@@ -74,3 +74,13 @@ milestones. This delivery advances mobile presentation and reliability. The
 remaining reverse-engine crash/persistence certification, filesystem/Git support
 and multi-operation planning keep their original release gates in
 REVERSE-UPGRADE-PROGRESS.md.
+
+## Production confirmation
+
+Commit `c676848` was pushed directly to `main`. Git integration automatically
+created production deployment `dpl_GJ8fV9oDSQcaDnhth14LY5bKeKwX`, which reached
+READY and owns `https://void-tui.vercel.app`. The production root responds with
+`Cache-Control: no-store`. At 390 px, the new ASCII chat and navigation loaded
+without console warnings/errors; composer bottom measured 778.5 px within an
+844 px viewport. The separate reverse-plan follow-up adds actual SIGKILL tests
+for the inverse-commit boundary; see REVERSE-UPGRADE-PROGRESS.md.

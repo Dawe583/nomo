@@ -134,3 +134,19 @@ tool notifications are informational rather than captured recovery receipts.
 The managed filesystem adapter and CLI/MCP configuration now support one regular file with bytes and mode recovery. Real filesystem tests cover binary data, restart, idempotence, human edits, ABA, permissions and unsafe paths. Missing atomic filesystem receipts leave uncertain outcomes unknown. This is not completion of R05.
 
 The public demo uses visitor-scoped managed cloud documents and a fixed TokenRouter model, without exposing private workspace or Prime credentials. Mobile controls use consistent SVG dimensions and a named native dialog. Research and the larger design sequence are recorded in `GUI-DESIGN-RESEARCH.md`.
+
+## Recovery process-death boundary, 2026-09-13
+
+Two additional real subprocess tests kill the executor with SIGKILL after an
+inverse commits, before the runtime receives its result. The signed journal
+remains at `recovery-dispatched`; a restarted executor refuses to send a second
+inverse. With a receipt atomically committed alongside the fixture value, explicit
+reconciliation writes one restored outcome. Without that receipt, restoration
+remains unknown even though the value matches the original. Repeated recovery
+and reconciliation leave one forward mutation and one inverse.
+
+The tests use a disposable SQLite adapter fixture, the actual local signed
+journal and reservation-backed encrypted vault. All 32 runtime tests and runtime
+TypeScript checks passed. This advances the process-crash portion of R01/R06; it
+does not certify PostgreSQL client SIGKILL, network partitions, external provider
+receipts, or the full M1 milestone.
