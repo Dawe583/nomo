@@ -67,3 +67,6 @@ packages/*/src/**/*.js.map
 /.swc
 
 /.nitro
+
+# Local operator exports may contain private conversation and ledger data
+/void-exports/

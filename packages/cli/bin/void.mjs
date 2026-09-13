@@ -17,7 +17,8 @@ if (!parsed.ok) {
   process.exit(2);
 }
 try {
-  if (parsed.command === "recovery") process.exitCode = await runRecoveryCommand(parsed.args);
+  if (parsed.command === "tui") { const { runWorkspaceTui } = await import("../src/tui/workspace-runner.ts"); process.exitCode = await runWorkspaceTui(parsed.args); }
+  else if (parsed.command === "recovery") process.exitCode = await runRecoveryCommand(parsed.args);
   else if (parsed.command === "agent") process.exit(await runAgentCommand(parsed.args));
   else if (parsed.command === "run") { await import("../../proxy/bin/void-proxy.mjs"); }
   else if (["attest", "export", "policy"].includes(parsed.command)) process.exit(await runOperation(parsed.command, parsed.args, process.env, text => console.log(text)));

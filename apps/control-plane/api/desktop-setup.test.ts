@@ -137,3 +137,14 @@ test('desktop API blocks remote mode and hostile origins and rejects extra impor
     } finally { await server.close(); }
   }
 });
+
+test('TokenRouter JSONC import preserves strings, accepts comments and rejects substituted endpoints', async t => {
+  const f = await fixture(t, async () => Response.json({ data: [{ id: 'z-ai/glm-5.3-free' }] }));
+  const file = '.config/opencode/opencode.jsonc';
+  const content = `// settings\n{"provider":{"tokenrouter":{"options":{/* comment */"baseURL":"https://api.tokenrouter.com/v1","apiKey":"${key}",},},},"literal":"// ,} /* untouched */",}`;
+  await f.save(file, content);
+  assert.equal((await desktopSetup(f.env)).sources.find(s => s.id === 'opencode:tokenrouter')?.available, true);
+  assert.equal((await importDesktopProvider('opencode:tokenrouter', f.env, f.app)).defaultModel, 'z-ai/glm-5.3-free');
+  await f.save(file, content.replace('api.tokenrouter.com', 'attacker.example'));
+  await assert.rejects(importDesktopProvider('opencode:tokenrouter', f.env, f.app), /unavailable/);
+});

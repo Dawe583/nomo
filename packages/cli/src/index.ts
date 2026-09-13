@@ -10,6 +10,7 @@
  */
 
 export const COMMANDS = [
+  "tui",
   "run",
   "classify",
   "feed",

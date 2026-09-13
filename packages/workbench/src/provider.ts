@@ -152,6 +152,7 @@ export class CompatibleProvider {
         } catch { throw new Error('Provider returned invalid tool arguments.'); }
         return call;
       });
+      if (!content.trim() && !toolCalls.length) throw new Error('Provider returned no answer. Retry the response.');
       await emit('', true);
       return { message: { role: 'assistant', content: content || null, ...(toolCalls.length ? { tool_calls: toolCalls } : {}) }, usage };
     } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }

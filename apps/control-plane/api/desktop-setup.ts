@@ -7,6 +7,7 @@ import { PROVIDER_PRESETS } from '../../../packages/workbench/src/provider-defau
 import type { Workbench } from '../../../packages/workbench/src/index.ts';
 
 const sources = [
+  { id: 'opencode:tokenrouter', name: 'TokenRouter', source: 'OpenCode', file: '.config/opencode/opencode.jsonc', provider: 'tokenrouter', entry: 'tokenrouter', config: true },
   { id: 'prime:tokenrouter', name: 'TokenRouter', source: 'Prime', file: '.prime/agent/models.json', provider: 'tokenrouter', entry: 'tokenrouter', models: true },
   { id: 'opencode:zen', name: 'OpenCode Zen', source: 'OpenCode', file: '.local/share/opencode/auth.json', provider: 'opencode-zen', entry: 'opencode' },
   { id: 'prime:zen', name: 'OpenCode Zen', source: 'Prime', file: '.prime/agent/auth.json', provider: 'opencode-zen', entry: 'opencode' },
@@ -35,10 +36,20 @@ async function credential(source: Source, env: Readonly<NodeJS.ProcessEnv>) {
       length += bytesRead;
     }
     if (length > 1_048_576) throw new Error('unavailable');
-    const data = object(JSON.parse(buffer.subarray(0, length).toString('utf8')));
+    let text = buffer.subarray(0, length).toString('utf8');
+    if ('config' in source) {
+      // JSONC comments/trailing commas only; preserve strings and never execute config.
+      text = text.replace(/("(?:\\.|[^"\\])*")|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/g, (match, quoted) => quoted ?? ' ');
+      text = text.replace(/"(?:\\.|[^"\\])*"|,(\s*[}\]])/g, (match, closing) => closing ?? match);
+    }
+    const data = object(JSON.parse(text));
     const preset = PROVIDER_PRESETS.find(p => p.id === source.provider)!;
     let key: unknown;
-    if ('models' in source) {
+    if ('config' in source) {
+      const options = object(object(object(data.provider)[source.entry]).options);
+      if (options.baseURL !== preset.baseUrl) throw new Error('unavailable');
+      key = options.apiKey;
+    } else if ('models' in source) {
       const entry = object(object(data.providers)[source.entry]);
       if (entry.baseUrl !== preset.baseUrl) throw new Error('unavailable');
       key = entry.apiKey;

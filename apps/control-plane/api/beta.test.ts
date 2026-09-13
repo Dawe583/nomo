@@ -28,7 +28,7 @@ test('standalone HTTP decision reaches the proxy broker through durable state', 
   const call = { tool: 'postgres.row.delete', klass: 'r3' as const, workspace: 'default', connector: 'postgres', blastRadius: undefined };
   const waiting = queue.hold({ ...call, blastRadius: undefined, ruleIndex: 0, rationale: 'beta fixture', args: {}, notify: ['cli'] }, 10);
   const hold = broker.register(queue, call);
-  const server = await listenControlPlane({ env: {}, approvals: localApprovals({ VOID_APPROVALS_DIR: dir }) });
+  const server = await listenControlPlane({ env: { VOID_DATA_DIR: join(dir, 'workbench') }, approvals: localApprovals({ VOID_APPROVALS_DIR: dir }) });
   try {
     const origin = `http://127.0.0.1:${server.port}`;
     const pending = await (await fetch(`${origin}/api/approvals`)).json() as { approvals: unknown[] };

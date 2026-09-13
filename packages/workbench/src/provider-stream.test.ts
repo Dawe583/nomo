@@ -171,3 +171,10 @@ test("truncated model output is never accepted as a tool action", async () => {
     /truncated/,
   );
 });
+
+test("completed empty stream is reported as failure instead of a successful blank answer", async () => {
+  const provider = new CompatibleProvider(config, async () => stream(
+    frame({ choices: [{ delta: {}, finish_reason: "stop" }] }) + "data: [DONE]\n\n",
+  ));
+  await assert.rejects(provider.complete("m", [], [], new AbortController().signal, () => {}), /no answer/);
+});

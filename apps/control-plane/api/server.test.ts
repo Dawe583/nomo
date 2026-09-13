@@ -1,7 +1,7 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { request as httpRequest } from "node:http";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -51,16 +51,18 @@ async function withServer<T>(
   run: (origin: string) => Promise<T>,
   options: WithServerOptions = {},
 ): Promise<T> {
+  const dataDir = await mkdtemp(join(tmpdir(), "void-api-workbench-"));
   const handle = await listenControlPlane({
     ledgerPath,
     webRoot: join(import.meta.dirname, '../web'),
     approvals: options.approvals,
-    env: options.env ?? {},
+    env: { VOID_DATA_DIR: dataDir, ...options.env },
   });
   try {
     return await run(`http://127.0.0.1:${handle.port}`);
   } finally {
     await handle.close();
+    await rm(dataDir, { recursive: true, force: true });
   }
 }
 
