@@ -36,6 +36,7 @@ test("built web serves deep links and hashed assets without exposing source or u
       const response = await fetch(base + path);
       assert.equal(response.status, 200, path);
       assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+      assert.equal(response.headers.get("cache-control"), "no-store");
       assert.match(await response.text(), /id="root"/);
     }
     const asset = await fetch(base + "/assets/app-123.js");

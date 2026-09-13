@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import * as m from "motion/react-m";
 import { MotionConfig, useReducedMotion } from "motion/react";
 import { api, download, type Row } from "./api";
-import { BrandMark } from "./brand";
+import { AsciiWordmark, BrandMark } from "./brand";
 import { Icon } from "./icons";
 import { Dialog, ErrorBox, MotionEnabled, useText } from "./ui";
 
@@ -14,27 +14,49 @@ export function PublicDemo({
   onWorkspace,
   motion,
   onMotion,
+  onTheme,
+  onLocale,
 }: {
   onWorkspace: () => void;
   motion: boolean;
   onMotion: () => void;
+  onTheme: () => void;
+  onLocale: () => void;
 }) {
   const t = useText(),
     reduced = useReducedMotion() || !motion;
   const [state, setState] = useState<Row>(),
-    [draft, setDraft] = useState(""),
+    [draft, setDraft] = useState(
+      () => sessionStorage.getItem("void-demo-draft") ?? "",
+    ),
+    [starting, setStarting] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState<unknown>(),
     [panel, setPanel] = useState<"menu" | "documents" | null>(null),
     [review, setReview] = useState<Row>(),
     [proof, setProof] = useState<Row>();
   const transcript = useRef<HTMLDivElement>(null),
-    started = useRef(false);
+    started = useRef(false),
+    pendingRequest = useRef<{ prompt: string; requestId: string } | null>(null);
+  async function start() {
+    setStarting(true);
+    setError(undefined);
+    try {
+      setState(await api("/api/demo/start", "POST", {}));
+    } catch (e) {
+      setError(e);
+    } finally {
+      setStarting(false);
+    }
+  }
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    void api("/api/demo/start", "POST", {}).then(setState).catch(setError);
+    void start();
   }, []);
+  useEffect(() => {
+    sessionStorage.setItem("void-demo-draft", draft);
+  }, [draft]);
   useEffect(() => {
     transcript.current?.scrollTo({
       top: transcript.current.scrollHeight,
@@ -128,8 +150,12 @@ export function PublicDemo({
     </>
   );
   async function send() {
-    if (busy || !draft.trim()) return;
+    if (busy || !state || state.status === "running" || !draft.trim()) return;
     const prompt = draft.trim();
+    if (pendingRequest.current?.prompt !== prompt)
+      pendingRequest.current = { prompt, requestId: crypto.randomUUID() };
+    const request = pendingRequest.current;
+    const previousCount = state.messages?.length ?? 0;
     setBusy(true);
     setError(undefined);
     setDraft("");
@@ -141,24 +167,36 @@ export function PublicDemo({
       ],
     }));
     try {
-      setState(
-        await api("/api/demo/message", "POST", {
-          prompt,
-          requestId: crypto.randomUUID(),
-        }),
-      );
+      setState(await api("/api/demo/message", "POST", request));
+      pendingRequest.current = null;
     } catch (e) {
       setError(e);
       try {
-        setState(await api("/api/demo/state"));
-      } catch {}
+        const current = await api("/api/demo/state");
+        setState(current);
+        // Restore only rejected messages; an accepted run must not be sent twice.
+        if (
+          !current.messages
+            ?.slice(previousCount)
+            .some(
+              (message: Row) =>
+                message.role === "user" && message.content === prompt,
+            )
+        )
+          setDraft((value) => value || prompt);
+      } catch {
+        setDraft((value) => value || prompt);
+      }
     } finally {
       setBusy(false);
     }
   }
   return (
     <MotionEnabled value={!reduced}>
-      <MotionConfig reducedMotion="user">
+      <MotionConfig
+        reducedMotion={reduced ? "always" : "user"}
+        transition={{ duration: reduced ? 0 : 0.24 }}
+      >
         <div className="demo-app">
           <header className="demo-topbar">
             <button
@@ -193,7 +231,7 @@ export function PublicDemo({
                     initial={reduced ? false : { opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    <BrandMark />
+                    <AsciiWordmark />
                     <h1>
                       {t(
                         "Od nápadu. Zpět kdykoliv.",
@@ -267,7 +305,7 @@ export function PublicDemo({
                         </div>
                       </m.article>
                     ))}
-                    {busy && (
+                    {(busy || state.status === "running") && (
                       <div className="demo-thinking" role="status">
                         <BrandMark />
                         {t("VOID pracuje…", "VOID is working…")}
@@ -282,6 +320,17 @@ export function PublicDemo({
                     error ?? (state?.error ? new Error(state.error) : undefined)
                   }
                 />
+                {!state && (
+                  <div className="demo-connection" role="status">
+                    {starting ? (
+                      t("Připojování…", "Connecting…")
+                    ) : (
+                      <button onClick={() => void start()}>
+                        {t("Zkusit připojení znovu", "Retry connection")}
+                      </button>
+                    )}
+                  </div>
+                )}
                 <form
                   className="demo-composer"
                   onSubmit={(e) => {
@@ -367,14 +416,11 @@ export function PublicDemo({
                       {t("Dokumenty a historie", "Documents and history")}
                     </span>
                   </button>
-                  <button
-                    onClick={() => {
-                      document.documentElement.dataset.theme =
-                        document.documentElement.dataset.theme === "dark"
-                          ? "light"
-                          : "dark";
-                    }}
-                  >
+                  <button onClick={onLocale}>
+                    <Icon name="language" />
+                    <span>{t("English", "Čeština")}</span>
+                  </button>
+                  <button onClick={onTheme}>
                     <Icon name="theme" />
                     <span>{t("Změnit vzhled", "Change appearance")}</span>
                   </button>

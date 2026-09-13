@@ -8,3 +8,5 @@ The user requested active use of these installed skills throughout this work:
 - `/Users/dawe/.codex/skills/ponytail/SKILL.md`: reuse existing capabilities, avoid unnecessary infrastructure, and never omit requested features, accessibility, validation, or verification.
 
 The intended default for new GUI conversations is TokenRouter / GLM 5.3 Free: provider `tokenrouter`, API model `z-ai/glm-5.3-free`, endpoint `https://api.tokenrouter.com/v1`. The OpenCode selection identifier is `tokenrouter/z-ai/glm-5.3-free`; do not send that provider-prefixed identifier as the API model. Never put credentials into source, documentation, browser storage, or logs. Existing conversations retain their provider/model snapshot.
+
+The user reaffirmed on 2026-09-13: work directly on `main`, commit and push completed verified changes to GitHub `main` for automatic Vercel deployment. Preserve unrelated files and never commit secrets. Use caveman and ponytail by default for all work. Mobile usability and a stronger ASCII identity are current design priorities.

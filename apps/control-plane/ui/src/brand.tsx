@@ -18,3 +18,14 @@ export function BrandMark({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+/** Plain ASCII avoids fallback-font width differences on mobile browsers. */
+export function AsciiWordmark() {
+  return (
+    <pre className="ascii-wordmark" aria-hidden="true">
+      {
+        " __   __  ___   ___  ___  \n \\ \\ / / / _ \\ |_ _||   \\ \n  \\ V / | (_) | | | | |) |\n   \\_/   \\___/ |___||___/ "
+      }
+    </pre>
+  );
+}

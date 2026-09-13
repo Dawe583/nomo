@@ -1,5 +1,5 @@
 import * as m from "motion/react-m";
-import { BrandMark } from "./brand";
+import { AsciiWordmark, BrandMark } from "./brand";
 import { ApprovalReview } from "./approval-review";
 import { transcriptEvents } from "./events";
 import {
@@ -388,9 +388,7 @@ export function Chat({
               initial={animate ? { opacity: 0, y: 12 } : false}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="welcome-emblem">
-                <BrandMark />
-              </div>
+              <AsciiWordmark />
               <h1>
                 {t(
                   "Prostor pro vaše další myšlenky.",

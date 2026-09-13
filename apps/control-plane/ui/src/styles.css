@@ -1566,47 +1566,6 @@ dialog::backdrop {
   .toolbar .button {
     font-size: 11px;
   }
-  .table-scroll table,
-  .table-scroll tbody {
-    display: block;
-  }
-  .table-scroll thead {
-    display: none;
-  }
-  .table-scroll tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    padding: 12px;
-    gap: 6px;
-    border-bottom: 1px solid var(--line);
-  }
-  .table-scroll td {
-    display: flex;
-    flex-direction: column;
-    border: 0;
-    padding: 3px;
-    max-width: none;
-    min-width: 0;
-    font-size: 12px;
-  }
-  .table-scroll td::before {
-    content: attr(data-label);
-    font-size: 10px;
-    color: var(--muted);
-  }
-  .table-scroll td:first-child {
-    font-weight: 600;
-    font-size: 14px;
-    grid-column: 1/-1;
-  }
-  .table-scroll td:last-child {
-    grid-column: 2;
-    align-self: end;
-    align-items: flex-end;
-  }
-  .table-scroll td:last-child::before {
-    display: none;
-  }
   .pagination {
     font-size: 11px;
   }

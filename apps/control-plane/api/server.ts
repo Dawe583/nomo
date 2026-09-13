@@ -421,6 +421,7 @@ async function serveStatic(
   }
   response.statusCode = 200;
   response.setHeader("content-type", contentType(filePath));
+  response.setHeader("cache-control", filePath.endsWith(".html") ? "no-store" : "public, max-age=0, must-revalidate");
   if (request.method === "HEAD") {
     response.end();
     return;

@@ -9,6 +9,8 @@ import * as m from "motion/react-m";
 import { IntegrationContext } from "./integrations";
 import { BrandMark } from "./brand";
 import {
+  Component,
+  type ReactNode,
   lazy,
   Suspense,
   useEffect,
@@ -29,6 +31,7 @@ import {
   useText,
 } from "./ui";
 import "./styles.css";
+import "./ascii.css";
 const PublicDemo = lazy(() =>
   import("./demo").then((module) => ({ default: module.PublicDemo })),
 );
@@ -77,6 +80,35 @@ const routes = [
   ["models", "◎", "Modely a spotřeba", "Models and usage"],
   ["settings", "⚙", "Nastavení", "Settings"],
 ];
+class AppBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    if (this.state.failed)
+      return (
+        <div className="app-recovery" role="alert">
+          <BrandMark />
+          <h1>VOID</h1>
+          <p>
+            {document.documentElement.lang === "cs"
+              ? "Rozhraní se nepodařilo načíst. Načtěte aktuální verzi."
+              : "The interface could not load. Reload the current version."}
+          </p>
+          <button className="primary" onClick={() => location.reload()}>
+            {document.documentElement.lang === "cs"
+              ? "Načíst znovu"
+              : "Reload workspace"}
+          </button>
+        </div>
+      );
+    return this.props.children;
+  }
+}
 function Root() {
   const [locale, setLocale] = useState<"cs" | "en">(() =>
     localStorage.getItem("void-locale") === "cs" ? "cs" : "en",
@@ -89,15 +121,17 @@ function Root() {
   }, [locale]);
   return (
     <Locale value={locale}>
-      <Suspense
-        fallback={
-          <div className="app-loading" role="status">
-            VOID
-          </div>
-        }
-      >
-        <App locale={locale} setLocale={setLocale} />
-      </Suspense>
+      <AppBoundary>
+        <Suspense
+          fallback={
+            <div className="app-loading" role="status">
+              VOID
+            </div>
+          }
+        >
+          <App locale={locale} setLocale={setLocale} />
+        </Suspense>
+      </AppBoundary>
     </Locale>
   );
 }
@@ -394,6 +428,15 @@ function App({
       <div className="app-loading" role="status">
         {demo.error ? (
           <ErrorBox error={demo.error} />
+        ) : demo.data ? (
+          <div className="app-recovery">
+            <p>
+              {t("Demo nyní není dostupné.", "Demo is currently unavailable.")}
+            </p>
+            <button onClick={() => navigate("/chat/new")}>
+              {t("Otevřít pracovní prostor", "Open workspace")}
+            </button>
+          </div>
         ) : (
           t("Načítání dema…", "Loading demo…")
         )}
@@ -407,6 +450,14 @@ function App({
       <PublicDemo
         motion={motion}
         onMotion={() => setMotion(!motion)}
+        onTheme={() =>
+          setAppearance(
+            document.documentElement.dataset.theme === "dark"
+              ? "light"
+              : "dark",
+          )
+        }
+        onLocale={() => setLocale(locale === "cs" ? "en" : "cs")}
         onWorkspace={() => {
           setPrivateLogin(true);
           navigate("/chat/new");
@@ -712,12 +763,20 @@ function App({
                     className="chat-container"
                     inert={context && matchMedia("(max-width:767px)").matches}
                   >
-                    <Chat
-                      key={chatId ?? "new"}
-                      id={chatId}
-                      navigate={navigate}
-                      onContext={() => setContext(true)}
-                    />
+                    <Suspense
+                      fallback={
+                        <p className="route-loading" role="status">
+                          {t("Načítání konverzace…", "Loading conversation…")}
+                        </p>
+                      }
+                    >
+                      <Chat
+                        key={chatId ?? "new"}
+                        id={chatId}
+                        navigate={navigate}
+                        onContext={() => setContext(true)}
+                      />
+                    </Suspense>
                   </div>
                 ) : (
                   <div
@@ -726,32 +785,40 @@ function App({
                     inert={context && matchMedia("(max-width:767px)").matches}
                   >
                     <h1>{t(active[2], active[3])}</h1>
-                    {page === "overview" ? (
-                      <Overview navigate={navigate} />
-                    ) : page === "sessions" ? (
-                      <Sessions navigate={navigate} />
-                    ) : page === "runs" ? (
-                      <Runs navigate={navigate} />
-                    ) : page === "documents" ? (
-                      <Documents />
-                    ) : page === "approvals" ? (
-                      <Approvals />
-                    ) : page === "ledger" ? (
-                      <Ledger />
-                    ) : page === "connections" ? (
-                      <Connections />
-                    ) : page === "models" ? (
-                      <Models />
-                    ) : page === "settings" ? (
-                      <Settings
-                        appearance={appearance}
-                        setAppearance={setAppearance}
-                        locale={locale}
-                        setLocale={setLocale}
-                      />
-                    ) : (
-                      <p>{t("Stránka nenalezena.", "Page not found.")}</p>
-                    )}
+                    <Suspense
+                      fallback={
+                        <p className="route-loading" role="status">
+                          {t("Načítání stránky…", "Loading page…")}
+                        </p>
+                      }
+                    >
+                      {page === "overview" ? (
+                        <Overview navigate={navigate} />
+                      ) : page === "sessions" ? (
+                        <Sessions navigate={navigate} />
+                      ) : page === "runs" ? (
+                        <Runs navigate={navigate} />
+                      ) : page === "documents" ? (
+                        <Documents />
+                      ) : page === "approvals" ? (
+                        <Approvals />
+                      ) : page === "ledger" ? (
+                        <Ledger />
+                      ) : page === "connections" ? (
+                        <Connections />
+                      ) : page === "models" ? (
+                        <Models />
+                      ) : page === "settings" ? (
+                        <Settings
+                          appearance={appearance}
+                          setAppearance={setAppearance}
+                          locale={locale}
+                          setLocale={setLocale}
+                        />
+                      ) : (
+                        <p>{t("Stránka nenalezena.", "Page not found.")}</p>
+                      )}
+                    </Suspense>
                   </div>
                 )}
                 {context && (
@@ -811,7 +878,15 @@ function App({
                             "Documents in this conversation",
                           )}
                         </p>
-                        <Documents sessionId={chatId} />
+                        <Suspense
+                          fallback={
+                            <p role="status">
+                              {t("Načítání dokumentů…", "Loading documents…")}
+                            </p>
+                          }
+                        >
+                          <Documents sessionId={chatId} />
+                        </Suspense>
                         <button onClick={() => navigate("/ledger")}>
                           {t("Otevřít ledger", "Open ledger")}
                         </button>

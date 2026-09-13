@@ -84,7 +84,15 @@ export function Dialog({
       ref={ref}
       onCancel={close}
       onClick={(e) => {
-        if (e.target === e.currentTarget) close();
+        const rect = e.currentTarget.getBoundingClientRect();
+        if (
+          e.target === e.currentTarget &&
+          (e.clientX < rect.left ||
+            e.clientX > rect.right ||
+            e.clientY < rect.top ||
+            e.clientY > rect.bottom)
+        )
+          close();
       }}
     >
       <div className="dialog-heading">
@@ -139,7 +147,11 @@ export function DataTable({
   const [hidden, setHidden] = useState<string[]>([]),
     [detail, setDetail] = useState<Row>(),
     [view, setView] = useState(
-      initial.get("view") === "list" ? "list" : "table",
+      ["list", "table"].includes(initial.get("view") ?? "")
+        ? initial.get("view")!
+        : matchMedia("(max-width: 767px)").matches
+          ? "list"
+          : "table",
     );
   const restoring = useRef(false);
   useEffect(() => {
@@ -162,7 +174,13 @@ export function DataTable({
       setSort(
         (url.get("order") === "desc" ? "-" : "") + (url.get("sort") ?? ""),
       );
-      setView(url.get("view") === "list" ? "list" : "table");
+      setView(
+        ["list", "table"].includes(url.get("view") ?? "")
+          ? url.get("view")!
+          : matchMedia("(max-width: 767px)").matches
+            ? "list"
+            : "table",
+      );
       setHistory(window.history.state?.tableHistory ?? []);
     };
     window.addEventListener("popstate", restore);
@@ -180,7 +198,7 @@ export function DataTable({
       sort: sort.replace(/^-/, ""),
       order: sort ? (sort.startsWith("-") ? "desc" : "asc") : "",
       cursor,
-      view: view === "list" ? "list" : "",
+      view,
     })) {
       if (value) url.searchParams.set(key, value);
       else url.searchParams.delete(key);
@@ -265,7 +283,9 @@ export function DataTable({
             <button
               onClick={() => setView(view === "table" ? "list" : "table")}
             >
-              {t("Tabulka / seznam", "Table / list")}
+              {view === "list"
+                ? t("Zobrazit tabulku", "Show table")
+                : t("Zobrazit seznam", "Show list")}
             </button>
             {columns.map((c) => (
               <label key={c.key}>
