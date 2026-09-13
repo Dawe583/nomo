@@ -15,7 +15,7 @@ import {
   desktopSetup,
 } from "../../../../apps/control-plane/api/desktop-setup.ts";
 import { loadPolicy } from "../../../policy/src/rules.ts";
-import { box, fit, pad, sanitizeText, visibleLength } from "./layout.ts";
+import { fit, pad, sanitizeText, visibleLength } from "./layout.ts";
 
 export const WORKSPACE_TABS = [
   "overview",
@@ -136,24 +136,20 @@ export class WorkspaceTui {
   items(): Item[] {
     let rows: Item[] = [];
     if (this.tab === "sessions")
-      rows = [...this.workbench.list()]
-        .reverse()
-        .map((s) => ({
-          id: s.id,
-          sessionId: s.id,
-          label: `[${s.status}] ${s.title ?? s.id}${s.archived ? " [archived]" : ""}`,
-          lines: json(s),
-        }));
+      rows = [...this.workbench.list()].reverse().map((s) => ({
+        id: s.id,
+        sessionId: s.id,
+        label: `[${s.status}] ${s.title ?? s.id}${s.archived ? " [archived]" : ""}`,
+        lines: json(s),
+      }));
     if (this.tab === "documents")
-      rows = this.workbench
-        .documentsList()
-        .map((d) => ({
-          id: `${d.sessionId}:${d.path}`,
-          sessionId: d.sessionId,
-          path: d.path,
-          label: `${d.path}  ${d.bytes} B  ${d.sessionId.slice(0, 8)}`,
-          lines: json(d),
-        }));
+      rows = this.workbench.documentsList().map((d) => ({
+        id: `${d.sessionId}:${d.path}`,
+        sessionId: d.sessionId,
+        path: d.path,
+        label: `${d.path}  ${d.bytes} B  ${d.sessionId.slice(0, 8)}`,
+        lines: json(d),
+      }));
     if (this.tab === "ledger") {
       for (const [id, entries] of this.proofs)
         for (const e of entries) {
@@ -210,13 +206,11 @@ export class WorkspaceTui {
         })),
       );
     if (this.tab === "tools" || this.tab === "policy")
-      rows = this.workbench
-        .connectionState()
-        .connectors.map((c) => ({
-          id: c.id,
-          label: `${c.name} (${c.tools.length} tools)`,
-          lines: json(c),
-        }));
+      rows = this.workbench.connectionState().connectors.map((c) => ({
+        id: c.id,
+        label: `${c.name} (${c.tools.length} tools)`,
+        lines: json(c),
+      }));
     if (this.tab === "models")
       rows = (this.provider?.models ?? []).map((m) => ({
         id: m.id,
@@ -769,6 +763,48 @@ export function wrap(lines: readonly string[], width: number): string[] {
   }
   return out;
 }
+export const TUI_COMMANDS = [
+  ["/new", "Nová konverzace"],
+  ["/chat", "Zpět do konverzace"],
+  ["/sessions", "Otevřít historii"],
+  ["/documents", "Dokumenty a revize"],
+  ["/ledger", "Podepsané operace"],
+  ["/approvals", "Čekající rozhodnutí"],
+  ["/models", "Dostupné modely"],
+  ["/overview", "Přehled workspace"],
+  ["/verify", "Ověřit podpisy"],
+  ["/undo", "Náhled vrácení změny"],
+  ["/edit", "Otevřít editor dokumentu"],
+  ["/history", "Historie dokumentu"],
+  ["/branch", "Vytvořit větev"],
+  ["/retry", "Nový pokus s potvrzením"],
+  ["/tools", "MCP konektory"],
+  ["/policy", "Pravidla nástrojů"],
+  ["/usage", "Spotřeba modelu"],
+  ["/stop", "Zastavit běh"],
+  ["/help", "Všechny příkazy"],
+  ["/quit", "Uložit a ukončit"],
+] as const;
+export function commandSuggestions(input: string) {
+  return /^\/[^\s]*$/.test(input)
+    ? TUI_COMMANDS.filter(([name]) => name.startsWith(input))
+    : [];
+}
+export type WorkspaceVisuals = {
+  color?: boolean;
+  frame?: number;
+  motion?: boolean;
+  boot?: boolean;
+  command?: string;
+  suggestion?: number;
+};
+const VOID_LOGO = [
+  String.raw` __      __  ____   _____  _____  `,
+  String.raw` \ \    / / / __ \ |_   _||  __ \ `,
+  String.raw`  \ \  / / | |  | |  | |  | |  | |`,
+  String.raw`   \ \/ /  | |__| | _| |_ | |__| |`,
+  String.raw`    \__/    \____/ |_____||_____/ `,
+];
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -776,11 +812,120 @@ export function renderWorkspace(
   input = "",
   editing = false,
   busy = false,
+  visuals: WorkspaceVisuals = {},
 ): string {
   const width = Math.max(20, columns),
-    height = Math.max(8, rows),
-    bodyHeight = Math.max(1, height - 7);
-  const lines = wrap(ui.lines(), width - 4);
+    height = Math.max(8, rows);
+  const ink = (value: string, code: string) =>
+    visuals.color ? `\x1b[${code}m${value}\x1b[0m` : value;
+  const text = (value: string) => fit(sanitizeText(value), width);
+  const amber = "38;5;215",
+    ice = "38;5;117",
+    muted = "38;5;245",
+    violet = "38;5;183";
+  const running = busy || ui.workbench.running();
+  const frame = visuals.motion === false ? 0 : (visuals.frame ?? 0);
+  const spinner = running
+    ? ["[.   ]", "[ .  ]", "[  . ]", "[   .]", "[  . ]", "[ .  ]"][frame % 6]
+    : "[ * ]";
+  const holds = ui.workbench.pending().length + ui.proxy.holds.length;
+  const header: string[] = [];
+  if (height >= 22 && width >= 50 && !ui.confirmation) {
+    const aside = [
+      "VOID / local workspace",
+      ui.session()?.model || ui.model || "Připoj model přes /connect",
+      running ? "Model pracuje / Esc zastavit" : "Tvoje práce. Tvoje kontrola.",
+      `${ui.workbench.list().length} konverzací / ${holds} ke schválení`,
+      "[/] příkazy   [Esc] navigace",
+    ];
+    VOID_LOGO.forEach((line, i) =>
+      header.push(
+        ink(
+          line,
+          `1;${(visuals.boot || running) && frame % 5 === i ? ice : amber}`,
+        ) +
+          (width >= 78
+            ? ink(
+                fit(
+                  sanitizeText("   " + aside[i]),
+                  width - visibleLength(line),
+                ),
+                i === 1 ? ice : muted,
+              )
+            : ""),
+      ),
+    );
+  } else
+    header.push(
+      ink(
+        text(` /V/  VOID  ${spinner} ${ui.tab}  |  ${holds} schválení`),
+        `1;${amber}`,
+      ),
+    );
+  const tabIndex = WORKSPACE_TABS.indexOf(ui.tab);
+  const tabs =
+    WORKSPACE_TABS.join("  ").length < width - 2
+      ? WORKSPACE_TABS
+      : WORKSPACE_TABS.slice(Math.max(0, tabIndex - 1), tabIndex + 3);
+  header.push(
+    fit(
+      tabs
+        .map((t) =>
+          ink(
+            t === ui.tab ? ` [${t}] ` : ` ${t} `,
+            t === ui.tab ? `1;${ice}` : muted,
+          ),
+        )
+        .join(""),
+      width,
+    ),
+  );
+  const candidates =
+    editing && !ui.confirmation
+      ? commandSuggestions(visuals.command ?? "")
+      : [];
+  const selection = Math.max(
+    0,
+    Math.min(visuals.suggestion ?? 0, candidates.length - 1),
+  );
+  const menuStart = Math.max(0, selection - 3);
+  const menu = candidates.slice(
+    menuStart,
+    menuStart + Math.min(5, Math.max(0, height - header.length - 8)),
+  );
+  const composer = wrap(
+    (
+      input ||
+      (editing ? "Zeptej se nebo napiš / pro příkazy" : "i psát / Enter detail")
+    ).split("\n"),
+    width - 2,
+  );
+  const composerHeight = Math.min(composer.length, height >= 18 ? 3 : 1);
+  const cursorLine = Math.max(
+    0,
+    composer.findIndex((line) => line.includes("_")),
+  );
+  const composerStart = Math.max(0, cursorLine - composerHeight + 1);
+  const bodyHeight = Math.max(
+    1,
+    height - header.length - 4 - composerHeight - menu.length,
+  );
+  let content = ui.lines();
+  if (ui.tab === "chat" && !ui.session() && !ui.detail && !ui.confirmation)
+    content = [
+      "",
+      "  Vítej ve VOIDu.",
+      "  Napiš, co chceš vytvořit. Zbytek sleduj tady.",
+      "",
+      "  > Vytvoř plán projektu a ulož ho do plan.md",
+      "",
+      "  + Dokumenty    Zachycené změny a potvrzené Undo",
+      "  + Ledger       Podepsaná historie každé operace",
+      "  + Schvalování  Rozhodnutí před externím nástrojem",
+      "",
+      "  / příkazy     Tab doplnit     Esc navigace",
+    ];
+  const lines = wrap(content, width - 4);
   let offset = ui.scroll;
   if (!ui.detail && !ui.confirmation && ui.tab === "chat" && ui.scroll < 0)
     offset = Math.max(0, lines.length - bodyHeight);
@@ -796,40 +941,86 @@ export function renderWorkspace(
   );
   const body = lines.slice(offset, offset + bodyHeight);
   while (body.length < bodyHeight) body.push("");
+  const frameColor = ui.confirmation ? amber : muted;
+  const bodyRows = body.map((line) => {
+    const tone = /^>/.test(line)
+      ? `1;${ice}`
+      : /VY$/.test(line)
+        ? `1;${violet}`
+        : /VOID(?: \[stream\])?$/.test(line)
+          ? `1;${amber}`
+          : /^(Error|Neplatný|Selhání)/.test(line)
+            ? "38;5;203"
+            : "39";
+    return (
+      ink(ui.confirmation ? "! " : "  ", frameColor) +
+      ink(pad(line, width - 4), tone) +
+      (ui.confirmation ? ink(" !", frameColor) : "  ")
+    );
+  });
   const status = ui.confirmation
-    ? "y potvrdit | Esc zrušit | PgUp/PgDn celý náhled"
-    : `${busy ? "[pracuji] " : ""}${ui.notice}`;
-  const tabIndex = WORKSPACE_TABS.indexOf(ui.tab);
-  const tabs =
-    WORKSPACE_TABS.join(" ").length < width - 4
-      ? WORKSPACE_TABS
-      : WORKSPACE_TABS.slice(Math.max(0, tabIndex - 1), tabIndex + 4);
-  const heading = `VOID > ${ui.tab.toUpperCase()} | ${ui.session()?.status ?? "ready"} | ${ui.workbench.pending().length + ui.proxy.holds.length} schválení`;
+    ? "ROZHODNUTÍ / y potvrdit / Esc zrušit / PgDn náhled"
+    : running
+      ? `${spinner} ${ui.session()?.status === "running" ? "VOID pracuje" : "Dokončuji operaci"}  /  Esc zastavit`
+      : ui.notice;
+  const line = (label: string) => {
+    const head = `-- ${label} `;
+    const rail = Array.from(
+      { length: Math.max(0, width - head.length) },
+      () => "-",
+    );
+    if (running && visuals.motion !== false && rail.length)
+      rail[frame % rail.length] = "*";
+    return fit(head + rail.join(""), width);
+  };
+  const menuRows = menu.map(([name, description], i) =>
+    ink(
+      text(
+        `${i + menuStart === selection ? " >" : "  "} ${name.padEnd(13)} ${description}`,
+      ),
+      i + menuStart === selection ? `1;${ice}` : muted,
+    ),
+  );
   return [
-    pad(heading, width),
-    fit(tabs.map((t) => (t === ui.tab ? `[${t}]` : t)).join(" "), width),
-    ...box(
-      `${offset + 1}-${Math.min(lines.length, offset + bodyHeight)}/${lines.length}`,
-      body,
-      width,
+    ...header,
+    ...bodyRows,
+    ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
+    ...menuRows,
+    ink(
+      line(editing ? "Napiš pokyn" : `${ui.tab} / navigace`),
+      editing ? ice : muted,
     ),
-    fit(sanitizeText(status), width),
-    fit(
-      `${editing ? "> " : "[i psát] "} ${sanitizeText(input).replace(/\?/g, "?")}`,
-      width,
-      "left",
+    ...composer
+      .slice(composerStart, composerStart + composerHeight)
+      .map((value, i) =>
+        ink(
+          fit(`${i === 0 ? (editing ? "> " : ": ") : "  "}${value}`, width),
+          editing ? "1;39" : muted,
+        ),
+      ),
+    ink("-".repeat(width), editing ? ice : muted),
+    ink(
+      text(
+        candidates.length
+          ? "šipky výběr / Tab doplnit / Enter spustit / Esc zavřít"
+          : editing
+            ? "Enter odeslat / Alt+Enter řádek / Esc navigace / Ctrl+C zrušit"
+            : "Tab sekce / i psát / u Undo / a schválit / d odmítnout / q konec",
+      ),
+      muted,
     ),
-    fit(
-      "Tab sekce | Enter detail | j/k výběr | u Undo | a/d schválit/odmítnout | q konec",
-      width,
-    ),
-  ].join("\n");
+  ]
+    .slice(0, height)
+    .join("\n");
 }
 const HELP = [
   "VOID TUI — skutečná lokální data, žádná demonstrační čísla",
   "",
   "Tab / Shift+Tab: sekce; j/k nebo šipky: výběr; Enter: detail.",
-  "PgUp/PgDn: posun textu; Esc: zpět/zrušit; i: psaní; /: příkaz.",
+  "Chat: rovnou piš. / otevře nabídku; šipky vyberou, Tab doplní.",
+  "PgUp/PgDn: posun textu; Esc: zastavit běh / navigace; i: psaní.",
+  "Šipky v prázdném jednořádkovém vstupu procházejí tvoje pokyny.",
+  "NO_COLOR vypne barvy; VOID_TUI_MOTION=0 vypne animace.",
   "Psaní: Enter odešle; Alt+Enter nový řádek; Ctrl+U smaže řádek.",
   "V navigaci: n nová konverzace; u náhled Undo; a/d schválení; q konec.",
   "",

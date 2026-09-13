@@ -71,7 +71,28 @@ await app.shutdown(); console.log(session.id);
         read_until("VOID: ukončuji")
         assert process.wait(timeout=5) == 0, "TUI failed to exit cleanly"
         assert b"\x1b[?1049l" in output and b"\x1b[?2004l" in output, "Terminal mode not restored"
-        print("PASS: real PTY navigation, paste-safe confirmation, Undo, signatures, resize and clean exit")
+        os.close(master)
+        master, slave = pty.openpty()
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
+        process = subprocess.Popen(["node", "packages/cli/bin/void.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+        os.close(slave)
+        read_until("Napiš pokyn")
+        os.write(master, b"draft first")
+        read_until("draft first")
+        os.write(master, b"\x1b\rdraft second")
+        read_until("draft second")
+        os.write(master, b"\x03/led")
+        read_until("Podepsané operace")
+        os.write(master, b"\t\r")
+        read_until("ledger / navigace")
+        os.write(master, b"/chat\r")
+        read_until("Napiš pokyn")
+        os.write(master, b"\x1b[A")
+        read_until("PTY test")
+        os.write(master, b"\x03\x03")
+        read_until("VOID: ukončuji")
+        assert process.wait(timeout=5) == 0
+        print("PASS: PTY logo, immediate typing, multiline input, history, slash completion, paste-safe Undo, signatures, resize and clean exit")
     finally:
         if process.poll() is None:
             process.kill()

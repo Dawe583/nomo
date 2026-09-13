@@ -8,6 +8,7 @@ import { LocalStorage } from "../../../workbench/src/storage.ts";
 import {
   WorkspaceTui,
   WORKSPACE_TABS,
+  commandSuggestions,
   renderWorkspace,
   message,
   type WorkspaceTab,
@@ -93,7 +94,7 @@ export class WorkspaceInput {
   display() {
     const points = [...this.value];
     points.splice(this.cursor, 0, "_");
-    return points.join("").replace(/\n/g, " / ");
+    return points.join("");
   }
 }
 
@@ -104,7 +105,7 @@ export async function runWorkspaceTui(
     once = false,
     source: string | undefined,
     sessionId: string | undefined;
-  let tab: WorkspaceTab = "overview";
+  let tab: WorkspaceTab = "chat";
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--once") once = true;
@@ -170,6 +171,13 @@ export async function runWorkspaceTui(
     await app.shutdown();
     return ui.proofErrors.size ? 1 : 0;
   }
+  input.editing = tab === "chat";
+  let suggestion = 0;
+  let historyIndex = -1;
+  let historyDraft = "";
+  const startedAt = Date.now();
+  const color = env.NO_COLOR === undefined;
+  const motion = env.VOID_TUI_MOTION !== "0" && env.TERM !== "dumb";
   const screen = new DiffScreenWriter(process.stdout);
   let busy = false,
     suspended = false,
@@ -202,6 +210,14 @@ export async function runWorkspaceTui(
           input.display(),
           input.editing,
           busy,
+          {
+            color,
+            motion,
+            frame: Math.floor((Date.now() - startedAt) / 140),
+            boot: motion && Date.now() - startedAt < 1800,
+            command: input.value,
+            suggestion,
+          },
         ),
       );
   };
@@ -322,7 +338,9 @@ export async function runWorkspaceTui(
       }
       if (!original.trimStart().startsWith("/")) drafts[oldSession] = "";
       input.set(drafts[ui.sessionId ?? "new"] ?? "");
-      input.editing = false;
+      input.editing = ui.tab === "chat";
+      suggestion = 0;
+      historyIndex = -1;
       if (result === "edit") await editor();
       saveDraft();
     };
@@ -335,8 +353,28 @@ export async function runWorkspaceTui(
     };
     const onKey = (value: string | undefined, key: Key) => {
       if (stopped || suspended) return;
+      if (
+        !input.pasting &&
+        ((key.ctrl && key.name === "c") || key.name === "escape") &&
+        app.running()
+      ) {
+        try {
+          for (const session of app.allViews())
+            if (session.status === "running") app.cancel(session.id);
+          ui.notice = "Běh zastaven. Již odeslaný nástroj může dobíhat.";
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        draw();
+        return;
+      }
       if (key.ctrl && key.name === "c") {
-        stop();
+        if (input.editing && input.value) {
+          input.set("");
+          suggestion = 0;
+          scheduleDraft();
+          draw();
+        } else stop();
         return;
       }
       if (key.name === "paste-start" && ui.confirmation) {
@@ -359,7 +397,60 @@ export async function runWorkspaceTui(
         return;
       }
       if (input.editing || key.name === "paste-start") {
+        const candidates = input.pasting ? [] : commandSuggestions(input.value);
+        if (
+          candidates.length &&
+          ["up", "down", "tab", "return", "enter"].includes(key.name ?? "")
+        ) {
+          if (key.name === "up" || key.name === "down")
+            suggestion =
+              (suggestion + (key.name === "up" ? candidates.length - 1 : 1)) %
+              candidates.length;
+          else {
+            input.set(
+              candidates[Math.min(suggestion, candidates.length - 1)]![0],
+            );
+            suggestion = 0;
+            if (key.name !== "tab") void task(submit);
+          }
+          draw();
+          return;
+        }
+        if (
+          !input.pasting &&
+          ["up", "down"].includes(key.name ?? "") &&
+          !input.value.includes("\n")
+        ) {
+          const history = (ui.session()?.events ?? [])
+            .filter((e) => e.kind === "user")
+            .map((e) => e.text)
+            .reverse();
+          if (history.length) {
+            if (historyIndex < 0) historyDraft = input.value;
+            historyIndex =
+              key.name === "up"
+                ? Math.min(history.length - 1, historyIndex + 1)
+                : Math.max(-1, historyIndex - 1);
+            input.set(historyIndex < 0 ? historyDraft : history[historyIndex]!);
+            draw();
+            return;
+          }
+        }
+        if (!input.pasting && ["pageup", "pagedown"].includes(key.name ?? "")) {
+          if (ui.scroll < 0)
+            ui.scroll = Math.max(
+              0,
+              wrap(ui.lines(), (process.stdout.columns ?? 80) - 4).length -
+                Math.max(1, (process.stdout.rows ?? 24) - 10),
+            );
+          ui.scroll =
+            key.name === "pageup" ? Math.max(0, ui.scroll - 8) : ui.scroll + 8;
+          draw();
+          return;
+        }
         const action = input.key(value, key);
+        suggestion = 0;
+        historyIndex = -1;
         if (action === "submit") void task(submit);
         else scheduleDraft();
         draw();
@@ -372,8 +463,10 @@ export async function runWorkspaceTui(
           wrap(ui.lines(), (process.stdout.columns ?? 80) - 4).length -
             Math.max(1, (process.stdout.rows ?? 24) - 7),
         );
-      if (key.name === "tab") ui.cycle(key.shift ? -1 : 1);
-      else if (value === "q") {
+      if (key.name === "tab") {
+        ui.cycle(key.shift ? -1 : 1);
+        input.editing = ui.tab === "chat";
+      } else if (value === "q") {
         stop();
         return;
       } else if (value === "i" || value === "/") {
@@ -387,7 +480,10 @@ export async function runWorkspaceTui(
           input.set("/");
         }
       } else if (value === "n")
-        void task(() => navigate(() => ui.command("/new")));
+        void task(async () => {
+          await navigate(() => ui.command("/new"));
+          input.editing = true;
+        });
       else if (value === "u") void task(() => ui.prepareUndo());
       else if (value === "a" || value === "d")
         void task(async () =>

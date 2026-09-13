@@ -6,12 +6,13 @@ import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import {
   WorkspaceTui,
+  commandSuggestions,
   renderWorkspace,
   transcript,
   wrap,
 } from "./workspace.ts";
 import { WorkspaceInput } from "./workspace-runner.ts";
-import { visibleLength } from "./layout.ts";
+import { visibleLength, stripAnsi } from "./layout.ts";
 
 test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, signed export and restart", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-"));
@@ -156,4 +157,52 @@ test("stream deltas are shown once and replaced by the completed assistant messa
     { ...base, seq: 2, type: "message.completed", text: "Hello" },
   ]);
   assert.equal(result.filter((s) => s === "Hello").length, 1);
+});
+
+test("styled frames stay bounded, motion can stop, and slash choices never include arguments", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-style-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "界".repeat(120);
+  ui.notice = "untrusted \x1b[2J";
+  for (const [w, h] of [
+    [20, 8],
+    [40, 12],
+    [50, 26],
+    [78, 26],
+    [100, 32],
+    [160, 45],
+  ]) {
+    const frame = renderWorkspace(
+      ui,
+      w!,
+      h!,
+      "line one\nline two_",
+      true,
+      true,
+      { color: true, command: "/", suggestion: 18, frame: 2 },
+    );
+    assert.ok(frame.includes("\x1b["));
+    assert.ok(!frame.includes("\x1b[2J"));
+    assert.ok(frame.split("\n").length <= h!);
+    assert.ok(frame.split("\n").every((line) => visibleLength(line) <= w!));
+  }
+  const still = (frame: number) =>
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame, motion: false });
+  assert.equal(still(0), still(9));
+  assert.notEqual(
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 0 }),
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 1 }),
+  );
+  assert.deepEqual(
+    commandSuggestions("/led").map(([name]) => name),
+    ["/ledger"],
+  );
+  assert.equal(commandSuggestions("/new delete everything").length, 0);
+  assert.ok(stripAnsi(renderWorkspace(ui, 100, 32)).includes("|_____||_____/"));
 });

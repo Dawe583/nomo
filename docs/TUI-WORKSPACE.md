@@ -28,9 +28,9 @@ fallback. Pokud import není potřebný, lze použít uložený profil nebo prom
 
 ## První skutečný test
 
-1. `n` založí novou konverzaci. `i` zapne psaní.
+1. Po spuštění lze rovnou psát. `/new` založí novou konverzaci.
 2. Napiš: `Vytvoř plán testování a ulož ho do plan.md.` Enter odešle.
-3. Tab přepíná přehled, chat, konverzace, dokumenty, ledger, schválení,
+3. Escape přejde do navigace. Tab přepíná přehled, chat, konverzace, dokumenty, ledger, schválení,
    pravidla, nástroje, modely, spotřebu a nápovědu.
 4. V dokumentech j/k nebo šipky vyberou řádek; Enter otevře obsah.
 5. `/edit` otevře lokální editor. Po jeho ukončení TUI zobrazí obsah před/po.
@@ -43,6 +43,19 @@ fallback. Pokud import není potřebný, lze použít uložený profil nebo prom
    `void-exports/` s právy 0600. Existující soubory nepřepisují.
 9. `q` v navigaci nebo Ctrl+C ukončí TUI a obnoví terminál. Již odeslaný
    externí nástroj může ještě dobíhat; automaticky se neopakuje.
+
+TUI má velké ASCII logo, barevné role zpráv, zvýrazněná rozhodnutí a nabídku
+příkazů. `/` nabídku otevře, šipky vybírají, Tab doplní a Enter spustí příkaz.
+Při psaní šipka nahoru prochází předchozí pokyny dané konverzace. Po odeslání
+zůstává chat připravený k psaní další zprávy; nový požadavek lze odeslat po
+skončení běhu. Escape nebo Ctrl+C během běhu zastavuje model. Ctrl+C ve vstupu
+nejprve vymaže koncept; s prázdným vstupem ukončí aplikaci.
+
+Logo při startu krátce prosvítá; běh modelu má animovaný indikátor a pohyb
+na oddělovači vstupu. `VOID_TUI_MOTION=0 pnpm tui` vypne animace.
+`NO_COLOR=1 pnpm tui` vypne barvy. Výpis `--once` je vždy statický bez barev.
+Malé terminály používají kompaktní logo a kratší navigaci. Zůstává vlastní
+ovládání VOIDu pro ledger a explicitní rozhodnutí; nejde o úplný klon Claude Code.
 
 Alt+Enter vloží nový řádek. Bracketed paste neodesílá zprávy a nepotvrzuje
 operace. Escape vrací z detailu nebo ukončí psaní. `/help` obsahuje všechny
