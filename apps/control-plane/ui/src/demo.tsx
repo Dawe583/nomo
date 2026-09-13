@@ -161,6 +161,7 @@ export function PublicDemo({
     setDraft("");
     setState((current) => ({
       ...current,
+      error: undefined,
       messages: [
         ...(current?.messages ?? []),
         { role: "user", content: prompt },

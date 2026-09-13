@@ -84,3 +84,15 @@ READY and owns `https://void-tui.vercel.app`. The production root responds with
 without console warnings/errors; composer bottom measured 778.5 px within an
 844 px viewport. The separate reverse-plan follow-up adds actual SIGKILL tests
 for the inverse-commit boundary; see REVERSE-UPGRADE-PROGRESS.md.
+
+### Live provider limitation
+
+A real message was submitted in the visitor-scoped production demo. The demo
+accepted the message, but TokenRouter did not complete it. After adding a safe
+error classifier and repeating the small smoke request once, the deployed
+provider returned HTTP 503. This is an unresolved upstream availability failure,
+not a successful live-generation test. The UI now distinguishes provider rate
+limits, authentication/model-access errors and other HTTP failures without
+exposing provider payloads or credentials. The four demo tests pass, including
+error redaction. No provider/model substitution or credential change was made.
+A new submission clears the previous server error while it is pending.
