@@ -7,8 +7,25 @@ import {
   demoCookie,
   demoIdentity,
   reserveDemoBudget,
+  demoFailureMessage,
 } from "./demo.mjs";
 import { DEFAULT_MODEL_ID } from "../packages/workbench/src/provider-defaults.ts";
+import { ProviderRequestError } from "../packages/workbench/src/provider.ts";
+test("demo failures distinguish provider limits and authentication without leaking payloads", () => {
+  assert.match(
+    demoFailureMessage(new ProviderRequestError(429)),
+    /rate limited.*429/,
+  );
+  assert.match(
+    demoFailureMessage(new ProviderRequestError(401)),
+    /credentials.*401/,
+  );
+  assert.match(demoFailureMessage(new ProviderRequestError(502)), /HTTP 502/);
+  assert.doesNotMatch(
+    demoFailureMessage(new Error("secret-provider-payload")),
+    /secret-provider-payload/,
+  );
+});
 test("demo cookies are signed, expiring and distinct from workspace authority", () => {
   const secret = "a".repeat(44),
     id = randomUUID(),

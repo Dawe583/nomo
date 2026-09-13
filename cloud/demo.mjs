@@ -12,7 +12,10 @@ import {
   ledger,
 } from "./store.mjs";
 import { mutateCloudDocument, managedCloudUndo } from "./recovery.mjs";
-import { CompatibleProvider } from "../packages/workbench/src/provider.ts";
+import {
+  CompatibleProvider,
+  ProviderRequestError,
+} from "../packages/workbench/src/provider.ts";
 import {
   DEFAULT_MODEL_ID,
   TOKENROUTER_URL,
@@ -23,6 +26,21 @@ import {
   workspaceTools,
   previewWorkspaceUndo,
 } from "../packages/workbench/src/workspace.ts";
+
+export function demoFailureMessage(error) {
+  const preserved =
+    " Completed document changes remain available for review and Undo.";
+  if (error instanceof ProviderRequestError) {
+    const reason =
+      error.status === 429
+        ? "TokenRouter is rate limited (HTTP 429). Try again later."
+        : [401, 403].includes(error.status)
+          ? `TokenRouter rejected the demo credentials or model access (HTTP ${error.status}). The workspace owner needs to check the demo provider configuration.`
+          : `TokenRouter could not complete the request (HTTP ${error.status}). Try again later.`;
+    return reason + preserved;
+  }
+  return "The demo could not finish this reply. Try again later." + preserved;
+}
 
 const cookieName = "__Host-void-demo";
 const fail = (message, status = 400) =>
@@ -336,10 +354,13 @@ export function demoRouter(dependencies = {}) {
           });
       }
       state.status = "idle";
-    } catch {
+    } catch (error) {
       state.status = "failed";
-      state.error =
-        "The demo could not finish this reply. Completed document changes remain available for review and Undo. Provider availability or the demo limit may be responsible.";
+      state.error = demoFailureMessage(error);
+      // Only our numeric HTTP status enters logs; never provider payloads or keys.
+      console.warn("void.demo.provider_failure", {
+        status: error instanceof ProviderRequestError ? error.status : null,
+      });
     }
     await storage.transaction("demo-capacity", async (c) => {
       const current = await load(state.id, c);
