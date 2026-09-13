@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import { DEFAULT_MODEL_ID, DEFAULT_MODEL_NAME } from './provider-defaults.ts';
 export class ProviderRequestError extends Error {
   readonly status: number;
@@ -31,13 +32,29 @@ export class CompatibleProvider {
   }
   async complete(model: string, messages: readonly ModelMessage[], tools: readonly unknown[], signal: AbortSignal, onDelta?: (text: string) => void | Promise<void>): Promise<ModelReply> {
     if (this.config.kind === 'anthropic') return this.anthropic(model, messages, tools, signal);
-    const response = await this.response('chat/completions', { model, messages, ...(tools.length ? { tools } : {}), ...(this.base.hostname === 'api.openai.com' ? { max_completion_tokens: 4096 } : { max_tokens: 4096 }), stream: !!onDelta, ...(onDelta ? { stream_options: { include_usage: true } } : {}) }, signal);
+    signal = AbortSignal.any([signal, AbortSignal.timeout(60000)]);
+    const body = { model, messages, ...(tools.length ? { tools } : {}), ...(this.base.hostname === 'api.openai.com' ? { max_completion_tokens: 4096 } : { max_tokens: 4096 }), stream: !!onDelta, ...(onDelta ? { stream_options: { include_usage: true } } : {}) };
+    let response: Response;
+    for (let attempt = 0; ; attempt++) {
+      try { response = await this.response('chat/completions', body, signal); break; }
+      catch (error) {
+        // Only retry explicit transient rejection of the free endpoint, before any
+        // reply or tool dispatch. Never substitute a paid model or replay a stream.
+        if (this.base.origin !== 'https://api.tokenrouter.com' || model !== DEFAULT_MODEL_ID ||
+          attempt >= 2 || signal.aborted || !(error instanceof ProviderRequestError) ||
+          ![429, 502, 503, 504].includes(error.status) || (error.retryAfter ?? 0) > 5) throw error;
+        await delay((error.retryAfter ?? attempt + 1) * 1000, undefined, { signal });
+      }
+    }
     if (response.headers.get('content-type')?.includes('text/event-stream')) return this.streamReply(response, signal, onDelta);
-    const body = await this.decode(response);
-    const message = body.choices?.[0]?.message;
+    const decoded = await this.decode(response);
+    const choice = decoded.choices?.[0];
+    if (choice?.finish_reason === 'length' || choice?.finish_reason === 'content_filter') throw new Error('Provider response was truncated. No tools were executed.');
+    const message = choice?.message;
     if (message?.role !== 'assistant' || (message.content !== null && typeof message.content !== 'string' && message.content !== undefined)) throw new Error('Provider returned an invalid response.');
     if (message.tool_calls !== undefined && (!Array.isArray(message.tool_calls) || !message.tool_calls.every((call: ToolCall) => typeof call.id === 'string' && call.type === 'function' && typeof call.function?.name === 'string' && typeof call.function?.arguments === 'string'))) throw new Error('Provider returned invalid tool calls.');
-    return { message: { role: 'assistant', content: message.content ?? null, ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}) }, usage: body.usage };
+    if (!message.content?.trim() && !message.tool_calls?.length) throw new Error('Provider returned no answer. Retry the response.');
+    return { message: { role: 'assistant', content: message.content ?? null, ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}) }, usage: decoded.usage };
   }
   private async anthropic(model: string, messages: readonly ModelMessage[], tools: readonly unknown[], signal: AbortSignal): Promise<ModelReply> {
     const converted: Array<{ role: string; content: unknown }> = [];
@@ -149,6 +166,7 @@ export class CompatibleProvider {
       if (response.status === 403) { try { const error = await response.json() as { error?: { type?: string } }; if (error.error?.type === 'customer_verification_required') code = error.error.type; } catch {} }
       const rawRetry = response.headers.get('retry-after');
       const retryAfter = rawRetry ? (/^\d+$/.test(rawRetry) ? Number(rawRetry) : Math.max(0, Math.ceil((Date.parse(rawRetry) - Date.now()) / 1000))) : undefined;
+      await response.body?.cancel().catch(() => {});
       throw new ProviderRequestError(response.status, code, Number.isFinite(retryAfter) ? retryAfter : undefined);
     }
     return response;
@@ -157,7 +175,7 @@ export class CompatibleProvider {
   private async decode(response: Response) {
     // Provider JSON is untrusted. Runtime validation below narrows the fields
     // consumed by the workbench without exposing provider error payloads.
-    try { return await response.json() as { data?: unknown; choices?: Array<{ message?: ModelMessage }>; usage?: ModelReply["usage"] }; }
+    try { return await response.json() as { data?: unknown; choices?: Array<{ message?: ModelMessage; finish_reason?: string }>; usage?: ModelReply["usage"] }; }
     catch { throw new Error("Provider returned invalid JSON."); }
   }
 }
