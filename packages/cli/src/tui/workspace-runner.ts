@@ -176,7 +176,8 @@ export async function runWorkspaceTui(
   let historyIndex = -1;
   let historyDraft = "";
   const startedAt = Date.now();
-  const color = env.NO_COLOR === undefined;
+  // VOID has its own explicit color preference; inherited NO_COLOR must not hide its UI.
+  const color = env.VOID_TUI_COLOR !== "0";
   const motion = env.VOID_TUI_MOTION !== "0" && env.TERM !== "dumb";
   const screen = new DiffScreenWriter(process.stdout);
   let busy = false,
@@ -248,7 +249,9 @@ export async function runWorkspaceTui(
       !config.length ||
       !config.every((v) => typeof v === "string" && v.length)
     )
-      throw Error("VOID_TUI_EDITOR musí být JSON pole programu a argumentů.");
+      throw Error(
+        "VOID_TUI_EDITOR must be a JSON array of an executable and its arguments.",
+      );
     const temp = await mkdtemp(join(tmpdir(), "void-editor-")),
       file = join(temp, "document.txt");
     let captured = false;
@@ -269,15 +272,15 @@ export async function runWorkspaceTui(
       });
       if (code !== 0)
         throw Error(
-          "Editor nedokončil úpravu. Původní dokument zůstal zachován.",
+          "The editor did not finish. The original document is preserved.",
         );
       const content = await readFile(file, "utf8");
       if (Buffer.byteLength(content) > 256000)
-        throw Error("Dokument přesahuje 256 kB.");
+        throw Error("Document exceeds 256 kB.");
       ui.prepareEdit(target, content);
       captured = true;
     } catch (error) {
-      throw Error(`${message(error)} Koncept editoru zůstal v ${file}`);
+      throw Error(`${message(error)} Editor draft preserved at ${file}`);
     } finally {
       if (captured) await rm(temp, { recursive: true, force: true });
       suspended = false;
@@ -310,9 +313,9 @@ export async function runWorkspaceTui(
       process.off("SIGHUP", stop);
       screen.leave();
       process.stdout.write("\x1b[?2004l");
-      if (draftError) console.error("Koncept se nepodařilo uložit.");
+      if (draftError) console.error("Could not save the draft.");
       console.log(
-        "VOID: ukončuji běh a ukládám historii. Již odeslaný externí nástroj může doběhnout.",
+        "VOID: stopping the run and saving history. A dispatched external tool may still complete.",
       );
       void (async () => {
         app.close();
@@ -322,7 +325,7 @@ export async function runWorkspaceTui(
         () => resolveDone(draftError ? 1 : 0),
         () => {
           console.error(
-            "Uložení selhalo. Zachovej datový adresář a zkontroluj ledger.",
+            "Save failed. Preserve the data directory and check the ledger.",
           );
           resolveDone(1);
         },
@@ -361,7 +364,7 @@ export async function runWorkspaceTui(
         try {
           for (const session of app.allViews())
             if (session.status === "running") app.cancel(session.id);
-          ui.notice = "Běh zastaven. Již odeslaný nástroj může dobíhat.";
+          ui.notice = "Run stopped. A dispatched tool may still complete.";
         } catch (error) {
           ui.notice = message(error);
         }

@@ -14,7 +14,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix="void-tui-pty-") as data:
-    env = {**os.environ, "VOID_DATA_DIR": data, "TERM": "xterm-256color", "CI": ""}
+    env = {**os.environ, "VOID_DATA_DIR": data, "TERM": "xterm-256color", "CI": "", "NO_COLOR": "1"}
     for name in ["TOKENROUTER_API_KEY", "OPENROUTER_API_KEY", "VOID_UPSTREAM_COMMAND", "VOID_POLICY_PATH"]:
         env.pop(name, None)
     seed = """
@@ -50,8 +50,9 @@ await app.shutdown(); console.log(session.id);
 
     try:
         read_until("pty.md")
+        assert b"\x1b[38;5;" in output or b"\x1b[1;38;5;" in output, "Inherited NO_COLOR disabled TUI colors"
         os.write(master, b"\r")
-        read_until("DOKUMENT pty.md")
+        read_until("DOCUMENT pty.md")
         os.write(master, b"u")
         read_until("UNDO pty.md?")
         before = len(output)
@@ -59,16 +60,16 @@ await app.shutdown(); console.log(session.id);
         time.sleep(0.3)
         if select.select([master], [], [], 0)[0]:
             output.extend(os.read(master, 65536))
-        assert "Undo dokončeno".encode() not in output[before:], "Paste confirmed a mutation"
+        assert "Undo completed".encode() not in output[before:], "Paste confirmed a mutation"
         os.write(master, b"y")
-        read_until("Undo dokončeno")
+        read_until("Undo completed")
         os.write(master, b"/verify\r")
-        read_until("podepsaných záznamů")
+        read_until("signed entries")
         fcntl.ioctl(master, termios.TIOCSWINSZ, struct.pack("HHHH", 12, 40, 0, 0))
         os.kill(process.pid, signal.SIGWINCH)
         time.sleep(0.1)
         os.write(master, b"q")
-        read_until("VOID: ukončuji")
+        read_until("VOID: stopping")
         assert process.wait(timeout=5) == 0, "TUI failed to exit cleanly"
         assert b"\x1b[?1049l" in output and b"\x1b[?2004l" in output, "Terminal mode not restored"
         os.close(master)
@@ -76,21 +77,21 @@ await app.shutdown(); console.log(session.id);
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
         process = subprocess.Popen(["node", "packages/cli/bin/void.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
         os.close(slave)
-        read_until("Napiš pokyn")
+        read_until("Write a prompt")
         os.write(master, b"draft first")
         read_until("draft first")
         os.write(master, b"\x1b\rdraft second")
         read_until("draft second")
         os.write(master, b"\x03/led")
-        read_until("Podepsané operace")
+        read_until("Signed operations")
         os.write(master, b"\t\r")
-        read_until("ledger / navigace")
+        read_until("ledger / navigation")
         os.write(master, b"/chat\r")
-        read_until("Napiš pokyn")
+        read_until("Write a prompt")
         os.write(master, b"\x1b[A")
         read_until("PTY test")
         os.write(master, b"\x03\x03")
-        read_until("VOID: ukončuji")
+        read_until("VOID: stopping")
         assert process.wait(timeout=5) == 0
         print("PASS: PTY logo, immediate typing, multiline input, history, slash completion, paste-safe Undo, signatures, resize and clean exit")
     finally:

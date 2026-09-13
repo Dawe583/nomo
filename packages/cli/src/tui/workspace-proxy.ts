@@ -62,7 +62,7 @@ export class ProxyWorkspace {
       }
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT")
-        this.errors.push("Ověřovací klíč proxy není platný.");
+        this.errors.push("Invalid proxy verification key.");
     }
     try {
       for (const file of await readdir(this.ledgerDir, {
@@ -78,13 +78,13 @@ export class ProxyWorkspace {
           if (!result.ok) throw Error("invalid");
           this.entries.set(file.name.slice(0, -6), entries);
         } catch {
-          this.errors.push(`Neplatný proxy ledger: ${file.name}`);
+          this.errors.push(`Invalid proxy ledger: ${file.name}`);
         }
       }
       this.signed = publicKey !== undefined;
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT")
-        this.errors.push("Proxy ledger nelze načíst.");
+        this.errors.push("Cannot read the proxy ledger.");
     }
     try {
       this.holds = loadPending(this.approvalDir).filter(
@@ -92,7 +92,7 @@ export class ProxyWorkspace {
       );
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT")
-        this.errors.push("Proxy schvalování nelze načíst.");
+        this.errors.push("Cannot read proxy approvals.");
     }
   }
   decide(id: string, kind: "approved" | "denied", reason: string) {

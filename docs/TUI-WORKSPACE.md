@@ -53,7 +53,8 @@ nejprve vymaže koncept; s prázdným vstupem ukončí aplikaci.
 
 Logo při startu krátce prosvítá; běh modelu má animovaný indikátor a pohyb
 na oddělovači vstupu. `VOID_TUI_MOTION=0 pnpm tui` vypne animace.
-`NO_COLOR=1 pnpm tui` vypne barvy. Výpis `--once` je vždy statický bez barev.
+`VOID_TUI_COLOR=0 pnpm tui` vypne barvy. Rozhraní je standardně anglické
+a barevné, i když prostředí zdědí `NO_COLOR=1`; barvy řídí vlastní nastavení VOIDu. Výpis `--once` je vždy statický bez barev.
 Malé terminály používají kompaktní logo a kratší navigaci. Zůstává vlastní
 ovládání VOIDu pro ledger a explicitní rozhodnutí; nejde o úplný klon Claude Code.
 

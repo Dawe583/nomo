@@ -60,7 +60,7 @@ export class WorkspaceTui {
   documentPath?: string;
   model = "";
   filter = "";
-  notice = "Tab: sekce | i: psát | /help: příkazy";
+  notice = "Tab: panels | i: type | /help: commands";
   detail?: string[];
   confirmation?: Confirmation;
   provider?: Awaited<ReturnType<Workbench["providerState"]>>;
@@ -101,7 +101,7 @@ export class WorkspaceTui {
       } catch {
         this.proofErrors.set(
           session.id,
-          "CHYBA podpisu / integrity. Obnovu ani export nelze považovat za ověřené.",
+          "Signature / integrity ERROR. Recovery and export cannot be considered verified.",
         );
       }
     }
@@ -129,7 +129,7 @@ export class WorkspaceTui {
     return this.sessionId ? this.workbench.get(this.sessionId) : undefined;
   }
   private useSession(id: string) {
-    if (!this.workbench.get(id)) throw Error("Konverzace neexistuje.");
+    if (!this.workbench.get(id)) throw Error("Conversation not found.");
     this.sessionId = id;
     this.documentPath = undefined;
   }
@@ -161,7 +161,7 @@ export class WorkspaceTui {
               ? { operationId: b.operationId }
               : {}),
             label: `${id.slice(0, 8)} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
-            lines: ["[OK] Hash chain a podpis ověřeny", ...json(e)],
+            lines: ["[OK] Hash chain and signature verified", ...json(e)],
           });
         }
       for (const [workspace, entries] of this.proxy.entries)
@@ -172,8 +172,8 @@ export class WorkspaceTui {
             label: `proxy:${workspace} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
             lines: [
               this.proxy.signed
-                ? "[OK] Proxy podpisy a hash chain ověřeny"
-                : "[!] Proxy: pouze hash integrita, podpis NEOVĚŘEN",
+                ? "[OK] Proxy signatures and hash chain verified"
+                : "[!] Proxy: hash integrity only, signature NOT VERIFIED",
               ...json(e),
             ],
           });
@@ -248,7 +248,7 @@ export class WorkspaceTui {
     }
     if (this.tab === "models") {
       this.model = row.id;
-      this.notice = `Model pro novou konverzaci: ${row.id}. Existující konverzace si zachová původní model.`;
+      this.notice = `New conversation model: ${row.id}. Existing conversations keep their original model.`;
       return;
     }
     this.detail = row.lines;
@@ -256,21 +256,21 @@ export class WorkspaceTui {
   }
   showDocument() {
     if (!this.sessionId || !this.documentPath)
-      throw Error("Vyber dokument pomocí Enter nebo /document cesta.");
+      throw Error("Select a document with Enter or /document path.");
     const d = this.workbench.document(this.sessionId, this.documentPath);
     this.detail = [
-      `DOKUMENT ${this.documentPath}`,
-      `Revize: ${d.revision ?? "nový dokument"}`,
+      `DOCUMENT ${this.documentPath}`,
+      `Revision: ${d.revision ?? "new document"}`,
       "",
       ...(d.content ?? "").split("\n"),
       "",
-      "/edit upravit | /history historie | /undo náhled obnovy | /export document",
+      "/edit edit | /history revisions | /undo preview recovery | /export document",
     ];
     this.scroll = 0;
   }
   editTarget() {
     if (!this.sessionId || !this.documentPath)
-      throw Error("Nejdřív vyber dokument.");
+      throw Error("Select a document first.");
     const d = this.workbench.document(this.sessionId, this.documentPath);
     return {
       sessionId: this.sessionId,
@@ -281,16 +281,16 @@ export class WorkspaceTui {
   }
   prepareEdit(target: ReturnType<WorkspaceTui["editTarget"]>, content: string) {
     if (content === target.content) {
-      this.notice = "Dokument beze změn.";
+      this.notice = "Document unchanged.";
       return;
     }
     this.confirmation = {
-      title: `ULOŽIT ${target.path}?`,
+      title: `SAVE ${target.path}?`,
       lines: [
-        "PŘED",
+        "BEFORE",
         ...target.content.split("\n"),
         "",
-        "PO",
+        "AFTER",
         ...content.split("\n"),
       ],
       apply: async () => {
@@ -302,7 +302,7 @@ export class WorkspaceTui {
         this.useSession(target.sessionId);
         this.documentPath = target.path;
         this.showDocument();
-        this.notice = "Uloženo. Podepsaná změna a Undo jsou v ledgeru.";
+        this.notice = "Saved. The signed change and Undo are in the ledger.";
       },
     };
     this.scroll = 0;
@@ -313,7 +313,7 @@ export class WorkspaceTui {
       this.useSession(selected.sessionId!);
       id = selected.operationId;
     }
-    if (!this.sessionId) throw Error("Vyber konverzaci nebo ledger záznam.");
+    if (!this.sessionId) throw Error("Select a conversation or ledger entry.");
     const sessionId = this.sessionId;
     const ops = this.workbench.workspace(sessionId).operations;
     const undone = new Set(ops.flatMap((o) => (o.undoes ? [o.undoes] : [])));
@@ -325,19 +325,22 @@ export class WorkspaceTui {
           o.kind !== "undo" &&
           !undone.has(o.id),
       )?.id;
-    if (!id) throw Error("Vyber dokument s nevrácenou změnou nebo /undo ID.");
+    if (!id)
+      throw Error(
+        "Select a document with an outstanding change or use /undo ID.",
+      );
     const operationId = id,
       preview = await this.workbench.undoPreview(sessionId, operationId);
     if (!preview.canApply) throw Error(preview.reason);
     this.confirmation = {
       title: `UNDO ${preview.path}?`,
       lines: [
-        `Operace: ${operationId}`,
-        "PŘED",
-        ...(preview.before ?? "[neexistuje]").split("\n"),
+        `Operation: ${operationId}`,
+        "BEFORE",
+        ...(preview.before ?? "[does not exist]").split("\n"),
         "",
-        "PO",
-        ...(preview.after ?? "[neexistuje]").split("\n"),
+        "AFTER",
+        ...(preview.after ?? "[does not exist]").split("\n"),
       ],
       apply: async () => {
         const current = await this.workbench.undoPreview(
@@ -345,10 +348,10 @@ export class WorkspaceTui {
           operationId,
         );
         if (canonicalJson(current) !== canonicalJson(preview))
-          throw Error("Náhled se změnil. Znovu vyžádej /undo.");
+          throw Error("The preview changed. Request /undo again.");
         await this.workbench.undo(sessionId, operationId, "tui-operator");
         this.detail = undefined;
-        this.notice = "Undo dokončeno a podepsáno. Historie zůstává zachována.";
+        this.notice = "Undo completed and signed. History is preserved.";
       },
     };
     this.scroll = 0;
@@ -357,29 +360,30 @@ export class WorkspaceTui {
     id ??= this.items()[this.selected]?.id;
     if (id?.startsWith("proxy:")) {
       const hold = this.proxy.holds.find((h) => `proxy:${h.holdId}` === id);
-      if (!hold) throw Error("Proxy hold není aktivní.");
+      if (!hold) throw Error("Proxy hold is no longer active.");
       const { decisionToken, ...visible } = hold;
       this.confirmation = {
-        title: `PROXY ${kind === "approved" ? "SCHVÁLIT" : "ODMÍTNOUT"}?`,
+        title: `PROXY ${kind === "approved" ? "APPROVE" : "DENY"}?`,
         lines: json(visible),
         apply: async () => {
           this.proxy.decide(hold.holdId, kind, reason);
           this.notice =
-            "Rozhodnutí zařazeno pro proxy. Dokončení ještě není potvrzeno.";
+            "Decision queued for the proxy. Completion is not yet confirmed.";
         },
       };
       this.scroll = 0;
       return;
     }
     const hold = this.workbench.pending().find((h) => h.holdId === id);
-    if (!hold) throw Error("Schválení už není aktivní. Obnov přehled.");
+    if (!hold)
+      throw Error("Approval is no longer active. Refresh the overview.");
     this.confirmation = {
-      title: `${kind === "approved" ? "SCHVÁLIT" : "ODMÍTNOUT"} NÁSTROJ?`,
+      title: `${kind === "approved" ? "APPROVE" : "DENY"} TOOL?`,
       lines: [
         ...json(hold),
         "",
-        `Důvod: ${reason || "(neuveden)"}`,
-        "Externí efekt nemusí mít Undo.",
+        `Reason: ${reason || "(not provided)"}`,
+        "External effects may not support Undo.",
       ],
       apply: async () => {
         if (
@@ -389,8 +393,9 @@ export class WorkspaceTui {
             reason,
           })
         )
-          throw Error("Schválení expirovalo nebo již bylo vyřešeno.");
-        this.notice = "Rozhodnutí přijato. Dokončení nástroje ověř v ledgeru.";
+          throw Error("Approval expired or was already resolved.");
+        this.notice =
+          "Decision accepted. Check the ledger for tool completion.";
         this.detail = undefined;
       },
     };
@@ -442,15 +447,15 @@ export class WorkspaceTui {
     if (cmd === "open") {
       const rows = [...this.workbench.list()].reverse();
       const s = rows.find((s) => s.id === arg) ?? rows[Number(arg) - 1];
-      if (!s) throw Error("/open číslo nebo ID konverzace");
+      if (!s) throw Error("/open conversation-number-or-ID");
       this.useSession(s.id);
       this.choose("chat");
       return;
     }
     if (cmd === "stop") {
-      if (!this.sessionId) throw Error("Vyber běžící konverzaci.");
+      if (!this.sessionId) throw Error("Select a running conversation.");
       this.workbench.cancel(this.sessionId);
-      this.notice = "Rušení. Již odeslaný nástroj může ještě doběhnout.";
+      this.notice = "Cancelling. A dispatched tool may still complete.";
       return;
     }
     if (cmd === "retry" || cmd === "branch") {
@@ -458,8 +463,9 @@ export class WorkspaceTui {
       const seq = arg
         ? Number(arg)
         : [...(s?.events ?? [])].reverse().find((e) => e.kind === "user")?.seq;
-      if (!s || !seq) throw Error("Vyber zprávu ke větvení.");
-      if (this.workbench.running()) throw Error("Počkej na dokončení rušení.");
+      if (!s || !seq) throw Error("Select a message to branch from.");
+      if (this.workbench.running())
+        throw Error("Wait for cancellation to finish.");
       const child = await this.workbench.branch(s.id, {
         seq,
         snapshotDocuments: true,
@@ -467,15 +473,15 @@ export class WorkspaceTui {
       this.useSession(child.id);
       this.choose("chat");
       this.notice =
-        "Větev vytvořena. Historické nástroje se nepřehrávají. Napiš další pokyn.";
+        "Branch created. Historical tools are not replayed. Write your next prompt.";
       if (cmd === "retry") {
         const key = randomUUID();
         this.confirmation = {
-          title: "ZNOVU ODPOVĚDĚT VE VĚTVI?",
+          title: "RETRY IN A NEW BRANCH?",
           lines: [
-            "Model znovu odpoví na předchozí pokyn.",
-            "Aktuální dokumenty jsou zkopírované. Nové nástroje znovu procházejí VOID.",
-            "Historické nástroje se nepřehrávají.",
+            "The model will respond to the previous prompt again.",
+            "Current documents are copied. New tool calls go through VOID again.",
+            "Historical tools are not replayed.",
           ],
           apply: async () => {
             this.workbench.send(
@@ -490,9 +496,9 @@ export class WorkspaceTui {
     }
     if (cmd === "model") {
       if (!this.provider?.models.some((m) => m.id === arg))
-        throw Error("Vyber ID z /models.");
+        throw Error("Select an ID from /models.");
       this.model = arg;
-      this.notice = `Model pro nové konverzace: ${arg}`;
+      this.notice = `Model for new conversations: ${arg}`;
       return;
     }
     if (cmd === "connect") {
@@ -502,7 +508,7 @@ export class WorkspaceTui {
         this.workbench,
       );
       this.model = this.provider.defaultModel ?? "";
-      this.notice = `Připojeno ${this.provider.providerId}. Klíč je uložen šifrovaně.`;
+      this.notice = `Connected to ${this.provider.providerId}. The key is stored encrypted.`;
       return;
     }
     if (cmd === "sources") {
@@ -520,12 +526,12 @@ export class WorkspaceTui {
       this.choose("ledger");
       this.notice =
         this.proofErrors.size || this.proxy.errors.length
-          ? "CHYBA OVĚŘENÍ. Viz přehled."
-          : `Ověřeno ${[...this.proofs.values()].reduce((n, v) => n + v.length, 0)} podepsaných záznamů.`;
+          ? "VERIFICATION FAILED. See the overview."
+          : `Verified ${[...this.proofs.values()].reduce((n, v) => n + v.length, 0)} signed entries.`;
       return;
     }
     if (cmd === "document") {
-      if (!this.sessionId) throw Error("Vyber konverzaci.");
+      if (!this.sessionId) throw Error("Select a conversation.");
       this.documentPath = arg;
       this.choose("documents");
       this.showDocument();
@@ -533,7 +539,7 @@ export class WorkspaceTui {
     }
     if (cmd === "edit") return "edit";
     if (cmd === "history") {
-      if (!this.sessionId) throw Error("Vyber dokument.");
+      if (!this.sessionId) throw Error("Select a document.");
       this.detail = this.workbench
         .workspace(this.sessionId)
         .operations.filter(
@@ -557,12 +563,12 @@ export class WorkspaceTui {
       return;
     }
     if (cmd === "rename") {
-      if (!this.sessionId) throw Error("Vyber konverzaci.");
+      if (!this.sessionId) throw Error("Select a conversation.");
       this.workbench.patchSession(this.sessionId, { title: arg });
       return;
     }
     if (cmd === "archive") {
-      if (!this.sessionId) throw Error("Vyber konverzaci.");
+      if (!this.sessionId) throw Error("Select a conversation.");
       this.workbench.patchSession(this.sessionId, { archived: true });
       this.choose("sessions");
       return;
@@ -571,19 +577,19 @@ export class WorkspaceTui {
       const space = arg.indexOf(" ");
       const id = arg.slice(0, space),
         path = arg.slice(space + 1);
-      if (space < 1) throw Error("/policy-file connector-ID cesta-k-YAML");
+      if (space < 1) throw Error("/policy-file connector-ID path-to-YAML");
       const policy = await readFile(resolve(path), "utf8");
-      if (!loadPolicy(policy).ok) throw Error("Neplatná policy.");
+      if (!loadPolicy(policy).ok) throw Error("Invalid policy.");
       this.confirmation = {
-        title: `ZMĚNIT POLICY ${id}?`,
+        title: `CHANGE POLICY ${id}?`,
         lines: [
           policy,
           "",
-          "Platí pro nové konverzace; stávající mají snapshot pravidel.",
+          "Applies to new conversations; existing conversations keep their policy snapshot.",
         ],
         apply: async () => {
           await this.workbench.updateConnector(id, { policy });
-          this.notice = "Policy uložena. Založ novou konverzaci.";
+          this.notice = "Policy saved. Start a new conversation.";
         },
       };
       return;
@@ -592,7 +598,8 @@ export class WorkspaceTui {
       const config = JSON.parse(await readFile(resolve(arg), "utf8"));
       await this.workbench.addConnector(config);
       this.choose("tools");
-      this.notice = "MCP připojeno. Nová konverzace načte aktuální katalog.";
+      this.notice =
+        "MCP connected. A new conversation will load the current catalog.";
       return;
     }
     if (cmd === "test-connector") {
@@ -603,7 +610,7 @@ export class WorkspaceTui {
       await this.export(arg || "ledger");
       return;
     }
-    throw Error("Neznámý příkaz. /help zobrazí dostupné ovládání.");
+    throw Error("Unknown command. Use /help to see available commands.");
   }
   async export(kind: string) {
     const folder = resolve(this.env.VOID_EXPORT_DIR ?? "void-exports");
@@ -617,7 +624,7 @@ export class WorkspaceTui {
         this.proxy.errors.length ||
         (this.proxy.entries.size && !this.proxy.signed)
       )
-        throw Error("Export odmítnut: některý ledger není ověřený.");
+        throw Error("Export refused: a ledger has not been verified.");
       content =
         [...this.proofs.values(), ...this.proxy.entries.values()]
           .flat()
@@ -626,7 +633,7 @@ export class WorkspaceTui {
       suffix = ".jsonl";
     } else if (kind === "chat") {
       const session = this.session();
-      if (!session) throw Error("Vyber konverzaci.");
+      if (!session) throw Error("Select a conversation.");
       content = JSON.stringify(session, null, 2);
       suffix = ".json";
     } else if (kind === "document") {
@@ -663,52 +670,52 @@ export class WorkspaceTui {
       return this.session()
         ? transcript(this.session()!.events)
         : [
-            "NOVÁ KONVERZACE",
+            "NEW CONVERSATION",
             "",
-            `Model: ${this.model || "nepřipojen"}`,
-            "i začne psaní; Enter odešle, Alt+Enter vloží řádek.",
-            "Příklad: Vytvoř plán a ulož ho do plan.md.",
+            `Model: ${this.model || "not connected"}`,
+            "Press i to type; Enter to send; Alt+Enter for a new line.",
+            "Example: Create a plan and save it to plan.md.",
             "",
-            "/connect načte TokenRouter z lokální konfigurace OpenCode.",
+            "/connect imports TokenRouter from your local OpenCode configuration.",
           ];
     if (this.tab === "overview") {
       const o = activity(this.workbench.allViews()).overview;
       return [
-        "VOID / LOKÁLNÍ PRACOVNÍ PROSTOR",
+        "VOID / LOCAL WORKSPACE",
         "",
-        `Provider: ${this.provider?.connected ? this.provider.providerId : "NEPŘIPOJEN"} | model: ${this.model || "-"}`,
-        `Běh: ${this.workbench.running() ? "probíhá nebo dobíhá" : "volno"}`,
-        `Konverzace: ${this.workbench.list().length} | Dokumenty: ${this.workbench.documentsList().length} | Čekající schválení: ${this.workbench.pending().length + this.proxy.holds.length}`,
-        `Ledger: ${[...this.proofs.values()].reduce((n, p) => n + p.length, 0)} managed + ${[...this.proxy.entries.values()].reduce((n, p) => n + p.length, 0)} proxy záznamů`,
-        `Proxy podpisy: ${this.proxy.entries.size ? (this.proxy.signed ? "ověřeny" : "NEOVĚŘENY (pouze integrita)") : "žádné záznamy"} | Chyby: ${this.proofErrors.size + this.proxy.errors.length}`,
+        `Provider: ${this.provider?.connected ? this.provider.providerId : "NOT CONNECTED"} | model: ${this.model || "-"}`,
+        `Run: ${this.workbench.running() ? "running or settling" : "idle"}`,
+        `Conversations: ${this.workbench.list().length} | Documents: ${this.workbench.documentsList().length} | Pending approvals: ${this.workbench.pending().length + this.proxy.holds.length}`,
+        `Ledger: ${[...this.proofs.values()].reduce((n, p) => n + p.length, 0)} managed + ${[...this.proxy.entries.values()].reduce((n, p) => n + p.length, 0)} proxy entries`,
+        `Proxy signatures: ${this.proxy.entries.size ? (this.proxy.signed ? "verified" : "NOT VERIFIED (integrity only)") : "no entries"} | Errors: ${this.proofErrors.size + this.proxy.errors.length}`,
         ...this.proofErrors.values(),
         "",
-        `Dokončené běhy: ${o.runs} | Selhání: ${o.failed}`,
-        `Tokeny od providera: ${o.totalTokens ?? "neznámé"} | Cena: neznámá`,
+        `Completed runs: ${o.runs} | Failures: ${o.failed}`,
+        `Provider tokens: ${o.totalTokens ?? "unknown"} | Cost: unknown`,
         "",
-        "ZAČNI: n nová konverzace, i pokyn, Enter odeslat.",
-        "DOKUMENTY: Enter otevřít, /edit upravit, u náhled Undo.",
-        "KONTROLA: ledger + approvals; /verify znovu ověří podpisy.",
+        "START: n new conversation, i type a prompt, Enter send.",
+        "DOCUMENTS: Enter open, /edit edit, u preview Undo.",
+        "CONTROL: ledger + approvals; /verify rechecks signatures.",
         "",
-        "Spravované dokumenty nejsou soubory na disku počítače.",
-        "MCP nástroje vyžadují explicitní připojení a klasifikaci.",
-        "Externí zápisy nemají automatické Undo.",
+        "Managed documents are not files on your computer's disk.",
+        "MCP tools require explicit connection and classification.",
+        "External writes do not have automatic Undo.",
         `Proxy ledger: ${this.proxy.ledgerDir}`,
-        `Proxy schválení: ${this.proxy.approvalDir}`,
+        `Proxy approvals: ${this.proxy.approvalDir}`,
         ...this.proxy.errors,
       ];
     }
     if (this.tab === "policy")
       return [
-        "SPRAVOVANÉ DOKUMENTY",
-        "Čtení R0; zápisy R1 s capture a ověřeným Undo.",
+        "MANAGED DOCUMENTS",
+        "R0 reads; R1 writes with capture and verified Undo.",
         "",
-        "VÝCHOZÍ POLICY PRO EXTERNÍ MCP",
+        "DEFAULT POLICY FOR EXTERNAL MCP",
         ...DEFAULT_POLICY.split("\n"),
-        "Neznámé nástroje jsou odmítnuty. Schválení po expiraci neplatí.",
-        "Pravidla jsou snapshotována do nové konverzace.",
+        "Unknown tools are denied. Expired approvals cannot release tools.",
+        "Each new conversation snapshots its policy.",
         "",
-        "/policy-file ID cesta.yaml mění pravidla konkrétního konektoru.",
+        "/policy-file ID path.yaml changes the policy for a specific connector.",
         "",
         ...this.items().flatMap((r) => [r.label, ...r.lines, ""]),
       ];
@@ -718,16 +725,16 @@ export class WorkspaceTui {
           (r, i) => `${i === this.selected ? ">" : " "} ${i + 1}. ${r.label}`,
         )
       : [
-          "Zatím žádné záznamy.",
+          "No entries yet.",
           this.tab === "tools"
-            ? "/connector-file soubor.json připojí skutečný MCP server."
+            ? "/connector-file file.json connects a real MCP server."
             : "",
         ];
   }
 }
 
 export function message(error: unknown) {
-  return error instanceof Error ? error.message : "Operace selhala.";
+  return error instanceof Error ? error.message : "Operation failed.";
 }
 export function transcript(events: readonly SessionEvent[]): string[] {
   const rows: string[] = [];
@@ -740,7 +747,7 @@ export function transcript(events: readonly SessionEvent[]): string[] {
     if (e.kind === "assistant") partial = "";
     if (e.type === "run.status" || e.kind === "usage") continue;
     rows.push(
-      `[${e.at.slice(11, 19)}] ${e.kind === "user" ? "VY" : e.kind === "assistant" ? "VOID" : e.kind.toUpperCase()}`,
+      `[${e.at.slice(11, 19)}] ${e.kind === "user" ? "YOU" : e.kind === "assistant" ? "VOID" : e.kind.toUpperCase()}`,
       ...e.text.split("\n"),
       "",
     );
@@ -764,26 +771,26 @@ export function wrap(lines: readonly string[], width: number): string[] {
   return out;
 }
 export const TUI_COMMANDS = [
-  ["/new", "Nová konverzace"],
-  ["/chat", "Zpět do konverzace"],
-  ["/sessions", "Otevřít historii"],
-  ["/documents", "Dokumenty a revize"],
-  ["/ledger", "Podepsané operace"],
-  ["/approvals", "Čekající rozhodnutí"],
-  ["/models", "Dostupné modely"],
-  ["/overview", "Přehled workspace"],
-  ["/verify", "Ověřit podpisy"],
-  ["/undo", "Náhled vrácení změny"],
-  ["/edit", "Otevřít editor dokumentu"],
-  ["/history", "Historie dokumentu"],
-  ["/branch", "Vytvořit větev"],
-  ["/retry", "Nový pokus s potvrzením"],
-  ["/tools", "MCP konektory"],
-  ["/policy", "Pravidla nástrojů"],
-  ["/usage", "Spotřeba modelu"],
-  ["/stop", "Zastavit běh"],
-  ["/help", "Všechny příkazy"],
-  ["/quit", "Uložit a ukončit"],
+  ["/new", "New conversation"],
+  ["/chat", "Return to chat"],
+  ["/sessions", "Open conversation history"],
+  ["/documents", "Documents and revisions"],
+  ["/ledger", "Signed operations"],
+  ["/approvals", "Pending decisions"],
+  ["/models", "Available models"],
+  ["/overview", "Workspace overview"],
+  ["/verify", "Verify signatures"],
+  ["/undo", "Preview Undo"],
+  ["/edit", "Open document editor"],
+  ["/history", "Document history"],
+  ["/branch", "Create a branch"],
+  ["/retry", "Retry with confirmation"],
+  ["/tools", "MCP connectors"],
+  ["/policy", "Tool policies"],
+  ["/usage", "Model usage"],
+  ["/stop", "Stop run"],
+  ["/help", "All commands"],
+  ["/quit", "Save and quit"],
 ] as const;
 export function commandSuggestions(input: string) {
   return /^\/[^\s]*$/.test(input)
@@ -817,7 +824,7 @@ export function renderWorkspace(
   const width = Math.max(20, columns),
     height = Math.max(8, rows);
   const ink = (value: string, code: string) =>
-    visuals.color ? `\x1b[${code}m${value}\x1b[0m` : value;
+    visuals.color ? `\x1b[${code}m${value}\x1b[0;48;5;234;38;5;252m` : value;
   const text = (value: string) => fit(sanitizeText(value), width);
   const amber = "38;5;215",
     ice = "38;5;117",
@@ -833,10 +840,10 @@ export function renderWorkspace(
   if (height >= 22 && width >= 50 && !ui.confirmation) {
     const aside = [
       "VOID / local workspace",
-      ui.session()?.model || ui.model || "Připoj model přes /connect",
-      running ? "Model pracuje / Esc zastavit" : "Tvoje práce. Tvoje kontrola.",
-      `${ui.workbench.list().length} konverzací / ${holds} ke schválení`,
-      "[/] příkazy   [Esc] navigace",
+      ui.session()?.model || ui.model || "Connect a model with /connect",
+      running ? "Working / Esc to stop" : "Your work. Your control.",
+      `${ui.workbench.list().length} conversations / ${holds} pending approvals`,
+      "[/] commands   [Esc] navigation",
     ];
     VOID_LOGO.forEach((line, i) =>
       header.push(
@@ -858,7 +865,7 @@ export function renderWorkspace(
   } else
     header.push(
       ink(
-        text(` /V/  VOID  ${spinner} ${ui.tab}  |  ${holds} schválení`),
+        text(` /V/  VOID  ${spinner} ${ui.tab}  |  ${holds} approvals`),
         `1;${amber}`,
       ),
     );
@@ -873,7 +880,7 @@ export function renderWorkspace(
         .map((t) =>
           ink(
             t === ui.tab ? ` [${t}] ` : ` ${t} `,
-            t === ui.tab ? `1;${ice}` : muted,
+            t === ui.tab ? `1;${ice};48;5;24` : muted,
           ),
         )
         .join(""),
@@ -896,7 +903,9 @@ export function renderWorkspace(
   const composer = wrap(
     (
       input ||
-      (editing ? "Zeptej se nebo napiš / pro příkazy" : "i psát / Enter detail")
+      (editing
+        ? "Ask anything or type / for commands"
+        : "i type / Enter details")
     ).split("\n"),
     width - 2,
   );
@@ -914,16 +923,16 @@ export function renderWorkspace(
   if (ui.tab === "chat" && !ui.session() && !ui.detail && !ui.confirmation)
     content = [
       "",
-      "  Vítej ve VOIDu.",
-      "  Napiš, co chceš vytvořit. Zbytek sleduj tady.",
+      "  Welcome to VOID.",
+      "  Describe what you want to build. Follow the work here.",
       "",
-      "  > Vytvoř plán projektu a ulož ho do plan.md",
+      "  > Create a project plan and save it to plan.md",
       "",
-      "  + Dokumenty    Zachycené změny a potvrzené Undo",
-      "  + Ledger       Podepsaná historie každé operace",
-      "  + Schvalování  Rozhodnutí před externím nástrojem",
+      "  + Documents    Captured changes and confirmed Undo",
+      "  + Ledger       Signed history of every operation",
+      "  + Approvals    Your decision before an external tool",
       "",
-      "  / příkazy     Tab doplnit     Esc navigace",
+      "  / commands     Tab complete     Esc navigate",
     ];
   const lines = wrap(content, width - 4);
   let offset = ui.scroll;
@@ -945,13 +954,13 @@ export function renderWorkspace(
   const bodyRows = body.map((line) => {
     const tone = /^>/.test(line)
       ? `1;${ice}`
-      : /VY$/.test(line)
+      : /YOU$/.test(line)
         ? `1;${violet}`
         : /VOID(?: \[stream\])?$/.test(line)
           ? `1;${amber}`
-          : /^(Error|Neplatný|Selhání)/.test(line)
+          : /^(Error|Invalid|Failed)/.test(line)
             ? "38;5;203"
-            : "39";
+            : "38;5;252";
     return (
       ink(ui.confirmation ? "! " : "  ", frameColor) +
       ink(pad(line, width - 4), tone) +
@@ -959,9 +968,9 @@ export function renderWorkspace(
     );
   });
   const status = ui.confirmation
-    ? "ROZHODNUTÍ / y potvrdit / Esc zrušit / PgDn náhled"
+    ? "REVIEW / y confirm / Esc cancel / PgDn preview"
     : running
-      ? `${spinner} ${ui.session()?.status === "running" ? "VOID pracuje" : "Dokončuji operaci"}  /  Esc zastavit`
+      ? `${spinner} ${ui.session()?.status === "running" ? "VOID is working" : "Finishing operation"}  /  Esc stop`
       : ui.notice;
   const line = (label: string) => {
     const head = `-- ${label} `;
@@ -978,7 +987,7 @@ export function renderWorkspace(
       text(
         `${i + menuStart === selection ? " >" : "  "} ${name.padEnd(13)} ${description}`,
       ),
-      i + menuStart === selection ? `1;${ice}` : muted,
+      i + menuStart === selection ? `1;${ice};48;5;24` : muted,
     ),
   );
   return [
@@ -987,7 +996,7 @@ export function renderWorkspace(
     ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
     ...menuRows,
     ink(
-      line(editing ? "Napiš pokyn" : `${ui.tab} / navigace`),
+      line(editing ? "Write a prompt" : `${ui.tab} / navigation`),
       editing ? ice : muted,
     ),
     ...composer
@@ -995,50 +1004,53 @@ export function renderWorkspace(
       .map((value, i) =>
         ink(
           fit(`${i === 0 ? (editing ? "> " : ": ") : "  "}${value}`, width),
-          editing ? "1;39" : muted,
+          editing ? "1;38;5;255;48;5;236" : muted,
         ),
       ),
     ink("-".repeat(width), editing ? ice : muted),
     ink(
       text(
         candidates.length
-          ? "šipky výběr / Tab doplnit / Enter spustit / Esc zavřít"
+          ? "arrows select / Tab complete / Enter run / Esc close"
           : editing
-            ? "Enter odeslat / Alt+Enter řádek / Esc navigace / Ctrl+C zrušit"
-            : "Tab sekce / i psát / u Undo / a schválit / d odmítnout / q konec",
+            ? "Enter send / Alt+Enter newline / Esc navigate / Ctrl+C cancel"
+            : "Tab panels / i type / u Undo / a approve / d deny / q quit",
       ),
       muted,
     ),
   ]
     .slice(0, height)
+    .map((row) =>
+      visuals.color ? `\x1b[48;5;234;38;5;252m${pad(row, width)}\x1b[0m` : row,
+    )
     .join("\n");
 }
 const HELP = [
-  "VOID TUI — skutečná lokální data, žádná demonstrační čísla",
+  "VOID TUI — real local data, no demo metrics",
   "",
-  "Tab / Shift+Tab: sekce; j/k nebo šipky: výběr; Enter: detail.",
-  "Chat: rovnou piš. / otevře nabídku; šipky vyberou, Tab doplní.",
-  "PgUp/PgDn: posun textu; Esc: zastavit běh / navigace; i: psaní.",
-  "Šipky v prázdném jednořádkovém vstupu procházejí tvoje pokyny.",
-  "NO_COLOR vypne barvy; VOID_TUI_MOTION=0 vypne animace.",
-  "Psaní: Enter odešle; Alt+Enter nový řádek; Ctrl+U smaže řádek.",
-  "V navigaci: n nová konverzace; u náhled Undo; a/d schválení; q konec.",
+  "Tab / Shift+Tab: panels; j/k or arrows: select; Enter: details.",
+  "Chat: start typing. / opens commands; arrows select; Tab completes.",
+  "PgUp/PgDn: scroll; Esc: stop run / navigation; i: type.",
+  "Up/down in a single-line input browse your previous prompts.",
+  "VOID_TUI_COLOR=0 disables colors; VOID_TUI_MOTION=0 disables animation.",
+  "Enter sends; Alt+Enter inserts a newline; Ctrl+U clears input.",
+  "Navigation: n new chat; u preview Undo; a/d approvals; q quit.",
   "",
-  "/new [pokyn] | /open číslo-nebo-ID | /chat | /sessions",
-  "/stop | /branch [seq] | /retry | /rename název | /archive",
-  "/models | /model přesné-ID | /connect [opencode:tokenrouter] | /sources",
-  "/documents | /document cesta | /edit | /history | /undo [operation-ID]",
+  "/new [prompt] | /open number-or-ID | /chat | /sessions",
+  "/stop | /branch [seq] | /retry | /rename title | /archive",
+  "/models | /model exact-ID | /connect [opencode:tokenrouter] | /sources",
+  "/documents | /document path | /edit | /history | /undo [operation-ID]",
   "/ledger | /verify | /filter text | /export ledger|chat|document",
-  "/approvals | /approve [hold-ID] [důvod] | /deny [hold-ID] [důvod]",
-  "/tools | /connector-file cesta.json | /test-connector ID",
-  "/policy | /policy-file connector-ID cesta.yaml | /usage | /overview",
+  "/approvals | /approve [hold-ID] [reason] | /deny [hold-ID] [reason]",
+  "/tools | /connector-file path.json | /test-connector ID",
+  "/policy | /policy-file connector-ID path.yaml | /usage | /overview",
   "",
-  'Editor: VOID_TUI_EDITOR jako JSON pole, např. ["code","--wait"].',
-  "Jinak EDITOR jako cesta k programu, výchozí nano. Změnu potvrdíš v TUI.",
-  "Konflikt revize nic nepřepíše. Undo i schválení vždy mají vlastní potvrzení.",
-  "Větev kopíruje textový kontext a aktuální dokumenty, nepřehrává nástroje.",
-  "Free model se nikdy automaticky nenahrazuje placeným.",
-  "Exporty mají práva 0600 a nepřepisují existující soubory.",
-  "Data jsou šifrovaná v VOID_DATA_DIR, standardně ~/.void/workbench.",
-  "Lokální TUI nečte soukromé cloudové konverzace.",
+  'Editor: VOID_TUI_EDITOR is a JSON array, e.g. ["code","--wait"].',
+  "Otherwise EDITOR is an executable path; default: nano. Confirm edits in TUI.",
+  "Revision conflicts never overwrite changes. Undo and approvals require confirmation.",
+  "Branches copy text context and current documents; tools are never replayed.",
+  "The free model is never automatically replaced with a paid model.",
+  "Exports use file permissions 0600 and never overwrite existing files.",
+  "Data is encrypted in VOID_DATA_DIR, default: ~/.void/workbench.",
+  "Local TUI does not read private cloud conversations.",
 ];

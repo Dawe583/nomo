@@ -73,5 +73,5 @@ test("TUI proxy reads verify signatures, refuse tampering and queue identity-bou
   );
   await proxy.refresh(true);
   assert.equal(proxy.entries.size, 0);
-  assert.match(proxy.errors.join(" "), /Neplatný proxy ledger/);
+  assert.match(proxy.errors.join(" "), /Invalid proxy ledger/);
 });
