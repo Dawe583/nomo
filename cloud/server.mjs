@@ -497,14 +497,15 @@ app.get('/api/tools', async (req, res) => {
   if (req.query.session) {
     const session = await read(`session:${req.query.session}`);
     if (!session) return res.status(404).json({ message: 'Session not found.' });
-    return res.json({ scope: 'session', tools: toolCatalog(session.tools ?? []) });
+    return res.json({ scope: 'session', tools: toolCatalog(session.tools ?? [], Object.values(session.connected ?? {}).map(connection => decrypt(connection.config).token)) });
   }
   const saved = (await read('connectors')) ?? [];
+  const secrets = saved.map(item => decrypt(item.secret).token);
   const tools = [...workspaceTools, ...saved.flatMap(item => (decrypt(item.secret).tools ?? []).map(tool => ({ ...tool, connectorId: item.id })))];
   const upstream = await read('upstream');
-  if (upstream) tools.push(...(await catalog(decrypt(upstream))).tools.map(tool => ({ ...tool, connectorId: 'legacy' })));
+  if (upstream) { const config = decrypt(upstream); secrets.push(config.token); tools.push(...(await catalog(config)).tools.map(tool => ({ ...tool, connectorId: 'legacy' }))); }
   for (const integration of await integrationCatalogs()) tools.push(...integration.tools);
-  return res.json({ scope: 'configured', tools: toolCatalog(tools) });
+  return res.json({ scope: 'configured', tools: toolCatalog(tools, secrets) });
 });
 app.get("/api/connectors", async (req, res) => {
   const saved = (await read("connectors")) ?? [];

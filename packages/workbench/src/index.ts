@@ -99,7 +99,7 @@ export class Workbench {
   availableTools(id?: string) {
     const session = id ? this.sessions.get(id) : undefined;
     if (id && !session) throw new Error('Session not found.');
-    return { scope: id ? 'session' : 'configured', tools: toolCatalog(session ? session.tools ?? [...workspaceTools] : [...workspaceTools, ...this.connectors.flatMap(c => c.tools.map(tool => ({ ...tool, connectorId: c.id })))]) };
+    return { scope: id ? 'session' : 'configured', tools: toolCatalog(session ? session.tools ?? [...workspaceTools] : [...workspaceTools, ...this.connectors.flatMap(c => c.tools.map(tool => ({ ...tool, connectorId: c.id })))], [...this.connectors.map(c => c.token), ...Object.values(session?.connections ?? {}).map(c => c.token)]) };
   }
   get(id: string): SessionView | undefined { return this.sessions.get(id)?.view; }
   async start(prompt: string, model = this.preferences.defaultModel ?? DEFAULT_MODEL_ID, key?: string): Promise<SessionView> { return this.locked(async () => { const prior = this.request(key, ['start', prompt, model]); if (prior) return this.get(prior)!; await this.providerState(); const result = await this.startSession(prompt, model); this.remember(key, ['start', prompt, model], result.id); return result; }); }

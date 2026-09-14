@@ -39,3 +39,10 @@ test('session tool catalogue uses its snapshot and rejects unknown sessions', as
   assert.deepEqual(snapshot.tools.map(t => t.name), workspaceTools.map(t => t.name));
   assert.doesNotMatch(JSON.stringify(snapshot), /private-key|messages|baseUrl/);
 });
+
+test('catalogue redacts known connector credentials even if echoed in remote schemas', () => {
+  const secret = 'private"token';
+  const rows = toolCatalog([{ name: 'remote', connectorId: 'server', description: `Echo ${secret}`, inputSchema: { default: secret } }], [secret]);
+  assert.equal(rows[0]!.description, 'Echo [redacted]');
+  assert.deepEqual(rows[0]!.inputSchema, { default: '[redacted]' });
+});
