@@ -1,0 +1,19 @@
+name: manifest persistence
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  manifest:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [24, 26]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node --test packages/connectors/src/manifest.test.ts

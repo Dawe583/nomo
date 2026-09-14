@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile, open, unlink } from "node:fs/promises";
+import { mkdir, readFile, rename, open, unlink } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -72,12 +72,21 @@ async function writeManifest(snapshotDir: string, records: readonly SnapshotMani
   const target = join(snapshotDir, MANIFEST_FILE);
   const temporary = join(snapshotDir, `${MANIFEST_FILE}.${process.pid}.${randomUUID()}.tmp`);
   const text = records.map((record) => JSON.stringify(record)).join("\n") + (records.length === 0 ? "" : "\n");
-  await writeFile(temporary, text, { mode: 0o600 });
-  const handle = await open(temporary, "r");
-  try { await handle.sync(); } finally { await handle.close(); }
-  await rename(temporary, target);
-  const directory = await open(snapshotDir, "r");
-  try { await directory.sync(); } finally { await directory.close(); }
+  const handle = await open(temporary, "wx", 0o600);
+  try {
+    // Windows requires a writable handle for FlushFileBuffers.
+    try { await handle.writeFile(text); await handle.sync(); }
+    finally { await handle.close(); }
+    await rename(temporary, target);
+    // Node cannot open/flush directory handles on Windows. File contents are
+    // flushed above, but durable directory replacement needs a native API.
+    if (process.platform !== "win32") {
+      const directory = await open(snapshotDir, "r");
+      try { await directory.sync(); } finally { await directory.close(); }
+    }
+  } finally {
+    await unlink(temporary).catch((error) => { if (!isMissingFile(error)) throw error; });
+  }
 }
 
 function validateEntry(value: unknown, line: number): SnapshotManifestEntry {

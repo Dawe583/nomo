@@ -1,5 +1,20 @@
 # VOID 0.1 beta
 
+Current capability summary (14 September 2026):
+
+| Surface | Supported recovery | Boundary |
+| --- | --- | --- |
+| Managed documents | Captured, signed Undo with explicit confirmation | Managed storage only; drift and missing/modified evidence are refused |
+| Managed PostgreSQL | One configured row identified by primary key | Requires the revision trigger and managed adapter contract |
+| Managed filesystem | Cooperative single-file recovery | No arbitrary directory or cross-process transaction guarantee |
+| Legacy PostgreSQL/S3 connectors | Guarded replay of captured operations | Host capture required; S3 writes a new version |
+| Arbitrary remote MCP tools | Policy and execution evidence | No automatic inverse without a capture integration |
+| Cross-system time rewind | Planned | Illustrations are not a shipped universal recovery feature |
+
+See [recovery coverage](RECOVERY-COVERAGE.md) for exact adapter requirements.
+The [public demo](https://void-tui.vercel.app/) operates only on isolated demo
+documents, with no access to the visitor's computer or connected accounts.
+
 ## Desktop and web workspace
 
 The shared agent application includes provider presets (OpenAI-compatible APIs
@@ -71,7 +86,9 @@ never share the signing or encryption keys. Enter the access token in the web
 connection form. Authentication uses Secure, HttpOnly, SameSiteStrict cookies.
 This beta is a single-operator workspace, not a multiuser RBAC product.
 
-The default cloud provider is Vercel AI Gateway. A model catalog can be available
+New conversations default to TokenRouter / GLM 5.3 Free (`z-ai/glm-5.3-free`).
+Existing conversations retain their saved provider and model. Vercel AI Gateway
+remains an optional provider. A model catalog can be available
 before the account is authorized to generate. If Gateway reports
 `customer_verification_required`, complete account verification in Vercel or
 enter a provider API key through Provider settings. Custom keys and tool-server
@@ -85,8 +102,9 @@ unclassified tools are denied. Target facts are operator declarations, never
 invented measurements. Policy changes apply to new sessions.
 
 One model session runs at a time, bounded to 20 model turns per message and 32
-tools per batch. The recent session list shows 100 sessions; transcripts retain
-200 visible events. Approvals survive function restarts. A dispatched tool is
+tools per batch. Session lists and retained history use server pagination.
+The session record caches 200 events; the separate append-only event table
+retains history for paging and export. Approvals survive function restarts. A dispatched tool is
 never retried after an ambiguous interruption. Cancellation stops further calls;
 an already dispatched mutation may finish and is recorded. Signed ledger rows
 are protected from updates/deletes by a database trigger and verified on read.
@@ -106,12 +124,13 @@ including nested and composite references; cycles are refused. S3 replay uses
 S3 restoration writes a new version and does not reverse object history.
 
 A host must capture snapshots and produce a manifest through the connector API.
-Automatic snapshot capture is not wired into arbitrary MCP upstreams. Manifests
-are trusted local inputs, matched by tool and argument digest; ambiguous matches
-are refused. This is not a cryptographically bound per-execution snapshot index.
+Automatic snapshot capture is not wired into arbitrary MCP upstreams. Legacy
+CLI apply requires a trusted public key and a signed `execute:completed` entry
+whose `captureDigest` matches the manifest capture. Ambiguous matches are refused.
 Preview first and restrict snapshot write access. Snapshots are content checked
 and written with private file permissions. GUI apply requires explicit
-confirmation and signed-ledger validation.
+confirmation and signed-ledger validation. See [manifest durability](MANIFEST-DURABILITY.md)
+for filesystem persistence guarantees, including the Windows power-loss limitation.
 
 An `allow:resolved` ledger event records authorization, not proof that an upstream
 mutation completed successfully. Taint edges describe recorded dependencies,
@@ -140,9 +159,14 @@ It does not claim a completed paid-model run or validation of customer buckets.
 
 This is not completion of every work package in the master plan. Native Codex,
 Claude Code and OpenCode process adapters, PTY embedding, direct host-project
-editing, token streaming, product multi-agent orchestration and production KMS
+editing, product multi-agent orchestration and production KMS
 remain open. Desktop signing/notarization requires an Apple Developer identity;
-the local build is an unsigned beta. Windows/Linux packages are unverified.
+the local build is an unsigned beta. Token streaming is implemented; see
+[GUI delivery evidence](GUI-UPGRADE-DELIVERY.md). Windows beta 4 packaging and
+installed WebView smoke passed on 14 September 2026, as recorded in
+[Windows desktop verification](WINDOWS-DESKTOP.md). Linux native packaging
+remains unverified. Physical mobile keyboards, screen readers and full 200%
+zoom acceptance remain pending; see [the acceptance matrix](MOBILE-ACCESSIBILITY-ACCEPTANCE.md).
 Only one model session runs at a time. Speculative execution is not supported.
 
 ## Desktop and managed-workspace verification

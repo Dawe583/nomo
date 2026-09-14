@@ -1,0 +1,72 @@
+name: cloud integration
+on:
+  push:
+    branches: [main]
+    tags: ['*rc*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: void_test
+          POSTGRES_PASSWORD: disposable_ci_only
+          POSTGRES_DB: void_gui_upgrade_preview
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U void_test -d void_gui_upgrade_preview"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/checkout@v4
+        with:
+          repository: neondatabase/wsproxy
+          ref: 99ed92dd75ba625d03c8d0bd1b09f8ccfe42916a
+          path: .ci/wsproxy
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache-dependency-path: .ci/wsproxy/go.sum
+      - name: Start loopback Neon wire-protocol proxy
+        working-directory: .ci/wsproxy
+        env:
+          LISTEN_PORT: '127.0.0.1:5433'
+          PROMETHEUS_BIND: '127.0.0.1:2112'
+          ALLOW_ADDR_REGEX: '^127\.0\.0\.1:5432$'
+          LOG_CONN_INFO: 'false'
+        run: |
+          go build -o wsproxy .
+          ./wsproxy > "$RUNNER_TEMP/void-wsproxy.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/void-wsproxy.pid"
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:2112/metrics > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Run both SQL suites and deterministic managed-cloud flow
+        env:
+          VOID_TEST_DATABASE_ISOLATED: '1'
+          VOID_TEST_DATABASE_URL: postgresql://void_test:disposable_ci_only@127.0.0.1:5432/void_gui_upgrade_preview
+        run: node scripts/src/check-cloud-integration.mjs
+      - name: Stop test proxy
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/void-wsproxy.pid"; then
+            kill "$(cat "$RUNNER_TEMP/void-wsproxy.pid")" || true
+          fi
+      # GitHub removes the job's service container and database on every exit.

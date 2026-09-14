@@ -10,6 +10,8 @@ import {
   ledger,
 } from "./store.mjs";
 import { mutateCloudDocument, managedCloudUndo } from "./recovery.mjs";
+import { validateCloudTestEnvironment } from "../scripts/src/cloud-test-config.mjs";
+if (process.env.VOID_GUI_DATABASE_TEST === "1") validateCloudTestEnvironment(process.env);
 
 test(
   "cloud managed documents commit evidence atomically, refuse drift and missing artifacts",

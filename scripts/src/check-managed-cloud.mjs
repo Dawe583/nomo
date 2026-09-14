@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { randomBytes, randomUUID, generateKeyPairSync } from 'node:crypto';
+import { validateCloudTestEnvironment } from './cloud-test-config.mjs';
 
 const testUrl = process.env.VOID_TEST_DATABASE_URL;
 if (!testUrl || process.env.VOID_TEST_DATABASE_ISOLATED !== '1') {
@@ -14,7 +15,11 @@ function target(value) {
   const url = new URL(value);
   return `${url.hostname.replace('-pooler.', '.')}${url.pathname}`;
 }
-if (process.env.DATABASE_URL && target(testUrl) === target(process.env.DATABASE_URL)) throw new Error('Test database matches the application database. Select an isolated Neon branch.');
+if (process.env.DATABASE_URL && target(testUrl) === target(process.env.DATABASE_URL)) {
+  // The CI preload has already selected the disposable loopback service.
+  // Identical remote/application targets still fail before any schema mutation.
+  validateCloudTestEnvironment(process.env);
+}
 process.env.DATABASE_URL = testUrl;
 process.env.VOID_CONTROL_TOKEN = randomBytes(32).toString('hex');
 process.env.VOID_SECRET_KEY = randomBytes(32).toString('base64');

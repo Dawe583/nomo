@@ -17,6 +17,8 @@ import { entryHash, GENESIS_PREV } from "../packages/ledger/src/canonical.ts";
 import { sha256Hex } from "../packages/ledger/src/sign.ts";
 import { signingPreimage } from "../packages/ledger/src/index.ts";
 import { createWorkspace } from "../packages/workbench/src/workspace.ts";
+import { validateCloudTestEnvironment } from "../scripts/src/cloud-test-config.mjs";
+if (process.env.VOID_GUI_DATABASE_TEST === "1") validateCloudTestEnvironment(process.env);
 
 // Run only against an explicitly supplied isolated test database.
 test(
