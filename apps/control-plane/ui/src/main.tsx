@@ -32,6 +32,7 @@ import {
 } from "./ui";
 import "./styles.css";
 import "./ascii.css";
+import "./mobile.css";
 const PublicDemo = lazy(() =>
   import("./demo").then((module) => ({ default: module.PublicDemo })),
 );
@@ -320,6 +321,14 @@ function App({
       previous?.focus();
     };
   }, [drawer, context]);
+  useEffect(() => {
+    const mobile = matchMedia("(max-width: 767px)");
+    const update = () => {
+      if (!mobile.matches) setDrawer(false);
+    };
+    mobile.addEventListener("change", update);
+    return () => mobile.removeEventListener("change", update);
+  }, []);
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
