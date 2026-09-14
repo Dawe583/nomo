@@ -10,10 +10,14 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         node: [24, 26]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: node --test packages/connectors/src/manifest.test.ts
+      - run: pnpm install --frozen-lockfile
+      - run: node --test packages/connectors/src/manifest.test.ts packages/workbench/src/storage.test.ts apps/control-plane/api/server.test.ts

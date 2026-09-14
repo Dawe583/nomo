@@ -54,13 +54,21 @@ export class LocalStorage {
     const iv = randomBytes(12), cipher = createCipheriv('aes-256-gcm', this.key, iv);
     const bytes = Buffer.concat([cipher.update(JSON.stringify(value)), cipher.final()]);
     const temporary = `${this.path}.${randomBytes(8).toString('hex')}`;
-    writeFileSync(temporary, Buffer.concat([iv, cipher.getAuthTag(), bytes]), { mode: 0o600, flag: 'wx' });
-    const fd = openSync(temporary, 'r');
-    try { fsyncSync(fd); } finally { closeSync(fd); }
-    renameSync(temporary, this.path);
-    this.revision = createHash("sha256").update(readFileSync(this.path)).digest("hex");
-    const dir = openSync(this.directory, 'r');
-    try { fsyncSync(dir); } finally { closeSync(dir); }
+    const fd = openSync(temporary, 'wx', 0o600);
+    try {
+      try { writeFileSync(fd, Buffer.concat([iv, cipher.getAuthTag(), bytes])); fsyncSync(fd); }
+      finally { closeSync(fd); }
+      renameSync(temporary, this.path);
+      this.revision = createHash("sha256").update(readFileSync(this.path)).digest("hex");
+      // Node cannot flush a Windows directory; file contents were flushed above.
+      if (process.platform !== 'win32') {
+        const dir = openSync(this.directory, 'r');
+        try { fsyncSync(dir); } finally { closeSync(dir); }
+      }
+    } finally {
+      try { unlinkSync(temporary); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    }
   }
 }
 

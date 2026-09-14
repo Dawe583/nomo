@@ -5,6 +5,8 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { LocalStorage } from './storage.ts';
+import fs from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
 
 function directory(t: { after: (fn: () => void) => void }): string {
   const path = mkdtempSync(join(tmpdir(), 'void-storage-'));
@@ -63,7 +65,8 @@ test('storage rejects stale writers and preserves the latest complete snapshot',
   assert.throws(() => second.save({ document: 'stale', evidence: ['one'] }), /changed in another runtime/);
   assert.deepEqual(new LocalStorage(dir).read(), { document: 'second', evidence: ['one', 'two'] });
   assert.equal(existsSync(join(dir, 'workspace.enc.lock')), false);
-  assert.equal(statSync(join(dir, 'workspace.enc')).mode & 0o077, 0);
+  // POSIX permission bits do not describe Windows ACLs.
+  if (process.platform !== 'win32') assert.equal(statSync(join(dir, 'workspace.enc')).mode & 0o077, 0);
 });
 
 test('failed serialization leaves the atomic document and evidence snapshot unchanged', t => {
@@ -75,4 +78,19 @@ test('failed serialization leaves the atomic document and evidence snapshot unch
   assert.deepEqual(readFileSync(join(dir, 'workspace.enc')), bytes);
   assert.deepEqual(readdirSync(dir).sort(), ['workspace.enc', 'workspace.key']);
   assert.deepEqual(store.read(), { document: 'original', evidence: ['one'] });
+});
+
+test('failed workspace flush preserves encrypted state and releases the lock for retry', t => {
+  const dir = directory(t), store = new LocalStorage(dir);
+  store.save({ document: 'before', evidence: ['one'] });
+  const bytes = readFileSync(join(dir, 'workspace.enc'));
+  const failure = t.mock.method(fs, 'fsyncSync', () => { throw new Error('injected flush failure'); });
+  syncBuiltinESMExports();
+  try {
+    assert.throws(() => store.save({ document: 'after', evidence: ['one', 'two'] }), /injected flush failure/);
+    assert.deepEqual(readFileSync(join(dir, 'workspace.enc')), bytes);
+    assert.deepEqual(readdirSync(dir).sort(), ['workspace.enc', 'workspace.key']);
+  } finally { failure.mock.restore(); syncBuiltinESMExports(); }
+  store.save({ document: 'after', evidence: ['one', 'two'] });
+  assert.deepEqual(new LocalStorage(dir).read(), { document: 'after', evidence: ['one', 'two'] });
 });

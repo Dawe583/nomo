@@ -112,11 +112,9 @@ export function reservedRecoveryVault(
         ) + oldBytes;
       const result = run(db, used);
       db.exec("COMMIT");
-      const directory = await open(rootPath, "r");
-      try {
-        await directory.sync();
-      } finally {
-        await directory.close();
+      if (process.platform !== "win32") {
+        const directory = await open(rootPath, "r");
+        try { await directory.sync(); } finally { await directory.close(); }
       }
       return result;
     } finally {

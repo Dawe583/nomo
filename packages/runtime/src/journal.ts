@@ -173,11 +173,9 @@ export function localOperationJournal(
                 ) as OperationEvent;
                 validateTransition(events, stable);
                 await ledger.append(stable);
-                const directory = await open(key, "r");
-                try {
-                  await directory.sync();
-                } finally {
-                  await directory.close();
+                if (process.platform !== "win32") {
+                  const directory = await open(key, "r");
+                  try { await directory.sync(); } finally { await directory.close(); }
                 }
                 events.push(stable);
               },

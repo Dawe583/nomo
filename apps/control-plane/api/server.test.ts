@@ -1,7 +1,7 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { request as httpRequest } from "node:http";
-import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -67,6 +67,26 @@ async function withServer<T>(
 }
 
 describe("control plane API", () => {
+  test("serves built assets on every host and refuses Windows path separators", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "void-built-assets-"));
+    const webRoot = join(dir, "web");
+    await mkdir(join(webRoot, "assets"), { recursive: true });
+    await writeFile(join(webRoot, "index.html"), '<script src="/assets/app-123.js"></script>');
+    await writeFile(join(webRoot, "assets", "app-123.js"), 'console.log("fixture")');
+    await writeFile(join(webRoot, "assets", "app-123.css"), 'body{color:red}');
+    const handle = await listenControlPlane({ webRoot, env: { VOID_DATA_DIR: join(dir, "data") } });
+    try {
+      const origin = `http://127.0.0.1:${handle.port}`;
+      for (const [path, mime] of [["/", "text/html"], ["/chat/new", "text/html"],
+        ["/assets/app-123.js", "application/javascript"], ["/assets/app-123.css", "text/css"]]) {
+        const response = await fetch(origin + path);
+        assert.equal(response.status, 200, path);
+        assert.ok(response.headers.get("content-type")?.startsWith(mime), path);
+      }
+      for (const path of ["/assets%5capp-123.js", "/assets/%5c..%5cindex.html", "/assets/app-123.js%00"])
+        assert.equal((await fetch(origin + path)).status, 404, path);
+    } finally { await handle.close(); await rm(dir, { recursive: true, force: true }); }
+  });
   test("returns a limited ledger feed with verified chain fields", async () => {
     const ledgerPath = await seedLedger(2);
     await withServer(ledgerPath, async (origin) => {

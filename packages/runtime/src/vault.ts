@@ -66,11 +66,9 @@ export function localRecoveryVault(
         await handle.close();
       }
       await rename(tmp, join(dir, reference.digest));
-      const parent = await open(dir, "r");
-      try {
-        await parent.sync();
-      } finally {
-        await parent.close();
+      if (process.platform !== "win32") {
+        const parent = await open(dir, "r");
+        try { await parent.sync(); } finally { await parent.close(); }
       }
       return reference;
     },

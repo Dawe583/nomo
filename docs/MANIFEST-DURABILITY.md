@@ -18,3 +18,10 @@ Windows flushes file contents but Node cannot flush a directory handle there.
 Successful return therefore does not guarantee the replacement directory entry
 survives power loss. No fsync error is silently ignored. Filesystem and hardware
 durability guarantees still apply; this is not a transactional remote store.
+
+The same Windows directory-flush limitation applies to Workbench encrypted
+snapshots and the runtime journal/vault. Workbench snapshots flush a writable
+temporary file before replacement; the reserved vault uses SQLite's committed
+transaction. Unix directory flushes remain mandatory and propagate failures.
+On Windows, keep these files in a private user directory governed by filesystem
+ACLs; POSIX mode bits do not establish equivalent access control.
