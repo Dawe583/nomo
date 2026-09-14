@@ -27,18 +27,24 @@ error. The API suite passes all 12 tests, including asset routing and encoded
 Windows-separator refusal. All six encrypted-storage tests pass on Windows,
 including injected flush failure, stale-writer refusal and retry.
 
-## Remaining engineering verification
+## Follow-up verification, 15 September 2026
 
-The broader Windows runtime run passed 33 of 38 storage/runtime tests. Five
-crash-process cases remain failing: two child-process timeouts, two development
-key reload failures because POSIX mode 0600 does not describe Windows ACLs, and
-one POSIX SIGKILL exit-status assertion. Do not interpret the focused Windows CI
-gate as complete Windows crash/restart certification. Follow-up: implement and
-test Windows development-key ACL validation, then adapt the process fixtures
-without weakening key-access checks or skipping recovery assertions. Estimated
-1 to 2 days, subject to Windows ACL and subprocess behavior. The existing proxy
-suite also hung in the full local Windows run; Linux CI remains the full-suite
-gate. Physical-device cases below still require actual devices and evidence.
+All 32 runtime tests now pass on Windows, including all five previously failing
+crash cases. All 39 ledger tests pass, including private Windows ACL creation,
+key reload, rejection of an explicit Everyone read grant, and reparse-point
+refusal. Windows fixtures use junctions where symlink creation needs elevated
+privileges; Linux retains file-symlink coverage. The reserved-vault crash fixture
+signals its exact pre-commit point, then the parent kills it; rollback and quota
+assertions still run. The proxy bin suite passes all 14 cases with isolated
+in-memory signing keys. These suites are included in the Windows/Linux Node
+24/26 persistence workflow. This does not claim the full Windows suite passes.
+
+Additional local browser checks at 640x450 (reflow equivalent to a 1280x900
+viewport at 200% zoom, not an actual browser-zoom test) passed: no horizontal
+overflow, 44x44 visible send control, forward/backward dialog focus wrapping,
+and Escape restoration to View options. An unsent disposable draft was used.
+No real provider request was made. The user confirmed no physical mobile devices
+are available; physical-device and screen-reader acceptance remain unverified.
 
 | Case | Expected result | Source evidence | Physical acceptance |
 | --- | --- | --- | --- |

@@ -249,7 +249,7 @@ test("SIGKILL before snapshot commit rolls back payload and quota together", asy
  import {DatabaseSync} from 'node:sqlite';
  import {reservedRecoveryVault} from ${JSON.stringify(new URL("./index.ts", import.meta.url).href)};
  const original=DatabaseSync.prototype.exec;
- DatabaseSync.prototype.exec=function(sql){if(sql==='COMMIT')process.kill(process.pid,'SIGKILL');return original.call(this,sql)};
+ DatabaseSync.prototype.exec=function(sql){if(sql==='COMMIT'){process.send('before-commit');Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0)}return original.call(this,sql)};
  await reservedRecoveryVault(process.env.TEST_VAULT,{first:Buffer.from(process.env.TEST_KEY,'base64')},'first',${JSON.stringify(capacity)}).put('one','before',{operationId:'op',slot:'capture'});
  `;
   const child = spawn(
@@ -261,15 +261,19 @@ test("SIGKILL before snapshot commit rolls back payload and quota together", asy
         TEST_VAULT: root,
         TEST_KEY: f.keys.first.toString("base64"),
       },
-      stdio: "ignore",
+      stdio: ["ignore", "ignore", "pipe", "ipc"],
     },
   );
   t.after(() => {
     if (child.exitCode === null) child.kill("SIGKILL");
   });
-  const [exit, signal] = await once(child, "exit", {
+  const [stage] = await once(child, "message", {
     signal: AbortSignal.timeout(15000),
   });
+  assert.equal(stage, "before-commit");
+  const exited = once(child, "exit");
+  child.kill("SIGKILL");
+  const [exit, signal] = await exited;
   assert.equal(exit, null);
   assert.equal(signal, "SIGKILL");
   const restarted = reservedRecoveryVault(root, f.keys, "first", capacity);

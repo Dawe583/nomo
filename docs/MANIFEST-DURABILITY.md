@@ -25,3 +25,11 @@ temporary file before replacement; the reserved vault uses SQLite's committed
 transaction. Unix directory flushes remain mandatory and propagate failures.
 On Windows, keep these files in a private user directory governed by filesystem
 ACLs; POSIX mode bits do not establish equivalent access control.
+
+Development signing keys now enforce Windows ACLs before writing private bytes.
+New files permit only the current user; reload rejects another owner or allow
+entries beyond that user, LocalSystem and built-in Administrators. PowerShell's
+.NET ACL API uses SIDs and receives paths as environment data. Missing ACL
+support or validation failure refuses the key; no POSIX-mode bypass is used.
+Existing broadly accessible keys are rejected, not silently changed. On Unix,
+the regular-file, symlink and exact 0600 checks remain in force.

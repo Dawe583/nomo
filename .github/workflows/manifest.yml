@@ -21,3 +21,4 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: pnpm install --frozen-lockfile
       - run: node --test packages/connectors/src/manifest.test.ts packages/workbench/src/storage.test.ts apps/control-plane/api/server.test.ts
+      - run: node --test --test-concurrency=1 packages/runtime/src/*.test.ts packages/ledger/src/*.test.ts packages/proxy/src/bin.test.ts

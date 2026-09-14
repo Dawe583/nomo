@@ -8,7 +8,7 @@ import { decide, HoldQueue, loadPolicy } from "../../policy/src/index.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import type { JsonlEntry, JsonlReceipt } from "../../ledger/src/store.ts";
-import type { LedgerStore } from "../../ledger/src/index.ts";
+import type { LedgerStore, KeyProvider } from "../../ledger/src/index.ts";
 import type { LoadedPolicy, PolicyCall, PolicyDecision } from "../../policy/src/index.ts";
 
 import { forwardPromptMessage } from "./forward/prompts.ts";
@@ -54,6 +54,8 @@ export type ProxyOptions = {
   readonly onHold?: (queue: HoldQueue) => void | (() => void);
   /** Ledger directory for the dev tier store. Required for the fail-closed posture. */
   readonly ledgerDir?: string;
+  /** Optional signer for an embedded proxy; defaults to the development key. */
+  readonly keyProvider?: KeyProvider;
   readonly workspace?: string;
   readonly upstreamSpawn?: (events: UpstreamEvents) => UpstreamProcess;
   readonly input?: AsyncIterable<string>;
@@ -99,7 +101,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   // fail-closed posture the store must open before the first call routes, because
   // the posture promises that a call without a ledger record never forwards.
   const ledgerStore: LedgerStore<unknown, JsonlEntry, JsonlReceipt> | undefined =
-    options.ledgerDir === undefined ? undefined : jsonlStore(await devKeyProvider(), { dir: options.ledgerDir });
+    options.ledgerDir === undefined ? undefined : jsonlStore(options.keyProvider ?? await devKeyProvider(), { dir: options.ledgerDir });
   let resolveUpstreamClosed: () => void = () => {};
   const upstreamClosed = new Promise<void>((resolve) => { resolveUpstreamClosed = resolve; });
 

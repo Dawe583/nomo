@@ -1,10 +1,21 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
-import { chmod, mkdir, mkdtemp, stat, symlink, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  stat,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { assertPrivateKeyFileMode, sanitizeWorkspace } from "./hardening.ts";
+import {
+  assertPrivateKeyFileMode,
+  sanitizeWorkspace,
+  windowsKeyAcl,
+} from "./hardening.ts";
 import { devKeyProvider } from "./sign.ts";
 import { jsonlStore } from "./store.ts";
 
@@ -23,20 +34,50 @@ describe("sanitizeWorkspace", () => {
     const store = jsonlStore(key, { dir: join(dir, "ledger") });
 
     await assert.rejects(
-      () => store.append({ workspace: "../outside", at: "now", tool: "t", klass: "r1", decision: "allow", argsDigest: "a" }),
+      () =>
+        store.append({
+          workspace: "../outside",
+          at: "now",
+          tool: "t",
+          klass: "r1",
+          decision: "allow",
+          argsDigest: "a",
+        }),
       /workspace must match/,
     );
   });
 });
 
 describe("development key file permissions", () => {
-  test("new development keys are written 0600", async () => {
+  if (process.platform === "win32")
+    test("Windows rejects an explicitly broadened ACL and restores private access", async () => {
+      const { execFile } = await import("node:child_process");
+      const { promisify } = await import("node:util");
+      const dir = await mkdtemp(join(tmpdir(), "void key ' acl-"));
+      const file = join(dir, "dev-ed25519.pkcs8");
+      await devKeyProvider({ dir, env: {} });
+      await promisify(execFile)(
+        join(process.env.SystemRoot!, "System32", "icacls.exe"),
+        [file, "/grant", "*S-1-1-0:(R)"],
+        { windowsHide: true },
+      );
+      await assert.rejects(
+        () => devKeyProvider({ dir, env: {} }),
+        /private Windows ACL/,
+      );
+      await windowsKeyAcl(file, true);
+      await assertPrivateKeyFileMode(file);
+    });
+  test("new development keys are private and reusable", async () => {
     const dir = await mkdtemp(join(tmpdir(), "void-key-mode-"));
 
-    await devKeyProvider({ dir, env: {} });
+    const first = await devKeyProvider({ dir, env: {} });
+    const second = await devKeyProvider({ dir, env: {} });
+    assert.equal(await first.currentKeyId(), await second.currentKeyId());
+    await assertPrivateKeyFileMode(join(dir, "dev-ed25519.pkcs8"));
 
     const mode = (await stat(join(dir, "dev-ed25519.pkcs8"))).mode & 0o777;
-    assert.equal(mode, 0o600);
+    if (process.platform !== "win32") assert.equal(mode, 0o600);
   });
 
   test("existing development keys with broad permissions are rejected", async () => {
@@ -45,7 +86,10 @@ describe("development key file permissions", () => {
     await writeFile(file, "not a key");
     await chmod(file, 0o644);
 
-    await assert.rejects(() => devKeyProvider({ dir, env: {} }), /permissions 0600/);
+    await assert.rejects(
+      () => devKeyProvider({ dir, env: {} }),
+      /permissions 0600|private Windows ACL/,
+    );
   });
 
   test("symbolic link key files are rejected before read", async () => {
@@ -53,9 +97,21 @@ describe("development key file permissions", () => {
     const targetDir = await mkdtemp(join(tmpdir(), "void-key-target-"));
     const target = join(targetDir, "target.pkcs8");
     await writeFile(target, "not a key");
-    await symlink(target, join(dir, "dev-ed25519.pkcs8"));
+    // Junctions exercise reparse-point rejection without requiring Windows
+    // developer mode or SeCreateSymbolicLinkPrivilege.
+    await symlink(
+      process.platform === "win32" ? targetDir : target,
+      join(dir, "dev-ed25519.pkcs8"),
+      process.platform === "win32" ? "junction" : "file",
+    );
 
-    await assert.rejects(() => assertPrivateKeyFileMode(join(dir, "dev-ed25519.pkcs8")), /symbolic link/);
-    await assert.rejects(() => devKeyProvider({ dir, env: {} }), /symbolic link/);
+    await assert.rejects(
+      () => assertPrivateKeyFileMode(join(dir, "dev-ed25519.pkcs8")),
+      /symbolic link/,
+    );
+    await assert.rejects(
+      () => devKeyProvider({ dir, env: {} }),
+      /symbolic link/,
+    );
   });
 });

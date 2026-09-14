@@ -286,7 +286,7 @@ describe("the four forger attacks", () => {
     const keyDir = join(dir, "symlinked");
     await mkdir(keyDir, { recursive: true });
     const target = join(dir, "attacker-target");
-    await symlink(target, join(keyDir, "dev-ed25519.pkcs8"));
+    await symlink(target, join(keyDir, "dev-ed25519.pkcs8"), process.platform === "win32" ? "junction" : "file");
     await assert.rejects(() => devKeyProvider({ dir: keyDir, env: {} }));
     await assert.rejects(() => stat(target), /ENOENT/);
   });

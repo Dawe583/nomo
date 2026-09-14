@@ -103,8 +103,12 @@ describe("watchLedgerFeed", () => {
       decision: "hold:denied",
       argsDigest: "a".repeat(64),
     });
-    callbacks[0]!();
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    // Poll the observable result rather than assuming fixed disk latency.
+    const deadline = Date.now() + 5000;
+    while ((pages.at(-1) as { records: unknown[] } | undefined)?.records.length !== 2 && Date.now() < deadline) {
+      callbacks[0]!();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
     watcher.close();
     assert.equal((pages[pages.length - 1] as { records: readonly unknown[] }).records.length, 2);
   });

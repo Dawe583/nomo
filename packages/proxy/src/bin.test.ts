@@ -1,3 +1,5 @@
+import { generateKeyPairSync } from "node:crypto";
+import { keyProviderFromPkcs8 } from "../../ledger/src/sign.ts";
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
@@ -213,6 +215,7 @@ describe("runProxy", () => {
     const errors: string[] = [];
 
     await runProxy({
+        keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
       upstreamCommand: ["fake"],
       upstreamUrl: "http://127.0.0.1:1/mcp",
       policyPath,
@@ -230,6 +233,7 @@ describe("runProxy", () => {
   test("http transport without upstreamUrl throws a startup error", async () => {
     await assert.rejects(
       () => runProxy({
+        keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
         transport: "http",
         policyPath: "unused.yml",
         posture: "observe",
@@ -270,6 +274,7 @@ async function makeHarness(decision: Decision, posture: ProxyOptions["posture"] 
     },
     async runRaw(lines) {
       await runProxy({
+        keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
         upstreamCommand: ["fake"],
         policyPath,
         posture,
@@ -378,6 +383,7 @@ async function makeHttpHarness(server: HttpUpstreamHarness, decision: Decision):
     ledgerDir,
     start() {
       return runProxy({
+        keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
         transport: "http",
         upstreamUrl: server.url,
         policyPath,

@@ -28,7 +28,7 @@ import { homedir } from "node:os";
 
 import type { Alg, KeyProvider } from "./index.ts";
 import { canonicalJson, entryHash } from "./canonical.ts";
-import { assertPrivateKeyFileMode } from "./hardening.ts";
+import { assertPrivateKeyFileMode, windowsKeyAcl } from "./hardening.ts";
 
 /** The digest engine. Swappable at the test boundary, node:crypto in production. */
 export const sha256Hex = async (input: string): Promise<string> =>
@@ -68,7 +68,11 @@ export async function devKeyProvider(
 export function keyProviderFromPkcs8(pkcs8: Buffer): KeyProvider {
   // DER, named explicitly: a bare Buffer defaults to PEM parsing and fails
   // with an opaque OpenSSL decoder error on the exact bytes export produced.
-  const privateKey = createPrivateKey({ key: pkcs8, format: "der", type: "pkcs8" });
+  const privateKey = createPrivateKey({
+    key: pkcs8,
+    format: "der",
+    type: "pkcs8",
+  });
   if (privateKey.asymmetricKeyType !== "ed25519")
     throw new TypeError(
       `expected an ed25519 private key, got ${String(privateKey.asymmetricKeyType)}`,
@@ -138,6 +142,8 @@ async function generateAndWriteKey(dir: string, file: string): Promise<Buffer> {
   // write would succeed quietly. O_CREAT|O_EXCL refuses to follow it.
   const handle = await open(file, "wx", 0o600);
   try {
+    // Restrict the empty file before any secret bytes are written.
+    if (process.platform === "win32") await windowsKeyAcl(file, true);
     await handle.writeFile(pkcs8);
     await handle.sync();
   } finally {
@@ -146,7 +152,9 @@ async function generateAndWriteKey(dir: string, file: string): Promise<Buffer> {
   return pkcs8;
 }
 
-function publicKeyBytes(privateKey: ReturnType<typeof createPrivateKey>): Uint8Array {
+function publicKeyBytes(
+  privateKey: ReturnType<typeof createPrivateKey>,
+): Uint8Array {
   const spki = createPublicKey(privateKey).export({
     format: "der",
     type: "spki",
