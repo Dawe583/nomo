@@ -28,6 +28,28 @@ fallback. Pokud import není potřebný, lze použít uložený profil nebo prom
 
 ## První skutečný test
 
+### Token Harbor
+
+Token Harbor je dostupný jako provider v nastavení GUI a v TUI přes
+`/connect tokenharbor`. Používá oficiální OpenAI kompatibilní endpoint
+`https://tokenharbor.ai/v1`. Příkaz načte `TOKENHARBOR_API_KEY`, připravený
+šifrovaný klíč nebo dříve ověřený profil. Klíč se nezadává do historie TUI.
+Účet musí mít ověřený e-mail. Neúspěšné ověření nemění aktivního providera.
+Po úspěšném připojení se provider uloží pro nové konverzace; `/models` umožní
+vybrat model z ověřeného katalogu. Existující konverzace zachovají vlastní profil.
+
+### Katalog a editace
+
+- `/tools [text]` hledá mezi skutečnými nástroji aktuální konverzace, nebo
+  nástroji pro novou konverzaci. Enter ukáže popis, schéma argumentů a rozsah Undo.
+- Delší výsledky nástrojů jsou standardně sbalené. `/expand` přepíná úplný
+  výpis a volba přetrvá restart. Původní výsledky i export zůstávají úplné.
+- Šipky nahoru/dolů pohybují kurzorem mezi řádky víceřádkového konceptu.
+  Ctrl+W maže předchozí slovo, Ctrl+K obsah do konce řádku.
+- Vstup sleduje skutečný kurzor i v textu obsahujícím podtržítka.
+
+### Postup
+
 1. Po spuštění lze rovnou psát. `/new` založí novou konverzaci.
 2. Napiš: `Vytvoř plán testování a ulož ho do plan.md.` Enter odešle.
 3. Escape přejde do navigace. Tab přepíná přehled, chat, konverzace, dokumenty, ledger, schválení,

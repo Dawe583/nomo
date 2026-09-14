@@ -35,6 +35,49 @@ export class WorkspaceInput {
       [...this.value].length,
     );
   }
+  private editKey(key: Key): boolean {
+    const points = [...this.value];
+    if (key.name === "up" || key.name === "down") {
+      const start = this.cursor
+        ? points.lastIndexOf("\n", this.cursor - 1) + 1
+        : 0;
+      const column = this.cursor - start;
+      if (key.name === "up" && start > 0) {
+        const previous =
+          start > 1 ? points.lastIndexOf("\n", start - 2) + 1 : 0;
+        this.cursor = Math.min(start - 1, previous + column);
+      } else if (key.name === "down") {
+        const end = points.indexOf("\n", this.cursor);
+        if (end >= 0) {
+          const nextEnd = points.indexOf("\n", end + 1);
+          this.cursor = Math.min(
+            nextEnd < 0 ? points.length : nextEnd,
+            end + 1 + column,
+          );
+        }
+      }
+      return true;
+    }
+    if (key.ctrl && key.name === "w") {
+      let start = this.cursor;
+      while (start > 0 && /\s/u.test(points[start - 1]!)) start--;
+      while (start > 0 && !/\s/u.test(points[start - 1]!)) start--;
+      points.splice(start, this.cursor - start);
+      this.cursor = start;
+      this.value = points.join("");
+      return true;
+    }
+    if (key.ctrl && key.name === "k") {
+      const end = points.indexOf("\n", this.cursor);
+      points.splice(
+        this.cursor,
+        end < 0 ? points.length - this.cursor : Math.max(1, end - this.cursor),
+      );
+      this.value = points.join("");
+      return true;
+    }
+    return false;
+  }
   key(value: string | undefined, key: Key): "submit" | "escape" | undefined {
     if (key.name === "paste-start") {
       this.pasting = true;
@@ -66,6 +109,7 @@ export class WorkspaceInput {
       }
       return "submit";
     }
+    if (this.editKey(key)) return;
     const points = [...this.value];
     if (key.name === "backspace") {
       if (this.cursor) points.splice(--this.cursor, 1);
@@ -110,7 +154,7 @@ export async function runWorkspaceTui(
     if (arg === "--once") once = true;
     else if (arg === "--help") {
       console.log(
-        "void tui [--once] [--view overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:tokenrouter]",
+        "void tui [--once] [--view overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider tokenharbor|opencode:tokenrouter]",
       );
       return 0;
     } else if (
@@ -142,11 +186,13 @@ export async function runWorkspaceTui(
   const saved = store.read<{
     sessionId?: string;
     model?: string;
+    compactTools?: boolean;
     drafts: Record<string, string>;
   }>();
   const drafts = saved?.drafts ?? {};
   const input = new WorkspaceInput();
   await ui.initialize();
+  ui.compactTools = saved?.compactTools ?? true;
   if (source) await ui.command(`/connect ${source}`);
   const selected = sessionId ?? saved?.sessionId;
   if (selected && app.get(selected)) ui.sessionId = selected;
@@ -188,7 +234,12 @@ export async function runWorkspaceTui(
   const saveDraft = () => {
     if (!input.value.startsWith("/"))
       drafts[ui.sessionId ?? "new"] = input.value;
-    store.save({ sessionId: ui.sessionId, model: ui.model, drafts });
+    store.save({
+      sessionId: ui.sessionId,
+      model: ui.model,
+      compactTools: ui.compactTools,
+      drafts,
+    });
   };
   const scheduleDraft = () => {
     clearTimeout(draftTimer);
@@ -218,6 +269,7 @@ export async function runWorkspaceTui(
             boot: motion && Date.now() - startedAt < 1800,
             command: input.value,
             suggestion,
+            cursor: input.cursor,
           },
         ),
       );

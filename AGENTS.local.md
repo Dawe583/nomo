@@ -12,3 +12,11 @@ The intended default for new GUI conversations is TokenRouter / GLM 5.3 Free: pr
 The user reaffirmed on 2026-09-13: work directly on `main`, commit and push completed verified changes to GitHub `main` for automatic Vercel deployment. Preserve unrelated files and never commit secrets. Use caveman and ponytail by default for all work. Mobile usability and a stronger ASCII identity are current design priorities.
 
 The user requested on 2026-09-14: all built-in TUI interface text must default to English. The interactive TUI must use its full color theme by default, even when the host inherits NO_COLOR=1. Use VOID_TUI_COLOR=0 as its explicit monochrome option; keep noninteractive output plain. Preserve user-authored messages and documents in their original language.
+
+On 2026-09-15 the user requested Token Harbor as the new local default provider.
+Its official OpenAI-compatible endpoint is `https://tokenharbor.ai/v1`.
+The key is staged in encrypted local provider setup storage, outside this repo.
+Activation is pending account email verification: the live model catalog returned
+HTTP 403 `email_verification_required`. After verification, `/connect tokenharbor`
+validates the catalog and saves the provider for new conversations. The requested
+model is not yet specified. Existing conversations retain their provider snapshots.

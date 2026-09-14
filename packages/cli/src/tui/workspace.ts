@@ -1,4 +1,5 @@
 import { ProxyWorkspace } from "./workspace-proxy.ts";
+import { connectTokenHarbor } from "../../../workbench/src/provider-setup.ts";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
@@ -61,6 +62,7 @@ export class WorkspaceTui {
   documentPath?: string;
   model = "";
   filter = "";
+  compactTools = true;
   notice = "Tab: panels | i: type | /help: commands";
   detail?: string[];
   confirmation?: Confirmation;
@@ -206,7 +208,29 @@ export class WorkspaceTui {
           lines: json(h),
         })),
       );
-    if (this.tab === "tools" || this.tab === "policy")
+    if (this.tab === "tools")
+      rows = this.workbench
+        .availableTools(this.sessionId)
+        .tools.map((tool) => ({
+          id: tool.id,
+          label: `[${tool.klass.toUpperCase()}] ${tool.name} / ${tool.source}${tool.capturedUndo ? " / captured Undo" : ""}`,
+          lines: [
+            `TOOL ${tool.name}`,
+            `Source: ${tool.source}`,
+            `Scope: ${this.sessionId ? "current conversation" : "new conversations"}`,
+            tool.capturedUndo
+              ? "Captured document Undo available."
+              : "Undo is not guaranteed for this tool.",
+            "",
+            tool.description,
+            "",
+            "INPUT SCHEMA",
+            ...json(tool.inputSchema),
+            "",
+            "The model requests tools through VOID policy and approvals.",
+          ],
+        }));
+    if (this.tab === "policy")
       rows = this.workbench.connectionState().connectors.map((c) => ({
         id: c.id,
         label: `${c.name} (${c.tools.length} tools)`,
@@ -435,6 +459,14 @@ export class WorkspaceTui {
       arg = match[2]?.trim() ?? "";
     if (WORKSPACE_TABS.includes(cmd as WorkspaceTab)) {
       this.choose(cmd as WorkspaceTab);
+      this.filter = arg;
+      return;
+    }
+    if (cmd === "expand") {
+      this.compactTools = !this.compactTools;
+      this.notice = this.compactTools
+        ? "Compact tool output. /expand shows full results."
+        : "Full tool output. /expand collapses results.";
       return;
     }
     if (cmd === "quit") return "quit";
@@ -530,11 +562,14 @@ export class WorkspaceTui {
       return;
     }
     if (cmd === "connect") {
-      this.provider = await importDesktopProvider(
-        arg || "opencode:tokenrouter",
-        this.env,
-        this.workbench,
-      );
+      this.provider =
+        arg === "tokenharbor"
+          ? await connectTokenHarbor(this.workbench, this.env)
+          : await importDesktopProvider(
+              arg || "opencode:tokenrouter",
+              this.env,
+              this.workbench,
+            );
       this.model = this.provider.defaultModel ?? "";
       this.notice = `Connected to ${this.provider.providerId}. The key is stored encrypted.`;
       return;
@@ -808,6 +843,7 @@ type ChatRow = {
 export function chatRows(
   events: readonly SessionEvent[],
   width: number,
+  compactTools = false,
 ): ChatRow[] {
   const rows: ChatRow[] = [];
   let partial = "";
@@ -881,6 +917,16 @@ export function chatRows(
             : event.type === "tool.started"
               ? "◇ Tool request"
               : "◆ Tool result";
+    if (compactTools && event.kind === "tool") {
+      const output = wrap(event.text.split("\n"), width);
+      if (output.length > 4) {
+        add(`${label}  ${event.at.slice(11, 19)}`, "tool");
+        for (const line of output.slice(0, 3)) add(line, "tool");
+        add(`  … ${output.length - 3} more lines /expand`, "tool");
+        add("", "text");
+        continue;
+      }
+    }
     messageRows(event.text, event.kind, `${label}  ${event.at.slice(11, 19)}`);
   }
   if (partial) messageRows(partial, "assistant", "● VOID  streaming");
@@ -918,7 +964,9 @@ export const TUI_COMMANDS = [
   ["/history", "Document history"],
   ["/branch", "Create a branch"],
   ["/retry", "Retry with confirmation"],
-  ["/tools", "MCP connectors"],
+  ["/tools", "Search tools and inspect schemas"],
+  ["/expand", "Toggle full tool output"],
+  ["/connect tokenharbor", "Connect saved Token Harbor key"],
   ["/policy", "Tool policies"],
   ["/usage", "Model usage"],
   ["/stop", "Stop run"],
@@ -938,6 +986,7 @@ export type WorkspaceVisuals = {
   boot?: boolean;
   command?: string;
   suggestion?: number;
+  cursor?: number;
 };
 const VOID_LOGO = [
   String.raw` __      __  ____   _____  _____  `,
@@ -1053,10 +1102,16 @@ export function renderWorkspace(
     width - 2,
   );
   const composerHeight = Math.min(composer.length, height >= 18 ? 3 : 1);
-  const cursorLine = Math.max(
-    0,
-    composer.findIndex((line) => line.includes("_")),
-  );
+  const cursorLine =
+    visuals.cursor === undefined
+      ? Math.max(
+          0,
+          composer.findIndex((line) => line.includes("_")),
+        )
+      : wrap(
+          ([...input].slice(0, visuals.cursor).join("") + "_").split("\n"),
+          width - 2,
+        ).length - 1;
   const composerStart = Math.max(0, cursorLine - composerHeight + 1);
   const bodyHeight = Math.max(
     1,
@@ -1080,7 +1135,7 @@ export function renderWorkspace(
       "  / commands     Tab complete     Esc navigate",
     ];
   const styled = richChat
-    ? chatRows(ui.session()!.events, width - 4)
+    ? chatRows(ui.session()!.events, width - 4, ui.compactTools)
     : undefined;
   const lines = styled?.map((row) => row.text) ?? wrap(content, width - 4);
   let offset = ui.scroll;
@@ -1223,11 +1278,13 @@ const HELP = [
   "",
   "/new [prompt] | /open number-or-ID | /chat | /sessions",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
-  "/models | /model exact-ID | /connect [opencode:tokenrouter] | /sources",
+  "/models | /model exact-ID | /connect tokenharbor | /connect opencode:tokenrouter | /sources",
   "/documents | /document path | /edit | /history | /undo [operation-ID]",
   "/ledger | /verify | /filter text | /export ledger|chat|document",
   "/approvals | /approve [hold-ID] [reason] | /deny [hold-ID] [reason]",
-  "/tools | /connector-file path.json | /test-connector ID",
+  "/tools [search] | Enter inspect tool | /expand compact/full tool output",
+  "/connector-file path.json | /test-connector ID",
+  "Multiline: Up/Down move cursor | Ctrl+W delete word | Ctrl+K delete to line end",
   "/policy | /policy-file connector-ID path.yaml | /usage | /overview",
   "",
   'Editor: VOID_TUI_EDITOR is a JSON array, e.g. ["code","--wait"].',

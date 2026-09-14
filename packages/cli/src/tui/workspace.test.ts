@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import {
   WorkspaceTui,
+  chatRows,
   commandSuggestions,
   renderWorkspace,
   transcript,
@@ -13,6 +14,91 @@ import {
 } from "./workspace.ts";
 import { WorkspaceInput } from "./workspace-runner.ts";
 import { visibleLength, stripAnsi } from "./layout.ts";
+
+test("multiline editing moves across Unicode lines and deletes words without touching other lines", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("ab😀\nxy\nlast");
+  input.key(undefined, { name: "up" });
+  assert.equal(input.cursor, 6);
+  input.key(undefined, { name: "up" });
+  assert.equal(input.cursor, 2);
+  input.key(undefined, { name: "down" });
+  assert.equal(input.cursor, 6);
+  input.key(undefined, { name: "w", ctrl: true });
+  assert.equal(input.value, "ab😀\n\nlast");
+  input.set("ab😀\nlast");
+  input.cursor = 1;
+  input.key(undefined, { name: "k", ctrl: true });
+  assert.equal(input.value, "a\nlast");
+  input.key(undefined, { name: "k", ctrl: true });
+  assert.equal(input.value, "alast");
+  input.set("\nsecond");
+  input.cursor = 1;
+  input.key(undefined, { name: "up" });
+  assert.equal(input.cursor, 0);
+});
+
+test("tools show actual managed capabilities, searchable schemas and no execution on inspection", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-tools-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app);
+  await ui.command("/tools write");
+  const rows = ui.items();
+  assert.ok(rows.length > 0);
+  assert.ok(
+    rows.some(
+      (row) =>
+        row.label.includes("void_workspace_write") &&
+        row.label.includes("captured Undo"),
+    ),
+  );
+  await ui.openSelected();
+  assert.ok(ui.detail?.includes("INPUT SCHEMA"));
+  assert.equal(app.list().length, 0);
+  assert.equal(ui.confirmation, undefined);
+});
+
+test("compact tool output keeps complete events available and never hides assistant errors", () => {
+  const event = {
+    seq: 1,
+    at: "2026-09-15T10:00:00Z",
+    kind: "tool" as const,
+    type: "tool.completed",
+    text: Array.from({ length: 20 }, (_, i) => `result ${i}`).join("\n"),
+  };
+  const compact = chatRows([event], 80, true);
+  assert.ok(compact.some((row) => row.text.includes("17 more lines /expand")));
+  assert.ok(!compact.some((row) => row.text === "result 19"));
+  assert.ok(
+    chatRows([event], 80, false).some((row) => row.text === "result 19"),
+  );
+  assert.ok(
+    chatRows([{ ...event, kind: "error" }], 80, true).some(
+      (row) => row.text === "result 19",
+    ),
+  );
+  assert.equal(event.text.split("\n").length, 20);
+});
+
+test("composer follows the actual cursor beyond literal underscores", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-cursor-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app);
+  const value = "literal_under_score\nsecond\nthird\nfourth\nlast";
+  const result = renderWorkspace(ui, 80, 24, value + "_", true, false, {
+    cursor: [...value].length,
+  });
+  assert.ok(result.includes("last_"));
+});
 
 test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, signed export and restart", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-"));

@@ -3,7 +3,14 @@ export const DEFAULT_PROVIDER_ID = "tokenrouter";
 export const DEFAULT_MODEL_ID = "z-ai/glm-5.3-free";
 export const DEFAULT_MODEL_NAME = "GLM 5.3 Free";
 export const TOKENROUTER_URL = "https://api.tokenrouter.com/v1";
+export const TOKENHARBOR_URL = "https://tokenharbor.ai/v1";
 export const PROVIDER_PRESETS = [
+  {
+    id: "tokenharbor",
+    name: "Token Harbor",
+    baseUrl: TOKENHARBOR_URL,
+    kind: "openai",
+  },
   {
     id: "opencode-zen",
     name: "OpenCode Zen",

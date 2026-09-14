@@ -5,7 +5,7 @@ export class ProviderRequestError extends Error {
   readonly code: string | undefined;
   readonly retryAfter: number | undefined;
   constructor(status: number, code?: string, retryAfter?: number) {
-    super(code === 'customer_verification_required' ? 'Vercel AI Gateway requires account verification. Add a card in Vercel AI Gateway settings or connect your own provider key.' : `Provider request failed (HTTP ${status}). Check credentials, model access or rate limits.`);
+    super(code === 'email_verification_required' ? 'Token Harbor requires email verification. Open your confirmation email or request a new one at https://tokenharbor.ai/dashboard, then reconnect.' : code === 'customer_verification_required' ? 'Vercel AI Gateway requires account verification. Add a card in Vercel AI Gateway settings or connect your own provider key.' : `Provider request failed (HTTP ${status}). Check credentials, model access or rate limits.`);
     this.status = status; this.code = code; this.retryAfter = retryAfter;
   }
 }
@@ -164,7 +164,7 @@ export class CompatibleProvider {
     } catch { throw new Error(signal?.aborted ? 'Session cancelled.' : 'Provider connection failed. Check its endpoint and availability.'); }
     if (!response.ok) {
       let code: string | undefined;
-      if (response.status === 403) { try { const error = await response.json() as { error?: { type?: string } }; if (error.error?.type === 'customer_verification_required') code = error.error.type; } catch {} }
+      if (response.status === 403) { try { const error = await response.json() as { error?: { type?: string } }; if (error.error?.type === 'customer_verification_required' || (this.base.origin === 'https://tokenharbor.ai' && error.error?.type === 'email_verification_required')) code = error.error.type; } catch {} }
       const rawRetry = response.headers.get('retry-after');
       const retryAfter = rawRetry ? (/^\d+$/.test(rawRetry) ? Number(rawRetry) : Math.max(0, Math.ceil((Date.parse(rawRetry) - Date.now()) / 1000))) : undefined;
       await response.body?.cancel().catch(() => {});
