@@ -2,7 +2,7 @@
 
 VOID is an accountability and reversibility layer for AI agents.
 
-[Download VOID](https://dawe583.github.io/void/) — macOS desktop beta, TUI source download, and setup instructions.
+[Download VOID](https://dawe583.github.io/void/): macOS desktop beta, TUI source download, and setup instructions.
 
 It sits between an MCP capable agent and the tools the agent can write to. For each write, VOID classifies how reversible the call is, applies a policy, and appends a signed hash chained ledger entry. Later, operators can inspect the feed, verify the chain, attest a slice, trace taint, and replay true inverses when a connector has captured enough state.
 
