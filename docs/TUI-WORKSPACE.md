@@ -58,6 +58,31 @@ a barevné, i když prostředí zdědí `NO_COLOR=1`; barvy řídí vlastní nas
 Malé terminály používají kompaktní logo a kratší navigaci. Zůstává vlastní
 ovládání VOIDu pro ledger a explicitní rozhodnutí; nejde o úplný klon Claude Code.
 
+### Čtení chatu a průběh práce
+
+Chat po úvodní animaci používá kompaktní hlavičku, aby zůstalo více místa
+na zprávy. Role vycházejí z událostí Workbenche: uživatel, VOID, požadavek
+nástroje, výsledek a chyba. Nadpisy odpovědi jsou zvýrazněné; fenced code
+bloky mají vlastní pozadí, jazyk a čísla řádků. Kód se nevykonává a původní
+zprávy se nemění. Jde o terminálové formátování nadpisů a kódových bloků,
+ne o úplný Markdown renderer se syntax highlightingem.
+
+Běh ukazuje pulzující indikátor a pohybující se stopu na oddělovači vstupu.
+Stav rozlišuje přemýšlení, streamovanou odpověď, požadavek nástroje a čekání
+na schválení aktuální konverzace. Čas měří sekundy od posledního uživatelského
+pokynu; nejde o odhad zbývající doby. Vypnutí animací nemění aktuálnost dat.
+
+- PgUp/PgDn posouvá o skutečnou výšku obsahu s překryvem dvou řádků.
+- Při čtení historie je vidět rozsah řádků. Nové zprávy nepřesunou čtenáře na konec.
+- `/bottom` nebo Ctrl+End vrátí chat na živý konec. PgDn na konci obnoví stejné sledování.
+- `/find text` vyhledá zprávy aktuální konverzace bez ohledu na velikost písmen.
+  Výsledky ukazují celé odpovídající zprávy; PgUp/PgDn je prochází, Escape zavře.
+  Vyhledávání zahrnuje uložené zprávy a výsledky nástrojů, nikoli nehotové stream delty.
+
+Ověření tohoto upgradu používá izolovaný fixture provider, testy skutečného
+Workbenche a PTY včetně hledání a návratu na živý konec. Kontrola barev vychází
+z ANSI snímku skutečného rendereru. Nepotvrzuje dostupnost živého providera.
+
 Alt+Enter vloží nový řádek. Bracketed paste neodesílá zprávy a nepotvrzuje
 operace. Escape vrací z detailu nebo ukončí psaní. `/help` obsahuje všechny
 příkazy. Rozpracované zprávy jsou uložené šifrovaně mezi spuštěními.

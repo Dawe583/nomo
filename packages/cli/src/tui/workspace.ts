@@ -56,6 +56,7 @@ export class WorkspaceTui {
   tab: WorkspaceTab = "overview";
   selected = 0;
   scroll = 0;
+  viewport = { offset: 0, height: 1, total: 0 };
   sessionId?: string;
   documentPath?: string;
   model = "";
@@ -437,6 +438,33 @@ export class WorkspaceTui {
       return;
     }
     if (cmd === "quit") return "quit";
+    if (cmd === "bottom") {
+      this.choose("chat");
+      this.scroll = -1;
+      this.notice = "Following latest messages.";
+      return;
+    }
+    if (cmd === "find") {
+      if (!arg) throw Error("/find text — search this conversation");
+      const events = this.session()?.events;
+      if (!events) throw Error("Select a conversation.");
+      const matches = events.filter(
+        (e) =>
+          e.type !== "message.delta" &&
+          e.type !== "run.status" &&
+          e.kind !== "usage" &&
+          e.text.toLocaleLowerCase().includes(arg.toLocaleLowerCase()),
+      );
+      this.detail = [
+        `Search: ${arg}`,
+        `${matches.length} matching messages`,
+        "",
+        ...transcript(matches),
+      ];
+      this.scroll = 0;
+      this.notice = "Search results / PgUp PgDn scroll / Esc close";
+      return;
+    }
     if (cmd === "new") {
       this.sessionId = undefined;
       this.documentPath = undefined;
@@ -645,6 +673,23 @@ export class WorkspaceTui {
     await writeFile(path, content, { flag: "wx", mode: 0o600 });
     this.notice = `Export: ${path}`;
   }
+  scrollPage(direction: number) {
+    const { offset, height, total } = this.viewport;
+    const next = Math.max(
+      0,
+      Math.min(
+        Math.max(0, total - height),
+        offset + direction * Math.max(1, height - 2),
+      ),
+    );
+    this.scroll =
+      this.tab === "chat" &&
+      !this.detail &&
+      !this.confirmation &&
+      next >= total - height
+        ? -1
+        : next;
+  }
   lines(): string[] {
     if (this.confirmation)
       return [
@@ -755,6 +800,92 @@ export function transcript(events: readonly SessionEvent[]): string[] {
   if (partial) rows.push("VOID [stream]", ...partial.split("\n"));
   return rows;
 }
+type ChatRow = {
+  text: string;
+  style: "user" | "assistant" | "heading" | "code" | "tool" | "error" | "text";
+};
+/** Terminal-only presentation. Never evaluate Markdown, HTML or terminal escapes. */
+export function chatRows(
+  events: readonly SessionEvent[],
+  width: number,
+): ChatRow[] {
+  const rows: ChatRow[] = [];
+  let partial = "";
+  const add = (value: string, style: ChatRow["style"]) => {
+    rows.push(...wrap([value], width).map((text) => ({ text, style })));
+  };
+  const messageRows = (
+    value: string,
+    kind: SessionEvent["kind"],
+    label: string,
+  ) => {
+    add(label, kind === "usage" ? "text" : kind);
+    let fence = "",
+      lineNumber = 0;
+    for (const raw of value.split("\n")) {
+      const marker = /^\s{0,3}(`{3,}|~{3,})(.*)$/.exec(raw);
+      if (
+        kind === "assistant" &&
+        marker &&
+        (!fence ||
+          (marker[1]![0] === fence[0] &&
+            marker[1]!.length >= fence.length &&
+            !marker[2]!.trim()))
+      ) {
+        if (fence) {
+          add("  └ end code", "tool");
+          fence = "";
+        } else {
+          fence = marker[1]!;
+          lineNumber = 0;
+          add(`  ┌ ${marker[2]!.trim() || "code"}`, "code");
+        }
+      } else if (fence) {
+        const prefix = `  ${String(++lineNumber).padStart(2)} │ `;
+        for (const [i, chunk] of wrap(
+          [raw],
+          Math.max(1, width - prefix.length),
+        ).entries())
+          add(
+            (i ? " ".repeat(prefix.length - 2) + "│ " : prefix) + chunk,
+            "code",
+          );
+      } else
+        add(
+          raw,
+          kind === "error"
+            ? "error"
+            : kind === "tool"
+              ? "tool"
+              : kind === "assistant" && /^#{1,6}\s/.test(raw)
+                ? "heading"
+                : "text",
+        );
+    }
+    add("", "text");
+  };
+  for (const event of events) {
+    if (event.type === "message.delta") {
+      partial += event.text;
+      continue;
+    }
+    if (event.kind === "assistant") partial = "";
+    if (event.type === "run.status" || event.kind === "usage") continue;
+    const label =
+      event.kind === "user"
+        ? "› You"
+        : event.kind === "assistant"
+          ? "● VOID"
+          : event.kind === "error"
+            ? "! Error"
+            : event.type === "tool.started"
+              ? "◇ Tool request"
+              : "◆ Tool result";
+    messageRows(event.text, event.kind, `${label}  ${event.at.slice(11, 19)}`);
+  }
+  if (partial) messageRows(partial, "assistant", "● VOID  streaming");
+  return rows;
+}
 export function wrap(lines: readonly string[], width: number): string[] {
   const out: string[] = [];
   for (const line of lines) {
@@ -773,6 +904,8 @@ export function wrap(lines: readonly string[], width: number): string[] {
 export const TUI_COMMANDS = [
   ["/new", "New conversation"],
   ["/chat", "Return to chat"],
+  ["/bottom", "Follow latest messages"],
+  ["/find", "Search conversation text"],
   ["/sessions", "Open conversation history"],
   ["/documents", "Documents and revisions"],
   ["/ledger", "Signed operations"],
@@ -798,6 +931,7 @@ export function commandSuggestions(input: string) {
     : [];
 }
 export type WorkspaceVisuals = {
+  now?: number;
   color?: boolean;
   frame?: number;
   motion?: boolean;
@@ -832,12 +966,19 @@ export function renderWorkspace(
     violet = "38;5;183";
   const running = busy || ui.workbench.running();
   const frame = visuals.motion === false ? 0 : (visuals.frame ?? 0);
-  const spinner = running
-    ? ["[.   ]", "[ .  ]", "[  . ]", "[   .]", "[  . ]", "[ .  ]"][frame % 6]
-    : "[ * ]";
-  const holds = ui.workbench.pending().length + ui.proxy.holds.length;
+  const spinner = running ? ["·", "✢", "✳", "✶", "✳", "✢"][frame % 6] : "◆";
+  const pending = ui.workbench.pending();
+  const holds = pending.length + ui.proxy.holds.length;
+  const waiting = pending.some((hold) =>
+    hold.holdId.startsWith(`${ui.sessionId}:`),
+  );
   const header: string[] = [];
-  if (height >= 22 && width >= 50 && !ui.confirmation) {
+  if (
+    height >= 22 &&
+    width >= 50 &&
+    !ui.confirmation &&
+    (!ui.session() || ui.tab !== "chat" || visuals.boot)
+  ) {
     const aside = [
       "VOID / local workspace",
       ui.session()?.model || ui.model || "Connect a model with /connect",
@@ -865,7 +1006,9 @@ export function renderWorkspace(
   } else
     header.push(
       ink(
-        text(` /V/  VOID  ${spinner} ${ui.tab}  |  ${holds} approvals`),
+        text(
+          ` /V/  VOID  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
+        ),
         `1;${amber}`,
       ),
     );
@@ -919,7 +1062,9 @@ export function renderWorkspace(
     1,
     height - header.length - 4 - composerHeight - menu.length,
   );
-  let content = ui.lines();
+  const richChat =
+    ui.tab === "chat" && !!ui.session() && !ui.detail && !ui.confirmation;
+  let content = richChat ? [] : ui.lines();
   if (ui.tab === "chat" && !ui.session() && !ui.detail && !ui.confirmation)
     content = [
       "",
@@ -934,7 +1079,10 @@ export function renderWorkspace(
       "",
       "  / commands     Tab complete     Esc navigate",
     ];
-  const lines = wrap(content, width - 4);
+  const styled = richChat
+    ? chatRows(ui.session()!.events, width - 4)
+    : undefined;
+  const lines = styled?.map((row) => row.text) ?? wrap(content, width - 4);
   let offset = ui.scroll;
   if (!ui.detail && !ui.confirmation && ui.tab === "chat" && ui.scroll < 0)
     offset = Math.max(0, lines.length - bodyHeight);
@@ -948,30 +1096,64 @@ export function renderWorkspace(
     Math.max(0, offset),
     Math.max(0, lines.length - bodyHeight),
   );
+  ui.viewport = { offset, height: bodyHeight, total: lines.length };
   const body = lines.slice(offset, offset + bodyHeight);
   while (body.length < bodyHeight) body.push("");
   const frameColor = ui.confirmation ? amber : muted;
-  const bodyRows = body.map((line) => {
-    const tone = /^>/.test(line)
-      ? `1;${ice}`
-      : /YOU$/.test(line)
-        ? `1;${violet}`
-        : /VOID(?: \[stream\])?$/.test(line)
+  const bodyRows = body.map((line, index) => {
+    const style = styled?.[offset + index]?.style;
+    const tone =
+      style === "user"
+        ? `1;${violet};48;5;236`
+        : style === "assistant" || style === "heading"
           ? `1;${amber}`
-          : /^(Error|Invalid|Failed)/.test(line)
-            ? "38;5;203"
-            : "38;5;252";
+          : style === "code"
+            ? `${ice};48;5;235`
+            : style === "tool"
+              ? muted
+              : style === "error"
+                ? "38;5;203"
+                : style === "text"
+                  ? "38;5;252"
+                  : /^>/.test(line)
+                    ? `1;${ice}`
+                    : /YOU$/.test(line)
+                      ? `1;${violet}`
+                      : /VOID(?: \[stream\])?$/.test(line)
+                        ? `1;${amber}`
+                        : /^(Error|Invalid|Failed)/.test(line)
+                          ? "38;5;203"
+                          : "38;5;252";
     return (
       ink(ui.confirmation ? "! " : "  ", frameColor) +
       ink(pad(line, width - 4), tone) +
       (ui.confirmation ? ink(" !", frameColor) : "  ")
     );
   });
+  const events = ui.session()?.events ?? [];
+  const latestUser = [...events].reverse().find((e) => e.kind === "user");
+  const elapsed =
+    visuals.now && latestUser && ui.session()?.status === "running"
+      ? ` / ${Math.max(0, Math.floor((visuals.now - Date.parse(latestUser.at)) / 1000))}s`
+      : "";
+  const lastEvent = [...events]
+    .reverse()
+    .find((e) => e.type !== "run.status" && e.kind !== "usage");
+  const phase =
+    lastEvent?.type === "tool.started"
+      ? "Calling tool"
+      : lastEvent?.type === "message.delta"
+        ? "Writing response"
+        : "Thinking";
+  const historyStatus =
+    richChat && ui.scroll >= 0
+      ? `History ${offset + 1}-${Math.min(offset + bodyHeight, lines.length)}/${lines.length} / /bottom to follow`
+      : undefined;
   const status = ui.confirmation
     ? "REVIEW / y confirm / Esc cancel / PgDn preview"
     : running
-      ? `${spinner} ${ui.session()?.status === "running" ? "VOID is working" : "Finishing operation"}  /  Esc stop`
-      : ui.notice;
+      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "Waiting for approval" : phase) : "Finishing operation"}${elapsed} / Esc stop${historyStatus ? " / reading history" : ""}`
+      : (historyStatus ?? ui.notice);
   const line = (label: string) => {
     const head = `-- ${label} `;
     const rail = Array.from(
@@ -979,7 +1161,8 @@ export function renderWorkspace(
       () => "-",
     );
     if (running && visuals.motion !== false && rail.length)
-      rail[frame % rail.length] = "*";
+      for (let tail = 0; tail < Math.min(5, rail.length); tail++)
+        rail[(frame + tail) % rail.length] = ["·", "─", "━", "─", "·"][tail]!;
     return fit(head + rail.join(""), width);
   };
   const menuRows = menu.map(([name, description], i) =>
@@ -1030,7 +1213,9 @@ const HELP = [
   "",
   "Tab / Shift+Tab: panels; j/k or arrows: select; Enter: details.",
   "Chat: start typing. / opens commands; arrows select; Tab completes.",
-  "PgUp/PgDn: scroll; Esc: stop run / navigation; i: type.",
+  "PgUp/PgDn: scroll; /bottom or Ctrl+End: follow latest; i: type.",
+  "/find text searches the current conversation; Esc closes results.",
+  "Esc: stop run / navigation. Code blocks keep their original text.",
   "Up/down in a single-line input browse your previous prompts.",
   "VOID_TUI_COLOR=0 disables colors; VOID_TUI_MOTION=0 disables animation.",
   "Enter sends; Alt+Enter inserts a newline; Ctrl+U clears input.",

@@ -206,3 +206,104 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
   assert.equal(commandSuggestions("/new delete everything").length, 0);
   assert.ok(stripAnsi(renderWorkspace(ui, 100, 32)).includes("|_____||_____/"));
 });
+
+test("chat presentation preserves code, sanitizes escapes, and distinguishes event roles", async () => {
+  const { chatRows } = await import("./workspace.ts");
+  const base = {
+    seq: 1,
+    at: "2026-09-14T10:00:00Z",
+    kind: "assistant" as const,
+  };
+  const events = [
+    { ...base, text: "# Plan\n```ts\nconst x = '界';\n```\nDone \x1b[2J" },
+  ];
+  const rows = chatRows(events, 40);
+  assert.ok(rows.some((r) => r.style === "heading" && r.text === "# Plan"));
+  assert.ok(
+    rows.some((r) => r.style === "code" && r.text.includes("const x = '界';")),
+  );
+  assert.ok(
+    rows.every((r) => !r.text.includes("\x1b") && visibleLength(r.text) <= 40),
+  );
+  const hostile = chatRows(
+    [{ ...base, kind: "user", text: "```ts\n# I am not a heading\nVOID" }],
+    40,
+  );
+  assert.ok(
+    !hostile.some(
+      (r) =>
+        r.style === "code" || r.style === "heading" || r.style === "assistant",
+    ),
+  );
+  const streamed = chatRows(
+    [
+      { ...base, type: "message.delta", text: "partial" },
+      { ...base, seq: 2, type: "message.completed", text: "complete" },
+    ],
+    40,
+  );
+  assert.ok(!streamed.some((r) => r.text.includes("partial")));
+  assert.equal(streamed.filter((r) => r.text === "complete").length, 1);
+  const fences = chatRows([{ ...base, text: "````ts\n```\nkept\n````" }], 40);
+  assert.ok(fences.some((r) => r.style === "code" && r.text.includes("```")));
+});
+
+test("search and paging use real conversation data and return to live follow", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-reading-"));
+  const app = new Workbench({ VOID_DATA_DIR: root }, async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content:
+                  "# Result\n```text\n" +
+                  "line 界\n".repeat(50) +
+                  "```\nNeedle found",
+              },
+            },
+          ],
+        }),
+  );
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture",
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  await ui.command("Read this");
+  await app.settled();
+  renderWorkspace(ui, 80, 24, "_", true);
+  const end = ui.viewport.offset;
+  assert.ok(end > 0);
+  ui.scrollPage(-1);
+  assert.ok(ui.scroll >= 0 && ui.scroll < end);
+  assert.match(stripAnsi(renderWorkspace(ui, 80, 24, "_", true)), /History/);
+  ui.scrollPage(1);
+  assert.equal(ui.scroll, -1);
+  await ui.command("/find nEeDlE");
+  assert.match(ui.detail!.join("\n"), /1 matching messages/);
+  assert.match(ui.detail!.join("\n"), /Needle found/);
+  await ui.command("/find missing-value");
+  assert.match(ui.detail!.join("\n"), /0 matching messages/);
+  await ui.command("/bottom");
+  assert.equal(ui.detail, undefined);
+  assert.equal(ui.scroll, -1);
+  for (const [width, height] of [
+    [20, 8],
+    [40, 12],
+    [80, 24],
+    [120, 40],
+  ]) {
+    const frame = renderWorkspace(ui, width!, height!, "_", true, false, {
+      color: true,
+    });
+    assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width!));
+    assert.equal(frame.split("\n").length, height);
+  }
+});

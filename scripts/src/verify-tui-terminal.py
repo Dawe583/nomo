@@ -90,10 +90,16 @@ await app.shutdown(); console.log(session.id);
         read_until("Write a prompt")
         os.write(master, b"\x1b[A")
         read_until("PTY test")
+        os.write(master, b"\x03/find PTY test\r")
+        read_until("1 matching messages")
+        os.write(master, b"\x1b")
+        read_until("› You")
+        os.write(master, b"/bottom\r")
+        read_until("Following latest messages")
         os.write(master, b"\x03\x03")
         read_until("VOID: stopping")
         assert process.wait(timeout=5) == 0
-        print("PASS: PTY logo, immediate typing, multiline input, history, slash completion, paste-safe Undo, signatures, resize and clean exit")
+        print("PASS: PTY logo, immediate typing, multiline input, history search, live follow, slash completion, paste-safe Undo, signatures, resize and clean exit")
     finally:
         if process.poll() is None:
             process.kill()

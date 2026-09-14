@@ -12,7 +12,6 @@ import {
   renderWorkspace,
   message,
   type WorkspaceTab,
-  wrap,
 } from "./workspace.ts";
 import { DiffScreenWriter } from "./watch.ts";
 import { sanitizeText } from "./layout.ts";
@@ -212,6 +211,7 @@ export async function runWorkspaceTui(
           input.editing,
           busy,
           {
+            now: Date.now(),
             color,
             motion,
             frame: Math.floor((Date.now() - startedAt) / 140),
@@ -341,7 +341,7 @@ export async function runWorkspaceTui(
       }
       if (!original.trimStart().startsWith("/")) drafts[oldSession] = "";
       input.set(drafts[ui.sessionId ?? "new"] ?? "");
-      input.editing = ui.tab === "chat";
+      input.editing = ui.tab === "chat" && !ui.detail;
       suggestion = 0;
       historyIndex = -1;
       if (result === "edit") await editor();
@@ -399,6 +399,17 @@ export async function runWorkspaceTui(
         draw();
         return;
       }
+      if (
+        !input.pasting &&
+        key.ctrl &&
+        key.name === "end" &&
+        ui.tab === "chat" &&
+        !ui.detail
+      ) {
+        ui.scroll = -1;
+        draw();
+        return;
+      }
       if (input.editing || key.name === "paste-start") {
         const candidates = input.pasting ? [] : commandSuggestions(input.value);
         if (
@@ -414,7 +425,8 @@ export async function runWorkspaceTui(
               candidates[Math.min(suggestion, candidates.length - 1)]![0],
             );
             suggestion = 0;
-            if (key.name !== "tab") void task(submit);
+            if (input.value === "/find") input.set("/find ");
+            else if (key.name !== "tab") void task(submit);
           }
           draw();
           return;
@@ -440,14 +452,7 @@ export async function runWorkspaceTui(
           }
         }
         if (!input.pasting && ["pageup", "pagedown"].includes(key.name ?? "")) {
-          if (ui.scroll < 0)
-            ui.scroll = Math.max(
-              0,
-              wrap(ui.lines(), (process.stdout.columns ?? 80) - 4).length -
-                Math.max(1, (process.stdout.rows ?? 24) - 10),
-            );
-          ui.scroll =
-            key.name === "pageup" ? Math.max(0, ui.scroll - 8) : ui.scroll + 8;
+          ui.scrollPage(key.name === "pageup" ? -1 : 1);
           draw();
           return;
         }
@@ -460,12 +465,6 @@ export async function runWorkspaceTui(
         return;
       }
       if (busy && key.name !== "tab") return;
-      if (ui.scroll < 0 && (key.name === "pageup" || key.name === "pagedown"))
-        ui.scroll = Math.max(
-          0,
-          wrap(ui.lines(), (process.stdout.columns ?? 80) - 4).length -
-            Math.max(1, (process.stdout.rows ?? 24) - 7),
-        );
       if (key.name === "tab") {
         ui.cycle(key.shift ? -1 : 1);
         input.editing = ui.tab === "chat";
@@ -499,8 +498,8 @@ export async function runWorkspaceTui(
         ui.scroll = 0;
       } else if (key.name === "return")
         void task(() => navigate(() => ui.openSelected()));
-      else if (key.name === "pageup") ui.scroll = Math.max(0, ui.scroll - 10);
-      else if (key.name === "pagedown") ui.scroll += 10;
+      else if (key.name === "pageup") ui.scrollPage(-1);
+      else if (key.name === "pagedown") ui.scrollPage(1);
       else if (key.name === "up" || value === "k") {
         if (ui.detail) ui.scroll = Math.max(0, ui.scroll - 1);
         else ui.selected = Math.max(0, ui.selected - 1);
