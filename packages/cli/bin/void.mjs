@@ -11,6 +11,11 @@ import { runApproveCommand, runApprovalsCommand } from "../src/approve.ts";
 import { readFileSync } from "node:fs";
 import { runClassifyCommand, runFeedCommand, runReplayCommand, runTaintCommand, runVerifyCommand, parseInvocation } from "../src/index.ts";
 
+if (process.argv.length === 3 && ["--help", "-h"].includes(process.argv[2])) {
+  const usage = parseInvocation([]);
+  if (!usage.ok) console.log(usage.reason);
+  process.exit(0);
+}
 const parsed = parseInvocation(process.argv.slice(2));
 if (!parsed.ok) {
   console.error(parsed.reason);

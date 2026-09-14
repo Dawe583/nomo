@@ -477,7 +477,7 @@ export class WorkspaceTui {
       return;
     }
     if (cmd === "find") {
-      if (!arg) throw Error("/find text — search this conversation");
+      if (!arg) throw Error("/find text: search this conversation");
       const events = this.session()?.events;
       if (!events) throw Error("Select a conversation.");
       const matches = events.filter(
@@ -1206,7 +1206,7 @@ export function renderWorkspace(
       : undefined;
   const status = ui.confirmation
     ? "REVIEW / y confirm / Esc cancel / PgDn preview"
-    : running
+    : running && (busy || ui.session()?.status === "running")
       ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "Waiting for approval" : phase) : "Finishing operation"}${elapsed} / Esc stop${historyStatus ? " / reading history" : ""}`
       : (historyStatus ?? ui.notice);
   const line = (label: string) => {
@@ -1264,7 +1264,7 @@ export function renderWorkspace(
     .join("\n");
 }
 const HELP = [
-  "VOID TUI — real local data, no demo metrics",
+  "VOID TUI: real local data, no demo metrics",
   "",
   "Tab / Shift+Tab: panels; j/k or arrows: select; Enter: details.",
   "Chat: start typing. / opens commands; arrows select; Tab completes.",

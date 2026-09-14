@@ -1,12 +1,9 @@
 /**
  * The void command.
  *
- * The command handlers are WP-09 and do not exist yet. What is here is the
- * command surface, kept in one place so that an unknown command is a refusal
- * with the list rather than a silent no op, which is the shape the whole
- * product uses for anything it does not recognise, and the WP-09b terminal
- * render model under src/tui/, which is data in and glyphs out and owns no
- * domain behaviour of its own.
+ * Keep the command surface in one place so unknown commands fail with useful
+ * alternatives. The binary dispatches handlers; terminal views consume the
+ * shared workbench rather than owning policy or recovery logic.
  */
 
 export const COMMANDS = [

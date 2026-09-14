@@ -214,7 +214,7 @@ export async function runWorkspaceTui(
       ),
     );
     await app.shutdown();
-    return ui.proofErrors.size ? 1 : 0;
+    return ui.proofErrors.size || ui.proxy.errors.length ? 1 : 0;
   }
   input.editing = tab === "chat";
   let suggestion = 0;
@@ -345,17 +345,11 @@ export async function runWorkspaceTui(
     }
   };
   return new Promise<number>((resolveDone) => {
-    const stop = () => {
+    const restoreTerminal = () => {
       if (stopped) return;
       stopped = true;
       clearInterval(timer);
       clearTimeout(draftTimer);
-      let draftError = false;
-      try {
-        saveDraft();
-      } catch {
-        draftError = true;
-      }
       process.stdin.off("keypress", onKey);
       process.stdout.off("resize", draw);
       process.stdin.setRawMode(wasRaw);
@@ -363,8 +357,21 @@ export async function runWorkspaceTui(
       process.off("SIGINT", stop);
       process.off("SIGTERM", stop);
       process.off("SIGHUP", stop);
+      process.off("exit", restoreTerminal);
+      process.off("uncaughtExceptionMonitor", restoreTerminal);
       screen.leave();
       process.stdout.write("\x1b[?2004l");
+    };
+    const stop = () => {
+      if (stopped) return;
+      // Fatal exits need synchronous terminal cleanup, never asynchronous storage work.
+      restoreTerminal();
+      let draftError = false;
+      try {
+        saveDraft();
+      } catch {
+        draftError = true;
+      }
       if (draftError) console.error("Could not save the draft.");
       console.log(
         "VOID: stopping the run and saving history. A dispatched external tool may still complete.",
@@ -414,9 +421,14 @@ export async function runWorkspaceTui(
         app.running()
       ) {
         try {
-          for (const session of app.allViews())
-            if (session.status === "running") app.cancel(session.id);
-          ui.notice = "Run stopped. A dispatched tool may still complete.";
+          const session = ui.session();
+          if (session?.status === "running") {
+            app.cancel(session.id);
+            ui.notice = "Run stopped. A dispatched tool may still complete.";
+          } else {
+            if (key.name === "escape") input.editing = false;
+            ui.notice = "Selected conversation is not running. Open the active conversation to cancel it.";
+          }
         } catch (error) {
           ui.notice = message(error);
         }
@@ -569,6 +581,8 @@ export async function runWorkspaceTui(
     process.once("SIGINT", stop);
     process.once("SIGTERM", stop);
     process.once("SIGHUP", stop);
+    process.once("exit", restoreTerminal);
+    process.once("uncaughtExceptionMonitor", restoreTerminal);
     screen.enter();
     process.stdout.write("\x1b[?2004h");
     draw();
