@@ -1,6 +1,6 @@
 # VOID desktop
 
-The native macOS app runs the same GUI and local control-plane API as `pnpm gui`.
+The native macOS and Windows apps run the same GUI and local control-plane API as `pnpm gui`.
 Tauri 2 keeps one app instance per user and owns an isolated Node process and binds the backend to an ephemeral
 loopback port. The packaged application contains Node 24 and the bundled backend;
 end users do not need Node, pnpm, Rust, Vercel or a running terminal.
@@ -15,18 +15,20 @@ pnpm --dir apps/desktop dev
 pnpm --dir apps/desktop build
 ```
 
-The build host needs Rust and Xcode Command Line Tools. macOS 13.5 or newer is
+The macOS build host needs Rust and Xcode Command Line Tools. Windows x64 needs
+Rust MSVC, Visual Studio C++ build tools and WebView2; see `docs/WINDOWS-DESKTOP.md`. macOS 13.5 or newer is
 required by the bundled Node runtime. macOS arm64 and x64 are
 supported on their matching host architectures. The build pins and verifies the
 SHA-256 of the official Node distribution. The exact website Aperture logo is
-used to generate the macOS application icon.
+used to generate the application icons.
 
 Artifacts are written to `apps/desktop/src-tauri/target/release/bundle/`.
 DMG creation runs without Finder automation. The `.app` can run locally; public distribution also needs an Apple Developer
 signing identity and notarization credentials configured using Tauri's standard
 `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD` and `APPLE_TEAM_ID`
-environment variables. Without those credentials the build is an unsigned local
-beta, not a notarized installer. Windows/Linux packages are not yet verified.
+environment variables. Without those credentials macOS builds use an ad-hoc signature for bundle integrity,
+not Apple notarization. Windows produces an unsigned NSIS beta installer;
+SmartScreen may warn. Linux packages are not verified.
 
 ## Runtime boundary
 
@@ -54,13 +56,13 @@ configured provider or a running local model server.
 Data is stored under the OS application data directory (`~/Library/Application
 Support/dev.void.desktop` on macOS). The backend receives `VOID_DATA_DIR` and a
 local ledger directory. The workspace encryption key is retained in macOS
-Keychain and passed privately to the backend for startup. It is removed from the
+Keychain or the current user’s Windows Credential Manager, and passed privately to the backend for startup. It is removed from the
 runtime environment before MCP processes are launched. A legacy `workspace.key`
-is migrated with Keychain readback verification and retired only after the
+is migrated with native store readback verification and retired only after the
 backend opens successfully. A locked Keychain or conflicting keys stops startup
-without overwriting the workspace. The native smoke check and Rust migration
-tests use ephemeral or injected storage; they do not access the real Keychain. Directories have mode 0700 and the runtime log has mode
-0600. Closing the app closes the ownership pipe, cancels the workbench and closes
+without overwriting the workspace. The native smoke check and migration tests use ephemeral or injected storage.
+The Windows-specific test verifies a temporary credential and removes it. On
+Unix, directories have mode 0700 and the runtime log has mode 0600. Closing the app closes the ownership pipe, cancels the workbench and closes
 HTTP connections; a stuck backend is terminated after five seconds. Closing the
 pipe also handles an unexpected shell termination.
 
@@ -94,7 +96,7 @@ apps/desktop/src-tauri/target/release/bundle/macos/VOID.app/Contents/MacOS/void-
 ```
 
 This checks that the packaged application resolves its own resources and serves
-the real workbench, renders it in WKWebView and verifies an actual Blob download
+the real workbench, renders it in the native WebView, opens the slash menu, selects a real tool, and verifies an actual Blob download
 to its temporary directory, then shuts down. It uses a temporary data directory and does
-not contact a provider. Close an already running VOID app before this check, as
-the single-instance guard otherwise focuses the existing app.
+not contact a provider. Smoke tests bypass the single-instance guard so they do
+not focus or alter an already running user workspace.

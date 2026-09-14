@@ -12,7 +12,8 @@ The NSIS installer is generated under
 
 The manually dispatched **Windows desktop** GitHub Actions workflow builds the
 installer, tests credential storage, installs the package, and checks that its
-WebView can load the local runtime and download an export. Only a successful run
+WebView can load the local runtime, open the slash menu, select a real tool and
+download an export. Only a successful run
 uploads an installer and its SHA-256 file. Builds are unsigned previews; Windows
 may display a SmartScreen warning. No Windows download is advertised until the
 native build and installed-application smoke test succeed.

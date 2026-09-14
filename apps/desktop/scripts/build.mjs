@@ -5,7 +5,7 @@ const desktop = fileURLToPath(new URL('../', import.meta.url));
 // contains the application and Applications shortcut, without interactive layout.
 const child = spawn(process.execPath, [fileURLToPath(new URL('../node_modules/@tauri-apps/cli/tauri.js', import.meta.url)), 'build', ...(process.platform === 'win32' ? ['--config', 'src-tauri/tauri.windows.conf.json'] : []), ...process.argv.slice(2)], {
   cwd: desktop,
-  env: { ...process.env, CI: 'true' },
+  env: { ...process.env, CI: 'true', ...(process.platform === 'darwin' ? { APPLE_SIGNING_IDENTITY: process.env.APPLE_SIGNING_IDENTITY ?? '-' } : {}) },
   stdio: 'inherit',
 });
 child.once('error', error => { console.error(`Could not start the desktop build: ${error.message}`); process.exitCode = 1; });
