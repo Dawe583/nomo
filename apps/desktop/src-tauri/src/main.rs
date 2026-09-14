@@ -146,14 +146,18 @@ fn main() {
     let smoke_data =
         std::env::temp_dir().join(format!("void-desktop-native-smoke-{}", std::process::id()));
     let cleanup_data = smoke_data.clone();
-    let app = tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
+    let builder = tauri::Builder::default();
+    let builder = if smoke {
+        builder
+    } else {
+        builder.plugin(tauri_plugin_single_instance::init(|app, _, _| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
                 let _ = window.set_focus();
             }
         }))
-        .setup(move |app| {
+    };
+    let app = builder.setup(move |app| {
             let resources = if cfg!(debug_assertions) {
                 PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources")
             } else {
@@ -265,7 +269,28 @@ fn main() {
                           }, 100);
                         })()"#);
                     } else {
-                    let _ = window.eval("(() => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['VOID desktop download smoke'], {type: 'text/plain'})); a.download = 'void-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); })()");
+                    let _ = window.eval(r#"(() => {
+                      const finish = text => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'void-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
+                      let attempts = 0, opened = false;
+                      const timer = setInterval(() => {
+                        if (++attempts > 150) { clearInterval(timer); finish('FAIL: React command menu or bundled tool API unavailable'); return; }
+                        const trigger = document.querySelector('.command-trigger');
+                        if (!trigger) return;
+                        if (!opened) { opened = true; trigger.click(); return; }
+                        const options = [...document.querySelectorAll('.command-results [role=option]')];
+                        const write = options.find(option => option.textContent.includes('/void_workspace_write'));
+                        if (!write) return;
+                        clearInterval(timer);
+                        const palette = document.querySelector('.command-palette');
+                        const composer = document.querySelector('.composer');
+                        if (getComputedStyle(composer).overflow === 'hidden' || palette.getBoundingClientRect().height < 100) { finish('FAIL: command menu clipped'); return; }
+                        write.click();
+                        setTimeout(() => {
+                          const draft = document.querySelector('.composer textarea');
+                          finish(draft?.value.includes('void_workspace_write') && document.querySelector('.selected-tool') ? 'VOID desktop download smoke' : 'FAIL: tool selection did not prepare a request');
+                        }, 150);
+                      }, 100);
+                    })()"#);
                     }
                 }
             })
