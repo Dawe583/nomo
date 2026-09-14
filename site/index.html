@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Download VOID for macOS or run the terminal workspace from source. Real release links, requirements, and setup instructions."
+    />
+    <meta name="theme-color" content="#f6f0e3" />
+    <meta
+      property="og:title"
+      content="Get VOID — a workspace with a way back"
+    />
+    <meta
+      property="og:description"
+      content="macOS desktop beta and the VOID terminal workspace. Download, inspect, and run locally."
+    />
+    <meta property="og:url" content="https://dawe583.github.io/void/" />
+    <link rel="canonical" href="https://dawe583.github.io/void/" />
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <link
+      rel="preload"
+      href="./fonts/instrument-serif-latin-400-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Get VOID — macOS &amp; terminal downloads</title>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="page">
+      <header>
+        <a class="brand" href="./" aria-label="VOID downloads home"
+          ><img src="./icon.svg" alt="" width="28" height="28" />VOID</a
+        >
+        <nav aria-label="Main navigation">
+          <a href="https://void-neon-ten.vercel.app/">[Website]</a>
+          <a href="https://github.com/Dawe583/void">[GitHub]</a>
+          <a href="https://void-tui.vercel.app/">[Open web app]</a>
+        </nav>
+      </header>
+      <main id="main">
+        <section class="hero" aria-labelledby="hero-title">
+          <div>
+            <p class="eyebrow"><span>VOID / downloads</span> Local workspace</p>
+            <h1 id="hero-title">Your workspace.<br />On your machine.</h1>
+            <p class="intro">
+              Chat with your agent. Review its work. Keep a signed history and a
+              way back for captured document changes.
+            </p>
+            <a class="button primary" href="#downloads"
+              >Get VOID <span aria-hidden="true">↓</span></a
+            >
+            <p class="small">Desktop beta / terminal workspace / open source</p>
+          </div>
+          <div
+            class="terminal"
+            aria-label="VOID terminal workspace capabilities"
+          >
+            <div class="terminal-bar">
+              <span>[ ] [ ] [ ]</span><span>VOID / terminal</span>
+            </div>
+            <pre aria-hidden="true" class="wordmark">
+ __      __  ____   _____  _____
+ \ \    / / / __ \ |_   _||  __ \
+  \ \  / / | |  | |  | |  | |  | |
+   \ \/ /  | |__| | _| |_ | |__| |
+    \__/    \____/ |_____||_____/</pre>
+            <dl class="terminal-features">
+              <div>
+                <dt>/chat</dt>
+                <dd>Work with your agent</dd>
+              </div>
+              <div>
+                <dt>/documents</dt>
+                <dd>Inspect captured changes</dd>
+              </div>
+              <div>
+                <dt>/undo</dt>
+                <dd>Review before restoring</dd>
+              </div>
+              <div>
+                <dt>/ledger</dt>
+                <dd>Verify signed history</dd>
+              </div>
+            </dl>
+            <div class="terminal-footer">
+              <span class="cursor" aria-hidden="true">▌</span> Your work. Your
+              control.
+            </div>
+          </div>
+        </section>
+        <section
+          id="downloads"
+          class="downloads"
+          aria-labelledby="downloads-title"
+        >
+          <div class="section-heading">
+            <p class="eyebrow">Available today</p>
+            <h2 id="downloads-title">Choose your interface.</h2>
+          </div>
+          <div class="download-grid">
+            <article>
+              <div class="release-type">
+                <span>[ GUI ]</span><span class="badge">Beta 3</span>
+              </div>
+              <h3>VOID for macOS</h3>
+              <p>
+                The desktop app with a local runtime included. Download the disk
+                image, then drag VOID into Applications.
+              </p>
+              <dl class="specs">
+                <div>
+                  <dt>Hardware</dt>
+                  <dd>Apple Silicon · M1 or newer</dd>
+                </div>
+                <div>
+                  <dt>System</dt>
+                  <dd>macOS 13.5 or later</dd>
+                </div>
+                <div>
+                  <dt>Download</dt>
+                  <dd>DMG · 41.8 MiB</dd>
+                </div>
+                <div>
+                  <dt>Released</dt>
+                  <dd>13 September 2026</dd>
+                </div>
+              </dl>
+              <a
+                class="button primary"
+                href="https://github.com/Dawe583/void/releases/download/desktop-v0.1.0-beta.3/VOID_0.1.0_aarch64.dmg"
+                >Download macOS GUI <span aria-hidden="true">↓</span></a
+              >
+              <p class="release-note">
+                This beta is not Apple-notarized. Gatekeeper may block
+                installation. An Intel installer is not available.
+              </p>
+              <div class="text-links">
+                <a
+                  href="https://github.com/Dawe583/void/releases/tag/desktop-v0.1.0-beta.3"
+                  >Release notes</a
+                ><a
+                  href="https://github.com/Dawe583/void/releases/download/desktop-v0.1.0-beta.3/SHA256SUMS.txt"
+                  >SHA-256 checksums</a
+                >
+              </div>
+            </article>
+            <article>
+              <div class="release-type">
+                <span>[ TUI ]</span
+                ><span class="badge">Source distribution</span>
+              </div>
+              <h3>VOID in your terminal</h3>
+              <p>
+                The live terminal workspace: animated feedback, searchable chat,
+                document revisions, approvals and signed operations.
+              </p>
+              <dl class="specs">
+                <div>
+                  <dt>Requirements</dt>
+                  <dd>Node.js 24+ and pnpm 10</dd>
+                </div>
+                <div>
+                  <dt>Download</dt>
+                  <dd>Repository source ZIP</dd>
+                </div>
+                <div>
+                  <dt>Snapshot</dt>
+                  <dd><code>bf407da</code> · 14 September 2026</dd>
+                </div>
+                <div>
+                  <dt>Start</dt>
+                  <dd><code>pnpm tui</code></dd>
+                </div>
+              </dl>
+              <a
+                class="button"
+                href="https://github.com/Dawe583/void/archive/bf407da98deb7ad7d75648911e989f24bdea9f23.zip"
+                >Download TUI source <span aria-hidden="true">↓</span></a
+              >
+              <p class="release-note">
+                A standalone TUI installer has not been released. This ZIP
+                contains the source repository; install its dependencies before
+                starting.
+              </p>
+              <div class="text-links">
+                <a href="#terminal-setup">Run the TUI</a
+                ><a
+                  href="https://github.com/Dawe583/void/blob/main/docs/TUI-WORKSPACE.md"
+                  >Full terminal guide</a
+                >
+              </div>
+            </article>
+          </div>
+        </section>
+        <section
+          class="setup"
+          id="terminal-setup"
+          aria-labelledby="setup-title"
+        >
+          <div>
+            <p class="eyebrow">From source to workspace</p>
+            <h2 id="setup-title">Two commands.<br />Your terminal.</h2>
+            <p>
+              Install
+              <a href="https://nodejs.org/en/download">Node.js 24 or newer</a>
+              and <a href="https://pnpm.io/installation">pnpm 10</a>. Extract
+              the source ZIP, open Terminal in the extracted folder, then run:
+            </p>
+          </div>
+          <div>
+            <pre class="commands"><code>pnpm install --frozen-lockfile
+pnpm tui</code></pre>
+            <p class="small">
+              On macOS, <code>VOID.command</code> in that folder also launches
+              the TUI after dependencies are installed.
+            </p>
+            <p class="small">
+              Connect a model provider before your first conversation. Existing
+              OpenCode TokenRouter settings can be imported with
+              <code>/connect opencode:tokenrouter</code>. Provider availability
+              and usage limits still apply.
+            </p>
+          </div>
+        </section>
+        <section class="web-link" aria-labelledby="web-title">
+          <div>
+            <h2 id="web-title">Start in the browser.</h2>
+            <p>
+              Open the web app if you want to try VOID before installing it.
+            </p>
+          </div>
+          <a class="button" href="https://void-tui.vercel.app/"
+            >Open VOID web app <span aria-hidden="true">↗</span></a
+          >
+        </section>
+      </main>
+      <footer>
+        <span>VOID / accountable agent work</span
+        ><a href="https://github.com/Dawe583/void/blob/main/LICENSE"
+          >Apache-2.0</a
+        ><a href="https://github.com/Dawe583/void/issues">Report an issue</a
+        ><span>Published on GitHub Pages</span>
+      </footer>
+    </div>
+  </body>
+</html>
