@@ -22,7 +22,7 @@ if ($env:VOID_ACL_PROTECT -eq '1') {
   $acl.AddAccessRule($rule)
   [System.IO.File]::SetAccessControl($file, $acl)
 }
-$acl = Get-Acl -LiteralPath $file
+$acl = [System.IO.File]::GetAccessControl($file)
 if ($acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $sid.Value) { throw 'unexpected key owner' }
 $readable = $false
 foreach ($rule in $acl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])) {
@@ -48,14 +48,18 @@ if (-not $readable) { throw 'key ACL does not grant owner read access' }
         timeout: 15_000,
         env: {
           ...process.env,
+          // A parent pwsh 7 process can export modules incompatible with the
+          // Windows PowerShell 5.1 host used for .NET Framework ACL APIs.
+          PSModulePath: join(process.env.SystemRoot ?? "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "Modules"),
           VOID_ACL_FILE: file,
           VOID_ACL_PROTECT: protect ? "1" : "0",
         },
       },
     );
-  } catch {
+  } catch (error) {
     throw new Error(
       "development key file must have a private Windows ACL owned by the current user",
+      { cause: new Error(String((error as { stderr?: string }).stderr ?? "Windows ACL command unavailable").trim().slice(0, 1000)) },
     );
   }
 }

@@ -6,6 +6,7 @@ on:
 jobs:
   manifest:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         node: [24, 26]
