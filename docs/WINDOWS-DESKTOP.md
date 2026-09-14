@@ -17,3 +17,11 @@ download an export. Only a successful run
 uploads an installer and its SHA-256 file. Builds are unsigned previews; Windows
 may display a SmartScreen warning. No Windows download is advertised until the
 native build and installed-application smoke test succeed.
+
+## Verified beta 4
+
+The Windows x64 package passed native build, credential tests, silent installation
+and the command-menu/runtime/export smoke check in Actions run
+https://github.com/Dawe583/void/actions/runs/34896103807 .
+Published installers and checksums:
+https://github.com/Dawe583/void/releases/tag/desktop-v0.1.0-beta.4 .

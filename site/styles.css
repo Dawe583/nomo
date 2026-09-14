@@ -245,7 +245,7 @@ dd {
 }
 .download-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   border-block: 1px solid var(--line);
 }
@@ -468,5 +468,33 @@ footer > span {
   }
   .cursor {
     animation: none;
+  }
+}
+
+@media (min-width: 801px) {
+  .download-grid article {
+    padding: 28px 20px;
+  }
+  .download-grid article:first-child {
+    padding-left: 0;
+  }
+  .download-grid article:last-child {
+    padding-right: 0;
+  }
+  .download-grid .button {
+    padding-inline: 12px;
+    font-size: 12px;
+  }
+}
+@media (min-width: 801px) and (max-width: 1100px) {
+  .download-grid {
+    grid-template-columns: 1fr;
+  }
+  .download-grid article {
+    padding: 28px 0;
+    border-left: 0;
+  }
+  .download-grid article + article {
+    border-top: 1px solid var(--line);
   }
 }
