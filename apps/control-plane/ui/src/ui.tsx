@@ -90,9 +90,11 @@ export function Dialog({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       ref={ref}
       tabIndex={-1}
-      onCancel={(event) => { event.preventDefault(); close(); }}
+      onCancel={(event) => { event.preventDefault(); event.stopPropagation(); close(); }}
       onKeyDown={(event) => {
+        if (event.key === "Escape") event.stopPropagation();
         if (event.key !== "Tab") return;
+        event.stopPropagation();
         const dialog = event.currentTarget;
         const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
           'button, a[href], input, select, textarea, [tabindex], [contenteditable="true"]',

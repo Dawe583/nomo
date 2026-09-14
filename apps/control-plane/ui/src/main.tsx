@@ -266,6 +266,7 @@ function App({
   useEffect(() => {
     function shortcut(e: KeyboardEvent) {
       if (e.isComposing) return;
+      if (e.target instanceof Element && e.target.closest("dialog[open]")) return;
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setSearch((s) => !s);
@@ -303,6 +304,7 @@ function App({
       ).filter((el) => !el.hasAttribute("disabled"));
     focusable()[0]?.focus();
     const trap = (event: KeyboardEvent) => {
+      if (event.target instanceof Element && event.target.closest("dialog[open]")) return;
       if (event.key !== "Tab") return;
       const controls = focusable();
       const first = controls[0],

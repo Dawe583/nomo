@@ -3135,3 +3135,10 @@ dialog::backdrop {
   .selected-tool { max-height: 100px; }
 }
 .composer:has(.command-palette), .demo-composer:has(.command-palette) { overflow: visible; }
+
+.document-history { margin-bottom: 24px; min-width: 0; }
+.document-operation-list { list-style: none; padding: 0; max-height: 22rem; overflow-y: auto; overscroll-behavior: contain; }
+.document-operation-list li + li { border-top: 1px solid var(--line); }
+.document-operation-list button { width: 100%; min-height: 44px; text-align: left; display: grid; gap: 4px; padding: 12px; }
+.document-operation-list strong, .operation-id { overflow-wrap: anywhere; }
+.document-operation-list span { font-size: 12px; }

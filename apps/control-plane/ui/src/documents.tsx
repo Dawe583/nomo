@@ -3,6 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, download, type Row } from "./api";
 import { DataTable, Dialog, Empty, ErrorBox, useApi, useText } from "./ui";
 import { RichText } from "./chat";
+import {
+  documentHistory,
+  documentContentState,
+  type DocumentOperation,
+} from "./document-history";
 export function Documents({
   sessionId,
   initialPath,
@@ -19,6 +24,7 @@ export function Documents({
   });
   return (
     <div className="documents">
+      {sessionId && <DocumentHistory key={sessionId} sessionId={sessionId} />}
       <DataTable
         endpoint={
           "/api/documents" +
@@ -54,6 +60,232 @@ export function Documents({
     </div>
   );
 }
+function DocumentHistory({ sessionId }: { sessionId: string }) {
+  const t = useText();
+  const query = useApi(
+    "/api/sessions/" + encodeURIComponent(sessionId) + "/workspace",
+  );
+  const [search, setSearch] = useState(""),
+    [selected, setSelected] = useState<DocumentOperation>();
+  const operations = documentHistory<DocumentOperation>(
+    query.data?.workspace?.operations ?? [],
+    search,
+  );
+  return (
+    <section
+      className="document-history"
+      aria-label={t("Historie dokumentů", "Document history")}
+    >
+      <h3>{t("Historie dokumentů", "Document history")}</h3>
+      <p className="muted">
+        {t(
+          "Zachované změny této konverzace včetně smazaných dokumentů. Možnost Undo ověří server v náhledu.",
+          "Retained changes in this conversation, including deleted documents. The server checks Undo availability in the preview.",
+        )}
+      </p>
+      <ErrorBox error={query.error} />
+      <label>
+        {t("Hledat cestu nebo ID operace", "Find path or operation ID")}
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </label>
+      {query.isPending ? (
+        <p role="status">{t("Načítání historie…", "Loading history…")}</p>
+      ) : operations.length ? (
+        <ul className="document-operation-list">
+          {operations.map((operation) => (
+            <li key={operation.id}>
+              <button onClick={() => setSelected(operation)}>
+                <strong>{operation.path}</strong>
+                <span>
+                  {operation.kind} ·{" "}
+                  {new Date(operation.at).toLocaleString(t("cs-CZ", "en-GB"))}
+                </span>
+                <span>{t("Zkontrolovat změnu", "Review change")}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        !query.error && (
+          <p>
+            {search
+              ? t("Žádné odpovídající změny.", "No matching changes.")
+              : t("Zatím žádné zaznamenané změny.", "No recorded changes yet.")}
+          </p>
+        )
+      )}
+      {selected && (
+        <OperationReview
+          sessionId={sessionId}
+          operationId={selected.id}
+          path={selected.path}
+          close={() => setSelected(undefined)}
+        />
+      )}
+    </section>
+  );
+}
+
+function OperationReview({
+  sessionId,
+  operationId,
+  path,
+  close,
+  onRestored,
+}: {
+  sessionId: string;
+  operationId: string;
+  path: string;
+  close: () => void;
+  onRestored?: () => Promise<void>;
+}) {
+  const t = useText(),
+    client = useQueryClient();
+  const base = "/api/sessions/" + encodeURIComponent(sessionId);
+  const [undo, setUndo] = useState<Row>(),
+    [checking, setChecking] = useState(true),
+    [previewError, setPreviewError] = useState<unknown>(),
+    [reviewVersion, setReviewVersion] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setChecking(true);
+    setUndo(undefined);
+    setPreviewError(undefined);
+    // Operator review must not change under focus, polling or cache invalidation.
+    api(base + "/undo/" + encodeURIComponent(operationId))
+      .then(
+        (result) => {
+          if (active) setUndo(result);
+        },
+        (error) => {
+          if (active) setPreviewError(error);
+        },
+      )
+      .finally(() => {
+        if (active) setChecking(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [base, operationId, reviewVersion]);
+  const session = useApi(base + "?events=false");
+  const [busy, setBusy] = useState(false),
+    [applied, setApplied] = useState(false),
+    [error, setError] = useState<unknown>(),
+    [failed, setFailed] = useState(false);
+  async function apply() {
+    if (busy || applied || failed || undo?.canApply !== true || checking)
+      return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await api(base + "/undo/" + encodeURIComponent(operationId), "POST", {
+        confirm: operationId,
+      });
+      setApplied(true);
+      await client.invalidateQueries();
+      await onRestored?.();
+    } catch (error) {
+      setError(error);
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Dialog
+      title={t("Vrácení změny: ", "Undo change: ") + path}
+      close={() => {
+        if (!busy) close();
+      }}
+    >
+      <p className="muted">
+        {t("Operace", "Operation")}:{" "}
+        <code className="operation-id">{operationId}</code>
+      </p>
+      <ErrorBox error={error ?? previewError} />
+      {checking && (
+        <p role="status">{t("Ověřuji náhled…", "Checking preview…")}</p>
+      )}
+      {applied ? (
+        <p role="status">
+          {t(
+            "Změna byla vrácena. Evidence zůstává zachovaná.",
+            "Change reversed. Evidence remains preserved.",
+          )}
+        </p>
+      ) : (
+        undo && (
+          <>
+            <p>
+              {undo.reason ??
+                t(
+                  "Zkontrolujte přesnou změnu před potvrzením.",
+                  "Review the exact change before confirming.",
+                )}
+            </p>
+            <Diff before={undo.before} after={undo.after} />
+          </>
+        )
+      )}
+      {session.data?.session?.workspace && (
+        <a
+          className="button"
+          aria-disabled={busy}
+          tabIndex={busy ? -1 : undefined}
+          href={
+            busy
+              ? undefined
+              : "/ledger?workspace=" +
+                encodeURIComponent(session.data.session.workspace)
+          }
+        >
+          {t("Ledger této konverzace", "Conversation ledger")}
+        </a>
+      )}
+      <div className="actions">
+        {!applied && (
+          <button
+            className="primary"
+            disabled={
+              busy ||
+              failed ||
+              checking ||
+              !!previewError ||
+              undo?.canApply !== true
+            }
+            onClick={apply}
+          >
+            {busy
+              ? t("Vracím změnu…", "Applying Undo…")
+              : t("Potvrdit Undo", "Confirm Undo")}
+          </button>
+        )}
+        {!applied && (failed || !!previewError) && (
+          <button
+            disabled={busy || checking}
+            onClick={() => {
+              setFailed(false);
+              setError(undefined);
+              setChecking(true);
+              setReviewVersion((version) => version + 1);
+            }}
+          >
+            {t("Obnovit náhled", "Refresh preview")}
+          </button>
+        )}
+        <button disabled={busy} onClick={close}>
+          {applied ? t("Zavřít", "Close") : t("Zrušit", "Cancel")}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
 function Diff({
   before,
   after,
@@ -81,32 +313,45 @@ function Diff({
   return (
     <div className="diff">
       {[
-        [t("Před změnou", "Before"), left, "removed"],
-        [t("Po změně", "After"), right, "added"],
-      ].map(([label, lines, tone]) => (
+        [
+          t("Před změnou", "Before"),
+          left,
+          "removed",
+          documentContentState(before),
+        ],
+        [t("Po změně", "After"), right, "added", documentContentState(after)],
+      ].map(([label, lines, tone, state]) => (
         <section key={String(tone)}>
           <h3>{String(label)}</h3>
-          <pre>
-            {(lines as string[]).map((line, i) => (
-              <span
-                key={i}
-                className={
-                  i >= prefix && i < (lines as string[]).length - suffix
-                    ? String(tone)
-                    : "unchanged"
-                }
-              >
-                <span className="line-number">{i + 1}</span>
-                {i >= prefix && i < (lines as string[]).length - suffix
-                  ? tone === "removed"
-                    ? "− "
-                    : "+ "
-                  : "  "}
-                {line}
-                {"\n"}
-              </span>
-            ))}
-          </pre>
+          {state === "absent" ? (
+            <p>{t("Dokument neexistuje", "Document does not exist")}</p>
+          ) : state === "empty" ? (
+            <p>{t("Prázdný dokument (0 bajtů)", "Empty document (0 bytes)")}</p>
+          ) : state === "unavailable" ? (
+            <p>{t("Obsah není dostupný", "Content unavailable")}</p>
+          ) : (
+            <pre>
+              {(lines as string[]).map((line, i) => (
+                <span
+                  key={i}
+                  className={
+                    i >= prefix && i < (lines as string[]).length - suffix
+                      ? String(tone)
+                      : "unchanged"
+                  }
+                >
+                  <span className="line-number">{i + 1}</span>
+                  {i >= prefix && i < (lines as string[]).length - suffix
+                    ? tone === "removed"
+                      ? "− "
+                      : "+ "
+                    : "  "}
+                  {line}
+                  {"\n"}
+                </span>
+              ))}
+            </pre>
+          )}
         </section>
       ))}
     </div>
@@ -286,19 +531,7 @@ function DocumentEditor({
                     {new Date(op.at).toLocaleString(t("cs-CZ", "en-GB"))}
                   </p>
                 </div>
-                <button
-                  disabled={op.kind === "undo"}
-                  onClick={async () => {
-                    try {
-                      const preview = await api(
-                        base + "/undo/" + encodeURIComponent(op.id),
-                      );
-                      setUndo({ ...preview, operation: op.id });
-                    } catch (e) {
-                      setError(e);
-                    }
-                  }}
-                >
+                <button onClick={() => setUndo({ operation: op.id })}>
                   {t("Náhled Undo", "Preview Undo")}
                 </button>
               </article>
@@ -312,50 +545,20 @@ function DocumentEditor({
         <Empty>{t("Načítání dokumentu…", "Loading document…")}</Empty>
       )}
       {undo && (
-        <div className="undo-review">
-          <h3>{t("Vrácení změny", "Undo change")}</h3>
-          <p>
-            {undo.reason ??
-              t(
-                "Zkontrolujte přesnou změnu před potvrzením.",
-                "Review the exact change before confirming.",
-              )}
-          </p>
-          <Diff before={undo.before} after={undo.after} />
-          <button
-            disabled={!undo.canApply || busy}
-            className="primary"
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await api(
-                  base + "/undo/" + encodeURIComponent(undo.operation),
-                  "POST",
-                  { confirm: undo.operation },
-                );
-                setUndo(undefined);
-                const refreshed = await detail.refetch();
-                if (refreshed.data?.document) {
-                  setContent(refreshed.data.document.content ?? "");
-                  setBaseline(refreshed.data.document.content ?? "");
-                  setRevision(refreshed.data.document.revision);
-                }
-                await client.invalidateQueries();
-                setMode("preview");
-                requestAnimationFrame(() => previewTab.current?.focus());
-              } catch (e) {
-                setError(e);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {t("Potvrdit Undo", "Confirm Undo")}
-          </button>
-          <button onClick={() => setUndo(undefined)}>
-            {t("Zrušit", "Cancel")}
-          </button>
-        </div>
+        <OperationReview
+          sessionId={selected.sessionId}
+          operationId={undo.operation}
+          path={selected.path}
+          close={() => setUndo(undefined)}
+          onRestored={async () => {
+            const refreshed = await detail.refetch();
+            if (refreshed.data?.document) {
+              setContent(refreshed.data.document.content ?? "");
+              setBaseline(refreshed.data.document.content ?? "");
+              setRevision(refreshed.data.document.revision);
+            }
+          }}
+        />
       )}
     </Dialog>
   );

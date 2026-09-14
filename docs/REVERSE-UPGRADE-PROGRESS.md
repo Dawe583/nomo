@@ -150,3 +150,12 @@ journal and reservation-backed encrypted vault. All 32 runtime tests and runtime
 TypeScript checks passed. This advances the process-crash portion of R01/R06; it
 does not certify PostgreSQL client SIGKILL, network partitions, external provider
 receipts, or the full M1 milestone.
+
+## Persistence and interface recovery follow-up
+
+Twenty additional before/after journal and vault failure cases now cover local
+retry, reconciliation, signed evidence and retained capacity. The terminal fixes
+verification exit status, selected-run cancellation and fatal-exit cleanup. The
+shared GUI exposes retained operations for deleted-document recovery. See
+[the checkpoint](UPGRADE-CHECKPOINT.md) for fresh verification and exact limits.
+This does not close M1 or add multi-operation recovery/provider certification.
