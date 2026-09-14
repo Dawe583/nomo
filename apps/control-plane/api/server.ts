@@ -427,178 +427,158 @@ async function serveStatic(
     response.end();
     return;
   }
-  await new Promise<void>((re…4660 tokens truncated…            {c.label}
-              </label>
-            ))}
-            <button
-              onClick={() =>
-                localStorage.setItem(
-                  "void-view:" + endpoint,
-                  json({ hidden, size, sort, view }),
-                )
-              }
-            >
-              {t("Uložit pohled", "Save view")}
-            </button>
-            <button
-              onClick={() => {
-                try {
-                  const v = JSON.parse(
-                    localStorage.getItem("void-view:" + endpoint) ?? "{}",
-                  );
-                  setHidden(v.hidden ?? []);
-                  setSize(v.size ?? "50");
-                  setSort(v.sort ?? "");
-                  setView(v.view ?? "table");
-                } catch {}
-              }}
-            >
-              {t("Načíst pohled", "Load view")}
-            </button>
-          </div>
-        </details>
-        <button
-          disabled={!rows.length}
-          onClick={() =>
-            download(
-              "void-page.json",
-              json({ scope: data?.scope, asOf: data?.asOf, items: rows }),
-              "application/json",
-            )
-          }
-        >
-          {t("Export stránky", "Export page")}
-        </button>
-      </div>
-      <ErrorBox error={query.error} />
-      {updates && (
-        <button
-          className="notice"
-          onClick={() => {
-            setSnapshot(query.data);
-            setUpdates(false);
-          }}
-        >
-          {t(
-            "Jsou dostupné nové záznamy. Aktualizovat pohled.",
-            "New records available. Update this view.",
-          )}
-        </button>
-      )}
-      {query.isLoading ? (
-        <Empty>{t("Načítání…", "Loading…")}</Empty>
-      ) : !rows.length ? (
-        <Empty>
-          {empty ??
-            t(
-              "Žádné výsledky. Změňte filtr nebo začněte novou konverzaci.",
-              "No results. Change the filter or start a conversation.",
-            )}
-        </Empty>
-      ) : (
-        <div
-          className={"table-scroll " + (view === "list" ? "list-view" : "")}
-          tabIndex={0}
-          aria-label={t("Výsledky", "Results")}
-        >
-          <table>
-            <thead>
-              <tr>
-                {visible.map((c) => (
-                  <th key={c.key}>
-                    <button
-                      onClick={() => {
-                        setSort(sort === c.key ? "-" + c.key : c.key);
-                        setCursor("");
-                        setHistory([]);
-                      }}
-                    >
-                      {c.label}{" "}
-                      {sort.replace("-", "") === c.key
-                        ? sort.startsWith("-")
-                          ? "↓"
-                          : "↑"
-                        : ""}
-                    </button>
-                  </th>
-                ))}
-                <th>{t("Detail", "Detail")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={row.id ?? row.holdId ?? row.seq ?? row.path ?? index}>
-                  {visible.map((c) => (
-                    <td key={c.key} data-label={c.label}>
-                      {c.render
-                        ? c.render(row)
-                        : row[c.key] == null
-                          ? "—"
-                          : /^(at|.*At)$/.test(c.key) &&
-                              Number.isFinite(Date.parse(row[c.key]))
-                            ? new Date(row[c.key]).toLocaleString(
-                                t("cs-CZ", "en-GB"),
-                              )
-                            : typeof row[c.key] === "number"
-                              ? new Intl.NumberFormat(
-                                  t("cs-CZ", "en-GB"),
-                                ).format(row[c.key])
-                              : String(row[c.key])}
-                    </td>
-                  ))}
-                  <td>
-                    <button
-                      onClick={() => (onRow ? onRow(row) : setDetail(row))}
-                      aria-label={t("Otevřít detail", "Open details")}
-                    >
-                      ↗
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <div className="pagination">
-        <span>
-          {data?.total ?? rows.length} {t("záznamů", "records")}{" "}
-          {data?.asOf && (
-            <small>
-              {new Date(data.asOf).toLocaleTimeString(t("cs-CZ", "en-GB"))}
-            </small>
-          )}
-        </span>
-        <button
-          disabled={!history.length}
-          onClick={() => {
-            setCursor(history.at(-1) ?? "");
-            setHistory(history.slice(0, -1));
-          }}
-        >
-          {t("Předchozí", "Previous")}
-        </button>
-        <button
-          disabled={!data?.hasMore || !data?.nextCursor}
-          onClick={() => {
-            setHistory([...history, cursor]);
-            setCursor(data!.nextCursor);
-          }}
-        >
-          {t("Další", "Next")}
-        </button>
-      </div>
-      {detail && (
-        <Dialog
-          title={t("Podrobnosti záznamu", "Record details")}
-          close={() => setDetail(undefined)}
-        >
-          <JsonDetail value={detail} />
-          <button onClick={() => navigator.clipboard.writeText(json(detail))}>
-            {t("Kopírovat", "Copy")}
-          </button>
-        </Dialog>
-      )}
-    </div>
-  );
+  await new Promise<void>((resolvePipe, rejectPipe) => {
+    const stream = createReadStream(filePath);
+    stream.once("error", rejectPipe);
+    response.once("error", rejectPipe);
+    response.once("finish", resolvePipe);
+    stream.pipe(response);
+  });
+}
+
+function toApiEntry(record: LedgerFeedRecord): JsonObject {
+  return {
+    seq: record.seq,
+    at: record.at,
+    tool: record.tool,
+    klass: record.klass,
+    decision: record.decision,
+    argsDigest: record.argsDigest,
+    prev_hash: record.prevDigest,
+    hash: record.digest,
+    digest: record.digest,
+  };
+}
+
+function toApiApproval(record: PendingApproval): JsonObject {
+  return {
+    holdId: record.holdId,
+    call: record.call,
+    expiresAt: record.expiresAt,
+    status: record.status,
+  };
+}
+
+// Host validation blocks DNS rebinding; Origin and Fetch Metadata block hostile
+// browser pages. This is a local boundary, not authentication between local users.
+function isLocalRequest(request: IncomingMessage): boolean {
+  const peer = request.socket.remoteAddress;
+  if (peer !== "127.0.0.1" && peer !== "::1" && peer !== "::ffff:127.0.0.1") return false;
+  const port = request.socket.localPort;
+  const hosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]);
+  const host = request.headers.host;
+  if (host === undefined || !hosts.has(host)) return false;
+  const origin = request.headers.origin;
+  if (origin !== undefined && origin !== `http://${host}`) return false;
+  const site = request.headers["sec-fetch-site"];
+  return site === undefined || site === "same-origin" || site === "none";
+}
+
+function parseRequestUrl(request: IncomingMessage): URL | null {
+  try {
+    return new URL(request.url ?? "/", "http://127.0.0.1");
+  } catch {
+    return null;
+  }
+}
+
+function parseLimit(raw: string | null): number {
+  if (raw === null) return 50;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isInteger(parsed) || parsed < 1) return 50;
+  return Math.min(parsed, 200);
+}
+
+async function readPendingApprovals(approvals: ApprovalBroker | undefined): Promise<readonly PendingApproval[]> {
+  if (approvals?.listPending !== undefined) return approvals.listPending();
+  if (approvals?.pending !== undefined) return approvals.pending();
+  return [];
+}
+
+function parseDecision(value: unknown): ApprovalDecision | null {
+  if (typeof value !== "object" || value === null) return null;
+  const body = value as Record<string, unknown>;
+  if (body.kind !== "approved" && body.kind !== "denied") return null;
+  if (typeof body.by !== "string" || body.by === "") return null;
+  if (body.reason !== undefined && typeof body.reason !== "string") return null;
+  return body.reason === undefined
+    ? { kind: body.kind, by: body.by }
+    : { kind: body.kind, by: body.by, reason: body.reason };
+}
+
+async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+  // Browsers block cross-origin application/json form posts behind a preflight,
+  // but a text/plain form body can still be crafted to parse as JSON. Requiring
+  // the explicit content type keeps the decision endpoint a fetch-only surface,
+  // so a hostile page cannot post a decision through a victim browser session.
+  const contentType = request.headers["content-type"];
+  if (contentType === undefined || !applicationJsonContentType(contentType)) return null;
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of request) {
+    const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+    size += buffer.length;
+    if (size > maxBodyBytes) throw new Error("request body exceeds 64 KiB");
+    chunks.push(buffer);
+  }
+  if (chunks.length === 0) return null;
+  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
+function applicationJsonContentType(header: string): boolean {
+  const [mediaType] = header.split(";", 2);
+  return mediaType.trim().toLowerCase() === "application/json";
+}
+
+function sendJson(response: ServerResponse, statusCode: number, value: JsonObject): void {
+  response.setHeader("cache-control", "no-store");
+  response.setHeader("x-content-type-options", "nosniff");
+  response.statusCode = statusCode;
+  response.setHeader("content-type", "application/json; charset=utf-8");
+  response.end(JSON.stringify(value));
+}
+
+function staticPath(webRoot: string, pathname: string): string | null {
+  if (pathname.startsWith('/api/')) return null;
+  const spa = /^\/(chat(?:\/[^/]*)?|demo|overview|sessions|runs|documents|approvals|ledger|connections|models|settings)$/.test(pathname);
+  const legacySpa = ['/feed.html','/approvals.html','/ledger.html'].includes(pathname) && !existsSync(join(webRoot, pathname));
+  const name = pathname === '/' || spa || legacySpa ? '/index.html' : pathname;
+  let normalized: string;
+  try {
+    const decoded = decodeURIComponent(name);
+    if (decoded.includes("\\") || decoded.includes("\0")) return null;
+    // URL paths use forward slashes even when the host filesystem is Windows.
+    normalized = posix.normalize(decoded);
+  } catch {
+    return null;
+  }
+  if (!normalized.endsWith(".html") && !publicScriptPaths.has(normalized) && !/^\/assets\/[A-Za-z0-9_.-]+\.(js|css|svg|woff2)$/.test(normalized)) return null;
+  const target = resolve(join(webRoot, normalized));
+  const inside = relative(webRoot, target);
+  if (inside.startsWith("..") || inside === "" || inside.includes(":") || resolve(webRoot, inside) !== target) return null;
+  return target;
+}
+
+function contentType(filePath: string): string {
+  if (extname(filePath) === ".html") return "text/html; charset=utf-8";
+  if (extname(filePath) === ".webmanifest") return "application/manifest+json";
+  if (extname(filePath) === ".svg") return "image/svg+xml";
+  if (extname(filePath) === ".css") return "text/css; charset=utf-8";
+  if (extname(filePath) === ".js") return "application/javascript; charset=utf-8";
+  return "application/octet-stream";
+}
+
+function selectLedgerPath(options: RouteOptions, workspace: string | null): string | null {
+  if (options.ledgerPath !== undefined) return options.ledgerPath;
+  const name = workspace ?? options.env.VOID_WORKSPACE ?? "default";
+  if (!/^[A-Za-z0-9_.-]+$/.test(name)) return null;
+  const dir = options.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger");
+  return join(dir, `${name}.jsonl`);
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const port = Number.parseInt(process.env.PORT ?? "8081", 10);
+  createControlPlaneServer({ approvals: localApprovals(process.env) }).listen(port, process.env.VOID_CONTROL_TOKEN && process.env.VOID_CONTROL_TOKEN.length >= 32 ? process.env.VOID_CONTROL_HOST ?? "127.0.0.1" : "127.0.0.1", () => {
+    console.log(`VOID control plane API listening on http://127.0.0.1:${port}`);
+  });
 }
