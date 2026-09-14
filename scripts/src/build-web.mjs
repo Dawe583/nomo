@@ -2,7 +2,9 @@ import { copyFile, mkdir, rm } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 const root = new URL('../../', import.meta.url);
 await rm(new URL('../../dist/web/', import.meta.url), { recursive: true, force: true });
-const result = spawnSync(process.execPath, [process.env.npm_execpath, '--filter', '@void/control-plane-ui', 'build'], { cwd: root, stdio: 'inherit' });
+// Vercel invokes this file directly; pnpm scripts additionally provide npm_execpath.
+const packageManager = process.env.npm_execpath;
+const result = spawnSync(packageManager ? process.execPath : 'pnpm', [...(packageManager ? [packageManager] : []), '--filter', '@void/control-plane-ui', 'build'], { cwd: root, stdio: 'inherit' });
 if (result.status !== 0) process.exit(result.status ?? 1);
 const output = new URL('../../dist/web/', import.meta.url);
 await mkdir(output, { recursive: true });
