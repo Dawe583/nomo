@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 const desktop = fileURLToPath(new URL('../', import.meta.url));
 // Avoid Finder AppleScript automation during DMG creation. The installer still
 // contains the application and Applications shortcut, without interactive layout.
-const child = spawn(fileURLToPath(new URL('../node_modules/.bin/tauri', import.meta.url)), ['build', ...process.argv.slice(2)], {
+const child = spawn(process.execPath, [fileURLToPath(new URL('../node_modules/@tauri-apps/cli/tauri.js', import.meta.url)), 'build', ...(process.platform === 'win32' ? ['--config', 'src-tauri/tauri.windows.conf.json'] : []), ...process.argv.slice(2)], {
   cwd: desktop,
   env: { ...process.env, CI: 'true' },
   stdio: 'inherit',

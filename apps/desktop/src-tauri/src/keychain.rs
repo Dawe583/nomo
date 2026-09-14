@@ -95,6 +95,94 @@ impl SecretStore for MacKeychain {
     }
 }
 
+#[cfg(windows)]
+pub struct WindowsCredentials {
+    pub account: String,
+}
+#[cfg(windows)]
+impl WindowsCredentials {
+    fn target(&self) -> Vec<u16> {
+        format!("dev.void.desktop.workspace:{}", self.account)
+            .encode_utf16()
+            .chain(Some(0))
+            .collect()
+    }
+}
+#[cfg(windows)]
+impl SecretStore for WindowsCredentials {
+    fn get(&self) -> Result<Option<Vec<u8>>> {
+        use windows_sys::Win32::{
+            Foundation::{GetLastError, ERROR_NOT_FOUND},
+            Security::Credentials::*,
+        };
+        let target = self.target();
+        let mut credential = std::ptr::null_mut();
+        // Windows owns the returned allocation until CredFree. Copy only a valid key.
+        unsafe {
+            if CredReadW(target.as_ptr(), CRED_TYPE_GENERIC, 0, &mut credential) == 0 {
+                if GetLastError() == ERROR_NOT_FOUND {
+                    return Ok(None);
+                }
+                return Err("Cannot unlock the VOID key in Windows Credential Manager".into());
+            }
+            let entry = &*credential;
+            let key = if entry.CredentialBlobSize == 32 && !entry.CredentialBlob.is_null() {
+                Some(std::slice::from_raw_parts(entry.CredentialBlob, 32).to_vec())
+            } else {
+                None
+            };
+            CredFree(credential.cast());
+            key.map(Some)
+                .ok_or_else(|| "Invalid Windows workspace key; data was left unchanged".into())
+        }
+    }
+    fn put(&self, key: &[u8]) -> Result<()> {
+        use windows_sys::Win32::Security::Credentials::*;
+        if key.len() != 32 {
+            return Err("Invalid workspace key length".into());
+        }
+        let mut target = self.target();
+        let mut username: Vec<u16> = "VOID".encode_utf16().chain(Some(0)).collect();
+        let mut bytes = key.to_vec();
+        let entry = CREDENTIALW {
+            Type: CRED_TYPE_GENERIC,
+            TargetName: target.as_mut_ptr(),
+            CredentialBlobSize: bytes.len() as u32,
+            CredentialBlob: bytes.as_mut_ptr(),
+            Persist: CRED_PERSIST_LOCAL_MACHINE,
+            UserName: username.as_mut_ptr(),
+            ..Default::default()
+        };
+        let saved = unsafe { CredWriteW(&entry, 0) };
+        bytes.fill(0);
+        if saved == 0 {
+            return Err("Cannot save the VOID key in Windows Credential Manager".into());
+        }
+        Ok(())
+    }
+}
+
+#[cfg(all(test, windows))]
+#[test]
+fn windows_credentials_round_trip() {
+    use windows_sys::Win32::Security::Credentials::*;
+    let store = WindowsCredentials {
+        account: format!(
+            "test-{}-{:?}",
+            std::process::id(),
+            std::time::SystemTime::now()
+        ),
+    };
+    assert!(store.get().unwrap().is_none());
+    let key = random_key().unwrap();
+    store.put(&key).unwrap();
+    let actual = store.get();
+    unsafe {
+        CredDeleteW(store.target().as_ptr(), CRED_TYPE_GENERIC, 0);
+    }
+    assert_eq!(actual.unwrap(), Some(key));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

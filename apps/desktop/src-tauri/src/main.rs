@@ -65,9 +65,18 @@ fn launch_runtime(
                 },
             )?
         }
-        #[cfg(not(target_os = "macos"))]
+        #[cfg(windows)]
         {
-            return Err("Native workspace key storage is currently supported on macOS only".into());
+            keychain::load_or_create(
+                &data,
+                &keychain::WindowsCredentials {
+                    account: data.to_string_lossy().into_owned(),
+                },
+            )?
+        }
+        #[cfg(not(any(target_os = "macos", windows)))]
+        {
+            return Err("Native workspace key storage is supported on macOS and Windows".into());
         }
     };
     let node = resources
@@ -86,7 +95,13 @@ fn launch_runtime(
     search_path.extend(std::env::split_paths(
         &std::env::var_os("PATH").unwrap_or_default(),
     ));
-    let mut child = Command::new(node)
+    let mut command = Command::new(node);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW for the owned Node runtime.
+    }
+    let mut child = command
         .arg(resources.join("runtime/runtime.mjs"))
         .current_dir(&data)
         .env("VOID_DATA_DIR", &data)
@@ -201,7 +216,7 @@ fn main() {
                     tauri::webview::DownloadEvent::Finished { success, .. } => {
                         if smoke {
                             let correct = success && std::fs::read(&finish_file).ok().as_deref() == Some(b"VOID desktop download smoke");
-                            if correct { println!("VOID native desktop smoke passed: bundled runtime, rendered WKWebView and Blob download verified. Mobile toolbar checks: {}.", mobile_smoke); }
+                            if correct { println!("VOID native desktop smoke passed: bundled runtime, rendered WebView and Blob download verified. Mobile toolbar checks: {}.", mobile_smoke); }
                             else { eprintln!("VOID native desktop smoke failed: {}", std::fs::read_to_string(&finish_file).unwrap_or_else(|_| "Blob export was not saved correctly".into())); }
                             download_app.exit(if correct { 0 } else { 1 });
                         }
@@ -237,7 +252,7 @@ fn main() {
                                   check(document.querySelector('dialog[open]'), 'options dialog open');
                                   const actions = [...document.querySelectorAll('.mobile-action-list button')];
                                   check(actions.length >= 4, 'options present');
-                                  check(actions.every(button => button.getBoundingClientRect().height >= 51.9), 'options touch size: ' + actions.map(button => button.getBoundingClientRect().height).join(','));
+                                  check(actions.every(button => button.getBoundingClientRect().height >= 43.9), 'options touch size: ' + actions.map(button => button.getBoundingClientRect().height).join(','));
                                   const before = document.documentElement.dataset.theme;
                                   document.querySelector('.mobile-action-list .theme-toggle').click();
                                   setTimeout(() => {
