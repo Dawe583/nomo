@@ -1,3 +1,4 @@
+import { toolCatalog } from '../packages/workbench/src/tool-catalog.ts';
 import { demoRouter } from "./demo.mjs";
 import { mountPrimeRoutes, enqueuePrime, primeStatus } from "./prime.mjs";
 import { mutateCloudDocument, managedCloudUndo } from "./recovery.mjs";
@@ -491,6 +492,19 @@ app.post("/api/upstream", async (req, res) => {
 app.delete("/api/upstream", async (req, res) => {
   await write("upstream", null);
   res.json({ ok: true });
+});
+app.get('/api/tools', async (req, res) => {
+  if (req.query.session) {
+    const session = await read(`session:${req.query.session}`);
+    if (!session) return res.status(404).json({ message: 'Session not found.' });
+    return res.json({ scope: 'session', tools: toolCatalog(session.tools ?? []) });
+  }
+  const saved = (await read('connectors')) ?? [];
+  const tools = [...workspaceTools, ...saved.flatMap(item => (decrypt(item.secret).tools ?? []).map(tool => ({ ...tool, connectorId: item.id })))];
+  const upstream = await read('upstream');
+  if (upstream) tools.push(...(await catalog(decrypt(upstream))).tools.map(tool => ({ ...tool, connectorId: 'legacy' })));
+  for (const integration of await integrationCatalogs()) tools.push(...integration.tools);
+  return res.json({ scope: 'configured', tools: toolCatalog(tools) });
 });
 app.get("/api/connectors", async (req, res) => {
   const saved = (await read("connectors")) ?? [];

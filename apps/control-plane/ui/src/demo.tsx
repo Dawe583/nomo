@@ -1,10 +1,12 @@
+import { CommandMenu } from "./command-menu.tsx";
+import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import * as m from "motion/react-m";
 import { MotionConfig, useReducedMotion } from "motion/react";
 import { api, download, type Row } from "./api";
 import { AsciiWordmark, BrandMark } from "./brand";
 import { Icon } from "./icons";
-import { Dialog, ErrorBox, MotionEnabled, useText } from "./ui";
+import { Dialog, ErrorBox, MotionEnabled, useText, useApi } from "./ui";
 
 const RichText = lazy(() =>
   import("./chat").then((module) => ({ default: module.RichText })),
@@ -38,6 +40,45 @@ export function PublicDemo({
   const transcript = useRef<HTMLDivElement>(null),
     started = useRef(false),
     pendingRequest = useRef<{ prompt: string; requestId: string } | null>(null);
+  const [commandDismissed, setCommandDismissed] = useState(false);
+  const [commandIndex, setCommandIndex] = useState(0);
+  const composerInput = useRef<HTMLTextAreaElement>(null);
+  const commandOpen =
+    draft.startsWith("/") && !/\s/.test(draft) && !commandDismissed;
+  const tools = useApi("/api/demo/tools", commandOpen);
+  const commandItems = filterCommands(
+    [
+      {
+        id: "documents",
+        name: "context",
+        description: t(
+          "Zkušební dokumenty a zachycené Undo",
+          "Demo documents and captured Undo",
+        ),
+      },
+      {
+        id: "workspace",
+        name: "workspace",
+        description: t("Přejít do plného workspace", "Open the full workspace"),
+      },
+      ...(tools.data?.tools ?? []).map((tool: Command) => ({
+        ...tool,
+        tool: true,
+      })),
+    ],
+    draft,
+  );
+  const activeCommand = Math.min(
+    commandIndex,
+    Math.max(0, commandItems.length - 1),
+  );
+  function chooseCommand(command: Command) {
+    setDraft(command.tool ? toolPrompt(command) : "");
+    setCommandDismissed(true);
+    if (command.id === "documents") setPanel("documents");
+    if (command.id === "workspace") onWorkspace();
+    composerInput.current?.focus();
+  }
   async function start() {
     setStarting(true);
     setError(undefined);
@@ -150,6 +191,11 @@ export function PublicDemo({
     </>
   );
   async function send() {
+    if (commandOpen) {
+      if (commandItems[activeCommand])
+        chooseCommand(commandItems[activeCommand]);
+      return;
+    }
     if (busy || !state || state.status === "running" || !draft.trim()) return;
     const prompt = draft.trim();
     if (pendingRequest.current?.prompt !== prompt)
@@ -339,17 +385,72 @@ export function PublicDemo({
                     void send();
                   }}
                 >
+                  {commandOpen && (
+                    <CommandMenu
+                      items={commandItems}
+                      active={activeCommand}
+                      choose={chooseCommand}
+                      loading={tools.isLoading}
+                      error={!!tools.error}
+                      retry={() => {
+                        void tools.refetch();
+                      }}
+                      scope="session"
+                    />
+                  )}
                   <textarea
+                    ref={composerInput}
+                    aria-autocomplete="list"
+                    aria-controls={
+                      commandOpen ? "void-command-list" : undefined
+                    }
+                    aria-expanded={commandOpen}
+                    aria-activedescendant={
+                      commandOpen && commandItems.length
+                        ? `void-command-${activeCommand}`
+                        : undefined
+                    }
                     aria-label={t("Zpráva", "Message")}
                     rows={2}
                     maxLength={4000}
                     value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      setCommandDismissed(false);
+                      setCommandIndex(0);
+                    }}
                     placeholder={t(
-                      "Co spolu vytvoříme?",
-                      "What shall we create?",
+                      "Zpráva nebo / pro příkazy a nástroje",
+                      "Message or / for commands and tools",
                     )}
                     onKeyDown={(e) => {
+                      if (e.nativeEvent.isComposing) return;
+                      if (commandOpen) {
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          setCommandDismissed(true);
+                          return;
+                        }
+                        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                          e.preventDefault();
+                          setCommandIndex(
+                            (activeCommand +
+                              (e.key === "ArrowDown" ? 1 : -1) +
+                              commandItems.length) %
+                              Math.max(1, commandItems.length),
+                          );
+                          return;
+                        }
+                        if (
+                          (e.key === "Enter" && !e.shiftKey) ||
+                          (e.key === "Tab" && commandItems.length)
+                        ) {
+                          e.preventDefault();
+                          if (commandItems[activeCommand])
+                            chooseCommand(commandItems[activeCommand]);
+                          return;
+                        }
+                      }
                       if (
                         e.key === "Enter" &&
                         !e.shiftKey &&

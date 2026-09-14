@@ -163,6 +163,7 @@ async function route(
       }
       return sendJson(response, 405, { error: 'method_not_allowed' });
     }
+    if (parsed.pathname === '/api/tools' && request.method === 'GET') return sendJson(response, 200, wb.availableTools(query.get('session') || undefined));
     if (parsed.pathname === '/api/preferences') {
       if (request.method === 'GET') return sendJson(response, 200, { preferences: wb.getPreferences() });
       if (request.method === 'PATCH') return sendJson(response, 200, { preferences: wb.patchPreferences(await readJsonBody(request) as Record<string, unknown>) });

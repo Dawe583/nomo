@@ -1,3 +1,4 @@
+import { toolCatalog } from './tool-catalog.ts';
 import { managedDocumentAdapter } from './managed-documents.ts';
 import { recoveryRuntime, localOperationJournal, digest, type Json } from '../../runtime/src/index.ts';
 import { DEFAULT_MODEL_ID, TOKENROUTER_URL, PROVIDER_PRESETS } from './provider-defaults.ts';
@@ -95,6 +96,11 @@ export class Workbench {
   }
   clearProvider(): void { this.ignoreEnvironment = true; this.provider = undefined; if (this.config) delete this.profiles[this.config.baseUrl]; this.config = undefined; this.catalog = []; this.persist(); }
   list(): readonly SessionView[] { return [...this.sessions.values()].map(session => ({ ...session.view, events: [] })); }
+  availableTools(id?: string) {
+    const session = id ? this.sessions.get(id) : undefined;
+    if (id && !session) throw new Error('Session not found.');
+    return { scope: id ? 'session' : 'configured', tools: toolCatalog(session ? session.tools ?? [...workspaceTools] : [...workspaceTools, ...this.connectors.flatMap(c => c.tools.map(tool => ({ ...tool, connectorId: c.id })))]) };
+  }
   get(id: string): SessionView | undefined { return this.sessions.get(id)?.view; }
   async start(prompt: string, model = this.preferences.defaultModel ?? DEFAULT_MODEL_ID, key?: string): Promise<SessionView> { return this.locked(async () => { const prior = this.request(key, ['start', prompt, model]); if (prior) return this.get(prior)!; await this.providerState(); const result = await this.startSession(prompt, model); this.remember(key, ['start', prompt, model], result.id); return result; }); }
   private async startSession(prompt: string, model: string): Promise<SessionView> {

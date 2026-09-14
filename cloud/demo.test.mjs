@@ -128,6 +128,10 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
     403,
   );
   assert.equal((await request("/state")).status, 401);
+  const publicTools = await (await request('/tools')).json();
+  assert.deepEqual(publicTools.tools.map(tool => tool.name), ['void_workspace_list', 'void_workspace_read', 'void_workspace_write', 'void_workspace_delete']);
+  assert.ok(publicTools.tools.every(tool => tool.source === 'workspace'));
+  assert.equal(reads.length, 0, 'Public tool metadata must not read private workspace state');
   const first = await request("/start", "POST"),
     firstCookie = first.headers.get("set-cookie");
   const second = await request("/start", "POST"),

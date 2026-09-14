@@ -1,3 +1,4 @@
+import { toolCatalog } from '../packages/workbench/src/tool-catalog.ts';
 /** Public demo owns a separate namespace and only managed document tools.
  * No provider profiles, OAuth accounts, MCP endpoints or Prime bridge are read.
  */
@@ -147,6 +148,7 @@ export function demoRouter(dependencies = {}) {
         .json({ available: false, message: "Public demo is not configured." });
     next();
   });
+  router.get('/tools', (req, res) => res.json({ scope: 'session', tools: toolCatalog(workspaceTools) }));
   router.get("/status", (req, res) =>
     res.json({
       available: true,

@@ -1,3 +1,5 @@
+import { CommandMenu } from "./command-menu.tsx";
+import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import * as m from "motion/react-m";
 import { AsciiWordmark, BrandMark } from "./brand";
 import { ApprovalReview } from "./approval-review";
@@ -106,6 +108,7 @@ export function Chat({
   );
   const provider = useApi("/api/provider");
   const preferences = useApi("/api/preferences");
+  const capabilities = useApi("/api/capabilities");
   const workspace = useApi("/api/sessions/" + id + "/workspace", !!id);
   const holds = useApi("/api/approvals", !!id, 3000);
   const [contextPicker, setContextPicker] = useState(false);
@@ -152,12 +155,171 @@ export function Chat({
   const [follow, setFollow] = useState(true);
   const transcript = useRef<HTMLDivElement>(null),
     textarea = useRef<HTMLTextAreaElement>(null);
+  const [commandDismissed, setCommandDismissed] = useState(false);
+  const [commandIndex, setCommandIndex] = useState(0);
+  const [selectedTool, setSelectedTool] = useState<Command>();
+  const commandOpen =
+    draft.startsWith("/") && !/\s/.test(draft) && !commandDismissed;
+  const toolsQuery = useApi(
+    "/api/tools" + (id ? "?session=" + encodeURIComponent(id) : ""),
+    commandOpen,
+  );
+  const commands: Command[] = [
+    {
+      id: "new",
+      name: "new",
+      description: t("Nová konverzace", "New conversation"),
+    },
+    {
+      id: "plan",
+      name: "plan",
+      description: t(
+        "Připravit plán před provedením změn",
+        "Request a plan before making changes",
+      ),
+    },
+    {
+      id: "review",
+      name: "review",
+      description: t(
+        "Zkontrolovat výstupy a rizika",
+        "Review outputs and risks",
+      ),
+    },
+    {
+      id: "tools",
+      name: "tools",
+      description: t(
+        "Připojené nástroje a jejich konfigurace",
+        "Connected tools and configuration",
+      ),
+    },
+    {
+      id: "model",
+      name: "model",
+      description: t(
+        "Vybrat model pro novou konverzaci",
+        "Choose a model for a new conversation",
+      ),
+    },
+    {
+      id: "context",
+      name: "context",
+      description: t(
+        "Dokumenty, revize a kontext",
+        "Documents, revisions and context",
+      ),
+    },
+    {
+      id: "undo",
+      name: "undo",
+      description: t(
+        "Otevřít zachycené změny a náhled Undo",
+        "Open captured changes and Undo preview",
+      ),
+    },
+    {
+      id: "approvals",
+      name: "approvals",
+      description: t(
+        "Rozhodnutí čekající na schválení",
+        "Pending approval decisions",
+      ),
+    },
+    {
+      id: "ledger",
+      name: "ledger",
+      description: t(
+        "Podepsaný audit operací VOID",
+        "VOID signed operation audit",
+      ),
+    },
+    ...(id
+      ? [
+          {
+            id: "export",
+            name: "export",
+            description: t(
+              "Stáhnout načtený přepis jako Markdown",
+              "Download the loaded transcript as Markdown",
+            ),
+          },
+        ]
+      : []),
+    ...(running
+      ? [
+          {
+            id: "stop",
+            name: "stop",
+            description: t(
+              "Zastavit aktivního agenta",
+              "Stop the active agent",
+            ),
+          },
+        ]
+      : []),
+    ...(toolsQuery.data?.tools ?? []).map((tool: Command) => ({
+      ...tool,
+      tool: true,
+      description: `${tool.source} · ${tool.description}`,
+    })),
+  ];
+  const commandItems = filterCommands(commands, draft);
+  const activeCommand = Math.min(
+    commandIndex,
+    Math.max(0, commandItems.length - 1),
+  );
+  async function chooseCommand(command: Command) {
+    setCommandDismissed(true);
+    setDraft("");
+    setCommandIndex(0);
+    if (command.tool) {
+      setSelectedTool(command);
+      setDraft(toolPrompt(command));
+    } else if (command.id === "plan")
+      setDraft(
+        t(
+          "Nejprve navrhni plán, upozorni na rizika a vyčkej na mé schválení před změnami. Úkol: ",
+          "First propose a plan, identify risks, and wait for my approval before making changes. Task: ",
+        ),
+      );
+    else if (command.id === "review")
+      setDraft(
+        t(
+          "Zkontroluj následující práci. Uveď konkrétní nálezy, důkazy a doporučené opravy. Bez provádění změn. Předmět kontroly: ",
+          "Review the following work. Give concrete findings, evidence and suggested fixes. Do not make changes. Review: ",
+        ),
+      );
+    else if (command.id === "new") navigate("/chat");
+    else if (command.id === "tools") navigate("/connections");
+    else if (command.id === "model") {
+      if (id) navigate("/models");
+      else setPicker(true);
+    } else if (command.id === "context" || command.id === "undo") onContext();
+    else if (command.id === "export")
+      download(
+        "void-transcript-" + id + ".md",
+        events.map((event) => `## ${event.kind}\n\n${event.text}`).join("\n\n"),
+        "text/markdown",
+      );
+    else if (command.id === "stop") {
+      try {
+        await api("/api/sessions/" + id, "DELETE");
+        await client.invalidateQueries();
+      } catch (error) {
+        setError(error);
+      }
+    } else navigate("/" + command.id);
+    textarea.current?.focus();
+  }
   const requestKey = useRef<{ prompt: string; key: string } | undefined>(
     undefined,
   );
   useEffect(() => {
     setDraft(sessionStorage.getItem(draftKey) ?? "");
     setAttachments([]);
+    setSelectedTool(undefined);
+    setCommandDismissed(false);
     setFollow(true);
   }, [draftKey]);
   useEffect(() => {
@@ -292,6 +454,11 @@ export function Chat({
     } else setNewMessages(true);
   }, [events.length, events.at(-1)?.text, follow]);
   async function send() {
+    if (commandOpen) {
+      if (commandItems[activeCommand])
+        await chooseCommand(commandItems[activeCommand]);
+      return;
+    }
     if (!draft.trim() || busy || running || retryWait > 0) return;
     setBusy(true);
     setError(undefined);
@@ -330,6 +497,7 @@ export function Chat({
       );
       sessionStorage.removeItem(draftKey);
       setDraft("");
+      setSelectedTool(undefined);
       setAttachments([]);
       requestKey.current = undefined;
       setFollow(true);
@@ -615,6 +783,41 @@ export function Chat({
             void send();
           }}
         >
+          {commandOpen && (
+            <CommandMenu
+              items={commandItems}
+              active={activeCommand}
+              choose={(command) => {
+                void chooseCommand(command);
+              }}
+              loading={toolsQuery.isLoading}
+              error={!!toolsQuery.error}
+              retry={() => {
+                void toolsQuery.refetch();
+              }}
+              scope={toolsQuery.data?.scope}
+            />
+          )}
+          {selectedTool && (
+            <details className="selected-tool">
+              <summary>
+                {selectedTool.name} ·{" "}
+                {selectedTool.capturedUndo
+                  ? "VOID Undo"
+                  : selectedTool.klass === "r0"
+                    ? "Read"
+                    : "VOID policy"}
+              </summary>
+              <p>{selectedTool.description}</p>
+              <pre>{json(selectedTool.inputSchema)}</pre>
+              <p>
+                {t(
+                  "Požadavek vykoná agent přes běžné schvalování VOID. Dostupnost neznamená oprávnění.",
+                  "The agent handles this request through normal VOID approval. Availability is not permission.",
+                )}
+              </p>
+            </details>
+          )}
           {attachments.length > 0 && (
             <div className="attachments">
               {attachments.map((a, i) => (
@@ -636,12 +839,58 @@ export function Chat({
           <textarea
             ref={textarea}
             aria-label={t("Zpráva", "Message")}
-            placeholder={t("Co dnes vytvoříme?", "What shall we create today?")}
+            aria-autocomplete="list"
+            aria-controls={commandOpen ? "void-command-list" : undefined}
+            aria-expanded={commandOpen}
+            aria-activedescendant={
+              commandOpen && commandItems.length
+                ? `void-command-${activeCommand}`
+                : undefined
+            }
+            placeholder={t(
+              "Napište zprávu nebo / pro příkazy a nástroje",
+              "Message or / for commands and tools",
+            )}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              if (
+                selectedTool &&
+                !e.target.value.startsWith(toolPrompt(selectedTool))
+              )
+                setSelectedTool(undefined);
+              setCommandDismissed(false);
+              setCommandIndex(0);
+            }}
             rows={2}
             onKeyDown={(e) => {
               if (e.nativeEvent.isComposing) return;
+              if (commandOpen) {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setCommandDismissed(true);
+                  return;
+                }
+                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setCommandIndex(
+                    (activeCommand +
+                      (e.key === "ArrowDown" ? 1 : -1) +
+                      commandItems.length) %
+                      Math.max(1, commandItems.length),
+                  );
+                  return;
+                }
+                if (
+                  (e.key === "Enter" && !e.shiftKey) ||
+                  (e.key === "Tab" && commandItems.length)
+                ) {
+                  e.preventDefault();
+                  if (commandItems[activeCommand])
+                    void chooseCommand(commandItems[activeCommand]);
+                  return;
+                }
+              }
               const enter =
                 preferences.data?.preferences?.sendBehavior === "enter";
               if (
@@ -658,6 +907,28 @@ export function Chat({
             }}
           />
           <div className="composer-actions">
+            <button
+              type="button"
+              className="command-trigger"
+              aria-label={t(
+                "Otevřít příkazy a nástroje",
+                "Open commands and tools",
+              )}
+              onClick={() => {
+                if (!draft) {
+                  setDraft("/");
+                  setCommandDismissed(false);
+                  setCommandIndex(0);
+                } else {
+                  setCommandDismissed(false);
+                }
+                textarea.current?.focus();
+              }}
+              disabled={!!draft && !draft.startsWith("/")}
+              title={t("Příkazy a nástroje", "Commands and tools")}
+            >
+              /
+            </button>
             <div>
               <label
                 className="attach-button"
@@ -764,7 +1035,9 @@ export function Chat({
             {(session?.agent ?? preferences.data?.preferences?.defaultAgent) ===
             "prime-agent"
               ? "prime-agent · Local PC"
-              : "VOID Cloud"}
+              : capabilities.data?.mode === "local"
+                ? "VOID Local"
+                : "VOID Cloud"}
           </span>
           <button onClick={onContext}>
             {t("Dokumenty a kontext", "Documents and context")}
