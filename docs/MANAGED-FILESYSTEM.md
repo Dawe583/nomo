@@ -5,7 +5,9 @@ regular file inside an explicitly configured cooperative workspace. This is the
 first R05 slice. Git, rename, directory mutations and arbitrary shell side
 effects are not covered.
 
-A successful inverse restores exact bytes and POSIX permission bits. It does not
+A successful inverse restores exact bytes and POSIX permission bits on Unix.
+Windows supports writable regular files only (mode 0666), restores bytes, and
+refuses read-only files and other explicit modes before dispatch. It does not
 restore inode identity, ownership, timestamps, ACLs, extended attributes or
 external observers. The declared scope is included in the signed runtime flow
 and approval digest. Binary data uses canonical base64, limited to 1 MiB decoded.
@@ -15,7 +17,9 @@ and approval digest. Binary data uses canonical base64, limited to 1 MiB decoded
 The operator must exclude concurrent external writers during dispatch and Undo.
 Node's filesystem API does not provide atomic conditional path replacement.
 The adapter verifies observed revisions, uses atomic no-clobber creation and
-same-directory replacement, and syncs file and directory changes. It does not
+same-directory replacement, and syncs file contents. Unix also syncs directory
+changes; Windows lacks Node directory-handle flushing, so directory-entry
+durability across power loss is not guaranteed. It does not
 claim protection against a malicious process racing path resolution.
 
 Revisions include content, mode, device/inode, nanosecond ctime and ownership.
@@ -26,7 +30,10 @@ a restore. Existing files must have one hard link and no special permission bits
 
 Traversal, symlinks, non-regular files, oversized captures, `.git`, `.ssh`, `.aws`,
 `.env*` and `.void*` path segments are refused. The configured runtime state
-must live outside the managed root. A managed path is not a general sandbox for
+must live outside the managed root, including through symlinks/junctions and
+native Windows paths. Alternate data streams, reserved device names, trailing
+dots/spaces and Windows-invalid characters are refused on every platform to
+keep portable paths unambiguous. A managed path is not a general sandbox for
 other tools installed on the machine.
 
 ## Configuration and CLI
@@ -100,3 +107,6 @@ The checks use real temporary directories, binary content, permission bits,
 restart, idempotence, user edits, ABA, links, traversal and over-limit files. The
 CLI test executes inspect, approval, write, plan and approved Undo with encrypted
 on-disk state. They do not certify concurrent hostile writers or full R05.
+
+`void recovery conformance` additionally runs 24 disposable create/write/delete
+checks and emits a versioned JSON report. See [Adapter conformance](ADAPTER-CONFORMANCE.md).

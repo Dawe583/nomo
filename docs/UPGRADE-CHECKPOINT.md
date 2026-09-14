@@ -54,7 +54,7 @@ recovery-plan digest.
 
 ## Fresh verification
 
-- `pnpm run check`: typechecks passed; 650 tests in 11 suites passed; 13 cloud
+- `pnpm run check`: typechecks passed; 656 tests in 11 suites passed; 13 cloud
   tests passed and four opt-in integration tests were skipped.
 - `pnpm run test:tui`: 15 Node tests and expanded real PTY checks passed.
 - `node scripts/src/e2e-arc.mjs all`: passed the SDK, approval and ledger arc.
@@ -86,6 +86,14 @@ timed out. Chrome DevTools was unavailable because its profile was already owned
 Playwright provided the independent browser. Existing local `/api/integrations`
 404 fallback messages remain. Physical phones, screen readers, complete visual
 regression, Windows native build and notarization were not verified here.
+
+## Concurrent upstream integration
+
+GitHub main advanced to `6534b04` during this work. Its adapter conformance
+command and Windows cooperative filesystem checks were preserved and merged,
+not overwritten. The final counts above include both sets of changes. See
+`ADAPTER-CONFORMANCE.md` for that separately delivered capability and its limits.
+The combined source passed the full typecheck/test and web/cloud build gates.
 
 ## Next work, in plan order
 

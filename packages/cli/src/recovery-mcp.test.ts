@@ -152,7 +152,7 @@ test("actual CLI stdio process remains alive after initialize and denies writes 
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [
-      new URL("../bin/void.mjs", import.meta.url).pathname,
+      (await import("node:url")).fileURLToPath(new URL("../bin/void.mjs", import.meta.url)),
       "recovery",
       "serve",
       "--config",

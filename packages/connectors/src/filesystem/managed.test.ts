@@ -68,7 +68,7 @@ test("real binary write and delete restore bytes/mode across restart and preserv
     "restored",
   );
   assert.deepEqual(await readFile(join(f.root, "file")), original);
-  assert.equal((await stat(join(f.root, "file"))).mode & 0o777, 0o751);
+  assert.equal((await stat(join(f.root, "file"))).mode & 0o777, process.platform === "win32" ? 0o666 : 0o751);
   assert.equal(
     (await restarted.recover(plan, async () => true)).status,
     "restored",
@@ -118,7 +118,7 @@ test("external content, ABA and mode edits conflict instead of being overwritten
     const f = await fixture(t);
     await writeFile(join(f.root, "file"), "before");
     await f.execute("write", "file", Buffer.from("agent").toString("base64"));
-    if (change === "mode") await chmod(join(f.root, "file"), 0o700);
+    if (change === "mode") await chmod(join(f.root, "file"), process.platform === "win32" ? 0o444 : 0o700);
     else {
       await writeFile(join(f.root, "file"), "human");
       if (change === "aba") await writeFile(join(f.root, "file"), "agent");
@@ -139,8 +139,8 @@ test("external content, ABA and mode edits conflict instead of being overwritten
 test("traversal, protected paths, symlinks, hardlinks and oversized files fail before dispatch", async (t) => {
   const f = await fixture(t);
   await writeFile(join(f.dir, "private"), "secret");
-  await symlink(join(f.dir, "private"), join(f.root, "symbol"));
-  await symlink(f.dir, join(f.root, "escape"));
+  await symlink(process.platform === "win32" ? f.dir : join(f.dir, "private"), join(f.root, "symbol"), process.platform === "win32" ? "junction" : "file");
+  await symlink(f.dir, join(f.root, "escape"), process.platform === "win32" ? "junction" : "dir");
   await link(join(f.dir, "private"), join(f.root, "hard"));
   await writeFile(join(f.root, "large"), Buffer.alloc(1024 * 1024 + 1));
   for (const path of [
@@ -148,6 +148,13 @@ test("traversal, protected paths, symlinks, hardlinks and oversized files fail b
     "/etc/passwd",
     ".git/config",
     ".env",
+    ".git /config",
+    ".git./config",
+    "file:stream",
+    "NUL.txt",
+    "nested/COM1",
+    "trailing.",
+    "trailing ",
     "symbol",
     "escape/private",
     "hard",
@@ -176,4 +183,13 @@ test("drift between prepare and dispatch refuses write; lost response remains un
     status: "unknown",
   });
   assert.equal(await readFile(join(f.root, "file"), "utf8"), "human");
+});
+
+test("Windows refuses unsupported modes before dispatch", { skip: process.platform !== "win32" }, async (t) => {
+  const f = await fixture(t);
+  await assert.rejects(f.adapter().preflight({ action: "write", path: "new", base64: "", mode: 0o755 }), /0666/);
+  await assert.rejects(stat(join(f.root, "new")), { code: "ENOENT" });
+  await writeFile(join(f.root, "readonly"), "human", { mode: 0o444 });
+  await assert.rejects(f.adapter().preflight({ action: "delete", path: "readonly" }), /writable/);
+  assert.equal(await readFile(join(f.root, "readonly"), "utf8"), "human");
 });

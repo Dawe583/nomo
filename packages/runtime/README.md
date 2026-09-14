@@ -20,3 +20,8 @@ Run `pnpm --filter @void/runtime test` and `pnpm --filter @void/runtime typechec
 artifacts and quota reservations in SQLite. `localRecoveryVault` remains the
 legacy file implementation; callers choosing it do not gain total capacity
 reservation. Both implement the same runtime vault interface.
+
+`runAdapterConformance` runs eight common boundary checks using independently
+allocated disposable fixtures. The CLI applies them to filesystem create, write
+and delete via `void recovery conformance`. See
+`../../docs/ADAPTER-CONFORMANCE.md` for the fixture API and evidence limits.
