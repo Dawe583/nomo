@@ -73,8 +73,15 @@ export function Dialog({
   const t = useText();
   useEffect(() => {
     const dialog = ref.current;
+    const opener = document.activeElement instanceof HTMLElement
+      ? document.activeElement : null;
     dialog?.showModal();
-    return () => dialog?.close();
+    return () => {
+      dialog?.close();
+      // React may remove the focused node after effect cleanup. Restore focus
+      // after removal, rather than relying on the browser's close algorithm.
+      queueMicrotask(() => { if (opener?.isConnected) opener.focus(); });
+    };
   }, []);
   return (
     <m.dialog
@@ -82,7 +89,25 @@ export function Dialog({
       initial={animate ? { opacity: 0, y: 18, scale: 0.985 } : false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       ref={ref}
-      onCancel={close}
+      tabIndex={-1}
+      onCancel={(event) => { event.preventDefault(); close(); }}
+      onKeyDown={(event) => {
+        if (event.key !== "Tab") return;
+        const dialog = event.currentTarget;
+        const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
+          'button, a[href], input, select, textarea, [tabindex], [contenteditable="true"]',
+        )).filter((element) => element.tabIndex >= 0 &&
+          !element.matches(":disabled, [inert], [hidden]") &&
+          !element.closest("[inert], [hidden]") && element.getClientRects().length > 0);
+        const first = controls[0], last = controls.at(-1);
+        const active = document.activeElement;
+        if (!first || !dialog.contains(active) ||
+            (event.shiftKey ? active === first || active === dialog : active === last)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first)?.focus();
+          if (!first) dialog.focus();
+        }
+      }}
       onClick={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         if (
