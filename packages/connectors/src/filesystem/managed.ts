@@ -60,6 +60,9 @@ export function managedFilesystemAdapter(options: {
           !p ||
           p === "." ||
           p === ".." ||
+          /[<>:"|?*\x00-\x1f]/.test(p) ||
+          /[. ]$/.test(p) ||
+          /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(p) ||
           /^(\.git|\.ssh|\.aws|\.env.*|\.void.*)$/i.test(p),
       )
     )
@@ -104,6 +107,8 @@ export function managedFilesystemAdapter(options: {
         (!Number.isInteger(value.mode) || value.mode < 0 || value.mode > 0o777)
       )
         throw new Error("Invalid file mode.");
+      if (process.platform === "win32" && value.mode !== undefined && value.mode !== 0o666)
+        throw new Error("Windows managed writes support writable files (mode 0666) only.");
     } else if (value.base64 !== undefined || value.mode !== undefined)
       throw new Error("Delete accepts only a path.");
     return value;
@@ -112,6 +117,11 @@ export function managedFilesystemAdapter(options: {
     const absolute = target(path);
     let fd: number;
     try {
+      // O_NOFOLLOW is unavailable on Windows. Check the path itself as well as
+      // the opened handle; cooperative ownership excludes races between them.
+      const entry = lstatSync(absolute);
+      if (!entry.isFile() || entry.isSymbolicLink())
+        throw new Error("Only regular files without symlinks are supported.");
       fd = openSync(
         absolute,
         constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
@@ -141,6 +151,8 @@ export function managedFilesystemAdapter(options: {
         throw new Error(
           "Only regular, single-link files up to 1 MiB are supported.",
         );
+      if (process.platform === "win32" && Number(stat.mode & 0o777n) !== 0o666)
+        throw new Error("Windows managed recovery requires a writable regular file.");
       // Bound reads even when a non-cooperating process grows the file.
       const bytes = Buffer.alloc(maxBytes + 1);
       const count = readSync(fd, bytes, 0, bytes.length, 0);
@@ -172,6 +184,9 @@ export function managedFilesystemAdapter(options: {
     }
   }
   function syncDirectory(path: string) {
+    // Node cannot open/flush directory handles on Windows. File contents were
+    // flushed before replacement; directory-entry power-loss durability differs.
+    if (process.platform === "win32") return;
     const fd = openSync(dirname(path), constants.O_RDONLY);
     try {
       fsyncSync(fd);
@@ -245,7 +260,9 @@ export function managedFilesystemAdapter(options: {
         reversibility: "r1",
         readiness: "verified",
         scope:
-          "Cooperative filesystem: one path, bytes and POSIX mode only. No concurrent external writer, inode, ACL, xattr or shell guarantee.",
+          process.platform === "win32"
+            ? "Cooperative Windows filesystem: one writable regular file, bytes only. No concurrent external writer, ACL, inode, xattr, shell or directory-entry power-loss guarantee."
+            : "Cooperative filesystem: one path, bytes and POSIX mode only. No concurrent external writer, inode, ACL, xattr or shell guarantee.",
         resources: [`file:${join(root, mutation.path)}`],
         revision: before.revision,
         blastRadius: { count: 1, precision: "exact" },
@@ -281,7 +298,7 @@ export function managedFilesystemAdapter(options: {
         before.snapshot,
         mutation.action === "delete" ? null : mutation.base64!,
         mutation.mode ??
-          (before.snapshot.bytes === null ? 0o644 : before.snapshot.mode),
+          (before.snapshot.bytes === null ? (process.platform === "win32" ? 0o666 : 0o644) : before.snapshot.mode),
       );
       return {
         result: { path: mutation.path, action: mutation.action },
@@ -322,7 +339,7 @@ export function managedFilesystemAdapter(options: {
         evidence: {
           path: before.path,
           revision: restored.revision,
-          scope: "bytes-and-mode",
+          scope: process.platform === "win32" ? "bytes" : "bytes-and-mode",
         },
       };
     },

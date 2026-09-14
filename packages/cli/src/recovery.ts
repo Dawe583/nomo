@@ -1,4 +1,6 @@
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
+import { assertRecoveryStateOutsideRoot } from "./recovery-paths.ts";
+import { runConformanceCommand } from "./conformance.ts";
 import { readFile } from "node:fs/promises";
 import { resolve, join, dirname } from "node:path";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
@@ -39,6 +41,7 @@ export async function runRecoveryCommand(
   print: (s: string) => void = console.log,
 ): Promise<number> {
   const [action, ...rest] = argv;
+  if (action === "conformance") return runConformanceCommand(rest, print);
   const args = new Map<string, string>();
   for (let i = 0; i < rest.length; i += 2) {
     if (
@@ -63,7 +66,7 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: void recovery <install|inspect|execute|plan|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
+      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery <install|inspect|execute|plan|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -111,10 +114,7 @@ export async function runRecoveryCommand(
   if (config.filesystem) {
     const root = resolve(dirname(configPath), config.filesystem.root);
     const state = resolve(dirname(configPath), config.stateDir);
-    if (state === root || state.startsWith(root + "/"))
-      throw new Error(
-        "Recovery state must be outside the managed filesystem root.",
-      );
+    await assertRecoveryStateOutsideRoot(root, state);
   }
   const adapter = options
     ? managedPostgresAdapter(options)
