@@ -20,7 +20,8 @@
     "dev:web": "pnpm --filter @void/control-plane-ui dev",
     "test:tui": "node --test packages/cli/src/tui/workspace*.test.ts && python3 scripts/src/verify-tui-terminal.py",
     "test:reverse": "node scripts/src/check-reverse-engine.mjs",
-    "test:oauth": "node --test cloud/*.test.mjs"
+    "test:oauth": "node --test cloud/*.test.mjs",
+    "build": "node scripts/src/build-web.mjs && nitro build && node scripts/src/check-cloud-build.mjs"
   },
   "private": true,
   "devDependencies": {

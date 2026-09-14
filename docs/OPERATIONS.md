@@ -288,3 +288,16 @@ Use `observe` only for trials:
 ```sh
 node packages/proxy/bin/void-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --posture observe --workspace demo
 ```
+
+## Web and cloud production build
+
+Run `pnpm run build` from the repository root. Vercel and the Node 24/26 CI
+matrix use this same command. It builds the Vite GUI, bundles the Nitro cloud
+backend and workflows, and validates `.vercel/output` before deployment.
+The validator requires the frontend entrypoint and its referenced assets, the
+Node API handler, the API route, and response streaming support.
+
+`pnpm build:web` remains the frontend-only command used by desktop packaging.
+A successful frontend build alone does not establish that the cloud build works.
+The frontend launcher also supports direct `node scripts/src/build-web.mjs`
+invocation without `npm_execpath`, as used by older Vercel project settings.

@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node scripts/src/build-web.mjs && nitro build",
+  "buildCommand": "pnpm run build",
   "framework": null,
   "headers": [
     {
