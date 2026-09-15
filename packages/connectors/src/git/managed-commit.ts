@@ -1,17 +1,23 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
+import { spawn } from "node:child_process";
 import {
   closeSync,
   constants,
   existsSync,
   fstatSync,
   lstatSync,
+  mkdtempSync,
   openSync,
   readFileSync,
   readSync,
   realpathSync,
   readdirSync,
+  rmdirSync,
+  unlinkSync,
+  chmodSync,
+  writeFileSync,
 } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import type { Json, Outcome, Reconciliation, RecoveryOutcome } from "../recovery.ts";
 
@@ -86,6 +92,30 @@ export type CommitPlan = {
   receiptRef: string;
   metadata: CommitMetadata;
 };
+export type CommitEvidence = {
+  kind: "commit";
+  repositoryIdentity: string;
+  branchRef: string;
+  parent: string;
+  tree: string;
+  commit: string;
+  receiptRef: string;
+  expectedTreeManifestDigest: string;
+  indexDigest: string;
+  worktreeDigest: string;
+};
+export type RefUpdate = { ref: string; newOid: string; oldOid: string | null };
+export type PrivateIndexWorkspace = {
+  directory: string;
+  directoryDev: bigint;
+  directoryIno: bigint;
+  directoryUid: bigint;
+  tokenPath: string;
+  tokenIno: bigint;
+  token: string;
+  indexPath: string;
+  ownedFiles: Map<string, { dev: bigint; ino: bigint }>;
+};
 export type ManagedCommitLifecycle = {
   capture(mutation: CommitMutation): CommitCapture;
   prepare(mutation: CommitMutation, captured: CommitCapture, operationId: string): CommitPlan;
@@ -108,6 +138,13 @@ function contained(commonDir: string, target: string): boolean {
   const path = relative(commonDir, target);
   return path === "" || (!path.startsWith(`..${sep}`) && path !== ".." && !isAbsolute(path));
 }
+function pathExists(path: string): boolean {
+  try { lstatSync(path); return true; }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw error;
+  }
+}
 
 export function captureContainedPathChain(
   commonDir: string,
@@ -125,7 +162,7 @@ export function captureContainedPathChain(
   let missingAt = -1;
   for (let index = 0; index < parts.length; index++) {
     current = join(current, parts[index]!);
-    if (!existsSync(current)) { missingAt = index; break; }
+    if (!pathExists(current)) { missingAt = index; break; }
     const item = lstatSync(current, { bigint: true });
     if (item.isSymbolicLink()) throw new Error("Git path symbolic link is unsupported.");
     if (item.uid !== boundary.uid) throw new Error("Git path ownership changed.");
@@ -185,7 +222,7 @@ export function verifyFilesRefPaths(
 }
 
 function validateBranchRef(ref: string): void {
-  if (!ref.startsWith("refs/heads/") || ref.length > 1024 || /[\~^:?*\[ - ]/.test(ref) || ref.includes("//") || ref.endsWith("/") || ref.endsWith(".lock"))
+  if (!ref.startsWith("refs/heads/") || ref.length > 1024 || /[\~^:?*\[\x00- \x7f]/.test(ref) || ref.includes("//") || ref.endsWith("/") || ref.endsWith(".lock"))
     throw new Error("A canonical attached branch is required.");
   if (ref.split("/").some((part) => !part || part === "." || part === ".." || part.endsWith(".lock")))
     throw new Error("A canonical attached branch is required.");
@@ -214,7 +251,7 @@ function readReflog(path: string): { digest: string; generation: string } {
 function parseManifest(output: string, oidPattern: RegExp): TreeManifestEntry[] {
   if (!output) return [];
   const entries: TreeManifestEntry[] = [];
-  for (const record of output.split(" ")) {
+  for (const record of output.split("\x00")) {
     if (!record) continue;
     const match = /^(100644|100755) (?:blob )?([0-9a-f]+)(?: 0)?\t(.+)$/.exec(record);
     if (!match || !oidPattern.test(match[2]!)) throw new Error("Git manifest entry is unsupported.");
@@ -275,12 +312,12 @@ export function captureCommit(mutation: CommitMutation, services: CommitServices
   catch { throw new Error("A born branch is required."); }
   if (!services.oidPattern.test(head)) throw new Error("A born branch is required.");
   if (services.git(["rev-parse", "--show-ref-format"]) !== "files") throw new Error("Files refs are required.");
-  const worktrees = services.git(["worktree", "list", "--porcelain", "-z"]).split(" ").filter((value) => value.startsWith("worktree "));
+  const worktrees = services.git(["worktree", "list", "--porcelain", "-z"]).split("\x00").filter((value) => value.startsWith("worktree "));
   if (worktrees.length !== 1) throw new Error("Exactly one registered worktree is required.");
   const destructivePaths = captureFilesRefPaths(services.commonDir, ref);
   verifyFilesRefPaths(destructivePaths);
   for (const chain of [destructivePaths.branchRef, destructivePaths.operationNamespace, destructivePaths.recoveryNamespace])
-    if (existsSync(`${chain.target}.lock`)) throw new Error("Git ref lock exists.");
+    if (pathExists(`${chain.target}.lock`)) throw new Error("Git ref lock exists.");
   for (const namespace of [destructivePaths.operationNamespace.target, destructivePaths.recoveryNamespace.target])
     if (existsSync(namespace) && readdirSync(namespace).some((name) => name.endsWith(".lock"))) throw new Error("Git receipt lock exists.");
   const reflog = readReflog(destructivePaths.branchReflog.target);
@@ -295,7 +332,7 @@ export function captureCommit(mutation: CommitMutation, services: CommitServices
   const target = services.pathTarget(mutation.path);
   let worktree: WorktreeBinding;
   if (!indexEntry.present) {
-    if (existsSync(target)) throw new Error("A staged deletion requires an absent worktree path.");
+    if (pathExists(target)) throw new Error("A staged deletion requires an absent worktree path.");
     worktree = { present: false };
   } else {
     const item = lstatSync(target, { bigint: true });
@@ -351,6 +388,231 @@ export function prepareCommit(captured: CommitCapture, operationId: string, nowS
   };
 }
 
+
+export function createPrivateIndexWorkspace(realIndexPath: string): PrivateIndexWorkspace {
+  const parent = realpathSync(dirname(realIndexPath));
+  const directory = mkdtempSync(join(parent, ".void-git-index-"));
+  chmodSync(directory, 0o700);
+  const item = lstatSync(directory, { bigint: true });
+  if (!item.isDirectory() || item.isSymbolicLink() || item.uid !== BigInt(process.geteuid?.() ?? process.getuid?.() ?? Number(item.uid)) || (item.mode & 0o777n) !== 0o700n)
+    throw new Error("Managed Git private index workspace is unsafe.");
+  const token = randomBytes(32).toString("hex");
+  const tokenPath = join(directory, "owner");
+  const fd = openSync(tokenPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600);
+  try { writeFileSync(fd, token); } finally { closeSync(fd); }
+  const tokenStat = lstatSync(tokenPath, { bigint: true });
+  const workspace: PrivateIndexWorkspace = {
+    directory,
+    directoryDev: item.dev,
+    directoryIno: item.ino,
+    directoryUid: item.uid,
+    tokenPath,
+    tokenIno: tokenStat.ino,
+    token,
+    indexPath: join(directory, "index"),
+    ownedFiles: new Map(),
+  };
+  workspace.ownedFiles.set(tokenPath, { dev: tokenStat.dev, ino: tokenStat.ino });
+  if (existsSync(workspace.indexPath)) throw new Error("Managed Git private index already exists.");
+  return workspace;
+}
+
+export function recordOwnedPrivateFile(workspace: PrivateIndexWorkspace, path: string): void {
+  if (!existsSync(path)) return;
+  if (dirname(path) !== workspace.directory) throw new Error("Managed Git private file escaped its workspace.");
+  const parent = lstatSync(workspace.directory, { bigint: true });
+  const item = lstatSync(path, { bigint: true });
+  if (parent.dev !== workspace.directoryDev || parent.ino !== workspace.directoryIno || parent.uid !== workspace.directoryUid || !item.isFile() || item.isSymbolicLink() || item.nlink !== 1n || item.uid !== workspace.directoryUid)
+    throw new Error("Managed Git private file identity changed.");
+  workspace.ownedFiles.set(path, { dev: item.dev, ino: item.ino });
+}
+
+export function cleanupPrivateIndexWorkspace(workspace: PrivateIndexWorkspace): void {
+  const directory = lstatSync(workspace.directory, { bigint: true });
+  if (!directory.isDirectory() || directory.isSymbolicLink() || directory.dev !== workspace.directoryDev || directory.ino !== workspace.directoryIno || directory.uid !== workspace.directoryUid || (directory.mode & 0o777n) !== 0o700n)
+    throw new Error("Managed Git private workspace identity changed.");
+  const token = lstatSync(workspace.tokenPath, { bigint: true });
+  if (!token.isFile() || token.isSymbolicLink() || token.ino !== workspace.tokenIno || readFileSync(workspace.tokenPath, "utf8") !== workspace.token)
+    throw new Error("Managed Git private workspace token identity changed.");
+  const names = readdirSync(workspace.directory);
+  const allowed = new Set(["owner", "index", "index.lock"]);
+  if (names.some((name) => !allowed.has(name))) throw new Error("Managed Git private workspace contains an unknown file.");
+  for (const path of [workspace.tokenPath, workspace.indexPath, `${workspace.indexPath}.lock`]) {
+    if (!existsSync(path)) continue;
+    const expected = workspace.ownedFiles.get(path);
+    const current = lstatSync(path, { bigint: true });
+    if (!expected || !current.isFile() || current.isSymbolicLink() || current.dev !== expected.dev || current.ino !== expected.ino || dirname(path) !== workspace.directory)
+      throw new Error("Managed Git private file identity changed.");
+  }
+  for (const path of [`${workspace.indexPath}.lock`, workspace.indexPath, workspace.tokenPath])
+    if (existsSync(path)) unlinkSync(path);
+  rmdirSync(workspace.directory);
+}
+
+export async function writeCandidateTree(
+  baseTree: string,
+  path: string,
+  entry: GitEntry,
+  expectedManifestDigest: string,
+  services: CommitServices,
+): Promise<string> {
+  const workspace = createPrivateIndexWorkspace(services.indexPath);
+  const privateEnv = { GIT_INDEX_FILE: workspace.indexPath, GIT_NO_REPLACE_OBJECTS: "1" };
+  try {
+    services.git(["read-tree", baseTree], undefined, privateEnv);
+    recordOwnedPrivateFile(workspace, workspace.indexPath);
+    if (entry.present)
+      services.git(["update-index", "--add", "--cacheinfo", entry.mode, entry.oid, path], undefined, privateEnv);
+    else services.git(["update-index", "--force-remove", "--", path], undefined, privateEnv);
+    recordOwnedPrivateFile(workspace, workspace.indexPath);
+    const tree = services.git(["write-tree"], undefined, privateEnv);
+    recordOwnedPrivateFile(workspace, workspace.indexPath);
+    if (!services.oidPattern.test(tree) || manifestDigest(readTreeManifest(tree, services)) !== expectedManifestDigest)
+      throw new Error("Managed Git candidate tree verification failed.");
+    return tree;
+  } finally {
+    try { recordOwnedPrivateFile(workspace, workspace.indexPath); } catch {}
+    try { recordOwnedPrivateFile(workspace, `${workspace.indexPath}.lock`); } catch {}
+    cleanupPrivateIndexWorkspace(workspace);
+  }
+}
+
+export async function createCommit(tree: string, parent: string, metadata: CommitMetadata, services: CommitServices): Promise<string> {
+  const date = `${metadata.timestamp} +0000`;
+  const oid = services.git(
+    ["-c", "commit.gpgSign=false", "-c", "user.useConfigOnly=true", "commit-tree", tree, "-p", parent],
+    `${metadata.subject}\n`,
+    {
+      GIT_NO_REPLACE_OBJECTS: "1",
+      GIT_AUTHOR_NAME: metadata.authorName,
+      GIT_AUTHOR_EMAIL: metadata.authorEmail,
+      GIT_AUTHOR_DATE: date,
+      GIT_COMMITTER_NAME: metadata.committerName,
+      GIT_COMMITTER_EMAIL: metadata.committerEmail,
+      GIT_COMMITTER_DATE: date,
+    },
+  );
+  if (!services.oidPattern.test(oid)) throw new Error("Managed Git commit creation failed.");
+  return oid;
+}
+
+export async function commitRefTransaction(
+  updates: readonly RefUpdate[],
+  lockedRecheck: () => void,
+  services: CommitServices,
+): Promise<void> {
+  if (updates.length === 0) throw new Error("Managed Git ref transaction failed.");
+  const commands = ["start", ...updates.map((update) => update.oldOid === null
+    ? `create ${update.ref} ${update.newOid}`
+    : `update ${update.ref} ${update.newOid} ${update.oldOid}`), "prepare", ""].join("\n");
+  await new Promise<void>((resolvePromise, rejectPromise) => {
+    const child = spawn("git", ["-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "update-ref", "--stdin"], {
+      cwd: services.root,
+      env: {
+        PATH: process.env.PATH,
+        TMPDIR: process.env.TMPDIR,
+        LC_ALL: "C",
+        GIT_TERMINAL_PROMPT: "0",
+        GIT_CONFIG_NOSYSTEM: "1",
+        GIT_CONFIG_SYSTEM: "/dev/null",
+        GIT_CONFIG_GLOBAL: "/dev/null",
+        GIT_OPTIONAL_LOCKS: "0",
+        GIT_PAGER: "cat",
+        GIT_LITERAL_PATHSPECS: "1",
+        GIT_NO_LAZY_FETCH: "1",
+        GIT_NO_REPLACE_OBJECTS: "1",
+      },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let stdout = "", stderr = "", settled = false, prepared = false;
+    const fail = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (!child.killed) child.kill("SIGTERM");
+      rejectPromise(new Error("Managed Git ref transaction failed."));
+    };
+    const timer = setTimeout(fail, 15_000);
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk: string) => {
+      stdout += chunk;
+      if (Buffer.byteLength(stdout) > 64 * 1024) return fail();
+      if (!prepared && stdout === "start: ok\nprepare: ok\n") {
+        prepared = true;
+        try { lockedRecheck(); child.stdin.write("commit\n"); child.stdin.end(); }
+        catch { child.stdin.write("abort\n"); child.stdin.end(); }
+      } else if (!"start: ok\nprepare: ok\ncommit: ok\n".startsWith(stdout)) fail();
+    });
+    child.stderr.on("data", (chunk: string) => {
+      stderr += chunk;
+      if (Buffer.byteLength(stderr) > 64 * 1024) fail();
+    });
+    child.on("error", fail);
+    child.on("close", (code, signal) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (code === 0 && signal === null && stderr === "" && stdout === "start: ok\nprepare: ok\ncommit: ok\n") resolvePromise();
+      else rejectPromise(new Error("Managed Git ref transaction failed."));
+    });
+    child.stdin.write(commands);
+  });
+}
+
+function exactRef(ref: string, services: CommitServices): string | null {
+  try {
+    const oid = services.git(["show-ref", "--verify", "--hash", ref]);
+    return services.oidPattern.test(oid) ? oid : null;
+  } catch { return null; }
+}
+
+function currentWorktreeDigest(captured: CommitCapture, services: CommitServices): string {
+  const selected = captured.selected;
+  const target = services.pathTarget(selected.path);
+  if (!selected.worktree.present) return existsSync(target) ? "changed" : jsonDigest(["absent"]);
+  if (!existsSync(target)) return "changed";
+  const item = lstatSync(target, { bigint: true });
+  const mode = (item.mode & 0o111n) !== 0n ? "100755" : "100644";
+  const oid = services.git(["hash-object", "--no-filters", "--", selected.path]);
+  return jsonDigest([oid, mode]);
+}
+
+export function verifyManagedCommit(commit: string, captured: CommitCapture, plan: CommitPlan, services: CommitServices): CommitEvidence {
+  if (exactRef(plan.branchRef, services) !== commit || exactRef(plan.receiptRef, services) !== commit)
+    throw new Error("Managed Git commit verification failed.");
+  const raw = services.git(["cat-file", "commit", commit]);
+  const date = `${plan.metadata.timestamp} +0000`;
+  const expectedPrefix = `tree `;
+  if (!raw.startsWith(expectedPrefix) || raw.includes("gpgsig") || Buffer.byteLength(raw) >= 1024)
+    throw new Error("Managed Git commit verification failed.");
+  const lines = raw.split("\n");
+  const tree = lines[0]?.slice(5) ?? "";
+  if (lines[1] !== `parent ${plan.parent}` || lines[2] !== `author ${plan.metadata.authorName} <${plan.metadata.authorEmail}> ${date}` || lines[3] !== `committer ${plan.metadata.committerName} <${plan.metadata.committerEmail}> ${date}` || lines[4] !== "" || lines[5] !== plan.metadata.subject || lines.length !== 6)
+    throw new Error("Managed Git commit verification failed.");
+  if (manifestDigest(readTreeManifest(tree, services)) !== plan.expectedTreeManifestDigest)
+    throw new Error("Managed Git commit verification failed.");
+  const indexDigest = sha256(services.rawIndex());
+  if (indexDigest !== captured.index.rawDigest) throw new Error("Managed Git real index changed.");
+  const expectedWorktree = captured.selected.worktree.present
+    ? jsonDigest([captured.selected.worktree.blobOid, captured.selected.worktree.mode])
+    : jsonDigest(["absent"]);
+  const worktreeDigest = currentWorktreeDigest(captured, services);
+  if (worktreeDigest !== expectedWorktree) throw new Error("Managed Git worktree changed.");
+  return {
+    kind: "commit",
+    repositoryIdentity: captured.repository.identity,
+    branchRef: plan.branchRef,
+    parent: plan.parent,
+    tree,
+    commit,
+    receiptRef: plan.receiptRef,
+    expectedTreeManifestDigest: plan.expectedTreeManifestDigest,
+    indexDigest,
+    worktreeDigest,
+  };
+}
+
 export function createManagedCommitLifecycle(services: CommitServices): ManagedCommitLifecycle {
   return {
     capture: (mutation) => captureCommit(mutation, services),
@@ -362,10 +624,37 @@ export function createManagedCommitLifecycle(services: CommitServices): ManagedC
       const headManifest = readTreeManifest(captured.branch.tree, services);
       const plan = prepareCommit(captured, operationId);
       plan.expectedTreeManifestDigest = manifestDigest(applySelectedEntry(headManifest, captured.selected.path, captured.selected.index));
-      if (existsSync(`${join(services.commonDir, ...plan.receiptRef.split("/"))}.lock`)) throw new Error("Git receipt lock exists.");
+      if (pathExists(`${join(services.commonDir, ...plan.receiptRef.split("/"))}.lock`)) throw new Error("Git receipt lock exists.");
       return plan;
     },
-    execute: async () => unsupported(),
+    async execute(mutation, captured, plan, operationId) {
+      if (!isDeepStrictEqual(mutation, captured.mutation) || plan.receiptRef !== receiptRef("operations", operationId))
+        throw new Error("Git capture binding conflict.");
+      const current = captureCommit(mutation, services);
+      if (!isDeepStrictEqual(current, captured)) throw new Error("Git state conflict.");
+      const expectedManifestDigest = manifestDigest(applySelectedEntry(readTreeManifest(captured.branch.tree, services), captured.selected.path, captured.selected.index));
+      const expectedSubject = `VOID managed commit ${sha256(operationId).slice(0, 16)}`;
+      if (plan.parent !== captured.branch.head || plan.branchRef !== captured.branch.ref || !isDeepStrictEqual(plan.repository, captured.repository) || plan.expectedTreeManifestDigest !== expectedManifestDigest || plan.metadata.authorName !== "VOID Managed Git" || plan.metadata.authorEmail !== "managed-git@void.invalid" || plan.metadata.committerName !== "VOID Managed Git" || plan.metadata.committerEmail !== "managed-git@void.invalid" || plan.metadata.subject !== expectedSubject || !/^\d+$/.test(plan.metadata.timestamp))
+        throw new Error("Git plan binding conflict.");
+      verifyFilesRefPaths(captured.repository.destructivePaths);
+      const tree = await writeCandidateTree(captured.branch.tree, captured.selected.path, captured.selected.index, plan.expectedTreeManifestDigest, services);
+      const commit = await createCommit(tree, plan.parent, plan.metadata, services);
+      await commitRefTransaction(
+        [
+          { ref: plan.branchRef, newOid: commit, oldOid: plan.parent },
+          { ref: plan.receiptRef, newOid: commit, oldOid: null },
+        ],
+        () => {
+          verifyFilesRefPaths(captured.repository.destructivePaths, { allowOwnedNamespaceCreation: true });
+          const reflog = readReflog(captured.repository.destructivePaths.branchReflog.target);
+          if (reflog.digest !== captured.branch.reflogDigest || reflog.generation !== captured.branch.reflogGeneration)
+            throw new Error("Git branch reflog changed.");
+        },
+        services,
+      );
+      const evidence = verifyManagedCommit(commit, captured, plan, services);
+      return { result: { action: "commit", path: mutation.path, commit }, evidence: evidence as unknown as Json };
+    },
     async reconcile() { return { status: "unknown" }; },
     async recover() { return { status: "conflict", evidence: null }; },
     async reconcileRecovery() { return { status: "unknown" }; },

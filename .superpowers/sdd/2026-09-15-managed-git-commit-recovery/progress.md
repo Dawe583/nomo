@@ -10,7 +10,9 @@ Task 2: complete
 - RED: `node --test packages/connectors/src/git/managed-commit.test.ts` exited 1. The preparation test failed with `Managed Git commit execution is unavailable.`
 - GREEN typecheck: `pnpm --filter @void/connectors run typecheck` exited 0.
 - GREEN focused tests: `node --test packages/connectors/src/git/managed-commit.test.ts packages/connectors/src/git/managed.test.ts` exited 0 with 28 passed and 1 Windows test skipped.
-Task 3: pending
+Task 3: complete
+- RED: `node --test packages/connectors/src/git/managed-commit.test.ts` exited 1. The forward append test failed with `Managed Git commit execution is unavailable.`
+- GREEN: `pnpm --filter @void/connectors run typecheck && node --test packages/connectors/src/git/managed-commit.test.ts packages/connectors/src/git/managed.test.ts` exited 0. Typecheck passed; tests reported 29 passed and 1 Windows test skipped.
 Task 4: pending
 Task 5: pending
 Task 6: pending

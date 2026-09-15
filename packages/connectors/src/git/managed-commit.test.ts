@@ -99,3 +99,30 @@ posixTest(
     assert.equal((prepared.before as unknown as CommitCapture).repository.root, f.root);
   },
 );
+
+posixTest("forward commit appends one fixed commit and preserves index and worktree", async (t) => {
+  const f = await commitRepository(t);
+  await f.write("selected", "after", 0o755);
+  f.run("add", "selected");
+  const before = await f.snapshot();
+  const args = { action: "commit", path: "selected" } as const;
+  const observation = await f.adapter.preflight(args);
+  const prepared = await f.adapter.prepare(args, observation, "forward-op");
+  const outcome = await f.adapter.execute(args, prepared, "forward-op");
+  const head = f.run("rev-parse", "HEAD");
+  assert.equal(f.run("rev-parse", "HEAD^"), before.head);
+  assert.equal(f.run("rev-list", "--parents", "-n", "1", head).split(" ").length, 2);
+  assert.equal(f.run("rev-parse", (prepared.plan as unknown as CommitPlan).receiptRef), head);
+  assert.equal(f.run("diff-tree", "--no-commit-id", "--name-only", "-r", head), "selected");
+  const after = await f.snapshot();
+  assert.deepEqual(after.index, before.index);
+  assert.deepEqual(after.files, before.files);
+  assert.equal(JSON.stringify(outcome).includes(f.root), false);
+  const rawCommit = f.run("cat-file", "commit", head) + "\n";
+  assert.match(
+    rawCommit,
+    /^tree [0-9a-f]+\nparent [0-9a-f]+\nauthor VOID Managed Git <managed-git@void.invalid> \d+ \+0000\ncommitter VOID Managed Git <managed-git@void.invalid> \d+ \+0000\n\nVOID managed commit [0-9a-f]{16}\n$/,
+  );
+  assert.ok(!rawCommit.includes("gpgsig"));
+  assert.ok(Buffer.byteLength(rawCommit) < 1024);
+});
