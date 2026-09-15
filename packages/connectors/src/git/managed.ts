@@ -55,23 +55,31 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     GIT_CONFIG_SYSTEM: "/dev/null",
     GIT_CONFIG_GLOBAL: "/dev/null",
     GIT_OPTIONAL_LOCKS: "0",
+    GIT_NO_REPLACE_OBJECTS: "1",
     GIT_PAGER: "cat",
     GIT_LITERAL_PATHSPECS: "1",
     GIT_NO_LAZY_FETCH: "1",
     GCM_INTERACTIVE: "never",
   };
-  const git = (args: readonly string[], input?: Buffer | string, extraEnv: NodeJS.ProcessEnv = {}) => {
+  const gitBuffer = (args: readonly string[], input?: Buffer | string, extraEnv: NodeJS.ProcessEnv = {}) => {
     const result = spawnSync("git", ["-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", ...args], {
       cwd: root,
       env: { ...env, ...extraEnv },
       input,
-      encoding: "utf8",
-      maxBuffer: 1024 * 1024,
+      encoding: "buffer",
+      maxBuffer: 20 * 1024 * 1024,
       stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
       timeout: 15_000,
     });
-    if (result.status !== 0 || result.signal || result.error || result.stderr) throw new Error("Managed Git command failed.");
-    return result.stdout.trim();
+    if (result.status !== 0 || result.signal || result.error || result.stderr.length)
+      throw new Error("Managed Git command failed.");
+    return result.stdout;
+  };
+  const git = (args: readonly string[], input?: Buffer | string, extraEnv: NodeJS.ProcessEnv = {}) => {
+    const output = gitBuffer(args, input, extraEnv);
+    const value = output.toString("utf8");
+    if (!Buffer.from(value, "utf8").equals(output)) throw new Error("Managed Git output is not UTF-8.");
+    return value.trim();
   };
   if (git(["rev-parse", "--is-bare-repository"]) !== "false") throw new Error("Bare repositories are unsupported.");
   if (realpathSync(git(["rev-parse", "--show-toplevel"])) !== root) throw new Error("Configured root must be the canonical worktree root.");
@@ -345,6 +353,7 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     objectFormat,
     oidPattern,
     git,
+    gitBuffer,
     pathTarget,
     currentIdentity,
     validateRepository,
