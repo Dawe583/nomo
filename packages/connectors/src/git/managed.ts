@@ -23,17 +23,20 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { Json, Observation, Outcome, Prepared, RecoveryAdapter, RecoveryOutcome } from "../recovery.ts";
+import { createManagedCommitLifecycle } from "./managed-commit.ts";
+import type { CommitCapture, CommitMutation, CommitPlan } from "./managed-commit.ts";
 
-type Mutation =
+type LegacyMutation =
   | { action: "write"; path: string; base64: string; mode?: number }
   | { action: "delete"; path: string }
   | { action: "rename"; path: string; to: string }
   | { action: "stage" | "unstage"; path: string };
+type Mutation = LegacyMutation | CommitMutation;
 type Worktree = { present: false; revision: string } | { present: true; bytes: string; digest: string; size: number; mode: number; revision: string };
 type IndexEntry = { present: false } | { present: true; mode: string; oid: string; stage: number };
 type State = { head: string; indexRevision: string; worktree: Worktree; index: IndexEntry; destination?: Worktree; destinationIndex?: IndexEntry };
-type Capture = { mutation: Mutation; state: State };
-type Plan = { root: string; gitDir: string; commonDir: string; indexPath: string; objectFormat: string; identity: string; mutation: Mutation; after: State };
+type Capture = { mutation: LegacyMutation; state: State };
+type Plan = { root: string; gitDir: string; commonDir: string; indexPath: string; objectFormat: string; identity: string; mutation: LegacyMutation; after: State };
 const maxBytes = 1024 * 1024;
 const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const same = isDeepStrictEqual;
@@ -168,6 +171,11 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     const value = args as Record<string, unknown>;
     if (typeof value.action !== "string" || typeof value.path !== "string") throw new Error("Invalid Git mutation.");
     pathTarget(value.path);
+    if (value.action === "commit") {
+      if (Object.keys(value).some((key) => !["action", "path"].includes(key)))
+        throw new Error("Invalid Git commit.");
+      return { action: "commit", path: value.path };
+    }
     if (value.action === "write") {
       if (Object.keys(value).some((key) => !["action", "path", "base64", "mode"].includes(key)) || typeof value.base64 !== "string") throw new Error("Invalid Git write.");
       const bytes = Buffer.from(value.base64, "base64");
@@ -224,7 +232,7 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     if (!match || match[4] !== path || match[2] !== "blob") throw new Error("Submodules or non-files are unsupported.");
     return { present: true, mode: match[1]!, oid: match[3]!, stage: 0 };
   }
-  function capture(mutation: Mutation): State {
+  function capture(mutation: LegacyMutation): State {
     validateRepository();
     const head = git(["rev-parse", "--verify", "HEAD^{commit}"]);
     if (!oidPattern.test(head)) throw new Error("Invalid HEAD object identity.");
@@ -240,7 +248,7 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     const destinationIndex = mutation.action === "rename" ? indexEntry(mutation.to) : undefined;
     return { head, indexRevision: indexRevision(), worktree: selected, index, ...(destination ? { destination } : {}), ...(destinationIndex ? { destinationIndex } : {}) };
   }
-  function predicted(mutation: Mutation, before: State): State {
+  function predicted(mutation: LegacyMutation, before: State): State {
     if (mutation.action === "write") {
       const bytes = Buffer.from(mutation.base64, "base64"), mode = mutation.mode ?? (before.worktree.present ? before.worktree.mode : 0o644);
       return { ...before, worktree: { present: true, bytes: mutation.base64, digest: createHash("sha256").update(bytes).digest("hex"), size: bytes.length, mode, revision: "pending" } };
@@ -258,7 +266,7 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     const normalized = (state: State) => ({ head: state.head, index: state.index, worktree: state.worktree.present ? { present: true, bytes: state.worktree.bytes, mode: state.worktree.mode } : { present: false }, ...(state.destinationIndex ? { destinationIndex: state.destinationIndex } : {}), ...(state.destination ? { destination: state.destination.present ? { present: true, bytes: state.destination.bytes, mode: state.destination.mode } : { present: false } } : {}) });
     return same(normalized(actual), normalized(expected));
   }
-  function exactForMutation(actual: State, expected: State, mutation: Mutation) {
+  function exactForMutation(actual: State, expected: State, mutation: LegacyMutation) {
     if (mutation.action === "stage" || mutation.action === "unstage") return same(actual, expected);
     const withoutGeneration = ({ indexRevision: _ignored, ...state }: State) => state;
     return same(withoutGeneration(actual), withoutGeneration(expected));
@@ -328,27 +336,65 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
       }
     }
   }
+  const commitLifecycle = createManagedCommitLifecycle({
+    root,
+    gitDir,
+    commonDir,
+    indexPath,
+    identity,
+    objectFormat,
+    oidPattern,
+    git,
+    pathTarget,
+    currentIdentity,
+    validateRepository,
+    rawIndex: () => readFileSync(indexPath),
+    indexRevision,
+  });
+  const unpackCommit = (prepared: Prepared) => {
+    const before = prepared.before as unknown as CommitCapture;
+    const plan = prepared.plan as unknown as CommitPlan;
+    if (before.kind !== "commit" || plan.kind !== "commit")
+      throw new Error("Invalid managed Git commit preparation.");
+    return { before, plan };
+  };
   const unpack = (prepared: Prepared) => ({ before: prepared.before as unknown as Capture, plan: prepared.plan as unknown as Plan });
   const restored: RecoveryOutcome = { status: "restored", evidence: { verified: true } };
   return {
     id: "git.managed", version: "1",
     async preflight(args) {
-      const mutation = parse(args), state = capture(mutation);
+      const mutation = parse(args);
+      if (mutation.action === "commit") {
+        const captured = commitLifecycle.capture(mutation);
+        return { effect: "write", reversibility: "r1", readiness: "verified", scope: "Cooperative POSIX Git branch tree: one selected staged path.", resources: [`git-repository:${identity}`, `git-branch-tree:${identity}:${mutation.path}`], revision: digest(captured), blastRadius: { count: 1, precision: "exact" } };
+      }
+      const state = capture(mutation);
       if (["delete", "rename"].includes(mutation.action) && !state.worktree.present) throw new Error("Worktree source does not exist.");
       if (mutation.action === "rename" && state.destination?.present) throw new Error("Rename destination exists.");
       if (mutation.action === "unstage") headEntry(mutation.path);
       const isIndex = mutation.action === "stage" || mutation.action === "unstage";
       return { effect: "write", reversibility: "r1", readiness: "verified", scope: `Cooperative POSIX Git ${isIndex ? "index" : "worktree"}: one selected ${isIndex ? "index path" : mutation.action === "rename" ? "rename pair" : "path"}. No concurrent writer, commit, remote, hook, ACL, ownership or xattr guarantee.`, resources: [`git-repository:${identity}`, `${isIndex ? "git-index" : "git-worktree"}:${identity}:${mutation.path}`, ...(mutation.action === "rename" ? [`git-worktree:${identity}:${mutation.to}`] : [])], revision: digest(state), blastRadius: { count: mutation.action === "rename" ? 2 : 1, precision: "exact" } };
     },
-    async prepare(args, observation) {
-      const mutation = parse(args), state = capture(mutation);
+    async prepare(args, observation, operationId) {
+      const mutation = parse(args);
+      if (mutation.action === "commit") {
+        const captured = commitLifecycle.capture(mutation);
+        if (observation.revision !== digest(captured)) throw new Error("Git state conflict.");
+        return { before: captured as unknown as Json, plan: commitLifecycle.prepare(mutation, captured, operationId) as unknown as Json };
+      }
+      const state = capture(mutation);
       if (observation.revision !== digest(state)) throw new Error("Git state conflict.");
       const after = predicted(mutation, state);
       if (equivalent(state, after)) throw new Error("No-op Git mutations are refused.");
       return { before: { mutation, state } as unknown as Json, plan: { root, gitDir, commonDir, indexPath, objectFormat, identity, mutation, after } as unknown as Json };
     },
-    async execute(args, prepared) {
-      const mutation = parse(args), { before, plan } = unpack(prepared);
+    async execute(args, prepared, operationId) {
+      const mutation = parse(args);
+      if (mutation.action === "commit") {
+        const { before, plan } = unpackCommit(prepared);
+        return commitLifecycle.execute(mutation, before, plan, operationId);
+      }
+      const { before, plan } = unpack(prepared);
       if (plan.root !== root || plan.gitDir !== gitDir || plan.commonDir !== commonDir || plan.indexPath !== indexPath || plan.objectFormat !== objectFormat || plan.identity !== identity || !same(mutation, plan.mutation) || !same(mutation, before.mutation) || !exactForMutation(capture(mutation), before.state, mutation)) throw new Error("Git capture binding or state conflict.");
       if (mutation.action === "write" || mutation.action === "delete") replaceWorktree(mutation.path, before.state.worktree, plan.after.worktree);
       else if (mutation.action === "rename") {
@@ -364,11 +410,23 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
       return { result: { action: mutation.action, path: mutation.path }, evidence: { after } as unknown as Json };
     },
     async release() {},
-    async reconcile() {
+    async reconcile(operationId, prepared) {
+      const before = prepared.before as unknown as { kind?: string };
+      const plan = prepared.plan as unknown as { kind?: string };
+      if (before.kind === "commit" && plan.kind === "commit") {
+        const commit = unpackCommit(prepared);
+        return commitLifecycle.reconcile(operationId, commit.before, commit.plan);
+      }
       // State equality is not an operation-specific durable receipt and can be ABA.
       return { status: "unknown" };
     },
-    async recover(prepared, outcome) {
+    async recover(prepared, outcome, recoveryId) {
+      const maybeBefore = prepared.before as unknown as { kind?: string };
+      const maybePlan = prepared.plan as unknown as { kind?: string };
+      if (maybeBefore.kind === "commit" && maybePlan.kind === "commit") {
+        const commit = unpackCommit(prepared);
+        return commitLifecycle.recover(commit.before, commit.plan, outcome, recoveryId);
+      }
       const { before, plan } = unpack(prepared);
       if (plan.root !== root || plan.gitDir !== gitDir || plan.commonDir !== commonDir || plan.indexPath !== indexPath || plan.objectFormat !== objectFormat || plan.identity !== identity)
         return { status: "conflict", evidence: null };
@@ -390,7 +448,13 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
       if (!equivalent(capture(mutation), before.state)) throw new Error("Git recovery verification failed.");
       return restored;
     },
-    async reconcileRecovery() {
+    async reconcileRecovery(prepared, outcome, recoveryId) {
+      const before = prepared.before as unknown as { kind?: string };
+      const plan = prepared.plan as unknown as { kind?: string };
+      if (before.kind === "commit" && plan.kind === "commit") {
+        const commit = unpackCommit(prepared);
+        return commitLifecycle.reconcileRecovery(commit.before, commit.plan, outcome, recoveryId);
+      }
       // Target equality is not an operation-specific durable receipt and can be ABA.
       return { status: "unknown" };
     },
