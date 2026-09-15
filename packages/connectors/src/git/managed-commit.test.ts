@@ -1,7 +1,7 @@
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import {
   closeSync,
   constants,
@@ -34,9 +34,17 @@ import { dirname, join, relative, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { managedGitAdapter } from "./managed.ts";
 import {
+  cleanupPrivateIndexWorkspace,
+  captureContainedPathChain,
+  commitRefTransaction,
+  createCommit,
+  createPrivateIndexWorkspace,
   parseIndexManifest,
   parseTreeManifest,
+  recordOwnedPrivateFile,
+  writeCandidateTree,
   type CommitCapture,
+  type CommitServices,
   type CommitPlan,
 } from "./managed-commit.ts";
 import type { Json } from "../recovery.ts";
@@ -896,3 +904,518 @@ posixTest("commit supports SHA-256 capture and pure preparation", async (t) => {
   assert.equal((prepared.plan as unknown as CommitPlan).parent.length, 64);
   assert.deepEqual(await f.snapshot(), before);
 });
+
+
+async function dispatchForward(f: CommitFixture, operationId: string) {
+  const args = { action: "commit", path: "selected" } as const;
+  const observation = await f.adapter.preflight(args);
+  const prepared = await f.adapter.prepare(args, observation, operationId);
+  const outcome = await f.adapter.execute(args, prepared, operationId);
+  return { prepared, outcome };
+}
+
+async function arrangeForwardScenario(
+  f: CommitFixture,
+  scenario: "add" | "modify" | "delete" | "binary" | "executable",
+) {
+  if (scenario === "add") {
+    f.run("rm", "-q", "selected");
+    f.run("commit", "-qm", "remove selected");
+    await f.write("selected", "added");
+    f.run("add", "selected");
+  } else if (scenario === "delete") {
+    f.run("rm", "-q", "selected");
+  } else if (scenario === "binary") {
+    await f.write("selected", Buffer.from([0, 255, 1, 10, 128]));
+    f.run("add", "selected");
+  } else if (scenario === "executable") {
+    await stageChange(f, "#!/bin/sh\nexit 0\n", 0o755);
+  } else {
+    await stageChange(f, "modified");
+  }
+}
+
+for (const scenario of ["add", "modify", "delete", "binary", "executable"] as const) {
+  posixTest(`forward commit handles ${scenario} and preserves human state`, async (t) => {
+    const f = await commitRepository(t);
+    await arrangeForwardScenario(f, scenario);
+    const before = await f.snapshot();
+    const { prepared, outcome } = await dispatchForward(f, `forward-${scenario}`);
+    const after = await f.snapshot();
+    const plan = prepared.plan as unknown as CommitPlan;
+    const head = f.run("rev-parse", "HEAD");
+    assert.equal(f.run("rev-parse", "HEAD^"), before.head);
+    assert.equal(f.run("rev-list", "--parents", "-n", "1", head).split(" ").length, 2);
+    assert.equal(f.run("rev-parse", plan.receiptRef), head);
+    assert.equal(f.run("diff-tree", "--no-commit-id", "--name-only", "-r", head), "selected");
+    assert.deepEqual(after.index, before.index);
+    assert.deepEqual(after.worktree, before.worktree);
+    assert.deepEqual(await readFile(join(f.root, "staged-sentinel")), Buffer.from("staged"));
+    assert.deepEqual(await readFile(join(f.root, "unstaged-sentinel")), Buffer.from("unstaged"));
+    assert.deepEqual(await readFile(join(f.root, "untracked-sentinel")), Buffer.from("untracked"));
+    assert.equal(JSON.stringify(outcome).includes(f.root), false);
+    const raw = f.run("cat-file", "commit", head) + "\n";
+    assert.match(raw, /^tree [0-9a-f]+\nparent [0-9a-f]+\nauthor VOID Managed Git <managed-git@void.invalid> \d+ \+0000\ncommitter VOID Managed Git <managed-git@void.invalid> \d+ \+0000\n\nVOID managed commit [0-9a-f]{16}\n$/);
+    assert.equal(raw.includes("gpgsig"), false);
+    assert.ok(Buffer.byteLength(raw) < 1024);
+    assert.equal((await readdir(dirname(f.gitPath("index")))).some((name) => name.startsWith(".void-git-index-")), false);
+  });
+}
+
+posixTest("forward commit completes a SHA-256 lifecycle", async (t) => {
+  const f = await commitRepository(t, "sha256");
+  await stageChange(f, "sha256-after");
+  const before = await f.snapshot();
+  const { prepared } = await dispatchForward(f, "sha256-forward");
+  const plan = prepared.plan as unknown as CommitPlan;
+  const head = f.run("rev-parse", "HEAD");
+  assert.equal(head.length, 64);
+  assert.equal(f.run("rev-parse", "HEAD^"), before.head);
+  assert.equal(f.run("rev-parse", plan.receiptRef), head);
+  assert.deepEqual((await f.snapshot()).index, before.index);
+  assert.deepEqual((await f.snapshot()).worktree, before.worktree);
+});
+
+for (const [name, arrange] of [
+  ["branch CAS drift", async (f: CommitFixture) => { f.run("commit", "-qm", "human raced commit"); }],
+  ["branch reflog append", async (f: CommitFixture) => { await writeFile(f.gitPath("logs/refs/heads/main"), "foreign reflog\n", { flag: "a" }); }],
+  ["branch reflog ABA replacement", async (f: CommitFixture) => {
+    const path = f.gitPath("logs/refs/heads/main");
+    const bytes = await readFile(path);
+    await rename(path, `${path}.old`);
+    await writeFile(path, bytes);
+  }],
+] as const) {
+  posixTest(`forward commit refuses ${name} before object writes`, async (t) => {
+    const f = await commitRepository(t);
+    await stageChange(f);
+    const args = { action: "commit", path: "selected" } as const;
+    const observation = await f.adapter.preflight(args);
+    const prepared = await f.adapter.prepare(args, observation, "raced-op");
+    await arrange(f);
+    const raced = await f.snapshot();
+    await assert.rejects(f.adapter.execute(args, prepared, "raced-op"));
+    assert.deepEqual(await f.snapshot(), raced);
+  });
+}
+
+posixTest("forward commit refuses a preexisting receipt without object writes", async (t) => {
+  const f = await commitRepository(t);
+  await stageChange(f);
+  const args = { action: "commit", path: "selected" } as const;
+  const observation = await f.adapter.preflight(args);
+  const prepared = await f.adapter.prepare(args, observation, "receipt-op");
+  const plan = prepared.plan as unknown as CommitPlan;
+  f.run("update-ref", plan.receiptRef, f.run("rev-parse", "HEAD"));
+  await f.trackGitTree("refs/void");
+  const raced = await f.snapshot();
+  await assert.rejects(f.adapter.execute(args, prepared, "receipt-op"));
+  assert.deepEqual(await f.snapshot(), raced);
+});
+
+for (const payload of [Buffer.alloc(0), Buffer.from("foreign lock")]) {
+  posixTest(`forward commit never touches a foreign real index lock of ${payload.length} bytes`, async (t) => {
+    const f = await commitRepository(t);
+    await stageChange(f);
+    const args = { action: "commit", path: "selected" } as const;
+    const observation = await f.adapter.preflight(args);
+    const prepared = await f.adapter.prepare(args, observation, "index-lock-op");
+    const lock = `${f.gitPath("index")}.lock`;
+    await writeFile(lock, payload);
+    const before = await readFile(lock);
+    const objects = (await f.snapshot()).objects;
+    await assert.rejects(f.adapter.execute(args, prepared, "index-lock-op"), /lock|conflict|changed/i);
+    assert.deepEqual(await readFile(lock), before);
+    assert.deepEqual((await f.snapshot()).objects, objects);
+  });
+}
+
+for (const relativePath of [
+  "refs/void/operations",
+  `refs/void/operations/${sha256("leaf-op")}`,
+] as const) {
+  posixTest(`forward commit validates exact receipt chain at ${relativePath} before objects`, async (t) => {
+    const f = await commitRepository(t);
+    await stageChange(f);
+    const args = { action: "commit", path: "selected" } as const;
+    const observation = await f.adapter.preflight(args);
+    const prepared = await f.adapter.prepare(args, observation, "leaf-op");
+    const target = f.gitPath(relativePath);
+    const external = await f.temp();
+    const foreign = join(external, "foreign");
+    await mkdir(foreign, { recursive: true });
+    const sentinel = Buffer.from([9, 0, 255, 7]);
+    await writeFile(join(foreign, "sentinel"), sentinel);
+    await rm(target, { recursive: true, force: true });
+    await mkdir(dirname(target), { recursive: true });
+    await symlink(foreign, target);
+    const before = await f.snapshot();
+    await assert.rejects(f.adapter.execute(args, prepared, "leaf-op"), /symbolic|containment|identity|path|state/i);
+    const after = await f.snapshot();
+    assert.deepEqual(after.objects, before.objects);
+    assert.deepEqual(await readFile(join(foreign, "sentinel")), sentinel);
+    assert.equal(after.head, before.head);
+  });
+}
+
+posixTest("private index starts absent and has a private ownership token", async (t) => {
+  const f = await commitRepository(t);
+  const workspace = createPrivateIndexWorkspace(f.gitPath("index"));
+  try {
+    await assert.rejects(lstat(workspace.indexPath), { code: "ENOENT" });
+    const directory = await lstat(workspace.directory, { bigint: true });
+    const token = await lstat(workspace.tokenPath, { bigint: true });
+    assert.equal(directory.mode & 0o777n, 0o700n);
+    assert.equal(token.mode & 0o777n, 0o600n);
+    assert.equal(token.uid, directory.uid);
+    assert.equal(token.nlink, 1n);
+    assert.equal(token.ino, workspace.tokenIno);
+  } finally {
+    cleanupPrivateIndexWorkspace(workspace);
+  }
+});
+
+posixTest("private index cleanup refuses a replaced directory", async (t) => {
+  const f = await commitRepository(t);
+  const workspace = createPrivateIndexWorkspace(f.gitPath("index"));
+  const moved = `${workspace.directory}.owned`;
+  await rename(workspace.directory, moved);
+  await mkdir(workspace.directory, { mode: 0o700 });
+  const sentinel = Buffer.from("foreign sentinel");
+  await writeFile(join(workspace.directory, "sentinel"), sentinel);
+  assert.throws(() => cleanupPrivateIndexWorkspace(workspace), /identity/);
+  assert.deepEqual(await readFile(join(workspace.directory, "sentinel")), sentinel);
+  await rm(workspace.directory, { recursive: true, force: true });
+  await rm(moved, { recursive: true, force: true });
+});
+
+for (const attack of ["extra file", "token replacement", "index replacement", "lock replacement"] as const) {
+  posixTest(`private index cleanup fails closed on ${attack}`, async (t) => {
+    const f = await commitRepository(t);
+    const workspace = createPrivateIndexWorkspace(f.gitPath("index"));
+    const foreign = Buffer.from(`foreign ${attack}`);
+    let target: string;
+    if (attack === "extra file") {
+      target = join(workspace.directory, "extra");
+      await writeFile(target, foreign);
+    } else if (attack === "token replacement") {
+      target = workspace.tokenPath;
+      await unlink(target);
+      await writeFile(target, foreign);
+    } else {
+      target = attack === "index replacement" ? workspace.indexPath : `${workspace.indexPath}.lock`;
+      await writeFile(target, "owned");
+      recordOwnedPrivateFile(workspace, target);
+      await unlink(target);
+      await writeFile(target, foreign);
+    }
+    assert.throws(() => cleanupPrivateIndexWorkspace(workspace), /identity|unknown/);
+    assert.deepEqual(await readFile(target), foreign);
+    await rm(workspace.directory, { recursive: true, force: true });
+  });
+}
+
+
+function transactionServices(f: CommitFixture): CommitServices {
+  const head = f.run("rev-parse", "HEAD");
+  return {
+    root: f.root,
+    oidPattern: new RegExp(`^[0-9a-f]{${head.length}}$`),
+  } as unknown as CommitServices;
+}
+
+posixTest("ref transaction holds both locks through the locked recheck", async (t) => {
+  const f = await commitRepository(t);
+  const oldHead = f.run("rev-parse", "HEAD");
+  const tree = f.run("rev-parse", "HEAD^{tree}");
+  const commit = f.run("commit-tree", tree, "-p", oldHead, "-m", "candidate");
+  const receipt = `refs/void/operations/${sha256("held-locks")}`;
+  let checked = false;
+  await commitRefTransaction(
+    [
+      { ref: "refs/heads/main", newOid: commit, oldOid: oldHead },
+      { ref: receipt, newOid: commit, oldOid: null },
+    ],
+    () => {
+      assert.equal(lstatSync(`${f.gitPath("refs/heads/main")}.lock`).isFile(), true);
+      assert.equal(lstatSync(`${f.gitPath(receipt)}.lock`).isFile(), true);
+      checked = true;
+    },
+    transactionServices(f),
+  );
+  assert.equal(checked, true);
+  assert.equal(f.run("rev-parse", "HEAD"), commit);
+  assert.equal(f.run("rev-parse", receipt), commit);
+});
+
+posixTest("ref transaction aborts a reflog race after prepare while locks remain held", async (t) => {
+  const f = await commitRepository(t);
+  const oldHead = f.run("rev-parse", "HEAD");
+  const tree = f.run("rev-parse", "HEAD^{tree}");
+  const commit = f.run("commit-tree", tree, "-p", oldHead, "-m", "candidate");
+  const receipt = `refs/void/operations/${sha256("reflog-race")}`;
+  const racedLine = Buffer.from("foreign reflog append\n");
+  await assert.rejects(commitRefTransaction(
+    [
+      { ref: "refs/heads/main", newOid: commit, oldOid: oldHead },
+      { ref: receipt, newOid: commit, oldOid: null },
+    ],
+    () => {
+      assert.equal(lstatSync(`${f.gitPath("refs/heads/main")}.lock`).isFile(), true);
+      writeFileSync(f.gitPath("logs/refs/heads/main"), racedLine, { flag: "a" });
+      throw new Error("reflog changed");
+    },
+    transactionServices(f),
+  ), /transaction/);
+  assert.equal(f.run("rev-parse", "HEAD"), oldHead);
+  assert.notEqual(spawnSync("git", ["-C", f.root, "show-ref", "--verify", receipt]).status, 0);
+  assert.deepEqual((await readFile(f.gitPath("logs/refs/heads/main"))).subarray(-racedLine.length), racedLine);
+});
+
+posixTest("ref transaction timeout waits for SIGTERM then SIGKILL and leaves no child", async (t) => {
+  const f = await commitRepository(t);
+  const directory = await f.temp();
+  const pidPath = join(directory, "pid");
+  const command = join(directory, "hanging-git");
+  await writeFile(command, `const fs=require("node:fs");fs.writeFileSync(${JSON.stringify(pidPath)},String(process.pid));process.on("SIGTERM",()=>{});process.stdin.resume();setInterval(()=>{},1000);\n`);
+  const oid = f.run("rev-parse", "HEAD");
+  const signals: NodeJS.Signals[] = [];
+  const started = Date.now();
+  await assert.rejects(commitRefTransaction(
+    [{ ref: "refs/heads/main", newOid: oid, oldOid: oid }],
+    () => {},
+    transactionServices(f),
+    { command: process.execPath, commandArgs: [command], timeoutMs: 250, termGraceMs: 100, killGraceMs: 100, onSignal: (signal) => signals.push(signal) },
+  ), /transaction/);
+  assert.ok(Date.now() - started < 2_000);
+  assert.deepEqual(signals.slice(0, 2), ["SIGTERM", "SIGKILL"]);
+  const pid = Number(await readFile(pidPath, "utf8"));
+  assert.throws(() => process.kill(pid, 0), { code: "ESRCH" });
+  assert.equal(pathExistsForTest(`${f.gitPath("refs/heads/main")}.lock`), false);
+});
+
+function pathExistsForTest(path: string): boolean {
+  try { lstatSync(path); return true; }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+posixTest("two processes racing one prepared commit produce one winner", async (t) => {
+  const f = await commitRepository(t);
+  await stageChange(f, "process-race");
+  const args = { action: "commit", path: "selected" } as const;
+  const observation = await f.adapter.preflight(args);
+  const prepared = await f.adapter.prepare(args, observation, "two-process-op");
+  const directory = await f.temp();
+  const artifact = join(directory, "prepared.json");
+  const script = join(directory, "race.mjs");
+  await writeFile(artifact, JSON.stringify(prepared));
+  const moduleUrl = new URL("./managed.ts", import.meta.url).href;
+  await writeFile(script, `import fs from "node:fs";import { managedGitAdapter } from ${JSON.stringify(moduleUrl)};const prepared=JSON.parse(fs.readFileSync(${JSON.stringify(artifact)},"utf8"));const adapter=managedGitAdapter({root:${JSON.stringify(f.root)},cooperative:true});try{await adapter.execute({action:"commit",path:"selected"},prepared,"two-process-op");process.exit(0)}catch{process.exit(2)}\n`);
+  const runChild = () => new Promise<number>((resolvePromise) => {
+    const child = spawn(process.execPath, [script], { cwd: process.cwd(), stdio: "ignore" });
+    child.on("close", (code) => resolvePromise(code ?? 3));
+  });
+  const beforeHead = f.run("rev-parse", "HEAD");
+  const codes = await Promise.all([runChild(), runChild()]);
+  assert.deepEqual(codes.sort(), [0, 2]);
+  assert.equal(f.run("rev-parse", "HEAD^"), beforeHead);
+  const receipt = (prepared.plan as unknown as CommitPlan).receiptRef;
+  assert.equal(f.run("rev-parse", receipt), f.run("rev-parse", "HEAD"));
+  assert.equal(f.run("for-each-ref", "--format=%(refname)", "refs/void/operations").split("\n").filter(Boolean).length, 1);
+});
+
+
+posixTest("private index cleanup runs after an injected Git failure", async (t) => {
+  const f = await commitRepository(t);
+  await stageChange(f, "failure-after-index");
+  const realIndex = await readFile(f.gitPath("index"));
+  const worktree = await readFile(join(f.root, "selected"));
+  const oid = f.run("rev-parse", ":selected");
+  const services = {
+    root: f.root,
+    indexPath: f.gitPath("index"),
+    oidPattern: /^[0-9a-f]{40}$/,
+    git(args: readonly string[], input?: Buffer | string, extraEnv: NodeJS.ProcessEnv = {}) {
+      if (args[0] === "update-index") {
+        writeFileSync(`${extraEnv.GIT_INDEX_FILE}.lock`, "owned lock");
+        throw new Error("injected Git failure");
+      }
+      return execFileSync("git", ["-C", f.root, ...args], {
+        input,
+        env: { ...process.env, ...extraEnv },
+        encoding: "utf8",
+      }).trim();
+    },
+  } as unknown as CommitServices;
+  await assert.rejects(
+    writeCandidateTree(f.run("rev-parse", "HEAD^{tree}"), "selected", {
+      present: true,
+      mode: "100644",
+      oid,
+    }, "unused", services),
+    /injected/,
+  );
+  assert.deepEqual(await readFile(f.gitPath("index")), realIndex);
+  assert.deepEqual(await readFile(join(f.root, "selected")), worktree);
+  assert.equal((await readdir(dirname(f.gitPath("index")))).some((name) => name.startsWith(".void-git-index-")), false);
+});
+
+
+for (const race of ["branch CAS", "preexisting receipt"] as const) {
+  posixTest(`prepared ref transaction preserves ${race} raced state`, async (t) => {
+    const f = await commitRepository(t);
+    const plannedParent = f.run("rev-parse", "HEAD");
+    const tree = f.run("rev-parse", "HEAD^{tree}");
+    const candidate = f.run("commit-tree", tree, "-p", plannedParent, "-m", "candidate");
+    const raced = f.run("commit-tree", tree, "-p", plannedParent, "-m", "raced");
+    const receipt = `refs/void/operations/${sha256(`transaction-${race}`)}`;
+    if (race === "branch CAS") f.run("update-ref", "refs/heads/main", raced, plannedParent);
+    else f.run("update-ref", receipt, raced);
+    const expectedHead = f.run("rev-parse", "HEAD");
+    const expectedReceipt = race === "preexisting receipt" ? raced : null;
+    const index = await readFile(f.gitPath("index"));
+    const worktree = await readFile(join(f.root, "selected"));
+    const foreignLock = `${f.gitPath("index")}.lock`;
+    const lockBytes = Buffer.from(`foreign ${race} lock`);
+    await writeFile(foreignLock, lockBytes);
+    await assert.rejects(commitRefTransaction(
+      [
+        { ref: "refs/heads/main", newOid: candidate, oldOid: plannedParent },
+        { ref: receipt, newOid: candidate, oldOid: null },
+      ],
+      () => {},
+      transactionServices(f),
+    ), /transaction/);
+    assert.equal(f.run("rev-parse", "HEAD"), expectedHead);
+    if (expectedReceipt) assert.equal(f.run("rev-parse", receipt), expectedReceipt);
+    else assert.notEqual(spawnSync("git", ["-C", f.root, "show-ref", "--verify", receipt]).status, 0);
+    assert.deepEqual(await readFile(f.gitPath("index")), index);
+    assert.deepEqual(await readFile(join(f.root, "selected")), worktree);
+    assert.deepEqual(await readFile(foreignLock), lockBytes);
+  });
+}
+
+for (const lockKind of ["branch", "receipt"] as const) {
+  posixTest(`ref transaction preserves a foreign ${lockKind} lock`, async (t) => {
+    const f = await commitRepository(t);
+    const head = f.run("rev-parse", "HEAD");
+    const receipt = `refs/void/operations/${sha256(`lock-${lockKind}`)}`;
+    const lock = lockKind === "branch"
+      ? `${f.gitPath("refs/heads/main")}.lock`
+      : `${f.gitPath(receipt)}.lock`;
+    await mkdir(dirname(lock), { recursive: true });
+    const bytes = Buffer.from([0, 255, 4, 2]);
+    await writeFile(lock, bytes);
+    await assert.rejects(commitRefTransaction(
+      [
+        { ref: "refs/heads/main", newOid: head, oldOid: head },
+        { ref: receipt, newOid: head, oldOid: null },
+      ],
+      () => {},
+      transactionServices(f),
+    ), /transaction/);
+    assert.deepEqual(await readFile(lock), bytes);
+    assert.equal(f.run("rev-parse", "HEAD"), head);
+  });
+}
+
+
+posixTest("failed ref transaction leaves at most the candidate tree and commit dangling", async (t) => {
+  const f = await commitRepository(t);
+  await stageChange(f, "dangling-candidate");
+  const args = { action: "commit", path: "selected" } as const;
+  const observation = await f.adapter.preflight(args);
+  const prepared = await f.adapter.prepare(args, observation, "dangling-op");
+  const captured = prepared.before as unknown as CommitCapture;
+  const plan = prepared.plan as unknown as CommitPlan;
+  const services = {
+    ...transactionServices(f),
+    indexPath: f.gitPath("index"),
+    git(args: readonly string[], input?: Buffer | string, extraEnv: NodeJS.ProcessEnv = {}) {
+      return execFileSync("git", ["-C", f.root, ...args], {
+        input: typeof input === "string" ? Buffer.from(input) : input,
+        env: { ...process.env, ...extraEnv },
+        encoding: "utf8",
+      }).trim();
+    },
+    gitBuffer(args: readonly string[], input?: Buffer | string, extraEnv: NodeJS.ProcessEnv = {}) {
+      return execFileSync("git", ["-C", f.root, ...args], {
+        input: typeof input === "string" ? Buffer.from(input) : input,
+        env: { ...process.env, ...extraEnv },
+        encoding: "buffer",
+        maxBuffer: 20 * 1024 * 1024,
+      });
+    },
+  } as unknown as CommitServices;
+  const raced = f.run("commit-tree", captured.branch.tree, "-p", plan.parent, "-m", "raced");
+  const before = await f.snapshot();
+  const tree = await writeCandidateTree(
+    captured.branch.tree,
+    captured.selected.path,
+    captured.selected.index,
+    plan.expectedTreeManifestDigest,
+    services,
+  );
+  const candidate = await createCommit(tree, plan.parent, plan.metadata, services);
+  f.run("update-ref", plan.branchRef, raced, plan.parent);
+  await assert.rejects(commitRefTransaction(
+    [
+      { ref: plan.branchRef, newOid: candidate, oldOid: plan.parent },
+      { ref: plan.receiptRef, newOid: candidate, oldOid: null },
+    ],
+    () => {},
+    services,
+  ), /transaction/);
+  const after = await f.snapshot();
+  assert.equal(after.head, raced);
+  assert.deepEqual(after.index, before.index);
+  assert.deepEqual(after.worktree, before.worktree);
+  assert.deepEqual(before.objects.filter((oid) => !after.objects.includes(oid)), []);
+  assert.ok(after.objects.filter((oid) => !before.objects.includes(oid)).length <= 2);
+});
+
+
+for (const alias of ["receipt leaf", "receipt parent"] as const) {
+  posixTest(`locked ref transaction refuses a ${alias} alias and preserves its sentinel`, async (t) => {
+    const f = await commitRepository(t);
+    const oldHead = f.run("rev-parse", "HEAD");
+    const tree = f.run("rev-parse", "HEAD^{tree}");
+    const candidate = f.run("commit-tree", tree, "-p", oldHead, "-m", "candidate");
+    const receipt = `refs/void/operations/${sha256(`locked-${alias}`)}`;
+    const receiptPath = f.gitPath(receipt);
+    await mkdir(dirname(receiptPath), { recursive: true });
+    const captured = captureContainedPathChain(f.gitPath("."), receiptPath, "missing-or-file");
+    const external = await f.temp();
+    const sentinel = join(external, "sentinel");
+    const bytes = Buffer.from([0, 7, 255, 1]);
+    await writeFile(sentinel, bytes);
+    await assert.rejects(commitRefTransaction(
+      [
+        { ref: "refs/heads/main", newOid: candidate, oldOid: oldHead },
+        { ref: receipt, newOid: candidate, oldOid: null },
+      ],
+      () => {
+        if (alias === "receipt leaf") {
+          symlinkSyncForTest(sentinel, receiptPath);
+        } else {
+          const parent = dirname(receiptPath);
+          const moved = join(external, "operations");
+          renameSync(parent, moved);
+          symlinkSyncForTest(moved, parent);
+        }
+        const current = captureContainedPathChain(f.gitPath("."), receiptPath, "missing-or-file");
+        assert.deepEqual(current, captured);
+      },
+      transactionServices(f),
+    ), /transaction/);
+    assert.equal(f.run("rev-parse", "HEAD"), oldHead);
+    assert.deepEqual(await readFile(sentinel), bytes);
+  });
+}
+
+function symlinkSyncForTest(target: string, path: string): void {
+  execFileSync("ln", ["-s", target, path]);
+}
