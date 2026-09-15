@@ -7,9 +7,12 @@ import {
   constants,
   fstatSync,
   lstatSync,
+  mkdirSync,
   openSync,
   readSync,
   readlinkSync,
+  renameSync,
+  writeFileSync,
   type BigIntStats,
 } from "node:fs";
 import {
@@ -27,7 +30,7 @@ import {
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { managedGitAdapter } from "./managed.ts";
 import {
@@ -101,6 +104,25 @@ async function commitRepository(
   run("add", "staged-sentinel");
   await writeFile(join(root, "unstaged-sentinel"), "unstaged");
   await writeFile(join(root, "untracked-sentinel"), "untracked");
+  const registeredGitPaths = new Set<string>();
+  const registeredWorktreePaths = new Set<string>();
+  const directoryBindings = new Map<string, BigIntStats>();
+  const bindFixedPath = (path: string, boundary: string, registry: Set<string>) => {
+    let current = path;
+    for (;;) {
+      registry.add(current);
+      try {
+        const item = lstatSync(current, { bigint: true });
+        if (item.isDirectory() && !item.isSymbolicLink()) directoryBindings.set(current, item);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      }
+      if (current === boundary) break;
+      const parent = dirname(current);
+      if (parent === current || !current.startsWith(`${boundary}${sep}`)) break;
+      current = parent;
+    }
+  };
   const gitPaths = new Map<string, string>();
   const gitPath = (path: string) => {
     const cached = gitPaths.get(path);
@@ -108,30 +130,43 @@ async function commitRepository(
     const value = run("rev-parse", "--git-path", path);
     const resolved = value.startsWith("/") ? value : join(root, value);
     gitPaths.set(path, resolved);
+    bindFixedPath(resolved, root, registeredGitPaths);
     return resolved;
   };
   for (const path of [".", "index", "refs/heads/main", "logs/refs/heads/main", "packed-refs", "config"])
     gitPath(path);
+  type SnapshotSeamEvent = "before-file-open";
+  let snapshotSeam: (event: SnapshotSeamEvent, path: string) => void = () => {};
+  type SnapshotBudget = { entries: number; fileBytes: number };
+  const maxSnapshotDepth = 32;
+  const maxSnapshotEntries = 512;
+  const maxSnapshotAggregateBytes = 8 * 1024 * 1024;
   const maxSnapshotFileBytes = 20 * 1024 * 1024;
   const statIdentity = (left: BigIntStats, right: BigIntStats) =>
     left.dev === right.dev && left.ino === right.ino && left.uid === right.uid && left.mode === right.mode;
-  const pathSnapshot = async (path: string): Promise<PathSnapshot> => {
+  const pathSnapshot = async (path: string, budget: SnapshotBudget): Promise<PathSnapshot> => {
     let item;
     try { item = lstatSync(path, { bigint: true }); }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return { present: false };
       throw error;
     }
+    if (++budget.entries > maxSnapshotEntries) throw new Error("Snapshot exceeds the total entries limit.");
     const kind = item.isFile() ? "file" : item.isDirectory() ? "directory" : item.isSymbolicLink() ? "symlink" : "other";
     let bytes: Buffer | undefined;
     let link: string | undefined;
     let after = item;
     if (kind === "file") {
+      snapshotSeam("before-file-open", path);
       const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
       try {
         const before = fstatSync(fd, { bigint: true });
-        if (!before.isFile() || before.size > BigInt(maxSnapshotFileBytes))
-          throw new Error("Snapshot file is unsupported.");
+        if (!statIdentity(item, before) || !before.isFile())
+          throw new Error("Snapshot file identity changed.");
+        if (before.size > BigInt(maxSnapshotFileBytes)) throw new Error("Snapshot file is unsupported.");
+        if (budget.fileBytes + Number(before.size) > maxSnapshotAggregateBytes)
+          throw new Error("Snapshot exceeds the aggregate file bytes limit.");
+        budget.fileBytes += Number(before.size);
         bytes = Buffer.alloc(Number(before.size));
         let offset = 0;
         while (offset < bytes.length) {
@@ -176,43 +211,39 @@ async function commitRepository(
   const initialCommon = lstatSync(commonPath, { bigint: true });
   const boundaryMatches = (captured: PathSnapshot, expected: BigIntStats) =>
     captured.present && captured.kind === "directory" && captured.dev === String(expected.dev) &&
-    captured.ino === String(expected.ino) && captured.uid === String(expected.uid);
-  const recursiveSnapshot = async (
-    directory: string,
-    options: { skipGitDirectory?: boolean; skipObjects?: boolean } = {},
-  ) => {
-    const result: Record<string, PathSnapshot> = { ".": await pathSnapshot(directory) };
-    const visit = async (current: string, prefix = "") => {
-      const before = lstatSync(current, { bigint: true });
-      if (!before.isDirectory() || before.isSymbolicLink()) throw new Error("Snapshot directory is unsafe.");
-      const names = (await readdir(current)).sort();
-      const afterRead = lstatSync(current, { bigint: true });
-      if (!statIdentity(before, afterRead) || !afterRead.isDirectory() || afterRead.isSymbolicLink())
-        throw new Error("Snapshot directory identity changed.");
-      for (const name of names) {
-        if (!prefix && options.skipGitDirectory && name === ".git") continue;
-        const beforeChild = lstatSync(current, { bigint: true });
-        if (!statIdentity(before, beforeChild) || !beforeChild.isDirectory() || beforeChild.isSymbolicLink())
-          throw new Error("Snapshot directory identity changed.");
-        const relative = prefix ? `${prefix}/${name}` : name;
-        const absolute = join(current, name);
-        const captured = await pathSnapshot(absolute);
-        result[relative] = captured;
-        if (
-          captured.present && captured.kind === "directory" &&
-          !(options.skipObjects && relative === "objects")
-        ) await visit(absolute, relative);
-        const afterChild = lstatSync(current, { bigint: true });
-        if (!statIdentity(before, afterChild) || !afterChild.isDirectory() || afterChild.isSymbolicLink())
-          throw new Error("Snapshot directory identity changed.");
-      }
-      const after = lstatSync(current, { bigint: true });
-      if (!statIdentity(before, after) || !after.isDirectory() || after.isSymbolicLink())
-        throw new Error("Snapshot directory identity changed.");
-    };
-    if (result["."].present && result["."].kind === "directory") await visit(directory);
-    return result;
+    captured.ino === String(expected.ino) && captured.uid === String(expected.uid) &&
+    captured.mode === String(expected.mode);
+  const statMatchesSnapshot = (item: BigIntStats, expected: PathSnapshot) =>
+    expected.present && expected.kind === "directory" && item.isDirectory() && !item.isSymbolicLink() &&
+    String(item.dev) === expected.dev && String(item.ino) === expected.ino &&
+    String(item.uid) === expected.uid && String(item.mode) === expected.mode;
+  const assertBoundaryIdentities = () => {
+    const currentRoot = lstatSync(root, { bigint: true });
+    const currentCommon = lstatSync(commonPath, { bigint: true });
+    if (
+      !currentRoot.isDirectory() || currentRoot.isSymbolicLink() ||
+      !currentCommon.isDirectory() || currentCommon.isSymbolicLink() ||
+      !statIdentity(initialRoot, currentRoot) || !statIdentity(initialCommon, currentCommon)
+    ) throw new Error("Snapshot boundary identity changed.");
   };
+  const trackExistingTree = async (
+    directory: string,
+    boundary: string,
+    registry: Set<string>,
+    skipObjects = false,
+  ): Promise<void> => {
+    bindFixedPath(directory, boundary, registry);
+    for (const name of await readdir(directory)) {
+      const child = join(directory, name);
+      bindFixedPath(child, boundary, registry);
+      const item = lstatSync(child);
+      if (item.isDirectory() && !item.isSymbolicLink() && !(skipObjects && child === join(directory, "objects")))
+        await trackExistingTree(child, boundary, registry, false);
+    }
+  };
+  for (const path of ["selected", "staged-sentinel", "unstaged-sentinel", "untracked-sentinel"])
+    bindFixedPath(join(root, path), root, registeredWorktreePaths);
+  await trackExistingTree(commonPath, commonPath, registeredGitPaths, true);
   const emptySnapshot = (
     rootBoundary: PathSnapshot,
     commonBoundary: PathSnapshot,
@@ -231,37 +262,71 @@ async function commitRepository(
     worktree: {},
     gitMetadata,
   });
+  const fixedSnapshot = async (
+    paths: Set<string>,
+    boundary: string,
+    budget: SnapshotBudget,
+  ): Promise<{ entries: Record<string, PathSnapshot>; unsafe: boolean }> => {
+    const entries: Record<string, PathSnapshot> = {};
+    let unsafe = false;
+    const ordered = [...paths].sort((left, right) => left.split(sep).length - right.split(sep).length || left.localeCompare(right));
+    if (ordered.length + budget.entries > maxSnapshotEntries)
+      throw new Error("Snapshot exceeds the total entries limit.");
+    const blocked: string[] = [];
+    for (const path of ordered) {
+      if (blocked.some((parent) => path.startsWith(`${parent}${sep}`))) continue;
+      const relativePath = relative(boundary, path) || ".";
+      const depth = relativePath === "." ? 0 : relativePath.split(sep).length;
+      if (depth > maxSnapshotDepth) throw new Error("Snapshot exceeds the directory depth limit.");
+      const captured = await pathSnapshot(path, budget);
+      entries[relativePath] = captured;
+      const expected = directoryBindings.get(path);
+      if (expected && !boundaryMatches(captured, expected)) unsafe = true;
+      if (captured.present && captured.kind === "symlink") unsafe = true;
+      if (!captured.present || captured.kind !== "directory" || (expected && !boundaryMatches(captured, expected)))
+        blocked.push(path);
+    }
+    return { entries, unsafe };
+  };
   const snapshot = async (): Promise<Snapshot> => {
-    const rootBoundary = await pathSnapshot(root);
+    const budget: SnapshotBudget = { entries: 0, fileBytes: 0 };
+    const rootBoundary = await pathSnapshot(root, budget);
     if (!boundaryMatches(rootBoundary, initialRoot))
       return emptySnapshot(rootBoundary, { present: false }, {});
-    const commonBoundary = await pathSnapshot(commonPath);
+    const commonBoundary = await pathSnapshot(commonPath, budget);
     if (!boundaryMatches(commonBoundary, initialCommon))
       return emptySnapshot(rootBoundary, commonBoundary, { ".": commonBoundary });
-    const gitMetadata = await recursiveSnapshot(commonPath, { skipObjects: true });
-    if (Object.values(gitMetadata).some((value) => value.present && value.kind === "symlink"))
-      return emptySnapshot(rootBoundary, commonBoundary, gitMetadata);
+    assertBoundaryIdentities();
+    const gitFixed = await fixedSnapshot(registeredGitPaths, commonPath, budget);
+    assertBoundaryIdentities();
+    if (gitFixed.unsafe) return emptySnapshot(rootBoundary, commonBoundary, gitFixed.entries);
+    assertBoundaryIdentities();
     const head = (() => {
       const result = spawnSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" });
       return result.status === 0 ? result.stdout.trim() : "";
     })();
+    assertBoundaryIdentities();
     const refs = run("for-each-ref", "--format=%(refname):%(objectname)")
       .split("\n").filter(Boolean).sort();
+    assertBoundaryIdentities();
     const objects = run("-c", "remote.origin.promisor=false", "cat-file", "--batch-all-objects", "--batch-check=%(objectname)")
       .split("\n").filter(Boolean).sort();
+    assertBoundaryIdentities();
+    const worktreeFixed = await fixedSnapshot(registeredWorktreePaths, root, budget);
+    assertBoundaryIdentities();
     return {
       rootBoundary,
       commonBoundary,
       head,
       refs,
       objects,
-      index: await pathSnapshot(gitPath("index")),
-      looseBranchRef: await pathSnapshot(gitPath("refs/heads/main")),
-      branchReflog: await pathSnapshot(gitPath("logs/refs/heads/main")),
-      packedRefs: await pathSnapshot(gitPath("packed-refs")),
-      config: await pathSnapshot(gitPath("config")),
-      worktree: await recursiveSnapshot(root, { skipGitDirectory: true }),
-      gitMetadata,
+      index: gitFixed.entries[relative(commonPath, gitPath("index"))] ?? { present: false },
+      looseBranchRef: gitFixed.entries[relative(commonPath, gitPath("refs/heads/main"))] ?? { present: false },
+      branchReflog: gitFixed.entries[relative(commonPath, gitPath("logs/refs/heads/main"))] ?? { present: false },
+      packedRefs: gitFixed.entries[relative(commonPath, gitPath("packed-refs"))] ?? { present: false },
+      config: gitFixed.entries[relative(commonPath, gitPath("config"))] ?? { present: false },
+      worktree: worktreeFixed.entries,
+      gitMetadata: gitFixed.entries,
     };
   };
   return {
@@ -272,8 +337,19 @@ async function commitRepository(
     write: async (path: string, value: string | Buffer, mode = 0o644) => {
       await writeFile(join(root, path), value);
       await chmod(join(root, path), mode);
+      bindFixedPath(join(root, path), root, registeredWorktreePaths);
+    },
+    async mkdirWorktree(path: string) {
+      await mkdir(join(root, path));
+      bindFixedPath(join(root, path), root, registeredWorktreePaths);
+    },
+    async trackGitTree(path = ".") {
+      await trackExistingTree(gitPath(path), commonPath, registeredGitPaths);
     },
     snapshot,
+    setSnapshotSeam(seam: (event: SnapshotSeamEvent, path: string) => void) {
+      snapshotSeam = seam;
+    },
     async temp() {
       const path = await mkdtemp(join(tmpdir(), "void-git-external-"));
       extras.push(path);
@@ -360,25 +436,26 @@ const refusedProfiles: Array<{
   arrange(f: CommitFixture): Promise<void> | void;
   error: RegExp;
 }> = [
-  { name: "detached HEAD", arrange: (f) => f.run("checkout", "--detach", "-q"), error: /attached/ },
-  { name: "unborn HEAD", arrange: (f) => f.run("checkout", "--orphan", "unborn"), error: /born/ },
+  { name: "detached HEAD", arrange: (f) => { f.run("checkout", "--detach", "-q"); }, error: /attached/ },
+  { name: "unborn HEAD", arrange: (f) => { f.run("checkout", "--orphan", "unborn"); }, error: /born/ },
   {
     name: "second worktree",
     arrange: async (f) => {
       const path = await f.temp();
       await rm(path, { recursive: true });
       f.run("worktree", "add", "-q", "-b", "other", path);
+      await f.trackGitTree("worktrees");
     },
     error: /one registered worktree/,
   },
   { name: "shallow", arrange: (f) => writeFile(f.gitPath("shallow"), `${f.run("rev-parse", "HEAD")}\n`), error: /shallow/i },
-  { name: "replace ref", arrange: (f) => { const head = f.run("rev-parse", "HEAD"); f.run("replace", head, head); }, error: /replace/i },
+  { name: "replace ref", arrange: async (f) => { const head = f.run("rev-parse", "HEAD"); f.run("replace", head, head); await f.trackGitTree("refs/replace"); }, error: /replace/i },
   { name: "graft", arrange: (f) => writeFile(f.gitPath("info/grafts"), `${f.run("rev-parse", "HEAD")}\n`), error: /graft/i },
   { name: "alternates", arrange: async (f) => { const path = await f.temp(); await mkdir(join(path, "info"), { recursive: true }); await mkdir(join(path, "pack"), { recursive: true }); await writeFile(f.gitPath("objects/info/alternates"), `${path}\n`); }, error: /alternate/i },
-  { name: "promisor config", arrange: (f) => f.run("config", "remote.origin.promisor", "true"), error: /promisor/ },
+  { name: "promisor config", arrange: (f) => { f.run("config", "remote.origin.promisor", "true"); }, error: /promisor/ },
   { name: "promisor pack marker", arrange: (f) => writeFile(f.gitPath("objects/pack/foreign.promisor"), ""), error: /promisor/ },
-  { name: "partial clone extension only", arrange: (f) => f.run("config", "extensions.partialClone", "origin"), error: /partial/i },
-  { name: "signing required", arrange: (f) => f.run("config", "commit.gpgSign", "true"), error: /signing/ },
+  { name: "partial clone extension only", arrange: (f) => { f.run("config", "extensions.partialClone", "origin"); }, error: /partial/i },
+  { name: "signing required", arrange: (f) => { f.run("config", "commit.gpgSign", "true"); }, error: /signing/ },
   { name: "missing reflog", arrange: (f) => unlink(f.gitPath("logs/refs/heads/main")), error: /reflog/ },
   { name: "branch lock", arrange: (f) => writeFile(f.gitPath("refs/heads/main.lock"), "foreign"), error: /lock/ },
   { name: "branch reflog lock", arrange: (f) => writeFile(f.gitPath("logs/refs/heads/main.lock"), "foreign"), error: /lock/ },
@@ -441,6 +518,67 @@ function snapshotContainsBytes(value: unknown, wanted: Buffer): boolean {
   if (!value || typeof value !== "object") return false;
   return Object.values(value).some((item) => snapshotContainsBytes(item, wanted));
 }
+
+posixTest("snapshot refuses a file replacement between lstat and fd open", async (t) => {
+  const f = await commitRepository(t);
+  await stageChange(f);
+  f.run("pack-refs", "--all");
+  const target = f.gitPath("packed-refs");
+  const external = await f.temp();
+  const moved = join(external, "packed-original");
+  const original = await readFile(target);
+  let replaced = false;
+  f.setSnapshotSeam((event, path) => {
+    if (replaced || event !== "before-file-open" || path !== target) return;
+    replaced = true;
+    renameSync(target, moved);
+    writeFileSync(target, "replacement");
+  });
+  await assert.rejects(f.snapshot(), /identity/);
+  assert.deepEqual(await readFile(moved), original);
+});
+
+posixTest("snapshot refuses a directory replacement before traversal", async (t) => {
+  const f = await commitRepository(t);
+  await stageChange(f);
+  const target = f.gitPath("refs/heads");
+  const external = await f.temp();
+  const moved = join(external, "heads-original");
+  const sentinel = Buffer.from("directory-replacement-sentinel");
+  renameSync(target, moved);
+  mkdirSync(target);
+  writeFileSync(join(target, "foreign"), sentinel);
+  const captured = await f.snapshot();
+  assert.equal(captured.head, "");
+  assert.equal(snapshotContainsBytes(captured, sentinel), false);
+  assert.deepEqual(await readFile(join(target, "foreign")), sentinel);
+});
+
+posixTest("snapshot refuses excessive directory depth", async (t) => {
+  const f = await commitRepository(t);
+  let path = "";
+  for (let depth = 0; depth < 40; depth++) {
+    path = path ? `${path}/depth-${depth}` : `depth-${depth}`;
+    await f.mkdirWorktree(path);
+  }
+  await assert.rejects(f.snapshot(), /depth/);
+});
+
+posixTest("snapshot refuses excessive total entries", async (t) => {
+  const f = await commitRepository(t);
+  const directory = join(f.root, "entries");
+  await mkdir(directory);
+  await Promise.all(Array.from({ length: 600 }, (_, index) =>
+    f.write(`entries/entry-${index}`, "x"),
+  ));
+  await assert.rejects(f.snapshot(), /entries/);
+});
+
+posixTest("snapshot refuses excessive aggregate bytes before reading the file", async (t) => {
+  const f = await commitRepository(t);
+  await f.write("oversized-snapshot", Buffer.alloc(9 * 1024 * 1024, 0x61));
+  await assert.rejects(f.snapshot(), /aggregate/);
+});
 
 for (const alias of ["common directory", "refs heads directory"] as const) {
   posixTest(`snapshot stops before following ${alias} alias`, async (t) => {
@@ -508,7 +646,7 @@ const indexProfiles: Array<{
   error: RegExp;
 }> = [
   { name: "sparse index", arrange: (f) => f.run("config", "core.sparseCheckout", "true"), error: /sparse/i },
-  { name: "split index", arrange: (f) => f.run("update-index", "--split-index"), error: /split/i },
+  { name: "split index", arrange: async (f) => { f.run("update-index", "--split-index"); await f.trackGitTree(); }, error: /split/i },
   {
     name: "unmerged entries",
     arrange: (f) => {
