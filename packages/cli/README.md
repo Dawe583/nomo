@@ -1,42 +1,66 @@
 # @void/cli
 
-The `void` command.
+The development `void` command. It runs locally with no production account.
+Packages remain private workspace packages, so use the repository binary:
 
-## Responsible for
+```sh
+node packages/cli/bin/void.mjs --help
+```
 
-The operator's entire interface to VOID on the dev tier: wrapping an agent
-session (`void run`), verifying a ledger (`void ledger verify`), replaying an
-inverse (`void replay`), and exporting an attestation (`void attest`). It is the
-surface that has to work with no database, no account and no network, because the
-free tier is a local ledger in a file.
+## Runnable surfaces
 
-WP-09 lands the command handlers. Only the invocation parser and the WP-09b
-terminal render model (`src/tui/`) exist today; no command is runnable yet, and
-`void watch` currently resolves in the parser only.
+- `tui`: live local terminal workspace.
+- `agent`: bounded model and tool session.
+- `run`: launch the MCP proxy through the same arguments as `void-proxy`.
+- `classify`: classify a captured transcript from declared facts.
+- `feed` and `watch`: verify and inspect ledger activity.
+- `approvals` and `approve`: inspect and decide durable holds.
+- `ledger verify` and `verify`: verify ledger integrity and signatures.
+- `replay`: preview or apply one captured connector inverse by ledger sequence.
+- `recovery`: inspect, execute, plan, apply or reconcile managed filesystem and
+  PostgreSQL operations. Its `plan-job`, `apply-job`, and `status-job` actions
+  persist local recovery jobs for one exact run or an explicit operation list.
+  Its `serve` action exposes the single-operation managed contract over stdio
+  MCP. Its `conformance` action runs the disposable filesystem checks.
+- `taint`: query recorded resource and digest relationships.
+- `policy`: list, show or validate bundled policy packs.
+- `export` and `attest`: export local evidence and create an attestation.
 
-## Must never import
+Run a command without its required arguments to print its current usage. See
+`../../README.md`, `../../docs/BETA.md`, and `../../docs/ADAPTER-CONFORMANCE.md`
+for supported examples.
 
-`@workspace/*` or anything from the site. It composes the product packages
-(`@void/proxy`, `@void/ledger`, `@void/policy`, `@void/registry`) and owns no
-domain logic of its own: anything worth testing belongs in the package that owns
-it, not in an argument parser.
+## Boundaries
 
-## Must never do
+The CLI does not implement the pinned marketing examples `void init`,
+`void report`, `void rewind`, `void budget`, Python wrapping, or
+`--format aiact-a12 --since 30d`. Current replay selects one signed captured
+operation. It is not a cross-system time scrubber.
 
-Print a secret. Not in a verbose mode, not in an error, not in a receipt. The
-ledger stores a digest of a payload, never the payload, and the CLI is the place
-where that rule is easiest to break by accident.
+A connector name or registry classification is not recovery evidence. Managed
+recovery works only through registered executable adapters. Legacy PostgreSQL
+and S3 replay preview requires matching host capture. Apply additionally
+requires a trusted verification key, signed `execute:completed` evidence, and
+capture binding. Missing executors, captures, signatures, policy, or encryption
+keys fail closed.
 
-Exit 0 on a verification it could not complete. `void ledger verify` exits
-non-zero when the chain does not verify, and reports an entry signed by a `dev-`
-key as valid, development key, never as plain valid.
+Recovery jobs use reverse ledger order and stop on conflict or unknown. Any new
+forward operation after preview invalidates the job. They do not yet provide
+dependency ordering, branch continuation, leases, scheduling, time selection,
+MCP job tools, or cloud jobs.
 
-## Public surface
+The CLI must never print credentials. Recovery and replay errors redact provider
+payloads that can contain credentials or customer data. Interactive `agent` and
+`tui` commands display user and model content by design, and `export` prints the
+stored ledger bodies selected by the operator. A development signing key is
+reported as a development key, not production identity.
 
-- `COMMANDS`, `Command`
-- `ParsedInvocation`, `parseInvocation(argv)`
-- TUI render model, capability detection, inline, watch and hold renderers from
-  `src/tui/`. See `src/tui/README.md` for the visual and degradation contracts.
+## Public TypeScript surface
 
-`parseInvocation` takes argv as a parameter; the process boundary stays in the
-bin entry point, which does not exist yet.
+`src/index.ts` exports the invocation parser and command names, terminal render
+models, and the classify, feed, replay, taint, verify, and approval handlers.
+The binary imports agent, recovery, watch, and local operation handlers directly;
+those modules are not exported by the package barrel. The binary owns process
+exit behavior and command dispatch. Domain logic remains in the registry,
+ledger, policy, proxy, connector, runtime, SDK, and workbench packages. The CLI
+does not import `@workspace/*` or site code.

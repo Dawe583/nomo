@@ -1,49 +1,66 @@
 # @void/proxy
 
-The MCP proxy. It terminates the agent's connection as a server and opens its own
-to the upstream server as a client.
+The MCP proxy terminates an agent's local stdio connection and opens either a
+stdio process or HTTP connection to one upstream MCP server. Both upstream
+transports use the same session translation and `tools/call` interception path.
 
-## Responsible for
+## Runnable binary
 
-Being transparent, then being a checkpoint. Every message forwarded honestly in
-both directions, including notifications, with no capability advertised that the
-upstream does not have. Around `tools/call` it classifies, asks policy, records
-to the ledger, and holds or denies.
+```sh
+node packages/proxy/bin/void-proxy.mjs \
+  --upstream node \
+  --args fixtures/e2e-server.mjs \
+  --policy fixtures/e2e-policy.yaml \
+  --ledger-dir /tmp/void-ledger \
+  --workspace demo
+```
 
-Phase 1 is **stdio only**. Streamable HTTP is WP-02, and it arrives with its own
-exit criteria: localhost binding, Origin validation, a required bearer token.
+For an HTTP MCP upstream, use `--transport http --upstream-url <url>` instead
+of `--upstream` and `--args`. The proxy itself remains the stdio MCP server used
+by the agent. This package does not provide a shared inbound HTTP gateway.
 
-## The frozen interface
+## Behavior
 
-`docs/interface.md` is the design the builders code from: the module list, the
-message flows, the id and progress-token translation tables, and the exported
-signatures. `docs/message-inventory.md` is the message surface it was designed
-against, every fact cited into the SDK. Builders do not consult the spec from
-memory.
+The proxy forwards MCP initialization, tools, resources, prompts,
+notifications, progress tokens, cancellation and upstream server requests while
+translating identifiers between both sessions. Around `tools/call` it:
 
-## Posture
+1. maps the requested tool to registry data and declared facts;
+2. applies the loaded YAML policy;
+3. appends decision evidence to the signed JSONL ledger;
+4. forwards, denies, or blocks on a durable hold;
+5. records the hold resolution before an approved call proceeds.
 
-Fail closed. An unknown tool, an unclassified call, a ledger append failure, a
-missing or invalid policy file and an internal error all resolve to deny. Observe
-only is an explicit opt in flag, never a fallback. This trades availability for
-safety: a VOID crash becomes an outage of the agent's write path, and the first
-user is told so.
+`fail-closed` is the default posture. Unknown tools, invalid policy or facts,
+ledger failure, malformed calls, and internal safety failures deny. A
+fail-closed process requires `--ledger-dir`. `observe` is an explicit trial
+posture that forwards non-allow decisions and reports them on stderr.
 
-## Must never import
+Approval files can be placed under `--approvals-dir`; the running proxy pumps
+decisions while input is blocked on a hold. Direct denials name the rule and
+class. Hold outcomes name their approval state.
 
-A connector. It resolves them by id through a list it is handed, so adding a tool
-surface stays additive. It does not import the site, the control plane or
-`@workspace/*`.
+## Boundaries
 
-## Must never do
+HTTP support is an upstream MCP client transport, not a generic HTTP tool
+interceptor. One proxy process connects to one upstream. There is no hosted
+multi-tenant gateway in this package.
 
-Return a generic error on a deny or a cancel. The error names the rule id, the
-class and what approval would require, because a vague refusal trains agents to
-retry with a reworded request, which turns a safety tool into an evasion trainer.
+The generic proxy records authorization and hold resolution. It does not
+automatically call PostgreSQL, S3, filesystem, OAuth, or other connector
+capture. An approved or `allow:resolved` entry is not proof that an external
+mutation completed and does not create an inverse. Hosts that need managed
+capture and signed execution outcomes must use `@void/runtime` through a
+registered recovery adapter.
+
+Target facts are operator declarations unless a composed host supplies probe
+results. Observe mode is not a twin or transaction shadow run. Holds are
+blocking; provisional receipts and cascading cancellation are not implemented.
 
 ## Public surface
 
-- `Posture`, `DEFAULT_POSTURE`
-- `Transport`, `SUPPORTED_TRANSPORTS`, `isSupportedTransport`
-
-The transports and the message path are WP-01 and WP-02 and do not exist yet.
+`src/index.ts` exports stdio and HTTP upstream transports, session and JSON-RPC
+types, tool/resource/prompt forwarding, notification and server-request relays,
+approval pumping, and hardening helpers. `runProxy` and its options live in
+`src/bin.ts`. The proxy resolves connectors supplied by a host and never imports
+one.

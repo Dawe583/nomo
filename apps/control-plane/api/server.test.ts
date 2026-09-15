@@ -87,6 +87,25 @@ describe("control plane API", () => {
         assert.equal((await fetch(origin + path)).status, 404, path);
     } finally { await handle.close(); await rm(dir, { recursive: true, force: true }); }
   });
+  test("reports unavailable cloud-only surfaces without expected local 404s", async () => {
+    await withServer("unused.jsonl", async (origin) => {
+      const expected = new Map<string, unknown>([
+        ["/api/agents", { supported: false, prime: { online: false, tools: [] } }],
+        ["/api/integrations", { supported: false, integrations: [] }],
+        ["/api/demo/status", { supported: false, available: false }],
+      ]);
+      for (const [path, body] of expected) {
+        const response = await fetch(origin + path);
+        assert.equal(response.status, 200, path);
+        assert.deepEqual(await response.json(), body, path);
+      }
+      assert.equal(
+        (await fetch(origin + "/api/integrations", { method: "POST" })).status,
+        404,
+      );
+    });
+  });
+
   test("returns a limited ledger feed with verified chain fields", async () => {
     const ledgerPath = await seedLedger(2);
     await withServer(ledgerPath, async (origin) => {

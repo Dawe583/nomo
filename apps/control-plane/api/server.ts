@@ -153,6 +153,9 @@ async function route(
   try {
     const desktop = !!options.env.VOID_DESKTOP_WEB_ROOT && !options.env.VOID_CONTROL_TOKEN && isLocalRequest(request);
     if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local'), desktopSetup: desktop });
+    if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, { supported: false, prime: { online: false, tools: [] } });
+    if (request.method === 'GET' && parsed.pathname === '/api/integrations') return sendJson(response, 200, { supported: false, integrations: [] });
+    if (request.method === 'GET' && parsed.pathname === '/api/demo/status') return sendJson(response, 200, { supported: false, available: false });
     if (parsed.pathname === '/api/desktop/setup') {
       if (!desktop) return sendJson(response, 404, { error: 'not_available' });
       if (request.method === 'GET') return sendJson(response, 200, await desktopSetup(options.env));

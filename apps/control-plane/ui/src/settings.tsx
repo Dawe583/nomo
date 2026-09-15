@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useApi, useText } from "./ui";
+import { DESKTOP_DOWNLOADS } from "./desktop-downloads";
 export function Settings({
   appearance,
   setAppearance,
@@ -41,20 +42,33 @@ export function Settings({
         <h3>macOS</h3>
         <p>
           {t(
-            "Lokální desktopová beta pro Apple Silicon. macOS 13.5 nebo novější. Obsahuje vlastní VOID runtime.",
-            "Local desktop beta for Apple Silicon. Requires macOS 13.5 or later. Includes its own VOID runtime.",
+            "Lokální desktopová beta 4 pro Apple Silicon. macOS 13.5 nebo novější. Obsahuje vlastní VOID runtime.",
+            "Local desktop beta 4 for Apple Silicon. Requires macOS 13.5 or later. Includes its own VOID runtime.",
           )}
         </p>
-        <a
-          className="button"
-          href="https://github.com/Dawe583/void/releases/download/desktop-v0.1.0-beta.3/VOID_0.1.0_aarch64.dmg"
-        >
+        <a className="button" href={DESKTOP_DOWNLOADS.macos}>
           {t("Stáhnout pro macOS (.dmg)", "Download for macOS (.dmg)")}
         </a>
         <p className="muted">
           {t(
             "Beta zatím nemá notarizaci Apple. Gatekeeper může instalaci zablokovat. Verze pro Intel zatím není dostupná.",
             "This beta is not Apple-notarized. Gatekeeper may block installation. An Intel build is not available yet.",
+          )}
+        </p>
+        <h3>Windows</h3>
+        <p>
+          {t(
+            "Lokální desktopová beta 4 pro Windows 10 nebo 11 na x64. Vyžaduje WebView2 a obsahuje vlastní VOID runtime.",
+            "Local desktop beta 4 for Windows 10 or 11 on x64. Requires WebView2 and includes its own VOID runtime.",
+          )}
+        </p>
+        <a className="button" href={DESKTOP_DOWNLOADS.windows}>
+          {t("Stáhnout pro Windows (.exe)", "Download for Windows (.exe)")}
+        </a>
+        <p className="muted">
+          {t(
+            "Beta není podepsaná. Windows SmartScreen může zobrazit varování. Klíče pracovního prostoru zůstávají ve Windows Credential Manageru.",
+            "This beta is unsigned. Windows SmartScreen may warn. Workspace keys stay in Windows Credential Manager.",
           )}
         </p>
         <h3>iOS / iPadOS</h3>
@@ -92,7 +106,7 @@ export function Settings({
       </section>
       <section>
         <h2>{t("Váš pracovní prostor", "Your workspace")}</h2>
-        {agents.data && (
+        {agents.data?.supported !== false && agents.data && (
           <>
             <label>
               {t("Výchozí agent", "Default agent")}

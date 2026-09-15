@@ -95,15 +95,78 @@ not overwritten. The final counts above include both sets of changes. See
 `ADAPTER-CONFORMANCE.md` for that separately delivered capability and its limits.
 The combined source passed the full typecheck/test and web/cloud build gates.
 
+## Current reverse tool increment
+
+### Cooperative filesystem rename
+
+`filesystem.managed` now captures and recovers a rename between two validated
+regular file paths. The source must exist and the destination must be absent.
+The plan binds both resource revisions, survives restart, restores exact bytes
+and POSIX mode, and refuses detected destination drift, ABA, source recreation,
+symlinks and hardlinks. Literal version 1 write and delete captures remain
+recoverable by the additive adapter.
+
+Rename is verified only on POSIX. Windows refuses it before dispatch. Node has no
+portable atomic no replace rename primitive. A concurrent external writer can
+still create a destination or recreate a source after the final check and have
+it replaced by native rename. The adapter is therefore limited to an explicitly
+cooperative workspace with external concurrent writers excluded. This is not a
+universal filesystem interception or Git recovery claim.
+
+### Persistent recovery jobs
+
+The local runtime now persists a signed plan for one run or an explicit operation
+list. The digest binds the full plan and exact journal sequence and hash boundary.
+Apply loads that stored plan, executes successful operations in reverse journal
+order, records every checkpoint and resumes after restart without repeating a
+confirmed inverse. Conflict stops later steps. Unknown recovery requires explicit
+reconciliation. Missing local prerequisites produce a redacted, resumable paused
+state that keeps forward writes blocked.
+
+Only one recovery job can be active in a workspace. Signed job payloads validate
+outer and embedded identity, digest, checkpoint bounds, outcome prefix and
+residual shape. This first slice has no dependency closure, time selection,
+branch continuation, scheduler, lease, external fencing, MCP job surface or cloud
+job surface. Any forward operation after planning makes the preview stale.
+Older binaries do not read job entries, so mixed runtime versions are unsupported.
+
+### Truthful local capability surfaces
+
+The local control plane now returns explicit `supported:false` responses for
+`/api/agents`, `/api/integrations` and `/api/demo/status` instead of expected
+404 responses. Settings hide unavailable cloud agent controls and link to the
+published beta 4 macOS and Windows assets. CLI and proxy package documentation
+now describes runnable commands, transports, replay and recovery requirements,
+and current unsupported marketing examples without promoting metadata to
+recovery evidence.
+
+### Integrated verification
+
+- `pnpm run check` passed all workspace typechecks and tests. The cloud group
+  passed 13 offline tests and skipped four opt in live integration tests.
+- `pnpm test:reverse` passed 518 core tests: ledger 49, policy 75, registry 38,
+  proxy 80, connectors 94, runtime 63, CLI 81, SDK 10 and workbench 28.
+- Focused integrated recovery job tests passed 12 of 12. Focused rename suites
+  passed 20 tests with one Windows specific test skipped on macOS.
+- `pnpm run build` passed Vite, Nitro, workflow and cloud artifact validation.
+  The existing large web chunk warning remains and is not a performance claim.
+- A credential empty local server returned the three capability responses with
+  HTTP 200. Playwright loaded settings, connections and demo with no console
+  errors, showed the unavailable cloud fallbacks and found both beta 4 links.
+
+No production account, live provider, secret or external mutation was used.
+The four live integration skips, physical Windows execution, installer signing,
+notarization and download execution remain outside this evidence.
+
 ## Next work, in plan order
 
-1. Finish M1 provider-specific client-crash and persistence certification.
-2. R05 Git/rename and R06 durable multi-operation planning/checkpoints.
-3. R07 runtime provenance and dependency-aware recovery.
-4. R08/R09 executable provider adapters with disposable-service conformance.
-5. R10 cloud budgets, R11 staged/cascading cancellation, R12/R13 SDK and enforced
-   host boundaries, R14 offline completeness and operational release evidence.
+1. Finish M1 provider specific client crash and persistence certification.
+2. Add an executable Git adapter and its disposable conformance evidence.
+3. R07 runtime provenance and dependency aware recovery.
+4. R08 and R09 executable provider adapters with disposable service conformance.
+5. R10 cloud budgets, R11 staged and cascading cancellation, R12 and R13 SDK and
+   enforced host boundaries, then R14 operational release evidence.
 
 Connected OAuth, registry classifications and fixture tests are not substitutes
 for certified provider recovery. No production account mutation, provider
-activation or live-service certification was part of this verification.
+activation or live service certification was part of this verification.
