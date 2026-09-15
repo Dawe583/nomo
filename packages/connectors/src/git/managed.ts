@@ -58,7 +58,6 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     GIT_PAGER: "cat",
     GIT_LITERAL_PATHSPECS: "1",
     GIT_NO_LAZY_FETCH: "1",
-    GIT_NO_REPLACE_OBJECTS: "1",
     GCM_INTERACTIVE: "never",
   };
   const git = (args: readonly string[], input?: Buffer | string, extraEnv: NodeJS.ProcessEnv = {}) => {
