@@ -65,6 +65,8 @@ export type FilesRefPathBinding = {
   voidNamespace: ContainedPathChain;
   operationNamespace: ContainedPathChain;
   recoveryNamespace: ContainedPathChain;
+  packedRefs: ContainedPathChain;
+  packedRefsLock: ContainedPathChain;
 };
 export type RepositoryBinding = {
   identity: string;
@@ -272,12 +274,14 @@ export function captureFilesRefPaths(
     voidNamespace: captureContainedPathChain(commonDir, join(commonDir, "refs", "void"), "directory"),
     operationNamespace: captureContainedPathChain(commonDir, join(commonDir, "refs", "void", "operations"), "directory"),
     recoveryNamespace: captureContainedPathChain(commonDir, join(commonDir, "refs", "void", "recoveries"), "directory"),
+    packedRefs: captureContainedPathChain(commonDir, join(commonDir, "packed-refs"), "missing-or-file"),
+    packedRefsLock: captureContainedPathChain(commonDir, join(commonDir, "packed-refs.lock"), "missing-or-file"),
   };
 }
 
 function chainLeafExpectation(name: keyof FilesRefPathBinding): "directory" | "file" | "missing-or-file" {
   if (name === "branchReflog") return "file";
-  if (name === "branchRef") return "missing-or-file";
+  if (name === "branchRef" || name === "packedRefs" || name === "packedRefsLock") return "missing-or-file";
   return "directory";
 }
 
@@ -290,7 +294,7 @@ export function verifyFilesRefPaths(
     boundary.dev !== binding.boundary.dev || boundary.ino !== binding.boundary.ino ||
     boundary.uid !== binding.boundary.uid || boundary.kind !== "directory"
   ) throw new Error("Git common directory identity changed.");
-  const names = ["branchRef", "branchReflog", "voidNamespace", "operationNamespace", "recoveryNamespace"] as const;
+  const names = ["branchRef", "branchReflog", "voidNamespace", "operationNamespace", "recoveryNamespace", "packedRefs", "packedRefsLock"] as const;
   const refreshed = { ...binding };
   for (const name of names) {
     const next = captureContainedPathChain(
@@ -334,31 +338,32 @@ function parseManifestRecord(record: Buffer, oidPattern: RegExp): TreeManifestEn
   return { path, mode: match[1], oid: match[3]! };
 }
 
-export function readTreeManifest(
-  treeish: string,
-  services: CommitServices,
-): TreeManifestEntry[] {
-  const records = splitNul(
-    services.gitBuffer(["ls-tree", "-rz", "--full-tree", treeish]),
-    "Invalid Git tree manifest.",
-  );
-  const manifest = records.map((record) => parseManifestRecord(record, services.oidPattern));
+export function parseTreeManifest(bytes: Buffer, oidPattern: RegExp): TreeManifestEntry[] {
+  const manifest = splitNul(bytes, "Invalid Git tree manifest.")
+    .map((record) => parseManifestRecord(record, oidPattern));
   manifest.sort((left, right) => Buffer.compare(Buffer.from(left.path), Buffer.from(right.path)));
   return manifest;
 }
 
-function readIndexManifest(services: CommitServices): TreeManifestEntry[] {
-  const records = splitNul(
-    services.gitBuffer(["ls-files", "--stage", "-z"]),
-    "Invalid Git index manifest.",
+export function readTreeManifest(
+  treeish: string,
+  services: CommitServices,
+): TreeManifestEntry[] {
+  return parseTreeManifest(
+    services.gitBuffer(["ls-tree", "-rz", "--full-tree", treeish]),
+    services.oidPattern,
   );
+}
+
+export function parseIndexManifest(bytes: Buffer, oidPattern: RegExp): TreeManifestEntry[] {
+  const records = splitNul(bytes, "Invalid Git index manifest.");
   const manifest = records.map((record) => {
     const tab = record.indexOf(0x09);
     if (tab < 0) throw new Error("Invalid Git index manifest.");
     const header = decodeUtf8(record.subarray(0, tab), "Invalid Git index manifest.");
     const path = decodeUtf8(record.subarray(tab + 1), "Invalid Git index pathname.");
     const match = /^(\d{6}) ([0-9a-f]+) ([0-3])$/.exec(header);
-    if (!match || match[3] !== "0" || !services.oidPattern.test(match[2]!))
+    if (!match || match[3] !== "0" || !oidPattern.test(match[2]!))
       throw new Error("Unmerged or invalid Git index entry.");
     if (match[1] !== "100644" && match[1] !== "100755")
       throw new Error("Unsupported Git index mode.");
@@ -366,6 +371,13 @@ function readIndexManifest(services: CommitServices): TreeManifestEntry[] {
   });
   manifest.sort((left, right) => Buffer.compare(Buffer.from(left.path), Buffer.from(right.path)));
   return manifest;
+}
+
+function readIndexManifest(services: CommitServices): TreeManifestEntry[] {
+  return parseIndexManifest(
+    services.gitBuffer(["ls-files", "--stage", "-z"]),
+    services.oidPattern,
+  );
 }
 
 export function applySelectedEntry(
@@ -492,7 +504,11 @@ function captureWorktree(path: string, entry: GitEntry, services: CommitServices
   } finally { closeSync(fd); }
 }
 
-function assertRepositoryProfile(services: CommitServices, branchRef: string): { paths: FilesRefPathBinding; config: Array<[string, string]>; metadataDigest: string } {
+function assertRepositoryProfile(
+  services: CommitServices,
+  branchRef: string,
+  capturedPaths?: FilesRefPathBinding,
+): { paths: FilesRefPathBinding; config: Array<[string, string]>; metadataDigest: string } {
   if (services.currentIdentity() !== services.identity) throw new Error("Git repository identity changed.");
   if (services.git(["rev-parse", "--show-ref-format"]) !== "files")
     throw new Error("Only the files ref backend is supported.");
@@ -516,7 +532,8 @@ function assertRepositoryProfile(services: CommitServices, branchRef: string): {
     if (key === "commit.gpgsign" && ["true", "yes", "on", "1"].includes(value))
       throw new Error("Required commit signing is unsupported.");
   }
-  const paths = captureFilesRefPaths(services.commonDir, branchRef);
+  const paths = capturedPaths ?? captureFilesRefPaths(services.commonDir, branchRef);
+  verifyFilesRefPaths(paths);
   if (paths.branchReflog.missingSuffix.length) throw new Error("An existing branch reflog is required.");
   const receiptMetadata = directoryMetadata(join(services.commonDir, "refs", "void"), true);
   const packPath = captureContainedPathChain(
@@ -529,6 +546,7 @@ function assertRepositoryProfile(services: CommitServices, branchRef: string): {
   if (
     pathExistsNoFollow(`${paths.branchRef.target}.lock`) ||
     pathExistsNoFollow(`${paths.branchReflog.target}.lock`) ||
+    paths.packedRefsLock.missingSuffix.length === 0 ||
     receiptMetadata.hasLock
   ) throw new Error("A relevant Git ref is locked.");
   return {
@@ -549,11 +567,12 @@ export function captureCommit(
   try { ref = services.git(["symbolic-ref", "-q", "HEAD"]); }
   catch { throw new Error("An attached branch is required."); }
   validateBranchRef(ref);
+  const destructivePaths = captureFilesRefPaths(services.commonDir, ref);
   let directHead: string;
   try { directHead = services.git(["show-ref", "--verify", "--hash", ref]); }
   catch { throw new Error("A born HEAD is required."); }
   if (!services.oidPattern.test(directHead)) throw new Error("A born HEAD is required.");
-  const profile = assertRepositoryProfile(services, ref);
+  const profile = assertRepositoryProfile(services, ref, destructivePaths);
   let head: string;
   try { head = services.git(["rev-parse", "--verify", "HEAD^{commit}"]); }
   catch { throw new Error("A born HEAD is required."); }

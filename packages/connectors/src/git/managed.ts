@@ -132,6 +132,7 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     while (offset < contentEnd) {
       if (offset + 8 > contentEnd) throw new Error("Invalid Git index extension.");
       const signature = bytes.subarray(offset, offset + 4).toString("ascii"), size = bytes.readUInt32BE(offset + 4);
+      if (signature === "link") throw new Error("Split index is unsupported.");
       if (signature !== "TREE" || offset + 8 + size > contentEnd) throw new Error("Unsupported Git index extension.");
       offset += 8 + size;
     }
@@ -145,8 +146,8 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     if (currentIdentity() !== identity)
       throw new Error("Git repository identity changed.");
     if (existsSync(`${indexPath}.lock`)) throw new Error("Git index is locked.");
-    if (git(["update-index", "--show-index-version"]) !== "2") throw new Error("Unsupported Git index format.");
-    if (git(["rev-parse", "--shared-index-path"])) throw new Error("Split index is unsupported.");
+    const header = readFileSync(indexPath).subarray(0, 4).toString("ascii");
+    if (header !== "DIRC") git(["ls-files", "--stage", "-z"]);
     indexRevision();
     if (git(["ls-files", "--unmerged", "-z"])) throw new Error("Unmerged index entries are unsupported.");
     const flags = git(["ls-files", "-v", "-z"]);

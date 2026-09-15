@@ -4,10 +4,13 @@ import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import {
   chmod,
+  lstat,
   mkdir,
   mkdtemp,
   readFile,
+  readlink,
   realpath,
+  readdir,
   rename,
   rm,
   symlink,
@@ -17,17 +20,42 @@ import {
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { managedGitAdapter } from "./managed.ts";
-import type { CommitCapture, CommitPlan } from "./managed-commit.ts";
+import {
+  parseIndexManifest,
+  parseTreeManifest,
+  type CommitCapture,
+  type CommitPlan,
+} from "./managed-commit.ts";
 import type { Json } from "../recovery.ts";
 
 const posixTest = process.platform === "win32" ? test.skip : test;
 const sha256 = (value: string | Buffer) =>
   createHash("sha256").update(value).digest("hex");
 
+type PathSnapshot =
+  | { present: false }
+  | {
+      present: true;
+      kind: "file" | "directory" | "symlink" | "other";
+      mode: string;
+      dev: string;
+      ino: string;
+      uid: string;
+      nlink: string;
+      size: string;
+      ctimeNs: string;
+      bytes?: Buffer;
+      link?: string;
+    };
 type Snapshot = {
   head: string;
-  index: Buffer;
-  files: Record<string, Buffer | null>;
+  index: PathSnapshot;
+  looseBranchRef: PathSnapshot;
+  branchReflog: PathSnapshot;
+  packedRefs: PathSnapshot;
+  config: PathSnapshot;
+  gitMetadata: Record<string, PathSnapshot>;
+  worktree: Record<string, PathSnapshot>;
   refs: string[];
   objects: string[];
 };
@@ -61,32 +89,97 @@ async function commitRepository(
   run("add", "staged-sentinel");
   await writeFile(join(root, "unstaged-sentinel"), "unstaged");
   await writeFile(join(root, "untracked-sentinel"), "untracked");
+  const gitPaths = new Map<string, string>();
   const gitPath = (path: string) => {
+    const cached = gitPaths.get(path);
+    if (cached) return cached;
     const value = run("rev-parse", "--git-path", path);
-    return value.startsWith("/") ? value : join(root, value);
+    const resolved = value.startsWith("/") ? value : join(root, value);
+    gitPaths.set(path, resolved);
+    return resolved;
   };
-  const readMaybe = async (path: string) => {
-    try { return await readFile(path); }
+  for (const path of [".", "index", "refs/heads/main", "logs/refs/heads/main", "packed-refs", "config"])
+    gitPath(path);
+  const pathSnapshot = async (path: string): Promise<PathSnapshot> => {
+    let item;
+    try { item = await lstat(path, { bigint: true }); }
     catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return { present: false };
       throw error;
     }
+    const kind = item.isFile() ? "file" : item.isDirectory() ? "directory" : item.isSymbolicLink() ? "symlink" : "other";
+    const bytes = kind === "file" ? await readFile(path) : undefined;
+    const link = kind === "symlink" ? await readlink(path) : undefined;
+    const after = await lstat(path, { bigint: true });
+    assert.equal(after.dev, item.dev);
+    assert.equal(after.ino, item.ino);
+    return {
+      present: true,
+      kind,
+      mode: String(after.mode),
+      dev: String(after.dev),
+      ino: String(after.ino),
+      uid: String(after.uid),
+      nlink: String(after.nlink),
+      size: String(after.size),
+      ctimeNs: String(after.ctimeNs),
+      ...(bytes === undefined ? {} : { bytes }),
+      ...(link === undefined ? {} : { link }),
+    };
   };
-  const snapshot = async (): Promise<Snapshot> => ({
-    head: (() => {
+  const worktreeSnapshot = async () => {
+    const result: Record<string, PathSnapshot> = {};
+    const visit = async (directory: string, prefix = "") => {
+      for (const name of (await readdir(directory)).sort()) {
+        if (!prefix && name === ".git") continue;
+        const relative = prefix ? `${prefix}/${name}` : name;
+        const absolute = join(directory, name);
+        const captured = await pathSnapshot(absolute);
+        result[relative] = captured;
+        if (captured.present && captured.kind === "directory") await visit(absolute, relative);
+      }
+    };
+    await visit(root);
+    return result;
+  };
+  const gitMetadataSnapshot = async () => {
+    const rootPath = gitPath(".");
+    const result: Record<string, PathSnapshot> = { ".": await pathSnapshot(rootPath) };
+    const visit = async (directory: string, prefix = "") => {
+      for (const name of (await readdir(directory)).sort()) {
+        const relative = prefix ? `${prefix}/${name}` : name;
+        const absolute = join(directory, name);
+        const captured = await pathSnapshot(absolute);
+        result[relative] = captured;
+        if (captured.present && captured.kind === "directory" && relative !== "objects")
+          await visit(absolute, relative);
+      }
+    };
+    if (result["."].present && result["."].kind === "directory") await visit(rootPath);
+    return result;
+  };
+  const snapshot = async (): Promise<Snapshot> => {
+    const head = (() => {
       const result = spawnSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" });
       return result.status === 0 ? result.stdout.trim() : "";
-    })(),
-    index: await readFile(gitPath("index")),
-    files: Object.fromEntries(await Promise.all(
-      ["selected", "staged-sentinel", "unstaged-sentinel", "untracked-sentinel"]
-        .map(async (path) => [path, await readMaybe(join(root, path))] as const),
-    )),
-    refs: run("for-each-ref", "--format=%(refname):%(objectname)", "refs/void/")
-      .split("\n").filter(Boolean),
-    objects: run("-c", "remote.origin.promisor=false", "cat-file", "--batch-all-objects", "--batch-check=%(objectname)")
-      .split("\n").filter(Boolean).sort(),
-  });
+    })();
+    const refs = run("for-each-ref", "--format=%(refname):%(objectname)")
+      .split("\n").filter(Boolean).sort();
+    const objects = run("-c", "remote.origin.promisor=false", "cat-file", "--batch-all-objects", "--batch-check=%(objectname)")
+      .split("\n").filter(Boolean).sort();
+    return {
+      head,
+      refs,
+      objects,
+      index: await pathSnapshot(gitPath("index")),
+      looseBranchRef: await pathSnapshot(gitPath("refs/heads/main")),
+      branchReflog: await pathSnapshot(gitPath("logs/refs/heads/main")),
+      packedRefs: await pathSnapshot(gitPath("packed-refs")),
+      config: await pathSnapshot(gitPath("config")),
+      worktree: await worktreeSnapshot(),
+      gitMetadata: await gitMetadataSnapshot(),
+    };
+  };
   return {
     root,
     run,
@@ -138,8 +231,11 @@ posixTest("commit accepts exactly action and path", async (t) => {
     { action: "commit", path: "selected", base64: "" },
     { action: "commit", path: "selected", mode: 0o644 },
     { action: "commit", path: "selected", to: "other" },
-  ] as Json[])
+  ] as Json[]) {
+    const before = await fixture.snapshot();
     await assert.rejects(fixture.adapter.preflight(args));
+    assert.deepEqual(await fixture.snapshot(), before);
+  }
 });
 
 posixTest(
@@ -200,6 +296,17 @@ const refusedProfiles: Array<{
   { name: "missing reflog", arrange: (f) => unlink(f.gitPath("logs/refs/heads/main")), error: /reflog/ },
   { name: "branch lock", arrange: (f) => writeFile(f.gitPath("refs/heads/main.lock"), "foreign"), error: /lock/ },
   { name: "branch reflog lock", arrange: (f) => writeFile(f.gitPath("logs/refs/heads/main.lock"), "foreign"), error: /lock/ },
+  { name: "packed refs lock", arrange: (f) => writeFile(f.gitPath("packed-refs.lock"), "foreign-packed-lock"), error: /lock/ },
+  {
+    name: "packed refs lock symbolic link",
+    arrange: async (f) => {
+      const external = await f.temp();
+      const sentinel = join(external, "lock");
+      await writeFile(sentinel, "foreign-packed-lock");
+      await symlink(sentinel, f.gitPath("packed-refs.lock"));
+    },
+    error: /symbolic link|containment|lock|ownership/,
+  },
   { name: "receipt lock", arrange: async (f) => { const path = f.gitPath(`refs/void/operations/${sha256("op")}.lock`); await mkdir(dirname(path), { recursive: true }); await writeFile(path, "foreign"); }, error: /lock/ },
 ];
 
@@ -211,6 +318,16 @@ for (const profile of refusedProfiles) {
     await refusesUnchanged(f, profile.error);
   });
 }
+
+posixTest("commit preserves foreign packed refs lock bytes", async (t) => {
+  const f = await commitRepository(t);
+  await stageChange(f);
+  const lock = f.gitPath("packed-refs.lock");
+  const bytes = Buffer.from([0, 255, 1, 2]);
+  await writeFile(lock, bytes);
+  await refusesUnchanged(f, /lock/);
+  assert.deepEqual(await readFile(lock), bytes);
+});
 
 for (const marker of [
   "MERGE_HEAD",
@@ -232,6 +349,20 @@ for (const marker of [
     await refusesUnchanged(f, /operation/i);
   });
 }
+
+posixTest("commit refuses a packed refs alias and preserves external bytes", async (t) => {
+  const f = await commitRepository(t);
+  await stageChange(f);
+  f.run("pack-refs", "--all");
+  const target = f.gitPath("packed-refs");
+  const external = await f.temp();
+  const moved = join(external, "packed-refs");
+  await rename(target, moved);
+  await symlink(moved, target);
+  const externalBefore = await readFile(moved);
+  await refusesUnchanged(f, /symbolic link|containment|ownership/);
+  assert.deepEqual(await readFile(moved), externalBefore);
+});
 
 for (const relative of [
   "refs/heads",
@@ -366,6 +497,104 @@ for (const path of ["", ".git/config", ".GIT/config", "line\nbreak", "a//b", "a/
     assert.deepEqual(await f.snapshot(), before);
   });
 }
+
+type PrepareDrift = {
+  name: string;
+  arrange(f: CommitFixture): Promise<void> | void;
+};
+
+const prepareDrifts: PrepareDrift[] = [
+  { name: "HEAD and branch", arrange: (f) => { f.run("commit", "-qm", "human"); } },
+  { name: "branch reflog append", arrange: (f) => writeFile(f.gitPath("logs/refs/heads/main"), "foreign reflog\n", { flag: "a" }) },
+  {
+    name: "branch reflog away and back",
+    arrange: async (f) => {
+      const path = f.gitPath("logs/refs/heads/main");
+      const bytes = await readFile(path);
+      await rename(path, `${path}.away`);
+      await writeFile(path, bytes);
+    },
+  },
+  { name: "repository config", arrange: (f) => { f.run("config", "void.drift", "changed"); } },
+  { name: "raw index format", arrange: (f) => { f.run("update-index", "--index-version", "3"); } },
+  {
+    name: "logical index entry",
+    arrange: async (f) => {
+      await f.write("staged-sentinel", "raced-stage");
+      f.run("add", "staged-sentinel");
+    },
+  },
+  { name: "selected worktree bytes", arrange: (f) => f.write("selected", "raced-bytes") },
+  { name: "selected worktree mode", arrange: (f) => chmod(join(f.root, "selected"), 0o755) },
+  {
+    name: "repository root identity",
+    arrange: async (f) => {
+      const external = await f.temp();
+      const moved = join(external, "repository");
+      await rename(f.root, moved);
+      await symlink(moved, f.root);
+    },
+  },
+  {
+    name: "common directory alias",
+    arrange: async (f) => {
+      const target = f.gitPath(".");
+      const external = await f.temp();
+      const moved = join(external, "gitdir");
+      await rename(target, moved);
+      await symlink(moved, target);
+    },
+  },
+  {
+    name: "destructive ref parent alias",
+    arrange: async (f) => {
+      const target = f.gitPath("refs/heads");
+      const external = await f.temp();
+      const moved = join(external, "heads");
+      await rename(target, moved);
+      await symlink(moved, target);
+    },
+  },
+];
+
+for (const drift of prepareDrifts) {
+  posixTest(`commit prepare refuses exact ${drift.name} drift`, async (t) => {
+    const f = await commitRepository(t);
+    await stageChange(f);
+    const args = { action: "commit", path: "selected" } as const;
+    const observed = await f.adapter.preflight(args);
+    await drift.arrange(f);
+    const raced = await f.snapshot();
+    await assert.rejects(f.adapter.prepare(args, observed, "drift-op"));
+    assert.deepEqual(await f.snapshot(), raced);
+  });
+}
+
+posixTest("byte manifest parsers preserve newline paths", () => {
+  const oid = "a".repeat(40);
+  const pattern = /^[0-9a-f]{40}$/;
+  assert.deepEqual(
+    parseTreeManifest(Buffer.from(`100644 blob ${oid}\tline\nbreak\0`), pattern),
+    [{ path: "line\nbreak", mode: "100644", oid }],
+  );
+  assert.deepEqual(
+    parseIndexManifest(Buffer.from(`100644 ${oid} 0\tline\nbreak\0`), pattern),
+    [{ path: "line\nbreak", mode: "100644", oid }],
+  );
+});
+
+posixTest("byte manifest parsers reject invalid UTF-8 paths", () => {
+  const oid = "a".repeat(40);
+  const pattern = /^[0-9a-f]{40}$/;
+  assert.throws(
+    () => parseTreeManifest(Buffer.concat([Buffer.from(`100644 blob ${oid}\t`), Buffer.from([0xff, 0])]), pattern),
+    /pathname/,
+  );
+  assert.throws(
+    () => parseIndexManifest(Buffer.concat([Buffer.from(`100644 ${oid} 0\t`), Buffer.from([0xff, 0])]), pattern),
+    /pathname/,
+  );
+});
 
 posixTest("commit preparation rejects invalid identifier tokens without writes", async (t) => {
   for (const operationId of ["", "x".repeat(4097), "\ud800"]) {
