@@ -1,9 +1,10 @@
 # Managed filesystem recovery
 
 The `filesystem.managed` adapter implements create, write and delete for one
-regular file inside an explicitly configured cooperative workspace. This is the
-first R05 slice. Git, rename, directory mutations and arbitrary shell side
-effects are not covered.
+regular file inside an explicitly configured cooperative workspace. It also
+supports rename between two validated file paths when the
+source is a regular single-link file and the destination is absent. Git,
+directory mutations and arbitrary shell side effects are not covered.
 
 A successful inverse restores exact bytes and POSIX permission bits on Unix.
 Windows supports writable regular files only (mode 0666), restores bytes, and
@@ -23,9 +24,15 @@ durability across power loss is not guaranteed. It does not
 claim protection against a malicious process racing path resolution.
 
 Revisions include content, mode, device/inode, nanosecond ctime and ownership.
-Observed ABA edits and later chmod operations conflict. Missing files include
-the parent directory revision, so unrelated directory changes can conservatively
-block Undo of a deletion. This is a deliberate refusal, not permission to force
+Observed ABA edits and later chmod operations conflict. On POSIX, rename binds
+both source and destination revisions and refuses a destination observed before
+dispatch. It then uses the native filesystem rename. A writer outside the
+cooperative boundary can create a destination after the check, and POSIX rename
+can replace it. Undo has the symmetric race if an outside writer recreates the
+source. Undo requires the source to remain absent when checked and the
+destination to match the recorded result. Missing files include the parent directory revision,
+so unrelated directory changes can conservatively block Undo of a deletion or
+rename. This is a deliberate refusal, not permission to force
 a restore. Existing files must have one hard link and no special permission bits.
 
 Traversal, symlinks, non-regular files, oversized captures, `.git`, `.ssh`, `.aws`,
@@ -78,7 +85,9 @@ Use `void recovery inspect --config config.json --input request.json`, review
 the observation, then execute the identical request with `--approve` and the
 returned approval digest. `plan` returns a recovery plan for the operation;
 `apply` requires that exact plan and its digest. Changed requests or state
-invalidate the approval. Delete accepts only `action` and `path`.
+invalidate the approval. Delete accepts only `action` and `path`. Rename accepts
+only `action`, `path` and `to`. Both rename paths use the same traversal, protected-path and symlink
+validation.
 
 For local MCP, run `void recovery serve --config config.json`. The existing five
 managed recovery tools remain available; `void_execute` advertises the configured
@@ -104,9 +113,12 @@ node --test packages/connectors/src/filesystem/managed.test.ts packages/cli/src/
 ```
 
 The checks use real temporary directories, binary content, permission bits,
-restart, idempotence, user edits, ABA, links, traversal and over-limit files. The
-CLI test executes inspect, approval, write, plan and approved Undo with encrypted
-on-disk state. They do not certify concurrent hostile writers or full R05.
+restart, idempotence, rename, user edits, ABA, source recreation, destination
+conflicts, links, traversal and over-limit files. The CLI test executes inspect, approval, write, plan and approved Undo with encrypted
+on-disk state. They do not certify concurrent hostile writers, Git, full R05
+or Windows rename behavior. Windows rename is explicitly refused until separate
+CI evidence supports equivalent readiness.
 
-`void recovery conformance` additionally runs 24 disposable create/write/delete
-checks and emits a versioned JSON report. See [Adapter conformance](ADAPTER-CONFORMANCE.md).
+On POSIX, `void recovery conformance` additionally runs 32 disposable
+create/write/delete/rename checks. Windows runs the existing 24
+disposable create/write/delete checks and emits a versioned JSON report. See [Adapter conformance](ADAPTER-CONFORMANCE.md).

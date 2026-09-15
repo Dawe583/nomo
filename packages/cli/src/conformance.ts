@@ -10,13 +10,19 @@ import {
   runAdapterConformance,
   CONFORMANCE_CASES,
   type ConformanceFixture,
+  type Json,
 } from "../../runtime/src/index.ts";
+
+const filesystemOperations =
+  process.platform === "win32"
+    ? (["create", "write", "delete"] as const)
+    : (["create", "write", "delete", "rename"] as const);
 
 export const filesystemConformanceProfile = {
   schema: "void.adapter-capability.v1",
   adapter: { id: "filesystem.managed", version: "1" },
-  operations: ["create", "write", "delete"],
-  boundary: "cooperative-single-regular-file",
+  operations: filesystemOperations,
+  boundary: "cooperative-regular-file-paths",
   maxDecodedBytes: 1024 * 1024,
   recovery: { posix: "bytes-and-mode", win32: "bytes-writable-files-only" },
   durableExecutionReceipt: false,
@@ -24,39 +30,54 @@ export const filesystemConformanceProfile = {
   excluded: [
     "concurrent-external-writers",
     "git",
-    "rename",
     "directories",
     "acl",
     "ownership",
     "xattrs",
     "shell-effects",
     "windows-directory-entry-power-loss",
+    ...(process.platform === "win32" ? ["rename"] : []),
   ],
   conformance: {
     schema: "void.adapter-conformance.v1",
-    fixture: "disposable-local-file-create-write-delete",
+    fixture:
+      process.platform === "win32"
+        ? "disposable-local-file-create-write-delete"
+        : "disposable-local-file-create-write-delete-rename",
     checks: CONFORMANCE_CASES,
   },
 } as const;
 
 export async function filesystemConformanceFixture(
-  operation: "create" | "write" | "delete" = "write",
+  operation: "create" | "write" | "delete" | "rename" = "write",
 ): Promise<ConformanceFixture> {
   const dir = await mkdtemp(join(tmpdir(), "void-conformance-"));
   try {
     const root = join(dir, "project");
     await mkdir(root);
-    const file = join(root, "sample.bin");
-    const before =
-      operation === "create"
-        ? null
-        : Buffer.from([0, 255, 1, 128, 10]).toString("base64");
-    const after =
-      operation === "delete"
-        ? null
-        : Buffer.from("conformance agent edit").toString("base64");
-    const human = Buffer.from("conformance human edit").toString("base64");
-    if (before !== null) await writeFile(file, Buffer.from(before, "base64"));
+    const file = join(root, "sample.bin"),
+      moved = join(root, "moved.bin");
+    const original = Buffer.from([0, 255, 1, 128, 10]).toString("base64"),
+      edited = Buffer.from("conformance agent edit").toString("base64"),
+      humanBytes = Buffer.from("conformance human edit").toString("base64"),
+      before: Json =
+        operation === "create"
+          ? null
+          : operation === "rename"
+            ? { source: original, destination: null }
+            : original,
+      after: Json =
+        operation === "delete"
+          ? null
+          : operation === "rename"
+            ? { source: null, destination: original }
+            : edited,
+      human: Json =
+        operation === "rename"
+          ? { source: null, destination: humanBytes }
+          : humanBytes;
+    if (operation !== "create")
+      await writeFile(file, Buffer.from(original, "base64"));
     const { privateKey } = generateKeyPairSync("ed25519");
     const signer = keyProviderFromPkcs8(
       privateKey.export({ type: "pkcs8", format: "der" }),
@@ -73,22 +94,35 @@ export async function filesystemConformanceFixture(
         ),
       }),
       arguments:
-        after === null
-          ? { action: "delete", path: "sample.bin" }
-          : { action: "write", path: "sample.bin", base64: after },
-      changedArguments: { action: "write", path: "sample.bin", base64: human },
+        operation === "rename"
+          ? { action: "rename", path: "sample.bin", to: "moved.bin" }
+          : after === null
+            ? { action: "delete", path: "sample.bin" }
+            : { action: "write", path: "sample.bin", base64: after },
+      changedArguments:
+        operation === "rename"
+          ? { action: "rename", path: "sample.bin", to: "other.bin" }
+          : { action: "write", path: "sample.bin", base64: human },
       before,
       after,
       human,
       read: async () => {
-        try {
-          return (await readFile(file)).toString("base64");
-        } catch (error) {
-          if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
-          throw error;
-        }
+        const read = async (path: string) => {
+          try {
+            return (await readFile(path)).toString("base64");
+          } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+            throw error;
+          }
+        };
+        return operation === "rename"
+          ? { source: await read(file), destination: await read(moved) }
+          : read(file);
       },
-      writeHuman: () => writeFile(file, Buffer.from(human, "base64")),
+      writeHuman: () =>
+        operation === "rename"
+          ? writeFile(moved, Buffer.from(humanBytes, "base64"))
+          : writeFile(file, Buffer.from(humanBytes, "base64")),
       dispose: () => rm(dir, { recursive: true, force: true }),
     };
   } catch (error) {

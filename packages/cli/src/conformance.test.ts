@@ -29,7 +29,9 @@ test("actual CLI runs every conformance case and emits a scoped JSON report", as
     report.scenarios.map(
       (scenario: { operation: string }) => scenario.operation,
     ),
-    ["create", "write", "delete"],
+    process.platform === "win32"
+      ? ["create", "write", "delete"]
+      : ["create", "write", "delete", "rename"],
   );
   for (const scenario of report.scenarios) {
     assert.deepEqual(
@@ -43,7 +45,9 @@ test("actual CLI runs every conformance case and emits a scoped JSON report", as
   assert.equal(report.capability.durableExecutionReceipt, false);
   assert.equal(
     report.capability.conformance.fixture,
-    "disposable-local-file-create-write-delete",
+    process.platform === "win32"
+      ? "disposable-local-file-create-write-delete"
+      : "disposable-local-file-create-write-delete-rename",
   );
 });
 

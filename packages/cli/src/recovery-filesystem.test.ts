@@ -104,3 +104,100 @@ test("filesystem CLI requires exact approval and restores user bytes from encryp
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test(
+  "filesystem CLI inspects, renames and restores a binary file",
+  { skip: process.platform === "win32" },
+  async () => {
+    const dir = await mkdtemp(join(tmpdir(), "void-fs-rename-cli-"));
+    const env = { TEST_KEY: randomBytes(32).toString("base64") };
+    try {
+      await mkdir(join(dir, "project"));
+      const bytes = randomBytes(2048);
+      await writeFile(join(dir, "project", "source.bin"), bytes);
+      const config = join(dir, "config.json"),
+        input = join(dir, "input.json");
+      await writeFile(
+        config,
+        JSON.stringify({
+          workspace: "test",
+          stateDir: "state",
+          encryptionKeyEnv: "TEST_KEY",
+          filesystem: { root: "project", cooperative: true },
+        }),
+      );
+      await writeFile(
+        input,
+        JSON.stringify({
+          workspace: "test",
+          operationId: "rename",
+          runId: "run",
+          agentId: "agent",
+          adapterId: "filesystem.managed",
+          arguments: { action: "rename", path: "source.bin", to: "moved.bin" },
+        }),
+      );
+      let inspected: { approvalDigest: string } | undefined;
+      assert.equal(
+        await runRecoveryCommand(
+          ["inspect", "--config", config, "--input", input],
+          env,
+          (text) => (inspected = JSON.parse(text)),
+        ),
+        0,
+      );
+      assert.equal(
+        await runRecoveryCommand(
+          [
+            "execute",
+            "--config",
+            config,
+            "--input",
+            input,
+            "--approve",
+            inspected!.approvalDigest,
+          ],
+          env,
+          () => {},
+        ),
+        0,
+      );
+      assert.deepEqual(
+        await readFile(join(dir, "project", "moved.bin")),
+        bytes,
+      );
+      let plan: RecoveryPlan | undefined;
+      assert.equal(
+        await runRecoveryCommand(
+          ["plan", "--config", config, "--input", input],
+          env,
+          (text) => (plan = JSON.parse(text)),
+        ),
+        0,
+      );
+      await writeFile(input, JSON.stringify(plan));
+      assert.equal(
+        await runRecoveryCommand(
+          [
+            "apply",
+            "--config",
+            config,
+            "--input",
+            input,
+            "--approve",
+            plan!.digest,
+          ],
+          env,
+          () => {},
+        ),
+        0,
+      );
+      assert.deepEqual(
+        await readFile(join(dir, "project", "source.bin")),
+        bytes,
+      );
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  },
+);

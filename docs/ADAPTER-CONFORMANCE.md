@@ -10,26 +10,28 @@ node packages/cli/bin/void.mjs recovery conformance --adapter filesystem.managed
 The command creates its own temporary directories, signing key and encryption
 key. It does not read recovery configuration, use provider credentials, contact
 services or edit the current project. Each case gets independent resources and
-cleanup. Unknown adapters and configuration arguments are refused. Exit 0 means
-all 24 checks passed; exit 1 means a case or its cleanup failed.
+cleanup. Unknown adapters and configuration arguments are refused. Exit 0 means all checks passed; exit 1 means a case or its cleanup failed.
+POSIX runs 32 checks across create, write, delete and rename. Windows runs the
+existing 24 create, write and delete checks because rename remains refused
+until separate Windows evidence exists.
 
 ## Evidence and scope
 
 The JSON `void.adapter-conformance-run.v1` report contains a versioned
-`void.adapter-capability.v1` profile and three scenarios: create, write and
-delete. Each scenario includes the adapter ID/version, Node version, platform,
+`void.adapter-capability.v1` profile and three Windows scenarios or four POSIX
+scenarios: create, write, delete and, on POSIX, rename. Each scenario includes the adapter ID/version, Node version, platform,
 and eight named pass/fail checks:
 
-| Check | Required behavior |
-| --- | --- |
+| Check                   | Required behavior                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Restart and idempotence | Reopen journal/vault and adapter; one forward call and one inverse; rejected approval leaves the file intact |
-| Changed request | Reusing an operation ID for different arguments refuses dispatch |
-| Authorization refusal | Denial preserves target state without calling adapter execution |
-| Capture failure | Failed artifact storage releases preparation without dispatch |
-| Human drift | Recovery reports conflict and preserves the independently edited file |
-| Changed plan | Altered resources cannot reuse an approved plan digest |
-| Lost execution response | Mutation followed by a thrown response remains unknown; reopened runtime does not redispatch |
-| Lost recovery response | Inverse followed by a thrown response remains unknown; reopened runtime does not repeat the inverse |
+| Changed request         | Reusing an operation ID for different arguments refuses dispatch                                             |
+| Authorization refusal   | Denial preserves target state without calling adapter execution                                              |
+| Capture failure         | Failed artifact storage releases preparation without dispatch                                                |
+| Human drift             | Recovery reports conflict and preserves the independently edited file                                        |
+| Changed plan            | Altered resources cannot reuse an approved plan digest                                                       |
+| Lost execution response | Mutation followed by a thrown response remains unknown; reopened runtime does not redispatch                 |
+| Lost recovery response  | Inverse followed by a thrown response remains unknown; reopened runtime does not repeat the inverse          |
 
 The target is inspected independently of the adapter result. The binary sample
 includes zero and non-UTF-8 bytes. Failure reports contain check identifiers,

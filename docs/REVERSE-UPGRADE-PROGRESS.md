@@ -2,9 +2,11 @@
 
 ## Adapter conformance and Windows filesystem follow-up, 2026-09-15
 
-`void recovery conformance` now runs eight common runtime checks for each of
-filesystem create, write and delete. Its JSON report includes a versioned
-capability profile and platform/Node evidence. The reusable runner rejects
+`void recovery conformance` runs eight common runtime checks for each supported
+filesystem operation. POSIX runs 32 checks across create, write, delete and
+rename. Windows runs 24 checks across create, write and delete; rename is
+explicitly refused until separate Windows evidence exists. Its JSON report
+includes a versioned capability profile and platform/Node evidence. The reusable runner rejects
 false-success fixtures, altered requests/plans and unsafe retries; failed fixture
 cleanup also fails the report. See `ADAPTER-CONFORMANCE.md` for the exact limits.
 
@@ -29,23 +31,23 @@ is separate remaining work. No claim of a full Windows CLI suite pass is made.
 This tracks REVERSE-TOOL-UPGRADE-PLAN.md. No full milestone is declared complete
 by the existence of a prototype or a narrow passing test.
 
-| Package | Current implementation | Remaining release gates |
-| --- | --- | --- |
-| R00 | Contract, coverage, context corrections, descriptor vs executable adapter distinction | Machine-readable provider certification and public-site alignment |
-| R01 | Signed local journal, immutable operation identity, unknown results, adapter reconciliation | Cloud transactional journal, full persistence fault matrix |
-| R02 | Shared runtime used by managed CLI/MCP, TS SDK and local workbench document writes/Undo | Legacy proxy and general external-tool cloud conformance |
-| R03 | Encrypted durable artifacts, reserved capture/outcome/recovery capacity, shared quota, legacy reads, key rotation | Streaming, pin lifecycle, GC, retention, quota migration |
-| R04 | Structured row mutations, revision trigger, atomic outbox, verified restore, real prepare serialization conflict, managed deadlock and terminated database sessions | Cascade/tenant certification, migration, client process kill and network partition |
-| R05 | Cooperative one-file create/write/delete and guarded Undo on Unix/Windows; portable path and state boundary checks | Git and rename pending; Windows recovery is bytes-only for writable files |
-| R06 | Single-operation plan, exact digest, signed recovery, uncertain recovery reconciliation | Multi-operation jobs, selection boundaries, dependencies, durable leases/checkpoints |
-| R07 | Existing taint modules retained | Runtime provenance and dependency-aware recovery integration |
-| R08 | Existing legacy S3 retained | Managed S3/versioning, Supabase-specific capability tests |
-| R09 | Existing OAuth layer retained | GitHub/Vercel executable recovery adapters and real sandbox conformance |
-| R10 | Local daily workspace/per-agent reservations; concurrent/restart test | Cloud accounting, modes, approvals integration and full reservation fault matrix |
-| R11 | Not started | Staged graph, cancellation, barriers and restart semantics |
-| R12 | Executable adapter interface, managed TS SDK, reusable conformance runner and filesystem command/profile | Python transport client, provider-specific fixtures and broader capability certification |
-| R13 | Local MCP entry point with operator identity/policy | OpenCode doctor/init, authenticated remote executor, managed egress boundary |
-| R14 | Coverage, runbook, scoped validation evidence | Export bundles/checkpoint completeness, metrics, operational certification |
+| Package | Current implementation                                                                                                                                              | Remaining release gates                                                                                                                  |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| R00     | Contract, coverage, context corrections, descriptor vs executable adapter distinction                                                                               | Machine-readable provider certification and public-site alignment                                                                        |
+| R01     | Signed local journal, immutable operation identity, unknown results, adapter reconciliation                                                                         | Cloud transactional journal, full persistence fault matrix                                                                               |
+| R02     | Shared runtime used by managed CLI/MCP, TS SDK and local workbench document writes/Undo                                                                             | Legacy proxy and general external-tool cloud conformance                                                                                 |
+| R03     | Encrypted durable artifacts, reserved capture/outcome/recovery capacity, shared quota, legacy reads, key rotation                                                   | Streaming, pin lifecycle, GC, retention, quota migration                                                                                 |
+| R04     | Structured row mutations, revision trigger, atomic outbox, verified restore, real prepare serialization conflict, managed deadlock and terminated database sessions | Cascade/tenant certification, migration, client process kill and network partition                                                       |
+| R05     | Cooperative one-file create/write/delete and guarded Undo on Unix/Windows; POSIX two-path rename; portable path and state boundary checks                           | Git pending; Windows rename refused; Windows file recovery is bytes-only for writable files; concurrent external writers remain excluded |
+| R06     | Single-operation plan, exact digest, signed recovery, uncertain recovery reconciliation                                                                             | Multi-operation jobs, selection boundaries, dependencies, durable leases/checkpoints                                                     |
+| R07     | Existing taint modules retained                                                                                                                                     | Runtime provenance and dependency-aware recovery integration                                                                             |
+| R08     | Existing legacy S3 retained                                                                                                                                         | Managed S3/versioning, Supabase-specific capability tests                                                                                |
+| R09     | Existing OAuth layer retained                                                                                                                                       | GitHub/Vercel executable recovery adapters and real sandbox conformance                                                                  |
+| R10     | Local daily workspace/per-agent reservations; concurrent/restart test                                                                                               | Cloud accounting, modes, approvals integration and full reservation fault matrix                                                         |
+| R11     | Not started                                                                                                                                                         | Staged graph, cancellation, barriers and restart semantics                                                                               |
+| R12     | Executable adapter interface, managed TS SDK, reusable conformance runner and filesystem command/profile                                                            | Python transport client, provider-specific fixtures and broader capability certification                                                 |
+| R13     | Local MCP entry point with operator identity/policy                                                                                                                 | OpenCode doctor/init, authenticated remote executor, managed egress boundary                                                             |
+| R14     | Coverage, runbook, scoped validation evidence                                                                                                                       | Export bundles/checkpoint completeness, metrics, operational certification                                                               |
 
 ## Verified foundation
 
@@ -64,8 +66,9 @@ by the existence of a prototype or a narrow passing test.
    termination and a managed-dispatch deadlock now have executable coverage.
 2. Cloud document integration now uses the shared runtime in one database
    transaction. Extend conformance before covering external cloud tools.
-3. Implement filesystem/Git with an explicit cooperative vs enforced boundary;
-   never claim an atomic filesystem CAS that the OS interface cannot provide.
+3. Add Git recovery and extend filesystem coverage only with an explicit
+   cooperative vs enforced boundary. Never claim an atomic filesystem CAS or
+   unconditional no-overwrite behavior that the OS interface cannot provide.
 4. Add persistent multi-operation planning and resource/provenance dependencies.
 5. Build provider adapters and cloud journal/transport, then budgets/staged work
    and operational evidence against the exit criteria in the original plan.

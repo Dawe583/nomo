@@ -137,25 +137,66 @@ export function recoveryMcpServer(options: {
             : {
                 ...definition,
                 description:
-                  "Execute one cooperative workspace file write/delete with durable capture. Bytes and mode only. No shell or concurrent external writer guarantee. Reconcile unknown outcomes without redispatch.",
+                  "Execute one cooperative workspace file write/delete or, on POSIX, a two-path rename with durable capture. Rename refuses a destination observed before dispatch, but no operation is safe from excluded concurrent external writers. Bytes and mode only. No shell guarantee. Reconcile unknown outcomes without redispatch.",
                 inputSchema: {
                   ...definition.inputSchema,
                   properties: {
                     ...definition.inputSchema.properties,
                     mutation: {
-                      type: "object",
-                      additionalProperties: false,
-                      required: ["action", "path"],
-                      properties: {
-                        action: { type: "string", enum: ["write", "delete"] },
-                        path: { type: "string" },
-                        base64: {
-                          type: "string",
-                          description:
-                            "Canonical base64, maximum 1 MiB decoded",
+                      oneOf: [
+                        {
+                          type: "object",
+                          additionalProperties: false,
+                          required: ["action", "path", "base64"],
+                          properties: {
+                            action: { type: "string", enum: ["write"] },
+                            path: { type: "string" },
+                            base64: {
+                              type: "string",
+                              description:
+                                "Canonical base64, maximum 1 MiB decoded",
+                            },
+                            mode: {
+                              type: "integer",
+                              minimum: 0,
+                              maximum: 511,
+                            },
+                          },
                         },
-                        mode: { type: "integer", minimum: 0, maximum: 511 },
-                      },
+                        {
+                          type: "object",
+                          additionalProperties: false,
+                          required: ["action", "path"],
+                          properties: {
+                            action: { type: "string", enum: ["delete"] },
+                            path: { type: "string" },
+                          },
+                        },
+                        ...(process.platform === "win32"
+                          ? []
+                          : [
+                              {
+                                type: "object",
+                                additionalProperties: false,
+                                required: ["action", "path", "to"],
+                                properties: {
+                                  action: {
+                                    type: "string",
+                                    enum: ["rename"],
+                                  },
+                                  path: {
+                                    type: "string",
+                                    description: "Existing source path",
+                                  },
+                                  to: {
+                                    type: "string",
+                                    description:
+                                      "Absent destination path in the same cooperative workspace",
+                                  },
+                                },
+                              },
+                            ]),
+                      ],
                     },
                   },
                 },
