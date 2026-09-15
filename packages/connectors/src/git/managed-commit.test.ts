@@ -3,6 +3,16 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import {
+  closeSync,
+  constants,
+  fstatSync,
+  lstatSync,
+  openSync,
+  readSync,
+  readlinkSync,
+  type BigIntStats,
+} from "node:fs";
+import {
   chmod,
   lstat,
   mkdir,
@@ -48,6 +58,8 @@ type PathSnapshot =
       link?: string;
     };
 type Snapshot = {
+  rootBoundary: PathSnapshot;
+  commonBoundary: PathSnapshot;
   head: string;
   index: PathSnapshot;
   looseBranchRef: PathSnapshot;
@@ -100,19 +112,51 @@ async function commitRepository(
   };
   for (const path of [".", "index", "refs/heads/main", "logs/refs/heads/main", "packed-refs", "config"])
     gitPath(path);
+  const maxSnapshotFileBytes = 20 * 1024 * 1024;
+  const statIdentity = (left: BigIntStats, right: BigIntStats) =>
+    left.dev === right.dev && left.ino === right.ino && left.uid === right.uid && left.mode === right.mode;
   const pathSnapshot = async (path: string): Promise<PathSnapshot> => {
     let item;
-    try { item = await lstat(path, { bigint: true }); }
+    try { item = lstatSync(path, { bigint: true }); }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return { present: false };
       throw error;
     }
     const kind = item.isFile() ? "file" : item.isDirectory() ? "directory" : item.isSymbolicLink() ? "symlink" : "other";
-    const bytes = kind === "file" ? await readFile(path) : undefined;
-    const link = kind === "symlink" ? await readlink(path) : undefined;
-    const after = await lstat(path, { bigint: true });
-    assert.equal(after.dev, item.dev);
-    assert.equal(after.ino, item.ino);
+    let bytes: Buffer | undefined;
+    let link: string | undefined;
+    let after = item;
+    if (kind === "file") {
+      const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+      try {
+        const before = fstatSync(fd, { bigint: true });
+        if (!before.isFile() || before.size > BigInt(maxSnapshotFileBytes))
+          throw new Error("Snapshot file is unsupported.");
+        bytes = Buffer.alloc(Number(before.size));
+        let offset = 0;
+        while (offset < bytes.length) {
+          const count = readSync(fd, bytes, offset, bytes.length - offset, offset);
+          if (count <= 0) throw new Error("Snapshot file changed.");
+          offset += count;
+        }
+        const descriptorAfter = fstatSync(fd, { bigint: true });
+        const pathnameAfter = lstatSync(path, { bigint: true });
+        if (
+          !statIdentity(before, descriptorAfter) || before.size !== descriptorAfter.size ||
+          before.ctimeNs !== descriptorAfter.ctimeNs || !statIdentity(descriptorAfter, pathnameAfter) ||
+          pathnameAfter.isSymbolicLink()
+        ) throw new Error("Snapshot file identity changed.");
+        after = pathnameAfter;
+      } finally { closeSync(fd); }
+    } else if (kind === "symlink") {
+      link = readlinkSync(path);
+      after = lstatSync(path, { bigint: true });
+      if (!statIdentity(item, after) || !after.isSymbolicLink())
+        throw new Error("Snapshot symbolic link identity changed.");
+    } else {
+      after = lstatSync(path, { bigint: true });
+      if (!statIdentity(item, after)) throw new Error("Snapshot path identity changed.");
+    }
     return {
       present: true,
       kind,
@@ -127,38 +171,76 @@ async function commitRepository(
       ...(link === undefined ? {} : { link }),
     };
   };
-  const worktreeSnapshot = async () => {
-    const result: Record<string, PathSnapshot> = {};
-    const visit = async (directory: string, prefix = "") => {
-      for (const name of (await readdir(directory)).sort()) {
-        if (!prefix && name === ".git") continue;
+  const initialRoot = lstatSync(root, { bigint: true });
+  const commonPath = gitPath(".");
+  const initialCommon = lstatSync(commonPath, { bigint: true });
+  const boundaryMatches = (captured: PathSnapshot, expected: BigIntStats) =>
+    captured.present && captured.kind === "directory" && captured.dev === String(expected.dev) &&
+    captured.ino === String(expected.ino) && captured.uid === String(expected.uid);
+  const recursiveSnapshot = async (
+    directory: string,
+    options: { skipGitDirectory?: boolean; skipObjects?: boolean } = {},
+  ) => {
+    const result: Record<string, PathSnapshot> = { ".": await pathSnapshot(directory) };
+    const visit = async (current: string, prefix = "") => {
+      const before = lstatSync(current, { bigint: true });
+      if (!before.isDirectory() || before.isSymbolicLink()) throw new Error("Snapshot directory is unsafe.");
+      const names = (await readdir(current)).sort();
+      const afterRead = lstatSync(current, { bigint: true });
+      if (!statIdentity(before, afterRead) || !afterRead.isDirectory() || afterRead.isSymbolicLink())
+        throw new Error("Snapshot directory identity changed.");
+      for (const name of names) {
+        if (!prefix && options.skipGitDirectory && name === ".git") continue;
+        const beforeChild = lstatSync(current, { bigint: true });
+        if (!statIdentity(before, beforeChild) || !beforeChild.isDirectory() || beforeChild.isSymbolicLink())
+          throw new Error("Snapshot directory identity changed.");
         const relative = prefix ? `${prefix}/${name}` : name;
-        const absolute = join(directory, name);
+        const absolute = join(current, name);
         const captured = await pathSnapshot(absolute);
         result[relative] = captured;
-        if (captured.present && captured.kind === "directory") await visit(absolute, relative);
+        if (
+          captured.present && captured.kind === "directory" &&
+          !(options.skipObjects && relative === "objects")
+        ) await visit(absolute, relative);
+        const afterChild = lstatSync(current, { bigint: true });
+        if (!statIdentity(before, afterChild) || !afterChild.isDirectory() || afterChild.isSymbolicLink())
+          throw new Error("Snapshot directory identity changed.");
       }
+      const after = lstatSync(current, { bigint: true });
+      if (!statIdentity(before, after) || !after.isDirectory() || after.isSymbolicLink())
+        throw new Error("Snapshot directory identity changed.");
     };
-    await visit(root);
+    if (result["."].present && result["."].kind === "directory") await visit(directory);
     return result;
   };
-  const gitMetadataSnapshot = async () => {
-    const rootPath = gitPath(".");
-    const result: Record<string, PathSnapshot> = { ".": await pathSnapshot(rootPath) };
-    const visit = async (directory: string, prefix = "") => {
-      for (const name of (await readdir(directory)).sort()) {
-        const relative = prefix ? `${prefix}/${name}` : name;
-        const absolute = join(directory, name);
-        const captured = await pathSnapshot(absolute);
-        result[relative] = captured;
-        if (captured.present && captured.kind === "directory" && relative !== "objects")
-          await visit(absolute, relative);
-      }
-    };
-    if (result["."].present && result["."].kind === "directory") await visit(rootPath);
-    return result;
-  };
+  const emptySnapshot = (
+    rootBoundary: PathSnapshot,
+    commonBoundary: PathSnapshot,
+    gitMetadata: Record<string, PathSnapshot>,
+  ): Snapshot => ({
+    rootBoundary,
+    commonBoundary,
+    head: "",
+    refs: [],
+    objects: [],
+    index: { present: false },
+    looseBranchRef: { present: false },
+    branchReflog: { present: false },
+    packedRefs: { present: false },
+    config: { present: false },
+    worktree: {},
+    gitMetadata,
+  });
   const snapshot = async (): Promise<Snapshot> => {
+    const rootBoundary = await pathSnapshot(root);
+    if (!boundaryMatches(rootBoundary, initialRoot))
+      return emptySnapshot(rootBoundary, { present: false }, {});
+    const commonBoundary = await pathSnapshot(commonPath);
+    if (!boundaryMatches(commonBoundary, initialCommon))
+      return emptySnapshot(rootBoundary, commonBoundary, { ".": commonBoundary });
+    const gitMetadata = await recursiveSnapshot(commonPath, { skipObjects: true });
+    if (Object.values(gitMetadata).some((value) => value.present && value.kind === "symlink"))
+      return emptySnapshot(rootBoundary, commonBoundary, gitMetadata);
     const head = (() => {
       const result = spawnSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" });
       return result.status === 0 ? result.stdout.trim() : "";
@@ -168,6 +250,8 @@ async function commitRepository(
     const objects = run("-c", "remote.origin.promisor=false", "cat-file", "--batch-all-objects", "--batch-check=%(objectname)")
       .split("\n").filter(Boolean).sort();
     return {
+      rootBoundary,
+      commonBoundary,
       head,
       refs,
       objects,
@@ -176,8 +260,8 @@ async function commitRepository(
       branchReflog: await pathSnapshot(gitPath("logs/refs/heads/main")),
       packedRefs: await pathSnapshot(gitPath("packed-refs")),
       config: await pathSnapshot(gitPath("config")),
-      worktree: await worktreeSnapshot(),
-      gitMetadata: await gitMetadataSnapshot(),
+      worktree: await recursiveSnapshot(root, { skipGitDirectory: true }),
+      gitMetadata,
     };
   };
   return {
@@ -246,12 +330,14 @@ posixTest(
     const before = await f.snapshot();
     const args = { action: "commit", path: "selected" } as const;
     const observed = await f.adapter.preflight(args);
+    assert.deepEqual(await f.snapshot(), before);
     assert.equal(observed.reversibility, "r1");
     assert.equal(observed.blastRadius.count, 1);
     assert.equal(observed.resources.length, 2);
     assert.ok(observed.resources.every((value) => !value.includes(f.root)));
+    const beforePrepare = await f.snapshot();
     const prepared = await f.adapter.prepare(args, observed, "unsafe/id with spaces");
-    assert.deepEqual(await f.snapshot(), before);
+    assert.deepEqual(await f.snapshot(), beforePrepare);
     const plan = prepared.plan as unknown as CommitPlan;
     assert.match(plan.receiptRef, /^refs\/void\/operations\/[0-9a-f]{64}$/);
     assert.ok(!plan.receiptRef.includes("unsafe"));
@@ -347,6 +433,30 @@ for (const marker of [
     if (/sequencer|rebase/.test(marker)) await mkdir(path, { recursive: true });
     else await writeFile(path, `${f.run("rev-parse", "HEAD")}\n`);
     await refusesUnchanged(f, /operation/i);
+  });
+}
+
+function snapshotContainsBytes(value: unknown, wanted: Buffer): boolean {
+  if (Buffer.isBuffer(value)) return value.equals(wanted);
+  if (!value || typeof value !== "object") return false;
+  return Object.values(value).some((item) => snapshotContainsBytes(item, wanted));
+}
+
+for (const alias of ["common directory", "refs heads directory"] as const) {
+  posixTest(`snapshot stops before following ${alias} alias`, async (t) => {
+    const f = await commitRepository(t);
+    await stageChange(f);
+    const target = alias === "common directory" ? f.gitPath(".") : f.gitPath("refs/heads");
+    const external = await f.temp();
+    const moved = join(external, "moved");
+    await rename(target, moved);
+    const sentinel = Buffer.from(`external-secret-${alias}`);
+    await writeFile(join(moved, "snapshot-sentinel"), sentinel);
+    await symlink(moved, target);
+    const captured = await f.snapshot();
+    assert.equal(captured.head, "");
+    assert.equal(snapshotContainsBytes(captured, sentinel), false);
+    assert.deepEqual(await readFile(join(moved, "snapshot-sentinel")), sentinel);
   });
 }
 

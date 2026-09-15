@@ -92,10 +92,19 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
   const indexLocation = git(["rev-parse", "--git-path", "index"]);
   const indexPath = isAbsolute(indexLocation) ? indexLocation : join(root, indexLocation);
   const stat = lstatSync(root, { bigint: true });
+  const commonStat = lstatSync(commonDir, { bigint: true });
+  if (!commonStat.isDirectory() || commonStat.isSymbolicLink())
+    throw new Error("Git common directory identity changed.");
   const identity = digest([root, gitDir, commonDir, indexPath, objectFormat, String(stat.dev), String(stat.ino)]);
   function currentIdentity() {
     const current = lstatSync(root, { bigint: true });
-    if (!current.isDirectory()) throw new Error("Git repository identity changed.");
+    if (!current.isDirectory() || current.isSymbolicLink()) throw new Error("Git repository identity changed.");
+    const currentCommonStat = lstatSync(commonDir, { bigint: true });
+    if (
+      !currentCommonStat.isDirectory() || currentCommonStat.isSymbolicLink() ||
+      currentCommonStat.dev !== commonStat.dev || currentCommonStat.ino !== commonStat.ino ||
+      currentCommonStat.uid !== commonStat.uid
+    ) throw new Error("Git common directory identity changed.");
     const currentGitDir = realpathSync(git(["rev-parse", "--absolute-git-dir"]));
     const location = git(["rev-parse", "--git-common-dir"]);
     const currentCommonDir = realpathSync(isAbsolute(location) ? location : join(root, location));
