@@ -32,8 +32,10 @@ captured UTC timestamp. It creates unsigned commits only.
 The adapter ID and version remain `git.managed` and `1`. Existing persisted
 version 1 operations must remain recoverable by the same configured adapter.
 The new action is additive and uses a discriminated internal capture and plan.
-No runtime, ledger, registry, configuration, or connector interface changes are
-required.
+No production recovery runtime, ledger, registry, configuration, or connector
+interface changes are required. The reusable conformance fixture contract may add
+optional execution and recovery reconciliation expectations so receipt-bearing
+actions can prove response-loss reconciliation. Its legacy defaults remain unknown.
 
 The declared target is one selected path in one local branch tree. The forward
 result is an append-only commit. Recovery restores that selected branch-tree
@@ -50,7 +52,10 @@ The commit action is verified only when all of these conditions hold:
 - Exactly one registered worktree for the repository.
 - Attached, born HEAD whose direct symbolic target is one canonical
   `refs/heads/*` ref.
-- Files ref backend with an enabled existing branch reflog.
+- Files ref backend with an enabled existing branch reflog. Every existing
+  filesystem component from the canonical common directory to the concrete
+  branch ref, branch reflog, and `refs/void` receipt namespaces is canonically
+  contained, non-symlink, and owned by the repository identity boundary.
 - No shallow boundary, partial or promisor clone, alternates, grafts, replace
   refs, missing objects, sparse index, split index, unmerged entries, submodule
   entry, symlink entry, special file mode, unsupported flags or extensions.
@@ -82,11 +87,18 @@ Commit preflight captures and binds:
 
 - repository identity, root, Git directory, common directory, index path, object
   format, ref backend, and single-worktree profile;
-- exact branch ref, HEAD commit, HEAD tree, branch reflog bytes and generation;
+- exact branch ref, HEAD commit, HEAD tree, and bounded branch reflog digest and
+  generation metadata, never raw reflog bytes;
 - complete logical and raw index generation;
 - selected HEAD entry, selected index entry, and selected worktree state;
-- all refusal-sensitive repository state;
+- all refusal-sensitive repository state, including bounded identity metadata
+  for every existing destructive ref, reflog, and receipt-namespace path
+  component;
 - the canonical selected path.
+
+Raw reflog bytes are read only to compute bounded digest and generation metadata.
+They are never stored in `Prepared`, the encrypted recovery vault, outcomes, or
+receipts.
 
 Preparation repeats the capture and requires exact observation equality. It
 binds the selected logical tree edit and a digest of the complete expected tree
@@ -113,8 +125,8 @@ transaction that:
 1. requires the concrete branch to equal the captured parent OID;
 2. creates the operation receipt ref only if absent;
 3. prepares and holds both ref locks;
-4. rechecks the captured branch reflog bytes and generation while the branch
-   lock is held;
+4. recomputes and rechecks the captured branch reflog digest and generation
+   metadata from the reflog file while the branch lock is held;
 5. commits the branch update and receipt creation atomically.
 
 The receipt is `refs/void/operations/<digest>` and points to the exact managed
@@ -153,7 +165,8 @@ single parent. One prepared ref transaction then:
 
 1. requires the branch to equal that captured current tip;
 2. creates `refs/void/recoveries/<digest>` only if absent;
-3. holds both locks and rechecks the current branch reflog generation;
+3. holds both locks and recomputes and rechecks the current branch reflog digest
+   and generation metadata;
 4. atomically advances the branch and creates the recovery receipt.
 
 Post-verification proves that the recovery commit has the captured tip as its
@@ -203,9 +216,12 @@ claim. The reflog recheck closes branch ABA before transaction commit for normal
 cooperative writers. Hostile reflog replacement and physical power-loss behavior
 are not certified.
 
-All unsupported or unprovable states fail before branch mutation. CAS, receipt,
-reflog, ancestry, selected-path, configuration, index, worktree, or object drift
-preserves current refs and human state. Response-loss handling reads receipts
+All unsupported or unprovable states fail before branch mutation. A symlink,
+parent alias, ownership change, or containment failure in a destructive branch
+ref, reflog, or receipt path fails before object or ref mutation; checking only
+the final path with `O_NOFOLLOW` is insufficient. CAS, receipt, reflog, ancestry,
+selected-path, configuration, index, worktree, or object drift preserves current
+refs, external sentinels, and human state. Response-loss handling reads receipts
 and never repeats an uncertain ref transaction.
 
 ## Tests and conformance
@@ -238,10 +254,19 @@ worktree, and receipts.
 Disposable conformance adds a seventh POSIX Git scenario. The report contains
 seven scenarios with eight shared runtime checks each, for 56 checks. Its
 semantic fixture observes the selected branch-tree resource plus independent
-index, worktree, staged, unstaged, and untracked sentinels. Direct tests, not the
-generic runner alone, prove that recovery creates a new commit without rewriting
-history. The report remains `certification:false` and
-`sharedRuntimeChecksOnly:true`.
+index, worktree, staged, unstaged, and untracked sentinels. The reusable
+`ConformanceFixture` adds optional `expectedExecutionReconciliation` and
+`expectedRecoveryReconciliation` fields. Their legacy defaults are `unknown`;
+the commit fixture expects `succeeded` and `restored`, respectively, after
+injected response loss while still proving one execute and one recover call.
+This is a conformance-only contract change; the production recovery runtime and
+`RecoveryAdapter` remain unchanged. Direct tests, not the generic runner alone,
+prove that recovery creates a new commit without rewriting history. The adapter
+profile keeps `durableExecutionReceipt:false` and
+`durableRecoveryReceipt:false` because legacy actions lack receipts, and adds
+truthful `actionReceipts.commit` receipt metadata for `commit` only. The report
+remains
+`certification:false` and `sharedRuntimeChecksOnly:true`.
 
 ## Documentation and claims
 
