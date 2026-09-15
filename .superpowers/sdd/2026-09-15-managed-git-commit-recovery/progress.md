@@ -6,7 +6,10 @@ Task 1: complete
 - RED: `node --test packages/connectors/src/git/managed-commit.test.ts packages/connectors/src/git/managed.test.ts` exited 1. The commit input test failed with `Unsupported Git action.` while 26 existing tests passed and 1 Windows test skipped.
 - GREEN typecheck: `pnpm --filter @void/connectors run typecheck` exited 0.
 - GREEN tests: `node --test packages/connectors/src/git/managed-commit.test.ts packages/connectors/src/git/managed.test.ts` exited 0 with 27 passed and 1 Windows test skipped.
-Task 2: pending
+Task 2: complete
+- RED: `node --test packages/connectors/src/git/managed-commit.test.ts` exited 1. The preparation test failed with `Managed Git commit execution is unavailable.`
+- GREEN typecheck: `pnpm --filter @void/connectors run typecheck` exited 0.
+- GREEN focused tests: `node --test packages/connectors/src/git/managed-commit.test.ts packages/connectors/src/git/managed.test.ts` exited 0 with 28 passed and 1 Windows test skipped.
 Task 3: pending
 Task 4: pending
 Task 5: pending
