@@ -1,7 +1,9 @@
-import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { generateKeyPairSync, randomBytes } from "node:crypto";
+import { createHash, generateKeyPairSync, randomBytes } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { managedGitAdapter } from "../../connectors/src/git/managed.ts";
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
 import { keyProviderFromPkcs8 } from "../../ledger/src/sign.ts";
 import {
@@ -131,27 +133,105 @@ export async function filesystemConformanceFixture(
   }
 }
 
+
+export const gitConformanceProfile = {
+  schema: "void.adapter-capability.v1",
+  adapter: { id: "git.managed", version: "1" },
+  operations: process.platform === "win32" ? ([] as const) : (["create", "write", "delete", "rename", "stage", "unstage"] as const),
+  actionNote: "create is a write scenario against an absent path, not a public action",
+  boundary: "cooperative-posix-single-git-surface",
+  maxDecodedBytes: 1024 * 1024,
+  recovery: { posix: "selected-worktree-bytes-mode-or-logical-index-entry", win32: "unsupported" },
+  durableExecutionReceipt: false,
+  durableRecoveryReceipt: false,
+  certification: false,
+  excluded: ["windows", "process-death", "power-loss", "concurrent-external-writers", "commits", "remotes", "hooks", "arbitrary-git", "dangling-stage-blob-removal", "acl", "ownership", "xattrs", "split-index", "non-v2-index", "unknown-index-extensions", "unsupported-index-flags"],
+  conformance: {
+    schema: "void.adapter-conformance.v1",
+    fixture: "disposable-local-git-repository-without-remote",
+    checks: CONFORMANCE_CASES,
+    sharedRuntimeChecksOnly: true,
+  },
+} as const;
+
+type GitScenario = (typeof gitConformanceProfile.operations)[number];
+export async function gitConformanceFixture(operation: GitScenario = "write"): Promise<ConformanceFixture> {
+  if (process.platform === "win32") throw new Error("git.managed is unsupported on Windows");
+  const dir = await mkdtemp(join(tmpdir(), "void-git-conformance-"));
+  try {
+    const root = join(dir, "repo");
+    execFileSync("git", ["init", "-q", root]);
+    const run = (...args: string[]) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8" }).trim();
+    run("config", "user.name", "VOID conformance");
+    run("config", "user.email", "void@example.invalid");
+    const file = join(root, "sample.bin"), moved = join(root, "moved.bin");
+    const originalBuffer = Buffer.from([0, 255, 1, 128, 10]), editedBuffer = Buffer.from("conformance agent edit"), humanBuffer = Buffer.from("conformance human edit");
+    await writeFile(file, originalBuffer, { mode: 0o755 });
+    run("add", "sample.bin"); run("commit", "-qm", "initial");
+    await writeFile(join(root, "sentinel-staged"), "base"); await writeFile(join(root, "sentinel-unstaged"), "base");
+    run("add", "sentinel-staged", "sentinel-unstaged"); run("commit", "-qm", "sentinels");
+    await writeFile(join(root, "sentinel-staged"), "staged human"); run("add", "sentinel-staged");
+    await writeFile(join(root, "sentinel-unstaged"), "unstaged human"); await writeFile(join(root, "sentinel-untracked"), "untracked human");
+    if (operation === "create") { await rm(file); run("update-index", "--force-remove", "sample.bin"); }
+    if (operation === "stage" || operation === "unstage") await writeFile(file, editedBuffer, { mode: 0o755 });
+    if (operation === "unstage") run("add", "sample.bin");
+    const readPath = async (path: string) => { try { return (await readFile(path)).toString("base64"); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; } };
+    const readIndex = () => run("ls-files", "--stage", "--", "sample.bin") || null;
+    const readSelected = async (): Promise<Json> => operation === "rename" ? { source: await readPath(file), destination: await readPath(moved) } : operation === "stage" || operation === "unstage" ? readIndex() : readPath(file);
+    const selectedBefore = await readSelected();
+    const head = run("rev-parse", "HEAD"), manifestBefore = run("ls-files", "--stage").split("\n").filter(Boolean).sort();
+    const rawIndex = operation === "stage" || operation === "unstage" ? null : createHash("sha256").update(await readFile(join(root, run("rev-parse", "--git-path", "index")))).digest("hex");
+    const sentinel = async (name: string) => ({ bytes: await readPath(join(root, name)), mode: (await stat(join(root, name))).mode & 0o777 });
+    const sentinels = async () => ({ staged: await sentinel("sentinel-staged"), unstaged: await sentinel("sentinel-unstaged"), untracked: await sentinel("sentinel-untracked") });
+    const context = await sentinels();
+    const arguments_: Json = operation === "rename" ? { action: "rename", path: "sample.bin", to: "moved.bin" } : operation === "delete" ? { action: "delete", path: "sample.bin" } : operation === "stage" || operation === "unstage" ? { action: operation, path: "sample.bin" } : { action: "write", path: "sample.bin", base64: editedBuffer.toString("base64"), mode: 0o644 };
+    let selectedAfter: Json;
+    if (operation === "rename") selectedAfter = { source: null, destination: originalBuffer.toString("base64") };
+    else if (operation === "delete") selectedAfter = null;
+    else if (operation === "stage") { const oid = run("hash-object", "--no-filters", "sample.bin"); selectedAfter = `100755 ${oid} 0\tsample.bin`; }
+    else if (operation === "unstage") selectedAfter = run("ls-tree", "HEAD", "--", "sample.bin").replace(/^([0-9]+) blob ([0-9a-f]+)\t/, "$1 $2 0\t");
+    else selectedAfter = editedBuffer.toString("base64");
+    const humanOid = createHash("sha1").update(`blob ${humanBuffer.length}\0`).update(humanBuffer).digest("hex");
+    const selectedHuman: Json = operation === "rename" ? { source: null, destination: humanBuffer.toString("base64") } : operation === "stage" || operation === "unstage" ? `100755 ${humanOid} 0\tsample.bin` : humanBuffer.toString("base64");
+    const replaceSelected = (manifest: string[], selected: Json) => {
+      const rest = manifest.filter((line) => !line.endsWith("\tsample.bin"));
+      if (typeof selected === "string" && /^[0-9]{6} [0-9a-f]+ 0\t/.test(selected)) rest.push(selected);
+      return rest.sort();
+    };
+    const before: Json = { selected: selectedBefore, head, rawIndex, index: manifestBefore, worktree: context };
+    const after: Json = { selected: selectedAfter, head, rawIndex, index: operation === "stage" || operation === "unstage" ? replaceSelected(manifestBefore, selectedAfter) : manifestBefore, worktree: context };
+    const human: Json = { selected: selectedHuman, head, rawIndex, index: operation === "stage" || operation === "unstage" ? replaceSelected(manifestBefore, selectedHuman) : manifestBefore, worktree: context };
+    const read = async (): Promise<Json> => ({ selected: await readSelected(), head: run("rev-parse", "HEAD"), rawIndex: operation === "stage" || operation === "unstage" ? null : createHash("sha256").update(await readFile(join(root, run("rev-parse", "--git-path", "index")))).digest("hex"), index: run("ls-files", "--stage").split("\n").filter(Boolean).sort(), worktree: await sentinels() });
+    const { privateKey } = generateKeyPairSync("ed25519"), signer = keyProviderFromPkcs8(privateKey.export({ type: "pkcs8", format: "der" })), key = randomBytes(32);
+    return {
+      adapter: () => managedGitAdapter({ root, cooperative: true }),
+      options: () => ({ journal: localOperationJournal(join(dir, "journal"), signer), vault: reservedRecoveryVault(join(dir, "vault"), { conformance: key }, "conformance") }),
+      arguments: arguments_,
+      changedArguments: operation === "rename" ? { action: "rename", path: "sample.bin", to: "other.bin" } : operation === "stage" || operation === "unstage" ? { action: operation, path: "other.bin" } : { action: "write", path: "sample.bin", base64: humanBuffer.toString("base64") },
+      before, after, human,
+      read,
+      writeHuman: async () => {
+        if (operation === "rename") await writeFile(moved, humanBuffer);
+        else if (operation === "stage" || operation === "unstage") { await writeFile(file, humanBuffer); run("add", "sample.bin"); }
+        else await writeFile(file, humanBuffer);
+      },
+      dispose: () => rm(dir, { recursive: true, force: true }),
+    };
+  } catch (error) { await rm(dir, { recursive: true, force: true }); throw error; }
+}
+
 export async function runConformanceCommand(
   argv: readonly string[],
   print: (text: string) => void,
 ): Promise<number> {
-  if (
-    argv.length !== 0 &&
-    !(
-      argv.length === 2 &&
-      argv[0] === "--adapter" &&
-      argv[1] === "filesystem.managed"
-    )
-  )
-    throw new Error(
-      "usage: void recovery conformance [--adapter filesystem.managed] (disposable local fixtures only)",
-    );
+  const selected = argv.length === 0 ? "filesystem.managed" : argv.length === 2 && argv[0] === "--adapter" ? argv[1] : undefined;
+  if (selected !== "filesystem.managed" && selected !== "git.managed")
+    throw new Error("usage: void recovery conformance [--adapter filesystem.managed|git.managed] (disposable local fixtures only)");
+  const capability = selected === "git.managed" ? gitConformanceProfile : filesystemConformanceProfile;
   const scenarios = [];
-  for (const operation of filesystemConformanceProfile.operations) {
-    const report = await runAdapterConformance(
-      filesystemConformanceProfile.adapter,
-      () => filesystemConformanceFixture(operation),
-    );
+  if (selected === "git.managed" && process.platform === "win32") scenarios.push({ operation: "platform-refusal", passed: false, checks: [{ id: "posix-only", passed: true }] });
+  else for (const operation of capability.operations) {
+    const report = await runAdapterConformance(capability.adapter, () => selected === "git.managed" ? gitConformanceFixture(operation as GitScenario) : filesystemConformanceFixture(operation as "create" | "write" | "delete" | "rename"));
     scenarios.push({ operation, ...report });
   }
   const passed = scenarios.every((report) => report.passed);
@@ -160,7 +240,7 @@ export async function runConformanceCommand(
       {
         schema: "void.adapter-conformance-run.v1",
         passed,
-        capability: filesystemConformanceProfile,
+        capability,
         scenarios,
       },
       null,

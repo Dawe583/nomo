@@ -202,7 +202,54 @@ export function recoveryMcpServer(options: {
                 },
               },
         )
-      : tools;
+      : options.adapterId === "git.managed"
+        ? tools.map((definition) =>
+            definition.name !== "void_execute"
+              ? definition
+              : {
+                  ...definition,
+                  description:
+                    "Execute one structured Git worktree or index mutation in a declared cooperative POSIX repository. No commits, remotes, hooks, shell, arbitrary Git commands or safety against excluded concurrent writers. Stage leaves a content-addressed dangling blob that can retain selected bytes until Git garbage collection. Unknown outcomes remain unknown without an operation-specific durable receipt.",
+                  inputSchema: {
+                    ...definition.inputSchema,
+                    properties: {
+                      ...definition.inputSchema.properties,
+                      mutation: {
+                        oneOf: [
+                          {
+                            type: "object",
+                            additionalProperties: false,
+                            required: ["action", "path", "base64"],
+                            properties: {
+                              action: { type: "string", enum: ["write"] },
+                              path: { type: "string" },
+                              base64: { type: "string", description: "Canonical base64, maximum 1 MiB decoded" },
+                              mode: { type: "integer", minimum: 0, maximum: 511 },
+                            },
+                          },
+                          ...["delete", "stage", "unstage"].map((action) => ({
+                            type: "object",
+                            additionalProperties: false,
+                            required: ["action", "path"],
+                            properties: { action: { type: "string", enum: [action] }, path: { type: "string" } },
+                          })),
+                          {
+                            type: "object",
+                            additionalProperties: false,
+                            required: ["action", "path", "to"],
+                            properties: {
+                              action: { type: "string", enum: ["rename"] },
+                              path: { type: "string", description: "Existing source path" },
+                              to: { type: "string", description: "Absent destination path" },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+          )
+        : tools;
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: definitions,
   }));

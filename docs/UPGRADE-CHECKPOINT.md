@@ -140,14 +140,43 @@ now describes runnable commands, transports, replay and recovery requirements,
 and current unsupported marketing examples without promoting metadata to
 recovery evidence.
 
+### Managed Git recovery
+
+`git.managed` version 1 adds structured POSIX worktree create, write, delete and
+rename plus logical index stage and unstage. Capture binds repository layout,
+HEAD, the selected worktree state and index entries. Worktree recovery preserves
+unrelated staging when selected endpoint entries remain exact. Index recovery
+conservatively conflicts on any later index generation change, preserving human
+state instead of weakening selected-entry ABA checks.
+
+Index installation uses an owned real `index.lock`, a private copied index,
+strict version 2 parsing, complete logical manifest checks and atomic install.
+The adapter refuses sparse, split, unmerged, unsupported flag or extension
+profiles, active Git operations, Git administrative aliases, symlinks,
+hardlinks and submodule paths. Fixed Git plumbing has bounded redacted output
+and disables prompts, hooks, filters, credential helpers and lazy fetching.
+
+This remains a cooperative POSIX subset. Stage can retain selected bytes as a
+dangling content-addressed Git blob until garbage collection. Git has no
+operation-specific durable receipt here, so both response-loss reconciliation
+paths remain unknown. Windows, process death, power loss, commits, history,
+branches, remotes, directories and noncooperative writers are excluded. See
+`MANAGED-GIT.md` for the exact contract.
+
 ### Integrated verification
 
-- `pnpm run check` passed all workspace typechecks and tests. The cloud group
+- `pnpm run check` passed all typechecks and 709 workspace tests. The cloud group
   passed 13 offline tests and skipped four opt in live integration tests.
-- `pnpm test:reverse` passed 518 core tests: ledger 49, policy 75, registry 38,
-  proxy 80, connectors 94, runtime 63, CLI 81, SDK 10 and workbench 28.
+- `pnpm test:reverse` passed 550 core tests: ledger 49, policy 75, registry 38,
+  proxy 80, connectors 119, runtime 63, CLI 88, SDK 10 and workbench 28.
 - Focused integrated recovery job tests passed 12 of 12. Focused rename suites
   passed 20 tests with one Windows specific test skipped on macOS.
+- The final Git adapter, CLI, MCP and conformance suite passed 40 tests with one
+  Windows-only refusal skipped on macOS. Independent security and conformance
+  reviews returned GO after adversarial fixes.
+- The disposable `git.managed` command passed six POSIX scenarios and all 48
+  shared runtime checks. Its report explicitly sets `certification:false` and
+  `sharedRuntimeChecksOnly:true`.
 - `pnpm run build` passed Vite, Nitro, workflow and cloud artifact validation.
   The existing large web chunk warning remains and is not a performance claim.
 - A credential empty local server returned the three capability responses with
@@ -161,7 +190,8 @@ notarization and download execution remain outside this evidence.
 ## Next work, in plan order
 
 1. Finish M1 provider specific client crash and persistence certification.
-2. Add an executable Git adapter and its disposable conformance evidence.
+2. Design append-only managed commit recovery using a new revert commit or
+   recovery PR, with no reset or force push.
 3. R07 runtime provenance and dependency aware recovery.
 4. R08 and R09 executable provider adapters with disposable service conformance.
 5. R10 cloud budgets, R11 staged and cascading cancellation, R12 and R13 SDK and

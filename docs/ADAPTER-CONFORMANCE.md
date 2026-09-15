@@ -5,6 +5,7 @@ Run the built-in disposable filesystem checks from the checkout:
 ```sh
 node packages/cli/bin/void.mjs recovery conformance
 node packages/cli/bin/void.mjs recovery conformance --adapter filesystem.managed
+node packages/cli/bin/void.mjs recovery conformance --adapter git.managed
 ```
 
 The command creates its own temporary directories, signing key and encryption
@@ -74,3 +75,14 @@ adapters are trusted code, not plugins loaded by this command. External
 providers still need isolated target identity, receipt, conflict, permission
 and crash tests. Python transport and general provider certification remain
 outstanding R12 work.
+
+## Managed Git profile
+
+The POSIX Git command runs 48 shared runtime checks across create-by-write,
+write, delete, rename, stage and unstage in disposable repositories with no
+remote and local-only identity. Each Git fixture independently reads HEAD, the
+normalized full index manifest, selected endpoints, and byte/mode sentinels for
+unrelated staged, unstaged and untracked worktree state. `certification: false` and
+`sharedRuntimeChecksOnly: true` are explicit in the report. See
+`MANAGED-GIT.md` for the dangling blob, reconciliation, platform and process
+death limits. Windows reports the POSIX exclusion and does not mutate.

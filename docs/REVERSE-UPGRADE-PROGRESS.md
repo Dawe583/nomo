@@ -31,23 +31,23 @@ is separate remaining work. No claim of a full Windows CLI suite pass is made.
 This tracks REVERSE-TOOL-UPGRADE-PLAN.md. No full milestone is declared complete
 by the existence of a prototype or a narrow passing test.
 
-| Package | Current implementation                                                                                                                                              | Remaining release gates                                                                                                                  |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| R00     | Contract, coverage, context corrections, descriptor vs executable adapter distinction                                                                               | Machine-readable provider certification and public-site alignment                                                                        |
-| R01     | Signed local journal, immutable operation identity, unknown results, adapter reconciliation                                                                         | Cloud transactional journal, full persistence fault matrix                                                                               |
-| R02     | Shared runtime used by managed CLI/MCP, TS SDK and local workbench document writes/Undo                                                                             | Legacy proxy and general external-tool cloud conformance                                                                                 |
-| R03     | Encrypted durable artifacts, reserved capture/outcome/recovery capacity, shared quota, legacy reads, key rotation                                                   | Streaming, pin lifecycle, GC, retention, quota migration                                                                                 |
-| R04     | Structured row mutations, revision trigger, atomic outbox, verified restore, real prepare serialization conflict, managed deadlock and terminated database sessions | Cascade/tenant certification, migration, client process kill and network partition                                                       |
-| R05     | Cooperative one-file create/write/delete and guarded Undo on Unix/Windows; POSIX two-path rename; portable path and state boundary checks                           | Git pending; Windows rename refused; Windows file recovery is bytes-only for writable files; concurrent external writers remain excluded |
-| R06     | Single-operation plan, exact digest, signed recovery, uncertain recovery reconciliation                                                                             | Multi-operation jobs, selection boundaries, dependencies, durable leases/checkpoints                                                     |
-| R07     | Existing taint modules retained                                                                                                                                     | Runtime provenance and dependency-aware recovery integration                                                                             |
-| R08     | Existing legacy S3 retained                                                                                                                                         | Managed S3/versioning, Supabase-specific capability tests                                                                                |
-| R09     | Existing OAuth layer retained                                                                                                                                       | GitHub/Vercel executable recovery adapters and real sandbox conformance                                                                  |
-| R10     | Local daily workspace/per-agent reservations; concurrent/restart test                                                                                               | Cloud accounting, modes, approvals integration and full reservation fault matrix                                                         |
-| R11     | Not started                                                                                                                                                         | Staged graph, cancellation, barriers and restart semantics                                                                               |
-| R12     | Executable adapter interface, managed TS SDK, reusable conformance runner and filesystem command/profile                                                            | Python transport client, provider-specific fixtures and broader capability certification                                                 |
-| R13     | Local MCP entry point with operator identity/policy                                                                                                                 | OpenCode doctor/init, authenticated remote executor, managed egress boundary                                                             |
-| R14     | Coverage, runbook, scoped validation evidence                                                                                                                       | Export bundles/checkpoint completeness, metrics, operational certification                                                               |
+| Package | Current implementation                                                                                                                                                 | Remaining release gates                                                                                                                |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| R00     | Contract, coverage, context corrections, descriptor vs executable adapter distinction                                                                                  | Machine-readable provider certification and public-site alignment                                                                      |
+| R01     | Signed local journal, immutable operation identity, unknown results, adapter reconciliation                                                                            | Cloud transactional journal, full persistence fault matrix                                                                             |
+| R02     | Shared runtime used by managed CLI/MCP, TS SDK and local workbench document writes/Undo                                                                                | Legacy proxy and general external-tool cloud conformance                                                                               |
+| R03     | Encrypted durable artifacts, reserved capture/outcome/recovery capacity, shared quota, legacy reads, key rotation                                                      | Streaming, pin lifecycle, GC, retention, quota migration                                                                               |
+| R04     | Structured row mutations, revision trigger, atomic outbox, verified restore, real prepare serialization conflict, managed deadlock and terminated database sessions    | Cascade/tenant certification, migration, client process kill and network partition                                                     |
+| R05     | Cooperative filesystem create/write/delete on Unix/Windows and POSIX rename; POSIX structured Git worktree and index create-by-write/write/delete/rename/stage/unstage | Managed commit/revert and remote recovery; Windows Git; noncooperative writer boundary; Windows filesystem rename and mode restoration |
+| R06     | Persistent run and explicit-list plans, full boundary digest, checkpoints, paused/unknown/conflict states and one active workspace job                                 | Dependency/time selection, durable leases and fencing, MCP/cloud job surfaces                                                          |
+| R07     | Existing taint modules retained                                                                                                                                        | Runtime provenance and dependency-aware recovery integration                                                                           |
+| R08     | Existing legacy S3 retained                                                                                                                                            | Managed S3/versioning, Supabase-specific capability tests                                                                              |
+| R09     | Existing OAuth layer retained                                                                                                                                          | GitHub/Vercel executable recovery adapters and real sandbox conformance                                                                |
+| R10     | Local daily workspace/per-agent reservations; concurrent/restart test                                                                                                  | Cloud accounting, modes, approvals integration and full reservation fault matrix                                                       |
+| R11     | Not started                                                                                                                                                            | Staged graph, cancellation, barriers and restart semantics                                                                             |
+| R12     | Executable adapter interface, managed TS SDK, reusable conformance runner and filesystem command/profile                                                               | Python transport client, provider-specific fixtures and broader capability certification                                               |
+| R13     | Local MCP entry point with operator identity/policy                                                                                                                    | OpenCode doctor/init, authenticated remote executor, managed egress boundary                                                           |
+| R14     | Coverage, runbook, scoped validation evidence                                                                                                                          | Export bundles/checkpoint completeness, metrics, operational certification                                                             |
 
 ## Verified foundation
 
@@ -66,10 +66,11 @@ by the existence of a prototype or a narrow passing test.
    termination and a managed-dispatch deadlock now have executable coverage.
 2. Cloud document integration now uses the shared runtime in one database
    transaction. Extend conformance before covering external cloud tools.
-3. Add Git recovery and extend filesystem coverage only with an explicit
-   cooperative vs enforced boundary. Never claim an atomic filesystem CAS or
-   unconditional no-overwrite behavior that the OS interface cannot provide.
-4. Add persistent multi-operation planning and resource/provenance dependencies.
+3. Design and verify an append-only managed commit/revert slice. It must not
+   reset or force push shared history, and it needs separate remote and process
+   failure evidence before any broader Git claim.
+4. Extend persistent recovery planning with resource/provenance dependencies,
+   time selection, leases and fencing.
 5. Build provider adapters and cloud journal/transport, then budgets/staged work
    and operational evidence against the exit criteria in the original plan.
 
@@ -79,9 +80,10 @@ configuration remain separate from the reverse engine implementation.
 
 ## Verification checkpoint
 
-Latest local `pnpm check`: typechecks passed; 579 package/application/script
-tests passed; nine OAuth tests passed and two opt-in cloud integration tests
-were skipped at that checkpoint. The three isolated cloud GUI, recovery and Prime
+Earlier local checkpoint, before managed Git and persistent recovery jobs:
+`pnpm check` passed 579 package/application/script tests; nine OAuth tests
+passed and two opt-in cloud integration tests were skipped. See
+`UPGRADE-CHECKPOINT.md` and the current task evidence for later validation. The three isolated cloud GUI, recovery and Prime
 protocol scenarios were subsequently run successfully. The real PostgreSQL verification was rerun successfully with the
 OS-backed writer mutex and relation certification checks. Fifty-three tests cover
 the newly added runtime, managed SQL, MCP and SDK paths, including three separate
@@ -188,3 +190,13 @@ verification exit status, selected-run cancellation and fatal-exit cleanup. The
 shared GUI exposes retained operations for deleted-document recovery. See
 [the checkpoint](UPGRADE-CHECKPOINT.md) for fresh verification and exact limits.
 This does not close M1 or add multi-operation recovery/provider certification.
+
+## Managed Git subset, 2026-09-15
+
+The local `git.managed` adapter adds structured POSIX worktree and logical index
+recovery for one selected target. It does not complete WP-R05 or add commit or
+remote recovery. Both lost-response reconciliation paths remain unknown without
+an operation-specific durable receipt. Stage can leave a dangling Git blob that
+retains selected bytes until garbage collection. The disposable six-scenario,
+48-check shared runtime profile is evidence for its named cases only, not full
+Git or process-death certification. See `MANAGED-GIT.md`.

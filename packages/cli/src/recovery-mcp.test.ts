@@ -15,6 +15,7 @@ import {
   type Json,
 } from "../../runtime/src/index.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
+import { managedGitAdapter } from "../../connectors/src/git/managed.ts";
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
 
 test("MCP client executes, previews and restores through signed runtime; policy and workspace cannot be supplied by agent", async (t) => {
@@ -296,4 +297,55 @@ test("filesystem MCP advertises platform rename scope and enforces mutation sche
     "restored",
   );
   assert.equal(await readFile(join(root, "source"), "utf8"), "before");
+});
+
+
+test("Git MCP schema exposes only the closed structured mutation union", async (t) => {
+  const server = recoveryMcpServer({ runtime: {} as never, workspace: "test", agentId: "agent", adapterId: "git.managed", permitted: async () => false });
+  const client = new Client({ name: "git-schema-test", version: "1" });
+  const [a, b] = InMemoryTransport.createLinkedPair();
+  await server.connect(a); await client.connect(b);
+  t.after(async () => { await client.close(); await server.close(); });
+  const execute = (await client.listTools()).tools.find((entry) => entry.name === "void_execute")!;
+  assert.match(execute.description!, /cooperative POSIX/);
+  assert.match(execute.description!, /dangling blob/);
+  const mutation = execute.inputSchema.properties!.mutation as { oneOf: Array<{ required: string[]; properties: { action: { enum: string[] } } }> };
+  assert.deepEqual(mutation.oneOf.map((item) => item.properties.action.enum[0]), ["write", "delete", "stage", "unstage", "rename"]);
+  assert.equal(mutation.oneOf.some((item) => item.properties.action.enum.includes("create")), false);
+});
+
+
+test("Git MCP validates mutations through the real signed runtime", async (t) => {
+  if (process.platform === "win32") return;
+  const dir = await mkdtemp(join(tmpdir(), "void-mcp-git-")), root = join(dir, "repo");
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const { execFileSync } = await import("node:child_process");
+  execFileSync("git", ["init", "-q", root]);
+  execFileSync("git", ["-C", root, "config", "user.name", "VOID test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]); await writeFile(join(root, "sentinel"), "unchanged"); execFileSync("git", ["-C", root, "add", "sentinel"]); execFileSync("git", ["-C", root, "commit", "-qm", "initial"]);
+  const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
+  const runtime = recoveryRuntime({ journal: localOperationJournal(join(dir, "journal"), signer), vault: localRecoveryVault(join(dir, "vault"), { key: randomBytes(32) }, "key"), adapters: [managedGitAdapter({ root, cooperative: true })], authorize: async () => true });
+  const server = recoveryMcpServer({ runtime, workspace: "test", agentId: "agent", adapterId: "git.managed", permitted: async () => true });
+  const client = new Client({ name: "git-runtime-test", version: "1" }); const [a, b] = InMemoryTransport.createLinkedPair(); await server.connect(a); await client.connect(b);
+  t.after(async () => { await client.close(); await server.close(); });
+  let id = 0;
+  const indexPath = execFileSync("git", ["-C", root, "rev-parse", "--git-path", "index"], { encoding: "utf8" }).trim();
+  const snapshot = async () => ({ status: execFileSync("git", ["-C", root, "status", "--porcelain=v2", "-z"], { encoding: "buffer" }), index: await readFile(join(root, indexPath)), sentinel: await readFile(join(root, "sentinel")) });
+  for (const mutation of [
+    { action: "write", path: "file" }, { action: "write", path: "file", base64: "", to: "other" },
+    { action: "delete", path: "file", base64: "" }, { action: "delete", path: "file", to: "other" }, { action: "stage", path: "file", base64: "" }, { action: "stage", path: "file", to: "other" },
+    { action: "unstage", path: "file", base64: "" }, { action: "unstage", path: "file", to: "other" }, { action: "rename", path: "file" },
+    { action: "rename", path: "file", to: "other", base64: "" }, { action: "unknown", path: "file" },
+    { action: "stage", path: 4 },
+  ]) {
+    const before = await snapshot();
+    const result = await client.callTool({ name: "void_execute", arguments: { operationId: `bad-${id++}`, runId: "run", mutation } });
+    assert.equal(result.isError === true || JSON.parse((result.content as { text: string }[])[0]!.text).status === "failed", true);
+    assert.deepEqual(await snapshot(), before);
+  }
+  const text = (result: Awaited<ReturnType<typeof client.callTool>>) => JSON.parse((result.content as { text: string }[])[0]!.text);
+  const valid = await client.callTool({ name: "void_execute", arguments: { operationId: "valid", runId: "run", mutation: { action: "write", path: "file", base64: "" } } });
+  assert.equal(text(valid).status, "succeeded");
+  const plan = text(await client.callTool({ name: "void_recovery_plan", arguments: { operationId: "valid" } }));
+  assert.equal(text(await client.callTool({ name: "void_recovery_apply", arguments: { plan } })).status, "restored");
+  await assert.rejects(readFile(join(root, "file")), { code: "ENOENT" });
 });

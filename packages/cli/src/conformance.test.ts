@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import {
   filesystemConformanceFixture,
   filesystemConformanceProfile,
+  gitConformanceProfile,
+  gitConformanceFixture,
   runConformanceCommand,
 } from "./conformance.ts";
 import {
@@ -143,4 +145,22 @@ test("cleanup failure and fixture setup failure cannot produce green reports", a
   assert.equal(failed.passed, false);
   assert.equal(failed.checks.length, CONFORMANCE_CASES.length);
   assert.ok(!JSON.stringify(failed).includes("credential"));
+});
+
+
+test("Git profile distinguishes create scenario from write action and stays scoped", async () => {
+  assert.deepEqual(gitConformanceProfile.operations, process.platform === "win32" ? [] : ["create", "write", "delete", "rename", "stage", "unstage"]);
+  assert.equal(gitConformanceProfile.durableExecutionReceipt, false);
+  assert.equal(gitConformanceProfile.certification, false);
+  if (process.platform !== "win32") {
+    const fixture = await gitConformanceFixture("create");
+    try { assert.equal((fixture.arguments as { action: string }).action, "write"); }
+    finally { await fixture.dispose(); }
+  }
+  const lines: string[] = [];
+  assert.equal(await runConformanceCommand(["--adapter", "git.managed"], (line) => lines.push(line)), process.platform === "win32" ? 1 : 0);
+  const report = JSON.parse(lines[0]!);
+  assert.equal(report.capability.adapter.id, "git.managed");
+  assert.equal(report.capability.conformance.sharedRuntimeChecksOnly, true);
+  if (process.platform === "win32") assert.deepEqual(report.scenarios, [{ operation: "platform-refusal", passed: false, checks: [{ id: "posix-only", passed: true }] }]);
 });

@@ -1,8 +1,9 @@
+import { managedGitAdapter } from "../../connectors/src/git/managed.ts";
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
 import { assertRecoveryStateOutsideRoot } from "./recovery-paths.ts";
 import { runConformanceCommand } from "./conformance.ts";
 import { readFile } from "node:fs/promises";
-import { resolve, join, dirname } from "node:path";
+import { resolve, join, dirname, isAbsolute } from "node:path";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import {
   recoveryRuntime,
@@ -30,6 +31,7 @@ type Config = {
   stateDir: string;
   encryptionKeyEnv: string;
   filesystem?: { root: string; cooperative: true };
+  git?: { root: string; cooperative: true };
   postgres?: {
     schema: string;
     tables: ManagedPostgresOptions["tables"];
@@ -77,7 +79,14 @@ export async function runRecoveryCommand(
   if (
     !/^[\w-]{1,100}$/.test(config.workspace) ||
     !config.stateDir ||
-    Boolean(config.postgres) === Boolean(config.filesystem)
+    [config.postgres, config.filesystem, config.git].filter(Boolean).length !== 1 ||
+    (config.git !== undefined &&
+      (config.git.cooperative !== true ||
+        typeof config.git.root !== "string" ||
+        !config.git.root ||
+        isAbsolute(config.git.root) ||
+        config.git.root.includes("\\") ||
+        config.git.root.split("/").some((part) => !part || part === "." || part === "..")))
   )
     throw new Error("Invalid recovery configuration.");
   const postgres = config.postgres;
@@ -95,7 +104,7 @@ export async function runRecoveryCommand(
   if (action === "install") {
     if (!options)
       throw new Error(
-        "Filesystem needs no installation. Configure an existing cooperative root.",
+        "Filesystem and Git need no installation. Configure an existing cooperative root.",
       );
     await installManagedPostgres(options);
     print(
@@ -115,17 +124,22 @@ export async function runRecoveryCommand(
       : JSON.parse(await readFile(resolve(args.get("--input")!), "utf8"));
   if (input.workspace !== config.workspace)
     throw new Error("Input belongs to another workspace.");
-  if (config.filesystem) {
-    const root = resolve(dirname(configPath), config.filesystem.root);
+  if (config.filesystem || config.git) {
+    const root = resolve(dirname(configPath), (config.filesystem ?? config.git)!.root);
     const state = resolve(dirname(configPath), config.stateDir);
     await assertRecoveryStateOutsideRoot(root, state);
   }
   const adapter = options
     ? managedPostgresAdapter(options)
-    : managedFilesystemAdapter({
-        root: resolve(dirname(configPath), config.filesystem!.root),
-        cooperative: config.filesystem!.cooperative,
-      });
+    : config.git
+      ? managedGitAdapter({
+          root: resolve(dirname(configPath), config.git.root),
+          cooperative: config.git.cooperative,
+        })
+      : managedFilesystemAdapter({
+          root: resolve(dirname(configPath), config.filesystem!.root),
+          cooperative: config.filesystem!.cooperative,
+        });
   if (action === "inspect") {
     const request = input as ExecutionRequest;
     if (request.adapterId !== adapter.id)
@@ -173,7 +187,7 @@ export async function runRecoveryCommand(
         loaded.ok &&
         decide(loaded, {
           tool,
-          connector: options ? "postgres" : "filesystem",
+          connector: options ? "postgres" : config.git ? "git" : "filesystem",
           workspace: config.workspace,
           klass,
           blastRadius,
