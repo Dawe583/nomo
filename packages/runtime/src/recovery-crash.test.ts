@@ -62,7 +62,8 @@ const adapter = {
     if (${durableReceipt}) db.prepare('INSERT INTO receipts VALUES (?,?)').run(id, prepared.before);
     db.exec('COMMIT');
     process.send({ stage: 'inverse-committed', plan, recoveryId: id });
-    await new Promise(() => {});
+    // A pending promise alone does not keep Node alive after IPC flushes.
+    await new Promise(() => setInterval(() => {}, 1000));
   }
 };
 const signer = await devKeyProvider({ dir: join(root, 'keys'), env: {} });
