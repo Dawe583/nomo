@@ -11,6 +11,7 @@ import {
   digest,
   type ExecutionRequest,
   type RecoveryPlan,
+  type RecoveryJobRequest,
 } from "../../runtime/src/index.ts";
 import {
   managedPostgresAdapter,
@@ -58,6 +59,9 @@ export async function runRecoveryCommand(
       "inspect",
       "execute",
       "plan",
+      "plan-job",
+      "apply-job",
+      "status-job",
       "apply",
       "reconcile",
       "reconcile-recovery",
@@ -66,7 +70,7 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery <install|inspect|execute|plan|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
+      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery <install|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -223,6 +227,39 @@ export async function runRecoveryCommand(
     const result = await runtime.execute(input as ExecutionRequest);
     print(JSON.stringify(result));
     return result.status === "succeeded" ? 0 : 1;
+  }
+  if (action === "plan-job") {
+    print(
+      JSON.stringify(
+        await runtime.planRecoveryJob(input as RecoveryJobRequest),
+        null,
+        2,
+      ),
+    );
+    return 0;
+  }
+  if (action === "status-job") {
+    print(
+      JSON.stringify(
+        await runtime.recoveryJobStatus(config.workspace, input.jobId),
+        null,
+        2,
+      ),
+    );
+    return 0;
+  }
+  if (action === "apply-job") {
+    if (!args.has("--approve"))
+      throw new Error(
+        "Review the recovery job plan and supply its exact --approve digest.",
+      );
+    const result = await runtime.runRecoveryJob(
+      config.workspace,
+      input.jobId,
+      async (plan) => args.get("--approve") === plan.digest,
+    );
+    print(JSON.stringify(result));
+    return result.status === "restored" || result.status === "partial" ? 0 : 1;
   }
   if (action === "plan") {
     print(

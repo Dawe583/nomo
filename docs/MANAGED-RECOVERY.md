@@ -15,13 +15,20 @@ are read from named environment variables, never embedded in the configuration.
   "agentId": "opencode-local",
   "stateDir": "./recovery-state",
   "encryptionKeyEnv": "VOID_RECOVERY_KEY",
-  "vaultCapacity": {"maxArtifactBytes": 67108864, "maxTotalBytes": 1073741824},
+  "vaultCapacity": {
+    "maxArtifactBytes": 67108864,
+    "maxTotalBytes": 1073741824
+  },
   "policyPath": "./recovery-policy.yml",
   "postgres": {
     "urlEnv": "VOID_DATABASE_URL",
     "schema": "void_recovery",
     "tables": [
-      {"table": "public.account", "primaryKey": ["id"], "columns": ["balance", "note"]}
+      {
+        "table": "public.account",
+        "primaryKey": ["id"],
+        "columns": ["balance", "note"]
+      }
     ]
   }
 }
@@ -64,6 +71,12 @@ Old file snapshots remain readable and count toward the quota. Stop all older
 executors before switching; do not run old and new vault writers together.
 Keep encryption keys, existing files and the SQLite database in your backup.
 
+Recovery jobs add `void.recovery-job.v1` entries to the existing signed journal.
+The new reader accepts operation-only journals without rewriting them. Older
+runtime binaries do not accept job entries. Stop all writers, back up signing
+keys, encryption keys, journal and vault together, then upgrade every writer.
+Mixed runtime versions are not supported.
+
 ## Operator workflow
 
 An execution input has stable identities and structured arguments:
@@ -78,8 +91,8 @@ An execution input has stable identities and structured arguments:
   "arguments": {
     "table": "public.account",
     "action": "update",
-    "key": {"id": 1},
-    "values": {"balance": 20}
+    "key": { "id": 1 },
+    "values": { "balance": 20 }
   }
 }
 ```
@@ -97,6 +110,21 @@ An execution input has stable identities and structured arguments:
 
 Use `node packages/cli/bin/void.mjs` wherever the `void` binary is not installed.
 Never generate a new operation ID merely because a response was lost.
+
+For several operations, write a job request with a stable `jobId` and either
+`{"kind":"run","runId":"session-1"}` or
+`{"kind":"operations","operationIds":["op-1","op-2"]}` selection. Then use:
+
+```sh
+void recovery plan-job --config recovery.json --input job-request.json
+void recovery apply-job --config recovery.json --input job-id.json --approve PLAN_DIGEST
+void recovery status-job --config recovery.json --input job-id.json
+```
+
+`job-id.json` contains only `{"workspace":"demo","jobId":"job-1"}`. Apply loads
+the signed stored plan. Repeat `apply-job` after restart to resume a previously
+approved job. Reconcile an unknown operation first. Any new forward operation
+after planning requires a new job ID and plan.
 
 ## MCP connection
 
@@ -118,9 +146,15 @@ rules:
   - match:
       workspace: demo
       connector: postgres
-      tool: [void_execute, void_recovery_apply, void_reconcile, void_recovery_reconcile]
+      tool:
+        [
+          void_execute,
+          void_recovery_apply,
+          void_reconcile,
+          void_recovery_reconcile,
+        ]
       class: r1
-      blast_radius: {lt: 2}
+      blast_radius: { lt: 2 }
     decision: allow
   - match:
       workspace: demo
@@ -142,6 +176,10 @@ public HTTP endpoint for claude.ai or the Vercel chat application.
 ## Failure handling
 
 - `unknown`: preserve the original identity and reconcile; no blind retry.
+- `paused`: inspect the structured status, restore the configured adapter version
+  or required local state, then repeat `apply-job` with the same job ID. Status
+  exposes only `step-unavailable` and the operation ID. Forward operations stay
+  blocked until the job reaches a safe terminal state.
 - `conflict`: keep the human change. The current release does not automatically
   replan a conflicting operation or force overwrite it.
 - Invalid journal or missing key: stop recovery and restore verified backups.

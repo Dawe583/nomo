@@ -12,8 +12,19 @@ import {
   type OperationEvent,
   type OperationJournal,
   type JournalTransaction,
+  type RecoveryJobEvent,
+  type RecoveryJobStage,
   type Stage,
 } from "./journal.ts";
+import {
+  completeRecoveryJobPlan,
+  validateRecoveryJobPlan,
+  type RecoveryJobPlan,
+  type RecoveryJobRequest,
+  type RecoveryJobResult,
+  type RecoveryResidual,
+} from "./recovery/plan.ts";
+import { jobPlan, latestJobEvent, progressFrom } from "./recovery/run.ts";
 import {
   VaultCapacityError,
   type RecoveryVault,
@@ -108,6 +119,58 @@ export function recoveryRuntime(options: RuntimeOptions) {
       observation: Observation;
       prepared: Prepared;
     };
+  const planFor = async (
+    tx: JournalTransaction,
+    event: OperationEvent,
+  ): Promise<RecoveryPlan> => {
+    if (event.stage !== "succeeded")
+      throw new Error(
+        "Only a confirmed successful operation can be planned for recovery.",
+      );
+    adapterFor(event.adapterId, event.adapterVersion);
+    const bundle = await loadPrepared(tx, event);
+    if (
+      bundle.observation.readiness !== "verified" ||
+      !["r0", "r1", "r2"].includes(bundle.observation.reversibility)
+    )
+      throw new Error("Operation has no verified recovery capability.");
+    await options.vault.get(
+      event.workspace,
+      artifact(tx, event.operationId, "succeeded"),
+    );
+    await options.vault.reserve?.(event.workspace, event.operationId, [
+      "recovery",
+    ]);
+    return {
+      workspace: event.workspace,
+      operationId: event.operationId,
+      digest: digest({
+        event,
+        capture: artifact(tx, event.operationId, "prepared"),
+      }),
+      scope: bundle.observation.scope,
+      resources: bundle.observation.resources,
+      reversibility: bundle.observation.reversibility,
+    };
+  };
+  const recordJob = async (
+    tx: JournalTransaction,
+    plan: RecoveryJobPlan,
+    stage: RecoveryJobStage,
+    data: Json,
+  ) => {
+    if (!tx.appendJob)
+      throw new Error("Recovery job journal support is unavailable.");
+    return tx.appendJob({
+      schema: "void.recovery-job.v1",
+      workspace: plan.workspace,
+      jobId: plan.jobId,
+      planDigest: plan.digest,
+      at: new Date().toISOString(),
+      stage,
+      data,
+    });
+  };
   const resultFor = async (
     tx: JournalTransaction,
     event: OperationEvent,
@@ -131,7 +194,11 @@ export function recoveryRuntime(options: RuntimeOptions) {
         }
       : {}),
   });
-  return {
+  let recoverOperation!: (
+    plan: RecoveryPlan,
+    authorize: (plan: RecoveryPlan) => Promise<boolean>,
+  ) => Promise<RecoveryOutcome | { status: "unknown" }>;
+  const runtime = {
     async status(
       workspace: string,
       operationId: string,
@@ -166,6 +233,23 @@ export function recoveryRuntime(options: RuntimeOptions) {
           }
           return resultFor(tx, prior);
         }
+        const jobs = new Map(
+          (tx.jobEvents ?? []).map((event) => [event.jobId, event]),
+        );
+        if (
+          [...jobs.values()].some((event) =>
+            [
+              "approved",
+              "applying",
+              "checkpoint",
+              "unknown",
+              "paused",
+            ].includes(event.stage),
+          )
+        )
+          throw new Error(
+            "A recovery job blocks new forward operations in this workspace.",
+          );
         const identity: OperationEvent = {
           schema: "void.operation.v1",
           workspace: request.workspace,
@@ -374,35 +458,398 @@ export function recoveryRuntime(options: RuntimeOptions) {
     ): Promise<RecoveryPlan> {
       return options.journal.transaction(workspace, async (tx) => {
         const event = latest(tx, operationId);
-        if (!event || event.stage !== "succeeded")
-          throw new Error(
-            "Only a confirmed successful operation can be planned for recovery.",
-          );
-        adapterFor(event.adapterId, event.adapterVersion);
-        const bundle = await loadPrepared(tx, event);
-        if (
-          bundle.observation.readiness !== "verified" ||
-          !["r0", "r1", "r2"].includes(bundle.observation.reversibility)
-        )
-          throw new Error("Operation has no verified recovery capability.");
-        // Missing/invalid result or capture fails the preview before approval.
-        await options.vault.get(
-          workspace,
-          artifact(tx, operationId, "succeeded"),
-        );
-        await options.vault.reserve?.(workspace, operationId, ["recovery"]);
-        return {
-          workspace,
-          operationId,
-          digest: digest({
-            event,
-            capture: artifact(tx, operationId, "prepared"),
-          }),
-          scope: bundle.observation.scope,
-          resources: bundle.observation.resources,
-          reversibility: bundle.observation.reversibility,
-        };
+        if (!event) throw new Error("Operation not found.");
+        return planFor(tx, event);
       });
+    },
+    async planRecoveryJob(
+      request: RecoveryJobRequest,
+    ): Promise<RecoveryJobPlan> {
+      const input = clean(request);
+      if (!/^[\w-]{1,120}$/.test(input.jobId))
+        throw new Error("Invalid recovery job identity.");
+      if (!input.selection || typeof input.selection !== "object")
+        throw new Error("Invalid recovery selection.");
+      if (input.selection.kind === "run") {
+        if (!/^[\w-]{1,120}$/.test(input.selection.runId))
+          throw new Error("Invalid run identity.");
+      } else if (input.selection.kind === "operations") {
+        if (
+          !Array.isArray(input.selection.operationIds) ||
+          input.selection.operationIds.length === 0 ||
+          new Set(input.selection.operationIds).size !==
+            input.selection.operationIds.length
+        )
+          throw new Error(
+            "Recovery operation selection must contain unique IDs.",
+          );
+        for (const id of input.selection.operationIds)
+          if (typeof id !== "string" || !/^[\w-]{1,120}$/.test(id))
+            throw new Error("Invalid operation identity.");
+      } else throw new Error("Invalid recovery selection.");
+      return options.journal.transaction(input.workspace, async (tx) => {
+        const existing = jobPlan(tx.jobEvents ?? [], input.jobId);
+        if (existing) {
+          if (digest(existing.selection) !== digest(input.selection))
+            throw new Error(
+              "Recovery job identity belongs to another selection.",
+            );
+          validateRecoveryJobPlan(existing);
+          return existing;
+        }
+        const records =
+          tx.records ??
+          (() => {
+            throw new Error("Recovery job journal support is unavailable.");
+          })();
+        const head = records.at(-1);
+        const boundary = {
+          sequence: head?.sequence ?? 0,
+          digest: head?.digest ?? "0".repeat(64),
+        };
+        const latestRecords = new Map<string, (typeof tx.records)[number]>();
+        for (const record of records)
+          if (record.event.schema === "void.operation.v1")
+            latestRecords.set(record.event.operationId, record);
+        const selection = input.selection;
+        const selected =
+          selection.kind === "run"
+            ? [...latestRecords.values()].filter(
+                (record) =>
+                  record.event.schema === "void.operation.v1" &&
+                  record.event.runId === selection.runId,
+              )
+            : selection.operationIds.map((id) => latestRecords.get(id));
+        const steps: Array<{
+          operationId: string;
+          sequence: number;
+          plan: RecoveryPlan;
+        }> = [];
+        const residuals: RecoveryResidual[] = [];
+        for (let index = 0; index < selected.length; index++) {
+          const record = selected[index];
+          const requestedId =
+            input.selection.kind === "operations"
+              ? input.selection.operationIds[index]!
+              : undefined;
+          if (!record || record.event.schema !== "void.operation.v1") {
+            residuals.push({ operationId: requestedId!, status: "missing" });
+            continue;
+          }
+          const event = record.event;
+          if (
+            [
+              "restored",
+              "compensated",
+              "conflict",
+              "recovery-dispatched",
+              "recovery-unknown",
+            ].includes(event.stage)
+          ) {
+            const status =
+              event.stage === "restored"
+                ? "already-recovered"
+                : event.stage === "compensated"
+                  ? "compensated"
+                  : event.stage === "conflict"
+                    ? "conflict"
+                    : "unknown";
+            residuals.push({ operationId: event.operationId, status });
+            continue;
+          }
+          if (event.stage !== "succeeded") {
+            residuals.push({
+              operationId: event.operationId,
+              status: "not-successful",
+            });
+            continue;
+          }
+          try {
+            steps.push({
+              operationId: event.operationId,
+              sequence: record.sequence,
+              plan: await planFor(tx, event),
+            });
+          } catch (error) {
+            residuals.push({
+              operationId: event.operationId,
+              status:
+                error instanceof Error && error.message.includes("no verified")
+                  ? "unsupported"
+                  : "unavailable",
+            });
+          }
+        }
+        steps.sort((left, right) => right.sequence - left.sequence);
+        const plan = completeRecoveryJobPlan({
+          schema: "void.recovery-plan.v1",
+          workspace: input.workspace,
+          jobId: input.jobId,
+          selection: input.selection,
+          boundary,
+          steps,
+          residuals,
+        });
+        await recordJob(tx, plan, "planned", { plan: plan as unknown as Json });
+        return plan;
+      });
+    },
+    async recoveryJobStatus(
+      workspace: string,
+      jobId: string,
+    ): Promise<RecoveryJobResult | RecoveryJobPlan> {
+      return options.journal.transaction(workspace, async (tx) => {
+        const plan = jobPlan(tx.jobEvents ?? [], jobId);
+        if (!plan) throw new Error("Recovery job not found.");
+        validateRecoveryJobPlan(plan);
+        const event = latestJobEvent(tx.jobEvents ?? [], jobId);
+        if (
+          event &&
+          ["restored", "partial", "conflict", "unknown", "paused"].includes(
+            event.stage,
+          )
+        )
+          return event.data as unknown as RecoveryJobResult;
+        return plan;
+      });
+    },
+    async runRecoveryJob(
+      workspace: string,
+      jobId: string,
+      authorize: (plan: RecoveryJobPlan) => Promise<boolean>,
+    ): Promise<RecoveryJobResult> {
+      let plan!: RecoveryJobPlan;
+      await options.journal.transaction(workspace, async (tx) => {
+        plan =
+          jobPlan(tx.jobEvents ?? [], jobId) ??
+          (() => {
+            throw new Error("Recovery job not found.");
+          })();
+        validateRecoveryJobPlan(plan);
+        const event = latestJobEvent(tx.jobEvents ?? [], jobId)!;
+        const records =
+          tx.records ??
+          (() => {
+            throw new Error("Recovery job journal support is unavailable.");
+          })();
+        const boundaryRecord = records.find(
+          (record) => record.sequence === plan.boundary.sequence,
+        );
+        if (
+          plan.boundary.sequence === 0
+            ? plan.boundary.digest !== "0".repeat(64) ||
+              !records.some(
+                (record) =>
+                  record.sequence === 1 &&
+                  record.event.schema === "void.recovery-job.v1" &&
+                  record.event.jobId === jobId &&
+                  record.event.stage === "planned",
+              )
+            : boundaryRecord?.digest !== plan.boundary.digest
+        )
+          throw new Error("Recovery job selection boundary is invalid.");
+        if (["restored", "partial", "conflict"].includes(event.stage)) return;
+        if (event.stage === "planned") {
+          const latestJobs = new Map(
+            (tx.jobEvents ?? []).map((candidate) => [
+              candidate.jobId,
+              candidate,
+            ]),
+          );
+          if (
+            [...latestJobs.values()].some(
+              (candidate) =>
+                candidate.jobId !== jobId &&
+                [
+                  "approved",
+                  "applying",
+                  "checkpoint",
+                  "unknown",
+                  "paused",
+                ].includes(candidate.stage),
+            )
+          )
+            throw new Error(
+              "Another recovery job is active in this workspace.",
+            );
+          if (
+            records.some(
+              (record) =>
+                record.sequence > plan.boundary.sequence &&
+                record.event.schema === "void.operation.v1" &&
+                record.event.stage === "received",
+            )
+          )
+            throw new Error("Recovery job selection boundary is stale.");
+          if (!(await authorize(clean(plan))))
+            throw new Error("Recovery job was not authorized.");
+          await recordJob(tx, plan, "approved", null);
+        }
+      });
+      for (;;) {
+        const state = await options.journal.transaction(
+          workspace,
+          async (tx) => {
+            const event = latestJobEvent(tx.jobEvents ?? [], jobId)!;
+            if (["restored", "partial", "conflict"].includes(event.stage))
+              return {
+                done: event.data as unknown as RecoveryJobResult,
+              } as const;
+            const storedProgress = progressFrom(event, plan);
+            const progress =
+              event.stage === "unknown"
+                ? {
+                    ...storedProgress,
+                    residuals: storedProgress.residuals.filter(
+                      (residual) =>
+                        residual.status !== "unknown" ||
+                        residual.operationId !==
+                          plan.steps[storedProgress.checkpoint]?.operationId,
+                    ),
+                  }
+                : storedProgress;
+            if (progress.checkpoint === 0) {
+              const records =
+                tx.records ??
+                (() => {
+                  throw new Error(
+                    "Recovery job journal support is unavailable.",
+                  );
+                })();
+              const stale = records.some(
+                (record) =>
+                  record.sequence > plan.boundary.sequence &&
+                  record.event.schema === "void.operation.v1" &&
+                  record.event.stage === "received",
+              );
+              if (stale)
+                throw new Error("Recovery job selection boundary is stale.");
+            }
+            if (
+              event.stage === "approved" ||
+              event.stage === "unknown" ||
+              event.stage === "paused"
+            )
+              await recordJob(
+                tx,
+                plan,
+                "applying",
+                progress as unknown as Json,
+              );
+            if (progress.checkpoint < plan.steps.length) {
+              const step = plan.steps[progress.checkpoint]!;
+              try {
+                const operation = latest(tx, step.operationId);
+                if (!operation) throw new Error("Operation not found.");
+                adapterFor(operation.adapterId, operation.adapterVersion);
+                await loadPrepared(tx, operation);
+                await options.vault.get(
+                  workspace,
+                  artifact(tx, operation.operationId, "succeeded"),
+                );
+              } catch {
+                const result: RecoveryJobResult = {
+                  jobId,
+                  status: "paused",
+                  ...progress,
+                  pause: {
+                    code: "step-unavailable",
+                    operationId: step.operationId,
+                  },
+                };
+                await recordJob(tx, plan, "paused", result as unknown as Json);
+                return { done: result } as const;
+              }
+            }
+            if (progress.checkpoint >= plan.steps.length) {
+              const result: RecoveryJobResult = {
+                jobId,
+                status:
+                  progress.residuals.length === 0 ? "restored" : "partial",
+                ...progress,
+              };
+              await recordJob(
+                tx,
+                plan,
+                result.status,
+                result as unknown as Json,
+              );
+              return { done: result } as const;
+            }
+            return {
+              progress,
+              step: plan.steps[progress.checkpoint]!,
+            } as const;
+          },
+        );
+        if ("done" in state) return state.done!;
+        const outcome = await recoverOperation(
+          state.step.plan,
+          async () => true,
+        );
+        const terminal = await options.journal.transaction(
+          workspace,
+          async (tx) => {
+            const current = progressFrom(
+              latestJobEvent(tx.jobEvents ?? [], jobId),
+              plan,
+            );
+            if (current.checkpoint > state.progress.checkpoint)
+              return undefined;
+            if (outcome.status === "unknown") {
+              const result: RecoveryJobResult = {
+                jobId,
+                status: "unknown",
+                ...current,
+                residuals: [
+                  ...current.residuals,
+                  { operationId: state.step.operationId, status: "unknown" },
+                ],
+              };
+              await recordJob(tx, plan, "unknown", result as unknown as Json);
+              return result;
+            }
+            if (outcome.status === "conflict") {
+              const residuals: RecoveryResidual[] = [
+                ...current.residuals,
+                { operationId: state.step.operationId, status: "conflict" },
+                ...plan.steps.slice(current.checkpoint + 1).map((step) => ({
+                  operationId: step.operationId,
+                  status: "blocked-by-conflict" as const,
+                })),
+              ];
+              const result: RecoveryJobResult = {
+                jobId,
+                status: "conflict",
+                ...current,
+                residuals,
+              };
+              await recordJob(tx, plan, "conflict", result as unknown as Json);
+              return result;
+            }
+            const residuals =
+              outcome.status === "compensated"
+                ? [
+                    ...current.residuals,
+                    {
+                      operationId: state.step.operationId,
+                      status: "compensated" as const,
+                    },
+                  ]
+                : current.residuals;
+            await recordJob(tx, plan, "checkpoint", {
+              checkpoint: current.checkpoint + 1,
+              outcomes: [
+                ...current.outcomes,
+                { operationId: state.step.operationId, status: outcome.status },
+              ],
+              residuals,
+            } as unknown as Json);
+            return undefined;
+          },
+        );
+        if (terminal) return terminal;
+      }
     },
     async recover(
       inputPlan: RecoveryPlan,
@@ -496,4 +943,6 @@ export function recoveryRuntime(options: RuntimeOptions) {
       });
     },
   };
+  recoverOperation = runtime.recover;
+  return runtime;
 }

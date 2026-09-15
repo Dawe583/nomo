@@ -6,11 +6,11 @@ alone is not proof of recoverability.
 
 Three independent observations describe each call:
 
-| Axis | Values | Meaning |
-| --- | --- | --- |
-| Effect | read, write, external-disclosure, mixed, unknown | Observable action |
-| Reversibility | r0, r1, r2, r3, unknown | Exact restore, restore with trace, compensation, no inverse, or unproven |
-| Readiness | verified, conditional, expired, unsupported, unknown-outcome, conflict | Current availability of that recovery |
+| Axis          | Values                                                                 | Meaning                                                                  |
+| ------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Effect        | read, write, external-disclosure, mixed, unknown                       | Observable action                                                        |
+| Reversibility | r0, r1, r2, r3, unknown                                                | Exact restore, restore with trace, compensation, no inverse, or unproven |
+| Readiness     | verified, conditional, expired, unsupported, unknown-outcome, conflict | Current availability of that recovery                                    |
 
 R0 is not a synonym for GET. A read can disclose information irreversibly. R1
 restores declared state but does not erase logs, observations or transaction
@@ -39,6 +39,33 @@ A changed plan is refused. Human drift is a conflict. Recovery writes a new
 signed event linked by `reverses`; it never deletes original evidence. Unknown
 recovery results can be reconciled when the adapter supports durable receipts.
 Reconciliation never repeats the inverse.
+
+## Persistent recovery jobs
+
+The local runtime can persist a recovery plan for one exact run or an explicit
+list of operation IDs. The signed plan includes a full ledger sequence and hash
+boundary, every selected single-operation plan in reverse success order, and
+known residuals. Its digest covers the complete plan except the digest field.
+Approval binds that digest. Apply loads the stored plan by job ID rather than
+trusting plan bytes supplied again by a caller.
+
+The runner records approval, application, each completed step, and the terminal
+result in the same signed workspace journal. Each step uses the existing
+single-operation recovery path. A restart after an inverse but before the job
+checkpoint therefore reads the operation receipt and does not authorize another
+inverse. Conflict stops the remaining steps and records them as blocked. Unknown
+stops without retry; after explicit operation reconciliation, the same job can
+resume. A deterministic setup failure after approval records `paused` with a
+redacted `step-unavailable` code and operation ID. New forward operations remain
+blocked. Restore the exact adapter version and required local state, then run the
+same job ID again. Compensation makes the job partial, never restored.
+
+This first slice uses reverse ledger order only. It has no cross-agent dependency
+closure. Any new forward operation after preview invalidates the plan, including
+unrelated work. Once application starts, the local journal blocks new forward
+operations until the job reaches a terminal state. It has no time or checkpoint
+selection, independent branch continuation, lease, external fencing, scheduler,
+MCP job surface or cloud job surface.
 
 ## Trust boundary
 

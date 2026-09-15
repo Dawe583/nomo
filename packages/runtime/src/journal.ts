@@ -2,13 +2,12 @@ import { mkdir, open, realpath, lstat, chmod } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { setTimeout as delay } from "node:timers/promises";
 import { resolve, join } from "node:path";
-import { createHash } from "node:crypto";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import type { KeyProvider } from "../../ledger/src/index.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
-export const digest = (value: unknown): string =>
-  createHash("sha256").update(canonicalJson(value)).digest("hex");
+import { validateRecoveryJobPayload } from "./recovery/plan.ts";
+export { digest } from "./digest.ts";
 export type Stage =
   | "received"
   | "authorized"
@@ -36,9 +35,37 @@ export type OperationEvent = {
   stage: Stage;
   data: Json;
 };
+export type RecoveryJobStage =
+  | "planned"
+  | "approved"
+  | "applying"
+  | "checkpoint"
+  | "restored"
+  | "partial"
+  | "conflict"
+  | "unknown"
+  | "paused";
+export type RecoveryJobEvent = {
+  schema: "void.recovery-job.v1";
+  workspace: string;
+  jobId: string;
+  planDigest: string;
+  at: string;
+  stage: RecoveryJobStage;
+  data: Json;
+};
+export type JournalRecord = {
+  event: OperationEvent | RecoveryJobEvent;
+  sequence: number;
+  digest: string;
+};
 export interface JournalTransaction {
+  /** Operation events only. Kept stable for existing callers and budget accounting. */
   events: OperationEvent[];
+  jobEvents?: RecoveryJobEvent[];
+  records?: JournalRecord[];
   append(event: OperationEvent): Promise<void>;
+  appendJob?(event: RecoveryJobEvent): Promise<void>;
 }
 export interface OperationJournal {
   transaction<T>(
@@ -101,6 +128,62 @@ export function validateTransition(
       );
   }
 }
+const jobAllowed: Record<RecoveryJobStage, readonly RecoveryJobStage[]> = {
+  planned: ["approved"],
+  approved: ["applying"],
+  applying: [
+    "checkpoint",
+    "restored",
+    "partial",
+    "conflict",
+    "unknown",
+    "paused",
+  ],
+  checkpoint: [
+    "checkpoint",
+    "restored",
+    "partial",
+    "conflict",
+    "unknown",
+    "paused",
+  ],
+  unknown: ["applying"],
+  paused: ["applying"],
+  restored: [],
+  partial: [],
+  conflict: [],
+};
+export function validateJobTransition(
+  events: readonly RecoveryJobEvent[],
+  event: RecoveryJobEvent,
+): void {
+  if (
+    event.schema !== "void.recovery-job.v1" ||
+    !/^[\w-]{1,120}$/.test(event.jobId) ||
+    !/^[a-f0-9]{64}$/.test(event.planDigest) ||
+    !Object.hasOwn(jobAllowed, event.stage)
+  )
+    throw new Error("Invalid recovery job event.");
+  validateRecoveryJobPayload(events, event);
+  const previous = [...events]
+    .reverse()
+    .find((candidate) => candidate.jobId === event.jobId);
+  if (!previous) {
+    if (event.stage !== "planned")
+      throw new Error("Recovery job must start with planned.");
+    return;
+  }
+  if (
+    previous.workspace !== event.workspace ||
+    previous.planDigest !== event.planDigest
+  )
+    throw new Error("Recovery job identity or plan changed.");
+  if (!jobAllowed[previous.stage].includes(event.stage))
+    throw new Error(
+      `Invalid recovery job transition: ${previous.stage} to ${event.stage}.`,
+    );
+}
+
 /** ponytail: use SQLite's OS-backed lock instead of inventing stale-process leases.
  * The transaction is a writer mutex only; signed JSONL remains the source of truth.
  * Process death releases the lock. Local disk only, never an NFS/distributed lease. */
@@ -158,13 +241,32 @@ export function localOperationJournal(
                 "Operation journal signature or integrity verification failed.",
               );
             const events: OperationEvent[] = [];
+            const jobEvents: RecoveryJobEvent[] = [];
+            const records: JournalRecord[] = [];
             for await (const entry of ledger.read(workspace)) {
-              const event = entry.body as OperationEvent;
-              validateTransition(events, event);
-              events.push(event);
+              const event = entry.body as OperationEvent | RecoveryJobEvent;
+              if (event.schema === "void.operation.v1") {
+                validateTransition(events, event);
+                events.push(event);
+              } else if (event.schema === "void.recovery-job.v1") {
+                validateJobTransition(jobEvents, event);
+                jobEvents.push(event);
+              } else throw new Error("Invalid journal event schema.");
+              records.push({ event, sequence: entry.seq, digest: entry.hash });
             }
+            const syncDirectory = async () => {
+              if (process.platform === "win32") return;
+              const directory = await open(key, "r");
+              try {
+                await directory.sync();
+              } finally {
+                await directory.close();
+              }
+            };
             return await run({
               events,
+              jobEvents,
+              records,
               async append(event) {
                 if (event.workspace !== workspace)
                   throw new Error("Wrong journal workspace.");
@@ -172,12 +274,30 @@ export function localOperationJournal(
                   canonicalJson(event),
                 ) as OperationEvent;
                 validateTransition(events, stable);
-                await ledger.append(stable);
-                if (process.platform !== "win32") {
-                  const directory = await open(key, "r");
-                  try { await directory.sync(); } finally { await directory.close(); }
-                }
+                const receipt = await ledger.append(stable);
+                await syncDirectory();
                 events.push(stable);
+                records.push({
+                  event: stable,
+                  sequence: receipt.seq,
+                  digest: receipt.hash,
+                });
+              },
+              async appendJob(event) {
+                if (event.workspace !== workspace)
+                  throw new Error("Wrong journal workspace.");
+                const stable = JSON.parse(
+                  canonicalJson(event),
+                ) as RecoveryJobEvent;
+                validateJobTransition(jobEvents, stable);
+                const receipt = await ledger.append(stable);
+                await syncDirectory();
+                jobEvents.push(stable);
+                records.push({
+                  event: stable,
+                  sequence: receipt.seq,
+                  digest: receipt.hash,
+                });
               },
             });
           } finally {

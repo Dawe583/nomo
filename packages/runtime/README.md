@@ -25,3 +25,20 @@ reservation. Both implement the same runtime vault interface.
 allocated disposable fixtures. The CLI applies them to filesystem create, write
 and delete via `void recovery conformance`. See
 `../../docs/ADAPTER-CONFORMANCE.md` for the fixture API and evidence limits.
+
+## Recovery jobs
+
+`planRecoveryJob` persists a signed plan for an exact run or explicit operation
+selection. The plan binds the full signed journal boundary, reverse sequence
+order, each single-operation plan and every known residual to one digest.
+`runRecoveryJob` loads that stored plan by job ID and checkpoints each result.
+It reuses single-operation recovery, so restart and checkpoint loss do not
+authorize a second inverse.
+
+This first local slice stops all remaining operations on conflict or unknown.
+A deterministic step setup failure persists `paused` with only a redacted error
+code and operation ID. The workspace remains blocked until the missing adapter
+version or local state is repaired and the same job resumes to a safe terminal.
+Any new forward operation after preview makes the boundary stale. It does not
+provide dependency ordering, branch continuation, leases, fencing, scheduling,
+time selection, MCP job tools or cloud jobs.
