@@ -54,6 +54,13 @@ boundaries. Neither is a physical network partition or killed client-worker test
 runtime test sends actual SIGKILL after dispatch. MCP integration uses the actual signed runtime with a test adapter; it is not a live OpenCode
 session or cloud transport conformance test.
 
+The focused suite also runs real local crash checks: SIGKILL during dispatch on
+the local SQLite-mutex journal stays unknown without a second write, inverse
+receipt and checkpoint boundaries survive a SIGKILL restart, and a full-disk
+capture failure closes before dispatch. These cover the local transactional
+fault surface only. Physical disk exhaustion behavior, PostgreSQL client process
+death and physical network partitions remain open release gates.
+
 Capacity verification includes an actual SIGKILL before the SQLite snapshot
 commit: payload and quota roll back together, and a restarted writer retains
 the original reservation. The opt-in real PostgreSQL script also runs using
