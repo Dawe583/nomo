@@ -20,6 +20,8 @@ node packages/cli/bin/void.mjs --help
 - `--version`: print the workspace version without touching any data.
 - `config`: print resolved paths and flags with their source. Secret values
   never print, only whether a key is set.
+- `init [--data-dir PATH]`: create the local encrypted storage layout. Contacts
+  no provider and prints no key. Running it twice changes nothing.
 - `replay`: preview or apply one captured connector inverse by ledger sequence.
 - `recovery`: inspect, execute, plan, apply or reconcile managed filesystem and
   PostgreSQL operations. Its `plan-job`, `apply-job`, and `status-job` actions
@@ -36,8 +38,8 @@ for supported examples.
 
 ## Boundaries
 
-The CLI does not implement the pinned marketing examples `void init`,
-`void report`, `void rewind`, `void budget`, Python wrapping, or
+The CLI does not implement the pinned marketing examples `void report`,
+`void rewind`, `void budget`, Python wrapping, or
 `--format aiact-a12 --since 30d`. Current replay selects one signed captured
 operation. It is not a cross-system time scrubber.
 
@@ -62,7 +64,8 @@ reported as a development key, not production identity.
 ## Public TypeScript surface
 
 `src/index.ts` exports the invocation parser and command names, terminal render
-models, and the classify, feed, replay, taint, verify, approval, doctor, and config handlers.
+models, and the classify, feed, replay, taint, verify, approval, doctor, config,
+and init handlers.
 The binary imports agent, recovery, watch, and local operation handlers directly;
 those modules are not exported by the package barrel. The binary owns process
 exit behavior and command dispatch. Domain logic remains in the registry,

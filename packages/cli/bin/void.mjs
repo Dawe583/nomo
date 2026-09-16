@@ -10,8 +10,16 @@ import { runWatchCommand } from "../src/watch.ts";
 import { runApproveCommand, runApprovalsCommand } from "../src/approve.ts";
 import { runDoctorCommand } from "../src/doctor.ts";
 import { runConfigCommand } from "../src/config.ts";
+import { runInitCommand } from "../src/init.ts";
 import { readFileSync } from "node:fs";
-import { runClassifyCommand, runFeedCommand, runReplayCommand, runTaintCommand, runVerifyCommand, parseInvocation } from "../src/index.ts";
+import {
+  runClassifyCommand,
+  runFeedCommand,
+  runReplayCommand,
+  runTaintCommand,
+  runVerifyCommand,
+  parseInvocation,
+} from "../src/index.ts";
 
 if (process.argv.length === 3 && ["--help", "-h"].includes(process.argv[2])) {
   const usage = parseInvocation([]);
@@ -26,7 +34,10 @@ function packageVersion() {
     throw Error("Package version is missing.");
   return meta.version;
 }
-if (process.argv.length === 3 && ["--version", "-v"].includes(process.argv[2])) {
+if (
+  process.argv.length === 3 &&
+  ["--version", "-v"].includes(process.argv[2])
+) {
   console.log(`void ${packageVersion()}`);
   process.exit(0);
 }
@@ -36,17 +47,33 @@ if (!parsed.ok) {
   process.exit(2);
 }
 try {
-  if (parsed.command === "tui") { const { runWorkspaceTui } = await import("../src/tui/workspace-runner.ts"); process.exitCode = await runWorkspaceTui(parsed.args); }
-  else if (parsed.command === "recovery") process.exitCode = await runRecoveryCommand(parsed.args);
-  else if (parsed.command === "agent") process.exit(await runAgentCommand(parsed.args));
-  else if (parsed.command === "run") { await import("../../proxy/bin/void-proxy.mjs"); }
-  else if (["attest", "export", "policy"].includes(parsed.command)) process.exit(await runOperation(parsed.command, parsed.args, process.env, text => console.log(text)));
+  if (parsed.command === "tui") {
+    const { runWorkspaceTui } = await import("../src/tui/workspace-runner.ts");
+    process.exitCode = await runWorkspaceTui(parsed.args);
+  } else if (parsed.command === "recovery")
+    process.exitCode = await runRecoveryCommand(parsed.args);
+  else if (parsed.command === "agent")
+    process.exit(await runAgentCommand(parsed.args));
+  else if (parsed.command === "run") {
+    await import("../../proxy/bin/void-proxy.mjs");
+  } else if (["attest", "export", "policy"].includes(parsed.command))
+    process.exit(
+      await runOperation(parsed.command, parsed.args, process.env, (text) =>
+        console.log(text),
+      ),
+    );
   else if (parsed.command === "ledger") {
     const [action, ...args] = parsed.args;
-    if (action !== "verify") throw new Error("usage: void ledger verify --ledger <path>");
-    process.exit(await runVerifyCommand(args, { stdout: console.log, stderr: console.error }));
-  }
-  else if (parsed.command === "watch") process.exit(await runWatchCommand(parsed.args));
+    if (action !== "verify")
+      throw new Error("usage: void ledger verify --ledger <path>");
+    process.exit(
+      await runVerifyCommand(args, {
+        stdout: console.log,
+        stderr: console.error,
+      }),
+    );
+  } else if (parsed.command === "watch")
+    process.exit(await runWatchCommand(parsed.args));
   else if (parsed.command === "classify") {
     const code = await runClassifyCommand(
       parsed.args,
@@ -54,8 +81,7 @@ try {
       (line) => console.log(line),
     );
     process.exit(code);
-  }
-  else if (parsed.command === "feed") {
+  } else if (parsed.command === "feed") {
     const code = await runFeedCommand(parsed.args, {
       stdout: (line) => console.log(line),
       stderr: (line) => console.error(line),
@@ -102,13 +128,27 @@ try {
         { env: process.env, version: packageVersion() },
       ),
     );
+  } else if (parsed.command === "init") {
+    process.exit(
+      await runInitCommand(
+        parsed.args,
+        {
+          stdout: (line) => console.log(line),
+          stderr: (line) => console.error(line),
+        },
+        { env: process.env },
+      ),
+    );
   } else if (parsed.command === "approve" || parsed.command === "approvals") {
-    const run = parsed.command === "approve" ? runApproveCommand : runApprovalsCommand;
-    process.exit(await run(parsed.args, {
-      stdout: (line) => console.log(line),
-      stderr: (line) => console.error(line),
-      env: process.env,
-    }));
+    const run =
+      parsed.command === "approve" ? runApproveCommand : runApprovalsCommand;
+    process.exit(
+      await run(parsed.args, {
+        stdout: (line) => console.log(line),
+        stderr: (line) => console.error(line),
+        env: process.env,
+      }),
+    );
   } else {
     console.error(`${parsed.command} is not runnable yet`);
     process.exit(2);

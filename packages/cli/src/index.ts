@@ -25,6 +25,7 @@ export const COMMANDS = [
   "agent",
   "doctor",
   "config",
+  "init",
 ] as const;
 
 export type Command = (typeof COMMANDS)[number];
@@ -60,3 +61,4 @@ export * from "./verify.ts";
 export * from "./approve.ts";
 export * from "./doctor.ts";
 export * from "./config.ts";
+export * from "./init.ts";

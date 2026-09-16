@@ -559,3 +559,18 @@ test("rewind without a conversation asks for selection", async (t) => {
   assert.equal(ui.tab, "ledger");
   assert.match(ui.notice, /select a conversation/i);
 });
+
+test("TUI init reuses the CLI implementation and creates storage", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-init-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  await ui.command("/init");
+  assert.equal(ui.detail?.[0], "init exit 0");
+  assert.ok(ui.detail?.some((line) => line.startsWith("created: ")));
+  const { existsSync } = await import("node:fs");
+  assert.ok(existsSync(join(root, "tui", "workspace.key")));
+});

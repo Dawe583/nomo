@@ -17,6 +17,7 @@ import {
 } from "../../../../apps/control-plane/api/desktop-setup.ts";
 import { loadPolicy } from "../../../policy/src/rules.ts";
 import { runDoctorCommand } from "../doctor.ts";
+import { runInitCommand } from "../init.ts";
 import {
   fit,
   pad,
@@ -554,6 +555,24 @@ export class WorkspaceTui {
       this.scroll = 0;
       return;
     }
+    if (cmd === "init") {
+      const lines: string[] = [];
+      const code = await runInitCommand(
+        arg ? [arg] : [],
+        {
+          stdout: (line) => {
+            lines.push(line);
+          },
+          stderr: (line) => {
+            lines.push(line);
+          },
+        },
+        { env: this.env },
+      );
+      this.detail = [`init exit ${code}`, "", ...lines];
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "bottom") {
       this.choose("chat");
       this.scroll = -1;
@@ -1047,6 +1066,7 @@ export const TUI_COMMANDS = [
   ["/models", "Available models"],
   ["/overview", "Workspace overview"],
   ["/doctor", "Environment checks"],
+  ["/init", "Set up workspace storage"],
   ["/status", "Workspace status"],
   ["/cost", "Token usage and cost"],
   ["/verify", "Verify signatures"],
