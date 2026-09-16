@@ -30,6 +30,8 @@ Plán: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md), původní audit: [GUI-UPGRADE
   branch, retry, Arrow Up branch review and the token status were reachable.
   At 390 by 844 pixels the document width stayed 390 pixels and the composer
   bottom stayed at 844 pixels. The browser console had no errors or warnings.
+- `pnpm run build` passes on the release tree: Vite web build, Nitro server,
+  Vercel artifact with 4 frontend assets, Node API and streaming route.
 
 This increment does not claim full Claude Code parity. Structured permission
 modes, background tasks, custom agents, hooks, durable context compaction and
