@@ -16,6 +16,22 @@ import {
 import { DiffScreenWriter } from "./watch.ts";
 import { sanitizeText } from "./layout.ts";
 
+export type WorkspaceShortcut =
+  "redraw" | "toggle-tools" | "search-history" | "quit";
+
+export function workspaceShortcut(
+  key: Key,
+  editing: boolean,
+  input: string,
+): WorkspaceShortcut | undefined {
+  if (!key.ctrl) return undefined;
+  if (key.name === "l") return "redraw";
+  if (key.name === "o") return "toggle-tools";
+  if (key.name === "r" && editing && !input) return "search-history";
+  if (key.name === "d" && (!editing || !input)) return "quit";
+  return undefined;
+}
+
 /** Bracketed paste never submits a message or an approval. */
 export class WorkspaceInput {
   editing = false;
@@ -427,7 +443,8 @@ export async function runWorkspaceTui(
             ui.notice = "Run stopped. A dispatched tool may still complete.";
           } else {
             if (key.name === "escape") input.editing = false;
-            ui.notice = "Selected conversation is not running. Open the active conversation to cancel it.";
+            ui.notice =
+              "Selected conversation is not running. Open the active conversation to cancel it.";
           }
         } catch (error) {
           ui.notice = message(error);
@@ -439,9 +456,45 @@ export async function runWorkspaceTui(
         if (input.editing && input.value) {
           input.set("");
           suggestion = 0;
-          scheduleDraft();
+          try {
+            saveDraft();
+          } catch (error) {
+            ui.notice = message(error);
+          }
           draw();
         } else stop();
+        return;
+      }
+      const shortcut = ui.confirmation
+        ? undefined
+        : workspaceShortcut(key, input.editing, input.value);
+      if (shortcut === "quit") {
+        stop();
+        return;
+      }
+      if (shortcut === "redraw") {
+        screen.redraw();
+        draw();
+        return;
+      }
+      if (shortcut === "toggle-tools") {
+        ui.compactTools = !ui.compactTools;
+        ui.notice = ui.compactTools
+          ? "Compact tool output. Ctrl+O shows full results."
+          : "Full tool output. Ctrl+O collapses results.";
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        draw();
+        return;
+      }
+      if (shortcut === "search-history") {
+        input.set("/find ");
+        suggestion = 0;
+        ui.notice = "Type search text and press Enter.";
+        draw();
         return;
       }
       if (key.name === "paste-start" && ui.confirmation) {

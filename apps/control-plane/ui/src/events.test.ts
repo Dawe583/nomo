@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { transcriptEvents } from "./events.ts";
+import { lastUserMessage, transcriptEvents, usageSummary } from "./events.ts";
 test("stream fragments render once and reconcile with authoritative completion", () => {
   const deltas = [
     { seq: 1, type: "message.delta", payload: { text: "Hello " }, at: "a" },
@@ -41,4 +41,53 @@ test("tool start and result share one card without losing arguments", () => {
   assert.equal(events[0].id, "start");
   assert.equal(events[0].payload.status, "completed");
   assert.deepEqual(events[0].payload.arguments, { path: "plan.md" });
+});
+
+test("usage summary reports provider values and preserves unknowns", () => {
+  assert.deepEqual(usageSummary([]), {
+    inputTokens: null,
+    outputTokens: null,
+    totalTokens: null,
+    cost: null,
+  });
+  assert.deepEqual(
+    usageSummary([
+      {
+        type: "usage.reported",
+        payload: {
+          prompt_tokens: 120,
+          completion_tokens: 30,
+          total_tokens: 150,
+        },
+      },
+    ]),
+    { inputTokens: 120, outputTokens: 30, totalTokens: 150, cost: null },
+  );
+  assert.equal(
+    usageSummary([{ type: "usage.reported", payload: { total_tokens: "150" } }])
+      .totalTokens,
+    null,
+  );
+});
+
+test("last user message selects the latest completed prompt", () => {
+  const first = { seq: 1, kind: "user", text: "first" };
+  const last = {
+    seq: 3,
+    kind: "user",
+    text: "last",
+    type: "message.completed",
+  };
+  assert.equal(
+    lastUserMessage([
+      first,
+      { seq: 2, kind: "assistant", text: "reply" },
+      last,
+    ]),
+    last,
+  );
+  assert.equal(
+    lastUserMessage([{ type: "message.delta", kind: "user" }]),
+    undefined,
+  );
 });

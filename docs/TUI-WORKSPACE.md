@@ -68,6 +68,12 @@ vybrat model z ověřeného katalogu. Existující konverzace zachovají vlastn�
 
 TUI má velké ASCII logo, barevné role zpráv, zvýrazněná rozhodnutí a nabídku
 příkazů. `/` nabídku otevře, šipky vybírají, Tab doplní a Enter spustí příkaz.
+Nabídka přijímá i fuzzy zkratku, například `/rs` pro `/resume`. `/clear`,
+`/status`, `/cost`, `/context`, `/permissions`, `/mcp`, `/resume` a `/rewind`
+používají existující chat, přehled, usage, dokumenty, policy, historii
+konverzací a kontrolovaný Undo tok. Nevytvářejí druhou management vrstvu.
+Ctrl+R připraví hledání historie, Ctrl+O přepne úplný výpis nástrojů, Ctrl+L
+překreslí terminál a Ctrl+D ukončí pouze prázdný vstup.
 Při psaní šipka nahoru prochází předchozí pokyny dané konverzace. Po odeslání
 zůstává chat připravený k psaní další zprávy; nový požadavek lze odeslat po
 skončení běhu. Escape nebo Ctrl+C během běhu zastavuje model. Ctrl+C ve vstupu

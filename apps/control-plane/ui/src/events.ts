@@ -48,3 +48,28 @@ export function transcriptEvents(source: Row[]): Row[] {
     result.push({ seq: "stream-" + seq, kind: "assistant", text: delta, at });
   return result;
 }
+
+export function usageSummary(source: Row[]) {
+  const usage = [...source]
+    .reverse()
+    .find((event) => event.type === "usage.reported")?.payload;
+  const number = (value: unknown) =>
+    typeof value === "number" && Number.isFinite(value) ? value : null;
+  return {
+    inputTokens: number(usage?.prompt_tokens ?? usage?.input_tokens),
+    outputTokens: number(usage?.completion_tokens ?? usage?.output_tokens),
+    totalTokens: number(usage?.total_tokens),
+    cost: number(usage?.cost),
+  };
+}
+
+export function lastUserMessage(source: Row[]): Row | undefined {
+  return [...source]
+    .reverse()
+    .find(
+      (event) =>
+        event.kind === "user" &&
+        event.type !== "message.delta" &&
+        typeof event.text === "string",
+    );
+}

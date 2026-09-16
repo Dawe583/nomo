@@ -136,6 +136,7 @@ are not included in this beta.
 - `docs/DECISIONS.md`: decision log.
 - `docs/STANDARDS.md`: coding, test, safety, and repository rules.
 - `docs/OPERATIONS.md`: operator runbook.
+- `docs/PLAN-GAPS.md`: consolidated remaining work across active plans.
 - `docs/SDK.md`: SDK release candidate surface.
 - `docs/TESTING.md`: package test commands and test rules.
 - `packages/policy/README.md`: policy pack contents and loading rules.

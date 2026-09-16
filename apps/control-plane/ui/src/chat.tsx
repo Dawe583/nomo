@@ -3,7 +3,7 @@ import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import * as m from "motion/react-m";
 import { AsciiWordmark, BrandMark } from "./brand";
 import { ApprovalReview } from "./approval-review";
-import { transcriptEvents } from "./events";
+import { lastUserMessage, transcriptEvents, usageSummary } from "./events";
 import {
   Children,
   useContext,
@@ -336,9 +336,9 @@ export function Chat({
   }, [preferences.data]);
   const [eventBuffer, setEventBuffer] = useState<Row[]>([]);
   const [historyComplete, setHistoryComplete] = useState(true);
-  const events = transcriptEvents(
-    eventBuffer.length ? eventBuffer : (session?.events ?? []),
-  );
+  const rawEvents = eventBuffer.length ? eventBuffer : (session?.events ?? []);
+  const events = transcriptEvents(rawEvents);
+  const usage = usageSummary(rawEvents);
   const latestError = [...eventBuffer]
     .reverse()
     .find((event: Row) => event.type === "run.error");
@@ -865,6 +865,16 @@ export function Chat({
             rows={2}
             onKeyDown={(e) => {
               if (e.nativeEvent.isComposing) return;
+              if (e.key === "ArrowUp" && !draft && !running) {
+                const previous = lastUserMessage(rawEvents);
+                if (previous) {
+                  e.preventDefault();
+                  setRetry(false);
+                  setBranch(previous);
+                  setEdited(previous.text);
+                  return;
+                }
+              }
               if (commandOpen) {
                 if (e.key === "Escape") {
                   e.preventDefault();
@@ -1031,6 +1041,17 @@ export function Chat({
         </form>
         <div className="composer-footnote">
           <span>{providerLabel}</span>
+          <span
+            title={t(
+              "Vstupní a výstupní tokeny podle posledního hlášení providera",
+              "Input and output tokens from the latest provider report",
+            )}
+          >
+            {usage.totalTokens === null
+              ? t("Tokeny neznámé", "Tokens unknown")
+              : `${usage.totalTokens.toLocaleString()} tokens`}
+            {usage.cost === null ? " · cost unknown" : ` · ${usage.cost}`}
+          </span>
           <span>
             {(session?.agent ?? preferences.data?.preferences?.defaultAgent) ===
             "prime-agent"

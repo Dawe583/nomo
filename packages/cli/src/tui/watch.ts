@@ -364,6 +364,11 @@ export class DiffScreenWriter {
     this.previous = next;
   }
 
+  redraw(): void {
+    this.output.write("\u001b[H\u001b[2J");
+    this.previous = [];
+  }
+
   leave(): void {
     this.output.write("\u001b[?25h\u001b[?1049l");
     this.previous = [];

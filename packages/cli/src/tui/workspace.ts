@@ -470,6 +470,58 @@ export class WorkspaceTui {
       return;
     }
     if (cmd === "quit") return "quit";
+    if (cmd === "status") {
+      this.choose("overview");
+      return;
+    }
+    if (cmd === "context") {
+      this.choose("documents");
+      return;
+    }
+    if (cmd === "permissions" || cmd === "mcp") {
+      this.choose("policy");
+      this.notice =
+        "Connector policy stays authoritative. Use /tools for the catalog.";
+      return;
+    }
+    if (cmd === "clear") {
+      this.sessionId = undefined;
+      this.documentPath = undefined;
+      this.choose("chat");
+      this.notice =
+        "New conversation. Prior history remains available in /sessions.";
+      return;
+    }
+    if (cmd === "cost") {
+      this.choose("usage");
+      return;
+    }
+    if (cmd === "resume") {
+      if (!arg) {
+        this.choose("sessions");
+        this.notice = "Select a conversation and press Enter to resume.";
+        return;
+      }
+      const rows = [...this.workbench.list()].reverse();
+      const selected =
+        rows.find((item) => item.id === arg) ?? rows[Number(arg) - 1];
+      if (!selected) throw Error("/resume conversation-number-or-ID");
+      this.useSession(selected.id);
+      this.choose("chat");
+      return;
+    }
+    if (cmd === "rewind") {
+      if (arg) {
+        await this.prepareUndo(arg);
+        return;
+      }
+      const sessionId = this.sessionId;
+      this.choose("ledger");
+      this.filter = sessionId ?? "";
+      this.notice =
+        "Select a recoverable operation and press u for reviewed Undo.";
+      return;
+    }
     if (cmd === "bottom") {
       this.choose("chat");
       this.scroll = -1;
@@ -949,15 +1001,21 @@ export function wrap(lines: readonly string[], width: number): string[] {
 }
 export const TUI_COMMANDS = [
   ["/new", "New conversation"],
+  ["/clear", "Start fresh and retain history"],
   ["/chat", "Return to chat"],
   ["/bottom", "Follow latest messages"],
   ["/find", "Search conversation text"],
   ["/sessions", "Open conversation history"],
+  ["/resume", "Resume a conversation"],
+  ["/rewind", "Review a recoverable checkpoint"],
   ["/documents", "Documents and revisions"],
+  ["/context", "Managed documents and context"],
   ["/ledger", "Signed operations"],
   ["/approvals", "Pending decisions"],
   ["/models", "Available models"],
   ["/overview", "Workspace overview"],
+  ["/status", "Workspace status"],
+  ["/cost", "Token usage and cost"],
   ["/verify", "Verify signatures"],
   ["/undo", "Preview Undo"],
   ["/edit", "Open document editor"],
@@ -968,15 +1026,26 @@ export const TUI_COMMANDS = [
   ["/expand", "Toggle full tool output"],
   ["/connect tokenharbor", "Connect saved Token Harbor key"],
   ["/policy", "Tool policies"],
+  ["/permissions", "Tool policies and approvals"],
+  ["/mcp", "MCP connectors and policy"],
   ["/usage", "Model usage"],
   ["/stop", "Stop run"],
   ["/help", "All commands"],
   ["/quit", "Save and quit"],
 ] as const;
 export function commandSuggestions(input: string) {
-  return /^\/[^\s]*$/.test(input)
-    ? TUI_COMMANDS.filter(([name]) => name.startsWith(input))
-    : [];
+  if (!/^\/[^\s]*$/.test(input)) return [];
+  const query = input.slice(1).toLocaleLowerCase();
+  const matches = ([name]: (typeof TUI_COMMANDS)[number]) => {
+    const command = name.slice(1).split(" ")[0]!.toLocaleLowerCase();
+    let cursor = 0;
+    for (const point of command) if (point === query[cursor]) cursor++;
+    return cursor === query.length;
+  };
+  return TUI_COMMANDS.filter(matches).sort(
+    (left, right) =>
+      Number(!left[0].startsWith(input)) - Number(!right[0].startsWith(input)),
+  );
 }
 export type WorkspaceVisuals = {
   now?: number;
@@ -1115,7 +1184,7 @@ export function renderWorkspace(
   const composerStart = Math.max(0, cursorLine - composerHeight + 1);
   const bodyHeight = Math.max(
     1,
-    height - header.length - 4 - composerHeight - menu.length,
+    height - header.length - 5 - composerHeight - menu.length,
   );
   const richChat =
     ui.tab === "chat" && !!ui.session() && !ui.detail && !ui.confirmation;
@@ -1204,6 +1273,14 @@ export function renderWorkspace(
     richChat && ui.scroll >= 0
       ? `History ${offset + 1}-${Math.min(offset + bodyHeight, lines.length)}/${lines.length} / /bottom to follow`
       : undefined;
+  const usage = [...(ui.session()?.events ?? [])]
+    .reverse()
+    .find((event) => event.kind === "usage")?.payload;
+  const tokens =
+    typeof usage?.total_tokens === "number" ? usage.total_tokens : "unknown";
+  const cost = typeof usage?.cost === "number" ? usage.cost : "unknown";
+  const model = ui.session()?.model || ui.model || "not connected";
+  const summary = `model: ${model} | tokens: ${tokens} | cost: ${cost} | output: ${ui.compactTools ? "compact" : "full"}`;
   const status = ui.confirmation
     ? "REVIEW / y confirm / Esc cancel / PgDn preview"
     : running && (busy || ui.session()?.status === "running")
@@ -1231,6 +1308,7 @@ export function renderWorkspace(
   return [
     ...header,
     ...bodyRows,
+    ink(text(summary), ice),
     ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
     ...menuRows,
     ink(
@@ -1251,7 +1329,7 @@ export function renderWorkspace(
         candidates.length
           ? "arrows select / Tab complete / Enter run / Esc close"
           : editing
-            ? "Enter send / Alt+Enter newline / Esc navigate / Ctrl+C cancel"
+            ? "Enter send / Alt+Enter newline / Ctrl+R search / Ctrl+O output / Esc navigate"
             : "Tab panels / i type / u Undo / a approve / d deny / q quit",
       ),
       muted,
@@ -1274,9 +1352,13 @@ const HELP = [
   "Up/down in a single-line input browse your previous prompts.",
   "VOID_TUI_COLOR=0 disables colors; VOID_TUI_MOTION=0 disables animation.",
   "Enter sends; Alt+Enter inserts a newline; Ctrl+U clears input.",
+  "Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws.",
+  "Ctrl+D exits only from an empty input. Ctrl+C clears, cancels or exits.",
   "Navigation: n new chat; u preview Undo; a/d approvals; q quit.",
   "",
-  "/new [prompt] | /open number-or-ID | /chat | /sessions",
+  "/new [prompt] | /clear | /open number-or-ID | /resume [number-or-ID]",
+  "/status | /cost | /context | /rewind [operation-ID]",
+  "/permissions | /mcp | /sessions",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
   "/models | /model exact-ID | /connect tokenharbor | /connect opencode:tokenrouter | /sources",
   "/documents | /document path | /edit | /history | /undo [operation-ID]",

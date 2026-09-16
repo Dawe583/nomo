@@ -12,8 +12,33 @@ import {
   transcript,
   wrap,
 } from "./workspace.ts";
-import { WorkspaceInput } from "./workspace-runner.ts";
+import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
 import { visibleLength, stripAnsi } from "./layout.ts";
+
+test("Claude style shortcuts map only the intended control keys", () => {
+  assert.equal(
+    workspaceShortcut({ name: "l", ctrl: true }, true, "draft"),
+    "redraw",
+  );
+  assert.equal(
+    workspaceShortcut({ name: "o", ctrl: true }, true, "draft"),
+    "toggle-tools",
+  );
+  assert.equal(
+    workspaceShortcut({ name: "r", ctrl: true }, true, ""),
+    "search-history",
+  );
+  assert.equal(
+    workspaceShortcut({ name: "r", ctrl: true }, true, "draft"),
+    undefined,
+  );
+  assert.equal(workspaceShortcut({ name: "d", ctrl: true }, true, ""), "quit");
+  assert.equal(
+    workspaceShortcut({ name: "d", ctrl: true }, true, "draft"),
+    undefined,
+  );
+  assert.equal(workspaceShortcut({ name: "r" }, true, ""), undefined);
+});
 
 test("multiline editing moves across Unicode lines and deletes words without touching other lines", () => {
   const input = new WorkspaceInput();
@@ -61,6 +86,39 @@ test("tools show actual managed capabilities, searchable schemas and no executio
   assert.ok(ui.detail?.includes("INPUT SCHEMA"));
   assert.equal(app.list().length, 0);
   assert.equal(ui.confirmation, undefined);
+});
+
+test("Claude style management aliases open real VOID views", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-aliases-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app);
+
+  await ui.command("/status");
+  assert.equal(ui.tab, "overview");
+  await ui.command("/context");
+  assert.equal(ui.tab, "documents");
+  await ui.command("/permissions");
+  assert.equal(ui.tab, "policy");
+  await ui.command("/mcp");
+  assert.equal(ui.tab, "policy");
+  await ui.command("/clear");
+  assert.equal(ui.tab, "chat");
+  assert.equal(ui.sessionId, undefined);
+  await ui.command("/cost");
+  assert.equal(ui.tab, "usage");
+  await ui.command("/resume");
+  assert.equal(ui.tab, "sessions");
+  await ui.command("/rewind");
+  assert.equal(ui.tab, "ledger");
+  assert.match(ui.notice, /select a recoverable operation/i);
+  assert.match(
+    stripAnsi(renderWorkspace(ui, 100, 32)),
+    /model: not connected.*tokens: unknown.*output: compact/i,
+  );
 });
 
 test("compact tool output keeps complete events available and never hides assistant errors", () => {
@@ -289,6 +347,8 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
     commandSuggestions("/led").map(([name]) => name),
     ["/ledger"],
   );
+  assert.ok(commandSuggestions("/rs").some(([name]) => name === "/resume"));
+  assert.ok(commandSuggestions("/rw").some(([name]) => name === "/rewind"));
   assert.equal(commandSuggestions("/new delete everything").length, 0);
   assert.ok(stripAnsi(renderWorkspace(ui, 100, 32)).includes("|_____||_____/"));
 });

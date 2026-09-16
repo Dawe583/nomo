@@ -45,12 +45,31 @@ export function ApprovalReview({
           expired && record.status === "pending" ? "expired" : record.status
         }
       />
-      <p>
+      <div className="approval-facts">
+        <span>
+          {t("Třída", "Class")}:{" "}
+          <strong>{record.call?.klass ?? "unknown"}</strong>
+        </span>
+        <span>
+          {t("Workspace", "Workspace")}: {record.call?.workspace ?? "unknown"}
+        </span>
+        <span>
+          {t("Rozsah", "Blast radius")}:{" "}
+          {record.call?.blastRadius?.count ??
+            record.call?.blastRadius ??
+            t("nezměřeno", "not measured")}
+          {record.call?.blastRadius?.precision
+            ? ` (${record.call.blastRadius.precision})`
+            : ""}
+        </span>
+      </div>
+      <p className="approval-rationale">
+        <strong>{t("Důvod politiky", "Policy rationale")}:</strong>{" "}
         {record.reason ??
           record.rationale ??
           t(
-            "Důvod politiky není součástí odpovědi serveru.",
-            "Policy rationale is not included in the server response.",
+            "Server důvod neposkytl.",
+            "The server did not provide a rationale.",
           )}
       </p>
       <JsonDetail value={record} />

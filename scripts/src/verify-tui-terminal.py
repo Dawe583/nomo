@@ -106,10 +106,22 @@ await app.shutdown(); console.log(session.id);
         read_until("Write a prompt")
         os.write(master, b"/expand\r")
         read_until("Full tool output")
-        os.write(master, b"\x03\x03")
+        os.write(master, b"\x0f")
+        read_until("Compact tool output")
+        redraw_start = len(output)
+        os.write(master, b"\x0c")
+        time.sleep(0.2)
+        if select.select([master], [], [], 0)[0]:
+            output.extend(os.read(master, 65536))
+        assert b"\x1b[2J" in output[redraw_start:], "Ctrl+L did not redraw"
+        os.write(master, b"\x12PTY test\r")
+        read_until("1 matching messages")
+        os.write(master, b"\x1b")
+        read_until("chat / navigation")
+        os.write(master, b"\x15\x04")
         read_until("VOID: stopping")
         assert process.wait(timeout=5) == 0
-        print("PASS: PTY logo, immediate typing, multiline input, history search, live follow, slash completion, paste-safe Undo, signatures, resize and clean exit")
+        print("PASS: PTY logo, typing, history, fuzzy commands, Ctrl+O, Ctrl+L, Ctrl+R, Ctrl+D, safe Undo and clean exit")
     finally:
         if process.poll() is None:
             process.kill()

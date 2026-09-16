@@ -15,6 +15,26 @@ Plán: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md), původní audit: [GUI-UPGRADE
 - Výchozí nové konverzace: **TokenRouter / GLM 5.3 Free**, ID `z-ai/glm-5.3-free`. Ověřen skutečný katalog 137 modelů. Klíč je serverový; nepřechází do klientského buildu. Existující sessions zachovávají původní provider/model. Není zaveden tichý placený fallback.
 - OpenAI-compatible stream parser zvládá rozdělené UTF-8/CRLF, tool fragments, redakci klíče a neúplný stream. Chyby providera včetně 429 mají konkrétní stav; generace se automaticky neopakuje.
 
+## Current management parity increment
+
+- Chat now shows the latest real provider token report beside the provider.
+  Missing token or cost data stays explicitly unknown.
+- Arrow Up on an empty composer opens the reviewed branch editor for the last
+  user message. It never rewrites history or replays earlier tools.
+- Approval review exposes class, workspace, blast radius and precision when the
+  server provides them, plus the server policy rationale.
+- Existing message actions, command palette, export, model picker, attachments,
+  session rename, pin, archive, search, retry and safe branch controls remain
+  the shared management surface.
+- Disposable browser QA completed a real managed document tool run. Copy,
+  branch, retry, Arrow Up branch review and the token status were reachable.
+  At 390 by 844 pixels the document width stayed 390 pixels and the composer
+  bottom stayed at 844 pixels. The browser console had no errors or warnings.
+
+This increment does not claim full Claude Code parity. Structured permission
+modes, background tasks, custom agents, hooks, durable context compaction and
+dependency-aware multi-operation rewind remain in `PLAN-GAPS.md`.
+
 ## Ověření
 
 | Důkaz | Výsledek |
