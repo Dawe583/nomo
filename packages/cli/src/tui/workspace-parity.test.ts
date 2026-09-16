@@ -151,7 +151,7 @@ test("double Escape opens checkpoints, single Escape only closes", () => {
 
 test("gated shell shows output once and refuses key material", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-shell-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { VOID_DATA_DIR: root, VOID_TUI_ENV_PROBE: "probe-secret" };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -170,6 +170,10 @@ test("gated shell shows output once and refuses key material", async (t) => {
     /Refused/,
   );
   await assert.rejects(ui.command("!printenv OPENROUTER_API_KEY"), /Refused/);
+  await assert.rejects(
+    ui.command("!printenv VOID_TUI_ENV_PROBE"),
+    /Local command failed/,
+  );
 });
 
 test("shell output redacts exact stored secret values", async (t) => {

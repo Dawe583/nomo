@@ -340,6 +340,7 @@ export class WorkspaceTui {
     let out: string;
     try {
       const result = await runShellFile("sh", ["-c", cmd], {
+        env: { PATH: "/usr/bin:/bin", LANG: "C" },
         timeout: 10000,
         maxBuffer: 1024 * 64,
       });
