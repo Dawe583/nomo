@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import {
   chmodSync,
   closeSync,
+  fchmodSync,
   constants,
   fstatSync,
   lstatSync,
@@ -702,46 +703,101 @@ export function prepareCommit(
   };
 }
 
-export function createPrivateIndexWorkspace(realIndexPath: string): PrivateIndexWorkspace {
+export type PrivateWorkspaceInitEvent =
+  | "random"
+  | "open"
+  | "write"
+  | "close"
+  | "lstat"
+  | "validation";
+
+type PrivateWorkspaceControls = {
+  seam?: (event: PrivateWorkspaceInitEvent) => void;
+};
+
+export function createPrivateIndexWorkspace(
+  realIndexPath: string,
+  controls: PrivateWorkspaceControls = {},
+): PrivateIndexWorkspace {
   const parent = realpathSync(dirname(realIndexPath));
   const directory = mkdtempSync(join(parent, ".void-git-index-"));
-  chmodSync(directory, 0o700);
-  const item = lstatSync(directory, { bigint: true });
-  const effectiveUid = BigInt(process.geteuid?.() ?? process.getuid?.() ?? Number(item.uid));
-  if (
-    !item.isDirectory() || item.isSymbolicLink() || item.uid !== effectiveUid ||
-    item.nlink < 1n || (item.mode & 0o777n) !== 0o700n
-  ) throw new Error("Managed Git private workspace is unsafe.");
-  const token = randomBytes(32).toString("hex");
+  const createdDirectory = lstatSync(directory, { bigint: true });
+  let descriptor: number | undefined;
+  let tokenIdentity: { dev: bigint; ino: bigint } | undefined;
   const tokenPath = join(directory, "owner");
-  const descriptor = openSync(
-    tokenPath,
-    constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW,
-    0o600,
-  );
-  try { writeFileSync(descriptor, token); }
-  finally { closeSync(descriptor); }
-  const tokenStat = lstatSync(tokenPath, { bigint: true });
-  if (
-    !tokenStat.isFile() || tokenStat.isSymbolicLink() || tokenStat.nlink !== 1n ||
-    tokenStat.uid !== item.uid || (tokenStat.mode & 0o777n) !== 0o600n
-  ) throw new Error("Managed Git private workspace token is unsafe.");
-  const workspace: PrivateIndexWorkspace = {
-    directory,
-    directoryDev: item.dev,
-    directoryIno: item.ino,
-    directoryUid: item.uid,
-    tokenPath,
-    tokenDev: tokenStat.dev,
-    tokenIno: tokenStat.ino,
-    token,
-    indexPath: join(directory, "index"),
-    ownedFiles: new Map(),
-  };
-  workspace.ownedFiles.set(tokenPath, { dev: tokenStat.dev, ino: tokenStat.ino });
-  if (pathExistsNoFollow(workspace.indexPath))
-    throw new Error("Managed Git private index already exists.");
-  return workspace;
+  try {
+    chmodSync(directory, 0o700);
+    const item = lstatSync(directory, { bigint: true });
+    const effectiveUid = BigInt(process.geteuid?.() ?? process.getuid?.() ?? Number(item.uid));
+    if (
+      !item.isDirectory() || item.isSymbolicLink() ||
+      item.dev !== createdDirectory.dev || item.ino !== createdDirectory.ino ||
+      item.uid !== effectiveUid || item.nlink < 1n || (item.mode & 0o777n) !== 0o700n
+    ) throw new Error("Managed Git private workspace is unsafe.");
+    controls.seam?.("random");
+    const token = randomBytes(32).toString("hex");
+    controls.seam?.("open");
+    descriptor = openSync(
+      tokenPath,
+      constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW,
+      0o600,
+    );
+    const openedToken = fstatSync(descriptor, { bigint: true });
+    tokenIdentity = { dev: openedToken.dev, ino: openedToken.ino };
+    fchmodSync(descriptor, 0o600);
+    controls.seam?.("write");
+    writeFileSync(descriptor, token);
+    controls.seam?.("close");
+    closeSync(descriptor);
+    descriptor = undefined;
+    controls.seam?.("lstat");
+    const tokenStat = lstatSync(tokenPath, { bigint: true });
+    controls.seam?.("validation");
+    if (
+      !tokenStat.isFile() || tokenStat.isSymbolicLink() || tokenStat.nlink !== 1n ||
+      tokenStat.dev !== tokenIdentity.dev || tokenStat.ino !== tokenIdentity.ino ||
+      tokenStat.uid !== item.uid || (tokenStat.mode & 0o777n) !== 0o600n
+    ) throw new Error("Managed Git private workspace token is unsafe.");
+    const workspace: PrivateIndexWorkspace = {
+      directory,
+      directoryDev: item.dev,
+      directoryIno: item.ino,
+      directoryUid: item.uid,
+      tokenPath,
+      tokenDev: tokenStat.dev,
+      tokenIno: tokenStat.ino,
+      token,
+      indexPath: join(directory, "index"),
+      ownedFiles: new Map(),
+    };
+    workspace.ownedFiles.set(tokenPath, { dev: tokenStat.dev, ino: tokenStat.ino });
+    if (pathExistsNoFollow(workspace.indexPath))
+      throw new Error("Managed Git private index already exists.");
+    return workspace;
+  } catch (error) {
+    if (descriptor !== undefined) {
+      try { closeSync(descriptor); }
+      catch {}
+    }
+    try {
+      const currentDirectory = lstatSync(directory, { bigint: true });
+      if (
+        currentDirectory.isDirectory() && !currentDirectory.isSymbolicLink() &&
+        currentDirectory.dev === createdDirectory.dev && currentDirectory.ino === createdDirectory.ino &&
+        currentDirectory.uid === createdDirectory.uid
+      ) {
+        if (tokenIdentity && pathExistsNoFollow(tokenPath)) {
+          const currentToken = lstatSync(tokenPath, { bigint: true });
+          if (
+            currentToken.isFile() && !currentToken.isSymbolicLink() &&
+            currentToken.dev === tokenIdentity.dev && currentToken.ino === tokenIdentity.ino
+          ) unlinkSync(tokenPath);
+        }
+        if (readdirSync(directory).length === 0) rmdirSync(directory);
+      }
+    } catch {}
+    throw error;
+  }
 }
 
 function assertPrivateDirectory(workspace: PrivateIndexWorkspace): void {
@@ -887,9 +943,12 @@ type TransactionControls = {
   command?: string;
   commandArgs?: string[];
   timeoutMs?: number;
+  abortGraceMs?: number;
   termGraceMs?: number;
   killGraceMs?: number;
+  holdAfterPrepare?: boolean;
   onSignal?: (signal: NodeJS.Signals) => void;
+  onSpawn?: (pid: number) => void;
 };
 
 export async function commitRefTransaction(
@@ -939,69 +998,82 @@ export async function commitRefTransaction(
         stdio: ["pipe", "pipe", "pipe"],
       },
     );
+    if (child.pid !== undefined) controls.onSpawn?.(child.pid);
     let stdout = Buffer.alloc(0);
     let stderrBytes = 0;
     let prepared = false;
     let accepted = false;
-    let failure: Error | null = null;
+    let shuttingDown = false;
+    let settled = false;
+    let abortTimer: NodeJS.Timeout | undefined;
     let termTimer: NodeJS.Timeout | undefined;
     let killTimer: NodeJS.Timeout | undefined;
     const transactionError = () => new Error("Managed Git ref transaction failed.");
-    const terminate = () => {
-      if (!failure) failure = transactionError();
-      if (!child.stdin.destroyed) child.stdin.end();
+    const rejectOnce = () => {
+      if (settled) return;
+      settled = true;
+      rejectPromise(transactionError());
+    };
+    const sendKill = () => {
+      if (child.exitCode === null && child.signalCode === null) {
+        controls.onSignal?.("SIGKILL");
+        child.kill("SIGKILL");
+      }
+      killTimer ??= setTimeout(rejectOnce, controls.killGraceMs ?? 250);
+    };
+    const sendTerm = () => {
       if (child.exitCode === null && child.signalCode === null) {
         controls.onSignal?.("SIGTERM");
         child.kill("SIGTERM");
       }
-      termTimer ??= setTimeout(() => {
-        if (child.exitCode === null && child.signalCode === null) {
-          controls.onSignal?.("SIGKILL");
-          child.kill("SIGKILL");
-        }
-      }, controls.termGraceMs ?? 250);
-      killTimer ??= setTimeout(() => {
-        if (child.exitCode === null && child.signalCode === null) {
-          controls.onSignal?.("SIGKILL");
-          child.kill("SIGKILL");
-        }
-      }, (controls.termGraceMs ?? 250) + (controls.killGraceMs ?? 250));
+      termTimer ??= setTimeout(sendKill, controls.termGraceMs ?? 250);
     };
-    const timeout = setTimeout(terminate, controls.timeoutMs ?? 15_000);
+    const shutdown = () => {
+      if (shuttingDown || settled) return;
+      shuttingDown = true;
+      if (!child.stdin.destroyed) {
+        if (prepared && !accepted) child.stdin.end("abort\n");
+        else child.stdin.end();
+      }
+      abortTimer = setTimeout(sendTerm, controls.abortGraceMs ?? 250);
+    };
+    const timeout = setTimeout(shutdown, controls.timeoutMs ?? 15_000);
     child.stdout.on("data", (chunk: Buffer) => {
+      if (shuttingDown || settled) return;
       stdout = Buffer.concat([stdout, chunk]);
-      if (stdout.length > 64 * 1024) return terminate();
+      if (stdout.length > 64 * 1024) return shutdown();
       const text = stdout.toString("utf8");
-      if (!Buffer.from(text).equals(stdout)) return terminate();
+      if (!Buffer.from(text).equals(stdout)) return shutdown();
       if (!prepared && text === "start: ok\nprepare: ok\n") {
         prepared = true;
+        if (controls.holdAfterPrepare) return;
         try {
           lockedRecheck();
           accepted = true;
           child.stdin.end("commit\n");
-        } catch {
-          failure = transactionError();
-          child.stdin.end("abort\n", terminate);
-        }
+        } catch { shutdown(); }
       } else if (!"start: ok\nprepare: ok\ncommit: ok\n".startsWith(text)) {
-        terminate();
+        shutdown();
       }
     });
     child.stderr.on("data", (chunk: Buffer) => {
       stderrBytes += chunk.length;
-      if (stderrBytes > 64 * 1024) terminate();
+      shutdown();
     });
-    child.on("error", () => { failure = transactionError(); terminate(); });
+    child.on("error", shutdown);
     child.on("close", (code, signal) => {
       clearTimeout(timeout);
+      if (abortTimer) clearTimeout(abortTimer);
       if (termTimer) clearTimeout(termTimer);
       if (killTimer) clearTimeout(killTimer);
-      const valid = accepted && !failure && code === 0 && signal === null && stderrBytes === 0 &&
+      if (settled) return;
+      const valid = accepted && !shuttingDown && code === 0 && signal === null && stderrBytes === 0 &&
         stdout.equals(Buffer.from("start: ok\nprepare: ok\ncommit: ok\n"));
+      settled = true;
       if (valid) resolvePromise();
       else rejectPromise(transactionError());
     });
-    child.stdin.on("error", () => terminate());
+    child.stdin.on("error", shutdown);
     child.stdin.write(commands);
   });
 }

@@ -10,8 +10,10 @@ import {
   mkdirSync,
   openSync,
   readSync,
+  readdirSync,
   readlinkSync,
   renameSync,
+  unlinkSync,
   writeFileSync,
   type BigIntStats,
 } from "node:fs";
@@ -976,6 +978,22 @@ posixTest("forward commit completes a SHA-256 lifecycle", async (t) => {
   assert.deepEqual((await f.snapshot()).worktree, before.worktree);
 });
 
+posixTest("forward commit advances a packed branch and creates a loose receipt", async (t) => {
+  const f = await commitRepository(t);
+  f.run("pack-refs", "--all", "--prune");
+  assert.equal(pathExistsForTest(f.gitPath("refs/heads/main")), false);
+  await stageChange(f, "packed-branch");
+  const before = await f.snapshot();
+  const { prepared } = await dispatchForward(f, "packed-forward");
+  const plan = prepared.plan as unknown as CommitPlan;
+  const head = f.run("rev-parse", "HEAD");
+  assert.equal(f.run("rev-parse", "HEAD^"), before.head);
+  assert.equal(f.run("rev-parse", plan.receiptRef), head);
+  assert.deepEqual((await f.snapshot()).index, before.index);
+  assert.deepEqual((await f.snapshot()).worktree, before.worktree);
+});
+
+
 for (const [name, arrange] of [
   ["branch CAS drift", async (f: CommitFixture) => { f.run("commit", "-qm", "human raced commit"); }],
   ["branch reflog append", async (f: CommitFixture) => { await writeFile(f.gitPath("logs/refs/heads/main"), "foreign reflog\n", { flag: "a" }); }],
@@ -1323,10 +1341,12 @@ for (const lockKind of ["branch", "receipt"] as const) {
 }
 
 
-posixTest("failed ref transaction leaves at most the candidate tree and commit dangling", async (t) => {
+posixTest("failed nested-path transaction leaves every new object unreachable", async (t) => {
   const f = await commitRepository(t);
-  await stageChange(f, "dangling-candidate");
-  const args = { action: "commit", path: "selected" } as const;
+  await f.mkdirWorktree("nested");
+  await f.write("nested/selected", "nested-candidate");
+  f.run("add", "nested/selected");
+  const args = { action: "commit", path: "nested/selected" } as const;
   const observation = await f.adapter.preflight(args);
   const prepared = await f.adapter.prepare(args, observation, "dangling-op");
   const captured = prepared.before as unknown as CommitCapture;
@@ -1351,7 +1371,7 @@ posixTest("failed ref transaction leaves at most the candidate tree and commit d
     },
   } as unknown as CommitServices;
   const raced = f.run("commit-tree", captured.branch.tree, "-p", plan.parent, "-m", "raced");
-  const before = await f.snapshot();
+  const beforeObjects = (await f.snapshot()).objects;
   const tree = await writeCandidateTree(
     captured.branch.tree,
     captured.selected.path,
@@ -1361,6 +1381,7 @@ posixTest("failed ref transaction leaves at most the candidate tree and commit d
   );
   const candidate = await createCommit(tree, plan.parent, plan.metadata, services);
   f.run("update-ref", plan.branchRef, raced, plan.parent);
+  const racedState = await f.snapshot();
   await assert.rejects(commitRefTransaction(
     [
       { ref: plan.branchRef, newOid: candidate, oldOid: plan.parent },
@@ -1370,13 +1391,14 @@ posixTest("failed ref transaction leaves at most the candidate tree and commit d
     services,
   ), /transaction/);
   const after = await f.snapshot();
-  assert.equal(after.head, raced);
-  assert.deepEqual(after.index, before.index);
-  assert.deepEqual(after.worktree, before.worktree);
-  assert.deepEqual(before.objects.filter((oid) => !after.objects.includes(oid)), []);
-  assert.ok(after.objects.filter((oid) => !before.objects.includes(oid)).length <= 2);
+  assert.deepEqual(after.refs, racedState.refs);
+  assert.deepEqual(after.index, racedState.index);
+  assert.deepEqual(after.worktree, racedState.worktree);
+  const newlyWritten = after.objects.filter((oid) => !beforeObjects.includes(oid));
+  assert.ok(newlyWritten.length >= 3);
+  const reachable = new Set(f.run("rev-list", "--objects", "--all").split("\n").map((line) => line.split(" ")[0]));
+  for (const oid of newlyWritten) assert.equal(reachable.has(oid), false);
 });
-
 
 for (const alias of ["receipt leaf", "receipt parent"] as const) {
   posixTest(`locked ref transaction refuses a ${alias} alias and preserves its sentinel`, async (t) => {
@@ -1419,3 +1441,176 @@ for (const alias of ["receipt leaf", "receipt parent"] as const) {
 function symlinkSyncForTest(target: string, path: string): void {
   execFileSync("ln", ["-s", target, path]);
 }
+
+
+posixTest("private index token mode ignores a hostile umask", async (t) => {
+  const f = await commitRepository(t);
+  const prior = process.umask(0o777);
+  try {
+    const workspace = createPrivateIndexWorkspace(f.gitPath("index"));
+    try {
+      assert.equal((await lstat(workspace.directory, { bigint: true })).mode & 0o777n, 0o700n);
+      assert.equal((await lstat(workspace.tokenPath, { bigint: true })).mode & 0o777n, 0o600n);
+    } finally { cleanupPrivateIndexWorkspace(workspace); }
+  } finally { process.umask(prior); }
+});
+
+for (const event of ["random", "open", "write", "close", "lstat", "validation"] as const) {
+  posixTest(`private index initialization cleans up an injected ${event} failure`, async (t) => {
+    const f = await commitRepository(t);
+    const parent = dirname(f.gitPath("index"));
+    const before = (await readdir(parent)).filter((name) => name.startsWith(".void-git-index-")).sort();
+    assert.throws(() => createPrivateIndexWorkspace(f.gitPath("index"), {
+      seam(actual) {
+        if (actual === event) throw new Error(`injected ${event} failure`);
+      },
+    }), new RegExp(`injected ${event}`));
+    const after = (await readdir(parent)).filter((name) => name.startsWith(".void-git-index-")).sort();
+    assert.deepEqual(after, before);
+  });
+}
+
+posixTest("real prepared transaction timeout aborts and releases both locks", async (t) => {
+  const f = await commitRepository(t);
+  const oldHead = f.run("rev-parse", "HEAD");
+  const tree = f.run("rev-parse", "HEAD^{tree}");
+  const candidate = f.run("commit-tree", tree, "-p", oldHead, "-m", "candidate");
+  const receipt = `refs/void/operations/${sha256("real-timeout")}`;
+  let pid = 0;
+  await assert.rejects(commitRefTransaction(
+    [
+      { ref: "refs/heads/main", newOid: candidate, oldOid: oldHead },
+      { ref: receipt, newOid: candidate, oldOid: null },
+    ],
+    () => {},
+    transactionServices(f),
+    {
+      timeoutMs: 100,
+      termGraceMs: 100,
+      killGraceMs: 100,
+      holdAfterPrepare: true,
+      onSpawn: (childPid) => { pid = childPid; },
+    },
+  ), (error: Error) => error.message === "Managed Git ref transaction failed.");
+  assert.ok(pid > 0);
+  assert.throws(() => process.kill(pid, 0), { code: "ESRCH" });
+  assert.equal(pathExistsForTest(`${f.gitPath("refs/heads/main")}.lock`), false);
+  assert.equal(pathExistsForTest(`${f.gitPath(receipt)}.lock`), false);
+  assert.equal(f.run("rev-parse", "HEAD"), oldHead);
+});
+
+posixTest("real prepared protocol failure aborts and releases both locks", async (t) => {
+  const f = await commitRepository(t);
+  const oldHead = f.run("rev-parse", "HEAD");
+  const tree = f.run("rev-parse", "HEAD^{tree}");
+  const candidate = f.run("commit-tree", tree, "-p", oldHead, "-m", "candidate");
+  const receipt = `refs/void/operations/${sha256("real-protocol")}`;
+  let pid = 0;
+  await assert.rejects(commitRefTransaction(
+    [
+      { ref: "refs/heads/main", newOid: candidate, oldOid: oldHead },
+      { ref: receipt, newOid: candidate, oldOid: null },
+    ],
+    () => { throw new Error("secret recheck output"); },
+    transactionServices(f),
+    { onSpawn: (childPid) => { pid = childPid; } },
+  ), (error: Error) => error.message === "Managed Git ref transaction failed." && !error.message.includes("secret"));
+  assert.ok(pid > 0);
+  assert.throws(() => process.kill(pid, 0), { code: "ESRCH" });
+  assert.equal(pathExistsForTest(`${f.gitPath("refs/heads/main")}.lock`), false);
+  assert.equal(pathExistsForTest(`${f.gitPath(receipt)}.lock`), false);
+  assert.equal(f.run("rev-parse", "HEAD"), oldHead);
+});
+
+const protocolCases = [
+  { name: "early close", body: "process.exit(0)" },
+  { name: "nonzero close", body: "process.exit(7)" },
+  { name: "signal close", body: "process.kill(process.pid, 'SIGTERM')" },
+  { name: "bounded stderr", body: "process.stderr.write('secret-child-stderr');process.exit(1)" },
+  { name: "overcap stderr", body: "process.stderr.write('secret'.repeat(12000));process.exit(1)" },
+  { name: "malformed stdout", body: "process.stdout.write('secret malformed\\n');process.stdin.resume()" },
+  { name: "overcap stdout", body: "process.stdout.write('secret'.repeat(12000));process.stdin.resume()" },
+  { name: "close after prepare", body: "process.stdout.write('start: ok\\nprepare: ok\\n');process.exit(0)" },
+] as const;
+
+for (const protocol of protocolCases) {
+  posixTest(`ref transaction redacts and bounds ${protocol.name}`, async (t) => {
+    const f = await commitRepository(t);
+    const directory = await f.temp();
+    const script = join(directory, "protocol.cjs");
+    const pidPath = join(directory, "pid");
+    await writeFile(script, `const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(pidPath)},String(process.pid));${protocol.body};setInterval(()=>{},1000);`);
+    const head = f.run("rev-parse", "HEAD");
+    await assert.rejects(commitRefTransaction(
+      [{ ref: "refs/heads/main", newOid: head, oldOid: head }],
+      () => {},
+      transactionServices(f),
+      {
+        command: process.execPath,
+        commandArgs: [script],
+        timeoutMs: 150,
+        termGraceMs: 75,
+        killGraceMs: 75,
+      },
+    ), (error: Error) => error.message === "Managed Git ref transaction failed." && !error.message.includes("secret"));
+    const pid = Number(await readFile(pidPath, "utf8"));
+    assert.throws(() => process.kill(pid, 0), { code: "ESRCH" });
+    assert.equal(pathExistsForTest(`${f.gitPath("refs/heads/main")}.lock`), false);
+  });
+}
+
+
+posixTest("prepared shutdown flushes abort before SIGTERM and SIGKILL", async (t) => {
+  const f = await commitRepository(t);
+  const directory = await f.temp();
+  const script = join(directory, "prepared-hang.cjs");
+  const pidPath = join(directory, "pid");
+  const abortPath = join(directory, "abort");
+  await writeFile(script, `const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(pidPath)},String(process.pid));process.on('SIGTERM',()=>{});process.stdout.write('start: ok\\nprepare: ok\\n');process.stdin.on('data',chunk=>{if(chunk.toString().includes('abort\\n'))fs.writeFileSync(${JSON.stringify(abortPath)},'abort\\n')});setInterval(()=>{},1000);`);
+  const head = f.run("rev-parse", "HEAD");
+  const signals: NodeJS.Signals[] = [];
+  await assert.rejects(commitRefTransaction(
+    [{ ref: "refs/heads/main", newOid: head, oldOid: head }],
+    () => {},
+    transactionServices(f),
+    {
+      command: process.execPath,
+      commandArgs: [script],
+      timeoutMs: 100,
+      abortGraceMs: 100,
+      termGraceMs: 100,
+      killGraceMs: 100,
+      holdAfterPrepare: true,
+      onSignal(signal) {
+        assert.equal(pathExistsForTest(abortPath), true);
+        signals.push(signal);
+      },
+    },
+  ), (error: Error) => error.message === "Managed Git ref transaction failed.");
+  assert.deepEqual(await readFile(abortPath), Buffer.from("abort\n"));
+  assert.deepEqual(signals.slice(0, 2), ["SIGTERM", "SIGKILL"]);
+  const pid = Number(await readFile(pidPath, "utf8"));
+  assert.throws(() => process.kill(pid, 0), { code: "ESRCH" });
+});
+
+posixTest("private index initialization never deletes a replaced foreign token", async (t) => {
+  const f = await commitRepository(t);
+  const parent = dirname(f.gitPath("index"));
+  const before = new Set(await readdir(parent));
+  const foreign = Buffer.from("foreign initialization token");
+  let tokenPath = "";
+  assert.throws(() => createPrivateIndexWorkspace(f.gitPath("index"), {
+    seam(event) {
+      if (event !== "validation") return;
+      const directory = readdirSync(parent).map((name) => join(parent, name))
+        .find((path) => !before.has(path.slice(parent.length + 1)) && path.includes(".void-git-index-"));
+      assert.ok(directory);
+      tokenPath = join(directory, "owner");
+      unlinkSync(tokenPath);
+      writeFileSync(tokenPath, foreign);
+      throw new Error("injected foreign replacement");
+    },
+  }), /injected foreign replacement/);
+  assert.deepEqual(await readFile(tokenPath), foreign);
+  await rm(dirname(tokenPath), { recursive: true, force: true });
+});
