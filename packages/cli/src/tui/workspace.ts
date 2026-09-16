@@ -17,7 +17,13 @@ import {
 } from "../../../../apps/control-plane/api/desktop-setup.ts";
 import { loadPolicy } from "../../../policy/src/rules.ts";
 import { runDoctorCommand } from "../doctor.ts";
-import { fit, pad, sanitizeText, unifiedDiff, visibleLength } from "./layout.ts";
+import {
+  fit,
+  pad,
+  sanitizeText,
+  unifiedDiff,
+  visibleLength,
+} from "./layout.ts";
 
 export const WORKSPACE_TABS = [
   "overview",
@@ -510,10 +516,24 @@ export class WorkspaceTui {
         return;
       }
       const sessionId = this.sessionId;
+      if (!sessionId) {
+        this.choose("ledger");
+        this.notice =
+          "Select a conversation to rewind its recoverable operations.";
+        return;
+      }
       this.choose("ledger");
-      this.filter = sessionId ?? "";
+      this.filter = sessionId;
+      const recoverable = this.items().findIndex(
+        (row) => row.operationId && row.sessionId === sessionId,
+      );
+      if (recoverable < 0) {
+        this.notice = "No recoverable operations in this conversation.";
+        return;
+      }
+      this.selected = recoverable;
       this.notice =
-        "Select a recoverable operation and press u for reviewed Undo.";
+        "Latest recoverable operation selected. Press u for reviewed Undo.";
       return;
     }
     if (cmd === "doctor") {
@@ -521,8 +541,12 @@ export class WorkspaceTui {
       const code = await runDoctorCommand(
         arg ? [arg] : [],
         {
-          stdout: (line) => { lines.push(line); },
-          stderr: (line) => { lines.push(line); },
+          stdout: (line) => {
+            lines.push(line);
+          },
+          stderr: (line) => {
+            lines.push(line);
+          },
         },
         { env: this.env },
       );

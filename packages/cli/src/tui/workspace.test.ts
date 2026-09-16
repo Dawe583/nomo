@@ -114,7 +114,7 @@ test("Claude style management aliases open real VOID views", async (t) => {
   assert.equal(ui.tab, "sessions");
   await ui.command("/rewind");
   assert.equal(ui.tab, "ledger");
-  assert.match(ui.notice, /select a recoverable operation/i);
+  assert.match(ui.notice, /select a conversation to rewind/i);
   assert.match(
     stripAnsi(renderWorkspace(ui, 100, 32)),
     /model: not connected.*tokens: unknown.*output: compact/i,
@@ -485,4 +485,77 @@ test("TUI doctor reuses the CLI implementation without touching state", async (t
   await ui.command("/doctor");
   assert.equal(ui.detail?.[0], "doctor exit 0");
   assert.ok(ui.detail?.some((line) => line.startsWith("PASS node")));
+});
+
+test("rewind selects the latest recoverable operation", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-rewind-"));
+  const env = { VOID_DATA_DIR: root };
+  const app = new Workbench(env, async (url, options) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
+    const body = JSON.parse(String(options?.body));
+    const tool = body.tools.find((t: { function: { description: string } }) =>
+      t.function.description.startsWith("void_workspace_write:"),
+    );
+    return Response.json({
+      choices: [
+        {
+          message:
+            body.messages.at(-1).role === "tool"
+              ? { role: "assistant", content: "Created" }
+              : {
+                  role: "assistant",
+                  content: null,
+                  tool_calls: [
+                    {
+                      id: "create",
+                      type: "function",
+                      function: {
+                        name: tool.function.name,
+                        arguments: JSON.stringify({
+                          path: "plan.md",
+                          content: "first",
+                        }),
+                      },
+                    },
+                  ],
+                },
+        },
+      ],
+    });
+  });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "private-fixture",
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("Write the plan");
+  await app.settled();
+  await ui.refresh(true);
+  await ui.command("/rewind");
+  assert.equal(ui.tab, "ledger");
+  const row = ui.items()[ui.selected];
+  assert.ok(
+    row?.operationId,
+    "expected the selected row to carry an operation",
+  );
+  assert.match(ui.notice, /press u/i);
+});
+
+test("rewind without a conversation asks for selection", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-rewind-empty-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  await ui.command("/rewind");
+  assert.equal(ui.tab, "ledger");
+  assert.match(ui.notice, /select a conversation/i);
 });

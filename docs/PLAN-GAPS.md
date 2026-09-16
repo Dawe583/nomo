@@ -1,6 +1,9 @@
 # VOID remaining work
 
-Audit baseline: commit `0888a511b67d1effc22b019319c2d6a3aba9bd44`.
+Audit baseline: commit `0189f9d`, extended by the TUI rewind selection
+increment in this tree. A sibling session owns R05 managed Git commit recovery
+on branch `upgrade/git-commit` and reverted one incomplete merge there; see
+`tmp/parity/root-lane.md` for the lane split.
 
 This document consolidates the active plans. It does not replace
 `EXECUTION-PLAN.md`, `REVERSE-TOOL-UPGRADE-PLAN.md` or
@@ -38,26 +41,26 @@ managed Git or persistent recovery jobs.
 
 ## Execution and build plan status
 
-| Work package                  | Status                                            | Remaining evidence or work                                                                                                                              |
-| ----------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| WP-00 to WP-05                | Done for the current local core                   | Keep context, registry, ledger, proxy and blocking hold contracts aligned as later packages change.                                                     |
-| WP-06 PostgreSQL              | Partial                                           | R04 cascade and tenant certification, migrations, client process kill and network partition.                                                            |
-| WP-07 S3                      | Partial                                           | Replace legacy coverage with managed version-aware recovery and disposable service conformance.                                                         |
-| WP-08 probes and blast radius | Partial                                           | Provider-specific exact or bounded measurement and release evidence remain incomplete.                                                                  |
-| WP-09 CLI                     | Partial                                           | Core commands work. Doctor, init and broader provider recovery surfaces remain under R13 and R14.                                                       |
-| WP-09b TUI                    | Done for original acceptance, parity still active | Current PTY safety passes. Continue Claude Code style management controls, richer tool and diff review, mode visibility and complete shortcut coverage. |
-| WP-10 API                     | Partial                                           | External cloud tool conformance, remote executor authentication and job surfaces remain.                                                                |
-| WP-11 UI                      | Partial                                           | Main React control plane shipped. Physical accessibility, performance certification and the parity list below remain.                                   |
-| WP-12 taint graph             | Partial                                           | R07 runtime provenance and dependency-aware recovery are missing.                                                                                       |
-| WP-13 attestation             | Partial                                           | Complete R14 export bundles, checkpoints and operational verification.                                                                                  |
-| WP-14 SDK wrap                | Partial                                           | Managed TypeScript SDK exists. Python transport and broader provider fixtures remain.                                                                   |
-| WP-15 hardening and release   | Partial                                           | Native signing, KMS, external service certification, metrics and release operations remain.                                                             |
-| AW-00 and AW-01               | Mostly done                                       | Shared events and provider registry exist. Token Harbor activation remains blocked on account email verification and model choice.                      |
-| AW-02 runtime adapters        | Partial                                           | Native Claude Code, Codex and OpenCode process adapters, PTY embedding and direct host project editing remain open.                                     |
-| AW-03 TUI workbench           | Done for current local workbench                  | Continue management parity without moving authority into the renderer.                                                                                  |
-| AW-04 and AW-05               | Mostly done                                       | Cloud API and GUI are usable. External tool coverage and remaining acceptance gates stay open.                                                          |
-| AW-06 desktop shell           | Partial                                           | Tauri shell and packaged smoke exist. Signing, notarization and Linux packaging remain.                                                                 |
-| AW-07 multi-agent review loop | Not started                                       | Product-level orchestration, review loop and safe shared-workspace coordination remain.                                                                 |
+| Work package                  | Status                                            | Remaining evidence or work                                                                                                                                                                                                                                                                      |
+| ----------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WP-00 to WP-05                | Done for the current local core                   | Keep context, registry, ledger, proxy and blocking hold contracts aligned as later packages change.                                                                                                                                                                                             |
+| WP-06 PostgreSQL              | Partial                                           | R04 cascade and tenant certification, migrations, client process kill and network partition.                                                                                                                                                                                                    |
+| WP-07 S3                      | Partial                                           | Replace legacy coverage with managed version-aware recovery and disposable service conformance.                                                                                                                                                                                                 |
+| WP-08 probes and blast radius | Partial                                           | Provider-specific exact or bounded measurement and release evidence remain incomplete.                                                                                                                                                                                                          |
+| WP-09 CLI                     | Partial                                           | Core commands plus read-only doctor, config and version work. Init and broader provider recovery surfaces remain under R13 and R14.                                                                                                                                                             |
+| WP-09b TUI                    | Done for original acceptance, parity still active | PTY safety passes. Shipped: fuzzy commands, management aliases, shortcuts, usage status line, unified diff review, read-only doctor, config and version commands, rewind auto-select. Remaining: permission modes, context compaction, file mentions, background tasks, configurable shortcuts. |
+| WP-10 API                     | Partial                                           | External cloud tool conformance, remote executor authentication and job surfaces remain.                                                                                                                                                                                                        |
+| WP-11 UI                      | Partial                                           | Main React control plane shipped. Physical accessibility, performance certification and the parity list below remain.                                                                                                                                                                           |
+| WP-12 taint graph             | Partial                                           | R07 runtime provenance and dependency-aware recovery are missing.                                                                                                                                                                                                                               |
+| WP-13 attestation             | Partial                                           | Complete R14 export bundles, checkpoints and operational verification.                                                                                                                                                                                                                          |
+| WP-14 SDK wrap                | Partial                                           | Managed TypeScript SDK exists. Python transport and broader provider fixtures remain.                                                                                                                                                                                                           |
+| WP-15 hardening and release   | Partial                                           | Native signing, KMS, external service certification, metrics and release operations remain.                                                                                                                                                                                                     |
+| AW-00 and AW-01               | Mostly done                                       | Shared events and provider registry exist. Token Harbor activation remains blocked on account email verification and model choice.                                                                                                                                                              |
+| AW-02 runtime adapters        | Partial                                           | Native Claude Code, Codex and OpenCode process adapters, PTY embedding and direct host project editing remain open.                                                                                                                                                                             |
+| AW-03 TUI workbench           | Done for current local workbench                  | Continue management parity without moving authority into the renderer.                                                                                                                                                                                                                          |
+| AW-04 and AW-05               | Mostly done                                       | Cloud API and GUI are usable. External tool coverage and remaining acceptance gates stay open.                                                                                                                                                                                                  |
+| AW-06 desktop shell           | Partial                                           | Tauri shell and packaged smoke exist. Signing, notarization and Linux packaging remain.                                                                                                                                                                                                         |
+| AW-07 multi-agent review loop | Not started                                       | Product-level orchestration, review loop and safe shared-workspace coordination remain.                                                                                                                                                                                                         |
 
 The older `BUILD-PLAN.md` phases map to the same gaps. Phases 0 to 7 have
 working implementations with scoped limits. Phase 8 remains incomplete because
@@ -67,23 +70,23 @@ production deployment shape are not fully certified.
 
 ## Reverse plan status
 
-| Package | Status                                  | Exact gap                                                                                     |
-| ------- | --------------------------------------- | --------------------------------------------------------------------------------------------- |
-| R00     | Partial                                 | Machine-readable provider certification and public claim alignment.                           |
-| R01     | Partial                                 | Cloud journal and the full persistence fault matrix.                                          |
-| R02     | Partial                                 | Legacy proxy and general external cloud tool conformance.                                     |
-| R03     | Partial                                 | Streaming artifacts, pin lifecycle, retention, garbage collection and quota migration.        |
-| R04     | Partial                                 | Cascade and tenant tests, migrations, client kill and network partition.                      |
-| R05     | Partial                                 | Managed commit and revert, remote recovery, Windows Git, Windows rename and mode restoration. |
-| R06     | Partial                                 | Dependency and time selection, durable leases, fencing, MCP jobs and cloud jobs.              |
-| R07     | Not started beyond legacy taint helpers | Runtime provenance and dependency-aware recovery integration.                                 |
-| R08     | Not started beyond legacy S3            | Managed S3 and Supabase adapters with real capability tests.                                  |
-| R09     | Not started beyond OAuth                | GitHub and Vercel executable recovery with sandbox conformance.                               |
-| R10     | Partial                                 | Cloud accounting, visible modes, approval integration and the full reservation fault matrix.  |
-| R11     | Not started                             | Staged graph, barriers, cascading cancellation and restart semantics.                         |
-| R12     | Partial                                 | Python transport, provider fixtures and broad certification profiles.                         |
-| R13     | Partial                                 | OpenCode doctor and init, authenticated remote executor and managed egress.                   |
-| R14     | Partial                                 | Export bundle completeness, metrics and operational certification.                            |
+| Package | Status                                  | Exact gap                                                                                                                                                                |
+| ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R00     | Partial                                 | Machine-readable provider certification and public claim alignment.                                                                                                      |
+| R01     | Partial                                 | Cloud journal and the full persistence fault matrix.                                                                                                                     |
+| R02     | Partial                                 | Legacy proxy and general external cloud tool conformance.                                                                                                                |
+| R03     | Partial                                 | Streaming artifacts, pin lifecycle, retention, garbage collection and quota migration.                                                                                   |
+| R04     | Partial                                 | Cascade and tenant tests, migrations, client kill and network partition.                                                                                                 |
+| R05     | Partial, sibling lane active            | Managed commit and revert, remote recovery, Windows Git, Windows rename and mode restoration. One incomplete merge was reverted; root lane does not duplicate this work. |
+| R06     | Partial                                 | Dependency and time selection, durable leases, fencing, MCP jobs and cloud jobs.                                                                                         |
+| R07     | Not started beyond legacy taint helpers | Runtime provenance and dependency-aware recovery integration.                                                                                                            |
+| R08     | Not started beyond legacy S3            | Managed S3 and Supabase adapters with real capability tests.                                                                                                             |
+| R09     | Not started beyond OAuth                | GitHub and Vercel executable recovery with sandbox conformance.                                                                                                          |
+| R10     | Partial                                 | Cloud accounting, visible modes, approval integration and the full reservation fault matrix.                                                                             |
+| R11     | Not started                             | Staged graph, barriers, cascading cancellation and restart semantics.                                                                                                    |
+| R12     | Partial                                 | Python transport, provider fixtures and broad certification profiles.                                                                                                    |
+| R13     | Partial                                 | OpenCode doctor and init, authenticated remote executor and managed egress.                                                                                              |
+| R14     | Partial                                 | Export bundle completeness, metrics and operational certification.                                                                                                       |
 
 Source of detail: the table and sequence in `REVERSE-UPGRADE-PROGRESS.md` and
 `UPGRADE-CHECKPOINT.md`. These gaps must not be converted into broad recovery
