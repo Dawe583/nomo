@@ -134,4 +134,17 @@ and capacity protection. Read tools remain on the existing lightweight path.
 New signed document entries identify the managed runtime operation. Missing
 runtime evidence refuses recovery; it cannot masquerade as an old operation.
 Unmarked historical operations still require their original signature/capture
-verification. The cloud host is a separate pending integration.
+verification.
+
+## Cloud managed documents
+
+Cloud managed documents run the same local planner/runner inside one outer SQL
+transaction: one exact run or explicit operation ID list, plan by stable job ID,
+digest-bound approval before application, signed planned/approved/applying/
+checkpoint/restored/partial/conflict/unknown/paused events, and blocked forward
+writes while an active job is unterminal. The HTTP surface exposes only
+`/api/sessions/:id/recovery-jobs/plan`, `/apply` and `/:job`; it projects plan
+digests, step operation IDs/sequences and operation residuals/statuses
+without operation payloads, captures or provider receipts. There is no
+dependency closure, time or checkpoint selection, scheduler, lease, fencing or
+MCP job surface.
