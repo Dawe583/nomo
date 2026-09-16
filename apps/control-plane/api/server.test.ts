@@ -133,6 +133,28 @@ describe("control plane API", () => {
     });
   });
 
+  test("returns an explicit empty feed when no ledger exists yet", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "void-control-plane-api-empty-"));
+    try {
+      await withServer(join(dir, "default.jsonl"), async (origin) => {
+        // The ledger file was never created, so this is a fresh workspace.
+        // An empty ledger is a valid state, not a failed request: the feed
+        // keeps its page shape and reports zero checked records.
+        const response = await fetch(`${origin}/api/feed?workspace=default`);
+        assert.equal(response.status, 200);
+        const body = await response.json() as { entries: unknown[]; items: unknown[]; verified: boolean; signed: boolean; integrity: boolean; checked: number };
+        assert.deepEqual(body.entries, []);
+        assert.deepEqual(body.items, []);
+        assert.equal(body.verified, false);
+        assert.equal(body.signed, false);
+        assert.equal(body.integrity, false);
+        assert.equal(body.checked, 0);
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   test("reports chain verification status", async () => {
     const ledgerPath = await seedLedger(3);
     await withServer(ledgerPath, async (origin) => {

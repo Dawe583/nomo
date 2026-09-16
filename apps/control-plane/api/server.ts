@@ -346,7 +346,13 @@ async function handleFeed(response: ServerResponse, options: RouteOptions, searc
   if (ledgerPath === null) return sendJson(response, 400, { error: "invalid_workspace" });
   try { await stat(ledgerPath); }
   catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return sendJson(response, 404, { error: "ledger_not_found", message: "No recorded calls yet. Start an agent session or connect an existing VOID workspace." });
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      // A missing ledger means no calls were recorded yet. That is a valid
+      // empty state with the same page shape, not a failed request.
+      const fresh = searchParams.get("workspace") ?? options.env.VOID_WORKSPACE ?? basename(ledgerPath, ".jsonl");
+      const empty = page(filterRows([], searchParams), searchParams, fresh);
+      return sendJson(response, 200, { ...empty, entries: empty.items, verified: false, signed: false, integrity: false, checked: 0, message: "No recorded calls yet. Start an agent session or connect an existing VOID workspace." });
+    }
     throw error;
   }
   const feed = await readLedgerFeed(ledgerPath, { publicKey: options.publicKey });
