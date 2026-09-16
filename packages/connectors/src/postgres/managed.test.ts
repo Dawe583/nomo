@@ -6,8 +6,9 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
 import {
-  managedPostgresAdapter,
+  inspectManagedPostgres,
   installManagedPostgres,
+  managedPostgresAdapter,
   type ManagedPostgresOptions,
 } from "./managed.ts";
 import {
@@ -43,7 +44,9 @@ async function fixture(t: import("node:test").TestContext) {
       close: async () => {},
     }),
   };
-  await installManagedPostgres(options);
+  const installed = await installManagedPostgres(options);
+  assert.deepEqual(installed, { installedTables: ["public.account"], metadataVersion: 1 });
+  assert.deepEqual(await inspectManagedPostgres(options), { metadataVersion: 1, complete: true, legacyWithoutVersion: false });
   const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} }),
     runtimeOptions = {
       journal: localOperationJournal(join(root, "journal"), signer),

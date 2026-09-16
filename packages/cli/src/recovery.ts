@@ -106,12 +106,14 @@ export async function runRecoveryCommand(
       throw new Error(
         "Filesystem and Git need no installation. Configure an existing cooperative root.",
       );
-    await installManagedPostgres(options);
+    const installed = await installManagedPostgres(options);
     print(
       JSON.stringify({
         installed: true,
         workspace: config.workspace,
-        tables: options.tables.map((t) => t.table),
+        tables: installed.installedTables,
+        metadataVersion: installed.metadataVersion,
+        migration: "v1-install-only; legacy metadata has no automatic upgrade path",
       }),
     );
     return 0;

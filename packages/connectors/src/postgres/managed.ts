@@ -56,15 +56,48 @@ function triggerSource(target: ManagedTable, schema: string): string {
     END`;
 }
 /** Explicit installation on operator-selected tables. Never run implicitly during a tool call.
- * Revisions remain after deletion, so A -> B -> A cannot hide a conflicting write. */
+ * Revisions remain after deletion, so A -> B -> A cannot hide a conflicting write.
+ *
+ * Metadata layout is version 1. There is no released upgrade migration: an
+ * older experimental schema must be reviewed manually, and any future layout
+ * change must be an explicit reviewed migration, not silent DDL during calls. */
+export const MANAGED_METADATA_VERSION = 1;
+export type ManagedMetadataInspection = {
+  metadataVersion: number | null;
+  complete: boolean;
+  legacyWithoutVersion: boolean;
+};
+async function metadataPresent(connection: ManagedConnection, schema: string, table: string): Promise<boolean> {
+  const rows = await connection.query<{ exists: string | boolean }>("SELECT to_regclass($1)::text IS NOT NULL AS exists", [`${schema}.${table}`]);
+  return rows[0]?.exists === true || rows[0]?.exists === "true";
+}
+export async function inspectManagedPostgres(options: ManagedPostgresOptions): Promise<ManagedMetadataInspection> {
+  const schema = ident(options.schema);
+  const connection = await options.connect();
+  try {
+    const [revision, operations, recoveries, meta] = await Promise.all([
+      metadataPresent(connection, schema, "revisions"),
+      metadataPresent(connection, schema, "operations"),
+      metadataPresent(connection, schema, "recoveries"),
+      metadataPresent(connection, schema, "meta"),
+    ]);
+    if (!meta) return { metadataVersion: null, complete: false, legacyWithoutVersion: revision || operations || recoveries };
+    const version = (await connection.query<{ version: string }>(`SELECT version::text AS version FROM ${schema}.meta WHERE key='version'`))[0]?.version;
+    const metadataVersion = version === undefined ? null : Number(version);
+    return { metadataVersion: Number.isSafeInteger(metadataVersion) ? metadataVersion : null, complete: metadataVersion === MANAGED_METADATA_VERSION && revision && operations && recoveries, legacyWithoutVersion: false };
+  } finally {
+    await connection.close();
+  }
+}
 export async function installManagedPostgres(
   options: ManagedPostgresOptions,
-): Promise<void> {
+): Promise<{ installedTables: readonly string[]; metadataVersion: number }> {
   const schema = ident(options.schema),
     connection = await options.connect();
   try {
     await connection.query("BEGIN");
     await connection.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+    await connection.query(`CREATE TABLE IF NOT EXISTS ${schema}.meta(key text PRIMARY KEY, version integer NOT NULL)`);
     await connection.query(
       `CREATE TABLE IF NOT EXISTS ${schema}.revisions(resource text PRIMARY KEY, revision bigint NOT NULL)`,
     );
@@ -74,6 +107,7 @@ export async function installManagedPostgres(
     await connection.query(
       `CREATE TABLE IF NOT EXISTS ${schema}.recoveries(id text PRIMARY KEY, input_digest text NOT NULL, outcome jsonb NOT NULL)`,
     );
+    const installed: string[] = [];
     for (const target of options.tables) {
       const table = tableName(target.table);
       if (!target.primaryKey.length)
@@ -90,8 +124,11 @@ export async function installManagedPostgres(
       await connection.query(
         `CREATE TRIGGER ${trigger} AFTER INSERT OR UPDATE OR DELETE ON ${table} FOR EACH ROW EXECUTE FUNCTION ${fn}()`,
       );
+      installed.push(target.table);
     }
+    await connection.query(`INSERT INTO ${schema}.meta(key,version) VALUES('version',${MANAGED_METADATA_VERSION}) ON CONFLICT(key) DO UPDATE SET version=EXCLUDED.version`);
     await connection.query("COMMIT");
+    return { installedTables: installed, metadataVersion: MANAGED_METADATA_VERSION };
   } catch (error) {
     await connection.query("ROLLBACK").catch(() => {});
     throw error;
