@@ -65,7 +65,9 @@ explicit operation list, `planned → approved → applying → checkpoint → r
 partial / conflict / unknown / paused`, resumable steps, blocked forward writes and
 digest-bound approval/apply. The slice remains reverse ledger order only and has no
 cross-agent dependency closure, time or checkpoint selection, independent branch
-continuation, scheduler, lease, external fencing or MCP job surface.
+continuation, scheduler, lease or external fencing. The retained local MCP job
+tools are available on the same constrained runner. There is still no cloud MCP
+job surface.
 
 ## Trust boundary
 
