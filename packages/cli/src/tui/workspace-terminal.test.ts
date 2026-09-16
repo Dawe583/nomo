@@ -22,6 +22,17 @@ test("root help succeeds without opening workspace data", async (t) => {
   assert.equal(result.stderr, "");
 });
 
+test("version prints without opening workspace data", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-terminal-version-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const result = await exec(process.execPath, [binary, "--version"], {
+    env: { PATH: process.env.PATH, HOME: root, VOID_DATA_DIR: root },
+  });
+  assert.deepEqual(await readdir(root), []);
+  assert.match(result.stdout, /^void \d+\.\d+\.\d+\n$/);
+  assert.equal(result.stderr, "");
+});
+
 test("one-shot TUI exits unsuccessfully for a corrupt proxy ledger", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-terminal-proof-"));
   t.after(() => rm(root, { recursive: true, force: true }));

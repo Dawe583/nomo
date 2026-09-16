@@ -473,3 +473,16 @@ test("unified diff shows changed hunks with context and caps long output", () =>
   assert.ok(big.length <= 11);
   assert.match(big.at(-1)!, /more lines/);
 });
+
+test("TUI doctor reuses the CLI implementation without touching state", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-doctor-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  await ui.command("/doctor");
+  assert.equal(ui.detail?.[0], "doctor exit 0");
+  assert.ok(ui.detail?.some((line) => line.startsWith("PASS node")));
+});

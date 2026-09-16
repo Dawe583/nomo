@@ -16,6 +16,7 @@ import {
   desktopSetup,
 } from "../../../../apps/control-plane/api/desktop-setup.ts";
 import { loadPolicy } from "../../../policy/src/rules.ts";
+import { runDoctorCommand } from "../doctor.ts";
 import { fit, pad, sanitizeText, unifiedDiff, visibleLength } from "./layout.ts";
 
 export const WORKSPACE_TABS = [
@@ -515,6 +516,20 @@ export class WorkspaceTui {
         "Select a recoverable operation and press u for reviewed Undo.";
       return;
     }
+    if (cmd === "doctor") {
+      const lines: string[] = [];
+      const code = await runDoctorCommand(
+        arg ? [arg] : [],
+        {
+          stdout: (line) => { lines.push(line); },
+          stderr: (line) => { lines.push(line); },
+        },
+        { env: this.env },
+      );
+      this.detail = [`doctor exit ${code}`, "", ...lines];
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "bottom") {
       this.choose("chat");
       this.scroll = -1;
@@ -1007,6 +1022,7 @@ export const TUI_COMMANDS = [
   ["/approvals", "Pending decisions"],
   ["/models", "Available models"],
   ["/overview", "Workspace overview"],
+  ["/doctor", "Environment checks"],
   ["/status", "Workspace status"],
   ["/cost", "Token usage and cost"],
   ["/verify", "Verify signatures"],

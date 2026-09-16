@@ -8,12 +8,22 @@ import { runAgentCommand } from "../src/agent.ts";
 import { runOperation } from "../src/operations.ts";
 import { runWatchCommand } from "../src/watch.ts";
 import { runApproveCommand, runApprovalsCommand } from "../src/approve.ts";
+import { runDoctorCommand } from "../src/doctor.ts";
 import { readFileSync } from "node:fs";
 import { runClassifyCommand, runFeedCommand, runReplayCommand, runTaintCommand, runVerifyCommand, parseInvocation } from "../src/index.ts";
 
 if (process.argv.length === 3 && ["--help", "-h"].includes(process.argv[2])) {
   const usage = parseInvocation([]);
   if (!usage.ok) console.log(usage.reason);
+  process.exit(0);
+}
+if (process.argv.length === 3 && ["--version", "-v"].includes(process.argv[2])) {
+  const meta = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  );
+  if (!meta || typeof meta.version !== "string" || !meta.version)
+    throw Error("Package version is missing.");
+  console.log(`void ${meta.version}`);
   process.exit(0);
 }
 const parsed = parseInvocation(process.argv.slice(2));
@@ -66,6 +76,17 @@ try {
       stderr: (line) => console.error(line),
     });
     process.exit(code);
+  } else if (parsed.command === "doctor") {
+    process.exit(
+      await runDoctorCommand(
+        parsed.args,
+        {
+          stdout: (line) => console.log(line),
+          stderr: (line) => console.error(line),
+        },
+        { env: process.env },
+      ),
+    );
   } else if (parsed.command === "approve" || parsed.command === "approvals") {
     const run = parsed.command === "approve" ? runApproveCommand : runApprovalsCommand;
     process.exit(await run(parsed.args, {

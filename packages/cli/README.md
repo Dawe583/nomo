@@ -16,6 +16,8 @@ node packages/cli/bin/void.mjs --help
 - `feed` and `watch`: verify and inspect ledger activity.
 - `approvals` and `approve`: inspect and decide durable holds.
 - `ledger verify` and `verify`: verify ledger integrity and signatures.
+- `doctor`: read-only local environment checks with PASS, WARN or FAIL lines.
+- `--version`: print the workspace version without touching any data.
 - `replay`: preview or apply one captured connector inverse by ledger sequence.
 - `recovery`: inspect, execute, plan, apply or reconcile managed filesystem and
   PostgreSQL operations. Its `plan-job`, `apply-job`, and `status-job` actions
@@ -58,7 +60,7 @@ reported as a development key, not production identity.
 ## Public TypeScript surface
 
 `src/index.ts` exports the invocation parser and command names, terminal render
-models, and the classify, feed, replay, taint, verify, and approval handlers.
+models, and the classify, feed, replay, taint, verify, approval, and doctor handlers.
 The binary imports agent, recovery, watch, and local operation handlers directly;
 those modules are not exported by the package barrel. The binary owns process
 exit behavior and command dispatch. Domain logic remains in the registry,
