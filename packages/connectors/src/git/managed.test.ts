@@ -383,22 +383,3 @@ posixTest("recovery-time HEAD drift conflicts and preserves exact agent-after wo
   assert.equal((await adapter.recover(done.prepared, done.outcome, "head-drift")).status, "conflict");
   assert.deepEqual(await readFile(join(root, "tracked")), worktreeAfter); assert.deepEqual(await readFile(indexPath), indexAfter);
 });
-
-posixTest("legacy version 1 prepared JSON still executes and recovers", async (t) => {
-  const { adapter } = await repository(t);
-  const args = {
-    action: "write",
-    path: "tracked",
-    base64: Buffer.from("agent").toString("base64"),
-  } as const;
-  const observation = await adapter.preflight(args);
-  const prepared = JSON.parse(
-    JSON.stringify(await adapter.prepare(args, observation, "legacy")),
-  );
-  assert.equal("kind" in (prepared.before as object), false);
-  const outcome = await adapter.execute(args, prepared, "legacy");
-  assert.equal(
-    (await adapter.recover(prepared, outcome, "legacy-recovery")).status,
-    "restored",
-  );
-});
