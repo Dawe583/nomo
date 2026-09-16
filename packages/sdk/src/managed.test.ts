@@ -94,4 +94,34 @@ test("managed SDK uses durable runtime, isolates workspace, and refuses dispatch
     "restored",
   );
   assert.equal(value, "before");
+  const jobSecond = await restarted.execute("fixture", "second", "run", "second-after");
+  assert.equal(jobSecond.status, "succeeded");
+  const jobPlan = await restarted.planRecoveryJob({
+    workspace: "test",
+    jobId: "sdk-job",
+    selection: { kind: "operations", operationIds: ["second", "missing"] },
+  });
+  assert.deepEqual(
+    jobPlan.steps.map((step: { operationId: string }) => step.operationId),
+    ["second"],
+  );
+  assert.deepEqual(jobPlan.residuals, [{ operationId: "missing", status: "missing" }]);
+  const storedStatus = await restarted.recoveryJobStatus("sdk-job");
+  assert.equal("digest" in storedStatus && storedStatus.digest, jobPlan.digest);
+  const applied = await restarted.runRecoveryJob("sdk-job", async (candidate) => {
+    assert.equal(candidate.digest, jobPlan.digest);
+    return true;
+  });
+  assert.equal(applied.status, "partial");
+  assert.equal(applied.checkpoint, 1);
+  assert.deepEqual((await restarted.recoveryJobStatus("sdk-job")), applied);
+  assert.throws(
+    () =>
+      restarted.planRecoveryJob({
+        workspace: "other",
+        jobId: "sdk-job",
+        selection: { kind: "run", runId: "run" },
+      }),
+    /workspace/,
+  );
 });

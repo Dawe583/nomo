@@ -1,5 +1,8 @@
 import {
   recoveryRuntime,
+  type RecoveryJobPlan,
+  type RecoveryJobRequest,
+  type RecoveryJobResult,
   type RuntimeOptions,
   type Json,
   type RecoveryPlan,
@@ -44,5 +47,21 @@ export function managedClient(
     reconcileRecovery(operationId: string) {
       return runtime.reconcileRecovery(workspace, operationId);
     },
+    planRecoveryJob(request: RecoveryJobRequest) {
+      if (request.workspace !== undefined && request.workspace !== workspace) throw new Error("Recovery job belongs to another workspace.");
+      assertJobId(request.jobId);
+      return runtime.planRecoveryJob({ workspace, jobId: request.jobId, selection: request.selection });
+    },
+    recoveryJobStatus(jobId: string) {
+      assertJobId(jobId);
+      return runtime.recoveryJobStatus(workspace, jobId);
+    },
+    runRecoveryJob(jobId: string, authorize: (plan: RecoveryJobPlan) => Promise<boolean>): Promise<RecoveryJobResult> {
+      assertJobId(jobId);
+      return runtime.runRecoveryJob(workspace, jobId, authorize);
+    },
   };
+}
+function assertJobId(jobId: unknown): asserts jobId is string {
+  if (typeof jobId !== "string" || !/^[\w-]{1,120}$/.test(jobId)) throw new Error("Invalid recovery job identity.");
 }

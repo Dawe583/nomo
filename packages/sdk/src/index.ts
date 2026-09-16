@@ -2,6 +2,9 @@ export { VoidClient, createVoidClient } from "./client.ts";
 export { managedClient } from "./managed.ts";
 export type {
   RecoveryAdapter,
+  RecoveryJobPlan,
+  RecoveryJobRequest,
+  RecoveryJobResult,
   RuntimeOptions,
   RecoveryPlan,
   ExecutionResult,
