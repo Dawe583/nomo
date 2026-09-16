@@ -25,15 +25,17 @@ not a declaration that all work packages in REVERSE-TOOL-UPGRADE-PLAN are done.
 ## PostgreSQL limitations
 
 The initial adapter rejects inbound foreign keys, generated/identity columns,
-additional user triggers, RLS, rules, partitioned relations and disabled or
-substituted revision triggers. It does not support arbitrary SQL, bulk predicates, DDL, sequence restoration or
-external observers. Real SERIALIZABLE conflict during managed prepare is tested.
-The isolated verifier includes a real lock cycle during managed dispatch and
-checks the safe outcome for whichever transaction PostgreSQL selects as victim.
-It also terminates its own backend before/after execution COMMIT and after Undo
-COMMIT, verifying row state, receipt counts, reconciliation and no redispatch.
-Cascade, RLS/tenant certification, client process death and physical network
-partition scenarios remain release gates.
+additional user triggers, rules, RLS, partitioned relations and disabled or
+substituted revision triggers. Those refusal paths are covered by offline
+adversarial tests. It does not support arbitrary SQL, bulk predicates, DDL,
+sequence restoration or external observers. Real SERIALIZABLE conflict during
+managed prepare is tested. The isolated verifier includes a real lock cycle
+during managed dispatch and checks the safe outcome for whichever transaction
+PostgreSQL selects as victim. It also terminates its own backend before/after
+execution COMMIT and after Undo COMMIT, verifying row state, receipt counts,
+reconciliation and no redispatch. Cascade execution, tenant-scoped RLS
+certification, client process death and physical network partition scenarios
+remain release gates.
 
 Installation creates a configured metadata schema and row revision triggers.
 It is an explicit operator command, never automatic on connection. Metadata

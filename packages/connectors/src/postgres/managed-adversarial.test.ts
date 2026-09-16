@@ -198,6 +198,27 @@ test("failed recovery receipt insertion rolls back the inverse", async (t) => {
   );
 });
 
+test("inbound foreign keys, rules and generated columns fail closed as uncertified", async (t) => {
+  const f = await fixture(t);
+  await f.db.exec("CREATE TABLE child(id integer PRIMARY KEY, account_id integer REFERENCES account(id) ON DELETE CASCADE); INSERT INTO child VALUES(1,1)");
+  await assert.rejects(f.execute("cascade-inbound", 1, 12), /cascade|referenced|cert/i);
+  await f.db.exec("DROP TABLE child");
+  await f.db.exec("CREATE RULE protect AS ON UPDATE TO account DO INSTEAD NOTHING");
+  await assert.rejects(f.execute("rule", 1, 13), /rule|cert/i);
+  await f.db.exec("DROP RULE protect ON account");
+  await f.db.exec("ALTER TABLE account ADD COLUMN serial_no integer GENERATED ALWAYS AS IDENTITY");
+  await assert.rejects(f.execute("generated", 1, 14), /generated|identity|cert/i);
+  assert.equal((await f.db.query<{ balance: number }>("SELECT balance FROM account WHERE id=1")).rows[0]?.balance, 10);
+  assert.equal(
+    (
+      await f.db.query<Record<string, unknown>>(
+        "SELECT count(*)::int AS n FROM void_recovery.operations",
+      )
+    ).rows[0]?.n,
+    0,
+  );
+});
+
 test("recreating a table at the same name invalidates the old target capture", async (t) => {
   const f = await fixture(t),
     operation = await f.execute("one", 1, 11);
