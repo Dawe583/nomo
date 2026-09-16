@@ -125,10 +125,12 @@ state that keeps forward writes blocked.
 
 Only one recovery job can be active in a workspace. Signed job payloads validate
 outer and embedded identity, digest, checkpoint bounds, outcome prefix and
-residual shape. This first slice has no dependency closure, time selection,
-branch continuation, scheduler, lease, external fencing, MCP job surface or cloud
-job surface. Any forward operation after planning makes the preview stale.
-Older binaries do not read job entries, so mixed runtime versions are unsupported.
+residual shape. Cloud managed documents and local/retained MCP/SDK hosts expose
+the same constrained plan/status/apply job surface on that runner. This slice has
+no dependency closure, time or checkpoint selection, branch continuation,
+scheduler, lease, external fencing or cloud MCP job surface. Any forward operation
+after planning makes the preview stale. Older binaries do not read job entries,
+so mixed runtime versions are unsupported.
 
 ### Truthful local capability surfaces
 
