@@ -42,12 +42,11 @@ Reconciliation never repeats the inverse.
 
 ## Persistent recovery jobs
 
-The local runtime can persist a recovery plan for one exact run or an explicit
-list of operation IDs. The signed plan includes a full ledger sequence and hash
-boundary, every selected single-operation plan in reverse success order, and
-known residuals. Its digest covers the complete plan except the digest field.
-Approval binds that digest. Apply loads the stored plan by job ID rather than
-trusting plan bytes supplied again by a caller.
+The local runtime and cloud managed documents can persist a recovery plan for one exact run or an
+explicit list of operation IDs. The signed plan includes a full ledger sequence and hash boundary, every
+selected single-operation plan in reverse success order, and known residuals. Its digest covers the
+complete plan except the digest field. Approval binds that digest. Apply loads the stored plan by job
+ID rather than trusting plan bytes supplied again by a caller.
 
 The runner records approval, application, each completed step, and the terminal
 result in the same signed workspace journal. Each step uses the existing
@@ -60,12 +59,13 @@ redacted `step-unavailable` code and operation ID. New forward operations remain
 blocked. Restore the exact adapter version and required local state, then run the
 same job ID again. Compensation makes the job partial, never restored.
 
-This first slice uses reverse ledger order only. It has no cross-agent dependency
-closure. Any new forward operation after preview invalidates the plan, including
-unrelated work. Once application starts, the local journal blocks new forward
-operations until the job reaches a terminal state. It has no time or checkpoint
-selection, independent branch continuation, lease, external fencing, scheduler,
-MCP job surface or cloud job surface.
+Cloud managed documents use the same signing, boundary, digest-matched single-job
+planner and durable job runner as a limited retained surface: one exact run or an
+explicit operation list, `planned → approved → applying → checkpoint → restored /
+partial / conflict / unknown / paused`, resumable steps, blocked forward writes and
+digest-bound approval/apply. The slice remains reverse ledger order only and has no
+cross-agent dependency closure, time or checkpoint selection, independent branch
+continuation, scheduler, lease, external fencing or MCP job surface.
 
 ## Trust boundary
 

@@ -1,5 +1,5 @@
-import { recoveryRuntime } from "../packages/runtime/src/execute.ts";
-import { digest, validateTransition } from "../packages/runtime/src/journal.ts";
+import { digest, validateJobTransition, validateTransition } from "../packages/runtime/src/journal.ts";
+import { validateRecoveryJobPayload } from "../packages/runtime/src/recovery/plan.ts";
 import { VaultCapacityError } from "../packages/runtime/src/vault.ts";
 import { managedDocumentAdapter } from "../packages/workbench/src/managed-documents.ts";
 import {
@@ -13,7 +13,9 @@ const SLOT_BYTES = 4 * 1024 * 1024,
 export const documentOperationId = (id) => digest(id);
 
 /** Only managed documents: caller holds the session transaction lock. Artifacts,
- * signed events and document state commit together, including on process death.
+ * signed operation/job events and document state commit together inside the same
+ * SQL transaction, including across process death. Local journal/result rows are
+ * never the event source here; the cloud ledger entries are the persisted journal.
  * Never use this transaction host for external tools or network side effects. */
 export async function cloudDocumentRuntime(
   session,
@@ -23,17 +25,40 @@ export async function cloudDocumentRuntime(
   const workspace = session.workspace;
   const proof = await ledger(workspace, client);
   const events = [];
+  const jobEvents = [];
   for (const entry of proof.entries) {
     if (entry.body.runtimeEvent) {
       validateTransition(events, entry.body.runtimeEvent);
       events.push(entry.body.runtimeEvent);
+    } else if (entry.body.runtimeJobEvent) {
+      validateJobTransition(jobEvents, entry.body.runtimeJobEvent);
+      validateRecoveryJobPayload(jobEvents, entry.body.runtimeJobEvent);
+      jobEvents.push(entry.body.runtimeJobEvent);
     }
   }
+  const records = [
+    ...proof.entries
+      .filter((entry) => entry.body.runtimeEvent)
+      .map((entry) => ({
+        event: entry.body.runtimeEvent,
+        sequence: entry.seq,
+        digest: entry.hash,
+      })),
+    ...proof.entries
+      .filter((entry) => entry.body.runtimeJobEvent)
+      .map((entry) => ({
+        event: entry.body.runtimeJobEvent,
+        sequence: entry.seq,
+        digest: entry.hash,
+      })),
+  ].sort((left, right) => left.sequence - right.sequence);
   const journal = {
     transaction: async (scope, run) => {
       if (scope !== workspace) throw new Error("Recovery workspace mismatch.");
       return run({
         events,
+        jobEvents,
+        records,
         append: async (event) => {
           if (event.workspace !== workspace)
             throw new Error("Recovery workspace mismatch.");
@@ -51,6 +76,35 @@ export async function cloudDocumentRuntime(
           );
           proof.entries.push(signed);
           events.push(event);
+          records.push({
+            event,
+            sequence: signed.seq,
+            digest: signed.hash,
+          });
+        },
+        appendJob: async (event) => {
+          if (event.workspace !== workspace)
+            throw new Error("Recovery workspace mismatch.");
+          validateJobTransition(jobEvents, event);
+          validateRecoveryJobPayload(jobEvents, event);
+          const signed = await append(
+            {
+              workspace,
+              at: event.at,
+              tool: "void_recovery",
+              klass: "r1",
+              decision: `recovery:job:${event.stage}`,
+              runtimeJobEvent: event,
+            },
+            client,
+          );
+          proof.entries.push(signed);
+          jobEvents.push(event);
+          records.push({
+            event,
+            sequence: signed.seq,
+            digest: signed.hash,
+          });
         },
       });
     },
@@ -218,4 +272,44 @@ export async function managedCloudUndo(
       throw new Error(`Managed document recovery ${result.status}.`);
   }
   return true;
+}
+
+/** Plan and run a retained recovery job for one exact run or an explicit operation
+ * list. `session` supplies only the workspace/scope binding. The caller must hold
+ * the session advisory lock and keep document state, artifacts, plan approval and
+ * checkpoints inside the same outer SQL transaction. Job identity must be stable
+ * across retries, so planning is load-or-create by job ID rather than caller bytes. */
+export async function planCloudRecoveryJob(request, session, client) {
+  const host = await cloudDocumentRuntime(session, client);
+  return host.runtime.planRecoveryJob(request);
+}
+
+/**
+ * Apply one already-planned retained job. `approve` is the operator binding for
+ * the whole stored plan digest; it is asked once, before application starts. The
+ * caller stays in the same outer SQL transaction: signed checkpoints accumulate in
+ * the ledger while the document adapter commits recovered state and receipts
+ * atomically. A thrown setup error returns a redacted paused job without repeating
+ * a confirmed inverse; reconcile one uncertain operation, then run the same job ID
+ * again. Forward writes remain blocked outside this helper: `execute.ts` refuses
+ * new operations while a retained job has not reached a terminal stage.
+ */
+export async function runCloudRecoveryJob(
+  session,
+  client,
+  jobId,
+  approve,
+) {
+  const host = await cloudDocumentRuntime(session, client);
+  return host.runtime.runRecoveryJob(session.workspace, jobId, approve);
+}
+
+/**
+ * Return the stored job plan below a terminal result, or the latest terminal
+ * result when `runRecoveryJob` has already completed, conflicts, stayed unknown
+ * or paused. No caller-supplied plan bytes are accepted.
+ */
+export async function cloudRecoveryJobStatus(session, client, jobId) {
+  const host = await cloudDocumentRuntime(session, client);
+  return host.runtime.recoveryJobStatus(session.workspace, jobId);
 }

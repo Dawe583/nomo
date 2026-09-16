@@ -1,7 +1,7 @@
 import { toolCatalog } from '../packages/workbench/src/tool-catalog.ts';
 import { demoRouter } from "./demo.mjs";
 import { mountPrimeRoutes, enqueuePrime, primeStatus } from "./prime.mjs";
-import { mutateCloudDocument, managedCloudUndo } from "./recovery.mjs";
+import { cloudRecoveryJobStatus, managedCloudUndo, mutateCloudDocument, planCloudRecoveryJob, runCloudRecoveryJob } from "./recovery.mjs";
 import { workspaceSessionCookie } from "../apps/control-plane/api/session-cookie.mjs";
 import {
   mountIntegrationCallback,
@@ -689,13 +689,123 @@ async function applyManagedUndo(id, operationId) {
     await write(`session:${s.id}`, s, c);
   });
 }
-app.post("/api/sessions/:id/undo/:operation", async (req, res) => {
-  if (req.body?.confirm !== req.params.operation)
+const cloudJobIdentity = (value) =>
+  typeof value === "string" && /^[\w-]{1,120}$/.test(value) ? value : null;
+const cloudJobSelection = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  if (value.kind === "run" && cloudJobIdentity(value.runId))
+    return { kind: "run", runId: value.runId };
+  if (
+    value.kind === "operations" &&
+    Array.isArray(value.operationIds) &&
+    value.operationIds.length > 0 &&
+    new Set(value.operationIds).size === value.operationIds.length &&
+    value.operationIds.every(cloudJobIdentity)
+  )
+    return { kind: "operations", operationIds: [...value.operationIds] };
+  return null;
+};
+const cloudJobDigest = (value) =>
+  typeof value === "string" && /^[a-f0-9]{64}$/.test(value) ? value : null;
+const cloudRecoveryJobResponse = (payload) => {
+  if ("digest" in payload) {
+    return {
+      jobId: payload.jobId,
+      planDigest: payload.digest,
+      selection: payload.selection,
+      boundary: payload.boundary,
+      steps: payload.steps.map((step) => ({
+        operationId: step.operationId,
+        sequence: step.sequence,
+      })),
+      residuals: payload.residuals.map((residual) => ({
+        operationId: residual.operationId,
+        status: residual.status,
+      })),
+    };
+  }
+  return {
+    jobId: payload.jobId,
+    status: payload.status,
+    checkpoint: payload.checkpoint,
+    outcomes: Array.isArray(payload.outcomes)
+      ? payload.outcomes.map((outcome) => ({
+          operationId: outcome.operationId,
+          status: outcome.status,
+        }))
+      : [],
+    residuals: Array.isArray(payload.residuals)
+      ? payload.residuals.map((residual) => ({
+          operationId: residual.operationId,
+          status: residual.status,
+        }))
+      : [],
+    ...(payload.pause ? { pause: payload.pause } : {}),
+  };
+};
+app.post("/api/sessions/:id/recovery-jobs/plan", async (req, res) => {
+  const s = await read(`session:${req.params.id}`);
+  if (!s) return res.status(404).json({ message: "Session not found." });
+  const jobId = cloudJobIdentity(req.body?.jobId);
+  const selection = cloudJobSelection(req.body?.selection);
+  if (!jobId || !selection)
     return res
-      .status(409)
-      .json({ message: "Preview and confirm this change first." });
-  await applyManagedUndo(req.params.id, req.params.operation);
-  res.json({ ok: true });
+      .status(400)
+      .json({ message: "A recovery job needs a stable ID and one exact run or operation list." });
+  try {
+    const plan = await transaction(req.params.id, async (c) =>
+      planCloudRecoveryJob(
+        { workspace: s.workspace, jobId, selection },
+        s,
+        c,
+      ),
+    );
+    res.json(cloudRecoveryJobResponse(plan));
+  } catch (error) {
+    res.status(400).json({ message: error?.message ?? "Recovery job planning failed." });
+  }
+});
+app.post("/api/sessions/:id/recovery-jobs/apply", async (req, res) => {
+  const s = await read(`session:${req.params.id}`);
+  if (!s) return res.status(404).json({ message: "Session not found." });
+  if (s.status === "running")
+    return res.status(409).json({ message: "Wait for the agent to stop." });
+  const jobId = cloudJobIdentity(req.body?.jobId);
+  const planDigest = cloudJobDigest(req.body?.planDigest);
+  if (!jobId || !planDigest)
+    return res
+      .status(400)
+      .json({ message: "Applying a recovery job needs its stored digest." });
+  try {
+    const result = await transaction(req.params.id, async (c) => {
+      const planned = await cloudRecoveryJobStatus(s, c, jobId);
+      if (!("digest" in planned)) return planned;
+      if (planned.digest !== planDigest)
+        throw new Error("Recovery job digest changed; re-plan the job.");
+      return runCloudRecoveryJob(s, c, jobId, async (stored) => {
+        if (stored.digest !== planDigest)
+          throw new Error("Recovery job digest changed; re-plan the job.");
+        return req.body?.approved === true;
+      });
+    });
+    res.json(cloudRecoveryJobResponse(result));
+  } catch (error) {
+    res.status(400).json({ message: error?.message ?? "Recovery job failed." });
+  }
+});
+app.get("/api/sessions/:id/recovery-jobs/:job", async (req, res) => {
+  const s = await read(`session:${req.params.id}`);
+  if (!s) return res.status(404).json({ message: "Session not found." });
+  const jobId = cloudJobIdentity(req.params.job);
+  if (!jobId) return res.status(400).json({ message: "Invalid recovery job." });
+  try {
+    const status = await transaction(req.params.id, async (c) =>
+      cloudRecoveryJobStatus(s, c, jobId),
+    );
+    res.json(cloudRecoveryJobResponse(status));
+  } catch (error) {
+    res.status(404).json({ message: error?.message ?? "Recovery job not found." });
+  }
 });
 app.get("/api/sessions", async (req, res) =>
   res.json(await sessionPage(queryOf(req))),
