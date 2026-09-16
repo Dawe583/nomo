@@ -81,9 +81,12 @@ The local journal serializes a directory using a SQLite transaction as an OS-bac
 writer mutex. Signed JSONL remains the operation source of truth. Process death
 releases the mutex; a SIGKILL regression verifies that the next executor reads
 `dispatched` as unknown without repeating the write. This requires a local disk,
-not NFS or a distributed filesystem. Never delete the SQLite file while writers
-may exist. A legacy `.runtime.lock` blocks startup until the old executor has
-been stopped and the operator has reviewed migration.
+not NFS or a distributed filesystem. A separate in-workspace single active job
+check refuses new forward writes while one retained job is unterminal, but it is
+not a durable worker lease and offers no fencing: two local writers obey the same
+SQLite mutex, while concurrent cloud writers rely on the outer session advisory
+lock rather than a lease. A legacy `.runtime.lock` blocks startup until the old
+executor has been stopped and the operator has reviewed migration.
 
 The CLI uses `reservedRecoveryVault`: encrypted payloads and reservation changes
 commit in one local SQLite transaction. Before preparation the runtime reserves
