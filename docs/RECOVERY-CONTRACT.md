@@ -63,9 +63,9 @@ Cloud managed documents use the same signing, boundary, digest-matched single-jo
 planner and durable job runner as a limited retained surface: one exact run or an
 explicit operation list, `planned → approved → applying → checkpoint → restored /
 partial / conflict / unknown / paused`, resumable steps, blocked forward writes and
-digest-bound approval/apply. The slice remains reverse ledger order only and has no
-cross-agent dependency closure, time or checkpoint selection, independent branch
-continuation, scheduler, lease or external fencing. The retained local MCP job
+digest-bound approval/apply. The slice remains descending journal-sequence order only
+and has no cross-agent dependency closure, time or checkpoint selection, independent
+branch continuation, scheduler, lease or external fencing. The retained local MCP job
 tools are available on the same constrained runner. There is still no cloud MCP
 job surface.
 
