@@ -49,6 +49,12 @@ by the existence of a prototype or a narrow passing test.
 | R13     | Local MCP entry point with operator identity/policy                                                                                                                    | OpenCode doctor/init, authenticated remote executor, managed egress boundary                                                           |
 | R14     | Coverage, runbook, scoped validation evidence                                                                                                                          | Export bundles/checkpoint completeness, metrics, operational certification                                                             |
 
+Retained job update: local MCP and cloud HTTP now expose plan/status/apply job
+surfaces on the same constrained single-job runner. Run/explicit-list selection,
+signed digest binding, checkpoints, terminal results and blocked forward writes
+are shared. Dependency/time/checkpoint selection, scheduler, durable leases and
+fencing, cloud MCP jobs and cross-agent provenance remain excluded.
+
 ## Verified foundation
 
 - Actual managed PostgreSQL mutation and transactionally bound before/outcome evidence.
