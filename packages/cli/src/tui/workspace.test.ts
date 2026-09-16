@@ -30,7 +30,7 @@ test("Claude style shortcuts map only the intended control keys", () => {
   );
   assert.equal(
     workspaceShortcut({ name: "r", ctrl: true }, true, "draft"),
-    undefined,
+    "search-history",
   );
   assert.equal(workspaceShortcut({ name: "d", ctrl: true }, true, ""), "quit");
   assert.equal(
@@ -117,7 +117,7 @@ test("Claude style management aliases open real VOID views", async (t) => {
   assert.match(ui.notice, /select a conversation to rewind/i);
   assert.match(
     stripAnsi(renderWorkspace(ui, 100, 32)),
-    /model: not connected.*tokens: unknown.*output: compact/i,
+    /model: not connected.*mode: normal.*tokens: unknown.*compact/i,
   );
 });
 

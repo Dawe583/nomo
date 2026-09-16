@@ -82,3 +82,22 @@ Oba `SKILL.md` byly přečteny. Použita stručná komunikace, zachování úpln
 ## Hranice důkazů
 
 Živé generování TokenRouteru, chování na fyzickém iPhonu/Androidu, dlouhá historie a autentizovaný produkční workflow zůstávají ověřovacími kroky implementace. Referenční claude.ai a OpenCode jsou funkční inspirace zadání; audit netvrdí úplnou shodu s jejich aktuálními placenými funkcemi. Produkce ani aplikace nebyly tímto plánováním přestavěny či nasazeny.
+
+## Dodatek 2026-09-16: stav po GUI parity inkrementu
+
+Overeno v kodu `apps/control-plane/ui/src` a v headless Chrome na
+320, 390, 430, 768, 1280 a 1440 px proti lokalnimu serveru. Nula
+horizontalniho overflow vsude, composer v kazde sirce uvnitr viewportu,
+welcome stav viditelny, paleta prikazu se otevre s akcemi i vysledky,
+zadne chyby v konzoli.
+
+| ID | Novy stav | Duvod |
+|---|---|---|
+| A18 | uzavreno | Samostatna prihlasovaci plocha existovala; nove se pred uspesnym probe na `/api/provider` nevysilaji zadne chranene dotazy (sessions, approvals, hledani, preferences, detail konverzace). |
+| A07 | uzavreno viditelne | Stranka Behy ukazuje zivou kapacitu z `/api/overview` a pravidlo cekani, ktere composer uz vymaha. Limit jedineho behu v cloudu se netvrdi, protoze lokalni kontrakt ho neposkytuje. |
+| A15 | overeno, zustava uzavreno | Stabilni `/chat/:id`, drafty na konverzaci, explicitni welcome stav. Nove paleta prikazu nad akci i historii. |
+| A11 | overeno, zustava uzavreno | ApprovalReview ukazuje tridu, workspace, blast radius i presnost a duvod politiky; chybejici udaje zustavaji explicitne nezname. |
+| A16 | overeno, zustava uzavreno | Spotreba cte strukturovane provider reporty; cena zustava unknown, nic se nevymysli. |
+| A05, A06, A09 | overeno, zustava uzavreno | Vsechny tabulky pouzivaji serverove hledani a cursor strankovani pres `DataTable`; zadny linearni prepad v prohlizeci. |
+| mazani konverzace | otevreno | Server nema endpoint pro smazani session; DELETE rusi beh. Cesta je archivace s potvrzenim. Vyzaduje novy kontrakt; do spolecneho kontraktu patri jen po dohode s TUI drahou. |
+| thinking toggle | otevreno | Zadny serverovy kontrakt pro extended thinking; do GUI se nepridalo nic vymysleneho. |

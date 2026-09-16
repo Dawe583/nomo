@@ -291,13 +291,26 @@ node packages/proxy/bin/void-proxy.mjs --upstream node --args fixtures/e2e-serve
 
 ## Web and cloud production build
 
-Run `pnpm run build` from the repository root. Vercel and the Node 24/26 CI
-matrix use this same command. It builds the Vite GUI, bundles the Nitro cloud
+Run `pnpm run build` from the repository root. Vercel uses the same command
+but on its own Node runtime: Vercel offers 20.x, 22.x, and 24.x (default),
+so Node 26 is a local and CI target only, never the Vercel runtime
+(source: `vercel.com/docs/functions/runtimes/node-js/node-js-versions`,
+fetched 2026-09-16). It builds the Vite GUI, bundles the Nitro cloud
 backend and workflows, and validates `.vercel/output` before deployment.
 The validator requires the frontend entrypoint and its referenced assets, the
 Node API handler, the API route, and response streaming support.
 
 `pnpm build:web` remains the frontend-only command used by desktop packaging.
 A successful frontend build alone does not establish that the cloud build works.
+
+## Secret rotation boundary (no production KMS)
+
+Local secrets live in the AES-256-GCM snapshot, macOS Keychain, Windows
+Credential Manager, or a mode-0600 key file. There is no production KMS in
+this tree. Rotating `VOID_SIGNING_KEY` today means generating a new key,
+redeploying, and running `scripts/src/provision-cloud.mjs`; old signed rows
+verify only against the key that signed them. A KMS-backed rotation drill
+is an open release gate (`docs/RELEASE.md` blocker 10, `docs/PLAN-GAPS.md`
+item 10), not a procedure documented here.
 The frontend launcher also supports direct `node scripts/src/build-web.mjs`
 invocation without `npm_execpath`, as used by older Vercel project settings.

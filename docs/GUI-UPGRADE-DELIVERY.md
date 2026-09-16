@@ -83,3 +83,56 @@ Aktuální produkční konverzace po skutečné generaci, editaci a Undo:
 ![Desktop 1440×900](gui-upgrade/desktop.png)
 
 ![Mobil 390×844](gui-upgrade/mobile.png)
+
+## GUI parity increment 2026-09-16 (claude.ai controls)
+
+Scope: `apps/control-plane/ui/src/{main,chat,pages,commands}.tsx|ts` plus a
+new `commands.test.ts`. No server, policy or connector change. No new
+dependency. No em or en dash in the new text.
+
+- Cmd+K is now a real command palette, not only conversation search. It lists
+  app actions (new conversation plus every page route) above the
+  server-searched conversation hits. Actions and hits are plain buttons, so
+  all of them stay keyboard reachable with visible focus.
+- New shortcuts: Cmd+Shift+O opens a new chat from anywhere. Esc inside the
+  composer requests a real run cancellation on the server while a run is
+  active; an open slash menu or dialog still consumes Esc first. Arrow Up on
+  an empty composer keeps opening the branch editor for the last user
+  message, without rewriting history or replaying tools.
+- Archive and restore on the Conversations page now ask for confirmation.
+  The dialog states that archiving only hides the conversation: it never
+  stops running work and never deletes the signed ledger. Hard delete stays
+  unavailable because the server exposes no session delete endpoint
+  (DELETE on a session cancels its run).
+- The Runs page shows a live capacity banner from `/api/overview`: the real
+  active run count, or an explicit unknown label when the count is missing.
+  The banner also states the waiting rule the composer already enforces:
+  a new message waits while its conversation runs, and Stop ends the run.
+- Sign-in gating (A18 follow-up): the provider probe doubles as the login
+  check, and sessions, approvals, conversation search, preferences and the
+  current conversation detail now stay disabled until that probe succeeds.
+  The dedicated token gate surface itself is unchanged.
+- New tests: `commands.test.ts` covers the palette filter (empty query
+  lists everything, bilingual case-insensitive match, no hit returns empty).
+
+Verification on this tree (2026-09-16):
+
+| Check | Result |
+|---|---|
+| `pnpm --filter @void/control-plane-ui typecheck` | pass, exit 0 |
+| `pnpm exec tsc -p apps/control-plane/tsconfig.json` | pass, exit 0 |
+| `node --test --test-reporter=tap src/*.test.ts` (control-plane UI) | 11 tests, 11 pass |
+| `pnpm run build:web` | pass, Vite build ready in `dist/web` |
+| `pnpm run typecheck` (repo root) | fails only in `packages/cli/src/tui/workspace.ts`, which is sibling `tui-parity` working-tree code outside this package scope |
+| Headless Chrome QA on the local server at 320, 390, 430, 768, 1280 and 1440 px | zero horizontal overflow everywhere, composer inside the viewport, welcome state shown, Cmd+K palette opens with actions and hits, no console errors |
+
+Audit IDs touched by this increment: A18 closed (gate plus no protected
+fetches before login), A07 visibly closed on the Runs page with live
+numbers (a cloud single-run limit claim is still not stated because the
+local contract does not expose it), A15 re-verified (stable `/chat/:id`
+URLs, per-conversation drafts, explicit welcome state) with the palette
+added on top, A11/A16/A05/A06/A09 re-verified unchanged (structured
+approval rationale with explicit unknowns, provider usage reports with
+cost unknown, server-side search and cursor pagination in every table).
+Still open: hard conversation delete (no server endpoint) and a thinking
+toggle (no server contract for extended thinking; nothing was invented).

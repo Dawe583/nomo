@@ -18,6 +18,7 @@ export function Sessions({ navigate }: { navigate: (path: string) => void }) {
     client = useQueryClient();
   const [archived, setArchived] = useState(false),
     [edit, setEdit] = useState<Row>(),
+    [confirmArchive, setConfirmArchive] = useState<Row>(),
     [title, setTitle] = useState(""),
     [error, setError] = useState<unknown>();
   async function patch(row: Row, body: Row) {
@@ -81,7 +82,7 @@ export function Sessions({ navigate }: { navigate: (path: string) => void }) {
                 <button onClick={() => patch(r, { pinned: !r.pinned })}>
                   {r.pinned ? t("Odepnout", "Unpin") : t("Připnout", "Pin")}
                 </button>
-                <button onClick={() => patch(r, { archived: !r.archived })}>
+                <button onClick={() => setConfirmArchive(r)}>
                   {r.archived
                     ? t("Obnovit", "Restore")
                     : t("Archivovat", "Archive")}
@@ -92,6 +93,41 @@ export function Sessions({ navigate }: { navigate: (path: string) => void }) {
         ]}
         onRow={(r) => navigate("/chat/" + r.id)}
       />
+      {confirmArchive && (
+        <Dialog
+          title={
+            confirmArchive.archived
+              ? t("Obnovit konverzaci", "Restore conversation")
+              : t("Archivovat konverzaci", "Archive conversation")
+          }
+          close={() => setConfirmArchive(undefined)}
+        >
+          <p>
+            {confirmArchive.archived
+              ? t(
+                  "Konverzace se vrátí mezi aktivní. Podepsaný ledger se nemění.",
+                  "The conversation returns to active. The signed ledger is unchanged.",
+                )
+              : t(
+                  "Archivace konverzaci jen skryje. Běžící práci nevypne a podepsaný ledger nesmaže.",
+                  "Archiving only hides the conversation. It never stops running work and never deletes the signed ledger.",
+                )}
+          </p>
+          <button
+            className="primary"
+            onClick={async () => {
+              await patch(confirmArchive, {
+                archived: !confirmArchive.archived,
+              });
+              setConfirmArchive(undefined);
+            }}
+          >
+            {confirmArchive.archived
+              ? t("Obnovit", "Restore")
+              : t("Archivovat", "Archive")}
+          </button>
+        </Dialog>
+      )}
       {edit && (
         <Dialog
           title={t("Přejmenovat konverzaci", "Rename conversation")}
@@ -182,7 +218,24 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
 export function Runs({ navigate }: { navigate: (path: string) => void }) {
   const t = useText();
   const [status, setStatus] = useState("");
+  // Live capacity comes from the server overview. Unknown stays unknown.
+  const overview = useApi("/api/overview");
+  const running =
+    overview.data?.running ?? overview.data?.overview?.running ?? null;
   return (
+    <>
+      <p className="page-intro" role="status">
+        {running === null
+          ? t(
+              "Počet aktivních běhů je neznámý. Novou zprávu nelze odeslat, dokud její konverzace běží.",
+              "Active run count is unknown. A new message cannot be sent while its conversation is running.",
+            )
+          : t(
+              `Aktivní běhy: ${running}. Nová zpráva čeká, dokud její konverzace běží. Tlačítko Zastavit běh ukončí.`,
+              `Active runs: ${running}. A new message waits while its conversation runs. The Stop button ends the run.`,
+            )}
+      </p>
+      <ErrorBox error={overview.error} />
     <DataTable
       key={status}
       endpoint={"/api/runs?status=" + status}
@@ -223,6 +276,7 @@ export function Runs({ navigate }: { navigate: (path: string) => void }) {
         </select>
       }
     />
+    </>
   );
 }
 export function Approvals() {

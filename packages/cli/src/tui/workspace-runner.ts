@@ -9,7 +9,11 @@ import {
   WorkspaceTui,
   WORKSPACE_TABS,
   commandSuggestions,
+  isDoubleEscape,
+  mentionCandidates,
+  mentionToken,
   renderWorkspace,
+  searchHistoryPrompts,
   message,
   type WorkspaceTab,
 } from "./workspace.ts";
@@ -27,7 +31,7 @@ export function workspaceShortcut(
   if (!key.ctrl) return undefined;
   if (key.name === "l") return "redraw";
   if (key.name === "o") return "toggle-tools";
-  if (key.name === "r" && editing && !input) return "search-history";
+  if (key.name === "r" && editing) return "search-history";
   if (key.name === "d" && (!editing || !input)) return "quit";
   return undefined;
 }
@@ -203,12 +207,19 @@ export async function runWorkspaceTui(
     sessionId?: string;
     model?: string;
     compactTools?: boolean;
+    mode?: string;
     drafts: Record<string, string>;
   }>();
   const drafts = saved?.drafts ?? {};
   const input = new WorkspaceInput();
   await ui.initialize();
   ui.compactTools = saved?.compactTools ?? true;
+  if (
+    saved?.mode === "normal" ||
+    saved?.mode === "accept" ||
+    saved?.mode === "plan"
+  )
+    ui.mode = saved.mode;
   if (source) await ui.command(`/connect ${source}`);
   const selected = sessionId ?? saved?.sessionId;
   if (selected && app.get(selected)) ui.sessionId = selected;
@@ -236,6 +247,10 @@ export async function runWorkspaceTui(
   let suggestion = 0;
   let historyIndex = -1;
   let historyDraft = "";
+  let historyQuery = "";
+  let historyPos = -1;
+  let mentionIndex = 0;
+  let lastEsc = 0;
   const startedAt = Date.now();
   // VOID has its own explicit color preference; inherited NO_COLOR must not hide its UI.
   const color = env.VOID_TUI_COLOR !== "0";
@@ -254,6 +269,7 @@ export async function runWorkspaceTui(
       sessionId: ui.sessionId,
       model: ui.model,
       compactTools: ui.compactTools,
+      mode: ui.mode,
       drafts,
     });
   };
@@ -298,6 +314,16 @@ export async function runWorkspaceTui(
       try {
         await fn();
         await ui.refresh();
+        const queued = ui.queuedPrompt;
+        if (queued && !app.running()) {
+          ui.takeQueued();
+          try {
+            await ui.command(queued);
+            await ui.refresh();
+          } catch (error) {
+            ui.notice = message(error);
+          }
+        }
       } catch (error) {
         ui.notice = message(error);
       } finally {
@@ -491,9 +517,33 @@ export async function runWorkspaceTui(
         return;
       }
       if (shortcut === "search-history") {
-        input.set("/find ");
-        suggestion = 0;
-        ui.notice = "Type search text and press Enter.";
+        if (!input.value) {
+          input.set("/find ");
+          suggestion = 0;
+          historyQuery = "";
+          historyPos = -1;
+          ui.notice = "Type search text and press Enter.";
+          draw();
+          return;
+        }
+        const matches = searchHistoryPrompts(
+          ui.promptHistory(),
+          input.value,
+        );
+        if (!matches.length) {
+          ui.notice = "No matching prompt in this conversation.";
+          draw();
+          return;
+        }
+        if (historyQuery !== input.value) {
+          historyQuery = input.value;
+          historyPos = -1;
+        }
+        historyPos = (historyPos + 1) % matches.length;
+        input.set(matches[historyPos]!);
+        ui.notice =
+          `History ${historyPos + 1}/${matches.length}. ` +
+          "Ctrl+R again for an older match.";
         draw();
         return;
       }
@@ -511,8 +561,19 @@ export async function runWorkspaceTui(
           ui.scroll = 0;
         } else if (value === "y" && !input.pasting)
           void task(() => ui.confirm());
+        else if (value === "n" && !input.pasting) ui.reject();
         else if (key.name === "pageup") ui.scroll = Math.max(0, ui.scroll - 10);
         else if (key.name === "pagedown") ui.scroll += 10;
+        draw();
+        return;
+      }
+      if (!input.pasting && key.name === "tab" && key.shift) {
+        ui.cycleMode();
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
         draw();
         return;
       }
@@ -528,6 +589,30 @@ export async function runWorkspaceTui(
         return;
       }
       if (input.editing || key.name === "paste-start") {
+        const token = input.pasting
+          ? undefined
+          : mentionToken(input.value, input.cursor);
+        const mentions = token === undefined
+          ? []
+          : mentionCandidates(token, ui.documentPaths());
+        if (mentions.length && key.name === "tab" && !key.shift) {
+          const pick = mentions[mentionIndex % mentions.length]!;
+          const points = [...input.value];
+          const start = input.cursor - [...token!].length;
+          points.splice(start, [...token!].length, ...`${pick} `);
+          input.value = points.join("").slice(0, 32000);
+          input.cursor = Math.min(
+            start + [...pick].length + 1,
+            [...input.value].length,
+          );
+          mentionIndex = (mentionIndex + 1) % mentions.length;
+          ui.notice = mentions.length > 1
+            ? `${mentions.length} @ matches. Tab again for the next one.`
+            : `Mentioned @${pick}. Content is quoted on send.`;
+          draw();
+          return;
+        }
+        mentionIndex = 0;
         const candidates = input.pasting ? [] : commandSuggestions(input.value);
         if (
           candidates.length &&
@@ -576,8 +661,21 @@ export async function runWorkspaceTui(
         const action = input.key(value, key);
         suggestion = 0;
         historyIndex = -1;
-        if (action === "submit") void task(submit);
-        else scheduleDraft();
+        if (action === "submit") {
+          const text = input.value;
+          const plain =
+            !text.trimStart().startsWith("/") &&
+            !text.trimStart().startsWith("!");
+          if (plain && app.running() && text.trim()) {
+            ui.queuePrompt(text);
+            input.set("");
+            historyQuery = "";
+            historyPos = -1;
+            draw();
+            return;
+          }
+          void task(submit);
+        } else scheduleDraft();
         draw();
         return;
       }
@@ -611,8 +709,15 @@ export async function runWorkspaceTui(
       else if (value === "r") void task(() => ui.refresh(true));
       else if (value === "?") ui.choose("help");
       else if (key.name === "escape") {
-        ui.detail = undefined;
-        ui.scroll = 0;
+        const now = Date.now();
+        if (isDoubleEscape(now, lastEsc)) {
+          lastEsc = 0;
+          void task(() => ui.command("/rewind"));
+        } else {
+          lastEsc = now;
+          ui.detail = undefined;
+          ui.scroll = 0;
+        }
       } else if (key.name === "return")
         void task(() => navigate(() => ui.openSelected()));
       else if (key.name === "pageup") ui.scrollPage(-1);

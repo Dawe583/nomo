@@ -192,6 +192,45 @@ Pokud editor nebo kontrola velikosti selže, jeho chráněný pracovní soubor
 zůstane k obnově na cestě uvedené v chybě. Konflikt uložení ponechá náhled změny
 v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
 
+## Režimy, fronta a nové příkazy
+
+- Shift+Tab přepíná režim `normal` / `accept` / `plan`. Režim je vidět ve
+  stavovém řádku a v nápovědě kláves. Volba přetrvá restart.
+- Režim `plan` předřadí pokynu větu, aby model nejprve navrhl postup a nežádal
+  hned nástroje měnící stav. Režim `accept` zkracuje klávesy editace, ale
+  schválení externích nástrojů zůstává vždy explicitní. VOID nikdy nic
+  automaticky nepotvrzuje.
+- Pokyn odeslaný během běhu se zařadí do fronty a odešle po zastavení běhu.
+  Ve stavovém řádku je vidět, zda fronta čeká.
+- Ctrl+R nad rozepsaným vstupem hledá v odeslaných pokynech této konverzace,
+  opakované stisknutí ukazuje starší shody. Z prázdného vstupu připraví
+  `/find` nad textem konverzace.
+- Dvojí Escape otevře `/rewind`, tedy seznam obnovitelných kontrolních bodů.
+  Obnova jde pouze přes kontrolovaný Undo tok s potvrzením.
+- `!příkaz` spustí ohraničený lokální shell s limitem 10 s. Výstup se ukáže
+  jednou, nikdy se neukládá do ledgeru a nikdy neobsahuje uložené klíče.
+  Příkaz odkazující na pověření nebo klíčový materiál se odmítne.
+- `@cesta` doplní Tab z cest spravovaných dokumentů a při odeslání vloží
+  citaci obsahu do pokynu. Neznámá cesta odeslání zastaví a vypíše se.
+- Potvrzení změny ukazuje unified diff. Klávesa `y` přijme, `n` odmítne,
+  Escape zruší. Nic se neaplikuje bez explicitní klávesy.
+- Stavový řádek ukazuje model, režim, čítač kontextu, tokeny z providera
+  a cenu. Cena je vždy `unknown`, nikdy odhad.
+- `/todos` vypíše checklist z reálných zpráv agenta. Přehled ukazuje
+  otevřené položky aktuální konverzace.
+- `/compact` ukáže lokální výtah z uchovaných zpráv. Souhrn přes providera
+  zatím Workbench kontrakt neumí, takže jde o přiznaný fallback.
+- `/context` ukáže čísla kontextu aktuální konverzace, `/cost` reálné záznamy
+  usage bez odhadů, `/status` stav providera, běhu, fronty a kontextu.
+- `/agents` vypíše konverzace a konektory, `/config` cesty a přepínače bez
+  tajemství, `/memory` rozsah uchované historie.
+- `/login [zdroj]` připojí providera stejným kódem jako `/connect`,
+  `/logout` providera odpojí a smaže uložené profily.
+- `/init` připraví úložiště a v klidové konverzaci založí startovní `plan.md`,
+  pokud ještě neexistuje.
+- `/hooks`, `/vim`, `/terminal-setup` a `/output-style` nemají obdobu ve
+  VOIDu. TUI to řekne rovnou a odkáže na `/expand`.
+
 ## Ověření
 
 ```sh

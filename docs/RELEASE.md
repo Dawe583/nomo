@@ -111,6 +111,40 @@ Wave 5 source status, pending integrated verification:
    quickstart under five minutes, Docker image, and MCP registry listing still
    require release evidence. The WP-15 exit is not complete just because the
    source and metadata are present.
+8. **Apple signing and notarization.** Local macOS builds are ad-hoc signed
+   for bundle integrity only, not Apple notarization. Public distribution
+   needs a paid Apple Developer identity: Developer ID certificate,
+   hardened runtime, secure timestamp, and `notarytool` (Apple retired
+   `altool` uploads on 2023-11-01). Tauri reads `APPLE_SIGNING_IDENTITY`,
+   `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`; a free Apple account
+   cannot notarize. A missing team id is a hard bundler error, other
+   missing credentials only warn and skip. Evidence per release: signed
+   `.app`/`.dmg` (tauri.conf.json targets `app` + `dmg`, macOS 13.5
+   floor), notary log, and Gatekeeper ticket stapled or online. Sources:
+   Apple "Notarizing macOS software before distribution", Tauri
+   `distribute/Sign/macos` doc and bundler `macos/app.rs`, plus
+   `apps/desktop/README.md`.
+9. **Linux packaging and installer signing.** Linux targets (`deb`, `rpm`,
+   `AppImage` via Tauri `BundleTarget`) are unverified, including the
+   installed-app smoke check. The v2 updater reuses the AppImage plus a
+   `.sig` sidecar. Windows ships an unsigned NSIS beta installer;
+   SmartScreen may warn. Evidence per OS: native build, install, and the
+   packaged `--smoke-test` on that OS. No Linux download is advertised
+   until that passes. Source: Tauri updater plugin doc and bundle-target
+   reference (`/tauri-apps/tauri-docs` via Context7).
+10. **Production secrets, mobile, and accessibility gates.** Local secret
+    storage (AES-256-GCM snapshot, macOS Keychain / Windows Credential
+    Manager, mode-0600 key file) exists, but production KMS and a key
+    rotation drill remain open per `docs/PLAN-GAPS.md` item 10 and the
+    Production-secrets row. `VOID_SIGNING_KEY` rotation today means
+    redeploy plus `provision-cloud.mjs`; it is not a KMS rotation.
+    Physical iOS/Android keyboards, VoiceOver/TalkBack, and true 200%
+    browser zoom at desktop and mobile widths are pending per
+    `docs/MOBILE-ACCESSIBILITY-ACCEPTANCE.md`. The 640x450 reflow check
+    is explicitly not a browser-zoom test. Each pending case must record
+    device, OS, browser, screen reader, viewport, zoom, commit, and a
+    screenshot or recording with disposable content. Desktop emulation
+    cannot close these cases.
 7. **Security and licensing signoff.** Resolve release-blocking findings in
    `packages/security-notes.md` after the wave 5 adversarial review. In
    particular, unclassified calls permitted by broad allow rules remain a
@@ -197,3 +231,11 @@ truncate, rewrite, or delete ledger records as a release rollback.
       are checked in the actual release artifacts.
 - [ ] Support ownership, incident handling, rollback, and measured performance
       budgets are documented without claims from fixture-only evidence.
+- [ ] Apple signing and notarization pass with Developer ID, notary log,
+      and Gatekeeper ticket (blocker 8). Ad-hoc local signature is not
+      release evidence.
+- [ ] Linux packaging and installed-app smoke pass on a Linux machine;
+      Windows stays unsigned-beta until signed (blocker 9).
+- [ ] Production KMS plus rotation drill, physical mobile keyboards,
+      VoiceOver/TalkBack, and true 200% zoom acceptance are recorded with
+      device evidence (blocker 10). Reflow checks do not close zoom.

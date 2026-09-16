@@ -21,6 +21,7 @@ import {
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { api, ApiError, download, items, json } from "./api";
+import { filterPalette } from "./commands.ts";
 import {
   Badge,
   Dialog,
@@ -182,7 +183,12 @@ function App({
     false,
   );
   const provider = useApi("/api/provider");
-  const prefs = useApi("/api/preferences");
+  // The provider probe doubles as the login check. Every other query below
+  // is protected data, so it stays disabled until this probe succeeds.
+  const needsAuth =
+    provider.error instanceof ApiError &&
+    (provider.error.status === 401 || provider.error.status === 403);
+  const prefs = useApi("/api/preferences", !needsAuth);
   const initialPreferences = useRef({
     appearance: !localStorage.getItem("void-appearance"),
     locale: !localStorage.getItem("void-locale"),
@@ -199,11 +205,14 @@ function App({
       setLocale(value.locale);
     initialPreferences.current = { appearance: false, locale: false };
   }, [prefs.data, setLocale]);
-  const sessions = useApi("/api/sessions?archived=false&limit=20");
-  const approvals = useApi("/api/approvals");
+  const sessions = useApi(
+    "/api/sessions?archived=false&limit=20",
+    !needsAuth,
+  );
+  const approvals = useApi("/api/approvals", !needsAuth);
   const history = useApi(
     "/api/sessions?q=" + encodeURIComponent(query) + "&limit=50",
-    search,
+    search && !needsAuth,
   );
   const [page, sessionId] = path.replace(/^\//, "").split("/");
   const active = routes.find((r) => r[0] === page) ?? routes[0];
@@ -211,7 +220,7 @@ function App({
     page === "chat" && sessionId && sessionId !== "new" ? sessionId : undefined;
   const currentDetail = useApi(
     "/api/sessions/" + chatId + "?events=false",
-    !!chatId,
+    !!chatId && !needsAuth,
   );
   const current =
     currentDetail.data?.session ??
@@ -270,6 +279,15 @@ function App({
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setSearch((s) => !s);
+      }
+      // Cmd+Shift+O opens a fresh chat from anywhere in the app.
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.shiftKey &&
+        (e.key === "o" || e.key === "O")
+      ) {
+        e.preventDefault();
+        navigate("/chat/new");
       }
       if (e.key === "Escape") {
         if (
@@ -356,9 +374,6 @@ function App({
       document.documentElement.style.removeProperty("--mobile-height");
     };
   }, []);
-  const needsAuth =
-    provider.error instanceof ApiError &&
-    (provider.error.status === 401 || provider.error.status === 403);
   const headerActions = (
     <>
       <button
@@ -952,19 +967,54 @@ function App({
           </main>
           {search && (
             <Dialog
-              title={t("Hledat konverzaci", "Find a conversation")}
+              title={t("Paleta příkazů", "Command palette")}
               close={() => setSearch(false)}
             >
               <input
                 autoFocus
                 type="search"
-                placeholder={t("Název nebo obsah…", "Title or content…")}
-                aria-label={t("Hledat konverzaci", "Find a conversation")}
+                placeholder={t(
+                  "Akce nebo konverzace… (⌘K)",
+                  "Actions or conversations… (Cmd+K)",
+                )}
+                aria-label={t(
+                  "Paleta příkazů a hledání konverzací",
+                  "Command palette and conversation search",
+                )}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
               <ErrorBox error={history.error} />
               <div className="search-results">
+                <p className="muted">{t("Akce", "Actions")}</p>
+                {filterPalette(
+                  [
+                    {
+                      id: "new",
+                      label: t("Nová konverzace", "New conversation"),
+                      text: `new ${t("Nová konverzace", "New conversation")} chat`,
+                      run: () => navigate("/chat/new"),
+                    },
+                    ...routes.slice(1, -1).map(([slug, , cs, en]) => ({
+                      id: slug,
+                      label: t(cs, en),
+                      text: `${slug} ${t(cs, en)}`,
+                      run: () => navigate("/" + slug),
+                    })),
+                  ],
+                  query,
+                ).map((action) => (
+                  <button
+                    key={action.id}
+                    onClick={() => {
+                      setQuery("");
+                      action.run();
+                    }}
+                  >
+                    <strong>{action.label}</strong>
+                  </button>
+                ))}
+                <p className="muted">{t("Konverzace", "Conversations")}</p>
                 {items(history.data, "sessions").map((s) => (
                   <button key={s.id} onClick={() => navigate("/chat/" + s.id)}>
                     <strong>{s.title ?? s.model}</strong>

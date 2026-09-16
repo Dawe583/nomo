@@ -160,13 +160,18 @@ It does not claim a completed paid-model run or validation of customer buckets.
 This is not completion of every work package in the master plan. Native Codex,
 Claude Code and OpenCode process adapters, PTY embedding, direct host-project
 editing, product multi-agent orchestration and production KMS
-remain open. Desktop signing/notarization requires an Apple Developer identity;
-the local build is an unsigned beta. Token streaming is implemented; see
+remain open. Desktop signing/notarization requires a paid Apple Developer
+identity (Developer ID, hardened runtime, `notarytool`; free accounts cannot
+notarize); the local build is ad-hoc signed only, which is bundle integrity,
+not Apple notarization (see `docs/RELEASE.md` blocker 8). Token streaming is implemented; see
 [GUI delivery evidence](GUI-UPGRADE-DELIVERY.md). Windows beta 4 packaging and
 installed WebView smoke passed on 14 September 2026, as recorded in
-[Windows desktop verification](WINDOWS-DESKTOP.md). Linux native packaging
-remains unverified. Physical mobile keyboards, screen readers and full 200%
-zoom acceptance remain pending; see [the acceptance matrix](MOBILE-ACCESSIBILITY-ACCEPTANCE.md).
+[Windows desktop verification](WINDOWS-DESKTOP.md). Linux native packaging (`deb`, `rpm`, `AppImage`) and the installed-app
+smoke check remain unverified (see `docs/RELEASE.md` blocker 9). Physical
+mobile keyboards, VoiceOver/TalkBack and true 200% browser zoom acceptance
+remain pending; the 640x450 reflow check is explicitly not a zoom test;
+see [the acceptance matrix](MOBILE-ACCESSIBILITY-ACCEPTANCE.md) and
+`docs/RELEASE.md` blocker 10.
 Only one model session runs at a time. Speculative execution is not supported.
 
 ## Desktop and managed-workspace verification

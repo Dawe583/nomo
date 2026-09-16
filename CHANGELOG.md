@@ -13,7 +13,10 @@ All notable user-facing changes since the first repository commit.
   commands, each reused by matching TUI slash commands.
 - Show the real provider token report in GUI chat, open reviewed branches with
   Arrow Up, and expose class, blast radius, and policy rationale in approvals.
-- Record the consolidated remaining-work list in `docs/PLAN-GAPS.md`.
+- Consolidate the remaining-work list and clarify release requirements for
+  Apple signing and notarization, Linux packaging, production key management,
+  physical mobile keyboards, screen readers, and 200% browser zoom.
+- Clarify that Node 26 is supported locally, not as the Vercel runtime.
 
 ### Security fixes
 

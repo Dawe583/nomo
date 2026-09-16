@@ -453,6 +453,21 @@ export function Chat({
       setNewMessages(false);
     } else setNewMessages(true);
   }, [events.length, events.at(-1)?.text, follow]);
+  // Esc in the composer requests a real run cancellation on the server.
+  // Overlay dismissal keeps priority: an open slash menu or dialog consumes
+  // Esc before this branch ever runs.
+  async function stopRun() {
+    if (!id || busy) return;
+    setBusy(true);
+    try {
+      await api("/api/sessions/" + id, "DELETE");
+      await client.invalidateQueries();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function send() {
     if (commandOpen) {
       if (commandItems[activeCommand])
@@ -865,6 +880,11 @@ export function Chat({
             rows={2}
             onKeyDown={(e) => {
               if (e.nativeEvent.isComposing) return;
+              if (e.key === "Escape" && !commandOpen && running && id) {
+                e.preventDefault();
+                void stopRun();
+                return;
+              }
               if (e.key === "ArrowUp" && !draft && !running) {
                 const previous = lastUserMessage(rawEvents);
                 if (previous) {
@@ -1008,16 +1028,10 @@ export function Chat({
               <button
                 type="button"
                 disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  try {
-                    await api("/api/sessions/" + id, "DELETE");
-                    await client.invalidateQueries();
-                  } catch (e) {
-                    setError(e);
-                  } finally {
-                    setBusy(false);
-                  }
+                title={t("Zastavit (Esc)", "Stop (Esc)")}
+                aria-label={t("Zastavit běh", "Stop the run")}
+                onClick={() => {
+                  void stopRun();
                 }}
               >
                 {t("Zastavit ■", "Stop ■")}

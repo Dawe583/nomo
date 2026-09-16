@@ -1,8 +1,11 @@
 import { ProxyWorkspace } from "./workspace-proxy.ts";
 import { connectTokenHarbor } from "../../../workbench/src/provider-setup.ts";
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
+import { promisify } from "node:util";
+import { resolveConfig } from "../config.ts";
 import {
   Workbench,
   DEFAULT_POLICY,
@@ -57,6 +60,104 @@ const json = (value: unknown) =>
   JSON.stringify(value, null, 2)?.split("\n") ?? [];
 const text = (value: unknown) => String(value ?? "unknown");
 
+export type TuiMode = "normal" | "accept" | "plan";
+export const TUI_MODES: readonly TuiMode[] = ["normal", "accept", "plan"];
+
+/** Double Escape in a short window opens the checkpoint list. */
+export function isDoubleEscape(now: number, last: number, windowMs = 800) {
+  return last > 0 && now - last >= 0 && now - last <= windowMs;
+}
+
+/** Reverse history search over sent prompts, most recent first. */
+export function searchHistoryPrompts(
+  prompts: readonly string[],
+  query: string,
+): string[] {
+  const needle = query.toLocaleLowerCase();
+  if (!needle) return [...prompts];
+  return prompts.filter((item) =>
+    item.toLocaleLowerCase().includes(needle),
+  );
+}
+
+/** Checklist items are read from real messages, never invented. */
+export interface TuiTodo {
+  readonly done: boolean;
+  readonly text: string;
+  readonly seq: number;
+}
+export function extractTodos(
+  events: readonly {
+    seq: number;
+    kind: string;
+    type?: string;
+    text: string;
+  }[],
+): TuiTodo[] {
+  const out: TuiTodo[] = [];
+  for (const event of events) {
+    if (event.type && event.type !== "message.completed") continue;
+    if (event.kind !== "assistant" && event.kind !== "user") continue;
+    for (const line of event.text.split("\n")) {
+      const found = /^\s*[-*]\s*\[( |x|X)\]\s+(.+)$/.exec(line);
+      if (found)
+        out.push({
+          done: found[1] !== " ",
+          text: found[2]!.trim().slice(0, 200),
+          seq: event.seq,
+        });
+    }
+  }
+  return out;
+}
+
+/** @path completion reads managed document paths of live sessions. */
+export function mentionCandidates(
+  prefix: string,
+  paths: readonly string[],
+): string[] {
+  const needle = prefix.toLocaleLowerCase();
+  return paths
+    .filter((item) => item.toLocaleLowerCase().startsWith(needle))
+    .slice(0, 8);
+}
+/** The @ token right before the cursor, if the operator typed one. */
+export function mentionToken(
+  value: string,
+  cursor: number,
+): string | undefined {
+  const before = [...value].slice(0, cursor).join("");
+  const found = /@([^\s@]*)$/.exec(before);
+  return found ? (found[1] ?? "") : undefined;
+}
+
+/** Gated shell escape refuses anything that can carry key material. */
+const SHELL_REFUSALS = [
+  /\$[A-Za-z_]*(KEY|TOKEN|SECRET|PASSWORD)/,
+  /api[_-]?key/i,
+  /tokenharbor|tokenrouter/i,
+  /secret|password|passwd|authorization|bearer/i,
+  /private[_-]?key|id_rsa|\.pem\b/i,
+  /\.env\b|\.void|keychain/i,
+];
+const runShellFile = promisify(execFile);
+
+const STARTER_DOC = `# Plan
+
+## Goal
+
+Describe what this workspace should achieve.
+
+## Steps
+
+- [ ] First concrete step
+- [ ] Second concrete step
+
+## Notes
+
+Decisions and open questions live here.
+`;
+
 /** Same persistent workbench as the web. Rendering never grants tool authority. */
 export class WorkspaceTui {
   readonly workbench: Workbench;
@@ -71,6 +172,8 @@ export class WorkspaceTui {
   model = "";
   filter = "";
   compactTools = true;
+  mode: TuiMode = "normal";
+  queuedPrompt: string | null = null;
   notice = "Tab: panels | i: type | /help: commands";
   detail?: string[];
   confirmation?: Confirmation;
@@ -135,6 +238,253 @@ export class WorkspaceTui {
           WORKSPACE_TABS.length
       ]!,
     );
+  }
+  cycleMode() {
+    const next =
+      TUI_MODES[(TUI_MODES.indexOf(this.mode) + 1) % TUI_MODES.length]!;
+    this.mode = next;
+    this.notice =
+      next === "plan"
+        ? "Plan mode. Prompts ask for a plan before any tool runs."
+        : next === "accept"
+          ? "Accept mode. Shorter edit keys, approvals stay explicit."
+          : "Normal mode. Every change and approval needs your key.";
+  }
+  queuePrompt(value: string) {
+    this.queuedPrompt = value.slice(0, 32000);
+    this.notice =
+      "Run is active. The prompt is queued and sends when it stops.";
+  }
+  takeQueued(): string | null {
+    const next = this.queuedPrompt;
+    this.queuedPrompt = null;
+    return next;
+  }
+  reject() {
+    if (!this.confirmation) return;
+    this.confirmation = undefined;
+    this.scroll = 0;
+    this.notice = "Rejected. Nothing was applied.";
+  }
+  /** Previous user prompts of this conversation, most recent first. */
+  promptHistory(): string[] {
+    return (this.session()?.events ?? [])
+      .filter(
+        (event) =>
+          event.kind === "user" &&
+          (!event.type || event.type === "message.completed"),
+      )
+      .map((event) => event.text)
+      .reverse();
+  }
+  documentPaths(): string[] {
+    return [
+      ...new Set(
+        this.workbench.documentsList().map((item) => item.path),
+      ),
+    ];
+  }
+  /** Message and token counts from retained events, never estimated. */
+  contextNumbers() {
+    const session = this.session();
+    const events = session?.events ?? [];
+    const messages = events.filter(
+      (event) => event.kind === "user" || event.kind === "assistant",
+    ).length;
+    const usageEvents = events.filter((event) => event.kind === "usage");
+    const known = usageEvents.some(
+      (event) => typeof event.payload?.total_tokens === "number",
+    );
+    const tokens = usageEvents.reduce(
+      (sum, event) =>
+        sum +
+        (typeof event.payload?.total_tokens === "number"
+          ? (event.payload.total_tokens as number)
+          : 0),
+      0,
+    );
+    let docs = 0;
+    if (session) {
+      try {
+        docs = Object.keys(
+          this.workbench.workspace(session.id).files ?? {},
+        ).length;
+      } catch {
+        docs = 0;
+      }
+    }
+    return { messages, limit: 199, tokens: known ? tokens : null, docs };
+  }
+  private redactSecrets(value: string) {
+    let out = value;
+    for (const key of [
+      "TOKENHARBOR_API_KEY",
+      "TOKENROUTER_API_KEY",
+      "OPENROUTER_API_KEY",
+      "VOID_SIGNING_KEY",
+      "VOID_VERIFY_KEY",
+      "VOID_WORKSPACE_KEY",
+    ]) {
+      const secret = this.env[key];
+      if (secret) out = out.split(secret).join("[redacted]");
+    }
+    return out;
+  }
+  async runShell(raw: string) {
+    const cmd = raw.slice(1).trim();
+    if (!cmd) throw Error("Usage: !command (local shell, 10 s limit)");
+    if (SHELL_REFUSALS.some((re) => re.test(cmd)))
+      throw Error(
+        "Refused: the command references credentials or key material.",
+      );
+    let out: string;
+    try {
+      const result = await runShellFile("sh", ["-c", cmd], {
+        timeout: 10000,
+        maxBuffer: 1024 * 64,
+      });
+      const r = result as { stdout: string; stderr: string };
+      out = `${r.stdout ?? ""}` + (r.stderr ? `\n[stderr]\n${r.stderr}` : "");
+    } catch (error) {
+      const failed = error as { stdout?: unknown; stderr?: unknown };
+      const partial = `${failed.stdout ?? ""}${failed.stderr ?? ""}`.trim();
+      throw Error(
+        partial
+          ? "Local command failed. Partial output stays out of the ledger."
+          : `Local command failed. ${message(error)}`,
+      );
+    }
+    const shown = this.redactSecrets(out).slice(0, 4000) || "(no output)";
+    this.detail = [
+      `LOCAL SHELL, not stored in the ledger (exit 0): ${this.redactSecrets(cmd).slice(0, 120)}`,
+      "",
+      ...shown.split("\n"),
+    ];
+    this.scroll = 0;
+    this.notice = "Shell output is shown once and never persisted.";
+  }
+  /** @path tokens quote managed document content into the prompt. */
+  expandMentions(prompt: string, sessionId: string) {
+    let paths = new Set<string>();
+    try {
+      paths = new Set(
+        Object.keys(this.workbench.workspace(sessionId).files ?? {}),
+      );
+    } catch {
+      paths = new Set();
+    }
+    const missing: string[] = [];
+    const expanded = prompt.replace(
+      /@([^\s@][^\s]*)/g,
+      (token, path: string) => {
+        if (!paths.has(path)) {
+          if (!missing.includes(path)) missing.push(path);
+          return token;
+        }
+        const doc = this.workbench.document(sessionId, path);
+        return `${path} (quoted context):
+${(doc.content ?? "").slice(0, 2000)}`;
+      },
+    );
+    return { expanded, missing };
+  }
+  /** Local extractive summary; the provider path has no contract yet. */
+  compactLines() {
+    const session = this.session();
+    if (!session) throw Error("Select a conversation to summarize.");
+    const turns = (session.events ?? []).filter(
+      (event) => event.kind === "user" || event.kind === "assistant",
+    );
+    const first = turns.find((event) => event.kind === "user");
+    const last = [...turns]
+      .reverse()
+      .find((event) => event.kind === "assistant");
+    const ctx = this.contextNumbers();
+    const todos = extractTodos(session.events ?? []);
+    const open = todos.filter((item) => !item.done).length;
+    return [
+      `COMPACT SUMMARY, local fallback: ${session.title ?? session.id}`,
+      "Provider summarization is not part of the Workbench contract,",
+      "so this summary is built from retained events only.",
+      "",
+      `Messages: ${ctx.messages} of ${ctx.limit} | ` +
+        `Tokens: ${ctx.tokens ?? "unknown"} | Documents: ${ctx.docs}`,
+      `Open checklist items: ${open} of ${todos.length}`,
+      "",
+      `First request: ${(first?.text ?? "(none)").slice(0, 300)}`,
+      "",
+      `Latest answer: ${(last?.text ?? "(none)").slice(0, 500)}`,
+      "",
+      "Use /branch to continue from an earlier message in a safe copy.",
+    ];
+  }
+  costLines() {
+    const usage = activity(this.workbench.allViews());
+    const lines = [
+      "COST AND USAGE, provider reported, never estimated",
+      "",
+      `Sessions: ${usage.overview.sessions} | Runs: ${usage.overview.runs} | ` +
+        `Records: ${usage.overview.usageRecords}`,
+      `Total tokens: ${usage.overview.totalTokens ?? "unknown"} | Cost: unknown`,
+      "",
+    ];
+    for (const record of usage.usage.slice(-20))
+      lines.push(
+        `${record.sessionId.slice(0, 8)} ${record.model} ` +
+          `in ${record.inputTokens ?? "?"} out ${record.outputTokens ?? "?"} ` +
+          `total ${record.totalTokens ?? "unknown"}`,
+      );
+    if (!usage.usage.length)
+      lines.push("No usage records yet. Send a prompt first.");
+    return lines;
+  }
+  statusLines() {
+    const ctx = this.session() ? this.contextNumbers() : null;
+    return [
+      `Provider: ${this.provider?.connected ? this.provider.providerId : "NOT CONNECTED"}`,
+      `model: ${this.session()?.model || this.model || "-"} | Mode: ${this.mode}`,
+      `Run: ${this.workbench.running() ? "running or settling" : "idle"}`,
+      ctx
+        ? `Context: ${ctx.messages}/${ctx.limit} messages | ` +
+          `tokens: ${ctx.tokens ?? "unknown"} | cost: unknown`
+        : "No conversation selected.",
+      `Conversations: ${this.workbench.list().length} | ` +
+        `Pending: ${this.workbench.pending().length + this.proxy.holds.length}`,
+      this.queuedPrompt
+        ? "One prompt is queued for the end of the run."
+        : "No queued prompt.",
+    ];
+  }
+  agentsLines() {
+    const rows = [...this.workbench.list()].reverse();
+    return [
+      "AGENTS, conversations and connectors, live data",
+      "",
+      ...(rows.length
+        ? rows.map(
+            (item) =>
+              `[${item.status}] ${item.title ?? item.id} ${item.id.slice(0, 8)} ${item.model}`,
+          )
+        : ["No conversations yet."]),
+      "",
+      ...this.workbench
+        .connectionState()
+        .connectors.map(
+          (item) => `connector: ${item.name} (${item.tools.length} tools)`,
+        ),
+    ];
+  }
+  memoryLines() {
+    const views = this.workbench.allViews();
+    const events = views.reduce((sum, item) => sum + item.events.length, 0);
+    return [
+      "MEMORY, retained local history, encrypted at rest",
+      "",
+      `Conversations: ${views.length} | Stored events: ${events}`,
+      `Storage: ${this.env.VOID_DATA_DIR ?? "default workbench directory"}`,
+      "Drafts persist per conversation between runs.",
+      "The free model is never replaced with a paid model.",
+    ];
   }
   session() {
     return this.sessionId ? this.workbench.get(this.sessionId) : undefined;
@@ -441,13 +791,34 @@ export class WorkspaceTui {
     if (!value) return;
     const match = /^\/(\S+)(?:\s+([\s\S]*))?$/.exec(value);
     if (!match) {
+      if (value.startsWith("!")) {
+        await this.runShell(value);
+        return;
+      }
+      if (this.workbench.running()) {
+        this.queuePrompt(raw);
+        return;
+      }
+      let prompt = raw;
+      if (this.sessionId) {
+        const mentions = this.expandMentions(raw, this.sessionId);
+        if (mentions.missing.length)
+          throw Error(
+            `Unknown @path: ${mentions.missing.join(", ")}. Mention a managed document.`,
+          );
+        prompt = mentions.expanded;
+      }
+      if (this.mode === "plan")
+        prompt =
+          "Plan only. Describe the steps and the documents that would " +
+          `change. Do not request state changing tools yet.\n\n${prompt}`;
       if (this.sessionId)
-        this.workbench.send(this.sessionId, raw, randomUUID());
+        this.workbench.send(this.sessionId, prompt, randomUUID());
       else
         this.useSession(
           (
             await this.workbench.start(
-              raw,
+              prompt,
               this.model || undefined,
               randomUUID(),
             )
@@ -473,10 +844,33 @@ export class WorkspaceTui {
     if (cmd === "quit") return "quit";
     if (cmd === "status") {
       this.choose("overview");
+      this.detail = this.statusLines();
+      this.scroll = 0;
       return;
     }
     if (cmd === "context") {
+      if (!this.sessionId) {
+        this.choose("documents");
+        this.notice = "Select a conversation for live context numbers.";
+        return;
+      }
+      const ctx = this.contextNumbers();
       this.choose("documents");
+      this.detail = [
+        `CONTEXT ${this.session()?.title ?? this.sessionId}`,
+        "",
+        `Model: ${this.session()?.model ?? this.model}`,
+        `Messages: ${ctx.messages} of ${ctx.limit}, then a new session is needed`,
+        `Tokens reported: ${ctx.tokens ?? "unknown"}`,
+        "Cost: unknown",
+        `Managed documents: ${ctx.docs}`,
+        "",
+        ...this.workbench
+          .documentsList()
+          .filter((item) => item.sessionId === this.sessionId)
+          .map((item) => `${item.path} ${item.bytes} B`),
+      ];
+      this.scroll = 0;
       return;
     }
     if (cmd === "permissions" || cmd === "mcp") {
@@ -495,8 +889,63 @@ export class WorkspaceTui {
     }
     if (cmd === "cost") {
       this.choose("usage");
+      this.detail = this.costLines();
+      this.scroll = 0;
       return;
     }
+    if (cmd === "compact") {
+      this.detail = this.compactLines();
+      this.scroll = 0;
+      this.notice = "Local summary. Provider summarization is unavailable.";
+      return;
+    }
+    if (cmd === "todos") {
+      const session = this.session();
+      if (!session) throw Error("Select a conversation.");
+      const todos = extractTodos(session.events);
+      const open = todos.filter((item) => !item.done).length;
+      this.detail = [
+        `TODOS from real agent output, ${open} open of ${todos.length}`,
+        "",
+        ...(todos.length
+          ? todos.map(
+              (item) => `${item.done ? "[x]" : "[ ]"} ${item.text} (#${item.seq})`,
+            )
+          : ["No checklist items in this conversation yet."]),
+      ];
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "agents") {
+      this.detail = this.agentsLines();
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "config") {
+      this.detail = [
+        "CONFIG, secret values never print",
+        "",
+        ...resolveConfig(this.env).map(
+          (entry) => `${entry.key}: ${entry.value} [${entry.source}]`,
+        ),
+      ];
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "memory") {
+      this.detail = this.memoryLines();
+      this.scroll = 0;
+      return;
+    }
+    if (
+      cmd === "hooks" ||
+      cmd === "vim" ||
+      cmd === "terminal-setup" ||
+      cmd === "output-style"
+    )
+      throw Error(
+        `/${cmd} has no VOID equivalent. Use /expand for tool output style.`,
+      );
     if (cmd === "resume") {
       if (!arg) {
         this.choose("sessions");
@@ -571,6 +1020,40 @@ export class WorkspaceTui {
       );
       this.detail = [`init exit ${code}`, "", ...lines];
       this.scroll = 0;
+      const target = this.sessionId;
+      if (target && !this.workbench.running()) {
+        try {
+          const starter = this.workbench.document(target, "plan.md");
+          if (!starter.content?.trim()) {
+            await this.workbench.editDocument(
+              target,
+              { path: "plan.md", content: STARTER_DOC, expectedRevision: null },
+              "tui-operator",
+            );
+            this.notice = "Storage ready. A starter plan.md was created.";
+          } else this.notice = "Storage ready. plan.md already exists.";
+        } catch (error) {
+          this.notice = `Storage ready. Starter doc skipped: ${message(error)}`;
+        }
+      } else if (!target)
+        this.notice = "Storage ready. Open a conversation for plan.md.";
+      return;
+    }
+    if (cmd === "login") {
+      this.provider = await importDesktopProvider(
+        arg || "opencode:tokenrouter",
+        this.env,
+        this.workbench,
+      );
+      this.model = this.provider.defaultModel ?? "";
+      this.notice = `Connected to ${this.provider.providerId}. The key is stored encrypted.`;
+      return;
+    }
+    if (cmd === "logout") {
+      this.workbench.clearProvider();
+      this.provider = await this.workbench.providerState();
+      this.model = "";
+      this.notice = "Provider disconnected. Saved profiles were removed.";
       return;
     }
     if (cmd === "bottom") {
@@ -863,6 +1346,20 @@ export class WorkspaceTui {
           ];
     if (this.tab === "overview") {
       const o = activity(this.workbench.allViews()).overview;
+      const openTodos = this.sessionId
+        ? extractTodos(this.session()?.events ?? []).filter(
+            (item) => !item.done,
+          )
+        : [];
+      const planLines = openTodos.length
+        ? [
+            "",
+            "Plan, from real agent output (/todos for all):",
+            ...openTodos
+              .slice(0, 5)
+              .map((item) => `[ ] ${item.text} (#${item.seq})`),
+          ]
+        : ["", "Plan: no open checklist items. /todos shows them all."];
       return [
         "VOID / LOCAL WORKSPACE",
         "",
@@ -875,6 +1372,7 @@ export class WorkspaceTui {
         "",
         `Completed runs: ${o.runs} | Failures: ${o.failed}`,
         `Provider tokens: ${o.totalTokens ?? "unknown"} | Cost: unknown`,
+        ...planLines,
         "",
         "START: n new conversation, i type a prompt, Enter send.",
         "DOCUMENTS: Enter open, /edit edit, u preview Undo.",
@@ -1069,6 +1567,15 @@ export const TUI_COMMANDS = [
   ["/init", "Set up workspace storage"],
   ["/status", "Workspace status"],
   ["/cost", "Token usage and cost"],
+  ["/compact", "Summarize context, local fallback"],
+  ["/todos", "Checklist from agent output"],
+  ["/agents", "Conversations and connectors"],
+  ["/config", "Resolved paths and flags"],
+  ["/memory", "Retained local history"],
+  ["/model", "Set model for new chats"],
+  ["/export", "Save ledger, chat or document"],
+  ["/login", "Connect a provider"],
+  ["/logout", "Disconnect the provider"],
   ["/verify", "Verify signatures"],
   ["/undo", "Preview Undo"],
   ["/edit", "Open document editor"],
@@ -1333,9 +1840,13 @@ export function renderWorkspace(
     typeof usage?.total_tokens === "number" ? usage.total_tokens : "unknown";
   const cost = typeof usage?.cost === "number" ? usage.cost : "unknown";
   const model = ui.session()?.model || ui.model || "not connected";
-  const summary = `model: ${model} | tokens: ${tokens} | cost: ${cost} | output: ${ui.compactTools ? "compact" : "full"}`;
+  const ctx = ui.session() ? ui.contextNumbers() : null;
+  const ctxText = ctx ? `${ctx.messages}/${ctx.limit}` : "no session";
+  const summary =
+    `model: ${fit(model, 20)} | mode: ${ui.mode} | ctx: ${ctxText} | ` +
+    `tokens: ${tokens} | cost: ${cost} | ${ui.compactTools ? "compact" : "full"}`;
   const status = ui.confirmation
-    ? "REVIEW / y confirm / Esc cancel / PgDn preview"
+    ? "REVIEW / y accept / n reject / Esc cancel / PgDn preview"
     : running && (busy || ui.session()?.status === "running")
       ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "Waiting for approval" : phase) : "Finishing operation"}${elapsed} / Esc stop${historyStatus ? " / reading history" : ""}`
       : (historyStatus ?? ui.notice);
@@ -1382,8 +1893,12 @@ export function renderWorkspace(
         candidates.length
           ? "arrows select / Tab complete / Enter run / Esc close"
           : editing
-            ? "Enter send / Alt+Enter newline / Ctrl+R search / Ctrl+O output / Esc navigate"
-            : "Tab panels / i type / u Undo / a approve / d deny / q quit",
+            ? ui.mode === "plan"
+              ? "PLAN mode / Enter sends a plan request / Shift+Tab mode / Esc navigate"
+              : ui.mode === "accept"
+                ? "ACCEPT mode / approvals stay explicit / Enter send / Shift+Tab mode"
+                : "Enter send / Alt+Enter newline / Ctrl+R search / Ctrl+O output / Esc navigate"
+            : "Tab panels / Shift+Tab mode / i type / u Undo / a approve / d deny / q quit",
       ),
       muted,
     ),
@@ -1397,28 +1912,36 @@ export function renderWorkspace(
 const HELP = [
   "VOID TUI: real local data, no demo metrics",
   "",
-  "Tab / Shift+Tab: panels; j/k or arrows: select; Enter: details.",
+  "Tab: panels; Shift+Tab: mode (normal / accept / plan); Enter: details.",
   "Chat: start typing. / opens commands; arrows select; Tab completes.",
+  "@path mentions quote a managed document into the prompt on send.",
   "PgUp/PgDn: scroll; /bottom or Ctrl+End: follow latest; i: type.",
   "/find text searches the current conversation; Esc closes results.",
-  "Esc: stop run / navigation. Code blocks keep their original text.",
+  "Esc stops a run, or closes details. Esc Esc lists checkpoints.",
+  "A prompt sent during a run is queued and sends when the run stops.",
+  "!command runs a gated local shell; output shows once, never persists.",
   "Up/down in a single-line input browse your previous prompts.",
   "VOID_TUI_COLOR=0 disables colors; VOID_TUI_MOTION=0 disables animation.",
   "Enter sends; Alt+Enter inserts a newline; Ctrl+U clears input.",
-  "Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws.",
+  "Ctrl+R searches your prompts, or conversation text from empty input.",
+  "Ctrl+O toggles tool output; Ctrl+L redraws the terminal.",
   "Ctrl+D exits only from an empty input. Ctrl+C clears, cancels or exits.",
-  "Edit and Undo confirmations show a unified diff; full history stays signed.",
+  "Confirmations show a unified diff; y accepts, n rejects, Esc cancels.",
+  "Plan mode prefixes prompts so the model plans before acting.",
+  "Accept mode shortens edit keys; tool approvals always stay explicit.",
   "Navigation: n new chat; u preview Undo; a/d approvals; q quit.",
   "",
   "/new [prompt] | /clear | /open number-or-ID | /resume [number-or-ID]",
-  "/status | /cost | /context | /rewind [operation-ID]",
-  "/permissions | /mcp | /sessions",
+  "/status | /cost | /context | /compact | /rewind [operation-ID]",
+  "/todos | /agents | /memory | /permissions | /mcp | /sessions",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
-  "/models | /model exact-ID | /connect tokenharbor | /connect opencode:tokenrouter | /sources",
+  "/models | /model exact-ID | /connect tokenharbor | /login | /logout",
   "/documents | /document path | /edit | /history | /undo [operation-ID]",
   "/ledger | /verify | /filter text | /export ledger|chat|document",
   "/approvals | /approve [hold-ID] [reason] | /deny [hold-ID] [reason]",
   "/tools [search] | Enter inspect tool | /expand compact/full tool output",
+  "/config shows paths and flags without secrets; /sources lists providers.",
+  "/hooks /vim /terminal-setup /output-style have no VOID equivalent.",
   "/connector-file path.json | /test-connector ID",
   "Multiline: Up/Down move cursor | Ctrl+W delete word | Ctrl+K delete to line end",
   "/policy | /policy-file connector-ID path.yaml | /usage | /overview",
