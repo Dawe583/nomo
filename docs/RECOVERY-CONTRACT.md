@@ -65,9 +65,10 @@ explicit operation list, `planned → approved → applying → checkpoint → r
 partial / conflict / unknown / paused`, resumable steps, blocked forward writes and
 digest-bound approval/apply. The slice remains descending journal-sequence order only
 and has no cross-agent dependency closure, time or checkpoint selection, independent
-branch continuation, scheduler, lease or external fencing. The retained local MCP job
-tools are available on the same constrained runner. There is still no cloud MCP
-job surface.
+branch continuation, scheduler, lease or external fencing. The existing taint
+graph stays an inspection-only neighborhood around signed records; the local and
+cloud retained planners never consume it. The retained local MCP job tools are
+available on the same constrained runner. There is still no cloud MCP job surface.
 
 ## Trust boundary
 
