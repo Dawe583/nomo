@@ -81,7 +81,7 @@ test("MCP client executes, previews and restores through signed runtime; policy 
     await client.close();
     await server.close();
   });
-  assert.equal((await client.listTools()).tools.length, 5);
+  assert.equal((await client.listTools()).tools.length, 8);
   const call = async (name: string, args: Record<string, unknown>) =>
     client.callTool({ name, arguments: args });
   const payload = (r: Awaited<ReturnType<typeof call>>) =>
@@ -126,6 +126,71 @@ test("MCP client executes, previews and restores through signed runtime; policy 
     "restored",
   );
   assert.equal(writes, 1);
+  const second = await call("void_execute", {
+    operationId: "second",
+    runId: "run",
+    mutation: { value: "second-after" },
+  });
+  assert.equal(payload(second).status, "succeeded");
+  const job = "retained-job";
+  const request = {
+    jobId: job,
+    selection: { kind: "operations", operationIds: ["second", "missing"] },
+  };
+  const stored = payload(await call("void_recovery_plan_job", request));
+  assert.equal(stored.jobId, job);
+  assert.deepEqual(
+    stored.steps.map((step: { operationId: string }) => step.operationId),
+    ["second"],
+  );
+  assert.deepEqual(stored.residuals, [{ operationId: "missing", status: "missing" }]);
+  assert.equal(
+    payload(await call("void_recovery_status_job", { jobId: job })).digest,
+    stored.digest,
+  );
+  denied.add("void_recovery_apply_job");
+  assert.equal(
+    (
+      await call("void_recovery_apply_job", {
+        jobId: job,
+        planDigest: stored.digest,
+      })
+    ).isError,
+    true,
+  );
+  denied.clear();
+  const applied = payload(
+    await call("void_recovery_apply_job", {
+      jobId: job,
+      planDigest: stored.digest,
+    }),
+  );
+  assert.equal(applied.status, "partial");
+  assert.equal(applied.checkpoint, 1);
+  assert.deepEqual(
+    applied.residuals,
+    [{ operationId: "missing", status: "missing" }],
+  );
+  assert.deepEqual(
+    payload(await call("void_recovery_status_job", { jobId: job })),
+    applied,
+  );
+  const replanned = payload(await call("void_recovery_plan_job", request));
+  assert.equal(replanned.digest, stored.digest);
+  assert.equal(
+    (await call("void_recovery_plan_job", { jobId: job, selection: { kind: "run", runId: "run" } }))
+      .isError,
+    true,
+  );
+  assert.equal(
+    payload(
+      await call("void_recovery_apply_job", {
+        jobId: job,
+        planDigest: "0".repeat(64),
+      }),
+    ).status,
+    applied.status,
+  );
 });
 test("actual CLI stdio process remains alive after initialize and denies writes without policy", async (t) => {
   const { writeFile } = await import("node:fs/promises");
@@ -171,7 +236,7 @@ test("actual CLI stdio process remains alive after initialize and denies writes 
   });
   t.after(() => client.close());
   await client.connect(transport);
-  assert.equal((await client.listTools()).tools.length, 5);
+  assert.equal((await client.listTools()).tools.length, 8);
   assert.equal(
     (
       await client.callTool({
@@ -189,7 +254,7 @@ test("actual CLI stdio process remains alive after initialize and denies writes 
     ).isError,
     true,
   );
-  assert.equal((await client.listTools()).tools.length, 5);
+  assert.equal((await client.listTools()).tools.length, 8);
 });
 
 test("filesystem MCP advertises platform rename scope and enforces mutation schemas", async (t) => {

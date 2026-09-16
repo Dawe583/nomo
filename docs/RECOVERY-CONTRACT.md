@@ -147,4 +147,4 @@ writes while an active job is unterminal. The HTTP surface exposes only
 digests, step operation IDs/sequences and operation residuals/statuses
 without operation payloads, captures or provider receipts. There is no
 dependency closure, time or checkpoint selection, scheduler, lease, fencing or
-MCP job surface.
+cloud MCP job surface. The retained local MCP host is the only MCP job surface.

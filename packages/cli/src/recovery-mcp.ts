@@ -5,18 +5,45 @@ import {
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import type {
-  recoveryRuntime,
-  Json,
+  RecoveryJobPlan,
+  RecoveryJobRequest,
+  RecoveryJobResult,
   RecoveryPlan,
+  RecoveryRuntime,
+  Json,
 } from "../../runtime/src/index.ts";
 
-type Runtime = ReturnType<typeof recoveryRuntime>;
+type Runtime = Pick<
+  RecoveryRuntime,
+  | "execute"
+  | "planRecovery"
+  | "recover"
+  | "reconcile"
+  | "reconcileRecovery"
+  | "planRecoveryJob"
+  | "recoveryJobStatus"
+  | "runRecoveryJob"
+>;
+const identityPattern = "^[\\w-]{1,120}$";
+const identityShape = (label: string) => ({ type: "string", pattern: identityPattern, description: label });
+const isIdentity = (value: unknown): value is string => typeof value === "string" && new RegExp(identityPattern).test(value);
+const validJobSelection = (selection: RecoveryJobRequest["selection"]): boolean => {
+  if (!selection || typeof selection !== "object" || Array.isArray(selection)) return false;
+  if (selection.kind === "run") return isIdentity(selection.runId);
+  if (selection.kind !== "operations") return false;
+  const ids = selection.operationIds;
+  if (!Array.isArray(ids) || ids.length === 0 || new Set(ids).size !== ids.length) return false;
+  return ids.every(isIdentity);
+};
 const identity = { type: "string", pattern: "^[\\w-]{1,120}$" };
 const operation = { operationId: identity };
 const names = [
   "void_execute",
   "void_recovery_plan",
   "void_recovery_apply",
+  "void_recovery_plan_job",
+  "void_recovery_status_job",
+  "void_recovery_apply_job",
   "void_reconcile",
   "void_recovery_reconcile",
 ] as const;
@@ -115,6 +142,27 @@ const tools: Tool[] = [
     "Look up durable execution evidence after an unknown outcome. Does not repeat the original mutation; may update the local journal.",
     operation,
     ["operationId"],
+    false,
+  ),
+  tool(
+    "void_recovery_plan_job",
+    "Plan one retained recovery job for an exact run or explicit operation list. Load or create by stable job ID; validates the signed stored plan rather than trusting caller plan bytes.",
+    { jobId: identityShape("Stable job ID reused across retries"), selection: { type: "object", description: "One exact run or explicit operation ID list" } },
+    ["jobId", "selection"],
+    true,
+  ),
+  tool(
+    "void_recovery_status_job",
+    "Return the stored retained job plan or its terminal restored/partial/conflict/unknown/paused result by stable job ID.",
+    { jobId: identityShape("Stable job ID") },
+    ["jobId"],
+    true,
+  ),
+  tool(
+    "void_recovery_apply_job",
+    "Apply one already-planned retained job after operator policy checks the stored plan digest. The job ID alone is not permission.",
+    { jobId: identityShape("Stable job ID"), planDigest: { type: "string", pattern: "^[a-f0-9]{64}$", description: "Digest of the stored plan" } },
+    ["jobId", "planDigest"],
     false,
   ),
 ];
@@ -267,12 +315,10 @@ export function recoveryMcpServer(options: {
         throw new Error("Unexpected argument.");
       for (const key of definition.inputSchema.required ?? [])
         if (!(key in args)) throw new Error("Missing argument.");
-      for (const key of ["operationId", "runId"])
-        if (
-          key in args &&
-          (typeof args[key] !== "string" || !/^[\w-]{1,120}$/.test(args[key]))
-        )
-          throw new Error("Invalid identity.");
+      for (const key of ["operationId", "runId", "jobId"])
+        if (key in args && !isIdentity(args[key])) throw new Error("Invalid identity.");
+      if ("selection" in args && !validJobSelection(args.selection as RecoveryJobRequest["selection"])) throw new Error("Invalid recovery job selection.");
+      if ("planDigest" in args && (typeof args.planDigest !== "string" || !/^[a-f0-9]{64}$/.test(args.planDigest))) throw new Error("Invalid plan digest.");
       if (!(await options.permitted(name)))
         throw new Error(
           "Operator policy does not allow this tool. Hold requires operator approval outside this server.",
@@ -308,7 +354,26 @@ export function recoveryMcpServer(options: {
           options.workspace,
           args.operationId as string,
         );
-      else {
+      else if (name === "void_recovery_plan_job") {
+        const request = { workspace: options.workspace, jobId: args.jobId, selection: args.selection } as RecoveryJobRequest;
+        if (request.workspace !== options.workspace) throw new Error("Recovery job belongs to another workspace.");
+        result = await options.runtime.planRecoveryJob(request);
+      } else if (name === "void_recovery_status_job") {
+        result = await options.runtime.recoveryJobStatus(options.workspace, args.jobId as string);
+      } else if (name === "void_recovery_apply_job") {
+        if (!(await options.permitted(name)))
+          throw new Error("Operator policy does not allow this tool.");
+        const stored = await options.runtime.recoveryJobStatus(options.workspace, args.jobId as string);
+        if (!("digest" in stored)) {
+          result = stored;
+        } else {
+          if (stored.digest !== args.planDigest) throw new Error("Recovery job digest changed; re-plan the job.");
+          result = await options.runtime.runRecoveryJob(options.workspace, args.jobId as string, async (storedPlan: RecoveryJobPlan) => {
+            if (storedPlan.digest !== args.planDigest) throw new Error("Recovery job digest changed; re-plan the job.");
+            return true;
+          });
+        }
+      } else {
         const plan = args.plan as RecoveryPlan | undefined;
         if (!plan || plan.workspace !== options.workspace)
           throw new Error("Recovery plan belongs to another workspace.");

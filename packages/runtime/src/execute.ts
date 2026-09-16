@@ -70,6 +70,31 @@ export type RecoveryPlan = {
   resources: string[];
   reversibility: string;
 };
+/** Named local recovery host contract. This is the boundary imported by MCP/CLI hosts. */
+export interface RecoveryRuntime {
+  execute(input: ExecutionRequest): Promise<ExecutionResult>;
+  reconcile(workspace: string, operationId: string): Promise<ExecutionResult>;
+  reconcileRecovery(
+    workspace: string,
+    operationId: string,
+  ): Promise<RecoveryOutcome | { status: "unknown" }>;
+  planRecovery(workspace: string, operationId: string): Promise<RecoveryPlan>;
+  planRecoveryJob(request: RecoveryJobRequest): Promise<RecoveryJobPlan>;
+  recoveryJobStatus(
+    workspace: string,
+    jobId: string,
+  ): Promise<RecoveryJobResult | RecoveryJobPlan>;
+  runRecoveryJob(
+    workspace: string,
+    jobId: string,
+    authorize: (plan: RecoveryJobPlan) => Promise<boolean>,
+  ): Promise<RecoveryJobResult>;
+  recover(
+    plan: RecoveryPlan,
+    authorize: (plan: RecoveryPlan) => Promise<boolean>,
+  ): Promise<RecoveryOutcome | { status: "unknown" }>;
+  status(workspace: string, operationId: string): Promise<Stage | undefined>;
+}
 const adapterKey = (workspace: string, operationId: string) =>
   digest({ workspace, operationId });
 const clean = <T>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -87,7 +112,7 @@ function artifact(
   if (!event) throw new Error("Required operation evidence is missing.");
   return event.data as unknown as VaultReference;
 }
-export function recoveryRuntime(options: RuntimeOptions) {
+export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
   if (options.irreversibilityBudget)
     validateBudget(options.irreversibilityBudget);
   const adapters = new Map<string, RecoveryAdapter>();
