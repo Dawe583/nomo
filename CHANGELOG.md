@@ -6,6 +6,14 @@ All notable user-facing changes since the first repository commit.
 
 - Add a live ledger TUI with keyboard inspection and signature checks.
 - Refine the GUI with shared Apple-inspired styling, call search and details.
+- Bring TUI management closer to Claude Code: fuzzy slash commands, status,
+  cost, resume, rewind with auto-selected recoverable operation, control-key
+  shortcuts, a real usage status line, and unified diff review.
+- Add read-only `void doctor`, `void config`, `void init`, and `void --version`
+  commands, each reused by matching TUI slash commands.
+- Show the real provider token report in GUI chat, open reviewed branches with
+  Arrow Up, and expose class, blast radius, and policy rationale in approvals.
+- Record the consolidated remaining-work list in `docs/PLAN-GAPS.md`.
 
 ### Security fixes
 
