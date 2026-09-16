@@ -73,7 +73,8 @@ Nabídka přijímá i fuzzy zkratku, například `/rs` pro `/resume`. `/clear`,
 používají existující chat, přehled, usage, dokumenty, policy, historii
 konverzací a kontrolovaný Undo tok. Nevytvářejí druhou management vrstvu.
 Ctrl+R připraví hledání historie, Ctrl+O přepne úplný výpis nástrojů, Ctrl+L
-překreslí terminál a Ctrl+D ukončí pouze prázdný vstup.
+překreslí terminál a Ctrl+D ukončí pouze prázdný vstup. Potvrzení editace
+a Undo ukazuje unified diff se změněnými úseky místo plného textu před a po.
 Při psaní šipka nahoru prochází předchozí pokyny dané konverzace. Po odeslání
 zůstává chat připravený k psaní další zprávy; nový požadavek lze odeslat po
 skončení běhu. Escape nebo Ctrl+C během běhu zastavuje model. Ctrl+C ve vstupu

@@ -16,7 +16,7 @@ import {
   desktopSetup,
 } from "../../../../apps/control-plane/api/desktop-setup.ts";
 import { loadPolicy } from "../../../policy/src/rules.ts";
-import { fit, pad, sanitizeText, visibleLength } from "./layout.ts";
+import { fit, pad, sanitizeText, unifiedDiff, visibleLength } from "./layout.ts";
 
 export const WORKSPACE_TABS = [
   "overview",
@@ -311,13 +311,7 @@ export class WorkspaceTui {
     }
     this.confirmation = {
       title: `SAVE ${target.path}?`,
-      lines: [
-        "BEFORE",
-        ...target.content.split("\n"),
-        "",
-        "AFTER",
-        ...content.split("\n"),
-      ],
+      lines: unifiedDiff(target.content, content),
       apply: async () => {
         await this.workbench.editDocument(
           target.sessionId,
@@ -361,11 +355,10 @@ export class WorkspaceTui {
       title: `UNDO ${preview.path}?`,
       lines: [
         `Operation: ${operationId}`,
-        "BEFORE",
-        ...(preview.before ?? "[does not exist]").split("\n"),
-        "",
-        "AFTER",
-        ...(preview.after ?? "[does not exist]").split("\n"),
+        ...unifiedDiff(
+          preview.before ?? "[does not exist]",
+          preview.after ?? "[does not exist]",
+        ),
       ],
       apply: async () => {
         const current = await this.workbench.undoPreview(
@@ -1354,6 +1347,7 @@ const HELP = [
   "Enter sends; Alt+Enter inserts a newline; Ctrl+U clears input.",
   "Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws.",
   "Ctrl+D exits only from an empty input. Ctrl+C clears, cancels or exits.",
+  "Edit and Undo confirmations show a unified diff; full history stays signed.",
   "Navigation: n new chat; u preview Undo; a/d approvals; q quit.",
   "",
   "/new [prompt] | /clear | /open number-or-ID | /resume [number-or-ID]",

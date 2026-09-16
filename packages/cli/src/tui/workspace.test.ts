@@ -13,7 +13,7 @@ import {
   wrap,
 } from "./workspace.ts";
 import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
-import { visibleLength, stripAnsi } from "./layout.ts";
+import { visibleLength, stripAnsi, unifiedDiff } from "./layout.ts";
 
 test("Claude style shortcuts map only the intended control keys", () => {
   assert.equal(
@@ -452,4 +452,24 @@ test("search and paging use real conversation data and return to live follow", a
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width!));
     assert.equal(frame.split("\n").length, height);
   }
+});
+
+test("unified diff shows changed hunks with context and caps long output", () => {
+  assert.deepEqual(unifiedDiff("a\nb\nc", "a\nb\nc"), ["No changes."]);
+  const narrow = unifiedDiff("one\ntwo\nthree", "one\nTWO\nthree", 0);
+  assert.ok(narrow.some((line) => line.startsWith("@@ -2")));
+  assert.ok(narrow.includes("-two"));
+  assert.ok(narrow.includes("+TWO"));
+  assert.ok(!narrow.some((line) => line === " one" || line === " three"));
+  const wide = unifiedDiff("one\ntwo\nthree", "one\nTWO\nthree", 1);
+  assert.ok(wide.includes(" one"));
+  assert.ok(wide.includes(" three"));
+  const big = unifiedDiff(
+    Array.from({ length: 50 }, (_, i) => `old ${i}`).join("\n"),
+    Array.from({ length: 50 }, (_, i) => `new ${i}`).join("\n"),
+    0,
+    10,
+  );
+  assert.ok(big.length <= 11);
+  assert.match(big.at(-1)!, /more lines/);
 });

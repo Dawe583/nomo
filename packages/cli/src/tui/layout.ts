@@ -169,3 +169,96 @@ export function meter(value: number, max: number, width: number): string {
   );
   return `${"#".repeat(filled)}${".".repeat(Math.max(0, width - filled))}`;
 }
+
+type DiffOp = { kind: " " | "-" | "+"; line: string };
+
+function myersOps(a: readonly string[], b: readonly string[]): DiffOp[] {
+  const n = a.length, m = b.length;
+  if (!n && !m) return [];
+  if (!n) return b.map((line) => ({ kind: "+" as const, line }));
+  if (!m) return a.map((line) => ({ kind: "-" as const, line }));
+  if (n * m > 4000000)
+    return [
+      ...a.map((line) => ({ kind: "-" as const, line })),
+      ...b.map((line) => ({ kind: "+" as const, line })),
+    ];
+  const max = n + m, offset = max, trace: Int32Array[] = [];
+  const v = new Int32Array(2 * max + 1).fill(-1);
+  v[offset + 1] = 0;
+  let done = false;
+  for (let d = 0; d <= max && !done; d++) {
+    for (let k = -d; k <= d; k += 2) {
+      const index = offset + k;
+      let x: number;
+      if (k === -d || (k !== d && v[index - 1]! < v[index + 1]!)) x = v[index + 1]!;
+      else x = v[index - 1]! + 1;
+      let y = x - k;
+      while (x < n && y < m && a[x] === b[y]) { x++; y++; }
+      v[index] = x;
+      if (x >= n && y >= m) { done = true; break; }
+    }
+    trace.push(Int32Array.from(v));
+  }
+  const ops: DiffOp[] = [];
+  let x = n, y = m;
+  for (let d = trace.length - 1; d > 0; d--) {
+    const prev = trace[d - 1]!, k = x - y;
+    const down = k === -d || (k !== d && prev[offset + k - 1]! < prev[offset + k + 1]!);
+    const prevK = down ? k + 1 : k - 1;
+    const prevX = prev[offset + prevK]!, prevY = prevX - prevK;
+    while (x > prevX && y > prevY) { x--; y--; ops.push({ kind: " ", line: a[x]! }); }
+    if (down) { y--; ops.push({ kind: "+", line: b[y]! }); }
+    else { x--; ops.push({ kind: "-", line: a[x]! }); }
+  }
+  while (x > 0 && y > 0) { x--; y--; ops.push({ kind: " ", line: a[x]! }); }
+  while (x > 0) { x--; ops.push({ kind: "-", line: a[x]! }); }
+  while (y > 0) { y--; ops.push({ kind: "+", line: b[y]! }); }
+  return ops.reverse();
+}
+
+/** Line diff for review screens. Display only; the ledger stays authoritative. */
+export function unifiedDiff(
+  before: string,
+  after: string,
+  context = 3,
+  maxRows = 200,
+): string[] {
+  const ops = myersOps(before.split("\n"), after.split("\n"));
+  if (ops.every((op) => op.kind === " ")) return ["No changes."];
+  const rows: string[] = [];
+  let aLine = 1, bLine = 1, index = 0;
+  while (index < ops.length) {
+    while (index < ops.length && ops[index]!.kind === " ") {
+      aLine++; bLine++; index++;
+    }
+    if (index >= ops.length) break;
+    const hunkStart = Math.max(0, index - context);
+    const lead = index - hunkStart;
+    let end = index;
+    while (end < ops.length) {
+      if (ops[end]!.kind !== " ") { end++; continue; }
+      let run = 0;
+      while (end + run < ops.length && ops[end + run]!.kind === " ") run++;
+      if (run > 2 * context || end + run >= ops.length) break;
+      end += run;
+    }
+    const tail = Math.min(context, ops.length - end);
+    const slice = ops.slice(hunkStart, end + tail);
+    let aStart = aLine, bStart = bLine;
+    for (const op of slice.slice(0, lead)) {
+      if (op.kind !== "+") aStart--;
+      if (op.kind !== "-") bStart--;
+    }
+    const aLen = slice.filter((op) => op.kind !== "+").length;
+    const bLen = slice.filter((op) => op.kind !== "-").length;
+    rows.push("@@ -" + aStart + "," + aLen + " +" + bStart + "," + bLen + " @@");
+    for (const op of slice) rows.push(op.kind + op.line);
+    for (const op of slice) {
+      if (op.kind !== "+") aLine++;
+      if (op.kind !== "-") bLine++;
+    }
+    index = end + tail;
+  }
+  if (rows.length <= maxRows) return rows;
+  return [...rows.slice(0, maxRows), "... (" + (rows.length - maxRows) + " more lines)"];
+}
