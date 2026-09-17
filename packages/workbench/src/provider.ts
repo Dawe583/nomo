@@ -40,7 +40,7 @@ export class CompatibleProvider {
       catch (error) {
         // Only retry explicit transient rejection of the free endpoint, before any
         // reply or tool dispatch. Never substitute a paid model or replay a stream.
-        if (this.base.origin !== 'https://api.tokenrouter.com' || model !== DEFAULT_MODEL_ID ||
+        if ((this.base.origin !== 'https://api.tokenrouter.com' && this.base.origin !== 'https://text.pollinations.ai') || model !== DEFAULT_MODEL_ID ||
           attempt >= 2 || signal.aborted || !(error instanceof ProviderRequestError) ||
           ![429, 502, 503, 504].includes(error.status) || (error.retryAfter ?? 0) > 5) throw error;
         await delay((error.retryAfter ?? attempt + 1) * 1000, undefined, { signal });

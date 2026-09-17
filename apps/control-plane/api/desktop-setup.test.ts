@@ -52,11 +52,11 @@ test('local import uses fixed endpoint, hides key, selects valid model and survi
   assert.ok(!(await readFile(join(f.env.VOID_DATA_DIR, 'workspace.enc'))).includes(Buffer.from(key)));
 });
 
-test('Prime TokenRouter import keeps requested GLM when available', async t => {
-  const f = await fixture(t, async () => Response.json({ data: [{ id: 'other' }, { id: 'z-ai/glm-5.3-free' }] }));
+test('Prime TokenRouter import keeps the free default model when available', async t => {
+  const f = await fixture(t, async () => Response.json({ data: [{ id: 'other' }, { id: 'openai-fast' }] }));
   await f.save('.prime/agent/models.json', { providers: { tokenrouter: { baseUrl: 'https://api.tokenrouter.com/v1', apiKey: key } } });
   const result = await importDesktopProvider('prime:tokenrouter', f.env, f.app);
-  assert.equal(result.defaultModel, 'z-ai/glm-5.3-free');
+  assert.equal(result.defaultModel, 'openai-fast');
   assert.equal(result.providerId, 'tokenrouter');
 });
 

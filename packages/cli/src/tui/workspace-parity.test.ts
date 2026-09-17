@@ -849,6 +849,7 @@ test("/providers lists presets with local open model options", async (t) => {
   const shown = ui.detail?.join("\n") ?? "";
   assert.match(shown, /tokenrouter/);
   assert.match(shown, /tokenharbor/);
+  assert.match(shown, /pollinations/);
   assert.match(shown, /ollama.*local/);
   assert.match(shown, /Hermes/);
   assert.ok(
