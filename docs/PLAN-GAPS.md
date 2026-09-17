@@ -90,6 +90,7 @@ section 2 already flags as non evidence.
 Minimum change: publish the capability profile schema, require it in the
 release gate, and annotate or remove unproven site claims. Dependency:
 R12 profiles. Size: L.
+
 ## 2. Coding agent adapters
 
 ### G-07 R05: Git commit, revert, remote, Windows
@@ -213,16 +214,19 @@ Dependency: R06, R07, R12. Size: M.
 
 Plan: `docs/EXECUTION-PLAN.md` WP-15, `docs/RELEASE.md`, `docs/PRIME-HANDOFF.md`.
 Missing: key rotation drill (S09), transport bounds and backpressure
-(S10), typed request identity (S11), ledger read limits (S13), Slack URL
-policy (S14), child environment isolation (S15); npm scope ownership,
+(S10), Slack URL policy (S14); npm scope ownership,
 gated publish CI, compiled or bundled installable artifacts, Docker image,
 fresh install run.
+Closed since the 2026-09-16 audit: typed request identity (S11, c49aa8c
+and 396178a), ledger read limits (S13, 95c73e6, whole file read remains an
+accepted single read limit), child environment isolation (S15, 396178a).
 Evidence: `docs/PRIME-HANDOFF.md` names S09 through S15 as followup;
 `docs/RELEASE.md` lists the npm credential, publish CI and installable
 artifact blocks; packages stay `private: true`.
-Minimum change: close S10 and S11 before adding runtime surfaces, then run
+Minimum change: close S10 before adding runtime surfaces, then run
 the publish checklist in order. Dependency: WP-09 minimum. Size: L.
 `[EXT]` needs npm scope ownership and a human release authorization.
+
 ## 5. Execution and build plan deltas
 
 ### G-17 WP-04b: registry breadth toward 500 entries

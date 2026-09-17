@@ -36,17 +36,17 @@ Runtime: Node v26.8.1, pnpm 10.33.0.
 The recovered baseline passed typechecking and 397 package tests. After the
 fixes, `pnpm run check` covers 9 suites and 460 passing tests, zero failures:
 
-| Suite | Pass |
-| --- | ---: |
-| cli | 95 |
-| connectors | 57 |
-| ledger | 49 |
-| policy | 75 |
-| proxy | 80 |
-| registry | 38 |
-| sdk | 6 |
-| control-plane | 30 |
-| scripts | 30 |
+| Suite         | Pass |
+| ------------- | ---: |
+| cli           |   95 |
+| connectors    |   57 |
+| ledger        |   49 |
+| policy        |   75 |
+| proxy         |   80 |
+| registry      |   38 |
+| sdk           |    6 |
+| control-plane |   30 |
+| scripts       |   30 |
 
 The four local integration commands also passed:
 
@@ -77,8 +77,16 @@ release gate. In particular:
 - S07 deliberately retained broad operator allow rules for unknown tools. That
   prior policy decision has not been silently reversed here.
 - Key rotation (S09), transport bounds
-  and backpressure (S10), typed request identity (S11), ledger read limits (S13),
-  Slack URL policy (S14), and child environment isolation (S15) need followup.
+  and backpressure (S10), and Slack URL policy (S14) need followup.
+- Typed request identity (S11): closed. Session translation keeps agent ids in
+  one typed map, replies in the sent type, and progress tokens remember their
+  original value. Commit c49aa8c, extended in 396178a.
+- Ledger read limits (S13): closed at the entry boundary. `readLedgerEntries`
+  caps file bytes and entries per call (95c73e6). Growth during a single read
+  remains an accepted limit of the whole file read.
+- Child environment isolation (S15): closed. runProxy passes an allowlist to
+  the upstream child, case-insensitive on Windows, with upstreamEnv as the
+  explicit escalation. Verified with a real child process (396178a).
 - Real binary replay executors and disposable Postgres/S3 verification remain
   absent. Configuring a database URL is not an executor implementation.
 - Independently installable compiled artifacts, protected publication, npm
@@ -87,10 +95,10 @@ release gate. In particular:
   desktop sessions or full workbench orchestration. The AW sequence remains
   subject to the dependencies in EXECUTION-PLAN.md.
 
-Next local hardening step: close the bounded transport/request identity
-findings before adding more agent runtime surfaces. Hosted verification and publication require the relevant
+Next local hardening step: S09 key rotation drill and S14 Slack URL policy,
+then S10 transport bounds before more agent runtime surfaces. Hosted
+verification and publication require the relevant
 user-provided test resources and release authorization.
-
 
 ## Small section 2: SDK startup signatures
 
@@ -128,7 +136,6 @@ and the full provider/session workbench are not claimed complete.
 Next GUI/TUI slice: connect live pending approvals to the watch and standalone
 GUI broker, with consistent action confirmation and status. Agent sessions,
 provider setup and full replay UI remain separate unfinished workstream items.
-
 
 Live watch PTY verification also passed at 80x24: Enter detail, Escape, help,
 normal quit, SIGINT, SIGTERM and SIGHUP all restored the original terminal mode
