@@ -10,6 +10,7 @@ import {
   REGISTRY_SIZE,
   type TranscriptCall,
 } from "./classify.ts";
+import { REGISTRY_DISCLAIMER } from "@void/registry";
 
 const s3Delete = "aws.s3.object.delete";
 const pgUpdate = "postgres.row.update";
@@ -99,6 +100,12 @@ describe("classifyTranscript, the distribution", () => {
     assert.ok(text.includes("unclassified: 0%"));
     assert.ok(text.includes("unknown-tool: 0"));
     assert.ok(text.includes("r3: 1"));
+  });
+
+  test("the printed report carries the registry disclaimer verbatim", () => {
+    const text = formatClassifyReport(classifyTranscript([]));
+    assert.ok(text.includes("not certified by any vendor"));
+    assert.ok(text.endsWith(REGISTRY_DISCLAIMER));
   });
 });
 

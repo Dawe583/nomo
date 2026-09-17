@@ -87,6 +87,7 @@ test("tools show actual managed capabilities, searchable schemas and no executio
   );
   await ui.openSelected();
   assert.ok(ui.detail?.includes("INPUT SCHEMA"));
+  assert.ok(ui.detail?.some((line) => line.includes("not certified by any vendor")));
   assert.equal(app.list().length, 0);
   assert.equal(ui.confirmation, undefined);
 });

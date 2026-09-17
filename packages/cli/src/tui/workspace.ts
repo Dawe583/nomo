@@ -19,6 +19,7 @@ import {
   desktopSetup,
 } from "../../../../apps/control-plane/api/desktop-setup.ts";
 import { loadPolicy } from "../../../policy/src/rules.ts";
+import { REGISTRY_DISCLAIMER } from "../../../registry/src/index.ts";
 import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
 import { runConformanceCommand } from "../conformance.ts";
@@ -610,6 +611,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             ...json(tool.inputSchema),
             "",
             "The model requests tools through VOID policy and approvals.",
+            "",
+            REGISTRY_DISCLAIMER,
           ],
         }));
     if (this.tab === "policy")

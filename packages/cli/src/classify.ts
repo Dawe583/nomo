@@ -7,7 +7,13 @@
  * where coverage is thin, which is why it is printed first, not buried.
  */
 
-import { registry, findEntry, evaluate, type RegistryTone } from "@void/registry";
+import {
+  registry,
+  findEntry,
+  evaluate,
+  REGISTRY_DISCLAIMER,
+  type RegistryTone,
+} from "@void/registry";
 
 export type TranscriptCall = {
   readonly tool: string;
@@ -81,6 +87,8 @@ export function formatClassifyReport(report: ClassifyReport): string {
     lines.push(`${key}: ${report.distribution[key]}`);
   }
   lines.push(`unclassified: ${report.unclassifiedShare}%`);
+  // Standards rule 10: the disclaimer travels verbatim with the data.
+  lines.push("", REGISTRY_DISCLAIMER);
   return lines.join("\n");
 }
 
