@@ -9,6 +9,7 @@ import {
   TAB_ICONS,
   WorkspaceTui,
   approvalLabel,
+  detectHarnesses,
   commandSuggestions,
   extractTodos,
   isDoubleEscape,
@@ -764,6 +765,72 @@ test("/attest signs the conversation slice for offline checks", async (t) => {
   assert.ok(
     commandSuggestions("/att").some(([name]) => name === "/attest"),
   );
+});
+
+test("/providers lists presets with local open model options", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-providers-"));
+  const full = { VOID_DATA_DIR: root };
+  const app = new Workbench(full);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, full);
+  await ui.command("/providers");
+  const shown = ui.detail?.join("\n") ?? "";
+  assert.match(shown, /tokenrouter/);
+  assert.match(shown, /tokenharbor/);
+  assert.match(shown, /ollama.*local/);
+  assert.match(shown, /Hermes/);
+  assert.ok(
+    commandSuggestions("/prov").some(([name]) => name === "/providers"),
+  );
+});
+
+test("/harness shows and switches the agent harness", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-harness-"));
+  const full = { VOID_DATA_DIR: root, PATH: "/usr/bin:/bin" };
+  const app = new Workbench(full);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, full);
+  await ui.command("/harness");
+  assert.match(ui.detail?.join("\n") ?? "", /current default: cloud/);
+  assert.match(ui.detail?.join("\n") ?? "", /prime-agent: not detected on PATH/);
+  await ui.command("/harness prime-agent");
+  assert.equal(app.getPreferences().defaultAgent, "prime-agent");
+  assert.match(ui.notice, /prime-agent/);
+  await ui.command("/harness cloud");
+  assert.equal(app.getPreferences().defaultAgent, "cloud");
+  await assert.rejects(ui.command("/harness skynet"), /\/harness cloud/);
+  const found = await detectHarnesses({ PATH: "/usr/bin:/bin" });
+  assert.deepEqual(
+    found.map((item) => item.id),
+    ["prime-agent", "opencode"],
+  );
+  assert.ok(found.every((item) => item.path === null));
+});
+
+test("live thinking dots animate with motion and freeze without it", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-dots-"));
+  const full = { VOID_DATA_DIR: root };
+  const app = new Workbench(full);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, full);
+  const early = renderWorkspace(ui, 80, 30, "_", true, true, { frame: 0 });
+  const late = renderWorkspace(ui, 80, 30, "_", true, true, { frame: 4 });
+  assert.match(stripAnsi(early), /Finishing operation\. \//);
+  assert.match(stripAnsi(late), /Finishing operation\.\. \//);
+  assert.notEqual(stripAnsi(early), stripAnsi(late));
+  const still = (frame: number) =>
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame, motion: false });
+  assert.equal(stripAnsi(still(0)), stripAnsi(still(9)));
+  assert.match(stripAnsi(still(0)), /Finishing operation \/ Esc stop/);
 });
 
 test("new commands complete from a slash prefix", () => {

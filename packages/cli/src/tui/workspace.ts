@@ -2,7 +2,7 @@ import { ProxyWorkspace } from "./workspace-proxy.ts";
 import { connectTokenHarbor } from "../../../workbench/src/provider-setup.ts";
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { promisify } from "node:util";
 import { resolveConfig } from "../config.ts";
@@ -12,6 +12,7 @@ import {
   type SessionEvent,
 } from "../../../workbench/src/index.ts";
 import { activity } from "../../../workbench/src/gui.ts";
+import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import {
@@ -149,6 +150,30 @@ export function mentionToken(
   const before = [...value].slice(0, cursor).join("");
   const found = /@([^\s@]*)$/.exec(before);
   return found ? (found[1] ?? "") : undefined;
+}
+
+/** External harness CLIs detected on PATH, never executed by this check. */
+export async function detectHarnesses(env: Readonly<NodeJS.ProcessEnv>): Promise<
+  { id: string; path: string | null }[]
+> {
+  const found: { id: string; path: string | null }[] = [];
+  const pathEnv = env.PATH ?? "";
+  for (const id of ["prime-agent", "opencode"]) {
+    let path: string | null = null;
+    for (const dir of pathEnv.split(":")) {
+      if (!dir) continue;
+      const candidate = join(dir, id);
+      try {
+        await access(candidate);
+        path = candidate;
+        break;
+      } catch {
+        continue;
+      }
+    }
+    found.push({ id, path });
+  }
+  return found;
 }
 
 /** Gated shell escape refuses anything that can carry key material. */
@@ -1430,6 +1455,55 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       await this.export(arg || "ledger");
       return;
     }
+    if (cmd === "providers") {
+      const current =
+        this.provider?.providerId ??
+        this.workbench.getPreferences().defaultProvider;
+      this.detail = [
+        "PROVIDERS, pick with /connect ID or /login",
+        "",
+        ...PROVIDER_PRESETS.map(
+          (preset) =>
+            `${preset.id === current ? "[*]" : "[ ]"} ${preset.id}  ${preset.name}` +
+            ("local" in preset && preset.local ? "  (local, runs open models like Hermes)" : ""),
+        ),
+        "",
+        "Local entries need Ollama or LM Studio running on this machine.",
+        "Keys stay encrypted in local provider storage, never in the repo.",
+      ];
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "harness") {
+      // The setting is shared with the control plane. Detection only looks
+      // at PATH presence; nothing is executed, so listing is always safe.
+      if (arg && arg !== "cloud" && arg !== "prime-agent")
+        throw Error("/harness cloud | prime-agent");
+      if (arg) {
+        this.workbench.patchPreferences({ defaultAgent: arg });
+        this.notice =
+          arg === "prime-agent"
+            ? "Harness: prime-agent. New conversations route there when the bridge runs."
+            : "Harness: cloud. New conversations run in the managed session.";
+      }
+      const prefs = this.workbench.getPreferences();
+      const found = await detectHarnesses(this.env);
+      this.detail = [
+        `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
+        "",
+        "cloud: managed session in this workspace, approvals in the TUI.",
+        "prime-agent: local harness CLI for team agents, needs the bridge.",
+        "",
+        ...found.map(
+          (item) =>
+            `${item.id}: ${item.path ?? "not detected on PATH"}`,
+        ),
+        "",
+        "/harness cloud | /harness prime-agent switches the default.",
+      ];
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "attest") {
       if (!this.sessionId) throw Error("Select a conversation.");
       // Signed slice of this conversation for a third party. The bundle
@@ -1769,6 +1843,8 @@ export const TUI_COMMANDS = [
   ["/exit", "Save and quit"],
   ["/export", "Save ledger, chat or document"],
   ["/attest", "Signed slice for a third party"],
+  ["/providers", "Model providers and local open models"],
+  ["/harness", "Agent harness: cloud or prime-agent"],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],
   ["/verify", "Verify signatures"],
@@ -2076,6 +2152,9 @@ export function renderWorkspace(
       : lastEvent?.type === "message.delta"
         ? "Writing response"
         : "Thinking";
+  // Live ellipsis, frozen when motion is off so paused frames stay equal.
+  const dots =
+    visuals.motion === false ? "" : ".".repeat(1 + (Math.floor(frame / 3) % 3));
   const historyStatus =
     richChat && ui.scroll >= 0
       ? `History ${offset + 1}-${Math.min(offset + bodyHeight, lines.length)}/${lines.length} / /bottom to follow`
@@ -2123,7 +2202,7 @@ export function renderWorkspace(
   const status = ui.confirmation
     ? "REVIEW / y accept / n reject / Esc cancel / PgDn preview"
     : running && (busy || ui.session()?.status === "running")
-      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "◉ Waiting for approval" : `● ${phase}`) : "● Finishing operation"}${elapsed} / Esc stop${historyStatus ? " / reading history" : ""}${todoBadge}`
+      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "◉ Waiting for approval" : `● ${phase}${dots}`) : `● Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / reading history" : ""}${todoBadge}`
       : (historyStatus ?? ui.notice);
   const menuRows = menu.map(([name, description], i) =>
     ink(
@@ -2236,6 +2315,8 @@ const HELP = [
   "/todos | /agents | /memory | /permissions | /mcp | /sessions",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
   "/models | /model exact-ID | /connect tokenharbor | /login | /logout",
+  "/providers lists model providers incl. local open models",
+  "/harness cloud | /harness prime-agent switches the agent harness",
   "/conformance [adapter] runs the disposable adapter checks",
   "/theme [color|mono|motion|still|reset] session theme",
   "/documents | /document path | /edit | /history | /undo [operation-ID]",
