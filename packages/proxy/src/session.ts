@@ -18,6 +18,12 @@ export class Session {
   readonly #upstreamToAgent = new Map<number, number>();
   readonly #usedIds = new Set<number>();
   #nextId = 1;
+  // Typed identity: a string agent id keeps its own counter, so agent id "1"
+  // and agent id 1 never share an upstream slot. Without this the numeric
+  // allocation collides with the string id's mapping and the string caller
+  // loses its reply (agentToUpstream was overwritten, translate returned null).
+  readonly #agentToUpstreamString = new Map<string, number>();
+  #nextStringId = 1;
 
   readonly maps: SessionMaps = {
     agentToUpstream: this.#agentToUpstream,
@@ -29,10 +35,25 @@ export class Session {
   }
 
   translateRequestOut(agentRequest: JsonRpcRequest): JsonRpcRequest {
+    if (typeof agentRequest.id === "string") {
+      return this.#translateRequestOutString(agentRequest);
+    }
     const agentId = numericId(agentRequest.id);
     this.#rememberId(agentId);
     const upstreamId = this.#allocateId();
     this.#agentToUpstream.set(agentId, upstreamId);
+
+    const translated = { ...agentRequest, id: upstreamId };
+    const params = remapMetaToken(agentRequest.params, upstreamId);
+    return params === agentRequest.params ? translated : { ...translated, params };
+  }
+
+  #translateRequestOutString(agentRequest: JsonRpcRequest): JsonRpcRequest {
+    const agentId = agentRequest.id as string;
+    // One upstream id per string agent id. Repeated use of the same string id
+    // replaces the mapping, mirroring numeric re-entry semantics.
+    const upstreamId = this.#allocateId();
+    this.#agentToUpstreamString.set(agentId, upstreamId);
 
     const translated = { ...agentRequest, id: upstreamId };
     const params = remapMetaToken(agentRequest.params, upstreamId);
@@ -89,13 +110,26 @@ export class Session {
       return null;
     }
 
+    if (typeof message.id === "string") {
+      // The proxy always allocates numeric upstream ids, so a string id on a
+      // response is an unknown identity, never a reply this session routed.
+      return null;
+    }
+
     const upstreamId = numericId(message.id);
     const agentId = this.#agentIdForUpstreamResponse(upstreamId);
     if (agentId === null) {
       return null;
     }
 
-    this.drop(agentId);
+    // The reply must return the id in the type the agent sent. A string
+    // agent id resolves through its own map, a number through the numeric
+    // one; both consume their mapping exactly once.
+    if (typeof agentId === "string") {
+      this.#agentToUpstreamString.delete(agentId);
+    } else {
+      this.drop(agentId);
+    }
     return { ...message, id: agentId };
   }
 
@@ -118,7 +152,9 @@ export class Session {
     }
 
     const agentId = this.#agentIdForUpstreamResponse(token);
-    if (agentId === null) {
+    if (agentId === null || typeof agentId === "string") {
+      // Progress tokens are numeric by contract; a string agent id never
+      // enters the numeric maps, so no progress token can map to one.
       return null;
     }
 
@@ -132,7 +168,9 @@ export class Session {
     }
 
     const agentId = this.#agentIdForUpstreamResponse(requestId);
-    if (agentId === null) {
+    if (agentId === null || typeof agentId === "string") {
+      // Cancellation params are numeric by contract; a string agent id never
+      // enters the numeric maps, so nothing numeric can be cancelled here.
       return null;
     }
 
@@ -151,8 +189,14 @@ export class Session {
     return params === message.params ? translated : { ...translated, params };
   }
 
-  #agentIdForUpstreamResponse(upstreamId: number): number | null {
+  #agentIdForUpstreamResponse(upstreamId: number): number | string | null {
     for (const [agentId, mappedUpstreamId] of this.#agentToUpstream) {
+      if (mappedUpstreamId === upstreamId) {
+        return agentId;
+      }
+    }
+
+    for (const [agentId, mappedUpstreamId] of this.#agentToUpstreamString) {
       if (mappedUpstreamId === upstreamId) {
         return agentId;
       }

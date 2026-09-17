@@ -110,3 +110,26 @@ describe("Session", () => {
 function request(id: number, method: string): JsonRpcRequest {
   return { jsonrpc: "2.0", id, method };
 }
+
+describe("Session typed request identity", () => {
+  test("string and number agent ids stay distinct and reply in their own type", () => {
+    const session = new Session();
+    const fromString = session.translateRequestOut(request("1" as unknown as number, "tools/list"));
+    const fromNumber = session.translateRequestOut(request(1, "tools/call"));
+
+    assert.notEqual(fromString.id, fromNumber.id);
+    const replyString = session.translateInbound({ jsonrpc: "2.0", id: fromString.id, result: "s" });
+    const replyNumber = session.translateInbound({ jsonrpc: "2.0", id: fromNumber.id, result: "n" });
+
+    assert.deepEqual(replyString, { jsonrpc: "2.0", id: "1", result: "s" });
+    assert.deepEqual(replyNumber, { jsonrpc: "2.0", id: 1, result: "n" });
+  });
+
+  test("duplicate inbound server request ids get distinct agent ids", () => {
+    const session = new Session();
+    const first = session.translateInbound(request(42, "roots/list"));
+    const second = session.translateInbound(request(42, "roots/list"));
+
+    assert.notEqual((first as JsonRpcRequest).id, (second as JsonRpcRequest).id);
+  });
+});
