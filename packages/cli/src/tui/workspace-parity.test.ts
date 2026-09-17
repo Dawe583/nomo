@@ -9,6 +9,7 @@ import {
   TAB_ICONS,
   TAB_ICON_TONE,
   WorkspaceTui,
+  filterKeyForTab,
   approvalLabel,
   detectHarnesses,
   commandSuggestions,
@@ -455,10 +456,11 @@ test("logo is one stroke width and every row aligns", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, env);
-  const frame = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n").slice(0, 5);
-  assert.equal(frame.length, 5);
-  assert.ok(frame.every((line) => /^[ █]{32}/.test(line)));
-  assert.ok(frame.every((line) => line[32] === " "));
+  const rows = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n");
+  // Aperture mark plus wordmark: 7 rows, the wordmark rides centered.
+  assert.ok(rows.slice(0, 7).every((line) => /[█▀▄]/.test(line)));
+  const wordmark = rows.slice(1, 6).map((line) => line.slice(17, 49));
+  assert.ok(wordmark.every((line) => /^[ █]{32}$/.test(line)));
 });
 
 test("tab icons carry fixed colors in color mode only", async (t) => {
@@ -641,6 +643,19 @@ test("block cursor, Ctrl arrows and queued badge", async (t) => {
   ui.queuePrompt("later");
   const frame = stripAnsi(renderWorkspace(ui, 100, 32));
   assert.match(frame, /\+1 queued/);
+});
+
+test("typing filters lists, bound keys keep their action", () => {
+  assert.equal(filterKeyForTab("m", { name: undefined }, "models"), "m");
+  assert.equal(filterKeyForTab("u", { name: undefined }, "models"), undefined);
+  assert.equal(filterKeyForTab("q", { name: undefined }, "models"), undefined);
+  assert.equal(filterKeyForTab("?", { name: undefined }, "models"), undefined);
+  assert.equal(filterKeyForTab("m", { name: undefined }, "chat"), undefined);
+  assert.equal(filterKeyForTab("m", { name: undefined }, "help"), undefined);
+  assert.equal(filterKeyForTab("m", { name: "m", ctrl: true }, "models"), undefined);
+  assert.equal(filterKeyForTab("", { name: undefined }, "models"), undefined);
+  assert.equal(filterKeyForTab("ab", { name: undefined }, "models"), undefined);
+  assert.equal(filterKeyForTab("5", { name: undefined }, "ledger"), "5");
 });
 
 test("stash, editor and quit map only the intended control keys", () => {

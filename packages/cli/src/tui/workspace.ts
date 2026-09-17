@@ -22,6 +22,7 @@ import {
 import { loadPolicy } from "../../../policy/src/rules.ts";
 import { REGISTRY_DISCLAIMER } from "../../../registry/src/index.ts";
 import { VOID_PALETTE } from "./theme.ts";
+import { brandHeader } from "./brand.ts";
 import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
 import { runConformanceCommand } from "../conformance.ts";
@@ -87,6 +88,39 @@ export function approvalLabel(hold: {
       : ` radius ${hold.call.blastRadius}`;
   const reason = hold.call.reason ? ` ${hold.call.reason}` : "";
   return `[${hold.status}]${klass} ${hold.call.tool} ${hold.holdId.slice(0, 8)}${radius}${reason}`;
+}
+
+/** Tabs where typing filters the list, like a finder. Chat, overview,
+ * policy text and help take no filter; every other tab lists items. */
+const FILTER_TABS: readonly WorkspaceTab[] = [
+  "sessions",
+  "documents",
+  "ledger",
+  "approvals",
+  "policy",
+  "tools",
+  "models",
+  "usage",
+];
+
+/** Navigation keys keep their action; any other printable character filters.
+ * Returns the character to append, or undefined when the key stays bound. */
+export function filterKeyForTab(
+  value: string | undefined,
+  key: { name?: string; ctrl?: boolean; meta?: boolean },
+  tab: WorkspaceTab,
+): string | undefined {
+  if (!FILTER_TABS.includes(tab)) return undefined;
+  if (!value || [...value].length !== 1 || key.ctrl || key.meta) return undefined;
+  if (/[\x00-\x1f\x7f-\x9f]/.test(value)) return undefined;
+  if (
+    [
+      "q", "i", "n", "u", "a", "d", "r", "?", "j", "k",
+      "/", "!", "{", "}",
+    ].includes(value)
+  )
+    return undefined;
+  return value;
 }
 
 /** Reverse history search over sent prompts, most recent first. */
@@ -1984,30 +2018,51 @@ export function renderWorkspace(
     !ui.confirmation &&
     (!ui.session() || ui.tab !== "chat" || visuals.boot)
   ) {
+    // Web aperture mark plus the wordmark, the same pair as the site
+    // header. The mark is 7 rows, the wordmark 5, so the wordmark rides
+    // centered with one blank row top and bottom.
     const aside = [
       "VOID / local workspace",
       ui.session()?.model || ui.model || "Connect a model with /connect",
       running ? "Working / Esc to stop" : "Your work. Your control.",
       `${ui.workbench.list().length} conversations / ${holds} pending approvals`,
       "[/] commands   [Esc] navigation",
+      "/keybindings lists every shortcut",
+      "Shift+Tab mode | Tab panels",
     ];
-    VOID_LOGO.forEach((line, i) =>
-      header.push(
+    const mark = brandHeader("", {
+      interactive: true,
+      ansi: visuals.color === true,
+      colorDepth: visuals.color === true ? 24 : 0,
+      columns: width,
+      rows: height,
+      reason: "interactive",
+    });
+    mark.forEach((markRow, i) => {
+      const logoRow =
+        i === 0 || i === mark.length - 1
+          ? " ".repeat(32)
+          : (VOID_LOGO[i - 1] ?? " ".repeat(32));
+      const left =
+        markRow +
+        "  " +
         ink(
-          line,
+          logoRow,
           `1;${(visuals.boot || running) && frame % 5 === i ? ice : amber}`,
-        ) +
+        );
+      header.push(
+        left +
           (width >= 78
             ? ink(
                 fit(
-                  sanitizeText("   " + aside[i]),
-                  width - visibleLength(line),
+                  sanitizeText("   " + (aside[i] ?? "")),
+                  width - visibleLength(left),
                 ),
                 i === 1 ? ice : muted,
               )
             : ""),
-      ),
-    );
+      );
+    });
   } else
     header.push(
       ink(
@@ -2276,7 +2331,7 @@ export function renderWorkspace(
               : ui.mode === "accept"
                 ? "● ACCEPT / approvals stay explicit / Enter send / Shift+Tab or Alt+M mode / Ctrl+J newline / Ctrl+T todos"
                 : "Enter send / Shift+Enter or Ctrl+J or \\+Enter newline / Ctrl+R search / Ctrl+O output / Ctrl+T todos / Esc Esc clear / Esc navigate"
-            : "Tab panels (Left/Right too) / Shift+Tab or Alt+M mode / i type / u Undo / a approve / d deny / Ctrl+S stash / Ctrl+G editor / Meta+P models / { } prompts / q quit",
+            : "Tab panels / i type / Enter open / Esc back / u Undo / ? keys",
       ),
       muted,
     ),
