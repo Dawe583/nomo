@@ -2,7 +2,7 @@ import { generateKeyPairSync } from "node:crypto";
 import { keyProviderFromPkcs8 } from "../../ledger/src/sign.ts";
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -244,6 +244,61 @@ describe("runProxy", () => {
       ProxyStartupError,
     );
   });
+});
+
+test("runProxy filters inherited environment and honors explicit upstreamEnv", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-proxy-env-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const policyPath = join(dir, "policy.yml");
+  await writeFile(policyPath, policyText("deny"));
+  const previous = process.env.VOID_ENV_PROBE_SECRET;
+  process.env.VOID_ENV_PROBE_SECRET = "synthetic-parent-value";
+  t.after(() => {
+    if (previous === undefined) delete process.env.VOID_ENV_PROBE_SECRET;
+    else process.env.VOID_ENV_PROBE_SECRET = previous;
+  });
+  const script = `
+    const rl = require('node:readline').createInterface({ input: process.stdin });
+    rl.once('line', line => {
+      const request = JSON.parse(line);
+      const result = {
+        secret: process.env.VOID_ENV_PROBE_SECRET ?? null,
+        path: typeof process.env.PATH === 'string',
+      };
+      process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result }) + '\\n', () => process.exit(0));
+    });
+  `;
+  for (const upstreamEnv of [undefined, { VOID_ENV_PROBE_SECRET: "explicit-child-value" }]) {
+    const input = lineQueue();
+    const output: unknown[] = [];
+    const errors: string[] = [];
+    input.push(JSON.stringify({ jsonrpc: "2.0", id: 71, method: "tools/list" }));
+    const timer = setTimeout(() => input.close(), 5_000);
+    try {
+      await runProxy({
+        upstreamCommand: [process.execPath, "-e", script],
+        upstreamEnv,
+        policyPath,
+        posture: "observe",
+        shutdownSignals: false,
+        input,
+        output: line => output.push(JSON.parse(line)),
+        error: line => errors.push(line),
+      });
+    } finally {
+      clearTimeout(timer);
+      input.close();
+    }
+    assert.deepEqual(errors, []);
+    assert.deepEqual(output, [{
+      jsonrpc: "2.0",
+      id: 71,
+      result: {
+        secret: upstreamEnv?.VOID_ENV_PROBE_SECRET ?? null,
+        path: process.env.PATH !== undefined,
+      },
+    }]);
+  }
 });
 
 type Decision = "allow" | "deny" | "hold";

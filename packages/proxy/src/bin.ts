@@ -137,8 +137,8 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     }
 
     if (isNotification(message)) {
-      const relayed = relayNotification(message, session.maps).notification;
-      sendJson(relayed);
+      const relayed = session.translateInbound(message);
+      if (relayed !== null) sendJson(relayed);
       return;
     }
 
@@ -451,7 +451,7 @@ function cancellationFromAgent(notification: JsonRpcNotification, session: Sessi
   const params = notification.params;
   if (params === undefined) return null;
   const requestId = params.requestId;
-  if (typeof requestId !== "number") return null;
+  if (typeof requestId !== "number" && typeof requestId !== "string") return null;
   return session.translateCancellation(requestId);
 }
 
@@ -515,9 +515,28 @@ function normalizePosture(posture: ProxyPosture): "fail-closed" | "observe" {
   return posture === "observe" || posture === "observe-only" ? "observe" : "fail-closed";
 }
 
+const UPSTREAM_ENV_ALLOWLIST = [
+  "HOME",
+  "PATH",
+  "TMPDIR",
+  "TEMP",
+  "TMP",
+  "USERPROFILE",
+  "LANG",
+  "LC_ALL",
+  "SYSTEMROOT",
+  "COMSPEC",
+  "APPDATA",
+  "LOCALAPPDATA",
+  "PROGRAMFILES",
+] as const;
+
 function cleanEnv(env: NodeJS.ProcessEnv): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(env)) if (value !== undefined) out[key] = value;
+  for (const [key, value] of Object.entries(env)) {
+    const name = process.platform === "win32" ? key.toUpperCase() : key;
+    if (value !== undefined && UPSTREAM_ENV_ALLOWLIST.some(allowed => allowed === name)) out[key] = value;
+  }
   return out;
 }
 

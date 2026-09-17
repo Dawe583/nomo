@@ -40,6 +40,17 @@ Approval files can be placed under `--approvals-dir`; the running proxy pumps
 decisions while input is blocked on a hold. Direct denials name the rule and
 class. Hold outcomes name their approval state.
 
+## Child environment
+
+Without `upstreamEnv`, `runProxy` inherits only HOME, PATH, TMPDIR, TEMP, TMP,
+USERPROFILE, LANG, LC_ALL, SYSTEMROOT, COMSPEC, APPDATA, LOCALAPPDATA and
+PROGRAMFILES. Windows variable names are matched case-insensitively. Provider
+credentials, VOID signing keys and runtime injection variables are not inherited.
+Embedded hosts can explicitly provide `upstreamEnv` to grant required variables;
+the stdio transport still supplies the parent PATH when it is absent. This is
+an environment boundary, not a process or filesystem sandbox. Windows behavior
+is not certified by the macOS child-process integration test.
+
 ## Boundaries
 
 HTTP support is an upstream MCP client transport, not a generic HTTP tool
