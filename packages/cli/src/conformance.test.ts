@@ -8,6 +8,8 @@ import {
   filesystemConformanceProfile,
   gitConformanceProfile,
   gitConformanceFixture,
+  managedDocumentsConformanceFixture,
+  managedDocumentsConformanceProfile,
   runConformanceCommand,
 } from "./conformance.ts";
 import {
@@ -147,6 +149,44 @@ test("cleanup failure and fixture setup failure cannot produce green reports", a
   assert.ok(!JSON.stringify(failed).includes("credential"));
 });
 
+
+test("managed documents publish a capability profile and pass every runtime check", async () => {
+  assert.equal(managedDocumentsConformanceProfile.adapter.id, "managed-documents");
+  assert.equal(managedDocumentsConformanceProfile.certification, false);
+  assert.deepEqual(managedDocumentsConformanceProfile.operations, ["write", "delete"]);
+  const lines: string[] = [];
+  assert.equal(
+    await runConformanceCommand(["--adapter", "managed-documents"], (line) => lines.push(line)),
+    0,
+  );
+  const report = JSON.parse(lines[0]!);
+  assert.equal(report.passed, true);
+  assert.deepEqual(
+    report.scenarios.map((scenario: { operation: string }) => scenario.operation),
+    ["write", "delete"],
+  );
+  for (const scenario of report.scenarios) {
+    assert.deepEqual(
+      scenario.checks.map((check: { id: string }) => check.id),
+      CONFORMANCE_CASES,
+    );
+    assert.ok(scenario.checks.every((check: { passed: boolean }) => check.passed));
+  }
+});
+
+test("managed document preflight states class, readiness and radius per call", async () => {
+  const fixture = await managedDocumentsConformanceFixture("write");
+  try {
+    const observation = await fixture.adapter().preflight(fixture.arguments);
+    assert.equal(observation.effect, "write");
+    assert.equal(observation.reversibility, "r1");
+    assert.equal(observation.readiness, "verified");
+    assert.deepEqual(observation.blastRadius, { count: 1, precision: "exact" });
+    assert.deepEqual(observation.resources, ["document:sample.md"]);
+  } finally {
+    await fixture.dispose();
+  }
+});
 
 test("Git profile distinguishes create scenario from write action and stays scoped", async () => {
   assert.deepEqual(gitConformanceProfile.operations, process.platform === "win32" ? [] : ["create", "write", "delete", "rename", "stage", "unstage"]);

@@ -1,8 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { mkdtemp, rm, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { Workbench } from "../../../workbench/src/index.ts";
 import {
   WorkspaceTui,
@@ -230,12 +233,34 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
   await ui.confirm();
   assert.equal(app.workspace(id).files["plan.md"], "first");
   await ui.command("/export ledger");
-  const exported = await readFile(
-    join(env.VOID_EXPORT_DIR, (await readdir(env.VOID_EXPORT_DIR))[0]!),
-    "utf8",
+  const bundlePath = join(
+    env.VOID_EXPORT_DIR,
+    (await readdir(env.VOID_EXPORT_DIR))[0]!,
   );
+  const exported = await readFile(bundlePath, "utf8");
   assert.ok(exported.includes("signature"));
   assert.ok(!exported.includes("private-fixture"));
+  // The export must verify offline without this software, signatures included.
+  const { devKeyProvider } = await import("../../../ledger/src/sign.ts");
+  const key = await devKeyProvider({ dir: join(root, "keys") });
+  const keyId = await key.currentKeyId();
+  const spki = await key.publicKey(keyId);
+  const standalone = fileURLToPath(
+    new URL(
+      "../../../../scripts/src/verify-ledger-standalone.mjs",
+      import.meta.url,
+    ),
+  );
+  const verified = await promisify(execFile)(process.execPath, [
+    standalone,
+    bundlePath,
+    "--public-key",
+    Buffer.from(spki!).toString("base64"),
+    "--key-id",
+    keyId,
+  ]);
+  assert.match(verified.stdout, /VERIFIED \d+ entries/);
+  assert.match(verified.stdout, /signatures and hash links/);
   await app.shutdown();
   app = new Workbench(env);
   assert.equal(app.workspace(id).files["plan.md"], "first");

@@ -5,8 +5,14 @@ import { createHash, generateKeyPairSync, randomBytes } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { managedGitAdapter } from "../../connectors/src/git/managed.ts";
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
+import { managedDocumentAdapter } from "../../workbench/src/managed-documents.ts";
+import {
+  createWorkspace,
+  type WorkspaceState,
+} from "../../workbench/src/workspace.ts";
 import { keyProviderFromPkcs8 } from "../../ledger/src/sign.ts";
 import {
+  digest,
   localOperationJournal,
   reservedRecoveryVault,
   runAdapterConformance,
@@ -220,18 +226,129 @@ export async function gitConformanceFixture(operation: GitScenario = "write"): P
   } catch (error) { await rm(dir, { recursive: true, force: true }); throw error; }
 }
 
+export const managedDocumentsConformanceProfile = {
+  schema: "void.adapter-capability.v1",
+  adapter: { id: "managed-documents", version: "1" },
+  operations: ["write", "delete"],
+  boundary: "managed-text-documents-no-host-filesystem",
+  maxDecodedBytes: 256_000,
+  recovery: {
+    posix: "captured-before-image-with-drift-refusal",
+    win32: "captured-before-image-with-drift-refusal",
+  },
+  durableExecutionReceipt: false,
+  durableRecoveryReceipt: false,
+  certification: false,
+  excluded: [
+    "host-filesystem",
+    "binary-documents",
+    "directories",
+    "concurrent-external-writers",
+    "process-death",
+    "power-loss",
+    "remote-recovery",
+  ],
+  conformance: {
+    schema: "void.adapter-conformance.v1",
+    fixture: "disposable-in-memory-workspace",
+    checks: CONFORMANCE_CASES,
+    sharedRuntimeChecksOnly: true,
+  },
+} as const;
+
+type ManagedDocumentsScenario = "write" | "delete";
+
+export async function managedDocumentsConformanceFixture(
+  operation: ManagedDocumentsScenario = "write",
+): Promise<ConformanceFixture> {
+  const dir = await mkdtemp(join(tmpdir(), "void-documents-conformance-"));
+  try {
+    const path = "sample.md",
+      original = "conformance original document",
+      edited = "conformance agent edit",
+      human = "conformance human edit",
+      stamp = "2026-09-18T00:00:00.000Z";
+    let state: WorkspaceState = {
+      ...createWorkspace(),
+      files: { [path]: original },
+    };
+    // A changed delete targets another document: same path would be the
+    // same request, and the changed request case needs a real difference.
+    const inputFor = (content: string | null, other = path): Json =>
+      (content === null
+        ? {
+            id: "operation",
+            name: "void_workspace_delete",
+            arguments: { path: other },
+            at: stamp,
+          }
+        : {
+            id: "operation",
+            name: "void_workspace_write",
+            arguments: { path: other, content },
+            at: stamp,
+          }) as unknown as Json;
+    const { privateKey } = generateKeyPairSync("ed25519");
+    const signer = keyProviderFromPkcs8(
+      privateKey.export({ type: "pkcs8", format: "der" }),
+    );
+    const key = randomBytes(32);
+    return {
+      adapter: () =>
+        managedDocumentAdapter({
+          read: async () => state,
+          // Capture binding without a ledger: the committed operation with
+          // the same id must digest identically, or it is not our receipt.
+          verify: async (operation) => {
+            const found = state.operations.find(
+              (item) => item.id === operation.id,
+            );
+            return !!found && digest(found) === digest(operation);
+          },
+          commit: async (change) => {
+            state = change.state;
+          },
+        }),
+      options: () => ({
+        journal: localOperationJournal(join(dir, "journal"), signer),
+        vault: reservedRecoveryVault(
+          join(dir, "vault"),
+          { conformance: key },
+          "conformance",
+        ),
+      }),
+      arguments: inputFor(operation === "write" ? edited : null),
+      changedArguments: inputFor(
+        operation === "write" ? `${human} changed` : null,
+        operation === "write" ? path : "other.md",
+      ),
+      before: original,
+      after: operation === "write" ? edited : null,
+      human,
+      read: async () => state.files[path] ?? null,
+      writeHuman: async () => {
+        state = { ...state, files: { ...state.files, [path]: human } };
+      },
+      dispose: () => rm(dir, { recursive: true, force: true }),
+    };
+  } catch (error) {
+    await rm(dir, { recursive: true, force: true });
+    throw error;
+  }
+}
+
 export async function runConformanceCommand(
   argv: readonly string[],
   print: (text: string) => void,
 ): Promise<number> {
   const selected = argv.length === 0 ? "filesystem.managed" : argv.length === 2 && argv[0] === "--adapter" ? argv[1] : undefined;
-  if (selected !== "filesystem.managed" && selected !== "git.managed")
-    throw new Error("usage: void recovery conformance [--adapter filesystem.managed|git.managed] (disposable local fixtures only)");
-  const capability = selected === "git.managed" ? gitConformanceProfile : filesystemConformanceProfile;
+  if (selected !== "filesystem.managed" && selected !== "git.managed" && selected !== "managed-documents")
+    throw new Error("usage: void recovery conformance [--adapter filesystem.managed|git.managed|managed-documents] (disposable local fixtures only)");
+  const capability = selected === "git.managed" ? gitConformanceProfile : selected === "managed-documents" ? managedDocumentsConformanceProfile : filesystemConformanceProfile;
   const scenarios = [];
   if (selected === "git.managed" && process.platform === "win32") scenarios.push({ operation: "platform-refusal", passed: false, checks: [{ id: "posix-only", passed: true }] });
   else for (const operation of capability.operations) {
-    const report = await runAdapterConformance(capability.adapter, () => selected === "git.managed" ? gitConformanceFixture(operation as GitScenario) : filesystemConformanceFixture(operation as "create" | "write" | "delete" | "rename"));
+    const report = await runAdapterConformance(capability.adapter, () => selected === "git.managed" ? gitConformanceFixture(operation as GitScenario) : selected === "managed-documents" ? managedDocumentsConformanceFixture(operation as ManagedDocumentsScenario) : filesystemConformanceFixture(operation as "create" | "write" | "delete" | "rename"));
     scenarios.push({ operation, ...report });
   }
   const passed = scenarios.every((report) => report.passed);

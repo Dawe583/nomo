@@ -6,6 +6,7 @@ Run the built-in disposable filesystem checks from the checkout:
 node packages/cli/bin/void.mjs recovery conformance
 node packages/cli/bin/void.mjs recovery conformance --adapter filesystem.managed
 node packages/cli/bin/void.mjs recovery conformance --adapter git.managed
+node packages/cli/bin/void.mjs recovery conformance --adapter managed-documents
 ```
 
 The command creates its own temporary directories, signing key and encryption
@@ -75,6 +76,17 @@ adapters are trusted code, not plugins loaded by this command. External
 providers still need isolated target identity, receipt, conflict, permission
 and crash tests. Python transport and general provider certification remain
 outstanding R12 work.
+
+## Managed documents profile
+
+The `managed-documents` command runs 16 shared runtime checks across write
+and delete in a disposable in-memory workspace with a reopened journal and
+vault. This is the adapter behind TUI chat edits: per-call preflight states
+R1, verified readiness and exact radius 1, and human drift reports conflict
+instead of overwriting. `certification: false` and
+`sharedRuntimeChecksOnly: true` are explicit in the report. Text documents
+only, 256 kB per document, no host filesystem. Process death, power loss
+and concurrent external writers stay excluded.
 
 ## Managed Git profile
 
