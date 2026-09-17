@@ -562,6 +562,32 @@ test("render collects user prompt rows for jumps", async (t) => {
   assert.ok(ui.promptRows[0]! < ui.promptRows[1]!);
 });
 
+test("arrow keys cycle panels in navigation, cursor in editing", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-arrows-"));
+  const full = { VOID_DATA_DIR: root };
+  const app = new Workbench(full);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, full);
+  assert.equal(ui.tab, "overview");
+  ui.cycle(1);
+  assert.equal(ui.tab, "chat");
+  ui.cycle(-1);
+  assert.equal(ui.tab, "overview");
+  ui.choose("overview");
+  ui.cycle(-1);
+  assert.equal(ui.tab, "help");
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("ab");
+  input.key(undefined, { name: "left" });
+  assert.equal(input.cursor, 1);
+  input.key(undefined, { name: "right" });
+  assert.equal(input.cursor, 2);
+});
+
 test("stash, editor and quit map only the intended control keys", () => {
   assert.equal(workspaceShortcut({ name: "s", ctrl: true }, true, "draft"), "stash");
   assert.equal(workspaceShortcut({ name: "s", ctrl: true }, false, ""), "stash");

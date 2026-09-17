@@ -916,6 +916,11 @@ export async function runWorkspaceTui(
       if (key.name === "tab") {
         ui.cycle(key.shift ? -1 : 1);
         input.editing = ui.tab === "chat";
+      } else if (!input.pasting && (key.name === "right" || key.name === "left")) {
+        // Panels follow the reference: Right is next, Left is previous.
+        // In editing mode the same arrows move the cursor instead.
+        ui.cycle(key.name === "right" ? 1 : -1);
+        input.editing = ui.tab === "chat";
       } else if (value === "q") {
         stop();
         return;

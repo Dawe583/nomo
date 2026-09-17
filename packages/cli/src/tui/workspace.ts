@@ -2124,7 +2124,7 @@ export function renderWorkspace(
               : ui.mode === "accept"
                 ? "● ACCEPT / approvals stay explicit / Enter send / Shift+Tab or Alt+M mode / Ctrl+J newline / Ctrl+T todos"
                 : "Enter send / Shift+Enter or Ctrl+J or \\+Enter newline / Ctrl+R search / Ctrl+O output / Ctrl+T todos / Esc Esc clear / Esc navigate"
-            : "Tab panels / Shift+Tab or Alt+M mode / i type / u Undo / a approve / d deny / Ctrl+S stash / Ctrl+G editor / Meta+P models / { } prompts / q quit",
+            : "Tab panels (Left/Right too) / Shift+Tab or Alt+M mode / i type / u Undo / a approve / d deny / Ctrl+S stash / Ctrl+G editor / Meta+P models / { } prompts / q quit",
       ),
       muted,
     ),
@@ -2139,6 +2139,7 @@ const KEYBINDINGS = [
   "KEYBINDINGS, same action as the reference terminal where VOID has it",
   "",
   "Enter send | Shift+Enter, Alt+Enter, Ctrl+J or backslash+Enter newline",
+  "Left/Right move cursor, or cycle panels outside editing",
   "Esc stop a run or close | Esc Esc clear input, or checkpoints when empty",
   "Shift+Tab or Alt+M cycle mode (normal / accept / plan)",
   "Tab panels, complete, accept suggestion | Up/Down or Ctrl+P/N history",
@@ -2154,7 +2155,7 @@ const KEYBINDINGS = [
 const HELP = [
   "VOID TUI: real local data, no demo metrics",
   "",
-  "Tab: panels; Shift+Tab or Alt+M: mode (normal / accept / plan); Enter: details.",
+  "Tab panels (Left/Right too); Shift+Tab or Alt+M: mode (normal / accept / plan); Enter: details.",
   "Chat: start typing. / opens commands; arrows select; Tab completes.",
   "@path mentions quote a managed document into the prompt on send.",
   "PgUp/PgDn: scroll; /bottom or Ctrl+End: follow latest; i: type.",
