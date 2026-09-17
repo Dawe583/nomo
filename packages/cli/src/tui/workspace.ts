@@ -1199,10 +1199,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     if (cmd === "verify") {
       await this.refresh(true);
       this.choose("ledger");
+      // Third parties recheck without this software through the standalone
+      // script, so the notice names it instead of hiding that path.
+      const standalone =
+        "Third parties recheck exports with scripts/src/verify-ledger-standalone.mjs.";
       this.notice =
         this.proofErrors.size || this.proxy.errors.length
-          ? "VERIFICATION FAILED. See the overview."
-          : `Verified ${[...this.proofs.values()].reduce((n, v) => n + v.length, 0)} signed entries.`;
+          ? `VERIFICATION FAILED. See the overview. ${standalone}`
+          : `Verified ${[...this.proofs.values()].reduce((n, v) => n + v.length, 0)} signed entries. ${standalone}`;
       return;
     }
     if (cmd === "document") {
