@@ -16,8 +16,10 @@ import { loadPolicy } from '../../policy/src/rules.ts';
 import { decide } from '../../policy/src/decide.ts';
 import { setTimeout as delay } from 'node:timers/promises';
 import { randomUUID } from 'node:crypto';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { attestLedger, type AttestationDocument } from '../../ledger/src/attest.ts';
 import { createVoidClient, type VoidClient } from '../../sdk/src/client.ts';
 import { CompatibleProvider, ProviderRequestError, type Model, type ModelMessage, type ProviderConfig } from './provider.ts';
 import type { JsonObject } from '../../proxy/src/rpc.ts';
@@ -291,6 +293,21 @@ export class Workbench {
       this.event(session, 'tool', `Undid ${transition.operation?.path ?? operationId}.`); this.persist();
       return { ok: true, workspace: transition.state };
     });
+  }
+  /** Signed slice of one workspace for a third party. Verified in repo first. */
+  async attest(id: string): Promise<AttestationDocument> {
+    const session = this.sessions.get(id);
+    if (!session) throw new Error('Session not found.');
+    const workspace = session.view.workspace;
+    await this.ledger(workspace);
+    const dir = await mkdtemp(join(tmpdir(), 'void-attest-'));
+    try {
+      await writeFile(join(dir, `${workspace}.jsonl`), `${(this.evidence[workspace] ?? []).map(e => JSON.stringify(e)).join('\n')}\n`, { mode: 0o600 });
+      const key = await devKeyProvider({ dir: join(this.storage.directory, 'keys'), env: this.env });
+      return attestLedger(dir, workspace, key);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   }
   async ledger(workspace: string) {
     if (!Object.hasOwn(this.documents, workspace)) return undefined;

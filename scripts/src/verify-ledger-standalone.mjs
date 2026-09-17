@@ -31,6 +31,8 @@ import { join } from "node:path";
 
 const LEDGER_PREIMAGE_VERSION = "void.ledger.v1";
 const ENTRY_DOMAIN = "void.ledger.entry.v1";
+const ATTESTATION_PREIMAGE_VERSION = "void.ledger.attestation.v1";
+const MERKLE_DOMAIN = "void.ledger.merkle.v1";
 const GENESIS_PREV = "0".repeat(64);
 const MAX_BYTES = 64 * 1024 * 1024;
 const MAX_ENTRIES = 100_000;
@@ -95,6 +97,138 @@ function signingPreimage(keyId, hash) {
   return new TextEncoder().encode(
     `${LEDGER_PREIMAGE_VERSION}|ed25519|${keyId}|${hash}`,
   );
+}
+
+function merkleDigest(hashes) {
+  if (!hashes.length) return sha256Hex(`${MERKLE_DOMAIN}|empty`);
+  let level = [...hashes];
+  for (const hash of level)
+    if (!/^[0-9a-f]{64}$/.test(hash))
+      throw new TypeError("merkle input must be a 64 lowercase hex digest");
+  while (level.length > 1) {
+    const next = [];
+    for (let index = 0; index < level.length; index += 2) {
+      const left = level[index];
+      const right = level[index + 1] ?? left;
+      next.push(sha256Hex(`${MERKLE_DOMAIN}|node|${left}|${right}`));
+    }
+    level = next;
+  }
+  return level[0] ?? GENESIS_PREV;
+}
+
+function attestationPreimage(unsigned) {
+  return new TextEncoder().encode(
+    `${ATTESTATION_PREIMAGE_VERSION}|${canonicalJson(unsigned)}`,
+  );
+}
+
+function parseAttestation(value) {
+  if (typeof value !== "object" || value === null)
+    throw new Error("attestation is not an object");
+  for (const [field, ok] of [
+    [
+      "workspace",
+      typeof value.workspace === "string" && value.workspace !== "",
+    ],
+    [
+      "headSeq",
+      typeof value.headSeq === "number" &&
+        Number.isInteger(value.headSeq) &&
+        value.headSeq >= 0,
+    ],
+    ["headHash", typeof value.headHash === "string"],
+    [
+      "entriesCount",
+      typeof value.entriesCount === "number" &&
+        Number.isInteger(value.entriesCount) &&
+        value.entriesCount >= 0,
+    ],
+    ["treeDigest", typeof value.treeDigest === "string"],
+    ["key_id", typeof value.key_id === "string" && value.key_id !== ""],
+    ["alg", typeof value.alg === "string" && value.alg !== ""],
+    [
+      "signature",
+      typeof value.signature === "string" && value.signature !== "",
+    ],
+  ])
+    if (!ok) throw new Error(`attestation has invalid ${field}`);
+  return value;
+}
+
+function verifyAttestation(doc, entries, publicKey) {
+  const chain = verifyEntries(entries, publicKey);
+  if (!chain.ok)
+    return { ok: false, reason: `ledger mismatch: ${chain.reason}` };
+  if (doc.entriesCount !== entries.length)
+    return {
+      ok: false,
+      reason: `entries count mismatch: attestation ${doc.entriesCount}, ledger ${entries.length}`,
+    };
+  const headSeq = entries.length === 0 ? 0 : entries[entries.length - 1].seq;
+  if (doc.headSeq !== headSeq)
+    return {
+      ok: false,
+      reason: `head seq mismatch: attestation ${doc.headSeq}, ledger ${headSeq}`,
+    };
+  if (doc.headHash !== chain.head)
+    return { ok: false, reason: "head hash mismatch" };
+  let tree;
+  try {
+    tree = merkleDigest(entries.map((entry) => entry.hash));
+  } catch (error) {
+    return { ok: false, reason: `tree digest failed: ${error.message}` };
+  }
+  if (doc.treeDigest !== tree)
+    return { ok: false, reason: "tree digest mismatch" };
+  const wrong = entries.find((entry) => entry.workspace !== doc.workspace);
+  if (wrong !== undefined)
+    return { ok: false, reason: `workspace mismatch at entry ${wrong.seq}` };
+  if (!publicKey) return { ok: true, integrityOnly: true };
+  if (doc.alg !== "ed25519")
+    return {
+      ok: false,
+      reason: `unsupported attestation algorithm ${doc.alg}`,
+    };
+  const [alg, encoded, extra] = doc.signature.split(":");
+  if (extra !== undefined || alg !== doc.alg || !encoded)
+    return { ok: false, reason: "malformed attestation signature" };
+  const {
+    workspace,
+    headSeq: hs,
+    headHash,
+    at,
+    entriesCount,
+    treeDigest,
+    key_id,
+    alg: docAlg,
+  } = doc;
+  let signatureOk = false;
+  try {
+    signatureOk = verify(
+      null,
+      attestationPreimage({
+        workspace,
+        headSeq: hs,
+        headHash,
+        at,
+        entriesCount,
+        treeDigest,
+        key_id,
+        alg: docAlg,
+      }),
+      publicKey,
+      Buffer.from(encoded, "base64"),
+    );
+  } catch {
+    signatureOk = false;
+  }
+  if (!signatureOk)
+    return {
+      ok: false,
+      reason: `attestation signature fails under ${doc.key_id}`,
+    };
+  return { ok: true };
 }
 
 function parseEntry(value, line) {
@@ -282,7 +416,40 @@ function selftest() {
     if (!integrity.ok)
       throw new Error(`integrity-only failed: ${integrity.reason ?? ""}`);
     console.log("SELFTEST PASS integrity-only: hash links hold without a key");
-    console.log("SELFTEST PASS all four checks");
+    const unsigned = {
+      workspace: "selftest",
+      headSeq: 3,
+      headHash: good.head,
+      at: "2026-09-18T00:00:00.000Z",
+      entriesCount: 3,
+      treeDigest: merkleDigest(entries.map((entry) => entry.hash)),
+      key_id: keyId,
+      alg: "ed25519",
+    };
+    const doc = {
+      ...unsigned,
+      signature: `ed25519:${sign(null, attestationPreimage(unsigned), privateKey).toString("base64")}`,
+    };
+    const spkiKey = createPublicKey({
+      key: spki,
+      format: "der",
+      type: "spki",
+    });
+    const attested = verifyAttestation(doc, entries, spkiKey);
+    if (!attested.ok)
+      throw new Error(`attestation failed: ${attested.reason ?? ""}`);
+    console.log("SELFTEST PASS attestation: signed slice matches the bundle");
+    const recounted = verifyAttestation(
+      { ...doc, entriesCount: 2 },
+      entries,
+      spkiKey,
+    );
+    if (recounted.ok || !/count mismatch/.test(recounted.reason ?? ""))
+      throw new Error("recounted attestation verified");
+    console.log(
+      `SELFTEST PASS attestation tamper refused: ${recounted.reason}`,
+    );
+    console.log("SELFTEST PASS all six checks");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -293,14 +460,18 @@ function main(argv) {
     selftest();
     return;
   }
-  const file = argv.find((arg) => !arg.startsWith("--"));
+  const positional = argv.filter((arg) => !arg.startsWith("--"));
+  const file = positional[0];
   const keyIndex = argv.indexOf("--public-key");
   const idIndex = argv.indexOf("--key-id");
+  const attestationIndex = argv.indexOf("--attestation");
   const encoded = keyIndex >= 0 ? argv[keyIndex + 1] : undefined;
   const onlyKeyId = idIndex >= 0 ? argv[idIndex + 1] : undefined;
+  const attestationPath =
+    attestationIndex >= 0 ? argv[attestationIndex + 1] : undefined;
   if (!file || file.startsWith("--")) {
     console.error(
-      "Usage: verify-ledger-standalone.mjs <bundle.jsonl> [--public-key <base64-spki> --key-id <id>]",
+      "Usage: verify-ledger-standalone.mjs <bundle.jsonl> [--public-key <base64-spki> --key-id <id>] [--attestation <doc.json>]",
     );
     process.exitCode = 2;
     return;
@@ -347,6 +518,25 @@ function main(argv) {
   console.log(
     `VERIFIED ${result.checked} entries, head ${result.head} (${scope})`,
   );
+  if (attestationPath !== undefined) {
+    let doc;
+    try {
+      doc = parseAttestation(JSON.parse(readFileSync(attestationPath, "utf8")));
+    } catch (error) {
+      console.error(`FAILED: attestation unreadable: ${error.message}`);
+      process.exitCode = 1;
+      return;
+    }
+    const attested = verifyAttestation(doc, entries, publicKey);
+    if (!attested.ok) {
+      console.error(`FAILED: ${attested.reason}`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(
+      `ATTESTED ${doc.entriesCount} entries under ${doc.key_id} (${publicKey ? "signed" : "integrity only, signature NOT VERIFIED"})`,
+    );
+  }
 }
 
 main(process.argv.slice(2));

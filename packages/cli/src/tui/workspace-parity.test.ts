@@ -746,6 +746,26 @@ test("/theme switches session color and motion without touching env", async (t) 
   );
 });
 
+test("/attest signs the conversation slice for offline checks", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-attest-"));
+  const { app, env } = await fixtureApp(root, "answer here");
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  await ui.command("/attest");
+  assert.match(ui.detail?.[0] ?? "", /ATTESTATION/);
+  assert.match(ui.detail?.join("\n") ?? "", /"entriesCount": 0/);
+  assert.match(ui.notice, /Attested 0 entries/);
+  assert.ok(
+    commandSuggestions("/att").some(([name]) => name === "/attest"),
+  );
+});
+
 test("new commands complete from a slash prefix", () => {
   for (const cmd of [
     "/compact",

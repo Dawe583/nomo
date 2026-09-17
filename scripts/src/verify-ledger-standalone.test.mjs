@@ -18,7 +18,9 @@ test("standalone selftest proves roundtrip, tamper refusal and wrong key refusal
   assert.match(result.stdout, /SELFTEST PASS tamper refused/);
   assert.match(result.stdout, /SELFTEST PASS wrong key refused/);
   assert.match(result.stdout, /SELFTEST PASS integrity-only/);
-  assert.match(result.stdout, /SELFTEST PASS all four checks/);
+  assert.match(result.stdout, /SELFTEST PASS attestation: signed slice/);
+  assert.match(result.stdout, /SELFTEST PASS attestation tamper refused/);
+  assert.match(result.stdout, /SELFTEST PASS all six checks/);
 });
 
 test("missing bundle and half key options fail with usage, not a crash", async () => {

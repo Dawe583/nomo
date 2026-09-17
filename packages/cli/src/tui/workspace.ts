@@ -1430,6 +1430,22 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       await this.export(arg || "ledger");
       return;
     }
+    if (cmd === "attest") {
+      if (!this.sessionId) throw Error("Select a conversation.");
+      // Signed slice of this conversation for a third party. The bundle
+      // from /export ledger plus this document verify fully offline.
+      const doc = await this.workbench.attest(this.sessionId);
+      this.detail = [
+        `ATTESTATION ${this.session()?.title ?? this.sessionId}`,
+        "",
+        ...json(doc),
+        "",
+        "Check offline: standalone verifier --attestation this file.",
+      ];
+      this.scroll = 0;
+      this.notice = `Attested ${doc.entriesCount} entries, head ${doc.headHash.slice(0, 16)}.`;
+      return;
+    }
     throw Error("Unknown command. Use /help to see available commands.");
   }
   async export(kind: string) {
@@ -1752,6 +1768,7 @@ export const TUI_COMMANDS = [
   ["/keybindings", "Keyboard shortcut reference"],
   ["/exit", "Save and quit"],
   ["/export", "Save ledger, chat or document"],
+  ["/attest", "Signed slice for a third party"],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],
   ["/verify", "Verify signatures"],
@@ -2223,6 +2240,7 @@ const HELP = [
   "/theme [color|mono|motion|still|reset] session theme",
   "/documents | /document path | /edit | /history | /undo [operation-ID]",
   "/ledger | /verify | /filter text | /export ledger|chat|document",
+  "/attest signs this conversation slice for offline third party checks",
   "/approvals | /approve [hold-ID] [reason] | /deny [hold-ID] [reason]",
   "/tools [search] | Enter inspect tool | /expand compact/full tool output",
   "/config shows paths and flags without secrets; /sources lists providers.",
