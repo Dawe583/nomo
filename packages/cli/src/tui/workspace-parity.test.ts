@@ -589,6 +589,29 @@ test("arrow keys cycle panels in navigation, cursor in editing", async (t) => {
   assert.equal(input.cursor, 2);
 });
 
+test("block cursor, Ctrl arrows and queued badge", async (t) => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("src/utils/foo.ts");
+  assert.equal(input.display(), "src/utils/foo.ts▌");
+  input.cursor = 16;
+  input.key(undefined, { name: "left", ctrl: true });
+  assert.equal(input.cursor, 14);
+  input.key(undefined, { name: "right", ctrl: true });
+  assert.equal(input.cursor, 16);
+  const root = await mkdtemp(join(tmpdir(), "void-tui-queued-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  ui.queuePrompt("later");
+  const frame = stripAnsi(renderWorkspace(ui, 100, 32));
+  assert.match(frame, /\+1 queued/);
+});
+
 test("stash, editor and quit map only the intended control keys", () => {
   assert.equal(workspaceShortcut({ name: "s", ctrl: true }, true, "draft"), "stash");
   assert.equal(workspaceShortcut({ name: "s", ctrl: true }, false, ""), "stash");

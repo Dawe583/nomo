@@ -2047,7 +2047,7 @@ export function renderWorkspace(
     visuals.cursor === undefined
       ? Math.max(
           0,
-          composer.findIndex((line) => line.includes("_")),
+          composer.findIndex((line) => line.includes("▌")),
         )
       : wrap(
           ([...input].slice(0, visuals.cursor).join("") + "_").split("\n"),
@@ -2173,6 +2173,7 @@ export function renderWorkspace(
     : "";
   const holdBadge =
     holds > 0 ? ` | ◉ ${holds} approval${holds === 1 ? "" : "s"}` : "";
+  const queuedBadge = ui.queuedPrompt ? " | +1 queued" : "";
   // The tail (mode, tokens, compact) must survive narrow frames, so a long
   // model name shrinks first instead of truncating the status fields.
   let modelShown = fit(model, 20);
@@ -2181,7 +2182,7 @@ export function renderWorkspace(
   let dropCost = false;
   const summaryTail = (): string =>
     ` | ${MODE_ICON[ui.mode]} mode: ${ui.mode} | ctx: ${ctxText}${ctxBar} | ` +
-    `tokens: ${tokens}${dropCost ? "" : costSeg} | ${ui.compactTools ? "compact" : "full"}${holdBadge}`;
+    `tokens: ${tokens}${dropCost ? "" : costSeg} | ${ui.compactTools ? "compact" : "full"}${holdBadge}${queuedBadge}`;
   if (visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width)
     dropCost = true;
   while (
@@ -2278,7 +2279,7 @@ const KEYBINDINGS = [
   "Ctrl+S stash, again restore | Ctrl+G or Ctrl+X Ctrl+E editor",
   "Ctrl+T checklist | Meta+P models | { and } jump between prompts",
   "Ctrl+W to whitespace, Alt+D word, Ctrl+K line, Ctrl+U clear, Ctrl+Y paste",
-  "Ctrl+_ undo input | Alt+B/F word jump | Ctrl+A/E line ends",
+  "Ctrl+_ undo input | Alt+B/F or Ctrl+Left/Right word jump | Ctrl+A/E line ends",
   "Ctrl+D delete forward, twice exit | Ctrl+C clear, cancel, exit",
   "y accept, n reject, Esc cancel a review | PgUp/PgDn scroll",
   "No VOID equivalent: background tasks, image paste, suspend, Vim editing.",

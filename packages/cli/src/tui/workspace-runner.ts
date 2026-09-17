@@ -138,15 +138,16 @@ export class WorkspaceInput {
       return true;
     }
     // Word jumps use letter and digit runs, so punctuation separates words.
-    // Ctrl+W is the exception and deletes back to whitespace.
-    if (key.meta && key.name === "b") {
+    // Ctrl+W is the exception and deletes back to whitespace. Ctrl+Left and
+    // Ctrl+Right mirror the Alt word jumps for terminals that send them.
+    if ((key.meta && key.name === "b") || (key.ctrl && key.name === "left")) {
       let pos = this.cursor;
       while (pos > 0 && !WorkspaceInput.isWordChar(points[pos - 1]!)) pos--;
       while (pos > 0 && WorkspaceInput.isWordChar(points[pos - 1]!)) pos--;
       this.cursor = pos;
       return true;
     }
-    if (key.meta && key.name === "f") {
+    if ((key.meta && key.name === "f") || (key.ctrl && key.name === "right")) {
       let pos = this.cursor;
       while (pos < points.length && !WorkspaceInput.isWordChar(points[pos]!))
         pos++;
@@ -287,8 +288,10 @@ export class WorkspaceInput {
     return;
   }
   display() {
+    // Block cursor, one cell like a terminal cursor. The render matches it
+    // literally, so typed text can never be mistaken for the cursor.
     const points = [...this.value];
-    points.splice(this.cursor, 0, "_");
+    points.splice(this.cursor, 0, "▌");
     return points.join("");
   }
 }
@@ -821,6 +824,14 @@ export async function runWorkspaceTui(
         return;
       }
       if (input.editing || key.name === "paste-start") {
+        // A lone ? on empty input opens help instead of typing, like the
+        // reference. Any other text keeps the keystroke as typed input.
+        if (!input.pasting && input.value === "" && value === "?") {
+          ui.choose("help");
+          input.editing = false;
+          draw();
+          return;
+        }
         const token = input.pasting
           ? undefined
           : mentionToken(input.value, input.cursor);
