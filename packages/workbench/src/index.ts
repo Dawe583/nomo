@@ -44,7 +44,7 @@ export class Workbench {
   private connectors: Connector[] = [];
   private documents: Record<string, WorkspaceState> = {};
   private evidence: Record<string, JsonlEntry[]> = {};
-  private readonly holds = new Map<string, { holdId: string; call: { tool: string; workspace: string; klass: string; blastRadius: number | undefined }; expiresAt: number; status: 'pending' | 'approved' | 'denied'; by?: string; reason?: string; notify: string[] }>();
+  private readonly holds = new Map<string, { holdId: string; call: { tool: string; workspace: string; klass: string; blastRadius: number | undefined; reason: string }; expiresAt: number; status: 'pending' | 'approved' | 'denied'; by?: string; reason?: string; notify: string[] }>();
   private ignoreEnvironment = false;
   private catalog: readonly Model[] = [];
   private readonly sessions = new Map<string, Session>();
@@ -348,7 +348,12 @@ export class Workbench {
     if (!config) throw new Error('Connector not available in this session.');
     const name = config.mapping?.[tool.name] ?? tool.name;
     const classification = classifyTool(name, { facts: config.facts ?? {}, args });
-    const call = { tool: name, workspace: session.view.workspace, klass: classification.outcome === 'classified' ? classification.tone : 'r3', connector: tool.connectorId, blastRadius: undefined, arguments: args };
+    // The hold keeps the classification evidence, not only its tone, so the
+    // operator decides from the matched case rather than a bare class label.
+    const callReason = classification.outcome === 'classified' ? classification.reason
+      : classification.outcome === 'unknown-tool' ? 'No registry entry covers this tool. Fail closed as R3.'
+      : `No registry case matched. Assumed ${classification.assumeTone ?? 'r3'}${classification.missingFacts.length ? `; missing facts: ${classification.missingFacts.join(', ')}` : ''}.`;
+    const call = { tool: name, workspace: session.view.workspace, klass: classification.outcome === 'classified' ? classification.tone : 'r3', connector: tool.connectorId, blastRadius: undefined, reason: callReason, arguments: args };
     const policy = loadPolicy(config.policy ?? DEFAULT_POLICY);
     if (!policy.ok) throw new Error('Invalid policy.');
     const decision = classification.outcome === 'classified' ? decide(policy, call) : { kind: 'deny' as const };

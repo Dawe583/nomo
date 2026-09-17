@@ -69,6 +69,22 @@ export function isDoubleEscape(now: number, last: number, windowMs = 800) {
   return last > 0 && now - last >= 0 && now - last <= windowMs;
 }
 
+/** Approval rows show class, radius and the matched case, never a bare tool name.
+ * An unmeasured radius prints as unknown, because unknown is not zero. */
+export function approvalLabel(hold: {
+  holdId: string;
+  status: string;
+  call: { tool: string; klass?: string; blastRadius?: number; reason?: string };
+}): string {
+  const klass = hold.call.klass ? ` [${hold.call.klass.toUpperCase()}]` : "";
+  const radius =
+    hold.call.blastRadius === undefined
+      ? " radius unknown"
+      : ` radius ${hold.call.blastRadius}`;
+  const reason = hold.call.reason ? ` ${hold.call.reason}` : "";
+  return `[${hold.status}]${klass} ${hold.call.tool} ${hold.holdId.slice(0, 8)}${radius}${reason}`;
+}
+
 /** Reverse history search over sent prompts, most recent first. */
 export function searchHistoryPrompts(
   prompts: readonly string[],
@@ -550,12 +566,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           const h = value as {
             holdId: string;
             status: string;
-            call: { tool: string };
+            call: {
+              tool: string;
+              klass?: string;
+              blastRadius?: number;
+              reason?: string;
+            };
             expiresAt: number;
           };
           return {
             id: h.holdId,
-            label: `[${h.status}] ${h.call.tool} ${h.holdId.slice(0, 8)}`,
+            label: approvalLabel(h),
             lines: json(h),
           };
         })
@@ -715,6 +736,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       title: `UNDO ${preview.path}?`,
       lines: [
         `Operation: ${operationId}`,
+        "Drift check passed: the document still matches the captured image,",
+        "and no newer change to this document exists. The preview is",
+        "rechecked before anything is applied.",
         ...unifiedDiff(
           preview.before ?? "[does not exist]",
           preview.after ?? "[does not exist]",

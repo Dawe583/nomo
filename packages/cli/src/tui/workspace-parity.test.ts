@@ -8,6 +8,7 @@ import {
   MODE_ICON,
   TAB_ICONS,
   WorkspaceTui,
+  approvalLabel,
   commandSuggestions,
   extractTodos,
   isDoubleEscape,
@@ -499,6 +500,53 @@ test("stash, editor and quit map only the intended control keys", () => {
   );
   assert.equal(workspaceShortcut({ name: "s" }, true, "draft"), undefined);
   assert.equal(workspaceShortcut({ name: "g" }, true, "draft"), undefined);
+});
+
+test("approval rows carry class, radius and the matched case", () => {
+  assert.equal(
+    approvalLabel({
+      holdId: "abc123",
+      status: "pending",
+      call: { tool: "stripe.refund.create", klass: "r2", reason: "Money moves." },
+    }),
+    "[pending] [R2] stripe.refund.create abc123 radius unknown Money moves.",
+  );
+  assert.equal(
+    approvalLabel({
+      holdId: "abc123",
+      status: "approved",
+      call: { tool: "db.row.delete", klass: "r3", blastRadius: 3 },
+    }),
+    "[approved] [R3] db.row.delete abc123 radius 3",
+  );
+  assert.equal(
+    approvalLabel({ holdId: "abc123", status: "pending", call: { tool: "x" } }),
+    "[pending] x abc123 radius unknown",
+  );
+});
+
+test("undo review states the drift check before the diff", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-undo-drift-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  const id = ui.sessionId!;
+  await app.editDocument(
+    id,
+    { path: "doc.md", content: "before", expectedRevision: null },
+    "tui-operator",
+  );
+  ui.sessionId = id;
+  ui.documentPath = "doc.md";
+  await ui.prepareUndo();
+  assert.equal(ui.confirmation?.title, "UNDO doc.md?");
+  assert.ok(ui.confirmation?.lines.join("\n").includes("Drift check passed"));
 });
 
 test("new commands complete from a slash prefix", () => {
