@@ -18,8 +18,9 @@ domain behaviour.
 
 ## Visual contract
 
-The interface uses ASCII structure only. Colour follows the site palette, but
-it is redundant information:
+The workspace frame uses box drawing with joined corners, one unbroken border
+at every width. Tabs, modes and status carry single cell icons, always next to
+a text label. Colour follows the site palette, but it is redundant information:
 
 | class | marker | truecolour |
 | ----- | ------ | ---------- |
@@ -29,7 +30,8 @@ it is redundant information:
 | R3    | `[3]`  | `#f47a88`  |
 
 Allow, hold and deny additionally carry `[+]`, `[!]` and `[x]`. No safety state
-may be distinguished only by colour.
+may be distinguished only by colour or by an icon. The prompt box border is
+mode aware (normal, accept, plan) and always states the mode in text.
 
 The memorable visual element is the accountable write-path line:
 
@@ -100,6 +102,16 @@ class filters; p pauses display updates; v refreshes verification; ? opens help;
 q exits. Exiting leaves the proxy running. The live watch does not offer approval
 or replay shortcuts until those actions are actually connected. Existing preview
 renderers remain available for the richer planned dashboard.
+
+## Workspace keys
+
+The workspace prompt follows the reference terminal: Enter sends; Shift+Enter,
+Alt+Enter, Ctrl+J or backslash+Enter inserts a newline; Esc stops a run; Esc Esc
+clears input or opens checkpoints when empty; Shift+Tab or Alt+M cycles modes;
+Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws, twice
+clears; Ctrl+S stashes input; Ctrl+G opens the editor; Meta+P opens models;
+Ctrl+C clears, cancels or exits; Ctrl+D exits from empty input. Ctrl+B
+background tasks, image paste, suspend and Vim editing have no VOID equivalent.
 
 ### Aperture identity
 

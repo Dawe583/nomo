@@ -23,6 +23,7 @@ import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
 import {
   fit,
+  meter,
   pad,
   sanitizeText,
   unifiedDiff,
@@ -1340,7 +1341,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "NEW CONVERSATION",
             "",
             `Model: ${this.model || "not connected"}`,
-            "Press i to type; Enter to send; Alt+Enter for a new line.",
+            "Press i to type; Enter to send; Shift+Enter or Ctrl+J for a new line.",
             "Example: Create a plan and save it to plan.md.",
             "",
             "/connect imports TokenRouter from your local OpenCode configuration.",
@@ -1625,6 +1626,44 @@ const VOID_LOGO = [
   String.raw`   \ \/ /  | |__| | _| |_ | |__| |`,
   String.raw`    \__/    \____/ |_____||_____/ `,
 ];
+// Single cell symbols only, so visibleLength stays exact on every terminal.
+// Geometric shapes (U+25A0 to U+25FF) count one cell in layout.ts, while emoji
+// and dingbat ranges count two. Icons never carry safety meaning alone, the
+// [0] to [3] and [+]/[!]/[x] markers stay authoritative.
+export const TAB_ICONS: Record<WorkspaceTab, string> = {
+  overview: "◈",
+  chat: "●",
+  sessions: "≡",
+  documents: "▤",
+  ledger: "▪",
+  approvals: "◉",
+  policy: "§",
+  tools: "+",
+  models: "◐",
+  usage: "◔",
+  help: "?",
+};
+export const MODE_ICON: Record<TuiMode, string> = {
+  normal: "◆",
+  accept: "●",
+  plan: "○",
+};
+// Continuous prompt frame. The old dashed rails left the composer sides open,
+// which read as interrupted lines. Box drawing with joined corners keeps one
+// unbroken border at every width.
+export function promptFrameTop(title: string, width: number): string {
+  // Titles longer than the frame truncate with a marker, never wrap past it.
+  const fitted = fit(title, Math.max(1, width - 6));
+  const head = `╭─ ${fitted} `;
+  const tail = Math.max(0, width - visibleLength(head) - 1);
+  return `${head}${"─".repeat(tail)}╮`;
+}
+export function promptFrameBottom(width: number): string {
+  return `╰${"─".repeat(Math.max(0, width - 2))}╯`;
+}
+export function promptFrameRow(content: string, width: number): string {
+  return `│ ${pad(content, Math.max(0, width - 4))} │`;
+}
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -1701,7 +1740,7 @@ export function renderWorkspace(
       tabs
         .map((t) =>
           ink(
-            t === ui.tab ? ` [${t}] ` : ` ${t} `,
+            t === ui.tab ? ` [${TAB_ICONS[t]} ${t}] ` : ` ${TAB_ICONS[t]} ${t} `,
             t === ui.tab ? `1;${ice};48;5;24` : muted,
           ),
         )
@@ -1722,6 +1761,9 @@ export function renderWorkspace(
     menuStart,
     menuStart + Math.min(5, Math.max(0, height - header.length - 8)),
   );
+  // Inside the frame the row keeps 2 side cells plus a 2 cell prompt prefix,
+  // so text wraps at width - 6 and the border never breaks mid line.
+  const composerInner = Math.max(1, width - 6);
   const composer = wrap(
     (
       input ||
@@ -1729,7 +1771,7 @@ export function renderWorkspace(
         ? "Ask anything or type / for commands"
         : "i type / Enter details")
     ).split("\n"),
-    width - 2,
+    composerInner,
   );
   const composerHeight = Math.min(composer.length, height >= 18 ? 3 : 1);
   const cursorLine =
@@ -1740,7 +1782,7 @@ export function renderWorkspace(
         )
       : wrap(
           ([...input].slice(0, visuals.cursor).join("") + "_").split("\n"),
-          width - 2,
+          composerInner,
         ).length - 1;
   const composerStart = Math.max(0, cursorLine - composerHeight + 1);
   const bodyHeight = Math.max(
@@ -1843,63 +1885,84 @@ export function renderWorkspace(
   const model = ui.session()?.model || ui.model || "not connected";
   const ctx = ui.session() ? ui.contextNumbers() : null;
   const ctxText = ctx ? `${ctx.messages}/${ctx.limit}` : "no session";
-  const summary =
-    `model: ${fit(model, 20)} | mode: ${ui.mode} | ctx: ${ctxText} | ` +
-    `tokens: ${tokens} | cost: ${cost} | ${ui.compactTools ? "compact" : "full"}`;
+  const ctxBar = ctx
+    ? ` ${meter(ctx.messages, ctx.limit, width >= 120 ? 10 : 4)}`
+    : "";
+  const holdBadge =
+    holds > 0 ? ` | ◉ ${holds} approval${holds === 1 ? "" : "s"}` : "";
+  // The tail (mode, tokens, compact) must survive narrow frames, so a long
+  // model name shrinks first instead of truncating the status fields.
+  let modelShown = fit(model, 20);
+  // Cost stays visible when it fits; the full cost report lives in /cost.
+  const costSeg = ` | cost: ${cost}`;
+  let dropCost = false;
+  const summaryTail = (): string =>
+    ` | ${MODE_ICON[ui.mode]} mode: ${ui.mode} | ctx: ${ctxText}${ctxBar} | ` +
+    `tokens: ${tokens}${dropCost ? "" : costSeg} | ${ui.compactTools ? "compact" : "full"}${holdBadge}`;
+  if (visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width)
+    dropCost = true;
+  while (
+    visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width &&
+    visibleLength(modelShown) > 8
+  )
+    modelShown = fit(modelShown, visibleLength(modelShown) - 1);
+  const summary = `◐ model: ${modelShown}${summaryTail()}`;
+  const todoBadge = (() => {
+    try {
+      const todos = extractTodos(ui.session()?.events ?? []);
+      const open = todos.filter((item) => !item.done).length;
+      return todos.length ? ` | ✓ ${todos.length - open}/${todos.length} todos` : "";
+    } catch {
+      return "";
+    }
+  })();
   const status = ui.confirmation
     ? "REVIEW / y accept / n reject / Esc cancel / PgDn preview"
     : running && (busy || ui.session()?.status === "running")
-      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "Waiting for approval" : phase) : "Finishing operation"}${elapsed} / Esc stop${historyStatus ? " / reading history" : ""}`
+      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "◉ Waiting for approval" : `● ${phase}`) : "● Finishing operation"}${elapsed} / Esc stop${historyStatus ? " / reading history" : ""}${todoBadge}`
       : (historyStatus ?? ui.notice);
-  const line = (label: string) => {
-    const head = `-- ${label} `;
-    const rail = Array.from(
-      { length: Math.max(0, width - head.length) },
-      () => "-",
-    );
-    if (running && visuals.motion !== false && rail.length)
-      for (let tail = 0; tail < Math.min(5, rail.length); tail++)
-        rail[(frame + tail) % rail.length] = ["·", "─", "━", "─", "·"][tail]!;
-    return fit(head + rail.join(""), width);
-  };
   const menuRows = menu.map(([name, description], i) =>
     ink(
       text(
-        `${i + menuStart === selection ? " >" : "  "} ${name.padEnd(13)} ${description}`,
+        `${i + menuStart === selection ? " ›" : "  "} ${name.padEnd(13)} ${description}`,
       ),
       i + menuStart === selection ? `1;${ice};48;5;24` : muted,
     ),
   );
+  // One frame, joined corners, no gaps: top, rows with vertical sides, bottom.
+  const frameTitle = editing
+    ? `${MODE_ICON[ui.mode]} Write a prompt [${ui.mode.toUpperCase()}]`
+    : `${TAB_ICONS[ui.tab]} ${ui.tab} / navigation`;
+  const promptBox = [
+    promptFrameTop(frameTitle, width),
+    ...composer
+      .slice(composerStart, composerStart + composerHeight)
+      .map((value, i) =>
+        promptFrameRow(
+          `${i === 0 ? (editing ? "› " : ": ") : "  "}${value}`,
+          width,
+        ),
+      ),
+    promptFrameBottom(width),
+  ];
   return [
     ...header,
     ...bodyRows,
     ink(text(summary), ice),
     ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
     ...menuRows,
-    ink(
-      line(editing ? "Write a prompt" : `${ui.tab} / navigation`),
-      editing ? ice : muted,
-    ),
-    ...composer
-      .slice(composerStart, composerStart + composerHeight)
-      .map((value, i) =>
-        ink(
-          fit(`${i === 0 ? (editing ? "> " : ": ") : "  "}${value}`, width),
-          editing ? "1;38;5;255;48;5;236" : muted,
-        ),
-      ),
-    ink("-".repeat(width), editing ? ice : muted),
+    ...promptBox.map((row) => ink(row, editing ? ice : muted)),
     ink(
       text(
         candidates.length
-          ? "arrows select / Tab complete / Enter run / Esc close"
+          ? "↑↓ select / Tab complete / Enter run / Esc close"
           : editing
             ? ui.mode === "plan"
-              ? "PLAN mode / Enter sends a plan request / Shift+Tab mode / Esc navigate"
+              ? "○ PLAN / Enter sends a plan request / Shift+Tab or Alt+M mode / Ctrl+J newline / Esc navigate"
               : ui.mode === "accept"
-                ? "ACCEPT mode / approvals stay explicit / Enter send / Shift+Tab mode"
-                : "Enter send / Alt+Enter newline / Ctrl+R search / Ctrl+O output / Esc navigate"
-            : "Tab panels / Shift+Tab mode / i type / u Undo / a approve / d deny / q quit",
+                ? "● ACCEPT / approvals stay explicit / Enter send / Shift+Tab or Alt+M mode / Ctrl+J newline"
+                : "Enter send / Shift+Enter or Ctrl+J or \\+Enter newline / Ctrl+R search / Ctrl+O output / Esc Esc clear / Esc navigate"
+            : "Tab panels / Shift+Tab or Alt+M mode / i type / u Undo / a approve / d deny / Ctrl+S stash / Ctrl+G editor / Meta+P models / q quit",
       ),
       muted,
     ),
@@ -1913,20 +1976,22 @@ export function renderWorkspace(
 const HELP = [
   "VOID TUI: real local data, no demo metrics",
   "",
-  "Tab: panels; Shift+Tab: mode (normal / accept / plan); Enter: details.",
+  "Tab: panels; Shift+Tab or Alt+M: mode (normal / accept / plan); Enter: details.",
   "Chat: start typing. / opens commands; arrows select; Tab completes.",
   "@path mentions quote a managed document into the prompt on send.",
   "PgUp/PgDn: scroll; /bottom or Ctrl+End: follow latest; i: type.",
   "/find text searches the current conversation; Esc closes results.",
-  "Esc stops a run, or closes details. Esc Esc lists checkpoints.",
+  "Esc stops a run, or closes details. Esc Esc clears input, or lists checkpoints when empty.",
   "A prompt sent during a run is queued and sends when the run stops.",
   "!command runs a gated local shell; output shows once, never persists.",
-  "Up/down in a single-line input browse your previous prompts.",
+  "Up/Down or Ctrl+P/Ctrl+N browse your previous prompts in single-line input.",
   "VOID_TUI_COLOR=0 disables colors; VOID_TUI_MOTION=0 disables animation.",
-  "Enter sends; Alt+Enter inserts a newline; Ctrl+U clears input.",
+  "Enter sends; Shift+Enter, Alt+Enter, Ctrl+J or backslash+Enter inserts a newline.",
   "Ctrl+R searches your prompts, or conversation text from empty input.",
-  "Ctrl+O toggles tool output; Ctrl+L redraws the terminal.",
+  "Ctrl+O toggles tool output; Ctrl+L redraws, twice clears; Ctrl+S stashes input.",
+  "Ctrl+G opens the document editor; Meta+P jumps to models.",
   "Ctrl+D exits only from an empty input. Ctrl+C clears, cancels or exits.",
+  "Alt+B/F move by word; Alt+D deletes a word; Ctrl+Y pastes killed text; Ctrl+_ undoes input.",
   "Confirmations show a unified diff; y accepts, n rejects, Esc cancels.",
   "Plan mode prefixes prompts so the model plans before acting.",
   "Accept mode shortens edit keys; tool approvals always stay explicit.",
@@ -1943,8 +2008,9 @@ const HELP = [
   "/tools [search] | Enter inspect tool | /expand compact/full tool output",
   "/config shows paths and flags without secrets; /sources lists providers.",
   "/hooks /vim /terminal-setup /output-style have no VOID equivalent.",
+  "Ctrl+B background tasks, image paste, suspend and Vim editing have no VOID equivalent.",
   "/connector-file path.json | /test-connector ID",
-  "Multiline: Up/Down move cursor | Ctrl+W delete word | Ctrl+K delete to line end",
+  "Multiline: Up/Down move cursor | Ctrl+W delete to whitespace | Ctrl+K delete to line end | Ctrl+U clear",
   "/policy | /policy-file connector-ID path.yaml | /usage | /overview",
   "",
   'Editor: VOID_TUI_EDITOR is a JSON array, e.g. ["code","--wait"].',

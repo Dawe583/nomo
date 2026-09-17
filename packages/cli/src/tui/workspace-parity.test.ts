@@ -5,17 +5,22 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import {
+  MODE_ICON,
+  TAB_ICONS,
   WorkspaceTui,
   commandSuggestions,
   extractTodos,
   isDoubleEscape,
   mentionCandidates,
   mentionToken,
+  promptFrameBottom,
+  promptFrameRow,
+  promptFrameTop,
   renderWorkspace,
   searchHistoryPrompts,
 } from "./workspace.ts";
-import { workspaceShortcut } from "./workspace-runner.ts";
-import { stripAnsi } from "./layout.ts";
+import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
+import { stripAnsi, visibleLength } from "./layout.ts";
 
 const assistantFetcher = (content: string) =>
   async (url: unknown) => {
@@ -388,6 +393,112 @@ test("review needs an explicit accept or reject key", async (t) => {
   assert.equal(app.workspace(id).files["doc.md"], "before");
   const frame = stripAnsi(renderWorkspace(ui, 100, 32));
   assert.ok(frame.includes("Tab panels"));
+});
+
+test("prompt frame stays continuous at every width", async (t) => {
+  assert.equal(visibleLength(promptFrameTop("Write a prompt", 80)), 80);
+  assert.equal(visibleLength(promptFrameBottom(80)), 80);
+  assert.equal(visibleLength(promptFrameRow("> hello_", 80)), 80);
+  assert.ok(promptFrameTop("Write a prompt", 20).startsWith("╭"));
+  assert.ok(promptFrameTop("Write a prompt", 20).endsWith("╮"));
+  const root = await mkdtemp(join(tmpdir(), "void-tui-frame-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  for (const [width, height] of [
+    [20, 8],
+    [40, 12],
+    [80, 24],
+    [100, 32],
+    [160, 45],
+  ]) {
+    const frame = stripAnsi(
+      renderWorkspace(ui, width!, height!, "hello_", true, false, {
+        cursor: 6,
+      }),
+    );
+    const rows = frame.split("\n");
+    assert.equal(rows.length, height);
+    assert.ok(rows.every((line) => visibleLength(line) <= width!));
+    const top = rows.find((line) => line.startsWith("╭"))!;
+    const bottom = rows.find((line) => line.startsWith("╰"))!;
+    assert.ok(top.endsWith("╮"), top);
+    assert.ok(bottom.endsWith("╯"), bottom);
+    assert.equal(visibleLength(top), width);
+    assert.equal(visibleLength(bottom), width);
+    const promptRows = rows.filter((line) => line.startsWith("│"));
+    assert.ok(promptRows.length > 0);
+    for (const row of promptRows) {
+      assert.ok(row.endsWith("│"), row);
+      assert.equal(visibleLength(row), width);
+    }
+  }
+});
+
+test("icons stay one cell wide and never carry safety meaning", () => {
+  for (const icon of [...Object.values(TAB_ICONS), ...Object.values(MODE_ICON)])
+    assert.equal(visibleLength(icon), 1, icon);
+  assert.equal(TAB_ICONS.chat, "●");
+  assert.equal(MODE_ICON.plan, "○");
+});
+
+test("newline keys match the reference terminal", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  assert.equal(input.key(undefined, { name: "j", ctrl: true }), undefined);
+  assert.equal(input.value, "\n");
+  input.set("ab");
+  assert.equal(input.key(undefined, { name: "enter", shift: true }), undefined);
+  assert.equal(input.value, "ab\n");
+  input.set("cd");
+  assert.equal(input.key(undefined, { name: "enter", meta: true }), undefined);
+  assert.equal(input.value, "cd\n");
+  input.set("trail\\");
+  assert.equal(input.key("\r", { name: "return" }), undefined);
+  assert.equal(input.value, "trail\n");
+  input.set("send me");
+  assert.equal(input.key("\r", { name: "return" }), "submit");
+});
+
+test("kill ring and input undo cover the editing keys", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("hello world");
+  input.cursor = 11;
+  input.key(undefined, { name: "w", ctrl: true });
+  assert.equal(input.value, "hello ");
+  input.key(undefined, { name: "y", ctrl: true });
+  assert.equal(input.value, "hello world");
+  input.set("abcdef");
+  input.cursor = 3;
+  assert.equal(input.key(undefined, { name: "d", ctrl: true }), undefined);
+  assert.equal(input.value, "abcef");
+  input.key(undefined, { name: "_", ctrl: true });
+  assert.equal(input.value, "abcdef");
+  input.set("src/utils/foo.ts");
+  input.cursor = 16;
+  input.key(undefined, { name: "b", meta: true });
+  assert.equal(input.cursor, 14);
+  input.key(undefined, { name: "f", meta: true });
+  assert.equal(input.cursor, 16);
+  input.cursor = 4;
+  input.key(undefined, { name: "d", meta: true });
+  assert.equal(input.value, "src/utils/foo.ts".replace("utils", ""));
+});
+
+test("stash, editor and quit map only the intended control keys", () => {
+  assert.equal(workspaceShortcut({ name: "s", ctrl: true }, true, "draft"), "stash");
+  assert.equal(workspaceShortcut({ name: "s", ctrl: true }, false, ""), "stash");
+  assert.equal(
+    workspaceShortcut({ name: "g", ctrl: true }, true, "draft"),
+    "external-editor",
+  );
+  assert.equal(workspaceShortcut({ name: "s" }, true, "draft"), undefined);
+  assert.equal(workspaceShortcut({ name: "g" }, true, "draft"), undefined);
 });
 
 test("new commands complete from a slash prefix", () => {

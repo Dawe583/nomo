@@ -21,7 +21,12 @@ import { DiffScreenWriter } from "./watch.ts";
 import { sanitizeText } from "./layout.ts";
 
 export type WorkspaceShortcut =
-  "redraw" | "toggle-tools" | "search-history" | "quit";
+  | "redraw"
+  | "toggle-tools"
+  | "search-history"
+  | "stash"
+  | "external-editor"
+  | "quit";
 
 export function workspaceShortcut(
   key: Key,
@@ -32,6 +37,8 @@ export function workspaceShortcut(
   if (key.name === "l") return "redraw";
   if (key.name === "o") return "toggle-tools";
   if (key.name === "r" && editing) return "search-history";
+  if (key.name === "s") return "stash";
+  if (key.name === "g") return "external-editor";
   if (key.name === "d" && (!editing || !input)) return "quit";
   return undefined;
 }
@@ -42,11 +49,29 @@ export class WorkspaceInput {
   value = "";
   cursor = 0;
   pasting = false;
+  // Kill ring: Ctrl+K, Ctrl+U, Ctrl+W and Alt+D store deleted text for Ctrl+Y.
+  // Undo keeps one previous state for Ctrl+_. Both stay in memory only.
+  kill = "";
+  private undoState?: { value: string; cursor: number };
   set(value: string) {
     this.value = value;
     this.cursor = [...value].length;
   }
+  private remember() {
+    this.undoState = { value: this.value, cursor: this.cursor };
+  }
+  undoEdit(): boolean {
+    if (!this.undoState) return false;
+    this.value = this.undoState.value;
+    this.cursor = Math.min(
+      this.undoState.cursor,
+      [...this.undoState.value].length,
+    );
+    this.undoState = undefined;
+    return true;
+  }
   insert(value: string) {
+    this.remember();
     const points = [...this.value];
     points.splice(this.cursor, 0, ...value);
     this.value = points.join("").slice(0, 32000);
@@ -55,18 +80,23 @@ export class WorkspaceInput {
       [...this.value].length,
     );
   }
+  private static isWordChar(point: string): boolean {
+    return /[A-Za-z0-9]/.test(point);
+  }
   private editKey(key: Key): boolean {
     const points = [...this.value];
-    if (key.name === "up" || key.name === "down") {
+    const up = key.name === "up" || (key.ctrl && key.name === "p");
+    const down = key.name === "down" || (key.ctrl && key.name === "n");
+    if (up || down) {
       const start = this.cursor
         ? points.lastIndexOf("\n", this.cursor - 1) + 1
         : 0;
       const column = this.cursor - start;
-      if (key.name === "up" && start > 0) {
+      if (up && start > 0) {
         const previous =
           start > 1 ? points.lastIndexOf("\n", start - 2) + 1 : 0;
         this.cursor = Math.min(start - 1, previous + column);
-      } else if (key.name === "down") {
+      } else if (down) {
         const end = points.indexOf("\n", this.cursor);
         if (end >= 0) {
           const nextEnd = points.indexOf("\n", end + 1);
@@ -78,21 +108,55 @@ export class WorkspaceInput {
       }
       return true;
     }
+    // Word jumps use letter and digit runs, so punctuation separates words.
+    // Ctrl+W is the exception and deletes back to whitespace.
+    if (key.meta && key.name === "b") {
+      let pos = this.cursor;
+      while (pos > 0 && !WorkspaceInput.isWordChar(points[pos - 1]!)) pos--;
+      while (pos > 0 && WorkspaceInput.isWordChar(points[pos - 1]!)) pos--;
+      this.cursor = pos;
+      return true;
+    }
+    if (key.meta && key.name === "f") {
+      let pos = this.cursor;
+      while (pos < points.length && !WorkspaceInput.isWordChar(points[pos]!))
+        pos++;
+      while (pos < points.length && WorkspaceInput.isWordChar(points[pos]!))
+        pos++;
+      this.cursor = pos;
+      return true;
+    }
+    if (key.meta && key.name === "d") {
+      this.remember();
+      const start = this.cursor;
+      let pos = start;
+      while (pos < points.length && !WorkspaceInput.isWordChar(points[pos]!))
+        pos++;
+      while (pos < points.length && WorkspaceInput.isWordChar(points[pos]!))
+        pos++;
+      this.kill = points.slice(start, pos).join("");
+      points.splice(start, pos - start);
+      this.value = points.join("");
+      return true;
+    }
     if (key.ctrl && key.name === "w") {
+      this.remember();
       let start = this.cursor;
       while (start > 0 && /\s/u.test(points[start - 1]!)) start--;
       while (start > 0 && !/\s/u.test(points[start - 1]!)) start--;
+      this.kill = points.slice(start, this.cursor).join("");
       points.splice(start, this.cursor - start);
       this.cursor = start;
       this.value = points.join("");
       return true;
     }
     if (key.ctrl && key.name === "k") {
+      this.remember();
       const end = points.indexOf("\n", this.cursor);
-      points.splice(
-        this.cursor,
-        end < 0 ? points.length - this.cursor : Math.max(1, end - this.cursor),
-      );
+      const count =
+        end < 0 ? points.length - this.cursor : Math.max(1, end - this.cursor);
+      this.kill = points.slice(this.cursor, this.cursor + count).join("");
+      points.splice(this.cursor, count);
       this.value = points.join("");
       return true;
     }
@@ -122,8 +186,36 @@ export class WorkspaceInput {
       this.editing = false;
       return "escape";
     }
+    // Ctrl+J inserts a newline in every terminal, no setup needed.
+    if (key.ctrl && key.name === "j") {
+      this.insert("\n");
+      return;
+    }
+    if (key.ctrl && key.name === "y") {
+      if (this.kill) this.insert(this.kill);
+      return;
+    }
+    if (key.ctrl && (key.name === "_" || key.name === "-")) {
+      this.undoEdit();
+      return;
+    }
     if (key.name === "return" || key.name === "enter") {
-      if (key.meta || key.shift) {
+      // Shift+Enter, Alt+Enter and Ctrl+Enter insert a newline. A trailing
+      // backslash plus Enter is the fallback that works in every terminal.
+      if (key.meta || key.shift || key.ctrl) {
+        this.insert("\n");
+        return;
+      }
+      const pointsNow = [...this.value];
+      if (
+        this.cursor === pointsNow.length &&
+        pointsNow.length > 0 &&
+        pointsNow[pointsNow.length - 1] === "\\"
+      ) {
+        this.remember();
+        pointsNow.pop();
+        this.value = pointsNow.join("");
+        this.cursor = pointsNow.length;
         this.insert("\n");
         return;
       }
@@ -132,9 +224,17 @@ export class WorkspaceInput {
     if (this.editKey(key)) return;
     const points = [...this.value];
     if (key.name === "backspace") {
-      if (this.cursor) points.splice(--this.cursor, 1);
+      if (this.cursor) {
+        this.remember();
+        points.splice(--this.cursor, 1);
+      }
       this.value = points.join("");
     } else if (key.name === "delete") {
+      this.remember();
+      points.splice(this.cursor, 1);
+      this.value = points.join("");
+    } else if (key.ctrl && key.name === "d") {
+      this.remember();
       points.splice(this.cursor, 1);
       this.value = points.join("");
     } else if (key.name === "left") this.cursor = Math.max(0, this.cursor - 1);
@@ -144,8 +244,11 @@ export class WorkspaceInput {
       this.cursor = 0;
     else if (key.name === "end" || (key.ctrl && key.name === "e"))
       this.cursor = points.length;
-    else if (key.ctrl && key.name === "u") this.set("");
-    else if (
+    else if (key.ctrl && key.name === "u") {
+      this.remember();
+      this.kill = points.slice(0, this.cursor).join("");
+      this.set("");
+    } else if (
       !key.ctrl &&
       !key.meta &&
       value &&
@@ -251,6 +354,10 @@ export async function runWorkspaceTui(
   let historyPos = -1;
   let mentionIndex = 0;
   let lastEsc = 0;
+  // Ctrl+S stash slot and Ctrl+L double press stay local, never persisted.
+  let stash = "";
+  let stashCursor = 0;
+  let lastCtrlL = 0;
   const startedAt = Date.now();
   // VOID has its own explicit color preference; inherited NO_COLOR must not hide its UI.
   const color = env.VOID_TUI_COLOR !== "0";
@@ -499,8 +606,48 @@ export async function runWorkspaceTui(
         return;
       }
       if (shortcut === "redraw") {
-        screen.redraw();
+        // Second Ctrl+L within 2 s runs /clear, like the reference terminal.
+        const nowL = Date.now();
+        if (nowL - lastCtrlL < 2000) {
+          lastCtrlL = 0;
+          void task(async () => {
+            await navigate(() => ui.command("/clear"));
+            input.editing = true;
+          });
+        } else {
+          lastCtrlL = nowL;
+          screen.redraw();
+          draw();
+        }
+        return;
+      }
+      if (shortcut === "stash") {
+        if (input.value) {
+          stash = input.value;
+          stashCursor = input.cursor;
+          input.set("");
+          suggestion = 0;
+          ui.notice = "Stashed. Ctrl+S restores the prompt.";
+        } else if (stash) {
+          input.set(stash);
+          input.cursor = Math.min(stashCursor, [...input.value].length);
+          ui.notice = "Restored the stashed prompt.";
+        } else {
+          ui.notice = "Nothing stashed. Type first, then Ctrl+S.";
+        }
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
         draw();
+        return;
+      }
+      if (shortcut === "external-editor") {
+        void task(async () => {
+          await editor();
+          saveDraft();
+        });
         return;
       }
       if (shortcut === "toggle-tools") {
@@ -577,6 +724,25 @@ export async function runWorkspaceTui(
         draw();
         return;
       }
+      // Alt+M cycles modes where Shift+Tab never arrives. Meta+P opens the
+      // model picker without clearing the prompt. Both mirror the reference.
+      if (!input.pasting && key.meta && key.name === "m") {
+        ui.cycleMode();
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        draw();
+        return;
+      }
+      if (!input.pasting && key.meta && key.name === "p") {
+        ui.choose("models");
+        input.editing = false;
+        ui.notice = "Models. Enter picks the model for new conversations.";
+        draw();
+        return;
+      }
       if (
         !input.pasting &&
         key.ctrl &&
@@ -635,7 +801,8 @@ export async function runWorkspaceTui(
         }
         if (
           !input.pasting &&
-          ["up", "down"].includes(key.name ?? "") &&
+          (["up", "down"].includes(key.name ?? "") ||
+            (key.ctrl && (key.name === "p" || key.name === "n"))) &&
           !input.value.includes("\n")
         ) {
           const history = (ui.session()?.events ?? [])
@@ -644,10 +811,10 @@ export async function runWorkspaceTui(
             .reverse();
           if (history.length) {
             if (historyIndex < 0) historyDraft = input.value;
-            historyIndex =
-              key.name === "up"
-                ? Math.min(history.length - 1, historyIndex + 1)
-                : Math.max(-1, historyIndex - 1);
+            const older = key.name === "up" || (key.ctrl && key.name === "p");
+            historyIndex = older
+              ? Math.min(history.length - 1, historyIndex + 1)
+              : Math.max(-1, historyIndex - 1);
             input.set(historyIndex < 0 ? historyDraft : history[historyIndex]!);
             draw();
             return;
@@ -712,7 +879,17 @@ export async function runWorkspaceTui(
         const now = Date.now();
         if (isDoubleEscape(now, lastEsc)) {
           lastEsc = 0;
-          void task(() => ui.command("/rewind"));
+          // Text in the box clears first, empty input opens checkpoints.
+          if (input.value) {
+            input.set("");
+            suggestion = 0;
+            try {
+              saveDraft();
+            } catch (error) {
+              ui.notice = message(error);
+            }
+            ui.notice = "Cleared. The draft stays saved.";
+          } else void task(() => ui.command("/rewind"));
         } else {
           lastEsc = now;
           ui.detail = undefined;
@@ -722,10 +899,18 @@ export async function runWorkspaceTui(
         void task(() => navigate(() => ui.openSelected()));
       else if (key.name === "pageup") ui.scrollPage(-1);
       else if (key.name === "pagedown") ui.scrollPage(1);
-      else if (key.name === "up" || value === "k") {
+      else if (
+        key.name === "up" ||
+        (key.ctrl && key.name === "p") ||
+        value === "k"
+      ) {
         if (ui.detail) ui.scroll = Math.max(0, ui.scroll - 1);
         else ui.selected = Math.max(0, ui.selected - 1);
-      } else if (key.name === "down" || value === "j") {
+      } else if (
+        key.name === "down" ||
+        (key.ctrl && key.name === "n") ||
+        value === "j"
+      ) {
         if (ui.detail) ui.scroll++;
         else ui.selected = Math.min(ui.items().length - 1, ui.selected + 1);
       }
