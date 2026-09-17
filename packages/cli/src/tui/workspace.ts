@@ -186,6 +186,8 @@ export class WorkspaceTui {
   selected = 0;
   scroll = 0;
   viewport = { offset: 0, height: 1, total: 0 };
+  /** Viewport offsets of user prompt rows, for { and } jumps. */
+  promptRows: number[] = [];
   sessionId?: string;
   documentPath?: string;
   model = "";
@@ -871,7 +873,52 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         : "Full tool output. /expand collapses results.";
       return;
     }
-    if (cmd === "quit") return "quit";
+    if (cmd === "quit" || cmd === "exit") return "quit";
+    if (cmd === "plan") {
+      this.mode = "plan";
+      this.notice =
+        "Plan mode. Prompts ask for a plan before any tool runs.";
+      return;
+    }
+    if (cmd === "stats") {
+      this.choose("usage");
+      this.detail = this.costLines();
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "diff") {
+      if (!this.sessionId) throw Error("Select a conversation.");
+      const ops = this.workbench.workspace(this.sessionId).operations;
+      const undone = new Set(ops.flatMap((o) => (o.undoes ? [o.undoes] : [])));
+      const open = ops.filter(
+        (o) =>
+          o.kind !== "undo" &&
+          !undone.has(o.id) &&
+          (!this.documentPath || o.path === this.documentPath),
+      );
+      if (!open.length) {
+        this.detail = ["No outstanding changes. Every edit is undone or kept."];
+        this.scroll = 0;
+        return;
+      }
+      this.detail = [
+        `DIFF of outstanding changes${this.documentPath ? ` in ${this.documentPath}` : ""}, newest last`,
+        "",
+        ...open.flatMap((o) => [
+          `--- ${o.path} (${o.kind} ${o.id.slice(0, 8)})`,
+          ...unifiedDiff(o.before ?? "[does not exist]", o.after ?? "[does not exist]"),
+          "",
+        ]),
+        "Use /undo ID for reviewed Undo of one operation.",
+      ];
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "keybindings") {
+      this.detail = [...KEYBINDINGS];
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "status") {
       this.choose("overview");
       this.detail = this.statusLines();
@@ -1664,6 +1711,11 @@ export const TUI_COMMANDS = [
   ["/config", "Resolved paths and flags"],
   ["/memory", "Retained local history"],
   ["/model", "Set model for new chats"],
+  ["/plan", "Switch to plan mode"],
+  ["/stats", "Token usage and cost"],
+  ["/diff", "Outstanding document changes"],
+  ["/keybindings", "Keyboard shortcut reference"],
+  ["/exit", "Save and quit"],
   ["/export", "Save ledger, chat or document"],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],
@@ -1913,6 +1965,17 @@ export function renderWorkspace(
     Math.max(0, lines.length - bodyHeight),
   );
   ui.viewport = { offset, height: bodyHeight, total: lines.length };
+  // User prompt rows drive the { and } jumps. Rich chat marks the prompt
+  // label by style; plain transcript rows end with the YOU marker instead.
+  ui.promptRows = lines
+    .map((line, index) =>
+      styled?.[index]?.style === "user" ||
+      line.startsWith("› You") ||
+      / YOU$/.test(line)
+        ? index
+        : -1,
+    )
+    .filter((index) => index >= 0);
   const body = lines.slice(offset, offset + bodyHeight);
   while (body.length < bodyHeight) body.push("");
   const frameColor = ui.confirmation ? amber : muted;
@@ -2034,24 +2097,34 @@ export function renderWorkspace(
       ),
     promptFrameBottom(width),
   ];
+  // The frame border follows the permission mode, like the reference
+  // terminal: ice for normal, green for accept, blue for plan. The title
+  // always states the mode in text, so color stays redundant information.
+  const frameTone = !editing
+    ? muted
+    : ui.mode === "plan"
+      ? "38;5;75"
+      : ui.mode === "accept"
+        ? "38;5;78"
+        : ice;
   return [
     ...header,
     ...bodyRows,
     ink(text(summary), ice),
     ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
     ...menuRows,
-    ...promptBox.map((row) => ink(row, editing ? ice : muted)),
+    ...promptBox.map((row) => ink(row, frameTone)),
     ink(
       text(
         candidates.length
           ? "↑↓ select / Tab complete / Enter run / Esc close"
           : editing
             ? ui.mode === "plan"
-              ? "○ PLAN / Enter sends a plan request / Shift+Tab or Alt+M mode / Ctrl+J newline / Esc navigate"
+              ? "○ PLAN / Enter sends a plan request / Shift+Tab or Alt+M mode / Ctrl+J newline / Ctrl+T todos / Esc navigate"
               : ui.mode === "accept"
-                ? "● ACCEPT / approvals stay explicit / Enter send / Shift+Tab or Alt+M mode / Ctrl+J newline"
-                : "Enter send / Shift+Enter or Ctrl+J or \\+Enter newline / Ctrl+R search / Ctrl+O output / Esc Esc clear / Esc navigate"
-            : "Tab panels / Shift+Tab or Alt+M mode / i type / u Undo / a approve / d deny / Ctrl+S stash / Ctrl+G editor / Meta+P models / q quit",
+                ? "● ACCEPT / approvals stay explicit / Enter send / Shift+Tab or Alt+M mode / Ctrl+J newline / Ctrl+T todos"
+                : "Enter send / Shift+Enter or Ctrl+J or \\+Enter newline / Ctrl+R search / Ctrl+O output / Ctrl+T todos / Esc Esc clear / Esc navigate"
+            : "Tab panels / Shift+Tab or Alt+M mode / i type / u Undo / a approve / d deny / Ctrl+S stash / Ctrl+G editor / Meta+P models / { } prompts / q quit",
       ),
       muted,
     ),
@@ -2062,6 +2135,22 @@ export function renderWorkspace(
     )
     .join("\n");
 }
+const KEYBINDINGS = [
+  "KEYBINDINGS, same action as the reference terminal where VOID has it",
+  "",
+  "Enter send | Shift+Enter, Alt+Enter, Ctrl+J or backslash+Enter newline",
+  "Esc stop a run or close | Esc Esc clear input, or checkpoints when empty",
+  "Shift+Tab or Alt+M cycle mode (normal / accept / plan)",
+  "Tab panels, complete, accept suggestion | Up/Down or Ctrl+P/N history",
+  "Ctrl+R search prompts | Ctrl+O tool output | Ctrl+L redraw, twice clear",
+  "Ctrl+S stash, again restore | Ctrl+G or Ctrl+X Ctrl+E editor",
+  "Ctrl+T checklist | Meta+P models | { and } jump between prompts",
+  "Ctrl+W to whitespace, Alt+D word, Ctrl+K line, Ctrl+U clear, Ctrl+Y paste",
+  "Ctrl+_ undo input | Alt+B/F word jump | Ctrl+A/E line ends",
+  "Ctrl+D delete forward, twice exit | Ctrl+C clear, cancel, exit",
+  "y accept, n reject, Esc cancel a review | PgUp/PgDn scroll",
+  "No VOID equivalent: background tasks, image paste, suspend, Vim editing.",
+];
 const HELP = [
   "VOID TUI: real local data, no demo metrics",
   "",
@@ -2079,6 +2168,9 @@ const HELP = [
   "Ctrl+R searches your prompts, or conversation text from empty input.",
   "Ctrl+O toggles tool output; Ctrl+L redraws, twice clears; Ctrl+S stashes input.",
   "Ctrl+G opens the document editor; Meta+P jumps to models.",
+  "/keybindings lists every shortcut; /plan switches to plan mode.",
+  "Ctrl+T shows the checklist from agent output; { and } jump between prompts.",
+  "Ctrl+X Ctrl+E opens the editor; Ctrl+D deletes forward, twice exits.",
   "Ctrl+D exits only from an empty input. Ctrl+C clears, cancels or exits.",
   "Alt+B/F move by word; Alt+D deletes a word; Ctrl+Y pastes killed text; Ctrl+_ undoes input.",
   "Confirmations show a unified diff; y accepts, n rejects, Esc cancels.",

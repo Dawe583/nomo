@@ -20,7 +20,12 @@ import {
   renderWorkspace,
   searchHistoryPrompts,
 } from "./workspace.ts";
-import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
+import {
+  ChordTracker,
+  WorkspaceInput,
+  nextPromptRow,
+  workspaceShortcut,
+} from "./workspace-runner.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
 const assistantFetcher = (content: string) =>
@@ -491,6 +496,72 @@ test("kill ring and input undo cover the editing keys", () => {
   assert.equal(input.value, "src/utils/foo.ts".replace("utils", ""));
 });
 
+test("Ctrl+T maps to the checklist in every editing state", () => {
+  assert.equal(workspaceShortcut({ name: "t", ctrl: true }, true, "draft"), "show-todos");
+  assert.equal(workspaceShortcut({ name: "t", ctrl: true }, false, ""), "show-todos");
+  assert.equal(workspaceShortcut({ name: "t" }, true, "draft"), undefined);
+});
+
+test("Ctrl+X Ctrl+E chord arms, fires and disarms", () => {
+  const chord = new ChordTracker();
+  assert.equal(chord.chord({ name: "x", ctrl: true }, 1000), undefined);
+  assert.equal(chord.chord({ name: "e", ctrl: true }, 1100), "external-editor");
+  assert.equal(chord.chord({ name: "e", ctrl: true }, 1200), undefined);
+  const stale = new ChordTracker();
+  assert.equal(stale.chord({ name: "x", ctrl: true }, 1000), undefined);
+  assert.equal(stale.chord({ name: "e", ctrl: true }, 3000), undefined);
+  const broken = new ChordTracker();
+  assert.equal(broken.chord({ name: "x", ctrl: true }, 1000), undefined);
+  assert.equal(broken.chord({ name: "a", ctrl: true }, 1100), undefined);
+  assert.equal(broken.chord({ name: "e", ctrl: true }, 1200), undefined);
+  assert.equal(new ChordTracker().chord({ name: "e", ctrl: true }, 1000), undefined);
+});
+
+test("prompt jumps move between user rows only", () => {
+  const rows = [3, 9, 20];
+  assert.equal(nextPromptRow(rows, 0, 1), 3);
+  assert.equal(nextPromptRow(rows, 3, 1), 9);
+  assert.equal(nextPromptRow(rows, 20, 1), -1);
+  assert.equal(nextPromptRow(rows, 20, -1), 9);
+  assert.equal(nextPromptRow(rows, 3, -1), -1);
+  assert.equal(nextPromptRow([], 0, 1), -1);
+});
+
+test("prompt frame follows the permission mode color", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-frame-tone-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  ui.mode = "plan";
+  assert.ok(renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes("38;5;75"));
+  ui.mode = "accept";
+  assert.ok(renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes("38;5;78"));
+  ui.mode = "normal";
+  assert.ok(renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes("38;5;117"));
+});
+
+test("render collects user prompt rows for jumps", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-prompt-rows-"));
+  const { app, env } = await fixtureApp(root, "answer one");
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("first question");
+  await app.settled();
+  await ui.command("second question");
+  await app.settled();
+  renderWorkspace(ui, 100, 40, "_", true);
+  assert.equal(ui.promptRows.length, 2);
+  assert.ok(ui.promptRows[0]! < ui.promptRows[1]!);
+});
+
 test("stash, editor and quit map only the intended control keys", () => {
   assert.equal(workspaceShortcut({ name: "s", ctrl: true }, true, "draft"), "stash");
   assert.equal(workspaceShortcut({ name: "s", ctrl: true }, false, ""), "stash");
@@ -567,6 +638,60 @@ test("/conformance proves the adapter behind TUI edits inside the TUI", async (t
   assert.ok(
     commandSuggestions("/conf").some(([name]) => name === "/conformance"),
   );
+});
+
+test("/plan /stats /exit /keybindings match the reference commands", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-cmds-"));
+  const full = { VOID_DATA_DIR: root };
+  const app = new Workbench(full);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, full);
+  await ui.command("/plan");
+  assert.equal(ui.mode, "plan");
+  assert.match(ui.notice, /Plan mode/);
+  assert.equal(await ui.command("/exit"), "quit");
+  await ui.command("/stats");
+  assert.equal(ui.tab, "usage");
+  assert.ok(ui.detail?.join("\n").includes("Cost: unknown"));
+  await ui.command("/keybindings");
+  assert.ok(ui.detail?.join("\n").includes("Ctrl+J"));
+  assert.ok(ui.detail?.join("\n").includes("Shift+Tab or Alt+M"));
+  for (const cmd of ["/plan", "/stats", "/diff", "/keybindings", "/exit"])
+    assert.ok(
+      commandSuggestions(cmd).some(([name]) => name === cmd),
+      `${cmd} should complete`,
+    );
+});
+
+test("/diff shows outstanding changes and empties after undo", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-diff-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  const id = ui.sessionId!;
+  await app.editDocument(
+    id,
+    { path: "doc.md", content: "before", expectedRevision: null },
+    "tui-operator",
+  );
+  await ui.command("/diff");
+  assert.match(ui.detail?.join("\n") ?? "", /DIFF of outstanding changes/);
+  assert.match(ui.detail?.join("\n") ?? "", /doc\.md/);
+  ui.sessionId = id;
+  ui.documentPath = "doc.md";
+  await ui.prepareUndo();
+  await ui.confirm();
+  await ui.command("/diff");
+  assert.match(ui.detail?.join("\n") ?? "", /No outstanding changes/);
 });
 
 test("new commands complete from a slash prefix", () => {

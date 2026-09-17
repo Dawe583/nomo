@@ -26,6 +26,7 @@ export type WorkspaceShortcut =
   | "search-history"
   | "stash"
   | "external-editor"
+  | "show-todos"
   | "quit";
 
 export function workspaceShortcut(
@@ -39,8 +40,36 @@ export function workspaceShortcut(
   if (key.name === "r" && editing) return "search-history";
   if (key.name === "s") return "stash";
   if (key.name === "g") return "external-editor";
+  if (key.name === "t") return "show-todos";
   if (key.name === "d" && (!editing || !input)) return "quit";
   return undefined;
+}
+
+/** Two key chords with a short window, for readline native bindings the
+ * terminal sends as separate presses. Stays in memory only. */
+export class ChordTracker {
+  private pendingAt = 0;
+  chord(key: Key, now = Date.now()): "external-editor" | undefined {
+    if (key.ctrl && key.name === "x") {
+      this.pendingAt = now;
+      return;
+    }
+    const open = this.pendingAt > 0 && now - this.pendingAt < 1500;
+    this.pendingAt = 0;
+    if (open && key.ctrl && key.name === "e") return "external-editor";
+    return;
+  }
+}
+
+/** Jump between user prompts in the rendered chat rows. Rows are viewport
+ * offsets, so the runner can set the scroll position directly. */
+export function nextPromptRow(
+  rows: readonly number[],
+  offset: number,
+  direction: 1 | -1,
+): number {
+  if (direction === 1) return rows.find((row) => row > offset) ?? -1;
+  return [...rows].reverse().find((row) => row < offset) ?? -1;
 }
 
 /** Bracketed paste never submits a message or an approval. */
@@ -358,6 +387,8 @@ export async function runWorkspaceTui(
   let stash = "";
   let stashCursor = 0;
   let lastCtrlL = 0;
+  let lastCtrlD = 0;
+  const chord = new ChordTracker();
   const startedAt = Date.now();
   // VOID has its own explicit color preference; inherited NO_COLOR must not hide its UI.
   const color = env.VOID_TUI_COLOR !== "0";
@@ -602,7 +633,33 @@ export async function runWorkspaceTui(
         ? undefined
         : workspaceShortcut(key, input.editing, input.value);
       if (shortcut === "quit") {
-        stop();
+        // Empty input exits on the second press within 800 ms, like the
+        // reference terminal. Text input clears first instead of quitting.
+        if (input.value) {
+          input.set("");
+          suggestion = 0;
+          try {
+            saveDraft();
+          } catch (error) {
+            ui.notice = message(error);
+          }
+          ui.notice = "Cleared. Draft saved.";
+          draw();
+          return;
+        }
+        const nowD = Date.now();
+        if (isDoubleEscape(nowD, lastCtrlD)) {
+          lastCtrlD = 0;
+          stop();
+          return;
+        }
+        lastCtrlD = nowD;
+        ui.notice = "Press Ctrl+D again to exit.";
+        draw();
+        return;
+      }
+      if (shortcut === "show-todos") {
+        void task(() => ui.command("/todos"));
         return;
       }
       if (shortcut === "redraw") {
@@ -722,6 +779,15 @@ export async function runWorkspaceTui(
           ui.notice = message(error);
         }
         draw();
+        return;
+      }
+      // Readline native chord: Ctrl+X then Ctrl+E opens the editor. A lone
+      // Ctrl+X arms nothing visible; any other key disarms it.
+      if (!input.pasting && chord.chord(key) === "external-editor") {
+        void task(async () => {
+          await editor();
+          saveDraft();
+        });
         return;
       }
       // Alt+M cycles modes where Shift+Tab never arrives. Meta+P opens the
@@ -899,6 +965,15 @@ export async function runWorkspaceTui(
         void task(() => navigate(() => ui.openSelected()));
       else if (key.name === "pageup") ui.scrollPage(-1);
       else if (key.name === "pagedown") ui.scrollPage(1);
+      else if (value === "{" || value === "}") {
+        const target = nextPromptRow(
+          ui.promptRows,
+          ui.viewport.offset,
+          value === "}" ? 1 : -1,
+        );
+        if (target < 0) ui.notice = "No further prompt in this direction.";
+        else ui.scroll = target;
+      }
       else if (
         key.name === "up" ||
         (key.ctrl && key.name === "p") ||
