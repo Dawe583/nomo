@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 
 import { GENESIS_PREV, entryHash } from "./canonical.ts";
 import { sha256Hex, verifySignature } from "./sign.ts";
@@ -27,13 +27,70 @@ export type VerifyChainOptions = {
   readonly publicKey?: PublicKeyLookup;
 };
 
-export type VerifyLedgerFileOptions = VerifyChainOptions;
+export type VerifyLedgerFileOptions = VerifyChainOptions & ReadLedgerEntriesOptions;
 
 export async function verifyLedgerFile(
   path: string,
   options: VerifyLedgerFileOptions = {},
 ): Promise<VerifyChainResult> {
-  return verifyChain(await readLedgerEntries(path), options);
+  return verifyChain(
+    await readLedgerEntries(path, { maxBytes: options.maxBytes, maxEntries: options.maxEntries }),
+    options,
+  );
+}
+
+/**
+ * Read limits for untrusted ledger files. G-16/S13: callers previously loaded
+ * the whole file, so one giant line or an unbounded entry count could exhaust
+ * memory before verification had a chance to name the finding. The limits cap
+ * total bytes and entries per read; a legitimate ledger stays far below both,
+ * and operators who outgrow them raise the bound explicitly per call site.
+ */
+export type ReadLedgerEntriesOptions = {
+  readonly maxBytes?: number;
+  readonly maxEntries?: number;
+};
+
+export const LEDGER_READ_MAX_BYTES = 64 * 1024 * 1024;
+export const LEDGER_READ_MAX_ENTRIES = 100_000;
+
+export async function readLedgerEntries(
+  path: string,
+  options: ReadLedgerEntriesOptions = {},
+): Promise<JsonlEntry[]> {
+  const maxBytes = options.maxBytes ?? LEDGER_READ_MAX_BYTES;
+  const maxEntries = options.maxEntries ?? LEDGER_READ_MAX_ENTRIES;
+  const stat = await fstat(path);
+  if (stat > maxBytes) {
+    throw new Error(
+      `ledger file ${path} is ${stat} bytes and exceeds the ${maxBytes} byte read limit`,
+    );
+  }
+  const text = await readFile(path, "utf8");
+  const entries: JsonlEntry[] = [];
+  const lines = text.split("\n");
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]!.trim();
+    if (line === "") continue;
+    if (entries.length >= maxEntries) {
+      throw new Error(
+        `ledger file ${path} exceeds the ${maxEntries} entry read limit at line ${index + 1}`,
+      );
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(line);
+    } catch {
+      throw new Error(`ledger line ${index + 1} is not JSON`);
+    }
+    entries.push(asEntry(parsed, index + 1));
+  }
+  return entries;
+}
+
+async function fstat(path: string): Promise<number> {
+  const info = await stat(path);
+  return info.size;
 }
 
 export async function verifyChain(
@@ -86,24 +143,6 @@ export async function verifyChain(
   }
 
   return { ok: true, checked, head: prev, lines };
-}
-
-export async function readLedgerEntries(path: string): Promise<JsonlEntry[]> {
-  const text = await readFile(path, "utf8");
-  const entries: JsonlEntry[] = [];
-  const lines = text.split("\n");
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index]!.trim();
-    if (line === "") continue;
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(line);
-    } catch {
-      throw new Error(`ledger line ${index + 1} is not JSON`);
-    }
-    entries.push(asEntry(parsed, index + 1));
-  }
-  return entries;
 }
 
 async function lookupPublicKey(
