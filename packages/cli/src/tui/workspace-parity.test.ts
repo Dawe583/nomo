@@ -720,6 +720,32 @@ test("/diff shows outstanding changes and empties after undo", async (t) => {
   assert.match(ui.detail?.join("\n") ?? "", /No outstanding changes/);
 });
 
+test("/theme switches session color and motion without touching env", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-theme-"));
+  const full = { VOID_DATA_DIR: root };
+  const app = new Workbench(full);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, full);
+  await ui.command("/theme mono");
+  assert.equal(ui.colorOverride, false);
+  assert.match(ui.notice, /monochrome/);
+  assert.ok(ui.detail?.join("\n").includes("accent"));
+  await ui.command("/theme color");
+  assert.equal(ui.colorOverride, true);
+  await ui.command("/theme still");
+  assert.equal(ui.motionOverride, false);
+  await ui.command("/theme reset");
+  assert.equal(ui.colorOverride, undefined);
+  assert.equal(ui.motionOverride, undefined);
+  await assert.rejects(ui.command("/theme pink"), /\/theme color/);
+  assert.ok(
+    commandSuggestions("/the").some(([name]) => name === "/theme"),
+  );
+});
+
 test("new commands complete from a slash prefix", () => {
   for (const cmd of [
     "/compact",

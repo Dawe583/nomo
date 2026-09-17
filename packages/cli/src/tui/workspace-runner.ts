@@ -433,8 +433,8 @@ export async function runWorkspaceTui(
           busy,
           {
             now: Date.now(),
-            color,
-            motion,
+            color: ui.colorOverride ?? color,
+            motion: ui.motionOverride ?? motion,
             frame: Math.floor((Date.now() - startedAt) / 140),
             boot: motion && Date.now() - startedAt < 1800,
             command: input.value,

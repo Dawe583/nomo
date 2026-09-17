@@ -20,6 +20,7 @@ import {
 } from "../../../../apps/control-plane/api/desktop-setup.ts";
 import { loadPolicy } from "../../../policy/src/rules.ts";
 import { REGISTRY_DISCLAIMER } from "../../../registry/src/index.ts";
+import { VOID_PALETTE } from "./theme.ts";
 import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
 import { runConformanceCommand } from "../conformance.ts";
@@ -194,6 +195,9 @@ export class WorkspaceTui {
   filter = "";
   compactTools = true;
   mode: TuiMode = "normal";
+  /** Runtime theme overrides. Undefined keeps the VOID_TUI_* environment. */
+  colorOverride?: boolean;
+  motionOverride?: boolean;
   queuedPrompt: string | null = null;
   notice = "Tab: panels | i: type | /help: commands";
   detail?: string[];
@@ -917,6 +921,36 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     if (cmd === "keybindings") {
       this.detail = [...KEYBINDINGS];
       this.scroll = 0;
+      return;
+    }
+    if (cmd === "theme") {
+      // Session override only. Lasting choice stays in the environment,
+      // so a checked out repository can never restyle another operator.
+      if (arg === "color") this.colorOverride = true;
+      else if (arg === "mono") this.colorOverride = false;
+      else if (arg === "motion") this.motionOverride = true;
+      else if (arg === "still") this.motionOverride = false;
+      else if (arg === "reset") {
+        this.colorOverride = undefined;
+        this.motionOverride = undefined;
+      } else if (arg)
+        throw Error("/theme color | mono | motion | still | reset");
+      const color = this.colorOverride ?? this.env.VOID_TUI_COLOR !== "0";
+      const motion =
+        this.motionOverride ??
+        (this.env.VOID_TUI_MOTION !== "0" && this.env.TERM !== "dumb");
+      this.detail = [
+        `THEME this session: ${color ? "full color" : "monochrome"}, motion ${motion ? "on" : "off"}`,
+        "",
+        ...Object.entries(VOID_PALETTE).map(
+          ([name, hex]) => `${name.padEnd(6)} ${hex}`,
+        ),
+        "",
+        "Color never carries safety meaning; classes keep their markers.",
+        "Persist with VOID_TUI_COLOR=0 or VOID_TUI_MOTION=0. /theme reset restores them.",
+      ];
+      this.scroll = 0;
+      this.notice = `Theme: ${color ? "full color" : "monochrome"}, motion ${motion ? "on" : "off"}.`;
       return;
     }
     if (cmd === "status") {
@@ -1714,6 +1748,7 @@ export const TUI_COMMANDS = [
   ["/plan", "Switch to plan mode"],
   ["/stats", "Token usage and cost"],
   ["/diff", "Outstanding document changes"],
+  ["/theme", "Color and motion for this session"],
   ["/keybindings", "Keyboard shortcut reference"],
   ["/exit", "Save and quit"],
   ["/export", "Save ledger, chat or document"],
@@ -2185,6 +2220,7 @@ const HELP = [
   "/stop | /branch [seq] | /retry | /rename title | /archive",
   "/models | /model exact-ID | /connect tokenharbor | /login | /logout",
   "/conformance [adapter] runs the disposable adapter checks",
+  "/theme [color|mono|motion|still|reset] session theme",
   "/documents | /document path | /edit | /history | /undo [operation-ID]",
   "/ledger | /verify | /filter text | /export ledger|chat|document",
   "/approvals | /approve [hold-ID] [reason] | /deny [hold-ID] [reason]",
