@@ -112,6 +112,7 @@ Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws, twice
 clears; Ctrl+S stashes input; Ctrl+G opens the editor; Meta+P opens models;
 Ctrl+C clears, cancels or exits; Ctrl+D exits from empty input. Ctrl+B
 background tasks, image paste, suspend and Vim editing have no VOID equivalent.
+`/conformance [adapter]` runs the disposable adapter checks behind the TUI.
 
 ### Aperture identity
 

@@ -21,6 +21,7 @@ import {
 import { loadPolicy } from "../../../policy/src/rules.ts";
 import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
+import { runConformanceCommand } from "../conformance.ts";
 import {
   fit,
   meter,
@@ -1030,6 +1031,62 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
+    if (cmd === "conformance") {
+      const adapter = arg || "managed-documents";
+      if (
+        adapter !== "managed-documents" &&
+        adapter !== "filesystem.managed" &&
+        adapter !== "git.managed"
+      )
+        throw Error(
+          "/conformance managed-documents | filesystem.managed | git.managed",
+        );
+      // Disposable fixtures only, same command the release gate runs. Slow
+      // adapters block the prompt with the busy spinner, never silently.
+      const lines: string[] = [];
+      const code = await runConformanceCommand(
+        ["--adapter", adapter],
+        (line) => {
+          lines.push(line);
+        },
+      );
+      let summary = "report is not JSON";
+      try {
+        const report = JSON.parse(lines.join("\n")) as {
+          passed: boolean;
+          scenarios: {
+            operation: string;
+            passed: boolean;
+            checks: { id: string; passed: boolean }[];
+          }[];
+        };
+        summary = report.scenarios
+          .map((scenario) => {
+            const failed = scenario.checks.filter((check) => !check.passed);
+            return `${scenario.operation}: ${scenario.passed ? "PASS" : `FAIL ${failed.map((check) => check.id).join(",")}`}`;
+          })
+          .join(" | ");
+        this.detail = [
+          `conformance ${adapter} exit ${code}, passed: ${report.passed}`,
+          `capability: ${adapter} v1, certification: false`,
+          "",
+          ...report.scenarios.flatMap((scenario) => [
+            `${scenario.operation}: ${scenario.passed ? "PASS" : "FAIL"}`,
+            ...scenario.checks.map(
+              (check) => `  ${check.passed ? "[+]" : "[x]"} ${check.id}`,
+            ),
+          ]),
+        ];
+      } catch {
+        this.detail = [`conformance ${adapter} exit ${code}`, ...lines];
+      }
+      this.scroll = 0;
+      this.notice =
+        code === 0
+          ? `Conformance ${adapter} passed: ${summary}`
+          : `Conformance ${adapter} FAILED: ${summary}`;
+      return;
+    }
     if (cmd === "init") {
       const lines: string[] = [];
       const code = await runInitCommand(
@@ -1595,6 +1652,7 @@ export const TUI_COMMANDS = [
   ["/overview", "Workspace overview"],
   ["/doctor", "Environment checks"],
   ["/init", "Set up workspace storage"],
+  ["/conformance", "Run adapter conformance checks"],
   ["/status", "Workspace status"],
   ["/cost", "Token usage and cost"],
   ["/compact", "Summarize context, local fallback"],
@@ -2030,6 +2088,7 @@ const HELP = [
   "/todos | /agents | /memory | /permissions | /mcp | /sessions",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
   "/models | /model exact-ID | /connect tokenharbor | /login | /logout",
+  "/conformance [adapter] runs the disposable adapter checks",
   "/documents | /document path | /edit | /history | /undo [operation-ID]",
   "/ledger | /verify | /filter text | /export ledger|chat|document",
   "/approvals | /approve [hold-ID] [reason] | /deny [hold-ID] [reason]",

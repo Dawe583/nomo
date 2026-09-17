@@ -549,6 +549,26 @@ test("undo review states the drift check before the diff", async (t) => {
   assert.ok(ui.confirmation?.lines.join("\n").includes("Drift check passed"));
 });
 
+test("/conformance proves the adapter behind TUI edits inside the TUI", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-conformance-"));
+  const full = { VOID_DATA_DIR: root };
+  const app = new Workbench(full);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, full);
+  await ui.command("/conformance");
+  assert.match(ui.detail?.[0] ?? "", /conformance managed-documents exit 0/);
+  assert.match(ui.detail?.join("\n") ?? "", /write: PASS/);
+  assert.match(ui.detail?.join("\n") ?? "", /human-drift/);
+  assert.match(ui.notice, /passed/);
+  await assert.rejects(ui.command("/conformance unknown"), /managed-documents/);
+  assert.ok(
+    commandSuggestions("/conf").some(([name]) => name === "/conformance"),
+  );
+});
+
 test("new commands complete from a slash prefix", () => {
   for (const cmd of [
     "/compact",
