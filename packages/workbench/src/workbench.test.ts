@@ -78,6 +78,19 @@ test('a destructive model call waits for an operator in its own workspace', asyn
   assert.ok(feed.records.some(record => record.decision === 'hold:denied'));
 });
 
+test('denial text names the rule id, the class and the approval path', async t => {
+  const { denialText } = await import('./index.ts');
+  assert.equal(
+    denialText('orders_delete', 'r3', { kind: 'deny', ruleIndex: 2, rationale: 'only fixture tools are allowed' }),
+    'VOID denied orders_delete (r3) by policy rule 2. Reason: only fixture tools are allowed. Change the connector policy or ask the operator to approve this class. Do not retry with reworded arguments.',
+  );
+  assert.match(
+    denialText('orders_delete', 'r3', { kind: 'hold', ruleIndex: 1, rationale: 'destructive fixture tool requires approval' }),
+    /by policy rule 1.*operator approval before expiry.*Do not retry/,
+  );
+  assert.match(denialText('x', 'r3', { kind: 'unmatched' }), /no matching policy rule/);
+});
+
 test('long sessions keep advancing event cursors and refuse unbounded context', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'void-agent-context-'));
   const fetcher: typeof fetch = async url => String(url).endsWith('/models')

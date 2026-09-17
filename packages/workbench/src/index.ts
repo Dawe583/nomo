@@ -27,6 +27,16 @@ import type { JsonObject } from '../../proxy/src/rpc.ts';
 export type SessionEvent = { readonly seq: number; readonly at: string; readonly kind: 'user' | 'assistant' | 'tool' | 'error' | 'usage'; readonly text: string; readonly id?: string; readonly sessionId?: string; readonly runId?: string; readonly type?: string; readonly payload?: Record<string, unknown>; readonly schemaVersion?: number };
 export type SessionView = { readonly id: string; readonly workspace: string; readonly model: string; readonly title?: string; readonly createdAt?: string; readonly updatedAt?: string; readonly pinned?: boolean; readonly archived?: boolean; readonly project?: string; readonly tags?: string[]; readonly runId?: string; readonly provider?: string; readonly parentId?: string; readonly status: 'running' | 'idle' | 'cancelled' | 'failed'; readonly events: readonly SessionEvent[] };
 export const DEFAULT_POLICY = 'version: 1\nrules:\n  - match:\n      class: r0\n    decision: allow\n  - match: {}\n    decision: hold\n    seconds: 300\n    notify: [cli]\n';
+// Standards rule 10: a denial names the rule id, the class and what approval
+// would require. A generic error trains agents to retry with a reworded
+// request, which turns a safety tool into an evasion trainer.
+export function denialText(tool: string, klass: string, decision: { kind: string; ruleIndex?: number; rationale?: string }): string {
+  const decided = (decision.kind === 'deny' || decision.kind === 'hold') && typeof decision.ruleIndex === 'number';
+  const basis = decided ? `policy rule ${decision.ruleIndex}` : 'no matching policy rule';
+  const why = decided && decision.rationale ? ` Reason: ${decision.rationale}.` : '';
+  const remedy = decision.kind === 'hold' ? 'It needed operator approval before expiry.' : 'Change the connector policy or ask the operator to approve this class.';
+  return `VOID denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
+}
 type Connector = McpConfig & { id: string; name: string; tools: McpTool[] };
 type Session = { view: SessionView; messages: ModelMessage[]; client?: VoidClient; tools?: McpTool[]; connections?: Record<string, McpConfig & { sessionId?: string }>; config?: ProviderConfig; controller: AbortController; provider: CompatibleProvider };
 
@@ -387,7 +397,7 @@ export class Workbench {
       await this.locked(() => this.commitWorkspace(session, this.workspace(session.view.id), name, args, allowed ? "hold:approved" : "hold:denied", undefined, hold, { klass: call.klass }));
       this.approvalHistory.push({ ...hold }); this.holds.delete(hold.holdId);
     }
-    if (!allowed) return { isError: true, content: [{ type: 'text', text: `VOID denied ${name} (${call.klass}). Review the connector policy and explicit registry mapping. Do not retry.` }] };
+    if (!allowed) return { isError: true, content: [{ type: 'text', text: denialText(name, call.klass, decision) }] };
     if (session.controller.signal.aborted) throw new Error('Session cancelled.');
     let result;
     try { result = await rpc(config, 'tools/call', { name: tool.name, arguments: args }, config.sessionId); }
