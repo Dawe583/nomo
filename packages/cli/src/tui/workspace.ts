@@ -1888,13 +1888,31 @@ export type WorkspaceVisuals = {
   suggestion?: number;
   cursor?: number;
 };
+// Block capitals, one stroke width everywhere. The slashed ASCII logo
+// read as jagged because every row leaned; full blocks stay uniform at
+// any width and count one cell each in layout.ts.
 const VOID_LOGO = [
-  String.raw` __      __  ____   _____  _____  `,
-  String.raw` \ \    / / / __ \ |_   _||  __ \ `,
-  String.raw`  \ \  / / | |  | |  | |  | |  | |`,
-  String.raw`   \ \/ /  | |__| | _| |_ | |__| |`,
-  String.raw`    \__/    \____/ |_____||_____/ `,
+  "█     █   █████   █████  ████   ",
+  "█     █  █     █    █    █   █  ",
+  "█     █  █     █    █    █   █  ",
+  " █   █   █     █    █    █   █  ",
+  "  █ █     █████   █████  ████   ",
 ];
+// Decorative tab identity colors. Safety state never rides on these;
+// classes and decisions keep their text markers in every surface.
+export const TAB_ICON_TONE: Record<WorkspaceTab, string> = {
+  overview: "38;5;215",
+  chat: "38;5;117",
+  sessions: "38;5;183",
+  documents: "38;5;78",
+  ledger: "38;5;179",
+  approvals: "38;5;203",
+  policy: "38;5;245",
+  tools: "38;5;214",
+  models: "38;5;75",
+  usage: "38;5;228",
+  help: "38;5;245",
+};
 // Single cell symbols only, so visibleLength stays exact on every terminal.
 // Geometric shapes (U+25A0 to U+25FF) count one cell in layout.ts, while emoji
 // and dingbat ranges count two. Icons never carry safety meaning alone, the
@@ -2007,12 +2025,14 @@ export function renderWorkspace(
   header.push(
     fit(
       tabs
-        .map((t) =>
-          ink(
-            t === ui.tab ? ` [${TAB_ICONS[t]} ${t}] ` : ` ${TAB_ICONS[t]} ${t} `,
-            t === ui.tab ? `1;${ice};48;5;24` : muted,
-          ),
-        )
+        .map((t) => {
+          const icon = ink(`${TAB_ICONS[t]}`, TAB_ICON_TONE[t]);
+          const name =
+            t === ui.tab
+              ? ink(` [${t}] `, `1;${ice};48;5;24`)
+              : ink(` ${t} `, muted);
+          return `${icon}${name}`;
+        })
         .join(""),
       width,
     ),

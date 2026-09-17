@@ -7,6 +7,7 @@ import { Workbench } from "../../../workbench/src/index.ts";
 import {
   MODE_ICON,
   TAB_ICONS,
+  TAB_ICON_TONE,
   WorkspaceTui,
   approvalLabel,
   detectHarnesses,
@@ -444,6 +445,36 @@ test("prompt frame stays continuous at every width", async (t) => {
       assert.equal(visibleLength(row), width);
     }
   }
+});
+
+test("logo is one stroke width and every row aligns", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-logo-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  const frame = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n").slice(0, 5);
+  assert.equal(frame.length, 5);
+  assert.ok(frame.every((line) => /^[ █]{32}/.test(line)));
+  assert.ok(frame.every((line) => line[32] === " "));
+});
+
+test("tab icons carry fixed colors in color mode only", async (t) => {
+  for (const tone of Object.values(TAB_ICON_TONE)) assert.match(tone, /^38;5;\d+$/);
+  const root = await mkdtemp(join(tmpdir(), "void-tui-icon-tone-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  const color = renderWorkspace(ui, 200, 40, "_", true, false, { color: true });
+  assert.ok(color.includes("38;5;203"));
+  assert.ok(color.includes("38;5;78"));
+  const mono = stripAnsi(renderWorkspace(ui, 100, 32, "_", true));
+  assert.ok(!mono.includes("38;5;"));
 });
 
 test("icons stay one cell wide and never carry safety meaning", () => {

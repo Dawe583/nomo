@@ -376,7 +376,7 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
   assert.ok(commandSuggestions("/rs").some(([name]) => name === "/resume"));
   assert.ok(commandSuggestions("/rw").some(([name]) => name === "/rewind"));
   assert.equal(commandSuggestions("/new delete everything").length, 0);
-  assert.ok(stripAnsi(renderWorkspace(ui, 100, 32)).includes("|_____||_____/"));
+  assert.ok(stripAnsi(renderWorkspace(ui, 100, 32)).includes("█     █"));
 });
 
 test("chat presentation preserves code, sanitizes escapes, and distinguishes event roles", async () => {
