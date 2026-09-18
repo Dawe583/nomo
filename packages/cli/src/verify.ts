@@ -1,6 +1,9 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { readLedgerEntries, verifyChain } from "../../ledger/src/verify.ts";
@@ -23,9 +26,11 @@ type VerifyArgs = {
   readonly file: string | undefined;
   readonly attestation: string | undefined;
   readonly key: string | undefined;
+  readonly keyId: string | undefined;
+  readonly standalone: boolean;
 };
 
-const USAGE = "usage: void verify --ledger <dir-or-file> [--file export.jsonl] [--attestation path] [--key base64-spki]";
+const USAGE = "usage: void verify --ledger <dir-or-file> [--file export.jsonl] [--attestation path] [--key base64-spki] [--key-id id] [--standalone]";
 
 export async function runVerifyCommand(
   argv: readonly string[],
@@ -35,6 +40,8 @@ export async function runVerifyCommand(
   try {
     const parsed = parseVerifyArgs(argv);
     const ledgerPath = await resolveLedgerPath(parsed, io.env ?? process.env);
+    if (parsed.standalone)
+      return runStandalone(ledgerPath, parsed, io);
     const publicKey = options.publicKey ?? await publicKeyLookup(parsed.key, io.env ?? process.env);
     const entries = await readLedgerEntries(ledgerPath);
     const chain = await verifyChain(entries, { publicKey });
@@ -71,6 +78,8 @@ function parseVerifyArgs(argv: readonly string[]): VerifyArgs {
   let file: string | undefined;
   let attestation: string | undefined;
   let key: string | undefined;
+  let keyId: string | undefined;
+  let standalone = false;
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
     if (arg === "--ledger") {
@@ -85,11 +94,47 @@ function parseVerifyArgs(argv: readonly string[]): VerifyArgs {
     } else if (arg === "--key") {
       key = needValue(argv, index, "--key");
       index += 1;
+    } else if (arg === "--key-id") {
+      keyId = needValue(argv, index, "--key-id");
+      index += 1;
+    } else if (arg === "--standalone") {
+      standalone = true;
     } else {
       throw new Error(`unknown verify option ${JSON.stringify(arg)}. ${USAGE}`);
     }
   }
-  return { ledger, file, attestation, key };
+  return { ledger, file, attestation, key, keyId, standalone };
+}
+
+/**
+ * Rechecks through the standalone script in a child process, so the proof
+ * never imports this repository. A failure there is independent evidence,
+ * not a second run of the same code.
+ */
+async function runStandalone(
+  target: string,
+  args: VerifyArgs,
+  io: VerifyCommandIo,
+): Promise<number> {
+  const script = fileURLToPath(
+    new URL("../../../scripts/src/verify-ledger-standalone.mjs", import.meta.url),
+  );
+  const scriptArgs = [script, target];
+  if (args.key !== undefined) scriptArgs.push("--public-key", args.key);
+  if (args.keyId !== undefined) scriptArgs.push("--key-id", args.keyId);
+  if (args.attestation !== undefined)
+    scriptArgs.push("--attestation", args.attestation);
+  try {
+    const result = await promisify(execFile)(process.execPath, scriptArgs);
+    for (const line of `${result.stdout ?? ""}`.split("\n"))
+      if (line) io.stdout(line);
+    return 0;
+  } catch (error) {
+    const failed = error as { stdout?: unknown; stderr?: unknown; code?: unknown };
+    for (const line of `${failed.stdout ?? ""}${failed.stderr ?? ""}`.split("\n"))
+      if (line) io.stdout(line);
+    return typeof failed.code === "number" ? failed.code : 1;
+  }
 }
 
 function needValue(argv: readonly string[], index: number, name: string): string {

@@ -132,7 +132,7 @@ export function Chat({
   const [draft, setDraft] = useState(
     () => sessionStorage.getItem(draftKey) ?? "",
   );
-  const [model, setModel] = useState("z-ai/glm-5.3-free");
+  const [model, setModel] = useState("openai-fast");
   const [modelSearch, setModelSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -1018,8 +1018,8 @@ export function Chat({
                 disabled={!!id}
                 onClick={() => setPicker(true)}
               >
-                {(session?.model ?? model) === "z-ai/glm-5.3-free"
-                  ? "GLM 5.3 Free"
+                {(session?.model ?? model) === "openai-fast"
+                  ? "openai-fast (free)"
                   : (session?.model ?? model)}
                 <span aria-hidden="true">⌄</span>
               </button>

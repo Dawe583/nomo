@@ -464,8 +464,8 @@ export function PublicDemo({
                   />
                   <div className="demo-composer-tools">
                     <span>
-                      <b>GLM 5.3 Free</b>
-                      <small>TokenRouter</small>
+                      <b>openai-fast (free)</b>
+                      <small>Pollinations</small>
                     </span>
                     <m.button
                       type="submit"

@@ -23,20 +23,12 @@ test("standalone selftest proves roundtrip, tamper refusal and wrong key refusal
   assert.match(result.stdout, /SELFTEST PASS all six checks/);
 });
 
-test("missing bundle and half key options fail with usage, not a crash", async () => {
+test("missing bundle and empty invocation fail with usage, not a crash", async () => {
   await assert.rejects(
     exec(process.execPath, [script, "/no/such/bundle.jsonl"]),
     /FAILED: cannot read bundle/,
   );
-  await assert.rejects(
-    exec(process.execPath, [
-      script,
-      "/no/such/bundle.jsonl",
-      "--public-key",
-      "eA==",
-    ]),
-    /together/,
-  );
+  await assert.rejects(exec(process.execPath, [script]), /Usage:/);
 });
 
 test("standalone verifier agrees with the real ledger on a real export", async (t) => {

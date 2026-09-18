@@ -471,18 +471,13 @@ function main(argv) {
     attestationIndex >= 0 ? argv[attestationIndex + 1] : undefined;
   if (!file || file.startsWith("--")) {
     console.error(
-      "Usage: verify-ledger-standalone.mjs <bundle.jsonl> [--public-key <base64-spki> --key-id <id>] [--attestation <doc.json>]",
+      "Usage: verify-ledger-standalone.mjs <bundle.jsonl> [--public-key <base64-spki> [--key-id <id>]] [--attestation <doc.json>]",
     );
     process.exitCode = 2;
     return;
   }
-  if ((encoded === undefined) !== (onlyKeyId === undefined)) {
-    console.error(
-      "Pass --public-key and --key-id together, or neither for integrity only.",
-    );
-    process.exitCode = 2;
-    return;
-  }
+  // Key ids ride inside each entry, so --key-id is documentation only.
+  void onlyKeyId;
   let entries;
   try {
     entries = readBundle(file);

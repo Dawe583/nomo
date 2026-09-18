@@ -64,6 +64,30 @@ describe("runVerifyCommand", () => {
     assert.equal(err.length, 0);
     assert.match(out.join("\n"), /seq 1: ok/);
     assert.match(out.join("\n"), /chain: 2 entries ok/);
+
+  test("standalone rechecks without importing the repository", async () => {
+    const { dir, file, publicKey } = await seedLedger();
+    const spki = Buffer.from(publicKey).toString("base64");
+    const keyId = "standalone-test-key";
+    const out: string[] = [];
+    const err: string[] = [];
+    const code = await runVerifyCommand(
+      ["--file", file, "--standalone", "--key", spki, "--key-id", keyId],
+      { stdout: (line) => out.push(line), stderr: (line) => err.push(line) },
+    );
+    assert.equal(code, 0);
+    assert.match(out.join("\n"), /VERIFIED 2 entries/);
+    assert.match(out.join("\n"), /signatures and hash links/);
+    const bad: string[] = [];
+    const tampered = join(dir, "tampered.jsonl");
+    await writeFile(tampered, `${await readFile(file, "utf8")}not JSON\n`);
+    const badCode = await runVerifyCommand(
+      ["--file", tampered, "--standalone"],
+      { stdout: (line) => bad.push(line), stderr: () => {} },
+    );
+    assert.equal(badCode, 1);
+    assert.match(bad.join("\n"), /FAILED/);
+  });
     assert.match(out.join("\n"), /attestation: not checked/);
   });
 
