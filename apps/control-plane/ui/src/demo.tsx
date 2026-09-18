@@ -464,8 +464,8 @@ export function PublicDemo({
                   />
                   <div className="demo-composer-tools">
                     <span>
-                      <b>mimo-v2.5:free</b>
-                      <small>TokenHarbor</small>
+                      <b>openai-fast (free)</b>
+                      <small>Pollinations</small>
                     </span>
                     <m.button
                       type="submit"

@@ -205,7 +205,7 @@ export function Settings({
         <p>{provider.data?.baseUrl}</p>
         <p className="muted">
           {t("Výchozí model", "Default model")}:{" "}
-          {preferences.data?.preferences?.defaultModel ?? "mimo-v2.5:free"}.{" "}
+          {preferences.data?.preferences?.defaultModel ?? "openai-fast"}.{" "}
           {t(
             "Existující konverzace si ponechají původní nastavení.",
             "Existing conversations retain their settings.",

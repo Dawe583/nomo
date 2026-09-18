@@ -132,7 +132,7 @@ export function Chat({
   const [draft, setDraft] = useState(
     () => sessionStorage.getItem(draftKey) ?? "",
   );
-  const [model, setModel] = useState("mimo-v2.5:free");
+  const [model, setModel] = useState("openai-fast");
   const [modelSearch, setModelSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -1018,8 +1018,8 @@ export function Chat({
                 disabled={!!id}
                 onClick={() => setPicker(true)}
               >
-                {(session?.model ?? model) === "mimo-v2.5:free"
-                  ? "mimo-v2.5:free"
+                {(session?.model ?? model) === "openai-fast"
+                  ? "openai-fast (free)"
                   : (session?.model ?? model)}
                 <span aria-hidden="true">⌄</span>
               </button>

@@ -1,5 +1,4 @@
 import { ProxyWorkspace } from "./workspace-proxy.ts";
-import { connectTokenHarbor } from "../../../workbench/src/provider-setup.ts";
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -1267,7 +1266,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "login") {
       this.provider = await importDesktopProvider(
-        arg || "opencode:tokenrouter",
+        arg || "opencode:zen",
         this.env,
         this.workbench,
       );
@@ -1374,14 +1373,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "connect") {
-      this.provider =
-        arg === "tokenharbor"
-          ? await connectTokenHarbor(this.workbench, this.env)
-          : await importDesktopProvider(
-              arg || "opencode:tokenrouter",
-              this.env,
-              this.workbench,
-            );
+      // Local credential sources only: opencode or prime auth files, or an
+      // explicit OPENCODE_ZEN_API_KEY in the environment. Nothing is typed
+      // into the repo and no key travels in a command argument.
+      this.provider = await importDesktopProvider(
+        arg || "opencode:zen",
+        this.env,
+        this.workbench,
+      );
       this.model = this.provider.defaultModel ?? "";
       this.notice = `Connected to ${this.provider.providerId}. The key is stored encrypted.`;
       return;
@@ -1637,7 +1636,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "Press i to type; Enter to send; Shift+Enter or Ctrl+J for a new line.",
             "Example: Create a plan and save it to plan.md.",
             "",
-            "/connect imports TokenRouter from your local OpenCode configuration.",
+            "/connect imports OpenCode Zen from local auth or OPENCODE_ZEN_API_KEY.",
           ];
     if (this.tab === "overview") {
       const o = activity(this.workbench.allViews()).overview;
@@ -1889,7 +1888,7 @@ export const TUI_COMMANDS = [
   ["/retry", "Retry with confirmation"],
   ["/tools", "Search tools and inspect schemas"],
   ["/expand", "Toggle full tool output"],
-  ["/connect tokenharbor", "Connect saved Token Harbor key"],
+  ["/connect opencode:zen", "Connect OpenCode Zen from local auth"],
   ["/policy", "Tool policies"],
   ["/permissions", "Tool policies and approvals"],
   ["/mcp", "MCP connectors and policy"],
@@ -2390,7 +2389,7 @@ const HELP = [
   "/status | /cost | /context | /compact | /rewind [operation-ID]",
   "/todos | /agents | /memory | /permissions | /mcp | /sessions",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
-  "/models | /model exact-ID | /connect tokenharbor | /login | /logout",
+  "/models | /model exact-ID | /connect opencode:zen | /login | /logout",
   "/providers lists model providers incl. local open models",
   "/harness cloud | /harness prime-agent switches the agent harness",
   "/conformance [adapter] runs the disposable adapter checks",

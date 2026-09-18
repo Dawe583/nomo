@@ -1,7 +1,7 @@
 import { toolCatalog } from './tool-catalog.ts';
 import { managedDocumentAdapter } from './managed-documents.ts';
 import { recoveryRuntime, localOperationJournal, digest, type Json } from '../../runtime/src/index.ts';
-import { DEFAULT_MODEL_ID, TOKENROUTER_URL, TOKENHARBOR_URL, PROVIDER_PRESETS } from './provider-defaults.ts';
+import { DEFAULT_MODEL_ID, TOKENROUTER_URL, OPENCODE_ZEN_URL, PROVIDER_PRESETS } from './provider-defaults.ts';
 import { documentView, sessionPatch, preferencePatch, page, filterRows, providerFailure, connectorInput, publicConnector } from './gui.ts';
 import { LocalStorage } from './storage.ts';
 import { catalog as mcpCatalog, rpc, validateEndpoint, type McpTool, type McpConfig } from './mcp.ts';
@@ -47,7 +47,7 @@ export class Workbench {
   private provider: CompatibleProvider | undefined;
   private readonly storage: LocalStorage;
   private hasState = false;
-  private preferences: Record<string, string> = { defaultProvider: 'tokenharbor', defaultModel: DEFAULT_MODEL_ID, locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
+  private preferences: Record<string, string> = { defaultProvider: 'opencode-zen', defaultModel: DEFAULT_MODEL_ID, locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
   private requests: Record<string, { digest: string; sessionId: string }> = {};
   private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;
@@ -102,7 +102,7 @@ export class Workbench {
     return models;
   }
   async providerState() {
-    if (!this.provider && !this.ignoreEnvironment && this.env.TOKENHARBOR_API_KEY) await this.configure({ baseUrl: TOKENHARBOR_URL, apiKey: this.env.TOKENHARBOR_API_KEY });
+    if (!this.provider && !this.ignoreEnvironment && this.env.OPENCODE_ZEN_API_KEY) await this.configure({ baseUrl: OPENCODE_ZEN_URL, apiKey: this.env.OPENCODE_ZEN_API_KEY });
     if (!this.provider && !this.ignoreEnvironment && this.env.TOKENROUTER_API_KEY) await this.configure({ baseUrl: TOKENROUTER_URL, apiKey: this.env.TOKENROUTER_API_KEY });
     if (!this.provider && !this.ignoreEnvironment && this.env.OPENROUTER_API_KEY) await this.configure({ baseUrl: this.env.VOID_PROVIDER_URL ?? 'https://openrouter.ai/api/v1', apiKey: this.env.OPENROUTER_API_KEY });
     return { connected: this.provider !== undefined, models: this.catalog, keyStorage: this.keyStorage, baseUrl: this.config?.baseUrl, kind: this.config?.kind, profiles: Object.keys(this.profiles), presets: PROVIDER_PRESETS, providerId: PROVIDER_PRESETS.find(p => p.baseUrl === this.config?.baseUrl)?.id ?? 'custom', defaultModel: this.preferences.defaultModel, upstreamConfigured: true };

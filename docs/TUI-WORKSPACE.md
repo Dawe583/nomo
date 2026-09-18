@@ -12,31 +12,21 @@ Na macOS lze spustit také `VOID.command` dvojklikem. Potřebuje dostupný Node.
 24+ a pnpm. Není to `tui:preview`: tento příkaz používá skutečný lokální Workbench,
 šifrované uložiště, skutečný model a skutečné dokumentové operace.
 
-Na tomto počítači byl TokenRouter importován do lokálního šifrovaného úložiště.
-Jinde jej připojí příkaz uvnitř TUI:
-
-```text
-/connect opencode:tokenrouter
-```
-
-Import čte pouze pevnou cestu `~/.config/opencode/opencode.jsonc`, povolený
-endpoint TokenRouteru a doslovný API klíč. Nevykonává konfiguraci, shell ani
-odkazy na příkazy. `/sources` ukáže další dostupné zdroje. Model pro nové
-konverzace je `z-ai/glm-5.3-free`, dokud jej provider nabízí; žádný tichý placený
-fallback. Pokud import není potřebný, lze použít uložený profil nebo proměnnou
+Výchozí provider je OpenCode Zen. Klíč se čte pouze z proměnné
+`OPENCODE_ZEN_API_KEY` nebo z lokálního opencode auth souboru přes
+`/connect opencode:zen`; nikdy se nezadává do příkazové historie ani do
+repozitáře. `/sources` ukáže další dostupné zdroje. Model pro nové
+konverzace vybírá ověřený katalog; žádný tichý placený fallback.
+Pokud import není potřebný, lze použít uložený profil nebo proměnnou
 `TOKENROUTER_API_KEY` bez zadávání klíče do příkazové historie.
 
 ## První skutečný test
 
-### Token Harbor
+### Katalog a model
 
-Token Harbor je dostupný jako provider v nastavení GUI a v TUI přes
-`/connect tokenharbor`. Používá oficiální OpenAI kompatibilní endpoint
-`https://tokenharbor.ai/v1`. Příkaz načte `TOKENHARBOR_API_KEY`, připravený
-šifrovaný klíč nebo dříve ověřený profil. Klíč se nezadává do historie TUI.
-Účet musí mít ověřený e-mail. Neúspěšné ověření nemění aktivního providera.
-Po úspěšném připojení se provider uloží pro nové konverzace; `/models` umožní
-vybrat model z ověřeného katalogu. Existující konverzace zachovají vlastní profil.
+Po úspěšném připojení se provider uloží pro nové konverzace; `/models`
+umožní vybrat model z ověřeného katalogu. Existující konverzace
+zachovají vlastní profil.
 
 ### Katalog a editace
 

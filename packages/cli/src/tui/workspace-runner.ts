@@ -9,6 +9,7 @@ import {
   WorkspaceTui,
   WORKSPACE_TABS,
   commandSuggestions,
+  filterKeyForTab,
   isDoubleEscape,
   mentionCandidates,
   mentionToken,
@@ -309,7 +310,7 @@ export async function runWorkspaceTui(
     if (arg === "--once") once = true;
     else if (arg === "--help") {
       console.log(
-        "void tui [--once] [--view overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider tokenharbor|opencode:tokenrouter]",
+        "void tui [--once] [--view overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
       );
       return 0;
     } else if (
@@ -924,6 +925,28 @@ export async function runWorkspaceTui(
         return;
       }
       if (busy && key.name !== "tab") return;
+      // Type to filter in list tabs. Bound keys keep their action; every
+      // other printable character narrows the list instead of needing /filter.
+      const filterChar = !input.pasting
+        ? filterKeyForTab(value, key, ui.tab)
+        : undefined;
+      if (filterChar !== undefined) {
+        ui.filter += filterChar;
+        ui.selected = 0;
+        ui.detail = undefined;
+        ui.notice = `Filter: ${ui.filter} (Esc clears, Backspace deletes)`;
+        draw();
+        return;
+      }
+      if (!input.pasting && key.name === "backspace" && ui.filter) {
+        ui.filter = ui.filter.slice(0, -1);
+        ui.selected = 0;
+        ui.notice = ui.filter
+          ? `Filter: ${ui.filter} (Esc clears, Backspace deletes)`
+          : "Filter cleared.";
+        draw();
+        return;
+      }
       if (key.name === "tab") {
         ui.cycle(key.shift ? -1 : 1);
         input.editing = ui.tab === "chat";
@@ -958,6 +981,15 @@ export async function runWorkspaceTui(
       else if (value === "r") void task(() => ui.refresh(true));
       else if (value === "?") ui.choose("help");
       else if (key.name === "escape") {
+        // An active filter clears first, before details or checkpoints.
+        if (ui.filter) {
+          ui.filter = "";
+          ui.selected = 0;
+          lastEsc = 0;
+          ui.notice = "Filter cleared.";
+          draw();
+          return;
+        }
         const now = Date.now();
         if (isDoubleEscape(now, lastEsc)) {
           lastEsc = 0;
