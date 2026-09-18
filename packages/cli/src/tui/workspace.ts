@@ -2284,6 +2284,9 @@ export function renderWorkspace(
   const ctxBar = ctx
     ? ` ${meter(ctx.messages, ctx.limit, width >= 120 ? 10 : 4)}`
     : "";
+  const ctxBarVisual = ctx
+    ? ` ${progressBar(ctx.messages, ctx.limit, width >= 120 ? 10 : 4)}`
+    : "";
   const holdBadge =
     holds > 0 ? ` | ◉ ${holds} approval${holds === 1 ? "" : "s"}` : "";
   const queuedBadge = ui.queuedPrompt ? " | +1 queued" : "";
@@ -2294,7 +2297,7 @@ export function renderWorkspace(
   const costSeg = ` | cost: ${cost}`;
   let dropCost = false;
   const summaryTail = (): string =>
-    ` | ${MODE_ICON[ui.mode]} mode: ${ui.mode} | ctx: ${ctxText}${ctxBar} | ` +
+    ` | ${MODE_ICON[ui.mode]} mode: ${ui.mode} | ctx: ${ctxText}${ctxBarVisual} ${ctxBar} | ` +
     `tokens: ${tokens}${dropCost ? "" : costSeg} | ${ui.compactTools ? "compact" : "full"}${holdBadge}${queuedBadge}`;
   if (visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width)
     dropCost = true;
