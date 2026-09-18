@@ -1,0 +1,168 @@
+- generic [ref=f2e3]:
+  - link "Přejít na obsah" [ref=f2e4] [cursor=pointer]:
+    - /url: "#main"
+  - main [ref=f2e74]:
+    - generic [ref=f2e75]:
+      - button "Otevřít menu" [ref=f2e97] [cursor=pointer]
+      - generic [ref=f2e76]: write
+      - button "Nová konverzace" [ref=f2e100] [cursor=pointer]
+      - button "Možnosti zobrazení" [ref=f2e103] [cursor=pointer]
+    - generic [ref=f2e94]:
+      - generic [ref=f2e105]:
+        - generic [ref=f2e107]:
+          - article [ref=f2e108]:
+            - generic [ref=f2e109]:
+              - generic [ref=f2e110]: Vy
+              - time [ref=f2e111]: 01:28
+            - paragraph [ref=f2e113]: write
+            - generic [ref=f2e114]:
+              - button "Kopírovat" [ref=f2e115] [cursor=pointer]
+              - button "Upravit ve větvi" [ref=f2e116] [cursor=pointer]
+          - article [ref=f2e117]:
+            - generic [ref=f2e118]:
+              - generic [ref=f2e119]: VOID
+              - time [ref=f2e120]: 01:28
+            - paragraph [ref=f2e122]: "QA fixture: managed document operation."
+            - generic [ref=f2e123]:
+              - button "Kopírovat" [ref=f2e124] [cursor=pointer]
+              - button "Vytvořit větev" [ref=f2e125] [cursor=pointer]
+              - button "Zkusit znovu" [ref=f2e126] [cursor=pointer]
+          - article [ref=f2e127]:
+            - generic [ref=f2e128]:
+              - generic [ref=f2e129]: tool
+              - time [ref=f2e130]: 01:28
+            - group [ref=f2e131]:
+              - generic "void_workspace_write completed" [ref=f2e132] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f2e133]: ⌘
+                - text: void_workspace_write
+                - generic [ref=f2e134]: completed
+            - button "Kopírovat" [ref=f2e136] [cursor=pointer]
+          - article [ref=f2e137]:
+            - generic [ref=f2e138]:
+              - generic [ref=f2e139]: VOID
+              - time [ref=f2e140]: 01:28
+            - paragraph [ref=f2e142]: QA fixture finished the real managed document operation. Open Documents & Undo to inspect history.
+            - generic [ref=f2e143]:
+              - button "Kopírovat" [ref=f2e144] [cursor=pointer]
+              - button "Vytvořit větev" [ref=f2e145] [cursor=pointer]
+              - button "Zkusit znovu" [ref=f2e146] [cursor=pointer]
+          - article [ref=f2e147]:
+            - generic [ref=f2e148]:
+              - generic [ref=f2e149]: Vy
+              - time [ref=f2e150]: 01:28
+            - paragraph [ref=f2e152]: delete
+            - generic [ref=f2e153]:
+              - button "Kopírovat" [ref=f2e154] [cursor=pointer]
+              - button "Upravit ve větvi" [ref=f2e155] [cursor=pointer]
+          - article [ref=f2e156]:
+            - generic [ref=f2e157]:
+              - generic [ref=f2e158]: VOID
+              - time [ref=f2e159]: 01:28
+            - paragraph [ref=f2e161]: "QA fixture: managed document operation."
+            - generic [ref=f2e162]:
+              - button "Kopírovat" [ref=f2e163] [cursor=pointer]
+              - button "Vytvořit větev" [ref=f2e164] [cursor=pointer]
+              - button "Zkusit znovu" [ref=f2e165] [cursor=pointer]
+          - article [ref=f2e166]:
+            - generic [ref=f2e167]:
+              - generic [ref=f2e168]: tool
+              - time [ref=f2e169]: 01:28
+            - group [ref=f2e170]:
+              - generic "void_workspace_delete completed" [ref=f2e171] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f2e172]: ⌘
+                - text: void_workspace_delete
+                - generic [ref=f2e173]: completed
+            - button "Kopírovat" [ref=f2e175] [cursor=pointer]
+          - article [ref=f2e176]:
+            - generic [ref=f2e177]:
+              - generic [ref=f2e178]: VOID
+              - time [ref=f2e179]: 01:28
+            - paragraph [ref=f2e181]: QA fixture finished the real managed document operation. Open Documents & Undo to inspect history.
+            - generic [ref=f2e182]:
+              - button "Kopírovat" [ref=f2e183] [cursor=pointer]
+              - button "Vytvořit větev" [ref=f2e184] [cursor=pointer]
+              - button "Zkusit znovu" [ref=f2e185] [cursor=pointer]
+          - article [ref=f2e186]:
+            - generic [ref=f2e187]:
+              - generic [ref=f2e188]: tool
+              - time [ref=f2e189]: 01:29
+            - group [ref=f2e190]:
+              - generic "Undid 27536011-6305-4466-8950-aaa6e2356617-7-qa-1789428513733. tool" [ref=f2e191] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f2e192]: ⌘
+                - text: Undid 27536011-6305-4466-8950-aaa6e2356617-7-qa-1789428513733.
+                - generic [ref=f2e193]: tool
+            - button "Kopírovat" [ref=f2e195] [cursor=pointer]
+        - generic [ref=f2e196]:
+          - generic [ref=f2e197]:
+            - textbox "Zpráva" [ref=f2e198]:
+              - /placeholder: Napište zprávu nebo / pro příkazy a nástroje
+            - generic [ref=f2e199]:
+              - button "Otevřít příkazy a nástroje" [ref=f2e200] [cursor=pointer]: /
+              - generic [ref=f2e201]:
+                - generic "Přiložit textový soubor do 24 KB" [ref=f2e202] [cursor=pointer]:
+                  - text: ＋
+                  - generic [ref=f2e203]: Přiložit textový soubor
+                  - button "＋ Přiložit textový soubor" [ref=f2e204]
+                - button "Přiložit dokument z konverzace" [ref=f2e205] [cursor=pointer]: ▤
+                - button "qa-fixture" [disabled] [ref=f2e206]:
+                  - text: qa-fixture
+                  - generic [aria-hidden] [ref=f2e207]: ⌄
+              - button "Odeslat zprávu" [disabled] [ref=f2e208]: ↑
+          - generic [ref=f2e209]:
+            - generic [ref=f2e210]: VOID Local
+            - button "Dokumenty a kontext" [ref=f2e211] [cursor=pointer]
+      - dialog "Kontext" [ref=f2e212]:
+        - generic [ref=f2e213]:
+          - heading "Kontext" [level=2] [ref=f2e214]
+          - button "Zavřít kontext" [active] [ref=f2e215] [cursor=pointer]: ×
+        - generic [ref=f2e216]:
+          - heading "Připojené služby" [level=3] [ref=f2e217]
+          - paragraph [ref=f2e218]: OAuth je dostupný v cloudové aplikaci.
+          - button "Spravovat připojení" [ref=f2e219] [cursor=pointer]
+          - paragraph [ref=f2e220]: Povolené čtení je R0. Zápisy, neznámé nástroje a nástroje s více metodami jsou R3 a vyžadují schválení; automatické Undo není dostupné.
+        - paragraph [ref=f2e221]: Dokumenty této konverzace
+        - generic [ref=f2e222]:
+          - region "Historie dokumentů" [ref=f2e223]:
+            - heading "Historie dokumentů" [level=3] [ref=f2e224]
+            - paragraph [ref=f2e225]: Zachované změny této konverzace včetně smazaných dokumentů. Možnost Undo ověří server v náhledu.
+            - generic [ref=f2e226]:
+              - text: Hledat cestu nebo ID operace
+              - searchbox "Hledat cestu nebo ID operace" [ref=f2e227]
+            - list [ref=f2e228]:
+              - listitem [ref=f2e229]:
+                - button "plan.md undo · 15. 9. 2026 1:29:50 Zkontrolovat změnu" [ref=f2e230] [cursor=pointer]:
+                  - strong [ref=f2e231]: plan.md
+                  - generic [ref=f2e232]: undo · 15. 9. 2026 1:29:50
+                  - generic [ref=f2e233]: Zkontrolovat změnu
+              - listitem [ref=f2e234]:
+                - button "plan.md delete · 15. 9. 2026 1:28:33 Zkontrolovat změnu" [ref=f2e235] [cursor=pointer]:
+                  - strong [ref=f2e236]: plan.md
+                  - generic [ref=f2e237]: delete · 15. 9. 2026 1:28:33
+                  - generic [ref=f2e238]: Zkontrolovat změnu
+              - listitem [ref=f2e239]:
+                - button "plan.md write · 15. 9. 2026 1:28:17 Zkontrolovat změnu" [ref=f2e240] [cursor=pointer]:
+                  - strong [ref=f2e241]: plan.md
+                  - generic [ref=f2e242]: write · 15. 9. 2026 1:28:17
+                  - generic [ref=f2e243]: Zkontrolovat změnu
+          - generic [ref=f2e244]:
+            - generic [ref=f2e245]:
+              - searchbox "Hledat v celé historii" [ref=f2e246]
+              - button "Obnovit" [ref=f2e247] [cursor=pointer]
+              - group [ref=f2e248]:
+                - generic "Zobrazení" [ref=f2e249] [cursor=pointer]
+                - option "25"
+                - option "50" [selected]
+                - option "100"
+              - button "Export stránky" [ref=f2e250] [cursor=pointer]
+            - generic "Výsledky" [ref=f2e251]:
+              - table [ref=f2e252]:
+                - rowgroup [ref=f2e253]:
+                  - row [ref=f2e254]:
+                    - cell "plan.md" [ref=f2e255]
+                    - cell [ref=f2e256]:
+                      - button "Otevřít detail" [ref=f2e257] [cursor=pointer]: ↗
+            - generic [ref=f2e258]:
+              - generic [ref=f2e259]: 1 záznamů
+              - button "Předchozí" [disabled] [ref=f2e260]
+              - button "Další" [disabled] [ref=f2e261]
+        - button "Otevřít ledger" [ref=f2e262] [cursor=pointer]

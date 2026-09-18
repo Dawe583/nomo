@@ -1,0 +1,9 @@
+[     148ms] Unexpected token '<'
+[      58ms] [ERROR] Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html". Strict MIME type checking is enforced for module scripts per HTML spec. @ http://127.0.0.1:8082/chat/app.js:0
+[      58ms] [ERROR] Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html". Strict MIME type checking is enforced for module scripts per HTML spec. @ http://127.0.0.1:8082/chat/sessions.js:0
+[     159ms] Unexpected token '<'
+[     165ms] Unexpected token '<'
+[     164ms] [VERBOSE] [DOM] Password forms should have (optionally hidden) username fields for accessibility: (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:8082/chat/new:0
+[     166ms] [ERROR] Manifest: Line: 1, column: 1, Syntax error. @ http://127.0.0.1:8082/chat/manifest.webmanifest:0
+[     182ms] [ERROR] Manifest: Line: 1, column: 1, Syntax error. @ http://127.0.0.1:8082/chat/manifest.webmanifest:0
+[     183ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://127.0.0.1:8082/chat/new:0

@@ -1,0 +1,73 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: Papayai
+      - generic [ref=e8]: Jobs, money and runway, in one place.
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]: ✓
+        - generic [ref=e12]: Gestures
+      - generic [ref=e14]:
+        - generic [ref=e15]: "2"
+        - generic [ref=e16]: Numbers
+      - generic [ref=e18]:
+        - generic [ref=e19]: "3"
+        - generic [ref=e20]: Start
+    - generic [ref=e21]: The workspace control
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]: Tap the four-field mark
+          - generic [ref=e26]: Workspace menu
+        - generic [ref=e27]: M
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]: Voice capture
+          - generic [ref=e32]: Its own tile in Menu
+        - generic [ref=e33]: Menu
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]: Open Actions
+          - generic [ref=e38]: From Menu or keyboard
+        - generic [ref=e39]: A
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]: Swipe from the top edge
+          - generic [ref=e44]: Search
+        - generic [ref=e45]: /
+    - generic [ref=e47]: What runway is counted from
+    - generic [ref=e48]:
+      - generic [aria-hidden] [ref=e49]: i
+      - generic [ref=e50]: Both numbers can stay empty. Without the balance Runway has nothing to count from, and Settings takes them later.
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - textbox "Account balance in Kč" [ref=e53]
+        - generic: Balance, Kč
+        - generic [ref=e54]: Where runway starts. The app cannot see your bank.
+      - generic [ref=e55]:
+        - textbox "Personal draw per month" [ref=e56]: "0"
+        - generic: Personal draw, Kč
+        - generic [ref=e57]: What you pay yourself each month.
+    - generic [ref=e58]: Who are you
+    - generic [ref=e59]:
+      - generic [ref=e60]: D
+      - radiogroup [ref=e62]:
+        - radio "Max" [ref=e63] [cursor=pointer]: M
+        - radio "David" [checked] [ref=e64] [cursor=pointer]: D
+        - radio "Oliver" [ref=e65] [cursor=pointer]: O
+      - generic [ref=e66]:
+        - textbox "Your name" [ref=e67]: David
+        - text: 5/20
+    - generic [ref=e68]: Where the work is kept
+    - generic [ref=e69]: In the team's database, and everyone on the team sees it. Nothing stays on this device, so sign in first.
+    - generic [ref=e70]:
+      - button "Start the device" [ref=e71] [cursor=pointer]:
+        - generic [ref=e72]:
+          - generic [ref=e73]: Start the device
+          - generic [aria-hidden] [ref=e74]: No account, right away
+      - button "Sign in" [ref=e75] [cursor=pointer]
+  - text: ON OFF
+  - generic [aria-hidden]:
+    - generic: Papayai
+  - complementary "Data and save status":
+    - status: Sign in to load your data.

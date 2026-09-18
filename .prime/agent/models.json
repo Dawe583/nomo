@@ -1,0 +1,10 @@
+{
+  "prime:tokenrouter": {
+    "name": "TokenRouter",
+    "source": "Prime",
+    "provider": "tokenrouter",
+    "entry": "tokenrouter",
+    "models": true,
+    "free": true
+  }
+}

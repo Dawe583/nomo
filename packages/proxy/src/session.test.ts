@@ -125,6 +125,92 @@ describe("Session typed request identity", () => {
     assert.deepEqual(replyNumber, { jsonrpc: "2.0", id: 1, result: "n" });
   });
 
+  test("cancelling a string id leaves the matching numeric id active", () => {
+    const session = new Session();
+    const fromString = session.translateRequestOut(request("1", "tools/list"));
+    const fromNumber = session.translateRequestOut(request(1, "tools/list"));
+
+    assert.deepEqual(session.translateCancellation("1"), {
+      jsonrpc: "2.0",
+      method: "notifications/cancelled",
+      params: { requestId: fromString.id },
+    });
+    assert.equal(session.translateCancellation("1"), null);
+    assert.equal(session.translateInbound({ jsonrpc: "2.0", id: fromString.id, result: {} }), null);
+    assert.deepEqual(session.translateInbound({ jsonrpc: "2.0", id: fromNumber.id, result: {} }), {
+      jsonrpc: "2.0", id: 1, result: {},
+    });
+  });
+
+  for (const token of ["progress-7", "", 0, 42]) {
+    test(`restores independent progress token ${JSON.stringify(token)} without changing metadata`, () => {
+      const session = new Session();
+      const original: JsonRpcRequest = {
+        ...request("request-7", "tools/call"),
+        params: { name: "db.query", _meta: { progressToken: token, other: true } },
+      };
+      const outbound = session.translateRequestOut(original);
+
+      assert.deepEqual(outbound.params, {
+        name: "db.query", _meta: { progressToken: outbound.id, other: true },
+      });
+      assert.deepEqual(original.params, {
+        name: "db.query", _meta: { progressToken: token, other: true },
+      });
+      assert.deepEqual(session.translateInbound({
+        jsonrpc: "2.0",
+        method: "notifications/progress",
+        params: { progressToken: outbound.id, progress: 1, total: 3, message: "working" },
+      }), {
+        jsonrpc: "2.0",
+        method: "notifications/progress",
+        params: { progressToken: token, progress: 1, total: 3, message: "working" },
+      });
+    });
+  }
+
+  for (const terminal of ["drop", "result", "error", "outbound-cancellation", "inbound-cancellation"] as const) {
+    test(`${terminal} clears progress tokens and ignores late replies`, () => {
+      const session = new Session();
+      const outbound = session.translateRequestOut({
+        ...request("request-7", "tools/call"),
+        params: { _meta: { progressToken: "progress-7" } },
+      });
+      const progress: JsonRpcNotification = {
+        jsonrpc: "2.0",
+        method: "notifications/progress",
+        params: { progressToken: outbound.id, progress: 1 },
+      };
+      assert.notEqual(session.translateInbound(progress), null);
+
+      if (terminal === "drop") {
+        session.drop("request-7");
+      } else if (terminal === "outbound-cancellation") {
+        assert.notEqual(session.translateCancellation("request-7"), null);
+      } else if (terminal === "inbound-cancellation") {
+        assert.deepEqual(session.translateInbound({
+          jsonrpc: "2.0",
+          method: "notifications/cancelled",
+          params: { requestId: outbound.id, reason: "stopped" },
+        }), {
+          jsonrpc: "2.0",
+          method: "notifications/cancelled",
+          params: { requestId: "request-7", reason: "stopped" },
+        });
+      } else {
+        const payload = terminal === "result" ? { result: {} } : { error: { code: -32603, message: "failed" } };
+        assert.deepEqual(session.translateInbound({ jsonrpc: "2.0", id: outbound.id, ...payload }), {
+          jsonrpc: "2.0", id: "request-7", ...payload,
+        });
+      }
+
+      assert.equal(session.maps.agentToUpstream.size, 0);
+      assert.equal(session.translateInbound(progress), null);
+      assert.equal(session.translateInbound({ jsonrpc: "2.0", id: outbound.id, result: {} }), null);
+      assert.equal(session.translateCancellation("request-7"), null);
+    });
+  }
+
   test("duplicate inbound server request ids get distinct agent ids", () => {
     const session = new Session();
     const first = session.translateInbound(request(42, "roots/list"));

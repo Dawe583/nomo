@@ -1,0 +1,81 @@
+- generic [ref=e3]:
+  - link "Skip to content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - complementary "Main navigation" [ref=e5]:
+    - link [ref=e7] [cursor=pointer]:
+      - /url: /chat/new
+    - button "＋" [ref=e12] [cursor=pointer]
+    - button "⌕" [ref=e14] [cursor=pointer]
+    - navigation [ref=e16]:
+      - link "Overview" [ref=e17] [cursor=pointer]:
+        - /url: /overview
+      - link "Conversations" [ref=e21] [cursor=pointer]:
+        - /url: /sessions
+      - link "Runs and activity" [ref=e25] [cursor=pointer]:
+        - /url: /runs
+      - link "Documents" [ref=e29] [cursor=pointer]:
+        - /url: /documents
+      - link "Approvals" [ref=e33] [cursor=pointer]:
+        - /url: /approvals
+      - link "Ledger" [ref=e37] [cursor=pointer]:
+        - /url: /ledger
+      - link "Tools and connections" [ref=e41] [cursor=pointer]:
+        - /url: /connections
+      - link "Models and usage" [ref=e45] [cursor=pointer]:
+        - /url: /models
+    - link [ref=e50] [cursor=pointer]:
+      - /url: /settings
+      - generic [aria-hidden] [ref=e51]: ⚙
+  - main [ref=e54]:
+    - generic [ref=e55]:
+      - generic [ref=e56]: New conversation
+      - generic [ref=e58]:
+        - button "Switch to Czech" [ref=e59] [cursor=pointer]
+        - button "Toggle theme" [ref=e62] [cursor=pointer]
+        - button "Animations" [pressed] [ref=e65] [cursor=pointer]
+        - button "Open context" [ref=e68] [cursor=pointer]
+    - generic [ref=e73]:
+      - generic [ref=e76]:
+        - generic [aria-hidden] [ref=e77]: __ __ ___ ___ ___ \ \ / / / _ \ |_ _|| \ \ V / | (_) | | | | |) | \_/ \___/ |___||___/
+        - heading "Room for your next idea." [level=1] [ref=e78]
+        - paragraph [ref=e79]: Write, build, and keep every step in view.
+        - generic [ref=e80]:
+          - button ">_ Plan a project Create a concise project plan and save it to plan.md." [ref=e81] [cursor=pointer]:
+            - text: ">_"
+            - generic [ref=e82]:
+              - strong [ref=e83]: Plan a project
+              - generic [ref=e84]: Create a concise project plan and save it to plan.md.
+            - generic [aria-hidden] [ref=e85]: ↗
+          - button ">_ Explore tools Which tools are available? Explain how to use them." [ref=e86] [cursor=pointer]:
+            - text: ">_"
+            - generic [ref=e87]:
+              - strong [ref=e88]: Explore tools
+              - generic [ref=e89]: Which tools are available? Explain how to use them.
+            - generic [aria-hidden] [ref=e90]: ↗
+          - button ">_ Start a document Help me outline a new document." [ref=e91] [cursor=pointer]:
+            - text: ">_"
+            - generic [ref=e92]:
+              - strong [ref=e93]: Start a document
+              - generic [ref=e94]: Help me outline a new document.
+            - generic [aria-hidden] [ref=e95]: ↗
+      - generic [ref=e96]:
+        - generic [ref=e97]:
+          - textbox "Message" [ref=e98]:
+            - /placeholder: Message or / for commands and tools
+          - generic [ref=e99]:
+            - button "Open commands and tools" [ref=e100] [cursor=pointer]: /
+            - generic [ref=e101]:
+              - generic "Attach a text file up to 24 KB" [ref=e102] [cursor=pointer]:
+                - text: ＋
+                - generic [ref=e103]: Attach text file
+                - button "＋ Attach text file" [ref=e104]
+              - button "Attach conversation document" [disabled] [ref=e105]: ▤
+              - button "GLM 5.3 Free" [ref=e106] [cursor=pointer]:
+                - text: GLM 5.3 Free
+                - generic [aria-hidden] [ref=e107]: ⌄
+            - button "Send message" [disabled] [ref=e108]: ↑
+        - generic [ref=e109]:
+          - generic [ref=e110]: Provider unverified
+          - generic [ref=e111]: VOID Cloud
+          - button "Documents and context" [ref=e112] [cursor=pointer]
+          - generic [ref=e113]: Verify important results.

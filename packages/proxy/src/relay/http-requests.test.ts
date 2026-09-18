@@ -106,7 +106,7 @@ describe("createHttpRequestRelay", () => {
       const responsePromise = fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json", accept: "text/event-stream" },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 11, method: "tools/call", params: { name: "slow", _meta: { progressToken: 11 } } }),
+        body: JSON.stringify({ jsonrpc: "2.0", id: 11, method: "tools/call", params: { name: "slow", _meta: { progressToken: "job-progress" } } }),
       });
 
       await waitFor(() => sent.length === 1);
@@ -118,7 +118,7 @@ describe("createHttpRequestRelay", () => {
 
       assert.equal(response.headers.get("content-type"), "text/event-stream");
       assert.match(text, /"method":"notifications\/progress"/);
-      assert.match(text, /"progressToken":11/);
+      assert.match(text, /"progressToken":"job-progress"/);
       assert.match(text, /"id":11/);
       assert.match(text, /"done":true/);
     });

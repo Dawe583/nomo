@@ -135,10 +135,10 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
     }
 
     if (isProgressNotification(message)) {
-      const translated = relayNotification(message, session.maps).notification;
-      const agentId = readNumericParam(translated.params, "progressToken");
-      if (agentId !== null) {
-        pendingByAgent.get(agentId)?.pending.writeSse(translated);
+      const upstreamId = readNumericParam(message.params, "progressToken");
+      const translated = session.translateInbound(message);
+      if (upstreamId !== null && translated !== null && isNotification(translated)) {
+        pendingByUpstream.get(upstreamId)?.pending.writeSse(translated);
       }
       return;
     }

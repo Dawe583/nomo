@@ -1,0 +1,215 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "VOID" [ref=e5] [cursor=pointer]:
+        - /url: index.html
+      - button "Toggle color theme" [ref=e10] [cursor=pointer]: "[t] Theme"
+      - navigation "Primary" [ref=e11]:
+        - link "Workspace" [ref=e12] [cursor=pointer]:
+          - /url: index.html
+        - link "Activity" [ref=e13] [cursor=pointer]:
+          - /url: feed.html
+        - link "Approvals" [ref=e14] [cursor=pointer]:
+          - /url: approvals.html
+        - link "Ledger" [ref=e15] [cursor=pointer]:
+          - /url: ledger.html
+  - main [ref=e16]:
+    - region [ref=e17]:
+      - complementary "Sessions" [ref=e18]:
+        - generic [ref=e19]:
+          - heading "Workspace" [level=1] [ref=e20]
+          - button "New session" [ref=e21] [cursor=pointer]: "[+]"
+        - generic [ref=e22]: Find a session
+        - searchbox "Find a session" [ref=e23]
+        - 'button "[.] Create tui-check.md containing exactly: VOID TUI works. Use the document write t" [ref=e25] [cursor=pointer]'
+        - generic [ref=e26]:
+          - paragraph [ref=e27]: "[+] VOID protection activeDocument changes are captured."
+          - button "[=] Settings & connectors" [ref=e28] [cursor=pointer]
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - status [ref=e31]: New conversation
+          - status [ref=e32]:
+            - generic [ref=e33]: "[ permission: unknown ]"
+            - text: "server: local"
+          - button "[#] Documents & Undo" [ref=e34] [cursor=pointer]
+        - generic "Session transcript" [ref=e35]:
+          - generic [ref=e36]:
+            - paragraph [ref=e37]: + VOID agent
+            - heading "Room to work. Room to undo." [level=2] [ref=e38]: Room to work.Room to undo.
+            - paragraph [ref=e39]: Create documents, work with connected tools, and inspect every change. Your managed documents have captured history from the first edit.
+            - button "Draft a project plan in plan.md" [ref=e40] [cursor=pointer]
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - generic [ref=e43]:
+              - generic [ref=e44]: Find a model
+              - searchbox "Find a model" [ref=e45]
+            - generic [ref=e46]:
+              - generic [ref=e47]: Model
+              - combobox "Model" [ref=e48]:
+                - option "openai/gpt-5.4-nano" [selected]
+                - option "openai/gpt-5.6-luna"
+                - option "google/gemini-3.5-flash-lite"
+                - option "qwen/qwen3.5-9b"
+                - option "qwen/qwen3.7-max"
+                - option "deepseek/deepseek-v4-pro"
+                - option "bytedance-seed/seedream-5.0-pro"
+                - option "MiniMax-M3"
+                - option "qwen/qwen3.5-plus-02-15"
+                - option "anthropic/claude-fable-5"
+                - option "microsoft/mai-image-2.5"
+                - option "kling-v3-omni"
+                - option "x-ai/grok-4.20-beta"
+                - option "anthropic/claude-opus-4.8-fast"
+                - option "openai/gpt-5.2"
+                - option "deepseek/deepseek-v3.2"
+                - option "MiniMax-Hailuo-2.3"
+                - option "anthropic/claude-sonnet-4.5"
+                - option "qwen/qwen3.8-flash"
+                - option "stepfun/step-3.5-flash"
+                - option "x-ai/grok-4.6"
+                - option "z-ai/glm-5-turbo"
+                - option "bytedance-seed/seedream-4.5"
+                - option "moonshotai/kimi-k3"
+                - option "openai/gpt-image-2.5-sunburst"
+                - option "qwen3.6-flash"
+                - option "x-ai/grok-4.5"
+                - option "openai/gpt-5.6-terra"
+                - option "deepseek/deepseek-v4.1-flash"
+                - option "qwen/qwen3.5-397b-a17b"
+                - option "qwen/qwen3.8-max"
+                - option "deepseek/deepseek-v4-flash-vision-exp"
+                - option "bytedance-seed/seedream-5.0-lite"
+                - option "anthropic/claude-sonnet-4"
+                - option "kling-3.0-turbo"
+                - option "tencent/hy3-preview"
+                - option "z-ai/glm-5.1"
+                - option "nvidia/nemotron-3.5-lightning"
+                - option "deepseek/deepseek-v4-pro-0813"
+                - option "qwen3.5-omni-plus"
+                - option "anthropic/claude-sonnet-5"
+                - option "seed-2-0-pro-260328"
+                - option "moonshotai/kimi-k2.7-code"
+                - option "anthropic/claude-haiku-4.5"
+                - option "xiaomi/mimo-v2-pro"
+                - option "GLM 5.3 Free"
+                - option "z-ai/glm-4.6v"
+                - option "google/gemini-3-pro-image-preview"
+                - option "google/gemini-3.1-flash-image-preview"
+                - option "openai/gpt-5-image-mini"
+                - option "kling-v3"
+                - option "anthropic/claude-opus-4.6"
+                - option "google/gemini-3.7-flash"
+                - option "z-ai/glm-5.2"
+                - option "openai/gpt-oss-120b"
+                - option "x-ai/grok-4.1-fast"
+                - option "seed-2-0-mini-260428"
+                - option "qwen/qwen3-coder-next"
+                - option "seed-2-0-code-preview-260328"
+                - option "google/gemini-3.1-pro-preview"
+                - option "anthropic/claude-fable-5.1"
+                - option "happyhorse-1.0-t2v"
+                - option "dreamina-seedance-2-5-hc"
+                - option "xiaomi/mimo-v2-flash"
+                - option "google/gemini-3.1-flash-lite-image"
+                - option "openai/gpt-5.4-mini"
+                - option "z-ai/glm-4.5-air"
+                - option "stealth/ox-alpha"
+                - option "mistralai/voxtral-small-24b-2507"
+                - option "openai/gpt-5.5-pro"
+                - option "nvidia/nemotron-3-super-120b-a12b"
+                - option "minimax/minimax-m2-her"
+                - option "google/gemini-embedding-2"
+                - option "google/gemini-embedding-001"
+                - option "z-ai/glm-5.3"
+                - option "claude-haiku-4-5"
+                - option "claude-opus-4-8-m-aws"
+                - option "openai/gpt-5.4-image-2"
+                - option "google/gemini-3.5-flash"
+                - option "xiaomi/mimo-v2.5-pro"
+                - option "anthropic/claude-opus-5-fast"
+                - option "minimax/minimax-m2.7-highspeed"
+                - option "qwen/qwen3.5-122b-a10b"
+                - option "minimax/minimax-m2.7"
+                - option "xiaomi/mimo-v2.5"
+                - option "ex/gpt-5.4"
+                - option "mistralai/mistral-medium-3-5"
+                - option "qwen/qwen3.7-plus"
+                - option "qwen/qwen3.5-35b-a3b"
+                - option "anthropic/claude-opus-4.7"
+                - option "openai/gpt-5-image"
+                - option "google/gemini-3-flash-preview"
+                - option "wan3.0-video"
+                - option "openai/gpt-5.4-pro"
+                - option "google/gemma-4-26b-a4b-it"
+                - option "stepfun/step-3.7-flash"
+                - option "kling-v2-6"
+                - option "anthropic/claude-opus-4.5"
+                - option "mistralai/devstral-2512"
+                - option "tencent/hy4-preview"
+                - option "x-ai/grok-4.3"
+                - option "anthropic/claude-opus-4.7-fast"
+                - option "google/gemini-3.6-flash"
+                - option "x-ai/grok-build-0.1"
+                - option "openai/gpt-5"
+                - option "anthropic/claude-sonnet-4.6"
+                - option "openai/gpt-5.6-sol"
+                - option "google/gemini-3.8-flash"
+                - option "openai/gpt-5.4"
+                - option "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+                - option "deepseek/deepseek-v4-flash"
+                - option "sakana/fugu-ultra"
+                - option "openai/gpt-4o-mini"
+                - option "z-ai/glm-4.6"
+                - option "openai/gpt-image-2.5-flare"
+                - option "seed-2-0-lite-260428"
+                - option "openai/gpt-5.5"
+                - option "z-ai/glm-4.7"
+                - option "openai/gpt-6-astra"
+                - option "openai/gpt-audio"
+                - option "deepseek/deepseek-v4-flash-0731"
+                - option "z-ai/glm-5.3-flash"
+                - option "moonshotai/kimi-k2.6"
+                - option "google/gemini-2.5-flash-image"
+                - option "qwen/qwen3.5-flash"
+                - option "moonshotai/kimi-k2.5"
+                - option "anthropic/claude-opus-5"
+                - option "minimax/minimax-m2.5"
+                - option "qwen/qwen3.6-plus"
+                - option "xiaomi/mimo-v2-omni"
+                - option "openai/gpt-5-mini"
+                - option "mistralai/mistral-small-2603"
+                - option "minimax/minimax-m2.1"
+                - option "openai/gpt-audio-mini"
+                - option "anthropic/claude-opus-4.8"
+                - option "minimax/minimax-m2.1-highspeed"
+                - option "z-ai/glm-5"
+          - generic [ref=e49]: Message to your agent
+          - textbox "Message to your agent" [ref=e50]:
+            - /placeholder: What should we work on?
+          - generic [ref=e51]:
+            - paragraph [ref=e52]: Cmd/Ctrl + Enter to send
+            - generic [ref=e53]:
+              - button "Stop" [disabled] [ref=e54]
+              - button "Send message" [ref=e55] [cursor=pointer]
+        - button "Export conversation" [disabled] [ref=e57]
+        - paragraph [ref=e58]: Sessions, documents and keys are encrypted on this device. History survives restarting the app.
+        - region [ref=e59]:
+          - heading "Context" [level=2] [ref=e60]: "[~] Context"
+          - status [ref=e61]:
+            - generic [ref=e62]:
+              - term [ref=e63]: Total tokens
+              - definition [ref=e64]: "1017"
+              - term [ref=e65]: Usage records
+              - definition [ref=e66]: "2"
+              - term [ref=e67]: Cost
+              - definition [ref=e68]: unknown
+              - term [ref=e69]: Scope
+              - definition [ref=e70]: retained-history
+            - paragraph [ref=e71]: Missing token or cost data stays explicitly unknown.
+    - group [ref=e72]:
+      - generic "Workspace activity and approvals" [ref=e73] [cursor=pointer]
+      - text: "[ ] [ ]"
+  - contentinfo [ref=e74]:
+    - generic [ref=e75]: VOID / Recorded decisions. Verifiable evidence. Leave workspace blank to use the default ledger and view all pending holds.

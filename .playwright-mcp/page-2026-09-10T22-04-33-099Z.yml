@@ -1,0 +1,149 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "VOID" [ref=e4] [cursor=pointer]:
+      - /url: index.html
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - paragraph [ref=e7]: Control plane
+      - heading "Accountable writes, live from your workspace." [level=1] [ref=e8]
+      - paragraph [ref=e9]: Read the signed ledger and review pending holds. Proxy health is not reported by this API.
+    - generic [ref=e11]:
+      - form "Workspace selection" [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: Workspace (blank uses server default)
+          - textbox "Workspace (blank uses server default)" [ref=e15]:
+            - /placeholder: Server default
+        - button "Load workspace" [ref=e16] [cursor=pointer]
+      - generic [ref=e17]:
+        - status [ref=e18]: "chain ok, signatures checked: 12 records checked"
+        - button "Refresh now" [ref=e19] [cursor=pointer]
+      - status [ref=e20]: "Last updated: 2026-09-10T22:04:33.056Z. Refresh every 2 seconds."
+      - heading "Latest calls" [level=2] [ref=e21]
+      - paragraph [ref=e22]: feed verified with signatures checked against the configured key
+      - region "Ledger entries" [ref=e23]:
+        - table "Latest 50 ledger entries in the selected workspace" [ref=e24]:
+          - rowgroup [ref=e25]:
+            - row [ref=e26]:
+              - cell "1" [ref=e27]
+              - cell "2026-09-10T09:30:00.000Z" [ref=e28]
+              - cell "linear.issue.archive" [ref=e29]
+              - cell "R0 (ok)" [ref=e30]
+              - cell "allow:resolved" [ref=e32]
+              - cell "9f2d5b6a00f8..." [ref=e33]
+            - row [ref=e34]:
+              - cell "2" [ref=e35]
+              - cell "2026-09-10T09:30:45.000Z" [ref=e36]
+              - cell "google.calendar.event.create" [ref=e37]
+              - cell "R1 (info)" [ref=e38]
+              - cell "allow:resolved" [ref=e40]
+              - cell "6eb161e8dc05..." [ref=e41]
+            - row [ref=e42]:
+              - cell "3" [ref=e43]
+              - cell "2026-09-10T09:31:30.000Z" [ref=e44]
+              - cell "kubernetes.deployment.apply" [ref=e45]
+              - cell "R1 (info)" [ref=e46]
+              - cell "hold:approved" [ref=e48]
+              - cell "ec0e6bd185bd..." [ref=e49]
+            - row [ref=e50]:
+              - cell "4" [ref=e51]
+              - cell "2026-09-10T09:32:15.000Z" [ref=e52]
+              - cell "aws.iam.access_key.create" [ref=e53]
+              - cell "R2 (warn)" [ref=e54]
+              - cell "hold:denied" [ref=e56]
+              - cell "100cdb93e145..." [ref=e57]
+            - row [ref=e58]:
+              - cell "5" [ref=e59]
+              - cell "2026-09-10T09:33:00.000Z" [ref=e60]
+              - cell "stripe.subscription.delete" [ref=e61]
+              - cell "R2 (warn)" [ref=e62]
+              - cell "hold:expired" [ref=e64]
+              - cell "af549018dc2e..." [ref=e65]
+            - row [ref=e66]:
+              - cell "6" [ref=e67]
+              - cell "2026-09-10T09:33:45.000Z" [ref=e68]
+              - cell "aws.s3.object.put" [ref=e69]
+              - cell "R3 (bad)" [ref=e70]
+              - cell "deny:resolved" [ref=e72]
+              - cell "7c36cc4d1cf4..." [ref=e73]
+            - row [ref=e74]:
+              - cell "7" [ref=e75]
+              - cell "2026-09-10T09:34:30.000Z" [ref=e76]
+              - cell "aws.rds.instance.delete" [ref=e77]
+              - cell "R3 (bad)" [ref=e78]
+              - cell "hold:approved" [ref=e80]
+              - cell "38618e20f663..." [ref=e81]
+            - row [ref=e82]:
+              - cell "8" [ref=e83]
+              - cell "2026-09-10T09:35:15.000Z" [ref=e84]
+              - cell "sendgrid.mail.send" [ref=e85]
+              - cell "R2 (warn)" [ref=e86]
+              - cell "deny:resolved" [ref=e88]
+              - cell "52fca5e7eb72..." [ref=e89]
+            - row [ref=e90]:
+              - cell "9" [ref=e91]
+              - cell "2026-09-10T09:36:00.000Z" [ref=e92]
+              - cell "postgres.row.update" [ref=e93]
+              - cell "R1 (info)" [ref=e94]
+              - cell "allow:resolved" [ref=e96]
+              - cell "c9d3efc432ba..." [ref=e97]
+            - row [ref=e98]:
+              - cell "10" [ref=e99]
+              - cell "2026-09-10T09:36:45.000Z" [ref=e100]
+              - cell "postgres.row.delete" [ref=e101]
+              - cell "R1 (info)" [ref=e102]
+              - cell "hold:approved" [ref=e104]
+              - cell "5406a26e7a62..." [ref=e105]
+            - row [ref=e106]:
+              - cell "11" [ref=e107]
+              - cell "2026-09-10T09:37:30.000Z" [ref=e108]
+              - cell "aws.s3.bucket.delete" [ref=e109]
+              - cell "R3 (bad)" [ref=e110]
+              - cell "hold:approved" [ref=e112]
+              - cell "d8db374e2c17..." [ref=e113]
+            - row [ref=e114]:
+              - cell "12" [ref=e115]
+              - cell "2026-09-10T09:38:15.000Z" [ref=e116]
+              - cell "slack.conversation.archive" [ref=e117]
+              - cell "R1 (info)" [ref=e118]
+              - cell "hold:approved" [ref=e120]
+              - cell "f3029186080c..." [ref=e121]
+      - heading "Pending holds" [level=2] [ref=e122]
+      - status
+      - generic [ref=e123]:
+        - article [ref=e124]:
+          - generic [ref=e125]: R3 (bad)
+          - heading "aws.s3.bucket.delete" [level=2] [ref=e126]
+          - paragraph [ref=e127]:
+            - text: "Hold:"
+            - code [ref=e128]: h0001
+          - paragraph [ref=e129]: "Workspace: demo"
+          - paragraph [ref=e130]: "Blast radius: 1"
+          - paragraph [ref=e131]: Policy rationale is not included in this API response.
+          - paragraph [ref=e132]: 524 seconds remaining
+          - generic [ref=e133]:
+            - button "Approve aws.s3.bucket.delete" [ref=e134] [cursor=pointer]: Approve
+            - button "Deny aws.s3.bucket.delete" [ref=e135] [cursor=pointer]: Deny
+        - article [ref=e136]:
+          - generic [ref=e137]: R2 (warn)
+          - heading "stripe.subscription.delete" [level=2] [ref=e138]
+          - paragraph [ref=e139]:
+            - text: "Hold:"
+            - code [ref=e140]: h0002
+          - paragraph [ref=e141]: "Workspace: demo"
+          - paragraph [ref=e142]: "Blast radius: 2"
+          - paragraph [ref=e143]: Policy rationale is not included in this API response.
+          - paragraph [ref=e144]: 512 seconds remaining
+          - generic [ref=e145]:
+            - button "Approve stripe.subscription.delete" [ref=e146] [cursor=pointer]: Approve
+            - button "Deny stripe.subscription.delete" [ref=e147] [cursor=pointer]: Deny
+  - contentinfo [ref=e148]:
+    - generic [ref=e149]: VOID control plane. Live API data, no external assets. A blank workspace uses the server default. Without an explicit workspace, the approval inbox lists all broker holds.
+  - navigation "Primary" [ref=e150]:
+    - link "Home" [ref=e151] [cursor=pointer]:
+      - /url: index.html
+    - link "Feed" [ref=e155] [cursor=pointer]:
+      - /url: feed.html
+    - link "Approvals" [ref=e158] [cursor=pointer]:
+      - /url: approvals.html
+    - link "Ledger" [ref=e162] [cursor=pointer]:
+      - /url: ledger.html

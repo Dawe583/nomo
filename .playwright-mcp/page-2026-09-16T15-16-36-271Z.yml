@@ -1,0 +1,90 @@
+- generic [ref=f1e3]:
+  - link "Přejít na obsah" [ref=f1e4] [cursor=pointer]:
+    - /url: "#main"
+  - complementary "Hlavní navigace" [ref=f1e5]:
+    - link [ref=f1e7] [cursor=pointer]:
+      - /url: /chat/new
+    - button "＋" [ref=f1e12] [cursor=pointer]
+    - button "⌕" [ref=f1e14] [cursor=pointer]
+    - navigation [ref=f1e16]:
+      - link "Přehled" [ref=f1e17] [cursor=pointer]:
+        - /url: /overview
+      - link "Konverzace" [ref=f1e21] [cursor=pointer]:
+        - /url: /sessions
+      - link "Běhy a aktivita" [ref=f1e25] [cursor=pointer]:
+        - /url: /runs
+      - link "Dokumenty" [ref=f1e29] [cursor=pointer]:
+        - /url: /documents
+      - link "Schvalování" [ref=f1e33] [cursor=pointer]:
+        - /url: /approvals
+      - link "Ledger" [ref=f1e37] [cursor=pointer]:
+        - /url: /ledger
+      - link "Nástroje a konektory" [ref=f1e41] [cursor=pointer]:
+        - /url: /connections
+      - link "Modely a spotřeba" [ref=f1e45] [cursor=pointer]:
+        - /url: /models
+    - link [ref=f1e50] [cursor=pointer]:
+      - /url: /settings
+      - generic [aria-hidden] [ref=f1e51]: ⚙
+  - main [ref=f1e54]:
+    - generic [ref=f1e55]:
+      - generic [ref=f1e56]:
+        - generic [ref=f1e57]: Vytvoř plán v plan.md.
+        - generic [ref=f1e117]: idle
+      - generic [ref=f1e58]:
+        - button "Přepnout do angličtiny" [ref=f1e59] [cursor=pointer]
+        - button "Přepnout vzhled" [ref=f1e62] [cursor=pointer]
+        - button "Animace" [pressed] [ref=f1e65] [cursor=pointer]
+        - button "Export konverzace" [ref=f1e118] [cursor=pointer]
+        - button "Otevřít kontext" [ref=f1e68] [cursor=pointer]
+    - generic [ref=f1e121]:
+      - generic [ref=f1e123]:
+        - article [ref=f1e124]:
+          - generic [ref=f1e125]:
+            - generic [ref=f1e126]: Vy
+            - time [ref=f1e127]: 17:16
+          - paragraph [ref=f1e129]: Vytvoř plán v plan.md.
+          - generic [ref=f1e130]:
+            - button "Kopírovat" [ref=f1e131] [cursor=pointer]
+            - button "Upravit ve větvi" [ref=f1e132] [cursor=pointer]
+        - article [ref=f1e133]:
+          - generic [ref=f1e134]:
+            - generic [ref=f1e135]: VOID
+            - time [ref=f1e136]: 17:16
+          - paragraph [ref=f1e138]: "QA fixture: creating a project plan with captured history."
+          - generic [ref=f1e139]:
+            - button "Kopírovat" [ref=f1e140] [cursor=pointer]
+            - button "Vytvořit větev" [ref=f1e141] [cursor=pointer]
+            - button "Zkusit znovu" [ref=f1e142] [cursor=pointer]
+        - article [ref=f1e143]:
+          - generic [ref=f1e144]:
+            - generic [ref=f1e145]: tool
+            - time [ref=f1e146]: 17:16
+          - group [ref=f1e147]:
+            - generic "void_workspace_write requested" [ref=f1e148] [cursor=pointer]:
+              - generic [aria-hidden] [ref=f1e149]: ⌘
+              - text: void_workspace_write
+              - generic [ref=f1e150]: requested
+          - button "Kopírovat" [ref=f1e152] [cursor=pointer]
+      - generic [ref=f1e153]:
+        - generic [ref=f1e154]:
+          - textbox "Zpráva" [ref=f1e155]:
+            - /placeholder: Napište zprávu nebo / pro příkazy a nástroje
+          - generic [ref=f1e156]:
+            - button "Otevřít příkazy a nástroje" [ref=f1e157] [cursor=pointer]: /
+            - generic [ref=f1e158]:
+              - generic "Přiložit textový soubor do 24 KB" [ref=f1e159] [cursor=pointer]:
+                - text: ＋
+                - generic [ref=f1e160]: Přiložit textový soubor
+                - button "＋ Přiložit textový soubor" [ref=f1e161]
+              - button "Přiložit dokument z konverzace" [ref=f1e162] [cursor=pointer]: ▤
+              - button "qa-fixture" [disabled] [ref=f1e163]:
+                - text: qa-fixture
+                - generic [aria-hidden] [ref=f1e164]: ⌄
+            - button "Odeslat zprávu" [disabled] [ref=f1e165]: ↑
+        - generic [ref=f1e166]:
+          - generic [ref=f1e167]: http://127.0.0.1:8083/v1
+          - generic "Vstupní a výstupní tokeny podle posledního hlášení providera" [ref=f1e168]: Tokeny neznámé · cost unknown
+          - generic [ref=f1e169]: VOID Local
+          - button "Dokumenty a kontext" [ref=f1e170] [cursor=pointer]
+          - generic [ref=f1e171]: Důležité výstupy vždy ověřte.

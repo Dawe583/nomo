@@ -40,6 +40,29 @@ describe("runProxy", () => {
     ]);
   });
 
+  test("string cancellation maps upstream without cancelling the matching numeric id", async () => {
+    const harness = await makeHarness("allow");
+
+    await harness.run([
+      { jsonrpc: "2.0", id: "1", method: "resources/list" },
+      { jsonrpc: "2.0", id: 1, method: "resources/list" },
+      { jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: "1" } },
+      { jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: 1 } },
+    ]);
+
+    const [fromString, fromNumber, cancelString, cancelNumber] = harness.upstreamMessages;
+    assert.notEqual(fromString?.id, fromNumber?.id);
+    assert.deepEqual(cancelString, {
+      jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: fromString?.id },
+    });
+    assert.deepEqual(cancelNumber, {
+      jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: fromNumber?.id },
+    });
+    assert.equal(harness.upstreamMessages.length, 4);
+    assert.deepEqual(harness.outputMessages, []);
+    assert.deepEqual(harness.errors, []);
+  });
+
   test("tools call deny answers locally and does not send upstream", async () => {
     const harness = await makeHarness("deny");
 

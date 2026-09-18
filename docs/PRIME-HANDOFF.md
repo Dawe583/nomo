@@ -78,9 +78,13 @@ release gate. In particular:
   prior policy decision has not been silently reversed here.
 - Key rotation (S09), transport bounds
   and backpressure (S10), and Slack URL policy (S14) need followup.
-- Typed request identity (S11): closed. Session translation keeps agent ids in
-  one typed map, replies in the sent type, and progress tokens remember their
-  original value. Commit c49aa8c, extended in 396178a.
+- Typed request identity (S11): partial. Agent-originated requests in Session
+  keep typed ids, replies preserve that type, and progress tokens retain their
+  original value (c49aa8c, extended in 396178a). Session regressions cover typed
+  cancellation and token cleanup; runProxy coverage checks string cancellation.
+  The HTTP request relay still coerces client ids to numbers and routes progress
+  by request id rather than the original token. Session server-originated request
+  translation also still coerces ids to numbers. These paths remain open.
 - Ledger read limits (S13): closed at the entry boundary. `readLedgerEntries`
   caps file bytes and entries per call (95c73e6). Growth during a single read
   remains an accepted limit of the whole file read.

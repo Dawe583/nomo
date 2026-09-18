@@ -1,0 +1,68 @@
+- generic [active] [ref=e1]:
+  - navigation "Global" [ref=e2]:
+    - generic [ref=e7]: VOID
+    - link "Chat" [ref=e8] [cursor=pointer]:
+      - /url: "#/chat"
+    - link "Holds" [ref=e9] [cursor=pointer]:
+      - /url: "#/holds"
+    - link "Ledger" [ref=e10] [cursor=pointer]:
+      - /url: "#/ledger"
+    - generic [ref=e11]: no key
+    - button "Theme" [ref=e14] [cursor=pointer]
+    - button "Command palette" [ref=e15] [cursor=pointer]: ⌘K
+    - link "Review holds" [ref=e16] [cursor=pointer]:
+      - /url: "#/holds"
+  - generic [ref=e17]:
+    - generic [ref=e18]: sess-demo-01
+    - generic [ref=e19]: illustrative fixture, nothing live
+    - link "Open chat" [ref=e20] [cursor=pointer]:
+      - /url: "#/chat"
+  - generic [ref=e21]:
+    - complementary "Views" [ref=e22]:
+      - button "New chat" [ref=e23] [cursor=pointer]
+      - textbox "Search chats" [ref=e24]
+      - paragraph [ref=e26]: No chats yet.
+      - generic [ref=e27]:
+        - generic [ref=e28]: Operate
+        - generic [ref=e29]:
+          - button "Chat" [ref=e30] [cursor=pointer]
+          - button "Overview" [ref=e31] [cursor=pointer]
+          - button "Intercept simulator" [ref=e32] [cursor=pointer]
+          - button "Live feed" [ref=e33] [cursor=pointer]
+          - button "Holds" [ref=e34] [cursor=pointer]
+      - generic [ref=e35]:
+        - generic [ref=e36]: Observe
+        - generic [ref=e37]:
+          - button "Ledger" [ref=e38] [cursor=pointer]
+          - button "Registry" [ref=e39] [cursor=pointer]
+          - button "Policy" [ref=e40] [cursor=pointer]
+          - button "Replay" [ref=e41] [cursor=pointer]
+          - button "Taint graph" [ref=e42] [cursor=pointer]
+          - button "Audit" [ref=e43] [cursor=pointer]
+      - generic [ref=e44]:
+        - generic [ref=e45]: Setup
+        - generic [ref=e46]:
+          - button "Providers" [ref=e47] [cursor=pointer]
+          - button "Models and spend" [ref=e48] [cursor=pointer]
+          - button "Sessions" [ref=e49] [cursor=pointer]
+          - button "Connectors" [ref=e50] [cursor=pointer]
+          - button "Facts and probes" [ref=e51] [cursor=pointer]
+          - button "CLI builder" [ref=e52] [cursor=pointer]
+          - button "Settings" [ref=e53] [cursor=pointer]
+      - generic [ref=e54]: "? shortcutsCmd K paletteCmd N new chat"
+    - main [ref=e55]:
+      - generic [ref=e57]:
+        - heading "Chat" [level=2] [ref=e58]
+        - generic [ref=e59]:
+          - paragraph [ref=e60]: No conversation yet.
+          - button "New chat" [ref=e62] [cursor=pointer]
+          - paragraph [ref=e63]:
+            - text: No provider key set.
+            - link "Add one in Providers" [ref=e64] [cursor=pointer]:
+              - /url: "#/providers"
+            - text: ", then chat for real."
+  - generic [ref=e65]:
+    - generic [ref=e66]: ledger height 8
+    - generic [ref=e67]: chain not verified
+    - generic [ref=e68]: model z-ai/glm-5.3
+    - generic [ref=e69]: all data illustrative except chat

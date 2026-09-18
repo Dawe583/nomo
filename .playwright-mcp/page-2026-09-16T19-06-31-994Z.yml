@@ -1,0 +1,71 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e7]: Papayai
+      - generic [ref=f1e8]: Jobs, money and runway, in one place.
+    - generic [ref=f1e9]:
+      - generic [ref=f1e10]:
+        - generic [ref=f1e11]: ✓
+        - generic [ref=f1e12]: Gestures
+      - generic [ref=f1e14]:
+        - generic [ref=f1e15]: "2"
+        - generic [ref=f1e16]: Numbers
+      - generic [ref=f1e18]:
+        - generic [ref=f1e19]: "3"
+        - generic [ref=f1e20]: Start
+    - generic [ref=f1e21]: The workspace control
+    - generic [ref=f1e22]:
+      - generic [ref=f1e23]:
+        - generic [ref=f1e24]:
+          - generic [ref=f1e25]: Tap the four-field mark
+          - generic [ref=f1e26]: Workspace menu
+        - generic [ref=f1e27]: M
+      - generic [ref=f1e29]:
+        - generic [ref=f1e30]:
+          - generic [ref=f1e31]: Voice capture
+          - generic [ref=f1e32]: Its own tile in Menu
+        - generic [ref=f1e33]: Menu
+      - generic [ref=f1e35]:
+        - generic [ref=f1e36]:
+          - generic [ref=f1e37]: Open Actions
+          - generic [ref=f1e38]: From Menu or keyboard
+        - generic [ref=f1e39]: A
+      - generic [ref=f1e41]:
+        - generic [ref=f1e42]:
+          - generic [ref=f1e43]: Swipe from the top edge
+          - generic [ref=f1e44]: Search
+        - generic [ref=f1e45]: /
+    - generic [ref=f1e47]: What runway is counted from
+    - generic [ref=f1e48]:
+      - generic [aria-hidden] [ref=f1e49]: i
+      - generic [ref=f1e50]: Both numbers can stay empty. Without the balance Runway has nothing to count from, and Settings takes them later.
+    - generic [ref=f1e51]:
+      - generic [ref=f1e52]:
+        - textbox "Account balance in Kč" [ref=f1e53]
+        - generic: Balance, Kč
+        - generic [ref=f1e54]: Where runway starts. The app cannot see your bank.
+      - generic [ref=f1e55]:
+        - textbox "Personal draw per month" [ref=f1e56]: "0"
+        - generic: Personal draw, Kč
+        - generic [ref=f1e57]: What you pay yourself each month.
+    - generic [ref=f1e58]: Who are you
+    - generic [ref=f1e59]:
+      - generic [ref=f1e60]: D
+      - radiogroup [ref=f1e62]:
+        - radio "Max" [ref=f1e63] [cursor=pointer]: M
+        - radio "David" [checked] [ref=f1e64] [cursor=pointer]: D
+        - radio "Oliver" [ref=f1e65] [cursor=pointer]: O
+      - generic [ref=f1e66]:
+        - textbox "Your name" [ref=f1e67]: David
+        - text: 5/20
+    - generic [ref=f1e68]: Where the work is kept
+    - generic [ref=f1e69]: In the team's database, and everyone on the team sees it. Nothing stays on this device, so sign in first.
+    - generic [ref=f1e70]:
+      - button "Start the device" [ref=f1e71] [cursor=pointer]:
+        - generic [ref=f1e72]:
+          - generic [ref=f1e73]: Start the device
+          - generic [aria-hidden] [ref=f1e74]: No account, right away
+      - button "Sign in" [ref=f1e75] [cursor=pointer]
+  - text: ON OFF
+  - generic [aria-hidden]:
+    - generic: Papayai

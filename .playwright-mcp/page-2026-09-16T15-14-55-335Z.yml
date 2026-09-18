@@ -1,0 +1,73 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "VOID" [ref=e5] [cursor=pointer]:
+        - /url: index.html
+      - button "Toggle color theme" [ref=e10]: "[t] Theme"
+      - navigation "Primary" [ref=e11]:
+        - link "Workspace" [ref=e12] [cursor=pointer]:
+          - /url: index.html
+        - link "Activity" [ref=e13] [cursor=pointer]:
+          - /url: feed.html
+        - link "Approvals" [ref=e14] [cursor=pointer]:
+          - /url: approvals.html
+        - link "Ledger" [ref=e15] [cursor=pointer]:
+          - /url: ledger.html
+  - main [ref=e16]:
+    - region [ref=e17]:
+      - complementary "Sessions" [ref=e18]:
+        - generic [ref=e19]:
+          - heading "Workspace" [level=1] [ref=e20]
+          - button "New session" [ref=e21]: "[+]"
+        - text: Find a session
+        - searchbox "Find a session" [ref=e22]
+        - generic [ref=e23]:
+          - paragraph [ref=e24]: "[+] VOID protection activeDocument changes are captured."
+          - button "[=] Settings & connectors" [ref=e25]
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - status [ref=e28]: New conversation
+          - button "[#] Documents & Undo" [ref=e29]
+        - generic "Session transcript" [ref=e30]:
+          - generic [ref=e31]:
+            - paragraph [ref=e32]: VOID agent
+            - heading "Room to work. Room to undo." [level=2] [ref=e33]: Room to work.Room to undo.
+            - paragraph [ref=e34]: Create documents, work with connected tools, and inspect every change. Your managed documents have captured history from the first edit.
+            - button "Draft a project plan in plan.md" [ref=e35]
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - text: Find a model
+              - searchbox "Find a model" [ref=e39]
+            - generic [ref=e40]:
+              - text: Model
+              - combobox "Model" [ref=e41]
+          - text: Message to your agent
+          - textbox "Message to your agent" [ref=e42]:
+            - /placeholder: What should we work on?
+          - generic [ref=e43]:
+            - paragraph [ref=e44]: Cmd/Ctrl + Enter to send
+            - generic [ref=e45]:
+              - button "Stop" [disabled] [ref=e46]
+              - button "Send message" [disabled] [ref=e47]
+        - button "Export conversation" [disabled] [ref=e49]
+        - paragraph [ref=e50]: History is saved in your workspace. Provider access is required to generate responses.
+    - group [ref=e51]:
+      - generic "Workspace activity and approvals" [ref=e52]
+  - contentinfo [ref=e53]:
+    - generic [ref=e54]: VOID / Recorded decisions. Verifiable evidence. Leave workspace blank to use the default ledger and view all pending holds.
+  - navigation "Primary" [ref=e55]:
+    - link "Home" [ref=e56] [cursor=pointer]:
+      - /url: index.html
+      - text: "[.]Home"
+    - link "Feed" [ref=e57] [cursor=pointer]:
+      - /url: feed.html
+      - text: "[~]Feed"
+    - link "Approvals" [ref=e58] [cursor=pointer]:
+      - /url: approvals.html
+      - text: "[!]Approvals"
+    - link "Ledger" [ref=e59] [cursor=pointer]:
+      - /url: ledger.html
+      - text: "[#]Ledger"

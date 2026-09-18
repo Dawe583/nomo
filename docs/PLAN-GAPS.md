@@ -214,13 +214,16 @@ Dependency: R06, R07, R12. Size: M.
 
 Plan: `docs/EXECUTION-PLAN.md` WP-15, `docs/RELEASE.md`, `docs/PRIME-HANDOFF.md`.
 Missing: key rotation drill (S09), transport bounds and backpressure
-(S10), Slack URL policy (S14); npm scope ownership,
-gated publish CI, compiled or bundled installable artifacts, Docker image,
-fresh install run.
-Closed since the 2026-09-16 audit: typed request identity (S11, c49aa8c
-and 396178a), ledger read limits (S13, 95c73e6, whole file read remains an
-accepted single read limit), child environment isolation (S15, 396178a).
-Evidence: `docs/PRIME-HANDOFF.md` names S09 through S15 as followup;
+(S10), complete typed request identity across relay paths (S11), Slack URL
+policy (S14); npm scope ownership, gated publish CI, compiled or bundled
+installable artifacts, Docker image, fresh install run.
+S11 is partial: c49aa8c and 396178a preserve agent-originated Session ids
+and progress tokens. HTTP relay client ids and Session server-originated ids
+still undergo numeric coercion; HTTP progress still uses request ids as tokens.
+Closed since the 2026-09-16 audit: ledger read limits (S13, 95c73e6, whole
+file read remains an accepted single read limit), child environment isolation
+(S15, 396178a).
+Evidence: `docs/PRIME-HANDOFF.md` scopes the remaining hardening followup;
 `docs/RELEASE.md` lists the npm credential, publish CI and installable
 artifact blocks; packages stay `private: true`.
 Minimum change: close S10 before adding runtime surfaces, then run

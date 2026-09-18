@@ -1,0 +1,99 @@
+- generic [ref=f1e3]:
+  - link "Přejít na obsah" [ref=f1e119] [cursor=pointer]:
+    - /url: "#main"
+  - complementary "Hlavní navigace" [ref=f1e120]:
+    - generic [ref=f1e6]:
+      - link [ref=f1e121] [cursor=pointer]:
+        - /url: /chat/new
+        - strong [ref=f1e122]: VOID
+      - button "Sbalit navigaci" [ref=f1e123] [cursor=pointer]: ⇤
+    - paragraph: Osobní prostor
+    - button "＋ Nová konverzace" [ref=f1e124] [cursor=pointer]:
+      - generic [ref=f1e13]: ＋
+      - generic [ref=f1e125]: Nová konverzace
+    - button "⌕ Hledat ⌘ K" [ref=f1e126] [cursor=pointer]:
+      - generic [ref=f1e15]: ⌕
+      - generic [ref=f1e127]: Hledat
+      - generic [ref=f1e128]: ⌘ K
+    - navigation [ref=f1e16]:
+      - link "Přehled" [ref=f1e129] [cursor=pointer]:
+        - /url: /overview
+      - link "Konverzace" [ref=f1e131] [cursor=pointer]:
+        - /url: /sessions
+      - link "Běhy a aktivita" [ref=f1e133] [cursor=pointer]:
+        - /url: /runs
+      - link "Dokumenty" [ref=f1e135] [cursor=pointer]:
+        - /url: /documents
+      - link "Schvalování" [ref=f1e137] [cursor=pointer]:
+        - /url: /approvals
+      - link "Ledger" [ref=f1e37] [cursor=pointer]:
+        - /url: /ledger
+      - link "Nástroje a konektory" [ref=f1e140] [cursor=pointer]:
+        - /url: /connections
+      - link "Modely a spotřeba" [ref=f1e142] [cursor=pointer]:
+        - /url: /models
+    - generic [ref=f1e144]:
+      - heading "Nedávné konverzace" [level=2] [ref=f1e145]
+      - paragraph [ref=f1e146]: Vaše práce začíná novou konverzací.
+    - generic [ref=f1e49]:
+      - group [ref=f1e147]:
+        - generic "Šířka panelu" [ref=f1e148] [cursor=pointer]
+      - link "Nastavení" [ref=f1e149] [cursor=pointer]:
+        - /url: /settings
+        - generic [aria-hidden] [ref=f1e51]: ⚙
+      - generic [ref=f1e52]: Poskytovatel připojen
+  - main [ref=f1e54]:
+    - generic [ref=f1e55]:
+      - generic [ref=f1e56]: Nová konverzace
+      - generic [ref=f1e58]:
+        - button "Přepnout do angličtiny" [ref=f1e74] [cursor=pointer]
+        - button "Přepnout vzhled" [ref=f1e75] [cursor=pointer]
+        - button "Animace" [pressed] [ref=f1e76] [cursor=pointer]
+        - button "Otevřít kontext" [ref=f1e77] [cursor=pointer]
+    - generic [ref=f1e78]:
+      - generic [ref=f1e81]:
+        - generic [aria-hidden] [ref=f1e82]: __ __ ___ ___ ___ \ \ / / / _ \ |_ _|| \ \ V / | (_) | | | | |) | \_/ \___/ |___||___/
+        - heading "Prostor pro vaše další myšlenky." [level=1] [ref=f1e83]
+        - paragraph [ref=f1e84]: Pište, tvořte a mějte přehled o každém kroku.
+        - generic [ref=f1e85]:
+          - button ">_ Připravit projekt Vytvoř stručný projektový plán a ulož ho do plan.md." [ref=f1e86] [cursor=pointer]:
+            - text: ">_"
+            - generic [ref=f1e87]:
+              - strong [ref=f1e88]: Připravit projekt
+              - generic [ref=f1e89]: Vytvoř stručný projektový plán a ulož ho do plan.md.
+            - generic [aria-hidden] [ref=f1e90]: ↗
+          - button ">_ Prozkoumat možnosti Jaké nástroje mám k dispozici? Vysvětli jejich použití." [ref=f1e91] [cursor=pointer]:
+            - text: ">_"
+            - generic [ref=f1e92]:
+              - strong [ref=f1e93]: Prozkoumat možnosti
+              - generic [ref=f1e94]: Jaké nástroje mám k dispozici? Vysvětli jejich použití.
+            - generic [aria-hidden] [ref=f1e95]: ↗
+          - button ">_ Začít dokument Pomoz mi vytvořit strukturu nového dokumentu." [ref=f1e96] [cursor=pointer]:
+            - text: ">_"
+            - generic [ref=f1e97]:
+              - strong [ref=f1e98]: Začít dokument
+              - generic [ref=f1e99]: Pomoz mi vytvořit strukturu nového dokumentu.
+            - generic [aria-hidden] [ref=f1e100]: ↗
+      - generic [ref=f1e101]:
+        - alert [ref=f1e152]: "Požadavek se nepodařil: Select a model from the validated catalog."
+        - generic [ref=f1e102]:
+          - textbox "Zpráva" [ref=f1e103]:
+            - /placeholder: Napište zprávu nebo / pro příkazy a nástroje
+            - text: write
+          - generic [ref=f1e104]:
+            - button "Otevřít příkazy a nástroje" [disabled] [ref=f1e105]: /
+            - generic [ref=f1e106]:
+              - generic "Přiložit textový soubor do 24 KB" [ref=f1e107] [cursor=pointer]:
+                - text: ＋
+                - generic [ref=f1e108]: Přiložit textový soubor
+                - button "＋ Přiložit textový soubor" [ref=f1e109]
+              - button "Přiložit dokument z konverzace" [disabled] [ref=f1e110]: ▤
+              - button "qa-fixture" [active] [ref=f1e153] [cursor=pointer]:
+                - text: qa-fixture
+                - generic [aria-hidden] [ref=f1e112]: ⌄
+            - button "Odeslat zprávu" [ref=f1e113] [cursor=pointer]: ↑
+        - generic [ref=f1e114]:
+          - generic [ref=f1e115]: http://127.0.0.1:8093/v1
+          - generic [ref=f1e116]: VOID Local
+          - button "Dokumenty a kontext" [ref=f1e117] [cursor=pointer]
+          - generic [ref=f1e118]: Důležité výstupy vždy ověřte.

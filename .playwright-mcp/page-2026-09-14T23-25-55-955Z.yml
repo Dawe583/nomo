@@ -1,0 +1,89 @@
+- generic [ref=e3]:
+  - link "Přejít na obsah" [ref=e114] [cursor=pointer]:
+    - /url: "#main"
+  - complementary "Hlavní navigace" [ref=e115]:
+    - link [ref=e7] [cursor=pointer]:
+      - /url: /chat/new
+    - button "＋" [ref=e12] [cursor=pointer]
+    - button "⌕" [ref=e14] [cursor=pointer]
+    - navigation [ref=e16]:
+      - link "Přehled" [ref=e116] [cursor=pointer]:
+        - /url: /overview
+      - link "Konverzace" [ref=e117] [cursor=pointer]:
+        - /url: /sessions
+      - link "Běhy a aktivita" [ref=e118] [cursor=pointer]:
+        - /url: /runs
+      - link "Dokumenty" [ref=e119] [cursor=pointer]:
+        - /url: /documents
+      - link "Schvalování" [ref=e120] [cursor=pointer]:
+        - /url: /approvals
+      - link "Ledger" [ref=e37] [cursor=pointer]:
+        - /url: /ledger
+      - link "Nástroje a konektory" [ref=e121] [cursor=pointer]:
+        - /url: /connections
+      - link "Modely a spotřeba" [ref=e122] [cursor=pointer]:
+        - /url: /models
+    - link [ref=e50] [cursor=pointer]:
+      - /url: /settings
+      - generic [aria-hidden] [ref=e51]: ⚙
+  - main [ref=e54]:
+    - generic [ref=e55]:
+      - generic [ref=e56]:
+        - generic [ref=e57]: Create plan.md for isolated recovery QA.
+        - generic [ref=e150]: idle
+      - generic [ref=e58]:
+        - button "Přepnout do angličtiny" [ref=e123] [cursor=pointer]
+        - button "Přepnout vzhled" [ref=e124] [cursor=pointer]
+        - button "Animace" [pressed] [ref=e125] [cursor=pointer]
+        - button "Export konverzace" [ref=e151] [cursor=pointer]
+        - button "Otevřít kontext" [ref=e126] [cursor=pointer]
+    - generic [ref=e154]:
+      - generic [ref=e156]:
+        - article [ref=e157]:
+          - generic [ref=e158]:
+            - generic [ref=e159]: Vy
+            - time [ref=e160]: 01:25
+          - paragraph [ref=e162]: Create plan.md for isolated recovery QA.
+          - generic [ref=e163]:
+            - button "Kopírovat" [ref=e164] [cursor=pointer]
+            - button "Upravit ve větvi" [ref=e165] [cursor=pointer]
+        - article [ref=e166]:
+          - generic [ref=e167]:
+            - generic [ref=e168]: VOID
+            - time [ref=e169]: 01:25
+          - paragraph [ref=e171]: "QA fixture: creating a project plan with captured history."
+          - generic [ref=e172]:
+            - button "Kopírovat" [ref=e173] [cursor=pointer]
+            - button "Vytvořit větev" [ref=e174] [cursor=pointer]
+            - button "Zkusit znovu" [ref=e175] [cursor=pointer]
+        - article [ref=e176]:
+          - generic [ref=e177]:
+            - generic [ref=e178]: tool
+            - time [ref=e179]: 01:25
+          - group [ref=e180]:
+            - generic "void_workspace_write requested" [ref=e181] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e182]: ⌘
+              - text: void_workspace_write
+              - generic [ref=e183]: requested
+          - button "Kopírovat" [ref=e185] [cursor=pointer]
+      - generic [ref=e186]:
+        - generic [ref=e187]:
+          - textbox "Zpráva" [ref=e188]:
+            - /placeholder: Napište zprávu nebo / pro příkazy a nástroje
+          - generic [ref=e189]:
+            - button "Otevřít příkazy a nástroje" [ref=e190] [cursor=pointer]: /
+            - generic [ref=e191]:
+              - generic "Přiložit textový soubor do 24 KB" [ref=e192] [cursor=pointer]:
+                - text: ＋
+                - generic [ref=e193]: Přiložit textový soubor
+                - button "＋ Přiložit textový soubor" [ref=e194]
+              - button "Přiložit dokument z konverzace" [ref=e195] [cursor=pointer]: ▤
+              - button "qa-fixture" [disabled] [ref=e196]:
+                - text: qa-fixture
+                - generic [aria-hidden] [ref=e197]: ⌄
+            - button "Odeslat zprávu" [disabled] [ref=e198]: ↑
+        - generic [ref=e199]:
+          - generic [ref=e200]: http://127.0.0.1:8083/v1
+          - generic [ref=e201]: VOID Local
+          - button "Dokumenty a kontext" [ref=e202] [cursor=pointer]
+          - generic [ref=e203]: Důležité výstupy vždy ověřte.
