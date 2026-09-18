@@ -79,6 +79,14 @@ export interface DashboardState {
   readonly selectedCallId: string | null;
   readonly paused: boolean;
   readonly filter: ReversibilityClass | "all";
+  readonly context: { total: number; used: number; billing: number } | null;
+  readonly cost: readonly CostRecord[];
+}
+export interface CostRecord {
+  readonly model: string;
+  readonly tokens: number;
+  readonly records: number;
+  readonly usd: number | null;
 }
 
 export interface ReplayStep {

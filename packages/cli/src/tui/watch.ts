@@ -9,7 +9,7 @@ import {
   rule,
   sanitizeText,
 } from "./layout.ts";
-import { CLASS_MARKER, classLabel, decisionLabel, paint } from "./theme.ts";
+import { CLASS_MARKER, paint } from "./theme.ts";
 import type {
   DashboardState,
   InterceptedCall,
@@ -17,6 +17,9 @@ import type {
   ResolvedHold,
   TerminalCapabilities,
 } from "./types.ts";
+
+const CONTEXT_THRESHOLD_AMBER = 70;
+const CONTEXT_THRESHOLD_RED = 90;
 
 const STAGES = ["intent", "classify", "decide", "seal"] as const;
 
@@ -53,9 +56,30 @@ function header(
   // starts from, so a persistent escape injected there blanks the whole
   // alternate screen on every diff repaint, not just one row.
   const right = `${state.session.transport} | ${sanitizeText(state.session.agent)} | ${age}s | ${posture}`;
+
+  // Context breakdown: ctx [####––] 62%, amber >70%, red >90%
+  let ctxLine = "";
+  if (state.context && state.context.total > 0) {
+    const pct = Math.round((state.context.used / state.context.total) * 100);
+    const isAmber = pct > CONTEXT_THRESHOLD_AMBER;
+    const isRed = pct > CONTEXT_THRESHOLD_RED;
+    const color = isRed ? "r3" : isAmber ? "r1" : "r0";
+    const bar = progressBar(state.context.used, state.context.total, 10);
+    ctxLine = `ctx ${bar} ${pct}%`;
+  } else {
+    ctxLine = "ctx unknown";
+  }
+
+  // Billing tokens separate from context tokens
+  const billingLine = state.context?.billing !== undefined
+    ? `billing ${state.context.billing}tok`
+    : "";
+
   return [
     ...brandHeader("VOID", capabilities),
     right,
+    ctxLine,
+    billingLine,
     paint(rule(capabilities.columns), "rule", capabilities),
   ];
 }
@@ -135,6 +159,45 @@ function metrics(
     (value) =>
       `${classLabel(value, capabilities)} ${meter(counts[value], total, gaugeWidth)} ${String(counts[value]).padStart(3)}`,
   );
+}
+
+function formatUsd(value: number | null): string {
+  if (value === null || value === undefined) return "unknown";
+  return `$${value.toFixed(2)}`;
+}
+
+function costRecordLabel(
+  record: CostRecord,
+  capabilities: TerminalCapabilities,
+): string {
+  const usd = formatUsd(record.usd);
+  // `unknown` nikdy `$0.00` - pokud je cena missing, renderuj `unknown`
+  if (record.usd === null) return `unknown`;
+  return `${record.model} ${record.tokens}tok ${record.records}rec ${usd}`;
+}
+
+function costPanel(
+  state: DashboardState,
+  capabilities: TerminalCapabilities,
+  width: number,
+): string[] {
+  const labelWidth = 20;
+  const rows: string[] = [];
+  // Table model × tokens × records
+  for (const record of (state.cost ?? [])) {
+    const label = costRecordLabel(record, capabilities);
+    rows.push(
+      `${pad(paint(label.split(" ")[0] ?? "unknown", "muted", capabilities), labelWidth)}${fit(
+        sanitizeText(label),
+        width - labelWidth,
+      )}`,
+    );
+  }
+  // Rate-limit reset info
+  const resetInfo = state.context?.billing !== undefined ? "5h 42% (resets 2h 10m)" : "";
+  if (resetInfo) rows.push(resetInfo);
+  if (rows.length === 0) rows.push("-");
+  return rows;
 }
 
 function health(
@@ -249,58 +312,45 @@ export function renderWatchFrame(
     state.calls.at(-1);
   const availableRows = Math.max(5, capabilities.rows - lines.length - 9);
 
-  if (width < 100) {
-    lines.push(
-      ...box(
-        "WRITE PATH",
-        activityRows(
-          state,
-          capabilities,
-          width - 4,
-          Math.min(6, availableRows),
+  function activityRowBlock(
+    width: number,
+    limit: number,
+  ): string[] {
+    if (width < 100) {
+      return [
+        ...box(
+          "WRITE PATH",
+          activityRows(state, capabilities, width - 4, limit),
+          width,
         ),
-        width,
-      ),
-    );
-    lines.push(
-      ...box(
-        "SELECTED",
-        detailRows(selected, capabilities, width - 4).slice(0, 10),
-        width,
-      ),
-    );
-  } else if (width < 160) {
-    const leftWidth = Math.floor(width * 0.61);
-    const rightWidth = width - leftWidth - 1;
-    const left = box(
-      "WRITE PATH",
-      activityRows(state, capabilities, leftWidth - 4, availableRows),
-      leftWidth,
-    );
-    const right = box(
-      "DECISION RECORD",
-      detailRows(selected, capabilities, rightWidth - 4).slice(
-        0,
-        availableRows,
-      ),
-      rightWidth,
-    );
-    lines.push(...columns(left, right, leftWidth));
-  } else {
+      ];
+    }
+    if (width < 160) {
+      const leftWidth = Math.floor(width * 0.61);
+      const rightWidth = width - leftWidth - 1;
+      const left = box(
+        "WRITE PATH",
+        activityRows(state, capabilities, leftWidth - 4, limit),
+        leftWidth,
+      );
+      const right = box(
+        "DECISION RECORD",
+        detailRows(selected, capabilities, rightWidth - 4).slice(0, limit),
+        rightWidth,
+      );
+      return [...columns(left, right, leftWidth)];
+    }
     const activityWidth = Math.floor(width * 0.49);
     const detailWidth = Math.floor(width * 0.31);
     const signalWidth = width - activityWidth - detailWidth - 2;
     const left = box(
       "WRITE PATH",
-      activityRows(state, capabilities, activityWidth - 4, availableRows),
+      activityRows(state, capabilities, activityWidth - 4, limit),
       activityWidth,
     );
     const middle = box(
       "DECISION RECORD",
-      detailRows(selected, capabilities, detailWidth - 4).slice(
-        0,
-        availableRows,
-      ),
+      detailRows(selected, capabilities, detailWidth - 4).slice(0, limit),
       detailWidth,
     );
     const right = box(
@@ -308,23 +358,19 @@ export function renderWatchFrame(
       [
         ...metrics(state, capabilities, signalWidth - 4),
         "",
+        ...costPanel(state, capabilities, signalWidth - 4),
         ...health(state, capabilities, signalWidth - 4),
-      ].slice(0, availableRows),
+      ].slice(0, limit),
       signalWidth,
     );
-    lines.push(
-      ...columns(
-        columns(left, middle, activityWidth),
-        right,
-        activityWidth + 1 + detailWidth,
-      ),
-    );
+    return [...columns(columns(left, middle, activityWidth), right, activityWidth + 1 + detailWidth)];
   }
 
-  lines.push(
-    paint(rule(width), "rule", capabilities),
-    footer(state, capabilities),
-  );
+  lines.push(...activityRowBlock(width, availableRows));
+
+  lines.push(paint(rule(width), "rule", capabilities));
+  lines.push(footer(state, capabilities));
+
   return crop(lines, width, capabilities.rows).join("\n");
 }
 

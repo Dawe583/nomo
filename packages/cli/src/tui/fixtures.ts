@@ -111,6 +111,11 @@ export const previewState: DashboardState = {
   selectedCallId: "call_af31",
   paused: false,
   filter: "all",
+  context: { total: 100_000, used: 62_000, billing: 12_500 },
+  cost: [
+    { model: "gpt-4", tokens: 1_500, records: 42, usd: 15.80 },
+    { model: "gpt-3.5", tokens: 3_200, records: 18, usd: 3.20 },
+  ],
 };
 
 export const previewHold = {

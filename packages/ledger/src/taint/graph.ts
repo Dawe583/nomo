@@ -9,6 +9,7 @@ export type TaintNode = {
   readonly klass: string;
   readonly decision: string;
   readonly at: string;
+  readonly revision?: string;
 };
 
 export type TaintEdge = {
@@ -16,6 +17,7 @@ export type TaintEdge = {
   readonly to: CallDigest;
   readonly kind: "resource" | "data";
   readonly via: string;
+  readonly bindingType: "confirmed-data" | "observed-resource" | "conservative-potential";
 };
 
 export type TaintGraph = {
@@ -43,22 +45,33 @@ export function buildGraph(entries: readonly JsonlEntry[]): TaintGraph {
       klass: requiredString(body.klass, "klass", entry.seq),
       decision: requiredString(body.decision, "decision", entry.seq),
       at: requiredString(body.at, "at", entry.seq),
+      revision: stringValue(body.revision),
     };
     nodes.set(digest, node);
 
+    // First pass: check for confirmed data edges (outputDigest → inputDigest)
     for (const inputDigest of inputDigests(body)) {
       const from = producerByOutput.get(inputDigest);
-      if (from !== undefined) addEdge(edges, edgeKeys, from, digest, "data", inputDigest);
+      if (from !== undefined) {
+        addEdge(edges, edgeKeys, from, digest, "data", inputDigest, "confirmed-data");
+      }
     }
 
-    for (const resource of resourceKeys(body, node.tool)) {
+    // Second pass: check for observed resource edges (resource key seen before)
+    const resourceKeysList = resourceKeys(body, body.tool);
+    for (const resource of resourceKeysList) {
       const from = lastByResource.get(resource);
-      if (from !== undefined) addEdge(edges, edgeKeys, from, digest, "resource", resource);
+      if (from !== undefined) {
+        addEdge(edges, edgeKeys, from, digest, "resource", resource, "observed-resource");
+      }
       lastByResource.set(resource, digest);
     }
 
+    // Third pass: set producer by outputDigest for future data edge resolution
     const outputDigest = stringValue(body.outputDigest);
-    if (outputDigest !== undefined) producerByOutput.set(outputDigest, digest);
+    if (outputDigest !== undefined) {
+      producerByOutput.set(outputDigest, digest);
+    }
   }
 
   return { nodes, edges };
@@ -71,12 +84,13 @@ function addEdge(
   to: CallDigest,
   kind: TaintEdge["kind"],
   via: string,
+  bindingType: TaintEdge["bindingType"],
 ): void {
   if (from === to) return;
-  const key = `${from}\0${to}\0${kind}\0${via}`;
+  const key = `${from}\0${to}\0${kind}\0${via}\0${bindingType}`;
   if (edgeKeys.has(key)) return;
   edgeKeys.add(key);
-  edges.push({ from, to, kind, via });
+  edges.push({ from, to, kind, via, bindingType });
 }
 
 function entryBody(entry: JsonlEntry): Record<string, unknown> {

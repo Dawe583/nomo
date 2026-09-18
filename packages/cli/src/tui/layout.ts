@@ -170,6 +170,14 @@ export function meter(value: number, max: number, width: number): string {
   return `${"#".repeat(filled)}${".".repeat(Math.max(0, width - filled))}`;
 }
 
+export function progressBar(value: number, max: number, width: number): string {
+  const safeMax = Math.max(1, max);
+  const filled = Math.max(0, Math.min(width, Math.round((value / safeMax) * width)));
+  const empty = width - filled;
+  const bar = "#".repeat(filled) + ".".repeat(empty);
+  return bar + ` ${Math.round((value / safeMax) * 100)}%`;
+}
+
 type DiffOp = { kind: " " | "-" | "+"; line: string };
 
 function myersOps(a: readonly string[], b: readonly string[]): DiffOp[] {

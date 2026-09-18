@@ -42,6 +42,7 @@ describe("buildGraph", () => {
         to: entries[1]!.hash,
         kind: "resource",
         via: "s3.object.delete:bucket=docs:key=a.txt",
+        bindingType: "observed-resource",
       },
     ]);
   });

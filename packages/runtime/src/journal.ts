@@ -34,6 +34,16 @@ export type OperationEvent = {
   at: string;
   stage: Stage;
   data: Json;
+  /** Resource keys involved in this operation */
+  resourceKeys: string[];
+  /** Resources read during this operation */
+  readSet: string[];
+  /** Resources written during this operation */
+  writeSet: string[];
+  /** Observed revision from the operation */
+  revision: string;
+  /** Explicit receipt inputs */
+  receiptInputs: Json;
 };
 export type RecoveryJobStage =
   | "planned"
@@ -127,6 +137,17 @@ export function validateTransition(
         `Invalid operation transition: ${previous.stage} to ${event.stage}.`,
       );
   }
+  // Validate new optional fields exist with correct types
+  if (event.resourceKeys !== undefined && !Array.isArray(event.resourceKeys))
+    throw new Error("Invalid resourceKeys: must be an array.");
+  if (event.readSet !== undefined && !Array.isArray(event.readSet))
+    throw new Error("Invalid readSet: must be an array.");
+  if (event.writeSet !== undefined && !Array.isArray(event.writeSet))
+    throw new Error("Invalid writeSet: must be an array.");
+  if (event.revision !== undefined && (typeof event.revision !== "string" || event.revision === ""))
+    throw new Error("Invalid revision: must be a non-empty string.");
+  if (event.receiptInputs !== undefined && typeof event.receiptInputs !== "object")
+    throw new Error("Invalid receiptInputs: must be an object.");
 }
 const jobAllowed: Record<RecoveryJobStage, readonly RecoveryJobStage[]> = {
   planned: ["approved"],

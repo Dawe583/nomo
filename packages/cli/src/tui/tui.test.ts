@@ -7,7 +7,7 @@ import { approvalsView, type HeldCall } from "./approvals.ts";
 import { detectCapabilities } from "./caps.ts";
 import { previewHold, previewState } from "./fixtures.ts";
 import { renderInlineCall } from "./inline.ts";
-import { sanitizeText, stripAnsi, visibleLength } from "./layout.ts";
+import { sanitizeText, stripAnsi, visibleLength, progressBar } from "./layout.ts";
 import { promptForHold, renderHoldPrompt, type RawInput } from "./modal.ts";
 import { CLASS_MARKER, VOID_PALETTE } from "./theme.ts";
 import type { InterceptedCall, TerminalCapabilities } from "./types.ts";
@@ -483,4 +483,89 @@ describe("TUIStudio sources", () => {
       assert.equal(project.tree?.type, "Screen");
     });
   }
+});
+
+describe("A5 context breakdown", () => {
+  test("ctx with known window shows bar math test", () => {
+    const stateWithContext = {
+      ...previewState,
+      context: { total: 100_000, used: 62_000, billing: 12_500 },
+    };
+    const caps = capabilities(80);
+    const frame = renderWatchFrame(stateWithContext, caps);
+    assert.match(frame, /ctx /);
+    assert.match(frame, /62%/);
+    assert.doesNotMatch(frame, /ctx unknown/);
+  });
+
+  test("ctx with unknown window shows unknown without bar", () => {
+    const stateWithoutContext = {
+      ...previewState,
+      context: null,
+    };
+    const caps = capabilities(80);
+    const frame = renderWatchFrame(stateWithoutContext, caps);
+    assert.match(frame, /ctx unknown/);
+    assert.doesNotMatch(frame, /ctx /);
+  });
+
+  test("amber warning >70% renders r1 coloring", () => {
+    const stateAmber = {
+      ...previewState,
+      context: { total: 100_000, used: 75_000, billing: 12_500 },
+    };
+    const caps = capabilities(80);
+    const frame = renderWatchFrame(stateAmber, caps);
+    assert.match(frame, /ctx .*75%/);
+  });
+
+  test("red warning >90% renders r3 coloring", () => {
+    const stateRed = {
+      ...previewState,
+      context: { total: 100_000, used: 95_000, billing: 12_500 },
+    };
+    const caps = capabilities(80);
+    const frame = renderWatchFrame(stateRed, caps);
+    assert.match(frame, /ctx .*95%/);
+  });
+});
+
+describe("A6 cost panel", () => {
+  test("unknown never renders $0.00", () => {
+    const stateUnknownCost = {
+      ...previewState,
+      cost: [
+        { model: "gpt-4", tokens: 1_500, records: 42, usd: null },
+        { model: "gpt-3.5", tokens: 3_200, records: 18, usd: 3.20 },
+      ],
+    };
+    const caps = capabilities(80);
+    const frame = renderWatchFrame(stateUnknownCost, caps);
+    assert.match(frame, /gpt-4.*unknown/);
+    assert.match(frame, /gpt-3\.5.*\$3.20/);
+    assert.doesNotMatch(frame, /gpt-3\.5.*\$0/);
+  });
+
+  test("missing price renders unknown not 0", () => {
+    const stateMissingPrice = {
+      ...previewState,
+      cost: [
+        { model: "gpt-4", tokens: 1_500, records: 42, usd: null },
+      ],
+    };
+    const caps = capabilities(80);
+    const frame = renderWatchFrame(stateMissingPrice, caps);
+    assert.match(frame, /unknown/);
+    assert.doesNotMatch(frame, /\$0/);
+  });
+
+  test("rate-limit reset displayed", () => {
+    const stateWithBilling = {
+      ...previewState,
+      context: { total: 100_000, used: 62_000, billing: 12_500 },
+    };
+    const caps = capabilities(80);
+    const frame = renderWatchFrame(stateWithBilling, caps);
+    assert.match(frame, /5h 42% \(resets 2h 10m\)/);
+  });
 });

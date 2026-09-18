@@ -74,6 +74,7 @@ function parseNode(value: unknown): TaintNode {
     klass: requiredString(node.klass, "node klass"),
     decision: requiredString(node.decision, "node decision"),
     at: requiredString(node.at, "node at"),
+    revision: node.revision,
   };
 }
 
@@ -86,7 +87,7 @@ function parseEdge(value: unknown, nodes: ReadonlyMap<string, TaintNode>): Taint
   if (!nodes.has(to)) throw new Error(`taint export edge references unknown to node ${to}`);
   const kind = edge.kind;
   if (kind !== "resource" && kind !== "data") throw new Error("taint export edge has invalid kind");
-  return { from, to, kind, via: requiredString(edge.via, "edge via") };
+  return { from, to, kind, via: requiredString(edge.via, "edge via"), bindingType: edge.bindingType };
 }
 
 function requiredString(value: unknown, name: string): string {
@@ -100,7 +101,7 @@ function requiredInteger(value: unknown, name: string): number {
 }
 
 function compareEdges(left: TaintEdge, right: TaintEdge): number {
-  return compare(left.from, right.from) || compare(left.to, right.to) || compare(left.kind, right.kind) || compare(left.via, right.via);
+  return compare(left.from, right.from) || compare(left.to, right.to) || compare(left.kind, right.kind) || compare(left.via, right.via) || compare(left.bindingType, right.bindingType);
 }
 
 function compare(left: string, right: string): number {
