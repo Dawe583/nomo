@@ -7,7 +7,7 @@ The user requested active use of these installed skills throughout this work:
 - `/Users/dawe/.codex/skills/caveman/SKILL.md`: concise Czech communication; preserve complete technical detail in explicitly requested plans and reports.
 - `/Users/dawe/.codex/skills/ponytail/SKILL.md`: reuse existing capabilities, avoid unnecessary infrastructure, and never omit requested features, accessibility, validation, or verification.
 
-The intended default for new conversations is Pollinations / openai-fast: provider `pollinations`, API model `openai-fast`, endpoint `https://text.pollinations.ai/openai`, no key (TokenRouter / GLM 5.3 Free is dead). Never put credentials into source, documentation, browser storage, or logs. Existing conversations retain their provider/model snapshot.
+The intended default for new conversations is TokenHarbor / mimo-v2.5:free: provider `tokenharbor`, API model `mimo-v2.5:free`, endpoint `https://tokenharbor.ai/v1`, the free model from the operator's opencode setup (TokenRouter / GLM 5.3 Free is dead; Pollinations openai-fast stays as the keyless fallback preset). Never put credentials into source, documentation, browser storage, or logs. Existing conversations retain their provider/model snapshot.
 
 The user reaffirmed on 2026-09-13: work directly on `main`, commit and push completed verified changes to GitHub `main` for automatic Vercel deployment. Preserve unrelated files and never commit secrets. Use caveman and ponytail by default for all work. Mobile usability and a stronger ASCII identity are current design priorities.
 

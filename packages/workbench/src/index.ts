@@ -47,7 +47,7 @@ export class Workbench {
   private provider: CompatibleProvider | undefined;
   private readonly storage: LocalStorage;
   private hasState = false;
-  private preferences: Record<string, string> = { defaultProvider: 'pollinations', defaultModel: DEFAULT_MODEL_ID, locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
+  private preferences: Record<string, string> = { defaultProvider: 'tokenharbor', defaultModel: DEFAULT_MODEL_ID, locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
   private requests: Record<string, { digest: string; sessionId: string }> = {};
   private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;

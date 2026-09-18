@@ -1,7 +1,7 @@
 /** Public connection metadata only. Credentials belong to server-side storage. */
-export const DEFAULT_PROVIDER_ID = "pollinations";
-export const DEFAULT_MODEL_ID = "openai-fast";
-export const DEFAULT_MODEL_NAME = "openai-fast (free, no key)";
+export const DEFAULT_PROVIDER_ID = "tokenharbor";
+export const DEFAULT_MODEL_ID = "mimo-v2.5:free";
+export const DEFAULT_MODEL_NAME = "mimo-v2.5:free";
 export const TOKENROUTER_URL = "https://api.tokenrouter.com/v1";
 export const TOKENHARBOR_URL = "https://tokenharbor.ai/v1";
 export const PROVIDER_PRESETS = [
