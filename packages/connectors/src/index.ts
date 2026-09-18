@@ -19,6 +19,17 @@ export interface ConnectorDescriptor {
  * legacy capture/apply integrations use registry.ts Connector. */
 export type Connector = ConnectorDescriptor;
 export type { RecoveryAdapter, Observation, Reversibility, Readiness } from './recovery.ts';
+export {
+  CAPABILITY_SCHEMA,
+  CONFORMANCE_SCHEMA,
+  validateCapabilityProfile,
+  certificationStatus,
+  bindsAdapter,
+  type CapabilityProfile,
+  type CapabilityCertification,
+  type CapabilityConformanceRef,
+  type CertificationStatus,
+} from './capability.ts';
 
 /**
  * Takes the list as a parameter rather than reading a module level registry:
