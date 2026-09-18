@@ -1997,6 +1997,32 @@ export function promptFrameBottom(width: number): string {
 export function promptFrameRow(content: string, width: number): string {
   return `│ ${pad(content, Math.max(0, width - 4))} │`;
 }
+// Progress bar with gradient
+export function progressBar(
+  current: number,
+  total: number,
+  width: number,
+): string {
+  const filled = Math.max(
+    0,
+    Math.min(width, Math.round((current / Math.max(1, total)) * width)),
+  );
+  const empty = Math.max(0, width - filled);
+  return `█`.repeat(filled) + `░`.repeat(empty);
+}
+// Spinner frames for loading
+export const SPINNER_FRAMES = [
+  "⠋",
+  "⠙",
+  "⠹",
+  "⠸",
+  "⠼",
+  "⠴",
+  "⠦",
+  "⠧",
+  "⠇",
+  "⠏",
+];
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -2017,9 +2043,7 @@ export function renderWorkspace(
     violet = "38;5;183";
   const running = busy || ui.workbench.running();
   const frame = visuals.motion === false ? 0 : (visuals.frame ?? 0);
-  const spinner = running
-    ? ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"][frame % 10]
-    : "◆";
+  const spinner = running ? SPINNER_FRAMES[frame % SPINNER_FRAMES.length] : "◆";
   const pending = ui.workbench.pending();
   const holds = pending.length + ui.proxy.holds.length;
   const waiting = pending.some((hold) =>
