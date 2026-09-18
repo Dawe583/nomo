@@ -16,9 +16,10 @@ import { loadPolicy } from '../../policy/src/rules.ts';
 import { decide } from '../../policy/src/decide.ts';
 import { setTimeout as delay } from 'node:timers/promises';
 import { randomUUID } from 'node:crypto';
+import { constants } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile, open } from 'node:fs/promises';
 import { attestLedger, type AttestationDocument } from '../../ledger/src/attest.ts';
 import { createVoidClient, type VoidClient } from '../../sdk/src/client.ts';
 import { CompatibleProvider, ProviderRequestError, type Model, type ModelMessage, type ProviderConfig } from './provider.ts';
@@ -101,10 +102,52 @@ export class Workbench {
     try { this.persist(); } catch (error) { Object.assign(this, previous); throw error; }
     return models;
   }
+  private async getOpenCodeZenKey(): Promise<string | undefined> {
+    // Environment variable takes precedence.
+    if (this.env.OPENCODE_ZEN_API_KEY) return this.env.OPENCODE_ZEN_API_KEY;
+    // Fall back to the local opencode auth file, read with the same hardened
+    // rules as desktop setup: no symlinks, bounded size, no secrets echoed.
+    try {
+      const authPath = join(this.env.HOME ?? homedir(), '.local', 'share', 'opencode', 'auth.json');
+      const file = await open(authPath, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+      try {
+        const stat = await file.stat();
+        if (!stat.isFile() || stat.size > 1_048_576) return undefined;
+        const buffer = Buffer.alloc(1_048_577);
+        let length = 0;
+        while (length < buffer.length) {
+          const { bytesRead } = await file.read(buffer, length, buffer.length - length, null);
+          if (!bytesRead) break;
+          length += bytesRead;
+        }
+        if (length > 1_048_576) return undefined;
+        const text = buffer.subarray(0, length).toString('utf8');
+        const data = JSON.parse(text);
+        if (data.opencode && typeof data.opencode.key === 'string' && data.opencode.key.length > 0) {
+          return data.opencode.key;
+        }
+      } finally {
+        await file.close();
+      }
+    } catch {
+      // File absent, unreadable or malformed; no Zen key.
+    }
+    return undefined;
+  }
   async providerState() {
-    if (!this.provider && !this.ignoreEnvironment && this.env.OPENCODE_ZEN_API_KEY) await this.configure({ baseUrl: OPENCODE_ZEN_URL, apiKey: this.env.OPENCODE_ZEN_API_KEY });
-    if (!this.provider && !this.ignoreEnvironment && this.env.TOKENROUTER_API_KEY) await this.configure({ baseUrl: TOKENROUTER_URL, apiKey: this.env.TOKENROUTER_API_KEY });
-    if (!this.provider && !this.ignoreEnvironment && this.env.OPENROUTER_API_KEY) await this.configure({ baseUrl: this.env.VOID_PROVIDER_URL ?? 'https://openrouter.ai/api/v1', apiKey: this.env.OPENROUTER_API_KEY });
+    // OpenCode Zen is the default provider. Its key comes from the
+    // environment or the local opencode auth file; only fall through to
+    // TokenRouter/OpenRouter when no Zen key is available.
+    if (!this.provider && !this.ignoreEnvironment) {
+      const zenKey = await this.getOpenCodeZenKey();
+      if (zenKey) {
+        await this.configure({ baseUrl: OPENCODE_ZEN_URL, apiKey: zenKey });
+      } else if (this.env.TOKENROUTER_API_KEY) {
+        await this.configure({ baseUrl: TOKENROUTER_URL, apiKey: this.env.TOKENROUTER_API_KEY });
+      } else if (this.env.OPENROUTER_API_KEY) {
+        await this.configure({ baseUrl: this.env.VOID_PROVIDER_URL ?? 'https://openrouter.ai/api/v1', apiKey: this.env.OPENROUTER_API_KEY });
+      }
+    }
     return { connected: this.provider !== undefined, models: this.catalog, keyStorage: this.keyStorage, baseUrl: this.config?.baseUrl, kind: this.config?.kind, profiles: Object.keys(this.profiles), presets: PROVIDER_PRESETS, providerId: PROVIDER_PRESETS.find(p => p.baseUrl === this.config?.baseUrl)?.id ?? 'custom', defaultModel: this.preferences.defaultModel, upstreamConfigured: true };
   }
   clearProvider(): void { this.ignoreEnvironment = true; this.provider = undefined; if (this.config) delete this.profiles[this.config.baseUrl]; this.config = undefined; this.catalog = []; this.persist(); }
