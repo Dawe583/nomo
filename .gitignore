@@ -70,3 +70,5 @@ packages/*/src/**/*.js.map
 
 # Local operator exports may contain private conversation and ledger data
 /void-exports/
+# OpenCOOP project history (snapshots, members)
+.opencoop/
