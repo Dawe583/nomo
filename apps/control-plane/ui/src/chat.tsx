@@ -3,6 +3,12 @@ import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import * as m from "motion/react-m";
 import { AsciiWordmark, BrandMark } from "./brand";
 import { ApprovalReview } from "./approval-review";
+import {
+  PermissionBanner,
+  PermissionModeSwitch,
+  modePrefix,
+  usePermissionMode,
+} from "./permission-mode.tsx";
 import { lastUserMessage, transcriptEvents, usageSummary } from "./events";
 import {
   Children,
@@ -111,6 +117,7 @@ export function Chat({
   const capabilities = useApi("/api/capabilities");
   const workspace = useApi("/api/sessions/" + id + "/workspace", !!id);
   const holds = useApi("/api/approvals", !!id, 3000);
+  const perm = usePermissionMode(capabilities, preferences);
   const [contextPicker, setContextPicker] = useState(false);
   const [approval, setApproval] = useState<Row>();
   const session = sessionQuery.data?.session;
@@ -124,7 +131,7 @@ export function Chat({
     t("Poskytovatel neověřen", "Provider unverified");
   const running =
     session?.status === "running" || session?.status === "cancelling";
-  const draftKey =
+const draftKey =
     "void-draft:" +
     new URLSearchParams(location.search).get("workspace") +
     ":" +
@@ -153,11 +160,10 @@ export function Chat({
   >([]);
   const [newMessages, setNewMessages] = useState(false);
   const [follow, setFollow] = useState(true);
-  const transcript = useRef<HTMLDivElement>(null),
-    textarea = useRef<HTMLTextAreaElement>(null);
   const [commandDismissed, setCommandDismissed] = useState(false);
   const [commandIndex, setCommandIndex] = useState(0);
   const [selectedTool, setSelectedTool] = useState<Command>();
+  const [queued, setQueued] = useState(false);
   const commandOpen =
     draft.startsWith("/") && !/\s/.test(draft) && !commandDismissed;
   const toolsQuery = useApi(
@@ -336,6 +342,7 @@ export function Chat({
   }, [preferences.data]);
   const [eventBuffer, setEventBuffer] = useState<Row[]>([]);
   const [historyComplete, setHistoryComplete] = useState(true);
+  const [queued, setQueued] = useState(false);
   const rawEvents = eventBuffer.length ? eventBuffer : (session?.events ?? []);
   const events = transcriptEvents(rawEvents);
   const usage = usageSummary(rawEvents);
@@ -437,6 +444,20 @@ export function Chat({
     stream.onerror = () => {
       void sync();
     };
+    // When run stops and there's a queued draft, make it available to resume
+    useEffect(() => {
+      if (!running && queued && id && !disposed) {
+        // Run stopped with queued draft - mark it as ready to resume
+        // The queued draft remains in sessionStorage for resume after restart
+        setQueued(false); // reset queued flag, draft remains in storage
+      }
+      return () => {
+        disposed = true;
+      };
+    }, [running, queued, id]);
+    const stream = new EventSource(
+      "/api/sessions/" + encodeURIComponent(id) + "/stream",
+    );
     const poll = setInterval(() => void sync(), 5000);
     void sync();
     return () => {
@@ -474,10 +495,29 @@ export function Chat({
         await chooseCommand(commandItems[activeCommand]);
       return;
     }
-    if (!draft.trim() || busy || running || retryWait > 0) return;
+    if (!draft.trim()) {
+      setQueued(false);
+      return;
+    }
+    if (busy || retryWait > 0) return;
+    if (running) {
+      setQueued(true);
+      const queuedKey = "void-queued:" + draftKey.split(":").slice(1).join(":");
+      sessionStorage.setItem(queuedKey, draft);
+      setDraft(
+        t(
+          "Draft fronty: %1".replace("%1", draft),
+          "Queued draft: %1".replace("%1", draft),
+        ),
+      );
+      return;
+    }
     setBusy(true);
     setError(undefined);
+    // Režim je pokyn pro agenta (autorita server/policy ho nevynucuje) —
+    // proto prefix promptu, ne lokální blokace odeslání.
     const prompt =
+      modePrefix(perm.mode, t) +
       draft +
       (attachments.length
         ? "\n\n" +
@@ -780,6 +820,7 @@ export function Chat({
             </div>
           ))}
         <ErrorBox error={error ?? provider.error} />
+        <PermissionBanner mode={perm.mode} source={perm.source} />
         {provider.data && !provider.data.connected && (
           <div className="notice">
             {t(
@@ -813,6 +854,21 @@ export function Chat({
               scope={toolsQuery.data?.scope}
             />
           )}
+          <div className="composer-mode-row">
+            <PermissionModeSwitch
+              mode={perm.mode}
+              source={perm.source}
+              onChange={perm.setMode}
+            />
+            <span className="muted perm-source">
+              {perm.source === "server"
+                ? t("Zdroj: server", "Source: server")
+                : t(
+                    "Zdroj: místní předvolba — server nevynucuje",
+                    "Source: local preset — server does not enforce",
+                  )}
+            </span>
+          </div>
           {selectedTool && (
             <details className="selected-tool">
               <summary>
@@ -1048,11 +1104,42 @@ export function Chat({
                 }
                 aria-label={t("Odeslat zprávu", "Send message")}
               >
-                {busy ? "…" : "↑"}
+{busy ? "…" : "↑"}
               </m.button>
             )}
+<button
+                className="secondary compact"
+                title={t("Sbalit kontext", "Compact context")}
+                aria-label={t("Sbalit kontext", "Compact context")}
+                onClick={() => {
+                  void 0
+                }}
+              >
+                {t("Sbalit ▼", "Compact ▼")}
+              </button>
           </div>
         </form>
+        {queued && !running && (
+          <div className="queue-banner" role="status">
+            <span className="queue-banner-text">
+              {t(
+                "Draft fronty čeká na spuštění",
+                "Queued draft waiting to run",
+              )}
+            </span>
+            <button
+              onClick={() => {
+                setQueued(false);
+                sessionStorage.removeItem(
+                  "void-queued:" + draftKey.split(":").slice(1).join(":"),
+                );
+                void send();
+              }}
+            >
+              {t("Spustit", "Run")}
+            </button>
+          </div>
+        )}
         <div className="composer-footnote">
           <span>{providerLabel}</span>
           <span

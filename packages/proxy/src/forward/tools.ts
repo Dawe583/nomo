@@ -40,6 +40,12 @@ export type InterceptDeps = {
   readonly ledger: (entry: LedgerEntryInput) => void | Promise<void>;
   readonly probe?: ProbeProvider;
   readonly now?: () => Date;
+  /**
+   * WP-R02 capture gate: a durable snapshot of the call envelope that must
+   * complete before the proxy forwards upstream. Rejection blocks dispatch;
+   * the upstream is never called. Absent means no binding for this host.
+   */
+  readonly capture?: (call: InterceptedCall) => Promise<unknown>;
 };
 
 const ERROR_CODE = -32003;
@@ -62,6 +68,13 @@ export async function interceptCall(
     await writeLedger(deps, now, call.tool, policyCall.klass, decision.kind, digest);
 
     if (decision.kind === "allow") {
+      const captured = await runCaptureGate(deps, now, call, policyCall, digest, "allow");
+      if (captured === null) {
+        return {
+          kind: "deny",
+          error: denyError(call, policyCall, -1, "snapshot capture failed; upstream was not called"),
+        };
+      }
       await writeLedger(deps, now, call.tool, policyCall.klass, "allow:resolved", digest);
       return { kind: "allow" };
     }
@@ -77,6 +90,10 @@ export async function interceptCall(
     const heldCall = toHeldCall(call, policyCall, decision);
     const promise = deps.hold(decision.seconds).then(async (resolution) => {
       if (resolution.outcome.kind === "released" && resolution.outcome.release.kind === "approved") {
+        const captured = await runCaptureGate(deps, now, call, policyCall, digest, "hold");
+        if (captured === null) {
+          return holdError(resolution.call, { kind: "released", release: { kind: "denied", by: "snapshot capture failed; upstream was not called" } }, "hold");
+        }
         await writeLedger(deps, now, call.tool, policyCall.klass, "hold:approved", digest);
         return { jsonrpc: "2.0", id: 0, result: { approved: true } } satisfies JsonRpcResult;
       }
@@ -138,6 +155,29 @@ function chooseBlastRadius(
 
 function digestArgs(args: Readonly<Record<string, unknown>>): string {
   return createHash("sha256").update(JSON.stringify(args)).digest("hex");
+}
+
+/**
+ * Runs the WP-R02 capture gate. Returns non-null on success, null when the
+ * snapshot failed and dispatch must be blocked. Never throws: a throwing
+ * capture dependency resolves to a blocked dispatch, and the caller answers
+ * deny locally without contacting the upstream.
+ */
+async function runCaptureGate(
+  deps: InterceptDeps,
+  now: () => Date,
+  call: InterceptedCall,
+  policyCall: PolicyCall,
+  argsDigest: string,
+  decision: string,
+): Promise<unknown> {
+  if (deps.capture === undefined) return true;
+  try {
+    return await deps.capture(call);
+  } catch {
+    await writeLedger(deps, now, call.tool, policyCall.klass, `${decision}:capture-failed`, argsDigest);
+    return null;
+  }
 }
 
 async function writeLedger(

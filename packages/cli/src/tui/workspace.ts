@@ -467,6 +467,10 @@ export class WorkspaceTui {
       paths = new Set();
     }
     const missing: string[] = [];
+    const hasBinary = (path: string) => {
+      const ext = path.slice(path.lastIndexOf(".")).toLowerCase();
+      return [".pdf", ".exe", ".dll", ".so", ".dylib", ".bin", ".dat"].includes(ext);
+    };
     const expanded = prompt.replace(
       /@([^\s@][^\s]*)/g,
       (token, path: string) => {
@@ -475,6 +479,10 @@ export class WorkspaceTui {
           return token;
         }
         const doc = this.workbench.document(sessionId, path);
+        const isBinary = hasBinary(path);
+        if (isBinary) {
+          return `${path} [binární soubor - capability check required]`;
+        }
         return `${path} (quoted context):
 ${(doc.content ?? "").slice(0, 2000)}`;
       },
@@ -945,6 +953,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "quit" || cmd === "exit") return "quit";
+    if (cmd === "cancel") {
+      this.queuePrompt(undefined);
+      this.notice = "Queued prompt cancelled.";
+      return;
+    }
     if (cmd === "plan") {
       this.mode = "plan";
       this.notice = "Plan mode. Prompts ask for a plan before any tool runs.";
@@ -1036,11 +1049,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       }
       const ctx = this.contextNumbers();
       this.choose("documents");
+      const used = ctx.messages;
+      const limit = ctx.limit;
+      const percent = Math.round((used / limit) * 100);
+      const thresholdWarn = percent >= 90 ? " ⚠️ threshold exceeded" : "";
       this.detail = [
         `CONTEXT ${this.session()?.title ?? this.sessionId}`,
         "",
         `Model: ${this.session()?.model ?? this.model}`,
-        `Messages: ${ctx.messages} of ${ctx.limit}, then a new session is needed`,
+        `Messages: ${ctx.messages} of ${ctx.limit} ${percent > 0 ? `(${percent}%)` : ""}${thresholdWarn}`,
         `Tokens reported: ${ctx.tokens ?? "unknown"}`,
         "Cost: unknown",
         `Managed documents: ${ctx.docs}`,
@@ -1049,6 +1066,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           .documentsList()
           .filter((item) => item.sessionId === this.sessionId)
           .map((item) => `${item.path} ${item.bytes} B`),
+        "",
+        progressBar(used, limit, 20),
       ];
       this.scroll = 0;
       return;
@@ -1070,6 +1089,24 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     if (cmd === "cost") {
       this.choose("usage");
       this.detail = this.costLines();
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "queue") {
+      this.choose("overview");
+      const queued = this.queuedPrompt;
+      this.detail = [
+        "QUEUED PROMPT",
+        "",
+        queued ? `Pending: ${queued}` : "No queued prompt.",
+        "",
+        "The queued prompt will be sent at the end of the current run.",
+        "Use /cancel to cancel the queued prompt.",
+        "",
+        ...(queued
+          ? ["⚠️ Queued prompt is active - use /cancel to remove it."]
+          : []),
+      ];
       this.scroll = 0;
       return;
     }
@@ -1162,9 +1199,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.notice = "No recoverable operations in this conversation.";
         return;
       }
+      const selected = this.items()[recoverable];
+      const deps = selected.label.match(/\(([^)]+)\)/);
+      if (deps) {
+        this.notice = `Dependency warning: ${deps[1]}. Press u for reviewed Undo.`;
+      } else {
+        this.notice =
+          "Latest recoverable operation selected. Press u for reviewed Undo.";
+      }
       this.selected = recoverable;
-      this.notice =
-        "Latest recoverable operation selected. Press u for reviewed Undo.";
       return;
     }
     if (cmd === "doctor") {

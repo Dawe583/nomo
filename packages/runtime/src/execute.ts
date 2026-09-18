@@ -6,6 +6,17 @@ import type {
   RecoveryAdapter,
   RecoveryOutcome,
 } from "../../connectors/src/recovery.ts";
+/** WP-R02: legacy host binding contract lives here so every host imports one boundary. */
+export {
+  legacyOutcomeDigest,
+  runLegacyBoundCall,
+  type LegacyBoundResult,
+  type LegacyCallStatus,
+  type LegacyCapture,
+  type LegacyDispatch,
+  type LegacyOutcomeRecord,
+  type LegacyToolBinding,
+} from "./adapter.ts";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
 import {
   digest,

@@ -269,6 +269,36 @@ describe("runProxy", () => {
   });
 });
 
+test("failed legacy snapshot answers deny locally and never calls upstream (exit proof)", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
+  const policyPath = join(dir, "policy.yml");
+  await writeFile(policyPath, policyText("allow"));
+  const upstreamMessages: Array<Record<string, unknown>> = [];
+  const outputMessages: unknown[] = [];
+  const errors: string[] = [];
+
+  await runProxy({
+    keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
+    upstreamCommand: ["fake"],
+    policyPath,
+    posture: "fail-closed",
+    ledgerDir: await mkdtemp(join(tmpdir(), "void-bin-test-")),
+    workspace: "test",
+    input: fromLines([JSON.stringify(toolCall(41, "orders_delete"))]),
+    output(line) { outputMessages.push(JSON.parse(line) as unknown); },
+    error(line) { errors.push(line); },
+    legacyCapture: async () => { throw new Error("snapshot unavailable: disk full"); },
+    upstreamSpawn(events) { return fakeUpstream(events, upstreamMessages); },
+  });
+
+  assert.deepEqual(upstreamMessages, []);
+  assert.equal(outputMessages.length, 1);
+  const error = outputMessages[0] as { readonly id: number; readonly error: { readonly message: string } };
+  assert.equal(error.id, 41);
+  assert.match(error.error.message, /snapshot capture failed/);
+  assert.match(error.error.message, /upstream was not called/);
+});
+
 test("runProxy filters inherited environment and honors explicit upstreamEnv", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-proxy-env-"));
   t.after(() => rm(dir, { recursive: true, force: true }));

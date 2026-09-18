@@ -279,6 +279,9 @@ export class WorkspaceInput {
       this.remember();
       this.kill = points.slice(0, this.cursor).join("");
       this.set("");
+    } else if (key.ctrl && key.name === "p") {
+      this.command("/command-palette");
+      return;
     } else if (
       !key.ctrl &&
       !key.meta &&

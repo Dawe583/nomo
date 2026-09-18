@@ -76,7 +76,7 @@ const routes = [
   ["sessions", "≡", "Konverzace", "Conversations"],
   ["runs", "⌁", "Běhy a aktivita", "Runs and activity"],
   ["documents", "▤", "Dokumenty", "Documents"],
-  ["approvals", "◈", "Schvalování", "Approvals"],
+  ["approvals", "◈", "Schválení", "Approvals"],
   ["ledger", "▦", "Ledger", "Ledger"],
   ["connections", "⌘", "Nástroje a konektory", "Tools and connections"],
   ["models", "◎", "Modely a spotřeba", "Models and usage"],
@@ -690,14 +690,35 @@ function App({
               >
                 <Icon name="menu" />
               </button>
-              <div className="page-title">
+<div className="page-title">
                 <span>
                   {page === "chat" || path === "/"
                     ? (current?.title ??
-                      t("Nová konverzace", "New conversation"))
+                        t("Nová konverzace", "New conversation"))
                     : t(active[2], active[3])}
                 </span>
                 {current && <Badge value={current.status} />}
+                {overview.data?.queueCapacity !== undefined && (
+                  <Badge
+                    pill
+                    className="badge-queue"
+                    title={t("Fronta", "Queue")}
+                  >
+                    {overview.data.queueLength !== null
+                      ? `${overview.data.queueLength}/${overview.data.queueCapacity}`
+                      : "?/"}
+                  </Badge>
+                )}
+                {session && session.status === "running" && (
+                  <div className="queue-banner" role="status">
+                    <span className="queue-banner-text">
+                      {t(
+                        "1 aktivní běh, tvůj draft čeká",
+                        "1 active run, your draft waits",
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
               <button
                 className="mobile-new-chat"
@@ -805,45 +826,30 @@ function App({
                     </Suspense>
                   </div>
                 ) : (
-                  <div
-                    key={page}
-                    className="page-content"
-                    inert={context && matchMedia("(max-width:767px)").matches}
-                  >
-                    <h1>{t(active[2], active[3])}</h1>
-                    <Suspense
-                      fallback={
-                        <p className="route-loading" role="status">
-                          {t("Načítání stránky…", "Loading page…")}
-                        </p>
-                      }
+<div
+                      key={page}
+                      className="page-content"
+                      inert={context && matchMedia("(max-width:767px)").matches}
                     >
-                      {page === "overview" ? (
-                        <Overview navigate={navigate} />
-                      ) : page === "sessions" ? (
-                        <Sessions navigate={navigate} />
-                      ) : page === "runs" ? (
-                        <Runs navigate={navigate} />
-                      ) : page === "documents" ? (
-                        <Documents />
-                      ) : page === "approvals" ? (
-                        <Approvals />
-                      ) : page === "ledger" ? (
-                        <Ledger />
-                      ) : page === "connections" ? (
-                        <Connections />
-                      ) : page === "models" ? (
-                        <Models />
-                      ) : page === "settings" ? (
-                        <Settings
+                      <h1>{t(active[2], active[3])}</h1>
+                      <Suspense
+                        fallback={
+                          <p className="route-loading" role="status">
+                            {t("Načítání stránky…", "Loading page…")}
+                          </p>
+                        }
+                      >
+                        <PageComponent
+                          component={pageMap[page]}
+                          navigate={navigate}
                           appearance={appearance}
                           setAppearance={setAppearance}
                           locale={locale}
                           setLocale={setLocale}
                         />
-                      ) : (
-                        <p>{t("Stránka nenalezena.", "Page not found.")}</p>
-                      )}
+                        {pageMap[page] === undefined && (
+                          <p>{t("Stránka nenalezena.", "Page not found.")}</p>
+                        )}
                     </Suspense>
                   </div>
                 )}

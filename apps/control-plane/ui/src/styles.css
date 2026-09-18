@@ -1966,6 +1966,19 @@ dialog::backdrop {
   margin-right: 6px;
   background: currentColor;
 }
+.badge.badge-queue {
+  --queue-bg: var(--action);
+  --queue-fg: var(--action-text);
+  background: var(--queue-bg);
+  color: var(--queue-fg);
+  border-color: var(--queue-bg);
+}
+/* Queue full state */
+.badge.badge-queue[data-state="full"] {
+  background: var(--danger);
+  color: var(--action-text);
+  border-color: var(--danger);
+}
 
 @media (prefers-reduced-motion: no-preference) {
   :root:not([data-motion="off"])
@@ -3154,4 +3167,119 @@ dialog::backdrop {
 .approval-facts strong,
 .approval-rationale strong {
   color: var(--text);
+}
+
+/* B1: approval inbox v2 — riziko první, karty bez dekorativních gradientů. */
+.approval-inbox {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 28px;
+}
+.approval-card {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: 6px;
+  background: var(--canvas);
+  padding: 14px 16px;
+}
+.approval-card[data-risk="r3"] {
+  border-left-color: var(--danger);
+}
+.approval-card[data-risk="r2"] {
+  border-left-color: var(--action);
+}
+.approval-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.approval-card-head > strong {
+  flex: 1;
+  min-width: 200px;
+  overflow-wrap: anywhere;
+}
+.approval-plain {
+  font-size: 16px;
+  margin: 12px 0 4px;
+  overflow-wrap: anywhere;
+}
+.approval-rationale {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+dialog label > textarea {
+  margin-top: 6px;
+}
+
+/* B4: ledger verify — poctivý rozsah, progress bez animací navíc. */
+.verify-block {
+  margin: 4px 0 16px;
+}
+.verify-block > button {
+  min-height: 44px;
+}
+.verify-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.verify-progress progress {
+  width: 160px;
+  height: 12px;
+  accent-color: var(--action);
+}
+.verify-facts {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.verify-facts > div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.verify-facts dt {
+  color: var(--muted);
+  min-width: 64px;
+}
+.verify-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* B5: permission modes v composeru + banner. Autorita server/policy. */
+.composer-mode-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px 0;
+}
+.perm-switch {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.perm-switch button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.perm-switch .perm-active {
+  border-color: var(--action);
+  color: var(--action);
+  font-weight: 600;
+}
+.perm-source {
+  font-size: 11px;
+}
+.perm-banner {
+  border: 1px solid var(--action);
+  border-radius: 5px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
 }

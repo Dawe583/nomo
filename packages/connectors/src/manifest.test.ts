@@ -4,7 +4,9 @@ import { mkdtemp, readFile, readdir, rm, open, writeFile } from "node:fs/promise
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { findEntry, manifestReader, manifestWriter, type SnapshotManifestEntry } from "./manifest.ts";
+import { findEntry, collectManifestGarbage, manifestReader, manifestWriter, resolveRecoveryReadiness, type SnapshotManifestEntry } from "./manifest.ts";
+import { LocalSnapshotStore } from "./snapshot/local.ts";
+import { sha256Digest } from "./snapshot/store.ts";
 
 const reference = {
   namespace: "workspace-a",
@@ -81,6 +83,93 @@ describe("manifest", () => {
     const dir = await tempDir();
 
     assert.deepEqual(await manifestReader(dir), []);
+  });
+
+  test("pinned entries round trip format version, key id, and expiry", async () => {
+    const dir = await tempDir();
+    const entry: SnapshotManifestEntry = {
+      ...first,
+      operationId: "op-1",
+      recoveryJobId: "job-1",
+      pinned: true,
+      expiresAt: new Date("2030-01-01T00:00:00.000Z").toISOString(),
+      formatVersion: 1,
+      keyId: "k1",
+    };
+    await manifestWriter(dir).write(entry);
+    assert.deepEqual(await manifestReader(dir), [entry]);
+    assert.deepEqual(await findEntry(dir, entry.digest, entry.tool), entry);
+  });
+
+  test("resolveRecoveryReadiness returns available only for verified bytes", async () => {
+    const dir = await tempDir();
+    const store = LocalSnapshotStore(join(dir, "snapshots"));
+    const bytes = new TextEncoder().encode("before-image");
+    const stored = await store.put("ws", bytes);
+    const entry: SnapshotManifestEntry = { digest: stored.digest, reference: stored.reference, tool: "postgres.row.update", operationId: "op-1" };
+    await manifestWriter(dir).write(entry);
+
+    const ok = await resolveRecoveryReadiness(dir, store, entry.digest, entry.tool);
+    assert.equal(ok.status, "available");
+
+    const missing = await resolveRecoveryReadiness(dir, store, "sha256:" + "0".repeat(64), entry.tool);
+    assert.equal(missing.status, "unavailable");
+  });
+
+  test("resolveRecoveryReadiness reports unavailable on expiry, corruption, and loss", async () => {
+    const dir = await tempDir();
+    const store = LocalSnapshotStore(join(dir, "snapshots"));
+    const expiredBytes = new TextEncoder().encode("gone");
+    const expired = await store.put("ws", expiredBytes, {}, { expiresAt: new Date("2020-01-01T00:00:00.000Z") });
+    const expiredEntry: SnapshotManifestEntry = { digest: expired.digest, reference: expired.reference, tool: "postgres.row.update" };
+    await manifestWriter(dir).write(expiredEntry);
+    const expiredReadiness = await resolveRecoveryReadiness(dir, store, expiredEntry.digest, expiredEntry.tool);
+    assert.equal(expiredReadiness.status, "unavailable");
+    assert.match(expiredReadiness.status === "unavailable" ? expiredReadiness.reason : "", /expired/);
+
+    const live = await store.put("ws", new TextEncoder().encode("live"));
+    const liveEntry: SnapshotManifestEntry = { digest: live.digest, reference: live.reference, tool: "postgres.row.update" };
+    await manifestWriter(dir).write(liveEntry);
+    await writeFile(join(dir, "snapshots", encodeURIComponent("ws"), live.digest.slice("sha256:".length)), "forged");
+    const forged = await resolveRecoveryReadiness(dir, store, liveEntry.digest, liveEntry.tool);
+    assert.equal(forged.status, "unavailable");
+    assert.match(forged.status === "unavailable" ? forged.reason : "", /digest mismatch|unavailable/);
+  });
+
+  test("GC during Undo keeps pinned snapshots and reports the rest as unavailable", async () => {
+    const dir = await tempDir();
+    const store = LocalSnapshotStore(join(dir, "snapshots"));
+    const pinnedBytes = new TextEncoder().encode("undo-me");
+    const pinned = await store.put("ws", pinnedBytes, {}, { pin: { ownerId: "job-1", kind: "recovery" } });
+    const pinnedEntry: SnapshotManifestEntry = {
+      digest: pinned.digest,
+      reference: pinned.reference,
+      tool: "postgres.row.update",
+      recoveryJobId: "job-1",
+      pinned: true,
+    };
+    await manifestWriter(dir).write(pinnedEntry);
+
+    const gc = await store.collectGarbage?.("ws", { cutoff: new Date("2030-01-01T00:00:00.000Z") });
+    assert.equal(gc?.skippedPinned, 1);
+    const readiness = await resolveRecoveryReadiness(dir, store, pinnedEntry.digest, pinnedEntry.tool);
+    assert.equal(readiness.status, "available");
+
+    const report = await collectManifestGarbage(dir, store);
+    assert.equal(report.skippedPinned, 1);
+    assert.equal(report.retained, 0);
+  });
+
+  test("key binding mismatch and lost key stay unavailable", async () => {
+    const dir = await tempDir();
+    const writer = LocalSnapshotStore(join(dir, "snapshots"), { availableKeyIds: ["k1"] });
+    const stored = await writer.put("ws", new TextEncoder().encode("enc"), {}, { keyId: "k1" });
+    await manifestWriter(dir).write({ digest: stored.digest, reference: stored.reference, tool: "s3.object_delete", keyId: "k1" });
+    const rotated = LocalSnapshotStore(join(dir, "snapshots"), { availableKeyIds: ["k2"] });
+    const lost = await resolveRecoveryReadiness(dir, rotated, stored.digest, "s3.object_delete");
+    assert.equal(lost.status, "unavailable");
+    assert.match(lost.status === "unavailable" ? lost.reason : "", /key|unavailable/);
+    void sha256Digest(new TextEncoder().encode("touch-import"));
   });
 });
 

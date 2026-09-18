@@ -281,5 +281,58 @@ test("forged small counts cannot satisfy a radius allow rule", async () => {
     ledger: () => {},
     hold: async () => { throw new Error("unexpected hold"); },
   });
-  assert.equal(verdict.kind, "allow");
+  assert.deepEqual(verdict, { kind: "allow" });
+});
+
+test("capture failure on allow denies locally and records capture-failed", async () => {
+  const ledger: unknown[] = [];
+  const verdict = await interceptCall(call, {
+    classify: () => classified("r0"),
+    policy: () => ({ kind: "allow" }),
+    hold: async () => { throw new Error("hold should not run"); },
+    ledger: (entry) => { ledger.push(entry); },
+    capture: async () => { throw new Error("snapshot unavailable: disk full"); },
+  });
+
+  assert.equal(verdict.kind, "deny");
+  assert.match((verdict as { error: JsonRpcError }).error.error.message, /snapshot capture failed/);
+  assert.match((verdict as { error: JsonRpcError }).error.error.message, /upstream was not called/);
+  assert.deepEqual(ledger.map((entry) => (entry as { decision: string }).decision), ["allow", "allow:capture-failed"]);
+});
+
+test("capture failure after hold approval denies instead of forwarding", async () => {
+  const ledger: unknown[] = [];
+  const verdict = await interceptCall(call, {
+    classify: () => classified("r2"),
+    policy: () => ({ kind: "hold", ruleIndex: 2, seconds: 30, notify: ["cli"], rationale: "needs a human" }),
+    hold: async () => ({
+      id: "h1",
+      outcome: { kind: "released", release: { kind: "approved" } },
+      call: { id: "h1", tool: call.tool, klass: "r2", blastRadius: 12, ruleIndex: 2, rationale: "needs a human", args: call.args, heldAt: 1, expiresAt: 2, notify: ["cli"] },
+    }),
+    ledger: (entry) => { ledger.push(entry); },
+    capture: async () => { throw new Error("snapshot unavailable"); },
+  });
+
+  assert.equal(verdict.kind, "hold");
+  const result = await (verdict as { promise: Promise<JsonRpcError> }).promise;
+  assert.equal(result.error.code, -32003);
+  assert.match(result.error.message, /snapshot capture failed/);
+  assert.deepEqual(ledger.map((entry) => (entry as { decision: string }).decision), ["hold", "hold:capture-failed"]);
+});
+
+test("successful capture keeps the allow verdict byte-identical", async () => {
+  const ledger: unknown[] = [];
+  let captures = 0;
+  const verdict = await interceptCall(call, {
+    classify: () => classified("r0"),
+    policy: () => ({ kind: "allow" }),
+    hold: async () => { throw new Error("hold should not run"); },
+    ledger: (entry) => { ledger.push(entry); },
+    capture: async () => { captures++; return { digest: "captured" }; },
+  });
+
+  assert.deepEqual(verdict, { kind: "allow" });
+  assert.equal(captures, 1);
+  assert.deepEqual(ledger.map((entry) => (entry as { decision: string }).decision), ["allow", "allow:resolved"]);
 });

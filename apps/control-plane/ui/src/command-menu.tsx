@@ -1,7 +1,8 @@
-import { useEffect, useRef, useContext } from "react";
+import { useEffect, useRef, useContext, useState } from "react";
 import type { Command } from "./commands.ts";
 import * as m from "motion/react-m";
 import { MotionEnabled, useText } from "./ui.tsx";
+import { filterPaletteRecentFirst } from "./commands.ts";
 
 export function CommandMenu({
   items,
@@ -11,6 +12,7 @@ export function CommandMenu({
   error,
   retry,
   scope,
+  recentIds,
 }: {
   items: Command[];
   active: number;
@@ -19,10 +21,17 @@ export function CommandMenu({
   error: boolean;
   retry: () => void;
   scope?: string;
+  recentIds?: string[];
 }) {
   const t = useText();
   const animate = useContext(MotionEnabled);
   const selected = useRef<HTMLButtonElement>(null);
+  const [filtered, setFiltered] = useState(() =>
+    filterPaletteRecentFirst(items, "", recentIds),
+  );
+  useEffect(() => {
+    setFiltered(filterPaletteRecentFirst(items, "", recentIds));
+  }, [items, recentIds]);
   useEffect(() => {
     selected.current?.scrollIntoView({ block: "nearest" });
   }, [active, items[active]?.id]);
@@ -46,7 +55,7 @@ export function CommandMenu({
         id="void-command-list"
         aria-label={t("Dostupné příkazy", "Available commands")}
       >
-        {items.map((item, index) => (
+        {filtered.map((item, index) => (
           <button
             key={item.id}
             id={`void-command-${index}`}

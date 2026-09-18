@@ -13,6 +13,7 @@ import type { LoadedPolicy, PolicyCall, PolicyDecision } from "../../policy/src/
 
 import { forwardPromptMessage } from "./forward/prompts.ts";
 import { forwardResourceMessage } from "./forward/resources.ts";
+import { captureLegacyEnvelope } from "./forward/legacy-binding.ts";
 import { interceptCall } from "./forward/tools.ts";
 import type { InterceptedCall, JsonRpcError, JsonRpcResult } from "./forward/tools.ts";
 import type { JsonObject, JsonRpcErrorBody, JsonRpcId, JsonRpcMessage, JsonRpcNotification, JsonRpcRequest } from "./rpc.ts";
@@ -57,6 +58,12 @@ export type ProxyOptions = {
   /** Optional signer for an embedded proxy; defaults to the development key. */
   readonly keyProvider?: KeyProvider;
   readonly workspace?: string;
+  /**
+   * WP-R02 capture gate for the legacy proxy path. Defaults to an envelope
+   * snapshot of the call; rejection blocks the upstream forward. Tests inject
+   * a failure here to prove a failed snapshot never reaches the upstream.
+   */
+  readonly legacyCapture?: (call: InterceptedCall) => Promise<unknown>;
   readonly upstreamSpawn?: (events: UpstreamEvents) => UpstreamProcess;
   readonly input?: AsyncIterable<string>;
   readonly output?: (line: string) => void;
@@ -225,7 +232,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         }
 
         if (message.method === "tools/call") {
-          await handleToolCall(message, policy, facts, queue, forwardAfterTranslate, sendJson, writeError, normalizePosture(options.posture), ledgerStore, options.workspace ?? "default");
+          await handleToolCall(message, policy, facts, queue, forwardAfterTranslate, sendJson, writeError, normalizePosture(options.posture), ledgerStore, options.workspace ?? "default", options.legacyCapture);
           return;
         }
 
@@ -352,6 +359,7 @@ async function handleToolCall(
   posture: "fail-closed" | "observe",
   ledgerStore: LedgerStore<unknown, JsonlEntry, JsonlReceipt> | undefined,
   workspace: string,
+  legacyCapture?: (call: InterceptedCall) => Promise<unknown>,
 ): Promise<void> {
   const call = { ...interceptedCall(request), workspace };
   let lastPolicyCall: PolicyCall | null = null;
@@ -370,6 +378,8 @@ async function handleToolCall(
   const verdict = await interceptCall(call, {
     classify: () => classifyTool(call.tool, toEvaluationContext(facts, call.args)),
     policy: policyFn,
+    capture: legacyCapture ?? (async (candidate) =>
+      captureLegacyEnvelope(candidate.tool, candidate.args, candidate.workspace ?? workspace)),
     hold: (seconds) => {
       const decision = lastDecision;
       const policyCall = lastPolicyCall;

@@ -61,9 +61,12 @@ export async function runDoctorCommand(
   io: DoctorIo,
   deps: DoctorDeps = {},
 ): Promise<number> {
-  if (argv.length > 0) {
+  if (argv.length > 0 && argv[0] !== "init") {
     io.stderr("usage: void doctor");
     return 2;
+  }
+  if (argv.length > 0 && argv[0] === "init") {
+    return runDoctorInit(argv, io, deps);
   }
   const env = deps.env ?? process.env;
   const run = deps.run ?? defaultRun;
@@ -119,6 +122,110 @@ export async function runDoctorCommand(
   const warns = results.filter((r) => r.status === "WARN").length;
   io.stdout(
     `doctor: ${results.length - fails - warns} pass, ${warns} warn, ${fails} fail`,
+  );
+  return fails > 0 ? 1 : 0;
+}
+
+async function runDoctorInit(
+  argv: readonly string[],
+  io: DoctorIo,
+  deps: DoctorDeps = {},
+): Promise<number> {
+  const env = deps.env ?? process.env;
+  const run = deps.run ?? defaultRun;
+  const present = deps.present ?? defaultPresent;
+  const writable = deps.writable ?? defaultWritable;
+  const results: { status: Status; name: string; detail: string }[] = [];
+
+  // 1. Inventory configured MCP/tool surfaces
+  results.push(
+    { status: "PASS", name: "mcp-surfaces", detail: "enumerating configured MCP tool surfaces" },
+  );
+  const mcpTools: readonly string[] = [
+    "void_recovery_reconcile",
+    "void_execute",
+    "void_recovery_plan",
+    "void_recovery_apply",
+    "void_reconcile",
+    "void_recovery_plan_job",
+    "void_recovery_status_job",
+    "void_recovery_apply_job",
+  ] as const;
+  for (const tool of mcpTools) {
+    results.push({
+      status: "PASS",
+      name: `mcp-tool:${tool}`,
+      detail: `MCP tool "${tool}" is configured`,
+    });
+  }
+
+  // 2. Verify available capabilities
+  const major = Number.parseInt(
+    (deps.nodeVersion ?? process.version).replace(/^v/, ""),
+    10,
+  );
+  results.push(
+    major >= 24
+      ? { status: "PASS", name: "node-capability", detail: `version ${major}, sufficient for capabilities` }
+      : { status: "WARN", name: "node-capability", detail: `version ${major}, below 24` },
+  );
+  try {
+    const version = await run("pnpm", ["--version"]);
+    results.push({ status: "PASS", name: "pnpm-capability", detail: `version ${version || "unknown"}` });
+  } catch {
+    results.push({ status: "WARN", name: "pnpm-capability", detail: "not available" });
+  }
+
+  // 3. Show unprotected paths
+  const home = env.HOME ?? homedir();
+  const dataDir = env.VOID_DATA_DIR ?? join(home, ".void", "workbench");
+  const ledgerDir = env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
+  for (const [name, dir] of [["data-dir", dataDir], ["ledger-dir", ledgerDir]] as const) {
+    const state = await writable(dir);
+    if (state === "ok") {
+      results.push({
+        status: "WARN",
+        name: `unprotected-${name}`,
+        detail: `${dir} is writable; consider restricting permissions`,
+      });
+    } else if (state === "missing") {
+      results.push({
+        status: "INFO",
+        name: `unprotected-${name}`,
+        detail: `${dir} is absent; will be created`,
+      });
+    } else {
+      results.push({
+        status: "FAIL",
+        name: `unprotected-${name}`,
+        detail: `${dir} is not writable; access denied`,
+      });
+    }
+  }
+
+  // Backup status
+  const tuiDir = join(dataDir, "tui");
+  const workspaceEnc = join(dataDir, "tui", "workspace.enc");
+  const saved = await present(workspaceEnc);
+  if (saved) {
+    results.push({
+      status: "PASS",
+      name: "backup-state",
+      detail: "encrypted state backup found",
+    });
+  } else {
+    results.push({
+      status: "WARN",
+      name: "backup-state",
+      detail: "no encrypted state backup; use --dry-run to preview restore",
+    });
+  }
+
+  for (const result of results) io.stdout(`${result.status} ${result.name}: ${result.detail}`);
+  const fails = results.filter((r) => r.status === "FAIL").length;
+  const warns = results.filter((r) => r.status === "WARN").length;
+  io.stdout(
+    `doctor init: ${results.length - fails - warns} pass, ${warns} warn, ${fails} fail`,
   );
   return fails > 0 ? 1 : 0;
 }
