@@ -110,12 +110,25 @@ export function filterKeyForTab(
   tab: WorkspaceTab,
 ): string | undefined {
   if (!FILTER_TABS.includes(tab)) return undefined;
-  if (!value || [...value].length !== 1 || key.ctrl || key.meta) return undefined;
+  if (!value || [...value].length !== 1 || key.ctrl || key.meta)
+    return undefined;
   if (/[\x00-\x1f\x7f-\x9f]/.test(value)) return undefined;
   if (
     [
-      "q", "i", "n", "u", "a", "d", "r", "?", "j", "k",
-      "/", "!", "{", "}",
+      "q",
+      "i",
+      "n",
+      "u",
+      "a",
+      "d",
+      "r",
+      "?",
+      "j",
+      "k",
+      "/",
+      "!",
+      "{",
+      "}",
     ].includes(value)
   )
     return undefined;
@@ -129,9 +142,7 @@ export function searchHistoryPrompts(
 ): string[] {
   const needle = query.toLocaleLowerCase();
   if (!needle) return [...prompts];
-  return prompts.filter((item) =>
-    item.toLocaleLowerCase().includes(needle),
-  );
+  return prompts.filter((item) => item.toLocaleLowerCase().includes(needle));
 }
 
 /** Checklist items are read from real messages, never invented. */
@@ -186,9 +197,9 @@ export function mentionToken(
 }
 
 /** External harness CLIs detected on PATH, never executed by this check. */
-export async function detectHarnesses(env: Readonly<NodeJS.ProcessEnv>): Promise<
-  { id: string; path: string | null }[]
-> {
+export async function detectHarnesses(
+  env: Readonly<NodeJS.ProcessEnv>,
+): Promise<{ id: string; path: string | null }[]> {
   const found: { id: string; path: string | null }[] = [];
   const pathEnv = env.PATH ?? "";
   for (const id of ["prime-agent", "opencode"]) {
@@ -362,9 +373,7 @@ export class WorkspaceTui {
   }
   documentPaths(): string[] {
     return [
-      ...new Set(
-        this.workbench.documentsList().map((item) => item.path),
-      ),
+      ...new Set(this.workbench.documentsList().map((item) => item.path)),
     ];
   }
   /** Message and token counts from retained events, never estimated. */
@@ -938,8 +947,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     if (cmd === "quit" || cmd === "exit") return "quit";
     if (cmd === "plan") {
       this.mode = "plan";
-      this.notice =
-        "Plan mode. Prompts ask for a plan before any tool runs.";
+      this.notice = "Plan mode. Prompts ask for a plan before any tool runs.";
       return;
     }
     if (cmd === "stats") {
@@ -968,7 +976,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         ...open.flatMap((o) => [
           `--- ${o.path} (${o.kind} ${o.id.slice(0, 8)})`,
-          ...unifiedDiff(o.before ?? "[does not exist]", o.after ?? "[does not exist]"),
+          ...unifiedDiff(
+            o.before ?? "[does not exist]",
+            o.after ?? "[does not exist]",
+          ),
           "",
         ]),
         "Use /undo ID for reviewed Undo of one operation.",
@@ -1078,7 +1089,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         ...(todos.length
           ? todos.map(
-              (item) => `${item.done ? "[x]" : "[ ]"} ${item.text} (#${item.seq})`,
+              (item) =>
+                `${item.done ? "[x]" : "[ ]"} ${item.text} (#${item.seq})`,
             )
           : ["No checklist items in this conversation yet."]),
       ];
@@ -1498,7 +1510,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ...PROVIDER_PRESETS.map(
           (preset) =>
             `${preset.id === current ? "[*]" : "[ ]"} ${preset.id}  ${preset.name}` +
-            ("local" in preset && preset.local ? "  (local, runs open models like Hermes)" : ""),
+            ("local" in preset && preset.local
+              ? "  (local, runs open models like Hermes)"
+              : ""),
         ),
         "",
         "Local entries need Ollama or LM Studio running on this machine.",
@@ -1528,8 +1542,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "prime-agent: local harness CLI for team agents, needs the bridge.",
         "",
         ...found.map(
-          (item) =>
-            `${item.id}: ${item.path ?? "not detected on PATH"}`,
+          (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
         ),
         "",
         "/harness cloud | /harness prime-agent switches the default.",
@@ -2004,7 +2017,9 @@ export function renderWorkspace(
     violet = "38;5;183";
   const running = busy || ui.workbench.running();
   const frame = visuals.motion === false ? 0 : (visuals.frame ?? 0);
-  const spinner = running ? ["·", "✢", "✳", "✶", "✳", "✢"][frame % 6] : "◆";
+  const spinner = running
+    ? ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"][frame % 10]
+    : "◆";
   const pending = ui.workbench.pending();
   const holds = pending.length + ui.proxy.holds.length;
   const waiting = pending.some((hold) =>
@@ -2222,10 +2237,10 @@ export function renderWorkspace(
     .find((e) => e.type !== "run.status" && e.kind !== "usage");
   const phase =
     lastEvent?.type === "tool.started"
-      ? "Calling tool"
+      ? "🔧 Calling tool"
       : lastEvent?.type === "message.delta"
-        ? "Writing response"
-        : "Thinking";
+        ? "✍️ Writing response"
+        : "💭 Thinking";
   // Live ellipsis, frozen when motion is off so paused frames stay equal.
   const dots =
     visuals.motion === false ? "" : ".".repeat(1 + (Math.floor(frame / 3) % 3));
@@ -2269,15 +2284,17 @@ export function renderWorkspace(
     try {
       const todos = extractTodos(ui.session()?.events ?? []);
       const open = todos.filter((item) => !item.done).length;
-      return todos.length ? ` | ✓ ${todos.length - open}/${todos.length} todos` : "";
+      return todos.length
+        ? ` | ✓ ${todos.length - open}/${todos.length} todos`
+        : "";
     } catch {
       return "";
     }
   })();
   const status = ui.confirmation
-    ? "REVIEW / y accept / n reject / Esc cancel / PgDn preview"
+    ? "⚠️  REVIEW / y accept / n reject / Esc cancel / PgDn preview"
     : running && (busy || ui.session()?.status === "running")
-      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "◉ Waiting for approval" : `● ${phase}${dots}`) : `● Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / reading history" : ""}${todoBadge}`
+      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "⏳ Waiting for approval" : `● ${phase}${dots}`) : `⏳ Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / 📜 reading history" : ""}${todoBadge}`
       : (historyStatus ?? ui.notice);
   const menuRows = menu.map(([name, description], i) =>
     ink(
@@ -2287,9 +2304,12 @@ export function renderWorkspace(
       i + menuStart === selection ? `1;${ice};48;5;24` : muted,
     ),
   );
+  // Add mode indicator with icon
+  const modeIndicator =
+    ui.mode === "plan" ? "○" : ui.mode === "accept" ? "●" : "◆";
   // One frame, joined corners, no gaps: top, rows with vertical sides, bottom.
   const frameTitle = editing
-    ? `${MODE_ICON[ui.mode]} Write a prompt [${ui.mode.toUpperCase()}]`
+    ? `${modeIndicator} Write a prompt [${ui.mode.toUpperCase()}]`
     : `${TAB_ICONS[ui.tab]} ${ui.tab} / navigation`;
   const promptBox = [
     promptFrameTop(frameTitle, width),
@@ -2341,6 +2361,42 @@ export function renderWorkspace(
     )
     .join("\n");
 }
+export const STATUS_ICONS = {
+  success: "✅",
+  error: "❌",
+  warning: "⚠️",
+  info: "ℹ️",
+  pending: "⏳",
+  running: "🔄",
+  waiting: "⏳",
+  approval: "🔐",
+  document: "📄",
+  ledger: "📜",
+  tool: "🔧",
+  model: "🤖",
+  session: "💬",
+  document_list: "📁",
+  approval_list: "📋",
+  settings: "⚙️",
+  help: "❓",
+  search: "🔍",
+  filter: "🔎",
+  undo: "↩️",
+  redo: "↪️",
+  save: "💾",
+  export: "📤",
+  import: "📥",
+  connect: "🔗",
+  disconnect: "🔌",
+  theme: "🎨",
+  keybindings: "⌨️",
+  quit: "🚪",
+  new: "➕",
+  edit: "✏️",
+  delete: "🗑️",
+  copy: "📋",
+  paste: "📥",
+} as const;
 const KEYBINDINGS = [
   "KEYBINDINGS, same action as the reference terminal where VOID has it",
   "",

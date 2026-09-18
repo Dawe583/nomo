@@ -14,6 +14,14 @@ export const VOID_PALETTE = {
   r1: "#2997ff",
   r2: "#dcbc63",
   r3: "#f47a88",
+  bg: "#0d0d0f",
+  fg: "#e8e8eb",
+  border: "#2a2a2e",
+  highlight: "#bd4206",
+  success: "#5cc094",
+  warning: "#dcbc63",
+  error: "#f47a88",
+  info: "#2997ff",
 } as const;
 
 export const CLASS_MARKER: Record<ReversibilityClass, string> = {
@@ -41,6 +49,14 @@ const ANSI_16: Record<Tone, number> = {
   r1: 94,
   r2: 33,
   r3: 91,
+  bg: 30,
+  fg: 97,
+  border: 90,
+  highlight: 33,
+  success: 32,
+  warning: 33,
+  error: 91,
+  info: 94,
 };
 
 const ANSI_256: Record<Tone, number> = {
@@ -53,6 +69,14 @@ const ANSI_256: Record<Tone, number> = {
   r1: 111,
   r2: 179,
   r3: 211,
+  bg: 233,
+  fg: 255,
+  border: 239,
+  highlight: 166,
+  success: 78,
+  warning: 179,
+  error: 211,
+  info: 111,
 };
 
 function trueColor(hex: string): string {
