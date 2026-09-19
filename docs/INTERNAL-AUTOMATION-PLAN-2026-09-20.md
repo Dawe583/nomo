@@ -36,6 +36,7 @@ The target system should:
 - Existing runtime already provides tasks, weekly planning, approvals, reminders, standups, decisions, SOP proposals, private drafts, process discovery, knowledge search, project status and read-only GitHub search.
 - Existing PostgreSQL, n8n, scheduler, durable outbox, approval buttons and audit log are sufficient. No Kafka, Redis or second task store is needed.
 - Current GitHub sync is read-only and tied to one GitHub App installation and one owner. It cannot yet ingest the `VOID-harness` organization or create releases.
+- Agent configuration has drift: repository agent files still reference the retired `tokenrouter/z-ai/glm-5.3-free` route, while workspace policy requires `opencode-zen` by default and token-based providers only through environment or local authentication.
 
 ### Product and market
 
@@ -408,10 +409,12 @@ Weekend:
 ### Phase A — visibility, one to two days
 
 1. Install read-only GitHub App into `VOID-harness`.
-2. Generalize GitHub sync from one owner/installation to configured installations.
-3. Add workflow, release and deployment status ingestion.
-4. Add GitHub event digest jobs and Slack notification templates.
-5. Update Graphify after accepted `main` changes and expose query results through the existing knowledge path.
+2. Remove retired hard-coded model routes from every agent configuration; set the workspace-approved default and keep credentials out of Git.
+3. Verify agent display names, avatars, ownership and production model identity after the Slack owner signs in.
+4. Generalize GitHub sync from one owner/installation to configured installations.
+5. Add workflow, release and deployment status ingestion.
+6. Add GitHub event digest jobs and Slack notification templates.
+7. Update Graphify after accepted `main` changes and expose query results through the existing knowledge path.
 
 Exit proof: Coordinator reports organization branches, open work, latest workflow status and current release version with links; no write permission exists.
 
