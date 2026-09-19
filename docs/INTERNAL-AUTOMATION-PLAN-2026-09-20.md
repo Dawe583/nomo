@@ -31,8 +31,8 @@ The target system should:
 
 ### Slack agents
 
-- Builder, Courier and Coordinator completed live Slack-to-LLM-to-Slack production smokes.
-- Operator transport exists but has no owner until Oliver joins the Slack workspace.
+- David's Agent, Max's Agent and Coordinator completed live Slack-to-LLM-to-Slack production smokes.
+- Oliver's Agent transport exists but has no owner until Oliver joins the Slack workspace.
 - Existing runtime already provides tasks, weekly planning, approvals, reminders, standups, decisions, SOP proposals, private drafts, process discovery, knowledge search, project status and read-only GitHub search.
 - Existing PostgreSQL, n8n, scheduler, durable outbox, approval buttons and audit log are sufficient. No Kafka, Redis or second task store is needed.
 - Current GitHub sync is read-only and tied to one GitHub App installation and one owner. It cannot yet ingest the `VOID-harness` organization or create releases.
@@ -72,9 +72,9 @@ Do not add a general event bus, a second workflow engine, a second project track
 
 ## 4. Upgraded agent responsibilities
 
-### Builder — product and engineering execution
+### David's Agent — product and engineering execution
 
-Primary owner: David.
+Functional role: Builder. Primary owner: David.
 
 Add these skills:
 
@@ -97,9 +97,9 @@ Add these skills:
 
 Automation level: read and draft automatically; create David’s own tasks on explicit request; cross-owner assignments require owner approval.
 
-### Operator — internal operations and compliance
+### Oliver's Agent — internal operations and compliance
 
-Primary owner: Oliver after Slack onboarding.
+Functional role: Operator. Primary owner: Oliver after Slack onboarding.
 
 Add these skills:
 
@@ -118,9 +118,9 @@ Add these skills:
 
 Automation level: reminders, evidence collection and drafts automatic; access, credential, legal, financial and policy changes always human-approved.
 
-### Courier — marketing and distribution engine
+### Max's Agent — marketing and distribution engine
 
-Primary owner: Max.
+Functional role: Courier. Primary owner: Max.
 
 Add these skills:
 
@@ -167,6 +167,15 @@ Add these skills:
    - Summarize shipped value, current risks, next milestone, marketing output and decisions needed.
 
 Coordinator must not write product code, approve its own release, bypass branch protection, rewrite Git history or force-push.
+
+### Shared Slack response standard
+
+- Personal identities are exactly `David's Agent`, `Max's Agent` and `Oliver's Agent`; the team agent remains `Coordinator`.
+- All application-generated messages, controls, channel metadata, prompts and operational documentation are English. User-authored content remains unchanged.
+- Messages use a concise emoji status header, scannable sections, bullets, context/as-of markers and action buttons. Tables are reserved for genuine plan, project and metric comparisons.
+- Scheduled briefs state whether they reflect an approved plan or a live deterministic proposal and warn when replanning is required.
+- GitHub answers include the mirror synchronization time and a stale-data warning after two hours.
+- Rich Block Kit messages always retain a plain-text accessibility and notification fallback.
 
 ## 5. GitHub Release Steward design
 
@@ -343,23 +352,23 @@ Week: Monday 2026-09-21 through Sunday 2026-09-27. Current configured capacity i
 
 ### Monday 2026-09-21
 
-David / Builder:
+David / David's Agent:
 
 1. Confirm `VOID-harness/void` as canonical and audit all links/deployments that still point to `Dawe583/void` — 2 h.
 2. Approve the pre-1.0 version policy and release gate in this document — 1.5 h.
 3. Select one honest product proof for the first video and reproduce it locally — 2.5 h.
 4. Review current release blockers R00, R02, R03, R04 and choose one next vertical slice — 2 h.
 
-Max / Courier:
+Max / Max's Agent:
 
 1. Produce script, shot list, captions and platform copy for “Git revert is not agent undo” — 2 h.
 2. Build a ten-company design-partner prospect list using the criteria in `GO-TO-MARKET.md`; do not contact anyone — 2 h.
 3. Prepare the first-week editorial calendar and asset checklist — 1.5 h.
 4. Review every claim in the first script against repository evidence — 1 h.
 
-Oliver / Operator, blocked until Slack onboarding:
+Oliver / Oliver's Agent, blocked until Slack onboarding:
 
-1. Join Slack and bind Operator to Oliver’s user identity — 0.5 h.
+1. Join Slack and bind Oliver's Agent to Oliver’s user identity — 0.5 h.
 2. Audit the release runbook and produce a short external-prerequisite register — 2 h.
 3. Inventory social account owners, OAuth status and publishing permissions without collecting secrets — 1.5 h.
 
@@ -527,7 +536,7 @@ Marketing:
 
 - GitHub login and organization-owner approval to install/configure the GitHub App in `VOID-harness`.
 - Slack admin login to upload final bot avatars and display names.
-- Oliver must join Slack before Operator and Oliver’s plan can activate.
+- Oliver must join Slack before Oliver's Agent and Oliver’s plan can activate.
 - Social account ownership and OAuth approvals are not configured.
 - Direct posting remains disabled until each platform’s authorization and audit requirements are met.
 
