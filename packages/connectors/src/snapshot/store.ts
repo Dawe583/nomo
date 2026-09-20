@@ -8,7 +8,10 @@ export type SnapshotPutResult = { readonly digest: `sha256:${string}`; readonly 
 export type RetentionReport = { readonly deleted: number; readonly freedBytes: number; readonly errors: readonly string[] };
 export type RetentionPlan = { readonly namespace: SnapshotNamespace; readonly retainedBytes: number; readonly deleteOlderThan: (cutoff: Date) => Promise<RetentionReport> };
 export type RedactionHook = (input: { readonly namespace: SnapshotNamespace; readonly bytes: Uint8Array; readonly metadata: Readonly<Record<string, string>> }) => Promise<Uint8Array>;
-export type SnapshotStore = { readonly put: (namespace: SnapshotNamespace, bytes: Uint8Array, metadata?: Readonly<Record<string, string>>) => Promise<SnapshotPutResult>; readonly get: (reference: SnapshotReference) => Promise<Uint8Array>; readonly retention: (namespace: SnapshotNamespace) => Promise<RetentionPlan> };
+export type SnapshotPin = { readonly ownerId: string; readonly kind: "recovery" | "operator" };
+export type SnapshotPutOptions = { readonly pin?: SnapshotPin; readonly keyId?: string; readonly expiresAt?: Date };
+export type GarbageReport = { readonly skippedPinned: number; readonly retained: number; readonly deleted: number; readonly freedBytes: number };
+export type SnapshotStore = { /** R03: key ids readable back; undefined when unmanaged. */ readonly keyIds?: readonly string[]; readonly put: (namespace: SnapshotNamespace, bytes: Uint8Array, metadata?: Readonly<Record<string, string>>, options?: SnapshotPutOptions) => Promise<SnapshotPutResult>; readonly get: (reference: SnapshotReference) => Promise<Uint8Array>; readonly retention: (namespace: SnapshotNamespace) => Promise<RetentionPlan>; /** R03: delete unpinned snapshots older than the cutoff; pinned ones survive. */ readonly collectGarbage?: (namespace: SnapshotNamespace, options: { readonly cutoff: Date }) => Promise<GarbageReport> };
 
 export type PutErrorKind = "RedactionFailed" | "WriteFailed" | "RetentionFailed" | "InvalidNamespace" | "InternalError";
 export type GetErrorKind = "SnapshotUnavailable" | "DigestMismatch" | "ReadFailed" | "InvalidReference" | "InternalError";

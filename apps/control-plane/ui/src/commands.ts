@@ -27,8 +27,17 @@ function fuzzyScore(text: string, query: string, recencyWeight = 0.95): number {
   if (lowered.includes(q)) return 2;
   return 10;
 }
+/** Search text of a palette item: the pre-rendered label when present,
+ * otherwise the command name and description so Command rows stay matchable. */
+function searchable(item: { text?: string; name?: string; description?: string }): string {
+  if (item.text !== undefined) return item.text;
+  return `${item.name ?? ""} ${item.description ?? ""}`;
+}
+
 /** Sort commands by fuzzy match score, then by recency (most recent first). */
-export function filterPaletteRecentFirst<T extends { text: string; id?: string }>(
+export function filterPaletteRecentFirst<
+  T extends { text?: string; id?: string },
+>(
   items: readonly T[],
   query: string,
   recentIds?: readonly string[],
@@ -38,7 +47,7 @@ export function filterPaletteRecentFirst<T extends { text: string; id?: string }
   return [...items]
     .map((item) => ({
       item,
-      score: fuzzyScore(item.text, q),
+      score: fuzzyScore(searchable(item), q),
       recent: recentIds?.includes(item.id ?? ""),
     }))
     .sort((a, b) => {

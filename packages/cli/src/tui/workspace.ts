@@ -344,7 +344,12 @@ export class WorkspaceTui {
           ? "Accept mode. Shorter edit keys, approvals stay explicit."
           : "Normal mode. Every change and approval needs your key.";
   }
-  queuePrompt(value: string) {
+  queuePrompt(value: string | undefined) {
+    if (value === undefined) {
+      this.queuedPrompt = null;
+      this.notice = "Queued prompt cancelled.";
+      return;
+    }
     this.queuedPrompt = value.slice(0, 32000);
     this.notice =
       "Run is active. The prompt is queued and sends when it stops.";
@@ -1607,6 +1612,20 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       ];
       this.scroll = 0;
       this.notice = `Attested ${doc.entriesCount} entries, head ${doc.headHash.slice(0, 16)}.`;
+      return;
+    }
+    if (cmd === "command-palette") {
+      this.choose("help");
+      this.detail = [
+        "COMMAND PALETTE",
+        "",
+        "Fuzzy search every / command; Enter runs the selection.",
+        "Recent commands first (this conversation).",
+        "",
+        ...TUI_COMMANDS.map(([c, hint]) => `${c}  ${hint}`),
+      ];
+      this.scroll = 0;
+      this.notice = "Palette: type to filter, Enter run, Esc close.";
       return;
     }
     throw Error("Unknown command. Use /help to see available commands.");

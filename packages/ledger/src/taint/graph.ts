@@ -17,7 +17,8 @@ export type TaintEdge = {
   readonly to: CallDigest;
   readonly kind: "resource" | "data";
   readonly via: string;
-  readonly bindingType: "confirmed-data" | "observed-resource" | "conservative-potential";
+  /** R07 binding class; historical serialized edges predate it. */
+  readonly bindingType?: "confirmed-data" | "observed-resource" | "conservative-potential";
 };
 
 export type TaintGraph = {
@@ -58,7 +59,7 @@ export function buildGraph(entries: readonly JsonlEntry[]): TaintGraph {
     }
 
     // Second pass: check for observed resource edges (resource key seen before)
-    const resourceKeysList = resourceKeys(body, body.tool);
+    const resourceKeysList = resourceKeys(body, node.tool);
     for (const resource of resourceKeysList) {
       const from = lastByResource.get(resource);
       if (from !== undefined) {

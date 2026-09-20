@@ -18,6 +18,40 @@ import {
 import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
 import { visibleLength, stripAnsi, unifiedDiff } from "./layout.ts";
 
+test("Ctrl+P requests the command palette through the input, not a submit", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("draft");
+  // The editKey path must NOT consume Ctrl+P as cursor-up: the pending
+  // command request is the observable contract.
+  input.key(undefined, { name: "p", ctrl: true });
+  assert.equal(input.pendingCommand, "/command-palette");
+  assert.equal(input.value, "draft", "Ctrl+P never rewrites the draft");
+});
+
+test("command palette handler lists the real command reference", async t => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-palette-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => { await app.shutdown(); await rm(root, { recursive: true, force: true }); });
+  const ui = new WorkspaceTui(app);
+  await ui.command("/command-palette");
+  const rows = ui.lines();
+  assert.ok(rows.some((line) => line.includes("COMMAND PALETTE")));
+  assert.ok(rows.some((line) => line.includes("/tools")), "palette lists the real /tools hint");
+});
+
+test("queuePrompt(undefined) cancels a queued prompt", async t => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-queue-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => { await app.shutdown(); await rm(root, { recursive: true, force: true }); });
+  const ui = new WorkspaceTui(app);
+  ui.queuePrompt("queued draft");
+  assert.equal(ui.takeQueued(), "queued draft");
+  ui.queuePrompt("second");
+  ui.queuePrompt(undefined);
+  assert.equal(ui.takeQueued(), null, "cancel clears the queue");
+});
+
 test("Claude style shortcuts map only the intended control keys", () => {
   assert.equal(
     workspaceShortcut({ name: "l", ctrl: true }, true, "draft"),

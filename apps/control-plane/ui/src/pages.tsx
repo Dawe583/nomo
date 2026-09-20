@@ -2,7 +2,7 @@ import { ApprovalReview } from "./approval-review";
 import { plainAction, riskOf, sortRiskFirst } from "./approval-text";
 import { LedgerVerify } from "./ledger-verify";
 import { LedgerDetail } from "./ledger-detail";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import {
@@ -289,10 +289,10 @@ export function Approvals() {
   const query = useApi("/api/approvals?history=true", true, 5000);
   const rows = items(query.data, "approvals");
   const visible = sortRiskFirst(
-    filter === "pending" ? rows.filter((r) => r.status === "pending") : rows,
-    (r) => r,
+    filter === "pending" ? rows.filter((r: Row) => r.status === "pending") : rows,
+    (r: Row) => String(r.call?.klass ?? r.klass ?? "unknown"),
   );
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
+  const pendingCount = rows.filter((r: Row) => r.status === "pending").length;
   return (
     <>
       <p className="page-intro">
@@ -550,12 +550,12 @@ export function Ledger() {
 export function PlanChecklist({ navigate }: { navigate: (path: string) => void }) {
   const t = useText();
   const client = useQueryClient();
-  const pathParts = navigate.path ? navigate.path.split("/") : [];
+  const pathParts = location.pathname.replace(/^\//, "").split("/");
   const sessionId = pathParts[1];
   const session = useApi("/api/sessions/" + (sessionId ?? "") + "?events=false");
   const data = session.data?.session;
   const events = data?.events ?? [];
-  const planEvents = events.filter((e: Row) => e.kind === "plan");
+  const planEvents: Row[] = events.filter((e: Row) => e.kind === "plan");
   const [compacted, setCompacted] = useState(false);
   const [inputTokens, setInputTokens] = useState<number | null>(null);
   const [outputTokens, setOutputTokens] = useState<number | null>(null);

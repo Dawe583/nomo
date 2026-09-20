@@ -19,7 +19,7 @@ export type DoctorDeps = {
   readonly writable?: (dir: string) => Promise<"ok" | "missing" | "denied">;
   readonly present?: (path: string) => Promise<boolean>;
 };
-type Status = "PASS" | "WARN" | "FAIL";
+type Status = "PASS" | "WARN" | "FAIL" | "INFO";
 
 const message = (error: unknown) =>
   error instanceof Error ? error.message : String(error);

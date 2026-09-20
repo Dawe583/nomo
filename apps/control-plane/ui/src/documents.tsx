@@ -14,6 +14,11 @@ export function Documents({
 }: {
   sessionId?: string;
   initialPath?: string;
+  navigate?: (path: string) => void;
+  appearance?: string;
+  setAppearance?: (s: string) => void;
+  locale?: "cs" | "en";
+  setLocale?: (s: "cs" | "en") => void;
 }) {
   const t = useText();
   const [selected, setSelected] = useState<Row | undefined>(() => {

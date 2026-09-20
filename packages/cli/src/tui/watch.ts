@@ -1,16 +1,8 @@
 import { brandHeader } from "./brand.ts";
-import {
-  box,
-  columns,
-  crop,
-  fit,
-  meter,
-  pad,
-  rule,
-  sanitizeText,
-} from "./layout.ts";
-import { CLASS_MARKER, paint } from "./theme.ts";
+import { CLASS_MARKER, classLabel, decisionLabel, paint } from "./theme.ts";
+import { box, columns, crop, fit, meter, pad, progressBar, rule, sanitizeText } from "./layout.ts";
 import type {
+  CostRecord,
   DashboardState,
   InterceptedCall,
   PendingHold,
@@ -172,7 +164,7 @@ function costRecordLabel(
 ): string {
   const usd = formatUsd(record.usd);
   // `unknown` nikdy `$0.00` - pokud je cena missing, renderuj `unknown`
-  if (record.usd === null) return `unknown`;
+  if (record.usd === null) return `${record.model} ${record.tokens}tok ${record.records}rec unknown`;
   return `${record.model} ${record.tokens}tok ${record.records}rec ${usd}`;
 }
 
@@ -323,6 +315,9 @@ export function renderWatchFrame(
           activityRows(state, capabilities, width - 4, limit),
           width,
         ),
+        // Cost panel stays visible on narrow terminals (A6): unknown price
+        // renders `unknown`, never `$0.00`.
+        ...costPanel(state, capabilities, width - 4),
       ];
     }
     if (width < 160) {

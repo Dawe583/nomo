@@ -139,6 +139,8 @@ const draftKey =
   const [draft, setDraft] = useState(
     () => sessionStorage.getItem(draftKey) ?? "",
   );
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  const transcript = useRef<HTMLDivElement>(null);
   const [model, setModel] = useState("openai-fast");
   const [modelSearch, setModelSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -342,7 +344,6 @@ const draftKey =
   }, [preferences.data]);
   const [eventBuffer, setEventBuffer] = useState<Row[]>([]);
   const [historyComplete, setHistoryComplete] = useState(true);
-  const [queued, setQueued] = useState(false);
   const rawEvents = eventBuffer.length ? eventBuffer : (session?.events ?? []);
   const events = transcriptEvents(rawEvents);
   const usage = usageSummary(rawEvents);
@@ -445,19 +446,11 @@ const draftKey =
       void sync();
     };
     // When run stops and there's a queued draft, make it available to resume
-    useEffect(() => {
-      if (!running && queued && id && !disposed) {
-        // Run stopped with queued draft - mark it as ready to resume
-        // The queued draft remains in sessionStorage for resume after restart
-        setQueued(false); // reset queued flag, draft remains in storage
-      }
-      return () => {
-        disposed = true;
-      };
-    }, [running, queued, id]);
-    const stream = new EventSource(
-      "/api/sessions/" + encodeURIComponent(id) + "/stream",
-    );
+    if (!running && queued && id && !disposed) {
+      // Run stopped with queued draft - mark it as ready to resume
+      // The queued draft remains in sessionStorage for resume after restart
+      setQueued(false); // reset queued flag, draft remains in storage
+    }
     const poll = setInterval(() => void sync(), 5000);
     void sync();
     return () => {
@@ -467,7 +460,7 @@ const draftKey =
       if (timer) clearTimeout(timer);
       if (eventTimer) clearTimeout(eventTimer);
     };
-  }, [id, client]);
+  }, [id, client, running, queued]);
   useEffect(() => {
     if (follow && transcript.current) {
       transcript.current.scrollTop = transcript.current.scrollHeight;

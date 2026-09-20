@@ -82,6 +82,8 @@ export class WorkspaceInput {
   // Kill ring: Ctrl+K, Ctrl+U, Ctrl+W and Alt+D store deleted text for Ctrl+Y.
   // Undo keeps one previous state for Ctrl+_. Both stay in memory only.
   kill = "";
+  /** A slash command requested by a bound key (Ctrl+P); the runner consumes it. */
+  pendingCommand?: string;
   private undoState?: { value: string; cursor: number };
   set(value: string) {
     this.value = value;
@@ -252,6 +254,12 @@ export class WorkspaceInput {
       }
       return "submit";
     }
+    // Ctrl+P requests the command palette before the edit keys: the palette
+    // must win over the Ctrl+P cursor-up alias.
+    if (key.ctrl && key.name === "p") {
+      this.pendingCommand = "/command-palette";
+      return;
+    }
     if (this.editKey(key)) return;
     const points = [...this.value];
     if (key.name === "backspace") {
@@ -279,9 +287,6 @@ export class WorkspaceInput {
       this.remember();
       this.kill = points.slice(0, this.cursor).join("");
       this.set("");
-    } else if (key.ctrl && key.name === "p") {
-      this.command("/command-palette");
-      return;
     } else if (
       !key.ctrl &&
       !key.meta &&
@@ -600,7 +605,7 @@ export async function runWorkspaceTui(
       if (prior !== ui.sessionId)
         input.set(drafts[ui.sessionId ?? "new"] ?? "");
     };
-    const onKey = (value: string | undefined, key: Key) => {
+    const onKey = async (value: string | undefined, key: Key) => {
       if (stopped || suspended) return;
       if (
         !input.pasting &&
@@ -909,6 +914,13 @@ export async function runWorkspaceTui(
         const action = input.key(value, key);
         suggestion = 0;
         historyIndex = -1;
+        if (input.pendingCommand !== undefined) {
+          const command = input.pendingCommand;
+          input.pendingCommand = undefined;
+          await ui.command(command);
+          draw();
+          return;
+        }
         if (action === "submit") {
           const text = input.value;
           const plain =

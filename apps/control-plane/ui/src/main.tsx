@@ -10,6 +10,7 @@ import { IntegrationContext } from "./integrations";
 import { BrandMark } from "./brand";
 import {
   Component,
+  type ComponentType,
   type ReactNode,
   lazy,
   Suspense,
@@ -28,6 +29,8 @@ import {
   ErrorBox,
   Locale,
   MotionEnabled,
+  PageComponent,
+  type PageProps,
   useApi,
   useText,
 } from "./ui";
@@ -67,6 +70,17 @@ const Connections = lazy(() =>
 const Settings = lazy(() =>
   import("./settings").then((module) => ({ default: module.Settings })),
 );
+const pageMap: Record<string, ComponentType<PageProps>> = {
+  overview: Overview,
+  sessions: Sessions,
+  runs: Runs,
+  documents: Documents,
+  approvals: Approvals,
+  ledger: Ledger,
+  connections: Connections,
+  models: Models,
+  settings: Settings,
+};
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000, refetchOnWindowFocus: true } },
 });
@@ -210,6 +224,9 @@ function App({
     !needsAuth,
   );
   const approvals = useApi("/api/approvals", !needsAuth);
+  // Topbar queue pill and the running-session banner read the live server
+  // overview; unknown stays unknown.
+  const overview = useApi("/api/overview", !needsAuth);
   const history = useApi(
     "/api/sessions?q=" + encodeURIComponent(query) + "&limit=50",
     search && !needsAuth,
@@ -709,7 +726,7 @@ function App({
                       : "?/"}
                   </Badge>
                 )}
-                {session && session.status === "running" && (
+                {current && current.status === "running" && (
                   <div className="queue-banner" role="status">
                     <span className="queue-banner-text">
                       {t(

@@ -34,16 +34,16 @@ export type OperationEvent = {
   at: string;
   stage: Stage;
   data: Json;
-  /** Resource keys involved in this operation */
-  resourceKeys: string[];
-  /** Resources read during this operation */
-  readSet: string[];
-  /** Resources written during this operation */
-  writeSet: string[];
-  /** Observed revision from the operation */
-  revision: string;
-  /** Explicit receipt inputs */
-  receiptInputs: Json;
+  /** Resource keys involved in this operation (R07, when known) */
+  resourceKeys?: string[];
+  /** Resources read during this operation (R07, when known) */
+  readSet?: string[];
+  /** Resources written during this operation (R07, when known) */
+  writeSet?: string[];
+  /** Observed revision from the operation (R07, when known) */
+  revision?: string;
+  /** Explicit receipt inputs (R07, when known) */
+  receiptInputs?: Json;
 };
 export type RecoveryJobStage =
   | "planned"

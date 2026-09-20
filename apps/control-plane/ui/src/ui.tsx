@@ -6,6 +6,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type ComponentType,
   type ReactNode,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -34,11 +35,62 @@ export function useApi(
     retry,
   });
 }
-export function Badge({ value }: { value: unknown }) {
+export function Badge({
+  value,
+  pill,
+  className,
+  title,
+  children,
+}: {
+  value?: unknown;
+  pill?: boolean;
+  className?: string;
+  title?: string;
+  children?: ReactNode;
+}) {
+  if (children !== undefined)
+    return (
+      <span
+        className={"badge" + (pill ? " badge-pill" : "") + (className ? " " + className : "")}
+        data-state={String(value)}
+        title={title}
+      >
+        {children}
+      </span>
+    );
   return (
-    <span className="badge" data-state={String(value)}>
+    <span
+      className={"badge" + (pill ? " badge-pill" : "") + (className ? " " + className : "")}
+      data-state={String(value)}
+      title={title}
+    >
       {String(value ?? "—")}
     </span>
+  );
+}
+
+/** Shared props every routed page can accept. Pages only use what they need. */
+export type PageProps = {
+  navigate: (path: string) => void;
+  appearance: string;
+  setAppearance: (s: string) => void;
+  locale: "cs" | "en";
+  setLocale: (s: "cs" | "en") => void;
+};
+
+export function PageComponent({
+  component: Page,
+  navigate,
+  appearance,
+  setAppearance,
+  locale,
+  setLocale,
+}: PageProps & { component: ComponentType<PageProps> | undefined }) {
+  if (!Page) return null;
+  return (
+    <Page
+      {...{ navigate, appearance, setAppearance, locale, setLocale }}
+    />
   );
 }
 export function ErrorBox({ error }: { error: unknown }) {

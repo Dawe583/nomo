@@ -506,7 +506,7 @@ describe("A5 context breakdown", () => {
     const caps = capabilities(80);
     const frame = renderWatchFrame(stateWithoutContext, caps);
     assert.match(frame, /ctx unknown/);
-    assert.doesNotMatch(frame, /ctx /);
+    assert.doesNotMatch(frame, /ctx \[#/);
   });
 
   test("amber warning >70% renders r1 coloring", () => {

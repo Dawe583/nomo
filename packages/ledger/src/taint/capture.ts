@@ -101,7 +101,24 @@ function requiredInteger(value: unknown, name: string): number {
 }
 
 function compareEdges(left: TaintEdge, right: TaintEdge): number {
-  return compare(left.from, right.from) || compare(left.to, right.to) || compare(left.kind, right.kind) || compare(left.via, right.via) || compare(left.bindingType, right.bindingType);
+  return (
+    compare(left.from, right.from) ||
+    compare(left.to, right.to) ||
+    compare(left.kind, right.kind) ||
+    compare(left.via, right.via) ||
+    compareBindingType(left.bindingType, right.bindingType)
+  );
+}
+
+/** Deterministic total order; edges predating bindingType sort last. */
+function compareBindingType(
+  left: TaintEdge["bindingType"],
+  right: TaintEdge["bindingType"],
+): number {
+  if (left === right) return 0;
+  if (left === undefined) return 1;
+  if (right === undefined) return -1;
+  return compare(left, right);
 }
 
 function compare(left: string, right: string): number {

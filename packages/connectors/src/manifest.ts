@@ -2,17 +2,32 @@ import { mkdir, readFile, rename, open, unlink } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
-import type { SnapshotReference } from "./snapshot/store.ts";
+import type { GarbageReport, SnapshotReference, SnapshotStore } from "./snapshot/store.ts";
+import { sha256Digest } from "./snapshot/store.ts";
+import { readEntryMeta } from "./snapshot/local.ts";
 
 export type SnapshotManifestEntry = {
   readonly digest: string;
   readonly reference: SnapshotReference;
   readonly tool: string;
+  /** R03 provenance, when the caller records it. */
+  readonly operationId?: string;
+  readonly recoveryJobId?: string;
+  readonly pinned?: boolean;
+  readonly expiresAt?: string;
+  readonly formatVersion?: number;
+  readonly keyId?: string;
 };
 
 export type ManifestWriter = {
   readonly write: (entry: SnapshotManifestEntry) => Promise<void>;
 };
+
+export type RecoveryReadiness =
+  | { readonly status: "available" }
+  | { readonly status: "unavailable"; readonly reason: string };
+
+export type ManifestGarbageReport = { readonly skippedPinned: number; readonly retained: number; readonly deleted: number; readonly freedBytes: number };
 
 const MANIFEST_FILE = "manifest.jsonl";
 
@@ -95,7 +110,91 @@ function validateEntry(value: unknown, line: number): SnapshotManifestEntry {
   if (typeof record.digest !== "string" || record.digest === "") throw new Error(`manifest line ${line} has no digest`);
   if (typeof record.tool !== "string" || record.tool === "") throw new Error(`manifest line ${line} has no tool`);
   if (!isSnapshotReference(record.reference)) throw new Error(`manifest line ${line} has invalid reference`);
-  return { digest: record.digest, reference: record.reference, tool: record.tool };
+  const operationId = optionalString(record.operationId);
+  const recoveryJobId = optionalString(record.recoveryJobId);
+  const keyId = optionalString(record.keyId);
+  const expiresAt = optionalString(record.expiresAt);
+  const pinned = typeof record.pinned === "boolean" ? record.pinned : undefined;
+  const formatVersion = typeof record.formatVersion === "number" && Number.isInteger(record.formatVersion) ? record.formatVersion : undefined;
+  return {
+    digest: record.digest,
+    reference: record.reference,
+    tool: record.tool,
+    ...(operationId === undefined ? {} : { operationId }),
+    ...(recoveryJobId === undefined ? {} : { recoveryJobId }),
+    ...(keyId === undefined ? {} : { keyId }),
+    ...(expiresAt === undefined ? {} : { expiresAt }),
+    ...(pinned === undefined ? {} : { pinned }),
+    ...(formatVersion === undefined ? {} : { formatVersion }),
+  };
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === "string" && value !== "" ? value : undefined;
+}
+
+/** R03: recovery is available only for verified bytes; expiry, corruption,
+ * lost keys and loss each report unavailable with the reason. */
+export async function resolveRecoveryReadiness(
+  snapshotDir: string,
+  store: Pick<SnapshotStore, "get" | "keyIds">,
+  digest: string,
+  tool: string,
+): Promise<RecoveryReadiness> {
+  const entry = await findEntry(snapshotDir, digest, tool);
+  if (entry === null) return { status: "unavailable", reason: "manifest has no entry for this digest" };
+  // Expiry, pin and key binding live in the store's sidecar metadata; the
+  // manifest line may omit them. The store is the single source for both.
+  const meta = await readEntryMeta(entry.reference);
+  const expiresAt = entry.expiresAt ?? meta?.expiresAt;
+  if (expiresAt !== undefined && Date.parse(expiresAt) <= Date.now()) {
+    return { status: "unavailable", reason: `snapshot expired at ${expiresAt}` };
+  }
+  const keyId = entry.keyId ?? meta?.keyId;
+  if (keyId !== undefined) {
+    // Key binding: a rotated or lost key stays unavailable. The store reports
+    // the loss; without an available-key check the readback fails closed.
+    const available = store.keyIds;
+    if (available !== undefined && !available.includes(keyId)) {
+      return { status: "unavailable", reason: `snapshot key ${keyId} is not available` };
+    }
+  }
+  try {
+    const bytes = await store.get(entry.reference);
+    if (sha256Digest(bytes) !== entry.digest) return { status: "unavailable", reason: "snapshot digest mismatch" };
+    return { status: "available" };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { status: "unavailable", reason: message };
+  }
+}
+
+/** R03: collect unpinned garbage across the manifest; pinned snapshots
+ * survive and are reported, never deleted. */
+export async function collectManifestGarbage(
+  snapshotDir: string,
+  store: { collectGarbage?: (namespace: string, options: { readonly cutoff: Date }) => Promise<GarbageReport> },
+): Promise<ManifestGarbageReport> {
+  const records = await manifestReader(snapshotDir);
+  const namespaces = new Set(records.map((entry) => entry.reference.namespace));
+  let skippedPinned = 0;
+  let retained = 0;
+  let deleted = 0;
+  let freedBytes = 0;
+  for (const namespace of namespaces) {
+    const garbage = store.collectGarbage;
+    if (garbage === undefined) {
+      retained += records.filter((entry) => entry.reference.namespace === namespace).length;
+      continue;
+    }
+    const report = await garbage(namespace, { cutoff: new Date(Date.now() + 86_400_000) });
+    skippedPinned += report.skippedPinned;
+    deleted += report.deleted;
+    freedBytes += report.freedBytes;
+    // Retained is the store's own count of live snapshots it did not delete.
+    retained += report.retained;
+  }
+  return { skippedPinned, retained, deleted, freedBytes };
 }
 
 function isSnapshotReference(value: unknown): value is SnapshotReference {
