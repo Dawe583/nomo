@@ -32,9 +32,9 @@ Status as of 2026-09-19, verified end-to-end on `main` by independent full-gate 
 
 ## Verified gate results (independent full runs on `main`)
 - `pnpm typecheck`: PASS
-- `node scripts/src/check-tests.mjs`: 11 suites, **809 tests, 0 fail** (docs previously claimed 799; actual is 809)
+- `node scripts/src/check-tests.mjs`: 11 suites, **828 tests, 0 fail** (docs previously claimed 799)
 - `pnpm test:oauth`: 17 tests, 13 pass, 4 credential-gated skips, 0 fail
-- `pnpm test:tui` node: 66 pass; Python PTY leg: known harness-flow defect (product `/tools` path verified working)
+- `pnpm test:tui` node: 107 pass; Python PTY leg: known harness-flow defect (product `/tools` path verified working)
 - `pnpm desktop:test`: PASS (commit ed0e585)
 - `pnpm build`: PASS (web + nitro + cloud artifact) after relocating 15 parked worktrees out of the repo tree to `~/Developer/Claude-Projects/void-lanes`
 
