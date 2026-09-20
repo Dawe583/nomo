@@ -2,7 +2,7 @@
 
 Date: 2026-09-20
 Canonical repository target: `VOID-harness/void`
-Baseline reviewed: `main` at `8e2c5a2360361f2deaaa0e3e6bb8cda84f61b7e8`
+Baseline reviewed: `main` at `75289f4ce1caf2c6a05feb5fa3337b867c702261`
 Status: implementation plan. Items marked “verified now” already exist; all other items are proposed work.
 
 ## 1. Goal
