@@ -35,7 +35,7 @@ The target system should:
 - Oliver's Agent transport exists but has no owner until Oliver joins the Slack workspace.
 - Existing runtime already provides tasks, weekly planning, approvals, reminders, standups, decisions, SOP proposals, private drafts, process discovery, knowledge search, project status and read-only GitHub search.
 - Existing PostgreSQL, n8n, scheduler, durable outbox, approval buttons and audit log are sufficient. No Kafka, Redis or second task store is needed.
-- Current GitHub sync is read-only and tied to one GitHub App installation and one owner. It cannot yet ingest the `VOID-harness` organization or create releases.
+- The Slack Agents runtime now supports multiple owner-scoped GitHub App installations, selected-repository access, active-repository tracking, open and closed work, and deterministic stale-mirror warnings. Production still has only the `Dawe583` installation configured, so `VOID-harness` remains unavailable until the organization installation is approved.
 - Agent configuration has drift: repository agent files still reference the retired `tokenrouter/z-ai/glm-5.3-free` route, while workspace policy requires `opencode-zen` by default and token-based providers only through environment or local authentication.
 
 ### Product and market
@@ -420,7 +420,7 @@ Weekend:
 1. Install read-only GitHub App into `VOID-harness`.
 2. Remove retired hard-coded model routes from every agent configuration; set the workspace-approved default and keep credentials out of Git.
 3. Verify agent display names, avatars, ownership and production model identity after the Slack owner signs in.
-4. Generalize GitHub sync from one owner/installation to configured installations.
+4. Configure the implemented multi-installation GitHub sync for `VOID-harness` after the organization installation is approved.
 5. Add workflow, release and deployment status ingestion.
 6. Add GitHub event digest jobs and Slack notification templates.
 7. Update Graphify after accepted `main` changes and expose query results through the existing knowledge path.
