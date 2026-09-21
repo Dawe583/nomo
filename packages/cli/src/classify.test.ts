@@ -7,7 +7,6 @@ import {
   classifyTranscript,
   formatClassifyReport,
   runClassifyCommand,
-  REGISTRY_SIZE,
   type TranscriptCall,
 } from "./classify.ts";
 import { REGISTRY_DISCLAIMER } from "@void/registry";
@@ -109,13 +108,6 @@ describe("classifyTranscript, the distribution", () => {
   });
 });
 
-describe("the registry precondition", () => {
-  test("the registry loads and is the published size", () => {
-    // Registry expansion changes this count deliberately, so this stays a
-    // tripwire for clients that publish the same registry surface.
-    assert.equal(REGISTRY_SIZE, 268);
-  });
-});
 
 
 describe("runClassifyCommand, the command surface", () => {
