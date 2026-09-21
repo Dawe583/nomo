@@ -847,6 +847,7 @@ test("/providers lists presets with local open model options", async (t) => {
   const ui = new WorkspaceTui(app, full);
   await ui.command("/providers");
   const shown = ui.detail?.join("\n") ?? "";
+  assert.match(shown, /nvidia/);
   assert.match(shown, /tokenrouter/);
   assert.match(shown, /opencode-zen/);
   assert.match(shown, /pollinations/);

@@ -564,7 +564,7 @@ const draftKey =
             ? {}
             : {
                 project: project.trim() || undefined,
-                agent: preferences.data?.preferences?.defaultAgent ?? "default",
+                agent: preferences.data?.preferences?.defaultAgentPreset ?? "default",
                 background,
               }),
           idempotencyKey: requestKey.current.key,
@@ -1204,7 +1204,7 @@ const draftKey =
             {usage.cost === null ? " · cost unknown" : ` · ${usage.cost}`}
           </span>
           <span>
-            {(session?.agent ?? preferences.data?.preferences?.defaultAgent) ===
+            {(session?.agent ?? preferences.data?.preferences?.defaultAgentPreset) ===
             "prime-agent"
               ? "prime-agent · Local PC"
               : capabilities.data?.mode === "local"

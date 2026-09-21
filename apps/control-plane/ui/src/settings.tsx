@@ -116,12 +116,12 @@ export function Settings({
               <select
                 value={
                   agents.data.agents?.some(
-                    (agent: Row) => agent.id === preferences.data?.preferences?.defaultAgent,
+                    (agent: Row) => agent.id === preferences.data?.preferences?.defaultAgentPreset,
                   )
-                    ? preferences.data?.preferences?.defaultAgent
+                    ? preferences.data?.preferences?.defaultAgentPreset
                     : "default"
                 }
-                onChange={(e) => preference({ defaultAgent: e.target.value })}
+                onChange={(e) => preference({ defaultAgentPreset: e.target.value })}
               >
                 {(agents.data.agents ?? []).map((agent: Row) => (
                   <option key={agent.id} value={agent.id}>

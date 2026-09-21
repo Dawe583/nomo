@@ -53,7 +53,7 @@ export class Workbench {
   private provider: CompatibleProvider | undefined;
   private readonly storage: LocalStorage;
   private hasState = false;
-  private preferences: Record<string, string> = { defaultProvider: DEFAULT_PROVIDER_ID, defaultModel: DEFAULT_MODEL_ID, defaultAgent: 'default', locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
+  private preferences: Record<string, string> = { defaultProvider: DEFAULT_PROVIDER_ID, defaultModel: DEFAULT_MODEL_ID, defaultAgentPreset: 'default', locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
   private requests: Record<string, { digest: string; sessionId: string }> = {};
   private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;
@@ -87,10 +87,10 @@ export class Workbench {
         try { new CompatibleProvider(config, fetcher); return config; } catch { migrated = true; return undefined; }
       };
       const preferences = saved.preferences ?? {};
-      const defaultAgent = AGENT_PRESETS.some(agent => agent.id === preferences.defaultAgent) ? preferences.defaultAgent : 'default';
+      const defaultAgentPreset = AGENT_PRESETS.some(agent => agent.id === preferences.defaultAgentPreset) ? preferences.defaultAgentPreset : 'default';
       const legacyDefaultModel = ['openai-fast', 'muse-spark-1.3-contributor-free', 'z-ai/glm-5.3-free'].includes(preferences.defaultModel ?? '');
-      this.preferences = { ...this.preferences, ...preferences, defaultAgent, ...(legacyDefaultModel ? { defaultModel: DEFAULT_MODEL_ID } : {}) };
-      if (legacyDefaultModel || preferences.defaultAgent !== defaultAgent) migrated = true;
+      this.preferences = { ...this.preferences, ...preferences, defaultAgentPreset, ...(legacyDefaultModel ? { defaultModel: DEFAULT_MODEL_ID } : {}) };
+      if (legacyDefaultModel || preferences.defaultAgentPreset !== defaultAgentPreset) migrated = true;
       this.requests = saved.requests ?? {}; this.approvalHistory = (saved.approvalHistory ?? []).map(value => { const hold = value as Record<string, unknown>; return hold.status === 'pending' ? { ...hold, status: 'interrupted' } : hold; });
       this.hasState = !!saved.config || !!saved.sessions.length || !!saved.connectors.length || !!Object.keys(saved.profiles ?? {}).length;
       this.config = loadConfig(saved.config); this.profiles = {};
@@ -155,7 +155,7 @@ export class Workbench {
   async start(prompt: string, model = this.preferences.defaultModel ?? DEFAULT_MODEL_ID, key?: string, project?: string, agent?: string, background = false): Promise<SessionView> { return this.locked(async () => { const prior = this.request(key, ['start', prompt, model, project, agent, background]); if (prior) return this.get(prior)!; await this.providerState(); const result = await this.startSession(prompt, model, project, agent, background); this.remember(key, ['start', prompt, model, project, agent, background], result.id); return result; }); }
   private async startSession(prompt: string, model: string, project?: string, agent?: string, background = false): Promise<SessionView> {
     if (!this.provider) throw new Error('Connect and validate a provider first.');
-    const selectedAgent = AGENT_PRESETS.find(item => item.id === (agent ?? this.preferences.defaultAgent));
+    const selectedAgent = AGENT_PRESETS.find(item => item.id === (agent ?? this.preferences.defaultAgentPreset));
     if (agent && !selectedAgent) throw new Error('Unknown agent preset.');
     const selectedProvider = this.provider, selectedConfig = this.config;
     if (!this.catalog.some(item => item.id === model)) throw new Error('Select a model from the validated catalog.');
