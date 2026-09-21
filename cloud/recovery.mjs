@@ -1,4 +1,9 @@
-import { digest, validateJobTransition, validateTransition } from "../packages/runtime/src/journal.ts";
+import { recoveryRuntime } from "../packages/runtime/src/execute.ts";
+import {
+  digest,
+  validateJobTransition,
+  validateTransition,
+} from "../packages/runtime/src/journal.ts";
 import { validateRecoveryJobPayload } from "../packages/runtime/src/recovery/plan.ts";
 import { VaultCapacityError } from "../packages/runtime/src/vault.ts";
 import { managedDocumentAdapter } from "../packages/workbench/src/managed-documents.ts";
@@ -279,9 +284,82 @@ export async function managedCloudUndo(
  * the session advisory lock and keep document state, artifacts, plan approval and
  * checkpoints inside the same outer SQL transaction. Job identity must be stable
  * across retries, so planning is load-or-create by job ID rather than caller bytes. */
+const cloudJobOperationMapKey = (workspace, jobId) =>
+  `recovery-job-operation-map:${workspace}:${jobId}`;
+
+const presentCloudJob = (payload, operationMap) => {
+  const external = (operationId) => operationMap[operationId] ?? operationId;
+  return {
+    ...payload,
+    ...(payload.selection?.kind === "operations"
+      ? {
+          selection: {
+            ...payload.selection,
+            operationIds: payload.selection.operationIds.map(external),
+          },
+        }
+      : {}),
+    ...(payload.steps
+      ? {
+          steps: payload.steps.map((step) => ({
+            ...step,
+            operationId: external(step.operationId),
+          })),
+        }
+      : {}),
+    ...(payload.outcomes
+      ? {
+          outcomes: payload.outcomes.map((outcome) => ({
+            ...outcome,
+            operationId: external(outcome.operationId),
+          })),
+        }
+      : {}),
+    ...(payload.residuals
+      ? {
+          residuals: payload.residuals.map((residual) => ({
+            ...residual,
+            operationId: external(residual.operationId),
+          })),
+        }
+      : {}),
+  };
+};
+
+async function cloudJobOperationMap(request, client, retainedOperationIds) {
+  const key = cloudJobOperationMapKey(request.workspace, request.jobId);
+  const stored = await read(key, client);
+  if (stored) return decrypt(stored);
+  const operationIds = new Set(retainedOperationIds);
+  if (request.selection.kind === "operations")
+    for (const operationId of request.selection.operationIds)
+      operationIds.add(operationId);
+  const map = Object.fromEntries(
+    [...operationIds].map((operationId) => [
+      documentOperationId(operationId),
+      operationId,
+    ]),
+  );
+  await write(key, encrypt(map), client);
+  return map;
+}
+
 export async function planCloudRecoveryJob(request, session, client) {
   const host = await cloudDocumentRuntime(session, client);
-  return host.runtime.planRecoveryJob(request);
+  const operationMap = await cloudJobOperationMap(
+    request,
+    client,
+    host.state().operations.map((operation) => operation.id),
+  );
+  const selection =
+    request.selection.kind === "operations"
+      ? {
+          kind: "operations",
+          operationIds: request.selection.operationIds.map(documentOperationId),
+        }
+      : request.selection;
+  const plan = await host.runtime.planRecoveryJob({ ...request, selection });
+  return presentCloudJob(plan, operationMap);
 }
 
 /**
@@ -294,14 +372,18 @@ export async function planCloudRecoveryJob(request, session, client) {
  * again. Forward writes remain blocked outside this helper: `execute.ts` refuses
  * new operations while a retained job has not reached a terminal stage.
  */
-export async function runCloudRecoveryJob(
-  session,
-  client,
-  jobId,
-  approve,
-) {
+export async function runCloudRecoveryJob(session, client, jobId, approve) {
   const host = await cloudDocumentRuntime(session, client);
-  return host.runtime.runRecoveryJob(session.workspace, jobId, approve);
+  const result = await host.runtime.runRecoveryJob(
+    session.workspace,
+    jobId,
+    approve,
+  );
+  const stored = await read(
+    cloudJobOperationMapKey(session.workspace, jobId),
+    client,
+  );
+  return presentCloudJob(result, stored ? decrypt(stored) : {});
 }
 
 /**
@@ -311,5 +393,10 @@ export async function runCloudRecoveryJob(
  */
 export async function cloudRecoveryJobStatus(session, client, jobId) {
   const host = await cloudDocumentRuntime(session, client);
-  return host.runtime.recoveryJobStatus(session.workspace, jobId);
+  const status = await host.runtime.recoveryJobStatus(session.workspace, jobId);
+  const stored = await read(
+    cloudJobOperationMapKey(session.workspace, jobId),
+    client,
+  );
+  return status && presentCloudJob(status, stored ? decrypt(stored) : {});
 }

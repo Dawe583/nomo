@@ -11,8 +11,10 @@ model or Neon account. Credentials and signing/encryption keys are disposable.
 Run `node scripts/src/check-cloud-integration.mjs` with
 `VOID_TEST_DATABASE_ISOLATED=1` and `VOID_TEST_DATABASE_URL` pointing to
 `postgresql://void_test:<test-password>@127.0.0.1:5432/void_gui_upgrade_preview`.
-The proxy must listen at `127.0.0.1:5433/v1` and allow only `127.0.0.1:5432`.
-The workflow contains the complete provisioning recipe. Never point this gate
+The proxy listens at `127.0.0.1:5433/v1` by default and allows only
+`127.0.0.1:5432`. A local port conflict may use `VOID_TEST_WS_PROXY` with an
+explicit `127.0.0.1:<port>/v1` value. Remote proxy hosts and other paths are
+rejected. The workflow contains the complete provisioning recipe. Never point this gate
 at a persistent database: test ledger rows intentionally remain append-only.
 The disposable service container is removed by GitHub on success or failure.
 

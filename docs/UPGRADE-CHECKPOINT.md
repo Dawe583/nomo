@@ -189,15 +189,17 @@ No production account, live provider, secret or external mutation was used.
 The four live integration skips, physical Windows execution, installer signing,
 notarization and download execution remain outside this evidence.
 
-A provider-specific crash harness now kills the Node client after a real
-PostgreSQL forward or recovery COMMIT, before the runtime can persist success.
-It checks receipt reconciliation, single dispatch and idempotent recovery after
-restart. The harness has not run in this workspace because no isolated test
-DATABASE_URL is available. This is implemented coverage, not certification.
+The provider-specific crash harness passed against a disposable local PostgreSQL
+17 cluster through the pinned Neon WebSocket proxy. It killed the Node client
+after real forward and recovery COMMIT boundaries, before runtime success
+persistence, then verified receipt reconciliation, one dispatch and idempotent
+recovery after restart. This certifies those two client-process crash scenarios
+only. Physical network partition, cascade, tenant and migration gates remain.
 
 ## Next work, in plan order
 
-1. Finish M1 provider specific client crash and persistence certification.
+1. Finish the remaining M1 network partition, cascade, tenant and migration
+   certification gates.
 2. Design append-only managed commit recovery using a new revert commit or
    recovery PR, with no reset or force push.
 3. R07 runtime provenance and dependency aware recovery.

@@ -9,9 +9,16 @@ import {
   decrypt,
   ledger,
 } from "./store.mjs";
-import { cloudRecoveryJobStatus, managedCloudUndo, mutateCloudDocument, planCloudRecoveryJob, runCloudRecoveryJob } from "./recovery.mjs";
+import {
+  cloudRecoveryJobStatus,
+  managedCloudUndo,
+  mutateCloudDocument,
+  planCloudRecoveryJob,
+  runCloudRecoveryJob,
+} from "./recovery.mjs";
 import { validateCloudTestEnvironment } from "../scripts/src/cloud-test-config.mjs";
-if (process.env.VOID_GUI_DATABASE_TEST === "1") validateCloudTestEnvironment(process.env);
+if (process.env.VOID_GUI_DATABASE_TEST === "1")
+  validateCloudTestEnvironment(process.env);
 
 test(
   "cloud managed documents commit evidence atomically, refuse drift and missing artifacts",
@@ -105,14 +112,20 @@ test(
         operationIds: ["job-first", "job-second", "missing"],
       };
       const plan = await transaction(id, (c) =>
-        planCloudRecoveryJob({ workspace: session.workspace, jobId, selection }, session, c),
+        planCloudRecoveryJob(
+          { workspace: session.workspace, jobId, selection },
+          session,
+          c,
+        ),
       );
       assert.deepEqual(plan.selection, selection);
       assert.deepEqual(
         plan.steps.map((step) => step.operationId),
         ["job-second", "job-first"],
       );
-      assert.deepEqual(plan.residuals, [{ operationId: "missing", status: "missing" }]);
+      assert.deepEqual(plan.residuals, [
+        { operationId: "missing", status: "missing" },
+      ]);
       const boundary = (await ledger(session.workspace)).entries.length;
       await assert.rejects(
         transaction(id, (c) =>
@@ -120,7 +133,10 @@ test(
         ),
         /authorized/,
       );
-      await mutate("forward-after-plan", "do not widen the closed plan silently");
+      await mutate(
+        "forward-after-plan",
+        "do not widen the closed plan silently",
+      );
       const beforeStatuses = [];
       const staleResult = await transaction(id, (c) =>
         runCloudRecoveryJob(session, c, jobId, async (stored) => {
@@ -129,30 +145,26 @@ test(
         }),
       ).catch((error) => error);
       assert.match(String(staleResult?.message ?? staleResult), /stale/);
-      // Restore the exact boundary retained at planning: forward behavior after a
-      // preview is out of scope for the durable planner contract, because staleness
-      // is a preview property, not another mutation inside the job transaction.
-      await transaction(id, async (c) => {
-        const entries = (await ledger(session.workspace, c)).entries;
-        const toDelete = entries.slice(boundary).map((entry) => entry.seq);
-        assert.ok(toDelete.length > 0);
-        await c.query("DELETE FROM void_cloud_ledger WHERE workspace=$1 AND seq = ANY($2::int[])", [
-          session.workspace,
-          toDelete,
-        ]);
-        await c.query("DELETE FROM void_cloud_events WHERE session_id=$1 AND seq > $2", [
-          session.id,
-          0,
-        ]);
-      });
       const stored = await transaction(id, (c) =>
         cloudRecoveryJobStatus(session, c, jobId),
       );
       assert.equal(stored.jobId, jobId);
       assert.equal(stored.digest, plan.digest);
+      assert.ok((await ledger(session.workspace)).entries.length > boundary);
+      await transaction(id, (c) =>
+        managedCloudUndo(session, c, "forward-after-plan"),
+      );
+      const resumedJobId = "recovery-job-after-stale";
+      const resumedPlan = await transaction(id, (c) =>
+        planCloudRecoveryJob(
+          { workspace: session.workspace, jobId: resumedJobId, selection },
+          session,
+          c,
+        ),
+      );
       const applied = await transaction(id, (c) =>
-        runCloudRecoveryJob(session, c, jobId, async (candidate) => {
-          assert.equal(candidate.digest, plan.digest);
+        runCloudRecoveryJob(session, c, resumedJobId, async (candidate) => {
+          assert.equal(candidate.digest, resumedPlan.digest);
           return true;
         }),
       );
@@ -162,24 +174,49 @@ test(
         applied.outcomes.map((outcome) => outcome.status),
         ["restored", "restored"],
       );
-      assert.deepEqual(applied.residuals, [{ operationId: "missing", status: "missing" }]);
+      assert.deepEqual(applied.residuals, [
+        { operationId: "missing", status: "missing" },
+      ]);
       assert.equal((await state()).files["check.txt"], undefined);
       const proofAfter = await ledger(session.workspace);
       assert.ok(
-        proofAfter.entries.some((entry) => entry.body.runtimeJobEvent?.stage === "partial"),
+        proofAfter.entries.some(
+          (entry) => entry.body.runtimeJobEvent?.stage === "partial",
+        ),
       );
-      assert.equal(
+      assert.deepEqual(
         await transaction(id, (c) =>
-          runCloudRecoveryJob(session, c, jobId, async () => false),
+          runCloudRecoveryJob(session, c, resumedJobId, async () => false),
         ),
         applied,
       );
       const nextPlan = await transaction(id, (c) =>
-        planCloudRecoveryJob({ workspace: session.workspace, jobId, selection }, session, c),
+        planCloudRecoveryJob(
+          { workspace: session.workspace, jobId: resumedJobId, selection },
+          session,
+          c,
+        ),
       );
-      assert.equal(nextPlan.digest, plan.digest);
+      assert.equal(nextPlan.digest, resumedPlan.digest);
+      await mutate("run-selection-operation", "run selection");
+      const runPlan = await transaction(id, (c) =>
+        planCloudRecoveryJob(
+          {
+            workspace: session.workspace,
+            jobId: "run-recovery-job",
+            selection: { kind: "run", runId: session.id },
+          },
+          session,
+          c,
+        ),
+      );
+      assert.ok(runPlan.steps.length > 0);
+      assert.ok(
+        runPlan.steps.every((step) => !/^[a-f0-9]{64}$/.test(step.operationId)),
+      );
     } finally {
       // Keep this uniquely scoped evidence in the isolated append-only test ledger.
-    await database().end();
-  }
-});
+      await database().end();
+    }
+  },
+);

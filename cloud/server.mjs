@@ -1,7 +1,13 @@
-import { toolCatalog } from '../packages/workbench/src/tool-catalog.ts';
+import { toolCatalog } from "../packages/workbench/src/tool-catalog.ts";
 import { demoRouter } from "./demo.mjs";
 import { mountPrimeRoutes, enqueuePrime, primeStatus } from "./prime.mjs";
-import { cloudRecoveryJobStatus, managedCloudUndo, mutateCloudDocument, planCloudRecoveryJob, runCloudRecoveryJob } from "./recovery.mjs";
+import {
+  cloudRecoveryJobStatus,
+  managedCloudUndo,
+  mutateCloudDocument,
+  planCloudRecoveryJob,
+  runCloudRecoveryJob,
+} from "./recovery.mjs";
 import { workspaceSessionCookie } from "../apps/control-plane/api/session-cookie.mjs";
 import {
   mountIntegrationCallback,
@@ -493,19 +499,46 @@ app.delete("/api/upstream", async (req, res) => {
   await write("upstream", null);
   res.json({ ok: true });
 });
-app.get('/api/tools', async (req, res) => {
+app.get("/api/tools", async (req, res) => {
   if (req.query.session) {
     const session = await read(`session:${req.query.session}`);
-    if (!session) return res.status(404).json({ message: 'Session not found.' });
-    return res.json({ scope: 'session', tools: toolCatalog(session.tools ?? [], Object.values(session.connected ?? {}).map(connection => decrypt(connection.config).token)) });
+    if (!session)
+      return res.status(404).json({ message: "Session not found." });
+    return res.json({
+      scope: "session",
+      tools: toolCatalog(
+        session.tools ?? [],
+        Object.values(session.connected ?? {}).map(
+          (connection) => decrypt(connection.config).token,
+        ),
+      ),
+    });
   }
-  const saved = (await read('connectors')) ?? [];
-  const secrets = saved.map(item => decrypt(item.secret).token);
-  const tools = [...workspaceTools, ...saved.flatMap(item => (decrypt(item.secret).tools ?? []).map(tool => ({ ...tool, connectorId: item.id })))];
-  const upstream = await read('upstream');
-  if (upstream) { const config = decrypt(upstream); secrets.push(config.token); tools.push(...(await catalog(config)).tools.map(tool => ({ ...tool, connectorId: 'legacy' }))); }
-  for (const integration of await integrationCatalogs()) tools.push(...integration.tools);
-  return res.json({ scope: 'configured', tools: toolCatalog(tools, secrets) });
+  const saved = (await read("connectors")) ?? [];
+  const secrets = saved.map((item) => decrypt(item.secret).token);
+  const tools = [
+    ...workspaceTools,
+    ...saved.flatMap((item) =>
+      (decrypt(item.secret).tools ?? []).map((tool) => ({
+        ...tool,
+        connectorId: item.id,
+      })),
+    ),
+  ];
+  const upstream = await read("upstream");
+  if (upstream) {
+    const config = decrypt(upstream);
+    secrets.push(config.token);
+    tools.push(
+      ...(await catalog(config)).tools.map((tool) => ({
+        ...tool,
+        connectorId: "legacy",
+      })),
+    );
+  }
+  for (const integration of await integrationCatalogs())
+    tools.push(...integration.tools);
+  return res.json({ scope: "configured", tools: toolCatalog(tools, secrets) });
 });
 app.get("/api/connectors", async (req, res) => {
   const saved = (await read("connectors")) ?? [];
@@ -651,6 +684,14 @@ app.get("/api/sessions/:id/undo/:operation", async (req, res) => {
     }),
   );
 });
+app.post("/api/sessions/:id/undo/:operation", async (req, res) => {
+  if (req.body?.confirm !== req.params.operation)
+    return res
+      .status(409)
+      .json({ message: "Preview this exact operation first." });
+  await applyManagedUndo(req.params.id, req.params.operation);
+  res.json({ ok: true });
+});
 async function applyManagedUndo(id, operationId) {
   await transaction(id, async (c) => {
     const { s, state } = await undoProof(id, operationId, c);
@@ -751,18 +792,19 @@ app.post("/api/sessions/:id/recovery-jobs/plan", async (req, res) => {
   if (!jobId || !selection)
     return res
       .status(400)
-      .json({ message: "A recovery job needs a stable ID and one exact run or operation list." });
+      .json({
+        message:
+          "A recovery job needs a stable ID and one exact run or operation list.",
+      });
   try {
     const plan = await transaction(req.params.id, async (c) =>
-      planCloudRecoveryJob(
-        { workspace: s.workspace, jobId, selection },
-        s,
-        c,
-      ),
+      planCloudRecoveryJob({ workspace: s.workspace, jobId, selection }, s, c),
     );
     res.json(cloudRecoveryJobResponse(plan));
   } catch (error) {
-    res.status(400).json({ message: error?.message ?? "Recovery job planning failed." });
+    res
+      .status(400)
+      .json({ message: error?.message ?? "Recovery job planning failed." });
   }
 });
 app.post("/api/sessions/:id/recovery-jobs/apply", async (req, res) => {
@@ -804,7 +846,9 @@ app.get("/api/sessions/:id/recovery-jobs/:job", async (req, res) => {
     );
     res.json(cloudRecoveryJobResponse(status));
   } catch (error) {
-    res.status(404).json({ message: error?.message ?? "Recovery job not found." });
+    res
+      .status(404)
+      .json({ message: error?.message ?? "Recovery job not found." });
   }
 });
 app.get("/api/sessions", async (req, res) =>
