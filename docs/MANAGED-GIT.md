@@ -13,7 +13,8 @@ time. Configure an existing non-bare repository with a relative root:
 ```
 
 The state directory must be outside the repository. Git has no install action.
-The public actions are `write`, `delete`, `rename`, `stage` and `unstage`.
+The public actions are `write`, `delete`, `rename`, `stage`, `unstage` and
+`commit`.
 Create is the conformance name for `write` against an absent path, not another
 action. Writes accept canonical base64 up to 1 MiB and an optional POSIX mode.
 
@@ -35,6 +36,32 @@ system config, filters and lazy object fetching are disabled. No shell is
 involved. Index replacement owns `index.lock`, mutates a private copied index,
 checks unrelated logical entries, verifies the original index did not change and
 atomically installs the result. A preexisting lock is never removed.
+
+
+## Managed commit slice
+
+`commit` accepts exactly one relative path. The path must be a staged regular
+file, and its index entry must differ from the current `HEAD`. The branch must
+point directly at a single-parent commit. The adapter builds a candidate tree
+through a private index and creates the commit with Git plumbing. It does not
+rewrite the caller's index or worktree.
+
+The branch compare-and-swap and the operation receipt under
+`refs/void/operations/` are one `git update-ref --stdin` transaction. Recovery
+requires that exact receipt and exact recorded commit evidence. It creates a
+new single-parent inverse commit and atomically appends a recovery receipt under
+`refs/void/recoveries/`. It never moves the branch backward. Existing receipt
+refs make retries idempotent, and restart reconciliation validates the receipt,
+commit, parent, tree, metadata and repository binding instead of inferring
+success from target equality or ancestry.
+
+The recovery may follow unrelated later commits and preserves their tree entries.
+Branch ancestry, the selected index entry and selected worktree file must still
+match the forward result. Selected-path, repository, receipt or locked-ref drift
+is a conflict. No reset, checkout, remote command,
+hook, merge or force update is used. The initial commit, merge commits,
+symlinks, submodules, multiple selected paths and non-POSIX hosts remain out of
+scope.
 
 ## Limits
 
