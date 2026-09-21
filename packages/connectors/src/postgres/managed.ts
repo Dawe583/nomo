@@ -108,6 +108,48 @@ export type ManagedMetadataInspection = {
   legacyWithoutVersion: boolean;
 };
 
+type MetadataColumn = readonly [
+  name: string,
+  type: string,
+  nullable: boolean,
+  primaryKey: boolean,
+  defaultVersion: number | null | "invalid",
+];
+
+const metadataLayoutV1: Readonly<Record<string, readonly MetadataColumn[]>> = {
+  meta: [
+    ["key", "text", false, true, null],
+    ["version", "int4", false, false, null],
+  ],
+  revisions: [
+    ["resource", "text", false, true, null],
+    ["revision", "int8", false, false, null],
+  ],
+  operations: [
+    ["id", "text", false, true, null],
+    ["request_digest", "text", false, false, null],
+    ["capture", "jsonb", false, false, null],
+    ["outcome", "jsonb", false, false, null],
+  ],
+  recoveries: [
+    ["id", "text", false, true, null],
+    ["input_digest", "text", false, false, null],
+    ["outcome", "jsonb", false, false, null],
+  ],
+};
+const metadataLayoutV2: Readonly<Record<string, readonly MetadataColumn[]>> = {
+  ...metadataLayoutV1,
+  operations: [
+    ...metadataLayoutV1.operations,
+    ["format_version", "int4", false, false, MANAGED_METADATA_VERSION],
+  ],
+  recoveries: [
+    ...metadataLayoutV1.recoveries,
+    ["format_version", "int4", false, false, MANAGED_METADATA_VERSION],
+  ],
+};
+const metadataTables = Object.keys(metadataLayoutV2);
+
 async function metadataPresent(
   connection: ManagedConnection,
   schema: string,
@@ -156,38 +198,195 @@ async function metadataColumnPresent(
   return rows[0]?.exists === true || rows[0]?.exists === "true";
 }
 
+async function metadataStructureValid(
+  connection: ManagedConnection,
+  schemaName: string,
+  expected: Readonly<Record<string, readonly MetadataColumn[]>>,
+): Promise<boolean> {
+  const rows = await connection.query<{
+    table_name: string;
+    column_name: string;
+    udt_name: string;
+    nullable: boolean;
+    primary_key: boolean;
+    column_default: string | null;
+  }>(
+    `SELECT c.table_name,c.column_name,c.udt_name,c.is_nullable='YES' AS nullable,
+      EXISTS (SELECT 1 FROM pg_index i WHERE i.indrelid=(quote_ident(c.table_schema)||'.'||quote_ident(c.table_name))::regclass
+        AND i.indisprimary AND c.ordinal_position=ANY(i.indkey)) AS primary_key,c.column_default
+    FROM information_schema.columns c
+    WHERE c.table_schema=$1 AND c.table_name=ANY($2::text[])
+    ORDER BY c.table_name,c.ordinal_position`,
+    [schemaName, Object.keys(expected)],
+  );
+  const actual = new Map<string, MetadataColumn[]>();
+  for (const row of rows) {
+    const columns = actual.get(row.table_name) ?? [];
+    const defaultSource = row.column_default?.trim() ?? null;
+    const defaultVersion =
+      defaultSource === null
+        ? null
+        : /^-?(?:0|[1-9][0-9]*)$/.test(defaultSource)
+          ? Number(defaultSource)
+          : "invalid";
+    columns.push([
+      row.column_name,
+      row.udt_name,
+      row.nullable,
+      row.primary_key,
+      defaultVersion,
+    ]);
+    actual.set(row.table_name, columns);
+  }
+  const [relations, indexes, constraints, triggers, rules] = await Promise.all([
+    connection.query<{
+      name: string;
+      kind: string;
+      rls: boolean;
+      force_rls: boolean;
+      has_rules: boolean;
+    }>(
+      `SELECT c.relname AS name,c.relkind AS kind,c.relrowsecurity AS rls,c.relforcerowsecurity AS force_rls,c.relhasrules AS has_rules
+       FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+       WHERE n.nspname=$1 AND c.relkind IN ('r','p','v','m','S','f') ORDER BY c.relname`,
+      [schemaName],
+    ),
+    connection.query<{
+      table_name: string;
+      primary_index: boolean;
+      valid: boolean;
+    }>(
+      `SELECT c.relname AS table_name,i.indisprimary AS primary_index,i.indisvalid AS valid
+       FROM pg_index i JOIN pg_class c ON c.oid=i.indrelid JOIN pg_namespace n ON n.oid=c.relnamespace
+       WHERE n.nspname=$1 AND c.relname=ANY($2::text[]) ORDER BY c.relname,i.indexrelid`,
+      [schemaName, Object.keys(expected)],
+    ),
+    connection.query<{ table_name: string; type: string }>(
+      `SELECT c.relname AS table_name,k.contype AS type FROM pg_constraint k
+       JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace
+       WHERE n.nspname=$1 AND c.relname=ANY($2::text[]) ORDER BY c.relname,k.oid`,
+      [schemaName, Object.keys(expected)],
+    ),
+    connection.query<{ table_name: string }>(
+      `SELECT c.relname AS table_name FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
+       JOIN pg_namespace n ON n.oid=c.relnamespace
+       WHERE n.nspname=$1 AND c.relname=ANY($2::text[]) AND NOT t.tgisinternal`,
+      [schemaName, Object.keys(expected)],
+    ),
+    connection.query<{ table_name: string; rule_name: string }>(
+      `SELECT c.relname AS table_name,r.rulename AS rule_name FROM pg_rewrite r
+       JOIN pg_class c ON c.oid=r.ev_class JOIN pg_namespace n ON n.oid=c.relnamespace
+       WHERE n.nspname=$1 AND c.relname=ANY($2::text[])`,
+      [schemaName, Object.keys(expected)],
+    ),
+  ]);
+  const tableNames = Object.keys(expected).sort();
+  return (
+    Object.entries(expected).every(
+      ([table, columns]) =>
+        canonicalJson(actual.get(table)) === canonicalJson(columns),
+    ) &&
+    rows.length ===
+      Object.values(expected).reduce(
+        (sum, columns) => sum + columns.length,
+        0,
+      ) &&
+    canonicalJson(relations.map((relation) => relation.name)) ===
+      canonicalJson(tableNames) &&
+    relations.every(
+      (relation) =>
+        relation.kind === "r" && !relation.rls && !relation.force_rls,
+    ) &&
+    indexes.length === tableNames.length &&
+    indexes.every((index) => index.primary_index && index.valid) &&
+    constraints.length === tableNames.length &&
+    constraints.every((constraint) => constraint.type === "p") &&
+    triggers.length === 0 &&
+    rules.length === 0
+  );
+}
+
+async function inspectMetadata(
+  connection: ManagedConnection,
+  schemaName: string,
+): Promise<ManagedMetadataInspection> {
+  const schema = ident(schemaName),
+    layout = await metadataLayout(connection, schema);
+  if (!layout.meta)
+    return {
+      metadataVersion: null,
+      complete: false,
+      legacyWithoutVersion:
+        layout.revisions || layout.operations || layout.recoveries,
+    };
+  const version = await metadataVersion(connection, schema);
+  return {
+    metadataVersion: version,
+    complete:
+      version === MANAGED_METADATA_VERSION &&
+      Object.values(layout).every(Boolean) &&
+      (await metadataStructureValid(connection, schemaName, metadataLayoutV2)),
+    legacyWithoutVersion: false,
+  };
+}
+
+async function metadataIdentity(
+  connection: ManagedConnection,
+  schemaName: string,
+): Promise<readonly string[]> {
+  const rows = await connection.query<{ identity: string }>(
+    `SELECT 'schema:'||n.oid::text AS identity FROM pg_namespace n WHERE n.nspname=$1
+     UNION ALL SELECT c.relname||':'||c.oid::text AS identity FROM pg_class c
+     JOIN pg_namespace n ON n.oid=c.relnamespace
+     WHERE n.nspname=$1 AND c.relname=ANY($2::text[]) ORDER BY identity`,
+    [schemaName, metadataTables],
+  );
+  return rows.map((row) => row.identity);
+}
+
+function sameIdentity(
+  left: readonly string[],
+  right: readonly string[],
+): boolean {
+  return canonicalJson(left) === canonicalJson(right);
+}
+
+function assertInstallableMetadata(
+  inspection: ManagedMetadataInspection,
+  metaPresent: boolean,
+): void {
+  if (inspection.legacyWithoutVersion)
+    throw new Error("Legacy managed PostgreSQL metadata has no version.");
+  if (inspection.metadataVersion === 1)
+    throw new Error(
+      "Managed PostgreSQL metadata version 1 requires explicit migration.",
+    );
+  if (
+    inspection.metadataVersion !== null &&
+    inspection.metadataVersion !== MANAGED_METADATA_VERSION
+  )
+    throw new Error(
+      `Unsupported managed PostgreSQL metadata version ${inspection.metadataVersion}.`,
+    );
+  if (
+    inspection.metadataVersion === MANAGED_METADATA_VERSION &&
+    !inspection.complete
+  )
+    throw new Error(
+      "Managed PostgreSQL metadata version 2 has malformed structure.",
+    );
+  if (inspection.metadataVersion === null && metaPresent)
+    throw new Error(
+      "Managed PostgreSQL metadata version is missing or malformed.",
+    );
+}
+
 export async function inspectManagedPostgres(
   options: ManagedPostgresOptions,
 ): Promise<ManagedMetadataInspection> {
-  const schema = ident(options.schema);
   const connection = await options.connect();
   try {
-    const layout = await metadataLayout(connection, schema);
-    if (!layout.meta)
-      return {
-        metadataVersion: null,
-        complete: false,
-        legacyWithoutVersion:
-          layout.revisions || layout.operations || layout.recoveries,
-      };
-    const version = await metadataVersion(connection, schema);
-    const formatColumns =
-      version === MANAGED_METADATA_VERSION
-        ? await Promise.all([
-            metadataColumnPresent(connection, options.schema, "operations", "format_version"),
-            metadataColumnPresent(connection, options.schema, "recoveries", "format_version"),
-          ])
-        : [false, false];
-    return {
-      metadataVersion: version,
-      complete:
-        version === MANAGED_METADATA_VERSION &&
-        layout.revisions &&
-        layout.operations &&
-        layout.recoveries &&
-        formatColumns.every(Boolean),
-      legacyWithoutVersion: false,
-    };
+    return await inspectMetadata(connection, options.schema);
   } finally {
     await connection.close();
   }
@@ -216,10 +415,7 @@ function assertTenantConfig(tenant: ManagedTenantScope | undefined) {
     throw new Error("Tenant setting must be a qualified PostgreSQL setting.");
 }
 
-/**
- * Creates metadata only for a fresh schema. Existing metadata is never upgraded
- * here, so an operator must review and invoke migrateManagedPostgres explicitly.
- */
+/** Creates metadata only for a fresh schema or reinstalls exact version 2 metadata. */
 export async function installManagedPostgres(
   options: ManagedPostgresOptions,
 ): Promise<{ installedTables: readonly string[]; metadataVersion: number }> {
@@ -227,40 +423,67 @@ export async function installManagedPostgres(
   assertTenantConfig(options.tenant);
   options.tables.forEach((target) => assertTableConfig(target, options.tenant));
   const connection = await options.connect();
+  let begun = false;
   try {
+    const identityBefore = await metadataIdentity(connection, options.schema);
+    const inspection = await inspectMetadata(connection, options.schema);
+    const identityAfter = await metadataIdentity(connection, options.schema);
+    if (!sameIdentity(identityBefore, identityAfter))
+      throw new Error(
+        "Managed PostgreSQL metadata identity changed during preflight.",
+      );
+    assertInstallableMetadata(
+      inspection,
+      await metadataPresent(connection, schema, "meta"),
+    );
+    const existing = inspection.metadataVersion === MANAGED_METADATA_VERSION;
     await connection.query("BEGIN");
-    const layout = await metadataLayout(connection, schema);
-    if (Object.values(layout).some(Boolean)) {
-      if (
-        !layout.meta ||
-        !layout.revisions ||
-        !layout.operations ||
-        !layout.recoveries ||
-        (await metadataVersion(connection, schema)) !== MANAGED_METADATA_VERSION
+    begun = true;
+    await connection.query(
+      "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
+      [`void-managed-metadata:${options.schema}`],
+    );
+    if (existing)
+      await connection.query(
+        `LOCK TABLE ${schema}.meta,${schema}.revisions,${schema}.operations,${schema}.recoveries IN ACCESS EXCLUSIVE MODE`,
+      );
+    const locked = await inspectMetadata(connection, options.schema);
+    assertInstallableMetadata(
+      locked,
+      await metadataPresent(connection, schema, "meta"),
+    );
+    if (
+      existing !== (locked.metadataVersion === MANAGED_METADATA_VERSION) ||
+      !sameIdentity(
+        identityAfter,
+        await metadataIdentity(connection, options.schema),
       )
-        throw new Error(
-          "Existing recovery metadata requires explicit migration or review.",
-        );
-    }
+    )
+      throw new Error(
+        "Managed PostgreSQL metadata identity changed during installation.",
+      );
     await connection.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+    const createTable = existing
+      ? "CREATE TABLE IF NOT EXISTS"
+      : "CREATE TABLE";
     await connection.query(
-      `CREATE TABLE IF NOT EXISTS ${schema}.meta(key text PRIMARY KEY, version integer NOT NULL)`,
+      `${createTable} ${schema}.meta(key text PRIMARY KEY, version integer NOT NULL)`,
     );
     await connection.query(
-      `CREATE TABLE IF NOT EXISTS ${schema}.revisions(resource text PRIMARY KEY, revision bigint NOT NULL)`,
+      `${createTable} ${schema}.revisions(resource text PRIMARY KEY, revision bigint NOT NULL)`,
     );
     await connection.query(
-      `CREATE TABLE IF NOT EXISTS ${schema}.operations(id text PRIMARY KEY, request_digest text NOT NULL, capture jsonb NOT NULL, outcome jsonb NOT NULL, format_version integer NOT NULL DEFAULT ${MANAGED_METADATA_VERSION})`,
+      `${createTable} ${schema}.operations(id text PRIMARY KEY, request_digest text NOT NULL, capture jsonb NOT NULL, outcome jsonb NOT NULL, format_version integer NOT NULL DEFAULT ${MANAGED_METADATA_VERSION})`,
     );
     await connection.query(
-      `CREATE TABLE IF NOT EXISTS ${schema}.recoveries(id text PRIMARY KEY, input_digest text NOT NULL, outcome jsonb NOT NULL, format_version integer NOT NULL DEFAULT ${MANAGED_METADATA_VERSION})`,
+      `${createTable} ${schema}.recoveries(id text PRIMARY KEY, input_digest text NOT NULL, outcome jsonb NOT NULL, format_version integer NOT NULL DEFAULT ${MANAGED_METADATA_VERSION})`,
     );
     const installed: string[] = [];
     for (const target of options.tables) {
-      const table = tableName(target.table);
-      const suffix = hash(target.table).slice(0, 16);
-      const fn = `${schema}.${ident("revision_" + suffix)}`;
-      const trigger = ident("void_revision_" + suffix);
+      const table = tableName(target.table),
+        suffix = hash(target.table).slice(0, 16);
+      const fn = `${schema}.${ident("revision_" + suffix)}`,
+        trigger = ident("void_revision_" + suffix);
       await connection.query(
         `CREATE OR REPLACE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $body$${triggerSource(target, schema)}$body$`,
       );
@@ -270,55 +493,158 @@ export async function installManagedPostgres(
       );
       installed.push(target.table);
     }
+    if (
+      !(await metadataStructureValid(
+        connection,
+        options.schema,
+        metadataLayoutV2,
+      ))
+    )
+      throw new Error(
+        "Managed PostgreSQL metadata changed during installation.",
+      );
+    const finalVersion = await metadataVersion(connection, schema);
+    if (
+      (existing && finalVersion !== MANAGED_METADATA_VERSION) ||
+      (!existing && finalVersion !== null)
+    )
+      throw new Error(
+        "Managed PostgreSQL metadata changed during installation.",
+      );
     await connection.query(
-      `INSERT INTO ${schema}.meta(key,version) VALUES('version',${MANAGED_METADATA_VERSION}) ON CONFLICT(key) DO NOTHING`,
+      `INSERT INTO ${schema}.meta(key,version) VALUES('version',${MANAGED_METADATA_VERSION}) ON CONFLICT(key) DO UPDATE SET version=EXCLUDED.version`,
     );
+    if (
+      !(await metadataStructureValid(
+        connection,
+        options.schema,
+        metadataLayoutV2,
+      )) ||
+      (await metadataVersion(connection, schema)) !== MANAGED_METADATA_VERSION
+    )
+      throw new Error(
+        "Managed PostgreSQL metadata changed during installation.",
+      );
     await connection.query("COMMIT");
-    return { installedTables: installed, metadataVersion: MANAGED_METADATA_VERSION };
+    begun = false;
+    return {
+      installedTables: installed,
+      metadataVersion: MANAGED_METADATA_VERSION,
+    };
   } catch (error) {
-    await connection.query("ROLLBACK").catch(() => {});
+    if (begun) await connection.query("ROLLBACK").catch(() => {});
     throw error;
   } finally {
     await connection.close();
   }
 }
 
-/** Version 1 only had the three receipt tables. Version 2 marks receipt format. */
+/** Explicitly migrates the exact released version 1 layout to version 2. */
 export async function migrateManagedPostgres(
   options: ManagedPostgresOptions,
 ): Promise<{ fromVersion: number; metadataVersion: number }> {
-  const schema = ident(options.schema);
-  const connection = await options.connect();
+  const schema = ident(options.schema),
+    connection = await options.connect();
+  let begun = false;
   try {
-    await connection.query("BEGIN");
-    const layout = await metadataLayout(connection, schema);
+    const identityBefore = await metadataIdentity(connection, options.schema);
+    const inspection = await inspectMetadata(connection, options.schema);
+    const identityAfter = await metadataIdentity(connection, options.schema);
+    if (!sameIdentity(identityBefore, identityAfter))
+      throw new Error(
+        "Managed PostgreSQL metadata identity changed during preflight.",
+      );
+    if (inspection.legacyWithoutVersion || inspection.metadataVersion === null)
+      throw new Error(
+        "Recovery metadata version is missing; manual review is required.",
+      );
     if (
-      !layout.meta ||
-      !layout.revisions ||
-      !layout.operations ||
-      !layout.recoveries
+      inspection.metadataVersion !== 1 &&
+      inspection.metadataVersion !== MANAGED_METADATA_VERSION
     )
-      throw new Error("Recovery metadata is incomplete; manual review is required.");
-    const fromVersion = await metadataVersion(connection, schema);
+      throw new Error(
+        `Unsupported managed PostgreSQL metadata version ${inspection.metadataVersion}.`,
+      );
+    const expected =
+      inspection.metadataVersion === 1 ? metadataLayoutV1 : metadataLayoutV2;
+    if (!(await metadataStructureValid(connection, options.schema, expected)))
+      throw new Error(
+        `Managed PostgreSQL metadata version ${inspection.metadataVersion} has malformed structure.`,
+      );
+    const fromVersion = inspection.metadataVersion;
+    await connection.query("BEGIN");
+    begun = true;
+    await connection.query(
+      "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
+      [`void-managed-metadata:${options.schema}`],
+    );
+    await connection.query(
+      `LOCK TABLE ${schema}.meta,${schema}.revisions,${schema}.operations,${schema}.recoveries IN ACCESS EXCLUSIVE MODE`,
+    );
+    if (
+      !sameIdentity(
+        identityAfter,
+        await metadataIdentity(connection, options.schema),
+      )
+    )
+      throw new Error(
+        "Managed PostgreSQL metadata identity changed during migration.",
+      );
+    if (
+      (await metadataVersion(connection, schema)) !== fromVersion ||
+      !(await metadataStructureValid(connection, options.schema, expected))
+    )
+      throw new Error("Managed PostgreSQL metadata changed during migration.");
     if (fromVersion === MANAGED_METADATA_VERSION) {
       await connection.query("COMMIT");
+      begun = false;
       return { fromVersion, metadataVersion: MANAGED_METADATA_VERSION };
     }
-    if (fromVersion !== 1)
-      throw new Error("Unsupported recovery metadata version; manual review is required.");
     await connection.query(
-      `ALTER TABLE ${schema}.operations ADD COLUMN IF NOT EXISTS format_version integer NOT NULL DEFAULT 1`,
+      `ALTER TABLE ${schema}.operations ADD COLUMN format_version integer NOT NULL DEFAULT 1`,
     );
     await connection.query(
-      `ALTER TABLE ${schema}.recoveries ADD COLUMN IF NOT EXISTS format_version integer NOT NULL DEFAULT 1`,
+      `ALTER TABLE ${schema}.recoveries ADD COLUMN format_version integer NOT NULL DEFAULT 1`,
     );
     await connection.query(
-      `UPDATE ${schema}.meta SET version=${MANAGED_METADATA_VERSION} WHERE key='version'`,
+      `ALTER TABLE ${schema}.operations ALTER COLUMN format_version SET DEFAULT ${MANAGED_METADATA_VERSION}`,
     );
+    await connection.query(
+      `ALTER TABLE ${schema}.recoveries ALTER COLUMN format_version SET DEFAULT ${MANAGED_METADATA_VERSION}`,
+    );
+    if (
+      !(await metadataStructureValid(
+        connection,
+        options.schema,
+        metadataLayoutV2,
+      ))
+    )
+      throw new Error("Managed PostgreSQL metadata changed during migration.");
+    if ((await metadataVersion(connection, schema)) !== 1)
+      throw new Error("Managed PostgreSQL metadata changed during migration.");
+    const updated = await connection.query<{ version: number }>(
+      `UPDATE ${schema}.meta SET version=${MANAGED_METADATA_VERSION} WHERE key='version' AND version=1 RETURNING version`,
+    );
+    if (
+      updated.length !== 1 ||
+      !(await metadataStructureValid(
+        connection,
+        options.schema,
+        metadataLayoutV2,
+      )) ||
+      (await metadataVersion(connection, schema)) !==
+        MANAGED_METADATA_VERSION ||
+      !sameIdentity(
+        identityAfter,
+        await metadataIdentity(connection, options.schema),
+      )
+    )
+      throw new Error("Managed PostgreSQL metadata changed during migration.");
     await connection.query("COMMIT");
+    begun = false;
     return { fromVersion, metadataVersion: MANAGED_METADATA_VERSION };
   } catch (error) {
-    await connection.query("ROLLBACK").catch(() => {});
+    if (begun) await connection.query("ROLLBACK").catch(() => {});
     throw error;
   } finally {
     await connection.close();
@@ -331,7 +657,9 @@ export function managedPostgresAdapter(
   const schema = ident(options.schema);
   assertTenantConfig(options.tenant);
   options.tables.forEach((target) => assertTableConfig(target, options.tenant));
-  const tables = new Map(options.tables.map((target) => [target.table, target]));
+  const tables = new Map(
+    options.tables.map((target) => [target.table, target]),
+  );
   if (!/^[\w-]{1,100}$/.test(options.workspace))
     throw new Error("Invalid managed workspace.");
 
@@ -411,10 +739,22 @@ export function managedPostgresAdapter(
   async function requireCurrentMetadata(connection: ManagedConnection) {
     const version = await metadataVersion(connection, schema);
     if (version !== MANAGED_METADATA_VERSION)
-      throw new Error("Recovery metadata migration is required before execution.");
+      throw new Error(
+        "Recovery metadata migration is required before execution.",
+      );
     const [operations, recoveries] = await Promise.all([
-      metadataColumnPresent(connection, options.schema, "operations", "format_version"),
-      metadataColumnPresent(connection, options.schema, "recoveries", "format_version"),
+      metadataColumnPresent(
+        connection,
+        options.schema,
+        "operations",
+        "format_version",
+      ),
+      metadataColumnPresent(
+        connection,
+        options.schema,
+        "recoveries",
+        "format_version",
+      ),
     ]);
     if (!operations || !recoveries)
       throw new Error("Recovery metadata migration is incomplete.");
@@ -431,8 +771,7 @@ export function managedPostgresAdapter(
         [options.tenant.setting],
       )
     )[0]?.value;
-    if (!value)
-      throw new Error("Server-bound tenant setting is unavailable.");
+    if (!value) throw new Error("Server-bound tenant setting is unavailable.");
     const policies = await connection.query<{
       qual: string | null;
       withCheck: string | null;
@@ -444,11 +783,16 @@ export function managedPostgresAdapter(
     const expectedColumn = options.tenant.column.toLowerCase();
     if (
       !policies.some((policy) => {
-        const source = `${policy.qual ?? ""} ${policy.withCheck ?? ""}`.toLowerCase();
-        return source.includes(expectedSetting) && source.includes(expectedColumn);
+        const source =
+          `${policy.qual ?? ""} ${policy.withCheck ?? ""}`.toLowerCase();
+        return (
+          source.includes(expectedSetting) && source.includes(expectedColumn)
+        );
       })
     )
-      throw new Error("Tenant RLS policy does not bind the configured server setting.");
+      throw new Error(
+        "Tenant RLS policy does not bind the configured server setting.",
+      );
     return { ...options.tenant, value };
   }
 
@@ -510,8 +854,7 @@ export function managedPostgresAdapter(
         [target.table],
       )
     )[0];
-    if (!relation)
-      throw new Error("Configured relation does not exist.");
+    if (!relation) throw new Error("Configured relation does not exist.");
     if (
       relation.relkind !== "r" ||
       relation.relhasrules ||
@@ -545,7 +888,9 @@ export function managedPostgresAdapter(
     tenant: BoundTenantScope | null,
   ) {
     const keys = Object.keys(key).sort();
-    const clauses = keys.map((column, index) => `${ident(column)}=$${offset + index + 1}`);
+    const clauses = keys.map(
+      (column, index) => `${ident(column)}=$${offset + index + 1}`,
+    );
     const params: Json[] = keys.map((column) => key[column]!);
     if (tenant) {
       clauses.push(
@@ -585,12 +930,13 @@ export function managedPostgresAdapter(
       );
     const relationOid = await certifyTable(connection, target, tenant);
     const predicate = whereForKey(key, 0, tenant);
-    const row = (
-      await connection.query<{ row: Json }>(
-        `SELECT to_jsonb(target) AS row FROM ${tableName(target.table)} AS target WHERE ${predicate.where}${lock ? " FOR UPDATE" : ""}`,
-        predicate.params,
-      )
-    )[0]?.row ?? null;
+    const row =
+      (
+        await connection.query<{ row: Json }>(
+          `SELECT to_jsonb(target) AS row FROM ${tableName(target.table)} AS target WHERE ${predicate.where}${lock ? " FOR UPDATE" : ""}`,
+          predicate.params,
+        )
+      )[0]?.row ?? null;
     if (
       tenant &&
       row !== null &&
@@ -599,13 +945,22 @@ export function managedPostgresAdapter(
         String(row[tenant.column]) !== tenant.value)
     )
       throw new Error("Tenant RLS scope returned an out-of-scope row.");
-    const revision = (
-      await connection.query<{ revision: string }>(
-        `SELECT revision::text AS revision FROM ${schema}.revisions WHERE resource=$1`,
-        [resource],
-      )
-    )[0]?.revision ?? "0";
-    return { table: target.table, key, row, resource, revision, relationOid, depth };
+    const revision =
+      (
+        await connection.query<{ revision: string }>(
+          `SELECT revision::text AS revision FROM ${schema}.revisions WHERE resource=$1`,
+          [resource],
+        )
+      )[0]?.revision ?? "0";
+    return {
+      table: target.table,
+      key,
+      row,
+      resource,
+      revision,
+      relationOid,
+      depth,
+    };
   }
 
   async function cascadeEdges(
@@ -643,7 +998,9 @@ export function managedPostgresAdapter(
       if (parent.row === null) continue;
       for (const edge of await cascadeEdges(connection, parent.table)) {
         if (edge.deleteAction !== "c")
-          throw new Error("Referenced tables require an ON DELETE CASCADE-certified adapter.");
+          throw new Error(
+            "Referenced tables require an ON DELETE CASCADE-certified adapter.",
+          );
         const child = tables.get(edge.table);
         if (!child)
           throw new Error("Every cascade table must be explicitly configured.");
@@ -652,7 +1009,9 @@ export function managedPostgresAdapter(
           (!edge.childColumns.includes(tenant.column) ||
             !edge.parentColumns.includes(tenant.column))
         )
-          throw new Error("Tenant scope must be part of every cascade foreign key.");
+          throw new Error(
+            "Tenant scope must be part of every cascade foreign key.",
+          );
         const clauses: string[] = [];
         const params: Json[] = [];
         for (let column = 0; column < edge.childColumns.length; column += 1) {
@@ -661,7 +1020,9 @@ export function managedPostgresAdapter(
           ];
           if (value === undefined)
             throw new Error("Cascade parent value was not captured.");
-          clauses.push(`${ident(edge.childColumns[column]!)}=$${params.length + 1}`);
+          clauses.push(
+            `${ident(edge.childColumns[column]!)}=$${params.length + 1}`,
+          );
           params.push(value);
         }
         if (tenant) {
@@ -706,11 +1067,15 @@ export function managedPostgresAdapter(
     const tenant = await boundTenant(connection, target);
     const root = await inspectRow(connection, target, m.key, tenant, lock);
     if (tenant && m.action !== "insert" && root.row === null)
-      throw new Error("Target is absent or outside the server-bound tenant scope.");
+      throw new Error(
+        "Target is absent or outside the server-bound tenant scope.",
+      );
     if (m.action !== "delete") {
       const inbound = await cascadeEdges(connection, target.table);
       if (inbound.length)
-        throw new Error("Referenced tables require a cascade-certified delete operation.");
+        throw new Error(
+          "Referenced tables require a cascade-certified delete operation.",
+        );
     }
     const rows =
       m.action === "delete" && root.row !== null
@@ -785,13 +1150,20 @@ export function managedPostgresAdapter(
       ? new Map(
           await Promise.all(
             [...captures]
-              .sort((left, right) => left.resource.localeCompare(right.resource))
-              .map(async (capture) => [capture.resource, await lookup(capture)] as const),
+              .sort((left, right) =>
+                left.resource.localeCompare(right.resource),
+              )
+              .map(
+                async (capture) =>
+                  [capture.resource, await lookup(capture)] as const,
+              ),
           ),
         )
       : null;
     return {
-      rows: captures.map((capture) => locks?.get(capture.resource) ?? lookup(capture)).map((value) => value as RowCapture),
+      rows: captures
+        .map((capture) => locks?.get(capture.resource) ?? lookup(capture))
+        .map((value) => value as RowCapture),
       tenant: actualTenant,
     };
   }
@@ -808,7 +1180,9 @@ export function managedPostgresAdapter(
     if (canonicalJson(actualTenant) !== canonicalJson(planTenant))
       throw new Error("Server-bound tenant scope changed since capture.");
     const ordered = lock
-      ? [...captures].sort((left, right) => left.resource.localeCompare(right.resource))
+      ? [...captures].sort((left, right) =>
+          left.resource.localeCompare(right.resource),
+        )
       : captures;
     const states = new Map<string, RowCapture>();
     for (const capture of ordered) {
@@ -1002,9 +1376,10 @@ export function managedPostgresAdapter(
       const connection = await options.connect();
       try {
         await connection.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
-        await connection.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
-          operationKey(id),
-        ]);
+        await connection.query(
+          "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
+          [operationKey(id)],
+        );
         const inputDigest = hash({ prepared, outcome });
         const original = (
           await connection.query<{ capture: Prepared; outcome: Outcome }>(
@@ -1078,10 +1453,16 @@ export function managedPostgresAdapter(
           const target = tables.get(root.table)!;
           const before = root.row as Record<string, Json>;
           const writable = target.columns.filter(
-            (column) => column !== plan.tenant?.column && !target.primaryKey.includes(column),
+            (column) =>
+              column !== plan.tenant?.column &&
+              !target.primaryKey.includes(column),
           );
           if (writable.length) {
-            const predicate = whereForKey(root.key, writable.length, plan.tenant);
+            const predicate = whereForKey(
+              root.key,
+              writable.length,
+              plan.tenant,
+            );
             await connection.query(
               `UPDATE ${tableName(root.table)} SET ${writable.map((column, index) => `${ident(column)}=$${index + 1}`).join(",")} WHERE ${predicate.where}`,
               [

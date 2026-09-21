@@ -41,7 +41,12 @@ const pool = new Pool({
 });
 const suffix = randomBytes(8).toString("hex"),
   schema = "qa_recovery_" + suffix,
-  metadata = "qa_recovery_meta_" + suffix;
+  metadata = "qa_recovery_meta_" + suffix,
+  abaMetadata = "qa_recovery_aba_" + suffix,
+  freshRaceMetadata = "qa_recovery_fresh_race_" + suffix,
+  ruleMetadata = "qa_recovery_rule_" + suffix,
+  defaultMetadata = "qa_recovery_default_" + suffix,
+  nullDefaultMetadata = "qa_recovery_null_default_" + suffix;
 const root = await mkdtemp(join(tmpdir(), "void-real-postgres-"));
 const connect = async () => {
   const c = await pool.connect();
@@ -76,6 +81,162 @@ try {
     connect,
   };
   await installManagedPostgres(options);
+
+  const ruleOptions = { ...options, schema: ruleMetadata, tables: [] };
+  await installManagedPostgres(ruleOptions);
+  await db.query(
+    `CREATE RULE suppress_receipt AS ON INSERT TO "${ruleMetadata}".operations DO INSTEAD NOTHING`,
+  );
+  await assert.rejects(
+    installManagedPostgres(ruleOptions),
+    /malformed|structure/i,
+  );
+  assert.deepEqual(
+    await db.query(
+      `SELECT rulename FROM pg_rewrite WHERE ev_class='"${ruleMetadata}".operations'::regclass`,
+    ),
+    [{ rulename: "suppress_receipt" }],
+  );
+
+  const defaultOptions = { ...options, schema: defaultMetadata, tables: [] };
+  await installManagedPostgres(defaultOptions);
+  await db.query(
+    `ALTER TABLE "${defaultMetadata}".operations ALTER COLUMN format_version SET DEFAULT (2 + floor(random())::integer)`,
+  );
+  await assert.rejects(
+    installManagedPostgres(defaultOptions),
+    /malformed|structure/i,
+  );
+  const poisonedDefault = await db.query(
+    `SELECT column_default FROM information_schema.columns WHERE table_schema=$1 AND table_name='operations' AND column_name='format_version'`,
+    [defaultMetadata],
+  );
+  assert.equal(poisonedDefault.length, 1);
+  assert.notEqual(poisonedDefault[0].column_default.trim(), "2");
+
+  const nullDefaultOptions = {
+    ...options,
+    schema: nullDefaultMetadata,
+    tables: [],
+  };
+  await installManagedPostgres(nullDefaultOptions);
+  await db.query(
+    `ALTER TABLE "${nullDefaultMetadata}".operations ALTER COLUMN capture SET DEFAULT '{}'::jsonb`,
+  );
+  await assert.rejects(
+    installManagedPostgres(nullDefaultOptions),
+    /malformed|structure/i,
+  );
+  const unexpectedDefault = await db.query(
+    `SELECT column_default FROM information_schema.columns WHERE table_schema=$1 AND table_name='operations' AND column_name='capture'`,
+    [nullDefaultMetadata],
+  );
+  assert.equal(unexpectedDefault.length, 1);
+  assert.notEqual(unexpectedDefault[0].column_default, null);
+
+  const abaOptions = { ...options, schema: abaMetadata, tables: [] };
+  await installManagedPostgres(abaOptions);
+  await db.query(`INSERT INTO "${abaMetadata}".operations(id,request_digest,capture,outcome) VALUES('sentinel','digest','{}','{}');
+    INSERT INTO "${abaMetadata}".recoveries(id,input_digest,outcome) VALUES('sentinel','digest','{}')`);
+  let beginSeenResolve, continueInstallResolve;
+  const beginSeen = new Promise((resolve) => {
+    beginSeenResolve = resolve;
+  });
+  const continueInstall = new Promise((resolve) => {
+    continueInstallResolve = resolve;
+  });
+  const guardedOptions = {
+    ...abaOptions,
+    connect: async () => {
+      const connection = await connect();
+      return {
+        query: async (sql, params) => {
+          if (sql.trim() === "BEGIN") {
+            beginSeenResolve();
+            await continueInstall;
+          }
+          return connection.query(sql, params);
+        },
+        close: () => connection.close(),
+      };
+    },
+  };
+  const guardedInstall = installManagedPostgres(guardedOptions);
+  await beginSeen;
+  const replacer = await connect();
+  try {
+    await replacer.query(`DROP SCHEMA "${abaMetadata}" CASCADE;
+      CREATE SCHEMA "${abaMetadata}";
+      CREATE TABLE "${abaMetadata}".meta(key text PRIMARY KEY,version integer NOT NULL);
+      CREATE TABLE "${abaMetadata}".revisions(resource text PRIMARY KEY,revision bigint NOT NULL);
+      CREATE TABLE "${abaMetadata}".operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2);
+      CREATE TABLE "${abaMetadata}".recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2);
+      INSERT INTO "${abaMetadata}".meta VALUES('version',2)`);
+  } finally {
+    await replacer.close();
+    continueInstallResolve();
+  }
+  await assert.rejects(guardedInstall, /identity changed/i);
+  assert.deepEqual(
+    await db.query(
+      `SELECT count(*)::int AS count FROM "${abaMetadata}".operations`,
+    ),
+    [{ count: 0 }],
+  );
+  assert.deepEqual(
+    await db.query(
+      `SELECT count(*)::int AS count FROM "${abaMetadata}".recoveries`,
+    ),
+    [{ count: 0 }],
+  );
+  assert.deepEqual(
+    await db.query(
+      `SELECT count(*)::int AS count FROM pg_trigger WHERE tgname LIKE 'void_revision_%' AND tgrelid='"${schema}".account'::regclass`,
+    ),
+    [{ count: 1 }],
+  );
+
+  await db.query(`CREATE SCHEMA "${freshRaceMetadata}"`);
+  let createSeenResolve, continueFreshResolve;
+  const createSeen = new Promise((resolve) => {
+    createSeenResolve = resolve;
+  });
+  const continueFresh = new Promise((resolve) => {
+    continueFreshResolve = resolve;
+  });
+  const freshRaceOptions = {
+    ...options,
+    schema: freshRaceMetadata,
+    tables: [],
+    connect: async () => {
+      const connection = await connect();
+      return {
+        query: async (sql, params) => {
+          if (sql.includes("CREATE TABLE") && sql.includes(".meta")) {
+            createSeenResolve();
+            await continueFresh;
+          }
+          return connection.query(sql, params);
+        },
+        close: () => connection.close(),
+      };
+    },
+  };
+  const freshInstall = installManagedPostgres(freshRaceOptions);
+  await createSeen;
+  const freshRacer = await connect();
+  try {
+    await freshRacer.query(`CREATE TABLE "${freshRaceMetadata}".meta(key text PRIMARY KEY,version integer NOT NULL);
+      CREATE TABLE "${freshRaceMetadata}".revisions(resource text PRIMARY KEY,revision bigint NOT NULL);
+      CREATE TABLE "${freshRaceMetadata}".operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2);
+      CREATE TABLE "${freshRaceMetadata}".recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2);
+      INSERT INTO "${freshRaceMetadata}".meta VALUES('version',2)`);
+  } finally {
+    await freshRacer.close();
+    continueFreshResolve();
+  }
+  await assert.rejects(freshInstall, /already exists|duplicate/i);
+
   const keyDir = join(root, "keys"),
     journalDir = join(root, "journal"),
     vaultDir = join(root, "vault"),
@@ -629,6 +790,11 @@ try {
         "client SIGKILL after forward commit: receipt reconciliation",
         "client SIGKILL after recovery commit: idempotent reconciliation",
         "real deadlock during managed dispatch",
+        "metadata rewrite rule rejection",
+        "poisoned metadata default rejection",
+        "unexpected metadata default rejection",
+        "two-client metadata ABA rejection",
+        "two-client fresh metadata race rejection",
       ],
       networkPartitionTest: false,
     }),
@@ -638,6 +804,8 @@ try {
     if (created) {
       await db.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
       await db.query(`DROP SCHEMA IF EXISTS "${metadata}" CASCADE`);
+      await db.query(`DROP SCHEMA IF EXISTS "${abaMetadata}" CASCADE`);
+      await db.query(`DROP SCHEMA IF EXISTS "${freshRaceMetadata}" CASCADE`);
     }
   } finally {
     await db.close();
