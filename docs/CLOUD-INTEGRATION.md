@@ -3,9 +3,10 @@
 `cloud integration / isolated-postgres` runs on main pushes, pull requests,
 release-candidate tags and manual dispatch. It starts a job-scoped PostgreSQL 17
 service and a pinned Neon WebSocket proxy, then executes the existing GUI and
-recovery SQL suites and the deterministic managed-cloud HTTP/provider flow.
-It uses the production Neon driver and schema, with no paid model or Neon
-account. Credentials and signing/encryption keys are disposable.
+recovery SQL suites, the deterministic managed-cloud HTTP/provider flow and the
+managed PostgreSQL verifier. The verifier includes client SIGKILL after forward
+and recovery COMMIT. It uses the production Neon driver and schema, with no paid
+model or Neon account. Credentials and signing/encryption keys are disposable.
 
 Run `node scripts/src/check-cloud-integration.mjs` with
 `VOID_TEST_DATABASE_ISOLATED=1` and `VOID_TEST_DATABASE_URL` pointing to
