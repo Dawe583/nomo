@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, writeFile, readFile, rm, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { devKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
@@ -12,7 +13,7 @@ import { verifyLedgerFile } from "../../ledger/src/verify.ts";
 
 import { VoidClient } from "./client.ts";
 import { HoldDeniedError, LedgerVerifyError, RefusedError } from "./errors.ts";
-
+const fixtureServer = fileURLToPath(new URL("../../../fixtures/e2e-server.mjs", import.meta.url));
 async function fixturePolicy(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "void-sdk-policy-"));
   const path = join(dir, "policy.yaml");
@@ -41,7 +42,7 @@ async function makeClient(workspace: string): Promise<VoidClient> {
     ledgerDir: await mkdtemp(join(tmpdir(), "void-sdk-ledger-")),
     workspace,
     policyPath: await fixturePolicy(),
-    connect: { upstreamCommand: [process.execPath, "../../fixtures/e2e-server.mjs"] },
+    connect: { upstreamCommand: [process.execPath, fixtureServer] },
     requestTimeoutMs: 5_000,
   });
 }
@@ -112,7 +113,7 @@ describe("VoidClient", () => {
       ledgerDir: await mkdtemp(join(tmpdir(), "void-sdk-ledger-")),
       workspace: "invalid-policy",
       policyPath,
-      connect: { upstreamCommand: [process.execPath, "../../fixtures/e2e-server.mjs"] },
+      connect: { upstreamCommand: [process.execPath, fixtureServer] },
       requestTimeoutMs: 1_000,
     });
     try {
@@ -134,7 +135,7 @@ describe("VoidClient", () => {
       ledgerDir,
       workspace: "bad",
       policyPath: await fixturePolicy(),
-      connect: { upstreamCommand: [process.execPath, "../../fixtures/e2e-server.mjs"] },
+      connect: { upstreamCommand: [process.execPath, fixtureServer] },
       requestTimeoutMs: 1_000,
     });
     try {
@@ -181,7 +182,7 @@ for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
     const client = new VoidClient({
       ledgerDir: dir, workspace, policyPath: await fixturePolicy(),
       connect: { upstreamCommand: scenario === "trusted"
-        ? [process.execPath, "../../fixtures/e2e-server.mjs"]
+        ? [process.execPath, fixtureServer]
         : [process.execPath, "-e", "require('node:fs').writeFileSync(process.argv[1], 'started')", marker] },
       requestTimeoutMs: 1_000,
     });

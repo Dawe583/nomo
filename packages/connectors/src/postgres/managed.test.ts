@@ -9,6 +9,7 @@ import {
   inspectManagedPostgres,
   installManagedPostgres,
   managedPostgresAdapter,
+  migrateManagedPostgres,
   type ManagedPostgresOptions,
 } from "./managed.ts";
 import {
@@ -45,8 +46,8 @@ async function fixture(t: import("node:test").TestContext) {
     }),
   };
   const installed = await installManagedPostgres(options);
-  assert.deepEqual(installed, { installedTables: ["public.account"], metadataVersion: 1 });
-  assert.deepEqual(await inspectManagedPostgres(options), { metadataVersion: 1, complete: true, legacyWithoutVersion: false });
+  assert.deepEqual(installed, { installedTables: ["public.account"], metadataVersion: 2 });
+  assert.deepEqual(await inspectManagedPostgres(options), { metadataVersion: 2, complete: true, legacyWithoutVersion: false });
   const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} }),
     runtimeOptions = {
       journal: localOperationJournal(join(root, "journal"), signer),
@@ -324,5 +325,195 @@ test("uncertified row-level security refuses execution even for an owner that by
       )
     ).rows[0]?.balance,
     10,
+  );
+});
+
+test("managed PostgreSQL metadata migration is explicit, transactional and idempotent", async (t) => {
+  const db = new PGlite();
+  t.after(() => db.close());
+  await db.exec(
+    "CREATE TABLE account(id integer PRIMARY KEY, balance integer NOT NULL); CREATE SCHEMA void_recovery; CREATE TABLE void_recovery.meta(key text PRIMARY KEY, version integer NOT NULL); CREATE TABLE void_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL); CREATE TABLE void_recovery.operations(id text PRIMARY KEY, request_digest text NOT NULL, capture jsonb NOT NULL, outcome jsonb NOT NULL); CREATE TABLE void_recovery.recoveries(id text PRIMARY KEY, input_digest text NOT NULL, outcome jsonb NOT NULL); INSERT INTO void_recovery.meta VALUES('version',1)",
+  );
+  const options: ManagedPostgresOptions = {
+    workspace: "test",
+    schema: "void_recovery",
+    tables: [
+      {
+        table: "public.account",
+        primaryKey: ["id"],
+        columns: ["balance"],
+      },
+    ],
+    connect: async () => ({
+      query: async <T>(sql: string, params?: readonly unknown[]) =>
+        (await db.query<T>(sql, params ? [...params] : [])).rows,
+      close: async () => {},
+    }),
+  };
+  assert.deepEqual(await inspectManagedPostgres(options), {
+    metadataVersion: 1,
+    complete: false,
+    legacyWithoutVersion: false,
+  });
+  await assert.rejects(
+    installManagedPostgres(options),
+    /explicit migration|review/i,
+  );
+  assert.deepEqual(await migrateManagedPostgres(options), {
+    fromVersion: 1,
+    metadataVersion: 2,
+  });
+  assert.deepEqual(await migrateManagedPostgres(options), {
+    fromVersion: 2,
+    metadataVersion: 2,
+  });
+  assert.deepEqual(await inspectManagedPostgres(options), {
+    metadataVersion: 2,
+    complete: true,
+    legacyWithoutVersion: false,
+  });
+});
+
+test("managed PostgreSQL deletes and restores exact configured cascade descendants", async (t) => {
+  const db = new PGlite();
+  t.after(() => db.close());
+  await db.exec(
+    "CREATE TABLE parent(id integer PRIMARY KEY, label text NOT NULL); CREATE TABLE child(id integer PRIMARY KEY, parent_id integer NOT NULL REFERENCES parent(id) ON DELETE CASCADE, label text NOT NULL); CREATE TABLE grandchild(id integer PRIMARY KEY, child_id integer NOT NULL REFERENCES child(id) ON DELETE CASCADE, label text NOT NULL); INSERT INTO parent VALUES(1,'remove'),(2,'keep'); INSERT INTO child VALUES(10,1,'remove-child'),(20,2,'keep-child'); INSERT INTO grandchild VALUES(100,10,'remove-grandchild'),(200,20,'keep-grandchild')",
+  );
+  const options: ManagedPostgresOptions = {
+    workspace: "test",
+    schema: "void_recovery",
+    tables: [
+      { table: "public.parent", primaryKey: ["id"], columns: ["label"] },
+      {
+        table: "public.child",
+        primaryKey: ["id"],
+        columns: ["parent_id", "label"],
+      },
+      {
+        table: "public.grandchild",
+        primaryKey: ["id"],
+        columns: ["child_id", "label"],
+      },
+    ],
+    connect: async () => ({
+      query: async <T>(sql: string, params?: readonly unknown[]) =>
+        (await db.query<T>(sql, params ? [...params] : [])).rows,
+      close: async () => {},
+    }),
+  };
+  await installManagedPostgres(options);
+  const adapter = managedPostgresAdapter(options);
+  const input = {
+    table: "public.parent",
+    action: "delete",
+    key: { id: 1 },
+    values: {},
+  };
+  const observation = await adapter.preflight(input);
+  assert.deepEqual(observation.blastRadius, { count: 3, precision: "exact" });
+  const prepared = await adapter.prepare(input, observation, "cascade");
+  const outcome = await adapter.execute(input, prepared, "cascade");
+  assert.deepEqual(
+    (await db.query("SELECT id FROM parent ORDER BY id")).rows,
+    [{ id: 2 }],
+  );
+  assert.deepEqual(
+    (await db.query("SELECT id FROM child ORDER BY id")).rows,
+    [{ id: 20 }],
+  );
+  assert.deepEqual(
+    (await db.query("SELECT id FROM grandchild ORDER BY id")).rows,
+    [{ id: 200 }],
+  );
+  assert.equal(
+    (await adapter.recover(prepared, outcome, "cascade-recovery")).status,
+    "restored",
+  );
+  assert.deepEqual(
+    (await db.query("SELECT * FROM parent ORDER BY id")).rows,
+    [
+      { id: 1, label: "remove" },
+      { id: 2, label: "keep" },
+    ],
+  );
+  assert.deepEqual(
+    (await db.query("SELECT * FROM child ORDER BY id")).rows,
+    [
+      { id: 10, parent_id: 1, label: "remove-child" },
+      { id: 20, parent_id: 2, label: "keep-child" },
+    ],
+  );
+  assert.deepEqual(
+    (await db.query("SELECT * FROM grandchild ORDER BY id")).rows,
+    [
+      { id: 100, child_id: 10, label: "remove-grandchild" },
+      { id: 200, child_id: 20, label: "keep-grandchild" },
+    ],
+  );
+});
+
+test("managed PostgreSQL binds tenant RLS to a server setting and rejects cross-tenant recovery", async (t) => {
+  const db = new PGlite();
+  t.after(() => db.close());
+  await db.exec(
+    "CREATE TABLE account(id integer PRIMARY KEY, tenant_id text NOT NULL, balance integer NOT NULL); INSERT INTO account VALUES(1,'tenant-a',10),(2,'tenant-b',20); ALTER TABLE account ENABLE ROW LEVEL SECURITY; CREATE POLICY tenant_scope ON account USING (tenant_id=current_setting('void.tenant_id',true)) WITH CHECK (tenant_id=current_setting('void.tenant_id',true))",
+  );
+  await db.query("SELECT set_config('void.tenant_id','tenant-a',false)");
+  const options: ManagedPostgresOptions = {
+    workspace: "test",
+    schema: "void_recovery",
+    tenant: { column: "tenant_id", setting: "void.tenant_id" },
+    tables: [
+      {
+        table: "public.account",
+        primaryKey: ["id"],
+        columns: ["balance"],
+      },
+    ],
+    connect: async () => ({
+      query: async <T>(sql: string, params?: readonly unknown[]) =>
+        (await db.query<T>(sql, params ? [...params] : [])).rows,
+      close: async () => {},
+    }),
+  };
+  await installManagedPostgres(options);
+  const adapter = managedPostgresAdapter(options);
+  const input = {
+    table: "public.account",
+    action: "update",
+    key: { id: 1 },
+    values: { balance: 11 },
+  };
+  const observation = await adapter.preflight(input);
+  const prepared = await adapter.prepare(input, observation, "tenant");
+  const outcome = await adapter.execute(input, prepared, "tenant");
+  assert.equal(
+    (await db.query<{ balance: number }>("SELECT balance FROM account WHERE id=1"))
+      .rows[0]?.balance,
+    11,
+  );
+  assert.equal(
+    (await db.query<{ balance: number }>("SELECT balance FROM account WHERE id=2"))
+      .rows[0]?.balance,
+    20,
+  );
+  await assert.rejects(
+    adapter.preflight({
+      ...input,
+      key: { id: 2 },
+      values: { balance: 21 },
+    }),
+    /tenant|scope/i,
+  );
+  await db.query("SELECT set_config('void.tenant_id','tenant-b',false)");
+  await assert.rejects(
+    adapter.recover(prepared, outcome, "tenant-recovery"),
+    /tenant|scope/i,
+  );
+  await db.query("SELECT set_config('void.tenant_id','tenant-a',false)");
+  assert.equal(
+    (await adapter.recover(prepared, outcome, "tenant-recovery")).status,
+    "restored",
   );
 });

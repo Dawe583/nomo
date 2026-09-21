@@ -29,15 +29,20 @@ and client process kill. Dependency: R02 stable. Size: XL.
 ### G-02 R04: PostgreSQL certification tail
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R04.
-Missing: cascade and tenant certification, schema migrations, client
-process kill during dispatch, and network partition behavior.
-Evidence: `docs/REVERSE-UPGRADE-PROGRESS.md` lists exactly these four as
-the remaining R04 gates; `scripts/src/verify-managed-postgres.mjs` covers
-restart, terminated backends and deadlock only.
-Minimum change: one executable test per gate against a disposable server,
-plus a migration path for the metadata schema (`docs/MANAGED-RECOVERY.md`
-states there is no released upgrade migration). Dependency: R02, R03.
-Size: XL. `[EXT]` needs a disposable isolated PostgreSQL target.
+Partial evidence now exists: the managed adapter has explicit v1→v2
+metadata migration, configured ON DELETE CASCADE capture/restore, and
+server-bound tenant RLS checks. The isolated verifier also covers terminated
+PostgreSQL backends and client SIGKILL after forward and recovery COMMIT.
+Remaining: real-server cascade/tenant/migration certification, an in-flight
+client-kill case, and physical network-partition behavior.
+Evidence: `packages/connectors/src/postgres/managed.test.ts` is PGlite
+fixture coverage; `scripts/src/verify-managed-postgres.mjs` is the isolated
+Neon verifier and emits `networkPartitionTest: false`.
+Minimum change: keep fixture evidence separate from certification, add one
+executable real-server gate per remaining case, and document the explicit
+migration command path. Dependency: R02, R03.
+Size: XL. `[EXT]` needs a disposable isolated PostgreSQL target and a
+reproducible network-fault harness.
 
 ### G-03 R06: planner selection, leases, fencing, remote job surfaces
 

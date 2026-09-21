@@ -40,22 +40,24 @@ that key across restarts. The executor creates persistent local signing keys in
 `stateDir/keys`; back them up with the vault and journal. Do not commit any keys,
 connection strings, snapshots or state directories.
 
-Explicit installation adds version 1 metadata tables and a revision trigger to
-configured tables. Installation now records `void_recovery.meta.version = 1`
-and reports installed tables plus that version. Use the operator role intended
-for installation:
+Explicit installation adds version 2 metadata tables and a revision trigger
+to configured tables. Installation records
+`void_recovery.meta.version = 2` and reports installed tables plus that
+version:
 
 ```sh
 node packages/cli/bin/void.mjs recovery install --config recovery.json
 ```
 
-Use a constrained execution role in deployment. PostgreSQL metadata currently
-contains plaintext capture and outcome data and must be protected accordingly.
-There is no released upgrade migration for the database metadata layout.
-Before installing over an older experimental database, inspect it with
-`inspectManagedPostgres`: a complete version 1 schema may continue, but a
-legacy schema without version metadata or any other version needs manual review
-and an explicit reviewed migration; install will not silently change it.
+Use the operator role intended for installation. Existing version 1 metadata
+must be migrated explicitly:
+
+```sh
+node packages/cli/bin/void.mjs recovery migrate --config recovery.json
+```
+
+Normal tool calls never change metadata. Legacy schemas without version
+metadata or with another version require manual review and fail closed.
 
 ## Capacity and migration
 

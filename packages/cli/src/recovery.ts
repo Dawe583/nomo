@@ -17,6 +17,7 @@ import {
 import {
   managedPostgresAdapter,
   installManagedPostgres,
+  migrateManagedPostgres,
   type ManagedPostgresOptions,
 } from "../../connectors/src/postgres/managed.ts";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -58,6 +59,7 @@ export async function runRecoveryCommand(
   if (
     ![
       "install",
+      "migrate",
       "inspect",
       "execute",
       "plan",
@@ -72,7 +74,7 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery <install|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
+      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery <install|migrate|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -113,9 +115,18 @@ export async function runRecoveryCommand(
         workspace: config.workspace,
         tables: installed.installedTables,
         metadataVersion: installed.metadataVersion,
-        migration: "v1-install-only; legacy metadata has no automatic upgrade path",
+        migration:
+          "fresh-install-v2; existing metadata requires explicit reviewed migration",
       }),
     );
+    return 0;
+  }
+  if (action === "migrate") {
+    if (!options)
+      throw new Error(
+        "Filesystem and Git do not use PostgreSQL metadata migration.",
+      );
+    print(JSON.stringify(await migrateManagedPostgres(options)));
     return 0;
   }
   if (action !== "serve" && !args.get("--input"))

@@ -37,8 +37,7 @@ by the existence of a prototype or a narrow passing test.
 | R01     | Signed local journal, immutable operation identity, unknown results, adapter reconciliation                                                                            | Cloud transactional journal, full persistence fault matrix                                                                             |
 | R02     | Shared runtime used by managed CLI/MCP, TS SDK and local workbench document writes/Undo                                                                                | Legacy proxy and general external-tool cloud conformance                                                                               |
 | R03     | Encrypted durable artifacts, reserved capture/outcome/recovery capacity, shared quota, legacy reads, key rotation                                                      | Streaming, pin lifecycle, GC, retention, quota migration                                                                               |
-| R04     | Structured row mutations, revision trigger, atomic outbox, verified restore, real prepare serialization conflict, managed deadlock and terminated database sessions    | Cascade/tenant certification, migration, client process kill and network partition                                                     |
-| R05     | Cooperative filesystem create/write/delete on Unix/Windows and POSIX rename; POSIX structured Git worktree and index create-by-write/write/delete/rename/stage/unstage | Managed commit/revert and remote recovery; Windows Git; noncooperative writer boundary; Windows filesystem rename and mode restoration |
+| R04     | Structured row mutations, revision trigger, atomic outbox, verified restore, real prepare serialization conflict, managed deadlock, terminated sessions, client SIGKILL after COMMIT, cascade/tenant/migration fixture paths | Physical network partition, in-flight client kill, and real-server certification of cascade, tenant and migration                       |
 | R06     | Persistent run and explicit-list plans, full boundary digest, checkpoints, paused/unknown/conflict states and one active workspace job                                 | Dependency/time selection, durable leases and fencing, MCP/cloud job surfaces                                                          |
 | R07     | Existing taint modules retained                                                                                                                                        | Runtime provenance and dependency-aware recovery integration                                                                           |
 | R08     | Existing legacy S3 retained                                                                                                                                            | Managed S3/versioning, Supabase-specific capability tests                                                                              |
@@ -67,11 +66,13 @@ fencing, cloud MCP jobs and cross-agent provenance remain excluded.
 
 ## Next implementation sequence
 
-1. Complete the remaining client-process crash and persistence fault cases before
-   promoting M1 from verified subset to release milestone. Real database-session
-   termination and a managed-dispatch deadlock now have executable coverage.
+1. Keep M1 at verified-subset status. The real verifier now covers backend
+   termination at commit boundaries, client SIGKILL after forward/recovery
+   COMMIT, and managed deadlock. Cascade, tenant and metadata migration have
+   positive PGlite fixture coverage but are not real-server certification.
 2. Cloud document integration now uses the shared runtime in one database
    transaction. Extend conformance before covering external cloud tools.
+
 3. Design and verify an append-only managed commit/revert slice. It must not
    reset or force push shared history, and it needs separate remote and process
    failure evidence before any broader Git claim.
@@ -139,13 +140,13 @@ unknown without redispatch when the managed transaction loses, or successful
 execution and verified Undo when the competing transaction loses. This does not
 claim that both victim selections were observed in one run.
 
-Validation: `scripts/src/verify-managed-postgres.mjs` passed all thirteen reported
-checks against the isolated database; syntax and diff checks passed. The fixture
-removes its owned schemas and releases terminated clients without retaining error
-listeners. No production data or credentials were used by this verifier. This
-is connection-fault coverage, not a physical network partition, PostgreSQL server
-crash, client SIGKILL test, or completion of M1. Shared-runtime cloud integration
-remains the next feature work; the deployed web login is unchanged.
+Validation: `scripts/src/verify-managed-postgres.mjs` covers the isolated
+database scenarios recorded by its JSON report, including backend termination,
+client SIGKILL after forward/recovery COMMIT, and managed deadlock. No
+production data or credentials were used. This remains connection-fault
+coverage, not physical network partition behavior, an in-flight client kill,
+PostgreSQL server crash, or completion of M1. Shared-runtime cloud integration
+remains separate feature work; the deployed web login is unchanged.
 
 ### Cloud documents and local Prime execution, 2026-09-12
 

@@ -11,7 +11,7 @@ not a declaration that all work packages in REVERSE-TOOL-UPGRADE-PLAN are done.
 | Local encrypted snapshots                                   | Implemented subset          | AES-256-GCM, workspace AAD, digest, durable reserved slots, shared 1 GiB logical quota; legacy reads                                                                                                                          | `packages/runtime/src/{runtime,adversarial,reserved-vault}.test.ts`                  |
 | Signed lifecycle / idempotence                              | Implemented subset          | Local single writer; corruption fails closed; OS-backed local writer mutex, SIGKILL recovery                                                                                                                                  | Same suites                                                                          |
 | Managed MCP tools                                           | Implemented subset          | Local stdio, operator policy, configured workspace and agent identity                                                                                                                                                         | `packages/cli/src/recovery-mcp.test.ts` uses official MCP client/in-memory transport |
-| Real PostgreSQL                                             | Verified subset             | Isolated Neon database; separate connections, ABA, restart, terminated backend sessions and managed deadlock                                                                                                                  | `scripts/src/verify-managed-postgres.mjs`                                            |
+| Real PostgreSQL                                             | Verified subset             | Isolated Neon database; separate connections, ABA, restart, terminated backend sessions, managed deadlock, client SIGKILL after forward/recovery COMMIT, and explicit migration/cascade/tenant fixture paths | `scripts/src/verify-managed-postgres.mjs`, `packages/connectors/src/postgres/managed.test.ts` |
 | Legacy PostgreSQL/S3 replay                                 | Existing separate path      | Earlier capture/apply contract; no automatic managed-runtime guarantees                                                                                                                                                       | `REVERSE-ENGINE-VALIDATION.md`                                                       |
 | Local workbench documents                                   | Shared runtime integrated   | Writes, deletes, branch copies and operator Undo; legacy signed history preserved                                                                                                                                             | `packages/workbench/src/managed-documents.test.ts`                                   |
 | Cloud workbench documents                                   | Shared runtime integrated   | Atomic SQL document/evidence transaction, reserved encrypted artifacts, one retained run/explicit operation-list job with digest-bound approval/apply, signed plan/checkpoint history and blocked forward writes; resource/provenance ordering, scheduler/leases/fencing/MCP surfaces and external effects remain excluded | `cloud/recovery.test.mjs`, `cloud/gui.test.mjs`                                      |
@@ -24,24 +24,27 @@ not a declaration that all work packages in REVERSE-TOOL-UPGRADE-PLAN are done.
 
 ## PostgreSQL limitations
 
-The initial adapter rejects inbound foreign keys, generated/identity columns,
-additional user triggers, rules, RLS, partitioned relations and disabled or
-substituted revision triggers. Those refusal paths are covered by offline
-adversarial tests. It does not support arbitrary SQL, bulk predicates, DDL,
-sequence restoration or external observers. Real SERIALIZABLE conflict during
-managed prepare is tested. The isolated verifier includes a real lock cycle
-during managed dispatch and checks the safe outcome for whichever transaction
-PostgreSQL selects as victim. It also terminates its own backend before/after
-execution COMMIT and after Undo COMMIT, verifying row state, receipt counts,
-reconciliation and no redispatch. Cascade execution, tenant-scoped RLS
-certification, client process death and physical network partition scenarios
-remain release gates.
+The adapter supports explicitly configured ordinary tables. It rejects
+generated/identity columns, additional user triggers, rules, partitioned
+relations and disabled or substituted revision triggers. Tenant-scoped tables
+require server-bound RLS and a policy containing the configured setting and
+column. Deletes with inbound foreign keys require every cascade table to be
+configured and use `ON DELETE CASCADE`. These refusal paths and positive
+cascade/tenant paths are covered by offline PGlite tests.
+
+The adapter does not support arbitrary SQL, bulk predicates, DDL, sequence
+restoration or external observers. Real SERIALIZABLE conflict during managed
+prepare is tested. The isolated verifier includes a real lock cycle during
+managed dispatch, terminates its own backend before/after execution COMMIT and
+after Undo COMMIT, and kills a client worker after forward/recovery COMMIT.
+Physical network partition and an in-flight client kill remain release gates.
 
 Installation creates a configured metadata schema and row revision triggers.
-It is an explicit operator command, never automatic on connection. Metadata
-contains before images and outcomes in PostgreSQL; protect its privileges and
-backups as sensitive data. Local artifact encryption does not encrypt this
-transactional database evidence.
+Fresh installation writes metadata version 2. Existing version 1 metadata needs
+an explicit reviewed `migrateManagedPostgres` call; tool execution never
+performs migration. Metadata contains before images and outcomes in PostgreSQL;
+protect its privileges and backups as sensitive data. Local artifact encryption
+does not encrypt this transactional database evidence.
 
 ## Verification interpretation
 
