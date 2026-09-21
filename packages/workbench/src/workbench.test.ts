@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises';
-import { DEFAULT_MODEL_ID, OPENCODE_ZEN_URL } from './provider-defaults.ts';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { DEFAULT_MODEL_ID, DEFAULT_PROVIDER_ID, NVIDIA_URL } from './provider-defaults.ts';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -141,57 +141,53 @@ test('chat catalog excludes embedding, image and video models', async () => {
   assert.deepEqual((await provider.models()).map(model=>model.id),['chat','compatible-provider-model']);
 });
 
-test('OpenCode Zen is the default provider when its key is in the environment', async t => {
-  const home = await mkdtemp(join(tmpdir(), 'void-zen-env-home-'));
-  const dir = await mkdtemp(join(tmpdir(), 'void-zen-env-data-'));
-  const zenKey = 'zen-env-key-fixture';
+test('NVIDIA is the default provider when its key is in the environment', async t => {
+  const home = await mkdtemp(join(tmpdir(), 'void-nvidia-env-home-'));
+  const dir = await mkdtemp(join(tmpdir(), 'void-nvidia-env-data-'));
+  const nvidiaKey = 'nvapi-fixture-key';
   let seenUrl = '';
   let seenAuth = '';
   const fetcher: typeof fetch = async (url, options) => {
     seenUrl = String(url);
     seenAuth = (options?.headers as Record<string, string>)?.authorization ?? '';
-    return Response.json({ data: [{ id: 'zen-test-model' }] });
+    return Response.json({ data: [{ id: DEFAULT_MODEL_ID, name: 'GLM 5.3 Flash' }] });
   };
-  const workbench = new Workbench({ HOME: home, VOID_DATA_DIR: dir, OPENCODE_ZEN_API_KEY: zenKey }, fetcher);
+  const workbench = new Workbench({ HOME: home, VOID_DATA_DIR: dir, NVIDIA_API_KEY: nvidiaKey }, fetcher);
   t.after(async () => { workbench.close(); await rm(home, { recursive: true, force: true }); await rm(dir, { recursive: true, force: true }); });
   const state = await workbench.providerState();
-  assert.equal(state.providerId, 'opencode-zen');
+  assert.equal(state.providerId, DEFAULT_PROVIDER_ID);
   assert.equal(state.connected, true);
-  assert.equal(state.defaultModel, 'zen-test-model');
-  assert.ok(seenUrl.startsWith(OPENCODE_ZEN_URL), seenUrl);
-  assert.ok(seenAuth.includes(zenKey), seenAuth);
-  assert.ok(!JSON.stringify(state).includes(zenKey));
+  assert.equal(state.defaultModel, DEFAULT_MODEL_ID);
+  assert.ok(seenUrl.startsWith(NVIDIA_URL), seenUrl);
+  assert.equal(seenAuth, `Bearer ${nvidiaKey}`);
+  assert.ok(!JSON.stringify(state).includes(nvidiaKey));
 });
 
-test('OpenCode Zen falls back to the local opencode auth file for its key', async t => {
-  const home = await mkdtemp(join(tmpdir(), 'void-zen-file-home-'));
-  const dir = await mkdtemp(join(tmpdir(), 'void-zen-file-data-'));
-  const fileKey = 'zen-auth-file-key-fixture';
-  await mkdir(join(home, '.local', 'share', 'opencode'), { recursive: true });
-  await writeFile(join(home, '.local', 'share', 'opencode', 'auth.json'), JSON.stringify({ opencode: { type: 'api', key: fileKey } }));
-  let seenAuth = '';
-  const fetcher: typeof fetch = async (_url, options) => {
-    seenAuth = (options?.headers as Record<string, string>)?.authorization ?? '';
-    return Response.json({ data: [{ id: 'zen-test-model' }] });
-  };
-  const workbench = new Workbench({ HOME: home, VOID_DATA_DIR: dir }, fetcher);
+test('legacy OpenCode credentials do not override the NVIDIA default', async t => {
+  const home = await mkdtemp(join(tmpdir(), 'void-legacy-provider-home-'));
+  const dir = await mkdtemp(join(tmpdir(), 'void-legacy-provider-data-'));
+  let calls = 0;
+  const fetcher: typeof fetch = async () => { calls++; throw new Error('must not dispatch anything'); };
+  const workbench = new Workbench({ HOME: home, VOID_DATA_DIR: dir, OPENCODE_ZEN_API_KEY: 'legacy-key' }, fetcher);
   t.after(async () => { workbench.close(); await rm(home, { recursive: true, force: true }); await rm(dir, { recursive: true, force: true }); });
   const state = await workbench.providerState();
-  assert.equal(state.providerId, 'opencode-zen');
-  assert.equal(state.connected, true);
-  assert.ok(seenAuth.includes(fileKey), seenAuth);
-  assert.ok(!JSON.stringify(state).includes(fileKey));
+  assert.equal(state.providerId, DEFAULT_PROVIDER_ID);
+  assert.equal(state.connected, false);
+  assert.equal(state.setupRequired, true);
+  assert.equal(calls, 0);
 });
 
-test('without any Zen key the workbench configures no provider and dispatches nothing', async t => {
-  const home = await mkdtemp(join(tmpdir(), 'void-zen-empty-home-'));
-  const dir = await mkdtemp(join(tmpdir(), 'void-zen-empty-data-'));
+test('without NVIDIA key the workbench exposes setup state and dispatches nothing', async t => {
+  const home = await mkdtemp(join(tmpdir(), 'void-nvidia-empty-home-'));
+  const dir = await mkdtemp(join(tmpdir(), 'void-nvidia-empty-data-'));
   let calls = 0;
   const fetcher: typeof fetch = async () => { calls++; throw new Error('must not dispatch anything'); };
   const workbench = new Workbench({ HOME: home, VOID_DATA_DIR: dir }, fetcher);
   t.after(async () => { workbench.close(); await rm(home, { recursive: true, force: true }); await rm(dir, { recursive: true, force: true }); });
   const state = await workbench.providerState();
   assert.equal(state.connected, false);
-  assert.equal(state.providerId, 'custom');
+  assert.equal(state.providerId, DEFAULT_PROVIDER_ID);
+  assert.equal(state.defaultModel, DEFAULT_MODEL_ID);
+  assert.equal(state.setupRequired, true);
   assert.equal(calls, 0);
 });

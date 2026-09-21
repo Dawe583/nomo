@@ -1,10 +1,17 @@
 /** Public connection metadata only. Credentials belong to server-side storage. */
-export const DEFAULT_PROVIDER_ID = "opencode-zen";
-export const DEFAULT_MODEL_ID = "muse-spark-1.3-contributor-free";
-export const DEFAULT_MODEL_NAME = "Muse Spark 1.3 Contributor (free)";
+export const DEFAULT_PROVIDER_ID = "nvidia";
+export const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
+export const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
+export const NVIDIA_URL = "https://integrate.api.nvidia.com/v1";
 export const TOKENROUTER_URL = "https://api.tokenrouter.com/v1";
 export const OPENCODE_ZEN_URL = "https://opencode.ai/zen/v1";
 export const PROVIDER_PRESETS = [
+  {
+    id: "nvidia",
+    name: "NVIDIA NIM",
+    baseUrl: NVIDIA_URL,
+    kind: "compatible",
+  },
   {
     id: "opencode-zen",
     name: "OpenCode Zen",

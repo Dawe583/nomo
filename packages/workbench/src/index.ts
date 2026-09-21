@@ -1,7 +1,7 @@
 import { toolCatalog } from './tool-catalog.ts';
 import { managedDocumentAdapter } from './managed-documents.ts';
 import { recoveryRuntime, localOperationJournal, digest, type Json } from '../../runtime/src/index.ts';
-import { DEFAULT_MODEL_ID, TOKENROUTER_URL, OPENCODE_ZEN_URL, PROVIDER_PRESETS } from './provider-defaults.ts';
+import { DEFAULT_MODEL_ID, DEFAULT_PROVIDER_ID, NVIDIA_URL, TOKENROUTER_URL, PROVIDER_PRESETS } from './provider-defaults.ts';
 import { documentView, sessionPatch, preferencePatch, page, filterRows, providerFailure, connectorInput, publicConnector } from './gui.ts';
 import { LocalStorage } from './storage.ts';
 import { catalog as mcpCatalog, rpc, validateEndpoint, type McpTool, type McpConfig } from './mcp.ts';
@@ -16,10 +16,9 @@ import { loadPolicy } from '../../policy/src/rules.ts';
 import { decide } from '../../policy/src/decide.ts';
 import { setTimeout as delay } from 'node:timers/promises';
 import { randomUUID } from 'node:crypto';
-import { constants } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { mkdtemp, rm, writeFile, open } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { attestLedger, type AttestationDocument } from '../../ledger/src/attest.ts';
 import { createVoidClient, type VoidClient } from '../../sdk/src/client.ts';
 import { CompatibleProvider, ProviderRequestError, normalizeProviderConfig, type Model, type ModelMessage, type ProviderConfig } from './provider.ts';
@@ -48,7 +47,7 @@ export class Workbench {
   private provider: CompatibleProvider | undefined;
   private readonly storage: LocalStorage;
   private hasState = false;
-  private preferences: Record<string, string> = { defaultProvider: 'opencode-zen', defaultModel: DEFAULT_MODEL_ID, locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
+  private preferences: Record<string, string> = { defaultProvider: DEFAULT_PROVIDER_ID, defaultModel: DEFAULT_MODEL_ID, locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
   private requests: Record<string, { digest: string; sessionId: string }> = {};
   private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;
@@ -115,53 +114,23 @@ export class Workbench {
     try { this.persist(); } catch (error) { Object.assign(this, previous); throw error; }
     return models;
   }
-  private async getOpenCodeZenKey(): Promise<string | undefined> {
-    // Environment variable takes precedence.
-    if (this.env.OPENCODE_ZEN_API_KEY) return this.env.OPENCODE_ZEN_API_KEY;
-    // Fall back to the local opencode auth file, read with the same hardened
-    // rules as desktop setup: no symlinks, bounded size, no secrets echoed.
-    try {
-      const authPath = join(this.env.HOME ?? homedir(), '.local', 'share', 'opencode', 'auth.json');
-      const file = await open(authPath, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
-      try {
-        const stat = await file.stat();
-        if (!stat.isFile() || stat.size > 1_048_576) return undefined;
-        const buffer = Buffer.alloc(1_048_577);
-        let length = 0;
-        while (length < buffer.length) {
-          const { bytesRead } = await file.read(buffer, length, buffer.length - length, null);
-          if (!bytesRead) break;
-          length += bytesRead;
-        }
-        if (length > 1_048_576) return undefined;
-        const text = buffer.subarray(0, length).toString('utf8');
-        const data = JSON.parse(text);
-        if (data.opencode && typeof data.opencode.key === 'string' && data.opencode.key.length > 0) {
-          return data.opencode.key;
-        }
-      } finally {
-        await file.close();
-      }
-    } catch {
-      // File absent, unreadable or malformed; no Zen key.
-    }
-    return undefined;
-  }
   async providerState() {
-    // OpenCode Zen is the default provider. Its key comes from the
-    // environment or the local opencode auth file; only fall through to
-    // TokenRouter/OpenRouter when no Zen key is available.
-    if (!this.provider && !this.ignoreEnvironment) {
-      const zenKey = await this.getOpenCodeZenKey();
-      if (zenKey) {
-        await this.configure({ baseUrl: OPENCODE_ZEN_URL, apiKey: zenKey });
-      } else if (this.env.TOKENROUTER_API_KEY) {
-        await this.configure({ baseUrl: TOKENROUTER_URL, apiKey: this.env.TOKENROUTER_API_KEY });
-      } else if (this.env.OPENROUTER_API_KEY) {
-        await this.configure({ baseUrl: this.env.VOID_PROVIDER_URL ?? 'https://openrouter.ai/api/v1', apiKey: this.env.OPENROUTER_API_KEY });
-      }
+    if (!this.provider && !this.ignoreEnvironment && this.env.NVIDIA_API_KEY) {
+      await this.configure({ baseUrl: NVIDIA_URL, apiKey: this.env.NVIDIA_API_KEY });
     }
-    return { connected: this.provider !== undefined, models: this.catalog, keyStorage: this.keyStorage, baseUrl: this.config?.baseUrl, kind: this.config?.kind, profiles: Object.keys(this.profiles), presets: PROVIDER_PRESETS, providerId: PROVIDER_PRESETS.find(p => p.baseUrl === this.config?.baseUrl)?.id ?? 'custom', defaultModel: this.preferences.defaultModel, upstreamConfigured: true };
+    return {
+      connected: this.provider !== undefined,
+      setupRequired: this.provider === undefined && DEFAULT_PROVIDER_ID === 'nvidia',
+      models: this.catalog,
+      keyStorage: this.keyStorage,
+      baseUrl: this.config?.baseUrl,
+      kind: this.config?.kind,
+      profiles: Object.keys(this.profiles),
+      presets: PROVIDER_PRESETS,
+      providerId: PROVIDER_PRESETS.find(p => p.baseUrl === this.config?.baseUrl)?.id ?? DEFAULT_PROVIDER_ID,
+      defaultModel: this.preferences.defaultModel,
+      upstreamConfigured: true,
+    };
   }
   clearProvider(): void { this.ignoreEnvironment = true; this.provider = undefined; if (this.config) delete this.profiles[this.config.baseUrl]; this.config = undefined; this.catalog = []; this.persist(); }
   list(): readonly SessionView[] { return [...this.sessions.values()].map(session => ({ ...session.view, events: [] })); }

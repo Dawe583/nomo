@@ -4,8 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useApi, useText } from "./ui";
 import { DESKTOP_DOWNLOADS } from "./desktop-downloads";
-const DEFAULT_MODEL_ID = "muse-spark-1.3-contributor-free";
-const DEFAULT_MODEL_NAME = "Muse Spark 1.3 Contributor (free)";
+const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
+const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
+const DEFAULT_PROVIDER_URL = "https://integrate.api.nvidia.com/v1";
 export function Settings({
   appearance,
   setAppearance,
@@ -22,7 +23,7 @@ export function Settings({
   const provider = useApi("/api/provider"),
     preferences = useApi("/api/preferences"),
     agents = useApi("/api/agents");
-  const [baseUrl, setBaseUrl] = useState("https://api.tokenrouter.com/v1"),
+  const [baseUrl, setBaseUrl] = useState(DEFAULT_PROVIDER_URL),
     [kind, setKind] = useState("compatible"),
     [key, setKey] = useState(""),
     [error, setError] = useState<unknown>(),
@@ -204,7 +205,15 @@ export function Settings({
               : t("Nepřipojeno", "Disconnected")
           }
         />
-        <p>{provider.data?.baseUrl}</p>
+        <p>{provider.data?.baseUrl ?? DEFAULT_PROVIDER_URL}</p>
+        {provider.data?.setupRequired && (
+          <p className="notice">
+            {t(
+              "NVIDIA NIM čeká na NVIDIA_API_KEY. Hosted API má účetní trial/free kvótu; nejde o garantované neomezené bezplatné použití.",
+              "NVIDIA NIM needs NVIDIA_API_KEY. The hosted API may provide an account-scoped trial/free quota; this is not guaranteed unlimited free usage.",
+            )}
+          </p>
+        )}
         <p className="muted">
           {t("Výchozí model", "Default model")}:{" "}
           {(preferences.data?.preferences?.defaultModel ?? DEFAULT_MODEL_ID) === DEFAULT_MODEL_ID
