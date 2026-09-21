@@ -100,8 +100,6 @@ Audit target: `packages/registry/src/registry.ts` after `migrate-batch2` reporte
 | okta.user.delete | yes | 1 | none | none |
 | entra.group.member.add | yes | 2 | entra.group.data_access, entra.group.privileged_role | none |
 | auth0.client_secret.rotate | yes | 2 | auth0.application.two_active_secrets, auth0.secret.prior_captured | none |
-| openai.file.delete | yes | 2 | openai.file.source_exists | none |
-| openai.fine_tune.create | yes | 2 | openai.fine_tune.status | none |
 | vectordb.namespace.delete | yes | 2 | vectordb.embedding_model.pinned, vectordb.source_documents.pinned | none |
 | fs.file.write | yes | 3 | fs.path.existed, fs.shadow.captured | case 1 mismatch |
 | fs.path.remove_recursive | yes | 2 | fs.tree.git_clean | none |

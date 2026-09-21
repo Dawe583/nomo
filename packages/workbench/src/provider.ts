@@ -9,7 +9,11 @@ export class ProviderRequestError extends Error {
     this.status = status; this.code = code; this.retryAfter = retryAfter;
   }
 }
-export type ProviderConfig = { readonly baseUrl: string; readonly apiKey: string; readonly kind?: "openai" | "anthropic" };
+export type ProviderKind = "compatible" | "anthropic";
+export type ProviderConfig = { readonly baseUrl: string; readonly apiKey: string; readonly kind?: ProviderKind };
+export function normalizeProviderConfig(config: { readonly baseUrl: string; readonly apiKey: string; readonly kind?: string }): ProviderConfig {
+  return { baseUrl: config.baseUrl, apiKey: config.apiKey, kind: config.kind === "anthropic" ? "anthropic" : "compatible" };
+}
 export type Model = { readonly id: string; readonly name: string; readonly contextWindow?: number; readonly inputPrice?: string; readonly outputPrice?: string; readonly capabilities?: readonly string[] };
 export type ModelMessage = { readonly role: 'system' | 'user' | 'assistant' | 'tool'; readonly content: string | null; readonly tool_calls?: readonly ToolCall[]; readonly tool_call_id?: string };
 export type ToolCall = { readonly id: string; readonly type: 'function'; readonly function: { readonly name: string; readonly arguments: string } };
@@ -20,8 +24,10 @@ export class CompatibleProvider {
   private readonly config: ProviderConfig;
   private readonly request: typeof fetch;
   constructor(config: ProviderConfig, request: typeof fetch = fetch) {
-    this.config = config; this.request = request;
-    this.base = new URL(config.baseUrl.endsWith('/') ? config.baseUrl : `${config.baseUrl}/`);
+    this.config = normalizeProviderConfig(config); this.request = request;
+    this.base = new URL(this.config.baseUrl.endsWith('/') ? this.config.baseUrl : `${this.config.baseUrl}/`);
+    const hostname = this.base.hostname.replace(/\.+$/, "").toLowerCase();
+    if (hostname === "openai.com" || hostname.endsWith(".openai.com")) throw new Error("Direct OpenAI provider URLs are not supported.");
     if (this.base.protocol !== 'https:' && !(this.base.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(this.base.hostname))) throw new Error('Providers require HTTPS, or loopback HTTP for a local model.');
     if (this.base.username || this.base.password || this.base.search || this.base.hash) throw new Error('Provider URL cannot contain credentials or query parameters.');
   }
@@ -33,7 +39,7 @@ export class CompatibleProvider {
   async complete(model: string, messages: readonly ModelMessage[], tools: readonly unknown[], signal: AbortSignal, onDelta?: (text: string) => void | Promise<void>): Promise<ModelReply> {
     if (this.config.kind === 'anthropic') return this.anthropic(model, messages, tools, signal);
     signal = AbortSignal.any([signal, AbortSignal.timeout(60000)]);
-    const body = { model, messages, ...(tools.length ? { tools } : {}), ...(this.base.hostname === 'api.openai.com' ? { max_completion_tokens: 4096 } : { max_tokens: 4096 }), stream: !!onDelta, ...(onDelta ? { stream_options: { include_usage: true } } : {}) };
+    const body = { model, messages, ...(tools.length ? { tools } : {}), max_tokens: 4096, stream: !!onDelta, ...(onDelta ? { stream_options: { include_usage: true } } : {}) };
     let response: Response;
     for (let attempt = 0; ; attempt++) {
       try { response = await this.response('chat/completions', body, signal); break; }

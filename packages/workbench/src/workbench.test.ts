@@ -1,23 +1,46 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises';
-import { OPENCODE_ZEN_URL } from './provider-defaults.ts';
+import { DEFAULT_MODEL_ID, OPENCODE_ZEN_URL } from './provider-defaults.ts';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Workbench } from './index.ts';
 import { CompatibleProvider } from './provider.ts';
+import { LocalStorage } from './storage.ts';
 import { readLedgerFeed } from '../../ledger/src/feed.ts';
 
 const secret = 'fixture-provider-secret';
 const reply = (body: unknown) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 
-test('provider validates transport and never echoes upstream error bodies', async () => {
-  assert.throws(() => new CompatibleProvider({ baseUrl: 'http://remote.test/v1', apiKey: secret }), /HTTPS/);
+test('provider rejects direct OpenAI hosts and never echoes upstream error bodies', async () => {
+  for (const baseUrl of ['https://openai.com/v1', 'https://api.openai.com/v1', 'https://sandbox.api.openai.com./v1'])
+    assert.throws(() => new CompatibleProvider({ baseUrl, apiKey: secret }), /Direct OpenAI provider URLs are not supported/);
   const provider = new CompatibleProvider({ baseUrl: 'https://provider.test/v1', apiKey: secret }, async () => new Response(secret, { status: 401 }));
   await assert.rejects(provider.models(), error => error instanceof Error && !error.message.includes(secret) && error.message.includes('401'));
+});
+
+test('migrates legacy generic provider state to compatible and restores the neutral default', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'void-provider-migration-'));
+  t.after(async () => { await rm(dir, { recursive: true, force: true }); });
+  new LocalStorage(dir).save({
+    preferences: { defaultModel: 'openai-fast' },
+    config: { baseUrl: 'https://provider.test/v1', apiKey: secret, kind: 'openai' },
+    profiles: { 'https://provider.test/v1': { baseUrl: 'https://provider.test/v1', apiKey: secret, kind: 'openai' } },
+    catalog: [{ id: DEFAULT_MODEL_ID, name: DEFAULT_MODEL_ID }],
+    connectors: [], documents: {}, evidence: {}, sessions: [],
+  });
+  const workbench = new Workbench({ VOID_DATA_DIR: dir });
+  assert.equal((await workbench.providerState()).kind, 'compatible');
+  assert.equal((await workbench.providerState()).defaultModel, DEFAULT_MODEL_ID);
+  workbench.close();
+  const saved = new LocalStorage(dir).read<{ preferences: { defaultModel: string }; config: { kind: string }; profiles: Record<string, { kind: string }> }>()!;
+  assert.equal(saved.preferences.defaultModel, DEFAULT_MODEL_ID);
+  assert.equal(saved.config.kind, 'compatible');
+  assert.equal(saved.profiles['https://provider.test/v1']?.kind, 'compatible');
+  assert.doesNotMatch(JSON.stringify(saved), /"openai"/);
 });
 
 test('model tool calls cross a real VOID proxy and produce a ledger', async t => {

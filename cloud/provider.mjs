@@ -1,30 +1,31 @@
 import { getVercelOidcToken } from "@vercel/oidc";
 import { CompatibleProvider } from "../packages/workbench/src/provider.ts";
+import { normalizeProviderConfig } from "../packages/workbench/src/provider.ts";
 import {
   DEFAULT_MODEL_ID,
   DEFAULT_PROVIDER_ID,
   TOKENROUTER_URL,
   PROVIDER_PRESETS,
 } from "../packages/workbench/src/provider-defaults.ts";
-import { read, decrypt } from "./store.mjs";
+import { read, write, encrypt, decrypt } from "./store.mjs";
 
 async function configuration(snapshot) {
   const config = snapshot ?? (await read("provider"));
   if (config?.disabled) throw new Error("Connect a provider first.");
-  if (config?.secret) return decrypt(config.secret);
+  if (config?.secret) return normalizeProviderConfig(decrypt(config.secret));
   // Explicit legacy snapshots retain their provider. New workspaces use TokenRouter.
   if (config?.mode === "gateway")
     return {
       baseUrl: "https://ai-gateway.vercel.sh/v1",
       apiKey: process.env.AI_GATEWAY_API_KEY ?? (await getVercelOidcToken()),
-      kind: "openai",
+      kind: "compatible",
     };
   if (!process.env.TOKENROUTER_API_KEY)
     throw new Error("Connect TokenRouter to use GLM 5.3 Free.");
   return {
     baseUrl: TOKENROUTER_URL,
     apiKey: process.env.TOKENROUTER_API_KEY,
-    kind: "openai",
+    kind: "compatible",
   };
 }
 export async function provider(snapshot) {
@@ -38,6 +39,15 @@ export async function providerState() {
     keyStorage: "encrypted-cloud",
   };
   try {
+    const saved = await read("provider");
+    if (saved?.secret) {
+      const raw = decrypt(saved.secret), normalized = normalizeProviderConfig(raw);
+      if (raw.kind !== normalized.kind) {
+        const secret = encrypt(normalized), profiles = (await read("provider-profiles")) ?? {};
+        await write("provider", { ...saved, secret });
+        if (profiles[normalized.baseUrl]) { profiles[normalized.baseUrl] = secret; await write("provider-profiles", profiles); }
+      }
+    }
     const config = await configuration();
     const models = await new CompatibleProvider(config).models();
     return {

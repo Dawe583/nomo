@@ -4,6 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useApi, useText } from "./ui";
 import { DESKTOP_DOWNLOADS } from "./desktop-downloads";
+const DEFAULT_MODEL_ID = "muse-spark-1.3-contributor-free";
+const DEFAULT_MODEL_NAME = "Muse Spark 1.3 Contributor (free)";
 export function Settings({
   appearance,
   setAppearance,
@@ -21,7 +23,7 @@ export function Settings({
     preferences = useApi("/api/preferences"),
     agents = useApi("/api/agents");
   const [baseUrl, setBaseUrl] = useState("https://api.tokenrouter.com/v1"),
-    [kind, setKind] = useState("openai"),
+    [kind, setKind] = useState("compatible"),
     [key, setKey] = useState(""),
     [error, setError] = useState<unknown>(),
     [busy, setBusy] = useState(false),
@@ -205,7 +207,9 @@ export function Settings({
         <p>{provider.data?.baseUrl}</p>
         <p className="muted">
           {t("Výchozí model", "Default model")}:{" "}
-          {preferences.data?.preferences?.defaultModel ?? "openai-fast"}.{" "}
+          {(preferences.data?.preferences?.defaultModel ?? DEFAULT_MODEL_ID) === DEFAULT_MODEL_ID
+            ? DEFAULT_MODEL_NAME
+            : preferences.data?.preferences?.defaultModel}.{" "}
           {t(
             "Existující konverzace si ponechají původní nastavení.",
             "Existing conversations retain their settings.",
@@ -273,7 +277,7 @@ export function Settings({
           <label>
             {t("Protokol", "Protocol")}
             <select value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="openai">OpenAI compatible</option>
+              <option value="compatible">Chat Completions</option>
               <option value="anthropic">Anthropic</option>
             </select>
           </label>

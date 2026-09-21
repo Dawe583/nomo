@@ -53,10 +53,10 @@ test('local import uses fixed endpoint, hides key, selects valid model and survi
 });
 
 test('Prime TokenRouter import keeps the free default model when available', async t => {
-  const f = await fixture(t, async () => Response.json({ data: [{ id: 'other' }, { id: 'openai-fast' }] }));
+  const f = await fixture(t, async () => Response.json({ data: [{ id: 'other' }, { id: 'muse-spark-1.3-contributor-free' }] }));
   await f.save('.prime/agent/models.json', { providers: { tokenrouter: { baseUrl: 'https://api.tokenrouter.com/v1', apiKey: key } } });
   const result = await importDesktopProvider('prime:tokenrouter', f.env, f.app);
-  assert.equal(result.defaultModel, 'openai-fast');
+  assert.equal(result.defaultModel, 'muse-spark-1.3-contributor-free');
   assert.equal(result.providerId, 'tokenrouter');
 });
 

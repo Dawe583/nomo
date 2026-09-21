@@ -1797,28 +1797,6 @@ const identityEntries: RegistryEntry[] = [
 
 const aiEntries: RegistryEntry[] = [
   {
-    id: "openai.file.delete",
-    vendor: "openai",
-    surface: "Platform",
-    summary: "Delete an uploaded file.",
-    tags: ["ai", "delete"],
-    cases: [
-      { when: "the original artifact still exists in the source system", tone: "r1", inverse: "re-upload from the source", window: "unbounded", note: "the file id changes, so every assistant and batch job referencing it breaks" , if: {"kind": "fact", "fact": "openai.file.source_exists", "is": "true"} },
-      { when: "always", tone: "r3", inverse: null, window: "none", note: "an uploaded file is not retrievable in full once deleted" , if: {"kind": "always"} },
-    ],
-  },
-  {
-    id: "openai.fine_tune.create",
-    vendor: "openai",
-    surface: "Platform",
-    summary: "Start a fine tuning job.",
-    tags: ["ai", "money", "compute"],
-    cases: [
-      { when: "the job is queued and has not started", tone: "r0", inverse: "cancel the job", window: "until the job starts", note: "queued jobs are free to cancel" , if: {"kind": "fact", "fact": "openai.fine_tune.status", "is": "queued"} },
-      { when: "always", tone: "r3", inverse: null, window: "none", note: "compute spent is billed whether the resulting model is used or not, and cancellation does not refund it" , if: {"kind": "always"} },
-    ],
-  },
-  {
     id: "vectordb.namespace.delete",
     vendor: "generic",
     surface: "Vector store",

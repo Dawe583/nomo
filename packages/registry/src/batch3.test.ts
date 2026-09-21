@@ -17,7 +17,7 @@ test("batch 3 publishes at least 100 distinct new entries exactly as reviewed", 
     assert.deepEqual(findEntry(expected.id), expected, expected.id);
     assert.ok(batch.sources[expected.id]?.startsWith("https://"), expected.id);
   }
-  assert.equal(registry.length, 163 + batch.entries.length);
+  assert.equal(registry.length, 161 + batch.entries.length);
 });
 
 function conjuncts(guard: Precondition): Extract<Precondition, { kind: "fact" }>[] {

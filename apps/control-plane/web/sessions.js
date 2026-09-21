@@ -4,9 +4,9 @@ if (root) {
   let active;
   let catalog = [];
   const presets = {
-    openrouter: ['https://openrouter.ai/api/v1', 'openai'], openai: ['https://api.openai.com/v1', 'openai'], anthropic: ['https://api.anthropic.com/v1', 'anthropic'],
-    google: ['https://generativelanguage.googleapis.com/v1beta/openai', 'openai'], groq: ['https://api.groq.com/openai/v1', 'openai'], deepseek: ['https://api.deepseek.com', 'openai'],
-    gateway: ['https://ai-gateway.vercel.sh/v1', 'openai'], ollama: ['http://localhost:11434/v1', 'openai'], lmstudio: ['http://localhost:1234/v1', 'openai'], custom: ['', 'openai'],
+    openrouter: ['https://openrouter.ai/api/v1', 'compatible'], anthropic: ['https://api.anthropic.com/v1', 'anthropic'],
+    google: ['https://generativelanguage.googleapis.com/v1beta/openai', 'compatible'], groq: ['https://api.groq.com/openai/v1', 'compatible'], deepseek: ['https://api.deepseek.com', 'compatible'],
+    gateway: ['https://ai-gateway.vercel.sh/v1', 'compatible'], ollama: ['http://localhost:11434/v1', 'compatible'], lmstudio: ['http://localhost:1234/v1', 'compatible'], custom: ['', 'compatible'],
   };
   byId('provider-preset').addEventListener('change', () => { byId('provider-url').value = presets[byId('provider-preset').value][0]; byId('provider-key').value = ''; });
   let initialSelection = true;

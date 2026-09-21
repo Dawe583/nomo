@@ -17,7 +17,7 @@ documents, with no access to the visitor's computer or connected accounts.
 
 ## Desktop and web workspace
 
-The shared agent application includes provider presets (OpenAI-compatible APIs
+The shared agent application includes provider presets (compatible-provider APIs
 and native Anthropic), model search, reusable encrypted provider connections,
 multiple HTTP MCP connectors, persistent conversation history, export, approval
 links and a built-in managed document workspace. GUI, desktop and CLI use the

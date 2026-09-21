@@ -18,6 +18,7 @@ import {
   DEFAULT_MODEL_ID,
   PROVIDER_PRESETS,
 } from "../packages/workbench/src/provider-defaults.ts";
+import { normalizeProviderConfig } from "../packages/workbench/src/provider.ts";
 import {
   page,
   filterRows,
@@ -409,11 +410,11 @@ app.post("/api/provider", async (req, res) => {
   const previous = profiles[req.body.baseUrl]
     ? decrypt(profiles[req.body.baseUrl])
     : {};
-  const secret = encrypt({
+  const secret = encrypt(normalizeProviderConfig({
     baseUrl: req.body.baseUrl,
     apiKey: req.body.apiKey || previous.apiKey || "",
-    kind: req.body.kind === "anthropic" ? "anthropic" : "openai",
-  });
+    kind: req.body.kind,
+  }));
   const client = await provider({ secret });
   const models = await client.models();
   if (req.body.activate !== false) {

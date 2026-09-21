@@ -24,6 +24,8 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, download, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, MotionEnabled, useApi, useText } from "./ui";
+const DEFAULT_MODEL_ID = "muse-spark-1.3-contributor-free";
+const DEFAULT_MODEL_NAME = "Muse Spark 1.3 Contributor (free)";
 function CodeBlock({ children }: { children?: ReactNode }) {
   const ref = useRef<HTMLPreElement>(null),
     [wrap, setWrap] = useState(false),
@@ -141,7 +143,7 @@ const draftKey =
   );
   const textarea = useRef<HTMLTextAreaElement>(null);
   const transcript = useRef<HTMLDivElement>(null);
-  const [model, setModel] = useState("openai-fast");
+  const [model, setModel] = useState(DEFAULT_MODEL_ID);
   const [modelSearch, setModelSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -1067,8 +1069,8 @@ const draftKey =
                 disabled={!!id}
                 onClick={() => setPicker(true)}
               >
-                {(session?.model ?? model) === "openai-fast"
-                  ? "openai-fast (free)"
+                {(session?.model ?? model) === DEFAULT_MODEL_ID
+                  ? DEFAULT_MODEL_NAME
                   : (session?.model ?? model)}
                 <span aria-hidden="true">⌄</span>
               </button>

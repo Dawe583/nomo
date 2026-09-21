@@ -22,7 +22,7 @@ import { join } from 'node:path';
 import { mkdtemp, rm, writeFile, open } from 'node:fs/promises';
 import { attestLedger, type AttestationDocument } from '../../ledger/src/attest.ts';
 import { createVoidClient, type VoidClient } from '../../sdk/src/client.ts';
-import { CompatibleProvider, ProviderRequestError, type Model, type ModelMessage, type ProviderConfig } from './provider.ts';
+import { CompatibleProvider, ProviderRequestError, normalizeProviderConfig, type Model, type ModelMessage, type ProviderConfig } from './provider.ts';
 import type { JsonObject } from '../../proxy/src/rpc.ts';
 
 export type SessionEvent = { readonly seq: number; readonly at: string; readonly kind: 'user' | 'assistant' | 'tool' | 'error' | 'usage'; readonly text: string; readonly id?: string; readonly sessionId?: string; readonly runId?: string; readonly type?: string; readonly payload?: Record<string, unknown>; readonly schemaVersion?: number };
@@ -73,15 +73,28 @@ export class Workbench {
     this.storage = new LocalStorage(env.VOID_DATA_DIR ?? join(env.VOID_LEDGER_DIR ?? join(homedir(), '.void'), 'workbench'), env.VOID_WORKSPACE_KEY);
     const saved = this.storage.read<{ preferences?: Record<string, string>; requests?: Record<string, { digest: string; sessionId: string }>; approvalHistory?: unknown[]; config?: ProviderConfig; profiles?: Record<string, ProviderConfig>; catalog: readonly Model[]; connectors: Connector[]; documents: Record<string, WorkspaceState>; evidence: Record<string, JsonlEntry[]>; sessions: Array<{ view: SessionView; messages: ModelMessage[]; config?: ProviderConfig; tools?: McpTool[]; connections?: Session['connections'] }> }>();
     if (saved) {
-      this.preferences = { ...this.preferences, ...saved.preferences }; this.requests = saved.requests ?? {}; this.approvalHistory = (saved.approvalHistory ?? []).map(value => { const hold = value as Record<string, unknown>; return hold.status === 'pending' ? { ...hold, status: 'interrupted' } : hold; });
-      this.hasState = !!saved.config || !!saved.sessions.length || !!saved.connectors.length;
-      this.config = saved.config; this.profiles = saved.profiles ?? {}; this.catalog = saved.catalog; this.connectors = saved.connectors; this.documents = saved.documents; this.evidence = saved.evidence;
+      let migrated = false;
+      const loadConfig = (value: ProviderConfig | undefined) => {
+        if (!value) return undefined;
+        const config = normalizeProviderConfig(value);
+        if (value.kind !== config.kind) migrated = true;
+        try { new CompatibleProvider(config, fetcher); return config; } catch { migrated = true; return undefined; }
+      };
+      const preferences = saved.preferences ?? {};
+      this.preferences = { ...this.preferences, ...preferences, ...(preferences.defaultModel === 'openai-fast' ? { defaultModel: DEFAULT_MODEL_ID } : {}) };
+      if (preferences.defaultModel === 'openai-fast') migrated = true;
+      this.requests = saved.requests ?? {}; this.approvalHistory = (saved.approvalHistory ?? []).map(value => { const hold = value as Record<string, unknown>; return hold.status === 'pending' ? { ...hold, status: 'interrupted' } : hold; });
+      this.hasState = !!saved.config || !!saved.sessions.length || !!saved.connectors.length || !!Object.keys(saved.profiles ?? {}).length;
+      this.config = loadConfig(saved.config); this.profiles = {};
+      for (const [baseUrl, value] of Object.entries(saved.profiles ?? {})) { const profile = loadConfig(value); if (profile) this.profiles[baseUrl] = profile; }
+      this.catalog = saved.catalog; this.connectors = saved.connectors; this.documents = saved.documents; this.evidence = saved.evidence;
       if (this.config) this.provider = new CompatibleProvider(this.config, fetcher);
       for (const item of saved.sessions) {
-        const config = item.config ?? this.config;
-        if (!config) { const fallback = { baseUrl: TOKENROUTER_URL, apiKey: '' }; this.sessions.set(item.view.id, { ...item, view: { ...item.view, status: item.view.status === 'running' ? 'failed' : item.view.status }, provider: new CompatibleProvider(fallback, fetcher), controller: new AbortController() }); continue; }
-        this.sessions.set(item.view.id, { ...item, view: { ...item.view, status: item.view.status === 'running' ? 'failed' : item.view.status }, provider: new CompatibleProvider(config, fetcher), controller: new AbortController() });
+        const sessionConfig = item.config ? loadConfig(item.config) : undefined, config = sessionConfig ?? this.config;
+        if (!config) { const fallback = { baseUrl: TOKENROUTER_URL, apiKey: '' }; this.sessions.set(item.view.id, { ...item, config: sessionConfig, view: { ...item.view, status: item.view.status === 'running' ? 'failed' : item.view.status }, provider: new CompatibleProvider(fallback, fetcher), controller: new AbortController() }); continue; }
+        this.sessions.set(item.view.id, { ...item, config: sessionConfig, view: { ...item.view, status: item.view.status === 'running' ? 'failed' : item.view.status }, provider: new CompatibleProvider(config, fetcher), controller: new AbortController() });
       }
+      if (migrated) this.persist();
     }
   }
   private persist(): void {
@@ -91,12 +104,12 @@ export class Workbench {
     this.hasState = true;
   }
   async configure(config: ProviderConfig): Promise<readonly Model[]> {
-    config = { ...config, apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || '' };
+    config = normalizeProviderConfig({ ...config, apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || '' });
     const provider = new CompatibleProvider(config, this.fetcher);
     const models = await provider.models();
     if (!models.length) throw new Error('Provider returned no available models. Previous configuration was kept.');
     const previous = { provider: this.provider, config: this.config, profiles: this.profiles, catalog: this.catalog, preferences: this.preferences };
-    const preferred = [this.preferences.defaultModel, DEFAULT_MODEL_ID, 'muse-spark-1.3-contributor-free'].find(id => models.some(model => model.id === id)) ?? models[0]!.id;
+    const preferred = [this.preferences.defaultModel, DEFAULT_MODEL_ID].find(id => models.some(model => model.id === id)) ?? models[0]!.id;
     this.provider = provider; this.config = config; this.profiles = { ...this.profiles, [config.baseUrl]: config }; this.catalog = models;
     this.preferences = { ...this.preferences, defaultModel: preferred, defaultProvider: PROVIDER_PRESETS.find(p => p.baseUrl === config.baseUrl)?.id ?? 'custom' };
     try { this.persist(); } catch (error) { Object.assign(this, previous); throw error; }

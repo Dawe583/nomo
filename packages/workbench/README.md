@@ -1,6 +1,6 @@
 # VOID agent workbench
 
-An OpenAI-compatible model loop whose tools always go through the VOID SDK and
+A compatible-provider model loop whose tools always go through the VOID SDK and
 its fail-closed MCP proxy. There is no direct shell or database tool bypass.
 
 The runtime owns provider validation, model discovery, session state, cancellation

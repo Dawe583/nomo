@@ -89,8 +89,6 @@ extends the list and this file is the index.
 | notion.workspace.page_history | string | Whether the workspace has page history, true or false. |
 | npm.version.has_dependents | string | Whether another package depends on the published version, true or false. |
 | npm.version.within_unpublish_window | string | Whether the package version is still inside npm unpublish window, true or false. |
-| openai.file.source_exists | string | Whether the original file artifact still exists in the source system, true or false. |
-| openai.fine_tune.status | string | The fine tuning job status, for example queued or running. |
 | quickbooks.period.open | string | Whether the accounting period is open, true or false. |
 | redis.instance.pure_cache | string | Whether Redis is used only as a cache, true or false. |
 | redis.warm_path.known | string | Whether a known warm path exists for rebuilding Redis contents, true or false. |

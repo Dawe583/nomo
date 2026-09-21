@@ -106,6 +106,23 @@ describe("control plane API", () => {
     });
   });
 
+  test("rejects direct provider hosts before an upstream request", async () => {
+    await withServer("unused.jsonl", async (origin) => {
+      for (const baseUrl of ["https://api.openai.com/v1", "https://sandbox.api.openai.com./v1"]) {
+        const response = await fetch(origin + "/api/provider", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ baseUrl, apiKey: "smoke-key", kind: "compatible" }),
+        });
+        assert.equal(response.status, 400, baseUrl);
+        assert.deepEqual(await response.json(), {
+          error: "provider_unavailable",
+          message: "Direct OpenAI provider URLs are not supported.",
+        });
+      }
+    });
+  });
+
   test("returns a limited ledger feed with verified chain fields", async () => {
     const ledgerPath = await seedLedger(2);
     await withServer(ledgerPath, async (origin) => {

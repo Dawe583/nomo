@@ -15,6 +15,7 @@ import { GENESIS_PREV } from "../../../packages/ledger/src/canonical.ts";
 import { readLedgerFeed, type LedgerFeedRecord } from "../../../packages/ledger/src/feed.ts";
 import type { PublicKeyLookup } from "../../../packages/ledger/src/verify.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
+import { normalizeProviderConfig } from "../../../packages/workbench/src/provider.ts";
 import { authorizedRemote } from "./auth.ts";
 import { localApprovals } from "./local-approvals.ts";
 import { desktopSetup, importDesktopProvider } from './desktop-setup.ts';
@@ -199,9 +200,10 @@ async function route(
       if (request.method === "GET") return sendJson(response, 200, await options.workbench.providerState());
       if (request.method === "DELETE") { options.workbench.clearProvider(); return sendJson(response, 200, { ok: true }); }
       if (request.method === "POST") {
-        const body = await readJsonBody(request) as { baseUrl?: string; apiKey?: string; kind?: "openai" | "anthropic" } | null;
-        if (typeof body?.baseUrl !== "string" || typeof body.apiKey !== "string") return sendJson(response, 400, { error: "invalid_provider" });
-        const models = await options.workbench.configure({ baseUrl: body.baseUrl, apiKey: body.apiKey, kind: body.kind });
+        const body = await readJsonBody(request) as { baseUrl?: string; apiKey?: string; kind?: string } | null;
+        const { baseUrl, apiKey, kind } = body ?? {};
+        if (typeof baseUrl !== "string" || typeof apiKey !== "string") return sendJson(response, 400, { error: "invalid_provider" });
+        const models = await options.workbench.configure(normalizeProviderConfig({ baseUrl, apiKey, kind }));
         return sendJson(response, 200, { connected: true, models, keyStorage: "encrypted-local" });
       }
     } catch (error) { return sendJson(response, 400, { error: "provider_unavailable", message: error instanceof Error ? error.message : "Provider unavailable" }); }

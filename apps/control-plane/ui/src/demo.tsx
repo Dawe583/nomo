@@ -7,6 +7,7 @@ import { api, download, type Row } from "./api";
 import { AsciiWordmark, BrandMark } from "./brand";
 import { Icon } from "./icons";
 import { Dialog, ErrorBox, MotionEnabled, useText, useApi } from "./ui";
+const DEFAULT_MODEL_NAME = "Muse Spark 1.3 Contributor (free)";
 
 const RichText = lazy(() =>
   import("./chat").then((module) => ({ default: module.RichText })),
@@ -464,8 +465,8 @@ export function PublicDemo({
                   />
                   <div className="demo-composer-tools">
                     <span>
-                      <b>openai-fast (free)</b>
-                      <small>Pollinations</small>
+                      <b>{DEFAULT_MODEL_NAME}</b>
+                      <small>TokenRouter</small>
                     </span>
                     <m.button
                       type="submit"
