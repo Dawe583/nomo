@@ -61,6 +61,7 @@ export function Sessions({ navigate }: { navigate: (path: string) => void }) {
             ),
           },
           { key: "model", label: "Model" },
+          { key: "project", label: t("Projekt", "Project") },
           {
             key: "status",
             label: t("Stav", "Status"),

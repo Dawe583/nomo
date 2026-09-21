@@ -25,8 +25,14 @@ import { CompatibleProvider, ProviderRequestError, normalizeProviderConfig, type
 import type { JsonObject } from '../../proxy/src/rpc.ts';
 
 export type SessionEvent = { readonly seq: number; readonly at: string; readonly kind: 'user' | 'assistant' | 'tool' | 'error' | 'usage'; readonly text: string; readonly id?: string; readonly sessionId?: string; readonly runId?: string; readonly type?: string; readonly payload?: Record<string, unknown>; readonly schemaVersion?: number };
-export type SessionView = { readonly id: string; readonly workspace: string; readonly model: string; readonly title?: string; readonly createdAt?: string; readonly updatedAt?: string; readonly pinned?: boolean; readonly archived?: boolean; readonly project?: string; readonly tags?: string[]; readonly runId?: string; readonly provider?: string; readonly parentId?: string; readonly status: 'running' | 'idle' | 'cancelled' | 'failed'; readonly events: readonly SessionEvent[] };
+export type SessionView = { readonly id: string; readonly workspace: string; readonly model: string; readonly title?: string; readonly createdAt?: string; readonly updatedAt?: string; readonly pinned?: boolean; readonly archived?: boolean; readonly project?: string; readonly agent?: string; readonly tags?: string[]; readonly runId?: string; readonly provider?: string; readonly parentId?: string; readonly status: 'running' | 'idle' | 'cancelled' | 'failed'; readonly events: readonly SessionEvent[] };
 export const DEFAULT_POLICY = 'version: 1\nrules:\n  - match:\n      class: r0\n    decision: allow\n  - match: {}\n    decision: hold\n    seconds: 300\n    notify: [cli]\n';
+export const AGENT_PRESETS = [
+  { id: 'default', name: 'VOID default', description: 'General-purpose accountable agent.', instruction: '' },
+  { id: 'planner', name: 'Planner', description: 'Break work into an explicit, reviewable plan.', instruction: 'You are the VOID planner. Start with a concise plan, identify risks and dependencies, then execute only after the plan is clear.' },
+  { id: 'reviewer', name: 'Reviewer', description: 'Inspect changes for correctness, security and regressions.', instruction: 'You are the VOID reviewer. Prioritize concrete defects, security risks and missing verification; do not invent praise or rewrite unrelated code.' },
+  { id: 'implementer', name: 'Implementer', description: 'Implement the requested change with focused verification.', instruction: 'You are the VOID implementer. Make the smallest complete change, preserve existing contracts and verify the changed behavior before claiming success.' },
+] as const;
 // Standards rule 10: a denial names the rule id, the class and what approval
 // would require. A generic error trains agents to retry with a reworded
 // request, which turns a safety tool into an evasion trainer.
@@ -47,7 +53,7 @@ export class Workbench {
   private provider: CompatibleProvider | undefined;
   private readonly storage: LocalStorage;
   private hasState = false;
-  private preferences: Record<string, string> = { defaultProvider: DEFAULT_PROVIDER_ID, defaultModel: DEFAULT_MODEL_ID, locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
+  private preferences: Record<string, string> = { defaultProvider: DEFAULT_PROVIDER_ID, defaultModel: DEFAULT_MODEL_ID, defaultAgent: 'default', locale: 'cs', appearance: 'system', sendBehavior: 'enter' };
   private requests: Record<string, { digest: string; sessionId: string }> = {};
   private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;
@@ -80,8 +86,9 @@ export class Workbench {
         try { new CompatibleProvider(config, fetcher); return config; } catch { migrated = true; return undefined; }
       };
       const preferences = saved.preferences ?? {};
-      this.preferences = { ...this.preferences, ...preferences, ...(preferences.defaultModel === 'openai-fast' ? { defaultModel: DEFAULT_MODEL_ID } : {}) };
-      if (preferences.defaultModel === 'openai-fast') migrated = true;
+      const defaultAgent = AGENT_PRESETS.some(agent => agent.id === preferences.defaultAgent) ? preferences.defaultAgent : 'default';
+      this.preferences = { ...this.preferences, ...preferences, defaultAgent, ...(preferences.defaultModel === 'openai-fast' ? { defaultModel: DEFAULT_MODEL_ID } : {}) };
+      if (preferences.defaultModel === 'openai-fast' || preferences.defaultAgent !== defaultAgent) migrated = true;
       this.requests = saved.requests ?? {}; this.approvalHistory = (saved.approvalHistory ?? []).map(value => { const hold = value as Record<string, unknown>; return hold.status === 'pending' ? { ...hold, status: 'interrupted' } : hold; });
       this.hasState = !!saved.config || !!saved.sessions.length || !!saved.connectors.length || !!Object.keys(saved.profiles ?? {}).length;
       this.config = loadConfig(saved.config); this.profiles = {};
@@ -132,6 +139,9 @@ export class Workbench {
       upstreamConfigured: true,
     };
   }
+  agents() {
+    return { supported: true, agents: AGENT_PRESETS.map(({ id, name, description }) => ({ id, name, description })) };
+  }
   clearProvider(): void { this.ignoreEnvironment = true; this.provider = undefined; if (this.config) delete this.profiles[this.config.baseUrl]; this.config = undefined; this.catalog = []; this.persist(); }
   list(): readonly SessionView[] { return [...this.sessions.values()].map(session => ({ ...session.view, events: [] })); }
   availableTools(id?: string) {
@@ -140,9 +150,11 @@ export class Workbench {
     return { scope: id ? 'session' : 'configured', tools: toolCatalog(session ? session.tools ?? [...workspaceTools] : [...workspaceTools, ...this.connectors.flatMap(c => c.tools.map(tool => ({ ...tool, connectorId: c.id })))], [...this.connectors.map(c => c.token), ...Object.values(session?.connections ?? {}).map(c => c.token)]) };
   }
   get(id: string): SessionView | undefined { return this.sessions.get(id)?.view; }
-  async start(prompt: string, model = this.preferences.defaultModel ?? DEFAULT_MODEL_ID, key?: string): Promise<SessionView> { return this.locked(async () => { const prior = this.request(key, ['start', prompt, model]); if (prior) return this.get(prior)!; await this.providerState(); const result = await this.startSession(prompt, model); this.remember(key, ['start', prompt, model], result.id); return result; }); }
-  private async startSession(prompt: string, model: string): Promise<SessionView> {
+  async start(prompt: string, model = this.preferences.defaultModel ?? DEFAULT_MODEL_ID, key?: string, project?: string, agent?: string): Promise<SessionView> { return this.locked(async () => { const prior = this.request(key, ['start', prompt, model, project, agent]); if (prior) return this.get(prior)!; await this.providerState(); const result = await this.startSession(prompt, model, project, agent); this.remember(key, ['start', prompt, model, project, agent], result.id); return result; }); }
+  private async startSession(prompt: string, model: string, project?: string, agent?: string): Promise<SessionView> {
     if (!this.provider) throw new Error('Connect and validate a provider first.');
+    const selectedAgent = AGENT_PRESETS.find(item => item.id === (agent ?? this.preferences.defaultAgent));
+    if (agent && !selectedAgent) throw new Error('Unknown agent preset.');
     const selectedProvider = this.provider, selectedConfig = this.config;
     if (!this.catalog.some(item => item.id === model)) throw new Error('Select a model from the validated catalog.');
     if (this.closing || this.jobs.size || [...this.sessions.values()].some(session => session.view.status === 'running')) throw new Error('Wait for the active session or cancel it before starting another.');
@@ -166,8 +178,8 @@ export class Workbench {
       tools.push(...listed.tools.map(tool => ({ ...tool, connectorId: 'stdio' })));
     }
     if (this.closing || this.jobs.size || [...this.sessions.values()].some(s => s.view.status === 'running')) { client?.close(); throw new Error('Another session started while connecting tools. Retry after it stops.'); }
-    this.documents[workspace] = createWorkspace();
-    const session: Session = { view: { id, workspace, model, provider: selectedConfig?.baseUrl, createdAt: new Date().toISOString(), title: prompt.trim().slice(0, 80), status: 'idle', events: [] }, messages: [{ role: 'system', content: 'You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when tool results prove them. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.' }], client, tools, connections, config: selectedConfig, controller: new AbortController(), provider: selectedProvider };
+    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when tool results prove them. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ''}`;
+    const session: Session = { view: { id, workspace, model, provider: selectedConfig?.baseUrl, project: project?.trim().slice(0, 160) || undefined, agent: selectedAgent?.id, createdAt: new Date().toISOString(), title: prompt.trim().slice(0, 80), status: 'idle', events: [] }, messages: [{ role: 'system', content: systemInstruction }], client, tools, connections, config: selectedConfig, controller: new AbortController(), provider: selectedProvider };
     this.sessions.set(id, session);
     this.send(id, prompt);
     return session.view;
@@ -192,6 +204,30 @@ export class Workbench {
     const job = this.run(session);
     this.jobs.set(id, job);
     void job.catch(() => { session.view = { ...session.view, status: 'failed' }; }).finally(() => { this.jobs.delete(id); });
+  }
+  compact(id: string): SessionView {
+    const session = this.sessions.get(id);
+    if (!session) throw new Error('Session not found.');
+    if (session.view.status === 'running') throw new Error('Wait for the active run to settle before compacting.');
+    const keep = 6;
+    const omitted = session.messages.slice(1, -keep);
+    if (!omitted.length) return session.view;
+    const summary = omitted
+      .map(message => `${message.role}: ${typeof message.content === 'string' ? message.content : JSON.stringify(message.content)}`)
+      .join('\n')
+      .slice(0, 12000);
+    session.messages = [
+      session.messages[0]!,
+      { role: 'system', content: `VOID context summary. Earlier messages are compressed below; treat this as historical context.\n${summary}` },
+      ...session.messages.slice(-keep),
+    ];
+    this.event(session, 'tool', 'Context compacted.', {
+      beforeMessages: omitted.length + keep + 1,
+      afterMessages: session.messages.length,
+      omittedMessages: omitted.length,
+    }, 'context.compacted');
+    this.persist();
+    return session.view;
   }
   cancel(id: string): void {
     const session = this.sessions.get(id);

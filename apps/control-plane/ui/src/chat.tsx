@@ -24,8 +24,8 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, download, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, MotionEnabled, useApi, useText } from "./ui";
-const DEFAULT_MODEL_ID = "muse-spark-1.3-contributor-free";
-const DEFAULT_MODEL_NAME = "Muse Spark 1.3 Contributor (free)";
+const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
+const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
 function CodeBlock({ children }: { children?: ReactNode }) {
   const ref = useRef<HTMLPreElement>(null),
     [wrap, setWrap] = useState(false),
@@ -140,6 +140,9 @@ const draftKey =
     (id ?? "new");
   const [draft, setDraft] = useState(
     () => sessionStorage.getItem(draftKey) ?? "",
+  );
+  const [project, setProject] = useState(
+    () => new URLSearchParams(location.search).get("project")?.slice(0, 160) ?? "",
   );
   const textarea = useRef<HTMLTextAreaElement>(null);
   const transcript = useRef<HTMLDivElement>(null);
@@ -484,6 +487,18 @@ const draftKey =
       setBusy(false);
     }
   }
+  async function compactContext() {
+    if (!id || running || busy) return;
+    setBusy(true);
+    try {
+      await api("/api/sessions/" + id + "/compact", "POST");
+      await client.invalidateQueries();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function send() {
     if (commandOpen) {
       if (commandItems[activeCommand])
@@ -542,6 +557,12 @@ const draftKey =
         {
           prompt,
           model: session?.model ?? model,
+          ...(id
+            ? {}
+            : {
+                project: project.trim() || undefined,
+                agent: preferences.data?.preferences?.defaultAgent ?? "default",
+              }),
           idempotencyKey: requestKey.current.key,
         },
       );
@@ -819,13 +840,31 @@ const draftKey =
         {provider.data && !provider.data.connected && (
           <div className="notice">
             {t(
-              "Připojte poskytovatele modelu pro zahájení konverzace.",
-              "Connect a model provider to start a conversation.",
+              provider.data.setupRequired
+                ? "NVIDIA NIM čeká na API klíč."
+                : "Připojte poskytovatele modelu pro zahájení konverzace.",
+              provider.data.setupRequired
+                ? "NVIDIA NIM needs an API key."
+                : "Connect a model provider to start a conversation.",
             )}{" "}
             <button onClick={() => navigate("/settings")}>
-              {t("Připojit TokenRouter", "Connect TokenRouter")}
+              {t(
+                provider.data.setupRequired ? "Nastavit NVIDIA NIM" : "Nastavit poskytovatele",
+                provider.data.setupRequired ? "Set up NVIDIA NIM" : "Set up provider",
+              )}
             </button>
           </div>
+        )}
+        {!id && (
+          <label className="project-field">
+            {t("Projektový prostor (volitelné)", "Project workspace (optional)")}
+            <input
+              value={project}
+              maxLength={160}
+              placeholder={t("např. web VOID", "e.g. VOID web")}
+              onChange={(event) => setProject(event.target.value)}
+            />
+          </label>
         )}
         <form
           className="composer"
@@ -1102,15 +1141,17 @@ const draftKey =
 {busy ? "…" : "↑"}
               </m.button>
             )}
-<button
+              <button
+                type="button"
                 className="secondary compact"
+                disabled={!id || running || busy}
                 title={t("Sbalit kontext", "Compact context")}
                 aria-label={t("Sbalit kontext", "Compact context")}
                 onClick={() => {
-                  void 0
+                  void compactContext();
                 }}
               >
-                {t("Sbalit ▼", "Compact ▼")}
+                {busy ? t("Sbaluji…", "Compacting…") : t("Sbalit ▼", "Compact ▼")}
               </button>
           </div>
         </form>

@@ -154,7 +154,7 @@ async function route(
   try {
     const desktop = !!options.env.VOID_DESKTOP_WEB_ROOT && !options.env.VOID_CONTROL_TOKEN && isLocalRequest(request);
     if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local'), desktopSetup: desktop });
-    if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, { supported: false, prime: { online: false, tools: [] } });
+    if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, options.workbench.agents());
     if (request.method === 'GET' && parsed.pathname === '/api/integrations') return sendJson(response, 200, { supported: false, integrations: [] });
     if (request.method === 'GET' && parsed.pathname === '/api/demo/status') return sendJson(response, 200, { supported: false, available: false });
     if (parsed.pathname === '/api/desktop/setup') {
@@ -178,10 +178,10 @@ async function route(
     }
     if (parsed.pathname === '/api/documents' && request.method === 'GET') return sendJson(response, 200, page(filterRows(wb.documentsList(), query), query));
     if (parsed.pathname === '/api/approvals' && request.method === 'GET' && query.get('history') === 'true') { const result = page(filterRows(wb.approvals(), query), query); return sendJson(response, 200, { ...result, approvals: result.items }); }
-    const feature = /^\/api\/sessions\/([a-f0-9-]+)\/(events|stream|documents|branches)$/.exec(parsed.pathname);
+    const feature = /^\/api\/sessions\/([a-f0-9-]+)\/(events|stream|documents|branches|compact)$/.exec(parsed.pathname);
     if (feature) {
       const id = feature[1]!, kind = feature[2], session = wb.get(id); if (!session) return sendJson(response, 404, { message: 'Session not found.' });
-      if (kind === 'branches' && request.method === 'POST') return sendJson(response, 201, { session: await wb.branch(id, await readJsonBody(request) as { seq: number; prompt?: string; snapshotDocuments?: boolean }) });
+      if (kind === 'compact' && request.method === 'POST') return sendJson(response, 200, { session: wb.compact(id) });
       if (kind === 'documents') {
         if (request.method === 'GET') return sendJson(response, 200, { document: wb.document(id, query.get('path') ?? '') });
         if (request.method === 'PATCH') return sendJson(response, 200, { document: await wb.editDocument(id, await readJsonBody(request) as { path: string; content: string; expectedRevision: string | null }) });
@@ -248,9 +248,9 @@ async function route(
   if (parsed.pathname === "/api/sessions") {
     if (request.method === "GET") return sendJson(response, 200, options.workbench.sessionPage(query));
     if (request.method === "POST") {
-      const body = await readJsonBody(request) as { prompt?: string; model?: string; idempotencyKey?: string } | null;
-      if (typeof body?.prompt !== "string" || (body.model !== undefined && typeof body.model !== "string")) return sendJson(response, 400, { error: "invalid_session" });
-      try { return sendJson(response, 201, { session: await options.workbench.start(body.prompt, body.model, body.idempotencyKey) }); }
+      const body = await readJsonBody(request) as { prompt?: string; model?: string; project?: string; agent?: string; idempotencyKey?: string } | null;
+      if (typeof body?.prompt !== "string" || (body.model !== undefined && typeof body.model !== "string") || (body.project !== undefined && typeof body.project !== "string") || (body.agent !== undefined && typeof body.agent !== "string")) return sendJson(response, 400, { error: "invalid_session" });
+      try { return sendJson(response, 201, { session: await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent) }); }
       catch (error) { return sendJson(response, 409, { error: "session_not_started", message: error instanceof Error ? error.message : "Session not started" }); }
     }
   }

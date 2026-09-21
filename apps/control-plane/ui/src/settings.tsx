@@ -114,41 +114,28 @@ export function Settings({
             <label>
               {t("Výchozí agent", "Default agent")}
               <select
-                value={preferences.data?.preferences?.defaultAgent ?? "cloud"}
+                value={
+                  agents.data.agents?.some(
+                    (agent: Row) => agent.id === preferences.data?.preferences?.defaultAgent,
+                  )
+                    ? preferences.data?.preferences?.defaultAgent
+                    : "default"
+                }
                 onChange={(e) => preference({ defaultAgent: e.target.value })}
               >
-                <option value="cloud">VOID Cloud</option>
-                <option value="prime-agent">prime-agent (local PC)</option>
+                {(agents.data.agents ?? []).map((agent: Row) => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.name}
+                  </option>
+                ))}
               </select>
             </label>
-            <p>
-              prime-agent: {agents.data.prime?.online ? "Online" : "Offline"}
-            </p>
-            <p>
+            <p className="muted">
               {t(
-                "PC musí být zapnuté. Lokální nástroje nemají automatické VOID Undo.",
-                "Your PC must stay online. Local tools do not have automatic VOID Undo.",
+                "Agent určuje pracovní styl. Nástroje a oprávnění stále řídí VOID policy.",
+                "The agent selects working style. Tools and permissions remain governed by VOID policy.",
               )}
             </p>
-            <details>
-              <summary>
-                {t(
-                  "Nakonfigurované lokální nástroje",
-                  "Configured local tools",
-                )}
-              </summary>
-              <ul>
-                {(agents.data.prime?.tools ?? []).map((name: string) => (
-                  <li key={name}>{name}</li>
-                ))}
-              </ul>
-              <p>
-                {t(
-                  "Konfigurace není ověření přístupu. Služby mohou vyžadovat vlastní OAuth.",
-                  "Configuration is not access verification. Services may require their own OAuth.",
-                )}
-              </p>
-            </details>
           </>
         )}
 

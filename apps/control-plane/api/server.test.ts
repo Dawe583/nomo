@@ -87,10 +87,9 @@ describe("control plane API", () => {
         assert.equal((await fetch(origin + path)).status, 404, path);
     } finally { await handle.close(); await rm(dir, { recursive: true, force: true }); }
   });
-  test("reports unavailable cloud-only surfaces without expected local 404s", async () => {
+  test("reports local agents and unavailable cloud-only surfaces without 404s", async () => {
     await withServer("unused.jsonl", async (origin) => {
       const expected = new Map<string, unknown>([
-        ["/api/agents", { supported: false, prime: { online: false, tools: [] } }],
         ["/api/integrations", { supported: false, integrations: [] }],
         ["/api/demo/status", { supported: false, available: false }],
       ]);
@@ -99,6 +98,9 @@ describe("control plane API", () => {
         assert.equal(response.status, 200, path);
         assert.deepEqual(await response.json(), body, path);
       }
+      const agents = await (await fetch(origin + "/api/agents")).json() as { supported: boolean; agents: { id: string }[] };
+      assert.equal(agents.supported, true);
+      assert.ok(agents.agents.some(agent => agent.id === "reviewer"));
       assert.equal(
         (await fetch(origin + "/api/integrations", { method: "POST" })).status,
         404,

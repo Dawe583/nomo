@@ -135,6 +135,50 @@ test('long sessions keep advancing event cursors and refuse unbounded context', 
   assert.ok(events.at(-1)!.seq > 200);
   assert.throws(() => workbench.send(started.id, 'Too much context'), /context limit/);
 });
+test('context compaction preserves recent work and records the reduction', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'void-agent-compact-'));
+  let lastMessages: Array<{ role: string; content?: string }> = [];
+  const workbench = new Workbench({ VOID_DATA_DIR: dir }, async (url, options) => {
+    if (String(url).endsWith('/models')) return reply({ data: [{ id: 'fixture-model' }] });
+    const request = JSON.parse(String(options?.body));
+    lastMessages = request.messages;
+    return reply({ choices: [{ message: { role: 'assistant', content: 'Fixture response' } }], usage: { total_tokens: 1 } });
+  });
+  t.after(async () => { workbench.close(); await rm(dir, { recursive: true, force: true }); });
+  await workbench.configure({ baseUrl: 'https://provider.test/v1', apiKey: secret });
+  const started = await workbench.start('First', 'fixture-model', undefined, 'VOID project');
+  assert.equal(started.project, 'VOID project');
+  for (let turn = 0; turn < 5; turn++) {
+    for (let poll = 0; poll < 200 && workbench.get(started.id)?.status === 'running'; poll++) await delay(10);
+    assert.equal(workbench.get(started.id)?.status, 'idle');
+    workbench.send(started.id, `Follow up ${turn}`);
+  }
+  for (let poll = 0; poll < 200 && workbench.get(started.id)?.status === 'running'; poll++) await delay(10);
+  const compacted = workbench.compact(started.id);
+  assert.ok(compacted.events.some(event => event.type === 'context.compacted'));
+  const event = compacted.events.find(event => event.type === 'context.compacted')!;
+  assert.ok(Number(event.payload?.beforeMessages) > Number(event.payload?.afterMessages));
+  workbench.send(started.id, 'After compaction');
+  for (let poll = 0; poll < 200 && workbench.get(started.id)?.status === 'running'; poll++) await delay(10);
+  assert.equal(workbench.get(started.id)?.status, 'idle');
+  assert.ok(lastMessages.some(message => message.content?.includes('VOID context summary')));
+});
+test('built-in agents change the session instruction without changing provider authority', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'void-agent-presets-'));
+  let lastMessages: Array<{ role: string; content?: string }> = [];
+  const workbench = new Workbench({ VOID_DATA_DIR: dir }, async (url, options) => {
+    if (String(url).endsWith('/models')) return reply({ data: [{ id: 'fixture-model' }] });
+    lastMessages = JSON.parse(String(options?.body)).messages;
+    return reply({ choices: [{ message: { role: 'assistant', content: 'Fixture response' } }], usage: { total_tokens: 1 } });
+  });
+  t.after(async () => { workbench.close(); await rm(dir, { recursive: true, force: true }); });
+  await workbench.configure({ baseUrl: 'https://provider.test/v1', apiKey: secret });
+  assert.ok(workbench.agents().agents.some(agent => agent.id === 'reviewer'));
+  const started = await workbench.start('Review this', 'fixture-model', undefined, undefined, 'reviewer');
+  for (let poll = 0; poll < 200 && workbench.get(started.id)?.status === 'running'; poll++) await delay(10);
+  assert.equal(workbench.get(started.id)?.status, 'idle');
+  assert.ok(lastMessages.some(message => message.content?.includes('reviewer')));
+});
 
 test('chat catalog excludes embedding, image and video models', async () => {
   const provider = new CompatibleProvider({baseUrl:'https://provider.test/v1',apiKey:secret}, async () => reply({data:[{id:'chat',type:'language'},{id:'embed',type:'embedding'},{id:'video',type:'video'},{id:'image',type:'image'},{id:'compatible-provider-model'}]}));
