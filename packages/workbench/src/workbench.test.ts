@@ -26,7 +26,7 @@ test('migrates legacy generic provider state to compatible and restores the neut
   const dir = await mkdtemp(join(tmpdir(), 'void-provider-migration-'));
   t.after(async () => { await rm(dir, { recursive: true, force: true }); });
   new LocalStorage(dir).save({
-    preferences: { defaultModel: 'openai-fast' },
+    preferences: { defaultModel: 'muse-spark-1.3-contributor-free' },
     config: { baseUrl: 'https://provider.test/v1', apiKey: secret, kind: 'openai' },
     profiles: { 'https://provider.test/v1': { baseUrl: 'https://provider.test/v1', apiKey: secret, kind: 'openai' } },
     catalog: [{ id: DEFAULT_MODEL_ID, name: DEFAULT_MODEL_ID }],

@@ -132,7 +132,9 @@ export function Chat({
     providerEndpoint ??
     t("Poskytovatel neověřen", "Provider unverified");
   const running =
-    session?.status === "running" || session?.status === "cancelling";
+    session?.status === "running" ||
+    session?.status === "queued" ||
+    session?.status === "cancelling";
 const draftKey =
     "void-draft:" +
     new URLSearchParams(location.search).get("workspace") +
@@ -144,6 +146,7 @@ const draftKey =
   const [project, setProject] = useState(
     () => new URLSearchParams(location.search).get("project")?.slice(0, 160) ?? "",
   );
+  const [background, setBackground] = useState(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const transcript = useRef<HTMLDivElement>(null);
   const [model, setModel] = useState(DEFAULT_MODEL_ID);
@@ -562,6 +565,7 @@ const draftKey =
             : {
                 project: project.trim() || undefined,
                 agent: preferences.data?.preferences?.defaultAgent ?? "default",
+                background,
               }),
           idempotencyKey: requestKey.current.key,
         },
@@ -798,7 +802,9 @@ const draftKey =
                     "Zastavuji; odeslaný nástroj může ještě dokončit práci.",
                     "Stopping; an issued tool may still finish.",
                   )
-                : t("Agent pracuje…", "Agent is working…")}
+                : session?.status === "queued"
+                  ? t("Ve frontě; spustí se po dokončení předchozího běhu.", "Queued; it starts after the previous run settles.")
+                  : t("Agent pracuje…", "Agent is working…")}
             </p>
           )}
         </div>
@@ -864,6 +870,14 @@ const draftKey =
               placeholder={t("např. web VOID", "e.g. VOID web")}
               onChange={(event) => setProject(event.target.value)}
             />
+            <span className="project-background">
+              <input
+                type="checkbox"
+                checked={background}
+                onChange={(event) => setBackground(event.target.checked)}
+              />
+              {t("Spustit na pozadí (fronta)", "Run in background (queued)")}
+            </span>
           </label>
         )}
         <form

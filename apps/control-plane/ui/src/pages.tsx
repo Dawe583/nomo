@@ -273,7 +273,7 @@ export function Runs({ navigate }: { navigate: (path: string) => void }) {
           onChange={(e) => setStatus(e.target.value)}
         >
           <option value="">{t("Všechny stavy", "All states")}</option>
-          {["running", "idle", "failed", "cancelled"].map((s) => (
+          {["queued", "running", "idle", "failed", "cancelled"].map((s) => (
             <option key={s}>{s}</option>
           ))}
         </select>

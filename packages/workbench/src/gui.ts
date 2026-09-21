@@ -168,6 +168,7 @@ export function filterRows<T>(rows: readonly T[], query: URLSearchParams): T[] {
 export const capabilities = (mode: "local" | "cloud") => ({
   mode,
   maxActiveRuns: 1,
+  backgroundQueue: true,
   streaming: true,
   branches: true,
   documentEditing: true,

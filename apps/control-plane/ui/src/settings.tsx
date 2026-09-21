@@ -450,6 +450,12 @@ function Capabilities() {
             </dd>
             <dt>{t("Současné běhy", "Concurrent runs")}</dt>
             <dd>{query.data.maxActiveRuns ?? "—"}</dd>
+            <dt>{t("Fronta běhů", "Run queue")}</dt>
+            <dd>
+              {query.data.backgroundQueue
+                ? t("Dostupná", "Available")
+                : t("Není dostupná", "Unavailable")}
+            </dd>
             <dt>{t("Velikost zprávy", "Message size")}</dt>
             <dd>
               {query.data.maxPromptCharacters ?? "—"} {t("znaků", "characters")}

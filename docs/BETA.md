@@ -86,12 +86,12 @@ never share the signing or encryption keys. Enter the access token in the web
 connection form. Authentication uses Secure, HttpOnly, SameSiteStrict cookies.
 This beta is a single-operator workspace, not a multiuser RBAC product.
 
-New conversations default to TokenRouter / GLM 5.3 Free (`z-ai/glm-5.3-free`).
-Existing conversations retain their saved provider and model. Vercel AI Gateway
-remains an optional provider. A model catalog can be available
-before the account is authorized to generate. If Gateway reports
-`customer_verification_required`, complete account verification in Vercel or
-enter a provider API key through Provider settings. Custom keys and tool-server
+New conversations default to NVIDIA NIM / GLM 5.3 Flash
+(`z-ai/glm-5.3-flash`). Existing conversations retain their saved provider and
+model. The NVIDIA hosted API may expose an account-scoped trial/free quota; this
+is not a promise of unlimited free usage. Add `NVIDIA_API_KEY` through Provider
+settings or the local runtime environment. A model catalog can be available
+before the account is authorized to generate. Custom keys and tool-server
 credentials are encrypted before database storage. Prompts and tool results are
 sent to the selected provider.
 

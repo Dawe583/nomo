@@ -27,7 +27,7 @@ must not be used as the starting point for new UI features.
   conflict. Undo requires a fresh server preview and updates the editor revision.
 - Distinguish signed, verified, unavailable and unknown. A catalog model named
   Free is not evidence of a zero invoice. Do not invent limits or metrics.
-- Default new conversations to TokenRouter / `z-ai/glm-5.3-free`. Credentials
+- Default new conversations to NVIDIA NIM / `z-ai/glm-5.3-flash`. Credentials
   remain server-side. Existing conversations retain their provider snapshot.
 - UI defaults to Czech and supports English. Dates and numbers follow the active
   locale; API names, model names and conversation content remain unchanged.

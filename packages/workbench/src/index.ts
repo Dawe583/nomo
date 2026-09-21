@@ -25,7 +25,7 @@ import { CompatibleProvider, ProviderRequestError, normalizeProviderConfig, type
 import type { JsonObject } from '../../proxy/src/rpc.ts';
 
 export type SessionEvent = { readonly seq: number; readonly at: string; readonly kind: 'user' | 'assistant' | 'tool' | 'error' | 'usage'; readonly text: string; readonly id?: string; readonly sessionId?: string; readonly runId?: string; readonly type?: string; readonly payload?: Record<string, unknown>; readonly schemaVersion?: number };
-export type SessionView = { readonly id: string; readonly workspace: string; readonly model: string; readonly title?: string; readonly createdAt?: string; readonly updatedAt?: string; readonly pinned?: boolean; readonly archived?: boolean; readonly project?: string; readonly agent?: string; readonly tags?: string[]; readonly runId?: string; readonly provider?: string; readonly parentId?: string; readonly status: 'running' | 'idle' | 'cancelled' | 'failed'; readonly events: readonly SessionEvent[] };
+export type SessionView = { readonly id: string; readonly workspace: string; readonly model: string; readonly title?: string; readonly createdAt?: string; readonly updatedAt?: string; readonly pinned?: boolean; readonly archived?: boolean; readonly project?: string; readonly agent?: string; readonly tags?: string[]; readonly runId?: string; readonly provider?: string; readonly parentId?: string; readonly status: 'running' | 'queued' | 'idle' | 'cancelled' | 'failed'; readonly events: readonly SessionEvent[] };
 export const DEFAULT_POLICY = 'version: 1\nrules:\n  - match:\n      class: r0\n    decision: allow\n  - match: {}\n    decision: hold\n    seconds: 300\n    notify: [cli]\n';
 export const AGENT_PRESETS = [
   { id: 'default', name: 'VOID default', description: 'General-purpose accountable agent.', instruction: '' },
@@ -44,7 +44,7 @@ export function denialText(tool: string, klass: string, decision: { kind: string
   return `VOID denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
 }
 type Connector = McpConfig & { id: string; name: string; tools: McpTool[] };
-type Session = { view: SessionView; messages: ModelMessage[]; client?: VoidClient; tools?: McpTool[]; connections?: Record<string, McpConfig & { sessionId?: string }>; config?: ProviderConfig; controller: AbortController; provider: CompatibleProvider };
+type Session = { view: SessionView; messages: ModelMessage[]; queuedPrompt?: string; client?: VoidClient; tools?: McpTool[]; connections?: Record<string, McpConfig & { sessionId?: string }>; config?: ProviderConfig; controller: AbortController; provider: CompatibleProvider };
 
 /** Model tools always cross the existing VOID SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
@@ -66,6 +66,7 @@ export class Workbench {
   private ignoreEnvironment = false;
   private catalog: readonly Model[] = [];
   private readonly sessions = new Map<string, Session>();
+  private readonly queued = new Set<string>();
   private readonly jobs = new Map<string, Promise<void>>();
   private closing = false;
   running() { return this.jobs.size > 0; }
@@ -87,8 +88,9 @@ export class Workbench {
       };
       const preferences = saved.preferences ?? {};
       const defaultAgent = AGENT_PRESETS.some(agent => agent.id === preferences.defaultAgent) ? preferences.defaultAgent : 'default';
-      this.preferences = { ...this.preferences, ...preferences, defaultAgent, ...(preferences.defaultModel === 'openai-fast' ? { defaultModel: DEFAULT_MODEL_ID } : {}) };
-      if (preferences.defaultModel === 'openai-fast' || preferences.defaultAgent !== defaultAgent) migrated = true;
+      const legacyDefaultModel = ['openai-fast', 'muse-spark-1.3-contributor-free', 'z-ai/glm-5.3-free'].includes(preferences.defaultModel ?? '');
+      this.preferences = { ...this.preferences, ...preferences, defaultAgent, ...(legacyDefaultModel ? { defaultModel: DEFAULT_MODEL_ID } : {}) };
+      if (legacyDefaultModel || preferences.defaultAgent !== defaultAgent) migrated = true;
       this.requests = saved.requests ?? {}; this.approvalHistory = (saved.approvalHistory ?? []).map(value => { const hold = value as Record<string, unknown>; return hold.status === 'pending' ? { ...hold, status: 'interrupted' } : hold; });
       this.hasState = !!saved.config || !!saved.sessions.length || !!saved.connectors.length || !!Object.keys(saved.profiles ?? {}).length;
       this.config = loadConfig(saved.config); this.profiles = {};
@@ -97,8 +99,8 @@ export class Workbench {
       if (this.config) this.provider = new CompatibleProvider(this.config, fetcher);
       for (const item of saved.sessions) {
         const sessionConfig = item.config ? loadConfig(item.config) : undefined, config = sessionConfig ?? this.config;
-        if (!config) { const fallback = { baseUrl: TOKENROUTER_URL, apiKey: '' }; this.sessions.set(item.view.id, { ...item, config: sessionConfig, view: { ...item.view, status: item.view.status === 'running' ? 'failed' : item.view.status }, provider: new CompatibleProvider(fallback, fetcher), controller: new AbortController() }); continue; }
-        this.sessions.set(item.view.id, { ...item, config: sessionConfig, view: { ...item.view, status: item.view.status === 'running' ? 'failed' : item.view.status }, provider: new CompatibleProvider(config, fetcher), controller: new AbortController() });
+        if (!config) { const fallback = { baseUrl: TOKENROUTER_URL, apiKey: '' }; this.sessions.set(item.view.id, { ...item, config: sessionConfig, view: { ...item.view, status: item.view.status === 'running' || item.view.status === 'queued' ? 'failed' : item.view.status }, provider: new CompatibleProvider(fallback, fetcher), controller: new AbortController() }); continue; }
+        this.sessions.set(item.view.id, { ...item, config: sessionConfig, view: { ...item.view, status: item.view.status === 'running' || item.view.status === 'queued' ? 'failed' : item.view.status }, provider: new CompatibleProvider(config, fetcher), controller: new AbortController() });
       }
       if (migrated) this.persist();
     }
@@ -150,14 +152,14 @@ export class Workbench {
     return { scope: id ? 'session' : 'configured', tools: toolCatalog(session ? session.tools ?? [...workspaceTools] : [...workspaceTools, ...this.connectors.flatMap(c => c.tools.map(tool => ({ ...tool, connectorId: c.id })))], [...this.connectors.map(c => c.token), ...Object.values(session?.connections ?? {}).map(c => c.token)]) };
   }
   get(id: string): SessionView | undefined { return this.sessions.get(id)?.view; }
-  async start(prompt: string, model = this.preferences.defaultModel ?? DEFAULT_MODEL_ID, key?: string, project?: string, agent?: string): Promise<SessionView> { return this.locked(async () => { const prior = this.request(key, ['start', prompt, model, project, agent]); if (prior) return this.get(prior)!; await this.providerState(); const result = await this.startSession(prompt, model, project, agent); this.remember(key, ['start', prompt, model, project, agent], result.id); return result; }); }
-  private async startSession(prompt: string, model: string, project?: string, agent?: string): Promise<SessionView> {
+  async start(prompt: string, model = this.preferences.defaultModel ?? DEFAULT_MODEL_ID, key?: string, project?: string, agent?: string, background = false): Promise<SessionView> { return this.locked(async () => { const prior = this.request(key, ['start', prompt, model, project, agent, background]); if (prior) return this.get(prior)!; await this.providerState(); const result = await this.startSession(prompt, model, project, agent, background); this.remember(key, ['start', prompt, model, project, agent, background], result.id); return result; }); }
+  private async startSession(prompt: string, model: string, project?: string, agent?: string, background = false): Promise<SessionView> {
     if (!this.provider) throw new Error('Connect and validate a provider first.');
     const selectedAgent = AGENT_PRESETS.find(item => item.id === (agent ?? this.preferences.defaultAgent));
     if (agent && !selectedAgent) throw new Error('Unknown agent preset.');
     const selectedProvider = this.provider, selectedConfig = this.config;
     if (!this.catalog.some(item => item.id === model)) throw new Error('Select a model from the validated catalog.');
-    if (this.closing || this.jobs.size || [...this.sessions.values()].some(session => session.view.status === 'running')) throw new Error('Wait for the active session or cancel it before starting another.');
+    if (this.closing || (!background && (this.jobs.size || [...this.sessions.values()].some(session => session.view.status === 'running')))) throw new Error('Wait for the active session or cancel it before starting another.');
     let command: unknown;
     try { command = JSON.parse(this.env.VOID_UPSTREAM_COMMAND ?? 'null'); } catch { throw new Error('VOID_UPSTREAM_COMMAND must be a JSON array.'); }
     if (command !== null && (!Array.isArray(command) || !command.length || !command.every(item => typeof item === 'string' && item.length > 0))) throw new Error('Configure VOID_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.');
@@ -177,17 +179,18 @@ export class Workbench {
       const listed = await client.request('tools/list') as { tools: McpTool[] };
       tools.push(...listed.tools.map(tool => ({ ...tool, connectorId: 'stdio' })));
     }
-    if (this.closing || this.jobs.size || [...this.sessions.values()].some(s => s.view.status === 'running')) { client?.close(); throw new Error('Another session started while connecting tools. Retry after it stops.'); }
-    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when tool results prove them. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ''}`;
-    const session: Session = { view: { id, workspace, model, provider: selectedConfig?.baseUrl, project: project?.trim().slice(0, 160) || undefined, agent: selectedAgent?.id, createdAt: new Date().toISOString(), title: prompt.trim().slice(0, 80), status: 'idle', events: [] }, messages: [{ role: 'system', content: systemInstruction }], client, tools, connections, config: selectedConfig, controller: new AbortController(), provider: selectedProvider };
+    if (this.closing || (!background && (this.jobs.size || [...this.sessions.values()].some(s => s.view.status === 'running')))) { client?.close(); throw new Error('Another session started while connecting tools. Retry after it stops.'); }
+    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ''}`;
+    const queued = background && (this.jobs.size > 0 || [...this.sessions.values()].some(s => s.view.status === 'running'));
+    const session: Session = { view: { id, workspace, model, provider: selectedConfig?.baseUrl, project: project?.trim().slice(0, 160) || undefined, agent: selectedAgent?.id, createdAt: new Date().toISOString(), title: prompt.trim().slice(0, 80), status: queued ? 'queued' : 'idle', events: [] }, messages: [{ role: 'system', content: systemInstruction }], queuedPrompt: queued ? prompt : undefined, client, tools, connections, config: selectedConfig, controller: new AbortController(), provider: selectedProvider };
     this.sessions.set(id, session);
-    this.send(id, prompt);
+    if (queued) { this.queued.add(id); this.persist(); } else this.send(id, prompt);
     return session.view;
   }
   send(id: string, prompt: string, key?: string): void {
     if (this.request(key, [id, prompt])) return;
     const session = this.sessions.get(id);
-    if (this.closing || this.jobs.size || !session || session.view.status === 'running') throw new Error('The session is not ready for another message.');
+    if (this.closing || this.jobs.size || !session || session.view.status === 'running' || session.view.status === 'queued') throw new Error('The session is not ready for another message.');
     if (!prompt.trim() || prompt.length > 32000) throw new Error('Enter a prompt between 1 and 32000 characters.');
     if ([...this.sessions.values()].some(other => other !== session && other.view.status === 'running')) throw new Error('Wait for the active session or cancel it first.');
     const lastAssistant = [...session.messages].reverse().find(m => m.role === 'assistant');
@@ -203,7 +206,7 @@ export class Workbench {
     this.remember(key, [id, prompt], id);
     const job = this.run(session);
     this.jobs.set(id, job);
-    void job.catch(() => { session.view = { ...session.view, status: 'failed' }; }).finally(() => { this.jobs.delete(id); });
+    void job.catch(() => { session.view = { ...session.view, status: 'failed' }; }).finally(() => { this.jobs.delete(id); this.drainQueued(); });
   }
   compact(id: string): SessionView {
     const session = this.sessions.get(id);
@@ -229,13 +232,39 @@ export class Workbench {
     this.persist();
     return session.view;
   }
+  private drainQueued(): void {
+    if (this.closing || this.jobs.size) return;
+    const id = this.queued.values().next().value as string | undefined;
+    if (!id) return;
+    this.queued.delete(id);
+    const session = this.sessions.get(id);
+    if (!session || session.view.status !== 'queued' || !session.queuedPrompt) {
+      this.drainQueued();
+      return;
+    }
+    const prompt = session.queuedPrompt;
+    delete session.queuedPrompt;
+    session.view = { ...session.view, status: 'idle' };
+    try { this.send(id, prompt); }
+    catch (error) {
+      session.view = { ...session.view, status: 'failed' };
+      this.event(session, 'error', error instanceof Error ? error.message : 'Queued run failed.');
+      this.persist();
+    }
+  }
   cancel(id: string): void {
     const session = this.sessions.get(id);
     if (!session) throw new Error('Session not found.');
+    if (session.view.status === 'queued') {
+      this.queued.delete(id);
+      session.view = { ...session.view, status: 'cancelled' };
+      this.persist();
+      return;
+    }
     session.controller.abort(); session.client?.close();
     session.view = { ...session.view, status: 'cancelled' }; this.event(session, 'tool', 'Cancellation requested. An already dispatched tool may finish.', { status: 'cancelled' }, 'run.status'); this.persist();
   }
-  close(): void { this.closing = true; for (const session of this.sessions.values()) { session.controller.abort(); session.client?.close(); if (session.view.status === 'running') session.view = { ...session.view, status: 'cancelled' }; } this.persist(); }
+  close(): void { this.closing = true; for (const session of this.sessions.values()) { session.controller.abort(); session.client?.close(); if (session.view.status === 'running' || session.view.status === 'queued') session.view = { ...session.view, status: 'cancelled' }; } this.queued.clear(); this.persist(); }
   pending() { return [...this.holds.values()].filter(h => h.status === 'pending' && h.expiresAt > Date.now() && this.sessions.get(h.holdId.split(':')[0]!)?.view.status === 'running').concat([...this.sessions.values()].flatMap(session => session.view.status === 'running' ? (session.client?.pendingHolds() ?? []).map(hold => ({ ...hold, holdId: `${session.view.id}:${hold.holdId}` })) : []) as never[]); }
   decide(id: string, decision: { kind: 'approved' | 'denied'; by: string; reason?: string }): boolean {
     const local = this.holds.get(id);

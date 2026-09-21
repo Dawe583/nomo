@@ -68,13 +68,13 @@ that depth. R05 commit work runs in the sibling lane.
 | Stage                       | Status  | Evidence pointer                                                                                                |
 | --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
 | E0 fixtures                 | done    | Delivery report documents reproducible fixtures                                                                 |
-| E1 default model            | done    | TokenRouter and GLM 5.3 Free default verified against the live catalog                                          |
+| E1 default model            | done    | NVIDIA NIM / GLM 5.3 Flash default, setupRequired state and migration tests                                      |
 | E2 shell and routes         | done    | Shared React shell with login gate exists                                                                       |
-| E3 chat composition         | partial | Markdown, composer, drafts, picker and tool cards exist, management parity continues                            |
+| E3 chat composition         | partial | Markdown, composer, drafts, picker, tool cards, project workspace and context compaction exist; management parity continues |
 | E4 streaming and reconnect  | partial | Streaming with deltas exists, long run production evidence open                                                 |
 | E5 documents and Undo       | partial | Managed document Undo reviewed and tested, external tool Undo not implied                                       |
 | E6 history scale            | partial | Server filters and pagination exist, scale evidence continues                                                   |
-| E7 connectors and settings  | partial | Pages exist, provider price data unknown when providers omit it                                                 |
+| E7 connectors and settings  | partial | Pages exist; NVIDIA NIM, built-in agent presets and provider price/quota unknown state are exposed                  |
 | E8 mobile and accessibility | partial | Viewport checks pass, physical devices and screen readers pending per `docs/MOBILE-ACCESSIBILITY-ACCEPTANCE.md` |
 | E9 production operation     | partial | Production shipped, rollback documented but not executed                                                        |
 

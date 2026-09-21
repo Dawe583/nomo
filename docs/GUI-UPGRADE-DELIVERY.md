@@ -12,7 +12,7 @@ Plán: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md), původní audit: [GUI-UPGRADE
 - Dokumenty: editace s očekávanou revizí, konflikt 409, historie a diff; Undo používá aktuální preview a kontrolu digestu. Editor po Undo načte skutečnou novou revizi.
 - Konektory: přidání, editace, test připojení a skutečný katalog nástrojů se schématy. Prázdný token při editaci zachová existující tajemství.
 - Cloud uchovává append-only events samostatně; metadata polling nepřenáší celý transcript. Delta stránky a klientské sloučení zabraňují duplicitám. Starší zachovaná historie je dostupná přes serverové dotazy.
-- Výchozí nové konverzace: **TokenRouter / GLM 5.3 Free**, ID `z-ai/glm-5.3-free`. Ověřen skutečný katalog 137 modelů. Klíč je serverový; nepřechází do klientského buildu. Existující sessions zachovávají původní provider/model. Není zaveden tichý placený fallback.
+- Výchozí nové konverzace: **NVIDIA NIM / GLM 5.3 Flash**, ID `z-ai/glm-5.3-flash`, endpoint `https://integrate.api.nvidia.com/v1`. NVIDIA hosted trial/free quota je účetní a není garancí neomezeného bezplatného provozu. Klíč je serverový; nepřechází do klientského buildu. Existující sessions zachovávají původní provider/model. Bez klíče se zobrazí setup state, ne tichý placený fallback.
 - OpenAI-compatible stream parser zvládá rozdělené UTF-8/CRLF, tool fragments, redakci klíče a neúplný stream. Chyby providera včetně 429 mají konkrétní stav; generace se automaticky neopakuje.
 
 ## Current management parity increment
@@ -21,6 +21,12 @@ Plán: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md), původní audit: [GUI-UPGRADE
   Missing token or cost data stays explicitly unknown.
 - Arrow Up on an empty composer opens the reviewed branch editor for the last
   user message. It never rewrites history or replays earlier tools.
+- Nová konverzace může nést projektový workspace; Sessions zobrazují projekt a nový agent katalog nabízí `default`, `planner`, `reviewer` a `implementer`. Agent preset mění pouze systémovou instrukci; nástroje a oprávnění zůstávají pod VOID policy.
+- Chat má skutečnou akci Compact context. Server zachová systémové instrukce a poslední zprávy, vloží redigovatelný historický souhrn a zapíše `context.compacted` event.
+- Background start now creates a durable session immediately; when the single
+  active-run safety capacity is occupied, the session is visibly `queued` and
+  drains after the active provider settles. Shutdown cancels queued work rather
+  than pretending it completed.
 - Approval review exposes class, workspace, blast radius and precision when the
   server provides them, plus the server policy rationale.
 - Existing message actions, command palette, export, model picker, attachments,

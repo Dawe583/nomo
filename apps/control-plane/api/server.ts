@@ -248,9 +248,9 @@ async function route(
   if (parsed.pathname === "/api/sessions") {
     if (request.method === "GET") return sendJson(response, 200, options.workbench.sessionPage(query));
     if (request.method === "POST") {
-      const body = await readJsonBody(request) as { prompt?: string; model?: string; project?: string; agent?: string; idempotencyKey?: string } | null;
-      if (typeof body?.prompt !== "string" || (body.model !== undefined && typeof body.model !== "string") || (body.project !== undefined && typeof body.project !== "string") || (body.agent !== undefined && typeof body.agent !== "string")) return sendJson(response, 400, { error: "invalid_session" });
-      try { return sendJson(response, 201, { session: await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent) }); }
+      const body = await readJsonBody(request) as { prompt?: string; model?: string; project?: string; agent?: string; background?: boolean; idempotencyKey?: string } | null;
+      if (typeof body?.prompt !== "string" || (body.model !== undefined && typeof body.model !== "string") || (body.project !== undefined && typeof body.project !== "string") || (body.agent !== undefined && typeof body.agent !== "string") || (body.background !== undefined && typeof body.background !== "boolean")) return sendJson(response, 400, { error: "invalid_session" });
+      try { return sendJson(response, 201, { session: await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent, body.background) }); }
       catch (error) { return sendJson(response, 409, { error: "session_not_started", message: error instanceof Error ? error.message : "Session not started" }); }
     }
   }
