@@ -189,6 +189,12 @@ No production account, live provider, secret or external mutation was used.
 The four live integration skips, physical Windows execution, installer signing,
 notarization and download execution remain outside this evidence.
 
+A provider-specific crash harness now kills the Node client after a real
+PostgreSQL forward or recovery COMMIT, before the runtime can persist success.
+It checks receipt reconciliation, single dispatch and idempotent recovery after
+restart. The harness has not run in this workspace because no isolated test
+DATABASE_URL is available. This is implemented coverage, not certification.
+
 ## Next work, in plan order
 
 1. Finish M1 provider specific client crash and persistence certification.

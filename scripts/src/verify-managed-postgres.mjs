@@ -1,6 +1,8 @@
 // Opt-in real PostgreSQL test. Creates and removes only unique test-owned schemas.
 import assert from "node:assert/strict";
+import { fork } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
+import { once } from "node:events";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -74,14 +76,14 @@ try {
     connect,
   };
   await installManagedPostgres(options);
-  const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
+  const keyDir = join(root, "keys"),
+    journalDir = join(root, "journal"),
+    vaultDir = join(root, "vault"),
+    vaultKey = randomBytes(32),
+    signer = await devKeyProvider({ dir: keyDir, env: {} });
   const base = {
-    journal: localOperationJournal(join(root, "journal"), signer),
-    vault: reservedRecoveryVault(
-      join(root, "vault"),
-      { test: randomBytes(32) },
-      "test",
-    ),
+    journal: localOperationJournal(journalDir, signer),
+    vault: reservedRecoveryVault(vaultDir, { test: vaultKey }, "test"),
     authorize: async () => true,
   };
   let adapter = managedPostgresAdapter(options),
@@ -98,6 +100,48 @@ try {
       key: { id: 1 },
       values: { balance: 20 },
     },
+  };
+  const crashWorker = async (mode, input) => {
+    const child = fork(
+      new URL("./fixtures/managed-postgres-crash-worker.mjs", import.meta.url),
+      [],
+      {
+        stdio: ["ignore", "inherit", "inherit", "ipc"],
+        env: {
+          ...process.env,
+          VOID_POSTGRES_CRASH_CONFIG: JSON.stringify({
+            mode,
+            workspace: options.workspace,
+            metadata: options.schema,
+            tables: options.tables,
+            keyDir,
+            journalDir,
+            vaultDir,
+            vaultKey: vaultKey.toString("hex"),
+            ...input,
+          }),
+        },
+      },
+    );
+    try {
+      const [message] = await Promise.race([
+        once(child, "message"),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("PostgreSQL crash worker timed out.")),
+            20000,
+          ).unref(),
+        ),
+      ]);
+      assert.deepEqual(message, { stage: "committed", mode });
+      child.kill("SIGKILL");
+      const [code, signal] = await once(child, "exit");
+      assert.equal(code, null);
+      assert.equal(signal, "SIGKILL");
+    } finally {
+      if (child.exitCode === null && child.signalCode === null)
+        child.kill("SIGKILL");
+    }
   };
   assert.equal((await runtime.execute(request)).status, "succeeded");
   adapter = managedPostgresAdapter(options);
@@ -350,6 +394,88 @@ try {
   assert.equal(await receipts("recoveries"), recoveryCount + 1);
 
   console.log("PASS: recovery commit termination and receipt reconciliation");
+
+  const crashedForward = {
+    ...request,
+    operationId: randomUUID(),
+    arguments: { ...request.arguments, values: { balance: 65 } },
+  };
+  const operationCount = await receipts("operations");
+  await crashWorker("forward", { request: crashedForward });
+  assert.equal(await balance(), 65);
+  assert.equal(await receipts("operations"), operationCount + 1);
+  runtime = recoveryRuntime({
+    ...base,
+    adapters: [managedPostgresAdapter(options)],
+  });
+  assert.equal((await runtime.execute(crashedForward)).status, "unknown");
+  assert.equal(
+    (await runtime.reconcile("qa-test", crashedForward.operationId)).status,
+    "succeeded",
+  );
+  assert.equal(
+    (
+      await runtime.recover(
+        await runtime.planRecovery("qa-test", crashedForward.operationId),
+        async () => true,
+      )
+    ).status,
+    "restored",
+  );
+  assert.equal(await balance(), 40);
+  assert.equal(await receipts("operations"), operationCount + 1);
+  await base.journal.transaction("qa-test", async (tx) => {
+    assert.equal(
+      tx.events.filter(
+        (event) =>
+          event.operationId === crashedForward.operationId &&
+          event.stage === "dispatched",
+      ).length,
+      1,
+    );
+  });
+  console.log("PASS: client SIGKILL after forward commit");
+
+  const crashedRecovery = {
+    ...request,
+    operationId: randomUUID(),
+    arguments: { ...request.arguments, values: { balance: 66 } },
+  };
+  assert.equal((await runtime.execute(crashedRecovery)).status, "succeeded");
+  const crashedPlan = await runtime.planRecovery(
+      "qa-test",
+      crashedRecovery.operationId,
+    ),
+    recoveryReceiptCount = await receipts("recoveries");
+  await crashWorker("recovery", { plan: crashedPlan });
+  assert.equal(await balance(), 40);
+  assert.equal(await receipts("recoveries"), recoveryReceiptCount + 1);
+  runtime = recoveryRuntime({
+    ...base,
+    adapters: [managedPostgresAdapter(options)],
+  });
+  assert.equal(
+    (await runtime.reconcileRecovery("qa-test", crashedRecovery.operationId))
+      .status,
+    "restored",
+  );
+  assert.equal(
+    (await runtime.recover(crashedPlan, async () => true)).status,
+    "restored",
+  );
+  assert.equal(await receipts("recoveries"), recoveryReceiptCount + 1);
+  await base.journal.transaction("qa-test", async (tx) => {
+    assert.equal(
+      tx.events.filter(
+        (event) =>
+          event.operationId === crashedRecovery.operationId &&
+          event.stage === "recovery-dispatched",
+      ).length,
+      1,
+    );
+  });
+  console.log("PASS: client SIGKILL after recovery commit");
+
   // Create a real lock cycle while the managed adapter is dispatching. PostgreSQL
   // chooses the victim; assert the correct behavior for either valid selection.
   const competitor = await connect();
@@ -500,6 +626,8 @@ try {
         "terminated backend before commit: no mutation or receipt, no retry",
         "terminated backend after commit: receipt reconciliation and restore",
         "terminated recovery backend after commit: idempotent reconciliation",
+        "client SIGKILL after forward commit: receipt reconciliation",
+        "client SIGKILL after recovery commit: idempotent reconciliation",
         "real deadlock during managed dispatch",
       ],
       networkPartitionTest: false,
