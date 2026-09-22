@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {mkdtemp,rm} from "node:fs/promises";
+import {mkdtemp,rm,rename} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {Workbench} from "./index.ts";
@@ -13,7 +13,7 @@ async function fixture(t:import("node:test").TestContext){
  t.after(async()=>{await app.shutdown();await rm(directory,{recursive:true,force:true});});
  await app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await app.start("Test","fixture");await app.settled();
- return {session,get app(){return app;},restart(){app.close();app=new Workbench({VOID_DATA_DIR:directory},fetcher);}};
+ return {directory,session,get app(){return app;},restart(){app.close();app=new Workbench({VOID_DATA_DIR:directory},fetcher);}};
 }
 
 test("managed jobs preserve exact run selection and IDs across restart and repeated apply",async t=>{
@@ -54,4 +54,21 @@ test("state filters keep unknown runs separate from failed legacy status",()=>{
  const rows=[{state:"unknown",status:"unknown"},{state:"failed",status:"failed"}];
  assert.deepEqual(filterRows(rows,new URLSearchParams("state=unknown")),[rows[0]]);
  assert.deepEqual(filterRows(rows,new URLSearchParams("status=failed")),[rows[1]]);
+});
+
+test("explicit apply resumes a paused job after artifact repair without replaying completed work",async t=>{
+ const f=await fixture(t),id=f.session.id;
+ const edit=await f.app.editDocument(id,{path:"note",content:"one",expectedRevision:null});
+ const plan=await f.app.planRecoveryJob(id,{jobId:"repair",selection:{kind:"operations",operationIds:[edit.revision!]}});
+ const vault=join(f.directory,"recovery","vault"),backup=join(f.directory,"vault-backup");
+ await rename(vault,backup);
+ const approval={jobId:plan.jobId,planDigest:plan.planDigest,approved:true};
+ assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"paused");
+ assert.equal(f.app.document(id,"note").content,"one");
+ await rm(vault,{recursive:true,force:true});await rename(backup,vault);
+ assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"restored");
+ assert.equal(f.app.document(id,"note").content,null);
+ const count=f.app.workspace(id).operations.length;
+ assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"restored");
+ assert.equal(f.app.workspace(id).operations.length,count);
 });

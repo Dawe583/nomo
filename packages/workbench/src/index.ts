@@ -1452,8 +1452,7 @@ export class Workbench {
       // cannot exchange its approval for another job or caller-supplied plan.
       const plan = await runtime.planRecoveryJob({ workspace: session.view.workspace, jobId: request.jobId, selection: runtimeSelection(request.selection) });
       if (plan.digest !== input.planDigest) throw new Error("Recovery job digest changed. Refresh the preview.");
-      const status = await runtime.recoveryJobStatus(session.view.workspace, request.jobId);
-      const result = "digest" in status ? await runtime.runRecoveryJob(session.view.workspace, request.jobId, async stored => stored.digest === input.planDigest) : status;
+      const result = await runtime.runRecoveryJob(session.view.workspace, request.jobId, async stored => stored.digest === input.planDigest);
       return recoveryResult(result, recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection));
     });
   }
