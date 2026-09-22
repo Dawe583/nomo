@@ -1,3 +1,7 @@
+import { ProviderNotice, RunStatus } from "./workspace-status";
+import { providerStatus, runState, runCanStop, runBlocksInput } from "./workspace-state";
+import { SessionContext } from "./session-context";
+import { agentOptions } from "./agent-input";
 import { CommandMenu } from "./command-menu.tsx";
 import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import * as m from "motion/react-m";
@@ -117,6 +121,9 @@ export function Chat({
   const provider = useApi("/api/provider");
   const preferences = useApi("/api/preferences");
   const capabilities = useApi("/api/capabilities");
+  const agents = useApi("/api/agents", !id);
+  const projects = useApi("/api/projects", !id && capabilities.data?.projects === true);
+  const [agent, setAgent] = useState<string>();
   const workspace = useApi("/api/sessions/" + id + "/workspace", !!id);
   const holds = useApi("/api/approvals", !!id, 3000);
   const perm = usePermissionMode(capabilities, preferences);
@@ -131,10 +138,8 @@ export function Chat({
     )?.name ??
     providerEndpoint ??
     t("Poskytovatel neověřen", "Provider unverified");
-  const running =
-    session?.status === "running" ||
-    session?.status === "queued" ||
-    session?.status === "cancelling";
+  const running = runBlocksInput(session);
+  const state = runState(session);
 const draftKey =
     "void-draft:" +
     new URLSearchParams(location.search).get("workspace") +
@@ -318,14 +323,8 @@ const draftKey =
         events.map((event) => `## ${event.kind}\n\n${event.text}`).join("\n\n"),
         "text/markdown",
       );
-    else if (command.id === "stop") {
-      try {
-        await api("/api/sessions/" + id, "DELETE");
-        await client.invalidateQueries();
-      } catch (error) {
-        setError(error);
-      }
-    } else navigate("/" + command.id);
+    else if (command.id === "stop") await stopRun();
+    else navigate("/" + command.id);
     textarea.current?.focus();
   }
   const requestKey = useRef<{ prompt: string; key: string } | undefined>(
@@ -479,22 +478,10 @@ const draftKey =
   // Overlay dismissal keeps priority: an open slash menu or dialog consumes
   // Esc before this branch ever runs.
   async function stopRun() {
-    if (!id || busy) return;
+    if (!id || busy || !runCanStop(session)) return;
     setBusy(true);
     try {
-      await api("/api/sessions/" + id, "DELETE");
-      await client.invalidateQueries();
-    } catch (e) {
-      setError(e);
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function compactContext() {
-    if (!id || running || busy) return;
-    setBusy(true);
-    try {
-      await api("/api/sessions/" + id + "/compact", "POST");
+      await api("/api/runs/" + encodeURIComponent(id) + "/stop", "POST");
       await client.invalidateQueries();
     } catch (e) {
       setError(e);
@@ -512,7 +499,11 @@ const draftKey =
       setQueued(false);
       return;
     }
-    if (busy || retryWait > 0) return;
+    if (busy || retryWait > 0 || (id && !session) || (!id && providerStatus(provider.data) !== "ready")) return;
+    if (id && state === "unknown") {
+      setError(t("Nejprve ověřte výsledek předchozího běhu.", "Check the previous run outcome before sending."));
+      return;
+    }
     if (running) {
       setQueued(true);
       const queuedKey = "void-queued:" + draftKey.split(":").slice(1).join(":");
@@ -563,8 +554,8 @@ const draftKey =
           ...(id
             ? {}
             : {
-                project: project.trim() || undefined,
-                agent: preferences.data?.preferences?.defaultAgentPreset ?? "default",
+                project: capabilities.data?.projects === true ? project.trim() || undefined : undefined,
+                agent: agent ?? preferences.data?.preferences?.defaultAgentPreset ?? "default",
                 background,
               }),
           idempotencyKey: requestKey.current.key,
@@ -795,14 +786,8 @@ const draftKey =
           {running && (
             <p className="run-status" role="status">
               <span className="activity-dot" />{" "}
-              {session?.status === "cancelling"
-                ? t(
-                    "Zastavuji; odeslaný nástroj může ještě dokončit práci.",
-                    "Stopping; an issued tool may still finish.",
-                  )
-                : session?.status === "queued"
-                  ? t("Ve frontě; spustí se po dokončení předchozího běhu.", "Queued; it starts after the previous run settles.")
-                  : t("Agent pracuje…", "Agent is working…")}
+              {session && <RunStatus run={session} />}
+              {state === "stopping" && t(" Odeslaný nástroj může ještě dokončit práci.", " An issued tool may still finish.")}
             </p>
           )}
         </div>
@@ -841,43 +826,30 @@ const draftKey =
           ))}
         <ErrorBox error={error ?? provider.error} />
         <PermissionBanner mode={perm.mode} source={perm.source} />
-        {provider.data && !provider.data.connected && (
-          <div className="notice">
-            {t(
-              provider.data.setupRequired
-                ? "NVIDIA NIM čeká na API klíč."
-                : "Připojte poskytovatele modelu pro zahájení konverzace.",
-              provider.data.setupRequired
-                ? "NVIDIA NIM needs an API key."
-                : "Connect a model provider to start a conversation.",
-            )}{" "}
-            <button onClick={() => navigate("/settings")}>
-              {t(
-                provider.data.setupRequired ? "Nastavit NVIDIA NIM" : "Nastavit poskytovatele",
-                provider.data.setupRequired ? "Set up NVIDIA NIM" : "Set up provider",
-              )}
-            </button>
-          </div>
-        )}
-        {!id && (
-          <label className="project-field">
-            {t("Projektový prostor (volitelné)", "Project workspace (optional)")}
-            <input
-              value={project}
-              maxLength={160}
-              placeholder={t("např. web VOID", "e.g. VOID web")}
-              onChange={(event) => setProject(event.target.value)}
-            />
-            <span className="project-background">
-              <input
-                type="checkbox"
-                checked={background}
-                onChange={(event) => setBackground(event.target.checked)}
-              />
-              {t("Spustit na pozadí (fronta)", "Run in background (queued)")}
-            </span>
+        {!id && <ProviderNotice provider={provider.data} setup={() => navigate("/settings")} />}
+        {id && state === "unknown" && <p className="notice" role="status">{t("Výsledek běhu není potvrzen. Před dalším pokusem zkontrolujte běh a ledger.", "The run outcome is not confirmed. Check the run and ledger before retrying.")}</p>}
+        {!id && <details className="new-session-options">
+          <summary>{t("Projekt a agent", "Project and agent")}</summary>
+          <ErrorBox error={projects.error ?? agents.error} />
+          {capabilities.data?.projects === true ? <label>
+            {t("Projekt", "Project")}
+            <select value={project} onChange={event => setProject(event.target.value)} disabled={projects.isPending}>
+              <option value="">{t("Bez projektu", "No project")}</option>
+              {(projects.data?.items ?? []).map((row: Row) => <option key={row.id} value={row.id}>{row.name}</option>)}
+            </select>
+          </label> : <p className="muted">{t("Projekty nejsou na tomto hostu dostupné.", "Projects are not available on this host.")}</p>}
+          <label>{t("Agent pro tuto konverzaci", "Agent for this conversation")}
+            <select value={agent ?? preferences.data?.preferences?.defaultAgentPreset ?? "default"} onChange={event => setAgent(event.target.value)} disabled={agents.isPending || agents.data?.supported === false}>
+              {agentOptions(agents.data).map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
+            </select>
           </label>
-        )}
+          <p className="muted">{t("Nastavení se zachytí při vytvoření konverzace. Oprávnění nadále řídí server.", "Settings are captured when the conversation starts. Permissions remain server-controlled.")}</p>
+          {capabilities.data?.backgroundQueue === true && <label className="project-background">
+            <input type="checkbox" checked={background} onChange={event => setBackground(event.target.checked)} />
+            {t("Spustit na pozadí", "Run in background")}
+          </label>}
+          <button type="button" onClick={() => navigate("/settings")}>{t("Spravovat projekty a agenty", "Manage projects and agents")}</button>
+        </details>}
         <form
           className="composer"
           onSubmit={(e) => {
@@ -1129,7 +1101,7 @@ const draftKey =
             {running ? (
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !runCanStop(session)}
                 title={t("Zastavit (Esc)", "Stop (Esc)")}
                 aria-label={t("Zastavit běh", "Stop the run")}
                 onClick={() => {
@@ -1145,7 +1117,8 @@ const draftKey =
                 disabled={
                   busy ||
                   !draft.trim() ||
-                  !provider.data?.connected ||
+                  (!!id && !session) ||
+                  (!id && providerStatus(provider.data) !== "ready") ||
                   retryWait > 0
                 }
                 aria-label={t("Odeslat zprávu", "Send message")}
@@ -1153,18 +1126,7 @@ const draftKey =
 {busy ? "…" : "↑"}
               </m.button>
             )}
-              <button
-                type="button"
-                className="secondary compact"
-                disabled={!id || running || busy}
-                title={t("Sbalit kontext", "Compact context")}
-                aria-label={t("Sbalit kontext", "Compact context")}
-                onClick={() => {
-                  void compactContext();
-                }}
-              >
-                {busy ? t("Sbaluji…", "Compacting…") : t("Sbalit ▼", "Compact ▼")}
-              </button>
+
           </div>
         </form>
         {queued && !running && (
@@ -1188,6 +1150,7 @@ const draftKey =
             </button>
           </div>
         )}
+        {session && <SessionContext key={session.id} session={session} events={rawEvents} supported={capabilities.data?.contextCompaction === true} />}
         <div className="composer-footnote">
           <span>{providerLabel}</span>
           <span

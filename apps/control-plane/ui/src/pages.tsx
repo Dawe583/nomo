@@ -1,3 +1,5 @@
+import { ProviderNotice, RunStatus } from "./workspace-status";
+import { runCanStop, runState, RUN_STATES } from "./workspace-state";
 import { ApprovalReview } from "./approval-review";
 import { plainAction, riskOf, sortRiskFirst } from "./approval-text";
 import { LedgerVerify } from "./ledger-verify";
@@ -219,68 +221,57 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
   );
 }
 export function Runs({ navigate }: { navigate: (path: string) => void }) {
-  const t = useText();
-  const [status, setStatus] = useState("");
-  // Live capacity comes from the server overview. Unknown stays unknown.
+  const t = useText(), client = useQueryClient();
+  const [state, setState] = useState(""), [selected, setSelected] = useState<Row>(),
+    [stopping, setStopping] = useState(false), [error, setError] = useState<unknown>();
   const overview = useApi("/api/overview");
-  const running =
-    overview.data?.running ?? overview.data?.overview?.running ?? null;
-  return (
-    <>
-      <p className="page-intro" role="status">
-        {running === null
-          ? t(
-              "Počet aktivních běhů je neznámý. Novou zprávu nelze odeslat, dokud její konverzace běží.",
-              "Active run count is unknown. A new message cannot be sent while its conversation is running.",
-            )
-          : t(
-              `Aktivní běhy: ${running}. Nová zpráva čeká, dokud její konverzace běží. Tlačítko Zastavit běh ukončí.`,
-              `Active runs: ${running}. A new message waits while its conversation runs. The Stop button ends the run.`,
-            )}
-      </p>
-      <ErrorBox error={overview.error} />
-    <DataTable
-      key={status}
-      endpoint={"/api/runs?status=" + status}
+  const detail = useApi("/api/runs?sessionId=" + encodeURIComponent(selected?.sessionId ?? ""), !!selected, 3000);
+  const run = items(detail.data).find(row => row.id === selected?.id) ?? selected;
+  const running = overview.data?.running ?? overview.data?.overview?.running ?? null;
+  async function stop() {
+    if (!run || stopping || !runCanStop(run)) return;
+    setStopping(true); setError(undefined);
+    try {
+      await api("/api/runs/" + encodeURIComponent(run.sessionId) + "/stop", "POST");
+      await client.invalidateQueries();
+    } catch (error) { setError(error); }
+    finally { setStopping(false); }
+  }
+  return <>
+    <p className="page-intro" role="status">{running === null
+      ? t("Počet aktivních běhů je neznámý.", "Active run count is unknown.")
+      : t(`Aktivní běhy: ${running}.`, `Active runs: ${running}.`)}</p>
+    <ErrorBox error={overview.error} />
+    <DataTable key={state} endpoint={"/api/runs?state=" + state}
       columns={[
         { key: "id", label: t("Běh", "Run") },
-        {
-          key: "sessionId",
-          label: t("Konverzace", "Conversation"),
-          render: (r) => (
-            <button
-              className="text-button"
-              onClick={() => navigate("/chat/" + r.sessionId)}
-            >
-              {r.title ?? r.sessionId}
-            </button>
-          ),
-        },
-        {
-          key: "status",
-          label: t("Stav", "Status"),
-          render: (r) => <Badge value={r.status} />,
-        },
+        { key: "sessionId", label: t("Konverzace", "Conversation"), render: row => <button className="text-button" onClick={() => navigate("/chat/" + row.sessionId)}>{row.title ?? row.sessionId}</button> },
+        { key: "state", label: t("Stav", "State"), render: row => <RunStatus run={row} /> },
+        { key: "progress", label: t("Průběh", "Progress"), render: row => typeof row.progress === "number" ? `${Math.round(row.progress * 100)}%` : t("Neznámý", "Unknown") },
+        { key: "reconcileRequired", label: t("Kontrola výsledku", "Reconciliation"), render: row => runState(row) === "unknown" ? t("Nutná kontrola, neopakovat", "Check required, do not retry") : row.reconcileRequired === false ? t("Nevyžadována", "Not required") : t("Neznámá", "Unknown") },
         { key: "model", label: "Model" },
         { key: "createdAt", label: t("Začátek", "Started") },
         { key: "durationMs", label: "ms" },
         { key: "steps", label: t("Kroky", "Steps") },
       ]}
-      toolbar={
-        <select
-          aria-label={t("Stav běhu", "Run status")}
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">{t("Všechny stavy", "All states")}</option>
-          {["queued", "running", "idle", "failed", "cancelled"].map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-      }
+      onRow={row => { setSelected(row); setError(undefined); }}
+      toolbar={<select aria-label={t("Stav běhu", "Run state")} value={state} onChange={event => setState(event.target.value)}>
+        <option value="">{t("Všechny stavy", "All states")}</option>
+        {RUN_STATES.map(value => <option key={value}>{value}</option>)}
+      </select>}
     />
-    </>
-  );
+    {run && <Dialog title={t("Detail běhu", "Run details")} close={() => { if (!stopping) setSelected(undefined); }}>
+      <RunStatus run={run} />
+      <ErrorBox error={error ?? detail.error} />
+      {(runState(run) === "unknown" || run.reconcileRequired) && <p className="notice" role="status">{t("Výsledek není potvrzen. Zkontrolujte nástroje a ledger. Běh se automaticky neopakuje.", "The outcome is not confirmed. Inspect tools and the ledger. The run will not automatically repeat.")}</p>}
+      {runState(run) === "stopping" && <p role="status">{t("Požadavek na zastavení byl odeslán. Dříve spuštěný nástroj může ještě dokončit práci.", "Stop requested. An already dispatched tool may still finish.")}</p>}
+      <JsonDetail value={run} />
+      <div className="actions">
+        <button onClick={() => navigate("/chat/" + run.sessionId)}>{t("Otevřít konverzaci", "Open conversation")}</button>
+        <button disabled={stopping || !!detail.error || !runCanStop(run)} onClick={() => void stop()}>{stopping ? t("Žádám zastavení…", "Requesting stop…") : t("Zastavit běh", "Stop run")}</button>
+      </div>
+    </Dialog>}
+  </>;
 }
 export function Approvals() {
   const t = useText();
@@ -548,7 +539,7 @@ export function Ledger() {
     </>
   );
 }
-export function Models() {
+export function Models({ navigate }: { navigate: (path: string) => void }) {
   const t = useText();
   const provider = useApi("/api/provider"),
     client = useQueryClient();
@@ -557,6 +548,7 @@ export function Models() {
   return (
     <>
       <ErrorBox error={provider.error ?? error} />
+      <ProviderNotice provider={provider.data} setup={() => navigate("/settings")} />
       <p className="page-intro">
         {t(
           "Katalog aktuálně připojeného poskytovatele. Ceny a limity bez zdroje jsou neověřené.",

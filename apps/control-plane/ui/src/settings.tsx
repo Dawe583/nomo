@@ -1,3 +1,5 @@
+import { ProviderNotice } from "./workspace-status";
+import { WorkspaceControls } from "./workspace-controls";
 import { Integrations } from "./integrations";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,6 +42,7 @@ export function Settings({
   return (
     <div className="settings">
       <DesktopSetup />
+      <WorkspaceControls />
       <section aria-labelledby="install-heading">
         <h2 id="install-heading">{t("Aplikace VOID", "VOID apps")}</h2>
         <h3>macOS</h3>
@@ -185,13 +188,8 @@ export function Settings({
       </section>
       <section>
         <h2>{t("Poskytovatel modelu", "Model provider")}</h2>
-        <Badge
-          value={
-            provider.data?.connected
-              ? t("Připojeno", "Connected")
-              : t("Nepřipojeno", "Disconnected")
-          }
-        />
+        <ProviderNotice provider={provider.data} />
+        <ErrorBox error={provider.error} />
         <p>{provider.data?.baseUrl ?? DEFAULT_PROVIDER_URL}</p>
         {provider.data?.setupRequired && (
           <p className="notice">

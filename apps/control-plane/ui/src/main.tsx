@@ -1,3 +1,5 @@
+import { ProviderNotice, RunStatus } from "./workspace-status";
+import { providerStatus } from "./workspace-state";
 import { Icon } from "./icons";
 import {
   LazyMotion,
@@ -678,20 +680,18 @@ function App({
               <div className="connection">
                 <span
                   className={
-                    online && provider.data?.connected
+                    online && providerStatus(provider.data) === "ready"
                       ? "connected-dot"
                       : "disconnected-dot"
                   }
                 />
-                <span>
+                <div>
                   {!online
                     ? t("Offline", "Offline")
                     : provider.isLoading
                       ? t("Připojuji…", "Connecting…")
-                      : provider.data?.connected
-                        ? t("Poskytovatel připojen", "Provider connected")
-                        : t("Nastavit připojení", "Set up connection")}
-                </span>
+                      : <ProviderNotice provider={provider.data} />}
+                </div>
               </div>
             </div>
           </m.aside>
@@ -714,7 +714,7 @@ function App({
                         t("Nová konverzace", "New conversation"))
                     : t(active[2], active[3])}
                 </span>
-                {current && <Badge value={current.status} />}
+                {current && <RunStatus run={current} />}
                 {overview.data?.queueCapacity !== undefined && (
                   <Badge
                     pill
@@ -725,16 +725,6 @@ function App({
                       ? `${overview.data.queueLength}/${overview.data.queueCapacity}`
                       : "?/"}
                   </Badge>
-                )}
-                {current && current.status === "running" && (
-                  <div className="queue-banner" role="status">
-                    <span className="queue-banner-text">
-                      {t(
-                        "1 aktivní běh, tvůj draft čeká",
-                        "1 active run, your draft waits",
-                      )}
-                    </span>
-                  </div>
                 )}
               </div>
               <button
