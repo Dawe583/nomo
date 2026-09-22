@@ -5,7 +5,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { Workbench } from "./index.ts";
-import { page, filterRows, preferencePatch } from "./gui.ts";
+import {
+  page,
+  filterRows,
+  preferencePatch,
+  deriveRunState,
+  activity,
+  providerStateFromFailure,
+} from "./gui.ts";
 
 test("cursor binds filters and preserves position when new rows arrive; finds old results", () => {
   const rows = Array.from({ length: 151 }, (_, i) => ({
@@ -234,4 +241,153 @@ test("connector updates validate before commit, retain secret, expose schema, an
     wb.connectionState().connectors.find((c) => c.id === connector.id)?.name,
     "Changed",
   );
+});
+
+test("deriveRunState maps status strings to discriminated RunState", () => {
+  const { deriveRunState: _deriveRunState } = { deriveRunState };
+  assert.equal(deriveRunState("running", []), "running");
+  assert.equal(
+    deriveRunState("running", [
+      { text: "waiting for your approval", type: "run.status" },
+    ]),
+    "awaiting-approval",
+  );
+  assert.equal(deriveRunState("cancelled", []), "stopped");
+  assert.equal(deriveRunState("stopping", []), "stopping");
+  assert.equal(deriveRunState("paused", []), "paused");
+  assert.equal(deriveRunState("failed", []), "failed");
+  assert.equal(deriveRunState("unknown", []), "unknown");
+  assert.equal(deriveRunState("idle", []), "idle");
+  assert.equal(deriveRunState("weird", []), "idle");
+});
+
+test("activity returns runs with state, progress, reconcileRequired", () => {
+  const views = [
+    {
+      id: "s1",
+      model: "m1",
+      status: "running",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      events: [
+        {
+          seq: 1,
+          at: "2024-01-01T00:00:00.000Z",
+          kind: "user",
+          text: "hi",
+          type: "message.completed",
+        },
+        {
+          seq: 2,
+          at: "2024-01-01T00:00:01.000Z",
+          kind: "tool",
+          text: "",
+          type: "tool.started",
+          payload: { progress: 0.5 },
+        },
+        {
+          seq: 3,
+          at: "2024-01-01T00:00:02.000Z",
+          kind: "tool",
+          text: "",
+          type: "tool.result",
+        },
+      ],
+    },
+  ];
+  const result = activity(views);
+  assert.equal(result.runs.length, 1);
+  const run = result.runs[0]!;
+  assert.equal(run.state, "running");
+  assert.equal(run.progress, 0.5);
+  assert.equal(run.reconcileRequired, false);
+  assert.ok("durationMs" in run);
+});
+
+test("activity sets reconcileRequired true for unknown status", () => {
+  const views = [
+    {
+      id: "s1",
+      model: "m1",
+      status: "unknown",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      events: [
+        {
+          seq: 1,
+          at: "2024-01-01T00:00:00.000Z",
+          kind: "tool",
+          text: "",
+          type: "tool.started",
+        },
+      ],
+    },
+  ];
+  const result = activity(views);
+  assert.equal(result.runs[0]!.reconcileRequired, true);
+  assert.equal(result.runs[0]!.state, "unknown");
+});
+
+test("activity clamps progress outside 0..1 to null", () => {
+  // use static import
+  const views = [
+    {
+      id: "s1",
+      model: "m1",
+      status: "running",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      events: [
+        {
+          seq: 1,
+          at: "2024-01-01T00:00:00.000Z",
+          kind: "tool",
+          text: "",
+          type: "tool.started",
+          payload: { progress: 1.5 },
+        },
+      ],
+    },
+  ];
+  const result = activity(views);
+  assert.equal(result.runs[0]!.progress, null);
+});
+
+test("providerStateFromFailure maps 429 to rate-limited with retryAt", () => {
+  // use static import
+  const result = providerStateFromFailure(
+    false,
+    { status: 429, retryAfter: 30 },
+    false,
+  );
+  assert.equal(result.status, "rate-limited");
+  assert.ok(result.retryAt !== null);
+  assert.equal(new Date(result.retryAt!).getTime() > Date.now(), true);
+});
+
+test("providerStateFromFailure maps no credential to setup-required", () => {
+  // use static import
+  const result = providerStateFromFailure(false, null, false);
+  assert.equal(result.status, "setup-required");
+  assert.equal(
+    result.detail,
+    "No credential is configured for the default provider.",
+  );
+  assert.equal(result.retryAt, null);
+});
+
+test("providerStateFromFailure maps other failure to unavailable with text", () => {
+  const result = providerStateFromFailure(
+    false,
+    { status: 403, retryAfter: undefined },
+    true,
+  );
+  assert.equal(result.status, "unavailable");
+  assert.ok(result.detail !== null);
+  assert.equal(result.retryAt, null);
+});
+
+test("providerStateFromFailure ready when connected", () => {
+  // use static import
+  const result = providerStateFromFailure(true, null, true);
+  assert.equal(result.status, "ready");
+  assert.equal(result.detail, null);
+  assert.equal(result.retryAt, null);
 });

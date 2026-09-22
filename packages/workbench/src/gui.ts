@@ -180,6 +180,47 @@ export const capabilities = (mode: "local" | "cloud") => ({
   maxRequestBytes: 65536,
   historicalEvents: "retained-only",
 });
+export type ProviderStatus =
+  "ready" | "setup-required" | "rate-limited" | "unavailable";
+export type ViewName =
+  | "chat"
+  | "sessions"
+  | "runs"
+  | "documents"
+  | "approvals"
+  | "ledger"
+  | "tools"
+  | "models";
+export type RunState =
+  | "idle"
+  | "running"
+  | "awaiting-approval"
+  | "stopping"
+  | "stopped"
+  | "failed"
+  | "unknown"
+  | "paused";
+// A run status is a workspace-wide primitive, so the mapping from the older
+// string status to the discriminated RunState lives in one place. Unknown must
+// never fall through to a completed-looking state: an unconfirmed outcome asks
+// for reconciliation instead.
+export function deriveRunState(
+  status: string,
+  events: readonly { text?: string; type?: string }[],
+): RunState {
+  if (status === "running")
+    return events.some((e) =>
+      (e.text ?? "").includes("waiting for your approval"),
+    )
+      ? "awaiting-approval"
+      : "running";
+  if (status === "cancelled") return "stopped";
+  if (status === "stopping") return "stopping";
+  if (status === "paused") return "paused";
+  if (status === "failed") return "failed";
+  if (status === "unknown") return "unknown";
+  return "idle";
+}
 export function activity(
   views: readonly {
     id: string;
@@ -194,6 +235,7 @@ export function activity(
       kind: string;
       runId?: string;
       type?: string;
+      text?: string;
       payload?: Record<string, unknown>;
     }[];
   }[],
@@ -206,28 +248,41 @@ export function activity(
       );
       const first = events[0],
         last = events.at(-1);
+      const status =
+        id === s.runId || !s.runId
+          ? s.status
+          : String(
+              [...events].reverse().find((e) => e.type === "run.status")
+                ?.payload?.status ??
+                (events.some((e) => e.kind === "error") ? "failed" : "unknown"),
+            );
+      const progressCandidate = [...events]
+        .reverse()
+        .find((e) => typeof e.payload?.progress === "number")
+        ?.payload?.progress;
+      const progress =
+        typeof progressCandidate === "number" &&
+        progressCandidate >= 0 &&
+        progressCandidate <= 1
+          ? progressCandidate
+          : null;
+      const state = deriveRunState(status, events);
       return {
         id,
         runId: id,
         sessionId: s.id,
         model: s.model,
         provider: s.provider,
-        status:
-          id === s.runId || !s.runId
-            ? s.status
-            : String(
-                [...events].reverse().find((e) => e.type === "run.status")
-                  ?.payload?.status ??
-                  (events.some((e) => e.kind === "error")
-                    ? "failed"
-                    : "unknown"),
-              ),
+        status,
         createdAt: first?.at ?? s.createdAt,
         updatedAt: last?.at,
         durationMs:
           first && last ? Date.parse(last.at) - Date.parse(first.at) : null,
         steps: events.filter((e) => e.type === "tool.started").length,
         legacy: id.endsWith(":legacy"),
+        state,
+        progress,
+        reconcileRequired: status === "unknown",
       };
     });
   });
@@ -298,6 +353,45 @@ export function providerFailure(error: {
           : new Date(Date.now() + error.retryAfter * 1000).toISOString(),
       automaticRetry: false,
     },
+  };
+}
+// The provider state has exactly one source of truth. This maps an observed
+// ProviderRequestError (or the absence of a credential) to a status without
+// guessing a price or a quota; an unobserved retry time is null.
+export function providerStateFromFailure(
+  connected: boolean,
+  failure: { status: number; retryAfter?: number } | null,
+  credentials: boolean,
+): { status: ProviderStatus; detail: string | null; retryAt: string | null } {
+  if (failure?.status === 429)
+    return {
+      status: "rate-limited",
+      detail: "Provider rate limit reached.",
+      retryAt:
+        failure.retryAfter === undefined
+          ? null
+          : new Date(Date.now() + failure.retryAfter * 1000).toISOString(),
+    };
+  if (!connected && !credentials)
+    return {
+      status: "setup-required",
+      detail: "No credential is configured for the default provider.",
+      retryAt: null,
+    };
+  if (failure)
+    return {
+      status: "unavailable",
+      detail: providerFailure({
+        status: failure.status,
+        retryAfter: failure.retryAfter,
+        message: `Provider request failed (HTTP ${failure.status}).`,
+      }).text,
+      retryAt: null,
+    };
+  return {
+    status: connected ? "ready" : "unavailable",
+    detail: connected ? null : "The provider is configured but not usable.",
+    retryAt: null,
   };
 }
 
