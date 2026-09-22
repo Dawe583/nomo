@@ -2,6 +2,7 @@ version: 1
 rules:
   - match:
       tool: echo
+      class: unknown
     decision: allow
   - match:
       tool: orders_delete

@@ -22,6 +22,7 @@ async function fixturePolicy(): Promise<string> {
     "rules:",
     "  - match:",
     "      tool: echo",
+    "      class: unknown",
     "    decision: allow",
     "  - match:",
     "      tool: orders_delete",

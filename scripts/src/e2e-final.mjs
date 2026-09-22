@@ -130,6 +130,7 @@ async function policyPath(rootDir, seconds = 3) {
 rules:
   - match:
       tool: echo
+      class: unknown
     decision: allow
   - match:
       tool: orders_delete
