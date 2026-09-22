@@ -2,6 +2,7 @@ import { ProviderNotice, RunStatus } from "./workspace-status";
 import { providerStatus, runState, runCanStop, runBlocksInput } from "./workspace-state";
 import { SessionContext } from "./session-context";
 import { agentOptions } from "./agent-input";
+import { loadDraft, saveDraft, submitDraft } from "./draft-state";
 import { CommandMenu } from "./command-menu.tsx";
 import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import * as m from "motion/react-m";
@@ -146,7 +147,7 @@ const draftKey =
     ":" +
     (id ?? "new");
   const [draft, setDraft] = useState(
-    () => sessionStorage.getItem(draftKey) ?? "",
+    () => loadDraft(sessionStorage, draftKey).text,
   );
   const [project, setProject] = useState(
     () => new URLSearchParams(location.search).get("project")?.slice(0, 160) ?? "",
@@ -178,7 +179,7 @@ const draftKey =
   const [commandDismissed, setCommandDismissed] = useState(false);
   const [commandIndex, setCommandIndex] = useState(0);
   const [selectedTool, setSelectedTool] = useState<Command>();
-  const [queued, setQueued] = useState(false);
+  const [queued, setQueued] = useState(() => loadDraft(sessionStorage, draftKey).queued);
   const commandOpen =
     draft.startsWith("/") && !/\s/.test(draft) && !commandDismissed;
   const toolsQuery = useApi(
@@ -331,20 +332,22 @@ const draftKey =
     undefined,
   );
   useEffect(() => {
-    setDraft(sessionStorage.getItem(draftKey) ?? "");
+    const saved = loadDraft(sessionStorage, draftKey);
+    setDraft(saved.text);
+    setQueued(saved.queued);
     setAttachments([]);
     setSelectedTool(undefined);
     setCommandDismissed(false);
     setFollow(true);
   }, [draftKey]);
   useEffect(() => {
-    sessionStorage.setItem(draftKey, draft);
+    saveDraft(sessionStorage, draftKey, draft, queued);
     if (textarea.current) {
       textarea.current.style.height = "auto";
       textarea.current.style.height =
         Math.min(156, textarea.current.scrollHeight) + "px";
     }
-  }, [draft, draftKey]);
+  }, [draft, draftKey, queued]);
   useEffect(() => {
     if (preferences.data?.preferences?.defaultModel)
       setModel(preferences.data.preferences.defaultModel);
@@ -452,12 +455,6 @@ const draftKey =
     stream.onerror = () => {
       void sync();
     };
-    // When run stops and there's a queued draft, make it available to resume
-    if (!running && queued && id && !disposed) {
-      // Run stopped with queued draft - mark it as ready to resume
-      // The queued draft remains in sessionStorage for resume after restart
-      setQueued(false); // reset queued flag, draft remains in storage
-    }
     const poll = setInterval(() => void sync(), 5000);
     void sync();
     return () => {
@@ -467,7 +464,7 @@ const draftKey =
       if (timer) clearTimeout(timer);
       if (eventTimer) clearTimeout(eventTimer);
     };
-  }, [id, client, running, queued]);
+  }, [id, client]);
   useEffect(() => {
     if (follow && transcript.current) {
       transcript.current.scrollTop = transcript.current.scrollHeight;
@@ -505,15 +502,8 @@ const draftKey =
       return;
     }
     if (running) {
+      saveDraft(sessionStorage, draftKey, draft, true);
       setQueued(true);
-      const queuedKey = "void-queued:" + draftKey.split(":").slice(1).join(":");
-      sessionStorage.setItem(queuedKey, draft);
-      setDraft(
-        t(
-          "Draft fronty: %1".replace("%1", draft),
-          "Queued draft: %1".replace("%1", draft),
-        ),
-      );
       return;
     }
     setBusy(true);
@@ -544,8 +534,9 @@ const draftKey =
     }
     if (!requestKey.current || requestKey.current.prompt !== prompt)
       requestKey.current = { prompt, key: crypto.randomUUID() };
+    const idempotencyKey = requestKey.current.key;
     try {
-      const result = await api(
+      const result = await submitDraft(sessionStorage, draftKey, () => api(
         id ? "/api/sessions/" + id : "/api/sessions",
         "POST",
         {
@@ -558,10 +549,10 @@ const draftKey =
                 agent: agent ?? preferences.data?.preferences?.defaultAgentPreset ?? "default",
                 background,
               }),
-          idempotencyKey: requestKey.current.key,
+          idempotencyKey,
         },
-      );
-      sessionStorage.removeItem(draftKey);
+      ));
+      setQueued(false);
       setDraft("");
       setSelectedTool(undefined);
       setAttachments([]);
@@ -1129,24 +1120,19 @@ const draftKey =
 
           </div>
         </form>
-        {queued && !running && (
+        {queued && (
           <div className="queue-banner" role="status">
             <span className="queue-banner-text">
               {t(
-                "Draft fronty čeká na spuštění",
-                "Queued draft waiting to run",
+                "Koncept je uložený v této kartě. Nic se neodešle automaticky.",
+                "Draft saved in this tab. Nothing sends automatically.",
               )}
             </span>
             <button
-              onClick={() => {
-                setQueued(false);
-                sessionStorage.removeItem(
-                  "void-queued:" + draftKey.split(":").slice(1).join(":"),
-                );
-                void send();
-              }}
+              disabled={busy || running || retryWait > 0 || !draft.trim()}
+              onClick={() => void send()}
             >
-              {t("Spustit", "Run")}
+              {t("Odeslat koncept", "Send draft")}
             </button>
           </div>
         )}
