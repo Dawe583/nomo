@@ -1,4 +1,6 @@
 import test, { type TestContext } from "node:test";
+import fs from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
@@ -1144,6 +1146,77 @@ for (const attack of ["extra file", "token replacement", "index replacement", "l
 }
 
 
+for (const name of ["index", "index.lock"] as const) {
+  posixTest(`private ${name} cleanup preserves a replacement with reused inode numbers`, async (t) => {
+    const f = await commitRepository(t);
+    const workspace = createPrivateIndexWorkspace(f.gitPath("index"));
+    const target = join(workspace.directory, name);
+    await writeFile(target, "owned");
+    recordOwnedPrivateFile(workspace, target);
+    const owned = lstatSync(target, { bigint: true });
+    await unlink(target);
+    const foreign = Buffer.from("foreign inode replacement");
+    await writeFile(target, foreign);
+    reusePathInode(t, target, owned);
+    assert.throws(() => cleanupPrivateIndexWorkspace(workspace), /identity/);
+    assert.deepEqual(await readFile(target), foreign);
+  });
+}
+
+for (const outcome of ["success", "refusal"] as const) {
+  posixTest(`private index ${outcome} closes every retained descriptor`, async (t) => {
+    const f = await commitRepository(t);
+    const workspace = createPrivateIndexWorkspace(f.gitPath("index"));
+    for (const path of [workspace.indexPath, `${workspace.indexPath}.lock`]) {
+      await writeFile(path, "owned");
+      recordOwnedPrivateFile(workspace, path);
+    }
+    const descriptors = [...workspace.ownedFiles.values()].map((file) => file.descriptor);
+    if (outcome === "refusal") {
+      await writeFile(join(workspace.directory, "foreign"), "preserve");
+      assert.throws(() => cleanupPrivateIndexWorkspace(workspace), /unknown/);
+    } else {
+      cleanupPrivateIndexWorkspace(workspace);
+    }
+    for (const descriptor of descriptors)
+      assert.throws(() => fstatSync(descriptor), { code: "EBADF" });
+  });
+}
+
+posixTest("recording a replaced Git private index closes the previous descriptor", async (t) => {
+  const f = await commitRepository(t);
+  const workspace = createPrivateIndexWorkspace(f.gitPath("index"));
+  try {
+    await writeFile(workspace.indexPath, "first Git index");
+    recordOwnedPrivateFile(workspace, workspace.indexPath);
+    const previous = workspace.ownedFiles.get(workspace.indexPath)!;
+    await unlink(workspace.indexPath);
+    await writeFile(workspace.indexPath, "next Git index");
+    recordOwnedPrivateFile(workspace, workspace.indexPath);
+    assert.throws(() => fstatSync(previous.descriptor), { code: "EBADF" });
+    assert.equal(fstatSync(workspace.ownedFiles.get(workspace.indexPath)!.descriptor).nlink, 1);
+  } finally { cleanupPrivateIndexWorkspace(workspace); }
+});
+
+function reusePathInode(t: TestContext, target: string, owned: BigIntStats): void {
+  // Only pathname inode allocation is simulated. Real descriptors must still
+  // identify the unlinked original, and cleanup must preserve real foreign bytes.
+  const original = fs.lstatSync;
+  const mocked = t.mock.method(fs, "lstatSync", (...args: Parameters<typeof original>) => {
+    const item = original(...args);
+    if (item && String(args[0]) === target) {
+      item.dev = owned.dev;
+      item.ino = owned.ino;
+    }
+    return item;
+  });
+  syncBuiltinESMExports();
+  t.after(() => {
+    mocked.mock.restore();
+    syncBuiltinESMExports();
+  });
+}
+
 function transactionServices(f: CommitFixture): CommitServices {
   const head = f.run("rev-parse", "HEAD");
   return {
@@ -1791,6 +1864,30 @@ posixTest("private index initialization never deletes a replaced foreign token",
       tokenPath = join(directory, "owner");
       unlinkSync(tokenPath);
       writeFileSync(tokenPath, foreign);
+      throw new Error("injected foreign replacement");
+    },
+  }), /injected foreign replacement/);
+  assert.deepEqual(await readFile(tokenPath), foreign);
+  await rm(dirname(tokenPath), { recursive: true, force: true });
+});
+
+posixTest("private index initialization preserves a token with reused inode numbers", async (t) => {
+  const f = await commitRepository(t);
+  const parent = dirname(f.gitPath("index"));
+  const before = new Set(await readdir(parent));
+  const foreign = Buffer.from("foreign initialization token");
+  let tokenPath = "";
+  assert.throws(() => createPrivateIndexWorkspace(f.gitPath("index"), {
+    seam(event) {
+      if (event !== "validation") return;
+      const directory = readdirSync(parent).map((name) => join(parent, name))
+        .find((path) => !before.has(path.slice(parent.length + 1)) && path.includes(".void-git-index-"));
+      assert.ok(directory);
+      tokenPath = join(directory, "owner");
+      const owned = lstatSync(tokenPath, { bigint: true });
+      unlinkSync(tokenPath);
+      writeFileSync(tokenPath, foreign);
+      reusePathInode(t, tokenPath, owned);
       throw new Error("injected foreign replacement");
     },
   }), /injected foreign replacement/);

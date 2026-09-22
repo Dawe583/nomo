@@ -165,7 +165,7 @@ export type PrivateIndexWorkspace = {
   tokenIno: bigint;
   token: string;
   indexPath: string;
-  ownedFiles: Map<string, { dev: bigint; ino: bigint }>;
+  ownedFiles: Map<string, { dev: bigint; ino: bigint; descriptor: number }>;
 };
 
 export type ManagedCommitLifecycle = {
@@ -759,7 +759,7 @@ export function createPrivateIndexWorkspace(
     controls.seam?.("open");
     descriptor = openSync(
       tokenPath,
-      constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW,
+      constants.O_CREAT | constants.O_EXCL | constants.O_RDWR | constants.O_NOFOLLOW,
       0o600,
     );
     const openedToken = fstatSync(descriptor, { bigint: true });
@@ -768,12 +768,12 @@ export function createPrivateIndexWorkspace(
     controls.seam?.("write");
     writeFileSync(descriptor, token);
     controls.seam?.("close");
-    closeSync(descriptor);
-    descriptor = undefined;
+    // Keep the inode allocated until cleanup so unlink/create cannot reuse it.
     controls.seam?.("lstat");
     const tokenStat = lstatSync(tokenPath, { bigint: true });
     controls.seam?.("validation");
     if (
+      fstatSync(descriptor, { bigint: true }).nlink !== 1n ||
       !tokenStat.isFile() || tokenStat.isSymbolicLink() || tokenStat.nlink !== 1n ||
       tokenStat.dev !== tokenIdentity.dev || tokenStat.ino !== tokenIdentity.ino ||
       tokenStat.uid !== item.uid || (tokenStat.mode & 0o777n) !== 0o600n
@@ -790,15 +790,11 @@ export function createPrivateIndexWorkspace(
       indexPath: join(directory, "index"),
       ownedFiles: new Map(),
     };
-    workspace.ownedFiles.set(tokenPath, { dev: tokenStat.dev, ino: tokenStat.ino });
+    workspace.ownedFiles.set(tokenPath, { dev: tokenStat.dev, ino: tokenStat.ino, descriptor });
     if (pathExistsNoFollow(workspace.indexPath))
       throw new Error("Managed Git private index already exists.");
     return workspace;
   } catch (error) {
-    if (descriptor !== undefined) {
-      try { closeSync(descriptor); }
-      catch {}
-    }
     try {
       const currentParent = lstatSync(parent, { bigint: true });
       const currentDirectory = lstatSync(directory, { bigint: true });
@@ -815,9 +811,10 @@ export function createPrivateIndexWorkspace(
           (currentDirectory.mode & 0o777n) === initialDirectoryMode &&
           readdirSync(directory).length === 0;
       if (parentUnchanged && directoryUnchanged) {
-        if (tokenIdentity && pathExistsNoFollow(tokenPath)) {
+        if (tokenIdentity && descriptor !== undefined && pathExistsNoFollow(tokenPath)) {
           const currentToken = lstatSync(tokenPath, { bigint: true });
           if (
+            fstatSync(descriptor, { bigint: true }).nlink === 1n &&
             currentToken.isFile() && !currentToken.isSymbolicLink() &&
             currentToken.dev === tokenIdentity.dev && currentToken.ino === tokenIdentity.ino
           ) unlinkSync(tokenPath);
@@ -825,6 +822,9 @@ export function createPrivateIndexWorkspace(
         if (readdirSync(directory).length === 0) rmdirSync(directory);
       }
     } catch {}
+    finally {
+      if (descriptor !== undefined) closeSync(descriptor);
+    }
     throw error;
   }
 }
@@ -846,21 +846,41 @@ export function recordOwnedPrivateFile(
   if (dirname(path) !== workspace.directory)
     throw new Error("Managed Git private file escaped its workspace.");
   assertPrivateDirectory(workspace);
-  const item = lstatSync(path, { bigint: true });
+  const descriptor = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  let retained = false;
+  try {
+    const item = fstatSync(descriptor, { bigint: true });
+    const pathname = lstatSync(path, { bigint: true });
+    if (
+      !item.isFile() || item.nlink !== 1n || item.uid !== workspace.directoryUid ||
+      pathname.isSymbolicLink() || pathname.dev !== item.dev || pathname.ino !== item.ino
+    ) throw new Error("Managed Git private file identity changed.");
+    const previous = workspace.ownedFiles.get(path);
+    workspace.ownedFiles.set(path, { dev: item.dev, ino: item.ino, descriptor });
+    retained = true;
+    if (previous) closeSync(previous.descriptor);
+  } finally {
+    if (!retained) closeSync(descriptor);
+  }
+}
+
+function assertOwnedPrivateFile(workspace: PrivateIndexWorkspace, path: string): void {
+  const expected = workspace.ownedFiles.get(path);
+  const current = lstatSync(path, { bigint: true });
   if (
-    !item.isFile() || item.isSymbolicLink() || item.nlink !== 1n ||
-    item.uid !== workspace.directoryUid
+    dirname(path) !== workspace.directory || !expected || !current.isFile() ||
+    current.isSymbolicLink() || current.nlink !== 1n ||
+    current.uid !== workspace.directoryUid || current.dev !== expected.dev ||
+    current.ino !== expected.ino || fstatSync(expected.descriptor, { bigint: true }).nlink !== 1n
   ) throw new Error("Managed Git private file identity changed.");
-  workspace.ownedFiles.set(path, { dev: item.dev, ino: item.ino });
 }
 
 export function cleanupPrivateIndexWorkspace(workspace: PrivateIndexWorkspace): void {
-  assertPrivateDirectory(workspace);
-  const tokenDescriptor = openSync(
-    workspace.tokenPath,
-    constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
-  );
   try {
+    assertPrivateDirectory(workspace);
+    const tokenDescriptor = workspace.ownedFiles.get(workspace.tokenPath)?.descriptor;
+    if (tokenDescriptor === undefined)
+      throw new Error("Managed Git private workspace token identity changed.");
     const token = fstatSync(tokenDescriptor, { bigint: true });
     const bytes = Buffer.alloc(Buffer.byteLength(workspace.token));
     const count = readSync(tokenDescriptor, bytes, 0, bytes.length, 0);
@@ -872,31 +892,24 @@ export function cleanupPrivateIndexWorkspace(workspace: PrivateIndexWorkspace): 
       bytes.toString("utf8") !== workspace.token || pathname.isSymbolicLink() ||
       pathname.dev !== token.dev || pathname.ino !== token.ino
     ) throw new Error("Managed Git private workspace token identity changed.");
-  } finally { closeSync(tokenDescriptor); }
-  const allowed = new Set(["owner", "index", "index.lock"]);
-  if (readdirSync(workspace.directory).some((name) => !allowed.has(name)))
-    throw new Error("Managed Git private workspace contains an unknown file.");
-  for (const path of [workspace.tokenPath, workspace.indexPath, `${workspace.indexPath}.lock`]) {
-    if (!pathExistsNoFollow(path)) continue;
-    const expected = workspace.ownedFiles.get(path);
-    const current = lstatSync(path, { bigint: true });
-    if (
-      dirname(path) !== workspace.directory || !expected || !current.isFile() ||
-      current.isSymbolicLink() || current.nlink !== 1n ||
-      current.uid !== workspace.directoryUid || current.dev !== expected.dev ||
-      current.ino !== expected.ino
-    ) throw new Error("Managed Git private file identity changed.");
+    const allowed = new Set(["owner", "index", "index.lock"]);
+    if (readdirSync(workspace.directory).some((name) => !allowed.has(name)))
+      throw new Error("Managed Git private workspace contains an unknown file.");
+    const paths = [`${workspace.indexPath}.lock`, workspace.indexPath, workspace.tokenPath];
+    for (const path of paths) {
+      if (pathExistsNoFollow(path)) assertOwnedPrivateFile(workspace, path);
+    }
+    for (const path of paths) {
+      if (!pathExistsNoFollow(path)) continue;
+      assertOwnedPrivateFile(workspace, path);
+      unlinkSync(path);
+    }
+    assertPrivateDirectory(workspace);
+    rmdirSync(workspace.directory);
+  } finally {
+    for (const file of workspace.ownedFiles.values()) closeSync(file.descriptor);
+    workspace.ownedFiles.clear();
   }
-  for (const path of [`${workspace.indexPath}.lock`, workspace.indexPath, workspace.tokenPath]) {
-    if (!pathExistsNoFollow(path)) continue;
-    const current = lstatSync(path, { bigint: true });
-    const expected = workspace.ownedFiles.get(path)!;
-    if (current.dev !== expected.dev || current.ino !== expected.ino)
-      throw new Error("Managed Git private file identity changed.");
-    unlinkSync(path);
-  }
-  assertPrivateDirectory(workspace);
-  rmdirSync(workspace.directory);
 }
 
 export async function writeCandidateTree(
