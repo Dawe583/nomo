@@ -2,7 +2,11 @@ import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 
 import { Session } from "./session.ts";
-import type { JsonRpcNotification, JsonRpcRequest, JsonRpcResult } from "./rpc.ts";
+import type {
+  JsonRpcNotification,
+  JsonRpcRequest,
+  JsonRpcResult,
+} from "./rpc.ts";
 
 describe("Session", () => {
   test("remaps request ids out and results back", () => {
@@ -12,9 +16,17 @@ describe("Session", () => {
     assert.equal(outbound.id, 1);
     assert.deepEqual([...session.maps.agentToUpstream.entries()], [[10, 1]]);
 
-    const inbound = session.translateInbound({ jsonrpc: "2.0", id: 1, result: { tools: [] } });
+    const inbound = session.translateInbound({
+      jsonrpc: "2.0",
+      id: 1,
+      result: { tools: [] },
+    });
 
-    assert.deepEqual(inbound, { jsonrpc: "2.0", id: 10, result: { tools: [] } });
+    assert.deepEqual(inbound, {
+      jsonrpc: "2.0",
+      id: 10,
+      result: { tools: [] },
+    });
   });
 
   test("remaps progress tokens to the same id mapping", () => {
@@ -27,7 +39,10 @@ describe("Session", () => {
     });
 
     assert.equal(outbound.id, 1);
-    assert.deepEqual(outbound.params, { name: "db.query", _meta: { progressToken: 1 } });
+    assert.deepEqual(outbound.params, {
+      name: "db.query",
+      _meta: { progressToken: 1 },
+    });
 
     const progress = session.translateInbound({
       jsonrpc: "2.0",
@@ -45,21 +60,39 @@ describe("Session", () => {
   test("drops inbound messages that reference unknown ids", () => {
     const session = new Session();
 
-    assert.equal(session.translateInbound({ jsonrpc: "2.0", id: 99, result: {} }), null);
-    assert.equal(session.translateInbound({
-      jsonrpc: "2.0",
-      method: "notifications/progress",
-      params: { progressToken: 99, progress: 1 },
-    }), null);
+    assert.equal(
+      session.translateInbound({ jsonrpc: "2.0", id: 99, result: {} }),
+      null,
+    );
+    assert.equal(
+      session.translateInbound({
+        jsonrpc: "2.0",
+        method: "notifications/progress",
+        params: { progressToken: 99, progress: 1 },
+      }),
+      null,
+    );
   });
 
   test("negotiates only versions the agent can accept", () => {
     const session = new Session();
 
-    assert.equal(session.negotiatedVersion("2025-06-18", "2025-06-18"), "2025-06-18");
-    assert.equal(session.negotiatedVersion("2025-03-26", "2025-11-25"), "2025-03-26");
-    assert.equal(session.negotiatedVersion("2024-11-05", "2024-11-05"), "2024-11-05");
-    assert.equal(session.negotiatedVersion("2099-01-01", "2099-01-01"), "2025-11-25");
+    assert.equal(
+      session.negotiatedVersion("2025-06-18", "2025-06-18"),
+      "2025-06-18",
+    );
+    assert.equal(
+      session.negotiatedVersion("2025-03-26", "2025-11-25"),
+      "2025-03-26",
+    );
+    assert.equal(
+      session.negotiatedVersion("2024-11-05", "2024-11-05"),
+      "2024-11-05",
+    );
+    assert.equal(
+      session.negotiatedVersion("2099-01-01", "2099-01-01"),
+      "2025-11-25",
+    );
   });
 
   test("drop removes a mapping so late results are ignored", () => {
@@ -69,7 +102,10 @@ describe("Session", () => {
     session.drop(5);
 
     assert.deepEqual([...session.maps.agentToUpstream.entries()], []);
-    assert.equal(session.translateInbound({ jsonrpc: "2.0", id: outbound.id, result: {} }), null);
+    assert.equal(
+      session.translateInbound({ jsonrpc: "2.0", id: outbound.id, result: {} }),
+      null,
+    );
   });
 
   test("translates cancellation and removes the mapping", () => {
@@ -94,7 +130,11 @@ describe("Session", () => {
 
     assert.deepEqual([...session.maps.agentToUpstream.entries()], [[1, 2]]);
     assert.deepEqual([...session.maps.upstreamToAgent.entries()], [[2, 3]]);
-    assert.deepEqual(serverRequest, { jsonrpc: "2.0", id: 3, method: "roots/list" });
+    assert.deepEqual(serverRequest, {
+      jsonrpc: "2.0",
+      id: 3,
+      method: "roots/list",
+    });
   });
 
   test("allocateAgentId never reuses ids", () => {
@@ -118,8 +158,16 @@ describe("Session typed request identity", () => {
     const fromNumber = session.translateRequestOut(request(1, "tools/call"));
 
     assert.notEqual(fromString.id, fromNumber.id);
-    const replyString = session.translateInbound({ jsonrpc: "2.0", id: fromString.id, result: "s" });
-    const replyNumber = session.translateInbound({ jsonrpc: "2.0", id: fromNumber.id, result: "n" });
+    const replyString = session.translateInbound({
+      jsonrpc: "2.0",
+      id: fromString.id,
+      result: "s",
+    });
+    const replyNumber = session.translateInbound({
+      jsonrpc: "2.0",
+      id: fromNumber.id,
+      result: "n",
+    });
 
     assert.deepEqual(replyString, { jsonrpc: "2.0", id: "1", result: "s" });
     assert.deepEqual(replyNumber, { jsonrpc: "2.0", id: 1, result: "n" });
@@ -136,10 +184,26 @@ describe("Session typed request identity", () => {
       params: { requestId: fromString.id },
     });
     assert.equal(session.translateCancellation("1"), null);
-    assert.equal(session.translateInbound({ jsonrpc: "2.0", id: fromString.id, result: {} }), null);
-    assert.deepEqual(session.translateInbound({ jsonrpc: "2.0", id: fromNumber.id, result: {} }), {
-      jsonrpc: "2.0", id: 1, result: {},
-    });
+    assert.equal(
+      session.translateInbound({
+        jsonrpc: "2.0",
+        id: fromString.id,
+        result: {},
+      }),
+      null,
+    );
+    assert.deepEqual(
+      session.translateInbound({
+        jsonrpc: "2.0",
+        id: fromNumber.id,
+        result: {},
+      }),
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {},
+      },
+    );
   });
 
   for (const token of ["progress-7", "", 0, 42]) {
@@ -147,29 +211,53 @@ describe("Session typed request identity", () => {
       const session = new Session();
       const original: JsonRpcRequest = {
         ...request("request-7", "tools/call"),
-        params: { name: "db.query", _meta: { progressToken: token, other: true } },
+        params: {
+          name: "db.query",
+          _meta: { progressToken: token, other: true },
+        },
       };
       const outbound = session.translateRequestOut(original);
 
       assert.deepEqual(outbound.params, {
-        name: "db.query", _meta: { progressToken: outbound.id, other: true },
+        name: "db.query",
+        _meta: { progressToken: outbound.id, other: true },
       });
       assert.deepEqual(original.params, {
-        name: "db.query", _meta: { progressToken: token, other: true },
+        name: "db.query",
+        _meta: { progressToken: token, other: true },
       });
-      assert.deepEqual(session.translateInbound({
-        jsonrpc: "2.0",
-        method: "notifications/progress",
-        params: { progressToken: outbound.id, progress: 1, total: 3, message: "working" },
-      }), {
-        jsonrpc: "2.0",
-        method: "notifications/progress",
-        params: { progressToken: token, progress: 1, total: 3, message: "working" },
-      });
+      assert.deepEqual(
+        session.translateInbound({
+          jsonrpc: "2.0",
+          method: "notifications/progress",
+          params: {
+            progressToken: outbound.id,
+            progress: 1,
+            total: 3,
+            message: "working",
+          },
+        }),
+        {
+          jsonrpc: "2.0",
+          method: "notifications/progress",
+          params: {
+            progressToken: token,
+            progress: 1,
+            total: 3,
+            message: "working",
+          },
+        },
+      );
     });
   }
 
-  for (const terminal of ["drop", "result", "error", "outbound-cancellation", "inbound-cancellation"] as const) {
+  for (const terminal of [
+    "drop",
+    "result",
+    "error",
+    "outbound-cancellation",
+    "inbound-cancellation",
+  ] as const) {
     test(`${terminal} clears progress tokens and ignores late replies`, () => {
       const session = new Session();
       const outbound = session.translateRequestOut({
@@ -188,25 +276,47 @@ describe("Session typed request identity", () => {
       } else if (terminal === "outbound-cancellation") {
         assert.notEqual(session.translateCancellation("request-7"), null);
       } else if (terminal === "inbound-cancellation") {
-        assert.deepEqual(session.translateInbound({
-          jsonrpc: "2.0",
-          method: "notifications/cancelled",
-          params: { requestId: outbound.id, reason: "stopped" },
-        }), {
-          jsonrpc: "2.0",
-          method: "notifications/cancelled",
-          params: { requestId: "request-7", reason: "stopped" },
-        });
+        assert.deepEqual(
+          session.translateInbound({
+            jsonrpc: "2.0",
+            method: "notifications/cancelled",
+            params: { requestId: outbound.id, reason: "stopped" },
+          }),
+          {
+            jsonrpc: "2.0",
+            method: "notifications/cancelled",
+            params: { requestId: "request-7", reason: "stopped" },
+          },
+        );
       } else {
-        const payload = terminal === "result" ? { result: {} } : { error: { code: -32603, message: "failed" } };
-        assert.deepEqual(session.translateInbound({ jsonrpc: "2.0", id: outbound.id, ...payload }), {
-          jsonrpc: "2.0", id: "request-7", ...payload,
-        });
+        const payload =
+          terminal === "result"
+            ? { result: {} }
+            : { error: { code: -32603, message: "failed" } };
+        assert.deepEqual(
+          session.translateInbound({
+            jsonrpc: "2.0",
+            id: outbound.id,
+            ...payload,
+          }),
+          {
+            jsonrpc: "2.0",
+            id: "request-7",
+            ...payload,
+          },
+        );
       }
 
       assert.equal(session.maps.agentToUpstream.size, 0);
       assert.equal(session.translateInbound(progress), null);
-      assert.equal(session.translateInbound({ jsonrpc: "2.0", id: outbound.id, result: {} }), null);
+      assert.equal(
+        session.translateInbound({
+          jsonrpc: "2.0",
+          id: outbound.id,
+          result: {},
+        }),
+        null,
+      );
       assert.equal(session.translateCancellation("request-7"), null);
     });
   }
@@ -216,6 +326,88 @@ describe("Session typed request identity", () => {
     const first = session.translateInbound(request(42, "roots/list"));
     const second = session.translateInbound(request(42, "roots/list"));
 
-    assert.notEqual((first as JsonRpcRequest).id, (second as JsonRpcRequest).id);
+    assert.notEqual(
+      (first as JsonRpcRequest).id,
+      (second as JsonRpcRequest).id,
+    );
+  });
+
+  test("S11: server-originated numeric strings never coerce to their numeric lookalike", () => {
+    const session = new Session();
+    const fromNumber = session.translateInbound(request(42, "roots/list"));
+    const fromString = session.translateInbound(request("42", "roots/list"));
+
+    assert.notEqual(
+      (fromNumber as JsonRpcRequest).id,
+      (fromString as JsonRpcRequest).id,
+    );
+    assert.deepEqual(
+      [...session.maps.upstreamToAgent.entries()],
+      [
+        [42, (fromNumber as JsonRpcRequest).id],
+        ["42", (fromString as JsonRpcRequest).id],
+      ],
+    );
+  });
+
+  test("S11: leading-zero server ids stay distinct strings", () => {
+    const session = new Session();
+    const plain = session.translateInbound(request("1", "roots/list"));
+    const padded = session.translateInbound(request("01", "roots/list"));
+
+    assert.notEqual(
+      (plain as JsonRpcRequest).id,
+      (padded as JsonRpcRequest).id,
+    );
+  });
+
+  test("S11: a string response id is an unknown identity, never a coerced reply", () => {
+    const session = new Session();
+    const outbound = session.translateRequestOut(request(7, "tools/list"));
+
+    assert.equal(
+      session.translateInbound({
+        jsonrpc: "2.0",
+        id: String(outbound.id),
+        result: {},
+      }),
+      null,
+    );
+    assert.deepEqual(
+      session.translateInbound({ jsonrpc: "2.0", id: outbound.id, result: {} }),
+      {
+        jsonrpc: "2.0",
+        id: 7,
+        result: {},
+      },
+    );
+  });
+
+  test("S11: inbound cancellation with a string request id translates in its own type", () => {
+    const session = new Session();
+    session.translateRequestOut(request("7", "tools/call"));
+    const outboundNumber = session.translateRequestOut(
+      request(7, "tools/call"),
+    );
+
+    assert.deepEqual(
+      session.translateInbound({
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: outboundNumber.id },
+      }),
+      {
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: 7 },
+      },
+    );
+  });
+
+  test("S11: recordServerRequest keeps typed ids for the relay path", () => {
+    const session = new Session();
+    session.recordServerRequest("42", 9);
+
+    assert.deepEqual([...session.maps.upstreamToAgent.entries()], [["42", 9]]);
   });
 });

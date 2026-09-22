@@ -21,16 +21,80 @@ export function assertInboundLineCeiling(
   }
   const size = Buffer.byteLength(line, "utf8");
   if (size > maxBytes) {
-    throw new JsonRpcInputError("invalid", `inbound message exceeded ${maxBytes} bytes`);
+    throw new JsonRpcInputError(
+      "invalid",
+      `inbound message exceeded ${maxBytes} bytes`,
+    );
   }
 }
 
-export function assertSingleJsonRpcMessage(value: unknown): asserts value is JsonRpcMessage {
+export class ProxyOutputError extends Error {
+  readonly kind: "oversize" | "backpressure";
+
+  constructor(kind: "oversize" | "backpressure", message: string) {
+    super(message);
+    this.name = "ProxyOutputError";
+    this.kind = kind;
+  }
+}
+
+/**
+ * The per-message outbound ceiling, mirroring the inbound one. A relayed
+ * notification that serializes past the cap is dropped with this named
+ * error rather than growing stdout without bound.
+ */
+export function assertOutboundLineCeiling(
+  line: string,
+  maxBytes = DEFAULT_INBOUND_MAX_BYTES,
+): void {
+  if (!Number.isInteger(maxBytes) || maxBytes < 1) {
+    throw new TypeError("outbound message ceiling must be a positive integer");
+  }
+  const size = Buffer.byteLength(line, "utf8");
+  if (size > maxBytes) {
+    throw new ProxyOutputError(
+      "oversize",
+      `outbound message exceeded ${maxBytes} bytes`,
+    );
+  }
+}
+
+/**
+ * The queued-output backpressure guard. The caller passes the bytes already
+ * buffered in the stdout stream plus the incoming line; past the cap the
+ * line is dropped with a named error instead of queueing behind a flood of
+ * valid but unread notifications.
+ */
+export function assertOutboundQueueCeiling(
+  bufferedBytes: number,
+  incomingBytes: number,
+  maxBytes = DEFAULT_INBOUND_MAX_BYTES,
+): void {
+  if (!Number.isInteger(maxBytes) || maxBytes < 1) {
+    throw new TypeError("outbound queue ceiling must be a positive integer");
+  }
+  if (bufferedBytes + incomingBytes > maxBytes) {
+    throw new ProxyOutputError(
+      "backpressure",
+      `outbound queue exceeded ${maxBytes} bytes`,
+    );
+  }
+}
+
+export function assertSingleJsonRpcMessage(
+  value: unknown,
+): asserts value is JsonRpcMessage {
   if (Array.isArray(value)) {
-    throw new JsonRpcInputError("invalid", "JSON-RPC batch requests are not supported");
+    throw new JsonRpcInputError(
+      "invalid",
+      "JSON-RPC batch requests are not supported",
+    );
   }
   if (!isObject(value) || value.jsonrpc !== "2.0") {
-    throw new JsonRpcInputError("invalid", "message must be a JSON-RPC 2.0 object");
+    throw new JsonRpcInputError(
+      "invalid",
+      "message must be a JSON-RPC 2.0 object",
+    );
   }
   const hasMethod = "method" in value;
   const hasId = "id" in value;
@@ -41,18 +105,27 @@ export function assertSingleJsonRpcMessage(value: unknown): asserts value is Jso
   }
   if (hasMethod) {
     if (typeof value.method !== "string" || value.method === "") {
-      throw new JsonRpcInputError("invalid", "JSON-RPC method must be a non-empty string");
+      throw new JsonRpcInputError(
+        "invalid",
+        "JSON-RPC method must be a non-empty string",
+      );
     }
     return;
   }
   if (hasResult === hasError) {
-    throw new JsonRpcInputError("invalid", "JSON-RPC response must carry exactly one result or error");
+    throw new JsonRpcInputError(
+      "invalid",
+      "JSON-RPC response must carry exactly one result or error",
+    );
   }
 }
 
 function assertRequestId(value: unknown): asserts value is string | number {
   if (value === null) {
-    throw new JsonRpcInputError("invalid", "JSON-RPC id null is not accepted by MCP");
+    throw new JsonRpcInputError(
+      "invalid",
+      "JSON-RPC id null is not accepted by MCP",
+    );
   }
   if (typeof value === "string" && value !== "") {
     return;
@@ -60,7 +133,10 @@ function assertRequestId(value: unknown): asserts value is string | number {
   if (typeof value === "number" && Number.isInteger(value)) {
     return;
   }
-  throw new JsonRpcInputError("invalid", "JSON-RPC id must be a string or integer");
+  throw new JsonRpcInputError(
+    "invalid",
+    "JSON-RPC id must be a string or integer",
+  );
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

@@ -12,7 +12,10 @@ type StdioClock = {
 
 type StdioEvents = {
   readonly onMessage: (line: string) => void;
-  readonly onClose: (code: number | null, signal: NodeJS.Signals | null) => void;
+  readonly onClose: (
+    code: number | null,
+    signal: NodeJS.Signals | null,
+  ) => void;
   readonly onError: (err: Error) => void;
 };
 
@@ -73,7 +76,8 @@ export class ReadBuffer {
 
 const defaultClock: StdioClock = {
   setTimeout: (callback, ms) => setTimeout(callback, ms),
-  clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+  clearTimeout: (handle) =>
+    clearTimeout(handle as ReturnType<typeof setTimeout>),
 };
 
 function hasUnref(handle: TimerHandle): handle is { unref: () => void } {
@@ -97,6 +101,11 @@ export function spawnUpstream(
 
   const [program, ...args] = command;
   const childEnv: Record<string, string> = { ...env };
+  // Defense in depth: the local upstream runs as the proxy OS user with no
+  // sandbox, so it must never inherit the ledger signing key, even when an
+  // operator explicitly forwards an environment that contains it. An upstream
+  // that can sign ledger entries can forge the audit trail it is audited by.
+  delete childEnv.VOID_SIGNING_KEY;
   if (childEnv.PATH === undefined && process.env.PATH !== undefined) {
     childEnv.PATH = process.env.PATH;
   }
@@ -117,7 +126,10 @@ export function spawnUpstream(
   let closed = false;
   let ladderTimer: TimerHandle | null = null;
 
-  const finishClose = (code: number | null, signal: NodeJS.Signals | null): void => {
+  const finishClose = (
+    code: number | null,
+    signal: NodeJS.Signals | null,
+  ): void => {
     if (ladderTimer !== null) {
       clock.clearTimeout(ladderTimer);
       ladderTimer = null;

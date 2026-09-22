@@ -2,7 +2,7 @@ import { ApprovalReview } from "./approval-review";
 import { plainAction, riskOf, sortRiskFirst } from "./approval-text";
 import { LedgerVerify } from "./ledger-verify";
 import { LedgerDetail } from "./ledger-detail";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import {
@@ -548,88 +548,6 @@ export function Ledger() {
     </>
   );
 }
-export function PlanChecklist({ navigate }: { navigate: (path: string) => void }) {
-  const t = useText();
-  const client = useQueryClient();
-  const pathParts = location.pathname.replace(/^\//, "").split("/");
-  const sessionId = pathParts[1];
-  const session = useApi("/api/sessions/" + (sessionId ?? "") + "?events=false");
-  const data = session.data?.session;
-  const events = data?.events ?? [];
-  const planEvents: Row[] = events.filter((e: Row) => e.kind === "plan");
-  const [compacted, setCompacted] = useState(false);
-  const [inputTokens, setInputTokens] = useState<number | null>(null);
-  const [outputTokens, setOutputTokens] = useState<number | null>(null);
-  const [cacheTokens, setCacheTokens] = useState<number | null>(null);
-  const [summaryVersion, setSummaryVersion] = useState(0);
-
-  useEffect(() => {
-    if (!data || compacted) return;
-    const lastCompact = events.find((e: Row) => e.type === "compact");
-    if (lastCompact) {
-      setCompacted(true);
-      const usage = events
-        .reverse()
-        .find((e: Row) => e.type === "usage.reported");
-      if (usage?.payload) {
-        setInputTokens(usage.payload?.input_tokens ?? null);
-        setOutputTokens(usage.payload?.output_tokens ?? null);
-        setCacheTokens(usage.payload?.cache_tokens ?? null);
-        setSummaryVersion(usage.payload?.schemaVersion ?? 0);
-      }
-    }
-  }, [data, events, compacted]);
-
-  const planItems = useMemo(() => {
-    return planEvents.map((e: Row) => ({
-      id: e.id ?? e.seq?.toString(),
-      kind: e.kind,
-      text: e.text ?? "",
-      at: e.at,
-    }));
-  }, [planEvents]);
-
-  return (
-    <div className="plan-checklist">
-      <h2>{t("Plán úloh", "Plan Tasks")}</h2>
-      {planEvents.length === 0 ? (
-        <p>{t("Žádné plan události nebyly nalezeny.", "No plan events found.")}</p>
-      ) : (
-        <ul className="plan-list">
-          {planItems.map((item) => (
-            <li key={item.id} className="plan-item">
-              <span className="plan-kind">{item.kind}</span>
-              <span className="plan-text">{item.text}</span>
-              <span className="plan-at">
-                {item.at ? new Date(item.at).toLocaleString(t("cs-CZ", "en-GB")) : ""}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {compacted && (
-        <div className="compact-summary">
-          <h3>{t("Po compaktu", "After compact")}</h3>
-          <div className="token-summary">
-            <span>
-              {t("Vstupní tokeny", "Input tokens")}: {inputTokens !== null ? `${inputTokens.toLocaleString()}` : t("Neznámé", "Unknown")}
-            </span>
-            <span>
-              {t("Výstupní tokeny", "Output tokens")}: {outputTokens !== null ? `${outputTokens.toLocaleString()}` : t("Neznámé", "Unknown")}
-            </span>
-            {cacheTokens !== null && (
-              <span>
-                {t("Cache tokeny", "Cache tokens")}: {cacheTokens.toLocaleString()}
-              </span>
-            )}
-          </div>
-          <p>{t("Summary je verzované", "Summary is versioned")}: {summaryVersion}</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function Models() {
   const t = useText();
   const provider = useApi("/api/provider"),

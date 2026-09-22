@@ -9,14 +9,25 @@ import { promisify } from "node:util";
 import { Workbench } from "../../../workbench/src/index.ts";
 import {
   WorkspaceTui,
+  approvalBannerLines,
+  approvalEvidenceLines,
+  approvalReview,
   chatRows,
   commandSuggestions,
+  holdDiffRows,
+  modeAuthorityLabel,
   renderWorkspace,
   transcript,
   wrap,
 } from "./workspace.ts";
 import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
-import { visibleLength, stripAnsi, unifiedDiff } from "./layout.ts";
+import {
+  renderHunkSelection,
+  splitDiffHunks,
+  visibleLength,
+  stripAnsi,
+  unifiedDiff,
+} from "./layout.ts";
 
 test("Ctrl+P requests the command palette through the input, not a submit", () => {
   const input = new WorkspaceInput();
@@ -29,21 +40,30 @@ test("Ctrl+P requests the command palette through the input, not a submit", () =
   assert.equal(input.value, "draft", "Ctrl+P never rewrites the draft");
 });
 
-test("command palette handler lists the real command reference", async t => {
+test("command palette handler lists the real command reference", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-palette-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  t.after(async () => { await app.shutdown(); await rm(root, { recursive: true, force: true }); });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
   const ui = new WorkspaceTui(app);
   await ui.command("/command-palette");
   const rows = ui.lines();
   assert.ok(rows.some((line) => line.includes("COMMAND PALETTE")));
-  assert.ok(rows.some((line) => line.includes("/tools")), "palette lists the real /tools hint");
+  assert.ok(
+    rows.some((line) => line.includes("/tools")),
+    "palette lists the real /tools hint",
+  );
 });
 
-test("queuePrompt(undefined) cancels a queued prompt", async t => {
+test("queuePrompt(undefined) cancels a queued prompt", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-queue-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  t.after(async () => { await app.shutdown(); await rm(root, { recursive: true, force: true }); });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
   const ui = new WorkspaceTui(app);
   ui.queuePrompt("queued draft");
   assert.equal(ui.takeQueued(), "queued draft");
@@ -121,7 +141,9 @@ test("tools show actual managed capabilities, searchable schemas and no executio
   );
   await ui.openSelected();
   assert.ok(ui.detail?.includes("INPUT SCHEMA"));
-  assert.ok(ui.detail?.some((line) => line.includes("not certified by any vendor")));
+  assert.ok(
+    ui.detail?.some((line) => line.includes("not certified by any vendor")),
+  );
   assert.equal(app.list().length, 0);
   assert.equal(ui.confirmation, undefined);
 });
@@ -154,8 +176,8 @@ test("Claude style management aliases open real VOID views", async (t) => {
   assert.equal(ui.tab, "ledger");
   assert.match(ui.notice, /select a conversation to rewind/i);
   assert.match(
-    stripAnsi(renderWorkspace(ui, 100, 32)),
-    /model: not connected.*mode: normal.*tokens: unknown.*compact/i,
+    stripAnsi(renderWorkspace(ui, 140, 32)),
+    /model: not connected.*mode: normal \(local only, not enforced\).*tokens: unknown.*compact/i,
   );
 });
 
@@ -633,4 +655,308 @@ test("TUI init reuses the CLI implementation and creates storage", async (t) => 
   assert.ok(ui.detail?.some((line) => line.startsWith("created: ")));
   const { existsSync } = await import("node:fs");
   assert.ok(existsSync(join(root, "tui", "workspace.key")));
+});
+
+test("A2 approval banner names the hold and its keys, and counts the rest", () => {
+  assert.deepEqual(approvalBannerLines([], 80), [], "no holds means no banner");
+  const one = approvalBannerLines(
+    [
+      {
+        holdId: "abc12345xyz",
+        call: { tool: "aws.s3.object.delete", klass: "r2" },
+      },
+    ],
+    100,
+  );
+  assert.equal(one.length, 1);
+  assert.match(one[0]!, /APPROVAL PENDING/);
+  assert.match(one[0]!, /\[R2\]/);
+  assert.match(one[0]!, /aws\.s3\.object\.delete/);
+  assert.match(one[0]!, /abc12345/);
+  assert.match(one[0]!, /\[a\] approve/);
+  assert.match(one[0]!, /\[d\] deny/);
+  const two = approvalBannerLines(
+    [
+      { holdId: "h1", call: { tool: "a.tool", klass: "r3" } },
+      { holdId: "h2", call: { tool: "b.tool", klass: "r1" } },
+    ],
+    100,
+  );
+  assert.match(two[0]!, /\(\+1 more/);
+});
+
+test("A2 banner sanitizes hostile tool ids", () => {
+  const lines = approvalBannerLines(
+    [{ holdId: "h1", call: { tool: "evil\u001b[2J", klass: "r3" } }],
+    100,
+  );
+  assert.doesNotMatch(lines.join("\n"), /\u001b/);
+  assert.match(lines[0]!, /evil\?\[2J/);
+});
+
+test("A2 banner stays visible across tab switches", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-banner-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  ui.proxy.holds = [
+    {
+      holdId: "bannerhold01",
+      call: {
+        tool: "aws.s3.object.delete",
+        connector: "s3",
+        workspace: undefined,
+        klass: "r2",
+        blastRadius: 1,
+      },
+      expiresAt: Date.now() + 60_000,
+      status: "pending",
+      notify: ["cli"],
+    },
+  ];
+  for (const tab of ["chat", "overview", "approvals"] as const) {
+    ui.choose(tab);
+    const frame = stripAnsi(renderWorkspace(ui, 100, 32));
+    assert.match(frame, /APPROVAL PENDING/, `banner on ${tab}`);
+    assert.match(frame, /aws\.s3\.object\.delete/, `tool on ${tab}`);
+  }
+  ui.proxy.holds = [];
+  ui.choose("chat");
+  assert.doesNotMatch(
+    stripAnsi(renderWorkspace(ui, 100, 32)),
+    /APPROVAL PENDING/,
+  );
+});
+
+test("A4 mode label always says local only, never server enforced", () => {
+  assert.equal(
+    modeAuthorityLabel("plan"),
+    "mode: plan (local only, not enforced)",
+  );
+  assert.equal(
+    modeAuthorityLabel("normal"),
+    "mode: normal (local only, not enforced)",
+  );
+  assert.equal(
+    modeAuthorityLabel("accept"),
+    "mode: accept (local only, not enforced)",
+  );
+});
+
+test("A4 status bar and status detail carry the local only label", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-modelabel-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  ui.mode = "plan";
+  assert.match(
+    stripAnsi(renderWorkspace(ui, 100, 32)),
+    /mode: plan \(local only, not enforced\)/,
+  );
+  assert.ok(
+    ui.statusLines().some((line) => line.includes("local only, not enforced")),
+  );
+});
+
+test("A3 evidence renders class, radius, case prose and honest unknowns", () => {
+  const lines = approvalEvidenceLines({
+    holdId: "h1",
+    call: {
+      tool: "postgres.row.update",
+      klass: "r0",
+      blastRadius: 2,
+      reason: "keyed before image captured",
+    },
+  });
+  const view = lines.join("\n");
+  assert.match(view, /postgres\.row\.update/);
+  assert.match(view, /R0/);
+  assert.match(view, /2 targets, measured/);
+  assert.match(view, /precondition {3}keyed before image captured/);
+  assert.match(view, /matched rule {3}unknown/);
+  assert.match(view, /postcondition +unknown/);
+});
+
+test("A3 evidence never fabricates a missing precondition or rule", () => {
+  const lines = approvalEvidenceLines({
+    holdId: "proxy:1",
+    call: { tool: "aws.s3.object.delete", connector: "s3", klass: "r2" },
+  });
+  const view = lines.join("\n");
+  assert.match(view, /precondition {3}unknown/);
+  assert.match(view, /matched rule {3}unknown/);
+  assert.match(view, /postcondition +unknown/);
+  assert.doesNotMatch(view, /keyed before image/);
+});
+
+test("A3 evidence passes through server supplied rule and conditions", () => {
+  const lines = approvalEvidenceLines({
+    holdId: "h1",
+    ruleIndex: 4,
+    call: {
+      tool: "stripe.refund.create",
+      klass: "r2",
+      precondition: "funds still held",
+      postcondition: "refund recorded",
+    },
+  });
+  const view = lines.join("\n");
+  assert.match(view, /policy rule 4/);
+  assert.match(view, /funds still held/);
+  assert.match(view, /refund recorded/);
+});
+
+test("A3 evidence treats a non integer radius as unknown, never zero", () => {
+  for (const radius of [-1, 1.5, Number.NaN]) {
+    const view = approvalEvidenceLines({
+      holdId: "h",
+      call: { tool: "t", blastRadius: radius },
+    }).join("\n");
+    assert.match(view, /radius unknown/);
+    assert.doesNotMatch(view, /radius +-?[\d.]+/);
+  }
+});
+
+test("A1 diff splits into hunks and renders selection markers", () => {
+  const rows = unifiedDiff(
+    [
+      "top",
+      "a",
+      "x",
+      "mid1",
+      "mid2",
+      "mid3",
+      "mid4",
+      "mid5",
+      "mid6",
+      "b",
+      "end",
+    ].join("\n"),
+    [
+      "top",
+      "A",
+      "x",
+      "mid1",
+      "mid2",
+      "mid3",
+      "mid4",
+      "mid5",
+      "mid6",
+      "B",
+      "end",
+    ].join("\n"),
+    0,
+  );
+  const chunks = splitDiffHunks(rows);
+  assert.equal(chunks.length, 2);
+  assert.ok(chunks.every((chunk) => chunk[0]!.startsWith("@@")));
+  assert.deepEqual(splitDiffHunks(["No changes."]), []);
+  const rendered = renderHunkSelection(chunks, [true, false]);
+  assert.match(rendered[0]!, /^\[x\] 1\. @@/);
+  const secondHeader = rendered.find((line) => line.startsWith("[ ] 2."));
+  assert.ok(secondHeader, "deselected hunk keeps a visible marker");
+});
+
+test("A1 hold diff rows come from server supplied before and after only", () => {
+  assert.equal(
+    holdDiffRows({ call: { tool: "t" } }),
+    undefined,
+    "no diff fields means no hunks, full call scope",
+  );
+  const rows = holdDiffRows({
+    call: { before: "a\nb", after: "a\nB" },
+  });
+  assert.ok(rows?.some((row) => row.startsWith("@@")));
+});
+
+test("A1 approval review builds selectable hunks only with a diff", () => {
+  const plain = approvalReview({ holdId: "h", call: { tool: "t" } });
+  assert.equal(plain.hunks, undefined);
+  assert.match(plain.lines.join("\n"), /blast radius/);
+  const withDiff = approvalReview({
+    holdId: "h",
+    call: { tool: "t", before: "a\nb\nc", after: "a\nB\nc" },
+  });
+  assert.equal(withDiff.hunks?.chunks.length, 1);
+  assert.deepEqual(withDiff.hunks?.selected, [true]);
+  assert.match(withDiff.lines.join("\n"), /press 1-9 to toggle/);
+});
+
+test("A1 hunk toggle flips scope and the suffix rides with the decision", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-hunks-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  assert.equal(ui.hunkScopeSuffix(), "", "no review means no payload");
+  const review = approvalReview({
+    holdId: "h",
+    call: {
+      tool: "t",
+      before: [
+        "L01",
+        "l02",
+        "l03",
+        "l04",
+        "l05",
+        "l06",
+        "l07",
+        "l08",
+        "l09",
+        "l10",
+        "l11",
+        "l12",
+      ].join("\n"),
+      after: [
+        "L01-CHANGED",
+        "l02",
+        "l03",
+        "l04",
+        "l05",
+        "l06",
+        "l07",
+        "l08",
+        "l09",
+        "l10",
+        "l11",
+        "l12-CHANGED",
+      ].join("\n"),
+    },
+  });
+  assert.ok((review.hunks?.chunks.length ?? 0) >= 2, "needs two hunks");
+  ui.confirmation = {
+    title: "APPROVE TOOL?",
+    lines: [...review.lines],
+    hunks: {
+      chunks: review.hunks!.chunks,
+      selected: [...review.hunks!.selected],
+    },
+    hunkBase: [...(review.hunkBase ?? [])],
+    apply: async () => {},
+  };
+  ui.toggleHunk(1);
+  assert.equal(ui.confirmation.hunks?.selected[1], false);
+  assert.ok(
+    ui.confirmation.lines.some((line) => line.startsWith("[ ] 2.")),
+    "deselected hunk stays visible with its marker",
+  );
+  const total = ui.confirmation.hunks!.chunks.length;
+  assert.equal(ui.hunkScopeSuffix(), `[diff-scope: hunks 1/${total}]`);
+  ui.toggleHunk(99);
+  assert.match(ui.notice, new RegExp(`has ${total}`));
+  ui.confirmation = {
+    title: "APPROVE TOOL?",
+    lines: ["evidence"],
+    apply: async () => {},
+  };
+  ui.toggleHunk(0);
+  assert.match(ui.notice, /no diff hunks/);
 });

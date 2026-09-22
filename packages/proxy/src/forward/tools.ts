@@ -1,8 +1,16 @@
 import { createHash } from "node:crypto";
 
 import type { EvaluationResult } from "../../../registry/src/index.ts";
-import { UNCLASSIFIED_CLASS, type PolicyCall, type PolicyDecision } from "../../../policy/src/index.ts";
-import { holdErrorMessage, type HeldCall, type HoldResolution } from "../../../policy/src/index.ts";
+import {
+  UNCLASSIFIED_CLASS,
+  type PolicyCall,
+  type PolicyDecision,
+} from "../../../policy/src/index.ts";
+import {
+  holdErrorMessage,
+  type HeldCall,
+  type HoldResolution,
+} from "../../../policy/src/index.ts";
 
 import type { JsonRpcError, JsonRpcResult } from "../rpc.ts";
 import type { ProbeProvider, ProbeProviderResult } from "../blast.ts";
@@ -19,7 +27,10 @@ export type InterceptedCall = {
 export type CallVerdict =
   | { readonly kind: "allow" }
   | { readonly kind: "deny"; readonly error: JsonRpcError }
-  | { readonly kind: "hold"; readonly promise: Promise<JsonRpcResult | JsonRpcError> };
+  | {
+      readonly kind: "hold";
+      readonly promise: Promise<JsonRpcResult | JsonRpcError>;
+    };
 
 export type LedgerEntryInput = {
   readonly at: string;
@@ -34,7 +45,9 @@ export type InterceptDeps = {
    * The caller owns declared facts. When it merges this probe map, declared
    * facts stay authoritative because they are the operator safety contract.
    */
-  readonly classify: (probeFacts: Readonly<Record<string, string>>) => EvaluationResult;
+  readonly classify: (
+    probeFacts: Readonly<Record<string, string>>,
+  ) => EvaluationResult;
   readonly policy: (call: PolicyCall) => PolicyDecision;
   readonly hold: (seconds: number) => Promise<HoldResolution>;
   readonly ledger: (entry: LedgerEntryInput) => void | Promise<void>;
@@ -58,47 +71,141 @@ export async function interceptCall(
   const digest = digestArgs(call.args);
   try {
     const baseClassification = deps.classify({});
-    const probeResult = await runProbe(deps, call, buildPolicyCall(call, baseClassification, undefined));
-    const probeFacts = probeResult !== undefined && !("error" in probeResult) && probeResult.facts !== undefined ? probeResult.facts : {};
-    const classification = Object.keys(probeFacts).length === 0 ? baseClassification : deps.classify(probeFacts);
-    const policyCall = buildPolicyCall(call, classification, chooseBlastRadius(probeResult));
+    const probeResult = await runProbe(
+      deps,
+      call,
+      buildPolicyCall(call, baseClassification, undefined),
+    );
+    const probeFacts =
+      probeResult !== undefined &&
+      !("error" in probeResult) &&
+      probeResult.facts !== undefined
+        ? probeResult.facts
+        : {};
+    const classification =
+      Object.keys(probeFacts).length === 0
+        ? baseClassification
+        : deps.classify(probeFacts);
+    const policyCall = buildPolicyCall(
+      call,
+      classification,
+      chooseBlastRadius(probeResult),
+    );
     const decision = deps.policy(policyCall);
     // The decision record lands before the verdict, so a crash after the
     // decision still leaves the ledger saying what was about to happen.
-    await writeLedger(deps, now, call.tool, policyCall.klass, decision.kind, digest);
+    await writeLedger(
+      deps,
+      now,
+      call.tool,
+      policyCall.klass,
+      decision.kind,
+      digest,
+    );
 
     if (decision.kind === "allow") {
-      const captured = await runCaptureGate(deps, now, call, policyCall, digest, "allow");
+      const captured = await runCaptureGate(
+        deps,
+        now,
+        call,
+        policyCall,
+        digest,
+        "allow",
+      );
       if (captured === null) {
         return {
           kind: "deny",
-          error: denyError(call, policyCall, -1, "snapshot capture failed; upstream was not called"),
+          error: denyError(
+            call,
+            policyCall,
+            -1,
+            "snapshot capture failed; upstream was not called",
+          ),
         };
       }
-      await writeLedger(deps, now, call.tool, policyCall.klass, "allow:resolved", digest);
+      await writeLedger(
+        deps,
+        now,
+        call.tool,
+        policyCall.klass,
+        "allow:resolved",
+        digest,
+      );
       return { kind: "allow" };
     }
 
     if (decision.kind === "deny" || decision.kind === "unmatched") {
-      const error = decision.kind === "deny"
-        ? denyError(call, policyCall, decision.ruleIndex, decision.rationale)
-        : denyError(call, policyCall, -1, `policy returned ${decision.decision}`);
-      await writeLedger(deps, now, call.tool, policyCall.klass, `${decision.kind}:resolved`, digest);
+      const error =
+        decision.kind === "deny"
+          ? denyError(call, policyCall, decision.ruleIndex, decision.rationale)
+          : denyError(
+              call,
+              policyCall,
+              -1,
+              `policy returned ${decision.decision}`,
+            );
+      await writeLedger(
+        deps,
+        now,
+        call.tool,
+        policyCall.klass,
+        `${decision.kind}:resolved`,
+        digest,
+      );
       return { kind: "deny", error };
     }
 
     const heldCall = toHeldCall(call, policyCall, decision);
     const promise = deps.hold(decision.seconds).then(async (resolution) => {
-      if (resolution.outcome.kind === "released" && resolution.outcome.release.kind === "approved") {
-        const captured = await runCaptureGate(deps, now, call, policyCall, digest, "hold");
+      if (
+        resolution.outcome.kind === "released" &&
+        resolution.outcome.release.kind === "approved"
+      ) {
+        const captured = await runCaptureGate(
+          deps,
+          now,
+          call,
+          policyCall,
+          digest,
+          "hold",
+        );
         if (captured === null) {
-          return holdError(resolution.call, { kind: "released", release: { kind: "denied", by: "snapshot capture failed; upstream was not called" } }, "hold");
+          return holdError(
+            resolution.call,
+            {
+              kind: "released",
+              release: {
+                kind: "denied",
+                by: "snapshot capture failed; upstream was not called",
+              },
+            },
+            "hold",
+          );
         }
-        await writeLedger(deps, now, call.tool, policyCall.klass, "hold:approved", digest);
-        return { jsonrpc: "2.0", id: 0, result: { approved: true } } satisfies JsonRpcResult;
+        await writeLedger(
+          deps,
+          now,
+          call.tool,
+          policyCall.klass,
+          "hold:approved",
+          digest,
+        );
+        return {
+          jsonrpc: "2.0",
+          id: 0,
+          result: { approved: true },
+        } satisfies JsonRpcResult;
       }
-      const result = resolution.outcome.kind === "expired" ? "expired" : "denied";
-      await writeLedger(deps, now, call.tool, policyCall.klass, `hold:${result}`, digest);
+      const result =
+        resolution.outcome.kind === "expired" ? "expired" : "denied";
+      await writeLedger(
+        deps,
+        now,
+        call.tool,
+        policyCall.klass,
+        `hold:${result}`,
+        digest,
+      );
       return holdError(resolution.call, resolution.outcome, "hold");
     });
     void heldCall;
@@ -111,7 +218,15 @@ export async function interceptCall(
       klass: UNCLASSIFIED_CLASS,
       blastRadius: undefined,
     };
-    return { kind: "deny", error: denyError(call, policyCall, -1, "internal dependency failure; operator review required") };
+    return {
+      kind: "deny",
+      error: denyError(
+        call,
+        policyCall,
+        -1,
+        "internal dependency failure; operator review required",
+      ),
+    };
   }
 }
 
@@ -120,13 +235,14 @@ function buildPolicyCall(
   classification: EvaluationResult,
   blastRadius: number | undefined,
 ): PolicyCall {
-  const klass = classification.outcome === "classified" ? classification.tone : UNCLASSIFIED_CLASS;
+  const classified = classification.outcome === "classified";
   return {
     tool: call.tool,
     connector: call.connector,
     workspace: call.workspace,
-    klass,
+    klass: classified ? classification.tone : UNCLASSIFIED_CLASS,
     blastRadius,
+    ...(classified ? {} : { unclassified: true as const }),
   };
 }
 
@@ -146,7 +262,13 @@ async function runProbe(
 function chooseBlastRadius(
   probeResult: ProbeProviderResult | undefined,
 ): number | undefined {
-  if (probeResult !== undefined && !("error" in probeResult) && typeof probeResult.radius === "number" && Number.isSafeInteger(probeResult.radius) && probeResult.radius >= 0) {
+  if (
+    probeResult !== undefined &&
+    !("error" in probeResult) &&
+    typeof probeResult.radius === "number" &&
+    Number.isSafeInteger(probeResult.radius) &&
+    probeResult.radius >= 0
+  ) {
     return probeResult.radius;
   }
   // Caller-supplied counts are claims, never measurements that authorize writes.
@@ -175,7 +297,14 @@ async function runCaptureGate(
   try {
     return await deps.capture(call);
   } catch {
-    await writeLedger(deps, now, call.tool, policyCall.klass, `${decision}:capture-failed`, argsDigest);
+    await writeLedger(
+      deps,
+      now,
+      call.tool,
+      policyCall.klass,
+      `${decision}:capture-failed`,
+      argsDigest,
+    );
     return null;
   }
 }
@@ -188,7 +317,13 @@ async function writeLedger(
   decision: string,
   argsDigest: string,
 ): Promise<void> {
-  await deps.ledger({ at: now().toISOString(), tool, klass, decision, argsDigest });
+  await deps.ledger({
+    at: now().toISOString(),
+    tool,
+    klass,
+    decision,
+    argsDigest,
+  });
 }
 
 function denyError(
@@ -247,7 +382,9 @@ function holdError(
     jsonrpc: "2.0",
     error: {
       code: ERROR_CODE,
-      message: body.message.includes("Do not retry") ? body.message : `${body.message} Do not retry the same call; VOID rejected it.`,
+      message: body.message.includes("Do not retry")
+        ? body.message
+        : `${body.message} Do not retry the same call; VOID rejected it.`,
       data: body.data,
     },
   };

@@ -1,28 +1,55 @@
-import { createInterface } from "node:readline";
 import process from "node:process";
 import { readFile } from "node:fs/promises";
 
-import { classifyTool, loadFacts, toEvaluationContext, validateFactsFile } from "../../registry/src/index.ts";
+import {
+  classifyTool,
+  loadFacts,
+  toEvaluationContext,
+  validateFactsFile,
+} from "../../registry/src/index.ts";
 import type { FactsFile, FactsReport } from "../../registry/src/index.ts";
 import { decide, HoldQueue, loadPolicy } from "../../policy/src/index.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import type { JsonlEntry, JsonlReceipt } from "../../ledger/src/store.ts";
 import type { LedgerStore, KeyProvider } from "../../ledger/src/index.ts";
-import type { LoadedPolicy, PolicyCall, PolicyDecision } from "../../policy/src/index.ts";
+import type {
+  LoadedPolicy,
+  PolicyCall,
+  PolicyDecision,
+} from "../../policy/src/index.ts";
 
 import { forwardPromptMessage } from "./forward/prompts.ts";
 import { forwardResourceMessage } from "./forward/resources.ts";
 import { captureLegacyEnvelope } from "./forward/legacy-binding.ts";
 import { interceptCall } from "./forward/tools.ts";
-import type { InterceptedCall, JsonRpcError, JsonRpcResult } from "./forward/tools.ts";
-import type { JsonObject, JsonRpcErrorBody, JsonRpcId, JsonRpcMessage, JsonRpcNotification, JsonRpcRequest } from "./rpc.ts";
+import type {
+  InterceptedCall,
+  JsonRpcError,
+  JsonRpcResult,
+} from "./forward/tools.ts";
+import type {
+  JsonObject,
+  JsonRpcErrorBody,
+  JsonRpcId,
+  JsonRpcMessage,
+  JsonRpcNotification,
+  JsonRpcRequest,
+} from "./rpc.ts";
 import { relayNotification } from "./relay/notifications.ts";
 import { relayServerRequest, relayServerResponse } from "./relay/requests.ts";
 import type { JsonRpcResponse } from "./relay/requests.ts";
 import { Session } from "./session.ts";
-import { DEFAULT_INBOUND_MAX_BYTES, JsonRpcInputError, assertInboundLineCeiling, assertSingleJsonRpcMessage } from "./hardening.ts";
-import { spawnUpstream } from "./transport/stdio.ts";
+import {
+  DEFAULT_INBOUND_MAX_BYTES,
+  JsonRpcInputError,
+  ProxyOutputError,
+  assertInboundLineCeiling,
+  assertOutboundLineCeiling,
+  assertOutboundQueueCeiling,
+  assertSingleJsonRpcMessage,
+} from "./hardening.ts";
+import { ReadBuffer, spawnUpstream } from "./transport/stdio.ts";
 import { upstreamHttp } from "./transport/http.ts";
 import type { UpstreamProcess } from "./transport/stdio.ts";
 
@@ -36,11 +63,17 @@ export type ProxyShutdownSignals = {
   readonly setExitCode?: (code: number) => void;
 };
 
-export const SUPPORTED_TRANSPORTS: readonly ProxyTransport[] = ["stdio", "http"];
+export const SUPPORTED_TRANSPORTS: readonly ProxyTransport[] = [
+  "stdio",
+  "http",
+];
 
 export type UpstreamEvents = {
   readonly onMessage: (line: string) => void;
-  readonly onClose: (code: number | null, signal: NodeJS.Signals | null) => void;
+  readonly onClose: (
+    code: number | null,
+    signal: NodeJS.Signals | null,
+  ) => void;
   readonly onError: (error: Error) => void;
 };
 
@@ -69,6 +102,8 @@ export type ProxyOptions = {
   readonly output?: (line: string) => void;
   readonly error?: (line: string) => void;
   readonly inboundMaxBytes?: number;
+  /** Cap for one outbound line and for bytes buffered in stdout behind a notification flood. Defaults to four inbound ceilings. */
+  readonly outboundMaxBytes?: number;
   readonly shutdownSignals?: ProxyShutdownSignals | false;
 };
 
@@ -82,9 +117,27 @@ const INVALID_REQUEST = -32600;
 const INTERNAL_ERROR = -32603;
 
 export async function runProxy(options: ProxyOptions): Promise<void> {
-  const write = options.output ?? ((line: string) => { process.stdout.write(`${line}\n`); });
-  const writeError = options.error ?? ((line: string) => { process.stderr.write(`${line}\n`); });
   const inboundMaxBytes = options.inboundMaxBytes ?? DEFAULT_INBOUND_MAX_BYTES;
+  const outboundMaxBytes = options.outboundMaxBytes ?? inboundMaxBytes * 4;
+  // The default stdout writer is drain aware: when a valid notification flood
+  // leaves more than the queue cap unflushed, the line is refused with a named
+  // error instead of queueing behind it without bound. Buffered bytes are read
+  // from the stream itself, so no new queue is introduced to bound.
+  const write =
+    options.output ??
+    ((line: string) => {
+      assertOutboundQueueCeiling(
+        process.stdout.writableLength,
+        Buffer.byteLength(line, "utf8") + 1,
+        outboundMaxBytes,
+      );
+      process.stdout.write(`${line}\n`);
+    });
+  const writeError =
+    options.error ??
+    ((line: string) => {
+      process.stderr.write(`${line}\n`);
+    });
   const startup = validateStartup(options, writeError);
   let policy: LoadedPolicy;
   let facts: FactsReport;
@@ -107,15 +160,34 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   // The dev tier ledger is a JSONL file store with a local ed25519 signer. In the
   // fail-closed posture the store must open before the first call routes, because
   // the posture promises that a call without a ledger record never forwards.
-  const ledgerStore: LedgerStore<unknown, JsonlEntry, JsonlReceipt> | undefined =
-    options.ledgerDir === undefined ? undefined : jsonlStore(options.keyProvider ?? await devKeyProvider(), { dir: options.ledgerDir });
+  const ledgerStore:
+    LedgerStore<unknown, JsonlEntry, JsonlReceipt> | undefined =
+    options.ledgerDir === undefined
+      ? undefined
+      : jsonlStore(options.keyProvider ?? (await devKeyProvider()), {
+          dir: options.ledgerDir,
+        });
   let resolveUpstreamClosed: () => void = () => {};
-  const upstreamClosed = new Promise<void>((resolve) => { resolveUpstreamClosed = resolve; });
+  const upstreamClosed = new Promise<void>((resolve) => {
+    resolveUpstreamClosed = resolve;
+  });
 
   const initializeByUpstream = new Map<JsonRpcId, InitializeRequest>();
   let upstream: UpstreamProcess | null = null;
 
   const sendJson = (message: unknown): void => {
+    // The per-message outbound ceiling gates upstream-relayed content only.
+    // Oversize throws a named error; the upstream path below drops it.
+    const line = JSON.stringify(message);
+    assertOutboundLineCeiling(line, outboundMaxBytes);
+    write(line);
+  };
+  const sendLocal = (message: unknown): void => {
+    // Locally generated answers (parse errors, deny and hold verdicts) are
+    // bounded by the inbound ceiling plus operator policy text, never by
+    // upstream content, so they bypass the relay cap: capping them would turn
+    // every small-cap deployment into a self denial on its first error.
+    // The stdout queue guard in write still applies to every line.
     write(JSON.stringify(message));
   };
   const sendUpstream = (message: unknown): void => {
@@ -138,27 +210,43 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       return;
     }
 
-    if (isRequest(message)) {
-      sendJson(relayServerRequest(message, session));
-      return;
-    }
+    try {
+      if (isRequest(message)) {
+        sendJson(relayServerRequest(message, session));
+        return;
+      }
 
-    if (isNotification(message)) {
-      const relayed = session.translateInbound(message);
-      if (relayed !== null) sendJson(relayed);
-      return;
-    }
+      if (isNotification(message)) {
+        const relayed = session.translateInbound(message);
+        if (relayed !== null) sendJson(relayed);
+        return;
+      }
 
-    if (isResponse(message) && message.id !== undefined && initializeByUpstream.has(message.id)) {
-      const init = initializeByUpstream.get(message.id)!;
-      initializeByUpstream.delete(message.id);
+      if (
+        isResponse(message) &&
+        message.id !== undefined &&
+        initializeByUpstream.has(message.id)
+      ) {
+        const init = initializeByUpstream.get(message.id)!;
+        initializeByUpstream.delete(message.id);
+        const translated = session.translateInbound(message);
+        if (translated !== null)
+          sendJson(rewriteInitializeResult(translated, session, init));
+        return;
+      }
+
       const translated = session.translateInbound(message);
-      if (translated !== null) sendJson(rewriteInitializeResult(translated, session, init));
-      return;
+      if (translated !== null) sendJson(translated);
+    } catch (error) {
+      // Fail closed on the relay path: a refused outbound line is dropped
+      // with a named reason, never forwarded half-framed, and the session
+      // stays up for the messages that fit. Anything else is a bug, rethrow.
+      if (error instanceof ProxyOutputError) {
+        writeError(`upstream message dropped: ${error.message}`);
+        return;
+      }
+      throw error;
     }
-
-    const translated = session.translateInbound(message);
-    if (translated !== null) sendJson(translated);
   };
 
   let drained = false;
@@ -185,18 +273,28 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     const upstreamEvents: UpstreamEvents = {
       onMessage: handleUpstreamLine,
       onClose: handleUpstreamClose,
-      onError(error) { writeError(`upstream error: ${error.message}`); },
+      onError(error) {
+        writeError(`upstream error: ${error.message}`);
+      },
     };
-    upstream = startup.transport === "http"
-      ? upstreamHttp(startup.url, { events: upstreamEvents })
-      : options.upstreamSpawn === undefined
-        ? spawnUpstream(startup.command, options.upstreamEnv ?? cleanEnv(process.env), { events: upstreamEvents })
-        : options.upstreamSpawn(upstreamEvents);
+    upstream =
+      startup.transport === "http"
+        ? upstreamHttp(startup.url, { events: upstreamEvents })
+        : options.upstreamSpawn === undefined
+          ? spawnUpstream(
+              startup.command,
+              options.upstreamEnv ?? cleanEnv(process.env),
+              { events: upstreamEvents },
+            )
+          : options.upstreamSpawn(upstreamEvents);
   } catch (error) {
     throw new UpstreamStartError(errorMessage(error));
   }
 
-  const shutdownSignals = options.shutdownSignals === false ? null : options.shutdownSignals ?? processShutdownSignals();
+  const shutdownSignals =
+    options.shutdownSignals === false
+      ? null
+      : (options.shutdownSignals ?? processShutdownSignals());
   const sigint = (): void => {
     shutdownSignals?.setExitCode?.(130);
     shutdown();
@@ -214,11 +312,12 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       message = parseMessage(line, inboundMaxBytes);
     } catch (error) {
       const failure = parseFailure(error);
-      sendJson(jsonRpcError(null, failure.code, failure.message));
+      sendLocal(jsonRpcError(null, failure.code, failure.message));
       return;
     }
 
-    const responseId = "id" in message && message.id !== undefined ? message.id : null;
+    const responseId =
+      "id" in message && message.id !== undefined ? message.id : null;
     try {
       if (isRequest(message)) {
         if (message.method === "initialize") {
@@ -232,17 +331,33 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         }
 
         if (message.method === "tools/call") {
-          await handleToolCall(message, policy, facts, queue, forwardAfterTranslate, sendJson, writeError, normalizePosture(options.posture), ledgerStore, options.workspace ?? "default", options.legacyCapture);
+          await handleToolCall(
+            message,
+            policy,
+            facts,
+            queue,
+            forwardAfterTranslate,
+            sendLocal,
+            writeError,
+            normalizePosture(options.posture),
+            ledgerStore,
+            options.workspace ?? "default",
+            options.legacyCapture,
+          );
           return;
         }
 
         if (isResourceMethod(message.method)) {
-          await forwardResourceMessage(message, async (request) => forwardAfterTranslate(request));
+          await forwardResourceMessage(message, async (request) =>
+            forwardAfterTranslate(request),
+          );
           return;
         }
 
         if (isPromptMethod(message.method)) {
-          await forwardPromptMessage(message, async (request) => forwardAfterTranslate(request));
+          await forwardPromptMessage(message, async (request) =>
+            forwardAfterTranslate(request),
+          );
           return;
         }
 
@@ -263,17 +378,34 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       sendUpstream(relayServerResponse(message as JsonRpcResponse, session));
     } catch (error) {
       writeError(`request failed: ${errorMessage(error)}`);
-      sendJson(jsonRpcError(responseId, INTERNAL_ERROR, "Internal error"));
+      sendLocal(jsonRpcError(responseId, INTERNAL_ERROR, "Internal error"));
     }
   };
 
-  const input = (options.input ?? stdinLines())[Symbol.asyncIterator]();
+  const input = (options.input ?? stdinLines(inboundMaxBytes))[
+    Symbol.asyncIterator
+  ]();
   try {
     for (;;) {
-      const next = await Promise.race([
-        input.next(),
-        upstreamClosed.then(() => ({ done: true, value: undefined } as IteratorResult<string>)),
-      ]);
+      let next: IteratorResult<string>;
+      try {
+        next = await Promise.race([
+          input.next(),
+          upstreamClosed.then(
+            () => ({ done: true, value: undefined }) as IteratorResult<string>,
+          ),
+        ]);
+      } catch (error) {
+        // Fail closed on unreadable stdin: one overlong unterminated line ends
+        // the agent session after a single Invalid Request. Resuming mid-stream
+        // would misframe the line's tail as a new message, so the session ends
+        // instead of guessing where the next message starts.
+        if (error instanceof JsonRpcInputError) {
+          sendLocal(jsonRpcError(null, INVALID_REQUEST, "Invalid Request"));
+          break;
+        }
+        throw error;
+      }
       if (next.done === true) break;
       await handleAgentLine(next.value);
     }
@@ -293,30 +425,45 @@ type StartupConfig =
   | { readonly transport: "stdio"; readonly command: readonly string[] }
   | { readonly transport: "http"; readonly url: URL };
 
-function validateStartup(options: ProxyOptions, writeError: (line: string) => void): StartupConfig {
+function validateStartup(
+  options: ProxyOptions,
+  writeError: (line: string) => void,
+): StartupConfig {
   const transport = options.transport ?? "stdio";
   if (!isSupportedProxyTransport(transport)) {
-    throw new ProxyStartupError(`transport must be one of ${SUPPORTED_TRANSPORTS.join(", ")}`);
+    throw new ProxyStartupError(
+      `transport must be one of ${SUPPORTED_TRANSPORTS.join(", ")}`,
+    );
   }
 
   if (transport === "http") {
     if (options.upstreamUrl === undefined || options.upstreamUrl === "") {
-      const error = new ProxyStartupError("http transport requires upstreamUrl");
+      const error = new ProxyStartupError(
+        "http transport requires upstreamUrl",
+      );
       writeError(`startup failed: ${error.message}`);
       throw error;
     }
     try {
       return { transport, url: new URL(options.upstreamUrl) };
     } catch (error) {
-      throw new ProxyStartupError(`invalid upstreamUrl: ${errorMessage(error)}`);
+      throw new ProxyStartupError(
+        `invalid upstreamUrl: ${errorMessage(error)}`,
+      );
     }
   }
 
   if (options.upstreamUrl !== undefined) {
     writeError("startup warning: upstreamUrl is ignored for stdio transport");
   }
-  if (options.upstreamSpawn === undefined && (options.upstreamCommand === undefined || options.upstreamCommand.length === 0)) {
-    throw new UpstreamStartError("stdio transport requires an upstream command");
+  if (
+    options.upstreamSpawn === undefined &&
+    (options.upstreamCommand === undefined ||
+      options.upstreamCommand.length === 0)
+  ) {
+    throw new UpstreamStartError(
+      "stdio transport requires an upstream command",
+    );
   }
   return { transport, command: options.upstreamCommand ?? [] };
 }
@@ -327,9 +474,15 @@ function isSupportedProxyTransport(value: string): value is ProxyTransport {
 
 function processShutdownSignals(): ProxyShutdownSignals {
   return {
-    on(signal, handler) { process.on(signal, handler); },
-    off(signal, handler) { process.off(signal, handler); },
-    setExitCode(code) { process.exitCode = code; },
+    on(signal, handler) {
+      process.on(signal, handler);
+    },
+    off(signal, handler) {
+      process.off(signal, handler);
+    },
+    setExitCode(code) {
+      process.exitCode = code;
+    },
   };
 }
 
@@ -369,30 +522,43 @@ async function handleToolCall(
     const decision = decide(policy, policyCall);
     lastDecision = decision;
     if (posture === "observe" && decision.kind !== "allow") {
-      writeError(`observe: ${decision.kind} verdict for ${policyCall.tool} forwarded`);
+      writeError(
+        `observe: ${decision.kind} verdict for ${policyCall.tool} forwarded`,
+      );
       return { kind: "allow" };
     }
     return decision;
   };
 
   const verdict = await interceptCall(call, {
-    classify: () => classifyTool(call.tool, toEvaluationContext(facts, call.args)),
+    classify: () =>
+      classifyTool(call.tool, toEvaluationContext(facts, call.args)),
     policy: policyFn,
-    capture: legacyCapture ?? (async (candidate) =>
-      captureLegacyEnvelope(candidate.tool, candidate.args, candidate.workspace ?? workspace)),
+    capture:
+      legacyCapture ??
+      (async (candidate) =>
+        captureLegacyEnvelope(
+          candidate.tool,
+          candidate.args,
+          candidate.workspace ?? workspace,
+        )),
     hold: (seconds) => {
       const decision = lastDecision;
       const policyCall = lastPolicyCall;
-      if (decision === null || decision.kind !== "hold" || policyCall === null) throw new Error("hold decision state missing");
-      return queue.hold({
-        tool: call.tool,
-        klass: policyCall.klass,
-        blastRadius: policyCall.blastRadius,
-        ruleIndex: decision.ruleIndex,
-        rationale: decision.rationale,
-        args: call.args,
-        notify: decision.notify,
-      }, seconds);
+      if (decision === null || decision.kind !== "hold" || policyCall === null)
+        throw new Error("hold decision state missing");
+      return queue.hold(
+        {
+          tool: call.tool,
+          klass: policyCall.klass,
+          blastRadius: policyCall.blastRadius,
+          ruleIndex: decision.ruleIndex,
+          rationale: decision.rationale,
+          args: call.args,
+          notify: decision.notify,
+        },
+        seconds,
+      );
     },
     ledger: async (entry) => {
       // Fail-closed startup already refuses to run without a store. Reaching
@@ -400,7 +566,9 @@ async function handleToolCall(
       // loud stderr note per call rather than blocking the trial it exists
       // for; silently recording nothing would be the dishonest middle.
       if (ledgerStore === undefined) {
-        writeError(`observe: no ledger directory, record skipped for ${entry.tool}`);
+        writeError(
+          `observe: no ledger directory, record skipped for ${entry.tool}`,
+        );
         return;
       }
       await ledgerStore.append({ ...entry, workspace });
@@ -429,8 +597,10 @@ function interceptedCall(request: JsonRpcRequest): InterceptedCall {
   const params = request.params ?? {};
   const name = params.name;
   const args = params.arguments;
-  if (typeof name !== "string" || name === "") throw new TypeError("tools/call params.name is required");
-  if (args !== undefined && !isObject(args)) throw new TypeError("tools/call params.arguments must be an object");
+  if (typeof name !== "string" || name === "")
+    throw new TypeError("tools/call params.name is required");
+  if (args !== undefined && !isObject(args))
+    throw new TypeError("tools/call params.arguments must be an object");
   return {
     tool: name,
     connector: connectorFromName(name),
@@ -443,34 +613,77 @@ function connectorFromName(name: string): string {
   return dot === -1 ? name : name.slice(0, dot);
 }
 
-function rewriteInitializeResult(message: JsonRpcMessage, session: Session, init: InitializeRequest): JsonRpcMessage {
+function rewriteInitializeResult(
+  message: JsonRpcMessage,
+  session: Session,
+  init: InitializeRequest,
+): JsonRpcMessage {
   if (!("result" in message) || !isObject(message.result)) return message;
-  const upstreamVersion = typeof message.result.protocolVersion === "string" ? message.result.protocolVersion : init.requestedVersion;
+  const upstreamVersion =
+    typeof message.result.protocolVersion === "string"
+      ? message.result.protocolVersion
+      : init.requestedVersion;
   return {
     ...message,
     id: init.agentId,
     result: {
       ...message.result,
-      protocolVersion: session.negotiatedVersion(init.requestedVersion, upstreamVersion),
+      protocolVersion: session.negotiatedVersion(
+        init.requestedVersion,
+        upstreamVersion,
+      ),
     },
   };
 }
 
-function cancellationFromAgent(notification: JsonRpcNotification, session: Session): JsonRpcNotification | null {
+function cancellationFromAgent(
+  notification: JsonRpcNotification,
+  session: Session,
+): JsonRpcNotification | null {
   if (notification.method !== "notifications/cancelled") return null;
   const params = notification.params;
   if (params === undefined) return null;
   const requestId = params.requestId;
-  if (typeof requestId !== "number" && typeof requestId !== "string") return null;
+  if (typeof requestId !== "number" && typeof requestId !== "string")
+    return null;
   return session.translateCancellation(requestId);
 }
 
-async function* stdinLines(): AsyncIterable<string> {
-  const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });
-  for await (const line of rl) yield line;
+/**
+ * Bounded agent stdin. readline buffers an unterminated line without limit
+ * before the line ceiling ever sees it, so raw chunks go through the same
+ * ReadBuffer the upstream transport uses. An overlong line throws the named
+ * input error and ends the read; the caller answers one Invalid Request and
+ * closes the session rather than framing the line's tail as a new message.
+ * The stream parameter exists so tests can feed hostile chunks without stdin.
+ */
+export async function* stdinLines(
+  maxBytes = DEFAULT_INBOUND_MAX_BYTES,
+  stream: AsyncIterable<Buffer | string> = process.stdin,
+): AsyncIterable<string> {
+  const buffer = new ReadBuffer(maxBytes);
+  for await (const chunk of stream) {
+    try {
+      buffer.append(chunk);
+    } catch {
+      // ReadBuffer already cleared itself; name the refusal for the log.
+      throw new JsonRpcInputError(
+        "invalid",
+        `inbound message exceeded ${maxBytes} bytes`,
+      );
+    }
+    for (;;) {
+      const line = buffer.readLine();
+      if (line === null) break;
+      yield line;
+    }
+  }
 }
 
-function parseMessage(line: string, maxBytes = DEFAULT_INBOUND_MAX_BYTES): JsonRpcMessage {
+function parseMessage(
+  line: string,
+  maxBytes = DEFAULT_INBOUND_MAX_BYTES,
+): JsonRpcMessage {
   assertInboundLineCeiling(line, maxBytes);
   let parsed: unknown;
   try {
@@ -482,26 +695,49 @@ function parseMessage(line: string, maxBytes = DEFAULT_INBOUND_MAX_BYTES): JsonR
   return parsed;
 }
 
-function parseFailure(error: unknown): { readonly code: number; readonly message: string } {
+function parseFailure(error: unknown): {
+  readonly code: number;
+  readonly message: string;
+} {
   if (error instanceof JsonRpcInputError) {
-    return { code: error.kind === "parse" ? PARSE_ERROR : INVALID_REQUEST, message: error.kind === "parse" ? "Parse error" : "Invalid Request" };
+    return {
+      code: error.kind === "parse" ? PARSE_ERROR : INVALID_REQUEST,
+      message: error.kind === "parse" ? "Parse error" : "Invalid Request",
+    };
   }
   return { code: INVALID_REQUEST, message: "Invalid Request" };
 }
 
-function jsonRpcError(id: JsonRpcId | null, code: number, message: string, data?: unknown): { readonly jsonrpc: "2.0"; readonly id: JsonRpcId | null; readonly error: JsonRpcErrorBody } {
-  return { jsonrpc: "2.0", id, error: data === undefined ? { code, message } : { code, message, data } };
+function jsonRpcError(
+  id: JsonRpcId | null,
+  code: number,
+  message: string,
+  data?: unknown,
+): {
+  readonly jsonrpc: "2.0";
+  readonly id: JsonRpcId | null;
+  readonly error: JsonRpcErrorBody;
+} {
+  return {
+    jsonrpc: "2.0",
+    id,
+    error: data === undefined ? { code, message } : { code, message, data },
+  };
 }
 
 function isRequest(message: JsonRpcMessage): message is JsonRpcRequest {
   return "method" in message && "id" in message;
 }
 
-function isNotification(message: JsonRpcMessage): message is JsonRpcNotification {
+function isNotification(
+  message: JsonRpcMessage,
+): message is JsonRpcNotification {
   return "method" in message && !("id" in message);
 }
 
-function isResponse(message: JsonRpcMessage): message is JsonRpcResult | JsonRpcError {
+function isResponse(
+  message: JsonRpcMessage,
+): message is JsonRpcResult | JsonRpcError {
   return "result" in message || "error" in message;
 }
 
@@ -510,11 +746,18 @@ function isObject(value: unknown): value is JsonObject {
 }
 
 function readProtocolVersion(params: JsonObject | undefined): string {
-  return typeof params?.protocolVersion === "string" ? params.protocolVersion : "2025-11-25";
+  return typeof params?.protocolVersion === "string"
+    ? params.protocolVersion
+    : "2025-11-25";
 }
 
 function isResourceMethod(method: string): boolean {
-  return method === "resources/list" || method === "resources/read" || method === "resources/subscribe" || method === "resources/unsubscribe";
+  return (
+    method === "resources/list" ||
+    method === "resources/read" ||
+    method === "resources/subscribe" ||
+    method === "resources/unsubscribe"
+  );
 }
 
 function isPromptMethod(method: string): boolean {
@@ -522,7 +765,9 @@ function isPromptMethod(method: string): boolean {
 }
 
 function normalizePosture(posture: ProxyPosture): "fail-closed" | "observe" {
-  return posture === "observe" || posture === "observe-only" ? "observe" : "fail-closed";
+  return posture === "observe" || posture === "observe-only"
+    ? "observe"
+    : "fail-closed";
 }
 
 const UPSTREAM_ENV_ALLOWLIST = [
@@ -545,7 +790,11 @@ function cleanEnv(env: NodeJS.ProcessEnv): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [key, value] of Object.entries(env)) {
     const name = process.platform === "win32" ? key.toUpperCase() : key;
-    if (value !== undefined && UPSTREAM_ENV_ALLOWLIST.some(allowed => allowed === name)) out[key] = value;
+    if (
+      value !== undefined &&
+      UPSTREAM_ENV_ALLOWLIST.some((allowed) => allowed === name)
+    )
+      out[key] = value;
   }
   return out;
 }

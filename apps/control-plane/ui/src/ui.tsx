@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, download, items, json, type Row } from "./api";
+import { redactValue } from "./redact.ts";
 export const MotionEnabled = createContext(true);
 export const Locale = createContext<"cs" | "en">("en");
 export function useText() {
@@ -186,6 +187,14 @@ export function Dialog({
 }
 export function JsonDetail({ value }: { value: unknown }) {
   return <pre className="json">{json(value)}</pre>;
+}
+/**
+ * Evidence rendering with secret looking values masked before they reach
+ * the DOM. For tool payloads, approval records and ledger rows. The server
+ * record is untouched; only the displayed copy is redacted.
+ */
+export function RedactedJson({ value }: { value: unknown }) {
+  return <pre className="json">{json(redactValue(value))}</pre>;
 }
 export type Column = {
   key: string;

@@ -5,11 +5,23 @@ import process from "node:process";
 import { ReadBuffer, spawnUpstream } from "./stdio.ts";
 
 function onceClose(): {
-  readonly promise: Promise<{ readonly code: number | null; readonly signal: NodeJS.Signals | null }>;
-  readonly onClose: (code: number | null, signal: NodeJS.Signals | null) => void;
+  readonly promise: Promise<{
+    readonly code: number | null;
+    readonly signal: NodeJS.Signals | null;
+  }>;
+  readonly onClose: (
+    code: number | null,
+    signal: NodeJS.Signals | null,
+  ) => void;
 } {
-  let resolveClose: (event: { readonly code: number | null; readonly signal: NodeJS.Signals | null }) => void;
-  const promise = new Promise<{ readonly code: number | null; readonly signal: NodeJS.Signals | null }>((resolve) => {
+  let resolveClose: (event: {
+    readonly code: number | null;
+    readonly signal: NodeJS.Signals | null;
+  }) => void;
+  const promise = new Promise<{
+    readonly code: number | null;
+    readonly signal: NodeJS.Signals | null;
+  }>((resolve) => {
     resolveClose = resolve;
   });
 
@@ -25,10 +37,10 @@ describe("ReadBuffer", () => {
   test("reassembles partial chunks and drains complete lines", () => {
     const buffer = new ReadBuffer(100);
 
-    buffer.append("{\"a\":");
+    buffer.append('{"a":');
     assert.equal(buffer.readLine(), null);
 
-    buffer.append("1}\n{\"b\":2}\r\ntrail");
+    buffer.append('1}\n{"b":2}\r\ntrail');
     assert.equal(buffer.readLine(), '{"a":1}');
     assert.equal(buffer.readLine(), '{"b":2}');
     assert.equal(buffer.readLine(), null);
@@ -52,13 +64,18 @@ describe("ReadBuffer", () => {
 describe("spawnUpstream", () => {
   test("rejects an empty command", () => {
     assert.throws(
-      () => spawnUpstream([], {}, {
-        events: {
-          onMessage() {},
-          onClose() {},
-          onError() {},
-        },
-      }),
+      () =>
+        spawnUpstream(
+          [],
+          {},
+          {
+            events: {
+              onMessage() {},
+              onClose() {},
+              onError() {},
+            },
+          },
+        ),
       /must not be empty/,
     );
   });
@@ -66,17 +83,21 @@ describe("spawnUpstream", () => {
   test("sends newline framed JSON to a real child", async () => {
     const close = onceClose();
     const messages: string[] = [];
-    const upstream = spawnUpstream(["cat"], {}, {
-      events: {
-        onMessage(line) {
-          messages.push(line);
-        },
-        onClose: close.onClose,
-        onError(err) {
-          throw err;
+    const upstream = spawnUpstream(
+      ["cat"],
+      {},
+      {
+        events: {
+          onMessage(line) {
+            messages.push(line);
+          },
+          onClose: close.onClose,
+          onError(err) {
+            throw err;
+          },
         },
       },
-    });
+    );
 
     upstream.send('{"jsonrpc":"2.0","id":1,"result":{}}');
     await new Promise<void>((resolve) => setTimeout(resolve, 20));
@@ -91,27 +112,31 @@ describe("spawnUpstream", () => {
     const messages: string[] = [];
     const stderrChunks: string[] = [];
     const registeredStderr: string[] = [];
-    const upstream = spawnUpstream([
-      process.execPath,
-      "-e",
-      "process.stderr.write('log only\\n'); process.stdout.write('{\\\"ok\\\":true}\\n');",
-    ], {}, {
-      stderr: {
-        write(chunk: string | Uint8Array) {
-          stderrChunks.push(String(chunk));
-          return true;
+    const upstream = spawnUpstream(
+      [
+        process.execPath,
+        "-e",
+        "process.stderr.write('log only\\n'); process.stdout.write('{\\\"ok\\\":true}\\n');",
+      ],
+      {},
+      {
+        stderr: {
+          write(chunk: string | Uint8Array) {
+            stderrChunks.push(String(chunk));
+            return true;
+          },
+        },
+        events: {
+          onMessage(line) {
+            messages.push(line);
+          },
+          onClose: close.onClose,
+          onError(err) {
+            throw err;
+          },
         },
       },
-      events: {
-        onMessage(line) {
-          messages.push(line);
-        },
-        onClose: close.onClose,
-        onError(err) {
-          throw err;
-        },
-      },
-    });
+    );
     upstream.onStderr((chunk) => {
       registeredStderr.push(chunk);
     });
@@ -127,22 +152,26 @@ describe("spawnUpstream", () => {
     const close = onceClose();
     const messages: string[] = [];
     const errors: string[] = [];
-    spawnUpstream([
-      process.execPath,
-      "-e",
-      "process.stdout.write('abcdef'); setTimeout(() => process.stdout.write('ok\\n'), 10); setTimeout(() => process.exit(0), 30);",
-    ], {}, {
-      maxBufferSize: 5,
-      events: {
-        onMessage(line) {
-          messages.push(line);
-        },
-        onClose: close.onClose,
-        onError(err) {
-          errors.push(err.message);
+    spawnUpstream(
+      [
+        process.execPath,
+        "-e",
+        "process.stdout.write('abcdef'); setTimeout(() => process.stdout.write('ok\\n'), 10); setTimeout(() => process.exit(0), 30);",
+      ],
+      {},
+      {
+        maxBufferSize: 5,
+        events: {
+          onMessage(line) {
+            messages.push(line);
+          },
+          onClose: close.onClose,
+          onError(err) {
+            errors.push(err.message);
+          },
         },
       },
-    });
+    );
 
     await close.promise;
 
@@ -159,32 +188,36 @@ describe("spawnUpstream", () => {
     const ready = new Promise<void>((resolve) => {
       readyResolve = resolve;
     });
-    const upstream = spawnUpstream([
-      process.execPath,
-      "-e",
-      "process.on('SIGTERM', () => {}); process.stdout.write('ready\\n'); setInterval(() => {}, 1000);",
-    ], {}, {
-      killDelayMs: 25,
-      clock: {
-        setTimeout(callback, ms) {
-          callbacks.push(callback);
-          delays.push(ms);
-          return callbacks.length;
+    const upstream = spawnUpstream(
+      [
+        process.execPath,
+        "-e",
+        "process.on('SIGTERM', () => {}); process.stdout.write('ready\\n'); setInterval(() => {}, 1000);",
+      ],
+      {},
+      {
+        killDelayMs: 25,
+        clock: {
+          setTimeout(callback, ms) {
+            callbacks.push(callback);
+            delays.push(ms);
+            return callbacks.length;
+          },
+          clearTimeout() {},
         },
-        clearTimeout() {},
+        events: {
+          onMessage(line) {
+            if (line === "ready") {
+              readyResolve();
+            }
+          },
+          onClose: close.onClose,
+          onError(err) {
+            throw err;
+          },
+        },
       },
-      events: {
-        onMessage(line) {
-          if (line === "ready") {
-            readyResolve();
-          }
-        },
-        onClose: close.onClose,
-        onError(err) {
-          throw err;
-        },
-      },
-    });
+    );
 
     await ready;
     upstream.close();
@@ -195,31 +228,59 @@ describe("spawnUpstream", () => {
     assert.equal(event.signal, "SIGKILL");
   });
 
+  test("S15: strips VOID_SIGNING_KEY even when explicitly provided", async () => {
+    const close = onceClose();
+    const messages: string[] = [];
+    spawnUpstream(
+      [
+        process.execPath,
+        "-e",
+        "process.stdout.write(JSON.stringify({ key: process.env.VOID_SIGNING_KEY ?? null }) + '\\n');",
+      ],
+      { VOID_SIGNING_KEY: "synthetic-secret" },
+      {
+        events: {
+          onMessage(line) {
+            messages.push(line);
+          },
+          onClose: close.onClose,
+          onError(err) {
+            throw err;
+          },
+        },
+      },
+    );
+
+    await close.promise;
+
+    assert.deepEqual(messages, ['{"key":null}']);
+  });
+
   test("close is idempotent", async () => {
     const close = onceClose();
     let timerCount = 0;
-    const upstream = spawnUpstream([
-      process.execPath,
-      "-e",
-      "setInterval(() => {}, 1000);",
-    ], {}, {
-      clock: {
-        setTimeout(callback) {
-          timerCount += 1;
-          return setTimeout(callback, 1);
+    const upstream = spawnUpstream(
+      [process.execPath, "-e", "setInterval(() => {}, 1000);"],
+      {},
+      {
+        clock: {
+          setTimeout(callback) {
+            timerCount += 1;
+            return setTimeout(callback, 1);
+          },
+          clearTimeout(handle) {
+            clearTimeout(handle as ReturnType<typeof setTimeout>);
+          },
         },
-        clearTimeout(handle) {
-          clearTimeout(handle as ReturnType<typeof setTimeout>);
+        events: {
+          onMessage() {},
+          onClose: close.onClose,
+          onError(err) {
+            throw err;
+          },
         },
       },
-      events: {
-        onMessage() {},
-        onClose: close.onClose,
-        onError(err) {
-          throw err;
-        },
-      },
-    });
+    );
 
     upstream.close();
     upstream.close();

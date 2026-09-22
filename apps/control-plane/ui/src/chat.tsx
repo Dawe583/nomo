@@ -23,7 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, download, json, type Row } from "./api";
-import { Badge, Dialog, ErrorBox, MotionEnabled, useApi, useText } from "./ui";
+import { Badge, Dialog, ErrorBox, MotionEnabled, RedactedJson, useApi, useText } from "./ui";
 const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
 const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
 function CodeBlock({ children }: { children?: ReactNode }) {
@@ -743,9 +743,7 @@ const draftKey =
                       <Badge value={event.payload?.status ?? kind} />
                     </summary>
                     <RichText text={text} />
-                    {event.payload && (
-                      <pre className="json">{json(event.payload)}</pre>
-                    )}
+                    {event.payload && <RedactedJson value={event.payload} />}
                   </details>
                 ) : (
                   <div className="prose">

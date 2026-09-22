@@ -31,14 +31,13 @@ import {
 } from "./workspace-runner.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
-const assistantFetcher = (content: string) =>
-  async (url: unknown) => {
-    if (String(url).endsWith("/models"))
-      return Response.json({ data: [{ id: "fixture" }] });
-    return Response.json({
-      choices: [{ message: { role: "assistant", content } }],
-    });
-  };
+const assistantFetcher = (content: string) => async (url: unknown) => {
+  if (String(url).endsWith("/models"))
+    return Response.json({ data: [{ id: "fixture" }] });
+  return Response.json({
+    choices: [{ message: { role: "assistant", content } }],
+  });
+};
 
 async function fixtureApp(
   root: string,
@@ -175,10 +174,7 @@ test("gated shell shows output once and refuses key material", async (t) => {
   await ui.command("!echo parity-ok");
   assert.ok(ui.detail?.join("\n").includes("parity-ok"));
   assert.match(ui.notice, /never persisted/);
-  await assert.rejects(
-    ui.command("!echo $TOKENHARBOR_API_KEY"),
-    /Refused/,
-  );
+  await assert.rejects(ui.command("!echo $TOKENHARBOR_API_KEY"), /Refused/);
   await assert.rejects(
     ui.command("!cat ~/.void/keys/dev-ed25519.pkcs8"),
     /Refused/,
@@ -216,8 +212,17 @@ test("@ tokens complete from managed paths and quote on send", async (t) => {
     "plan.md",
   ]);
   assert.deepEqual(
-    mentionCandidates("", ["a.md", "b.md", "c.md", "d.md", "e.md",
-      "f.md", "g.md", "h.md", "i.md"]),
+    mentionCandidates("", [
+      "a.md",
+      "b.md",
+      "c.md",
+      "d.md",
+      "e.md",
+      "f.md",
+      "g.md",
+      "h.md",
+      "i.md",
+    ]),
     ["a.md", "b.md", "c.md", "d.md", "e.md", "f.md", "g.md", "h.md"],
   );
   const root = await mkdtemp(join(tmpdir(), "void-tui-mention-"));
@@ -247,8 +252,12 @@ test("@ tokens complete from managed paths and quote on send", async (t) => {
 
 test("todos come from real agent output, /todos lists them", async (t) => {
   const direct = extractTodos([
-    { seq: 1, kind: "assistant", type: "message.completed",
-      text: "- [ ] step one\n- [x] done step" },
+    {
+      seq: 1,
+      kind: "assistant",
+      type: "message.completed",
+      text: "- [ ] step one\n- [x] done step",
+    },
     { seq: 2, kind: "tool", type: "tool.result", text: "- [ ] not a todo" },
     { seq: 3, kind: "assistant", type: "message.delta", text: "- [ ] draft" },
   ]);
@@ -291,7 +300,9 @@ test("/context /cost /status report retained numbers, cost stays unknown", async
   assert.ok(!ui.detail?.join("\n").includes("CZK"));
   await ui.command("/status");
   assert.equal(ui.tab, "overview");
-  assert.ok(ui.detail?.join("\n").includes("Mode: normal"));
+  assert.ok(
+    ui.detail?.join("\n").includes("mode: normal (local only, not enforced)"),
+  );
 });
 
 test("/compact is an explicit local fallback, never a provider claim", async (t) => {
@@ -464,7 +475,8 @@ test("logo is one stroke width and every row aligns", async (t) => {
 });
 
 test("tab icons carry fixed colors in color mode only", async (t) => {
-  for (const tone of Object.values(TAB_ICON_TONE)) assert.match(tone, /^38;5;\d+$/);
+  for (const tone of Object.values(TAB_ICON_TONE))
+    assert.match(tone, /^38;5;\d+$/);
   const root = await mkdtemp(join(tmpdir(), "void-tui-icon-tone-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -531,8 +543,14 @@ test("kill ring and input undo cover the editing keys", () => {
 });
 
 test("Ctrl+T maps to the checklist in every editing state", () => {
-  assert.equal(workspaceShortcut({ name: "t", ctrl: true }, true, "draft"), "show-todos");
-  assert.equal(workspaceShortcut({ name: "t", ctrl: true }, false, ""), "show-todos");
+  assert.equal(
+    workspaceShortcut({ name: "t", ctrl: true }, true, "draft"),
+    "show-todos",
+  );
+  assert.equal(
+    workspaceShortcut({ name: "t", ctrl: true }, false, ""),
+    "show-todos",
+  );
   assert.equal(workspaceShortcut({ name: "t" }, true, "draft"), undefined);
 });
 
@@ -548,7 +566,10 @@ test("Ctrl+X Ctrl+E chord arms, fires and disarms", () => {
   assert.equal(broken.chord({ name: "x", ctrl: true }, 1000), undefined);
   assert.equal(broken.chord({ name: "a", ctrl: true }, 1100), undefined);
   assert.equal(broken.chord({ name: "e", ctrl: true }, 1200), undefined);
-  assert.equal(new ChordTracker().chord({ name: "e", ctrl: true }, 1000), undefined);
+  assert.equal(
+    new ChordTracker().chord({ name: "e", ctrl: true }, 1000),
+    undefined,
+  );
 });
 
 test("prompt jumps move between user rows only", () => {
@@ -571,11 +592,23 @@ test("prompt frame follows the permission mode color", async (t) => {
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
   ui.mode = "plan";
-  assert.ok(renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes("38;5;75"));
+  assert.ok(
+    renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes(
+      "38;5;75",
+    ),
+  );
   ui.mode = "accept";
-  assert.ok(renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes("38;5;78"));
+  assert.ok(
+    renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes(
+      "38;5;78",
+    ),
+  );
   ui.mode = "normal";
-  assert.ok(renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes("38;5;117"));
+  assert.ok(
+    renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes(
+      "38;5;117",
+    ),
+  );
 });
 
 test("render collects user prompt rows for jumps", async (t) => {
@@ -641,7 +674,9 @@ test("block cursor, Ctrl arrows and queued badge", async (t) => {
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
   ui.queuePrompt("later");
-  const frame = stripAnsi(renderWorkspace(ui, 100, 32));
+  // 140 columns fit the full summary including the local only mode label;
+  // narrower frames truncate the tail by the pre-existing fit() behavior.
+  const frame = stripAnsi(renderWorkspace(ui, 140, 32));
   assert.match(frame, /\+1 queued/);
 });
 
@@ -652,15 +687,24 @@ test("typing filters lists, bound keys keep their action", () => {
   assert.equal(filterKeyForTab("?", { name: undefined }, "models"), undefined);
   assert.equal(filterKeyForTab("m", { name: undefined }, "chat"), undefined);
   assert.equal(filterKeyForTab("m", { name: undefined }, "help"), undefined);
-  assert.equal(filterKeyForTab("m", { name: "m", ctrl: true }, "models"), undefined);
+  assert.equal(
+    filterKeyForTab("m", { name: "m", ctrl: true }, "models"),
+    undefined,
+  );
   assert.equal(filterKeyForTab("", { name: undefined }, "models"), undefined);
   assert.equal(filterKeyForTab("ab", { name: undefined }, "models"), undefined);
   assert.equal(filterKeyForTab("5", { name: undefined }, "ledger"), "5");
 });
 
 test("stash, editor and quit map only the intended control keys", () => {
-  assert.equal(workspaceShortcut({ name: "s", ctrl: true }, true, "draft"), "stash");
-  assert.equal(workspaceShortcut({ name: "s", ctrl: true }, false, ""), "stash");
+  assert.equal(
+    workspaceShortcut({ name: "s", ctrl: true }, true, "draft"),
+    "stash",
+  );
+  assert.equal(
+    workspaceShortcut({ name: "s", ctrl: true }, false, ""),
+    "stash",
+  );
   assert.equal(
     workspaceShortcut({ name: "g", ctrl: true }, true, "draft"),
     "external-editor",
@@ -674,7 +718,11 @@ test("approval rows carry class, radius and the matched case", () => {
     approvalLabel({
       holdId: "abc123",
       status: "pending",
-      call: { tool: "stripe.refund.create", klass: "r2", reason: "Money moves." },
+      call: {
+        tool: "stripe.refund.create",
+        klass: "r2",
+        reason: "Money moves.",
+      },
     }),
     "[pending] [R2] stripe.refund.create abc123 radius unknown Money moves.",
   );
@@ -811,9 +859,7 @@ test("/theme switches session color and motion without touching env", async (t) 
   assert.equal(ui.colorOverride, undefined);
   assert.equal(ui.motionOverride, undefined);
   await assert.rejects(ui.command("/theme pink"), /\/theme color/);
-  assert.ok(
-    commandSuggestions("/the").some(([name]) => name === "/theme"),
-  );
+  assert.ok(commandSuggestions("/the").some(([name]) => name === "/theme"));
 });
 
 test("/attest signs the conversation slice for offline checks", async (t) => {
@@ -831,9 +877,7 @@ test("/attest signs the conversation slice for offline checks", async (t) => {
   assert.match(ui.detail?.[0] ?? "", /ATTESTATION/);
   assert.match(ui.detail?.join("\n") ?? "", /"entriesCount": 0/);
   assert.match(ui.notice, /Attested 0 entries/);
-  assert.ok(
-    commandSuggestions("/att").some(([name]) => name === "/attest"),
-  );
+  assert.ok(commandSuggestions("/att").some(([name]) => name === "/attest"));
 });
 
 test("/providers lists presets with local open model options", async (t) => {
@@ -870,7 +914,10 @@ test("/harness shows and switches the agent harness", async (t) => {
   const ui = new WorkspaceTui(app, full);
   await ui.command("/harness");
   assert.match(ui.detail?.join("\n") ?? "", /current default: cloud/);
-  assert.match(ui.detail?.join("\n") ?? "", /prime-agent: not detected on PATH/);
+  assert.match(
+    ui.detail?.join("\n") ?? "",
+    /prime-agent: not detected on PATH/,
+  );
   await ui.command("/harness prime-agent");
   assert.equal(app.getPreferences().defaultAgent, "prime-agent");
   assert.match(ui.notice, /prime-agent/);

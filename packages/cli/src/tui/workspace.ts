@@ -29,7 +29,9 @@ import {
   fit,
   meter,
   pad,
+  renderHunkSelection,
   sanitizeText,
+  splitDiffHunks,
   unifiedDiff,
   visibleLength,
 } from "./layout.ts";
@@ -59,6 +61,10 @@ type Item = {
 type Confirmation = {
   title: string;
   lines: string[];
+  /** Diff hunks under review, when the approval carries a diff. The lines
+   * above are rebuilt from hunkBase plus the selection markers on toggle. */
+  hunks?: { chunks: string[][]; selected: boolean[] };
+  hunkBase?: string[];
   apply: () => Promise<void>;
 };
 const json = (value: unknown) =>
@@ -87,6 +93,163 @@ export function approvalLabel(hold: {
       : ` radius ${hold.call.blastRadius}`;
   const reason = hold.call.reason ? ` ${hold.call.reason}` : "";
   return `[${hold.status}]${klass} ${hold.call.tool} ${hold.holdId.slice(0, 8)}${radius}${reason}`;
+}
+
+/** One line banner for the oldest pending hold, pinned above every tab so
+ * an approval is never hidden behind a panel switch. The status bar badge
+ * keeps the count; this banner keeps the decision and its keys. */
+export function approvalBannerLines(
+  holds: readonly {
+    readonly holdId: string;
+    readonly call: { readonly tool: string; readonly klass?: string };
+  }[],
+  width: number,
+): string[] {
+  if (!holds.length) return [];
+  const first = holds[0]!;
+  const klass = first.call.klass ? ` [${first.call.klass.toUpperCase()}]` : "";
+  const rest =
+    holds.length > 1
+      ? ` (+${holds.length - 1} more, /approvals)`
+      : " (/approvals)";
+  return [
+    fit(
+      sanitizeText(
+        `[!] APPROVAL PENDING${klass} ${first.call.tool} ${first.holdId.slice(0, 8)} | [a] approve [d] deny${rest}`,
+      ),
+      width,
+    ),
+  ];
+}
+
+/** The TUI mode is a local prompt prefix only. No server readiness channel
+ * exists behind this UI yet, so the label always says local only, the same
+ * way the control plane labels an unenforced preset. */
+export function modeAuthorityLabel(mode: TuiMode): string {
+  return `mode: ${mode} (local only, not enforced)`;
+}
+
+/** Approval evidence for the decision screen. Tool, class, radius and the
+ * matched registry case prose come from the hold when the server supplies
+ * them. Rule id, precondition details and postcondition render as unknown
+ * when the server did not supply them, never invented. */
+export function approvalEvidenceLines(hold: {
+  readonly holdId: string;
+  readonly call: {
+    readonly tool?: unknown;
+    readonly klass?: unknown;
+    readonly blastRadius?: unknown;
+    readonly reason?: unknown;
+    readonly workspace?: unknown;
+    readonly connector?: unknown;
+    readonly policyRule?: unknown;
+    readonly precondition?: unknown;
+    readonly postcondition?: unknown;
+  };
+  readonly ruleIndex?: unknown;
+  readonly matchedRule?: unknown;
+}): string[] {
+  const call = hold.call ?? {};
+  const textOf = (value: unknown): string | undefined =>
+    typeof value === "string" && value ? value : undefined;
+  const tool = textOf(call.tool) ?? "unknown tool";
+  const klass =
+    typeof call.klass === "string" && call.klass
+      ? call.klass.toUpperCase()
+      : "unknown class";
+  const radius =
+    typeof call.blastRadius === "number" &&
+    Number.isSafeInteger(call.blastRadius) &&
+    call.blastRadius >= 0
+      ? `${call.blastRadius} targets, measured`
+      : "radius unknown";
+  // The workbench hold keeps the matched registry case prose in reason, so
+  // that prose is the precondition evidence. Anything else is unknown.
+  const precondition =
+    textOf(call.precondition) ??
+    textOf(call.reason) ??
+    "unknown (the server did not supply a precondition)";
+  const postcondition =
+    textOf(call.postcondition) ??
+    "unknown (the server does not report a postcondition)";
+  const ruleIndex =
+    typeof hold.ruleIndex === "number"
+      ? `policy rule ${hold.ruleIndex}`
+      : (textOf(hold.matchedRule) ??
+        textOf(call.policyRule) ??
+        "unknown (the server did not supply a matched rule id)");
+  return [
+    `tool           ${sanitizeText(tool)}`,
+    `class          ${sanitizeText(klass)}`,
+    `blast radius   ${sanitizeText(radius)}`,
+    `matched rule   ${sanitizeText(ruleIndex)}`,
+    `precondition   ${sanitizeText(precondition)}`,
+    `postcondition  ${sanitizeText(postcondition)}`,
+  ];
+}
+
+/** Diff rows carried by a hold, when a future server supplies them. Today
+ * neither the workbench nor the proxy hold carries a diff, so approvals
+ * review the full call scope. */
+export function holdDiffRows(hold: {
+  readonly call: {
+    readonly tool?: unknown;
+    readonly diff?: unknown;
+    readonly before?: unknown;
+    readonly after?: unknown;
+  };
+}): string[] | undefined {
+  const call = hold.call ?? {};
+  if (typeof call.diff === "string" && call.diff) return call.diff.split("\n");
+  if (typeof call.before === "string" && typeof call.after === "string")
+    return unifiedDiff(call.before, call.after);
+  return undefined;
+}
+
+/** Review lines for an approval: evidence first, then an optional
+ * selectable diff. Module level so tests can drive it without a running
+ * session; the class keeps a private alias for the same builders. */
+export function approvalReview(hold: {
+  readonly holdId: string;
+  readonly call: {
+    readonly tool?: unknown;
+    readonly klass?: unknown;
+    readonly blastRadius?: unknown;
+    readonly reason?: unknown;
+    readonly workspace?: unknown;
+    readonly connector?: unknown;
+    readonly policyRule?: unknown;
+    readonly precondition?: unknown;
+    readonly postcondition?: unknown;
+    readonly diff?: unknown;
+    readonly before?: unknown;
+    readonly after?: unknown;
+  };
+  readonly ruleIndex?: unknown;
+  readonly matchedRule?: unknown;
+}): {
+  readonly lines: string[];
+  readonly hunks?: { chunks: string[][]; selected: boolean[] };
+  readonly hunkBase?: string[];
+} {
+  const evidence = approvalEvidenceLines(
+    hold as Parameters<typeof approvalEvidenceLines>[0],
+  );
+  const diffRows = holdDiffRows(hold);
+  const chunks = diffRows ? splitDiffHunks(diffRows) : [];
+  if (!chunks.length) return { lines: [...evidence, ""] };
+  const selected = chunks.map(() => true);
+  const hunkBase = [
+    ...evidence,
+    "",
+    "DIFF SCOPE, client side: press 1-9 to toggle a hunk.",
+    "The server applies the full call until scope is enforced.",
+  ];
+  return {
+    lines: [...hunkBase, ...renderHunkSelection(chunks, selected)],
+    hunks: { chunks, selected },
+    hunkBase,
+  };
 }
 
 /** Tabs where typing filters the list, like a finder. Chat, overview,
@@ -474,7 +637,9 @@ export class WorkspaceTui {
     const missing: string[] = [];
     const hasBinary = (path: string) => {
       const ext = path.slice(path.lastIndexOf(".")).toLowerCase();
-      return [".pdf", ".exe", ".dll", ".so", ".dylib", ".bin", ".dat"].includes(ext);
+      return [".pdf", ".exe", ".dll", ".so", ".dylib", ".bin", ".dat"].includes(
+        ext,
+      );
     };
     const expanded = prompt.replace(
       /@([^\s@][^\s]*)/g,
@@ -548,7 +713,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     const ctx = this.session() ? this.contextNumbers() : null;
     return [
       `Provider: ${this.provider?.connected ? this.provider.providerId : "NOT CONNECTED"}`,
-      `model: ${this.session()?.model || this.model || "-"} | Mode: ${this.mode}`,
+      `model: ${this.session()?.model || this.model || "-"} | ${modeAuthorityLabel(this.mode)}`,
       `Run: ${this.workbench.running() ? "running or settling" : "idle"}`,
       ctx
         ? `Context: ${ctx.messages}/${ctx.limit} messages | ` +
@@ -848,17 +1013,68 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     };
     this.scroll = 0;
   }
+  /** Toggle one diff hunk in the open review. Number keys drive this;
+   * out of range input only renames the notice, never the selection. */
+  toggleHunk(index: number) {
+    const confirmation = this.confirmation;
+    const hunks = confirmation?.hunks;
+    if (!confirmation || !hunks || !hunks.chunks.length) {
+      this.notice = "This review has no diff hunks to toggle.";
+      return;
+    }
+    if (!Number.isInteger(index) || index < 0 || index >= hunks.chunks.length) {
+      this.notice = `No hunk ${index + 1}. This review has ${hunks.chunks.length}.`;
+      return;
+    }
+    hunks.selected[index] = !hunks.selected[index];
+    confirmation.lines = [
+      ...(confirmation.hunkBase ?? []),
+      ...renderHunkSelection(hunks.chunks, hunks.selected),
+    ];
+    this.scroll = 0;
+    this.notice = hunks.selected.some(Boolean)
+      ? `Hunk ${index + 1} ${hunks.selected[index] ? "selected" : "deselected"}. The scope rides with the decision.`
+      : "No hunks selected. The decision still covers the full call until the server enforces scope.";
+  }
+  /** Client side diff scope for the decision reason. Shape: full when the
+   * review carries no diff, otherwise hunks:a,b/N. The server does not
+   * enforce this yet (another lane); it is recorded so the ledger shows
+   * which hunks the operator reviewed. */
+  hunkScopeSuffix(): string {
+    const hunks = this.confirmation?.hunks;
+    if (!hunks || !hunks.chunks.length) return "";
+    const picked = hunks.selected
+      .map((keep, index) => (keep ? index + 1 : -1))
+      .filter((index) => index > 0);
+    return `[diff-scope: hunks ${picked.length ? picked.join(",") : "none"}/${hunks.chunks.length}]`;
+  }
+  /** Build the review lines for an approval: evidence first, then an
+   * optional selectable diff, then the raw record. Module level so tests
+   * can drive it without a running session. */
+  private approvalReviewLines = approvalReview;
   prepareApproval(kind: "approved" | "denied", id?: string, reason = "") {
     id ??= this.items()[this.selected]?.id;
     if (id?.startsWith("proxy:")) {
       const hold = this.proxy.holds.find((h) => `proxy:${h.holdId}` === id);
       if (!hold) throw Error("Proxy hold is no longer active.");
       const { decisionToken, ...visible } = hold;
+      const review = this.approvalReviewLines(
+        hold as Parameters<typeof approvalReview>[0],
+      );
       this.confirmation = {
         title: `PROXY ${kind === "approved" ? "APPROVE" : "DENY"}?`,
-        lines: json(visible),
+        lines: [...review.lines, ...json(visible)],
+        hunks: review.hunks,
+        hunkBase: review.hunkBase
+          ? [...review.hunkBase, ...json(visible)]
+          : undefined,
         apply: async () => {
-          this.proxy.decide(hold.holdId, kind, reason);
+          const suffix = this.hunkScopeSuffix();
+          this.proxy.decide(
+            hold.holdId,
+            kind,
+            suffix ? `${reason} ${suffix}`.trim() : reason,
+          );
           this.notice =
             "Decision queued for the proxy. Completion is not yet confirmed.";
         },
@@ -869,20 +1085,35 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     const hold = this.workbench.pending().find((h) => h.holdId === id);
     if (!hold)
       throw Error("Approval is no longer active. Refresh the overview.");
+    const review = this.approvalReviewLines(
+      hold as Parameters<typeof approvalReview>[0],
+    );
     this.confirmation = {
       title: `${kind === "approved" ? "APPROVE" : "DENY"} TOOL?`,
       lines: [
+        ...review.lines,
         ...json(hold),
         "",
         `Reason: ${reason || "(not provided)"}`,
         "External effects may not support Undo.",
       ],
+      hunks: review.hunks,
+      hunkBase: review.hunkBase
+        ? [
+            ...review.hunkBase,
+            ...json(hold),
+            "",
+            `Reason: ${reason || "(not provided)"}`,
+            "External effects may not support Undo.",
+          ]
+        : undefined,
       apply: async () => {
+        const suffix = this.hunkScopeSuffix();
         if (
           !this.workbench.decide(hold.holdId, {
             kind,
             by: "tui-operator",
-            reason,
+            reason: suffix ? `${reason} ${suffix}`.trim() : reason,
           })
         )
           throw Error("Approval expired or was already resolved.");
@@ -2111,6 +2342,24 @@ export function renderWorkspace(
   const waiting = pending.some((hold) =>
     hold.holdId.startsWith(`${ui.sessionId}:`),
   );
+  // Sticky approval banner: the oldest pending hold stays pinned above the
+  // body on every tab, so a hold is never hidden behind a panel switch.
+  const banner = approvalBannerLines(
+    [
+      ...pending.map((hold) => ({
+        holdId: hold.holdId,
+        call: {
+          tool: String((hold.call as { tool?: unknown }).tool ?? "unknown"),
+          klass: (hold.call as { klass?: unknown }).klass as string | undefined,
+        },
+      })),
+      ...ui.proxy.holds.map((hold) => ({
+        holdId: hold.holdId,
+        call: { tool: hold.call.tool, klass: hold.call.klass },
+      })),
+    ],
+    width,
+  );
   const header: string[] = [];
   if (
     height >= 22 &&
@@ -2231,7 +2480,7 @@ export function renderWorkspace(
   const composerStart = Math.max(0, cursorLine - composerHeight + 1);
   const bodyHeight = Math.max(
     1,
-    height - header.length - 5 - composerHeight - menu.length,
+    height - header.length - banner.length - 5 - composerHeight - menu.length,
   );
   const richChat =
     ui.tab === "chat" && !!ui.session() && !ui.detail && !ui.confirmation;
@@ -2359,7 +2608,7 @@ export function renderWorkspace(
   const costSeg = ` | cost: ${cost}`;
   let dropCost = false;
   const summaryTail = (): string =>
-    ` | ${MODE_ICON[ui.mode]} mode: ${ui.mode} | ctx: ${ctxText}${ctxBarVisual} ${ctxBar} | ` +
+    ` | ${MODE_ICON[ui.mode]} ${modeAuthorityLabel(ui.mode)} | ctx: ${ctxText}${ctxBarVisual} ${ctxBar} | ` +
     `tokens: ${tokens}${dropCost ? "" : costSeg} | ${ui.compactTools ? "compact" : "full"}${holdBadge}${queuedBadge}`;
   if (visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width)
     dropCost = true;
@@ -2424,6 +2673,7 @@ export function renderWorkspace(
         : ice;
   return [
     ...header,
+    ...banner.map((row) => ink(text(row), `1;${amber}`)),
     ...bodyRows,
     ink(text(summary), ice),
     ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),

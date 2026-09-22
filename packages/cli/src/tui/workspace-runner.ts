@@ -742,10 +742,7 @@ export async function runWorkspaceTui(
           draw();
           return;
         }
-        const matches = searchHistoryPrompts(
-          ui.promptHistory(),
-          input.value,
-        );
+        const matches = searchHistoryPrompts(ui.promptHistory(), input.value);
         if (!matches.length) {
           ui.notice = "No matching prompt in this conversation.";
           draw();
@@ -778,7 +775,13 @@ export async function runWorkspaceTui(
         } else if (value === "y" && !input.pasting)
           void task(() => ui.confirm());
         else if (value === "n" && !input.pasting) ui.reject();
-        else if (key.name === "pageup") ui.scroll = Math.max(0, ui.scroll - 10);
+        else if (/^[1-9]$/.test(value ?? "") && !input.pasting) {
+          // Per hunk diff scope, client side. The selection rides with
+          // the decision; the server applies the full call until scope
+          // is enforced by another lane.
+          ui.toggleHunk(Number(value) - 1);
+        } else if (key.name === "pageup")
+          ui.scroll = Math.max(0, ui.scroll - 10);
         else if (key.name === "pagedown") ui.scroll += 10;
         draw();
         return;
@@ -844,9 +847,10 @@ export async function runWorkspaceTui(
         const token = input.pasting
           ? undefined
           : mentionToken(input.value, input.cursor);
-        const mentions = token === undefined
-          ? []
-          : mentionCandidates(token, ui.documentPaths());
+        const mentions =
+          token === undefined
+            ? []
+            : mentionCandidates(token, ui.documentPaths());
         if (mentions.length && key.name === "tab" && !key.shift) {
           const pick = mentions[mentionIndex % mentions.length]!;
           const points = [...input.value];
@@ -858,9 +862,10 @@ export async function runWorkspaceTui(
             [...input.value].length,
           );
           mentionIndex = (mentionIndex + 1) % mentions.length;
-          ui.notice = mentions.length > 1
-            ? `${mentions.length} @ matches. Tab again for the next one.`
-            : `Mentioned @${pick}. Content is quoted on send.`;
+          ui.notice =
+            mentions.length > 1
+              ? `${mentions.length} @ matches. Tab again for the next one.`
+              : `Mentioned @${pick}. Content is quoted on send.`;
           draw();
           return;
         }
@@ -965,7 +970,10 @@ export async function runWorkspaceTui(
       if (key.name === "tab") {
         ui.cycle(key.shift ? -1 : 1);
         input.editing = ui.tab === "chat";
-      } else if (!input.pasting && (key.name === "right" || key.name === "left")) {
+      } else if (
+        !input.pasting &&
+        (key.name === "right" || key.name === "left")
+      ) {
         // Panels follow the reference: Right is next, Left is previous.
         // In editing mode the same arrows move the cursor instead.
         ui.cycle(key.name === "right" ? 1 : -1);
@@ -1036,8 +1044,7 @@ export async function runWorkspaceTui(
         );
         if (target < 0) ui.notice = "No further prompt in this direction.";
         else ui.scroll = target;
-      }
-      else if (
+      } else if (
         key.name === "up" ||
         (key.ctrl && key.name === "p") ||
         value === "k"

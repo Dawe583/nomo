@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type Row } from "./api";
-import { Badge, Dialog, ErrorBox, JsonDetail, useText } from "./ui";
+import { Badge, Dialog, ErrorBox, RedactedJson, useText } from "./ui";
 
 export function LedgerDetail({ row, close }: { row: Row; close: () => void }) {
   const t = useText(),
@@ -117,7 +117,7 @@ export function LedgerDetail({ row, close }: { row: Row; close: () => void }) {
           )}
           <details>
             <summary>{t("Zdrojová evidence", "Source evidence")}</summary>
-            <JsonDetail value={graph} />
+            <RedactedJson value={graph} />
           </details>
         </section>
       )}
@@ -169,7 +169,7 @@ export function LedgerDetail({ row, close }: { row: Row; close: () => void }) {
       )}
       <details>
         <summary>{t("Úplný záznam", "Full record")}</summary>
-        <JsonDetail value={row} />
+        <RedactedJson value={row} />
       </details>
     </Dialog>
   );

@@ -1,8 +1,16 @@
-import type { JsonObject, JsonRpcError, JsonRpcId, JsonRpcMessage, JsonRpcNotification, JsonRpcRequest, JsonRpcResult } from "./rpc.ts";
+import type {
+  JsonObject,
+  JsonRpcError,
+  JsonRpcId,
+  JsonRpcMessage,
+  JsonRpcNotification,
+  JsonRpcRequest,
+  JsonRpcResult,
+} from "./rpc.ts";
 
 export type SessionMaps = {
   readonly agentToUpstream: ReadonlyMap<JsonRpcId, number>;
-  readonly upstreamToAgent: ReadonlyMap<number, number>;
+  readonly upstreamToAgent: ReadonlyMap<JsonRpcId, JsonRpcId>;
 };
 
 const SUPPORTED_PROTOCOL_VERSIONS = [
@@ -15,9 +23,9 @@ const SUPPORTED_PROTOCOL_VERSIONS = [
 
 export class Session {
   readonly #agentToUpstream = new Map<JsonRpcId, number>();
-  readonly #upstreamToAgent = new Map<number, number>();
+  readonly #upstreamToAgent = new Map<JsonRpcId, JsonRpcId>();
   readonly #progressTokens = new Map<number, JsonRpcId>();
-  readonly #usedIds = new Set<number>();
+  readonly #usedIds = new Set<JsonRpcId>();
   #nextId = 1;
 
   readonly maps: SessionMaps = {
@@ -29,9 +37,21 @@ export class Session {
     return this.#allocateId();
   }
 
+  /**
+   * Records a server-originated request relayed outside translateInbound,
+   * so the agent response remaps to the upstream id. Ids stay typed: a
+   * string upstream id never becomes its numeric lookalike.
+   */
+  recordServerRequest(upstreamId: JsonRpcId, agentId: JsonRpcId): void {
+    this.#upstreamToAgent.set(
+      assertRequestId(upstreamId),
+      assertRequestId(agentId),
+    );
+  }
+
   translateRequestOut(agentRequest: JsonRpcRequest): JsonRpcRequest {
-    const agentId = agentRequest.id;
-    if (typeof agentId === "number") this.#rememberId(numericId(agentId));
+    const agentId = assertRequestId(agentRequest.id);
+    this.#rememberId(agentId);
     const upstreamId = this.#allocateId();
     this.#agentToUpstream.set(agentId, upstreamId);
     const token = readMeta(agentRequest.params)?.progressToken;
@@ -41,7 +61,9 @@ export class Session {
 
     const translated = { ...agentRequest, id: upstreamId };
     const params = remapMetaToken(agentRequest.params, upstreamId);
-    return params === agentRequest.params ? translated : { ...translated, params };
+    return params === agentRequest.params
+      ? translated
+      : { ...translated, params };
   }
 
   translateInbound(message: JsonRpcMessage): JsonRpcMessage | null {
@@ -57,10 +79,13 @@ export class Session {
   }
 
   negotiatedVersion(requested: string, upstreamAnswer: string): string {
-    const requestedIndex = SUPPORTED_PROTOCOL_VERSIONS.indexOf(requested as SupportedProtocolVersion);
-    const acceptable = requestedIndex === -1
-      ? SUPPORTED_PROTOCOL_VERSIONS
-      : SUPPORTED_PROTOCOL_VERSIONS.slice(requestedIndex);
+    const requestedIndex = SUPPORTED_PROTOCOL_VERSIONS.indexOf(
+      requested as SupportedProtocolVersion,
+    );
+    const acceptable =
+      requestedIndex === -1
+        ? SUPPORTED_PROTOCOL_VERSIONS
+        : SUPPORTED_PROTOCOL_VERSIONS.slice(requestedIndex);
 
     return acceptable.includes(upstreamAnswer as SupportedProtocolVersion)
       ? upstreamAnswer
@@ -87,7 +112,9 @@ export class Session {
     if (upstreamId !== undefined) this.#progressTokens.delete(upstreamId);
   }
 
-  #translateResponse(message: JsonRpcResult | JsonRpcError): JsonRpcMessage | null {
+  #translateResponse(
+    message: JsonRpcResult | JsonRpcError,
+  ): JsonRpcMessage | null {
     if (message.id === undefined) {
       return null;
     }
@@ -95,10 +122,11 @@ export class Session {
     if (typeof message.id === "string") {
       // The proxy always allocates numeric upstream ids, so a string id on a
       // response is an unknown identity, never a reply this session routed.
+      // It stays a string and is dropped, never coerced to its numeric lookalike.
       return null;
     }
 
-    const upstreamId = numericId(message.id);
+    const upstreamId = assertRequestId(message.id);
     const agentId = this.#agentIdForUpstreamResponse(upstreamId);
     if (agentId === null) {
       return null;
@@ -108,7 +136,9 @@ export class Session {
     return { ...message, id: agentId };
   }
 
-  #translateNotification(message: JsonRpcNotification): JsonRpcNotification | null {
+  #translateNotification(
+    message: JsonRpcNotification,
+  ): JsonRpcNotification | null {
     if (message.method === "notifications/progress") {
       return this.#translateProgress(message);
     }
@@ -128,11 +158,16 @@ export class Session {
 
     const originalToken = this.#progressTokens.get(token);
     if (originalToken === undefined) return null;
-    return { ...message, params: { ...message.params, progressToken: originalToken } };
+    return {
+      ...message,
+      params: { ...message.params, progressToken: originalToken },
+    };
   }
 
-  #translateInboundCancellation(message: JsonRpcNotification): JsonRpcNotification | null {
-    const requestId = readNumericParam(message.params, "requestId");
+  #translateInboundCancellation(
+    message: JsonRpcNotification,
+  ): JsonRpcNotification | null {
+    const requestId = readRequestIdParam(message.params, "requestId");
     if (requestId === null) {
       return message;
     }
@@ -145,7 +180,9 @@ export class Session {
   }
 
   #translateServerRequest(message: JsonRpcRequest): JsonRpcRequest {
-    const upstreamId = numericId(message.id);
+    // Server-originated ids stay typed: "42" never becomes 42, so a string
+    // id and its numeric lookalike route independently.
+    const upstreamId = assertRequestId(message.id);
     this.#rememberId(upstreamId);
     const agentId = this.#allocateId();
     this.#upstreamToAgent.set(upstreamId, agentId);
@@ -155,7 +192,7 @@ export class Session {
     return params === message.params ? translated : { ...translated, params };
   }
 
-  #agentIdForUpstreamResponse(upstreamId: number): number | string | null {
+  #agentIdForUpstreamResponse(upstreamId: JsonRpcId): JsonRpcId | null {
     for (const [agentId, mappedUpstreamId] of this.#agentToUpstream) {
       if (mappedUpstreamId === upstreamId) {
         return agentId;
@@ -176,12 +213,12 @@ export class Session {
     return id;
   }
 
-  #rememberId(id: number): void {
+  #rememberId(id: JsonRpcId): void {
     this.#usedIds.add(id);
   }
 }
 
-type SupportedProtocolVersion = typeof SUPPORTED_PROTOCOL_VERSIONS[number];
+type SupportedProtocolVersion = (typeof SUPPORTED_PROTOCOL_VERSIONS)[number];
 
 function isResult(message: JsonRpcMessage): message is JsonRpcResult {
   return "result" in message;
@@ -191,23 +228,49 @@ function isError(message: JsonRpcMessage): message is JsonRpcError {
   return "error" in message;
 }
 
-function isNotification(message: JsonRpcMessage): message is JsonRpcNotification {
+function isNotification(
+  message: JsonRpcMessage,
+): message is JsonRpcNotification {
   return "method" in message && !("id" in message);
 }
 
-function numericId(id: JsonRpcId): number {
+function assertRequestId(id: JsonRpcId): JsonRpcId {
+  if (typeof id === "string" && id !== "") {
+    return id;
+  }
+
   if (typeof id === "number" && Number.isInteger(id)) {
     return id;
   }
 
-  if (typeof id === "string" && /^\d+$/.test(id)) {
-    return Number(id);
-  }
-
-  throw new Error("JSON-RPC id must be an integer for session translation");
+  throw new Error(
+    "JSON-RPC id must be a string or integer for session translation",
+  );
 }
 
-function readNumericParam(params: JsonObject | undefined, key: string): number | null {
+function readRequestIdParam(
+  params: JsonObject | undefined,
+  key: string,
+): JsonRpcId | null {
+  if (params === undefined || !(key in params)) {
+    return null;
+  }
+
+  const value = params[key];
+  if (typeof value === "string" && value !== "") {
+    return value;
+  }
+  if (typeof value === "number" && Number.isInteger(value)) {
+    return value;
+  }
+
+  return null;
+}
+
+function readNumericParam(
+  params: JsonObject | undefined,
+  key: string,
+): number | null {
   if (params === undefined || !(key in params)) {
     return null;
   }
@@ -220,7 +283,10 @@ function readNumericParam(params: JsonObject | undefined, key: string): number |
   return value;
 }
 
-function remapMetaToken(params: JsonObject | undefined, nextToken: number): JsonObject | undefined {
+function remapMetaToken(
+  params: JsonObject | undefined,
+  nextToken: number,
+): JsonObject | undefined {
   const meta = readMeta(params);
   if (meta === null || !("progressToken" in meta)) {
     return params;

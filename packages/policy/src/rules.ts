@@ -10,7 +10,12 @@
  */
 
 import { parse } from "yaml";
-import { isMatchKey, type MatchKey, type Decision, POLICY_VERSION } from "./index.ts";
+import {
+  isMatchKey,
+  type MatchKey,
+  type Decision,
+  POLICY_VERSION,
+} from "./index.ts";
 
 /** The value a match key compares against; a list means any of. */
 export type MatchValue = string | number | readonly string[];
@@ -60,12 +65,19 @@ export function validatePolicyFile(value: unknown): string[] {
   if (typeof value !== "object" || value === null || Array.isArray(value))
     return ["policy file: must be an object"];
   const top = value as Record<string, unknown>;
-  const topKeys = Object.keys(top).filter((k) => !["version", "rules"].includes(k));
-  if (topKeys.length > 0) errors.push(`policy file: unknown key ${topKeys.join(", ")}`);
+  const topKeys = Object.keys(top).filter(
+    (k) => !["version", "rules"].includes(k),
+  );
+  if (topKeys.length > 0)
+    errors.push(`policy file: unknown key ${topKeys.join(", ")}`);
   if (top.version !== POLICY_VERSION)
-    errors.push(`version: must be ${POLICY_VERSION}, got ${JSON.stringify(top.version)}`);
-  if (!Array.isArray(top.rules)) return [...errors, "rules: required, a list of rules"];
-  if (top.rules.length === 0) errors.push("rules: at least one rule is required");
+    errors.push(
+      `version: must be ${POLICY_VERSION}, got ${JSON.stringify(top.version)}`,
+    );
+  if (!Array.isArray(top.rules))
+    return [...errors, "rules: required, a list of rules"];
+  if (top.rules.length === 0)
+    errors.push("rules: at least one rule is required");
   top.rules.forEach((raw, index) => {
     const path = `rules[${index}]`;
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
@@ -74,10 +86,17 @@ export function validatePolicyFile(value: unknown): string[] {
     }
     const rule = raw as Record<string, unknown>;
     const ruleKeys = Object.keys(rule).filter(
-      (k) => !["match", "decision", "seconds", "notify", "rationale"].includes(k),
+      (k) =>
+        !["match", "decision", "seconds", "notify", "rationale"].includes(k),
     );
-    if (ruleKeys.length > 0) errors.push(`${path}: unknown key ${ruleKeys.join(", ")}`);
-    if (rule.match === undefined || typeof rule.match !== "object" || rule.match === null || Array.isArray(rule.match)) {
+    if (ruleKeys.length > 0)
+      errors.push(`${path}: unknown key ${ruleKeys.join(", ")}`);
+    if (
+      rule.match === undefined ||
+      typeof rule.match !== "object" ||
+      rule.match === null ||
+      Array.isArray(rule.match)
+    ) {
       errors.push(`${path}.match: required, an object of match keys`);
     } else {
       const match = rule.match as Record<string, unknown>;
@@ -85,50 +104,83 @@ export function validatePolicyFile(value: unknown): string[] {
       // it, and that is checked as a file property after the loop.
       for (const [key, val] of Object.entries(match)) {
         if (!isMatchKey(key)) {
-          errors.push(`${path}.match.${key}: not a match key, expected one of class, tool, connector, workspace, blast_radius`);
+          errors.push(
+            `${path}.match.${key}: not a match key, expected one of class, tool, connector, workspace, blast_radius`,
+          );
           continue;
         }
         if (key === "blast_radius") {
-          const threshold = typeof val === "object" && val !== null && !Array.isArray(val)
-            ? (val as Record<string, unknown>).lt : undefined;
-          if (typeof threshold !== "number" || !Number.isSafeInteger(threshold) || threshold < 0)
+          const threshold =
+            typeof val === "object" && val !== null && !Array.isArray(val)
+              ? (val as Record<string, unknown>).lt
+              : undefined;
+          if (
+            typeof threshold !== "number" ||
+            !Number.isSafeInteger(threshold) ||
+            threshold < 0
+          )
             errors.push(`${path}.match.blast_radius: must be { lt: number }`);
           else {
-            const extra = Object.keys(val as Record<string, unknown>).filter((k) => k !== "lt");
-            if (extra.length > 0) errors.push(`${path}.match.blast_radius: unknown key ${extra.join(", ")}`);
+            const extra = Object.keys(val as Record<string, unknown>).filter(
+              (k) => k !== "lt",
+            );
+            if (extra.length > 0)
+              errors.push(
+                `${path}.match.blast_radius: unknown key ${extra.join(", ")}`,
+              );
           }
           continue;
         }
         if (key === "class") {
           const classes = Array.isArray(val) ? val : [val];
-          if (classes.length === 0 || !classes.every((item) => ["r0", "r1", "r2", "r3"].includes(item as string)))
-            errors.push(`${path}.match.class: must be r0, r1, r2, r3 or a non-empty list of those classes`);
+          if (
+            classes.length === 0 ||
+            !classes.every((item) =>
+              ["r0", "r1", "r2", "r3", "unknown"].includes(item as string),
+            )
+          )
+            errors.push(
+              `${path}.match.class: must be r0, r1, r2, r3, unknown or a non-empty list of those classes`,
+            );
           continue;
         }
         if (typeof val === "string" || typeof val === "number") continue;
         if (Array.isArray(val)) {
-          if (val.length === 0) errors.push(`${path}.match.${key}: an empty list matches nothing`);
+          if (val.length === 0)
+            errors.push(`${path}.match.${key}: an empty list matches nothing`);
           else if (!val.every((item) => typeof item === "string"))
             errors.push(`${path}.match.${key}: a list value must be strings`);
           continue;
         }
-        errors.push(`${path}.match.${key}: must be a string, a number or a list of strings`);
+        errors.push(
+          `${path}.match.${key}: must be a string, a number or a list of strings`,
+        );
       }
     }
     if (!DECISIONS.includes(rule.decision as Decision))
       errors.push(`${path}.decision: must be allow, deny or hold`);
     if (rule.decision === "hold") {
       const seconds = rule.seconds;
-      if (typeof seconds !== "number" || !Number.isInteger(seconds) || seconds < 1)
-        errors.push(`${path}.seconds: required for hold, a whole number of seconds, at least 1`);
+      if (
+        typeof seconds !== "number" ||
+        !Number.isInteger(seconds) ||
+        seconds < 1
+      )
+        errors.push(
+          `${path}.seconds: required for hold, a whole number of seconds, at least 1`,
+        );
       else if (seconds > 900)
-        errors.push(`${path}.seconds: the hold ceiling is 900 seconds, so the MCP request cannot outlive every client timeout`);
+        errors.push(
+          `${path}.seconds: the hold ceiling is 900 seconds, so the MCP request cannot outlive every client timeout`,
+        );
     } else if (rule.seconds !== undefined) {
       errors.push(`${path}.seconds: only a hold has a timer`);
     }
     if (rule.notify !== undefined) {
       if (!Array.isArray(rule.notify) || rule.notify.length === 0)
-        errors.push(`${path}.notify: a non-empty list of channels when present`);
+        errors.push(
+          `${path}.notify: a non-empty list of channels when present`,
+        );
       else if (!rule.notify.every((c) => CHANNELS.includes(c as NotifyChannel)))
         errors.push(`${path}.notify: must be cli or slack`);
     }
@@ -139,15 +191,27 @@ export function validatePolicyFile(value: unknown): string[] {
   // an unmatched call and a broken file must not resolve the same way.
   const rules = top.rules as Record<string, unknown>[];
   const terminal = rules.find((rule) => {
-    if (typeof rule !== "object" || rule === null || Array.isArray(rule)) return false;
+    if (typeof rule !== "object" || rule === null || Array.isArray(rule))
+      return false;
     const match = rule.match;
-    return typeof match === "object" && match !== null && !Array.isArray(match) && Object.keys(match).length === 0;
+    return (
+      typeof match === "object" &&
+      match !== null &&
+      !Array.isArray(match) &&
+      Object.keys(match).length === 0
+    );
   });
   if (!terminal)
-    errors.push("rules: the last rule must be the unguarded catch-all, match: {}");
-  const terminalIndex = rules.indexOf(terminal ?? rules[rules.length - 1] as Record<string, unknown>);
+    errors.push(
+      "rules: the last rule must be the unguarded catch-all, match: {}",
+    );
+  const terminalIndex = rules.indexOf(
+    terminal ?? (rules[rules.length - 1] as Record<string, unknown>),
+  );
   if (terminal && terminalIndex !== rules.length - 1)
-    errors.push("rules: the catch-all must be the last rule, because first match wins");
+    errors.push(
+      "rules: the catch-all must be the last rule, because first match wins",
+    );
   return errors;
 }
 

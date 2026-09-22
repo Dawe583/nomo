@@ -3283,3 +3283,51 @@ dialog label > textarea {
   margin: 0 0 8px;
   overflow-wrap: anywhere;
 }
+
+/* F2 approval surface: destructive gate signal, change evidence layout,
+   verify scope line. Reuses shared tokens and the .diff pattern. */
+.actions button[data-armed="true"] {
+  border-color: var(--danger);
+  color: var(--danger);
+  font-weight: 600;
+}
+.approval-diff {
+  margin: 12px 0;
+}
+.approval-diff h3 {
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+.approval-diff .diff {
+  grid-template-columns: 1fr;
+}
+.ledger-verify-scope {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 12px;
+  padding: 12px 16px;
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.ledger-verify-scope > div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ledger-verify-scope dt {
+  color: var(--muted);
+  min-width: 96px;
+}
+.ledger-verify-scope dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ledger-verify progress {
+  width: 160px;
+  height: 12px;
+  accent-color: var(--action);
+  vertical-align: middle;
+  margin-left: 12px;
+}

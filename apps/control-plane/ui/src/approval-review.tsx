@@ -1,8 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, type Row } from "./api";
-import { Badge, Dialog, ErrorBox, JsonDetail, useText } from "./ui";
+import { Badge, Dialog, ErrorBox, RedactedJson, useText } from "./ui";
 import { blastSummary, plainAction } from "./approval-text";
+import {
+  diffLines,
+  extractBeforeAfter,
+  requiresConfirm,
+} from "./approval-diff";
 
 /**
  * Detail schválení (B1). Napojeno na server jako autoritu: jedno rozhodnutí je
@@ -29,7 +34,35 @@ export function ApprovalReview({
   }, []);
   const expired = new Date(record.expiresAt).getTime() <= now;
   const settled = record.status !== "pending";
+  // B2: R3 and unknown holds arm first and confirm second. The server stays
+  // authoritative; this only slows the hand on destructive approvals.
+  const gate = requiresConfirm(record);
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const timer = setTimeout(() => setArmed(false), 8000);
+    return () => clearTimeout(timer);
+  }, [armed]);
+  // B1: before and after images come from the record only. An absent before
+  // image renders as unknown, never as an invented baseline.
+  const change = useMemo(() => extractBeforeAfter(record), [record]);
+  const changeLines = useMemo(
+    () =>
+      change.empty || change.beforeMissing
+        ? []
+        : diffLines(change.before, change.after),
+    [change],
+  );
   const blocked = busy || expired || settled || !!conflict;
+
+  function approve() {
+    if (gate && !armed) {
+      setArmed(true);
+      return;
+    }
+    setArmed(false);
+    void decide("approved");
+  }
 
   async function decide(kind: "approved" | "denied") {
     if (kind === "denied" && !note.trim()) {
@@ -143,20 +176,85 @@ export function ApprovalReview({
           )}
         />
       </label>
-      <JsonDetail value={record} />
+      <section className="approval-diff" aria-label={t("Změna", "Change")}>
+        <h3>{t("Navrhovaná změna", "Proposed change")}</h3>
+        {change.empty ? (
+          <p className="muted">
+            {t(
+              "Server k tomuto schválení neposlal žádný předchozí ani navrhovaný stav. Rozhodněte podle nástroje, třídy a rozsahu výše.",
+              "The server sent no before or proposed state for this approval. Decide from the tool, class and blast radius above.",
+            )}
+          </p>
+        ) : change.beforeMissing ? (
+          <>
+            <p className="notice" role="status">
+              {t(
+                "Předchozí stav server neposkytl, nelze porovnat. Níže je navrhované volání.",
+                "The server provided no before image, so there is nothing to compare. The proposed call is below.",
+              )}
+            </p>
+            <RedactedJson value={change.after} />
+          </>
+        ) : (
+          <div className="diff">
+            <pre aria-label={t("Porovnání", "Comparison")}>
+              {changeLines.map((line, index) => (
+                <span
+                  key={index}
+                  className={
+                    line.kind === "add"
+                      ? "added"
+                      : line.kind === "del"
+                        ? "removed"
+                        : undefined
+                  }
+                >
+                  {line.kind === "add" ? "+" : line.kind === "del" ? "-" : " "}
+                  {line.text}
+                </span>
+              ))}
+            </pre>
+          </div>
+        )}
+      </section>
+      <details>
+        <summary>
+          {t("Úplný záznam (tajemství maskována)", "Full record (secrets masked)")}
+        </summary>
+        <RedactedJson value={record} />
+      </details>
       <ErrorBox error={error} />
       <div className="actions">
         <button
           className="primary"
           disabled={blocked}
-          onClick={() => void decide("approved")}
+          data-armed={gate && armed ? "true" : undefined}
+          aria-describedby={gate ? "approve-gate-hint" : undefined}
+          onClick={approve}
         >
-          {t("Schválit", "Approve")}
+          {gate && !armed
+            ? t("Schválit (potvrdit)", "Approve (confirm)")
+            : gate && armed
+              ? t("Potvrdit schválení", "Confirm approval")
+              : t("Schválit", "Approve")}
         </button>
         <button disabled={blocked} onClick={() => void decide("denied")}>
           {t("Zamítnout", "Deny")}
         </button>
       </div>
+      {gate && !settled && (
+        <p id="approve-gate-hint" className="muted" role="status">
+          {armed
+            ? t(
+                "Destruktivní schválení: stiskněte znovu do 8 sekund. Jinak vyprší.",
+                "Destructive approval: press again within 8 seconds. Otherwise it lapses.",
+              )
+            : t(
+                "Destruktivní nebo neznámá třída: schválení vyžaduje druhé potvrzení.",
+                "Destructive or unknown class: approval needs a second confirmation.",
+              )}
+        </p>
+      )}
     </Dialog>
   );
 }

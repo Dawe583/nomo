@@ -19,12 +19,25 @@ describe("runProxy", () => {
     const harness = await makeHarness("allow");
 
     await harness.run([
-      { jsonrpc: "2.0", id: 10, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {} } },
+      {
+        jsonrpc: "2.0",
+        id: 10,
+        method: "initialize",
+        params: { protocolVersion: "2025-03-26", capabilities: {} },
+      },
     ]);
 
     assert.equal(harness.upstreamMessages[0]?.method, "initialize");
     assert.deepEqual(harness.outputMessages, [
-      { jsonrpc: "2.0", id: 10, result: { protocolVersion: "2025-03-26", capabilities: { tools: {} }, serverInfo: { name: "fake", version: "1" } } },
+      {
+        jsonrpc: "2.0",
+        id: 10,
+        result: {
+          protocolVersion: "2025-03-26",
+          capabilities: { tools: {} },
+          serverInfo: { name: "fake", version: "1" },
+        },
+      },
     ]);
   });
 
@@ -46,17 +59,30 @@ describe("runProxy", () => {
     await harness.run([
       { jsonrpc: "2.0", id: "1", method: "resources/list" },
       { jsonrpc: "2.0", id: 1, method: "resources/list" },
-      { jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: "1" } },
-      { jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: 1 } },
+      {
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: "1" },
+      },
+      {
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: 1 },
+      },
     ]);
 
-    const [fromString, fromNumber, cancelString, cancelNumber] = harness.upstreamMessages;
+    const [fromString, fromNumber, cancelString, cancelNumber] =
+      harness.upstreamMessages;
     assert.notEqual(fromString?.id, fromNumber?.id);
     assert.deepEqual(cancelString, {
-      jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: fromString?.id },
+      jsonrpc: "2.0",
+      method: "notifications/cancelled",
+      params: { requestId: fromString?.id },
     });
     assert.deepEqual(cancelNumber, {
-      jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: fromNumber?.id },
+      jsonrpc: "2.0",
+      method: "notifications/cancelled",
+      params: { requestId: fromNumber?.id },
     });
     assert.equal(harness.upstreamMessages.length, 4);
     assert.deepEqual(harness.outputMessages, []);
@@ -70,7 +96,10 @@ describe("runProxy", () => {
 
     assert.deepEqual(harness.upstreamMessages, []);
     assert.equal(harness.outputMessages.length, 1);
-    const error = harness.outputMessages[0] as { readonly id: number; readonly error: { readonly message: string } };
+    const error = harness.outputMessages[0] as {
+      readonly id: number;
+      readonly error: { readonly message: string };
+    };
     assert.equal(error.id, 22);
     assert.match(error.error.message, /denied/);
     assert.match(error.error.message, /Do not retry/);
@@ -79,7 +108,9 @@ describe("runProxy", () => {
   test("held call approved then forwards", async () => {
     const harness = await makeHarness("hold");
     let queue: HoldQueue | null = null;
-    harness.onHold = (q) => { queue = q; };
+    harness.onHold = (q) => {
+      queue = q;
+    };
     queueMicrotask(async () => {
       const q = await waitForQueue(() => queue);
       q.resolve(q.list()[0]!.id, { kind: "approved" });
@@ -96,7 +127,9 @@ describe("runProxy", () => {
   test("held call denied answers with the readable hold error", async () => {
     const harness = await makeHarness("hold");
     let queue: HoldQueue | null = null;
-    harness.onHold = (q) => { queue = q; };
+    harness.onHold = (q) => {
+      queue = q;
+    };
     queueMicrotask(async () => {
       const q = await waitForQueue(() => queue);
       q.resolve(q.list()[0]!.id, { kind: "denied", by: "test" });
@@ -105,7 +138,10 @@ describe("runProxy", () => {
     await harness.run([toolCall(24, "aws.s3.bucket.delete")]);
 
     assert.deepEqual(harness.upstreamMessages, []);
-    const error = harness.outputMessages[0] as { readonly id: number; readonly error: { readonly message: string } };
+    const error = harness.outputMessages[0] as {
+      readonly id: number;
+      readonly error: { readonly message: string };
+    };
     assert.equal(error.id, 24);
     assert.match(error.error.message, /was denied by a human/);
     assert.match(error.error.message, /Do not retry/);
@@ -130,16 +166,24 @@ describe("runProxy", () => {
 
     assert.deepEqual(harness.upstreamMessages, []);
     assert.deepEqual(harness.outputMessages, [
-      { jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } },
+      {
+        jsonrpc: "2.0",
+        id: null,
+        error: { code: -32700, message: "Parse error" },
+      },
     ]);
   });
 
   test("upstream exit drains held calls as expired", async () => {
     const harness = await makeHarness("hold");
     let events: UpstreamEvents | null = null;
-    harness.captureEvents = (e) => { events = e; };
+    harness.captureEvents = (e) => {
+      events = e;
+    };
     let queue: HoldQueue | null = null;
-    harness.onHold = (q) => { queue = q; };
+    harness.onHold = (q) => {
+      queue = q;
+    };
     queueMicrotask(async () => {
       await waitForQueue(() => queue);
       events?.onClose(1, null);
@@ -148,7 +192,13 @@ describe("runProxy", () => {
     await harness.run([toolCall(26, "aws.s3.bucket.delete")]);
 
     assert.deepEqual(harness.upstreamMessages, []);
-    const error = harness.outputMessages[0] as { readonly id: number; readonly error: { readonly message: string; readonly data: { readonly result: string } } };
+    const error = harness.outputMessages[0] as {
+      readonly id: number;
+      readonly error: {
+        readonly message: string;
+        readonly data: { readonly result: string };
+      };
+    };
     assert.equal(error.id, 26);
     assert.match(error.error.message, /expired without a human decision/);
     assert.equal(error.error.data.result, "expired");
@@ -159,15 +209,33 @@ describe("runProxy", () => {
     const harness = await makeHttpHarness(server, "allow");
     const run = harness.start();
 
-    harness.input.push(JSON.stringify({ jsonrpc: "2.0", id: 31, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {} } }));
-    await waitFor(() => harness.outputMessages.length === 1, "http initialize response");
+    harness.input.push(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: 31,
+        method: "initialize",
+        params: { protocolVersion: "2025-03-26", capabilities: {} },
+      }),
+    );
+    await waitFor(
+      () => harness.outputMessages.length === 1,
+      "http initialize response",
+    );
     harness.input.close();
     await run;
     await server.close();
 
     assert.equal(server.messages[0]?.method, "initialize");
     assert.deepEqual(harness.outputMessages, [
-      { jsonrpc: "2.0", id: 31, result: { protocolVersion: "2025-03-26", capabilities: { tools: {} }, serverInfo: { name: "fake-http", version: "1" } } },
+      {
+        jsonrpc: "2.0",
+        id: 31,
+        result: {
+          protocolVersion: "2025-03-26",
+          capabilities: { tools: {} },
+          serverInfo: { name: "fake-http", version: "1" },
+        },
+      },
     ]);
   });
 
@@ -177,7 +245,10 @@ describe("runProxy", () => {
     const run = harness.start();
 
     harness.input.push(JSON.stringify(toolCall(32, "aws.s3.bucket.delete")));
-    await waitFor(() => harness.outputMessages.length === 1, "http allow response");
+    await waitFor(
+      () => harness.outputMessages.length === 1,
+      "http allow response",
+    );
     harness.input.close();
     await run;
     await server.close();
@@ -193,14 +264,19 @@ describe("runProxy", () => {
     const server = await startHttpUpstream();
     const harness = await makeHttpHarness(server, "hold");
     let queue: HoldQueue | null = null;
-    harness.onHold = (q) => { queue = q; };
+    harness.onHold = (q) => {
+      queue = q;
+    };
     const run = harness.start();
 
     harness.input.push(JSON.stringify(toolCall(33, "aws.s3.bucket.delete")));
     const q = await waitForQueue(() => queue);
     assert.equal(server.messages.length, 0);
     q.resolve(q.list()[0]!.id, { kind: "approved" });
-    await waitFor(() => harness.outputMessages.length === 1, "http held response");
+    await waitFor(
+      () => harness.outputMessages.length === 1,
+      "http held response",
+    );
     harness.input.close();
     await run;
     await server.close();
@@ -220,13 +296,19 @@ describe("runProxy", () => {
     const run = harness.start();
 
     harness.input.push(JSON.stringify(toolCall(34, "aws.s3.bucket.delete")));
-    await waitFor(() => harness.outputMessages.length === 1, "http deny response");
+    await waitFor(
+      () => harness.outputMessages.length === 1,
+      "http deny response",
+    );
     harness.input.close();
     await run;
     await server.close();
 
     assert.deepEqual(server.messages, []);
-    const error = harness.outputMessages[0] as { readonly id: number; readonly error: { readonly message: string } };
+    const error = harness.outputMessages[0] as {
+      readonly id: number;
+      readonly error: { readonly message: string };
+    };
     assert.equal(error.id, 34);
     assert.match(error.error.message, /denied/);
   });
@@ -238,7 +320,12 @@ describe("runProxy", () => {
     const errors: string[] = [];
 
     await runProxy({
-        keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
+      keyProvider: keyProviderFromPkcs8(
+        generateKeyPairSync("ed25519").privateKey.export({
+          format: "der",
+          type: "pkcs8",
+        }),
+      ),
       upstreamCommand: ["fake"],
       upstreamUrl: "http://127.0.0.1:1/mcp",
       policyPath,
@@ -246,24 +333,37 @@ describe("runProxy", () => {
       ledgerDir: await mkdtemp(join(tmpdir(), "void-bin-test-")),
       input: fromLines([]),
       output() {},
-      error(line) { errors.push(line); },
-      upstreamSpawn(events) { return fakeUpstream(events, []); },
+      error(line) {
+        errors.push(line);
+      },
+      upstreamSpawn(events) {
+        return fakeUpstream(events, []);
+      },
     });
 
-    assert.match(errors.join("\n"), /upstreamUrl is ignored for stdio transport/);
+    assert.match(
+      errors.join("\n"),
+      /upstreamUrl is ignored for stdio transport/,
+    );
   });
 
   test("http transport without upstreamUrl throws a startup error", async () => {
     await assert.rejects(
-      () => runProxy({
-        keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
-        transport: "http",
-        policyPath: "unused.yml",
-        posture: "observe",
-        input: fromLines([]),
-        output() {},
-        error() {},
-      }),
+      () =>
+        runProxy({
+          keyProvider: keyProviderFromPkcs8(
+            generateKeyPairSync("ed25519").privateKey.export({
+              format: "der",
+              type: "pkcs8",
+            }),
+          ),
+          transport: "http",
+          policyPath: "unused.yml",
+          posture: "observe",
+          input: fromLines([]),
+          output() {},
+          error() {},
+        }),
       ProxyStartupError,
     );
   });
@@ -272,28 +372,49 @@ describe("runProxy", () => {
 test("failed legacy snapshot answers deny locally and never calls upstream (exit proof)", async () => {
   const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
   const policyPath = join(dir, "policy.yml");
-  await writeFile(policyPath, policyText("allow"));
+  // orders_delete is unclassified, so the allow path needs the explicit
+  // unknown opt-in: a bare catch-all allow no longer authorizes it (S07).
+  await writeFile(
+    policyPath,
+    "version: 1\nrules:\n  - match: { class: unknown }\n    decision: allow\n  - match: {}\n    decision: deny\n",
+  );
   const upstreamMessages: Array<Record<string, unknown>> = [];
   const outputMessages: unknown[] = [];
   const errors: string[] = [];
 
   await runProxy({
-    keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
+    keyProvider: keyProviderFromPkcs8(
+      generateKeyPairSync("ed25519").privateKey.export({
+        format: "der",
+        type: "pkcs8",
+      }),
+    ),
     upstreamCommand: ["fake"],
     policyPath,
     posture: "fail-closed",
     ledgerDir: await mkdtemp(join(tmpdir(), "void-bin-test-")),
     workspace: "test",
     input: fromLines([JSON.stringify(toolCall(41, "orders_delete"))]),
-    output(line) { outputMessages.push(JSON.parse(line) as unknown); },
-    error(line) { errors.push(line); },
-    legacyCapture: async () => { throw new Error("snapshot unavailable: disk full"); },
-    upstreamSpawn(events) { return fakeUpstream(events, upstreamMessages); },
+    output(line) {
+      outputMessages.push(JSON.parse(line) as unknown);
+    },
+    error(line) {
+      errors.push(line);
+    },
+    legacyCapture: async () => {
+      throw new Error("snapshot unavailable: disk full");
+    },
+    upstreamSpawn(events) {
+      return fakeUpstream(events, upstreamMessages);
+    },
   });
 
   assert.deepEqual(upstreamMessages, []);
   assert.equal(outputMessages.length, 1);
-  const error = outputMessages[0] as { readonly id: number; readonly error: { readonly message: string } };
+  const error = outputMessages[0] as {
+    readonly id: number;
+    readonly error: { readonly message: string };
+  };
   assert.equal(error.id, 41);
   assert.match(error.error.message, /snapshot capture failed/);
   assert.match(error.error.message, /upstream was not called/);
@@ -321,11 +442,16 @@ test("runProxy filters inherited environment and honors explicit upstreamEnv", a
       process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result }) + '\\n', () => process.exit(0));
     });
   `;
-  for (const upstreamEnv of [undefined, { VOID_ENV_PROBE_SECRET: "explicit-child-value" }]) {
+  for (const upstreamEnv of [
+    undefined,
+    { VOID_ENV_PROBE_SECRET: "explicit-child-value" },
+  ]) {
     const input = lineQueue();
     const output: unknown[] = [];
     const errors: string[] = [];
-    input.push(JSON.stringify({ jsonrpc: "2.0", id: 71, method: "tools/list" }));
+    input.push(
+      JSON.stringify({ jsonrpc: "2.0", id: 71, method: "tools/list" }),
+    );
     const timer = setTimeout(() => input.close(), 5_000);
     try {
       await runProxy({
@@ -335,22 +461,24 @@ test("runProxy filters inherited environment and honors explicit upstreamEnv", a
         posture: "observe",
         shutdownSignals: false,
         input,
-        output: line => output.push(JSON.parse(line)),
-        error: line => errors.push(line),
+        output: (line) => output.push(JSON.parse(line)),
+        error: (line) => errors.push(line),
       });
     } finally {
       clearTimeout(timer);
       input.close();
     }
     assert.deepEqual(errors, []);
-    assert.deepEqual(output, [{
-      jsonrpc: "2.0",
-      id: 71,
-      result: {
-        secret: upstreamEnv?.VOID_ENV_PROBE_SECRET ?? null,
-        path: process.env.PATH !== undefined,
+    assert.deepEqual(output, [
+      {
+        jsonrpc: "2.0",
+        id: 71,
+        result: {
+          secret: upstreamEnv?.VOID_ENV_PROBE_SECRET ?? null,
+          path: process.env.PATH !== undefined,
+        },
       },
-    }]);
+    ]);
   }
 });
 
@@ -365,7 +493,10 @@ type Harness = {
   readonly runRaw: (lines: readonly string[]) => Promise<void>;
 };
 
-async function makeHarness(decision: Decision, posture: ProxyOptions["posture"] = "fail-closed"): Promise<Harness> {
+async function makeHarness(
+  decision: Decision,
+  posture: ProxyOptions["posture"] = "fail-closed",
+): Promise<Harness> {
   const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText(decision));
@@ -382,7 +513,12 @@ async function makeHarness(decision: Decision, posture: ProxyOptions["posture"] 
     },
     async runRaw(lines) {
       await runProxy({
-        keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
+        keyProvider: keyProviderFromPkcs8(
+          generateKeyPairSync("ed25519").privateKey.export({
+            format: "der",
+            type: "pkcs8",
+          }),
+        ),
         upstreamCommand: ["fake"],
         policyPath,
         posture,
@@ -392,8 +528,12 @@ async function makeHarness(decision: Decision, posture: ProxyOptions["posture"] 
         ledgerDir: await mkdtemp(join(tmpdir(), "void-bin-test-")),
         workspace: "test",
         input: fromLines(lines),
-        output(line) { outputMessages.push(JSON.parse(line) as unknown); },
-        error(line) { errors.push(line); },
+        output(line) {
+          outputMessages.push(JSON.parse(line) as unknown);
+        },
+        error(line) {
+          errors.push(line);
+        },
         onHold: (queue) => harness.onHold?.(queue),
         upstreamSpawn(events) {
           harness.captureEvents?.(events);
@@ -405,25 +545,46 @@ async function makeHarness(decision: Decision, posture: ProxyOptions["posture"] 
   return harness;
 }
 
-function fakeUpstream(events: UpstreamEvents, seen: Array<Record<string, unknown>>): UpstreamProcess {
+function fakeUpstream(
+  events: UpstreamEvents,
+  seen: Array<Record<string, unknown>>,
+): UpstreamProcess {
   return {
     send(line) {
-      const message = JSON.parse(line) as { readonly id?: number; readonly method?: string; readonly params?: { readonly name?: string } };
+      const message = JSON.parse(line) as {
+        readonly id?: number;
+        readonly method?: string;
+        readonly params?: { readonly name?: string };
+      };
       seen.push(message as Record<string, unknown>);
       if (message.method === "initialize") {
-        events.onMessage(JSON.stringify({
-          jsonrpc: "2.0",
-          id: message.id,
-          result: { protocolVersion: "2025-11-25", capabilities: { tools: {} }, serverInfo: { name: "fake", version: "1" } },
-        }));
+        events.onMessage(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            id: message.id,
+            result: {
+              protocolVersion: "2025-11-25",
+              capabilities: { tools: {} },
+              serverInfo: { name: "fake", version: "1" },
+            },
+          }),
+        );
         return;
       }
       if (message.method === "tools/call") {
-        events.onMessage(JSON.stringify({ jsonrpc: "2.0", id: message.id, result: { called: message.params?.name } }));
+        events.onMessage(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            id: message.id,
+            result: { called: message.params?.name },
+          }),
+        );
       }
     },
     close() {},
-    onStderr() { return () => {}; },
+    onStderr() {
+      return () => {};
+    },
   };
 }
 
@@ -432,16 +593,25 @@ async function* fromLines(lines: readonly string[]): AsyncIterable<string> {
 }
 
 function policyText(decision: Decision): string {
-  if (decision === "allow") return "version: 1\nrules:\n  - match: {}\n    decision: allow\n";
-  if (decision === "deny") return "version: 1\nrules:\n  - match: {}\n    decision: deny\n    rationale: tests deny r3\n";
+  if (decision === "allow")
+    return "version: 1\nrules:\n  - match: {}\n    decision: allow\n";
+  if (decision === "deny")
+    return "version: 1\nrules:\n  - match: {}\n    decision: deny\n    rationale: tests deny r3\n";
   return "version: 1\nrules:\n  - match: {}\n    decision: hold\n    seconds: 60\n    notify: [cli]\n    rationale: tests hold r3\n";
 }
 
 function toolCall(id: number, name: string): Record<string, unknown> {
-  return { jsonrpc: "2.0", id, method: "tools/call", params: { name, arguments: {} } };
+  return {
+    jsonrpc: "2.0",
+    id,
+    method: "tools/call",
+    params: { name, arguments: {} },
+  };
 }
 
-async function waitForQueue(getQueue: () => HoldQueue | null): Promise<HoldQueue> {
+async function waitForQueue(
+  getQueue: () => HoldQueue | null,
+): Promise<HoldQueue> {
   // The hold lands after awaited ledger appends (real fs in a temp dir),
   // so a fixed tick count races disk latency. Poll on wall time instead:
   // the queue either appears within the hold's own lifetime or the test
@@ -454,7 +624,6 @@ async function waitForQueue(getQueue: () => HoldQueue | null): Promise<HoldQueue
   }
   throw new Error("queue was not populated");
 }
-
 
 type HttpHarness = {
   readonly input: LineQueue;
@@ -476,7 +645,10 @@ type LineQueue = AsyncIterable<string> & {
   readonly close: () => void;
 };
 
-async function makeHttpHarness(server: HttpUpstreamHarness, decision: Decision): Promise<HttpHarness> {
+async function makeHttpHarness(
+  server: HttpUpstreamHarness,
+  decision: Decision,
+): Promise<HttpHarness> {
   const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText(decision));
@@ -491,7 +663,12 @@ async function makeHttpHarness(server: HttpUpstreamHarness, decision: Decision):
     ledgerDir,
     start() {
       return runProxy({
-        keyProvider: keyProviderFromPkcs8(generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" })),
+        keyProvider: keyProviderFromPkcs8(
+          generateKeyPairSync("ed25519").privateKey.export({
+            format: "der",
+            type: "pkcs8",
+          }),
+        ),
         transport: "http",
         upstreamUrl: server.url,
         policyPath,
@@ -499,8 +676,12 @@ async function makeHttpHarness(server: HttpUpstreamHarness, decision: Decision):
         ledgerDir,
         workspace: "test-http",
         input,
-        output(line) { outputMessages.push(JSON.parse(line) as unknown); },
-        error(line) { errors.push(line); },
+        output(line) {
+          outputMessages.push(JSON.parse(line) as unknown);
+        },
+        error(line) {
+          errors.push(line);
+        },
         onHold: (queue) => harness.onHold?.(queue),
       });
     },
@@ -543,8 +724,13 @@ async function handleHttpUpstreamRequest(
 ): Promise<void> {
   if (request.method === "GET") {
     streams.add(response);
-    response.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache" });
-    request.on("close", () => { streams.delete(response); });
+    response.writeHead(200, {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+    });
+    request.on("close", () => {
+      streams.delete(response);
+    });
     return;
   }
 
@@ -554,19 +740,35 @@ async function handleHttpUpstreamRequest(
     return;
   }
 
-  const message = JSON.parse(await requestText(request)) as { readonly id?: number; readonly method?: string; readonly params?: { readonly name?: string } };
+  const message = JSON.parse(await requestText(request)) as {
+    readonly id?: number;
+    readonly method?: string;
+    readonly params?: { readonly name?: string };
+  };
   messages.push(message as Record<string, unknown>);
   response.writeHead(200, { "content-type": "application/json" });
   if (message.method === "initialize") {
-    response.end(JSON.stringify({
-      jsonrpc: "2.0",
-      id: message.id,
-      result: { protocolVersion: "2025-11-25", capabilities: { tools: {} }, serverInfo: { name: "fake-http", version: "1" } },
-    }));
+    response.end(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: message.id,
+        result: {
+          protocolVersion: "2025-11-25",
+          capabilities: { tools: {} },
+          serverInfo: { name: "fake-http", version: "1" },
+        },
+      }),
+    );
     return;
   }
   if (message.method === "tools/call") {
-    response.end(JSON.stringify({ jsonrpc: "2.0", id: message.id, result: { called: message.params?.name } }));
+    response.end(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: message.id,
+        result: { called: message.params?.name },
+      }),
+    );
     return;
   }
   response.end(JSON.stringify({ jsonrpc: "2.0", id: message.id, result: {} }));
@@ -595,7 +797,9 @@ function lineQueue(): LineQueue {
     const value = values.shift();
     if (value !== undefined) return { done: false, value };
     if (closed) return { done: true, value: undefined };
-    return new Promise<IteratorResult<string>>((resolve) => { waiters.push(resolve); });
+    return new Promise<IteratorResult<string>>((resolve) => {
+      waiters.push(resolve);
+    });
   };
 
   return {
@@ -625,12 +829,20 @@ function lineQueue(): LineQueue {
   };
 }
 
-async function readLedgerDecisions(ledgerDir: string, workspace: string): Promise<string[]> {
+async function readLedgerDecisions(
+  ledgerDir: string,
+  workspace: string,
+): Promise<string[]> {
   const text = await readFile(join(ledgerDir, `${workspace}.jsonl`), "utf8");
-  return text.split("\n").filter((line) => line !== "").map((line) => {
-    const entry = JSON.parse(line) as { readonly body: { readonly decision: string } };
-    return entry.body.decision;
-  });
+  return text
+    .split("\n")
+    .filter((line) => line !== "")
+    .map((line) => {
+      const entry = JSON.parse(line) as {
+        readonly body: { readonly decision: string };
+      };
+      return entry.body.decision;
+    });
 }
 
 async function waitFor(predicate: () => boolean, label: string): Promise<void> {

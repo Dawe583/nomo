@@ -5,7 +5,10 @@ import { readFileSync } from "node:fs";
 import { loadPolicy, validatePolicyFile } from "./rules.ts";
 import { decide, type PolicyCall } from "./decide.ts";
 
-const goodYaml = readFileSync(new URL("../../../policy/default.yaml", import.meta.url), "utf8");
+const goodYaml = readFileSync(
+  new URL("../../../policy/default.yaml", import.meta.url),
+  "utf8",
+);
 
 const call = (over: Partial<PolicyCall> = {}): PolicyCall => ({
   tool: "aws.s3.object.delete",
@@ -78,7 +81,8 @@ rules:
     seconds: 60
 `);
     assert.equal(notLast.ok, false);
-    if (!notLast.ok) assert.ok(notLast.errors.some((e) => e.includes("catch-all")));
+    if (!notLast.ok)
+      assert.ok(notLast.errors.some((e) => e.includes("catch-all")));
   });
 
   test("the hold ceiling is 900 seconds, the MCP request cannot outlive every client", () => {
@@ -96,7 +100,6 @@ rules:
     if (!tooLong.ok) assert.ok(tooLong.errors.some((e) => e.includes("900")));
   });
 
-
   test("unknown YAML keys and invalid negative hold seconds fail loudly", () => {
     const badTop = loadPolicy(`
 version: 1
@@ -106,7 +109,8 @@ rules:
 extra: true
 `);
     assert.equal(badTop.ok, false);
-    if (!badTop.ok) assert.ok(badTop.errors.some((e) => e.includes("unknown key extra")));
+    if (!badTop.ok)
+      assert.ok(badTop.errors.some((e) => e.includes("unknown key extra")));
 
     const badRule = loadPolicy(`
 version: 1
@@ -139,7 +143,10 @@ rules:
   test("blast_radius is the only comparison, and only lt", () => {
     const wrongOp = validatePolicyFile({
       version: 1,
-      rules: [{ match: { blast_radius: { gt: 5 } }, decision: "allow" }, { match: {}, decision: "hold", seconds: 60 }],
+      rules: [
+        { match: { blast_radius: { gt: 5 } }, decision: "allow" },
+        { match: {}, decision: "hold", seconds: 60 },
+      ],
     });
     assert.ok(wrongOp.some((e) => e.includes("blast_radius")));
   });
@@ -154,8 +161,14 @@ describe("decide, first match wins", () => {
   });
 
   test("r1 under the line goes through, over the line holds", () => {
-    assert.equal(decide(policy, call({ klass: "r1", blastRadius: 99 })).kind, "allow");
-    assert.equal(decide(policy, call({ klass: "r1", blastRadius: 100 })).kind, "hold");
+    assert.equal(
+      decide(policy, call({ klass: "r1", blastRadius: 99 })).kind,
+      "allow",
+    );
+    assert.equal(
+      decide(policy, call({ klass: "r1", blastRadius: 100 })).kind,
+      "hold",
+    );
   });
 
   test("a list value means any of, so r2 and r3 both hold", () => {
@@ -169,7 +182,10 @@ describe("decide, first match wins", () => {
   });
 
   test("a named tool denies before the class rules can hold it", () => {
-    const denied = decide(policy, call({ tool: "postgres.table.drop", klass: "r2" }));
+    const denied = decide(
+      policy,
+      call({ tool: "postgres.table.drop", klass: "r2" }),
+    );
     assert.equal(denied.kind, "deny");
   });
 
@@ -191,20 +207,137 @@ rules:
 });
 
 test("malformed rule shapes fail closed without throwing", () => {
-  for (const rule of [null, [], { match: [], decision: "allow" }, { match: { class: "r9" }, decision: "allow" }]) {
+  for (const rule of [
+    null,
+    [],
+    { match: [], decision: "allow" },
+    { match: { class: "r9" }, decision: "allow" },
+  ]) {
     const loaded = loadPolicy(JSON.stringify({ version: 1, rules: [rule] }));
     assert.equal(loaded.ok, false);
   }
   for (const lt of [-1, 0.5, Infinity, NaN, Number.MAX_SAFE_INTEGER + 1]) {
-    assert.notEqual(validatePolicyFile({ version: 1, rules: [
-      { match: { blast_radius: { lt } }, decision: "allow" },
-      { match: {}, decision: "deny" },
-    ] }).length, 0);
+    assert.notEqual(
+      validatePolicyFile({
+        version: 1,
+        rules: [
+          { match: { blast_radius: { lt } }, decision: "allow" },
+          { match: {}, decision: "deny" },
+        ],
+      }).length,
+      0,
+    );
   }
 });
 
 test("YAML syntax errors never echo source contents", () => {
-  const result = loadPolicy('version: 1\nrules: [SENTINEL_PRIVATE_VALUE');
+  const result = loadPolicy("version: 1\nrules: [SENTINEL_PRIVATE_VALUE");
   assert.equal(result.ok, false);
   assert.doesNotMatch(JSON.stringify(result), /SENTINEL_PRIVATE_VALUE/);
+});
+
+describe("S07, unclassified calls never pass a broad allow", () => {
+  const broadAllow = loadPolicy(`
+version: 1
+rules:
+  - match: {}
+    decision: allow
+`);
+  if (!broadAllow.ok) throw new Error("fixture must load");
+
+  const r3Allow = loadPolicy(`
+version: 1
+rules:
+  - match: { class: r3 }
+    decision: allow
+  - match: {}
+    decision: deny
+`);
+  if (!r3Allow.ok) throw new Error("fixture must load");
+
+  const r3ListAllow = loadPolicy(`
+version: 1
+rules:
+  - match: { class: [r0, r1, r2, r3] }
+    decision: allow
+  - match: {}
+    decision: deny
+`);
+  if (!r3ListAllow.ok) throw new Error("fixture must load");
+
+  const toolAllow = loadPolicy(`
+version: 1
+rules:
+  - match: { tool: postgres.row.delete }
+    decision: allow
+  - match: {}
+    decision: deny
+`);
+  if (!toolAllow.ok) throw new Error("fixture must load");
+
+  const unknownAllow = loadPolicy(`
+version: 1
+rules:
+  - match: { class: unknown }
+    decision: allow
+  - match: {}
+    decision: deny
+`);
+  if (!unknownAllow.ok) throw new Error("fixture must load");
+
+  const mixedAllow = loadPolicy(`
+version: 1
+rules:
+  - match: { class: [r3, unknown] }
+    decision: allow
+  - match: {}
+    decision: deny
+`);
+  if (!mixedAllow.ok) throw new Error("fixture must load");
+
+  const unclassified = call({ klass: "r3", unclassified: true });
+  const classifiedR3 = call({ klass: "r3" });
+
+  test("a bare catch-all allow does not authorize an unclassified call", () => {
+    assert.notEqual(decide(broadAllow, unclassified).kind, "allow");
+    assert.equal(decide(broadAllow, classifiedR3).kind, "allow");
+  });
+
+  test("a class r3 allow does not authorize an unclassified call", () => {
+    assert.equal(decide(r3Allow, unclassified).kind, "deny");
+    assert.equal(decide(r3Allow, classifiedR3).kind, "allow");
+  });
+
+  test("a class list of only r0 to r3 does not authorize an unclassified call", () => {
+    assert.equal(decide(r3ListAllow, unclassified).kind, "deny");
+    assert.equal(decide(r3ListAllow, classifiedR3).kind, "allow");
+  });
+
+  test("a tool-pinned allow without an unknown opt-in does not authorize an unclassified call", () => {
+    assert.equal(decide(toolAllow, unclassified).kind, "deny");
+  });
+
+  test("an explicit unknown allow still authorizes an unclassified call", () => {
+    assert.equal(decide(unknownAllow, unclassified).kind, "allow");
+    assert.equal(decide(mixedAllow, unclassified).kind, "allow");
+  });
+
+  test("an explicit unknown allow does not widen classified calls", () => {
+    assert.equal(decide(unknownAllow, classifiedR3).kind, "deny");
+    assert.equal(decide(mixedAllow, classifiedR3).kind, "allow");
+  });
+
+  test("deny and hold rules still match unclassified calls", () => {
+    const gated = loadPolicy(`
+version: 1
+rules:
+  - match: { class: r3 }
+    decision: hold
+    seconds: 60
+  - match: {}
+    decision: deny
+`);
+    if (!gated.ok) throw new Error("fixture must load");
+    assert.equal(decide(gated, unclassified).kind, "hold");
+  });
 });
