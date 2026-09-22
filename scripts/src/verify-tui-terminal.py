@@ -100,6 +100,10 @@ await app.shutdown(); console.log(session.id);
         read_until("void_workspace_write")
         os.write(master, b"\r")
         read_until("INPUT SCHEMA")
+        # Escape clears a list filter before closing its detail. A diff renderer
+        # does not resend unchanged tool text when only the filter notice changes.
+        os.write(master, b"\x1b")
+        read_until("Filter cleared.")
         os.write(master, b"\x1b")
         read_until("void_workspace_write")
         os.write(master, b"/chat\r")
@@ -119,6 +123,8 @@ await app.shutdown(); console.log(session.id);
         os.write(master, b"\x1b")
         read_until("chat / navigation")
         os.write(master, b"\x15\x04")
+        read_until("Press Ctrl+D again to exit.")
+        os.write(master, b"\x04")
         read_until("VOID: stopping")
         assert process.wait(timeout=5) == 0
         print("PASS: PTY logo, typing, history, fuzzy commands, Ctrl+O, Ctrl+L, Ctrl+R, Ctrl+D, safe Undo and clean exit")
