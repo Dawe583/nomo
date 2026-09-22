@@ -168,9 +168,11 @@ export function filterRows<T>(rows: readonly T[], query: URLSearchParams): T[] {
     });
   return result;
 }
+export const MAX_QUEUED_RUNS = 20;
 export const capabilities = (mode: "local" | "cloud") => ({
   mode,
   maxActiveRuns: 1,
+  ...(mode === "local" ? { maxQueuedRuns: MAX_QUEUED_RUNS } : {}),
   backgroundQueue: true,
   projects: mode === "local",
   customAgents: mode === "local",
@@ -223,7 +225,7 @@ export function deriveRunState(
       : "running";
   if (status === "cancelled") return "stopped";
   if (status === "stopping") return "stopping";
-  if (status === "paused") return "paused";
+  if (status === "paused" || status === "queued") return "paused";
   if (status === "failed") return "failed";
   if (status === "unknown") return "unknown";
   return "idle";
@@ -233,6 +235,7 @@ export function activity(
     id: string;
     model: string;
     status: string;
+    state?: RunState;
     provider?: string;
     runId?: string;
     createdAt?: string;
@@ -273,7 +276,7 @@ export function activity(
         progressCandidate <= 1
           ? progressCandidate
           : null;
-      const state = deriveRunState(status, events);
+      const state = (id === s.runId ? s.state : undefined) ?? deriveRunState(status, events);
       return {
         id,
         runId: id,

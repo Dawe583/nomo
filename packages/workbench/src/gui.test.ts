@@ -391,3 +391,14 @@ test("providerStateFromFailure ready when connected", () => {
   assert.equal(result.detail, null);
   assert.equal(result.retryAt, null);
 });
+
+test("activity uses projected state only for the current run",()=>{
+ const views=[{id:"session",model:"fixture",status:"running",state:"awaiting-approval" as const,runId:"current",events:[
+  {seq:1,at:"2026-09-22T00:00:00Z",kind:"tool",runId:"old",type:"run.status",payload:{status:"unknown"}},
+  {seq:2,at:"2026-09-22T00:00:01Z",kind:"tool",runId:"current",type:"run.status",payload:{status:"running"}},
+ ]}];
+ const runs=activity(views).runs;
+ assert.equal(runs.find(run=>run.runId==="current")?.state,"awaiting-approval");
+ assert.equal(runs.find(run=>run.runId==="old")?.state,"unknown");
+ assert.equal(runs.find(run=>run.runId==="old")?.reconcileRequired,true);
+});

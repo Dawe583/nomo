@@ -27,6 +27,7 @@ import {
   publicConnector,
   providerStateFromFailure,
   activity,
+  MAX_QUEUED_RUNS,
   type ProviderStatus,
   type ViewName,
   type RunState,
@@ -293,6 +294,7 @@ export class Workbench {
         messageIds?: string[];
         agentProfile?: AgentProfile;
         recoveryBlock?: Session["recoveryBlock"];
+        queuedPrompt?: string;
         config?: ProviderConfig;
         tools?: McpTool[];
         connections?: Session["connections"];
@@ -420,12 +422,13 @@ export class Workbench {
       agentProfiles: this.agentProfiles,
       projects: this.projectList,
       sessions: [...this.sessions.values()].map(
-        ({ view, messages, messageIds, agentProfile, recoveryBlock, config, tools, connections }) => ({
+        ({ view, messages, messageIds, agentProfile, recoveryBlock, queuedPrompt, config, tools, connections }) => ({
           view,
           messages,
           messageIds,
           agentProfile,
           recoveryBlock,
+          queuedPrompt,
           config,
           tools,
           connections,
@@ -683,6 +686,8 @@ export class Workbench {
   ): Promise<SessionView> {
     if (!this.provider)
       throw new Error("Connect and validate a provider first.");
+    if (background && this.queued.size >= MAX_QUEUED_RUNS)
+      throw new Error(`Background queue is full (${MAX_QUEUED_RUNS} queued runs). Stop a queued run before adding another.`);
     const selectedAgent = AGENT_PRESETS.find(
       (item) => item.id === (agent ?? this.preferences.defaultAgentPreset),
     );
@@ -780,6 +785,7 @@ export class Workbench {
         createdAt: new Date().toISOString(),
         title: prompt.trim().slice(0, 80),
         status: queued ? "queued" : "idle",
+        ...(queued ? { runId: randomUUID() } : {}),
         events: [],
       },
       messages: [{ role: "system", content: systemInstruction }],
@@ -795,6 +801,8 @@ export class Workbench {
     this.sessions.set(id, session);
     if (queued) {
       this.queued.add(id);
+      this.event(session, "user", prompt);
+      this.event(session, "tool", "Queued", { status: "queued" }, "run.status");
       this.persist();
     } else this.send(id, prompt);
     return session.view;
@@ -839,9 +847,11 @@ export class Workbench {
     if (session.messages.length >= 199)
       throw new Error("Session context limit reached. Start a new session.");
     session.controller = new AbortController();
-    session.view = { ...session.view, runId: randomUUID() };
+    const queued = session.view.status === "idle" && session.queuedPrompt === prompt;
+    if (!queued) session.view = { ...session.view, runId: randomUUID() };
+    delete session.queuedPrompt;
     session.messages.push({ role: "user", content: prompt });
-    this.event(session, "user", prompt);
+    if (!queued) this.event(session, "user", prompt);
     session.view = { ...session.view, status: "running" };
     this.event(session, "tool", "Running", { status: "running" }, "run.status");
     this.persist();
@@ -885,7 +895,6 @@ export class Workbench {
       return;
     }
     const prompt = session.queuedPrompt;
-    delete session.queuedPrompt;
     session.view = { ...session.view, status: "idle" };
     try {
       this.send(id, prompt);
@@ -905,7 +914,9 @@ export class Workbench {
     if (session.view.status === "unknown" || session.recoveryBlock) return;
     if (session.view.status === "queued") {
       this.queued.delete(id);
+      delete session.queuedPrompt;
       session.view = { ...session.view, status: "cancelled" };
+      this.event(session, "tool", "Queued run stopped before dispatch.", { status: "cancelled" }, "run.status");
       this.persist();
       return;
     }
