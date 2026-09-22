@@ -113,3 +113,31 @@ test("unrelated restored recovery cannot clear an existing forward unknown",asyn
  assert.equal(wb.get(id)?.status,"unknown");assert.throws(()=>wb.send(id,"Do not clear uncertainty"),/unknown/i);
  await wb.shutdown();
 });
+
+test("session recovery metadata exposes only the current or last approved job",async t=>{
+ const f=await fixture(t),id=f.session.id;
+ const edit=await f.app.editDocument(id,{path:"note",content:"one",expectedRevision:null});
+ const plan=await f.app.planRecoveryJob(id,{jobId:"visible-job",selection:{kind:"operations",operationIds:[edit.revision!]}});
+ const view=()=>f.app.get(id) as {lastRecoveryJob?:{jobId:string}};
+ assert.equal(view().lastRecoveryJob,undefined);
+ await assert.rejects(f.app.applyRecoveryJob(id,{jobId:plan.jobId,planDigest:"f".repeat(64),approved:true}),/digest/i);
+ assert.equal(view().lastRecoveryJob,undefined);
+ const vault=join(f.directory,"recovery","vault"),backup=join(f.directory,"metadata-vault-backup");await rename(vault,backup);
+ const approval={jobId:plan.jobId,planDigest:plan.planDigest,approved:true};
+ assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"paused");
+ assert.deepEqual(view().lastRecoveryJob,{jobId:plan.jobId});assert.equal("recoveryJobId" in view(),false);
+ assert.equal("recoveryBlock" in view(),false);assert.equal("previousStatus" in view(),false);
+ const copy=view().lastRecoveryJob!;copy.jobId="cannot-change-owner";assert.equal(view().lastRecoveryJob?.jobId,plan.jobId);
+ const {LocalStorage}=await import("./storage.ts");f.app.close();
+ const storage=new LocalStorage(f.directory),saved=storage.read<{sessions:Array<{view:{id:string;lastRecoveryJob?:unknown}}>}>()!;
+ saved.sessions.find(session=>session.view.id===id)!.view.lastRecoveryJob={jobId:"older-job",privateCapture:"never-public"};storage.save(saved);
+ f.restart(true);assert.deepEqual(view().lastRecoveryJob,{jobId:plan.jobId});assert.equal("recoveryJobId" in view(),false);
+ assert.deepEqual(f.app.patchSession(id,{title:"Keep the recovery owner"}).lastRecoveryJob,{jobId:plan.jobId});
+ await rm(vault,{recursive:true,force:true});await rename(backup,vault);
+ assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"restored");
+ assert.deepEqual(view().lastRecoveryJob,{jobId:plan.jobId});assert.equal("recoveryJobId" in view(),false);
+ f.restart();assert.deepEqual(view().lastRecoveryJob,{jobId:plan.jobId});assert.equal("recoveryJobId" in view(),false);
+ const child=await f.app.branch(id,{seq:f.app.get(id)!.events.find(event=>event.kind==="user")!.seq});
+ const childView=f.app.get(child.id) as {lastRecoveryJob?:unknown;recoveryJobId?:unknown};
+ assert.equal(childView.lastRecoveryJob,undefined);assert.equal(childView.recoveryJobId,undefined);
+});

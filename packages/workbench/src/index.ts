@@ -120,6 +120,7 @@ export type SessionView = {
   readonly parentId?: string;
   readonly compaction?: CompactionResult;
   readonly contextMessages?: number;
+  readonly lastRecoveryJob?: { readonly jobId: string };
   readonly state?: RunState;
   readonly status: "running" | "queued" | "idle" | "cancelled" | "failed" | "unknown" | "paused";
   readonly events: readonly SessionEvent[];
@@ -613,8 +614,10 @@ export class Workbench {
     this.persist();
   }
   private view(session: Session): SessionView {
+    const jobId = session.recoveryBlock?.jobId ?? session.view.lastRecoveryJob?.jobId;
     return {
       ...session.view,
+      lastRecoveryJob: jobId ? { jobId } : undefined,
       contextMessages: session.messages.length,
       state: session.view.status === "cancelled" && this.jobs.has(session.view.id)
         ? "stopping" : deriveRunState(session.view.status, session.view.events),
@@ -1057,7 +1060,7 @@ export class Workbench {
       updatedAt: new Date().toISOString(),
     };
     this.persist();
-    return s.view;
+    return this.view(s);
   }
   sessionPage(query: URLSearchParams) {
     const all = filterRows(
@@ -1209,6 +1212,7 @@ export class Workbench {
           workspace,
           parentId: id,
           compaction: undefined,
+          lastRecoveryJob: undefined,
           runId: undefined,
           title: `${parent.view.title ?? "Conversation"} (branch)`,
           status: "idle",
@@ -1486,7 +1490,7 @@ export class Workbench {
       const previousBlock = session.recoveryBlock;
       const block = previousBlock ?? { jobId: request.jobId, previousStatus: session.view.status };
       session.recoveryBlock = block;
-      session.view = { ...session.view, status: block.previousStatus === "unknown" ? "unknown" : "paused" };
+      session.view = { ...session.view, lastRecoveryJob: { jobId: request.jobId }, status: block.previousStatus === "unknown" ? "unknown" : "paused" };
       this.persist(); // Persist the dispatch guard before any inverse can execute.
       try {
         const result = await runtime.runRecoveryJob(session.view.workspace, request.jobId, async stored => stored.digest === input.planDigest);
