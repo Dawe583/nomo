@@ -178,10 +178,19 @@ async function route(
     }
     if (parsed.pathname === '/api/documents' && request.method === 'GET') return sendJson(response, 200, page(filterRows(wb.documentsList(), query), query));
     if (parsed.pathname === '/api/approvals' && request.method === 'GET' && query.get('history') === 'true') { const result = page(filterRows(wb.approvals(), query), query); return sendJson(response, 200, { ...result, approvals: result.items }); }
+    const recovery = /^\/api\/sessions\/([a-f0-9-]+)\/recovery-jobs\/([A-Za-z0-9_-]+)$/.exec(parsed.pathname);
+    if (recovery) {
+      const id = recovery[1]!, action = recovery[2]!;
+      if (!wb.get(id)) return sendJson(response, 404, { message: 'Session not found.' });
+      if (action === 'plan' && request.method === 'POST') return sendJson(response, 200, await wb.planRecoveryJob(id, await readJsonBody(request) as Parameters<Workbench['planRecoveryJob']>[1]));
+      if (action === 'apply' && request.method === 'POST') return sendJson(response, 200, await wb.applyRecoveryJob(id, await readJsonBody(request) as Parameters<Workbench['applyRecoveryJob']>[1]));
+      if (request.method === 'GET') return sendJson(response, 200, await wb.recoveryJobStatus(id, action));
+      return sendJson(response, 405, { error: 'method_not_allowed' });
+    }
     const feature = /^\/api\/sessions\/([a-f0-9-]+)\/(events|stream|documents|branches|compact)$/.exec(parsed.pathname);
     if (feature) {
       const id = feature[1]!, kind = feature[2], session = wb.get(id); if (!session) return sendJson(response, 404, { message: 'Session not found.' });
-      if (kind === 'compact' && request.method === 'POST') return sendJson(response, 200, { session: wb.compact(id) });
+      if (kind === 'compact' && request.method === 'POST') { const compaction = wb.compact(id); return sendJson(response, 200, { compaction, session: wb.get(id) }); }
       if (kind === 'documents') {
         if (request.method === 'GET') return sendJson(response, 200, { document: wb.document(id, query.get('path') ?? '') });
         if (request.method === 'PATCH') return sendJson(response, 200, { document: await wb.editDocument(id, await readJsonBody(request) as { path: string; content: string; expectedRevision: string | null }) });

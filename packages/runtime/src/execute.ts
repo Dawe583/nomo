@@ -249,9 +249,10 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       const requestDigest = digest(input),
         request = clean(input),
         adapter = adapterFor(request.adapterId);
-      for (const value of [request.operationId, request.agentId, request.runId])
+      for (const value of [request.operationId, request.agentId])
         if (!/^[\w-]{1,120}$/.test(value))
           throw new Error("Invalid operation identity.");
+      if (!/^[\w:-]{1,120}$/.test(request.runId)) throw new Error("Invalid run identity.");
       return options.journal.transaction(request.workspace, async (tx) => {
         const prior = latest(tx, request.operationId);
         if (prior) {
@@ -507,7 +508,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       if (!input.selection || typeof input.selection !== "object")
         throw new Error("Invalid recovery selection.");
       if (input.selection.kind === "run") {
-        if (!/^[\w-]{1,120}$/.test(input.selection.runId))
+        if (!/^[\w:-]{1,120}$/.test(input.selection.runId))
           throw new Error("Invalid run identity.");
       } else if (input.selection.kind === "operations") {
         if (

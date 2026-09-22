@@ -136,6 +136,7 @@ export function filterRows<T>(rows: readonly T[], query: URLSearchParams): T[] {
       (!q || JSON.stringify(row).toLowerCase().includes(q)) &&
       [
         "status",
+        "state",
         "model",
         "workspace",
         "sessionId",

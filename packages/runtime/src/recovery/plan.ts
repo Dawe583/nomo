@@ -138,7 +138,7 @@ export function validateRecoveryJobPlan(plan: RecoveryJobPlan): void {
   const selection = object(plan.selection, "selection");
   if (plan.selection.kind === "run") {
     exactKeys(selection, ["kind", "runId"], "selection");
-    if (!identity(plan.selection.runId))
+    if (typeof plan.selection.runId !== "string" || !/^[\w:-]{1,120}$/.test(plan.selection.runId))
       throw new Error("Invalid recovery job selection.");
   } else if (plan.selection.kind === "operations") {
     exactKeys(selection, ["kind", "operationIds"], "selection");

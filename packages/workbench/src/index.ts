@@ -1,4 +1,5 @@
 import { compactMessages } from "./context.ts";
+import { recoveryRequest, runtimeSelection, recoveryOperationMap, recoveryPreview, recoveryResult, type RecoveryRequest, type RecoveryApply } from "./recovery-jobs.ts";
 import { toolCatalog } from "./tool-catalog.ts";
 import { managedDocumentAdapter } from "./managed-documents.ts";
 import {
@@ -211,6 +212,7 @@ export class Workbench {
   private connectors: Connector[] = [];
   private documents: Record<string, WorkspaceState> = {};
   private evidence: Record<string, JsonlEntry[]> = {};
+  private recoveryRequests: Record<string, RecoveryRequest> = {};
   private readonly holds = new Map<
     string,
     {
@@ -277,6 +279,7 @@ export class Workbench {
       connectors: Connector[];
       documents: Record<string, WorkspaceState>;
       evidence: Record<string, JsonlEntry[]>;
+      recoveryRequests?: Record<string, RecoveryRequest>;
       sessions: Array<{
         view: SessionView;
         messages: ModelMessage[];
@@ -350,6 +353,7 @@ export class Workbench {
       this.connectors = saved.connectors;
       this.documents = saved.documents;
       this.evidence = saved.evidence;
+      this.recoveryRequests = saved.recoveryRequests ?? {};
       this.projectList = saved.projects ?? [];
       if (this.config)
         this.provider = new CompatibleProvider(this.config, fetcher);
@@ -402,6 +406,7 @@ export class Workbench {
       connectors: this.connectors,
       documents: this.documents,
       evidence: this.evidence,
+      recoveryRequests: this.recoveryRequests,
       projects: this.projectList,
       sessions: [...this.sessions.values()].map(
         ({ view, messages, messageIds, config, tools, connections }) => ({
@@ -1353,7 +1358,7 @@ export class Workbench {
       workspace: session.view.workspace,
       operationId: digest(id),
       agentId: approval?.by ?? "workbench-agent",
-      runId: session.view.id,
+      runId: session.view.runId ?? session.view.id,
       adapterId: "managed-documents",
       arguments: {
         id,
@@ -1368,6 +1373,51 @@ export class Workbench {
         `Managed document operation ${result.status}${result.reason ? ": " + result.reason : ""}. Reconcile its evidence before retrying.`,
       );
     return result.result;
+  }
+  private recoverySession(id: string) {
+    const session = this.sessions.get(id);
+    if (!session) throw new Error("Session not found.");
+    if (this.closing || this.jobs.size || session.view.status === "running" || session.view.status === "queued")
+      throw new Error("Wait for the agent to stop before recovery.");
+    return session;
+  }
+  async planRecoveryJob(id: string, input: RecoveryRequest) {
+    return this.locked(async () => {
+      const request = recoveryRequest(input), session = this.recoverySession(id);
+      const runtime = await this.documentRuntime(session);
+      const plan = await runtime.planRecoveryJob({ workspace: session.view.workspace, jobId: request.jobId, selection: runtimeSelection(request.selection) });
+      this.recoveryRequests[`${id}:${request.jobId}`] = request;
+      this.persist();
+      return recoveryPreview(plan, recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection));
+    });
+  }
+  async recoveryJobStatus(id: string, jobId: string) {
+    return this.locked(async () => {
+      const session = this.sessions.get(id);
+      if (!session) throw new Error("Session not found.");
+      const request = this.recoveryRequests[`${id}:${jobId}`];
+      if (!request) throw new Error("Recovery job not found.");
+      const runtime = await this.documentRuntime(session);
+      const status = await runtime.recoveryJobStatus(session.view.workspace, jobId);
+      const ids = recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection);
+      return "digest" in status ? recoveryPreview(status, ids) : recoveryResult(status, ids);
+    });
+  }
+  async applyRecoveryJob(id: string, input: RecoveryApply, operator: "web-operator" | "tui-operator" = "web-operator") {
+    return this.locked(async () => {
+      const session = this.recoverySession(id);
+      if (!input || input.approved !== true) throw new Error("Explicit operator approval is required.");
+      const request = this.recoveryRequests[`${id}:${input.jobId}`];
+      if (!request) throw new Error("Recovery job not found.");
+      const runtime = await this.documentRuntime(session, { by: operator });
+      // Reload the signed original plan even after a terminal result. A retry
+      // cannot exchange its approval for another job or caller-supplied plan.
+      const plan = await runtime.planRecoveryJob({ workspace: session.view.workspace, jobId: request.jobId, selection: runtimeSelection(request.selection) });
+      if (plan.digest !== input.planDigest) throw new Error("Recovery job digest changed. Refresh the preview.");
+      const status = await runtime.recoveryJobStatus(session.view.workspace, request.jobId);
+      const result = "digest" in status ? await runtime.runRecoveryJob(session.view.workspace, request.jobId, async stored => stored.digest === input.planDigest) : status;
+      return recoveryResult(result, recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection));
+    });
   }
   async undoPreview(id: string, operationId: string) {
     const state = this.workspace(id),
@@ -1877,7 +1927,7 @@ export class Workbench {
           this.persist();
           return;
         }
-        for (const call of reply.message.tool_calls) {
+        for (const [callIndex, call] of reply.message.tool_calls.entries()) {
           if (session.controller.signal.aborted) return;
           const tool = mapping.get(call.function.name);
           const name = tool?.name;
@@ -1906,7 +1956,7 @@ export class Workbench {
               session,
               tool!,
               args as JsonObject,
-              `${session.view.id}-${session.messages.length}-${call.id}`,
+              `${session.view.runId}-${turn}-${callIndex}`,
             );
           } catch (error) {
             if (error instanceof UnknownToolOutcome) throw error;

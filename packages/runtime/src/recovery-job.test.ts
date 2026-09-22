@@ -547,3 +547,12 @@ test("apply rejects a well-formed plan whose boundary record does not exist, inc
     "restored",
   );
 });
+
+test("run selection accepts cloud generation IDs without widening operation identities", async t=>{
+ const f=await fixture(t);
+ assert.equal((await f.execute("one","session:2")).status,"succeeded");
+ const plan=await f.open().planRecoveryJob({workspace:"test",jobId:"job",selection:{kind:"run",runId:"session:2"}});
+ assert.equal(plan.steps[0]?.operationId,"one");
+ assert.doesNotThrow(()=>validateRecoveryJobPlan(plan));
+ await assert.rejects(f.execute("bad:operation","session:2"),/identity/i);
+});
