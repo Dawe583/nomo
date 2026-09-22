@@ -1,77 +1,111 @@
 import { getVercelOidcToken } from "@vercel/oidc";
-import { CompatibleProvider } from "../packages/workbench/src/provider.ts";
-import { normalizeProviderConfig } from "../packages/workbench/src/provider.ts";
+import { createHash } from "node:crypto";
+import { CompatibleProvider, normalizeProviderConfig, ProviderRequestError } from "../packages/workbench/src/provider.ts";
+import { providerStateFromFailure } from "../packages/workbench/src/gui.ts";
 import {
   DEFAULT_MODEL_ID,
   DEFAULT_PROVIDER_ID,
+  NVIDIA_URL,
   TOKENROUTER_URL,
   PROVIDER_PRESETS,
 } from "../packages/workbench/src/provider-defaults.ts";
 import { read, write, encrypt, decrypt } from "./store.mjs";
 
-async function configuration(snapshot) {
-  const config = snapshot ?? (await read("provider"));
-  if (config?.disabled) throw new Error("Connect a provider first.");
-  if (config?.secret) return normalizeProviderConfig(decrypt(config.secret));
-  // Explicit legacy snapshots retain their provider. New workspaces use TokenRouter.
+const dependencies = (overrides) => ({
+  read, write, encrypt, decrypt, env: process.env, fetch,
+  oidc: getVercelOidcToken, ...overrides,
+});
+
+const snapshotKey = snapshot => createHash("sha256")
+  .update(JSON.stringify(snapshot ?? { mode: DEFAULT_PROVIDER_ID })).digest("hex");
+
+export async function rememberProviderFailure(snapshot, failure, client, overrides) {
+  const deps = dependencies(overrides);
+  await deps.write("provider-failure", {
+    provider: snapshotKey(snapshot), status: failure.status,
+    retryAt: failure.retryAfter === undefined ? null : new Date(Date.now() + failure.retryAfter * 1000).toISOString(),
+  }, client);
+}
+
+async function configuration(config, deps) {
+  if (config?.disabled) return null;
+  if (config?.secret) return normalizeProviderConfig(deps.decrypt(config.secret));
+  // Explicit snapshots keep the provider that originally received the session.
   if (config?.mode === "gateway")
     return {
       baseUrl: "https://ai-gateway.vercel.sh/v1",
-      apiKey: process.env.AI_GATEWAY_API_KEY ?? (await getVercelOidcToken()),
+      apiKey: deps.env.AI_GATEWAY_API_KEY ?? (await deps.oidc()),
       kind: "compatible",
     };
-  if (!process.env.TOKENROUTER_API_KEY)
-    throw new Error("Connect TokenRouter to use GLM 5.3 Free.");
-  return {
-    baseUrl: TOKENROUTER_URL,
-    apiKey: process.env.TOKENROUTER_API_KEY,
-    kind: "compatible",
-  };
+  if (config?.mode === "tokenrouter") {
+    if (!deps.env.TOKENROUTER_API_KEY) return null;
+    return { baseUrl: TOKENROUTER_URL, apiKey: deps.env.TOKENROUTER_API_KEY, kind: "compatible" };
+  }
+  if (config?.mode && config.mode !== "nvidia")
+    throw new Error("The saved provider is unavailable. Reconnect it explicitly.");
+  if (!deps.env.NVIDIA_API_KEY) return null;
+  return { baseUrl: NVIDIA_URL, apiKey: deps.env.NVIDIA_API_KEY, kind: "compatible" };
 }
-export async function provider(snapshot) {
-  return new CompatibleProvider(await configuration(snapshot));
+
+export async function provider(snapshot, overrides) {
+  const deps = dependencies(overrides);
+  const config = await configuration(snapshot ?? (await deps.read("provider")), deps);
+  if (!config) throw new Error("Connect the saved provider or configure NVIDIA_API_KEY for NVIDIA NIM.");
+  return new CompatibleProvider(config, deps.fetch);
 }
-export async function providerState() {
+
+export async function providerState(overrides) {
+  const deps = dependencies(overrides);
+  let credentials = Boolean(deps.env.NVIDIA_API_KEY);
   const defaults = {
     defaultModel: DEFAULT_MODEL_ID,
     providerId: DEFAULT_PROVIDER_ID,
+    baseUrl: NVIDIA_URL,
     presets: PROVIDER_PRESETS.filter((p) => !("local" in p)),
     keyStorage: "encrypted-cloud",
+    profiles: [],
+    models: [],
+    connected: false,
+    setupRequired: false,
   };
   try {
-    const saved = await read("provider");
+    const saved = await deps.read("provider");
     if (saved?.secret) {
-      const raw = decrypt(saved.secret), normalized = normalizeProviderConfig(raw);
+      credentials = true;
+      const raw = deps.decrypt(saved.secret), normalized = normalizeProviderConfig(raw);
       if (raw.kind !== normalized.kind) {
-        const secret = encrypt(normalized), profiles = (await read("provider-profiles")) ?? {};
-        await write("provider", { ...saved, secret });
-        if (profiles[normalized.baseUrl]) { profiles[normalized.baseUrl] = secret; await write("provider-profiles", profiles); }
+        const secret = deps.encrypt(normalized), profiles = (await deps.read("provider-profiles")) ?? {};
+        await deps.write("provider", { ...saved, secret });
+        if (profiles[normalized.baseUrl]) {
+          profiles[normalized.baseUrl] = secret;
+          await deps.write("provider-profiles", profiles);
+        }
       }
     }
-    const config = await configuration();
-    const models = await new CompatibleProvider(config).models();
+    const config = await configuration(saved, deps);
+    credentials = config !== null;
+    if (!config) return { ...defaults, setupRequired: true, ...providerStateFromFailure(false, null, false) };
+    Object.assign(defaults, {
+      baseUrl: config.baseUrl,
+      kind: config.kind,
+      providerId: PROVIDER_PRESETS.find((p) => p.baseUrl === config.baseUrl)?.id ?? "custom",
+    });
+    const models = await new CompatibleProvider(config, deps.fetch).models();
+    const failure = await deps.read("provider-failure");
+    const observed = failure?.status && failure.provider === snapshotKey(saved) ? failure : null;
     return {
       ...defaults,
       connected: true,
-      baseUrl: config.baseUrl,
-      kind: config.kind,
-      providerId:
-        PROVIDER_PRESETS.find((p) => p.baseUrl === config.baseUrl)?.id ??
-        "custom",
-      profiles: Object.keys((await read("provider-profiles")) ?? {}),
       models,
-      mode: config.baseUrl === TOKENROUTER_URL ? "tokenrouter" : "custom",
+      profiles: Object.keys((await deps.read("provider-profiles")) ?? {}),
+      mode: defaults.providerId,
+      ...providerStateFromFailure(true, observed, true),
     };
   } catch (error) {
-    return {
-      ...defaults,
-      connected: false,
-      baseUrl: TOKENROUTER_URL,
-      models: [],
-      message:
-        error instanceof Error
-          ? error.message
-          : "Connect TokenRouter to continue.",
-    };
+    // Configuration, database and transport errors are not safe public strings.
+    const failure = error instanceof ProviderRequestError
+      ? { status: error.status, retryAfter: error.retryAfter }
+      : { status: 503 };
+    return { ...defaults, ...providerStateFromFailure(false, failure, credentials) };
   }
 }

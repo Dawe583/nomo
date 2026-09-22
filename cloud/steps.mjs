@@ -11,7 +11,7 @@ import {
 import { encrypt } from "./store.mjs";
 import { read, write, transaction, event, append, decrypt } from "./store.mjs";
 import { ProviderRequestError } from "../packages/workbench/src/provider.ts";
-import { provider } from "./provider.mjs";
+import { provider, rememberProviderFailure } from "./provider.mjs";
 import { rpc } from "./mcp.mjs";
 import { classifyTool } from "../packages/registry/src/evaluate.ts";
 import { loadPolicy } from "../packages/policy/src/rules.ts";
@@ -33,7 +33,7 @@ export async function advance(id, generation) {
         "error",
         "Execution was interrupted. Review the ledger; the tool will not be retried automatically.",
       );
-      s.status = "failed";
+      s.status = "unknown";
       await save(s, c);
       return { kind: "done" };
     }
@@ -246,13 +246,21 @@ export async function advance(id, generation) {
         throw new Error("Too many tool calls in a single batch.");
       await transaction(id, async (c) => {
         const current = await read(`session:${id}`, c);
-        if (current.status !== "running" || current.generation !== generation)
+        if (current.generation !== generation) return;
+        if (current.status === "stopping") {
+          current.status = "cancelled";
+          current.executing = null;
+          event(current, "tool", "Stopped", { status: "cancelled" }, "run.status");
+          await save(current, c);
           return;
+        }
+        if (current.status !== "running") return;
         current.executing = null;
         const safeMessage = JSON.parse(
           client.redact(JSON.stringify(reply.message)),
         );
         current.messages.push(safeMessage);
+        await rememberProviderFailure(current.provider, { status: 0 }, c);
         current.queue = safeMessage.tool_calls ?? [];
         current.turn++;
         if (reply.message.content)
@@ -274,8 +282,15 @@ export async function advance(id, generation) {
       if (claim.builtin) {
         await transaction(id, async (c) => {
           const current = await read(`session:${id}`, c);
-          if (current.status !== "running" || current.generation !== generation)
+          if (current.generation !== generation) return;
+          if (current.status === "stopping") {
+            current.status = "cancelled";
+            current.executing = null;
+            event(current, "tool", "Stopped before dispatch", { status: "cancelled" }, "run.status");
+            await save(current, c);
             return;
+          }
+          if (current.status !== "running") return;
           const saved = await read(`workspace:${id}`, c),
             state = saved ? decrypt(saved) : createWorkspace();
           const input = {
@@ -380,6 +395,10 @@ export async function advance(id, generation) {
           `${claim.name}: ${result.result?.isError ? "failed" : "result received"}`,
         );
         current.executing = null;
+        if (current.status === "stopping") {
+          current.status = "cancelled";
+          event(current, "tool", "Stopped after the dispatched tool settled", { status: "cancelled" }, "run.status");
+        }
         current.queue.shift();
         current.messages.push({
           role: "tool",
@@ -399,8 +418,12 @@ export async function advance(id, generation) {
   } catch (error) {
     await transaction(id, async (c) => {
       const current = await read(`session:${id}`, c);
-      if (current.status === "running" && current.generation === generation) {
-        current.status = "failed";
+      if (["running", "stopping"].includes(current.status) && current.generation === generation) {
+        if (error instanceof ProviderRequestError) await rememberProviderFailure(current.provider, error, c);
+        const uncertain = claim.kind === "tool" && !claim.builtin;
+        if (uncertain) await append({ ...claim.body, at: new Date().toISOString(), decision: "execute:unknown" }, c);
+        current.status = uncertain ? "unknown" : current.status === "stopping" ? "cancelled" : "failed";
+        current.executing = null;
         event(
           current,
           "error",
@@ -421,8 +444,9 @@ export async function fail(id, generation) {
   "use step";
   await transaction(id, async (c) => {
     const s = await read(`session:${id}`, c);
-    if (s?.status === "running" && s.generation === generation) {
-      s.status = "failed";
+    if (s && ["running", "stopping"].includes(s.status) && s.generation === generation) {
+      s.status = s.executing === "tool" ? "unknown" : s.status === "stopping" ? "cancelled" : "failed";
+      s.executing = null;
       event(
         s,
         "error",

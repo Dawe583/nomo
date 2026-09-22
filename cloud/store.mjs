@@ -6,6 +6,7 @@ import { entryHash, GENESIS_PREV } from "../packages/ledger/src/canonical.ts";
 import { signingPreimage } from "../packages/ledger/src/index.ts";
 import { verifyChain } from "../packages/ledger/src/verify.ts";
 import { PROVIDER_PRESETS } from "../packages/workbench/src/provider-defaults.ts";
+import { deriveRunState } from "../packages/workbench/src/gui.ts";
 let pool;
 export function database() {
   if (!process.env.DATABASE_URL)
@@ -65,7 +66,7 @@ export async function write(key, value, client) {
 export async function sessions() {
   return (
     await database().query(
-      "SELECT document - 'messages' - 'events' - 'provider' - 'connected' - 'tools' - 'upstream' - 'pending' - 'queue' AS document FROM void_cloud_state WHERE key LIKE 'session:%' AND document->>'workspace' NOT LIKE 'qa-%' ORDER BY document->>'createdAt' DESC",
+      "SELECT (document - 'messages' - 'events' - 'provider' - 'connected' - 'tools' - 'upstream' - 'pending' - 'queue') || jsonb_build_object('hasPending', document->'pending' IS NOT NULL AND document->'pending' <> 'null'::jsonb, 'contextMessages', jsonb_array_length(COALESCE(document->'messages','[]'::jsonb))) AS document FROM void_cloud_state WHERE key LIKE 'session:%' AND document->>'workspace' NOT LIKE 'qa-%' ORDER BY document->>'createdAt' DESC",
     )
   ).rows.map((row) => row.document);
 }
@@ -213,6 +214,11 @@ export function view(session) {
     tags,
     parentId,
     runId: `${id}:${generation ?? 0}`,
+    state: status === "running" && (session.pending || session.hasPending === true) ? "awaiting-approval" : deriveRunState(status, []),
+    progress: null,
+    reconcileRequired: status === "unknown",
+    contextMessages: session.messages?.length ?? session.contextMessages ?? null,
+    compaction: session.compaction ?? null,
   };
 }
 export async function eventsAfter(id, after = 0) {
@@ -298,7 +304,7 @@ export async function sessionPage(query) {
   const limit = Math.min(100, Math.max(1, Number(query.get("limit")) || 50));
   const rows = (
     await database().query(
-      `SELECT (document - 'messages' - 'events' - 'provider' - 'connected' - 'tools' - 'upstream' - 'pending' - 'queue') AS metadata, jsonb_array_length(COALESCE(document->'messages','[]'::jsonb)) AS message_count FROM void_cloud_state WHERE ${conditions.join(" AND ")} ORDER BY ${column} ${order},key ${order} LIMIT ${bind(limit + 1)}`,
+      `SELECT (document - 'messages' - 'events' - 'provider' - 'connected' - 'tools' - 'upstream' - 'pending' - 'queue') || jsonb_build_object('hasPending', document->'pending' IS NOT NULL AND document->'pending' <> 'null'::jsonb) AS metadata, jsonb_array_length(COALESCE(document->'messages','[]'::jsonb)) AS message_count FROM void_cloud_state WHERE ${conditions.join(" AND ")} ORDER BY ${column} ${order},key ${order} LIMIT ${bind(limit + 1)}`,
       params,
     )
   ).rows;
@@ -306,6 +312,7 @@ export async function sessionPage(query) {
     items = rows.slice(0, limit).map((r) => ({
       ...view({ ...r.metadata, events: [] }),
       messageCount: r.message_count,
+      contextMessages: r.message_count,
     })),
     last = items.at(-1);
   return {

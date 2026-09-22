@@ -34,6 +34,10 @@ test(
     const previous = await read("prime-worker"),
       id = randomUUID();
     try {
+      const catalog = await (await fetch(base + "/api/agents", { headers })).json();
+      assert.deepEqual(catalog.agents?.map(agent => agent.id), ["cloud", "prime-agent"]);
+      assert.equal(catalog.hooksSupported, false);
+      assert.ok(catalog.prime, "preserve the existing worker catalog field");
       assert.equal(
         (
           await post(
@@ -114,7 +118,25 @@ test(
         ).body.cancel,
         true,
       );
-      assert.equal((await read(`session:${id}`)).status, "failed");
+      assert.equal((await read(`session:${id}`)).status, "unknown");
+      await transaction(id, async (c) => {
+        const current = await read(`session:${id}`, c);
+        current.status = "stopping";
+        current.generation = 3;
+        current.primeJob = { state: "claimed", claim: "stopped-lost", generation: 3, at: 0 };
+        await write(`session:${id}`, current, c);
+      });
+      assert.equal((await post("/api/prime/claim", { tools: [] })).body.job, null);
+      assert.equal((await read(`session:${id}`)).status, "unknown", "a disconnected stopping worker is unknown, never stuck or reclaimed");
+      await transaction(id, async (c) => {
+        const current = await read(`session:${id}`, c);
+        current.status = "stopping";
+        current.generation = 4;
+        current.primeJob = { state: "claimed", claim: "stop-heartbeat", generation: 4, at: Date.now() };
+        await write(`session:${id}`, current, c);
+      });
+      assert.equal((await post(`/api/prime/jobs/${id}`, { claim: "stop-heartbeat", generation: 4, type: "heartbeat" })).body.cancel, true);
+      assert.equal((await read(`session:${id}`)).status, "unknown", "heartbeat cannot prove that dispatched tool effects stopped");
     } finally {
       await database().query("DELETE FROM void_cloud_state WHERE key=$1", [
         `session:${id}`,

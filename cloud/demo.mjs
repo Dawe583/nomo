@@ -19,7 +19,7 @@ import {
 } from "../packages/workbench/src/provider.ts";
 import {
   DEFAULT_MODEL_ID,
-  TOKENROUTER_URL,
+  NVIDIA_URL,
 } from "../packages/workbench/src/provider-defaults.ts";
 import {
   createWorkspace,
@@ -101,7 +101,7 @@ export function demoRouter(dependencies = {}) {
   };
   const available = () =>
     process.env.VOID_PUBLIC_DEMO === "1" &&
-    !!process.env.VOID_DEMO_TOKENROUTER_KEY &&
+    !!process.env.VOID_DEMO_NVIDIA_KEY &&
     !!process.env.VOID_SECRET_KEY;
   const secret = () => process.env.VOID_SECRET_KEY;
   const stateKey = (id) => `demo:${id}`;
@@ -254,12 +254,11 @@ export function demoRouter(dependencies = {}) {
       return s;
     });
     if (duplicate) return res.json(await publicView(state));
-    const client =
-      dependencies.provider?.() ??
-      new CompatibleProvider({
-        baseUrl: TOKENROUTER_URL,
-        apiKey: process.env.VOID_DEMO_TOKENROUTER_KEY,
-      });
+    const config = {
+      baseUrl: NVIDIA_URL,
+      apiKey: process.env.VOID_DEMO_NVIDIA_KEY,
+    };
+    const client = dependencies.provider?.(config) ?? new CompatibleProvider(config);
     const tools = workspaceTools.map((tool) => ({
       type: "function",
       function: {

@@ -31,7 +31,7 @@ test(
       "/void_gui_upgrade_preview",
     );
     const id = randomUUID(),
-      session = { id, workspace: `agent-${id}` };
+      session = { id, workspace: `agent-${id}`, generation: 2 };
     const mutate = (operationId, content) =>
       transaction(id, (c) =>
         mutateCloudDocument(session, c, {
@@ -204,7 +204,7 @@ test(
           {
             workspace: session.workspace,
             jobId: "run-recovery-job",
-            selection: { kind: "run", runId: session.id },
+            selection: { kind: "run", runId: `${session.id}:2` },
           },
           session,
           c,

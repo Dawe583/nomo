@@ -228,7 +228,7 @@ export async function mutateCloudDocument(session, client, input, approvedBy) {
     workspace: session.workspace,
     operationId: documentOperationId(input.id),
     agentId: approvedBy ?? "web-operator",
-    runId: session.id,
+    runId: session.generation === undefined ? session.id : `${session.id}:${session.generation}`,
     adapterId: "managed-documents",
     arguments: { ...input, at: input.at ?? new Date().toISOString() },
   });
@@ -399,4 +399,12 @@ export async function cloudRecoveryJobStatus(session, client, jobId) {
     client,
   );
   return status && presentCloudJob(status, stored ? decrypt(stored) : {});
+}
+
+export async function cloudRecoveryJobPlanDigest(session, client, jobId) {
+  const proof = await ledger(session.workspace, client);
+  return proof.entries.find(entry =>
+    entry.body.runtimeJobEvent?.jobId === jobId &&
+    entry.body.runtimeJobEvent.stage === "planned"
+  )?.body.runtimeJobEvent.planDigest;
 }

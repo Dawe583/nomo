@@ -42,7 +42,15 @@ const workerAllowed = (req) => {
 };
 export function mountPrimeRoutes(app) {
   app.get("/api/agents", async (_req, res) =>
-    res.json({ prime: await primeStatus() }),
+    res.json({
+      supported: true,
+      agents: [
+        { id: "cloud", name: "Cloud", description: "Managed cloud document workspace." },
+        { id: "prime-agent", name: "Prime Agent", description: "Explicit local worker execution without automatic document Undo." },
+      ],
+      profiles: [], policyProfiles: [], hooks: [], hookCommands: [], hooksSupported: false,
+      prime: await primeStatus(),
+    }),
   );
   app.use("/api/prime", (req, res, next) =>
     workerAllowed(req)
@@ -62,7 +70,12 @@ export function mountPrimeRoutes(app) {
     await write("prime-worker", { at: Date.now(), tools: names });
     const candidate = (
       await database().query(
-        "SELECT document->>'id' AS id FROM void_cloud_state WHERE key LIKE 'session:%' AND document->>'agent'='prime-agent' AND document->>'status'='running' AND (document->'primeJob'->>'state'='queued' OR (document->'primeJob'->>'state'='claimed' AND (document->'primeJob'->>'at')::bigint < $1)) ORDER BY key LIMIT 1",
+        `SELECT document->>'id' AS id FROM void_cloud_state
+          WHERE key LIKE 'session:%' AND document->>'agent'='prime-agent' AND (
+            (document->>'status'='running' AND document->'primeJob'->>'state'='queued') OR
+            (document->>'status' IN ('running','stopping') AND document->'primeJob'->>'state'='claimed'
+              AND (document->'primeJob'->>'at')::bigint < $1)
+          ) ORDER BY key LIMIT 1`,
         [Date.now() - 90000],
       )
     ).rows[0];
@@ -70,11 +83,11 @@ export function mountPrimeRoutes(app) {
     const job = await transaction(candidate.id, async (c) => {
       const s = await read(`session:${candidate.id}`, c);
       if (
-        s.status === "running" &&
+        ["running", "stopping"].includes(s.status) &&
         s.primeJob?.state === "claimed" &&
         s.primeJob.at < Date.now() - 90000
       ) {
-        s.status = "failed";
+        s.status = "unknown";
         s.primeJob.state = "unknown";
         await append(
           {
@@ -147,6 +160,15 @@ export function mountPrimeRoutes(app) {
         s.generation !== input.generation
       )
         throw Object.assign(new Error("Stale worker claim."), { status: 409 });
+      if (s.status === "stopping") {
+        s.status = "unknown";
+        s.primeJob.state = "unknown";
+        event(s, "error", "Worker stop requested. Previously dispatched tool outcomes require reconciliation.");
+        await append({ workspace: s.workspace, at: new Date().toISOString(), tool: "prime_agent_run", klass: "r3",
+          decision: "execute:unknown", operationId: s.primeJob.claim, reason: "operator-stop", recovery: "not-captured" }, c);
+        await write(`session:${s.id}`, s, c);
+        return { cancel: true };
+      }
       if (s.status !== "running" || s.primeJob.state === "completed")
         return { cancel: true };
       s.primeJob.at = Date.now();
@@ -174,7 +196,7 @@ export function mountPrimeRoutes(app) {
           (input.failed
             ? "prime-agent failed without a response."
             : "prime-agent finished.");
-        s.status = input.failed ? "failed" : "idle";
+        s.status = input.failed ? "unknown" : "idle";
         s.primeJob.state = "completed";
         if (!input.failed)
           s.messages.push({ role: "assistant", content: text });

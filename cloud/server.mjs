@@ -1,12 +1,11 @@
 import { toolCatalog } from "../packages/workbench/src/tool-catalog.ts";
+import { compactMessages } from "../packages/workbench/src/context.ts";
 import { demoRouter } from "./demo.mjs";
+import { mountRecoveryRoutes } from "./recovery-routes.mjs";
 import { mountPrimeRoutes, enqueuePrime, primeStatus } from "./prime.mjs";
 import {
-  cloudRecoveryJobStatus,
   managedCloudUndo,
   mutateCloudDocument,
-  planCloudRecoveryJob,
-  runCloudRecoveryJob,
 } from "./recovery.mjs";
 import { workspaceSessionCookie } from "../apps/control-plane/api/session-cookie.mjs";
 import {
@@ -16,6 +15,7 @@ import {
 } from "./integrations.mjs";
 import {
   DEFAULT_MODEL_ID,
+  DEFAULT_PROVIDER_ID,
   PROVIDER_PRESETS,
 } from "../packages/workbench/src/provider-defaults.ts";
 import { normalizeProviderConfig } from "../packages/workbench/src/provider.ts";
@@ -143,7 +143,7 @@ const queryOf = (req) =>
   new URLSearchParams(req.originalUrl.split("?")[1] ?? "");
 const preferences = async () => ({
   defaultModel: DEFAULT_MODEL_ID,
-  defaultProvider: "tokenrouter",
+  defaultProvider: DEFAULT_PROVIDER_ID,
   defaultAgent: "cloud",
   locale: "cs",
   appearance: "system",
@@ -164,7 +164,26 @@ app.patch("/api/preferences", async (req, res) => {
   });
   res.json({ preferences: value });
 });
-app.get("/api/capabilities", (req, res) => res.json(capabilities("cloud")));
+app.get("/api/capabilities", (req, res) => res.json({
+  ...capabilities("cloud"), projects: false, customAgents: false, hooks: false,
+  contextCompaction: true, recoveryJobs: true, backgroundQueue: false,
+}));
+app.post("/api/sessions/:id/compact", async (req, res) => {
+  const result = await transaction(req.params.id, async c => {
+    const session = await read(`session:${req.params.id}`, c);
+    if (!session) throw Object.assign(new Error("Session not found."), { status: 404 });
+    if (!settledSession(session))
+      throw Object.assign(new Error("Wait for a known, settled run before compacting."), { status: 409 });
+    const compacted = compactMessages(session.id, session.messages, session.messageIds);
+    session.messages = compacted.messages;
+    session.messageIds = compacted.messageIds;
+    session.compaction = compacted.result;
+    event(session, "tool", "Context compacted.", compacted.result, "context.compacted");
+    await write(`session:${session.id}`, session, c);
+    return { session: view(session), compaction: compacted.result };
+  });
+  res.json(result);
+});
 app.patch("/api/sessions/:id", async (req, res) => {
   const value = await transaction(req.params.id, async (c) => {
     const current = await read(`session:${req.params.id}`, c);
@@ -234,11 +253,14 @@ app.get("/api/sessions/:id/documents", async (req, res) => {
     ),
   });
 });
+const settledSession = session =>
+  ["idle", "cancelled", "failed"].includes(session.status) && !session.executing &&
+  !session.pending && !session.queue?.length && !session.recoveryBlock;
 app.patch("/api/sessions/:id/documents", async (req, res) => {
   const document = await transaction(req.params.id, async (c) => {
     const s = await read(`session:${req.params.id}`, c);
     if (!s) throw new Error("Session not found.");
-    if (s.status === "running") throw new Error("Wait for the agent to stop.");
+    if (!settledSession(s)) throw Object.assign(new Error("Wait for a settled run. Reconcile uncertain outcomes or branch from stopped work with retained calls."), { status: 409 });
     const saved = await read(`workspace:${s.id}`, c),
       state = saved ? decrypt(saved) : createWorkspace(),
       input = req.body ?? {};
@@ -353,6 +375,7 @@ app.post("/api/sessions/:id/branches", async (req, res) => {
         queue: [],
         pending: null,
         executing: null,
+        recoveryBlock: undefined,
         runId: null,
         events: [],
         messages: [
@@ -696,7 +719,7 @@ app.post("/api/sessions/:id/undo/:operation", async (req, res) => {
 async function applyManagedUndo(id, operationId) {
   await transaction(id, async (c) => {
     const { s, state } = await undoProof(id, operationId, c);
-    if (s.status === "running") throw new Error("Wait for the agent to stop.");
+    if (!settledSession(s)) throw Object.assign(new Error("Wait for a settled run. Uncertain outcomes require reconciliation."), { status: 409 });
     if (await managedCloudUndo(s, c, operationId)) {
       event(s, "tool", "Document Undo verified.");
       await write(`session:${s.id}`, s, c);
@@ -731,127 +754,7 @@ async function applyManagedUndo(id, operationId) {
     await write(`session:${s.id}`, s, c);
   });
 }
-const cloudJobIdentity = (value) =>
-  typeof value === "string" && /^[\w-]{1,120}$/.test(value) ? value : null;
-const cloudJobSelection = (value) => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  if (value.kind === "run" && cloudJobIdentity(value.runId))
-    return { kind: "run", runId: value.runId };
-  if (
-    value.kind === "operations" &&
-    Array.isArray(value.operationIds) &&
-    value.operationIds.length > 0 &&
-    new Set(value.operationIds).size === value.operationIds.length &&
-    value.operationIds.every(cloudJobIdentity)
-  )
-    return { kind: "operations", operationIds: [...value.operationIds] };
-  return null;
-};
-const cloudJobDigest = (value) =>
-  typeof value === "string" && /^[a-f0-9]{64}$/.test(value) ? value : null;
-const cloudRecoveryJobResponse = (payload) => {
-  if ("digest" in payload) {
-    return {
-      jobId: payload.jobId,
-      planDigest: payload.digest,
-      selection: payload.selection,
-      boundary: payload.boundary,
-      steps: payload.steps.map((step) => ({
-        operationId: step.operationId,
-        sequence: step.sequence,
-      })),
-      residuals: payload.residuals.map((residual) => ({
-        operationId: residual.operationId,
-        status: residual.status,
-      })),
-    };
-  }
-  return {
-    jobId: payload.jobId,
-    status: payload.status,
-    checkpoint: payload.checkpoint,
-    outcomes: Array.isArray(payload.outcomes)
-      ? payload.outcomes.map((outcome) => ({
-          operationId: outcome.operationId,
-          status: outcome.status,
-        }))
-      : [],
-    residuals: Array.isArray(payload.residuals)
-      ? payload.residuals.map((residual) => ({
-          operationId: residual.operationId,
-          status: residual.status,
-        }))
-      : [],
-    ...(payload.pause ? { pause: payload.pause } : {}),
-  };
-};
-app.post("/api/sessions/:id/recovery-jobs/plan", async (req, res) => {
-  const s = await read(`session:${req.params.id}`);
-  if (!s) return res.status(404).json({ message: "Session not found." });
-  const jobId = cloudJobIdentity(req.body?.jobId);
-  const selection = cloudJobSelection(req.body?.selection);
-  if (!jobId || !selection)
-    return res
-      .status(400)
-      .json({
-        message:
-          "A recovery job needs a stable ID and one exact run or operation list.",
-      });
-  try {
-    const plan = await transaction(req.params.id, async (c) =>
-      planCloudRecoveryJob({ workspace: s.workspace, jobId, selection }, s, c),
-    );
-    res.json(cloudRecoveryJobResponse(plan));
-  } catch (error) {
-    res
-      .status(400)
-      .json({ message: error?.message ?? "Recovery job planning failed." });
-  }
-});
-app.post("/api/sessions/:id/recovery-jobs/apply", async (req, res) => {
-  const s = await read(`session:${req.params.id}`);
-  if (!s) return res.status(404).json({ message: "Session not found." });
-  if (s.status === "running")
-    return res.status(409).json({ message: "Wait for the agent to stop." });
-  const jobId = cloudJobIdentity(req.body?.jobId);
-  const planDigest = cloudJobDigest(req.body?.planDigest);
-  if (!jobId || !planDigest)
-    return res
-      .status(400)
-      .json({ message: "Applying a recovery job needs its stored digest." });
-  try {
-    const result = await transaction(req.params.id, async (c) => {
-      const planned = await cloudRecoveryJobStatus(s, c, jobId);
-      if (!("digest" in planned)) return planned;
-      if (planned.digest !== planDigest)
-        throw new Error("Recovery job digest changed; re-plan the job.");
-      return runCloudRecoveryJob(s, c, jobId, async (stored) => {
-        if (stored.digest !== planDigest)
-          throw new Error("Recovery job digest changed; re-plan the job.");
-        return req.body?.approved === true;
-      });
-    });
-    res.json(cloudRecoveryJobResponse(result));
-  } catch (error) {
-    res.status(400).json({ message: error?.message ?? "Recovery job failed." });
-  }
-});
-app.get("/api/sessions/:id/recovery-jobs/:job", async (req, res) => {
-  const s = await read(`session:${req.params.id}`);
-  if (!s) return res.status(404).json({ message: "Session not found." });
-  const jobId = cloudJobIdentity(req.params.job);
-  if (!jobId) return res.status(400).json({ message: "Invalid recovery job." });
-  try {
-    const status = await transaction(req.params.id, async (c) =>
-      cloudRecoveryJobStatus(s, c, jobId),
-    );
-    res.json(cloudRecoveryJobResponse(status));
-  } catch (error) {
-    res
-      .status(404)
-      .json({ message: error?.message ?? "Recovery job not found." });
-  }
-});
+mountRecoveryRoutes(app);
 app.get("/api/sessions", async (req, res) =>
   res.json(await sessionPage(queryOf(req))),
 );
@@ -1016,7 +919,7 @@ app.post("/api/sessions", async (req, res) => {
       connected,
       mcpSession: listed.sessionId,
       upstream,
-      provider: (await read("provider")) ?? { mode: "tokenrouter" },
+      provider: (await read("provider")) ?? { mode: DEFAULT_PROVIDER_ID },
       generation: 1,
       turn: 0,
       queue: [],
@@ -1027,8 +930,8 @@ app.post("/api/sessions", async (req, res) => {
     const prior = await priorRequest(key, digest, c);
     if (prior) return prior;
     const all = await sessions();
-    if (all.some((s) => s.status === "running"))
-      throw new Error("An agent is already running.");
+    if (all.some((s) => ["running", "stopping"].includes(s.status)))
+      throw Object.assign(new Error("An agent is still running or stopping."), { status: 409 });
     await write(`session:${id}`, session, c);
     await write(`workspace:${id}`, encrypt(createWorkspace()), c);
     if (key) await write(`request:${key}`, { digest, sessionId: id }, c);
@@ -1056,19 +959,20 @@ app.post("/api/sessions/:id", async (req, res) => {
   const key = requestKey(req),
     digest = await sha256Hex(canonicalJson({ id: req.params.id, prompt }));
   const s = await transaction("cloud-capacity", async (c) => {
+    await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [req.params.id]);
     const prior = await priorRequest(key, digest, c);
     if (prior) return null;
     const current = await read(`session:${req.params.id}`, c);
     if (
       !current ||
-      current.status === "running" ||
+      !settledSession(current) ||
       current.messages.length >= 199
     )
-      throw new Error(
-        "Start a new session or wait for this session to finish.",
-      );
-    if ((await sessions()).some((s) => s.status === "running"))
-      throw new Error("An agent is already running.");
+      throw Object.assign(new Error(
+        "Wait for this run to settle. An unknown outcome requires reconciliation, not retry.",
+      ), { status: 409 });
+    if ((await sessions()).some((s) => ["running", "stopping"].includes(s.status)))
+      throw Object.assign(new Error("An agent is still running or stopping."), { status: 409 });
     current.messages.push({ role: "user", content: prompt });
     current.generation++;
     event(current, "user", prompt);
@@ -1083,11 +987,12 @@ app.post("/api/sessions/:id", async (req, res) => {
   if (s) await launch(s);
   res.status(202).json({ ok: true });
 });
-app.delete("/api/sessions/:id", async (req, res) => {
+const stopSession = async (req, res) => {
   await transaction(req.params.id, async (c) => {
     const s = await read(`session:${req.params.id}`, c);
     if (!s) throw new Error("Session not found.");
-    s.status = "cancelled";
+    if (!["running", "stopping"].includes(s.status)) return;
+    s.status = s.executing || s.primeJob?.state === "claimed" ? "stopping" : "cancelled";
     event(
       s,
       "tool",
@@ -1098,7 +1003,9 @@ app.delete("/api/sessions/:id", async (req, res) => {
     await write(`session:${s.id}`, s, c);
   });
   res.json({ ok: true });
-});
+};
+app.delete("/api/sessions/:id", stopSession);
+app.post("/api/runs/:id/stop", stopSession);
 app.get("/api/approvals", async (req, res) => {
   const rows = (
     await database().query(

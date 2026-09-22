@@ -9,7 +9,7 @@ import {
   reserveDemoBudget,
   demoFailureMessage,
 } from "./demo.mjs";
-import { DEFAULT_MODEL_ID } from "../packages/workbench/src/provider-defaults.ts";
+import { DEFAULT_MODEL_ID, NVIDIA_URL } from "../packages/workbench/src/provider-defaults.ts";
 import { ProviderRequestError } from "../packages/workbench/src/provider.ts";
 test("demo failures distinguish provider limits and authentication without leaking payloads", () => {
   assert.match(
@@ -56,14 +56,14 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
   const prior = { ...process.env };
   Object.assign(process.env, {
     VOID_PUBLIC_DEMO: "1",
-    VOID_DEMO_TOKENROUTER_KEY: "test-key",
+    VOID_DEMO_NVIDIA_KEY: "test-key",
     VOID_SECRET_KEY: "s".repeat(44),
     VOID_LOCAL_TEST: "1",
   });
   t.after(() => {
     for (const key of [
       "VOID_PUBLIC_DEMO",
-      "VOID_DEMO_TOKENROUTER_KEY",
+      "VOID_DEMO_NVIDIA_KEY",
       "VOID_SECRET_KEY",
       "VOID_LOCAL_TEST",
     ])
@@ -90,7 +90,10 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
     },
     encrypt: JSON.stringify,
     decrypt: JSON.parse,
-    provider: () => ({
+    provider: (config) => {
+      assert.equal(config.baseUrl, NVIDIA_URL);
+      assert.equal(config.apiKey, "test-key");
+      return {
       redact: (value) => value,
       complete: async (model, messages, tools) => {
         calls.push({ model, tools });
@@ -101,7 +104,7 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
           },
         };
       },
-    }),
+    }; },
   };
   const app = express();
   app.use(express.json());

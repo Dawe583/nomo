@@ -7,6 +7,7 @@ import { configureCloudTest } from "./cloud-test-config.mjs";
 
 await configureCloudTest(); // Refuse unsafe configuration before importing the store.
 process.env.VOID_GUI_DATABASE_TEST = "1";
+process.env.VOID_OAUTH_DATABASE_TEST = "1";
 process.env.VOID_RECOVERY_DATABASE_TEST = "1";
 process.env.VOID_CONTROL_TOKEN = randomBytes(32).toString("hex");
 process.env.VOID_SECRET_KEY = randomBytes(32).toString("base64");
@@ -56,9 +57,11 @@ const output = run([
   "--test-reporter=tap",
   "cloud/gui.test.mjs",
   "cloud/recovery.test.mjs",
+  "cloud/prime.test.mjs",
+  "cloud/integrations.test.mjs",
 ]);
-assert.match(output, /^# tests 2$/m, "Both target scenarios must execute");
-assert.match(output, /^# pass 2$/m);
+assert.match(output, /^# tests 4$/m, "All four SQL scenarios must execute");
+assert.match(output, /^# pass 4$/m);
 assert.match(
   output,
   /^# skipped 0$/m,
