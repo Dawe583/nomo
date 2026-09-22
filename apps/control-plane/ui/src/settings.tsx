@@ -24,7 +24,9 @@ export function Settings({
     client = useQueryClient();
   const provider = useApi("/api/provider"),
     preferences = useApi("/api/preferences"),
-    agents = useApi("/api/agents");
+    agents = useApi("/api/agents"),
+    capabilities = useApi("/api/capabilities");
+  const agentPreference = capabilities.data?.mode === "cloud" ? "defaultAgent" : "defaultAgentPreset";
   const [baseUrl, setBaseUrl] = useState(DEFAULT_PROVIDER_URL),
     [kind, setKind] = useState("compatible"),
     [key, setKey] = useState(""),
@@ -119,13 +121,15 @@ export function Settings({
               <select
                 value={
                   agents.data.agents?.some(
-                    (agent: Row) => agent.id === preferences.data?.preferences?.defaultAgentPreset,
+                    (agent: Row) => agent.id === preferences.data?.preferences?.[agentPreference],
                   )
-                    ? preferences.data?.preferences?.defaultAgentPreset
-                    : "default"
+                    ? preferences.data?.preferences?.[agentPreference]
+                    : ""
                 }
-                onChange={(e) => preference({ defaultAgentPreset: e.target.value })}
+                disabled={capabilities.isPending || preferences.isPending}
+                onChange={(e) => preference({ [agentPreference]: e.target.value })}
               >
+                <option value="" disabled>{t("Vyberte dostupného agenta", "Choose an available agent")}</option>
                 {(agents.data.agents ?? []).map((agent: Row) => (
                   <option key={agent.id} value={agent.id}>
                     {agent.name}

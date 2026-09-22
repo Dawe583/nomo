@@ -35,3 +35,8 @@ export function agentInput(values: Record<string, string>) {
     maxContextTokens,
   };
 }
+
+export function sessionAgent(selected: string | undefined, preferences: Record<string, unknown> | undefined, mode: string | undefined, catalog?: Parameters<typeof agentOptions>[0]): string | undefined {
+  const choice = selected ?? preferences?.[mode === "cloud" ? "defaultAgent" : "defaultAgentPreset"];
+  return typeof choice === "string" && agentOptions(catalog).some(agent => agent.id === choice) ? choice : undefined;
+}

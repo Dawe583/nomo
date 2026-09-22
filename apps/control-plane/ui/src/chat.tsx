@@ -1,7 +1,7 @@
 import { ProviderNotice, RunStatus } from "./workspace-status";
 import { providerStatus, runState, runCanStop, runBlocksInput } from "./workspace-state";
 import { SessionContext } from "./session-context";
-import { agentOptions } from "./agent-input";
+import { agentOptions, sessionAgent } from "./agent-input";
 import { loadDraft, saveDraft, submitDraft } from "./draft-state";
 import { CommandMenu } from "./command-menu.tsx";
 import { filterCommands, toolPrompt, type Command } from "./commands.ts";
@@ -125,6 +125,7 @@ export function Chat({
   const agents = useApi("/api/agents", !id);
   const projects = useApi("/api/projects", !id && capabilities.data?.projects === true);
   const [agent, setAgent] = useState<string>();
+  const selectedAgent = sessionAgent(agent, preferences.data?.preferences, capabilities.data?.mode, agents.data);
   const workspace = useApi("/api/sessions/" + id + "/workspace", !!id);
   const holds = useApi("/api/approvals", !!id, 3000);
   const perm = usePermissionMode(capabilities, preferences);
@@ -496,7 +497,7 @@ const draftKey =
       setQueued(false);
       return;
     }
-    if (busy || retryWait > 0 || (id && !session) || (!id && providerStatus(provider.data) !== "ready")) return;
+    if (busy || retryWait > 0 || (id && !session) || (!id && (providerStatus(provider.data) !== "ready" || !selectedAgent))) return;
     if (id && state === "unknown") {
       setError(t("Nejprve ověřte výsledek předchozího běhu.", "Check the previous run outcome before sending."));
       return;
@@ -546,7 +547,7 @@ const draftKey =
             ? {}
             : {
                 project: capabilities.data?.projects === true ? project.trim() || undefined : undefined,
-                agent: agent ?? preferences.data?.preferences?.defaultAgentPreset ?? "default",
+                agent: selectedAgent,
                 background,
               }),
           idempotencyKey,
@@ -830,7 +831,8 @@ const draftKey =
             </select>
           </label> : <p className="muted">{t("Projekty nejsou na tomto hostu dostupné.", "Projects are not available on this host.")}</p>}
           <label>{t("Agent pro tuto konverzaci", "Agent for this conversation")}
-            <select value={agent ?? preferences.data?.preferences?.defaultAgentPreset ?? "default"} onChange={event => setAgent(event.target.value)} disabled={agents.isPending || agents.data?.supported === false}>
+            <select value={selectedAgent ?? ""} onChange={event => setAgent(event.target.value)} disabled={agents.isPending || agents.data?.supported === false}>
+              <option value="" disabled>{t("Vyberte dostupného agenta", "Choose an available agent")}</option>
               {agentOptions(agents.data).map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
             </select>
           </label>
@@ -1109,7 +1111,7 @@ const draftKey =
                   busy ||
                   !draft.trim() ||
                   (!!id && !session) ||
-                  (!id && providerStatus(provider.data) !== "ready") ||
+                  (!id && (providerStatus(provider.data) !== "ready" || !selectedAgent)) ||
                   retryWait > 0
                 }
                 aria-label={t("Odeslat zprávu", "Send message")}

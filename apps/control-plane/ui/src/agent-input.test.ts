@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { agentOptions, agentInput } from "./agent-input.ts";
+import { agentOptions, agentInput, sessionAgent } from "./agent-input.ts";
 
 test("agent choices combine server presets and custom profiles without duplicate ids", () => {
   assert.deepEqual(
@@ -49,4 +49,20 @@ test("profile payload uses the explicit tool allowlist and bounded numeric field
     () => agentInput({ maxTurns: "1.5", maxContextTokens: "4096" }),
     /positive integer/,
   );
+});
+
+test("cloud agent defaults use the host execution preference, never a local preset", () => {
+  const catalog = { agents: [{ id: "cloud", name: "Cloud" }, { id: "prime-agent", name: "Prime" }] };
+  const preferences = { defaultAgent: "prime-agent", defaultAgentPreset: "default" };
+  assert.equal(sessionAgent(undefined, preferences, "cloud", catalog), "prime-agent");
+  assert.equal(sessionAgent("cloud", preferences, "cloud", catalog), "cloud");
+  assert.equal(sessionAgent("unavailable", preferences, "cloud", catalog), undefined);
+  assert.equal(sessionAgent(undefined, { defaultAgent: "missing" }, "cloud", catalog), undefined);
+});
+
+test("local agent defaults preserve presets and explicit custom profiles", () => {
+  const catalog = { agents: [{ id: "default", name: "Default" }], profiles: [{ id: "custom", name: "Custom" }] };
+  assert.equal(sessionAgent(undefined, { defaultAgent: "cloud", defaultAgentPreset: "default" }, "local", catalog), "default");
+  assert.equal(sessionAgent("custom", { defaultAgentPreset: "default" }, "local", catalog), "custom");
+  assert.equal(sessionAgent(undefined, {}, "local", catalog), undefined);
 });
