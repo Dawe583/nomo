@@ -443,6 +443,7 @@ export class WorkspaceTui {
   documentPath?: string;
   projectId?: string;
   agentId?: string;
+  lastRecoveryJob?: { sessionId: string; jobId: string };
   model = "";
   filter = "";
   compactTools = true;
@@ -451,6 +452,7 @@ export class WorkspaceTui {
   colorOverride?: boolean;
   motionOverride?: boolean;
   queuedPrompt: string | null = null;
+  queuedPromptPaused = false;
   notice = "Tab: panels | i: type | /help: commands";
   detail?: string[];
   confirmation?: Confirmation;
@@ -529,6 +531,7 @@ export class WorkspaceTui {
           : "Normal mode. Every change and approval needs your key.";
   }
   queuePrompt(value: string | undefined) {
+    this.queuedPromptPaused = false;
     if (value === undefined) {
       this.queuedPrompt = null;
       this.notice = "Queued prompt cancelled.";
@@ -538,7 +541,26 @@ export class WorkspaceTui {
     this.notice =
       "Run is active. The prompt is queued and sends when it stops.";
   }
+  private queueBlockedByRuntime() {
+    return (
+      this.workbench.running() ||
+      this.workbench
+        .runs()
+        .some(
+          (run) =>
+            run.sessionId === this.sessionId &&
+            ["unknown", "stopping", "paused"].includes(run.state),
+        )
+    );
+  }
   takeQueued(): string | null {
+    if (
+      !this.queuedPrompt ||
+      this.confirmation ||
+      this.queuedPromptPaused ||
+      this.queueBlockedByRuntime()
+    )
+      return null;
     const next = this.queuedPrompt;
     this.queuedPrompt = null;
     return next;
@@ -594,12 +616,7 @@ export class WorkspaceTui {
         docs = 0;
       }
     }
-    const latest = events.at(-1);
-    const contextMessages =
-      latest?.type === "context.compacted" &&
-      typeof latest.payload?.afterMessages === "number"
-        ? latest.payload.afterMessages
-        : null;
+    const contextMessages = session?.contextMessages ?? null;
     return { messages, contextMessages, tokens: known ? tokens : null, docs };
   }
   private redactSecrets(value: string) {
@@ -756,11 +773,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     ];
   }
   statusLines() {
-    const ctx = this.session() ? this.contextNumbers() : null;
+    const session = this.session();
+    const ctx = session ? this.contextNumbers() : null;
+    const runs = this.workbench
+      .runs()
+      .filter((run) => run.sessionId === this.sessionId);
+    const run =
+      runs.find((item) => item.runId === session?.runId) ?? runs.at(-1);
     return [
       ...this.providerLines(),
       `model: ${this.session()?.model || this.model || "-"} | ${modeAuthorityLabel(this.mode)}`,
-      `Run: ${this.workbench.running() ? "running or settling" : "idle"}`,
+      `Run: ${run?.state ?? "unavailable"}${run?.reconcileRequired ? " | reconciliation required" : ""}`,
       ctx
         ? `Context messages: ${ctx.contextMessages ?? "unknown"} | transcript: ${ctx.messages} | ` +
           `cumulative provider tokens: ${ctx.tokens ?? "unknown"} | cost: unknown`
@@ -768,22 +791,31 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       `Conversations: ${this.workbench.list().length} | ` +
         `Pending: ${this.workbench.pending().length + this.proxy.holds.length}`,
       this.queuedPrompt
-        ? "One prompt is queued for the end of the run."
+        ? this.queuedPromptPaused
+          ? "One prompt is paused after recovery. Inspect /queue before resuming."
+          : "One prompt is queued for the end of the run."
         : "No queued prompt.",
     ];
   }
   agentsLines() {
+    const catalog = this.workbench.agents();
     const rows = [...this.workbench.list()].reverse();
     return [
       "AGENTS, runtime catalog",
       `Selected for new conversations: ${this.agentId ?? "runtime default"}`,
-      ...this.workbench
-        .agents()
-        .agents.map(
-          (agent) =>
-            `${agent.id === this.agentId ? ">" : " "} ${agent.id}: ${agent.name} / ${agent.description}`,
-        ),
+      ...catalog.agents.map(
+        (agent) =>
+          `${agent.id === this.agentId ? ">" : " "} ${agent.id}: ${agent.name} / ${agent.description}`,
+      ),
       "/agent ID selects a profile. Existing conversations keep their snapshot.",
+      "/agent-file path.json reviews a custom profile before saving.",
+      "File fields: id, name, systemPrompt, allowedTools, policyProfile, maxTurns, maxContextTokens.",
+      `Operator policy profiles: ${catalog.policyProfiles.join(", ") || "none"}`,
+      ...catalog.profiles.flatMap((profile) => [
+        `Profile ${profile.id}: policy ${profile.policyProfile}, max turns ${profile.maxTurns}, max context tokens ${profile.maxContextTokens}`,
+        `Allowed tools: ${profile.allowedTools.join(", ") || "none"}`,
+      ]),
+      "Prompt text does not grant tool or policy authority.",
       "",
       "CONVERSATIONS",
       ...(rows.length
@@ -809,7 +841,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       `Conversations: ${views.length} | Stored events: ${events}`,
       `Storage: ${this.env.VOID_DATA_DIR ?? "default workbench directory"}`,
       "Drafts persist per conversation between runs.",
-      "The free model is never replaced with a paid model.",
+      "Conversations retain their provider/model snapshot. Unreported cost stays unknown.",
     ];
   }
   session() {
@@ -1039,6 +1071,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     this.scroll = 0;
   }
   async prepareUndo(id?: string) {
+    this.queuedPromptPaused = true;
     const selected = this.items()[this.selected];
     if (this.tab === "ledger" && selected?.operationId && !id) {
       this.useSession(selected.sessionId!);
@@ -1099,6 +1132,119 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.notice = "Undo completed and signed. History is preserved.";
       },
     };
+    this.scroll = 0;
+  }
+  async prepareRecovery(
+    selection: Parameters<Workbench["planRecoveryJob"]>[1]["selection"],
+  ) {
+    if (!this.sessionId) throw Error("Select a conversation for recovery.");
+    this.queuedPromptPaused = true;
+    const sessionId = this.sessionId;
+    this.confirmation = undefined;
+    const plan = await this.workbench.planRecoveryJob(sessionId, {
+      jobId: randomUUID(),
+      selection,
+    });
+    this.lastRecoveryJob = { sessionId, jobId: plan.jobId };
+    const lines = [
+      `Job: ${plan.jobId}`,
+      `Plan digest: ${plan.planDigest}`,
+      `Conversation: ${sessionId}`,
+      ...(plan.selection.kind === "run"
+        ? [`Requested run: ${plan.selection.runId}`]
+        : []),
+      `Boundary sequence: ${plan.boundary.sequence}`,
+      `Boundary digest: ${plan.boundary.digest}`,
+      "",
+      "Server-verified recovery order:",
+      ...plan.steps.flatMap((step) => [
+        `#${step.sequence} ${step.operationId}`,
+        `Scope: ${step.scope}`,
+        ...step.resources.map((resource) => `Resource: ${resource}`),
+      ]),
+      "",
+      "Residuals:",
+      ...json(plan.residuals),
+      "",
+      "Changed resources pause recovery. No automatic retry or historical tool replay.",
+      `/recovery ${plan.jobId} refreshes status without applying anything.`,
+    ];
+    this.detail = ["RECOVERY PREVIEW", ...lines];
+    this.scroll = 0;
+    if (!plan.steps.length) {
+      this.notice =
+        "No recoverable steps. Review residuals; no change was applied.";
+      return;
+    }
+    this.confirmation = {
+      title: `RECOVER ${plan.steps.length} OPERATIONS?`,
+      lines,
+      apply: async () => {
+        this.confirmation = undefined;
+        const current = await this.workbench.recoveryJobStatus(
+          sessionId,
+          plan.jobId,
+        );
+        if (canonicalJson(current) !== canonicalJson(plan)) {
+          this.detail = [
+            "RECOVERY PREVIEW CHANGED",
+            ...json(current),
+            `/recovery ${plan.jobId} refreshes status only. Request /rewind again for a new review.`,
+          ];
+          throw Error(
+            "The recovery preview changed. Refresh before another action.",
+          );
+        }
+        let result;
+        try {
+          result = await this.workbench.applyRecoveryJob(
+            sessionId,
+            {
+              jobId: plan.jobId,
+              planDigest: plan.planDigest,
+              approved: true,
+            },
+            "tui-operator",
+          );
+        } catch (error) {
+          this.detail = [
+            "RECOVERY OUTCOME UNCONFIRMED",
+            message(error),
+            "",
+            ...lines,
+            "Refresh status and reconcile before any further action.",
+          ];
+          throw error;
+        }
+        this.detail = [
+          "RECOVERY RESULT",
+          ...json(result),
+          "",
+          "No automatic retry. Unknown outcomes require reconciliation.",
+          `/recovery ${plan.jobId} refreshes status only.`,
+          "Request /rewind with explicit operation IDs for a new review.",
+        ];
+        this.notice = `Recovery ${result.status}. Review outcomes and residuals before any further action.`;
+      },
+    };
+  }
+  async showRecovery(jobId?: string) {
+    const sessionId = jobId ? this.sessionId : this.lastRecoveryJob?.sessionId;
+    jobId ||= this.lastRecoveryJob?.jobId;
+    if (!sessionId || !jobId)
+      throw Error("Select a conversation and use /recovery job-ID.");
+    this.confirmation = undefined;
+    this.queuedPromptPaused = true;
+    const result = await this.workbench.recoveryJobStatus(sessionId, jobId);
+    this.useSession(sessionId);
+    this.lastRecoveryJob = { sessionId, jobId };
+    this.detail = [
+      "RECOVERY STATUS",
+      ...json(result),
+      "",
+      "Read-only refresh. No automatic retry. Unknown outcomes require reconciliation.",
+      "Request /rewind with explicit operation IDs for a new review.",
+    ];
     this.scroll = 0;
   }
   /** Toggle one diff hunk in the open review. Number keys drive this;
@@ -1416,6 +1562,28 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "queue") {
+      if (arg && arg !== "resume") throw Error("/queue [resume]");
+      if (arg === "resume") {
+        if (this.confirmation)
+          throw Error(
+            "Finish or cancel the review before resuming queued text.",
+          );
+        if (this.queueBlockedByRuntime())
+          throw Error(
+            "The runtime is not ready. Reconcile unknown or stopping work before resuming queued text.",
+          );
+        if (this.lastRecoveryJob) {
+          const status = await this.workbench.recoveryJobStatus(
+            this.lastRecoveryJob.sessionId,
+            this.lastRecoveryJob.jobId,
+          );
+          if ("status" in status && status.status === "unknown")
+            throw Error(
+              "Recovery outcome is unknown. Reconcile it before resuming queued text.",
+            );
+        }
+        this.queuedPromptPaused = false;
+      }
       this.choose("overview");
       const queued = this.queuedPrompt;
       this.detail = [
@@ -1423,7 +1591,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         queued ? `Pending: ${queued}` : "No queued prompt.",
         "",
-        "The queued prompt will be sent at the end of the current run.",
+        this.queuedPromptPaused
+          ? "Paused after recovery. Reconcile the outcome, then use /queue resume explicitly."
+          : "The queued prompt waits for runtime dispatch to be allowed and for all reviews to close.",
         "Use /cancel to cancel the queued prompt.",
         "",
         ...(queued
@@ -1498,6 +1668,55 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
+    if (cmd === "agent-file" || cmd === "hook-file") {
+      const catalog = this.workbench.agents();
+      if (cmd === "hook-file" && !catalog.hooksSupported)
+        throw Error(
+          "Hook execution is unsupported on this host. No operator allowlist is enabled.",
+        );
+      if (!arg) throw Error(`/${cmd} path.json`);
+      const input = JSON.parse(await readFile(resolve(arg), "utf8"));
+      this.confirmation = {
+        title: cmd === "agent-file" ? "SAVE AGENT PROFILE?" : "SAVE HOOK?",
+        lines: [
+          ...json(input),
+          "",
+          "The Workbench validates tool access, policy and operator allowlists.",
+          "Existing conversations keep their profile snapshot.",
+        ],
+        apply: async () => {
+          this.confirmation = undefined;
+          if (cmd === "agent-file") {
+            const profile = this.workbench.upsertAgent(input);
+            this.agentId = profile.id;
+            this.detail = ["AGENT PROFILE SAVED", ...json(profile)];
+            this.notice = "Profile selected for new conversations only.";
+          } else {
+            const hook = this.workbench.upsertHook(input);
+            this.detail = ["HOOK SAVED", ...json(hook)];
+            this.notice = "Hook configuration saved by the Workbench.";
+          }
+        },
+      };
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "hooks") {
+      const catalog = this.workbench.agents();
+      this.detail = [
+        "HOOKS",
+        catalog.hooksSupported
+          ? "Hooks are validated against the runtime operator allowlist."
+          : "Hook execution is unsupported on this host. No operator allowlist is enabled.",
+        `Allowed commands: ${catalog.hookCommands.join(", ") || "none"}`,
+        ...json(catalog.hooks),
+        ...(catalog.hooksSupported
+          ? ["/hook-file path.json reviews a hook before saving."]
+          : []),
+      ];
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "agents" || cmd === "agent") {
       if (cmd === "agent" && arg) {
         const agent = this.workbench
@@ -1526,12 +1745,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
-    if (
-      cmd === "hooks" ||
-      cmd === "vim" ||
-      cmd === "terminal-setup" ||
-      cmd === "output-style"
-    )
+    if (cmd === "vim" || cmd === "terminal-setup" || cmd === "output-style")
       throw Error(
         `/${cmd} has no VOID equivalent. Use /expand for tool output style.`,
       );
@@ -1549,9 +1763,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.choose("chat");
       return;
     }
+    if (cmd === "recovery") {
+      await this.showRecovery(arg || undefined);
+      return;
+    }
     if (cmd === "rewind") {
       if (arg) {
-        await this.prepareUndo(arg);
+        const ids = arg.split(/\s+/);
+        if (ids[0] === "run") {
+          if (ids.length !== 2) throw Error("/rewind run exact-run-ID");
+          await this.prepareRecovery({ kind: "run", runId: ids[1]! });
+        } else if (ids.length > 1) {
+          await this.prepareRecovery({ kind: "operations", operationIds: ids });
+        } else await this.prepareUndo(arg);
         return;
       }
       const sessionId = this.sessionId;
@@ -2099,7 +2323,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         ...this.providerLines(),
         `Model: ${this.model || "-"}`,
-        `Run: ${this.workbench.running() ? "running or settling" : "idle"}`,
+        `Active work: ${this.workbench.running() ? "running or settling" : "none"}`,
         `Conversations: ${this.workbench.list().length} | Documents: ${this.workbench.documentsList().length} | Pending approvals: ${this.workbench.pending().length + this.proxy.holds.length}`,
         `Ledger: ${[...this.proofs.values()].reduce((n, p) => n + p.length, 0)} managed + ${[...this.proxy.entries.values()].reduce((n, p) => n + p.length, 0)} proxy entries`,
         `Proxy signatures: ${this.proxy.entries.size ? (this.proxy.signed ? "verified" : "NOT VERIFIED (integrity only)") : "no entries"} | Errors: ${this.proofErrors.size + this.proxy.errors.length}`,
@@ -2296,7 +2520,10 @@ export const TUI_COMMANDS = [
   ["/sessions", "Open conversation history"],
   ["/resume", "Resume a conversation"],
   ["/runs", "Run states, progress and reconciliation"],
-  ["/rewind", "Review a recoverable checkpoint"],
+  ["/rewind", "Review operation IDs or run ID for recovery"],
+  ["/recovery", "Refresh a recovery job without applying it"],
+  ["/queue", "Inspect queued text or /queue resume when runtime allows"],
+  ["/cancel", "Cancel queued text without stopping a run"],
   ["/documents", "Documents and revisions"],
   ["/context", "Managed documents and context"],
   ["/ledger", "Signed operations"],
@@ -2312,6 +2539,9 @@ export const TUI_COMMANDS = [
   ["/todos", "Checklist from agent output"],
   ["/agents", "Runtime profiles, conversations and connectors"],
   ["/agent", "Select a profile for new conversations"],
+  ["/agent-file", "Review and save a custom profile from path.json"],
+  ["/hooks", "Runtime hook support and operator allowlist"],
+  ["/hook-file", "Review a hook if the host supports execution"],
   ["/projects", "List persisted projects"],
   ["/project", "Select a project ID or none for new conversations"],
   ["/project-file", "Review and save a project from path.json"],
@@ -2740,7 +2970,9 @@ export function renderWorkspace(
     : "no session";
   const holdBadge =
     holds > 0 ? ` | ◉ ${holds} approval${holds === 1 ? "" : "s"}` : "";
-  const queuedBadge = ui.queuedPrompt ? " | +1 queued" : "";
+  const queuedBadge = ui.queuedPrompt
+    ? ` | +1 ${ui.queuedPromptPaused ? "paused" : "queued"}`
+    : "";
   // The tail (mode, tokens, compact) must survive narrow frames, so a long
   // model name shrinks first instead of truncating the status fields.
   let modelShown = fit(model, 20);
@@ -2921,9 +3153,12 @@ const HELP = [
   "Navigation: n new chat; u preview Undo; a/d approvals; q quit.",
   "",
   "/new [prompt] | /clear | /open number-or-ID | /resume [number-or-ID]",
-  "/status | /cost | /context | /compact | /rewind [operation-ID]",
+  "/status | /cost | /context | /compact | /rewind [operation-IDs]",
+  "/rewind run exact-run-ID | /recovery [job-ID] (read-only status)",
+  "/queue [resume] | /cancel (queued text)",
   "/todos | /agents | /agent ID | /memory | /permissions | /mcp | /sessions",
   "/projects | /project ID|none | /project-file path.json",
+  "/agent-file path.json | /hooks | /hook-file path.json (if supported)",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
   "/models | /model exact-ID | /connect opencode:zen | /login | /logout",
   "/providers lists model providers incl. local open models",

@@ -74,6 +74,8 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   ]);
   await ui.command("/runs");
   assert.match(ui.items()[0]!.label, /unknown.*reconciliation required/);
+  await ui.command("/status");
+  assert.match(ui.lines().join("\n"), /Run: unknown.*reconciliation required/);
   for (const width of [40, 80, 120, 200]) {
     const lines = stripAnsi(renderWorkspace(ui, width, 24)).split("\n");
     assert.ok(lines.length <= 24);
@@ -158,6 +160,8 @@ test("compaction requires a fresh confirmed review, changes context and preserve
       (event) => event.kind === "user" || event.kind === "assistant",
     );
   const before = app.get(id)!.events.length;
+  const beforeContext = app.get(id)!.contextMessages!;
+  assert.equal(ui.contextNumbers().contextMessages, beforeContext);
   await ui.command("/compact");
   assert.match(ui.confirmation!.title, /COMPACT CONTEXT/);
   assert.equal(app.get(id)!.events.length, before, "review is read only");
@@ -165,6 +169,11 @@ test("compaction requires a fresh confirmed review, changes context and preserve
   assert.equal(ui.confirmation, undefined);
   assert.match(ui.lines().join("\n"), /Omitted messages: [1-9]/);
   assert.match(ui.lines().join("\n"), /Retained message IDs:/);
+  assert.equal(
+    ui.contextNumbers().contextMessages,
+    app.get(id)!.contextMessages,
+  );
+  assert.ok(ui.contextNumbers().contextMessages! < beforeContext);
   assert.deepEqual(
     app
       .get(id)!
@@ -220,4 +229,246 @@ test("stale Undo clears apply authority and names the changed resource before re
   await ui.prepareUndo();
   await ui.confirm();
   assert.equal(app.workspace(session.id).files["draft.md"], "first");
+});
+
+test("custom agent files use Workbench validation and persist without broadening existing sessions", async (t) => {
+  const { app, env, ui, restart } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  await ui.initialize();
+  await ui.command("original agent");
+  await app.settled();
+  const original = ui.sessionId!;
+  const originalAgent = app.get(original)!.agent;
+  const profile = {
+    id: "notes-only",
+    name: "Notes only",
+    systemPrompt: "Summarize notes.",
+    allowedTools: ["void_workspace_read"],
+    policyProfile: "default",
+    maxTurns: 2,
+    maxContextTokens: 4000,
+  };
+  const file = join(env.VOID_DATA_DIR, "profile.json");
+  await writeFile(file, JSON.stringify(profile));
+  await ui.command(`/agent-file ${file}`);
+  assert.match(ui.confirmation!.title, /SAVE AGENT/);
+  assert.equal(app.agents().profiles.length, 0);
+  await ui.confirm();
+  assert.deepEqual(app.agents().profiles[0], profile);
+  assert.equal(app.get(original)!.agent, originalAgent);
+  await ui.command("/new use notes profile");
+  await app.settled();
+  assert.equal(app.get(ui.sessionId!)!.agent, profile.id);
+  await writeFile(
+    file,
+    JSON.stringify({ ...profile, policyProfile: "unrestricted" }),
+  );
+  await ui.command(`/agent-file ${file}`);
+  await assert.rejects(ui.confirm(), /policy profile/i);
+  assert.equal(ui.confirmation, undefined);
+  assert.deepEqual(app.agents().profiles[0], profile);
+  const restored = await restart();
+  assert.deepEqual(restored.agents().profiles[0], profile);
+});
+
+test("hook capability stays visibly unsupported without an operator allowlist", async (t) => {
+  const { app, ui } = await fixture(t);
+  await ui.command("/hooks");
+  assert.match(ui.lines().join("\n"), /unsupported/i);
+  assert.match(ui.lines().join("\n"), /operator allowlist/i);
+  assert.equal(ui.confirmation, undefined);
+  await assert.rejects(ui.command("/hook-file missing.json"), /unsupported/i);
+  assert.equal(app.agents().hooks.length, 0);
+});
+
+test("multioperation recovery previews signed order and reports durable results without replay", async (t) => {
+  const { app, env, ui, restart } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Recover documents", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "recovery.md",
+    content: "first",
+    expectedRevision: null,
+  });
+  await app.editDocument(session.id, {
+    path: "recovery.md",
+    content: "second",
+    expectedRevision: app.document(session.id, "recovery.md").revision,
+  });
+  const operations = app.workspace(session.id).operations.map((op) => op.id);
+  await ui.initialize();
+  ui.sessionId = session.id;
+  await ui.command(`/rewind ${operations.join(" ")}`);
+  assert.equal(app.workspace(session.id).files["recovery.md"], "second");
+  assert.match(ui.confirmation!.title, /RECOVER 2 OPERATIONS/);
+  const preview = ui.lines().join("\n");
+  assert.ok(
+    preview.indexOf(operations[1]!) < preview.indexOf(operations[0]!),
+    "server reverse order is preserved",
+  );
+  assert.match(preview, /recovery.md/);
+  assert.match(preview, /Boundary sequence: [0-9]+/);
+  assert.doesNotMatch(preview, /\[object Object\]/);
+  const job = ui.lastRecoveryJob!;
+  assert.ok(job.jobId);
+  await ui.confirm();
+  assert.equal(ui.confirmation, undefined);
+  assert.match(ui.lines().join("\n"), /restored/);
+  assert.equal(app.workspace(session.id).files["recovery.md"], undefined);
+  const count = app.workspace(session.id).operations.length;
+  await ui.confirm();
+  await ui.command(`/recovery ${job.jobId}`);
+  assert.equal(app.workspace(session.id).operations.length, count);
+  assert.equal((await app.ledger(session.workspace))!.result.ok, true);
+  const restored = await restart();
+  const reopened = new WorkspaceTui(restored, env);
+  await reopened.initialize();
+  reopened.sessionId = session.id;
+  await reopened.command(`/recovery ${job.jobId}`);
+  assert.match(reopened.lines().join("\n"), /restored/);
+  assert.equal(restored.workspace(session.id).operations.length, count);
+});
+
+test("recovery conflict has no remaining apply action and status refresh never retries it", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Conflict", "fixture");
+  await app.settled();
+  for (const content of ["first", "second"]) {
+    await app.editDocument(session.id, {
+      path: "conflict.md",
+      content,
+      expectedRevision: app.document(session.id, "conflict.md").revision,
+    });
+  }
+  const operations = app.workspace(session.id).operations.map((op) => op.id);
+  await ui.initialize();
+  ui.sessionId = session.id;
+  await ui.command(`/rewind ${operations.join(" ")}`);
+  await app.editDocument(session.id, {
+    path: "conflict.md",
+    content: "newest",
+    expectedRevision: app.document(session.id, "conflict.md").revision,
+  });
+  await assert.rejects(ui.confirm(), /stale/);
+  assert.equal(ui.confirmation, undefined);
+  assert.match(ui.lines().join("\n"), /conflict.md/);
+  assert.match(ui.lines().join("\n"), /No automatic retry/);
+  const count = app.workspace(session.id).operations.length;
+  await ui.command("/recovery");
+  await ui.confirm();
+  assert.equal(app.workspace(session.id).operations.length, count);
+  assert.equal(app.workspace(session.id).files["conflict.md"], "newest");
+});
+
+test("unknown recovery status stays read only at every supported width", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Unknown recovery", "fixture");
+  await app.settled();
+  await ui.initialize();
+  ui.sessionId = session.id;
+  t.mock.method(app, "recoveryJobStatus", async () => ({
+    jobId: "uncertain",
+    status: "unknown",
+    checkpoint: 0,
+    outcomes: [],
+    residuals: [{ operationId: "unconfirmed-operation", status: "unknown" }],
+  }));
+  const apply = t.mock.method(app, "applyRecoveryJob", async () => {
+    throw Error("must not apply");
+  });
+  await ui.command("/recovery uncertain");
+  assert.equal(ui.confirmation, undefined);
+  assert.match(ui.lines().join("\n"), /unknown/);
+  assert.match(ui.lines().join("\n"), /require reconciliation/);
+  await ui.confirm();
+  assert.equal(apply.mock.callCount(), 0);
+  ui.queuePrompt("retain while recovery is unknown");
+  await ui.command("/recovery uncertain");
+  await assert.rejects(
+    ui.command("/queue resume"),
+    /unknown.*reconcile|reconcile.*unknown/i,
+  );
+  assert.equal(ui.queuedPrompt, "retain while recovery is unknown");
+  ui.queuePrompt("retain while status is unavailable");
+  t.mock.method(app, "recoveryJobStatus", async () => {
+    throw Error("status unavailable");
+  });
+  await assert.rejects(ui.command("/recovery uncertain"), /status unavailable/);
+  assert.equal(ui.takeQueued(), null);
+  assert.equal(ui.queuedPrompt, "retain while status is unavailable");
+  for (const width of [40, 80, 120, 200]) {
+    const lines = stripAnsi(renderWorkspace(ui, width, 24)).split("\n");
+    assert.ok(lines.length <= 24);
+    assert.ok(lines.every((line) => visibleLength(line) <= width));
+  }
+});
+
+test("queued text cannot drain through a confirmation", async (t) => {
+  const { ui } = await fixture(t);
+  ui.queuePrompt("keep this text");
+  ui.confirmation = { title: "REVIEW", lines: [], apply: async () => {} };
+  assert.equal(ui.takeQueued(), null);
+  assert.equal(ui.queuedPrompt, "keep this text");
+  ui.confirmation = undefined;
+  assert.equal(ui.takeQueued(), "keep this text");
+});
+
+test("recovery holds queued text until explicit resume and never overrides unknown or stopping", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Queue recovery", "fixture");
+  await app.settled();
+  for (const path of ["first.md", "second.md"])
+    await app.editDocument(session.id, {
+      path,
+      content: "edit",
+      expectedRevision: null,
+    });
+  await ui.initialize();
+  ui.sessionId = session.id;
+  ui.queuePrompt("later follow-up");
+  await ui.command(
+    `/rewind ${app
+      .workspace(session.id)
+      .operations.map((op) => op.id)
+      .join(" ")}`,
+  );
+  assert.equal(ui.takeQueued(), null);
+  ui.reject();
+  assert.equal(
+    ui.takeQueued(),
+    null,
+    "cancelling the review does not resume old intent",
+  );
+  await ui.command("/queue");
+  assert.match(ui.lines().join("\n"), /paused/i);
+  const run = app.runs()[0]!;
+  let state = "unknown";
+  const runs = t.mock.method(app, "runs", () => [{ ...run, state }]);
+  await assert.rejects(ui.command("/queue resume"), /runtime|reconcile/i);
+  assert.equal(ui.queuedPrompt, "later follow-up");
+  state = "stopping";
+  await assert.rejects(ui.command("/queue resume"), /runtime|reconcile/i);
+  assert.equal(ui.takeQueued(), null);
+  runs.mock.restore();
+  await ui.command("/queue resume");
+  assert.equal(ui.takeQueued(), "later follow-up");
 });

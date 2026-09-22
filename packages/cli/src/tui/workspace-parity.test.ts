@@ -355,7 +355,7 @@ test("provider only commands reject what VOID cannot do", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, full);
-  for (const cmd of ["/hooks", "/vim", "/terminal-setup", "/output-style"])
+  for (const cmd of ["/vim", "/terminal-setup", "/output-style"])
     await assert.rejects(ui.command(cmd), /no VOID equivalent/);
 });
 

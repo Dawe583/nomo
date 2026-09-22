@@ -351,6 +351,7 @@ export async function runWorkspaceTui(
     sessionId?: string;
     projectId?: string;
     agentId?: string;
+    lastRecoveryJob?: { sessionId: string; jobId: string };
     model?: string;
     compactTools?: boolean;
     mode?: string;
@@ -376,6 +377,8 @@ export async function runWorkspaceTui(
     ui.projectId = saved?.projectId;
   if (app.agents().agents.some((item) => item.id === saved?.agentId))
     ui.agentId = saved?.agentId;
+  if (saved?.lastRecoveryJob && app.get(saved.lastRecoveryJob.sessionId))
+    ui.lastRecoveryJob = saved.lastRecoveryJob;
   input.set(drafts[ui.sessionId ?? "new"] ?? "");
   const interactive =
     process.stdin.isTTY &&
@@ -425,6 +428,7 @@ export async function runWorkspaceTui(
       sessionId: ui.sessionId,
       projectId: ui.projectId,
       agentId: ui.agentId,
+      lastRecoveryJob: ui.lastRecoveryJob,
       model: ui.model,
       compactTools: ui.compactTools,
       mode: ui.mode,
@@ -472,9 +476,8 @@ export async function runWorkspaceTui(
       try {
         await fn();
         await ui.refresh();
-        const queued = ui.queuedPrompt;
-        if (queued && !app.running()) {
-          ui.takeQueued();
+        const queued = ui.takeQueued();
+        if (queued) {
           try {
             await ui.command(queued);
             await ui.refresh();
