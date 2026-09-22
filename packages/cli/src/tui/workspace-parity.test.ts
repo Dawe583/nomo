@@ -305,7 +305,7 @@ test("/context /cost /status report retained numbers, cost stays unknown", async
   );
 });
 
-test("/compact is an explicit local fallback, never a provider claim", async (t) => {
+test("/compact reports a confirmed no-op without claiming provider summarization", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-compact-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -317,10 +317,12 @@ test("/compact is an explicit local fallback, never a provider claim", async (t)
   await ui.command("remember this request");
   await app.settled();
   await ui.command("/compact");
-  const shown = ui.detail?.join("\n") ?? "";
-  assert.match(shown, /local fallback/);
-  assert.match(shown, /remember this request/);
-  assert.match(ui.notice, /local summary/i);
+  assert.match(ui.confirmation!.lines.join("\n"), /No provider summarization/);
+  await ui.confirm();
+  const shown = ui.lines().join("\n");
+  assert.match(shown, /Omitted messages: 0/);
+  assert.match(shown, /No messages needed compaction/);
+  assert.match(ui.notice, /Context unchanged/);
 });
 
 test("/agents /config /memory read live data without secrets", async (t) => {

@@ -27,7 +27,6 @@ import { runInitCommand } from "../init.ts";
 import { runConformanceCommand } from "../conformance.ts";
 import {
   fit,
-  meter,
   pad,
   renderHunkSelection,
   sanitizeText,
@@ -442,6 +441,8 @@ export class WorkspaceTui {
   promptRows: number[] = [];
   sessionId?: string;
   documentPath?: string;
+  projectId?: string;
+  agentId?: string;
   model = "";
   filter = "";
   compactTools = true;
@@ -564,7 +565,7 @@ export class WorkspaceTui {
       ...new Set(this.workbench.documentsList().map((item) => item.path)),
     ];
   }
-  /** Message and token counts from retained events, never estimated. */
+  /** Transcript size and cumulative usage are not the model's context window. */
   contextNumbers() {
     const session = this.session();
     const events = session?.events ?? [];
@@ -593,7 +594,13 @@ export class WorkspaceTui {
         docs = 0;
       }
     }
-    return { messages, limit: 199, tokens: known ? tokens : null, docs };
+    const latest = events.at(-1);
+    const contextMessages =
+      latest?.type === "context.compacted" &&
+      typeof latest.payload?.afterMessages === "number"
+        ? latest.payload.afterMessages
+        : null;
+    return { messages, contextMessages, tokens: known ? tokens : null, docs };
   }
   private redactSecrets(value: string) {
     let out = value;
@@ -679,35 +686,41 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     );
     return { expanded, missing };
   }
-  /** Local extractive summary; the provider path has no contract yet. */
-  compactLines() {
+  prepareCompact() {
     const session = this.session();
-    if (!session) throw Error("Select a conversation to summarize.");
-    const turns = (session.events ?? []).filter(
-      (event) => event.kind === "user" || event.kind === "assistant",
-    );
-    const first = turns.find((event) => event.kind === "user");
-    const last = [...turns]
-      .reverse()
-      .find((event) => event.kind === "assistant");
-    const ctx = this.contextNumbers();
-    const todos = extractTodos(session.events ?? []);
-    const open = todos.filter((item) => !item.done).length;
-    return [
-      `COMPACT SUMMARY, local fallback: ${session.title ?? session.id}`,
-      "Provider summarization is not part of the Workbench contract,",
-      "so this summary is built from retained events only.",
-      "",
-      `Messages: ${ctx.messages} of ${ctx.limit} | ` +
-        `Tokens: ${ctx.tokens ?? "unknown"} | Documents: ${ctx.docs}`,
-      `Open checklist items: ${open} of ${todos.length}`,
-      "",
-      `First request: ${(first?.text ?? "(none)").slice(0, 300)}`,
-      "",
-      `Latest answer: ${(last?.text ?? "(none)").slice(0, 500)}`,
-      "",
-      "Use /branch to continue from an earlier message in a safe copy.",
-    ];
+    if (!session) throw Error("Select a conversation to compact.");
+    const lastSeq = session.events.at(-1)?.seq;
+    this.confirmation = {
+      title: `COMPACT CONTEXT ${session.title ?? session.id}?`,
+      lines: [
+        "This changes the context sent to the model on the next turn.",
+        "The Workbench chooses which messages to retain and summarizes older context.",
+        "The complete transcript, documents and signed ledger remain unchanged.",
+        "Token savings are unknown. No provider summarization is promised.",
+      ],
+      apply: async () => {
+        this.confirmation = undefined;
+        if (this.workbench.get(session.id)?.events.at(-1)?.seq !== lastSeq)
+          throw Error("The conversation changed. Request /compact again.");
+        const result = this.workbench.compact(session.id);
+        this.detail = [
+          "CONTEXT COMPACTION RESULT",
+          `Omitted messages: ${result.omittedMessageCount}`,
+          `Created: ${result.createdAt}`,
+          "Retained message IDs:",
+          ...result.retainedMessageIds,
+          "",
+          "Summary:",
+          result.summary || "No messages needed compaction.",
+          "",
+          "Transcript and ledger preserved. /context shows reported counts.",
+        ];
+        this.notice = result.omittedMessageCount
+          ? "Context compacted. The next turn uses the retained context."
+          : "Context unchanged. No messages needed compaction.";
+      },
+    };
+    this.scroll = 0;
   }
   costLines() {
     const usage = activity(this.workbench.allViews());
@@ -749,8 +762,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       `model: ${this.session()?.model || this.model || "-"} | ${modeAuthorityLabel(this.mode)}`,
       `Run: ${this.workbench.running() ? "running or settling" : "idle"}`,
       ctx
-        ? `Context: ${ctx.messages}/${ctx.limit} messages | ` +
-          `tokens: ${ctx.tokens ?? "unknown"} | cost: unknown`
+        ? `Context messages: ${ctx.contextMessages ?? "unknown"} | transcript: ${ctx.messages} | ` +
+          `cumulative provider tokens: ${ctx.tokens ?? "unknown"} | cost: unknown`
         : "No conversation selected.",
       `Conversations: ${this.workbench.list().length} | ` +
         `Pending: ${this.workbench.pending().length + this.proxy.holds.length}`,
@@ -762,8 +775,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   agentsLines() {
     const rows = [...this.workbench.list()].reverse();
     return [
-      "AGENTS, conversations and connectors, live data",
+      "AGENTS, runtime catalog",
+      `Selected for new conversations: ${this.agentId ?? "runtime default"}`,
+      ...this.workbench
+        .agents()
+        .agents.map(
+          (agent) =>
+            `${agent.id === this.agentId ? ">" : " "} ${agent.id}: ${agent.name} / ${agent.description}`,
+        ),
+      "/agent ID selects a profile. Existing conversations keep their snapshot.",
       "",
+      "CONVERSATIONS",
       ...(rows.length
         ? rows.map(
             (item) =>
@@ -1054,12 +1076,24 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ),
       ],
       apply: async () => {
+        this.confirmation = undefined;
         const current = await this.workbench.undoPreview(
           sessionId,
           operationId,
         );
-        if (canonicalJson(current) !== canonicalJson(preview))
-          throw Error("The preview changed. Request /undo again.");
+        if (canonicalJson(current) !== canonicalJson(preview)) {
+          this.detail = [
+            `UNDO PREVIEW CHANGED: ${preview.path}`,
+            `Operation: ${operationId}`,
+            current.reason ||
+              "The captured state no longer matches this review.",
+            "Refresh the document and request /undo again. No change was applied.",
+            "Latest preview:",
+            ...json(current),
+          ];
+          this.scroll = 0;
+          throw Error("The preview changed. Refresh and request /undo again.");
+        }
         await this.workbench.undo(sessionId, operationId, "tui-operator");
         this.detail = undefined;
         this.notice = "Undo completed and signed. History is preserved.";
@@ -1222,6 +1256,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               prompt,
               this.model || undefined,
               randomUUID(),
+              this.projectId,
+              this.agentId,
             )
           ).id,
         );
@@ -1340,16 +1376,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       }
       const ctx = this.contextNumbers();
       this.choose("documents");
-      const used = ctx.messages;
-      const limit = ctx.limit;
-      const percent = Math.round((used / limit) * 100);
-      const thresholdWarn = percent >= 90 ? " ⚠️ threshold exceeded" : "";
       this.detail = [
         `CONTEXT ${this.session()?.title ?? this.sessionId}`,
         "",
         `Model: ${this.session()?.model ?? this.model}`,
-        `Messages: ${ctx.messages} of ${ctx.limit} ${percent > 0 ? `(${percent}%)` : ""}${thresholdWarn}`,
-        `Tokens reported: ${ctx.tokens ?? "unknown"}`,
+        `Messages: ${ctx.messages} in the complete transcript`,
+        `Retained context messages: ${ctx.contextMessages ?? "unknown"}`,
+        "Context token use and model limit: unknown",
+        `Cumulative provider tokens: ${ctx.tokens ?? "unknown"}`,
         "Cost: unknown",
         `Managed documents: ${ctx.docs}`,
         "",
@@ -1357,8 +1391,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           .documentsList()
           .filter((item) => item.sessionId === this.sessionId)
           .map((item) => `${item.path} ${item.bytes} B`),
-        "",
-        progressBar(used, limit, 20),
       ];
       this.scroll = 0;
       return;
@@ -1402,9 +1434,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "compact") {
-      this.detail = this.compactLines();
-      this.scroll = 0;
-      this.notice = "Local summary. Provider summarization is unavailable.";
+      this.prepareCompact();
       return;
     }
     if (cmd === "todos") {
@@ -1425,7 +1455,57 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
-    if (cmd === "agents") {
+    if (cmd === "projects" || cmd === "project") {
+      if (cmd === "project" && arg) {
+        const project = this.workbench
+          .listProjects()
+          .find((item) => item.id === arg);
+        if (arg !== "none" && !project)
+          throw Error("Unknown project. Use /projects for IDs.");
+        this.projectId = project?.id;
+      }
+      this.detail = [
+        "PROJECTS",
+        `Selected for new conversations: ${this.projectId ?? "none"}`,
+        ...this.workbench
+          .listProjects()
+          .map(
+            (item) =>
+              `${item.id === this.projectId ? ">" : " "} ${item.id}: ${item.name} / ${item.root}`,
+          ),
+        "",
+        "/project ID selects; /project none clears. Existing conversations do not change.",
+        "/project-file path.json creates or updates a project after review.",
+        'File fields: {"name":"Project name","root":"/descriptive/root"}',
+        "A project root is descriptive. It grants no access to host files.",
+      ];
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "project-file") {
+      if (!arg) throw Error("/project-file path.json");
+      const input = JSON.parse(await readFile(resolve(arg), "utf8"));
+      this.confirmation = {
+        title: "SAVE PROJECT?",
+        lines: [...json(input), "Project roots grant no filesystem authority."],
+        apply: async () => {
+          const project = this.workbench.upsertProject(input);
+          this.projectId = project.id;
+          this.detail = ["PROJECT SAVED", ...json(project)];
+          this.notice = "Project selected for new conversations only.";
+        },
+      };
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "agents" || cmd === "agent") {
+      if (cmd === "agent" && arg) {
+        const agent = this.workbench
+          .agents()
+          .agents.find((item) => item.id === arg);
+        if (!agent) throw Error("Unknown agent. Use /agents for IDs.");
+        this.agentId = agent.id;
+      }
       this.detail = this.agentsLines();
       this.scroll = 0;
       return;
@@ -1992,6 +2072,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "NEW CONVERSATION",
             "",
             `Model: ${this.model || "not connected"}`,
+            `Project: ${this.projectId ?? "none"} | Agent: ${this.agentId ?? "runtime default"}`,
             "Press i to type; Enter to send; Shift+Enter or Ctrl+J for a new line.",
             "Example: Create a plan and save it to plan.md.",
             "",
@@ -2227,9 +2308,13 @@ export const TUI_COMMANDS = [
   ["/conformance", "Run adapter conformance checks"],
   ["/status", "Workspace status"],
   ["/cost", "Token usage and cost"],
-  ["/compact", "Summarize context, local fallback"],
+  ["/compact", "Review real context compaction"],
   ["/todos", "Checklist from agent output"],
-  ["/agents", "Conversations and connectors"],
+  ["/agents", "Runtime profiles, conversations and connectors"],
+  ["/agent", "Select a profile for new conversations"],
+  ["/projects", "List persisted projects"],
+  ["/project", "Select a project ID or none for new conversations"],
+  ["/project-file", "Review and save a project from path.json"],
   ["/config", "Resolved paths and flags"],
   ["/memory", "Retained local history"],
   ["/model", "Set model for new chats"],
@@ -2650,13 +2735,9 @@ export function renderWorkspace(
   const cost = typeof usage?.cost === "number" ? usage.cost : "unknown";
   const model = ui.session()?.model || ui.model || "not connected";
   const ctx = ui.session() ? ui.contextNumbers() : null;
-  const ctxText = ctx ? `${ctx.messages}/${ctx.limit}` : "no session";
-  const ctxBar = ctx
-    ? ` ${meter(ctx.messages, ctx.limit, width >= 120 ? 10 : 4)}`
-    : "";
-  const ctxBarVisual = ctx
-    ? ` ${progressBar(ctx.messages, ctx.limit, width >= 120 ? 10 : 4)}`
-    : "";
+  const ctxText = ctx
+    ? `${ctx.contextMessages ?? "unknown"} messages`
+    : "no session";
   const holdBadge =
     holds > 0 ? ` | ◉ ${holds} approval${holds === 1 ? "" : "s"}` : "";
   const queuedBadge = ui.queuedPrompt ? " | +1 queued" : "";
@@ -2667,7 +2748,7 @@ export function renderWorkspace(
   const costSeg = ` | cost: ${cost}`;
   let dropCost = false;
   const summaryTail = (): string =>
-    ` | ${MODE_ICON[ui.mode]} ${modeAuthorityLabel(ui.mode)} | ctx: ${ctxText}${ctxBarVisual} ${ctxBar} | ` +
+    ` | ${MODE_ICON[ui.mode]} ${modeAuthorityLabel(ui.mode)} | ctx: ${ctxText} | ` +
     `tokens: ${tokens}${dropCost ? "" : costSeg} | ${ui.compactTools ? "compact" : "full"}${holdBadge}${queuedBadge}`;
   if (visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width)
     dropCost = true;
@@ -2841,7 +2922,8 @@ const HELP = [
   "",
   "/new [prompt] | /clear | /open number-or-ID | /resume [number-or-ID]",
   "/status | /cost | /context | /compact | /rewind [operation-ID]",
-  "/todos | /agents | /memory | /permissions | /mcp | /sessions",
+  "/todos | /agents | /agent ID | /memory | /permissions | /mcp | /sessions",
+  "/projects | /project ID|none | /project-file path.json",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
   "/models | /model exact-ID | /connect opencode:zen | /login | /logout",
   "/providers lists model providers incl. local open models",

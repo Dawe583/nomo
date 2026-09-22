@@ -349,6 +349,8 @@ export async function runWorkspaceTui(
   const store = new LocalStorage(join(dataDir, "tui"));
   const saved = store.read<{
     sessionId?: string;
+    projectId?: string;
+    agentId?: string;
     model?: string;
     compactTools?: boolean;
     mode?: string;
@@ -370,6 +372,10 @@ export async function runWorkspaceTui(
   if (saved?.model && ui.provider?.models.some((m) => m.id === saved.model))
     ui.model = saved.model;
   ui.choose(tab);
+  if (app.listProjects().some((item) => item.id === saved?.projectId))
+    ui.projectId = saved?.projectId;
+  if (app.agents().agents.some((item) => item.id === saved?.agentId))
+    ui.agentId = saved?.agentId;
   input.set(drafts[ui.sessionId ?? "new"] ?? "");
   const interactive =
     process.stdin.isTTY &&
@@ -417,6 +423,8 @@ export async function runWorkspaceTui(
       drafts[ui.sessionId ?? "new"] = input.value;
     store.save({
       sessionId: ui.sessionId,
+      projectId: ui.projectId,
+      agentId: ui.agentId,
       model: ui.model,
       compactTools: ui.compactTools,
       mode: ui.mode,
