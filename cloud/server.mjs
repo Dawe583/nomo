@@ -376,6 +376,7 @@ app.post("/api/sessions/:id/branches", async (req, res) => {
         pending: null,
         executing: null,
         recoveryBlock: undefined,
+        lastRecoveryJob: undefined,
         runId: null,
         events: [],
         messages: [

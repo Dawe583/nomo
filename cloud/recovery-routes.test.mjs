@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
 import { mountRecoveryRoutes } from "./recovery-routes.mjs";
+import { view } from "./store.mjs";
 
 async function fixture(t) {
   const state = { session: { id: "session", workspace: "agent-session", status: "idle" }, applies: 0, reads: [] };
@@ -115,3 +116,22 @@ for (const priorStatus of ["unknown", "paused", "cancelled", "failed"]) {
     assert.equal(f.state.saved.recoveryBlock, undefined);
   });
 }
+
+test("admitted recovery retains only public job identity across completion and reload", async t => {
+  const f = await fixture(t), apply = { jobId: "job", planDigest: f.digest, approved: true };
+  f.state.applyStatus = "paused";
+  await f.request("apply", apply);
+  assert.deepEqual(f.state.saved.lastRecoveryJob, { jobId: "job" });
+  const paused = view(structuredClone(f.state.saved));
+  assert.deepEqual(paused.lastRecoveryJob, { jobId: "job" });
+  assert.deepEqual(view({ ...f.state.saved, lastRecoveryJob: { jobId: "older", secret: "private-capture" } }).lastRecoveryJob, { jobId: "job" });
+  assert.doesNotMatch(JSON.stringify(paused), /priorStatus|recoveryBlock|private-capture/);
+  f.state.applyStatus = "restored";
+  await f.request("apply", apply);
+  const terminal = view(structuredClone(f.state.saved));
+  assert.deepEqual(terminal.lastRecoveryJob, { jobId: "job" });
+  assert.equal(terminal.recoveryBlock, undefined);
+  const count = f.state.applies;
+  assert.equal((await f.request("job")).body.status, "restored");
+  assert.equal(f.state.applies, count);
+});

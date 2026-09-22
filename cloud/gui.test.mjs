@@ -133,8 +133,11 @@ test(
     );
     assert.equal(undo.status, 200);
     const guardBase = await read(`session:${session.id}`);
-    const guarded = { ...guardBase, recoveryBlock: { jobId: "parent-recovery", priorStatus: "idle" } };
+    const guarded = { ...guardBase, lastRecoveryJob: { jobId: "older-recovery" }, recoveryBlock: { jobId: "parent-recovery", priorStatus: "idle" } };
     await write(`session:${session.id}`, guarded);
+    const guardedView = (await request(`/api/sessions/${session.id}`)).body.session;
+    assert.deepEqual(guardedView.lastRecoveryJob, { jobId: "parent-recovery" });
+    assert.doesNotMatch(JSON.stringify(guardedView), /priorStatus|recoveryBlock/);
     for (const [path, method, body] of [
       ["documents", "PATCH", { path: "notes.md", content: "blocked", expectedRevision: null }],
       ["compact", "POST", {}],
@@ -143,7 +146,9 @@ test(
     assert.equal((await request(`/api/sessions/${session.id}`, "POST", { prompt: "Blocked by recovery ownership" })).status, 409);
     const independentBranch = await request(`/api/sessions/${session.id}/branches`, "POST", { seq: 1 });
     assert.equal(independentBranch.status, 201);
-    assert.equal((await read(`session:${independentBranch.body.session.id}`)).recoveryBlock, undefined);
+    const branchedState = await read(`session:${independentBranch.body.session.id}`);
+    assert.equal(branchedState.recoveryBlock, undefined);
+    assert.equal(branchedState.lastRecoveryJob, undefined);
     assert.equal((await request(`/api/sessions/${independentBranch.body.session.id}/documents`, "PATCH", {
       path: "independent.md", content: "New workspace", expectedRevision: null,
     })).status, 200);

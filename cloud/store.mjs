@@ -219,6 +219,9 @@ export function view(session) {
     reconcileRequired: status === "unknown",
     contextMessages: session.messages?.length ?? session.contextMessages ?? null,
     compaction: session.compaction ?? null,
+    lastRecoveryJob: session.recoveryBlock?.jobId || session.lastRecoveryJob?.jobId
+      ? { jobId: session.recoveryBlock?.jobId ?? session.lastRecoveryJob.jobId }
+      : undefined,
   };
 }
 export async function eventsAfter(id, after = 0) {

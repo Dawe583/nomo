@@ -60,10 +60,10 @@ export function mountRecoveryRoutes(app, overrides = {}) {
       return { status: 409, body: { message: "Resolve the owning recovery job before applying another job." } };
     // Retain ownership before dispatch; a repaired job cannot clear unrelated uncertainty.
     const dispatch = "digest" in status || status.status === "paused";
-    if (dispatch && !session.recoveryBlock) {
+    if (dispatch && !session.recoveryBlock)
       session.recoveryBlock = { jobId, priorStatus: session.status };
-      await deps.write(`session:${session.id}`, session, client);
-    }
+    session.lastRecoveryJob = { jobId };
+    await deps.write(`session:${session.id}`, session, client);
     // Terminal and ambiguous results are observed, never dispatched again.
     const result = dispatch
       ? await deps.runCloudRecoveryJob(session, client, jobId, async plan => plan.digest === planDigest)
