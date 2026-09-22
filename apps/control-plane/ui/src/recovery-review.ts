@@ -47,3 +47,19 @@ export function recoveryApplyBody(state: RecoveryReview) {
       }
     : null;
 }
+
+export function recoveryStatusPath(session: {
+  id: string;
+  lastRecoveryJob?: unknown;
+}): string | undefined {
+  const retained = session.lastRecoveryJob;
+  if (!retained || typeof retained !== "object" || !("jobId" in retained))
+    return undefined;
+  const jobId = retained.jobId;
+  return typeof jobId === "string" && jobId.length > 0
+    ? "/api/sessions/" +
+        encodeURIComponent(session.id) +
+        "/recovery-jobs/" +
+        encodeURIComponent(jobId)
+    : undefined;
+}

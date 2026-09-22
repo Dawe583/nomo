@@ -1,6 +1,7 @@
 import { ProviderNotice, RunStatus } from "./workspace-status";
 import { providerStatus, runState, runCanStop, runBlocksInput } from "./workspace-state";
 import { SessionContext } from "./session-context";
+import { SessionRecoveryStatus } from "./recovery-dialog";
 import { agentOptions, sessionAgent } from "./agent-input";
 import { loadDraft, saveDraft, submitDraft } from "./draft-state";
 import { CommandMenu } from "./command-menu.tsx";
@@ -1138,7 +1139,10 @@ const draftKey =
             </button>
           </div>
         )}
-        {session && <SessionContext key={session.id} session={session} events={rawEvents} supported={capabilities.data?.contextCompaction === true} />}
+        {session && <>
+          <SessionRecoveryStatus key={"recovery:" + session.id} session={session} />
+          <SessionContext key={session.id} session={session} events={rawEvents} supported={capabilities.data?.contextCompaction === true} />
+        </>}
         <div className="composer-footnote">
           <span>{providerLabel}</span>
           <span

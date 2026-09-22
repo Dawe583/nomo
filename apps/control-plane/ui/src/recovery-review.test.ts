@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   recoveryReview,
   recoveryApplyBody,
+  recoveryStatusPath,
   type RecoveryReview,
 } from "./recovery-review.ts";
 const plan = {
@@ -73,4 +74,43 @@ test("only explicit refresh discards stale approval, even for unknown outcomes",
     plan: { ...plan, jobId: "job-2", planDigest: "sha256:new" },
   });
   assert.equal(recoveryApplyBody(ready)?.jobId, "job-2");
+});
+
+test("a retained recovery job can be inspected after session reload without a new identity", () => {
+  const session = {
+    id: "session-1",
+    lastRecoveryJob: { jobId: "job-retained" },
+  };
+  const restored = JSON.parse(JSON.stringify(session));
+  const expected = "/api/sessions/session-1/recovery-jobs/job-retained";
+  assert.equal(recoveryStatusPath(session), expected);
+  assert.equal(recoveryStatusPath(restored), expected);
+  assert.deepEqual(session, restored);
+});
+
+test("missing or invalid retained job metadata never offers a status request", () => {
+  for (const lastRecoveryJob of [
+    undefined,
+    null,
+    "job",
+    {},
+    { jobId: null },
+    { jobId: 1 },
+    { jobId: "" },
+  ]) {
+    assert.equal(
+      recoveryStatusPath({ id: "session-1", lastRecoveryJob }),
+      undefined,
+    );
+  }
+});
+
+test("status navigation encodes the exact retained session and job IDs", () => {
+  assert.equal(
+    recoveryStatusPath({
+      id: "session/one",
+      lastRecoveryJob: { jobId: "job/two?inspect" },
+    }),
+    "/api/sessions/session%2Fone/recovery-jobs/job%2Ftwo%3Finspect",
+  );
 });

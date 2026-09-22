@@ -1,10 +1,11 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "./api";
-import { Dialog, ErrorBox, RedactedJson, useText } from "./ui";
+import { api, type Row } from "./api";
+import { Dialog, ErrorBox, RedactedJson, useApi, useText } from "./ui";
 import {
   recoveryApplyBody,
   recoveryReview,
+  recoveryStatusPath,
   type RecoveryPlan,
 } from "./recovery-review";
 import type { DocumentOperation } from "./document-history";
@@ -75,6 +76,7 @@ export function RecoveryReview({
     } catch (error) {
       setError(error);
       dispatch({ type: "failed" });
+      await client.invalidateQueries();
     } finally {
       submitting.current = false;
     }
@@ -237,7 +239,9 @@ export function RecoveryReview({
             {t("Obnovit náhled", "Refresh preview")}
           </button>
           <button
-            disabled={busy || review.phase === "planning" || review.phase === "ready"}
+            disabled={
+              busy || review.phase === "planning" || review.phase === "ready"
+            }
             onClick={() => void observe()}
           >
             {t("Ověřit stav úlohy", "Check job status")}
@@ -245,5 +249,51 @@ export function RecoveryReview({
         </div>
       </div>
     </Dialog>
+  );
+}
+
+export function SessionRecoveryStatus({ session }: { session: Row }) {
+  const t = useText();
+  const [open, setOpen] = useState(false);
+  const path = recoveryStatusPath({
+    id: session.id,
+    lastRecoveryJob: session.lastRecoveryJob,
+  });
+  const status = useApi(path ?? "", open && !!path);
+  if (!path) return null;
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        {t("Stav úlohy obnovy", "Recovery job status")}
+      </button>
+      {open && (
+        <Dialog
+          title={t("Stav úlohy obnovy", "Recovery job status")}
+          close={() => setOpen(false)}
+        >
+          <p>
+            {t(
+              "Pouze čtení. Tato akce obnovu nespustí ani neopakuje.",
+              "Read only. This does not start or retry recovery.",
+            )}
+          </p>
+          <p>
+            <code>{session.lastRecoveryJob.jobId}</code>
+          </p>
+          {status.isPending && (
+            <p role="status">{t("Načítání stavu…", "Loading status…")}</p>
+          )}
+          <ErrorBox error={status.error} />
+          {status.data && <RedactedJson value={status.data} />}
+          <button
+            type="button"
+            disabled={status.isFetching}
+            onClick={() => void status.refetch()}
+          >
+            {t("Obnovit stav", "Refresh status")}
+          </button>
+        </Dialog>
+      )}
+    </>
   );
 }
