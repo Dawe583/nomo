@@ -78,6 +78,7 @@ import {
   type AttestationDocument,
 } from "../../ledger/src/attest.ts";
 import { createVoidClient, type VoidClient } from "../../sdk/src/client.ts";
+import { HoldDeniedError } from "../../sdk/src/errors.ts";
 import {
   CompatibleProvider,
   ProviderRequestError,
@@ -1796,16 +1797,25 @@ export class Workbench {
     if (tool.connectorId === "stdio") {
       if (!session.client)
         throw new Error("This stdio connection ended. Start a new session.");
+      const before = this.evidence[session.view.workspace]?.length ?? 0;
+      let outcome: { result: unknown } | { error: unknown };
       try {
-        return await session.client.request("tools/call", {
-          name: tool.name,
-          arguments: args,
-        });
-      } catch {
-        throw new UnknownToolOutcome();
-      } finally {
-        try { await this.syncStdio(session); } catch { throw new UnknownToolOutcome(); }
+        outcome = { result: await session.client.request("tools/call", { name: tool.name, arguments: args }) };
+      } catch (error) {
+        outcome = { error };
       }
+      try { await this.syncStdio(session); } catch { throw new UnknownToolOutcome(); }
+      if ("result" in outcome) return outcome.result;
+      // A typed denial alone can be forged by an upstream. Require fresh,
+      // verified proxy evidence for this exact tool and argument digest.
+      const argsDigest = await sha256Hex(JSON.stringify(args));
+      const receipt = this.evidence[session.view.workspace]?.slice(before)
+        .map(entry => entry.body as Record<string, unknown>)
+        .filter(body => body.source === "stdio-proxy" && body.tool === tool.name && body.argsDigest === argsDigest).at(-1);
+      if (outcome.error instanceof HoldDeniedError && (receipt?.decision === "hold:denied" || receipt?.decision === "hold:expired")) {
+        return { isError: true, content: [{ type: "text", text: outcome.error.message }] };
+      }
+      throw new UnknownToolOutcome();
     }
     if (!tool.connectorId)
       return this.locked(async () => {

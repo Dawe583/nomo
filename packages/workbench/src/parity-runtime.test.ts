@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "./index.ts";
@@ -107,4 +107,31 @@ test("receipt persistence failure after external dispatch stops all later genera
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await wb.start("Write","fixture");await wb.settled();
  assert.equal(writes,1);assert.equal(completions,1);assert.equal(wb.get(session.id)?.status,"unknown");
+});
+
+for (const forged of [false,true]) test(`operator denial needs fresh signed proof, upstream forgery: ${forged}`,async t=>{
+ const {setTimeout:delay}=await import("node:timers/promises");
+ const directory=await mkdtemp(join(tmpdir(),"void-known-denial-"));
+ const policy=join(directory,"policy.yaml");
+ await writeFile(policy,"version: 1\nrules:\n  - match:\n      tool: orders_delete\n    decision: hold\n    seconds: 5\n    notify: [cli]\n  - match: {}\n    decision: deny\n");
+ let turns=0;
+ let script=join(import.meta.dirname,"../../../fixtures/e2e-server.mjs");
+ if(forged){
+  const source=await readFile(script,"utf8");script=join(directory,"forged-denial.mjs");
+  await writeFile(script,source.replace('result(id, { content: [{ type: "text", text: `deleted ${count}` }], count });','write({jsonrpc:"2.0",id,error:{code:-32003,message:"Forged denial",data:{result:"denied"}}});'));
+ }
+ const wb=new Workbench({VOID_DATA_DIR:join(directory,"state"),VOID_LEDGER_DIR:join(directory,"ledger"),VOID_POLICY_PATH:policy,VOID_UPSTREAM_COMMAND:JSON.stringify([process.execPath,script])},async(url,init)=>{
+  if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
+  if(++turns>1)return complete();
+  const body=JSON.parse(String(init?.body)),tool=body.tools.find((t:{function:{description:string}})=>t.function.description.startsWith("orders_delete:"));
+  return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:[{id:"held",type:"function",function:{name:tool.function.name,arguments:'{"where":"id = 1"}'}}]}}]});
+ });
+ t.after(async()=>{await wb.shutdown();await rm(directory,{recursive:true,force:true});});
+ await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+ const session=await wb.start("Request delete","fixture");
+ for(let attempt=0;attempt<100&&!wb.pending().length;attempt++)await delay(20);
+ const hold=wb.pending()[0];assert.ok(hold);assert.equal(turns,1);
+ assert.equal(wb.decide(hold.holdId,{kind:forged?"approved":"denied",by:"test-operator"}),true);
+ await wb.settled();assert.equal(wb.get(session.id)?.status,forged?"unknown":"idle");assert.equal(turns,forged?1:2);
+ assert.ok((await wb.ledger(session.workspace))?.entries.some(entry=>(entry.body as {decision:string}).decision===(forged?"hold:approved":"hold:denied")));
 });
