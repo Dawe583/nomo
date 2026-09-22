@@ -164,6 +164,8 @@ async function route(
       wb.stopRun(stopRun[1]!); return sendJson(response, 200, { ok: true });
     }
     if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, options.workbench.agents());
+    if (request.method === 'POST' && parsed.pathname === '/api/agents') return sendJson(response, 200, { agent: wb.upsertAgent(await readJsonBody(request)) });
+    if (request.method === 'POST' && parsed.pathname === '/api/hooks') return sendJson(response, 200, { hook: wb.upsertHook(await readJsonBody(request)) });
     if (request.method === 'GET' && parsed.pathname === '/api/integrations') return sendJson(response, 200, { supported: false, integrations: [] });
     if (request.method === 'GET' && parsed.pathname === '/api/demo/status') return sendJson(response, 200, { supported: false, available: false });
     if (parsed.pathname === '/api/desktop/setup') {

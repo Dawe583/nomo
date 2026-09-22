@@ -115,6 +115,8 @@ export type SessionView = {
   readonly runId?: string;
   readonly provider?: string;
   readonly parentId?: string;
+  readonly compaction?: CompactionResult;
+  readonly contextMessages?: number;
   readonly status: "running" | "queued" | "idle" | "cancelled" | "failed" | "unknown" | "paused";
   readonly events: readonly SessionEvent[];
 };
@@ -179,6 +181,7 @@ type Session = {
   view: SessionView;
   messages: ModelMessage[];
   messageIds?: string[];
+  agentProfile?: AgentProfile;
   queuedPrompt?: string;
   client?: VoidClient;
   tools?: McpTool[];
@@ -213,6 +216,7 @@ export class Workbench {
   private documents: Record<string, WorkspaceState> = {};
   private evidence: Record<string, JsonlEntry[]> = {};
   private recoveryRequests: Record<string, RecoveryRequest> = {};
+  private agentProfiles: AgentProfile[] = [];
   private readonly holds = new Map<
     string,
     {
@@ -280,10 +284,12 @@ export class Workbench {
       documents: Record<string, WorkspaceState>;
       evidence: Record<string, JsonlEntry[]>;
       recoveryRequests?: Record<string, RecoveryRequest>;
+      agentProfiles?: AgentProfile[];
       sessions: Array<{
         view: SessionView;
         messages: ModelMessage[];
         messageIds?: string[];
+        agentProfile?: AgentProfile;
         config?: ProviderConfig;
         tools?: McpTool[];
         connections?: Session["connections"];
@@ -354,6 +360,7 @@ export class Workbench {
       this.documents = saved.documents;
       this.evidence = saved.evidence;
       this.recoveryRequests = saved.recoveryRequests ?? {};
+      this.agentProfiles = (saved.agentProfiles ?? []).map(profile => validateAgentProfile(profile));
       this.projectList = saved.projects ?? [];
       if (this.config)
         this.provider = new CompatibleProvider(this.config, fetcher);
@@ -407,12 +414,14 @@ export class Workbench {
       documents: this.documents,
       evidence: this.evidence,
       recoveryRequests: this.recoveryRequests,
+      agentProfiles: this.agentProfiles,
       projects: this.projectList,
       sessions: [...this.sessions.values()].map(
-        ({ view, messages, messageIds, config, tools, connections }) => ({
+        ({ view, messages, messageIds, agentProfile, config, tools, connections }) => ({
           view,
           messages,
           messageIds,
+          agentProfile,
           config,
           tools,
           connections,
@@ -496,12 +505,30 @@ export class Workbench {
   agents() {
     return {
       supported: true,
-      agents: AGENT_PRESETS.map(({ id, name, description }) => ({
-        id,
-        name,
-        description,
-      })),
+      agents: [
+        ...AGENT_PRESETS.map(({ id, name, description }) => ({ id, name, description })),
+        ...this.agentProfiles.map(({ id, name }) => ({ id, name, description: "Custom profile with explicit tools and bounded execution." })),
+      ],
+      profiles: structuredClone(this.agentProfiles),
+      policyProfiles: ["default"],
+      hooks: [] as Hook[], hookCommands: [] as string[], hooksSupported: false,
     };
+  }
+  upsertAgent(input: unknown): AgentProfile {
+    const profile = validateAgentProfile(input);
+    if (AGENT_PRESETS.some(preset => preset.id === profile.id)) throw new Error("Agent id belongs to a built-in preset.");
+    if (profile.policyProfile !== "default") throw new Error("Unknown policy profile. Select the existing default operator policy.");
+    const available = new Set([...workspaceTools, ...this.connectors.flatMap(connector => connector.tools)].map(tool => tool.name));
+    if (profile.allowedTools.some(name => !available.has(name))) throw new Error("Agent allowlist contains an unavailable tool.");
+    const before = this.agentProfiles;
+    this.agentProfiles = [...before.filter(candidate => candidate.id !== profile.id), profile];
+    this.hasState = true;
+    try { this.persist(); } catch (error) { this.agentProfiles = before; throw error; }
+    return structuredClone(profile);
+  }
+  upsertHook(input: unknown): Hook {
+    validateHook(input, []);
+    throw new Error("Hook execution is unsupported on this host.");
   }
   listProjects(): readonly {
     id: string;
@@ -580,6 +607,7 @@ export class Workbench {
   list(): readonly SessionView[] {
     return [...this.sessions.values()].map((session) => ({
       ...session.view,
+      contextMessages: session.messages.length,
       events: [],
     }));
   }
@@ -605,7 +633,8 @@ export class Workbench {
     };
   }
   get(id: string): SessionView | undefined {
-    return this.sessions.get(id)?.view;
+    const session = this.sessions.get(id);
+    return session && { ...session.view, contextMessages: session.messages.length };
   }
   async start(
     prompt: string,
@@ -653,7 +682,8 @@ export class Workbench {
     const selectedAgent = AGENT_PRESETS.find(
       (item) => item.id === (agent ?? this.preferences.defaultAgentPreset),
     );
-    if (agent && !selectedAgent) throw new Error("Unknown agent preset.");
+    const selectedProfile = this.agentProfiles.find(profile => profile.id === agent);
+    if (agent && !selectedAgent && !selectedProfile) throw new Error("Unknown agent preset or profile.");
     const selectedProvider = this.provider,
       selectedConfig = this.config;
     if (!this.catalog.some((item) => item.id === model))
@@ -730,7 +760,7 @@ export class Workbench {
         "Another session started while connecting tools. Retry after it stops.",
       );
     }
-    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}`;
+    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}`;
     const queued =
       background &&
       (this.jobs.size > 0 ||
@@ -742,16 +772,17 @@ export class Workbench {
         model,
         provider: selectedConfig?.baseUrl,
         project: project?.trim().slice(0, 160) || undefined,
-        agent: selectedAgent?.id,
+        agent: selectedProfile?.id ?? selectedAgent?.id,
         createdAt: new Date().toISOString(),
         title: prompt.trim().slice(0, 80),
         status: queued ? "queued" : "idle",
         events: [],
       },
       messages: [{ role: "system", content: systemInstruction }],
+      agentProfile: selectedProfile ? structuredClone(selectedProfile) : undefined,
       queuedPrompt: queued ? prompt : undefined,
       client,
-      tools,
+      tools: selectedProfile ? tools.filter(tool => selectedProfile.allowedTools.includes(tool.name)) : tools,
       connections,
       config: selectedConfig,
       controller: new AbortController(),
@@ -829,6 +860,7 @@ export class Workbench {
     const compacted = compactMessages(id, session.messages, session.messageIds);
     session.messages = compacted.messages;
     session.messageIds = compacted.messageIds;
+    session.view = { ...session.view, compaction: compacted.result, contextMessages: session.messages.length };
     if (compacted.result.omittedMessageCount) this.event(session, "tool", "Context compacted.", {
       beforeMessages: before, afterMessages: session.messages.length,
       omittedMessages: compacted.result.omittedMessageCount,
@@ -1006,7 +1038,7 @@ export class Workbench {
   }
   sessionPage(query: URLSearchParams) {
     const all = filterRows(
-      [...this.sessions.values()].map((s) => s.view),
+      this.allViews(),
       query,
     )
       .filter(
@@ -1037,7 +1069,7 @@ export class Workbench {
     };
   }
   allViews() {
-    return [...this.sessions.values()].map((s) => s.view);
+    return [...this.sessions.values()].map((session) => ({ ...session.view, contextMessages: session.messages.length }));
   }
   approvals() {
     return [
@@ -1147,6 +1179,8 @@ export class Workbench {
           id: childId,
           workspace,
           parentId: id,
+          compaction: undefined,
+          runId: undefined,
           title: `${parent.view.title ?? "Conversation"} (branch)`,
           status: "idle",
           pinned: false,
@@ -1154,6 +1188,7 @@ export class Workbench {
           createdAt: new Date().toISOString(),
           events: [],
         },
+        messageIds: undefined,
         messages: [
           parent.messages[0]!,
           ...messages.map((e) => ({
@@ -1677,12 +1712,87 @@ export class Workbench {
       }
     });
   }
+  private async authorizeTool(session: Session, call: { tool: string; workspace: string; connector: string; klass: string; blastRadius: number | undefined; reason: string; arguments: JsonObject }, decision: ReturnType<typeof decide> | { kind: "deny" }) {
+    const name = call.tool, args = call.arguments;
+    await this.locked(() =>
+      this.commitWorkspace(
+        session,
+        this.workspace(session.view.id),
+        name,
+        args,
+        decision.kind,
+        undefined,
+        undefined,
+        { klass: call.klass },
+      ),
+    );
+    let allowed = decision.kind === "allow";
+    if (decision.kind === "hold") {
+      const hold: {
+        holdId: string;
+        call: typeof call;
+        expiresAt: number;
+        status: "pending" | "approved" | "denied";
+        notify: string[];
+        by?: string;
+        reason?: string;
+      } = {
+        holdId: `${session.view.id}:${randomUUID()}`,
+        call,
+        expiresAt: Date.now() + decision.seconds * 1000,
+        status: "pending" as "pending" | "approved" | "denied",
+        notify: [],
+      };
+      this.holds.set(hold.holdId, hold);
+      this.event(session, "tool", `${name}: waiting for your approval.`);
+      this.persist();
+      while (
+        hold.status === "pending" &&
+        hold.expiresAt > Date.now() &&
+        !session.controller.signal.aborted
+      )
+        await delay(100);
+      allowed =
+        hold.status === "approved" && !session.controller.signal.aborted;
+      if (session.controller.signal.aborted && hold.status === "pending") {
+        hold.status = "denied";
+        hold.by = "runtime";
+        hold.reason = "Session cancelled before approval.";
+      }
+      await this.locked(() =>
+        this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          name,
+          args,
+          allowed ? "hold:approved" : "hold:denied",
+          undefined,
+          hold,
+          { klass: call.klass },
+        ),
+      );
+      this.approvalHistory.push({ ...hold });
+      this.holds.delete(hold.holdId);
+    }
+    return allowed;
+  }
   private async execute(
     session: Session,
     tool: McpTool,
     args: JsonObject,
     id: string,
   ): Promise<unknown> {
+    if (session.agentProfile) {
+      if (session.agentProfile.policyProfile !== "default" || !session.agentProfile.allowedTools.includes(tool.name))
+        throw new Error("Agent policy refused a tool outside its allowed scope.");
+      if (!tool.connectorId) {
+        const policy = loadPolicy(DEFAULT_POLICY);
+        if (!policy.ok) throw new Error("Invalid default operator policy.");
+        const call = { tool: tool.name, workspace: session.view.workspace, connector: "workspace", klass: workspaceToolClass(tool.name) ?? "r3", blastRadius: 1, reason: "Managed document policy.", arguments: args };
+        const decision = decide(policy, call);
+        if (!(await this.authorizeTool(session, call, decision))) return { isError: true, content: [{ type: "text", text: denialText(tool.name, call.klass, decision) }] };
+      }
+    }
     if (tool.connectorId === "stdio") {
       if (!session.client)
         throw new Error("This stdio connection ended. Start a new session.");
@@ -1750,66 +1860,7 @@ export class Workbench {
       classification.outcome === "classified"
         ? decide(policy, call)
         : { kind: "deny" as const };
-    await this.locked(() =>
-      this.commitWorkspace(
-        session,
-        this.workspace(session.view.id),
-        name,
-        args,
-        decision.kind,
-        undefined,
-        undefined,
-        { klass: call.klass },
-      ),
-    );
-    let allowed = decision.kind === "allow";
-    if (decision.kind === "hold") {
-      const hold: {
-        holdId: string;
-        call: typeof call;
-        expiresAt: number;
-        status: "pending" | "approved" | "denied";
-        notify: string[];
-        by?: string;
-        reason?: string;
-      } = {
-        holdId: `${session.view.id}:${randomUUID()}`,
-        call,
-        expiresAt: Date.now() + decision.seconds * 1000,
-        status: "pending" as "pending" | "approved" | "denied",
-        notify: [],
-      };
-      this.holds.set(hold.holdId, hold);
-      this.event(session, "tool", `${name}: waiting for your approval.`);
-      this.persist();
-      while (
-        hold.status === "pending" &&
-        hold.expiresAt > Date.now() &&
-        !session.controller.signal.aborted
-      )
-        await delay(100);
-      allowed =
-        hold.status === "approved" && !session.controller.signal.aborted;
-      if (session.controller.signal.aborted && hold.status === "pending") {
-        hold.status = "denied";
-        hold.by = "runtime";
-        hold.reason = "Session cancelled before approval.";
-      }
-      await this.locked(() =>
-        this.commitWorkspace(
-          session,
-          this.workspace(session.view.id),
-          name,
-          args,
-          allowed ? "hold:approved" : "hold:denied",
-          undefined,
-          hold,
-          { klass: call.klass },
-        ),
-      );
-      this.approvalHistory.push({ ...hold });
-      this.holds.delete(hold.holdId);
-    }
+    const allowed = await this.authorizeTool(session, call, decision);
     if (!allowed)
       return {
         isError: true,
@@ -1867,8 +1918,19 @@ export class Workbench {
         ? new Date(Date.now() + error.retryAfter * 1000).toISOString() : null,
     };
   }
+  private checkContextBudget(session: Session, tools: readonly unknown[]) {
+    if (!session.agentProfile) return;
+    // UTF-8 bytes plus protocol overhead are a conservative token bound, not
+    // a fabricated tokenizer measurement. Oversize requests never dispatch.
+    const bound = Buffer.byteLength(JSON.stringify(session.messages)) + Buffer.byteLength(JSON.stringify(tools)) + 1024;
+    if (bound > session.agentProfile.maxContextTokens) throw new Error("Agent context budget reached. Compact the session before continuing.");
+  }
   private async run(session: Session): Promise<void> {
     try {
+      if (session.agentProfile) {
+        session.agentProfile = validateAgentProfile(session.agentProfile);
+        if (session.agentProfile.policyProfile !== "default") throw new Error("Unknown agent policy profile.");
+      }
       const listed = { tools: session.tools ?? [...workspaceTools] };
       const mapping = new Map(
         listed.tools.map((tool, index) => [`tool_${index}`, tool]),
@@ -1881,8 +1943,10 @@ export class Workbench {
           parameters: tool.inputSchema ?? { type: "object", properties: {} },
         },
       }));
-      for (let turn = 0; turn < 20; turn++) {
+      const maxTurns = session.agentProfile?.maxTurns ?? 20;
+      for (let turn = 0; turn < maxTurns; turn++) {
         if (session.controller.signal.aborted) return;
+        this.checkContextBudget(session, tools);
         if (session.messages.length >= 200)
           throw new Error(
             "Session context limit reached. Start a new session.",
@@ -1908,6 +1972,8 @@ export class Workbench {
         if (session.controller.signal.aborted) return;
         if (delta) this.event(session, "assistant", delta, {}, "message.delta");
         session.messages.push(reply.message);
+        this.checkContextBudget(session, tools);
+        if (session.provider === this.provider) this.providerFailureState = null;
         if (reply.message.content)
           this.event(session, "assistant", reply.message.content);
         if (reply.usage)
@@ -1989,7 +2055,7 @@ export class Workbench {
         }
       }
       throw new Error(
-        "Session reached the 20-turn limit. Review the ledger before continuing.",
+        `Session reached the ${maxTurns}-turn limit. Review the ledger before continuing.`,
       );
     } catch (error) {
       if (!session.controller.signal.aborted) {

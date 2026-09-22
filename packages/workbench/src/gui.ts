@@ -173,7 +173,7 @@ export const capabilities = (mode: "local" | "cloud") => ({
   maxActiveRuns: 1,
   backgroundQueue: true,
   projects: mode === "local",
-  customAgents: false,
+  customAgents: mode === "local",
   hooks: false,
   contextCompaction: mode === "local",
   recoveryJobs: true,

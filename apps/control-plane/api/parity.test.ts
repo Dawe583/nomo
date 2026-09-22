@@ -41,3 +41,18 @@ test("local project and stop routes expose guarded additive capabilities",async 
  const capabilities=await(await fetch(origin+"/api/capabilities")).json() as Record<string,boolean>;
  assert.equal(capabilities.projects,true);assert.equal(capabilities.recoveryJobs,true);assert.equal(capabilities.contextCompaction,true);assert.equal(capabilities.hooks,false);
 });
+
+test("local agent API persists scoped profiles but cannot enable shell hooks",async t=>{
+ const directory=await mkdtemp(join(tmpdir(),"void-api-agents-"));
+ const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
+ const origin=`http://127.0.0.1:${server.port}`;
+ const post=(path:string,body:unknown)=>fetch(origin+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+ const profile={id:"custom",name:"Custom",systemPrompt:"Inspect",allowedTools:[],policyProfile:"default",maxTurns:2,maxContextTokens:8192};
+ assert.equal((await post("/api/agents",profile)).status,200);
+ const agents=await(await fetch(origin+"/api/agents")).json() as {profiles:unknown[];agents:Array<{id:string}>;hooksSupported:boolean};
+ assert.deepEqual(agents.profiles,[profile]);assert.ok(agents.agents.some(a=>a.id==="reviewer"));assert.equal(agents.hooksSupported,false);
+ assert.equal((await post("/api/agents",{...profile,policyProfile:"bypass"})).status,409);
+ assert.equal((await post("/api/hooks",{id:"hook",event:"before-run",command:"echo done; other",enabled:true})).status,409);
+ const capabilities=await(await fetch(origin+"/api/capabilities")).json() as {customAgents:boolean};assert.equal(capabilities.customAgents,true);
+});
