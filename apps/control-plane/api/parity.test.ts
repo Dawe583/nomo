@@ -28,3 +28,16 @@ test("local recovery routes require exact stored approval and retain immutable p
  const compact=await fetch(`http://127.0.0.1:${server.port}/api/sessions/${session.id}/compact`,{method:"POST"});
  const body=await compact.json() as {session:{id:string};compaction:{omittedMessageCount:number}};assert.equal(body.session.id,session.id);assert.equal(typeof body.compaction.omittedMessageCount,"number");
 });
+
+test("local project and stop routes expose guarded additive capabilities",async t=>{
+ const directory=await mkdtemp(join(tmpdir(),"void-api-project-"));
+ const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
+ const origin=`http://127.0.0.1:${server.port}`;
+ const post=(path:string,body:unknown)=>fetch(origin+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+ const created=await post("/api/projects",{name:"Example",root:"/metadata"});assert.equal(created.status,200);
+ const listed=await(await fetch(origin+"/api/projects")).json() as {items:unknown[];projects:unknown[]};assert.deepEqual(listed.items,listed.projects);assert.equal(listed.items.length,1);
+ assert.equal((await post("/api/runs/missing/stop",{})).status,404);
+ const capabilities=await(await fetch(origin+"/api/capabilities")).json() as Record<string,boolean>;
+ assert.equal(capabilities.projects,true);assert.equal(capabilities.recoveryJobs,true);assert.equal(capabilities.contextCompaction,true);assert.equal(capabilities.hooks,false);
+});

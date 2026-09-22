@@ -509,35 +509,37 @@ export class Workbench {
     root: string;
     updatedAt: string;
   }[] {
-    return [...this.projectList].sort((a, b) =>
+    return this.projectList.map(project => ({ ...project })).sort((a, b) =>
       b.updatedAt.localeCompare(a.updatedAt),
     );
   }
-  upsertProject(input: { name: string; root: string }): {
+  projects() { return this.listProjects(); }
+  upsertProject(input: { id?: string; name: string; root: string }): {
     id: string;
     name: string;
     root: string;
     updatedAt: string;
   } {
-    const name = input.name.trim().slice(0, 160);
-    const root = input.root.trim();
-    if (!name) throw new Error("Project name required.");
-    if (!root) throw new Error("Project root required.");
-    const existing = this.projectList.find((p) => p.root === root);
+    if (!input || typeof input.name !== "string" || !input.name.trim() || input.name.length > 160) throw new Error("Project name must contain 1..160 characters.");
+    if (typeof input.root !== "string" || !input.root.trim() || input.root.length > 4096) throw new Error("Project root must contain 1..4096 characters.");
+    if (input.id !== undefined && (typeof input.id !== "string" || !/^[A-Za-z0-9][\w-]{0,119}$/.test(input.id))) throw new Error("Invalid project id.");
+    const name = input.name.trim(), root = input.root.trim();
+    const existing = this.projectList.find((p) => input.id ? p.id === input.id : p.root === root);
     const now = new Date().toISOString();
     if (existing) {
       existing.name = name;
+      existing.root = root;
       existing.updatedAt = now;
       this.hasState = true;
       this.persist();
       return { ...existing };
     }
-    const id = randomUUID();
+    const id = input.id ?? randomUUID();
     const project = { id, name, root, updatedAt: now };
     this.projectList.push(project);
     this.hasState = true;
     this.persist();
-    return project;
+    return { ...project };
   }
   runs(): readonly {
     id: string;

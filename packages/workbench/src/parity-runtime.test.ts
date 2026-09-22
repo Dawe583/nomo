@@ -67,3 +67,17 @@ test("uncertain connector outcome stops the batch and requires reconciliation", 
   assert.throws(()=>wb.send(session.id,"Again"),/unknown|reconcil/i);
   assert.ok((await wb.ledger(session.workspace))?.entries.some(e=>(e.body as {decision:string}).decision==="execute:unknown"));
 });
+
+test("projects validate full bounds, return copies and persist by stable identity", async t=>{
+ const directory=await mkdtemp(join(tmpdir(),"void-project-contract-"));
+ let app=new Workbench({VOID_DATA_DIR:directory});
+ t.after(async()=>{app.close();await rm(directory,{recursive:true,force:true});});
+ assert.throws(()=>app.upsertProject({name:"x".repeat(161),root:"/root"}),/name/i);
+ const project=app.upsertProject({id:"example",name:"Example",root:"/descriptive-only"});
+ project.name="Changed outside";
+ assert.equal(app.projects()[0]?.name,"Example");
+ app.close();app=new Workbench({VOID_DATA_DIR:directory});
+ assert.equal(app.projects()[0]?.id,"example");
+ assert.equal(app.upsertProject({id:"example",name:"Renamed",root:"/new"}).id,"example");
+ assert.equal(app.projects().length,1);
+});

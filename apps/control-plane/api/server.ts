@@ -154,6 +154,15 @@ async function route(
   try {
     const desktop = !!options.env.VOID_DESKTOP_WEB_ROOT && !options.env.VOID_CONTROL_TOKEN && isLocalRequest(request);
     if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local'), desktopSetup: desktop });
+    if (parsed.pathname === '/api/projects') {
+      if (request.method === 'GET') { const projects = wb.projects(); return sendJson(response, 200, { items: projects, projects }); }
+      if (request.method === 'POST') return sendJson(response, 200, { project: wb.upsertProject(await readJsonBody(request) as Parameters<Workbench['upsertProject']>[0]) });
+    }
+    const stopRun = /^\/api\/runs\/([A-Za-z0-9_-]+)\/stop$/.exec(parsed.pathname);
+    if (stopRun && request.method === 'POST') {
+      if (!wb.get(stopRun[1]!)) return sendJson(response, 404, { message: 'Session not found.' });
+      wb.stopRun(stopRun[1]!); return sendJson(response, 200, { ok: true });
+    }
     if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, options.workbench.agents());
     if (request.method === 'GET' && parsed.pathname === '/api/integrations') return sendJson(response, 200, { supported: false, integrations: [] });
     if (request.method === 'GET' && parsed.pathname === '/api/demo/status') return sendJson(response, 200, { supported: false, available: false });
