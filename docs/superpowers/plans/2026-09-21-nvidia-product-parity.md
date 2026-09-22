@@ -26,6 +26,7 @@
 ### Task 1: NVIDIA provider default
 
 **Files:**
+
 - Modify: `packages/workbench/src/provider-defaults.ts`
 - Modify: `packages/workbench/src/index.ts`
 - Modify: `packages/workbench/src/provider.ts`
@@ -35,6 +36,7 @@
 - Modify: `cloud/demo.mjs` and `cloud/demo.test.mjs` only where the provider contract requires it
 
 **Interfaces:**
+
 - `PROVIDER_PRESETS` gains the NVIDIA preset.
 - `DEFAULT_PROVIDER_ID` becomes `nvidia`.
 - `DEFAULT_MODEL_ID` becomes `z-ai/glm-5.3-flash`.
@@ -51,6 +53,7 @@
 ### Task 2: Provider setup and quota states
 
 **Files:**
+
 - Modify: `packages/workbench/src/gui.ts`
 - Modify: `packages/workbench/src/index.ts`
 - Modify: `apps/control-plane/ui/src/pages.tsx`
@@ -59,19 +62,21 @@
 - Test: corresponding workbench and UI test files
 
 **Interfaces:**
+
 - Provider state returns `{ status: 'ready' | 'setup-required' | 'rate-limited' | 'unavailable'; provider; model; detail? }`.
 - UI never renders a missing quota/cost as zero.
 
-- [ ] Write failing tests for setup-required, rate-limited, unavailable, and ready states.
-- [ ] Implement the typed provider state and stable error mapping.
-- [ ] Add setup action and model picker metadata without exposing `NVIDIA_API_KEY`.
-- [ ] Verify keyboard focus, empty/error/loading states, and redacted error output.
-- [ ] Run UI tests and typecheck.
-- [ ] Commit: `feat: expose provider setup and quota states`.
+- [x] Write failing tests for setup-required, rate-limited, unavailable, and ready states.
+- [x] Implement the typed provider state and stable error mapping.
+- [x] Add setup action and model picker metadata without exposing `NVIDIA_API_KEY`.
+- [x] Verify keyboard focus, empty/error/loading states, and redacted error output.
+- [x] Run UI tests and typecheck.
+- [x] Commit: `feat: expose provider setup and quota states`.
 
 ### Task 3: Shared workspace and run view contract
 
 **Files:**
+
 - Modify: `packages/workbench/src/gui.ts`
 - Modify: `packages/workbench/src/index.ts`
 - Modify: `apps/control-plane/ui/src/main.tsx`
@@ -79,19 +84,21 @@
 - Add/modify focused contract tests beside each surface
 
 **Interfaces:**
+
 - Shared view names: `chat`, `sessions`, `runs`, `documents`, `approvals`, `ledger`, `tools`, `models`.
 - Run status is a discriminated state: `idle | running | awaiting-approval | stopping | stopped | failed | unknown | paused`.
 - Provider and run status use the same labels and unknown semantics across surfaces.
 
-- [ ] Write failing contract tests for view names and run-state rendering data.
-- [ ] Implement additive view fields and adapters; preserve old response fields.
-- [ ] Wire web, desktop shared bundle, and TUI navigation to the same route/view vocabulary.
-- [ ] Run UI, TUI, workbench, and CLI focused tests.
-- [ ] Commit: `feat: unify workspace and run view contracts`.
+- [x] Write failing contract tests for view names and run-state rendering data.
+- [x] Implement additive view fields and adapters; preserve old response fields.
+- [x] Wire web, desktop shared bundle, and TUI navigation to the same route/view vocabulary.
+- [x] Run UI, TUI, workbench, and CLI focused tests.
+- [x] Commit: `feat: unify workspace and run view contracts`.
 
 ### Task 4: Projects and bounded background runs
 
 **Files:**
+
 - Modify: `packages/runtime/src/recovery/plan.ts` and `run.ts` where existing job semantics support the feature
 - Modify: `packages/workbench/src/index.ts` and `gui.ts`
 - Modify: `apps/control-plane/ui/src/pages.tsx`
@@ -99,20 +106,22 @@
 - Test: runtime, workbench, UI, and TUI run tests
 
 **Interfaces:**
+
 - A project is a validated workspace-scoped record with `id`, `name`, `root`, and `updatedAt`.
 - A background run reuses the durable runtime job state and exposes `runId`, `status`, `progress`, `workspace`, and `reconcileRequired`.
 - Stop is a real server/runtime request; unknown results never auto-dispatch again.
 
-- [ ] Write failing tests for project isolation, run observation, stop, restart, unknown, and reconciliation.
-- [ ] Implement the smallest project persistence extension using existing Workbench storage.
-- [ ] Expose run list/detail/status in the shared GUI and TUI views.
-- [ ] Verify duplicate dispatch is impossible under restart and timeout.
-- [ ] Run focused runtime/workbench/UI/TUI suites.
-- [ ] Commit: `feat: add bounded project background runs`.
+- [x] Write failing tests for project isolation, run observation, stop, restart, unknown, and reconciliation.
+- [x] Implement the smallest project persistence extension using existing Workbench storage.
+- [x] Expose run list/detail/status in the shared GUI and TUI views.
+- [x] Verify duplicate dispatch is impossible under restart and timeout.
+- [x] Run focused runtime/workbench/UI/TUI suites.
+- [x] Commit: `feat: add bounded project background runs`.
 
 ### Task 5: Custom agents, hooks, and context compaction
 
 **Files:**
+
 - Add: `packages/workbench/src/agents.ts`
 - Add: `packages/workbench/src/agents.test.ts`
 - Modify: `packages/workbench/src/index.ts`
@@ -121,12 +130,13 @@
 - Modify: `packages/cli/src/tui/workspace.ts`
 
 **Interfaces:**
+
 - Agent profile: `{ id, name, systemPrompt, allowedTools, policyProfile, maxTurns, maxContextTokens }`.
 - Hook: `{ id, event: 'before-run' | 'after-tool' | 'after-run', command, enabled }`, validated against an explicit allowlist and operator policy.
 - Compaction returns `{ summary, retainedMessageIds, omittedMessageCount, createdAt }` and never modifies signed ledger records.
 
-- [ ] Write failing tests for profile validation, tool allowlists, hook refusal, turn/token bounds, and compaction audit preservation.
-- [ ] Implement typed profile persistence and policy checks; no prompt-only permission model.
+- [x] Write failing tests for profile validation, tool allowlists, hook refusal, turn/token bounds, and compaction audit preservation.
+- [x] Implement typed profile persistence and policy checks; no prompt-only permission model.
 - [ ] Implement bounded compaction with explicit UI/TUI status.
 - [ ] Add agent and context controls to settings/session surfaces.
 - [ ] Run focused tests and security review of command execution boundaries.
@@ -135,6 +145,7 @@
 ### Task 6: Recovery-first document and multi-operation UX
 
 **Files:**
+
 - Modify: `packages/workbench/src/gui.ts`
 - Modify: `packages/runtime/src/recovery/plan.ts` and `run.ts`
 - Modify: `apps/control-plane/ui/src/pages.tsx` and `chat.tsx`
@@ -142,6 +153,7 @@
 - Test: existing document, recovery, UI, and TUI suites
 
 **Interfaces:**
+
 - Preview is immutable until explicit refresh.
 - Undo and rewind require server/runtime revalidation of operation IDs, digests, current revisions, and policy.
 - Conflict displays the changed field/resource and disables retry until refresh.
@@ -155,6 +167,7 @@
 ### Task 7: Visual, responsive, and accessibility parity
 
 **Files:**
+
 - Modify: `apps/control-plane/ui/src/*.tsx`
 - Modify: `apps/control-plane/ui/src/*.css`
 - Modify: `packages/cli/src/tui/*.ts`
@@ -170,6 +183,7 @@
 ### Task 8: Release verification
 
 **Files:**
+
 - Modify: `docs/GUI-UPGRADE-DELIVERY.md`, `docs/PLAN-STATUS.md`, and `docs/PLAN-GAPS.md`
 - No source changes unless a verification regression finds one.
 
