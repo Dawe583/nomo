@@ -7,7 +7,7 @@ import { Workbench } from "../../../workbench/src/index.ts";
 import { LocalStorage } from "../../../workbench/src/storage.ts";
 import {
   WorkspaceTui,
-  WORKSPACE_TABS,
+  workspaceTab,
   commandSuggestions,
   filterKeyForTab,
   isDoubleEscape,
@@ -318,7 +318,7 @@ export async function runWorkspaceTui(
     if (arg === "--once") once = true;
     else if (arg === "--help") {
       console.log(
-        "void tui [--once] [--view overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
+        "void tui [--once] [--view runs|overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
       );
       return 0;
     } else if (
@@ -328,9 +328,9 @@ export async function runWorkspaceTui(
       if (!value || value.startsWith("--"))
         throw Error(`${arg} requires a value`);
       if (arg === "--view") {
-        if (!WORKSPACE_TABS.includes(value as WorkspaceTab))
-          throw Error("Unknown TUI view");
-        tab = value as WorkspaceTab;
+        const selected = workspaceTab(value);
+        if (!selected) throw Error("Unknown TUI view");
+        tab = selected;
       }
       if (arg === "--session") sessionId = value;
       if (arg === "--data-dir") directory = resolve(value);

@@ -10,7 +10,7 @@ import {
   DEFAULT_POLICY,
   type SessionEvent,
 } from "../../../workbench/src/index.ts";
-import { activity } from "../../../workbench/src/gui.ts";
+import { activity, type ViewName } from "../../../workbench/src/gui.ts";
 import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
@@ -50,6 +50,25 @@ export const WORKSPACE_TABS = [
   "help",
 ] as const;
 export type WorkspaceTab = (typeof WORKSPACE_TABS)[number];
+export const WORKSPACE_VIEWS = {
+  overview: "runs",
+  chat: "chat",
+  sessions: "sessions",
+  documents: "documents",
+  ledger: "ledger",
+  approvals: "approvals",
+  policy: null,
+  tools: "tools",
+  models: "models",
+  usage: "models",
+  help: null,
+} as const satisfies Record<WorkspaceTab, ViewName | null>;
+export function workspaceTab(value: string): WorkspaceTab | undefined {
+  if (value === "runs") return "overview";
+  return WORKSPACE_TABS.includes(value as WorkspaceTab)
+    ? (value as WorkspaceTab)
+    : undefined;
+}
 type Item = {
   id: string;
   label: string;
@@ -463,6 +482,7 @@ export class WorkspaceTui {
       .join("|");
     if (!force && stamp === this.proofStamp) return;
     this.proofStamp = stamp;
+    this.provider = await this.workbench.providerState();
     this.proofs.clear();
     this.proofErrors.clear();
     for (const session of this.workbench.list()) {
@@ -709,10 +729,23 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       lines.push("No usage records yet. Send a prompt first.");
     return lines;
   }
+  providerLines() {
+    const provider = this.provider;
+    return [
+      `Provider: ${provider?.providerId ?? "unknown"} | ${provider?.status ?? "unavailable"}`,
+      ...(provider?.detail ? [provider.detail] : []),
+      ...(provider?.retryAt ? [`Retry at: ${provider.retryAt}`] : []),
+      ...(provider?.status === "setup-required"
+        ? [
+            "/connect shows credential setup. Never type a key into the terminal.",
+          ]
+        : []),
+    ];
+  }
   statusLines() {
     const ctx = this.session() ? this.contextNumbers() : null;
     return [
-      `Provider: ${this.provider?.connected ? this.provider.providerId : "NOT CONNECTED"}`,
+      ...this.providerLines(),
       `model: ${this.session()?.model || this.model || "-"} | ${modeAuthorityLabel(this.mode)}`,
       `Run: ${this.workbench.running() ? "running or settling" : "idle"}`,
       ctx
@@ -767,6 +800,21 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   }
   items(): Item[] {
     let rows: Item[] = [];
+    if (this.tab === "overview")
+      rows = [...this.workbench.runs()].reverse().map((run) => ({
+        id: run.id,
+        sessionId: run.sessionId,
+        label: `[${run.state}] ${run.model} ${run.sessionId.slice(0, 8)} | progress ${run.progress === null ? "unknown" : `${Math.round(run.progress * 100)}%`}${run.reconcileRequired ? " | reconciliation required" : ""}`,
+        lines: [
+          "RUN",
+          ...json(run),
+          "",
+          "/stop requests a stop for this conversation. /chat opens its messages.",
+          ...(run.reconcileRequired
+            ? ["Outcome unknown. Reconcile before starting any further action."]
+            : []),
+        ],
+      }));
     if (this.tab === "sessions")
       rows = [...this.workbench.list()].reverse().map((s) => ({
         id: s.id,
@@ -879,10 +927,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         lines: json(m),
       }));
     if (this.tab === "usage")
-      rows = activity(this.workbench.allViews()).runs.map((r) => ({
+      rows = activity(this.workbench.allViews()).usage.map((r) => ({
         id: r.id,
         sessionId: r.sessionId,
-        label: `${r.status} ${r.model} ${r.sessionId.slice(0, 8)}`,
+        label: `${r.model} ${r.sessionId.slice(0, 8)} | tokens ${r.totalTokens ?? "unknown"} | cost unknown`,
         lines: json(r),
       }));
     return this.filter
@@ -896,6 +944,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   async openSelected() {
     const row = this.items()[this.selected];
     if (!row) return;
+    if (this.tab === "overview") {
+      this.useSession(row.sessionId!);
+      this.detail = row.lines;
+      this.scroll = 0;
+      return;
+    }
     if (this.tab === "sessions" || this.tab === "usage") {
       this.useSession(row.sessionId!);
       this.choose("chat");
@@ -1176,8 +1230,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     const cmd = match[1]!,
       arg = match[2]?.trim() ?? "";
-    if (WORKSPACE_TABS.includes(cmd as WorkspaceTab)) {
-      this.choose(cmd as WorkspaceTab);
+    const tab = workspaceTab(cmd);
+    if (tab) {
+      this.choose(tab);
       this.filter = arg;
       return;
     }
@@ -1555,16 +1610,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.notice = "Storage ready. Open a conversation for plan.md.";
       return;
     }
-    if (cmd === "login") {
-      this.provider = await importDesktopProvider(
-        arg || "opencode:zen",
-        this.env,
-        this.workbench,
-      );
-      this.model = this.provider.defaultModel ?? "";
-      this.notice = `Connected to ${this.provider.providerId}. The key is stored encrypted.`;
-      return;
-    }
     if (cmd === "logout") {
       this.workbench.clearProvider();
       this.provider = await this.workbench.providerState();
@@ -1616,8 +1661,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "stop") {
       if (!this.sessionId) throw Error("Select a running conversation.");
-      this.workbench.cancel(this.sessionId);
-      this.notice = "Cancelling. A dispatched tool may still complete.";
+      this.workbench.stopRun(this.sessionId);
+      this.notice =
+        "Stop requested. A dispatched tool may still complete; /runs shows the confirmed state.";
       return;
     }
     if (cmd === "retry" || cmd === "branch") {
@@ -1663,12 +1709,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.notice = `Model for new conversations: ${arg}`;
       return;
     }
-    if (cmd === "connect") {
-      // Local credential sources only: opencode or prime auth files, or an
-      // explicit OPENCODE_ZEN_API_KEY in the environment. Nothing is typed
-      // into the repo and no key travels in a command argument.
+    if (cmd === "connect" || cmd === "login") {
+      if (!arg || arg === "nvidia") {
+        this.provider = await this.workbench.providerState();
+        this.detail = this.providerLines();
+        this.notice =
+          this.provider.providerId === "nvidia"
+            ? "Set NVIDIA_API_KEY in the host environment, then reopen VOID. No key is accepted in chat."
+            : "Current provider is unchanged. /sources lists explicit local imports; /connect source-ID selects one.";
+        this.scroll = 0;
+        return;
+      }
       this.provider = await importDesktopProvider(
-        arg || "opencode:zen",
+        arg,
         this.env,
         this.workbench,
       );
@@ -1942,7 +1995,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "Press i to type; Enter to send; Shift+Enter or Ctrl+J for a new line.",
             "Example: Create a plan and save it to plan.md.",
             "",
-            "/connect imports OpenCode Zen from local auth or OPENCODE_ZEN_API_KEY.",
+            "/connect shows provider setup without switching existing conversations.",
           ];
     if (this.tab === "overview") {
       const o = activity(this.workbench.allViews()).overview;
@@ -1963,14 +2016,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return [
         "VOID / LOCAL WORKSPACE",
         "",
-        `Provider: ${this.provider?.connected ? this.provider.providerId : "NOT CONNECTED"} | model: ${this.model || "-"}`,
+        ...this.providerLines(),
+        `Model: ${this.model || "-"}`,
         `Run: ${this.workbench.running() ? "running or settling" : "idle"}`,
         `Conversations: ${this.workbench.list().length} | Documents: ${this.workbench.documentsList().length} | Pending approvals: ${this.workbench.pending().length + this.proxy.holds.length}`,
         `Ledger: ${[...this.proofs.values()].reduce((n, p) => n + p.length, 0)} managed + ${[...this.proxy.entries.values()].reduce((n, p) => n + p.length, 0)} proxy entries`,
         `Proxy signatures: ${this.proxy.entries.size ? (this.proxy.signed ? "verified" : "NOT VERIFIED (integrity only)") : "no entries"} | Errors: ${this.proofErrors.size + this.proxy.errors.length}`,
         ...this.proofErrors.values(),
         "",
-        `Completed runs: ${o.runs} | Failures: ${o.failed}`,
+        `Runs: ${o.runs} | Failures: ${o.failed}`,
+        ...this.items().map(
+          (row, i) =>
+            `${i === this.selected ? ">" : " "} ${i + 1}. ${row.label}`,
+        ),
         `Provider tokens: ${o.totalTokens ?? "unknown"} | Cost: unknown`,
         ...planLines,
         "",
@@ -2156,6 +2214,7 @@ export const TUI_COMMANDS = [
   ["/find", "Search conversation text"],
   ["/sessions", "Open conversation history"],
   ["/resume", "Resume a conversation"],
+  ["/runs", "Run states, progress and reconciliation"],
   ["/rewind", "Review a recoverable checkpoint"],
   ["/documents", "Documents and revisions"],
   ["/context", "Managed documents and context"],

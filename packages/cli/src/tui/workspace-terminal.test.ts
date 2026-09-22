@@ -51,3 +51,18 @@ test("one-shot TUI exits unsuccessfully for a corrupt proxy ledger", async (t) =
     },
   );
 });
+
+test("shared runs view is available in plain one-shot output", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-terminal-runs-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const result = await exec(
+    process.execPath,
+    [binary, "tui", "--once", "--view", "runs"],
+    {
+      env: { PATH: process.env.PATH, HOME: root, VOID_DATA_DIR: root },
+    },
+  );
+  assert.match(result.stdout, /Runs: 0/);
+  assert.match(result.stdout, /setup-required/);
+  assert.doesNotMatch(result.stdout, /\x1b/);
+});
