@@ -801,7 +801,7 @@ test("hook validation refuses commands not on allowlist", () => {
     event: "after-tool",
     command: "echo done",
     enabled: true,
-  });
+  }, ["echo done"]);
   assert.equal(ok.command, "echo done");
   assert.equal(ok.enabled, true);
 });
