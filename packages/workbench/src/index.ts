@@ -27,6 +27,7 @@ import {
   publicConnector,
   providerStateFromFailure,
   activity,
+  deriveRunState,
   MAX_QUEUED_RUNS,
   type ProviderStatus,
   type ViewName,
@@ -119,6 +120,7 @@ export type SessionView = {
   readonly parentId?: string;
   readonly compaction?: CompactionResult;
   readonly contextMessages?: number;
+  readonly state?: RunState;
   readonly status: "running" | "queued" | "idle" | "cancelled" | "failed" | "unknown" | "paused";
   readonly events: readonly SessionEvent[];
 };
@@ -591,8 +593,7 @@ export class Workbench {
     legacy: boolean;
     reconcileRequired: boolean;
   }[] {
-    const views = [...this.sessions.values()].map((s) => s.view);
-    const activityResult = activity(views);
+    const activityResult = activity(this.allViews());
     return activityResult.runs;
   }
   stopRun(sessionId: string): void {
@@ -611,12 +612,16 @@ export class Workbench {
     this.catalog = [];
     this.persist();
   }
-  list(): readonly SessionView[] {
-    return [...this.sessions.values()].map((session) => ({
+  private view(session: Session): SessionView {
+    return {
       ...session.view,
       contextMessages: session.messages.length,
-      events: [],
-    }));
+      state: session.view.status === "cancelled" && this.jobs.has(session.view.id)
+        ? "stopping" : deriveRunState(session.view.status, session.view.events),
+    };
+  }
+  list(): readonly SessionView[] {
+    return this.allViews().map(view => ({ ...view, events: [] }));
   }
   availableTools(id?: string) {
     const session = id ? this.sessions.get(id) : undefined;
@@ -641,7 +646,7 @@ export class Workbench {
   }
   get(id: string): SessionView | undefined {
     const session = this.sessions.get(id);
-    return session && { ...session.view, contextMessages: session.messages.length };
+    return session && this.view(session);
   }
   async start(
     prompt: string,
@@ -1087,7 +1092,7 @@ export class Workbench {
     };
   }
   allViews() {
-    return [...this.sessions.values()].map((session) => ({ ...session.view, contextMessages: session.messages.length }));
+    return [...this.sessions.values()].map(session => this.view(session));
   }
   approvals() {
     return [
@@ -1120,16 +1125,20 @@ export class Workbench {
   document(id: string, path: string) {
     return documentView(this.workspace(id), path, id);
   }
+  private settledSession(id: string): Session {
+    const session = this.sessions.get(id);
+    if (!session) throw new Error("Session not found.");
+    if (this.closing || this.jobs.size || session.recoveryBlock || !["idle", "cancelled", "failed"].includes(session.view.status))
+      throw new Error("Wait for the session to stop and settle. Reconcile unresolved recovery before changing documents.");
+    return session;
+  }
   async editDocument(
     id: string,
     input: { path: string; content: string; expectedRevision: string | null },
     operator: "web-operator" | "tui-operator" = "web-operator",
   ) {
     return this.locked(async () => {
-      const s = this.sessions.get(id);
-      if (!s) throw new Error("Session not found.");
-      if (this.jobs.size || s.view.status === "running")
-        throw new Error("Wait for the agent to stop.");
+      const s = this.settledSession(id);
       const state = this.workspace(id);
       if (
         documentView(state, input.path, id).revision !== input.expectedRevision
@@ -1190,6 +1199,8 @@ export class Workbench {
         workspace = `agent-${childId}`;
       const child: Session = {
         ...parent,
+        recoveryBlock: undefined,
+        queuedPrompt: undefined,
         client: undefined,
         controller: new AbortController(),
         view: {
@@ -1562,68 +1573,43 @@ export class Workbench {
     operator: "web-operator" | "tui-operator" = "web-operator",
   ) {
     return this.locked(async () => {
-      const session = this.sessions.get(id);
-      if (
-        this.closing ||
-        this.jobs.size ||
-        !session ||
-        session.view.status === "running"
-      )
-        throw new Error(
-          "Wait for the session to stop before undoing a change.",
-        );
+      const session = this.settledSession(id);
       const preview = await this.undoPreview(id, operationId);
-      if (
-        !preview.canApply &&
-        !this.workspace(id).operations.some((op) => op.undoes === operationId)
-      )
+      if (!preview.canApply && !this.workspace(id).operations.some(op => op.undoes === operationId))
         throw new Error(preview.reason);
-      const runtime = await this.documentRuntime(session, { by: operator }),
-        runtimeId = digest(operationId);
+      const runtime = await this.documentRuntime(session, { by: operator }), runtimeId = digest(operationId);
       let status = await runtime.status(session.view.workspace, runtimeId);
-      if (status) {
-        if (status === "unknown" || status === "dispatched")
-          status = (await runtime.reconcile(session.view.workspace, runtimeId))
-            .status;
-        const result =
-          status === "succeeded"
-            ? await runtime.recover(
-                await runtime.planRecovery(session.view.workspace, runtimeId),
-                async () => true,
-              )
-            : await runtime.reconcileRecovery(
-                session.view.workspace,
-                runtimeId,
-              );
-        if (result.status !== "restored")
-          throw new Error(`Managed document recovery ${result.status}.`);
-        this.event(session, "tool", `Undid ${operationId}.`);
-        this.persist();
-        return { ok: true, workspace: this.workspace(id) };
-      }
+      if (status === "unknown" || status === "dispatched")
+        status = (await runtime.reconcile(session.view.workspace, runtimeId)).status;
+      const plan = status === "succeeded" ? await runtime.planRecovery(session.view.workspace, runtimeId) : undefined;
       const prior = this.workspace(id);
-      const transition = applyWorkspaceUndo(this.workspace(id), {
-        id: `undo-${operationId}`,
-        operationId,
-      });
-      if (transition.result.isError)
-        throw new Error(transition.result.content[0]?.text ?? "Undo refused.");
-      if (transition.state === prior) return { ok: true, workspace: prior };
-      await this.commitWorkspace(
-        session,
-        transition.state,
-        "void_workspace_undo",
-        { operationId },
-        "execute:completed",
-        transition.operation,
-      );
-      this.event(
-        session,
-        "tool",
-        `Undid ${transition.operation?.path ?? operationId}.`,
-      );
+      const transition = status ? undefined : applyWorkspaceUndo(prior, { id: `undo-${operationId}`, operationId });
+      if (transition?.result.isError) throw new Error(transition.result.content[0]?.text ?? "Undo refused.");
+      if (transition?.state === prior) return { ok: true, workspace: prior };
+      this.settledSession(id); // send() may have run while the signed preview loaded.
+      const previousStatus = session.view.status;
+      // Before the inverse dispatches, a crash or lost receipt must leave a
+      // durable unknown. Stop and unrelated recovery cannot release this state.
+      session.view = { ...session.view, status: "unknown" };
       this.persist();
-      return { ok: true, workspace: transition.state };
+      let confirmed = false;
+      try {
+        if (status) {
+          const result = plan
+            ? await runtime.recover(plan, async () => true)
+            : await runtime.reconcileRecovery(session.view.workspace, runtimeId);
+          confirmed = result.status !== "unknown";
+          if (result.status !== "restored") throw new Error(`Managed document recovery ${result.status}.`);
+        } else {
+          await this.commitWorkspace(session, transition!.state, "void_workspace_undo", { operationId }, "execute:completed", transition!.operation);
+          confirmed = true;
+        }
+        this.event(session, "tool", `Undid ${operationId}.`);
+        return { ok: true, workspace: this.workspace(id) };
+      } finally {
+        session.view = { ...session.view, status: confirmed ? previousStatus : "unknown" };
+        this.persist();
+      }
     });
   }
   /** Signed slice of one workspace for a third party. Verified in repo first. */
