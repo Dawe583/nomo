@@ -1,0 +1,69 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Workbench } from "./index.ts";
+import { LocalStorage } from "./storage.ts";
+
+const complete = () => Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
+test("provider setup and generation failures produce stable redacted provider states", async t => {
+  const directory=await mkdtemp(join(tmpdir(),"void-parity-"));
+  const wb=new Workbench({VOID_DATA_DIR:directory,NVIDIA_API_KEY:"never-expose-this"}, async()=> new Response("never-expose-this",{status:401}));
+  t.after(async()=>{wb.close();await rm(directory,{recursive:true,force:true});});
+  const unavailable=await wb.providerState();
+  assert.equal(unavailable.status,"unavailable");
+  assert.doesNotMatch(JSON.stringify(unavailable),/never-expose-this/);
+  const otherDirectory=await mkdtemp(join(tmpdir(),"void-parity-rate-"));
+  const other=new Workbench({VOID_DATA_DIR:otherDirectory},async url=>String(url).endsWith("/models") ? Response.json({data:[{id:"fixture"}]}) : new Response("hidden",{status:429,headers:{"retry-after":"30"}}));
+  t.after(async()=>{other.close();await rm(otherDirectory,{recursive:true,force:true});});
+  await other.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+  await other.start("test","fixture"); await other.settled();
+  const first=await other.providerState(), second=await other.providerState();
+  assert.equal(first.status,"rate-limited"); assert.equal(first.retryAt,second.retryAt);
+});
+
+test("restart exposes interrupted runs as unknown and refuses redispatch", async t=>{
+  const directory=await mkdtemp(join(tmpdir(),"void-parity-restart-"));
+  const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):complete();
+  let wb=new Workbench({VOID_DATA_DIR:directory},fetcher);
+  t.after(async()=>{wb.close();await rm(directory,{recursive:true,force:true});});
+  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+  const session=await wb.start("test","fixture"); await wb.settled(); wb.close();
+  const storage=new LocalStorage(directory), saved=storage.read<{sessions:Array<{view:{status:string}}>}>()!;
+  saved.sessions[0]!.view.status="running"; storage.save(saved);
+  wb=new Workbench({VOID_DATA_DIR:directory},fetcher);
+  assert.equal(wb.get(session.id)?.status,"unknown");
+  assert.equal(wb.runs()[0]?.reconcileRequired,true);
+  assert.throws(()=>wb.send(session.id,"Again"),/unknown|reconcil/i);
+});
+
+test("uncertain connector outcome stops the batch and requires reconciliation", async t=>{
+  const {createServer}=await import("node:http");
+  const directory=await mkdtemp(join(tmpdir(),"void-parity-unknown-"));
+  let writes=0, completions=0;
+  const server=createServer(async(req,res)=>{
+    let text="";for await(const chunk of req)text+=chunk;
+    const body=JSON.parse(text);
+    if(body.method==="tools/call"){ writes++; req.socket.destroy(); return; }
+    res.setHeader("content-type","application/json");
+    res.end(JSON.stringify({jsonrpc:"2.0",id:body.id,result:body.method==="tools/list"?{tools:[{name:"write",inputSchema:{type:"object"}}]}:{}}));
+  });
+  await new Promise<void>(resolve=>server.listen(0,"127.0.0.1",resolve));
+  const address=server.address();assert.ok(address&&typeof address!=="string");
+  const wb=new Workbench({VOID_DATA_DIR:directory},async(url,init)=>{
+    if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
+    if(++completions>1)return complete();
+    const request=JSON.parse(String(init?.body));
+    const tool=request.tools.find((tool:{function:{description:string}})=>tool.function.description.startsWith("write:"));
+    return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:["first","second"].map(id=>({id,type:"function",function:{name:tool.function.name,arguments:"{}"}}))}}]});
+  });
+  t.after(async()=>{await wb.shutdown();server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(directory,{recursive:true,force:true});});
+  await wb.addConnector({url:`http://127.0.0.1:${address.port}`,mapping:{write:"aws.s3.object.put"},facts:{"bucket.versioning":"Enabled"}});
+  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+  const session=await wb.start("Write", "fixture");await wb.settled();
+  assert.equal(writes,1); assert.equal(completions,1);
+  assert.equal(wb.get(session.id)?.status,"unknown");
+  assert.throws(()=>wb.send(session.id,"Again"),/unknown|reconcil/i);
+  assert.ok((await wb.ledger(session.workspace))?.entries.some(e=>(e.body as {decision:string}).decision==="execute:unknown"));
+});

@@ -360,17 +360,16 @@ export function providerFailure(error: {
 // guessing a price or a quota; an unobserved retry time is null.
 export function providerStateFromFailure(
   connected: boolean,
-  failure: { status: number; retryAfter?: number } | null,
+  failure: { status: number; retryAfter?: number; retryAt?: string | null } | null,
   credentials: boolean,
 ): { status: ProviderStatus; detail: string | null; retryAt: string | null } {
   if (failure?.status === 429)
     return {
       status: "rate-limited",
       detail: "Provider rate limit reached.",
-      retryAt:
-        failure.retryAfter === undefined
+      retryAt: failure.retryAt ?? (failure.retryAfter === undefined
           ? null
-          : new Date(Date.now() + failure.retryAfter * 1000).toISOString(),
+          : new Date(Date.now() + failure.retryAfter * 1000).toISOString()),
     };
   if (!connected && !credentials)
     return {

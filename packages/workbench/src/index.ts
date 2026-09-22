@@ -1,3 +1,4 @@
+import { compactMessages } from "./context.ts";
 import { toolCatalog } from "./tool-catalog.ts";
 import { managedDocumentAdapter } from "./managed-documents.ts";
 import {
@@ -113,7 +114,7 @@ export type SessionView = {
   readonly runId?: string;
   readonly provider?: string;
   readonly parentId?: string;
-  readonly status: "running" | "queued" | "idle" | "cancelled" | "failed";
+  readonly status: "running" | "queued" | "idle" | "cancelled" | "failed" | "unknown" | "paused";
   readonly events: readonly SessionEvent[];
 };
 export const DEFAULT_POLICY =
@@ -169,10 +170,14 @@ export function denialText(
       : "Change the connector policy or ask the operator to approve this class.";
   return `VOID denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
 }
+class UnknownToolOutcome extends Error {
+  constructor() { super("Tool outcome is unknown. Stop and reconcile its evidence before continuing."); }
+}
 type Connector = McpConfig & { id: string; name: string; tools: McpTool[] };
 type Session = {
   view: SessionView;
   messages: ModelMessage[];
+  messageIds?: string[];
   queuedPrompt?: string;
   client?: VoidClient;
   tools?: McpTool[];
@@ -187,6 +192,7 @@ type Session = {
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
   private provider: CompatibleProvider | undefined;
+  private providerFailureState: { status: number; retryAt: string | null } | null = null;
   private readonly storage: LocalStorage;
   private hasState = false;
   private preferences: Record<string, string> = {
@@ -274,6 +280,7 @@ export class Workbench {
       sessions: Array<{
         view: SessionView;
         messages: ModelMessage[];
+        messageIds?: string[];
         config?: ProviderConfig;
         tools?: McpTool[];
         connections?: Session["connections"];
@@ -356,10 +363,7 @@ export class Workbench {
             config: sessionConfig,
             view: {
               ...item.view,
-              status:
-                item.view.status === "running" || item.view.status === "queued"
-                  ? "failed"
-                  : item.view.status,
+              status: item.view.status === "running" ? "unknown" : item.view.status === "queued" ? "paused" : item.view.status,
             },
             provider: new CompatibleProvider(fallback, fetcher),
             controller: new AbortController(),
@@ -371,10 +375,7 @@ export class Workbench {
           config: sessionConfig,
           view: {
             ...item.view,
-            status:
-              item.view.status === "running" || item.view.status === "queued"
-                ? "failed"
-                : item.view.status,
+            status: item.view.status === "running" ? "unknown" : item.view.status === "queued" ? "paused" : item.view.status,
           },
           provider: new CompatibleProvider(config, fetcher),
           controller: new AbortController(),
@@ -403,9 +404,10 @@ export class Workbench {
       evidence: this.evidence,
       projects: this.projectList,
       sessions: [...this.sessions.values()].map(
-        ({ view, messages, config, tools, connections }) => ({
+        ({ view, messages, messageIds, config, tools, connections }) => ({
           view,
           messages,
+          messageIds,
           config,
           tools,
           connections,
@@ -453,33 +455,23 @@ export class Workbench {
       Object.assign(this, previous);
       throw error;
     }
+    this.providerFailureState = null;
     return models;
   }
   async providerState() {
-    if (!this.provider && !this.ignoreEnvironment && this.env.NVIDIA_API_KEY) {
-      await this.configure({
-        baseUrl: NVIDIA_URL,
-        apiKey: this.env.NVIDIA_API_KEY,
-      });
+    if (!this.provider && !this.ignoreEnvironment && this.env.NVIDIA_API_KEY && !this.providerFailureState) {
+      try {
+        await this.configure({ baseUrl: NVIDIA_URL, apiKey: this.env.NVIDIA_API_KEY });
+      } catch (error) {
+        this.recordProviderFailure(error);
+      }
     }
-    const hasCredential = Boolean(this.env.NVIDIA_API_KEY);
-    const failure =
-      !this.provider && hasCredential
-        ? {
-            status: 401,
-            retryAfter: undefined,
-            message: "Provider configured but not usable.",
-          }
-        : null;
-    const derived = providerStateFromFailure(
-      this.provider !== undefined,
-      failure,
-      hasCredential,
-    );
+    const hasCredential = Boolean(this.config?.apiKey || (!this.ignoreEnvironment && this.env.NVIDIA_API_KEY));
+    const derived = providerStateFromFailure(this.provider !== undefined, this.providerFailureState, hasCredential);
     return {
       connected: this.provider !== undefined,
       setupRequired:
-        this.provider === undefined && DEFAULT_PROVIDER_ID === "nvidia",
+        derived.status === "setup-required",
       models: this.catalog,
       keyStorage: this.keyStorage,
       baseUrl: this.config?.baseUrl,
@@ -570,6 +562,7 @@ export class Workbench {
     }
   }
   clearProvider(): void {
+    this.providerFailureState = null;
     this.ignoreEnvironment = true;
     this.provider = undefined;
     if (this.config) delete this.profiles[this.config.baseUrl];
@@ -775,6 +768,8 @@ export class Workbench {
       session.view.status === "queued"
     )
       throw new Error("The session is not ready for another message.");
+    if (session.view.status === "unknown")
+      throw new Error("Run outcome is unknown. Reconcile its evidence before continuing.");
     if (!prompt.trim() || prompt.length > 32000)
       throw new Error("Enter a prompt between 1 and 32000 characters.");
     if (
@@ -821,62 +816,18 @@ export class Workbench {
   compact(id: string): CompactionResult {
     const session = this.sessions.get(id);
     if (!session) throw new Error("Session not found.");
-    if (session.view.status === "running")
+    if (this.jobs.size || session.view.status === "running" || session.view.status === "queued")
       throw new Error("Wait for the active run to settle before compacting.");
-    const keep = 6;
-    const omitted = session.messages.slice(1, -keep);
-    if (!omitted.length) {
-      return {
-        summary: "",
-        retainedMessageIds: session.messages.map(
-          (_, i) => `${session.view.id}:${i}`,
-        ),
-        omittedMessageCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-    }
-    const summary = omitted
-      .map(
-        (message) =>
-          `${message.role}: ${typeof message.content === "string" ? message.content : JSON.stringify(message.content)}`,
-      )
-      .join("\n")
-      .slice(0, 12000);
-    const retainedMessageIds = [
-      `${session.view.id}:0`,
-      ...session.messages
-        .slice(-keep)
-        .map(
-          (_, i) => `${session.view.id}:${session.messages.length - keep + i}`,
-        ),
-    ];
-    const omittedMessageCount = omitted.length;
-    session.messages = [
-      session.messages[0]!,
-      {
-        role: "system",
-        content: `VOID context summary. Earlier messages are compressed below; treat this as historical context.\n${summary}`,
-      },
-      ...session.messages.slice(-keep),
-    ];
-    this.event(
-      session,
-      "tool",
-      "Context compacted.",
-      {
-        beforeMessages: omitted.length + keep + 1,
-        afterMessages: session.messages.length,
-        omittedMessages: omitted.length,
-      },
-      "context.compacted",
-    );
+    const before = session.messages.length;
+    const compacted = compactMessages(id, session.messages, session.messageIds);
+    session.messages = compacted.messages;
+    session.messageIds = compacted.messageIds;
+    if (compacted.result.omittedMessageCount) this.event(session, "tool", "Context compacted.", {
+      beforeMessages: before, afterMessages: session.messages.length,
+      omittedMessages: compacted.result.omittedMessageCount,
+    }, "context.compacted");
     this.persist();
-    return {
-      summary,
-      retainedMessageIds,
-      omittedMessageCount,
-      createdAt: new Date().toISOString(),
-    };
+    return compacted.result;
   }
   private drainQueued(): void {
     if (this.closing || this.jobs.size) return;
@@ -1411,6 +1362,7 @@ export class Workbench {
         at: new Date().toISOString(),
       } as Json,
     });
+    if (result.status === "unknown" || result.status === "dispatched") throw new UnknownToolOutcome();
     if (result.status !== "succeeded")
       throw new Error(
         `Managed document operation ${result.status}${result.reason ? ": " + result.reason : ""}. Reconcile its evidence before retrying.`,
@@ -1687,6 +1639,8 @@ export class Workbench {
           name: tool.name,
           arguments: args,
         });
+      } catch {
+        throw new UnknownToolOutcome();
       } finally {
         await this.syncStdio(session);
       }
@@ -1834,7 +1788,7 @@ export class Workbench {
           { klass: call.klass },
         ),
       );
-      throw error;
+      throw new UnknownToolOutcome();
     }
     await this.locked(() =>
       this.commitWorkspace(
@@ -1853,6 +1807,13 @@ export class Workbench {
           JSON.stringify(result.result).split(config.token).join("[redacted]"),
         ) as unknown)
       : result.result;
+  }
+  private recordProviderFailure(error: unknown) {
+    this.providerFailureState = {
+      status: error instanceof ProviderRequestError ? error.status : 503,
+      retryAt: error instanceof ProviderRequestError && error.retryAfter !== undefined
+        ? new Date(Date.now() + error.retryAfter * 1000).toISOString() : null,
+    };
   }
   private async run(session: Session): Promise<void> {
     try {
@@ -1947,7 +1908,8 @@ export class Workbench {
               args as JsonObject,
               `${session.view.id}-${session.messages.length}-${call.id}`,
             );
-          } catch {
+          } catch (error) {
+            if (error instanceof UnknownToolOutcome) throw error;
             result = {
               isError: true,
               content: [
@@ -1979,6 +1941,7 @@ export class Workbench {
       );
     } catch (error) {
       if (!session.controller.signal.aborted) {
+        if (error instanceof ProviderRequestError && session.provider === this.provider) this.recordProviderFailure(error);
         const failure =
           error instanceof ProviderRequestError
             ? providerFailure(error)
@@ -1990,7 +1953,7 @@ export class Workbench {
             (error instanceof Error ? error.message : "Session failed."),
           failure?.payload ?? {},
         );
-        session.view = { ...session.view, status: "failed" };
+        session.view = { ...session.view, status: error instanceof UnknownToolOutcome ? "unknown" : "failed" };
         session.client?.close();
       }
     } finally {
