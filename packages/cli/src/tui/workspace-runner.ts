@@ -615,6 +615,8 @@ export async function runWorkspaceTui(
     };
     const onKey = async (value: string | undefined, key: Key) => {
       if (stopped || suspended) return;
+      // Double Escape must be consecutive, not span commands typed in between.
+      if (key.name !== "escape") lastEsc = 0;
       if (
         !input.pasting &&
         ((key.ctrl && key.name === "c") || key.name === "escape") &&
@@ -674,6 +676,8 @@ export async function runWorkspaceTui(
           return;
         }
         lastCtrlD = nowD;
+        // Exit guidance must not be masked by the history viewport status.
+        ui.scroll = -1;
         ui.notice = "Press Ctrl+D again to exit.";
         draw();
         return;

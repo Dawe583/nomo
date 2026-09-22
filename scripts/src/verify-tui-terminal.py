@@ -26,13 +26,27 @@ await app.editDocument(session.id,{path:'pty.md',content:'Original',expectedRevi
 await app.shutdown(); console.log(session.id);
 """
     session = subprocess.check_output(["node", "--input-type=module", "-e", seed], cwd=ROOT, env=env, text=True).strip()
+    observer = Path(data) / "frames.mjs"
+    observer.write_text("""
+import { DiffScreenWriter } from '%s';
+import { stripAnsi } from '%s';
+const write = DiffScreenWriter.prototype.write;
+DiffScreenWriter.prototype.write = function(frame) {
+  const result = write.call(this, frame);
+  // A notice may render before the runner completes its async refresh.
+  if (!stripAnsi(frame).includes('Finishing operation'))
+    process.stdout.write('\\x1b]777;void-test-ready\\x07');
+  return result;
+};
+""" % ((ROOT / "packages/cli/src/tui/watch.ts").as_uri(),
+       (ROOT / "packages/cli/src/tui/layout.ts").as_uri()))
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 80, 0, 0))
-    process = subprocess.Popen(["node", "packages/cli/bin/void.mjs", "tui", "--session", session, "--view", "documents"], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+    process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/void.mjs", "tui", "--session", session, "--view", "documents"], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
     os.close(slave)
     output = bytearray()
 
-    def read_until(marker, timeout=8):
+    def read_until(marker, timeout=8, ready=False):
         deadline = time.monotonic() + timeout
         start = len(output)
         while time.monotonic() < deadline:
@@ -44,17 +58,18 @@ await app.shutdown(); console.log(session.id);
                 if not chunk:
                     break
                 output.extend(chunk)
-            if marker.encode() in output[start:]:
+            found = output.find(marker.encode(), start)
+            if found >= 0 and (not ready or b"void-test-ready" in output[found:]):
                 return
         raise AssertionError(f"Missing terminal state: {marker}; tail={output[-1000:]!r}")
 
     try:
-        read_until("pty.md")
+        read_until("pty.md", ready=True)
         assert b"\x1b[38;5;" in output or b"\x1b[1;38;5;" in output, "Inherited NO_COLOR disabled TUI colors"
         os.write(master, b"\r")
-        read_until("DOCUMENT pty.md")
+        read_until("DOCUMENT pty.md", ready=True)
         os.write(master, b"u")
-        read_until("UNDO pty.md?")
+        read_until("UNDO pty.md?", ready=True)
         before = len(output)
         os.write(master, b"\x1b[200~y\n/approve fake\x1b[201~")
         time.sleep(0.3)
@@ -62,9 +77,9 @@ await app.shutdown(); console.log(session.id);
             output.extend(os.read(master, 65536))
         assert "Undo completed".encode() not in output[before:], "Paste confirmed a mutation"
         os.write(master, b"y")
-        read_until("Undo completed")
+        read_until("Undo completed", ready=True)
         os.write(master, b"/verify\r")
-        read_until("signed entries")
+        read_until("signed entries", ready=True)
         fcntl.ioctl(master, termios.TIOCSWINSZ, struct.pack("HHHH", 12, 40, 0, 0))
         os.kill(process.pid, signal.SIGWINCH)
         time.sleep(0.1)
@@ -75,43 +90,43 @@ await app.shutdown(); console.log(session.id);
         os.close(master)
         master, slave = pty.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
-        process = subprocess.Popen(["node", "packages/cli/bin/void.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+        process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/void.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
         os.close(slave)
-        read_until("Write a prompt")
+        read_until("Write a prompt", ready=True)
         os.write(master, b"draft first")
-        read_until("draft first")
+        read_until("draft first", ready=True)
         os.write(master, b"\x1b\rdraft second")
-        read_until("draft second")
+        read_until("draft second", ready=True)
         os.write(master, b"\x03/led")
-        read_until("Signed operations")
+        read_until("Signed operations", ready=True)
         os.write(master, b"\t\r")
-        read_until("ledger / navigation")
+        read_until("ledger / navigation", ready=True)
         os.write(master, b"/chat\r")
-        read_until("Write a prompt")
+        read_until("Write a prompt", ready=True)
         os.write(master, b"\x1b[A")
-        read_until("PTY test")
+        read_until("PTY test", ready=True)
         os.write(master, b"\x03/find PTY test\r")
-        read_until("1 matching messages")
+        read_until("1 matching messages", ready=True)
         os.write(master, b"\x1b")
-        read_until("› You")
+        read_until("› You", ready=True)
         os.write(master, b"/bottom\r")
-        read_until("Following latest messages")
+        read_until("Following latest messages", ready=True)
         os.write(master, b"/tools write\r")
-        read_until("void_workspace_write")
+        read_until("void_workspace_write", ready=True)
         os.write(master, b"\r")
-        read_until("INPUT SCHEMA")
+        read_until("INPUT SCHEMA", ready=True)
         # Escape clears a list filter before closing its detail. A diff renderer
         # does not resend unchanged tool text when only the filter notice changes.
         os.write(master, b"\x1b")
-        read_until("Filter cleared.")
+        read_until("Filter cleared.", ready=True)
         os.write(master, b"\x1b")
-        read_until("void_workspace_write")
+        read_until("void_workspace_write", ready=True)
         os.write(master, b"/chat\r")
-        read_until("Write a prompt")
+        read_until("Write a prompt", ready=True)
         os.write(master, b"/expand\r")
-        read_until("Full tool output")
+        read_until("Full tool output", ready=True)
         os.write(master, b"\x0f")
-        read_until("Compact tool output")
+        read_until("Compact tool output", ready=True)
         redraw_start = len(output)
         os.write(master, b"\x0c")
         time.sleep(0.2)
@@ -119,11 +134,12 @@ await app.shutdown(); console.log(session.id);
             output.extend(os.read(master, 65536))
         assert b"\x1b[2J" in output[redraw_start:], "Ctrl+L did not redraw"
         os.write(master, b"\x12PTY test\r")
-        read_until("1 matching messages")
+        read_until("1 matching messages", ready=True)
         os.write(master, b"\x1b")
-        read_until("chat / navigation")
+        # Closing search changes the transcript, not the already visible tab label.
+        read_until("› You", ready=True)
         os.write(master, b"\x15\x04")
-        read_until("Press Ctrl+D again to exit.")
+        read_until("Press Ctrl+D again to exit.", ready=True)
         os.write(master, b"\x04")
         read_until("VOID: stopping")
         assert process.wait(timeout=5) == 0
@@ -152,7 +168,7 @@ process.stdout.write = (...args) => {
   return result;
 };
 """)
-    for width, termination in [(80, "SIGINT"), (120, "SIGTERM"), (200, "SIGHUP"), (80, "fatal"), (80, "exit")]:
+    for width, termination in [(40, "SIGINT"), (80, "SIGINT"), (120, "SIGTERM"), (200, "SIGHUP"), (80, "fatal"), (80, "exit")]:
         master, slave = pty.openpty()
         original = termios.tcgetattr(slave)
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, width, 0, 0))
