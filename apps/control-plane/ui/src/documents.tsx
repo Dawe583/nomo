@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { RecoveryReview } from "./recovery-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, download, type Row } from "./api";
 import { DataTable, Dialog, Empty, ErrorBox, useApi, useText } from "./ui";
@@ -70,8 +71,10 @@ function DocumentHistory({ sessionId }: { sessionId: string }) {
   const query = useApi(
     "/api/sessions/" + encodeURIComponent(sessionId) + "/workspace",
   );
+  const capabilities = useApi("/api/capabilities");
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<DocumentOperation>();
+  const [selection, setSelection] = useState<string[]>([]), [reviewing, setReviewing] = useState(false);
   const operations = documentHistory<DocumentOperation>(
     query.data?.workspace?.operations ?? [],
     search,
@@ -88,7 +91,11 @@ function DocumentHistory({ sessionId }: { sessionId: string }) {
           "Retained changes in this conversation, including deleted documents. The server checks Undo availability in the preview.",
         )}
       </p>
-      <ErrorBox error={query.error} />
+      <ErrorBox error={query.error ?? capabilities.error} />
+      {capabilities.data?.recoveryJobs === true ? <div className="actions">
+        <button disabled={!selection.length || query.isPending || !!query.error} onClick={() => setReviewing(true)}>{t("Náhled obnovy vybraných změn", "Preview recovery of selected changes")} ({selection.length})</button>
+        <button disabled={!selection.length} onClick={() => setSelection([])}>{t("Zrušit výběr", "Clear selection")}</button>
+      </div> : <p className="muted">{t("Obnova více změn není na tomto hostu dostupná.", "Multi-operation recovery is not available on this host.")}</p>}
       <label>
         {t("Hledat cestu nebo ID operace", "Find path or operation ID")}
         <input
@@ -103,6 +110,10 @@ function DocumentHistory({ sessionId }: { sessionId: string }) {
         <ul className="document-operation-list">
           {operations.map((operation) => (
             <li key={operation.id}>
+              {capabilities.data?.recoveryJobs === true && <label>
+                <input type="checkbox" checked={selection.includes(operation.id)} onChange={event => setSelection(ids => event.target.checked ? [...ids, operation.id] : ids.filter(id => id !== operation.id))} />
+                {t("Vybrat změnu", "Select change")}: {operation.path} <code>{operation.id}</code>
+              </label>}
               <button onClick={() => setSelected(operation)}>
                 <strong>{operation.path}</strong>
                 <span>
@@ -123,6 +134,7 @@ function DocumentHistory({ sessionId }: { sessionId: string }) {
           </p>
         )
       )}
+      {reviewing && <RecoveryReview sessionId={sessionId} operationIds={selection} operations={query.data?.workspace?.operations ?? []} close={() => setReviewing(false)} />}
       {selected && (
         <OperationReview
           sessionId={sessionId}

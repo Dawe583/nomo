@@ -3331,3 +3331,12 @@ dialog label > textarea {
   vertical-align: middle;
   margin-left: 12px;
 }
+
+.provider-state, .recovery-review, .session-context, .new-session-options { min-width: 0; overflow-wrap: anywhere; }
+.session-context, .new-session-options { margin-top: 8px; max-height: min(18rem, 30dvh); overflow-y: auto; overscroll-behavior: contain; }
+.session-context > summary, .new-session-options > summary { min-height: 44px; padding: 12px 0; cursor: pointer; }
+.new-session-options label { margin-bottom: 8px; }
+.recovery-review .actions, .document-history > .actions { flex-wrap: wrap; }
+.recovery-review code, .document-operation-list code { overflow-wrap: anywhere; }
+.document-operation-list label { padding: 8px 12px; min-height: 44px; }
+.document-operation-list input[type="checkbox"] { width: auto; margin-right: 8px; }
