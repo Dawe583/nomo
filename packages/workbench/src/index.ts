@@ -844,7 +844,7 @@ export class Workbench {
     this.jobs.set(id, job);
     void job
       .catch(() => {
-        session.view = { ...session.view, status: "failed" };
+        if (session.view.status !== "unknown") session.view = { ...session.view, status: "failed" };
       })
       .finally(() => {
         this.jobs.delete(id);
@@ -896,6 +896,7 @@ export class Workbench {
   cancel(id: string): void {
     const session = this.sessions.get(id);
     if (!session) throw new Error("Session not found.");
+    if (session.view.status === "unknown") return;
     if (session.view.status === "queued") {
       this.queued.delete(id);
       session.view = { ...session.view, status: "cancelled" };
@@ -1804,7 +1805,7 @@ export class Workbench {
       } catch {
         throw new UnknownToolOutcome();
       } finally {
-        await this.syncStdio(session);
+        try { await this.syncStdio(session); } catch { throw new UnknownToolOutcome(); }
       }
     }
     if (!tool.connectorId)
@@ -1870,41 +1871,20 @@ export class Workbench {
       };
     if (session.controller.signal.aborted)
       throw new Error("Session cancelled.");
-    let result;
+    let result: Awaited<ReturnType<typeof rpc>>;
     try {
-      result = await rpc(
-        config,
-        "tools/call",
-        { name: tool.name, arguments: args },
-        config.sessionId,
-      );
-    } catch (error) {
-      await this.locked(() =>
-        this.commitWorkspace(
-          session,
-          this.workspace(session.view.id),
-          name,
-          args,
-          "execute:unknown",
-          undefined,
-          undefined,
-          { klass: call.klass },
-        ),
-      );
+      result = await rpc(config, "tools/call", { name: tool.name, arguments: args }, config.sessionId);
+      await this.locked(() => this.commitWorkspace(session, this.workspace(session.view.id), name, args,
+        result.result?.isError ? "execute:failed" : "execute:completed", undefined, undefined, { klass: call.klass }));
+    } catch {
+      try {
+        await this.locked(() => this.commitWorkspace(session, this.workspace(session.view.id), name, args,
+          "execute:unknown", undefined, undefined, { klass: call.klass }));
+      } catch {
+        // An unavailable ledger cannot turn an uncertain external effect into failure.
+      }
       throw new UnknownToolOutcome();
     }
-    await this.locked(() =>
-      this.commitWorkspace(
-        session,
-        this.workspace(session.view.id),
-        name,
-        args,
-        result.result?.isError ? "execute:failed" : "execute:completed",
-        undefined,
-        undefined,
-        { klass: call.klass },
-      ),
-    );
     return config.token
       ? (JSON.parse(
           JSON.stringify(result.result).split(config.token).join("[redacted]"),
@@ -1918,12 +1898,13 @@ export class Workbench {
         ? new Date(Date.now() + error.retryAfter * 1000).toISOString() : null,
     };
   }
-  private checkContextBudget(session: Session, tools: readonly unknown[]) {
+  private checkContextBudget(session: Session, tools: readonly unknown[], outputTokens = 4096) {
     if (!session.agentProfile) return;
     // UTF-8 bytes plus protocol overhead are a conservative token bound, not
-    // a fabricated tokenizer measurement. Oversize requests never dispatch.
-    const bound = Buffer.byteLength(JSON.stringify(session.messages)) + Buffer.byteLength(JSON.stringify(tools)) + 1024;
-    if (bound > session.agentProfile.maxContextTokens) throw new Error("Agent context budget reached. Compact the session before continuing.");
+    // a fabricated tokenizer measurement. Reserve the provider's fixed output
+    // ceiling too; an oversized combined context never dispatches.
+    const bound = Buffer.byteLength(JSON.stringify(session.messages)) + Buffer.byteLength(JSON.stringify(tools)) + 1024 + outputTokens;
+    if (bound > session.agentProfile.maxContextTokens) throw new Error("Agent context budget reached. Increase the budget or compact before continuing.");
   }
   private async run(session: Session): Promise<void> {
     try {
@@ -1972,7 +1953,7 @@ export class Workbench {
         if (session.controller.signal.aborted) return;
         if (delta) this.event(session, "assistant", delta, {}, "message.delta");
         session.messages.push(reply.message);
-        this.checkContextBudget(session, tools);
+        this.checkContextBudget(session, tools, 0);
         if (session.provider === this.provider) this.providerFailureState = null;
         if (reply.message.content)
           this.event(session, "assistant", reply.message.content);
@@ -2018,26 +1999,9 @@ export class Workbench {
             { tool: name, callId: call.id, arguments: args },
             "tool.started",
           );
-          let result: unknown;
-          try {
-            result = await this.execute(
-              session,
-              tool!,
-              args as JsonObject,
-              `${session.view.runId}-${turn}-${callIndex}`,
-            );
-          } catch (error) {
-            if (error instanceof UnknownToolOutcome) throw error;
-            result = {
-              isError: true,
-              content: [
-                {
-                  type: "text",
-                  text: "VOID refused or could not execute this call. Do not retry; ask the operator.",
-                },
-              ],
-            };
-          }
+          const result = await this.execute(
+            session, tool!, args as JsonObject, `${session.view.runId}-${turn}-${callIndex}`,
+          );
           if (session.controller.signal.aborted) return;
           this.event(
             session,
@@ -2058,7 +2022,7 @@ export class Workbench {
         `Session reached the ${maxTurns}-turn limit. Review the ledger before continuing.`,
       );
     } catch (error) {
-      if (!session.controller.signal.aborted) {
+      if (!session.controller.signal.aborted || error instanceof UnknownToolOutcome) {
         if (error instanceof ProviderRequestError && session.provider === this.provider) this.recordProviderFailure(error);
         const failure =
           error instanceof ProviderRequestError

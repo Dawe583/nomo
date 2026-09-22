@@ -52,7 +52,7 @@ test("custom turn and context bounds stop before extra provider calls",async t=>
  const session=await f.app.start("Inspect","fixture",undefined,undefined,"custom");await f.app.settled();
  assert.equal(calls,1);assert.equal(f.app.get(session.id)?.status,"failed");
  assert.match(f.app.get(session.id)!.events.find(e=>e.kind==="error")!.text,/1-turn/);
- f.app.upsertAgent({...profile,id:"tiny",maxContextTokens:1});
+ f.app.upsertAgent({...profile,id:"tiny",maxContextTokens:4096});
  const tiny=await f.app.start("Inspect","fixture",undefined,undefined,"tiny");await f.app.settled();
  assert.equal(calls,1);assert.equal(f.app.get(tiny.id)?.status,"failed");
  assert.match(f.app.get(tiny.id)!.events.find(e=>e.kind==="error")!.text,/context/i);

@@ -38,14 +38,14 @@ test("restart exposes interrupted runs as unknown and refuses redispatch", async
   assert.throws(()=>wb.send(session.id,"Again"),/unknown|reconcil/i);
 });
 
-test("uncertain connector outcome stops the batch and requires reconciliation", async t=>{
+for (const cancelAfterDispatch of [false, true]) test(`uncertain connector outcome stops the batch, cancelled: ${cancelAfterDispatch}`, async t=>{
   const {createServer}=await import("node:http");
   const directory=await mkdtemp(join(tmpdir(),"void-parity-unknown-"));
   let writes=0, completions=0;
   const server=createServer(async(req,res)=>{
     let text="";for await(const chunk of req)text+=chunk;
     const body=JSON.parse(text);
-    if(body.method==="tools/call"){ writes++; req.socket.destroy(); return; }
+    if(body.method==="tools/call"){ writes++; if (cancelAfterDispatch) wb.cancel(wb.list()[0]!.id); req.socket.destroy(); return; }
     res.setHeader("content-type","application/json");
     res.end(JSON.stringify({jsonrpc:"2.0",id:body.id,result:body.method==="tools/list"?{tools:[{name:"write",inputSchema:{type:"object"}}]}:{}}));
   });
@@ -64,6 +64,8 @@ test("uncertain connector outcome stops the batch and requires reconciliation", 
   const session=await wb.start("Write", "fixture");await wb.settled();
   assert.equal(writes,1); assert.equal(completions,1);
   assert.equal(wb.get(session.id)?.status,"unknown");
+  wb.cancel(session.id);
+  assert.equal(wb.get(session.id)?.status,"unknown");
   assert.throws(()=>wb.send(session.id,"Again"),/unknown|reconcil/i);
   assert.ok((await wb.ledger(session.workspace))?.entries.some(e=>(e.body as {decision:string}).decision==="execute:unknown"));
 });
@@ -80,4 +82,29 @@ test("projects validate full bounds, return copies and persist by stable identit
  assert.equal(app.projects()[0]?.id,"example");
  assert.equal(app.upsertProject({id:"example",name:"Renamed",root:"/new"}).id,"example");
  assert.equal(app.projects().length,1);
+});
+
+test("receipt persistence failure after external dispatch stops all later generation",async t=>{
+ const {createServer}=await import("node:http");
+ const directory=await mkdtemp(join(tmpdir(),"void-receipt-fault-"));
+ let writes=0,completions=0;
+ const server=createServer(async(req,res)=>{
+  let text="";for await(const chunk of req)text+=chunk;const body=JSON.parse(text);
+  if(body.method==="tools/call"){
+   writes++;const storage=new LocalStorage(directory);const state=storage.read();storage.save(state);
+  }
+  res.setHeader("content-type","application/json");res.end(JSON.stringify({jsonrpc:"2.0",id:body.id,result:body.method==="tools/list"?{tools:[{name:"write",inputSchema:{type:"object"}}]}:{content:[{type:"text",text:"completed"}]}}));
+ });
+ await new Promise<void>(resolve=>server.listen(0,"127.0.0.1",resolve));const address=server.address();assert.ok(address&&typeof address!=="string");
+ const wb=new Workbench({VOID_DATA_DIR:directory},async(url,init)=>{
+  if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
+  if(++completions>1)return complete();
+  const body=JSON.parse(String(init?.body));const tool=body.tools.find((t:{function:{description:string}})=>t.function.description.startsWith("write:"));
+  return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:[{id:"one",type:"function",function:{name:tool.function.name,arguments:"{}"}}]}}]});
+ });
+ t.after(async()=>{assert.throws(()=>wb.close(),/another runtime/);server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(directory,{recursive:true,force:true});});
+ await wb.addConnector({url:`http://127.0.0.1:${address.port}`,mapping:{write:"aws.s3.object.put"},facts:{"bucket.versioning":"Enabled"}});
+ await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+ const session=await wb.start("Write","fixture");await wb.settled();
+ assert.equal(writes,1);assert.equal(completions,1);assert.equal(wb.get(session.id)?.status,"unknown");
 });
