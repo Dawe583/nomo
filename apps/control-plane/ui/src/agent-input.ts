@@ -1,3 +1,5 @@
+export const DEFAULT_AGENT_CONTEXT_TOKENS = 32768;
+
 type AgentChoice = { id: string; name: string; description?: string };
 export function agentOptions(data?: {
   agents?: AgentChoice[];

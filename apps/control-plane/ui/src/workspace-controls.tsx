@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, items, type Row } from "./api";
 import { ErrorBox, JsonDetail, useApi, useText } from "./ui";
-import { agentInput } from "./agent-input";
+import { agentInput, DEFAULT_AGENT_CONTEXT_TOKENS } from "./agent-input";
 
 export function WorkspaceControls() {
   const t = useText(),
@@ -233,14 +233,14 @@ export function WorkspaceControls() {
                 />
               </label>
               <label>
-                {t("Maximum tokenů kontextu", "Maximum context tokens")}
+                {t("Maximum tokenů kontextu (vstup a rezerva výstupu)", "Maximum context tokens (input and reserved output)")}
                 <input
                   name="maxContextTokens"
                   type="number"
                   min="1"
                   step="1"
                   required
-                  defaultValue={profile?.maxContextTokens ?? 4096}
+                  defaultValue={profile?.maxContextTokens ?? DEFAULT_AGENT_CONTEXT_TOKENS}
                 />
               </label>
               <div className="actions">

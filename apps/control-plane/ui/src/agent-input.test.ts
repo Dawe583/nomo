@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { agentOptions, agentInput, sessionAgent } from "./agent-input.ts";
+import { agentOptions, agentInput, sessionAgent, DEFAULT_AGENT_CONTEXT_TOKENS } from "./agent-input.ts";
 
 test("agent choices combine server presets and custom profiles without duplicate ids", () => {
   assert.deepEqual(
@@ -65,4 +65,11 @@ test("local agent defaults preserve presets and explicit custom profiles", () =>
   assert.equal(sessionAgent(undefined, { defaultAgent: "cloud", defaultAgentPreset: "default" }, "local", catalog), "default");
   assert.equal(sessionAgent("custom", { defaultAgentPreset: "default" }, "local", catalog), "custom");
   assert.equal(sessionAgent(undefined, {}, "local", catalog), undefined);
+});
+
+test("new profiles reserve room for input and output without raising explicit limits", () => {
+  assert.equal(DEFAULT_AGENT_CONTEXT_TOKENS, 32768);
+  const defaults = { maxTurns: "8", maxContextTokens: String(DEFAULT_AGENT_CONTEXT_TOKENS) };
+  assert.equal(agentInput(defaults).maxContextTokens, 32768);
+  assert.equal(agentInput({ ...defaults, maxContextTokens: "512" }).maxContextTokens, 512);
 });
