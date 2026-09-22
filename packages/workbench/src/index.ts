@@ -184,6 +184,7 @@ type Session = {
   messageIds?: string[];
   agentProfile?: AgentProfile;
   queuedPrompt?: string;
+  recoveryBlock?: { jobId: string; previousStatus: SessionView["status"] };
   client?: VoidClient;
   tools?: McpTool[];
   connections?: Record<string, McpConfig & { sessionId?: string }>;
@@ -291,6 +292,7 @@ export class Workbench {
         messages: ModelMessage[];
         messageIds?: string[];
         agentProfile?: AgentProfile;
+        recoveryBlock?: Session["recoveryBlock"];
         config?: ProviderConfig;
         tools?: McpTool[];
         connections?: Session["connections"];
@@ -418,11 +420,12 @@ export class Workbench {
       agentProfiles: this.agentProfiles,
       projects: this.projectList,
       sessions: [...this.sessions.values()].map(
-        ({ view, messages, messageIds, agentProfile, config, tools, connections }) => ({
+        ({ view, messages, messageIds, agentProfile, recoveryBlock, config, tools, connections }) => ({
           view,
           messages,
           messageIds,
           agentProfile,
+          recoveryBlock,
           config,
           tools,
           connections,
@@ -809,6 +812,8 @@ export class Workbench {
       throw new Error("The session is not ready for another message.");
     if (session.view.status === "unknown")
       throw new Error("Run outcome is unknown. Reconcile its evidence before continuing.");
+    if (session.recoveryBlock)
+      throw new Error("Recovery is unresolved. Resume the approved recovery job before continuing.");
     if (!prompt.trim() || prompt.length > 32000)
       throw new Error("Enter a prompt between 1 and 32000 characters.");
     if (
@@ -897,7 +902,7 @@ export class Workbench {
   cancel(id: string): void {
     const session = this.sessions.get(id);
     if (!session) throw new Error("Session not found.");
-    if (session.view.status === "unknown") return;
+    if (session.view.status === "unknown" || session.recoveryBlock) return;
     if (session.view.status === "queued") {
       this.queued.delete(id);
       session.view = { ...session.view, status: "cancelled" };
@@ -1448,13 +1453,48 @@ export class Workbench {
       if (!input || input.approved !== true) throw new Error("Explicit operator approval is required.");
       const request = this.recoveryRequests[`${id}:${input.jobId}`];
       if (!request) throw new Error("Recovery job not found.");
+      if (session.recoveryBlock && session.recoveryBlock.jobId !== request.jobId)
+        throw new Error("Resume the unresolved recovery job before applying another.");
       const runtime = await this.documentRuntime(session, { by: operator });
       // Reload the signed original plan even after a terminal result. A retry
       // cannot exchange its approval for another job or caller-supplied plan.
       const plan = await runtime.planRecoveryJob({ workspace: session.view.workspace, jobId: request.jobId, selection: runtimeSelection(request.selection) });
       if (plan.digest !== input.planDigest) throw new Error("Recovery job digest changed. Refresh the preview.");
-      const result = await runtime.runRecoveryJob(session.view.workspace, request.jobId, async stored => stored.digest === input.planDigest);
-      return recoveryResult(result, recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection));
+      this.recoverySession(id); // A synchronous send may have started while the signed plan loaded.
+      const previousBlock = session.recoveryBlock;
+      const block = previousBlock ?? { jobId: request.jobId, previousStatus: session.view.status };
+      session.recoveryBlock = block;
+      session.view = { ...session.view, status: block.previousStatus === "unknown" ? "unknown" : "paused" };
+      this.persist(); // Persist the dispatch guard before any inverse can execute.
+      try {
+        const result = await runtime.runRecoveryJob(session.view.workspace, request.jobId, async stored => stored.digest === input.planDigest);
+        if (result.status === "unknown" || result.status === "paused") {
+          session.view = { ...session.view, status: block.previousStatus === "unknown" ? "unknown" : result.status };
+        } else {
+          session.view = { ...session.view, status: block.previousStatus };
+          delete session.recoveryBlock;
+        }
+        this.persist();
+        return recoveryResult(result, recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection));
+      } catch (error) {
+        // These runtime preflight refusals happen before the first inverse.
+        // Every other thrown result remains uncertain until its job is reconciled.
+        const refused = !previousBlock && error instanceof Error && [
+          "Recovery job selection boundary is stale.",
+          "Recovery job selection boundary is invalid.",
+          "Another recovery job is active in this workspace.",
+          "Recovery job was not authorized.",
+        ].includes(error.message);
+        if (refused) {
+          session.view = { ...session.view, status: block.previousStatus };
+          delete session.recoveryBlock;
+        } else {
+          session.recoveryBlock = block;
+          session.view = { ...session.view, status: "unknown" };
+        }
+        this.persist();
+        throw error;
+      }
     });
   }
   async undoPreview(id: string, operationId: string) {

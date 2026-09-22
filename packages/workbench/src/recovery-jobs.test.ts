@@ -13,7 +13,7 @@ async function fixture(t:import("node:test").TestContext){
  t.after(async()=>{await app.shutdown();await rm(directory,{recursive:true,force:true});});
  await app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await app.start("Test","fixture");await app.settled();
- return {directory,session,get app(){return app;},restart(){app.close();app=new Workbench({VOID_DATA_DIR:directory},fetcher);}};
+ return {directory,session,get app(){return app;},restart(reload=false){if(!reload)app.close();app=new Workbench({VOID_DATA_DIR:directory},fetcher);}};
 }
 
 test("managed jobs preserve exact run selection and IDs across restart and repeated apply",async t=>{
@@ -64,6 +64,12 @@ test("explicit apply resumes a paused job after artifact repair without replayin
  await rename(vault,backup);
  const approval={jobId:plan.jobId,planDigest:plan.planDigest,approved:true};
  assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"paused");
+ assert.equal(f.app.get(id)?.status,"paused");
+ assert.throws(()=>f.app.send(id,"Do not dispatch"),/recovery/i);
+ f.app.cancel(id);assert.equal(f.app.get(id)?.status,"paused");
+ f.restart();assert.throws(()=>f.app.send(id,"Still blocked"),/recovery/i);
+ const other=await f.app.start("Independent workspace","fixture",undefined,undefined,undefined,true);await f.app.settled();
+ assert.equal(f.app.get(other.id)?.status,"idle");
  assert.equal(f.app.document(id,"note").content,"one");
  await rm(vault,{recursive:true,force:true});await rename(backup,vault);
  assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"restored");
@@ -71,4 +77,39 @@ test("explicit apply resumes a paused job after artifact repair without replayin
  const count=f.app.workspace(id).operations.length;
  assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"restored");
  assert.equal(f.app.workspace(id).operations.length,count);
+ f.app.send(id,"Explicit continuation after this exact job settled");await f.app.settled();assert.equal(f.app.get(id)?.status,"idle");
+});
+
+test("unknown recovery blocks its session across restart and never replays the inverse",async t=>{
+ const {LocalStorage}=await import("./storage.ts");
+ const f=await fixture(t),id=f.session.id;
+ const edit=await f.app.editDocument(id,{path:"note",content:"one",expectedRevision:null});
+ const plan=await f.app.planRecoveryJob(id,{jobId:"unknown",selection:{kind:"operations",operationIds:[edit.revision!]}});
+ const save=LocalStorage.prototype.save;let failures=0;
+ const mock=t.mock.method(LocalStorage.prototype,"save",function(this:InstanceType<typeof LocalStorage>,value:unknown){
+  const state=value as {documents:Record<string,{operations:Array<{kind:string}>}>};
+  if(!failures&&state.documents[f.session.workspace]?.operations.some(op=>op.kind==="undo")){failures++;throw new Error("Injected inverse receipt failure");}
+  return save.call(this,value);
+ });
+ const approval={jobId:plan.jobId,planDigest:plan.planDigest,approved:true};
+ assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"unknown");mock.mock.restore();
+ assert.equal(failures,1);assert.equal(f.app.get(id)?.status,"unknown");assert.equal(f.app.runs().find(run=>run.sessionId===id)?.reconcileRequired,true);
+ assert.throws(()=>f.app.send(id,"Do not continue"),/unknown|recovery/i);
+ f.restart();assert.equal(f.app.get(id)?.status,"unknown");assert.throws(()=>f.app.send(id,"No restart replay"),/unknown|recovery/i);
+ const operations=f.app.workspace(id).operations.length;
+ assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"unknown");assert.equal(f.app.workspace(id).operations.length,operations);
+});
+
+test("unrelated restored recovery cannot clear an existing forward unknown",async t=>{
+ const {LocalStorage}=await import("./storage.ts");
+ const f=await fixture(t),id=f.session.id;
+ const edit=await f.app.editDocument(id,{path:"note",content:"one",expectedRevision:null});
+ f.app.close();const storage=new LocalStorage(f.directory),state=storage.read<{sessions:Array<{view:{id:string;status:string}}>}>()!;
+ state.sessions.find(session=>session.view.id===id)!.view.status="unknown";storage.save(state);
+ // Restart from the retained unknown without allowing the old instance to overwrite it.
+ f.restart(true);const wb=f.app;
+ const plan=await wb.planRecoveryJob(id,{jobId:"unrelated",selection:{kind:"operations",operationIds:[edit.revision!]}});
+ assert.equal((await wb.applyRecoveryJob(id,{jobId:plan.jobId,planDigest:plan.planDigest,approved:true})).status,"restored");
+ assert.equal(wb.get(id)?.status,"unknown");assert.throws(()=>wb.send(id,"Do not clear uncertainty"),/unknown/i);
+ await wb.shutdown();
 });
