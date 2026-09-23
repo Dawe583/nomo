@@ -1,5 +1,17 @@
 # VOID remaining work
 
+## Current bounded parity update
+
+This audit is historical. [Current scope and verification](UPGRADE-VERIFICATION.md) supersedes the missing-feature claims below, not the external certification gates.
+
+- G-01: managed cloud documents have signed operation/job events, artifacts and state in one SQL transaction. This is not a transaction host for arbitrary external tools. Physical network partition testing remains unverified.
+- G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list. Dependency/time/checkpoint selectors, leases and fencing remain open.
+- G-04: adapters already observe resource keys and revisions. General read/write provenance and dependency closure remain open.
+- G-07: managed filesystem and Git recovery exist. Noncooperative writers, full per-hunk enforcement and native cross-platform evidence remain separate work.
+- G-20: `scripts/src/verify-ledger-standalone.mjs` uses Node built-ins only. Independently published and audited distribution remains open.
+- Section 6: deterministic compaction, bounded local profiles, the twenty-item local queue and signed run/list recovery exist. Hooks, binary input, extra named permission modes, dependency-aware rewind and measured tokenizer accounting remain open.
+
+
 Audit date: 2026-09-16. Baseline: local `main` at `4c82c37`.
 Method: status documents were treated as claims only. Each item below names
 the code path that was read and, where cheap, the command that was run.

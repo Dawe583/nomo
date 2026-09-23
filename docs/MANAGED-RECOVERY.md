@@ -129,9 +129,14 @@ void recovery status-job --config recovery.json --input job-id.json
 ```
 
 `job-id.json` contains only `{"workspace":"demo","jobId":"job-1"}`. Apply loads
-the signed stored plan. Repeat `apply-job` after restart to resume a previously
-approved job. Reconcile an unknown operation first. Any new forward operation
-after planning requires a new job ID and plan.
+the signed stored plan. CLI/runtime jobs retain their original signed approval:
+`--approve` is checked when first approving a planned job, not as fresh consent
+when resuming an already approved paused job or reading a terminal result.
+The HTTP and TUI interfaces separately require the exact stored digest on every
+apply request. MCP job apply currently observes paused/unknown results without
+resuming them. Unknown inverse outcomes never grant replay authority; inspect
+and reconcile them first. Any new forward operation after planning requires a
+new job ID and plan.
 
 ## MCP connection
 
@@ -140,9 +145,13 @@ Use an absolute config path in the host launch command. The host must pass the
 credential environment variables to the child process. The model never receives
 them as tool arguments.
 
-The five tools are `void_execute`, `void_recovery_plan`, `void_recovery_apply`,
-`void_reconcile`, and `void_recovery_reconcile`. Workspace, adapter and agent
-identity come from operator configuration. The model supplies a stable run ID
+The server implements eight tools: `void_execute`, `void_recovery_plan`,
+`void_recovery_apply`, `void_reconcile`, `void_recovery_reconcile`,
+`void_recovery_plan_job`, `void_recovery_status_job`, and `void_recovery_apply_job`.
+A host can authorize a smaller allowlist. The verified local Prime Agent setup
+authorizes only the first five, not the job tools. See
+[the integration record](UPGRADE-VERIFICATION.md) for its scope and evidence.
+Workspace, adapter and agent identity come from operator configuration. The model supplies a stable run ID
 and operation ID. A plan digest is an integrity binding, not approval.
 
 Example policy for this single-row test workspace:

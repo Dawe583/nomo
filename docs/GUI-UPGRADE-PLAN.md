@@ -1,5 +1,14 @@
 # VOID — plán velkého upgradu GUI
 
+## Current contract and delivery boundary
+
+The deployment statement below refers only to the dated historical delivery. This integration's [verification record](UPGRADE-VERIFICATION.md) distinguishes local evidence from push, CI and deployment.
+
+NVIDIA NIM with `z-ai/glm-5.3-flash` supersedes the old TokenRouter default in the goals, E1, scenarios and DoD below. Explicit historical provider snapshots remain supported. Deterministic provider fixtures do not certify live NVIDIA generation.
+
+The old API proposal is partially delivered: local `/projects`, `/agents`, session `/compact`, `/runs/:id/stop`, and session `/recovery-jobs/plan`, `/recovery-jobs/apply`, `/recovery-jobs/:job` exist. Cloud does not advertise local projects, custom profiles, hooks or background queue support. E8/E9 and whole-upgrade DoD retain external, mobile hardware, production and rollback execution gates.
+
+
 Datum: 2026-09-11. Stav: **implementace nasazena; výsledky a otevřené ověření viz [předání](GUI-UPGRADE-DELIVERY.md)**. Výchozí audit: [GUI-UPGRADE-AUDIT.md](GUI-UPGRADE-AUDIT.md). Tento dokument zachovává původní zadání a akceptační cíle. Skutečně dodaný rozsah a dosud neprovedené kontroly rozlišuje předávací dokument.
 
 ## 1. Cíl a pevná rozhodnutí

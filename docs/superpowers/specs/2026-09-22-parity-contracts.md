@@ -164,3 +164,50 @@ signed ledger entry. The existing `context.compacted` event shape is preserved.
   rules already in `apps/control-plane/api/server.ts`.
 - Lanes B and C consume only these HTTP shapes or the workbench methods above.
 - No new dependency. Tests are `node:test`. No em or en dash anywhere.
+
+## 7. Completion integration, 2026-09-22
+
+The current completion pass keeps the existing catalog shapes. `agents()` returns
+`{supported, agents}` and adds `profiles`, `hooks`, `policyProfiles`,
+`hookCommands` and `hooksSupported`. `upsertAgent(input)` validates before
+persistence. Hook mutation is refused while `hooksSupported:false`; no executor
+is installed in this slice. Profiles are snapshotted at session creation and
+cannot grant tool or policy authority through their prompts.
+
+`GET /api/projects` returns `items` and the `projects` alias. `POST /api/projects`
+accepts `{id?, name, root}` and returns `{project}`. Sessions retain the project
+ID in their existing `project` string. A project root grants no filesystem rights.
+`POST /api/agents` returns `{agent}`. Hook execution, when supported, requires an
+explicit operator full-command allowlist, no shell and bounded execution.
+`POST /api/runs/:id/stop` takes a session ID and returns `{ok:true}`.
+
+`POST /api/sessions/:id/compact` returns `{session, compaction}`. Compaction must
+preserve complete assistant/tool result groups and must not promote untrusted
+history into system authority or rewrite ledger records.
+
+Recovery routes are shared with the existing cloud implementation:
+
+- `POST /api/sessions/:id/recovery-jobs/plan`: `{jobId, selection}`.
+- `POST /api/sessions/:id/recovery-jobs/apply`: `{jobId, planDigest, approved:true}`.
+- `GET /api/sessions/:id/recovery-jobs/:job`: immutable preview or job result.
+
+A selection is one exact run ID or an explicit operation ID list. A preview is
+`{jobId, planDigest, selection, boundary, steps, residuals}`. Steps carry
+`operationId`, `sequence`, `resources:string[]` and `scope:string`. A result
+carries `jobId`, `status`, `checkpoint`, `outcomes`, `residuals` and optional
+`pause`. No capture payload or credential belongs in these responses. The server
+binds approval to the stored digest, validates current state and serializes
+against forward writes. Explicit refresh creates a new job ID. Conflict and
+unknown outcomes never trigger an automatic apply retry.
+
+After admitted apply, the public session retains `lastRecoveryJob:{jobId}`.
+If recovery currently blocks the session, that field names its owning job.
+Only the job ID is public, never the private prior status or capture contents.
+Branches clear this reference because they create a different workspace. GUI
+status inspection after reload uses only GET for that existing ID. This metadata
+is not approval and must never generate a new plan or trigger recovery apply.
+
+Capabilities report `projects`, `customAgents`, `hooks`, `contextCompaction` and
+`recoveryJobs` per host. A false flag is a visible unsupported feature, not a
+control that produces a missing route error. Cloud profile and hook execution
+remain unsupported until the same enforcement exists in the cloud runner.

@@ -1,5 +1,12 @@
 # VOID — plán dalšího upgradu (TUI + GUI + AI agentic reverse tool)
 
+## Current status correction
+
+The dated roadmap below is not a completion report. See [verified scope](UPGRADE-VERIFICATION.md). New unconfigured workspaces default to NVIDIA NIM, `z-ai/glm-5.3-flash`; existing provider/model snapshots remain unchanged. Missing credentials mean setup-required, never fallback.
+
+Managed document SQL journaling, retained run/list recovery, local profiles, deterministic compaction and a bounded local queue are implemented slices of A5/A9/A10, B6/B8/B9/B11 and C3/C6. Their larger roadmap items are not complete: no general pause/resume, executable hooks, dependency closure, server-enforced per-hunk review or general cloud queue is claimed. Percentage milestones are not measured evidence. No entire F0-F5 phase is closed by this integration.
+
+
 Datum: 2026-09-18. Větev: `main` (lokálně pullnuto z `https://github.com/Dawe583/void`).
 Autor: tým subagentů (5 rolí) + orchestrátor. Metoda: evidence-first, specify-first, žádný Potěmkin.
 Vstupní dokumenty: `PLAN-GAPS.md` (audit 2026-09-16), `REVERSE-TOOL-UPGRADE-PLAN.md` (WP-R00–R14, milníky M0–M5),

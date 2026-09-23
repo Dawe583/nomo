@@ -1,5 +1,14 @@
 # Audit GUI před velkým upgradem
 
+## Current contract addendum
+
+See [current verification scope](UPGRADE-VERIFICATION.md). Earlier browser measurements below remain historical.
+
+A07: capabilities now expose `maxActiveRuns:1`. Local background queue capacity is twenty; cloud advertises `backgroundQueue:false`.
+
+A05/A06/A09: server-page UI is implemented, but pagination does not prove bounded server verification. Cloud ledger verification still reads and verifies the complete ledger. No verification cache/job or measured server performance claim is made. Physical devices, screen readers, live provider generation and production authentication remain separate gates.
+
+
 Datum: 2026-09-11. Lokální commit: `e301162`. Rozsah: všechny čtyři webové stránky, jejich společné CSS a klientské moduly, napojení lokálního i cloudového API, provider, session storage, dokumenty, schvalování, ledger a balení stejného webu do desktopové aplikace.
 
 ## Co bylo skutečně ověřeno

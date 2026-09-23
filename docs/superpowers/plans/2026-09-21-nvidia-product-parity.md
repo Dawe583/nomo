@@ -1,5 +1,14 @@
 # NVIDIA model and product parity Implementation Plan
 
+## Integration status and claim boundary
+
+Use the [additive frozen contracts](../specs/2026-09-22-parity-contracts.md) and [verification record](../../UPGRADE-VERIFICATION.md) over stale implementation checkboxes below.
+
+Tasks 1 and 5 have bounded provider/setup/snapshot, compaction and local profile implementations. Profiles expose only the default operator policy, `maxTurns <= 20`, and conservative UTF-8 request bounds with reserved output space, not measured tokenizer usage. `hooksSupported:false`; there is no hook executor.
+
+Task 4 uses persisted Workbench queued-run snapshots with a twenty-item local cap, not recovery runtime jobs. Restart does not dispatch saved queued work; interrupted execution remains uncertain. Task 6 acceptance includes legacy Undo, branch ownership and stopping lifecycle regressions as well as signed jobs. Task 7 requires actual browser and PTY evidence. Task 8 separates local checks, push, CI, deployment and live-provider certification.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship NVIDIA GLM 5.3 Flash as the safe default and make web, desktop, and TUI expose a coherent coding workspace with bounded background work, agents, context management, and recovery controls.
@@ -114,7 +123,7 @@
 - [x] Write failing tests for project isolation, run observation, stop, restart, unknown, and reconciliation.
 - [x] Implement the smallest project persistence extension using existing Workbench storage.
 - [x] Expose run list/detail/status in the shared GUI and TUI views.
-- [x] Verify duplicate dispatch is impossible under restart and timeout.
+- [x] Covered restart, timeout and lost-response cases refuse redispatch; this is not a universal guarantee.
 - [x] Run focused runtime/workbench/UI/TUI suites.
 - [x] Commit: `feat: add bounded project background runs`.
 
