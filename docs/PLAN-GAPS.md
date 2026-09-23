@@ -257,22 +257,19 @@ the publish checklist in order. Dependency: WP-09 minimum. Size: L.
 
 ### Dependency audit follow-up, 2026-09-23
 
-The unchanged lockfile has a reachable release blocker in the legacy CLI S3
-path: `@aws-sdk/client-s3@3.883.0` uses `fast-xml-parser@5.2.5` through
-`@aws-sdk/core`. Configurable S3 endpoints reach XML response parsing, including
-reported CPU/crash paths. Audit references include
+The reachable legacy CLI S3 blocker is resolved. The CLI now uses
+`@aws-sdk/client-s3@3.1036.0`, whose resolved protocol stack no longer includes
+the vulnerable `fast-xml-parser` or `uuid` versions. Workflow is `4.8.9`, with
+`devalue@5.9.2`; narrow workspace overrides select `nanoid@5.1.16`,
+`undici@7.29.0` and `esbuild@0.28.2` until their parents update those pins.
+
+Fresh evidence after the lockfile change: the production dependency audit found
+zero vulnerabilities at every severity, the full check passed 1,187 workspace
+and 49 cloud tests with the same four optional integration skips, 24 focused S3
+tests passed, the production cloud build passed, and the reverse engine check
+passed 883 tests. Audit references that caused the update include
 [GHSA-m7jm-9gc2-mpf2](https://github.com/advisories/GHSA-m7jm-9gc2-mpf2) and
 [GHSA-8gc5-j5rx-235r](https://github.com/advisories/GHSA-8gc5-j5rx-235r).
-The local retention fix does not change or resolve these dependencies.
-
-Independent source triage also found high advisories in `undici@7.28.0`
-(cache interceptor) and `nanoid@5.1.6` (invalid sizes). The observed workflow
-paths use a plain Agent and a constant size of 21, respectively; the vulnerable
-triggers were not found on those paths. This is not a clean dependency audit.
-Before the next release, review an AWS SDK upgrade that removes the XML parser,
-update workflow/devalue, and review narrowly scoped undici/nanoid overrides.
-Re-run the native audit, full check, S3 fixtures and build after lockfile changes.
-Review again before release or by 2026-09-30, whichever comes first.
 
 ### G-17 WP-04b: registry breadth toward 500 entries
 

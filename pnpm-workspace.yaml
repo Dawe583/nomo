@@ -74,6 +74,8 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 overrides:
+  "@workflow/core>nanoid": "5.1.16"
+  undici: "7.29.0"
   # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/freebsd-arm64": "-"
   "esbuild>@esbuild/freebsd-x64": "-"
@@ -148,6 +150,6 @@ overrides:
   "@expo/ngrok-bin>@expo/ngrok-bin-sunos-x64": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-win32-ia32": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-win32-x64": "-"
-  # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
+  # Keep build tooling on the patched esbuild release used across the workspace.
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
-  esbuild: "0.27.3"
+  esbuild: "0.28.2"

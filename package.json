@@ -51,6 +51,6 @@
     "express": "^5.2.1",
     "nitro": "3.0.260903-beta",
     "rollup": "^4.63.1",
-    "workflow": "^4.8.8"
+    "workflow": "^4.8.9"
   }
 }
