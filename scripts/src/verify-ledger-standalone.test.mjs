@@ -39,8 +39,8 @@ test("standalone verifier agrees with the real ledger on a real export", async (
   const generator = join(root, "generate.mts");
   await writeFile(
     generator,
-    `import { jsonlStore } from "/Users/dawe/Developer/Claude-Projects/VOID/packages/ledger/src/store.ts";
-import { devKeyProvider } from "/Users/dawe/Developer/Claude-Projects/VOID/packages/ledger/src/sign.ts";
+    `import { jsonlStore } from ${JSON.stringify(new URL("../../packages/ledger/src/store.ts", import.meta.url).href)};
+import { devKeyProvider } from ${JSON.stringify(new URL("../../packages/ledger/src/sign.ts", import.meta.url).href)};
 const dir = ${JSON.stringify(join(root, "ledger"))};
 const keys = ${JSON.stringify(join(root, "keys"))};
 const key = await devKeyProvider({ dir: keys });
