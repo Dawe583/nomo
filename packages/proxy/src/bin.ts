@@ -21,7 +21,15 @@ import type {
 
 import { forwardPromptMessage } from "./forward/prompts.ts";
 import { forwardResourceMessage } from "./forward/resources.ts";
-import { captureLegacyEnvelope } from "./forward/legacy-binding.ts";
+import {
+  captureLegacyEnvelope,
+  legacyArgsDigest,
+  validateLegacyCapture,
+  validateLegacyOutcome,
+  type LegacyBindingResolver,
+  type LegacyCaptureEvidence,
+  type LegacyProxyBinding,
+} from "./forward/legacy-binding.ts";
 import { interceptCall } from "./forward/tools.ts";
 import type {
   InterceptedCall,
@@ -97,6 +105,8 @@ export type ProxyOptions = {
    * a failure here to prove a failed snapshot never reaches the upstream.
    */
   readonly legacyCapture?: (call: InterceptedCall) => Promise<unknown>;
+  /** Optional durable host binding for explicitly supported legacy tools. */
+  readonly legacyBinding?: LegacyBindingResolver;
   readonly upstreamSpawn?: (events: UpstreamEvents) => UpstreamProcess;
   readonly input?: AsyncIterable<string>;
   readonly output?: (line: string) => void;
@@ -173,6 +183,15 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   });
 
   const initializeByUpstream = new Map<JsonRpcId, InitializeRequest>();
+  const pendingLegacy = new Map<
+    JsonRpcId,
+    {
+      readonly binding: LegacyProxyBinding;
+      readonly evidence: LegacyCaptureEvidence;
+    }
+  >();
+  const unknownLegacy = new Set<JsonRpcId>();
+  let upstreamWork = Promise.resolve();
   let upstream: UpstreamProcess | null = null;
 
   const sendJson = (message: unknown): void => {
@@ -201,7 +220,52 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     return translated;
   };
 
-  const handleUpstreamLine = (line: string): void => {
+  const finishLegacy = async (
+    upstreamId: JsonRpcId,
+    response: JsonRpcResult | JsonRpcError | null,
+  ): Promise<void> => {
+    const pending = pendingLegacy.get(upstreamId);
+    if (pending === undefined) return;
+    const outcome = await pending.binding.outcome(pending.evidence, response);
+    validateLegacyOutcome(pending.evidence, response, outcome);
+    pendingLegacy.delete(upstreamId);
+    if (response === null) unknownLegacy.add(upstreamId);
+  };
+
+  const markPendingLegacyUnknown = async (): Promise<void> => {
+    for (const upstreamId of [...pendingLegacy.keys()]) {
+      try {
+        await finishLegacy(upstreamId, null);
+      } catch (error) {
+        writeError(`legacy outcome failed: ${errorMessage(error)}`);
+      }
+    }
+  };
+
+  const forwardToolCall = async (
+    request: JsonRpcRequest,
+    bound: {
+      readonly binding: LegacyProxyBinding;
+      readonly evidence: LegacyCaptureEvidence;
+    } | null,
+  ): Promise<JsonRpcRequest> => {
+    const translated = session.translateRequestOut(request);
+    if (bound === null) {
+      sendUpstream(translated);
+      return translated;
+    }
+    await bound.binding.dispatched(bound.evidence);
+    pendingLegacy.set(translated.id, bound);
+    try {
+      sendUpstream(translated);
+    } catch (error) {
+      await finishLegacy(translated.id, null);
+      throw error;
+    }
+    return translated;
+  };
+
+  const handleUpstreamLine = async (line: string): Promise<void> => {
     let message: JsonRpcMessage;
     try {
       message = parseMessage(line, inboundMaxBytes);
@@ -211,6 +275,16 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     }
 
     try {
+      if (isResponse(message) && message.id !== undefined) {
+        if (unknownLegacy.has(message.id)) {
+          writeError("late legacy response dropped after unknown outcome");
+          return;
+        }
+        if (pendingLegacy.has(message.id)) {
+          await finishLegacy(message.id, message);
+        }
+      }
+
       if (isRequest(message)) {
         sendJson(relayServerRequest(message, session));
         return;
@@ -251,30 +325,45 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
 
   let drained = false;
   let upstreamClosedFlag = false;
+  let shutdownPromise: Promise<void> | null = null;
   const drainHolds = (): void => {
     if (drained) return;
     drained = true;
     if (typeof stopHold === "function") stopHold();
     queue.close();
   };
-  const shutdown = (): void => {
-    drainHolds();
-    if (!upstreamClosedFlag) upstream?.close();
-    resolveUpstreamClosed();
+  const shutdown = (): Promise<void> => {
+    shutdownPromise ??= (async () => {
+      drainHolds();
+      if (!upstreamClosedFlag) upstream?.close();
+      upstreamWork = upstreamWork.then(markPendingLegacyUnknown);
+      await upstreamWork;
+      resolveUpstreamClosed();
+    })();
+    return shutdownPromise;
   };
 
   const handleUpstreamClose = (): void => {
     upstreamClosedFlag = true;
     drainHolds();
-    resolveUpstreamClosed();
+    upstreamWork = upstreamWork
+      .then(markPendingLegacyUnknown)
+      .finally(resolveUpstreamClosed);
   };
 
   try {
     const upstreamEvents: UpstreamEvents = {
-      onMessage: handleUpstreamLine,
+      onMessage(line) {
+        upstreamWork = upstreamWork
+          .then(() => handleUpstreamLine(line))
+          .catch((error: unknown) => {
+            writeError(`upstream message failed: ${errorMessage(error)}`);
+          });
+      },
       onClose: handleUpstreamClose,
       onError(error) {
         writeError(`upstream error: ${error.message}`);
+        upstreamWork = upstreamWork.then(markPendingLegacyUnknown);
       },
     };
     upstream =
@@ -297,11 +386,11 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       : (options.shutdownSignals ?? processShutdownSignals());
   const sigint = (): void => {
     shutdownSignals?.setExitCode?.(130);
-    shutdown();
+    void shutdown();
   };
   const sigterm = (): void => {
     shutdownSignals?.setExitCode?.(143);
-    shutdown();
+    void shutdown();
   };
   shutdownSignals?.on("SIGINT", sigint);
   shutdownSignals?.on("SIGTERM", sigterm);
@@ -336,13 +425,14 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
             policy,
             facts,
             queue,
-            forwardAfterTranslate,
+            forwardToolCall,
             sendLocal,
             writeError,
             normalizePosture(options.posture),
             ledgerStore,
             options.workspace ?? "default",
             options.legacyCapture,
+            options.legacyBinding,
           );
           return;
         }
@@ -413,7 +503,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     shutdownSignals?.off("SIGINT", sigint);
     shutdownSignals?.off("SIGTERM", sigterm);
     await input.return?.();
-    shutdown();
+    await shutdown();
   }
 }
 
@@ -506,15 +596,28 @@ async function handleToolCall(
   policy: LoadedPolicy,
   facts: FactsReport,
   queue: HoldQueue,
-  forward: (request: JsonRpcRequest) => JsonRpcRequest,
+  forward: (
+    request: JsonRpcRequest,
+    bound: {
+      readonly binding: LegacyProxyBinding;
+      readonly evidence: LegacyCaptureEvidence;
+    } | null,
+  ) => Promise<JsonRpcRequest>,
   sendJson: (message: unknown) => void,
   writeError: (line: string) => void,
   posture: "fail-closed" | "observe",
   ledgerStore: LedgerStore<unknown, JsonlEntry, JsonlReceipt> | undefined,
   workspace: string,
   legacyCapture?: (call: InterceptedCall) => Promise<unknown>,
+  legacyBinding?: LegacyBindingResolver,
 ): Promise<void> {
   const call = { ...interceptedCall(request), workspace };
+  const binding =
+    posture === "fail-closed" ? (legacyBinding?.(call) ?? null) : null;
+  if (binding !== null && binding.tool !== call.tool) {
+    throw new Error("legacy binding tool mismatch");
+  }
+  let capturedEvidence: LegacyCaptureEvidence | null = null;
   let lastPolicyCall: PolicyCall | null = null;
   let lastDecision: PolicyDecision | null = null;
   const policyFn = (policyCall: PolicyCall): PolicyDecision => {
@@ -535,13 +638,21 @@ async function handleToolCall(
       classifyTool(call.tool, toEvaluationContext(facts, call.args)),
     policy: policyFn,
     capture:
-      legacyCapture ??
-      (async (candidate) =>
-        captureLegacyEnvelope(
-          candidate.tool,
-          candidate.args,
-          candidate.workspace ?? workspace,
-        )),
+      binding === null
+        ? (legacyCapture ??
+          (async (candidate) =>
+            captureLegacyEnvelope(
+              candidate.tool,
+              candidate.args,
+              candidate.workspace ?? workspace,
+            )))
+        : async (candidate) => {
+            const argsDigest = await legacyArgsDigest(candidate.args);
+            const evidence = await binding.capture(candidate, argsDigest);
+            validateLegacyCapture(candidate, argsDigest, evidence);
+            capturedEvidence = evidence;
+            return evidence;
+          },
     hold: (seconds) => {
       const decision = lastDecision;
       const policyCall = lastPolicyCall;
@@ -576,7 +687,12 @@ async function handleToolCall(
   });
 
   if (verdict.kind === "allow") {
-    forward(request);
+    await forward(
+      request,
+      binding === null || capturedEvidence === null
+        ? null
+        : { binding, evidence: capturedEvidence },
+    );
     return;
   }
 
@@ -590,7 +706,12 @@ async function handleToolCall(
     sendJson({ ...held, id: request.id });
     return;
   }
-  forward(request);
+  await forward(
+    request,
+    binding === null || capturedEvidence === null
+      ? null
+      : { binding, evidence: capturedEvidence },
+  );
 }
 
 function interceptedCall(request: JsonRpcRequest): InterceptedCall {

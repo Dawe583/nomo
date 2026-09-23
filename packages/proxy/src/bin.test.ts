@@ -13,6 +13,10 @@ import { ProxyStartupError, runProxy } from "./bin.ts";
 import type { ProxyOptions, UpstreamEvents } from "./bin.ts";
 import type { HoldQueue } from "../../policy/src/index.ts";
 import type { UpstreamProcess } from "./transport/stdio.ts";
+import type {
+  LegacyCaptureEvidence,
+  LegacyProxyBinding,
+} from "./forward/legacy-binding.ts";
 
 describe("runProxy", () => {
   test("initialize negotiation answers a version the agent supports", async () => {
@@ -369,6 +373,221 @@ describe("runProxy", () => {
   });
 });
 
+test("bound legacy call records capture and outcome before relay", async () => {
+  const events: string[] = [];
+  const outcomes: string[] = [];
+  const output: unknown[] = [];
+  const binding = testLegacyBinding(events, outcomes);
+
+  await runBoundProxy({
+    binding,
+    messages: [toolCall(81, binding.tool)],
+    output(line) {
+      events.push("agent");
+      output.push(JSON.parse(line) as unknown);
+    },
+    upstream(eventsApi) {
+      return {
+        send(line) {
+          events.push("upstream");
+          const request = JSON.parse(line) as { id: number };
+          eventsApi.onMessage(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: request.id,
+              result: { applied: true },
+            }),
+          );
+        },
+        close() {},
+        onStderr() {
+          return () => {};
+        },
+      };
+    },
+  });
+
+  assert.deepEqual(events, [
+    "capture",
+    "dispatched",
+    "upstream",
+    "completed",
+    "agent",
+  ]);
+  assert.deepEqual(outcomes, ["completed"]);
+  assert.deepEqual(output, [
+    { jsonrpc: "2.0", id: 81, result: { applied: true } },
+  ]);
+});
+
+test("bound capture failure sends zero upstream requests", async () => {
+  let upstreamCalls = 0;
+  const output: unknown[] = [];
+  const base = testLegacyBinding([], []);
+  const binding: LegacyProxyBinding = {
+    ...base,
+    async capture() {
+      throw new Error("snapshot unavailable");
+    },
+  };
+  await runBoundProxy({
+    binding,
+    messages: [toolCall(84, binding.tool)],
+    output: (line) => output.push(JSON.parse(line) as unknown),
+    upstream() {
+      return {
+        send() {
+          upstreamCalls += 1;
+        },
+        close() {},
+        onStderr() {
+          return () => {};
+        },
+      };
+    },
+  });
+  assert.equal(upstreamCalls, 0);
+  assert.match(JSON.stringify(output), /snapshot capture failed/);
+});
+
+test("bound JSON-RPC error records failed before relay", async () => {
+  const lifecycle: string[] = [];
+  const outcomes: string[] = [];
+  const output: unknown[] = [];
+  const binding = testLegacyBinding(lifecycle, outcomes);
+  await runBoundProxy({
+    binding,
+    messages: [toolCall(85, binding.tool)],
+    output: (line) => output.push(JSON.parse(line) as unknown),
+    upstream(eventsApi) {
+      return {
+        send(line) {
+          const request = JSON.parse(line) as { id: number };
+          eventsApi.onMessage(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: request.id,
+              error: { code: -32000, message: "write failed" },
+            }),
+          );
+        },
+        close() {},
+        onStderr() {
+          return () => {};
+        },
+      };
+    },
+  });
+  assert.deepEqual(outcomes, ["failed"]);
+  assert.match(JSON.stringify(output), /write failed/);
+});
+
+test("bound legacy call records unknown on close after dispatch", async () => {
+  const lifecycle: string[] = [];
+  const outcomes: string[] = [];
+  const binding = testLegacyBinding(lifecycle, outcomes);
+
+  await runBoundProxy({
+    binding,
+    messages: [toolCall(82, binding.tool)],
+    upstream(eventsApi) {
+      return {
+        send() {
+          lifecycle.push("upstream");
+          eventsApi.onClose(1, null);
+        },
+        close() {},
+        onStderr() {
+          return () => {};
+        },
+      };
+    },
+  });
+
+  assert.deepEqual(outcomes, ["unknown"]);
+  assert.equal(lifecycle.filter((item) => item === "upstream").length, 1);
+});
+
+test("bound legacy calls keep numeric and string ids distinct", async () => {
+  const lifecycle: string[] = [];
+  const outcomes: string[] = [];
+  const captures: LegacyCaptureEvidence[] = [];
+  const base = testLegacyBinding(lifecycle, outcomes);
+  const binding: LegacyProxyBinding = {
+    ...base,
+    async capture(call, argsDigest) {
+      const evidence = await base.capture(call, argsDigest);
+      const index = captures.length + 1;
+      const captureDigest = `sha256:${String(index).repeat(64)}`;
+      const next = {
+        ...evidence,
+        captureDigest,
+        reference: { ...evidence.reference, digest: captureDigest },
+      };
+      captures.push(next);
+      return next;
+    },
+  };
+  const pending: Array<{ id: number }> = [];
+
+  await runBoundProxy({
+    binding,
+    messages: [toolCall(1, binding.tool), toolCall("1", binding.tool)],
+    upstream(eventsApi) {
+      return {
+        send(line) {
+          pending.push(JSON.parse(line) as { id: number });
+          if (pending.length === 2) {
+            eventsApi.onMessage(
+              JSON.stringify({
+                jsonrpc: "2.0",
+                id: pending[1]!.id,
+                result: { applied: true },
+              }),
+            );
+            eventsApi.onMessage(
+              JSON.stringify({
+                jsonrpc: "2.0",
+                id: pending[0]!.id,
+                result: { applied: true },
+              }),
+            );
+          }
+        },
+        close() {},
+        onStderr() {
+          return () => {};
+        },
+      };
+    },
+  });
+
+  assert.notEqual(pending[0]?.id, pending[1]?.id);
+  assert.deepEqual(outcomes, [
+    captures[1]!.captureDigest,
+    captures[0]!.captureDigest,
+  ]);
+});
+
+test("observe posture never resolves a recovery binding", async () => {
+  let resolves = 0;
+  const upstreamMessages: Array<Record<string, unknown>> = [];
+  await runBoundProxy({
+    posture: "observe",
+    binding: testLegacyBinding([], []),
+    resolver() {
+      resolves += 1;
+      throw new Error("observe must not resolve bindings");
+    },
+    messages: [toolCall(83, "postgres.row.update")],
+    upstream(eventsApi) {
+      return fakeUpstream(eventsApi, upstreamMessages);
+    },
+  });
+  assert.equal(resolves, 0);
+  assert.equal(upstreamMessages.length, 1);
+});
+
 test("failed legacy snapshot answers deny locally and never calls upstream (exit proof)", async () => {
   const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
   const policyPath = join(dir, "policy.yml");
@@ -481,6 +700,95 @@ test("runProxy filters inherited environment and honors explicit upstreamEnv", a
     ]);
   }
 });
+
+type BoundProxyInput = {
+  readonly binding: LegacyProxyBinding;
+  readonly resolver?: ProxyOptions["legacyBinding"];
+  readonly messages: readonly Record<string, unknown>[];
+  readonly posture?: ProxyOptions["posture"];
+  readonly output?: (line: string) => void;
+  readonly upstream: (events: UpstreamEvents) => UpstreamProcess;
+};
+
+async function runBoundProxy(input: BoundProxyInput): Promise<void> {
+  const dir = await mkdtemp(join(tmpdir(), "void-bound-proxy-"));
+  const policyPath = join(dir, "policy.yml");
+  await writeFile(policyPath, policyText("allow"));
+  await runProxy({
+    keyProvider: keyProviderFromPkcs8(
+      generateKeyPairSync("ed25519").privateKey.export({
+        format: "der",
+        type: "pkcs8",
+      }),
+    ),
+    upstreamCommand: ["fake"],
+    policyPath,
+    posture: input.posture ?? "fail-closed",
+    ledgerDir: join(dir, "ledger"),
+    workspace: "test",
+    input: fromLines(input.messages.map((message) => JSON.stringify(message))),
+    output: input.output ?? (() => {}),
+    error() {},
+    legacyBinding:
+      input.resolver ??
+      ((call) => (call.tool === input.binding.tool ? input.binding : null)),
+    upstreamSpawn: input.upstream,
+  });
+  await rm(dir, { recursive: true, force: true });
+}
+
+function testLegacyBinding(
+  lifecycle: string[],
+  outcomes: string[],
+): LegacyProxyBinding {
+  return {
+    tool: "postgres.row.update",
+    async capture(call, argsDigest) {
+      lifecycle.push("capture");
+      const captureDigest = `sha256:${"a".repeat(64)}`;
+      return {
+        schema: "void.legacy.capture.v1",
+        at: new Date().toISOString(),
+        tool: call.tool,
+        workspace: call.workspace,
+        argsDigest,
+        captureDigest,
+        reference: {
+          namespace: "test/postgres",
+          digest: captureDigest,
+          uri: "file:///snapshot",
+        },
+      };
+    },
+    async dispatched() {
+      lifecycle.push("dispatched");
+    },
+    async outcome(evidence, response) {
+      const status =
+        response === null
+          ? "unknown"
+          : "error" in response
+            ? "failed"
+            : "completed";
+      lifecycle.push(status);
+      outcomes.push(
+        outcomes.length === 0 &&
+          lifecycle.filter((item) => item === "capture").length === 1
+          ? status
+          : evidence.captureDigest,
+      );
+      return {
+        schema: "void.legacy.outcome.v1",
+        at: new Date().toISOString(),
+        status,
+        tool: evidence.tool,
+        workspace: evidence.workspace,
+        argsDigest: evidence.argsDigest,
+        captureDigest: evidence.captureDigest,
+      };
+    },
+  };
+}
 
 type Decision = "allow" | "deny" | "hold";
 type Harness = {
@@ -600,7 +908,7 @@ function policyText(decision: Decision): string {
   return "version: 1\nrules:\n  - match: {}\n    decision: hold\n    seconds: 60\n    notify: [cli]\n    rationale: tests hold r3\n";
 }
 
-function toolCall(id: number, name: string): Record<string, unknown> {
+function toolCall(id: number | string, name: string): Record<string, unknown> {
   return {
     jsonrpc: "2.0",
     id,

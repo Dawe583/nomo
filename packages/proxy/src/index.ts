@@ -33,6 +33,7 @@ export * from "./session.ts";
 export * from "./transport/stdio.ts";
 export * from "./transport/http.ts";
 export * from "./forward/tools.ts";
+export * from "./forward/legacy-binding.ts";
 export { forwardResourceMessage, relayResourceNotification } from "./forward/resources.ts";
 export { forwardPromptMessage, relayPromptNotification } from "./forward/prompts.ts";
 export * from "./relay/notifications.ts";
