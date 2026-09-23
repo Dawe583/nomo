@@ -160,6 +160,19 @@ describe("manifest", () => {
     assert.equal(report.retained, 0);
   });
 
+  test("unreadable retention metadata reports unavailable without reading snapshot bytes", async (t) => {
+    const dir = await tempDir();
+    const store = LocalSnapshotStore(join(dir, "snapshots"));
+    const stored = await store.put("ws", new TextEncoder().encode("before"), {}, { pin: { ownerId: "job", kind: "recovery" } });
+    await manifestWriter(dir).write({ digest: stored.digest, reference: stored.reference, tool: "postgres.row.update" });
+    await writeFile(join(dir, "snapshots", "ws", stored.digest.slice(7)) + ".meta", "{broken");
+    const get = t.mock.method(store, "get");
+    const result = await resolveRecoveryReadiness(dir, store, stored.digest, "postgres.row.update");
+    assert.equal(result.status, "unavailable");
+    assert.match(result.status === "unavailable" ? result.reason : "", /metadata/i);
+    assert.equal(get.mock.callCount(), 0);
+  });
+
   test("key binding mismatch and lost key stay unavailable", async () => {
     const dir = await tempDir();
     const writer = LocalSnapshotStore(join(dir, "snapshots"), { availableKeyIds: ["k1"] });

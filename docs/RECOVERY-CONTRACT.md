@@ -113,6 +113,30 @@ not completeness of an unanchored truncated history.
 
 See `RECOVERY-COVERAGE.md` for the supported subset and evidence.
 
+## Legacy connector snapshot retention
+
+`LocalSnapshotStore` is separate from the encrypted managed recovery vault.
+Its namespace byte budget still evicts oldest unpinned snapshots. Recovery and
+operator pins survive budget eviction, age-based retention and explicit garbage
+collection. Admission that cannot fit alongside protected snapshots refuses
+before writing or evicting anything. Invalid cutoffs and missing, unreadable or
+invalid sidecar metadata refuse cleanup instead of treating evidence as unpinned.
+
+Every new legacy capture writes a metadata sidecar, including `{}` for unpinned
+bytes. Repeated captures preserve existing metadata and reject conflicting pin,
+key or expiry bindings. Older bytes without a sidecar remain directly readable,
+but retention and further admission in that namespace require operator review.
+Do not manufacture empty metadata for an old snapshot whose pin state is unknown.
+
+Cooperating mutations are serialized per namespace and use an exclusive
+`.retention.lock`, following the manifest writer's locking model. A competing or
+stale lock refuses mutation. After a crash, stop writers and inspect retained
+bytes and metadata before removing a stale lock. Never clear another live
+writer's lock. Do not mix older writers that ignore this protocol. This is a
+local-filesystem boundary, not a distributed lease or protection against writers
+that bypass the store. Partial publication failures may leave evidence for review.
+There is no automatic unpinning, administrative quota migration or key rotation.
+
 ## Irreversibility budget
 
 Managed runtime defaults to requiring verified R0/R1 recovery. A host that

@@ -143,23 +143,23 @@ export async function resolveRecoveryReadiness(
 ): Promise<RecoveryReadiness> {
   const entry = await findEntry(snapshotDir, digest, tool);
   if (entry === null) return { status: "unavailable", reason: "manifest has no entry for this digest" };
-  // Expiry, pin and key binding live in the store's sidecar metadata; the
-  // manifest line may omit them. The store is the single source for both.
-  const meta = await readEntryMeta(entry.reference);
-  const expiresAt = entry.expiresAt ?? meta?.expiresAt;
-  if (expiresAt !== undefined && Date.parse(expiresAt) <= Date.now()) {
-    return { status: "unavailable", reason: `snapshot expired at ${expiresAt}` };
-  }
-  const keyId = entry.keyId ?? meta?.keyId;
-  if (keyId !== undefined) {
-    // Key binding: a rotated or lost key stays unavailable. The store reports
-    // the loss; without an available-key check the readback fails closed.
-    const available = store.keyIds;
-    if (available !== undefined && !available.includes(keyId)) {
-      return { status: "unavailable", reason: `snapshot key ${keyId} is not available` };
-    }
-  }
   try {
+    // Expiry, pin and key binding live in the store's sidecar metadata; the
+    // manifest line may omit them. The store is the single source for both.
+    const meta = await readEntryMeta(entry.reference);
+    const expiresAt = entry.expiresAt ?? meta?.expiresAt;
+    if (expiresAt !== undefined && Date.parse(expiresAt) <= Date.now()) {
+      return { status: "unavailable", reason: `snapshot expired at ${expiresAt}` };
+    }
+    const keyId = entry.keyId ?? meta?.keyId;
+    if (keyId !== undefined) {
+      // Key binding: a rotated or lost key stays unavailable. The store reports
+      // the loss; without an available-key check the readback fails closed.
+      const available = store.keyIds;
+      if (available !== undefined && !available.includes(keyId)) {
+        return { status: "unavailable", reason: `snapshot key ${keyId} is not available` };
+      }
+    }
     const bytes = await store.get(entry.reference);
     if (sha256Digest(bytes) !== entry.digest) return { status: "unavailable", reason: "snapshot digest mismatch" };
     return { status: "available" };

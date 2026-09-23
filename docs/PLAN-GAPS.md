@@ -149,6 +149,12 @@ administrative migration; default limits are 64 MiB per artifact and
 Minimum change: retention policy plus a GC that never removes pinned
 snapshots, then a reviewed migration command. Dependency: R01. Size: M.
 
+Local follow-up on 2026-09-23: the legacy `LocalSnapshotStore` protects pins
+across all cleanup paths, rejects uncertain sidecars, and serializes cooperating
+namespace mutations. This does not close managed-vault streaming, pin lifecycle,
+quota migration or distributed fencing. See `RECOVERY-CONTRACT.md` for the
+old-writer and missing-sidecar compatibility boundary.
+
 ## 3. Provider adapters and host boundary
 
 ### G-10 R08: managed S3 and Supabase adapters
@@ -248,6 +254,25 @@ the publish checklist in order. Dependency: WP-09 minimum. Size: L.
 `[EXT]` needs npm scope ownership and a human release authorization.
 
 ## 5. Execution and build plan deltas
+
+### Dependency audit follow-up, 2026-09-23
+
+The unchanged lockfile has a reachable release blocker in the legacy CLI S3
+path: `@aws-sdk/client-s3@3.883.0` uses `fast-xml-parser@5.2.5` through
+`@aws-sdk/core`. Configurable S3 endpoints reach XML response parsing, including
+reported CPU/crash paths. Audit references include
+[GHSA-m7jm-9gc2-mpf2](https://github.com/advisories/GHSA-m7jm-9gc2-mpf2) and
+[GHSA-8gc5-j5rx-235r](https://github.com/advisories/GHSA-8gc5-j5rx-235r).
+The local retention fix does not change or resolve these dependencies.
+
+Independent source triage also found high advisories in `undici@7.28.0`
+(cache interceptor) and `nanoid@5.1.6` (invalid sizes). The observed workflow
+paths use a plain Agent and a constant size of 21, respectively; the vulnerable
+triggers were not found on those paths. This is not a clean dependency audit.
+Before the next release, review an AWS SDK upgrade that removes the XML parser,
+update workflow/devalue, and review narrowly scoped undici/nanoid overrides.
+Re-run the native audit, full check, S3 fixtures and build after lockfile changes.
+Review again before release or by 2026-09-30, whichever comes first.
 
 ### G-17 WP-04b: registry breadth toward 500 entries
 
