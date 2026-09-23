@@ -93,8 +93,8 @@
   }
   .topbar,
   .demo-topbar {
-    min-height: calc(50px + env(safe-area-inset-top));
-    height: calc(50px + env(safe-area-inset-top));
+    min-height: calc(48px + env(safe-area-inset-top));
+    height: calc(48px + env(safe-area-inset-top));
     padding-inline: max(6px, env(safe-area-inset-left))
       max(6px, env(safe-area-inset-right));
   }
@@ -184,8 +184,8 @@
     overflow-wrap: anywhere;
   }
   .page-content > h1 {
-    font-size: 24px;
-    margin-bottom: 16px;
+    font-size: 22px;
+    margin-bottom: 12px;
   }
   input,
   select,
@@ -266,4 +266,15 @@
   .demo-composer textarea {
     min-height: 40px;
   }
+}
+
+@media (max-width: 767px) {
+  .attachments button { min-width: 44px; min-height: 44px; }
+  .composer-actions { min-width: 0; gap: 0; }
+  .composer-actions > button { flex-shrink: 0; min-width: 44px; padding-inline: 6px; }
+  .composer-actions > div { flex: 1 1 0; min-width: 0; }
+  .composer-actions .model-button { min-width: 44px; max-width: 100%; }
+  .welcome { text-align: left; }
+  .welcome h1, .welcome > p { margin-inline: 0; }
+  .starters { margin-top: 14px; }
 }

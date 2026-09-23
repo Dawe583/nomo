@@ -7,7 +7,7 @@ import { loadDraft, saveDraft, submitDraft } from "./draft-state";
 import { CommandMenu } from "./command-menu.tsx";
 import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import * as m from "motion/react-m";
-import { AsciiWordmark, BrandMark } from "./brand";
+import { BrandMark } from "./brand";
 import { ApprovalReview } from "./approval-review";
 import {
   PermissionBanner,
@@ -131,6 +131,7 @@ export function Chat({
   const holds = useApi("/api/approvals", !!id, 3000);
   const perm = usePermissionMode(capabilities, preferences);
   const [contextPicker, setContextPicker] = useState(false);
+  const [chatOptions, setChatOptions] = useState(false);
   const [approval, setApproval] = useState<Row>();
   const session = sessionQuery.data?.session;
   const providerEndpoint = id ? session?.provider : provider.data?.baseUrl;
@@ -615,7 +616,7 @@ const draftKey =
               initial={animate ? { opacity: 0, y: 12 } : false}
               animate={{ opacity: 1, y: 0 }}
             >
-              <AsciiWordmark />
+              <BrandMark />
               <h1>
                 {t(
                   "Prostor pro vaše další myšlenky.",
@@ -783,6 +784,7 @@ const draftKey =
               {state === "stopping" && t(" Odeslaný nástroj může ještě dokončit práci.", " An issued tool may still finish.")}
             </p>
           )}
+          {session && <SessionContext key={session.id} session={session} events={rawEvents} supported={capabilities.data?.contextCompaction === true} />}
         </div>
       </div>
       {newMessages && !follow && (
@@ -791,6 +793,7 @@ const draftKey =
         </button>
       )}
       <div className="composer-wrap">
+        <div className="composer-notices" tabIndex={0} role="region" aria-label={t("Stav a upozornění", "Status and notices")}>
         {retryWait > 0 && (
           <p className="notice" role="status">
             {t(
@@ -821,66 +824,27 @@ const draftKey =
         <PermissionBanner mode={perm.mode} source={perm.source} />
         {!id && <ProviderNotice provider={provider.data} setup={() => navigate("/settings")} />}
         {id && state === "unknown" && <p className="notice" role="status">{t("Výsledek běhu není potvrzen. Před dalším pokusem zkontrolujte běh a ledger.", "The run outcome is not confirmed. Check the run and ledger before retrying.")}</p>}
-        {!id && <details className="new-session-options">
-          <summary>{t("Projekt a agent", "Project and agent")}</summary>
-          <ErrorBox error={projects.error ?? agents.error} />
-          {capabilities.data?.projects === true ? <label>
-            {t("Projekt", "Project")}
-            <select value={project} onChange={event => setProject(event.target.value)} disabled={projects.isPending}>
-              <option value="">{t("Bez projektu", "No project")}</option>
-              {(projects.data?.items ?? []).map((row: Row) => <option key={row.id} value={row.id}>{row.name}</option>)}
-            </select>
-          </label> : <p className="muted">{t("Projekty nejsou na tomto hostu dostupné.", "Projects are not available on this host.")}</p>}
-          <label>{t("Agent pro tuto konverzaci", "Agent for this conversation")}
-            <select value={selectedAgent ?? ""} onChange={event => setAgent(event.target.value)} disabled={agents.isPending || agents.data?.supported === false}>
-              <option value="" disabled>{t("Vyberte dostupného agenta", "Choose an available agent")}</option>
-              {agentOptions(agents.data).map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
-            </select>
-          </label>
-          <p className="muted">{t("Nastavení se zachytí při vytvoření konverzace. Oprávnění nadále řídí server.", "Settings are captured when the conversation starts. Permissions remain server-controlled.")}</p>
-          {capabilities.data?.backgroundQueue === true && <label className="project-background">
-            <input type="checkbox" checked={background} onChange={event => setBackground(event.target.checked)} />
-            {t("Spustit na pozadí", "Run in background")}
-          </label>}
-          <button type="button" onClick={() => navigate("/settings")}>{t("Spravovat projekty a agenty", "Manage projects and agents")}</button>
-        </details>}
-        <form
-          className="composer"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void send();
-          }}
-        >
-          {commandOpen && (
-            <CommandMenu
-              items={commandItems}
-              active={activeCommand}
-              choose={(command) => {
-                void chooseCommand(command);
-              }}
-              loading={toolsQuery.isLoading}
-              error={!!toolsQuery.error}
-              retry={() => {
-                void toolsQuery.refetch();
-              }}
-              scope={toolsQuery.data?.scope}
-            />
-          )}
-          <div className="composer-mode-row">
-            <PermissionModeSwitch
-              mode={perm.mode}
-              source={perm.source}
-              onChange={perm.setMode}
-            />
-            <span className="muted perm-source">
-              {perm.source === "server"
-                ? t("Zdroj: server", "Source: server")
-                : t(
-                    "Zdroj: místní předvolba — server nevynucuje",
-                    "Source: local preset — server does not enforce",
-                  )}
+        {queued && (
+          <div className="queue-banner" role="status">
+            <span className="queue-banner-text">
+              {t(
+                "Koncept je uložený v této kartě. Nic se neodešle automaticky.",
+                "Draft saved in this tab. Nothing sends automatically.",
+              )}
             </span>
+            <button
+              disabled={busy || running || retryWait > 0 || !draft.trim()}
+              onClick={() => void send()}
+            >
+              {t("Odeslat koncept", "Send draft")}
+            </button>
           </div>
+        )}
+        {session && <>
+          <SessionRecoveryStatus key={"recovery:" + session.id} session={session} />
+
+        </>}
+
           {selectedTool && (
             <details className="selected-tool">
               <summary>
@@ -918,6 +882,29 @@ const draftKey =
                 </span>
               ))}
             </div>
+          )}
+        </div>
+        <form
+          className="composer"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void send();
+          }}
+        >
+          {commandOpen && (
+            <CommandMenu
+              items={commandItems}
+              active={activeCommand}
+              choose={(command) => {
+                void chooseCommand(command);
+              }}
+              loading={toolsQuery.isLoading}
+              error={!!toolsQuery.error}
+              retry={() => {
+                void toolsQuery.refetch();
+              }}
+              scope={toolsQuery.data?.scope}
+            />
           )}
           <textarea
             ref={textarea}
@@ -1005,6 +992,9 @@ const draftKey =
             }}
           />
           <div className="composer-actions">
+            <button type="button" className="chat-options-trigger"
+              aria-label={t("Nastavení konverzace", "Conversation settings")}
+              onClick={() => setChatOptions(true)}>⋯</button>
             <button
               type="button"
               className="command-trigger"
@@ -1123,26 +1113,10 @@ const draftKey =
 
           </div>
         </form>
-        {queued && (
-          <div className="queue-banner" role="status">
-            <span className="queue-banner-text">
-              {t(
-                "Koncept je uložený v této kartě. Nic se neodešle automaticky.",
-                "Draft saved in this tab. Nothing sends automatically.",
-              )}
-            </span>
-            <button
-              disabled={busy || running || retryWait > 0 || !draft.trim()}
-              onClick={() => void send()}
-            >
-              {t("Odeslat koncept", "Send draft")}
-            </button>
-          </div>
-        )}
-        {session && <>
-          <SessionRecoveryStatus key={"recovery:" + session.id} session={session} />
-          <SessionContext key={session.id} session={session} events={rawEvents} supported={capabilities.data?.contextCompaction === true} />
-        </>}
+
+      </div>
+      {chatOptions && (
+        <Dialog title={t("Nastavení konverzace", "Conversation settings")} close={() => setChatOptions(false)}>
         <div className="composer-footnote">
           <span>{providerLabel}</span>
           <span
@@ -1164,14 +1138,54 @@ const draftKey =
                 ? "VOID Local"
                 : "VOID Cloud"}
           </span>
-          <button onClick={onContext}>
+          <button onClick={() => { setChatOptions(false); onContext(); }}>
             {t("Dokumenty a kontext", "Documents and context")}
           </button>
           <span>
             {t("Důležité výstupy vždy ověřte.", "Verify important results.")}
           </span>
         </div>
-      </div>
+
+          <div className="composer-mode-row">
+            <PermissionModeSwitch
+              mode={perm.mode}
+              source={perm.source}
+              onChange={perm.setMode}
+            />
+            <span className="muted perm-source">
+              {perm.source === "server"
+                ? t("Zdroj: server", "Source: server")
+                : t(
+                    "Zdroj: místní předvolba — server nevynucuje",
+                    "Source: local preset — server does not enforce",
+                  )}
+            </span>
+          </div>
+        {!id && <div className="new-session-options">
+          <h3>{t("Projekt a agent", "Project and agent")}</h3>
+          <ErrorBox error={projects.error ?? agents.error} />
+          {capabilities.data?.projects === true ? <label>
+            {t("Projekt", "Project")}
+            <select value={project} onChange={event => setProject(event.target.value)} disabled={projects.isPending}>
+              <option value="">{t("Bez projektu", "No project")}</option>
+              {(projects.data?.items ?? []).map((row: Row) => <option key={row.id} value={row.id}>{row.name}</option>)}
+            </select>
+          </label> : <p className="muted">{t("Projekty nejsou na tomto hostu dostupné.", "Projects are not available on this host.")}</p>}
+          <label>{t("Agent pro tuto konverzaci", "Agent for this conversation")}
+            <select value={selectedAgent ?? ""} onChange={event => setAgent(event.target.value)} disabled={agents.isPending || agents.data?.supported === false}>
+              <option value="" disabled>{t("Vyberte dostupného agenta", "Choose an available agent")}</option>
+              {agentOptions(agents.data).map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
+            </select>
+          </label>
+          <p className="muted">{t("Nastavení se zachytí při vytvoření konverzace. Oprávnění nadále řídí server.", "Settings are captured when the conversation starts. Permissions remain server-controlled.")}</p>
+          {capabilities.data?.backgroundQueue === true && <label className="project-background">
+            <input type="checkbox" checked={background} onChange={event => setBackground(event.target.checked)} />
+            {t("Spustit na pozadí", "Run in background")}
+          </label>}
+          <button type="button" onClick={() => navigate("/settings")}>{t("Spravovat projekty a agenty", "Manage projects and agents")}</button>
+        </div>}
+        </Dialog>
+      )}
       {contextPicker && (
         <Dialog
           title={t("Přiložit dokument", "Attach document")}

@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import * as m from "motion/react-m";
 import { MotionConfig, useReducedMotion } from "motion/react";
 import { api, download, type Row } from "./api";
-import { AsciiWordmark, BrandMark } from "./brand";
+import { BrandMark } from "./brand";
 import { Icon } from "./icons";
 import { Dialog, ErrorBox, MotionEnabled, useText, useApi } from "./ui";
 const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
@@ -279,7 +279,7 @@ export function PublicDemo({
                     initial={reduced ? false : { opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    <AsciiWordmark />
+                    <BrandMark />
                     <h1>
                       {t(
                         "Od nápadu. Zpět kdykoliv.",

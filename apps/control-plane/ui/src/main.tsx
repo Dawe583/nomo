@@ -165,7 +165,7 @@ function App({
   const contextRef = useRef<HTMLElement>(null),
     sidebarRef = useRef<HTMLElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState(
-      () => Number(localStorage.getItem("void-sidebar-width")) || 248,
+      () => Number(localStorage.getItem("void-sidebar-width")) || 224,
     ),
     [contextWidth, setContextWidth] = useState(
       () => Number(localStorage.getItem("void-context-width")) || 360,
@@ -198,13 +198,14 @@ function App({
     60000,
     false,
   );
-  const provider = useApi("/api/provider");
+  const provider = useApi("/api/provider", path !== "/demo");
   // The provider probe doubles as the login check. Every other query below
   // is protected data, so it stays disabled until this probe succeeds.
   const needsAuth =
     provider.error instanceof ApiError &&
     (provider.error.status === 401 || provider.error.status === 403);
-  const prefs = useApi("/api/preferences", !needsAuth);
+  const privateQueries = path !== "/demo" && !needsAuth;
+  const prefs = useApi("/api/preferences", privateQueries);
   const initialPreferences = useRef({
     appearance: !localStorage.getItem("void-appearance"),
     locale: !localStorage.getItem("void-locale"),
@@ -223,15 +224,15 @@ function App({
   }, [prefs.data, setLocale]);
   const sessions = useApi(
     "/api/sessions?archived=false&limit=20",
-    !needsAuth,
+    privateQueries,
   );
-  const approvals = useApi("/api/approvals", !needsAuth);
+  const approvals = useApi("/api/approvals", privateQueries);
   // Topbar queue pill and the running-session banner read the live server
   // overview; unknown stays unknown.
-  const overview = useApi("/api/overview", !needsAuth);
+  const overview = useApi("/api/overview", privateQueries);
   const history = useApi(
     "/api/sessions?q=" + encodeURIComponent(query) + "&limit=50",
-    search && !needsAuth,
+    search && privateQueries,
   );
   const [page, sessionId] = path.replace(/^\//, "").split("/");
   const active = routes.find((r) => r[0] === page) ?? routes[0];
@@ -239,7 +240,7 @@ function App({
     page === "chat" && sessionId && sessionId !== "new" ? sessionId : undefined;
   const currentDetail = useApi(
     "/api/sessions/" + chatId + "?events=false",
-    !!chatId && !needsAuth,
+    !!chatId && privateQueries,
   );
   const current =
     currentDetail.data?.session ??
@@ -285,7 +286,7 @@ function App({
       document.documentElement.dataset.theme = dark ? "dark" : "light";
       document
         .querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", dark ? "#12100a" : "#f6f0e3");
+        ?.setAttribute("content", dark ? "#191918" : "#f8f7f4");
     };
     update();
     media.addEventListener("change", update);

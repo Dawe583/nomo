@@ -1,5 +1,22 @@
 # VOID GUI design rules
 
+## Compact conversation layout, 2026-09-23
+
+This approved direction supersedes the historical large paper-terminal display
+rules below. Use neutral light/dark surfaces, Inter for interface text, and the
+VOID aperture with a restrained orange accent. Monospace is for code and short
+technical values, not the entire application. No page scaling or zoom tricks.
+
+Chat is the primary workspace. Keep the composer form outside the bounded,
+keyboard-scrollable status region. Secondary project, agent, permission controls
+and usage details live in Conversation settings; the current permission source
+and critical failures remain visible. Context compaction stays mounted in the
+transcript so closing a dialog cannot reset its pending mutation state.
+
+Use the same React assets for web and desktop. On mobile, reduce chrome and
+spacing, not 44px touch targets or 16px input text. Verify short screens, long
+drafts, overlays and populated content, not just empty screenshots.
+
 ## Shared React application
 
 The active web application lives in `apps/control-plane/ui`. Vite emits
