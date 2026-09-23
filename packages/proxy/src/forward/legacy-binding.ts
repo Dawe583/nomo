@@ -116,6 +116,30 @@ export function validateLegacyOutcome(
   response: JsonRpcResult | JsonRpcError | null,
   outcome: LegacyOutcomeEvidence,
 ): void {
+  validateOutcomeIdentity(capture, outcome);
+  if (response === null && outcome.status !== "unknown") {
+    throw new Error("legacy outcome must be unknown without a response");
+  }
+  if (response !== null && "error" in response && outcome.status !== "failed") {
+    throw new Error("legacy JSON-RPC error outcome must be failed");
+  }
+}
+
+
+export function validateLegacyRecoveryEvidence(
+  capture: LegacyCaptureEvidence,
+  outcome: LegacyOutcomeEvidence,
+): void {
+  validateOutcomeIdentity(capture, outcome);
+  if (outcome.status !== "completed") {
+    throw new Error("legacy recovery requires a completed outcome");
+  }
+}
+
+function validateOutcomeIdentity(
+  capture: LegacyCaptureEvidence,
+  outcome: LegacyOutcomeEvidence,
+): void {
   if (outcome.schema !== "void.legacy.outcome.v1") {
     throw new Error("legacy outcome schema mismatch");
   }
@@ -133,12 +157,6 @@ export function validateLegacyOutcome(
   }
   if (Number.isNaN(Date.parse(outcome.at))) {
     throw new Error("legacy outcome time is invalid");
-  }
-  if (response === null && outcome.status !== "unknown") {
-    throw new Error("legacy outcome must be unknown without a response");
-  }
-  if (response !== null && "error" in response && outcome.status !== "failed") {
-    throw new Error("legacy JSON-RPC error outcome must be failed");
   }
 }
 

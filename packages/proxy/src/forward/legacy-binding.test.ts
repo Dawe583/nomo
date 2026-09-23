@@ -6,6 +6,7 @@ import {
   legacyArgsDigest,
   validateLegacyCapture,
   validateLegacyOutcome,
+  validateLegacyRecoveryEvidence,
   type LegacyCaptureEvidence,
   type LegacyOutcomeEvidence,
 } from "./legacy-binding.ts";
@@ -86,5 +87,17 @@ test("legacy outcome validation binds capture and response kind", () => {
   assert.throws(
     () => validateLegacyOutcome(capture, result, { ...outcome("completed"), captureDigest: `sha256:${"e".repeat(64)}` }),
     /capture digest/,
+  );
+});
+
+test("legacy recovery requires matching completed evidence", () => {
+  assert.doesNotThrow(() => validateLegacyRecoveryEvidence(capture, outcome("completed")));
+  assert.throws(
+    () => validateLegacyRecoveryEvidence(capture, outcome("failed")),
+    /completed/,
+  );
+  assert.throws(
+    () => validateLegacyRecoveryEvidence(capture, { ...outcome("completed"), argsDigest: "c".repeat(64) }),
+    /argument digest/,
   );
 });
