@@ -100,4 +100,11 @@ test("legacy recovery requires matching completed evidence", () => {
     () => validateLegacyRecoveryEvidence(capture, { ...outcome("completed"), argsDigest: "c".repeat(64) }),
     /argument digest/,
   );
+  assert.throws(
+    () => validateLegacyRecoveryEvidence(
+      { ...capture, reference: { ...capture.reference, digest: `sha256:${"c".repeat(64)}` } },
+      outcome("completed"),
+    ),
+    /reference digest/,
+  );
 });

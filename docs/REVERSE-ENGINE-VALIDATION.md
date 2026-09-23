@@ -80,7 +80,7 @@ Capture ukládá bytes a persistovaný envelope cíle. Apply znovu načte digest
 | CLI hash-only důvěra | Přehašovaný ledger či zaměněný manifest mohl řídit mutation | Apply vyžaduje ověřené podpisy, `execute:completed` a podepsaný `captureDigest`; testy rehash a substitution |
 | Chyby služby | Některé inverse chyby mohly propagovat text driveru | Sanitizované odmítnutí; S3 permission failure nevolá write a nevrací credential |
 
-Nové důkazy jsou v `packages/proxy/src/forward/legacy-binding.test.ts`, `packages/proxy/src/bin.test.ts`, `packages/connectors/src/reverse-engine.test.ts`, `packages/cli/src/replay.test.ts` a `packages/connectors/src/s3/apply.test.ts`. Cross-layer scénář skládá injektovaný host binding, skutečný proxy transport, connector capture, podepsaný JSONL outcome, SQL forward, restart a konektorové Undo. Neimplikuje automatické capture uvnitř proxy ani podporu dalších toolů.
+Nové důkazy jsou v `packages/proxy/src/forward/legacy-binding.test.ts`, `packages/proxy/src/bin.test.ts`, `packages/connectors/src/reverse-engine.test.ts`, `packages/cli/src/replay.test.ts` a `packages/connectors/src/s3/apply.test.ts`. Cross-layer scénář skládá injektovaný host binding, skutečný `runProxy` lifecycle s in-process upstream fixture, connector capture, podepsaný completed JSONL outcome, SQL forward, restart a konektorové Undo. Proxy unit testy navíc pokrývají in-memory failed a unknown callbacky. Nejde o stdio nebo HTTP transport certification, signed negative fixture, automatické capture uvnitř proxy ani podporu dalších toolů.
 
 ## Změna CLI replay kontraktu
 
@@ -111,7 +111,7 @@ Konkrétní service adapter musí být nakonfigurovaný; samotný klíč žádn�
 | SQL částečné selhání | Reálný constraint rollback testován |
 | SQL dvě Undo stejné connection | Jedno provedení, jedno odmítnutí testováno |
 | SQL dvě síťové connection / výpadek COMMIT | Síťově zde netestováno; neznámý výsledek vyžaduje inspekci |
-| Legacy proxy `postgres.row.update` | Injektovaný binding, capture před dispatch, signed completed/failed/unknown, restart Undo ověřeny |
+| Legacy proxy `postgres.row.update` | Injektovaný binding, capture před dispatch, signed completed outcome a restart Undo ověřeny; failed/unknown mají proxy unit testy bez signed cross-layer fixture |
 | Legacy proxy numeric/string IDs | Přeložená ID vedou oddělenou capture a outcome evidenci |
 | Legacy proxy capture failure / close | Nula upstream callů před dispatch; po dispatch `unknown`, bez retry |
 | Capture versus původní forward race | Hostitel musí řešit transakční hranici; obecně nezaručeno |

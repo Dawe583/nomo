@@ -23,7 +23,6 @@ import { forwardPromptMessage } from "./forward/prompts.ts";
 import { forwardResourceMessage } from "./forward/resources.ts";
 import {
   captureLegacyEnvelope,
-  legacyArgsDigest,
   validateLegacyCapture,
   validateLegacyOutcome,
   type LegacyBindingResolver,
@@ -236,8 +235,8 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     for (const upstreamId of [...pendingLegacy.keys()]) {
       try {
         await finishLegacy(upstreamId, null);
-      } catch (error) {
-        writeError(`legacy outcome failed: ${errorMessage(error)}`);
+      } catch {
+        writeError("legacy outcome recording failed");
       }
     }
   };
@@ -254,7 +253,22 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       sendUpstream(translated);
       return translated;
     }
-    await bound.binding.dispatched(bound.evidence);
+    try {
+      await bound.binding.dispatched(bound.evidence);
+    } catch {
+      const failed: JsonRpcError = {
+        jsonrpc: "2.0",
+        id: translated.id,
+        error: { code: INTERNAL_ERROR, message: "dispatch evidence failed" },
+      };
+      try {
+        const outcome = await bound.binding.outcome(bound.evidence, failed);
+        validateLegacyOutcome(bound.evidence, failed, outcome);
+      } catch {
+        throw new Error("legacy dispatch and failure evidence recording failed");
+      }
+      throw new Error("legacy dispatch evidence failed");
+    }
     pendingLegacy.set(translated.id, bound);
     try {
       sendUpstream(translated);
@@ -270,6 +284,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     try {
       message = parseMessage(line, inboundMaxBytes);
     } catch {
+      await markPendingLegacyUnknown();
       writeError("upstream sent malformed JSON-RPC message");
       return;
     }
@@ -356,13 +371,13 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       onMessage(line) {
         upstreamWork = upstreamWork
           .then(() => handleUpstreamLine(line))
-          .catch((error: unknown) => {
-            writeError(`upstream message failed: ${errorMessage(error)}`);
+          .catch(() => {
+            writeError("upstream message handling failed");
           });
       },
       onClose: handleUpstreamClose,
-      onError(error) {
-        writeError(`upstream error: ${error.message}`);
+      onError() {
+        writeError("upstream error");
         upstreamWork = upstreamWork.then(markPendingLegacyUnknown);
       },
     };
@@ -612,8 +627,14 @@ async function handleToolCall(
   legacyBinding?: LegacyBindingResolver,
 ): Promise<void> {
   const call = { ...interceptedCall(request), workspace };
-  const binding =
-    posture === "fail-closed" ? (legacyBinding?.(call) ?? null) : null;
+  let binding: LegacyProxyBinding | null = null;
+  if (posture === "fail-closed" && legacyBinding !== undefined) {
+    try {
+      binding = legacyBinding(call);
+    } catch {
+      throw new Error("legacy binding resolution failed");
+    }
+  }
   if (binding !== null && binding.tool !== call.tool) {
     throw new Error("legacy binding tool mismatch");
   }
@@ -640,14 +661,14 @@ async function handleToolCall(
     capture:
       binding === null
         ? (legacyCapture ??
-          (async (candidate) =>
+          (async (candidate, argsDigest) =>
             captureLegacyEnvelope(
               candidate.tool,
               candidate.args,
               candidate.workspace ?? workspace,
+              argsDigest,
             )))
-        : async (candidate) => {
-            const argsDigest = await legacyArgsDigest(candidate.args);
+        : async (candidate, argsDigest) => {
             const evidence = await binding.capture(candidate, argsDigest);
             validateLegacyCapture(candidate, argsDigest, evidence);
             capturedEvidence = evidence;
@@ -725,7 +746,7 @@ function interceptedCall(request: JsonRpcRequest): InterceptedCall {
   return {
     tool: name,
     connector: connectorFromName(name),
-    args: args === undefined ? {} : args,
+    args: args === undefined ? {} : structuredClone(args),
   };
 }
 

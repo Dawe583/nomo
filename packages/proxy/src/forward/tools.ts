@@ -57,7 +57,10 @@ export type InterceptDeps = {
    * complete before the proxy forwards upstream. Rejection blocks dispatch;
    * the upstream is never called. Absent means no binding for this host.
    */
-  readonly capture?: (call: InterceptedCall) => Promise<unknown>;
+  readonly capture?: (
+    call: InterceptedCall,
+    argsDigest: string,
+  ) => Promise<unknown>;
 };
 
 const ERROR_CODE = -32003;
@@ -67,8 +70,8 @@ export async function interceptCall(
   deps: InterceptDeps,
 ): Promise<CallVerdict> {
   const now = deps.now ?? (() => new Date());
-  const digest = await legacyArgsDigest(call.args);
   try {
+    const digest = await legacyArgsDigest(call.args);
     const baseClassification = deps.classify({});
     const probeResult = await runProbe(
       deps,
@@ -290,7 +293,7 @@ async function runCaptureGate(
 ): Promise<unknown> {
   if (deps.capture === undefined) return true;
   try {
-    return await deps.capture(call);
+    return await deps.capture(call, argsDigest);
   } catch {
     await writeLedger(
       deps,

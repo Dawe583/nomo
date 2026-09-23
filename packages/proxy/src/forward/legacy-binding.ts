@@ -67,13 +67,14 @@ export async function captureLegacyEnvelope(
   tool: string,
   args: Readonly<Record<string, unknown>>,
   workspace?: string,
+  argsDigest?: string,
 ): Promise<LegacyEnvelope> {
   return {
     schema: "void.legacy.envelope.v1",
     at: new Date().toISOString(),
     tool,
     workspace,
-    argsDigest: await legacyArgsDigest(args),
+    argsDigest: argsDigest ?? (await legacyArgsDigest(args)),
   };
 }
 
@@ -82,9 +83,7 @@ export function validateLegacyCapture(
   argsDigest: string,
   evidence: LegacyCaptureEvidence,
 ): void {
-  if (evidence.schema !== "void.legacy.capture.v1") {
-    throw new Error("legacy capture schema mismatch");
-  }
+  validateCaptureEvidence(evidence);
   if (evidence.tool !== call.tool) {
     throw new Error("legacy capture tool mismatch");
   }
@@ -93,21 +92,6 @@ export function validateLegacyCapture(
   }
   if (evidence.argsDigest !== argsDigest) {
     throw new Error("legacy capture argument digest mismatch");
-  }
-  if (!isDigest(argsDigest)) {
-    throw new Error("legacy capture argument digest is invalid");
-  }
-  if (!isSnapshotDigest(evidence.captureDigest)) {
-    throw new Error("legacy capture digest is invalid");
-  }
-  if (evidence.reference.digest !== evidence.captureDigest) {
-    throw new Error("legacy capture reference digest mismatch");
-  }
-  if (evidence.reference.namespace === "" || evidence.reference.uri === "") {
-    throw new Error("legacy capture reference is incomplete");
-  }
-  if (Number.isNaN(Date.parse(evidence.at))) {
-    throw new Error("legacy capture time is invalid");
   }
 }
 
@@ -130,9 +114,31 @@ export function validateLegacyRecoveryEvidence(
   capture: LegacyCaptureEvidence,
   outcome: LegacyOutcomeEvidence,
 ): void {
+  validateCaptureEvidence(capture);
   validateOutcomeIdentity(capture, outcome);
   if (outcome.status !== "completed") {
     throw new Error("legacy recovery requires a completed outcome");
+  }
+}
+
+function validateCaptureEvidence(evidence: LegacyCaptureEvidence): void {
+  if (evidence.schema !== "void.legacy.capture.v1") {
+    throw new Error("legacy capture schema mismatch");
+  }
+  if (!isDigest(evidence.argsDigest)) {
+    throw new Error("legacy capture argument digest is invalid");
+  }
+  if (!isSnapshotDigest(evidence.captureDigest)) {
+    throw new Error("legacy capture digest is invalid");
+  }
+  if (evidence.reference.digest !== evidence.captureDigest) {
+    throw new Error("legacy capture reference digest mismatch");
+  }
+  if (evidence.reference.namespace === "" || evidence.reference.uri === "") {
+    throw new Error("legacy capture reference is incomplete");
+  }
+  if (Number.isNaN(Date.parse(evidence.at))) {
+    throw new Error("legacy capture time is invalid");
   }
 }
 

@@ -482,6 +482,87 @@ test("bound JSON-RPC error records failed before relay", async () => {
   assert.match(JSON.stringify(output), /write failed/);
 });
 
+test("binding cannot mutate arguments sent upstream", async () => {
+  const base = testLegacyBinding([], []);
+  let forwardedSql: unknown;
+  const binding: LegacyProxyBinding = {
+    ...base,
+    async capture(call, argsDigest) {
+      const evidence = await base.capture(call, argsDigest);
+      (call.args.command as { sql: string }).sql = "delete from account";
+      return evidence;
+    },
+  };
+  await runBoundProxy({
+    binding,
+    messages: [{
+      jsonrpc: "2.0",
+      id: 86,
+      method: "tools/call",
+      params: { name: binding.tool, arguments: { command: { sql: "update account set balance=20" } } },
+    }],
+    upstream(eventsApi) {
+      return {
+        send(line) {
+          const request = JSON.parse(line) as { id: number; params: { arguments: { command: { sql: string } } } };
+          forwardedSql = request.params.arguments.command.sql;
+          eventsApi.onMessage(JSON.stringify({ jsonrpc: "2.0", id: request.id, result: { applied: true } }));
+        },
+        close() {},
+        onStderr() { return () => {}; },
+      };
+    },
+  });
+  assert.equal(forwardedSql, "update account set balance=20");
+});
+
+test("malformed upstream response records unknown and drops a late response", async () => {
+  const outcomes: string[] = [];
+  const output: unknown[] = [];
+  const binding = testLegacyBinding([], outcomes);
+  await runBoundProxy({
+    binding,
+    messages: [toolCall(87, binding.tool)],
+    output: line => output.push(JSON.parse(line) as unknown),
+    upstream(eventsApi) {
+      return {
+        send(line) {
+          const request = JSON.parse(line) as { id: number };
+          eventsApi.onMessage("not json");
+          eventsApi.onMessage(JSON.stringify({ jsonrpc: "2.0", id: request.id, result: { applied: true } }));
+        },
+        close() {},
+        onStderr() { return () => {}; },
+      };
+    },
+  });
+  assert.deepEqual(outcomes, ["unknown"]);
+  assert.deepEqual(output, []);
+});
+
+test("dispatched evidence failure records failed and sends zero upstream requests", async () => {
+  const outcomes: string[] = [];
+  let upstreamCalls = 0;
+  const base = testLegacyBinding([], outcomes);
+  const binding: LegacyProxyBinding = {
+    ...base,
+    async dispatched() { throw new Error("sql=secret credential=secret"); },
+  };
+  await runBoundProxy({
+    binding,
+    messages: [toolCall(88, binding.tool)],
+    upstream() {
+      return {
+        send() { upstreamCalls += 1; },
+        close() {},
+        onStderr() { return () => {}; },
+      };
+    },
+  });
+  assert.equal(upstreamCalls, 0);
+  assert.deepEqual(outcomes, ["failed"]);
+});
+
 test("bound legacy call records unknown on close after dispatch", async () => {
   const lifecycle: string[] = [];
   const outcomes: string[] = [];
