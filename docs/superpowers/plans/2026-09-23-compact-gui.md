@@ -1,6 +1,7 @@
 # Compact GUI implementation plan
 
-Status: implementation and available verification complete; release in progress.
+Status: implementation and available verification complete; pushed to main in
+`805b0d19da0bccb6253b96fba46cdf4d9247b268`. Vercel was pending at handoff.
 See `docs/GUI-COMPACT-VERIFICATION.md` for exact evidence and open platform gates.
 
 ## Goal
@@ -33,7 +34,8 @@ Do not use page zoom or transform scaling. No new dependencies.
    Check empty, populated, missing provider, error, streaming, approval, long
    code/table/URL/name, multi-line input, keyboard, focus, Escape, zoom 200%,
    reduced motion. Capture screenshots and geometry, inspect console.
-6. [ ] Native and release (builds and native smokes passed; push pending). Run UI tests, repository typecheck/check, web/cloud
+6. [x] Native and release (builds, native smokes and push verified; hosted
+   deployment pending at handoff, not claimed successful). Run UI tests, repository typecheck/check, web/cloud
    build, desktop runtime tests and available native build/smoke. Reuse the two
    existing reviewers. Fix findings and reverify. Commit/push verified changes
    to main and verify deployment. Report native artifact separately from web.
