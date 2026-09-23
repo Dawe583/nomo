@@ -225,8 +225,14 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   ): Promise<void> => {
     const pending = pendingLegacy.get(upstreamId);
     if (pending === undefined) return;
-    const outcome = await pending.binding.outcome(pending.evidence, response);
-    validateLegacyOutcome(pending.evidence, response, outcome);
+    try {
+      const outcome = await pending.binding.outcome(pending.evidence, response);
+      validateLegacyOutcome(pending.evidence, response, outcome);
+    } catch (error) {
+      pendingLegacy.delete(upstreamId);
+      unknownLegacy.add(upstreamId);
+      throw error;
+    }
     pendingLegacy.delete(upstreamId);
     if (response === null) unknownLegacy.add(upstreamId);
   };
@@ -272,9 +278,13 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     pendingLegacy.set(translated.id, bound);
     try {
       sendUpstream(translated);
-    } catch (error) {
-      await finishLegacy(translated.id, null);
-      throw error;
+    } catch {
+      try {
+        await finishLegacy(translated.id, null);
+      } catch {
+        throw new Error("legacy send and unknown evidence recording failed");
+      }
+      throw new Error("legacy upstream send failed");
     }
     return translated;
   };
@@ -746,8 +756,20 @@ function interceptedCall(request: JsonRpcRequest): InterceptedCall {
   return {
     tool: name,
     connector: connectorFromName(name),
-    args: args === undefined ? {} : structuredClone(args),
+    args: immutableClone(args === undefined ? {} : args),
   };
+}
+
+function immutableClone<T>(value: T): T {
+  return deepFreeze(structuredClone(value));
+}
+
+function deepFreeze<T>(value: T): T {
+  if (typeof value !== "object" || value === null || Object.isFrozen(value)) {
+    return value;
+  }
+  for (const nested of Object.values(value)) deepFreeze(nested);
+  return Object.freeze(value);
 }
 
 function connectorFromName(name: string): string {

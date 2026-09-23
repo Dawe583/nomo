@@ -489,7 +489,10 @@ test("binding cannot mutate arguments sent upstream", async () => {
     ...base,
     async capture(call, argsDigest) {
       const evidence = await base.capture(call, argsDigest);
-      (call.args.command as { sql: string }).sql = "delete from account";
+      assert.throws(
+        () => { (call.args.command as { sql: string }).sql = "delete from account"; },
+        TypeError,
+      );
       return evidence;
     },
   };
@@ -500,6 +503,39 @@ test("binding cannot mutate arguments sent upstream", async () => {
       id: 86,
       method: "tools/call",
       params: { name: binding.tool, arguments: { command: { sql: "update account set balance=20" } } },
+    }],
+    upstream(eventsApi) {
+      return {
+        send(line) {
+          const request = JSON.parse(line) as { id: number; params: { arguments: { command: { sql: string } } } };
+          forwardedSql = request.params.arguments.command.sql;
+          eventsApi.onMessage(JSON.stringify({ jsonrpc: "2.0", id: request.id, result: { applied: true } }));
+        },
+        close() {},
+        onStderr() { return () => {}; },
+      };
+    },
+  });
+  assert.equal(forwardedSql, "update account set balance=20");
+});
+
+test("binding resolver receives recursively frozen arguments", async () => {
+  const base = testLegacyBinding([], []);
+  let forwardedSql: unknown;
+  await runBoundProxy({
+    binding: base,
+    resolver(call) {
+      assert.throws(
+        () => { (call.args.command as { sql: string }).sql = "delete from account"; },
+        TypeError,
+      );
+      return base;
+    },
+    messages: [{
+      jsonrpc: "2.0",
+      id: 89,
+      method: "tools/call",
+      params: { name: base.tool, arguments: { command: { sql: "update account set balance=20" } } },
     }],
     upstream(eventsApi) {
       return {
@@ -538,6 +574,44 @@ test("malformed upstream response records unknown and drops a late response", as
   });
   assert.deepEqual(outcomes, ["unknown"]);
   assert.deepEqual(output, []);
+});
+
+test("failed unknown persistence tombstones the call and sanitizes errors", async () => {
+  const attempts: string[] = [];
+  const output: unknown[] = [];
+  const errors: string[] = [];
+  const base = testLegacyBinding([], []);
+  const binding: LegacyProxyBinding = {
+    ...base,
+    async outcome(evidence, response) {
+      if (response === null) {
+        attempts.push("unknown");
+        throw new Error("sql=secret credential=secret");
+      }
+      attempts.push("completed");
+      return base.outcome(evidence, response);
+    },
+  };
+  await runBoundProxy({
+    binding,
+    messages: [toolCall(90, binding.tool)],
+    output: line => output.push(JSON.parse(line) as unknown),
+    error: line => errors.push(line),
+    upstream(eventsApi) {
+      return {
+        send(line) {
+          const request = JSON.parse(line) as { id: number };
+          eventsApi.onMessage("not json");
+          eventsApi.onMessage(JSON.stringify({ jsonrpc: "2.0", id: request.id, result: { applied: true } }));
+        },
+        close() {},
+        onStderr() { return () => {}; },
+      };
+    },
+  });
+  assert.deepEqual(attempts, ["unknown"]);
+  assert.deepEqual(output, []);
+  assert.doesNotMatch(errors.join("\n"), /secret/);
 });
 
 test("dispatched evidence failure records failed and sends zero upstream requests", async () => {
@@ -788,6 +862,7 @@ type BoundProxyInput = {
   readonly messages: readonly Record<string, unknown>[];
   readonly posture?: ProxyOptions["posture"];
   readonly output?: (line: string) => void;
+  readonly error?: (line: string) => void;
   readonly upstream: (events: UpstreamEvents) => UpstreamProcess;
 };
 
@@ -809,7 +884,7 @@ async function runBoundProxy(input: BoundProxyInput): Promise<void> {
     workspace: "test",
     input: fromLines(input.messages.map((message) => JSON.stringify(message))),
     output: input.output ?? (() => {}),
-    error() {},
+    error: input.error ?? (() => {}),
     legacyBinding:
       input.resolver ??
       ((call) => (call.tool === input.binding.tool ? input.binding : null)),
