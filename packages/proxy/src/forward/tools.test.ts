@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import type { RegistryTone } from "../../../registry/src/index.ts";
 import { probeDispatcher, type ConnectorProbe, type ProbeCache } from "../blast.ts";
+import { legacyArgsDigest } from "./legacy-binding.ts";
 import { interceptCall, type InterceptedCall, type JsonRpcError } from "./tools.ts";
 
 const call: InterceptedCall = {
@@ -145,6 +146,10 @@ describe("interceptCall", () => {
     const stored = JSON.stringify(ledger);
     assert.match(stored, /[0-9a-f]{64}/);
     assert.doesNotMatch(stored, /secret_table/);
+    assert.equal(
+      (ledger[0] as { argsDigest: string }).argsDigest,
+      await legacyArgsDigest(call.args),
+    );
   });
 });
 

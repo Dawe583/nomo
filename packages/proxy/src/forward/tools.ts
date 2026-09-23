@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 import type { EvaluationResult } from "../../../registry/src/index.ts";
 import {
   UNCLASSIFIED_CLASS,
@@ -14,6 +12,7 @@ import {
 
 import type { JsonRpcError, JsonRpcResult } from "../rpc.ts";
 import type { ProbeProvider, ProbeProviderResult } from "../blast.ts";
+import { legacyArgsDigest } from "./legacy-binding.ts";
 
 export type { JsonRpcError, JsonRpcResult } from "../rpc.ts";
 
@@ -68,7 +67,7 @@ export async function interceptCall(
   deps: InterceptDeps,
 ): Promise<CallVerdict> {
   const now = deps.now ?? (() => new Date());
-  const digest = digestArgs(call.args);
+  const digest = await legacyArgsDigest(call.args);
   try {
     const baseClassification = deps.classify({});
     const probeResult = await runProbe(
@@ -273,10 +272,6 @@ function chooseBlastRadius(
   }
   // Caller-supplied counts are claims, never measurements that authorize writes.
   return undefined;
-}
-
-function digestArgs(args: Readonly<Record<string, unknown>>): string {
-  return createHash("sha256").update(JSON.stringify(args)).digest("hex");
 }
 
 /**
