@@ -40,7 +40,9 @@ PGlite spouští skutečný PostgreSQL engine v procesu. Testuje SQL, constraint
 
 `tools/call` projde klasifikací a policy. Rozhodnutí a jeho vyřešení se zapíší do ledgeru před forwardem. Chyba zápisu ledgeru v testovaném interceptoru vrací deny. Hold čeká na rozhodnutí nebo expiraci. Proxy/SDK pak zprostředkuje externí volání.
 
-**Proxy nyní automaticky nevolá PostgreSQL/S3 `connector.capture()`.** Vazba capture a skutečného externího zápisu je odpovědností integrujícího hostitele. Podepsané `allow:resolved` znamená oprávnění pokračovat, nikoli důkaz úspěšného externího zápisu nebo existence inverse. Konektorová API a E2E harness tuto kompozici umějí sestavit, ale nejde o obecnou schopnost každého MCP serveru.
+Proxy nadále automaticky nevolá PostgreSQL/S3 `connector.capture()`. Nový volitelný host binding ale pro přesně pojmenovaný tool propojí capture, translated request ID, dispatch a terminal outcome. Capture failure blokuje upstream. JSON-RPC error je `failed`; ztracená odpověď nebo close po dispatch je `unknown` bez retry. Observe posture recovery binding nepoužívá.
+
+Conformance fixture ověřuje `postgres.row.update` přes skutečný `runProxy`, PGlite connector capture, podepsaný JSONL outcome, restart connectoru a Undo. Podepsané `allow:resolved` bez této binding evidence zůstává jen oprávněním pokračovat. Standalone `void-proxy`, S3 a ostatní external tools nejsou tímto testem certifikovány.
 
 ### Managed textové dokumenty
 
@@ -78,7 +80,7 @@ Capture ukládá bytes a persistovaný envelope cíle. Apply znovu načte digest
 | CLI hash-only důvěra | Přehašovaný ledger či zaměněný manifest mohl řídit mutation | Apply vyžaduje ověřené podpisy, `execute:completed` a podepsaný `captureDigest`; testy rehash a substitution |
 | Chyby služby | Některé inverse chyby mohly propagovat text driveru | Sanitizované odmítnutí; S3 permission failure nevolá write a nevrací credential |
 
-Nové důkazy jsou v `packages/connectors/src/reverse-engine.test.ts`, `packages/cli/src/replay.test.ts` a `packages/connectors/src/s3/apply.test.ts`. Cross-layer scénář výslovně skládá hostitelský capture, skutečný intercept, podepsaný JSONL, SQL forward a konektorové Undo. Neimplikuje automatické capture uvnitř proxy.
+Nové důkazy jsou v `packages/proxy/src/forward/legacy-binding.test.ts`, `packages/proxy/src/bin.test.ts`, `packages/connectors/src/reverse-engine.test.ts`, `packages/cli/src/replay.test.ts` a `packages/connectors/src/s3/apply.test.ts`. Cross-layer scénář skládá injektovaný host binding, skutečný proxy transport, connector capture, podepsaný JSONL outcome, SQL forward, restart a konektorové Undo. Neimplikuje automatické capture uvnitř proxy ani podporu dalších toolů.
 
 ## Změna CLI replay kontraktu
 
@@ -109,6 +111,9 @@ Konkrétní service adapter musí být nakonfigurovaný; samotný klíč žádn�
 | SQL částečné selhání | Reálný constraint rollback testován |
 | SQL dvě Undo stejné connection | Jedno provedení, jedno odmítnutí testováno |
 | SQL dvě síťové connection / výpadek COMMIT | Síťově zde netestováno; neznámý výsledek vyžaduje inspekci |
+| Legacy proxy `postgres.row.update` | Injektovaný binding, capture před dispatch, signed completed/failed/unknown, restart Undo ověřeny |
+| Legacy proxy numeric/string IDs | Přeložená ID vedou oddělenou capture a outcome evidenci |
+| Legacy proxy capture failure / close | Nula upstream callů před dispatch; po dispatch `unknown`, bez retry |
 | Capture versus původní forward race | Hostitel musí řešit transakční hranici; obecně nezaručeno |
 | S3 delete/restore bytes | Fake client round trip testován |
 | S3 concurrent writer / 412 | Podmíněný zápis odmítne overwrite v testu |

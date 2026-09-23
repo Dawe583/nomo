@@ -128,13 +128,17 @@ gates.
 ### G-08 R02: legacy proxy capture binding and external tool conformance
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R02.
-Missing: the general capture to dispatch binding for the legacy proxy path
-and conformance for external cloud tools routed through it.
-Evidence: `docs/REVERSE-ENGINE-VALIDATION.md` states the proxy no longer
-auto calls connector capture and that signed allow means permission, not
-proof of a write or an inverse.
-Minimum change: a host integration contract that binds capture, dispatch
-and outcome for each legacy tool, with one conformance fixture per tool.
+Partial: the proxy now exposes a generic injected host contract that binds
+canonical call identity, durable capture, translated dispatch and a terminal
+`completed`, `failed` or `unknown` outcome. A PGlite conformance fixture proves
+`postgres.row.update` through real `runProxy`, signed evidence, restart and Undo.
+Remaining: composition in the standalone host and one honest conformance fixture
+for every additional external tool. S3 and cloud provider tools remain open.
+Evidence: `packages/proxy/src/forward/legacy-binding.ts`,
+`packages/proxy/src/bin.test.ts`, `packages/connectors/src/reverse-engine.test.ts`
+and `docs/REVERSE-ENGINE-VALIDATION.md`.
+Minimum change: wire an operator-selected binding in a production composition
+root, then add provider fixtures without importing connectors into the proxy.
 Dependency: R03. Size: M.
 
 ### G-09 R03: streaming, pins, retention, GC, quota migration
