@@ -44,6 +44,8 @@ export interface DevKeyProviderOptions {
   readonly dir?: string;
   /** Environment, injectable at the test boundary. */
   readonly env?: Readonly<NodeJS.ProcessEnv>;
+  /** Whether a missing development key may be generated. Defaults to true. */
+  readonly createIfMissing?: boolean;
 }
 
 /**
@@ -62,7 +64,14 @@ export async function devKeyProvider(
   if (inline !== undefined && inline !== "") {
     return keyProviderFromPkcs8(Buffer.from(inline, "base64"));
   }
-  return keyProviderFromDirectory(dir);
+  return keyProviderFromDirectory(dir, options.createIfMissing ?? true);
+}
+
+/** Open retained development signing state without creating a replacement key. */
+export function retainedKeyProvider(
+  options: Omit<DevKeyProviderOptions, "createIfMissing"> = {},
+): Promise<KeyProvider> {
+  return devKeyProvider({ ...options, createIfMissing: false });
 }
 
 export function keyProviderFromPkcs8(pkcs8: Buffer): KeyProvider {
@@ -93,12 +102,15 @@ export function keyProviderFromPkcs8(pkcs8: Buffer): KeyProvider {
   };
 }
 
-async function keyProviderFromDirectory(dir: string): Promise<KeyProvider> {
+async function keyProviderFromDirectory(
+  dir: string,
+  createIfMissing = true,
+): Promise<KeyProvider> {
   const file = join(dir, "dev-ed25519.pkcs8");
   try {
     return keyProviderFromPkcs8(await readExistingKey(file));
   } catch (error) {
-    if (!isMissingFile(error)) throw error;
+    if (!isMissingFile(error) || !createIfMissing) throw error;
   }
   try {
     return keyProviderFromPkcs8(await generateAndWriteKey(dir, file));

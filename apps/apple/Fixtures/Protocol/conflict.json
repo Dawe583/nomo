@@ -1,0 +1,67 @@
+{
+  "fixture": "void.companion.v1.recovery-apply.conflict",
+  "protocol": "void.companion.v1",
+  "schemaVersion": 1,
+  "implementation": {
+    "server": "pending",
+    "apple": "pending",
+    "transport": "pending",
+    "authority": "not-granted"
+  },
+  "sourceRoutes": [
+    "POST /api/sessions/:id/recovery-jobs/apply"
+  ],
+  "request": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "request",
+    "requestId": "req-conflict-001",
+    "operationId": "op-conflict-001",
+    "operation": "recovery.apply",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "sessionId": "session-demo-001",
+    "issuedAt": "2026-09-24T12:00:00.000Z",
+    "expiresAt": "2026-09-24T12:01:00.000Z",
+    "bodyDigest": "eca9128a59fa7b8941a02b8dd48a2b37718c569dd4070cc87c6958c9c6002be5",
+    "body": {
+      "operationId": "op-conflict-001",
+      "idempotencyKey": "idem-conflict-001",
+      "jobId": "job-conflict-001",
+      "planDigest": "4444444444444444444444444444444444444444444444444444444444444444",
+      "approved": true,
+      "grantId": "grant-demo-003",
+      "grantVersion": 1
+    }
+  },
+  "response": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "response",
+    "requestId": "req-conflict-001",
+    "operationId": "op-conflict-001",
+    "operation": "recovery.apply",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "httpStatus": 409,
+    "outcome": "conflict",
+    "error": {
+      "code": "human_edit_conflict",
+      "message": "The target changed after preview; refresh the plan.",
+      "retryable": false,
+      "refreshRequired": true
+    },
+    "body": {
+      "jobId": "job-conflict-001",
+      "status": "conflict",
+      "checkpoint": 0,
+      "outcomes": [],
+      "residuals": [
+        {
+          "operationId": "operation-conflict-001",
+          "status": "conflict"
+        }
+      ]
+    }
+  }
+}

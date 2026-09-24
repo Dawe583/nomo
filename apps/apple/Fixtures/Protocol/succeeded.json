@@ -1,0 +1,61 @@
+{
+  "fixture": "void.companion.v1.recovery-apply.succeeded",
+  "protocol": "void.companion.v1",
+  "schemaVersion": 1,
+  "implementation": {
+    "server": "pending",
+    "apple": "pending",
+    "transport": "pending",
+    "authority": "not-granted"
+  },
+  "sourceRoutes": [
+    "POST /api/sessions/:id/recovery-jobs/apply"
+  ],
+  "request": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "request",
+    "requestId": "req-succeeded-001",
+    "operationId": "op-succeeded-001",
+    "operation": "recovery.apply",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "sessionId": "session-demo-001",
+    "issuedAt": "2026-09-24T12:00:00.000Z",
+    "expiresAt": "2026-09-24T12:01:00.000Z",
+    "bodyDigest": "c7e257403125f70ef795ced7ee8ae8b776bb80c6150de4c88dbe4c611689e68c",
+    "body": {
+      "operationId": "op-succeeded-001",
+      "idempotencyKey": "idem-succeeded-001",
+      "jobId": "job-succeeded-001",
+      "planDigest": "2222222222222222222222222222222222222222222222222222222222222222",
+      "approved": true,
+      "grantId": "grant-demo-001",
+      "grantVersion": 1
+    }
+  },
+  "response": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "response",
+    "requestId": "req-succeeded-001",
+    "operationId": "op-succeeded-001",
+    "operation": "recovery.apply",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "httpStatus": 200,
+    "outcome": "succeeded",
+    "body": {
+      "jobId": "job-succeeded-001",
+      "status": "restored",
+      "checkpoint": 1,
+      "outcomes": [
+        {
+          "operationId": "operation-succeeded-001",
+          "status": "restored"
+        }
+      ],
+      "residuals": []
+    }
+  }
+}

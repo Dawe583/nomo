@@ -2,9 +2,10 @@ import { managedGitAdapter } from "../../connectors/src/git/managed.ts";
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
 import { assertRecoveryStateOutsideRoot } from "./recovery-paths.ts";
 import { runConformanceCommand } from "./conformance.ts";
-import { readFile } from "node:fs/promises";
+import { inspectRecoveryHealth } from "./recovery-health.ts";
+import { readFile, readdir, lstat } from "node:fs/promises";
 import { resolve, join, dirname, isAbsolute } from "node:path";
-import { devKeyProvider } from "../../ledger/src/sign.ts";
+import { devKeyProvider, retainedKeyProvider } from "../../ledger/src/sign.ts";
 import {
   recoveryRuntime,
   localOperationJournal,
@@ -60,6 +61,7 @@ export async function runRecoveryCommand(
     ![
       "install",
       "migrate",
+      "health",
       "inspect",
       "execute",
       "plan",
@@ -74,7 +76,7 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery <install|migrate|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
+      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -91,6 +93,23 @@ export async function runRecoveryCommand(
         config.git.root.split("/").some((part) => !part || part === "." || part === "..")))
   )
     throw new Error("Invalid recovery configuration.");
+  if (action === "health") {
+    const configuredKey = env[config.encryptionKeyEnv];
+    const report = await inspectRecoveryHealth({
+      stateDir: resolve(dirname(configPath), config.stateDir),
+      workspace: config.workspace,
+      adapter: config.postgres
+        ? { id: `postgres-managed-${config.workspace}`, version: "2" }
+        : config.git
+          ? { id: "git.managed", version: "1" }
+          : { id: "filesystem.managed", version: "1" },
+      ...(configuredKey === undefined
+        ? {}
+        : { encryptionKey: Buffer.from(configuredKey, "base64") }),
+    });
+    print(JSON.stringify(report));
+    return report.status === "unavailable" || report.status === "unsafe" ? 1 : 0;
+  }
   const postgres = config.postgres;
   const url = postgres ? env[postgres.urlEnv] : undefined;
   if (postgres && !url)
@@ -181,7 +200,46 @@ export async function runRecoveryCommand(
     throw new Error(
       "Configured recovery encryption key must be 32 bytes in base64.",
     );
-  const signer = await devKeyProvider({ dir: join(state, "keys"), env: {} });
+  const keyPath = join(state, "keys", "dev-ed25519.pkcs8");
+  let retainedState = false;
+  try {
+    await lstat(keyPath);
+    retainedState = true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    const entries = await readdir(state).catch((cause: NodeJS.ErrnoException) => {
+      if (cause.code === "ENOENT") return [];
+      throw cause;
+    });
+    const keyEntries = await readdir(join(state, "keys")).catch((cause: NodeJS.ErrnoException) => {
+      if (cause.code === "ENOENT") return [];
+      throw cause;
+    });
+    retainedState =
+      entries.some((entry) => entry !== "keys") || keyEntries.length > 0;
+    if (retainedState)
+      throw new Error("Retained recovery signing key is unavailable; restore the original key before continuing.");
+  }
+  let signer;
+  try {
+    signer = retainedState
+      ? await retainedKeyProvider({ dir: join(state, "keys"), env: {} })
+      : await devKeyProvider({
+          dir: join(state, "keys"),
+          env: {},
+          createIfMissing: true,
+        });
+  } catch (error) {
+    if (
+      retainedState &&
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "ENOENT"
+    )
+      throw new Error("Retained recovery signing key is unavailable; restore the original key before continuing.");
+    throw error;
+  }
   const policy = async () => {
     if (!config.policyPath)
       return { ok: false, errors: ["No policy configured."] } as const;

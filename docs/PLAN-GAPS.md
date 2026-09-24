@@ -3,6 +3,12 @@
 ## Current bounded parity update
 
 This audit is historical. [Current scope and verification](UPGRADE-VERIFICATION.md) supersedes the missing-feature claims below, not the external certification gates.
+The 2026-09-24 Apple 1.0.1 inventory is in `RELEASE-1.0.1-MATRIX.md`.
+G-22/G-23 below describe the old distribution proposal. The native iOS
+target is now a paired-Mac SwiftUI client, not a local Swift recovery core.
+The current `xcodebuild -version` fails under active Command Line Tools;
+that does not establish the user's account, certificates or hardware state.
+
 
 - G-01: managed cloud documents have signed operation/job events, artifacts and state in one SQL transaction. This is not a transaction host for arbitrary external tools. Physical network partition testing remains unverified.
 - G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list. Dependency/time/checkpoint selectors, leases and fencing remain open.

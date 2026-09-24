@@ -1,0 +1,54 @@
+{
+  "fixture": "void.companion.v1.approval.denied",
+  "protocol": "void.companion.v1",
+  "schemaVersion": 1,
+  "implementation": {
+    "server": "pending",
+    "apple": "pending",
+    "transport": "pending",
+    "authority": "not-granted"
+  },
+  "sourceRoutes": [
+    "POST /api/approvals/:id/decision"
+  ],
+  "request": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "request",
+    "requestId": "req-denied-001",
+    "operationId": "op-denied-001",
+    "operation": "approval.decide",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "sessionId": "session-demo-001",
+    "issuedAt": "2026-09-24T12:00:00.000Z",
+    "expiresAt": "2026-09-24T12:01:00.000Z",
+    "bodyDigest": "852058a2f17381023298fa520def5230fc93acb4ec2e3edcd6427b8b5de4040a",
+    "body": {
+      "operationId": "op-denied-001",
+      "idempotencyKey": "idem-denied-001",
+      "approvalId": "approval-demo-001",
+      "requestDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "decision": "denied",
+      "grantId": "grant-demo-002",
+      "grantVersion": 1
+    }
+  },
+  "response": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "response",
+    "requestId": "req-denied-001",
+    "operationId": "op-denied-001",
+    "operation": "approval.decide",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "httpStatus": 200,
+    "outcome": "denied",
+    "body": {
+      "approvalId": "approval-demo-001",
+      "status": "denied",
+      "effectApplied": false
+    }
+  }
+}

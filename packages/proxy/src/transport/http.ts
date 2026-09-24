@@ -1,6 +1,9 @@
 import type { UpstreamProcess } from "./stdio.ts";
 
 const HTTP_DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024;
+const HTTP_MAX_PENDING_POSTS = 128;
+const HTTP_POST_TIMEOUT_MS = 120_000;
+const HTTP_MAX_GET_RECONNECTS = 5;
 
 type TimerHandle = unknown;
 
@@ -21,6 +24,9 @@ export type HttpTransportOptions = {
   readonly events?: HttpEvents;
   readonly maxBufferSize?: number;
   readonly reconnectDelayMs?: number;
+  readonly maxPendingPosts?: number;
+  readonly postTimeoutMs?: number;
+  readonly streamIdleMs?: number;
   readonly clock?: HttpClock;
   readonly fetch?: Fetch;
   readonly headers?: Readonly<Record<string, string>>;
@@ -57,10 +63,19 @@ export function upstreamHttp(url: URL, options: HttpTransportOptions = {}): Upst
   const events = options.events ?? noopEvents;
   const maxBufferSize = options.maxBufferSize ?? HTTP_DEFAULT_MAX_BUFFER_SIZE;
   const reconnectDelayMs = options.reconnectDelayMs ?? 250;
+  const maxPendingPosts = options.maxPendingPosts ?? HTTP_MAX_PENDING_POSTS;
+  const postTimeoutMs = options.postTimeoutMs ?? HTTP_POST_TIMEOUT_MS;
+  const streamIdleMs = options.streamIdleMs ?? 60_000;
+  if (!Number.isSafeInteger(maxPendingPosts) || maxPendingPosts < 1 || !Number.isSafeInteger(postTimeoutMs) || postTimeoutMs < 1 || !Number.isSafeInteger(streamIdleMs) || streamIdleMs < 1) {
+    throw new RangeError("HTTP transport limits must be positive safe integers");
+  }
   const baseHeaders = options.headers ?? {};
   const postControllers = new Set<AbortController>();
   let sessionId: string | null = null;
   let closed = false;
+  let canReconnect = true;
+  let authFailed = false;
+  let reconnectAttempts = 0;
   let streamController: AbortController | null = null;
   let reconnectTimer: TimerHandle | null = null;
 
@@ -81,13 +96,18 @@ export function upstreamHttp(url: URL, options: HttpTransportOptions = {}): Upst
   };
 
   const scheduleReconnect = (): void => {
-    if (closed || reconnectTimer !== null) {
+    if (closed || !canReconnect || reconnectTimer !== null) return;
+    if (reconnectAttempts >= HTTP_MAX_GET_RECONNECTS) {
+      canReconnect = false;
+      report(new Error("HTTP upstream GET reconnect limit reached"));
       return;
     }
+    const delay = Math.min(reconnectDelayMs * 2 ** reconnectAttempts, 30_000);
+    reconnectAttempts += 1;
     reconnectTimer = clock.setTimeout(() => {
       reconnectTimer = null;
       openStream();
-    }, reconnectDelayMs);
+    }, delay);
     if (hasUnref(reconnectTimer)) {
       reconnectTimer.unref();
     }
@@ -99,7 +119,7 @@ export function upstreamHttp(url: URL, options: HttpTransportOptions = {}): Upst
     }
   };
 
-  const handleResponse = async (response: Response): Promise<void> => {
+  const handleResponse = async (response: Response, onMessage = events.onMessage): Promise<void> => {
     rememberSession(response.headers);
     if (!response.ok) {
       throw new HttpUpstreamError(response.status, `HTTP upstream returned ${response.status}`);
@@ -107,13 +127,13 @@ export function upstreamHttp(url: URL, options: HttpTransportOptions = {}): Upst
 
     const contentType = response.headers.get("content-type") ?? "";
     if (contentType.toLowerCase().includes("text/event-stream")) {
-      await readSse(response, maxBufferSize, events.onMessage);
+      await readSse(response, maxBufferSize, onMessage);
       return;
     }
 
     const text = await readText(response, maxBufferSize);
     if (text.trim() !== "") {
-      events.onMessage(text);
+      onMessage(text);
     }
   };
 
@@ -125,21 +145,41 @@ export function upstreamHttp(url: URL, options: HttpTransportOptions = {}): Upst
     const controller = new AbortController();
     streamController = controller;
     void (async () => {
+      let idleTimer: NodeJS.Timeout | undefined;
+      let idle = false;
+      const resetIdle = (): void => {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          idle = true;
+          controller.abort();
+        }, streamIdleMs);
+        idleTimer.unref();
+      };
       try {
         const response = await fetchFn(url, {
           method: "GET",
           headers: headersFor("text/event-stream"),
           signal: controller.signal,
         });
-        await handleResponse(response);
+        resetIdle();
+        await handleResponse(response, (line) => {
+          resetIdle();
+          events.onMessage(line);
+        });
       } catch (error) {
-        if (!closed && !isAbortError(error)) {
-          report(error);
+        if (!closed) {
+          if (idle) report(new Error("HTTP upstream GET stream idle; reconnect required"));
+          else if (!isAbortError(error)) {
+            if (error instanceof HttpUpstreamError && error.status >= 400 && error.status < 500 && error.status !== 408 && error.status !== 429) {
+              canReconnect = false;
+              authFailed = error.status === 401 || error.status === 403;
+            }
+            report(error);
+          }
         }
       } finally {
-        if (streamController === controller) {
-          streamController = null;
-        }
+        clearTimeout(idleTimer);
+        if (streamController === controller) streamController = null;
         scheduleReconnect();
       }
     })();
@@ -152,9 +192,17 @@ export function upstreamHttp(url: URL, options: HttpTransportOptions = {}): Upst
       if (closed) {
         throw new Error("HTTP upstream is closed");
       }
+      if (authFailed) throw new Error("HTTP upstream authorization failed");
+      if (postControllers.size >= maxPendingPosts) throw new Error("HTTP upstream pending POST limit exceeded");
 
       const controller = new AbortController();
       postControllers.add(controller);
+      let timedOut = false;
+      const timer = clock.setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, postTimeoutMs);
+      if (hasUnref(timer)) timer.unref();
       void (async () => {
         try {
           const headers = headersFor("application/json, text/event-stream");
@@ -167,10 +215,16 @@ export function upstreamHttp(url: URL, options: HttpTransportOptions = {}): Upst
           });
           await handleResponse(response);
         } catch (error) {
-          if (!closed && !isAbortError(error)) {
-            report(error);
+          if (!closed) {
+            if (timedOut) {
+              report(new Error("HTTP POST outcome unknown after deadline; reconcile before retry"));
+            } else if (!isAbortError(error)) {
+              if (error instanceof HttpUpstreamError && (error.status === 401 || error.status === 403)) authFailed = true;
+              report(error);
+            }
           }
         } finally {
+          clock.clearTimeout(timer);
           postControllers.delete(controller);
         }
       })();

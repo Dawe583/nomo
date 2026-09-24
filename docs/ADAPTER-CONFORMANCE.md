@@ -1,5 +1,10 @@
 # Adapter conformance
 
+Apple 1.0.1 release evidence distinguishes source inspection, these disposable
+fixtures, signed sandbox installs and physical-device checks in
+`RELEASE-1.0.1-MATRIX.md`. A passing conformance report does not change
+`certification:false` or imply a native-app store capability.
+
 Run the built-in disposable filesystem checks from the checkout:
 
 ```sh

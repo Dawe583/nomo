@@ -1,5 +1,12 @@
 # VOID for macOS and iOS
 
+Release scope update, 2026-09-24: the approved implementation target is
+`docs/superpowers/plans/2026-09-23-void-1.0.1-apple-release.md`, with the
+product contract in `docs/superpowers/specs/void-1.0.1-product.md` and evidence
+in `docs/RELEASE-1.0.1-MATRIX.md`. This older A2/A3 direction of a mandatory
+SwiftUI Mac rewrite and iOS-local recovery core is superseded. Keep the
+historical rationale below; do not execute both architectures.
+
 Priority update, 12 September 2026: macOS and the advertised recovery contract
 take precedence. iOS implementation and distribution are deferred until the
 macOS product passes the capability release gates. The iOS sections below are

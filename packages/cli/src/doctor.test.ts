@@ -56,6 +56,14 @@ test("a denied directory fails while missing state only warns", async () => {
   assert.ok(c.out.some((line) => line.startsWith("WARN provider-state")));
 });
 
+test("doctor init does not mistake the primary encrypted state for a backup", async () => {
+  const c = collect();
+  await runDoctorCommand(["init"], c.io, healthy);
+  assert.ok(c.out.some((line) => line.startsWith("PASS provider-state: primary encrypted state found")));
+  assert.ok(c.out.some((line) => line.startsWith("WARN backup-state: no complete recovery backup verified")));
+  assert.equal(c.out.some((line) => line.startsWith("PASS backup-state")), false);
+});
+
 test("doctor rejects arguments with usage and exit two", async () => {
   const c = collect();
   const code = await runDoctorCommand(["--fix"], c.io, healthy);

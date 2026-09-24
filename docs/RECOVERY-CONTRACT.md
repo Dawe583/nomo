@@ -106,10 +106,57 @@ unfinished. Capacity settings persist and mismatching workers are rejected.
 The older `localRecoveryVault` remains compatible but offers only an individual
 artifact limit. `reservedRecoveryVault` reads its existing files and counts them
 against the shared quota. Stop old writers before migration; mixed writer
-versions are not supported. Back up signing keys, encryption keys, operation
-journal, vault SQLite database and legacy artifacts together. Use a stopped
-executor or SQLite-aware backup. Signature verification establishes integrity,
-not completeness of an unanchored truncated history.
+versions are not supported.
+
+A complete retained-state set is the signing key, every signed JSONL journal,
+the non-secret adapter/encryption-key configuration, the encryption key retained
+separately in the operator's secret store, the SQLite-consistent vault snapshot,
+and every legacy vault artifact. The encryption key value is never written to
+the backup manifest or a plaintext diagnostic. The managed target and its
+non-secret configuration are retained separately.
+
+With every executor stopped, create a new empty backup directory from the
+repository root:
+
+```sh
+node scripts/src/recovery-backup.mjs create \
+  --state /path/to/recovery-state \
+  --backup /path/to/new-backup \
+  --encryption-key-env VOID_RECOVERY_KEY \
+  --executor-stopped
+```
+
+The helper copies the signing key, journals and legacy artifacts. It uses the
+SQLite online backup API for `vault/vault.sqlite`, so committed WAL pages are
+part of the destination snapshot without copying live `-wal` or `-shm` files.
+The destination manifest inventories those files and records each journal's
+entry count, last sequence and head digest. Retain the printed manifest digest
+outside the backup directory as the completeness anchor, then verify before
+restoring:
+
+```sh
+node scripts/src/recovery-backup.mjs verify \
+  --backup /path/to/backup \
+  --anchor MANIFEST_SHA256
+```
+
+Verification categories fail closed. `history_unanchored` means the manifest
+or trusted expected anchor is absent or changed. `history_incomplete` covers
+a missing, changed or validly signed truncated journal prefix;
+`history_invalid` covers a journal signature or ledger hash-chain failure. A
+missing signing key, a wrong encryption key, and missing operation evidence
+remain the runtime's `key_unavailable` and `missing_artifact` categories.
+`backup_incomplete` or `vault_unverifiable` covers other inventory or snapshot
+mismatches. No category is repaired automatically.
+
+This restores retained state, not path identity. `filesystem.managed` binds an
+old operation to the original absolute root and its inode/ctime revision. Copy
+or move that managed root and Undo returns `status: "conflict"` with
+`evidence: null`; the recovery state must not silently rebind the operation.
+A real old-operation Undo is supported only when the managed target remains at
+the original path/volume/revision while the complete recovery state is restored.
+Signature and hash verification establish retained history integrity, not
+completeness of an unanchored truncated history.
 
 See `RECOVERY-COVERAGE.md` for the supported subset and evidence.
 

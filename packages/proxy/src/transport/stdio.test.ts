@@ -228,6 +228,27 @@ describe("spawnUpstream", () => {
     assert.equal(event.signal, "SIGKILL");
   });
 
+  test("bounds writes when a child never reads stdin", async () => {
+    const close = onceClose();
+    const upstream = spawnUpstream(
+      [process.execPath, "-e", "setInterval(() => {}, 1000);"],
+      {},
+      {
+        maxWriteBufferSize: 64 * 1024,
+        events: { onMessage() {}, onClose: close.onClose, onError(err) { throw err; } },
+      },
+    );
+    try {
+      const line = "x".repeat(32 * 1024);
+      assert.throws(() => {
+        for (let attempt = 0; attempt < 32; attempt += 1) upstream.send(line);
+      }, /write buffer exceeded/);
+    } finally {
+      upstream.close();
+      await close.promise;
+    }
+  });
+
   test("S15: strips VOID_SIGNING_KEY even when explicitly provided", async () => {
     const close = onceClose();
     const messages: string[] = [];

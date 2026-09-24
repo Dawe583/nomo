@@ -6,6 +6,9 @@ import { Session } from "../session.ts";
 import type { UpstreamProcess } from "../transport/stdio.ts";
 
 const HTTP_RELAY_MAX_BODY_SIZE = 10 * 1024 * 1024;
+const HTTP_RELAY_MAX_PENDING = 128;
+const HTTP_RELAY_REQUEST_TIMEOUT_MS = 120_000;
+const HTTP_RELAY_MAX_SSE_BUFFER_SIZE = 1024 * 1024;
 const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
 const INTERNAL_ERROR = -32603;
@@ -15,6 +18,8 @@ export type HttpRequestRelayOptions = {
   readonly upstream: UpstreamProcess;
   readonly session?: Session;
   readonly maxBodySize?: number;
+  readonly maxPendingRequests?: number;
+  readonly requestTimeoutMs?: number;
   readonly onError?: (error: Error) => void;
 };
 
@@ -27,20 +32,26 @@ export type HttpRequestRelay = {
 
 type PendingById = {
   readonly upstreamId: number;
-  readonly agentId: number;
+  readonly agentId: JsonRpcId;
   readonly pending: PendingHttpResponse;
 };
 
 export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRequestRelay {
   const session = options.session ?? new Session();
   const maxBodySize = options.maxBodySize ?? HTTP_RELAY_MAX_BODY_SIZE;
+  const maxPendingRequests = options.maxPendingRequests ?? HTTP_RELAY_MAX_PENDING;
+  const requestTimeoutMs = options.requestTimeoutMs ?? HTTP_RELAY_REQUEST_TIMEOUT_MS;
+  if (!Number.isSafeInteger(maxPendingRequests) || maxPendingRequests < 1 || !Number.isSafeInteger(requestTimeoutMs) || requestTimeoutMs < 1) {
+    throw new RangeError("HTTP relay limits must be positive safe integers");
+  }
   const pendingByUpstream = new Map<number, PendingById>();
-  const pendingByAgent = new Map<number, PendingById>();
+  const pendingByAgent = new Map<JsonRpcId, PendingById>();
 
   const removePending = (entry: PendingById): void => {
     pendingByUpstream.delete(entry.upstreamId);
     pendingByAgent.delete(entry.agentId);
     entry.pending.delete(entry.agentId);
+    session.drop(entry.agentId);
   };
 
   const fail = (error: Error): void => {
@@ -71,20 +82,36 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
     }
 
     const requests: JsonRpcRequest[] = [];
+    const notifications: JsonRpcNotification[] = [];
+    const seenIds = new Set<JsonRpcId>();
     try {
       for (const message of messages) {
         if (isRequest(message)) {
+          if (pendingByAgent.has(message.id) || seenIds.has(message.id)) {
+            throw new TypeError("Duplicate JSON-RPC request id");
+          }
+          seenIds.add(message.id);
           requests.push(message);
-          continue;
+        } else if (isNotification(message)) {
+          notifications.push(message);
+        } else {
+          throw new TypeError("HTTP relay accepts JSON-RPC requests and notifications only");
         }
-        if (isNotification(message)) {
-          routeNotification(message, options.upstream, session, pendingByAgent, removePending);
-          continue;
-        }
-        throw new TypeError("HTTP relay accepts JSON-RPC requests and notifications only");
       }
     } catch (error) {
       writeJson(response, 400, jsonRpcError(null, INVALID_REQUEST, errorMessage(error)));
+      return;
+    }
+    if (requests.length > maxPendingRequests - pendingByUpstream.size) {
+      writeJson(response, 429, jsonRpcError(null, INTERNAL_ERROR, "HTTP relay pending-request limit exceeded"));
+      return;
+    }
+    try {
+      for (const notification of notifications) {
+        routeNotification(notification, options.upstream, session, pendingByAgent, removePending);
+      }
+    } catch (error) {
+      writeJson(response, 502, jsonRpcError(null, INTERNAL_ERROR, errorMessage(error)));
       return;
     }
 
@@ -95,9 +122,7 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
     }
 
     const sse = acceptsSse(request.headers.accept);
-    const pending = new PendingHttpResponse(response, requests.length, batch, sse, (entry) => {
-      removePending(entry);
-    });
+    const pending = new PendingHttpResponse(response, requests.length, batch, sse, requestTimeoutMs, removePending);
 
     if (sse) {
       response.writeHead(200, {
@@ -112,7 +137,7 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
         const upstreamRequest = session.translateRequestOut(clientRequest);
         const entry = {
           upstreamId: numericId(upstreamRequest.id),
-          agentId: numericId(clientRequest.id),
+          agentId: clientRequest.id,
           pending,
         };
         pending.add(entry);
@@ -144,10 +169,10 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
     }
 
     if (isResponse(message)) {
-      if (message.id === undefined) {
+      if (typeof message.id !== "number" || !Number.isInteger(message.id)) {
         return;
       }
-      const upstreamId = numericId(message.id);
+      const upstreamId = message.id;
       const entry = pendingByUpstream.get(upstreamId);
       const translated = session.translateInbound(message);
       if (entry !== undefined && translated !== null && isResponse(translated)) {
@@ -159,7 +184,7 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
     if (isNotification(message)) {
       const translated = relayNotification(message, session.maps).notification;
       if (translated.method === "notifications/cancelled") {
-        const agentId = readNumericParam(translated.params, "requestId");
+        const agentId = readIdParam(translated.params, "requestId");
         if (agentId !== null) {
           const entry = pendingByAgent.get(agentId);
           if (entry !== undefined) {
@@ -200,7 +225,14 @@ class PendingHttpResponse {
   readonly #sse: boolean;
   readonly #onDone: (entry: PendingById) => void;
   readonly #responses: Array<JsonRpcResult | JsonRpcError> = [];
-  readonly #agentToUpstream = new Map<number, number>();
+  readonly #entries = new Map<JsonRpcId, PendingById>();
+  readonly #frames: string[] = [];
+  readonly #drainTimeoutMs: number;
+  #queuedBytes = 0;
+  #backpressured = false;
+  #finishWhenDrained = false;
+  #drainTimer: NodeJS.Timeout | null = null;
+  readonly #timer: NodeJS.Timeout;
   #completed = 0;
   #closed = false;
 
@@ -209,6 +241,7 @@ class PendingHttpResponse {
     total: number,
     batch: boolean,
     sse: boolean,
+    timeoutMs: number,
     onDone: (entry: PendingById) => void,
   ) {
     this.#response = response;
@@ -216,34 +249,39 @@ class PendingHttpResponse {
     this.#batch = batch;
     this.#sse = sse;
     this.#onDone = onDone;
+    this.#drainTimeoutMs = Math.min(timeoutMs, 30_000);
+    response.once("close", () => {
+      clearTimeout(this.#drainTimer ?? undefined);
+      this.#abandon();
+    });
+    this.#timer = setTimeout(() => this.closeWithError(
+      jsonRpcError(null, INTERNAL_ERROR, "Upstream outcome unknown after deadline; reconcile before retry"),
+      504,
+    ), timeoutMs);
+    this.#timer.unref();
   }
 
   add(entry: PendingById): void {
-    this.#agentToUpstream.set(entry.agentId, entry.upstreamId);
+    this.#entries.set(entry.agentId, entry);
   }
 
-  delete(agentId: number): void {
-    this.#agentToUpstream.delete(agentId);
+  delete(agentId: JsonRpcId): void {
+    this.#entries.delete(agentId);
   }
 
   complete(entry: PendingById, response: JsonRpcResult | JsonRpcError): void {
-    if (this.#closed || !this.#agentToUpstream.has(entry.agentId)) {
-      return;
-    }
+    if (this.#closed || !this.#entries.has(entry.agentId)) return;
     this.#onDone(entry);
     if (this.#sse) {
       this.writeSse(response);
-      this.#markComplete();
-      return;
+    } else {
+      this.#responses.push(response);
     }
-    this.#responses.push(response);
     this.#markComplete();
   }
 
   cancel(entry: PendingById, notification: JsonRpcNotification): void {
-    if (this.#closed || !this.#agentToUpstream.has(entry.agentId)) {
-      return;
-    }
+    if (this.#closed || !this.#entries.has(entry.agentId)) return;
     this.#onDone(entry);
     if (this.#sse) {
       this.writeSse(notification);
@@ -254,36 +292,83 @@ class PendingHttpResponse {
   }
 
   writeSse(message: JsonRpcMessage): void {
-    if (this.#closed || !this.#sse) {
-      return;
-    }
-    this.#response.write(`data: ${JSON.stringify(message)}\n\n`);
+    if (this.#closed || !this.#sse) return;
+    this.#sendFrame(`data: ${JSON.stringify(message)}\n\n`);
   }
 
-  closeWithError(error: JsonRpcError): void {
-    if (this.#closed) {
-      return;
-    }
-    this.#closed = true;
+  closeWithError(error: JsonRpcError, status = 500): void {
+    if (this.#closed) return;
+    this.#abandon();
     if (this.#sse) {
-      this.#response.write(`data: ${JSON.stringify(error)}\n\n`);
-      this.#response.end();
+      this.#sendFrame(`data: ${JSON.stringify(error)}\n\n`);
+      this.#finishSse();
+    } else {
+      writeJson(this.#response, status, error);
+    }
+  }
+
+  #sendFrame(frame: string): void {
+    const size = Buffer.byteLength(frame);
+    if (size + this.#queuedBytes + this.#response.writableLength > HTTP_RELAY_MAX_SSE_BUFFER_SIZE) {
+      this.#abandon();
+      this.#response.destroy();
       return;
     }
-    writeJson(this.#response, 500, error);
+    if (this.#backpressured) {
+      this.#frames.push(frame);
+      this.#queuedBytes += size;
+    } else if (!this.#response.write(frame)) {
+      this.#waitForDrain();
+    }
+  }
+
+  #waitForDrain(): void {
+    this.#backpressured = true;
+    this.#response.once("drain", () => this.#flush());
+    this.#drainTimer = setTimeout(() => {
+      this.#abandon();
+      this.#response.destroy();
+    }, this.#drainTimeoutMs);
+    this.#drainTimer.unref();
+  }
+
+  #flush(): void {
+    this.#backpressured = false;
+    clearTimeout(this.#drainTimer ?? undefined);
+    this.#drainTimer = null;
+    while (this.#frames.length > 0) {
+      const frame = this.#frames.shift();
+      if (frame === undefined) break;
+      this.#queuedBytes -= Buffer.byteLength(frame);
+      if (!this.#response.write(frame)) {
+        this.#waitForDrain();
+        return;
+      }
+    }
+    if (this.#finishWhenDrained) this.#response.end();
+  }
+
+  #finishSse(): void {
+    this.#finishWhenDrained = true;
+    if (!this.#backpressured) this.#response.end();
+  }
+
+  #abandon(): void {
+    if (this.#closed) return;
+    this.#closed = true;
+    clearTimeout(this.#timer);
+    for (const entry of this.#entries.values()) this.#onDone(entry);
   }
 
   #markComplete(): void {
     this.#completed += 1;
-    if (this.#completed < this.#total || this.#closed) {
-      return;
-    }
-    this.#closed = true;
+    if (this.#completed < this.#total || this.#closed) return;
+    this.#abandon();
     if (this.#sse) {
-      this.#response.end();
-      return;
+      this.#finishSse();
+    } else {
+      writeJson(this.#response, 200, this.#batch ? this.#responses : this.#responses[0]);
     }
-    writeJson(this.#response, 200, this.#batch ? this.#responses : this.#responses[0]);
   }
 }
 
@@ -307,11 +392,11 @@ function routeNotification(
   notification: JsonRpcNotification,
   upstream: UpstreamProcess,
   session: Session,
-  pendingByAgent: ReadonlyMap<number, PendingById>,
+  pendingByAgent: ReadonlyMap<JsonRpcId, PendingById>,
   removePending: (entry: PendingById) => void,
 ): void {
   if (notification.method === "notifications/cancelled") {
-    const requestId = readNumericParam(notification.params, "requestId");
+    const requestId = readIdParam(notification.params, "requestId");
     if (requestId === null) {
       return;
     }
@@ -369,14 +454,16 @@ function readNumericParam(params: Readonly<Record<string, unknown>> | undefined,
   return typeof value === "number" && Number.isInteger(value) ? value : null;
 }
 
+function readIdParam(params: Readonly<Record<string, unknown>> | undefined, key: string): JsonRpcId | null {
+  const value = params?.[key];
+  return (typeof value === "string" && value !== "") || (typeof value === "number" && Number.isInteger(value)) ? value : null;
+}
+
 function numericId(id: JsonRpcId): number {
   if (typeof id === "number" && Number.isInteger(id)) {
     return id;
   }
-  if (typeof id === "string" && /^\d+$/.test(id)) {
-    return Number(id);
-  }
-  throw new Error("JSON-RPC id must be an integer for HTTP relay translation");
+  throw new Error("Upstream JSON-RPC id must be an integer");
 }
 
 function errorMessage(error: unknown): string {

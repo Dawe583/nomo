@@ -1,12 +1,113 @@
-import { mkdtemp, writeFile, readFile, mkdir, rm } from "node:fs/promises";
+import {
+  copyFile,
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
 import assert from "node:assert/strict";
 import test from "node:test";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { runRecoveryCommand } from "./recovery.ts";
-import type { RecoveryPlan } from "../../runtime/src/index.ts";
-test("filesystem CLI requires exact approval and restores user bytes from encrypted state", async () => {
+import { recoveryMcpServer } from "./recovery-mcp.ts";
+import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
+import { retainedKeyProvider } from "../../ledger/src/sign.ts";
+import {
+  localOperationJournal,
+  recoveryRuntime,
+  reservedRecoveryVault,
+  type JournalRecord,
+  type RecoveryPlan,
+} from "../../runtime/src/index.ts";
+
+const backupTool = fileURLToPath(
+  new URL("../../../scripts/src/recovery-backup.mjs", import.meta.url),
+);
+type BackupHistory = {
+  workspace: string;
+  path: string;
+  entries: number;
+  sequence: number;
+  digest: string;
+};
+type BackupToolResult = {
+  ok: boolean;
+  manifestDigest?: string;
+  history?: BackupHistory[];
+  category?: string;
+};
+const runBackupTool = (args: string[]): BackupToolResult => {
+  const result = spawnSync(process.execPath, [backupTool, ...args], {
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout) as BackupToolResult;
+};
+const backupToolFailure = (args: string[]): BackupToolResult => {
+  const result = spawnSync(process.execPath, [backupTool, ...args], {
+    encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0, result.stdout);
+  return JSON.parse(result.stderr) as BackupToolResult;
+};
+const planFailureCategory = async (options: {
+  root: string;
+  stateDir: string;
+  key: Buffer;
+  operationId: string;
+}) => {
+  const signer = await retainedKeyProvider({
+    dir: join(options.stateDir, "keys"),
+    env: {},
+  });
+  const runtime = recoveryRuntime({
+    journal: localOperationJournal(join(options.stateDir, "journal"), signer),
+    vault: reservedRecoveryVault(
+      join(options.stateDir, "vault"),
+      { local: options.key },
+      "local",
+    ),
+    adapters: [
+      managedFilesystemAdapter({ root: options.root, cooperative: true }),
+    ],
+    authorize: async () => true,
+  });
+  const server = recoveryMcpServer({
+    runtime,
+    workspace: "backup-test",
+    agentId: "agent",
+    adapterId: "filesystem.managed",
+    permitted: async () => true,
+  });
+  const client = new Client({ name: "backup-restore-test", version: "1" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await server.connect(clientTransport);
+  await client.connect(serverTransport);
+  try {
+    const result = await client.callTool({
+      name: "void_recovery_plan",
+      arguments: { operationId: options.operationId },
+    });
+    const content = result.content;
+    if (!Array.isArray(content) || typeof content[0]?.text !== "string")
+      throw new Error("MCP error content unavailable.");
+    return JSON.parse(content[0].text) as { category: string; message: string };
+  } finally {
+    await client.close();
+    await server.close();
+  }
+};
+test("filesystem CLI restores in place but a copied old-operation workspace fails closed as conflict", async () => {
   const dir = await mkdtemp(join(tmpdir(), "void-fs-cli-"));
   const env = { TEST_KEY: randomBytes(32).toString("base64") };
   try {
@@ -67,6 +168,71 @@ test("filesystem CLI requires exact approval and restores user bytes from encryp
       await readFile(join(dir, "project", "notes.md"), "utf8"),
       "Agent edit",
     );
+    const signingKeyPath = join(dir, "state", "keys", "dev-ed25519.pkcs8");
+    const originalSigningKey = await readFile(signingKeyPath);
+    await rm(signingKeyPath);
+    try {
+      await assert.rejects(
+        runRecoveryCommand(["plan", "--config", config, "--input", input], env, () => {}),
+        /retained recovery signing key is unavailable/i,
+      );
+      await assert.rejects(readFile(signingKeyPath), { code: "ENOENT" });
+      assert.equal(await readFile(join(dir, "project", "notes.md"), "utf8"), "Agent edit");
+    } finally {
+      await writeFile(signingKeyPath, originalSigningKey, { mode: 0o600 });
+    }
+    const restoredDir = join(dir, "isolated-restore");
+    await mkdir(restoredDir);
+    await cp(join(dir, "project"), join(restoredDir, "project"), {
+      recursive: true,
+    });
+    await cp(join(dir, "state"), join(restoredDir, "state"), {
+      recursive: true,
+    });
+    await cp(config, join(restoredDir, "config.json"));
+    await cp(input, join(restoredDir, "input.json"));
+    const restoredConfig = join(restoredDir, "config.json");
+    const restoredInput = join(restoredDir, "input.json");
+    let restoredPlan: RecoveryPlan | undefined;
+    assert.equal(
+      await runRecoveryCommand(
+        ["plan", "--config", restoredConfig, "--input", restoredInput],
+        env,
+        (text) => {
+          restoredPlan = JSON.parse(text) as RecoveryPlan;
+        },
+      ),
+      0,
+    );
+    await writeFile(restoredInput, JSON.stringify(restoredPlan));
+    let restoredOutcome: unknown;
+    assert.equal(
+      await runRecoveryCommand(
+        [
+          "apply",
+          "--config",
+          restoredConfig,
+          "--input",
+          restoredInput,
+          "--approve",
+          restoredPlan!.digest,
+        ],
+        env,
+        (text) => {
+          restoredOutcome = JSON.parse(text) as unknown;
+        },
+      ),
+      1,
+    );
+    assert.deepEqual(restoredOutcome, { status: "conflict", evidence: null });
+    assert.equal(
+      await readFile(join(restoredDir, "project", "notes.md"), "utf8"),
+      "Agent edit",
+    );
+    assert.equal(
+      await readFile(join(dir, "project", "notes.md"), "utf8"),
+      "Agent edit",
+    );
     let plan: RecoveryPlan | undefined;
     assert.equal(
       await runRecoveryCommand(
@@ -97,10 +263,344 @@ test("filesystem CLI requires exact approval and restores user bytes from encryp
       await readFile(join(dir, "project", "notes.md"), "utf8"),
       "User original",
     );
-    console.log(
-      "PASS actual CLI inspect/approve/execute/plan/approve/Undo with encrypted disk state",
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("complete stopped-executor backup includes WAL state and restores a retained operation", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "void-complete-backup-"));
+  const key = randomBytes(32);
+  const wrongKey = randomBytes(32);
+  const env = { TEST_KEY: key.toString("base64") };
+  const projectRoot = join(dir, "project");
+  const stateDir = join(dir, "state");
+  const config = join(dir, "config.json");
+  const input = join(dir, "input.json");
+  let reader: DatabaseSync | undefined;
+  try {
+    await mkdir(projectRoot);
+    await writeFile(join(projectRoot, "notes.md"), "User original");
+    const recoveryConfig = {
+      workspace: "backup-test",
+      stateDir: "state",
+      encryptionKeyEnv: "TEST_KEY",
+      filesystem: { root: "project", cooperative: true as const },
+    };
+    await writeFile(config, JSON.stringify(recoveryConfig));
+    await writeFile(
+      input,
+      JSON.stringify({
+        workspace: "backup-test",
+        operationId: "backup-op",
+        runId: "backup-run",
+        agentId: "agent",
+        adapterId: "filesystem.managed",
+        arguments: {
+          action: "write",
+          path: "notes.md",
+          base64: Buffer.from("Agent edit").toString("base64"),
+        },
+      }),
+    );
+    let inspected: { approvalDigest: string } | undefined;
+    assert.equal(
+      await runRecoveryCommand(
+        ["inspect", "--config", config, "--input", input],
+        env,
+        (text) => {
+          inspected = JSON.parse(text) as { approvalDigest: string };
+        },
+      ),
+      0,
+    );
+    assert.equal(
+      await runRecoveryCommand(
+        [
+          "execute",
+          "--config",
+          config,
+          "--input",
+          input,
+          "--approve",
+          inspected!.approvalDigest,
+        ],
+        env,
+        () => {},
+      ),
+      0,
+    );
+    assert.equal(
+      await readFile(join(projectRoot, "notes.md"), "utf8"),
+      "Agent edit",
+    );
+
+    const sourceVault = join(stateDir, "vault", "vault.sqlite");
+    const writer = new DatabaseSync(sourceVault);
+    writer.exec(
+      "PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0; CREATE TABLE backup_probe(value TEXT NOT NULL);",
+    );
+    writer.prepare("INSERT INTO backup_probe VALUES(?)").run("checkpointed");
+    reader = new DatabaseSync(sourceVault, { readOnly: true });
+    reader.prepare("SELECT count(*) AS count FROM backup_probe").get();
+    writer.prepare("INSERT INTO backup_probe VALUES(?)").run("wal-only");
+    writer.close();
+    assert.ok((await stat(`${sourceVault}-wal`)).size > 0);
+
+    const mainOnly = join(dir, "main-only.sqlite");
+    await copyFile(sourceVault, mainOnly);
+    const mainOnlyDatabase = new DatabaseSync(mainOnly, { readOnly: true });
+    let mainOnlyRows = 0;
+    try {
+      mainOnlyRows = Number(
+        mainOnlyDatabase
+          .prepare("SELECT count(*) AS count FROM backup_probe")
+          .get()?.count,
+      );
+    } catch {
+      mainOnlyRows = 0;
+    } finally {
+      mainOnlyDatabase.close();
+    }
+    assert.ok(mainOnlyRows < 2, "the raw main file must not stand in for WAL");
+
+    const backupDir = join(dir, "complete-backup");
+    const created = runBackupTool([
+      "create",
+      "--state",
+      stateDir,
+      "--backup",
+      backupDir,
+      "--encryption-key-env",
+      "TEST_KEY",
+      "--executor-stopped",
+    ]);
+    assert.equal(created.ok, true);
+    assert.match(created.manifestDigest!, /^[a-f0-9]{64}$/);
+    assert.equal(created.history?.length, 1);
+    assert.equal(created.history[0]?.workspace, "backup-test");
+    assert.equal(created.history[0]?.sequence, 5);
+    const manifestText = await readFile(
+      join(backupDir, "recovery-backup-manifest.json"),
+      "utf8",
+    );
+    assert.equal(manifestText.includes(env.TEST_KEY), false);
+    assert.equal(manifestText.includes(wrongKey.toString("base64")), false);
+    assert.match(manifestText, /"encryptionKeyEnv": "TEST_KEY"/);
+
+    const backedUpDatabase = new DatabaseSync(
+      join(backupDir, "state", "vault", "vault.sqlite"),
+      { readOnly: true },
+    );
+    try {
+      assert.equal(
+        Number(
+          backedUpDatabase
+            .prepare("SELECT count(*) AS count FROM backup_probe")
+            .get()?.count,
+        ),
+        2,
+      );
+      assert.ok(
+        Number(
+          backedUpDatabase
+            .prepare("SELECT count(*) AS count FROM artifacts")
+            .get()?.count,
+        ) > 0,
+      );
+    } finally {
+      backedUpDatabase.close();
+    }
+    assert.deepEqual(
+      runBackupTool([
+        "verify",
+        "--backup",
+        backupDir,
+        "--anchor",
+        created.manifestDigest!,
+      ]),
+      {
+        ok: true,
+        manifestDigest: created.manifestDigest,
+        history: created.history,
+      },
+    );
+    const repeated = runBackupTool([
+      "create",
+      "--state",
+      stateDir,
+      "--backup",
+      join(dir, "complete-backup-repeat"),
+      "--encryption-key-env",
+      "TEST_KEY",
+      "--executor-stopped",
+    ]);
+    assert.equal(repeated.manifestDigest, created.manifestDigest);
+    assert.deepEqual(repeated.history, created.history);
+    reader.close();
+    reader = undefined;
+
+    const originalSigner = await retainedKeyProvider({
+      dir: join(stateDir, "keys"),
+      env: {},
+    });
+    let originalHead: JournalRecord | undefined;
+    await localOperationJournal(
+      join(stateDir, "journal"),
+      originalSigner,
+    ).transaction("backup-test", async (transaction) => {
+      originalHead = transaction.records?.at(-1);
+    });
+    assert.equal(originalHead?.sequence, created.history?.[0]?.sequence);
+    assert.equal(
+      (originalHead?.event as { stage?: string } | undefined)?.stage,
+      "succeeded",
+    );
+
+    const wrongKeyBackup = join(dir, "wrong-key-backup");
+    await cp(backupDir, wrongKeyBackup, { recursive: true });
+    const wrongKeyFailure = await planFailureCategory({
+      root: projectRoot,
+      stateDir: join(wrongKeyBackup, "state"),
+      key: wrongKey,
+      operationId: "backup-op",
+    });
+    assert.deepEqual(wrongKeyFailure, {
+      category: "key_unavailable",
+      message: "The retained recovery key is unavailable. Restore the original key before retrying.",
+    });
+    assert.equal(
+      JSON.stringify(wrongKeyFailure).includes(wrongKey.toString("base64")),
+      false,
+    );
+    assert.equal(
+      await readFile(join(projectRoot, "notes.md"), "utf8"),
+      "Agent edit",
+    );
+
+    const missingArtifactBackup = join(dir, "missing-artifact-backup");
+    await cp(backupDir, missingArtifactBackup, { recursive: true });
+    const incompleteVault = new DatabaseSync(
+      join(missingArtifactBackup, "state", "vault", "vault.sqlite"),
+    );
+    try {
+      incompleteVault
+        .prepare(
+          "DELETE FROM artifacts WHERE workspace=? AND operation_id=? AND slot=?",
+        )
+        .run("backup-test", "backup-op", "capture");
+    } finally {
+      incompleteVault.close();
+    }
+    const missingArtifactFailure = await planFailureCategory({
+      root: projectRoot,
+      stateDir: join(missingArtifactBackup, "state"),
+      key,
+      operationId: "backup-op",
+    });
+    assert.deepEqual(missingArtifactFailure, {
+      category: "missing_artifact",
+      message:
+        "Required recovery evidence is unavailable. Restore the retained state before retrying.",
+    });
+    assert.equal(
+      await readFile(join(projectRoot, "notes.md"), "utf8"),
+      "Agent edit",
+    );
+
+    assert.deepEqual(
+      backupToolFailure(["verify", "--backup", backupDir]),
+      { ok: false, category: "history_unanchored" },
+    );
+    const truncatedBackup = join(dir, "truncated-backup");
+    await cp(backupDir, truncatedBackup, { recursive: true });
+    const journalPath = join(
+      truncatedBackup,
+      "state",
+      "journal",
+      "backup-test.jsonl",
+    );
+    const journalLines = (await readFile(journalPath, "utf8"))
+      .split("\n")
+      .filter(Boolean);
+    assert.equal(journalLines.length, 5);
+    await writeFile(journalPath, `${journalLines.slice(0, -1).join("\n")}\n`);
+    assert.deepEqual(
+      backupToolFailure([
+        "verify",
+        "--backup",
+        truncatedBackup,
+        "--anchor",
+        created.manifestDigest!,
+      ]),
+      { ok: false, category: "history_incomplete" },
+    );
+
+    await rm(stateDir, { recursive: true });
+    await cp(join(backupDir, "state"), stateDir, { recursive: true });
+    const restoredSigner = await retainedKeyProvider({
+      dir: join(stateDir, "keys"),
+      env: {},
+    });
+    let restoredHead: JournalRecord | undefined;
+    await localOperationJournal(
+      join(stateDir, "journal"),
+      restoredSigner,
+    ).transaction("backup-test", async (transaction) => {
+      restoredHead = transaction.records?.at(-1);
+    });
+    assert.equal(restoredHead?.sequence, originalHead?.sequence);
+    assert.equal(restoredHead?.digest, originalHead?.digest);
+
+    let restoredPlan: RecoveryPlan | undefined;
+    assert.equal(
+      await runRecoveryCommand(
+        ["plan", "--config", config, "--input", input],
+        env,
+        (text) => {
+          restoredPlan = JSON.parse(text) as RecoveryPlan;
+        },
+      ),
+      0,
+    );
+    await writeFile(input, JSON.stringify(restoredPlan));
+    let restoredOutcome:
+      | {
+          status: string;
+          evidence?: { path: string; revision: string; scope: string };
+        }
+      | undefined;
+    assert.equal(
+      await runRecoveryCommand(
+        [
+          "apply",
+          "--config",
+          config,
+          "--input",
+          input,
+          "--approve",
+          restoredPlan!.digest,
+        ],
+        env,
+        (text) => {
+          restoredOutcome = JSON.parse(text) as typeof restoredOutcome;
+        },
+      ),
+      0,
+    );
+    assert.equal(restoredOutcome?.status, "restored");
+    assert.equal(restoredOutcome?.evidence?.path, "notes.md");
+    assert.equal(
+      restoredOutcome?.evidence?.scope,
+      process.platform === "win32" ? "bytes" : "bytes-and-mode",
+    );
+    assert.match(restoredOutcome!.evidence!.revision, /^[a-f0-9]{64}$/);
+    assert.equal(
+      await readFile(join(projectRoot, "notes.md"), "utf8"),
+      "User original",
     );
   } finally {
+    reader?.close();
     await rm(dir, { recursive: true, force: true });
   }
 });

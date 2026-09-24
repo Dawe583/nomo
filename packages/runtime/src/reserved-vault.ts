@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdir, readdir, lstat, chmod, open } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -14,11 +14,19 @@ import {
 } from "./vault.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
 const slots: readonly VaultSlot[] = ["capture", "outcome", "recovery"];
+type LegacyState = {
+  bytes: number;
+  sample?: { workspace: string; reference: VaultReference };
+};
 const identity = (value: string) => {
   if (typeof value !== "string" || !/^[\w-]{1,120}$/.test(value))
     throw new Error("Invalid vault identity.");
 };
 export type VaultCapacity = { maxArtifactBytes: number; maxTotalBytes: number };
+export const recoveryKeyProof = (key: Uint8Array, keyId: string): string =>
+  createHmac("sha256", key)
+    .update(`void.recovery.key-check.v1:${keyId}`)
+    .digest("hex");
 /** Encrypted payloads and quota changes commit in one SQLite transaction.
  * ponytail: whole JSON artifacts, local disk, one writer. Streaming and retention
  * need another format; no eviction of recovery evidence is implicit here. */
@@ -46,8 +54,9 @@ export function reservedRecoveryVault(
   const rootPath = resolve(root),
     legacy = localRecoveryVault(rootPath, keys, currentKey, maxArtifactBytes),
     slotBytes = maxArtifactBytes + 28;
-  async function legacyBytes(): Promise<number> {
-    let bytes = 0;
+  async function legacyState(): Promise<LegacyState> {
+    let bytes = 0,
+      sample: LegacyState["sample"];
     for (const entry of await readdir(rootPath, { withFileTypes: true })) {
       if (
         entry.name === "vault.sqlite" ||
@@ -60,16 +69,120 @@ export function reservedRecoveryVault(
         withFileTypes: true,
       })) {
         if (!file.isFile()) throw new Error("Unexpected legacy artifact.");
-        bytes += (await lstat(join(rootPath, entry.name, file.name))).size;
+        const stat = await lstat(join(rootPath, entry.name, file.name));
+        bytes += stat.size;
+        sample ??= {
+          workspace: entry.name,
+          reference: { digest: file.name, keyId: currentKey, bytes: stat.size },
+        };
       }
     }
-    return bytes;
+    return { bytes, sample };
+  }
+  const expectedKeyProof = recoveryKeyProof(key, currentKey);
+  const keyProofMatches = (actual: unknown): boolean =>
+    typeof actual === "string" &&
+    /^[a-f0-9]{64}$/.test(actual) &&
+    timingSafeEqual(Buffer.from(actual, "hex"), Buffer.from(expectedKeyProof, "hex"));
+  const isMissingFile = (error: unknown): boolean =>
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "ENOENT";
+  const isAuthenticationFailure = (error: unknown): boolean =>
+    error instanceof Error &&
+    /authenticate|bad decrypt|unsupported state/i.test(error.message);
+  async function ensureKeyMarker(
+    db: DatabaseSync,
+    old: LegacyState,
+  ): Promise<void> {
+    const existing = db
+      .prepare("SELECT proof FROM key_checks WHERE key_id=?")
+      .get(currentKey);
+    if (existing) {
+      if (!keyProofMatches(existing.proof))
+        throw new Error("Recovery key unavailable or incorrect for retained vault.");
+      return;
+    }
+    const keyRows: unknown = db
+      .prepare("SELECT DISTINCT key_id FROM artifacts ORDER BY key_id")
+      .all();
+    if (!Array.isArray(keyRows))
+      throw new Error("Recovery artifact cannot be verified.");
+    for (const keyRow of keyRows) {
+      if (
+        typeof keyRow !== "object" ||
+        keyRow === null ||
+        Array.isArray(keyRow) ||
+        !("key_id" in keyRow) ||
+        typeof keyRow.key_id !== "string"
+      )
+        throw new Error("Recovery artifact cannot be verified.");
+      const row = db
+        .prepare(
+          "SELECT workspace,digest,key_id,data FROM artifacts WHERE key_id=? ORDER BY workspace,digest LIMIT 1",
+        )
+        .get(keyRow.key_id);
+      if (
+        !row ||
+        typeof row.workspace !== "string" ||
+        typeof row.digest !== "string" ||
+        typeof row.key_id !== "string" ||
+        !(row.data instanceof Uint8Array)
+      )
+        throw new Error("Recovery artifact cannot be verified.");
+      try {
+        decode(
+          row.workspace,
+          { digest: row.digest, keyId: row.key_id, bytes: row.data.length },
+          Buffer.from(row.data),
+        );
+      } catch (error) {
+        if (
+          isAuthenticationFailure(error) ||
+          (error instanceof Error && error.message === "Recovery key unavailable.")
+        )
+          throw new Error("Recovery key unavailable or incorrect for retained vault.");
+        throw error;
+      }
+    }
+    if (keyRows.length === 0 && old.bytes > 0) {
+      if (old.sample) {
+        let verified = false,
+          missing = false,
+          authenticationFailure = false;
+        for (const keyId of Object.keys(keys)) {
+          try {
+            await legacy.get(old.sample.workspace, {
+              ...old.sample.reference,
+              keyId,
+            });
+            verified = true;
+            break;
+          } catch (error) {
+            missing ||= isMissingFile(error);
+            authenticationFailure ||= isAuthenticationFailure(error);
+          }
+        }
+        if (!verified) {
+          if (authenticationFailure && !missing)
+            throw new Error("Recovery key unavailable or incorrect for retained vault.");
+          throw new Error("Recovery artifact cannot be verified.");
+        }
+      } else {
+        throw new Error("Recovery artifact cannot be verified.");
+      }
+    }
+    db.prepare("INSERT INTO key_checks(key_id,proof) VALUES(?,?)").run(
+      currentKey,
+      expectedKeyProof,
+    );
   }
   async function transaction<T>(
-    run: (db: DatabaseSync, used: number) => T,
+    run: (db: DatabaseSync, used: number) => T | Promise<T>,
   ): Promise<T> {
     await mkdir(rootPath, { recursive: true, mode: 0o700 });
-    const oldBytes = await legacyBytes(),
+    const old = await legacyState(),
       path = join(rootPath, "vault.sqlite"),
       db = new DatabaseSync(path);
     try {
@@ -92,7 +205,8 @@ export function reservedRecoveryVault(
       }
       db.exec(`CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),capacity TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS artifacts(workspace TEXT NOT NULL,digest TEXT NOT NULL,key_id TEXT NOT NULL,data BLOB NOT NULL,operation_id TEXT,slot TEXT,content_digest TEXT NOT NULL,PRIMARY KEY(workspace,digest),UNIQUE(workspace,operation_id,slot));
-    CREATE TABLE IF NOT EXISTS reservations(workspace TEXT NOT NULL,operation_id TEXT NOT NULL,slot TEXT NOT NULL,bytes INTEGER NOT NULL,PRIMARY KEY(workspace,operation_id,slot));`);
+    CREATE TABLE IF NOT EXISTS reservations(workspace TEXT NOT NULL,operation_id TEXT NOT NULL,slot TEXT NOT NULL,bytes INTEGER NOT NULL,PRIMARY KEY(workspace,operation_id,slot));
+    CREATE TABLE IF NOT EXISTS key_checks(key_id TEXT PRIMARY KEY,proof TEXT NOT NULL);`);
       const limits = canonicalJson({ maxArtifactBytes, maxTotalBytes });
       db.prepare("INSERT OR IGNORE INTO settings VALUES(1,?)").run(limits);
       if (
@@ -102,6 +216,7 @@ export function reservedRecoveryVault(
         throw new Error(
           "Vault capacity differs from its persisted configuration.",
         );
+      await ensureKeyMarker(db, old);
       const used =
         Number(
           db
@@ -109,8 +224,8 @@ export function reservedRecoveryVault(
               "SELECT COALESCE((SELECT SUM(length(data)) FROM artifacts),0)+COALESCE((SELECT SUM(bytes) FROM reservations),0) AS bytes",
             )
             .get()!.bytes,
-        ) + oldBytes;
-      const result = run(db, used);
+        ) + old.bytes;
+      const result = await run(db, used);
       db.exec("COMMIT");
       if (process.platform !== "win32") {
         const directory = await open(rootPath, "r");

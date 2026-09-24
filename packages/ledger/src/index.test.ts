@@ -1,6 +1,6 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, stat, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -14,10 +14,11 @@ import { jsonlStore } from "./store.ts";
 import {
   devKeyProvider,
   keyProviderFromPkcs8,
+  retainedKeyProvider,
   verifySignature,
 } from "./sign.ts";
 import { generateKeyPairSync } from "node:crypto";
-import { signingPreimage } from "./index.ts";
+import { signingPreimage, type KeyProvider } from "./index.ts";
 
 const workspace = "test-ws";
 const dir = await mkdtemp(join(tmpdir(), "void-ledger-"));
@@ -115,6 +116,44 @@ describe("the dev key path", () => {
     const inline = keyProviderFromPkcs8(Buffer.from(pkcs8));
     const id = await inline.currentKeyId();
     assert.match(id, /^dev-/);
+  });
+
+  test("does not regenerate a retained key in the provider-boundary race", async () => {
+    const keyDir = join(dir, "retained-key-race");
+    await devKeyProvider({ dir: keyDir, env: {} });
+    const keyFile = join(keyDir, "dev-ed25519.pkcs8");
+    await rm(keyFile);
+
+    let signer: KeyProvider | undefined;
+    await assert.rejects(
+      async () => {
+        signer = await devKeyProvider({
+          dir: keyDir,
+          env: {},
+          createIfMissing: false,
+        });
+      },
+      { code: "ENOENT" },
+    );
+    assert.equal(signer, undefined);
+    await assert.rejects(readFile(keyFile), { code: "ENOENT" });
+  });
+
+  test("retainedKeyProvider never recreates a missing signing key", async () => {
+    const keyDir = join(dir, "retained-wrapper");
+    await devKeyProvider({ dir: keyDir, env: {} });
+    const keyFile = join(keyDir, "dev-ed25519.pkcs8");
+    await rm(keyFile);
+
+    let signer: KeyProvider | undefined;
+    await assert.rejects(
+      async () => {
+        signer = await retainedKeyProvider({ dir: keyDir, env: {} });
+      },
+      { code: "ENOENT" },
+    );
+    assert.equal(signer, undefined);
+    await assert.rejects(readFile(keyFile), { code: "ENOENT" });
   });
 });
 

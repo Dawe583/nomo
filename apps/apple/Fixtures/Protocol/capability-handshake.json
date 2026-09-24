@@ -1,0 +1,133 @@
+{
+  "fixture": "void.companion.v1.capability-handshake",
+  "protocol": "void.companion.v1",
+  "schemaVersion": 1,
+  "implementation": {
+    "server": "pending",
+    "apple": "pending",
+    "transport": "pending",
+    "authority": "not-granted"
+  },
+  "sourceRoutes": [
+    "GET /api/capabilities"
+  ],
+  "request": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "request",
+    "requestId": "req-handshake-001",
+    "operationId": "op-handshake-001",
+    "operation": "capability.handshake",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "issuedAt": "2026-09-24T12:00:00.000Z",
+    "expiresAt": "2026-09-24T12:01:00.000Z",
+    "bodyDigest": "9fecfcfb1c53ac9a5fde14aea23d506b052a1dbbfb84c27f5fdc97d57bb771cd",
+    "body": {
+      "client": {
+        "name": "VOID Apple companion",
+        "version": "0.0.0-fixture",
+        "platform": "ios"
+      },
+      "requestedCapabilities": [
+        "session.read",
+        "events.read",
+        "approval.read",
+        "recovery.preview"
+      ]
+    }
+  },
+  "response": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "response",
+    "requestId": "req-handshake-001",
+    "operationId": "op-handshake-001",
+    "operation": "capability.handshake",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "httpStatus": 200,
+    "outcome": "succeeded",
+    "body": {
+      "serverTime": "2026-09-24T12:00:00.000Z",
+      "protocolVersions": [
+        "void.companion.v1"
+      ],
+      "executor": {
+        "executorId": "executor-demo-001",
+        "displayName": "Paired Mac",
+        "platform": "macos",
+        "build": "0.1.0-fixture",
+        "identityKeyId": "executor-key-demo-001"
+      },
+      "workspace": {
+        "workspaceId": "workspace-demo-001",
+        "label": "Demo workspace"
+      },
+      "device": {
+        "deviceId": "device-demo-001",
+        "state": "pending"
+      },
+      "capabilities": [
+        {
+          "id": "session.read",
+          "version": "1",
+          "status": "pending",
+          "requiredScope": "sessions:read",
+          "limitation": "Companion envelope and scoped projection are not implemented."
+        },
+        {
+          "id": "events.read",
+          "version": "1",
+          "status": "pending",
+          "requiredScope": "events:read",
+          "limitation": "Bounded cursor adapter is not implemented."
+        },
+        {
+          "id": "approval.read",
+          "version": "1",
+          "status": "pending",
+          "requiredScope": "approvals:read",
+          "limitation": "Sanitized companion approval projection is not implemented."
+        },
+        {
+          "id": "recovery.preview",
+          "version": "1",
+          "status": "pending",
+          "requiredScope": "recovery:read",
+          "limitation": "Companion recovery projection is not implemented."
+        }
+      ],
+      "limits": {
+        "maxRequestBytes": 65536,
+        "maxPromptCharacters": 32000,
+        "maxEventsPerPage": 1000,
+        "maxEventPageBytes": 1048576,
+        "maxEventBytes": 32768,
+        "maxStreamSeconds": 55,
+        "replayWindowSeconds": 900,
+        "idempotencyRetentionHours": 24,
+        "deviceCredentialSeconds": 900,
+        "invitationSeconds": 120,
+        "grantSeconds": 300,
+        "recoveryPlanSeconds": 900,
+        "maxMutationsPerDevice": 2,
+        "maxStreamsPerDevice": 2,
+        "maxDevicesPerWorkspace": 8,
+        "maxOperationIds": 500,
+        "maxErrorCharacters": 320
+      },
+      "pendingBehaviors": [
+        "device credential and pairing",
+        "session reads and sends",
+        "bounded event cursor",
+        "approval decisions",
+        "recovery preview and apply",
+        "device revocation",
+        "sanitized diagnostics",
+        "physical-device evidence"
+      ],
+      "expiresAt": "2026-09-24T12:01:00.000Z"
+    }
+  }
+}

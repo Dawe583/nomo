@@ -108,6 +108,92 @@ test("legacy snapshots remain readable and consume quota; new configuration cann
     /persisted configuration/,
   );
 });
+test("refuses a different 32-byte key under an existing key ID before accepting new work", async (t) => {
+  const f = await fixture(t);
+  const original = reservedRecoveryVault(f.root, f.keys, "first");
+  await original.put("one", { secret: "retained" });
+  const wrong = reservedRecoveryVault(f.root, { ...f.keys, first: randomBytes(32) }, "first");
+  await assert.rejects(wrong.reserve!("one", "next"), /key unavailable|incorrect/i);
+  await assert.rejects(wrong.put("one", { secret: "new" }), /key unavailable|incorrect/i);
+  const db = new DatabaseSync(join(f.root, "vault.sqlite"), { readOnly: true });
+  try {
+    const row = db.prepare("SELECT count(*) AS n FROM artifacts").get();
+    if (!row || typeof row.n !== "number")
+      throw new Error("Artifact count unavailable.");
+    assert.equal(row.n, 1);
+  } finally {
+    db.close();
+  }
+});
+
+test("verifies an unmarked SQLite vault before persisting its key marker", async (t) => {
+  const f = await fixture(t);
+  const original = reservedRecoveryVault(f.root, f.keys, "first");
+  const reference = await original.put("one", { secret: "retained" });
+  const db = new DatabaseSync(join(f.root, "vault.sqlite"));
+  db.exec("DELETE FROM key_checks");
+  db.close();
+
+  const migrated = reservedRecoveryVault(f.root, f.keys, "first");
+  assert.deepEqual(await migrated.get("one", reference), { secret: "retained" });
+  const check = new DatabaseSync(join(f.root, "vault.sqlite"), { readOnly: true });
+  try {
+    const row = check.prepare("SELECT key_id,proof FROM key_checks").get();
+    if (!row || row.key_id !== "first" || typeof row.proof !== "string")
+      throw new Error("Key marker migration unavailable.");
+    assert.match(row.proof, /^[a-f0-9]{64}$/);
+  } finally {
+    check.close();
+  }
+  const wrong = reservedRecoveryVault(f.root, { ...f.keys, first: randomBytes(32) }, "first");
+  await assert.rejects(wrong.reserve!("one", "next"), /key unavailable|incorrect/i);
+});
+
+test("requires retained evidence before accepting an unmarked key rotation", async (t) => {
+  const f = await fixture(t);
+  const original = reservedRecoveryVault(f.root, f.keys, "first");
+  const oldReference = await original.put("one", { secret: "old" });
+  const clear = new DatabaseSync(join(f.root, "vault.sqlite"));
+  clear.exec("DELETE FROM key_checks");
+  clear.close();
+
+  const rotated = reservedRecoveryVault(
+    f.root,
+    { first: f.keys.first, second: f.keys.second },
+    "second",
+  );
+  await rotated.reserve!("one", "rotation");
+  const newReference = await rotated.put("one", { secret: "new" }, {
+    operationId: "rotation",
+    slot: "capture",
+  });
+  assert.equal(newReference.keyId, "second");
+  assert.deepEqual(await rotated.get("one", oldReference), { secret: "old" });
+  const migrated = new DatabaseSync(join(f.root, "vault.sqlite"));
+  try {
+    assert.equal(
+      migrated.prepare("SELECT key_id,proof FROM key_checks").get()?.key_id,
+      "second",
+    );
+  } finally {
+    migrated.close();
+  }
+
+
+  const clearAgain = new DatabaseSync(join(f.root, "vault.sqlite"));
+  clearAgain.exec("DELETE FROM key_checks");
+  clearAgain.close();
+  const missingOld = reservedRecoveryVault(
+    f.root,
+    { second: f.keys.second },
+    "second",
+  );
+  await assert.rejects(
+    missingOld.reserve!("one", "next"),
+    /key unavailable|incorrect/i,
+  );
+});
+
 test("ciphertext tampering and unavailable keys refuse restore", async (t) => {
   const f = await fixture(t),
     vault = reservedRecoveryVault(f.root, f.keys, "first");
@@ -235,6 +321,72 @@ test("runtime refuses dispatch without capacity and reconciles a persisted resul
     "restored",
   );
   assert.equal(value, "before");
+});
+
+test("storage refusal fails closed before dispatch without a success receipt", async (t) => {
+  const f = await fixture(t),
+    dir = join(f.root, "vault"),
+    vault = reservedRecoveryVault(dir, f.keys, "first"),
+    signer = await devKeyProvider({ dir: join(f.root, "keys"), env: {} }),
+    journal = localOperationJournal(join(f.root, "journal"), signer);
+  let dispatches = 0;
+  const adapter: RecoveryAdapter = {
+    id: "fixture",
+    version: "1",
+    async preflight() {
+      return {
+        effect: "write",
+        reversibility: "r1",
+        readiness: "verified",
+        scope: "value",
+        resources: ["value"],
+        revision: null,
+        blastRadius: { count: 1, precision: "exact" },
+      };
+    },
+    async prepare() {
+      return { before: null, plan: null };
+    },
+    async execute() {
+      dispatches += 1;
+      return { result: "unexpected", evidence: null };
+    },
+    async release() {},
+    async reconcile() {
+      throw new Error("not dispatched");
+    },
+    async recover() {
+      throw new Error("not dispatched");
+    },
+  };
+  const refusingVault = {
+    ...vault,
+    reserve: async () => {
+      throw Object.assign(new Error("ENOSPC"), { code: "ENOSPC" });
+    },
+  };
+  const runtime = recoveryRuntime({
+    journal,
+    vault: refusingVault,
+    adapters: [adapter],
+    authorize: async () => true,
+  });
+  const result = await runtime.execute({
+    workspace: "one",
+    agentId: "agent",
+    runId: "run",
+    operationId: "storage-refused",
+    adapterId: adapter.id,
+    arguments: "value",
+  });
+  assert.deepEqual(result, { status: "failed", operationId: "storage-refused" });
+  assert.equal(dispatches, 0);
+  await journal.transaction("one", async (tx) => {
+    const stages = tx.events.map((event) => event.stage);
+    assert.equal(stages.at(-1), "failed");
+    assert.equal(stages.includes("succeeded"), false);
+    assert.equal(stages.includes("dispatched"), false);
+  });
 });
 
 test("SIGKILL before snapshot commit rolls back payload and quota together", async (t) => {

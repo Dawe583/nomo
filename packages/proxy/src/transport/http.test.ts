@@ -199,7 +199,7 @@ describe("upstreamHttp", () => {
     try {
       await waitFor(() => getRecords.length === 1 && timers.length === 1);
       timers[0]?.();
-      await waitFor(() => getRecords.length === 2);
+      await waitFor(() => getRecords.length === 2 && messages.length === 2);
 
       assert.equal(getRecords[0]?.accept, "text/event-stream");
       assert.equal(getRecords[1]?.lastEventId, undefined);
@@ -207,6 +207,122 @@ describe("upstreamHttp", () => {
     } finally {
       upstream.close();
       await closeServer(server);
+    }
+  });
+
+  test("stops reconnecting after a permanent authorization failure", async () => {
+    let gets = 0;
+    const server = createServer((_request, response) => {
+      gets += 1;
+      response.writeHead(401);
+      response.end();
+    });
+    const url = await listen(server);
+    const errors: Error[] = [];
+    const timers: Array<() => void> = [];
+    const upstream = upstreamHttp(url, {
+      events: { onMessage() {}, onClose() {}, onError(error) { errors.push(error); } },
+      reconnectDelayMs: 5,
+      clock: { setTimeout(callback) { timers.push(callback); return timers.length; }, clearTimeout() {} },
+    });
+    try {
+      await waitFor(() => errors.length > 0);
+      assert.equal(timers.length, 0);
+      assert.equal(gets, 1);
+      assert.equal((errors[0] as HttpUpstreamError).status, 401);
+    } finally {
+      upstream.close();
+      await closeServer(server);
+    }
+  });
+
+  test("limits repeated short GET streams with increasing retry delays", async () => {
+    const delays: number[] = [];
+    const timers: Array<() => void> = [];
+    const errors: Error[] = [];
+    let gets = 0;
+    const upstream = upstreamHttp(new URL("http://127.0.0.1/mcp"), {
+      reconnectDelayMs: 10,
+      clock: { setTimeout(callback, ms) { delays.push(ms); timers.push(callback); return timers.length; }, clearTimeout() {} },
+      fetch: async () => {
+        gets += 1;
+        return new Response("", { headers: { "content-type": "text/event-stream" } });
+      },
+      events: { onMessage() {}, onClose() {}, onError(error) { errors.push(error); } },
+    });
+    try {
+      for (let index = 0; index < 5; index += 1) {
+        await waitFor(() => timers.length === index + 1);
+        timers[index]?.();
+      }
+      await waitFor(() => errors.length === 1);
+      assert.equal(gets, 6);
+      assert.deepEqual(delays, [10, 20, 40, 80, 160]);
+      assert.match(errors[0]?.message ?? "", /reconnect limit reached/);
+    } finally {
+      upstream.close();
+    }
+  });
+
+  test("aborts and reports an idle SSE GET without replaying POST", async () => {
+    let gets = 0;
+    const server = createServer((request, response) => {
+      if (request.method === "GET") {
+        gets += 1;
+        response.writeHead(200, { "content-type": "text/event-stream" });
+        response.write(": open\n\n");
+      }
+    });
+    const url = await listen(server);
+    const errors: Error[] = [];
+    const upstream = upstreamHttp(url, {
+      streamIdleMs: 25,
+      reconnectDelayMs: 1000,
+      events: { onMessage() {}, onClose() {}, onError(error) { errors.push(error); } },
+    });
+    try {
+      await waitFor(() => errors.length === 1);
+      assert.match(errors[0]?.message ?? "", /stream idle/);
+      assert.equal(gets, 1);
+    } finally {
+      upstream.close();
+      server.closeAllConnections();
+      await closeServer(server);
+    }
+  });
+
+  test("bounds stalled POSTs and reports uncertain outcome without replay", async () => {
+    let posts = 0;
+    const messages: string[] = [];
+    const errors: Error[] = [];
+    const timers: Array<() => void> = [];
+    const upstream = upstreamHttp(new URL("http://127.0.0.1/mcp"), {
+      maxPendingPosts: 1,
+      postTimeoutMs: 25,
+      clock: { setTimeout(callback) { timers.push(callback); return timers.length; }, clearTimeout() {} },
+      fetch: async (_url, init) => {
+        if (init?.method === "GET") return new Promise<Response>(() => {});
+        posts += 1;
+        if (posts > 1) return new Response('{"jsonrpc":"2.0","id":3,"result":true}', { headers: { "content-type": "application/json" } });
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(init.signal?.reason), { once: true });
+        });
+      },
+      events: { onMessage(line) { messages.push(line); }, onClose() {}, onError(error) { errors.push(error); } },
+    });
+    try {
+      upstream.send('{"jsonrpc":"2.0","id":1,"method":"tools/call"}');
+      assert.throws(() => upstream.send('{"jsonrpc":"2.0","id":2,"method":"tools/call"}'), /pending POST limit/);
+      await waitFor(() => timers.length === 1);
+      timers[0]?.();
+      await waitFor(() => errors.length === 1);
+      assert.match(errors[0]?.message ?? "", /unknown.*reconcile/i);
+      upstream.send('{"jsonrpc":"2.0","id":3,"method":"ping"}');
+      await waitFor(() => messages.length === 1);
+      assert.equal(posts, 2);
+      assert.deepEqual(JSON.parse(messages[0] ?? ""), { jsonrpc: "2.0", id: 3, result: true });
+    } finally {
+      upstream.close();
     }
   });
 });

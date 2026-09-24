@@ -4,6 +4,7 @@ import {
   ListToolsRequestSchema,
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
+import { isAbsolute } from "node:path";
 import type {
   RecoveryJobPlan,
   RecoveryJobRequest,
@@ -24,6 +25,127 @@ type Runtime = Pick<
   | "recoveryJobStatus"
   | "runRecoveryJob"
 >;
+export type RecoveryErrorCategory =
+  | "invalid_path"
+  | "missing_artifact"
+  | "policy_denied"
+  | "key_unavailable"
+  | "unsupported_recovery"
+  | "unknown";
+type RecoveryErrorPayload = { category: RecoveryErrorCategory; message: string };
+const safeErrorMessages: Record<RecoveryErrorCategory, string> = {
+  invalid_path: "Use a workspace-relative path without traversal or protected segments.",
+  missing_artifact: "Required recovery evidence is unavailable. Restore the retained state before retrying.",
+  policy_denied: "Operator policy does not allow this recovery request.",
+  key_unavailable: "The retained recovery key is unavailable. Restore the original key before retrying.",
+  unsupported_recovery: "This operation does not have a supported recovery path.",
+  unknown: "Recovery request refused or unavailable. Check operator policy, argument schema, workspace, and signed operation evidence.",
+};
+class RecoveryMcpError extends Error {
+  readonly category: RecoveryErrorCategory;
+  constructor(category: RecoveryErrorCategory) {
+    super(safeErrorMessages[category]);
+    this.category = category;
+  }
+}
+const errorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  )
+    return error.message;
+  return "";
+};
+const classifyError = (error: unknown): RecoveryErrorCategory => {
+  if (error instanceof RecoveryMcpError) return error.category;
+  const message = errorMessage(error).toLowerCase();
+  if (
+    /invalid workspace path|protected or invalid workspace path|unsafe workspace parent|invalid file path|invalid git path|absolute path|path traversal|relative path/.test(
+      message,
+    )
+  )
+    return "invalid_path";
+  if (
+    message.includes("not authorized") ||
+    message.includes("policy does not allow") ||
+    message.includes("operator policy")
+  )
+    return "policy_denied";
+  if (
+    /key unavailable|key is unavailable|key.*required|invalid or unavailable recovery reference|incorrect for retained vault|encryption key/.test(
+      message,
+    )
+  )
+    return "key_unavailable";
+  if (
+    /no verified recovery capability|not ready for recovery|only a confirmed successful operation|recovery adapter version is unavailable|unsupported recovery|no uncertain recovery exists/.test(
+      message,
+    )
+  )
+    return "unsupported_recovery";
+  if (
+    (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") ||
+    /required operation evidence is missing|operation evidence is missing|artifact.*(missing|unavailable)|recovery artifact|operation not found|recovery job not found|invalid recovery reference/.test(
+      message,
+    )
+  )
+    return "missing_artifact";
+  return "unknown";
+};
+const errorResult = (category: RecoveryErrorCategory) => ({
+  isError: true,
+  content: [
+    {
+      type: "text" as const,
+      text: JSON.stringify({ category, message: safeErrorMessages[category] } satisfies RecoveryErrorPayload),
+    },
+  ],
+});
+const workspaceRelativePath = {
+  type: "string",
+  minLength: 1,
+  maxLength: 1024,
+  description: "Workspace-relative path to one regular file; absolute paths, traversal, symlinks, and protected segments are refused.",
+};
+const boundedBase64 = {
+  type: "string",
+  maxLength: Math.ceil((1024 * 1024) / 3) * 4,
+  description: "Canonical base64, maximum 1 MiB decoded.",
+};
+const validateWorkspacePath = (value: unknown): void => {
+  if (typeof value !== "string" || !value || value.length > 1024 || isAbsolute(value) || value.includes("\\") || value.includes("\0"))
+    throw new RecoveryMcpError("invalid_path");
+  const parts = value.split("/");
+  if (
+    parts.some(
+      (part) =>
+        !part ||
+        part === "." ||
+        part === ".." ||
+        /[<>:"|?*\x00-\x1f]/.test(part) ||
+        /[. ]$/.test(part) ||
+        /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(part) ||
+        /^(\.git|\.ssh|\.aws|\.env.*|\.void.*)$/i.test(part),
+    )
+  )
+    throw new RecoveryMcpError("invalid_path");
+};
+const validateFilesystemMutation = (mutation: unknown): void => {
+  if (!mutation || typeof mutation !== "object" || Array.isArray(mutation))
+    throw new RecoveryMcpError("unknown");
+  if (!("path" in mutation) || typeof mutation.path !== "string")
+    throw new RecoveryMcpError("invalid_path");
+  validateWorkspacePath(mutation.path);
+  if ("action" in mutation && mutation.action === "rename" && "to" in mutation) {
+    if (typeof mutation.to !== "string")
+      throw new RecoveryMcpError("invalid_path");
+    validateWorkspacePath(mutation.to);
+  }
+};
 const identityPattern = "^[\\w-]{1,120}$";
 const identityShape = (label: string) => ({ type: "string", pattern: identityPattern, description: label });
 const isIdentity = (value: unknown): value is string => typeof value === "string" && new RegExp(identityPattern).test(value);
@@ -185,7 +307,7 @@ export function recoveryMcpServer(options: {
             : {
                 ...definition,
                 description:
-                  "Execute one cooperative workspace file write/delete or, on POSIX, a two-path rename with durable capture. Rename refuses a destination observed before dispatch, but no operation is safe from excluded concurrent external writers. Bytes and mode only. No shell guarantee. Reconcile unknown outcomes without redispatch.",
+                  "Execute one cooperative workspace-relative file mutation with durable capture. Supported actions are write, delete, and (on POSIX) rename. Each target is a regular file, each write is bounded to 1 MiB decoded, and bytes and mode only are covered. No shell guarantee. Rename refuses a destination observed before dispatch, but no operation is safe from excluded concurrent external writers. Reconcile unknown outcomes without redispatch.",
                 inputSchema: {
                   ...definition.inputSchema,
                   properties: {
@@ -198,12 +320,8 @@ export function recoveryMcpServer(options: {
                           required: ["action", "path", "base64"],
                           properties: {
                             action: { type: "string", enum: ["write"] },
-                            path: { type: "string" },
-                            base64: {
-                              type: "string",
-                              description:
-                                "Canonical base64, maximum 1 MiB decoded",
-                            },
+                            path: workspaceRelativePath,
+                            base64: boundedBase64,
                             mode: {
                               type: "integer",
                               minimum: 0,
@@ -217,7 +335,7 @@ export function recoveryMcpServer(options: {
                           required: ["action", "path"],
                           properties: {
                             action: { type: "string", enum: ["delete"] },
-                            path: { type: "string" },
+                            path: workspaceRelativePath,
                           },
                         },
                         ...(process.platform === "win32"
@@ -233,13 +351,13 @@ export function recoveryMcpServer(options: {
                                     enum: ["rename"],
                                   },
                                   path: {
-                                    type: "string",
-                                    description: "Existing source path",
+                                    ...workspaceRelativePath,
+                                    description: "Existing workspace-relative source path",
                                   },
                                   to: {
-                                    type: "string",
+                                    ...workspaceRelativePath,
                                     description:
-                                      "Absent destination path in the same cooperative workspace",
+                                      "Absent workspace-relative destination path in the same cooperative workspace",
                                   },
                                 },
                               },
@@ -320,9 +438,7 @@ export function recoveryMcpServer(options: {
       if ("selection" in args && !validJobSelection(args.selection as RecoveryJobRequest["selection"])) throw new Error("Invalid recovery job selection.");
       if ("planDigest" in args && (typeof args.planDigest !== "string" || !/^[a-f0-9]{64}$/.test(args.planDigest))) throw new Error("Invalid plan digest.");
       if (!(await options.permitted(name)))
-        throw new Error(
-          "Operator policy does not allow this tool. Hold requires operator approval outside this server.",
-        );
+        throw new RecoveryMcpError("policy_denied");
       let result: unknown;
       if (name === "void_execute") {
         if (
@@ -331,6 +447,8 @@ export function recoveryMcpServer(options: {
           Array.isArray(args.mutation)
         )
           throw new Error("Mutation must be an object.");
+        if (options.adapterId === "filesystem.managed")
+          validateFilesystemMutation(args.mutation);
         result = await options.runtime.execute({
           workspace: options.workspace,
           agentId: options.agentId,
@@ -362,7 +480,7 @@ export function recoveryMcpServer(options: {
         result = await options.runtime.recoveryJobStatus(options.workspace, args.jobId as string);
       } else if (name === "void_recovery_apply_job") {
         if (!(await options.permitted(name)))
-          throw new Error("Operator policy does not allow this tool.");
+          throw new RecoveryMcpError("policy_denied");
         const stored = await options.runtime.recoveryJobStatus(options.workspace, args.jobId as string);
         if (!("digest" in stored)) {
           result = stored;
@@ -382,17 +500,10 @@ export function recoveryMcpServer(options: {
         );
       }
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
-    } catch {
-      // Database errors can include credentials or row values. Keep them off the MCP channel.
-      return {
-        isError: true,
-        content: [
-          {
-            type: "text",
-            text: "Recovery request refused or unavailable. Check operator policy, argument schema, workspace, and signed operation evidence.",
-          },
-        ],
-      };
+    } catch (error) {
+      // Runtime errors can contain credentials, paths, prompts, or row values.
+      // Classify them without forwarding any of those details to MCP callers.
+      return errorResult(classifyError(error));
     }
   });
   return server;

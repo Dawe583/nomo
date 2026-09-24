@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
-import { recoveryMcpServer, type RecoveryTool } from "./recovery-mcp.ts";
+import { recoveryMcpServer, type RecoveryErrorCategory, type RecoveryTool } from "./recovery-mcp.ts";
 import {
   recoveryRuntime,
   localOperationJournal,
@@ -295,9 +295,21 @@ test("filesystem MCP advertises platform rename scope and enforces mutation sche
   const mutation = execute.inputSchema.properties!.mutation as {
     oneOf: Array<{
       required: string[];
-      properties: { action: { enum: string[] } };
+      properties: {
+        action: { enum: string[] };
+        path: { description?: string };
+        to?: { description?: string };
+      };
     }>;
   };
+  assert.match(execute.description!, /workspace-relative/i);
+  assert.match(execute.description!, /1 MiB/i);
+  assert.match(execute.description!, /no shell/i);
+  for (const schema of mutation.oneOf) {
+    assert.match(schema.properties.path.description ?? "", /workspace-relative/i);
+    if (schema.properties.to)
+      assert.match(schema.properties.to.description ?? "", /workspace-relative/i);
+  }
   assert.deepEqual(
     mutation.oneOf.map((schema) => ({
       action: schema.properties.action.enum[0],
@@ -413,4 +425,104 @@ test("Git MCP validates mutations through the real signed runtime", async (t) =>
   const plan = text(await client.callTool({ name: "void_recovery_plan", arguments: { operationId: "valid" } }));
   assert.equal(text(await client.callTool({ name: "void_recovery_apply", arguments: { plan } })).status, "restored");
   await assert.rejects(readFile(join(root, "file")), { code: "ENOENT" });
+});
+test("MCP errors expose stable sanitized categories without path or secret disclosure", async (t) => {
+  type ToolCallResult = {
+    isError?: boolean;
+    content: { type: string; text?: string }[];
+  };
+  type ErrorCase = {
+    category: RecoveryErrorCategory;
+    failure: string | null;
+    tool: "void_execute" | "void_recovery_plan";
+    args: Record<string, unknown>;
+  };
+  let failure = new Error("Required operation evidence is missing at /Users/private/secret.vault");
+  let denied = false;
+  const runtime = {
+    planRecovery: async () => {
+      throw failure;
+    },
+  } as never;
+  const server = recoveryMcpServer({
+    runtime,
+    workspace: "test",
+    agentId: "agent",
+    adapterId: "filesystem.managed",
+    permitted: async () => !denied,
+  });
+  const client = new Client({ name: "error-category-test", version: "1" });
+  const [a, b] = InMemoryTransport.createLinkedPair();
+  await server.connect(a);
+  await client.connect(b);
+  t.after(async () => {
+    await client.close();
+    await server.close();
+  });
+  const call = async (
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<ToolCallResult> =>
+    client.callTool({ name, arguments: args }) as Promise<ToolCallResult>;
+  const error = (result: ToolCallResult) =>
+    JSON.parse(result.content[0]?.text ?? "") as {
+      category: string;
+      message: string;
+    };
+  const cases: readonly ErrorCase[] = [
+    {
+      category: "invalid_path",
+      failure: null,
+      tool: "void_execute",
+      args: {
+        operationId: "invalid-path",
+        runId: "run",
+        mutation: {
+          action: "write",
+          path: "/Users/private/secret.txt",
+          base64: "",
+        },
+      },
+    },
+    {
+      category: "missing_artifact",
+      failure: "Required operation evidence is missing at /Users/private/secret.vault",
+      tool: "void_recovery_plan",
+      args: { operationId: "missing" },
+    },
+    {
+      category: "key_unavailable",
+      failure: "Recovery key unavailable for /Users/private/keyring",
+      tool: "void_recovery_plan",
+      args: { operationId: "key" },
+    },
+    {
+      category: "unsupported_recovery",
+      failure: "Operation has no verified recovery capability.",
+      tool: "void_recovery_plan",
+      args: { operationId: "unsupported" },
+    },
+    {
+      category: "unknown",
+      failure: "postgres://user:password@db/private and prompt body",
+      tool: "void_recovery_plan",
+      args: { operationId: "unknown" },
+    },
+  ];
+  for (const testCase of cases) {
+    if (testCase.failure) failure = new Error(testCase.failure);
+    const result = await call(testCase.tool, testCase.args);
+    assert.equal(result.isError, true);
+    const payload = error(result);
+    assert.equal(payload.category, testCase.category);
+    assert.doesNotMatch(
+      JSON.stringify(payload),
+      /private|secret|password|postgres:\/\//i,
+    );
+  }
+  denied = true;
+  const deniedResult = await call("void_recovery_plan", { operationId: "policy" });
+  assert.equal(deniedResult.isError, true);
+  assert.equal(error(deniedResult).category, "policy_denied");
+  assert.doesNotMatch(JSON.stringify(error(deniedResult)), /private|secret|password/i);
 });

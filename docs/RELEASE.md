@@ -1,5 +1,10 @@
 # VOID 0.1.0 release runbook
 
+Apple 1.0.1 release planning and exact evidence now live in
+`docs/superpowers/specs/void-1.0.1-product.md` and
+`docs/RELEASE-1.0.1-MATRIX.md`. This 0.1.0 development/npm runbook remains
+historical; it does not certify a Mac App Store or native iOS release.
+
 ## Status and version policy
 
 0.1.0 is a coherent development release, not an npm publication or a production

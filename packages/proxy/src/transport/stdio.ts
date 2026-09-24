@@ -28,6 +28,7 @@ export type UpstreamProcess = {
 export type StdioTransportOptions = {
   readonly events?: StdioEvents;
   readonly maxBufferSize?: number;
+  readonly maxWriteBufferSize?: number;
   readonly killDelayMs?: number;
   readonly clock?: StdioClock;
   readonly stderr?: Pick<NodeJS.WriteStream, "write">;
@@ -98,6 +99,10 @@ export function spawnUpstream(
   if (command.length === 0 || command[0] === "") {
     throw new Error("stdio upstream command must not be empty");
   }
+  const maxWriteBufferSize = options.maxWriteBufferSize ?? STDIO_DEFAULT_MAX_BUFFER_SIZE;
+  if (!Number.isSafeInteger(maxWriteBufferSize) || maxWriteBufferSize < 1) {
+    throw new RangeError("stdio write buffer limit must be a positive safe integer");
+  }
 
   const [program, ...args] = command;
   const childEnv: Record<string, string> = { ...env };
@@ -163,6 +168,10 @@ export function spawnUpstream(
     }
   });
 
+  child.stdin.on("error", (err) => {
+    if (!closed) events.onError(err);
+  });
+
   child.on("error", (err) => {
     events.onError(err);
   });
@@ -176,7 +185,11 @@ export function spawnUpstream(
       if (closed || child.stdin.destroyed) {
         throw new Error("stdio upstream is closed");
       }
-      child.stdin.write(`${line}\n`);
+      const framed = `${line}\n`;
+      if (Buffer.byteLength(framed) + child.stdin.writableLength > maxWriteBufferSize) {
+        throw new Error(`stdio upstream write buffer exceeded ${maxWriteBufferSize} bytes`);
+      }
+      child.stdin.write(framed);
     },
     close(): void {
       if (closed) {

@@ -1,0 +1,55 @@
+{
+  "fixture": "void.companion.v1.handshake.unsupported-version",
+  "protocol": "void.companion.v1",
+  "schemaVersion": 1,
+  "implementation": {
+    "server": "pending",
+    "apple": "pending",
+    "transport": "pending",
+    "authority": "not-granted"
+  },
+  "sourceRoutes": [
+    "GET /api/capabilities"
+  ],
+  "request": {
+    "protocol": "void.companion.v2",
+    "schemaVersion": 1,
+    "kind": "request",
+    "requestId": "req-unsupported-001",
+    "operationId": "op-unsupported-001",
+    "operation": "capability.handshake",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "issuedAt": "2026-09-24T12:00:00.000Z",
+    "expiresAt": "2026-09-24T12:01:00.000Z",
+    "bodyDigest": "9fecfcfb1c53ac9a5fde14aea23d506b052a1dbbfb84c27f5fdc97d57bb771cd",
+    "body": {
+      "client": {
+        "name": "VOID Apple companion",
+        "version": "0.0.0-fixture",
+        "platform": "ios"
+      },
+      "requestedCapabilities": [
+        "session.read",
+        "events.read",
+        "approval.read",
+        "recovery.preview"
+      ]
+    }
+  },
+  "response": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "response",
+    "requestId": "req-unsupported-001",
+    "operationId": "op-unsupported-001",
+    "operation": "capability.handshake",
+    "httpStatus": 426,
+    "outcome": "unsupported_version",
+    "error": {
+      "code": "protocol_version_unsupported",
+      "message": "The requested protocol version is not supported.",
+      "retryable": false
+    }
+  }
+}

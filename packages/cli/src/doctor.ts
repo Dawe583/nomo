@@ -203,23 +203,16 @@ async function runDoctorInit(
     }
   }
 
-  // Backup status
-  const tuiDir = join(dataDir, "tui");
-  const workspaceEnc = join(dataDir, "tui", "workspace.enc");
-  const saved = await present(workspaceEnc);
-  if (saved) {
-    results.push({
-      status: "PASS",
-      name: "backup-state",
-      detail: "encrypted state backup found",
-    });
-  } else {
-    results.push({
-      status: "WARN",
-      name: "backup-state",
-      detail: "no encrypted state backup; use --dry-run to preview restore",
-    });
-  }
+  // Primary provider state is not a recovery backup.
+  const saved = await present(join(dataDir, "tui", "workspace.enc"));
+  results.push(saved
+    ? { status: "PASS", name: "provider-state", detail: "primary encrypted state found" }
+    : { status: "WARN", name: "provider-state", detail: "no primary encrypted state found" });
+  results.push({
+    status: "WARN",
+    name: "backup-state",
+    detail: "no complete recovery backup verified; stop the executor and back up signing key, journal, vault and external encryption key together",
+  });
 
   for (const result of results) io.stdout(`${result.status} ${result.name}: ${result.detail}`);
   const fails = results.filter((r) => r.status === "FAIL").length;

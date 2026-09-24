@@ -999,3 +999,19 @@ Mobile toolbar controls use SVG instead of font-dependent symbols. Options use
 the shared native dialog with explicit accessible naming and 52-pixel rows.
 The native macOS shell continues using WKWebView; a SwiftUI migration remains
 separate from this bundled-interface update. Research: GUI-DESIGN-RESEARCH.md.
+
+## Apple 1.0.1 scope, 2026-09-24
+
+The user authorized implementation of
+`docs/superpowers/plans/2026-09-23-void-1.0.1-apple-release.md`.
+Keep the TypeScript recovery engine and existing Tauri Mac presentation until
+a signed App Sandbox experiment proves a blocker. Build a native SwiftUI
+iPhone/iPad companion for one explicitly paired Mac over a trusted local
+network. No iOS-local shell/recovery core, public relay, mandatory Mac SwiftUI
+rewrite, or universal Undo claim belongs to the first release. The older
+`APPLE-APPS-PLAN.md` remains historical and is superseded on these decisions.
+
+The measured Apple development selection is Command Line Tools, not full Xcode.
+Mac App Store signing, native physical-device verification, product design
+approval and external beta remain separate gates; no version label closes them.
+See `docs/RELEASE-1.0.1-MATRIX.md` for the item-level evidence contract.

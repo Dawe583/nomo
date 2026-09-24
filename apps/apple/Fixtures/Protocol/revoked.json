@@ -1,0 +1,52 @@
+{
+  "fixture": "void.companion.v1.session.revoked",
+  "protocol": "void.companion.v1",
+  "schemaVersion": 1,
+  "implementation": {
+    "server": "pending",
+    "apple": "pending",
+    "transport": "pending",
+    "authority": "not-granted"
+  },
+  "sourceRoutes": [
+    "GET /api/sessions/:id"
+  ],
+  "request": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "request",
+    "requestId": "req-revoked-001",
+    "operationId": "op-revoked-001",
+    "operation": "session.read",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "sessionId": "session-demo-001",
+    "issuedAt": "2026-09-24T12:00:00.000Z",
+    "expiresAt": "2026-09-24T12:01:00.000Z",
+    "bodyDigest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "body": {}
+  },
+  "response": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "response",
+    "requestId": "req-revoked-001",
+    "operationId": "op-revoked-001",
+    "operation": "session.read",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "httpStatus": 401,
+    "outcome": "revoked",
+    "error": {
+      "code": "device_revoked",
+      "message": "The device grant is no longer active.",
+      "retryable": false
+    },
+    "body": {
+      "deviceId": "device-demo-001",
+      "revokedAt": "2026-09-24T11:59:00.000Z",
+      "newMutationsAllowed": false,
+      "activeStreamsClosed": true
+    }
+  }
+}

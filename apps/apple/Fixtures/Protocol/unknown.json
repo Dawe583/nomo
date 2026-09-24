@@ -1,0 +1,67 @@
+{
+  "fixture": "void.companion.v1.recovery-apply.unknown",
+  "protocol": "void.companion.v1",
+  "schemaVersion": 1,
+  "implementation": {
+    "server": "pending",
+    "apple": "pending",
+    "transport": "pending",
+    "authority": "not-granted"
+  },
+  "sourceRoutes": [
+    "POST /api/sessions/:id/recovery-jobs/apply"
+  ],
+  "request": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "request",
+    "requestId": "req-unknown-001",
+    "operationId": "op-unknown-001",
+    "operation": "recovery.apply",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "sessionId": "session-demo-001",
+    "issuedAt": "2026-09-24T12:00:00.000Z",
+    "expiresAt": "2026-09-24T12:01:00.000Z",
+    "bodyDigest": "c75791e98322e045aff03dbae1abf83fb69a4988c59daaa7a13114fe322a6913",
+    "body": {
+      "operationId": "op-unknown-001",
+      "idempotencyKey": "idem-unknown-001",
+      "jobId": "job-unknown-001",
+      "planDigest": "5555555555555555555555555555555555555555555555555555555555555555",
+      "approved": true,
+      "grantId": "grant-demo-004",
+      "grantVersion": 1
+    }
+  },
+  "response": {
+    "protocol": "void.companion.v1",
+    "schemaVersion": 1,
+    "kind": "response",
+    "requestId": "req-unknown-001",
+    "operationId": "op-unknown-001",
+    "operation": "recovery.apply",
+    "deviceId": "device-demo-001",
+    "workspaceId": "workspace-demo-001",
+    "httpStatus": 202,
+    "outcome": "unknown",
+    "error": {
+      "code": "operation_unknown",
+      "message": "The operation outcome is not confirmed; reconcile its evidence.",
+      "retryable": false,
+      "reconcileRequired": true
+    },
+    "body": {
+      "jobId": "job-unknown-001",
+      "status": "unknown",
+      "checkpoint": 0,
+      "outcomes": [],
+      "residuals": [
+        {
+          "operationId": "operation-unknown-001",
+          "status": "unknown"
+        }
+      ]
+    }
+  }
+}
