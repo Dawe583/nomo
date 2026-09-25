@@ -4,6 +4,7 @@ struct OnboardingView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @AppStorage("void-entry-language") private var entryLanguage = "en"
+    @AppStorage("void-theme") private var theme: AppTheme = .system
 
     private var copy: AppCopy { AppCopy(language: entryLanguage) }
 
@@ -16,6 +17,7 @@ struct OnboardingView: View {
                     EntryConnectionView(
                         copy: copy,
                         language: $entryLanguage,
+                        theme: $theme,
                         showsHeader: false
                     )
                     .navigationTitle(copy.title)
@@ -25,6 +27,7 @@ struct OnboardingView: View {
                     EntryConnectionView(
                         copy: copy,
                         language: $entryLanguage,
+                        theme: $theme,
                         showsHeader: true
                     )
                     .navigationTitle(copy.title)
@@ -68,6 +71,7 @@ private struct EntryConnectionView: View {
 
     let copy: AppCopy
     @Binding var language: String
+    @Binding var theme: AppTheme
     let showsHeader: Bool
 
     var body: some View {
@@ -92,8 +96,21 @@ private struct EntryConnectionView: View {
                         }
                     }
                 }
-
-                EntryLanguagePicker(copy: copy, language: $language)
+                // Both preferences share one row when it fits. Two stacked
+                // pickers pushed the pairing reason below the fold on a
+                // 402-point-wide window, which the entry screen must not do:
+                // the reason for the disabled pairing control has to be
+                // readable without scrolling.
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: 16) {
+                        EntryLanguagePicker(copy: copy, language: $language)
+                        EntryThemePicker(copy: copy, theme: $theme)
+                    }
+                    VStack(alignment: .leading, spacing: 24) {
+                        EntryLanguagePicker(copy: copy, language: $language)
+                        EntryThemePicker(copy: copy, theme: $theme)
+                    }
+                }
 
                 EntryCard(
                     title: copy.accountTitle,
@@ -169,6 +186,29 @@ private struct EntryLanguagePicker: View {
             .pickerStyle(.segmented)
             .frame(minHeight: 44)
             .accessibilityLabel(copy.languageLabel)
+        }
+    }
+}
+
+private struct EntryThemePicker: View {
+    let copy: AppCopy
+    @Binding var theme: AppTheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(copy.themeLabel)
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+            Picker(copy.themeLabel, selection: $theme) {
+                Text(copy.themeSystemName).tag(AppTheme.system)
+                Text(copy.themeLightName).tag(AppTheme.light)
+                Text(copy.themeDarkName).tag(AppTheme.dark)
+            }
+            .pickerStyle(.segmented)
+            .frame(minHeight: 44)
+            .controlSize(.large)
+            .accessibilityLabel(copy.themeLabel)
+            .accessibilityIdentifier("entry.theme")
         }
     }
 }

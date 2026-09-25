@@ -5,6 +5,7 @@ struct RootView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var sidebarSelection: SidebarDestination? = .activity
     @AppStorage("void-entry-language") private var entryLanguage = "en"
+    @AppStorage("void-theme") private var theme: AppTheme = .system
 
     private var copy: AppCopy { AppCopy(language: entryLanguage) }
 
@@ -31,6 +32,7 @@ struct RootView: View {
                 }
             }
         }
+        .preferredColorScheme(theme.colorScheme)
         .tint(.orange)
         .task {
             model.loadCachedSessions()

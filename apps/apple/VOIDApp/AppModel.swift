@@ -6,6 +6,7 @@ final class AppModel: ObservableObject {
     enum ConnectionState: String, CaseIterable, Identifiable {
         case offline = "Offline"
         case paired = "Paired"
+
         case disconnected = "Disconnected"
 
         var id: String { rawValue }
@@ -74,6 +75,25 @@ final class AppModel: ObservableObject {
             Session(id: "local-1", title: "No cached sessions", detail: "Connect an explicitly paired executor to view durable activity.", outcome: .unavailable),
             Session(id: "local-2", title: "Offline mode", detail: "Read-only until a trusted executor is paired.", outcome: .offline)
         ]
+    }
+}
+
+/// Appearance choice for the whole app. `system` defers to the OS setting,
+/// so the app never has to know what the platform thinks light or dark means.
+enum AppTheme: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    /// `nil` means "no override", which is what following the system means.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
     }
 }
 

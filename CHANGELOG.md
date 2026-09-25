@@ -101,6 +101,11 @@ All notable user-facing changes since the first repository commit.
   out of the `cfg(windows)` block and pin them with tests, so a rule that could
   only be exercised on Windows is now exercised on every host. Renaming the
   target turns two of those tests red.
+- Add a real appearance preference to the iOS companion: light, dark and
+  system, persisted across launches and applied once at the root, with copy in
+  English and Czech. Two entry screens that the extra control pushed below the
+  fold on a 402-point-wide window are fixed by laying the language and
+  appearance controls out in one row when it fits.
 
 - d125b7e9: Restored the product baseline from upstream history.
 - 9ef84fe2: Synchronized the product branch with upstream history.

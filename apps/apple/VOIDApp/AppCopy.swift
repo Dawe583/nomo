@@ -14,6 +14,10 @@ struct AppCopy {
     let accountDetail: String
     let languageLabel: String
     let englishName: String
+    let themeLabel: String
+    let themeSystemName: String
+    let themeLightName: String
+    let themeDarkName: String
     let czechName: String
     let pairingState: String
     let pairingDetail: String
@@ -66,6 +70,10 @@ struct AppCopy {
             accountTitle = "VOID nemá účet"
             accountDetail = "Připojíte se k vlastnímu Macu, ne k účtu VOID."
             languageLabel = "Jazyk"
+            themeLabel = "Vzhled"
+            themeSystemName = "Systém"
+            themeLightName = "Světlý"
+            themeDarkName = "Tmavý"
             englishName = "English"
             czechName = "Čeština"
             pairingState = "Mac není spárován"
@@ -113,6 +121,10 @@ struct AppCopy {
             accountTitle = "VOID has no account"
             accountDetail = "You connect to a Mac you own, not to a VOID account."
             languageLabel = "Language"
+            themeLabel = "Appearance"
+            themeSystemName = "System"
+            themeLightName = "Light"
+            themeDarkName = "Dark"
             englishName = "English"
             czechName = "Čeština"
             pairingState = "Mac not paired"
