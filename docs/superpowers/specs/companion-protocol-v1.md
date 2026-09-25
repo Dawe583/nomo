@@ -39,9 +39,24 @@ The names below were inspected in the current tree. They are the preferred bindi
 | `recovery.preview` | `POST /api/sessions/:id/recovery-jobs/plan` | source-inspected | pending companion-safe projection and expiry |
 | `recovery.apply` | `POST /api/sessions/:id/recovery-jobs/apply` | source-inspected | pending single-use grant, digest binding, and operation receipt |
 | `recovery.status` | `GET /api/sessions/:id/recovery-jobs/:job` | source-inspected | pending safe status adapter |
-| `operation.status` | no existing route | absent | pending bounded status lookup by `operationId` |
-| `device.revoke` | no existing route | absent | pending authenticated revoke endpoint and active-stream close |
-| `diagnostics.read` | no existing route | absent | pending allowlisted, redacted diagnostics only |
+| `operation.status` | `GET /api/companion/operations/:operationId` | source-inspected, fixture-tested 2026-09-25 | bounded lookup by `operationId`; implemented, frozen outcome vocabulary |
+| `device.revoke` | `POST /api/companion/devices/:deviceId/revoke` | source-inspected, fixture-tested 2026-09-25 | implemented, idempotent per device; active-stream close is still pending |
+| `diagnostics.read` | `GET /api/companion/diagnostics` | source-inspected, fixture-tested 2026-09-25 | implemented, allowlisted and redacted |
+| `device.pair` | `POST /api/companion/devices` | source-inspected, fixture-tested 2026-09-25 | host-only pairing; the only operation that does not require an existing device credential |
+
+Those four routes landed on 2026-09-25 under `apps/control-plane/api/companion/`.
+`POST /api/companion/envelope` closes the envelope gap the bare payloads left
+open: it accepts a `void.companion.v1` request envelope, proves the device
+credential, maps the operation onto the same store primitives the internal path
+uses, and returns a response envelope with the echoed identity. `device.pair`
+was added to the Apple client's operation catalog as a separate
+`CompanionPairingRequest`, because an unpaired device has no `deviceId` and
+making that field optional would have weakened the bounded-identity check for
+every other operation. Two client guards were corrected to match the frozen
+contract: a `succeeded` outcome may not carry an error or arrive without a
+body, and the response identity is verified before the payload.
+Local loopback and fixture evidence only: `swift test` is a macOS-host run, so
+no paired phone, no iOS simulator and no transport journey is claimed.
 
 The existing cloud cookie and `VOID_CONTROL_TOKEN` authentication paths are not device pairing. They must not be copied into a phone credential. The existing loopback API remains private.
 

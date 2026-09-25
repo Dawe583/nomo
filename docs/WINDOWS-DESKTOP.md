@@ -29,6 +29,30 @@ uploads an installer and its SHA-256 file. Builds are unsigned previews; Windows
 may display a SmartScreen warning. No Windows download is advertised until the
 native build and installed-application smoke test succeed.
 
+## Windows workspace-key storage source audit
+
+Read-only audit of the current source on 2026-09-25, against the documented
+Win32 contract. It does not replace the open Windows gate and it is not a
+compile or runtime result on Windows.
+
+| Item | Source | Result |
+| --- | --- | --- |
+| Credential type and persistence | `apps/desktop/src-tauri/src/keychain.rs` `WindowsCredentials::put` | `CRED_TYPE_GENERIC` with `Persist: CRED_PERSIST_LOCAL_MACHINE` and `CredWriteW` flags `0`. |
+| Flags argument | Microsoft `CredWriteW` documentation | Correct as written. Persistence is selected by the `Persist` member; the `Flags` parameter accepts only `0` or `CRED_PRESERVE_CREDENTIAL_BLOB`, so passing `CRED_PERSIST_LOCAL_MACHINE` in `Flags` would fail with `ERROR_INVALID_FLAGS`. No change is required. |
+| Visibility of a persisted key | Microsoft `CREDENTIAL` documentation | `CRED_PERSIST_LOCAL_MACHINE` is visible to other logon sessions of the same user on the same computer, and not to other users or to other computers. The stored workspace key is therefore per-user, which matches the macOS keychain item, not a machine-wide secret. |
+| Unsupported editions | Microsoft `CREDENTIAL` documentation | The documentation lists `Windows Vista Home Basic`, `Windows Vista Home Premium`, `Windows Vista Starter` and `Windows XP Home Edition` as not supporting this value. It does not state support for modern Windows 10/11 Home, so Home-edition behaviour is unverified and is not claimed either way here. |
+| Read path | `WindowsCredentials::get` | `CredReadW` returns `Ok(None)` only on `ERROR_NOT_FOUND`. A zero or non-32-byte blob is a hard error, not a silent new key, and the Windows-owned allocation is released with `CredFree`. |
+| Failure mode if persistence degrades | `keychain.rs` `load_or_create` | Fails closed with `Encrypted workspace exists without its encryption key; restore the original key before opening VOID` rather than generating a new key over existing ciphertext. The post-write check compares the stored key in the same logon session, so it cannot detect a session-only persist downgrade; the cost is an availability failure after sign-out, not a silent key loss. |
+| Test coverage | `keychain.rs` `windows_tests` | Gated `#[cfg(all(test, windows))]`, so it does not run on a macOS host. |
+
+Toolchain limit on the audit machine: `rustc`/`cargo` are Homebrew `1.98.0`
+and `rustup` is not installed, so no `x86_64-pc-windows-msvc` target and no
+cross-target `cargo check` of the `cfg(windows)` paths is possible here. The
+`cfg(windows)` blocks in `keychain.rs` and `main.rs` are source-inspected only.
+
+Next: the Windows x64/MSVC gate above. Source correctness does not substitute
+for it.
+
 ## Historical beta-4 evidence (not current-candidate evidence)
 
 The Windows x64 package passed native build, credential tests, silent installation

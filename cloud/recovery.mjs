@@ -17,6 +17,19 @@ const SLOT_BYTES = 4 * 1024 * 1024,
   CAPACITY = 64 * 1024 * 1024;
 export const documentOperationId = (id) => digest(id);
 
+/**
+ * Surfaces that may authorize a managed document mutation. An agent is not on
+ * this list and never can be: the identity is copied into the signed journal,
+ * so a self-approval would falsify the audit trail that recovery and Undo are
+ * built on. `public-demo` is the isolated public demo, which has no human
+ * approval step by design and is therefore labelled truthfully rather than as
+ * an approval.
+ */
+export const AUTHORIZED_WRITE_SURFACES = new Set([
+  "web-operator",
+  "public-demo",
+]);
+
 /** Only managed documents: caller holds the session transaction lock. Artifacts,
  * signed operation/job events and document state commit together inside the same
  * SQL transaction, including across process death. Local journal/result rows are
@@ -217,7 +230,10 @@ export async function cloudDocumentRuntime(
     journal,
     vault,
     adapters: [adapter],
-    authorize: async () => true,
+    // Fail closed. Returning false records a `denied` transition and dispatches
+    // nothing, so an agent that somehow reaches this sink cannot forge the
+    // `authorized` stage that the journal would otherwise attribute to it.
+    authorize: async () => AUTHORIZED_WRITE_SURFACES.has(approvedBy),
   });
   return { runtime, state: () => state };
 }

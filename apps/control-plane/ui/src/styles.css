@@ -662,6 +662,12 @@ main {
   font-size: 17px;
   line-height: 26px;
 }
+/* The wrapper border is the only focus cue left once the canvas halo paints
+   canvas on canvas, so the primary input keeps the shared keyboard ring. */
+.composer textarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
 .composer-actions {
   display: flex;
   justify-content: space-between;

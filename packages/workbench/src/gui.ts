@@ -178,6 +178,22 @@ export function filterRows<T>(rows: readonly T[], query: URLSearchParams): T[] {
 export const MAX_QUEUED_RUNS = 20;
 export type PermissionMode = "plan" | "read-only" | "normal";
 
+
+/** The two permission defaults are deliberately different and both are
+ * explicit, because an embedder must never have to guess which one it got.
+ *
+ * `DEFAULT_LOCAL_PERMISSION_MODE` applies to a local operator surface (CLI,
+ * TUI, the embedded Workbench) that is already gated by host user
+ * authentication: the operator starts it deliberately, so an absent variable
+ * means "not restricted".
+ *
+ * `DEFAULT_HTTP_PERMISSION_MODE` applies to the remote-facing control-plane
+ * API, where an absent variable means "locked" and a human has to open it
+ * explicitly.
+ */
+export const DEFAULT_LOCAL_PERMISSION_MODE: PermissionMode = "normal";
+export const DEFAULT_HTTP_PERMISSION_MODE: PermissionMode = "read-only";
+
 /** The only permission source accepted by the local server. Missing or
  * malformed configuration is intentionally read-only, never normal. */
 export function serverPermissionMode(value: unknown): PermissionMode {

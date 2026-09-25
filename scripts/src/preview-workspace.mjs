@@ -12,8 +12,11 @@ const model = createServer(async (req, res) => {
   if (req.url === '/v1/models') return res.end(JSON.stringify({ data: [{ id: 'qa-fixture', name: 'QA fixture (not a live model)' }] }));
   let raw = ''; for await (const part of req) raw += part;
   const input = JSON.parse(raw), last = input.messages.at(-1);
-  const tool = input.tools.find(t => t.function.description.startsWith('void_workspace_write:'));
-  const message = last.role === 'tool' ? { role: 'assistant', content: 'QA fixture: plan.md was written through the real VOID document tool. Open Documents & Undo to review the captured change.' }
+  // A request with no tool catalog at all is a valid thing a client sends, and
+  // this fixture must answer it rather than take the whole preview server down.
+  const tool = (input.tools ?? []).find(t => t.function.description.startsWith('void_workspace_write:'));
+  const message = last.role === 'tool' || !tool
+    ? { role: 'assistant', content: 'QA fixture: plan.md was written through the real VOID document tool. Open Documents & Undo to review the captured change.' }
     : { role: 'assistant', content: 'QA fixture: creating a project plan with captured history.', tool_calls: [{ id: `qa-${Date.now()}`, type: 'function', function: { name: tool.function.name, arguments: JSON.stringify({ path: 'plan.md', content: '# Project plan\n\n1. Define the scope.\n2. Build the smallest useful version.\n3. Verify every write and its inverse.\n' }) } }] };
   res.end(JSON.stringify({ choices: [{ message }] }));
 });

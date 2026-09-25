@@ -87,8 +87,15 @@ test("local branch route strictly validates and delegates to Workbench.branch",a
  const wb=new Workbench({VOID_DATA_DIR:directory},fetcher);
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const parent=await wb.start("Branch fixture","fixture"); await wb.settled(); wb.close();
- const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
- t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
+ // Seeding a branch copies managed documents, which is a durable document
+ // write. The control plane defaults to read-only, so this route is exercised
+ // in normal mode; the read-only refusal is asserted below instead of being
+ // silently pinned as a passing 201.
+ const server=await listenControlPlane({env:{VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"}});
+ // The read-only phase below reopens the same data directory, so the first
+ // server has to be closed first; the hook stays idempotent either way.
+ let firstServerClosed=false;
+ t.after(async()=>{if(!firstServerClosed)await server.close();await rm(directory,{recursive:true,force:true});});
  const origin=`http://127.0.0.1:${server.port}`;
  const post=(body:unknown)=>fetch(`${origin}/api/sessions/${parent.id}/branches`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
  for (const body of [null,{}, {seq:"1"}, {seq:1,unknown:true}, {seq:1,prompt:""}, {seq:1,prompt:"ok",snapshotDocuments:"yes"}, {seq:1}])
@@ -101,7 +108,15 @@ test("local branch route strictly validates and delegates to Workbench.branch",a
  assert.equal(result.session.parentId,parent.id);
  assert.equal(result.session.status,"idle");
  const retry=await post(body);
- assert.equal(retry.status,201);
  assert.equal((await retry.json() as {session:{id:string}}).session.id,result.session.id);
  assert.equal((await post({...body,prompt:"Changed"})).status,409);
+ firstServerClosed=true;await server.close();
+ // The same route in the default read-only mode: branching without a document
+ // snapshot still works, seeding a branch is refused.
+ const readOnly=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ const readOnlyOrigin=`http://127.0.0.1:${readOnly.port}`;
+ const postReadOnly=(b:unknown)=>fetch(`${readOnlyOrigin}/api/sessions/${parent.id}/branches`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)});
+ assert.equal((await postReadOnly({seq:2,idempotencyKey:"api-branch-readonly"})).status,201);
+ assert.equal((await postReadOnly({seq:2,snapshotDocuments:true,idempotencyKey:"api-branch-readonly-snapshot"})).status,409);
+ await readOnly.close();
 });

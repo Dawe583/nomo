@@ -92,6 +92,49 @@ final class VOIDUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Connect an explicitly paired executor to view durable activity."].exists)
     }
 
+    func testPairingCTAStaysInertAndItsReasonStaysReadable() {
+        let connectMac = app.buttons["Connect a Mac"]
+        XCTAssertTrue(connectMac.waitForExistence(timeout: 5))
+        XCTAssertFalse(connectMac.isEnabled, "Pairing must stay unavailable until a real executor path exists.")
+
+        let notice = app.staticTexts["Secure Mac pairing is not available in this build."]
+        XCTAssertTrue(notice.exists)
+        XCTAssertGreaterThan(notice.frame.height, 0, "Pairing reason must render, not collapse to zero height.")
+        XCTAssertGreaterThan(notice.frame.width, 0, "Pairing reason must render, not collapse to zero width.")
+        XCTAssertTrue(
+            app.windows.firstMatch.frame.contains(notice.frame),
+            "Pairing reason is clipped outside the window: notice \(notice.frame) window \(app.windows.firstMatch.frame)"
+        )
+
+        connectMac.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+
+        XCTAssertFalse(
+            app.alerts.firstMatch.waitForExistence(timeout: 2),
+            "A dead-end pairing dialog appeared; the CTA must stay inert while pairing is unavailable."
+        )
+        XCTAssertTrue(app.staticTexts["Connect to your Mac"].waitForExistence(timeout: 5), "Entry screen must survive a tap on the inert pairing CTA.")
+        XCTAssertEqual(app.textFields.count, 0)
+        XCTAssertEqual(app.secureTextFields.count, 0)
+    }
+
+    func testActivityRowIsAnnouncedAsOneCombinedElement() {
+        completeOnboarding()
+        XCTAssertTrue(app.navigationBars["Activity"].waitForExistence(timeout: 5))
+
+        let row = app.buttons.matching(
+            NSPredicate(
+                format: "label CONTAINS %@ AND label CONTAINS %@",
+                "Offline mode",
+                "You can inspect cached activity only. No action can run without a paired Mac."
+            )
+        ).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "Session row must expose a combined accessibility label, not bare child text.")
+        XCTAssertTrue(row.isHittable)
+        XCTAssertTrue(
+            row.label.contains("Offline, You can inspect cached activity only. No action can run without a paired Mac."),
+            "Session row label must carry title, outcome and detail: got \(row.label)"
+        )
+    }
 
     func testSettingsAndActivityExposeNamedAccessibilityTargets() {
         completeOnboarding()

@@ -1,4 +1,4 @@
-import { page, filterRows, capabilities, activity, serverPermissionMode } from '../../../packages/workbench/src/gui.ts';
+import { page, filterRows, capabilities, activity, serverPermissionMode, DEFAULT_HTTP_PERMISSION_MODE } from '../../../packages/workbench/src/gui.ts';
 import { createReadStream, existsSync } from "node:fs";
 import { stat, readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
@@ -20,6 +20,8 @@ import { authorizedRemote } from "./auth.ts";
 import { localApprovals } from "./local-approvals.ts";
 import { desktopSetup, importDesktopProvider } from './desktop-setup.ts';
 import { keyProviderFromPkcs8 } from "../../../packages/ledger/src/sign.ts";
+import { handleCompanionRequest } from "./companion/routes.ts";
+import { handleCompanionEnvelopeRequest } from "./companion/envelope.ts";
 
 export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
 
@@ -104,7 +106,11 @@ export function createControlPlaneServer(options: ControlPlaneOptions = {}): Ser
   const built = fileURLToPath(new URL('../../../dist/web', import.meta.url));
   const webRoot = resolve(options.webRoot ?? (existsSync(join(built, 'index.html')) ? built : defaultWebRoot));
 
-  const workbench = new Workbench({ ...env, VOID_PERMISSION_MODE: serverPermissionMode(env.VOID_PERMISSION_MODE) });
+  // The remote-facing API stays locked unless a human opens it explicitly.
+  // Stated as a named constant so the divergence from the local operator
+  // default is deliberate and reviewable, not an accident of two different
+  // expressions in two files.
+  const workbench = new Workbench({ ...env, VOID_PERMISSION_MODE: serverPermissionMode(env.VOID_PERMISSION_MODE ?? DEFAULT_HTTP_PERMISSION_MODE) });
   const server = createServer((request, response) => {
     if (env.VOID_CONTROL_TOKEN ? !authorizedRemote(request, env) : !isLocalRequest(request)) {
       sendJson(response, 403, { error: "local_origin_required" });
@@ -364,6 +370,18 @@ async function route(
   const approvalMatch = /^\/api\/approvals\/([^/]+)\/decision$/.exec(parsed.pathname);
   if (request.method === "POST" && approvalMatch !== null) {
     return handleApprovalDecision(request, response, options.approvals, decodeURIComponent(approvalMatch[1]!));
+  }
+  if (parsed.pathname === "/api/companion/envelope") {
+    // The envelope adapter speaks the frozen `void.companion.v1` wire contract
+    // on one path. It is mounted inside the existing companion prefix so it
+    // keeps the same host or loopback gate and cross-site protections as every
+    // other API path, and proves its own device credential per request.
+    return handleCompanionEnvelopeRequest(request, response, options.env);
+  }
+  if (parsed.pathname === "/api/companion/devices" || parsed.pathname.startsWith("/api/companion/")) {
+    // Device routes keep the same host or loopback gate as every other API
+    // path and add their own per-request device credential inside.
+    return handleCompanionRequest(request, response, options.env);
   }
   if (request.method === "GET" || request.method === "HEAD") {
     return serveStatic(request, response, options.webRoot, parsed.pathname);

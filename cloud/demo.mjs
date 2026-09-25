@@ -326,7 +326,10 @@ export function demoRouter(dependencies = {}) {
                     session(state.id),
                     c,
                     input,
-                    "demo-agent",
+                    // Truthful label: the public demo has no human approval
+                    // step, so the journal records the surface, not an approval
+                    // that never happened.
+                    "public-demo",
                   )
                 ).result;
               }

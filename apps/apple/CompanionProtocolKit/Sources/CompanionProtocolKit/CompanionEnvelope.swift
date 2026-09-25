@@ -35,6 +35,30 @@ public struct CompanionRequest: Codable, Equatable, Sendable {
 }
 
 
+/// `device.pair` is the one operation a device without a credential may call,
+/// because it is the operation that mints one. It is deliberately not a
+/// `CompanionRequest`: the frozen `CompanionRequest` type requires a
+/// `deviceId` and a `workspaceId` that an unpaired device does not have, and
+/// making those optional would weaken the `isBoundedID` check every other
+/// operation relies on. Both identities are server derived, so this request
+/// carries neither, and it carries the stable idempotency key that issuing
+/// authority requires.
+public struct CompanionPairingRequest: Codable, Equatable, Sendable {
+    public static let operation = "device.pair"
+
+    public let protocolIdentifier: String
+    public let schemaVersion: Int
+    public let kind: String
+    public let requestId: String
+    public let operationId: String
+    public let operation: String
+    public let idempotencyKey: String
+    public let issuedAt: String
+    public let expiresAt: String
+    public let bodyDigest: String
+    public let body: JSONValue
+}
+
 public struct CompanionResponse: Codable, Equatable, Sendable {
     public let protocolIdentifier: String
     public let schemaVersion: Int

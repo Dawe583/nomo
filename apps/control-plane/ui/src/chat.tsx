@@ -486,6 +486,9 @@ const draftKey =
   // Esc before this branch ever runs.
   async function stopRun() {
     if (!id || busy || !runCanStop(session)) return;
+    // The Stop control exists only while a run is live, so it unmounts the
+    // moment the run ends. Hand the keyboard back to the composer instead of
+    // dropping focus on the document body, the same way the /stop command does.
     setBusy(true);
     try {
       await api("/api/runs/" + encodeURIComponent(id) + "/stop", "POST");
@@ -494,6 +497,7 @@ const draftKey =
       setError(e);
     } finally {
       setBusy(false);
+      textarea.current?.focus();
     }
   }
   async function send() {

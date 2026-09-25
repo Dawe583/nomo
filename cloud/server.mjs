@@ -64,7 +64,7 @@ import {
 } from "./store.mjs";
 import { provider, providerState } from "./provider.mjs";
 import { catalog, validateEndpoint } from "./mcp.mjs";
-import { CLOUD_POLICY } from "./steps.mjs";
+import { CLOUD_POLICY, holdTokenMatches } from "./steps.mjs";
 import { loadPolicy } from "../packages/policy/src/rules.ts";
 import {
   buildGraph,
@@ -1032,6 +1032,11 @@ app.post("/api/approvals/:id/decision", async (req, res) => {
     return res.status(400).json({ message: "Choose approved or denied." });
   const hold = await read(`hold:${req.params.id}`);
   if (!hold) return res.status(404).json({ message: "Hold not found." });
+  // A hold identifier is derived from public session counters, so a decision
+  // must also present the unguessable token minted with the hold. This is the
+  // same possession factor `packages/policy/src/approvals.ts` requires.
+  if (!holdTokenMatches(hold, req.body?.token))
+    return res.status(403).json({ message: "Approval token does not match this hold." });
   await transaction(hold.sessionId, async (c) => {
     const h = await read(`hold:${req.params.id}`, c);
     const s = await read(`session:${h.sessionId}`, c);

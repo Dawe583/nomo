@@ -31,6 +31,22 @@ extension CompanionRequest {
     }
 }
 
+extension CompanionPairingRequest {
+    enum CodingKeys: String, CodingKey {
+        case protocolIdentifier = "protocol"
+        case schemaVersion
+        case kind
+        case requestId
+        case operationId
+        case operation
+        case idempotencyKey
+        case issuedAt
+        case expiresAt
+        case bodyDigest
+        case body
+    }
+}
+
 extension CompanionResponse {
     enum CodingKeys: String, CodingKey {
         case protocolIdentifier = "protocol"

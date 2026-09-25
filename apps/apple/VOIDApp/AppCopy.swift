@@ -19,9 +19,7 @@ struct AppCopy {
     let pairingDetail: String
     let pairingSteps: String
     let connectMac: String
-    let pairingUnavailableTitle: String
     let pairingUnavailable: String
-    let ok: String
     let privacyTitle: String
     let privacyDetail: String
     let offlineState: String
@@ -74,9 +72,7 @@ struct AppCopy {
             pairingDetail = "Spárujte jeden vlastní Mac přes důvěryhodné místní připojení. Párování nevytváří účet VOID."
             pairingSteps = "Mac ponechte odemčený a potvrďte na Macu toto zařízení a pracovní prostor."
             connectMac = "Připojit Mac"
-            pairingUnavailableTitle = "Párování Macu není dostupné"
             pairingUnavailable = "Zabezpečené párování Macu v této verzi není dostupné."
-            ok = "OK"
             privacyTitle = "Žádné uživatelské jméno ani heslo"
             privacyDetail = "Tato úvodní obrazovka ne sbírá přihlašovací údaje. Klíče poskytovatele zůstávají na vybraném Macu a nejsou zde zadávány."
             offlineState = "Offline jen pro čtení"
@@ -123,9 +119,7 @@ struct AppCopy {
             pairingDetail = "Pair one user-owned Mac over a trusted local connection. Pairing never grants a VOID account."
             pairingSteps = "Keep the Mac unlocked and confirm this device and the workspace on the Mac."
             connectMac = "Connect a Mac"
-            pairingUnavailableTitle = "Mac pairing unavailable"
             pairingUnavailable = "Secure Mac pairing is not available in this build."
-            ok = "OK"
             privacyTitle = "No username or password"
             privacyDetail = "This entry screen collects no credentials. Provider keys stay on the selected Mac and are not entered here."
             offlineState = "Read-only offline"

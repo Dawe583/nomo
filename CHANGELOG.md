@@ -27,8 +27,56 @@ All notable user-facing changes since the first repository commit.
 - Reject hostile browser origins and DNS rebinding against the local control plane.
 - Distinguish signature verification from hash integrity in the ledger feed.
 - Include the control plane and script suites in the standard workspace check.
+- Hold every non-read-only cloud tool call, including built-in managed-document
+  writes. The cloud agent previously short-circuited built-in tools to `allow`,
+  so an r1 `void_workspace_write` or `void_workspace_delete` ran with no human
+  in the loop while the signed journal recorded the agent itself as the
+  approver. The cloud recovery sink also passed an unconditional authorize
+  callback to the runtime, which forged an `authorized` stage nobody granted.
+  Both now fail closed against an explicit allowlist of authorizing surfaces.
+- Refuse a branch document snapshot when the server permission mode forbids
+  document editing. `POST /api/sessions/:id/branches` with
+  `snapshotDocuments: true` performed durable managed-document writes while
+  `/api/capabilities` advertised `documentEditing: false`.
+- Name the two permission-mode defaults. A local operator surface and the
+  remote-facing control plane resolve an absent `VOID_PERMISSION_MODE`
+  differently on purpose; both are now named constants with a test instead of
+  two unrelated literals that had drifted apart unnoticed.
+- Serve the frozen `void.companion.v1` outcome vocabulary from
+  `operation.status`, and refuse a stored record carrying any other value.
+- Require a per-hold possession token for a cloud approval decision. The hold
+  identifier is derived from public session counters, so guessing one was
+  enough to decide someone else's hold; the decision now also has to present
+  the unguessable token minted with the hold, as the local approval broker
+  already required.
+- Give the web composer textarea a visible keyboard focus ring. `.composer
+  textarea { outline: none }` outranked `:focus-visible`, and the halo painted
+  the canvas colour on the canvas colour, so a keyboard user had no visible
+  focus indicator at all.
+- Return focus to the composer after a run is stopped. Pressing Stop unmounted
+  the focused button and dropped focus to the document body.
 
 ### Added
+
+- Add the three companion transport operations the release matrix recorded as
+  having no server route: `operation.status`, `device.revoke` and
+  `diagnostics.read`, plus a minimal device pairing model. Paired devices are
+  read-only by default, are scoped to one workspace, and can never see or
+  revoke another device. Diagnostics are an allowlisted, redacted projection
+  capped at 100 entries; no host path, raw log line or credential shape is
+  reachable through it.
+- Add a single-endpoint companion envelope adapter so the Apple client can
+  round-trip the protocol it was written against, and add `device.pair` to the
+  client catalog as a separate request type.
+- Add a standard-library Python client for the VOID proxy wire, closing the
+  transport-client half of the R12 milestone. It has no third-party
+  dependency, refuses a mismatched response identity, an oversized body, an
+  unknown shape and a mutating call without an idempotency key, and never
+  retries silently. Its canonical JSON is checked byte-for-byte against the
+  repository's own `packages/ledger/src/canonical.ts` running under Node.
+- Remove the unreachable pairing alert from the iOS companion entry screen. Its
+  button is disabled in every state of this build, so the dialog that confirmed
+  the same sentence already on screen could never open.
 
 - d125b7e9: Restored the product baseline from upstream history.
 - 9ef84fe2: Synchronized the product branch with upstream history.

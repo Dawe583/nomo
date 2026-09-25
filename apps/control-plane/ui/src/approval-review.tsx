@@ -81,6 +81,9 @@ export function ApprovalReview({
         "/api/approvals/" + encodeURIComponent(record.holdId) + "/decision",
         "POST",
         {
+          // The hold identifier is derived from public session counters, so a
+          // decision also has to present the token minted with the hold.
+          token: record.decisionToken,
           kind,
           by: "control-plane",
           ...(note.trim() ? { reason: note.trim().slice(0, 500) } : {}),

@@ -46,7 +46,7 @@ Live API harness (a throwaway script that drives the real `apps/control-plane/ap
 
 Repository suites run green: `apps/control-plane` `api/server.test.ts` + `api/parity.test.ts` 20/20; `packages/workbench` `permission-authority.test.ts` 4/4, `gui.test.ts` + `recovery-jobs.test.ts` 21/21, `provider-retry.test.ts` 5/5; `packages/proxy` transport and relay suites 39/39; `packages/cli` `recovery-filesystem` + `recovery-mcp` 9/9 and `recovery-health` 5/5; `packages/runtime` `reserved-vault` + `recovery-crash` 14/14 and `crash` + `persistence-fault` 22/22; `cargo test --offline diagnostics` 6/6 for the startup-log allowlist; conformance `filesystem.managed` 4/4, `git.managed` 6/6, `managed-documents` 2/2.
 
-Not covered, and therefore not claimed: no packaged-artifact install, upgrade, rollback or uninstall cycle; no mobile-bridge or paired-phone transport journey, and `device.revoke`, `operation.status` and `diagnostics.read` have no server route yet, so runtime revocation and device/workspace scope stay unverified; no real provider streaming; no VoiceOver, keyboard, zoom, rotation or Dynamic Type run; no performance/load budget run; and no power-loss or genuinely full-disk proof, only injected ENOSPC and SIGKILL.
+Not covered, and therefore not claimed: no packaged-artifact install, upgrade, rollback or uninstall cycle; no end-to-end mobile-bridge or paired-phone transport journey, because the Apple client still has no envelope round-trip against the routes that now exist (see the 2026-09-25 companion section); no real provider streaming; no VoiceOver, keyboard, zoom, rotation or Dynamic Type run; no performance/load budget run; and no power-loss or genuinely full-disk proof, only injected ENOSPC and SIGKILL.
 
 Live CLI recovery journey (a throwaway script that spawns the real `node packages/cli/bin/void.mjs recovery ...` binary with a minimal environment, per-run key material passed by environment variable name and never printed): 43 scenarios, 43 pass, 0 fail. `recovery health` on a fresh state directory exited non-zero as `unavailable` with `state.present=false`, explicit repair steps, no state directory and no key-shaped bytes in the report (L-01). `recovery inspect` returned an approval digest without touching the file (L-02). Execute required that exact digest: a forged digest was denied, and a denied operation identity stayed consumed even when replayed later with the correct digest, while a distinct operation identity with its own correct digest applied the write (L-03). A wrong key, a missing key variable and the correct key produced the expected non-zero, non-zero and exit-0 plan results with no refused plan mutating the file (L-04). A forged plan digest was refused without mutation, and the exact digest returned `restored` with bytes-and-mode evidence and content back at its original value, a real Undo through the CLI (L-05). Appending a forged line to the signed journal turned health and plan unsafe with the file unchanged, and restoring the original history returned health to exit 0 (L-06). Deleting the retained signing key was refused with the stable message `Retained recovery signing key is unavailable; restore the original key before continuing.`, the key was not silently regenerated, and restoring it returned health to exit 0 (L-07). `recovery-backup.mjs` create/verify exited 0 with a matching anchor, while a wrong anchor and a missing anchor both returned `history_unanchored`, a tampered backup journal returned `history_incomplete`, and a deleted vault artifact returned `missing_artifact`, with no workspace file mutated throughout (L-08). A second backup restored into an isolated copy reached health exit 0 and refused the wrong key (L-09). `apps/desktop` `runtime.test.mjs` + `release.test.mjs` pass 4/4.
 
@@ -55,6 +55,140 @@ One security-positive behaviour worth recording: a denied operation identity is 
 Finding from the 2026-09-25 local acceptance run, now fixed and re-verified: the operator tool catalog was not permission-mode filtered, so `GET /api/tools` advertised `void_workspace_write` while `documentEditing` was `false`, because `availableTools()` in `packages/workbench/src/index.ts` built the catalog from `workspaceTools` without the predicate dispatch applies. Dispatch-time enforcement held throughout, so it was a visible-capability mismatch rather than a bypass. `availableTools()` now filters through `toolAllowedInMode`; the live harness converted the observation into a hard assertion and re-ran at 67/67, checking that a read-only catalog returns exactly `void_workspace_list` and `void_workspace_read` while normal mode still advertises `void_workspace_write`. `packages/workbench` `permission-authority.test.ts` plus `safety-boundaries.test.ts` pass 8/8 and `apps/control-plane` `api/parity.test.ts` passes 5/5.
 
 The release matrix intentionally retains P01 and P04-P11, which includes the Windows gate P10.09, plus every D01-D04 requirement. Their open gates are not converted into source-inspection, simulator or metadata claims. Windows is outside the 1.0.1 delivery scope; its historical evidence is preserved, and P10.09 remains open for a later authorized current-source build.
+
+## 2026-09-25 companion transport and adversarial security pass
+
+The 2026-09-25 gaps recorded as "no existing route" for `operation.status`,
+`device.revoke` and `diagnostics.read` are closed at the source level. This is
+local, loopback and fixture evidence only: no paired phone, no physical
+device, no provider and no store were involved.
+
+### Companion routes now present
+
+`apps/control-plane/api/companion/` adds a minimal device pairing model and
+the three missing operations. Paired devices are read-only by default, carry
+`companion:read` or `companion:write`, and are bound to one workspace. Device
+tokens are minted with `randomBytes`, stored only as a SHA-256 digest, and
+compared with `timingSafeEqual`; the plaintext is returned exactly once and
+never written to disk. A missing, wrong, expired or revoked credential is
+`403`. A structurally invalid or foreign `operationId` is `404`, never a
+synthesised success. Diagnostics are an allowlisted projection capped at 100
+entries with a 320-character summary bound; a sentinel credential and a
+home-directory path were both proven absent from the response.
+
+`operation.status` serves the frozen `void.companion.v1` outcome vocabulary
+(`running`, `succeeded`, `denied`, `conflict`, `unknown`, `revoked`,
+`expired`) and rejects a stored record carrying any other value as a corrupt
+store, because the frozen fixture validator would refuse it. `CompanionProtocolKit`
+acceptance rules were transcribed into a test over live responses: bounded
+identifiers, the client's accepted status-code window, and the 1 MiB response
+ceiling.
+
+Suites: `apps/control-plane/api/companion/companion.test.ts` 14/14,
+`api/server.test.ts` 15/15, `api/parity.test.ts` 5/5, `apps/control-plane`
+typecheck exit 0. Each new assertion was mutation-checked.
+
+The envelope gap is now closed at the source level. `POST
+/api/companion/envelope` accepts a `void.companion.v1` request envelope,
+validates the exact field set, the admission window, the canonical-JSON digest
+and the per-operation body shape, proves the device credential, maps the
+operation onto the same store and projection primitives the internal path
+uses, and wraps the result in a response envelope with the echoed identity.
+Five operations are bound: `capability.handshake`, `operation.status`,
+`device.revoke`, `diagnostics.read` and `device.pair`. `device.pair` is the only
+operation that may be called without a credential and the only one whose
+identity is server-derived; a pairing request that carries a `deviceId` or
+`workspaceId` claim is refused so a caller cannot probe for a named workspace.
+On the Apple side, `CompanionPairingRequest` is a separate type rather than an
+optional `deviceId`, so the bounded-identity check stays strict for every other
+operation, and `device.pair` joined the mutating set. Two client guards were
+corrected against the frozen contract: a `succeeded` outcome may no longer
+carry an error or arrive without a body, and the response identity is checked
+before the payload.
+
+Evidence: `apps/control-plane/api/` 51/51, `apps/control-plane` typecheck exit
+0, `CompanionProtocolKit` `swift test` 33/33, and
+`scripts/src/companion-fixtures.test.mjs` 7/7. The acceptance gate is the real
+`validateCompanionFixture`, loaded by the contract test from fixtures built out
+of live HTTP responses. Three mutations were shown red and reverted.
+`swift test` is a macOS-host run against in-process transport doubles, so this
+is not an iOS simulator or device result, no TLS pinning path was exercised,
+and idempotent replay of a stored response is not implemented. P09.02 therefore
+stays open: no paired-phone journey is claimed.
+
+### Aggregate gate note, 2026-09-25
+
+A single `node --test packages/ apps/control-plane/ cloud/ scripts/` run did
+not finish inside the 240-second harness limit, in the same way the earlier
+full `pnpm run check` did not. That is negative evidence, not a pass. The
+suites were therefore run in bounded groups instead, each with its own result:
+`packages/workbench` + `packages/policy` + `packages/runtime` 256/256;
+`packages/proxy` + `packages/ledger` 193/193; `apps/control-plane/api` 51/51;
+`cloud` 61 pass / 4 skipped / 0 fail, the 4 being the database-gated cases;
+`apps/control-plane/ui/src` 71/71; `scripts/src/ui-layout.test.mjs` 12/12;
+`scripts/src/companion-fixtures.test.mjs` 7/7; and
+`python/void-transport` 84/84 under `unittest`. Typecheck is clean for
+`apps/control-plane`, its UI, and each of `workbench`, `policy`, `runtime`,
+`proxy` and `ledger`. `packages/cli` is 256/256 in its own bounded run.
+`packages/connectors` was not touched in this wave and its run exceeded the
+same limit on the PGlite fixtures, so no claim is made for it. A one-shot
+whole-tree green is still not claimed.
+
+### Adversarial security pass and four fixes
+
+A read-only adversarial pass over `packages/`, `cloud/`, `apps/control-plane`
+and `policy/` found no defect in the approval-digest binding, the journal
+state machine, workspace isolation, secret redaction, the proxy replay
+boundary, or the connector apply path; those boundaries were read and are
+recorded as confirmed rather than assumed. Three real defects and one
+hardening gap were found; all four are now closed:
+
+1. Cloud tool dispatch short-circuited built-in tools to `allow` without
+   consulting the policy, and the cloud recovery runtime was wired with an
+   unconditional `authorize`. An r1 `void_workspace_write` or
+   `void_workspace_delete` therefore ran with no human in the loop while the
+   signed journal recorded the agent itself as the approver. Both are fixed:
+   every classified tool now takes a real policy decision, and the sink fails
+   closed against an explicit allowlist of authorizing surfaces.
+   `cloud/steps.test.mjs` 5/5 and `cloud/` 54 pass / 4 skipped / 0 fail, with
+   the built-in exemption mutation turning the approval test red.
+2. `Workbench.branch` performed durable managed-document writes through
+   `snapshotDocuments: true` with no permission-mode gate, reachable over HTTP
+   while `/api/capabilities` advertised `documentEditing: false`. Seeding a
+   branch is now gated like every other document mutation; branching without a
+   snapshot still works in read-only mode. The parity test that had pinned the
+   old behaviour now runs in normal mode and asserts the read-only refusal.
+   `packages/workbench` 104/104 and `permission-authority.test.ts` 6/6, with
+   the gate mutation turning the refusal test red.
+3. An absent `VOID_PERMISSION_MODE` resolved to `normal` in the Workbench
+   constructor and to `read-only` in the control plane, through two unrelated
+   literals. Both defaults are now named constants with a test, so the
+   deliberate difference is reviewable.
+
+A fourth, informational hardening gap from the same pass is now closed: the
+cloud approval hold identifier is derived from public session counters and its
+decision route had no possession factor, unlike
+`packages/policy/src/approvals.ts`. A hold now carries an unguessable token
+minted with 24 random bytes, and a decision that does not present it is `403`.
+`cloud/steps.test.mjs` 5/5, `cloud/` 54 pass / 4 skipped / 0 fail, with a
+constant-token and non-timing-safe mutation turning the test red. This crossed
+no live privilege boundary, because every cloud route already requires the
+same control token, but it removes the one approval surface that relied on a
+guessable identifier alone.
+
+### Windows source audit
+
+The `cfg(windows)` workspace-key path was audited against the documented Win32
+contract and needs no change: `CredWriteW` takes persistence from the
+`Persist` member, `Flags` accepts only `0` or `CRED_PRESERVE_CREDENTIAL_BLOB`,
+and `CRED_PERSIST_LOCAL_MACHINE` is visible only to other logon sessions of the
+same user on the same computer, which matches the per-user macOS keychain item.
+Home-edition support is unverified, and `load_or_create` fails closed with an
+explicit restore message if a key ever becomes unavailable, so a persistence
+downgrade is an availability failure rather than silent key loss. The
+`#[cfg(all(test, windows))]` tests cannot run on a macOS host and no
+`x86_64-pc-windows-msvc` target is installable here, so the Windows code stays
+source-inspected. P10.09 is unchanged. See `docs/WINDOWS-DESKTOP.md`.
 
 ## Distribution and retained-format rules
 
@@ -120,11 +254,11 @@ Every row starts open. A gate labels what must be run or witnessed for that requ
 | P08.05 | Expose privacy/support/release notes and explicit export/delete/reset choices consistent with retained signed evidence. | Desktop/UI | Open: desktop new-user flow + diagnostic secret-exclusion tests. |
 | P08.06 | Fix outdated provider bootstrap instructions and stale beta download links. Store builds use Store updates; direct builds may initially use a verified release link rather than a new updater framework. | Desktop/UI | Open: desktop new-user flow + diagnostic secret-exclusion tests. |
 | P09.01 | Test fresh install, supported upgrade, rollback/unsupported-newer-format refusal and uninstall/reinstall behavior without accidental key/data loss. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. Partial 2026-09-25 evidence: the live harness ran each scenario against a fresh `mkdtemp` data directory, so fresh-state behaviour is covered, and a real inverse undo was applied in S-08. Not covered: install, upgrade, rollback, unsupported-newer-format refusal and uninstall/reinstall on a packaged artifact. No key or data-loss claim is made for an installed build. |
-| P09.02 | Execute normal and negative recovery journeys through actual desktop, mobile bridge and configured MCP transports in isolated environments. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. Partial 2026-09-25 evidence: the live harness ran normal and negative recovery journeys over the real control-plane API including confirmation-gated undo with a genuine inverse (S-08), and a live CLI journey ran 43 scenarios against the real `void.mjs recovery` binary covering health, inspect, digest-bound execute, key availability, plan/apply, journal tampering, retained-key loss, backup create/verify and an isolated backup restore (L-01 to L-09). The CLI suites cover the MCP stdio path. Not covered: the desktop packaged app, and any mobile-bridge or paired-phone transport; `device.revoke`, `operation.status` and `diagnostics.read` have no server route, so revocation and device/workspace scope are unverified at runtime. |
+| P09.02 | Execute normal and negative recovery journeys through actual desktop, mobile bridge and configured MCP transports in isolated environments. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. Partial 2026-09-25 evidence: the live harness ran normal and negative recovery journeys over the real control-plane API including confirmation-gated undo with a genuine inverse (S-08), and a live CLI journey ran 43 scenarios against the real `void.mjs recovery` binary covering health, inspect, digest-bound execute, key availability, plan/apply, journal tampering, retained-key loss, backup create/verify and an isolated backup restore (L-01 to L-09). The CLI suites cover the MCP stdio path. Added the same day: the companion surface now has 20 tests over the real control-plane HTTP server, so runtime revocation, device scope and workspace scope are no longer unverified. They cover pairing issuing a one-time credential that is never stored or repeated, the protocol's eight-device-per-workspace cap, the exact response shapes, a fail-closed 404 for an unprovable operation identity, fail-closed auth for missing, wrong, expired and revoked credentials, a read-only device refused a mutation, a device refused another device's revoke, idempotent revocation that keeps the dispatched effect readable, a second workspace seeing neither data nor credential, redacted and bounded diagnostics, cross-site refusal, the frozen outcome vocabulary, and a full `void.companion.v1` envelope round-trip whose live responses are validated by the frozen `validateCompanionFixture`. Still not covered: the desktop packaged app, and any paired-phone journey over a real transport with TLS. `swift test` for the Apple client is a macOS-host run against in-process transport doubles, so the envelope is proven against the server, not across a network. |
 | P09.03 | Test offline, revoked token, missing key, corrupted artifact, full storage, executor crash before/after dispatch and before/after recovery receipt. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. Partial 2026-09-25 evidence: missing, wrong and short credentials were refused with 403 (S-10); unknown, digest-mismatched and unapproved applies were refused with 409 without mutation (S-06, S-07); a stale plan could not overwrite a human edit (S-07); a missing key, a wrong key, a forged approval digest and a forged plan digest each failed closed without mutating the file (L-03, L-04, L-05); a deleted retained signing key was refused with a stable message and never silently regenerated (L-07); a forged journal line turned health and plan unsafe until the original history was restored (L-06); backup verification returned `history_unanchored`, `history_incomplete` and `missing_artifact` for a wrong or missing anchor, a tampered journal and a deleted vault artifact (L-08); a denied operation identity stayed consumed (L-03); and `packages/runtime` `recovery-crash` plus `persistence-fault` pass 36/36 across injected ENOSPC and SIGKILL. Not covered: real mid-stream revocation, genuinely full storage, a physically killed executor, and any power loss. |
-| P09.04 | Verify no secret/content leaks in exported diagnostics, logs, build artifacts, crash reports or screenshots. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. Partial 2026-09-25 evidence: sentinel private and API keys never appeared in ledger-verify, capabilities or provider error responses (S-12); the Rust startup-log allowlist passes 6/6; the Swift package bounds and redacts diagnostic identifiers and message content. Not covered: exported diagnostics, logs, build artifacts, crash reports or screenshots taken from an exact packaged build. |
+| P09.04 | Verify no secret/content leaks in exported diagnostics, logs, build artifacts, crash reports or screenshots. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. Partial 2026-09-25 evidence: sentinel private and API keys never appeared in ledger-verify, capabilities or provider error responses (S-12); the Rust startup-log allowlist passes 6/6; the Swift package bounds and redacts diagnostic identifiers and message content. Added the same day: the companion diagnostics surface is proven to refuse a sentinel credential and a home-directory path, caps the page at 100 entries and the summary at 320 characters counted in whole code points so an astral character cannot push it one unit over the frozen bound, and every live response body is additionally run through the frozen fixture field, bound and allowlist predicates. Still not covered: exported diagnostics, logs, build artifacts, crash reports or screenshots taken from an exact packaged build. |
 | P09.05 | Test real provider streaming in an explicitly authorized bounded-cost sandbox. Without credentials/budget, leave that gate open; fixtures cannot close it. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. No provider sandbox, credential or budget was authorized, so no real provider streaming run is claimed. Fixture and stream-unit coverage cannot close this gate. |
-| P09.06 | Run VoiceOver and physical keyboard tests, true 200% desktop zoom, iPhone/iPad safe areas, rotation, Dynamic Type and background lifecycle. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. The 2026-09-25 simulator run covered 9 `VOIDTests` cases and 6 `VOIDUITests` cases, but those 6 UI cases are navigation, copy and accessibility-label assertions only; they do not run VoiceOver, a physical keyboard, 200% zoom, safe-area checks, rotation, Dynamic Type or a background/foreground lifecycle pass, so this gate is untouched. |
+| P09.06 | Run VoiceOver and physical keyboard tests, true 200% desktop zoom, iPhone/iPad safe areas, rotation, Dynamic Type and background lifecycle. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. The 2026-09-25 simulator run now covers 9 `VOIDTests` and 8 `VOIDUITests` cases, and the web gate `scripts/src/ui-layout.test.mjs` covers 69 desktop and 55 mobile tab stops with a measured focus ring, reduced motion collapsing 12 animated elements to 0, and mobile touch targets. Those are still synthetic: a real Tab in a headless browser is not a physical keyboard, emulated 200% zoom is not browser zoom, and a simulator is not a device. VoiceOver, physical keyboard, true browser zoom, iPhone/iPad safe areas, rotation, Dynamic Type and background lifecycle remain untested, so this gate stays open. |
 | P09.07 | Validate performance/load budgets and record machine/device/network details. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. The 2026-09-25 simulator build, install and launch were not an instrumented performance run. The recorded transport load result under P02.06 is a relay bound, not this gate, and no device or network profile was captured. |
 | P10.01 | Coordinate marketing version 1.0.1, monotonically increasing Apple build numbers and source/binary provenance. Do not bump unrelated package compatibility blindly. | Release operator/product | Source-inspected and contract-tested: `apps/desktop/package.json`, `apps/desktop/src-tauri/Cargo.toml`, `apps/desktop/src-tauri/Cargo.lock` and `apps/desktop/src-tauri/tauri.conf.json` intentionally agree on local candidate `1.0.1`; `apps/desktop/release.test.mjs` verifies those sources. The Apple project metadata remains `MARKETING_VERSION=1.0.1` and `CURRENT_PROJECT_VERSION=1`. The bundled Node runtime remains separately pinned to `24.21.0`; root and unrelated workspace package versions are intentionally unchanged. No exact committed source/binary provenance, clean-tree record, or approved Apple build number is recorded. |
 | P10.02 | Freeze persisted-format migration/backup documentation and test upgrade from advertised prior versions. | Release operator/product | Source-inspected: `docs/RECOVERY-CONTRACT.md` documents current journal/vault formats and the complete stopped-executor backup; `scripts/src/recovery-backup.mjs` documents SQLite online backup, WAL manifest contents, and verification categories. No supported prior-version source, old-to-new upgrade fixture, or downgrade guarantee is advertised; those remain blockers. |
@@ -183,14 +317,14 @@ Every row starts open. A gate labels what must be run or witnessed for that requ
 | D03.28 | Guided first safe action and checklist progress. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
 | D03.29 | Version/about/update information and release notes. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
 | D03.30 | Diagnostics preview/export, privacy/support links and data management. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
-| D04.01 | Mac: chat, overview, conversations, runs, documents, approvals, ledger, connections, models, settings and public demo. Include search, detail views, paging, export and all dialogs. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
-| D04.02 | iPhone: onboarding/pairing, workspace/session selection, chat, activity, approval/recovery detail, documents and settings/device management. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
-| D04.03 | iPad: sidebar plus chat/detail, resizable/multitasking layouts, inspector, keyboard shortcuts and pointer interactions. Do not simply stretch the phone layout. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
-| D04.04 | Preserve drafts, IME, attachment removal, stream/cancel, status truth and focus when moving components. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
-| D04.05 | Capture actual built screens in both themes and English/Czech with long realistic content, not only component previews. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
-| D04.06 | Web viewport matrix:320x568,390x844,430x932,768x1024,834x1112,1024x768,1280x800,1440x900 and short landscape. Native matrix includes supported physical iPhone/iPad classes, orientation, larger text and keyboard. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
-| D04.07 | Keep basic320x568 transcript>=200px and ordinary desktop transcript>=60% work area. Test stacked notices/tool/attachments and long draft; Send/Stop must remain reachable. Keyboard-visible tiny viewports prioritize accessible composer, with transcript shrink explicitly measured rather than a physically impossible fixed height promise. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
-| D04.08 | Verify real keyboard focus, VoiceOver, contrast, target sizes, reduced motion, zoom and app resume. Screenshot comparison supplements interaction tests, not replaces them. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
+| D04.01 | Mac: chat, overview, conversations, runs, documents, approvals, ledger, connections, models, settings and public demo. Include search, detail views, paging, export and all dialogs. | UI QA/product | Routes measured on the 2026-09-25 build: `/chat`, `/overview`, `/runs`, `/documents`, `/approvals`, `/ledger`, `/connections`, `/models`, `/settings` and `/demo` all exist and are server-served. The "conversations" destination is `/sessions`, named "Konverzace / Conversations" in the sidebar (`main.tsx:92`); `/conversations` is a genuine 404 and was not invented into existence. Still open: per-route search, detail views, paging, export and dialogs were not individually exercised, and the public demo settles on "Demo is currently unavailable" when the fixture origin has no `/api/demo`. |
+| D04.02 | iPhone: onboarding/pairing, workspace/session selection, chat, activity, approval/recovery detail, documents and settings/device management. | UI QA/product | Partly closed by the 2026-09-25 simulator matrix, partly not built. `xcodebuild test` on iPhone 18 Pro and iPad Pro 11-inch (M5), iOS 27.0, Xcode 27.0: `VOIDUITests` 8/8 and `VOIDTests` 9/9 on both device classes. Screenshots in `tmp/apple-ui-matrix/screenshots/` (iPhone and iPad, English and Czech, light and dark). Present: onboarding `OnboardingView.swift:3`, pairing card `:104-125`, activity `SessionsView` `:199-247`, settings `SessionDetailView.swift:36-75`. Not implemented, so no run can close them: workspace selection (no picker exists), session selection (read-only list, two hardcoded rows `AppModel.swift:71-77`), chat (no composer anywhere under `apps/apple`), documents, approval or recovery actions, and device management (the only control, `SessionDetailView.swift:56-60`, is disabled because `connectionState` never becomes `paired`). The pairing CTA is intentionally disabled: `canPair` is false in every state of this build. |
+| D04.03 | iPad: sidebar plus chat/detail, resizable/multitasking layouts, inspector, keyboard shortcuts and pointer interactions. Do not simply stretch the phone layout. | UI QA/product | Partly closed. `NavigationSplitView` sidebar plus detail at `RootView.swift:15-27` with the sidebar at `:45-74`, and a real `horizontalSizeClass == .regular` split view, captured on an iPad Pro 11-inch (M5) simulator. Not implemented: inspector, keyboard shortcuts (no `keyboardShortcut` in the target), and chat detail. Pointer interaction is not verifiable on this machine; `simctl` has no mouse event injection. |
+| D04.04 | Preserve drafts, IME, attachment removal, stream/cancel, status truth and focus when moving components. | UI QA/product | Measured 2026-09-25 in headless Chromium over the built bundle: a draft survives both a route change (`/chat/<id>` to `/settings` and back) and an in-place sidebar collapse with its exact text intact; IME composition inserts characters with no submit and no loss; attachments add and remove. One defect was found and fixed: pressing Stop unmounted the focused button and dropped focus to `document.body`, so `stopRun` now returns focus to the composer in its `finally`. Reverting that fix turns the gate red. |
+| D04.05 | Capture actual built screens in both themes and English/Czech with long realistic content, not only component previews. | UI QA/product | Web closed 2026-09-25: light/en, light/cs, dark/en and dark/cs each render 2430-2542 characters with a 589px transcript, zero overflow, a visible composer and no error boundary; the public demo renders the same four combinations on its own server with the correct "From idea. Back anytime." and "Od nápadu. Zpět kdykoliv." headings, and the demo is clean across all nine viewports. The native app is a missing gate, not merely open: it has no theme control at all, with zero `colorScheme` or `preferredColorScheme` occurrences in `apps/apple/VOIDApp`, only `.tint(.orange)`. A system-level `simctl ui <udid> appearance dark` does repaint the app and both variants were captured, but the row needs a real in-app theme preference and a theme-parameterised UI test before any run can close the native part. |
+| D04.06 | Web viewport matrix:320x568,390x844,430x932,768x1024,834x1112,1024x768,1280x800,1440x900 and short landscape. Native matrix includes supported physical iPhone/iPad classes, orientation, larger text and keyboard. | UI QA/product | Web closed 2026-09-25 with a real three-exchange conversation carrying a heading, a table and a code block. All nine viewports report `scrollWidth == clientWidth`, so horizontal overflow is zero everywhere, and Send is reachable at all nine. Native part stays open: it needs physical iPhone/iPad classes, orientation changes, larger text and a hardware keyboard. |
+| D04.07 | Keep basic320x568 transcript>=200px and ordinary desktop transcript>=60% work area. Test stacked notices/tool/attachments and long draft; Send/Stop must remain reachable. Keyboard-visible tiny viewports prioritize accessible composer, with transcript shrink explicitly measured rather than a physically impossible fixed height promise. | UI QA/product | Closed 2026-09-25 with measured pixels: 320x568 transcript 372px of 520px work area (71.5%), 390x844 648/796 (81.4%), 430x932 736/884 (83.3%), 768x1024 813/976 (83.3%), 834x1112 901/1064 (84.7%), 1024x768 557/720 (77.4%), 1280x800 589/752 (78.3%), 1440x900 689/852 (80.9%). The stacked case at 320x568 with a 14-line draft and an attachment measured transcript 254px, notices 80px, attachments 56px, Send still reachable and the attachment removable. A keyboard-sized 667x375 measured 179px and 54.7%, which is reported rather than promised away, exactly as this row allows. |
+| D04.08 | Verify real keyboard focus, VoiceOver, contrast, target sizes, reduced motion, zoom and app resume. Screenshot comparison supplements interaction tests, not replaces them. | UI QA/product | Web closed 2026-09-25 with a browser gate, `scripts/src/ui-layout.test.mjs` 12/12: 69 desktop and 55 mobile tab stops, none without a solid outline of at least 2px; the composer textarea measured with a real Tab at 1280x800 and 390x844 shows a solid 2px ring in the app's own `--focus` token with `:focus-visible` true; 12 animated elements normally and 0 under `prefers-reduced-motion: reduce`; no sub-44px touch target on mobile except the visually hidden file input, and none at all in settings at 390x844. One real defect was found and fixed: the composer textarea had no visible focus ring, because `.composer textarea { outline: none }` outranked `:focus-visible` and the halo painted the canvas colour on the canvas colour; a real `:focus-visible` rule reusing the existing token and the existing 2px value was added. Reverting it turns the gate red. Contrast was not measured numerically and app resume was not exercised. On the native side, `VOIDUITests` asserts `accessibilityLabel` on two surfaces, `isHittable` on two, `isEnabled` on four, a 44-point minimum target height on four, a non-zero on-screen frame on four, zero credential fields on three, and that an activity row is announced as one combined element. Still missing there: VoiceOver focus order, measured contrast, reduced motion, zoom and app resume. The `accessibilityIdentifier` values `activity.settings` and `sidebar.settings` are defined in the app but referenced by no test, so they are dead metadata. |
 | D04.09 | User approves proposed stack/platform floors, initial connectivity scope and exclusions. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
 | D04.10 | Every milestone has dependencies, bounded deliverable and observable acceptance. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
 | D04.11 | Requirements map covers Mac, iPhone, iPad, pairing, recovery, diagnostics, privacy, signing, tests, beta and rollback. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |

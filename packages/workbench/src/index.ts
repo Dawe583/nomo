@@ -34,6 +34,7 @@ import {
   type RunState,
   type PermissionMode,
   serverPermissionMode,
+  DEFAULT_LOCAL_PERMISSION_MODE,
 } from "./gui.ts";
 import {
   validateAgentProfile,
@@ -271,7 +272,7 @@ export class Workbench {
     env: Readonly<NodeJS.ProcessEnv> = process.env,
     fetcher: typeof fetch = fetch,
   ) {
-    this.permissionMode = serverPermissionMode(env.VOID_PERMISSION_MODE ?? "normal");
+    this.permissionMode = serverPermissionMode(env.VOID_PERMISSION_MODE ?? DEFAULT_LOCAL_PERMISSION_MODE);
     this.keyStorage = env.VOID_WORKSPACE_KEY
       ? "os-keychain"
       : "encrypted-local";
@@ -1262,7 +1263,11 @@ export class Workbench {
       };
       this.sessions.set(childId, child);
       this.documents[workspace] = createWorkspace();
-      if (body.snapshotDocuments)
+      if (body.snapshotDocuments) {
+        // Seeding the child workspace is a durable document write, so it obeys
+        // the same server permission mode as every other managed-document
+        // mutation. Branching itself only creates session state and therefore
+        this.assertNormalMutation("branch document snapshot");
         for (const [path, content] of Object.entries(
           this.workspace(id).files,
         )) {
@@ -1274,6 +1279,7 @@ export class Workbench {
             { by: "web-operator" },
           );
         }
+      }
       for (const e of messages)
         this.event(child, e.kind, e.text, {
           importedFrom: id,

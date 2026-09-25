@@ -22,10 +22,10 @@ the `VOID` project and its schemes, a Release `iphonesimulator` build of the
 `VOID` scheme succeeded, and the built product installed and launched on an
 iPad Pro 11-inch (M5) simulator. That product is ad-hoc signed with no team
 identifier, no entitlements and no app icon, so it is simulator evidence only.
-Current source contains 9 `VOIDTests` cases and 6 `VOIDUITests` cases. A
-2026-09-25 simulator test run passed `VOIDTests` 9/9 and
-`VOIDUITests` 6/6 against the current source, replacing the earlier
-historical 6/6 unit figure. The `CompanionProtocolKit` package passes 27/27
+Current source contains 9 `VOIDTests` cases and 8 `VOIDUITests` cases. A
+2026-09-25 simulator test run passed `VOIDTests` 9/9 and `VOIDUITests` 8/8 on
+both an iPhone 18 Pro and an iPad Pro 11-inch (M5), replacing the earlier
+historical 6/6 unit figure. The `CompanionProtocolKit` package passes 33/33
 under `swift test` on a macOS host, which is not an iOS simulator or device
 result. Reserved-vault evidence is 12/12. A `generic/platform=iOS` Release
 build failed the same day for want of a provisioning profile for
@@ -36,6 +36,19 @@ Physical iPhone/iPad install, signed-device, App Store Connect and TestFlight
 evidence remain open. This toolchain inventory does not establish the user's
 account, certificates, provisioning or hardware state.
 
+The later 2026-09-25 wave is recorded in the same matrix under "companion
+transport and adversarial security pass". Three findings that this file's older
+text could not have predicted are now closed: the cloud tool path
+short-circuited built-in managed-document writes to `allow` and passed an
+unconditional authorize to the recovery runtime, so an r1 write ran with no
+human in the loop and the signed journal named the agent as its own approver;
+`Workbench.branch` seeded a child workspace with durable document writes under
+no permission-mode gate; and an absent `VOID_PERMISSION_MODE` resolved through
+two unrelated literals. The first companion transport routes and the
+single-endpoint envelope adapter also landed, and the R12 Python transport
+client now exists. None of that closes an external certification gate: P09.02
+still lacks a paired-phone journey over a real TLS transport, and P10.09 still
+needs a Windows x64/MSVC runner.
 
 - G-01: managed cloud documents have signed operation/job events, artifacts and state in one SQL transaction. This is not a transaction host for arbitrary external tools. Physical network partition testing remains unverified.
 - G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list. Dependency/time/checkpoint selectors, leases and fencing remain open.

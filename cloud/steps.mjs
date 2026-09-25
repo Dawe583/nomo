@@ -1,4 +1,5 @@
 import { mutateCloudDocument } from "./recovery.mjs";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { resolveIntegration } from "./integrations.mjs";
 import { integrationClass } from "./oauth.mjs";
 import { vercelCall } from "./vercel-integration.mjs";
@@ -20,6 +21,39 @@ import { canonicalJson } from "../packages/ledger/src/canonical.ts";
 import { sha256Hex } from "../packages/ledger/src/sign.ts";
 export const CLOUD_POLICY =
   "version: 1\nrules:\n  - match:\n      class: r0\n    decision: allow\n  - match: {}\n    decision: hold\n    seconds: 300\n    notify: [cli]\n";
+
+/**
+ * The policy decision for one cloud tool call.
+ *
+ * Exported so the approval boundary can be tested without a database. A
+ * built-in workspace tool gets no exemption: `void_workspace_write` and
+ * `void_workspace_delete` are r1 and `CLOUD_POLICY` holds everything that is
+ * not r0, so returning `allow` for built-ins would let the agent write managed
+ * documents with no human in the loop and no hold to approve.
+ */
+export function cloudToolDecision(policy, classification, callInfo) {
+  return classification.outcome === "classified"
+    ? decide(policy, callInfo)
+    : { kind: "deny" };
+}
+
+/** A hold identifier is derived from public session counters, so a decision is
+ * only accepted when it also presents the unguessable token minted with the
+ * hold. Comparison is length-checked first because `timingSafeEqual` throws on
+ * a length mismatch. */
+export function holdTokenMatches(record, presented) {
+  const expected = record?.decisionToken;
+  if (typeof expected !== "string" || expected.length === 0) return false;
+  if (typeof presented !== "string" || presented.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(presented), Buffer.from(expected));
+}
+
+/** 24 random bytes, base64url, exactly like the local broker's per-record
+ * token. Never derived from session state, because a hold identifier is
+ * derived from session state. */
+export function mintHoldToken() {
+  return randomBytes(24).toString("base64url");
+}
 const save = (s, c) => write(`session:${s.id}`, s, c);
 export async function advance(id, generation) {
   "use step";
@@ -117,12 +151,7 @@ export async function advance(id, generation) {
           ? { automaticUndo: false, provider: config.oauthProvider }
           : {}),
       };
-      const decision =
-        classification.outcome === "classified"
-          ? tool.builtin
-            ? { kind: "allow" }
-            : decide(policy, callInfo)
-          : { kind: "deny" };
+      const decision = cloudToolDecision(policy, classification, callInfo);
       const body = {
         workspace: s.workspace,
         at: new Date().toISOString(),
@@ -150,10 +179,15 @@ export async function advance(id, generation) {
         await write(
           `hold:${holdId}`,
           {
+            // A hold identifier is derived from public session counters, so the
+            // record also carries an unguessable possession factor, exactly as
+            // `packages/policy/src/approvals.ts` does. The decision route
+            // refuses a decision that does not present it.
             holdId,
             sessionId: s.id,
             call: callInfo,
             expiresAt: Date.now() + decision.seconds * 1000,
+            decisionToken: mintHoldToken(),
             status: "pending",
             notify: [],
           },
@@ -302,6 +336,11 @@ export async function advance(id, generation) {
             "void_workspace_write",
             "void_workspace_delete",
           ].includes(claim.name);
+          // Defence in depth. A managed document write is r1, so the policy
+          // decision above has already parked it behind a human hold. If this
+          // line is ever reached anyway, "cloud-agent" is deliberately absent
+          // from AUTHORIZED_WRITE_SURFACES, so the runtime records `denied`
+          // and dispatches nothing instead of an agent self-approval.
           const transition = managed
             ? await mutateCloudDocument(current, c, input, "cloud-agent")
             : executeWorkspaceTool(state, input);

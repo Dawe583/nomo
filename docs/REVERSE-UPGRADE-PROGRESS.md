@@ -28,6 +28,25 @@ limitation: twelve approval tests require Unix owner-only directory semantics.
 Those checks remain fail-closed; native Windows approval-directory ACL support
 is separate remaining work. No claim of a full Windows CLI suite pass is made.
 
+### Python transport client, 2026-09-25
+
+`python/void-transport` adds the standard library Python client WP-R12 asks
+for. It speaks the same wire as `packages/proxy/src/transport/http.ts` --
+JSON-RPC 2.0 over HTTP POST to one explicit `host:port` -- and refuses rather
+than guesses: a response whose `id` is not the id that was sent, a body over
+the configured limit, an unknown shape, a redirect, and a mutating
+`tools/call` without an idempotency key are all declined, and there is no
+silent retry. Its canonical JSON is checked against the repository's own
+`packages/ledger/src/canonical.ts` running under `node`, comparing canonical
+text, exact UTF-8 bytes and the `sha256:<hex>` digest over a shared corpus
+that includes Unicode, empty containers and the JavaScript number
+boundaries. The integration tests spawn the real relay: `createHttpRequestRelay`
+from `packages/proxy/src/relay/http-requests.ts` bound to a loopback port, with
+`void recovery serve` behind it as the real MCP server. The client has no TLS
+or certificate pinning, verifies no ledger, runs no replay, and covers no
+provider behaviour, so provider certification and the broader capability
+profiles remain open R12 work.
+
 This tracks REVERSE-TOOL-UPGRADE-PLAN.md. No full milestone is declared complete
 by the existence of a prototype or a narrow passing test.
 
@@ -44,7 +63,7 @@ by the existence of a prototype or a narrow passing test.
 | R09     | Existing OAuth layer retained                                                                                                                                          | GitHub/Vercel executable recovery adapters and real sandbox conformance                                                                |
 | R10     | Local daily workspace/per-agent reservations; concurrent/restart test                                                                                                  | Cloud accounting, modes, approvals integration and full reservation fault matrix                                                       |
 | R11     | Not started                                                                                                                                                            | Staged graph, cancellation, barriers and restart semantics                                                                             |
-| R12     | Executable adapter interface, managed TS SDK, reusable conformance runner and filesystem command/profile                                                               | Python transport client, provider-specific fixtures and broader capability certification                                               |
+| R12     | Executable adapter interface, managed TS SDK, reusable conformance runner, filesystem command/profile, and a standard-library Python transport client whose canonical JSON is checked against the repository's own                                                     | Provider-specific fixtures and broader capability certification                                                                       |
 | R13     | Local MCP entry point with operator identity/policy                                                                                                                    | OpenCode doctor/init, authenticated remote executor, managed egress boundary                                                           |
 | R14     | Coverage, runbook, scoped validation evidence                                                                                                                          | Export bundles/checkpoint completeness, metrics, operational certification                                                             |
 

@@ -65,7 +65,6 @@ private struct EntrySidebar: View {
 private struct EntryConnectionView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @State private var showingPairingUnavailable = false
 
     let copy: AppCopy
     @Binding var language: String
@@ -111,14 +110,17 @@ private struct EntryConnectionView: View {
                     .foregroundStyle(.secondary)
 
                 Button {
-                    showingPairingUnavailable = true
+                    // Pairing cannot run in this build, and the reason is
+                    // already on screen. An alert that can only ever confirm
+                    // the same sentence is dead weight, and it would be
+                    // unreachable anyway: the button is disabled whenever
+                    // `canPair` is false, which is every state in this build.
                 } label: {
                     Text(copy.connectMac)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .disabled(!model.canPair)
-                .accessibilityHint(copy.pairingUnavailable)
 
                 Text(copy.pairingUnavailable)
                     .font(.footnote)
@@ -147,11 +149,6 @@ private struct EntryConnectionView: View {
             .frame(maxWidth: 720, alignment: .leading)
             .frame(maxWidth: .infinity)
             .padding(24)
-        }
-        .alert(copy.pairingUnavailableTitle, isPresented: $showingPairingUnavailable) {
-            Button(copy.ok, role: .cancel) {}
-        } message: {
-            Text(copy.pairingUnavailable)
         }
     }
 }

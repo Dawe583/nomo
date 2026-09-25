@@ -137,8 +137,12 @@ public struct CompanionHTTPClient: Sendable {
     public static let maxRequestBytes = 65_536
     public static let maxResponseBytes = 1_048_576
 
+    /// Pairing is here because it issues a device credential: it is a mutation
+    /// even though it is the one call an unpaired device may make, and it
+    /// carries the same stable idempotency key across retries.
     private static let mutatingOperations: Set<String> = [
-        "session.create", "session.send", "session.cancel", "approval.decide", "recovery.apply", "device.revoke"
+        "session.create", "session.send", "session.cancel", "approval.decide", "recovery.apply", "device.revoke",
+        CompanionPairingRequest.operation,
     ]
     private let transport: any HTTPTransport
     private let encoder: JSONEncoder
@@ -149,6 +153,15 @@ public struct CompanionHTTPClient: Sendable {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         self.encoder = encoder
+    }
+
+    /// The identity a response must echo. A credentialed operation has to see
+    /// its own device and workspace back, because the server derives both from
+    /// the credential and any other value would be a different authority.
+    /// Pairing has none to see, so its echo is checked for boundedness instead.
+    private enum ExpectedIdentity {
+        case credentialed(deviceId: String, workspaceId: String)
+        case pairing
     }
 
     public func send(
@@ -165,7 +178,12 @@ public struct CompanionHTTPClient: Sendable {
               companionRequest.sessionId.map(Self.isBoundedID) ?? true,
               Self.isBoundedID(companionRequest.operation),
               Self.isBoundedID(companionRequest.idempotencyKey ?? "read"),
-              Self.validateEnvelope(companionRequest) else {
+              Self.validateEnvelope(
+                  issuedAt: companionRequest.issuedAt,
+                  expiresAt: companionRequest.expiresAt,
+                  bodyDigest: companionRequest.bodyDigest,
+                  body: companionRequest.body
+              ) else {
             throw CompanionHTTPError.invalidRequest
         }
         let body = try encoder.encode(companionRequest)
@@ -173,6 +191,58 @@ public struct CompanionHTTPClient: Sendable {
         if Self.mutatingOperations.contains(companionRequest.operation), companionRequest.idempotencyKey?.isEmpty != false {
             throw CompanionHTTPError.invalidRequest
         }
+        return try await perform(
+            body,
+            expected: .credentialed(deviceId: companionRequest.deviceId, workspaceId: companionRequest.workspaceId),
+            requestId: companionRequest.requestId,
+            operationId: companionRequest.operationId,
+            operation: companionRequest.operation,
+            authorizationProvider: authorizationProvider
+        )
+    }
+
+    /// `device.pair` is sent without a device and a workspace, because an
+    /// unpaired device has neither and the executor derives both. No
+    /// authorization provider is accepted: there is no credential to present,
+    /// and presenting one would be the only way to make a pairing answer look
+    /// like an authenticated one.
+    public func pair(_ pairingRequest: CompanionPairingRequest) async throws -> CompanionResponse {
+        guard pairingRequest.protocolIdentifier == CompanionProtocol.identifier,
+              pairingRequest.schemaVersion == CompanionProtocol.schemaVersion,
+              pairingRequest.kind == "request",
+              pairingRequest.operation == CompanionPairingRequest.operation,
+              Self.isBoundedID(pairingRequest.requestId),
+              Self.isBoundedID(pairingRequest.operationId),
+              Self.isBoundedID(pairingRequest.idempotencyKey),
+              Self.mutatingOperations.contains(pairingRequest.operation),
+              Self.validateEnvelope(
+                  issuedAt: pairingRequest.issuedAt,
+                  expiresAt: pairingRequest.expiresAt,
+                  bodyDigest: pairingRequest.bodyDigest,
+                  body: pairingRequest.body
+              ) else {
+            throw CompanionHTTPError.invalidRequest
+        }
+        let body = try encoder.encode(pairingRequest)
+        guard body.count <= Self.maxRequestBytes else { throw CompanionHTTPError.invalidRequest }
+        return try await perform(
+            body,
+            expected: .pairing,
+            requestId: pairingRequest.requestId,
+            operationId: pairingRequest.operationId,
+            operation: pairingRequest.operation,
+            authorizationProvider: nil
+        )
+    }
+
+    private func perform(
+        _ body: Data,
+        expected: ExpectedIdentity,
+        requestId: String,
+        operationId: String,
+        operation: String,
+        authorizationProvider: (@Sendable () async throws -> String?)?
+    ) async throws -> CompanionResponse {
         var request = URLRequest(url: transport.boundEndpoint)
         request.httpMethod = "POST"
         request.httpBody = body
@@ -182,6 +252,11 @@ public struct CompanionHTTPClient: Sendable {
         }
         do {
             let (data, response) = try await transport.data(for: request)
+            // `outcome` is the single discriminator. A receipt and the error
+            // that explains it are both legal, and the frozen `conflict`
+            // fixture pairs them, so their presence together is not ambiguity.
+            // What is not legal is a success that carries an error, or one that
+            // arrives without the evidence a client would store as the result.
             guard let httpResponse = response as? HTTPURLResponse,
                   (200..<300).contains(httpResponse.statusCode) || (400..<500).contains(httpResponse.statusCode),
                   httpResponse.statusCode == 200 || httpResponse.statusCode == 201 || httpResponse.statusCode == 202 || (400..<500).contains(httpResponse.statusCode),
@@ -190,17 +265,27 @@ public struct CompanionHTTPClient: Sendable {
             }
             let decoded: CompanionResponse
             do { decoded = try decoder.decode(CompanionResponse.self, from: data) } catch { throw CompanionHTTPError.invalidResponse }
+            // The envelope identity is checked before the payload, because an
+            // answer for another request is never this request's result, and
+            // reading its body first would be reading somebody else's receipt.
             guard decoded.protocolIdentifier == CompanionProtocol.identifier,
                   decoded.schemaVersion == CompanionProtocol.schemaVersion,
                   decoded.kind == "response",
                   decoded.httpStatus == httpResponse.statusCode,
                   (100...599).contains(decoded.httpStatus),
-                  !(decoded.body != nil && decoded.error != nil),
-                  decoded.requestId == companionRequest.requestId,
-                  decoded.operationId == companionRequest.operationId,
-                  decoded.operation == companionRequest.operation,
-                  decoded.deviceId == companionRequest.deviceId,
-                  decoded.workspaceId == companionRequest.workspaceId else { throw CompanionHTTPError.identityMismatch }
+                  decoded.requestId == requestId,
+                  decoded.operationId == operationId,
+                  decoded.operation == operation else { throw CompanionHTTPError.identityMismatch }
+            switch expected {
+            case .credentialed(let deviceId, let workspaceId):
+                guard decoded.deviceId == deviceId, decoded.workspaceId == workspaceId else { throw CompanionHTTPError.identityMismatch }
+            case .pairing:
+                guard decoded.deviceId.map(Self.isBoundedID) ?? true,
+                      decoded.workspaceId.map(Self.isBoundedID) ?? true else { throw CompanionHTTPError.identityMismatch }
+            }
+            guard !(decoded.outcome == .succeeded && decoded.error != nil),
+                  !(decoded.outcome == .succeeded && decoded.body == nil) else { throw CompanionHTTPError.invalidResponse }
+            if case .pairing = expected { try Self.validatePairingReceipt(decoded) }
             return decoded
         } catch let error as CompanionHTTPError {
             throw error
@@ -209,13 +294,28 @@ public struct CompanionHTTPClient: Sendable {
         }
     }
 
-    private static func validateEnvelope(_ request: CompanionRequest) -> Bool {
-        guard Self.isLowercaseSHA256(request.bodyDigest),
-              Self.digest(request.body) == request.bodyDigest,
-              request.issuedAt.hasSuffix("Z"),
-              request.expiresAt.hasSuffix("Z"),
-              let issued = parseUTC(request.issuedAt),
-              let expires = parseUTC(request.expiresAt) else { return false }
+    /// A pairing that reports success has to carry the credential it issued. A
+    /// success without one is a receipt the client cannot store, so it is
+    /// refused here instead of being handed to a caller as a paired device.
+    private static func validatePairingReceipt(_ response: CompanionResponse) throws {
+        guard response.outcome == .succeeded else { return }
+        guard case .object(let fields)? = response.body,
+              case .string(let deviceId)? = fields["deviceId"], isBoundedID(deviceId),
+              case .string(let token)? = fields["deviceToken"], token.count >= 32, token.count <= 128,
+              case .string(let expiresAt)? = fields["expiresAt"], parseUTC(expiresAt) != nil else {
+            throw CompanionHTTPError.invalidResponse
+        }
+    }
+
+    /// The window and digest rules every request shares, whether it carries a
+    /// device identity or mints one.
+    private static func validateEnvelope(issuedAt: String, expiresAt: String, bodyDigest: String, body: JSONValue) -> Bool {
+        guard isLowercaseSHA256(bodyDigest),
+              digest(body) == bodyDigest,
+              issuedAt.hasSuffix("Z"),
+              expiresAt.hasSuffix("Z"),
+              let issued = parseUTC(issuedAt),
+              let expires = parseUTC(expiresAt) else { return false }
         return issued < expires
     }
 
