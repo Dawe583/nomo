@@ -23,9 +23,13 @@ type Harness = {
   readonly close: () => Promise<void>;
 };
 
-async function startHarness(workspace = "alpha", dataDir?: string): Promise<Harness> {
+async function startHarness(workspace = "alpha", dataDir?: string, extraEnv: Record<string, string> = {}): Promise<Harness> {
   const directory = dataDir ?? await mkdtemp(join(tmpdir(), "void-companion-"));
-  const server: ListenHandle = await listenControlPlane({ env: { VOID_DATA_DIR: directory, VOID_WORKSPACE: workspace } });
+  // The write scope is an operator decision, so the harness that exercises it
+  // opts in explicitly, the way a host operator would.
+  const server: ListenHandle = await listenControlPlane({
+    env: { VOID_DATA_DIR: directory, VOID_WORKSPACE: workspace, VOID_COMPANION_WRITE_PAIRING: "1", ...extraEnv },
+  });
   return {
     origin: `http://127.0.0.1:${server.port}`,
     dataDir: directory,
@@ -505,4 +509,25 @@ test("operation status refuses a request body that names a different operation",
   assert.equal(await statusWith(JSON.stringify({ operationId: "op-other" })), 400);
   assert.equal(await statusWith(JSON.stringify({ operationId: "op-bound-identity", extra: true })), 400);
   assert.equal(await statusWith("not json"), 400);
+});
+
+test("a caller cannot grant itself the write scope; the host operator decides", async t => {
+  // No VOID_COMPANION_WRITE_PAIRING here: the default is read-only, so a
+  // request for the write scope is refused rather than silently downgraded.
+  const harness = await startHarness("alpha", undefined, { VOID_COMPANION_WRITE_PAIRING: "0" });
+  t.after(() => harness.close());
+
+  const refused = await pairRequest(harness, { label: "self-promoted", scopes: ["companion:read", "companion:write"] });
+  assert.equal(refused.status, 400);
+  assert.deepEqual(await refused.json(), { error: "invalid_pairing" });
+
+  // The same request for read only is granted, so the refusal is about the
+  // write scope and not about pairing.
+  const granted = await pair(harness, [readScope], "ordinary device");
+  assert.deepEqual(granted.scopes, [readScope]);
+
+  // A read-only device still cannot mutate, which is the property the write
+  // scope would otherwise have bought.
+  const revoke = await revokeRequest(harness, granted.deviceId, granted.deviceToken);
+  assert.equal(revoke.status, 403);
 });

@@ -140,6 +140,10 @@ All notable user-facing changes since the first repository commit.
   different body. A replayed pairing is refused with a conflict instead of
   minting a second device, and its one-time credential is never written to disk
   to make a retry cheap. The handshake now lists what it does not enforce.
+- Stop letting a pairing caller grant itself `companion:write`. The write scope
+  is the host operator's decision now, refused unless the host configured
+  `VOID_COMPANION_WRITE_PAIRING=1` and refused rather than quietly downgraded,
+  so a client never believes it holds an authority it does not.
 
 - d125b7e9: Restored the product baseline from upstream history.
 - 9ef84fe2: Synchronized the product branch with upstream history.

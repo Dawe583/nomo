@@ -25,9 +25,13 @@ const implementation = { server: "pending", apple: "pending", transport: "pendin
 
 type Harness = { readonly origin: string; readonly dataDir: string; readonly close: () => Promise<void> };
 
-async function startHarness(workspace = "alpha"): Promise<Harness> {
+async function startHarness(workspace = "alpha", extraEnv: Record<string, string> = {}): Promise<Harness> {
   const directory = await mkdtemp(join(tmpdir(), "void-envelope-"));
-  const server: ListenHandle = await listenControlPlane({ env: { VOID_DATA_DIR: directory, VOID_WORKSPACE: workspace } });
+  // The write scope is an operator decision, so the harness that exercises it
+  // opts in the way a host operator would.
+  const server: ListenHandle = await listenControlPlane({
+    env: { VOID_DATA_DIR: directory, VOID_WORKSPACE: workspace, VOID_COMPANION_WRITE_PAIRING: "1", ...extraEnv },
+  });
   return {
     origin: `http://127.0.0.1:${server.port}`,
     dataDir: directory,

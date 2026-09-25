@@ -53,6 +53,15 @@ function deviceFile(env: Readonly<NodeJS.ProcessEnv>): string {
   return join(companionDirectory(env), "devices.json");
 }
 
+/** Whether the host operator has authorised new devices to carry the write
+ * scope. It is the operator's decision, never the caller's, so it is host
+ * configuration and defaults to off. With it off, pairing mints read-only
+ * devices and a request for the write scope is refused rather than silently
+ * downgraded. */
+export function pairingGrantsWrite(env: Readonly<NodeJS.ProcessEnv>): boolean {
+  return env.VOID_COMPANION_WRITE_PAIRING === "1";
+}
+
 function parseDevice(value: unknown): CompanionDevice {
   const record = typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : null;
   const keys = record === null ? [] : Object.keys(record);

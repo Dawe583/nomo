@@ -260,12 +260,15 @@ critical. Six are fixed here, each with a mutation proof.
    object, which the server's own `sendReply` downgrades to a refusal. The
    client applies the server's invariant now.
 
-One remains open and is recorded rather than quietly fixed: pairing lets the
-caller choose `companion:write` with no operator approval. It fails in the safe
-direction today, because `device.revoke` only ever targets the calling device's
-own id, so the write scope currently buys a device nothing. It will not stay
-safe the moment a write-scoped operation can affect anything else, so the next
-binding has to grant that scope operator-side.
+The last one is closed as well. Pairing used to accept a caller-chosen scope
+list, so a device could grant itself `companion:write`. The scope is inert today
+only because the one operation that needs it targets the caller's own device,
+which is exactly the kind of accident that stops holding when the next binding
+lands. The write scope is now the host operator's decision: pairing refuses it
+unless `VOID_COMPANION_WRITE_PAIRING=1`, it is refused rather than silently
+downgraded, and the test that exercises write-scoped revocation opts in the way
+an operator would. `apps/control-plane/api/companion` 24/24, with the default
+mutation shown red.
 
 The retention lock's availability gap is now closed. It used to have no lease,
 so a collector that died left the lock behind and froze collection in that

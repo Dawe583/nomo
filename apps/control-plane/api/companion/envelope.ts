@@ -8,6 +8,7 @@ import {
   readOnlyScopes,
   readScope,
   revokeDevice,
+  pairingGrantsWrite,
   writeScope,
   type CompanionScope,
   type CompanionSession,
@@ -290,7 +291,10 @@ function diagnosticsRead(context: RunContext): Reply {
 
 /** Pairing parses the same label and scope vocabulary as the internal path, so
  * one request mints the same record on either route. */
-function parsePairingBody(body: JsonObject): { readonly label: string; readonly scopes: readonly CompanionScope[] } | null {
+function parsePairingBody(
+  body: JsonObject,
+  grantsWrite: boolean,
+): { readonly label: string; readonly scopes: readonly CompanionScope[] } | null {
   if (!exactKeys(body, ["label", "scopes"])) return null;
   const label = body.label ?? "companion device";
   if (typeof label !== "string" || !plainLabel(label)) return null;
@@ -298,7 +302,9 @@ function parsePairingBody(body: JsonObject): { readonly label: string; readonly 
   if (!Array.isArray(requested) || requested.length > 2) return null;
   const granted: CompanionScope[] = [];
   for (const scope of requested) {
-    if (scope !== readScope && scope !== writeScope) return null;
+    // The write scope is the operator's decision, never the caller's, and it
+    // is refused rather than silently downgraded.
+    if (scope !== readScope && !(scope === writeScope && grantsWrite)) return null;
     if (!granted.includes(scope)) granted.push(scope);
   }
   return { label, scopes: granted.sort() };
@@ -306,7 +312,7 @@ function parsePairingBody(body: JsonObject): { readonly label: string; readonly 
 
 function devicePair(context: RunContext): Reply {
   const body = recordOf(context.request.body);
-  const input = body === null ? null : parsePairingBody(body);
+  const input = body === null ? null : parsePairingBody(body, pairingGrantsWrite(context.env));
   if (input === null) return refused(403, "invalid_request", "The pairing body is not the v1 pairing shape.");
   // A captured pairing envelope replayed inside the window must not mint a
   // second device. The response is deliberately not replayed: it carries the

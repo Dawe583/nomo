@@ -6,6 +6,7 @@ import {
   readOnlyScopes,
   readScope,
   revokeDevice,
+  pairingGrantsWrite,
   writeScope,
   type CompanionScope,
   type CompanionSession,
@@ -74,7 +75,10 @@ async function readJsonBody(request: IncomingMessage): Promise<{ readonly presen
   }
 }
 
-function parsePairingBody(body: unknown): { readonly label: string; readonly scopes: readonly CompanionScope[] } | null {
+function parsePairingBody(
+  body: unknown,
+  grantsWrite: boolean,
+): { readonly label: string; readonly scopes: readonly CompanionScope[] } | null {
   if (body === undefined) return { label: "companion device", scopes: readOnlyScopes };
   const record = recordOf(body);
   if (record === null || Object.keys(record).some(key => key !== "label" && key !== "scopes")) return null;
@@ -84,7 +88,10 @@ function parsePairingBody(body: unknown): { readonly label: string; readonly sco
   if (!Array.isArray(requested) || requested.length > 2) return null;
   const granted: CompanionScope[] = [];
   for (const scope of requested) {
-    if (scope !== readScope && scope !== writeScope) return null;
+    // The write scope is the operator's decision, never the caller's. Without
+    // host authorisation it is refused, not silently downgraded, so a client
+    // never believes it holds an authority it does not.
+    if (scope !== readScope && !(scope === writeScope && grantsWrite)) return null;
     if (!granted.includes(scope)) granted.push(scope);
   }
   return { label, scopes: granted.sort() };
@@ -102,7 +109,7 @@ function deviceSession(request: IncomingMessage, env: Readonly<NodeJS.ProcessEnv
 
 async function pair(request: IncomingMessage, response: ServerResponse, env: Readonly<NodeJS.ProcessEnv>): Promise<void> {
   if (request.method !== "POST") return sendJson(response, 405, { error: "method_not_allowed" });
-  const input = parsePairingBody((await readJsonBody(request)).value);
+  const input = parsePairingBody((await readJsonBody(request)).value, pairingGrantsWrite(env));
   if (input === null) return sendJson(response, 400, { error: "invalid_pairing" });
   const { device, deviceToken } = pairDevice(env, input);
   // The plaintext credential exists in this response and nowhere else: the
