@@ -15,7 +15,10 @@ there was no plaintext fallback.
 
 Run `pnpm install --frozen-lockfile --ignore-scripts`, `pnpm desktop:setup`, then
 `pnpm desktop:build` on Windows with Rust MSVC and Visual Studio C++ build tools.
-The NSIS installer is generated under
+The shared `apps/desktop/src-tauri/tauri.conf.json` targets only `app` and
+`dmg`; the NSIS installer comes from the Windows overlay
+`apps/desktop/src-tauri/tauri.windows.conf.json`, which targets `nsis` with
+`installMode: currentUser`. It is generated under
 `apps/desktop/src-tauri/target/release/bundle/nsis/`.
 
 The manually dispatched **Windows desktop** GitHub Actions workflow builds the

@@ -25,6 +25,18 @@ test("read-only and plan modes block direct document mutation", async (t) => {
     assert.deepEqual(app.workspace(session.id).files, {});
   }
 });
+test("read-only tool catalog exposes only read tools for plan and read-only modes", async (t) => {
+  for (const mode of ["plan", "read-only"] as const) {
+    const directory = await mkdtemp(join(tmpdir(), "void-permission-catalog-"));
+    const app = await configured({ VOID_DATA_DIR: directory, VOID_PERMISSION_MODE: mode });
+    t.after(async () => { await app.shutdown(); await rm(directory, { recursive: true, force: true }); });
+    const session = await app.start("Inspect only", "fixture");
+    await app.settled();
+    const names = app.availableTools().tools.map((tool) => tool.name);
+    assert.deepEqual(names, ["void_workspace_list", "void_workspace_read"]);
+    assert.deepEqual(app.availableTools(session.id).tools.map((tool) => tool.name), ["void_workspace_list", "void_workspace_read"]);
+  }
+});
 
 test("a crafted model write call is refused before dispatch in read-only mode", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "void-permission-model-"));

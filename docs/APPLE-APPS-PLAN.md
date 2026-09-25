@@ -7,19 +7,38 @@ in `docs/RELEASE-1.0.1-MATRIX.md`. This older A2/A3 direction of a mandatory
 SwiftUI Mac rewrite and iOS-local recovery core is superseded. Keep the
 historical rationale below; do not execute both architectures.
 
-Release evidence update, 2026-09-24: the native iOS 17 Xcode project, Swift
-package, app, unit tests, UI-test source and protocol fixtures now exist under
-`apps/apple/`. Xcode metadata and the `VOID` simulator build succeeded. Current
-source contains 9 `VOIDTests` cases and 6 `VOIDUITests` cases. The last recorded
-sequential simulator run passed 6/6 and 6/6, respectively; it is historical
-execution evidence, not a 9/9 claim. Reserved-vault evidence is 12/12. Physical
-iPhone/iPad, signed-device, App Store Connect and TestFlight evidence remain
-open. The older macOS-first scope and iOS companion boundary remain in force.
+Release evidence update, 2026-09-25: the native iOS 17 Xcode project, Swift
+package, app, unit tests, UI-test source and protocol fixtures exist under
+`apps/apple/`. Current source contains 9 `VOIDTests` cases and 6
+`VOIDUITests` cases. On 2026-09-25 a Release `iphonesimulator` build of the
+`VOID` scheme succeeded, and the built product installed and launched on an
+iPad Pro 11-inch (M5) simulator, rendering the read-only onboarding/entry
+screen. That product is ad-hoc signed with no team identifier, no entitlements
+and no app icon, so it is simulator evidence and not a device or store claim.
+The last recorded sequential simulator run passed 6/6 and 6/6, respectively; it
+is historical execution evidence, not a 9/9 claim. Reserved-vault evidence is
+12/12. A `generic/platform=iOS` Release build failed the same day because no
+provisioning profile for `com.void.companion` is installed and the project sets
+no `DEVELOPMENT_TEAM`; the paired iPhone reports Developer Mode off. Physical
+iPhone/iPad install, signed-device, App Store Connect and TestFlight evidence
+remain open. The older macOS-first scope and iOS companion boundary remain in
+force.
 
 Windows is outside the 1.0.1 delivery scope. Its historical beta evidence is
 preserved in `WINDOWS-DESKTOP.md`, while current-source Windows evidence remains
 open. No physical iPhone/iPad build, signing, provisioning or store action is
 part of this evidence update.
+
+The same-day local acceptance run is recorded in `RELEASE-1.0.1-MATRIX.md`: 67
+live control-plane scenarios and 43 live CLI recovery-journey scenarios passed
+against disposable temp fixtures, the named repository suites passed, and the
+P09 rows are scoped rather than closed. No provider, credential, signed build,
+provisioned profile, physical device or store was involved. One finding from
+that run, that the operator tool catalog was not permission-mode filtered, is
+corrected in source and covered by the permission-authority and control-plane
+suites. The iOS companion is unaffected because this build has no write
+authority, and the corrected catalog still has to be witnessed on a packaged
+store build before that gate closes.
 
 ## Historical product direction (superseded)
 
@@ -47,11 +66,17 @@ execution.
   Replace/add a native install button only when a verified TestFlight or App Store
   URL exists. Downloading an arbitrary IPA from a website is not an installation
   path for ordinary devices. Do not present a disabled or invented native link.
-- Public Mac releases need Developer ID signing and notarization. Current machine
-  has an Apple Development identity, not the required Developer ID identity.
-- Native iOS metadata and simulator evidence now exist; distribution still requires
-  provisioning, App Store Connect access, a suitable Apple Developer membership,
-  physical iPhone/iPad checks, and a completed TestFlight/archive run.
+- Public Mac releases need Developer ID signing and notarization. The signing
+  inventory observed on 2026-09-25 exposes an Apple Development identity only;
+  no Developer ID Application identity, notarization ticket or Developer ID
+  artifact is evidenced, and `apps/desktop/scripts/build-policy.mjs` still
+  defaults the Mac identity to `-`.
+- Native iOS metadata, a Release simulator build and a simulator launch now
+  exist; distribution still requires a provisioning profile for
+  `com.void.companion`, a `DEVELOPMENT_TEAM` wired into the project, Developer
+  Mode enabled on the target device, App Store Connect access, a suitable Apple
+  Developer membership, physical iPhone/iPad checks, and a completed
+  TestFlight/archive run. None of that is claimed here.
 
 Acceptance: actual DMG download returns bytes; checksum matches; fresh isolated
 workspace starts without Node installed; UI accurately distinguishes local app,

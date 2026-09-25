@@ -633,17 +633,19 @@ export class Workbench {
   availableTools(id?: string) {
     const session = id ? this.sessions.get(id) : undefined;
     if (id && !session) throw new Error("Session not found.");
+    const tools = (session
+      ? (session.tools ?? [...workspaceTools])
+      : [
+          ...workspaceTools,
+          ...this.connectors.flatMap((c) =>
+            c.tools.map((tool) => ({ ...tool, connectorId: c.id })),
+          ),
+        ]
+    ).filter((tool) => this.toolAllowedInMode(tool));
     return {
       scope: id ? "session" : "configured",
       tools: toolCatalog(
-        session
-          ? (session.tools ?? [...workspaceTools])
-          : [
-              ...workspaceTools,
-              ...this.connectors.flatMap((c) =>
-                c.tools.map((tool) => ({ ...tool, connectorId: c.id })),
-              ),
-            ],
+        tools,
         [
           ...this.connectors.map((c) => c.token),
           ...Object.values(session?.connections ?? {}).map((c) => c.token),

@@ -62,6 +62,8 @@ test("server read-only mode blocks direct document and recovery mutations",async
  assert.notEqual(apply.status,200);
  const undo=await fetch(`${origin}/api/sessions/${session.id}/undo/${document.revision}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({confirm:document.revision})});
  assert.notEqual(undo.status,200);
+ const tools=await(await fetch(`${origin}/api/tools?session=${session.id}`)).json() as {tools:Array<{name:string}>};
+ assert.deepEqual(tools.tools.map(tool=>tool.name),["void_workspace_list","void_workspace_read"]);
 });
 
 test("local agent API persists scoped profiles but cannot enable shell hooks",async t=>{

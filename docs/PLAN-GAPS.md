@@ -3,17 +3,33 @@
 ## Current bounded parity update
 
 This audit is historical. [Current scope and verification](UPGRADE-VERIFICATION.md) supersedes the missing-feature claims below, not the external certification gates.
-The 2026-09-24 Apple 1.0.1 inventory is in `RELEASE-1.0.1-MATRIX.md`.
+The 2026-09-25 Apple 1.0.1 inventory is in `RELEASE-1.0.1-MATRIX.md`. That
+matrix also records the same day's disposable-fixture local acceptance run: 67
+live control-plane scenarios passed, the named repository suites passed, and
+the resulting P09 rows are scoped rather than closed. One finding from that
+run, that `GET /api/tools` advertised `void_workspace_write` while
+`documentEditing` was `false`, has been corrected in the working tree:
+`availableTools()` now filters through `toolAllowedInMode`, with cases in
+`packages/workbench/src/permission-authority.test.ts` and
+`apps/control-plane/api/parity.test.ts`. Dispatch-time enforcement held
+throughout, so the defect was the operator catalog, not a bypass. The fix is
+source-inspected here and has not been re-run through the live harness.
 G-22/G-23 below describe the old distribution proposal. The native iOS target
-is a paired-Mac SwiftUI client. Xcode 27.0 is installed at
-`/Applications/Xcode.app`; Xcode metadata, native project listing and the `VOID`
-simulator build succeeded. Current source contains 9 `VOIDTests` cases and 6
-`VOIDUITests` cases. The last recorded sequential simulator run passed
-`VOIDTests` 6/6 and `VOIDUITests` 6/6; it is historical execution evidence, not
-a 9/9 claim. Reserved-vault evidence is 12/12. Physical iPhone/iPad,
-signed-device, App Store Connect and TestFlight evidence remain open. This
-toolchain inventory does not establish the user's account, certificates,
-provisioning or hardware state.
+is a paired-Mac SwiftUI client. On 2026-09-25 Xcode 27.0 build 27A266a was
+confirmed selected at `/Applications/Xcode.app`; `xcodebuild -list` resolved
+the `VOID` project and its schemes, a Release `iphonesimulator` build of the
+`VOID` scheme succeeded, and the built product installed and launched on an
+iPad Pro 11-inch (M5) simulator. That product is ad-hoc signed with no team
+identifier, no entitlements and no app icon, so it is simulator evidence
+only. Current source contains 9 `VOIDTests` cases and 6 `VOIDUITests` cases.
+The last recorded sequential simulator run passed `VOIDTests` 6/6 and
+`VOIDUITests` 6/6; it is historical execution evidence, not a 9/9 claim.
+Reserved-vault evidence is 12/12. A `generic/platform=iOS` Release build failed
+the same day for want of a provisioning profile for `com.void.companion`, with
+`DEVELOPMENT_TEAM` unset and the paired iPhone reporting Developer Mode off.
+Physical iPhone/iPad install, signed-device, App Store Connect and TestFlight
+evidence remain open. This toolchain inventory does not establish the user's
+account, certificates, provisioning or hardware state.
 
 
 - G-01: managed cloud documents have signed operation/job events, artifacts and state in one SQL transaction. This is not a transaction host for arbitrary external tools. Physical network partition testing remains unverified.
