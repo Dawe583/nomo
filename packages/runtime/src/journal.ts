@@ -174,6 +174,16 @@ const jobAllowed: Record<RecoveryJobStage, readonly RecoveryJobStage[]> = {
   partial: [],
   conflict: [],
 };
+/** R14: the stage universe and terminality come from the validator's own
+ * table, never from a second list. An export manifest or a counter that
+ * disagrees with the enforced transitions would be a completeness claim
+ * about a machine nobody checks. */
+export const operationStageTable: Readonly<Record<Stage, readonly Stage[]>> =
+  Object.freeze(allowed);
+/** Recovery job counterpart, exported for the same reason. */
+export const jobStageTable: Readonly<
+  Record<RecoveryJobStage, readonly RecoveryJobStage[]>
+> = Object.freeze(jobAllowed);
 export function validateJobTransition(
   events: readonly RecoveryJobEvent[],
   event: RecoveryJobEvent,

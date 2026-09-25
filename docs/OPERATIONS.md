@@ -121,6 +121,80 @@ node packages/cli/bin/void.mjs verify --ledger <ledger-dir-or-file> --attestatio
 
 The verifier checks sequence order, previous hash links, body hashes, and signatures when a key is available. A failure exits non-zero and names the first bad entry.
 
+## Export bundles with a completeness proof
+
+`export --bundle` writes a bundle of four sections and a manifest. The manifest
+is written last, so a directory that exists always describes bytes that are on
+disk.
+
+```sh
+node packages/cli/bin/void.mjs export --ledger <ledger-file> --state <state-dir> --bundle <bundle-dir>
+```
+
+`--state` is the recovery state root the backup script reads: it holds
+`journal/<workspace>.jsonl` and `vault/`. It is required, because a bundle that
+cannot declare its journal and vault sections is not a complete bundle.
+
+The sections are:
+
+- `ledger.jsonl`: the verified workspace ledger
+- `journal.jsonl`: the operation journal, replayed through the transition tables on export and on load
+- `vault-manifest.json`: the vault inventory, by digest and byte length; artifact bytes stay encrypted at rest and are not copied
+- `capability.json`: what this build can export, the ledger read limits, and the operation and recovery-job stage universe read from the journal transition tables
+
+Each section carries its own record count, byte length and SHA-256, and each
+signed section carries the sequence range it claims. Record the printed
+`manifest sha256` out of band. That anchor is the completeness proof: a
+history whose tail was cut is still internally consistent, so a reviewer
+without an anchor cannot tell an honest bundle from a rewritten one.
+
+```sh
+node packages/cli/bin/void.mjs export verify --bundle <bundle-dir> --anchor <manifest-sha256> [--state <state-dir>]
+```
+
+Verification is fail closed. A missing section, a digest or byte-length
+mismatch, a record count that disagrees with the bytes, a sequence range the
+section does not carry, a journal that does not replay, or an anchor that does
+not match exits non-zero and prints no `complete true`. Export refuses the same
+way when the journal is missing, and writes no bundle directory at all.
+
+Without `--state` the verifier still checks digests, counts, ranges, chains and
+transitions, and reports `journal signatures not checked` rather than implying
+an authentication it did not perform. With `--state` the retained key is used
+and the journal signatures are checked.
+
+This proves what the bundle contains. It does not prove the vault bytes are
+recoverable, and it is not an operational certification.
+
+## Metrics
+
+`metrics` recomputes counters from the ledger, journal and vault that already
+exist. Nothing new is persisted, so the numbers can be thrown away and
+recomputed at any time.
+
+```sh
+node packages/cli/bin/void.mjs metrics --ledger <ledger-file> --state <state-dir> [--format text|json]
+node packages/cli/bin/void.mjs metrics --ledger <ledger-dir> [--format json]
+```
+
+Counter families: ledger files, entries and bytes, decisions by the closed
+`allow`/`deny`/`hold`/`other` set, the transition table sizes, journal events,
+operations and per-stage counts for every stage in the table, open operations,
+and vault artifacts, bytes and reservations.
+
+The label sets are closed and there is no PII, no secret and no workspace label
+in a sample name. A named ledger must verify before it is counted, and a
+command that cannot read the journal fails rather than reporting a quiet zero.
+A directory scan is the exception and the reason it exists: it counts the
+ledgers that could not be read (`void_ledger_files_unreadable_total`) apart from
+the ones that were read and did not verify
+(`void_ledger_files_rejected_total`). Stages that never happened are reported as
+zero, so failed, unknown and conflict work cannot be hidden by omission.
+
+Not covered: capture latency, reconciliation time, recovery success rate and
+connector coverage. They need timestamps and receipts this surface does not
+claim to read.
+
 ## Attestation flow
 
 An attestation is a signed summary of a ledger slice. It lets a reviewer check a head sequence, head hash, entry count, Merkle digest, key id, algorithm, and signature without trusting a VOID process.

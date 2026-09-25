@@ -29,7 +29,18 @@ export {
   type CapabilityCertification,
   type CapabilityConformanceRef,
   type CertificationStatus,
+  type CapabilityAuthority,
+  type CapabilityCertifiedEvidence,
 } from './capability.ts';
+export {
+  CONFORMANCE_RUNTIME,
+  CapabilityProfileError,
+  declareProviderProfiles,
+  hasProviderProfile,
+  resolveProviderProfile,
+  sharedConformanceRuntime,
+  type ProviderProfileSet,
+} from './capability-profiles.ts';
 
 /**
  * Takes the list as a parameter rather than reading a module level registry:

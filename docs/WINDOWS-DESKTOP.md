@@ -53,6 +53,22 @@ cross-target `cargo check` of the `cfg(windows)` paths is possible here. The
 Next: the Windows x64/MSVC gate above. Source correctness does not substitute
 for it.
 
+The one part of the `cfg(windows)` path that can be tested without Windows is
+now tested: the Credential Manager target name and the accepted blob length
+were moved out of the `#[cfg(windows)]` block into
+`windows_credential_target` and `WINDOWS_CREDENTIAL_BLOB_BYTES`, so a rule
+that can only be exercised on the platform it runs on is exercised on this
+host instead. `keychain::windows_naming_tests` pins that the Windows target is
+the same `dev.void.desktop.workspace` service and account the macOS keychain
+uses, that it is NUL terminated exactly once, that a non-ASCII account name
+survives whole, and that two workspaces never share one target. Renaming the
+target turns two of those tests red. `cargo test --offline` for the desktop
+crate is 16/16 on macOS.
+
+What is still not covered on this host: the `CredReadW` and `CredWriteW` calls
+themselves, `CredFree`, the `get_generic_password` error mapping, and the
+`#[cfg(all(test, windows))]` store tests. Those need a Windows machine.
+
 ## Historical beta-4 evidence (not current-candidate evidence)
 
 The Windows x64 package passed native build, credential tests, silent installation

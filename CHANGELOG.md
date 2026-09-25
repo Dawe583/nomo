@@ -77,6 +77,30 @@ All notable user-facing changes since the first repository commit.
 - Remove the unreachable pairing alert from the iOS companion entry screen. Its
   button is disabled in every state of this build, so the dialog that confirmed
   the same sentence already on screen could never open.
+- R03: add file recovery vault retention and collection. The shipped default
+  policy is manual, so nothing is collected implicitly; a pinned artifact is
+  never evicted and a policy that gives a pinned kind an expiry is refused;
+  unreadable evidence refuses the whole run before any delete; and every run
+  lands as a signed `vault.retention` journal chain, so a delete is never
+  silent. Not certified, and it does not cover the reserved SQLite vault.
+- G06: publish a versioned, per-provider machine-readable capability profile
+  and require it in the release gate. `void.adapter-capability.v2` states
+  `authority: "scope-only"`, names the conformance runtime each provider ran
+  against, and refuses unknown fields, a retired `v1` report, and a bare
+  `certification: true` presented as evidence. An adapter with no published
+  profile is refused, not skipped. Every profile stays `certification: false`.
+- R14: add an export bundle that can prove it is complete, and a metrics
+  surface. `void.export-bundle.v1` records the ledger, journal, vault manifest
+  and capability profile with counts, byte lengths and digests, and writes its
+  `complete` manifest last, so a failed export leaves no completeness claim on
+  disk. Verification takes an out-of-band anchor and recomputes every declared
+  number from the bytes. `void metrics` recomputes 18 closed-label counters
+  from the existing ledger, journal and vault, with no new persisted state.
+  Neither is an operational certification.
+- Move the Windows Credential Manager target name and the accepted blob length
+  out of the `cfg(windows)` block and pin them with tests, so a rule that could
+  only be exercised on Windows is now exercised on every host. Renaming the
+  target turns two of those tests red.
 
 - d125b7e9: Restored the product baseline from upstream history.
 - 9ef84fe2: Synchronized the product branch with upstream history.

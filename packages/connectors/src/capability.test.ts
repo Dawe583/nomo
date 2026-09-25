@@ -6,6 +6,7 @@ import {
   CONFORMANCE_SCHEMA,
   bindsAdapter,
   certificationStatus,
+  type CapabilityCertifiedEvidence,
   validateCapabilityProfile,
   type CapabilityProfile,
 } from "./capability.ts";
@@ -13,21 +14,28 @@ import {
 const base: CapabilityProfile = {
   schema: CAPABILITY_SCHEMA,
   adapter: { id: "filesystem.managed", version: "1" },
+  authority: "scope-only",
   operations: ["create", "write", "delete"],
   boundary: "cooperative-regular-file-paths",
+  maxDecodedBytes: 1024 * 1024,
   recovery: { posix: "bytes-and-mode", win32: "bytes-writable-files-only" },
   durableExecutionReceipt: false,
   durableRecoveryReceipt: false,
   excluded: ["concurrent-external-writers", "shell-effects"],
   conformance: {
     schema: CONFORMANCE_SCHEMA,
+    runtime: "void-recovery-runtime",
     fixture: "disposable-local-file-create-write-delete",
-    checks: ["restart-idempotence", "human-drift", "lost-response"],
+    checks: ["restart-and-idempotence", "human-drift", "lost-execution-response"],
+    sharedRuntimeChecksOnly: true,
   },
+  certification: false,
 };
 
-describe("capability profile", () => {
-  test("sound profile validates but stays uncertified without a certification block", () => {
+const errorsOf = (profile: unknown): string => validateCapabilityProfile(profile).join("; ");
+
+describe("capability profile schema", () => {
+  test("a sound profile validates and stays uncertified at certification:false", () => {
     assert.deepEqual(validateCapabilityProfile(base), []);
     assert.deepEqual(certificationStatus(base), {
       certified: false,
@@ -35,75 +43,116 @@ describe("capability profile", () => {
     });
   });
 
-  test("certified claim requires checks, timestamp and matching adapter version", () => {
-    const certified: CapabilityProfile = {
-      ...base,
-      certification: {
-        certified: true,
-        checks: ["restart-idempotence", "human-drift"],
-        at: "2026-09-18T00:00:00.000Z",
-        adapterVersion: "1",
-      },
-    };
-    assert.deepEqual(validateCapabilityProfile(certified), []);
-    assert.deepEqual(certificationStatus(certified).certified, true);
-  });
-
-  test("certified:true with empty checks is refused and never certified", () => {
-    const fake = {
-      ...base,
-      certification: { certified: true, checks: [], at: "2026-09-18T00:00:00.000Z" },
-    };
+  test("a missing schema version and a missing adapter version are both refused", () => {
+    const { schema: _omitted, ...withoutSchema } = base;
+    assert.deepEqual(validateCapabilityProfile(withoutSchema), [
+      'schema must be "void.adapter-capability.v2"',
+    ]);
     assert.match(
-      validateCapabilityProfile(fake).join("; "),
-      /must name the checks/,
+      errorsOf({ ...base, adapter: { id: "filesystem.managed" } }),
+      /adapter\.version must be a non-empty string/,
     );
-    assert.deepEqual(certificationStatus(fake as CapabilityProfile).certified, false);
+    assert.equal(certificationStatus(withoutSchema as unknown as CapabilityProfile).certified, false);
   });
 
-  test("drifted adapter version does not bind", () => {
+  test("the retired v1 profile is rejected instead of coerced", () => {
+    const v1 = { ...base, schema: "void.adapter-capability.v1" };
+    assert.deepEqual(validateCapabilityProfile(v1), [
+      'schema must be "void.adapter-capability.v2"',
+    ]);
+  });
+
+  test("certification:true is refused, and a bare true is not evidence", () => {
+    assert.match(
+      errorsOf({ ...base, certification: true }),
+      /a bare true is not evidence/,
+    );
+    assert.deepEqual(certificationStatus({ ...base, certification: true } as unknown as CapabilityProfile), {
+      certified: false,
+      sharedRuntimeChecksOnly: true,
+    });
+  });
+
+  test("an evidence object needs checks, an ISO timestamp and the same adapter version", () => {
+    const evidence: CapabilityCertifiedEvidence = {
+      certified: true,
+      checks: ["restart-and-idempotence", "human-drift"],
+      at: "2026-09-18T00:00:00.000Z",
+      adapterVersion: "1",
+    };
+    assert.deepEqual(validateCapabilityProfile({ ...base, certification: evidence }), []);
+    assert.equal(certificationStatus({ ...base, certification: evidence }).certified, true);
+    assert.match(errorsOf({ ...base, certification: { ...evidence, checks: [] } }), /must name the checks/);
+    assert.match(errorsOf({ ...base, certification: { ...evidence, at: "last tuesday" } }), /ISO run timestamp/);
+    assert.match(
+      errorsOf({ ...base, certification: { ...evidence, adapterVersion: "2" } }),
+      /certification\.adapterVersion must equal adapter\.version/,
+    );
+    assert.equal(
+      certificationStatus({ ...base, certification: { ...evidence, adapterVersion: "2" } }).certified,
+      false,
+    );
+    assert.match(errorsOf({ ...base, certification: { ...evidence, signedBy: "us" } }), /unknown field "signedBy"/);
+  });
+
+  test("a misspelled field is refused rather than silently ignored", () => {
+    assert.deepEqual(validateCapabilityProfile({ ...base, certifcation: true }), [
+      'unknown field "certifcation"',
+    ]);
+    assert.deepEqual(validateCapabilityProfile({ ...base, sharedRuntimeChecksOnly: true }), [
+      'unknown field "sharedRuntimeChecksOnly"',
+    ]);
+    assert.match(
+      errorsOf({ ...base, conformance: { ...base.conformance, sharedChecks: true } }),
+      /unknown field "sharedChecks"/,
+    );
+  });
+
+  test("a profile that claims authorization instead of scope is refused", () => {
+    assert.match(
+      errorsOf({ ...base, authority: "certified" }),
+      /authority must be "scope-only"/,
+    );
+    assert.equal(certificationStatus({ ...base, authority: "certified" } as unknown as CapabilityProfile).certified, false);
+  });
+
+  test("scope fields are type checked, including the byte ceiling", () => {
+    assert.match(errorsOf({ ...base, maxDecodedBytes: 0 }), /maxDecodedBytes must be a positive integer/);
+    assert.match(errorsOf({ ...base, maxDecodedBytes: 1.5 }), /maxDecodedBytes must be a positive integer/);
+    assert.match(errorsOf({ ...base, boundary: "" }), /boundary must be a non-empty string/);
+    assert.match(errorsOf({ ...base, durableRecoveryReceipt: "no" }), /durableRecoveryReceipt must be an explicit boolean/);
+    assert.match(errorsOf({ ...base, recovery: {} }), /recovery must be a non-empty platform-to-guarantee map/);
+  });
+
+  test("an empty operation list is only a platform exclusion", () => {
+    assert.match(
+      errorsOf({ ...base, operations: [] }),
+      /recovery excludes a platform as unsupported/,
+    );
+    const excludedPlatform: CapabilityProfile = {
+      ...base,
+      operations: [],
+      recovery: { posix: "selected-worktree-bytes", win32: "unsupported" },
+    };
+    assert.deepEqual(validateCapabilityProfile(excludedPlatform), []);
+    assert.match(
+      errorsOf({ ...base, conformance: { ...base.conformance, checks: [] } }),
+      /conformance\.checks must be a non-empty/,
+    );
+    assert.match(
+      errorsOf({ ...base, conformance: { ...base.conformance, runtime: "" } }),
+      /conformance\.runtime must name the runtime/,
+    );
+    assert.match(
+      errorsOf({ ...base, conformance: { ...base.conformance, sharedRuntimeChecksOnly: "yes" } }),
+      /conformance\.sharedRuntimeChecksOnly must be an explicit boolean/,
+    );
+    assert.deepEqual(validateCapabilityProfile(null), ["profile must be an object"]);
+  });
+
+  test("a drifted adapter version does not bind", () => {
     assert.equal(bindsAdapter(base, "filesystem.managed", "1"), true);
     assert.equal(bindsAdapter(base, "filesystem.managed", "2"), false);
     assert.equal(bindsAdapter(base, "git.managed", "1"), false);
-    const drifted: CapabilityProfile = {
-      ...base,
-      certification: {
-        certified: true,
-        checks: ["restart-idempotence"],
-        at: "2026-09-18T00:00:00.000Z",
-        adapterVersion: "1",
-      },
-    };
-    assert.equal(bindsAdapter({ ...drifted, adapter: { id: "filesystem.managed", version: "2" } }, "filesystem.managed", "2"), true);
-    assert.deepEqual(
-      validateCapabilityProfile({ ...drifted, adapter: { id: "filesystem.managed", version: "2" } }),
-      ["certification.adapterVersion must equal adapter.version"],
-    );
-  });
-
-  test("missing scope, boundary and receipt flags are explicit errors", () => {
-    const broken = {
-      ...base,
-      operations: [],
-      boundary: "",
-      durableExecutionReceipt: "no",
-    };
-    const errors = validateCapabilityProfile(broken);
-    assert.match(errors.join("; "), /operations must be a non-empty/);
-    assert.match(errors.join("; "), /boundary must be a non-empty/);
-    assert.match(errors.join("; "), /durableExecutionReceipt must be an explicit boolean/);
-    assert.deepEqual(certificationStatus(broken as unknown as CapabilityProfile).certified, false);
-  });
-
-  test("wrong schema and emptied conformance checks fail closed", () => {
-    assert.match(
-      validateCapabilityProfile({ ...base, schema: "void.adapter-capability.v0" }).join("; "),
-      /schema must be/,
-    );
-    assert.match(
-      validateCapabilityProfile({ ...base, conformance: { ...base.conformance, checks: [] } }).join("; "),
-      /conformance.checks must be a non-empty/,
-    );
-    assert.deepEqual(validateCapabilityProfile(null), ["profile must be an object"]);
   });
 });

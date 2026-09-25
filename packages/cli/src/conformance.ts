@@ -20,6 +20,14 @@ import {
   type ConformanceFixture,
   type Json,
 } from "../../runtime/src/index.ts";
+import {
+  CONFORMANCE_RUNTIME,
+  declareProviderProfiles,
+  resolveProviderProfile,
+  hasProviderProfile,
+  type ProviderProfileSet,
+} from "../../connectors/src/capability-profiles.ts";
+
 
 const filesystemOperations =
   process.platform === "win32"
@@ -27,8 +35,9 @@ const filesystemOperations =
     : (["create", "write", "delete", "rename"] as const);
 
 export const filesystemConformanceProfile = {
-  schema: "void.adapter-capability.v1",
+  schema: "void.adapter-capability.v2",
   adapter: { id: "filesystem.managed", version: "1" },
+  authority: "scope-only",
   operations: filesystemOperations,
   boundary: "cooperative-regular-file-paths",
   maxDecodedBytes: 1024 * 1024,
@@ -48,14 +57,16 @@ export const filesystemConformanceProfile = {
   ],
   conformance: {
     schema: "void.adapter-conformance.v1",
+    runtime: CONFORMANCE_RUNTIME.id,
     fixture:
       process.platform === "win32"
         ? "disposable-local-file-create-write-delete"
         : "disposable-local-file-create-write-delete-rename",
     checks: CONFORMANCE_CASES,
+    sharedRuntimeChecksOnly: true,
   },
+  certification: false,
 } as const;
-
 export async function filesystemConformanceFixture(
   operation: "create" | "write" | "delete" | "rename" = "write",
 ): Promise<ConformanceFixture> {
@@ -141,23 +152,25 @@ export async function filesystemConformanceFixture(
 
 
 export const gitConformanceProfile = {
-  schema: "void.adapter-capability.v1",
+  schema: "void.adapter-capability.v2",
   adapter: { id: "git.managed", version: "1" },
+  authority: "scope-only",
   operations: process.platform === "win32" ? ([] as const) : (["create", "write", "delete", "rename", "stage", "unstage"] as const),
-  actionNote: "create is a write scenario against an absent path, not a public action",
   boundary: "cooperative-posix-single-git-surface",
   maxDecodedBytes: 1024 * 1024,
   recovery: { posix: "selected-worktree-bytes-mode-or-logical-index-entry", win32: "unsupported" },
   durableExecutionReceipt: false,
   durableRecoveryReceipt: false,
-  certification: false,
   excluded: ["windows", "process-death", "power-loss", "concurrent-external-writers", "commits", "remotes", "hooks", "arbitrary-git", "dangling-stage-blob-removal", "acl", "ownership", "xattrs", "split-index", "non-v2-index", "unknown-index-extensions", "unsupported-index-flags"],
   conformance: {
     schema: "void.adapter-conformance.v1",
+    runtime: CONFORMANCE_RUNTIME.id,
     fixture: "disposable-local-git-repository-without-remote",
     checks: CONFORMANCE_CASES,
     sharedRuntimeChecksOnly: true,
   },
+  certification: false,
+  note: "create is a write scenario against an absent path, not a public action",
 } as const;
 
 type GitScenario = (typeof gitConformanceProfile.operations)[number];
@@ -227,8 +240,9 @@ export async function gitConformanceFixture(operation: GitScenario = "write"): P
 }
 
 export const managedDocumentsConformanceProfile = {
-  schema: "void.adapter-capability.v1",
+  schema: "void.adapter-capability.v2",
   adapter: { id: "managed-documents", version: "1" },
+  authority: "scope-only",
   operations: ["write", "delete"],
   boundary: "managed-text-documents-no-host-filesystem",
   maxDecodedBytes: 256_000,
@@ -238,7 +252,6 @@ export const managedDocumentsConformanceProfile = {
   },
   durableExecutionReceipt: false,
   durableRecoveryReceipt: false,
-  certification: false,
   excluded: [
     "host-filesystem",
     "binary-documents",
@@ -250,11 +263,24 @@ export const managedDocumentsConformanceProfile = {
   ],
   conformance: {
     schema: "void.adapter-conformance.v1",
+    runtime: CONFORMANCE_RUNTIME.id,
     fixture: "disposable-in-memory-workspace",
     checks: CONFORMANCE_CASES,
     sharedRuntimeChecksOnly: true,
   },
+  certification: false,
 } as const;
+
+/**
+ * Every provider the command can run, declared once and validated at import:
+ * a profile that does not fit the versioned schema stops the command instead
+ * of being skipped, and an adapter id without a profile is refused.
+ */
+export const providerProfiles: ProviderProfileSet = declareProviderProfiles([
+  filesystemConformanceProfile,
+  gitConformanceProfile,
+  managedDocumentsConformanceProfile,
+]);
 
 type ManagedDocumentsScenario = "write" | "delete";
 
@@ -342,9 +368,12 @@ export async function runConformanceCommand(
   print: (text: string) => void,
 ): Promise<number> {
   const selected = argv.length === 0 ? "filesystem.managed" : argv.length === 2 && argv[0] === "--adapter" ? argv[1] : undefined;
-  if (selected !== "filesystem.managed" && selected !== "git.managed" && selected !== "managed-documents")
-    throw new Error("usage: void recovery conformance [--adapter filesystem.managed|git.managed|managed-documents] (disposable local fixtures only)");
-  const capability = selected === "git.managed" ? gitConformanceProfile : selected === "managed-documents" ? managedDocumentsConformanceProfile : filesystemConformanceProfile;
+  if (selected === undefined || !hasProviderProfile(providerProfiles, selected))
+    throw new Error(`usage: void recovery conformance [--adapter ${providerProfiles.ids.join("|")}] (disposable local fixtures only); no capability profile for ${JSON.stringify(selected)}`);
+  // Fail-closed resolution: the profile set is the only source, so an adapter
+  // that lost or never had a profile refuses the run instead of inheriting
+  // another provider's scope.
+  const capability = resolveProviderProfile(providerProfiles, selected);
   const scenarios = [];
   if (selected === "git.managed" && process.platform === "win32") scenarios.push({ operation: "platform-refusal", passed: false, checks: [{ id: "posix-only", passed: true }] });
   else for (const operation of capability.operations) {

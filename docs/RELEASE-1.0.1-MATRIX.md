@@ -150,6 +150,7 @@ hardening gap were found; all four are now closed:
    signed journal recorded the agent itself as the approver. Both are fixed:
    every classified tool now takes a real policy decision, and the sink fails
    closed against an explicit allowlist of authorizing surfaces.
+
    `cloud/steps.test.mjs` 5/5 and `cloud/` 54 pass / 4 skipped / 0 fail, with
    the built-in exemption mutation turning the approval test red.
 2. `Workbench.branch` performed durable managed-document writes through
@@ -176,6 +177,53 @@ no live privilege boundary, because every cloud route already requires the
 same control token, but it removes the one approval surface that relied on a
 guessable identifier alone.
 
+### Reverse-tool milestone progress, 2026-09-25
+
+Three open R-series and gap items moved, each with a bounded test and a named
+remainder. None of them is a certification.
+
+R03 file recovery vault retention. `collectVaultGarbage` is the explicit,
+operator-driven collector. The shipped `MANUAL_RETENTION_POLICY` is
+`mode: "manual"` with no TTL, so nothing is collected implicitly. A pinned
+artifact is never evicted, a policy that gives a pinned kind an expiry is
+refused as a contradiction, an artifact with no lifecycle record is protected
+because its pin state is unknown, and unreadable or invalid evidence refuses
+the whole run before any delete. Evidence lives outside the artifact tree
+deliberately: `reservedRecoveryVault` reads every file in a workspace
+directory as a legacy artifact, so a sidecar there could make an existing
+vault unverifiable. Every run is a signed `void.operation.v1` chain under
+`adapterId "vault.retention"`, so a delete is never silent. `vault.ts` itself
+is byte-identical. `packages/runtime` 81/81. Not covered: the reserved SQLite
+vault, pin release, retention-index backup, streaming, and quota migration.
+
+R14 export bundle and metrics. `void.export-bundle.v1` carries the ledger,
+the journal, a vault manifest and the capability profile, each with a record
+count, a byte length and a SHA-256, plus a manifest written last into a
+staging directory that is renamed into place, so a failure leaves no
+completeness claim on disk. Verification needs an out-of-band anchor,
+recomputes every declared number from the bytes, re-verifies both signed
+chains, and replays the journal through the transition tables; a section
+rewritten in place, a re-declared manifest, or a missing section is refused.
+`metrics` recomputes 18 closed-label counters from the existing ledger,
+journal and vault with no new persisted state and no client library.
+`export-bundle.test.ts` plus `operations.test.ts` 14/14, and the real binary
+reports the counters. Operational certification is not claimed.
+
+G06 machine-readable capability profiles. The schema moved to
+`void.adapter-capability.v2`: a required `authority: "scope-only"`, a required
+`conformance.runtime`, a required `maxDecodedBytes`, a required `certification`
+where a bare `true` is refused as "not evidence", refusal of unknown fields
+and of a retired `v1` report, and a per-provider profile set that refuses an
+adapter with no published profile rather than skipping it. The release gate
+is `scripts/src/capability-profile-gate.test.mjs`, which `check-tests.mjs`
+already globs, so it runs under `pnpm test` with no package.json change.
+`capability.test.ts` plus `capability-profiles.test.ts` 18/18, gate 3/3. Every
+profile stays `certification: false`.
+
+The `void.adapter-capability.v1` to `v2` move is a report format break and is
+recorded as one. No persisted state depends on the older shape, and a v1
+report is refused rather than silently accepted.
+
 ### Windows source audit
 
 The `cfg(windows)` workspace-key path was audited against the documented Win32
@@ -187,12 +235,22 @@ Home-edition support is unverified, and `load_or_create` fails closed with an
 explicit restore message if a key ever becomes unavailable, so a persistence
 downgrade is an availability failure rather than silent key loss. The
 `#[cfg(all(test, windows))]` tests cannot run on a macOS host and no
-`x86_64-pc-windows-msvc` target is installable here, so the Windows code stays
-source-inspected. P10.09 is unchanged. See `docs/WINDOWS-DESKTOP.md`.
+`x86_64-pc-windows-msvc` target is installable here, so the Win32 calls
+themselves stay source-inspected. One part of that path is now testable
+without Windows: the Credential Manager target name and the accepted blob
+length moved out of the `#[cfg(windows)]` block, and
+`keychain::windows_naming_tests` pins that the target is the same
+`dev.void.desktop.workspace` service and account the macOS keychain uses, is
+NUL terminated exactly once, carries a non-ASCII account name whole, and is
+never shared between two workspaces. Renaming the target turns two of them
+red. `cargo test --offline` for the desktop crate is 16/16 on macOS. The
+`CredReadW` and `CredWriteW` calls and the `#[cfg(all(test, windows))]` store
+tests still need a Windows machine. P10.09 is unchanged. See
+`docs/WINDOWS-DESKTOP.md`.
 
 ## Distribution and retained-format rules
 
-Mac App Store, notarized direct Mac download and native iOS/iPadOS are three independent distribution tracks. Public managed cloud is not a first-beta executor. The local Mac candidate now intentionally uses version `1.0.1` in `apps/desktop/package.json`, `apps/desktop/src-tauri/Cargo.toml`, `apps/desktop/src-tauri/Cargo.lock` and `apps/desktop/src-tauri/tauri.conf.json`; the bundle identifier `dev.void.desktop` remains development metadata, not approved store identity. The bundled Node runtime remains independently pinned to `24.21.0`. `void.adapter-capability.v1` describes scope and does not authorize execution. Preserve `certification:false` on Git/documents and the uncertified filesystem profile until a separate certification process exists. Sources: `apps/desktop/README.md`, `apps/desktop/release.test.mjs`, `packages/connectors/src/capability.ts`, `packages/cli/src/conformance.ts`.
+Mac App Store, notarized direct Mac download and native iOS/iPadOS are three independent distribution tracks. Public managed cloud is not a first-beta executor. The local Mac candidate now intentionally uses version `1.0.1` in `apps/desktop/package.json`, `apps/desktop/src-tauri/Cargo.toml`, `apps/desktop/src-tauri/Cargo.lock` and `apps/desktop/src-tauri/tauri.conf.json`; the bundle identifier `dev.void.desktop` remains development metadata, not approved store identity. The bundled Node runtime remains independently pinned to `24.21.0`. `void.adapter-capability.v2` describes scope and does not authorize execution: it adds a required `authority: "scope-only"`, a required `conformance.runtime`, a required `maxDecodedBytes`, required `certification` where a bare `true` is refused as "not evidence", and it refuses unknown fields and a retired `v1` report. That is a report format break, recorded as one: a `v1` report is refused rather than silently accepted, and no persisted state depends on the older shape. Preserve `certification:false` on Git/documents and the uncertified filesystem profile until a separate certification process exists. Sources: `apps/desktop/README.md`, `apps/desktop/release.test.mjs`, `packages/connectors/src/capability.ts`, `packages/connectors/src/capability-profiles.ts`, `packages/cli/src/conformance.ts`.
 
 Journal `void.operation.v1` and `void.recovery-job.v1`, encrypted vault SQLite and legacy files, JSONL signatures, encryption/signing keys and document storage form one restore set. No general 1.x compatibility or downgrade promise until old-build fixtures prove it. A wrong key or truncated/unanchored history must be reported as unverifiable, not silently repaired. Sources: `packages/runtime/src/journal.ts`, `packages/runtime/src/reserved-vault.ts`, `docs/RECOVERY-CONTRACT.md`.
 
@@ -203,7 +261,7 @@ Every row starts open. A gate labels what must be run or witnessed for that requ
 | ID | Requirement | Owner | Acceptance gate |
 | --- | --- | --- | --- |
 | P00.01 | Reconcile stale gaps against current implementation; mark each supported adapter/operation/platform as source-inspected, fixture-tested, device-tested or externally verified. | Release/product | Done: current capability and tooling snapshot above; no device-tested claims. |
-| P00.02 | Record supported distribution modes and exact advertised exclusions. Reuse void.adapter-capability.v1; preserve certification:false unless an actual certification process exists. | Release/product | Done: distribution and retained-format rules above; existing profiles retain uncertified states. |
+| P00.02 | Record supported distribution modes and exact advertised exclusions. Reuse void.adapter-capability.v1; preserve certification:false unless an actual certification process exists. | Release/product | Done: distribution and retained-format rules above. The schema moved to `void.adapter-capability.v2` on 2026-09-25 and now refuses a retired `v1` report, so the wording of this row is one version behind the code; the intent is unchanged. Every provider profile keeps `certification:false` and a bare `certification:true` is refused as "not evidence", and the release gate `scripts/src/capability-profile-gate.test.mjs` asserts it per provider. |
 | P00.03 | Define persisted-format compatibility and supported upgrade sources before promising stable 1.x compatibility. | Release/product | Done: no upgrade source or downgrade promise is supported yet; exact old-build migration gate is P09.01/P10.02. |
 | P00.04 | Map every requirement below to a test and accountable owner. Record initial device/build tool inventory without exposing signing credentials. | Release/product | Done: each plan row has owner and acceptance gate below; current Xcode inventory is recorded above. |
 | P01.01 | Build a minimal signed sandbox variant retaining the real bundled runtime, not a placeholder UI. | Mac packaging | Open: signed sandbox install, real capture/Undo and iPhone/iPad TLS fixture. |

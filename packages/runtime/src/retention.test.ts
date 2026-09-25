@@ -1,0 +1,402 @@
+import test, { type TestContext } from "node:test";
+import assert from "node:assert/strict";
+import {
+  mkdtemp,
+  mkdir,
+  readdir,
+  rm,
+  stat,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { randomBytes } from "node:crypto";
+import { devKeyProvider } from "../../ledger/src/sign.ts";
+import {
+  localOperationJournal,
+  localRecoveryVault,
+  reservedRecoveryVault,
+  type Json,
+  type OperationJournal,
+  type RecoveryVault,
+  type VaultPin,
+  type VaultReference,
+} from "./index.ts";
+import {
+  MANUAL_RETENTION_POLICY,
+  collectVaultGarbage,
+  markVaultLifecycle,
+  validateRetentionPolicy,
+  type RetentionPolicy,
+} from "./retention.ts";
+import type { GarbageReport } from "../../connectors/src/snapshot/store.ts";
+
+const WORKSPACE = "ops";
+const BASE = Date.UTC(2026, 0, 2, 3, 4, 5);
+const AGE_POLICY: RetentionPolicy = {
+  version: 1,
+  mode: "age",
+  ttlByKind: { unpinned: 1000, recovery: null, operator: null },
+};
+
+const fixture = async (t: TestContext) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-retention-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const root = join(dir, "vault"),
+    index = join(dir, "retention"),
+    keys = { first: randomBytes(32) },
+    vault: RecoveryVault = localRecoveryVault(root, keys, "first"),
+    journal: OperationJournal = localOperationJournal(
+      join(dir, "journal"),
+      await devKeyProvider({ dir: join(dir, "keys"), env: {} }),
+    );
+  return {
+    root,
+    index,
+    journal,
+    keys,
+    put: (value: Json) => vault.put(WORKSPACE, value),
+    read: (reference: VaultReference) => vault.get(WORKSPACE, reference),
+    path: (reference: VaultReference) =>
+      join(root, WORKSPACE, reference.digest),
+    evidence: (reference: VaultReference) =>
+      join(index, WORKSPACE, `${reference.digest}.meta`),
+    mark: (reference: VaultReference, pin?: VaultPin) =>
+      markVaultLifecycle({
+        root,
+        index,
+        workspace: WORKSPACE,
+        reference,
+        pin,
+      }),
+    age: async (reference: VaultReference, ms = 60_000) => {
+      const when = new Date(BASE - ms);
+      await utimes(join(root, WORKSPACE, reference.digest), when, when);
+    },
+    collect: (operationId: string, policy?: RetentionPolicy) =>
+      collectVaultGarbage({
+        root,
+        index,
+        workspace: WORKSPACE,
+        journal,
+        operationId,
+        agentId: "agent",
+        runId: "run",
+        policy,
+        clock: () => new Date(BASE),
+        authorize: async () => true,
+      }),
+    events: (operationId: string) =>
+      journal.transaction(WORKSPACE, async (tx) =>
+        (tx.records ?? [])
+          .map((record) => record.event)
+          .filter(
+            (event) =>
+              "operationId" in event && event.operationId === operationId,
+          ),
+      ),
+    artifacts: async () =>
+      (await readdir(join(root, WORKSPACE))).filter((name) =>
+        /^[a-f0-9]{64}$/.test(name),
+      ),
+  };
+};
+type OperationEventLike = { stage: string; data: Json; adapterId: string };
+const stages = (events: readonly OperationEventLike[]) =>
+  events.map((event) => event.stage);
+const reportOf = (garbage: GarbageReport) => ({
+  skippedPinned: garbage.skippedPinned,
+  retained: garbage.retained,
+  deleted: garbage.deleted,
+  freedBytes: garbage.freedBytes,
+});
+
+test("the default retention policy is manual and the garbage collector is a no-op", async (t) => {
+  const f = await fixture(t);
+  assert.equal(MANUAL_RETENTION_POLICY.mode, "manual");
+  assert.deepEqual(
+    MANUAL_RETENTION_POLICY.ttlByKind,
+    { unpinned: null, recovery: null, operator: null },
+  );
+  const kept = await f.put("kept"),
+    released = await f.put("released");
+  await f.mark(released);
+  await f.age(kept);
+  await f.age(released);
+  const before = (await f.artifacts()).length;
+  assert.deepEqual(
+    reportOf(await f.collect("gc-default")),
+    { skippedPinned: 0, retained: before, deleted: 0, freedBytes: 0 },
+  );
+  assert.equal((await f.artifacts()).length, before);
+  assert.equal(await f.read(kept), "kept");
+  assert.equal(await f.read(released), "released");
+});
+
+test("age collection deletes only released artifacts and reports every count", async (t) => {
+  const f = await fixture(t);
+  const unmarked = await f.put("unmarked"),
+    released = await f.put("released"),
+    fresh = await f.put("fresh");
+  await f.mark(released);
+  await f.mark(fresh);
+  await f.age(unmarked);
+  await f.age(released);
+  const freed = (await stat(f.path(released))).size;
+  const report = reportOf(await f.collect("gc-age", AGE_POLICY));
+  assert.deepEqual(report, {
+    skippedPinned: 1,
+    retained: 1,
+    deleted: 1,
+    freedBytes: freed,
+  });
+  // unmarked has no lifecycle evidence at all, so it is protected.
+  assert.equal(await f.read(unmarked), "unmarked");
+  assert.equal(await f.read(fresh), "fresh");
+  await assert.rejects(f.read(released), /ENOENT/);
+  assert.deepEqual(await f.artifacts(), [
+    unmarked.digest,
+    fresh.digest,
+  ].sort());
+  assert.equal(
+    report.retained + report.skippedPinned + report.deleted,
+    3,
+  );
+});
+
+test("a pinned recovery artifact survives collection whatever the policy TTL", async (t) => {
+  const policy: RetentionPolicy = {
+    version: 1,
+    mode: "age",
+    ttlByKind: { unpinned: 1, recovery: null, operator: null },
+  };
+  for (const kind of ["recovery", "operator"] as const) {
+    const f = await fixture(t);
+    const pinned = await f.put(`pinned-${kind}`);
+    await f.mark(pinned, {
+      ownerId: "operator-1",
+      kind,
+    } satisfies VaultPin);
+    await f.age(pinned, 10 * 365 * 24 * 3_600_000);
+    assert.deepEqual(reportOf(await f.collect("gc-pin", policy)), {
+      skippedPinned: 1,
+      retained: 0,
+      deleted: 0,
+      freedBytes: 0,
+    });
+    assert.equal(await f.read(pinned), `pinned-${kind}`);
+  }
+});
+
+const damaged = async (t: TestContext, damage: "invalid-json" | "unreadable") => {
+  const f = await fixture(t);
+  const first = await f.put(`first-${damage}`),
+    second = await f.put(`second-${damage}`);
+  await f.mark(first);
+  await f.mark(second);
+  await f.age(first);
+  await f.age(second);
+  const sidecar = f.evidence(first);
+  await rm(sidecar);
+  if (damage === "invalid-json") await writeFile(sidecar, "{not json");
+  else await mkdir(sidecar);
+  await assert.rejects(
+    f.collect(`gc-${damage}`, AGE_POLICY),
+    /lifecycle is (unreadable|invalid); retention refused/,
+  );
+  // Nothing is deleted while a pin is unproven.
+  assert.equal(await f.read(first), `first-${damage}`);
+  assert.equal(await f.read(second), `second-${damage}`);
+  assert.deepEqual(
+    (await f.artifacts()).sort(),
+    [first.digest, second.digest].sort(),
+  );
+};
+
+test("invalid lifecycle evidence refuses the whole run", async (t) => {
+  await damaged(t, "invalid-json");
+});
+
+test("unreadable lifecycle evidence refuses the whole run", async (t) => {
+  await damaged(t, "unreadable");
+});
+
+test("two consecutive collections are idempotent", async (t) => {
+  const f = await fixture(t);
+  const first = await f.put("first"),
+    second = await f.put("second");
+  await f.mark(first);
+  await f.mark(second);
+  await f.age(first);
+  await f.age(second);
+  const freed =
+    (await stat(f.path(first))).size + (await stat(f.path(second))).size;
+  assert.deepEqual(reportOf(await f.collect("gc-1", AGE_POLICY)), {
+    skippedPinned: 0,
+    retained: 0,
+    deleted: 2,
+    freedBytes: freed,
+  });
+  assert.deepEqual(await f.artifacts(), []);
+  assert.deepEqual(reportOf(await f.collect("gc-2", AGE_POLICY)), {
+    skippedPinned: 0,
+    retained: 0,
+    deleted: 0,
+    freedBytes: 0,
+  });
+  assert.deepEqual(await f.artifacts(), []);
+});
+
+test("a collection run is a signed journal chain ending in its report", async (t) => {
+  const f = await fixture(t);
+  const released = await f.put("released");
+  await f.mark(released);
+  await f.age(released);
+  const report = reportOf(await f.collect("gc-journal", AGE_POLICY));
+  const events = (await f.events("gc-journal")) as OperationEventLike[];
+  assert.deepEqual(stages(events), [
+    "received",
+    "authorized",
+    "prepared",
+    "dispatched",
+    "succeeded",
+  ]);
+  const received = events[0]!.data as {
+    policy: RetentionPolicy;
+    policyDigest: string;
+  };
+  assert.deepEqual(received.policy, AGE_POLICY);
+  assert.match(received.policyDigest, /^[a-f0-9]{64}$/);
+  const succeeded = events.at(-1)!.data as GarbageReport & {
+    policyDigest: string;
+  };
+  assert.deepEqual(reportOf(succeeded), report);
+  assert.equal(succeeded.policyDigest, received.policyDigest);
+});
+
+test("a denied collection collects nothing and records the refusal", async (t) => {
+  const f = await fixture(t);
+  const released = await f.put("released");
+  await f.mark(released);
+  await f.age(released);
+  await assert.rejects(
+    collectVaultGarbage({
+      root: f.root,
+      index: f.index,
+      workspace: WORKSPACE,
+      journal: f.journal,
+      operationId: "gc-denied",
+      agentId: "agent",
+      runId: "run",
+      policy: AGE_POLICY,
+      clock: () => new Date(BASE),
+      authorize: async () => false,
+    }),
+    /retention was denied/,
+  );
+  assert.deepEqual(await f.artifacts(), [released.digest]);
+  assert.deepEqual(stages((await f.events("gc-denied")) as OperationEventLike[]), [
+    "received",
+    "denied",
+  ]);
+});
+
+test("lifecycle evidence is recorded once and never silently released", async (t) => {
+  const f = await fixture(t);
+  const reference = await f.put("artifact");
+  const missing = { digest: "0".repeat(64), keyId: "first", bytes: 0 };
+  await assert.rejects(
+    f.mark(missing),
+    /artifact is unavailable/,
+  );
+  await f.mark(reference, { ownerId: "op", kind: "recovery" });
+  await f.mark(reference, { ownerId: "op", kind: "recovery" });
+  await assert.rejects(
+    f.mark(reference),
+    /pinned recovery artifact is not released/,
+  );
+  await assert.rejects(
+    f.mark(reference, { ownerId: "other", kind: "recovery" }),
+    /pin conflicts/,
+  );
+  await assert.rejects(
+    f.mark(reference, {
+      ownerId: "op",
+      kind: "operator",
+    } as VaultPin),
+    /pin conflicts/,
+  );
+  const reread = await f.put("other");
+  await f.mark(reread);
+  assert.equal(await f.read(reread), "other");
+});
+
+test("retention evidence never enters the legacy artifact directory", async (t) => {
+  const f = await fixture(t);
+  const released = await f.put("released"),
+    pinned = await f.put("pinned");
+  await f.mark(released);
+  await f.mark(pinned, { ownerId: "op", kind: "recovery" });
+  await f.age(released);
+  await f.collect("gc-isolation", AGE_POLICY);
+  // The reserved vault reads every file in a workspace directory as a legacy
+  // artifact, so a sidecar or a lock file stored there breaks migration.
+  assert.deepEqual(
+    (await readdir(join(f.root, WORKSPACE))).sort(),
+    [pinned.digest],
+  );
+  const migrated = reservedRecoveryVault(f.root, f.keys, "first");
+  const stored = await migrated.put(WORKSPACE, "migrated");
+  assert.equal(stored.keyId, "first");
+  assert.equal(await migrated.get(WORKSPACE, pinned), "pinned");
+});
+
+test("a retention policy is versioned, per kind, and pinned kinds never expire", () => {
+  assert.deepEqual(validateRetentionPolicy(MANUAL_RETENTION_POLICY), {
+    version: 1,
+    mode: "manual",
+    ttlByKind: { unpinned: null, recovery: null, operator: null },
+  });
+  for (const policy of [
+    { ...MANUAL_RETENTION_POLICY, version: 2 as unknown as 1 },
+    { ...MANUAL_RETENTION_POLICY, mode: "sweep" as unknown as "manual" },
+    {
+      ...MANUAL_RETENTION_POLICY,
+      ttlByKind: { unpinned: 0, recovery: null, operator: null },
+    },
+    {
+      ...MANUAL_RETENTION_POLICY,
+      ttlByKind: { unpinned: -1, recovery: null, operator: null },
+    },
+    {
+      version: 1 as const,
+      mode: "age" as const,
+      ttlByKind: { unpinned: 10, recovery: 10, operator: null },
+    },
+    {
+      version: 1 as const,
+      mode: "age" as const,
+      ttlByKind: { unpinned: 10, recovery: null, operator: 10 },
+    },
+    {
+      version: 1 as const,
+      mode: "manual" as const,
+      ttlByKind: { unpinned: 10, recovery: null, operator: null },
+    },
+    {
+      version: 1 as const,
+      mode: "age" as const,
+      ttlByKind: { unpinned: null, recovery: null, operator: null },
+    },
+    {
+      ...MANUAL_RETENTION_POLICY,
+      ttlByKind: { unpinned: null, recovery: null },
+    } as unknown as RetentionPolicy,
+    {
+      ...MANUAL_RETENTION_POLICY,
+      ttlByKind: { unpinned: null, recovery: null, operator: null, extra: null },
+    } as unknown as RetentionPolicy,
+  ])
+    assert.throws(() => validateRetentionPolicy(policy), /retention|pinned|TTL/);
+});

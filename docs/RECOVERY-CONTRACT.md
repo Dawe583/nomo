@@ -100,8 +100,39 @@ artifacts are never implicitly deleted.
 This is a logical payload quota, not physical disk preallocation. SQLite pages,
 journals and filesystem overhead require extra free space. Real disk exhaustion
 still fails closed before dispatch, or leaves an uncertain result after dispatch.
-Streaming, automatic GC, retention and administrative quota migration remain
-unfinished. Capacity settings persist and mismatching workers are rejected.
+Streaming, automatic collection and administrative quota migration remain
+unfinished. Collection for the legacy file vault is operator-driven and is
+described under "File recovery vault retention" below. Capacity settings
+persist and mismatching workers are rejected.
+
+## File recovery vault retention
+
+`collectVaultGarbage` is the explicit, operator-driven collector for the legacy
+file vault. The shipped default `MANUAL_RETENTION_POLICY` is `mode: "manual"`
+with no TTL, so collection deletes nothing until an operator selects an age
+policy. Nothing is collected implicitly.
+
+Retention evidence is a per-artifact record kept in a separate index
+directory, never inside an artifact workspace directory:
+`reservedRecoveryVault` reads every file there as a legacy artifact, so a
+sidecar in that directory risks "Recovery artifact cannot be verified". An
+artifact with no record is protected, because its pin state is unknown. A
+record naming a `recovery` or `operator` pin is protected, and a policy that
+gives a pinned kind a TTL is refused as a contradiction. Unreadable or invalid
+evidence refuses the whole run before any delete; it is never read as
+"unpinned". There is no unpin operation: a pinned artifact stays retained until
+an operator reviews it out of band.
+
+The report is the connector `GarbageReport` shape
+(`skippedPinned`/`retained`/`deleted`/`freedBytes`), where `retained +
+skippedPinned + deleted` equals the artifact count seen at the start. Every run
+is a signed `void.operation.v1` journal chain under `adapterId
+"vault.retention"`, bound to the policy digest, ending in `succeeded` with the
+report: a delete is never silent. Runs serialize on `.retention.lock` in the
+index directory, and a competing or stale lock refuses the run.
+
+This does not cover the reserved SQLite vault, pin release, index backup, or
+administrative quota migration.
 
 The older `localRecoveryVault` remains compatible but offers only an individual
 artifact limit. `reservedRecoveryVault` reads its existing files and counts them

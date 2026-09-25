@@ -26,6 +26,7 @@ export const COMMANDS = [
   "doctor",
   "config",
   "init",
+  "metrics",
 ] as const;
 
 export type Command = (typeof COMMANDS)[number];

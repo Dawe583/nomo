@@ -56,7 +56,7 @@ try {
     process.exit(await runAgentCommand(parsed.args));
   else if (parsed.command === "run") {
     await import("../../proxy/bin/void-proxy.mjs");
-  } else if (["attest", "export", "policy"].includes(parsed.command))
+  } else if (["attest", "export", "policy", "metrics"].includes(parsed.command))
     process.exit(
       await runOperation(parsed.command, parsed.args, process.env, (text) =>
         console.log(text),

@@ -69,6 +69,24 @@ pub fn ephemeral() -> Result<WorkspaceKey> {
     })
 }
 
+/// The Windows Credential Manager target name for one workspace, NUL
+/// terminated and UTF-16 as `CredWriteW` requires. It is the Windows spelling
+/// of the same `dev.void.desktop.workspace` service and `account` pair the
+/// macOS keychain uses, so the two platforms name one credential rather than
+/// two. Kept outside the `cfg(windows)` block on purpose: the naming rule is
+/// the part that has to stay identical across platforms, and a rule that can
+/// only be tested on the platform it runs on is a rule nobody tests.
+pub fn windows_credential_target(account: &str) -> Vec<u16> {
+    format!("dev.void.desktop.workspace:{}", account)
+        .encode_utf16()
+        .chain(Some(0))
+        .collect()
+}
+
+/// The only blob length Credential Manager will hand back as a workspace key.
+/// A short or long blob is a corrupt or foreign entry, never a key to guess at.
+pub const WINDOWS_CREDENTIAL_BLOB_BYTES: usize = 32;
+
 #[cfg(target_os = "macos")]
 pub struct MacKeychain {
     pub account: String,
@@ -102,10 +120,7 @@ pub struct WindowsCredentials {
 #[cfg(windows)]
 impl WindowsCredentials {
     fn target(&self) -> Vec<u16> {
-        format!("dev.void.desktop.workspace:{}", self.account)
-            .encode_utf16()
-            .chain(Some(0))
-            .collect()
+        windows_credential_target(&self.account)
     }
 }
 #[cfg(windows)]
@@ -126,8 +141,10 @@ impl SecretStore for WindowsCredentials {
                 return Err("Cannot unlock the VOID key in Windows Credential Manager".into());
             }
             let entry = &*credential;
-            let key = if entry.CredentialBlobSize == 32 && !entry.CredentialBlob.is_null() {
-                Some(std::slice::from_raw_parts(entry.CredentialBlob, 32).to_vec())
+            let key = if entry.CredentialBlobSize as usize == WINDOWS_CREDENTIAL_BLOB_BYTES
+                && !entry.CredentialBlob.is_null()
+            {
+                Some(std::slice::from_raw_parts(entry.CredentialBlob, WINDOWS_CREDENTIAL_BLOB_BYTES).to_vec())
             } else {
                 None
             };
@@ -297,5 +314,55 @@ mod tests {
         assert!(load_or_create(&dir, &store).is_err());
         assert_eq!(store.get().unwrap(), None);
         std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod windows_naming_tests {
+    use super::{windows_credential_target, WINDOWS_CREDENTIAL_BLOB_BYTES};
+
+    /// The Windows target is the same `dev.void.desktop.workspace` service and
+    /// account the macOS keychain uses, joined by a colon. A change here would
+    /// silently orphan every existing Windows credential, so it is pinned
+    /// rather than left to a Windows-only test that nobody can run here.
+    #[test]
+    fn windows_target_names_the_same_workspace_the_keychain_does() {
+        let target = windows_credential_target("default");
+        let text: String = String::from_utf16(&target[..target.len() - 1]).unwrap();
+        assert_eq!(text, "dev.void.desktop.workspace:default");
+        assert!(target.starts_with(&"dev.void.desktop.workspace:".encode_utf16().collect::<Vec<u16>>()[..]));
+    }
+
+    #[test]
+    fn windows_target_is_nul_terminated_exactly_once() {
+        let target = windows_credential_target("abc");
+        assert_eq!(*target.last().unwrap(), 0);
+        assert_eq!(target.iter().filter(|unit| **unit == 0).count(), 1);
+    }
+
+    /// A non-ASCII account must survive as UTF-16 code units, not be truncated
+    /// at a byte boundary the way a `CString` would allow.
+    #[test]
+    fn windows_target_carries_non_ascii_accounts_whole() {
+        let target = windows_credential_target("úloha-Ω");
+        let text: String = String::from_utf16(&target[..target.len() - 1]).unwrap();
+        assert_eq!(text, "dev.void.desktop.workspace:úloha-Ω");
+    }
+
+    #[test]
+    fn distinct_workspaces_never_share_a_credential_target() {
+        assert_ne!(
+            windows_credential_target("a"),
+            windows_credential_target("b"),
+            "one shared target would hand one workspace another workspace's key"
+        );
+    }
+
+    /// The read path accepts exactly one blob length. Anything else is a
+    /// corrupt or foreign entry, and the caller turns it into an error rather
+    /// than a key.
+    #[test]
+    fn only_a_full_length_workspace_key_is_accepted() {
+        assert_eq!(WINDOWS_CREDENTIAL_BLOB_BYTES, 32);
     }
 }

@@ -24,8 +24,9 @@ until separate Windows evidence exists.
 
 ## Evidence and scope
 
-The JSON `void.adapter-conformance-run.v1` report contains a versioned
-`void.adapter-capability.v1` profile and three Windows scenarios or four POSIX
+The JSON `void.adapter-conformance-run.v1` report contains one versioned
+`void.adapter-capability.v2` profile for the selected provider (see Capability
+profile below) and three Windows scenarios or four POSIX
 scenarios: create, write, delete and, on POSIX, rename. Each scenario includes the adapter ID/version, Node version, platform,
 and eight named pass/fail checks:
 
@@ -57,6 +58,78 @@ runtime subprocess tests cover specific process-death boundaries.
 The Windows/Linux Node 24/26 persistence workflow runs this command and its
 negative tests, alongside the filesystem CLI and adapter regressions.
 
+## Capability profile
+
+The report carries one `void.adapter-capability.v2` profile per provider, not
+one global flag set. The schema, the validator and the per-provider set live
+in `packages/connectors/src/capability.ts` and
+`packages/connectors/src/capability-profiles.ts`; the shipped profiles live
+next to their fixtures in `packages/cli/src/conformance.ts`.
+
+The profile is a scope statement, never an authorization. `authority` is the
+literal `scope-only`, and `certification` is `false` for every shipped
+provider: passing the cases below certifies nothing. A profile becomes
+certified only with an evidence object naming the checks, the ISO run
+timestamp and the exact `adapter.version` behind the claim, and no shipped
+profile carries one.
+
+What the schema requires: `adapter.id`/`adapter.version`, `authority`,
+`operations`, `boundary`, `maxDecodedBytes`, a non-empty `recovery` map,
+explicit `durableExecutionReceipt`/`durableRecoveryReceipt`, a non-empty
+`excluded` list, and a `conformance` block with `schema`, `runtime`,
+`fixture`, non-empty `checks` and `sharedRuntimeChecksOnly`. Unknown fields
+are refused rather than ignored, and a `void.adapter-capability.v1` report is
+rejected, never coerced. An empty `operations` list is only accepted when
+`recovery` names a platform as `unsupported`, which is how the Git profile
+reads on Windows.
+
+The three shipped profiles, each with its own scope and its own exclusions:
+
+| Profile                     | Operations (POSIX)                | Boundary                                  | Certification |
+| --------------------------- | --------------------------------- | ----------------------------------------- | ------------- |
+| `filesystem.managed` v1     | create, write, delete, rename      | cooperative regular file paths            | `false`       |
+| `git.managed` v1            | create, write, delete, rename, stage, unstage | cooperative POSIX single Git surface | `false`       |
+| `managed-documents` v1      | write, delete                      | managed text documents, no host filesystem | `false`       |
+
+`filesystem.managed` carries `certification: false` explicitly; before the
+versioned schema it was the one profile that left the field out.
+
+### The shared runtime is a binding, not a constant
+
+All three providers really do run on one runtime: the case list belongs to
+`runAdapterConformance` in `packages/runtime/src/conformance.ts`, so the
+eight cases are the same for every provider. The profile states that as
+`conformance.runtime: "void-recovery-runtime"` and
+`conformance.sharedRuntimeChecksOnly: true` per provider, and
+`declareProviderProfiles` refuses a set whose profiles disagree on either. A
+provider with its own runtime therefore shows up as a different
+`conformance.runtime` instead of silently inheriting the shared-runtime
+claim, and a declared `sharedRuntimeChecksOnly` that contradicts the derived
+certification status is a declaration error.
+
+### Fail-closed resolution
+
+`providerProfiles` is declared and validated at import. `runConformanceCommand`
+resolves an adapter id through that set only: an id no profile publishes is
+refused with the ids that do, and there is no fallback profile and no
+"run it and see" path. `postgres-managed-*` has no profile and therefore no
+conformance run; that is the intended answer until R12 publishes one.
+
+### Release gate
+
+`scripts/src/capability-profile-gate.test.mjs` loads the shipped profiles,
+re-validates them against the schema instead of trusting the import-time
+declaration, refuses any certified claim or `authority` drift, and refuses a
+run for an adapter without a published profile. It runs as part of the
+`scripts` suite in `pnpm test`, and standalone:
+
+```sh
+node --test scripts/src/capability-profile-gate.test.mjs
+```
+
+The gate covers profile shape, not the runs themselves; the fixtures and
+their failures are covered by the adapter tests below.
+
 ## Adding an adapter fixture
 
 `packages/runtime/src/index.ts` exports `runAdapterConformance`,
@@ -75,9 +148,12 @@ const report = await runAdapterConformance(
 if (!report.passed) process.exitCode = 1;
 ```
 
-Use `packages/cli/src/conformance.ts` as the concrete fixture example. Runtime
-requests use workspace `conformance`; fixtures must match it. Fixtures and
-adapters are trusted code, not plugins loaded by this command. External
+Use `packages/cli/src/conformance.ts` as the concrete fixture example. A new
+provider adds its profile to that file and to the `providerProfiles`
+declaration; a profile that does not fit the schema stops the command at
+import, and the release gate re-checks it independently. Runtime
+requests use workspace `conformance`; fixtures must match it.
+Fixtures and adapters are trusted code, not plugins loaded by this command. External
 providers still need isolated target identity, receipt, conflict, permission
 and crash tests. Python transport and general provider certification remain
 outstanding R12 work.
