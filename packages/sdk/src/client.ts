@@ -9,6 +9,7 @@ import { ApprovalBroker } from "../../policy/src/index.ts";
 import type { ApprovalRecord, HeldCall, HoldQueue, PolicyCall } from "../../policy/src/index.ts";
 import { PolicyStartupError as ProxyPolicyStartupError, runProxy } from "../../proxy/src/bin.ts";
 import type { ProxyPosture, UpstreamEvents } from "../../proxy/src/bin.ts";
+import type { LegacyBindingResolver } from "../../proxy/src/forward/legacy-binding.ts";
 import type { JsonObject, JsonRpcError, JsonRpcId, JsonRpcMessage, JsonRpcResult } from "../../proxy/src/rpc.ts";
 import { upstreamHttp } from "../../proxy/src/transport/http.ts";
 
@@ -33,6 +34,14 @@ export type VoidClientOptions = {
   readonly factsPath?: string;
   readonly posture?: ProxyPosture;
   readonly requestTimeoutMs?: number;
+  /**
+   * A legacy external tool binding, resolved through `legacyBindingRoot` in
+   * `@void/proxy`. Supplying one is what makes the proxy capture a before image
+   * and record a durable outcome for that tool instead of treating it as an
+   * unaudited passthrough. Omitting it is honest and allowed: a `fail-closed`
+   * posture then refuses such a call outright.
+   */
+  readonly legacyBinding?: LegacyBindingResolver;
   readonly holdPollMs?: number;
   readonly clock?: VoidClock;
 };
@@ -76,6 +85,7 @@ export class VoidClient implements McpLikeClient {
   readonly #policyPath: string | undefined;
   readonly #factsPath: string | undefined;
   readonly #posture: ProxyPosture;
+  readonly #legacyBinding: LegacyBindingResolver | undefined;
   readonly #requestTimeoutMs: number;
   readonly #holdPollMs: number;
   readonly #clock: VoidClock;
@@ -99,6 +109,7 @@ export class VoidClient implements McpLikeClient {
     this.#policyPath = options.policyPath;
     this.#factsPath = options.factsPath;
     this.#posture = options.posture ?? "fail-closed";
+    this.#legacyBinding = options.legacyBinding;
     this.#requestTimeoutMs = options.requestTimeoutMs ?? 60_000;
     this.#holdPollMs = options.holdPollMs ?? 10;
     this.#clock = options.clock ?? defaultClock;
@@ -190,6 +201,7 @@ export class VoidClient implements McpLikeClient {
       await runProxy({
         upstreamCommand,
         upstreamEnv,
+        legacyBinding: this.#legacyBinding,
         upstreamSpawn,
         policyPath,
         factsPath: this.#factsPath,
