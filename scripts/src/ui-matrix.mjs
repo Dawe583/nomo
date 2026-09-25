@@ -41,6 +41,21 @@ const REQUIRED_ROUTES = [
   "approvals", "ledger", "connections", "models", "settings", "demo",
 ];
 
+// D02.07 internal gallery. It is a served SPA path, added to the allowlist in
+// apps/control-plane/api/server.ts and to the rewrites in vercel.json. It is
+// deliberately absent from the application `routes` table, so it is never in
+// the sidebar and never in the command palette.
+export const GALLERY_PATH = "/gallery";
+
+// The gallery replaces the shell, so these are the selectors that prove it is
+// reachable and that it is not part of the user navigation.
+const GALLERY_ROOT = '.gallery[data-gallery="components"]';
+const GALLERY_SECTION = ".gallery-section";
+
+// A synthetic credential shaped so redact.ts matches it by value as well as by
+// key name. The gallery must never render it.
+const GALLERY_SECRET = "sk-live-0000111122223333";
+
 // A long, realistic assistant answer so the transcript is never an empty hero.
 const LONG_REPLY = [
   "## Migration plan",
@@ -615,9 +630,225 @@ async function measureDemo(page, demo) {
   return rows;
 }
 
+// D02.07: the internal gallery has to pass the same gates as the application
+// it documents, so it is measured with the same probe at the same viewports.
+async function measureGallery(page, origin) {
+  const path = GALLERY_PATH;
+  const load = async (width, height) => {
+    await page.setViewport(width, height);
+    await page.goto(origin + path);
+    await waitForApp(page, GALLERY_ROOT);
+    return page.evaluate(PROBE_CALLED);
+  };
+  const pick = (result) => ({
+    clientWidth: result.clientWidth,
+    scrollWidth: result.scrollWidth,
+    horizontalOverflow: result.scrollWidth - result.clientWidth,
+    errorBoundary: result.errorBoundary,
+    heading: result.heading,
+    contentChars: result.contentChars,
+    offenders: result.offenders,
+    offenderCount: result.offenderCount,
+    tinyTargets: result.tinyTargets,
+    tinyTargetCount: result.tinyTargetCount,
+  });
+
+  // Reachable, served as a document, and clearly not a product surface: it
+  // replaces the shell, so no sidebar and no mobile nav can link to it.
+  const served = await fetch(origin + path);
+  await served.arrayBuffer();
+  const requests = [];
+  page.on("Network.requestWillBeSent", (params) =>
+    requests.push(params.request.url.replace(origin, "")),
+  );
+  await page.send("Network.enable");
+  await page.setViewport(1280, 800);
+  await page.goto(origin + path);
+  await waitForApp(page, GALLERY_ROOT);
+  const reach = await page.evaluate(`(() => ({
+    root: !!document.querySelector(${JSON.stringify(GALLERY_ROOT)}),
+    internalNotice: !!document.querySelector("[data-internal-gallery]"),
+    internalNoticeRole: document.querySelector("[data-internal-gallery]")?.getAttribute("role") ?? null,
+    internalNoticeChars: (document.querySelector("[data-internal-gallery]")?.innerText ?? "").trim().length,
+    sidebar: !!document.querySelector(".sidebar"),
+    mobileNav: !!document.querySelector(".mobile-nav"),
+    sections: [...document.querySelectorAll(${JSON.stringify(GALLERY_SECTION)})].map((node) => node.id),
+    dialogOpen: !!document.querySelector("dialog[open]"),
+    title: document.title,
+    // The synthetic credential is fed through RedactedJson. Scanning the
+    // serialised DOM catches it in an attribute, not just in visible text.
+    secretInDom: document.documentElement.outerHTML.includes(${JSON.stringify(GALLERY_SECRET)}),
+    bearerInDom: document.documentElement.outerHTML.includes("abcdef0123456789"),
+    redactionShown: (document.querySelector(".json")?.innerText ?? "").includes("[redacted]"),
+    keptPublicValue: (document.querySelector(".json")?.innerText ?? "").includes("public-value"),
+  }))()`);
+  await page.send("Network.disable");
+  const apiRequests = requests.filter((url) => url.startsWith("/api/"));
+
+  // D04.06 viewport matrix: the same nine viewports as the application.
+  const viewports = [];
+  for (const viewport of VIEWPORTS) {
+    const result = await load(viewport.width, viewport.height);
+    viewports.push({ viewport: viewport.name, kind: viewport.kind, ...pick(result) });
+  }
+
+  // D04.05 both themes render the real sections, not an empty shell.
+  const themes = [];
+  for (const theme of ["light", "dark"]) {
+    await page.setViewport(1280, 800);
+    await page.goto(origin + path);
+    await page.evaluate(`(() => { localStorage.setItem("void-appearance", ${JSON.stringify(theme)}); return true; })()`);
+    const result = await load(1280, 800);
+    themes.push({ theme, appliedTheme: result.theme, ...pick(result) });
+  }
+  await page.evaluate(`(() => { localStorage.removeItem("void-appearance"); return true; })()`);
+
+  // D04.08 every keyboard focus stop shows a visible ring.
+  await load(1280, 800);
+  const desktopFocus = await tabWalk(page, 220);
+  await load(390, 844);
+  const mobileFocus = await tabWalk(page, 220);
+
+  // D04.08 reduced motion removes animation and transition.
+  const motionRows = [];
+  for (const reduce of [false, true]) {
+    await page.setViewport(1280, 800);
+    await page.setReducedMotion(reduce);
+    await load(1280, 800);
+    motionRows.push(await page.evaluate(`(() => ({
+      prefersReduce: matchMedia("(prefers-reduced-motion: reduce)").matches,
+      motionFlag: document.documentElement.dataset.motion,
+      animated: [...document.querySelectorAll("body *")]
+        .map((node) => ({ node: node.tagName.toLowerCase() + (typeof node.className === "string" && node.className ? "." + node.className.trim().split(/\\s+/)[0] : ""), style: getComputedStyle(node) }))
+        .filter((entry) => entry.style.animationName !== "none" || entry.style.transitionDuration !== "0s")
+        .slice(0, 12)
+        .map((entry) => ({ node: entry.node, animation: entry.style.animationName, duration: entry.style.animationDuration, transition: entry.style.transitionDuration })),
+    }))()`));
+  }
+  await page.setReducedMotion(false);
+
+  // D04.08 200% zoom == half the CSS viewport.
+  const zoom200 = [];
+  for (const viewport of VIEWPORTS) {
+    const result = await load(Math.floor(viewport.width / 2), Math.floor(viewport.height / 2));
+    zoom200.push({
+      viewport: viewport.name,
+      cssViewport: Math.floor(viewport.width / 2) + "x" + Math.floor(viewport.height / 2),
+      clientWidth: result.clientWidth,
+      scrollWidth: result.scrollWidth,
+      horizontalOverflow: result.scrollWidth - result.clientWidth,
+      offenders: result.offenders,
+    });
+  }
+
+  // D04.08 touch targets on a phone viewport. The application sizes a checkbox
+  // at 20px and its wrapping label at 44px (styles.css:126-142), so the label
+  // is the measured target. Record the label box so the assertion can check
+  // that contract instead of exempting every input.
+  const phone = await load(390, 844);
+  const touchTargets = await page.evaluate(`(() => [...document.querySelectorAll("button, a[href], input, select, textarea, summary, [role=button]")]
+    .map((node) => {
+      const style = getComputedStyle(node);
+      if (style.display === "none" || style.visibility === "hidden" || node.disabled) return null;
+      const r = node.getBoundingClientRect();
+      if (!r.width || !r.height) return null;
+      if (r.width >= 43.5 && r.height >= 43.5) return null;
+      const label = node.closest("label");
+      const box = label ? label.getBoundingClientRect() : null;
+      return {
+        node: node.tagName.toLowerCase() + (typeof node.className === "string" && node.className ? "." + node.className.trim().split(/\\s+/).join(".") : ""),
+        width: Math.round(r.width * 1000) / 1000,
+        height: Math.round(r.height * 1000) / 1000,
+        text: (node.innerText || "").trim().slice(0, 24),
+        labelHeight: box ? Math.round(box.height * 100) / 100 : null,
+      };
+    })
+    .filter(Boolean))()`);
+
+  return {
+    path,
+    served: { status: served.status, type: served.headers.get("content-type") },
+    reach,
+    apiRequests,
+    allRequests: requests,
+    viewports,
+    themes,
+    focus: {
+      desktop: desktopFocus.map((stop) => ({ ...stop, ring: ringVisible(stop) })),
+      mobile: mobileFocus.map((stop) => ({ ...stop, ring: ringVisible(stop) })),
+    },
+    reducedMotion: motionRows,
+    zoom200,
+    touchTargets,
+  };
+}
+
+// D03.01 pending/disabled on the shared DataTable refresh. The refetch is held
+// open with Fetch interception so the pending state is observed rather than
+// raced against a loopback server that answers in under a millisecond.
+async function measureDataTableRefresh(page, origin) {
+  await page.setViewport(1280, 800);
+  await page.goto(origin + "/documents");
+  await waitForApp(page, ".data-block .toolbar button");
+  const READ = `(() => {
+    const node = [...document.querySelectorAll(".data-block .toolbar button")]
+      .find((button) => /Obnovit|Refresh/.test(button.innerText || ""));
+    if (!node) return { found: false };
+    const r = node.getBoundingClientRect();
+    return {
+      found: true,
+      disabled: node.disabled,
+      ariaBusy: node.getAttribute("aria-busy"),
+      text: (node.innerText || "").trim().slice(0, 24),
+      hitTest: (() => {
+        if (!r.width || !r.height) return "zero-size";
+        const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return top && (node === top || node.contains(top) || top.contains(node)) ? "reachable" : "covered";
+      })(),
+    };
+  })()`;
+  const settled = await page.evaluate(READ);
+
+  const held = [];
+  page.on("Fetch.requestPaused", (params) => held.push(params.requestId));
+  await page.send("Fetch.enable", { patterns: [{ urlPattern: "*/api/*" }] });
+  await page.evaluate(`(() => {
+    const node = [...document.querySelectorAll(".data-block .toolbar button")]
+      .find((button) => /Obnovit|Refresh/.test(button.innerText || ""));
+    node.click();
+    return true;
+  })()`);
+  // Poll for the render that the held request forces. Recording the miss is
+  // meaningful: the assertion fails rather than silently passing.
+  let during = null;
+  for (let i = 0; i < 40; i++) {
+    await page.settle();
+    const state = await page.evaluate(READ);
+    if (state.found && state.disabled) {
+      during = state;
+      break;
+    }
+    during ??= state;
+  }
+  await page.send("Fetch.disable");
+  for (const requestId of held)
+    await page.send("Fetch.continueRequest", { requestId }).catch(() => {});
+  // DataTable also polls on an interval, so sample until the control settles
+  // rather than reading one instant. The assertion is that the control comes
+  // back, not that it is idle at one particular millisecond.
+  let released = await page.evaluate(READ);
+  for (let i = 0; i < 20 && released.disabled; i++) {
+    await new Promise((r) => setTimeout(r, 200));
+    await page.settle();
+    released = await page.evaluate(READ);
+  }
+  return { settled, during, released, heldCount: held.length };
+}
+
 export async function measure() {
   const fixture = await startFixture();
   const workspace = await startWorkspace(fixture.port);
+
   const demo = await startDemoServer();
   const browser = await launchBrowser();
   let page;
@@ -629,6 +860,12 @@ export async function measure() {
 
     // D04.01 route matrix
     report.routes = await measureRoutes(page, workspace.origin);
+
+    // D02.07 internal component gallery, held to the same gates
+    report.gallery = await measureGallery(page, workspace.origin);
+
+    // D03.01 shared DataTable refresh pending state
+    report.dataTableRefresh = await measureDataTableRefresh(page, workspace.origin);
 
     // D04.05 theme x locale
     report.themeLocale = await measureThemesAndLocales(page, workspace.origin, sessionPath);

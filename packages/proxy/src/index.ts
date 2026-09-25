@@ -40,4 +40,5 @@ export * from "./relay/notifications.ts";
 export * from "./relay/requests.ts";
 export * from "./relay/http-requests.ts";
 export * from "./approval-loop.ts";
+export * from "./legacy-root.ts";
 export * from "./hardening.ts";

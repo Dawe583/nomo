@@ -192,3 +192,139 @@ test("D04.08 touch targets reach 44px on a phone viewport", { skip: !built && "d
   assert.ok(attach && attach.height >= 43.5, `the attach label is ${attach?.height}px tall`);
   assert.equal(report.touchTargetsSettings.tinyTargetCount, 0, "a phone-sized settings page has a small target");
 });
+
+// ------------------------------------------------------------ D02.07 gallery
+// The internal gallery documents the shipped components, so it is held to the
+// same measured gates as the application. Each assertion is a browser fact.
+
+test("D02.07 the gallery is a served, internal page outside the user navigation", { skip: !built && "dist/web is missing" }, () => {
+  assert.equal(report.gallery.path, "/gallery", "the harness measured " + report.gallery.path);
+  // Served as a document, not a 404 and not a redirect. The allowlist lives in
+  // apps/control-plane/api/server.ts:619; without it the page would not exist.
+  assert.equal(report.gallery.served.status, 200, `${report.gallery.path} answered HTTP ${report.gallery.served.status}`);
+  assert.match(
+    report.gallery.served.type ?? "",
+    /text\/html/,
+    `${report.gallery.path} is not served as a document: ${report.gallery.served.type}`,
+  );
+  const reach = report.gallery.reach;
+  assert.match(reach.title, /galerie komponent|component gallery/i, "the browser tab does not read as internal: " + reach.title);
+  assert.equal(reach.root, true, "the gallery root never rendered at " + report.gallery.path);
+  assert.equal(reach.internalNotice, true, "the gallery has no internal notice");
+  assert.equal(reach.internalNoticeRole, "note", "the internal notice is announced as " + reach.internalNoticeRole);
+  assert.ok(reach.internalNoticeChars > 40, `the internal notice reads "${reach.internalNoticeChars}" characters, too short to say the page is internal`);
+  // It replaces the shell, so there is no sidebar and no mobile nav to link to
+ // it. If either appears, the gate leaked into ordinary navigation.
+  assert.equal(reach.sidebar, false, "the gallery rendered inside the application shell");
+  assert.equal(reach.mobileNav, false, "the gallery rendered the mobile navigation");
+  assert.equal(reach.dialogOpen, false, "a dialog was already open on load");
+  assert.ok(
+    report.routes.nav.every((href) => !String(href).includes("gallery")),
+    "the gallery is linked from the application navigation: " + JSON.stringify(report.routes.nav),
+  );
+  assert.deepEqual(
+    reach.sections,
+    ["buttons", "fields", "choices", "status", "provider", "surfaces", "dialog", "icons"],
+    "the gallery sections are: " + JSON.stringify(reach.sections),
+  );
+});
+
+test("D02.07 the gallery fetches no workspace data", { skip: !built && "dist/web is missing" }, () => {
+  // The gallery mounts from Root, before App, so none of the provider,
+  // session, approval, overview or capability probes ever fire. If the gate
+  // moves back inside App, this goes red with a real request list.
+  assert.deepEqual(
+    report.gallery.apiRequests,
+    [],
+    "the gallery issued API requests: " + JSON.stringify(report.gallery.apiRequests),
+  );
+  // It must still be a real built bundle, not an empty document.
+  assert.ok(
+    report.gallery.allRequests.some((url) => url.startsWith("/assets/")),
+    "the gallery loaded no application bundle: " + JSON.stringify(report.gallery.allRequests),
+  );
+});
+
+test("D02.07 the gallery renders no credential in the DOM", { skip: !built && "dist/web is missing" }, () => {
+  // The evidence block feeds a synthetic secret through RedactedJson. If the
+  // key-based or the value-based redaction ever stops applying, the string
+  // lands in the serialised DOM and this goes red.
+  assert.equal(report.gallery.reach.secretInDom, false, "a synthetic API key reached the gallery DOM");
+  assert.equal(report.gallery.reach.bearerInDom, false, "a synthetic bearer token reached the gallery DOM");
+  // Redaction must not be a blanket blur: the non-secret sibling survives.
+  assert.equal(report.gallery.reach.redactionShown, true, "the evidence block shows no [redacted] marker");
+  assert.equal(report.gallery.reach.keptPublicValue, true, "redaction removed a value that is not a secret");
+});
+
+test("D02.07 the gallery has no horizontal overflow at any D04.06 viewport", { skip: !built && "dist/web is missing" }, () => {
+  assert.equal(report.gallery.viewports.length, 9);
+  for (const row of report.gallery.viewports) {
+    assert.equal(row.errorBoundary, false, `gallery ${row.viewport} fell into the error boundary`);
+    assert.equal(row.scrollWidth, row.clientWidth, `gallery ${row.viewport} overflows horizontally by ${row.horizontalOverflow}px: ${JSON.stringify(row.offenders.slice(0, 3))}`);
+    assert.ok(row.contentChars > 1200, `gallery ${row.viewport} rendered only ${row.contentChars} characters`);
+  }
+});
+
+test("D02.07 the gallery renders its real sections in light and dark", { skip: !built && "dist/web is missing" }, () => {
+  assert.equal(report.gallery.themes.length, 2);
+  for (const row of report.gallery.themes) {
+    assert.equal(row.appliedTheme, row.theme, `the gallery did not apply ${row.theme}`);
+    assert.equal(row.errorBoundary, false, `the ${row.theme} gallery fell into the error boundary`);
+    assert.equal(row.horizontalOverflow, 0, `the ${row.theme} gallery overflows horizontally`);
+    assert.ok(row.contentChars > 1200, `the ${row.theme} gallery rendered ${row.contentChars} characters`);
+    assert.ok(row.offenderCount === 0, `the ${row.theme} gallery has overflowing nodes: ${JSON.stringify(row.offenders.slice(0, 3))}`);
+  }
+});
+
+test("D02.07 every gallery focus stop shows a visible ring", { skip: !built && "dist/web is missing" }, () => {
+  for (const [name, stops] of [["desktop", report.gallery.focus.desktop], ["mobile", report.gallery.focus.mobile]]) {
+    assert.ok(stops.length > 8, `the ${name} gallery walk only reached ${stops.length} stops`);
+    for (const stop of stops) {
+      assert.ok(stop.focusVisible, `gallery ${name}: ${stop.element} is focused but not :focus-visible`);
+      assert.equal(stop.outlineStyle, "solid", `gallery ${name}: ${stop.element} has outline-style ${stop.outlineStyle}`);
+      assert.ok(Number.parseFloat(stop.outlineWidth) >= 2, `gallery ${name}: ${stop.element} outline is ${stop.outlineWidth}`);
+    }
+  }
+});
+
+test("D02.07 the gallery honours prefers-reduced-motion", { skip: !built && "dist/web is missing" }, () => {
+  const [normal, reduced] = report.gallery.reducedMotion;
+  assert.equal(normal.prefersReduce, false);
+  assert.ok(normal.animated.length > 0, "the gallery fixture measured no animated element at all");
+  assert.equal(reduced.prefersReduce, true);
+  assert.deepEqual(reduced.animated, [], "the gallery still animates under reduced motion");
+});
+
+test("D02.07 the gallery has no horizontal overflow at 200% zoom", { skip: !built && "dist/web is missing" }, () => {
+  for (const row of report.gallery.zoom200) {
+    assert.equal(row.scrollWidth, row.clientWidth, `the gallery at 200% in ${row.viewport} (${row.cssViewport}) overflows by ${row.horizontalOverflow}px: ${JSON.stringify(row.offenders.slice(0, 3))}`);
+  }
+});
+
+test("D02.07 every gallery touch target reaches 44px on a phone viewport", { skip: !built && "dist/web is missing" }, () => {
+  // The application sizes a checkbox at 20px and its wrapping label at 44px
+  // (styles.css:126-142), so the label is the target. Every other control has
+  // to reach 44px on its own.
+  for (const target of report.gallery.touchTargets) {
+    if (!target.node.startsWith("input"))
+      assert.fail(`small target in the gallery on a phone viewport: ${JSON.stringify(target)}`);
+    assert.ok(
+      target.labelHeight !== null && target.labelHeight >= 43.5,
+      `the ${target.node} is ${target.width}x${target.height} and its label is ${target.labelHeight}px, so nothing reaches 44px`,
+    );
+  }
+});
+
+test("D03.01 the shared DataTable refresh exposes a pending state", { skip: !built && "dist/web is missing" }, () => {
+  const refresh = report.dataTableRefresh;
+  assert.equal(refresh.settled.found, true, "the shared DataTable refresh button was never rendered");
+  assert.equal(refresh.heldCount > 0, true, "the refetch was never held, so no pending state could be observed");
+  // Before the fix the button stayed enabled through the whole refetch, so a
+  // second click could start another one.
+  assert.equal(refresh.settled.disabled, false, "the refresh button is permanently disabled, so it can never refresh");
+  assert.equal(refresh.during.disabled, true, `the refresh button stayed enabled while ${refresh.heldCount} requests were in flight: ${JSON.stringify(refresh.during)}`);
+  assert.equal(refresh.during.ariaBusy, "true", `the pending refresh is not announced: aria-busy is ${refresh.during.ariaBusy}`);
+  // Releasing the held request has to restore the control, or the page would
+  // deadlock after one refresh.
+  assert.equal(refresh.released.disabled, false, "the refresh button stayed disabled after the refetch completed");
+});

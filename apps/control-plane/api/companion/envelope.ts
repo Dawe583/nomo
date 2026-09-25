@@ -220,8 +220,11 @@ function operationStatus(context: RunContext): Reply {
   // answer is reused rather than reinterpreted: a lookup must never report an
   // outcome it cannot read, and an unusable identifier is never promoted to
   // `unknown`, which the contract reserves for a dispatched mutation whose
-  // receipt was lost.
-  if (record === null) {
+  // receipt was lost. Another device's operation is the same refusal as one
+  // that does not exist, so this check must stay identical to the one in
+  // `routes.ts` or the two routes drift apart and a read-scoped device in the
+  // same workspace can read a sibling's operation record.
+  if (record === null || record.deviceId !== context.session.deviceId) {
     return { ...refused(403, "operation_unknown", "The operation identity is not available to this device."), body: { operationId: context.operationId, status: "denied" } };
   }
   return statusReply(context.operationId, record.status);

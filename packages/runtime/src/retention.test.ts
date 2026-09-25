@@ -3,13 +3,15 @@ import assert from "node:assert/strict";
 import {
   mkdtemp,
   mkdir,
+  open,
+  readFile,
   readdir,
   rm,
   stat,
   utimes,
   writeFile,
 } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
@@ -74,6 +76,26 @@ const fixture = async (t: TestContext) => {
       const when = new Date(BASE - ms);
       await utimes(join(root, WORKSPACE, reference.digest), when, when);
     },
+    markIn: (reference: VaultReference, index: string) =>
+      markVaultLifecycle({
+        root,
+        index,
+        workspace: WORKSPACE,
+        reference,
+      }),
+    collectIn: (operationId: string, index: string) =>
+      collectVaultGarbage({
+        root,
+        index,
+        workspace: WORKSPACE,
+        journal,
+        operationId,
+        agentId: "agent",
+        runId: "run",
+        policy: AGE_POLICY,
+        clock: () => new Date(BASE),
+        authorize: async () => true,
+      }),
     collect: (operationId: string, policy?: RetentionPolicy) =>
       collectVaultGarbage({
         root,
@@ -399,4 +421,84 @@ test("a retention policy is versioned, per kind, and pinned kinds never expire",
     } as unknown as RetentionPolicy,
   ])
     assert.throws(() => validateRetentionPolicy(policy), /retention|pinned|TTL/);
+});
+
+test("a pin recorded after the scan still stops the delete", async (t) => {
+  const f = await fixture(t);
+  const released = await f.put("released");
+  await f.age(released, 60_000);
+  // No pin and no evidence: the collector is free to take this one.
+  await f.mark(released);
+
+  // A pin lands while the collection is in flight. `markVaultLifecycle` takes
+  // the same `.retention.lock` as the collector, so exactly one of the two runs
+  // first. Either order must leave the artifact on disk: if the pin wins, the
+  // collector sees it at the scan; if the collector wins, the re-read before the
+  // unlink sees it.
+  const pinning = f.mark(released, { ownerId: "ops", kind: "operator" });
+  const garbage = await f.collect("pin-race", AGE_POLICY);
+  const pinned = await pinning.then(
+    () => true,
+    () => false,
+  );
+  assert.ok(
+    (await f.artifacts()).includes(released.digest),
+    `a pinned artifact was collected: ${JSON.stringify(reportOf(garbage))}`,
+  );
+  assert.equal(await f.read(released), "released");
+  assert.equal(
+    pinned,
+    true,
+    "marking a pin must not fail just because a collection is running",
+  );
+});
+
+test("retention evidence must not be written inside the artifact root", async (t) => {
+  const f = await fixture(t);
+  const reference = await f.put("first");
+  // The artifact tree itself and any parent of it are both refused: a `.meta`
+  // sidecar there makes the reserved vault refuse the whole store as
+  // unverifiable, which is the reason evidence lives outside it.
+  for (const index of [f.root, dirname(f.root)]) {
+    await assert.rejects(
+      f.markIn(reference, index),
+      /outside the artifact root/,
+    );
+  }
+  await assert.rejects(
+    f.collectIn("index-root", f.root),
+    /outside the artifact root/,
+  );
+  await assert.rejects(
+    f.collectIn("index-parent", dirname(f.root)),
+    /outside the artifact root/,
+  );
+});
+
+test("recording a lifecycle obeys the same lock as a collection", async (t) => {
+  const f = await fixture(t);
+  const reference = await f.put("first");
+  // Hold the lock the way a running collection does, then try to record a pin.
+  // If marking did not participate, it would succeed and the collector's
+  // snapshot would never see the pin it just wrote.
+  const lock = join(f.index, WORKSPACE, ".retention.lock");
+  await mkdir(dirname(lock), { recursive: true, mode: 0o700 });
+  const held = await open(lock, "wx", 0o600);
+  t.after(async () => { await held.close(); await rm(lock, { force: true }); });
+
+  await assert.rejects(
+    f.mark(reference, { ownerId: "ops", kind: "operator" }),
+    /retention is locked/,
+  );
+  await assert.rejects(f.collect("locked"), /retention is locked/);
+  // Nothing was recorded and the artifact is untouched.
+  assert.equal(await f.read(reference), "first");
+  assert.equal(
+    await readFile(f.evidence(reference), "utf8").then(
+      () => true,
+      () => false,
+    ),
+    false,
+    "a refused mark must not leave evidence behind",
+  );
 });

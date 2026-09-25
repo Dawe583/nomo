@@ -35,10 +35,13 @@ import {
   type PageProps,
   useApi,
   useText,
+  useAppliedAppearance,
 } from "./ui";
 import "./styles.css";
 import "./ascii.css";
 import "./mobile.css";
+import { ComponentGallery } from "./gallery";
+import { isGalleryRequest } from "./gallery-path";
 const PublicDemo = lazy(() =>
   import("./demo").then((module) => ({ default: module.PublicDemo })),
 );
@@ -124,19 +127,55 @@ class AppBoundary extends Component<
           </button>
         </div>
       );
+
     return this.props.children;
   }
+}
+/** The one motion contract, shared by the shell and the internal gallery so
+ *  a reduced-motion or motion-off preference reaches both identically. */
+function MotionShell({
+  motion,
+  children,
+}: {
+  motion: boolean;
+  children: ReactNode;
+}) {
+  const reducedMotion = useReducedMotion();
+  return (
+    <MotionEnabled value={motion && !reducedMotion}>
+      <MotionConfig
+        reducedMotion={motion ? "user" : "always"}
+        transition={
+          motion && !reducedMotion
+            ? { duration: 0.24, ease: [0.22, 1, 0.36, 1] }
+            : { duration: 0 }
+        }
+      >
+        {children}
+      </MotionConfig>
+    </MotionEnabled>
+  );
 }
 function Root() {
   const [locale, setLocale] = useState<"cs" | "en">(() =>
     localStorage.getItem("void-locale") === "cs" ? "cs" : "en",
   );
+  // The internal gallery replaces the whole application before App mounts.
+  // That is what keeps it free of workspace data: none of App's provider,
+  // session, approval or overview probes ever fire.
+  const internal = isGalleryRequest(location);
   useEffect(() => {
     localStorage.setItem("void-locale", locale);
     document.documentElement.lang = locale;
-    document.title =
-      locale === "en" ? "VOID — Workspace" : "VOID — Pracovní prostor";
-  }, [locale]);
+    if (internal)
+      document.title =
+        locale === "en"
+          ? "VOID — Internal component gallery"
+          : "VOID — Interní galerie komponent";
+    else
+      document.title =
+        locale === "en" ? "VOID — Workspace" : "VOID — Pracovní prostor";
+  }, [locale, internal]);
   return (
     <Locale value={locale}>
       <AppBoundary>
@@ -147,7 +186,15 @@ function Root() {
             </div>
           }
         >
-          <App locale={locale} setLocale={setLocale} />
+          {internal ? (
+            <MotionShell
+              motion={localStorage.getItem("void-motion") !== "off"}
+            >
+              <ComponentGallery />
+            </MotionShell>
+          ) : (
+            <App locale={locale} setLocale={setLocale} />
+          )}
         </Suspense>
       </AppBoundary>
     </Locale>
@@ -277,21 +324,7 @@ function App({
       window.removeEventListener("offline", update);
     };
   }, []);
-  useEffect(() => {
-    localStorage.setItem("void-appearance", appearance);
-    const media = matchMedia("(prefers-color-scheme: dark)");
-    const update = () => {
-      const dark =
-        appearance === "dark" || (appearance === "system" && media.matches);
-      document.documentElement.dataset.theme = dark ? "dark" : "light";
-      document
-        .querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", dark ? "#191918" : "#f8f7f4");
-    };
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, [appearance]);
+  useAppliedAppearance(appearance);
   useEffect(() => {
     function shortcut(e: KeyboardEvent) {
       if (e.isComposing) return;
@@ -511,15 +544,7 @@ function App({
       />
     );
   return (
-    <MotionEnabled value={motion && !reducedMotion}>
-      <MotionConfig
-        reducedMotion={motion ? "user" : "always"}
-        transition={
-          motion && !reducedMotion
-            ? { duration: 0.24, ease: [0.22, 1, 0.36, 1] }
-            : { duration: 0 }
-        }
-      >
+    <MotionShell motion={motion}>
         <div
           style={
             {
@@ -1042,8 +1067,7 @@ function App({
             </Dialog>
           )}
         </div>
-      </MotionConfig>
-    </MotionEnabled>
+    </MotionShell>
   );
 }
 createRoot(document.getElementById("root")!).render(

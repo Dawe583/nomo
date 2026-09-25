@@ -89,6 +89,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/gallery",
+      "destination": "/index.html"
+    },
+    {
       "source": "/feed.html",
       "destination": "/index.html"
     },

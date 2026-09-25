@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useApi, useText } from "./ui";
 import { DESKTOP_DOWNLOADS } from "./desktop-downloads";
+import { GALLERY_PATH } from "./gallery-path";
 const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
 const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
 const DEFAULT_PROVIDER_URL = "https://integrate.api.nvidia.com/v1";
@@ -326,6 +327,19 @@ export function Settings({
               )}
         </p>
       )}
+      <section className="internal-tools">
+        <h2>{t("Vývojářské nástroje", "Developer tools")}</h2>
+        <p className="muted">
+          {t(
+            "Interní stránka pro vývojáře. Není součástí uživatelské navigace.",
+            "An internal page for developers. Not part of the user navigation.",
+          )}
+        </p>
+        <a className="button" href={GALLERY_PATH}>
+          <Badge value="unknown">{t("Interní", "Internal")}</Badge>
+          {t("Galerie komponent", "Component gallery")}
+        </a>
+      </section>
       <section>
         <h2>{t("Schopnosti a připojení", "Capabilities and connection")}</h2>
         <Capabilities />

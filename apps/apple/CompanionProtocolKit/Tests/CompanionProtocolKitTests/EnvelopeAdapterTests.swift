@@ -66,6 +66,36 @@ final class EnvelopeAdapterTests: XCTestCase {
         }
     }
 
+    func testACredentialedSuccessWithAnEmptyBodyIsRefused() async throws {
+        // The server's `sendReply` downgrades a `succeeded` with no body keys to
+        // a refusal, so an empty object is a shape the server would never emit.
+        // Accepting it here would hand a caller a completed operation with no
+        // receipt to reconcile against.
+        let data = try Data(contentsOf: fixturesDirectory.appendingPathComponent("succeeded.json"))
+        let fixture = try ProtocolContractDecoder.decodeFixture(data)
+        let transport = ExecutorTransport(boundEndpoint: endpoint) { posted in
+            let received = try JSONDecoder().decode(CompanionRequest.self, from: posted)
+            return (try Self.responsePayload(
+                requestId: received.requestId,
+                operationId: received.operationId,
+                operation: received.operation,
+                deviceId: received.deviceId,
+                workspaceId: received.workspaceId,
+                httpStatus: 200,
+                outcome: .succeeded,
+                body: .object([:])
+            ), 200)
+        }
+        let client = CompanionHTTPClient(transport: transport)
+
+        do {
+            _ = try await client.send(fixture.request)
+            XCTFail("a succeeded answer with an empty receipt must be refused")
+        } catch {
+            XCTAssertEqual(error as? CompanionHTTPError, .invalidResponse)
+        }
+    }
+
     func testAnEnvelopeForAnotherProtocolVersionNeverReachesTheTransport() async throws {
         let data = try Data(contentsOf: fixturesDirectory.appendingPathComponent("unsupported-version.json"))
         let fixture = try ProtocolContractDecoder.decodeFixture(data)

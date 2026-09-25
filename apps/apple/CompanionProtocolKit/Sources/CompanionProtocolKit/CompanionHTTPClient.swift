@@ -283,8 +283,16 @@ public struct CompanionHTTPClient: Sendable {
                 guard decoded.deviceId.map(Self.isBoundedID) ?? true,
                       decoded.workspaceId.map(Self.isBoundedID) ?? true else { throw CompanionHTTPError.identityMismatch }
             }
+            // A success carries a receipt. The server's own `sendReply`
+            // downgrades a `succeeded` with no body keys to a refusal, so
+            // accepting an empty object here would let a responder return
+            // something the server would never emit and have it read as a
+            // completed operation.
+            let receiptIsEmpty: Bool
+            if case .object(let fields)? = decoded.body { receiptIsEmpty = fields.isEmpty }
+            else { receiptIsEmpty = decoded.body == nil }
             guard !(decoded.outcome == .succeeded && decoded.error != nil),
-                  !(decoded.outcome == .succeeded && decoded.body == nil) else { throw CompanionHTTPError.invalidResponse }
+                  !(decoded.outcome == .succeeded && receiptIsEmpty) else { throw CompanionHTTPError.invalidResponse }
             if case .pairing = expected { try Self.validatePairingReceipt(decoded) }
             return decoded
         } catch let error as CompanionHTTPError {

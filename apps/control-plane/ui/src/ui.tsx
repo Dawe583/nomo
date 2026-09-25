@@ -19,6 +19,29 @@ export function useText() {
   const locale = useContext(Locale);
   return (cs: string, en: string) => (locale === "cs" ? cs : en);
 }
+/**
+ * The one appearance contract. The shell and the internal gallery both mount
+ * it, so the light and dark variants follow the same stored preference and the
+ * same `prefers-color-scheme` change as the rest of the application. The
+ * gallery mounts without the shell, so it has to apply this itself.
+ */
+export function useAppliedAppearance(appearance: string) {
+  useEffect(() => {
+    localStorage.setItem("void-appearance", appearance);
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    const update = () => {
+      const dark =
+        appearance === "dark" || (appearance === "system" && media.matches);
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute("content", dark ? "#191918" : "#f8f7f4");
+    };
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, [appearance]);
+}
 export function useApi(
   path: string,
   enabled = true,
@@ -345,6 +368,12 @@ export function DataTable({
         />
         {toolbar}
         <button
+          // The same pending contract the connections page already uses for
+          // its own refresh (integrations.tsx:107). Without it the shared
+          // button gives no feedback and can be clicked repeatedly while the
+          // refetch is still in flight.
+          disabled={query.isFetching}
+          aria-busy={query.isFetching}
           onClick={async () => {
             const result = await query.refetch();
             setSnapshot(result.data);

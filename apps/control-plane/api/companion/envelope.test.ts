@@ -401,3 +401,56 @@ test("every bound operation answers with the body its internal path returns", as
   const retained = await (await fetch(`${harness.origin}/api/companion/operations/${revokeOperationId(second.deviceId)}`)).json() as Envelope;
   assert.deepEqual(retained, { operationId: revokeOperationId(second.deviceId), status: "succeeded" });
 });
+
+test("operation status stays inside the device that owns the record", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const owner = await pair(harness, [readScope, writeScope], "owner");
+  const sibling = await pair(harness, [readScope], "Hallway iPad");
+  record(harness, "op-owned-by-owner", owner.deviceId, "succeeded");
+
+  // The owner's own record is readable.
+  const mine = await post(
+    harness,
+    envelope({ operationId: "op-owned-by-owner" }, {
+      operation: "operation.status",
+      operationId: "op-owned-by-owner",
+      deviceId: owner.deviceId,
+      workspaceId: "alpha",
+    }),
+    bearer(owner.deviceToken),
+  );
+  assert.equal(mine.status, 200, "the owning device must read its own operation");
+  const mineBody = await mine.json() as Envelope;
+  assert.equal(mineBody.outcome, "succeeded");
+  assert.equal((mineBody.body as { status?: string } | undefined)?.status, "succeeded");
+
+  // A sibling device in the same workspace, with a perfectly valid credential,
+  // must get the same refusal as an identifier that does not exist. Without the
+  // per-device check the bound path answered from the workspace alone and leaked
+  // a sibling's record.
+  const theirs = await post(
+    harness,
+    envelope({ operationId: "op-owned-by-owner" }, {
+      operation: "operation.status",
+      operationId: "op-owned-by-owner",
+      deviceId: sibling.deviceId,
+      workspaceId: "alpha",
+    }),
+    bearer(sibling.deviceToken),
+  );
+  // Exactly the shape a never-dispatched identifier gets, so a sibling's
+  // record is indistinguishable from one that does not exist.
+  const refusedBody = await theirs.json() as Envelope;
+  assert.equal(refusedBody.outcome, "denied", JSON.stringify(refusedBody));
+  assert.equal(refusedBody.httpStatus, 403);
+  assert.deepEqual(refusedBody.body, { operationId: "op-owned-by-owner", status: "denied" });
+  assert.equal((refusedBody.error as { code: string }).code, "operation_unknown");
+
+  // The internal route already refused this, and both must keep agreeing.
+  const internal = await fetch(
+    `${harness.origin}/api/companion/operations/op-owned-by-owner`,
+    { headers: bearer(sibling.deviceToken) },
+  );
+  assert.equal(internal.status, 404);
+});

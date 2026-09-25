@@ -224,6 +224,52 @@ The `void.adapter-capability.v1` to `v2` move is a report format break and is
 recorded as one. No persisted state depends on the older shape, and a v1
 report is refused rather than silently accepted.
 
+### Adversarial pass over the new surface
+
+A read-only pass over the companion routes, the vault collector, the export
+bundle, the metrics surface, the capability profiles and the Apple client
+returned twelve findings: four medium, six low, two informational, none
+critical. Six are fixed here, each with a mutation proof.
+
+1. The bound envelope `operation.status` resolved an operation by workspace
+   only, while the internal route it claims to mirror also requires the record
+   to belong to the calling device. A read-scoped device in the same workspace
+   could read a sibling's operation record. Both paths now apply the same
+   refusal, so a sibling's record is indistinguishable from one that does not
+   exist.
+2. The collector snapshotted the pin flag and deleted later, while
+   `markVaultLifecycle` never took the collection lock. A pin recorded during a
+   run was never observed, the artifact was deleted, and the sidecar was
+   removed with it, so the record that protected the artifact was destroyed by
+   the run meant to respect it. Marking takes the same lock now, and the
+   collector re-reads the evidence immediately before each unlink.
+3. Nothing enforced that the evidence index sits outside the artifact root,
+   which is the reason it lives there: a `.meta` sidecar in a workspace
+   directory makes the reserved vault refuse the whole store. It is refused at
+   the boundary now.
+4. The export bundle's capability section disclosed two exclusions and did not
+   say that the ledger and journal sections are verbatim copies of recorded
+   operations. It says so now.
+5. `verifyBundle` and `collectMetrics` asserted `signed.ledger` as a literal
+   `true` instead of deriving it, so neither could ever report a degraded
+   state. Both derive it now, the metrics flag additionally accounts for a
+   directory scan that deliberately counts files which failed verification, and
+   the metrics report emits basenames instead of absolute host paths so a
+   pasted report does not carry the operator's home directory and username.
+6. The Apple client accepted a `succeeded` answer carrying an empty body
+   object, which the server's own `sendReply` downgrades to a refusal. The
+   client applies the server's invariant now.
+
+Still open, and recorded rather than quietly fixed: `idempotencyKey` is
+required on mutating companion operations but is not yet used for
+deduplication, while the handshake advertises `replayWindowSeconds` and
+`idempotencyRetentionHours` as if it were; pairing lets the caller choose
+`companion:write` with no operator approval; and the handshake capability
+catalog omits `device.pair`, so the one credential-free operation is
+unnegotiable. None of these is exploitable beyond what is stated here: a
+replayed pairing is capped by the eight-device limit, a revoke is naturally
+idempotent, and an omitted catalog entry fails closed rather than open.
+
 ### Windows source audit
 
 The `cfg(windows)` workspace-key path was audited against the documented Win32
@@ -344,8 +390,8 @@ Every row starts open. A gate labels what must be run or witnessed for that requ
 | D02.04 | Preserve VOID aperture as the brand mark. Use one existing SVG family on web/Mac, extending only missing semantic icons; use SF Symbols on Apple-native screens with a documented semantic mapping. Do not ship SF Symbols as a cross-platform web icon font. | Design system | Open: component gallery + contrast/focus/target checks. |
 | D02.05 | Catalog navigation, chat, attachment, tool, policy, approval, preview, undo, conflict, unknown, executor, pairing, network, backup, privacy and support symbols. Avoid emoji/ASCII as the only functional icon. | Design system | Open: component gallery + contrast/focus/target checks. |
 | D02.06 | Icon-only controls receive accessible names/tooltips; destructive and ambiguous actions also show text. Never distinguish approved/conflict/unknown by color alone. | Design system | Open: component gallery + contrast/focus/target checks. |
-| D02.07 | Build a lightweight internal component/state gallery using existing app/dev tooling. Do not add Storybook or a new UI kit unless the existing tools genuinely cannot serve the need. | Design system | Open: component gallery + contrast/focus/target checks. |
-| D03.01 | Button and icon button variants with pending/disabled behavior. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
+| D02.07 | Build a lightweight internal component/state gallery using existing app/dev tooling. Do not add Storybook or a new UI kit unless the existing tools genuinely cannot serve the need. | Design system | Closed 2026-09-25 without a new tool: `/gallery` is an internal-only route in the existing app, mounted from `Root` so `App` never mounts, and it issues zero `/api/` requests. It is absent from `routes`, so it is out of the sidebar and out of the command palette, it sets its own internal document title, and it renders only static representative state. `apps/control-plane/ui/src/gallery.test.ts` and `scripts/src/ui-layout.test.mjs` run it through the same nine-viewport, focus-ring, reduced-motion, zoom and touch-target checks as the rest of the product, including an assertion that a synthetic secret fed through `RedactedJson` never reaches the DOM. `apps/control-plane/ui/src` 73/73 and `scripts/src/ui-layout.test.mjs` 22/22. |
+| D03.01 | Button and icon button variants with pending/disabled behavior. | UI implementation | Inventory 2026-09-25, counting only a component mounted in a running surface: 24 of the 30 D03 families have a real consumer with a `file:line`, 4 are partial, and 2 have none. D03.22 (backup and retained-history health) and D03.26 (pairing QR, confirmation, expiry, device revoke) have no consumer anywhere in `apps/control-plane/ui/src`. D03.25, D03.28, D03.29 and D03.30 are partial. These are absences, not test failures: no run closes a family that has nothing mounted. The primitives named in the plan and absent from the code are tooltip, `role="menu"`, `role="tablist"`/`role="tab"`, `role="switch"`, `role="combobox"`, skeleton, toast, native sheet, split-view, inspector and breadcrumb; the app uses native `<details>`/`<summary>` in 18 places instead. The full per-family table with `file:line` is the evidence for this row, and D01 design approval is still outstanding, so building a missing family is not authorised work. |
 | D03.02 | Text field, search, secure field, select/combobox and validated field message. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
 | D03.03 | Checkbox, radio/segmented control and switch with actual semantic role. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
 | D03.04 | Badge/status label, progress, skeleton and inline notice. | UI implementation | Open: real consumer + interaction states + gallery for each family. |

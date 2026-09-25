@@ -251,7 +251,7 @@ export type BundleVerification = {
   readonly sections: readonly BundleSection[];
   readonly vault: VaultManifestSection;
   readonly capability: CapabilitySection;
-  readonly signed: { readonly ledger: true; readonly journal: boolean };
+  readonly signed: { readonly ledger: boolean; readonly journal: boolean };
 };
 
 /** Section digests and counts, the first half of the proof. */
@@ -474,7 +474,10 @@ export async function verifyBundle(
     sections: manifest.sections,
     vault: vault as VaultManifestSection,
     capability: capability as CapabilitySection,
-    signed: { ledger: true, journal: journal.signed },
+    // Derived, not asserted. `readSignedSection` already refuses a chain that
+    // fails verification, so a literal `true` can never report a degraded state
+    // if that call site ever stops supplying a key.
+    signed: { ledger: ledger.signed, journal: journal.signed },
   };
 }
 
@@ -750,6 +753,7 @@ export function capabilitySection(workspace: string): CapabilitySection {
     excluded: [
       "vault artifact bytes: listed by digest and length, recovery runs through the backup path",
       "signing key material: never part of a bundle",
+      "the ledger and journal sections are verbatim copies of recorded operations and may contain prompts, document content and tool results; the bundle applies no redaction of its own",
     ],
   };
 }

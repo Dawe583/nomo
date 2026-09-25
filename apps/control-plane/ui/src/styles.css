@@ -3477,9 +3477,154 @@ dialog label > textarea {
   .overview-priority { margin-top: 12px; }
 }
 
+/* ---------------------------------------------- D02.07 component gallery
+ * Reuses only the tokens declared in :root. The gallery adds no token, no
+ * global override and no page scaling: it is laid out like a settings page.
+ */
+.gallery {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+.gallery-header {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+  margin-bottom: 8px;
+}
+.gallery-header h1 {
+  font-size: 28px;
+  margin: 8px 0;
+  /* 200% zoom halves the CSS viewport to 160px. The root font is a fixed
+   * 14px, so a heading word can be wider than the whole viewport. The
+   * application already uses overflow-wrap for this (styles.css:178). */
+  overflow-wrap: anywhere;
+}
+.gallery-internal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+}
+.gallery-section {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+.gallery-section h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.gallery-consumer {
+  margin: 0 0 14px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.gallery-consumer code {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--muted);
+}
+.gallery-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.gallery-fields {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+}
+.gallery-fields label {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  max-width: none;
+  /* A grid item defaults to min-width:auto, so one long field can widen the
+   * whole page instead of shrinking. */
+  min-width: 0;
+}
+.gallery-fields .error {
+  margin: 0;
+}
+.gallery-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 12px;
+}
+.gallery-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.gallery-badge {
+  display: inline-flex;
+}
+.gallery-notices {
+  display: grid;
+  gap: 8px;
+}
+.gallery-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.gallery-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+.gallery-icon code {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--muted);
+}
+.gallery-footer {
+  padding-top: 4px;
+}
+.internal-tools .button {
+  width: fit-content;
+}
+
+/* 200% zoom of a 320px phone leaves 160 CSS px. The root font is a fixed
+ * 14px, so the gallery tightens its own padding and heading the same way
+ * .page-content does at styles.css:1562, rather than scaling the page. */
+@media (max-width: 420px) {
+  .gallery {
+    padding: 16px 8px 48px;
+  }
+  .gallery-header h1 {
+    font-size: 22px;
+  }
+  .gallery-section h2 {
+    font-size: 16px;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   :root:not([data-motion="off"])
-    :is(.overview-priority, .trust-proof, .recovery-result) {
+    :is(
+      .overview-priority,
+      .trust-proof,
+      .recovery-result,
+      .gallery-section
+    ) {
     animation: workspace-enter 180ms ease-out both;
   }
 }

@@ -106,6 +106,35 @@ All notable user-facing changes since the first repository commit.
   English and Czech. Two entry screens that the extra control pushed below the
   fold on a 402-point-wide window are fixed by laying the language and
   appearance controls out in one row when it fits.
+- R10: add a shared, fenced server budget ledger. Reserve before dispatch,
+  settle on a terminal result, release only on confirmed non-execution, and a
+  crash between reserve and settle leaves a durable spend that expiry surfaces
+  without refunding, because a crashed process cannot prove it never ran.
+  A per-session ledger is refused outright: N workers would each authorise the
+  full limit.
+- R02: add a production composition root for legacy proxy bindings, with
+  explicit operator selection, a refusal on an unknown name, and three bound
+  tools, each with a cross-layer fixture.
+- Keep a paired device's operation status inside that device. The bound
+  envelope path resolved an operation by workspace alone while the internal
+  route also checked the owner, so a sibling device could read it.
+- Take the collection lock when recording a retention pin, and re-read the
+  evidence immediately before each unlink. A pin written during a collection
+  was previously never observed, and the artifact and its pin record were both
+  deleted by the run meant to respect the pin.
+- Refuse retention evidence written inside the artifact root, which is the one
+  place a sidecar breaks the reserved vault.
+- Say in an export bundle's own capability section that the ledger and journal
+  sections are verbatim copies of recorded operations.
+- Derive the `signed` flag in a bundle verification and a metrics report
+  instead of asserting it, and report basenames rather than absolute host
+  paths, so a pasted report does not carry the operator's home directory.
+- Add an internal `/gallery` route for the component families that have a real
+  consumer, using the existing app and the existing browser harness rather than
+  a new UI kit. It replaces the shell before `App` mounts, issues no API
+  requests, is absent from the sidebar and the command palette, and is checked
+  by the same viewport, focus, reduced-motion, zoom and touch-target gate as
+  the rest of the product.
 
 - d125b7e9: Restored the product baseline from upstream history.
 - 9ef84fe2: Synchronized the product branch with upstream history.

@@ -104,7 +104,12 @@ export async function collectMetrics(
 ): Promise<MetricsReport> {
   const info = await stat(options.ledgerPath);
   const directory = info.isDirectory();
-  const workspace = directory ? basename(options.ledgerPath) : basename(options.ledgerPath, ".jsonl");
+  // A directory name is not a workspace identity. In directory-scan mode this
+  // is a scan label and the report says so, rather than attributing every
+  // counter to something that looks like a workspace and is not one.
+  const workspace = directory
+    ? `scan:${basename(options.ledgerPath)}`
+    : basename(options.ledgerPath, ".jsonl");
   const scan = directory
     ? await scanLedgerDirectory(options.ledgerPath, options.publicKey)
     : await scanLedgerFile(options.ledgerPath, options.publicKey);
@@ -150,8 +155,11 @@ export async function collectMetrics(
     },
   ];
 
+  // Basenames, not absolute paths. `void metrics` writes this to stdout, and a
+  // report pasted into a tracker or a support thread should not carry the
+  // operator's home directory and username.
   const sources = {
-    ledger: options.ledgerPath,
+    ledger: basename(options.ledgerPath),
     journal: directory
       ? "not scanned: a directory scan has no single workspace journal"
       : options.stateDir
@@ -174,7 +182,7 @@ export async function collectMetrics(
       );
       samples.push(...journal.samples);
       journalSigned = journal.signed;
-      sources.journal = join(options.stateDir, "journal", `${workspace}.jsonl`);
+      sources.journal = join("journal", `${basename(options.ledgerPath, ".jsonl")}.jsonl`);
     }
     const vault = await readVaultManifest(options.stateDir, workspace);
     samples.push(
@@ -191,14 +199,17 @@ export async function collectMetrics(
       { name: "void_vault_unsettled_total", value: vault.unsettled },
       { name: "void_vault_reservations_total", value: vault.reservations },
     );
-    sources.vault = join(options.stateDir, "vault");
+    sources.vault = "vault";
   }
 
   return {
     schema: METRICS_SCHEMA,
     workspace,
     sources,
-    signed: { ledger: true, journal: journalSigned },
+    // Derived. A directory scan deliberately counts files that failed
+    // verification, so claiming the whole report is authenticated would be a
+    // claim about files this report never aggregated from.
+    signed: { ledger: directory ? scan.rejected === 0 : true, journal: journalSigned },
     samples,
   };
 }

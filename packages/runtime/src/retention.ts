@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, open, readdir, readFile, rename, rm, stat } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 
 import { canonicalJson } from "../../ledger/src/canonical.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
@@ -82,10 +82,18 @@ export function validateRetentionPolicy(
   });
 }
 
-const evidenceDir = (index: string, workspace: string): string => {
+const evidenceDir = (index: string, workspace: string, artifactRoot: string): string => {
   if (!/^[\w-]{1,100}$/.test(workspace))
     throw new Error("Invalid vault retention workspace.");
-  return join(resolve(index), workspace);
+  // The evidence tree must not be the artifact tree, or any parent of it: the
+  // reserved vault reads every regular file in a workspace directory as a
+  // legacy artifact, so a `.meta` sidecar there makes the whole store
+  // unverifiable. Refuse rather than write into a tree we just said is unsafe.
+  const base = resolve(index);
+  const root = resolve(artifactRoot);
+  if (root === base || root.startsWith(`${base}${sep}`))
+    throw new Error("Recovery vault retention evidence must live outside the artifact root.");
+  return join(base, workspace);
 };
 const lifecyclePath = (dir: string, artifact: ArtifactIdentity): string => {
   if (!/^[a-f0-9]{64}$/.test(artifact.digest))
@@ -159,51 +167,57 @@ export type VaultLifecycleRequest = {
 export async function markVaultLifecycle(
   request: VaultLifecycleRequest,
 ): Promise<void> {
-  const dir = evidenceDir(request.index, request.workspace),
-    path = lifecyclePath(dir, request.reference);
-  const incoming: VaultLifecycle =
-    request.pin === undefined ? {} : { pin: vaultPin(request.pin) };
-  const existing = await readLifecycle(dir, request.reference);
-  if (existing?.pin !== undefined && incoming.pin === undefined)
-    throw new Error("A pinned recovery artifact is not released by retention.");
-  if (
-    existing?.pin !== undefined &&
-    incoming.pin !== undefined &&
-    (existing.pin.ownerId !== incoming.pin.ownerId ||
-      existing.pin.kind !== incoming.pin.kind)
-  )
-    throw new Error("Recovery artifact pin conflicts with recorded lifecycle.");
-  const artifact = join(
-      resolve(request.root),
-      request.workspace,
-      request.reference.digest,
-    ),
-    metadata = await stat(artifact).catch(() => {
+  const dir = evidenceDir(request.index, request.workspace, request.root);
+  // The same lock the collector holds. Without it, a pin recorded while a
+  // collection is scanning is never observed, the artifact is deleted, and the
+  // sidecar is removed with it, so the one record that protected the artifact
+  // is destroyed by the run that was supposed to respect it.
+  await withRetentionLock(dir, async () => {
+    const path = lifecyclePath(dir, request.reference);
+    const incoming: VaultLifecycle =
+      request.pin === undefined ? {} : { pin: vaultPin(request.pin) };
+    const existing = await readLifecycle(dir, request.reference);
+    if (existing?.pin !== undefined && incoming.pin === undefined)
+      throw new Error("A pinned recovery artifact is not released by retention.");
+    if (
+      existing?.pin !== undefined &&
+      incoming.pin !== undefined &&
+      (existing.pin.ownerId !== incoming.pin.ownerId ||
+        existing.pin.kind !== incoming.pin.kind)
+    )
+      throw new Error("Recovery artifact pin conflicts with recorded lifecycle.");
+    const artifact = join(
+        resolve(request.root),
+        request.workspace,
+        request.reference.digest,
+      ),
+      metadata = await stat(artifact).catch(() => {
+        throw new Error(
+          "Recovery artifact is unavailable; lifecycle was not recorded.",
+        );
+      });
+    if (!metadata.isFile())
       throw new Error(
         "Recovery artifact is unavailable; lifecycle was not recorded.",
       );
-    });
-  if (!metadata.isFile())
-    throw new Error(
-      "Recovery artifact is unavailable; lifecycle was not recorded.",
-    );
-  const bytes = Buffer.from(canonicalJson({ ...existing, ...incoming }));
-  if (existing !== undefined && bytes.toString() === canonicalJson(existing))
-    return;
-  await mkdir(dir, { recursive: true, mode: 0o700 });
-  const temporary = `${path}.tmp-${randomBytes(16).toString("hex")}`;
-  try {
-    const handle = await open(temporary, "wx", 0o600);
+    const bytes = Buffer.from(canonicalJson({ ...existing, ...incoming }));
+    if (existing !== undefined && bytes.toString() === canonicalJson(existing))
+      return;
+    await mkdir(dir, { recursive: true, mode: 0o700 });
+    const temporary = `${path}.tmp-${randomBytes(16).toString("hex")}`;
     try {
-      await handle.writeFile(bytes);
-      await handle.sync();
+      const handle = await open(temporary, "wx", 0o600);
+      try {
+        await handle.writeFile(bytes);
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
+      await rename(temporary, path);
     } finally {
-      await handle.close();
+      await rm(temporary, { force: true });
     }
-    await rename(temporary, path);
-  } finally {
-    await rm(temporary, { force: true });
-  }
+  });
 }
 
 export type RetentionRequest = {
@@ -246,7 +260,7 @@ export async function collectVaultGarbage(
     if (!/^[\w-]{1,120}$/.test(value))
       throw new Error("Invalid vault retention identity.");
   const artifacts = join(resolve(options.root), workspace),
-    evidence = evidenceDir(options.index, workspace);
+    evidence = evidenceDir(options.index, workspace, options.root);
   const clock = options.clock ?? (() => new Date());
   const policyDigest = digest(canonicalJson(policy));
   const identity: OperationEvent = {
@@ -374,6 +388,17 @@ async function deleteArtifacts(
   const errors: string[] = [];
   for (const file of files) {
     try {
+      // Re-read the evidence immediately before the unlink rather than trusting
+      // the scan-time snapshot. A pin recorded between the scan and this point
+      // has to be able to stop the delete, and the sidecar must not be removed
+      // for an artifact that was kept.
+      const lifecycle = await readLifecycle(evidence, file.artifact);
+      if (lifecycle === undefined || lifecycle.pin !== undefined) {
+        errors.push(
+          `${file.artifact.digest} gained evidence or a pin after the scan; not deleted`,
+        );
+        continue;
+      }
       await rm(file.path);
       deleted += 1;
       freedBytes += file.size;
