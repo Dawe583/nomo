@@ -23,5 +23,5 @@ test("the agentic reverse loop holds up against a real database row", async (t) 
 test("the agentic reverse loop holds up over the transport an agent actually uses", async (t) => {
   const result = await runMcpReverseExercise();
   t.diagnostic(result.steps.join(" | "));
-  assert.equal(result.steps.length, 5);
+  assert.equal(result.steps.length, 6);
 });

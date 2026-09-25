@@ -1,5 +1,4 @@
 import { mutateCloudDocument } from "./recovery.mjs";
-import { randomBytes, timingSafeEqual } from "node:crypto";
 import { resolveIntegration } from "./integrations.mjs";
 import { integrationClass } from "./oauth.mjs";
 import { vercelCall } from "./vercel-integration.mjs";
@@ -45,14 +44,26 @@ export function holdTokenMatches(record, presented) {
   const expected = record?.decisionToken;
   if (typeof expected !== "string" || expected.length === 0) return false;
   if (typeof presented !== "string" || presented.length !== expected.length) return false;
-  return timingSafeEqual(Buffer.from(presented), Buffer.from(expected));
+  // Constant-time over equal-length base64url, so a wrong token reveals nothing
+  // about how much of the right one it guessed. No Node builtin: this module
+  // compiles into the agent-step workflow.
+  let difference = 0;
+  for (let index = 0; index < expected.length; index += 1)
+    difference |= expected.charCodeAt(index) ^ presented.charCodeAt(index);
+  return difference === 0;
 }
 
 /** 24 random bytes, base64url, exactly like the local broker's per-record
  * token. Never derived from session state, because a hold identifier is
- * derived from session state. */
+ * derived from session state.
+ *
+ * Web Crypto, not `node:crypto`: this module is compiled into the agent-step
+ * workflow, whose runtime rejects Node builtins outright. `getRandomValues` is
+ * both available there and the stronger primitive, so nothing is weakened. */
 export function mintHoldToken() {
-  return randomBytes(24).toString("base64url");
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Buffer.from(bytes).toString("base64url");
 }
 const save = (s, c) => write(`session:${s.id}`, s, c);
 export async function advance(id, generation) {

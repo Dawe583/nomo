@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { generateKeyPairSync, randomBytes } from "node:crypto";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -134,7 +135,30 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
       steps.push(`the signed journal verifies over ${proof.checked} entries`);
     }
 
-    // 4. Tightening the policy is what stops the agent, not the transport.
+    // 4. The property the whole product rests on: a human edit between the
+    //    capture and the inverse is a conflict, not something Undo overwrites.
+    const contended = await client.callTool({
+      name: "void_execute",
+      arguments: {
+        operationId: "op-mcp-contended",
+        runId: "mcp-run-2",
+        mutation: { action: "write", path: "disassembly.bin", base64: PATCHED.toString("base64") },
+      },
+    });
+    if (contended.isError === true) throw new Error(`the second mutation was refused: ${JSON.stringify(payload(contended))}`);
+    await writeFile(subject, Buffer.from("a human edited this after the capture\n", "utf8"), { mode: 0o600 });
+    const contestedPlan = await client.callTool({ name: "void_recovery_plan", arguments: { operationId: "op-mcp-contended" } });
+    const contestedApply = await client.callTool({ name: "void_recovery_apply", arguments: { plan: payload(contestedPlan) } });
+    const outcome = payload(contestedApply).status;
+    if (outcome !== "conflict") throw new Error(`a human edit produced ${String(outcome)} instead of a conflict`);
+    assert.equal(
+      await readFile(subject, "utf8"),
+      "a human edited this after the capture\n",
+      "Undo must not overwrite a human edit",
+    );
+    steps.push("a human edit after the capture is a conflict, and Undo leaves the human's bytes alone");
+
+    // 5. Tightening the policy is what stops the agent, not the transport.
     await client.close();
     await writeFile(policyPath, policy([
       "version: 1",

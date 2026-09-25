@@ -15,7 +15,7 @@ import {
   type MatchKey,
   type Decision,
   POLICY_VERSION,
-} from "./index.ts";
+} from "./grammar.ts";
 
 /** The value a match key compares against; a list means any of. */
 export type MatchValue = string | number | readonly string[];

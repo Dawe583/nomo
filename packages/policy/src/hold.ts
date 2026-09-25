@@ -10,7 +10,7 @@
  * instead of posing as a transport failure.
  */
 
-import type { Decision } from "./index.ts";
+import type { Decision } from "./grammar.ts";
 
 export type HoldId = string;
 

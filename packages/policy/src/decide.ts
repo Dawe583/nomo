@@ -9,7 +9,7 @@
  * the policy stay dumb about transports.
  */
 
-import { UNMATCHED_DECISION, UNKNOWN_CLASS, type MatchKey } from "./index.ts";
+import { UNMATCHED_DECISION, UNKNOWN_CLASS, type MatchKey } from "./grammar.ts";
 import type { LoadedPolicy, Rule, RuleMatch } from "./rules.ts";
 
 /** The call, as the registry and the proxy see it. */

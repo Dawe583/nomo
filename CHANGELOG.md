@@ -135,6 +135,13 @@ All notable user-facing changes since the first repository commit.
   requests, is absent from the sidebar and the command palette, and is checked
   by the same viewport, focus, reduced-motion, zoom and touch-target gate as
   the rest of the product.
+- Fix the cloud build. The agent-step workflow imports the policy decision
+  module, which imported the policy barrel for two string constants, and the
+  barrel re-exports the pack loader and the approval broker, both of which
+  touch the filesystem. The workflow runtime refuses Node builtins, so the
+  deployment failed. The grammar now lives in a leaf module the leaves share,
+  the barrel keeps the public names, and a test refuses a leaf that imports the
+  barrel again.
 - Add a read budget to the file recovery vault, so a host that will not load a
   large artifact gets a refusal naming the size instead of an allocation it
   cannot satisfy. It defaults to the write quota, so nothing changes by default,
