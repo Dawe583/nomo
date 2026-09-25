@@ -29,6 +29,12 @@ export function localRecoveryVault(
   keys: Readonly<Record<string, Uint8Array>>,
   currentKey: string,
   maxArtifactBytes = 64 * 1024 * 1024,
+  /**
+   * The largest artifact this host will load. Defaults to the write quota, so
+   * behaviour is unchanged, but a host can set it lower and get a refusal
+   * naming the size instead of an allocation it cannot satisfy.
+   */
+  readBudget = maxArtifactBytes,
 ): RecoveryVault {
   if (!Number.isSafeInteger(maxArtifactBytes) || maxArtifactBytes < 1)
     throw new Error("Invalid recovery artifact quota.");
@@ -85,6 +91,15 @@ export function localRecoveryVault(
         metadata.size > maxArtifactBytes + 28
       )
         throw new Error("Recovery artifact size mismatch.");
+      // Read budget. `maxArtifactBytes` already bounds what may be stored, so
+      // this only bites a host that deliberately declares a smaller working
+      // set. Refusing with the size named is the point: an unbounded
+      // `readFile` on a large artifact turns a recoverable refusal into a
+      // process-level allocation failure that takes the journal with it.
+      if (metadata.size - 28 > readBudget)
+        throw new VaultCapacityError(
+          `Recovery artifact of ${metadata.size - 28} bytes exceeds the ${readBudget} byte read budget.`,
+        );
       const bytes = await readFile(path);
       if (digest(bytes.toString("base64")) !== reference.digest)
         throw new Error("Recovery artifact digest mismatch.");

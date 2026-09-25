@@ -135,6 +135,11 @@ All notable user-facing changes since the first repository commit.
   requests, is absent from the sidebar and the command palette, and is checked
   by the same viewport, focus, reduced-motion, zoom and touch-target gate as
   the rest of the product.
+- Add a read budget to the file recovery vault, so a host that will not load a
+  large artifact gets a refusal naming the size instead of an allocation it
+  cannot satisfy. It defaults to the write quota, so nothing changes by default,
+  and the artifact itself is untouched so a host that later raises its budget
+  can still read it.
 - Give the recovery path an operator mode, so the same control the workbench
   exposes as a permission mode also exists where files actually change.
   `audit` and `plan` refuse dispatch before the policy is consulted, so widening
