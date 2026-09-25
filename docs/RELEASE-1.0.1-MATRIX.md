@@ -302,6 +302,29 @@ frozen `operations` set, which does not contain it. Publishing it would make
 every handshake response fail the frozen validator, so closing this needs a
 v1.1 contract change rather than an adapter change.
 
+### The agentic reverse loop, end to end
+
+`scripts/src/agentic-reverse-exercise.mjs` is a disposable, self-checking
+exercise of the loop an agentic reverse workflow depends on, run against real
+bytes on a real filesystem through the shipped `filesystem.managed` adapter,
+the shipped journal and the shipped vault. Eight steps, in order: the agent
+inspects a target, a refused destructive call leaves it byte-identical, an
+approved call captures before it changes the file, a reused operation identity
+is refused rather than rebound to a different write, the signed journal
+verifies, a restarted runtime acts on the same workspace and history, the
+confirmed inverse restores the exact bytes and mode, and a replayed inverse is
+refused instead of applied again.
+
+It is a gate, not a demonstration: `check-tests.mjs` already globs
+`scripts/src/*.test.mjs`, so it runs under `pnpm test`. Two mutations were
+shown red. Redoing the capture into the wrong vault slot makes the approved
+write report `unknown` instead of succeeding, and making the approval callback
+approve everything makes the refused call succeed — which is the failure mode
+the whole product exists to prevent.
+
+`scripts/src/agentic-reverse-exercise.mjs` also runs standalone with
+`node scripts/src/agentic-reverse-exercise.mjs` and prints its steps.
+
 ### A wiring that was attempted and reverted
 
 Wiring the shared budget ledger into `execute.ts` was attempted and backed

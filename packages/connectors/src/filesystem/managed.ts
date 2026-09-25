@@ -77,7 +77,7 @@ export function managedFilesystemAdapter(options: {
       if (!stat.isDirectory() || stat.isSymbolicLink())
         throw new Error("Unsafe workspace parent.");
     }
-    return join(root, path);
+    return join(root, path); //MUTATED
   }
   function parse(args: Json): Mutation {
     if (!args || Array.isArray(args) || typeof args !== "object")
