@@ -139,7 +139,10 @@ All notable user-facing changes since the first repository commit.
   files: a refused call changes nothing, an approved call captures before it
   writes, a reused identity cannot be rebound, the signed journal verifies, a
   restart keeps the history, the confirmed inverse restores exact bytes and
-  mode, and a replayed inverse is refused. It runs in the gate.
+  mode, and a replayed inverse is refused. The same loop runs against a real
+  database over PGlite, where a refused row change leaves the row alone and the
+  confirmed inverse restores the captured values rather than a reconstruction.
+  Both halves run in the gate.
 - Deduplicate a mutating companion operation by its idempotency key, bound to
   the exact request body, so a retry is distinguishable from a key reused for a
   different body. A replayed pairing is refused with a conflict instead of

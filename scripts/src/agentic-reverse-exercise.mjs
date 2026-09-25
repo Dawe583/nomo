@@ -189,3 +189,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   for (const [index, step] of result.steps.entries()) console.log(`  ${index + 1}. ${step}`);
   console.log(`agentic reverse exercise passed: ${result.steps.length} steps`);
 }
+
+/**
+ * The database half of the exercise lives next to the adapter it exercises, so
+ * PGlite resolves from the package that declares it. Re-exported here so both
+ * halves run from one entry point and one gate test.
+ */
+export { runDatabaseReverseExercise } from "../../packages/connectors/src/postgres/reverse-exercise.ts";

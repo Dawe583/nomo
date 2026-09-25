@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runAgenticReverseExercise } from "./agentic-reverse-exercise.mjs";
+import { runAgenticReverseExercise, runDatabaseReverseExercise } from "./agentic-reverse-exercise.mjs";
 
 test("the agentic reverse loop holds up end to end against real files", async (t) => {
   const result = await runAgenticReverseExercise();
@@ -12,4 +12,10 @@ test("the agentic reverse loop holds up end to end against real files", async (t
   assert.equal(result.bytes.original, 11);
   assert.equal(result.bytes.patched, 40);
   assert.equal(result.bytes.human, 38);
+});
+
+test("the agentic reverse loop holds up against a real database row", async (t) => {
+  const result = await runDatabaseReverseExercise();
+  t.diagnostic(result.steps.join(" | "));
+  assert.equal(result.steps.length, 5);
 });
