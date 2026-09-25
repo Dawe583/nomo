@@ -196,3 +196,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
  * halves run from one entry point and one gate test.
  */
 export { runDatabaseReverseExercise } from "../../packages/connectors/src/postgres/reverse-exercise.ts";
+export { runMcpReverseExercise } from "../../packages/cli/src/mcp-reverse-exercise.ts";

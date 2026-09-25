@@ -149,7 +149,9 @@ All notable user-facing changes since the first repository commit.
   mode, and a replayed inverse is refused. The same loop runs against a real
   database over PGlite, where a refused row change leaves the row alone and the
   confirmed inverse restores the captured values rather than a reconstruction.
-  Both halves run in the gate.
+  A third arm drives the loop over real MCP stdio against a spawned
+  `void recovery serve`, so the claim covers the transport an agent actually
+  uses. All three run in the gate.
 - Deduplicate a mutating companion operation by its idempotency key, bound to
   the exact request body, so a retry is distinguishable from a key reused for a
   different body. A replayed pairing is refused with a conflict instead of

@@ -315,6 +315,17 @@ verifies, a restarted runtime acts on the same workspace and history, the
 confirmed inverse restores the exact bytes and mode, and a replayed inverse is
 refused instead of applied again.
 
+A third arm runs the loop over the transport an agent actually uses.
+`packages/cli/src/mcp-reverse-exercise.ts` spawns the real `void recovery serve`
+as a child process over stdio, lets it negotiate its eight recovery tools under
+an operator policy, and drives execute, plan and apply through JSON-RPC: a
+permitted mutation lands on the real file, a previewed inverse restores the
+exact bytes, the process's own retained journal verifies under its public key,
+and tightening the policy to deny everything refuses the same mutation over the
+same transport. The other two arms drive the runtime directly, which is the
+right level for a unit and the wrong one for a claim about the product an agent
+talks to. Changing the tight policy from deny to allow turns the last step red.
+
 The same loop also runs against a real database, which is the flavour of
 reverse engineering the product is sold on:
 `packages/connectors/src/postgres/reverse-exercise.ts` installs a managed table
