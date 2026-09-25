@@ -17,6 +17,7 @@
     "kind": "request",
     "requestId": "req-succeeded-001",
     "operationId": "op-succeeded-001",
+    "idempotencyKey": "idem-succeeded-001",
     "operation": "recovery.apply",
     "deviceId": "device-demo-001",
     "workspaceId": "workspace-demo-001",

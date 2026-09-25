@@ -265,7 +265,7 @@ export function WorkspaceControls() {
         )}
       </section>
       <section>
-        <h2>Hooks</h2>
+        <h2>{t("Hooky", "Hooks")}</h2>
         <p className="muted">
           {t(
             "Pouze příkazy výslovně povolené operátorem. Uložení hooku jej samo nespouští.",

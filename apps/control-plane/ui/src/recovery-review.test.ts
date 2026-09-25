@@ -5,6 +5,7 @@ import {
   recoveryApplyBody,
   recoveryStatusPath,
   type RecoveryReview,
+  recoveryStateLabel,
 } from "./recovery-review.ts";
 const plan = {
   jobId: "job-1",
@@ -113,4 +114,11 @@ test("status navigation encodes the exact retained session and job IDs", () => {
     }),
     "/api/sessions/session%2Fone/recovery-jobs/job%2Ftwo%3Finspect",
   );
+});
+
+test("built-in recovery states localize without touching unknown server values", () => {
+  assert.equal(recoveryStateLabel("restored", "en"), "Restored");
+  assert.equal(recoveryStateLabel("blocked-by-conflict", "cs"), "Blokováno konfliktem");
+  assert.equal(recoveryStateLabel("server-specific-state", "en"), "server-specific-state");
+  assert.equal(recoveryStateLabel("missing", "en"), "Missing source");
 });

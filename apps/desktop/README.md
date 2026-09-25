@@ -5,6 +5,30 @@ Tauri 2 keeps one app instance per user and owns an isolated Node process and bi
 loopback port. The packaged application contains Node 24 and the bundled backend;
 end users do not need Node, pnpm, Rust, Vercel or a running terminal.
 
+## Local Mac 1.0.1 candidate
+
+This local-only Mac candidate is intentionally versioned `1.0.1` in all
+desktop release sources: `apps/desktop/package.json`,
+`apps/desktop/src-tauri/Cargo.toml` and `apps/desktop/src-tauri/tauri.conf.json`.
+`apps/desktop/src-tauri/Cargo.lock` records the same package version. The
+bundled Node runtime remains pinned independently at `24.21.0`; that runtime
+version is not the VOID product version.
+
+The direct-download profile is the only supported local Mac packaging path in
+this repository. `apps/desktop/scripts/build.mjs` resolves that policy before
+invoking Tauri: it refuses `VOID_DISTRIBUTION=store` on macOS, defaults the
+Apple signing identity to `-` (ad-hoc signature), and does not request
+notarization. The Mac App Store remains explicitly unconfigured: no store
+entitlements, provisioning profile, sandbox container or submission settings
+are inferred. Developer ID signing, notarization and a clean-machine install
+remain external release blockers, not local-build capabilities.
+
+The native shell keeps the redacted diagnostic boundary: startup failures
+persist only allowlisted categories in `desktop-startup.log`; paths, provider
+data, environment values and exception text are not logged. Use the native
+runtime smoke commands below after packaging. They use temporary data and do
+not contact a provider.
+
 ## Develop and package
 
 Run from the repository root after `pnpm install`:
@@ -27,7 +51,9 @@ DMG creation runs without Finder automation. The `.app` can run locally; public 
 signing identity and notarization credentials configured using Tauri's standard
 `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD` and `APPLE_TEAM_ID`
 environment variables. Without those credentials macOS builds use an ad-hoc signature for bundle integrity,
-not Apple notarization. Windows produces an unsigned NSIS beta installer;
+not Apple notarization. This direct-download profile is separate from a Mac App Store profile: no store
+entitlements, provisioning profile, sandbox container, or store submission configuration is present in this
+repository, and those must not be inferred from the direct build. Windows produces an unsigned NSIS beta installer;
 SmartScreen may warn. Linux packages are not verified.
 
 ## Runtime boundary
@@ -61,10 +87,16 @@ runtime environment before MCP processes are launched. A legacy `workspace.key`
 is migrated with native store readback verification and retired only after the
 backend opens successfully. A locked Keychain or conflicting keys stops startup
 without overwriting the workspace. The native smoke check and migration tests use ephemeral or injected storage.
-The Windows-specific test verifies a temporary credential and removes it. On
-Unix, directories have mode 0700 and the runtime log has mode 0600. Closing the app closes the ownership pipe, cancels the workbench and closes
-HTTP connections; a stuck backend is terminated after five seconds. Closing the
+The Windows-specific tests verify temporary Credential Manager entries, remove them
+with unconditional cleanup, and cover persistence across workspace loads. On
+Unix, directories have mode 0700. Runtime stderr is not persisted because it may contain backend details; startup
+failures are reduced to an allowlisted category in `desktop-startup.log` and the terminal points to that file
+without printing paths, environment values, provider data, or exception text. Closing the app closes the ownership
+pipe, cancels the workbench and closes HTTP connections; a stuck backend is terminated after five seconds. Closing the
 pipe also handles an unexpected shell termination.
+If the owned Node runtime exits after readiness, the shell treats that as a
+fail-closed runtime failure, records only `RUNTIME_EXITED`, and closes the
+desktop window instead of leaving a dead workbench origin open.
 
 The webview has no Node integration, shell access or broad Tauri permissions.
 Navigation is restricted to its own loopback origin. Document and conversation
@@ -93,6 +125,13 @@ After packaging, exercise the native executable and its embedded Node runtime:
 
 ```sh
 apps/desktop/src-tauri/target/release/bundle/macos/VOID.app/Contents/MacOS/void-desktop --smoke-test
+```
+
+The debug lifecycle smoke exercises that failure path without a provider or
+user workspace and must exit nonzero:
+
+```sh
+cargo run --manifest-path apps/desktop/src-tauri/Cargo.toml -- --smoke-runtime-exit
 ```
 
 This checks that the packaged application resolves its own resources and serves

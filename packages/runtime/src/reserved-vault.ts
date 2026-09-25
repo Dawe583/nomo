@@ -203,10 +203,23 @@ export function reservedRecoveryVault(
           await delay(25);
         }
       }
+      const versionRow: unknown = db.prepare("PRAGMA user_version").get();
+      if (
+        typeof versionRow !== "object" ||
+        versionRow === null ||
+        !("user_version" in versionRow) ||
+        typeof versionRow.user_version !== "number"
+      )
+        throw new Error("Recovery vault schema version cannot be verified.");
+      const schemaVersion = versionRow.user_version;
+      if (schemaVersion > 1)
+        throw new Error("Unsupported recovery vault schema version.");
       db.exec(`CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),capacity TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS artifacts(workspace TEXT NOT NULL,digest TEXT NOT NULL,key_id TEXT NOT NULL,data BLOB NOT NULL,operation_id TEXT,slot TEXT,content_digest TEXT NOT NULL,PRIMARY KEY(workspace,digest),UNIQUE(workspace,operation_id,slot));
     CREATE TABLE IF NOT EXISTS reservations(workspace TEXT NOT NULL,operation_id TEXT NOT NULL,slot TEXT NOT NULL,bytes INTEGER NOT NULL,PRIMARY KEY(workspace,operation_id,slot));
-    CREATE TABLE IF NOT EXISTS key_checks(key_id TEXT PRIMARY KEY,proof TEXT NOT NULL);`);
+    CREATE TABLE IF NOT EXISTS key_checks(key_id TEXT PRIMARY KEY,proof TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS artifacts_key_id ON artifacts(key_id);
+    PRAGMA user_version=1;`);
       const limits = canonicalJson({ maxArtifactBytes, maxTotalBytes });
       db.prepare("INSERT OR IGNORE INTO settings VALUES(1,?)").run(limits);
       if (

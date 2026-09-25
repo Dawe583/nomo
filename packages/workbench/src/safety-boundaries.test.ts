@@ -56,7 +56,7 @@ test("single Undo and writes cannot bypass the owning paused job after vault rep
 });
 test("an independent branch does not inherit its parent recovery owner or queued prompt",async t=>{
  const f=await paused(t),id=f.session.id;
- const child=await f.app.branch(id,{seq:f.app.get(id)!.events.find(event=>event.kind==="user")!.seq});
+ const child=await f.app.branch(id,{seq:f.app.get(id)!.events.find(event=>event.kind==="user")!.seq,idempotencyKey:"paused-recovery-branch"});
  f.app.send(child.id,"Continue independently");await f.app.settled();assert.equal(f.app.get(child.id)?.status,"idle");
  assert.equal(f.app.get(id)?.status,"paused");assert.equal(f.app.document(id,"note").content,"one");
  const saved=new LocalStorage(f.directory).read<{sessions:Array<{view:{id:string};recoveryBlock?:unknown;queuedPrompt?:unknown}>}>()!;

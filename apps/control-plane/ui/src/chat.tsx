@@ -9,6 +9,7 @@ import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import * as m from "motion/react-m";
 import { BrandMark } from "./brand";
 import { ApprovalReview } from "./approval-review";
+import { Icon } from "./icons";
 import {
   PermissionBanner,
   PermissionModeSwitch,
@@ -172,6 +173,12 @@ const draftKey =
   const [error, setError] = useState<unknown>();
   const [branch, setBranch] = useState<Row>();
   const [retry, setRetry] = useState(false);
+  const branchRequestKey = useRef<string | undefined>(undefined);
+  function selectBranch(event: Row, shouldRetry = false) {
+    branchRequestKey.current = crypto.randomUUID();
+    setRetry(shouldRetry);
+    setBranch(event);
+  }
   const [now, setNow] = useState(Date.now());
   const [edited, setEdited] = useState("");
   const [attachments, setAttachments] = useState<
@@ -511,8 +518,8 @@ const draftKey =
     }
     setBusy(true);
     setError(undefined);
-    // Režim je pokyn pro agenta (autorita server/policy ho nevynucuje) —
-    // proto prefix promptu, ne lokální blokace odeslání.
+    // The prefix is only a legible model instruction. The server remains
+    // authoritative: it filters the tool catalog and refuses mutations.
     const prompt =
       modePrefix(perm.mode, t) +
       draft +
@@ -577,6 +584,7 @@ const draftKey =
         seq: branch.seq,
         ...(branch.kind === "user" ? { prompt: edited } : {}),
         snapshotDocuments: true,
+        idempotencyKey: branchRequestKey.current,
       });
       if (retry)
         await api("/api/sessions/" + result.session.id, "POST", {
@@ -584,7 +592,7 @@ const draftKey =
             "Odpověz na předchozí uživatelskou zprávu.",
             "Respond to the preceding user message.",
           ),
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey: `${branchRequestKey.current}:followup`,
         });
       setBranch(undefined);
       setRetry(false);
@@ -744,8 +752,7 @@ const draftKey =
                       <button
                         disabled={running}
                         onClick={() => {
-                          setRetry(false);
-                          setBranch(event);
+                          selectBranch(event);
                           setEdited(kind === "user" ? text : "");
                         }}
                       >
@@ -763,9 +770,8 @@ const draftKey =
                             .reverse()
                             .find((e) => e.kind === "user");
                           if (user) {
-                            setBranch(user);
+                            selectBranch(user, true);
                             setEdited(user.text);
-                            setRetry(true);
                           }
                         }}
                       >
@@ -793,7 +799,7 @@ const draftKey =
         </button>
       )}
       <div className="composer-wrap">
-        <div className="composer-notices" tabIndex={0} role="region" aria-label={t("Stav a upozornění", "Status and notices")}>
+        <div className="composer-notices" tabIndex={0} role="region" aria-live="polite" aria-label={t("Stav a upozornění", "Status and notices")}>
         {retryWait > 0 && (
           <p className="notice" role="status">
             {t(
@@ -945,7 +951,7 @@ const draftKey =
                 if (previous) {
                   e.preventDefault();
                   setRetry(false);
-                  setBranch(previous);
+                  selectBranch(previous);
                   setEdited(previous.text);
                   return;
                 }
@@ -994,7 +1000,7 @@ const draftKey =
           <div className="composer-actions">
             <button type="button" className="chat-options-trigger"
               aria-label={t("Nastavení konverzace", "Conversation settings")}
-              onClick={() => setChatOptions(true)}>⋯</button>
+              onClick={() => setChatOptions(true)}><Icon name="more" /></button>
             <button
               type="button"
               className="command-trigger"
@@ -1025,7 +1031,7 @@ const draftKey =
                   "Attach a text file up to 24 KB",
                 )}
               >
-                ＋
+                <Icon name="plus" />
                 <span className="sr-only">
                   {t("Přiložit textový soubor", "Attach text file")}
                 </span>
@@ -1068,7 +1074,7 @@ const draftKey =
                   "Attach conversation document",
                 )}
               >
-                ▤
+                <Icon name="documents" />
               </button>
               <button
                 className="model-button"
@@ -1079,7 +1085,7 @@ const draftKey =
                 {(session?.model ?? model) === DEFAULT_MODEL_ID
                   ? DEFAULT_MODEL_NAME
                   : (session?.model ?? model)}
-                <span aria-hidden="true">⌄</span>
+                <Icon name="chevron" />
               </button>
             </div>
             {running ? (
@@ -1092,7 +1098,7 @@ const draftKey =
                   void stopRun();
                 }}
               >
-                {t("Zastavit ■", "Stop ■")}
+                <Icon name="stop" />
               </button>
             ) : (
               <m.button
@@ -1107,7 +1113,7 @@ const draftKey =
                 }
                 aria-label={t("Odeslat zprávu", "Send message")}
               >
-{busy ? "…" : "↑"}
+{busy ? "…" : <Icon name="send" />}
               </m.button>
             )}
 
@@ -1128,15 +1134,15 @@ const draftKey =
             {usage.totalTokens === null
               ? t("Tokeny neznámé", "Tokens unknown")
               : `${usage.totalTokens.toLocaleString()} tokens`}
-            {usage.cost === null ? " · cost unknown" : ` · ${usage.cost}`}
+            {usage.cost === null ? ` · ${t("cena neznámá", "cost unknown")}` : ` · ${usage.cost}`}
           </span>
           <span>
             {(session?.agent ?? preferences.data?.preferences?.defaultAgentPreset) ===
             "prime-agent"
-              ? "prime-agent · Local PC"
+              ? `prime-agent · ${t("Místní PC", "Local PC")}`
               : capabilities.data?.mode === "local"
-                ? "VOID Local"
-                : "VOID Cloud"}
+                ? t("Místní VOID", "VOID Local")
+                : t("VOID Cloud", "VOID Cloud")}
           </span>
           <button onClick={() => { setChatOptions(false); onContext(); }}>
             {t("Dokumenty a kontext", "Documents and context")}
@@ -1156,8 +1162,8 @@ const draftKey =
               {perm.source === "server"
                 ? t("Zdroj: server", "Source: server")
                 : t(
-                    "Zdroj: místní předvolba — server nevynucuje",
-                    "Source: local preset — server does not enforce",
+                    "Server mode unavailable — read-only fallback",
+                    "Server mode unavailable — read-only fallback",
                   )}
             </span>
           </div>

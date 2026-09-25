@@ -4,10 +4,16 @@
 
 This audit is historical. [Current scope and verification](UPGRADE-VERIFICATION.md) supersedes the missing-feature claims below, not the external certification gates.
 The 2026-09-24 Apple 1.0.1 inventory is in `RELEASE-1.0.1-MATRIX.md`.
-G-22/G-23 below describe the old distribution proposal. The native iOS
-target is now a paired-Mac SwiftUI client, not a local Swift recovery core.
-The current `xcodebuild -version` fails under active Command Line Tools;
-that does not establish the user's account, certificates or hardware state.
+G-22/G-23 below describe the old distribution proposal. The native iOS target
+is a paired-Mac SwiftUI client. Xcode 27.0 is installed at
+`/Applications/Xcode.app`; Xcode metadata, native project listing and the `VOID`
+simulator build succeeded. Current source contains 9 `VOIDTests` cases and 6
+`VOIDUITests` cases. The last recorded sequential simulator run passed
+`VOIDTests` 6/6 and `VOIDUITests` 6/6; it is historical execution evidence, not
+a 9/9 claim. Reserved-vault evidence is 12/12. Physical iPhone/iPad,
+signed-device, App Store Connect and TestFlight evidence remain open. This
+toolchain inventory does not establish the user's account, certificates,
+provisioning or hardware state.
 
 
 - G-01: managed cloud documents have signed operation/job events, artifacts and state in one SQL transaction. This is not a transaction host for arbitrary external tools. Physical network partition testing remains unverified.
@@ -380,29 +386,35 @@ Minimum change: Developer ID identity, sign, notarize, staple, publish a
 prerelease with checksum. Size: S once the identity exists. `[EXT]`
 blocked on the Apple Developer ID identity.
 
-### G-23 A2 to A5: SwiftUI client, iOS core, pairing, native release
+### G-23 A2 to A5: SwiftUI client, pairing, native release
 
 Plan: `docs/APPLE-APPS-PLAN.md` A2 through A5.
-Missing: the native client, the iOS local recovery core, Mac pairing, and
-the native release itself.
-Evidence: the plan marks Swift migration as not implemented and iOS as
-deferred design; this machine has Command Line Tools only, no full Xcode
-or iOS SDK.
-Minimum change: per plan sequence, macOS first, iOS only after the macOS
-gates pass. Size: XL. `[EXT]` blocked on full Xcode, provisioning, App
-Store Connect access, membership and physical hardware.
+Missing: the remaining native client implementation, Mac pairing, complete
+recovery/review journeys, physical-device acceptance, and the native release.
+Evidence: the native iOS 17 project, Swift package, app, unit tests and UI-test
+source now exist under `apps/apple/`. Xcode metadata and the `VOID` simulator
+build succeeded. Current source contains 9 `VOIDTests` cases and 6
+`VOIDUITests` cases; the last recorded sequential simulator run passed 6/6 and
+6/6, respectively. Reserved-vault evidence is 12/12. These results do not prove
+pairing, TLS, recovery, physical-device behavior, signing, App Store Connect or
+TestFlight.
+Minimum change: complete the paired-Mac flow and native acceptance, then run
+provisioning/archive/TestFlight on the exact candidate. Size: XL. `[EXT]`
+still requires provisioning, App Store Connect access, membership and physical
+iPhone/iPad hardware.
 
 ### G-24 Windows and Linux packaging tail
 
 Plan: `docs/WINDOWS-DESKTOP.md`, `docs/APPLE-APPS-PLAN.md` (packaging
 notes), `docs/UPGRADE-CHECKPOINT.md`.
-Missing: full Windows CLI and Git recovery suite evidence, advertised
-Windows download, and any Linux native packaging with installed smoke.
-Evidence: beta 4 passed build and smoke in Actions run 34896103807, but
-the checkpoint still lists full recovery suites as open; Linux packaging
-is unverified.
-Minimum change: run the full suites on each platform, then advertise.
-Size: M. `[EXT]` needs Windows and Linux machines.
+Status: Windows is out of scope for the 1.0.1 delivery and its current-source
+gate remains open. Beta-4 Actions evidence is historical and does not certify a
+current candidate. No current-source Windows packaging, installed smoke,
+advertised Windows download or full Windows recovery-suite evidence is claimed.
+Linux native packaging also remains unverified.
+Minimum change: in a later authorized release, run the full suites on the exact
+Windows and Linux candidates before advertisement. Size: M. `[EXT]` needs
+authorized Windows and Linux machines.
 
 ### G-25 Production secrets and key rotation drill
 

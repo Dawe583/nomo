@@ -137,7 +137,7 @@ test("session recovery metadata exposes only the current or last approved job",a
  assert.equal((await f.app.applyRecoveryJob(id,approval)).status,"restored");
  assert.deepEqual(view().lastRecoveryJob,{jobId:plan.jobId});assert.equal("recoveryJobId" in view(),false);
  f.restart();assert.deepEqual(view().lastRecoveryJob,{jobId:plan.jobId});assert.equal("recoveryJobId" in view(),false);
- const child=await f.app.branch(id,{seq:f.app.get(id)!.events.find(event=>event.kind==="user")!.seq});
+ const child=await f.app.branch(id,{seq:f.app.get(id)!.events.find(event=>event.kind==="user")!.seq,idempotencyKey:"recovery-branch"});
  const childView=f.app.get(child.id) as {lastRecoveryJob?:unknown;recoveryJobId?:unknown};
  assert.equal(childView.lastRecoveryJob,undefined);assert.equal(childView.recoveryJobId,undefined);
 });

@@ -17,6 +17,7 @@
     "kind": "request",
     "requestId": "req-unknown-001",
     "operationId": "op-unknown-001",
+    "idempotencyKey": "idem-unknown-001",
     "operation": "recovery.apply",
     "deviceId": "device-demo-001",
     "workspaceId": "workspace-demo-001",

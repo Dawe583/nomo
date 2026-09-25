@@ -82,6 +82,13 @@ export function sessionPatch(body: Record<string, unknown>) {
   return patch;
 }
 export function preferencePatch(body: Record<string, unknown>) {
+  if (
+    "permissionMode" in body ||
+    (typeof body.preferences === "object" &&
+      body.preferences !== null &&
+      "permissionMode" in body.preferences)
+  )
+    throw new Error("Permission mode is server-controlled.");
   const result: Record<string, string> = {};
   const enums: Record<string, string[]> = {
     defaultAgent: ["cloud", "prime-agent"],
@@ -169,8 +176,20 @@ export function filterRows<T>(rows: readonly T[], query: URLSearchParams): T[] {
   return result;
 }
 export const MAX_QUEUED_RUNS = 20;
-export const capabilities = (mode: "local" | "cloud") => ({
+export type PermissionMode = "plan" | "read-only" | "normal";
+
+/** The only permission source accepted by the local server. Missing or
+ * malformed configuration is intentionally read-only, never normal. */
+export function serverPermissionMode(value: unknown): PermissionMode {
+  return value === "plan" || value === "read-only" || value === "normal"
+    ? value
+    : "read-only";
+}
+
+export const capabilities = (mode: "local" | "cloud", permissionMode: PermissionMode = "read-only") => ({
   mode,
+  permissionMode,
+  permissionModeAuthority: "server",
   maxActiveRuns: 1,
   ...(mode === "local" ? { maxQueuedRuns: MAX_QUEUED_RUNS } : {}),
   backgroundQueue: true,
@@ -181,8 +200,7 @@ export const capabilities = (mode: "local" | "cloud") => ({
   recoveryJobs: true,
   limitations: ["Hooks are not executable on this host.", "Project roots are descriptive metadata, not filesystem authority."],
   streaming: true,
-  branches: true,
-  documentEditing: true,
+  documentEditing: permissionMode === "normal",
   textAttachments: true,
   binaryAttachments: false,
   maxPromptCharacters: 32000,

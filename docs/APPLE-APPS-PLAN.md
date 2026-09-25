@@ -7,32 +7,33 @@ in `docs/RELEASE-1.0.1-MATRIX.md`. This older A2/A3 direction of a mandatory
 SwiftUI Mac rewrite and iOS-local recovery core is superseded. Keep the
 historical rationale below; do not execute both architectures.
 
-Priority update, 12 September 2026: macOS and the advertised recovery contract
-take precedence. iOS implementation and distribution are deferred until the
-macOS product passes the capability release gates. The iOS sections below are
-future design, not current work or an announced release commitment.
+Release evidence update, 2026-09-24: the native iOS 17 Xcode project, Swift
+package, app, unit tests, UI-test source and protocol fixtures now exist under
+`apps/apple/`. Xcode metadata and the `VOID` simulator build succeeded. Current
+source contains 9 `VOIDTests` cases and 6 `VOIDUITests` cases. The last recorded
+sequential simulator run passed 6/6 and 6/6, respectively; it is historical
+execution evidence, not a 9/9 claim. Reserved-vault evidence is 12/12. Physical
+iPhone/iPad, signed-device, App Store Connect and TestFlight evidence remain
+open. The older macOS-first scope and iOS companion boundary remain in force.
 
-Status: implementation plan, 12 September 2026. Swift migration is not yet
-implemented. The downloadable macOS beta uses the existing Tauri shell and
-bundled Node runtime. Home Screen installation on iOS is the online web app.
+Windows is outside the 1.0.1 delivery scope. Its historical beta evidence is
+preserved in `WINDOWS-DESKTOP.md`, while current-source Windows evidence remains
+open. No physical iPhone/iPad build, signing, provisioning or store action is
+part of this evidence update.
 
-## Product decision
+## Historical product direction (superseded)
 
-Build a shared SwiftUI application for macOS and iOS, with native navigation,
-chat, operation timeline, recovery previews, approvals, workspace browser and
-settings. Keep the web app on Vercel. Preserve the exact aperture logo from
-Dawe583/void-empty, using the canonical SVG in the current UI as its source.
+The shared macOS-and-iOS SwiftUI implementation direction formerly recorded here
+is historical and must not be used as 1.0.1 implementation guidance. The
+current scope is the native paired-Mac companion described above and in
+`RELEASE-1.0.1-MATRIX.md`: the Mac remains the trusted executor and recovery
+engine, while iOS/iPadOS provides a bounded read-only companion surface with
+explicit pairing, executor identity, revocation and truthful offline states.
 
-Keep the tested TypeScript recovery engine on macOS during migration. A native
-SwiftUI interface does not require rewriting the recovery engine. On iOS,
-implement a smaller Swift execution core for resources inside the app sandbox
-and explicitly granted documents. Never silently route a Local action to a Mac
-or cloud service. Show the actual executor and recovery coverage on every call.
-
-Local execution and local inference are separate features. Local storage and
-Undo must work without internet. TokenRouter and OpenCode Zen require internet.
-Prime, shell tools and stdio MCP run on the Mac. iOS can use remote HTTP MCP or
-an explicitly paired Mac, but cannot launch the Mac's executables locally.
+Do not implement a shared Mac/iOS app or an iOS-local recovery core for this
+release. The web app remains a separate Vercel surface, and every mobile action
+must name its actual executor and recovery coverage rather than implying local
+execution.
 
 ## A1: Distribution and installation
 
@@ -48,9 +49,9 @@ an explicitly paired Mac, but cannot launch the Mac's executables locally.
   path for ordinary devices. Do not present a disabled or invented native link.
 - Public Mac releases need Developer ID signing and notarization. Current machine
   has an Apple Development identity, not the required Developer ID identity.
-- Native iOS build/testing requires full Xcode and the iOS SDK; this machine
-  currently has Command Line Tools only. TestFlight also needs provisioning,
-  App Store Connect access and a suitable Apple Developer membership.
+- Native iOS metadata and simulator evidence now exist; distribution still requires
+  provisioning, App Store Connect access, a suitable Apple Developer membership,
+  physical iPhone/iPad checks, and a completed TestFlight/archive run.
 
 Acceptance: actual DMG download returns bytes; checksum matches; fresh isolated
 workspace starts without Node installed; UI accurately distinguishes local app,

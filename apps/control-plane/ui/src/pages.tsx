@@ -7,6 +7,8 @@ import { LedgerDetail } from "./ledger-detail";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
+import { Icon } from "./icons";
+import { overviewState } from "./overview-state";
 import {
   Badge,
   DataTable,
@@ -168,6 +170,17 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
   const data = query.data;
   const metrics =
     data?.counts ?? data?.overview?.counts ?? data?.overview ?? data ?? {};
+  const state = overviewState(metrics);
+  const priorityLabel =
+    state.kind === "decisions"
+      ? t("Vyžaduje rozhodnutí", "Needs a decision")
+      : state.kind === "failures"
+        ? t("Vyžaduje zásah", "Needs attention")
+        : state.kind === "running"
+          ? t("Práce probíhá", "Work in progress")
+          : state.kind === "clear"
+            ? t("Bez čekající práce", "No work waiting")
+            : t("Stav není k dispozici", "Status unavailable");
   return (
     <>
       <p className="page-intro">
@@ -177,6 +190,16 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
         )}
       </p>
       <ErrorBox error={query.error} />
+      <section className="overview-priority" data-tone={state.tone} aria-live="polite">
+        <span className="overview-priority-icon" aria-hidden="true">
+          <Icon name={state.tone === "attention" ? "warning" : state.tone === "active" ? "runs" : state.tone === "clear" ? "verified" : "more"} />
+        </span>
+        <div>
+          <span>{t("Teď", "Now")}</span>
+          <strong>{priorityLabel}</strong>
+        </div>
+        {state.count !== undefined && <b>{state.count}</b>}
+      </section>
       <div className="metrics">
         {[
           [t("Konverzace", "Conversations"), "sessions", "/sessions"],
@@ -417,9 +440,9 @@ export function Ledger() {
   return (
     <>
       <ErrorBox error={error} />
-      <LedgerVerify key={query} query={query} />
+      <LedgerVerify key="ledger-verify" query={query} />
       <DataTable
-        key={filterQuery}
+        key={"ledger-feed:" + filterQuery}
         endpoint={"/api/feed?" + filterQuery}
         legacyKey="entries"
         toolbar={

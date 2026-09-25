@@ -434,6 +434,7 @@ test("prompt frame stays continuous at every width", async (t) => {
   for (const [width, height] of [
     [20, 8],
     [40, 12],
+
     [80, 24],
     [100, 32],
     [160, 45],
@@ -459,6 +460,50 @@ test("prompt frame stays continuous at every width", async (t) => {
       assert.equal(visibleLength(row), width);
     }
   }
+});
+
+test("live status stays within the compact ASCII identity", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-ascii-status-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  ui.choose("chat");
+  const frame = renderWorkspace(ui, 80, 30, "_", true, true, {
+    frame: 4,
+    motion: false,
+  });
+  assert.doesNotMatch(frame, /[⏳🔧✍️💭⚠️📜]/u);
+  assert.match(frame, /Finishing operation/);
+});
+
+test("branch intent reuses its idempotency key after a transient failure", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-branch-key-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("first prompt");
+  await app.settled();
+  const parent = ui.sessionId!;
+  const seq = app.get(parent)!.events.find((event) => event.kind === "user")!.seq;
+  const original = app.branch.bind(app);
+  const keys: string[] = [];
+  t.mock.method(app, "branch", async (id: string, body: Parameters<Workbench["branch"]>[1]) => {
+    keys.push(body.idempotencyKey);
+    if (keys.length === 1) throw Error("transient branch failure");
+    return original(id, body);
+  });
+  await assert.rejects(ui.command(`/branch ${seq}`), /transient branch failure/);
+  await ui.command(`/branch ${seq}`);
+  assert.equal(keys.length, 2);
+  assert.equal(keys[0], keys[1]);
+  assert.match(keys[0]!, /^[0-9a-f-]{36}$/);
 });
 
 test("logo is one stroke width and every row aligns", async (t) => {

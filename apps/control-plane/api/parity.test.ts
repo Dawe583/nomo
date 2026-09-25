@@ -8,12 +8,12 @@ import {listenControlPlane} from "./server.ts";
 
 test("local recovery routes require exact stored approval and retain immutable previews",async t=>{
  const directory=await mkdtemp(join(tmpdir(),"void-api-recovery-"));
- const wb=new Workbench({VOID_DATA_DIR:directory},async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]}));
+ const wb=new Workbench({VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"},async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]}));
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await wb.start("Test","fixture"); await wb.settled();
  const first=await wb.editDocument(session.id,{path:"note",content:"one",expectedRevision:null});
  wb.close();
- const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ const server=await listenControlPlane({env:{VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"}});
  t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
  const base=`http://127.0.0.1:${server.port}/api/sessions/${session.id}/recovery-jobs`;
  const post=(path:string,body:unknown)=>fetch(base+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -38,8 +38,30 @@ test("local project and stop routes expose guarded additive capabilities",async 
  const created=await post("/api/projects",{name:"Example",root:"/metadata"});assert.equal(created.status,200);
  const listed=await(await fetch(origin+"/api/projects")).json() as {items:unknown[];projects:unknown[]};assert.deepEqual(listed.items,listed.projects);assert.equal(listed.items.length,1);
  assert.equal((await post("/api/runs/missing/stop",{})).status,404);
- const capabilities=await(await fetch(origin+"/api/capabilities")).json() as Record<string,boolean>;
+ const capabilities=await(await fetch(origin+"/api/capabilities")).json() as Record<string, unknown>;
  assert.equal(capabilities.projects,true);assert.equal(capabilities.recoveryJobs,true);assert.equal(capabilities.contextCompaction,true);assert.equal(capabilities.hooks,false);
+ assert.equal((await fetch(origin+"/api/preferences",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({preferences:{permissionMode:"plan"}})})).status,409);
+ assert.equal(capabilities.permissionMode,"read-only");
+ assert.equal(capabilities.permissionModeAuthority,"server");
+});
+test("server read-only mode blocks direct document and recovery mutations",async t=>{
+ const directory=await mkdtemp(join(tmpdir(),"void-api-readonly-"));
+ const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
+ const wb=new Workbench({VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"},fetcher);
+ await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+ const session=await wb.start("Test","fixture");await wb.settled();
+ const document=await wb.editDocument(session.id,{path:"note",content:"one",expectedRevision:null});
+ const plan=await wb.planRecoveryJob(session.id,{jobId:"job",selection:{kind:"operations",operationIds:[document.revision!]}});
+ await wb.shutdown();
+ const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
+ const origin=`http://127.0.0.1:${server.port}`;
+ const patch=await fetch(`${origin}/api/sessions/${session.id}/documents`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({path:"note",content:"two",expectedRevision:document.revision})});
+ assert.equal(patch.status,409);
+ const apply=await fetch(`${origin}/api/sessions/${session.id}/recovery-jobs/${plan.jobId}/apply`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jobId:plan.jobId,planDigest:plan.planDigest,approved:true})});
+ assert.notEqual(apply.status,200);
+ const undo=await fetch(`${origin}/api/sessions/${session.id}/undo/${document.revision}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({confirm:document.revision})});
+ assert.notEqual(undo.status,200);
 });
 
 test("local agent API persists scoped profiles but cannot enable shell hooks",async t=>{
@@ -55,4 +77,29 @@ test("local agent API persists scoped profiles but cannot enable shell hooks",as
  assert.equal((await post("/api/agents",{...profile,policyProfile:"bypass"})).status,409);
  assert.equal((await post("/api/hooks",{id:"hook",event:"before-run",command:"echo done; other",enabled:true})).status,409);
  const capabilities=await(await fetch(origin+"/api/capabilities")).json() as {customAgents:boolean};assert.equal(capabilities.customAgents,true);
+});
+
+test("local branch route strictly validates and delegates to Workbench.branch",async t=>{
+ const directory=await mkdtemp(join(tmpdir(),"void-api-branch-"));
+ const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
+ const wb=new Workbench({VOID_DATA_DIR:directory},fetcher);
+ await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+ const parent=await wb.start("Branch fixture","fixture"); await wb.settled(); wb.close();
+ const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
+ const origin=`http://127.0.0.1:${server.port}`;
+ const post=(body:unknown)=>fetch(`${origin}/api/sessions/${parent.id}/branches`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+ for (const body of [null,{}, {seq:"1"}, {seq:1,unknown:true}, {seq:1,prompt:""}, {seq:1,prompt:"ok",snapshotDocuments:"yes"}, {seq:1}])
+   assert.equal((await post(body)).status,400,JSON.stringify(body));
+ const body={seq:1,prompt:"Edited branch",snapshotDocuments:true,idempotencyKey:"api-branch-key"};
+ const response=await post(body);
+ assert.equal(response.status,201);
+ const result=await response.json() as {session:{id:string;status:string;parentId?:string}};
+ assert.match(result.session.id,/^[a-f0-9-]{36}$/);
+ assert.equal(result.session.parentId,parent.id);
+ assert.equal(result.session.status,"idle");
+ const retry=await post(body);
+ assert.equal(retry.status,201);
+ assert.equal((await retry.json() as {session:{id:string}}).session.id,result.session.id);
+ assert.equal((await post({...body,prompt:"Changed"})).status,409);
 });

@@ -177,6 +177,21 @@ describe("external strings cannot inject terminal control", () => {
     assert.doesNotMatch(frame, /\u001b\[2J|\u001b\]0;/);
   });
 
+  test("a hostile session transport cannot blank the header", () => {
+    const frame = renderWatchFrame(
+      {
+        ...previewState,
+        session: {
+          ...previewState.session,
+          transport: "stdio\u001b[2J\u001b]0;pwned" as unknown as "stdio",
+        },
+      },
+      capabilities(120, 48, true),
+      0,
+    );
+    assert.doesNotMatch(frame, /\u001b\[2J|\u001b\]0;/);
+  });
+
   test("emoji tool ids do not wrap at narrow widths", () => {
     // U+1F680 ROCKET and U+2705 are two cell characters in real terminals
     // although the East Asian Width property alone does not force it; the
@@ -262,6 +277,11 @@ describe("watch dashboard", () => {
       assert.match(frame, /q quit/);
     });
   }
+  test("narrow dashboard keeps the selected decision record visible", () => {
+    const frame = renderWatchFrame(previewState, capabilities(80, 48));
+    assert.match(frame, /DECISION RECORD/);
+    assert.match(frame, /postgres\.table\.drop/);
+  });
 
   test("hold prompt includes risk, measured radius and explicit actions without colour", () => {
     const modal = renderHoldPrompt(previewHold, capabilities(80));

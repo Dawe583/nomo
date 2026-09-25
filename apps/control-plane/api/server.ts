@@ -1,4 +1,4 @@
-import { page, filterRows, capabilities, activity } from '../../../packages/workbench/src/gui.ts';
+import { page, filterRows, capabilities, activity, serverPermissionMode } from '../../../packages/workbench/src/gui.ts';
 import { createReadStream, existsSync } from "node:fs";
 import { stat, readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
@@ -104,7 +104,7 @@ export function createControlPlaneServer(options: ControlPlaneOptions = {}): Ser
   const built = fileURLToPath(new URL('../../../dist/web', import.meta.url));
   const webRoot = resolve(options.webRoot ?? (existsSync(join(built, 'index.html')) ? built : defaultWebRoot));
 
-  const workbench = new Workbench(env);
+  const workbench = new Workbench({ ...env, VOID_PERMISSION_MODE: serverPermissionMode(env.VOID_PERMISSION_MODE) });
   const server = createServer((request, response) => {
     if (env.VOID_CONTROL_TOKEN ? !authorizedRemote(request, env) : !isLocalRequest(request)) {
       sendJson(response, 403, { error: "local_origin_required" });
@@ -153,7 +153,7 @@ async function route(
   const query = parsed.searchParams, wb = options.workbench;
   try {
     const desktop = !!options.env.VOID_DESKTOP_WEB_ROOT && !options.env.VOID_CONTROL_TOKEN && isLocalRequest(request);
-    if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local'), desktopSetup: desktop });
+    if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local', serverPermissionMode(options.env.VOID_PERMISSION_MODE)), desktopSetup: desktop });
     if (parsed.pathname === '/api/projects') {
       if (request.method === 'GET') { const projects = wb.projects(); return sendJson(response, 200, { items: projects, projects }); }
       if (request.method === 'POST') return sendJson(response, 200, { project: wb.upsertProject(await readJsonBody(request) as Parameters<Workbench['upsertProject']>[0]) });
@@ -202,6 +202,14 @@ async function route(
     if (feature) {
       const id = feature[1]!, kind = feature[2], session = wb.get(id); if (!session) return sendJson(response, 404, { message: 'Session not found.' });
       if (kind === 'compact' && request.method === 'POST') { const compaction = wb.compact(id); return sendJson(response, 200, { compaction, session: wb.get(id) }); }
+      if (kind === 'branches') {
+        if (request.method !== 'POST') return sendJson(response, 405, { error: 'method_not_allowed' });
+        let body: unknown;
+        try { body = await readJsonBody(request); } catch { return sendJson(response, 400, { error: 'invalid_branch' }); }
+        const input = parseBranchInput(body);
+        if (!input) return sendJson(response, 400, { error: 'invalid_branch' });
+        return sendJson(response, 201, { session: await wb.branch(id, input) });
+      }
       if (kind === 'documents') {
         if (request.method === 'GET') return sendJson(response, 200, { document: wb.document(id, query.get('path') ?? '') });
         if (request.method === 'PATCH') return sendJson(response, 200, { document: await wb.editDocument(id, await readJsonBody(request) as { path: string; content: string; expectedRevision: string | null }) });
@@ -529,12 +537,31 @@ async function readPendingApprovals(approvals: ApprovalBroker | undefined): Prom
 function parseDecision(value: unknown): ApprovalDecision | null {
   if (typeof value !== "object" || value === null) return null;
   const body = value as Record<string, unknown>;
+
   if (body.kind !== "approved" && body.kind !== "denied") return null;
   if (typeof body.by !== "string" || body.by === "") return null;
   if (body.reason !== undefined && typeof body.reason !== "string") return null;
   return body.reason === undefined
     ? { kind: body.kind, by: body.by }
     : { kind: body.kind, by: body.by, reason: body.reason };
+}
+
+function parseBranchInput(value: unknown): { seq: number; prompt?: string; snapshotDocuments?: boolean; idempotencyKey: string } | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const body = value as Record<string, unknown>;
+  const allowed: Record<string, true> = { seq: true, prompt: true, snapshotDocuments: true, idempotencyKey: true };
+  if (Object.keys(body).some((key) => !allowed[key])) return null;
+  if (!Number.isSafeInteger(body.seq) || (body.seq as number) < 1) return null;
+  if (body.prompt !== undefined &&
+    (typeof body.prompt !== "string" || !body.prompt.trim() || body.prompt.length > 32000 || body.prompt.includes("\0"))) return null;
+  if (body.snapshotDocuments !== undefined && typeof body.snapshotDocuments !== "boolean") return null;
+  if (typeof body.idempotencyKey !== "string" || !/^[A-Za-z0-9_.:-]{1,160}$/.test(body.idempotencyKey)) return null;
+  return {
+    seq: body.seq as number,
+    ...(body.prompt === undefined ? {} : { prompt: body.prompt as string }),
+    ...(body.snapshotDocuments === undefined ? {} : { snapshotDocuments: body.snapshotDocuments as boolean }),
+    idempotencyKey: body.idempotencyKey,
+  };
 }
 
 async function readJsonBody(request: IncomingMessage): Promise<unknown> {

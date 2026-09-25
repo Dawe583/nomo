@@ -47,17 +47,15 @@ function header(
   // The agent identity is external data and sits on the line every frame
   // starts from, so a persistent escape injected there blanks the whole
   // alternate screen on every diff repaint, not just one row.
-  const right = `${state.session.transport} | ${sanitizeText(state.session.agent)} | ${age}s | ${posture}`;
-
-  // Context breakdown: ctx [####––] 62%, amber >70%, red >90%
+  const right = `${sanitizeText(state.session.transport)} | ${sanitizeText(state.session.agent)} | ${age}s | ${posture}`;
   let ctxLine = "";
   if (state.context && state.context.total > 0) {
     const pct = Math.round((state.context.used / state.context.total) * 100);
     const isAmber = pct > CONTEXT_THRESHOLD_AMBER;
     const isRed = pct > CONTEXT_THRESHOLD_RED;
-    const color = isRed ? "r3" : isAmber ? "r1" : "r0";
     const bar = progressBar(state.context.used, state.context.total, 10);
-    ctxLine = `ctx ${bar} ${pct}%`;
+    const label = isRed ? "critical" : isAmber ? "warning" : "ok";
+    ctxLine = `ctx ${bar} ${pct}% ${label}`;
   } else {
     ctxLine = "ctx unknown";
   }
@@ -92,14 +90,11 @@ function activityRows(
     const selected = call.id === state.selectedCallId ? ">" : " ";
     const radius =
       call.blastRadius === null ? "   ?" : String(call.blastRadius).padStart(4);
-    const toolWidth = Math.max(10, width - 35);
-    // Tool ids and times are external data and share the line with class and
-    // decision markers, so an injected escape could otherwise spoof the
-    // verdict a human scans for.
+    const toolWidth = Math.max(10, width - 45);
     const tool = sanitizeText(call.tool);
     const time = sanitizeText(call.time);
     return fit(
-      `${selected} ${time} ${classLabel(call.class, capabilities)} ${decisionLabel(call.decision, capabilities)} ${pad(fit(tool, toolWidth, "left"), toolWidth)} ${radius}`,
+      `${selected} ${time} ${classLabel(call.class, capabilities)} ${decisionLabel(call.decision, capabilities)} status:${call.status} ${pad(fit(tool, toolWidth, "left"), toolWidth)} ${radius}`,
       width,
     );
   });
@@ -124,7 +119,8 @@ function detailRows(
       "class",
       `${CLASS_MARKER[call.class]} ${call.class.toUpperCase()} / ${call.reason}`,
     ),
-    row("policy", call.policyRule),
+    row("status", call.status),
+    row("decision", call.decision),
     row(
       "blast radius",
       call.blastRadius === null
@@ -313,6 +309,17 @@ export function renderWatchFrame(
         ...box(
           "WRITE PATH",
           activityRows(state, capabilities, width - 4, limit),
+          width,
+        ),
+        // Narrow terminals stack the decision record below the write path.
+        // Hiding it made a selected run's class, policy and blast radius
+        // unreachable at exactly the width operators use most often.
+        ...box(
+          "DECISION RECORD",
+          detailRows(selected, capabilities, width - 4).slice(
+            0,
+            Math.max(1, limit - 5),
+          ),
           width,
         ),
         // Cost panel stays visible on narrow terminals (A6): unknown price

@@ -1,22 +1,31 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod downloads;
+mod diagnostics;
 mod keychain;
 use base64::Engine;
 use std::{
     io::{BufRead, BufReader, Read, Write},
     path::PathBuf,
     process::{Child, Command, Stdio},
-    sync::{mpsc, Mutex},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc, Arc, Mutex,
+    },
     time::{Duration, Instant},
 };
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
-struct Runtime(Mutex<Child>);
+struct Runtime {
+    child: Mutex<Child>,
+    exit: Mutex<mpsc::Receiver<()>>,
+    stopping: AtomicBool,
+}
 
 impl Runtime {
     fn stop(&self) {
-        if let Ok(mut child) = self.0.lock() {
+        self.stopping.store(true, Ordering::SeqCst);
+        if let Ok(mut child) = self.child.lock() {
             // Closing the ownership pipe asks Node to cancel sessions and close its server.
             drop(child.stdin.take());
             let deadline = Instant::now() + Duration::from_secs(5);
@@ -30,7 +39,19 @@ impl Runtime {
             let _ = child.wait();
         }
     }
+
+    fn wait_for_exit(&self) -> bool {
+        self.exit.lock().map(|exit| exit.recv().is_ok()).unwrap_or(false)
+            && !self.stopping.load(Ordering::SeqCst)
+    }
+
+    fn kill(&self) {
+        if let Ok(mut child) = self.child.lock() {
+            let _ = child.kill();
+        }
+    }
 }
+
 impl Drop for Runtime {
     fn drop(&mut self) {
         self.stop();
@@ -41,6 +62,22 @@ impl Drop for Runtime {
 struct Ready {
     port: u16,
 }
+
+fn forward_runtime_stdout(
+    stdout: impl BufRead,
+    sender: mpsc::Sender<Result<String, String>>,
+    exit_sender: mpsc::Sender<()>,
+) {
+    let mut lines = stdout.lines();
+    let ready = lines
+        .next()
+        .ok_or("Runtime exited before readiness".to_owned())
+        .and_then(|line| line.map_err(|error| error.to_string()));
+    let _ = sender.send(ready);
+    for _ in lines {}
+    let _ = exit_sender.send(());
+}
+
 
 fn launch_runtime(
     resources: PathBuf,
@@ -82,15 +119,6 @@ fn launch_runtime(
     let node = resources
         .join("bin")
         .join(if cfg!(windows) { "node.exe" } else { "node" });
-    let log = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(data.join("desktop-runtime.log"))?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        log.set_permissions(std::fs::Permissions::from_mode(0o600))?;
-    }
     let mut search_path = vec![resources.join("bin")];
     search_path.extend(std::env::split_paths(
         &std::env::var_os("PATH").unwrap_or_default(),
@@ -116,21 +144,19 @@ fn launch_runtime(
         .env_remove("VOID_CONTROL_TOKEN")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::from(log))
+        .stderr(Stdio::null())
         .spawn()?;
     let stdout = child.stdout.take().ok_or("Runtime stdout missing")?;
     let (sender, receiver) = mpsc::channel();
+    let (exit_sender, exit_receiver) = mpsc::channel();
     std::thread::spawn(move || {
-        let mut lines = BufReader::new(stdout).lines();
-        let ready = lines
-            .next()
-            .ok_or("Runtime exited before readiness".to_owned())
-            .and_then(|line| line.map_err(|error| error.to_string()));
-        let _ = sender.send(ready);
-        // Keep stdout drained; the first line is the only startup protocol message.
-        for _ in lines {}
+        forward_runtime_stdout(BufReader::new(stdout), sender, exit_sender);
     });
-    let runtime = Runtime(Mutex::new(child));
+    let runtime = Runtime {
+        child: Mutex::new(child),
+        exit: Mutex::new(exit_receiver),
+        stopping: AtomicBool::new(false),
+    };
     let line = receiver.recv_timeout(Duration::from_secs(30))??;
     let ready: Ready = serde_json::from_str(&line)?;
     if ready.port == 0 {
@@ -142,10 +168,13 @@ fn launch_runtime(
 
 fn main() {
     let mobile_smoke = std::env::args().any(|argument| argument == "--smoke-mobile");
-    let smoke = mobile_smoke || std::env::args().any(|argument| argument == "--smoke-test");
+    let runtime_exit_smoke = std::env::args().any(|argument| argument == "--smoke-runtime-exit");
+    let smoke = mobile_smoke || runtime_exit_smoke || std::env::args().any(|argument| argument == "--smoke-test");
     let smoke_data =
         std::env::temp_dir().join(format!("void-desktop-native-smoke-{}", std::process::id()));
     let cleanup_data = smoke_data.clone();
+    let runtime_exited = Arc::new(AtomicBool::new(false));
+    let setup_runtime_exited = runtime_exited.clone();
     let builder = tauri::Builder::default();
     let builder = if smoke {
         builder
@@ -157,20 +186,23 @@ fn main() {
             }
         }))
     };
-    let app = builder.setup(move |app| {
-            let resources = if cfg!(debug_assertions) {
-                PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources")
-            } else {
-                app.path().resource_dir()?.join("resources")
-            };
+    let app = match builder
+        .setup(move |app| {
             let data = if smoke {
                 smoke_data.clone()
             } else {
                 app.path().app_data_dir()?
             };
-            let (runtime, port) = launch_runtime(resources, data.clone(), smoke)?;
-            app.manage(runtime);
-            let origin = format!("http://127.0.0.1:{port}");
+            let result = (|| -> Result<(), Box<dyn std::error::Error>> {
+                diagnostics::clear_startup(&data)?;
+                let resources = if cfg!(debug_assertions) {
+                    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources")
+                } else {
+                    app.path().resource_dir()?.join("resources")
+                };
+                let (runtime, port) = launch_runtime(resources, data.clone(), smoke)?;
+                app.manage(runtime);
+                let origin = format!("http://127.0.0.1:{port}");
             if smoke {
                 let mut socket = std::net::TcpStream::connect(("127.0.0.1", port))?;
                 socket.set_read_timeout(Some(Duration::from_secs(10)))?;
@@ -221,7 +253,7 @@ fn main() {
                         if smoke {
                             let correct = success && std::fs::read(&finish_file).ok().as_deref() == Some(b"VOID desktop download smoke");
                             if correct { println!("VOID native desktop smoke passed: bundled runtime, rendered WebView and Blob download verified. Mobile toolbar checks: {}.", mobile_smoke); }
-                            else { eprintln!("VOID native desktop smoke failed: {}", std::fs::read_to_string(&finish_file).unwrap_or_else(|_| "Blob export was not saved correctly".into())); }
+                            else { eprintln!("VOID native desktop smoke failed: the expected local export was not saved"); }
                             download_app.exit(if correct { 0 } else { 1 });
                         }
                         true
@@ -230,7 +262,7 @@ fn main() {
                 }
             })
             .on_page_load(move |window, payload| {
-                if smoke && matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
+                if smoke && !runtime_exit_smoke && matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
                     // Exercise the same browser Blob + anchor.download mechanism
                     // as the production document and conversation export buttons.
                     if mobile_smoke {
@@ -295,12 +327,41 @@ fn main() {
                 }
             })
             .build()?;
-            Ok(())
+                let monitor_app = app.handle().clone();
+                let monitor_data = data.clone();
+                let monitor_exited = setup_runtime_exited.clone();
+                std::thread::spawn(move || {
+                    if monitor_app.state::<Runtime>().wait_for_exit() {
+                        monitor_exited.store(true, Ordering::SeqCst);
+                        let _ = diagnostics::write_startup(&monitor_data, "RUNTIME_EXITED");
+                        eprintln!("VOID native desktop runtime exited unexpectedly.");
+                        if runtime_exit_smoke {
+                            let _ = std::fs::remove_dir_all(&monitor_data);
+                            std::process::exit(1);
+                        }
+                        monitor_app.exit(1);
+                    }
+                });
+                if runtime_exit_smoke {
+                    app.state::<Runtime>().kill();
+                }
+                Ok(())
+            })();
+            if let Err(error) = &result {
+                let _ = diagnostics::write_startup(&data, diagnostics::classify(error.as_ref()));
+            }
+            result
         })
         .build(tauri::generate_context!())
-        .expect(
-            "Could not start VOID. Inspect desktop-runtime.log in the application data directory.",
-        );
+    {
+        Ok(app) => app,
+        Err(_) => {
+            eprintln!(
+                "VOID could not start. Check desktop-startup.log in the application data directory; the log contains only a safe failure category."
+            );
+            std::process::exit(1);
+        }
+    };
     app.run(|app, event| {
         if let tauri::RunEvent::Exit = event {
             app.state::<Runtime>().stop();
@@ -308,5 +369,32 @@ fn main() {
     });
     if smoke {
         let _ = std::fs::remove_dir_all(cleanup_data);
+    }
+    if runtime_exited.load(Ordering::SeqCst) {
+        std::process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn runtime_stdout_reports_process_exit_after_readiness() {
+        let (ready_sender, ready_receiver) = mpsc::channel();
+        let (exit_sender, exit_receiver) = mpsc::channel();
+
+        forward_runtime_stdout(
+            BufReader::new(Cursor::new(b"{\"port\":43123}\n".as_slice())),
+            ready_sender,
+            exit_sender,
+        );
+
+        assert_eq!(
+            ready_receiver.recv_timeout(Duration::from_secs(1)).unwrap(),
+            Ok("{\"port\":43123}".to_owned())
+        );
+        assert!(exit_receiver.recv_timeout(Duration::from_secs(1)).is_ok());
     }
 }

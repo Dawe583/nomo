@@ -32,6 +32,8 @@ import {
   type ProviderStatus,
   type ViewName,
   type RunState,
+  type PermissionMode,
+  serverPermissionMode,
 } from "./gui.ts";
 import {
   validateAgentProfile,
@@ -201,6 +203,7 @@ type Session = {
  * filesystem authority; operators configure the MCP upstream on the runtime. */
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
+  private readonly permissionMode: PermissionMode;
   private provider: CompatibleProvider | undefined;
   private providerFailureState: { status: number; retryAt: string | null } | null = null;
   private readonly storage: LocalStorage;
@@ -268,6 +271,7 @@ export class Workbench {
     env: Readonly<NodeJS.ProcessEnv> = process.env,
     fetcher: typeof fetch = fetch,
   ) {
+    this.permissionMode = serverPermissionMode(env.VOID_PERMISSION_MODE ?? "normal");
     this.keyStorage = env.VOID_WORKSPACE_KEY
       ? "os-keychain"
       : "encrypted-local";
@@ -800,7 +804,7 @@ export class Workbench {
       agentProfile: selectedProfile ? structuredClone(selectedProfile) : undefined,
       queuedPrompt: queued ? prompt : undefined,
       client,
-      tools: selectedProfile ? tools.filter(tool => selectedProfile.allowedTools.includes(tool.name)) : tools,
+      tools: (selectedProfile ? tools.filter(tool => selectedProfile.allowedTools.includes(tool.name)) : tools).filter(tool => this.toolAllowedInMode(tool)),
       connections,
       config: selectedConfig,
       controller: new AbortController(),
@@ -1051,16 +1055,23 @@ export class Workbench {
     this.persist();
     return this.getPreferences();
   }
+  permissionModeState() {
+    return this.permissionMode;
+  }
+  private assertNormalMutation(action: string) {
+    if (this.permissionMode !== "normal")
+      throw new Error(`Server permission mode ${this.permissionMode} forbids ${action}.`);
+  }
+  private toolAllowedInMode(tool: McpTool) {
+    return this.permissionMode === "normal" || (!tool.connectorId && (tool.name === "void_workspace_list" || tool.name === "void_workspace_read"));
+  }
   patchSession(id: string, body: Record<string, unknown>) {
-    const s = this.sessions.get(id);
-    if (!s) throw new Error("Session not found.");
-    s.view = {
-      ...s.view,
-      ...sessionPatch(body),
-      updatedAt: new Date().toISOString(),
-    };
+    const session = this.sessions.get(id);
+    if (!session) throw new Error("Session not found.");
+    const patch = sessionPatch(body);
+    session.view = { ...session.view, ...patch, updatedAt: new Date().toISOString() };
     this.persist();
-    return this.view(s);
+    return this.view(session);
   }
   sessionPage(query: URLSearchParams) {
     const all = filterRows(
@@ -1140,12 +1151,11 @@ export class Workbench {
     input: { path: string; content: string; expectedRevision: string | null },
     operator: "web-operator" | "tui-operator" = "web-operator",
   ) {
+    this.assertNormalMutation("document editing");
     return this.locked(async () => {
       const s = this.settledSession(id);
       const state = this.workspace(id);
-      if (
-        documentView(state, input.path, id).revision !== input.expectedRevision
-      )
+      if (documentView(state, input.path, id).revision !== input.expectedRevision)
         throw new Error("Document revision conflict. Refresh before saving.");
       const operationId = randomUUID();
       await this.mutateDocument(
@@ -1168,9 +1178,19 @@ export class Workbench {
   }
   async branch(
     id: string,
-    body: { seq: number; prompt?: string; snapshotDocuments?: boolean },
+    body: { seq: number; prompt?: string; snapshotDocuments?: boolean; idempotencyKey: string },
   ) {
     return this.locked(async () => {
+      if (typeof body.idempotencyKey !== "string" || !/^[A-Za-z0-9_.:-]{1,160}$/.test(body.idempotencyKey))
+        throw new Error("Invalid Idempotency key.");
+      const idempotencyKey = body.idempotencyKey;
+      const requestValue = [id, body.seq, body.prompt, body.snapshotDocuments === true];
+      const prior = this.request(idempotencyKey, requestValue);
+      if (prior) {
+        const child = this.sessions.get(prior);
+        if (!child) throw new Error("Idempotent branch result is unavailable.");
+        return child.view;
+      }
       if (this.jobs.size)
         throw new Error("Wait for the active run to settle before branching.");
       const parent = this.sessions.get(id);
@@ -1180,6 +1200,14 @@ export class Workbench {
         !parent.view.events.some((e) => e.seq === body.seq)
       )
         throw new Error("Choose an existing message.");
+      const state = deriveRunState(parent.view.status, parent.view.events);
+      if (
+        state === "unknown" ||
+        state === "stopping" ||
+        (state === "paused" &&
+          (!parent.recoveryBlock || parent.recoveryBlock.previousStatus === "unknown"))
+      )
+        throw new Error("Parent session outcome is unresolved. Reconcile or settle it before branching.");
       const messages = parent.view.events.filter(
         (e) =>
           e.seq <= body.seq &&
@@ -1250,6 +1278,7 @@ export class Workbench {
           originalSeq: e.seq,
         });
       this.persist();
+      this.remember(body.idempotencyKey, requestValue, childId);
       return child.view;
     });
   }
@@ -1452,6 +1481,7 @@ export class Workbench {
     return session;
   }
   async planRecoveryJob(id: string, input: RecoveryRequest) {
+    this.assertNormalMutation("recovery planning");
     return this.locked(async () => {
       const request = recoveryRequest(input), session = this.recoverySession(id);
       const runtime = await this.documentRuntime(session);
@@ -1474,13 +1504,12 @@ export class Workbench {
     });
   }
   async applyRecoveryJob(id: string, input: RecoveryApply, operator: "web-operator" | "tui-operator" = "web-operator") {
+    this.assertNormalMutation("recovery apply");
     return this.locked(async () => {
       const session = this.recoverySession(id);
       if (!input || input.approved !== true) throw new Error("Explicit operator approval is required.");
       const request = this.recoveryRequests[`${id}:${input.jobId}`];
       if (!request) throw new Error("Recovery job not found.");
-      if (session.recoveryBlock && session.recoveryBlock.jobId !== request.jobId)
-        throw new Error("Resume the unresolved recovery job before applying another.");
       const runtime = await this.documentRuntime(session, { by: operator });
       // Reload the signed original plan even after a terminal result. A retry
       // cannot exchange its approval for another job or caller-supplied plan.
@@ -1576,6 +1605,7 @@ export class Workbench {
     operationId: string,
     operator: "web-operator" | "tui-operator" = "web-operator",
   ) {
+    this.assertNormalMutation("workspace undo");
     return this.locked(async () => {
       const session = this.settledSession(id);
       const preview = await this.undoPreview(id, operationId);
@@ -1824,6 +1854,8 @@ export class Workbench {
     args: JsonObject,
     id: string,
   ): Promise<unknown> {
+    if (!this.toolAllowedInMode(tool))
+      return { isError: true, content: [{ type: "text", text: `Server permission mode ${this.permissionMode} forbids ${tool.name}.` }] };
     if (session.agentProfile) {
       if (session.agentProfile.policyProfile !== "default" || !session.agentProfile.allowedTools.includes(tool.name))
         throw new Error("Agent policy refused a tool outside its allowed scope.");

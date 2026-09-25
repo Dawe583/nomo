@@ -456,6 +456,7 @@ export class WorkspaceTui {
   notice = "Tab: panels | i: type | /help: commands";
   detail?: string[];
   confirmation?: Confirmation;
+  private branchIntent?: { sessionId: string; seq: number; command: "branch" | "retry"; key: string };
   provider?: Awaited<ReturnType<Workbench["providerState"]>>;
   proofs = new Map<string, JsonlEntry[]>();
   proofErrors = new Map<string, string>();
@@ -783,6 +784,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     return [
       ...this.providerLines(),
       `model: ${this.session()?.model || this.model || "-"} | ${modeAuthorityLabel(this.mode)}`,
+      `State: ${run?.state ?? "unknown"}${run?.reconcileRequired ? " | reconciliation required" : ""}`,
       `Run: ${run?.state ?? "unavailable"}${run?.reconcileRequired ? " | reconciliation required" : ""}`,
       ctx
         ? `Context messages: ${ctx.contextMessages ?? "unknown"} | transcript: ${ctx.messages} | ` +
@@ -1291,17 +1293,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     if (id?.startsWith("proxy:")) {
       const hold = this.proxy.holds.find((h) => `proxy:${h.holdId}` === id);
       if (!hold) throw Error("Proxy hold is no longer active.");
-      const { decisionToken, ...visible } = hold;
       const review = this.approvalReviewLines(
         hold as Parameters<typeof approvalReview>[0],
       );
       this.confirmation = {
         title: `PROXY ${kind === "approved" ? "APPROVE" : "DENY"}?`,
-        lines: [...review.lines, ...json(visible)],
+        lines: review.lines,
         hunks: review.hunks,
-        hunkBase: review.hunkBase
-          ? [...review.hunkBase, ...json(visible)]
-          : undefined,
+        hunkBase: review.hunkBase ? [...review.hunkBase] : undefined,
         apply: async () => {
           const suffix = this.hunkScopeSuffix();
           this.proxy.decide(
@@ -1326,7 +1325,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       title: `${kind === "approved" ? "APPROVE" : "DENY"} TOOL?`,
       lines: [
         ...review.lines,
-        ...json(hold),
         "",
         `Reason: ${reason || "(not provided)"}`,
         "External effects may not support Undo.",
@@ -1335,7 +1333,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       hunkBase: review.hunkBase
         ? [
             ...review.hunkBase,
-            ...json(hold),
             "",
             `Reason: ${reason || "(not provided)"}`,
             "External effects may not support Undo.",
@@ -1978,10 +1975,23 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       if (!s || !seq) throw Error("Select a message to branch from.");
       if (this.workbench.running())
         throw Error("Wait for cancellation to finish.");
+      const intent =
+        this.branchIntent?.sessionId === s.id &&
+        this.branchIntent.seq === seq &&
+        this.branchIntent.command === cmd
+          ? this.branchIntent
+          : (this.branchIntent = {
+              sessionId: s.id,
+              seq,
+              command: cmd,
+              key: randomUUID(),
+            });
       const child = await this.workbench.branch(s.id, {
         seq,
         snapshotDocuments: true,
+        idempotencyKey: intent.key,
       });
+      this.branchIntent = undefined;
       this.useSession(child.id);
       this.choose("chat");
       this.notice =
@@ -2946,10 +2956,10 @@ export function renderWorkspace(
     .find((e) => e.type !== "run.status" && e.kind !== "usage");
   const phase =
     lastEvent?.type === "tool.started"
-      ? "🔧 Calling tool"
+      ? "[tool] Calling tool"
       : lastEvent?.type === "message.delta"
-        ? "✍️ Writing response"
-        : "💭 Thinking";
+        ? "[write] Writing response"
+        : "[think] Thinking";
   // Live ellipsis, frozen when motion is off so paused frames stay equal.
   const dots =
     visuals.motion === false ? "" : ".".repeat(1 + (Math.floor(frame / 3) % 3));
@@ -2963,7 +2973,7 @@ export function renderWorkspace(
   const tokens =
     typeof usage?.total_tokens === "number" ? usage.total_tokens : "unknown";
   const cost = typeof usage?.cost === "number" ? usage.cost : "unknown";
-  const model = ui.session()?.model || ui.model || "not connected";
+  const model = sanitizeText(ui.session()?.model || ui.model || "not connected");
   const ctx = ui.session() ? ui.contextNumbers() : null;
   const ctxText = ctx
     ? `${ctx.contextMessages ?? "unknown"} messages`
@@ -3002,9 +3012,9 @@ export function renderWorkspace(
     }
   })();
   const status = ui.confirmation
-    ? "⚠️  REVIEW / y accept / n reject / Esc cancel / PgDn preview"
+    ? "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
     : running && (busy || ui.session()?.status === "running")
-      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "⏳ Waiting for approval" : `● ${phase}${dots}`) : `⏳ Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / 📜 reading history" : ""}${todoBadge}`
+      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}`
       : (historyStatus ?? ui.notice);
   const menuRows = menu.map(([name, description], i) =>
     ink(
@@ -3073,40 +3083,40 @@ export function renderWorkspace(
     .join("\n");
 }
 export const STATUS_ICONS = {
-  success: "✅",
-  error: "❌",
-  warning: "⚠️",
-  info: "ℹ️",
-  pending: "⏳",
-  running: "🔄",
-  waiting: "⏳",
-  approval: "🔐",
-  document: "📄",
-  ledger: "📜",
-  tool: "🔧",
-  model: "🤖",
-  session: "💬",
-  document_list: "📁",
-  approval_list: "📋",
-  settings: "⚙️",
-  help: "❓",
-  search: "🔍",
-  filter: "🔎",
-  undo: "↩️",
-  redo: "↪️",
-  save: "💾",
-  export: "📤",
-  import: "📥",
-  connect: "🔗",
-  disconnect: "🔌",
-  theme: "🎨",
-  keybindings: "⌨️",
-  quit: "🚪",
-  new: "➕",
-  edit: "✏️",
-  delete: "🗑️",
-  copy: "📋",
-  paste: "📥",
+  success: "+",
+  error: "!",
+  warning: "!",
+  info: "i",
+  pending: "?",
+  running: ">",
+  waiting: "?",
+  approval: "!",
+  document: "#",
+  ledger: "=",
+  tool: "+",
+  model: "@",
+  session: "#",
+  document_list: "=",
+  approval_list: "!",
+  settings: "*",
+  help: "?",
+  search: "/",
+  filter: "/",
+  undo: "<",
+  redo: ">",
+  save: "S",
+  export: "E",
+  import: "I",
+  connect: "+",
+  disconnect: "-",
+  theme: "*",
+  keybindings: "?",
+  quit: "Q",
+  new: "+",
+  edit: "E",
+  delete: "X",
+  copy: "C",
+  paste: "P",
 } as const;
 const KEYBINDINGS = [
   "KEYBINDINGS, same action as the reference terminal where VOID has it",

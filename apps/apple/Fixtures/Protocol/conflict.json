@@ -17,6 +17,7 @@
     "kind": "request",
     "requestId": "req-conflict-001",
     "operationId": "op-conflict-001",
+    "idempotencyKey": "idem-conflict-001",
     "operation": "recovery.apply",
     "deviceId": "device-demo-001",
     "workspaceId": "workspace-demo-001",

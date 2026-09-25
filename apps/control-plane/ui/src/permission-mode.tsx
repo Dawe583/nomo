@@ -1,5 +1,6 @@
-/** Visible permission modes. The server stays authoritative; a local preset is
- * only a prompt prefix, never a local enforcement block. */
+/** Visible permission modes. The server is the sole authority: it filters
+ * the tool catalog and refuses every state-changing mutation. The banner and
+ * prompt prefix are explanations, never the enforcement point. */
 import type { Row } from "./api";
 import { useText } from "./ui";
 
@@ -11,50 +12,39 @@ export type PermissionModeState = {
   readonly source: PermissionSource;
   readonly setMode: (mode: PermissionMode) => void;
 };
+export function resolvePermissionMode(data: Row | undefined): {
+  readonly mode: PermissionMode;
+  readonly source: PermissionSource;
+} {
+  const mode = data?.permissionMode;
+  if (data?.permissionModeAuthority === "server" && (mode === "plan" || mode === "read-only" || mode === "normal"))
+    return { mode, source: "server" };
+  return { mode: "read-only", source: "local" };
+}
 
-/** Resolve the visible mode: the server readiness wins; the local preference is
- * a fallback that labels itself as unenforced. */
+/** The server capability is authoritative. This hook intentionally does not
+ * read or write local preferences: a client cannot grant itself permission. */
 export function usePermissionMode(
   capabilities: { data?: Row },
-  preferences: { data?: Row },
+  _preferences?: { data?: Row },
 ): PermissionModeState {
-  const serverMode = serverReadinessMode(capabilities.data);
-  const localMode = localPresetMode(preferences.data);
-  const mode = serverMode ?? localMode ?? "normal";
-  const source: PermissionSource = serverMode !== undefined ? "server" : "local";
-  const setMode = (next: PermissionMode) => {
-    // The local preset is data, never code. Server enforcement stays authoritative.
-    void fetch("/api/preferences", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ preferences: { permissionMode: next } }),
-    }).catch(() => undefined);
+  const resolved = resolvePermissionMode(capabilities.data);
+  return {
+    ...resolved,
+    setMode: () => undefined,
   };
-  return { mode, source, setMode };
-}
-
-function serverReadinessMode(data: Row | undefined): PermissionMode | undefined {
-  const readiness = data?.readiness;
-  if (readiness === "read-only") return "read-only";
-  if (readiness === "plan") return "plan";
-  return undefined;
-}
-
-function localPresetMode(data: Row | undefined): PermissionMode | undefined {
-  const mode = data?.preferences?.permissionMode;
-  return mode === "plan" || mode === "read-only" || mode === "normal" ? mode : undefined;
 }
 
 /** The mode prefix is a prompt instruction, not a local block. */
 export function modePrefix(mode: PermissionMode, t: (cs: string, en: string) => string): string {
   if (mode === "plan")
     return t(
-      "Plan only. Describe the steps and the documents that would change. Do not request state changing tools yet.\n\n",
+      "Plánuj pouze. Popiš kroky a dokumenty, které by se změnily. Zatím nežádej o nástroje měnící stav.\n\n",
       "Plan only. Describe the steps and the documents that would change. Do not request state changing tools yet.\n\n",
     );
   if (mode === "read-only")
     return t(
-      "Read-only. Inspect and explain; do not change any state.\n\n",
+      "Jen čtení. Prohlížej a vysvětluj; neměň žádný stav.\n\n",
       "Read-only. Inspect and explain; do not change any state.\n\n",
     );
   return "";
@@ -75,21 +65,29 @@ export function PermissionModeSwitch({
   source: PermissionSource;
   onChange: (mode: PermissionMode) => void;
 }) {
+  const t = useText();
   return (
-    <div className="permission-modes" role="radiogroup" aria-label="Permission mode">
+    <div className="permission-modes" role="radiogroup" aria-disabled="true" aria-label={t("Režim oprávnění", "Permission mode")}>
       {MODES.map((entry) => (
         <button
           key={entry.id}
           type="button"
           role="radio"
           aria-checked={mode === entry.id}
+          disabled
           className={"permission-mode" + (mode === entry.id ? " active" : "")}
           data-source={source}
-          onClick={() => onChange(entry.id)}
         >
-          {entry.label}
+          {entry.id === "normal"
+            ? t("Normální", "Normal")
+            : entry.id === "plan"
+              ? t("Plán", "Plan")
+              : t("Jen čtení", "Read-only")}
         </button>
       ))}
+      <p className="muted permission-authority">
+        {t("Server určuje režim; tuto volbu nelze změnit.", "Server controls this mode; it cannot be changed here.")}
+      </p>
     </div>
   );
 }
@@ -113,7 +111,7 @@ export function PermissionBanner({
   const origin =
     source === "server"
       ? t("vynucuje server", "enforced by server")
-      : t("místní předvolba — nevynuceno", "local preset — not enforced");
+      : t("server mode unavailable — read-only fallback", "server mode unavailable — read-only fallback");
   return (
     <p className="permission-banner" role="status" data-mode={mode} data-source={source}>
       {label} · {origin}

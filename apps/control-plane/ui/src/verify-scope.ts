@@ -16,6 +16,9 @@ export type VerifyScope = {
   readonly headShort: string;
   readonly keyId: string | undefined;
   readonly verified: boolean | undefined;
+  readonly signed: boolean | undefined;
+  readonly integrity: boolean | undefined;
+  readonly proof: "verified" | "partial" | "failed" | "unknown";
 };
 
 export function verifyScope(data: Row | undefined): VerifyScope | undefined {
@@ -45,12 +48,26 @@ export function verifyScope(data: Row | undefined): VerifyScope | undefined {
       : typeof data.ok === "boolean"
         ? data.ok
         : undefined;
+  const signed = typeof data.signed === "boolean" ? data.signed : undefined;
+  const integrity =
+    typeof data.integrity === "boolean" ? data.integrity : undefined;
+  const proof =
+    verified === true && signed === true && integrity === true
+      ? "verified"
+      : verified === false || signed === false || integrity === false
+        ? "failed"
+        : verified === true
+          ? "partial"
+          : "unknown";
   return {
     checked,
     head,
     headShort: head.length > 20 ? head.slice(0, 20) + "…" : head,
     keyId,
     verified,
+    signed,
+    integrity,
+    proof,
   };
 }
 

@@ -12,6 +12,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { api, download, items, json, type Row } from "./api";
 import { redactValue } from "./redact.ts";
+import { statusLabel } from "./status-label.ts";
 export const MotionEnabled = createContext(true);
 export const Locale = createContext<"cs" | "en">("en");
 export function useText() {
@@ -49,6 +50,7 @@ export function Badge({
   title?: string;
   children?: ReactNode;
 }) {
+  const t = useText();
   if (children !== undefined)
     return (
       <span
@@ -65,7 +67,7 @@ export function Badge({
       data-state={String(value)}
       title={title}
     >
-      {String(value ?? "—")}
+      {statusLabel(value, t)}
     </span>
   );
 }
@@ -139,6 +141,7 @@ export function Dialog({
   return (
     <m.dialog
       aria-labelledby={headingId}
+      aria-modal="true"
       initial={animate ? { opacity: 0, y: 18, scale: 0.985 } : false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       ref={ref}

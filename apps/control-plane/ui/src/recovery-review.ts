@@ -11,6 +11,26 @@ export type RecoveryPlan = {
   selection?: unknown;
   boundary?: unknown;
 };
+
+export function recoveryStateLabel(
+  value: unknown,
+  locale: "cs" | "en",
+): string {
+  const labels: Record<string, readonly [string, string]> = {
+    restored: ["Obnoveno", "Restored"],
+    partial: ["Částečně obnoveno", "Partially restored"],
+    conflict: ["Konflikt", "Conflict"],
+    unknown: ["Výsledek neznámý", "Outcome unknown"],
+    paused: ["Pozastaveno", "Paused"],
+    missing: ["Chybí zdroj", "Missing source"],
+    "not-successful": ["Nebyla úspěšná", "Not successful"],
+    compensated: ["Kompenzováno", "Compensated"],
+    "blocked-by-conflict": ["Blokováno konfliktem", "Blocked by conflict"],
+  };
+  const key = String(value ?? "");
+  const label = labels[key];
+  return label ? label[locale === "cs" ? 0 : 1] : key || "—";
+}
 export type RecoveryReview = {
   phase: "planning" | "ready" | "applying" | "blocked" | "settled";
   plan?: RecoveryPlan;

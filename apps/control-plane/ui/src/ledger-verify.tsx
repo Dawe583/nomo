@@ -10,6 +10,7 @@
  */
 import { useEffect, useState } from "react";
 import { ErrorBox, useApi, useText } from "./ui";
+import { Icon } from "./icons";
 import {
   cacheMatchesHead,
   readCachedVerify,
@@ -67,6 +68,23 @@ export function LedgerVerify({ query }: { query: string }) {
           )}
         </p>
       )}
+      {scope && (
+        <section className="trust-proof" data-proof={scope.proof} aria-live="polite">
+          <Icon name={scope.proof === "verified" ? "verified" : scope.proof === "failed" ? "warning" : "more"} />
+          <div>
+            <span>{t("Důkaz integrity", "Integrity proof")}</span>
+            <strong>
+              {scope.proof === "verified"
+                ? t("Podpis a integrita ověřeny", "Signature and integrity verified")
+                : scope.proof === "failed"
+                  ? t("Ověření se nezdařilo", "Verification failed")
+                  : scope.proof === "partial"
+                    ? t("Rozsah důkazu je neúplný", "Proof scope is incomplete")
+                    : t("Důkaz není dostupný", "Proof unavailable")}
+            </strong>
+          </div>
+        </section>
+      )}
       {fresh && (
         <dl className="ledger-verify-scope" data-verified={String(verified)}>
           <div>
@@ -84,6 +102,14 @@ export function LedgerVerify({ query }: { query: string }) {
                 {scope.headShort === "" ? "-" : scope.headShort}
               </code>
             </dd>
+          </div>
+          <div>
+            <dt>{t("Podpis", "Signature")}</dt>
+            <dd>{scope.signed === true ? t("ověřen", "verified") : scope.signed === false ? t("neověřen", "not verified") : t("neznámý", "unknown")}</dd>
+          </div>
+          <div>
+            <dt>{t("Integrita", "Integrity")}</dt>
+            <dd>{scope.integrity === true ? t("ověřena", "verified") : scope.integrity === false ? t("nepotvrzena", "not confirmed") : t("neznámá", "unknown")}</dd>
           </div>
           <div>
             <dt>{t("Klíč", "Key")}</dt>

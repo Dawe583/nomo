@@ -22,6 +22,16 @@ const paths: Record<string, string> = {
   settings: "M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6",
   undo: "M8 4 3 9l5 5M3 9h10a6 6 0 0 1 0 12",
   send: "M12 20V4m-7 7 7-7 7 7",
+  plus: "M12 5v14M5 12h14",
+  search: "M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM15.5 15.5 21 21",
+  pin: "M9 4h6l-1 7 4 4H6l4-4-1-7Zm3 11v6",
+  warning: "M12 4 3.5 20h17L12 4Zm0 5v5m0 3h.01",
+  verified: "m5 12 4 4L19 6M12 3l2 2 4-1 1 4 2 2-2 2-1 4-4-1-2 2-2-2-4 1-1-4-2-2 2-2 1-4 4 1 2-2Z",
+  recovery: "M8 4 3 9l5 5M3 9h10a6 6 0 0 1 10.5 4M16 20l5-5-5-5",
+  panel: "M4 4h16v16H4ZM15 4v16",
+  collapse: "m14 7-5 5 5 5M9 12h11",
+  stop: "M7 7h10v10H7Z",
+  chevron: "m7 9 5 5 5-5",
 };
 export function Icon({ name }: { name: string }) {
   return (

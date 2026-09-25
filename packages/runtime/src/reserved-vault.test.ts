@@ -443,3 +443,67 @@ test("SIGKILL before snapshot commit rolls back payload and quota together", asy
     reference,
   );
 });
+
+test("persisted v0 SQLite schema upgrades to the bounded vault schema in place", async (t) => {
+  const f = await fixture(t),
+    capacity = { maxArtifactBytes: 1024, maxTotalBytes: 3 * 1052 },
+    path = join(f.root, "vault.sqlite");
+  const previous = new DatabaseSync(path);
+  try {
+    previous.exec(`PRAGMA user_version=0;
+      CREATE TABLE settings(id INTEGER PRIMARY KEY CHECK(id=1),capacity TEXT NOT NULL);
+      CREATE TABLE artifacts(workspace TEXT NOT NULL,digest TEXT NOT NULL,key_id TEXT NOT NULL,data BLOB NOT NULL,operation_id TEXT,slot TEXT,content_digest TEXT NOT NULL,PRIMARY KEY(workspace,digest),UNIQUE(workspace,operation_id,slot));
+      CREATE TABLE reservations(workspace TEXT NOT NULL,operation_id TEXT NOT NULL,slot TEXT NOT NULL,bytes INTEGER NOT NULL,PRIMARY KEY(workspace,operation_id,slot));
+      CREATE TABLE key_checks(key_id TEXT PRIMARY KEY,proof TEXT NOT NULL);`);
+    previous.prepare("INSERT INTO settings VALUES(1,?)").run(
+      JSON.stringify(capacity),
+    );
+  } finally {
+    previous.close();
+  }
+
+  await reservedRecoveryVault(f.root, f.keys, "first", capacity).reserve!(
+    "one",
+    "op",
+  );
+  const upgraded = new DatabaseSync(path, { readOnly: true });
+  try {
+    assert.equal(upgraded.prepare("PRAGMA user_version").get()?.user_version, 1);
+    assert.equal(
+      upgraded
+        .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='artifacts_key_id'")
+        .get()?.name,
+      "artifacts_key_id",
+    );
+  } finally {
+    upgraded.close();
+  }
+});
+
+test("newer persisted vault schema is refused before accepting bounded work", async (t) => {
+  const f = await fixture(t),
+    path = join(f.root, "vault.sqlite");
+  const future = new DatabaseSync(path);
+  try {
+    future.exec("PRAGMA user_version=2; CREATE TABLE settings(id INTEGER PRIMARY KEY CHECK(id=1),capacity TEXT NOT NULL)");
+  } finally {
+    future.close();
+  }
+
+  await assert.rejects(
+    reservedRecoveryVault(f.root, f.keys, "first").reserve!("one", "op"),
+    /unsupported.*schema|schema.*unsupported/i,
+  );
+  const unchanged = new DatabaseSync(path, { readOnly: true });
+  try {
+    assert.equal(unchanged.prepare("PRAGMA user_version").get()?.user_version, 2);
+    assert.equal(
+      unchanged
+        .prepare("SELECT count(*) AS count FROM sqlite_master WHERE type='table' AND name='artifacts'")
+        .get()?.count,
+      0,
+    );
+  } finally {
+    unchanged.close();
+  }
+});

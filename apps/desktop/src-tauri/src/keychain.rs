@@ -163,24 +163,61 @@ impl SecretStore for WindowsCredentials {
 }
 
 #[cfg(all(test, windows))]
-#[test]
-fn windows_credentials_round_trip() {
-    use windows_sys::Win32::Security::Credentials::*;
-    let store = WindowsCredentials {
-        account: format!(
-            "test-{}-{:?}",
-            std::process::id(),
-            std::time::SystemTime::now()
-        ),
-    };
-    assert!(store.get().unwrap().is_none());
-    let key = random_key().unwrap();
-    store.put(&key).unwrap();
-    let actual = store.get();
-    unsafe {
-        CredDeleteW(store.target().as_ptr(), CRED_TYPE_GENERIC, 0);
+mod windows_tests {
+    use super::*;
+
+    struct CredentialCleanup(Vec<u16>);
+
+    impl Drop for CredentialCleanup {
+        fn drop(&mut self) {
+            use windows_sys::Win32::Security::Credentials::*;
+            unsafe {
+                CredDeleteW(self.0.as_ptr(), CRED_TYPE_GENERIC, 0);
+            }
+        }
     }
-    assert_eq!(actual.unwrap(), Some(key));
+
+    #[test]
+    fn windows_credentials_round_trip() {
+        let store = WindowsCredentials {
+            account: format!(
+                "test-{}-{:?}",
+                std::process::id(),
+                std::time::SystemTime::now()
+            ),
+        };
+        let _cleanup = CredentialCleanup(store.target());
+        assert!(store.get().unwrap().is_none());
+        let key = random_key().unwrap();
+        store.put(&key).unwrap();
+        assert_eq!(store.get().unwrap(), Some(key));
+    }
+
+    #[test]
+    fn windows_credentials_persist_across_workspace_loads() {
+        let store = WindowsCredentials {
+            account: format!(
+                "test-persistence-{}-{:?}",
+                std::process::id(),
+                std::time::SystemTime::now()
+            ),
+        };
+        let _cleanup = CredentialCleanup(store.target());
+        let directory = std::env::temp_dir().join(format!(
+            "void-windows-credential-persistence-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&directory).unwrap();
+
+        let first = load_or_create(&directory, &store).unwrap();
+        let expected = first.bytes.clone();
+        drop(first);
+        let second = load_or_create(&directory, &store).unwrap();
+
+        assert_eq!(second.bytes, expected);
+        assert!(!directory.join("workspace.key").exists());
+        std::fs::remove_dir_all(directory).unwrap();
+    }
 }
 
 #[cfg(test)]

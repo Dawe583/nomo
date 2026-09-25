@@ -47,3 +47,73 @@ test("tool details and attachments share the bounded notices region", () => {
   assert.match(notices, /className="selected-tool"/);
   assert.match(notices, /className="attachments"/);
 });
+
+test("focus ring uses a semantic token and neutral halo", () => {
+  const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  assert.match(css, /--focus:/);
+  assert.match(css, /:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--focus\)/s);
+  assert.match(css, /:focus-visible\s*\{[^}]*box-shadow:\s*0 0 0 4px var\(--canvas\)/s);
+});
+
+test("permission controls use built-in locale text", () => {
+  const source = readFileSync(new URL("./permission-mode.tsx", import.meta.url), "utf8");
+  assert.match(source, /const t = useText\(\)/);
+  assert.match(source, /aria-label=\{t\("Režim oprávnění", "Permission mode"\)\}/);
+  assert.doesNotMatch(source, /aria-label="Permission mode"/);
+});
+
+test("native dialog exposes modal semantics", () => {
+  const source = readFileSync(new URL("./ui.tsx", import.meta.url), "utf8");
+  assert.match(source, /aria-modal="true"/);
+});
+
+test("composer notices announce changes politely", () => {
+  const source = readFileSync(new URL("./chat.tsx", import.meta.url), "utf8");
+  assert.match(source, /className="composer-notices"[^>]*aria-live="polite"/);
+});
+
+test("compact navigation and checkbox labels keep 44px targets", () => {
+  const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+  assert.match(css, /\.sidebar a:not\(\.brand a\)\s*\{[^}]*min-height:\s*44px/s);
+  assert.match(css, /label:has\(input\[type="checkbox"\]\)\s*\{[^}]*min-height:\s*44px/s);
+});
+
+test("built-in chat metadata is localized without touching authored content", () => {
+  const source = readFileSync(new URL("./chat.tsx", import.meta.url), "utf8");
+  assert.match(source, /t\("cena neznámá", "cost unknown"\)/);
+  assert.match(source, /t\("Místní PC", "Local PC"\)/);
+  assert.match(source, /t\("Místní VOID", "VOID Local"\)/);
+  assert.match(source, /t\("VOID Cloud", "VOID Cloud"\)/);
+  assert.doesNotMatch(source, /\? " · cost unknown"/);
+  assert.doesNotMatch(source, /\? "prime-agent · Local PC"/);
+  assert.doesNotMatch(source, /\? "VOID Local"/);
+});
+
+test("branch intent keeps one stable idempotency key across retries", () => {
+  const source = readFileSync(new URL("./chat.tsx", import.meta.url), "utf8");
+  assert.match(source, /branchRequestKey/);
+  assert.match(source, /idempotencyKey:\s*branchRequestKey\.current/);
+  assert.match(source, /idempotencyKey:\s*`\$\{branchRequestKey\.current\}:followup`/);
+  assert.doesNotMatch(source, /branches",\s*"POST",\s*\{[\s\S]*idempotencyKey:\s*crypto\.randomUUID\(\)/);
+});
+test("built-in command and hooks labels use the active locale", () => {
+  const commandMenu = readFileSync(new URL("./command-menu.tsx", import.meta.url), "utf8");
+  assert.match(commandMenu, /t\("r1 · Zpět", "r1 · Undo"\)/);
+  assert.match(commandMenu, /t\("r0 · Čtení", "r0 · Read"\)/);
+  assert.doesNotMatch(commandMenu, /\?\s*"r[01] · (?:Undo|Read)"/);
+  const controls = readFileSync(new URL("./workspace-controls.tsx", import.meta.url), "utf8");
+  assert.match(controls, /<h2>\{t\("Hooky", "Hooks"\)\}<\/h2>/);
+  assert.doesNotMatch(controls, /<h2>Hooks<\/h2>/);
+});
+
+test("icon-only controls use the shared semantic icon vocabulary", () => {
+  const source = readFileSync(new URL("./main.tsx", import.meta.url), "utf8");
+  const chat = readFileSync(new URL("./chat.tsx", import.meta.url), "utf8");
+  assert.match(source, /<Icon name="compose" \/>/);
+  assert.match(source, /<Icon name="search" \/>/);
+  assert.match(source, /<Icon name="settings" \/>/);
+  assert.match(chat, /<Icon name="more" \/>/);
+  assert.match(chat, /<Icon name="send" \/>/);
+  assert.match(chat, /<Icon name="stop" \/>/);
+  assert.doesNotMatch(chat, /className="chat-options-trigger"[\s\S]{0,160}>⋯/);
+});

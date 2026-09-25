@@ -571,9 +571,12 @@ function App({
               <button
                 className="collapse-button"
                 onClick={() => setCollapsed(!collapsed)}
-                aria-label={t("Sbalit navigaci", "Collapse navigation")}
+                aria-label={collapsed
+                  ? t("Rozbalit navigaci", "Expand navigation")
+                  : t("Sbalit navigaci", "Collapse navigation")}
+                aria-expanded={!collapsed}
               >
-                ⇤
+                <Icon name="collapse" />
               </button>
               <button
                 className="drawer-close"
@@ -588,11 +591,11 @@ function App({
                 t("Osobní prostor", "Personal workspace")}
             </p>
             <button className="new-chat" onClick={() => navigate("/chat/new")}>
-              <span>＋</span>
+              <Icon name="compose" />
               <span>{t("Nová konverzace", "New conversation")}</span>
             </button>
             <button className="search-button" onClick={() => setSearch(true)}>
-              <span>⌕</span>
+              <Icon name="search" />
               <span>{t("Hledat", "Search")}</span>
               <kbd>⌘ K</kbd>
             </button>
@@ -675,7 +678,7 @@ function App({
                   navigate("/settings");
                 }}
               >
-                <span aria-hidden="true">⚙</span>
+                <Icon name="settings" />
                 <span>{t("Nastavení", "Settings")}</span>
               </a>
               <div className="connection">
@@ -974,7 +977,7 @@ function App({
                 </a>
               ))}
               <button onClick={() => setDrawer(true)}>
-                <span aria-hidden="true">≡</span>
+                <Icon name="menu" />
                 {t("Více", "More")}
               </button>
             </nav>

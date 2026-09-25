@@ -72,3 +72,10 @@ packages/*/src/**/*.js.map
 /void-exports/
 # OpenCOOP project history (snapshots, members)
 .opencoop/
+# Local browser/terminal diagnostics
+.playwright-mcp/
+test-results/
+
+# Swift Package Manager and Python test artifacts
+.build/
+__pycache__/

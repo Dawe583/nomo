@@ -17,6 +17,7 @@
     "kind": "request",
     "requestId": "req-denied-001",
     "operationId": "op-denied-001",
+    "idempotencyKey": "idem-denied-001",
     "operation": "approval.decide",
     "deviceId": "device-demo-001",
     "workspaceId": "workspace-demo-001",

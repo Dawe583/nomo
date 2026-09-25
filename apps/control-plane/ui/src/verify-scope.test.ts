@@ -51,6 +51,23 @@ test("scope stays honest when the server omits fields", () => {
   assert.equal(verifyScope(undefined), undefined);
 });
 
+test("proof state distinguishes complete, partial, failed and unavailable verification", () => {
+  assert.equal(
+    verifyScope({ verified: true, signed: true, integrity: true })?.proof,
+    "verified",
+  );
+  assert.equal(
+    verifyScope({ verified: true, head: "sha256:aa" })?.proof,
+    "partial",
+  );
+  assert.equal(
+    verifyScope({ verified: false, signed: true, integrity: false })?.proof,
+    "failed",
+  );
+  assert.equal(verifyScope({ checked: 0 })?.proof, "unknown");
+  assert.equal(verifyScope(undefined)?.proof, undefined);
+});
+
 test("cache round trips per query and matches by head", () => {
   const store = memoryStore();
   assert.equal(readCachedVerify(store, "workspace=a"), undefined);

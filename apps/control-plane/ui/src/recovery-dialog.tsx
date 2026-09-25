@@ -2,9 +2,11 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type Row } from "./api";
 import { Dialog, ErrorBox, RedactedJson, useApi, useText } from "./ui";
+import { Icon } from "./icons";
 import {
   recoveryApplyBody,
   recoveryReview,
+  recoveryStateLabel,
   recoveryStatusPath,
   type RecoveryPlan,
 } from "./recovery-review";
@@ -120,10 +122,10 @@ export function RecoveryReview({
         )}
         {review.plan && (
           <>
-            <p>
-              {t("Digest schvalovaného plánu", "Reviewed plan digest")}:{" "}
-              <code>{review.plan.planDigest}</code>
-            </p>
+            <section className="recovery-evidence" aria-label={t("Důkazy plánu", "Plan evidence")}>
+              <div><span>{t("Úloha", "Job")}</span><code>{jobId}</code></div>
+              <div><span>{t("Digest", "Digest")}</span><code>{review.plan.planDigest}</code></div>
+            </section>
             <ol>
               {review.plan.steps.map((step) => (
                 <li key={step.operationId}>
@@ -167,7 +169,7 @@ export function RecoveryReview({
                   {review.plan.residuals.map((row) => (
                     <li key={row.operationId}>
                       {labels.get(row.operationId) ?? row.operationId}:{" "}
-                      {row.status}
+                      {recoveryStateLabel(row.status, document.documentElement.lang === "cs" ? "cs" : "en")}
                     </li>
                   ))}
                 </ul>
@@ -203,14 +205,14 @@ export function RecoveryReview({
           </p>
         )}
         {review.result && (
-          <section>
-            <h3>
-              {t("Stav úlohy", "Job status")}:{" "}
-              {String(
-                review.result.status ??
-                  t("Výsledek nepotvrzen", "Outcome unconfirmed"),
-              )}
-            </h3>
+          <section className="recovery-result" data-outcome={String(review.result.status ?? "unknown")} aria-live="polite">
+            <div className="recovery-result-heading">
+              <Icon name={["restored", "compensated"].includes(String(review.result.status)) ? "verified" : "warning"} />
+              <div>
+                <span>{t("Výsledek obnovy", "Recovery outcome")}</span>
+                <h3>{recoveryStateLabel(review.result.status, document.documentElement.lang === "cs" ? "cs" : "en")}</h3>
+              </div>
+            </div>
             <RedactedJson value={review.result} />
             <p>
               {t(

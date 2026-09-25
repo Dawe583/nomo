@@ -10,6 +10,7 @@ import {
   filterRows,
   preferencePatch,
   deriveRunState,
+  capabilities,
   activity,
   providerStateFromFailure,
 } from "./gui.ts";
@@ -43,6 +44,12 @@ test("cursor binds filters and preserves position when new rows arrive; finds ol
   );
   assert.throws(() => preferencePatch({ appearance: "unknown" }), /appearance/);
 });
+test("permission mode is server authoritative and fails closed",()=>{
+ assert.equal(capabilities("local").permissionMode,"read-only");
+ assert.equal(capabilities("local").permissionModeAuthority,"server");
+ assert.equal(capabilities("local","normal").permissionMode,"normal");
+ assert.throws(()=>preferencePatch({permissionMode:"plan"}),/server-controlled/);
+});
 
 test("GUI edits use revisions and signed undo, branches do not replay tools, requests survive restart", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "void-gui-"));
@@ -55,7 +62,7 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
           choices: [{ message: { role: "assistant", content: "Complete." } }],
           usage: { prompt_tokens: 2, completion_tokens: 3, total_tokens: 5 },
         }));
-  let wb = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  let wb = new Workbench({ VOID_DATA_DIR: directory, VOID_PERMISSION_MODE: "normal" }, fetcher);
   t.after(async () => {
     wb.close();
     await rm(directory, { recursive: true, force: true });
@@ -95,8 +102,26 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
     seq: 1,
     prompt: "Edited prompt",
     snapshotDocuments: true,
+    idempotencyKey: "branch-unkeyed-test",
   });
   assert.equal(child.status, "idle");
+ const keyed = { seq: 1, prompt: "Keyed branch", snapshotDocuments: true, idempotencyKey: "branch-key" };
+ const keyedFirst = await wb.branch(session.id, keyed as Parameters<Workbench["branch"]>[1]);
+ const keyedRetry = await wb.branch(session.id, keyed as Parameters<Workbench["branch"]>[1]);
+ assert.equal(keyedRetry.id, keyedFirst.id);
+ await assert.rejects(wb.branch(session.id, { seq: 1 } as Parameters<Workbench["branch"]>[1]), /Idempotency key/);
+ await assert.rejects(wb.branch(session.id, { ...keyed, prompt: "Changed payload" } as Parameters<Workbench["branch"]>[1]), /Idempotency key/);
+ const internals = wb as unknown as { sessions: Map<string, { view: { status: string } }>; jobs: Map<string, Promise<void>> };
+ const parentView = internals.sessions.get(session.id)!.view;
+ for (const status of ["unknown", "paused"]) {
+   parentView.status = status;
+  await assert.rejects(wb.branch(session.id, { seq: 1, idempotencyKey: `blocked-${status}` } as Parameters<Workbench["branch"]>[1]), /unknown|paused|reconcil|settle/i);
+ }
+ parentView.status = "cancelled";
+ internals.jobs.set(session.id, Promise.resolve());
+ await assert.rejects(wb.branch(session.id, { seq: 1, idempotencyKey: "active-run" } as Parameters<Workbench["branch"]>[1]), /active run|settle/i);
+ internals.jobs.delete(session.id);
+ parentView.status = "idle";
   assert.equal(requests, 1);
   assert.equal(wb.document(child.id, "notes.md").content, "Second version");
   assert.equal((await wb.ledger(child.workspace))?.result.ok, true);

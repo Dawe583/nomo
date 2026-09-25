@@ -75,9 +75,9 @@ export function CommandMenu({
             <small>
               {item.tool
                 ? item.capturedUndo
-                  ? "r1 · Undo"
+                  ? t("r1 · Zpět", "r1 · Undo")
                   : item.klass === "r0"
-                    ? "r0 · Read"
+                    ? t("r0 · Čtení", "r0 · Read")
                     : t("Dle policy", "Policy")
                 : "VOID"}
             </small>
