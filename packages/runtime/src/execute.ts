@@ -123,6 +123,67 @@ function artifact(
   if (!event) throw new Error("Required operation evidence is missing.");
   return event.data as unknown as VaultReference;
 }
+/**
+ * WP-R07 provenance. An event carries what the adapter observed, so a later
+ * replay can order dependent operations without re-reading the target.
+ *
+ * `UNOBSERVED` is the honest pre-preflight state, not a placeholder: the
+ * adapter has not looked at the target yet, and an entry claiming an empty
+ * resource set would read as "this call touched nothing". `revision` has to be
+ * a non-empty string for `validateOperationEvent`, so a pre-preflight entry
+ * carries `UNRECORDED` rather than an empty string that could be mistaken for
+ * a real revision.
+ */
+type Provenance = Pick<
+  OperationEvent,
+  "resourceKeys" | "readSet" | "writeSet" | "revision" | "receiptInputs"
+>;
+
+const UNRECORDED = "unrecorded";
+const UNOBSERVED: Provenance = {
+  resourceKeys: [],
+  readSet: [],
+  writeSet: [],
+  revision: UNRECORDED,
+  receiptInputs: null,
+};
+
+/**
+ * Splits the observed resources into the read and write sets by the declared
+ * effect. `mixed` lands in both, because an adapter that reports a mixed effect
+ * genuinely read something and genuinely wrote something, and collapsing it to
+ * one side would hide a dependency the taint graph needs.
+ */
+function provenanceOf(
+  observation: Observation,
+  approvalDigest: string,
+  adapterVersion: string,
+) {
+  const resources = [...observation.resources];
+  return {
+    resourceKeys: resources,
+    readSet:
+      observation.effect === "read" || observation.effect === "mixed"
+        ? resources
+        : [],
+    writeSet:
+      observation.effect === "write" || observation.effect === "mixed"
+        ? resources
+        : [],
+    revision:
+      typeof observation.revision === "string" && observation.revision !== ""
+        ? observation.revision
+        : UNRECORDED,
+    receiptInputs: {
+      approvalDigest,
+      adapterVersion,
+      scope: observation.scope,
+      reversibility: observation.reversibility,
+      readiness: observation.readiness,
+    } as Json,
+  };
+}
+
 export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
   if (options.irreversibilityBudget)
     validateBudget(options.irreversibilityBudget);
@@ -143,8 +204,15 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
     identity: OperationEvent,
     stage: Stage,
     data: Json = null,
+    provenance: Provenance = UNOBSERVED,
   ) => {
-    await tx.append({ ...identity, stage, data, at: new Date().toISOString() });
+    await tx.append({
+      ...identity,
+      ...provenance,
+      stage,
+      data,
+      at: new Date().toISOString(),
+    });
   };
   const loadPrepared = async (tx: JournalTransaction, event: OperationEvent) =>
     (await options.vault.get(
@@ -298,27 +366,36 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           at: new Date().toISOString(),
           stage: "received",
           data: null,
+          ...UNOBSERVED,
         };
         await tx.append(identity);
         let dispatched = false;
+        // Hoisted so a throw between preflight and dispatch still records what
+        // the adapter observed. A failure with no provenance would read as a
+        // call that touched nothing, which is a different claim.
+        let observed: Provenance = UNOBSERVED;
         try {
           const observation = JSON.parse(
             canonicalJson(await adapter.preflight(clean(request.arguments))),
           ) as Observation;
           digest(observation);
-          if (
-            options.requireRecoverable !== false &&
-            (observation.readiness !== "verified" ||
-              !["r0", "r1"].includes(observation.reversibility))
-          ) {
-            await record(tx, identity, "denied");
-            return { status: "denied", operationId: request.operationId };
-          }
           const approvalDigest = digest({
             requestDigest,
             adapterVersion: adapter.version,
             observation,
           });
+          // Everything past preflight carries the observed provenance, so a
+          // denied call still records what the adapter saw. Without this a
+          // denial would leave no resource trail for the taint graph.
+          observed = provenanceOf(observation, approvalDigest, adapter.version);
+          if (
+            options.requireRecoverable !== false &&
+            (observation.readiness !== "verified" ||
+              !["r0", "r1"].includes(observation.reversibility))
+          ) {
+            await record(tx, identity, "denied", null, observed);
+            return { status: "denied", operationId: request.operationId };
+          }
           if (
             !(await options.authorize({
               digest: approvalDigest,
@@ -326,7 +403,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
               request: clean(request),
             }))
           ) {
-            await record(tx, identity, "denied");
+            await record(tx, identity, "denied", null, observed);
             return { status: "denied", operationId: request.operationId };
           }
           const needsBudget =
@@ -342,15 +419,27 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
                 )
               : null;
           if (needsBudget && !budget) {
-            await record(tx, identity, "denied", {
-              reason: "irreversibility-budget",
-            });
+            await record(
+              tx,
+              identity,
+              "denied",
+              {
+                reason: "irreversibility-budget",
+              },
+              observed,
+            );
             return { status: "denied", operationId: request.operationId };
           }
-          await record(tx, identity, "authorized", {
-            approvalDigest,
-            ...(budget ? { budget } : {}),
-          });
+          await record(
+            tx,
+            identity,
+            "authorized",
+            {
+              approvalDigest,
+              ...(budget ? { budget } : {}),
+            },
+            observed,
+          );
           await options.vault.reserve?.(request.workspace, request.operationId);
           const prepared = await adapter.prepare(
             clean(request.arguments),
@@ -363,8 +452,14 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             clean({ request, observation, prepared }) as unknown as Json,
             { operationId: request.operationId, slot: "capture" },
           );
-          await record(tx, identity, "prepared", capture as unknown as Json);
-          await record(tx, identity, "dispatched");
+          await record(
+            tx,
+            identity,
+            "prepared",
+            capture as unknown as Json,
+            observed,
+          );
+          await record(tx, identity, "dispatched", null, observed);
           dispatched = true;
           const outcome = await adapter.execute(
             clean(request.arguments),
@@ -376,7 +471,13 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             outcome as unknown as Json,
             { operationId: request.operationId, slot: "outcome" },
           );
-          await record(tx, identity, "succeeded", result as unknown as Json);
+          await record(
+            tx,
+            identity,
+            "succeeded",
+            result as unknown as Json,
+            observed,
+          );
           return {
             status: "succeeded",
             operationId: request.operationId,
@@ -392,6 +493,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             identity,
             dispatched ? "unknown" : "failed",
             reason ? { reason } : null,
+            observed,
           );
           return {
             status: dispatched ? "unknown" : "failed",

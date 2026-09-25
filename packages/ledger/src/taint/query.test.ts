@@ -1,11 +1,7 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  blastRadiusFromTaint,
-  neighbors,
-  pathToRoot,
-} from "./query.ts";
+import { blastRadiusFromTaint, neighbors, pathToRoot } from "./query.ts";
 import type { TaintGraph, TaintNode } from "./graph.ts";
 
 const graph: TaintGraph = {
@@ -16,21 +12,42 @@ const graph: TaintGraph = {
     ["d", node(4, "d", "stripe.payout.create", "hold:denied")],
   ]),
   edges: [
-    { from: "a", to: "b", kind: "resource", via: "postgres:orders:42" },
-    { from: "b", to: "c", kind: "data", via: "result-2" },
+    {
+      from: "a",
+      to: "b",
+      kind: "resource",
+      via: "postgres:orders:42",
+      bindingType: "observed-resource",
+    },
+    {
+      from: "b",
+      to: "c",
+      kind: "data",
+      via: "result-2",
+      bindingType: "confirmed-data",
+    },
   ],
 };
 
 describe("taint query", () => {
   test("neighbors returns linked nodes to depth one", () => {
     const result = neighbors(graph, "a", 1);
-    assert.deepEqual(result.nodes.map((item) => item.seq), [1, 2]);
-    assert.deepEqual(result.edges.map((item) => item.via), ["postgres:orders:42"]);
+    assert.deepEqual(
+      result.nodes.map((item) => item.seq),
+      [1, 2],
+    );
+    assert.deepEqual(
+      result.edges.map((item) => item.via),
+      ["postgres:orders:42"],
+    );
   });
 
   test("neighbors returns linked nodes to depth two", () => {
     const result = neighbors(graph, "a", 2);
-    assert.deepEqual(result.nodes.map((item) => item.seq), [1, 2, 3]);
+    assert.deepEqual(
+      result.nodes.map((item) => item.seq),
+      [1, 2, 3],
+    );
     assert.equal(result.edges.length, 2);
   });
 
@@ -41,12 +58,23 @@ describe("taint query", () => {
 
   test("pathToRoot returns the shortest evidence chain", () => {
     const result = pathToRoot(graph, "c");
-    assert.deepEqual(result.nodes.map((item) => item.seq), [1, 2, 3]);
-    assert.deepEqual(result.edges.map((item) => item.via), ["postgres:orders:42", "result-2"]);
+    assert.deepEqual(
+      result.nodes.map((item) => item.seq),
+      [1, 2, 3],
+    );
+    assert.deepEqual(
+      result.edges.map((item) => item.via),
+      ["postgres:orders:42", "result-2"],
+    );
   });
 });
 
-function node(seq: number, digest: string, tool: string, decision: string): TaintNode {
+function node(
+  seq: number,
+  digest: string,
+  tool: string,
+  decision: string,
+): TaintNode {
   return {
     seq,
     digest,

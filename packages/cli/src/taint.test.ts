@@ -26,8 +26,25 @@ const graph: TaintGraph = {
     ["c", node(3, "c", "sendgrid.mail.send", "hold:approved")],
   ]),
   edges: [
-    { from: "a", to: "b", kind: "resource", via: "postgres:orders:42" },
-    { from: "b", to: "c", kind: "data", via: "result-2" },
+    // postgres:orders:42 is an observed resource identity, the same shape the
+    // graph emits for a table plus row predicate, so this is not the args
+    // digest fallback and must not be labelled conservative.
+    {
+      from: "a",
+      to: "b",
+      kind: "resource",
+      via: "postgres:orders:42",
+      bindingType: "observed-resource",
+    },
+    // A data edge exists only when an earlier entry published the output
+    // digest, so buildGraph emits no other bindingType for one.
+    {
+      from: "b",
+      to: "c",
+      kind: "data",
+      via: "result-2",
+      bindingType: "confirmed-data",
+    },
   ],
 };
 

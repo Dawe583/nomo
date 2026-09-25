@@ -131,7 +131,7 @@ export function Chat({
     t("Poskytovatel neověřen", "Provider unverified");
   const running =
     session?.status === "running" || session?.status === "cancelling";
-const draftKey =
+  const draftKey =
     "void-draft:" +
     new URLSearchParams(location.search).get("workspace") +
     ":" +
@@ -160,6 +160,8 @@ const draftKey =
   >([]);
   const [newMessages, setNewMessages] = useState(false);
   const [follow, setFollow] = useState(true);
+  const transcript = useRef<HTMLDivElement>(null),
+    textarea = useRef<HTMLTextAreaElement>(null);
   const [commandDismissed, setCommandDismissed] = useState(false);
   const [commandIndex, setCommandIndex] = useState(0);
   const [selectedTool, setSelectedTool] = useState<Command>();
@@ -342,7 +344,6 @@ const draftKey =
   }, [preferences.data]);
   const [eventBuffer, setEventBuffer] = useState<Row[]>([]);
   const [historyComplete, setHistoryComplete] = useState(true);
-  const [queued, setQueued] = useState(false);
   const rawEvents = eventBuffer.length ? eventBuffer : (session?.events ?? []);
   const events = transcriptEvents(rawEvents);
   const usage = usageSummary(rawEvents);
@@ -444,20 +445,6 @@ const draftKey =
     stream.onerror = () => {
       void sync();
     };
-    // When run stops and there's a queued draft, make it available to resume
-    useEffect(() => {
-      if (!running && queued && id && !disposed) {
-        // Run stopped with queued draft - mark it as ready to resume
-        // The queued draft remains in sessionStorage for resume after restart
-        setQueued(false); // reset queued flag, draft remains in storage
-      }
-      return () => {
-        disposed = true;
-      };
-    }, [running, queued, id]);
-    const stream = new EventSource(
-      "/api/sessions/" + encodeURIComponent(id) + "/stream",
-    );
     const poll = setInterval(() => void sync(), 5000);
     void sync();
     return () => {
@@ -468,6 +455,14 @@ const draftKey =
       if (eventTimer) clearTimeout(eventTimer);
     };
   }, [id, client]);
+  // A run that stops makes a queued draft sendable again. This stays a
+  // component effect on purpose: registered from inside the stream effect it
+  // ran its cleanup on every run transition, and that cleanup set the stream
+  // closure's disposed flag, which killed merge, sync, the poll and the
+  // EventSource for the rest of the mount with no way back.
+  useEffect(() => {
+    if (!running && queued) setQueued(false);
+  }, [running, queued]);
   useEffect(() => {
     if (follow && transcript.current) {
       transcript.current.scrollTop = transcript.current.scrollHeight;
@@ -514,8 +509,8 @@ const draftKey =
     }
     setBusy(true);
     setError(undefined);
-    // Režim je pokyn pro agenta (autorita server/policy ho nevynucuje) —
-    // proto prefix promptu, ne lokální blokace odeslání.
+    // Režim je pokyn pro agenta (server ani policy ho nevynucují), proto je to
+    // prefix promptu a ne lokální blokace odeslání.
     const prompt =
       modePrefix(perm.mode, t) +
       draft +
@@ -819,7 +814,9 @@ const draftKey =
               </button>
             </div>
           ))}
-        <ErrorBox error={error ?? provider.error} />
+        {/* perm.error rides the existing box: the mode switch has no error slot
+            of its own, and a failed persistence must not be invisible. */}
+        <ErrorBox error={error ?? perm.error ?? provider.error} />
         <PermissionBanner mode={perm.mode} source={perm.source} />
         {provider.data && !provider.data.connected && (
           <div className="notice">
@@ -864,8 +861,8 @@ const draftKey =
               {perm.source === "server"
                 ? t("Zdroj: server", "Source: server")
                 : t(
-                    "Zdroj: místní předvolba — server nevynucuje",
-                    "Source: local preset — server does not enforce",
+                    "Zdroj: místní předvolba, server nevynucuje",
+                    "Source: local preset, server does not enforce",
                   )}
             </span>
           </div>
@@ -1104,19 +1101,9 @@ const draftKey =
                 }
                 aria-label={t("Odeslat zprávu", "Send message")}
               >
-{busy ? "…" : "↑"}
+                {busy ? "…" : "↑"}
               </m.button>
             )}
-<button
-                className="secondary compact"
-                title={t("Sbalit kontext", "Compact context")}
-                aria-label={t("Sbalit kontext", "Compact context")}
-                onClick={() => {
-                  void 0
-                }}
-              >
-                {t("Sbalit ▼", "Compact ▼")}
-              </button>
           </div>
         </form>
         {queued && !running && (

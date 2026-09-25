@@ -6,11 +6,13 @@ import {
   fit,
   meter,
   pad,
+  progressBar,
   rule,
   sanitizeText,
 } from "./layout.ts";
-import { CLASS_MARKER, paint } from "./theme.ts";
+import { CLASS_MARKER, classLabel, decisionLabel, paint } from "./theme.ts";
 import type {
+  CostRecord,
   DashboardState,
   InterceptedCall,
   PendingHold,
@@ -57,7 +59,7 @@ function header(
   // alternate screen on every diff repaint, not just one row.
   const right = `${state.session.transport} | ${sanitizeText(state.session.agent)} | ${age}s | ${posture}`;
 
-  // Context breakdown: ctx [####––] 62%, amber >70%, red >90%
+  // Context breakdown: ctx ######.... 62%, amber >70%, red >90%
   let ctxLine = "";
   if (state.context && state.context.total > 0) {
     const pct = Math.round((state.context.used / state.context.total) * 100);
@@ -172,7 +174,7 @@ function costRecordLabel(
 ): string {
   const usd = formatUsd(record.usd);
   // `unknown` nikdy `$0.00` - pokud je cena missing, renderuj `unknown`
-  if (record.usd === null) return `unknown`;
+  if (record.usd === null) return `${record.model} unknown`;
   return `${record.model} ${record.tokens}tok ${record.records}rec ${usd}`;
 }
 
@@ -338,7 +340,19 @@ export function renderWatchFrame(
         detailRows(selected, capabilities, rightWidth - 4).slice(0, limit),
         rightWidth,
       );
-      return [...columns(left, right, leftWidth)];
+      // The cost panel rides in the right column here too, so the mid width
+      // layout carries the same signals as the widest one.
+      const signals = box(
+        "SIGNALS",
+        [
+          ...metrics(state, capabilities, rightWidth - 4),
+          "",
+          ...costPanel(state, capabilities, rightWidth - 4),
+          ...health(state, capabilities, rightWidth - 4),
+        ].slice(0, limit),
+        rightWidth,
+      );
+      return [...columns(left, signals, leftWidth)];
     }
     const activityWidth = Math.floor(width * 0.49);
     const detailWidth = Math.floor(width * 0.31);

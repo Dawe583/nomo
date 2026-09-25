@@ -17,6 +17,8 @@ import {
   renderReplayPreview,
 } from "./views.ts";
 import { renderWatchFrame } from "./watch.ts";
+import { commandPaletteRows, commandSuggestions } from "./workspace.ts";
+import { WorkspaceInput } from "./workspace-runner.ts";
 
 const capabilities = (
   columns: number,
@@ -506,7 +508,8 @@ describe("A5 context breakdown", () => {
     const caps = capabilities(80);
     const frame = renderWatchFrame(stateWithoutContext, caps);
     assert.match(frame, /ctx unknown/);
-    assert.doesNotMatch(frame, /ctx /);
+    // With no measured window there is no bar, so nothing renders a fraction.
+    assert.doesNotMatch(frame, /ctx \[/);
   });
 
   test("amber warning >70% renders r1 coloring", () => {
@@ -539,10 +542,10 @@ describe("A6 cost panel", () => {
         { model: "gpt-3.5", tokens: 3_200, records: 18, usd: 3.20 },
       ],
     };
-    const caps = capabilities(80);
+    const caps = capabilities(120); // the cost panel needs the width
     const frame = renderWatchFrame(stateUnknownCost, caps);
-    assert.match(frame, /gpt-4.*unknown/);
-    assert.match(frame, /gpt-3\.5.*\$3.20/);
+    assert.match(frame, /gpt-4 unknown/);
+    assert.match(frame, /gpt-3\.5 3200tok/);
     assert.doesNotMatch(frame, /gpt-3\.5.*\$0/);
   });
 
@@ -553,7 +556,7 @@ describe("A6 cost panel", () => {
         { model: "gpt-4", tokens: 1_500, records: 42, usd: null },
       ],
     };
-    const caps = capabilities(80);
+    const caps = capabilities(120); // the cost panel needs the width
     const frame = renderWatchFrame(stateMissingPrice, caps);
     assert.match(frame, /unknown/);
     assert.doesNotMatch(frame, /\$0/);
@@ -564,8 +567,50 @@ describe("A6 cost panel", () => {
       ...previewState,
       context: { total: 100_000, used: 62_000, billing: 12_500 },
     };
-    const caps = capabilities(80);
+    const caps = capabilities(120); // the cost panel needs the width
     const frame = renderWatchFrame(stateWithBilling, caps);
     assert.match(frame, /5h 42% \(resets 2h 10m\)/);
+  });
+});
+
+describe("command palette", () => {
+  const palette = (query: string, index: number) => ({
+    open: true,
+    query,
+    index,
+    candidates: commandSuggestions(`/${query}`),
+  });
+
+  test("marks the row the / menu would run and never exceeds the width", () => {
+    const rows = commandPaletteRows(palette("co", 1), 80, false, 40);
+    const marked = rows.filter((row) => row.startsWith("[*]"));
+    assert.equal(marked.length, 1);
+    assert.match(marked[0]!, /^\[\*\] \/conformance/);
+    for (const row of rows) assert.ok(visibleLength(row) <= 78, row);
+  });
+
+  test("a box that is not a / query marks nothing, and no match says so", () => {
+    // index -1 is what the runner sends when Enter could run no command, so a
+    // mark there would be a selection the operator cannot act on.
+    const rows = commandPaletteRows(palette("", -1), 80, false, 40);
+    assert.equal(rows.length > 0, true);
+    assert.equal(rows.some((row) => row.startsWith("[*]")), false);
+    assert.match(
+      commandPaletteRows(palette("zzzz", 0), 80, false, 40).join("\n"),
+      /No command matches \/zzzz/,
+    );
+  });
+
+  test("Ctrl+P asks the runner for the palette and leaves the draft alone", () => {
+    const input = new WorkspaceInput();
+    const asked: string[] = [];
+    input.command = (name) => {
+      asked.push(name);
+    };
+    input.editing = true;
+    input.set("draft");
+    input.key(undefined, { name: "p", ctrl: true });
+    assert.deepEqual(asked, ["/command-palette"]);
+    assert.equal(input.value, "draft");
   });
 });

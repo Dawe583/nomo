@@ -1,8 +1,8 @@
 import { ApprovalReview } from "./approval-review";
-import { plainAction, riskOf, sortRiskFirst } from "./approval-text";
-import { LedgerVerify } from "./ledger-verify";
+import { plainAction, riskOf, sortRiskFirst } from "./approval-text.ts";
+import { LedgerVerify } from "./ledger-verify.tsx";
 import { LedgerDetail } from "./ledger-detail";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import {
@@ -187,7 +187,7 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
         ].map(([label, key, path]) => (
           <button key={key} onClick={() => navigate(path)}>
             <span>{label}</span>
-            <strong>{metrics[key] ?? "—"}</strong>
+            <strong>{metrics[key] ?? t("Neznámé", "Unknown")}</strong>
             <span aria-hidden="true">↗</span>
           </button>
         ))}
@@ -238,46 +238,46 @@ export function Runs({ navigate }: { navigate: (path: string) => void }) {
             )}
       </p>
       <ErrorBox error={overview.error} />
-    <DataTable
-      key={status}
-      endpoint={"/api/runs?status=" + status}
-      columns={[
-        { key: "id", label: t("Běh", "Run") },
-        {
-          key: "sessionId",
-          label: t("Konverzace", "Conversation"),
-          render: (r) => (
-            <button
-              className="text-button"
-              onClick={() => navigate("/chat/" + r.sessionId)}
-            >
-              {r.title ?? r.sessionId}
-            </button>
-          ),
-        },
-        {
-          key: "status",
-          label: t("Stav", "Status"),
-          render: (r) => <Badge value={r.status} />,
-        },
-        { key: "model", label: "Model" },
-        { key: "createdAt", label: t("Začátek", "Started") },
-        { key: "durationMs", label: "ms" },
-        { key: "steps", label: t("Kroky", "Steps") },
-      ]}
-      toolbar={
-        <select
-          aria-label={t("Stav běhu", "Run status")}
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">{t("Všechny stavy", "All states")}</option>
-          {["running", "idle", "failed", "cancelled"].map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-      }
-    />
+      <DataTable
+        key={status}
+        endpoint={"/api/runs?status=" + status}
+        columns={[
+          { key: "id", label: t("Běh", "Run") },
+          {
+            key: "sessionId",
+            label: t("Konverzace", "Conversation"),
+            render: (r) => (
+              <button
+                className="text-button"
+                onClick={() => navigate("/chat/" + r.sessionId)}
+              >
+                {r.title ?? r.sessionId}
+              </button>
+            ),
+          },
+          {
+            key: "status",
+            label: t("Stav", "Status"),
+            render: (r) => <Badge value={r.status} />,
+          },
+          { key: "model", label: "Model" },
+          { key: "createdAt", label: t("Začátek", "Started") },
+          { key: "durationMs", label: "ms" },
+          { key: "steps", label: t("Kroky", "Steps") },
+        ]}
+        toolbar={
+          <select
+            aria-label={t("Stav běhu", "Run status")}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">{t("Všechny stavy", "All states")}</option>
+            {["running", "idle", "failed", "cancelled"].map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        }
+      />
     </>
   );
 }
@@ -290,15 +290,15 @@ export function Approvals() {
   const rows = items(query.data, "approvals");
   const visible = sortRiskFirst(
     filter === "pending" ? rows.filter((r) => r.status === "pending") : rows,
-    (r) => r,
+    (r: Row) => r,
   );
   const pendingCount = rows.filter((r) => r.status === "pending").length;
   return (
     <>
       <p className="page-intro">
         {t(
-          `Riziko první: R3 a R2 nahoře. Čeká ${pendingCount}. Expiraci a druhé rozhodnutí hlídá server — pozdní volba skončí konfliktem, ne dvojím zápisem.`,
-          `Risk first: R3 and R2 on top. ${pendingCount} pending. Expiry and double decisions are guarded by the server — a late choice ends in conflict, not a duplicate write.`,
+          `Riziko první: R3 a R2 nahoře. Čeká ${pendingCount}. Expiraci a druhé rozhodnutí hlídá server: pozdní volba skončí konfliktem, ne dvojím zápisem.`,
+          `Risk first: R3 and R2 on top. ${pendingCount} pending. Expiry and double decisions are guarded by the server: a late choice ends in conflict, not a duplicate write.`,
         )}
       </p>
       <ErrorBox error={query.error} />
@@ -309,7 +309,10 @@ export function Approvals() {
         >
           {t("Čekající", "Pending")} ({pendingCount})
         </button>
-        <button aria-pressed={filter === "all"} onClick={() => setFilter("all")}>
+        <button
+          aria-pressed={filter === "all"}
+          onClick={() => setFilter("all")}
+        >
           {t("Vše včetně vyřešených", "All including resolved")}
         </button>
         <button onClick={() => void query.refetch()}>
@@ -329,7 +332,7 @@ export function Approvals() {
         </Empty>
       ) : (
         <div className="approval-inbox">
-          {visible.map((r) => {
+          {visible.map((r: Row) => {
             const klass = riskOf(r);
             const settled = r.status !== "pending";
             return (
@@ -344,18 +347,20 @@ export function Approvals() {
                   <Badge value={r.status} />
                 </div>
                 <p className="muted">
-                  {r.call?.tool ?? r.tool ?? "—"} ·{" "}
-                  {t("prostor", "workspace")}{" "}
-                  {r.call?.workspace ?? "unknown"} ·{" "}
+                  {r.call?.tool ?? r.tool ?? t("Neznámé", "Unknown")} ·{" "}
+                  {t("prostor", "workspace")} {r.call?.workspace ?? "unknown"} ·{" "}
                   {t("vyprší", "expires")}{" "}
                   {r.expiresAt
                     ? new Date(r.expiresAt).toLocaleString(t("cs-CZ", "en-GB"))
-                    : "—"}
+                    : t("Neznámé", "Unknown")}
                 </p>
                 <p className="approval-rationale">
                   {r.reason ??
                     r.rationale ??
-                    t("Server důvod neposkytl.", "The server gave no rationale.")}
+                    t(
+                      "Server důvod neposkytl.",
+                      "The server gave no rationale.",
+                    )}
                 </p>
                 <div className="actions">
                   <button
@@ -547,12 +552,28 @@ export function Ledger() {
     </>
   );
 }
-export function PlanChecklist({ navigate }: { navigate: (path: string) => void }) {
+type PlanItem = {
+  id: string | number | undefined;
+  kind: string;
+  text: string;
+  at: string | undefined;
+};
+export function PlanChecklist({
+  navigate,
+}: {
+  navigate: (path: string) => void;
+}) {
   const t = useText();
   const client = useQueryClient();
-  const pathParts = navigate.path ? navigate.path.split("/") : [];
-  const sessionId = pathParts[1];
-  const session = useApi("/api/sessions/" + (sessionId ?? "") + "?events=false");
+  // A navigate callback cannot carry the location it navigates away from, so
+  // the route comes from the URL, which main.tsx resyncs on push and popstate.
+  // Splitting without the leading slash is how main.tsx reads the same path.
+  const [route, routeSession] = location.pathname.replace(/^\//, "").split("/");
+  const sessionId = route === "chat" ? routeSession : undefined;
+  const session = useApi(
+    "/api/sessions/" + (sessionId ?? "") + "?events=false",
+    !!sessionId,
+  );
   const data = session.data?.session;
   const events = data?.events ?? [];
   const planEvents = events.filter((e: Row) => e.kind === "plan");
@@ -579,7 +600,7 @@ export function PlanChecklist({ navigate }: { navigate: (path: string) => void }
     }
   }, [data, events, compacted]);
 
-  const planItems = useMemo(() => {
+  const planItems = useMemo<PlanItem[]>(() => {
     return planEvents.map((e: Row) => ({
       id: e.id ?? e.seq?.toString(),
       kind: e.kind,
@@ -592,15 +613,19 @@ export function PlanChecklist({ navigate }: { navigate: (path: string) => void }
     <div className="plan-checklist">
       <h2>{t("Plán úloh", "Plan Tasks")}</h2>
       {planEvents.length === 0 ? (
-        <p>{t("Žádné plan události nebyly nalezeny.", "No plan events found.")}</p>
+        <p>
+          {t("Žádné plan události nebyly nalezeny.", "No plan events found.")}
+        </p>
       ) : (
         <ul className="plan-list">
-          {planItems.map((item) => (
+          {planItems.map((item: PlanItem) => (
             <li key={item.id} className="plan-item">
               <span className="plan-kind">{item.kind}</span>
               <span className="plan-text">{item.text}</span>
               <span className="plan-at">
-                {item.at ? new Date(item.at).toLocaleString(t("cs-CZ", "en-GB")) : ""}
+                {item.at
+                  ? new Date(item.at).toLocaleString(t("cs-CZ", "en-GB"))
+                  : ""}
               </span>
             </li>
           ))}
@@ -611,18 +636,28 @@ export function PlanChecklist({ navigate }: { navigate: (path: string) => void }
           <h3>{t("Po compaktu", "After compact")}</h3>
           <div className="token-summary">
             <span>
-              {t("Vstupní tokeny", "Input tokens")}: {inputTokens !== null ? `${inputTokens.toLocaleString()}` : t("Neznámé", "Unknown")}
+              {t("Vstupní tokeny", "Input tokens")}:{" "}
+              {inputTokens !== null
+                ? `${inputTokens.toLocaleString()}`
+                : t("Neznámé", "Unknown")}
             </span>
             <span>
-              {t("Výstupní tokeny", "Output tokens")}: {outputTokens !== null ? `${outputTokens.toLocaleString()}` : t("Neznámé", "Unknown")}
+              {t("Výstupní tokeny", "Output tokens")}:{" "}
+              {outputTokens !== null
+                ? `${outputTokens.toLocaleString()}`
+                : t("Neznámé", "Unknown")}
             </span>
             {cacheTokens !== null && (
               <span>
-                {t("Cache tokeny", "Cache tokens")}: {cacheTokens.toLocaleString()}
+                {t("Cache tokeny", "Cache tokens")}:{" "}
+                {cacheTokens.toLocaleString()}
               </span>
             )}
           </div>
-          <p>{t("Summary je verzované", "Summary is versioned")}: {summaryVersion}</p>
+          <p>
+            {t("Summary je verzované", "Summary is versioned")}:{" "}
+            {summaryVersion}
+          </p>
         </div>
       )}
     </div>
@@ -664,7 +699,8 @@ export function Models() {
                 <p className="muted">
                   {t("Cena", "Price")}:{" "}
                   {m.pricing ? json(m.pricing) : t("neověřena", "unverified")} ·{" "}
-                  {t("Kontext", "Context")}: {m.contextLength ?? "—"}
+                  {t("Kontext", "Context")}:{" "}
+                  {m.contextLength ?? t("Neznámé", "Unknown")}
                 </p>
               </div>
               <button

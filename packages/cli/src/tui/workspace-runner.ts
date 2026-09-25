@@ -17,6 +17,7 @@ import {
   searchHistoryPrompts,
   message,
   type WorkspaceTab,
+  type WorkspaceVisuals,
 } from "./workspace.ts";
 import { DiffScreenWriter } from "./watch.ts";
 import { sanitizeText } from "./layout.ts";
@@ -28,7 +29,8 @@ export type WorkspaceShortcut =
   | "stash"
   | "external-editor"
   | "show-todos"
-  | "quit";
+  | "quit"
+  | "command-palette";
 
 export function workspaceShortcut(
   key: Key,
@@ -79,6 +81,10 @@ export class WorkspaceInput {
   value = "";
   cursor = 0;
   pasting = false;
+  // Ctrl+P asks the view to open the command palette. That state belongs to the
+  // runner rather than to the buffer, so the opener is injected and stays a
+  // no-op for the tests that drive the input on its own.
+  command: (name: string) => void = () => undefined;
   // Kill ring: Ctrl+K, Ctrl+U, Ctrl+W and Alt+D store deleted text for Ctrl+Y.
   // Undo keeps one previous state for Ctrl+_. Both stay in memory only.
   kill = "";
@@ -122,6 +128,7 @@ export class WorkspaceInput {
         ? points.lastIndexOf("\n", this.cursor - 1) + 1
         : 0;
       const column = this.cursor - start;
+      const from = this.cursor;
       if (up && start > 0) {
         const previous =
           start > 1 ? points.lastIndexOf("\n", start - 2) + 1 : 0;
@@ -136,7 +143,10 @@ export class WorkspaceInput {
           );
         }
       }
-      return true;
+      // A one line box has no line to move to, and claiming the key anyway
+      // would swallow Ctrl+P, which is the command palette. An unmoved cursor
+      // is not handled here, so the key falls through below.
+      return this.cursor !== from;
     }
     // Word jumps use letter and digit runs, so punctuation separates words.
     // Ctrl+W is the exception and deletes back to whitespace. Ctrl+Left and
@@ -351,6 +361,17 @@ export async function runWorkspaceTui(
   }>();
   const drafts = saved?.drafts ?? {};
   const input = new WorkspaceInput();
+  // Command palette state. Only the open flag lives here: the query, the
+  // candidate list and the marked row are read back from the input and the
+  // menu selection on every frame, so the overlay can never name a command
+  // the / menu no longer offers or mark a row Enter would not run.
+  let paletteOpen = false;
+  const openPalette = () => {
+    paletteOpen = true;
+  };
+  input.command = (name) => {
+    if (name === "/command-palette") openPalette();
+  };
   await ui.initialize();
   ui.compactTools = saved?.compactTools ?? true;
   if (
@@ -429,6 +450,21 @@ export async function runWorkspaceTui(
     }, 500);
   };
   const draw = () => {
+    // The palette is a view of the / menu, so every frame derives its query
+    // and candidate list from the input. Only a / query can be run, so only a /
+    // query carries a marked row: that row is the one Tab completes and Enter
+    // runs. A confirmation owns the whole screen, so the palette is dropped
+    // rather than drawn under the diff.
+    const query = input.value.startsWith("/") ? input.value.slice(1) : "";
+    const palette: WorkspaceVisuals["palette"] =
+      paletteOpen && !ui.confirmation
+        ? {
+            open: true,
+            query,
+            index: input.value.startsWith("/") ? suggestion : -1,
+            candidates: commandSuggestions(`/${query}`),
+          }
+        : undefined;
     if (!stopped && !suspended)
       screen.write(
         renderWorkspace(
@@ -447,6 +483,7 @@ export async function runWorkspaceTui(
             command: input.value,
             suggestion,
             cursor: input.cursor,
+            palette,
           },
         ),
       );
@@ -778,6 +815,15 @@ export async function runWorkspaceTui(
         draw();
         return;
       }
+      // The palette is the outermost overlay, so one Esc closes it, in the
+      // composer and outside it, before a filter, a detail panel or the
+      // checkpoint list gets the key.
+      if (paletteOpen && key.name === "escape") {
+        paletteOpen = false;
+        ui.notice = "Command palette closed.";
+        draw();
+        return;
+      }
       if (!input.pasting && key.name === "tab" && key.shift) {
         ui.cycleMode();
         try {
@@ -886,19 +932,32 @@ export async function runWorkspaceTui(
             (key.ctrl && (key.name === "p" || key.name === "n"))) &&
           !input.value.includes("\n")
         ) {
-          const history = (ui.session()?.events ?? [])
-            .filter((e) => e.kind === "user")
-            .map((e) => e.text)
-            .reverse();
-          if (history.length) {
-            if (historyIndex < 0) historyDraft = input.value;
-            const older = key.name === "up" || (key.ctrl && key.name === "p");
-            historyIndex = older
-              ? Math.min(history.length - 1, historyIndex + 1)
-              : Math.max(-1, historyIndex - 1);
-            input.set(historyIndex < 0 ? historyDraft : history[historyIndex]!);
+          // Ctrl+P is the command palette over the / menu, not a history key.
+          // With no / in the box the input handler opens it, so the palette is
+          // reachable from an empty composer too.
+          if (key.ctrl && key.name === "p" && input.value.startsWith("/")) {
+            openPalette();
             draw();
             return;
+          } else if (
+            key.name === "up" ||
+            key.name === "down" ||
+            (key.ctrl && key.name === "n")
+          ) {
+            const history = (ui.session()?.events ?? [])
+              .filter((e) => e.kind === "user")
+              .map((e) => e.text)
+              .reverse();
+            if (history.length) {
+              if (historyIndex < 0) historyDraft = input.value;
+              const older = key.name === "up" || (key.ctrl && key.name === "n");
+              historyIndex = older
+                ? Math.min(history.length - 1, historyIndex + 1)
+                : Math.max(-1, historyIndex - 1);
+              input.set(historyIndex < 0 ? historyDraft : history[historyIndex]!);
+              draw();
+              return;
+            }
           }
         }
         if (!input.pasting && ["pageup", "pagedown"].includes(key.name ?? "")) {
@@ -911,6 +970,9 @@ export async function runWorkspaceTui(
         historyIndex = -1;
         if (action === "submit") {
           const text = input.value;
+          // The palette shows what is about to run, so it goes when the prompt
+          // does rather than lingering over the next conversation.
+          paletteOpen = false;
           const plain =
             !text.trimStart().startsWith("/") &&
             !text.trimStart().startsWith("!");

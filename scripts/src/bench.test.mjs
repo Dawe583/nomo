@@ -2,12 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 
 const execute = promisify(execFile);
-const script = new URL("./bench.mjs", import.meta.url);
+// fileURLToPath, never URL#pathname. A Windows file URL's pathname is
+// "/C:/dir/bench.mjs", and Windows path normalization turns that leading slash
+// into a drive-relative "\C:\dir\bench.mjs", which resolves to
+// "C:\C:\dir\bench.mjs" and fails to load. POSIX pathname is already the
+// absolute path, so the bug is invisible on ubuntu-latest and macOS.
+const script = fileURLToPath(new URL("./bench.mjs", import.meta.url));
 
 async function run(...args) {
-  return execute(process.execPath, [script.pathname, ...args], {
+  return execute(process.execPath, [script, ...args], {
     timeout: 30_000,
     // An unusable ambient key proves the benchmark does not read user keys.
     env: { ...process.env, VOID_SIGNING_KEY: "not-a-signing-key" },

@@ -954,8 +954,13 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "quit" || cmd === "exit") return "quit";
     if (cmd === "cancel") {
-      this.queuePrompt(undefined);
-      this.notice = "Queued prompt cancelled.";
+      // queuePrompt only ever stores text, so cancelling means dropping the
+      // queued value. Claiming a cancel with nothing queued would report a
+      // state the operator cannot verify.
+      this.notice = this.queuedPrompt
+        ? "Queued prompt cancelled."
+        : "No prompt is queued.";
+      this.queuedPrompt = null;
       return;
     }
     if (cmd === "plan") {
@@ -1967,6 +1972,52 @@ export function commandSuggestions(input: string) {
       Number(!left[0].startsWith(input)) - Number(!right[0].startsWith(input)),
   );
 }
+/**
+ * Command palette over the / menu.
+ *
+ * The candidates arrive already filtered and prefix ordered from
+ * commandSuggestions, so the overlay cannot name a command the menu under it
+ * would not offer, and the marked row is the one Enter runs. Scoring the
+ * command list a second time here would only rank it differently from the menu
+ * it claims to show.
+ */
+export function commandPaletteRows(
+  palette: NonNullable<WorkspaceVisuals["palette"]>,
+  columns: number,
+  color: boolean,
+  rows: number,
+): string[] {
+  const width = Math.min(78, Math.max(20, columns));
+  // The frame paints the background and pads every row, so a palette row
+  // carries the tone only. These mirror the frame tones in renderWorkspace:
+  // the palette sits inside that frame, and a second mapping for the same
+  // surface would read as a different one.
+  const mutedTone = "38;5;245",
+    selectedTone = "1;38;5;215";
+  const ink = (value: string, tone: string): string =>
+    color ? `\x1b[${tone}m${value}\x1b[0m` : value;
+  // Half the rows the frame reserves for chrome, so opening the palette cannot
+  // push the composer off a short terminal.
+  const height = Math.max(1, Math.min(6, Math.floor((rows - 12) / 2)));
+  if (!palette.candidates.length)
+    return [ink(`No command matches /${palette.query}`, mutedTone)];
+  // index -1 means nothing is selected yet: over a box that is not a / query
+  // there is no command Enter could run.
+  const selected = Math.min(palette.index, palette.candidates.length - 1);
+  // Keep the marked row on screen when the list outgrows the overlay. Color
+  // is not the only signal: [*] carries the selection in text.
+  const first = Math.min(
+    Math.max(0, selected - height + 1),
+    Math.max(0, palette.candidates.length - height),
+  );
+  return palette.candidates
+    .slice(first, first + height)
+    .map(([name, description], offset) => {
+      const index = first + offset;
+      const line = `${index === selected ? "[*]" : "[ ]"} ${name} ${description}`;
+      return ink(fit(line, width - 2), index === selected ? selectedTone : mutedTone);
+    });
+}
 export type WorkspaceVisuals = {
   now?: number;
   color?: boolean;
@@ -1976,6 +2027,14 @@ export type WorkspaceVisuals = {
   command?: string;
   suggestion?: number;
   cursor?: number;
+  palette?: {
+    open: boolean;
+    query: string;
+    index: number;
+    // commandSuggestions hands back the as const command tuples, so the
+    // element is a readonly pair rather than a mutable one.
+    candidates: readonly (readonly [string, string])[];
+  };
 };
 // Block capitals, one stroke width everywhere. The slashed ASCII logo
 // read as jagged because every row leaned; full blocks stay uniform at
@@ -2366,6 +2425,11 @@ export function renderWorkspace(
     : running && (busy || ui.session()?.status === "running")
       ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "⏳ Waiting for approval" : `● ${phase}${dots}`) : `⏳ Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / 📜 reading history" : ""}${todoBadge}`
       : (historyStatus ?? ui.notice);
+  // Command palette over the / menu. It is a frame input like command or
+  // suggestion, not state on the view, so the runner owns when it is open.
+  const paletteRows = visuals.palette?.open
+    ? commandPaletteRows(visuals.palette, width, visuals.color === true, height)
+    : [];
   const menuRows = menu.map(([name, description], i) =>
     ink(
       text(
@@ -2408,7 +2472,9 @@ export function renderWorkspace(
     ...bodyRows,
     ink(text(summary), ice),
     ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
-    ...menuRows,
+    // The palette replaces the menu rows it belongs to, so the frame never
+    // shows two competing command lists.
+    ...(paletteRows.length ? paletteRows : menuRows),
     ...promptBox.map((row) => ink(row, frameTone)),
     ink(
       text(
@@ -2474,7 +2540,7 @@ const KEYBINDINGS = [
   "Left/Right move cursor, or cycle panels outside editing",
   "Esc stop a run or close | Esc Esc clear input, or checkpoints when empty",
   "Shift+Tab or Alt+M cycle mode (normal / accept / plan)",
-  "Tab panels, complete, accept suggestion | Up/Down or Ctrl+P/N history",
+  "Tab panels, complete, accept suggestion | Up/Down or Ctrl+N history | Ctrl+P palette",
   "Ctrl+R search prompts | Ctrl+O tool output | Ctrl+L redraw, twice clear",
   "Ctrl+S stash, again restore | Ctrl+G or Ctrl+X Ctrl+E editor",
   "Ctrl+T checklist | Meta+P models | { and } jump between prompts",
@@ -2495,7 +2561,7 @@ const HELP = [
   "Esc stops a run, or closes details. Esc Esc clears input, or lists checkpoints when empty.",
   "A prompt sent during a run is queued and sends when the run stops.",
   "!command runs a gated local shell; output shows once, never persists.",
-  "Up/Down or Ctrl+P/Ctrl+N browse your previous prompts in single-line input.",
+  "Up/Down or Ctrl+N browse your previous prompts; Ctrl+P opens the command palette.",
   "VOID_TUI_COLOR=0 disables colors; VOID_TUI_MOTION=0 disables animation.",
   "Enter sends; Shift+Enter, Alt+Enter, Ctrl+J or backslash+Enter inserts a newline.",
   "Ctrl+R searches your prompts, or conversation text from empty input.",

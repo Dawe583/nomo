@@ -21,7 +21,10 @@ type TaintBody = {
   readonly args: Readonly<Record<string, unknown>>;
 };
 
-async function seedLedger(): Promise<{ readonly dir: string; readonly file: string }> {
+async function seedLedger(): Promise<{
+  readonly dir: string;
+  readonly file: string;
+}> {
   const dir = await mkdtemp(join(tmpdir(), "void-taint-"));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(signer, { dir });
@@ -49,6 +52,49 @@ async function seedLedger(): Promise<{ readonly dir: string; readonly file: stri
   return { dir, file: join(dir, `${workspace}.jsonl`) };
 }
 
+describe("taint export validation", () => {
+  test("rejects a bindingType outside the union", async () => {
+    const { dir } = await seedLedger();
+    const tampered = mutateFirstEdge(await exportedFrom(dir), (edge) => {
+      edge.bindingType = "assumed-dependency";
+    });
+
+    assert.throws(
+      () => verifyTaint(tampered),
+      /taint export edge has invalid bindingType/,
+    );
+  });
+
+  test("rejects an edge that omits bindingType", async () => {
+    const { dir } = await seedLedger();
+    const tampered = mutateFirstEdge(await exportedFrom(dir), (edge) => {
+      delete edge.bindingType;
+    });
+
+    assert.throws(
+      () => verifyTaint(tampered),
+      /taint export edge has invalid bindingType/,
+    );
+  });
+});
+
+async function exportedFrom(dir: string): Promise<string> {
+  return exportTaint(await taintFromLedger(dir, workspace));
+}
+
+function mutateFirstEdge(
+  json: string,
+  mutate: (edge: Record<string, unknown>) => void,
+): string {
+  const parsed = JSON.parse(json) as {
+    edges: Array<Record<string, unknown>>;
+  };
+  const edge = parsed.edges[0];
+  assert.ok(edge, "the seeded export must carry at least one edge");
+  mutate(edge);
+  return JSON.stringify(parsed);
+}
+
 describe("taintFromLedger", () => {
   test("builds only after the ledger chain verifies", async () => {
     const { dir } = await seedLedger();
@@ -66,7 +112,10 @@ describe("taintFromLedger", () => {
     lines[0] = JSON.stringify(first);
     await writeFile(file, `${lines.join("\n")}\n`);
 
-    await assert.rejects(() => taintFromLedger(dir, workspace), /body does not match digest/);
+    await assert.rejects(
+      () => taintFromLedger(dir, workspace),
+      /body does not match digest/,
+    );
   });
 });
 
@@ -74,9 +123,18 @@ describe("taint export", () => {
   test("round trips the pinned JSON shape", async () => {
     const { dir, file } = await seedLedger();
     const text = await readFile(file, "utf8");
-    const graph = buildGraph(text.trim().split("\n").map((line) => JSON.parse(line) as never));
+    const graph = buildGraph(
+      text
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line) as never),
+    );
     const json = exportTaint(graph);
-    const parsed = JSON.parse(json) as { version: string; nodes: unknown[]; edges: unknown[] };
+    const parsed = JSON.parse(json) as {
+      version: string;
+      nodes: unknown[];
+      edges: unknown[];
+    };
     const verified = verifyTaint(json);
 
     assert.equal(parsed.version, "void.taint.v1");

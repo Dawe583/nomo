@@ -4,6 +4,19 @@ import * as m from "motion/react-m";
 import { MotionEnabled, useText } from "./ui.tsx";
 import { filterPaletteRecentFirst } from "./commands.ts";
 
+// A command is not a palette row. The sorter ranks a pre-rendered match
+// string, and every row renders and returns the whole command, so the two
+// shapes cannot be collapsed. The projection carries both: the sorter gets
+// the text it reads and the row keeps the name, description, tool flag,
+// captured inverse and class that the class label below depends on.
+type PaletteCommand = Command & { text: string };
+function paletteCommand(command: Command): PaletteCommand {
+  return {
+    ...command,
+    text: `${command.name} ${command.description} ${command.source ?? ""}`,
+  };
+}
+
 export function CommandMenu({
   items,
   active,
@@ -27,10 +40,12 @@ export function CommandMenu({
   const animate = useContext(MotionEnabled);
   const selected = useRef<HTMLButtonElement>(null);
   const [filtered, setFiltered] = useState(() =>
-    filterPaletteRecentFirst(items, "", recentIds),
+    filterPaletteRecentFirst(items.map(paletteCommand), "", recentIds),
   );
   useEffect(() => {
-    setFiltered(filterPaletteRecentFirst(items, "", recentIds));
+    setFiltered(
+      filterPaletteRecentFirst(items.map(paletteCommand), "", recentIds),
+    );
   }, [items, recentIds]);
   useEffect(() => {
     selected.current?.scrollIntoView({ block: "nearest" });

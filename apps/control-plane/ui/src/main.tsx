@@ -10,6 +10,7 @@ import { IntegrationContext } from "./integrations";
 import { BrandMark } from "./brand";
 import {
   Component,
+  type ComponentType,
   type ReactNode,
   lazy,
   Suspense,
@@ -82,6 +83,35 @@ const routes = [
   ["models", "◎", "Modely a spotřeba", "Models and usage"],
   ["settings", "⚙", "Nastavení", "Settings"],
 ];
+// The routed pages do not share one prop list, so the map is typed by what
+// each page actually consumes: the navigation pages read navigate, settings
+// reads the appearance and locale setters, and the rest read nothing. A page
+// is therefore never widened to accept a prop it ignores, and an unknown slug
+// stays a miss that the not-found paragraph below reports.
+type PageProps = {
+  navigate: (path: string) => void;
+  appearance: string;
+  setAppearance: (s: string) => void;
+  locale: "cs" | "en";
+  setLocale: (s: "cs" | "en") => void;
+};
+const pageMap: Partial<Record<string, ComponentType<PageProps>>> = {
+  documents: () => <Documents />,
+  overview: ({ navigate }) => <Overview navigate={navigate} />,
+  sessions: ({ navigate }) => <Sessions navigate={navigate} />,
+  runs: ({ navigate }) => <Runs navigate={navigate} />,
+  approvals: () => <Approvals />,
+  ledger: () => <Ledger />,
+  connections: () => <Connections />,
+  models: () => <Models />,
+  settings: (props) => <Settings {...props} />,
+};
+function PageComponent({
+  component: Page,
+  ...props
+}: PageProps & { component?: ComponentType<PageProps> }) {
+  return Page ? <Page {...props} /> : null;
+}
 class AppBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }
@@ -119,7 +149,7 @@ function Root() {
     localStorage.setItem("void-locale", locale);
     document.documentElement.lang = locale;
     document.title =
-      locale === "en" ? "VOID — Workspace" : "VOID — Pracovní prostor";
+      locale === "en" ? "VOID: Workspace" : "VOID: Pracovní prostor";
   }, [locale]);
   return (
     <Locale value={locale}>
@@ -205,15 +235,26 @@ function App({
       setLocale(value.locale);
     initialPreferences.current = { appearance: false, locale: false };
   }, [prefs.data, setLocale]);
-  const sessions = useApi(
-    "/api/sessions?archived=false&limit=20",
-    !needsAuth,
-  );
+  const sessions = useApi("/api/sessions?archived=false&limit=20", !needsAuth);
   const approvals = useApi("/api/approvals", !needsAuth);
   const history = useApi(
     "/api/sessions?q=" + encodeURIComponent(query) + "&limit=50",
     search && !needsAuth,
   );
+  // Queue capacity is the server's declared run concurrency, and occupancy is
+  // its live count of running sessions. Neither field is synthesised here: a
+  // host that does not report a number keeps the badge hidden rather than
+  // showing an unmeasured queue as empty.
+  const overview = useApi("/api/overview", !needsAuth);
+  const capabilities = useApi("/api/capabilities", !needsAuth, 60000);
+  const queueCapacity =
+    typeof capabilities.data?.maxActiveRuns === "number"
+      ? capabilities.data.maxActiveRuns
+      : undefined;
+  const queueLength =
+    typeof overview.data?.running === "number"
+      ? overview.data.running
+      : undefined;
   const [page, sessionId] = path.replace(/^\//, "").split("/");
   const active = routes.find((r) => r[0] === page) ?? routes[0];
   const chatId =
@@ -275,7 +316,8 @@ function App({
   useEffect(() => {
     function shortcut(e: KeyboardEvent) {
       if (e.isComposing) return;
-      if (e.target instanceof Element && e.target.closest("dialog[open]")) return;
+      if (e.target instanceof Element && e.target.closest("dialog[open]"))
+        return;
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setSearch((s) => !s);
@@ -322,7 +364,11 @@ function App({
       ).filter((el) => !el.hasAttribute("disabled"));
     focusable()[0]?.focus();
     const trap = (event: KeyboardEvent) => {
-      if (event.target instanceof Element && event.target.closest("dialog[open]")) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest("dialog[open]")
+      )
+        return;
       if (event.key !== "Tab") return;
       const controls = focusable();
       const first = controls[0],
@@ -690,26 +736,35 @@ function App({
               >
                 <Icon name="menu" />
               </button>
-<div className="page-title">
+              <div className="page-title">
                 <span>
                   {page === "chat" || path === "/"
                     ? (current?.title ??
-                        t("Nová konverzace", "New conversation"))
+                      t("Nová konverzace", "New conversation"))
                     : t(active[2], active[3])}
                 </span>
                 {current && <Badge value={current.status} />}
-                {overview.data?.queueCapacity !== undefined && (
-                  <Badge
-                    pill
-                    className="badge-queue"
+                {/*
+                  This is deliberately not Badge. Badge takes one value, and
+                  this row needs a data-state the queue-full rule keys on
+                  beside its own occupancy text.
+                */}
+                {queueCapacity !== undefined && (
+                  <span
+                    className="badge badge-queue"
+                    data-state={
+                      queueLength !== undefined && queueLength >= queueCapacity
+                        ? "full"
+                        : "open"
+                    }
                     title={t("Fronta", "Queue")}
                   >
-                    {overview.data.queueLength !== null
-                      ? `${overview.data.queueLength}/${overview.data.queueCapacity}`
-                      : "?/"}
-                  </Badge>
+                    {queueLength === undefined
+                      ? "?/" + queueCapacity
+                      : queueLength + "/" + queueCapacity}
+                  </span>
                 )}
-                {session && session.status === "running" && (
+                {current?.status === "running" && (
                   <div className="queue-banner" role="status">
                     <span className="queue-banner-text">
                       {t(
@@ -826,30 +881,30 @@ function App({
                     </Suspense>
                   </div>
                 ) : (
-<div
-                      key={page}
-                      className="page-content"
-                      inert={context && matchMedia("(max-width:767px)").matches}
+                  <div
+                    key={page}
+                    className="page-content"
+                    inert={context && matchMedia("(max-width:767px)").matches}
+                  >
+                    <h1>{t(active[2], active[3])}</h1>
+                    <Suspense
+                      fallback={
+                        <p className="route-loading" role="status">
+                          {t("Načítání stránky…", "Loading page…")}
+                        </p>
+                      }
                     >
-                      <h1>{t(active[2], active[3])}</h1>
-                      <Suspense
-                        fallback={
-                          <p className="route-loading" role="status">
-                            {t("Načítání stránky…", "Loading page…")}
-                          </p>
-                        }
-                      >
-                        <PageComponent
-                          component={pageMap[page]}
-                          navigate={navigate}
-                          appearance={appearance}
-                          setAppearance={setAppearance}
-                          locale={locale}
-                          setLocale={setLocale}
-                        />
-                        {pageMap[page] === undefined && (
-                          <p>{t("Stránka nenalezena.", "Page not found.")}</p>
-                        )}
+                      <PageComponent
+                        component={pageMap[page]}
+                        navigate={navigate}
+                        appearance={appearance}
+                        setAppearance={setAppearance}
+                        locale={locale}
+                        setLocale={setLocale}
+                      />
+                      {pageMap[page] === undefined && (
+                        <p>{t("Stránka nenalezena.", "Page not found.")}</p>
+                      )}
                     </Suspense>
                   </div>
                 )}

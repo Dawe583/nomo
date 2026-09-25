@@ -35,9 +35,10 @@ export function useApi(
   });
 }
 export function Badge({ value }: { value: unknown }) {
+  const t = useText();
   return (
     <span className="badge" data-state={String(value)}>
-      {String(value ?? "—")}
+      {value == null ? t("Neznámé", "Unknown") : String(value)}
     </span>
   );
 }
@@ -433,7 +434,7 @@ export function DataTable({
                       {c.render
                         ? c.render(row)
                         : row[c.key] == null
-                          ? "—"
+                          ? t("Neznámé", "Unknown")
                           : /^(at|.*At)$/.test(c.key) &&
                               Number.isFinite(Date.parse(row[c.key]))
                             ? new Date(row[c.key]).toLocaleString(

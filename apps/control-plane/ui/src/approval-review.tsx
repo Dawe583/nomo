@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useText } from "./ui";
-import { blastSummary, plainAction } from "./approval-text";
+import { blastSummary, plainAction } from "./approval-text.ts";
 
 /**
  * Detail schválení (B1). Napojeno na server jako autoritu: jedno rozhodnutí je
@@ -65,8 +65,8 @@ export function ApprovalReview({
       ) {
         setConflict(
           t(
-            "Toto schválení již bylo rozhodnuto jinde nebo vypršelo. Žádný druhý zápis se neprovedl — obnovte seznam.",
-            "This approval was already decided elsewhere or expired. No second write was made — refresh the list.",
+            "Toto schválení již bylo rozhodnuto jinde nebo vypršelo. Žádný druhý zápis se neprovedl. Obnovte seznam.",
+            "This approval was already decided elsewhere or expired. No second write was made. Refresh the list.",
           ),
         );
         await client.invalidateQueries();

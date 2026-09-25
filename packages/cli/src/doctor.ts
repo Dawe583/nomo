@@ -190,7 +190,9 @@ async function runDoctorInit(
       });
     } else if (state === "missing") {
       results.push({
-        status: "INFO",
+        // Missing first-run state is a warning, never a failure, and INFO is
+        // not one of the three statuses this report counts.
+        status: "WARN",
         name: `unprotected-${name}`,
         detail: `${dir} is absent; will be created`,
       });

@@ -3,7 +3,13 @@ import { join } from "node:path";
 
 import { readLedgerFeed } from "../feed.ts";
 import type { JsonlEntry } from "../store.ts";
-import { buildGraph, DATA_EDGE_HONESTY_NOTE, type TaintEdge, type TaintGraph, type TaintNode } from "./graph.ts";
+import {
+  buildGraph,
+  DATA_EDGE_HONESTY_NOTE,
+  type TaintEdge,
+  type TaintGraph,
+  type TaintNode,
+} from "./graph.ts";
 
 export type ExportedTaint = {
   readonly version: "void.taint.v1";
@@ -14,7 +20,10 @@ export type ExportedTaint = {
   readonly edges: readonly TaintEdge[];
 };
 
-export async function taintFromLedger(dir: string, workspace: string): Promise<TaintGraph> {
+export async function taintFromLedger(
+  dir: string,
+  workspace: string,
+): Promise<TaintGraph> {
   const ledgerPath = join(dir, `${workspace}.jsonl`);
   await readLedgerFeed(ledgerPath);
   return buildGraph(await readEntries(ledgerPath));
@@ -24,7 +33,9 @@ export function exportTaint(graph: TaintGraph): string {
   const exported: ExportedTaint = {
     version: "void.taint.v1",
     honesty: { dataEdges: DATA_EDGE_HONESTY_NOTE },
-    nodes: [...graph.nodes.values()].sort((left, right) => left.seq - right.seq),
+    nodes: [...graph.nodes.values()].sort(
+      (left, right) => left.seq - right.seq,
+    ),
     edges: [...graph.edges].sort(compareEdges),
   };
   return JSON.stringify(exported);
@@ -32,17 +43,23 @@ export function exportTaint(graph: TaintGraph): string {
 
 export function verifyTaint(json: string): TaintGraph {
   const parsed = JSON.parse(json) as unknown;
-  if (typeof parsed !== "object" || parsed === null) throw new Error("taint export is not an object");
+  if (typeof parsed !== "object" || parsed === null)
+    throw new Error("taint export is not an object");
   const value = parsed as Partial<ExportedTaint>;
-  if (value.version !== "void.taint.v1") throw new Error("taint export has invalid version");
-  if (value.honesty?.dataEdges !== DATA_EDGE_HONESTY_NOTE) throw new Error("taint export has invalid honesty note");
-  if (!Array.isArray(value.nodes)) throw new Error("taint export has invalid nodes");
-  if (!Array.isArray(value.edges)) throw new Error("taint export has invalid edges");
+  if (value.version !== "void.taint.v1")
+    throw new Error("taint export has invalid version");
+  if (value.honesty?.dataEdges !== DATA_EDGE_HONESTY_NOTE)
+    throw new Error("taint export has invalid honesty note");
+  if (!Array.isArray(value.nodes))
+    throw new Error("taint export has invalid nodes");
+  if (!Array.isArray(value.edges))
+    throw new Error("taint export has invalid edges");
 
   const nodes = new Map<string, TaintNode>();
   for (const node of value.nodes) {
     const parsedNode = parseNode(node);
-    if (nodes.has(parsedNode.digest)) throw new Error(`taint export duplicates node ${parsedNode.digest}`);
+    if (nodes.has(parsedNode.digest))
+      throw new Error(`taint export duplicates node ${parsedNode.digest}`);
     nodes.set(parsedNode.digest, parsedNode);
   }
 
@@ -58,14 +75,16 @@ async function readEntries(ledgerPath: string): Promise<JsonlEntry[]> {
     const line = lines[index]!.trim();
     if (line === "") continue;
     const parsed = JSON.parse(line) as unknown;
-    if (typeof parsed !== "object" || parsed === null) throw new Error(`ledger line ${index + 1} is not an object`);
+    if (typeof parsed !== "object" || parsed === null)
+      throw new Error(`ledger line ${index + 1} is not an object`);
     entries.push(parsed as JsonlEntry);
   }
   return entries;
 }
 
 function parseNode(value: unknown): TaintNode {
-  if (typeof value !== "object" || value === null) throw new Error("taint export node is not an object");
+  if (typeof value !== "object" || value === null)
+    throw new Error("taint export node is not an object");
   const node = value as Partial<TaintNode>;
   return {
     digest: requiredString(node.digest, "node digest"),
@@ -78,30 +97,66 @@ function parseNode(value: unknown): TaintNode {
   };
 }
 
-function parseEdge(value: unknown, nodes: ReadonlyMap<string, TaintNode>): TaintEdge {
-  if (typeof value !== "object" || value === null) throw new Error("taint export edge is not an object");
+function parseEdge(
+  value: unknown,
+  nodes: ReadonlyMap<string, TaintNode>,
+): TaintEdge {
+  if (typeof value !== "object" || value === null)
+    throw new Error("taint export edge is not an object");
   const edge = value as Partial<TaintEdge>;
   const from = requiredString(edge.from, "edge from");
   const to = requiredString(edge.to, "edge to");
-  if (!nodes.has(from)) throw new Error(`taint export edge references unknown from node ${from}`);
-  if (!nodes.has(to)) throw new Error(`taint export edge references unknown to node ${to}`);
+  if (!nodes.has(from))
+    throw new Error(`taint export edge references unknown from node ${from}`);
+  if (!nodes.has(to))
+    throw new Error(`taint export edge references unknown to node ${to}`);
   const kind = edge.kind;
-  if (kind !== "resource" && kind !== "data") throw new Error("taint export edge has invalid kind");
-  return { from, to, kind, via: requiredString(edge.via, "edge via"), bindingType: edge.bindingType };
+  if (kind !== "resource" && kind !== "data")
+    throw new Error("taint export edge has invalid kind");
+  return {
+    from,
+    to,
+    kind,
+    via: requiredString(edge.via, "edge via"),
+    bindingType: requiredBindingType(edge.bindingType),
+  };
+}
+
+function requiredBindingType(value: unknown): TaintEdge["bindingType"] {
+  // Missing and unknown are the same refusal. The label is how a reader tells
+  // a proven dependency from a heuristic one, so an absent or invented label is
+  // an invalid label rather than a weaker one. This parses an export file
+  // supplied by whoever handed it over, so it is validated like kind is.
+  if (
+    value !== "confirmed-data" &&
+    value !== "observed-resource" &&
+    value !== "conservative-potential"
+  ) {
+    throw new Error("taint export edge has invalid bindingType");
+  }
+  return value;
 }
 
 function requiredString(value: unknown, name: string): string {
-  if (typeof value !== "string" || value === "") throw new Error(`taint export has invalid ${name}`);
+  if (typeof value !== "string" || value === "")
+    throw new Error(`taint export has invalid ${name}`);
   return value;
 }
 
 function requiredInteger(value: unknown, name: string): number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) throw new Error(`taint export has invalid ${name}`);
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1)
+    throw new Error(`taint export has invalid ${name}`);
   return value;
 }
 
 function compareEdges(left: TaintEdge, right: TaintEdge): number {
-  return compare(left.from, right.from) || compare(left.to, right.to) || compare(left.kind, right.kind) || compare(left.via, right.via) || compare(left.bindingType, right.bindingType);
+  return (
+    compare(left.from, right.from) ||
+    compare(left.to, right.to) ||
+    compare(left.kind, right.kind) ||
+    compare(left.via, right.via) ||
+    compare(left.bindingType, right.bindingType)
+  );
 }
 
 function compare(left: string, right: string): number {

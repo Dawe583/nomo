@@ -1,5 +1,14 @@
 import type { JsonlEntry } from "../store.ts";
 
+/**
+ * Taint graph construction over a verified ledger feed.
+ *
+ * Every edge carries the label of how it was established, so a reader can tell
+ * a proven dependency from a heuristic one. Identical argument text is not proof
+ * of causation, which is why the args digest fallback is labelled conservative
+ * and never observed.
+ */
+
 export type CallDigest = string;
 
 export type TaintNode = {
@@ -17,7 +26,8 @@ export type TaintEdge = {
   readonly to: CallDigest;
   readonly kind: "resource" | "data";
   readonly via: string;
-  readonly bindingType: "confirmed-data" | "observed-resource" | "conservative-potential";
+  readonly bindingType:
+    "confirmed-data" | "observed-resource" | "conservative-potential";
 };
 
 export type TaintGraph = {
@@ -53,18 +63,35 @@ export function buildGraph(entries: readonly JsonlEntry[]): TaintGraph {
     for (const inputDigest of inputDigests(body)) {
       const from = producerByOutput.get(inputDigest);
       if (from !== undefined) {
-        addEdge(edges, edgeKeys, from, digest, "data", inputDigest, "confirmed-data");
+        addEdge(
+          edges,
+          edgeKeys,
+          from,
+          digest,
+          "data",
+          inputDigest,
+          "confirmed-data",
+        );
       }
     }
 
-    // Second pass: check for observed resource edges (resource key seen before)
-    const resourceKeysList = resourceKeys(body, body.tool);
-    for (const resource of resourceKeysList) {
-      const from = lastByResource.get(resource);
+    // node.tool rather than body.tool because it is already a validated string,
+    // and reusing it keeps a via prefix from disagreeing with the tool the node
+    // itself is labelled with.
+    for (const binding of resourceBindings(body, node.tool)) {
+      const from = lastByResource.get(binding.key);
       if (from !== undefined) {
-        addEdge(edges, edgeKeys, from, digest, "resource", resource, "observed-resource");
+        addEdge(
+          edges,
+          edgeKeys,
+          from,
+          digest,
+          "resource",
+          binding.key,
+          binding.bindingType,
+        );
       }
-      lastByResource.set(resource, digest);
+      lastByResource.set(binding.key, digest);
     }
 
     // Third pass: set producer by outputDigest for future data edge resolution
@@ -101,7 +128,8 @@ function entryBody(entry: JsonlEntry): Record<string, unknown> {
 }
 
 function requiredString(value: unknown, name: string, seq: number): string {
-  if (typeof value !== "string" || value === "") throw new Error(`ledger entry ${seq} has no ${name}`);
+  if (typeof value !== "string" || value === "")
+    throw new Error(`ledger entry ${seq} has no ${name}`);
   return value;
 }
 
@@ -111,33 +139,67 @@ function stringValue(value: unknown): string | undefined {
 
 function sourceArgs(body: Record<string, unknown>): Record<string, unknown> {
   return typeof body.args === "object" && body.args !== null
-    ? body.args as Record<string, unknown>
+    ? (body.args as Record<string, unknown>)
     : body;
 }
 
-function resourceKeys(body: Record<string, unknown>, tool: string): string[] {
+type ResourceBinding = {
+  readonly key: string;
+  readonly bindingType: "observed-resource" | "conservative-potential";
+};
+
+function resourceBindings(
+  body: Record<string, unknown>,
+  tool: string,
+): ResourceBinding[] {
   const args = sourceArgs(body);
-  const keys: string[] = [];
+  const bindings: ResourceBinding[] = [];
+  const observed = (key: string): void => {
+    bindings.push({ key, bindingType: "observed-resource" });
+  };
   const bucket = firstString(args, ["bucket", "Bucket", "bucketName"]);
   const key = firstString(args, ["key", "Key", "objectKey"]);
-  if (bucket !== undefined && key !== undefined) keys.push(`${tool}:bucket=${bucket}:key=${key}`);
+  if (bucket !== undefined && key !== undefined)
+    observed(`${tool}:bucket=${bucket}:key=${key}`);
 
   const table = firstString(args, ["table", "tableName", "relation"]);
-  const rowDigest = firstString(args, ["rowPredicateDigest", "predicateDigest", "whereDigest", "queryDigest"]);
-  if (table !== undefined && rowDigest !== undefined) keys.push(`${tool}:table=${table}:predicate=${rowDigest}`);
+  const rowDigest = firstString(args, [
+    "rowPredicateDigest",
+    "predicateDigest",
+    "whereDigest",
+    "queryDigest",
+  ]);
+  if (table !== undefined && rowDigest !== undefined)
+    observed(`${tool}:table=${table}:predicate=${rowDigest}`);
 
-  const identity = firstString(args, ["resourceKey", "resourceId", "identity", "target", "id"]);
-  if (identity !== undefined) keys.push(`${tool}:identity=${identity}`);
+  const identity = firstString(args, [
+    "resourceKey",
+    "resourceId",
+    "identity",
+    "target",
+    "id",
+  ]);
+  if (identity !== undefined) observed(`${tool}:identity=${identity}`);
 
-  if (keys.length === 0) {
+  if (bindings.length === 0) {
     const argsDigest = stringValue(body.argsDigest);
-    if (argsDigest !== undefined) keys.push(`${tool}:argsDigest=${argsDigest}`);
+    // No resource identity is observable here, so the only thing binding these
+    // two calls together is that their argument text is identical. That is a
+    // potential dependency, not an observed one, and the label says so.
+    if (argsDigest !== undefined)
+      bindings.push({
+        key: `${tool}:argsDigest=${argsDigest}`,
+        bindingType: "conservative-potential",
+      });
   }
 
-  return keys;
+  return bindings;
 }
 
-function firstString(source: Record<string, unknown>, names: readonly string[]): string | undefined {
+function firstString(
+  source: Record<string, unknown>,
+  names: readonly string[],
+): string | undefined {
   for (const name of names) {
     const value = stringValue(source[name]);
     if (value !== undefined) return value;

@@ -3116,45 +3116,200 @@ dialog::backdrop {
   }
 }
 
-.demo-messages .demo-rich { white-space: normal; }
-.demo-rich p { margin: 0 0 12px; }
-.demo-rich h1, .demo-rich h2, .demo-rich h3 { font: 600 17px/1.4 Inter, sans-serif; margin: 20px 0 12px; }
-.app-loading { height: 100dvh; display: grid; place-items: center; font-size: 18px; letter-spacing: 2px; }
+.demo-messages .demo-rich {
+  white-space: normal;
+}
+.demo-rich p {
+  margin: 0 0 12px;
+}
+.demo-rich h1,
+.demo-rich h2,
+.demo-rich h3 {
+  font:
+    600 17px/1.4 Inter,
+    sans-serif;
+  margin: 20px 0 12px;
+}
+.app-loading {
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
 
 /* VOID's command surface keeps tool provenance and reversibility visible. */
-.composer, .demo-composer { position: relative; }
-.command-palette { position: absolute; z-index: 25; bottom: calc(100% + 8px); left: 0; right: 0; background: var(--surface); color: var(--ink, #17150f); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 14px 48px #0003; overflow: hidden; max-height: min(440px, 55dvh); display: flex; flex-direction: column; }
-.command-palette header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-family: var(--mono, monospace); font-size: 11px; }
-.command-palette header strong { font-weight: 500; }
-.command-results { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding: 5px; }
-.command-results > button { width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 9px 12px; text-align: left; border: 0; background: transparent; border-radius: 8px; color: inherit; }
-.command-results > button[aria-selected="true"], .command-results > button:hover { background: color-mix(in srgb, currentColor 8%, transparent); box-shadow: inset 3px 0 var(--action); }
-.command-glyph { color: var(--action); font: 20px monospace; width: 20px; flex-shrink: 0; }
-.command-copy { min-width: 0; flex: 1; display: grid; gap: 3px; }
-.command-copy strong { font: 12px var(--mono, monospace); overflow-wrap: anywhere; }
-.command-copy > span { font-size: 11px; opacity: .65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.command-results small { font: 10px var(--mono, monospace); white-space: nowrap; opacity: .7; }
-.command-palette footer, .command-palette > p { padding: 9px 14px; margin: 0; font-size: 11px; line-height: 1.45; border-top: 1px solid var(--line); }
-.command-trigger { font: 18px monospace; min-width: 36px; }
-.selected-tool { font-size: 11px; padding: 8px 12px; border-bottom: 1px solid var(--line); max-height: 140px; overflow: auto; }
-.selected-tool summary { cursor: pointer; color: var(--action); overflow-wrap: anywhere; }
-.selected-tool pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 10px; }
-@media (max-width: 767px) {
-  .command-palette { max-height: min(330px, 45dvh); border-radius: 10px; }
-  .command-palette header { padding: 8px 10px; }
-  .command-results > button { min-height: 48px; gap: 8px; padding: 8px; }
-  .command-copy strong { font-size: 11px; }
-  .command-results small { font-size: 9px; }
-  .selected-tool { max-height: 100px; }
+.composer,
+.demo-composer {
+  position: relative;
 }
-.composer:has(.command-palette), .demo-composer:has(.command-palette) { overflow: visible; }
+.command-palette {
+  position: absolute;
+  z-index: 25;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  color: var(--ink, #17150f);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 14px 48px #0003;
+  overflow: hidden;
+  max-height: min(440px, 55dvh);
+  display: flex;
+  flex-direction: column;
+}
+.command-palette header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+}
+.command-palette header strong {
+  font-weight: 500;
+}
+.command-results {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  padding: 5px;
+}
+.command-results > button {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  color: inherit;
+}
+.command-results > button[aria-selected="true"],
+.command-results > button:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  box-shadow: inset 3px 0 var(--action);
+}
+.command-glyph {
+  color: var(--action);
+  font: 20px monospace;
+  width: 20px;
+  flex-shrink: 0;
+}
+.command-copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+.command-copy strong {
+  font: 12px var(--mono, monospace);
+  overflow-wrap: anywhere;
+}
+.command-copy > span {
+  font-size: 11px;
+  opacity: 0.65;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.command-results small {
+  font: 10px var(--mono, monospace);
+  white-space: nowrap;
+  opacity: 0.7;
+}
+.command-palette footer,
+.command-palette > p {
+  padding: 9px 14px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  border-top: 1px solid var(--line);
+}
+.command-trigger {
+  font: 18px monospace;
+  min-width: 36px;
+}
+.selected-tool {
+  font-size: 11px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  max-height: 140px;
+  overflow: auto;
+}
+.selected-tool summary {
+  cursor: pointer;
+  color: var(--action);
+  overflow-wrap: anywhere;
+}
+.selected-tool pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+@media (max-width: 767px) {
+  .command-palette {
+    max-height: min(330px, 45dvh);
+    border-radius: 10px;
+  }
+  .command-palette header {
+    padding: 8px 10px;
+  }
+  .command-results > button {
+    min-height: 48px;
+    gap: 8px;
+    padding: 8px;
+  }
+  .command-copy strong {
+    font-size: 11px;
+  }
+  .command-results small {
+    font-size: 9px;
+  }
+  .selected-tool {
+    max-height: 100px;
+  }
+}
+.composer:has(.command-palette),
+.demo-composer:has(.command-palette) {
+  overflow: visible;
+}
 
-.document-history { margin-bottom: 24px; min-width: 0; }
-.document-operation-list { list-style: none; padding: 0; max-height: 22rem; overflow-y: auto; overscroll-behavior: contain; }
-.document-operation-list li + li { border-top: 1px solid var(--line); }
-.document-operation-list button { width: 100%; min-height: 44px; text-align: left; display: grid; gap: 4px; padding: 12px; }
-.document-operation-list strong, .operation-id { overflow-wrap: anywhere; }
-.document-operation-list span { font-size: 12px; }
+.document-history {
+  margin-bottom: 24px;
+  min-width: 0;
+}
+.document-operation-list {
+  list-style: none;
+  padding: 0;
+  max-height: 22rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.document-operation-list li + li {
+  border-top: 1px solid var(--line);
+}
+.document-operation-list button {
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+.document-operation-list strong,
+.operation-id {
+  overflow-wrap: anywhere;
+}
+.document-operation-list span {
+  font-size: 12px;
+}
 
 .approval-facts {
   display: flex;
@@ -3169,7 +3324,7 @@ dialog::backdrop {
   color: var(--text);
 }
 
-/* B1: approval inbox v2 — riziko první, karty bez dekorativních gradientů. */
+/* B1: approval inbox v2, riziko první, karty bez dekorativních gradientů. */
 .approval-inbox {
   display: grid;
   gap: 12px;
@@ -3212,7 +3367,7 @@ dialog label > textarea {
   margin-top: 6px;
 }
 
-/* B4: ledger verify — poctivý rozsah, progress bez animací navíc. */
+/* B4: ledger verify, poctivý rozsah, progress bez animací navíc. */
 .verify-block {
   margin: 4px 0 16px;
 }
@@ -3282,4 +3437,29 @@ dialog label > textarea {
   font-size: 13px;
   margin: 0 0 8px;
   overflow-wrap: anywhere;
+}
+
+/* B6: fronta. Barva je jen podtrzeni, vypisek nese --ink na --surface. */
+.queue-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  margin: 6px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--action);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+.queue-banner-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
 }

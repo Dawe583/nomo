@@ -78,23 +78,83 @@ The snapshot store stores bytes and returns references. It does not classify
 calls and it does not know connector semantics. Redaction runs before bytes
 leave the process, including for a local directory store.
 
+`put`, `get`, and `retention` are the required surface. `artifactState`,
+`availableKeyIds`, and `collectGarbage` are optional, and every default is fail
+closed: a store that cannot prove an artifact unpinned, readable, and collectable
+must have it retained, so a caller checks for these rather than assuming them.
+
 ```ts
 export type SnapshotNamespace = string;
 export type SnapshotPutResult = { readonly digest: `sha256:${string}`; readonly reference: SnapshotReference };
-export type RetentionReport = { readonly deleted: number; readonly freedBytes: number; readonly errors: readonly string[] };
+export type RetentionReport = { readonly deleted: number; readonly freedBytes: number; readonly errors: readonly string[]; readonly skipped?: number };
 export type RetentionPlan = { readonly namespace: SnapshotNamespace; readonly retainedBytes: number; readonly deleteOlderThan: (cutoff: Date) => Promise<RetentionReport> };
 export type RedactionHook = (input: { readonly namespace: SnapshotNamespace; readonly bytes: Uint8Array; readonly metadata: Readonly<Record<string, string>> }) => Promise<Uint8Array>;
-export type SnapshotStore = { readonly put: (namespace: SnapshotNamespace, bytes: Uint8Array, metadata?: Readonly<Record<string, string>>) => Promise<SnapshotPutResult>; readonly get: (reference: SnapshotReference) => Promise<Uint8Array>; readonly retention: (namespace: SnapshotNamespace) => Promise<RetentionPlan> };
+export type SnapshotPin = { readonly ownerId: string; readonly kind: string };
+export type SnapshotPutOptions = { readonly expiresAt?: Date; readonly pin?: SnapshotPin; readonly keyId?: string; readonly formatVersion?: number };
+export type ArtifactState = { readonly digest: string; readonly recorded: boolean; readonly readable: boolean; readonly keyId?: string; readonly expiresAt?: string; readonly pin?: SnapshotPin; readonly formatVersion?: number };
+export type GarbagePolicy = { readonly cutoff: Date; readonly collectable?: ReadonlySet<string>; readonly expired?: ReadonlySet<string>; readonly protectedDigests?: ReadonlySet<string> };
+export type GarbageReport = { readonly scanned: number; readonly deleted: number; readonly deletedDigests: readonly string[]; readonly retained: number; readonly freedBytes: number; readonly skippedPinned: number; readonly skippedProtected: number; readonly skippedUnreadable: number; readonly errors: readonly string[] };
+export type SnapshotStore = { readonly put: (namespace: SnapshotNamespace, bytes: Uint8Array, metadata?: Readonly<Record<string, string>>, options?: SnapshotPutOptions) => Promise<SnapshotPutResult>; readonly get: (reference: SnapshotReference) => Promise<Uint8Array>; readonly retention: (namespace: SnapshotNamespace) => Promise<RetentionPlan>; readonly artifactState?: (reference: SnapshotReference) => Promise<ArtifactState | null>; readonly availableKeyIds?: () => readonly string[]; readonly collectGarbage?: (namespace: SnapshotNamespace, policy: GarbagePolicy) => Promise<GarbageReport> };
 ```
 
-Two implementations are planned later: `snapshot/local.ts` and
-`snapshot/s3.ts`. Both compute `sha256:` over the redacted bytes they store,
-verify the digest on `get`, expose retained byte count, and expose a
-delete-by-age hook. Neither logs payload bytes.
+`recorded: false` means unknown, never "no pin". `readable: false` means the
+store cannot show the bytes are readable under a key it holds, and
+`availableKeyIds` is declared rather than probed, so an empty list holds none.
+Failures are typed, not empty bytes: `PutErrorKind` is `RedactionFailed`,
+`WriteFailed`, `RetentionFailed`, `InvalidNamespace`, `InvalidOptions`, or
+`InternalError`; `GetErrorKind` is `SnapshotUnavailable`, `DigestMismatch`,
+`ReadFailed`, `InvalidReference`, `KeyUnavailable`, or `InternalError`.
 
-The ledger stores digests and references, never payload bytes. The snapshot
-store is where before images live. Redaction is before storage, not a read-time
-display filter, because secrets must not leave the process in the first place.
+Two implementations exist, `snapshot/local.ts` and `snapshot/s3.ts`. Both compute
+`sha256:` over the redacted bytes they store, verify the digest on `get`, expose
+retained byte count, and expose a delete-by-age hook. Neither logs payload bytes.
+`sha256Digest`, `makePutError`, and `makeGetError` are exported so every store
+builds errors the same way. Only `local.ts` implements the optional members, so an
+S3 artifact is never collectable here. The ledger stores digests and references.
+
+## Snapshot manifest, readiness and collection
+
+`manifest.ts` is the append only index binding a captured digest to the tool that
+captured it. It is the R03 surface, and it exists because a store's own opinion
+is not evidence. `SUPPORTED_CAPTURE_FORMAT_VERSION` is 1 and
+`DEFAULT_RETENTION_MS` is seven days. `SnapshotManifestEntry` carries `digest`,
+`reference`, and `tool` with the optional `operationId`, `recoveryJobId`,
+`pinned`, `expiresAt`, `formatVersion`, and `keyId`. `manifestWriter` returns a
+`ManifestWriter`; `manifestReader` and `findEntry` read the index;
+`resolveRecoveryReadiness` and `collectManifestGarbage` are the readiness and
+collection calls. Each takes the snapshot directory as its first argument.
+
+`resolveRecoveryReadiness` returns `available` only from bytes it read back and
+re-hashed. A missing field is never a pass: an unsupported capture format, an
+unreadable recorded artifact, a missing or disagreeing key, an expired or
+unparseable deadline, and a read failure each return `unavailable` with the
+reason named.
+
+`collectManifestGarbage` clears an entry only after the store confirms the bytes
+are gone. Bytes go first, the index is replaced atomically afterwards, and an
+entry naming a job or operation is retained until the caller proves it terminal.
+
+### Limits
+
+- Collection never removes a pinned snapshot, and **a pin has no release API
+  yet**, so a pinned artifact is retained indefinitely by design.
+- Collection never removes an artifact whose encryption key is no longer
+  available. An unreadable key is not proof of garbage, so the artifact is
+  retained and counted under `skippedUnreadable`. Rotation looks like this:
+  narrowing `availableKeyIds` retains artifacts under the retired key.
+- Collection never runs through a store that omits `artifactState` or
+  `collectGarbage`, never collects an unrecorded artifact, and never runs on
+  its own. No scheduler, lease, or fence guards it, and no automatic GC deletes
+  history.
+- **Streaming is not implemented.** `put` takes a whole `Uint8Array` and `get`
+  returns a whole `Uint8Array`: no chunked write, no resumable upload, no
+  bounded memory path for an artifact larger than memory.
+- **Quota migration is not implemented.** Changing an existing vault's capacity
+  needs an explicit administrative migration in the runtime, and the
+  `LocalSnapshotStore` byte budget is a logical limit, not disk preallocation.
+- **Manifest rename durability on Windows is unproven.** File contents are
+  flushed, but Node cannot open or flush a directory handle on Windows, so the
+  directory level replacement is not fsynced there.
 
 ## Postgres connector module map
 
