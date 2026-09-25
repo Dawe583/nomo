@@ -24,12 +24,15 @@ test("a lease is only reclaimable when it expired AND its holder is gone", () =>
 });
 
 test("an absent or unusable lease blocks, because an unknown owner is not a dead one", () => {
-  assert.equal(leaseVerdict(undefined, dead, NOW).reclaimable, false);
-  assert.match(leaseVerdict(undefined, dead, NOW).reason, /no lease/);
-  assert.equal(leaseVerdict(lease("host", NOW - 1), dead, NOW).reclaimable, false);
-  assert.match(leaseVerdict(lease("host", NOW - 1), dead, NOW).reason, /no usable pid/);
-  assert.equal(leaseVerdict(lease("host:notapid", NOW - 1), dead, NOW).reclaimable, false);
-  assert.equal(leaseVerdict(lease("host:0", NOW - 1), dead, NOW).reclaimable, false);
+  const reason = (holder: string | undefined): string => {
+    const verdict = leaseVerdict(holder === undefined ? undefined : lease(holder, NOW - 1), dead, NOW);
+    assert.equal(verdict.reclaimable, false);
+    return verdict.reason;
+  };
+  assert.match(reason(undefined), /no lease/);
+  assert.match(reason("host"), /no usable pid/);
+  assert.match(reason("host:notapid"), /no usable pid/);
+  assert.match(reason("host:0"), /no usable pid/);
 });
 
 test("the pid is read from the end of the holder, so a labelled host is not a pid", () => {
