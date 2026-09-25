@@ -135,6 +135,11 @@ All notable user-facing changes since the first repository commit.
   requests, is absent from the sidebar and the command palette, and is checked
   by the same viewport, focus, reduced-motion, zoom and touch-target gate as
   the rest of the product.
+- Add a disposable end-to-end exercise of the agentic reverse loop against real
+  files: a refused call changes nothing, an approved call captures before it
+  writes, a reused identity cannot be rebound, the signed journal verifies, a
+  restart keeps the history, the confirmed inverse restores exact bytes and
+  mode, and a replayed inverse is refused. It runs in the gate.
 - Deduplicate a mutating companion operation by its idempotency key, bound to
   the exact request body, so a retry is distinguishable from a key reused for a
   different body. A replayed pairing is refused with a conflict instead of
