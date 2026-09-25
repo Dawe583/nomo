@@ -47,7 +47,61 @@ Anything cross tool is the taint graph, WP-12.
 
 - `loadPolicy`, `validatePolicyFile`, `LoadedPolicy`, `PolicyFile`
 - `decide`, `PolicyCall`, `PolicyDecision`
+- In `src/approvals.ts`: `ApprovalBroker`, `ApprovalStateInUseError`,
+  `ApprovalStateUnsafeError`, `loadPending`, `savePending`, `writeDecision`,
+  `inspectApprovalStateDirectory`, `classifyPosixApprovalState`,
+  `ApprovalStateVerdict`, `ApprovalStateCode`, `ApprovalAclReader`
 - In `src/packs.ts`: `loadPack`, `listPacks`, `PackError`
+
+## Approval state directory, per platform
+
+A hold is released by a human dropping a decision file into a directory on
+disk, so that directory is a security boundary: a foreign writer can release a
+held call, and a foreign reader learns which calls are pending. Only the
+operator may reach it.
+
+| Platform | What is checked                                                                                                                             | What proves it                                                 |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| POSIX    | `mode & 0o077 === 0` and the owner uid, on a real directory                                                                                 | the stat, unchanged                                            |
+| Windows  | a real directory that is not a link, plus a DACL whose only principals are the operator, `NT AUTHORITY\SYSTEM` and `BUILTIN\Administrators` | `icacls`, the binary that ships with Windows, so no dependency |
+
+`classifyPosixApprovalState` is the POSIX rule as a pure function of the stat,
+exported so a reviewer on any platform can run it. It is the rule the Windows
+check is measured against, so it stays testable where the mode bits mean
+nothing.
+
+Three outcomes, never two, because a control that cannot be evaluated must not
+read as one that passed:
+
+- `owner-only`, with the evidence that proved it.
+- `unsafe`, with a code, refused. A proven foreign writer is never
+  acknowledgeable.
+- `unverifiable`, with a code, refused unless the host passes
+  `acknowledgeUnverifiableState`. The recorded verdict then carries
+  `acknowledged: true`, so the caller can log or display that the control did
+  not pass. `inspectApprovalStateDirectory` returns the verdict without
+  deciding anything.
+
+Measured on Windows, 2026-09-25: `stat.mode & 0o777` is `0o666` for a directory
+and for a file alike whatever `chmod` was asked for, `stat.uid` is always `0`
+and `process.getuid` is absent, so the old predicate was never satisfiable and
+the whole approval path was dead on that platform. `lstat` does report
+symlinks and junctions there, so the link half of the control is real evidence.
+
+A directory VOID can claim is narrowed to the operator before it is accepted:
+`mkdirSync` already promises mode `0o700`, which Windows cannot honour, and
+narrowing the DACL is that same promise in the unit Windows does enforce. The
+recorded verdict says so through `hardened`. A verified DACL is then read once
+per directory per process, because a state write would otherwise pay a process
+spawn.
+
+What this cannot claim on Windows: the operator's own name is recognised from
+`USERNAME` and `USERDOMAIN`, and a localised alias for Administrators or SYSTEM
+that this file does not know is reported unverifiable rather than assumed
+trusted; the parent directory is not walked, so a foreign writable parent can
+still replace the leaf, which is the same hole the POSIX leaf check has; and the
+directory entry's own durability is not confirmed, because Windows cannot flush
+a directory handle.
 
 ## Policy packs
 

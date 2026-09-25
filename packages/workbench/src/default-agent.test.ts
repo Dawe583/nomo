@@ -73,5 +73,16 @@ test('default agent writes a captured document, restarts, verifies evidence and 
     const path = join(directory, file);
     if ((await stat(path)).isFile()) assert.equal((await readFile(path)).includes(Buffer.from(secret)), false, `Secret leaked to ${file}`);
   }
-  assert.equal((await stat(join(directory, 'workspace.enc'))).mode & 0o077, 0);
+  // Owner-only is the only confidentiality claim these files make, and stat is
+  // the only way to read it back. Windows has no POSIX mode bits: LocalStorage
+  // asks for 0o600 through openSync and chmod, which NTFS silently discards, so
+  // stat reports the fixed 0o666 and the bits below are 0o66 whatever the
+  // product does. Asserting them there would be asserting a guarantee the
+  // platform cannot express, and the secret scan above is what still holds on
+  // Windows. storage.test.ts:69 draws the same boundary for the same reason.
+  if (process.platform !== 'win32') {
+    for (const name of ['workspace.enc', 'workspace.key']) {
+      assert.equal((await stat(join(directory, name))).mode & 0o077, 0, `${name} must not be group or world readable`);
+    }
+  }
 });

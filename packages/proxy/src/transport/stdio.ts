@@ -172,6 +172,15 @@ export function spawnUpstream(
       }
       closed = true;
       child.stdin.end();
+      // Two rungs, and they promise different things per platform, so the ladder
+      // is only ever as strong as its first rung. On POSIX SIGTERM is catchable:
+      // an upstream that installs a handler outlives this line and SIGKILL is
+      // the rung that ends it. On Windows Node routes both names through one
+      // uncatchable TerminateProcess, measured on win32 at Node 24: a child
+      // that installed a SIGTERM handler still died here, and the close event
+      // named the rung that ended the process, not the one requested last. The
+      // escalation below is therefore a no-op on Windows, and a Windows close
+      // must never be reported as a SIGKILL the platform performed.
       child.kill("SIGTERM");
       ladderTimer = clock.setTimeout(() => {
         ladderTimer = null;

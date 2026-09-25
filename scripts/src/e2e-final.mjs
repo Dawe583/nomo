@@ -310,7 +310,13 @@ async function runAttestationMoment(state) {
   const generated = await runCommand(process.execPath, ["--input-type=module", "-e", code, state.ledgerDir, state.workspace], { env: state.env });
   assert.equal(generated.code, 0, generated.stderr);
   const path = generated.stdout.trim();
-  assert.match(path, /attestations\/\d+\.json$/);
+  // Assert on path segments, never on a joined string with a hardcoded "/". The
+  // separator is "\" on Windows, so the old pattern passed on ubuntu-latest and
+  // failed for every Windows contributor. The claim asserted is unchanged: the
+  // attestation landed in the attestations directory under a numeric .json name.
+  const segments = path.split(/[\\/]/);
+  assert.equal(segments[segments.length - 2], "attestations");
+  assert.match(segments[segments.length - 1], /^\d+\.json$/);
   const verified = await runCli(["verify", "--ledger", state.ledgerDir, "--attestation", path], state.env);
   assert.equal(verified.code, 0, verified.stderr);
   assert.match(verified.stdout, /attestation: match/);

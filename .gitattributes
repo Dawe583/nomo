@@ -1,0 +1,37 @@
+# Line endings are part of correctness here, not formatting preference.
+#
+# A CRLF checkout is not cosmetic. A shebang line becomes
+# "#!/usr/bin/env node\r", and the kernel on Linux and macOS stops the interpreter
+# token at the carriage return, so the file no longer executes at all for anyone
+# who clones it. The release-packaging test asserts the exact shebang bytes of
+# packages/*/bin, which is the assertion that catches a contributor committing one
+# of those files with CRLF from Windows.
+#
+# Git normalises to LF in the index on commit and checks out LF on every platform,
+# so this governs the stored bytes and does not depend on anybody's editor setting.
+* text=auto eol=lf
+
+*.mjs   text eol=lf
+*.js    text eol=lf
+*.cjs   text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.mts   text eol=lf
+*.cts   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sh    text eol=lf
+
+# Bin scripts are executed directly rather than imported, so line one is an
+# interpreter directive and not text. A CR there is a runtime failure on every
+# Unix system, not a formatting difference.
+packages/*/bin/* text eol=lf
+
+# Carve-outs, and they come last because a later pattern wins. cmd.exe and
+# Windows PowerShell are the platforms where CRLF is the expected line ending for
+# these formats, so the blanket rule above must not reach them.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf

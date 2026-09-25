@@ -12,8 +12,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generateKeyPairSync, sign as cryptoSign } from "node:crypto";
 
-const root = new URL("..", import.meta.url).pathname;
-const ledger = await import(`${root}packages/ledger/src/index.ts`);
+// A file URL href, never URL#pathname. The pathname of a Windows file URL is
+// "/C:/dir", which Windows path normalization turns into a drive-relative
+// "\C:\dir" and then into "C:\C:\dir". href is also the only specifier form
+// import() accepts on every platform, so this needs no platform branch at all.
+const ledger = await import(
+  new URL("../packages/ledger/src/index.ts", import.meta.url).href
+);
 
 const entries = Number.parseInt(
   (

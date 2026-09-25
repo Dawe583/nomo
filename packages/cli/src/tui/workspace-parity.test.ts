@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,6 +16,7 @@ import {
   commandSuggestions,
   extractTodos,
   isDoubleEscape,
+  localShell,
   mentionCandidates,
   mentionToken,
   promptFrameBottom,
@@ -163,6 +165,42 @@ test("double Escape opens checkpoints, single Escape only closes", () => {
   assert.equal(isDoubleEscape(900, 1000), false);
 });
 
+// The gated shell is a capability of the TUI, not of one operating system, so
+// these commands are stated in the shell this platform actually ships. Every
+// one of them exists in that shell, which keeps each refusal about the gate
+// rather than about a missing program, and the undefined variable probe proves
+// the child never inherited the operator environment.
+const SHELL_COMMANDS =
+  process.platform === "win32"
+    ? {
+        undefinedVar: "set VOID_TUI_ENV_PROBE",
+        keyMaterial: [
+          "echo %TOKENHARBOR_API_KEY%",
+          "type %USERPROFILE%\\.void\\keys\\dev-ed25519.pkcs8",
+          "set OPENROUTER_API_KEY",
+        ],
+      }
+    : {
+        undefinedVar: "printenv VOID_TUI_ENV_PROBE",
+        keyMaterial: [
+          "echo $TOKENHARBOR_API_KEY",
+          "cat ~/.void/keys/dev-ed25519.pkcs8",
+          "printenv OPENROUTER_API_KEY",
+        ],
+      };
+
+test("the gated shell is a program this platform has, in a scrubbed environment", () => {
+  const shell = localShell();
+  assert.deepEqual(
+    Object.keys(shell.env).filter((key) => key !== "PATH" && key !== "LANG"),
+    [],
+    "the shell child may inherit nothing but a fixed path",
+  );
+  if (process.platform === "win32")
+    assert.ok(existsSync(shell.file), shell.file);
+  else assert.equal(shell.file, "sh");
+});
+
 test("gated shell shows output once and refuses key material", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-shell-"));
   const full = { VOID_DATA_DIR: root, VOID_TUI_ENV_PROBE: "probe-secret" };
@@ -175,17 +213,10 @@ test("gated shell shows output once and refuses key material", async (t) => {
   await ui.command("!echo parity-ok");
   assert.ok(ui.detail?.join("\n").includes("parity-ok"));
   assert.match(ui.notice, /never persisted/);
+  for (const command of SHELL_COMMANDS.keyMaterial)
+    await assert.rejects(ui.command(`!${command}`), /Refused/, command);
   await assert.rejects(
-    ui.command("!echo $TOKENHARBOR_API_KEY"),
-    /Refused/,
-  );
-  await assert.rejects(
-    ui.command("!cat ~/.void/keys/dev-ed25519.pkcs8"),
-    /Refused/,
-  );
-  await assert.rejects(ui.command("!printenv OPENROUTER_API_KEY"), /Refused/);
-  await assert.rejects(
-    ui.command("!printenv VOID_TUI_ENV_PROBE"),
+    ui.command(`!${SHELL_COMMANDS.undefinedVar}`),
     /Local command failed/,
   );
 });

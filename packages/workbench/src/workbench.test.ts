@@ -13,6 +13,23 @@ const secret = 'fixture-provider-secret';
 const reply = (body: unknown) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 
+// A session that drives a real upstream over stdio spawns a child process, and a
+// managed document write inside it costs seconds by itself: measured here at 1.7
+// to 3.5 s unloaded and up to 6.2 s under sixteen way parallel package load,
+// because the runtime re-verifies its whole signed journal on every operation.
+// The former 2 s and 4 s iteration budgets sat below that cost, so a loaded
+// machine reported a session that was still legitimately mid-operation and never
+// reached the assertion. No retry and no re-execution: the wait condition is
+// unchanged, only the ceiling is honest about the work being awaited, and a real
+// hang still fails with the label below.
+const SESSION_TIMEOUT_MS = 30_000;
+
+async function settle(read: () => boolean, label: string): Promise<void> {
+  const deadline = Date.now() + SESSION_TIMEOUT_MS;
+  while (!read() && Date.now() < deadline) await delay(20);
+  assert.ok(read(), `${label} did not settle within ${SESSION_TIMEOUT_MS}ms`);
+}
+
 test('provider validates transport and never echoes upstream error bodies', async () => {
   assert.throws(() => new CompatibleProvider({ baseUrl: 'http://remote.test/v1', apiKey: secret }), /HTTPS/);
   const provider = new CompatibleProvider({ baseUrl: 'https://provider.test/v1', apiKey: secret }, async () => new Response(secret, { status: 401 }));
@@ -39,7 +56,7 @@ test('model tool calls cross a real VOID proxy and produce a ledger', async t =>
   t.after(async () => { workbench.close(); await rm(dir, { recursive: true, force: true }); });
   await workbench.configure({ baseUrl: 'https://provider.test/v1', apiKey: secret });
   const started = await workbench.start('Test echo', 'fixture-model');
-  for (let i = 0; i < 200 && workbench.get(started.id)?.status === 'running'; i++) await delay(20);
+  await settle(() => workbench.get(started.id)?.status !== 'running', `session ${started.id} to settle`);
   const session = workbench.get(started.id)!;
   assert.equal(session.status, 'idle', JSON.stringify(session.events));
   assert.equal(turn, 2);
@@ -66,13 +83,13 @@ test('a destructive model call waits for an operator in its own workspace', asyn
   t.after(async () => { workbench.close(); await rm(dir, { recursive: true, force: true }); });
   await workbench.configure({ baseUrl: 'https://provider.test/v1', apiKey: secret });
   const session = await workbench.start('Request a destructive fixture', 'fixture-model');
-  for (let i = 0; i < 100 && !workbench.pending().length; i++) await delay(20);
+  await settle(() => workbench.pending().length > 0, `hold for ${session.workspace} to reach the operator`);
   const hold = workbench.pending()[0]!;
   assert.ok(hold);
   assert.equal(hold.call.workspace, session.workspace);
   assert.equal(turn, 1, 'model must wait on VOID approval');
   assert.equal(workbench.decide(hold.holdId, { kind: 'denied', by: 'beta-test' }), true);
-  for (let i = 0; i < 100 && workbench.get(session.id)?.status === 'running'; i++) await delay(20);
+  await settle(() => workbench.get(session.id)?.status !== 'running', `session ${session.id} to settle after the denial`);
   assert.equal(workbench.get(session.id)?.status, 'idle');
   const feed = await readLedgerFeed(join(dir, `${session.workspace}.jsonl`));
   assert.ok(feed.records.some(record => record.decision === 'hold:denied'));
@@ -101,7 +118,7 @@ test('long sessions keep advancing event cursors and refuse unbounded context', 
   await workbench.configure({ baseUrl: 'https://provider.test/v1', apiKey: secret });
   const started = await workbench.start('First', 'fixture-model');
   for (let turn = 0; turn < 99; turn++) {
-    for (let poll = 0; poll < 200 && workbench.get(started.id)?.status === 'running'; poll++) await delay(10);
+    await settle(() => workbench.get(started.id)?.status !== 'running', `turn ${turn} of session ${started.id}`);
     assert.equal(workbench.get(started.id)?.status, 'idle');
     if (turn < 98) workbench.send(started.id, `Follow up ${turn}`);
   }

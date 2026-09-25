@@ -4,6 +4,30 @@ import process from "node:process";
 
 import { ReadBuffer, spawnUpstream } from "./stdio.ts";
 
+// A real child gets to prove it answered, not to fit inside a guessed sleep.
+// Cold spawn on win32 at Node 24 measured 41ms to 87ms from spawn() to the
+// child's own first byte, so a small budget cuts the child off before it reads
+// a byte. This is a deadline that fails loudly, never a wait that flatters the
+// implementation.
+const CHILD_ANSWER_BUDGET_MS = 5000;
+
+async function withinDeadline<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error(`${what} did not arrive within ${ms}ms`));
+        }, ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function onceClose(): {
   readonly promise: Promise<{ readonly code: number | null; readonly signal: NodeJS.Signals | null }>;
   readonly onClose: (code: number | null, signal: NodeJS.Signals | null) => void;
@@ -66,10 +90,22 @@ describe("spawnUpstream", () => {
   test("sends newline framed JSON to a real child", async () => {
     const close = onceClose();
     const messages: string[] = [];
-    const upstream = spawnUpstream(["cat"], {}, {
+    let markEchoed: (line: string) => void;
+    const echoed = new Promise<string>((resolve) => {
+      markEchoed = resolve;
+    });
+
+    // The child is node itself, not `cat`: on Windows `cat` is a third party
+    // shim, on this machine Neovim's, and a stock install has no cat.exe at
+    // all, so the framing assertion used to depend on somebody's PATH. The test
+    // waits for the frame it sent to come back rather than for a sleep to
+    // expire, because close() kills the upstream, so a sleep that expires first
+    // asserts scheduler latency instead of framing.
+    const upstream = spawnUpstream([process.execPath, "-e", "process.stdin.pipe(process.stdout);"], {}, {
       events: {
         onMessage(line) {
           messages.push(line);
+          markEchoed(line);
         },
         onClose: close.onClose,
         onError(err) {
@@ -79,10 +115,11 @@ describe("spawnUpstream", () => {
     });
 
     upstream.send('{"jsonrpc":"2.0","id":1,"result":{}}');
-    await new Promise<void>((resolve) => setTimeout(resolve, 20));
+    const first = await withinDeadline(echoed, CHILD_ANSWER_BUDGET_MS, "upstream echo");
     upstream.close();
     await close.promise;
 
+    assert.equal(first, '{"jsonrpc":"2.0","id":1,"result":{}}');
     assert.deepEqual(messages, ['{"jsonrpc":"2.0","id":1,"result":{}}']);
   });
 
@@ -192,7 +229,18 @@ describe("spawnUpstream", () => {
     callbacks[0]?.();
     const event = await close.promise;
 
-    assert.equal(event.signal, "SIGKILL");
+    // The escalation is issued either way, but the rung that ends the child is
+    // not the same one on every platform, so the close event names the first.
+    // On POSIX the child script's SIGTERM handler makes it survive rung one, so
+    // SIGKILL ends it. On Windows Node routes both names through one
+    // uncatchable TerminateProcess, measured 10 runs out of 10 on win32 at Node
+    // 24: rung one ended the process, rung two hit an already dead handle, and
+    // the close event named SIGTERM. Asserting the platform truth keeps the
+    // test honest on both; asserting a Windows SIGKILL would assert a kill the
+    // platform did not perform.
+    const rungThatEndedTheChild = process.platform === "win32" ? "SIGTERM" : "SIGKILL";
+    assert.equal(event.signal, rungThatEndedTheChild);
+    assert.equal(event.code, null);
   });
 
   test("close is idempotent", async () => {

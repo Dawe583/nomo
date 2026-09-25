@@ -1,12 +1,28 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ApprovalBroker, ApprovalStateInUseError, loadPending, writeDecision } from "../../policy/src/approvals.ts";
+import { ApprovalBroker, ApprovalStateInUseError, ApprovalStateUnsafeError, loadPending, writeDecision } from "../../policy/src/approvals.ts";
 import { HoldQueue } from "../../policy/src/hold.ts";
 import { pumpApprovals } from "../../proxy/src/approval-loop.ts";
 import { runApproveCommand, runApprovalsCommand } from "./approve.ts";
+
+/**
+ * The Windows half of the state directory proof needs a real foreign writer,
+ * and the operating system binary that creates one is icacls. Its output is
+ * read back by the test rather than trusted, because a grant that silently
+ * failed would leave a directory that was never permissive to begin with.
+ */
+function icacls(dir: string, ...args: string[]): string {
+  return execFileSync("icacls", [dir, ...args], { encoding: "utf8", windowsHide: true });
+}
+
+/** Asserts the refusal is the typed one, with the code the caller expects. */
+function isUnsafeState(code: string) {
+  return (error: unknown) => error instanceof ApprovalStateUnsafeError && error.code === code && /owner-only/.test(error.message);
+}
 
 const call = { tool: "postgres.table.drop", klass: "r3", blastRadius: 1, ruleIndex: 0, rationale: "hold", args: { secret: "not persisted" }, notify: ["cli"] };
 function fixture(t: { after: (fn: () => void) => void }) {
@@ -114,16 +130,36 @@ test("invalid decision kind cannot release an in-process hold", (t) => {
   assert.equal(f.queue.list().length, 1);
 });
 
-test("preexisting permissive and symlink state directories are rejected", (t) => {
+test("a state directory that is not owner-only is refused or hardened, and a symlink is refused", (t) => {
   const base = fs.mkdtempSync(join(tmpdir(), "void-approve-perms-"));
   t.after(() => fs.rmSync(base, { recursive: true, force: true }));
   const unsafe = join(base, "unsafe");
-  fs.mkdirSync(unsafe, { mode: 0o777 });
-  fs.chmodSync(unsafe, 0o777);
-  assert.throws(() => new ApprovalBroker({ stateDir: unsafe }), /owner-only/);
-  fs.chmodSync(unsafe, 0o700);
-  fs.symlinkSync(unsafe, join(base, "linked"));
-  assert.throws(() => new ApprovalBroker({ stateDir: join(base, "linked") }), /owner-only/);
+  fs.mkdirSync(unsafe, { mode: 0o700 });
+
+  if (process.platform === "win32") {
+    // chmod cannot widen a DACL, so the foreign writer is created with the
+    // icacls binary the operating system ships, and the grant is read back
+    // first: an unproven premise would make every assertion below vacuous.
+    icacls(unsafe, "/grant", "*S-1-1-0:(M)");
+    assert.match(icacls(unsafe), /Everyone:\(M\)/);
+    const broker = new ApprovalBroker({ stateDir: unsafe });
+    assert.deepEqual(broker.stateDirectoryCheck, { outcome: "owner-only", evidence: "windows-dacl", hardened: true }, "a foreign write grant must be narrowed, not reported as already safe");
+    // The repair has to exist in the file system, not only in the verdict.
+    assert.doesNotMatch(icacls(unsafe), /Everyone/i);
+    broker.close();
+  } else {
+    fs.chmodSync(unsafe, 0o777);
+    assert.throws(() => new ApprovalBroker({ stateDir: unsafe }), isUnsafeState("group-or-world-access"));
+    fs.chmodSync(unsafe, 0o700);
+  }
+
+  // The link check is evidence on every platform, so it is not gated: a
+  // symlinked state directory redirects the check at a directory the operator
+  // never named, and on Windows hardening would rewrite that target.
+  const target = join(base, "target");
+  fs.mkdirSync(target, { mode: 0o700 });
+  fs.symlinkSync(target, join(base, "linked"), "dir");
+  assert.throws(() => new ApprovalBroker({ stateDir: join(base, "linked") }), isUnsafeState("symbolic-link"));
 });
 
 test("a second proxy refuses the state directory with a typed error", (t) => {

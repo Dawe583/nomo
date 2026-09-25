@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, writeFile, readFile, rm, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { devKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
@@ -12,6 +13,23 @@ import { verifyLedgerFile } from "../../ledger/src/verify.ts";
 
 import { VoidClient } from "./client.ts";
 import { HoldDeniedError, LedgerVerifyError, RefusedError } from "./errors.ts";
+
+// The proxy spawns the upstream with the runner's cwd, so a relative fixture
+// path resolves only when the runner happens to sit in packages/sdk. From the
+// repository root it pointed outside the tree, the child died with
+// MODULE_NOT_FOUND, and every stdio backed test timed out instead of failing on
+// its own assertion. Anchor the fixture to this module instead, as
+// packages/workbench/src/workbench.test.ts does, so the file is correct from any cwd.
+const root = fileURLToPath(new URL("../../../", import.meta.url));
+const upstream = [process.execPath, join(root, "fixtures/e2e-server.mjs")];
+
+// A forwarded request spawns a real upstream child process, so it costs process
+// startup rather than milliseconds: measured here at 306 to 786 ms unloaded and
+// up to 1677 ms under twelve way parallel package load. The former one second
+// budget sat below that cost, so a slow machine reported "request tools/call
+// timed out" and never reached the assertion under test. This is a hang
+// detector for a fixture, not a product timeout, so it is sized with margin.
+const REQUEST_TIMEOUT_MS = 15_000;
 
 async function fixturePolicy(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "void-sdk-policy-"));
@@ -41,8 +59,8 @@ async function makeClient(workspace: string): Promise<VoidClient> {
     ledgerDir: await mkdtemp(join(tmpdir(), "void-sdk-ledger-")),
     workspace,
     policyPath: await fixturePolicy(),
-    connect: { upstreamCommand: [process.execPath, "../../fixtures/e2e-server.mjs"] },
-    requestTimeoutMs: 5_000,
+    connect: { upstreamCommand: upstream },
+    requestTimeoutMs: REQUEST_TIMEOUT_MS,
   });
 }
 
@@ -112,8 +130,8 @@ describe("VoidClient", () => {
       ledgerDir: await mkdtemp(join(tmpdir(), "void-sdk-ledger-")),
       workspace: "invalid-policy",
       policyPath,
-      connect: { upstreamCommand: [process.execPath, "../../fixtures/e2e-server.mjs"] },
-      requestTimeoutMs: 1_000,
+      connect: { upstreamCommand: upstream },
+      requestTimeoutMs: REQUEST_TIMEOUT_MS,
     });
     try {
       await assert.rejects(client.request("tools/call", { name: "echo", arguments: { text: "never" } }), (error: unknown) => {
@@ -134,8 +152,8 @@ describe("VoidClient", () => {
       ledgerDir,
       workspace: "bad",
       policyPath: await fixturePolicy(),
-      connect: { upstreamCommand: [process.execPath, "../../fixtures/e2e-server.mjs"] },
-      requestTimeoutMs: 1_000,
+      connect: { upstreamCommand: upstream },
+      requestTimeoutMs: REQUEST_TIMEOUT_MS,
     });
     try {
       await assert.rejects(client.request("tools/call", { name: "echo", arguments: { text: "never" } }), (error: unknown) => {
@@ -181,9 +199,9 @@ for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
     const client = new VoidClient({
       ledgerDir: dir, workspace, policyPath: await fixturePolicy(),
       connect: { upstreamCommand: scenario === "trusted"
-        ? [process.execPath, "../../fixtures/e2e-server.mjs"]
+        ? upstream
         : [process.execPath, "-e", "require('node:fs').writeFileSync(process.argv[1], 'started')", marker] },
-      requestTimeoutMs: 1_000,
+      requestTimeoutMs: REQUEST_TIMEOUT_MS,
     });
     try {
       const request = client.request("tools/call", { name: "echo", arguments: { text: "authenticated" } });

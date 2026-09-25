@@ -107,7 +107,13 @@ async function runApiPass(factsPath) {
   let holdQueue = null;
   const ledgerDir = await mkdtemp(join(tmpdir(), "void-e2e-ledger-"));
   const running = runProxy({
-    upstreamCommand: ["node", "fixtures/e2e-server.mjs"],
+    // process.execPath, never a bare "node". The upstream is a child of this
+    // process, so it has to be the same interpreter that is running the test.
+    // A bare "node" is resolved through PATH, and a machine with two Node
+    // installs (the upstream child would then silently differ in major version
+    // from the proxy code it is being driven by) makes the result depend on PATH
+    // order rather than on the test.
+    upstreamCommand: [process.execPath, "fixtures/e2e-server.mjs"],
     policyPath: "fixtures/e2e-policy.yaml",
     factsPath,
     posture: "fail-closed",

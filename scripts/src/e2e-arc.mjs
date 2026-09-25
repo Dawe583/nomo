@@ -10,13 +10,19 @@ import { mkdtemp, readFile, writeFile, rm, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 
 import { createVoidClient } from "../../packages/sdk/src/index.ts";
 import { listenControlPlane } from "../../apps/control-plane/api/server.ts";
 import { devKeyProvider } from "../../packages/ledger/src/sign.ts";
 
-const root = new URL("../..", import.meta.url).pathname;
+// fileURLToPath, never URL#pathname. A Windows file URL's pathname is "/C:/dir",
+// which Windows path normalization turns into a drive-relative "\C:\dir" and then
+// into "C:\C:\dir", so every join() below and every spawn cwd resolve to a
+// directory that does not exist. POSIX pathname is already the absolute path,
+// so the bug is invisible on ubuntu-latest and macOS.
+const root = fileURLToPath(new URL("../..", import.meta.url));
 const fixturesPolicy = join(root, "fixtures", "e2e-policy.yaml");
 const fixturesUpstream = join(root, "fixtures", "e2e-server.mjs");
 
@@ -186,7 +192,10 @@ async function runArcMoment() {
   void denyResult;
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+// The same fileURLToPath reason applies here: comparing process.argv[1], a real
+// Windows path, against a "/C:/..." pathname never matches, so the guard below
+// stayed false and this module ran its moment even when invoked with no "all".
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const args = new Set(process.argv.slice(2));
   if (!args.has("all")) {
     console.error("usage: node scripts/src/e2e-arc.mjs all");

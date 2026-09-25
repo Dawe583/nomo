@@ -223,6 +223,7 @@ export async function detectHarnesses(
 /** Gated shell escape refuses anything that can carry key material. */
 const SHELL_REFUSALS = [
   /\$[A-Za-z_]*(KEY|TOKEN|SECRET|PASSWORD)/,
+  /%[A-Za-z_]*(KEY|TOKEN|SECRET|PASSWORD)[A-Za-z_]*%/,
   /api[_-]?key/i,
   /tokenharbor|tokenrouter/i,
   /secret|password|passwd|authorization|bearer/i,
@@ -230,6 +231,38 @@ const SHELL_REFUSALS = [
   /\.env\b|\.void|keychain/i,
 ];
 const runShellFile = promisify(execFile);
+
+export type LocalShell = {
+  readonly file: string;
+  readonly args: readonly string[];
+  readonly env: Readonly<Record<string, string>>;
+};
+
+/**
+ * The shell is the platform's own, and the environment it gets is a fixed
+ * system directory with nothing of the operator's: the child cannot read a
+ * variable VOID holds and cannot reach a binary the operator happens to have
+ * installed. Hardcoding `sh` with PATH=/usr/bin:/bin satisfied that on POSIX
+ * and assumed a program stock Windows does not ship, so the escape hatch there
+ * failed with a bare ENOENT instead of running. cmd.exe with System32 on PATH
+ * is the same containment, measured to need nothing else in its environment.
+ */
+export function localShell(
+  systemRoot: string | undefined = process.env.SystemRoot,
+): LocalShell {
+  if (process.platform !== "win32")
+    return {
+      file: "sh",
+      args: ["-c"],
+      env: { PATH: "/usr/bin:/bin", LANG: "C" },
+    };
+  const system = join(systemRoot ?? "C:\\Windows", "System32");
+  return {
+    file: join(system, "cmd.exe"),
+    args: ["/d", "/s", "/c"],
+    env: { PATH: system },
+  };
+}
 
 const STARTER_DOC = `# Plan
 
@@ -431,8 +464,9 @@ export class WorkspaceTui {
       );
     let out: string;
     try {
-      const result = await runShellFile("sh", ["-c", cmd], {
-        env: { PATH: "/usr/bin:/bin", LANG: "C" },
+      const shell = localShell();
+      const result = await runShellFile(shell.file, [...shell.args, cmd], {
+        env: shell.env,
         timeout: 10000,
         maxBuffer: 1024 * 64,
       });

@@ -5,12 +5,22 @@ import { promisify } from "node:util";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const exec = promisify(execFile);
 const script = fileURLToPath(
   new URL("./verify-ledger-standalone.mjs", import.meta.url),
 );
+// The generator runs from a temp directory outside the repository, so a bare
+// specifier cannot resolve and the two ledger modules have to be named by
+// absolute file URL. Derive them from this file rather than from the path of
+// whoever wrote the test, or the check passes only on the author's machine.
+const ledgerModule = (name) =>
+  pathToFileURL(
+    fileURLToPath(
+      new URL(`../../packages/ledger/src/${name}`, import.meta.url),
+    ),
+  ).href;
 
 test("standalone selftest proves roundtrip, tamper refusal and wrong key refusal", async () => {
   const result = await exec(process.execPath, [script, "--selftest"]);
@@ -39,8 +49,8 @@ test("standalone verifier agrees with the real ledger on a real export", async (
   const generator = join(root, "generate.mts");
   await writeFile(
     generator,
-    `import { jsonlStore } from "/Users/dawe/Developer/Claude-Projects/VOID/packages/ledger/src/store.ts";
-import { devKeyProvider } from "/Users/dawe/Developer/Claude-Projects/VOID/packages/ledger/src/sign.ts";
+    `import { jsonlStore } from ${JSON.stringify(ledgerModule("store.ts"))};
+import { devKeyProvider } from ${JSON.stringify(ledgerModule("sign.ts"))};
 const dir = ${JSON.stringify(join(root, "ledger"))};
 const keys = ${JSON.stringify(join(root, "keys"))};
 const key = await devKeyProvider({ dir: keys });
