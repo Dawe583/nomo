@@ -15,6 +15,7 @@ import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
+import { canonicalJson } from "../../ledger/src/canonical.ts";
 import {
   localOperationJournal,
   localRecoveryVault,
@@ -423,33 +424,35 @@ test("a retention policy is versioned, per kind, and pinned kinds never expire",
     assert.throws(() => validateRetentionPolicy(policy), /retention|pinned|TTL/);
 });
 
-test("a pin recorded after the scan still stops the delete", async (t) => {
+test("a pin that appears after the scan still stops the delete", async (t) => {
   const f = await fixture(t);
   const released = await f.put("released");
   await f.age(released, 60_000);
   // No pin and no evidence: the collector is free to take this one.
   await f.mark(released);
 
-  // A pin lands while the collection is in flight. `markVaultLifecycle` takes
-  // the same `.retention.lock` as the collector, so exactly one of the two runs
-  // first. Either order must leave the artifact on disk: if the pin wins, the
-  // collector sees it at the scan; if the collector wins, the re-read before the
-  // unlink sees it.
-  const pinning = f.mark(released, { ownerId: "ops", kind: "operator" });
-  const garbage = await f.collect("pin-race", AGE_POLICY);
-  const pinned = await pinning.then(
-    () => true,
-    () => false,
+  // A writer that does not take the collection lock lands a pin between the
+  // scan and the unlink. The collector re-reads the evidence immediately before
+  // deleting, so the artifact survives and the pin record is not removed with
+  // it. Written straight to the sidecar, which is exactly what such a writer
+  // does.
+  await writeFile(
+    f.evidence(released),
+    canonicalJson({ pin: { ownerId: "ops", kind: "operator" } }),
+    { mode: 0o600 },
   );
+
+  const garbage = await f.collect("pin-race", AGE_POLICY);
+  assert.deepEqual(reportOf(garbage).deleted, 0, "a pin written after the scan must stop the delete");
   assert.ok(
     (await f.artifacts()).includes(released.digest),
-    `a pinned artifact was collected: ${JSON.stringify(reportOf(garbage))}`,
+    "the artifact is still on disk after a refused delete",
   );
   assert.equal(await f.read(released), "released");
   assert.equal(
-    pinned,
-    true,
-    "marking a pin must not fail just because a collection is running",
+    await readFile(f.evidence(released), "utf8").then((value) => value, () => ""),
+    canonicalJson({ pin: { ownerId: "ops", kind: "operator" } }),
+    "the pin record that stopped the delete must survive it",
   );
 });
 

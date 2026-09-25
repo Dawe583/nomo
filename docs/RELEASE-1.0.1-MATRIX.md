@@ -292,6 +292,30 @@ frozen `operations` set, which does not contain it. Publishing it would make
 every handshake response fail the frozen validator, so closing this needs a
 v1.1 contract change rather than an adapter change.
 
+### A wiring that was attempted and reverted
+
+Wiring the shared budget ledger into `execute.ts` was attempted and backed
+out. The reason is worth recording because it is a design constraint, not an
+oversight.
+
+The ledger has to be reserved before dispatch, and the journal's writer lock is
+held for the whole transaction, so acquiring the budget lock inside it lets one
+contended worker hold the journal lock for the budget lock's full retry
+deadline and stall every workspace behind it. Reserving before the transaction
+means the preflight observation has to happen before it too, since that
+observation is what decides whether a unit is needed. Hoisting preflight out of
+the transaction compiles, passes most of the suite, and breaks a real property
+that `crash.test.ts` pins: a restarted executor reconciling an operation that
+already dispatched must not observe, prepare or execute it again. The fixture
+adapter for that test throws on a second preflight, and it fired.
+
+The safe order therefore needs the prior-record check to run as a short read
+before the reservation, with the transaction still re-checking it
+authoritatively. That is real work with its own failure modes, so it is left
+open rather than half-done. The ledger is a tested library with an honest
+"not yet wired" gate, and every host that has not opted into it keeps the
+existing local cap, which is unchanged by this decision.
+
 ### Windows source audit
 
 The `cfg(windows)` workspace-key path was audited against the documented Win32
