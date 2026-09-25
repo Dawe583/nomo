@@ -367,6 +367,17 @@ recorded as paused rather than silently stepped over. The rule lives in
 process, a real live one and an unanswerable case. `packages/runtime` 104/104,
 with both halves of the reclaim mutation-checked.
 
+### One unreproduced test failure, recorded rather than forgotten
+
+A single run of the 506-test core set reported one failure. It did not
+reproduce in the roughly thirty runs that followed, including six consecutive
+runs of `packages/runtime` alone and eight of the other five packages together,
+nor in focused repetition of `crash.test.ts`, `adversarial.test.ts` and
+`persistence-fault.test.ts`. The failing test name was not captured, so the
+honest record is that one failure was seen once and its cause is unknown, not
+that the suite is deterministic. A flake in a security product is a finding in
+its own right, and this one is open until it can be named.
+
 ### A wiring that was attempted and reverted
 
 Wiring the shared budget ledger into `execute.ts` was attempted and backed
