@@ -230,6 +230,19 @@ function planned(
   return data.plan as RecoveryJobPlan;
 }
 
+/** The shape check only. Whether a lease may be reclaimed is decided in
+ * `recovery/lease.ts`, next to the rule and its tests. */
+function validLease(value: unknown): value is { holder: string; expiresAt: number } {
+  const lease = object(value, "lease");
+  return (
+    Object.keys(lease).length === 2 &&
+    typeof lease.holder === "string" &&
+    /^[\w.:-]{1,160}$/.test(lease.holder) &&
+    typeof lease.expiresAt === "number" &&
+    Number.isFinite(lease.expiresAt)
+  );
+}
+
 function validateProgress(
   value: unknown,
   plan: RecoveryJobPlan,
@@ -242,7 +255,18 @@ function validateProgress(
       : terminal
         ? ["jobId", "status", "checkpoint", "outcomes", "residuals"]
         : ["checkpoint", "outcomes", "residuals"];
-  exactKeys(data, keys, "progress payload");
+  // R06: a non-terminal payload may carry the lease of the worker applying it.
+  // Absent means no lease was claimed, which the workspace guard treats as "the
+  // holder is unknown" and therefore never reclaims.
+  if (data.lease !== undefined && !validLease(data.lease))
+    throw new Error("Invalid recovery job lease.");
+  exactKeys(
+    data,
+    terminal === undefined && data.lease !== undefined
+      ? [...keys, "lease"]
+      : keys,
+    "progress payload",
+  );
   const checkpoint = data.checkpoint;
   if (
     !Number.isSafeInteger(checkpoint) ||

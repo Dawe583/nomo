@@ -135,6 +135,13 @@ All notable user-facing changes since the first repository commit.
   requests, is absent from the sidebar and the command palette, and is checked
   by the same viewport, focus, reduced-motion, zoom and touch-target gate as
   the rest of the product.
+- Make a recovery plan prove its own undo order. Adapters may record the read
+  set they consulted, it is stored durably in the capture, and a plan whose order
+  cannot be proven is refused rather than run. An absent read set is unknown, not
+  empty.
+- Give a recovery job a durable lease that is reclaimed only when it expired and
+  its holder is provably gone, so a worker that dies mid-apply cannot freeze the
+  workspace forever and a live one is never displaced.
 - Add a disposable end-to-end exercise of the agentic reverse loop against real
   files: a refused call changes nothing, an approved call captures before it
   writes, a reused identity cannot be rebound, the signed journal verifies, a

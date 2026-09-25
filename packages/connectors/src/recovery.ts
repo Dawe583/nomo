@@ -18,6 +18,13 @@ export type Observation = {
   scope: string;
   resources: string[];
   revision: Json;
+  /**
+   * What the adapter consulted to reach a decision, with the revision it saw.
+   * Absent means the adapter reports no read set, never that it read nothing: a
+   * planner that cannot prove a dependency must refuse to order around it, and
+   * it cannot prove one from an absent field.
+   */
+  reads?: readonly { readonly resource: string; readonly revision: Json }[];
   blastRadius: {
     count: number | null;
     precision: "exact" | "bounded" | "unknown";

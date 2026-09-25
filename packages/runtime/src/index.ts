@@ -7,3 +7,5 @@ export * from "./budget.ts";
 export * from "./conformance.ts";
 export type * from "../../connectors/src/recovery.ts";
 export * from "./recovery/plan.ts";
+export * from "./recovery/provenance.ts";
+export * from "./recovery/lease.ts";

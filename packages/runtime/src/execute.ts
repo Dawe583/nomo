@@ -36,6 +36,12 @@ import {
   type RecoveryResidual,
 } from "./recovery/plan.ts";
 import { jobPlan, latestJobEvent, progressFrom } from "./recovery/run.ts";
+import { leaseOf, leaseVerdict } from "./recovery/lease.ts";
+import {
+  orderRecoverySteps,
+  provenanceOf,
+  type ProvenanceFact,
+} from "./recovery/provenance.ts";
 import {
   VaultCapacityError,
   type RecoveryVault,
@@ -66,6 +72,13 @@ export type RuntimeOptions = {
   authorize: (request: Authorization) => Promise<boolean>;
   requireRecoverable?: boolean;
   irreversibilityBudget?: IrreversibilityBudget;
+  /** Identifies this worker in a recovery-job lease. Defaults to a fixed label, so
+   * the pid in the lease is what identifies the process. */
+  readonly hostLabel?: string;
+  /** How long this worker's claim on a recovery job stays valid. The lease is
+   * renewed at every step; a job whose holder died is reclaimable only after it
+   * expires AND its holder is provably gone. */
+  readonly jobLeaseMs?: number;
 };
 export type ExecutionResult = {
   status: Stage;
@@ -106,6 +119,8 @@ export interface RecoveryRuntime {
   ): Promise<RecoveryOutcome | { status: "unknown" }>;
   status(workspace: string, operationId: string): Promise<Stage | undefined>;
 }
+const isNodeError = (error: unknown): error is NodeJS.ErrnoException =>
+  error instanceof Error && "code" in error;
 const adapterKey = (workspace: string, operationId: string) =>
   digest({ workspace, operationId });
 const clean = <T>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -189,6 +204,9 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       reversibility: bundle.observation.reversibility,
     };
   };
+  const leaseHolder = `${options.hostLabel ?? "host"}:${process.pid}`;
+  const leaseMs = options.jobLeaseMs ?? 15 * 60 * 1000;
+
   const recordJob = async (
     tx: JournalTransaction,
     plan: RecoveryJobPlan,
@@ -562,6 +580,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           sequence: number;
           plan: RecoveryPlan;
         }> = [];
+        const provenance: ProvenanceFact[] = [];
         const residuals: RecoveryResidual[] = [];
         for (let index = 0; index < selected.length; index++) {
           const record = selected[index];
@@ -602,6 +621,17 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             continue;
           }
           try {
+            // The read and write sets come from the durable capture, not from
+            // anything this transaction remembers, so the ordering survives a
+            // restart and cannot be reconstructed after the fact.
+            const bundle = await loadPrepared(tx, event);
+            provenance.push(
+              provenanceOf(
+                event.operationId,
+                record.sequence,
+                bundle.observation,
+              ),
+            );
             steps.push({
               operationId: event.operationId,
               sequence: record.sequence,
@@ -618,6 +648,13 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           }
         }
         steps.sort((left, right) => right.sequence - left.sequence);
+        // Reverse sequence is only safe when every step that read what another
+        // step wrote is undone first. The recorded read and write sets prove it
+        // or the plan is refused; nothing here reorders, because a plan whose
+        // order cannot be proven is not a plan worth guessing at.
+        const ordering = orderRecoverySteps(provenance);
+        if (!ordering.safe)
+          throw new Error(`Recovery job order is not provably safe: ${ordering.reason}.`);
         const plan = completeRecoveryJobPlan({
           schema: "void.recovery-plan.v1",
           workspace: input.workspace,
@@ -693,22 +730,57 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
               candidate,
             ]),
           );
-          if (
-            [...latestJobs.values()].some(
-              (candidate) =>
-                candidate.jobId !== jobId &&
-                [
-                  "approved",
-                  "applying",
-                  "checkpoint",
-                  "unknown",
-                  "paused",
-                ].includes(candidate.stage),
-            )
-          )
+          // R06: another job blocks this workspace unless it is holding an
+          // expired lease whose owner is provably gone. A live holder, an
+          // unreadable lease and an absent lease all keep blocking, so the
+          // failure mode is "no recovery" rather than "two recoveries".
+          const blocking = [...latestJobs.values()].filter(
+            (candidate) =>
+              candidate.jobId !== jobId &&
+              [
+                "approved",
+                "applying",
+                "checkpoint",
+                "unknown",
+                "paused",
+              ].includes(candidate.stage),
+          );
+          const reclaimable = blocking.filter((candidate) =>
+            leaseVerdict(leaseOf(candidate.data)).reclaimable,
+          );
+          if (blocking.length > reclaimable.length)
             throw new Error(
               "Another recovery job is active in this workspace.",
             );
+          const superseded: string[] = [];
+          for (const stale of reclaimable) {
+            // Record the supersession rather than silently proceeding, so the
+            // history shows which job was displaced. Without its plan and
+            // progress the job is not reclaimable: there would be nothing to
+            // record, so the refusal stands.
+            const stalePlan = jobPlan(tx.jobEvents ?? [], stale.jobId);
+            if (stalePlan === undefined) {
+              throw new Error("Another recovery job is active in this workspace.");
+            }
+            const staleProgress = progressFrom(
+              latestJobEvent(tx.jobEvents ?? [], stale.jobId),
+              stalePlan,
+            );
+            const step = stalePlan.steps[staleProgress.checkpoint];
+            if (step === undefined) {
+              throw new Error("Another recovery job is active in this workspace.");
+            }
+            await recordJob(
+              tx,
+              stalePlan,
+              "paused",
+              {
+                ...staleProgress,
+                pause: { code: "lease-expired", operationId: step.operationId },
+              } as unknown as Json,
+            );
+            superseded.push(stale.jobId);
+          }
           if (
             records.some(
               (record) =>
@@ -767,12 +839,12 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
               event.stage === "unknown" ||
               event.stage === "paused"
             )
-              await recordJob(
-                tx,
-                plan,
-                "applying",
-                progress as unknown as Json,
-              );
+              // R06: claim the lease before any step runs, so another worker can
+              // tell an in-flight job from one whose holder died.
+              await recordJob(tx, plan, "applying", {
+                ...progress,
+                lease: { holder: leaseHolder, expiresAt: Date.now() + leaseMs },
+              } as unknown as Json);
             if (progress.checkpoint < plan.steps.length) {
               const step = plan.steps[progress.checkpoint]!;
               try {
@@ -874,6 +946,8 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
                     },
                   ]
                 : current.residuals;
+            // The lease is renewed at every step, so a job that is genuinely
+            // working is never mistaken for one whose holder died.
             await recordJob(tx, plan, "checkpoint", {
               checkpoint: current.checkpoint + 1,
               outcomes: [
@@ -881,6 +955,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
                 { operationId: state.step.operationId, status: outcome.status },
               ],
               residuals,
+              lease: { holder: leaseHolder, expiresAt: Date.now() + leaseMs },
             } as unknown as Json);
             return undefined;
           },

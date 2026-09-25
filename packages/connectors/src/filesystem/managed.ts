@@ -314,6 +314,15 @@ export function managedFilesystemAdapter(options: {
           count: mutation.action === "rename" ? 2 : 1,
           precision: "exact",
         },
+        // R07: what this call consulted to decide. The before image is the
+        // read, and its revision is what an undo is measured against, so a plan
+        // can prove its order instead of assuming it.
+        reads: [
+          { resource: `file:${join(root, mutation.path)}`, revision: before.revision },
+          ...(mutation.action === "rename"
+            ? [{ resource: `file:${join(root, mutation.to)}`, revision: destination!.revision }]
+            : []),
+        ],
       };
     },
     async prepare(args, observation) {

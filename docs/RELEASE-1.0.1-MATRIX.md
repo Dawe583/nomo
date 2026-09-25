@@ -336,6 +336,37 @@ product exists to prevent.
 `scripts/src/agentic-reverse-exercise.mjs` also runs standalone with
 `node scripts/src/agentic-reverse-exercise.mjs` and prints its steps.
 
+### R06 and R07: a job lease, and a plan that proves its own order
+
+A recovery plan was undone in reverse journal sequence, which is only safe
+because every producer of a resource a step read is undone after that step.
+Reverse sequence does not prove that: for a selected subset, or when a step
+read what an earlier step wrote, the order can be wrong.
+
+Provenance now makes the assumption checkable. An adapter may record a read set
+with the revision it saw; `filesystem.managed` records the before image and, for
+a rename, the destination, because that is exactly what it consulted. The
+`filesystem` and `managed-postgres` paths carry it durably in the capture, and
+`orderRecoverySteps` refuses a plan whose order it cannot prove. It does not
+reorder: a plan whose order cannot be proven is not a plan worth guessing at. An
+absent read set is treated as unknown rather than as empty, so an adapter that
+reports nothing contributes no edges and no claim in either direction. Five
+cases are pinned directly, and removing the refusal turns one red.
+
+The R06 job lease closes the matching availability gap. A workspace already
+refused a second recovery job while one was in flight, inside the journal
+writer transaction, so two workers cannot interleave; what it could not survive
+was the worker dying mid-`applying`, which blocked the workspace until someone
+edited a journal by hand. A job now claims a lease naming its host and pid and
+renews it at every step. Reclaiming requires both that the deadline passed and
+that the holder is provably gone; an absent lease, an unparseable pid, an
+unexpired lease and a live holder all keep blocking, and `EPERM` from a process
+that exists but belongs to someone else counts as alive. A displaced job is
+recorded as paused rather than silently stepped over. The rule lives in
+`packages/runtime/src/recovery/lease.ts` so it can be proven for a real dead
+process, a real live one and an unanswerable case. `packages/runtime` 104/104,
+with both halves of the reclaim mutation-checked.
+
 ### A wiring that was attempted and reverted
 
 Wiring the shared budget ledger into `execute.ts` was attempted and backed

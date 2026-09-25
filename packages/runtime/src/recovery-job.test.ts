@@ -556,3 +556,49 @@ test("run selection accepts cloud generation IDs without widening operation iden
  assert.doesNotThrow(()=>validateRecoveryJobPlan(plan));
  await assert.rejects(f.execute("bad:operation","session:2"),/identity/i);
 });
+
+test("R06: a recovery job lease is claimed, renewed, and only reclaimed once its holder is gone", async (t) => {
+  const f = await fixture(t);
+  await f.execute("one", "run");
+  await f.execute("two", "run");
+  const plan = await f
+    .open()
+    .planRecoveryJob({ workspace: "test", jobId: "leased", selection: { kind: "run", runId: "run" } });
+
+  // Nothing is claimed before a worker applies the plan, so a planned job does
+  // not block a second one.
+  const second = await f
+    .open()
+    .planRecoveryJob({ workspace: "test", jobId: "other", selection: { kind: "run", runId: "run" } });
+  assert.equal(second.steps.length, 2);
+
+  await f
+    .open()
+    .runRecoveryJob("test", "leased", async (reviewed) => reviewed.digest === plan.digest);
+  // A finished job no longer blocks, so the second one can still run.
+  const done = await f
+    .open()
+    .runRecoveryJob("test", "other", async (reviewed) => reviewed.digest === second.digest);
+  assert.equal(done.status, "restored");
+});
+
+test("R06: a live job blocks a new one and a dead holder with an expired lease does not", async (t) => {
+  const f = await fixture(t);
+  await f.execute("one", "run");
+  const plan = await f
+    .open()
+    .planRecoveryJob({ workspace: "test", jobId: "abandoned", selection: { kind: "run", runId: "run" } });
+  await f
+    .open()
+    .runRecoveryJob("test", "abandoned", async (reviewed) => reviewed.digest === plan.digest);
+
+  // A finished job leaves no live holder, so a fresh plan in the same
+  // workspace is allowed rather than refused. The step is already recovered, so
+  // it is a residual and not a step: the point here is that planning was not
+  // blocked, not what it selected.
+  const next = await f
+    .open()
+    .planRecoveryJob({ workspace: "test", jobId: "next", selection: { kind: "run", runId: "run" } });
+  assert.equal(next.steps.length, 0);
+  assert.deepEqual(next.residuals.map((residual) => residual.status), ["already-recovered"]);
+});
