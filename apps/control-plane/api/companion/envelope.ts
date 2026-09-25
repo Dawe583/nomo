@@ -13,8 +13,9 @@ import {
   type CompanionSession,
 } from "./devices.ts";
 import { companionDiagnostics } from "./diagnostics.ts";
-import { readOperation, type CompanionOperationStatus } from "./operations.ts";
+import { readOperation, revokeOperationId, type CompanionOperationStatus } from "./operations.ts";
 import { companionWorkspace, CompanionStoreError } from "./store.ts";
+import { readIdempotency, recordIdempotency } from "./idempotency.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -94,6 +95,10 @@ type EchoedScope = { readonly deviceId: string; readonly workspaceId: string } |
 
 type RunContext = {
   readonly env: Readonly<NodeJS.ProcessEnv>;
+  /** Present on every mutating operation. Paired with `requestDigest` so a
+   * retry is distinguishable from a key reused for a different body. */
+  readonly idempotencyKey: string;
+  readonly requestDigest: string;
   /** The authority the bound operation runs with. Pairing runs as the host,
    * because the host mints the device, not the caller. */
   readonly session: CompanionSession;
@@ -202,6 +207,8 @@ function handshake(context: RunContext): Reply {
         })),
       limits: { ...limits },
       pendingBehaviors: [
+        "idempotent replay of a mutation inside the advertised window",
+        "recovery of a lost device.pair response",
         "executor identity and pinned certificate",
         "session reads and sends",
         "bounded event cursor",
@@ -255,8 +262,21 @@ function statusReply(operationId: string, status: CompanionOperationStatus): Rep
 }
 
 function deviceRevoke(context: RunContext): Reply {
+  // The effect is already idempotent: `revokeDevice` keeps the first
+  // `revokedAt` and records nothing the second time, and a revoked device can
+  // no longer authenticate at all. What still has to be refused is a key that
+  // arrives for a different body, so one key can never be steered onto another
+  // request.
+  if (readIdempotency(context.env, context.idempotencyKey, context.requestDigest).state === "conflict") {
+    return refused(409, "idempotency_key_reused", "The idempotency key belongs to a different request.");
+  }
   const receipt = revokeDevice(context.env, context.deviceId);
   if (receipt === null) return refused(403, "authorization_denied", "The device identity is not available to this workspace.");
+  recordIdempotency(context.env, context.idempotencyKey, {
+    requestDigest: context.requestDigest,
+    operationId: revokeOperationId(context.deviceId),
+    recordedAt: Date.now(),
+  });
   return {
     httpStatus: 200,
     outcome: "succeeded",
@@ -288,7 +308,21 @@ function devicePair(context: RunContext): Reply {
   const body = recordOf(context.request.body);
   const input = body === null ? null : parsePairingBody(body);
   if (input === null) return refused(403, "invalid_request", "The pairing body is not the v1 pairing shape.");
+  // A captured pairing envelope replayed inside the window must not mint a
+  // second device. The response is deliberately not replayed: it carries the
+  // one-time plaintext credential, and storing that on disk to make a retry
+  // cheap would trade a replay window for credential material at rest. The
+  // caller pairs again instead, and the workspace's device cap bounds it.
+  const prior = readIdempotency(context.env, context.idempotencyKey, context.requestDigest);
+  if (prior.state !== "new") {
+    return refused(409, "idempotency_key_reused", "This pairing was already dispatched; pair again to receive a new credential.");
+  }
   const { device, deviceToken } = pairDevice(context.env, input);
+  recordIdempotency(context.env, context.idempotencyKey, {
+    requestDigest: context.requestDigest,
+    operationId: device.deviceId,
+    recordedAt: Date.now(),
+  });
   return {
     httpStatus: 201,
     outcome: "succeeded",
@@ -498,7 +532,7 @@ export async function handleCompanionEnvelopeRequest(
       if (!session.scopes.includes(binding.requiredScope)) {
         return sendReply(response, echo, refused(403, "authorization_denied", "The device grant does not carry the required scope."), claim);
       }
-      const reply = binding.run({ env, session, request: parsed, operationId: echo.operationId, deviceId: session.deviceId });
+      const reply = binding.run({ env, session, request: parsed, operationId: echo.operationId, deviceId: session.deviceId, idempotencyKey: parsed.idempotencyKey as string, requestDigest: digest });
       return sendReply(response, echo, reply, claim);
     }
     // Pairing runs as the host that mints the device. The operator identity is
@@ -506,7 +540,7 @@ export async function handleCompanionEnvelopeRequest(
     // already cleared the host gate; its placeholder device identity is never
     // minted into a receipt, because the receipt carries the new one.
     const operator: CompanionSession = { deviceId: unattributed, workspaceId: companionWorkspace(env), label: "host operator", scopes: [readScope, writeScope] };
-    const reply = binding.run({ env, session: operator, request: parsed, operationId: echo.operationId, deviceId: unattributed });
+    const reply = binding.run({ env, session: operator, request: parsed, operationId: echo.operationId, deviceId: unattributed, idempotencyKey: parsed.idempotencyKey as string, requestDigest: digest });
     const minted = typeof reply.body?.deviceId === "string" ? reply.body.deviceId : null;
     return sendReply(response, echo, reply, minted === null ? null : { deviceId: minted, workspaceId: operator.workspaceId });
   } catch (error) {

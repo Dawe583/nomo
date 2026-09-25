@@ -58,6 +58,17 @@ body, and the response identity is verified before the payload.
 Local loopback and fixture evidence only: `swift test` is a macOS-host run, so
 no paired phone, no iOS simulator and no transport journey is claimed.
 
+`device.pair` is implemented and dispatchable but is not in the handshake
+capability catalog. That is a property of the frozen v1 contract, not of the
+adapter: the capability catalog in `scripts/src/companion-fixtures.mjs` is
+derived from the frozen `operations` set, which does not contain
+`device.pair` even though the frozen `mutations` set does. Publishing it in
+the handshake would make every handshake response fail the frozen validator,
+so the frozen contract wins and the gap is recorded here instead. A client
+therefore reaches pairing by calling the operation directly rather than by
+negotiating it. Closing this properly needs a v1.1 contract change, not an
+adapter change.
+
 The existing cloud cookie and `VOID_CONTROL_TOKEN` authentication paths are not device pairing. They must not be copied into a phone credential. The existing loopback API remains private.
 
 ## 3. Protocol envelope and exact identity

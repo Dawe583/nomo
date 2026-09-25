@@ -16,6 +16,7 @@
  */
 
 import {
+  bindsAdapter,
   certificationStatus,
   validateCapabilityProfile,
   type CapabilityProfile,
@@ -109,7 +110,11 @@ export function resolveProviderProfile(
   set: ProviderProfileSet,
   adapterId: string,
 ): CapabilityProfile {
-  const profile = set.entries.find((entry) => entry.adapter.id === adapterId);
+  // `bindsAdapter` is the one place the "was this profile issued for exactly
+  // this adapter" rule lives, so resolution goes through it instead of
+  // repeating the comparison. The version is the profile's own here; the
+  // conformance runner is what later binds it to a runtime adapter.
+  const profile = set.entries.find((entry) => bindsAdapter(entry, adapterId, entry.adapter.version));
   if (profile === undefined) {
     throw new CapabilityProfileError(
       `no capability profile for adapter ${JSON.stringify(adapterId)}; published: ${set.ids.join(", ")}`,

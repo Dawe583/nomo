@@ -135,6 +135,11 @@ All notable user-facing changes since the first repository commit.
   requests, is absent from the sidebar and the command palette, and is checked
   by the same viewport, focus, reduced-motion, zoom and touch-target gate as
   the rest of the product.
+- Deduplicate a mutating companion operation by its idempotency key, bound to
+  the exact request body, so a retry is distinguishable from a key reused for a
+  different body. A replayed pairing is refused with a conflict instead of
+  minting a second device, and its one-time credential is never written to disk
+  to make a retry cheap. The handshake now lists what it does not enforce.
 
 - d125b7e9: Restored the product baseline from upstream history.
 - 9ef84fe2: Synchronized the product branch with upstream history.

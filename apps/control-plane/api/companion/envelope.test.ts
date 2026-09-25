@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -453,4 +453,86 @@ test("operation status stays inside the device that owns the record", async t =>
     { headers: bearer(sibling.deviceToken) },
   );
   assert.equal(internal.status, 404);
+});
+
+test("a replayed pairing does not mint a second device and never replays the credential", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const pairing = envelope({ label: "Kitchen iPhone", scopes: [readScope] }, {
+    operation: "device.pair",
+    operationId: "op-pair-idem",
+    idempotencyKey: "idem-pair-1",
+    deviceId: undefined,
+    workspaceId: undefined,
+  });
+  delete pairing.deviceId;
+  delete pairing.workspaceId;
+
+  const first = await (await post(harness, pairing)).json() as Envelope;
+  assert.equal(first.outcome, "succeeded", JSON.stringify(first));
+  const firstBody = first.body as { deviceId: string; deviceToken: string };
+  assert.match(firstBody.deviceToken, /^[A-Za-z0-9_-]{43}$/);
+
+  // A captured envelope replayed inside the window is refused rather than
+  // minting device #2, and the one-time credential is never handed out twice.
+  const replay = await (await post(harness, pairing)).json() as Envelope;
+  assert.equal(replay.outcome, "conflict", JSON.stringify(replay));
+  assert.equal(replay.httpStatus, 409);
+  assert.equal((replay.error as { code: string }).code, "idempotency_key_reused");
+  assert.equal(
+    JSON.stringify(replay).includes(firstBody.deviceToken),
+    false,
+    "a refused replay must not echo the credential it already issued",
+  );
+
+  // The workspace has exactly one device from that key, and a fresh key still
+  // works, so the refusal is about the replay and not about pairing at all.
+  const registry = await readFile(join(harness.dataDir, "companion", "devices.json"), "utf8");
+  assert.equal(registry.match(/"deviceId"/g)?.length, 1, `a replayed pairing minted a second device: ${registry}`);
+  const freshRequest = envelope({ label: "Hallway iPad", scopes: [readScope] }, {
+    operation: "device.pair",
+    operationId: "op-pair-fresh",
+    idempotencyKey: "idem-pair-2",
+    deviceId: undefined,
+    workspaceId: undefined,
+  });
+  delete freshRequest.deviceId;
+  delete freshRequest.workspaceId;
+  const fresh = await (await post(harness, freshRequest)).json() as Envelope;
+  assert.equal(fresh.outcome, "succeeded", JSON.stringify(fresh));
+  assert.notEqual((fresh.body as { deviceId: string }).deviceId, firstBody.deviceId);
+});
+
+test("a mutation idempotency key reused for a different body is a conflict", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const device = await pair(harness, [readScope, writeScope], "owner");
+  const revoke = envelope({ deviceId: device.deviceId }, {
+    operation: "device.revoke",
+    operationId: "op-revoke-idem",
+    deviceId: device.deviceId,
+    idempotencyKey: "idem-revoke-1",
+  });
+  const first = await (await post(harness, revoke, bearer(device.deviceToken))).json() as Envelope;
+  assert.equal(first.outcome, "succeeded", JSON.stringify(first));
+
+  // A revoked device cannot replay anything at all: the credential is dead
+  // before the idempotency store is even consulted. That is a stronger property
+  // than replaying the first receipt, so it is what the test asserts.
+  const replay = await (await post(harness, revoke, bearer(device.deviceToken))).json() as Envelope;
+  assert.equal(replay.outcome, "denied", JSON.stringify(replay));
+  assert.equal(replay.httpStatus, 403);
+  assert.equal((replay.error as { code: string }).code, "authentication_required");
+
+  // A different body under the same key never resolves to the first request.
+  const owner = await pair(harness, [readScope, writeScope], "second owner");
+  const reused = await (await post(harness, envelope({ deviceId: owner.deviceId }, {
+    operation: "device.revoke",
+    operationId: "op-revoke-idem-2",
+    deviceId: owner.deviceId,
+    idempotencyKey: "idem-revoke-1",
+  }), bearer(owner.deviceToken))).json() as Envelope;
+  assert.equal(reused.outcome, "conflict", JSON.stringify(reused));
+  assert.equal(reused.httpStatus, 409);
+  assert.equal((reused.error as { code: string }).code, "idempotency_key_reused");
 });

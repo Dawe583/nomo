@@ -260,15 +260,37 @@ critical. Six are fixed here, each with a mutation proof.
    object, which the server's own `sendReply` downgrades to a refusal. The
    client applies the server's invariant now.
 
-Still open, and recorded rather than quietly fixed: `idempotencyKey` is
-required on mutating companion operations but is not yet used for
-deduplication, while the handshake advertises `replayWindowSeconds` and
-`idempotencyRetentionHours` as if it were; pairing lets the caller choose
-`companion:write` with no operator approval; and the handshake capability
-catalog omits `device.pair`, so the one credential-free operation is
-unnegotiable. None of these is exploitable beyond what is stated here: a
-replayed pairing is capped by the eight-device limit, a revoke is naturally
-idempotent, and an omitted catalog entry fails closed rather than open.
+Still open, and recorded rather than quietly fixed: pairing lets the caller
+choose `companion:write` with no operator approval, and a stale
+`.retention.lock` has no lease, so it blocks collection permanently after a
+process death. The first fails in the safe direction today, because
+`device.revoke` only ever targets the calling device's own id, so the write
+scope currently buys a device nothing. The second can only prevent a delete,
+never cause one.
+
+Two of the remaining findings are now closed as well. A mutating companion
+operation is deduplicated by its idempotency key, bound to the exact request
+body, so a retry is distinguishable from a key reused for a different body; a
+replayed `device.pair` is refused with a conflict instead of minting a second
+device, and its one-time plaintext credential is deliberately never stored to
+make a retry cheap. A replayed `device.revoke` is refused even earlier, because
+a revoked device can no longer authenticate at all. The handshake now lists
+`idempotent replay of a mutation` and `recovery of a lost device.pair response`
+among its pending behaviors, so the advertised limits match what is enforced.
+`apps/control-plane/api/companion` 23/23 with both mutations shown red.
+
+`resolveProviderProfile` now goes through `bindsAdapter`, so the rule "this
+profile was issued for exactly this adapter" lives in one place instead of
+being restated and existing only in a test. `capability.test.ts` and
+`capability-profiles.test.ts` 19/19, the release gate 3/3, and
+`conformance.test.ts` 8/8.
+
+One finding is not fixable in the adapter and is recorded in the protocol spec
+instead: `device.pair` is implemented and dispatchable but is not in the
+handshake capability catalog, because the frozen v1 catalog is derived from the
+frozen `operations` set, which does not contain it. Publishing it would make
+every handshake response fail the frozen validator, so closing this needs a
+v1.1 contract change rather than an adapter change.
 
 ### Windows source audit
 
