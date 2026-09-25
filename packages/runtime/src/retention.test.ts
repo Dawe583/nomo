@@ -13,6 +13,8 @@ import {
 } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { randomBytes } from "node:crypto";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
@@ -504,4 +506,45 @@ test("recording a lifecycle obeys the same lock as a collection", async (t) => {
     false,
     "a refused mark must not leave evidence behind",
   );
+});
+
+test("a lock left by a dead collector is reclaimed, a live or unreadable one is not", async (t) => {
+  const f = await fixture(t);
+  const reference = await f.put("first");
+  const lock = join(f.index, WORKSPACE, ".retention.lock");
+  await mkdir(dirname(lock), { recursive: true, mode: 0o700 });
+
+  // A lock this process still holds is never reclaimed, however old it looks.
+  const live = await open(lock, "wx", 0o600);
+  await live.writeFile(JSON.stringify({ schema: "void.retention.lock.v1", pid: process.pid, expiresAt: 0 }));
+  await live.close();
+  await assert.rejects(f.collect("live-lock"), /retention is locked/);
+  assert.equal(await f.read(reference), "first");
+
+  // A lock whose owner is gone and whose lease has passed is reclaimed, so a
+  // crash does not freeze retention until an operator notices. A real exited
+  // child supplies the pid; guessing one is unreliable because an existing but
+  // foreign pid answers EPERM, not ESRCH, and that case must stay refused.
+  await rm(lock, { force: true });
+  const child = spawn(process.execPath, ["-e", ""], { stdio: "ignore" });
+  const deadPid = child.pid;
+  assert.ok(typeof deadPid === "number");
+  await once(child, "exit");
+  const handle = await open(lock, "wx", 0o600);
+  await handle.writeFile(JSON.stringify({
+    schema: "void.retention.lock.v1",
+    pid: deadPid,
+    expiresAt: Date.now() - 1000,
+  }));
+  await handle.close();
+  assert.equal(
+    (await f.collect("dead-lock")).deleted >= 0,
+    true,
+    "a dead owner's expired lock must not freeze collection",
+  );
+  assert.equal(await rm(lock, { force: true }), undefined, "the reclaimed lock is released again");
+
+  // A lock we cannot parse is a lock we will not take.
+  await writeFile(lock, "not json", { mode: 0o600 });
+  await assert.rejects(f.collect("unreadable-lock"), /retention is locked/);
 });

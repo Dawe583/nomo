@@ -129,7 +129,11 @@ skippedPinned + deleted` equals the artifact count seen at the start. Every run
 is a signed `void.operation.v1` journal chain under `adapterId
 "vault.retention"`, bound to the policy digest, ending in `succeeded` with the
 report: a delete is never silent. Runs serialize on `.retention.lock` in the
-index directory, and a competing or stale lock refuses the run.
+index directory. A competing lock refuses the run. A lock left behind by a
+process that died is reclaimed only when both of these hold: its recorded lease
+has passed, and its recorded owner is provably gone. Either check being
+uncertain keeps the refusal, so a lock that cannot be read, parsed, or attributed
+never becomes a second collector.
 
 This does not cover the reserved SQLite vault, pin release, index backup, or
 administrative quota migration.

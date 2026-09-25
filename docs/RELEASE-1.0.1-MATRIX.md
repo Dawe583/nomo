@@ -260,13 +260,20 @@ critical. Six are fixed here, each with a mutation proof.
    object, which the server's own `sendReply` downgrades to a refusal. The
    client applies the server's invariant now.
 
-Still open, and recorded rather than quietly fixed: pairing lets the caller
-choose `companion:write` with no operator approval, and a stale
-`.retention.lock` has no lease, so it blocks collection permanently after a
-process death. The first fails in the safe direction today, because
-`device.revoke` only ever targets the calling device's own id, so the write
-scope currently buys a device nothing. The second can only prevent a delete,
-never cause one.
+One remains open and is recorded rather than quietly fixed: pairing lets the
+caller choose `companion:write` with no operator approval. It fails in the safe
+direction today, because `device.revoke` only ever targets the calling device's
+own id, so the write scope currently buys a device nothing. It will not stay
+safe the moment a write-scoped operation can affect anything else, so the next
+binding has to grant that scope operator-side.
+
+The retention lock's availability gap is now closed. It used to have no lease,
+so a collector that died left the lock behind and froze collection in that
+workspace permanently. A lock now records its owner and a lease, and is
+reclaimed only when the lease has passed AND the owner is provably gone; an
+unreadable, unparseable or unattributable lock is still refused, so the failure
+mode stays "no delete" rather than "two deletes". `packages/runtime` 92/92, with
+both halves of the reclaim mutation-checked.
 
 Two of the remaining findings are now closed as well. A mutating companion
 operation is deduplicated by its idempotency key, bound to the exact request

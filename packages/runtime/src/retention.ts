@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, open, readdir, readFile, rename, rm, stat } from "node:fs/promises";
+import { mkdir, open, readdir, readFile, rename, rm, stat, type FileHandle } from "node:fs/promises";
 import { join, resolve, sep } from "node:path";
 
 import { canonicalJson } from "../../ledger/src/canonical.ts";
@@ -86,15 +86,21 @@ const evidenceDir = (index: string, workspace: string, artifactRoot: string): st
   if (!/^[\w-]{1,100}$/.test(workspace))
     throw new Error("Invalid vault retention workspace.");
   // The evidence tree must not be the artifact tree, or any parent of it: the
-  // reserved vault reads every regular file in a workspace directory as a
-  // legacy artifact, so a `.meta` sidecar there makes the whole store
-  // unverifiable. Refuse rather than write into a tree we just said is unsafe.
+  // reserved vault reads every file in a workspace directory as a legacy
+  // artifact, so a `.meta` sidecar there makes the whole store unverifiable.
+  // Refuse rather than write into a tree we just said is unsafe.
   const base = resolve(index);
   const root = resolve(artifactRoot);
   if (root === base || root.startsWith(`${base}${sep}`))
     throw new Error("Recovery vault retention evidence must live outside the artifact root.");
   return join(base, workspace);
 };
+/** How long a lock may sit before a collector may reclaim it, and only if its
+ * recorded owner is provably gone. Long enough to cover a slow collection,
+ * short enough that a crash does not freeze retention until an operator
+ * notices. */
+const retentionLeaseMs = 15 * 60 * 1000;
+
 const lifecyclePath = (dir: string, artifact: ArtifactIdentity): string => {
   if (!/^[a-f0-9]{64}$/.test(artifact.digest))
     throw new Error("Invalid or unavailable recovery reference.");
@@ -328,25 +334,77 @@ export async function collectVaultGarbage(
   });
 }
 
+/** A lock that outlives its process would freeze collection permanently, and
+ * "delete the lock if it looks old" is how two collectors end up deleting at
+ * once. The lease is therefore reclaimable only when the deadline has passed
+ * AND the recorded owner is provably gone. Either check being uncertain keeps
+ * the refusal, so the failure mode stays "no delete" rather than "two
+ * deletes". */
+type RetentionLockRecord = {
+  readonly schema: "void.retention.lock.v1";
+  readonly pid: number;
+  readonly expiresAt: number;
+};
+
+async function reclaimableLock(lockPath: string, now: number): Promise<boolean> {
+  const raw = await readFile(lockPath, "utf8").catch(() => null);
+  if (raw === null) return true;
+  let record: RetentionLockRecord;
+  try {
+    const parsed = JSON.parse(raw) as Partial<RetentionLockRecord>;
+    if (parsed.schema !== "void.retention.lock.v1" || !Number.isInteger(parsed.pid) || !Number.isFinite(parsed.expiresAt)) return false;
+    record = { schema: parsed.schema, pid: parsed.pid as number, expiresAt: parsed.expiresAt as number };
+  } catch {
+    // A lock we cannot read is a lock we will not take.
+    return false;
+  }
+  if (record.expiresAt > now) return false;
+  try {
+    process.kill(record.pid, 0);
+    return false;
+  } catch (error) {
+    return isNodeError(error) && error.code === "ESRCH";
+  }
+}
+
 async function withRetentionLock<T>(
   dir: string,
   run: () => Promise<T>,
+  now: () => number = Date.now,
 ): Promise<T> {
   await mkdir(dir, { recursive: true, mode: 0o700 });
-  // Follow the connector snapshot store and the manifest writer: a competing or
-  // stale lock refuses the run instead of waiting on a guessed lease.
   const lockPath = join(dir, ".retention.lock");
-  const handle = await open(lockPath, "wx", 0o600).catch((error: unknown) => {
-    if (isNodeError(error) && error.code === "EEXIST")
-      throw new Error(
-        "Recovery vault retention is locked; review the active writer before retrying.",
-      );
-    throw error;
-  });
+  let handle: FileHandle | null = null;
+  for (let attempt = 0; attempt < 2 && handle === null; attempt += 1) {
+    const opened = await open(lockPath, "wx", 0o600).catch((error: unknown) => {
+      if (isNodeError(error) && error.code === "EEXIST") return null;
+      throw error;
+    });
+    if (opened !== null) {
+      handle = opened;
+      break;
+    }
+    if (attempt === 0 && (await reclaimableLock(lockPath, now()))) {
+      // Only reached once the deadline passed and the owner is provably gone.
+      await rm(lockPath, { force: true });
+      continue;
+    }
+    throw new Error(
+      "Recovery vault retention is locked; review the active writer before retrying.",
+    );
+  }
+  const held = handle as FileHandle;
   try {
+    const record: RetentionLockRecord = {
+      schema: "void.retention.lock.v1",
+      pid: process.pid,
+      expiresAt: now() + retentionLeaseMs,
+    };
+    await held.writeFile(JSON.stringify(record));
+    await held.sync();
     return await run();
   } finally {
-    await handle.close();
+    await held.close();
     await rm(lockPath, { force: true });
   }
 }
