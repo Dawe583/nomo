@@ -11,18 +11,21 @@ Release evidence update, 2026-09-25: the native iOS 17 Xcode project, Swift
 package, app, unit tests, UI-test source and protocol fixtures exist under
 `apps/apple/`. Current source contains 9 `VOIDTests` cases and 6
 `VOIDUITests` cases. On 2026-09-25 a Release `iphonesimulator` build of the
-`VOID` scheme succeeded, and the built product installed and launched on an
-iPad Pro 11-inch (M5) simulator, rendering the read-only onboarding/entry
-screen. That product is ad-hoc signed with no team identifier, no entitlements
-and no app icon, so it is simulator evidence and not a device or store claim.
-The last recorded sequential simulator run passed 6/6 and 6/6, respectively; it
-is historical execution evidence, not a 9/9 claim. Reserved-vault evidence is
-12/12. A `generic/platform=iOS` Release build failed the same day because no
-provisioning profile for `com.void.companion` is installed and the project sets
-no `DEVELOPMENT_TEAM`; the paired iPhone reports Developer Mode off. Physical
-iPhone/iPad install, signed-device, App Store Connect and TestFlight evidence
-remain open. The older macOS-first scope and iOS companion boundary remain in
-force.
+`VOID` scheme succeeded, the built product installed and launched on an
+iPad Pro 11-inch (M5) simulator rendering the read-only onboarding/entry
+screen, and a simulator test run passed `VOIDTests` 9/9 and `VOIDUITests` 6/6
+against the current source. That product is ad-hoc signed with no team
+identifier, no entitlements and no app icon, so it is simulator evidence and
+not a device or store claim. The `CompanionProtocolKit` package passes 27/27
+under `swift test`, but that is a macOS host run and not an iOS simulator or
+device result, because `xcodebuild test -scheme CompanionProtocolKit` is not
+configured for the test action. A `generic/platform=iOS` Release build failed
+the same day because no provisioning profile for `com.void.companion` is
+installed, the project declares no `DEVELOPMENT_TEAM` and no
+`CODE_SIGN_ENTITLEMENTS`, and the paired iPhone reports Developer Mode off.
+Physical iPhone/iPad install, signed-device, App Store Connect and TestFlight
+evidence remain open. The older macOS-first scope and iOS companion boundary
+remain in force.
 
 Windows is outside the 1.0.1 delivery scope. Its historical beta evidence is
 preserved in `WINDOWS-DESKTOP.md`, while current-source Windows evidence remains

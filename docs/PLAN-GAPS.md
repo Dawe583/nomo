@@ -12,21 +12,26 @@ run, that `GET /api/tools` advertised `void_workspace_write` while
 `availableTools()` now filters through `toolAllowedInMode`, with cases in
 `packages/workbench/src/permission-authority.test.ts` and
 `apps/control-plane/api/parity.test.ts`. Dispatch-time enforcement held
-throughout, so the defect was the operator catalog, not a bypass. The fix is
-source-inspected here and has not been re-run through the live harness.
+throughout, so the defect was the operator catalog, not a bypass. The live
+harness now asserts the read-only catalog and re-passed at 67/67, and
+`permission-authority.test.ts` plus `safety-boundaries.test.ts` pass 8/8.
 G-22/G-23 below describe the old distribution proposal. The native iOS target
 is a paired-Mac SwiftUI client. On 2026-09-25 Xcode 27.0 build 27A266a was
 confirmed selected at `/Applications/Xcode.app`; `xcodebuild -list` resolved
 the `VOID` project and its schemes, a Release `iphonesimulator` build of the
 `VOID` scheme succeeded, and the built product installed and launched on an
 iPad Pro 11-inch (M5) simulator. That product is ad-hoc signed with no team
-identifier, no entitlements and no app icon, so it is simulator evidence
-only. Current source contains 9 `VOIDTests` cases and 6 `VOIDUITests` cases.
-The last recorded sequential simulator run passed `VOIDTests` 6/6 and
-`VOIDUITests` 6/6; it is historical execution evidence, not a 9/9 claim.
-Reserved-vault evidence is 12/12. A `generic/platform=iOS` Release build failed
-the same day for want of a provisioning profile for `com.void.companion`, with
-`DEVELOPMENT_TEAM` unset and the paired iPhone reporting Developer Mode off.
+identifier, no entitlements and no app icon, so it is simulator evidence only.
+Current source contains 9 `VOIDTests` cases and 6 `VOIDUITests` cases. A
+2026-09-25 simulator test run passed `VOIDTests` 9/9 and
+`VOIDUITests` 6/6 against the current source, replacing the earlier
+historical 6/6 unit figure. The `CompanionProtocolKit` package passes 27/27
+under `swift test` on a macOS host, which is not an iOS simulator or device
+result. Reserved-vault evidence is 12/12. A `generic/platform=iOS` Release
+build failed the same day for want of a provisioning profile for
+`com.void.companion`, with no `DEVELOPMENT_TEAM` and no
+`CODE_SIGN_ENTITLEMENTS` in the project and the paired iPhone reporting
+Developer Mode off.
 Physical iPhone/iPad install, signed-device, App Store Connect and TestFlight
 evidence remain open. This toolchain inventory does not establish the user's
 account, certificates, provisioning or hardware state.
