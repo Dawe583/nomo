@@ -378,6 +378,31 @@ recorded as paused rather than silently stepped over. The rule lives in
 process, a real live one and an unanswerable case. `packages/runtime` 104/104,
 with both halves of the reclaim mutation-checked.
 
+### The cloud deployment outage, 2026-09-26
+
+Twelve consecutive Vercel production deployments failed before this fix, and
+nothing was live. `pnpm run build` reproduced it exactly: eleven
+`workflow-node-module-error` failures, because the agent-step workflow compiles
+`cloud/steps.mjs`, which imports `decide`, which imported the policy barrel for
+two string constants, and the barrel re-exports the pack loader and the approval
+broker, both of which touch the filesystem. The workflow runtime refuses Node
+builtins outright.
+
+Two things are worth recording about why it took so long. The defect was
+already in the tree before this change; a new import in `cloud/steps.mjs` only
+removed the tree-shaking slack that had been hiding it. And the guard against it
+is now a test that needs no bundler: no policy leaf may import the barrel, and
+the barrel must still publish the whole grammar.
+
+Verified after the fix: `pnpm run build` exits 0 from a cleared
+`.vercel/output`, the cloud artifact check reports 4 frontend assets, the Node
+API and the streaming route, the deployment
+`https://void-tui.vercel.app` is `Ready` on the production alias, `/`, `/chat`
+and `/gallery` serve 200, unauthenticated `/api/*` answers 401, an unknown route
+is 404, and a request carrying a foreign `Origin` is refused with 403. This is
+the first successful deployment in over two hours and the first evidence that
+any of these routes has ever answered from this deployment.
+
 ### One unreproduced test failure, recorded rather than forgotten
 
 A single run of the 506-test core set reported one failure. It did not
