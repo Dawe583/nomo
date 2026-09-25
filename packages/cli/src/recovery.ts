@@ -25,10 +25,25 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { recoveryMcpServer } from "./recovery-mcp.ts";
 import { loadPolicy, decide } from "../../policy/src/index.ts";
 import { postgresExecutor } from "./postgres.ts";
+/**
+ * The operator's mode for this workspace, mirrored from the workbench's
+ * `permissionMode` so the same operator gets the same control on the path that
+ * actually changes files. `audit` and `plan` refuse dispatch regardless of
+ * policy, so a mode is something an operator can widen by editing one field
+ * and not something a policy edit can widen by accident.
+ */
+export type RecoveryMode = "audit" | "plan" | "normal";
+
+const MODES: readonly RecoveryMode[] = ["audit", "plan", "normal"];
+
 type Config = {
   vaultCapacity?: { maxArtifactBytes: number; maxTotalBytes: number };
   policyPath?: string;
   agentId?: string;
+  /** Absent means `normal`, which is what an unconfigured workspace has always
+   * done. The default is unchanged on purpose: a mode that silently narrowed a
+   * working configuration would be a behaviour change, not a safety feature. */
+  mode?: RecoveryMode;
   workspace: string;
   stateDir: string;
   encryptionKeyEnv: string;
@@ -82,6 +97,7 @@ export async function runRecoveryCommand(
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
   if (
     !/^[\w-]{1,100}$/.test(config.workspace) ||
+    (config.mode !== undefined && !MODES.includes(config.mode)) ||
     !config.stateDir ||
     [config.postgres, config.filesystem, config.git].filter(Boolean).length !== 1 ||
     (config.git !== undefined &&
@@ -107,9 +123,13 @@ export async function runRecoveryCommand(
         ? {}
         : { encryptionKey: Buffer.from(configuredKey, "base64") }),
     });
-    print(JSON.stringify(report));
+    // The effective mode is part of the health report so an operator can see
+    // it without reading the config file, and so a restricted workspace is
+    // never mistaken for a broken one.
+    print(JSON.stringify({ ...report, mode: config.mode ?? "normal" }));
     return report.status === "unavailable" || report.status === "unsafe" ? 1 : 0;
   }
+  const mode: RecoveryMode = config.mode ?? "normal";
   const postgres = config.postgres;
   const url = postgres ? env[postgres.urlEnv] : undefined;
   if (postgres && !url)
@@ -277,14 +297,19 @@ export async function runRecoveryCommand(
       config.vaultCapacity,
     ),
     adapters: [adapter],
-    authorize: async (proposal) =>
-      action === "serve"
+    authorize: async (proposal) => {
+      // A mode that forbids dispatch forbids it here, before the policy is
+      // consulted, so widening the policy cannot widen the mode.
+      if (mode !== "normal" && proposal.observation.effect !== "read")
+        return false;
+      return action === "serve"
         ? allowed(
             "void_execute",
             proposal.observation.reversibility,
             proposal.observation.blastRadius.count ?? undefined,
           )
-        : args.get("--approve") === proposal.digest,
+        : args.get("--approve") === proposal.digest;
+    },
   });
   if (action === "serve") {
     if (!config.agentId || !/^[\w-]{1,120}$/.test(config.agentId))

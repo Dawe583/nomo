@@ -135,6 +135,11 @@ All notable user-facing changes since the first repository commit.
   requests, is absent from the sidebar and the command palette, and is checked
   by the same viewport, focus, reduced-motion, zoom and touch-target gate as
   the rest of the product.
+- Give the recovery path an operator mode, so the same control the workbench
+  exposes as a permission mode also exists where files actually change.
+  `audit` and `plan` refuse dispatch before the policy is consulted, so widening
+  a policy cannot widen the mode; `normal` is the unchanged default; and
+  `recovery health` reports the effective mode.
 - Make a recovery plan prove its own undo order. Adapters may record the read
   set they consulted, it is stored durably in the capture, and a plan whose order
   cannot be proven is refused rather than run. An absent read set is unknown, not
