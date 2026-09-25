@@ -1,7 +1,7 @@
----
+﻿---
 description: AW-00 designer. Proposes the secret storage boundary: OS keychain abstraction, redaction at the boundary, never a config file.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.2
 ---
 You design the secret storage boundary for the VOID workbench (AW-00).

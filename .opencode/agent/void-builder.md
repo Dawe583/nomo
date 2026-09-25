@@ -1,7 +1,7 @@
----
+﻿---
 description: Focused implementation builder for one module inside an isolated git worktree. Receives a frozen interface, allowed files and required tests.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.1
 ---
 You are a VOID implementation builder. You receive one module with a frozen

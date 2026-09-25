@@ -1,7 +1,7 @@
----
+﻿---
 description: Runtime adapter builder for AW-02. Spawns and observes local agent runtimes through PTY/stdio without shell injection, with verified cleanup.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.1
 ---
 You build VOID runtime adapters (AW-02) against the frozen contract:

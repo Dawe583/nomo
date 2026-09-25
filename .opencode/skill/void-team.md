@@ -4,12 +4,21 @@ description: "Use when orchestrating VOID subagent teams through prime-agent: sp
 
 # VOID team orchestration via prime-agent
 
-prime-agent is installed at /Users/dawe/.local/bin/prime-agent (v0.9.3) with a
-running daemon. Model: tokenrouter/z-ai/glm-5.3-free. CRITICAL: the free tier
-allows about 8 requests per minute, so spawn AT MOST ONE prime-agent subagent
-at a time and expect 429s on parallel spawns. For parallel teams use the
-opencode Task tool with the freellmapi provider instead, or run prime-agent
-children sequentially.
+Every command below was written against prime-agent 0.9.3 on macOS, where it
+lives at /Users/dawe/.local/bin/prime-agent. On any other machine, including
+Windows, prime-agent is not installed and none of these commands run; check
+`Get-Command prime-agent` or `which prime-agent` before planning a team on it.
+
+The model this skill used to name, `tokenrouter/z-ai/glm-5.3-free`, is
+DEAD. TokenRouter was removed from this repository on 2026-09-18; see
+AGENTS.local.md. Do not pass it to anything. Subagents run on
+`opencode/space-bunny-free`, and every agent file under `.opencode/agent/`
+carries that model in its frontmatter.
+
+For parallel teams use the opencode Task tool. It needs no daemon, no socket
+and no rate-limit coordination, because every subagent inherits the session
+model. Give each a disjoint file list and require a verification command, and
+never let two of them edit the same tree.
 
 ## Spawning a background team member (one at a time)
 

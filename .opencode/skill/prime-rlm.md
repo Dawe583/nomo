@@ -4,6 +4,12 @@ description: "Use when driving prime-agent's Python RLM kernel programmatically:
 
 # prime-agent RLM recipes
 
+prime-agent is not installed on this machine. It lived on the author's macOS
+host and these recipes are kept for reference only. Verify it exists before
+relying on any of it: `Get-Command prime-agent` on Windows, `which
+prime-agent` elsewhere. For parallel subagent work here, use the opencode Task
+tool instead; see `.opencode/skill/void-team.md`.
+
 prime-agent's model works inside a persistent Python kernel. From a prime-agent
 session, children are native:
 
@@ -25,11 +31,14 @@ Shell per call, kernel state persistent across calls:
     result = await bash("pnpm run typecheck")
     print(result.output)
 
-## Known limits on this machine (2026-09-08)
+## Known limits (recorded 2026-09-08, updated 2026-09-25)
 
-- Free model glm-5.3-free: 8 req/min, so parallel children hit 429 and some
-  return empty. Spawn one child at a time.
+- The provider this skill used to rely on, `tokenrouter/z-ai/glm-5.3-free`
+  (~8 requests per minute, so parallel children hit 429 and some return
+  empty), is DEAD. TokenRouter was removed from this repository on
+  2026-09-18; see AGENTS.local.md. Do not pass it to anything.
 - Paid OpenRouter models through the operator key: 402 (max_tokens 32k
   rejected, max_tokens not settable via rlm). Not usable for children.
-- The operator's opencode runs on the same tokenrouter key; coordinate spawn
-  bursts between opencode and prime-agent or they eat each other's quota.
+- opencode and prime-agent no longer share a key, so there is no quota to
+  coordinate. Every opencode subagent in this repository runs on
+  `opencode/space-bunny-free`.

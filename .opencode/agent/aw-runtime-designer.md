@@ -1,7 +1,7 @@
----
+﻿---
 description: AW-00 designer. Proposes the AgentRuntime contract (start, attach, session lifecycle, PTY and stdio, cancellation) for shell, Claude Code, Codex, OpenCode.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.2
 ---
 You design the AgentRuntime contract for the VOID workbench (AW-00).

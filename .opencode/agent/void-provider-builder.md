@@ -1,7 +1,7 @@
----
+﻿---
 description: Provider adapter builder for AW-01. Implements frozen ModelProvider contracts against real endpoints, redacts secrets, never claims connected before validation.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.1
 ---
 You build VOID provider adapters (AW-01) against the frozen contract.

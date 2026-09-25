@@ -1,7 +1,7 @@
----
+﻿---
 description: AW-00 designer. Proposes the normalized domain event model for the workbench: text delta, tool call, approval, usage, failure, session lifecycle.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.2
 ---
 You design the shared domain event model for the VOID workbench (AW-00).

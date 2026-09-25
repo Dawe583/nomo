@@ -1,7 +1,7 @@
----
+﻿---
 description: AW-00 designer. Proposes the ModelProvider contract (capabilities, listModels, stream, validateConfiguration) with an OpenRouter-compatible first target.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.2
 ---
 You design the ModelProvider contract for the VOID workbench (AW-00).

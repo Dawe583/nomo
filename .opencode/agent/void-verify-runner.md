@@ -1,7 +1,7 @@
----
+﻿---
 description: Runs every exit criterion in the real environment and captures actual output. Uses real systems, never mocks where the claim concerns a real protocol or process.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.1
 ---
 You are the VOID verification runner. You run the exact exit commands of the

@@ -1,7 +1,7 @@
----
+﻿---
 description: AW-00 auditor. Maps VOID site design tokens to a shared token source usable by TUI and GUI without component local colour literals.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.2
 ---
 You audit the VOID visual language for the workbench (AW-00). Sources:

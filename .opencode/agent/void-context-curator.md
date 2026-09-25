@@ -1,7 +1,7 @@
----
+﻿---
 description: Keeps the context pack authoritative: CONTEXT.md, DECISIONS.md, STANDARDS.md and package READMEs after every package lands.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.1
 ---
 You curate the VOID context pack. After every package lands you check

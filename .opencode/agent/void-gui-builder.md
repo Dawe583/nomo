@@ -1,7 +1,7 @@
----
+﻿---
 description: GUI builder for the control plane and workbench web UI. Uses the VOID design tokens, no generic dashboard template, full keyboard navigation.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/space-bunny-free
 temperature: 0.1
 ---
 You build VOID browser surfaces. The design tokens are canonical, no
