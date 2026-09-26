@@ -166,18 +166,46 @@ channel name at registration with `unknown approval channel <value>`
 `Decision` is `"allow" | "deny" | "hold"`
 (packages/policy/src/index.ts:19). `decide` walks the rules in file
 order and the first matching rule wins
-(packages/policy/src/decide.ts:90-108):
+(packages/policy/src/decide.ts:168-191):
 
-- `allow` returns `{ kind: "allow" }`
-  (packages/policy/src/decide.ts:98).
+- `allow` returns `{ kind: "allow", ruleIndex, rationale }`
+  (packages/policy/src/decide.ts:37-49, `:176`, `:180`). An allow names its
+  rule because an authorization is the record that most needs one: a denial
+  hurts nobody downstream, an allowed r3 delete does.
 - `deny` returns `{ kind: "deny", ruleIndex, rationale }`
-  (packages/policy/src/decide.ts:99-100).
+  (packages/policy/src/decide.ts:52-55, `:182`).
 - `hold` returns `{ kind: "hold", ruleIndex, seconds, notify, rationale }`
-  (packages/policy/src/decide.ts:101-107).
+  (packages/policy/src/decide.ts:57-64, `:184-190`).
+- `unmatched` names no rule (packages/policy/src/decide.ts:65-68, `:191`).
+  That is reachable only in a file that validated and was then replaced.
+
+`ruleIndex` and `rationale` are optional on `allow` because a host may
+synthesise one without consulting a policy file. On `deny` and `hold`
+`ruleIndex` is required and `rationale` is not: a rule may state none,
+and a missing rationale is not an empty one.
 
 `decide` requires an already validated policy and throws a `TypeError`
 on a broken file, because a broken file is the caller's deny path,
-not a decision (packages/policy/src/decide.ts:94).
+not a decision (packages/policy/src/decide.ts:163-167).
+
+## Naming a policy in a record
+
+`policyDigest(policyFile)` is the sha256 over the canonical JSON of the
+loaded policy content, not over the file bytes
+(packages/policy/src/digest.ts:19). A reviewer who parses the same file to
+the same rules gets the same value whatever comments, key order or YAML
+style the operator used, which is what makes it usable as evidence. The
+`version` key is part of that content, so a policy that changed only its
+declared version is a different policy.
+
+The proxy binds this value into every decision record it writes
+(packages/proxy/src/forward/tools.ts, `attribution.policyDigest`), and the
+ledger entry hash covers it (packages/ledger/src/canonical.ts:101), so the
+record and the policy it names are covered by the same signature. Records
+written before this existed carry no `attribution` field and still verify;
+`readLedgerReason` (packages/ledger/src/attribution.ts:89) reports that as
+"this record names no policy", which is different from naming a policy and no
+rule.
 
 The file must end with the unguarded catch-all `match: {}`, and that
 catch-all must be the last rule, because first match wins

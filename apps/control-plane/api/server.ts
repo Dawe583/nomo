@@ -631,6 +631,10 @@ function toApiEntry(record: LedgerFeedRecord): JsonObject {
     prev_hash: record.prevDigest,
     hash: record.digest,
     digest: record.digest,
+    // A record that carries no reason must not acquire a null one here: the
+    // absence is the fact, and a consumer that reads null learns nothing
+    // about whether this entry predates attribution or merely has no rule.
+    ...(record.attribution === undefined ? {} : { attribution: record.attribution }),
   };
 }
 

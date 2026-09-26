@@ -14,6 +14,7 @@ export * from "./grammar.ts";
 export * from "./rules.ts";
 export * from "./packs.ts";
 export * from "./decide.ts";
+export * from "./digest.ts";
 export * from "./hold.ts";
 export * from "./channels/cli.ts";
 export * from "./approvals.ts";

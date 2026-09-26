@@ -19,6 +19,21 @@ All notable user-facing changes since the first repository commit.
   removes the failure where a rebuild lost access to the app's own workspace
   key, which macOS ends with no remedy because the encrypted data has no other
   key.
+- Evidence: every ledger record now carries which policy decided it and which
+  rule fired, so a decision can be re-derived rather than only observed. An
+  allowed call names its authorizing rule too, which it previously did not
+  record at all, and that is the record that most needs it. Ledgers written
+  before this keep verifying and are described as carrying no reason, which is
+  kept distinct from a reason that is malformed; a malformed one fails the
+  chain instead of passing quietly. No migration was needed, because the
+  record body was already opaque to the hash.
+- Evidence: every verification surface now says what a signature actually
+  establishes. A chain signature proves the bytes came from a process holding
+  a particular key and that the chain is internally consistent; it does not
+  prove nobody rewrote the history, because in every shipped topology the
+  recorder, the signer and the verifier are one principal. The headline states
+  integrity alongside the claim instead of leaving a bare `verified` to be read
+  as tamper-evidence it is not.
 - Evidence: verification no longer reads a private key to decide what a valid
   signature means. The trusted public half is pinned separately, and a
   substituted key is now rejected instead of accepted. Signed anchors for the

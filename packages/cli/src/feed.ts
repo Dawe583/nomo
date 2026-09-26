@@ -90,8 +90,12 @@ function printPage(
       stdout(JSON.stringify({ ...page, records }));
     }
   } else {
-    if (!follow || afterSeq === 0) stdout("seq at tool klass decision argsDigest digest");
+    if (!follow || afterSeq === 0)
+      stdout("seq at tool klass decision argsDigest rule policyDigest rationale digest");
     for (const record of records) {
+      // "-" is the honest rendering of both kinds of absence: a record with no
+      // attribution and a record whose decision named no rule. Printing an
+      // empty column for either would make them look like the same record.
       stdout([
         record.seq,
         record.at,
@@ -99,6 +103,11 @@ function printPage(
         record.klass,
         record.decision,
         record.argsDigest,
+        record.attribution?.rule?.index ?? "-",
+        record.attribution?.policyDigest ?? "-",
+        record.attribution?.rule?.rationale === undefined
+          ? "-"
+          : record.attribution.rule.rationale,
         record.digest,
       ].join(" "));
     }

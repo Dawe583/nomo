@@ -1,6 +1,7 @@
 import { watchFile, unwatchFile } from "node:fs";
 import type { JsonlEntry } from "./store.ts";
 import { readLedgerEntries, verifyChain, type PublicKeyLookup } from "./verify.ts";
+import { readLedgerReason, type LedgerAttribution } from "./attribution.ts";
 
 export type LedgerFeedRecord = {
   readonly seq: number;
@@ -10,6 +11,12 @@ export type LedgerFeedRecord = {
   readonly decision: string;
   readonly argsDigest: string;
   readonly captureDigest?: string;
+  /**
+   * Present only on entries that carry a reason. Its absence is the record
+   * making no attribution claim, which is a different fact from a record
+   * that names a policy and no rule.
+   */
+  readonly attribution?: LedgerAttribution;
   readonly prevDigest: string;
   readonly digest: string;
 };
@@ -112,6 +119,10 @@ function toFeedRecord(entry: JsonlEntry): LedgerFeedRecord {
   const klass = stringField(body, "klass", entry.seq);
   const decision = stringField(body, "decision", entry.seq);
   const argsDigest = stringField(body, "argsDigest", entry.seq);
+  // The feed refuses what the verifier refuses, so a consumer cannot read a
+  // reason the chain would reject as malformed.
+  const reason = readLedgerReason(entry.body, entry.seq);
+  if (reason.kind === "malformed") throw new Error(reason.detail);
   return {
     seq: entry.seq,
     at,
@@ -120,6 +131,7 @@ function toFeedRecord(entry: JsonlEntry): LedgerFeedRecord {
     decision,
     argsDigest,
     ...(typeof body.captureDigest === "string" ? { captureDigest: body.captureDigest } : {}),
+    ...(reason.kind === "attributed" ? { attribution: reason.attribution } : {}),
     prevDigest: entry.prev_hash,
     digest: entry.hash,
   };

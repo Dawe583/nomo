@@ -178,16 +178,30 @@ export function verificationKeyLine(key: VerificationFacts): string {
 }
 
 /**
- * A short state for a headline, where the long caveat does not fit. A binary
- * `verified` is not enough on a status line: "verified against a key this
- * process could also have replaced" and "verified against a key the operator
- * supplied" are different claims and must not read the same.
+ * A short state for a headline, where the long caveat does not fit.
+ *
+ * A binary `verified` is not enough on a status line, for two reasons that
+ * pull in opposite directions and both have to be honoured at once.
+ *
+ * Which key answered matters: "verified against a key this process could also
+ * have replaced" and "verified against a key the operator supplied" are
+ * different claims and must not read the same.
+ *
+ * And the word `verified` itself overclaims. What a chain signature proves is
+ * that the bytes came from a process holding a particular key, and that the
+ * chain is internally consistent. It does not prove nobody rewrote the
+ * history, because in every shipped topology the recorder, the signer and the
+ * verifier are one OS principal. So the honest headline says what was
+ * established, `integrity only`, rather than leaving `verified` to be read as
+ * tamper-evidence it is not. An independent review recommended exactly this,
+ * and it is the cheapest true change available: it removes a claim the code
+ * cannot back, and it does not pretend the boundary moved.
  */
 export function verificationStatus(key: VerificationFacts): string {
-  if (key.degraded) return "DEGRADED (key from signing key material)";
+  if (key.degraded) return "DEGRADED, integrity only (key from signing key material)";
   if (key.source === "trust-file" && !key.operatorSupplied)
-    return "verified against a trust file the agent can also replace (key substitution NOT detected)";
-  return "verified against a key supplied out of band";
+    return "integrity only, verified against a trust file the agent can also replace (key substitution NOT detected)";
+  return "integrity only, verified against a key supplied out of band";
 }
 
 /** A public key bound to the one key id the records of that key carry. */

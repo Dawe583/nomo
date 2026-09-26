@@ -16,6 +16,8 @@ import { rpc } from "./mcp.mjs";
 import { classifyTool } from "../packages/registry/src/evaluate.ts";
 import { loadPolicy } from "../packages/policy/src/rules.ts";
 import { decide } from "../packages/policy/src/decide.ts";
+import { policyDigest } from "../packages/policy/src/digest.ts";
+import { buildAttribution } from "../packages/ledger/src/attribution.ts";
 import { canonicalJson } from "../packages/ledger/src/canonical.ts";
 import { sha256Hex } from "../packages/ledger/src/sign.ts";
 export const CLOUD_POLICY =
@@ -170,6 +172,9 @@ export async function advance(id, generation) {
         klass: callInfo.klass,
         decision: decision.kind,
         argsDigest: `sha256:${await sha256Hex(new TextEncoder().encode(canonicalJson(args)))}`,
+        // The same reason the local proxy binds, so a cloud record is as
+        // attributable as a local one and one reader serves both.
+        attribution: buildAttribution(policyDigest(policy.policy), decision),
       };
       event(
         s,

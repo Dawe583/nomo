@@ -19,6 +19,7 @@ import { homedir } from "node:os";
 
 import type { LedgerStore } from "./index.ts";
 import { GENESIS_PREV, canonicalJson, entryHash } from "./canonical.ts";
+import { readLedgerReason } from "./attribution.ts";
 import { sha256Hex, verifySignature } from "./sign.ts";
 import { sanitizeWorkspace } from "./hardening.ts";
 
@@ -158,6 +159,12 @@ export function jsonlStore(
         if (entry.workspace !== workspace || typeof entry.body !== "object" || entry.body === null ||
             !("workspace" in entry.body) || entry.body.workspace !== workspace)
           return { ok: false, checked, reason: `workspace: entry ${entry.seq} does not belong to ${workspace}` };
+        // A record that claims a reason must carry a reason this reader can
+        // vouch for. An entry with no attribution at all is not this failure:
+        // that is a pre-attribution entry, and it still verifies.
+        const reason = readLedgerReason(entry.body, entry.seq);
+        if (reason.kind === "malformed")
+          return { ok: false, checked, reason: `attribution: ${reason.detail}` };
         if (entry.prev_hash !== prev)
           return { ok: false, checked, reason: `link: entry ${entry.seq} points at ${entry.prev_hash.slice(0, 8)} but the chain is at ${prev.slice(0, 8)}` };
         const recomputed = await entryHash(entry.body, prev, sha256Hex);

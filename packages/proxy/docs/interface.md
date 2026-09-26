@@ -134,7 +134,7 @@ export type CallVerdict =
   | { readonly kind: "hold"; readonly promise: Promise<JsonRpcResult | JsonRpcError> };
 export function interceptCall(
   call: InterceptedCall,
-  deps: { classify: () => ClassifiedCall; policy: () => PolicyDecision; hold: (seconds: number) => Promise<HoldResolution>; ledger: (entry: LedgerEntryInput) => void },
+  deps: { classify: () => ClassifiedCall; policy: () => PolicyDecision; hold: (seconds: number) => Promise<HoldResolution>; ledger: (entry: LedgerEntryInput) => void; policyDigest?: () => string },
 ): CallVerdict;
 
 // relay/notifications.ts

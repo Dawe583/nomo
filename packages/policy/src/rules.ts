@@ -48,8 +48,10 @@ export type PolicyFile = {
   readonly rules: readonly Rule[];
 };
 
+export type ValidPolicy = { readonly ok: true; readonly policy: PolicyFile };
+
 export type LoadedPolicy =
-  | { readonly ok: true; readonly policy: PolicyFile }
+  | ValidPolicy
   | { readonly ok: false; readonly errors: readonly string[] };
 
 const DECISIONS: readonly Decision[] = ["allow", "deny", "hold"];

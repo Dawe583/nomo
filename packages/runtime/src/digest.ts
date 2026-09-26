@@ -1,5 +1,6 @@
-import { createHash } from "node:crypto";
-import { canonicalJson } from "../../ledger/src/canonical.ts";
-
-export const digest = (value: unknown): string =>
-  createHash("sha256").update(canonicalJson(value)).digest("hex");
+/**
+ * The canonical content digest, defined once in the ledger package so a
+ * digest means the same thing in a decision record, a recovery plan and a
+ * retention approval. Re-exported under the name the runtime already uses.
+ */
+export { canonicalDigest as digest } from "../../ledger/src/sign.ts";

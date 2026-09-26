@@ -8,15 +8,15 @@ import {
   validateFactsFile,
 } from "../../registry/src/index.ts";
 import type { FactsFile, FactsReport } from "../../registry/src/index.ts";
-import { decide, HoldQueue, loadPolicy } from "../../policy/src/index.ts";
+import { decide, HoldQueue, loadPolicy, policyDigest } from "../../policy/src/index.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import type { JsonlEntry, JsonlReceipt } from "../../ledger/src/store.ts";
 import type { LedgerStore, KeyProvider } from "../../ledger/src/index.ts";
 import type {
-  LoadedPolicy,
   PolicyCall,
   PolicyDecision,
+  ValidPolicy,
 } from "../../policy/src/index.ts";
 
 import { forwardPromptMessage } from "./forward/prompts.ts";
@@ -148,7 +148,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       process.stderr.write(`${line}\n`);
     });
   const startup = validateStartup(options, writeError);
-  let policy: LoadedPolicy;
+  let policy: ValidPolicy;
   let facts: FactsReport;
   try {
     policy = await readPolicy(options.policyPath);
@@ -601,7 +601,7 @@ function processShutdownSignals(): ProxyShutdownSignals {
   };
 }
 
-async function readPolicy(path: string): Promise<LoadedPolicy> {
+async function readPolicy(path: string): Promise<ValidPolicy> {
   const text = await readFile(path, "utf8");
   const loaded = loadPolicy(text);
   if (!loaded.ok) throw new PolicyStartupError(loaded.errors.join("; "));
@@ -618,7 +618,7 @@ async function readFacts(path: string | undefined): Promise<FactsReport> {
 
 async function handleToolCall(
   request: JsonRpcRequest,
-  policy: LoadedPolicy,
+  policy: ValidPolicy,
   facts: FactsReport,
   queue: HoldQueue,
   forward: (
@@ -668,6 +668,10 @@ async function handleToolCall(
     classify: () =>
       classifyTool(call.tool, toEvaluationContext(facts, call.args)),
     policy: policyFn,
+    // One digest of the loaded policy, computed from the content rather than
+    // the file bytes, so the record names the policy a reviewer can also
+    // obtain. Scoped to this request because the policy is reloaded for one.
+    policyDigest: () => policyDigest(policy.policy),
     capture:
       binding === null
         ? (legacyCapture ??

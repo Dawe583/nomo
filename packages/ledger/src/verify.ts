@@ -1,6 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 
 import { GENESIS_PREV, entryHash } from "./canonical.ts";
+import { readLedgerReason } from "./attribution.ts";
 import { sha256Hex, verifySignature } from "./sign.ts";
 import { signingPreimage } from "./index.ts";
 import type { JsonlEntry } from "./store.ts";
@@ -111,6 +112,9 @@ export async function verifyChain(
     if (typeof entry.body !== "object" || entry.body === null ||
         !("workspace" in entry.body) || entry.body.workspace !== entry.workspace)
       return fail(`entry ${entry.seq} workspace does not match its signed body`);
+    const reason = readLedgerReason(entry.body, entry.seq);
+    if (reason.kind === "malformed")
+      return fail(`attribution: ${reason.detail}`);
     if (entry.seq !== checked)
       return fail(`expected seq ${checked}, found ${entry.seq}`);
     if (entry.prev_hash !== prev)

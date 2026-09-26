@@ -150,6 +150,18 @@ and every legacy vault artifact. The encryption key value is never written to
 the backup manifest or a plaintext diagnostic. The managed target and its
 non-secret configuration are retained separately.
 
+A decision record written by the proxy carries the reason it
+exists: `attribution.policyDigest`, the digest of the policy content the call
+was decided under, and `attribution.rule` with the index of the rule that fired
+and the rationale that rule states. Both live in the signed body, so the entry
+hash already covers them. This is additive: a record written before the field
+existed has no `attribution`, keeps verifying, and needs no migration, because
+the hash is over the body that was actually written. A record that carries a
+malformed `attribution` is a named verification finding, not a record to
+repair. Readers must keep "this record names no policy" apart from "this
+record names a policy and no rule"; see `readLedgerReason` in
+`packages/ledger/src/attribution.ts`.
+
 With every executor stopped, create a new empty backup directory from the
 repository root:
 

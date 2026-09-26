@@ -34,6 +34,15 @@ import { assertPrivateKeyFileMode, windowsKeyAcl } from "./hardening.ts";
 export const sha256Hex = async (input: string): Promise<string> =>
   createHash("sha256").update(input).digest("hex");
 
+/**
+ * sha256 over the canonical JSON of a value, so two runtimes digesting the
+ * same content agree byte for byte. One implementation, one answer: a second
+ * content digest in the tree is a second value for the same claim, and the
+ * loser of that race is whoever later re-derives the proof.
+ */
+export const canonicalDigest = (value: unknown): string =>
+  createHash("sha256").update(canonicalJson(value)).digest("hex");
+
 export function keyIdFromSpki(spki: Uint8Array): string {
   const digest = createHash("sha256").update(spki).digest("hex");
   return `ed25519:${digest.slice(0, 16)}`;

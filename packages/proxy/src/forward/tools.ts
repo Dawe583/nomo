@@ -12,6 +12,7 @@ import {
 
 import type { JsonRpcError, JsonRpcResult } from "../rpc.ts";
 import type { ProbeProvider, ProbeProviderResult } from "../blast.ts";
+import { buildAttribution, type LedgerAttribution } from "../../../ledger/src/attribution.ts";
 import { legacyArgsDigest } from "./legacy-binding.ts";
 
 export type { JsonRpcError, JsonRpcResult } from "../rpc.ts";
@@ -37,6 +38,12 @@ export type LedgerEntryInput = {
   readonly klass: string;
   readonly decision: string;
   readonly argsDigest: string;
+  /**
+   * Why this record exists, bound into the entry hash and its signature.
+   * Absent only when no policy was consulted, which is a different claim
+   * from an attribution that names a policy and no rule.
+   */
+  readonly attribution?: LedgerAttribution;
 };
 
 export type InterceptDeps = {
@@ -50,6 +57,13 @@ export type InterceptDeps = {
   readonly policy: (call: PolicyCall) => PolicyDecision;
   readonly hold: (seconds: number) => Promise<HoldResolution>;
   readonly ledger: (entry: LedgerEntryInput) => void | Promise<void>;
+  /**
+   * The digest of the policy content this call was decided under. A dep that
+   * omits it records no attribution rather than an empty one, so a record
+   * never claims a policy nobody can name. It is read per call because the
+   * policy is reloaded per request.
+   */
+  readonly policyDigest?: () => string;
   readonly probe?: ProbeProvider;
   readonly now?: () => Date;
   /**
@@ -94,6 +108,7 @@ export async function interceptCall(
       chooseBlastRadius(probeResult),
     );
     const decision = deps.policy(policyCall);
+    const attribution = decisionAttribution(deps, decision);
     // The decision record lands before the verdict, so a crash after the
     // decision still leaves the ledger saying what was about to happen.
     await writeLedger(
@@ -103,6 +118,7 @@ export async function interceptCall(
       policyCall.klass,
       decision.kind,
       digest,
+      attribution,
     );
 
     if (decision.kind === "allow") {
@@ -113,6 +129,7 @@ export async function interceptCall(
         policyCall,
         digest,
         "allow",
+        attribution,
       );
       if (captured === null) {
         return {
@@ -132,6 +149,7 @@ export async function interceptCall(
         policyCall.klass,
         "allow:resolved",
         digest,
+        attribution,
       );
       return { kind: "allow" };
     }
@@ -153,6 +171,7 @@ export async function interceptCall(
         policyCall.klass,
         `${decision.kind}:resolved`,
         digest,
+        attribution,
       );
       return { kind: "deny", error };
     }
@@ -170,6 +189,7 @@ export async function interceptCall(
           policyCall,
           digest,
           "hold",
+          attribution,
         );
         if (captured === null) {
           return holdError(
@@ -191,6 +211,7 @@ export async function interceptCall(
           policyCall.klass,
           "hold:approved",
           digest,
+          attribution,
         );
         return {
           jsonrpc: "2.0",
@@ -207,6 +228,7 @@ export async function interceptCall(
         policyCall.klass,
         `hold:${result}`,
         digest,
+        attribution,
       );
       return holdError(resolution.call, resolution.outcome, "hold");
     });
@@ -290,6 +312,7 @@ async function runCaptureGate(
   policyCall: PolicyCall,
   argsDigest: string,
   decision: string,
+  attribution: LedgerAttribution | undefined,
 ): Promise<unknown> {
   if (deps.capture === undefined) return true;
   try {
@@ -302,6 +325,7 @@ async function runCaptureGate(
       policyCall.klass,
       `${decision}:capture-failed`,
       argsDigest,
+      attribution,
     );
     return null;
   }
@@ -314,6 +338,7 @@ async function writeLedger(
   klass: string,
   decision: string,
   argsDigest: string,
+  attribution: LedgerAttribution | undefined,
 ): Promise<void> {
   await deps.ledger({
     at: now().toISOString(),
@@ -321,7 +346,27 @@ async function writeLedger(
     klass,
     decision,
     argsDigest,
+    // Spread rather than a bare undefined: canonicalJson refuses undefined,
+    // and a record that names no policy must simply not carry the field.
+    ...(attribution === undefined ? {} : { attribution }),
   });
+}
+
+/**
+ * The reason bound to this record. One read of the decision and one digest of
+ * the policy, computed once per call and written on every record the call
+ * produces, so the first record and the resolved one cannot disagree about
+ * which policy and rule produced them.
+ */
+function decisionAttribution(
+  deps: InterceptDeps,
+  decision: PolicyDecision,
+): LedgerAttribution | undefined {
+  const digest = deps.policyDigest?.();
+  if (digest === undefined) return undefined;
+  // An unmatched call names no rule and that is not a rule zero: the policy
+  // file it was decided under is still worth binding.
+  return buildAttribution(digest, "ruleIndex" in decision ? decision : {});
 }
 
 function denyError(

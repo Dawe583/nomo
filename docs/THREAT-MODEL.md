@@ -242,8 +242,9 @@ Two record shapes exist. The **proxy decision record** is what
 | Reversibility class | yes (`klass`, `:1715-1717`) | yes (`:1715-1717`) | no | — |
 | Decision / outcome | yes, as a free string (`:1718`) | yes, free string (`:1718`) | as `stage` (`:318`) | — |
 | **Tool arguments** | **digest only** — `argsDigest` (`:1719`) | digest only (`:1719`) | `requestDigest` (`:312`) | — |
-| **Which policy rule fired** | **no** | **no** | **no** | — |
-| **The policy itself** (content or version) | **no** | **no** | **no** | — |
+| **Which policy rule fired** | yes — `attribution.rule.index` (`attribution.ts:46-49`) | **no** | **no** | — |
+| **Why that rule fired** | yes — `attribution.rule.rationale` when the rule states one | **no** | **no** | — |
+| **The policy itself** (content or version) | yes — `attribution.policyDigest` = `canonicalDigest(policyFile)` | **no** | **no** | — |
 | **The model that made the call** | **no** | **no** | **no** | — |
 | **The prompt / conversation** | **no** | **no** | **no** | — |
 | **The tool result / side effect** | **no** | **no** | result goes to the vault, not the chain (`execute.ts:240-249`) | — |
@@ -261,20 +262,38 @@ without invalidating the chain?*
 
 Almost everything that matters.
 
-- **The policy.** `PolicyFile.version` is a **format** constant, not a content
-  version — `packages/policy/src/rules.ts:73` requires it to equal
-  `POLICY_VERSION`. No policy digest is recorded anywhere in the decision path.
-  The only `policyDigest` in the repository is
-  `packages/runtime/src/retention.ts:271-276`, which is the *retention*
-  policy, unrelated. So an attacker can swap `policy.yaml` for a permissive one
-  and the signed record still reads `decision: "allow"`, still verifies, and
-  carries no evidence of which rules produced it. AAT §5.3 asks for exactly
-  this and calls it "Policy integrity".
-- **The rule that fired.** `PolicyDecision` carries `ruleIndex` and
-  `rationale` (`packages/policy/src/decide.ts:39-47`) and the deny error
-  carries them to the agent (`packages/proxy/src/forward/tools.ts:340-347`), but
-  `writeLedger` (`:318-325`) records neither. The signed record says *what was
-  decided*, never *why, or under which rule*.
+- **The policy is now named, and naming it is what closes this.** A decision
+  record carries `attribution.policyDigest`, the sha256 over the canonical JSON
+  of the policy content the call was decided under
+  (`packages/policy/src/digest.ts`, bound by the entry hash at
+  `packages/ledger/src/canonical.ts:101`). A reviewer who obtains
+  `policy.yaml` recomputes one value and learns whether the record was made
+  under the policy they think is in force, instead of being told so by whoever
+  wrote the record. `PolicyFile.version` remains a **format** constant and is
+  part of that content, so a policy that changed only its declared version is a
+  different policy with a different digest. AAT §5.3 asks for exactly this and
+  calls it "Policy integrity".
+  What it does not do: it does not stop an attacker who also holds the signing
+  key, and it does not make the policy itself available — the digest is
+  evidence, not the document. Note also that the *retention* `policyDigest`
+  (`packages/runtime/src/retention.ts:271`) is a different quantity: it is
+  `digest(canonicalJson(policy))`, which canonicalises an already-canonical
+  string and so carries an extra layer of JSON quoting. The two digests are not
+  comparable and must not be.
+- **The rule that fired.** `PolicyDecision` now names the rule on all three
+  paths, allow included (`packages/policy/src/decide.ts:37-49`), and the record
+  binds `attribution.rule.index` and, when the rule states one,
+  `attribution.rule.rationale`. A record written before this existed carries no
+  `attribution` at all and still verifies, because the entry hash is over the
+  body that was actually written; there is no migration and none is invented.
+  `readLedgerReason` (`packages/ledger/src/attribution.ts:89`) keeps "this
+  record names no policy", "this record names a policy and no rule" and "a rule
+  fired with no rationale" apart, because collapsing them would let a reader
+  report the last as the middle.
+  What still leaks: in observe posture the proxy forwards a call the policy
+  would have refused and records `decision: "allow"` with no rule
+  (`packages/proxy/src/bin.ts:659-663`), so an observe-mode record names the
+  policy but not the rule it evaded.
 - **The classification.** `klass` is recorded, so the R-class is bound — but
   `blastRadius`, `unclassified`, and the probe facts that produced them are not.
 - **Everything about the model.** No model id, no prompt, no digest. Nothing in

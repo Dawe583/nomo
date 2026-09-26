@@ -35,7 +35,19 @@ export type PolicyCall = {
 
 /** The resolved action for a call. */
 export type PolicyDecision =
-  | { readonly kind: "allow" }
+  | {
+      readonly kind: "allow";
+      /**
+       * The rule that authorized the call. First match wins, so an allow
+       * names exactly one rule, and an authorization is the record that most
+       * needs one: a denial hurts nobody downstream, an allowed r3 delete
+       * does. Absent only where a host synthesised an allow without asking a
+       * policy file, which is why it is not silently read as rule zero.
+       */
+      readonly ruleIndex?: number;
+      /** Absent means the rule states no rationale. "" is a stated one. */
+      readonly rationale?: string;
+    }
   | {
       readonly kind: "deny";
       readonly ruleIndex: number;
@@ -161,10 +173,11 @@ export function decide(policy: LoadedPolicy, call: PolicyCall): PolicyDecision {
       // unknown opt-in matches, with the remaining keys checked normally.
       if (!ruleOptsIntoUnknown(rule)) continue;
       if (!matchesExceptClass(rule, call)) continue;
-      return { kind: "allow" };
+      return { kind: "allow", ruleIndex: index, rationale: rule.rationale };
     }
     if (!matchesOne(rule, call)) continue;
-    if (rule.decision === "allow") return { kind: "allow" };
+    if (rule.decision === "allow")
+      return { kind: "allow", ruleIndex: index, rationale: rule.rationale };
     if (rule.decision === "deny")
       return { kind: "deny", ruleIndex: index, rationale: rule.rationale };
     return {

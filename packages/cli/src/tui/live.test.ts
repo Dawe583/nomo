@@ -26,16 +26,18 @@ test("live view never labels integrity-only data as signature checked", () => {
 });
 
 // The live feed rendered the bare claim "Signatures checked against the
-// configured key", which says nothing about *which* key. Three different
-// guarantees were reaching the operator as one sentence. This pins that they
-// stay distinguishable on the screen, and that a degraded mode is never
-// presented as a clean one.
+// configured key", which says nothing about *which* key and overclaims about
+// what a signature proves. Three different guarantees were reaching the
+// operator as one sentence. This pins that they stay distinguishable, that a
+// degraded mode is never presented as a clean one, and that every one of them
+// says `integrity only` rather than leaving a bare `verified` to be read as
+// tamper-evidence, which it is not in any shipped topology.
 test("the live feed names which key checked the signatures", () => {
   const caps = { interactive: true, ansi: false, colorDepth: 0, columns: 200, rows: 24, reason: "no-color" } as const;
   const claims = [
-    "verified against a key supplied out of band",
-    "verified against a trust file the agent can also replace (key substitution NOT detected)",
-    "DEGRADED (key from signing key material)",
+    "integrity only, verified against a key supplied out of band",
+    "integrity only, verified against a trust file the agent can also replace (key substitution NOT detected)",
+    "DEGRADED, integrity only (key from signing key material)",
   ];
   const frames = claims.map((verificationStatus) =>
     renderLiveFeed({ ...view, verificationStatus }, caps),
@@ -50,7 +52,7 @@ test("a degraded live feed carries the opt-in that caused it", () => {
   const frame = renderLiveFeed(
     {
       ...view,
-      verificationStatus: "DEGRADED (key from signing key material)",
+      verificationStatus: "DEGRADED, integrity only (key from signing key material)",
       verificationNote: verificationKeyLine({
         keyId: "dev-ed25519:0123456789abcdef",
         source: "signing-key-file",
