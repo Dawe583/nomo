@@ -137,10 +137,11 @@ artifacts are never implicitly deleted.
 This is a logical payload quota, not physical disk preallocation. SQLite pages,
 journals and filesystem overhead require extra free space. Real disk exhaustion
 still fails closed before dispatch, or leaves an uncertain result after dispatch.
-Streaming, automatic collection and administrative quota migration remain
-unfinished. Collection for the legacy file vault is operator-driven and is
-described under "File recovery vault retention" below. Capacity settings
-persist and mismatching workers are rejected.
+Streaming, pin release, retention-index backup and administrative quota
+migration are implemented and described under "File recovery vault retention"
+below. Automatic collection remains unfinished: collection for the legacy file
+vault is operator-driven. Capacity settings persist and mismatching workers are
+rejected.
 
 ## File recovery vault retention
 
@@ -157,8 +158,21 @@ artifact with no record is protected, because its pin state is unknown. A
 record naming a `recovery` or `operator` pin is protected, and a policy that
 gives a pinned kind a TTL is refused as a contradiction. Unreadable or invalid
 evidence refuses the whole run before any delete; it is never read as
-"unpinned". There is no unpin operation: a pinned artifact stays retained until
-an operator reviews it out of band.
+"unpinned".
+
+`releaseVaultPin` is the supported way to remove a pin. The caller names the pin
+it believes is recorded, and the release is refused unless the recorded owner
+and kind match it exactly, so a stale operator view cannot release a pin that
+has since changed. A release against an artifact with no evidence refuses, and
+against an artifact with no recorded pin refuses: absent evidence means
+"protect", and converting unknown into collectable is the one inference
+retention must not make. The release is recorded as a `release` field naming
+the operator, the time and the pin it removed, not as an absent pin, so an
+artifact an operator released stays distinguishable from one nobody reviewed.
+It takes the same `.retention.lock` the collector holds, so it cannot land in
+the gap between a collector's scan and its unlink. It never touches the
+artifact; only the record protecting it changes. Marking and releasing share
+one sidecar writer, so both land as a synced temporary renamed into place.
 
 The report is the connector `GarbageReport` shape
 (`skippedPinned`/`retained`/`deleted`/`freedBytes`), where `retained +
@@ -172,8 +186,88 @@ has passed, and its recorded owner is provably gone. Either check being
 uncertain keeps the refusal, so a lock that cannot be read, parsed, or attributed
 never becomes a second collector.
 
-This does not cover the reserved SQLite vault, pin release, index backup, or
-administrative quota migration.
+### Retention index backup
+
+The index is authoritative state, not derived state: it is the only record of
+which artifacts are pinned, and a lost sidecar is indistinguishable from an
+artifact nobody ever reviewed, so it cannot be rebuilt from the artifact tree.
+`backupRetentionIndex` therefore copies every evidence sidecar and writes a
+`void.retention.index.v1` manifest naming each with its byte count and SHA-256.
+A file in the index that is not a digest-named `.meta` sidecar refuses the
+backup rather than being skipped, because a backup that quietly omitted one
+would restore an index that no longer protects what it used to. `.retention.lock`
+is excluded: it is live coordination, and restoring a stale lock would freeze
+collection on the next run. The manifest is written last, so a backup
+interrupted before it lands has no manifest and cannot be mistaken for a
+complete one.
+
+`restoreRetentionIndex` reads and verifies every manifest entry before
+installing any of it, and refuses the whole restore when a file's digest or
+byte count disagrees, when the manifest is missing or malformed, or when the
+backup holds a file its manifest does not list. A partial restore would leave
+the index asserting protection it no longer holds, so nothing is installed
+until everything verifies. A restored pin protects its artifact and a restored
+release does not, which is what a test asserts by collecting after a restore.
+Both a backup and a restore target are refused inside the artifact root, for
+the same reason evidence is.
+
+### Managed vault streaming
+
+`putStream` and `getStream` are the chunked surfaces of `reservedRecoveryVault`.
+A streamed write declares its exact plaintext length; that declaration is proved
+against the artifact quota before the source is read at all, and a source that
+delivers more or fewer bytes than it declared is refused with nothing stored.
+Encryption is GCM with fixed expansion, so the ciphertext length is known from
+the declaration and the payload is one buffer filled in place, rather than a
+chunk list plus a concatenation. A streamed read verifies size and digest, then
+yields bounded plaintext chunks.
+
+Measured in a fresh process, because a process that already holds other
+artifacts cannot report a meaningful high-water mark. On a 32 MiB artifact the
+value path (`put` then `get`) peaks at about 360 MB of resident memory, roughly
+eleven times the artifact; the streamed round trip peaks at about 70 MB. The
+gap is the copies: `put` built a full canonical JSON string, a `Buffer.concat`
+copy, and a base64 string four thirds the artifact's size, and `get` still adds
+a `Buffer.from` copy, a `Buffer.concat`, a string and a parse. `getStream` is
+the surface that removes the read-side copies, and `putStream` the one that
+removes the write-side ones; a caller that keeps using the value path keeps
+paying for them.
+
+The remaining cost is the SQLite blob binding: the stored payload is one `BLOB`
+column, so it is materialised once no matter how it is written. That sets the
+floor at about two full-size buffers, and the measurement bears it out — a
+64 MiB artifact peaks at about 141 MB, still linear in artifact size and still
+far below the value path. Streaming also removes the base64 string entirely, by
+hashing the base64 preimage in three-byte-aligned slices; that is exact because
+the base64 alphabet contains nothing `JSON.stringify` escapes, so the
+concatenation is byte-identical to the one-shot encoding. Reading a legacy file
+artifact through `getStream` refuses with a named message, because
+`localRecoveryVault` has no chunked reader. `put` and `putStream` are one
+statement, so they cannot diverge, and both store the same content digest for
+the same plaintext.
+
+### Administrative quota migration
+
+`migrateCapacity` is the only way the persisted capacity changes. It is
+compare-and-swap: the operator states the capacity the vault is expected to hold
+now, and the move is refused unless the vault holds exactly that, so a second
+operator, a worker that already migrated, or a stale decision cannot apply it.
+The move, its new capacity and a `capacity_migrations` row recording the
+operator, the from and to capacities, the bytes in force and the reservation
+count all commit in one transaction, so an operator who cannot read back the row
+has no evidence the move happened. Lowering the total below the bytes already
+stored is refused with the byte count named, because that would leave artifacts
+no writer can place again. Ordinary `put`, `reserve` and `release` never
+migrate, and no collection path calls it: capacity never follows from ordinary
+use. A worker whose configured capacity disagrees with the persisted one is
+still rejected on every operation, which is what makes the migration the
+visible way out rather than a bypass.
+
+The SQLite vault still has no retention: the collector above walks the legacy
+file tree, so artifacts in the reserved vault are not collected by it, and
+`getStream` is not yet a surface the collector uses. There is no streaming
+reader for a legacy file artifact, and no partial-restore path: a restore that
+cannot verify every entry refuses everything.
 
 The older `localRecoveryVault` remains compatible but offers only an individual
 artifact limit. `reservedRecoveryVault` reads its existing files and counts them

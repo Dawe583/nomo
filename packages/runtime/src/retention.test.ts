@@ -30,8 +30,12 @@ import {
 } from "./index.ts";
 import {
   MANUAL_RETENTION_POLICY,
+  backupRetentionIndex,
   collectVaultGarbage,
   markVaultLifecycle,
+  releaseVaultPin,
+  restoreRetentionIndex,
+  RETENTION_INDEX_MANIFEST,
   validateRetentionPolicy,
   type RetentionPolicy,
 } from "./retention.ts";
@@ -547,4 +551,265 @@ test("a lock left by a dead collector is reclaimed, a live or unreadable one is 
   // A lock we cannot parse is a lock we will not take.
   await writeFile(lock, "not json", { mode: 0o600 });
   await assert.rejects(f.collect("unreadable-lock"), /retention is locked/);
+});
+
+const release = (
+  f: Awaited<ReturnType<typeof fixture>>,
+  reference: VaultReference,
+  pin: VaultPin,
+  operatorId = "ops-1",
+) =>
+  releaseVaultPin({
+    root: f.root,
+    index: f.index,
+    workspace: WORKSPACE,
+    reference,
+    pin,
+    operatorId,
+    clock: () => new Date(BASE),
+  });
+
+test("a pinned artifact is released through the supported surface, not by hand", async (t) => {
+  const f = await fixture(t);
+  const pinned = await f.put("pinned");
+  await f.mark(pinned, { ownerId: "ops", kind: "operator" });
+  await f.age(pinned);
+  // While pinned, an age policy may run but must not take it.
+  assert.deepEqual(reportOf(await f.collect("gc-pinned", AGE_POLICY)), {
+    skippedPinned: 1,
+    retained: 0,
+    deleted: 0,
+    freedBytes: 0,
+  });
+  const record = await release(f, pinned, {
+    ownerId: "ops",
+    kind: "operator",
+  });
+  assert.equal(record.operatorId, "ops-1", "the release names who released it");
+  assert.deepEqual(record.released, { ownerId: "ops", kind: "operator" });
+  assert.equal(record.at, new Date(BASE).toISOString());
+  // The release is recorded evidence, not an absent pin: an artifact that was
+  // never reviewed and one an operator released must stay distinguishable.
+  assert.deepEqual(
+    JSON.parse(await readFile(f.evidence(pinned), "utf8")),
+    {
+      release: {
+        operatorId: "ops-1",
+        at: new Date(BASE).toISOString(),
+        released: { ownerId: "ops", kind: "operator" },
+      },
+    },
+  );
+  assert.equal(reportOf(await f.collect("gc-released", AGE_POLICY)).deleted, 1);
+  assert.deepEqual(await f.artifacts(), []);
+});
+
+test("a pin release refuses any owner or kind it cannot prove it is removing", async (t) => {
+  const f = await fixture(t);
+  const pinned = await f.put("pinned"),
+    unmarked = await f.put("unmarked");
+  await f.mark(pinned, { ownerId: "ops", kind: "operator" });
+  await f.age(pinned);
+  await f.age(unmarked);
+  // A release must name the protection it removes. Naming a different owner,
+  // a different kind, or an artifact with no evidence at all, all refuse:
+  // absent evidence means "protect", not "nothing to do".
+  await assert.rejects(
+    release(f, pinned, { ownerId: "someone-else", kind: "operator" }),
+    /does not match the recorded lifecycle/,
+  );
+  await assert.rejects(
+    release(f, pinned, { ownerId: "ops", kind: "recovery" }),
+    /does not match the recorded lifecycle/,
+  );
+  await assert.rejects(
+    release(f, unmarked, { ownerId: "ops", kind: "operator" }),
+    /no recorded pin/,
+  );
+  // An operator identity that is not an identity is refused outright.
+  await assert.rejects(
+    release(f, pinned, { ownerId: "ops", kind: "operator" }, "../escape"),
+    /Invalid recovery pin release operator/,
+  );
+  // Nothing was released: every refusal left the pin standing. Both artifacts
+  // are protected, the pinned one by its record and the unmarked one because
+  // an absent record means "protect", so neither is collectable.
+  assert.equal(await f.read(pinned), "pinned");
+  assert.deepEqual(reportOf(await f.collect("gc-refused", AGE_POLICY)), {
+    skippedPinned: 2,
+    retained: 0,
+    deleted: 0,
+    freedBytes: 0,
+  });
+  // Releasing an already released artifact refuses rather than recording twice.
+  await release(f, pinned, { ownerId: "ops", kind: "operator" });
+  await assert.rejects(
+    release(f, pinned, { ownerId: "ops", kind: "operator" }),
+    /no recorded pin to release/,
+  );
+});
+
+test("a pin release takes the collection lock", async (t) => {
+  const f = await fixture(t);
+  const pinned = await f.put("pinned");
+  await f.mark(pinned, { ownerId: "ops", kind: "operator" });
+  // Hold the lock the way a running collection does. A release that did not
+  // participate would land in the gap between the scan and the unlink, and the
+  // artifact would be deleted on evidence the collector never saw.
+  const lock = join(f.index, WORKSPACE, ".retention.lock");
+  await mkdir(dirname(lock), { recursive: true, mode: 0o700 });
+  const held = await open(lock, "wx", 0o600);
+  t.after(async () => { await held.close(); await rm(lock, { force: true }); });
+  await assert.rejects(
+    release(f, pinned, { ownerId: "ops", kind: "operator" }),
+    /retention is locked/,
+  );
+  assert.equal(await f.read(pinned), "pinned");
+  assert.equal(
+    await readFile(f.evidence(pinned), "utf8").then(
+      (value) => JSON.parse(value).release === undefined,
+      () => false,
+    ),
+    true,
+    "a refused release must not record a release",
+  );
+});
+
+test("a retention index backup restores the pins it recorded", async (t) => {
+  const f = await fixture(t);
+  const pinned = await f.put("pinned"),
+    released = await f.put("released");
+  await f.mark(pinned, { ownerId: "ops", kind: "operator" });
+  await f.mark(released);
+  await f.age(pinned);
+  await f.age(released);
+  const backup = join(dirname(f.index), "index-backup");
+  const manifest = await backupRetentionIndex({
+    index: f.index,
+    destination: backup,
+    artifactRoot: f.root,
+  });
+  assert.equal(manifest.schema, RETENTION_INDEX_MANIFEST);
+  assert.deepEqual(
+    manifest.entries.map((entry) => entry.path).sort(),
+    [`${WORKSPACE}/${pinned.digest}.meta`, `${WORKSPACE}/${released.digest}.meta`].sort(),
+  );
+  // Lose the index entirely, as a damaged volume would.
+  await rm(f.index, { recursive: true, force: true });
+  // With no index every artifact is protected, because a missing record is
+  // not permission: this is the state a restore has to fix.
+  assert.deepEqual(reportOf(await f.collect("gc-no-index", AGE_POLICY)), {
+    skippedPinned: 2,
+    retained: 0,
+    deleted: 0,
+    freedBytes: 0,
+  });
+  const restored = await restoreRetentionIndex({
+    index: f.index,
+    source: backup,
+    artifactRoot: f.root,
+  });
+  assert.deepEqual(restored.entries, manifest.entries);
+  // The restored pin protects its artifact and the restored release does not.
+  const freed = (await stat(f.path(released))).size;
+  assert.deepEqual(reportOf(await f.collect("gc-restored", AGE_POLICY)), {
+    skippedPinned: 1,
+    retained: 0,
+    deleted: 1,
+    freedBytes: freed,
+  });
+  assert.deepEqual(await f.artifacts(), [pinned.digest]);
+  assert.equal(await f.read(pinned), "pinned");
+});
+
+test("a tampered or unlisted retention index backup refuses to restore", async (t) => {
+  const f = await fixture(t);
+  const pinned = await f.put("pinned");
+  await f.mark(pinned, { ownerId: "ops", kind: "operator" });
+  const backup = join(dirname(f.index), "index-backup");
+  await backupRetentionIndex({
+    index: f.index,
+    destination: backup,
+    artifactRoot: f.root,
+  });
+  const sidecar = join(backup, WORKSPACE, `${pinned.digest}.meta`);
+  // One flipped byte: the manifest no longer describes the file, and a restore
+  // that trusted the file would install a pin record nobody wrote.
+  const original = await readFile(sidecar, "utf8");
+  await writeFile(sidecar, original.replace("operator", "recovery"));
+  await assert.rejects(
+    restoreRetentionIndex({
+      index: f.index,
+      source: backup,
+      artifactRoot: f.root,
+    }),
+    /does not match its manifest/,
+  );
+  // A file the manifest does not list refuses the whole restore, so the index
+  // never ends up half-restored.
+  await writeFile(sidecar, original);
+  await writeFile(join(backup, WORKSPACE, `${"a".repeat(64)}.meta`), "{}");
+  await assert.rejects(
+    restoreRetentionIndex({
+      index: f.index,
+      source: backup,
+      artifactRoot: f.root,
+    }),
+    /does not list/,
+  );
+  // A backup with no manifest is not a backup.
+  await rm(join(backup, "retention-index.json"));
+  await assert.rejects(
+    restoreRetentionIndex({
+      index: f.index,
+      source: backup,
+      artifactRoot: f.root,
+    }),
+    /has no manifest/,
+  );
+  // Through all of that the original index still holds the pin it had.
+  assert.equal(await f.read(pinned), "pinned");
+  assert.deepEqual(
+    JSON.parse(await readFile(f.evidence(pinned), "utf8")),
+    JSON.parse(original),
+  );
+});
+
+test("a retention index backup refuses an index that is not evidence, and the artifact root", async (t) => {
+  const f = await fixture(t);
+  const pinned = await f.put("pinned");
+  await f.mark(pinned, { ownerId: "ops", kind: "operator" });
+  // A stray file in the index is refused rather than skipped: a backup that
+  // omitted it would restore an index that no longer protects what it used to.
+  await writeFile(join(f.index, WORKSPACE, "notes.txt"), "not evidence");
+  await assert.rejects(
+    backupRetentionIndex({
+      index: f.index,
+      destination: join(dirname(f.index), "backup"),
+      artifactRoot: f.root,
+    }),
+    /not artifact evidence/,
+  );
+  // The lock is coordination, not evidence, and is excluded rather than refused.
+  await rm(join(f.index, WORKSPACE, "notes.txt"));
+  const lock = join(f.index, WORKSPACE, ".retention.lock");
+  await writeFile(lock, JSON.stringify({ schema: "void.retention.lock.v1" }));
+  const manifest = await backupRetentionIndex({
+    index: f.index,
+    destination: join(dirname(f.index), "backup"),
+    artifactRoot: f.root,
+  });
+  assert.deepEqual(manifest.entries.map((entry) => entry.path), [
+    `${WORKSPACE}/${pinned.digest}.meta`,
+  ]);
+  // A backup inside the artifact tree would make the reserved vault read it as
+  // a legacy artifact, so it is refused for the same reason evidence is.
+  await assert.rejects(
+    backupRetentionIndex({
+      index: f.index,
+      destination: join(f.root, "backup"),
+      artifactRoot: f.root,
+    }),
+    /outside the artifact root/,
+  );
 });

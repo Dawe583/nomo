@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdir, readdir, lstat, chmod, open } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -10,6 +10,7 @@ import {
   VaultCapacityError,
   type RecoveryVault,
   type VaultReference,
+  type VaultAllocation,
   type VaultSlot,
 } from "./vault.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
@@ -23,30 +24,112 @@ const identity = (value: string) => {
     throw new Error("Invalid vault identity.");
 };
 export type VaultCapacity = { maxArtifactBytes: number; maxTotalBytes: number };
-export const recoveryKeyProof = (key: Uint8Array, keyId: string): string =>
-  createHmac("sha256", key)
-    .update(`void.recovery.key-check.v1:${keyId}`)
-    .digest("hex");
-/** Encrypted payloads and quota changes commit in one SQLite transaction.
- * ponytail: whole JSON artifacts, local disk, one writer. Streaming and retention
- * need another format; no eviction of recovery evidence is implicit here. */
-export function reservedRecoveryVault(
-  root: string,
-  keys: Readonly<Record<string, Uint8Array>>,
-  currentKey: string,
-  capacity: VaultCapacity = {
-    maxArtifactBytes: 64 * 1024 * 1024,
-    maxTotalBytes: 1024 * 1024 * 1024,
-  },
-): RecoveryVault {
-  const { maxArtifactBytes, maxTotalBytes } = capacity;
-  for (const value of [maxArtifactBytes, maxTotalBytes])
+
+/** One plaintext chunk. A capture too large to hold is fed as chunks, and the
+ * vault never concatenates them into a single value. */
+export type VaultPlaintext = AsyncIterable<Uint8Array> | Iterable<Uint8Array>;
+/** A streamed artifact declares its exact plaintext length. The quota decision
+ * and the ciphertext layout both depend on it before the first chunk is read,
+ * so a stream that delivers a different total is refused rather than resized. */
+export type VaultStreamRequest = {
+  readonly bytes: number;
+  readonly allocation?: VaultAllocation;
+};
+/** A capacity move states the capacity the vault is expected to hold now. It
+ * is refused unless it does, so a second operator, or a worker that already
+ * migrated, cannot silently apply a stale decision. */
+export type VaultCapacityMigration = {
+  readonly from: VaultCapacity;
+  readonly operatorId: string;
+};
+export type VaultCapacityMigrationReport = {
+  readonly from: VaultCapacity;
+  readonly to: VaultCapacity;
+  readonly usedBytes: number;
+  readonly reservations: number;
+};
+export interface ManagedRecoveryVault extends RecoveryVault {
+  reserve(
+    workspace: string,
+    operationId: string,
+    slots?: readonly VaultSlot[],
+  ): Promise<void>;
+  release(workspace: string, operationId: string): Promise<void>;
+  putStream(
+    workspace: string,
+    source: VaultPlaintext,
+    request: VaultStreamRequest,
+  ): Promise<VaultReference>;
+  getStream(
+    workspace: string,
+    reference: VaultReference,
+  ): AsyncGenerator<Uint8Array>;
+  migrateCapacity(
+    request: VaultCapacityMigration,
+  ): Promise<VaultCapacityMigrationReport>;
+}
+
+const capacityOf = (capacity: VaultCapacity): VaultCapacity => {
+  for (const value of [capacity.maxArtifactBytes, capacity.maxTotalBytes])
     if (
       !Number.isSafeInteger(value) ||
       value < 1 ||
       value > Number.MAX_SAFE_INTEGER / 4
     )
       throw new Error("Invalid vault capacity.");
+  return capacity;
+};
+
+/** A view of stored bytes without copying them. The old writer copied each
+ * blob twice and the reader three times, which is most of why a large artifact
+ * cost more memory than its own size. */
+const view = (bytes: Uint8Array, at = 0, to = bytes.byteLength): Buffer =>
+  Buffer.isBuffer(bytes)
+    ? bytes.subarray(at, to)
+    : Buffer.from(bytes.buffer, bytes.byteOffset + at, to - at);
+
+/** The reference digest is the canonical digest of the base64 of the stored
+ * bytes, which is sha256 over `"` + base64 + `"`. The base64 alphabet contains
+ * nothing JSON.stringify escapes, so that preimage is exact and can be hashed
+ * in three-byte-aligned slices instead of materialising a string four thirds
+ * the size of the artifact. Slicing on that boundary is what makes the
+ * concatenation byte-identical to the one-shot encoding: only the final slice
+ * may carry padding. */
+const streamedBase64Digest = (bytes: Uint8Array): string => {
+  const hash = createHash("sha256").update('"'),
+    aligned = bytes.length - (bytes.length % 3),
+    step = 3 * 4096;
+  for (let at = 0; at < aligned; at += step)
+    hash.update(
+      view(bytes, at, Math.min(at + step, aligned)).toString("base64"),
+    );
+  if (aligned !== bytes.length)
+    hash.update(view(bytes, aligned, bytes.length).toString("base64"));
+  return hash.update('"').digest("hex");
+};
+
+/** Ciphertext layout: a 12 byte IV, a 16 byte GCM tag, then the payload. */
+const VAULT_OVERHEAD = 28;
+const STREAM_CHUNK = 256 * 1024;
+export const recoveryKeyProof = (key: Uint8Array, keyId: string): string =>
+  createHmac("sha256", key)
+    .update(`void.recovery.key-check.v1:${keyId}`)
+    .digest("hex");
+/** Encrypted payloads and quota changes commit in one local SQLite transaction.
+ * ponytail: one writer, local disk, no eviction of recovery evidence. A capture
+ * too large to hold is written with `putStream`, which encrypts chunk by chunk;
+ * `put` is the same statement for a value the caller already holds. */
+export function reservedRecoveryVault(
+  root: string,
+  keys: Readonly<Record<string, Uint8Array>>,
+  currentKey: string,
+  requested: VaultCapacity = {
+    maxArtifactBytes: 64 * 1024 * 1024,
+    maxTotalBytes: 1024 * 1024 * 1024,
+  },
+): ManagedRecoveryVault {
+  const capacity = capacityOf(requested),
+    { maxArtifactBytes, maxTotalBytes } = capacity;
   const key = keys[currentKey];
   identity(currentKey);
   if (!key || key.byteLength !== 32)
@@ -180,6 +263,11 @@ export function reservedRecoveryVault(
   }
   async function transaction<T>(
     run: (db: DatabaseSync, used: number) => T | Promise<T>,
+    /** Present only for an explicit administrative capacity move. It replaces
+     * the equality check below with a compare-and-swap against the capacity
+     * the operator says the vault holds, and records the move in the same
+     * transaction. No other caller may change the persisted capacity. */
+    migrate?: VaultCapacityMigration,
   ): Promise<T> {
     await mkdir(rootPath, { recursive: true, mode: 0o700 });
     const old = await legacyState(),
@@ -219,15 +307,26 @@ export function reservedRecoveryVault(
     CREATE TABLE IF NOT EXISTS reservations(workspace TEXT NOT NULL,operation_id TEXT NOT NULL,slot TEXT NOT NULL,bytes INTEGER NOT NULL,PRIMARY KEY(workspace,operation_id,slot));
     CREATE TABLE IF NOT EXISTS key_checks(key_id TEXT PRIMARY KEY,proof TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS artifacts_key_id ON artifacts(key_id);
+    CREATE TABLE IF NOT EXISTS capacity_migrations(at TEXT NOT NULL,operator_id TEXT NOT NULL,from_capacity TEXT NOT NULL,to_capacity TEXT NOT NULL,used_bytes INTEGER NOT NULL,reservations INTEGER NOT NULL);
     PRAGMA user_version=1;`);
       const limits = canonicalJson({ maxArtifactBytes, maxTotalBytes });
       db.prepare("INSERT OR IGNORE INTO settings VALUES(1,?)").run(limits);
+      const expected = migrate
+        ? canonicalJson(capacityOf(migrate.from))
+        : limits;
+      const persisted: unknown = db
+        .prepare("SELECT capacity FROM settings WHERE id=1")
+        .get();
       if (
-        db.prepare("SELECT capacity FROM settings WHERE id=1").get()!
-          .capacity !== limits
+        typeof persisted !== "object" ||
+        persisted === null ||
+        !("capacity" in persisted) ||
+        persisted.capacity !== expected
       )
         throw new Error(
-          "Vault capacity differs from its persisted configuration.",
+          migrate
+            ? "Recovery vault capacity migration does not match the capacity the vault holds."
+            : "Vault capacity differs from its persisted configuration.",
         );
       await ensureKeyMarker(db, old);
       const used =
@@ -239,6 +338,32 @@ export function reservedRecoveryVault(
             .get()!.bytes,
         ) + old.bytes;
       const result = await run(db, used);
+      // The move and its record commit together or not at all. An operator
+      // who cannot read back the row that says what the capacity became has
+      // no evidence the move happened, so the two are one statement.
+      if (migrate) {
+        const counted: unknown = db
+          .prepare("SELECT COUNT(*) AS count FROM reservations")
+          .get();
+        if (
+          typeof counted !== "object" ||
+          counted === null ||
+          !("count" in counted) ||
+          typeof counted.count !== "number"
+        )
+          throw new Error("Recovery vault reservations cannot be counted.");
+        db.prepare("UPDATE settings SET capacity=? WHERE id=1").run(limits);
+        db.prepare(
+          "INSERT INTO capacity_migrations(at,operator_id,from_capacity,to_capacity,used_bytes,reservations) VALUES(?,?,?,?,?,?)",
+        ).run(
+          new Date().toISOString(),
+          migrate.operatorId,
+          expected,
+          limits,
+          used,
+          counted.count,
+        );
+      }
       db.exec("COMMIT");
       if (process.platform !== "win32") {
         const directory = await open(rootPath, "r");
@@ -277,6 +402,117 @@ export function reservedRecoveryVault(
       ]).toString(),
     );
   };
+  /** A streamed write and a whole-value write are one statement, so a capture
+   * that fits in memory and a capture that does not cannot diverge. The
+   * content digest is always the hash of the plaintext bytes, which for a value
+   * is exactly the canonical digest the slot retry compares. */
+  async function write(
+    db: DatabaseSync,
+    used: number,
+    workspace: string,
+    source: VaultPlaintext,
+    bytes: number,
+    allocation?: VaultAllocation,
+  ): Promise<VaultReference> {
+    if (allocation) {
+      identity(allocation.operationId);
+      if (!slots.includes(allocation.slot))
+        throw new Error("Invalid vault slot.");
+    }
+    if (!Number.isSafeInteger(bytes) || bytes < 1)
+      throw new Error("A recovery artifact declares a positive byte count.");
+    if (bytes > maxArtifactBytes)
+      throw new VaultCapacityError("Recovery artifact exceeds quota.");
+    // GCM expands by a fixed amount and the caller declared the plaintext
+    // length, so the ciphertext length is known before the first chunk: one
+    // allocation filled in place, not a chunk list plus a concatenation.
+    const data = Buffer.alloc(bytes + VAULT_OVERHEAD),
+      iv = randomBytes(12),
+      content = createHash("sha256"),
+      cipher = createCipheriv("aes-256-gcm", key, iv);
+    iv.copy(data, 0);
+    cipher.setAAD(Buffer.from(`void.recovery.v1:${workspace}:${currentKey}`));
+    let at = VAULT_OVERHEAD, written = 0;
+    for await (const chunk of source) {
+      const block = view(chunk);
+      written += block.byteLength;
+      if (written > bytes)
+        throw new Error(
+          "A streamed recovery artifact exceeded the byte count it declared; nothing was stored.",
+        );
+      content.update(block);
+      at += cipher.update(block).copy(data, at);
+    }
+    if (written !== bytes)
+      throw new Error(
+        "A streamed recovery artifact ended before the byte count it declared; nothing was stored.",
+      );
+    at += cipher.final().copy(data, at);
+    if (at !== data.byteLength)
+      throw new Error(
+        "Recovery artifact encryption did not produce its declared length.",
+      );
+    cipher.getAuthTag().copy(data, 12);
+    const contentDigest = content.digest("hex");
+    // The slot retry resolves after the plaintext is hashed, not before it is
+    // read: a caller retrying a slot must prove the evidence it offers is the
+    // evidence that slot already holds.
+    const prior = allocation
+      ? db
+          .prepare(
+            "SELECT digest,key_id,data,content_digest FROM artifacts WHERE workspace=? AND operation_id=? AND slot=?",
+          )
+          .get(workspace, allocation.operationId, allocation.slot)
+      : undefined;
+    if (prior) {
+      if (prior.content_digest !== contentDigest)
+        throw new Error("Vault slot belongs to different evidence.");
+      const stored = prior.data as Uint8Array,
+        reference = {
+          digest: String(prior.digest),
+          keyId: String(prior.key_id),
+          bytes: stored.byteLength,
+        };
+      decode(workspace, reference, view(stored));
+      return reference;
+    }
+    // The reservation is only consulted once the slot is known to be empty.
+    // A retry arrives after its reservation was spent on the first write, so
+    // demanding one here would refuse the idempotent replay it exists to allow.
+    const reserved = allocation
+      ? db
+          .prepare(
+            "SELECT bytes FROM reservations WHERE workspace=? AND operation_id=? AND slot=?",
+          )
+          .get(workspace, allocation.operationId, allocation.slot)
+      : undefined;
+    if (allocation && !reserved)
+      throw new Error("Recovery slot is not reserved.");
+    const reference = {
+      digest: streamedBase64Digest(data),
+      keyId: currentKey,
+      bytes: data.byteLength,
+    };
+    if (
+      data.byteLength > Number(reserved?.bytes ?? maxTotalBytes) ||
+      used - Number(reserved?.bytes ?? 0) + data.byteLength > maxTotalBytes
+    )
+      throw new VaultCapacityError("Recovery vault total quota exhausted.");
+    db.prepare("INSERT INTO artifacts VALUES(?,?,?,?,?,?,?)").run(
+      workspace,
+      reference.digest,
+      currentKey,
+      data,
+      allocation?.operationId ?? null,
+      allocation?.slot ?? null,
+      contentDigest,
+    );
+    if (allocation)
+      db.prepare(
+        "DELETE FROM reservations WHERE workspace=? AND operation_id=? AND slot=?",
+      ).run(workspace, allocation.operationId, allocation.slot);
+    return reference;
+  }
   return {
     async reserve(workspace, operationId, requested = slots) {
       identity(workspace);
@@ -323,81 +559,110 @@ export function reservedRecoveryVault(
     },
     async put(workspace, value, allocation) {
       identity(workspace);
-      if (allocation) {
-        identity(allocation.operationId);
-        if (!slots.includes(allocation.slot))
-          throw new Error("Invalid vault slot.");
-      }
-      const plain = Buffer.from(canonicalJson(value)),
-        contentDigest = digest(value);
-      if (plain.length > maxArtifactBytes)
+      const plain = Buffer.from(canonicalJson(value));
+      return transaction((db, used) =>
+        write(db, used, workspace, [plain], plain.byteLength, allocation),
+      );
+    },
+    async putStream(workspace, source, request) {
+      identity(workspace);
+      if (typeof request !== "object" || request === null)
+        throw new Error("A streamed recovery artifact declares its byte count.");
+      // The declared length is proved against the quota before the source is
+      // touched, so an oversized capture costs no chunk of reading.
+      if (
+        !Number.isSafeInteger(request.bytes) ||
+        request.bytes < 1 ||
+        request.bytes > maxArtifactBytes
+      )
         throw new VaultCapacityError("Recovery artifact exceeds quota.");
+      return transaction((db, used) =>
+        write(db, used, workspace, source, request.bytes, request.allocation),
+      );
+    },
+    async *getStream(workspace, reference) {
+      identity(workspace);
+      if (!/^[a-f0-9]{64}$/.test(reference.digest))
+        throw new Error("Invalid recovery reference.");
+      const row: unknown = await transaction((db) =>
+        db
+          .prepare("SELECT data FROM artifacts WHERE workspace=? AND digest=?")
+          .get(workspace, reference.digest),
+      );
+      if (typeof row !== "object" || row === null || !("data" in row))
+        throw new Error(
+          "Recovery artifact streaming covers the reserved vault only; a legacy file artifact has no chunked reader.",
+        );
+      // A SQLite blob column binds a Buffer, but the row crosses the statement
+      // boundary as unknown, so the shape is proved before it is read.
+      const blob = row.data;
+      if (!(blob instanceof Uint8Array))
+        throw new Error("Recovery artifact digest or size mismatch.");
+      const stored: Buffer = view(blob);
+      // The stored payload arrives as one SQLite blob, which is the last
+      // full-size allocation on this path. Verifying and decrypting it in place
+      // is what removes the four plaintext-sized copies the value reader made.
+      if (
+        stored.byteLength !== reference.bytes ||
+        streamedBase64Digest(stored) !== reference.digest
+      )
+        throw new Error("Recovery artifact digest or size mismatch.");
+      if (!Object.hasOwn(keys, reference.keyId))
+        throw new Error("Recovery key unavailable.");
+      const cipher = createDecipheriv(
+        "aes-256-gcm",
+        keys[reference.keyId]!,
+        view(stored, 0, 12),
+      );
+      cipher.setAAD(
+        Buffer.from(`void.recovery.v1:${workspace}:${reference.keyId}`),
+      );
+      cipher.setAuthTag(view(stored, 12, VAULT_OVERHEAD));
+      for (
+        let at = VAULT_OVERHEAD;
+        at < stored.byteLength;
+        at += STREAM_CHUNK
+      ) {
+        const plain = cipher.update(
+          view(stored, at, Math.min(at + STREAM_CHUNK, stored.byteLength)),
+        );
+        if (plain.byteLength) yield plain;
+      }
+      const last = cipher.final();
+      if (last.byteLength) yield last;
+    },
+    async migrateCapacity(request) {
+      identity(request.operatorId);
+      if (typeof request.from !== "object" || request.from === null)
+        throw new Error(
+          "Recovery vault capacity migration declares its expected capacity.",
+        );
+      const from = capacityOf(request.from);
       return transaction((db, used) => {
-        const prior = allocation
-          ? db
-              .prepare(
-                "SELECT digest,key_id,data,content_digest FROM artifacts WHERE workspace=? AND operation_id=? AND slot=?",
-              )
-              .get(workspace, allocation.operationId, allocation.slot)
-          : undefined;
-        if (prior) {
-          if (prior.content_digest !== contentDigest)
-            throw new Error("Vault slot belongs to different evidence.");
-          const bytes = Buffer.from(prior.data as Uint8Array),
-            reference = {
-              digest: String(prior.digest),
-              keyId: String(prior.key_id),
-              bytes: bytes.length,
-            };
-          decode(workspace, reference, bytes);
-          return reference;
-        }
-        const reserved = allocation
-          ? db
-              .prepare(
-                "SELECT bytes FROM reservations WHERE workspace=? AND operation_id=? AND slot=?",
-              )
-              .get(workspace, allocation.operationId, allocation.slot)
-          : undefined;
-        if (allocation && !reserved)
-          throw new Error("Recovery slot is not reserved.");
-        const iv = randomBytes(12),
-          cipher = createCipheriv("aes-256-gcm", key, iv);
-        cipher.setAAD(
-          Buffer.from(`void.recovery.v1:${workspace}:${currentKey}`),
-        );
-        const data = Buffer.concat([
-          iv,
-          Buffer.alloc(16),
-          cipher.update(plain),
-          cipher.final(),
-        ]);
-        cipher.getAuthTag().copy(data, 12);
-        const reference = {
-          digest: digest(data.toString("base64")),
-          keyId: currentKey,
-          bytes: data.length,
-        };
+        // Lowering the ceiling under what is already stored would leave
+        // artifacts no writer can place again, so the move is refused here
+        // rather than applied and discovered at some later write.
+        if (maxTotalBytes < used)
+          throw new Error(
+            `Recovery vault capacity migration cannot lower the total below the ${used} bytes the vault holds.`,
+          );
+        const counted: unknown = db
+          .prepare("SELECT COUNT(*) AS count FROM reservations")
+          .get();
         if (
-          data.length > Number(reserved?.bytes ?? maxTotalBytes) ||
-          used - Number(reserved?.bytes ?? 0) + data.length > maxTotalBytes
+          typeof counted !== "object" ||
+          counted === null ||
+          !("count" in counted) ||
+          typeof counted.count !== "number"
         )
-          throw new VaultCapacityError("Recovery vault total quota exhausted.");
-        db.prepare("INSERT INTO artifacts VALUES(?,?,?,?,?,?,?)").run(
-          workspace,
-          reference.digest,
-          currentKey,
-          data,
-          allocation?.operationId ?? null,
-          allocation?.slot ?? null,
-          contentDigest,
-        );
-        if (allocation)
-          db.prepare(
-            "DELETE FROM reservations WHERE workspace=? AND operation_id=? AND slot=?",
-          ).run(workspace, allocation.operationId, allocation.slot);
-        return reference;
-      });
+          throw new Error("Recovery vault reservations cannot be counted.");
+        return {
+          from,
+          to: { maxArtifactBytes, maxTotalBytes },
+          usedBytes: used,
+          reservations: counted.count,
+        };
+      }, request);
     },
     async get(workspace, reference) {
       identity(workspace);

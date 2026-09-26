@@ -1,19 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, readFile } from "node:fs/promises";
+import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { DatabaseSync } from "node:sqlite";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
+import { canonicalJson } from "../../ledger/src/canonical.ts";
 import {
   reservedRecoveryVault,
   localRecoveryVault,
   localOperationJournal,
   recoveryRuntime,
+  VaultCapacityError,
   type RecoveryAdapter,
   type Json,
 } from "./index.ts";
+import { digest } from "./journal.ts";
 async function fixture(t: import("node:test").TestContext) {
   const root = await mkdtemp(join(tmpdir(), "void-reserved-"));
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -505,5 +509,363 @@ test("newer persisted vault schema is refused before accepting bounded work", as
     );
   } finally {
     unchanged.close();
+  }
+});
+
+/** A capture that cannot be held: the source yields chunks and never a value. */
+const chunked = (bytes: Buffer, size = 256 * 1024) => ({
+  async *[Symbol.asyncIterator]() {
+    for (let at = 0; at < bytes.length; at += size)
+      yield bytes.subarray(at, Math.min(at + size, bytes.length));
+  },
+});
+
+test("a streamed capture round trips without holding the artifact in memory", async (t) => {
+  const f = await fixture(t),
+    capacity = { maxArtifactBytes: 64 * 1024 * 1024, maxTotalBytes: 256 * 1024 * 1024 },
+    vault = reservedRecoveryVault(f.root, f.keys, "first", capacity);
+  // 32 MiB of plaintext. The value path needs roughly 360 MB of resident
+  // memory for this artifact (measured in a fresh process at this commit: a
+  // full canonical JSON string, a Buffer.concat copy, and a base64 string four
+  // thirds its size). The stream path must stay near the size of the one
+  // allocation it cannot avoid, which is the SQLite blob binding.
+  const size = 32 * 1024 * 1024,
+    plain = Buffer.from(JSON.stringify({ blob: "x".repeat(size) }));
+  await vault.reserve!("one", "op", ["capture"]);
+  const reference = await vault.putStream("one", chunked(plain), {
+    bytes: plain.byteLength,
+    allocation: { operationId: "op", slot: "capture" },
+  });
+  let read = 0,
+    largest = 0;
+  for await (const chunk of vault.getStream("one", reference)) {
+    read += chunk.byteLength;
+    largest = Math.max(largest, chunk.byteLength);
+  }
+  assert.equal(read, plain.byteLength, "the streamed read returns every plaintext byte");
+  assert.equal(
+    largest,
+    256 * 1024,
+    "a chunked reader yields bounded chunks, not the whole artifact",
+  );
+  // It is the same artifact the value path stores, so the two agree.
+  assert.deepEqual(await vault.get("one", reference), { blob: "x".repeat(size) });
+  // Peak memory is measured in a child process: this process already holds
+  // every other test's artifacts, so its resident high-water mark would say
+  // nothing about this path.
+  const worker = join(f.root, "measure.mjs");
+  await writeFile(
+    worker,
+    `
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { randomBytes } from "node:crypto";
+import { reservedRecoveryVault } from ${JSON.stringify(new URL("./reserved-vault.ts", import.meta.url).href)};
+const size = ${size};
+const root = await mkdtemp(join(tmpdir(), "void-measure-"));
+const vault = reservedRecoveryVault(join(root, "vault"), { k: randomBytes(32) }, "k", ${JSON.stringify(capacity)});
+await vault.reserve("w", "op", ["capture"]);
+const plain = Buffer.from(JSON.stringify({ blob: "x".repeat(size) }));
+async function* chunks() { for (let at = 0; at < plain.length; at += 262144) yield plain.subarray(at, at + 262144); }
+const before = process.memoryUsage().rss;
+let peak = 0;
+const timer = setInterval(() => { peak = Math.max(peak, process.memoryUsage().rss - before); }, 1);
+const ref = await vault.putStream("w", chunks(), { bytes: plain.length, allocation: { operationId: "op", slot: "capture" } });
+let read = 0;
+for await (const chunk of vault.getStream("w", ref)) read += chunk.length;
+clearInterval(timer);
+process.stdout.write(JSON.stringify({ peak, read, bytes: plain.length }));
+await rm(root, { recursive: true, force: true });
+`,
+  );
+  const child = execFileSync(
+    process.execPath,
+    ["--experimental-strip-types", worker],
+    { encoding: "utf8" },
+  );
+  const measured = JSON.parse(child) as { peak: number; read: number; bytes: number };
+  assert.equal(measured.read, plain.byteLength, "the child read every byte back");
+  assert.ok(
+    measured.peak < 160 * 1024 * 1024,
+    `streamed round trip peaked at ${Math.round(measured.peak / 1048576)} MB for a ${Math.round(plain.byteLength / 1048576)} MB artifact; the value path needs about 360 MB`,
+  );
+});
+
+test("a streamed artifact carries the same content digest the value path computes", async (t) => {
+  const f = await fixture(t),
+    vault = reservedRecoveryVault(f.root, f.keys, "first"),
+    value = { blob: "x".repeat(4096), nested: { a: [1, 2, 3] } },
+    plain = Buffer.from(canonicalJson(value));
+  await vault.reserve!("one", "op", ["capture"]);
+  await vault.reserve!("two", "op", ["capture"]);
+  const streamed = await vault.putStream("one", chunked(plain), {
+    bytes: plain.byteLength,
+    allocation: { operationId: "op", slot: "capture" },
+  });
+  const stored = await vault.put("two", value, {
+    operationId: "op",
+    slot: "capture",
+  });
+  const rows = (workspace: string) => {
+    const db = new DatabaseSync(join(f.root, "vault.sqlite"), { readOnly: true });
+    try {
+      return db
+        .prepare("SELECT content_digest FROM artifacts WHERE workspace=? AND digest=?")
+        .get(workspace, workspace === "one" ? streamed.digest : stored.digest);
+    } finally {
+      db.close();
+    }
+  };
+  assert.equal(
+    rows("one")?.content_digest,
+    rows("two")?.content_digest,
+    "a streamed write and a value write agree on what the evidence is",
+  );
+  assert.equal(rows("one")?.content_digest, digest(value));
+});
+
+test("a stream that lies about its length stores nothing", async (t) => {
+  const f = await fixture(t),
+    capacity = { maxArtifactBytes: 1024, maxTotalBytes: 4096 },
+    vault = reservedRecoveryVault(f.root, f.keys, "first", capacity);
+  const over = Buffer.alloc(2048),
+    under = Buffer.alloc(512);
+  // Declared over the quota: the refusal lands before the source is read at
+  // all, so a hostile stream costs no chunk of work.
+  let touched = 0;
+  await assert.rejects(
+    vault.putStream("one", {
+      async *[Symbol.asyncIterator]() {
+        touched += 1;
+        yield over;
+      },
+    }, { bytes: 2048 }),
+    (error: unknown) => {
+      assert.ok(error instanceof VaultCapacityError, String(error));
+      return true;
+    },
+  );
+  assert.equal(touched, 0, "an over-quota declaration must not read the source");
+  // Declared within the quota but delivered differently: refused, and nothing
+  // is left behind that a later reader could mistake for a stored artifact.
+  for (const [payload, declared] of [
+    [over, 1024],
+    [under, 1024],
+  ] as const)
+    await assert.rejects(
+      vault.putStream("one", chunked(payload, 512), { bytes: declared }),
+      /exceeded the byte count it declared|ended before the byte count it declared/,
+    );
+  // One legitimate write establishes the schema, and it is the only row: a
+  // refused stream leaves neither an artifact nor a partial payload.
+  const kept = await vault.put("two", "stored");
+  const db = new DatabaseSync(join(f.root, "vault.sqlite"), { readOnly: true });
+  try {
+    const rows = db
+      .prepare("SELECT digest FROM artifacts WHERE workspace='one'")
+      .all();
+    assert.deepEqual(rows, [], "a refused stream stores nothing under its workspace");
+    assert.equal(
+      db.prepare("SELECT count(*) AS count FROM artifacts").get()?.count,
+      1,
+      "only the legitimate artifact is stored",
+    );
+  } finally {
+    db.close();
+  }
+  assert.equal(await vault.get("two", kept), "stored");
+});
+
+test("a streamed write obeys the same reservation and slot rules as a value write", async (t) => {
+  const f = await fixture(t),
+    vault = reservedRecoveryVault(f.root, f.keys, "first"),
+    plain = Buffer.from(canonicalJson({ value: "before" }));
+  await assert.rejects(
+    vault.putStream("one", chunked(plain), {
+      bytes: plain.byteLength,
+      allocation: { operationId: "unreserved", slot: "capture" },
+    }),
+    /not reserved/,
+  );
+  await vault.reserve!("one", "op", ["capture"]);
+  const first = await vault.putStream("one", chunked(plain), {
+    bytes: plain.byteLength,
+    allocation: { operationId: "op", slot: "capture" },
+  });
+  // The same bytes retry to the same artifact, exactly as a value write does.
+  assert.deepEqual(
+    await vault.putStream("one", chunked(plain), {
+      bytes: plain.byteLength,
+      allocation: { operationId: "op", slot: "capture" },
+    }),
+    first,
+    "a slot retry returns the artifact already stored",
+  );
+  const changed = Buffer.from(canonicalJson({ value: "after" }));
+  await assert.rejects(
+    vault.putStream("one", chunked(changed), {
+      bytes: changed.byteLength,
+      allocation: { operationId: "op", slot: "capture" },
+    }),
+    /different evidence/,
+  );
+  assert.deepEqual(await vault.get("one", first), { value: "before" });
+});
+
+test("a streamed read refuses a legacy artifact, a wrong key and a corrupted payload", async (t) => {
+  const f = await fixture(t),
+    legacy = localRecoveryVault(f.root, f.keys, "first", 1024),
+    old = await legacy.put("one", "legacy bytes"),
+    vault = reservedRecoveryVault(f.root, f.keys, "first"),
+    plain = Buffer.from(canonicalJson("managed"));
+  const managed = await vault.putStream("two", chunked(plain), {
+    bytes: plain.byteLength,
+  });
+  await assert.rejects(
+    (async () => {
+      for await (const _ of vault.getStream("one", old));
+    })(),
+    /legacy file artifact has no chunked reader/,
+  );
+  // A reader that does not hold the key the artifact was written under cannot
+  // decrypt it, and must say so rather than yield unauthenticated bytes.
+  const holder = reservedRecoveryVault(f.root, f.keys, "second"),
+    underSecond = await holder.putStream("two", chunked(plain), {
+      bytes: plain.byteLength,
+    });
+  const withoutKey = reservedRecoveryVault(f.root, { first: f.keys.first }, "first");
+  await assert.rejects(
+    (async () => {
+      for await (const _ of withoutKey.getStream("two", underSecond));
+    })(),
+    /key unavailable/,
+  );
+  // Flipping one ciphertext byte must refuse rather than yield forged bytes.
+  const db = new DatabaseSync(join(f.root, "vault.sqlite"));
+  try {
+    const row = db
+      .prepare("SELECT data FROM artifacts WHERE workspace=? AND digest=?")
+      .get("two", managed.digest);
+    if (typeof row !== "object" || row === null || !("data" in row))
+      throw new Error("the streamed artifact row is unavailable");
+    const data = Buffer.from(row.data as Uint8Array);
+    data[data.length - 1] ^= 0xff;
+    db.prepare("UPDATE artifacts SET data=? WHERE workspace=? AND digest=?").run(
+      data,
+      "two",
+      managed.digest,
+    );
+  } finally {
+    db.close();
+  }
+  await assert.rejects(
+    (async () => {
+      for await (const _ of vault.getStream("two", managed));
+    })(),
+    /digest or size mismatch/,
+  );
+});
+
+test("a capacity migration moves capacity explicitly, once, and is recorded", async (t) => {
+  const f = await fixture(t),
+    before = { maxArtifactBytes: 1024, maxTotalBytes: 4 * 1052 },
+    after = { maxArtifactBytes: 4096, maxTotalBytes: 64 * 1052 },
+    original = reservedRecoveryVault(f.root, f.keys, "first", before);
+  await original.put("one", "retained evidence");
+  // A worker built with the new capacity is refused until an operator moves it,
+  // which is the point: capacity never follows from ordinary use.
+  await assert.rejects(
+    reservedRecoveryVault(f.root, f.keys, "first", after).reserve!("one", "op"),
+    /persisted configuration/,
+  );
+  const moved = await reservedRecoveryVault(f.root, f.keys, "first", after)
+    .migrateCapacity({ from: before, operatorId: "ops-1" });
+  assert.deepEqual(moved.from, before);
+  assert.deepEqual(moved.to, after);
+  assert.ok(moved.usedBytes > 0, "the move reports the bytes in force when it applied");
+  // The move took effect: a worker on the new capacity writes and reads, and
+  // the worker that held the old capacity is now the mismatched one.
+  const after1 = reservedRecoveryVault(f.root, f.keys, "first", after),
+    second = await after1.put("one", "written after the move");
+  assert.equal(await after1.get("one", second), "written after the move");
+  await assert.rejects(
+    reservedRecoveryVault(f.root, f.keys, "first", before).reserve!("one", "op"),
+    /persisted configuration/,
+  );
+  // Replaying the same move is refused: the vault no longer holds what it
+  // declared, so a stale operator decision cannot be applied twice.
+  await assert.rejects(
+    reservedRecoveryVault(f.root, f.keys, "first", before).migrateCapacity({
+      from: before,
+      operatorId: "ops-2",
+    }),
+    /does not match the capacity the vault holds/,
+  );
+  const db = new DatabaseSync(join(f.root, "vault.sqlite"), { readOnly: true });
+  try {
+    const row = db.prepare("SELECT * FROM capacity_migrations").get();
+    assert.equal(row?.operator_id, "ops-1", "the operator that moved capacity is recorded");
+    assert.equal(row?.from_capacity, canonicalJson(before));
+    assert.equal(row?.to_capacity, canonicalJson(after));
+    assert.equal(row?.used_bytes, moved.usedBytes);
+    assert.equal(db.prepare("SELECT count(*) AS count FROM capacity_migrations").get()?.count, 1);
+  } finally {
+    db.close();
+  }
+});
+
+test("a capacity migration below the stored bytes is refused and changes nothing", async (t) => {
+  const f = await fixture(t),
+    before = { maxArtifactBytes: 64 * 1024, maxTotalBytes: 256 * 1024 },
+    vault = reservedRecoveryVault(f.root, f.keys, "first", before);
+  const reference = await vault.put("one", "x".repeat(40 * 1024));
+  const tooSmall = { maxArtifactBytes: 1024, maxTotalBytes: 8 * 1024 };
+  await assert.rejects(
+    reservedRecoveryVault(f.root, f.keys, "first", tooSmall).migrateCapacity({
+      from: before,
+      operatorId: "ops",
+    }),
+    (error: unknown) => {
+      // The refusal names the precondition and the byte count it would strand.
+      assert.match((error as Error).message, /cannot lower the total below the \d+ bytes/);
+      return true;
+    },
+  );
+  // Nothing moved: the vault still reads and still enforces the capacity it had.
+  assert.equal(typeof await vault.get("one", reference), "string");
+  const db = new DatabaseSync(join(f.root, "vault.sqlite"), { readOnly: true });
+  try {
+    assert.equal(db.prepare("SELECT count(*) AS count FROM capacity_migrations").get()?.count, 0);
+    assert.equal(
+      db.prepare("SELECT capacity FROM settings WHERE id=1").get()?.capacity,
+      canonicalJson(before),
+    );
+  } finally {
+    db.close();
+  }
+});
+
+test("ordinary vault traffic never migrates capacity", async (t) => {
+  const f = await fixture(t),
+    capacity = { maxArtifactBytes: 1024, maxTotalBytes: 8 * 1052 },
+    vault = reservedRecoveryVault(f.root, f.keys, "first", capacity);
+  await vault.reserve!("one", "op");
+  await vault.put("one", "kept");
+  await vault.put("two", "also kept");
+  await vault.release!("one", "op");
+  const db = new DatabaseSync(join(f.root, "vault.sqlite"), { readOnly: true });
+  try {
+    assert.equal(
+      db.prepare("SELECT count(*) AS count FROM capacity_migrations").get()?.count,
+      0,
+      "writing, reserving and releasing are not capacity moves",
+    );
+    assert.equal(
+      db.prepare("SELECT capacity FROM settings WHERE id=1").get()?.capacity,
+      canonicalJson(capacity),
+    );
+  } finally {
+    db.close();
   }
 });

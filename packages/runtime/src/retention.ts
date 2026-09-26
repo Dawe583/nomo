@@ -1,6 +1,6 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { mkdir, open, readdir, readFile, rename, rm, stat, type FileHandle } from "node:fs/promises";
-import { join, resolve, sep } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 
 import { canonicalJson } from "../../ledger/src/canonical.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
@@ -37,8 +37,16 @@ export const MANUAL_RETENTION_POLICY: RetentionPolicy = Object.freeze({
   }),
 });
 /** Per-artifact retention evidence. Absent means "protect"; a pin is never
- * dropped here, so an artifact cannot release itself. */
-export type VaultLifecycle = { pin?: VaultPin };
+ * dropped here, so an artifact cannot release itself. A release is recorded
+ * rather than implied by an empty record, so "protected because unknown" and
+ * "collectable because an operator said so" stay distinguishable. */
+export type VaultLifecycle = { pin?: VaultPin; release?: VaultRelease };
+/** A recorded release: who released which pin, and when. */
+export type VaultRelease = {
+  readonly operatorId: string;
+  readonly at: string;
+  readonly released: { readonly ownerId: string; readonly kind: VaultPin["kind"] };
+};
 type ArtifactIdentity = { readonly digest: string };
 const kinds: readonly RetentionKind[] = ["unpinned", "recovery", "operator"];
 
@@ -95,6 +103,20 @@ const evidenceDir = (index: string, workspace: string, artifactRoot: string): st
     throw new Error("Recovery vault retention evidence must live outside the artifact root.");
   return join(base, workspace);
 };
+
+/** A backup or a restore target must also live outside the artifact tree, for
+ * the same reason evidence does: the reserved vault reads every file in a
+ * workspace directory as a legacy artifact, so a manifest there makes the
+ * whole store unverifiable. */
+const outsideArtifactRoot = (path: string, artifactRoot: string): string => {
+  const resolved = resolve(path),
+    root = resolve(artifactRoot);
+  if (resolved === root || resolved.startsWith(`${root}${sep}`))
+    throw new Error(
+      "Recovery vault retention evidence must live outside the artifact root.",
+    );
+  return resolved;
+};
 /** How long a lock may sit before a collector may reclaim it, and only if its
  * recorded owner is provably gone. Long enough to cover a slow collection,
  * short enough that a crash does not freeze retention until an operator
@@ -120,6 +142,28 @@ function vaultPin(value: unknown): VaultPin {
   )
     throw new Error("Recovery artifact lifecycle is invalid; retention refused.");
   return value as VaultPin;
+}
+function vaultRelease(value: unknown): VaultRelease {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    Array.isArray(value) ||
+    Object.keys(value).some(
+      (key) => key !== "operatorId" && key !== "at" && key !== "released",
+    ) ||
+    !("operatorId" in value) ||
+    typeof value.operatorId !== "string" ||
+    !value.operatorId.length ||
+    !("at" in value) ||
+    typeof value.at !== "string" ||
+    !("released" in value)
+  )
+    throw new Error("Recovery artifact lifecycle is invalid; retention refused.");
+  return {
+    operatorId: value.operatorId,
+    at: value.at,
+    released: vaultPin(value.released),
+  };
 }
 /** Absent evidence is reported as undefined so the caller protects the artifact.
  * Unreadable or invalid evidence refuses instead of guessing the pin. */
@@ -148,13 +192,18 @@ async function readLifecycle(
     typeof parsed !== "object" ||
     parsed === null ||
     Array.isArray(parsed) ||
-    Object.keys(parsed).some((key) => key !== "pin")
+    Object.keys(parsed).some((key) => key !== "pin" && key !== "release")
   )
     throw new Error(
       "Recovery artifact lifecycle is invalid; retention refused.",
     );
   const record = parsed as Readonly<Record<string, unknown>>;
-  return Object.hasOwn(record, "pin") ? { pin: vaultPin(record.pin) } : {};
+  return {
+    ...(Object.hasOwn(record, "pin") ? { pin: vaultPin(record.pin) } : {}),
+    ...(Object.hasOwn(record, "release")
+      ? { release: vaultRelease(record.release) }
+      : {}),
+  };
 }
 
 export type VaultLifecycleRequest = {
@@ -206,24 +255,97 @@ export async function markVaultLifecycle(
       throw new Error(
         "Recovery artifact is unavailable; lifecycle was not recorded.",
       );
-    const bytes = Buffer.from(canonicalJson({ ...existing, ...incoming }));
-    if (existing !== undefined && bytes.toString() === canonicalJson(existing))
+    const lifecycle: VaultLifecycle = { ...existing, ...incoming };
+    if (existing !== undefined && canonicalJson(lifecycle) === canonicalJson(existing))
       return;
-    await mkdir(dir, { recursive: true, mode: 0o700 });
-    const temporary = `${path}.tmp-${randomBytes(16).toString("hex")}`;
-    try {
-      const handle = await open(temporary, "wx", 0o600);
-      try {
-        await handle.writeFile(bytes);
-        await handle.sync();
-      } finally {
-        await handle.close();
-      }
-      await rename(temporary, path);
-    } finally {
-      await rm(temporary, { force: true });
-    }
+    await writeLifecycle(dir, request.reference, lifecycle);
   });
+}
+
+export type VaultPinReleaseRequest = {
+  readonly root: string;
+  readonly index: string;
+  readonly workspace: string;
+  readonly reference: VaultReference;
+  /** The pin the operator believes is recorded. It must match the recorded one
+ * exactly: a release names the protection it removes, so a stale operator
+ * view cannot release a pin that has since been changed by someone else. */
+  readonly pin: VaultPin;
+  readonly operatorId: string;
+  readonly clock?: () => Date;
+};
+/** R03 pin release. This is the supported way to remove a pin; the alternative
+ * was editing the sidecar by hand, which is a retention bug rather than a
+ * policy. It takes the same lock the collector holds, so a release cannot land
+ * in the gap between a collector's scan and its unlink. The artifact itself is
+ * never touched: only the record protecting it changes, and what it changes to
+ * is a recorded release naming the operator, not an absent pin. */
+export async function releaseVaultPin(
+  request: VaultPinReleaseRequest,
+): Promise<VaultRelease> {
+  if (!/^[\w-]{1,120}$/.test(request.operatorId))
+    throw new Error("Invalid recovery pin release operator.");
+  const dir = evidenceDir(request.index, request.workspace, request.root);
+  const held = vaultPin(request.pin);
+  return withRetentionLock(dir, async () => {
+    const existing = await readLifecycle(dir, request.reference);
+    // Absent evidence means "protect", not "nothing to do": releasing an
+    // artifact whose pin state this store cannot prove would convert unknown
+    // into collectable, which is the one inference retention must never make.
+    if (existing === undefined)
+      throw new Error(
+        "Recovery artifact has no recorded pin; a release cannot prove what protection to remove.",
+      );
+    if (existing.pin === undefined)
+      throw new Error(
+        "Recovery artifact has no recorded pin to release; it is already released for retention.",
+      );
+    if (
+      existing.pin.ownerId !== held.ownerId ||
+      existing.pin.kind !== held.kind
+    )
+      throw new Error(
+        "Recovery artifact pin does not match the recorded lifecycle; nothing was released.",
+      );
+    const release: VaultRelease = {
+      operatorId: request.operatorId,
+      at: (request.clock ?? (() => new Date()))().toISOString(),
+      released: { ownerId: held.ownerId, kind: held.kind },
+    };
+    await writeLifecycle(dir, request.reference, {
+      release: { ...existing.release, ...release },
+    });
+    return release;
+  });
+}
+
+/** The sidecar write, shared by marking and releasing so both land the same
+ * way: a synced temporary, renamed into place, never a partial record. */
+async function writeLifecycle(
+  dir: string,
+  artifact: ArtifactIdentity,
+  lifecycle: VaultLifecycle,
+): Promise<void> {
+  const path = lifecyclePath(dir, artifact),
+    bytes = Buffer.from(canonicalJson(lifecycle));
+  await mkdir(dir, { recursive: true, mode: 0o700 });
+  const temporary = `${path}.tmp-${randomBytes(16).toString("hex")}`;
+  try {
+    const handle = await open(temporary, "wx", 0o600);
+    try {
+      await handle.writeFile(bytes);
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    await rename(temporary, path);
+  } finally {
+    await rm(temporary, { force: true });
+  }
+  if (process.platform !== "win32") {
+    const parent = await open(dir, "r");
+    try { await parent.sync(); } finally { await parent.close(); }
+  }
 }
 
 export type RetentionRequest = {
@@ -470,4 +592,238 @@ async function deleteArtifacts(
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && "code" in error;
+}
+
+/** R03 retention-index backup. The index is authoritative state, not derived
+ * state: it is the only record of which artifacts are pinned, and a lost
+ * sidecar is indistinguishable from an artifact that was never reviewed. It
+ * cannot be rebuilt from the artifact tree, so it needs a backup that is
+ * verified before it is trusted. */
+export const RETENTION_INDEX_MANIFEST = "void.retention.index.v1";
+export type RetentionIndexEntry = {
+  /** Path relative to the index root, `workspace/digest.meta`. */
+  readonly path: string;
+  readonly bytes: number;
+  readonly sha256: string;
+};
+export type RetentionIndexManifest = {
+  readonly schema: typeof RETENTION_INDEX_MANIFEST;
+  readonly entries: readonly RetentionIndexEntry[];
+};
+export type RetentionIndexBackupRequest = {
+  /** The retention index root, the same one passed to the collector. */
+  readonly index: string;
+  /** Where the backup is written. Refused inside the artifact root. */
+  readonly destination: string;
+  readonly artifactRoot: string;
+};
+export type RetentionIndexRestoreRequest = {
+  readonly index: string;
+  /** The backup directory a previous `backupRetentionIndex` produced. */
+  readonly source: string;
+  readonly artifactRoot: string;
+};
+
+const indexEntries = (
+  dir: string,
+  prefix = "",
+  /** The backup manifest is the backup's own descriptor, not evidence about an
+   * artifact, so it is skipped when the tree being walked is a backup. */
+  manifestName?: string,
+): Promise<string[]> =>
+  readdir(dir, { withFileTypes: true })
+    .then((items) =>
+      Promise.all(
+        items.map(async (item) => {
+          const name = prefix ? `${prefix}/${item.name}` : item.name;
+          // The lock is a live coordination file, not evidence. Backing it up
+          // would restore a stale lock and freeze collection on the next run.
+          if (item.name === ".retention.lock") return [];
+          if (!prefix && manifestName && item.name === manifestName) return [];
+          if (item.isDirectory())
+            return indexEntries(join(dir, item.name), name, manifestName);
+          if (!item.isFile())
+            throw new Error(
+              "Recovery retention index holds an entry that is not a file; backup refused.",
+            );
+          if (!/^[a-f0-9]{64}\.meta$/.test(item.name))
+            throw new Error(
+              "Recovery retention index holds a file that is not artifact evidence; backup refused.",
+            );
+          return [name];
+        }),
+      ),
+    )
+    .then((groups) => groups.flat());
+
+const readIndexEntry = async (
+  source: string,
+  entry: RetentionIndexEntry,
+): Promise<Buffer> => {
+  const path = join(source, ...entry.path.split("/")),
+    bytes = await readFile(path);
+  if (
+    bytes.byteLength !== entry.bytes ||
+    createHash("sha256").update(bytes).digest("hex") !== entry.sha256
+  )
+    throw new Error(
+      "Recovery retention index backup does not match its manifest; restore refused.",
+    );
+  return bytes;
+};
+
+/** Copies every evidence sidecar and writes a manifest naming each one with its
+ * byte count and digest. A sidecar that is not a digest-named evidence file is
+ * refused rather than skipped: a backup that quietly omitted one would restore
+ * an index that no longer protects what it used to. */
+export async function backupRetentionIndex(
+  request: RetentionIndexBackupRequest,
+): Promise<RetentionIndexManifest> {
+  const source = resolve(request.index),
+    destination = outsideArtifactRoot(request.destination, request.artifactRoot);
+  outsideArtifactRoot(source, request.artifactRoot);
+  const names = (await stat(source).catch(() => {
+    throw new Error("Recovery retention index is unavailable; backup refused.");
+  })).isDirectory()
+    ? await indexEntries(source)
+    : [];
+  const entries: RetentionIndexEntry[] = [];
+  // The manifest is written last, so a backup interrupted before it lands has
+  // no manifest and therefore cannot be mistaken for a complete one.
+  for (const name of names.sort()) {
+    const bytes = await readFile(join(source, ...name.split("/"))),
+      path = join(destination, ...name.split("/"));
+    entries.push({
+      path: name,
+      bytes: bytes.byteLength,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+    });
+    await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+    const temporary = `${path}.tmp-${randomBytes(16).toString("hex")}`;
+    try {
+      const handle = await open(temporary, "wx", 0o600);
+      try {
+        await handle.writeFile(bytes);
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
+      await rename(temporary, path);
+    } finally {
+      await rm(temporary, { force: true });
+    }
+  }
+  const manifest: RetentionIndexManifest = {
+    schema: RETENTION_INDEX_MANIFEST,
+    entries,
+  };
+  await mkdir(destination, { recursive: true, mode: 0o700 });
+  const manifestPath = join(destination, "retention-index.json"),
+    temporary = `${manifestPath}.tmp-${randomBytes(16).toString("hex")}`;
+  try {
+    const handle = await open(temporary, "wx", 0o600);
+    try {
+      await handle.writeFile(canonicalJson(manifest));
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    await rename(temporary, manifestPath);
+  } finally {
+    await rm(temporary, { force: true });
+  }
+  return manifest;
+}
+
+/** Restores an index from a backup. Every entry is read and verified against
+ * the manifest before anything is installed, and an unlisted file in the
+ * backup refuses the whole restore: a partial restore would leave the index
+ * asserting protection it no longer holds. */
+export async function restoreRetentionIndex(
+  request: RetentionIndexRestoreRequest,
+): Promise<RetentionIndexManifest> {
+  const source = outsideArtifactRoot(request.source, request.artifactRoot);
+  const target = outsideArtifactRoot(request.index, request.artifactRoot);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(
+      await readFile(join(source, "retention-index.json"), "utf8"),
+    );
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT")
+      throw new Error(
+        "Recovery retention index backup has no manifest; restore refused.",
+      );
+    throw new Error(
+      "Recovery retention index backup manifest is unreadable; restore refused.",
+    );
+  }
+  if (
+    typeof parsed !== "object" ||
+    parsed === null ||
+    Array.isArray(parsed) ||
+    !("schema" in parsed) ||
+    parsed.schema !== RETENTION_INDEX_MANIFEST ||
+    !("entries" in parsed) ||
+    !Array.isArray(parsed.entries)
+  )
+    throw new Error(
+      "Recovery retention index backup manifest is invalid; restore refused.",
+    );
+  const entries: RetentionIndexEntry[] = [];
+  for (const entry of parsed.entries) {
+    if (
+      typeof entry !== "object" ||
+      entry === null ||
+      !("path" in entry) ||
+      typeof entry.path !== "string" ||
+      !/^[\w-]{1,100}\/[a-f0-9]{64}\.meta$/.test(entry.path) ||
+      !("bytes" in entry) ||
+      typeof entry.bytes !== "number" ||
+      !Number.isSafeInteger(entry.bytes) ||
+      entry.bytes < 0 ||
+      !("sha256" in entry) ||
+      typeof entry.sha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(entry.sha256)
+    )
+      throw new Error(
+        "Recovery retention index backup manifest is invalid; restore refused.",
+      );
+    entries.push({
+      path: entry.path,
+      bytes: entry.bytes,
+      sha256: entry.sha256,
+    });
+  }
+  // Verify everything before installing anything, so a corrupt backup cannot
+  // leave the index half-restored and half-asserting protection it lost.
+  const verified = new Map<string, Buffer>();
+  for (const entry of entries)
+    verified.set(entry.path, await readIndexEntry(source, entry));
+  const present = (
+    await indexEntries(source, "", "retention-index.json").catch(() => [])
+  ).sort();
+  const listed = entries.map((entry) => entry.path).sort();
+  if (present.join("\n") !== listed.join("\n"))
+    throw new Error(
+      "Recovery retention index backup holds files its manifest does not list; restore refused.",
+    );
+  for (const [name, bytes] of verified) {
+    const path = join(target, ...name.split("/"));
+    await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+    const temporary = `${path}.tmp-${randomBytes(16).toString("hex")}`;
+    try {
+      const handle = await open(temporary, "wx", 0o600);
+      try {
+        await handle.writeFile(bytes);
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
+      await rename(temporary, path);
+    } finally {
+      await rm(temporary, { force: true });
+    }
+  }
+  return { schema: RETENTION_INDEX_MANIFEST, entries };
 }
