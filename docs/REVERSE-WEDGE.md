@@ -411,7 +411,7 @@ commit message already celebrated and that I re-verified in source
 structural requirement is a string `workspace` field, enforced at
 `store.ts:210`).
 
-**And the third-party check is already built.** `scripts/src/verify-ledger-standalone.mjs`
+**And the third-party check is already built.** `packages/verifier/verify-ledger.mjs`
 is a single dependency-free file importing only `node:crypto` and `node:fs`,
 which re-implements the canonicaliser, entry hash, signing preimage and Merkle
 digest byte-for-byte, with a `--selftest` pinning six shared vectors. A RE claim
@@ -505,7 +505,7 @@ changes**, and no frozen recovery format moves.
 | `packages/ledger/src/verify.ts` | Route the new finding into `verifyChain`, mirroring the four-line attribution hook. |
 | `packages/ledger/src/store.ts` | Route the new finding into the store's own check, so the feed refuses exactly what the verifier refuses. |
 | `packages/ledger/src/feed.ts` | Same routing on the read path. |
-| `scripts/src/verify-ledger-standalone.mjs` | Re-implement the assertion parse and the `sha256(range)` re-derivation with **no VOID imports**, and pin the vectors in the existing `--selftest`. |
+| `packages/verifier/verify-ledger.mjs` | Re-implement the assertion parse and the `sha256(range)` re-derivation with **no VOID imports**, and pin the vectors in the existing `--selftest`. |
 | `packages/cli/src/assert.ts` | **New.** `add` and `verify` subcommands. |
 | `packages/cli/bin/void.mjs` | Two dispatch lines. |
 | `packages/policy/src/attribution.ts` | **No change.** An assertion is not a tool call, so no policy decision exists. It is appended directly, and the record says so in a field the verifier checks, so a host cannot synthesise a policy-attributed assertion. |
@@ -523,7 +523,7 @@ the first increment is entirely inside the ledger and the CLI.
 Four proofs, in increasing hostility. Every one is a command, not a claim.
 
 1. **Round trip.** `void assertion add` on the fixture, then
-   `node scripts/src/verify-ledger-standalone.mjs <bundle> --public-key <spki>`
+   `node packages/verifier/verify-ledger.mjs <bundle> --public-key <spki>`
    → `VERIFIED n entries, head <hash> (signatures and hash links)`, exit 0.
    Proves the new body shape is hashed, chained and signed by the existing
    machinery with no format change.
@@ -837,7 +837,7 @@ Local, at `63dbd2c`:
   `:91-138` (`appendInner` / `append`), `:159-172` (store-side check),
   `:210` (workspace-field requirement)
 - `packages/ledger/src/index.ts:32-51` (`LedgerStore`), `:69` (`signingPreimage`)
-- `scripts/src/verify-ledger-standalone.mjs` (dependency-free verifier shape)
+- `packages/verifier/verify-ledger.mjs` (dependency-free verifier shape)
 - `packages/policy/src/grammar.ts:1-53` (closed match keys, decisions, classes)
 - `packages/policy/src/rules.ts:136-147` (accepted class set)
 - `packages/cli/src/recovery-mcp.ts:162-172` (closed tool-name union)

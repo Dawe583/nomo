@@ -98,6 +98,33 @@ const INVENTORY = {
   // pointer to it is a record of the decision, not a broken link to fix.
   "docs/GO-TO-MARKET.md":
     "confidential and deliberately absent from the repository; PLAN-GAPS and PLAN-STATUS say so",
+
+  // Paths the strategy documents name as files that would be new. A proposal
+  // that says "new docs/SECURITY.md" is honest; a status document claiming the
+  // file shipped would not be. VOID-FUTURE-DIRECTION and REVERSE-WEDGE both
+  // work this way, and neither claims any of these landed.
+  "docs/AAT-CROSSWALK.md":
+    "VOID-FUTURE-DIRECTION proposal for a field-by-field AAT crosswalk; never built",
+  "docs/SECURITY.md":
+    "VOID-FUTURE-DIRECTION proposal for a public guarantees page; never built, and packages/security-notes.md carries the material that did land",
+  "docs/otel-genai-proposal.md":
+    "VOID-FUTURE-DIRECTION proposal for an OpenTelemetry GenAI proposal; never published",
+  "packages/cli/src/standalone-verify.mjs":
+    "VOID-FUTURE-DIRECTION proposal for a standalone verifier entry point; it shipped as packages/verifier/verify-ledger.mjs instead",
+  "packages/cli/src/tool-signing.ts":
+    "VOID-FUTURE-DIRECTION proposal to sign tool definitions MCPS-style; never built",
+  "packages/ledger/src/aat.ts":
+    "VOID-FUTURE-DIRECTION proposal for an AAT-shaped bundle; never built, and the ledger keeps its own record shape",
+  "packages/ledger/src/assertion.ts":
+    "REVERSE-WEDGE proposal for a new assertion body type; never built",
+  "packages/ledger/src/assertion.test.ts":
+    "REVERSE-WEDGE proposal for the assertion test matrix; never built with the type it would have tested",
+  "packages/cli/src/assert.ts":
+    "REVERSE-WEDGE proposal for void assertion add and verify subcommands; never built",
+  "packages/policy/src/attribution.ts":
+    "REVERSE-WEDGE proposal for policy attribution of assertions; never built, and attribution itself shipped as packages/ledger/src/attribution.ts",
+  "docs/reference/server-json/official-registry-requirements.md":
+    "DISTRIBUTION-PATH cites a vendor requirements document fetched from the web, not a file in this tree",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */
