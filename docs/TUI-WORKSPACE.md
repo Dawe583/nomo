@@ -1,5 +1,9 @@
 # VOID na vlastním počítači
 
+> Úplný návod pro provozovatele, včetně všech povrchů, je
+> [HANDBOOK.cs.md](HANDBOOK.cs.md). Tento dokument popisuje jen terminálové
+> rozhraní a jeho klávesy.
+
 ## Spuštění
 
 Z kořene repozitáře:

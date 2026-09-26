@@ -2,6 +2,11 @@
 
 VOID is an accountability and reversibility layer for AI agents.
 
+**Start here: [the VOID handbook](docs/HANDBOOK.md).** It is the complete operator
+guide, in English and in [Czech](docs/HANDBOOK.cs.md), and it is checked by a
+test: every command, script, path and link in it is verified to exist, so it
+cannot drift away from the product the way a README can.
+
 [Download VOID](https://dawe583.github.io/void/): Windows and macOS desktop beta, TUI source download, and setup instructions.
 
 It sits between an MCP capable agent and the tools the agent can write to. For each write, VOID classifies how reversible the call is, applies a policy, and appends a signed hash chained ledger entry. Later, operators can inspect the feed, verify the chain, attest a slice, trace taint, and replay true inverses when a connector has captured enough state.
@@ -43,9 +48,11 @@ The GUI uses the shared React/TypeScript client in `apps/control-plane/ui`.
 `pnpm gui` builds it before starting the local API. For frontend development,
 run `node apps/control-plane/api/server.ts` and `pnpm dev:web` in separate
 terminals. `pnpm build:web` creates the production assets used by Vercel and
-the desktop bundle. New conversations default to **TokenRouter / GLM 5.3 Free**;
-connect a server-side provider key in Settings or set `TOKENROUTER_API_KEY`.
-Existing conversations keep their original provider and model.
+the desktop bundle. New conversations default to **NVIDIA NIM / GLM 5.3 Flash**
+(`z-ai/glm-5.3-flash`); connect a server-side provider key in Settings or set
+`NVIDIA_API_KEY`. Existing conversations keep their original provider and model.
+A workspace with no credential resolves reports **Setup required** and dispatches
+nothing: VOID never silently falls back to a different provider.
 
 From the repository root, start with the simulated hold moment:
 
