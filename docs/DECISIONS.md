@@ -1015,3 +1015,45 @@ The measured Apple development selection is Command Line Tools, not full Xcode.
 Mac App Store signing, native physical-device verification, product design
 approval and external beta remain separate gates; no version label closes them.
 See `docs/RELEASE-1.0.1-MATRIX.md` for the item-level evidence contract.
+
+## Four scope answers, 2026-09-26
+
+Taken after `docs/OPEN-WORK-AUDIT.md` reconciled the planning and evidence
+documents against the tree and found that the largest remaining blocks of work
+were each waiting on an answer only the user could give. Each is recorded here
+with what it closes and what it does not.
+
+**One status index, not one status ledger.** The repository has three status
+ledgers in three unrelated id namespaces and no crosswalk, so "is this one thing
+done?" has no answer. Collapsing them into one was considered and rejected for
+now: it is a migration of every cross-reference in the tree, and a reader who
+has an index can already find the gap and read the source. `docs/STATUS-INDEX.md`
+is the index, and it is explicitly not a fourth ledger. `docs/PLAN-STATUS.md` is
+not deleted; it is dated and marked as not current, because deleting the record
+of what a work package was supposed to deliver loses the reason the work exists.
+
+**The phone companion stays read-only.** The shipped app is read-only by
+construction: `apps/apple/VOIDApp/AppCopy.swift` already tells the user that
+approval and Undo happen on the Mac, and pairing a device with write scope is an
+operator opt-in that is off by default. That is the answer, so the P05.03,
+P06.03 and P07.01-P07.04 rows that assume a phone-side approval or Undo are
+struck rather than built. What stays open is the read-only half: paired-device
+races, a real TLS round trip on hardware, and the cache and removal work, which
+is now implemented and recorded in `docs/IOS-CACHE-AND-REMOVAL-POLICY.md`.
+
+**`certification: false` is the permanent honest answer.** Every published
+capability profile carries it, and `void.adapter-capability.v2` refuses a bare
+`certification: true` as "not evidence". Rather than widen the schema for a state
+that does not exist, the field stays false and the reason is written down. The
+gap this exposed is real and stays visible: the schema has no way to say "this
+adapter has no bound at all", which is why a profile lists the bound it measured
+and names the absence in `excluded` instead of leaving the field to be read as a
+limit.
+
+**No hardcoded default provider.** The matrix says the model is the operator's
+choice and the surface is provider-agnostic, while
+`packages/workbench/src/provider-defaults.ts` made one vendor the default. Both
+cannot be the position, and the provider-agnostic reading is the one taken: the
+product asks on first use rather than shipping a vendor's endpoint as a default.
+The presets remain, because offering a choice is not the same as choosing for
+the operator.
