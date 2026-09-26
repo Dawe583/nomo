@@ -911,7 +911,54 @@ export async function measure() {
       attachmentState.removeControl = removeButton;
     }
     await rm(attachment, { force: true });
-    report.stackedNotices = { longDraft, attachmentState };
+
+    // D04.07 the selected tool row, stacked with the same long draft. The row
+    // is reached the way a user reaches it: through the command palette, not
+    // by writing state into the DOM.
+    const toolName = await page.evaluate(`(() => {
+      const area = document.querySelector(".composer textarea");
+      if (!area) return null;
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+      setter.call(area, "/");
+      area.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    })()`);
+    let toolState = null;
+    let toolExpandedState = null;
+    if (toolName) {
+      let picked = false;
+      for (let i = 0; i < 40 && !picked; i++) {
+        picked = await page.evaluate(`(() => {
+          const entry = [...document.querySelectorAll(".command-results > button")].find((b) => b.querySelector(".command-glyph")?.textContent === "⌘");
+          if (!entry) return false;
+          entry.click();
+          return true;
+        })()`);
+        if (!picked) {
+          await page.settle();
+          await new Promise((r) => setTimeout(r, 150));
+        }
+      }
+      await page.settle();
+      // chooseCommand seeds the draft with the tool prompt; the long draft is
+      // appended to that exact prefix so the prepared request stays selected.
+      const toolPromptText = await page.evaluate(readDraft);
+      await page.evaluate(setDraft(toolPromptText + "\n" + longDraft));
+      await page.settle();
+      toolState = await page.evaluate(PROBE_CALLED);
+      toolState.selectedToolOpen = await page.evaluate(
+        `(() => !!document.querySelector(".selected-tool[open]"))()`,
+      );
+      await page.evaluate(
+        `(() => { const row = document.querySelector(".selected-tool > summary"); if (!row) return false; row.click(); return true; })()`,
+      );
+      await page.settle();
+      toolExpandedState = await page.evaluate(PROBE_CALLED);
+      toolExpandedState.selectedToolOpen = await page.evaluate(
+        `(() => !!document.querySelector(".selected-tool[open]"))()`,
+      );
+    }
+    report.stackedNotices = { longDraft, attachmentState, toolState, toolExpandedState };
 
     // D04.04 draft survives a route change and a reload
     await page.setViewport(1280, 800);
@@ -939,26 +986,91 @@ export async function measure() {
     const afterToggle = await page.evaluate(readDraft);
     report.draftSurvival = { beforeRoute, afterRoute, beforeToggle, afterToggle };
 
-    // D04.04 IME composition must not submit or lose characters
+    // D04.04 IME composition. Input.imeSetComposition starts a real
+    // composition, so the keydown the composer sees really carries
+    // isComposing. The pair to compare is the same key before and after the
+    // composition closes: only the flag differs, and only one may submit.
     await page.setViewport(1280, 800);
     await page.goto(workspace.origin + sessionPath);
     await waitForApp(page, ".composer .send");
-    await page.evaluate(`(() => { const area = document.querySelector(".composer textarea"); area.focus(); return true; })()`);
-    for (const [type, key, text] of [
-      ["keyDown", "Process", ""],
-      ["char", "p", "p"],
-      ["char", "ř", "ř"],
-    ]) {
-      if (type === "char")
-        await page.send("Input.insertText", { text });
-      else
-        await page.send("Input.dispatchKeyEvent", { type: "keyDown", key, code: key, text, windowsVirtualKeyCode: 229 });
-    }
-    await page.settle();
-    const imeValue = await page.evaluate(readDraft);
-    await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Process", code: "Process", windowsVirtualKeyCode: 229 });
     await page.evaluate(setDraft(""));
-    report.ime = { value: imeValue };
+    await page.settle();
+    await page.evaluate(`(() => {
+      const area = document.querySelector(".composer textarea");
+      if (!area) return false;
+      area.focus();
+      window.__voidKeys = [];
+      // A recorder, never a canceller: preventing the default here would hide
+      // exactly the behaviour under test.
+      area.addEventListener("keydown", (e) => {
+        window.__voidKeys.push({ key: e.key, isComposing: e.isComposing, ctrl: e.ctrlKey, meta: e.metaKey });
+      });
+      return true;
+    })()`);
+    const imeText = "překlávesa";
+    const enterKey = { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13, modifiers: 2 };
+    const enter = async () => {
+      await page.send("Input.dispatchKeyEvent", { type: "rawKeyDown", text: "\r", ...enterKey });
+      await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...enterKey });
+      await page.settle();
+    };
+    const sessionEvents = () =>
+      fetch(
+        workspace.origin +
+          "/api/sessions/" +
+          sessionPath.split("/").pop() +
+          "/events?after=0",
+      )
+        .then((r) => r.json())
+        .then((body) =>
+          (body.items ?? [])
+            .filter((e) => e.kind === "user")
+            .map((e) => String(e.text ?? "").trim()),
+        );
+    const readComposition = () =>
+      page.evaluate(`(() => ({
+        draft: document.querySelector(".composer textarea")?.value ?? null,
+        focused: document.activeElement?.matches(".composer textarea") === true,
+        // The newest user row by its content, not a row count: a refetch can
+        // add and drop rows, but the sent text either arrived or it did not.
+        lastUser: [...document.querySelectorAll(".message.user .prose")].map((node) => node.innerText.trim()).at(-1) ?? null,
+        keys: window.__voidKeys ?? [],
+      }))()`);
+    await page.send("Input.imeSetComposition", { text: "př", selectionStart: 2, selectionEnd: 2 });
+    await page.settle();
+    const composing = await readComposition();
+    const messagesBefore = composing.messages;
+    // Ctrl+Enter always submits, so this isolates the composition guard from
+    // the send-behaviour preference.
+    await enter();
+    const duringComposition = await readComposition();
+    // insertText commits the composition and fires compositionend.
+    await page.send("Input.insertText", { text: imeText });
+    await page.settle();
+    const committed = await readComposition();
+    await enter();
+    const submitted = await readComposition();
+    // The fixture answers immediately; wait for the run this send started so
+    // the transcript has settled and the cancel-focus measurement below starts
+    // from a clean composer.
+    for (let waited = 0; waited < 40; waited++) {
+      if (!(await page.evaluate(`(() => !!document.querySelector(".composer .send:disabled"))()`))) break;
+      await new Promise((r) => setTimeout(r, 250));
+      await page.settle();
+    }
+    report.ime = {
+      text: imeText,
+      composing,
+      duringComposition,
+      committed,
+      submitted,
+      // The durable claim is on the server, not in a row count: the composing
+      // key must leave the stored user messages untouched, and the same key
+      // after the composition closed must add one carrying the composed text.
+      settled: await readComposition(),
+      userMessages: await sessionEvents(),
+      messagesBefore,
+    };
 
     // D04.04 focus after cancelling a stream
     process.env.VOID_QA_SLOW = "1";

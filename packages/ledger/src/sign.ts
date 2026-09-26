@@ -39,6 +39,14 @@ export function keyIdFromSpki(spki: Uint8Array): string {
   return `ed25519:${digest.slice(0, 16)}`;
 }
 
+/**
+ * The key id a stored record carries for an SPKI public key. One scheme, one
+ * place: a verifier that computes the id any other way silently stops
+ * matching the records it is supposed to check.
+ */
+export const devKeyIdFromSpki = (spki: Uint8Array): string =>
+  `dev-${keyIdFromSpki(spki)}`;
+
 export interface DevKeyProviderOptions {
   /** Directory for the development key material. Defaults to ~/.void/keys. */
   readonly dir?: string;
@@ -87,7 +95,7 @@ export function keyProviderFromPkcs8(pkcs8: Buffer): KeyProvider {
       `expected an ed25519 private key, got ${String(privateKey.asymmetricKeyType)}`,
     );
   const spki = publicKeyBytes(privateKey);
-  const keyId = `dev-${keyIdFromSpki(spki)}`;
+  const keyId = devKeyIdFromSpki(spki);
   return {
     alg: "ed25519",
     async currentKeyId() {

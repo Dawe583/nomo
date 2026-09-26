@@ -7,6 +7,11 @@ const policy = resolveBuildPolicy({
   distribution: process.env.VOID_DISTRIBUTION,
   env: process.env,
 });
+// The build log names the identity the policy resolved and where it came from,
+// so a keychain failure after a rebuild can be traced to a signing decision.
+if (process.platform === 'darwin') {
+  console.error(`desktop signing: ${policy.signingIdentity} (${policy.signingIdentitySource})`);
+}
 // Avoid Finder AppleScript automation during DMG creation. The installer still
 // contains the application and Applications shortcut, without interactive layout.
 const child = spawn(process.execPath, [fileURLToPath(new URL('../node_modules/@tauri-apps/cli/tauri.js', import.meta.url)), 'build', ...(process.platform === 'win32' ? ['--config', 'src-tauri/tauri.windows.conf.json'] : []), ...process.argv.slice(2)], {

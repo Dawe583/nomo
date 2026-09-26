@@ -9,15 +9,15 @@ historical rationale below; do not execute both architectures.
 
 Release evidence update, 2026-09-25: the native iOS 17 Xcode project, Swift
 package, app, unit tests, UI-test source and protocol fixtures exist under
-`apps/apple/`. Current source contains 9 `VOIDTests` cases and 11
+`apps/apple/`. Current source contains 9 `VOIDTests` cases and 18
 `VOIDUITests` cases. On 2026-09-25 a Release `iphonesimulator` build of the
 `VOID` scheme succeeded and the built product installed and launched on an
 iPad Pro 11-inch (M5) simulator rendering the read-only onboarding/entry
 screen. A 2026-09-26 simulator test run against the current source passed
-`VOIDTests` 9/9 and `VOIDUITests` 11/11, superseding the 6 `VOIDUITests` cases
+`VOIDTests` 9/9 and `VOIDUITests` 18/18, superseding the 6 `VOIDUITests` cases
 that the 2026-09-25 run covered. That product is ad-hoc signed with no team
 identifier, no entitlements and no app icon, so it is simulator evidence and
-not a device or store claim. The `CompanionProtocolKit` package passes 27/27
+not a device or store claim. The `CompanionProtocolKit` package passes 34/34
 under `swift test`, but that is a macOS host run and not an iOS simulator or
 device result, because `xcodebuild test -scheme CompanionProtocolKit` is not
 configured for the test action. A `generic/platform=iOS` Release build failed
@@ -73,8 +73,12 @@ execution.
 - Public Mac releases need Developer ID signing and notarization. The signing
   inventory observed on 2026-09-25 exposes an Apple Development identity only;
   no Developer ID Application identity, notarization ticket or Developer ID
-  artifact is evidenced, and `apps/desktop/scripts/build-policy.mjs` still
-  defaults the Mac identity to `-`.
+  artifact is evidenced. `apps/desktop/scripts/build-policy.mjs` no longer
+  defaults the Mac identity to `-`: it prefers `APPLE_SIGNING_IDENTITY`, then a
+  stable code-signing identity discovered read-only from the keychain, and only
+  falls back to an ad-hoc signature. That is local stability against rebuilds
+  losing keychain access, not notarization, and Apple disqualifies both ad-hoc
+  and Apple Development certificates for it.
 - Native iOS metadata, a Release simulator build and a simulator launch now
   exist; distribution still requires a provisioning profile for
   `com.void.companion`, a `DEVELOPMENT_TEAM` wired into the project, Developer

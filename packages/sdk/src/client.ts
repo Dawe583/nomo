@@ -1,10 +1,14 @@
 import { mkdir, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { ledgerDir as defaultLedgerDir } from "../../ledger/src/store.ts";
 import { verifyLedgerFile } from "../../ledger/src/verify.ts";
-import { devKeyProvider } from "../../ledger/src/sign.ts";
+import {
+  DEGRADED_VERIFICATION_NOTE,
+  resolveVerificationKey,
+  type VerificationKey,
+} from "../../ledger/src/verify-key.ts";
 import { ApprovalBroker } from "../../policy/src/index.ts";
 import type { ApprovalRecord, HeldCall, HoldQueue, PolicyCall } from "../../policy/src/index.ts";
 import { PolicyStartupError as ProxyPolicyStartupError, runProxy } from "../../proxy/src/bin.ts";
@@ -42,6 +46,21 @@ export type VoidClientOptions = {
    * posture then refuses such a call outright.
    */
   readonly legacyBinding?: LegacyBindingResolver;
+  /**
+   * Environment the verification key is resolved from. Defaults to the
+   * process environment; injectable so an embedder resolves against the same
+   * env it hands the proxy.
+   */
+  readonly env?: Readonly<NodeJS.ProcessEnv>;
+  /**
+   * Opt in to verifying an existing workspace ledger with signing key
+   * material when no public key is pinned. Off by default: the key that
+   * writes the records must not be the key that decides they are valid, or a
+   * replaced key file silently redefines what "valid" means
+   * (docs/THREAT-MODEL.md §2.4). A degraded answer is reported on `errors`,
+   * and is not authentication against the agent either way.
+   */
+  readonly allowDegradedVerifyKey?: boolean;
   readonly holdPollMs?: number;
   readonly clock?: VoidClock;
 };
@@ -101,6 +120,9 @@ export class VoidClient implements McpLikeClient {
   #closed = false;
   #pumpTimer: unknown;
   #defaultPolicyPath: string | undefined;
+  readonly #env: Readonly<NodeJS.ProcessEnv>;
+  readonly #allowDegradedVerifyKey: boolean;
+  #verification: VerificationKey | undefined;
 
   constructor(options: VoidClientOptions) {
     this.#ledgerDir = options.ledgerDir ?? defaultLedgerDir();
@@ -113,6 +135,17 @@ export class VoidClient implements McpLikeClient {
     this.#requestTimeoutMs = options.requestTimeoutMs ?? 60_000;
     this.#holdPollMs = options.holdPollMs ?? 10;
     this.#clock = options.clock ?? defaultClock;
+    this.#env = options.env ?? process.env;
+    this.#allowDegradedVerifyKey = options.allowDegradedVerifyKey ?? false;
+  }
+
+  /**
+   * How the existing workspace ledger was verified, once the client has
+   * started. Undefined before the first request, and undefined when the
+   * check never ran because no ledger file existed yet.
+   */
+  get verification(): VerificationKey | undefined {
+    return this.#verification;
   }
 
   get errors(): readonly string[] {
@@ -239,10 +272,22 @@ export class VoidClient implements McpLikeClient {
       throw error;
     }
 
+    // The key that writes the records must not be the key that decides they
+    // are valid, so this resolves a pinned public key and only falls back to
+    // signing key material when the embedder asked for that by name.
+    const key = await this.#verificationKey();
+    if (key === undefined) {
+      throw new LedgerVerifyError(
+        "no verification key is configured for an existing workspace ledger: pin one with `void init --pin-verify-key`, or set VOID_VERIFY_KEY",
+      );
+    }
+    this.#verification = key;
+    if (key.degraded)
+      this.#errors.push(
+        `ledger verification is DEGRADED (${key.source}): ${DEGRADED_VERIFICATION_NOTE}`,
+      );
     try {
-      // Trust the proxy's configured signer, never a key supplied by ledger data.
-      const signer = await devKeyProvider();
-      const result = await verifyLedgerFile(path, { publicKey: (keyId) => signer.publicKey(keyId) });
+      const result = await verifyLedgerFile(path, { publicKey: key.publicKey });
       if (!result.ok) {
         throw new LedgerVerifyError(`ledger verification failed: ${result.reason ?? "unknown"}`, {
           reason: result.reason,
@@ -253,6 +298,28 @@ export class VoidClient implements McpLikeClient {
       if (error instanceof LedgerVerifyError) throw error;
       throw new LedgerVerifyError(`ledger verification failed: ${errorMessage(error)}`);
     }
+  }
+
+  /**
+   * The key an existing workspace ledger is checked with.
+   *
+   * The default never opens private key material: a pinned public key comes
+   * from VOID_VERIFY_KEY or the trust file. The degraded path that does read
+   * the signing key exists for an embedder that opts in by name, and the
+   * answer reports itself as degraded. A missing key file resolves to no key
+   * rather than an error, so an unset opt-in reads as unset.
+   */
+  async #verificationKey(): Promise<VerificationKey | undefined> {
+    return resolveVerificationKey({
+      env: this.#env,
+      allowDegraded: this.#allowDegradedVerifyKey,
+      // The proxy signs with devKeyProvider({ env }), whose default directory
+      // is this one; naming it keeps a single answer. keyDir rather than a
+      // signingKey callback, so a machine with no key yet resolves to "no
+      // key" instead of an error, and so this read-only check never mints
+      // signing capability.
+      keyDir: join(homedir(), ".void", "keys"),
+    });
   }
 
   async #ensureDefaultPolicyPath(): Promise<string> {

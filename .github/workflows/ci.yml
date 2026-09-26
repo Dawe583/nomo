@@ -10,12 +10,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Every step carries its own `timeout-minutes` and the job budget is the sum
+  # of them, so a slow step is reported as itself instead of the whole job
+  # dying under one shared deadline. Measured on a loaded macOS host on
+  # 2026-09-26, with a cold-checkout allowance on top: `pnpm install` 1 s warm,
+  # `pnpm run typecheck` 7 s, `pnpm run build` 22 s, `pnpm test` 671 s,
+  # `node --test apps/control-plane/...` 1 s, `node --test scripts/src/*.test.mjs`
+  # 158 s, `e2e.mjs` 1 s, `e2e-connectors.mjs` 0 s, `e2e-final.mjs` 15 s,
+  # `e2e-arc.mjs` 5 s. `pnpm test` carries the `git.managed` conformance run
+  # (94 s to 138 s over three runs) inside `packages/cli`, which is why it needs
+  # a budget of its own rather than a share of a short job deadline.
   gates:
     strategy:
       matrix:
         node-version: [24, 26]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 95
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -27,13 +37,23 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
       - run: pnpm run typecheck
+        timeout-minutes: 10
       - run: pnpm run build
+        timeout-minutes: 10
       - run: pnpm test
+        timeout-minutes: 25
       - run: node --test apps/control-plane/api/server.test.ts apps/control-plane/web/control-plane-pages.test.mjs apps/control-plane/web/app.test.mjs
+        timeout-minutes: 5
       - run: node --test scripts/src/*.test.mjs
         working-directory: .
+        timeout-minutes: 10
       - run: node scripts/src/e2e.mjs
+        timeout-minutes: 5
       - run: node scripts/src/e2e-connectors.mjs
+        timeout-minutes: 5
       - run: node scripts/src/e2e-final.mjs all
+        timeout-minutes: 10
       - run: node scripts/src/e2e-arc.mjs all
+        timeout-minutes: 5

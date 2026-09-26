@@ -22,6 +22,7 @@ import {
   useContext,
   isValidElement,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -30,7 +31,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, download, json, type Row } from "./api";
-import { Badge, Dialog, ErrorBox, MotionEnabled, RedactedJson, useApi, useText } from "./ui";
+import { statusLabel } from "./status-label.ts";
+import { formatDuration, streamPhase, toolDuration, toolTimings, type ToolTiming } from "./chat-stream";
+import {
+  ATTACHMENT_BYTE_LIMIT,
+  BUDGET_VISIBLE_AT,
+  clearDraftFiles,
+  MESSAGE_BYTE_LIMIT,
+  MESSAGE_CHAR_LIMIT,
+  attachmentBytes,
+  loadDraftFiles,
+  messageSize,
+  saveDraftFiles,
+  type DraftFile,
+} from "./chat-composer";
+import { Badge, Dialog, Empty, ErrorBox, MotionEnabled, RedactedJson, useApi, useText } from "./ui";
+import "./chat.css";
 const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
 const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
 function CodeBlock({ children }: { children?: ReactNode }) {
@@ -104,6 +120,79 @@ export function RichText({ text }: { text: string }) {
     </Markdown>
   );
 }
+
+/** The two tool lifecycle states the shared `status-label.ts` table does not
+ * carry. These are hand-transcribed strings, not derived from the events: the
+ * keys are the `status` values `events.ts` writes when it merges a
+ * `tool.started` with a `tool.result`. Rename one there and it falls through
+ * to `statusLabel`, which has no entry and returns the raw token. Both files
+ * have to change together. */
+const TOOL_LIFECYCLE: Record<string, [string, string]> = {
+  requested: ["probíhá", "running"],
+  completed: ["dokončeno", "completed"],
+};
+
+function toolStatusLabel(value: unknown, t: (cs: string, en: string) => string) {
+  const lifecycle = TOOL_LIFECYCLE[String(value ?? "")];
+  return lifecycle ? t(lifecycle[0], lifecycle[1]) : statusLabel(value, t);
+}
+
+/** A tool card is read at two different moments: while the call is in flight,
+ * when the arguments matter and the result does not exist yet, and after it
+ * settled, when the arguments are detail and the outcome and duration are the
+ * point. The same markup carries both, so a reader never has to guess which
+ * one they are looking at. */
+function ToolCard({
+  event,
+  text,
+  timing,
+}: {
+  event: Row;
+  text: string;
+  timing?: ToolTiming;
+}) {
+  const t = useText();
+  const card = useRef<HTMLDetailsElement>(null);
+  const status = String(event.payload?.status ?? event.kind ?? event.type ?? "");
+  const live = status === "requested";
+  const duration = formatDuration(toolDuration(timing));
+  const tool = String(event.payload?.tool ?? text.slice(0, 100) ?? "");
+  useEffect(() => {
+    // Open on arrival so an in-flight call is visible without a click, and
+    // never force it shut afterwards: once it is settled the user decides.
+    if (live) card.current?.setAttribute("open", "");
+  }, [live]);
+  return (
+    <details
+      className="tool-card"
+      ref={card}
+      data-phase={live ? "running" : "settled"}
+      aria-busy={live || undefined}
+    >
+      <summary>
+        <span className="tool-glyph" aria-hidden="true">⌘</span>
+        <span className="tool-name">{tool}</span>
+        {live && <span className="tool-pulse" aria-hidden="true" />}
+        <Badge value={status}>{toolStatusLabel(status, t)}</Badge>
+        {duration && (
+          <span className="tool-duration">
+            {t("trvala", "took")} {duration}
+          </span>
+        )}
+      </summary>
+      {live && (
+        <p className="tool-pending">
+          {t(
+            "Volání běží. Výsledek ani změnu stavu zatím nelze potvrdit.",
+            "The call is running. Neither a result nor a state change is confirmed yet.",
+          )}
+        </p>
+      )}
+      {text ? <div className="tool-result"><RichText text={text} /></div> : null}
+      {event.payload ? <RedactedJson value={event.payload} /> : null}
+    </details>
+  );
+}
 export function Chat({
   id,
   navigate,
@@ -145,20 +234,19 @@ export function Chat({
     t("Poskytovatel neověřen", "Provider unverified");
   const running = runBlocksInput(session);
   const state = runState(session);
-const draftKey =
-    "void-draft:" +
-    new URLSearchParams(location.search).get("workspace") +
-    ":" +
-    (id ?? "new");
+  const search = new URLSearchParams(location.search);
+  const draftKey = "void-draft:" + search.get("workspace") + ":" + (id ?? "new");
   const [draft, setDraft] = useState(
     () => loadDraft(sessionStorage, draftKey).text,
   );
   const [project, setProject] = useState(
-    () => new URLSearchParams(location.search).get("project")?.slice(0, 160) ?? "",
+    () => search.get("project")?.slice(0, 160) ?? "",
   );
   const [background, setBackground] = useState(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const transcript = useRef<HTMLDivElement>(null);
+  const composerWrap = useRef<HTMLDivElement>(null);
+  const chatSection = useRef<HTMLElement>(null);
   const [model, setModel] = useState(DEFAULT_MODEL_ID);
   const [modelSearch, setModelSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -181,9 +269,55 @@ const draftKey =
   }
   const [now, setNow] = useState(Date.now());
   const [edited, setEdited] = useState("");
-  const [attachments, setAttachments] = useState<
-    { name: string; content: string; bytes: number }[]
-  >([]);
+  const [attachments, setAttachments] = useState<DraftFile[]>([]);
+  // Mirrors `attachments` so the persistence effect can read the value that
+  // belongs to the current draft key even inside the restoring commit.
+  const attachmentsRef = useRef<DraftFile[]>(attachments);
+  attachmentsRef.current = attachments;
+  // One prompt and one set of bounds. The budget line under the input and the
+  // send guard read this same string, so the number on screen can never
+  // disagree with the limit that blocks the message.
+  const prompt =
+    modePrefix(perm.mode, t) +
+    draft +
+    (attachments.length
+      ? "\n\n" +
+        attachments
+          .map((a) => "--- " + a.name + " ---\n" + a.content)
+          .join("\n\n")
+      : "");
+  const size = messageSize(prompt);
+  const attachmentTotal = attachmentBytes(attachments);
+  // The budget appears only once the prompt is close enough to a bound to
+  // matter, so an ordinary draft never pays for a warning it does not need.
+  const budget =
+    size.pressure < BUDGET_VISIBLE_AT
+      ? null
+      : size.over
+        ? t(
+            "Překročen limit: " +
+              size.chars.toLocaleString() +
+              " znaků a " +
+              size.bytes.toLocaleString() +
+              " B. Zkraťte zprávu nebo odeberte přílohu.",
+            "Over the limit: " +
+              size.chars.toLocaleString() +
+              " characters and " +
+              size.bytes.toLocaleString() +
+              " B. Shorten the message or remove an attachment.",
+          )
+        : t(
+            "Do limitu zbývá " +
+              (MESSAGE_CHAR_LIMIT - size.chars).toLocaleString() +
+              " znaků nebo " +
+              (MESSAGE_BYTE_LIMIT - size.bytes).toLocaleString() +
+              " B.",
+            "Before the limit: " +
+              (MESSAGE_CHAR_LIMIT - size.chars).toLocaleString() +
+              " characters or " +
+              (MESSAGE_BYTE_LIMIT - size.bytes).toLocaleString() +
+              " B.",
+          );
   const [newMessages, setNewMessages] = useState(false);
   const [follow, setFollow] = useState(true);
   const [commandDismissed, setCommandDismissed] = useState(false);
@@ -345,11 +479,32 @@ const draftKey =
     const saved = loadDraft(sessionStorage, draftKey);
     setDraft(saved.text);
     setQueued(saved.queued);
-    setAttachments([]);
+    // The draft text survives a route change, so its attachments have to as
+    // well. Restoring one without the other would send a different message
+    // than the one the composer shows.
+    const files = loadDraftFiles(sessionStorage, draftKey);
+    attachmentsRef.current = files;
+    setAttachments(files);
     setSelectedTool(undefined);
     setCommandDismissed(false);
     setFollow(true);
+    // Defence in depth, not a live fix. `main.tsx:857` mounts Chat with
+    // `key={chatId ?? "new"}` and ui.test.ts pins that, so a /chat/A -> /chat/B
+    // switch does remount and a branch dialog cannot survive it. An earlier
+    // review claimed the opposite on the strength of PageComponent, which
+    // chat never goes through; it does not. Resetting the branch state here
+    // costs nothing and keeps the effect that owns this component's
+    // conversation-scoped state from being the one place it does not.
+    setBranch(undefined);
+    setRetry(false);
+    setEdited("");
   }, [draftKey]);
+  useEffect(() => {
+    // The ref, not the state: on a key change this effect runs in the same
+    // commit as the restore above and would otherwise write the previous
+    // conversation's files under the new key.
+    saveDraftFiles(sessionStorage, draftKey, attachmentsRef.current);
+  }, [attachments, draftKey]);
   useEffect(() => {
     saveDraft(sessionStorage, draftKey, draft, queued);
     if (textarea.current) {
@@ -366,6 +521,8 @@ const draftKey =
   const [historyComplete, setHistoryComplete] = useState(true);
   const rawEvents = eventBuffer.length ? eventBuffer : (session?.events ?? []);
   const events = transcriptEvents(rawEvents);
+  const streaming = streamPhase(rawEvents);
+  const timings = toolTimings(rawEvents);
   const usage = usageSummary(rawEvents);
   const latestError = [...eventBuffer]
     .reverse()
@@ -475,12 +632,66 @@ const draftKey =
       if (eventTimer) clearTimeout(eventTimer);
     };
   }, [id, client]);
-  useEffect(() => {
-    if (follow && transcript.current) {
-      transcript.current.scrollTop = transcript.current.scrollHeight;
-      setNewMessages(false);
-    } else setNewMessages(true);
+  // Anchoring runs before paint. Applied after the frame, an autoscroll is a
+  // visible jump on every streamed fragment. `follow` means the reader is at
+  // the end, so scrolling up is never fought and the transcript keeps its
+  // place while history is read.
+  useLayoutEffect(() => {
+    const el = transcript.current;
+    if (!el || !follow) return;
+    el.scrollTop = el.scrollHeight;
+    setNewMessages(false);
   }, [events.length, events.at(-1)?.text, follow]);
+  // Content can grow without a new event: a Markdown table, a code block, an
+  // entering message. Re-anchor so the newest line stays in view while the
+  // reader is following. When they are not, only growth is news: a webfont
+  // load, a window resize or a details toggle must not raise the pill.
+  useEffect(() => {
+    const el = transcript.current;
+    const content = el?.firstElementChild;
+    if (!el || !content || typeof ResizeObserver === "undefined") return;
+    let height = el.scrollHeight;
+    const observer = new ResizeObserver(() => {
+      const grown = el.scrollHeight > height;
+      height = el.scrollHeight;
+      if (follow) {
+        el.scrollTop = el.scrollHeight;
+        setNewMessages(false);
+        return;
+      }
+      if (grown) setNewMessages(true);
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [follow]);
+  // The composer grows with the draft and with the notices above it. The pill
+  // is positioned from the measured height instead of a fixed guess, so it
+  // cannot land on top of the input it is meant to sit above.
+  useEffect(() => {
+    const wrap = composerWrap.current;
+    const section = chatSection.current;
+    if (!wrap || !section) return;
+    const apply = () =>
+      section.style.setProperty(
+        "--composer-offset",
+        Math.round(wrap.getBoundingClientRect().height) + "px",
+      );
+    apply();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(apply);
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, []);
+  // Scrolling back to the end by hand is a decision to follow again. Without
+  // this the pill stays on screen above a line the reader is already looking
+  // at, and it survives until the next event happens to arrive.
+  function onTranscriptScroll() {
+    const el = transcript.current;
+    if (!el) return;
+    const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    setFollow(atEnd);
+    if (atEnd) setNewMessages(false);
+  }
   // Esc in the composer requests a real run cancellation on the server.
   // Overlay dismissal keeps priority: an open slash menu or dialog consumes
   // Esc before this branch ever runs.
@@ -524,19 +735,7 @@ const draftKey =
     setError(undefined);
     // The prefix is only a legible model instruction. The server remains
     // authoritative: it filters the tool catalog and refuses mutations.
-    const prompt =
-      modePrefix(perm.mode, t) +
-      draft +
-      (attachments.length
-        ? "\n\n" +
-          attachments
-            .map((a) => "--- " + a.name + " ---\n" + a.content)
-            .join("\n\n")
-        : "");
-    if (
-      prompt.length > 32000 ||
-      new TextEncoder().encode(JSON.stringify({ prompt })).length > 60000
-    ) {
+    if (size.over) {
       setError(
         t(
           "Zpráva s přílohami přesahuje limit 32 000 znaků nebo 60 KB. Zkraťte ji.",
@@ -566,6 +765,10 @@ const draftKey =
           idempotencyKey,
         },
       ));
+      // The draft text is cleared inside submitDraft; the attachments have to
+      // be cleared here, imperatively, so an unmount or a route change
+      // between now and the next effect cannot leave them behind.
+      clearDraftFiles(sessionStorage, draftKey);
       setQueued(false);
       setDraft("");
       setSelectedTool(undefined);
@@ -611,16 +814,11 @@ const draftKey =
   const models: Row[] = provider.data?.models ?? [];
   const catalog = models;
   return (
-    <section className={"chat " + (!id ? "chat-empty" : "chat-active")}>
-      <div
-        className="transcript"
-        ref={transcript}
-        onScroll={() => {
-          const el = transcript.current;
-          if (el)
-            setFollow(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
-        }}
-      >
+    <section
+      className={"chat " + (!id ? "chat-empty" : "chat-active")}
+      ref={chatSection}
+    >
+      <div className="transcript" ref={transcript} onScroll={onTranscriptScroll}>
         <div className="messages">
           {!id && (
             <m.div
@@ -692,6 +890,17 @@ const draftKey =
             </m.div>
           )}
           <ErrorBox error={sessionQuery.error} />
+          {id && sessionQuery.isError && (
+            <p className="notice">
+              {t(
+                "Přepis této konverzace není dostupný. Koncept zůstává uložený v tomto okně.",
+                "This transcript is not available. Your draft stays saved in this tab.",
+              )}{" "}
+              <button type="button" onClick={() => navigate("/sessions")}>
+                {t("Otevřít přehled konverzací", "Open conversation history")}
+              </button>
+            </p>
+          )}
           {!historyComplete && (
             <p className="notice">
               {t(
@@ -701,20 +910,50 @@ const draftKey =
             </p>
           )}
           {sessionQuery.isLoading && id && (
-            <p>{t("Načítání konverzace…", "Loading conversation…")}</p>
+            <div className="chat-loading" role="status">
+              <p>{t("Načítání konverzace…", "Loading conversation…")}</p>
+              <span className="skeleton-line skeleton-lead" />
+              <span className="skeleton-line" />
+              <span className="skeleton-line skeleton-long" />
+              <span className="skeleton-block" />
+              <span className="skeleton-line skeleton-short" />
+            </div>
           )}
+          {id &&
+            !sessionQuery.isLoading &&
+            !sessionQuery.isError &&
+            !events.length && (
+              <Empty>
+                {t(
+                  "Tato konverzace zatím nemá žádné zprávy. Níže můžete napsat první zprávu nebo koncept uložit bez odeslání.",
+                  "This conversation has no messages yet. Write the first one below, or keep a draft without sending it.",
+                )}
+              </Empty>
+            )}
           {events.map((event, index) => {
             const kind = event.kind ?? event.type ?? "event";
             const text = event.text ?? event.payload?.text ?? "";
             const isTool = kind.includes("tool") || kind === "decision";
+            // Provisional text needs both an open delta run and a run that
+            // still accepts input. Without the second half a stop, a failure
+            // or a truncated history would leave the last answer badged
+            // "arriving" with its actions suppressed, and the user could not
+            // copy, branch from or retry the answer they just asked for.
+            const arriving =
+              running &&
+              streaming.streaming &&
+              index === events.length - 1 &&
+              !isTool;
             return (
               <m.article
                 initial={animate ? { opacity: 0, y: 6 } : false}
                 animate={{ opacity: 1, y: 0 }}
                 key={event.id ?? event.seq ?? index}
+                aria-busy={arriving || undefined}
                 className={
                   "message " +
-                  (kind === "user" ? "user" : isTool ? "tool" : "assistant")
+                  (kind === "user" ? "user" : isTool ? "tool" : "assistant") +
+                  (arriving ? " arriving" : "")
                 }
               >
                 <div className="message-label">
@@ -725,7 +964,21 @@ const draftKey =
                         ? "VOID"
                         : kind}
                   </span>
-                  <time>
+                  {arriving && (
+                    // A live region of its own, because the run status below
+                    // is anchored on `running` and a stop clears that while
+                    // the text is still settling. It enters once and leaves
+                    // once, so it is announced twice, not per token.
+                    <span
+                      className="stream-flag"
+                      data-stream="true"
+                      role="status"
+                    >
+                      <span className="stream-caret" aria-hidden="true" />
+                      {t("právě dorazí", "arriving")}
+                    </span>
+                  )}
+                  <time dateTime={event.at}>
                     {new Date(event.at).toLocaleTimeString(
                       t("cs-CZ", "en-GB"),
                       { hour: "2-digit", minute: "2-digit" },
@@ -733,21 +986,19 @@ const draftKey =
                   </time>
                 </div>
                 {isTool ? (
-                  <details className="tool-card">
-                    <summary>
-                      <span aria-hidden="true">⌘</span>{" "}
-                      {event.payload?.tool ?? text.slice(0, 100) ?? kind}
-                      <Badge value={event.payload?.status ?? kind} />
-                    </summary>
-                    <RichText text={text} />
-                    {event.payload && <RedactedJson value={event.payload} />}
-                  </details>
+                  <ToolCard
+                    event={event}
+                    text={text}
+                    timing={timings.get(String(event.payload?.callId ?? ""))}
+                  />
                 ) : (
                   <div className="prose">
                     <RichText text={text} />
                   </div>
                 )}
-                {text && (
+                {/* Copying, branching from or retrying a message that is still
+                    arriving would act on text the server has not settled. */}
+                {text && !arriving && (
                   <div className="message-actions">
                     <button onClick={() => navigator.clipboard.writeText(text)}>
                       {t("Kopírovat", "Copy")}
@@ -798,11 +1049,17 @@ const draftKey =
         </div>
       </div>
       {newMessages && !follow && (
-        <button className="new-messages" onClick={() => setFollow(true)}>
+        <button
+          className="new-messages"
+          onClick={() => {
+            setFollow(true);
+            textarea.current?.focus();
+          }}
+        >
           {t("Nové zprávy ↓", "New messages ↓")}
         </button>
       )}
-      <div className="composer-wrap">
+      <div className="composer-wrap" ref={composerWrap}>
         <div className="composer-notices" tabIndex={0} role="region" aria-live="polite" aria-label={t("Stav a upozornění", "Status and notices")}>
         {retryWait > 0 && (
           <p className="notice" role="status">
@@ -843,7 +1100,7 @@ const draftKey =
               )}
             </span>
             <button
-              disabled={busy || running || retryWait > 0 || !draft.trim()}
+              disabled={busy || running || retryWait > 0 || !draft.trim() || size.over}
               onClick={() => void send()}
             >
               {t("Odeslat koncept", "Send draft")}
@@ -858,12 +1115,17 @@ const draftKey =
           {selectedTool && (
             <details className="selected-tool">
               <summary>
-                {selectedTool.name} ·{" "}
-                {selectedTool.capturedUndo
-                  ? "VOID Undo"
-                  : selectedTool.klass === "r0"
-                    ? "Read"
-                    : "VOID policy"}
+                <strong>{selectedTool.name}</strong>
+                <span className="selected-tool-class">
+                  {selectedTool.capturedUndo
+                    ? t("r1 · vratná změna", "r1 · reversible")
+                    : selectedTool.klass === "r0"
+                      ? t("r0 · čtení", "r0 · read")
+                      : t("podle VOID policy", "by VOID policy")}
+                </span>
+                <span className="selected-tool-hint">
+                  {t("jen připraveno", "prepared only")}
+                </span>
               </summary>
               <p>{selectedTool.description}</p>
               <pre>{json(selectedTool.inputSchema)}</pre>
@@ -882,7 +1144,7 @@ const draftKey =
                   {a.name} <small>{a.bytes} B</small>
                   <button
                     type="button"
-                    aria-label={t("Odebrat přílohu", "Remove attachment")}
+                    aria-label={t("Odebrat přílohu", "Remove attachment") + " " + a.name}
                     onClick={() =>
                       setAttachments(attachments.filter((_, n) => n !== i))
                     }
@@ -891,6 +1153,10 @@ const draftKey =
                   </button>
                 </span>
               ))}
+              <span className="attachments-total">
+                {attachmentTotal.toLocaleString()} B /{" "}
+                {ATTACHMENT_BYTE_LIMIT.toLocaleString()} B
+              </span>
             </div>
           )}
         </div>
@@ -927,6 +1193,7 @@ const draftKey =
                 ? `void-command-${activeCommand}`
                 : undefined
             }
+            aria-describedby={budget ? "composer-budget" : undefined}
             placeholder={t(
               "Napište zprávu nebo / pro příkazy a nástroje",
               "Message or / for commands and tools",
@@ -1001,6 +1268,19 @@ const draftKey =
               }
             }}
           />
+          {budget && (
+            // No live region: this text recomputes on every keystroke, and a
+            // number read back per character is noise. The textarea already
+            // points at it with aria-describedby, so it is announced when the
+            // user reaches it rather than on every character typed.
+            <p
+              className="composer-budget"
+              id="composer-budget"
+              data-over={size.over || undefined}
+            >
+              {budget}
+            </p>
+          )}
           <div className="composer-actions">
             <button type="button" className="chat-options-trigger"
               aria-label={t("Nastavení konverzace", "Conversation settings")}
@@ -1046,13 +1326,17 @@ const draftKey =
                     const file = e.target.files?.[0];
                     if (!file) return;
                     if (
-                      file.size + attachments.reduce((n, a) => n + a.bytes, 0) >
-                      24576
+                      file.size + attachmentTotal >
+                      ATTACHMENT_BYTE_LIMIT
                     ) {
                       setError(
                         t(
-                          "Přílohy mohou mít dohromady nejvýše 24 KB.",
-                          "Attachments may total at most 24 KB.",
+                          "Přílohy mohou mít dohromady nejvýše " +
+                            Math.round(ATTACHMENT_BYTE_LIMIT / 1024) +
+                            " kB.",
+                          "Attachments may total at most " +
+                            Math.round(ATTACHMENT_BYTE_LIMIT / 1024) +
+                            " kB.",
                         ),
                       );
                       return;
@@ -1111,6 +1395,7 @@ const draftKey =
                 disabled={
                   busy ||
                   !draft.trim() ||
+                  size.over ||
                   (!!id && !session) ||
                   (!id && (providerStatus(provider.data) !== "ready" || !selectedAgent)) ||
                   retryWait > 0
@@ -1165,10 +1450,12 @@ const draftKey =
             <span className="muted perm-source">
               {perm.source === "server"
                 ? t("Zdroj: server", "Source: server")
-                : t(
-                    "Server mode unavailable — read-only fallback",
-                    "Server mode unavailable — read-only fallback",
-                  )}
+                : perm.source === "pending"
+                  ? t("Režim se ověřuje u serveru", "Checking the server")
+                  : t(
+                      "Server mode unavailable — read-only fallback",
+                      "Server mode unavailable — read-only fallback",
+                    )}
             </span>
           </div>
         {!id && <div className="new-session-options">
@@ -1214,12 +1501,16 @@ const draftKey =
                 onClick={() => {
                   const content = String(value);
                   const bytes = new TextEncoder().encode(content).length;
-                  if (
-                    bytes + attachments.reduce((n, a) => n + a.bytes, 0) >
-                    24576
-                  ) {
+                  if (bytes + attachmentTotal > ATTACHMENT_BYTE_LIMIT) {
                     setError(
-                      t("Kontext přesahuje 24 KB.", "Context exceeds 24 KB."),
+                      t(
+                        "Kontext přesahuje " +
+                          Math.round(ATTACHMENT_BYTE_LIMIT / 1024) +
+                          " kB.",
+                        "Context exceeds " +
+                          Math.round(ATTACHMENT_BYTE_LIMIT / 1024) +
+                          " kB.",
+                      ),
                     );
                     setContextPicker(false);
                     return;

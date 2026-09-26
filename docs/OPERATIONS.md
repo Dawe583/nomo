@@ -60,6 +60,141 @@ The dev-tier ledger is JSONL.
 
 If `VOID_LEDGER_DIR` is not set, the default ledger directory is under the user's home directory. The development private key is not in the ledger directory by default. It comes from `VOID_SIGNING_KEY` or from the local development key path managed by `devKeyProvider`.
 
+### The verification key is not the signing key
+
+Verification reads a **public key**, and in every shipped default that public
+key comes from a file inside `~/.void/`, the same directory tree as the
+private signing key. The table below is the resolution order and, in the
+last column, what each answer is actually **worth**. Read the last column
+before treating any verification result as tamper-proofing.
+
+| Source | How it is set | Worth |
+| --- | --- | --- |
+| `VOID_VERIFY_KEY` | base64 SPKI DER of the ed25519 public key | **pinned, out of band.** Supplied as a value, never written to a file. This is the only source that earns the word *pinned*. |
+| `VOID_VERIFY_KEY_FILE` | path to a file holding that key | Trusted **because you named the path**. VOID infers the bytes are yours from the path alone and cannot prove who wrote them. Worth a pin only if the agent has no credentials for that path. |
+| `VOID_TRUST_DIR` | directory holding `verify-ed25519.spki` | Same as above: trusted on the strength of the path, not the contents. |
+| `~/.void/trust/verify-ed25519.spki` | written once by `void init --pin-verify-key` | **Not pinned.** This is the default, and it shares `~/.void/` with `keys/dev-ed25519.pkcs8`. See below. |
+| `VOID_SIGNING_KEY` | base64 PKCS#8 private key | **Degraded.** The key that signs is the key that verifies. |
+| `VOID_VERIFY_ALLOW_SIGNING_KEY=1` | explicit opt-in to the local `keys/dev-ed25519.pkcs8` file | **Degraded.** The same file, reached by opting in. Undocumented opt-ins are how operators end up in a mode they did not choose, so every surface now names this variable. |
+
+#### Why the default trust file is not a pin
+
+The trust file is created with mode `0400`. That refuses an in-place write by a
+different user. It stops **nothing** for its own owner, who may `unlink` it and
+create a new file in its place. An attacker who can replace
+`~/.void/keys/dev-ed25519.pkcs8` can equally replace
+`~/.void/trust/verify-ed25519.spki`, re-sign the entire local history with a key
+of their own, and have it verify clean.
+
+This was executed, not assumed. The attack lands: after `unlink` and recreate
+of the `0400` trust file alongside a replaced key file, the resolved key reports
+`source: trust-file`, `operatorSupplied: false`, `degraded: false`, and the
+forged chain verifies `ok=true`. See `docs/EVIDENCE-FIXES-VERIFICATION.md` (F1).
+
+The trust file stays at the default path on purpose. There is no location on a
+single-user host that a same-uid attacker cannot also write, so moving it buys
+no security and would silently strand every key already provisioned at the old
+path. The honest response is to say so on every surface, which is what VOID
+does.
+
+#### What the one-key-id binding does and does not buy
+
+A key is bound to the one key id the records carry. An entry signed by any other
+key fails with `has no public key for <key id>`.
+
+This detects key substitution **only when the verification key is itself out of
+the agent's reach**. That means `VOID_VERIFY_KEY`, or a trust file at a path the
+agent has no credentials for. It does **not** mean replacing
+`dev-ed25519.pkcs8` is always detected: if the trust file is replaced alongside
+it, the substituted key becomes the anchor and the forged chain verifies. The
+original text of this section claimed the detection was unconditional. It is not,
+and the correction is the point of this section.
+
+Against the agent itself, every shipped default proves close to nothing. The
+recorder, the signer and the verifier run as one OS principal, so the signature
+establishes that the bytes came from a process holding a specific key, and
+nothing more. See `docs/THREAT-MODEL.md` §1.1 and §2.4.
+
+#### Provisioning
+
+```sh
+node packages/cli/bin/void.mjs init --pin-verify-key     # anchors the local key file
+node packages/cli/bin/void.mjs init --from-spki <base64> # anchors a key you hold elsewhere
+```
+
+`--from-spki` is the one that anchors something the agent did not choose, and
+the output says so. `--pin-verify-key` anchors whatever
+`keys/dev-ed25519.pkcs8` holds at that moment and detects only a *later* change
+to it; if the key file was already replaced, it pinned the wrong key. Compare
+the SPKI the command prints against the key you expect.
+
+`pinVerificationKey` refuses to overwrite an existing trust file with a
+different key, and says so. Removing it deliberately to repin is the supported
+way to change the anchor; see "Key rotation" below for what a real rotation
+story would need.
+
+#### What every surface reports
+
+With nothing configured, every surface reports
+`verification key: none, signature NOT VERIFIED` and checks hash links only.
+`void verify` and `void export`/`void attest` print the key line first,
+`/api/ledger/verify` returns it as `verificationKey`, and the TUI and `void
+watch` render it beside the signed boolean.
+
+The word *pinned* appears only where it is earned, meaning a key supplied as
+a value or on a command line. A trust file at any path is reported as `trust-file`,
+because reading a file is not what makes verification strong or weak; sharing a
+directory tree with the signing key is. Every trust-file answer carries a
+caveat, and the API carries `substitutionDetected` next to `authenticated`
+because "a signature checked out" and "key substitution would be detected" are
+different claims.
+
+#### Key rotation
+
+Rotating the signing key is **not supported today**, and the failure is
+asymmetric in a way worth knowing before you try it.
+
+What happens: entries signed by the retired key carry its `key_id`, the
+verification key is the new one, and the chain is refused with
+`entry 1 has no public key for dev-ed25519:<old id>`. `void attest` exits 1 with
+that error naming a key id the operator never asked about. `void export
+--ledger` does not verify, so it can still succeed, and a workflow that
+exports after a rotation and then attests will discover the problem at the
+second step.
+
+There is no in-command way out. `pinVerificationKey` refuses a different key,
+and there is no key-id allowlist in the pin.
+
+Deliberately not built here, and why. A rotation story needs all of the
+following, and each one changes a persisted artifact or a trust decision:
+
+1. **A trust set in the pin.** The trust file holds one base64 SPKI. A
+   rotation needs a *set* of key ids the verifier will accept, with a
+   transition where old and new overlap. That is a format change to a file
+   operators already have on disk, with its own migration and its own backup
+   story.
+2. **A decision about re-signing.** Either the ledger is rewritten under the
+   new key, which destroys the very history the anchor set was protecting, or
+   the old entries keep the old `key_id` and both keys stay trusted, which
+   means a compromised old key stays valid forever. There is no obviously
+   correct answer here, and picking one silently is worse than not shipping.
+3. **Anchor and attestation interaction.** Anchors and attestations are signed
+   by a named key id. After a rotation, an existing anchor names a key the
+   verifier no longer trusts, and `void verify --anchors` starts failing on
+   anchors that were valid when written. That is a second format decision.
+4. **Revocation.** "Accepted" and "still trusted" are different. Without a
+   revocation story, an allowlist only ever grows.
+5. **A `void` command for it.** Not a library function. `void init
+   --rotate-verify-key` would have to print what it is about to stop trusting,
+   because the operator is trading a guarantee for a different one.
+
+Until those exist: pin out of band with `void init --from-spki`, keep the old
+public key somewhere you control, and treat a rotation as a deliberate
+re-anchoring: re-provision the trust file with the new key and accept that the
+pre-rotation entries will not verify against it. That is a documented cost, not
+a supported flow, and it is why the surfaces above say what the key is worth
+rather than that it is pinned.
+
 Each JSONL line is one stored entry with:
 
 - workspace
@@ -119,7 +254,17 @@ To verify a ledger against an attestation:
 node packages/cli/bin/void.mjs verify --ledger <ledger-dir-or-file> --attestation <attestation-json>
 ```
 
-The verifier checks sequence order, previous hash links, body hashes, and signatures when a key is available. A failure exits non-zero and names the first bad entry.
+To verify a ledger against a published anchor file:
+
+```sh
+node packages/cli/bin/void.mjs verify --ledger <ledger-dir-or-file> --anchors <anchors.jsonl>
+```
+
+The verifier checks sequence order, previous hash links, body hashes, and
+signatures when a key is available. A failure exits non-zero and names the
+first bad entry. An anchor is only checked when a verification key is
+available: without one, the command refuses rather than accept a claim it
+cannot authenticate.
 
 ## Export bundles with a completeness proof
 
@@ -198,6 +343,46 @@ claim to read.
 ## Attestation flow
 
 An attestation is a signed summary of a ledger slice. It lets a reviewer check a head sequence, head hash, entry count, Merkle digest, key id, algorithm, and signature without trusting a VOID process.
+
+### The anchor is what makes truncation detectable
+
+A chain verifies clean on any prefix, so a dropped tail is invisible to
+`verifyChain`. An anchor is a signed `{headSeq, headHash, treeDigest}` that
+somebody else holds. Publish one with:
+
+```sh
+node packages/cli/bin/void.mjs attest --ledger <ledger-file> --anchor <anchors.jsonl>
+```
+
+`attest` verifies the chain against the verification key above, signs the head,
+writes the retained local copy under `<ledger dir>/attestations/<head-seq>.json`,
+and appends the signed head to the anchor file you name. The anchor file is
+appended to, never rewritten, and a head that goes backwards or conflicts in it
+is refused.
+
+**Where the anchor file lives decides what it is worth.** It is an anchor only
+for as long as the agent process cannot write it: a path the OS denies the
+runtime, a read-only mount, a copy a third party keeps, or a file forwarded out
+of band. An anchor file inside the directory the agent already writes detects
+nothing the local chain check did not, and the command says so on every write.
+
+What an anchor does: it makes truncation, omission and rewriting of the
+anchored prefix detectable by whoever holds the anchor, and it survives the
+ledger being rewritten because the attacker would have to re-sign the anchor
+too. What it does not do: it does not stop the agent rewriting local history,
+and it does not stop the agent from never writing records it omits. An
+attacker who runs the agent can decline to anchor, and the missing newer
+anchor is the signal. This is **detects tampering by a third party, not by the
+agent itself**, not non-repudiation, and not a claim of trust level L2.
+
+`export verify` accepts the same document against a bundle, where the manifest
+digest anchor and the signed head compose: the digest proves the bundle is the
+one that was published, the head proves the ledger inside it is the one that
+was anchored.
+
+```sh
+node packages/cli/bin/void.mjs export verify --bundle <bundle-dir> --anchor <manifest-sha256> --attestation <anchor.json>
+```
 
 Operational flow:
 

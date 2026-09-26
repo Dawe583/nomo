@@ -196,3 +196,192 @@ test("the evidence documents keep the physical-device and store boundary explici
     "docs/WINDOWS-DESKTOP.md no longer refuses to advertise a Windows download",
   );
 });
+
+const NUMBER_WORDS = {
+  Two: 2,
+  Three: 3,
+  Four: 4,
+  Five: 5,
+  Six: 6,
+  Seven: 7,
+  Eight: 8,
+  Nine: 9,
+  Ten: 10,
+  Eleven: 11,
+  Twelve: 12,
+};
+const SPELLED = Object.keys(NUMBER_WORDS).join("|");
+const ADAPTERS = ["filesystem.managed", "git.managed", "managed-documents"];
+// The matrix records superseded runs on purpose, so a count only counts when
+// the sentence around it is not marked as history. The window is kept short
+// so an unrelated "earlier" in the same sentence cannot silence a live claim.
+const SUPERSEDED = /\b(?:superseded|earlier|previously|prior|historical|stale|only|used to|no longer)\b/iu;
+
+/**
+ * The desktop crate's macOS test count, counted the way `cargo test` counts
+ * it: every `#[test]` in `apps/desktop/src-tauri/src` except the ones inside
+ * a module gated `#[cfg(all(test, windows))]`, which no macOS host can build
+ * or run. Derived from the source so it tracks the tree.
+ */
+function countRustTestCases(directory) {
+  return readdirSync(directory)
+    .filter((file) => file.endsWith(".rs"))
+    .reduce((total, file) => {
+      const lines = readFileSync(`${directory}/${file}`, "utf8").split("\n");
+      const windowsOnly = new Set();
+      for (const [index, line] of lines.entries()) {
+        if (!/^\s*#\[cfg\(all\(test, windows\)\)\]/u.test(line)) continue;
+        let depth = 0;
+        let opened = false;
+        for (let end = index; end < lines.length; end += 1) {
+          for (const character of lines[end]) {
+            if (character === "{") {
+              depth += 1;
+              opened = true;
+            } else if (character === "}") depth -= 1;
+          }
+          if (opened && depth === 0) {
+            for (let skipped = index + 1; skipped < end; skipped += 1) windowsOnly.add(skipped);
+            break;
+          }
+        }
+      }
+      return (
+        total +
+        lines.filter((line, index) => !windowsOnly.has(index) && line.includes("#[test]")).length
+      );
+    }, 0);
+}
+
+/**
+ * `void recovery conformance` emits one scenario per declared operation, so
+ * an adapter's scenario count is the operation list in its capability
+ * profile. The Windows branch is skipped: this matrix records the macOS run.
+ */
+function conformanceScenarioCounts() {
+  const source = readFileSync("packages/cli/src/conformance.ts", "utf8");
+  return ADAPTERS.map((id) => {
+    let expression =
+      source
+        .match(new RegExp(`id: "${id.replace(/\./gu, "\\.")}"[\\s\\S]{0,200}?operations: ([^\\n]+)`, "u"))?.[1]
+        .replace(/,$/u, "")
+        .trim() ?? "";
+    const alias = expression.match(/^[A-Za-z_$][\w$]*$/u)?.[0];
+    if (alias) {
+      expression =
+        source.match(new RegExp(`(?:export\\s+)?const\\s+${alias}\\s*=([\\s\\S]*?);`, "u"))?.[1] ?? "";
+    }
+    if (expression.includes('process.platform === "win32"')) {
+      expression = expression.slice(expression.indexOf(":", expression.indexOf("win32")));
+    }
+    return [id, (expression.match(/"[^"]+"/gu) ?? []).length];
+  });
+}
+
+/** Collapses the wrapping while remembering the source line of every character. */
+function collapseWrapping(text) {
+  let prose = "";
+  const lineOf = [];
+  let line = 1;
+  let collapsed = false;
+  for (const character of text) {
+    if (/\s/u.test(character)) {
+      if (!collapsed) {
+        prose += " ";
+        lineOf.push(line);
+        collapsed = true;
+      }
+      if (character === "\n") line += 1;
+      continue;
+    }
+    collapsed = false;
+    prose += character;
+    lineOf.push(line);
+  }
+  return { prose, lineOf };
+}
+
+/** The clause holding `at`, which runs to the next sentence or table cell. */
+function clauseAt(prose, at) {
+  let start = at;
+  let end = prose.length;
+  for (let index = at; index >= 0; index -= 1) {
+    if (/[;|]/u.test(prose[index]) || (prose[index] === "." && prose[index + 1] === " ")) {
+      start = index + 1;
+      break;
+    }
+  }
+  for (let index = at; index < prose.length; index += 1) {
+    if (/[;|]/u.test(prose[index]) || (prose[index] === "." && prose[index + 1] === " ")) {
+      end = index;
+      break;
+    }
+  }
+  return [prose.slice(start, end).trim(), start, end];
+}
+
+/** Every way the matrix states the size of a named, countable suite. */
+function suiteCountPatterns() {
+  const patterns = [
+    ["desktop rust crate", /`cargo test`\s+(\d+)\/\d+/gu],
+    ["desktop rust crate", /desktop crate is (\d+)\/\d+/gu],
+    ["VOIDTests", /(\d+)\s+`VOIDTests`(?:\s+source)?\s+cases/gu],
+    ["VOIDTests", /`VOIDTests`\s+(\d+)\/\d+/gu],
+    ["VOIDTests", /`VOIDTests\s+(\d+)\/\d+`/gu],
+    ["VOIDUITests", /(\d+)\s+`VOIDUITests`(?:\s+source)?\s+cases/gu],
+    ["VOIDUITests", /`VOIDUITests`\s+(\d+)\/\d+/gu],
+    ["VOIDUITests", /`VOIDUITests\s+(\d+)\/\d+`/gu],
+  ];
+  for (const adapter of ADAPTERS) {
+    const id = adapter.replace(/\./gu, "\\.");
+    patterns.push([adapter, new RegExp(`\`${id}\`[^.\`]{0,60}?(\\d+)\\/\\d+`, "gu")]);
+    patterns.push([adapter, new RegExp(`\`${id}\`[^|\`]{0,240}?(${SPELLED}) conformance scenarios`, "gu")]);
+    // "4 scenarios, 32 checks, 0 failed" and the older "37 scenarios passed"
+    // and "19 passed" all state how many scenarios the adapter has. Collecting
+    // every phrasing keeps this line under the same guard as the table rows.
+    patterns.push([adapter, new RegExp(`\`${id}\`[^.\`]{0,80}?(\\d+) scenarios`, "gu")]);
+    patterns.push([adapter, new RegExp(`\`${id}\`[^.\`]{0,80}?(\\d+) passed`, "gu")]);
+  }
+  return patterns;
+}
+
+test("every suite count the matrix states is the count the tree has, once", () => {
+  const expected = new Map([
+    ["VOIDTests", countSwiftTestCases("apps/apple/VOIDTests")],
+    ["VOIDUITests", countSwiftTestCases("apps/apple/VOIDUITests")],
+    ["desktop rust crate", countRustTestCases("apps/desktop/src-tauri/src")],
+    ...conformanceScenarioCounts(),
+  ]);
+  const { prose, lineOf } = collapseWrapping(matrix);
+  const stated = new Map([...expected.keys()].map((suite) => [suite, []]));
+
+  for (const [suite, pattern] of suiteCountPatterns()) {
+    for (const match of prose.matchAll(pattern)) {
+      const count = NUMBER_WORDS[match[1]] ?? match[1];
+      if (count === undefined) continue;
+      const at = match.index + match[0].lastIndexOf(match[1]);
+      const [clause, start, end] = clauseAt(prose, at);
+      if (SUPERSEDED.test(prose.slice(Math.max(start, at - 60), at))) continue;
+      if (SUPERSEDED.test(prose.slice(at, Math.min(end, at + 100)))) continue;
+      stated.get(suite)?.push({ count: Number(count), line: lineOf[at], clause });
+    }
+  }
+
+  for (const [suite, claims] of stated) {
+    const numbers = [...new Set(claims.map((claim) => claim.count))];
+    const said = claims
+      .map((claim) => `  line ${claim.line}: ${claim.count} — ${claim.clause.slice(0, 90)}`)
+      .join("\n");
+    assert.ok(claims.length > 0, `the matrix no longer states a count for ${suite}`);
+    assert.deepEqual(
+      numbers.length > 1 ? [`${suite} is given ${numbers.length} different sizes:\n${said}`] : [],
+      [],
+      `the matrix must not let two sentences disagree about ${suite}`,
+    );
+    assert.equal(
+      numbers[0],
+      expected.get(suite),
+      `the matrix says ${suite} has ${numbers[0]}, the tree has ${expected.get(suite)}:\n${said}`,
+    );
+  }
+});

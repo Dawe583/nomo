@@ -23,6 +23,49 @@ export type VerifyAttestationResult =
   | { readonly ok: true }
   | { readonly ok: false; readonly reason: string };
 
+/**
+ * The result of checking a ledger against one anchor. `grown` is the number of
+ * entries written after the anchor was taken: growth is normal, a shorter
+ * chain is not.
+ */
+export type AnchorMatch =
+  | {
+      readonly ok: true;
+      readonly headSeq: number;
+      readonly headHash: string;
+      readonly entriesCount: number;
+      readonly grown: number;
+      readonly at: string;
+      readonly key_id: string;
+    }
+  | { readonly ok: false; readonly reason: string };
+
+/** Parse and shape check an attestation document from untrusted bytes. */
+export function parseAttestationDocument(value: unknown, label = "attestation"): AttestationDocument {
+  if (typeof value !== "object" || value === null)
+    throw new Error(`${label} is not an object`);
+  const parsed = value as Partial<AttestationDocument>;
+  if (typeof parsed.workspace !== "string" || parsed.workspace === "")
+    throw new Error(`${label} has invalid workspace`);
+  if (typeof parsed.headSeq !== "number" || !Number.isInteger(parsed.headSeq) || parsed.headSeq < 0)
+    throw new Error(`${label} has invalid headSeq`);
+  if (typeof parsed.headHash !== "string" || parsed.headHash === "")
+    throw new Error(`${label} has invalid headHash`);
+  if (typeof parsed.at !== "string" || parsed.at === "")
+    throw new Error(`${label} has invalid at`);
+  if (typeof parsed.entriesCount !== "number" || !Number.isInteger(parsed.entriesCount) || parsed.entriesCount < 0)
+    throw new Error(`${label} has invalid entriesCount`);
+  if (typeof parsed.treeDigest !== "string" || parsed.treeDigest === "")
+    throw new Error(`${label} has invalid treeDigest`);
+  if (typeof parsed.key_id !== "string" || parsed.key_id === "")
+    throw new Error(`${label} has invalid key_id`);
+  if (parsed.alg !== "ed25519" && parsed.alg !== "ecdsa-p256-sha256")
+    throw new Error(`${label} has invalid alg`);
+  if (typeof parsed.signature !== "string" || parsed.signature === "")
+    throw new Error(`${label} has invalid signature`);
+  return parsed as AttestationDocument;
+}
+
 export type AttestLedgerOptions = {
   readonly now?: () => Date;
 };
@@ -93,20 +136,70 @@ export async function verifyAttestation(
   const wrongWorkspace = ledgerEntries.find((entry) => entry.workspace !== doc.workspace);
   if (wrongWorkspace !== undefined)
     return { ok: false, reason: `workspace mismatch at entry ${wrongWorkspace.seq}` };
+  return verifyAnchorSignature(doc, options.publicKey);
+}
+
+/**
+ * The check an anchor exists for, and the reason it is not the same call as
+ * `verifyChain`: a chain is consistent on any prefix, so a chain that has had
+ * its tail dropped verifies clean forever. An anchor is a length and a head
+ * somebody else published, so this fails on a chain shorter than the anchor,
+ * on an entry where the anchor said a different one was, and on a document
+ * that does not verify under a key the holder of the anchor trusts.
+ *
+ * Growth is not a failure: entries written after the anchor was taken are
+ * reported as `grown` and left to the next anchor.
+ */
+export async function verifyAnchor(
+  doc: AttestationDocument,
+  ledgerEntries: readonly JsonlEntry[],
+  options: { readonly publicKey: PublicKeyLookup },
+): Promise<AnchorMatch> {
+  const chain = await verifyChain(ledgerEntries);
+  if (!chain.ok) return { ok: false, reason: `ledger mismatch: ${chain.reason}` };
+  if (doc.headSeq !== doc.entriesCount)
+    return { ok: false, reason: `anchor head seq ${doc.headSeq} and entry count ${doc.entriesCount} disagree` };
+  if (doc.entriesCount > ledgerEntries.length)
+    return {
+      ok: false,
+      reason: `the anchor covers ${doc.entriesCount} entries and the ledger holds ${ledgerEntries.length}: the chain is shorter than the anchor, so entries were dropped`,
+    };
+  const anchored = doc.entriesCount === 0 ? undefined : ledgerEntries[doc.entriesCount - 1];
+  const expectedHead = doc.entriesCount === 0 ? GENESIS_PREV : anchored!.hash;
+  if (doc.headHash !== expectedHead)
+    return { ok: false, reason: `entry ${doc.headSeq} is ${expectedHead}, the anchored head was ${doc.headHash}` };
+  const treeDigest = await merkleDigest(ledgerEntries.slice(0, doc.entriesCount).map((entry) => entry.hash));
+  if (doc.treeDigest !== treeDigest)
+    return { ok: false, reason: `tree digest mismatch: ${doc.treeDigest}, ledger ${treeDigest}` };
+  const wrongWorkspace = ledgerEntries.find((entry) => entry.workspace !== doc.workspace);
+  if (wrongWorkspace !== undefined)
+    return { ok: false, reason: `workspace mismatch at entry ${wrongWorkspace.seq}` };
+  const signature = await verifyAnchorSignature(doc, options.publicKey);
+  if (!signature.ok) return signature;
+  return {
+    ok: true,
+    headSeq: doc.headSeq,
+    headHash: doc.headHash,
+    entriesCount: doc.entriesCount,
+    grown: ledgerEntries.length - doc.entriesCount,
+    at: doc.at,
+    key_id: doc.key_id,
+  };
+}
+
+/** The origin half of an anchor: which key signed it, and does that check out. */
+async function verifyAnchorSignature(
+  doc: AttestationDocument,
+  publicKey: PublicKeyLookup,
+): Promise<VerifyAttestationResult> {
   if (doc.alg !== "ed25519")
     return { ok: false, reason: `unsupported attestation algorithm ${doc.alg}` };
   const signature = attestationSignatureBytes(doc);
-  if (signature === null)
-    return { ok: false, reason: "malformed attestation signature" };
-  const publicKey = await lookupAttestationKey(options.publicKey, doc.key_id);
-  if (publicKey === null)
+  if (signature === null) return { ok: false, reason: "malformed attestation signature" };
+  const spki = await lookupAttestationKey(publicKey, doc.key_id);
+  if (spki === null)
     return { ok: false, reason: `no public key for attestation key ${doc.key_id}` };
-  const ok = verifySignature(
-    "ed25519",
-    attestationPreimage(unsignedAttestation(doc)),
-    signature,
-    publicKey,
-  );
+  const ok = verifySignature("ed25519", attestationPreimage(unsignedAttestation(doc)), signature, spki);
   return ok ? { ok: true } : { ok: false, reason: `attestation signature fails under ${doc.key_id}` };
 }
 

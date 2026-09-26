@@ -34,7 +34,7 @@ struct OnboardingView: View {
                 }
             }
         }
-        .tint(.orange)
+        .tint(VoidColor.accent)
     }
 }
 
@@ -47,7 +47,7 @@ private struct EntrySidebar: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Image(systemName: "circle.dotted.circle.fill")
                         .font(.system(size: 64))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(VoidColor.accent)
                         .accessibilityHidden(true)
                     Text("VOID")
                         .font(.largeTitle.bold())
@@ -84,7 +84,7 @@ private struct EntryConnectionView: View {
                     headerLayout {
                         Image(systemName: "circle.dotted.circle.fill")
                             .font(.system(size: 64))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(VoidColor.accent)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 8) {
                             Text("VOID")

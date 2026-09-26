@@ -14,6 +14,7 @@ import { activity, type ViewName } from "../../../workbench/src/gui.ts";
 import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
+import { verificationKeyNote, verificationStatus } from "../../../ledger/src/verify-key.ts";
 import {
   importDesktopProvider,
   desktopSetup,
@@ -460,6 +461,14 @@ export class WorkspaceTui {
   provider?: Awaited<ReturnType<Workbench["providerState"]>>;
   proofs = new Map<string, JsonlEntry[]>();
   proofErrors = new Map<string, string>();
+  /**
+   * The key the workbench verified the managed ledger with, and the claim it
+   * supports. The managed proofs are read through `Workbench.ledger`, which
+   * resolves its own key, so the TUI has to carry that resolution out to the
+   * record view rather than assert "verified" with nothing behind it.
+   */
+  managedVerificationStatus: string | undefined;
+  managedVerificationNote: string | undefined;
   private proofStamp = "";
   constructor(
     workbench: Workbench,
@@ -489,10 +498,19 @@ export class WorkspaceTui {
     this.provider = await this.workbench.providerState();
     this.proofs.clear();
     this.proofErrors.clear();
+    // Every managed workspace verifies with the same resolved key, so the
+    // last one read is the one that verified them all. Recording it is what
+    // lets the record view name the key instead of only asserting a result.
+    this.managedVerificationStatus = undefined;
+    this.managedVerificationNote = undefined;
     for (const session of this.workbench.list()) {
       try {
         const proof = await this.workbench.ledger(session.workspace);
-        if (proof) this.proofs.set(session.id, [...proof.entries]);
+        if (proof) {
+          this.proofs.set(session.id, [...proof.entries]);
+          this.managedVerificationStatus = verificationStatus(proof.verification);
+          this.managedVerificationNote = verificationKeyNote(proof.verification);
+        }
       } catch {
         this.proofErrors.set(
           session.id,
@@ -897,7 +915,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               ? { operationId: b.operationId }
               : {}),
             label: `${id.slice(0, 8)} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
-            lines: ["[OK] Hash chain and signature verified", ...json(e)],
+            lines: [
+              this.managedVerificationStatus === undefined
+                ? "[OK] Hash chain and signature verified"
+                : `[OK] Hash chain and signature verified — ${this.managedVerificationStatus}`,
+              ...(this.managedVerificationNote === undefined
+                ? []
+                : [`Verification key: ${this.managedVerificationNote}`]),
+              ...json(e),
+            ],
           });
         }
       for (const [workspace, entries] of this.proxy.entries)
@@ -908,8 +934,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             label: `proxy:${workspace} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
             lines: [
               this.proxy.signed
-                ? "[OK] Proxy signatures and hash chain verified"
+                ? `[OK] Proxy signatures and hash chain verified — ${this.proxy.verificationStatus}`
                 : "[!] Proxy: hash integrity only, signature NOT VERIFIED",
+              ...(this.proxy.verificationNote
+                ? [`Verification key: ${this.proxy.verificationNote}`]
+                : []),
               ...json(e),
             ],
           });
@@ -2336,8 +2365,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         `Active work: ${this.workbench.running() ? "running or settling" : "none"}`,
         `Conversations: ${this.workbench.list().length} | Documents: ${this.workbench.documentsList().length} | Pending approvals: ${this.workbench.pending().length + this.proxy.holds.length}`,
         `Ledger: ${[...this.proofs.values()].reduce((n, p) => n + p.length, 0)} managed + ${[...this.proxy.entries.values()].reduce((n, p) => n + p.length, 0)} proxy entries`,
-        `Proxy signatures: ${this.proxy.entries.size ? (this.proxy.signed ? "verified" : "NOT VERIFIED (integrity only)") : "no entries"} | Errors: ${this.proofErrors.size + this.proxy.errors.length}`,
-        ...this.proofErrors.values(),
+        // The bare word "verified" is the defect the audit named here: it does
+        // not say which key answered, so a chain checked against a trust file
+        // the agent can also replace read the same as one checked against a
+        // key the operator handed over. The status names the answer, and the
+        // long caveat follows it on its own line.
+        `Proxy signatures: ${this.proxy.entries.size ? (this.proxy.signed ? this.proxy.verificationStatus : "NOT VERIFIED (integrity only)") : "no entries"} | Errors: ${this.proofErrors.size + this.proxy.errors.length}`,
+        ...(this.proxy.entries.size && this.proxy.verificationNote
+          ? [`Proxy verification key: ${this.proxy.verificationNote}`]
+          : []),
         "",
         `Runs: ${o.runs} | Failures: ${o.failed}`,
         ...this.items().map(

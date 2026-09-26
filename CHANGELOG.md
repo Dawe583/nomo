@@ -11,6 +11,38 @@ All notable user-facing changes since the first repository commit.
   `Cannot unlock the VOID workspace key in macOS Keychain`. Collapsing the two
   cases would have let a fresh key be minted over an existing encrypted
   workspace.
+- Mac desktop builds no longer default to an ad-hoc signature. The signing
+  identity is now resolved in three observable steps: the operator's own
+  `APPLE_SIGNING_IDENTITY`, then a stable identity already present in the
+  keychain, discovered read-only, then ad-hoc as a last resort that warns with
+  the consequence spelled out. A notarised run refuses ad-hoc outright. This
+  removes the failure where a rebuild lost access to the app's own workspace
+  key, which macOS ends with no remedy because the encrypted data has no other
+  key.
+- Evidence: verification no longer reads a private key to decide what a valid
+  signature means. The trusted public half is pinned separately, and a
+  substituted key is now rejected instead of accepted. Signed anchors for the
+  ledger head gain a real command path, so a shortened history is caught. The
+  honest boundary is unchanged and now stated plainly: this detects tampering
+  by a third party, not by the agent itself, and the status surfaces say which
+  key was used rather than only that a signature verified.
+- Web chat: stopping a run now settles the last answer instead of leaving it
+  permanently marked as arriving with its copy, branch and retry controls
+  suppressed. A draft and its attachments are now saved and restored together,
+  so navigating back can no longer restore attachments against an empty draft
+  and send a different message than the one on screen. Scrolling up mid-stream
+  is respected, the composer budget is measured from the real composer height,
+  and the visible size counter and the send guard read one limit rather than two
+  copies of it.
+- Web chat: the permission banner no longer claims the server mode is
+  unavailable on every page load while the mode is still being fetched, and a
+  read-only session is styled as distinctly not granted rather than as
+  settled. The mode control is no longer rendered as a group of unselectable
+  options; where no setter exists, the mode is shown as text.
+- iOS: the app declares its supported orientations and a launch screen, so
+  UIKit no longer warns about both on every build. The entry title resolves
+  correctly on a regular width layout, and a table or code block below the fold
+  is laid out and reachable rather than filled in only on scroll.
 - CLI: `void watch --ledger` now accepts a ledger directory and resolves it to
   that workspace's ledger file, matching what the sibling commands read. A path
   that is already a file is still taken as given, and a path that does not

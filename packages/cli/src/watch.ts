@@ -3,7 +3,13 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { stat } from "node:fs/promises";
 import { readLedgerFeed } from "../../ledger/src/feed.ts";
-import { devKeyProvider } from "../../ledger/src/sign.ts";
+import {
+  NO_VERIFICATION_KEY_NOTE,
+  resolveVerificationKey,
+  verificationKeyLine,
+  verificationStatus,
+} from "../../ledger/src/verify-key.ts";
+import { retainedKeyProvider } from "../../ledger/src/sign.ts";
 import { detectCapabilities } from "./tui/caps.ts";
 import { DiffScreenWriter } from "./tui/watch.ts";
 import { liveRecords, renderLiveFeed, type LiveView } from "./tui/live.ts";
@@ -48,11 +54,40 @@ export async function runWatchCommand(argv: readonly string[]): Promise<number> 
     if (reading || stopped) return;
     reading = true;
     try {
-      const signer = await devKeyProvider();
-      const page = await readLedgerFeed(ledgerFile, { publicKey: id => signer.publicKey(id) });
+      // Resolved the same way every other verifier surface resolves it, so an
+      // operator's pin is honoured here and the source is reported. This used
+      // to call `devKeyProvider()` with no arguments at all: it read the real
+      // `~/.void/keys`, ignored the trust file, and minted a key when none
+      // existed. `retainedKeyProvider` keeps a watch from creating signing
+      // capability as a side effect of looking at the ledger.
+      const key = await resolveVerificationKey({
+        env: process.env,
+        allowDegraded: true,
+        signingKey: async () => {
+          try {
+            return await retainedKeyProvider({ env: process.env });
+          } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+            throw error;
+          }
+        },
+      });
+      const page = await readLedgerFeed(ledgerFile, { publicKey: key?.publicKey });
       if (stopped) return;
       const selectedSeq = liveRecords(view)[view.selected]?.seq;
-      view = { ...view, page, error: undefined };
+      // The watch stated nothing at all when no key resolved, which is the one
+      // state an operator most needs to be told about. It now always names the
+      // answer, using the same line every other surface prints, so a reader
+      // comparing `void watch` against `void verify` is comparing the same
+      // claim and not two different ones.
+      const note = key === undefined ? NO_VERIFICATION_KEY_NOTE : verificationKeyLine(key);
+      view = {
+        ...view,
+        page,
+        error: undefined,
+        verificationNote: note,
+        verificationStatus: key === undefined ? "NOT VERIFIED (integrity only)" : verificationStatus(key),
+      };
       const index = liveRecords(view).findIndex(row => row.seq === selectedSeq);
       view = { ...view, selected: Math.max(0, index) };
     } catch {

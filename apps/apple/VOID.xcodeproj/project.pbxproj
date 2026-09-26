@@ -7,15 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		152AAFA001630DD8C1583E60 /* ChatMessageRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C88B3ABB79D60297BD610C /* ChatMessageRow.swift */; };
 		1A50C3DCD061893BD4D87BDD /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6755F2721E9895C7F9DE3158 /* AppModel.swift */; };
 		2DF5EFCB9D9012CC7783B103 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F68E0CB9EC43A665417C593 /* SessionDetailView.swift */; };
 		3262B33A6B0F79871B2A6C75 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D916312188BD64791D68F8AC /* RootView.swift */; };
+		346D48640E8C6702BE265130 /* SampleChatTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = E83CE8004689B8EAC1F09849 /* SampleChatTransport.swift */; };
+		4C619A34A44A30B888F540EF /* ChatModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D43CF913472E84BFFAC91514 /* ChatModel.swift */; };
 		64169446E93EF325066585CA /* VOIDUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B86FDE1B3E130F49F0BD33E5 /* VOIDUITests.swift */; };
+		688D33D3D5B2097353C991F5 /* ChatCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F288976D3832D6DB693729E /* ChatCopy.swift */; };
 		722993CDECFB04A1F4FBE154 /* VOIDAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E50C10522810F0B84CAC786B /* VOIDAppTests.swift */; };
 		930DD864D064C0E003D5E646 /* CompanionProtocolKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8EC5DA2354E1DA2FD25E756B /* CompanionProtocolKit */; };
 		ACDD3740696185BFCCA0B6D3 /* AppCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742A40AD788CD93EE6DD4DCD /* AppCopy.swift */; };
 		ACF2935E0160EFA29DAAA176 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD26D8B1980FF8794A50A1E3 /* OnboardingView.swift */; };
 		B849FD0F2565401FC53BD1E1 /* VOIDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09504F74A63AB5F84331C97B /* VOIDApp.swift */; };
+		C0B88995B0A14B0D6B4A5A96 /* ChatTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E79CB2A4CD367FFC8471D7C /* ChatTheme.swift */; };
+		EF61AEC5ABD61E746D7D479D /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8D0CBF0F6775CD4C4F92E98 /* ChatView.swift */; };
+		FA4A6D8658B6584009F6BA3C /* MarkdownText.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D28B0BDE0E204F03846E20 /* MarkdownText.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,17 +44,24 @@
 
 /* Begin PBXFileReference section */
 		09504F74A63AB5F84331C97B /* VOIDApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VOIDApp.swift; sourceTree = "<group>"; };
+		2F288976D3832D6DB693729E /* ChatCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatCopy.swift; sourceTree = "<group>"; };
 		2F68E0CB9EC43A665417C593 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+		3E79CB2A4CD367FFC8471D7C /* ChatTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatTheme.swift; sourceTree = "<group>"; };
 		54F16E1D4A1F18CAAD160A18 /* VOIDUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VOIDUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FF2AA7E1F9317BF4DEF6DF7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6755F2721E9895C7F9DE3158 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		742A40AD788CD93EE6DD4DCD /* AppCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCopy.swift; sourceTree = "<group>"; };
 		748B3398565D1A5E789B105E /* VOIDTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VOIDTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B86FDE1B3E130F49F0BD33E5 /* VOIDUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VOIDUITests.swift; sourceTree = "<group>"; };
+		B8D0CBF0F6775CD4C4F92E98 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		C0C88B3ABB79D60297BD610C /* ChatMessageRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageRow.swift; sourceTree = "<group>"; };
 		C5B607EA4718F1550242E300 /* VOID.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VOID.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3D28B0BDE0E204F03846E20 /* MarkdownText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownText.swift; sourceTree = "<group>"; };
+		D43CF913472E84BFFAC91514 /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
 		D916312188BD64791D68F8AC /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		DD26D8B1980FF8794A50A1E3 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		E50C10522810F0B84CAC786B /* VOIDAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VOIDAppTests.swift; sourceTree = "<group>"; };
+		E83CE8004689B8EAC1F09849 /* SampleChatTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleChatTransport.swift; sourceTree = "<group>"; };
 		FE47B3B875BB5240EF8D3D4C /* CompanionProtocolKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CompanionProtocolKit; path = CompanionProtocolKit; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -105,9 +119,16 @@
 			children = (
 				742A40AD788CD93EE6DD4DCD /* AppCopy.swift */,
 				6755F2721E9895C7F9DE3158 /* AppModel.swift */,
+				2F288976D3832D6DB693729E /* ChatCopy.swift */,
+				C0C88B3ABB79D60297BD610C /* ChatMessageRow.swift */,
+				D43CF913472E84BFFAC91514 /* ChatModel.swift */,
+				3E79CB2A4CD367FFC8471D7C /* ChatTheme.swift */,
+				B8D0CBF0F6775CD4C4F92E98 /* ChatView.swift */,
 				5FF2AA7E1F9317BF4DEF6DF7 /* Info.plist */,
+				D3D28B0BDE0E204F03846E20 /* MarkdownText.swift */,
 				DD26D8B1980FF8794A50A1E3 /* OnboardingView.swift */,
 				D916312188BD64791D68F8AC /* RootView.swift */,
+				E83CE8004689B8EAC1F09849 /* SampleChatTransport.swift */,
 				2F68E0CB9EC43A665417C593 /* SessionDetailView.swift */,
 				09504F74A63AB5F84331C97B /* VOIDApp.swift */,
 			);
@@ -241,8 +262,15 @@
 			files = (
 				ACDD3740696185BFCCA0B6D3 /* AppCopy.swift in Sources */,
 				1A50C3DCD061893BD4D87BDD /* AppModel.swift in Sources */,
+				688D33D3D5B2097353C991F5 /* ChatCopy.swift in Sources */,
+				152AAFA001630DD8C1583E60 /* ChatMessageRow.swift in Sources */,
+				4C619A34A44A30B888F540EF /* ChatModel.swift in Sources */,
+				C0B88995B0A14B0D6B4A5A96 /* ChatTheme.swift in Sources */,
+				EF61AEC5ABD61E746D7D479D /* ChatView.swift in Sources */,
+				FA4A6D8658B6584009F6BA3C /* MarkdownText.swift in Sources */,
 				ACF2935E0160EFA29DAAA176 /* OnboardingView.swift in Sources */,
 				3262B33A6B0F79871B2A6C75 /* RootView.swift in Sources */,
+				346D48640E8C6702BE265130 /* SampleChatTransport.swift in Sources */,
 				2DF5EFCB9D9012CC7783B103 /* SessionDetailView.swift in Sources */,
 				B849FD0F2565401FC53BD1E1 /* VOIDApp.swift in Sources */,
 			);

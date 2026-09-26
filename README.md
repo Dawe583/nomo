@@ -39,6 +39,13 @@ Run the live local terminal workspace with `pnpm tui` (or double-click `VOID.com
 
 Use Node.js 24 or newer and `pnpm install --frozen-lockfile`. Packages are private at version 0.1.0. Start the agent GUI with `pnpm gui`, or run the native macOS app with `pnpm desktop:setup` followed by `pnpm desktop`. Connect a provider in Settings; managed documents and captured Undo work without a separate tool server. Build the installer with `pnpm desktop:build`; see [the beta runbook](docs/BETA.md) for agent configuration, terminal controls, Vercel deployment and the reviewed feature boundaries.
 
+The native iOS app under `apps/apple` is generated: `apps/apple/project.yml` is
+the source of truth and `apps/apple/VOID.xcodeproj` is a build artifact. Run
+`pnpm apple:project` from the repository root after changing the yml or adding or
+removing a source file, and commit the regenerated project with the change. Run
+`pnpm apple:project:check` to prove the committed project still matches the yml
+without writing to the working tree. Never hand-edit `project.pbxproj`.
+
 The GUI uses the shared React/TypeScript client in `apps/control-plane/ui`.
 `pnpm gui` builds it before starting the local API. For frontend development,
 run `node apps/control-plane/api/server.ts` and `pnpm dev:web` in separate

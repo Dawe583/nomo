@@ -16,9 +16,18 @@ version is not the VOID product version.
 
 The direct-download profile is the only supported local Mac packaging path in
 this repository. `apps/desktop/scripts/build.mjs` resolves that policy before
-invoking Tauri: it refuses `VOID_DISTRIBUTION=store` on macOS, defaults the
-Apple signing identity to `-` (ad-hoc signature), and does not request
-notarization. The Mac App Store remains explicitly unconfigured: no store
+invoking Tauri: it refuses `VOID_DISTRIBUTION=store` on macOS and resolves the
+Apple signing identity in order, as `APPLE_SIGNING_IDENTITY` used verbatim,
+otherwise a stable code-signing identity already in the keychain, listed
+read-only through `security find-identity -v -p codesigning` without opening any
+key material, otherwise `-` (ad-hoc signature). The build log names the
+identity it resolved. A stable identity matters locally: macOS binds a keychain
+item to the identity that created it, so an ad-hoc signature that changes on
+every rebuild is what makes a rebuild unable to read the workspace key. When no
+stable identity is available the build still succeeds, but it warns and names
+the exit the operator would otherwise meet. A run that expects a notarized
+artifact is refused outright rather than built ad-hoc. The Mac App Store
+remains explicitly unconfigured: no store
 entitlements, provisioning profile, sandbox container or submission settings
 are inferred. Developer ID signing, notarization and a clean-machine install
 remain external release blockers, not local-build capabilities.
@@ -50,11 +59,21 @@ Artifacts are written to `apps/desktop/src-tauri/target/release/bundle/`.
 DMG creation runs without Finder automation. The `.app` can run locally; public distribution also needs an Apple Developer
 signing identity and notarization credentials configured using Tauri's standard
 `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD` and `APPLE_TEAM_ID`
-environment variables. Without those credentials macOS builds use an ad-hoc signature for bundle integrity,
-not Apple notarization. This direct-download profile is separate from a Mac App Store profile: no store
+environment variables. Without notarization credentials a macOS build is a local
+bundle-integrity build and nothing more: it is signed with whatever stable
+identity the policy resolved above, or with an ad-hoc signature if there is
+none, and it is never notarized. This direct-download profile is separate from a Mac App Store profile: no store
 entitlements, provisioning profile, sandbox container, or store submission configuration is present in this
 repository, and those must not be inferred from the direct build. Windows produces an unsigned NSIS beta installer;
 SmartScreen may warn. Linux packages are not verified.
+
+`APPLE_SIGNING_IDENTITY` is the one variable that overrides the whole chain: set
+it to any identity name and the build uses it verbatim, skipping both the
+keychain lookup and the ad-hoc fallback. To see the names the machine already
+holds, run `security find-identity -v -p codesigning`; it prints identity names
+only. Apple does not accept an ad-hoc, Apple Development, Mac Distribution or
+local development certificate for notarization, so a stable identity bought for
+local keychain stability is not a notarization identity.
 
 ## Runtime boundary
 

@@ -459,7 +459,6 @@ mod tests {
         assert!(exit_receiver.recv_timeout(Duration::from_secs(1)).is_ok());
     }
 
-
     /// A category with no guidance is a category that sends the operator back
     /// to a log file, which is what P08.03 exists to stop. The keychain case
     /// is also the one that has to keep saying there is no password to type.

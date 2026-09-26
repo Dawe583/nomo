@@ -5,11 +5,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
+import { generateKeyPairSync } from "node:crypto";
 
-import { devKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
+import { devKeyProvider, keyProviderFromPkcs8, sha256Hex } from "../../ledger/src/sign.ts";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import { entryHash } from "../../ledger/src/canonical.ts";
 import { verifyLedgerFile } from "../../ledger/src/verify.ts";
+import {
+  PINNED_KEY_FILE_NAME,
+  pinVerificationKey,
+} from "../../ledger/src/verify-key.ts";
 
 import { VoidClient, createVoidClient } from "./client.ts";
 import { legacyBindingRoot } from "../../proxy/src/legacy-root.ts";
@@ -163,15 +168,27 @@ test("RefusedError maps connector drift refusal reports", () => {
 });
 
 
+// A pinned public key, provisioned the way an operator does it, is what the
+// startup check reads. These cases used to pass because the client derived the
+// key from the private key file, which is the substitution a pin is what
+// makes detectable, so the pin is what they are asserted against now.
 for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
   test(`startup authenticates existing ledger: ${scenario}`, async () => {
     const dir = await mkdtemp(join(tmpdir(), "void-sdk-signatures-"));
     const workspace = "signed";
     const path = join(dir, `${workspace}.jsonl`);
     const marker = join(dir, "upstream-started");
+    const honest = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
     const signer = scenario === "foreign-key"
       ? await devKeyProvider({ dir: join(dir, "foreign-keys"), env: {} })
-      : await devKeyProvider();
+      : honest;
+    const spki = await honest.publicKey(await honest.currentKeyId());
+    assert.ok(spki !== null);
+    const trust = join(dir, "trust");
+    await pinVerificationKey(spki, {
+      file: join(trust, PINNED_KEY_FILE_NAME),
+      anchoredFrom: "operator-spki",
+    });
     await jsonlStore(signer, { dir }).append({ workspace, tool: "echo", decision: "deny" });
     if (scenario === "rehashed") {
       const entry = JSON.parse(await readFile(path, "utf8"));
@@ -183,6 +200,7 @@ for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
     assert.equal((await verifyLedgerFile(path)).ok, true);
     const client = new VoidClient({
       ledgerDir: dir, workspace, policyPath: await fixturePolicy(),
+      env: { VOID_TRUST_DIR: trust },
       connect: { upstreamCommand: scenario === "trusted"
         ? [process.execPath, fixtureServer]
         : [process.execPath, "-e", "require('node:fs').writeFileSync(process.argv[1], 'started')", marker] },
@@ -192,6 +210,9 @@ for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
       const request = client.request("tools/call", { name: "echo", arguments: { text: "authenticated" } });
       if (scenario === "trusted") {
         assert.equal(textFrom(await request), "authenticated");
+        // Whatever the source is named, what matters is that it came from the
+        // pinned public key and is not degraded.
+        assert.equal(client.verification?.degraded, false);
       } else {
         await assert.rejects(request, LedgerVerifyError);
         await assert.rejects(access(marker), { code: "ENOENT" });
@@ -202,6 +223,71 @@ for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
     }
   });
 }
+
+test("an existing ledger with no pinned key is refused, not checked with the private key file", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "void-sdk-unpinned-"));
+  const workspace = "unpinned";
+  const home = join(dir, "home");
+  const signer = await devKeyProvider({ dir: join(home, ".void", "keys"), env: {} });
+  await jsonlStore(signer, { dir }).append({ workspace, tool: "echo", decision: "deny" });
+  const marker = join(dir, "upstream-started");
+  const client = new VoidClient({
+    ledgerDir: dir,
+    workspace,
+    policyPath: await fixturePolicy(),
+    env: { HOME: home },
+    connect: {
+      upstreamCommand: [process.execPath, "-e", "require('node:fs').writeFileSync(process.argv[1], 'started')", marker],
+    },
+    requestTimeoutMs: 1_000,
+  });
+  try {
+    // The signing key sits right there at ~/.void/keys and would verify this
+    // chain perfectly. Reading it is the defect: it would also verify a chain
+    // an attacker re-signed after replacing that file, so the check is refused
+    // and named instead.
+    await assert.rejects(
+      client.request("tools/call", { name: "echo", arguments: { text: "never" } }),
+      (error: unknown) => {
+        assert.ok(error instanceof LedgerVerifyError);
+        assert.match(error.message, /no verification key is configured/);
+        return true;
+      },
+    );
+    await assert.rejects(access(marker), { code: "ENOENT" });
+  } finally {
+    client.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a signing key named in the environment is a degraded answer, and says so", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "void-sdk-degraded-"));
+  const workspace = "degraded";
+  // Written straight from a generated pair and used only in this process; the
+  // value never reaches a log or a fixture file.
+  const { privateKey } = generateKeyPairSync("ed25519");
+  const pkcs8 = privateKey.export({ type: "pkcs8", format: "der" }).toString("base64");
+  const signer = keyProviderFromPkcs8(Buffer.from(pkcs8, "base64"));
+  await jsonlStore(signer, { dir }).append({ workspace, tool: "echo", decision: "deny" });
+  const client = new VoidClient({
+    ledgerDir: dir,
+    workspace,
+    policyPath: await fixturePolicy(),
+    env: { VOID_SIGNING_KEY: pkcs8 },
+    connect: { upstreamCommand: [process.execPath, fixtureServer] },
+    requestTimeoutMs: 5_000,
+  });
+  try {
+    assert.equal(textFrom(await client.request("tools/call", { name: "echo", arguments: { text: "ok" } })), "ok");
+    assert.equal(client.verification?.degraded, true);
+    assert.equal(client.verification?.source, "signing-key-env");
+    assert.match(client.errors.join(" "), /DEGRADED/);
+  } finally {
+    client.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
 
 /** A purpose-built upstream that speaks one bound tool, so the client can be
  * driven end to end without touching the shared e2e fixture. */

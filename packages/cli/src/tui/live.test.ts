@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { renderLiveFeed, liveRecords, type LiveView } from "./live.ts";
 import { visibleLength } from "./layout.ts";
+import { verificationKeyLine } from "../../../ledger/src/verify-key.ts";
 
 const view: LiveView = { workspace: "local", selected: 0, filter: "", paused: false, detail: false, help: false,
   page: { verified: true, signed: true, head: "a".repeat(64), records: [
@@ -22,6 +23,48 @@ test("live view never labels integrity-only data as signature checked", () => {
   const frame = renderLiveFeed({ ...view, page: { ...view.page!, signed: false } }, { interactive: false, ansi: false, colorDepth: 0, columns: 80, rows: 24, reason: "not-tty" });
   assert.match(frame, /Signatures have not been checked/);
   assert.equal(liveRecords({ ...view, filter: "r3" }).length, 0);
+});
+
+// The live feed rendered the bare claim "Signatures checked against the
+// configured key", which says nothing about *which* key. Three different
+// guarantees were reaching the operator as one sentence. This pins that they
+// stay distinguishable on the screen, and that a degraded mode is never
+// presented as a clean one.
+test("the live feed names which key checked the signatures", () => {
+  const caps = { interactive: true, ansi: false, colorDepth: 0, columns: 200, rows: 24, reason: "no-color" } as const;
+  const claims = [
+    "verified against a key supplied out of band",
+    "verified against a trust file the agent can also replace (key substitution NOT detected)",
+    "DEGRADED (key from signing key material)",
+  ];
+  const frames = claims.map((verificationStatus) =>
+    renderLiveFeed({ ...view, verificationStatus }, caps),
+  );
+  for (const [index, frame] of frames.entries())
+    assert.match(frame, new RegExp(claims[index]!.replace(/[()]/g, "\\$&")), claims[index]);
+  // Three guarantees, three renderings. Before this, all three read the same.
+  assert.equal(new Set(frames).size, 3, "two key states rendered identically");
+});
+
+test("a degraded live feed carries the opt-in that caused it", () => {
+  const frame = renderLiveFeed(
+    {
+      ...view,
+      verificationStatus: "DEGRADED (key from signing key material)",
+      verificationNote: verificationKeyLine({
+        keyId: "dev-ed25519:0123456789abcdef",
+        source: "signing-key-file",
+        degraded: true,
+        operatorSupplied: false,
+      }),
+    },
+    { interactive: true, ansi: false, colorDepth: 0, columns: 120, rows: 24, reason: "no-color" },
+  );
+  // The switch that put the operator in this mode survives truncation, which
+  // is why the note leads with it rather than ending with it.
+  assert.match(frame, /VOID_VERIFY_ALLOW_SIGNING_KEY/);
+  // The note names itself once. Prefixing it again read as a stutter.
+  assert.equal(frame.match(/verification key:/g)?.length, 1, frame);
 });
 
 test('pending approvals expose real risk and require an explicit confirmation', () => {

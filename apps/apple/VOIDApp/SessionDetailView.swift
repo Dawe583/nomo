@@ -1,7 +1,12 @@
 import SwiftUI
 
+/// A session in the activity list opens as a conversation.
+///
+/// The status, the outcome explanation and the no-action statement that used
+/// to be the whole detail screen now live in the bounded notices region of
+/// `ChatView`, so the reason an action is unavailable is read next to the
+/// composer that cannot send, instead of on a separate page.
 struct SessionDetailView: View {
-    @EnvironmentObject private var model: AppModel
     @AppStorage("void-entry-language") private var entryLanguage = "en"
 
     let session: Session
@@ -9,27 +14,9 @@ struct SessionDetailView: View {
     private var copy: AppCopy { AppCopy(language: entryLanguage) }
 
     var body: some View {
-        List {
-            Section(copy.statusTitle) {
-                LabeledContent(copy.outcomeLabel, value: copy.outcomeTitle(for: session.outcome))
-                Text(copy.outcomeExplanation(for: session.outcome))
-                    .foregroundStyle(.secondary)
-            }
-            Section(copy.detailsTitle) {
-                Text(copy.sessionDetail(for: session))
-                    .foregroundStyle(.secondary)
-            }
-            Section {
-                Label(
-                    model.connectionState == .offline ? copy.noActionOffline : copy.noActionReadOnly,
-                    systemImage: "lock"
-                )
-                .foregroundStyle(.secondary)
-                .accessibilityElement(children: .combine)
-            }
-        }
-        .navigationTitle(copy.sessionTitle(for: session))
-        .navigationBarTitleDisplayMode(.inline)
+        ChatView(session: session)
+            .navigationTitle(copy.sessionTitle(for: session))
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 

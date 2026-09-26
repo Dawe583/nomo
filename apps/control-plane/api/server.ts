@@ -1,6 +1,6 @@
 import { page, filterRows, capabilities, activity, serverPermissionMode, DEFAULT_HTTP_PERMISSION_MODE } from '../../../packages/workbench/src/gui.ts';
 import { createReadStream, existsSync } from "node:fs";
-import { stat, readFile } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { basename, extname, join, posix, relative, resolve } from "node:path";
 import { homedir } from "node:os";
@@ -19,7 +19,13 @@ import { normalizeProviderConfig } from "../../../packages/workbench/src/provide
 import { authorizedRemote } from "./auth.ts";
 import { localApprovals } from "./local-approvals.ts";
 import { desktopSetup, importDesktopProvider } from './desktop-setup.ts';
-import { keyProviderFromPkcs8 } from "../../../packages/ledger/src/sign.ts";
+import {
+  NO_VERIFICATION_KEY_NOTE,
+  resolveVerificationKey,
+  verificationKeyNote,
+  type VerificationFacts,
+  type VerificationKeySource,
+} from "../../../packages/ledger/src/verify-key.ts";
 import { handleCompanionRequest } from "./companion/routes.ts";
 import { handleCompanionEnvelopeRequest } from "./companion/envelope.ts";
 
@@ -68,6 +74,19 @@ type RouteOptions = {
   readonly approvals?: ApprovalBroker;
   readonly replay?: ReplayCommandOptions;
   readonly publicKey?: PublicKeyLookup;
+  /**
+   * The resolved key, with its origin. `degraded` means private key material
+   * was involved, so a replaced key file cannot be detected in that mode;
+   * `operatorSupplied` means the operator chose these bytes somewhere the
+   * agent cannot reach, which the default trust file is not.
+   */
+  readonly verificationKey?: {
+    readonly publicKey: PublicKeyLookup;
+    readonly keyId: string;
+    readonly source: VerificationKeySource;
+    readonly degraded: boolean;
+    readonly operatorSupplied: boolean;
+  };
 };
 
 const here = fileURLToPath(new URL(".", import.meta.url));
@@ -76,29 +95,30 @@ const maxBodyBytes = 64 * 1024;
 const publicScriptPaths: ReadonlySet<string> = new Set(["/app.js", "/workbench.css", "/theme.js", "/sessions.js", "/workspace-ui.js", "/cloud-settings.js", "/manifest.webmanifest", "/icon.svg"]);
 
 /**
- * Resolve a verification key without ever generating one. Reading is the
- * operator's trust domain: the server sits next to the ledger it serves, so
- * the same development key that signed locally is the honest default. When no
- * key material exists the lookup stays undefined and every feed and verify
- * view reports integrity without claiming authentication.
+ * Resolve the verification key without ever generating one, and without
+ * reading the private key file the ledger was signed with: a key resolved
+ * from `dev-ed25519.pkcs8` is the writer's key, so a server that resolved it
+ * that way would report an attacker's rewritten chain as valid
+ * (docs/THREAT-MODEL.md §2.4). A public key comes from `VOID_VERIFY_KEY` or a
+ * trust file; a trust file at the default `~/.void/trust/` path reports
+ * `operatorSupplied: false`, because it shares a tree with the key it is
+ * supposed to anchor. A configured `VOID_SIGNING_KEY` is still honoured,
+ * because naming it is an explicit operator choice, and the response says it
+ * was degraded. With nothing configured the lookup stays undefined and every
+ * feed and verify view reports integrity without claiming authentication.
  */
-async function resolveVerifyKey(env: Readonly<NodeJS.ProcessEnv>): Promise<PublicKeyLookup | undefined> {
-  const inline = env.VOID_SIGNING_KEY;
-  if (inline !== undefined && inline !== "") {
-    const provider = keyProviderFromPkcs8(Buffer.from(inline, "base64"));
-    return (keyId) => provider.publicKey(keyId);
-  }
-  const explicit = env.VOID_VERIFY_KEY;
-  if (explicit !== undefined && explicit !== "") {
-    return new Uint8Array(Buffer.from(explicit, "base64"));
-  }
-  if (env === process.env) {
-    try {
-      const provider = keyProviderFromPkcs8(await readFile(join(homedir(), ".void", "keys", "dev-ed25519.pkcs8")));
-      return keyId => provider.publicKey(keyId);
-    } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
-  }
-  return undefined;
+async function resolveVerifyKey(
+  env: Readonly<NodeJS.ProcessEnv>,
+): Promise<RouteOptions["verificationKey"]> {
+  const resolved = await resolveVerificationKey({ env });
+  if (resolved === undefined) return undefined;
+  return {
+    publicKey: resolved.publicKey,
+    keyId: resolved.keyId,
+    source: resolved.source,
+    degraded: resolved.degraded,
+    operatorSupplied: resolved.operatorSupplied,
+  };
 }
 
 export function createControlPlaneServer(options: ControlPlaneOptions = {}): Server {
@@ -116,8 +136,8 @@ export function createControlPlaneServer(options: ControlPlaneOptions = {}): Ser
       sendJson(response, 403, { error: "local_origin_required" });
       return;
     }
-    void resolveVerifyKey(env).then((publicKey) =>
-      route(request, response, { ...options, env, webRoot, publicKey, workbench, approvals: workbench.list().length ? { pending: async () => [...await readPendingApprovals(options.approvals), ...workbench.pending()], decide: (id, decision) => id.includes(":") ? workbench.decide(id, decision) : options.approvals?.decide(id, decision) } : options.approvals })).catch(() => {
+    void resolveVerifyKey(env).then((verificationKey) =>
+      route(request, response, { ...options, env, webRoot, publicKey: verificationKey?.publicKey, verificationKey, workbench, approvals: workbench.list().length ? { pending: async () => [...await readPendingApprovals(options.approvals), ...workbench.pending()], decide: (id, decision) => id.includes(":") ? workbench.decide(id, decision) : options.approvals?.decide(id, decision) } : options.approvals })).catch(() => {
       sendJson(response, 500, {
         error: "internal_error",
         message: "The request failed; operator review required",
@@ -271,12 +291,30 @@ async function route(
   }
   if (request.method === 'GET' && ['/api/feed', '/api/ledger/verify', '/api/ledger/export'].includes(parsed.pathname)) {
     const workspace = parsed.searchParams.get('workspace') || options.workbench.list().at(-1)?.workspace;
-    const proof = workspace ? await options.workbench.ledger(workspace) : undefined;
+    // The workbench verifies this chain against the key it resolved, and
+    // throws when it cannot authenticate one. An unauthenticatable chain is a
+    // shaped refusal, not a server fault: catch it and fall through to the
+    // handlers below, which report the same failure the other callers get
+    // instead of an unhandled 500.
+    const proof = workspace
+      ? await options.workbench.ledger(workspace).catch(() => undefined)
+      : undefined;
     if (proof && proof.entries.length) {
-      if (parsed.pathname === '/api/feed') { const result = page(filterRows(proof.entries.map(e => ({ seq: e.seq, ...(e.body as JsonObject), hash: e.hash, digest: e.hash, prev_hash: e.prev_hash })).reverse(), query), query, workspace); return sendJson(response, 200, { ...result, entries: result.items, verified: true, signed: true, integrity: true, checked: proof.entries.length }); }
-      if (parsed.pathname === '/api/ledger/verify') return sendJson(response, 200, { ok: true, verified: true, signed: true, integrity: true, checked: proof.entries.length, head: proof.result.head });
+      // `signed: true` here is earned, not defaulted: `Workbench.ledger`
+      // verified this chain with the key it resolved and throws otherwise, so
+      // reaching this line means a signature check passed. What that check is
+      // *worth* is not the same claim, which is why the `verificationKey` block
+      // travels with every one of these responses and carries
+      // `substitutionDetected` alongside `authenticated`. A client that reads
+      // only the boolean calls a trust-file check tamper-proofing, which it is
+      // not.
+      const verification = verificationSummary(proof.verification);
+      if (parsed.pathname === '/api/feed') { const result = page(filterRows(proof.entries.map(e => ({ seq: e.seq, ...(e.body as JsonObject), hash: e.hash, digest: e.hash, prev_hash: e.prev_hash })).reverse(), query), query, workspace); return sendJson(response, 200, { ...result, entries: result.items, verified: true, signed: true, substitutionDetected: verification["substitutionDetected"] === true, integrity: true, checked: proof.entries.length, verificationKey: verification }); }
+      if (parsed.pathname === '/api/ledger/verify') return sendJson(response, 200, { ok: true, verified: true, signed: true, substitutionDetected: verification["substitutionDetected"] === true, integrity: true, checked: proof.entries.length, head: proof.result.head, verificationKey: verification });
       response.setHeader('content-disposition', 'attachment; filename="void-ledger.json"');
-      return sendJson(response, 200, { format: 'void.signed-ledger.v1', entries: proof.entries });
+      // A bundle without the key that authenticated it is silently
+      // unverifiable downstream, so the verification block travels with it.
+      return sendJson(response, 200, { format: 'void.signed-ledger.v1', entries: proof.entries, checked: proof.entries.length, head: proof.result.head, verificationKey: verification });
     }
   }
   if (parsed.pathname === "/api/sessions") {
@@ -354,9 +392,33 @@ async function route(
   if (request.method === "GET" && parsed.pathname === "/api/ledger/export") {
     const ledger = selectLedgerPath(options, parsed.searchParams.get("workspace"));
     if (!ledger) return sendJson(response, 400, { error: "invalid_workspace" });
-    const page = await readLedgerFeed(ledger, { publicKey: options.publicKey });
+    // Same shape as the workbench-backed export above: a bundle that does not
+    // carry the key that authenticated it cannot be re-verified downstream.
+    const page = await readLedgerFeed(ledger, { publicKey: options.publicKey }).catch(() => undefined);
     response.setHeader("content-disposition", 'attachment; filename="void-records.json"');
-    return sendJson(response, 200, { format: "void.signed-ledger.v1", verified: page.signed, entries: await readLedgerEntries(ledger) });
+    if (page === undefined)
+      return sendJson(response, 200, {
+        format: "void.signed-ledger.v1",
+        verified: false,
+        signed: false,
+        integrity: false,
+        checked: 0,
+        entries: [],
+        verificationKey: verificationSummary(options.verificationKey),
+        reason: "Ledger integrity or signature validation failed. Inspect the ledger locally before trusting these records.",
+      });
+    const verification = verificationSummary(options.verificationKey);
+    return sendJson(response, 200, {
+      format: "void.signed-ledger.v1",
+      verified: page.signed,
+      signed: page.signed,
+      substitutionDetected: verification["substitutionDetected"] === true,
+      integrity: true,
+      checked: page.records.length,
+      head: page.head,
+      verificationKey: verification,
+      entries: await readLedgerEntries(ledger),
+    });
   }
   if (request.method === "GET" && parsed.pathname === "/api/feed") {
     return handleFeed(response, options, parsed.searchParams);
@@ -389,6 +451,49 @@ async function route(
   sendJson(response, 404, { error: "not_found" });
 }
 
+/**
+ * Which key this response was verified with, in one shape for every endpoint.
+ *
+ * `authenticated` is the boolean a client should branch on, and it is the only
+ * one that means "a public key checked these signatures". `degraded` means
+ * private key material was involved, and `operatorSupplied` means the operator
+ * chose these bytes somewhere the agent cannot reach. With no key at all,
+ * `degraded` is reported as true: the honest value would be a third state, and
+ * emitting `degraded: false` beside `source: "none"` invites a client to
+ * read the absence of a key as an absence of degradation. Over-reporting
+ * degradation is the safe direction; `authenticated: false` disambiguates it.
+ *
+ * `authenticated` is deliberately *not* the same claim as `substitutionDetected`.
+ * A signature can check out against a trust file the agent can also replace,
+ * and a client that only reads `authenticated: true` would call that
+ * tamper-proofing. The two fields say different things and both are present.
+ */
+function verificationSummary(key: VerificationFacts | undefined): JsonObject {
+  if (!key)
+    return {
+      keyId: null,
+      source: "none",
+      authenticated: false,
+      substitutionDetected: false,
+      degraded: true,
+      note: NO_VERIFICATION_KEY_NOTE,
+    };
+  const note = verificationKeyNote(key);
+  return {
+    keyId: key.keyId,
+    source: key.source,
+    authenticated: true,
+    // True only for a key the operator supplied where the agent cannot reach.
+    // A trust file at any path is inferred from the path alone, so it never
+    // earns this, and the default path in particular shares a tree with the
+    // signing key.
+    substitutionDetected: key.operatorSupplied && !key.degraded,
+    degraded: key.degraded,
+    operatorSupplied: key.operatorSupplied,
+    ...(note !== undefined ? { note } : {}),
+  };
+}
+
 async function handleFeed(response: ServerResponse, options: RouteOptions, searchParams: URLSearchParams): Promise<void> {
   const ledgerPath = selectLedgerPath(options, searchParams.get("workspace"));
   if (ledgerPath === null) return sendJson(response, 400, { error: "invalid_workspace" });
@@ -403,11 +508,29 @@ async function handleFeed(response: ServerResponse, options: RouteOptions, searc
     }
     throw error;
   }
-  const feed = await readLedgerFeed(ledgerPath, { publicKey: options.publicKey });
   const workspace = searchParams.get("workspace") ?? options.env.VOID_WORKSPACE ?? basename(ledgerPath, ".jsonl");
+  let feed: Awaited<ReturnType<typeof readLedgerFeed>>;
+  try {
+    feed = await readLedgerFeed(ledgerPath, { publicKey: options.publicKey });
+  } catch {
+    // A chain that cannot be authenticated is a refusal with a shape, not a
+    // server fault. The rows are withheld because nothing vouches for them.
+    const refused = page(filterRows([], searchParams), searchParams, workspace);
+    return sendJson(response, 200, {
+      ...refused,
+      entries: [],
+      verified: false,
+      integrity: false,
+      signed: false,
+      checked: 0,
+      verificationKey: verificationSummary(options.verificationKey),
+      reason: "Ledger integrity or signature validation failed. Inspect the ledger locally before trusting these records.",
+    });
+  }
   const rows = feed.records.map(record => ({ ...toApiEntry(record), workspace })).reverse();
   const result = page(filterRows(rows, searchParams), searchParams, workspace);
-  sendJson(response, 200, { ...result, entries: result.items, verified: feed.signed, integrity: true, signed: feed.signed, checked: feed.records.length });
+  const verification = verificationSummary(options.verificationKey);
+  sendJson(response, 200, { ...result, entries: result.items, verified: feed.signed, integrity: true, signed: feed.signed, substitutionDetected: verification["substitutionDetected"] === true, checked: feed.records.length, verificationKey: verification });
 }
 
 async function handleVerify(response: ServerResponse, options: RouteOptions, searchParams: URLSearchParams): Promise<void> {
@@ -415,11 +538,14 @@ async function handleVerify(response: ServerResponse, options: RouteOptions, sea
   if (ledgerPath === null) return sendJson(response, 400, { error: "invalid_workspace" });
   try {
     const page = await readLedgerFeed(ledgerPath, { publicKey: options.publicKey });
+    const verification = verificationSummary(options.verificationKey);
     sendJson(response, 200, {
+      verificationKey: verification,
       ok: true,
       verified: page.signed,
       integrity: true,
       signed: page.signed,
+      substitutionDetected: verification["substitutionDetected"] === true,
       checked: page.records.length,
       head: page.head,
     });
@@ -432,6 +558,7 @@ async function handleVerify(response: ServerResponse, options: RouteOptions, sea
       signed: false,
       checked: 0,
       head: GENESIS_PREV,
+      verificationKey: verificationSummary(options.verificationKey),
       reason: (error as NodeJS.ErrnoException).code === "ENOENT" ? "No ledger yet. Run an agent through void-proxy in this workspace, then refresh." : "Ledger integrity or signature validation failed. Inspect the ledger locally before trusting these records.",
     });
   }

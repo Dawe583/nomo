@@ -46,6 +46,7 @@ import {
   type PublicKeyLookup,
 } from "../../ledger/src/verify.ts";
 import type { JsonlEntry } from "../../ledger/src/store.ts";
+import { verifyAnchor, type AttestationDocument } from "../../ledger/src/attest.ts";
 import {
   jobStageTable,
   operationStageTable,
@@ -237,6 +238,13 @@ export type VerifyBundleOptions = {
   readonly anchor: string;
   readonly publicKey: PublicKeyLookup;
   /**
+   * A signed head published out of band, checked against the bundle's ledger
+   * section. Distinct from `anchor`: that is the manifest digest, this is a
+   * signature over a length and a head, so it also fails a bundle whose
+   * ledger section was truncated while the manifest was rewritten to match.
+   */
+  readonly attestation?: AttestationDocument | undefined;
+  /**
    * Optional on purpose: a reviewer holding only the bundle and its anchor can
    * check digests, ranges and transitions but not journal signatures. The
    * result then says so instead of implying an authentication that did not
@@ -415,6 +423,16 @@ export async function verifyBundle(
     ledger.entries.length,
     ledger.range,
   );
+
+  if (options.attestation !== undefined) {
+    // The manifest digest proves the bundle is the one that was published. The
+    // signed head proves the ledger inside it is the one that was anchored,
+    // so a bundle truncated and re-manifested still fails.
+    const anchored = await verifyAnchor(options.attestation, ledger.entries, {
+      publicKey: options.publicKey,
+    });
+    if (!anchored.ok) refuse("anchor_mismatch", `signed anchor: ${anchored.reason}`);
+  }
   if (
     (ledger.entries[ledger.entries.length - 1]?.hash ?? "") !== manifest.ledgerHead
   )
@@ -844,8 +862,13 @@ const jsonlBytes = (entries: readonly JsonlEntry[]): Buffer =>
     entries.length === 0 ? "" : `${entries.map((entry) => JSON.stringify(entry)).join("\n")}\n`,
   );
 
-/** Human readable bundle summary for the CLI, one line per section. */
-export function describeBundle(result: ExportBundleResult): string[] {
+/** Human readable bundle summary for the CLI, one line per section.
+ *
+ * The block is contiguous and positionally meaningful: it opens with
+ * `workspace`, ends with `complete true`, and callers read the first and last
+ * lines. Any caller-supplied detail therefore belongs *inside* the block, one
+ * line above the terminator, not before or after it. */
+export function describeBundle(result: ExportBundleResult, verification?: string): string[] {
   return [
     `workspace ${result.workspace}`,
     `bundle ${result.bundleDir}`,
@@ -855,6 +878,7 @@ export function describeBundle(result: ExportBundleResult): string[] {
     ),
     `ledger head ${result.manifest.ledgerHead}`,
     `manifest sha256 ${result.manifestDigest}`,
+    ...(verification ? [verification] : []),
     "complete true",
   ];
 }

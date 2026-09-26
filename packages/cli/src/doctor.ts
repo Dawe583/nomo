@@ -7,6 +7,12 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { access, constants } from "node:fs/promises";
 import { execFile } from "node:child_process";
+import { retainedKeyProvider } from "../../ledger/src/sign.ts";
+import {
+  pinnedKeyFile,
+  resolveVerificationKey,
+  verificationKeyNote,
+} from "../../ledger/src/verify-key.ts";
 
 export type DoctorIo = {
   readonly stdout: (line: string) => void;
@@ -101,10 +107,74 @@ export async function runDoctorCommand(
           : { status: "FAIL", name, detail: `${dir} is not writable` },
     );
   }
+  // Resolved the same way every verifier surface resolves it, so `doctor`
+  // reports the host that is actually configured. It used to look only at
+  // `VOID_VERIFY_KEY`, which reported a host with a perfectly good trust file
+  // pinned as unconfigured and never mentioned the pin at all.
+  //
+  // `allowDegraded` and the retained key are what make the third state
+  // reachable. Without them an operator who set `VOID_VERIFY_ALLOW_SIGNING_KEY`
+  // was reported as `unset` here while every other surface was quietly
+  // verifying with signing key material — so the one command whose job is to
+  // tell an operator they are in a degraded mode was the one that could not
+  // see it. `retainedKeyProvider` never creates a key, so asking costs
+  // nothing and grants no capability.
+  const trustFile = pinnedKeyFile(env, { home });
+  const verifyKey = await resolveVerificationKey({
+    env,
+    home,
+    allowDegraded: true,
+    signingKey: async () => {
+      try {
+        return await retainedKeyProvider({ dir: join(home, ".void", "keys"), env });
+      } catch (error) {
+        // No retained key is a state, not a fault: nothing has signed yet, so
+        // there is nothing to verify with and the answer below is `unset`.
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+        throw error;
+      }
+    },
+  }).catch(
+    (error: unknown) => {
+      results.push({
+        status: "FAIL",
+        name: "verify-key",
+        detail: `unreadable: ${message(error)}`,
+      });
+      return undefined;
+    },
+  );
+  // One vocabulary, one derivation. `verificationKeyNote` decides what is
+  // worth disclosing; this decides how loudly to say it. The out-of-tree trust
+  // file is a `WARN` and not a `PASS` because VOID infers `operatorSupplied`
+  // from the path alone and cannot tell who wrote the bytes, so calling it
+  // supplied out of band would claim more than the code knows.
   results.push(
-    env.VOID_VERIFY_KEY
-      ? { status: "PASS", name: "verify-key", detail: "public key configured" }
-      : { status: "WARN", name: "verify-key", detail: "unset; proxy entries show hash integrity only" },
+    verifyKey === undefined
+      ? {
+          status: "WARN",
+          name: "verify-key",
+          detail: trustFile === undefined
+            ? "unset; no signature is checked anywhere, so entries show hash integrity only"
+            : `unset; no key at ${trustFile}, so no signature is checked`,
+        }
+      : verifyKey.degraded
+        ? {
+            status: "WARN",
+            name: "verify-key",
+            detail: `DEGRADED ${verifyKey.keyId} (${verifyKey.source}): ${verificationKeyNote(verifyKey)}`,
+          }
+        : verificationKeyNote(verifyKey) === undefined
+          ? {
+              status: "PASS",
+              name: "verify-key",
+              detail: `pinned ${verifyKey.keyId} (${verifyKey.source}), supplied out of band`,
+            }
+          : {
+              status: "WARN",
+              name: "verify-key",
+              detail: `${verifyKey.keyId} (${verifyKey.source}) at ${trustFile}: ${verificationKeyNote(verifyKey)}`,
+            },
   );
   const saved =
     (await present(join(dataDir, "tui", "workspace.enc"))) ||

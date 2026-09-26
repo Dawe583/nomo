@@ -12,6 +12,14 @@ export type LiveView = {
   readonly approvalSelected?: number;
   readonly confirmDecision?: "approved" | "denied";
   readonly notice?: string;
+  /**
+   * Which key answered, in the shared one-line form, plus the long caveat
+   * where there is one. Both are set together, so a screen cannot show a
+   * caveat without the claim it qualifies.
+   */
+  readonly verificationNote?: string;
+  /** The short claim for the headline, naming the key. */
+  readonly verificationStatus?: string;
   readonly page?: FeedPage;
   readonly workspace: string;
   readonly selected: number;
@@ -34,9 +42,17 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
     ...brandHeader(`VOID / ${view.workspace}`, caps),
     `${view.paused ? "Paused view" : "Live ledger"}  |  ${view.filter || "All classes"}  |  ${rows.length} records`,
     paint(rule(width), "rule", caps),
-    view.error ? `Read failed: ${sanitizeText(view.error)}. Press v to retry.`
-      : view.page?.signed ? "Signatures checked against the configured key"
-      : "Integrity only. Signatures have not been checked.",
+    view.error
+      ? `Read failed: ${sanitizeText(view.error)}. Press v to retry.`
+      : view.page?.signed
+        ? `Signatures checked — ${view.verificationStatus ?? "against a key of unstated origin"}`
+        : "Integrity only. Signatures have not been checked.",
+    // Which key that was, on the same screen as the boolean. "Checked" and
+    // "checked against a key this process could also have replaced" are not
+    // the same claim, and the operator has to see the difference. The note is
+    // the shared one-line form, which already names itself, so it is not
+    // prefixed a second time here.
+    ...(view.verificationNote ? [sanitizeText(view.verificationNote)] : []),
     "",
   ];
   if (view.notice) lines.push(sanitizeText(view.notice));

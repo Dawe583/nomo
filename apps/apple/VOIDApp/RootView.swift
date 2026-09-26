@@ -33,7 +33,7 @@ struct RootView: View {
             }
         }
         .preferredColorScheme(theme.colorScheme)
-        .tint(.orange)
+        .tint(VoidColor.accent)
         .task {
             model.loadCachedSessions()
         }

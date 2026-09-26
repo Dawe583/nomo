@@ -1,0 +1,280 @@
+/* Chat surface only. Tokens, shell, tables and data pages stay in the shared
+   stylesheets; this file owns the transcript, the message shapes, the tool
+   card, the composer and its bounded notices region.
+
+   Motion rule for this file: every animation and transition is declared inside
+   a `prefers-reduced-motion: no-preference` block and is also suppressed by the
+   explicit motion-off preference, exactly like the shared surfaces. A keyframe
+   is never referenced from outside one of those blocks. */
+
+/* ------------------------------------------------------------- transcript */
+
+.chat-loading {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0 24px;
+}
+.chat-loading p {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.skeleton-line,
+.skeleton-block {
+  display: block;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--raised);
+}
+.skeleton-line {
+  width: 100%;
+}
+.skeleton-block {
+  height: 68px;
+  margin: 10px 0;
+  border-radius: 6px;
+}
+
+/* Line lengths only. A width is not a token, so these stay widths, but they
+   live here so no element in the transcript carries an inline style. */
+.skeleton-lead { width: 58%; }
+.skeleton-long { width: 76%; }
+.skeleton-short { width: 41%; }
+.skeleton-lead { width: 58%; }
+
+/* A partial answer is still arriving. The rail and the caret say so without
+   recolouring the text, so a streamed paragraph is never mistaken for a final
+   one by someone who cannot see the animation. */
+.message.arriving {
+  border-left: 2px solid var(--action);
+  padding-left: 12px;
+  margin-left: -14px;
+}
+.stream-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: var(--muted);
+}
+.stream-caret {
+  width: 2px;
+  height: 1.1em;
+  border-radius: 1px;
+  background: var(--action);
+}
+
+/* ---------------------------------------------------------------- tool card */
+
+.tool-card[data-phase="running"] {
+  border-left: 3px solid var(--action);
+}
+.tool-card[data-phase="settled"] {
+  border-left: 3px solid var(--line);
+}
+.tool-card .tool-glyph {
+  font: 15px var(--mono, monospace);
+  color: var(--action);
+}
+.tool-card .tool-name {
+  font-family: var(--mono, monospace);
+  font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tool-card .tool-duration {
+  font: 12px var(--mono, monospace);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tool-card .tool-pending {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.tool-card .tool-result {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.tool-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--action);
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- composer */
+
+/* The pill used to sit at a fixed 200px from the bottom, so a long draft or a
+   stacked notices region put it on top of the input it points at. `chat.tsx`
+   measures the composer and writes `--composer-offset` instead. */
+.new-messages {
+  bottom: calc(var(--composer-offset, 132px) + 8px);
+  z-index: 2;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--text) 18%, transparent);
+  font-size: 13px;
+}
+
+.composer-budget {
+  margin: 0;
+  padding: 0 14px 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.composer-budget[data-over] {
+  color: var(--danger);
+}
+
+/* The permission mode has to be readable at a glance, and it has to stay
+   readable when the notices region scrolls. The mode is carried by the rail
+   style as well as by the words, so colour is never the only signal. */
+.composer-notices > .permission-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  margin: 0 0 6px;
+  padding: 5px 10px;
+  background: var(--canvas);
+  border-left: 3px solid var(--line);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.composer-notices > .permission-banner[data-mode="normal"] {
+  border-left-color: var(--action);
+  border-left-style: solid;
+}
+.composer-notices > .permission-banner[data-mode="plan"] {
+  border-left-color: var(--muted);
+  border-left-style: dashed;
+}
+.composer-notices > .permission-banner[data-mode="read-only"] {
+  border-left-color: var(--muted);
+  border-left-style: dotted;
+}
+/* A locally resolved mode is not enforced by the server. The rail says so
+   before the sentence does. */
+.composer-notices > .permission-banner[data-source="local"] {
+  border-left-style: double;
+  border-left-width: 5px;
+}
+
+/* The server has not answered yet, so this must not read as a decided state.
+ * Dashed rather than dotted, because dotted is what a server-enforced
+ * read-only uses, and 5px rather than 3px, so the rail is legible at a glance
+ * rather than read only by a reader who already suspects something. The
+ * colour is --muted, not --line: measured against the --canvas banner
+ * background, --line is 1.34:1 in light and 1.80:1 in dark, which is below the
+ * 3:1 the design system sets for necessary UI graphics and would make the
+ * rail fail at the only job it has. --muted measures 5.36:1 and 8.01:1. The
+ * words still carry the state; this is not the only signal. */
+.composer-notices > .permission-banner[data-source="pending"] {
+  border-left-color: var(--muted);
+  border-left-style: dashed;
+  border-left-width: 5px;
+}
+
+.attachments-total {
+  align-self: center;
+  border: 0;
+  padding-left: 0;
+  font: 12px var(--mono, monospace);
+  color: var(--muted);
+}
+
+/* The prepared tool request is the one composer row a reader has to be able to
+   read on a phone, so its summary is a full touch target and its schema is not
+   rendered below the readable metadata size. */
+.selected-tool > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.selected-tool > summary strong {
+  font-family: var(--mono, monospace);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.selected-tool .selected-tool-class {
+  font: 12px var(--mono, monospace);
+  color: var(--muted);
+}
+.selected-tool .selected-tool-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.selected-tool pre {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.selected-tool p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Three labels in a 294px notices region at 320px: the row wraps instead of
+   pushing the page wider than the viewport. */
+.selected-tool > summary {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.selected-tool .selected-tool-hint {
+  white-space: normal;
+}
+
+/* ------------------------------------------------------------------ motion */
+/* Nothing above may animate unless the reader has not asked for reduced motion
+   and has not turned motion off in the application. */
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="off"]) .stream-caret {
+    animation: chat-breathe 1.1s ease-in-out infinite;
+  }
+  :root:not([data-motion="off"]) .tool-pulse {
+    animation: chat-breathe 1.1s ease-in-out infinite;
+  }
+  :root:not([data-motion="off"]) .skeleton-line,
+  :root:not([data-motion="off"]) .skeleton-block {
+    animation: chat-skeleton 1.4s ease-in-out infinite;
+  }
+  :root:not([data-motion="off"]) .new-messages {
+    transition: opacity 140ms ease-out;
+  }
+}
+
+@keyframes chat-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes chat-skeleton {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}

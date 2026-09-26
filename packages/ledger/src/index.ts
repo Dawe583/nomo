@@ -83,3 +83,5 @@ export * from "./feed.ts";
 export * from "./verify.ts";
 export * from "./attest.ts";
 export * from "./hardening.ts";
+export * from "./anchor.ts";
+export * from "./verify-key.ts";

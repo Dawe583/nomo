@@ -307,14 +307,17 @@ async function runFeedMoment(state) {
 
 async function runAttestationMoment(state) {
   assert.ok(state);
-  const code = `import { attestLedger, storeAttestation } from "./packages/ledger/src/attest.ts"; const [dir, workspace] = process.argv.slice(1); const doc = await attestLedger(dir, workspace); console.log(await storeAttestation(dir, doc));`;
+  // Verification no longer reads the signing key file, so the reviewer side
+  // of this moment supplies the pinned public key the way an operator would.
+  const code = `import { attestLedger, storeAttestation } from "./packages/ledger/src/attest.ts"; import { devKeyProvider } from "./packages/ledger/src/sign.ts"; const [dir, workspace] = process.argv.slice(1); const key = await devKeyProvider(); const doc = await attestLedger(dir, workspace, key); console.log(JSON.stringify({ path: await storeAttestation(dir, doc), publicKey: Buffer.from(await key.publicKey(await key.currentKeyId())).toString("base64") }));`;
   const generated = await runCommand(process.execPath, ["--input-type=module", "-e", code, state.ledgerDir, state.workspace], { env: state.env });
   assert.equal(generated.code, 0, generated.stderr);
-  const path = generated.stdout.trim();
+  const { path, publicKey } = JSON.parse(generated.stdout.trim());
   assert.match(path, /attestations\/\d+\.json$/);
-  const verified = await runCli(["verify", "--ledger", state.ledgerDir, "--attestation", path], state.env);
+  const verified = await runCli(["verify", "--ledger", state.ledgerDir, "--attestation", path, "--key", publicKey], state.env);
   assert.equal(verified.code, 0, verified.stderr);
   assert.match(verified.stdout, /attestation: match/);
+  assert.match(verified.stdout, /verification key: pinned dev-ed25519:/);
   return { path, verified };
 }
 

@@ -61,13 +61,15 @@ import {
   type WorkspaceState,
   type WorkspaceOperation,
 } from "./workspace.ts";
-import { devKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
+import { devKeyProvider, retainedKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
 import {
   canonicalJson,
   entryHash,
   GENESIS_PREV,
 } from "../../ledger/src/canonical.ts";
 import { signingPreimage } from "../../ledger/src/index.ts";
+import { resolveVerificationKey, type VerificationKey } from "../../ledger/src/verify-key.ts";
+import type { KeyProvider } from "../../ledger/src/index.ts";
 import { verifyChain, readLedgerEntries } from "../../ledger/src/verify.ts";
 import type { JsonlEntry } from "../../ledger/src/store.ts";
 import { classifyTool } from "../../registry/src/evaluate.ts";
@@ -1679,16 +1681,51 @@ export class Workbench {
   async ledger(workspace: string) {
     if (!Object.hasOwn(this.documents, workspace)) return undefined;
     const entries = this.evidence[workspace] ?? [],
-      key = await devKeyProvider({
-        dir: join(this.storage.directory, "keys"),
-        env: this.env,
-      });
-    const result = await verifyChain(entries, {
-      publicKey: (id) => key.publicKey(id),
-    });
+      key = await this.verificationKey(() => this.retainedSigner());
+    const result = await verifyChain(entries, { publicKey: key.publicKey });
     if (!result.ok)
       throw new Error("Workspace ledger signature verification failed.");
-    return { entries, result };
+    return { entries, result, verification: key };
+  }
+  /**
+   * The signer this workbench would use, opened without creating one. A read
+   * path that mints a key has created signing capability as a side effect of
+   * being read, so every verification thunk goes through here.
+   */
+  private async retainedSigner(
+    dir: string = join(this.storage.directory, "keys"),
+  ): Promise<KeyProvider | undefined> {
+    try {
+      return await retainedKeyProvider({ dir, env: this.env });
+    } catch (error) {
+      // No key yet is a state, not a fault: a workbench that has not signed
+      // anything has nothing to authenticate, and the refusal that follows
+      // says so.
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+      throw error;
+    }
+  }
+  /**
+   * The key this workbench checks its own evidence with. A key the operator
+   * supplied out of band wins, so an operator who pinned one gets key
+   * substitution detected here too. Without one the recorder verifies itself
+   * with the key it signs with, and says so: the recorder, the signer and this
+   * check are one OS principal, so that is not independence and nothing may
+   * report it as authentication against the agent. The signer thunk returns
+   * undefined rather than creating a key, so a read never grants signing
+   * capability.
+   */
+  private async verificationKey(
+    signer: () => Promise<KeyProvider | undefined>,
+  ): Promise<VerificationKey> {
+    const resolved = await resolveVerificationKey({
+      env: this.env,
+      allowDegraded: true,
+      signingKey: signer,
+    });
+    if (resolved === undefined)
+      throw new Error("No verification key is available for the workspace ledger.");
+    return resolved;
   }
   private async commitWorkspace(
     session: Session,
@@ -1764,10 +1801,18 @@ export class Workbench {
       }
       // The SDK uses this same signer. Preserve and link the original signed
       // authorization events instead of hiding them behind the document ledger.
-      const key = await devKeyProvider();
-      const verified = await verifyChain(entries, {
-        publicKey: (id) => key.publicKey(id),
-      });
+      //
+      // These entries were signed by the stdio proxy, which signs with
+      // `devKeyProvider()` at its default `~/.void/keys` — *not* with the
+      // workbench's own document key under the data directory. Resolving
+      // against the wrong directory finds nothing, and the throw below turns
+      // that into an unknown tool outcome for a tool that ran perfectly well.
+      // The public key still comes from the shared resolution, so an operator's
+      // out-of-band pin wins and the fallback is reported as degraded.
+      const key = await this.verificationKey(() =>
+        this.retainedSigner(join(homedir(), ".void", "keys")),
+      );
+      const verified = await verifyChain(entries, { publicKey: key.publicKey });
       if (!verified.ok)
         throw new Error("The stdio proxy ledger failed verification.");
       for (const entry of entries) {

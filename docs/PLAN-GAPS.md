@@ -22,8 +22,8 @@ the `VOID` project and its schemes, a Release `iphonesimulator` build of the
 `VOID` scheme succeeded, and the built product installed and launched on an
 iPad Pro 11-inch (M5) simulator. That product is ad-hoc signed with no team
 identifier, no entitlements and no app icon, so it is simulator evidence only.
-Current source contains 9 `VOIDTests` cases and 11 `VOIDUITests` cases. A
-2026-09-26 simulator run passed `VOIDTests` 9/9 and `VOIDUITests` 11/11 on an
+Current source contains 9 `VOIDTests` cases and 18 `VOIDUITests` cases. A
+2026-09-26 simulator run passed `VOIDTests` 9/9 and `VOIDUITests` 18/18 on an
 iPad Pro 11-inch (M5) at iOS 27.0 with Xcode 27.0, ending `** TEST SUCCEEDED
 **`. The earlier 2026-09-25 run on both an iPhone 18 Pro and that iPad passed
 `VOIDTests` 9/9 and `VOIDUITests` 8/8 against the smaller UI tree of that day,

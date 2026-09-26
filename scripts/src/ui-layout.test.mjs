@@ -12,7 +12,9 @@
  *   - cancelling a run returns focus to the composer,
  *   - reduced motion removes animation and transition,
  *   - 200% zoom does not overflow,
- *   - every light/dark and English/Czech combination renders real content.
+ *   - every light/dark and English/Czech combination renders real content,
+ *   - an IME composition neither submits nor loses characters,
+ *   - a stacked long draft, attachment and selected tool keep Send reachable.
  *
  * Run: node --test scripts/src/ui-layout.test.mjs
  * Requires `node scripts/src/build-web.mjs` to have produced dist/web.
@@ -59,6 +61,30 @@ test("D04.07 transcript keeps 200px at 320x568 and 60% of the work area on deskt
   }
 });
 
+test("D04.07 the transcript share is re-derived at every viewport, not only on desktop", { skip: !built && "dist/web is missing" }, () => {
+  // One floor per viewport class. The percentages are recomputed from the two
+  // measured pixel values, so a recorded string can never carry a stale claim.
+  const floors = { phone: 65, tablet: 75, landscape: 70, desktop: 70, "short-landscape": 45 };
+  const seen = [];
+  for (const row of report.viewportMatrix) {
+    assert.ok(row.transcriptHeight > 0, `${row.viewport} has no measured transcript height`);
+    assert.ok(row.workAreaHeight > 0, `${row.viewport} has no measured work area height`);
+    const derived = Math.round((row.transcriptHeight / row.workAreaHeight) * 1000) / 10;
+    assert.ok(
+      Math.abs(derived - Number.parseFloat(row.transcriptShare)) < 0.05,
+      `${row.viewport} recorded ${row.transcriptShare} but the pixels derive ${derived}%`,
+    );
+    const floor = floors[row.kind];
+    assert.ok(floor !== undefined, `${row.viewport} has no transcript-share floor for kind ${row.kind}`);
+    assert.ok(
+      derived >= floor,
+      `${row.viewport} transcript is ${derived}% of the work area (${row.transcriptHeight}px of ${row.workAreaHeight}px), floor ${floor}%`,
+    );
+    seen.push(row.viewport);
+  }
+  assert.equal(seen.length, 9, "the share table must cover the whole D04.06 viewport set");
+});
+
 test("D04.07 a long draft plus an attachment keeps Send reachable at 320x568", { skip: !built && "dist/web is missing" }, () => {
   const state = report.stackedNotices.attachmentState;
   assert.ok(state, "no attachment state was measured");
@@ -67,6 +93,52 @@ test("D04.07 a long draft plus an attachment keeps Send reachable at 320x568", {
   assert.ok(state.send.bottom <= state.innerHeight + 1, `Send fell outside the viewport at ${state.send.bottom} of ${state.innerHeight}`);
   assert.equal(state.sendHit, "reachable");
   assert.equal(state.afterRemove, null, "the attachment could not be removed");
+});
+
+test("D04.07 the selected tool row is reachable from the palette and keeps Send reachable at 320x568", { skip: !built && "dist/web is missing" }, () => {
+  const state = report.stackedNotices.toolState;
+  const expanded = report.stackedNotices.toolExpandedState;
+  assert.ok(state, "no selected tool row was measured");
+  assert.ok(state.selectedTool, "the selected tool row never reached the composer notices region");
+  assert.equal(state.selectedToolOpen, false, "the prepared request must not open by itself");
+  assert.ok(state.noticesText.includes("jen připraveno"), "the row does not say that nothing has run: " + state.noticesText);
+  assert.ok(state.transcript && state.transcript.height >= 200, `stacked transcript is ${state.transcript?.height}px`);
+  assert.ok(state.send.bottom <= state.innerHeight + 1, `Send fell outside the viewport at ${state.send.bottom} of ${state.innerHeight}`);
+  assert.equal(state.scrollWidth, state.clientWidth, "the selected tool row overflows horizontally");
+  assert.equal(state.sendHit, "reachable");
+  // Opening the schema is the worst case for the bounded notices region.
+  assert.ok(expanded, "the expanded tool row was not measured");
+  assert.equal(expanded.selectedToolOpen, true, "the selected tool row did not expand");
+  assert.ok(expanded.selectedTool.height > state.selectedTool.height, "expanding the row did not add content");
+  assert.ok(expanded.send.bottom <= expanded.innerHeight + 1, `Send fell outside the viewport at ${expanded.send.bottom} of ${expanded.innerHeight} when the tool row was expanded`);
+  assert.equal(expanded.sendHit, "reachable", `Send is ${expanded.sendHit} with the tool row expanded`);
+  assert.ok(expanded.transcript && expanded.transcript.height >= 140, `transcript collapsed to ${expanded.transcript?.height}px with the tool row expanded`);
+});
+
+test("D04.04 an IME composition keeps its characters and does not submit", { skip: !built && "dist/web is missing" }, () => {
+  const ime = report.ime;
+  // The composition is real: the browser itself produced these keydowns and
+ // reported isComposing, so this is not a synthetic flag the app handed us.
+  assert.equal(ime.composing.draft, "př", "the composition never reached the composer");
+  const duringKey = ime.duringComposition.keys.at(-1);
+  assert.ok(duringKey, "no keydown was recorded during the composition");
+  assert.equal(duringKey.key, "Enter");
+  assert.equal(duringKey.ctrl, true, "the composing key was not the one that always submits");
+  assert.equal(duringKey.isComposing, true, "Chromium did not report an open composition");
+  assert.equal(ime.duringComposition.draft, "př", "Enter during a composition lost or changed the draft");
+  assert.equal(ime.duringComposition.focused, true, "focus left the composer during a composition");
+  // Same key, same modifiers, composition closed: now it must send.
+  assert.equal(ime.submitted.keys.at(-1).isComposing, false, "the composition was still open after commit");
+  assert.equal(ime.submitted.draft, "", "the draft survived a send it triggered");
+  assert.equal(ime.settled.keys.length, 2, "the composer received a third key");
+  // The durable claim is checked on the server, not in a DOM row count a
+  // refetch can change: the composed text was stored exactly once, and only
+  // the key after the composition closed could have stored it. The stored
+  // text carries the permission prefix the composer prepends by design.
+  const stored = ime.userMessages.filter((text) => text.endsWith(ime.text));
+  assert.equal(stored.length, 1, "the composed text was stored " + stored.length + " times, expected once");
+  assert.equal(ime.userMessages.at(-1).endsWith(ime.text), true, "the newest stored user message is not the composed one: " + JSON.stringify(ime.userMessages.at(-1)));
+  assert.equal(ime.committed.draft, ime.text, "committing the composition lost characters");
 });
 
 test("D04.01 every required Mac route has a server-served, rendering surface", { skip: !built && "dist/web is missing" }, () => {

@@ -4,6 +4,14 @@ on:
     branches: [main]
   pull_request:
 jobs:
+  # Per-step budgets again, for the same reason as `ci.yml`: the step that runs
+  # `packages/cli/src/conformance.test.ts` also runs the `git.managed`
+  # conformance, which is the one gate that costs minutes rather than seconds.
+  # Measured on macOS on 2026-09-26: install 1 s, the three `node --test` steps
+  # 1 s, 19 s and 81 s, and `void recovery conformance` 3 s for
+  # `filesystem.managed`. `git.managed` alone took 94 s to 138 s over three
+  # runs, so a shared 10 minute job deadline left the slow step with whatever
+  # the fast ones happened not to use.
   manifest:
     strategy:
       fail-fast: false
@@ -11,7 +19,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         node: [24, 26]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -21,7 +29,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
       - run: node --test packages/connectors/src/manifest.test.ts packages/workbench/src/storage.test.ts apps/control-plane/api/server.test.ts
+        timeout-minutes: 5
       - run: node --test --test-concurrency=1 packages/runtime/src/*.test.ts packages/ledger/src/*.test.ts packages/proxy/src/bin.test.ts
+        timeout-minutes: 10
       - run: node --test packages/connectors/src/filesystem/managed.test.ts packages/cli/src/recovery-filesystem.test.ts packages/cli/src/recovery-mcp.test.ts packages/cli/src/recovery-paths.test.ts packages/cli/src/conformance.test.ts
+        timeout-minutes: 15
       - run: node packages/cli/bin/void.mjs recovery conformance
+        timeout-minutes: 5
