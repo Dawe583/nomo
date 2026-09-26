@@ -67,6 +67,14 @@ export function provenanceOf(
  *
  * A pair that reads and writes each other's resources is a cycle: no order is
  * safe, and the plan is refused rather than resolved by a guess.
+ *
+ * The facts must be the steps of one plan, and nothing else. A caller that
+ * records a fact before it knows the operation is a step hands this function a
+ * claim about an operation the plan never undoes: an unreadable capture
+ * becomes a residual, and its blank fact would still be counted as
+ * independent here. Nothing consumed that list at the time and the proof
+ * itself stayed correct, which is exactly why it is easy to get wrong. Push
+ * the fact once the operation really is a step.
  */
 export function orderRecoverySteps(facts: readonly ProvenanceFact[]): StepOrderVerdict {
   const byId = new Map(facts.map((fact) => [fact.operationId, fact]));

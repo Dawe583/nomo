@@ -835,11 +835,17 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             continue;
           }
           try {
+            // The plan first, then the fact. The ordering proof is over the
+            // step set and nothing else, so a fact only enters it for an
+            // operation that really became a step; otherwise an operation
+            // whose capture could not be read would arrive at the ordering
+            // proof as a claim of independence for a step that is not there.
+            const plan = await planFor(tx, event);
             provenance.push(facts.get(event.operationId)!);
             steps.push({
               operationId: event.operationId,
               sequence: record.sequence,
-              plan: await planFor(tx, event),
+              plan,
             });
           } catch (error) {
             residuals.push({
