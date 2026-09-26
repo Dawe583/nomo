@@ -54,7 +54,7 @@ still lacks a paired-phone journey over a real TLS transport, and P10.09 still
 needs a Windows x64/MSVC runner.
 
 - G-01: managed cloud documents have signed operation/job events, artifacts and state in one SQL transaction. This is not a transaction host for arbitrary external tools. Physical network partition testing remains unverified.
-- G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list. Dependency/time/checkpoint selectors, leases and fencing remain open.
+- G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list. Dependency, time and checkpoint selectors and independent branch continuation are implemented as pure, fail-closed functions and are not yet wired into `planRecoveryJob`; leases and fencing remain open.
 - G-04: adapters already observe resource keys and revisions. General read/write provenance and dependency closure remain open.
 - G-07: managed filesystem and Git recovery exist. Noncooperative writers, full per-hunk enforcement and native cross-platform evidence remain separate work.
 - G-20: `@void/verifier` is its own package with zero dependencies and no import from this repository. Never published, and the export-bundle fixtures are still missing.
@@ -100,25 +100,38 @@ client-kill case, and physical network-partition behavior.
 Evidence: `packages/connectors/src/postgres/managed.test.ts` is PGlite
 fixture coverage; `scripts/src/verify-managed-postgres.mjs` is the isolated
 Neon verifier and emits `networkPartitionTest: false`.
-Minimum change: keep fixture evidence separate from certification, add one
-executable real-server gate per remaining case, and document the explicit
-migration command path. Dependency: R02, R03.
+Minimum change: keep fixture evidence separate from certification, and add one
+executable real-server gate per remaining case. The explicit migration command
+path is no longer outstanding here: `void recovery migrate --config <file>` and
+the refusal inside tool execution are documented in `docs/RECOVERY-COVERAGE.md`
+under "Managed PostgreSQL metadata migration".
 Size: XL. `[EXT]` needs a disposable isolated PostgreSQL target and a
 reproducible network-fault harness.
 
 ### G-03 R06: planner selection, leases, fencing, remote job surfaces
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R06.
-Missing: dependency and time selection, durable leases and fencing, MCP
-and cloud job surfaces. The stored plan covers one run or an explicit
-operation list in reverse ledger order only.
-Evidence: `packages/runtime/src/recovery/plan.ts` plus `run.ts` exist, but
-a tree wide search for lease or fencing terms returns zero hits, and
-`docs/RECOVERY-CONTRACT.md` confirms "no cross-agent dependency closure"
-and "no time or checkpoint selection".
-Minimum change: resource aware selection, single active worker lease with
-fencing, then MCP and cloud surfaces on top. Dependency: R02, R03, one
-R04 or R05 adapter. Size: XL.
+Missing: durable leases and fencing, MCP and cloud job surfaces, and the
+wiring of the selectors below into the dispatch path. The stored plan still
+covers one run or an explicit operation list in reverse ledger order only.
+Evidence: `packages/runtime/src/recovery/plan.ts` now exports
+`resolveRecoverySelection` and `independentBranches`, with 25 tests in
+`packages/runtime/src/recovery/selectors.test.ts`, but
+`packages/runtime/src/execute.ts` still validates `request.selection` inline
+and ends in `throw new Error("Invalid recovery selection.")`, so every new kind
+is refused at the door as of 2026-09-26.
+Noted: independent branch continuation is the part that can silently disagree
+with the ordering proof if it is ever built separately, because "this branch
+touches nothing the blocked branch touched" and "this order is safe" are two
+readings of the same dependency claim. Both are derived here from the one edge
+list `provenanceEdges` returns, one edge per consumer, producer and resource,
+which is the same list `orderRecoverySteps` proves an order from, so a branch
+held by an edge and a step refused for that edge cannot name different
+dependencies.
+Minimum change: wire the selectors into `planRecoveryJob` by building the
+journal state from the retained records and their prepared captures, then
+resource aware selection, a single active worker lease with fencing, then MCP
+and cloud surfaces on top. Dependency: R02, R03, one R04 or R05 adapter. Size: XL.
 
 ### G-04 R07: runtime provenance and dependency aware recovery
 
@@ -486,11 +499,20 @@ authorized Windows and Linux machines.
 ### G-25 Production secrets and key rotation drill
 
 Plan: `docs/BETA.md`, `docs/RELEASE.md`, `docs/OPERATIONS.md`.
-Missing: production KMS, complete rotation evidence, and ledger read
-limits.
+Missing: production KMS, the rotation drill, and the recorded evidence that a
+rotation happened and stayed verifiable. The third item G-16 used to list here,
+ledger read limits, is closed: they shipped on 2026-09-17 in `95c73e6` and live
+as per-call byte and entry bounds in `packages/ledger/src/verify.ts`, which
+G-16 also records. What remains in this gap is therefore the rotation drill
+itself, and the production KMS it would run against.
 Evidence: local encrypted storage and mode-0600 key files exist; the beta
-doc scopes this to a single operator workspace with no multiuser RBAC.
-Minimum change: KMS selection, rotation drill, recorded evidence. Size: M.
+doc scopes this to a single operator workspace with no multiuser RBAC. The
+`KeyProvider` interface takes a key id and the verifier resolves one per entry,
+but the only provider in the tree holds a single key and returns null for any
+other id, so a chain signed across a rotation does not verify today. A
+`key_id` is already carried in the signature preimage, so the ledger format
+itself is not the obstacle.
+Minimum change: KMS selection, then the rotation drill and its evidence. Size: M.
 `[EXT]` needs an authorized production like KMS.
 
 ## 8. Business plan

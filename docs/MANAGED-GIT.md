@@ -41,10 +41,11 @@ atomically installs the result. A preexisting lock is never removed.
 ## Managed commit slice
 
 `commit` accepts exactly one relative path. The path must be a staged regular
-file, and its index entry must differ from the current `HEAD`. The branch must
-point directly at a single-parent commit. The adapter builds a candidate tree
-through a private index and creates the commit with Git plumbing. It does not
-rewrite the caller's index or worktree.
+file, and its index entry must differ from the current `HEAD`. The repository
+must be on an attached direct branch with a born `HEAD`, so the branch ref and
+`HEAD` resolve to the same commit. The adapter builds a candidate tree through
+a private index and creates the commit with Git plumbing, with exactly one
+parent. It does not rewrite the caller's index or worktree.
 
 The branch compare-and-swap and the operation receipt under
 `refs/void/operations/` are one `git update-ref --stdin` transaction. Recovery
@@ -58,10 +59,17 @@ success from target equality or ancestry.
 The recovery may follow unrelated later commits and preserves their tree entries.
 Branch ancestry, the selected index entry and selected worktree file must still
 match the forward result. Selected-path, repository, receipt or locked-ref drift
-is a conflict. No reset, checkout, remote command,
-hook, merge or force update is used. The initial commit, merge commits,
-symlinks, submodules, multiple selected paths and non-POSIX hosts remain out of
-scope.
+is a conflict. No reset, checkout, remote command, hook, merge or force update
+is used.
+
+The branch tip does not have to be a single-parent commit: capture never
+inspects how many parents it has. A merge commit at the tip is accepted, and the
+commits the adapter writes above it are single-parent. That was measured on a
+disposable merge through a full forward and recovery cycle, and no named test in
+the tree covers it yet. An unborn branch, a symlink, a submodule, several
+selected paths and a non-POSIX host remain out of scope. Symlinks, submodules
+and unmerged index entries are rejected by the path and index parsers, and an
+unborn branch has no index to capture in the first place.
 
 ## Limits
 
@@ -74,22 +82,38 @@ Stage writes a content-addressed dangling blob before installing the index. Undo
 does not remove that object. It can retain the selected bytes and use disk until
 Git garbage collection. Do not stage secrets through this adapter.
 
-There is no operation-specific durable execution or recovery receipt. Both
-reconciliation methods return unknown. Target equality is not treated as proof
-because it can be ABA. This does not claim detection of HEAD moving away and back to the same object ID. The runtime never redispatches an unknown mutation or
-repeats an uncertain inverse.
+The worktree and index actions (`write`, `delete`, `rename`, `stage`,
+`unstage`) have no operation-specific durable execution or recovery receipt.
+For those five, both reconciliation methods return unknown, because target
+equality is not treated as proof: it can be ABA. This does not claim detection
+of HEAD moving away and back to the same object ID. `commit` is the one
+exception, and it is an exception because it writes its own receipt rather
+than inferring one from repository state; see "## Managed commit slice" above.
+The runtime never redispatches an unknown mutation or repeats an uncertain
+inverse.
 
-There is no commit, branch, tag, stash, remote, fetch, pull, push, force push,
-reset, clean, checkout, merge, rebase, cherry-pick, submodule or hook execution.
-There is no directory mutation, arbitrary Git command or full repository
-rollback. The disposable conformance command has no remote and uses local-only
-author identity:
+Apart from that single-path `commit`, there is no branch, tag, stash, remote,
+fetch, pull, push, force push, reset, clean, checkout, merge, rebase,
+cherry-pick, submodule or hook execution. There is no directory mutation, no
+arbitrary Git command and no full repository rollback. The disposable
+conformance command has no remote and uses local-only author identity:
 
 ```sh
 node packages/cli/bin/void.mjs recovery conformance --adapter git.managed
 ```
 
-Its six scenarios and eight shared runtime checks per scenario are repeatable
-boundary evidence, not full Git certification. They simulate response loss in
-one process. They do not kill a Git child or certify process death, power loss,
-hostile writers or every Git repository format.
+Each published scenario runs the same set of shared runtime checks, listed by
+name in `packages/runtime/src/conformance.ts` and attached to the profile as
+`sharedRuntimeChecksOnly`. The scenario list itself lives in
+`packages/cli/src/conformance.ts`; read the count there rather than trusting a
+number copied into this document, because the profile is where operations are
+added and withdrawn. On Windows the profile publishes no operations and the
+command refuses.
+
+The result is repeatable boundary evidence, not full Git certification. The
+scenarios simulate response loss in one process. They do not kill a Git child
+or certify process death, power loss, hostile writers or every Git repository
+format. The commit lifecycle is additionally covered directly, and much more
+closely, by `packages/connectors/src/git/managed-commit.test.ts`, which is a
+separate suite from the conformance command and is where the receipt,
+transaction and recovery behaviour above is actually pinned.
