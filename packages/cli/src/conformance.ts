@@ -5,6 +5,12 @@ import { createHash, generateKeyPairSync, randomBytes } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { managedGitAdapter } from "../../connectors/src/git/managed.ts";
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
+import {
+  MANAGED_POSTGRES_SCENARIOS,
+  managedPostgresConformanceFixture,
+  managedPostgresConformanceIdentity,
+  type ManagedPostgresScenario,
+} from "../../connectors/src/postgres/conformance-fixture.ts";
 import { managedDocumentAdapter } from "../../workbench/src/managed-documents.ts";
 import {
   createWorkspace,
@@ -155,13 +161,19 @@ export const gitConformanceProfile = {
   schema: "void.adapter-capability.v2",
   adapter: { id: "git.managed", version: "1" },
   authority: "scope-only",
-  operations: process.platform === "win32" ? ([] as const) : (["create", "write", "delete", "rename", "stage", "unstage"] as const),
+  operations: process.platform === "win32" ? ([] as const) : (["create", "write", "delete", "rename", "stage", "unstage", "commit"] as const),
   boundary: "cooperative-posix-single-git-surface",
   maxDecodedBytes: 1024 * 1024,
   recovery: { posix: "selected-worktree-bytes-mode-or-logical-index-entry", win32: "unsupported" },
-  durableExecutionReceipt: false,
-  durableRecoveryReceipt: false,
-  excluded: ["windows", "process-death", "power-loss", "concurrent-external-writers", "commits", "remotes", "hooks", "arbitrary-git", "dangling-stage-blob-removal", "acl", "ownership", "xattrs", "split-index", "non-v2-index", "unknown-index-extensions", "unsupported-index-flags"],
+  // The commit lifecycle writes `refs/void/operations/` and
+  // `refs/void/recoveries/` receipts and reads them back in `reconcile` and
+  // `reconcileRecovery`, so the adapter version as published does carry
+  // durable receipts. The worktree and index actions deliberately reconcile
+  // to unknown instead, because state equality is ABA-unsafe; that limit is
+  // named under excluded rather than left to be inferred.
+  durableExecutionReceipt: true,
+  durableRecoveryReceipt: true,
+  excluded: ["windows", "process-death", "power-loss", "concurrent-external-writers", "durable-receipt-outside-commit", "remotes", "hooks", "arbitrary-git", "multi-path-commits", "history-rewriting", "commit-signing", "detached-head", "active-git-operations", "submodules", "symlinks", "dangling-stage-blob-removal", "acl", "ownership", "xattrs", "split-index", "non-v2-index", "unknown-index-extensions", "unsupported-index-flags"],
   conformance: {
     schema: "void.adapter-conformance.v1",
     runtime: CONFORMANCE_RUNTIME.id,
@@ -170,7 +182,7 @@ export const gitConformanceProfile = {
     sharedRuntimeChecksOnly: true,
   },
   certification: false,
-  note: "create is a write scenario against an absent path, not a public action",
+  note: "create is a write scenario against an absent path, not a public action; commit is POSIX-only like the whole adapter, and on Windows the operation list is empty with recovery.win32 set to unsupported, so the run refuses rather than skipping the scenario",
 } as const;
 
 type GitScenario = (typeof gitConformanceProfile.operations)[number];
@@ -184,13 +196,22 @@ export async function gitConformanceFixture(operation: GitScenario = "write"): P
     run("config", "user.name", "VOID conformance");
     run("config", "user.email", "void@example.invalid");
     const file = join(root, "sample.bin"), moved = join(root, "moved.bin");
-    const originalBuffer = Buffer.from([0, 255, 1, 128, 10]), editedBuffer = Buffer.from("conformance agent edit"), humanBuffer = Buffer.from("conformance human edit");
+    const originalBuffer = Buffer.from([0, 255, 1, 128, 10]), editedBuffer = Buffer.from("conformance agent edit"), humanBuffer = Buffer.from("conformance human edit"), otherOriginal = Buffer.from("conformance other original"), otherEdited = Buffer.from("conformance other edit");
     await writeFile(file, originalBuffer, { mode: 0o755 });
     run("add", "sample.bin"); run("commit", "-qm", "initial");
     await writeFile(join(root, "sentinel-staged"), "base"); await writeFile(join(root, "sentinel-unstaged"), "base");
     run("add", "sentinel-staged", "sentinel-unstaged"); run("commit", "-qm", "sentinels");
     await writeFile(join(root, "sentinel-staged"), "staged human"); run("add", "sentinel-staged");
     await writeFile(join(root, "sentinel-unstaged"), "unstaged human"); await writeFile(join(root, "sentinel-untracked"), "untracked human");
+    if (operation === "commit") {
+      // A second committed path that is staged but not selected. The commit
+      // lifecycle moves the branch by one selected path, so a commit that
+      // swept the whole index would pass every other measurement here.
+      await writeFile(join(root, "other.bin"), otherOriginal);
+      run("add", "other.bin"); run("commit", "-qm", "other base");
+      await writeFile(file, editedBuffer, { mode: 0o755 }); run("add", "sample.bin");
+      await writeFile(join(root, "other.bin"), otherEdited); run("add", "other.bin");
+    }
     if (operation === "create") { await rm(file); run("update-index", "--force-remove", "sample.bin"); }
     if (operation === "stage" || operation === "unstage") await writeFile(file, editedBuffer, { mode: 0o755 });
     if (operation === "unstage") run("add", "sample.bin");
@@ -217,19 +238,60 @@ export async function gitConformanceFixture(operation: GitScenario = "write"): P
       if (typeof selected === "string" && /^[0-9]{6} [0-9a-f]+ 0\t/.test(selected)) rest.push(selected);
       return rest.sort();
     };
-    const before: Json = { selected: selectedBefore, head, rawIndex, index: manifestBefore, worktree: context };
-    const after: Json = { selected: selectedAfter, head, rawIndex, index: operation === "stage" || operation === "unstage" ? replaceSelected(manifestBefore, selectedAfter) : manifestBefore, worktree: context };
-    const human: Json = { selected: selectedHuman, head, rawIndex, index: operation === "stage" || operation === "unstage" ? replaceSelected(manifestBefore, selectedHuman) : manifestBefore, worktree: context };
-    const read = async (): Promise<Json> => ({ selected: await readSelected(), head: run("rev-parse", "HEAD"), rawIndex: operation === "stage" || operation === "unstage" ? null : createHash("sha256").update(await readFile(join(root, run("rev-parse", "--git-path", "index")))).digest("hex"), index: run("ls-files", "--stage").split("\n").filter(Boolean).sort(), worktree: await sentinels() });
+    // Commit measures the committed tree and the index, not the worktree:
+    // the lifecycle moves a ref, so "the worktree still holds the staged
+    // bytes" is part of what has to stay true across a commit and its
+    // recovery, and the unselected staged path proves the commit did not
+    // sweep the index into the branch.
+    const isCommit = operation === "commit";
+    const commitTree = () => run("ls-tree", "-r", "HEAD");
+    const commitState = async () => ({
+      tree: commitTree(),
+      selected: execFileSync("git", ["-C", root, "cat-file", "blob", "HEAD:sample.bin"]).toString("base64"),
+      other: execFileSync("git", ["-C", root, "cat-file", "blob", "HEAD:other.bin"]).toString("base64"),
+      index: {
+        selected: readIndex(),
+        other: run("ls-files", "--stage", "--", "other.bin") || null,
+      },
+      worktree: await readPath(file),
+      otherWorktree: await readPath(join(root, "other.bin")),
+    });
+    const commitStates = async () => {
+      const captured = await commitState();
+      const after = {
+        ...captured,
+        tree: commitTree().replace(/^100755 blob [0-9a-f]+\tsample\.bin$/mu, () => `100755 blob ${run("hash-object", "--no-filters", "sample.bin")}\tsample.bin`),
+        selected: editedBuffer.toString("base64"),
+      };
+      return {
+        before: captured,
+        after,
+        human: { ...after, worktree: humanBuffer.toString("base64") },
+      };
+    };
+    // Only the commit fixture has a second committed path, so the commit
+    // measurements are built only for it: reading another scenario's tree
+    // would ask git for a path that does not exist there.
+    const commit = isCommit ? await commitStates() : null;
+    const before: Json = commit ? commit.before : { selected: selectedBefore, head, rawIndex, index: manifestBefore, worktree: context };
+    const after: Json = commit ? commit.after : { selected: selectedAfter, head, rawIndex, index: operation === "stage" || operation === "unstage" ? replaceSelected(manifestBefore, selectedAfter) : manifestBefore, worktree: context };
+    const human: Json = commit ? commit.human : { selected: selectedHuman, head, rawIndex, index: operation === "stage" || operation === "unstage" ? replaceSelected(manifestBefore, selectedHuman) : manifestBefore, worktree: context };
+    const read = async (): Promise<Json> => isCommit ? commitState() : { selected: await readSelected(), head: run("rev-parse", "HEAD"), rawIndex: operation === "stage" || operation === "unstage" ? null : createHash("sha256").update(await readFile(join(root, run("rev-parse", "--git-path", "index")))).digest("hex"), index: run("ls-files", "--stage").split("\n").filter(Boolean).sort(), worktree: await sentinels() };
     const { privateKey } = generateKeyPairSync("ed25519"), signer = keyProviderFromPkcs8(privateKey.export({ type: "pkcs8", format: "der" })), key = randomBytes(32);
     return {
       adapter: () => managedGitAdapter({ root, cooperative: true }),
       options: () => ({ journal: localOperationJournal(join(dir, "journal"), signer), vault: reservedRecoveryVault(join(dir, "vault"), { conformance: key }, "conformance") }),
-      arguments: arguments_,
-      changedArguments: operation === "rename" ? { action: "rename", path: "sample.bin", to: "other.bin" } : operation === "stage" || operation === "unstage" ? { action: operation, path: "other.bin" } : { action: "write", path: "sample.bin", base64: humanBuffer.toString("base64") },
+      arguments: isCommit ? { action: "commit", path: "sample.bin" } : arguments_,
+      // A different, individually valid request: the refusal it exercises is
+      // the idempotency key, not argument validation. other.bin is staged and
+      // differs from HEAD, so committing it would otherwise be accepted.
+      changedArguments: isCommit ? { action: "commit", path: "other.bin" } : operation === "rename" ? { action: "rename", path: "sample.bin", to: "other.bin" } : operation === "stage" || operation === "unstage" ? { action: operation, path: "other.bin" } : { action: "write", path: "sample.bin", base64: humanBuffer.toString("base64") },
       before, after, human,
       read,
       writeHuman: async () => {
+        // Out of band on purpose: the commit lifecycle compares the selected
+        // worktree against the staged entry, so an unstaged human edit is
+        // drift the recovery has to refuse rather than overwrite.
         if (operation === "rename") await writeFile(moved, humanBuffer);
         else if (operation === "stage" || operation === "unstage") { await writeFile(file, humanBuffer); run("add", "sample.bin"); }
         else await writeFile(file, humanBuffer);
@@ -272,6 +334,71 @@ export const managedDocumentsConformanceProfile = {
 } as const;
 
 /**
+ * Managed PostgreSQL, published for the first time in 1.0.1. The adapter is
+ * a full `RecoveryAdapter` that ran in the reverse exercise over PGlite while
+ * no profile named it, so nothing stated what it could recover.
+ *
+ * Two fields here are statements about the adapter rather than about the
+ * fixture, and they are the reason this profile is not a copy of the other
+ * three. The receipts are durable: `execute` and `recover` write into the
+ * managed schema's own `operations` and `recoveries` tables, which is what
+ * `reconcile` and `reconcileRecovery` read back, so both flags are true
+ * where the other three adapters are false. And the guarantee is not
+ * platform-specific: nothing in the adapter branches on the platform, so
+ * win32 states the same recovery as posix rather than a weaker one.
+ */
+export const managedPostgresConformanceProfile = {
+  schema: "void.adapter-capability.v2",
+  adapter: managedPostgresConformanceIdentity(),
+  authority: "scope-only",
+  operations: MANAGED_POSTGRES_SCENARIOS,
+  boundary: "cooperative-configured-tables-with-server-bound-tenant-scope",
+  // The largest capture these scenarios restore. The adapter enforces no
+  // payload bound of its own, which is why `unbounded-payload` is listed as
+  // excluded rather than left for a reader to infer from this number.
+  maxDecodedBytes: 1024,
+  recovery: {
+    posix: "captured-row-values-and-captured-cascade-descendants",
+    win32: "captured-row-values-and-captured-cascade-descendants",
+  },
+  durableExecutionReceipt: true,
+  durableRecoveryReceipt: true,
+  excluded: [
+    "networked-cluster",
+    "replication",
+    "server-side-certification",
+    "concurrent-external-writers",
+    "process-death",
+    "power-loss",
+    "network-partition",
+    "schema-migration",
+    "rules",
+    "partitioned-tables",
+    "subclassed-relations",
+    "generated-columns",
+    "identity-sequences",
+    "metadata-migration",
+    "external-observers",
+    "transaction-history",
+    "acl",
+    "ownership",
+    "xattrs",
+    "additional-triggers",
+    "unbounded-payload",
+  ],
+  conformance: {
+    schema: "void.adapter-conformance.v1",
+    runtime: CONFORMANCE_RUNTIME.id,
+    fixture: "disposable-in-process-pglite-with-row-level-security",
+    checks: CONFORMANCE_CASES,
+    sharedRuntimeChecksOnly: true,
+  },
+  certification: false,
+  note: "The adapter derives its id from the configured workspace, so this profile publishes the conformance workspace instance of version 2 and no other; PGlite is a real in-process engine, so what is measured is the local transaction boundary and the configured tenant policy, not a networked cluster.",
+} as const;
+
+
+/**
  * Every provider the command can run, declared once and validated at import:
  * a profile that does not fit the versioned schema stops the command instead
  * of being skipped, and an adapter id without a profile is refused.
@@ -280,6 +407,7 @@ export const providerProfiles: ProviderProfileSet = declareProviderProfiles([
   filesystemConformanceProfile,
   gitConformanceProfile,
   managedDocumentsConformanceProfile,
+  managedPostgresConformanceProfile,
 ]);
 
 type ManagedDocumentsScenario = "write" | "delete";
@@ -363,6 +491,34 @@ export async function managedDocumentsConformanceFixture(
   }
 }
 
+/**
+ * The one place a published profile id resolves to the fixture that runs its
+ * scenarios. Fail-closed: an operation the resolved fixture does not accept
+ * is refused by that fixture's own scenario check, so a profile that gains an
+ * operation nobody implemented stops the run instead of measuring the
+ * nearest operation it does have.
+ */
+const fixtureFor =
+  (adapter: string, operation: string): (() => Promise<ConformanceFixture>) => {
+    if (adapter === "git.managed")
+      return () => gitConformanceFixture(operation as GitScenario);
+    if (adapter === "managed-documents")
+      return () =>
+        managedDocumentsConformanceFixture(
+          operation as ManagedDocumentsScenario,
+        );
+    if (adapter === managedPostgresConformanceProfile.adapter.id)
+      return () =>
+        managedPostgresConformanceFixture(
+          operation as ManagedPostgresScenario,
+        );
+    return () =>
+      filesystemConformanceFixture(
+        operation as "create" | "write" | "delete" | "rename",
+      );
+  };
+
+
 export async function runConformanceCommand(
   argv: readonly string[],
   print: (text: string) => void,
@@ -377,7 +533,7 @@ export async function runConformanceCommand(
   const scenarios = [];
   if (selected === "git.managed" && process.platform === "win32") scenarios.push({ operation: "platform-refusal", passed: false, checks: [{ id: "posix-only", passed: true }] });
   else for (const operation of capability.operations) {
-    const report = await runAdapterConformance(capability.adapter, () => selected === "git.managed" ? gitConformanceFixture(operation as GitScenario) : selected === "managed-documents" ? managedDocumentsConformanceFixture(operation as ManagedDocumentsScenario) : filesystemConformanceFixture(operation as "create" | "write" | "delete" | "rename"));
+    const report = await runAdapterConformance(capability.adapter, fixtureFor(selected, operation));
     scenarios.push({ operation, ...report });
   }
   const passed = scenarios.every((report) => report.passed);

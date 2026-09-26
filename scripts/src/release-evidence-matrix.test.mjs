@@ -211,7 +211,12 @@ const NUMBER_WORDS = {
   Twelve: 12,
 };
 const SPELLED = Object.keys(NUMBER_WORDS).join("|");
-const ADAPTERS = ["filesystem.managed", "git.managed", "managed-documents"];
+const ADAPTERS = [
+  "filesystem.managed",
+  "git.managed",
+  "managed-documents",
+  "postgres-managed-conformance",
+];
 // The matrix records superseded runs on purpose, so a count only counts when
 // the sentence around it is not marked as history. The window is kept short
 // so an unrelated "earlier" in the same sentence cannot silence a live claim.
@@ -256,26 +261,30 @@ function countRustTestCases(directory) {
 /**
  * `void recovery conformance` emits one scenario per declared operation, so
  * an adapter's scenario count is the operation list in its capability
- * profile. The Windows branch is skipped: this matrix records the macOS run.
+ * profile.
+ *
+ * The count is read from the published profile rather than parsed out of the
+ * source text. Text parsing missed the postgres profile entirely, because its
+ * adapter id is derived from the factory at import rather than written as a
+ * literal and its operation list lives in another module, so a profile could
+ * be added to the release and this gate would have gone on checking the other
+ * three. That is the same defect the profile itself was added to fix: an
+ * adapter nothing names.
+ *
+ * A profile that publishes no operations on this platform is skipped rather
+ * than compared, because `git.managed` deliberately publishes none on Windows
+ * and this matrix records the macOS run.
  */
-function conformanceScenarioCounts() {
-  const source = readFileSync("packages/cli/src/conformance.ts", "utf8");
+async function conformanceScenarioCounts() {
+  const { providerProfiles } = await import("../../packages/cli/src/conformance.ts");
+  const { resolveProviderProfile } = await import(
+    "../../packages/connectors/src/capability-profiles.ts"
+  );
   return ADAPTERS.map((id) => {
-    let expression =
-      source
-        .match(new RegExp(`id: "${id.replace(/\./gu, "\\.")}"[\\s\\S]{0,200}?operations: ([^\\n]+)`, "u"))?.[1]
-        .replace(/,$/u, "")
-        .trim() ?? "";
-    const alias = expression.match(/^[A-Za-z_$][\w$]*$/u)?.[0];
-    if (alias) {
-      expression =
-        source.match(new RegExp(`(?:export\\s+)?const\\s+${alias}\\s*=([\\s\\S]*?);`, "u"))?.[1] ?? "";
-    }
-    if (expression.includes('process.platform === "win32"')) {
-      expression = expression.slice(expression.indexOf(":", expression.indexOf("win32")));
-    }
-    return [id, (expression.match(/"[^"]+"/gu) ?? []).length];
-  });
+    const profile = resolveProviderProfile(providerProfiles, id);
+    if (profile === undefined) throw new Error(`no published profile for ${id}`);
+    return [id, profile.operations.length];
+  }).filter(([, count]) => count > 0);
 }
 
 /** Collapses the wrapping while remembering the source line of every character. */
@@ -345,12 +354,12 @@ function suiteCountPatterns() {
   return patterns;
 }
 
-test("every suite count the matrix states is the count the tree has, once", () => {
+test("every suite count the matrix states is the count the tree has, once", async () => {
   const expected = new Map([
     ["VOIDTests", countSwiftTestCases("apps/apple/VOIDTests")],
     ["VOIDUITests", countSwiftTestCases("apps/apple/VOIDUITests")],
     ["desktop rust crate", countRustTestCases("apps/desktop/src-tauri/src")],
-    ...conformanceScenarioCounts(),
+    ...(await conformanceScenarioCounts()),
   ]);
   const { prose, lineOf } = collapseWrapping(matrix);
   const stated = new Map([...expected.keys()].map((suite) => [suite, []]));

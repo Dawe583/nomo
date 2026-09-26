@@ -22,13 +22,15 @@ the `VOID` project and its schemes, a Release `iphonesimulator` build of the
 `VOID` scheme succeeded, and the built product installed and launched on an
 iPad Pro 11-inch (M5) simulator. That product is ad-hoc signed with no team
 identifier, no entitlements and no app icon, so it is simulator evidence only.
-Current source contains 9 `VOIDTests` cases and 18 `VOIDUITests` cases. A
+Current source contains 12 `VOIDTests` cases and 18 `VOIDUITests` cases. A
 2026-09-26 simulator run passed `VOIDTests` 9/9 and `VOIDUITests` 18/18 on an
 iPad Pro 11-inch (M5) at iOS 27.0 with Xcode 27.0, ending `** TEST SUCCEEDED
-**`. The earlier 2026-09-25 run on both an iPhone 18 Pro and that iPad passed
+**`, and a later run the same day passed `VOIDTests` 12/12 after the
+paired-device and cache-policy work landed. The 18-case UI run has not been
+repeated against that newer source. The earlier 2026-09-25 run on both an iPhone 18 Pro and that iPad passed
 `VOIDTests` 9/9 and `VOIDUITests` 8/8 against the smaller UI tree of that day,
 so both it and the earlier 6/6 unit figure are superseded. The
-`CompanionProtocolKit` package passes 33/33 under `swift test` on a macOS
+`CompanionProtocolKit` package passes 58/58 under `swift test` on a macOS
 host, which is not an iOS simulator or device result. Reserved-vault evidence
 is 12/12. A `generic/platform=iOS` Release build failed the same day for want of
 a provisioning profile for
@@ -477,9 +479,10 @@ Missing: the remaining native client implementation, Mac pairing, complete
 recovery/review journeys, physical-device acceptance, and the native release.
 Evidence: the native iOS 17 project, Swift package, app, unit tests and UI-test
 source now exist under `apps/apple/`. Xcode metadata and the `VOID` simulator
-build succeeded. Current source contains 9 `VOIDTests` cases and 11
-`VOIDUITests` cases; the last recorded sequential simulator run passed 9/9 and
-11/11, respectively. Reserved-vault evidence is 12/12. These results do not prove
+build succeeded. Current source contains 12 `VOIDTests` cases and 18
+`VOIDUITests` cases; the last recorded sequential simulator run against the
+source of that day passed 9/9 unit and 18/18 UI, and a later run the same day
+passed 12/12 unit after the paired-device and cache-policy work landed. Reserved-vault evidence is 12/12. These results do not prove
 pairing, TLS, recovery, physical-device behavior, signing, App Store Connect or
 TestFlight.
 Minimum change: complete the paired-Mac flow and native acceptance, then run

@@ -30,15 +30,18 @@ import {
   filesystemConformanceProfile,
   gitConformanceProfile,
   managedDocumentsConformanceProfile,
+  managedPostgresConformanceProfile,
   providerProfiles,
   runConformanceCommand,
 } from "../../packages/cli/src/conformance.ts";
+import { managedPostgresConformanceIdentity } from "../../packages/connectors/src/postgres/conformance-fixture.ts";
 
 /** Every provider profile the CLI ships, loaded from the shipped source. */
 const shipped = [
   filesystemConformanceProfile,
   gitConformanceProfile,
   managedDocumentsConformanceProfile,
+  managedPostgresConformanceProfile,
 ];
 
 test("every shipped provider profile fits void.adapter-capability.v2", () => {
@@ -98,6 +101,42 @@ test("a run for an adapter without a published profile is refused", async () => 
   await assert.rejects(
     runConformanceCommand(["--adapter", "postgres-managed-workbench"], () => {
       assert.fail("a run without a capability profile must not report");
+    }),
+    /no capability profile for "postgres-managed-workbench"/,
+  );
+});
+
+test("the gate covers the managed PostgreSQL adapter the tree actually builds", () => {
+  // Read from the factory, not from a string in this test: the adapter
+  // derives its id from the configured workspace, so the id a release would
+  // ship is whatever `managedPostgresAdapter` builds. A profile that named a
+  // different string, or a set that dropped the profile, fails here instead
+  // of shipping the adapter unpublished.
+  const identity = managedPostgresConformanceIdentity();
+  assert.equal(identity.version, "2");
+  assert.deepEqual(managedPostgresConformanceProfile.adapter, identity);
+  assert.equal(hasProviderProfile(providerProfiles, identity.id), true);
+  assert.equal(
+    resolveProviderProfile(providerProfiles, identity.id).adapter.version,
+    identity.version,
+  );
+  // An in-process engine is not a networked cluster, and the durable flags
+  // are only true because the receipts live in the managed metadata.
+  assert.equal(managedPostgresConformanceProfile.durableExecutionReceipt, true);
+  assert.equal(managedPostgresConformanceProfile.durableRecoveryReceipt, true);
+  assert.ok(
+    managedPostgresConformanceProfile.excluded.includes("server-side-certification"),
+    "an in-process engine is not a networked cluster",
+  );
+});
+
+test("another workspace of the same adapter is refused, because a profile binds one id", async () => {
+  // The identity is workspace-scoped, so publishing one profile cannot cover
+  // every deployment of this adapter. Refusing a run for an id nothing was
+  // measured against beats resolving a profile for it.
+  await assert.rejects(
+    runConformanceCommand(["--adapter", "postgres-managed-workbench"], () => {
+      assert.fail("an unpublished adapter id must not report");
     }),
     /no capability profile for "postgres-managed-workbench"/,
   );

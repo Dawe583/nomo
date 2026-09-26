@@ -12,6 +12,7 @@ node packages/cli/bin/void.mjs recovery conformance
 node packages/cli/bin/void.mjs recovery conformance --adapter filesystem.managed
 node packages/cli/bin/void.mjs recovery conformance --adapter git.managed
 node packages/cli/bin/void.mjs recovery conformance --adapter managed-documents
+node packages/cli/bin/void.mjs recovery conformance --adapter postgres-managed-conformance
 ```
 
 The command creates its own temporary directories, signing key and encryption
@@ -83,20 +84,21 @@ rejected, never coerced. An empty `operations` list is only accepted when
 `recovery` names a platform as `unsupported`, which is how the Git profile
 reads on Windows.
 
-The three shipped profiles, each with its own scope and its own exclusions:
+The four shipped profiles, each with its own scope and its own exclusions:
 
 | Profile                     | Operations (POSIX)                | Boundary                                  | Certification |
 | --------------------------- | --------------------------------- | ----------------------------------------- | ------------- |
 | `filesystem.managed` v1     | create, write, delete, rename      | cooperative regular file paths            | `false`       |
-| `git.managed` v1            | create, write, delete, rename, stage, unstage | cooperative POSIX single Git surface | `false`       |
+| `git.managed` v1            | create, write, delete, rename, stage, unstage, commit | cooperative POSIX single Git surface | `false`       |
 | `managed-documents` v1      | write, delete                      | managed text documents, no host filesystem | `false`       |
+| `postgres-managed-conformance` v2 | insert, update, delete, delete-cascade, tenant-update | cooperative configured tables, in-process PGlite with row-level security | `false`       |
 
 `filesystem.managed` carries `certification: false` explicitly; before the
 versioned schema it was the one profile that left the field out.
 
 ### The shared runtime is a binding, not a constant
 
-All three providers really do run on one runtime: the case list belongs to
+All four providers really do run on one runtime: the case list belongs to
 `runAdapterConformance` in `packages/runtime/src/conformance.ts`, so the
 eight cases are the same for every provider. The profile states that as
 `conformance.runtime: "void-recovery-runtime"` and
@@ -112,8 +114,14 @@ certification status is a declaration error.
 `providerProfiles` is declared and validated at import. `runConformanceCommand`
 resolves an adapter id through that set only: an id no profile publishes is
 refused with the ids that do, and there is no fallback profile and no
-"run it and see" path. `postgres-managed-*` has no profile and therefore no
-conformance run; that is the intended answer until R12 publishes one.
+"run it and see" path. The PostgreSQL profile binds the id the adapter factory
+derives for the conformance workspace, `postgres-managed-conformance`, by calling
+that factory at import rather than writing the id out by hand, so the profile
+cannot claim an id no adapter reports. Its scenarios need PGlite, which is a
+dev dependency, so the import is dynamic and its absence is a named refusal
+rather than a load failure for `void.mjs`. The fixture lives in
+`packages/connectors/src/postgres/conformance-fixture.ts`; the profile itself
+stays in `packages/cli/src/conformance.ts`.
 
 ### Release gate
 
