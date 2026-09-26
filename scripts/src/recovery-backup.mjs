@@ -15,6 +15,7 @@ import {
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { backup, DatabaseSync } from "node:sqlite";
 import { retainedKeyProvider } from "../../packages/ledger/src/sign.ts";
+import { windowsKeyAcl } from "../../packages/ledger/src/hardening.ts";
 import { jsonlStore } from "../../packages/ledger/src/store.ts";
 
 const manifestName = "recovery-backup-manifest.json";
@@ -160,6 +161,12 @@ async function createBackup({ stateDir, backupDir, encryptionKeyEnv }) {
     const signingKey = join(stateCopy, "keys", "dev-ed25519.pkcs8");
     await regularFile(signingKey, "key_unavailable");
     await chmod(signingKey, 0o600);
+    // fs.cp does not carry a Windows ACL, and chmod is a no-op there, so the
+    // copied key arrived readable by more than its owner. The ledger refuses
+    // exactly that on restore, which made every Windows backup unusable for the
+    // one job it exists for. Re-protect the copy the way the ledger protects a
+    // key it writes itself.
+    if (process.platform === "win32") await windowsKeyAcl(signingKey, true);
 
     const sourceVault = join(source, "vault", "vault.sqlite");
     const restoredVault = join(stateCopy, "vault", "vault.sqlite");
@@ -302,6 +309,17 @@ async function main() {
 main().catch((error) => {
   const category =
     error instanceof RecoveryBackupError ? error.category : "backup_incomplete";
-  process.stderr.write(`${JSON.stringify({ ok: false, category })}\n`);
+  // The generic fallback above discards the real cause, so a plain fs error was
+  // indistinguishable from a refused inventory. The category stays the machine
+  // readable contract; the reason is what an operator or a test can act on.
+  process.stderr.write(
+    `${JSON.stringify({
+      ok: false,
+      category,
+      ...(error instanceof RecoveryBackupError
+        ? {}
+        : { reason: String(error?.message ?? error).slice(0, 500) }),
+    })}\n`,
+  );
   process.exitCode = 1;
 });

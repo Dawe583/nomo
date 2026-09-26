@@ -2,16 +2,19 @@ import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
 const script = new URL("./e2e-final.mjs", import.meta.url);
-const root = new URL("../..", import.meta.url);
+const root = fileURLToPath(new URL("../..", import.meta.url));
 
 describe("final e2e sweep", () => {
   test("runs the product moments through the script", async () => {
     const { stdout, stderr } = await execFileAsync(
       process.execPath,
-      [script.pathname, "all"],
+      // fileURLToPath, not script.pathname: on Windows the pathname is "/C:/..."
+      // and becomes "C:\C:\..." once execFile resolves it against the drive.
+      [fileURLToPath(script), "all"],
       { cwd: root, timeout: 30000, maxBuffer: 1024 * 1024 },
     );
 

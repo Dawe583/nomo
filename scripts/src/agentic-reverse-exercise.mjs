@@ -156,9 +156,17 @@ export async function runAgenticReverseExercise(options = {}) {
     const restored = await host.recover(plan, async () => true);
     if (restored.status !== "restored") throw new Error(`the inverse reported ${JSON.stringify(restored)}`);
     if (!(await readFile(subject)).equals(ORIGINAL)) throw new Error("the inverse did not restore the original bytes");
-    const mode = (await stat(subject)).mode & 0o777;
-    if (mode !== MODE) throw new Error(`the inverse did not restore the mode: ${mode.toString(8)}`);
-    steps.push(`the confirmed inverse restores the exact bytes and mode ${mode.toString(8)}`);
+    // Mode is only in scope where the adapter declares it. The managed
+    // filesystem adapter reports its Windows scope as "bytes", because Windows
+    // reports 0666 for every file and there is no mode to restore. Asserting it
+    // here would be asserting something the product does not claim.
+    if (process.platform !== "win32") {
+      const mode = (await stat(subject)).mode & 0o777;
+      if (mode !== MODE) throw new Error(`the inverse did not restore the mode: ${mode.toString(8)}`);
+      steps.push(`the confirmed inverse restores the exact bytes and mode ${mode.toString(8)}`);
+    } else {
+      steps.push("the confirmed inverse restores the exact bytes (mode is out of scope on Windows)");
+    }
 
     // 8. A replayed inverse is refused rather than applied twice.
     let replayRefused = false;

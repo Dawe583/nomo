@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { setTimeout as delay } from "node:timers/promises";
 import { chmod, mkdir, realpath } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type { OperationEvent } from "./journal.ts";
 export type IrreversibilityBudget = {
   dailyLimit: number;
@@ -151,6 +151,12 @@ export interface BudgetStore {
     expected: BudgetFence,
     next: BudgetDayState,
   ): Promise<boolean>;
+  /** Release the backing handle. Optional because an in-memory store has none.
+   *
+   * A SQLite store must be closable: Windows refuses to unlink an open database
+   * file, so a host that never calls this cannot rotate, archive or remove its
+   * own budget state, and every test that cleans up a temp directory fails. */
+  readonly close?: () => void;
 }
 
 export type BudgetSpend = {
@@ -692,7 +698,10 @@ const serialise = async <T>(
 export async function sqliteBudgetStore(file: string): Promise<BudgetStore> {
   const folder = dirname(file);
   await mkdir(folder, { recursive: true, mode: 0o700 });
-  const path = join(await realpath(folder), file.split("/").pop() as string);
+  // basename, not file.split("/").pop(): a Windows caller passes backslashes, so
+  // splitting on "/" returns the whole absolute path and re-joining it doubled
+  // the drive into the directory.
+  const path = join(await realpath(folder), basename(file));
   const db = new DatabaseSync(path);
   await chmod(path, 0o600);
   db.exec("PRAGMA busy_timeout=0");
@@ -738,6 +747,9 @@ export async function sqliteBudgetStore(file: string): Promise<BudgetStore> {
         writeDay.run(key, next.version, JSON.stringify(next));
         return true;
       });
+    },
+    close() {
+      db.close();
     },
   };
 }

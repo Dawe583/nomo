@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -109,7 +110,9 @@ test("invalid and fractional irreversible budgets fail closed", () => {
 // and "shared" are observed rather than asserted.
 // ---------------------------------------------------------------------------
 
-const BUDGET_MODULE = join(import.meta.dirname, "budget.ts");
+// The child imports this module, so the specifier must be a URL. A Windows path
+// would be read as a bare "c:" protocol and the child would refuse to load.
+const BUDGET_MODULE = pathToFileURL(join(import.meta.dirname, "budget.ts")).href;
 const AT = "2026-09-25T10:00:00.000Z";
 const DAY = AT.slice(0, 10);
 
@@ -135,9 +138,18 @@ const operation = (
       : null,
 });
 
-const store = (t: { after: (fn: () => unknown) => void }, dir: string) => {
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  return sqliteBudgetStore(join(dir, "budget.sqlite"));
+/** A SQLite store whose handle is released before the temp directory goes.
+ *
+ * One hook, in this order, on purpose. Windows refuses to unlink a database
+ * file that is still open, so a test that only removes the directory fails in
+ * cleanup and hides the behaviour it was written to check. */
+const store = async (t: { after: (fn: () => unknown) => void }, dir: string) => {
+  const opened = await sqliteBudgetStore(join(dir, "budget.sqlite"));
+  t.after(async () => {
+    opened.close?.();
+    await rm(dir, { recursive: true, force: true });
+  });
+  return opened;
 };
 
 /** A store that cannot exclude anything across workers must be refused, not
@@ -236,9 +248,19 @@ test("per agent cap refuses the same agent the journal derivation refuses", asyn
 test("exhausted, unreadable and contradictory budget state all refuse", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-budget-refuse-"));
   const file = join(dir, "budget.sqlite");
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  // This case holds two stores and a raw handle on one file, so cleanup closes
+  // all three before removing the directory.
+  const open: Array<() => void> = [];
+  t.after(async () => {
+    for (const close of open) close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  // Opened here rather than through store(), because this case needs one hook
+  // that closes every handle on the file before the directory is removed.
+  const primaryStore = await sqliteBudgetStore(file);
+  open.push(() => primaryStore.close?.());
   const ledger = serverBudgetLedger({
-    store: await sqliteBudgetStore(file),
+    store: primaryStore,
     account: "shared",
     budget: { dailyLimit: 1 },
     now: () => new Date(AT),
@@ -274,6 +296,7 @@ test("exhausted, unreadable and contradictory budget state all refuse", async (t
   assert.equal((await ledger.snapshot()).total, 1);
   // Unreadable account state is an incident, never an empty budget.
   const raw = new DatabaseSync(file);
+  open.push(() => raw.close());
   raw.prepare("UPDATE void_budget_day SET body = ?").run("{not json");
   await assert.rejects(
     () => ledger.reserve({ operationId: "op-3", agentId: "agent-a" }),
@@ -283,8 +306,10 @@ test("exhausted, unreadable and contradictory budget state all refuse", async (t
   // back up. The probe ledger has headroom on purpose: a forged body that
   // happens to hit the cap would still answer "exhausted" and hide the fact
   // that the state was trusted at all.
+  const probeStore = await sqliteBudgetStore(file);
+  open.push(() => probeStore.close?.());
   const probe = serverBudgetLedger({
-    store: await sqliteBudgetStore(file),
+    store: probeStore,
     account: "shared",
     budget: { dailyLimit: 1000 },
     now: () => new Date(AT),
@@ -333,7 +358,8 @@ test("exhausted, unreadable and contradictory budget state all refuse", async (t
       `accepted a forged hold: ${JSON.stringify(hold)}`,
     );
   }
-  raw.close();
+  // The raw handle is closed by the cleanup hook, not here: closing it twice
+  // throws ERR_INVALID_STATE and would fail the case for the wrong reason.
   // A store that cannot exclude anything across workers is refused outright.
   assert.throws(
     () =>
@@ -349,17 +375,24 @@ test("exhausted, unreadable and contradictory budget state all refuse", async (t
 
 test("two workers on one account never both spend the same unit", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-budget-race-"));
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const open: Array<() => void> = [];
+  t.after(async () => {
+    for (const close of open) close();
+    await rm(dir, { recursive: true, force: true });
+  });
   // Two stores, two connections, no shared memory: exactly the situation the
   // in process journal derivation cannot see.
   const budget = { dailyLimit: 2, perAgentDailyLimit: 1 };
+  const leftStore = await sqliteBudgetStore(join(dir, "budget.sqlite"));
+  const rightStore = await sqliteBudgetStore(join(dir, "budget.sqlite"));
+  open.push(() => leftStore.close?.(), () => rightStore.close?.());
   const left = serverBudgetLedger({
-    store: await sqliteBudgetStore(join(dir, "budget.sqlite")),
+    store: leftStore,
     account: "shared",
     budget,
   });
   const right = serverBudgetLedger({
-    store: await sqliteBudgetStore(join(dir, "budget.sqlite")),
+    store: rightStore,
     account: "shared",
     budget,
   });
@@ -380,7 +413,11 @@ test("two workers on one account never both spend the same unit", async (t) => {
 
 test("a worker killed between reserve and settle leaves a detectable charge that is never refunded", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-budget-crash-"));
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const open: Array<() => void> = [];
+  t.after(async () => {
+    for (const close of open) close();
+    await rm(dir, { recursive: true, force: true });
+  });
   const file = join(dir, "budget.sqlite");
   const worker = join(dir, "worker.mts");
   // A fixed instant, never Date.now(). The day bucket is the UTC date, so a
@@ -412,12 +449,18 @@ process.kill(process.pid, "SIGKILL");
     [worker, file, "shared", "1", "op-crash", ready, String(instant)],
     { encoding: "utf8" },
   );
-  assert.equal(killed.signal, "SIGKILL");
+  // The claim under test is that the worker died without unwinding, not which
+  // signal name the platform reports. Windows terminates the process and
+  // reports no signal at all, so assert the absence of a clean exit instead.
+  assert.notEqual(killed.status, 0);
+  assert.equal(killed.signal === "SIGKILL" || killed.signal === null, true);
   assert.equal(await readFile(ready, "utf8"), "reserved");
   // A fresh process, a fresh store, no memory of the dead one: the charge
   // survived the crash and is visible as an unfinished reservation.
+  const afterStore = await sqliteBudgetStore(file);
+  open.push(() => afterStore.close?.());
   const after = serverBudgetLedger({
-    store: await sqliteBudgetStore(file),
+    store: afterStore,
     account: "shared",
     budget: { dailyLimit: 1 },
     leaseMs: 1000,
@@ -449,7 +492,11 @@ process.kill(process.pid, "SIGKILL");
 
 test("two worker processes share one account across a process boundary", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-budget-procs-"));
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const open: Array<() => void> = [];
+  t.after(async () => {
+    for (const close of open) close();
+    await rm(dir, { recursive: true, force: true });
+  });
   const file = join(dir, "budget.sqlite");
   const worker = join(dir, "worker.mts");
   await writeFile(
@@ -482,8 +529,10 @@ process.stdout.write(String(outcomes.filter((item) => item.ok).length));
     0,
   );
   assert.equal(admitted, 2);
+  const finalStore = await sqliteBudgetStore(file);
+  open.push(() => finalStore.close?.());
   const ledger = serverBudgetLedger({
-    store: await sqliteBudgetStore(file),
+    store: finalStore,
     account: "shared",
     budget: { dailyLimit: 2 },
   });

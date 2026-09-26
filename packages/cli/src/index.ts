@@ -53,6 +53,7 @@ export function parseInvocation(argv: readonly string[]): ParsedInvocation {
   return { ok: true, command: name as Command, args };
 }
 
+export * from "./argv.ts";
 export * from "./tui/index.ts";
 export * from "./classify.ts";
 export * from "./feed.ts";

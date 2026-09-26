@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
 import { execFileSync } from "node:child_process";
@@ -151,7 +151,7 @@ posixTest("supports SHA-256 and linked worktree identity without exposing admini
   execFileSync("git", ["-C", base, "config", "user.email", "void@example.invalid"]);
   execFileSync("git", ["-C", base, "commit", "--allow-empty", "-qm", "initial"]);
   assert.equal((await managedGitAdapter({ root: base, cooperative: true }).preflight({ action: "write", path: "file", base64: "" })).readiness, "verified");
-  const linked = join(dirname(base), `${base.split("/").pop()}-linked`);
+  const linked = join(dirname(base), `${basename(base)}-linked`);
   t.after(() => rm(linked, { recursive: true, force: true }));
   execFileSync("git", ["-C", base, "worktree", "add", "-q", "-b", "fixture-linked", linked]);
   const observed = await managedGitAdapter({ root: linked, cooperative: true }).preflight({ action: "write", path: "file", base64: "" });

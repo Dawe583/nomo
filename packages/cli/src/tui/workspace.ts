@@ -644,8 +644,22 @@ export class WorkspaceTui {
       );
     let out: string;
     try {
-      const result = await runShellFile("sh", ["-c", cmd], {
-        env: { PATH: "/usr/bin:/bin", LANG: "C" },
+      // The shell is the operator's, so name it per platform rather than
+      // assuming sh: on Windows there is no sh on PATH without Git Bash, which
+      // made every !command fail with ENOENT. PATH stays narrowed on both
+      // sides, because the point is to expose a small tool set and not the
+      // operator's whole environment.
+      const windows = process.platform === "win32";
+      const shell = windows ? process.env.ComSpec ?? "cmd.exe" : "sh";
+      // cmd needs /c to run anything at all; /d only turns AutoRun off and
+      // /s strips the surrounding quotes. Without /c it starts an interactive
+      // prompt and the 10 s timeout is what ends it.
+      const args = windows ? ["/d", "/s", "/c", cmd] : ["-c", cmd];
+      const systemRoot = process.env.SystemRoot ?? "C:\\Windows";
+      const result = await runShellFile(shell, args, {
+        env: windows
+          ? { PATH: `${systemRoot}\\System32`, SystemRoot: systemRoot, ComSpec: shell }
+          : { PATH: "/usr/bin:/bin", LANG: "C" },
         timeout: 10000,
         maxBuffer: 1024 * 64,
       });
