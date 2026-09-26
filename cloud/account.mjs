@@ -8,7 +8,7 @@
  * the sealed cookie this module writes is the only thing that survives a
  * request.
  *
- * Three properties are load bearing and each one has a test in
+ * Five properties are load bearing and each one has a test in
  * `cloud/account.test.mjs`.
  *
  * **The provider is server side only.** `vercel.json` sets `default-src 'self'`
@@ -26,6 +26,22 @@
  * cookie is ours. It does not prove the person holding it is still the person it
  * was issued to, so a resolved session is confirmed against the provider before
  * it becomes an owner.
+ *
+ * **Nothing here decodes a token.** The access token is opaque: it is handed to
+ * the provider as a bearer and the answer is an id, never a set of claims. A
+ * JWT payload is signed by the provider, not by this code, so a claim read out
+ * of one is evidence of nothing, and a request the provider will not confirm
+ * yields no identity at all rather than the identity somebody else chose. This
+ * is also why there is no role in the session: a role read from a claim is the
+ * obvious wrong turn the first time somebody needs one, and the right answer is
+ * the provider round trip `whoIs()` already makes.
+ *
+ * **The API never says whether an address holds an account.** A wrong password,
+ * an unknown address and a provider answer that names the address all collapse
+ * into one failure and one sentence, and the collapsing happens in `classify`
+ * here, not by the provider's good behaviour. Supabase is under no obligation
+ * to answer an unknown address the way it answers a wrong password, so a
+ * defence that leaned on it answering both alike would not be a defence.
  *
  * Sign up is off. `signupAllowed()` reads `VOID_ACCOUNT_SIGNUP`, which is not
  * set, and no code path here creates an account unless it is. The gate is in
@@ -143,15 +159,47 @@ export const signupAllowed = (env = process.env) =>
   env.VOID_ACCOUNT_SIGNUP === "1";
 
 /**
- * Supabase answers 200 for a session and 400 for everything else, with a machine
- * code in the body. Only two of those codes carry information worth passing on,
- * and both become the same sentence so the API never says whether an address is
- * registered.
+ * The codes and the sentences a provider reaches for when the answer is about
+ * the address rather than about the attempt. `user_already_exists` is the
+ * dangerous one, because it confirms the address is registered, and
+ * `user_not_found` says the opposite, so a provider careless enough to answer
+ * the two cases differently has already handed the caller a way to tell them
+ * apart.
+ */
+const ADDRESS_CODES = new Set([
+  "user_already_exists",
+  "user_not_found",
+  "email_exists",
+  "email_not_confirmed",
+]);
+const ADDRESS_PHRASES = [
+  "already registered",
+  "not registered",
+  "no user found",
+  "user not found",
+];
+
+const namesTheAddress = (body) => {
+  const code = typeof body?.error_code === "string" ? body.error_code : "";
+  if (ADDRESS_CODES.has(code)) return true;
+  const message = typeof body?.msg === "string" ? body.msg.toLowerCase() : "";
+  return ADDRESS_PHRASES.some((phrase) => message.includes(phrase));
+};
+
+/**
+ * Supabase answers 200 for a session and 400 for nearly everything else, with a
+ * machine code in the body, and nothing in that body is passed on to the caller.
+ *
+ * An answer that names the address is the same sentence as a wrong password
+ * whatever status arrived with it, which is the whole point: the rule is ours
+ * and holds for a provider that is careless with its status codes, not only for
+ * one that answers every refusal identically. What is left once the naming
+ * answers are taken out is a rate limit or an outage, and only those become
+ * `provider_error`. Anything this module cannot interpret is answered
+ * conservatively.
  */
 const classify = (status, body) => {
-  if (status === 400 && body?.error_code === "user_already_exists")
-    return "invalid_credentials";
-  if (status === 422 || status === 400) return "invalid_credentials";
+  if (namesTheAddress(body)) return "invalid_credentials";
   if (status === 429 || status >= 500) return "provider_error";
   return "invalid_credentials";
 };
@@ -308,7 +356,9 @@ export function createAccountService(config) {
     /**
      * Ask the provider to send a link. The address is handed over and nothing
      * is said about whether it holds an account, which is the same sentence
-     * either way.
+     * either way. The answer goes through the same `classify` as a password
+     * sign in, so a provider that names the address on this path is collapsed
+     * here too rather than only on the other one.
      */
     async requestMagicLink(email) {
       if (!service.isConfigured()) return "provider_error";
@@ -325,7 +375,7 @@ export function createAccountService(config) {
         },
       });
       if (result.ok) return null;
-      return result.status >= 500 ? "provider_error" : "invalid_credentials";
+      return classify(result.status, result.body);
     },
 
     async signOut(session) {

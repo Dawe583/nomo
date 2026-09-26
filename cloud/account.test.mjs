@@ -37,6 +37,24 @@ const session = (over = {}) => ({
   ...over,
 });
 
+/**
+ * One service, one scripted provider answer, and a record of what was asked.
+ * `env: {}` is the shipped configuration, where sign up is off, so a failure
+ * here is the failure a visitor actually receives.
+ */
+const scriptedService = (reply, asked = []) =>
+  createAccountService({
+    supabaseUrl: "https://provider.invalid",
+    supabaseKey: "anon",
+    sessionSecret: SEAL_KEY,
+    siteOrigin: "https://chat.voidagent.tech",
+    env: {},
+    fetchImpl: async (url, init) => {
+      asked.push({ url: String(url), init });
+      return Response.json(reply.body ?? {}, { status: reply.status });
+    },
+  });
+
 test("the account cookie is sealed, and a tampered one does not open", () => {
   const sealed = sealSession(session(), SEAL_KEY);
   assert.deepEqual(openSession(sealed, SEAL_KEY).userId, session().userId);
@@ -203,6 +221,109 @@ test("the provider decides who the caller is, and an unverified token is nobody"
   assert.equal(await service.whoIs("revoked-token"), null);
   assert.equal(await service.whoIs(""), null);
   assert.equal(await service.whoIs(undefined), null);
+});
+
+test("every provider answer that names an address gets the one sentence a wrong password gets", async () => {
+  // Ten refusals, ten different shapes from the provider, one sentence out of
+  // here. The 5xx entries carry an address naming code or sentence and nothing
+  // else: on a 4xx every refusal is the same sentence anyway, so a rule that
+  // only ever looked at the status would leave this test green. The closing
+  // control proves the collapse is not a blanket "everything is the same".
+  const answers = [
+    { status: 400, body: { error_code: "invalid_credentials", msg: "Invalid login credentials" } },
+    { status: 400, body: { error_code: "user_not_found", msg: "User not found" } },
+    { status: 422, body: { error_code: "user_already_exists", msg: "User already registered" } },
+    { status: 404, body: { error_code: "user_not_found", msg: "No user found with this email" } },
+    { status: 503, body: { error_code: "user_already_exists" } },
+    { status: 500, body: { error_code: "user_not_found" } },
+    { status: 500, body: { error_code: "email_exists" } },
+    { status: 500, body: { error_code: "email_not_confirmed" } },
+    { status: 500, body: { msg: "User already registered" } },
+    { status: 500, body: { msg: "No user found with this email" } },
+  ];
+
+  for (const [index, answer] of answers.entries()) {
+    const asked = [];
+    const email = `person${index}@example.com`;
+    const said = `${answer.status} ${JSON.stringify(answer.body)}`;
+    const result = await scriptedService(answer, asked).signIn({
+      method: "password",
+      email,
+      password: "correct horse battery staple",
+    });
+    assert.deepEqual(result, { failure: "invite_required" }, `${said} became another answer`);
+    assert.equal(asked.length, 1, `${said}: one refusal, one call`);
+    assert.equal(asked[0].url.endsWith("/token?grant_type=password"), true);
+    assert.equal(asked[0].init.body.includes(email), true, `${said}: the address did reach the provider`);
+    const returned = JSON.stringify(result);
+    for (const word of [answer.body.msg, answer.body.error_code, email].filter(Boolean))
+      assert.equal(returned.includes(word), false, `${said}: ${word} came back out`);
+  }
+
+  // The control: a 5xx that names no address is still the provider's own
+  // failure, so a visitor can be told the service is down without either answer
+  // saying anything about whether an address exists.
+  assert.deepEqual(
+    await scriptedService({ status: 500, body: { msg: "upstream unavailable" } }).signIn({
+      method: "password",
+      email: "person@example.com",
+      password: "correct horse battery staple",
+    }),
+    { failure: "provider_error" },
+  );
+  assert.notEqual(FAILURE_STATUS.provider_error, FAILURE_STATUS.invite_required);
+
+  // The same rule runs where a link is asked for, which is a login and not a
+  // registration, so an address the provider names there is collapsed as well.
+  assert.equal(
+    await scriptedService({ status: 500, body: { error_code: "user_not_found" } }).requestMagicLink("person@example.com"),
+    "invalid_credentials",
+  );
+  assert.equal(
+    await scriptedService({ status: 400, body: { error_code: "user_not_found" } }).requestMagicLink("person@example.com"),
+    "invalid_credentials",
+  );
+  assert.equal(
+    await scriptedService({ status: 500, body: { msg: "upstream unavailable" } }).requestMagicLink("person@example.com"),
+    "provider_error",
+  );
+});
+
+test("a token is a bearer string, and a decodable claim inside one is not an identity", async () => {
+  // A token anybody could mint, carrying an id, an email and a role. It is well
+  // formed enough to decode and the provider refuses it, so the answer is nobody
+  // and the provider is still the thing that decided.
+  const forged = [
+    Buffer.from('{"alg":"HS256","typ":"JWT"}').toString("base64url"),
+    Buffer.from(
+      JSON.stringify({ sub: "attacker-chosen-user", email: "attacker@example.com", role: "admin" }),
+    ).toString("base64url"),
+    "signature",
+  ].join(".");
+  const asked = [];
+  const refused = scriptedService(
+    { status: 401, body: { msg: "invalid JWT: unable to parse or verify signature" } },
+    asked,
+  );
+  assert.equal(await refused.whoIs(forged), null);
+  assert.equal(asked.length, 1, "the token was confirmed at the provider, not read here");
+  assert.equal(asked[0].init.headers.Authorization, `Bearer ${forged}`);
+
+  // An answer the provider does confirm is an id and an email and nothing else,
+  // so there is no claim in a session for a handler to find and trust.
+  const confirmed = scriptedService({
+    status: 200,
+    body: {
+      id: "3f2b1c4e-0000-4000-8000-000000000000",
+      email: "person@example.com",
+      role: "admin",
+      user_metadata: { role: "admin" },
+    },
+  });
+  assert.deepEqual(await confirmed.whoIs("access-token"), {
+    id: "3f2b1c4e-0000-4000-8000-000000000000",
+    email: "person@example.com",
+  });
 });
 
 test("the OAuth state carries the owner sealed, and the provider cannot read it", () => {
