@@ -4,6 +4,38 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Desktop: a refused macOS keychain read is no longer reported as a missing
+  key. A key that exists but cannot be opened, because the access was denied
+  or the user cancelled, is now told apart from a key that was never created,
+  and a refused read prints fixed operator guidance instead of exiting with
+  `Cannot unlock the VOID workspace key in macOS Keychain`. Collapsing the two
+  cases would have let a fresh key be minted over an existing encrypted
+  workspace.
+- CLI: `void watch --ledger` now accepts a ledger directory and resolves it to
+  that workspace's ledger file, matching what the sibling commands read. A path
+  that is already a file is still taken as given, and a path that does not
+  exist yet is left alone rather than silently rewritten.
+- QA harness: the workspace preview now passes the caller's environment
+  through to the control plane instead of a two-value object. A permission mode
+  chosen by the operator was being dropped on the way in, so the preview always
+  served read-only and the document write path looked broken rather than never
+  enabled. The disposable preview data directories still override.
+- iOS: the app no longer triggers the UIKit App Config warnings about
+  orientation support and launch screens. The orientation and launch-screen
+  declarations are now build settings rather than missing, and the version keys
+  follow the project's own version and build number instead of hardcoded text.
+- iOS: the iPad contrast check no longer fails on a missing entry title. At
+  regular width the entry title lives in the navigation bar rather than the
+  scroll view, so the check now looks there as well. The AA contrast
+  requirement is unchanged and still measures rendered pixels.
+- Runtime: the budget crash-consistency check no longer depends on the wall
+  clock. It derived its clock from the current time plus an hour, so between
+  23:00 and 00:00 UTC the snapshot crossed a UTC day boundary, the reservation
+  was correctly filtered out as belonging to the previous day, and the check
+  failed every night for an hour while passing the rest of the day. The worker
+  and the inspecting ledger now share one fixed instant. The budget behaviour
+  itself is unchanged and correct.
+
 - Add a live ledger TUI with keyboard inspection and signature checks.
 - Refine the GUI with shared Apple-inspired styling, call search and details.
 - Bring TUI management closer to Claude Code: fuzzy slash commands, status,
@@ -40,7 +72,7 @@ All notable user-facing changes since the first repository commit.
   `/api/capabilities` advertised `documentEditing: false`.
 - Name the two permission-mode defaults. A local operator surface and the
   remote-facing control plane resolve an absent `VOID_PERMISSION_MODE`
-  differently on purpose; both are now named constants with a test instead of
+  differently on purpose; both are now named constants with a check instead of
   two unrelated literals that had drifted apart unnoticed.
 - Serve the frozen `void.companion.v1` outcome vocabulary from
   `operation.status`, and refuse a stored record carrying any other value.
@@ -73,7 +105,7 @@ All notable user-facing changes since the first repository commit.
   dependency, refuses a mismatched response identity, an oversized body, an
   unknown shape and a mutating call without an idempotency key, and never
   retries silently. Its canonical JSON is checked byte-for-byte against the
-  repository's own `packages/ledger/src/canonical.ts` running under Node.
+  repository's own canonical-JSON implementation running under Node.
 - Remove the unreachable pairing alert from the iOS companion entry screen. Its
   button is disabled in every state of this build, so the dialog that confirmed
   the same sentence already on screen could never open.
@@ -98,9 +130,9 @@ All notable user-facing changes since the first repository commit.
   from the existing ledger, journal and vault, with no new persisted state.
   Neither is an operational certification.
 - Move the Windows Credential Manager target name and the accepted blob length
-  out of the `cfg(windows)` block and pin them with tests, so a rule that could
+  out of the `cfg(windows)` block and pin them with checks, so a rule that could
   only be exercised on Windows is now exercised on every host. Renaming the
-  target turns two of those tests red.
+  target turns two of those checks red.
 - Add a real appearance preference to the iOS companion: light, dark and
   system, persisted across launches and applied once at the root, with copy in
   English and Czech. Two entry screens that the extra control pushed below the
@@ -140,7 +172,7 @@ All notable user-facing changes since the first repository commit.
   barrel re-exports the pack loader and the approval broker, both of which
   touch the filesystem. The workflow runtime refuses Node builtins, so the
   deployment failed. The grammar now lives in a leaf module the leaves share,
-  the barrel keeps the public names, and a test refuses a leaf that imports the
+  the barrel keeps the public names, and a check refuses a leaf that imports the
   barrel again.
 - Add a read budget to the file recovery vault, so a host that will not load a
   large artifact gets a refusal naming the size instead of an allocation it

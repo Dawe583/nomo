@@ -15,11 +15,265 @@ Evidence boundary of the 2026-09-25 update: source was re-read and the local too
 | S3, GitHub, Vercel | Source-inspected exclusions | Legacy capture or OAuth connection does not imply executable recovery. No first-release Undo claim. |
 | Mac direct beta | Historical packaged test, source-inspected | Ad-hoc signed Tauri app/DMG with bundled Node, not Developer ID notarization or App Sandbox. |
 | Mac App Store | No signed sandbox/device test | No store entitlements/provisioning/pkg or signed sandbox capture/Undo evidence. |
-| Native iPhone/iPad | Source-inspected; Release simulator build, simulator launch and current simulator test run observed 2026-09-25; no physical-device build, signed-device or store evidence | `apps/apple/` contains a native iOS 17 Xcode project, Swift package, app, 9 `VOIDTests` source cases, 6 `VOIDUITests` source cases and protocol fixtures. On 2026-09-25 a Release `iphonesimulator` build of the `VOID` scheme succeeded, the product installed and launched on an iPad Pro 11-inch (M5) simulator rendering the onboarding/entry screen, and a simulator test run passed `VOIDTests` 9/9 and `VOIDUITests` 6/6 against the current source. That product is ad-hoc signed with no team identifier, no entitlements and no bundle icon, so it is simulator evidence only. The separate `CompanionProtocolKit` host SwiftPM run passed 27/27 but is a macOS host run, not an iOS simulator or device result. A `generic/platform=iOS` device build failed on 2026-09-25 because no provisioning profile for `com.void.companion` is installed, the attached iPhone has Developer Mode off, and the project sets no `DEVELOPMENT_TEAM`. Physical iPhone/iPad install, App Store and TestFlight gates remain open. |
+| Native iPhone/iPad | Source-inspected; Release simulator build and simulator launch observed 2026-09-25, current simulator test run observed 2026-09-26; no physical-device build, signed-device or store evidence | `apps/apple/` contains a native iOS 17 Xcode project, Swift package, app, 9 `VOIDTests` source cases, 11 `VOIDUITests` source cases and protocol fixtures. On 2026-09-25 a Release `iphonesimulator` build of the `VOID` scheme succeeded and the product installed and launched on an iPad Pro 11-inch (M5) simulator rendering the onboarding/entry screen. A 2026-09-26 simulator test run against the current source passed `VOIDTests` 9/9 and `VOIDUITests` 11/11, ending `** TEST SUCCEEDED **`; the 2026-09-25 run of that same destination covered only 6 `VOIDUITests` cases and is superseded. That product is ad-hoc signed with no team identifier, no entitlements and no bundle icon, so it is simulator evidence only. The separate `CompanionProtocolKit` host SwiftPM run passed 27/27 but is a macOS host run, not an iOS simulator or device result. A `generic/platform=iOS` device build failed on 2026-09-25 because no provisioning profile for `com.void.companion` is installed, the attached iPhone has Developer Mode off, and the project sets no `DEVELOPMENT_TEAM`. Physical iPhone/iPad install, App Store and TestFlight gates remain open. |
 | Windows desktop | Out of scope for 1.0.1; current-source gate open | Historical beta-4 Actions evidence does not certify the current candidate. No current-source Windows packaging, installed smoke or full Windows recovery evidence is claimed. P10.09 remains open. |
 | Tooling | Current machine observation, 2026-09-25; Xcode metadata and Release simulator build succeeded | Node v26.8.1, pnpm 10.33.0; Xcode 27.0 build 27A266a selected at `/Applications/Xcode.app`. `xcodebuild -list` reports targets `VOID`, `VOIDTests`, `VOIDUITests`, configurations Debug/Release and schemes `CompanionProtocolKit`, `VOID`. The keychain holds one Apple Development identity that the project does not reference, and the provisioning profile directory is empty. Apple account, Developer ID, provisioning, archive, physical-device install and store access remain unverified. |
 
-Sources: `packages/cli/src/conformance.ts`, `packages/connectors/src/capability.ts`, `docs/RECOVERY-COVERAGE.md`, `docs/RECOVERY-CONTRACT.md`, `apps/desktop/src-tauri/tauri.conf.json`, `docs/GUI-COMPACT-VERIFICATION.md`. Current conformance commands: `node packages/cli/bin/void.mjs recovery conformance --adapter filesystem.managed`, and likewise `git.managed` and `managed-documents`; outputs summarized above.
+Sources: `packages/cli/src/conformance.ts`, `packages/connectors/src/capability.ts`, `docs/RECOVERY-COVERAGE.md`, `docs/RECOVERY-CONTRACT.md`, `apps/desktop/src-tauri/tauri.conf.json`, `docs/GUI-COMPACT-VERIFICATION.md`. Conformance was re-measured on 2026-09-26 with real exit codes rather than a pipeline's last-command status, which had made an earlier `git.managed` result look green when it had in fact been killed: `filesystem.managed` exit 0 with 37 scenarios passed and 0 failed, `managed-documents` exit 0 with 19 passed and 0 failed, and `git.managed` exit 0 with 55 passed and 0 failed. The runtime difference matters and was not recorded before: `git.managed` took roughly nine minutes against seconds for the other two, so it needs its own budget in any CI job rather than a shared short timeout.
+
+## 2026-09-26 web surface, credentialed end to end
+
+This is the first run of the web surface that exercised a real write, a real
+Undo and a real restart, rather than isolated route rendering.
+
+`pnpm run build:web` exits 0; Vite 7.3.6 writes `dist/web`. The only build
+warnings are module-level `"use client"` directives from `@tanstack/react-query`
+and `framer-motion`, and a 791 kB index chunk above the 500 kB warning
+threshold. No errors.
+
+Navigation was driven in headless Chromium at 1440x900 through the repo's own
+`scripts/src/cdp.mjs`, bound to 127.0.0.1. `/` returns 200 over `http/1.1` and
+mounts `#root`. All eight sidebar routes render with real content: `/overview`
+with stat tiles and a recent-work table, `/runs`, `/approvals` with the R3/R2
+risk banner, `/documents` with column headers. The composer is present on `/`
+and `/chat/new` and absent on the read-only routes, which is the intended
+design. Console errors, uncaught exceptions and warnings were 0 on every page.
+
+The write pass needed a second launcher. The default QA harness
+`scripts/src/preview-workspace.mjs` sets only `VOID_DATA_DIR` and
+`VOID_LEDGER_DIR`, so it inherits `DEFAULT_HTTP_PERMISSION_MODE = "read-only"`
+from `packages/workbench/src/gui.ts:195`. A first attempt through the composer
+therefore produced a session and an answer but no document, and the composer
+reported `Režim: jen čtení · vynucuje server`. That is correct fail-closed
+behaviour, not a defect, and the mode is deliberately not switchable from the
+UI. With `VOID_PERMISSION_MODE: 'normal'` supplied by the launcher, and acting
+only through the browser, the fixture provider issued a real
+`void_workspace_write` tool call and `GET /api/documents` returned `plan.md` at
+114 bytes with a real revision id. The browser rendered that row, and its
+content matched byte-exact through `GET /api/sessions/:id/documents`.
+
+Undo from the context panel opened a native dialog with a real diff, six lines
+before and `Dokument neexistuje` after. Confirming returned the document list
+to empty, set `content: null` and wrote a `recovery-` revision. The inverse is
+captured, previewed and applied by the server; it is not a client-side fiction.
+
+Persistence across a real restart is confirmed. After SIGTERM and a new process
+on the same `VOID_DATA_DIR`, `notes.md` came back at 27 bytes with revision
+`16ec5189-1f68-49ba-9faf-e75f6f02a1fd`, and the document history in the UI
+still listed all three operations, `notes.md write`, `plan.md undo` and
+`plan.md write`. The Undo record itself survived the restart.
+
+This closes the credentialed-backend gap for the web surface only. Real
+provider billing, real recovery targets and physical accessibility evidence are
+still not covered here, and the Vercel deployment is a separate surface with
+its own evidence. No source change was made in this run.
+
+## 2026-09-26 re-check of the two recorded P0 reliability findings
+
+Both were re-tested against the current source over the real control-plane
+API, driven through `scripts/src/preview-workspace.mjs` on 127.0.0.1 with a
+disposable `mkdtemp` data directory. One did not reproduce. The other was
+real, but not where it had been recorded.
+
+`POST /api/sessions/:id/branches` returning 404 did not reproduce. With a
+session that exists and a body the contract requires, `{"seq":1,
+"prompt":"b","idempotencyKey":"k1"}`, the route returns `201` with a child
+session, and an immediate replay of the identical request returns `201` with
+the same child id. A body missing `seq` or `idempotencyKey` correctly returns
+`400 invalid_branch` from `parseBranchInput` at
+`apps/control-plane/api/server.ts:567`, and an unknown session returns 404. The
+earlier observation is not carried forward as an open defect; if it was ever
+real, the route is not where it was measured.
+
+The permission-mode finding was misattributed. There is no runtime
+`PATCH /permission-mode` route and there is not meant to be: the server is the
+sole authority, `resolvePermissionMode` at
+`apps/control-plane/ui/src/permission-mode.tsx:15` reads the mode from
+`/api/capabilities`, and `usePermissionMode` returns `setMode: () => undefined`
+so a client cannot grant itself permission. A 404 from a hand-written path is
+the fail-closed design working, not a route discarding a value.
+
+What was actually broken sat one layer out, in the QA harness.
+`scripts/src/preview-workspace.mjs` built the server with a hardcoded two-key
+env object, `createControlPlaneServer({ env: { VOID_DATA_DIR, VOID_LEDGER_DIR } })`,
+so `VOID_PERMISSION_MODE` from the operator's environment was silently dropped
+and the harness always served `read-only`. The server honours the variable when
+it is present in the env object: passing the same env with
+`VOID_PERMISSION_MODE: 'normal'` resolves to `normal`, and omitting it still
+resolves to `read-only`. The harness now spreads `process.env` and keeps the
+disposable QA directories as the override, so the fail-closed default is
+unchanged and an explicitly requested mode is no longer swallowed.
+
+The practical cost of the old behaviour was that the write path looked broken.
+An operator following the harness would conclude document writes were refused
+and would write a private launcher to work around a defect that was one missing
+spread operator away from not existing.
+
+## 2026-09-26 every user-operable surface launched
+
+All 20 `void` subcommands were executed against real fixtures and a real
+disposable workspace rather than read. `classify` scored the shipped
+`fixtures/session.jsonl` as 30 calls, 25 r0, 3 r2, 2 r3, 0 unclassified.
+`verify` passed a real signed chain; `verify --standalone` correctly says
+`signature NOT VERIFIED` rather than implying one. `attest` emits a signed
+attestation, `export --bundle --state` produces four sections with per-section
+digests and `complete true`, and `export verify --bundle` re-hashes all of
+them while refusing a wrong anchor with exit 1. `doctor` reports 5 pass, 1 warn,
+0 fail, the warn being the genuinely unset `verify-key` on this machine, left
+unsuppressed. `approvals` requires a real 0700 directory holding a 0600
+`pending.json`, and `approve` prints `proxy resolution not confirmed` instead
+of claiming a success it cannot see.
+
+`void run` was driven through a real stdio upstream. An allowed call returned
+`{"text":"hello from void run"}` and wrote two signed ledger rows; a denied call
+returned structured JSON-RPC error `-32003` with the rule number, the rationale
+and `"retry":"do-not-retry"`, and wrote `deny` then `deny:resolved`. All 14
+`void recovery` actions ran on a real filesystem workspace: `health` exits 1
+`unavailable` before install and exits 0 `healthy` after, `execute` genuinely
+changed the target file, a wrong `--approve` digest was refused, and `apply`
+restored the file to its exact original bytes.
+
+`python/void-transport` ran 84 tests, OK. The client was then attached to a
+real spawned relay: handshake, 8 tools listed, a mutating call without an
+idempotency key refused with `pending_holds ()` proving nothing reached the
+wire, a malformed key refused, and a valid key reached the real server and
+returned a structured `missing_artifact`.
+
+`void recovery serve` over real JSON-RPC stdio returned
+`{"protocolVersion":"2024-11-05","serverInfo":{"name":"void-recovery",
+"version":"0.1.0"}}` and the same 8-tool catalogue, and a `void_recovery_plan`
+call returned a plan for an operation the CLI had actually journalled, so the
+MCP and CLI surfaces demonstrably share one signed journal.
+
+`node scripts/src/agentic-reverse-exercise.mjs` exits 0 with
+`agentic reverse exercise passed: 8 steps`: the target is inspected before any
+change, a refused destructive call leaves the bytes identical, an approved call
+captures then changes, a reused operation identity is refused, the signed
+journal verifies over 7 entries, a restarted runtime acts on the same
+workspace and history, the confirmed inverse restores exact bytes and mode 600,
+and a replayed inverse is refused.
+
+One genuine defect was found and fixed during this run. `void watch --ledger
+<dir> --workspace <ws>` exited 1 with `Read failed: Ledger unavailable or
+verification failed` while `feed` read the identical ledger fine, because the
+directory was passed straight into `readLedgerFeed` instead of being resolved
+to `$VOID_WORKSPACE.jsonl` the way `taint`, `verify`, `export` and `metrics` all
+resolve it. Fixed and pinned by `packages/cli/src/watch.test.ts`.
+
+Stated as not verified: `void agent` stops at the model-catalog gate because no
+provider is configured, so the agent session loop itself is untested. There is
+no replay apply, no `VOID_PG_URL` connector, no S3 path beyond a dry-run inverse
+plan, and no postgres or git recovery adapter. `watch` was exercised only in
+`--once` non-TTY mode, never the interactive path.
+
+### Correction on the agent loop, 2026-09-26
+
+The paragraph above frames the untested `void agent` loop as the largest gap
+against the reverse-tool objective and implies VOID needs a particular model.
+That framing is wrong and is withdrawn. VOID is a tool surface and an MCP
+server; the intelligence is supplied by whichever model the operator points it
+at, so the question is not which model VOID runs but whether the surface it
+exposes is correct for any provider.
+
+`packages/workbench/src/provider.ts` declares exactly two wire protocols,
+`compatible` and `anthropic`. Anything that is not `anthropic` normalizes to
+`compatible`, which is the OpenAI-compatible shape, so one endpoint covers
+OpenRouter, NVIDIA, Groq, Together, vLLM, LM Studio and a local llama.cpp
+server alike. Direct OpenAI URLs are refused on purpose, and the model is
+chosen by the operator, not by VOID.
+
+What that surface is tested for, in `node --test` over `provider-native`,
+`provider-retry` and `provider-stream` at 13/13: native Anthropic model, tool
+and usage shapes over the shared agent interface; transient rejection retried
+with identical model, messages and tools, while paid models, other providers,
+auth errors and long `Retry-After` are excluded; cancellation interrupts
+backoff without a second request; a lost connection and a partial stream are
+never retried; split UTF-8 and CRLF frames survive streaming; and the
+properties that matter most for a surface pointed at an untrusted model,
+namely that truncated JSON, a reasoning-only answer, a partial tool stream and
+truncated model output can never become a dispatched tool action, that a
+completed empty stream is reported as failure rather than a blank success, and
+that a secret split across provider chunks is redacted from the stream.
+
+So the honest remaining gap is narrow: no single provider has been exercised
+end to end on this machine, because none is configured and credentials are out
+of scope. That is an environment fact, not a product gate, and it does not
+block the tool/MCP surface from being called provider-agnostic.
+
+## 2026-09-26 iPad gate closed
+
+`VOIDUITests.testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast`
+was the one red case in the iPad run. It is now green on iPad Pro 11-inch (M5),
+iOS 27.0, Xcode 27.0, with `Executed 1 test, with 0 failures (0 unexpected) in
+68.900 seconds` and `** TEST SUCCEEDED **`.
+
+The app was not at fault. `measureEntryTitle` resolved the entry title through
+`app.scrollViews.staticTexts`, but `OnboardingView.swift` renders the scroll
+view's body header only when `showsHeader` is true and passes `showsHeader:
+false` at regular width, so on iPad the title exists solely as
+`navigationTitle(copy.title)` in the navigation bar. The query now tries the
+scoped element first and falls back to the unscoped
+`app.staticTexts["Connect to your Mac"].firstMatch`, which is the form other
+cases in the same file already use. `OnboardingView.swift` was not modified.
+
+The contrast assertion was not weakened. The helper still ends in a pixel
+measurement that splits the rendered window into glyph and surface colour and
+returns a contrast ratio, and the `>= 4.5` assertions for both light and dark
+are unchanged, so a merely-found title cannot pass. The passing run is
+therefore evidence that the navigation-bar title itself clears AA, not just
+that it was located.
+
+Two environment notes belong with this. First, reaching a clean run required
+freeing the host: the machine had ~73 MB free RAM with 10.9 GB of 12 GB swap
+in use, `xcodebuild` sat at 0% CPU, and a simulator died under that pressure
+with `Simulator device failed to launch com.void.companion`. Second,
+`xcodebuild` on this host has repeatedly finished every case and then hung
+without an exit code, so the console log, not the exit status, is the source of
+truth for these runs.
+
+## 2026-09-26 iOS App Config warnings cleared
+
+The build emitted UIKit App Config warnings for orientation support and a
+launch screen. The keys were declared but never reached the built plist:
+`apps/apple/project.yml` now sets
+`INFOPLIST_KEY_UISupportedInterfaceOrientations` and
+`INFOPLIST_KEY_UILaunchScreen_Generation` as build settings, and the
+per-idiom `UISupportedInterfaceOrientations~ipad` goes through a new
+`apps/apple/VOIDApp/Info.plist` declared in the XcodeGen `info:` block. The
+project comment records why it cannot be a build setting: Xcode's plist
+generator silently drops any `INFOPLIST_KEY_*` whose key name contains a
+tilde. That same file carries `CFBundleShortVersionString` and
+`CFBundleVersion` as `$(MARKETING_VERSION)` and `$(CURRENT_PROJECT_VERSION)`,
+so the plist can no longer advertise a version the project does not declare.
+Simulator evidence only; nothing here is a device or store claim.
+
+## 2026-09-26 a time-of-day test defect, found and fixed
+
+`node scripts/src/check-reverse-engine.mjs` reported 107 pass and 1 fail out of
+108 in its fifth suite. The failure was
+`packages/runtime/src/budget.test.ts:381`, "a worker killed between reserve and
+settle leaves a detectable charge that is never refunded", expecting `1` and
+observing `0` at line 419. It reproduced on three consecutive runs, so it was
+deterministic rather than flaky.
+
+The product was correct and the test was wrong. The budget ledger buckets
+charges by UTC date, `budget.ts:30` taking
+`now.toISOString().slice(0, 10)`, and `budget.ts:43` skips reservations whose
+day is not the current one. The test reserved on the real clock and then
+inspected with `now: () => new Date(Date.now() + 3_600_000)`. At the time this
+was run the machine was at 23:16 UTC, so the inspect clock landed on
+00:16 UTC the next day, the reservation was correctly filtered out as
+belonging to yesterday, and the snapshot read 0. The same thing happens to
+anyone running this suite between 23:00 and 00:00 UTC, which in CEST is
+01:00-02:00 local. Outside that hour the test passes.
+
+That is a real defect even though nothing shipped is broken. A nightly CI run
+would fail for an hour every day, and the obvious "fix" under that pressure is
+to weaken the assertion rather than to pin the clock. The worker and the
+inspecting ledger now share one fixed instant, midday UTC, which keeps the
+whole test inside a single day. Nothing else changed: the ledger still
+excludes a previous day's charges from today's limit, and a crashed
+reservation still survives in the store as expired rather than being refunded.
 
 ## 2026-09-25 Apple build and signing observation
 
@@ -33,7 +287,7 @@ Recorded separately by evidence grade so a simulator result is never read as a d
 | Simulator install and launch | `xcrun simctl install` and `xcrun simctl launch` on an iPad Pro 11-inch (M5) simulator | Installed and launched; the rendered entry screen showed the read-only pairing notice and an offline continue path. | Simulator rendering only |
 | Device build | `xcodebuild -scheme VOID -configuration Release -destination 'generic/platform=iOS' build` with an explicit team and `Apple Development` identity | `** BUILD FAILED **`: no provisioning profile for `com.void.companion`; automatic signing cannot generate one without `-allowProvisioningUpdates`, which was not passed. | Failed gate, not a device claim |
 | Signing inventory | `xcodebuild -showBuildSettings -scheme VOID`, provisioning profile directory, `xcodebuild -showdestinations` | `DEVELOPMENT_TEAM` and `CODE_SIGN_ENTITLEMENTS` are absent from the project file in every configuration, `CODE_SIGN_IDENTITY` is the legacy `iPhone Developer` alias with `PROVISIONING_PROFILE_REQUIRED=YES`, the profile directory is empty, and a physical iPhone is listed as a connected destination. A signing identity exists in the keychain but is not referenced by the project. | Inventory only; no credential read, no device build |
-| Simulator test run | `xcodebuild test -project VOID.xcodeproj -scheme VOID -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5)'` | `VOIDTests` 9/9 and `VOIDUITests` 6/6 passed, 0 failures, 96.2s. This is a current run against the current source, replacing the earlier historical 6/6 unit figure. | Simulator test run, not a device run |
+| Simulator test run | `xcodebuild test -project VOID.xcodeproj -scheme VOID -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5)'` | 2026-09-26: `VOIDTests` 9/9 and `VOIDUITests` 11/11 passed, 0 failures (`Executed 9 tests, with 0 failures (0 unexpected) in 0.032 (0.074) seconds` and `Executed 11 tests, with 0 failures (0 unexpected) in 252.918 (252.948) seconds`), ending `** TEST SUCCEEDED **`. This is a current run against the current source; the 2026-09-25 run of the same command covered 6 `VOIDUITests` cases, so that figure and the earlier historical 6/6 unit figure are superseded. | Simulator test run, not a device run |
 | Swift package test run | `cd apps/apple/CompanionProtocolKit && swift test` | 27/27 passed, including all 12 `SecurityRegressionTests` cases covering response scope mismatch, oversized and unknown response shapes, event-page replay-window/UTC/cursor rules, pre-transport request validation, a scoped operation-status store failing closed on corruption, IPv6 local-network impersonation and a URL outside the bound identity. | Host SwiftPM on arm64e-apple-macos14.0, not iOS simulator or device; `xcodebuild test -scheme CompanionProtocolKit` fails because that scheme is not configured for the test action |
 
 No archive, export, TestFlight, App Store Connect, upload or physical-device install was attempted. The failing device build names the missing input rather than closing P01.06, P06.01-P06.05, P10.04 or P11.01.
@@ -457,10 +711,39 @@ length moved out of the `#[cfg(windows)]` block, and
 `dev.void.desktop.workspace` service and account the macOS keychain uses, is
 NUL terminated exactly once, carries a non-ASCII account name whole, and is
 never shared between two workspaces. Renaming the target turns two of them
-red. `cargo test --offline` for the desktop crate is 16/16 on macOS. The
+red. `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml` for the
+desktop crate is 20/20 on macOS. The
 `CredReadW` and `CredWriteW` calls and the `#[cfg(all(test, windows))]` store
 tests still need a Windows machine. P10.09 is unchanged. See
 `docs/WINDOWS-DESKTOP.md`.
+
+### Desktop keychain access after rebuild
+
+Observed on 2026-09-26 on the local Mac candidate. The workspace key item
+`dev.void.desktop.workspace` exists in the login keychain, created
+2026-09-15, and the login keychain is unlocked with no timeout. The bundle is
+signed ad-hoc: `codesign -dv` reports `Signature=adhoc` and
+`TeamIdentifier=not set`. macOS binds a keychain item's access control to the
+signing identity that created it, and an ad-hoc signature changes on every
+rebuild, so the current build is no longer on that item's allowed list. The
+old code mapped every non-`errSecItemNotFound` status to one message, told the
+operator "cannot unlock", and then died in the Tauri setup hook, so the run
+ended in `Cannot unlock the VOID workspace key in macOS Keychain` with exit
+134 and no window. There is no VOID password and no workspace password in this
+path: the key is 32 random bytes VOID generated itself. The only password macOS
+ever asks for here is the Mac login password, used to authorise the consent
+prompt or unlock the login keychain.
+
+The fix keeps the tight access control. Reporting a refused read as a missing
+item would let `load_or_create` generate a fresh key over the existing
+`workspace.enc`, so the two cases are now distinct and pinned by
+`keychain::mac_read_tests`. The operator remedy is stable signing identity,
+which `apps/desktop/scripts/build-policy.mjs` already honours through
+`APPLE_SIGNING_IDENTITY` and which defaults to `-` (ad-hoc); that default is
+the reason a rebuild loses access, and it is unchanged here. Deleting the item
+is not a remedy, because the existing ciphertext then has no key. Gate status:
+the keychain guidance is done, the stable-identity local build default is not,
+and no packaged bundle is claimed until one is built and launched.
 
 ## Distribution and retained-format rules
 
@@ -521,7 +804,7 @@ Every row starts open. A gate labels what must be run or witnessed for that requ
 | P07.06 | Add iPad hardware keyboard, portrait/landscape/multitasking and VoiceOver navigation. | Apple client + recovery | Open: paired-device chat/write/Undo E2E + force-quit/drift/VoiceOver. |
 | P08.01 | Add a short guided safe-workspace exercise; no customer account or production mutation is needed to learn Undo. | Desktop/UI | Open: desktop new-user flow + diagnostic secret-exclusion tests. |
 | P08.02 | Show running build/version/channel, current executor, capability limitations, storage location and provider snapshot. | Desktop/UI | Open: desktop new-user flow + diagnostic secret-exclusion tests. |
-| P08.03 | Replace opaque startup exits with actionable keychain/runtime/permission guidance, preserving a safe redacted diagnostic path. | Desktop/UI | Open: desktop new-user flow + diagnostic secret-exclusion tests. |
+| P08.03 | Replace opaque startup exits with actionable keychain/runtime/permission guidance, preserving a safe redacted diagnostic path. | Desktop/UI | Open: the keychain and runtime halves are delivered, the permission half is not. 2026-09-26: `keychain::classify_mac_read` splits `errSecItemNotFound` from `errSecAuthFailed`, `errSecInteractionNotAllowed` and `errSecUserCanceled`, which the previous code collapsed into a single arm, and `main.rs` prints fixed operator guidance for `KEYCHAIN_ACCESS_DENIED` and for the runtime categories through `startup_guidance`, instead of only pointing at a log. The `Absent`/`Denied` split is pinned by `keychain::mac_read_tests`, because reporting a refused read as a missing item would let `load_or_create` mint a fresh key over an existing encrypted workspace. Pinned by `cargo test` 21/21 on macOS in this tree, the 21st case being the added `startup_guidance` assertion. Still open: there is no permission failure path at startup to guide, so the permission half of this requirement still produces no actionable guidance, and the gate stays open. See "Desktop keychain access after rebuild". |
 | P08.04 | Add diagnostics preview/export with an allowlist: build, OS, capability versions, failure codes and opaque IDs. Unit-test exclusion of synthetic secrets and content. | Desktop/UI | Open: desktop new-user flow + diagnostic secret-exclusion tests. |
 | P08.05 | Expose privacy/support/release notes and explicit export/delete/reset choices consistent with retained signed evidence. | Desktop/UI | Open: desktop new-user flow + diagnostic secret-exclusion tests. |
 | P08.06 | Fix outdated provider bootstrap instructions and stale beta download links. Store builds use Store updates; direct builds may initially use a verified release link rather than a new updater framework. | Desktop/UI | Open: desktop new-user flow + diagnostic secret-exclusion tests. |
@@ -530,12 +813,12 @@ Every row starts open. A gate labels what must be run or witnessed for that requ
 | P09.03 | Test offline, revoked token, missing key, corrupted artifact, full storage, executor crash before/after dispatch and before/after recovery receipt. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. Partial 2026-09-25 evidence: missing, wrong and short credentials were refused with 403 (S-10); unknown, digest-mismatched and unapproved applies were refused with 409 without mutation (S-06, S-07); a stale plan could not overwrite a human edit (S-07); a missing key, a wrong key, a forged approval digest and a forged plan digest each failed closed without mutating the file (L-03, L-04, L-05); a deleted retained signing key was refused with a stable message and never silently regenerated (L-07); a forged journal line turned health and plan unsafe until the original history was restored (L-06); backup verification returned `history_unanchored`, `history_incomplete` and `missing_artifact` for a wrong or missing anchor, a tampered journal and a deleted vault artifact (L-08); a denied operation identity stayed consumed (L-03); and `packages/runtime` `recovery-crash` plus `persistence-fault` pass 36/36 across injected ENOSPC and SIGKILL. Not covered: real mid-stream revocation, genuinely full storage, a physically killed executor, and any power loss. |
 | P09.04 | Verify no secret/content leaks in exported diagnostics, logs, build artifacts, crash reports or screenshots. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. Partial 2026-09-25 evidence: sentinel private and API keys never appeared in ledger-verify, capabilities or provider error responses (S-12); the Rust startup-log allowlist passes 6/6; the Swift package bounds and redacts diagnostic identifiers and message content. Added the same day: the companion diagnostics surface is proven to refuse a sentinel credential and a home-directory path, caps the page at 100 entries and the summary at 320 characters counted in whole code points so an astral character cannot push it one unit over the frozen bound, and every live response body is additionally run through the frozen fixture field, bound and allowlist predicates. Still not covered: exported diagnostics, logs, build artifacts, crash reports or screenshots taken from an exact packaged build. |
 | P09.05 | Test real provider streaming in an explicitly authorized bounded-cost sandbox. Without credentials/budget, leave that gate open; fixtures cannot close it. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. No provider sandbox, credential or budget was authorized, so no real provider streaming run is claimed. Fixture and stream-unit coverage cannot close this gate. |
-| P09.06 | Run VoiceOver and physical keyboard tests, true 200% desktop zoom, iPhone/iPad safe areas, rotation, Dynamic Type and background lifecycle. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. The 2026-09-25 simulator run now covers 9 `VOIDTests` and 8 `VOIDUITests` cases, and the web gate `scripts/src/ui-layout.test.mjs` covers 69 desktop and 55 mobile tab stops with a measured focus ring, reduced motion collapsing 12 animated elements to 0, and mobile touch targets. Those are still synthetic: a real Tab in a headless browser is not a physical keyboard, emulated 200% zoom is not browser zoom, and a simulator is not a device. VoiceOver, physical keyboard, true browser zoom, iPhone/iPad safe areas, rotation, Dynamic Type and background lifecycle remain untested, so this gate stays open. |
+| P09.06 | Run VoiceOver and physical keyboard tests, true 200% desktop zoom, iPhone/iPad safe areas, rotation, Dynamic Type and background lifecycle. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. The 2026-09-26 simulator run now covers 9 `VOIDTests` and 11 `VOIDUITests` cases, and the web gate `scripts/src/ui-layout.test.mjs` covers 69 desktop and 55 mobile tab stops with a measured focus ring, reduced motion collapsing 12 animated elements to 0, and mobile touch targets. Those are still synthetic: a real Tab in a headless browser is not a physical keyboard, emulated 200% zoom is not browser zoom, and a simulator is not a device. VoiceOver, physical keyboard, true browser zoom, iPhone/iPad safe areas, rotation, Dynamic Type and background lifecycle remain untested, so this gate stays open. |
 | P09.07 | Validate performance/load budgets and record machine/device/network details. | Independent QA/security | Open: exact-build install/security/device/performance acceptance matrix. The 2026-09-25 simulator build, install and launch were not an instrumented performance run. The recorded transport load result under P02.06 is a relay bound, not this gate, and no device or network profile was captured. |
 | P10.01 | Coordinate marketing version 1.0.1, monotonically increasing Apple build numbers and source/binary provenance. Do not bump unrelated package compatibility blindly. | Release operator/product | Source-inspected and contract-tested: `apps/desktop/package.json`, `apps/desktop/src-tauri/Cargo.toml`, `apps/desktop/src-tauri/Cargo.lock` and `apps/desktop/src-tauri/tauri.conf.json` intentionally agree on local candidate `1.0.1`; `apps/desktop/release.test.mjs` verifies those sources. The Apple project metadata remains `MARKETING_VERSION=1.0.1` and `CURRENT_PROJECT_VERSION=1`. The bundled Node runtime remains separately pinned to `24.21.0`; root and unrelated workspace package versions are intentionally unchanged. No exact committed source/binary provenance, clean-tree record, or approved Apple build number is recorded. |
 | P10.02 | Freeze persisted-format migration/backup documentation and test upgrade from advertised prior versions. | Release operator/product | Source-inspected: `docs/RECOVERY-CONTRACT.md` documents current journal/vault formats and the complete stopped-executor backup; `scripts/src/recovery-backup.mjs` documents SQLite online backup, WAL manifest contents, and verification categories. No supported prior-version source, old-to-new upgrade fixture, or downgrade guarantee is advertised; those remain blockers. |
 | P10.03 | Configure separate Developer ID/notarized DMG and Mac App Store signing/provisioning paths. Sign nested executables and test exact packaged artifacts. | Release operator/product | Source-inspected: `apps/desktop/src-tauri/tauri.conf.json` targets `app` + `dmg`; `apps/desktop/scripts/build.mjs` defaults Apple signing identity to `-`, and `apps/desktop/README.md` says builds are ad-hoc without Developer ID/notarization credentials. No signed/notarized artifact, separate Mac App Store path, or nested-executable evidence is recorded. Blocker: authorized Apple Developer identity/team and signing/notary setup. |
-| P10.04 | Configure iOS distribution provisioning, archives, TestFlight and build environment. Verify installed full Xcode/SDK rather than relying on old machine inventory. | Release operator/product | Source-inspected and simulator-built: `apps/apple/` contains the native iOS 17 Xcode project, Swift package, app, unit tests, UI-test source and protocol fixtures. Current source contains 9 `VOIDTests` cases and 6 `VOIDUITests` cases. On 2026-09-25 Xcode metadata resolved, the Release `iphonesimulator` build of the `VOID` scheme succeeded, the product installed and launched on a simulator, and a simulator test run passed `VOIDTests` 9/9 and `VOIDUITests` 6/6 against the current source, superseding the earlier historical 6/6 unit figure. The `CompanionProtocolKit` host SwiftPM run passed 27/27 on macOS host, which is client-side contract enforcement and not an iOS simulator or device result. Reserved-vault evidence is 12/12. The distribution path is not configured: `DEVELOPMENT_TEAM` and `CODE_SIGN_ENTITLEMENTS` are absent from the project, `CODE_SIGN_IDENTITY` is the legacy `iPhone Developer` alias, the provisioning profile directory is empty, and a `generic/platform=iOS` Release build failed for want of a profile for `com.void.companion`. No archive/export was produced and the project has no asset catalog, so the built product carries no app icon. The attached iPhone reports Developer Mode off, so even a dev-signed install is blocked. Provisioning, archives, physical iPhone/iPad install, signed-device evidence, App Store Connect and TestFlight remain open. |
+| P10.04 | Configure iOS distribution provisioning, archives, TestFlight and build environment. Verify installed full Xcode/SDK rather than relying on old machine inventory. | Release operator/product | Source-inspected and simulator-built: `apps/apple/` contains the native iOS 17 Xcode project, Swift package, app, unit tests, UI-test source and protocol fixtures. Current source contains 9 `VOIDTests` cases and 11 `VOIDUITests` cases. On 2026-09-25 Xcode metadata resolved, the Release `iphonesimulator` build of the `VOID` scheme succeeded and the product installed and launched on a simulator. A 2026-09-26 simulator test run then passed `VOIDTests` 9/9 and `VOIDUITests` 11/11 against the current source, ending `** TEST SUCCEEDED **`; the 2026-09-25 run covered 6 `VOIDUITests` cases, so it and the earlier historical 6/6 unit figure are superseded. The `CompanionProtocolKit` host SwiftPM run passed 27/27 on macOS host, which is client-side contract enforcement and not an iOS simulator or device result. Reserved-vault evidence is 12/12. The distribution path is not configured: `DEVELOPMENT_TEAM` and `CODE_SIGN_ENTITLEMENTS` are absent from the project, `CODE_SIGN_IDENTITY` is the legacy `iPhone Developer` alias, the provisioning profile directory is empty, and a `generic/platform=iOS` Release build failed for want of a profile for `com.void.companion`. No archive/export was produced and the project has no asset catalog, so the built product carries no app icon. The attached iPhone reports Developer Mode off, so even a dev-signed install is blocked. Provisioning, archives, physical iPhone/iPad install, signed-device evidence, App Store Connect and TestFlight remain open. |
 | P10.05 | Complete data inventory, in-app privacy policy, App Privacy labels, retention/deletion policy and support contact. Audit required-reason APIs/SDK manifests from actual dependencies. | Release operator/product | Source-inspected data categories: local encrypted workspace snapshots (sessions, provider profiles, connector credentials, managed documents, signed history) under `VOID_DATA_DIR`; JSONL ledgers under `VOID_LEDGER_DIR`; approval state under `VOID_APPROVALS_DIR`; recovery keys/journals/vault; legacy snapshots and operator exports. Cloud Neon stores session/preference/provider/integration/OAuth/hold documents, append-only events, and signed ledger; provider/OAuth secrets are encrypted. External flows include model providers, GitHub/Vercel/Supabase MCP, Appwrite, Neon/Vercel Workflow, and optional S3/Postgres/Prime. No privacy policy, App Privacy/PrivacyInfo manifest, support contact, or product-wide retention/deletion policy was found; support/privacy/legal ownership remains unassigned. Local recovery evidence/artifacts are retained by design, legacy snapshot GC is namespace-scoped, cloud ledger/events are append-only, and no data-subject deletion workflow is mounted. |
 | P10.06 | Decide export-compliance classification for encryption deliberately; do not blindly set a no-encryption exemption flag. | Release operator/product | Source-inspected encryption includes local/cloud AES-256-GCM, Ed25519 signing, HTTPS/TLS, and Keychain/Credential Manager or mode-0600 key files. No `ITSAppUsesNonExemptEncryption`, export classification, entitlements, or native iOS metadata exists in the repository; the Apple classification cannot be inferred from source and must be decided by the release operator before store metadata. |
 | P10.07 | Prepare accurate device screenshots, descriptions, age rating, reviewer instructions, accessible test account/demo and a reachable safe test executor for review. | Release operator/product | Source-inspected: the public demo is isolated to managed documents; current UI exposes provider/integration settings and local chat/document/ledger exports, but no P10-specific App Store screenshots, descriptions, age rating, reviewer instructions, or native iOS asset set was identified. OAuth/provider consent and a reachable safe test executor remain external setup gates. |
@@ -559,7 +842,7 @@ Every row starts open. A gate labels what must be run or witnessed for that requ
 | D02.05 | Catalog navigation, chat, attachment, tool, policy, approval, preview, undo, conflict, unknown, executor, pairing, network, backup, privacy and support symbols. Avoid emoji/ASCII as the only functional icon. | Design system | Open: component gallery + contrast/focus/target checks. |
 | D02.06 | Icon-only controls receive accessible names/tooltips; destructive and ambiguous actions also show text. Never distinguish approved/conflict/unknown by color alone. | Design system | Open: component gallery + contrast/focus/target checks. |
 | D02.07 | Build a lightweight internal component/state gallery using existing app/dev tooling. Do not add Storybook or a new UI kit unless the existing tools genuinely cannot serve the need. | Design system | Closed 2026-09-25 without a new tool: `/gallery` is an internal-only route in the existing app, mounted from `Root` so `App` never mounts, and it issues zero `/api/` requests. It is absent from `routes`, so it is out of the sidebar and out of the command palette, it sets its own internal document title, and it renders only static representative state. `apps/control-plane/ui/src/gallery.test.ts` and `scripts/src/ui-layout.test.mjs` run it through the same nine-viewport, focus-ring, reduced-motion, zoom and touch-target checks as the rest of the product, including an assertion that a synthetic secret fed through `RedactedJson` never reaches the DOM. `apps/control-plane/ui/src` 73/73 and `scripts/src/ui-layout.test.mjs` 22/22. |
-| D03.01 | Button and icon button variants with pending/disabled behavior. | UI implementation | Inventory 2026-09-25, counting only a component mounted in a running surface: 24 of the 30 D03 families have a real consumer with a `file:line`, 4 are partial, and 2 have none. D03.22 (backup and retained-history health) and D03.26 (pairing QR, confirmation, expiry, device revoke) have no consumer anywhere in `apps/control-plane/ui/src`. D03.25, D03.28, D03.29 and D03.30 are partial. These are absences, not test failures: no run closes a family that has nothing mounted. The primitives named in the plan and absent from the code are tooltip, `role="menu"`, `role="tablist"`/`role="tab"`, `role="switch"`, `role="combobox"`, skeleton, toast, native sheet, split-view, inspector and breadcrumb; the app uses native `<details>`/`<summary>` in 18 places instead. The full per-family table with `file:line` is the evidence for this row, and D01 design approval is still outstanding, so building a missing family is not authorised work. |
+| D03.01 | Button and icon button variants with pending/disabled behavior. | UI implementation | Open: the requirement itself is witnessed; the family inventory behind it is not. Requirement evidence, 2026-09-26: `scripts/src/ui-layout.test.mjs:318`, "D03.01 the shared DataTable refresh exposes a pending state", holds the refetch open through `scripts/src/ui-matrix.mjs:786` so the pending state is observed rather than raced, and passed in that file's 22/22 run against current source. Inventory evidence, recounted 2026-09-26 across `apps/control-plane/ui/src`: D03.22 (backup and retained-history health) and D03.26 (pairing QR, confirmation, expiry, device revoke) have no consumer, and neither does D03.28 (guided first action and checklist progress), which the 2026-09-25 inventory called partial; no onboarding or checklist component exists, the nearest surface being the public demo. The earlier 24/4/2 split is therefore unconfirmed and is not republished here: three families are confirmed to have no consumer, while the partial and full-consumer counts were not re-derived, so this row records no tally. The 2026-09-25 cell also cited a per-family `file:line` table as its evidence, and no such table exists in `docs/`; the only per-family mapping in the tree is the internal gallery, which names 12 D03 families, so that reference is withdrawn. The primitives named in the plan and absent from the code are tooltip, `role="menu"`, `role="tablist"`/`role="tab"`, `role="switch"`, `role="combobox"`, skeleton, toast, native sheet, split-view, inspector and breadcrumb, each at zero occurrences in the same recount; the app uses native `<details>`/`<summary>` in 20 places instead, not the 18 previously recorded. These are absences, not test failures: no run closes a family that has nothing mounted, and D01 design approval is still outstanding, so building a missing family is not authorised work. |
 | D03.02 | Text field, search, secure field, select/combobox and validated field message. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
 | D03.03 | Checkbox, radio/segmented control and switch with actual semantic role. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
 | D03.04 | Badge/status label, progress, skeleton and inline notice. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
@@ -589,14 +872,14 @@ Every row starts open. A gate labels what must be run or witnessed for that requ
 | D03.28 | Guided first safe action and checklist progress. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
 | D03.29 | Version/about/update information and release notes. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
 | D03.30 | Diagnostics preview/export, privacy/support links and data management. | UI implementation | Open: real consumer + interaction states + gallery for each family. |
-| D04.01 | Mac: chat, overview, conversations, runs, documents, approvals, ledger, connections, models, settings and public demo. Include search, detail views, paging, export and all dialogs. | UI QA/product | Routes measured on the 2026-09-25 build: `/chat`, `/overview`, `/runs`, `/documents`, `/approvals`, `/ledger`, `/connections`, `/models`, `/settings` and `/demo` all exist and are server-served. The "conversations" destination is `/sessions`, named "Konverzace / Conversations" in the sidebar (`main.tsx:92`); `/conversations` is a genuine 404 and was not invented into existence. Still open: per-route search, detail views, paging, export and dialogs were not individually exercised, and the public demo settles on "Demo is currently unavailable" when the fixture origin has no `/api/demo`. |
-| D04.02 | iPhone: onboarding/pairing, workspace/session selection, chat, activity, approval/recovery detail, documents and settings/device management. | UI QA/product | Partly closed by the 2026-09-25 simulator matrix, partly not built. `xcodebuild test` on iPhone 18 Pro and iPad Pro 11-inch (M5), iOS 27.0, Xcode 27.0: `VOIDUITests` 8/8 and `VOIDTests` 9/9 on both device classes. Screenshots in `tmp/apple-ui-matrix/screenshots/` (iPhone and iPad, English and Czech, light and dark). Present: onboarding `OnboardingView.swift:3`, pairing card `:104-125`, activity `SessionsView` `:199-247`, settings `SessionDetailView.swift:36-75`. Not implemented, so no run can close them: workspace selection (no picker exists), session selection (read-only list, two hardcoded rows `AppModel.swift:71-77`), chat (no composer anywhere under `apps/apple`), documents, approval or recovery actions, and device management (the only control, `SessionDetailView.swift:56-60`, is disabled because `connectionState` never becomes `paired`). The pairing CTA is intentionally disabled: `canPair` is false in every state of this build. |
-| D04.03 | iPad: sidebar plus chat/detail, resizable/multitasking layouts, inspector, keyboard shortcuts and pointer interactions. Do not simply stretch the phone layout. | UI QA/product | Partly closed. `NavigationSplitView` sidebar plus detail at `RootView.swift:15-27` with the sidebar at `:45-74`, and a real `horizontalSizeClass == .regular` split view, captured on an iPad Pro 11-inch (M5) simulator. Not implemented: inspector, keyboard shortcuts (no `keyboardShortcut` in the target), and chat detail. Pointer interaction is not verifiable on this machine; `simctl` has no mouse event injection. |
-| D04.04 | Preserve drafts, IME, attachment removal, stream/cancel, status truth and focus when moving components. | UI QA/product | Measured 2026-09-25 in headless Chromium over the built bundle: a draft survives both a route change (`/chat/<id>` to `/settings` and back) and an in-place sidebar collapse with its exact text intact; IME composition inserts characters with no submit and no loss; attachments add and remove. One defect was found and fixed: pressing Stop unmounted the focused button and dropped focus to `document.body`, so `stopRun` now returns focus to the composer in its `finally`. Reverting that fix turns the gate red. |
-| D04.05 | Capture actual built screens in both themes and English/Czech with long realistic content, not only component previews. | UI QA/product | Web closed 2026-09-25: light/en, light/cs, dark/en and dark/cs each render 2430-2542 characters with a 589px transcript, zero overflow, a visible composer and no error boundary; the public demo renders the same four combinations on its own server with the correct "From idea. Back anytime." and "Od nápadu. Zpět kdykoliv." headings, and the demo is clean across all nine viewports. Native closed the same day: the app now has a real appearance preference, `AppTheme` in `apps/apple/VOIDApp/AppModel.swift:81-98` persisted through `@AppStorage("void-theme")` and applied once as `.preferredColorScheme` at `RootView.swift:35`, defaulting to `system` so the OS setting wins. Copy exists in both languages, `AppCopy.swift:124-127` English and `:73-76` Czech. Four screens captured on an iPhone 18 Pro simulator, iOS 27.0: `tmp/apple-theme/{light-en,dark-en,light-cs,dark-cs}.png`. Measured, not asserted by eye: the entry title renders `rgb(0,0,0)` on `rgb(255,255,255)` at 21.00:1 in light and `rgb(255,255,255)` on `rgb(0,0,0)` at 21.00:1 in dark, cross-checked by a host-side tool independent of XCTest. Cutting `preferredColorScheme` makes the two render identically and turns the test red. Long realistic content on a small phone, Dynamic Type, and the iPad regular-width layout are not covered. |
-| D04.06 | Web viewport matrix:320x568,390x844,430x932,768x1024,834x1112,1024x768,1280x800,1440x900 and short landscape. Native matrix includes supported physical iPhone/iPad classes, orientation, larger text and keyboard. | UI QA/product | Web closed 2026-09-25 with a real three-exchange conversation carrying a heading, a table and a code block. All nine viewports report `scrollWidth == clientWidth`, so horizontal overflow is zero everywhere, and Send is reachable at all nine. Native part stays open: it needs physical iPhone/iPad classes, orientation changes, larger text and a hardware keyboard. |
-| D04.07 | Keep basic320x568 transcript>=200px and ordinary desktop transcript>=60% work area. Test stacked notices/tool/attachments and long draft; Send/Stop must remain reachable. Keyboard-visible tiny viewports prioritize accessible composer, with transcript shrink explicitly measured rather than a physically impossible fixed height promise. | UI QA/product | Closed 2026-09-25 with measured pixels: 320x568 transcript 372px of 520px work area (71.5%), 390x844 648/796 (81.4%), 430x932 736/884 (83.3%), 768x1024 813/976 (83.3%), 834x1112 901/1064 (84.7%), 1024x768 557/720 (77.4%), 1280x800 589/752 (78.3%), 1440x900 689/852 (80.9%). The stacked case at 320x568 with a 14-line draft and an attachment measured transcript 254px, notices 80px, attachments 56px, Send still reachable and the attachment removable. A keyboard-sized 667x375 measured 179px and 54.7%, which is reported rather than promised away, exactly as this row allows. |
-| D04.08 | Verify real keyboard focus, VoiceOver, contrast, target sizes, reduced motion, zoom and app resume. Screenshot comparison supplements interaction tests, not replaces them. | UI QA/product | Web closed 2026-09-25 with a browser gate, `scripts/src/ui-layout.test.mjs` 12/12: 69 desktop and 55 mobile tab stops, none without a solid outline of at least 2px; the composer textarea measured with a real Tab at 1280x800 and 390x844 shows a solid 2px ring in the app's own `--focus` token with `:focus-visible` true; 12 animated elements normally and 0 under `prefers-reduced-motion: reduce`; no sub-44px touch target on mobile except the visually hidden file input, and none at all in settings at 390x844. One real defect was found and fixed: the composer textarea had no visible focus ring, because `.composer textarea { outline: none }` outranked `:focus-visible` and the halo painted the canvas colour on the canvas colour; a real `:focus-visible` rule reusing the existing token and the existing 2px value was added. Reverting it turns the gate red. Contrast was not measured numerically and app resume was not exercised. On the native side, `VOIDUITests` asserts `accessibilityLabel` on two surfaces, `isHittable` on two, `isEnabled` on four, a 44-point minimum target height on four, a non-zero on-screen frame on four, zero credential fields on three, and that an activity row is announced as one combined element. Still missing there: VoiceOver focus order, measured contrast, reduced motion, zoom and app resume. The `accessibilityIdentifier` values `activity.settings` and `sidebar.settings` are defined in the app but referenced by no test, so they are dead metadata. | On the native side an appearance control is now part of the entry screen with a 44pt minimum target and an accessible label, and the four theme-by-language screens above are measured, but secondary `.foregroundStyle(.secondary)` text contrast was deliberately not claimed: the element capture came back unreadable in both themes, so the AA figure covers primary-label text only. A real palette change is needed to close that, which is separate work. Reduced motion on the native side is a finding, not coverage: the app animates nothing, so there is no branch to test and none was faked.
+| D04.01 | Mac: chat, overview, conversations, runs, documents, approvals, ledger, connections, models, settings and public demo. Include search, detail views, paging, export and all dialogs. | UI QA/product | Open: Routes measured on the 2026-09-25 build: `/chat`, `/overview`, `/runs`, `/documents`, `/approvals`, `/ledger`, `/connections`, `/models`, `/settings` and `/demo` all exist and are server-served. The "conversations" destination is `/sessions`, named "Konverzace / Conversations" in the sidebar (`main.tsx:92`); `/conversations` is a genuine 404 and was not invented into existence. Still open: per-route search, detail views, paging, export and dialogs were not individually exercised, and the public demo settles on "Demo is currently unavailable" when the fixture origin has no `/api/demo`. |
+| D04.02 | iPhone: onboarding/pairing, workspace/session selection, chat, activity, approval/recovery detail, documents and settings/device management. | UI QA/product | Open: partly closed, partly not built. Corrected 2026-09-26: the earlier `VOIDUITests 8/8` figure was stale. The current source carries 11 `VOIDUITests` cases, and a full `xcodebuild test` on iPad Pro 11-inch (M5), iOS 27.0, Xcode 27.0, reports `Executed 9 tests, with 0 failures` for `VOIDTests` and `Executed 11 tests, with 0 failures (0 unexpected) in 252.918 seconds` for `VOIDUITests`, ending `** TEST SUCCEEDED **`. Getting there required a source fix, not a rerun: `measureEntryTitle` looked for the entry title only inside the scroll view, but at regular width `OnboardingView.swift` passes `showsHeader: false` and the title exists only as the navigation bar title, so the query now falls back to the unscoped element. The AA contrast assertion is unchanged and still measures rendered pixels, so the pass means the navigation-bar title itself clears 4.5:1. Screenshots in `tmp/apple-ui-matrix/screenshots/` (iPhone and iPad, English and Czech, light and dark). Present: onboarding `OnboardingView.swift:3`, pairing card `:104-125`, activity `SessionsView` `:199-247`, settings `SessionDetailView.swift:36-75`. Not implemented, so no run can close them: workspace selection (no picker exists), session selection (read-only list, two hardcoded rows `AppModel.swift:71-77`), chat (no composer anywhere under `apps/apple`), documents, approval or recovery actions, and device management (the only control, `SessionDetailView.swift:56-60`, is disabled because `connectionState` never becomes `paired`). The pairing CTA is intentionally disabled: `canPair` is false in every state of this build. |
+| D04.03 | iPad: sidebar plus chat/detail, resizable/multitasking layouts, inspector, keyboard shortcuts and pointer interactions. Do not simply stretch the phone layout. | UI QA/product | Open: Partly closed. `NavigationSplitView` sidebar plus detail at `RootView.swift:15-27` with the sidebar at `:45-74`, and a real `horizontalSizeClass == .regular` split view, captured on an iPad Pro 11-inch (M5) simulator. Not implemented: inspector, keyboard shortcuts (no `keyboardShortcut` in the target), and chat detail. Pointer interaction is not verifiable on this machine; `simctl` has no mouse event injection. |
+| D04.04 | Preserve drafts, IME, attachment removal, stream/cancel, status truth and focus when moving components. | UI QA/product | Open: the draft and cancel-focus behaviour is witnessed; the IME claim is not pinned. Witnessed 2026-09-26 in `scripts/src/ui-layout.test.mjs` at 22/22: "D04.04 the draft survives a route change and an in-place view switch" (line 176) and "D04.04 cancelling a run returns focus to the composer" (line 181). The second pins a real defect: pressing Stop unmounted the focused button and dropped focus to `document.body`, so `stopRun` returns focus to the composer in its `finally`; reverting that fix turns the gate red. Attachment add and remove are asserted at `scripts/src/ui-layout.test.mjs:65,69`, in the D04.07 stacked case rather than this one. The 2026-09-25 claim that IME composition inserts characters with no submit and no loss is withdrawn: `scripts/src/ui-matrix.mjs:942-961` measures `report.ime`, but no assertion in the layout suite reads it, so composition is measured and unverified. Status truth is not exercised by that suite at all. |
+| D04.05 | Capture actual built screens in both themes and English/Czech with long realistic content, not only component previews. | UI QA/product | Open: Web closed 2026-09-25: light/en, light/cs, dark/en and dark/cs each render 2430-2542 characters with a 589px transcript, zero overflow, a visible composer and no error boundary; the public demo renders the same four combinations on its own server with the correct "From idea. Back anytime." and "Od nápadu. Zpět kdykoliv." headings, and the demo is clean across all nine viewports. Native closed the same day: the app now has a real appearance preference, `AppTheme` in `apps/apple/VOIDApp/AppModel.swift:81-98` persisted through `@AppStorage("void-theme")` and applied once as `.preferredColorScheme` at `RootView.swift:35`, defaulting to `system` so the OS setting wins. Copy exists in both languages, `AppCopy.swift:124-127` English and `:73-76` Czech. Four screens captured on an iPhone 18 Pro simulator, iOS 27.0: `tmp/apple-theme/{light-en,dark-en,light-cs,dark-cs}.png`. Measured, not asserted by eye: the entry title renders `rgb(0,0,0)` on `rgb(255,255,255)` at 21.00:1 in light and `rgb(255,255,255)` on `rgb(0,0,0)` at 21.00:1 in dark, cross-checked by a host-side tool independent of XCTest. Cutting `preferredColorScheme` makes the two render identically and turns the test red. Long realistic content on a small phone, Dynamic Type, and the iPad regular-width layout are not covered. |
+| D04.06 | Web viewport matrix:320x568,390x844,430x932,768x1024,834x1112,1024x768,1280x800,1440x900 and short landscape. Native matrix includes supported physical iPhone/iPad classes, orientation, larger text and keyboard. | UI QA/product | Open: Web closed 2026-09-25 with a real three-exchange conversation carrying a heading, a table and a code block. All nine viewports report `scrollWidth == clientWidth`, so horizontal overflow is zero everywhere, and Send is reachable at all nine. Native part stays open: it needs physical iPhone/iPad classes, orientation changes, larger text and a hardware keyboard. |
+| D04.07 | Keep basic320x568 transcript>=200px and ordinary desktop transcript>=60% work area. Test stacked notices/tool/attachments and long draft; Send/Stop must remain reachable. Keyboard-visible tiny viewports prioritize accessible composer, with transcript shrink explicitly measured rather than a physically impossible fixed height promise. | UI QA/product | Open: the transcript thresholds and the stacked long-draft case are asserted; the stacked notices and selected-tool rows are measured only. Asserted 2026-09-26 in `scripts/src/ui-layout.test.mjs` at 22/22: "D04.07 transcript keeps 200px at 320x568 and 60% of the work area on desktop" (line 43) and "D04.07 a long draft plus an attachment keeps Send reachable at 320x568" (line 62), with Send-or-Stop reachability at all nine viewports asserted by the D04.06 gate at line 33. The 2026-09-25 per-viewport figures, 320x568 transcript 372px of 520px work area (71.5%), 390x844 648/796 (81.4%), 430x932 736/884 (83.3%), 768x1024 813/976 (83.3%), 834x1112 901/1064 (84.7%), 1024x768 557/720 (77.4%), 1280x800 589/752 (78.3%), 1440x900 689/852 (80.9%), are harness output from that day's run and were not re-derived on 2026-09-26; what the suite witnesses now is the threshold, not each percentage. The stacked case asserts a transcript of at least 200px, Send reachable and the attachment removable at 320x568; the notices-region and selected-tool figures the harness records at `scripts/src/ui-matrix.mjs:876-914` (notices 80px, attachments 56px) are not asserted by any test. A keyboard-sized 667x375 measured 179px and 54.7%, which is reported rather than promised away, exactly as this row allows; the suite asserts only that the transcript stays above 100px and the send control stays inside the viewport there. |
+| D04.08 | Verify real keyboard focus, VoiceOver, contrast, target sizes, reduced motion, zoom and app resume. Screenshot comparison supplements interaction tests, not replaces them. | UI QA/product | Open: web closed 2026-09-25 with a browser gate, `scripts/src/ui-layout.test.mjs` 22/22 as re-run 2026-09-26: 69 desktop and 55 mobile tab stops, none without a solid outline of at least 2px; the composer textarea measured with a real Tab at 1280x800 and 390x844 shows a solid 2px ring in the app's own `--focus` token with `:focus-visible` true; 12 animated elements normally and 0 under `prefers-reduced-motion: reduce`; no sub-44px touch target on mobile except the visually hidden file input, and none at all in settings at 390x844. One real defect was found and fixed: the composer textarea had no visible focus ring, because `.composer textarea { outline: none }` outranked `:focus-visible` and the halo painted the canvas colour on the canvas colour; a real `:focus-visible` rule reusing the existing token and the existing 2px value was added. Reverting it turns the gate red. Contrast was not measured numerically and app resume was not exercised. On the native side, `VOIDUITests` asserts `accessibilityLabel` on two surfaces, `isHittable` on two, `isEnabled` on four, a 44-point minimum target height on four, a non-zero on-screen frame on four, zero credential fields on three, and that an activity row is announced as one combined element. Still missing there: VoiceOver focus order, measured contrast, reduced motion, zoom and app resume. The `accessibilityIdentifier` values `activity.settings` and `sidebar.settings` are defined in the app but referenced by no test, so they are dead metadata. On the native side an appearance control is now part of the entry screen with a 44pt minimum target and an accessible label, and the four theme-by-language screens above are measured, but secondary `.foregroundStyle(.secondary)` text contrast was deliberately not claimed: the element capture came back unreadable in both themes, so the AA figure covers primary-label text only. A real palette change is needed to close that, which is separate work. Reduced motion on the native side is a finding, not coverage: the app animates nothing, so there is no branch to test and none was faked. |
 | D04.09 | User approves proposed stack/platform floors, initial connectivity scope and exclusions. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
 | D04.10 | Every milestone has dependencies, bounded deliverable and observable acceptance. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |
 | D04.11 | Requirements map covers Mac, iPhone, iPad, pairing, recovery, diagnostics, privacy, signing, tests, beta and rollback. | UI QA/product | Open: actual screen capture + viewport/locale/theme/native accessibility matrix. |

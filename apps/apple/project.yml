@@ -13,6 +13,20 @@ targets:
     platform: iOS
     sources:
       - path: VOIDApp
+    # Xcode's Info.plist generator silently drops any INFOPLIST_KEY_* whose key
+    # name contains a tilde, so `UISupportedInterfaceOrientations~ipad` cannot be
+    # expressed as a build setting. It goes through a generated Info.plist file,
+    # which Xcode merges on top of GENERATE_INFOPLIST_FILE output.
+    info:
+      path: VOIDApp/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     dependencies:
       - package: CompanionProtocolKit
     settings:
@@ -29,6 +43,8 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: VOID connects only to a trusted executor you explicitly pair.
         INFOPLIST_KEY_NSFaceIDUsageDescription: VOID does not use Face ID.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
         SWIFT_EMIT_LOC_STRINGS: YES
   VOIDTests:
     type: bundle.unit-test

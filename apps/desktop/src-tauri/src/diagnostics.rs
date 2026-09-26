@@ -10,7 +10,12 @@ const STARTUP_LOG: &str = "desktop-startup.log";
 /// file or the terminal.
 pub fn classify(error: &(dyn Error + 'static)) -> &'static str {
     let text = error.to_string().to_ascii_lowercase();
-    if text.contains("keychain")
+    // Checked before the keychain branch: the denied message names the
+    // workspace key but not the keychain, so it would otherwise fall through
+    // to the generic workspace category and lose the only actionable part.
+    if text.contains("not authorised to read it") {
+        "KEYCHAIN_ACCESS_DENIED"
+    } else if text.contains("keychain")
         || text.contains("credential manager")
         || text.contains("invalid windows workspace key")
         || text.contains("workspace encryption key")
@@ -29,6 +34,7 @@ pub fn classify(error: &(dyn Error + 'static)) -> &'static str {
 
 fn allowlisted_code(code: &str) -> &'static str {
     match code {
+        "KEYCHAIN_ACCESS_DENIED" => "KEYCHAIN_ACCESS_DENIED",
         "KEYCHAIN_UNAVAILABLE" => "KEYCHAIN_UNAVAILABLE",
         "RUNTIME_STARTUP_FAILED" => "RUNTIME_STARTUP_FAILED",
         "RUNTIME_NETWORK_FAILED" => "RUNTIME_NETWORK_FAILED",
@@ -82,6 +88,20 @@ mod tests {
             )),
             "KEYCHAIN_UNAVAILABLE"
         );
+    }
+
+    /// The denied message names the workspace key but not the keychain, so
+    /// without an explicit branch it lands in the generic workspace category
+    /// and the operator loses the only part they can act on.
+    #[test]
+    fn classifies_a_refused_keychain_read_as_its_own_category() {
+        assert_eq!(
+            classify(&io::Error::other(
+                "VOID workspace key exists but this build is not authorised to read it"
+            )),
+            "KEYCHAIN_ACCESS_DENIED"
+        );
+        assert_eq!(allowlisted_code("KEYCHAIN_ACCESS_DENIED"), "KEYCHAIN_ACCESS_DENIED");
     }
 
     #[test]

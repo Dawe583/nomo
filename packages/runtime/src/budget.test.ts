@@ -383,15 +383,23 @@ test("a worker killed between reserve and settle leaves a detectable charge that
   t.after(() => rm(dir, { recursive: true, force: true }));
   const file = join(dir, "budget.sqlite");
   const worker = join(dir, "worker.mts");
+  // A fixed instant, never Date.now(). The day bucket is the UTC date, so a
+  // wall-clock-derived "+1 hour" moves the snapshot into the next UTC day
+  // whenever this runs between 23:00 and 00:00 UTC. The reservation is then
+  // correctly filtered out as belonging to yesterday, the snapshot reads 0,
+  // and the suite fails every night for an hour while passing the rest of the
+  // day. Midday UTC keeps the whole test inside one day.
+  const instant = Date.parse("2026-06-01T12:00:00.000Z");
   const ready = join(dir, "ready");
   await writeFile(
     worker,
     `import { writeFileSync } from "node:fs";
 import { serverBudgetLedger, sqliteBudgetStore } from ${JSON.stringify(BUDGET_MODULE)};
-const [storeFile, account, limit, operationId, readyPath] = process.argv.slice(2);
+const [storeFile, account, limit, operationId, readyPath, instant] = process.argv.slice(2);
 const ledger = serverBudgetLedger({
   store: await sqliteBudgetStore(storeFile),
   account,
+  now: () => new Date(Number(instant)),
   budget: { dailyLimit: Number(limit) },
 });
 const outcome = await ledger.reserve({ operationId, agentId: "agent-crash" });
@@ -401,7 +409,7 @@ process.kill(process.pid, "SIGKILL");
   );
   const killed = spawnSync(
     process.execPath,
-    [worker, file, "shared", "1", "op-crash", ready],
+    [worker, file, "shared", "1", "op-crash", ready, String(instant)],
     { encoding: "utf8" },
   );
   assert.equal(killed.signal, "SIGKILL");
@@ -413,7 +421,7 @@ process.kill(process.pid, "SIGKILL");
     account: "shared",
     budget: { dailyLimit: 1 },
     leaseMs: 1000,
-    now: () => new Date(Date.now() + 3_600_000),
+    now: () => new Date(instant + 3_600_000),
   });
   const seen = await after.snapshot();
   assert.equal(seen.total, 1);

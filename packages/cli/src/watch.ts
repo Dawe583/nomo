@@ -1,11 +1,23 @@
 import { loadPending, writeDecision } from "../../policy/src/approvals.ts";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { stat } from "node:fs/promises";
 import { readLedgerFeed } from "../../ledger/src/feed.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { detectCapabilities } from "./tui/caps.ts";
 import { DiffScreenWriter } from "./tui/watch.ts";
 import { liveRecords, renderLiveFeed, type LiveView } from "./tui/live.ts";
+
+/// Resolve the `--ledger` value to a ledger file. Every sibling command reads
+/// `<ledger dir>/<workspace>.jsonl`, so handing the directory itself to the
+/// feed fails to open it. A path that exists as a file is taken as given, so
+/// pointing at one specific ledger still works.
+export async function resolveLedgerPath(value: string | undefined, workspace: string): Promise<string> {
+  const fallback = join(process.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"), `${workspace}.jsonl`);
+  if (value === undefined) return fallback;
+  const isDirectory = await stat(value).then(info => info.isDirectory()).catch(() => false);
+  return isDirectory ? join(value, `${workspace}.jsonl`) : value;
+}
 
 export async function runWatchCommand(argv: readonly string[]): Promise<number> {
   let workspace = process.env.VOID_WORKSPACE ?? "default";
@@ -24,7 +36,7 @@ export async function runWatchCommand(argv: readonly string[]): Promise<number> 
     } else throw new Error(`unknown watch option: ${arg}`);
   }
   if (!/^[A-Za-z0-9_.-]+$/.test(workspace)) throw new Error("invalid workspace");
-  ledger ??= join(process.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"), `${workspace}.jsonl`);
+  const ledgerFile = await resolveLedgerPath(ledger, workspace);
   approvalDir ??= join(homedir(), ".void", "approvals", workspace);
   let view: LiveView = { workspace, selected: 0, filter: "", paused: false, detail: false, help: false };
   const caps = () => detectCapabilities(process.env, process.stdout);
@@ -37,7 +49,7 @@ export async function runWatchCommand(argv: readonly string[]): Promise<number> 
     reading = true;
     try {
       const signer = await devKeyProvider();
-      const page = await readLedgerFeed(ledger, { publicKey: id => signer.publicKey(id) });
+      const page = await readLedgerFeed(ledgerFile, { publicKey: id => signer.publicKey(id) });
       if (stopped) return;
       const selectedSeq = liveRecords(view)[view.selected]?.seq;
       view = { ...view, page, error: undefined };

@@ -87,6 +87,45 @@ pub fn windows_credential_target(account: &str) -> Vec<u16> {
 /// A short or long blob is a corrupt or foreign entry, never a key to guess at.
 pub const WINDOWS_CREDENTIAL_BLOB_BYTES: usize = 32;
 
+/// Why a macOS keychain read ended the way it did.
+///
+/// `Absent` and `Denied` must never collapse into one another. An ad-hoc
+/// signed app gets a fresh code signature on every rebuild, and macOS binds
+/// a keychain item's access control to that signature, so after a rebuild the
+/// item is still there and the app is simply no longer on its trusted list.
+/// Reading that as "absent" would make VOID mint a fresh key on top of an
+/// existing encrypted workspace.
+#[cfg(target_os = "macos")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MacKeychainRead {
+    Absent,
+    Denied,
+    Unavailable,
+}
+
+/// `errSecItemNotFound`: no such item, so a first run or a fresh install.
+#[cfg(target_os = "macos")]
+const ERR_SEC_ITEM_NOT_FOUND: i32 = -25300;
+/// `errSecAuthFailed` and `errSecInteractionNotAllowed`: the item exists and
+/// the login keychain is unlocked, but this build is not authorised to read
+/// it. `errSecUserCanceled` is the same story seen from the other side, the
+/// operator dismissed the consent prompt.
+#[cfg(target_os = "macos")]
+const ERR_SEC_READ_DENIED: [i32; 3] = [-25293, -25308, -128];
+
+/// Split a `get_generic_password` status into the three cases an operator can
+/// act on. Every other status is genuinely unavailable.
+#[cfg(target_os = "macos")]
+pub fn classify_mac_read(code: i32) -> MacKeychainRead {
+    if code == ERR_SEC_ITEM_NOT_FOUND {
+        MacKeychainRead::Absent
+    } else if ERR_SEC_READ_DENIED.contains(&code) {
+        MacKeychainRead::Denied
+    } else {
+        MacKeychainRead::Unavailable
+    }
+}
+
 #[cfg(target_os = "macos")]
 pub struct MacKeychain {
     pub account: String,
@@ -99,8 +138,18 @@ impl SecretStore for MacKeychain {
             &self.account,
         ) {
             Ok(key) => Ok(Some(key)),
-            Err(error) if error.code() == -25300 => Ok(None),
-            Err(_) => Err("Cannot unlock the VOID workspace key in macOS Keychain".into()),
+            Err(error) => match classify_mac_read(error.code()) {
+                MacKeychainRead::Absent => Ok(None),
+                // There is no password to be entered here. The operator has to
+                // grant this build access to the item, or build with a stable
+                // signing identity so a rebuild does not lose the grant.
+                MacKeychainRead::Denied => {
+                    Err("VOID workspace key exists but this build is not authorised to read it".into())
+                }
+                MacKeychainRead::Unavailable => {
+                    Err("Cannot unlock the VOID workspace key in macOS Keychain".into())
+                }
+            },
         }
     }
     fn put(&self, key: &[u8]) -> Result<()> {
@@ -314,6 +363,43 @@ mod tests {
         assert!(load_or_create(&dir, &store).is_err());
         assert_eq!(store.get().unwrap(), None);
         std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+/// A rebuild of an ad-hoc signed app is the common way to hit the denied
+/// case, and it is the one where a wrong answer destroys data: reported as
+/// absent, the key would be regenerated over an existing workspace. So the
+/// split is pinned here rather than left to a test that has to touch the real
+/// login keychain.
+#[cfg(all(test, target_os = "macos"))]
+mod mac_read_tests {
+    use super::{classify_mac_read, MacKeychainRead};
+
+    #[test]
+    fn missing_item_is_absent_and_read_refusal_is_not() {
+        assert_eq!(classify_mac_read(-25300), MacKeychainRead::Absent);
+        assert_eq!(classify_mac_read(-25293), MacKeychainRead::Denied);
+        assert_eq!(classify_mac_read(-25308), MacKeychainRead::Denied);
+        assert_eq!(classify_mac_read(-128), MacKeychainRead::Denied);
+    }
+
+    #[test]
+    fn denial_never_reports_itself_as_a_missing_key() {
+        for code in [-25293, -25308, -128] {
+            assert_ne!(
+                classify_mac_read(code),
+                MacKeychainRead::Absent,
+                "a refused read must not look like a first run, it must not \
+                 regenerate the key over an existing encrypted workspace"
+            );
+        }
+    }
+
+    #[test]
+    fn unrelated_status_is_unavailable_rather_than_absent() {
+        for code in [-1, -34018, 0] {
+            assert_eq!(classify_mac_read(code), MacKeychainRead::Unavailable);
+        }
     }
 }
 

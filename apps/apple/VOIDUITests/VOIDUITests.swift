@@ -237,8 +237,10 @@ final class VOIDUITests: XCTestCase {
         app.launchArguments = ["-void-theme", theme]
         app.launch()
 
-        // The navigation bar repeats the same title, so scope to the entry body.
-        let title = app.scrollViews.staticTexts["Connect to your Mac"].firstMatch
+        // The navigation bar repeats the title, so scope to the entry body first. The
+        // body omits its own header at regular width, so fall back to the bare title.
+        let scoped = app.scrollViews.staticTexts["Connect to your Mac"].firstMatch
+        let title = scoped.waitForExistence(timeout: 5) ? scoped : app.staticTexts["Connect to your Mac"].firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 5), file: file, line: line)
         return try measure(element: title, name: name, file: file, line: line)
     }

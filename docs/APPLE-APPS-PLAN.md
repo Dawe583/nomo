@@ -9,12 +9,13 @@ historical rationale below; do not execute both architectures.
 
 Release evidence update, 2026-09-25: the native iOS 17 Xcode project, Swift
 package, app, unit tests, UI-test source and protocol fixtures exist under
-`apps/apple/`. Current source contains 9 `VOIDTests` cases and 6
+`apps/apple/`. Current source contains 9 `VOIDTests` cases and 11
 `VOIDUITests` cases. On 2026-09-25 a Release `iphonesimulator` build of the
-`VOID` scheme succeeded, the built product installed and launched on an
+`VOID` scheme succeeded and the built product installed and launched on an
 iPad Pro 11-inch (M5) simulator rendering the read-only onboarding/entry
-screen, and a simulator test run passed `VOIDTests` 9/9 and `VOIDUITests` 6/6
-against the current source. That product is ad-hoc signed with no team
+screen. A 2026-09-26 simulator test run against the current source passed
+`VOIDTests` 9/9 and `VOIDUITests` 11/11, superseding the 6 `VOIDUITests` cases
+that the 2026-09-25 run covered. That product is ad-hoc signed with no team
 identifier, no entitlements and no app icon, so it is simulator evidence and
 not a device or store claim. The `CompanionProtocolKit` package passes 27/27
 under `swift test`, but that is a macOS host run and not an iOS simulator or

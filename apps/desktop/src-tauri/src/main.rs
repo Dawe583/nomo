@@ -175,6 +175,11 @@ fn main() {
     let cleanup_data = smoke_data.clone();
     let runtime_exited = Arc::new(AtomicBool::new(false));
     let setup_runtime_exited = runtime_exited.clone();
+    // Tauri turns a failing setup hook into a build error and hands back no
+    // error value, so the classified category is carried out of the hook here
+    // rather than read back out of the log file.
+    let startup_code = Arc::new(Mutex::new(None::<&'static str>));
+    let setup_startup_code = startup_code.clone();
     let builder = tauri::Builder::default();
     let builder = if smoke {
         builder
@@ -348,7 +353,11 @@ fn main() {
                 Ok(())
             })();
             if let Err(error) = &result {
-                let _ = diagnostics::write_startup(&data, diagnostics::classify(error.as_ref()));
+                let code = diagnostics::classify(error.as_ref());
+                let _ = diagnostics::write_startup(&data, code);
+                if let Ok(mut slot) = setup_startup_code.lock() {
+                    *slot = Some(code);
+                }
             }
             result
         })
@@ -356,9 +365,20 @@ fn main() {
     {
         Ok(app) => app,
         Err(_) => {
-            eprintln!(
-                "VOID could not start. Check desktop-startup.log in the application data directory; the log contains only a safe failure category."
-            );
+            // Tauri reports a failing setup hook as a bare build error, so the
+            // category captured inside the hook is the only thing that can
+            // tell these two apart here.
+            let guidance = startup_code
+                .lock()
+                .ok()
+                .and_then(|slot| *slot)
+                .and_then(|code| startup_guidance(code));
+            match guidance {
+                Some(guidance) => eprintln!("{guidance}"),
+                None => eprintln!(
+                    "VOID could not start. Check desktop-startup.log in the application data directory; the log contains only a safe failure category."
+                ),
+            }
             std::process::exit(1);
         }
     };
@@ -372,6 +392,47 @@ fn main() {
     }
     if runtime_exited.load(Ordering::SeqCst) {
         std::process::exit(1);
+    }
+
+}
+/// Operator guidance per startup category. Fixed strings only: no error text,
+/// no path and no environment value ever reaches the terminal from here.
+fn startup_guidance(code: &str) -> Option<&'static str> {
+    match code {
+        "KEYCHAIN_ACCESS_DENIED" => Some(
+            "VOID could not read its workspace key.\n\
+             \n\
+             The key exists in your login keychain under the service\n\
+             dev.void.desktop.workspace, but this build of the app is not on\n\
+             that item's allowed list. There is no VOID password and no\n\
+             workspace password to enter.\n\
+             \n\
+             Fix it with either:\n\
+             1. Keychain Access, search dev.void.desktop.workspace, open it,\n\
+                Access Control tab, choose \"Allow all applications to access\n\
+                this item\", save, then start VOID again.\n\
+             2. Build with a stable signing identity instead of an ad-hoc one,\n\
+                so the allowed list survives every rebuild:\n\
+             \x20  APPLE_SIGNING_IDENTITY=\"<your identity>\" pnpm --dir apps/desktop build\n\
+             \n\
+             Do not delete the keychain item: the existing encrypted workspace\n\
+             cannot be read without its key.",
+        ),
+        "RUNTIME_STARTUP_FAILED" | "RUNTIME_NETWORK_FAILED" => Some(
+            "VOID could not start its bundled local runtime.\n\
+             \n\
+             This is the desktop runtime that serves the workbench on a local\n\
+             loopback port, not a remote service. It either did not come up or\n\
+             could not bind a loopback port.\n\
+             \n\
+             Check in order:\n\
+             1. Rebuild so the runtime is prepared for this platform:\n\
+             \x20  pnpm --dir apps/desktop prepare:runtime\n\
+             2. Confirm nothing else needs the port, and that no firewall or\n\
+                VPN client is intercepting loopback traffic.\n\
+             3. Start VOID again. No credentials are involved in this path.",
+        ),
+        _ => None,
     }
 }
 
@@ -396,5 +457,30 @@ mod tests {
             Ok("{\"port\":43123}".to_owned())
         );
         assert!(exit_receiver.recv_timeout(Duration::from_secs(1)).is_ok());
+    }
+
+
+    /// A category with no guidance is a category that sends the operator back
+    /// to a log file, which is what P08.03 exists to stop. The keychain case
+    /// is also the one that has to keep saying there is no password to type.
+    #[test]
+    fn actionable_startup_categories_have_operator_guidance() {
+        for code in [
+            "KEYCHAIN_ACCESS_DENIED",
+            "RUNTIME_STARTUP_FAILED",
+            "RUNTIME_NETWORK_FAILED",
+        ] {
+            let guidance = startup_guidance(code)
+                .unwrap_or_else(|| panic!("{code} falls back to the opaque message"));
+            assert!(guidance.len() > 80, "{code} guidance is too thin to act on");
+        }
+        assert!(startup_guidance("KEYCHAIN_ACCESS_DENIED")
+            .unwrap()
+            .contains("no\nworkspace password to enter"));
+        assert!(startup_guidance("KEYCHAIN_ACCESS_DENIED")
+            .unwrap()
+            .contains("Do not delete the keychain item"));
+        assert!(startup_guidance("STARTUP_FAILED").is_none());
+        assert!(startup_guidance("WORKSPACE_ACCESS_FAILED").is_none());
     }
 }

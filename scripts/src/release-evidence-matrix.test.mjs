@@ -65,7 +65,12 @@ const stillOpen = [
   ...range("P11", 6),
   "P10.09",
   ...range("D01", 5),
-  ...range("D02", 7),
+  // D02.07 left this list on 2026-09-26: witnessed by
+  // `apps/control-plane/ui/src` at 73/73 and `scripts/src/ui-layout.test.mjs`
+  // at 22/22, both re-run against current source, with `dist/web` present so
+  // the gallery's four layout tests are measured rather than skipped. The
+  // other six D02 rows are unwitnessed and stay here.
+  ...range("D02", 6),
   ...range("D03", 30),
   ...range("D04", 13),
 ];

@@ -21,7 +21,13 @@ const model = createServer(async (req, res) => {
   res.end(JSON.stringify({ choices: [{ message }] }));
 });
 await new Promise(resolve => model.listen(modelPort, '127.0.0.1', resolve));
-const app = createControlPlaneServer({ env: { VOID_DATA_DIR: directory, VOID_LEDGER_DIR: join(directory, 'ledger') } });
+// The caller's environment is passed through, not replaced. An explicit
+// two-key object silently dropped VOID_PERMISSION_MODE, so the harness always
+// served read-only no matter what the operator asked for, and the write path
+// looked broken when it was only never enabled. The disposable QA data
+// directories still win, because handing a real workspace to a browser
+// harness is the worse failure.
+const app = createControlPlaneServer({ env: { ...process.env, VOID_DATA_DIR: directory, VOID_LEDGER_DIR: join(directory, 'ledger') } });
 async function close() { await new Promise(resolve => app.close(resolve)); await new Promise(resolve => model.close(resolve)); await rm(directory, { recursive: true, force: true }); }
 process.once('SIGINT', () => void close()); process.once('SIGTERM', () => void close());
 
