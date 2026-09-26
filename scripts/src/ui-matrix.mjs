@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createControlPlaneServer } from "../../apps/control-plane/api/server.ts";
+import { recoveryStateLabel } from "../../apps/control-plane/ui/src/recovery-review.ts";
 import { launchBrowser, openPage } from "./cdp.mjs";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -85,6 +86,62 @@ const LONG_REPLY = [
   "which is exactly the condition the height contract is written for.",
 ].join("\n");
 
+// The four states this harness has to drive are properties of a real provider
+// conversation, not of a page. A fixture that can only answer instantly and
+// unconditionally cannot produce any of them, so the behaviour is switched
+// explicitly by the measurement that needs it and reset in a `finally`, and
+// the chunk count of the last streamed answer is kept so the report can be
+// checked against what the endpoint really sent.
+const providerBehaviour = { mode: "tool-flow", retryAfter: 5, lastChunks: 0 };
+
+// The streamed answer is a list of sentences so the pieces the provider sends
+// are exactly these strings, and the answer they reassemble into is
+// `STREAMED_ANSWER`. No tool call, so every character on screen came from the
+// stream rather than from a second turn.
+const STREAMED_SENTENCES = [
+  "Streaming is not a complete response rendered late.",
+  "Each sentence below reaches the transcript while the run is still open,",
+  "so a reader watches the answer arrive instead of inferring that it did.",
+  "The provider sends these in order and never resends one of them.",
+  "A dropped piece would leave a gap the finished text cannot hide,",
+  "because the finished text is the same string the provider streamed.",
+  "Nothing is written into the page after the fact.",
+  "The browser reads a real event stream and renders what the server sent.",
+];
+const STREAMED_ANSWER = STREAMED_SENTENCES.join(" ");
+
+// The revision the operator saves before recovering the earlier write. A
+// recovery has to refuse to undo a document it no longer matches, so this is
+// the content that must survive the failed recovery untouched.
+const NEWER_REVISION = "# Project plan\n\n1. Define the scope.\n2. Build the smallest useful version.\n3. Record what the recovery refused to undo.\n";
+
+/** Send STREAMED_ANSWER as an event stream, one frame per sentence.
+ *
+ * A non-streaming request still gets the same words: the run has to be able to
+ * reach a completed state either way, and what is under measurement is the
+ * framing, not the text. A closed socket is a cancelled run, not a crash. */
+async function streamAnswer(response, streamed) {
+  if (!streamed) {
+    response.setHeader("content-type", "application/json");
+    providerBehaviour.lastChunks = 0;
+    return response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: STREAMED_ANSWER } }] }));
+  }
+  response.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-store" });
+  const write = (payload) => {
+    if (response.writableEnded || response.destroyed) return false;
+    response.write("data: " + JSON.stringify(payload) + "\n\n");
+    return true;
+  };
+  providerBehaviour.lastChunks = STREAMED_SENTENCES.length;
+  for (const [index, sentence] of STREAMED_SENTENCES.entries()) {
+    await new Promise((r) => setTimeout(r, 600));
+    if (!write({ choices: [{ index: 0, delta: { content: index === 0 ? sentence : " " + sentence } }] })) return;
+  }
+  if (!write({ choices: [{ index: 0, delta: {}, finish_reason: "stop" }], usage: { total_tokens: Math.ceil(STREAMED_ANSWER.length / 4) } })) return;
+  response.write("data: [DONE]\n\n");
+  response.end();
+}
+
 async function startFixture() {
   const model = createServer(async (request, response) => {
     response.setHeader("content-type", "application/json");
@@ -99,6 +156,12 @@ async function startFixture() {
       response.statusCode = 400;
       return response.end("{}");
     }
+    if (providerBehaviour.mode === "rate-limit") {
+      response.statusCode = 429;
+      response.setHeader("retry-after", String(providerBehaviour.retryAfter));
+      return response.end(JSON.stringify({ error: { type: "rate_limit_exceeded", message: "Too many requests for this key." } }));
+    }
+    if (providerBehaviour.mode === "stream") return streamAnswer(response, input.stream === true);
     const messages = Array.isArray(input.messages) ? input.messages : [];
     const last = messages.at(-1) ?? { role: "user" };
     const write = (Array.isArray(input.tools) ? input.tools : []).find((tool) =>
@@ -125,6 +188,7 @@ async function startFixture() {
             }],
           }
         : { role: "assistant", content: LONG_REPLY };
+    providerBehaviour.lastChunks = 0;
     response.end(JSON.stringify({ choices: [{ message }] }));
   });
   await new Promise((resolve) => model.listen(0, "127.0.0.1", resolve));
@@ -581,6 +645,558 @@ async function seedConversation(page, origin) {
     await page.settle();
   }
   return page.evaluate(`(() => location.pathname)()`);
+}
+
+// ------------------------------------------------------ live runtime states
+// Streaming, a provider refusal, a recovery that cannot apply and a pending
+// approval are properties of a real conversation. Each one is driven through
+// the built application against the real control plane, and everything
+// recorded below is either read out of the running page or returned by the
+// server that answered it. A state that cannot be driven honestly is recorded
+// as not driven with the reason, never as a pass and never as a weaker
+// assertion.
+
+const runStateProbe = (origin, id) =>
+  fetch(origin + "/api/sessions/" + id)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((body) => body?.session ?? null);
+
+/** Send a prompt and wait for the run it started to settle.
+ *
+ * The wait is the server's, not the DOM's: while a run is live the composer
+ * swaps Send for Stop, so a disabled button is a request in flight rather than
+ * a run in progress, and a missing button is a run in progress rather than a
+ * finished one. Only the session's own state answers the question. */
+async function sendAndWait(page, origin, prompt) {
+  await page.evaluate(setDraft(prompt));
+  await page.settle();
+  const sent = await page.evaluate(`(() => {
+    const button = document.querySelector(".composer .send");
+    if (!button || button.disabled) return false;
+    button.click();
+    return true;
+  })()`);
+  if (!sent) return null;
+  const id = await currentSessionId(page);
+  if (!id) return null;
+  const settled = await settleRun(origin, id, ["idle", "failed", "stopped", "unknown"]);
+  await page.settle();
+  return { id, settled };
+}
+
+/** The session id of the conversation the page is on, once a send created it. */
+async function currentSessionId(page) {
+  for (let i = 0; i < 80; i++) {
+    const id = await page.evaluate(
+      `(() => location.pathname.match(/^\\/chat\\/([a-f0-9-]+)$/) ?.[1] ?? null)()`,
+    );
+    if (id) return id;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return null;
+}
+
+async function settleRun(origin, id, states, tries = 120) {
+  for (let i = 0; i < tries; i++) {
+    const session = await runStateProbe(origin, id);
+    if (session && states.includes(session.state ?? session.status)) return session;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return null;
+}
+
+const LAST_ASSISTANT = `(() => {
+  const rows = [...document.querySelectorAll(".message.assistant .prose")];
+  const text = rows.at(-1)?.innerText ?? "";
+  return {
+    // A markdown renderer decides its own line breaks; the claim under test is
+    // which characters arrived, not where the renderer wrapped them.
+    text: text.replace(/\\s+/g, " ").trim(),
+    arriving: !!document.querySelector(".message.assistant.arriving"),
+    flag: document.querySelector(".message.assistant .stream-flag")?.innerText?.trim() ?? null,
+  };
+})()`;
+
+/** D04.04 streaming, read while the run that produced it is still open. */
+async function measureStreaming(page, origin) {
+  await page.setViewport(390, 844);
+  await page.goto(origin + "/chat/new");
+  await waitForApp(page, ".composer .send");
+  providerBehaviour.mode = "stream";
+  try {
+    await page.evaluate(setDraft("Napiš odpověď, která dorazí po částech."));
+    await page.settle();
+    await page.evaluate(`(() => { document.querySelector(".composer .send").click(); return true; })()`);
+    const id = await currentSessionId(page);
+    if (!id) return { driven: false, reason: "the send never produced a conversation to read" };
+    const partials = [];
+    for (let i = 0; i < 60; i++) {
+      const reading = await page.evaluate(LAST_ASSISTANT);
+      if (reading.text) {
+        const session = await runStateProbe(origin, id);
+        const state = session?.state ?? session?.status ?? null;
+        // One reading per distinct length: a re-render that changed nothing is
+        // not evidence that anything arrived.
+        if (partials.at(-1)?.text !== reading.text)
+          partials.push({ text: reading.text, arriving: reading.arriving, flag: reading.flag, runState: state });
+        if (state !== "running" && partials.length) break;
+      }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    const settled = await settleRun(origin, id, ["idle", "failed", "stopped", "unknown"]);
+    await page.settle();
+    const completed = await page.evaluate(LAST_ASSISTANT);
+    const events = await fetch(origin + "/api/sessions/" + id + "/events?after=0")
+      .then((r) => r.json())
+      .then((body) => body.items ?? []);
+    return {
+      driven: true,
+      answer: STREAMED_ANSWER,
+      streamedChars: STREAMED_ANSWER.length,
+      chunkCount: providerBehaviour.lastChunks,
+      partials,
+      completed: completed.text,
+      finalState: settled?.state ?? settled?.status ?? null,
+      deltaEvents: events.filter((e) => e.type === "message.delta").length,
+    };
+  } finally {
+    providerBehaviour.mode = "tool-flow";
+  }
+}
+
+const RATE_LIMIT_PROBE = `(() => {
+  const send = document.querySelector(".composer .send");
+  const transcript = document.querySelector(".transcript");
+  const el = document.documentElement;
+  const notice = [...document.querySelectorAll(".composer-notices p.notice")]
+    .map((p) => p.innerText.trim())
+    .find((text) => /rate limit/i.test(text)) ?? null;
+  const r = send?.getBoundingClientRect();
+  const hit = (() => {
+    if (!r || !r.width || !r.height) return null;
+    const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return top && (send === top || send.contains(top) || top.contains(send)) ? "reachable" : "covered";
+  })();
+  const offenders = [];
+  for (const node of document.querySelectorAll(".composer-notices *")) {
+    const style = getComputedStyle(node);
+    if (style.display === "none" || style.visibility === "hidden") continue;
+    const box = node.getBoundingClientRect();
+    if (!box.width && !box.height) continue;
+    if (box.right > el.clientWidth + 1 || box.left < -1)
+      offenders.push({ node: node.tagName.toLowerCase() + "." + String(node.className || ""), left: Math.round(box.left), right: Math.round(box.right) });
+  }
+  return {
+    notice,
+    sendDisabled: send ? send.disabled : null,
+    send: r ? { top: Math.round(r.top), bottom: Math.round(r.bottom) } : null,
+    sendHit: hit,
+    innerHeight,
+    transcriptHeight: transcript ? Math.round(transcript.getBoundingClientRect().height) : null,
+    scrollWidth: el.scrollWidth,
+    clientWidth: el.clientWidth,
+    offenders,
+  };
+})()`;
+
+/** D04.04 a provider refusal the composer has to survive and then clear. */
+async function measureRateLimit(page, origin) {
+  await page.setViewport(320, 568);
+  await page.goto(origin + "/chat/new");
+  await waitForApp(page, ".composer .send");
+  providerBehaviour.mode = "rate-limit";
+  let id;
+  try {
+    await page.evaluate(setDraft("Zpráva, kterou poskytovatel odmítne."));
+    await page.settle();
+    await page.evaluate(`(() => { document.querySelector(".composer .send").click(); return true; })()`);
+    id = await currentSessionId(page);
+    if (!id) return { driven: false, reason: "the refused send never produced a conversation" };
+    await settleRun(origin, id, ["failed", "idle", "stopped", "unknown"]);
+    await page.settle();
+    let during = null;
+    for (let i = 0; i < 40 && !during?.notice; i++) {
+      await new Promise((r) => setTimeout(r, 200));
+      const probe = await page.evaluate(RATE_LIMIT_PROBE);
+      if (probe.notice) during = probe;
+    }
+    if (!during) return { driven: false, reason: "the 429 refusal never reached the composer notices" };
+    const events = await fetch(origin + "/api/sessions/" + id + "/events?after=0")
+      .then((r) => r.json())
+      .then((body) => body.items ?? []);
+    const failure = [...events].reverse().find((e) => e.type === "run.error");
+    const session = await runStateProbe(origin, id);
+    const provider = await fetch(origin + "/api/provider").then((r) => r.json());
+    // The refusal is temporary, and the only honest way to show that is a real
+    // reply after it. Send stays disabled until the server's own retry time
+    // passes, so this waits the refusal out rather than reaching past it.
+    providerBehaviour.mode = "tool-flow";
+    for (let i = 0; i < 60; i++) {
+      const probe = await page.evaluate(RATE_LIMIT_PROBE);
+      if (!probe.notice && probe.sendDisabled === false) break;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    const afterRun = await sendAndWait(page, origin, "Zpráva po odmítnutí limitu.");
+    if (!afterRun) return { driven: false, reason: "the composer never accepted a message after the refusal" };
+    // A cleared draft is not proof that the composer works again, because an
+    // empty composer is disabled for an unrelated reason. A real draft is:
+    // only the refusal can keep Send disabled from here.
+    await page.evaluate(setDraft("Koncept, který se po odmítnutí musí poslat."));
+    await page.settle();
+    // The client refetches a settled session on its own schedule, so the
+    // composer can still be showing Stop for a while after the server called
+    // the run done. This waits for the control the assertion is about, and
+    // keeps the last reading either way so a composer that never comes back
+    // fails rather than passing on a timeout.
+    let after = null;
+    for (let i = 0; i < 80; i++) {
+      after = await page.evaluate(RATE_LIMIT_PROBE);
+      if (after.sendDisabled === false) break;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    const afterAssistant = await page.evaluate(LAST_ASSISTANT);
+    return {
+      driven: true,
+      status: failure?.payload?.status ?? null,
+      retryAfter: providerBehaviour.retryAfter,
+      runError: failure?.payload ?? null,
+      notice: during.notice,
+      sendDisabled: during.sendDisabled,
+      send: during.send,
+      sendHit: during.sendHit,
+      innerHeight: during.innerHeight,
+      transcriptHeight: during.transcriptHeight,
+      horizontalOverflow: during.scrollWidth - during.clientWidth,
+      offenders: during.offenders,
+      providerStatus: provider.status,
+      failedRun: session?.state ?? session?.status ?? null,
+      after: {
+        notice: after.notice,
+        sendDisabled: after.sendDisabled,
+        completed: afterAssistant.text,
+        providerStatus: (await fetch(origin + "/api/provider").then((r) => r.json())).status,
+      },
+      afterSession: afterRun.id,
+    };
+  } finally {
+    providerBehaviour.mode = "tool-flow";
+  }
+}
+
+
+/** D04.04 a held tool call, pending in the server and decided in the browser. */
+async function measureApproval(page, origin) {
+  await page.setViewport(1280, 800);
+  // A custom agent profile is what puts a managed write through the operator
+  // policy: without a profile the workspace tools are not classified, so
+  // nothing would ever be held and the state could not exist.
+  await page.goto(origin + "/settings");
+  await waitForApp(page, "form input[name=id]");
+  const created = await page.evaluate(`(() => {
+    const form = [...document.querySelectorAll("form")].find((f) => f.querySelector("[name=allowedTools]"));
+    if (!form) return false;
+    const set = (name, value) => {
+      const field = form.querySelector("[name=" + name + "]");
+      if (!field) return false;
+      const proto = field.tagName === "TEXTAREA" ? window.HTMLTextAreaElement.prototype
+        : field.tagName === "SELECT" ? window.HTMLSelectElement.prototype
+        : window.HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(proto, "value").set.call(field, value);
+      field.dispatchEvent(new Event(field.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+      return true;
+    };
+    set("id", "qa-approver");
+    set("name", "QA approver");
+    set("systemPrompt", "Write the plan document through the managed workspace tool.");
+    set("allowedTools", "void_workspace_write\\nvoid_workspace_read");
+    set("maxTurns", "4");
+    set("maxContextTokens", "32768");
+    form.requestSubmit();
+    return true;
+  })()`);
+  if (!created) return { driven: false, reason: "the agent profile form was not on the settings page" };
+  let profileReady = null;
+  for (let i = 0; i < 40 && !profileReady; i++) {
+    await new Promise((r) => setTimeout(r, 200));
+    profileReady = await fetch(origin + "/api/agents")
+      .then((r) => r.json())
+      .then((body) => (body.profiles ?? []).some((p) => p.id === "qa-approver"));
+  }
+  if (!profileReady) return { driven: false, reason: "the agent profile was never stored" };
+
+  await page.goto(origin + "/chat/new");
+  await waitForApp(page, ".composer .send");
+  // The agent for a new conversation lives in the conversation settings
+  // dialog, so the operator opens it and picks the profile there.
+  await page.evaluate(`(() => { document.querySelector(".chat-options-trigger").click(); return true; })()`);
+  await waitForApp(page, 'dialog[open] option[value="qa-approver"]');
+  const chosen = await page.evaluate(`(() => {
+    const select = [...document.querySelectorAll("dialog[open] select")]
+      .find((node) => [...node.options].some((option) => option.value === "qa-approver"));
+    if (!select) return null;
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
+    setter.call(select, "qa-approver");
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    const value = select.value;
+    document.querySelector("dialog[open] .dialog-heading button")?.click();
+    return value;
+  })()`);
+  if (chosen !== "qa-approver") return { driven: false, reason: "the agent profile could not be selected on a new conversation" };
+  await page.settle();
+  await page.evaluate(setDraft("Zapiš plán do dokumentu přes nástroj."));
+  await page.settle();
+  await page.evaluate(`(() => { document.querySelector(".composer .send").click(); return true; })()`);
+  const id = await currentSessionId(page);
+  if (!id) return { driven: false, reason: "the held tool call never produced a conversation" };
+
+  const INLINE_APPROVAL = `(() => {
+    const node = document.querySelector(".composer-notices .inline-approval");
+    return node ? node.innerText.trim() : null;
+  })()`;
+  let before = null;
+  let seenAt = 0;
+  for (let i = 0; i < 80 && !before; i++) {
+    await new Promise((r) => setTimeout(r, 250));
+    const inline = await page.evaluate(INLINE_APPROVAL);
+    if (inline) {
+      before = inline;
+      seenAt = Date.now();
+    }
+  }
+  if (!before) return { driven: false, reason: "the held tool call never appeared in the composer" };
+  const holds = await fetch(origin + "/api/approvals").then((r) => r.json());
+  const hold = (holds.approvals ?? [])[0] ?? null;
+  const held = await runStateProbe(origin, id);
+  const documents = await fetch(origin + "/api/documents?sessionId=" + id).then((r) => r.json());
+  const beforeState = {
+    inline: before,
+    holdStatus: hold?.status ?? null,
+    expiresInSeconds: hold?.expiresAt ? Math.round((hold.expiresAt - Date.now()) / 1000) : null,
+    runState: held?.state ?? held?.status ?? null,
+    toolWritten: (documents.items ?? documents.documents ?? []).length > 0,
+  };
+
+  await page.evaluate(`(() => {
+    const node = document.querySelector(".composer-notices .inline-approval button");
+    if (!node) return false;
+    node.click();
+    return true;
+  })()`);
+  await waitForApp(page, "dialog[open] .approval-facts");
+  const dialog = await page.evaluate(`(() => {
+    const node = document.querySelector("dialog[open]");
+    const approve = [...node.querySelectorAll(".actions button")].find((b) => /Approve/.test(b.innerText));
+    return {
+      tool: node.querySelector("h2, h3")?.innerText?.trim() ?? null,
+      klass: node.querySelector(".approval-facts")?.innerText ?? "",
+      workspace: node.querySelector(".approval-facts")?.innerText ?? "",
+      approveDisabled: approve ? approve.disabled : null,
+    };
+  })()`);
+  const decidedAt = Date.now();
+  await page.evaluate(`(() => {
+    const approve = [...document.querySelectorAll("dialog[open] .actions button")].find((b) => /Approve/.test(b.innerText));
+    if (!approve || approve.disabled) return false;
+    approve.click();
+    return true;
+  })()`);
+  const settled = await settleRun(origin, id, ["idle", "failed", "stopped", "unknown"]);
+  await page.settle();
+  for (let i = 0; i < 20; i++) {
+    if (!(await page.evaluate(INLINE_APPROVAL))) break;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  const history = await fetch(origin + "/api/approvals?history=true").then((r) => r.json());
+  const records = history.approvals ?? history.items ?? [];
+  const decided = records.find((a) => a.holdId === (hold?.holdId ?? null)) ?? null;
+  const stillPending = (await fetch(origin + "/api/approvals").then((r) => r.json()))
+    .approvals.some((a) => a.holdId === (hold?.holdId ?? null));
+  const written = await fetch(origin + "/api/documents?sessionId=" + id).then((r) => r.json());
+  const assistant = await page.evaluate(LAST_ASSISTANT);
+  return {
+    driven: true,
+    tool: dialog.tool,
+    workspace: (dialog.workspace.match(/Workspace:\s*(\S+)/) ?? [])[1] ?? null,
+    // Pending means the operator could still have said no: the record has to
+    // sit in the server unread long enough for a decision to be a decision.
+    pendingMs: decidedAt - seenAt,
+    before: beforeState,
+    dialog: {
+      tool: dialog.tool,
+      klass: (dialog.klass.match(/Class:\s*(\S+)/) ?? [])[1] ?? null,
+      workspace: (dialog.workspace.match(/Workspace:\s*(\S+)/) ?? [])[1] ?? null,
+      approveDisabled: dialog.approveDisabled,
+    },
+    after: {
+      holdStatus: decided?.status ?? null,
+      stillPending,
+      inlineGone: (await page.evaluate(INLINE_APPROVAL)) === null,
+      toolWritten: (written.items ?? written.documents ?? []).length > 0,
+      runState: settled?.state ?? settled?.status ?? null,
+      completed: assistant.text,
+    },
+  };
+}
+
+/** D04.07 a recovery the operator approves and the server cannot apply. */
+async function measureRecovery(page, origin) {
+  await page.setViewport(1280, 800);
+  await page.goto(origin + "/chat/new");
+  await waitForApp(page, ".composer .send");
+  const started = await sendAndWait(page, origin, "Napiš plán do dokumentu, abych mohl zkusit obnovu.");
+  if (!started) return { driven: false, reason: "the conversation that owns the document never started" };
+  const id = started.id;
+  const written = await fetch(origin + "/api/documents?sessionId=" + id).then((r) => r.json());
+  const rows = written.items ?? written.documents ?? [];
+  if (!rows.length) return { driven: false, reason: "the run left no document to recover" };
+  const path = rows[0].path;
+
+  // The operator moves the document on before recovering the earlier write.
+  // That is the real cause of a conflict, and the recovery refuses to undo a
+  // document it no longer matches.
+  await page.evaluate(`(() => {
+    const button = document.querySelector('button[aria-label="Open context"]');
+    if (!button) return false;
+    button.click();
+    return true;
+  })()`);
+  await waitForApp(page, "section.document-history");
+  const edited = await page.evaluate(`(() => {
+    const row = [...document.querySelectorAll(".data-block tbody tr")]
+      .find((node) => (node.querySelector("td")?.innerText ?? "").trim() === ${JSON.stringify(path)});
+    // The row itself carries no handler; the operator opens the document with
+    // the control the table puts at the end of the row.
+    const open = row?.querySelector("button[aria-label]");
+    if (!open) return false;
+    open.click();
+    return true;
+  })()`);
+  if (!edited) return { driven: false, reason: "the document row could not be opened in the context panel" };
+  await waitForApp(page, "dialog[open] .document-editor, dialog[open] .document-preview");
+  const openTab = await page.evaluate(`(() => {
+    const tab = [...document.querySelectorAll("dialog[open] .toolbar button")].find((b) => /Edit/.test(b.innerText));
+    if (!tab) return false;
+    tab.click();
+    return true;
+  })()`);
+  if (!openTab) return { driven: false, reason: "the document editor has no edit mode" };
+  await waitForApp(page, "dialog[open] textarea.document-editor");
+  const revised = NEWER_REVISION;
+  await page.evaluate(`(() => {
+    const area = document.querySelector("dialog[open] textarea.document-editor");
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+    setter.call(area, ${JSON.stringify(revised)});
+    area.dispatchEvent(new Event("input", { bubbles: true }));
+    return area.value;
+  })()`);
+  await page.settle();
+  const saved = await page.evaluate(`(() => {
+    const button = [...document.querySelectorAll("dialog[open] .toolbar ~ button.primary, dialog[open] button.primary")]
+      .find((b) => /Save new revision/.test(b.innerText));
+    if (!button || button.disabled) return false;
+    button.click();
+    return true;
+  })()`);
+  if (!saved) return { driven: false, reason: "the new document revision could not be saved" };
+  for (let i = 0; i < 40; i++) {
+    const document_ = await fetch(origin + "/api/sessions/" + id + "/documents?path=" + encodeURIComponent(path)).then((r) => r.json());
+    if (document_?.document?.content === revised) break;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  await page.evaluate(`(() => {
+    const close = document.querySelector("dialog[open] .dialog-close, dialog[open] button[aria-label]");
+    if (close) { close.click(); return true; }
+    document.querySelector("dialog[open]")?.close();
+    return false;
+  })()`);
+  await page.settle();
+
+  // The oldest write to the path is the one a recovery can still name, and
+  // the newest one is what makes it fail. The history section renders before
+  // its rows arrive, so this polls rather than reading one instant.
+  let ticked = null;
+  for (let i = 0; i < 60 && !ticked; i++) {
+    ticked = await page.evaluate(`(() => {
+      const rows = [...document.querySelectorAll(".document-operation-list li")];
+      const target = rows.filter((row) => (row.innerText || "").includes(${JSON.stringify(path)}) && /write/.test(row.innerText)).at(-1);
+      if (!target) return null;
+      const box = target.querySelector("input[type=checkbox]");
+      if (!box || box.checked) return null;
+      box.click();
+      return target.querySelector("code")?.innerText?.trim() ?? null;
+    })()`);
+    if (!ticked) await new Promise((r) => setTimeout(r, 250));
+  }
+  if (!ticked) return { driven: false, reason: "no recorded write to the document could be selected for recovery" };
+  const opened = await page.evaluate(`(() => {
+    const button = [...document.querySelectorAll(".document-history .actions button")]
+      .find((b) => /Preview recovery of selected changes/.test(b.innerText));
+    if (!button || button.disabled) return false;
+    button.click();
+    return true;
+  })()`);
+  if (!opened) return { driven: false, reason: "the recovery preview could not be opened" };
+  await waitForApp(page, "dialog[open] .recovery-evidence, dialog[open] .error");
+  const plan = await page.evaluate(`(() => {
+    const node = document.querySelector("dialog[open]");
+    return {
+      shown: !!node.querySelector(".recovery-evidence"),
+      steps: node.querySelectorAll(".recovery-review ol > li").length,
+      applyDisabled: [...node.querySelectorAll(".actions button")].find((b) => /Approve and apply/.test(b.innerText))?.disabled ?? null,
+    };
+  })()`);
+  if (!plan.shown || !plan.steps) return { driven: false, reason: "the recovery plan held no executable step" };
+  const approved = await page.evaluate(`(() => {
+    const button = [...document.querySelectorAll("dialog[open] .actions button")].find((b) => /Approve and apply/.test(b.innerText));
+    if (!button || button.disabled) return false;
+    button.click();
+    return true;
+  })()`);
+  if (!approved) return { driven: false, reason: "the recovery apply control was not operable" };
+  let outcome = null;
+  for (let i = 0; i < 60 && !outcome; i++) {
+    await new Promise((r) => setTimeout(r, 250));
+    outcome = await page.evaluate(`(() => {
+      const node = document.querySelector("dialog[open]");
+      if (!node) return null;
+      const result = node.querySelector(".recovery-result");
+      const error = node.querySelector(".error");
+      if (!result && !error) return null;
+      return {
+        attribute: result?.getAttribute("data-outcome") ?? null,
+        label: result?.querySelector("h3")?.innerText?.trim() ?? null,
+        error: result ? null : error?.innerText?.trim() ?? null,
+        text: node.innerText,
+      };
+    })()`);
+  }
+  if (!outcome) return { driven: false, reason: "the recovery neither settled nor refused in the browser" };
+  const jobId = await page.evaluate(`(() => document.querySelector("dialog[open] .recovery-review p code")?.innerText?.trim() ?? null)()`);
+  const serverStatus = jobId
+    ? await fetch(origin + "/api/sessions/" + id + "/recovery-jobs/" + encodeURIComponent(jobId))
+        .then((r) => (r.ok ? r.json() : null))
+        .then((body) => body?.status ?? null)
+    : null;
+  const current = await fetch(origin + "/api/sessions/" + id + "/documents?path=" + encodeURIComponent(path)).then((r) => r.json());
+  return {
+    driven: true,
+    path,
+    operationId: ticked,
+    jobId,
+    stepCount: plan.steps,
+    planShown: plan.shown,
+    approved,
+    status: outcome.attribute,
+    dialogText: outcome.text,
+    outcomeLabel: outcome.label,
+    outcomeError: outcome.error,
+    label: recoveryStateLabel(outcome.attribute, "en"),
+    successLabel: recoveryStateLabel("restored", "en"),
+    serverStatus,
+    documentPreserved: (current?.document?.content ?? null) === revised,
+    documentContent: current?.document?.content ?? null,
+    expectedContent: revised,
+  };
 }
 
 // --------------------------------------------------------------------- main
@@ -1186,6 +1802,34 @@ export async function measure() {
       });
     }
     report.zoom200 = zoomRows;
+
+    // D04.04/D04.07 the four live states, each driven through the built
+    // application on a conversation of its own. The refusal runs last: a
+    // provider that is still refusing blocks every later send, so leaving it
+    // until the end keeps the other three from being measured through a
+    // composer that is not allowed to transmit. The locale is pinned so the
+    // exact strings under test are the ones an operator would read.
+    await page.evaluate(`(() => { localStorage.setItem("void-locale", "en"); return true; })()`);
+    // A state whose measurement broke is a state that was not driven, and the
+    // reason travels with it into the gate's output. Letting the throw escape
+    // would fail the whole report instead of naming this one hole.
+    const drive = async (name, run) => {
+      try {
+        return await run();
+      } catch (error) {
+        return {
+          driven: false,
+          reason: name + " could not be driven: " + (error instanceof Error ? error.message : String(error)),
+        };
+      }
+    };
+    report.liveStates = {
+      streaming: await drive("streaming", () => measureStreaming(page, workspace.origin)),
+      approval: await drive("approval", () => measureApproval(page, workspace.origin)),
+      recovery: await drive("recovery", () => measureRecovery(page, workspace.origin)),
+      rateLimit: await drive("rateLimit", () => measureRateLimit(page, workspace.origin)),
+    };
+    await page.evaluate(`(() => { localStorage.removeItem("void-locale"); return true; })()`);
 
     // D04.01/D04.05/D04.06 for the public demo surface
     report.demo = await measureDemo(page, demo);

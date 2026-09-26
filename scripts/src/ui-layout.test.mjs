@@ -43,6 +43,19 @@ const report = await (reportPromise ?? Promise.resolve(null));
 // Recorded as a todo as well as skipped, so an unwitnessed browser gate reads as
 // outstanding work in the summary rather than as a deliberate pass.
 if (gateGap !== null) test.todo(`browser layout gate did not run: ${gateGap}`);
+// A live state the harness could not drive is a hole in the evidence, not a
+// pass. The same rule as the gate above: the reason is named in the output and
+// recorded as a todo, so a run that could not drive a state cannot read as a
+// clean run. A state that is missing altogether is a harness fault and fails
+// its test below rather than skipping it, so deleting a measurement cannot
+// turn the gate green.
+const undriven = Object.entries(report?.liveStates ?? {})
+  .filter(([, state]) => state.driven === false)
+  .map(([key, state]) => ({ key, reason: state.reason ?? "no reason was recorded" }));
+for (const { key, reason } of undriven)
+  test.todo(`live state ${key} was not driven: ${reason}`);
+const stateSkip = (key) =>
+  skip || undriven.find((entry) => entry.key === key)?.reason || false;
 if (report && process.env.VOID_QA_REPORT) {
   const { writeFile } = await import("node:fs/promises");
   await writeFile(process.env.VOID_QA_REPORT, JSON.stringify(report, null, 2));
@@ -415,4 +428,112 @@ test("D03.01 the shared DataTable refresh exposes a pending state", { skip }, ()
   // Releasing the held request has to restore the control, or the page would
   // deadlock after one refresh.
   assert.equal(refresh.released.disabled, false, "the refresh button stayed disabled after the refetch completed");
+});
+
+// ------------------------------------------------------- D04.04 live states
+// Streaming, a rate-limit refusal, a failing recovery and a live pending
+// approval are properties of a real conversation, not of a component. Each
+// one is driven through the built application against a real control plane
+// and a real provider request, and every assertion below reads a fact out of
+// the running browser or out of the server that answered it.
+
+test("D04.04 a streamed reply is read in the transcript while the run is still live", { skip: stateSkip("streaming") }, () => {
+  const state = report.liveStates.streaming;
+  assert.ok(state, "the streaming state was never measured");
+  // The provider really answered in pieces. One chunk is a complete response
+  // that happened to be framed as a stream, which is not incremental delivery.
+  assert.ok(state.chunkCount >= 4, `the provider sent the reply in ${state.chunkCount} chunks`);
+  const partials = state.partials;
+  assert.ok(partials.length >= 3, `only ${partials.length} readings were taken while the stream was open`);
+  for (let i = 1; i < partials.length; i++)
+    assert.ok(partials[i].text.length > partials[i - 1].text.length, `reading ${i} is not longer than reading ${i - 1}: ${partials.map((p) => p.text.length)}`);
+  // The run is read from the server, not inferred from the button: a disabled
+  // Send would also be true after a refusal, which is not a live stream.
+  for (const reading of partials)
+    assert.equal(reading.runState, "running", `the run was ${reading.runState} while the transcript still had ${reading.text.length} characters`);
+  for (const reading of partials)
+    assert.ok(state.answer.startsWith(reading.text), "a mid-stream reading is not a prefix of the answer the provider streamed: " + JSON.stringify(reading.text));
+  assert.ok(partials.at(-1).text.length < state.answer.length, "the last mid-stream reading already held the whole answer, so nothing was observed arriving");
+  // The transcript ends on exactly what was streamed: no duplicate delta and
+  // no truncation of the tail.
+  assert.equal(state.completed, state.answer, "the completed reply is not the streamed answer");
+  assert.equal(state.completed.length, state.streamedChars, `the transcript shows ${state.completed.length} characters for ${state.streamedChars} streamed characters`);
+  assert.ok(state.deltaEvents >= 2, `only ${state.deltaEvents} message.delta events were recorded`);
+});
+
+test("D04.04 a provider rate limit is refused in the UI, blocks Send and clears on the next good reply", { skip: stateSkip("rateLimit") }, () => {
+  const state = report.liveStates.rateLimit;
+  assert.ok(state, "the rate-limit state was never measured");
+  assert.equal(state.status, 429, `the provider answered HTTP ${state.status}`);
+  // A refusal is never retried behind the operator's back.
+  assert.equal(state.runError.automaticRetry, false, "the run error claims an automatic retry");
+  assert.equal(state.runError.retryAfter, state.retryAfter, "the recorded retry delay does not match the Retry-After the provider sent");
+  assert.match(state.notice, /^Provider rate limit\. Retry in [1-9]\d* s\.$/, "the composer does not name the refusal: " + JSON.stringify(state.notice));
+  assert.equal(state.sendDisabled, true, "Send stayed enabled while the provider was refusing");
+  assert.equal(state.providerStatus, "rate-limited", "the provider is reported as " + state.providerStatus);
+  assert.equal(state.failedRun, "failed", `the refused run settled as ${state.failedRun}`);
+  // The refusal is a live surface, so the phone gates apply to it too: a
+  // notice that pushed Send off screen would hide the refusal on a phone.
+  assert.equal(state.horizontalOverflow, 0, `the refusal overflows the page by ${state.horizontalOverflow}px: ${JSON.stringify(state.offenders.slice(0, 3))}`);
+  assert.ok(state.transcriptHeight >= 200, `the transcript collapsed to ${state.transcriptHeight}px under the refusal`);
+  assert.ok(state.send.bottom <= state.innerHeight + 1, `Send fell outside the viewport at ${state.send.bottom} of ${state.innerHeight} under the refusal`);
+  assert.equal(state.sendHit, "reachable", `Send is ${state.sendHit} under the refusal`);
+  // The refusal is not permanent: the next good reply lifts it.
+  assert.equal(state.after.notice, null, "the refusal notice is still up after a good reply: " + JSON.stringify(state.after.notice));
+  assert.equal(state.after.sendDisabled, false, "Send stayed disabled after a good reply");
+  assert.equal(state.after.providerStatus, "ready", "the provider is still " + state.after.providerStatus + " after a good reply");
+  assert.ok(state.after.completed.length > 0, "the reply that lifted the refusal never landed");
+});
+
+test("D04.04 a tool call waits as a live pending approval and one browser decision settles it", { skip: stateSkip("approval") }, () => {
+  const state = report.liveStates.approval;
+  assert.ok(state, "the approval state was never measured");
+  // Pending means pending: the server holds it, the run is parked on it and
+  // the composer says so before anyone decides anything.
+  assert.equal(state.before.holdStatus, "pending", "the hold was not pending: " + state.before.holdStatus);
+  assert.equal(state.before.runState, "awaiting-approval", `the run is ${state.before.runState} while the hold is pending`);
+  assert.ok(state.before.expiresInSeconds > 0, "the hold has no expiry, so it is not a hold");
+  assert.match(state.before.inline, /Needs a decision/);
+  assert.ok(state.before.inline.includes(state.tool), "the composer notice does not name the held tool: " + JSON.stringify(state.before.inline));
+  assert.equal(state.before.toolWritten, false, "the held tool ran before it was approved");
+  // The dialog the operator opens is the server's record, not a client guess.
+  assert.equal(state.dialog.tool, state.tool, "the review dialog is about " + state.dialog.tool);
+  assert.equal(state.dialog.klass, "r1", `the dialog classifies the call as ${state.dialog.klass}`);
+  assert.equal(state.dialog.workspace, state.workspace, "the dialog names a different workspace than the run");
+  assert.equal(state.dialog.approveDisabled, false, "the approve control is not operable while the hold is pending");
+  // One decision, one effect: the write the held call proposed is on disk and
+  // the hold is settled in the server's own history.
+  assert.equal(state.after.holdStatus, "approved", `the hold settled as ${state.after.holdStatus}`);
+  assert.equal(state.after.stillPending, false, "the decided hold is still offered as pending");
+  assert.equal(state.after.inlineGone, true, "the composer still asks for a decision that has been made");
+  assert.equal(state.after.toolWritten, true, "the approved call never wrote the document it proposed");
+  assert.equal(state.after.runState, "idle", `the run is ${state.after.runState} after the approval`);
+  assert.ok(state.after.completed.length > 0, "the run produced no answer after the approved tool ran");
+  assert.ok(state.pendingMs > 0, "the approval was decided in the same instant it appeared, so it was never pending");
+});
+
+test("D04.07 a recovery that cannot apply is reported as a failure in the browser", { skip: stateSkip("recovery") }, () => {
+  const state = report.liveStates.recovery;
+  assert.ok(state, "the recovery state was never measured");
+  // The recovery really ran: the operator planned real steps and approved a
+  // real apply, so a failure below is a failure of the recovery and not of a
+  // request that never started.
+  assert.ok(state.stepCount > 0, "the plan held no steps, so no recovery ran");
+  assert.equal(state.planShown, true, "the plan never reached the reviewable state");
+  assert.ok(state.approved, "the operator's apply was never sent");
+  assert.ok(
+    ["conflict", "partial", "paused", "unknown"].includes(state.status),
+    "the recovery settled as " + state.status + ", which is not a failure this gate can call a failure",
+  );
+  assert.equal(state.serverStatus, state.status, "the browser and the server disagree about the recovery outcome");
+  // The dialog has to say so, in the words the shared label table gives the
+  // status the server reported. A recovery that failed and reads as restored
+  // is the one bug this measurement exists to catch.
+  assert.equal(state.outcomeLabel, state.label, "the review dialog reads " + JSON.stringify(state.outcomeLabel) + " for a " + state.status + " recovery");
+  assert.notEqual(state.outcomeLabel, state.successLabel, "the review dialog claims the failed recovery succeeded");
+  assert.equal(state.outcomeError, null, "the failed recovery was also rendered as a request error: " + JSON.stringify(state.outcomeError));
+  assert.match(state.dialogText, /never automatically retries/, "the dialog does not say the failed recovery was not retried: " + JSON.stringify(state.dialogText));
+  // Failing closed means the newer document is still there.
+  assert.equal(state.documentPreserved, true, "the document the failed recovery would have removed is gone");
+  assert.equal(state.documentContent, state.expectedContent, "the preserved document is not the newer content");
 });

@@ -61,9 +61,15 @@ replace an installed desktop application.
 Actual browser 200% zoom could not be activated reliably; 720x450 layout reflow is
 only a proxy. Physical keyboard/safe areas and VoiceOver/TalkBack were not tested.
 Real incremental provider streaming, rate limiting, recovery failures and live
-pending approval scenarios were not injected in this browser run. Existing unit
-coverage and unchanged handlers are not substitutes for that runtime evidence.
-No claim of universal flawless UI or full hardware certification is made.
+pending approval are now driven in the browser run, and the four of them are
+asserted from measured facts rather than from unit coverage: a streamed reply
+read in the transcript while the run is still live, a 429 refused in the
+composer with Send disabled and cleared by the next good reply, a held tool call
+decided by one click in the browser, and a recovery that cannot apply rendered
+as a conflict with the newer revision left byte for byte. A state that cannot be
+driven is named in the output and recorded as a todo, never as a pass. Physical
+keyboard, safe areas and VoiceOver/TalkBack were still not tested, and no claim
+of universal flawless UI or full hardware certification is made.
 
 ## Final correction checks
 
