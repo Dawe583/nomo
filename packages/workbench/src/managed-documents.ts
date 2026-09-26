@@ -88,7 +88,8 @@ export function managedDocumentAdapter(host: {
       const input = parse(args),
         state = await host.read(),
         next = transition(state, input),
-        path = next.operation!.path;
+        path = next.operation!.path,
+        observed = revision(state, path);
       return {
         effect: "write",
         reversibility: "r1",
@@ -96,8 +97,15 @@ export function managedDocumentAdapter(host: {
         scope:
           "Managed text document content and operation history; no host filesystem or external effects.",
         resources: ["document:" + path],
-        revision: revision(state, path),
+        revision: observed,
         blastRadius: { count: 1, precision: "exact" },
+        // R07: the document this call read, at the revision it read it. The
+        // host state is a whole workspace, but `executeWorkspaceTool` consults
+        // one path's content and that path's own operation history, and that
+        // pair is exactly what `revision` digests. Claiming the workspace
+        // would make every document a dependency of every other one and prove
+        // nothing a plan could order.
+        reads: [{ resource: "document:" + path, revision: observed }],
       };
     },
     async prepare(args, observation) {

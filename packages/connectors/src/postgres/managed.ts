@@ -1237,6 +1237,23 @@ export function managedPostgresAdapter(
           resources: state.rows.map((row) => row.resource),
           revision: json(state),
           blastRadius: { count: state.rows.length, precision: "exact" },
+          // R07: what this call actually read, at the revision it read it.
+          // `inspectState` selects every row it will later write — the target
+          // plus, for a delete, the whole cascade tree it walked — and each
+          // capture carries that row's own revision from the metadata ledger.
+          // Naming them is a claim a reviewer can check against the capture.
+          //
+          // The catalog, the metadata tables and the server-bound tenant
+          // setting are deliberately absent: they are this adapter's own
+          // preconditions, re-certified under a lock in `prepare`, they carry
+          // no row revision, and two operations in the same schema would
+          // therefore claim a dependency on each other through a control-plane
+          // table that no recovery touches. A resource the adapter cannot
+          // version is not a resource it may claim.
+          reads: state.rows.map((row) => ({
+            resource: row.resource,
+            revision: row.revision,
+          })),
         };
       } finally {
         await connection.close();

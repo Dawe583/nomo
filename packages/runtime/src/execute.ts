@@ -389,6 +389,27 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
               canonicalJson(await adapter.preflight(clean(request.arguments))),
             ) as Observation;
             digest(observation);
+            // R07: what this operation read and wrote, from the observation
+            // the adapter just made, not from the request the caller sent. A
+            // read set the adapter never performed would be a false claim in a
+            // signed journal, so an adapter that cannot observe its reads
+            // leaves the field absent and the planner treats the step as
+            // unproven rather than as independent. Every later record for this
+            // operation repeats these three fields, because `identity` is what
+            // each stage is written from.
+            if (observation.reads)
+              identity.readSet = observation.reads.map((read) => read.resource);
+            identity.writeSet = [...observation.resources];
+            // A null revision is an observation — there was no prior state —
+            // and is recorded as such. A revision the adapter did not report
+            // at all is an absence, and an absent field is the only honest
+            // record of it: canonicalJson refuses undefined, and a signed
+            // record that cannot be canonicalised is a defect here rather than
+            // something the serialiser should absorb.
+            if (typeof observation.revision === "string")
+              identity.revision = observation.revision;
+            else if (observation.revision !== undefined)
+              identity.revision = canonicalJson(observation.revision);
             if (
               options.requireRecoverable !== false &&
               (observation.readiness !== "verified" ||

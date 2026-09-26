@@ -142,16 +142,60 @@ adapter. Size: XL.
 ### G-04 R07: runtime provenance and dependency aware recovery
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R07.
-Missing: everything beyond the legacy taint helpers. The runtime records
-no resource read or write sets, no revisions, no dependency certainty, and
-the planner uses no graph.
-Evidence: `packages/ledger/src/taint/query.test.ts` passes 4/4, so the
-legacy helpers work, but no file under `packages/runtime/src` references
-taint, and `docs/REVERSE-UPGRADE-PROGRESS.md` marks R07 as retained legacy
-only. `node --test packages/ledger/src/taint/query.test.ts` passes.
-Minimum change: record resource keys with read and write sets and observed
-revisions at dispatch, then compute descendant closure in the planner.
-Dependency: R01, R02, integration with R06. Size: XL.
+Closed in part 2026-09-26; the residual is stated below rather than repeated
+as a missing capability.
+
+The audit row this came from (`docs/OPEN-WORK-AUDIT.md` 24, written against
+63dbd2c) said the runtime "records no resource read or write sets" and that
+`orderRecoverySteps` therefore "has nothing to order by". Against this tree
+both halves were wrong in the same direction. Provenance facts were already
+built from the durable capture's `Observation` in `planRecoveryJob`, and
+`filesystem.managed` already recorded a read set. What was missing was the
+PostgreSQL and managed-documents read sets and the journal fields, and the
+planner's problem was the opposite of having too little to order by: it
+refused plans it should have accepted.
+
+Now true. `recoveryRuntime` stamps `readSet`, `writeSet` and `revision` onto
+the operation identity from the adapter's `preflight` observation, so every
+record from `authorized` onwards carries them, and the values are the ones the
+adapter observed rather than the ones the caller declared. An adapter that
+cannot observe its reads leaves `readSet` absent, and an adapter that reports
+no revision leaves `revision` absent, because `canonicalJson` refuses
+`undefined` and an absent field is the only honest record of an absence. A
+`null` revision is an observation — there was no prior state — and is recorded
+canonically. `managedPostgresAdapter` records every row it captured with that
+row's own revision from the metadata ledger, and the managed-documents adapter
+records the document it read at the revision it read it; the filesystem
+adapter needed no change because its read set already was its before-image.
+`collectVaultGarbage` in `retention.ts` writes its own `vault.retention`
+record and is deliberately not stamped: it has no `Observation`, and the sets
+it would carry are the ones its policy names rather than ones it observed.
+
+The closure is computed in `provenanceEdges`. A read of a resource the step
+did not write is a consultation and any writer of that resource is a candidate
+producer, later ones included, which is the case the proof refuses. A read of
+a resource the step did write is its own before-image, so only a writer
+earlier in the journal can have produced it. Before this, a read matched every
+writer including later ones, and two sequential writes to one file were
+refused with the claim that the first had read the second's output. Measured
+before and after on `filesystem.managed`: `Recovery job order is not provably
+safe: op-1 read file:/…/a.txt from op-2, which is later in the journal` became
+a plan of both steps in reverse order. `orderRecoverySteps` now also refuses a
+plan in which two steps each wrote one resource and each recorded the same
+revision for it, because the second started from a state the first write had
+already moved past. No plan.ts rule was added: the unproven and independent
+distinction there is the one `independentBranches` and the `dependencies`
+selector already use, and this change feeds it rather than restating it.
+
+Still not provable, and not claimed: the Git managed adapter records no read
+set until its own owner lands one, and its steps are reported as unproven
+rather than ordered. A write must move the revision of every resource it
+writes for the chain check to mean anything; an adapter that cannot version
+what it writes records no revision and the check skips it rather than reading
+the absence as agreement. Cross-system plans, data-flow provenance between
+agents (WP-R07's two-to-three-agent exit), and a resource hierarchy across
+systems remain open. `node --test packages/runtime/src/provenance.test.ts`
+passes 12/12 and the runtime suite 161/161.
 
 ### G-05 R11: staged hold, barriers, cascading cancel
 
@@ -182,17 +226,36 @@ R12 profiles. Size: L.
 ### G-07 R05: Git commit, revert, remote, Windows
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R05.
-Missing: managed commit and revert, remote recovery, Windows Git, Windows
-filesystem rename and mode restoration, and a noncooperative writer
-boundary.
-Evidence: `docs/MANAGED-GIT.md` limits section lists no commit, branch,
-remote, reset or checkout support; `docs/ADAPTER-CONFORMANCE.md` records
-Windows rename as refused and Windows Git as POSIX exclusion.
-Minimum change: append only revert commit or recovery PR, never reset or
-force push; Windows rename only with separate evidence. Dependency: R02,
-R03. Size: L to XL. Sibling lane active on commit recovery, root lane
-does not duplicate it. `[EXT]` needs a Windows machine for the Windows
-gates.
+Shipped: managed commit and revert (2026-09-25, `git/managed-commit.ts`), then
+remote recovery as `recoverRemote` (2026-09-26, `git/managed-remote.ts`). The
+remote path fetches the named remote branch, re-derives the undone commit from
+its own `refs/void/operations/` receipt, and publishes exactly one new
+`refs/heads/void/recovery/<digest>` branch carrying the inverse, parented on the
+remote tip, with a digest-bound proposal body that names the operation, its
+receipt and its commit. No local branch is created, no existing ref moves,
+there is no `reset` and there is no force-push; the only remote commands are
+`fetch`, `ls-remote` and `push`. A remote that advances between capture and
+apply is refused by name rather than rebased, a refused push reconciles to
+`failed`, and a branch found at a foreign commit reconciles to `unknown` with
+no second push.
+Missing: publication and its conformance scenario; the pull request itself;
+the Windows gates. `recoverRemote` is wired into the adapter but is not in the
+`git.managed` profile's operation list, the profile still lists `remotes` under
+`excluded`, the MCP tool schema still omits it, and
+`docs/RELEASE-1.0.1-MATRIX.md` still records the pre-remote scenario count.
+Turning the published branch into a pull request needs a host credential and
+belongs to the GitHub adapter (G-11). `recoverRemote` has no managed inverse of
+its own — deleting a published branch is a human decision — so it reports R3
+and the default runtime denies the dispatch.
+Evidence: `docs/MANAGED-GIT.md` "## Managed remote recovery";
+`packages/connectors/src/git/managed-remote.test.ts` against a real bare local
+remote with a real second clone as the noncooperative writer;
+`docs/ADAPTER-CONFORMANCE.md` records Windows rename as refused and Windows Git
+as a POSIX exclusion.
+Minimum change: add the operation and a remote-backed conformance fixture to
+`packages/cli/src/conformance.ts`, then update the matrix count; Windows rename
+only with separate evidence. Dependency: R02, R03. Size: M for publication, XL
+for the Windows gates. `[EXT]` needs a Windows machine for the Windows gates.
 
 ### G-08 R02: legacy proxy capture binding and external tool conformance
 
@@ -370,12 +433,46 @@ Minimum change: one measurement proof per certified provider. Size: M.
 ### G-19 WP-12 taint graph product integration
 
 Plan: `docs/EXECUTION-PLAN.md` WP-12.
-Missing: the two workflow integration of the graph into the product; the
-legacy helpers alone do not order recovery.
-Evidence: `packages/cli/src/taint.ts` and the ledger taint modules exist
-and are tested, but no planner consumes them (see G-04).
-Minimum change: wire the graph into the R06 planner. Dependency: G-04.
-Size: M.
+Answered 2026-09-26, and the answer is that the graph cannot feed recovery
+ordering without becoming the graph G-04 already builds. Recorded here with
+the evidence rather than left as a missing capability, because "wire it in" is
+the instruction that would produce a second, worse provenance graph.
+
+`buildGraph` reads the policy decision feed, not the recovery journal: it
+requires `tool`, `klass` and `decision` on every entry and throws
+`ledger entry 1 has no klass` without them, so a `void.operation.v1` record
+cannot be a node. A node is a call digest with a sequence, a tool name and a
+decision, and no file under `packages/ledger/src/taint/` mentions
+`operationId`, so nothing joins a taint node to a recovery step. `TaintNode.
+revision` is declared and nothing in the tree writes `revision` into a ledger
+entry body, so it is `undefined` on every real node.
+
+The edges are the reason it must stay separate. `resourceKeys` derives a key
+from what the caller declared — `bucket`/`key`, `table`/`rowPredicateDigest`,
+`identity`/`id`, and `argsDigest` when nothing else matches — and `buildGraph`
+joins consecutive calls that share one. Verified on a two-entry graph: the
+edge is `x:identity=r1`, `bindingType: "observed-resource"`, produced by two
+callers naming the same id, with no observation of any resource on either
+side. Feeding that to `orderRecoverySteps` would substitute a declared claim
+for a proven one, which is the failure G-04's minimum change exists to
+eliminate, and the planner would either refuse correct plans or order them on
+argument text. Re-keying the graph by operation ID and deriving its resources
+from observed read and write sets is not an integration: it is G-04's graph
+under a second name, kept honest only by never being consulted.
+
+What the two structures do share is the vocabulary WP-R07 asks for, and the
+provenance module now uses it honestly: a taint edge is `confirmed-data`,
+`observed-resource` or `conservative-potential`, and a `ProvenanceFact` with
+no recorded read set is a conservative potential dependency that contributes
+no edge and is reported as unproven. The inspection surface stays exactly
+where it is — `void taint` in the CLI over the decision feed, no file under
+`packages/runtime/src` importing it — and `docs/RECOVERY-CONTRACT.md` already
+says the retained planners never consume it.
+
+Still open under this row: WP-R07's data-flow edges between agents, which need
+an `outputDigest`/`inputDigest` pair recorded by the producers themselves. The
+decision feed carries no producer for them today, and a caller-supplied
+`inputDigest` is the same declared claim this row refuses.
 
 ### G-20 WP-13 standalone verifier
 

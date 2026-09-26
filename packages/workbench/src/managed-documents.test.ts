@@ -182,3 +182,40 @@ test("previously signed document operations without runtime markers retain legac
   assert.equal(app.workspace(f.session.id).files["old.md"], undefined);
   assert.equal((await app.ledger(f.session.workspace))?.result.ok, true);
 });
+test("each managed document record names the document it read at the revision it read it", async (t) => {
+  const f = await fixture(t);
+  const first = await f.app.editDocument(f.session.id, {
+    path: "note.md",
+    content: "first",
+    expectedRevision: null,
+  });
+  await f.app.editDocument(f.session.id, {
+    path: "note.md",
+    content: "second",
+    expectedRevision: first.revision,
+  });
+  const events = (
+    await readFile(
+      join(f.root, "recovery", "journal", f.session.workspace + ".jsonl"),
+      "utf8",
+    )
+  )
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line).body);
+  const seen = new Map<string, { readSet?: string[]; revision?: string }>();
+  for (const event of events)
+    if (event.stage === "succeeded")
+      seen.set(event.operationId, {
+        readSet: event.readSet,
+        revision: event.revision,
+      });
+  assert.equal(seen.size, 2);
+  const [older, newer] = [...seen.values()];
+  // The read set is the document the call consulted, not the document the
+  // caller named, and the revision moved with the first write: that pair is
+  // what orders two edits to one document.
+  assert.deepEqual(older.readSet, ["document:note.md"]);
+  assert.deepEqual(newer.readSet, ["document:note.md"]);
+  assert.notEqual(older.revision, newer.revision);
+});

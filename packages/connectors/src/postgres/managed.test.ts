@@ -517,3 +517,23 @@ test("managed PostgreSQL binds tenant RLS to a server setting and rejects cross-
     "restored",
   );
 });
+test("a managed PostgreSQL observation names the rows it read at the revision it read them", async (t) => {
+  const f = await fixture(t);
+  const adapter = managedPostgresAdapter(f.options);
+  const before = await adapter.preflight(f.request.arguments);
+  // The read set is the capture, not a declaration: the same row the
+  // observation will write, at the revision the metadata ledger holds for it.
+  assert.deepEqual(before.reads, [
+    { resource: before.resources[0], revision: "0" },
+  ]);
+  assert.equal(
+    (await recoveryRuntime(f.runtimeOptions).execute(f.request)).status,
+    "succeeded",
+  );
+  const after = await adapter.preflight(f.request.arguments);
+  // The revision moved with the write, which is what lets a plan order two
+  // operations on one row instead of assuming it.
+  assert.deepEqual(after.reads, [
+    { resource: after.resources[0], revision: "1" },
+  ]);
+});
