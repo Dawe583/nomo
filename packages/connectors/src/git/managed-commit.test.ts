@@ -2155,6 +2155,41 @@ posixTest("recovery appends an inverse commit and durable receipt", async (t) =>
   assert.deepEqual(await readFile(join(f.root, "selected")), worktreeBefore);
 });
 
+posixTest("a managed commit on top of a merge commit keeps the merge and recovers", async (t) => {
+  const f = await commitRepository(t);
+  // A real merge, not a fast-forward, so the tip the adapter builds on has two
+  // parents. The claim under test is that such a tip is an ordinary base: the
+  // documents used to say merge commits were out of scope, and nothing in the
+  // source inspects the parent's count.
+  f.run("checkout", "-q", "-b", "side");
+  await f.write("side-only", "side");
+  f.run("add", "side-only");
+  f.run("commit", "-qm", "side");
+  f.run("checkout", "-q", "main");
+  await f.write("main-only", "main");
+  f.run("add", "main-only");
+  f.run("commit", "-qm", "main");
+  f.run("merge", "-q", "--no-ff", "-m", "merge side", "side");
+  const merged = f.run("rev-parse", "HEAD");
+  assert.equal(f.run("rev-list", "--parents", "-n", "1", merged).split(" ").length, 3);
+  await stageChange(f, "after-merge");
+  const before = await f.snapshot();
+  const { prepared, outcome } = await dispatchForward(f, "merge-forward");
+  const head = f.run("rev-parse", "HEAD");
+  assert.equal(f.run("rev-parse", "HEAD^"), merged);
+  assert.equal(f.run("rev-list", "--parents", "-n", "1", head).split(" ").length, 2);
+  assert.equal(f.run("show", `${head}:side-only`), "side");
+  assert.equal(f.run("show", `${head}:main-only`), "main");
+  assert.deepEqual((await f.snapshot()).worktree, before.worktree);
+  assert.equal((await f.adapter.recover(prepared, outcome, "merge-recover")).status, "restored");
+  // The inverse lands on the managed commit, and both merged files survive it.
+  const inverse = f.run("rev-parse", "HEAD");
+  assert.equal(f.run("rev-parse", `${inverse}^`), head);
+  assert.equal(f.run("show", `${inverse}:selected`), "before");
+  assert.equal(f.run("show", `${inverse}:side-only`), "side");
+  assert.equal(f.run("show", `${inverse}:main-only`), "main");
+});
+
 posixTest("recovery is restart-idempotent from its exact receipt", async (t) => {
   const f = await commitRepository(t);
   await stageChange(f, "managed");

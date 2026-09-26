@@ -64,12 +64,13 @@ is used.
 
 The branch tip does not have to be a single-parent commit: capture never
 inspects how many parents it has. A merge commit at the tip is accepted, and the
-commits the adapter writes above it are single-parent. That was measured on a
-disposable merge through a full forward and recovery cycle, and no named test in
-the tree covers it yet. An unborn branch, a symlink, a submodule, several
-selected paths and a non-POSIX host remain out of scope. Symlinks, submodules
-and unmerged index entries are rejected by the path and index parsers, and an
-unborn branch has no index to capture in the first place.
+commits the adapter writes above it are single-parent. This is measured, not
+assumed: `packages/connectors/src/git/managed-commit.test.ts` builds a real
+two-parent merge at the tip, commits above it, and recovers, asserting that the
+merge is neither flattened nor lost. An unborn branch, a symlink, a submodule,
+several selected paths and a non-POSIX host remain out of scope. Symlinks,
+submodules and unmerged index entries are rejected by the path and index
+parsers, and an unborn branch has no index to capture in the first place.
 
 ## Limits
 

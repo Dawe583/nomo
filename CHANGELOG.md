@@ -4,6 +4,55 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Operator guide: there is now one entry point for using VOID.
+  `docs/HANDBOOK.md`, with a Czech edition beside it, was written from the
+  product rather than from the other documents: every command, TUI tab, slash
+  command, GUI route, composer command, policy key and MCP tool was read out of
+  the source first. It leads with what VOID does not do, because a guide that
+  overstates the product is worse than no guide. It is a gate rather than
+  prose: `scripts/src/handbook.test.mjs` fails the build when the guide names a
+  command, script or path the product does not have, when it omits a command
+  the binary accepts, when the provider and model it calls the default are not
+  the ones the code declares, or when the two editions document different
+  command sets.
+- Distribution: the standalone ledger verifier is now its own installable
+  package, `@void/verifier`, with a `void-verify` binary, zero dependencies of
+  any kind, no import from this repository and no build step. It moved out of
+  `scripts/src` rather than being copied, because its own header calls drift
+  between it and the ledger a defect and a second copy would have been exactly
+  that. Its README commits in writing to keeping both properties: a verifier
+  that pulls in a dependency tree inherits that tree's supply chain, which is
+  the thing an audit is supposed to be independent of. The rest of the open
+  core is still `private: true`, deliberately, because twelve of those packages
+  export TypeScript source with no build step and publishing them would ship
+  something Node cannot run; `scripts/src/licence-line.test.mjs` now refuses any
+  package that is publishable without a way to produce its files, so the flag
+  cannot be flipped on its own.
+- Licence: the boundary between the open core and the paid side is written down
+  rather than implied. `CONTRIBUTING.md` asks for a Developer Certificate of
+  Origin sign-off and no CLA, states that registry data is the easiest valuable
+  contribution while connector work needs prior agreement and a feature needs a
+  described use case, and records the maintenance bound honestly: one person,
+  issues are read, no response time is promised. `apps/control-plane/LICENSE`
+  marks the paid and closed side, because one root licence cannot describe a
+  repository that deliberately contains both. The README now carries the
+  licence, the open and paid split, the rule that nothing moves from open to
+  paid, and the tamper-evident rather than tamper-proof limitation where a
+  reader meets it.
+- Gates: three checks were added, each written after the drift it catches
+  actually shipped. Documentation that names a file that does not exist now
+  fails (`scripts/src/doc-truth.test.mjs`), a component that grows a colour
+  literal or an unprefixed keyframe now fails
+  (`scripts/src/design-token.test.mjs`), and a package that claims to be
+  publishable without a way to produce its files now fails
+  (`scripts/src/licence-line.test.mjs`).
+- CI: the pipeline runs its tests before the build. The build had sat first for
+  long enough that a build regression made seventeen consecutive runs report
+  failure while executing zero tests and zero end-to-end scripts, so a red
+  pipeline said nothing about whether the product worked. Each step now carries
+  its own explicit time budget rather than sharing one deadline, which is what
+  let a killed `git.managed` conformance run once look green.
+
 - Desktop: a refused macOS keychain read is no longer reported as a missing
   key. A key that exists but cannot be opened, because the access was denied
   or the user cancelled, is now told apart from a key that was never created,
