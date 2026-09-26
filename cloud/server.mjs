@@ -69,7 +69,13 @@ import {
   DATA_EDGE_HONESTY_NOTE,
 } from "../packages/ledger/src/taint/graph.ts";
 import { neighbors } from "../packages/ledger/src/taint/query.ts";
-import { accountServiceFromEnv, readSessionCookie } from "./account.mjs";
+import {
+  FAILURE_STATUS,
+  accountServiceFromEnv,
+  clearSessionCookie,
+  readSessionCookie,
+  setSessionCookie,
+} from "./account.mjs";
 import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
 const app = express();
 app.disable("x-powered-by");
@@ -131,6 +137,89 @@ app.use(async (req, res, next) => {
   if (req.path === "/api/session" && req.method === "DELETE") {
     res.setHeader("set-cookie", workspaceSessionCookie());
     return res.json({ ok: true });
+  }
+
+  /**
+   * The sentences a refused sign in is answered in.
+   *
+   * A provider answer names a machine condition, and some of those names say
+   * whether the address holds an account. This map is keyed by the broker's own
+   * collapsed code, so there is no provider string anywhere near the wire: a
+   * wrong password, an unknown address and a provider that names the address
+   * all reach the caller as this one sentence.
+   */
+  const accountFailureMessage = Object.freeze({
+    invalid_credentials: "That email and password were not accepted.",
+    // While signup is off every unconfirmed attempt arrives here, including a
+    // member who mistyped the password for an account that does exist. So this
+    // sentence says the sign in was not accepted, then says what is true about
+    // this server, and says nothing whatever about the address. "Invitation
+    // only" would be a claim about a person that cannot honestly be made from
+    // here, and being wrong sends a member hunting for an invitation they never
+    // needed.
+    invite_required:
+      "That email and password were not accepted. This server does not create new accounts.",
+    provider_error: "The sign in service could not be reached. Try again shortly.",
+  });
+  // The three account routes answer before an owner exists, so they cannot live
+  // behind the resolution below: a caller with no credential yet is exactly who
+  // these are for. They sit beside `/api/session` and below the origin and
+  // sec-fetch checks, which is what keeps a cross-site sign in attempt refused
+  // even though the route itself demands no credential.
+  if (req.path === "/api/account" && req.method === "GET") {
+    if (!accounts.isConfigured())
+      return res.status(200).json({ configured: false, signedIn: false });
+    const session = accounts.openSession(readSessionCookie(req));
+    let user = null;
+    if (session)
+      try {
+        user = await accounts.whoIs(session.accessToken);
+      } catch {
+        user = null;
+      }
+    // A session the store would refuse is reported as signed out. The other
+    // answer is a screen that tells a person they are in and then refuses every
+    // request they make, which is a worse lie than an early sign in screen.
+    return res.json({
+      configured: true,
+      signedIn: Boolean(user && isOwner(user.id)),
+      ...(user ? { email: user.email } : {}),
+    });
+  }
+  if (req.path === "/api/account/signin" && req.method === "POST") {
+    if (!accounts.isConfigured())
+      return res.status(503).json({
+        error: "account_not_configured",
+        message: "Accounts are not configured on this server.",
+      });
+    let result;
+    try {
+      // The method is named here and not read from the body, so this route is
+      // password sign in and cannot be talked into a magic link or a signup.
+      result = await accounts.signIn({
+        method: "password",
+        email: req.body?.email,
+        password: req.body?.password,
+      });
+    } catch {
+      result = { failure: "provider_error" };
+    }
+    if (result.failure || !result.session) {
+      const failure = result.failure ?? "provider_error";
+      return res.status(FAILURE_STATUS[failure] ?? 502).json({
+        error: failure,
+        message:
+          accountFailureMessage[failure] ?? accountFailureMessage.provider_error,
+      });
+    }
+    setSessionCookie(res, accounts.sealSession(result.session));
+    return res.json({ signedIn: true, email: result.session.email });
+  }
+  if (req.path === "/api/account" && req.method === "DELETE") {
+    const session = accounts.openSession(readSessionCookie(req));
+    if (session) await accounts.signOut(session);
+    clearSessionCookie(res);
+    return res.json({ signedIn: false });
   }
   let cookie;
   try {

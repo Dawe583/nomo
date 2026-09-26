@@ -1265,6 +1265,39 @@ dialog::backdrop {
 .connection-gate p {
   color: var(--muted);
 }
+
+/* The account sign in gate. It shares the connection gate's frame on purpose:
+   the two sit in the same place in the interface, and a person who has seen
+   one should recognise the other as the same kind of question. */
+.account-machine {
+  border-left: 2px solid var(--line);
+  padding-left: 12px;
+  font-size: 14px;
+}
+.account-identity {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--ink) !important;
+}
+.field-error {
+  margin: -8px 0 0;
+  color: var(--danger);
+  font-size: 14px;
+}
+.error-text {
+  color: var(--danger);
+}
+/* Focus lands here to read the answer out, so the region has to be focusable
+   without being a control and has to stay legible while it holds focus. */
+.account-answer {
+  min-height: 1.5em;
+  font-size: 14px;
+}
+.account-answer:empty {
+  min-height: 0;
+}
+.account-answer .error-text {
+  display: block;
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -2040,7 +2073,7 @@ dialog::backdrop {
     animation: v-aperture-focus 380ms ease;
   }
   :root:not([data-motion="off"])
-    :is(.page-content, .message, .attachments > span) {
+    :is(.page-content, .message, .attachments > span, .account-gate) {
     animation: v-workspace-enter 240ms ease-out both;
   }
 

@@ -42,6 +42,16 @@ import "./ascii.css";
 import "./mobile.css";
 import { ComponentGallery } from "./gallery";
 import { isGalleryRequest } from "./gallery-path";
+// Imported statically, not through `lazy()`. The sign in screen is the one
+// surface a person reaches precisely when they cannot get in, and a lazy chunk
+// that has not arrived yet is a blank page in front of the person who needs it
+// most. The one shared bundle is also what `inlineDynamicImports` is for.
+import {
+  ACCOUNT_PROBE_PATH,
+  accountCopy,
+  gateScreen,
+} from "./account-sign-in";
+import { AccountSignIn } from "./account-gate";
 const PublicDemo = lazy(() =>
   import("./demo").then((module) => ({ default: module.PublicDemo })),
 );
@@ -208,6 +218,10 @@ function App({
   setLocale: (s: "cs" | "en") => void;
 }) {
   const t = useText();
+  // The sentences for the two screens that are not the workspace. Held once
+  // here because the gate is reached from three branches and the copy has to
+  // be the same sentence in all of them.
+  const accountText = accountCopy(t);
   const reducedMotion = useReducedMotion();
   const contextRef = useRef<HTMLElement>(null),
     sidebarRef = useRef<HTMLElement>(null);
@@ -251,6 +265,20 @@ function App({
   const needsAuth =
     provider.error instanceof ApiError &&
     (provider.error.status === 401 || provider.error.status === 403);
+  // One probe, asked only while the workspace is refusing this visitor, decides
+  // whether the screen in front of them is the account sign in or the
+  // workspace access token. It is not polled and not retried: it is a question
+  // about which screen to draw, and a second attempt a moment later would only
+  // draw the same screen again.
+  const accountProbe = useApi(ACCOUNT_PROBE_PATH, needsAuth, 0, false);
+  const gate = gateScreen({
+    pending: accountProbe.isPending,
+    configured: accountProbe.data?.configured === true,
+    status:
+      accountProbe.error instanceof ApiError
+        ? accountProbe.error.status
+        : undefined,
+  });
   const privateQueries = path !== "/demo" && !needsAuth;
   const prefs = useApi("/api/preferences", privateQueries);
   const initialPreferences = useRef({
@@ -794,6 +822,25 @@ function App({
             )}
             <ErrorBox error={error} />
             {needsAuth ? (
+              gate === "account" ? (
+                <AccountSignIn
+                  probe={accountProbe.data}
+                  queryClient={queryClient}
+                />
+              ) : gate === "loading" ? (
+                <div className="connection-gate account-gate">
+                  <div className="account-answer" role="status">
+                    {accountText.loading}
+                  </div>
+                </div>
+              ) : gate === "unavailable" ? (
+                <div className="connection-gate account-gate">
+                  <BrandMark className="gate-logo" />
+                  <div className="account-answer" role="status">
+                    {accountText.unavailable}
+                  </div>
+                </div>
+              ) : (
               <div className="connection-gate">
                 <BrandMark className="gate-logo" />
                 <h1>
@@ -839,6 +886,7 @@ function App({
                   </button>
                 </form>
               </div>
+              )
             ) : (
               <div className={"work-area " + (context ? "with-context" : "")}>
                 {page === "chat" || path === "/" ? (
