@@ -4,14 +4,36 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- The chat origin now has a sign in screen, and the account broker finally has
+  a route of its own. Previously the broker could only resolve a cookie that
+  already existed, so a person could hold an account and have no way to become
+  signed in. `GET /api/account` reports whether this deployment has accounts and
+  whether the caller has a session, `POST /api/account/signin` exchanges an
+  email and a password for a sealed HttpOnly cookie, and `DELETE /api/account`
+  revokes and clears. All three answer before an owner is resolved, because a
+  caller with no credential yet is who they are for, and all three sit below
+  the origin checks, so a cross-site sign in is still refused. Password is the
+  only way in: no magic link, no registration, no reset and no social sign in
+  is offered, because the broker will not complete any of them. The screen says
+  plainly which credential it wants, because the workspace access token and a
+  person's account are not the same thing and pasting one into the other is the
+  obvious mistake. A failure is rendered from a code in this repository's own
+  words and never from a provider's message, so no refusal can name whether an
+  address holds an account. Nothing in the browser talks to the provider:
+  `connect-src 'self'` is unchanged, and the screen ships in the one shared
+  bundle rather than a lazy chunk, because the surface a person reaches when
+  they cannot get in is the worst place for a chunk to still be loading.
+  Accounts stay unenabled: with no Supabase project configured these routes
+  report that they are unconfigured and the workspace access token gate is
+  exactly what it was.
+
 - The hosted cloud workspace is now scoped by an owner. Every row in
   `void_cloud_state`, `void_cloud_ledger` and `void_cloud_events` carries the
   verified identity it belongs to, and that identity is the first column of
   every primary key, so two accounts cannot address each other's rows even by
   the same session identifier. Every statement in the cloud data layer carries
-  the owner as a bound parameter, the owner is the first argument of every store
-  function so a call that forgets it throws instead of querying, and a test
-  parses the queries rather than trusting review. The owner is resolved once, in
+  the owner as a bound parameter, and a missing owner fails closed rather than
+  exposing shared data. The owner is resolved once, in
   the session middleware, from a verified session and from nowhere else: a
   header, a query parameter or a body field is not a source. The operator's
   access token keeps working and now resolves to one reserved owner, `operator`,

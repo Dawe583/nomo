@@ -1,5 +1,4 @@
-import { Pool, neonConfig } from "@neondatabase/serverless";
-neonConfig.webSocketConstructor = WebSocket;
+import { Pool } from "pg";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { devKeyProvider, sha256Hex } from "../packages/ledger/src/sign.ts";
 import { entryHash, GENESIS_PREV } from "../packages/ledger/src/canonical.ts";

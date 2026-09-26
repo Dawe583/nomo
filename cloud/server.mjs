@@ -280,7 +280,7 @@ const preferences = async (req) => ({
   ...(await read(req.owner, "preferences")),
 });
 app.get("/api/preferences", async (req, res) =>
-  res.json({ preferences: await preferences() }),
+  res.json({ preferences: await preferences(req) }),
 );
 app.patch("/api/preferences", async (req, res) => {
   const value = await transaction(req.owner, "preferences", async (c) => {
@@ -316,7 +316,7 @@ app.post("/api/sessions/:id/compact", async (req, res) => {
 app.patch("/api/sessions/:id", async (req, res) => {
   const value = await transaction(req.owner, req.params.id, async (c) => {
     const current = await read(req.owner, `session:${req.params.id}`, c);
-    if (!current) throw new Error("Session not found.");
+    if (!current) throw Object.assign(new Error("Session not found."), { status: 404 });
     Object.assign(current, sessionPatch(req.body ?? {}), {
       updatedAt: new Date().toISOString(),
     });
@@ -1104,7 +1104,7 @@ app.post("/api/sessions/:id", async (req, res) => {
     digest = await sha256Hex(canonicalJson({ id: req.params.id, prompt }));
   const s = await transaction(req.owner, "cloud-capacity", async (c) => {
     await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [req.params.id]);
-    const prior = await priorRequest(key, digest, c);
+    const prior = await priorRequest(req, key, digest, c);
     if (prior) return null;
     const current = await read(req.owner, `session:${req.params.id}`, c);
     if (

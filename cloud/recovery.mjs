@@ -405,6 +405,7 @@ export async function runCloudRecoveryJob(owner, session, client, jobId, approve
     approve,
   );
   const stored = await read(
+    owner,
     cloudJobOperationMapKey(session.workspace, jobId),
     client,
   );

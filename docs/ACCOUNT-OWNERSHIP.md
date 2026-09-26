@@ -8,6 +8,19 @@ created on the marketing site sees only its own data. It exists because
 `docs/APPWRITE-AUTH.md` forbids enabling public signup until every cloud read
 and write is scoped by a verified owner.
 
+## Supabase migration checkpoint
+
+The empty `VOID` project in `eu-west-1` now has migration `20260926231124`
+with the three tables below. Row Level Security is enabled. The `anon`,
+`authenticated` and `PUBLIC` roles have no table privileges. A live Data API
+request with the publishable key received HTTP 401. The application is not yet
+connected to this database, no Neon data has been copied, and public signup
+remains disabled.
+
+The cloud server must use only a server-side PostgreSQL connection string.
+Browser clients must never receive database credentials or use these tables
+directly.
+
 ## What the data looks like
 
 Three tables, in `cloud/schema.sql`, and all three have an owner that is the

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { chmod, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { managedGitAdapter } from "./managed.ts";
 import type { Json, Prepared, RecoveryAdapter } from "../recovery.ts";
@@ -128,7 +128,8 @@ posixTest("a published managed commit is undone by one new remote branch and not
   const receiptsBefore = f.run("for-each-ref", "--format=%(refname) %(objectname)", "refs/void/");
   const remoteReflogBefore = f.onRemote("reflog", "show", "refs/heads/main");
   const statusBefore = f.run("status", "--porcelain");
-  const indexBefore = await readFile(f.run("rev-parse", "--git-path", "index"));
+  const indexPath = resolve(f.root, f.run("rev-parse", "--git-path", "index"));
+  const indexBefore = await readFile(indexPath);
   const worktreeBefore = await readFile(join(f.root, "selected"));
 
   const { args, prepared, plan } = await prepareRecovery(f, "pushed-op", "recovery-op");
@@ -179,7 +180,7 @@ posixTest("a published managed commit is undone by one new remote branch and not
     ["refs/heads/main"],
   );
   // The caller's index and worktree are not touched by a remote recovery.
-  assert.deepEqual(await readFile(f.run("rev-parse", "--git-path", "index")), indexBefore);
+  assert.deepEqual(await readFile(indexPath), indexBefore);
   assert.deepEqual(await readFile(join(f.root, "selected")), worktreeBefore);
   assert.equal(f.run("status", "--porcelain"), statusBefore);
 });

@@ -33,12 +33,12 @@ test(
     );
     const id = randomUUID(),
       session = { id, workspace: `agent-${id}`, generation: 2 };
-    const mutate = (operationId, content) =>
+    const mutate = (operationId, content, path = "check.txt") =>
       transaction(OPERATOR_OWNER, id, (c) =>
         mutateCloudDocument(OPERATOR_OWNER, session, c, {
           id: operationId,
           name: "void_workspace_write",
-          arguments: { path: "check.txt", content },
+          arguments: { path, content },
         }),
       );
     const state = async () => decrypt(await read(OPERATOR_OWNER, `workspace:${id}`));
@@ -50,12 +50,12 @@ test(
         /newer changes/,
       );
       assert.equal(
-        await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(session, c, "second")),
+        await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(OPERATOR_OWNER, session, c, "second")),
         true,
       );
       assert.equal((await state()).files["check.txt"], "before");
       const count = (await state()).operations.length;
-      await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(session, c, "second"));
+      await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(OPERATOR_OWNER, session, c, "second"));
       assert.equal((await state()).operations.length, count);
       const proof = await ledger(OPERATOR_OWNER, session.workspace);
       assert.ok(
@@ -104,7 +104,7 @@ test(
         }),
         /artifact/,
       );
-      await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(session, c, "first"));
+      await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(OPERATOR_OWNER, session, c, "first"));
       assert.equal((await state()).files["check.txt"], undefined);
       await mutate("job-first", "job before");
       await mutate("job-second", "job after");
@@ -203,7 +203,7 @@ test(
         ),
       );
       assert.equal(nextPlan.digest, resumedPlan.digest);
-      await mutate("run-selection-operation", "run selection");
+      await mutate("run-selection-operation", "run selection", "run-selection.txt");
       const runPlan = await transaction(OPERATOR_OWNER, id, (c) =>
         planCloudRecoveryJob(
           OPERATOR_OWNER,

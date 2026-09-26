@@ -56,12 +56,13 @@ const output = run([
   "--test",
   "--test-reporter=tap",
   "cloud/gui.test.mjs",
+  "cloud/account-isolation.test.mjs",
   "cloud/recovery.test.mjs",
   "cloud/prime.test.mjs",
   "cloud/integrations.test.mjs",
 ]);
-assert.match(output, /^# tests 4$/m, "All four SQL scenarios must execute");
-assert.match(output, /^# pass 4$/m);
+assert.match(output, /^# tests 5$/m, "All five SQL scenarios must execute");
+assert.match(output, /^# pass 5$/m);
 assert.match(
   output,
   /^# skipped 0$/m,

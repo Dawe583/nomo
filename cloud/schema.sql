@@ -26,3 +26,21 @@ CREATE INDEX IF NOT EXISTS void_cloud_session_status ON void_cloud_state ((docum
 CREATE INDEX IF NOT EXISTS void_cloud_events_type ON void_cloud_events ((event->>'type'),session_id,seq);
 DROP TRIGGER IF EXISTS void_cloud_events_immutable ON void_cloud_events;
 CREATE TRIGGER void_cloud_events_immutable BEFORE UPDATE OR DELETE ON void_cloud_events FOR EACH ROW EXECUTE FUNCTION void_cloud_immutable();
+
+-- The server connects as the database owner. Public API roles get no table access.
+ALTER TABLE void_cloud_state ENABLE ROW LEVEL SECURITY;
+ALTER TABLE void_cloud_ledger ENABLE ROW LEVEL SECURITY;
+ALTER TABLE void_cloud_events ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE void_cloud_state, void_cloud_ledger, void_cloud_events FROM PUBLIC;
+DO $$
+DECLARE role_name text;
+BEGIN
+  FOREACH role_name IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
+      EXECUTE format(
+        'REVOKE ALL ON TABLE public.void_cloud_state, public.void_cloud_ledger, public.void_cloud_events FROM %I',
+        role_name
+      );
+    END IF;
+  END LOOP;
+END $$;

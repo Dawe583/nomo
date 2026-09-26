@@ -28,6 +28,7 @@ process.env.VOID_LOCAL_TEST = '1';
 
 const { transaction, write, read, encrypt, decrypt, ledger, database } = await import('../../cloud/store.mjs');
 const { advance } = await import('../../cloud/steps.mjs');
+const { OPERATOR_OWNER } = await import('../../cloud/owner.mjs');
 const { default: app } = await import('../../cloud/server.mjs');
 const { workspaceTools } = await import('../../packages/workbench/src/workspace.ts');
 const { canonicalJson } = await import('../../packages/ledger/src/canonical.ts');
@@ -45,7 +46,7 @@ const fixture = createServer(async (req, res) => {
     const tool = input.tools.find(item => item.function.description.startsWith('void_workspace_write:'));
     assert.ok(tool);
     const message = input.messages.at(-1).role === 'tool'
-      ? { role: 'assistant', content: `Created the document. ${secret}` }
+      ? { role: 'assistant', content: `No document was created. ${secret}` }
       : { role: 'assistant', content: null, tool_calls: [{ id: 'managed-write', type: 'function', function: { name: tool.function.name, arguments: JSON.stringify({ path: 'notes/plan.md', content: 'Managed cloud document.' }) } }] };
     res.setHeader('content-type', 'application/json');
     res.end(JSON.stringify({ choices: [{ message }] }));
@@ -67,20 +68,30 @@ try {
     return { status: response.status, body: await response.json() };
   };
   assert.equal((await fetch(`${origin}/api/sessions/${id}/workspace`)).status, 401);
-  await write(`session:${id}`, { id, workspace, createdAt: new Date().toISOString(), model: 'fixture-managed', status: 'running', events: [], messages: [{ role: 'user', content: 'Create a managed document.' }], tools: workspaceTools.map(tool => ({ ...tool, builtin: true })), provider: { secret: encrypt({ baseUrl: providerUrl, apiKey: secret }) }, generation: 1, turn: 0, queue: [] });
-  assert.equal(await advance(id, 1), 'next');
-  assert.equal(await advance(id, 1), 'next');
-  await advance(id, 1);
-  const session = await read(`session:${id}`);
+  await write(OPERATOR_OWNER, `session:${id}`, { id, workspace, createdAt: new Date().toISOString(), model: 'fixture-managed', status: 'running', events: [], messages: [{ role: 'user', content: 'Create a managed document.' }], tools: workspaceTools.map(tool => ({ ...tool, builtin: true })), provider: { secret: encrypt({ baseUrl: providerUrl, apiKey: secret }) }, generation: 1, turn: 0, queue: [] });
+  assert.equal(await advance(OPERATOR_OWNER, id, 1), 'next');
+  assert.equal(await advance(OPERATOR_OWNER, id, 1), 'wait');
+  const pending = await read(OPERATOR_OWNER, `session:${id}`);
+  assert.equal(await read(OPERATOR_OWNER, `workspace:${id}`), undefined);
+  const hold = await read(OPERATOR_OWNER, `hold:${pending.pending.id}`);
+  assert.equal((await api(`/api/approvals/${hold.holdId}/decision`, 'POST', {
+    kind: 'denied', token: hold.decisionToken,
+  })).status, 200);
+  assert.equal(await advance(OPERATOR_OWNER, id, 1), 'next');
+  assert.equal(await advance(OPERATOR_OWNER, id, 1), 'next');
+  const session = await read(OPERATOR_OWNER, `session:${id}`);
   assert.equal(session.status, 'idle');
   assert.equal(turns, 2);
   assert.ok(!JSON.stringify(session).includes(secret), 'Provider credentials must be redacted from persisted model output.');
-  const sealed = await read(`workspace:${id}`);
+  assert.equal((await api(`/api/sessions/${id}/documents`, 'PATCH', {
+    path: 'notes/plan.md', content: 'Managed cloud document.', expectedRevision: null,
+  })).status, 200);
+  const sealed = await read(OPERATOR_OWNER, `workspace:${id}`);
   assert.equal(typeof sealed, 'string');
   assert.ok(!sealed.includes('Managed cloud document.'));
   const state = decrypt(sealed), operation = state.operations[0];
   assert.equal(state.files['notes/plan.md'], 'Managed cloud document.');
-  const proof = await ledger(workspace);
+  const proof = await ledger(OPERATOR_OWNER, workspace);
   assert.equal(proof.result.ok, true);
   assert.ok(proof.entries.some(entry => entry.body.operationId === operation.id && entry.body.captureDigest === undefined) === false);
   const captureDigest = await sha256Hex(canonicalJson(operation));
@@ -95,27 +106,27 @@ try {
   const forged = structuredClone(state);
   forged.operations[0].before = 'Forged prior content';
   forged.operations[0].digest = captureDigest;
-  await transaction(id, c => write(`workspace:${id}`, encrypt(forged), c));
+  await transaction(OPERATOR_OWNER, id, c => write(OPERATOR_OWNER, `workspace:${id}`, encrypt(forged), c));
   assert.equal((await api(path)).status, 400, 'Undo must reject a capture that no longer matches signed evidence.');
   const drifted = structuredClone(state);
   drifted.files['notes/plan.md'] = 'Newer independent edit';
-  await transaction(id, c => write(`workspace:${id}`, encrypt(drifted), c));
+  await transaction(OPERATOR_OWNER, id, c => write(OPERATOR_OWNER, `workspace:${id}`, encrypt(drifted), c));
   assert.equal((await api(path, 'POST', { confirm: operation.id })).status, 400);
-  assert.equal(decrypt(await read(`workspace:${id}`)).files['notes/plan.md'], 'Newer independent edit');
-  await transaction(id, c => write(`workspace:${id}`, sealed, c));
+  assert.equal(decrypt(await read(OPERATOR_OWNER, `workspace:${id}`)).files['notes/plan.md'], 'Newer independent edit');
+  await transaction(OPERATOR_OWNER, id, c => write(OPERATOR_OWNER, `workspace:${id}`, sealed, c));
   assert.equal((await api(path, 'POST', { confirm: operation.id })).status, 200);
-  assert.deepEqual(decrypt(await read(`workspace:${id}`)).files, {});
-  const after = await ledger(workspace);
+  assert.deepEqual(decrypt(await read(OPERATOR_OWNER, `workspace:${id}`)).files, {});
+  const after = await ledger(OPERATOR_OWNER, workspace);
   assert.equal(after.result.ok, true);
   assert.equal(after.entries.filter(entry => entry.body.tool === 'void_workspace_undo').length, 1);
   assert.equal((await api(path, 'POST', { confirm: operation.id })).status, 200);
-  assert.equal((await ledger(workspace)).entries.length, after.entries.length);
+  assert.equal((await ledger(OPERATOR_OWNER, workspace)).entries.length, after.entries.length);
   assert.equal((await api(`/api/sessions/${id}/workspace`)).body.workspace.operations.length, 2);
-  console.log('PASS isolated Neon managed agent: HTTP provider, atomic encrypted capture, signed binding, API confirmation, drift refusal, forged capture refusal, idempotent undo and persisted reload.');
+  console.log('PASS isolated cloud: agent write held and denied, operator edit captured, signed binding, drift refusal, forged capture refusal and idempotent undo.');
 } finally {
   await close(fixture); await close(server);
   // Evidence is append-only, including test evidence. Only this run's mutable
   // documents and session are cleaned; no provider or connector settings change.
-  await database().query('DELETE FROM void_cloud_state WHERE key = ANY($1::text[])', [[`session:${id}`, `workspace:${id}`]]).catch(() => {});
+  await database().query('DELETE FROM void_cloud_state WHERE owner=$1 AND key = ANY($2::text[])', [OPERATOR_OWNER, [`session:${id}`, `workspace:${id}`]]).catch(() => {});
   await database().end();
 }
