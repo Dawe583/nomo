@@ -41,6 +41,22 @@ if one does not. The owner is a bound parameter in all of them, never text
 assembled into the statement, so the value cannot be altered by changing a
 filter.
 
+The rule is about a table reference rather than about a statement, because a
+statement can name two tables and the outer predicate says nothing about the
+inner one. The scan splits each statement into its query blocks, judges every
+table reference only against predicates written in its own block, and reports
+the text it judged. A block that names two cloud tables has to qualify the
+owner for each of them, because an unqualified `owner=$1` there would be an
+ambiguous column rather than an answer.
+
+The two page functions compose their statements in JavaScript, so the one that
+reaches `void_cloud_events` is not written down anywhere in the source and a
+scan of the file cannot see it. `cloud/owner.test.mjs` therefore also runs the
+same rule over the SQL `sessionPage` and `ledgerPage` actually hand to the
+driver, captured with the driver stubbed and no database started. That is the
+check that fails if `e.owner=$1` is removed from the event search; the text scan
+alone passes with it gone, which is the defect it was rewritten to close.
+
 The two keyset page queries bind the owner once as `$1` and write `owner=$1`
 into every statement they build rather than appending it to a condition list,
 so a caller cannot remove the predicate by manipulating a filter. The event

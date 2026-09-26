@@ -38,15 +38,175 @@ function statements(source) {
 }
 
 /**
- * The rule a statement touching cloud state has to satisfy. A read, an update
- * or a delete must compare the owner column; an insert must supply it. Anything
- * else is a statement that can reach a row it was not issued for.
+ * A statement, with everything a string literal or a comment says removed and
+ * nothing else changed: same length, so a position here is a position there.
+ * A parenthesis inside `'session:%'` is text, not structure, and a rule that
+ * counted it would measure the author's quoting rather than their scoping.
  */
+function skeleton(sql) {
+  const out = [];
+  let i = 0;
+  while (i < sql.length) {
+    const ch = sql[i];
+    if (ch === "'" || ch === '"') {
+      let j = i + 1;
+      while (j < sql.length) {
+        if (sql[j] === ch) {
+          // A doubled quote is one escaped quote, not the end of the literal.
+          if (sql[j + 1] === ch) {
+            j += 2;
+            continue;
+          }
+          break;
+        }
+        j++;
+      }
+      out.push(" ".repeat(Math.min(j + 1, sql.length) - i));
+      i = j + 1;
+      continue;
+    }
+    if (ch === "-" && sql[i + 1] === "-") {
+      const end = sql.indexOf("\n", i);
+      const stop = end < 0 ? sql.length : end;
+      out.push(" ".repeat(stop - i));
+      i = stop;
+      continue;
+    }
+    if (ch === "/" && sql[i + 1] === "*") {
+      const end = sql.indexOf("*/", i + 2);
+      const stop = end < 0 ? sql.length : end + 2;
+      out.push(" ".repeat(stop - i));
+      i = stop;
+      continue;
+    }
+    out.push(ch);
+    i++;
+  }
+  return out.join("");
+}
+
+/**
+ * The statement split into query blocks: the statement itself, then one block
+ * per parenthesised group, each holding only the text of its own block with
+ * every nested group blanked out.
+ *
+ * This is the whole point of the rewrite. A table reference is judged only by
+ * the block it sits in, so an outer `WHERE owner=$1` cannot stand in for a
+ * subquery that has no predicate of its own, which is exactly the mistake a
+ * future refactor makes when it hoists a subquery into a helper.
+ *
+ * A scanner and not a SQL parser, and the reason is measured rather than
+ * preferred. The parser this repository already depends on,
+ * `node-sql-parser`, cannot read the statement `cloud/store.mjs` runs on every
+ * write that carries events:
+ *
+ *   INSERT INTO void_cloud_events(owner,session_id,seq,event) SELECT
+ *   $1,$2,(e->>'seq')::integer,e FROM jsonb_array_elements($3::jsonb) e
+ *
+ * A scan built on it would need a fallback for precisely the statements it has
+ * to police, and a fallback is where a rule quietly stops applying. The
+ * structure the rule needs is narrower than a parse tree, and this supplies
+ * all of it.
+ */
+function blocks(sql) {
+  const text = skeleton(sql);
+  const spans = [];
+  const open = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "(") open.push(i);
+    else if (text[i] === ")" && open.length > 0) spans.push([open.pop(), i]);
+  }
+  const own = (from, to) => {
+    const chars = text.slice(from, to + 1).split("");
+    for (const [start, end] of spans)
+      if (from < start && end < to)
+        for (let i = start; i <= end; i++) chars[i - from] = " ";
+    return chars.join("");
+  };
+  return [
+    { from: 0, to: text.length - 1, text: own(0, text.length - 1) },
+    ...spans.map(([from, to]) => ({ from, to, text: own(from, to) })),
+  ];
+}
+
+/**
+ * Words that follow a table name without being its alias. Without this
+ * `FROM void_cloud_state WHERE` would read `WHERE` as the alias and then look
+ * for a predicate written `where.owner=`, which is not what anybody wrote.
+ */
+const NOT_AN_ALIAS = new Set([
+ "as", "and", "cross", "delete", "except", "fetch", "for", "from", "full",
+ "group", "having", "in", "inner", "insert", "intersect", "into", "join",
+ "lateral", "left", "limit", "natural", "offset", "on", "or", "order",
+ "outer", "returning", "right", "select", "set", "union", "update", "using",
+ "values", "where", "window", "with",
+]);
+
+const REFERENCE =
+  /\b(void_cloud_(?:state|ledger|events))\b(?:\s+(?:as\s+)?([A-Za-z_][\w]*))?/gi;
+
+/** The owner of one reference, if this block writes one out. */
+const isBound = (reference, block, single, masked) => {
+  const { table, alias } = reference;
+  if (/\binsert\s+into\s+$/i.test(block.text.slice(0, reference.at)))
+    return /\bowner\b/.test(
+      masked.slice(reference.at + table.length).match(/^\s*\(([^)]*)\)/)?.[1] ?? "",
+    );
+  const qualified = new RegExp(
+    `\\b${alias ?? table}\\.\\s*owner\\s*=\\s*\\$(?:\\d+|\\{)`,
+    "i",
+  );
+  if (qualified.test(block.text)) return true;
+  // A block naming two cloud tables cannot say `owner=$1` and mean both of
+  // them: the database would call the column ambiguous. An unqualified
+  // predicate is only an answer when there is one table to answer about.
+  return single && /(^|[^.\w])owner\s*=\s*\$(?:\d+|\{)/.test(block.text);
+};
+
+/**
+ * Every table reference in a statement that no owner predicate in its own
+ * block accounts for, each with the text that proves it.
+ *
+ * A read, an update or a delete has to compare the owner column; an insert has
+ * to supply it in its column list. Anything else is a reference that can reach
+ * a row it was not issued for.
+ */
+export function unscopedTables(sql) {
+  const masked = skeleton(sql);
+  const found = [];
+  for (const block of blocks(sql)) {
+    const references = [...block.text.matchAll(REFERENCE)].map((match) => ({
+      table: match[1],
+      // A keyword where an alias would be is not an alias, and the reference it
+      // follows is still a reference. Dropping the whole match there is how a
+      // statement ends up unexamined and reads as scoped.
+      alias:
+        match[2] && !NOT_AN_ALIAS.has(match[2].toLowerCase()) ? match[2] : null,
+      at: match.index,
+    }));
+    if (references.length === 0) continue;
+    for (const reference of references) {
+      if (isBound(reference, block, references.length === 1, masked)) continue;
+      const qualifier = [reference.table, reference.alias && ` ${reference.alias}`]
+        .filter(Boolean)
+        .join("");
+      // A block is a window onto the statement, so an offset measured inside
+      // one is a position in the statement only once the window is added.
+      const at = block.from + reference.at;
+      found.push(
+        `${qualifier} is read without an owner predicate ("${sql
+          .slice(at, at + 80)
+          .replace(/\s+/g, " ")
+          .trim()}")`,
+      );
+    }
+  }
+  return found;
+}
+
+/** True when no table reference in the statement is left unscoped. */
 export function ownerIsBound(sql) {
-  if (/^\s*(select|update|delete|with)\b/i.test(sql))
-    return /\bowner\s*=\s*\$?\d/.test(sql) || /\bowner\s*=\s*\$\{/.test(sql);
-  if (/^\s*insert\b/i.test(sql)) return /\bowner\b/i.test(sql);
-  return false;
+  return unscopedTables(sql).length === 0;
 }
 
 const SOURCES = readdirSync(cloudDir)
@@ -59,8 +219,8 @@ test("every statement that reads or writes cloud state is scoped to an owner", (
   for (const name of SOURCES) {
     for (const sql of statements(readCloud(name))) {
       seen++;
-      if (!ownerIsBound(sql))
-        unscoped.push(`${name}: ${sql.slice(0, 90)}`);
+      for (const problem of unscopedTables(sql))
+        unscoped.push(`${name}: ${problem}`);
     }
   }
   // A scan that quietly stopped finding statements would pass everything below,
@@ -70,6 +230,110 @@ test("every statement that reads or writes cloud state is scoped to an owner", (
   // deleted.
   assert.ok(seen >= 17, `only ${seen} scoped statements were found`);
   assert.deepEqual(unscoped, []);
+});
+
+/**
+ * The same rule, run against the SQL the page functions actually hand to the
+ * database rather than against the text they were written with.
+ *
+ * `sessionPage` and `ledgerPage` assemble their filters in JavaScript and
+ * interpolate the result, so the statement that names two tables is not
+ * written down anywhere in the source. A scan of the file cannot see it, and
+ * neither can the account isolation suite, whose per-row session ids keep one
+ * owner's subquery away from another's rows whatever the predicate says. So the
+ * statement is captured at the driver, and the driver is stubbed here rather
+ * than the store: no database is started, no socket is opened, and the store
+ * runs its real composition.
+ *
+ * Broken by: dropping `e.owner=$1` from the event search, or hoisting that
+ * subquery into a helper, or moving the page off a bound owner. Each leaves a
+ * table reference that only the outer predicate was covering.
+ */
+test("the statements the page functions compose are scoped per table reference", async (t) => {
+  const { Pool } = await import("pg");
+  const issued = [];
+  const driver = Pool.prototype.query;
+  const previousUrl = process.env.DATABASE_URL;
+  // Never dialled: `query` is replaced before anything can reach a server.
+  process.env.DATABASE_URL = "postgresql://void:void@127.0.0.1:1/void";
+  Pool.prototype.query = function (text) {
+    const sql = String(text);
+    issued.push(sql);
+    return Promise.resolve({
+      rows: /count\(\*\)/i.test(sql) ? [{ count: "0" }] : [],
+      rowCount: 0,
+    });
+  };
+  t.after(async () => {
+    Pool.prototype.query = driver;
+    await store.database().end();
+    if (previousUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousUrl;
+  });
+
+  const owner = "5c1f7a10-0000-4000-8000-000000000000";
+  const filter = new URLSearchParams({ q: "needle", limit: "50" });
+  await store.sessionPage(owner, filter);
+  await store.ledgerPage(owner, "default", filter);
+
+  // A capture that caught nothing would pass every line below.
+  assert.ok(issued.length >= 4, `only ${issued.length} statements were captured`);
+  // And one of them has to be the two table one, or the check is not covering
+  // the case it exists for.
+  assert.equal(
+    issued.filter((sql) => /void_cloud_state/i.test(sql) && /void_cloud_events/i.test(sql))
+      .length,
+    2,
+    "the session page composes two statements that name both tables",
+  );
+  assert.deepEqual(
+    issued.flatMap((sql) => unscopedTables(sql).map((problem) => `${sql.slice(0, 60)}… ${problem}`)),
+    [],
+  );
+});
+
+/**
+ * The rule is about a table reference rather than a statement, and the case
+ * that proves it is the one a text scan over the whole statement gets wrong:
+ * an outer `WHERE owner=$1` is not an answer for a subquery that has none.
+ *
+ * `sessionPage` builds its search condition in JavaScript and interpolates the
+ * result, so the composed statement is not written down anywhere in the
+ * source. This is the shape of the real hole, stated as text the rule can be
+ * run against directly.
+ */
+test("an outer owner predicate is not an answer for a table inside a subquery", () => {
+  const search = (owner) =>
+    `SELECT count(*) FROM void_cloud_state WHERE owner=$1 AND (document->>'title' ILIKE $2 OR EXISTS (SELECT 1 FROM void_cloud_events e ${owner}AND e.session_id=document->>'id'))`;
+  assert.deepEqual(unscopedTables(search("WHERE e.owner=$1 ")), []);
+
+  const unscoped = unscopedTables(search(""));
+  assert.equal(unscoped.length, 1, JSON.stringify(unscoped));
+  assert.match(unscoped[0], /^void_cloud_events e is read without an owner predicate/);
+  // The predicate it is missing is quoted back, so a reader of the failure can
+  // see which text was judged rather than only that something was.
+  assert.match(unscoped[0], /\("void_cloud_events e\s+AND e\.session_id/);
+  assert.equal(
+    /\bowner\s*=\s*\$1/.test(search("")),
+    true,
+    "the rule this replaced read the same statement as scoped, on the outer predicate alone",
+  );
+
+  // A join inside one block is the other shape, and `owner=$1` cannot mean two
+  // tables there: the database would call the column ambiguous. So both
+  // references are reported, and qualifying both is what silences it.
+  const joined =
+    "SELECT 1 FROM void_cloud_state s JOIN void_cloud_events e ON e.session_id=s.document->>'id' WHERE e.session_id=$1";
+  assert.deepEqual(
+    unscopedTables(joined).map((problem) => problem.split(" is ")[0]),
+    ["void_cloud_state s", "void_cloud_events e"],
+  );
+  assert.deepEqual(
+    unscopedTables(
+      joined.replace("WHERE e.session_id=$1", "WHERE s.owner=$1 AND e.owner=$1"),
+    ),
+    [],
+  );
 });
 
 test("the predicate check rejects a statement that has no owner", () => {
