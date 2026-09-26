@@ -4,6 +4,45 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Companion pairing now requires a host-minted invitation, and this is a
+  behaviour change for anyone pairing a device. `POST
+  /api/companion/invitations` mints one; the invitation expires after 120
+  seconds, is accepted exactly once, and can only be minted by the loopback
+  host operator, never by a device that already holds a credential. Pairing
+  without one is refused. The spend is a single exclusive create rather than a
+  read-modify-write, so two devices racing the same invitation produce one
+  device and one named loser rather than two. A workspace that is already at
+  its device limit is told so before the invitation is spent, so a request that
+  could never have paired does not consume the operator's authority to pair.
+  The frozen `void.companion.v1` contract is unchanged: this is host admission
+  control around the existing route, so no handshake capability was added and
+  no existing validator can start failing.
+- iOS: nothing the executor answers is stored on the device. The URL cache,
+  cookie store and credential store are emptied and detached for every session
+  the client builds, and the process-wide shared caches are purged as well. A
+  transcript is in memory for that process only, is stamped non-authoritative
+  by a stored constant no decoder can change, and is bounded at 200 entries;
+  it exposes a list and nothing else, so it cannot answer whether an operation
+  is running or reversible. A new mutation cannot be computed from it, because
+  the idempotency key comes from a turn sequence the cache has no way to
+  produce. The device token is stored in the Keychain and nowhere else, and
+  the credential type redacts itself from `print`, interpolation, crash
+  reports and the debugger. Removing this device now revokes on the executor
+  first and deletes the Keychain credential second, and it says which happened:
+  removed, removed locally only because the executor was unreachable, or
+  failed. The policy is written down in `docs/IOS-CACHE-AND-REMOVAL-POLICY.md`
+  and shown in Settings in both languages.
+- Evidence: the managed PostgreSQL adapter and the Git commit lifecycle are
+  now published capability profiles, so the release gate can no longer ship
+  either of them unnamed. `void recovery conformance --adapter
+  postgres-managed-conformance` runs five scenarios over an in-process
+  database, including a real cascade subtree and a row-level tenant scope
+  executed as an unprivileged role; `--adapter git.managed` runs seven,
+  including the commit lifecycle and its durable receipts. The profiles state
+  that the durable-receipt guarantee covers the commit operation and not the
+  worktree and index actions, which still reconcile to unknown because state
+  equality is ABA-unsafe.
+
 - Operator guide: there is now one entry point for using VOID.
   `docs/HANDBOOK.md`, with a Czech edition beside it, was written from the
   product rather than from the other documents: every command, TUI tab, slash

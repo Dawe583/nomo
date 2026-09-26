@@ -1,8 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
+  activeDeviceLimitReached,
   authenticateDevice,
-  pairDevice,
   plainLabel,
+  pairDevice,
   readOnlyScopes,
   readScope,
   revokeDevice,
@@ -12,6 +13,7 @@ import {
   type CompanionSession,
 } from "./devices.ts";
 import { companionDiagnostics } from "./diagnostics.ts";
+import { consumeInvitation, mintInvitation } from "./invitations.ts";
 import { readOperation } from "./operations.ts";
 import { companionWorkspace, CompanionStoreError } from "./store.ts";
 
@@ -78,10 +80,14 @@ async function readJsonBody(request: IncomingMessage): Promise<{ readonly presen
 function parsePairingBody(
   body: unknown,
   grantsWrite: boolean,
-): { readonly label: string; readonly scopes: readonly CompanionScope[] } | null {
-  if (body === undefined) return { label: "companion device", scopes: readOnlyScopes };
+): { readonly invitation: string; readonly label: string; readonly scopes: readonly CompanionScope[] } | null {
+  // An absent body is not an invitation. The default label survives, because a
+  // host may pair a device it never named, but the authority to create that
+  // device does not.
+  if (body === undefined) return null;
   const record = recordOf(body);
-  if (record === null || Object.keys(record).some(key => key !== "label" && key !== "scopes")) return null;
+  if (record === null || Object.keys(record).some(key => key !== "invitation" && key !== "label" && key !== "scopes")) return null;
+  if (typeof record.invitation !== "string" || record.invitation.length === 0) return null;
   const label = record.label ?? "companion device";
   if (typeof label !== "string" || !plainLabel(label)) return null;
   const requested = record.scopes ?? readOnlyScopes;
@@ -94,7 +100,7 @@ function parsePairingBody(
     if (scope !== readScope && !(scope === writeScope && grantsWrite)) return null;
     if (!granted.includes(scope)) granted.push(scope);
   }
-  return { label, scopes: granted.sort() };
+  return { invitation: record.invitation, label, scopes: granted.sort() };
 }
 
 /** A device credential is a separate authority from the loopback host gate. A
@@ -107,13 +113,50 @@ function deviceSession(request: IncomingMessage, env: Readonly<NodeJS.ProcessEnv
   return authenticateDevice(env, header.slice("Bearer ".length));
 }
 
+/** Minting authority is the host operator's, and only the host operator's. A
+ * caller that already holds a device credential is refused outright rather
+ * than treated as the operator, because a paired device that can mint
+ * invitations can pair a second device and hand it the same authority. This is
+ * host admission control around the existing pairing route; nothing is added
+ * to the frozen `void.companion.v1` capability catalog. */
+async function invite(request: IncomingMessage, response: ServerResponse, env: Readonly<NodeJS.ProcessEnv>): Promise<void> {
+  if (request.method !== "POST") return sendJson(response, 405, { error: "method_not_allowed" });
+  if (request.headers.authorization !== undefined) return sendJson(response, 403, { error: "device_forbidden" });
+  const { present, value } = await readJsonBody(request);
+  if (present && (recordOf(value) === null || Object.keys(recordOf(value)!).length !== 0)) {
+    return sendJson(response, 400, { error: "invalid_invitation_request" });
+  }
+  const minted = mintInvitation(env);
+  return sendJson(response, 201, { invitation: minted.invitation, expiresAt: minted.expiresAt });
+}
+
 async function pair(request: IncomingMessage, response: ServerResponse, env: Readonly<NodeJS.ProcessEnv>): Promise<void> {
   if (request.method !== "POST") return sendJson(response, 405, { error: "method_not_allowed" });
   const input = parsePairingBody((await readJsonBody(request)).value, pairingGrantsWrite(env));
   if (input === null) return sendJson(response, 400, { error: "invalid_pairing" });
+  // Order matters. A workspace that is already full is told so before the
+  // invitation is spent, so a request that could never have paired does not
+  // consume the operator's one authority to pair. Spending the invitation is
+  // the atomic step, and it happens exactly once even when two devices race.
+  if (activeDeviceLimitReached(env)) {
+    return sendJson(response, 409, { error: "device_limit" });
+  }
+  try {
+    consumeInvitation(env, input.invitation);
+  } catch (error) {
+    if (error instanceof CompanionStoreError) {
+      if (error.code === "invalid_invitation" || error.code === "expired_invitation" || error.code === "used_invitation") {
+        return sendJson(response, 403, { error: error.code });
+      }
+    }
+    throw error;
+  }
   const { device, deviceToken } = pairDevice(env, input);
   // The plaintext credential exists in this response and nowhere else: the
-  // registry holds only its digest and no later route repeats it.
+  // registry holds only its digest and no later route repeats it. The spent
+  // invitation is not echoed here either, because this response is the one
+  // place the secret would then be readable twice; the durable marker on disk
+  // is the evidence that exactly one device came from it.
   return sendJson(response, 201, {
     deviceId: device.deviceId,
     deviceToken,
@@ -180,6 +223,7 @@ export async function handleCompanionRequest(request: IncomingMessage, response:
   if (path === null) return sendJson(response, 400, { error: "bad_url" });
   try {
     if (path === "/api/companion/devices") return await pair(request, response, env);
+    if (path === "/api/companion/invitations") return await invite(request, response, env);
     if (path === "/api/companion/diagnostics") {
       if (request.method !== "GET") return sendJson(response, 405, { error: "method_not_allowed" });
       const session = deviceSession(request, env);
@@ -192,7 +236,9 @@ export async function handleCompanionRequest(request: IncomingMessage, response:
     if (target !== null) return await revoke(request, response, env, target[1]!);
     return sendJson(response, 404, { error: "not_found" });
   } catch (error) {
-    if (error instanceof CompanionStoreError && error.code === "device_limit") return sendJson(response, 409, { error: "device_limit" });
+    if (error instanceof CompanionStoreError && (error.code === "device_limit" || error.code === "invitation_limit")) {
+      return sendJson(response, 409, { error: error.code });
+    }
     // A store that cannot be read or written is never reported with its own
     // contents: the caller learns the stable category and nothing more.
     return sendJson(response, 500, { error: "internal_error" });

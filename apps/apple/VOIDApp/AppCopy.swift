@@ -50,6 +50,13 @@ struct AppCopy {
     let pairingPolicyDetail: String
     let revokeDevice: String
     let revokeTitle: String
+    let cachePolicyTitle: String
+    let cachePolicyDetail: String
+    let removeDevice: String
+    let removeDeviceTitle: String
+    let removeDeviceMessage: String
+    let removeDeviceDone: String
+    let removeDeviceUnconfirmed: String
     let noCachedSessionsTitle: String
     let noCachedSessionsDetail: String
     let offlineModeTitle: String
@@ -110,6 +117,13 @@ struct AppCopy {
             pairingPolicyDetail = "Párování vyžaduje výslovně vybraný vlastní Mac. VOID nevyhledává ani nedůvěřuje libovolným serverům."
             revokeDevice = "Odpojit spárované zařízení"
             revokeTitle = "Odpojit párování tohoto zařízení?"
+            cachePolicyTitle = "Mezipaměť"
+            cachePolicyDetail = "Nic, co spárovaný executor odpoví, se na tomto zařízení neukládá trvale. Historie konverzace zůstává jen v paměti, je označena jako minulá aktivita a nikdy se nepoužije k rozhodnutí o dalším kroku."
+            removeDevice = "Odebrat toto zařízení"
+            removeDeviceTitle = "Odebrat párování tohoto zařízení?"
+            removeDeviceMessage = "Přihlašovací údaje zařízení se smažou z klíčenky a všechno, co tato aplikace uložila, se vyprázdní. Executor musí zařízení znovu spárovat, než bude možné pokračovat."
+            removeDeviceDone = "Toto zařízení bylo odebráno a jeho přihlašovací údaje smazány."
+            removeDeviceUnconfirmed = "Toto zařízení bylo odebráno lokálně. Executor nebyl dosažen, takže párování zrušte na Macu."
             noCachedSessionsTitle = "Žádné uložené relace"
             noCachedSessionsDetail = "Pro zobrazení trvalé aktivity připojte výslovně spárovaný executor."
             offlineModeTitle = "Režim offline"
@@ -161,6 +175,13 @@ struct AppCopy {
             pairingPolicyDetail = "Pairing requires an explicitly selected, user-owned executor. VOID does not discover or trust arbitrary servers."
             revokeDevice = "Revoke paired device"
             revokeTitle = "Revoke this device pairing?"
+            cachePolicyTitle = "Cache"
+            cachePolicyDetail = "Nothing a paired executor answers is kept on this device. Conversation history stays in memory, is labelled as past activity, and is never used to decide what happens next."
+            removeDevice = "Remove this device"
+            removeDeviceTitle = "Remove this device pairing?"
+            removeDeviceMessage = "This device's credential is deleted from the Keychain and everything this app cached is cleared. The executor must pair the device again before anything else works."
+            removeDeviceDone = "This device was removed and its credential deleted."
+            removeDeviceUnconfirmed = "This device was removed on this side. The executor was not reachable, so revoke the pairing on the Mac too."
             revokeMessage = "Future requests will be denied until the device is paired again."
             noCachedSessionsTitle = "No cached sessions"
             noCachedSessionsDetail = "Connect an explicitly paired executor to view durable activity."
@@ -213,6 +234,19 @@ struct AppCopy {
         case (false, .succeeded): "The Mac confirmed completion. This companion only displays cached activity."
         case (false, .offline): "No action is available without a paired Mac."
         case (false, .unavailable): "No durable activity is available without a paired executor."
+        }
+    }
+
+    /// What the app says after a removal. The three outcomes are three
+    /// different claims, and saying "done" for a local-only removal would
+    /// leave the operator believing the executor had stopped honouring the
+    /// device when it had not.
+    func removalNotice(for outcome: AppModel.RemovalOutcome) -> String {
+        switch (isCzech, outcome) {
+        case (true, .removed): removeDeviceDone
+        case (true, .removedLocallyOnly), (true, .failed): removeDeviceUnconfirmed
+        case (false, .removed): removeDeviceDone
+        case (false, .removedLocallyOnly), (false, .failed): removeDeviceUnconfirmed
         }
     }
 

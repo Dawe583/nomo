@@ -76,11 +76,21 @@ function post(harness: Harness, request: Envelope | string, headers: Record<stri
   });
 }
 
+async function mint(harness: Harness): Promise<string> {
+  const response = await fetch(`${harness.origin}/api/companion/invitations`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
+  assert.equal(response.status, 201);
+  return (await response.json() as { invitation: string }).invitation;
+}
+
 async function pair(harness: Harness, scopes: readonly CompanionScope[] = [readScope], label = "Kitchen iPhone"): Promise<Paired> {
   const response = await fetch(`${harness.origin}/api/companion/devices`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ label, scopes }),
+    body: JSON.stringify({ invitation: await mint(harness), label, scopes }),
   });
   assert.equal(response.status, 201);
   return await response.json() as Paired;
@@ -277,7 +287,7 @@ test("pairing needs no device identity, mints one credential, and then proves it
 
   // An unpaired device holds no device and no workspace: the request carries
   // neither, and the server derives both.
-  const request = envelope({ label: "Kitchen iPhone", scopes: [readScope] }, {
+  const request = envelope({ invitation: await mint(harness), label: "Kitchen iPhone", scopes: [readScope] }, {
     operation: "device.pair",
     operationId: "op-pair-001",
     idempotencyKey: "idem-pair-001",
@@ -308,24 +318,31 @@ test("pairing needs no device identity, mints one credential, and then proves it
 
   // Pairing is the operation that issues authority, so it carries a stable
   // idempotency key and never accepts a device or workspace claim.
-  const withoutKey = envelope({ label: "x" }, { operation: "device.pair", operationId: "op-pair-002" });
+  const withoutKey = envelope({ invitation: await mint(harness), label: "x" }, { operation: "device.pair", operationId: "op-pair-002" });
   delete withoutKey.deviceId;
   delete withoutKey.workspaceId;
   assertRefusal(await (await post(harness, withoutKey)).json() as Envelope, { httpStatus: 403, outcome: "denied" });
 
-  const claiming = envelope({ label: "x" }, { operation: "device.pair", operationId: "op-pair-003", idempotencyKey: "idem-pair-003", deviceId: "device-already" });
+  const claiming = envelope({ invitation: await mint(harness), label: "x" }, { operation: "device.pair", operationId: "op-pair-003", idempotencyKey: "idem-pair-003", deviceId: "device-already" });
   delete claiming.workspaceId;
   assertRefusal(await (await post(harness, claiming)).json() as Envelope, { httpStatus: 403, outcome: "denied" });
 
-  const unknownScope = envelope({ label: "x", scopes: ["companion:admin"] }, { operation: "device.pair", operationId: "op-pair-004", idempotencyKey: "idem-pair-004" });
+  const unknownScope = envelope({ invitation: await mint(harness), label: "x", scopes: ["companion:admin"] }, { operation: "device.pair", operationId: "op-pair-004", idempotencyKey: "idem-pair-004" });
   delete unknownScope.deviceId;
   delete unknownScope.workspaceId;
   assertRefusal(await (await post(harness, unknownScope)).json() as Envelope, { httpStatus: 403, outcome: "denied" });
 
+  // A pairing with no invitation is refused before it can mint anything. The
+  // host authority to create a device is not derivable from the request body.
+  const uninvited = envelope({ label: "no invitation" }, { operation: "device.pair", operationId: "op-pair-006", idempotencyKey: "idem-pair-006" });
+  delete uninvited.deviceId;
+  delete uninvited.workspaceId;
+  assertRefusal(await (await post(harness, uninvited)).json() as Envelope, { httpStatus: 403, outcome: "denied" });
+
   // A workspace holds at most the protocol's eight active devices, and the
   // ninth pairing is a conflict rather than a success without a receipt.
   for (let index = 0; index < 7; index += 1) await pair(harness, [readScope], `device-${index}`);
-  const ninth = envelope({ label: "ninth" }, { operation: "device.pair", operationId: "op-pair-005", idempotencyKey: "idem-pair-005" });
+  const ninth = envelope({ invitation: await mint(harness), label: "ninth" }, { operation: "device.pair", operationId: "op-pair-005", idempotencyKey: "idem-pair-005" });
   delete ninth.deviceId;
   delete ninth.workspaceId;
   const limit = await (await post(harness, ninth)).json() as Envelope;
@@ -462,7 +479,7 @@ test("operation status stays inside the device that owns the record", async t =>
 test("a replayed pairing does not mint a second device and never replays the credential", async t => {
   const harness = await startHarness();
   t.after(() => harness.close());
-  const pairing = envelope({ label: "Kitchen iPhone", scopes: [readScope] }, {
+  const pairing = envelope({ invitation: await mint(harness), label: "Kitchen iPhone", scopes: [readScope] }, {
     operation: "device.pair",
     operationId: "op-pair-idem",
     idempotencyKey: "idem-pair-1",
@@ -493,7 +510,7 @@ test("a replayed pairing does not mint a second device and never replays the cre
   // works, so the refusal is about the replay and not about pairing at all.
   const registry = await readFile(join(harness.dataDir, "companion", "devices.json"), "utf8");
   assert.equal(registry.match(/"deviceId"/g)?.length, 1, `a replayed pairing minted a second device: ${registry}`);
-  const freshRequest = envelope({ label: "Hallway iPad", scopes: [readScope] }, {
+  const freshRequest = envelope({ invitation: await mint(harness), label: "Hallway iPad", scopes: [readScope] }, {
     operation: "device.pair",
     operationId: "op-pair-fresh",
     idempotencyKey: "idem-pair-2",
@@ -504,6 +521,28 @@ test("a replayed pairing does not mint a second device and never replays the cre
   delete freshRequest.workspaceId;
   const fresh = await (await post(harness, freshRequest)).json() as Envelope;
   assert.equal(fresh.outcome, "succeeded", JSON.stringify(fresh));
+
+  // The same envelope body under a different idempotency key is a different
+  // replay, and the invitation is what stops it: the host has one authority to
+  // create this device and it has already been spent.
+  const replayedBody = envelope({ invitation: (pairing.body as { invitation: string }).invitation, label: "Kitchen iPhone", scopes: [readScope] }, {
+    operation: "device.pair",
+    operationId: "op-pair-second-key",
+    idempotencyKey: "idem-pair-3",
+    deviceId: undefined,
+    workspaceId: undefined,
+  });
+  delete replayedBody.deviceId;
+  delete replayedBody.workspaceId;
+  const second = await (await post(harness, replayedBody)).json() as Envelope;
+  assertRefusal(second, { httpStatus: 403, outcome: "denied" });
+  assert.equal((second.error as { code: string }).code, "used_invitation");
+  assert.equal(
+    JSON.stringify(second).includes(firstBody.deviceToken),
+    false,
+    "a refused duplicate acceptance must not echo the credential it already issued",
+  );
+  assert.equal((await readFile(join(harness.dataDir, "companion", "devices.json"), "utf8")).match(/"deviceId"/g)?.length, 2);
   assert.notEqual((fresh.body as { deviceId: string }).deviceId, firstBody.deviceId);
 });
 

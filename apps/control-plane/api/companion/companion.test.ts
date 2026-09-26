@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { listenControlPlane, type ListenHandle } from "../server.ts";
@@ -8,9 +9,12 @@ import { request as httpRequest } from "node:http";
 import { connect } from "node:net";
 import { projectDiagnostics } from "./diagnostics.ts";
 import { authenticateDevice, readScope, writeScope, type CompanionScope } from "./devices.ts";
+import { consumeInvitation, mintInvitation } from "./invitations.ts";
+import { CompanionStoreError } from "./store.ts";
 import { recordOperation, revokeOperationId } from "./operations.ts";
 
 type Paired = { readonly deviceId: string; readonly deviceToken: string; readonly expiresAt: string; readonly scopes: readonly string[] };
+type Minted = { readonly invitation: string; readonly expiresAt: string };
 type Diagnostics = { readonly entries: readonly { id: string; status: string; summary?: string }[] };
 
 const pathSentinel = "~/Library/VOID/sentinel-credential";
@@ -49,10 +53,28 @@ function pairRequest(harness: Harness, body: unknown, headers: Record<string, st
   });
 }
 
+// Pairing is gated on a host invitation, so the convenience helper mints one
+// per call. A test that is about invitations never uses this helper.
 async function pair(harness: Harness, scopes: readonly CompanionScope[] = [readScope], label = "Kitchen iPhone"): Promise<Paired> {
-  const response = await pairRequest(harness, { label, scopes });
+  return await pairWith(harness, (await mint(harness)).invitation, scopes, label);
+}
+
+// The host operator mints an invitation before a device can pair.
+async function mint(harness: Harness, headers: Record<string, string> = {}): Promise<Minted> {
+  const response = await fetch(`${harness.origin}/api/companion/invitations`, {
+    method: "POST",
+    headers: { "content-type": "application/json", ...headers },
+    body: "{}",
+  });
   assert.equal(response.status, 201);
-  return await response.json() as Paired;
+  return await response.json() as Minted;
+}
+
+async function pairWith(harness: Harness, invitation: string, scopes: readonly CompanionScope[] = [readScope], label = "Kitchen iPhone"): Promise<Paired> {
+  const response = await pairRequest(harness, { invitation, label, scopes });
+  const text = await response.text();
+  assert.equal(response.status, 201, text);
+  return JSON.parse(text) as Paired;
 }
 
 function authorized(harness: Harness, path: string, token: string): Promise<Response> {
@@ -92,18 +114,28 @@ test("pairing issues a one-time device credential and never stores or repeats th
   const text = await listed.text();
   assert.equal(text.includes(first.deviceToken), false);
   assert.equal(text.includes(second.deviceToken), false);
-  assert.equal(await (await pairRequest(harness, { label: "third", scopes: [readScope] })).status, 201);
-  assert.equal((await pairRequest(harness, { label: "x", scopes: ["companion:admin"] })).status, 400);
-  assert.equal((await pairRequest(harness, { label: "x", unexpected: true })).status, 400);
+  await pair(harness, [readScope], "third");
+  assert.equal((await pairRequest(harness, { invitation: (await mint(harness)).invitation, label: "x", scopes: ["companion:admin"] })).status, 400);
+  assert.equal((await pairRequest(harness, { invitation: (await mint(harness)).invitation, label: "x", unexpected: true })).status, 400);
+  // The pairing body is the only host surface that carries a secret, so a body
+  // without one is a shape refusal and not a device: nothing is minted.
+  assert.equal((await pairRequest(harness, { label: "no invitation", scopes: [readScope] })).status, 400);
+  assert.equal((await pairRequest(harness, undefined)).status, 400);
 });
 
 test("a workspace holds at most the protocol's eight active devices", async t => {
   const harness = await startHarness();
   t.after(() => harness.close());
   for (let index = 0; index < 8; index += 1) await pair(harness, [readScope], `device-${index}`);
-  const refused = await pairRequest(harness, { label: "ninth", scopes: [readScope] });
+  const refused = await pairRequest(harness, { invitation: (await mint(harness)).invitation, label: "ninth", scopes: [readScope] });
   assert.equal(refused.status, 409);
   assert.deepEqual(await refused.json(), { error: "device_limit" });
+  // The refusal is a device cap, not a spent invitation: the operator's
+  // authority to pair the ninth device after a revoke must still be there.
+  const revoked = await revokeRequest(harness, JSON.parse(await readFile(harness.registry, "utf8"))[0].deviceId);
+  assert.equal(revoked.status, 200);
+  const ninth = await pairRequest(harness, { invitation: (await mint(harness)).invitation, label: "ninth", scopes: [readScope] });
+  assert.equal(ninth.status, 201);
 });
 
 test("operation status, revocation, and diagnostics answer with the exact contract shapes", async t => {
@@ -198,8 +230,8 @@ test("a read-only device cannot mutate and a device cannot revoke another device
   assert.equal((await revokeRequest(harness, reader.deviceId, writer.deviceToken)).status, 403);
   assert.equal((await authorized(harness, "/api/companion/diagnostics", reader.deviceToken)).status, 200);
   assert.equal((await authorized(harness, "/api/companion/diagnostics", writer.deviceToken)).status, 200);
-  assert.equal((await pairRequest(harness, { label: "write only", scopes: [writeScope] })).status, 201);
-  const writeOnly = await (await pairRequest(harness, { label: "write only two", scopes: [writeScope] })).json() as Paired;
+  await pairWith(harness, (await mint(harness)).invitation, [writeScope], "write only");
+  const writeOnly = await pairWith(harness, (await mint(harness)).invitation, [writeScope], "write only two");
   assert.deepEqual(writeOnly.scopes, [writeScope]);
   assert.equal((await authorized(harness, "/api/companion/diagnostics", writeOnly.deviceToken)).status, 403);
   assert.equal((await revokeRequest(harness, reader.deviceId)).status, 200);
@@ -297,7 +329,8 @@ test("companion routes stay behind the existing cross-site protections", async t
   for (const headers of hostile) {
     const label = JSON.stringify(headers);
     assert.equal((await fetch(`${harness.origin}/api/companion/diagnostics`, { headers: { ...headers, authorization: `Bearer ${device.deviceToken}` } })).status, 403, label);
-    assert.equal((await pairRequest(harness, { label: "x" }, headers)).status, 403, label);
+    assert.equal((await pairRequest(harness, { invitation: (await mint(harness)).invitation, label: "x" }, headers)).status, 403, label);
+    assert.equal((await fetch(`${harness.origin}/api/companion/invitations`, { method: "POST", headers: { ...headers } })).status, 403, label);
     assert.equal((await revokeRequest(harness, device.deviceId, undefined, headers)).status, 403, label);
     assert.equal((await fetch(`${harness.origin}/api/companion/operations/op-any`, { headers: { ...headers, authorization: `Bearer ${device.deviceToken}` } })).status, 403, label);
   }
@@ -461,7 +494,7 @@ test("minted identities and answers stay inside the Apple client acceptance rule
   assert.equal(((await numeric.json()) as { operationId: string }).operationId, "00123");
 
   for (const response of [
-    await pairRequest(harness, { label: "x", scopes: ["companion:admin"] }),
+    await pairRequest(harness, { invitation: (await mint(harness)).invitation, label: "x", scopes: ["companion:admin"] }),
     await authorized(harness, "/api/companion/diagnostics", "wrong-token-value-that-is-long-enough"),
     await authorized(harness, "/api/companion/operations/op-missing", device.deviceToken),
     await fetch(`${harness.origin}/api/companion/diagnostics`, { method: "POST", headers: { authorization: `Bearer ${device.deviceToken}` } }),
@@ -517,7 +550,7 @@ test("a caller cannot grant itself the write scope; the host operator decides", 
   const harness = await startHarness("alpha", undefined, { VOID_COMPANION_WRITE_PAIRING: "0" });
   t.after(() => harness.close());
 
-  const refused = await pairRequest(harness, { label: "self-promoted", scopes: ["companion:read", "companion:write"] });
+  const refused = await pairRequest(harness, { invitation: (await mint(harness)).invitation, label: "self-promoted", scopes: ["companion:read", "companion:write"] });
   assert.equal(refused.status, 400);
   assert.deepEqual(await refused.json(), { error: "invalid_pairing" });
 
@@ -530,4 +563,227 @@ test("a caller cannot grant itself the write scope; the host operator decides", 
   // scope would otherwise have bought.
   const revoke = await revokeRequest(harness, granted.deviceId, granted.deviceToken);
   assert.equal(revoke.status, 403);
+});
+
+// ---------------------------------------------------------------------------
+// P05.01-P05.05: the paired-device races. Each one has a refusal code the
+// client can name, because "please try again" is not actionable for an
+// operator who cannot tell a spent invitation from a wrong workspace.
+// ---------------------------------------------------------------------------
+
+test("a pairing invitation expires and is refused by name once it has", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const env = { VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" };
+
+  const minted = mintInvitation(env, 1_000_000);
+  assert.match(minted.invitation, /^invite-[A-Za-z0-9_-]{32}$/);
+  // The frozen handshake advertises `invitationSeconds: 120`, and that is
+  // exactly the lifetime the host honours.
+  assert.equal(Date.parse(minted.expiresAt) - 1_000_000, 120_000);
+
+  // One second before the deadline the invitation is still spendable, and the
+  // boundary is inclusive on the far side: at the instant it expires it is
+  // refused, not accepted.
+  assert.equal(consumeInvitation(env, minted.invitation, 1_000_000 + 119_999).invitationId, minted.invitation);
+  const spent = mintInvitation(env, 2_000_000);
+  assert.throws(() => consumeInvitation(env, spent.invitation, 2_000_000 + 120_000), (error: unknown) =>
+    error instanceof CompanionStoreError && error.code === "expired_invitation");
+  // An expired invitation is refused, not silently re-minted into a working
+  // one, so the same secret still cannot pair afterwards.
+  const response = await pairRequest(harness, { invitation: spent.invitation, label: "late", scopes: [readScope] });
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { error: "expired_invitation" });
+
+  // A well-formed but unusable invitation is a different refusal from an
+  // expired one, so an operator can tell a typo from a timeout, and neither
+  // ever mints a device.
+  for (const candidate of ["invite-", `invite-${"A".repeat(32)}`, minted.invitation.replace("invite-", "invitx-")]) {
+    const refused = await pairRequest(harness, { invitation: candidate, label: "stranger", scopes: [readScope] });
+    assert.equal(refused.status, 403, candidate);
+    assert.deepEqual(await refused.json(), { error: "invalid_invitation" }, candidate);
+  }
+  // A field that is not a usable shape at all is a body refusal rather than an
+  // invitation refusal, because the two name different operator mistakes.
+  assert.equal((await pairRequest(harness, { invitation: "", label: "stranger", scopes: [readScope] })).status, 400);
+  assert.equal((await pairRequest(harness, { invitation: 42, label: "stranger", scopes: [readScope] })).status, 400);
+  // Nothing in this test paired a device, so there is no registry at all.
+  assert.equal(existsSync(harness.registry), false, "a refused invitation minted a device");
+});
+
+test("a pairing invitation is spent once, so a replayed acceptance is refused rather than ignored", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const { invitation } = await mint(harness);
+
+  const accepted = await pairWith(harness, invitation, [readScope], "Kitchen iPhone");
+  // The one-time plaintext is in this response and nowhere else, including
+  // not in the response to a replay of the very same request.
+  const replay = await pairRequest(harness, { invitation, label: "Kitchen iPhone", scopes: [readScope] });
+  assert.equal(replay.status, 403);
+  const text = await replay.text();
+  assert.deepEqual(JSON.parse(text), { error: "used_invitation" });
+  assert.equal(text.includes(accepted.deviceToken), false, "a refused replay echoed the credential it already issued");
+
+  // A duplicate acceptance through a different envelope is refused the same
+  // way, because the invitation is spent before any device is minted.
+  const duplicate = await pairRequest(harness, { invitation, label: "Hallway iPad", scopes: [readScope, writeScope] });
+  assert.equal(duplicate.status, 403);
+  assert.deepEqual(await duplicate.json(), { error: "used_invitation" });
+  const registry = await readFile(harness.registry, "utf8");
+  assert.equal(registry.match(/"deviceId"/g)?.length, 1, `a spent invitation minted a second device: ${registry}`);
+});
+
+test("two devices racing for one invitation produce exactly one winner", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const { invitation } = await mint(harness);
+
+  // Both requests are in flight before either reads the store, which is the
+  // window a read-modify-write would lose. Exactly one may win.
+  const results = await Promise.all([
+    pairRequest(harness, { invitation, label: "phone-a", scopes: [readScope] }),
+    pairRequest(harness, { invitation, label: "phone-b", scopes: [readScope] }),
+  ]);
+  const statuses = results.map(response => response.status).sort();
+  assert.deepEqual(statuses, [201, 403], "the race produced neither a single winner nor a single named loser");
+  const loser = results.find(response => response.status === 403)!;
+  assert.deepEqual(await loser.json(), { error: "used_invitation" });
+
+  const registry = await readFile(harness.registry, "utf8");
+  assert.equal(registry.match(/"deviceId"/g)?.length, 1, `the race minted more than one device: ${registry}`);
+
+  // A wider race, eight devices for one invitation, has the same answer.
+  const second = await mint(harness);
+  const many = await Promise.all(Array.from({ length: 8 }, (_, index) =>
+    pairRequest(harness, { invitation: second.invitation, label: `phone-${index}`, scopes: [readScope] })));
+  assert.equal(many.filter(response => response.status === 201).length, 1);
+  assert.equal(many.filter(response => response.status === 403).length, 7);
+  assert.equal((await readFile(harness.registry, "utf8")).match(/"deviceId"/g)?.length, 2);
+});
+
+test("a pairing invitation belongs to one workspace and cannot be spent in another", async t => {
+  const dataDir = await mkdtemp(join(tmpdir(), "void-companion-invite-"));
+  const alpha = await startHarness("alpha", dataDir);
+  const beta = await startHarness("beta", dataDir);
+  t.after(async () => {
+    await alpha.close();
+    await beta.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const { invitation } = await mint(alpha);
+  const refused = await pairRequest(beta, { invitation, label: "borrowed", scopes: [readScope] });
+  assert.equal(refused.status, 403);
+  assert.deepEqual(await refused.json(), { error: "invalid_invitation" });
+  // It is refused, not spent: the workspace it does belong to can still use it.
+  const owner = await pairRequest(alpha, { invitation, label: "borrowed", scopes: [readScope] });
+  assert.equal(owner.status, 201);
+});
+
+test("a host holds a bounded number of unspent invitations", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const env = { VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" };
+  const minted = Array.from({ length: 32 }, () => mintInvitation(env));
+  assert.throws(() => mintInvitation(env), (error: unknown) => error instanceof CompanionStoreError && error.code === "invitation_limit");
+  // The refusal is on the operator's authority to invite, not on the
+  // invitations already issued: spending one frees exactly one slot.
+  consumeInvitation(env, minted[0]!.invitation);
+  assert.equal(mintInvitation(env).invitation.length, 39);
+});
+
+test("revocation takes effect on an open event stream and names the refusal", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const device = await pair(harness, [readScope], "Kitchen iPhone");
+
+  // The stream is open: the device is reading page after page under the same
+  // credential, and each page is served.
+  for (let page = 0; page < 3; page += 1) {
+    assert.equal((await authorized(harness, "/api/companion/diagnostics", device.deviceToken)).status, 200);
+  }
+  const revoked = await revokeRequest(harness, device.deviceId);
+  assert.equal(revoked.status, 200);
+  assert.deepEqual(Object.keys(await revoked.clone().json() as Record<string, unknown>).sort(), ["activeStreamsClosed", "deviceId", "newMutationsAllowed", "revokedAt"]);
+
+  // The very next request on that stream is refused, by name. The transport
+  // holds no stream state to tear down: every page re-proves the credential,
+  // so revocation closes the open stream at once.
+  const afterRevoke = await authorized(harness, "/api/companion/diagnostics", device.deviceToken);
+  assert.equal(afterRevoke.status, 403);
+  assert.deepEqual(await afterRevoke.json(), { error: "device_forbidden" });
+  assert.equal((await authorized(harness, `/api/companion/operations/${revokeOperationId(device.deviceId)}`, device.deviceToken)).status, 403);
+  assert.equal(authenticateDevice({ VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" }, device.deviceToken), null);
+});
+
+test("revocation during a pending approval stops the work and keeps its outcome evidence", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const device = await pair(harness, [readScope, writeScope], "Kitchen iPhone");
+  const env = { VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" };
+  const approvalId = "approval-pending-001";
+  recordOperation(env, {
+    operationId: approvalId,
+    workspaceId: "alpha",
+    deviceId: device.deviceId,
+    operation: "approval.decide",
+    status: "running",
+    updatedAt: new Date().toISOString(),
+  });
+
+  // The approval is pending and the device may still read it.
+  const pending = await authorized(harness, `/api/companion/operations/${approvalId}`, device.deviceToken);
+  assert.equal(pending.status, 200);
+  assert.deepEqual(await pending.json(), { operationId: approvalId, status: "running" });
+
+  // The executor revokes mid-approval.
+  assert.equal((await revokeRequest(harness, device.deviceId, device.deviceToken)).status, 200);
+
+  // Further authorized work stops at once, with the refusal named.
+  const afterRevoke = await authorized(harness, `/api/companion/operations/${approvalId}`, device.deviceToken);
+  assert.equal(afterRevoke.status, 403);
+  assert.deepEqual(await afterRevoke.json(), { error: "device_forbidden" });
+  assert.equal((await revokeRequest(harness, device.deviceId, device.deviceToken)).status, 403);
+
+  // The already-dispatched outcome evidence survives: it is a property of the
+  // operation, not of the credential that happened to observe it, so the host
+  // operator can still settle and read the approval.
+  const settled = new Date().toISOString();
+  recordOperation(env, {
+    operationId: approvalId,
+    workspaceId: "alpha",
+    deviceId: device.deviceId,
+    operation: "approval.decide",
+    status: "denied",
+    updatedAt: settled,
+  });
+  const host = await fetch(`${harness.origin}/api/companion/operations/${approvalId}`);
+  assert.equal(host.status, 200);
+  assert.deepEqual(await host.json(), { operationId: approvalId, status: "denied" });
+  // And the revoke itself keeps its own durable receipt.
+  const receipt = await fetch(`${harness.origin}/api/companion/operations/${revokeOperationId(device.deviceId)}`);
+  assert.equal(((await receipt.json()) as { status: string }).status, "succeeded");
+});
+
+test("a paired device cannot mint an invitation for a second device", async t => {
+  const harness = await startHarness();
+  t.after(() => harness.close());
+  const device = await pair(harness, [readScope, writeScope], "Kitchen iPhone");
+
+  // Minting authority is the operator's. A device that can mint an invitation
+  // can pair a second device and hand it the same authority, so the request is
+  // refused outright rather than treated as the operator.
+  const refused = await mint(harness, { authorization: `Bearer ${device.deviceToken}` }).catch(() => "refused");
+  assert.equal(refused, "refused");
+  const response = await fetch(`${harness.origin}/api/companion/invitations`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${device.deviceToken}` },
+    body: "{}",
+  });
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { error: "device_forbidden" });
+  // A body the host did not ask for is a shape refusal, not a silent mint.
+  assert.equal((await fetch(`${harness.origin}/api/companion/invitations`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ label: "x" }) })).status, 400);
+  assert.equal((await fetch(`${harness.origin}/api/companion/invitations`)).status, 405);
 });

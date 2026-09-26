@@ -24,6 +24,7 @@ struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
     @AppStorage("void-entry-language") private var entryLanguage = "en"
     @State private var showingRevokeConfirmation = false
+    @State private var showingRemoveConfirmation = false
 
     private var copy: AppCopy { AppCopy(language: entryLanguage) }
 
@@ -51,6 +52,22 @@ struct SettingsView: View {
                 Text(copy.settingsPrivacyDetail)
                     .foregroundStyle(.secondary)
             }
+            Section(copy.cachePolicyTitle) {
+                Text(copy.cachePolicyDetail)
+                    .foregroundStyle(.secondary)
+            }
+            Section(copy.removeDevice) {
+                Button(copy.removeDevice, role: .destructive) {
+                    showingRemoveConfirmation = true
+                }
+                .frame(minHeight: 44)
+                .accessibilityHint(copy.removeDeviceMessage)
+                if let outcome = model.removalOutcome {
+                    Text(copy.removalNotice(for: outcome))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .navigationTitle(copy.settingsTitle)
         .confirmationDialog(copy.revokeTitle, isPresented: $showingRevokeConfirmation, titleVisibility: .visible) {
@@ -58,6 +75,12 @@ struct SettingsView: View {
             Button(copy.cancel, role: .cancel) {}
         } message: {
             Text(copy.revokeMessage)
+        }
+        .confirmationDialog(copy.removeDeviceTitle, isPresented: $showingRemoveConfirmation, titleVisibility: .visible) {
+            Button(copy.removeDevice, role: .destructive) { Task { await model.removeThisDevice() } }
+            Button(copy.cancel, role: .cancel) {}
+        } message: {
+            Text(copy.removeDeviceMessage)
         }
     }
 }

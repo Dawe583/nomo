@@ -65,6 +65,26 @@ public struct LocalNetworkIdentity: Equatable, Sendable {
     }
 }
 
+/// Whether a server's leaf certificate is the one the operator pinned.
+///
+/// The decision is a value rather than an inline `if` so that a certificate
+/// mismatch can be proven without standing up a TLS endpoint: a mismatch is
+/// the case where a second machine on the local network answers for the
+/// executor, and it has to be a refusal rather than a warning.
+public enum ServerTrustDecision: String, Equatable, Sendable {
+    case pinned
+    case refused
+
+    public static func evaluate(pinnedFingerprint: String, leafCertificate: Data) -> ServerTrustDecision {
+        guard !leafCertificate.isEmpty,
+              LocalNetworkIdentity.isLowercaseSHA256(pinnedFingerprint) else { return .refused }
+        let presented = SHA256.hash(data: leafCertificate).map { String(format: "%02x", $0) }.joined()
+        // A byte-for-byte comparison of two fixed-length digests, and a wrong
+        // length is a refusal rather than a prefix match.
+        return presented == pinnedFingerprint ? .pinned : .refused
+    }
+}
+
 public final class PinnedTLSDelegate: NSObject, URLSessionDelegate, @unchecked Sendable {
     private let fingerprint: String
 
@@ -84,16 +104,16 @@ public final class PinnedTLSDelegate: NSObject, URLSessionDelegate, @unchecked S
         }
         let host = challenge.protectionSpace.host
         let policy = SecPolicyCreateSSL(true, host as CFString)
-        if SecTrustSetPolicies(trust, [policy] as CFArray) == errSecSuccess,
-           SecTrustEvaluateWithError(trust, nil),
-           let certificates = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
-           let certificate = certificates.first,
-           let certificateData = SecCertificateCopyData(certificate) as Data?,
-           SHA256.hash(data: certificateData).map({ String(format: "%02x", $0) }).joined() == fingerprint {
-            completionHandler(.useCredential, URLCredential(trust: trust))
-        } else {
+        guard SecTrustSetPolicies(trust, [policy] as CFArray) == errSecSuccess,
+              SecTrustEvaluateWithError(trust, nil),
+              let certificates = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
+              let certificate = certificates.first,
+              let certificateData = SecCertificateCopyData(certificate) as Data?,
+              ServerTrustDecision.evaluate(pinnedFingerprint: fingerprint, leafCertificate: certificateData) == .pinned else {
             completionHandler(.cancelAuthenticationChallenge, nil)
+            return
         }
+        completionHandler(.useCredential, URLCredential(trust: trust))
     }
 }
 
@@ -108,9 +128,10 @@ public final class URLSessionTransport: NSObject, HTTPTransport, @unchecked Send
 
     public init(identity: LocalNetworkIdentity, sessionConfiguration: URLSessionConfiguration = .ephemeral) {
         let configuration = sessionConfiguration.copy() as! URLSessionConfiguration
-        configuration.httpCookieStorage = nil
-        configuration.urlCache = nil
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        // The cache policy, applied here rather than at each call site, because
+        // a session that keeps a URL cache would replay a `device.revoke` or a
+        // `device.pair` from disk the next time the app opens.
+        CompanionCachePolicy.apply(to: configuration)
         configuration.timeoutIntervalForRequest = 15
         configuration.timeoutIntervalForResource = 30
         let delegate = PinnedTLSDelegate(fingerprint: identity.certificateSHA256)

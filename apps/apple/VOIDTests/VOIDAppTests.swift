@@ -94,4 +94,42 @@ final class VOIDAppTests: XCTestCase {
         XCTAssertEqual(copy.outcomeTitle(for: .unknown), "Neznámé")
         XCTAssertEqual(copy.outcomeTitle(for: .paused), "Pozastaveno")
     }
+
+    func testRemovingThisDeviceClearsSessionsAndReportsWhatItActuallyAchieved() async {
+        let model = AppModel()
+        model.loadCachedSessions()
+        XCTAssertFalse(model.sessions.isEmpty)
+
+        await model.removeThisDevice()
+
+        // The local half always happens: the pairing is gone from this side
+        // and nothing that could authorise a later request is left on screen.
+        XCTAssertTrue(model.sessions.isEmpty)
+        XCTAssertEqual(model.connectionState, .offline)
+        XCTAssertEqual(model.executorName, "No executor selected")
+        // This build has no paired transport, so it never reached an executor
+        // and the outcome must not claim it did.
+        XCTAssertEqual(model.removalOutcome, .removedLocallyOnly)
+        XCTAssertFalse(try XCTUnwrap(model.removalOutcome).credentialDeleted == false)
+    }
+
+    func testCachedHistoryIsNeverAuthorityForTheApp() {
+        let model = AppModel()
+        XCTAssertEqual(model.cachedHistoryAuthority, .nonAuthoritative)
+    }
+
+    func testRemovalCopyNamesWhatWasRemovedInBothLanguages() {
+        let english = AppCopy(language: "en")
+        let czech = AppCopy(language: "cs")
+
+        XCTAssertNotEqual(english.removeDevice, czech.removeDevice)
+        XCTAssertTrue(english.cachePolicyDetail.contains("in memory"))
+        XCTAssertTrue(english.cachePolicyDetail.contains("never used to decide"))
+        XCTAssertTrue(czech.cachePolicyDetail.contains("jen v paměti"))
+        // A local-only removal and a confirmed one are different claims and
+        // are not allowed to share a sentence.
+        XCTAssertNotEqual(english.removalNotice(for: .removed), english.removalNotice(for: .removedLocallyOnly))
+        XCTAssertNotEqual(english.removalNotice(for: .failed), english.removalNotice(for: .removed))
+        XCTAssertNotEqual(czech.removalNotice(for: .removed), czech.removalNotice(for: .removedLocallyOnly))
+    }
 }

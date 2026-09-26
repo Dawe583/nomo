@@ -127,6 +127,15 @@ export function pairDevice(
   return { device, deviceToken };
 }
 
+/** Whether the workspace already holds every active device it may. A caller
+ * checks this before spending a pairing invitation, so an invitation is not
+ * burned by a request that could not have paired anyway. It is a precheck, not
+ * the limit: the check inside `pairDevice` is the one enforced at the write. */
+export function activeDeviceLimitReached(env: Readonly<NodeJS.ProcessEnv>): boolean {
+  const workspaceId = companionWorkspace(env);
+  return loadDevices(env).filter(device => device.workspaceId === workspaceId && device.revokedAt === null).length >= maxActiveDevices;
+}
+
 /** Fail-closed device authentication. A missing, wrong, expired, revoked, or
  * foreign-workspace credential yields no session, and an unreadable registry
  * yields no session either: guessing a device must never be cheaper than

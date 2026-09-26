@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { canonicalJson } from "../../../../packages/ledger/src/canonical.ts";
 import {
+  activeDeviceLimitReached,
   authenticateDevice,
   pairDevice,
   plainLabel,
@@ -16,6 +17,7 @@ import {
 import { companionDiagnostics } from "./diagnostics.ts";
 import { readOperation, revokeOperationId, type CompanionOperationStatus } from "./operations.ts";
 import { companionWorkspace, CompanionStoreError } from "./store.ts";
+import { consumeInvitation } from "./invitations.ts";
 import { readIdempotency, recordIdempotency } from "./idempotency.ts";
 
 type JsonObject = Record<string, unknown>;
@@ -294,8 +296,9 @@ function diagnosticsRead(context: RunContext): Reply {
 function parsePairingBody(
   body: JsonObject,
   grantsWrite: boolean,
-): { readonly label: string; readonly scopes: readonly CompanionScope[] } | null {
-  if (!exactKeys(body, ["label", "scopes"])) return null;
+): { readonly invitation: string; readonly label: string; readonly scopes: readonly CompanionScope[] } | null {
+  if (!exactKeys(body, ["invitation", "label", "scopes"])) return null;
+  if (typeof body.invitation !== "string" || body.invitation.length === 0) return null;
   const label = body.label ?? "companion device";
   if (typeof label !== "string" || !plainLabel(label)) return null;
   const requested = body.scopes ?? readOnlyScopes;
@@ -307,7 +310,7 @@ function parsePairingBody(
     if (scope !== readScope && !(scope === writeScope && grantsWrite)) return null;
     if (!granted.includes(scope)) granted.push(scope);
   }
-  return { label, scopes: granted.sort() };
+  return { invitation: body.invitation, label, scopes: granted.sort() };
 }
 
 function devicePair(context: RunContext): Reply {
@@ -322,6 +325,21 @@ function devicePair(context: RunContext): Reply {
   const prior = readIdempotency(context.env, context.idempotencyKey, context.requestDigest);
   if (prior.state !== "new") {
     return refused(409, "idempotency_key_reused", "This pairing was already dispatched; pair again to receive a new credential.");
+  }
+  // The invitation is what makes that bound hold without the host's help: a
+  // replay of this envelope, a second client with the same body, and a fresh
+  // idempotency key all reach the same one-shot spend, and the second arrival
+  // is told the invitation is spent rather than minting a second device.
+  if (activeDeviceLimitReached(context.env)) {
+    return refused(409, "device_limit", "The workspace already holds the maximum number of active companion devices.");
+  }
+  try {
+    consumeInvitation(context.env, input.invitation);
+  } catch (error) {
+    if (error instanceof CompanionStoreError && (error.code === "invalid_invitation" || error.code === "expired_invitation" || error.code === "used_invitation")) {
+      return refused(403, error.code, "This pairing invitation cannot be spent. Mint a new one on the host and pair again.");
+    }
+    throw error;
   }
   const { device, deviceToken } = pairDevice(context.env, input);
   recordIdempotency(context.env, context.idempotencyKey, {
