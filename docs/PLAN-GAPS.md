@@ -57,7 +57,8 @@ needs a Windows x64/MSVC runner.
 - G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list. Dependency/time/checkpoint selectors, leases and fencing remain open.
 - G-04: adapters already observe resource keys and revisions. General read/write provenance and dependency closure remain open.
 - G-07: managed filesystem and Git recovery exist. Noncooperative writers, full per-hunk enforcement and native cross-platform evidence remain separate work.
-- G-20: `scripts/src/verify-ledger-standalone.mjs` uses Node built-ins only. Independently published and audited distribution remains open.
+- G-20: `@void/verifier` is its own package with zero dependencies and no import from this repository. Never published, and the export-bundle fixtures are still missing.
+- G-26: the open core is Apache 2.0 and NOT publishable. Nine packages export TypeScript source and ten of twelve have no build, so flipping `private` would ship source Node cannot run.
 - Section 6: deterministic compaction, bounded local profiles, the twenty-item local queue and signed run/list recovery exist. Hooks, binary input, extra named permission modes, dependency-aware rewind and measured tokenizer accounting remain open.
 
 
@@ -360,12 +361,41 @@ Size: M.
 ### G-20 WP-13 standalone verifier
 
 Plan: `docs/EXECUTION-PLAN.md` WP-13.
-Missing: a standalone verifier a third party can run without this
-software; current attestation verifies inside the repo toolchain.
-Evidence: `packages/ledger/src/attest.ts` plus `void attest` exist, but no
-separate verifier artifact is published.
-Minimum change: publish a minimal verifier with fixtures. Size: S.
+Partly closed 2026-09-26. The verifier is now `@void/verifier`, its own
+installable package with a `void-verify` binary, zero dependencies of any kind and
+no import from this repository, and it carries a README that commits in writing to
+keeping both properties. `scripts/src/licence-line.test.mjs` fails the build if
+either is lost.
+Still missing: it has never been published to a registry, and the export-bundle
+fixtures a third party would use to try it are not in the package.
+Minimum change: publish it, and ship a small synthetic bundle as a fixture.
+Size: S. Needs release credentials from G-26, not code.
 
+### G-26 the open core is licensed for publication and cannot be published
+
+Measured 2026-09-26, and this is the largest remaining gap in the licence line.
+Every package declares Apache 2.0, the root LICENSE is the verbatim text, the
+NOTICE carries the registry disclaimer verbatim, and `@void/verifier` is
+publishable today. Nothing else is. Twelve packages are `private: true`, and that
+flag is not an oversight: `release-packaging.test.mjs` enforces it so nothing ships
+with incoherent release metadata, and it is what currently stops a broken release.
+
+Flipping it would make things worse rather than better. Nine packages point
+`exports` at TypeScript source and ten of the twelve have no build script, so
+publishing them would ship source that Node cannot run. The licence line therefore
+rests on a distribution channel that does not exist yet, which is worth stating
+plainly because DECISIONS 5 argues the MCP registry, GitHub search and the registry
+entry pages all require something installable without a sales call.
+
+Minimum change per open package: a build emitting JavaScript, `main`, `module`
+and `types` that agree for all three resolvers the workspace uses, a `files` list
+covering the output, build ordering in the root build script, and a preview publish
+to a scratch registry. `scripts/src/licence-line.test.mjs` refuses any package that
+is publishable without a way to produce its files, so the flag cannot be flipped on
+its own.
+Size: L. Sequence registry, ledger, policy, proxy, cli, in that order: each depends
+on the ones before it, and a partially published chain is harder to consume than an
+unpublished one.
 ### G-21 WP-14 SDK framework wrap
 
 Plan: `docs/EXECUTION-PLAN.md` WP-14.

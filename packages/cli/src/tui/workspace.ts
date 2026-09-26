@@ -2073,7 +2073,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // Third parties recheck without this software through the standalone
       // script, so the notice names it instead of hiding that path.
       const standalone =
-        "Third parties recheck exports with scripts/src/verify-ledger-standalone.mjs.";
+        "Third parties recheck exports with packages/verifier/verify-ledger.mjs.";
       this.notice =
         this.proofErrors.size || this.proxy.errors.length
           ? `VERIFICATION FAILED. See the overview. ${standalone}`

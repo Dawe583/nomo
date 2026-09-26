@@ -650,11 +650,11 @@ Ledger je jeden JSON objekt na řádek v jen připisovaném souboru, defaultně 
 `~/.void/ledger/<workspace>.jsonl`. `void feed` ho vypíše, `void verify` ho
 zkontroluje a `/verify` v TUI udělá totéž s rozsahem na obrazovce.
 
-**Ověř ho mimo síť.** `scripts/src/verify-ledger-standalone.mjs` je
+**Ověř ho mimo síť.** `packages/verifier/verify-ledger.mjs` je
 jednosouborový verifikátor bez závislostí, spustitelný bez instalace VOID:
 
 ```sh
-node scripts/src/verify-ledger-standalone.mjs --selftest
+node packages/verifier/verify-ledger.mjs --selftest
 ```
 
 Jeho self-test projde round trip, editované tělo, špatný klíč, integritu bez

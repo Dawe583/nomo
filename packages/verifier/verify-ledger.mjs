@@ -1,5 +1,6 @@
 /**
- * Standalone VOID ledger verifier. Third parties run this without VOID.
+ * Standalone VOID ledger verifier, published as @void/verifier. Third
+ * parties run this without VOID.
  *
  * Only Node built-ins are used: node:crypto and node:fs for verification,
  * node:os and node:path in the selftest. Nothing is imported from this
@@ -9,10 +10,15 @@
  * between this file and packages/ledger is a defect, and the selftest
  * below pins the shared vectors.
  *
+ * The package README carries the commitment that this file keeps zero
+ * dependencies and will not acquire a build step. Both properties exist so a
+ * verifier can be read rather than trusted, and a gate fails the build when
+ * either is lost.
+ *
  * Usage:
- *   node verify-ledger-standalone.mjs <bundle.jsonl>
- *   node verify-ledger-standalone.mjs <bundle.jsonl> --public-key <base64-spki> --key-id <id>
- *   node verify-ledger-standalone.mjs --selftest
+ *   void-verify <bundle.jsonl>
+ *   void-verify <bundle.jsonl> --public-key <base64-spki> --key-id <id>
+ *   void-verify --selftest
  *
  * Without a public key only hash links, sequence and body digests are
  * checked, and the verdict says so. That is integrity evidence, not
@@ -472,7 +478,7 @@ function main(argv) {
     attestationIndex >= 0 ? argv[attestationIndex + 1] : undefined;
   if (!file || file.startsWith("--")) {
     console.error(
-      "Usage: verify-ledger-standalone.mjs <bundle.jsonl> [--public-key <base64-spki> [--key-id <id>]] [--attestation <doc.json>]",
+      "Usage: void-verify <bundle.jsonl> [--public-key <base64-spki> [--key-id <id>]] [--attestation <doc.json>]",
     );
     process.exitCode = 2;
     return;

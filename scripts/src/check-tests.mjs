@@ -126,6 +126,7 @@ const REQUIRED_SCRIPT_TESTS = [
   "doc-truth.test.mjs",
   "design-token.test.mjs",
   "handbook.test.mjs",
+  "licence-line.test.mjs",
 ];
 const present = new Set(
   readdirSync(join(root, "scripts", "src"))

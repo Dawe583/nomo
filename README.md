@@ -146,5 +146,40 @@ are not included in this beta.
 - `docs/PLAN-GAPS.md`: consolidated remaining work across active plans.
 - `docs/SDK.md`: SDK release candidate surface.
 - `docs/TESTING.md`: package test commands and test rules.
+- `CONTRIBUTING.md`: how to contribute, and what gets declined.
 - `packages/policy/README.md`: policy pack contents and loading rules.
+- `packages/verifier/README.md`: the independent offline ledger verifier.
 - `scripts/src/bench.mjs`: local smoke benchmark (forwarding, ledger append, classification).
+
+## Licence
+
+The interception spine is Apache 2.0, and that is the part you should be able to
+read before putting it in a write path: the registry, the ledger, the proxy, the
+policy engine, the CLI, the connectors, and the standalone verifier. Full text is
+in `LICENSE`; the registry's own caveat travels in `NOTICE` and with the data
+wherever the data goes.
+
+`apps/control-plane` is the closed, paid part and is **not** covered by the root
+licence; it carries its own `LICENSE`. The line is in `docs/DECISIONS.md`
+section 5, along with the rule it exists to hold: **a feature never moves from
+open to paid.** Approvals, budgets, multi-workspace, SSO and the taint graph are
+on the paid side because they are organisational, not because they are
+interesting.
+
+`@void/verifier` is separately installable and depends on nothing at all, not
+even on VOID. That is deliberate: an auditor who has to trust the vendor's
+dependency tree is not getting an independent check.
+
+## No support obligation
+
+There is none on the open packages. VOID is maintained by one person. Issues are
+read, a response time is not promised, and a bug is not guaranteed to be fixed.
+Contributing is the reliable way to get a change made; `CONTRIBUTING.md` says
+which contributions are easy and which need prior agreement.
+
+One limitation belongs here rather than in a footnote, because it is where a
+reader meets it: the ledger is tamper **evident**, not tamper proof. A database
+superuser bypasses every grant and every trigger, which is exactly why entries
+are signed. An entry signed by a compromised host key verifies, so past entries
+are only as trustworthy as the key that signed them, and why a published
+checkpoint matters.

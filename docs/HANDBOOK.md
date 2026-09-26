@@ -665,11 +665,11 @@ The ledger is one JSON object per line in an append-only file, under
 `~/.void/ledger/<workspace>.jsonl` by default. `void feed` prints it, `void verify`
 checks it, and `/verify` in the TUI does the same with the scope on screen.
 
-**Verify it offline.** `scripts/src/verify-ledger-standalone.mjs` is a
+**Verify it offline.** `packages/verifier/verify-ledger.mjs` is a
 single-file verifier with no dependencies, runnable without installing VOID:
 
 ```sh
-node scripts/src/verify-ledger-standalone.mjs --selftest
+node packages/verifier/verify-ledger.mjs --selftest
 ```
 
 Its self-test exercises a round trip, an edited body, a wrong key, integrity

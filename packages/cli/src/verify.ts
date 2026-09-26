@@ -117,7 +117,7 @@ async function runStandalone(
   io: VerifyCommandIo,
 ): Promise<number> {
   const script = fileURLToPath(
-    new URL("../../../scripts/src/verify-ledger-standalone.mjs", import.meta.url),
+    new URL("../../verifier/verify-ledger.mjs", import.meta.url),
   );
   const scriptArgs = [script, target];
   if (args.key !== undefined) scriptArgs.push("--public-key", args.key);

@@ -1,0 +1,40 @@
+{
+  "name": "@void/verifier",
+  "version": "0.1.0",
+  "description": "Offline verifier for a VOID ledger export. Node built-ins only, no VOID dependency, no runtime dependencies at all.",
+  "license": "Apache-2.0",
+  "keywords": [
+    "ledger",
+    "verification",
+    "audit",
+    "offline",
+    "append-only",
+    "hash-chain"
+  ],
+  "type": "module",
+  "bin": {
+    "void-verify": "./verify-ledger.mjs"
+  },
+  "main": "./verify-ledger.mjs",
+  "exports": {
+    ".": "./verify-ledger.mjs"
+  },
+  "files": [
+    "verify-ledger.mjs",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dawe583/void.git",
+    "directory": "packages/verifier"
+  },
+  "homepage": "https://github.com/Dawe583/void/tree/main/packages/verifier",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test verify-ledger.test.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
