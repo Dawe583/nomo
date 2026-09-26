@@ -422,35 +422,59 @@ command exits 0 in this environment and the output has been read.
 > exist. The reasoning is kept because it is load bearing for any future
 > server-rendered function tree; the paths are history.
 >
-> Everything in this section still applies; only the paths moved. The design system is
-> now two files: `apps/control-plane/ui/src/styles.css` for the control plane and
-> the workbench, and `site/styles.css` for the site.
+> Everything in this section still applies; only the paths moved, and one of the
+> paths had moved twice. The design system is **three** token files:
+> `apps/control-plane/ui/src/styles.css` for the Vite control plane,
+> `apps/control-plane/web/workbench.css` for the server rendered workbench pages,
+> and `site/styles.css` for the separate site.
 
-Tokens, both themes and every keyframe live in those two files. Change colours
-there and nowhere else.
+Every token, both themes and every keyframe is declared in one of those three and
+nowhere else. Change colours there and nowhere else.
+`scripts/src/design-token.test.mjs` fails the build when a component grows a
+colour literal or an unprefixed keyframe, and when a static
+`meta name="theme-color"` stops matching the canvas token.
 
-- Never write a colour literal in a component. Every colour is a
+- Never write a colour literal in a component. Every colour is
   `var(--token)`. That is what makes the theme toggle work and it is the only
-  thing keeping the control plane and the site from drifting.
-- Reversibility class is only ever `--ok`, `--info`, `--warn`, `--bad`, carried
-  as a `data-tone` attribute plus the tone name as text. `--accent` is brand
-  only and never means a class.
-- No shadows, no gradients, no rounded cards. Radii are 2px on controls and the
-  22px pill on `.btn`. Hover is a background tint of `var(--a04)`, never a lift
-  or a shadow. Cells are separated by 1px `var(--line)` rules at `gap: 0`.
+  thing keeping the control plane and the site from drifting. Three exemptions
+  exist and each is deliberate: a token file, the brand SVG whose geometry is
+  fixed, and the `content` of a `meta name="theme-color"`, which cannot read CSS
+  because it is an HTML attribute rather than a style. The last one is pinned to
+  the token by the gate, because it had drifted to the site palette while the
+  page underneath it was the control plane.
+- Reversibility class is `--good`, `--danger`, `--action` or `--focus` in the
+  control plane, carried as a `data-tone` attribute whose values are `clear`,
+  `attention` and `active`. The server rendered workbench pages still carry the
+  older `--ok`, `--info`, `--warn`, `--bad` set. `--accent` is brand only and
+  never means a class.
+- No decorative shadow and no gradient on desktop chrome, and no rounded cards.
+  Radii are 5px on controls, 20px on the composer pill, 22px on the demo
+  composer. The mobile layer is the deliberate exception: a bottom sheet is
+  `24px 24px 0 0` and a drawer is `0 20px 20px 0`, because that is the platform
+  shape and squaring it would make a sheet read as a card. The five elevated
+  surfaces that do cast a shadow, the composer, the dialog, the command palette
+  and the two sheets, take it from `--shadow-*` tokens rather than an inline
+  alpha, because a shadow is a design value. Hover is a background tint of
+  `var(--raised)`, never a lift. Cells are separated by 1px `var(--line)` rules
+  at `gap: 0`.
 - Serif for headlines, sans for body copy, mono for everything else: every
   label, kicker, tag, button, table header, caption, number and status word.
 - Prefix every keyframe with `v-`. Tailwind ships `ping`, `spin`, `pulse` and
   `bounce`, and an unprefixed keyframe is silently overridden.
 - Never write a bare descendant `span` rule; scope to `> span`. Never set
   `display: grid` on a `ul` or `ol` that needs its markers.
-- Honour `prefers-reduced-motion`, animate transform and opacity only, and never
-  animate `filter: blur()`.
+- Honour `prefers-reduced-motion`, which the control plane enforces globally
+  with an `animation: none !important` rule over `*`. Animate transform and
+  opacity, and never animate `filter: blur()`. One named exception:
+  `v-working-pulse` animates the ring's `box-shadow`, because on a text only
+  surface that ring is the only thing separating working from idle. A static
+  `backdrop-filter: blur()` on a dialog backdrop is not animated and is fine.
 - No hover only affordances. Everything reachable by hover is reachable by tap
   and by keyboard.
 
-Before building a new view, read `sections/hold.tsx`, `sections/replay.tsx` and
-`pages/attestation.tsx`. The component almost certainly already exists.
+Before building a new view, read `apps/control-plane/ui/src/approval-review.tsx`,
+`recovery-dialog.tsx` and `pages.tsx`. The component almost certainly already
+exists.
 
 ---
 

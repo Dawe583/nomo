@@ -122,7 +122,11 @@ if (results.length === 0) {
 // one test() block inside a guarded file, is not observable from inside this
 // repository at all. That class of change is review, and a test that claimed to
 // catch it would be a false guarantee.
-const REQUIRED_SCRIPT_TESTS = ["doc-truth.test.mjs", "handbook.test.mjs"];
+const REQUIRED_SCRIPT_TESTS = [
+  "doc-truth.test.mjs",
+  "design-token.test.mjs",
+  "handbook.test.mjs",
+];
 const present = new Set(
   readdirSync(join(root, "scripts", "src"))
     .filter((file) => file.endsWith(".test.mjs"))

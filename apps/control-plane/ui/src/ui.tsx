@@ -33,9 +33,18 @@ export function useAppliedAppearance(appearance: string) {
       const dark =
         appearance === "dark" || (appearance === "system" && media.matches);
       document.documentElement.dataset.theme = dark ? "dark" : "light";
-      document
-        .querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", dark ? "#191918" : "#f8f7f4");
+      // Read the canvas token rather than repeating its value. The theme
+      // attribute is already set, so the resolved custom property is the one for
+      // the theme actually in effect. A literal here drifted from styles.css
+      // once already, and the browser chrome is the first thing a user sees.
+      const canvas = getComputedStyle(document.documentElement)
+        .getPropertyValue("--canvas")
+        .trim();
+      if (canvas) {
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute("content", canvas);
+      }
     };
     update();
     media.addEventListener("change", update);
