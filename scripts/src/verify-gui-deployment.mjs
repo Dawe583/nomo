@@ -62,8 +62,16 @@ try {
     preferences = request("/api/preferences");
   assert.equal(state.status, 200);
   assert.equal(state.value.connected, true);
-  assert.equal(preferences.value.preferences.defaultModel, "z-ai/glm-5.3-free");
-  assert.ok(state.value.models.some((m) => m.id === "z-ai/glm-5.3-free"));
+  // A deployment where nobody chose a model carries no defaultModel, and that
+  // is the correct shape now that the product ships no default. The check is
+  // therefore that whatever is reported is a model the provider actually
+  // serves, and that a connected deployment still serves at least one.
+  const chosen = preferences.value.preferences.defaultModel;
+  assert.ok(
+    chosen === undefined || state.value.models.some((m) => m.id === chosen),
+    `the deployment reports defaultModel ${JSON.stringify(chosen)}, which its provider does not serve`,
+  );
+  assert.ok(state.value.models.length > 0, "a connected deployment serves no models");
   console.log(
     JSON.stringify({
       connected: true,

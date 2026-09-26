@@ -55,9 +55,10 @@ The GUI uses the shared React/TypeScript client in `apps/control-plane/ui`.
 `pnpm gui` builds it before starting the local API. For frontend development,
 run `node apps/control-plane/api/server.ts` and `pnpm dev:web` in separate
 terminals. `pnpm build:web` creates the production assets used by Vercel and
-the desktop bundle. New conversations default to **NVIDIA NIM / GLM 5.3 Flash**
-(`z-ai/glm-5.3-flash`); connect a server-side provider key in Settings or set
-`NVIDIA_API_KEY`. Existing conversations keep their original provider and model.
+the desktop bundle. VOID has no default provider and no default model: connect a
+server-side provider key in Settings, or set `NVIDIA_API_KEY` to use NVIDIA NIM,
+and the first conversation asks which model to use from the catalog that
+provider returns. Existing conversations keep their original provider and model.
 A workspace with no credential resolves reports **Setup required** and dispatches
 nothing: VOID never silently falls back to a different provider.
 

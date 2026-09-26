@@ -7,9 +7,8 @@ import { api, items, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useApi, useText } from "./ui";
 import { DESKTOP_DOWNLOADS } from "./desktop-downloads";
 import { GALLERY_PATH } from "./gallery-path";
-const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
-const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
-const DEFAULT_PROVIDER_URL = "https://integrate.api.nvidia.com/v1";
+// VOID has no default provider and no default model. The panel below reports
+// what is connected and, when nothing is, says that.
 export function Settings({
   appearance,
   setAppearance,
@@ -28,7 +27,7 @@ export function Settings({
     agents = useApi("/api/agents"),
     capabilities = useApi("/api/capabilities");
   const agentPreference = capabilities.data?.mode === "cloud" ? "defaultAgent" : "defaultAgentPreset";
-  const [baseUrl, setBaseUrl] = useState(DEFAULT_PROVIDER_URL),
+  const [baseUrl, setBaseUrl] = useState(""),
     [kind, setKind] = useState("compatible"),
     [key, setKey] = useState(""),
     [error, setError] = useState<unknown>(),
@@ -195,7 +194,13 @@ export function Settings({
         <h2>{t("Poskytovatel modelu", "Model provider")}</h2>
         <ProviderNotice provider={provider.data} />
         <ErrorBox error={provider.error} />
-        <p>{provider.data?.baseUrl ?? DEFAULT_PROVIDER_URL}</p>
+        <p>
+          {provider.data?.baseUrl ||
+            t(
+              "Zatím není připojen žádný poskytovatel.",
+              "No model provider is connected yet.",
+            )}
+        </p>
         {provider.data?.setupRequired && (
           <p className="notice">
             {t(
@@ -205,10 +210,13 @@ export function Settings({
           </p>
         )}
         <p className="muted">
-          {t("Výchozí model", "Default model")}:{" "}
-          {(preferences.data?.preferences?.defaultModel ?? DEFAULT_MODEL_ID) === DEFAULT_MODEL_ID
-            ? DEFAULT_MODEL_NAME
-            : preferences.data?.preferences?.defaultModel}.{" "}
+          {t("Model pro nové konverzace", "Model for new conversations")}:{" "}
+          {preferences.data?.preferences?.defaultModel ||
+            t(
+              "zatím nevýchozí, vyberte ho v konverzaci",
+              "none chosen yet, select one in a conversation",
+            )}
+          .{" "}
           {t(
             "Existující konverzace si ponechají původní nastavení.",
             "Existing conversations retain their settings.",
@@ -242,7 +250,7 @@ export function Settings({
               <select
                 value={
                   provider.data.presets.find((p: Row) => p.baseUrl === baseUrl)
-                    ?.id ?? "custom"
+                    ?.id ?? (baseUrl ? "custom" : "")
                 }
                 onChange={(e) => {
                   const preset = provider.data?.presets.find(
@@ -255,6 +263,9 @@ export function Settings({
                   }
                 }}
               >
+                <option value="">
+                  {t("Vyberte poskytovatele…", "Choose a provider…")}
+                </option>
                 {provider.data.presets.map((p: Row) => (
                   <option key={p.id} value={p.id}>
                     {p.name}

@@ -1,7 +1,24 @@
-/** Public connection metadata only. Credentials belong to server-side storage. */
-export const DEFAULT_PROVIDER_ID = "nvidia";
-export const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
-export const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
+/** Public connection metadata only. Credentials belong to server-side storage.
+ *
+ * There is no default provider and no default model. A workspace with nothing
+ * configured has neither, and the surfaces say so rather than naming a vendor.
+ * The presets below are the choices on offer; offering a choice is not the same
+ * as choosing for the operator.
+ */
+
+/** The no-cost model each origin serves, keyed by that origin. A transient
+ * rejection of the named model is retried; a paid model on the same endpoint is
+ * never retried, and neither is any model this table does not name. Naming the
+ * model per endpoint is what keeps the guard from becoming "retry everything".
+ * TokenHarbor has no preset because it is a hand-typed endpoint, and it is
+ * listed here for the same reason: the guard tests the origin, not a preset. */
+export const FREE_MODEL_BY_ORIGIN: Readonly<Record<string, string>> = {
+  "https://api.tokenrouter.com": "z-ai/glm-5.3-flash",
+  "https://text.pollinations.ai": "z-ai/glm-5.3-flash",
+  "https://tokenharbor.ai": "z-ai/glm-5.3-flash",
+};
+
+/** Public endpoints. A preset is a choice, so these stay exported. */
 export const NVIDIA_URL = "https://integrate.api.nvidia.com/v1";
 export const TOKENROUTER_URL = "https://api.tokenrouter.com/v1";
 export const OPENCODE_ZEN_URL = "https://opencode.ai/zen/v1";

@@ -47,8 +47,8 @@ import {
 } from "./chat-composer";
 import { Badge, Dialog, Empty, ErrorBox, MotionEnabled, RedactedJson, useApi, useText } from "./ui";
 import "./chat.css";
-const DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash";
-const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
+// VOID has no default model. The composer starts empty; the operator's saved
+// preference or the provider's validated catalog fills it in.
 function CodeBlock({ children }: { children?: ReactNode }) {
   const ref = useRef<HTMLPreElement>(null),
     [wrap, setWrap] = useState(false),
@@ -247,7 +247,7 @@ export function Chat({
   const transcript = useRef<HTMLDivElement>(null);
   const composerWrap = useRef<HTMLDivElement>(null);
   const chatSection = useRef<HTMLElement>(null);
-  const [model, setModel] = useState(DEFAULT_MODEL_ID);
+  const [model, setModel] = useState("");
   const [modelSearch, setModelSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -1369,10 +1369,13 @@ export function Chat({
                 type="button"
                 disabled={!!id}
                 onClick={() => setPicker(true)}
+                aria-label={t(
+                  "Vybrat model pro novou konverzaci",
+                  "Choose a model for a new conversation",
+                )}
               >
-                {(session?.model ?? model) === DEFAULT_MODEL_ID
-                  ? DEFAULT_MODEL_NAME
-                  : (session?.model ?? model)}
+                {(session?.model || model) ||
+                  t("Vybrat model", "Choose a model")}
                 <Icon name="chevron" />
               </button>
             </div>

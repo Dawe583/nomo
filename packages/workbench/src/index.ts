@@ -9,9 +9,6 @@ import {
   type Json,
 } from "../../runtime/src/index.ts";
 import {
-  DEFAULT_MODEL_ID,
-  DEFAULT_MODEL_NAME,
-  DEFAULT_PROVIDER_ID,
   NVIDIA_URL,
   TOKENROUTER_URL,
   PROVIDER_PRESETS,
@@ -130,6 +127,13 @@ export type SessionView = {
   readonly status: "running" | "queued" | "idle" | "cancelled" | "failed" | "unknown" | "paused";
   readonly events: readonly SessionEvent[];
 };
+/** Model ids VOID once shipped as its default. They are retired on sight: the
+ * workspace picks from its own validated catalog or has no model at all. */
+const RETIRED_MODEL_IDS = [
+  "openai-fast",
+  "muse-spark-1.3-contributor-free",
+  "z-ai/glm-5.3-free",
+];
 export const DEFAULT_POLICY =
   "version: 1\nrules:\n  - match:\n      class: r0\n    decision: allow\n  - match: {}\n    decision: hold\n    seconds: 300\n    notify: [cli]\n";
 export const AGENT_PRESETS = [
@@ -211,9 +215,9 @@ export class Workbench {
   private providerFailureState: { status: number; retryAt: string | null } | null = null;
   private readonly storage: LocalStorage;
   private hasState = false;
-  private preferences: Record<string, string> = {
-    defaultProvider: DEFAULT_PROVIDER_ID,
-    defaultModel: DEFAULT_MODEL_ID,
+  /** VOID ships no default model and no default provider, so neither key is
+   * present until a provider is configured or a preference is patched. */
+  private preferences: Record<string, string | undefined> = {
     defaultAgentPreset: "default",
     locale: "cs",
     appearance: "system",
@@ -336,21 +340,26 @@ export class Workbench {
       )
         ? preferences.defaultAgentPreset
         : "default";
-      const legacyDefaultModel = [
-        "openai-fast",
-        "muse-spark-1.3-contributor-free",
-        "z-ai/glm-5.3-free",
-      ].includes(preferences.defaultModel ?? "");
+      const retiredModel = RETIRED_MODEL_IDS.includes(
+        preferences.defaultModel ?? "",
+      );
       this.preferences = {
         ...this.preferences,
         ...preferences,
         defaultAgentPreset,
-        ...(legacyDefaultModel ? { defaultModel: DEFAULT_MODEL_ID } : {}),
       };
-      if (
-        legacyDefaultModel ||
-        preferences.defaultAgentPreset !== defaultAgentPreset
-      )
+      if (retiredModel) {
+        // The retired id leaves the preference instead of being rewritten to a
+        // vendor's model. A workspace with a validated catalog re-picks from it;
+        // one without has no model until a provider is configured.
+        const replacement = saved.catalog?.find(
+          (model) => !RETIRED_MODEL_IDS.includes(model.id),
+        )?.id;
+        if (replacement) this.preferences.defaultModel = replacement;
+        else delete this.preferences.defaultModel;
+        migrated = true;
+      }
+      if (preferences.defaultAgentPreset !== defaultAgentPreset)
         migrated = true;
       this.requests = saved.requests ?? {};
       this.approvalHistory = (saved.approvalHistory ?? []).map((value) => {
@@ -465,10 +474,12 @@ export class Workbench {
       catalog: this.catalog,
       preferences: this.preferences,
     };
+    // The preference the operator already made is honoured when this provider
+    // serves it; otherwise the first model of the validated catalog is used.
+    // No vendor's model is inserted on the operator's behalf.
     const preferred =
-      [this.preferences.defaultModel, DEFAULT_MODEL_ID].find((id) =>
-        models.some((model) => model.id === id),
-      ) ?? models[0]!.id;
+      models.find((model) => model.id === this.preferences.defaultModel)?.id ??
+      models[0]!.id;
     this.provider = provider;
     this.config = config;
     this.profiles = { ...this.profiles, [config.baseUrl]: config };
@@ -509,10 +520,13 @@ export class Workbench {
       kind: this.config?.kind,
       profiles: Object.keys(this.profiles),
       presets: PROVIDER_PRESETS,
-      providerId:
-        PROVIDER_PRESETS.find((p) => p.baseUrl === this.config?.baseUrl)?.id ??
-        DEFAULT_PROVIDER_ID,
-      defaultModel: this.preferences.defaultModel,
+      // A workspace with nothing configured has no provider, and says so
+      // instead of naming one vendor.
+      providerId: this.config
+        ? (PROVIDER_PRESETS.find((p) => p.baseUrl === this.config?.baseUrl)?.id ??
+          "custom")
+        : null,
+      defaultModel: this.preferences.defaultModel ?? null,
       upstreamConfigured: true,
       status: derived.status,
       detail: derived.detail,
@@ -662,33 +676,41 @@ export class Workbench {
   }
   async start(
     prompt: string,
-    model = this.preferences.defaultModel ?? DEFAULT_MODEL_ID,
+    model?: string,
     key?: string,
     project?: string,
     agent?: string,
     background = false,
   ): Promise<SessionView> {
     return this.locked(async () => {
-      const prior = this.request(key, [
-        "start",
-        prompt,
-        model,
-        project,
-        agent,
-        background,
-      ]);
+      const selected = model ?? this.preferences.defaultModel;
+      const prior = selected
+        ? this.request(key, [
+            "start",
+            prompt,
+            selected,
+            project,
+            agent,
+            background,
+          ])
+        : undefined;
       if (prior) return this.get(prior)!;
       await this.providerState();
+      // There is no default model to fall back on. A provider configured from
+      // the environment above may have set one; otherwise the operator picks.
+      const selectedModel = selected ?? this.preferences.defaultModel;
+      if (!selectedModel)
+        throw new Error("Select a model from the validated catalog.");
       const result = await this.startSession(
         prompt,
-        model,
+        selectedModel,
         project,
         agent,
         background,
       );
       this.remember(
         key,
-        ["start", prompt, model, project, agent, background],
+        ["start", prompt, selectedModel, project, agent, background],
         result.id,
       );
       return result;

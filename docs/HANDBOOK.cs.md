@@ -192,10 +192,11 @@ pracovní prostor, v prohlížeči.
 
 ## 6. Připojení poskytovatele modelu
 
-**Nový pracovní prostor má default NVIDIA NIM s modelem `z-ai/glm-5.3-flash`**
-(`GLM 5.3 Flash`), na `https://integrate.api.nvidia.com/v1`. Existující konverzace
-si ponechají poskytovatele a model, se kterým vznikly; změna defaultu nikdy
-nepřepíše historii.
+**VOID nemá žádný výchozí poskytovatele ani výchozí model.** Nový pracovní prostor
+nemá ani jedno, dokud nějaký nepřipojíš. Nastavení vypisuje poskytovatele na
+výběr a první konverzace se zeptá, který model použít, z katalogu, který vrátí
+připojený poskytovatel. Existující konverzace si ponechají poskytovatele a
+model, se kterým vznikly; připojení jiného poskytovatele nikdy nepřepíše historii.
 
 Přihlášení udávají dva způsoby a jsou záměrně různé.
 
@@ -206,9 +207,10 @@ export NVIDIA_API_KEY=...
 void tui
 ```
 
-Toto je jediný ambientní přihlašovací údaj, který výchozí cesta čte. TUI to
-říká přímo: `Set NVIDIA_API_KEY in the host environment, then reopen VOID. No key
-is accepted in chat.`
+Toto je jediný ambientní přihlašovací údaj, který VOID čte, a je to volba, kterou
+udělal sis ty, ne default, který udělal VOID. TUI to říká přímo: `Set
+NVIDIA_API_KEY in the host environment, then reopen VOID. No key is accepted in
+chat.`
 
 **Uložený, pro operátora.** V GUI otevři **Nastavení**, pak **Poskytovatel
 modelu**. Vyber preset, vlož klíč do heslového pole a stiskni **Připojit a
@@ -222,12 +224,13 @@ Když se nerozřeší žádné přihlášení, odznak stavu říká **Vyžaduje 
 nic nevyšle. To je záměr: VOID nepřepíná na jiného poskytovatele, protože tichý
 přepínaje poskytovatele je přesně ta chyba, které operátor nevidí.
 
-Presety dostupné v GUI: NVIDIA NIM, OpenCode Zen, Pollinations (zdarma, bez
-klíče), TokenRouter, OpenRouter, Anthropic, Google Gemini, Groq, DeepSeek a
-Vercel AI Gateway, plus vlastní OpenAI-kompatibilní endpoint. TUI vypisuje ještě
-dva, Ollama a LM Studio, protože jsou lokální a GUI je vyřazuje. Stav poskytovatele
-je jeden z: `Připraven`, `Vyžaduje nastavení`, `Limit poskytovatele` (s nejčasnějším
-zkušením s retry), `Nedostupný`.
+Presety dostupné v GUI: NVIDIA NIM (`https://integrate.api.nvidia.com/v1`),
+OpenCode Zen, Pollinations (zdarma, bez klíče), TokenRouter, OpenRouter,
+Anthropic, Google Gemini, Groq, DeepSeek a Vercel AI Gateway, plus vlastní
+OpenAI-kompatibilní endpoint. Jsou to volby na výběr a připojí ten, koho vyberete.
+TUI vypisuje ještě dva, Ollama a LM Studio, protože jsou lokální a GUI je vyřazuje.
+Stav poskytovatele je jeden z: `Připraven`, `Vyžaduje nastavení`, `Limit
+poskytovatele` (s nejčasnějším zkušením s retry), `Nedostupný`.
 
 Cena a kvóty poskytovatele se nikdy neodhadují. Tam, kde provider nehlásil číslo,
 VOID vypíše `unknown`, nikdy `$0.00`.

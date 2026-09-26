@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { provider, providerState } from "./provider.mjs";
-import { DEFAULT_MODEL_ID, NVIDIA_URL, TOKENROUTER_URL } from "../packages/workbench/src/provider-defaults.ts";
+import { NVIDIA_URL, TOKENROUTER_URL } from "../packages/workbench/src/provider-defaults.ts";
 
 function fixture(env = {}, saved) {
   const values = new Map(saved ? [["provider", saved]] : []), requests = [];
@@ -14,13 +14,13 @@ function fixture(env = {}, saved) {
     oidc: async () => "fixture-oidc",
     fetch: async (url, options) => {
       requests.push({ url: String(url), options });
-      return Response.json({ data: [{ id: DEFAULT_MODEL_ID }] });
+      return Response.json({ data: [{ id: "fixture-model" }] });
     },
   };
   return { dependencies, requests, values };
 }
 
-test("cloud defaults use NVIDIA without falling back to legacy credentials", async () => {
+test("cloud uses the NVIDIA key in the environment and never names a default model", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia", TOKENROUTER_API_KEY: "fixture-legacy" });
   const state = await providerState(f.dependencies);
   assert.equal(state.status, "ready");
@@ -28,7 +28,8 @@ test("cloud defaults use NVIDIA without falling back to legacy credentials", asy
   assert.equal(state.setupRequired, false);
   assert.equal(state.providerId, "nvidia");
   assert.equal(state.baseUrl, NVIDIA_URL);
-  assert.equal(state.defaultModel, DEFAULT_MODEL_ID);
+  // The deployment names no model of its own until the operator picks one.
+  assert.equal(state.defaultModel, null);
   assert.equal(f.requests[0].url, `${NVIDIA_URL}/models`);
   assert.equal(f.requests[0].options.headers.authorization, "Bearer fixture-nvidia");
   assert.doesNotMatch(JSON.stringify(state), /fixture-nvidia|fixture-legacy/);
@@ -43,6 +44,23 @@ test("missing NVIDIA credentials expose setup and make no provider request", asy
   assert.equal(state.retryAt, null);
   assert.deepEqual(f.requests, []);
   await assert.rejects(provider(undefined, f.dependencies), /NVIDIA/);
+});
+
+test("a deployment with nothing saved has no provider id and no model id", async () => {
+  const f = fixture({});
+  const state = await providerState(f.dependencies);
+  assert.equal(state.status, "setup-required");
+  assert.equal(state.connected, false);
+  assert.equal(state.providerId, null);
+  assert.equal(state.baseUrl, null);
+  assert.equal(state.defaultModel, null);
+  assert.deepEqual(f.requests, []);
+  // The presets are still offered, because a choice is not a default.
+  assert.ok(state.presets.length >= 10);
+  assert.equal(
+    state.presets.some((preset) => preset.id === "nvidia"),
+    true,
+  );
 });
 
 test("legacy snapshots retain TokenRouter while new snapshots select NVIDIA", async () => {
@@ -99,7 +117,7 @@ test("storage and malformed profile errors do not expose secret error payloads",
 test("runtime rate limits survive a successful catalog probe and remain provider scoped", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia" });
   const { rememberProviderFailure } = await import("./provider.mjs");
-  await rememberProviderFailure({ mode: "nvidia" }, { status: 429, retryAfter: 3 }, undefined, f.dependencies);
+  await rememberProviderFailure(undefined, { status: 429, retryAfter: 3 }, undefined, f.dependencies);
   const limited = await providerState(f.dependencies);
   assert.equal(limited.status, "rate-limited");
   assert.equal(limited.connected, true);
@@ -111,7 +129,7 @@ test("runtime rate limits survive a successful catalog probe and remain provider
 test("non-rate-limit provider failures never advertise a retry clock", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia" });
   const { rememberProviderFailure } = await import("./provider.mjs");
-  await rememberProviderFailure({ mode: "nvidia" }, { status: 503, retryAfter: 10 }, undefined, f.dependencies);
+  await rememberProviderFailure(undefined, { status: 503, retryAfter: 10 }, undefined, f.dependencies);
   const state = await providerState(f.dependencies);
   assert.equal(state.status, "unavailable");
   assert.equal(state.retryAt, null);

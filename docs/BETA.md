@@ -90,14 +90,15 @@ never share the signing or encryption keys. Enter the access token in the web
 connection form. Authentication uses Secure, HttpOnly, SameSiteStrict cookies.
 This beta is a single-operator workspace, not a multiuser RBAC product.
 
-New conversations default to NVIDIA NIM / GLM 5.3 Flash
-(`z-ai/glm-5.3-flash`). Existing conversations retain their saved provider and
-model. The NVIDIA hosted API may expose an account-scoped trial/free quota; this
-is not a promise of unlimited free usage. Add `NVIDIA_API_KEY` through Provider
-settings or the local runtime environment. A model catalog can be available
-before the account is authorized to generate. Custom keys and tool-server
-credentials are encrypted before database storage. Prompts and tool results are
-sent to the selected provider.
+VOID has no default provider and no default model. Add `NVIDIA_API_KEY` through
+Provider settings or the local runtime environment, or connect another provider
+from the preset list, and the first conversation asks which model to use from
+the catalog that provider returns. Existing conversations retain their saved
+provider and model. The NVIDIA hosted API may expose an account-scoped
+trial/free quota; this is not a promise of unlimited free usage.
+A model catalog can be available before the account is authorized to generate.
+Custom keys and tool-server credentials are encrypted before database storage.
+Prompts and tool results are sent to the selected provider.
 
 Connect an HTTPS MCP server in Tool server and policy. It is the system the
 agent operates on, not an external VOID runtime. Without tools, sessions support

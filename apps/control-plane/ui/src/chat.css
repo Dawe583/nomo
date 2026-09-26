@@ -119,7 +119,7 @@
   min-height: 44px;
   padding: 0 16px;
   border-radius: 22px;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--text) 18%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 18%, transparent);
   font-size: 13px;
 }
 
@@ -150,7 +150,7 @@
   border-left: 3px solid var(--line);
   font-size: 13px;
   line-height: 1.4;
-  color: var(--text);
+  color: var(--ink);
 }
 .composer-notices > .permission-banner[data-mode="normal"] {
   border-left-color: var(--action);

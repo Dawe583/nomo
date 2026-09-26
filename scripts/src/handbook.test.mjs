@@ -5,8 +5,6 @@ import { dirname, join, relative } from "node:path";
 
 import { COMMANDS, parseInvocation } from "../../packages/cli/src/argv.ts";
 import {
-  DEFAULT_MODEL_ID,
-  DEFAULT_PROVIDER_ID,
   NVIDIA_URL,
   PROVIDER_PRESETS,
 } from "../../packages/workbench/src/provider-defaults.ts";
@@ -221,29 +219,41 @@ test("every markdown link to a file resolves", () => {
   }
 });
 
-test("the default provider and model the handbook names are the ones the code declares", () => {
+test("the handbook says there is no default provider, and means it", () => {
   // README.md shipped "TokenRouter / GLM 5.3 Free" here for months after the
-  // default changed. A handbook repeating that would be the same defect, so the
-  // values are read from the code rather than trusted.
-  assert.ok(
-    en.includes(DEFAULT_MODEL_ID),
-    `the handbook never names the default model ${DEFAULT_MODEL_ID}`,
+  // default changed. A handbook repeating a default that no longer exists
+  // would be the same defect again, so the gate asserts the opposite of what
+  // it used to: that neither edition promises a reader a default at all.
+  assert.match(
+    en,
+    /no default provider and no default model/i,
+    "the English edition must say what happens on first use",
   );
-  assert.ok(
-    en.includes(DEFAULT_PROVIDER_ID),
-    `the handbook never names the default provider ${DEFAULT_PROVIDER_ID}`,
+  assert.match(
+    cs,
+    /nemá žádný výchozí poskytovatele ani výchozí model/i,
+    "the Czech edition must say the same in Czech",
   );
+  assert.doesNotMatch(
+    en,
+    /defaults to (NVIDIA NIM|TokenRouter|OpenCode Zen|OpenRouter)/i,
+    "the English edition must not promise a default provider",
+  );
+  assert.doesNotMatch(
+    cs,
+    /má default (NVIDIA NIM|TokenRouter)/i,
+    "the Czech edition must not promise a default provider",
+  );
+  // A preset is a choice, not a default, so naming the NVIDIA endpoint is
+  // still correct and still required: it is the one endpoint both editions
+  // document as a preset.
   assert.ok(
     en.includes(NVIDIA_URL),
-    "the handbook must state the NVIDIA endpoint the default points at",
-  );
-  assert.ok(
-    cs.includes(DEFAULT_MODEL_ID),
-    `the Czech edition never names the default model ${DEFAULT_MODEL_ID}`,
+    "the handbook must state the NVIDIA endpoint a preset points at",
   );
   assert.ok(
     cs.includes(NVIDIA_URL),
-    "the Czech edition must state the NVIDIA endpoint",
+    "the Czech edition must state the same preset endpoint",
   );
   // The one thing a cost display must never do is present an unmeasured value as
   // a real one. The handbook's rule is that unknown is spelled unknown.

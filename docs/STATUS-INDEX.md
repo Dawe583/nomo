@@ -151,6 +151,7 @@ reader who arrives at the audit first does not rebuild finished work.
 | 35 | `ad16679` | the `void recovery migrate` path, every refusal and the structural reason tool execution refuses it are documented |
 | 41 | `68dfdbb` | one operational certification run recorded in `docs/UPGRADE-CHECKPOINT.md`, with what it did not cover |
 | 49 | `ba2e042` | the iOS cache policy, Keychain-only credential storage and a removal path that leaves no credential |
+| 16 | the scope answer in `docs/DECISIONS.md` | no provider and no model is a hardcoded default any more; the product asks on first use, the retry guard identifies a free model explicitly, and both handbooks, the README and the beta document say so |
 
 Two rows are partly closed and the remainder is named rather than implied. Row 23
 has its dependency, time and checkpoint selectors wired, with cross-host fencing

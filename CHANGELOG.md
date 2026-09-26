@@ -4,6 +4,23 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- VOID no longer ships a default provider or a default model. `providerId` and
+  `defaultModel` are `null` in a workspace with nothing configured, the provider
+  panel says no provider is connected instead of naming a vendor, and the first
+  conversation asks which model to use from the catalog the connected provider
+  returns. This is a behaviour change: a workspace that relied on the old
+  `nvidia` / `z-ai/glm-5.3-flash` default now has to connect a provider and
+  choose a model, or set `NVIDIA_API_KEY` and pick from NVIDIA's own catalog. The
+  presets are untouched, because offering a choice is not the same as choosing
+  for the operator, and the three endpoint constants stay exported. A retired
+  model id left in an old workspace is re-picked from that workspace's own
+  validated catalog, or dropped when there is none. The retry guard that keeps a
+  paid model from being retried no longer identifies the free model by a global
+  constant: each free endpoint names the model it serves, so a paid model, and
+  any model the operator typed that is in no table, is still dispatched once and
+  never retried. The public demo has no operator to ask, so it names its own
+  model in one place and reports it on `/api/demo/status`; that is the demo
+  choosing a configuration, not the product having a default.
 - Companion pairing now requires a host-minted invitation, and this is a
   behaviour change for anyone pairing a device. `POST
   /api/companion/invitations` mints one; the invitation expires after 120
@@ -30,8 +47,8 @@ All notable user-facing changes since the first repository commit.
   reports and the debugger. Removing this device now revokes on the executor
   first and deletes the Keychain credential second, and it says which happened:
   removed, removed locally only because the executor was unreachable, or
-  failed. The policy is written down in `docs/IOS-CACHE-AND-REMOVAL-POLICY.md`
-  and shown in Settings in both languages.
+  failed. The policy is written down in the operator documentation and shown in
+  Settings in both languages.
 - Evidence: the managed PostgreSQL adapter and the Git commit lifecycle are
   now published capability profiles, so the release gate can no longer ship
   either of them unnamed. `void recovery conformance --adapter
@@ -43,9 +60,9 @@ All notable user-facing changes since the first repository commit.
   worktree and index actions, which still reconcile to unknown because state
   equality is ABA-unsafe.
 
-- Operator guide: there is now one entry point for using VOID.
-  `docs/HANDBOOK.md`, with a Czech edition beside it, was written from the
-  product rather than from the other documents: every command, TUI tab, slash
+- Operator guide: there is now one entry point for using VOID. A new
+  handbook, with a Czech edition beside it, was written from the product
+  rather than from the other documents: every command, TUI tab, slash
   command, GUI route, composer command, policy key and MCP tool was read out of
   the source first. It leads with what VOID does not do, because a guide that
   overstates the product is worse than no guide. It is a gate rather than
@@ -85,9 +102,9 @@ All notable user-facing changes since the first repository commit.
   (`scripts/src/design-token.test.mjs`), and a package that claims to be
   publishable without a way to produce its files now fails
   (`scripts/src/licence-line.test.mjs`).
-- CI: the pipeline runs its tests before the build. The build had sat first for
+- CI: the pipeline runs its checks before the build. The build had sat first for
   long enough that a build regression made seventeen consecutive runs report
-  failure while executing zero tests and zero end-to-end scripts, so a red
+  failure while executing zero unit checks and zero end-to-end scripts, so a red
   pipeline said nothing about whether the product worked. Each step now carries
   its own explicit time budget rather than sharing one deadline, which is what
   let a killed `git.managed` conformance run once look green.

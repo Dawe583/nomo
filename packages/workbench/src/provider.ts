@@ -1,5 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
-import { DEFAULT_MODEL_ID, DEFAULT_MODEL_NAME } from './provider-defaults.ts';
+import { FREE_MODEL_BY_ORIGIN } from './provider-defaults.ts';
 export class ProviderRequestError extends Error {
   readonly status: number;
   readonly code: string | undefined;
@@ -34,7 +34,7 @@ export class CompatibleProvider {
   async models(): Promise<readonly Model[]> {
     const body = await this.json('models');
     if (!Array.isArray(body.data)) throw new Error('Provider returned an invalid model catalog.');
-    return body.data.filter((model: unknown): model is { id: string; name?: string; display_name?: string } => typeof model === 'object' && model !== null && 'id' in model && typeof model.id === 'string' && (!('type' in model) || model.type === 'language' || (this.config.kind === 'anthropic' && model.type === 'model'))).map((model: { id: string; name?: string; display_name?: string }) => ({ id: model.id, name: model.id === DEFAULT_MODEL_ID ? DEFAULT_MODEL_NAME : model.display_name ?? (typeof model.name === "string" ? model.name : model.id) }));
+    return body.data.filter((model: unknown): model is { id: string; name?: string; display_name?: string } => typeof model === 'object' && model !== null && 'id' in model && typeof model.id === 'string' && (!('type' in model) || model.type === 'language' || (this.config.kind === 'anthropic' && model.type === 'model'))).map((model: { id: string; name?: string; display_name?: string }) => ({ id: model.id, name: model.display_name ?? (typeof model.name === "string" ? model.name : model.id) }));
   }
   async complete(model: string, messages: readonly ModelMessage[], tools: readonly unknown[], signal: AbortSignal, onDelta?: (text: string) => void | Promise<void>): Promise<ModelReply> {
     if (this.config.kind === 'anthropic') return this.anthropic(model, messages, tools, signal);
@@ -44,9 +44,11 @@ export class CompatibleProvider {
     for (let attempt = 0; ; attempt++) {
       try { response = await this.response('chat/completions', body, signal); break; }
       catch (error) {
-        // Only retry explicit transient rejection of the free endpoint, before any
-        // reply or tool dispatch. Never substitute a paid model or replay a stream.
-        if ((this.base.origin !== 'https://api.tokenrouter.com' && this.base.origin !== 'https://text.pollinations.ai' && this.base.origin !== 'https://tokenharbor.ai') || model !== DEFAULT_MODEL_ID ||
+        // Only retry explicit transient rejection of the free model this origin
+        // serves, before any reply or tool dispatch. Nothing about a model the
+        // operator typed makes it free, so an unknown model is never retried.
+        // Never substitute a paid model or replay a stream.
+        if (FREE_MODEL_BY_ORIGIN[this.base.origin] !== model ||
           attempt >= 2 || signal.aborted || !(error instanceof ProviderRequestError) ||
           ![429, 502, 503, 504].includes(error.status) || (error.retryAfter ?? 0) > 5) throw error;
         await delay((error.retryAfter ?? attempt + 1) * 1000, undefined, { signal });

@@ -52,11 +52,14 @@ test('local import uses fixed endpoint, hides key, selects valid model and survi
   assert.ok(!(await readFile(join(f.env.VOID_DATA_DIR, 'workspace.enc'))).includes(Buffer.from(key)));
 });
 
-test('Prime TokenRouter import keeps the configured default model when available', async t => {
+test('Prime TokenRouter import takes the first validated catalog model when none is configured', async t => {
   const f = await fixture(t, async () => Response.json({ data: [{ id: 'other' }, { id: 'z-ai/glm-5.3-flash' }, { id: 'muse-spark-1.3-contributor-free' }] }));
   await f.save('.prime/agent/models.json', { providers: { tokenrouter: { baseUrl: 'https://api.tokenrouter.com/v1', apiKey: key } } });
   const result = await importDesktopProvider('prime:tokenrouter', f.env, f.app);
-  assert.equal(result.defaultModel, 'z-ai/glm-5.3-flash');
+  // There is no product default to keep any more, so the import takes the
+  // head of the validated catalog. What matters to an operator is that it
+  // takes a model the provider actually serves, deterministically.
+  assert.equal(result.defaultModel, 'other');
   assert.equal(result.providerId, 'tokenrouter');
 });
 

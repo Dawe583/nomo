@@ -14,8 +14,6 @@ import {
   integrationCatalogs,
 } from "./integrations.mjs";
 import {
-  DEFAULT_MODEL_ID,
-  DEFAULT_PROVIDER_ID,
   PROVIDER_PRESETS,
 } from "../packages/workbench/src/provider-defaults.ts";
 import { normalizeProviderConfig } from "../packages/workbench/src/provider.ts";
@@ -142,8 +140,9 @@ mountPrimeRoutes(app);
 const queryOf = (req) =>
   new URLSearchParams(req.originalUrl.split("?")[1] ?? "");
 const preferences = async () => ({
-  defaultModel: DEFAULT_MODEL_ID,
-  defaultProvider: DEFAULT_PROVIDER_ID,
+  // No default model and no default provider: the deployment asks, and a
+  // conversation without a chosen model is refused rather than answered by a
+  // vendor the operator never picked.
   defaultAgent: "cloud",
   locale: "cs",
   appearance: "system",
@@ -920,7 +919,9 @@ app.post("/api/sessions", async (req, res) => {
       connected,
       mcpSession: listed.sessionId,
       upstream,
-      provider: (await read("provider")) ?? { mode: DEFAULT_PROVIDER_ID },
+      // No saved provider means no provider. The session records the absence and
+      // the provider layer resolves the operator's configuration, if any.
+      provider: await read("provider"),
       generation: 1,
       turn: 0,
       queue: [],

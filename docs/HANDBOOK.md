@@ -196,10 +196,11 @@ It opens the same workspace, in a browser.
 
 ## 6. Connect a model provider
 
-**A new workspace defaults to NVIDIA NIM with the model `z-ai/glm-5.3-flash`**
-(`GLM 5.3 Flash`), at `https://integrate.api.nvidia.com/v1`. Existing
-conversations keep the provider and model they were created with; switching the
-default never rewrites history.
+**VOID has no default provider and no default model.** A new workspace has
+neither until you connect one. Settings lists the providers on offer, and the
+first conversation asks which model to use from the catalog the connected
+provider returns. Existing conversations keep the provider and model they were
+created with; connecting a different provider never rewrites history.
 
 There are two ways to supply a credential, and they are different on purpose.
 
@@ -211,9 +212,9 @@ export NVIDIA_API_KEY=...
 void tui
 ```
 
-This is the only ambient credential the default path reads. The TUI says so
-directly: `Set NVIDIA_API_KEY in the host environment, then reopen VOID. No key
-is accepted in chat.`
+This is the only ambient credential VOID reads, and it is a choice you made, not
+a default it made for you. The TUI says so directly: `Set NVIDIA_API_KEY in the
+host environment, then reopen VOID. No key is accepted in chat.`
 
 **Stored, for an operator.** In the GUI, open **Settings**, then **Model
 provider**. Pick a preset, paste the key into the password field, press **Connect
@@ -228,12 +229,13 @@ nothing dispatches. This is deliberate: VOID does not fall back to another
 provider, because a silent provider switch is exactly the failure an operator
 cannot see.
 
-The presets available in the GUI are NVIDIA NIM, OpenCode Zen, Pollinations (free,
-no key), TokenRouter, OpenRouter, Anthropic, Google Gemini, Groq, DeepSeek and
-the Vercel AI Gateway, plus a custom OpenAI-compatible endpoint. The TUI lists two
-more, Ollama and LM Studio, because those are local and the GUI filters them out.
-Provider status is one of: `Ready`, `Setup required`, `Rate limited` (with the
-earliest retry time), `Unavailable`.
+The presets available in the GUI are NVIDIA NIM (`https://integrate.api.nvidia.com/v1`),
+OpenCode Zen, Pollinations (free, no key), TokenRouter, OpenRouter, Anthropic,
+Google Gemini, Groq, DeepSeek and the Vercel AI Gateway, plus a custom
+OpenAI-compatible endpoint. They are the choices on offer, and choosing one is
+what connects it. The TUI lists two more, Ollama and LM Studio, because those are
+local and the GUI filters them out. Provider status is one of: `Ready`, `Setup
+required`, `Rate limited` (with the earliest retry time), `Unavailable`.
 
 Provider cost and quota figures are never estimated. Where no provider reported a
 number, VOID prints `unknown`, never `$0.00`.

@@ -2071,8 +2071,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.provider = await this.workbench.providerState();
         this.detail = this.providerLines();
         this.notice =
-          this.provider.providerId === "nvidia"
-            ? "Set NVIDIA_API_KEY in the host environment, then reopen VOID. No key is accepted in chat."
+          !this.provider.providerId || this.provider.providerId === "nvidia"
+            ? "No provider is configured, so set NVIDIA_API_KEY in the host environment for the NVIDIA preset, or use /sources and /connect for an explicit local import. No key is accepted in chat."
             : "Current provider is unchanged. /sources lists explicit local imports; /connect source-ID selects one.";
         this.scroll = 0;
         return;

@@ -8,8 +8,9 @@ import {
   demoIdentity,
   reserveDemoBudget,
   demoFailureMessage,
+  DEMO_MODEL,
 } from "./demo.mjs";
-import { DEFAULT_MODEL_ID, NVIDIA_URL } from "../packages/workbench/src/provider-defaults.ts";
+import { NVIDIA_URL } from "../packages/workbench/src/provider-defaults.ts";
 import { ProviderRequestError } from "../packages/workbench/src/provider.ts";
 test("demo failures distinguish provider limits and authentication without leaking payloads", () => {
   assert.match(
@@ -159,7 +160,11 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
     200,
   );
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].model, DEFAULT_MODEL_ID);
+  // The demo has no operator to ask, so it names one model itself and reports
+  // that same model on /status. Nothing here is a product default.
+  assert.ok(DEMO_MODEL.length > 0);
+  assert.equal(calls[0].model, DEMO_MODEL);
+  assert.equal((await (await request("/status")).json()).model, DEMO_MODEL);
   assert.ok(
     calls[0].tools.every((tool) =>
       tool.function.name.startsWith("void_workspace_"),

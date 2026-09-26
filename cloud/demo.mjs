@@ -18,7 +18,6 @@ import {
   ProviderRequestError,
 } from "../packages/workbench/src/provider.ts";
 import {
-  DEFAULT_MODEL_ID,
   NVIDIA_URL,
 } from "../packages/workbench/src/provider-defaults.ts";
 import {
@@ -27,6 +26,11 @@ import {
   workspaceTools,
   previewWorkspaceUndo,
 } from "../packages/workbench/src/workspace.ts";
+
+/** The public demo has no operator to ask, so it chooses its own configuration
+ * and says so in one place. This is the demo's model, not a product default:
+ * VOID ships none, and `/status` reports this value so the UI can show it. */
+export const DEMO_MODEL = "z-ai/glm-5.3-flash";
 
 export function demoFailureMessage(error) {
   const preserved =
@@ -152,7 +156,7 @@ export function demoRouter(dependencies = {}) {
   router.get("/status", (req, res) =>
     res.json({
       available: true,
-      model: DEFAULT_MODEL_ID,
+      model: DEMO_MODEL,
       provider: "tokenrouter",
     }),
   );
@@ -271,7 +275,7 @@ export function demoRouter(dependencies = {}) {
       const deadline = AbortSignal.timeout(50000);
       for (let turn = 0; turn < 3; turn++) {
         const reply = await client.complete(
-          DEFAULT_MODEL_ID,
+          DEMO_MODEL,
           state.messages,
           tools,
           deadline,

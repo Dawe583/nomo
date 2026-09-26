@@ -1,11 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
-import {
-  DEFAULT_MODEL_ID,
-  DEFAULT_PROVIDER_ID,
-  NVIDIA_URL,
-} from "./provider-defaults.ts";
+import { NVIDIA_URL } from "./provider-defaults.ts";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,12 +42,10 @@ test("provider rejects direct OpenAI hosts and never echoes upstream error bodie
   );
 });
 
-test("migrates legacy generic provider state to compatible and restores the neutral default", async (t) => {
+test("migrates legacy generic provider state to compatible and retires the legacy default model", async () => {
   const dir = await mkdtemp(join(tmpdir(), "void-provider-migration-"));
-  t.after(async () => {
-    await rm(dir, { recursive: true, force: true });
-  });
-  new LocalStorage(dir).save({
+  const bare = await mkdtemp(join(tmpdir(), "void-provider-migration-bare-"));
+  const state = (catalog: Array<{ id: string; name: string }>) => ({
     preferences: { defaultModel: "muse-spark-1.3-contributor-free" },
     config: {
       baseUrl: "https://provider.test/v1",
@@ -65,28 +59,44 @@ test("migrates legacy generic provider state to compatible and restores the neut
         kind: "openai",
       },
     },
-    catalog: [{ id: DEFAULT_MODEL_ID, name: DEFAULT_MODEL_ID }],
+    catalog,
     connectors: [],
     documents: {},
     evidence: {},
     sessions: [],
   });
+  new LocalStorage(dir).save(
+    state([
+      { id: "z-ai/glm-5.3-free", name: "Retired model" },
+      { id: "catalog-model", name: "Catalog model" },
+    ]),
+  );
+  new LocalStorage(bare).save(state([]));
   const workbench = new Workbench({ VOID_DATA_DIR: dir });
   assert.equal((await workbench.providerState()).kind, "compatible");
-  assert.equal(
-    (await workbench.providerState()).defaultModel,
-    DEFAULT_MODEL_ID,
-  );
+  // A retired id is replaced from the validated catalog, never by a vendor model.
+  assert.equal((await workbench.providerState()).defaultModel, "catalog-model");
   workbench.close();
-  const saved = new LocalStorage(dir).read<{
+  const persisted = new LocalStorage(dir).read<{
     preferences: { defaultModel: string };
     config: { kind: string };
     profiles: Record<string, { kind: string }>;
   }>()!;
-  assert.equal(saved.preferences.defaultModel, DEFAULT_MODEL_ID);
-  assert.equal(saved.config.kind, "compatible");
-  assert.equal(saved.profiles["https://provider.test/v1"]?.kind, "compatible");
-  assert.doesNotMatch(JSON.stringify(saved), /"openai"/);
+  assert.equal(persisted.preferences.defaultModel, "catalog-model");
+  assert.equal(persisted.config.kind, "compatible");
+  assert.equal(persisted.profiles["https://provider.test/v1"]?.kind, "compatible");
+  assert.doesNotMatch(JSON.stringify(persisted), /"openai"/);
+  // Without a catalog there is no model to re-pick, so the preference is gone.
+  const empty = new Workbench({ VOID_DATA_DIR: bare });
+  assert.equal((await empty.providerState()).defaultModel, null);
+  empty.close();
+  assert.equal(
+    new LocalStorage(bare).read<{ preferences: Record<string, string> }>()!
+      .preferences.defaultModel,
+    undefined,
+  );
+  await rm(dir, { recursive: true, force: true });
+  await rm(bare, { recursive: true, force: true });
 });
 
 test("model tool calls cross a real VOID proxy and produce a ledger", async (t) => {
@@ -498,7 +508,7 @@ test("chat catalog excludes embedding, image and video models", async () => {
   );
 });
 
-test("NVIDIA is the default provider when its key is in the environment", async (t) => {
+test("NVIDIA is used when its key is in the environment, and its catalog picks the model", async (t) => {
   const home = await mkdtemp(join(tmpdir(), "void-nvidia-env-home-"));
   const dir = await mkdtemp(join(tmpdir(), "void-nvidia-env-data-"));
   const nvidiaKey = "nvapi-fixture-key";
@@ -509,7 +519,7 @@ test("NVIDIA is the default provider when its key is in the environment", async 
     seenAuth =
       (options?.headers as Record<string, string>)?.authorization ?? "";
     return Response.json({
-      data: [{ id: DEFAULT_MODEL_ID, name: "GLM 5.3 Flash" }],
+      data: [{ id: "nvidia-catalog-model", name: "NVIDIA catalog model" }],
     });
   };
   const workbench = new Workbench(
@@ -522,58 +532,38 @@ test("NVIDIA is the default provider when its key is in the environment", async 
     await rm(dir, { recursive: true, force: true });
   });
   const state = await workbench.providerState();
-  assert.equal(state.providerId, DEFAULT_PROVIDER_ID);
+  assert.equal(state.providerId, "nvidia");
   assert.equal(state.connected, true);
-  assert.equal(state.defaultModel, DEFAULT_MODEL_ID);
+  // The validated catalog chooses the model. No vendor model is injected.
+  assert.equal(state.defaultModel, "nvidia-catalog-model");
   assert.ok(seenUrl.startsWith(NVIDIA_URL), seenUrl);
   assert.equal(seenAuth, `Bearer ${nvidiaKey}`);
   assert.ok(!JSON.stringify(state).includes(nvidiaKey));
 });
 
-test("legacy OpenCode credentials do not override the NVIDIA default", async (t) => {
-  const home = await mkdtemp(join(tmpdir(), "void-legacy-provider-home-"));
-  const dir = await mkdtemp(join(tmpdir(), "void-legacy-provider-data-"));
-  let calls = 0;
-  const fetcher: typeof fetch = async () => {
-    calls++;
-    throw new Error("must not dispatch anything");
-  };
-  const workbench = new Workbench(
-    { HOME: home, VOID_DATA_DIR: dir, OPENCODE_ZEN_API_KEY: "legacy-key" },
-    fetcher,
-  );
-  t.after(async () => {
+test("an unconfigured workspace has no provider and no model, whatever credentials the host holds", async () => {
+  for (const env of [{ OPENCODE_ZEN_API_KEY: "legacy-key" }, {}]) {
+    const home = await mkdtemp(join(tmpdir(), "void-unconfigured-home-"));
+    const dir = await mkdtemp(join(tmpdir(), "void-unconfigured-data-"));
+    let calls = 0;
+    const fetcher: typeof fetch = async () => {
+      calls++;
+      throw new Error("must not dispatch anything");
+    };
+    const workbench = new Workbench(
+      { HOME: home, VOID_DATA_DIR: dir, ...env },
+      fetcher,
+    );
+    const state = await workbench.providerState();
     workbench.close();
+    assert.equal(state.connected, false);
+    assert.equal(state.providerId, null);
+    assert.equal(state.defaultModel, null);
+    assert.equal(state.setupRequired, true);
+    assert.equal(calls, 0);
     await rm(home, { recursive: true, force: true });
     await rm(dir, { recursive: true, force: true });
-  });
-  const state = await workbench.providerState();
-  assert.equal(state.providerId, DEFAULT_PROVIDER_ID);
-  assert.equal(state.connected, false);
-  assert.equal(state.setupRequired, true);
-  assert.equal(calls, 0);
-});
-
-test("without NVIDIA key the workbench exposes setup state and dispatches nothing", async (t) => {
-  const home = await mkdtemp(join(tmpdir(), "void-nvidia-empty-home-"));
-  const dir = await mkdtemp(join(tmpdir(), "void-nvidia-empty-data-"));
-  let calls = 0;
-  const fetcher: typeof fetch = async () => {
-    calls++;
-    throw new Error("must not dispatch anything");
-  };
-  const workbench = new Workbench({ HOME: home, VOID_DATA_DIR: dir }, fetcher);
-  t.after(async () => {
-    workbench.close();
-    await rm(home, { recursive: true, force: true });
-    await rm(dir, { recursive: true, force: true });
-  });
-  const state = await workbench.providerState();
-  assert.equal(state.connected, false);
-  assert.equal(state.providerId, DEFAULT_PROVIDER_ID);
-  assert.equal(state.defaultModel, DEFAULT_MODEL_ID);
-  assert.equal(state.setupRequired, true);
-  assert.equal(calls, 0);
+  }
 });
 
 test("providerState returns status detail retryAt per contract", async (t) => {

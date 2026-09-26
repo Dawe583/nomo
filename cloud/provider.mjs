@@ -3,8 +3,6 @@ import { createHash } from "node:crypto";
 import { CompatibleProvider, normalizeProviderConfig, ProviderRequestError } from "../packages/workbench/src/provider.ts";
 import { providerStateFromFailure } from "../packages/workbench/src/gui.ts";
 import {
-  DEFAULT_MODEL_ID,
-  DEFAULT_PROVIDER_ID,
   NVIDIA_URL,
   TOKENROUTER_URL,
   PROVIDER_PRESETS,
@@ -16,8 +14,10 @@ const dependencies = (overrides) => ({
   oidc: getVercelOidcToken, ...overrides,
 });
 
+// A workspace with nothing saved hashes as null, which keeps the absence out of
+// the provider-mode vocabulary instead of inventing a vendor to stand for it.
 const snapshotKey = snapshot => createHash("sha256")
-  .update(JSON.stringify(snapshot ?? { mode: DEFAULT_PROVIDER_ID })).digest("hex");
+  .update(JSON.stringify(snapshot ?? null)).digest("hex");
 
 export async function rememberProviderFailure(snapshot, failure, client, overrides) {
   const deps = dependencies(overrides);
@@ -57,10 +57,12 @@ export async function provider(snapshot, overrides) {
 export async function providerState(overrides) {
   const deps = dependencies(overrides);
   let credentials = Boolean(deps.env.NVIDIA_API_KEY);
+  // No provider and no model until one is configured. The presets are the
+  // choices on offer, never the one the deployment answered for the operator.
   const defaults = {
-    defaultModel: DEFAULT_MODEL_ID,
-    providerId: DEFAULT_PROVIDER_ID,
-    baseUrl: NVIDIA_URL,
+    defaultModel: null,
+    providerId: null,
+    baseUrl: null,
     presets: PROVIDER_PRESETS.filter((p) => !("local" in p)),
     keyStorage: "encrypted-cloud",
     profiles: [],

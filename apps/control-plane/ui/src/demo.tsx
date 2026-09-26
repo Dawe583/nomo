@@ -7,7 +7,8 @@ import { api, download, type Row } from "./api";
 import { BrandMark } from "./brand";
 import { Icon } from "./icons";
 import { Dialog, ErrorBox, MotionEnabled, useText, useApi } from "./ui";
-const DEFAULT_MODEL_NAME = "GLM 5.3 Flash";
+// The demo names its own model server-side. There is no product default to copy
+// into the composer label, so the label is read from the demo status.
 
 const RichText = lazy(() =>
   import("./chat").then((module) => ({ default: module.RichText })),
@@ -47,6 +48,7 @@ export function PublicDemo({
   const commandOpen =
     draft.startsWith("/") && !/\s/.test(draft) && !commandDismissed;
   const tools = useApi("/api/demo/tools", commandOpen);
+  const status = useApi("/api/demo/status");
   const commandItems = filterCommands(
     [
       {
@@ -465,7 +467,10 @@ export function PublicDemo({
                   />
                   <div className="demo-composer-tools">
                     <span>
-                      <b>{DEFAULT_MODEL_NAME}</b>
+                      <b>
+                        {status.data?.model ||
+                          t("Model neznámý", "Model unknown")}
+                      </b>
                       <small>NVIDIA NIM</small>
                     </span>
                     <m.button

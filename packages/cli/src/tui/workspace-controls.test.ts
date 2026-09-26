@@ -90,7 +90,10 @@ test("provider status and setup action never hide unavailable NVIDIA behind anot
   assert.match(ui.lines().join("\n"), /setup-required/);
   await ui.command("/connect");
   assert.match(ui.notice, /NVIDIA_API_KEY/);
-  assert.equal((await app.providerState()).providerId, "nvidia");
+  // No provider is configured, so there is no provider id to report. The
+  // decision to ship no default deletes this assertion's premise: a workspace
+  // that has chosen nothing says nothing rather than naming a vendor.
+  assert.equal((await app.providerState()).providerId, null);
   ui.provider = {
     ...ui.provider!,
     connected: true,
