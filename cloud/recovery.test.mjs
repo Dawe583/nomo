@@ -80,7 +80,7 @@ test(
       await assert.rejects(
         transaction(OPERATOR_OWNER, id, async (c) => {
           const quota = await read(OPERATOR_OWNER, `recovery-quota:${id}`, c);
-          await write(OPERATOR_OWNER, 
+          await write(OPERATOR_OWNER,
             `recovery-quota:${id}`,
             { ...quota, bytes: 64 * 1024 * 1024 },
             c,

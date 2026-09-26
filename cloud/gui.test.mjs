@@ -67,13 +67,13 @@ test(
       event(session, i % 2 ? "assistant" : "user", `message ${i}`);
     await write(OPERATOR_OWNER, `session:${session.id}`, session);
     await write(OPERATOR_OWNER, `workspace:${session.id}`, encrypt(createWorkspace()));
-    const first = await sessionPage(OPERATOR_OWNER, 
+    const first = await sessionPage(OPERATOR_OWNER,
       new URLSearchParams({ q: prefix, limit: "50" }),
     );
     assert.equal(first.total, 151);
     assert.equal(first.items.length, 50);
     assert.equal(first.items[0].events.length, 0);
-    const second = await sessionPage(OPERATOR_OWNER, 
+    const second = await sessionPage(OPERATOR_OWNER,
       new URLSearchParams({ q: prefix, limit: "50", cursor: first.nextCursor }),
     );
     assert.equal(second.items.length, 50);
@@ -239,14 +239,14 @@ test(
       "INSERT INTO void_cloud_ledger(owner,workspace,seq,entry) SELECT $1,$2,(e->>'seq')::integer,e FROM jsonb_array_elements($3::jsonb) e",
       [OPERATOR_OWNER, scaleWorkspace, JSON.stringify(signed)],
     );
-    const scalePage = await ledgerPage(OPERATOR_OWNER, 
+    const scalePage = await ledgerPage(OPERATOR_OWNER,
       scaleWorkspace,
       new URLSearchParams("limit=50"),
     );
     assert.equal(scalePage.total, 10000);
     assert.equal(scalePage.items.length, 50);
     assert.equal(scalePage.items[0].seq, 10000);
-    const scaleNext = await ledgerPage(OPERATOR_OWNER, 
+    const scaleNext = await ledgerPage(OPERATOR_OWNER,
       scaleWorkspace,
       new URLSearchParams({ limit: "50", cursor: scalePage.nextCursor }),
     );

@@ -78,7 +78,7 @@ test(
         await database().end();
       }
     });
-    await write(OPERATOR_OWNER, 
+    await write(OPERATOR_OWNER,
       keys[0],
       encrypt({
         client_id: "isolated-client",

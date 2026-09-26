@@ -402,7 +402,7 @@ app.patch("/api/sessions/:id/documents", async (req, res) => {
       error.status = 409;
       throw error;
     }
-    const changed = await mutateCloudDocument(req.owner, 
+    const changed = await mutateCloudDocument(req.owner,
       s,
       c,
       {
@@ -519,7 +519,7 @@ app.post("/api/sessions/:id/branches", async (req, res) => {
       const saved = await read(req.owner, `workspace:${parent.id}`, c),
         original = saved ? decrypt(saved) : createWorkspace();
       for (const [path, content] of Object.entries(original.files)) {
-        const changed = await mutateCloudDocument(req.owner, 
+        const changed = await mutateCloudDocument(req.owner,
           child,
           c,
           {
@@ -767,7 +767,7 @@ app.patch("/api/connectors/:id", async (req, res) => {
       error.status = 409;
       throw error;
     }
-    await write(req.owner, 
+    await write(req.owner,
       "connectors",
       current.map((item) =>
         item.id === previous.id
@@ -796,7 +796,7 @@ app.post("/api/connectors/:id/test", async (req, res) => {
 app.delete("/api/connectors/:id", async (req, res) => {
   await transaction(req.owner, "connectors", async (c) => {
     const items = (await read(req.owner, "connectors", c)) ?? [];
-    await write(req.owner, 
+    await write(req.owner,
       "connectors",
       items.filter((item) => item.id !== req.params.id),
       c,
@@ -865,7 +865,7 @@ async function applyManagedUndo(req, id, operationId) {
         "Undo refused because the document changed. Refresh its history.",
       );
     if (changed.state === state) return;
-    await append(req.owner, 
+    await append(req.owner,
       {
         workspace: s.workspace,
         at: new Date().toISOString(),
