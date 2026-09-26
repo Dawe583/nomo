@@ -9,6 +9,10 @@ Rules here are not style preferences. Each one is here because breaking it has
 cost this repository a deploy, a build, an hour of debugging, or would cost the
 product its claim.
 
+Sections 5 and 11 describe the pre-split tree and are marked where they do. Every
+other rule applies to the current tree, and `scripts/src/doc-truth.test.mjs`
+fails the build when a document names a file that is not there.
+
 ---
 
 ## 1. No em dash, no en dash. Anywhere.
@@ -139,7 +143,8 @@ Rules that follow, all of them load bearing:
   package that takes its clock, its store and its signer as arguments is easier
   to test and better designed anyway.
 
-A worked example, `packages/ledger/src/canonical.test.ts`:
+A worked example, the `canonicalJson` block in
+`packages/ledger/src/index.test.ts`:
 
 ```ts
 import test, { describe } from "node:test";
@@ -184,7 +189,7 @@ The convention already in use in this repository. Read
 - **Subject line:** imperative mood, sentence case, no full stop, no `feat:` or
   `fix:` prefix, under 72 characters. A colon mid-subject to name the subsystem
   is fine when it earns its place: `Fix the Vercel function build:
-  api/tsconfig.json could not emit`.
+api/tsconfig.json could not emit`.
 - **Blank line**, then the body.
 - **Body:** prose paragraphs wrapped at 80 columns, explaining why the change
   exists and what a reviewer needs in order to check it. It is not a changelog
@@ -220,6 +225,12 @@ all three triggers intact.
 ---
 
 ## 5. `api/` may import only npm packages and relative files inside `api/`
+
+> **Tree status, 2026-09-26.** The marketing site was split out of this
+> repository, so the `api/`, `artifacts/` and `lib/` directories named in this
+> section, and in `docs/CONTEXT.md`'s layout and `docs/DECISIONS.md` 6b, no longer
+> exist. The reasoning is kept because it is load bearing for any future
+> server-rendered function tree; the paths are history.
 
 Anything under `api/` may import **only** npm packages that resolve from the
 **repository root** `node_modules`, and relative files that live **inside**
@@ -348,7 +359,7 @@ command exits 0 in this environment and the output has been read.
 - An exit criterion is a shell command with an observable result, not a
   sentence. "The proxy forwards notifications" is not an exit criterion.
   `pnpm test` is. `curl -s localhost:8080/api/registry?view=stats | grep
-  '"entries":89'` is.
+'"entries":89'` is.
 - The command must assert the **thing that breaks**, not a proxy for it. A
   `tsc` exit code does not assert an emit layout, because the broken variant
   exits 0. Assert the layout.
@@ -405,8 +416,18 @@ command exits 0 in this environment and the output has been read.
 
 ## 11. If you touch the site or the control plane
 
-`artifacts/void/src/index.css` is the entire design system: tokens, both themes,
-every keyframe. Change colours there and nowhere else.
+> **Tree status, 2026-09-26.** The marketing site was split out of this
+> repository, so the `api/`, `artifacts/` and `lib/` directories named in this
+> section, and in `docs/CONTEXT.md`'s layout and `docs/DECISIONS.md` 6b, no longer
+> exist. The reasoning is kept because it is load bearing for any future
+> server-rendered function tree; the paths are history.
+>
+> Everything in this section still applies; only the paths moved. The design system is
+> now two files: `apps/control-plane/ui/src/styles.css` for the control plane and
+> the workbench, and `site/styles.css` for the site.
+
+Tokens, both themes and every keyframe live in those two files. Change colours
+there and nowhere else.
 
 - Never write a colour literal in a component. Every colour is a
   `var(--token)`. That is what makes the theme toggle work and it is the only
@@ -435,14 +456,14 @@ Before building a new view, read `sections/hold.tsx`, `sections/replay.tsx` and
 
 ## 12. Known discrepancies to fix, not to copy
 
-- `README.md:81` says Node.js 24, `package.json` `engines` says `22.x`, and the
-  installed runtime is 22.22.2. Pick one and correct the other two.
-- `replit.md:88` points the `lib/db` mitigation at a `storage.ts` that does not
-  exist. Correct the gotcha when WP-03 lands.
-- `lib/db/drizzle.config.ts:4` throws on a missing environment variable, which
-  breaks rule 6. It is contained only because `push` is not on the build path.
-- The comment in `api/tsconfig.json` says `pnpm run typecheck` passes
-  `--noEmit`. It passes `--outDir`.
+- Resolved 2026-09-26: `README.md`, `package.json` `engines` and the installed
+  runtime all say Node 24. The `22.x` disagreement this bullet recorded is closed.
+- Gone with the site split: `replit.md` and `lib/db` no longer exist, so the broken
+  `drizzle.config.ts` guard and the `storage.ts` pointer it described are no longer
+  reachable. `packages/ledger` owns its own pool and never imported
+  `@workspace/db`, so rule 6 was never violated in shipped code.
+- Gone with the site split: the `api/tsconfig.json` comment about `--noEmit`
+  against `--outDir`, and the layout assertion in `pnpm run typecheck` with it.
 - Introducing raw SQL DDL for the ledger gives this repository **two** migration
-  mechanisms. Write the second one into `replit.md` and `README.md` in the same
+  mechanisms. Write the second one into `packages/ledger/README.md` in the same
   commit, or the next agent will not know it exists.

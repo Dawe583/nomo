@@ -16,13 +16,15 @@ Na macOS lze spustit také `VOID.command` dvojklikem. Potřebuje dostupný Node.
 24+ a pnpm. Není to `tui:preview`: tento příkaz používá skutečný lokální Workbench,
 šifrované uložiště, skutečný model a skutečné dokumentové operace.
 
-Výchozí provider je OpenCode Zen. Klíč se čte pouze z proměnné
-`OPENCODE_ZEN_API_KEY` nebo z lokálního opencode auth souboru přes
-`/connect opencode:zen`; nikdy se nezadává do příkazové historie ani do
-repozitáře. `/sources` ukáže další dostupné zdroje. Model pro nové
-konverzace vybírá ověřený katalog; žádný tichý placený fallback.
-Pokud import není potřebný, lze použít uložený profil nebo proměnnou
-`TOKENROUTER_API_KEY` bez zadávání klíče do příkazové historie.
+Výchozí provider je NVIDIA NIM, model `z-ai/glm-5.3-flash`, endpoint
+`https://integrate.api.nvidia.com/v1`. Klíč se čte pouze z proměnné
+`NVIDIA_API_KEY`; nikdy se nezadává do příkazové historie ani do repozitáře.
+Bez klíče je stav `Setup required`. VOID nikdy tiše nepřepne na jiný
+providera a nikdy neodhadne cenu. `/sources` ukáže další dostupné zdroje:
+OpenCode Zen, TokenRouter, OpenRouter, Anthropic, Google, Groq, DeepSeek,
+Vercel AI Gateway, Ollama a LM Studio. Model pro nové konverzace vybírá
+ověřený katalog; žádný tichý placený fallback. existující konverzace si
+drží vlastní provider/model snapshot.
 
 ## První skutečný test
 
@@ -121,8 +123,11 @@ Externí nástroj je klasifikován registrem a vyhodnocen pravidly konektoru.
 Neznámý nástroj se odmítne. Výchozí policy povoluje R0 a ostatní známé třídy
 pozdrží na 300 sekund. Expirace není automatické schválení.
 
-TUI ukazuje argumenty čekajícího nástroje, třídu, workspace a termín expirace.
-`a` připraví schválení, `d` odmítnutí, `y` potvrdí. Lze uvést důvod:
+TUI ukazuje třídu, zbývající čas, nástroj, blast radius, číslo pravidla a
+odůvodnění. `/approvals` vypisuje odpočet, živý feed absolutní čas expirace.
+Argumenty ani workspace v rozhodovacím UI nejsou: ledgerový záznam uchovává
+jen `argsDigest`, nikdy payload. `a` připraví schválení, `d` odmítnutí, `y`
+potvrdí. Lze uvést důvod:
 
 ```text
 /approve hold-ID důvod rozhodnutí
@@ -188,8 +193,9 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
 
 ## Režimy, fronta a nové příkazy
 
-- Shift+Tab přepíná režim `normal` / `accept` / `plan`. Režim je vidět ve
-  stavovém řádku a v nápovědě kláves. Volba přetrvá restart.
+- Shift+Tab nebo Alt+M přepíná režim `normal` / `accept` / `plan`. Režim je
+  vidět ve stavovém řádku a v nápovědě kláves. Alt+M existuje proto, že
+  některé terminály Shift+Tab vůbec neposílají. Volba přetrvá restart.
 - Režim `plan` předřadí pokynu větu, aby model nejprve navrhl postup a nežádal
   hned nástroje měnící stav. Režim `accept` zkracuje klávesy editace, ale
   schválení externích nástrojů zůstává vždy explicitní. VOID nikdy nic
@@ -209,7 +215,8 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
 - Potvrzení změny ukazuje unified diff. Klávesa `y` přijme, `n` odmítne,
   Escape zruší. Nic se neaplikuje bez explicitní klávesy.
 - Stavový řádek ukazuje model, režim, čítač kontextu, tokeny z providera
-  a cenu. Cena je vždy `unknown`, nikdy odhad.
+  a cenu. Workbench nedostává cenové údaje, takže je cena v TUI vždy
+  `unknown`, nikdy odhad.
 - `/todos` vypíše checklist z reálných zpráv agenta. Přehled ukazuje
   otevřené položky aktuální konverzace.
 - `/compact` ukáže lokální výtah z uchovaných zpráv. Souhrn přes providera

@@ -1,5 +1,20 @@
 # VOID UI/UX Upgrade Plan - Mobile-First, Claude Chat Parity
 
+> **Superseded, 2026-09-26. Not the plan of record, and its checklist is not
+> status.** Nothing below has been maintained since it was written: all forty
+> items are still unchecked even where the work demonstrably shipped, and the
+> two facts it leads with are wrong now. The default provider is NVIDIA NIM
+> with `z-ai/glm-5.3-flash` and `NVIDIA_API_KEY`, not OpenCode Zen, and there is
+> no silent keyless Pollinations fallback. The test and lint tooling is
+> `node:test` plus `tsc`, not Vitest, Playwright or ESLint; those are not in
+> this repository.
+>
+> Read the plans of record instead: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md)
+> and [GUI-UPGRADE-DELIVERY.md](GUI-UPGRADE-DELIVERY.md) for the GUI,
+> [TUI-WORKSPACE.md](TUI-WORKSPACE.md) for the terminal,
+> [PLAN-STATUS.md](PLAN-STATUS.md) for what is actually built, and
+> [HANDBOOK.md](HANDBOOK.md) for how to use the product.
+
 **Goal**: Transform VOID into a professional, mobile-first AI chat interface matching Claude Chat web experience, with OpenCode Zen as default provider.
 
 ## 1. Provider Configuration - OpenCode Zen as Default

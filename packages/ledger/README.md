@@ -33,13 +33,14 @@ or a connector; it is called by them.
 
 ## Must never do
 
-Degrade to memory. `api/_store.ts` does that for the waitlist and it is
-catastrophic here: a receipt returned for a record that died with the process is
-manufactured evidence. If it cannot persist, `append` throws and the intercepted
-call is denied.
+Degrade to memory. The marketing waitlist store this package grew out of
+did exactly that, and it is catastrophic here: a receipt returned for a record
+that died with the process is manufactured evidence. If it cannot persist,
+`append` throws and the intercepted call is denied.
 
-Persist a truncated digest. `api/_core.ts` returns 8 hex characters; the chain
-stores all 64, truncated only at the render boundary.
+Persist a truncated digest. That same waitlist hashed to 8 hex characters, which
+is birthday collidable in roughly 65 thousand attempts and impossible to verify
+independently. This chain stores all 64, truncated only at the render boundary.
 
 ## Public surface
 

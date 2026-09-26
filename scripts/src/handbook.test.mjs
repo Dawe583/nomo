@@ -269,16 +269,6 @@ test("the provider key the handbook names is one the workbench actually reads", 
   assert.ok(cs.includes("NVIDIA_API_KEY"));
 });
 
-test("the provider key the handbook names is one the workbench actually reads", () => {
-  const source = read("packages/workbench/src/index.ts");
-  assert.ok(
-    source.includes("NVIDIA_API_KEY"),
-    "NVIDIA_API_KEY is no longer the ambient credential; the handbook is now wrong",
-  );
-  assert.ok(en.includes("NVIDIA_API_KEY"));
-  assert.ok(cs.includes("NVIDIA_API_KEY"));
-});
-
 test("the two editions document the same command set", () => {
   const commands = (text) =>
     new Set(

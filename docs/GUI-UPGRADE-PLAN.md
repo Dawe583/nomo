@@ -259,7 +259,7 @@ Strom udává odpovědnosti, nikoli příkaz vytvořit prázdné soubory. Soubor
 | `cloud/server.mjs` | Kontrakt nové navigace, stránkované seznamy, preferences, delta/event endpointy |
 | `cloud/store.mjs`, `cloud/schema.sql` | Neztrátové events a read models; indexy podle skutečných dotazů |
 | `cloud/steps.mjs`, `cloud/workflow.mjs` | Emise průběhu, usage a konečného výsledku při zachování durable orchestrace |
-| `api/server.ts` | Parita lokálního API; bezpečné servírování build assets a SPA fallback |
+| `apps/control-plane/api/server.ts` | Parita lokálního API; bezpečné servírování build assets a SPA fallback |
 | `scripts/src/build-web.mjs`, `nitro.config.ts` | Vite build do `dist/web`, asset hashing, route fallback mimo `/api` |
 | `apps/desktop/scripts/prepare.mjs` | Balení stejného sestaveného webu včetně vnořených assets |
 | `docs/GUI-RULES.md` | Nové závazné komponentové a responzivní zásady po implementaci |

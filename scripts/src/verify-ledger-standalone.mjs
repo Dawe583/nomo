@@ -1,7 +1,8 @@
 /**
  * Standalone VOID ledger verifier. Third parties run this without VOID.
  *
- * Only node:crypto and node:fs are used, nothing is imported from this
+ * Only Node built-ins are used: node:crypto and node:fs for verification,
+ * node:os and node:path in the selftest. Nothing is imported from this
  * repository, so a copy of this one file plus a JSONL export bundle is
  * enough to recheck a ledger offline. The canonicaliser, the entry hash
  * and the signing preimage are replicated here byte for byte; any drift
