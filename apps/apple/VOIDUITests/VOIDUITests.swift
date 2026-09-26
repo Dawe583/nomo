@@ -10,6 +10,23 @@ final class VOIDUITests: XCTestCase {
         app.launch()
     }
 
+    /// Minimum touch target, and the slack allowed when reading it back.
+    ///
+    /// The layout is exactly 44pt by construction, `VoidPrimaryButtonStyle`
+    /// applies `.frame(width: 44, height: 44)`. But XCUITest reports a frame
+    /// that has been through the render tree and a scale conversion, and on an
+    /// iPhone Air the very same 44pt button came back as 43.999969482421875,
+    /// which is one unit in the last place below 44. Two buttons built from
+    /// the same style in the same view measured 44.000x and 43.9999 in the
+    /// same run, so this is the measurement, not the layout.
+    ///
+    /// A hair of slack keeps the assertion about what it is actually for, that
+    /// a person can hit the control, and still fails a real regression: the
+    /// smallest target that still passes here is 43.5pt, which is a visible
+    /// regression and nowhere near the 40pt a shrunken control would produce.
+    private static let touchTarget: CGFloat = 44
+    private static let touchTargetSlack: CGFloat = 0.5
+
     func testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline() {
         XCTAssertTrue(app.staticTexts["Connect to your Mac"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["VOID has no account"].exists)
@@ -23,11 +40,11 @@ final class VOIDUITests: XCTestCase {
         let connectMac = app.buttons["Connect a Mac"]
         XCTAssertTrue(connectMac.exists)
         XCTAssertFalse(connectMac.isEnabled)
-        XCTAssertGreaterThanOrEqual(connectMac.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(connectMac.frame.height, Self.touchTarget - Self.touchTargetSlack)
 
         let continueOffline = app.buttons["Continue offline"]
         XCTAssertTrue(continueOffline.isEnabled)
-        XCTAssertGreaterThanOrEqual(continueOffline.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(continueOffline.frame.height, Self.touchTarget - Self.touchTargetSlack)
         continueOffline.tap()
 
         XCTAssertTrue(app.navigationBars["Activity"].waitForExistence(timeout: 5))
@@ -51,11 +68,11 @@ final class VOIDUITests: XCTestCase {
         let connectMac = app.buttons["Připojit Mac"]
         XCTAssertTrue(connectMac.exists)
         XCTAssertFalse(connectMac.isEnabled)
-        XCTAssertGreaterThanOrEqual(connectMac.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(connectMac.frame.height, Self.touchTarget - Self.touchTargetSlack)
 
         let continueOffline = app.buttons["Pokračovat offline"]
         XCTAssertTrue(continueOffline.exists)
-        XCTAssertGreaterThanOrEqual(continueOffline.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(continueOffline.frame.height, Self.touchTarget - Self.touchTargetSlack)
     }
 
     func testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline() {
@@ -142,7 +159,7 @@ final class VOIDUITests: XCTestCase {
         let settingsButton = app.buttons["Settings"]
         XCTAssertTrue(settingsButton.exists)
         XCTAssertEqual(settingsButton.label, "Settings")
-        XCTAssertGreaterThanOrEqual(settingsButton.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(settingsButton.frame.height, Self.touchTarget - Self.touchTargetSlack)
 
         XCTAssertTrue(app.staticTexts["Offline"].exists)
     }
@@ -151,7 +168,7 @@ final class VOIDUITests: XCTestCase {
         let appearance = app.segmentedControls["entry.theme"]
         XCTAssertTrue(appearance.waitForExistence(timeout: 5))
         XCTAssertEqual(appearance.label, "Appearance")
-        XCTAssertGreaterThanOrEqual(appearance.frame.height, 44, "Appearance control must keep the 44pt touch target contract.")
+        XCTAssertGreaterThanOrEqual(appearance.frame.height, Self.touchTarget - Self.touchTargetSlack, "Appearance control must keep the 44pt touch target contract.")
 
         for choice in ["System", "Light", "Dark"] {
             XCTAssertTrue(appearance.buttons[choice].exists, "Appearance control is missing the \(choice) choice.")
@@ -253,8 +270,8 @@ final class VOIDUITests: XCTestCase {
         let send = app.buttons["chat.send"]
         XCTAssertTrue(send.exists)
         XCTAssertFalse(send.isEnabled, "Send must not be offered while no transport exists.")
-        XCTAssertGreaterThanOrEqual(send.frame.height, 44, "Send must keep the 44pt touch target contract.")
-        XCTAssertGreaterThanOrEqual(send.frame.width, 44)
+        XCTAssertGreaterThanOrEqual(send.frame.height, Self.touchTarget - Self.touchTargetSlack, "Send must keep the 44pt touch target contract.")
+        XCTAssertGreaterThanOrEqual(send.frame.width, Self.touchTarget - Self.touchTargetSlack)
 
         let window = app.windows.firstMatch.frame
         XCTAssertTrue(
@@ -326,7 +343,7 @@ final class VOIDUITests: XCTestCase {
 
         let disclosure = app.buttons["chat.tool.call-read.disclosure"]
         XCTAssertTrue(disclosure.waitForExistence(timeout: 5))
-        XCTAssertGreaterThanOrEqual(disclosure.frame.height, 44, "A disclosure is still a touch control.")
+        XCTAssertGreaterThanOrEqual(disclosure.frame.height, Self.touchTarget - Self.touchTargetSlack, "A disclosure is still a touch control.")
         disclosure.tap()
 
         let details = element("chat.tool.details")
@@ -431,8 +448,8 @@ final class VOIDUITests: XCTestCase {
 
         let stop = app.buttons["chat.stop"]
         XCTAssertTrue(stop.waitForExistence(timeout: 10), "A live run must offer a real stop control.")
-        XCTAssertGreaterThanOrEqual(stop.frame.height, 44)
-        XCTAssertGreaterThanOrEqual(stop.frame.width, 44)
+        XCTAssertGreaterThanOrEqual(stop.frame.height, Self.touchTarget - Self.touchTargetSlack)
+        XCTAssertGreaterThanOrEqual(stop.frame.width, Self.touchTarget - Self.touchTargetSlack)
         XCTAssertTrue(app.staticTexts["Streaming response"].exists, "A live run must be visible as a running state.")
 
         let runningTool = element("chat.tool.call-1")

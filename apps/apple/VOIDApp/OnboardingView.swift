@@ -30,7 +30,11 @@ struct OnboardingView: View {
                         theme: $theme,
                         showsHeader: true
                     )
-                    .navigationTitle(copy.title)
+                    // The body renders the title as a large header at a compact
+                    // width, so the navigation bar repeats the same sentence.
+                    // A landing screen wants the large one, and the inline
+                    // navigation title is hidden rather than printing it twice.
+                    .navigationTitle("")
                 }
             }
         }

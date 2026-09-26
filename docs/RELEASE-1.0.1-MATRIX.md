@@ -284,6 +284,56 @@ One boundary: `project.xcworkspace/xcshareddata/` holds SwiftPM package
 resolution state that XcodeGen never writes, so it is excluded from the
 comparison rather than reported as drift. The pbxproj itself is compared in full.
 
+## 2026-09-26 four simulator destinations, including the tightest one
+
+The suite was re-run on four destinations rather than the two it had been
+pinned to, and the extra two were chosen for what they break rather than for
+coverage credit.
+
+| Destination | Result |
+| --- | --- |
+| iPhone Air, iOS 27.0 | `Executed 18 tests, with 0 failures (0 unexpected) in 306.538 (306.568) seconds`, ending `** TEST SUCCEEDED **` |
+| iPhone 18 Pro, iOS 27.0 | `Executed 18 tests, with 0 failures (0 unexpected) in 308.594 (308.625) seconds`, ending `** TEST SUCCEEDED **` |
+| iPad Pro 11-inch (M5), iOS 27.0 | `Executed 18 tests, with 0 failures (0 unexpected) in 402.766 (402.784) seconds` |
+| iPad Pro 13-inch (M5), iOS 27.0 | `Executed 18 tests, with 0 failures (0 unexpected) in 378.884 (378.918) seconds`, ending `** TEST SUCCEEDED **` |
+
+`VOIDTests` was 9/9 on all four. There is no `iPad Pro Max` device type; Apple
+renamed the large iPad Pro to `iPad Pro 13-inch (M5)`, so that is the max form
+factor and it is covered above. A physical David's iPhone Air is registered on
+this machine but reports `Devices Offline`, so no physical-device evidence is
+claimed anywhere in this row.
+
+### The iPhone Air found a real one
+
+`testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful` failed only on the
+Air, at `VOIDUITests.swift:434`:
+`XCTAssertGreaterThanOrEqual failed: ("43.999969482421875") is less than
+("44.0")`. The same run passed it on the other three destinations.
+
+The layout was never wrong. `VoidPrimaryButtonStyle` applies
+`.frame(width: 44, height: 44)`, and `chat.stop` and `chat.send` use the very
+same style in the same view. What differs is the number that comes back:
+XCUITest reports a frame that has been through the render tree and a scale
+conversion, and on this device the identical 44pt button read as
+43.999969482421875, which is one unit in the last place below 44. In the same
+Air run, another button built from the same style measured 44.000x. The
+assertion was a float-equality trap, and the fix is a documented 0.5pt slack,
+which still fails any real regression because the smallest target that passes
+is 43.5pt, far from the 40pt a shrunken control would produce.
+
+### And looking at the screen found what no assertion could
+
+On the iPhone Air the entry screen printed its title twice: once in the
+navigation bar and once as the large body header, because the body header is
+shown at a compact width and the navigation title was not hidden. Every test
+passed. The compact layout now hides the inline navigation title, which also
+returned roughly one card of vertical space on the smallest screen in the
+matrix, so the credential note below the fold became fully readable.
+
+One boundary: `project.xcworkspace/xcshareddata/` holds SwiftPM package
+resolution state that XcodeGen never writes, so it is excluded from the
+comparison rather than reported as drift. The pbxproj itself is compared in full.
+
 ## 2026-09-26 explicit CI time budgets, from measured runtimes
 
 Two gates ran for minutes while the CI jobs that contain them had a single
