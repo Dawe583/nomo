@@ -41,49 +41,54 @@ return the created record, and `read` must return validated `id`, `userId`,
 `secret`, expiry, and revocation fields. The recovery helper ignores caller
 URLs and derives `/reset-password` from `VOID_PUBLIC_ORIGIN`.
 
-The deployment does not use it. The identity provider for the chat origin is
-Supabase Auth, reached only from `cloud/account.mjs`, and `cloud/auth.mjs`
-remains unmounted with its own test as its only importer. Choosing one provider
-over the other is a decision the operator has not yet made, and the material
-below is kept because it records what the other option would need.
+This is not what the deployment uses. The live identity path for the chat
+origin is `cloud/account.mjs`, which talks to Supabase Auth, and it is wired
+into the middleware in `cloud/server.mjs` and behind three routes of its own.
+`cloud/auth.mjs` is still unmounted, with `cloud/auth.test.mjs` as its only
+importer, so nothing in the deployment reaches Appwrite at runtime. A reader
+who arrives here from a question about accounts in the chat origin wants
+`cloud/account.mjs`; a reader who wants the Appwrite option kept on paper is
+reading the right section.
 
 ## Required before public signup
 
 Public signup must remain disabled until all cloud reads and writes are scoped
-by verified authenticated owner identity. That condition is now met and is
-enforced rather than reviewed: every table carries an owner, the owner is the
-first column of every primary key, the owner is the first parameter of every
-store function, and `cloud/owner.test.mjs` parses every statement under
-`cloud/` and fails if one has no owner. What is still missing is the rest: a
-Supabase project to sign in against, an endpoint suite that proves two accounts
-cannot reach each other's rows against an isolated database, and a decision
+by verified authenticated owner identity. **That rule has been satisfied for
+the cloud data layer.** Every table carries an owner, the owner is the first
+column of every primary key, the owner is the first parameter of every store
+function, and `cloud/owner.test.mjs` parses every statement under `cloud/` and
+fails if one has no owner. `cloud/account-isolation.test.mjs` then proves the
+same property at the HTTP boundary against a real database, as two
+provider confirmed users.
+
+Signup is nevertheless off, and the switch that would turn it on is
+`VOID_ACCOUNT_SIGNUP`, which is not set. Two things are still missing. A real
+Supabase project: without `SUPABASE_URL`, `SUPABASE_ANON_KEY` and
+`VOID_ACCOUNT_SEAL_KEY` the broker is unconfigured, the account routes say so,
+and no sign in has ever been confirmed against a real provider. And a decision
 about the Prime bridge, which is a machine credential bound to the operator's
-namespace and is refused to accounts for now. `docs/ACCOUNT-OWNERSHIP.md`
-carries the list and the reasoning. Signup stays off, and the switch that
-would turn it on is `VOID_ACCOUNT_SIGNUP`.
+namespace and is refused to accounts for now. Setting the variable on its own
+would not open registration either, because a signup additionally requires an
+invitation code and no mounted route accepts one. The full list and the
+reasoning are in `docs/ACCOUNT-OWNERSHIP.md`.
 
 ## Account deletion
 
-There is no account-deletion route, because no account can be created through
-any mounted route. No route on the chat origin creates one: `cloud/auth.mjs` is
-not imported by any application, its only importer is `cloud/auth.test.mjs`,
-and the mounted broker refuses to sign anybody up while `VOID_ACCOUNT_SIGNUP`
-is unset. Its signup, login, logout, account lookup and password recovery
-helpers are therefore not reachable from `cloud/server.mjs`, `cloud/demo.mjs` or
-`cloud/prime.mjs`.
+There is still no account deletion route, and there is still nothing to delete:
+no mounted route creates an account. `cloud/auth.mjs` is not imported by any
+application, its only importer is `cloud/auth.test.mjs`, and the live broker
+will not sign anybody up while `VOID_ACCOUNT_SIGNUP` is unset. The one
+deletion it can perform is a session revocation, not an account removal.
 
-Neither module has a deletion method of its own. `createAuth` exposes exactly
-signup, login, logout, account lookup and password recovery, and the one
-`DELETE` it issues is against the current session during logout, which ends a
-session and does not remove an account. `cloud/schema.sql` defines three
-tables and none of them holds an account, so there is no local account record
-to remove either.
-
-Mounting account creation is what makes account deletion real work, and it
-becomes real work at that moment rather than later. There is no deletion method
-to hang a route on, so one has to be added first, and it has to remove that
-account's own rows and not only the provider account. The cloud tables are now
-scoped by owner, so that removal is scoped too; see
-`docs/ACCOUNT-OWNERSHIP.md`. Until the prerequisites above are met, an
-account-deletion route would protect nothing, which is why this is recorded as
-a statement rather than left as an open task.
+That said, the reason this section exists has changed. The claim it used to
+rest on, that no person can hold an account here at all, is no longer safe: a
+person whose account exists at the provider can sign in over
+`POST /api/account/signin` and own rows, and nothing in this database records
+that they did. Account deletion becomes real work the moment a real provider
+account signs in, not the moment account creation is mounted, and the work is
+the same either way: there is no deletion method to hang a route on, so one has
+to be added, and it has to remove that account's own rows and not only the
+provider account. The cloud tables are scoped by owner, so that removal is
+scoped too. Until a real account can sign in, an account deletion route would
+protect nothing, which is why this is recorded as a statement rather than left
+as an open task.

@@ -83,12 +83,30 @@ Server environment variables:
 - `VOID_SIGNING_KEY`: Ed25519 PKCS8 DER, base64, stable across deployments.
 - Optional `AI_GATEWAY_API_KEY`: otherwise Vercel OIDC authenticates AI Gateway.
 
+The account identity layer reads four more, and none of them is set here:
+
+- `SUPABASE_URL` and `SUPABASE_ANON_KEY`: the Supabase Auth project the chat
+  origin signs in against.
+- `VOID_ACCOUNT_SEAL_KEY`: 64 hexadecimal characters, 32 bytes, the key the
+  `__Host-void-account` cookie is sealed with.
+- `VOID_ACCOUNT_SIGNUP`: the signup switch. It is off, and setting it alone
+  would not open registration, because a signup also needs an invitation code
+  that no mounted route accepts.
+
+With those three account values absent the broker reports itself
+unconfigured, the account routes say so, and every request must present the
+control token. The Prime bridge reads `VOID_BRIDGE_TOKEN`, the public demo
+reads `VOID_PUBLIC_DEMO` and `VOID_DEMO_NVIDIA_KEY`, and the OAuth callback
+derives its base from `VOID_PUBLIC_ORIGIN`. See
+[account ownership](ACCOUNT-OWNERSHIP.md).
+
 `node --env-file=.env.local scripts/src/provision-cloud.mjs` installs the schema
 and sets the server secrets using Vercel environment management. Its local secret
 files are ignored and private. The operator access token is in `.env.void-access`;
 never share the signing or encryption keys. Enter the access token in the web
-connection form. Authentication uses Secure, HttpOnly, SameSiteStrict cookies.
-This beta is a single-operator workspace, not a multiuser RBAC product.
+connection form. The workspace cookie is Secure, HttpOnly and SameSite Strict;
+the account cookie, when one is ever issued, is Secure, HttpOnly and SameSite
+Lax. This beta is a single-operator workspace, not a multiuser RBAC product.
 
 Accounts are not on for this beta and the access token still means the
 operator's own workspace. Before deploying a build that carries account
@@ -96,8 +114,11 @@ ownership, run `cloud/0001-account-ownership.sql` against the database. It is
 additive, it is safe to run twice, it moves every existing row into the
 operator's namespace so nothing changes for the token you already have, and it
 takes a short exclusive lock while it swaps the primary keys, so run it once
-with the deploy paused. Skipping it leaves the server writing a column the
-database does not have, and every cloud read fails until it is applied.
+with the deploy paused. It disables the two append-only triggers for the
+backfill that would otherwise be refused by them, and re-enables them in the
+same transaction. Skipping it leaves the server writing a column the database
+does not have, and every cloud read fails until it is applied. See
+[account ownership](ACCOUNT-OWNERSHIP.md).
 
 VOID has no default provider and no default model. Add `NVIDIA_API_KEY` through
 Provider settings or the local runtime environment, or connect another provider

@@ -2,9 +2,17 @@
 
 `cloud integration / isolated-postgres` runs on main pushes, pull requests,
 release-candidate tags and manual dispatch. It starts a job-scoped PostgreSQL 17
-service and a pinned Neon WebSocket proxy, then executes the existing GUI and
-recovery SQL suites, the deterministic managed-cloud HTTP/provider flow and the
-managed PostgreSQL verifier. The verifier includes client SIGKILL after forward
+service and a pinned Neon WebSocket proxy, then executes the GUI,
+account-isolation and recovery SQL suites, the deterministic managed-cloud
+HTTP/provider flow and the managed PostgreSQL verifier. Account isolation
+issues requests as two provider-confirmed users and checks that they cannot
+read or change each other's session pages, events, ledger pages and preference
+writes, and that a cross-owner session edit is refused without touching the
+other account's row. The account routes have their own suite,
+`cloud/account-routes.test.mjs`, which drives `GET /api/account`,
+`POST /api/account/signin` and `DELETE /api/account` over real HTTP against a
+provider on loopback and needs no database. The verifier includes client
+SIGKILL after forward
 and recovery COMMIT. It uses the production Neon driver and schema, with no paid
 model or Neon account. Credentials and signing/encryption keys are disposable.
 
@@ -20,7 +28,7 @@ The disposable service container is removed by GitHub on success or failure.
 
 Configuration validation precedes schema mutation and rejects missing isolation,
 remote hosts, other database names/users, URL options and a differing application
-DATABASE_URL. Both named scenarios must pass with zero skips; subprocess errors,
+DATABASE_URL. All five SQL scenarios must pass with zero skips; subprocess errors,
 timeouts and assertion failures fail the job. Output redacts generated secrets.
 The managed-cloud fixture supplies its own local provider and checks auth,
 confirmation, signed captures, refusal paths and restart-safe state.

@@ -152,7 +152,7 @@ reader who arrives at the audit first does not rebuild finished work.
 | 41 | `68dfdbb` | one operational certification run recorded in `docs/UPGRADE-CHECKPOINT.md`, with what it did not cover |
 | 49 | `ba2e042` | the iOS cache policy, Keychain-only credential storage and a removal path that leaves no credential |
 | 16 | the scope answer in `docs/DECISIONS.md` | no provider and no model is a hardcoded default any more; the product asks on first use, the retry guard identifies a free model explicitly, and both handbooks, the README and the beta document say so |
-| 9 | the statement in `docs/APPWRITE-AUTH.md` "## Account deletion" | no account can be created through any mounted route, because `createAuth` is imported only by its own test and no application mounts it, so there is nothing for a deletion route to protect. It becomes real work the moment those helpers are mounted, because the module has no deletion method to hang a route on |
+| 9 | the statement in `docs/APPWRITE-AUTH.md` "## Account deletion" | no mounted route creates an account: the Appwrite module is imported only by its own test, the live Supabase broker refuses signup while `VOID_ACCOUNT_SIGNUP` is unset, and no mounted route accepts the invitation code a signup would need. It is no longer true that no person can hold an account, because a provider account can now sign in over `POST /api/account/signin` and own rows. Deletion therefore becomes real work when a real provider account signs in, and the module has no deletion method to hang a route on |
 
 Two rows are partly closed and the remainder is named rather than implied. Row 23
 has its dependency, time and checkpoint selectors wired, with cross-host fencing
