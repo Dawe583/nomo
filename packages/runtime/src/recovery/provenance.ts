@@ -33,6 +33,14 @@ export type StepOrderVerdict =
   | { readonly safe: true; readonly independent: readonly string[]; readonly edges: number }
   | { readonly safe: false; readonly reason: string };
 
+/** One proven claim: this step read that resource, and that step wrote it. */
+export type ProvenanceEdge = {
+  readonly consumer: string;
+  readonly producer: string;
+  readonly resource: string;
+};
+
+
 /** The read set an adapter recorded, or undefined when it recorded none. */
 export function readsOf(observation: Observation): ProvenanceFact["reads"] {
   return observation.reads;
@@ -61,41 +69,58 @@ export function provenanceOf(
  * safe, and the plan is refused rather than resolved by a guess.
  */
 export function orderRecoverySteps(facts: readonly ProvenanceFact[]): StepOrderVerdict {
+  const byId = new Map(facts.map((fact) => [fact.operationId, fact]));
+  const independent: string[] = [];
+  for (const fact of facts) if (fact.reads === undefined) independent.push(fact.operationId);
+  const edges = provenanceEdges(facts);
+  for (const edge of edges) {
+    const consumer = byId.get(edge.consumer)!;
+    const producer = byId.get(edge.producer)!;
+    if (consumer.sequence === producer.sequence)
+      return {
+        safe: false,
+        reason: `${edge.consumer} and ${edge.producer} share a journal sequence and read each other's writes`,
+      };
+    if (producer.sequence > consumer.sequence)
+      return {
+        safe: false,
+        reason: `${edge.consumer} read ${edge.resource} from ${edge.producer}, which is later in the journal and would be restored first`,
+      };
+  }
+  return { safe: true, independent, edges: edges.length };
+}
+
+/**
+ * The graph the planner and the selectors share, so neither can hold a second
+ * opinion about which step depends on which. One edge per consumer, producer
+ * and resource: a read recorded twice is one claim, not two.
+ */
+export function provenanceEdges(
+  facts: readonly ProvenanceFact[],
+): readonly ProvenanceEdge[] {
   const writers = new Map<string, string[]>();
-  for (const fact of facts) {
+  for (const fact of facts)
     for (const resource of fact.resources) {
       const owners = writers.get(resource) ?? [];
-      owners.push(fact.operationId);
+      if (!owners.includes(fact.operationId)) owners.push(fact.operationId);
       writers.set(resource, owners);
     }
-  }
-  const independent: string[] = [];
-  let edges = 0;
+  const edges: ProvenanceEdge[] = [];
+  const seen = new Set<string>();
   for (const fact of facts) {
-    if (fact.reads === undefined) {
-      independent.push(fact.operationId);
-      continue;
-    }
-    for (const read of fact.reads) {
+    if (fact.reads === undefined) continue;
+    for (const read of fact.reads)
       for (const producer of writers.get(read.resource) ?? []) {
         if (producer === fact.operationId) continue;
-        const producerFact = facts.find((candidate) => candidate.operationId === producer);
-        if (producerFact === undefined) continue;
-        if (producerFact.sequence === fact.sequence) {
-          return {
-            safe: false,
-            reason: `${fact.operationId} and ${producer} share a journal sequence and read each other's writes`,
-          };
-        }
-        if (producerFact.sequence > fact.sequence) {
-          return {
-            safe: false,
-            reason: `${fact.operationId} read ${read.resource} from ${producer}, which is later in the journal and would be restored first`,
-          };
-        }
-        edges += 1;
+        const key = `${fact.operationId}\u0000${producer}\u0000${read.resource}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        edges.push({
+          consumer: fact.operationId,
+          producer,
+          resource: read.resource,
+        });
       }
-    }
   }
-  return { safe: true, independent, edges };
+  return edges;
 }

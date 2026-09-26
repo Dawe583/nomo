@@ -54,7 +54,7 @@ still lacks a paired-phone journey over a real TLS transport, and P10.09 still
 needs a Windows x64/MSVC runner.
 
 - G-01: managed cloud documents have signed operation/job events, artifacts and state in one SQL transaction. This is not a transaction host for arbitrary external tools. Physical network partition testing remains unverified.
-- G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list. Dependency, time and checkpoint selectors and independent branch continuation are implemented as pure, fail-closed functions and are not yet wired into `planRecoveryJob`; leases and fencing remain open.
+- G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list, and `planRecoveryJob` now also consumes dependency, time and checkpoint selectors and independent branch continuation, resolved to that same exact list. Leases and fencing remain open.
 - G-04: adapters already observe resource keys and revisions. General read/write provenance and dependency closure remain open.
 - G-07: managed filesystem and Git recovery exist. Noncooperative writers, full per-hunk enforcement and native cross-platform evidence remain separate work.
 - G-20: `@void/verifier` is its own package with zero dependencies and no import from this repository. Never published, and the export-bundle fixtures are still missing.
@@ -111,15 +111,20 @@ reproducible network-fault harness.
 ### G-03 R06: planner selection, leases, fencing, remote job surfaces
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R06.
-Missing: durable leases and fencing, MCP and cloud job surfaces, and the
-wiring of the selectors below into the dispatch path. The stored plan still
-covers one run or an explicit operation list in reverse ledger order only.
-Evidence: `packages/runtime/src/recovery/plan.ts` now exports
-`resolveRecoverySelection` and `independentBranches`, with 25 tests in
-`packages/runtime/src/recovery/selectors.test.ts`, but
-`packages/runtime/src/execute.ts` still validates `request.selection` inline
-and ends in `throw new Error("Invalid recovery selection.")`, so every new kind
-is refused at the door as of 2026-09-26.
+Missing: durable leases and fencing, and the MCP and cloud job surfaces. The
+stored plan still covers one run or an explicit operation list in reverse
+ledger order only; a rule selector is resolved to that list and never stored.
+Evidence: `packages/runtime/src/recovery/plan.ts` exports
+`resolveRecoverySelection` and `independentBranches`, with 26 tests in
+`packages/runtime/src/recovery/selectors.test.ts`. `planRecoveryJob` in
+`packages/runtime/src/execute.ts` builds the journal state in one pass from
+the retained records and their prepared captures, resolves the selector once
+against it, and feeds the resolved operation IDs into the existing step loop.
+Every selector kind lands on one of the two recorded `RecoverySelection`
+forms, so a signed plan keeps naming the steps it undoes rather than the rule
+that chose them, and its digest and every consumer of a plan are unchanged.
+Re-planning an existing job id through a rule is refused, and a rule that
+reaches nothing is refused because there is no list to record.
 Noted: independent branch continuation is the part that can silently disagree
 with the ordering proof if it is ever built separately, because "this branch
 touches nothing the blocked branch touched" and "this order is safe" are two
@@ -128,10 +133,9 @@ list `provenanceEdges` returns, one edge per consumer, producer and resource,
 which is the same list `orderRecoverySteps` proves an order from, so a branch
 held by an edge and a step refused for that edge cannot name different
 dependencies.
-Minimum change: wire the selectors into `planRecoveryJob` by building the
-journal state from the retained records and their prepared captures, then
-resource aware selection, a single active worker lease with fencing, then MCP
-and cloud surfaces on top. Dependency: R02, R03, one R04 or R05 adapter. Size: XL.
+Minimum change: a single active worker lease with fencing, then MCP and cloud
+surfaces on top of the wired planner. Dependency: R02, R03, one R04 or R05
+adapter. Size: XL.
 
 ### G-04 R07: runtime provenance and dependency aware recovery
 

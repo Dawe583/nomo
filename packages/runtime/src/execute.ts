@@ -29,11 +29,17 @@ import {
 } from "./journal.ts";
 import {
   completeRecoveryJobPlan,
+  independentBranches,
+  resolveRecoverySelection,
   validateRecoveryJobPlan,
   type RecoveryJobPlan,
   type RecoveryJobRequest,
   type RecoveryJobResult,
+  type RecoveryJournalState,
+  type RecoveryOperationState,
   type RecoveryResidual,
+  type RecoverySelection,
+  type RecoverySelector,
 } from "./recovery/plan.ts";
 import { jobPlan, latestJobEvent, progressFrom } from "./recovery/run.ts";
 import { leaseOf, leaseVerdict } from "./recovery/lease.ts";
@@ -50,7 +56,10 @@ import {
 import {
   reserveBudget,
   validateBudget,
+  type BudgetHold,
+  type BudgetOutcome,
   type IrreversibilityBudget,
+  type ServerBudgetLedger,
 } from "./budget.ts";
 export type ExecutionRequest = {
   workspace: string;
@@ -72,6 +81,13 @@ export type RuntimeOptions = {
   authorize: (request: Authorization) => Promise<boolean>;
   requireRecoverable?: boolean;
   irreversibilityBudget?: IrreversibilityBudget;
+  /** R10: the shared authority for the irreversible budget.
+   *
+   * Opt in and the reservation has to clear both this ledger and
+   * `irreversibilityBudget`, so a host that adopts it never loses the local
+   * cap it already had. A host that does not adopt it is untouched, including
+   * the journal derivation's own accounting. */
+  readonly budgetLedger?: ServerBudgetLedger;
   /** Identifies this worker in a recovery-job lease. Defaults to a fixed label, so
    * the pid in the lease is what identifies the process. */
   readonly hostLabel?: string;
@@ -86,6 +102,15 @@ export type ExecutionResult = {
   result?: Json;
   reason?: "recovery-capacity";
 };
+/** What the shared ledger still owes once the journal transaction is over.
+ *
+ * `null` means this operation reserved nothing. A `reason` is the only thing
+ * that hands a unit back, so it is written down rather than inferred: a
+ * failure before dispatch is the one case where nothing ran. */
+type BudgetCharge =
+  | { operationId: string; outcome: BudgetOutcome }
+  | { operationId: string; reason: string }
+  | null;
 export type RecoveryPlan = {
   workspace: string;
   operationId: string;
@@ -160,6 +185,25 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
     data: Json = null,
   ) => {
     await tx.append({ ...identity, stage, data, at: new Date().toISOString() });
+  };
+  /** Close a shared budget hold, always after the journal transaction has
+   * returned and never inside it.
+   *
+   * These are writes to a second store, and the journal's writer lock is held
+   * for the whole transaction and is shared by every workspace in the journal
+   * directory. Closing a hold under it would buy nothing and could stall
+   * unrelated work, so the ordering is fixed here rather than at the call
+   * site. A close that never lands leaves a `reserved` hold, which the ledger
+   * makes visible through `expireStale` and never refunds: the journal is the
+   * record of what happened, and a dispatch that already ran must not be
+   * reported as a failure because the bookkeeping was contended. */
+  const commitCharge = async (charge: BudgetCharge) => {
+    if (!charge || !options.budgetLedger) return;
+    await (
+      "outcome" in charge
+        ? options.budgetLedger.settle(charge)
+        : options.budgetLedger.release(charge)
+    ).catch(() => {});
   };
   const loadPrepared = async (tx: JournalTransaction, event: OperationEvent) =>
     (await options.vault.get(
@@ -271,162 +315,261 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
         if (!/^[\w-]{1,120}$/.test(value))
           throw new Error("Invalid operation identity.");
       if (!/^[\w:-]{1,120}$/.test(request.runId)) throw new Error("Invalid run identity.");
-      return options.journal.transaction(request.workspace, async (tx) => {
-        const prior = latest(tx, request.operationId);
-        if (prior) {
+      // R10: the shared account is read before the journal writer lock is
+      // taken. This is a short read of prior records and it decides nothing
+      // about the reservation, which is deliberate on two counts. It cannot
+      // refuse on an exhausted account, because only the fenced read that
+      // would have committed the hold can also prove this operation was not
+      // already charged by a process that died mid-dispatch. And an account
+      // that cannot be trusted is an incident, not a `failed` operation, so it
+      // is discovered here rather than while every workspace in the journal
+      // directory waits on the lock behind it.
+      if (options.budgetLedger) await options.budgetLedger.snapshot();
+      const pending = options.journal.transaction(
+        request.workspace,
+        async (tx): Promise<{ result: ExecutionResult; charge: BudgetCharge }> => {
+          const prior = latest(tx, request.operationId);
+          if (prior) {
+            if (
+              prior.requestDigest !== requestDigest ||
+              prior.adapterVersion !== adapter.version
+            )
+              throw new Error(
+                "Idempotency key belongs to another request or adapter version.",
+              );
+            // A crashed process never silently resumes a possibly dispatched operation.
+            if (prior.stage === "dispatched") {
+              await record(tx, prior, "unknown");
+              return {
+                result: { status: "unknown", operationId: prior.operationId },
+                charge: null,
+              };
+            }
+            return { result: await resultFor(tx, prior), charge: null };
+          }
+          const jobs = new Map(
+            (tx.jobEvents ?? []).map((event) => [event.jobId, event]),
+          );
           if (
-            prior.requestDigest !== requestDigest ||
-            prior.adapterVersion !== adapter.version
+            [...jobs.values()].some((event) =>
+              [
+                "approved",
+                "applying",
+                "checkpoint",
+                "unknown",
+                "paused",
+              ].includes(event.stage),
+            )
           )
             throw new Error(
-              "Idempotency key belongs to another request or adapter version.",
+              "A recovery job blocks new forward operations in this workspace.",
             );
-          // A crashed process never silently resumes a possibly dispatched operation.
-          if (prior.stage === "dispatched") {
-            await record(tx, prior, "unknown");
-            return { status: "unknown", operationId: prior.operationId };
-          }
-          return resultFor(tx, prior);
-        }
-        const jobs = new Map(
-          (tx.jobEvents ?? []).map((event) => [event.jobId, event]),
-        );
-        if (
-          [...jobs.values()].some((event) =>
-            [
-              "approved",
-              "applying",
-              "checkpoint",
-              "unknown",
-              "paused",
-            ].includes(event.stage),
-          )
-        )
-          throw new Error(
-            "A recovery job blocks new forward operations in this workspace.",
-          );
-        const identity: OperationEvent = {
-          schema: "void.operation.v1",
-          workspace: request.workspace,
-          operationId: request.operationId,
-          requestDigest,
-          adapterId: adapter.id,
-          adapterVersion: adapter.version,
-          agentId: request.agentId,
-          runId: request.runId,
-          at: new Date().toISOString(),
-          stage: "received",
-          data: null,
-        };
-        await tx.append(identity);
-        let dispatched = false;
-        try {
-          const observation = JSON.parse(
-            canonicalJson(await adapter.preflight(clean(request.arguments))),
-          ) as Observation;
-          digest(observation);
-          if (
-            options.requireRecoverable !== false &&
-            (observation.readiness !== "verified" ||
-              !["r0", "r1"].includes(observation.reversibility))
-          ) {
-            await record(tx, identity, "denied");
-            return { status: "denied", operationId: request.operationId };
-          }
-          const approvalDigest = digest({
+          const identity: OperationEvent = {
+            schema: "void.operation.v1",
+            workspace: request.workspace,
+            operationId: request.operationId,
             requestDigest,
+            adapterId: adapter.id,
             adapterVersion: adapter.version,
-            observation,
-          });
-          if (
-            !(await options.authorize({
-              digest: approvalDigest,
-              observation: clean(observation),
-              request: clean(request),
-            }))
-          ) {
-            await record(tx, identity, "denied");
-            return { status: "denied", operationId: request.operationId };
-          }
-          const needsBudget =
-            observation.readiness !== "verified" ||
-            observation.reversibility === "r3" ||
-            observation.reversibility === "unknown";
-          const budget =
-            needsBudget && options.irreversibilityBudget
-              ? reserveBudget(
-                  tx.events,
-                  options.irreversibilityBudget,
-                  request.agentId,
-                )
-              : null;
-          if (needsBudget && !budget) {
-            await record(tx, identity, "denied", {
-              reason: "irreversibility-budget",
+            agentId: request.agentId,
+            runId: request.runId,
+            at: new Date().toISOString(),
+            stage: "received",
+            data: null,
+          };
+          await tx.append(identity);
+          let dispatched = false;
+          // The shared hold this process took, if any. It lives beside the
+          // dispatch flag so the catch can close it: a failure after the
+          // reservation and before dispatch is the one case that hands a unit
+          // back.
+          let charged: BudgetHold | null = null;
+          try {
+            const observation = JSON.parse(
+              canonicalJson(await adapter.preflight(clean(request.arguments))),
+            ) as Observation;
+            digest(observation);
+            if (
+              options.requireRecoverable !== false &&
+              (observation.readiness !== "verified" ||
+                !["r0", "r1"].includes(observation.reversibility))
+            ) {
+              await record(tx, identity, "denied");
+              return {
+                result: { status: "denied", operationId: request.operationId },
+                charge: null,
+              };
+            }
+            const approvalDigest = digest({
+              requestDigest,
+              adapterVersion: adapter.version,
+              observation,
             });
-            return { status: "denied", operationId: request.operationId };
-          }
-          await record(tx, identity, "authorized", {
-            approvalDigest,
-            ...(budget ? { budget } : {}),
-          });
-          await options.vault.reserve?.(request.workspace, request.operationId);
-          const prepared = await adapter.prepare(
-            clean(request.arguments),
-            clean(observation),
-            adapterKey(request.workspace, request.operationId),
-          );
-          digest(prepared);
-          const capture = await options.vault.put(
-            request.workspace,
-            clean({ request, observation, prepared }) as unknown as Json,
-            { operationId: request.operationId, slot: "capture" },
-          );
-          await record(tx, identity, "prepared", capture as unknown as Json);
-          await record(tx, identity, "dispatched");
-          dispatched = true;
-          const outcome = await adapter.execute(
-            clean(request.arguments),
-            clean(prepared),
-            adapterKey(request.workspace, request.operationId),
-          );
-          const result = await options.vault.put(
-            request.workspace,
-            outcome as unknown as Json,
-            { operationId: request.operationId, slot: "outcome" },
-          );
-          await record(tx, identity, "succeeded", result as unknown as Json);
-          return {
-            status: "succeeded",
-            operationId: request.operationId,
-            result: outcome.result,
-          };
-        } catch (error) {
-          const reason =
-            error instanceof VaultCapacityError
-              ? ("recovery-capacity" as const)
-              : undefined;
-          await record(
-            tx,
-            identity,
-            dispatched ? "unknown" : "failed",
-            reason ? { reason } : null,
-          );
-          return {
-            status: dispatched ? "unknown" : "failed",
-            operationId: request.operationId,
-            ...(reason ? { reason } : {}),
-          };
-        } finally {
-          if (!dispatched)
-            await options.vault
-              .release?.(request.workspace, request.operationId)
+            if (
+              !(await options.authorize({
+                digest: approvalDigest,
+                observation: clean(observation),
+                request: clean(request),
+              }))
+            ) {
+              await record(tx, identity, "denied");
+              return {
+                result: { status: "denied", operationId: request.operationId },
+                charge: null,
+              };
+            }
+            const needsBudget =
+              observation.readiness !== "verified" ||
+              observation.reversibility === "r3" ||
+              observation.reversibility === "unknown";
+            const budget =
+              needsBudget && options.irreversibilityBudget
+                ? reserveBudget(
+                    tx.events,
+                    options.irreversibilityBudget,
+                    request.agentId,
+                  )
+                : null;
+            // An irreversible operation needs a budget behind it, and that is
+            // the same gate as before this ledger existed: a host that
+            // configured only the local cap keeps exactly the authority it had,
+            // and a host that adopted the shared account gets that authority
+            // instead of being asked for a redundant second one. A host that
+            // configured both has to clear both, because the journal
+            // derivation can only see the events its own process wrote.
+            if (
+              needsBudget &&
+              (options.irreversibilityBudget ? !budget : !options.budgetLedger)
+            ) {
+              await record(tx, identity, "denied", {
+                reason: "irreversibility-budget",
+              });
+              return {
+                result: { status: "denied", operationId: request.operationId },
+                charge: null,
+              };
+            }
+            if (needsBudget && options.budgetLedger) {
+              // One fenced attempt, never a retry. The journal's writer lock is
+              // held for the whole transaction and is shared by every workspace
+              // in the journal directory, so the one thing this path may not do
+              // is re-decide under contention: that is the stall the first
+              // attempt at this wiring was reverted for. Losing the fence is
+              // reported, and the caller retries with a fresh operation id.
+              const reservation = await options.budgetLedger.reserve({
+                operationId: request.operationId,
+                agentId: request.agentId,
+                attempts: 1,
+              });
+              if (!reservation.ok) {
+                if (reservation.reason === "exhausted") {
+                  await record(tx, identity, "denied", {
+                    reason: "irreversibility-budget",
+                  });
+                  return {
+                    result: { status: "denied", operationId: request.operationId },
+                    charge: null,
+                  };
+                }
+                // Nothing ran and no unit was taken, so this is a failure and
+                // not a denial: the cap never refused the operation.
+                await record(tx, identity, "failed", {
+                  reason: "budget-contention",
+                });
+                return {
+                  result: { status: "failed", operationId: request.operationId },
+                  charge: null,
+                };
+              }
+              charged = reservation.hold;
+            }
+            await record(tx, identity, "authorized", {
+              approvalDigest,
+              ...(budget ? { budget } : {}),
+            });
+            await options.vault.reserve?.(request.workspace, request.operationId);
+            const prepared = await adapter.prepare(
+              clean(request.arguments),
+              clean(observation),
+              adapterKey(request.workspace, request.operationId),
+            );
+            digest(prepared);
+            const capture = await options.vault.put(
+              request.workspace,
+              clean({ request, observation, prepared }) as unknown as Json,
+              { operationId: request.operationId, slot: "capture" },
+            );
+            await record(tx, identity, "prepared", capture as unknown as Json);
+            await record(tx, identity, "dispatched");
+            dispatched = true;
+            const outcome = await adapter.execute(
+              clean(request.arguments),
+              clean(prepared),
+              adapterKey(request.workspace, request.operationId),
+            );
+            const result = await options.vault.put(
+              request.workspace,
+              outcome as unknown as Json,
+              { operationId: request.operationId, slot: "outcome" },
+            );
+            await record(tx, identity, "succeeded", result as unknown as Json);
+            return {
+              result: {
+                status: "succeeded",
+                operationId: request.operationId,
+                result: outcome.result,
+              },
+              charge: charged
+                ? { operationId: request.operationId, outcome: "succeeded" }
+                : null,
+            };
+          } catch (error) {
+            const reason =
+              error instanceof VaultCapacityError
+                ? ("recovery-capacity" as const)
+                : undefined;
+            await record(
+              tx,
+              identity,
+              dispatched ? "unknown" : "failed",
+              reason ? { reason } : null,
+            );
+            return {
+              result: {
+                status: dispatched ? "unknown" : "failed",
+                operationId: request.operationId,
+                ...(reason ? { reason } : {}),
+              },
+              // Only a hold this process actually took may be closed. A
+              // reservation that was never made leaves nothing to settle, and a
+              // process that died after dispatching leaves its hold `reserved`
+              // on purpose, because expiry makes that visible and never
+              // refunds it.
+              charge: charged
+                ? dispatched
+                  ? { operationId: request.operationId, outcome: "unknown" }
+                  : {
+                      operationId: request.operationId,
+                      reason: "the operation failed before dispatch",
+                    }
+                : null,
+            };
+          } finally {
+            if (!dispatched)
+              await options.vault
+                .release?.(request.workspace, request.operationId)
+                .catch(() => {});
+            await adapter
+              .release(adapterKey(request.workspace, request.operationId))
               .catch(() => {});
-          await adapter
-            .release(adapterKey(request.workspace, request.operationId))
-            .catch(() => {});
-        }
-      });
+          }
+        },
+      );
+      const { result, charge } = await pending;
+      // The journal is already the record of what happened, so the shared
+      // hold is closed after the writer lock is gone rather than under it.
+      await commitCharge(charge);
+      return result;
     },
     async reconcile(
       workspace: string,
@@ -523,28 +666,25 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       const input = clean(request);
       if (!/^[\w-]{1,120}$/.test(input.jobId))
         throw new Error("Invalid recovery job identity.");
+      // Every way a selection can be wrong is answered by the resolver, which
+      // is a pure function of the journal state and names what a valid
+      // selector looks like. What the runtime still owns is the identity of
+      // the job the plan is for, because that is not the selector's business.
       if (!input.selection || typeof input.selection !== "object")
         throw new Error("Invalid recovery selection.");
-      if (input.selection.kind === "run") {
-        if (!/^[\w:-]{1,120}$/.test(input.selection.runId))
-          throw new Error("Invalid run identity.");
-      } else if (input.selection.kind === "operations") {
-        if (
-          !Array.isArray(input.selection.operationIds) ||
-          input.selection.operationIds.length === 0 ||
-          new Set(input.selection.operationIds).size !==
-            input.selection.operationIds.length
-        )
-          throw new Error(
-            "Recovery operation selection must contain unique IDs.",
-          );
-        for (const id of input.selection.operationIds)
-          if (typeof id !== "string" || !/^[\w-]{1,120}$/.test(id))
-            throw new Error("Invalid operation identity.");
-      } else throw new Error("Invalid recovery selection.");
+      const recorded: RecoverySelector = input.selection;
       return options.journal.transaction(input.workspace, async (tx) => {
         const existing = jobPlan(tx.jobEvents ?? [], input.jobId);
         if (existing) {
+          // A plan records the steps it undoes, not the rule that chose them,
+          // so a selector the plan cannot store cannot be checked against it.
+          // Re-resolving one later may reach different operations, and
+          // re-planning under the same job id would approve a recovery nobody
+          // signed.
+          if (recorded.kind !== "run" && recorded.kind !== "operations")
+            throw new Error(
+              `Recovery job ${input.jobId} is already planned, and a ${recorded.kind} selector is not recorded in the plan, so this request cannot be proven to be the same one. Plan it under a new job id.`,
+            );
           if (digest(existing.selection) !== digest(input.selection))
             throw new Error(
               "Recovery job identity belongs to another selection.",
@@ -566,30 +706,94 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
         for (const record of records)
           if (record.event.schema === "void.operation.v1")
             latestRecords.set(record.event.operationId, record);
-        const selection = input.selection;
-        const selected =
-          selection.kind === "run"
-            ? [...latestRecords.values()].filter(
-                (record) =>
-                  record.event.schema === "void.operation.v1" &&
-                  record.event.runId === selection.runId,
-              )
-            : selection.operationIds.map((id) => latestRecords.get(id));
+        // One pass over the journal, before any selector runs. A selector
+        // orders and filters by journal position, and a provenance fact needs
+        // the durable capture, so the capture is read here and kept instead of
+        // being read again for whichever steps the plan turns out to contain.
+        const facts = new Map<string, ProvenanceFact>();
+        const operations: RecoveryOperationState[] = [];
+        for (const [operationId, record] of latestRecords) {
+          const event = record.event;
+          if (event.schema !== "void.operation.v1") continue;
+          let fact: ProvenanceFact;
+          try {
+            // The read and write sets come from the durable capture, not from
+            // anything this transaction remembers, so the ordering survives a
+            // restart and cannot be reconstructed after the fact.
+            fact = provenanceOf(
+              event.operationId,
+              record.sequence,
+              (await loadPrepared(tx, event)).observation,
+            );
+          } catch {
+            // No capture means no claim either way. The step loop turns this
+            // into an `unavailable` residual, and a dependency selector
+            // refuses a root that recorded no reads rather than guessing at
+            // the branch behind it.
+            fact = {
+              operationId: event.operationId,
+              sequence: record.sequence,
+              resources: [],
+              reads: undefined,
+            };
+          }
+          facts.set(event.operationId, fact);
+          operations.push({
+            operationId,
+            sequence: record.sequence,
+            at: event.at,
+            runId: event.runId,
+            fact,
+          });
+        }
+        const state: RecoveryJournalState = { boundary, operations };
+        const selection = resolveRecoverySelection(state, input.selection);
+        if (selection.kind === "refused") throw new Error(selection.reason);
+        // A plan stores the steps it undoes, so every selector lands on the two
+        // recorded kinds. A rule that reached nothing has no list to store and
+        // no true statement to record, which is the opposite of a `run`: an
+        // empty run is recorded verbatim and stays a true one. The refusal says
+        // the window was empty, because an operator who asked for one wants to
+        // know that and not that their selector was malformed.
+        const chosen: RecoverySelection =
+          recorded.kind === "run" || recorded.kind === "operations"
+            ? recorded
+            : selection.operationIds.length
+              ? { kind: "operations", operationIds: selection.operationIds }
+              : (() => {
+                  throw new Error(
+                    `The ${recorded.kind} selector resolved to no operations before the boundary at sequence ${state.boundary.sequence}, and a plan records the steps it undoes rather than the rule that chose them. Name the operations instead.`,
+                  );
+                })();
+        // A job that is applying, paused or in conflict is holding a step, and
+        // anything provably joined to it by a recorded read has to wait rather
+        // than be planned as though it were free.
+        const jobEvents = tx.jobEvents ?? [];
+        const blocked: string[] = [];
+        for (const event of jobEvents)
+          if (["applying", "paused", "conflict"].includes(event.stage)) {
+            const plan = jobPlan(jobEvents, event.jobId);
+            const step = plan?.steps[progressFrom(event, plan).checkpoint];
+            if (step) blocked.push(step.operationId);
+          }
+        const branches = independentBranches(state, blocked);
+        if (branches.kind === "refused") throw new Error(branches.reason);
+        const held = new Set(
+          branches.held.map((branch) => branch.operationId),
+        );
         const steps: Array<{
           operationId: string;
           sequence: number;
           plan: RecoveryPlan;
         }> = [];
         const provenance: ProvenanceFact[] = [];
-        const residuals: RecoveryResidual[] = [];
-        for (let index = 0; index < selected.length; index++) {
-          const record = selected[index];
-          const requestedId =
-            input.selection.kind === "operations"
-              ? input.selection.operationIds[index]!
-              : undefined;
+        const residuals: RecoveryResidual[] = selection.missing.map(
+          (operationId) => ({ operationId, status: "missing" as const }),
+        );
+        for (const operationId of selection.operationIds) {
+          const record = latestRecords.get(operationId);
           if (!record || record.event.schema !== "void.operation.v1") {
-            residuals.push({ operationId: requestedId!, status: "missing" });
+            residuals.push({ operationId, status: "missing" });
             continue;
           }
           const event = record.event;
@@ -620,18 +824,18 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             });
             continue;
           }
+          if (held.has(event.operationId)) {
+            // A branch joined to a step another job is holding is not free to
+            // recover yet, and a plan that said nothing about that would be a
+            // plan pretending the hold does not exist.
+            residuals.push({
+              operationId: event.operationId,
+              status: "blocked-by-conflict",
+            });
+            continue;
+          }
           try {
-            // The read and write sets come from the durable capture, not from
-            // anything this transaction remembers, so the ordering survives a
-            // restart and cannot be reconstructed after the fact.
-            const bundle = await loadPrepared(tx, event);
-            provenance.push(
-              provenanceOf(
-                event.operationId,
-                record.sequence,
-                bundle.observation,
-              ),
-            );
+            provenance.push(facts.get(event.operationId)!);
             steps.push({
               operationId: event.operationId,
               sequence: record.sequence,
@@ -659,7 +863,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           schema: "void.recovery-plan.v1",
           workspace: input.workspace,
           jobId: input.jobId,
-          selection: input.selection,
+          selection: chosen,
           boundary,
           steps,
           residuals,

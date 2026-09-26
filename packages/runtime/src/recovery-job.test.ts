@@ -602,3 +602,251 @@ test("R06: a live job blocks a new one and a dead holder with an expired lease d
   assert.equal(next.steps.length, 0);
   assert.deepEqual(next.residuals.map((residual) => residual.status), ["already-recovered"]);
 });
+
+test("a rule selector resolves to steps and the plan records the steps it undoes", async (t) => {
+  const f = await fixture(t);
+  await f.execute("one", "run");
+  await f.execute("two", "run");
+  await f.execute("other", "other");
+  const everything = await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "all",
+    selection: { kind: "time", before: "2999-01-01T00:00:00.000Z" },
+  });
+  assert.deepEqual(
+    everything.steps.map((step) => step.operationId),
+    ["other", "two", "one"],
+  );
+  // A plan names the steps it undoes, not the rule that chose them, so the
+  // digest and every consumer of a plan stay the shape they already were.
+  assert.deepEqual(everything.selection, {
+    kind: "operations",
+    operationIds: ["other", "two", "one"],
+  });
+  assert.doesNotThrow(() => validateRecoveryJobPlan(everything));
+  // The same journal reached by a different rule. A checkpoint names a journal
+  // position and is inclusive of the operation recorded at it, so the two cases
+  // that matter are the position a step occupies and the one just below it.
+  // Both are here because an operator who gets this wrong silently recovers
+  // one operation too many or too few.
+  const second = everything.steps[1]!;
+  const upto = await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "upto",
+    selection: { kind: "checkpoint", sequence: second.sequence },
+  });
+  assert.deepEqual(
+    upto.steps.map((step) => step.operationId),
+    ["two", "one"],
+  );
+  assert.deepEqual(upto.selection, {
+    kind: "operations",
+    operationIds: ["two", "one"],
+  });
+  const below = await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "below",
+    selection: { kind: "checkpoint", sequence: second.sequence - 1 },
+  });
+  assert.deepEqual(
+    below.steps.map((step) => step.operationId),
+    ["one"],
+  );
+  assert.equal(
+    (await f.open().runRecoveryJob("test", "upto", async () => true)).status,
+    "restored",
+  );
+  // Only what the plan named was undone, and nothing else was touched. Both
+  // named operations created their own value, so a correct restore removes
+  // the key outright rather than putting an older revision back.
+  assert.equal(f.values.has("one"), false);
+  assert.equal(f.values.has("two"), false);
+  assert.equal(f.values.get("other"), "after-other");
+  // The inverse ran for exactly the two operations the plan named, which is
+  // the claim that a shorter prefix does not quietly recover the whole run.
+  assert.deepEqual([...f.recoveries.keys()].sort(), ["one", "two"]);
+});
+
+test("a selector that cannot be answered is refused with a reason and plans nothing", async (t) => {
+  const f = await fixture(t);
+  await f.execute("one", "run");
+  const open = f.open();
+  await assert.rejects(
+    () =>
+      open.planRecoveryJob({
+        workspace: "test",
+        jobId: "unknown",
+        selection: { kind: "wat" } as never,
+      }),
+    /"wat" is not a recovery selector kind/,
+  );
+  await assert.rejects(
+    () =>
+      open.planRecoveryJob({
+        workspace: "test",
+        jobId: "past",
+        selection: { kind: "checkpoint", sequence: 9999 },
+      }),
+    /cannot name sequence 9999/,
+  );
+  // A window with nothing in it is refused as the empty window it is, not as
+  // a malformed request, because that is the thing the operator has to fix.
+  await assert.rejects(
+    () =>
+      open.planRecoveryJob({
+        workspace: "test",
+        jobId: "empty",
+        selection: { kind: "time", before: "2000-01-01T00:00:00.000Z" },
+      }),
+    /The time selector resolved to no operations before the boundary at sequence \d+/,
+  );
+  // A rule the plan cannot store cannot be proven to be the same request.
+  await open.planRecoveryJob({
+    workspace: "test",
+    jobId: "once",
+    selection: { kind: "time", before: "2999-01-01T00:00:00.000Z" },
+  });
+  await assert.rejects(
+    () =>
+      open.planRecoveryJob({
+        workspace: "test",
+        jobId: "once",
+        selection: { kind: "time", before: "2999-01-01T00:00:00.000Z" },
+      }),
+    /a time selector is not recorded in the plan/,
+  );
+  for (const jobId of ["unknown", "past", "empty"])
+    await assert.rejects(
+      () => open.recoveryJobStatus("test", jobId),
+      /Recovery job not found/,
+    );
+});
+
+test("a step another job holds keeps its connected branch out of the plan", async (t) => {
+  const f = await fixture(t);
+  // The shared fixture's adapter records no read sets, so this case needs one
+  // that does: a branch is only provable from a recorded read, and inventing
+  // edges from the shared one would change the ordering proof under every
+  // other case in this file.
+  const root = await mkdtemp(join(tmpdir(), "void-held-branch-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
+  const key = randomBytes(32);
+  const values = new Map<string, string>();
+  const adapter: RecoveryAdapter = {
+    id: "reading",
+    version: "1",
+    async preflight(args) {
+      const { id, reads } = args as { id: string; reads?: string };
+      return {
+        effect: "write",
+        reversibility: "r1",
+        readiness: "verified",
+        scope: id,
+        resources: [`held:${id}`],
+        ...(reads
+          ? {
+              reads: [
+                { resource: `held:${reads}`, revision: values.get(reads) ?? null },
+              ],
+            }
+          : {}),
+        revision: null,
+        blastRadius: { count: 1, precision: "exact" },
+      };
+    },
+    async prepare(args, observation) {
+      return { before: observation.revision, plan: args };
+    },
+    async execute(args) {
+      const { id } = args as { id: string };
+      values.set(id, `wrote-${id}`);
+      return { result: id, evidence: { id } };
+    },
+    async release() {},
+    async reconcile() {
+      return { status: "unknown" };
+    },
+    async recover() {
+      return { status: "restored", evidence: null };
+    },
+  };
+  const open = () =>
+    recoveryRuntime({
+      journal: localOperationJournal(join(root, "journal"), signer),
+      vault: localRecoveryVault(join(root, "vault"), { key }, "key"),
+      adapters: [adapter],
+      authorize: async () => true,
+      requireRecoverable: false,
+    });
+  for (const [operationId, id, reads] of [
+    ["op-writer", "writer", undefined],
+    ["op-reader", "reader", "writer"],
+    ["op-free", "free", undefined],
+  ] as const)
+    assert.equal(
+      (
+        await open().execute({
+          workspace: "test",
+          operationId,
+          runId: "run",
+          agentId: "agent",
+          adapterId: adapter.id,
+          // `Json` has no undefined, and an absent read set is the claim this
+          // case is about: one writer that read nothing cannot be held.
+          arguments: { id, ...(reads ? { reads } : {}) },
+        })
+      ).status,
+      "succeeded",
+    );
+  // A job that has claimed a step and is still applying it holds that step.
+  const held = await open().planRecoveryJob({
+    workspace: "test",
+    jobId: "held",
+    selection: { kind: "operations", operationIds: ["op-writer"] },
+  });
+  const at = new Date().toISOString();
+  await localOperationJournal(join(root, "journal"), signer).transaction(
+    "test",
+    async (tx) => {
+      await tx.appendJob!({
+        schema: "void.recovery-job.v1",
+        workspace: "test",
+        jobId: "held",
+        planDigest: held.digest,
+        at,
+        stage: "approved",
+        data: null,
+      });
+      await tx.appendJob!({
+        schema: "void.recovery-job.v1",
+        workspace: "test",
+        jobId: "held",
+        planDigest: held.digest,
+        at,
+        stage: "applying",
+        data: {
+          checkpoint: 0,
+          outcomes: [],
+          residuals: held.residuals,
+          lease: { holder: "other:1", expiresAt: Date.now() + 600_000 },
+        } as never,
+      });
+    },
+  );
+  const continuation = await open().planRecoveryJob({
+    workspace: "test",
+    jobId: "continuation",
+    selection: { kind: "operations", operationIds: ["op-free", "op-reader"] },
+  });
+  // op-reader read what the held step wrote, so it is restored after it and
+  // cannot be planned now. op-free touches nothing the held step wrote and is.
+  assert.deepEqual(
+    continuation.steps.map((step) => step.operationId),
+    ["op-free"],
+  );
+  assert.deepEqual(continuation.residuals, [
+    { operationId: "op-reader", status: "blocked-by-conflict" },
+  ]);
+  assert.doesNotThrow(() => validateRecoveryJobPlan(continuation));
+});

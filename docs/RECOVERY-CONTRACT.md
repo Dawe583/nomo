@@ -63,12 +63,49 @@ Cloud managed documents use the same signing, boundary, digest-matched single-jo
 planner and durable job runner as a limited retained surface: one exact run or an
 explicit operation list, `planned → approved → applying → checkpoint → restored /
 partial / conflict / unknown / paused`, resumable steps, blocked forward writes and
-digest-bound approval/apply. The slice remains descending journal-sequence order only
-and has no cross-agent dependency closure, time or checkpoint selection, independent
-branch continuation, scheduler, lease or external fencing. The existing taint
+digest-bound approval/apply. That surface is still one exact run or an
+explicit operation list, in descending journal-sequence order. The existing taint
 graph stays an inspection-only neighborhood around signed records; the local and
 cloud retained planners never consume it. The retained local MCP job tools are
 available on the same constrained runner. There is still no cloud MCP job surface.
+
+Planner selectors exist as pure functions in
+`packages/runtime/src/recovery/plan.ts`. `resolveRecoverySelection` takes a
+journal state and resolves a `run`, `operations`, `dependencies`, `time` or
+`checkpoint` selector to the exact operation IDs the plan shape above already
+stores, so a signed plan still records the steps it undoes rather than the rule
+that chose them, and its digest still binds that list.
+`independentBranches` reports the branches that stay selectable while another
+operation is stopped, conflicting or in progress, holds the ones a proven
+dependency edge reaches in either direction, and reports a step that recorded no
+reads as unproven rather than as independent. Both read their dependencies from
+the one edge list `provenanceEdges` returns, the same list `orderRecoverySteps`
+proves an order from, so selection and ordering cannot hold two opinions about
+what depends on what. Every malformed, unresolvable or unprovable claim is refused
+with the valid values named: an unknown or malformed kind, an unexpected key, a
+non-UTC or unparseable instant, an inverted window, a checkpoint past the signed
+boundary, a dependency root the journal does not contain, a root that recorded no
+read set, and a branch whose order cannot be proven. Nothing falls back to
+journal order, and a selector that resolves to nothing is a zero-step plan rather
+than a refusal.
+
+The selectors are wired. `planRecoveryJob` in `packages/runtime/src/execute.ts`
+builds a `RecoveryJournalState` from the retained records and their prepared
+captures in one pass, resolves the selector once against it, and feeds the
+resolved operation IDs into the existing step loop. Every selector still lands
+on the two recorded `RecoverySelection` kinds, so a signed plan keeps naming
+the steps it undoes rather than the rule that chose them and its digest, and
+every consumer of a plan, is unchanged. Two refusals are specific to that
+boundary: a rule that reaches nothing has no list to record and is refused as
+the empty window it is, and a job identity that is already planned cannot be
+re-planned through a rule the plan does not store, because re-resolving it later
+may reach different operations. A `run` selector is recorded verbatim, so a run
+that has done nothing is still the zero-step plan it always was.
+
+A blocked step is visible in a plan rather than assumed away: a job that is
+applying, paused or in conflict holds the step at its checkpoint, and anything a
+recorded read connects to it is returned as a `blocked-by-conflict` residual
+instead of a step.
 
 ## Trust boundary
 
@@ -246,6 +283,61 @@ The budget does not grant permission: the host authorization callback must
 still allow the call. It does not make R3 reversible; a successful R3 operation
 cannot produce a verified recovery plan. Cloud/distributed budgets, mode
 rollout, weighted costs and staged reservations remain future work.
+
+### The server budget ledger is on a dispatch path
+
+`serverBudgetLedger` in `packages/runtime/src/budget.ts` is no longer a tested
+library with no host. `recoveryRuntime` takes it as the optional
+`budgetLedger`, and an irreversible operation dispatched through that runtime
+reserves a unit against it.
+
+The shape is deliberate, and it is the shape that survives. A host supplies a
+`BudgetStore` whose scope is `host` or `cluster` — a `session` store is refused
+outright, because per-process counting hands every worker the full limit and so
+authorises N times the irreversible work the cap exists to prevent — plus the
+account name and the same limits the local derivation uses. The reservation
+happens in three places, and each one is where it has to be:
+
+1. A short read of the account's prior records runs **before** the journal
+   transaction opens, so it is never waiting on a lock the whole workspace
+   shares. It decides nothing. It cannot refuse on an exhausted account, because
+   only the fenced read that would have committed the hold can also prove that
+   this operation was not already charged by a process that died mid-dispatch,
+   and a record that reads as a different operation is not the same record. What
+   it does do is surface an unreadable or self-contradictory account as an
+   incident before the writer lock is taken, rather than absorbing a broken
+   budget into a `failed` operation.
+2. The reservation itself is inside the existing transaction, at the same point
+   as authorization, and it is the authority: one compare-and-swap against a
+   version fence, so two workers cannot both receive the full limit. A
+   reservation commits before dispatch, so a process that dies in between leaves
+   a durable `reserved` hold rather than a silent gap.
+3. The hold is settled or released after the transaction returns, never inside
+   it. A failure before dispatch is the only thing that hands a unit back, and
+   it says so in writing; unknown and unfinished stay spent, because a process
+   that cannot prove it never ran has not earned a refund.
+
+One detail is the whole reason this is not the obvious wiring. The journal's
+writer lock is held for the entire transaction and is shared by every workspace
+in the journal directory, so anything slow inside it stalls unrelated work. An
+earlier attempt acquired the budget lock there and was reverted: the ledger
+retries a lost fence up to its configured attempt count, each attempt able to
+wait out the store's own lock deadline, and multiplying those while holding the
+journal lock is precisely the stall. So the in-transaction reservation takes a
+**single** fenced attempt (`attempts: 1`) and reports a lost race as
+`reason: "contended"` instead of spinning. A contended worker fails its
+operation before dispatch rather than making every other workspace wait, and
+the caller retries with a fresh operation id. The prior-record read exists for
+the same reason: it keeps the common exhausted case from reaching the store at
+all.
+
+A restarted executor does not re-observe an already-dispatched charge. It sees
+the `dispatched` journal record and records `unknown` before the budget gate, so
+it never reserves a second time, and it leaves the dead process's hold alone:
+`expireStale` makes it visible and still counts it as spent. A host that
+configures both the local cap and the ledger has to clear both, because the
+journal derivation can only see the events its own process wrote; a host that
+configures neither is denied exactly as before.
 
 ## Local managed documents
 

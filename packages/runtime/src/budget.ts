@@ -175,7 +175,14 @@ export type BudgetSpend = {
 
 export type ReserveOutcome =
   | { ok: true; hold: BudgetHold; idempotent: boolean; spend: BudgetSpend }
-  | { ok: false; reason: "exhausted"; spend: BudgetSpend };
+  | { ok: false; reason: "exhausted"; spend: BudgetSpend }
+  | {
+      ok: false;
+      /** Not a cap decision: this call lost a fence it was not allowed to
+       * retry past, so it reports contention rather than exhaustion. */
+      reason: "contended";
+      spend: BudgetSpend;
+    };
 
 export type ServerBudgetOptions = {
   store: BudgetStore;
@@ -197,8 +204,15 @@ export type ServerBudgetLedger = {
   readonly guarantee: string;
   readonly key: string;
   /** Commits the unit before dispatch, exactly where the journal derivation
-   * refuses on a null reservation. */
-  reserve(input: { operationId: string; agentId: string }): Promise<ReserveOutcome>;
+   * refuses on a null reservation. `attempts` on the input bounds the fence
+   * retries for that one call: a caller already holding an unrelated writer
+   * lock passes 1 and is told `reason: "contended"` when the race is lost,
+   * because for that caller a retry is the other lock's stall. */
+  reserve(input: {
+    operationId: string;
+    agentId: string;
+    attempts?: number;
+  }): Promise<ReserveOutcome>;
   /** Records the terminal result of an operation that may have run. A second
    * settle of the same outcome is idempotent; a different one is a conflict
    * and throws. */
@@ -447,9 +461,18 @@ export function serverBudgetLedger(
     );
   };
   /** Read, decide, commit under the caller's fence. A lost race re-reads and
-   * re-decides instead of overwriting, which is the whole fencing story. */
+   * re-decides instead of overwriting, which is the whole fencing story.
+   *
+   * `lost` exists for the one caller that cannot afford to re-decide. A
+   * dispatch path holds an unrelated writer lock across the journal
+   * transaction, so a spin here is that lock's stall, and the store behind it
+   * can be contended by a worker that is not inside a transaction at all.
+   * Such a caller names its own attempt limit and is handed the contention
+   * instead of waiting it out. */
   const update = async <T>(
     apply: (state: BudgetDayState) => readonly [BudgetDayState | null, T],
+    limit: number,
+    lost?: () => Promise<T> | T,
   ): Promise<T> => {
     for (let attempt = 1; ; attempt++) {
       const current = await readState(day());
@@ -471,10 +494,12 @@ export function serverBudgetLedger(
           );
         });
       if (won) return result;
-      if (attempt >= attempts)
+      if (attempt >= limit) {
+        if (lost) return lost();
         throw new BudgetStateError(
-          `Budget commit lost the fence ${attempts} times; refusing to guess the account state.`,
+          `Budget commit lost the fence ${limit} times; refusing to guess the account state.`,
         );
+      }
     }
   };
   /** Every terminal action starts by proving the hold it means to move. */
@@ -508,6 +533,9 @@ export function serverBudgetLedger(
     async reserve(input) {
       const operationId = identifier(input.operationId, "operation id");
       const agentId = identifier(input.agentId, "agent id");
+      const limit = input.attempts ?? attempts;
+      if (!Number.isSafeInteger(limit) || limit < 1)
+        throw new Error("Budget attempts must be a positive integer.");
       return update<ReserveOutcome>(
         (state): readonly [BudgetDayState | null, ReserveOutcome] => {
           const existing = latestHold(state, operationId);
@@ -551,6 +579,18 @@ export function serverBudgetLedger(
             { ok: true, hold, idempotent: false, spend: spendOf(next) },
           ];
         },
+        limit,
+        // Only a caller that named its own limit hears about contention. The
+        // default keeps treating an unproven account as an incident, because
+        // a refusal the caller can act on is a weaker promise than one it
+        // cannot.
+        input.attempts === undefined
+          ? undefined
+          : async () => ({
+              ok: false,
+              reason: "contended" as const,
+              spend: spendOf(await readState(day())),
+            }),
       );
     },
     async settle(input) {
@@ -578,7 +618,7 @@ export function serverBudgetLedger(
           settledAt: now().toISOString(),
         };
         return [move(state, hold, settled), settled] as const;
-      });
+      }, attempts);
     },
     async release(input) {
       const operationId = identifier(input.operationId, "operation id");
@@ -602,7 +642,7 @@ export function serverBudgetLedger(
           reason: input.reason,
         };
         return [move(state, hold, released), released] as const;
-      });
+      }, attempts);
     },
     async expire(input) {
       const operationId = identifier(input.operationId, "operation id");
@@ -619,7 +659,7 @@ export function serverBudgetLedger(
           reason: EXPIRED_REASON,
         };
         return [move(state, hold, expired), expired] as const;
-      });
+      }, attempts);
     },
     async expireStale() {
       return update((state) => {
@@ -643,7 +683,7 @@ export function serverBudgetLedger(
           { ...state, version: state.version + 1, holds },
           operationIds,
         ] as const;
-      });
+      }, attempts);
     },
     async snapshot() {
       return spendOf(await readState(day()));
