@@ -13,8 +13,8 @@ time. Configure an existing non-bare repository with a relative root:
 ```
 
 The state directory must be outside the repository. Git has no install action.
-The public actions are `write`, `delete`, `rename`, `stage`, `unstage` and
-`commit`.
+The public actions are `write`, `delete`, `rename`, `stage`, `unstage`,
+`commit` and `recoverRemote`.
 Create is the conformance name for `write` against an absent path, not another
 action. Writes accept canonical base64 up to 1 MiB and an optional POSIX mode.
 
@@ -72,6 +72,79 @@ several selected paths and a non-POSIX host remain out of scope. Symlinks,
 submodules and unmerged index entries are rejected by the path and index
 parsers, and an unborn branch has no index to capture in the first place.
 
+## Managed remote recovery
+
+`recoverRemote` undoes a managed commit that has already been pushed. It takes
+the configured remote name and the operation identifier of the commit to undo,
+and nothing else: the path, the parent, the receipt and the single changed path
+are re-derived from the repository, never taken from the caller.
+
+A pushed commit cannot be undone in place. `reset` and force-push rewrite
+history other people already have, so neither is ever used, and no existing ref
+on either side moves. The only append-only inverse is a new commit on a new
+branch, parented on the remote's current tip, with every other tree entry
+preserved. That branch is pushed once, by a plain create with no force flag,
+under `refs/heads/void/recovery/<sha256 of the operation id>`, and the local
+branch is not created at all. The remote branch and its commit are the recovery
+proposal: merging or closing it is a human decision.
+
+The proposal is deterministic and carries its own digest. It names the
+operation it is undoing, that operation's receipt under `refs/void/operations/`,
+its commit and parent, the one path the inverse returns and the base it applies
+to, and a SHA-256 digest over exactly those claims.
+
+The lifecycle is the same shape as the commit slice, with a different proof.
+Capture fetches the named remote branch into `refs/remotes/<remote>/<branch>`
+with no `+` in the refspec, so a remote that was rewritten under a stale
+tracking ref is refused rather than forced into agreement. It then re-reads the
+forward operation from its own receipt. Execution re-captures immediately
+before the write boundary, and a remote that advanced since capture is refused
+by name: the inverse is never rebuilt on the new tip. A path that changed on the
+remote after the operation is also refused, because "return this path to its
+pre-operation value" is no longer what the operator asked for. The receipt
+under `refs/void/recoveries/` is written before the push, in one
+`git update-ref --stdin` transaction, so an attempt is always recorded. The
+receipt is a record of the attempt and not proof of publication: a push is
+proved only by reading the remote ref back and finding that exact commit.
+
+Consequences of that ordering, all of them deliberate. A push the remote
+refuses is a definite failure, and reconcile reports `failed` rather than
+unknown, because the read-back proved the branch is absent. A branch that is
+present at a different commit is `unknown`, because the adapter cannot tell its
+own publication from somebody else's replacement and never pushes again. A
+read-back that cannot be answered at all is `unknown` for the same reason.
+There is no second push under any of them, and no rebase.
+
+`recoverRemote` has no managed inverse, so its observation is `r3` and the
+default runtime denies the dispatch: a host has to configure an
+irreversibility budget or a shared budget ledger before it can run at all. The
+adapter's own `recover` refuses with the same reason — deleting or closing a
+published branch is a human decision, not an inverse this adapter performs.
+`reconcileRecovery` returns unknown, because there is no recovery receipt and
+an absent one never authorizes another inverse.
+
+Refusals name their precondition: no such remote, a remote whose push URL
+differs from its fetch URL, a remote with a configured `core.sshCommand`,
+upload-pack or receive-pack program, a branch the remote does not carry, a
+remote branch that cannot be fetched, an operation with no managed receipt, an
+operation that was never published, a no-op operation, a path that moved, a
+remote that advanced, and a tampered plan.
+
+What does not exist. No pull request is opened: the proposal is a branch plus
+the text above, and turning it into a pull request needs a host credential,
+which is the GitHub adapter's work, not this one's. There is no delete, rename
+or prune of a remote or its refs, no tag handling, no submodule, no hook, no
+`git remote add` and no multi-remote operation. Only `fetch`, `ls-remote` and
+`push` are ever run against a remote, with prompts disabled and an inherited
+`GIT_SSH_COMMAND` dropped; any other transport setting in the repository's own
+config, an `http.proxy` for instance, is honoured exactly as it is for every
+other Git command this adapter runs. There is no cross-platform evidence:
+every test here is a real local remote on POSIX.
+
+The action is not in the published `git.managed` operation list, so
+`void recovery conformance` does not run it; see "## Limits" for what
+publishing it requires.
+
 ## Limits
 
 This is a cooperative POSIX profile. A noncooperative writer can still act after
@@ -93,11 +166,12 @@ than inferring one from repository state; see "## Managed commit slice" above.
 The runtime never redispatches an unknown mutation or repeats an uncertain
 inverse.
 
-Apart from that single-path `commit`, there is no branch, tag, stash, remote,
-fetch, pull, push, force push, reset, clean, checkout, merge, rebase,
-cherry-pick, submodule or hook execution. There is no directory mutation, no
-arbitrary Git command and no full repository rollback. The disposable
-conformance command has no remote and uses local-only author identity:
+Apart from the two single-path actions above, there is no branch, tag, stash,
+pull, force push, reset, clean, checkout, merge, rebase, cherry-pick, submodule
+or hook execution. The only remote commands are the three named above. There is
+no directory mutation, no arbitrary Git command and no full repository
+rollback. The disposable conformance command has no remote and uses local-only
+author identity:
 
 ```sh
 node packages/cli/bin/void.mjs recovery conformance --adapter git.managed
@@ -111,6 +185,13 @@ number copied into this document, because the profile is where operations are
 added and withdrawn. On Windows the profile publishes no operations and the
 command refuses.
 
+`recoverRemote` is implemented, wired and tested, but it is not published. The
+profile's operation list, its `excluded` entry for `remotes`, the MCP tool
+schema in `packages/cli/src/recovery-mcp.ts` and the scenario count recorded in
+`docs/RELEASE-1.0.1-MATRIX.md` all still describe a remote-free adapter. A
+conformance scenario for this action needs a real remote in the disposable
+fixture, which the fixture builder does not create today.
+
 The result is repeatable boundary evidence, not full Git certification. The
 scenarios simulate response loss in one process. They do not kill a Git child
 or certify process death, power loss, hostile writers or every Git repository
@@ -118,3 +199,7 @@ format. The commit lifecycle is additionally covered directly, and much more
 closely, by `packages/connectors/src/git/managed-commit.test.ts`, which is a
 separate suite from the conformance command and is where the receipt,
 transaction and recovery behaviour above is actually pinned.
+
+The remote recovery is covered the same way, in
+`packages/connectors/src/git/managed-remote.test.ts`, against a real bare local
+remote and a real second clone used as the noncooperative writer.

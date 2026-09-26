@@ -212,7 +212,7 @@ function pathExistsNoFollow(path: string): boolean {
   }
 }
 
-function validateToken(value: string, label: string): void {
+export function validateToken(value: string, label: string): void {
   const bytes = Buffer.from(value, "utf8");
   if (!value || bytes.length > 4096 || decodeUtf8(bytes, `Invalid ${label}.`) !== value)
     throw new Error(`Invalid ${label}.`);
@@ -223,7 +223,7 @@ function validateSelectedPath(path: string): void {
   if (/[\u0000-\u001f\u007f]/u.test(path)) throw new Error("Invalid Git path.");
 }
 
-function validateBranchRef(ref: string): void {
+export function validateBranchRef(ref: string): void {
   if (!ref.startsWith("refs/heads/") || !/^[\x20-\x7e]+$/.test(ref))
     throw new Error("An attached canonical branch is required.");
   const components = ref.split("/");
@@ -551,7 +551,7 @@ function captureWorktree(path: string, entry: GitEntry, services: CommitServices
   } finally { closeSync(fd); }
 }
 
-function assertRepositoryProfile(
+export function assertRepositoryProfile(
   services: CommitServices,
   branchRef: string,
   capturedPaths?: FilesRefPathBinding,

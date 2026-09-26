@@ -19,19 +19,27 @@ import {
   readdirSync,
 } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { Json, Observation, Outcome, Prepared, RecoveryAdapter, RecoveryOutcome } from "../recovery.ts";
 import { createManagedCommitLifecycle } from "./managed-commit.ts";
 import type { CommitCapture, CommitMutation, CommitPlan } from "./managed-commit.ts";
+import { createManagedRemoteLifecycle } from "./managed-remote.ts";
+import type {
+  RemoteCapture,
+  RemoteCommandResult,
+  RemoteMutation,
+  RemotePlan,
+  RemoteServices,
+} from "./managed-remote.ts";
 
 type LegacyMutation =
   | { action: "write"; path: string; base64: string; mode?: number }
   | { action: "delete"; path: string }
   | { action: "rename"; path: string; to: string }
   | { action: "stage" | "unstage"; path: string };
-type Mutation = LegacyMutation | CommitMutation;
+type Mutation = LegacyMutation | CommitMutation | RemoteMutation;
 type Worktree = { present: false; revision: string } | { present: true; bytes: string; digest: string; size: number; mode: number; revision: string };
 type IndexEntry = { present: false } | { present: true; mode: string; oid: string; stage: number };
 type State = { head: string; indexRevision: string; worktree: Worktree; index: IndexEntry; destination?: Worktree; destinationIndex?: IndexEntry };
@@ -81,6 +89,56 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     if (!Buffer.from(value, "utf8").equals(output)) throw new Error("Managed Git output is not UTF-8.");
     return value.trim();
   };
+  // Remote-touching Git is asynchronous and reported rather than thrown on,
+  // because a network failure has to stay distinguishable from a refusal and
+  // an uncertain outcome must never turn into a second push.
+  const networkEnv: NodeJS.ProcessEnv = {
+    ...env,
+    GIT_ASKPASS: "/bin/false",
+    SSH_ASKPASS: "/bin/false",
+    GIT_SSH_COMMAND: undefined,
+  };
+  // `GIT_ASKPASS` and `SSH_ASKPASS` point at a command that always fails, so
+  // a credential prompt dies instead of waiting on a human, and an inherited
+  // `GIT_SSH_COMMAND` is dropped rather than honoured.
+  const remoteCommand = async (
+    args: readonly string[],
+  ): Promise<RemoteCommandResult> =>
+    new Promise<RemoteCommandResult>((resolvePromise, rejectPromise) => {
+      const child = spawn("git", ["-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", ...args], {
+        cwd: root,
+        env: networkEnv,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      const cap = 64 * 1024;
+      let stdout = "";
+      let stderr = "";
+      let settled = false;
+      const finish = (result: RemoteCommandResult) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolvePromise(result);
+      };
+      // A command that never answers is an uncertain outcome, not a refusal, so
+      // it is reported by rejecting: the runtime records the dispatch as
+      // unknown and reconciliation decides it from the durable receipt and the
+      // live remote. Nothing here is ever retried.
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        child.kill("SIGKILL");
+        rejectPromise(new Error("Managed Git remote command timed out."));
+      }, 30_000);
+      child.stdout.on("data", (chunk: Buffer) => {
+        if (stdout.length < cap) stdout += chunk.toString("utf8").slice(0, cap - stdout.length);
+      });
+      child.stderr.on("data", (chunk: Buffer) => {
+        if (stderr.length < cap) stderr += chunk.toString("utf8").slice(0, cap - stderr.length);
+      });
+      child.on("error", () => finish({ status: null, signal: null, stdout, stderr }));
+      child.on("close", (status, signal) => finish({ status, signal, stdout, stderr }));
+    });
   if (git(["rev-parse", "--is-bare-repository"]) !== "false") throw new Error("Bare repositories are unsupported.");
   if (realpathSync(git(["rev-parse", "--show-toplevel"])) !== root) throw new Error("Configured root must be the canonical worktree root.");
   const gitDir = realpathSync(git(["rev-parse", "--absolute-git-dir"]));
@@ -187,6 +245,13 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
   function parse(args: Json): Mutation {
     if (!args || Array.isArray(args) || typeof args !== "object") throw new Error("Invalid Git mutation.");
     const value = args as Record<string, unknown>;
+    if (value.action === "recoverRemote") {
+      if (
+        Object.keys(value).some((key) => !["action", "remote", "operation"].includes(key)) ||
+        typeof value.remote !== "string" || typeof value.operation !== "string"
+      ) throw new Error("Invalid Git remote recovery.");
+      return { action: "recoverRemote", remote: value.remote, operation: value.operation };
+    }
     if (typeof value.action !== "string" || typeof value.path !== "string") throw new Error("Invalid Git mutation.");
     pathTarget(value.path);
     if (value.action === "commit") {
@@ -370,11 +435,36 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     rawIndex: () => readFileSync(indexPath),
     indexRevision,
   });
+  const remoteServices: RemoteServices = {
+    root,
+    gitDir,
+    commonDir,
+    indexPath,
+    identity,
+    objectFormat,
+    oidPattern,
+    git,
+    gitBuffer,
+    pathTarget,
+    currentIdentity,
+    validateRepository,
+    rawIndex: () => readFileSync(indexPath),
+    indexRevision,
+    remoteCommand,
+  };
+  const remoteLifecycle = createManagedRemoteLifecycle(remoteServices);
   const unpackCommit = (prepared: Prepared) => {
     const before = prepared.before as unknown as CommitCapture;
     const plan = prepared.plan as unknown as CommitPlan;
     if (before.kind !== "commit" || plan.kind !== "commit")
       throw new Error("Invalid managed Git commit preparation.");
+    return { before, plan };
+  };
+  const unpackRemote = (prepared: Prepared) => {
+    const before = prepared.before as unknown as RemoteCapture;
+    const plan = prepared.plan as unknown as RemotePlan;
+    if (before.kind !== "remote-recovery" || plan.kind !== "remote-recovery")
+      throw new Error("Invalid managed Git remote recovery preparation.");
     return { before, plan };
   };
   const unpack = (prepared: Prepared) => ({ before: prepared.before as unknown as Capture, plan: prepared.plan as unknown as Plan });
@@ -383,6 +473,10 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     id: "git.managed", version: "1",
     async preflight(args) {
       const mutation = parse(args);
+      if (mutation.action === "recoverRemote") {
+        const captured = await remoteLifecycle.capture(mutation);
+        return { effect: "mixed", reversibility: "r3", readiness: "verified", scope: `Cooperative POSIX Git remote ${mutation.remote}: one new recovery branch carrying the inverse of one published managed commit. The base branch and every existing ref are left untouched, and no local branch moves. This operation has no managed inverse, so a host must allow an R3 dispatch to run it.`, resources: [`git-repository:${identity}`, `git-remote:${identity}:${mutation.remote}`, `git-remote-branch:${identity}:${captured.remote.branch}`], revision: digest(captured), blastRadius: { count: 1, precision: "exact" } };
+      }
       if (mutation.action === "commit") {
         const captured = commitLifecycle.capture(mutation);
         return { effect: "write", reversibility: "r1", readiness: "verified", scope: "Cooperative POSIX Git branch tree: one selected staged path.", resources: [`git-repository:${identity}`, `git-branch-tree:${identity}:${mutation.path}`], revision: digest(captured), blastRadius: { count: 1, precision: "exact" } };
@@ -396,6 +490,11 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     },
     async prepare(args, observation, operationId) {
       const mutation = parse(args);
+      if (mutation.action === "recoverRemote") {
+        const captured = await remoteLifecycle.capture(mutation);
+        if (observation.revision !== digest(captured)) throw new Error("Git remote state conflict.");
+        return { before: captured as unknown as Json, plan: remoteLifecycle.prepare(mutation, captured, operationId) as unknown as Json };
+      }
       if (mutation.action === "commit") {
         const captured = commitLifecycle.capture(mutation);
         if (observation.revision !== digest(captured)) throw new Error("Git state conflict.");
@@ -409,6 +508,10 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     },
     async execute(args, prepared, operationId) {
       const mutation = parse(args);
+      if (mutation.action === "recoverRemote") {
+        const { before, plan } = unpackRemote(prepared);
+        return remoteLifecycle.execute(mutation, before, plan, operationId);
+      }
       if (mutation.action === "commit") {
         const { before, plan } = unpackCommit(prepared);
         return commitLifecycle.execute(mutation, before, plan, operationId);
@@ -436,6 +539,10 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
         const commit = unpackCommit(prepared);
         return commitLifecycle.reconcile(operationId, commit.before, commit.plan);
       }
+      if (before.kind === "remote-recovery" && plan.kind === "remote-recovery") {
+        const remote = unpackRemote(prepared);
+        return remoteLifecycle.reconcile(operationId, remote.before, remote.plan);
+      }
       // State equality is not an operation-specific durable receipt and can be ABA.
       return { status: "unknown" };
     },
@@ -445,6 +552,10 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
       if (maybeBefore.kind === "commit" && maybePlan.kind === "commit") {
         const commit = unpackCommit(prepared);
         return commitLifecycle.recover(commit.before, commit.plan, outcome, recoveryId);
+      }
+      if (maybeBefore.kind === "remote-recovery" && maybePlan.kind === "remote-recovery") {
+        const remote = unpackRemote(prepared);
+        return remoteLifecycle.recover(remote.before, remote.plan, outcome, recoveryId);
       }
       const { before, plan } = unpack(prepared);
       if (plan.root !== root || plan.gitDir !== gitDir || plan.commonDir !== commonDir || plan.indexPath !== indexPath || plan.objectFormat !== objectFormat || plan.identity !== identity)
@@ -473,6 +584,10 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
       if (before.kind === "commit" && plan.kind === "commit") {
         const commit = unpackCommit(prepared);
         return commitLifecycle.reconcileRecovery(commit.before, commit.plan, outcome, recoveryId);
+      }
+      if (before.kind === "remote-recovery" && plan.kind === "remote-recovery") {
+        const remote = unpackRemote(prepared);
+        return remoteLifecycle.reconcileRecovery(remote.before, remote.plan, outcome, recoveryId);
       }
       // Target equality is not an operation-specific durable receipt and can be ABA.
       return { status: "unknown" };
