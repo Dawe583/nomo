@@ -86,12 +86,44 @@ for (const { name, dir } of suites) {
       : [];
   if (name === "scripts" && files.length === 0)
     throw new Error("scripts suite has no tests");
+  results.push(
+    runSuite(name, name === "scripts" ? root : dir, files, "packages"),
+  );
+}
+
+// The cloud suites are the second half of `pnpm test` and used to run entirely
+// outside this file, as a bare `node --test cloud/*.test.mjs` with no deadline.
+// That is the same silent freeze the per-package bound exists to prevent, and it
+// is worse here: this branch added owner.test.mjs, account.test.mjs and
+// account-routes.test.mjs, so a stall in exactly the code under review printed
+// nothing at all. The suite is reported as `cloud` so a failure names the
+// invocation that produced it, because "the cloud suite exceeded its budget"
+// sends a reader to different files than a package exceeding its.
+const cloudDir = join(root, "cloud");
+if (existsSync(cloudDir)) {
+  const cloudFiles = readdirSync(cloudDir)
+    .filter((file) => file.endsWith(".test.mjs"))
+    .sort()
+    .map((file) => join(cloudDir, file));
+  if (cloudFiles.length === 0) throw new Error("cloud suite has no tests");
+  results.push(runSuite("cloud", root, cloudFiles, "cloud"));
+}
+
+/**
+ * Runs one suite under the ceiling and returns its result.
+ *
+ * The runner label travels with the result. `packages` and `cloud` are two
+ * separate `node --test` invocations over disjoint files, and a report that
+ * cannot tell them apart sends the reader to the wrong directory to look for
+ * the reason.
+ */
+function runSuite(name, dir, files, runner) {
   const started = Date.now();
   // `killSignal: SIGKILL` rather than the default SIGTERM: a suite wedged in
   // native code or holding a child that ignores SIGTERM would otherwise keep
   // the event loop alive past the timeout and defeat the bound entirely.
   const run = spawnSync("node", ["--test", "--test-reporter=tap", ...files], {
-    cwd: name === "scripts" ? root : dir,
+    cwd: dir,
     encoding: "utf8",
     timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
     killSignal: "SIGKILL",
@@ -113,20 +145,20 @@ for (const { name, dir } of suites) {
       10,
     );
 
-
-  results.push({
+  return {
     name,
+    runner,
     pass: read("pass"),
     fail: read("fail"),
     code: run.status ?? 1,
     timedOut,
     elapsed: Date.now() - started,
     output,
-  });
+  };
 }
 
 let failed = false;
-const width = Math.max(...results.map((r) => r.name.length), 7);
+const width = Math.max(...results.map((r) => `${r.runner}/${r.name}`.length), 7);
 
 for (const r of results) {
   const reasons = [];
@@ -134,13 +166,18 @@ for (const r of results) {
   // A suite that ran out of time is a distinct failure from one that failed an
   // assertion: the first is this gate's bound firing, and printing it as a bare
   // non-zero exit would point the reader at a test that may well be green. It
-  // leads the reasons, because it is the fact that explains the rest.
-  if (r.timedOut) reasons.unshift(`no completion in ${Math.round(r.elapsed / 1000)}s`);
+  // leads the reasons, because it is the fact that explains the rest. The runner
+  // is in the reason too, because `cloud` and `packages` are separate
+  // invocations and only one of them contains the code under review.
+  if (r.timedOut)
+    reasons.unshift(
+      `${r.runner} suite exceeded its budget, no completion in ${Math.round(r.elapsed / 1000)}s`,
+    );
   if (r.fail > 0) reasons.push(`${r.fail} failing`);
   if (r.pass <= 0) reasons.push("ran no tests");
 
   console.log(
-    `  ${r.name.padEnd(width)}  ${String(r.pass).padStart(3)} pass  ${String(r.fail).padStart(3)} fail  ${reasons.length ? "FAIL: " + reasons.join(", ") : "ok"}`,
+    `  ${`${r.runner}/${r.name}`.padEnd(width)}  ${String(r.pass).padStart(3)} pass  ${String(r.fail).padStart(3)} fail  ${reasons.length ? "FAIL: " + reasons.join(", ") : "ok"}`,
   );
   if (reasons.length) {
     failed = true;

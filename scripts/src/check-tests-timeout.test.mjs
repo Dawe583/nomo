@@ -49,6 +49,50 @@ test("a suite that exceeds its budget is reported as itself, not as a crash", ()
   assert.match(output, /FAIL:.*no completion/, "the suite's own line has to carry the reason");
 });
 
+test("the cloud half of the gate is under the same ceiling as the packages", () => {
+  // This is the one that was missed. `pnpm test` was `check-tests.mjs &&
+  // pnpm test:oauth`, and the second half was a bare `node --test
+  // cloud/*.test.mjs` with no deadline, so a stall in the cloud suites printed
+  // nothing. That is where this branch put its new work: owner.test.mjs,
+  // account.test.mjs and account-routes.test.mjs all run there. A bound that
+  // covered only the packages would have left the code under review unprotected.
+  const run = runGate({ VOID_SUITE_TIMEOUT_MS: "1" });
+  const output = outputOf(run);
+
+  assert.match(
+    output,
+    /cloud\s+-\d+ pass/,
+    "the cloud suite has to appear in the report at all, or it is not being run here",
+  );
+  assert.match(
+    output,
+    /FAIL: cloud suite exceeded its budget/,
+    "a cloud stall must name the cloud runner, not read as a package failure",
+  );
+});
+
+test("the report says which runner produced a failure", () => {
+  // `packages` and `cloud` are two separate `node --test` invocations over
+  // disjoint files. A line that named only the suite would send a reader to
+  // the wrong directory, which is the whole reason the label exists.
+  const output = outputOf(runGate({ VOID_SUITE_TIMEOUT_MS: "1" }));
+  // The runner is a prefix, so the cloud row reads `cloud/cloud`: the second
+  // half of `pnpm test` is both the runner and the suite name. Deliberate
+  // rather than tidied away, because the row has to be traceable to the
+  // invocation, and a reader who greps for one label has to find the other.
+  assert.match(output, /packages\/cli\b/, "package rows name the runner that produced them");
+  assert.match(
+    output,
+    /^\s+cloud\/cloud\s+-?\d+ pass/m,
+    "the cloud row is reported and carries its runner",
+  );
+  assert.match(
+    output,
+    /^\s+cloud\/cloud\s+.*FAIL: cloud suite exceeded its budget/m,
+    "a cloud failure has to say the cloud runner exceeded, not read as a package",
+  );
+});
+
 test("the default ceiling stays far above the measured cost of the slowest suite", () => {
   // A bound that fires on a healthy suite is worse than no bound, so the
   // default cannot be tightened casually. Measured on this host: packages/cli,
