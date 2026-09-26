@@ -1,5 +1,9 @@
 # VOID 0.1 beta
 
+> New here? Start with [the VOID handbook](HANDBOOK.md), or its
+> [Czech edition](HANDBOOK.cs.md). This document is the capability and boundary
+> record; the handbook is the operating guide.
+
 Current capability summary (14 September 2026):
 
 | Surface | Supported recovery | Boundary |

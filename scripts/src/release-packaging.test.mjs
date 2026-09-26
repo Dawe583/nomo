@@ -12,15 +12,42 @@ const packageDirs = readdirSync(new URL("packages/", root), { withFileTypes: tru
   .map((entry) => `packages/${entry.name}`);
 const directories = [".", ...packageDirs, "apps/control-plane", "scripts"];
 
+/**
+ * Packages allowed to be publishable, and why.
+ *
+ * The one hard rule here is that nothing publishes with sloppy metadata, and a
+ * blanket "private: true" was how this repository enforced it. `packages/verifier`
+ * is the exception because it is a single executable file of Node built-ins: it
+ * needs no build, so there is nothing that could ship broken. Every other
+ * assertion in the rule still applies to it, and adding a second entry means
+ * somebody wrote down a reason.
+ */
+const PUBLISHABLE = new Map([
+  [
+    "packages/verifier",
+    "one executable file of Node built-ins, no build step, so it cannot ship source the runtime cannot load",
+  ],
+]);
+
 for (const directory of directories) {
-  test(`${directory} stays private with coherent development release metadata`, () => {
+  test(`${directory} ${PUBLISHABLE.has(directory) ? "is publishable with" : "stays private with"} coherent development release metadata`, () => {
     const data = manifest(`${directory}/package.json`);
     assert.match(data.name, /^@void\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
     if (directory.startsWith("packages/")) {
       assert.equal(data.name, `@void/${directory.slice("packages/".length)}`);
     }
     assert.equal(data.version, "0.1.0");
-    assert.equal(data.private, true);
+    if (PUBLISHABLE.has(directory)) {
+      // Only the private flag is relaxed. Everything below still applies, and the
+      // reason has to exist, or this is a silent exemption.
+      assert.notEqual(data.private, true, `${directory} is listed publishable, so it must not also be private`);
+      assert.ok(
+        (PUBLISHABLE.get(directory) ?? "").length > 20,
+        `${directory} needs a reason a reviewer can weigh`,
+      );
+    } else {
+      assert.equal(data.private, true);
+    }
     assert.equal(data.engines.node, ">=24");
     assert.equal(typeof data.description, "string");
     assert.ok(data.description.length > 20);

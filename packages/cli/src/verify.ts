@@ -222,7 +222,7 @@ async function runStandalone(
   key: ResolvedVerifyKey,
 ): Promise<number> {
   const script = fileURLToPath(
-    new URL("../../../scripts/src/verify-ledger-standalone.mjs", import.meta.url),
+    new URL("../../verifier/verify-ledger.mjs", import.meta.url),
   );
   const scriptArgs = [script, target];
   // A key resolved from a pin is handed on explicitly, so the independent

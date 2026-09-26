@@ -83,13 +83,22 @@ describe("spawnUpstream", () => {
   test("sends newline framed JSON to a real child", async () => {
     const close = onceClose();
     const messages: string[] = [];
+    // Wait for the echo rather than sleeping: a node child needs longer to
+    // start than cat did, and a fixed sleep made this timing dependent.
+    let echoed: () => void;
+    const received = new Promise<void>((resolve) => {
+      echoed = resolve;
+    });
     const upstream = spawnUpstream(
-      ["cat"],
+      // An echo child rather than `cat`, which does not exist on Windows. The
+      // claim under test is the newline framing, not the tool that reads it.
+      [process.execPath, "-e", "process.stdin.pipe(process.stdout);"],
       {},
       {
         events: {
           onMessage(line) {
             messages.push(line);
+            echoed();
           },
           onClose: close.onClose,
           onError(err) {
@@ -100,7 +109,7 @@ describe("spawnUpstream", () => {
     );
 
     upstream.send('{"jsonrpc":"2.0","id":1,"result":{}}');
-    await new Promise<void>((resolve) => setTimeout(resolve, 20));
+    await received;
     upstream.close();
     await close.promise;
 
@@ -225,7 +234,16 @@ describe("spawnUpstream", () => {
     callbacks[0]?.();
     const event = await close.promise;
 
-    assert.equal(event.signal, "SIGKILL");
+    // The child ignores SIGTERM and would otherwise run forever, so reaching
+    // here at all proves the ladder escalated to an unconditional kill. The
+    // reported name is POSIX only: Windows has no SIGKILL and reports
+    // TerminateProcess as SIGTERM.
+    assert.ok(
+      process.platform === "win32"
+        ? event.signal === "SIGTERM" || event.signal === null
+        : event.signal === "SIGKILL",
+      `unexpected exit signal ${String(event.signal)}`,
+    );
   });
 
   test("bounds writes when a child never reads stdin", async () => {

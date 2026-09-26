@@ -5,6 +5,11 @@ Rule used: `partial` appears only with positive evidence of a real
 implemented subset. TUI and GUI rows are summary level; sibling lanes own
 that depth. R05 commit work runs in the sibling lane.
 
+The entry point for using the product is [the handbook](HANDBOOK.md), with a
+[Czech edition](HANDBOOK.cs.md). Both are verified by
+`scripts/src/handbook.test.mjs`, which fails when a command, script, path, link
+or the stated default provider stops matching the tree.
+
 ## EXECUTION-PLAN.md
 
 | Work package                                       | Status  | Evidence pointer                                                                                                                                                                                       |
@@ -14,13 +19,13 @@ that depth. R05 commit work runs in the sibling lane.
 | WP-02 streamable HTTP, progress, cancel, reconnect | partial | `packages/sdk/src/client.ts` supports an HTTP upstream, but reconnect and progress guarantees have no release evidence                                                                                 |
 | WP-03 ledger                                       | done    | `packages/ledger/src`, chain, signing, verification and attestation tested                                                                                                                             |
 | WP-04a registry runtime and evaluator              | done    | `packages/registry/src/evaluate.ts`, `precondition.ts`, `facts.ts` with tests                                                                                                                          |
-| WP-04b registry expansion by batch                 | partial | 270 entries in `packages/registry/src/registry.ts`, no batch pipeline, goal is 500                                                                                                                     |
+| WP-04b registry expansion by batch                 | partial | 268 entries in `packages/registry/src/registry.ts`, no batch pipeline, goal is 500. `fixtures/registry/wp04b-batch2.json` carries 74 entries with no source map, so a quarter of that batch has no recorded refuter |
 | WP-05 policy and blocking hold                     | done    | `packages/policy/src/hold.ts`, approvals broker, 75 policy tests per handoff table; staged hold is separate R11 work                                                                                   |
 | WP-06 connector Postgres                           | partial | Legacy capture and inverse plus restricted managed R1 in `packages/connectors/src/postgres/managed.ts`; cascade, tenant, migration, kill and partition gates open                                      |
 | WP-07 connector S3                                 | partial | Legacy byte snapshot path in `packages/connectors/src/s3/` only, fake clients in tests                                                                                                                 |
 | WP-08 probes and blast radius                      | partial | `packages/connectors/src/probes/postgres.ts` and `s3.ts` exist, provider specific certification open                                                                                                   |
 | WP-09 CLI                                          | partial | `packages/cli/src` covers classify, feed, replay, attest, taint, verify, doctor, init and recovery, but `docs/RELEASE.md` still requires real end to end verification of the approve and replay wiring |
-| WP-09b terminal interface                          | partial | `packages/cli/src/tui/` exists with tests; `node packages/cli/bin/void.mjs tui --help` currently prints a parse error, needs sibling lane check                                                        |
+| WP-09b terminal interface                          | partial | `packages/cli/src/tui/` exists with tests. `void tui --help` prints its usage line and exits 0; a sibling lane owns the depth |
 | WP-10 control plane API                            | partial | `apps/control-plane/api` plus `cloud/server.mjs` serve a single operator workspace; no multitenancy, no SSO                                                                                            |
 | WP-11 control plane UI                             | partial | `apps/control-plane/ui/src` is usable and deployed; parity and acceptance tail open, sibling lane owns depth                                                                                           |
 | WP-12 taint graph                                  | partial | `packages/ledger/src/taint/` helpers tested, product integration missing                                                                                                                               |
@@ -101,7 +106,7 @@ that depth. R05 commit work runs in the sibling lane.
 | `docs/MANAGED-FILESYSTEM.md`              | partial     | Cooperative create, write, delete and POSIX rename documented, Windows rename refused                     |
 | `docs/ADAPTER-CONFORMANCE.md`             | partial     | Filesystem and Git conformance commands pass, certification flags false                                   |
 | `docs/PRIME-HANDOFF.md`                   | partial     | S11 partial across relay paths, S13 and S15 scoped closures; S07 retained, S09, S10 and S14 followup open |
-| `docs/GO-TO-MARKET.md`                    | not started | Business execution not started; file is confidential and must leave the tree before open sourcing         |
+| `docs/GO-TO-MARKET.md`                    | absent by design | The document is confidential and is deliberately not in this repository. Nothing in the tree may depend on reading it, and business execution has not started |
 
 ## Living status records, current as of the dates inside them
 

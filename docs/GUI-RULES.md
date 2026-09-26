@@ -46,8 +46,9 @@ must not be used as the starting point for new UI features.
   Free is not evidence of a zero invoice. Do not invent limits or metrics.
 - Default new conversations to NVIDIA NIM / `z-ai/glm-5.3-flash`. Credentials
   remain server-side. Existing conversations retain their provider snapshot.
-- UI defaults to Czech and supports English. Dates and numbers follow the active
-  locale; API names, model names and conversation content remain unchanged.
+- UI defaults to English for a fresh browser and offers Czech from the header and
+  Settings; an existing stored preference is respected. Dates and numbers follow the
+  active locale; API names, model names and conversation content remain unchanged.
 
 Validate changes with `pnpm run typecheck`, `pnpm test`, `pnpm build:web` and the
 relevant browser flow. Use `pnpm desktop:test` for shared runtime changes. Check
@@ -100,11 +101,13 @@ BREAKPOINTS: 1440 lock, 1068, 834, 734, 640, 480. Hero 56 -> 40 (1068) -> 34 (64
 ## Canonical brand and motion (2026-09-11 refinement)
 
 The only approved logo is the aperture in `Dawe583/void-empty` at commit
-`25b5e62d49d614f88804b72b55609c74092d98d8`,
-`artifacts/void/src/components/site/shell.tsx` (`Brand`). Preserve its exact SVG
-geometry: four brackets, orange square, central dot. Use `ui/src/brand.tsx` on
-all new GUI brand surfaces; favicon is the original `public/favicon.svg` from
-that repository. Do not substitute ASCII `[V]`, letter tiles, or a new symbol.
+`25b5e62d49d614f88804b72b55609c74092d98d8`. It reached this repository through the
+removed `artifacts/` site tree, so that path no longer resolves; the component that
+now carries the mark is `apps/control-plane/ui/src/brand.tsx` (`Brand`). Preserve
+its exact SVG geometry: four brackets, orange square, central dot. Use
+`ui/src/brand.tsx` on all new GUI brand surfaces; favicon is the original
+`public/favicon.svg` from that repository. Do not substitute ASCII `[V]`, letter
+tiles, or a new symbol.
 
 Match the website's self-hosted Instrument Serif, Inter, and JetBrains Mono.
 English is the default for a fresh browser; Czech remains available through the

@@ -9,6 +9,7 @@
 import { mkdtemp, readFile, writeFile, rm, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import assert from "node:assert/strict";
 
@@ -16,7 +17,9 @@ import { createVoidClient } from "../../packages/sdk/src/index.ts";
 import { listenControlPlane } from "../../apps/control-plane/api/server.ts";
 import { devKeyProvider } from "../../packages/ledger/src/sign.ts";
 
-const root = new URL("../..", import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: on Windows the pathname is "/C:/..." and
+// joining a fixture onto it resolves against the current drive.
+const root = fileURLToPath(new URL("../..", import.meta.url));
 const fixturesPolicy = join(root, "fixtures", "e2e-policy.yaml");
 const fixturesUpstream = join(root, "fixtures", "e2e-server.mjs");
 
@@ -186,7 +189,9 @@ async function runArcMoment() {
   void denyResult;
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+// fileURLToPath, not URL.pathname: on Windows argv[1] is a native path and the
+// pathname is "/C:/...", so this guard never matched and the script never ran.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const args = new Set(process.argv.slice(2));
   if (!args.has("all")) {
     console.error("usage: node scripts/src/e2e-arc.mjs all");

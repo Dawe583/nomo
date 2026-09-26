@@ -304,7 +304,7 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
   const spki = await key.publicKey(keyId);
   const standalone = fileURLToPath(
     new URL(
-      "../../../../scripts/src/verify-ledger-standalone.mjs",
+      "../../../verifier/verify-ledger.mjs",
       import.meta.url,
     ),
   );

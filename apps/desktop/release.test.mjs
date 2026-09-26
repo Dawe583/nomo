@@ -12,7 +12,9 @@ test('local Mac release metadata agrees on 1.0.1', async () => {
   assert.equal(packageJson.version, '1.0.1');
   assert.equal(tauri.version, '1.0.1');
   assert.match(cargo, /^version = "1\.0\.1"$/m);
-  assert.match(lock, /name = "void-desktop"\nversion = "1\.0\.1"/);
+  // \r? on every line break: a CRLF checkout would otherwise fail this on the
+  // line ending rather than on the version, which is the whole claim.
+  assert.match(lock, /name = "void-desktop"\r?\nversion = "1\.0\.1"/);
 });
 
 /** A keychain with no code-signing identity, so the ad-hoc path is reachable. */

@@ -14,10 +14,11 @@ import { demoRouter } from "../../cloud/demo.mjs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createControlPlaneServer } from "../../apps/control-plane/api/server.ts";
 import { launchBrowser, openPage } from "./cdp.mjs";
 
-const ROOT = new URL("../../", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 
 export const DESKTOP_VIEWPORTS = ["1024x768", "1280x800", "1440x900"];
 export const PHONE_VIEWPORTS = ["320x568", "390x844", "430x932"];

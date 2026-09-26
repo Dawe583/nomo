@@ -1,6 +1,8 @@
 # VOID operations runbook
 
-This runbook is for the dev-tier product in this repository.
+This runbook is for the dev-tier product in this repository. For the operator
+guide that walks through using the product end to end, see
+[the VOID handbook](HANDBOOK.md) or [its Czech edition](HANDBOOK.cs.md).
 
 ## Policy grammar quick table
 

@@ -2,12 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 
 const execute = promisify(execFile);
 const script = new URL("./bench.mjs", import.meta.url);
 
 async function run(...args) {
-  return execute(process.execPath, [script.pathname, ...args], {
+  // fileURLToPath, not script.pathname: on Windows the pathname is
+  // "/C:/.../bench.mjs", which execFile resolves against the current drive and
+  // turns into "C:\C:\...".
+  return execute(process.execPath, [fileURLToPath(script), ...args], {
     timeout: 30_000,
     // An unusable ambient key proves the benchmark does not read user keys.
     env: { ...process.env, VOID_SIGNING_KEY: "not-a-signing-key" },

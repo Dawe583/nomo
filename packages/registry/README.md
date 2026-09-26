@@ -23,24 +23,23 @@ Function and the runtime all read the same module.
 
 ## Where the data actually lives
 
-`api/_registry.ts`, still, and `src/index.ts` re-exports it. That direction is
-deliberate: a relative import that leaves `api/` raises the inferred emit root of
-`api/tsconfig.json` to the repository root, every compiled function moves from
-`<out>/registry.js` to `<out>/api/registry.js`, and Vercel resolves no route at
-all. `tsc` exits 0 on that. See `docs/DECISIONS.md` 6b.
+In this package: `src/registry.ts` holds the data and `src/index.ts`
+re-exports it. No second copy may exist anywhere in the repository.
 
-The move happens at WP-04a, in the opposite direction: `api/_registry.ts` becomes
-`export * from "@void/registry";`, a bare specifier resolved through
-`node_modules`, which is the only form that leaves the flat emit untouched. It is
-gated on a preview deploy.
+That direction is not a preference. While the data lived under the `api/`
+directory, a relative import that left it raised TypeScript's inferred emit root to
+the repository root, every compiled function moved from `<out>/registry.js` to
+`<out>/api/registry.js`, and Vercel resolved no route at all while `tsc` still
+exited 0. The decision is in `docs/DECISIONS.md` 6b. That `api/` tree no longer
+exists: the site was split out of this repository, and with it went the layout that
+made the import direction load bearing.
 
-Consumers today are unchanged and must stay that way until that commit:
-`artifacts/void/src/pages/registry.tsx` and `artifacts/api-server` use the
-`@shared/*` alias, `api/registry.ts` uses `./_registry_http`.
+Consumers import `@void/registry` and reach the same module the CLI, the
+workbench and the runtime use.
 
 ## Public surface
 
-Re-exported from `api/_registry.ts`:
+Re-exported from `src/registry.ts`:
 
 - Types: `RegistryTone`, `RegistryCase`, `RegistryEntry`, `RegistryQuery`
 - Data: `registry`, `REGISTRY_VERSION`, `REGISTRY_DISCLAIMER`, `TONE_LABEL`

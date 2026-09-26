@@ -13,6 +13,7 @@ import { LocalSnapshotStore } from "../../packages/connectors/src/snapshot/local
 import { sha256Digest } from "../../packages/connectors/src/snapshot/store.ts";
 import { jsonlStore } from "../../packages/ledger/src/store.ts";
 import { devKeyProvider } from "../../packages/ledger/src/sign.ts";
+import { parseInvocation } from "../../packages/cli/src/argv.ts";
 
 const root = new URL("../..", import.meta.url);
 const rootPath = fileURLToPath(root);
@@ -72,9 +73,11 @@ function parseJsonLines(buffer) {
   return messages;
 }
 
+/** Ask the parser which commands exist rather than grepping a source file for a
+ * quoted word. The grep broke the moment the command list moved out of the CLI
+ * barrel, and it would have kept passing while the command did not work. */
 function hasApproveSurface() {
-  const source = readFileSyncText("packages/cli/src/index.ts");
-  return /"approve"/.test(source);
+  return parseInvocation(["approve"]).ok;
 }
 
 function hasHttpSurface() {
@@ -313,7 +316,9 @@ async function runAttestationMoment(state) {
   const generated = await runCommand(process.execPath, ["--input-type=module", "-e", code, state.ledgerDir, state.workspace], { env: state.env });
   assert.equal(generated.code, 0, generated.stderr);
   const { path, publicKey } = JSON.parse(generated.stdout.trim());
-  assert.match(path, /attestations\/\d+\.json$/);
+  // Either separator: the path is a native one, so it carries backslashes on
+  // Windows and the claim under test is the file name, not the separator.
+  assert.match(path, /attestations[/\\]\d+\.json$/);
   const verified = await runCli(["verify", "--ledger", state.ledgerDir, "--attestation", path, "--key", publicKey], state.env);
   assert.equal(verified.code, 0, verified.stderr);
   assert.match(verified.stdout, /attestation: match/);

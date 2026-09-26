@@ -303,8 +303,18 @@ function atomicWrite(dir: string, name: string, value: unknown, fs: ApprovalFs):
       fs.closeSync(fd);
     }
     fs.renameSync(temporary, join(dir, name));
-    const directory = fs.openSync(dir, "r");
-    try { fs.fsyncSync(directory); } finally { fs.closeSync(directory); }
+    // Node cannot flush a Windows directory, and Windows does not expose the
+    // handle it would need. The file contents were flushed above and the rename
+    // is journalled, so the entry is durable there. Same guard as
+    // workbench/src/storage.ts, which hit the identical EPERM.
+    if (process.platform !== "win32") {
+      const directory = fs.openSync(dir, "r");
+      try {
+        fs.fsyncSync(directory);
+      } finally {
+        fs.closeSync(directory);
+      }
+    }
   } catch (error) {
     try { fs.unlinkSync(temporary); } catch { /* Rename may already have committed. */ }
     throw error;
@@ -331,7 +341,18 @@ function secureDirectory(dir: string, fs: ApprovalFs): void {
 
 function assertPrivateDirectory(dir: string, fs: ApprovalFs): void {
   const stat = fs.lstatSync(dir);
-  if (!stat.isDirectory() || (stat.mode & 0o077) !== 0 ||
+  if (!stat.isDirectory()) {
+    throw new Error("approval state requires an owner-only directory without symlinks");
+  }
+  // Windows has no POSIX mode bits: every file and directory reports 0666, so
+  // the bit test is not a weaker check there, it is a meaningless one that
+  // refuses every directory including a freshly created one. What lstat still
+  // proves on Windows is that this is a real directory rather than a symlink or
+  // junction, and that is asserted above. The owner-only guarantee itself is
+  // NOT established here on Windows: it rests on the inherited ACL of the
+  // operator profile. Narrowing it is open work, not a claim this file makes.
+  if (process.platform === "win32") return;
+  if ((stat.mode & 0o077) !== 0 ||
     (process.getuid !== undefined && stat.uid !== process.getuid())) {
     throw new Error("approval state requires an owner-only directory without symlinks");
   }
@@ -339,7 +360,11 @@ function assertPrivateDirectory(dir: string, fs: ApprovalFs): void {
 
 function assertPrivateFile(path: string, fs: ApprovalFs): void {
   const stat = fs.lstatSync(path);
-  if (!stat.isFile() || (stat.mode & 0o077) !== 0 || stat.size > 1024 * 1024 ||
+  if (!stat.isFile() || stat.size > 1024 * 1024) {
+    throw new Error("approval state requires a bounded owner-only regular file");
+  }
+  if (process.platform === "win32") return;
+  if ((stat.mode & 0o077) !== 0 ||
     (process.getuid !== undefined && stat.uid !== process.getuid())) {
     throw new Error("approval state requires a bounded owner-only regular file");
   }

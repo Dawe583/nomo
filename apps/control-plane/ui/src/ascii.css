@@ -200,10 +200,10 @@ dialog {
   max-width: 42ch;
 }
 :root[data-motion="on"] .ascii-wordmark {
-  animation: terminal-reveal 0.65s steps(8, end) both;
+  animation: v-terminal-reveal 0.65s steps(8, end) both;
 }
 :root[data-motion="on"] .demo-thinking .void-aperture {
-  animation: terminal-pulse 1.2s steps(3, end) infinite;
+  animation: v-terminal-pulse 1.2s steps(3, end) infinite;
 }
 :root[data-motion="on"] button {
   transition:
@@ -211,7 +211,7 @@ dialog {
     border-color 0.12s,
     box-shadow 0.12s;
 }
-@keyframes terminal-reveal {
+@keyframes v-terminal-reveal {
   from {
     clip-path: inset(0 100% 0 0);
     opacity: 0.25;
@@ -221,7 +221,7 @@ dialog {
     opacity: 1;
   }
 }
-@keyframes terminal-pulse {
+@keyframes v-terminal-pulse {
   50% {
     opacity: 0.35;
   }

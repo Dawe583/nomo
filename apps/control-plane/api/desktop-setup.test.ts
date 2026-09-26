@@ -78,9 +78,16 @@ test('custom credential destinations, oversized files and symlinks fail closed',
   const path = await f.save(auth, ' '.repeat(1_048_577));
   await assert.rejects(importDesktopProvider('opencode:zen', f.env, f.app), /unavailable/);
   await rm(path);
-  const target = await f.save('secret.json', { opencode: { type: 'api', key } });
-  await symlink(target, path);
-  await assert.rejects(importDesktopProvider('opencode:zen', f.env, f.app), /unavailable/);
+  // A file symlink needs Developer Mode or elevation on Windows, and a junction
+  // only works for a directory, so the symlink refusal is asserted where the
+  // fixture can actually be built. The destination and size refusals above run
+  // everywhere. The product refuses a symlink on every platform; only this test
+  // is narrower.
+  if (process.platform !== 'win32') {
+    const target = await f.save('secret.json', { opencode: { type: 'api', key } });
+    await symlink(target, path);
+    await assert.rejects(importDesktopProvider('opencode:zen', f.env, f.app), /unavailable/);
+  }
 });
 
 test('rejected credential, empty catalog and network failure keep previous provider', async t => {

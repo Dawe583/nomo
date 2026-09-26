@@ -23,16 +23,32 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { measure, DESKTOP_VIEWPORTS, PHONE_VIEWPORTS, SHORT_LANDSCAPE } from "./ui-matrix.mjs";
+import { chromiumAvailable } from "./cdp.mjs";
 
-const built = existsSync(new URL("../../dist/web/index.html", import.meta.url));
-const reportPromise = built ? measure() : null;
+/** Why this gate did not run, or null when it did.
+ *
+ * Both conditions used to hide. A missing dist/web skipped the suite, so a clean
+ * clone reported twenty-two passing tests that had never executed, and a host
+ * without a Chromium crashed the whole run instead of skipping. Both are the
+ * same failure: a green pipeline that says nothing about the browser. Name the
+ * reason so the gap is visible in the output. */
+const gateGap = !existsSync(new URL("../../dist/web/index.html", import.meta.url))
+  ? "dist/web is missing; run node scripts/src/build-web.mjs"
+  : !chromiumAvailable()
+    ? "no Chromium on this host; set VOID_QA_CHROMIUM to run the browser gate"
+    : null;
+const skip = gateGap === null ? false : gateGap;
+const reportPromise = gateGap === null ? measure() : null;
 const report = await (reportPromise ?? Promise.resolve(null));
+// Recorded as a todo as well as skipped, so an unwitnessed browser gate reads as
+// outstanding work in the summary rather than as a deliberate pass.
+if (gateGap !== null) test.todo(`browser layout gate did not run: ${gateGap}`);
 if (report && process.env.VOID_QA_REPORT) {
   const { writeFile } = await import("node:fs/promises");
   await writeFile(process.env.VOID_QA_REPORT, JSON.stringify(report, null, 2));
 }
 
-test("D04.06 viewport matrix has no horizontal overflow and a reachable Send", { skip: !built && "dist/web is missing; run node scripts/src/build-web.mjs" }, () => {
+test("D04.06 viewport matrix has no horizontal overflow and a reachable Send", { skip }, () => {
   for (const row of report.viewportMatrix) {
     assert.equal(row.scrollWidth, row.clientWidth, `${row.viewport} overflows horizontally by ${row.horizontalOverflow}px: ${JSON.stringify(row.offenders.slice(0, 3))}`);
     const send = row.raw.send ?? row.raw.stop;
@@ -42,7 +58,7 @@ test("D04.06 viewport matrix has no horizontal overflow and a reachable Send", {
   }
 });
 
-test("D04.07 transcript keeps 200px at 320x568 and 60% of the work area on desktop", { skip: !built && "dist/web is missing" }, () => {
+test("D04.07 transcript keeps 200px at 320x568 and 60% of the work area on desktop", { skip }, () => {
   for (const name of PHONE_VIEWPORTS) {
     const phone = report.viewportMatrix.find((row) => row.viewport === name);
     assert.ok(phone.transcriptHeight >= 200, `${name} transcript is ${phone.transcriptHeight}px`);
@@ -61,7 +77,7 @@ test("D04.07 transcript keeps 200px at 320x568 and 60% of the work area on deskt
   }
 });
 
-test("D04.07 the transcript share is re-derived at every viewport, not only on desktop", { skip: !built && "dist/web is missing" }, () => {
+test("D04.07 the transcript share is re-derived at every viewport, not only on desktop", { skip }, () => {
   // One floor per viewport class. The percentages are recomputed from the two
   // measured pixel values, so a recorded string can never carry a stale claim.
   const floors = { phone: 65, tablet: 75, landscape: 70, desktop: 70, "short-landscape": 45 };
@@ -85,7 +101,7 @@ test("D04.07 the transcript share is re-derived at every viewport, not only on d
   assert.equal(seen.length, 9, "the share table must cover the whole D04.06 viewport set");
 });
 
-test("D04.07 a long draft plus an attachment keeps Send reachable at 320x568", { skip: !built && "dist/web is missing" }, () => {
+test("D04.07 a long draft plus an attachment keeps Send reachable at 320x568", { skip }, () => {
   const state = report.stackedNotices.attachmentState;
   assert.ok(state, "no attachment state was measured");
   assert.ok(state.attachments, "the attachment never reached the notices region");
@@ -95,7 +111,7 @@ test("D04.07 a long draft plus an attachment keeps Send reachable at 320x568", {
   assert.equal(state.afterRemove, null, "the attachment could not be removed");
 });
 
-test("D04.07 the selected tool row is reachable from the palette and keeps Send reachable at 320x568", { skip: !built && "dist/web is missing" }, () => {
+test("D04.07 the selected tool row is reachable from the palette and keeps Send reachable at 320x568", { skip }, () => {
   const state = report.stackedNotices.toolState;
   const expanded = report.stackedNotices.toolExpandedState;
   assert.ok(state, "no selected tool row was measured");
@@ -115,10 +131,10 @@ test("D04.07 the selected tool row is reachable from the palette and keeps Send 
   assert.ok(expanded.transcript && expanded.transcript.height >= 140, `transcript collapsed to ${expanded.transcript?.height}px with the tool row expanded`);
 });
 
-test("D04.04 an IME composition keeps its characters and does not submit", { skip: !built && "dist/web is missing" }, () => {
+test("D04.04 an IME composition keeps its characters and does not submit", { skip }, () => {
   const ime = report.ime;
   // The composition is real: the browser itself produced these keydowns and
- // reported isComposing, so this is not a synthetic flag the app handed us.
+  // reported isComposing, so this is not a synthetic flag the app handed us.
   assert.equal(ime.composing.draft, "př", "the composition never reached the composer");
   const duringKey = ime.duringComposition.keys.at(-1);
   assert.ok(duringKey, "no keydown was recorded during the composition");
@@ -141,7 +157,7 @@ test("D04.04 an IME composition keeps its characters and does not submit", { ski
   assert.equal(ime.committed.draft, ime.text, "committing the composition lost characters");
 });
 
-test("D04.01 every required Mac route has a server-served, rendering surface", { skip: !built && "dist/web is missing" }, () => {
+test("D04.01 every required Mac route has a server-served, rendering surface", { skip }, () => {
   const expected = {
     chat: "/chat",
     overview: "/overview",
@@ -177,7 +193,7 @@ test("D04.01 every required Mac route has a server-served, rendering surface", {
   assert.ok(report.demo.length > 0, "the public demo surface was never measured");
 });
 
-test("D04.05 both themes and both locales render the long conversation", { skip: !built && "dist/web is missing" }, () => {
+test("D04.05 both themes and both locales render the long conversation", { skip }, () => {
   assert.equal(report.themeLocale.length, 4);
   for (const row of report.themeLocale) {
     assert.equal(row.errorBoundary, false, `${row.theme}/${row.locale} fell into the error boundary`);
@@ -190,7 +206,7 @@ test("D04.05 both themes and both locales render the long conversation", { skip:
   }
 });
 
-test("D04.05 the public demo renders in both themes and both locales", { skip: !built && "dist/web is missing" }, () => {
+test("D04.05 the public demo renders in both themes and both locales", { skip }, () => {
   const combos = report.demo.filter((row) => row.appliedTheme);
   assert.equal(combos.length, 4);
   for (const row of combos) {
@@ -210,7 +226,7 @@ test("D04.05 the public demo renders in both themes and both locales", { skip: !
   }
 });
 
-test("D04.08 every keyboard focus stop shows a visible ring", { skip: !built && "dist/web is missing" }, () => {
+test("D04.08 every keyboard focus stop shows a visible ring", { skip }, () => {
   for (const [name, stops] of [["desktop", report.focus.desktop], ["mobile", report.focus.mobile]]) {
     assert.ok(stops.length > 10, `the ${name} tab walk only reached ${stops.length} stops`);
     for (const stop of stops) {
@@ -230,7 +246,7 @@ test("D04.08 every keyboard focus stop shows a visible ring", { skip: !built && 
   }
 });
 
-test("D04.08 prefers-reduced-motion removes animation and transition", { skip: !built && "dist/web is missing" }, () => {
+test("D04.08 prefers-reduced-motion removes animation and transition", { skip }, () => {
   const [normal, reduced] = report.reducedMotion;
   assert.equal(normal.prefersReduce, false);
   assert.ok(normal.animated.length > 0, "the motion fixture measured no animated element at all");
@@ -238,24 +254,24 @@ test("D04.08 prefers-reduced-motion removes animation and transition", { skip: !
   assert.deepEqual(reduced.animated, [], "reduced motion still animates");
 });
 
-test("D04.08 200% zoom keeps the page free of horizontal overflow", { skip: !built && "dist/web is missing" }, () => {
+test("D04.08 200% zoom keeps the page free of horizontal overflow", { skip }, () => {
   for (const row of report.zoom200) {
     assert.equal(row.scrollWidth, row.clientWidth, `${row.viewport} at 200% overflows by ${row.horizontalOverflow}px`);
     assert.equal(row.sendHit, "reachable", `${row.viewport} at 200% Send is ${row.sendHit}`);
   }
 });
 
-test("D04.04 the draft survives a route change and an in-place view switch", { skip: !built && "dist/web is missing" }, () => {
+test("D04.04 the draft survives a route change and an in-place view switch", { skip }, () => {
   assert.equal(report.draftSurvival.afterRoute, "Draft, který musí přežít změnu trasy i view.");
   assert.equal(report.draftSurvival.afterToggle, "Draft, který musí přežít přepnutí view v rámci chatu.");
 });
 
-test("D04.04 cancelling a run returns focus to the composer", { skip: !built && "dist/web is missing" }, () => {
+test("D04.04 cancelling a run returns focus to the composer", { skip }, () => {
   assert.equal(report.cancelFocus.runningStopHit, "reachable", "Stop was not reachable while the run was live");
   assert.equal(report.cancelFocus.focusAfterCancel, "composer-textarea", "focus fell to " + report.cancelFocus.focusAfterCancel + " after cancelling the run");
 });
 
-test("D04.08 touch targets reach 44px on a phone viewport", { skip: !built && "dist/web is missing" }, () => {
+test("D04.08 touch targets reach 44px on a phone viewport", { skip }, () => {
   // The only measured sub-44px node is the file input inside the 44px attach
   // label; the label, not the hidden input, is the touch target.
   const offending = report.touchTargets.tinyTargets.filter((target) => !target.node.startsWith("input"));
@@ -269,7 +285,7 @@ test("D04.08 touch targets reach 44px on a phone viewport", { skip: !built && "d
 // The internal gallery documents the shipped components, so it is held to the
 // same measured gates as the application. Each assertion is a browser fact.
 
-test("D02.07 the gallery is a served, internal page outside the user navigation", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 the gallery is a served, internal page outside the user navigation", { skip }, () => {
   assert.equal(report.gallery.path, "/gallery", "the harness measured " + report.gallery.path);
   // Served as a document, not a 404 and not a redirect. The allowlist lives in
   // apps/control-plane/api/server.ts:619; without it the page would not exist.
@@ -301,7 +317,7 @@ test("D02.07 the gallery is a served, internal page outside the user navigation"
   );
 });
 
-test("D02.07 the gallery fetches no workspace data", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 the gallery fetches no workspace data", { skip }, () => {
   // The gallery mounts from Root, before App, so none of the provider,
   // session, approval, overview or capability probes ever fire. If the gate
   // moves back inside App, this goes red with a real request list.
@@ -317,7 +333,7 @@ test("D02.07 the gallery fetches no workspace data", { skip: !built && "dist/web
   );
 });
 
-test("D02.07 the gallery renders no credential in the DOM", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 the gallery renders no credential in the DOM", { skip }, () => {
   // The evidence block feeds a synthetic secret through RedactedJson. If the
   // key-based or the value-based redaction ever stops applying, the string
   // lands in the serialised DOM and this goes red.
@@ -328,7 +344,7 @@ test("D02.07 the gallery renders no credential in the DOM", { skip: !built && "d
   assert.equal(report.gallery.reach.keptPublicValue, true, "redaction removed a value that is not a secret");
 });
 
-test("D02.07 the gallery has no horizontal overflow at any D04.06 viewport", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 the gallery has no horizontal overflow at any D04.06 viewport", { skip }, () => {
   assert.equal(report.gallery.viewports.length, 9);
   for (const row of report.gallery.viewports) {
     assert.equal(row.errorBoundary, false, `gallery ${row.viewport} fell into the error boundary`);
@@ -337,7 +353,7 @@ test("D02.07 the gallery has no horizontal overflow at any D04.06 viewport", { s
   }
 });
 
-test("D02.07 the gallery renders its real sections in light and dark", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 the gallery renders its real sections in light and dark", { skip }, () => {
   assert.equal(report.gallery.themes.length, 2);
   for (const row of report.gallery.themes) {
     assert.equal(row.appliedTheme, row.theme, `the gallery did not apply ${row.theme}`);
@@ -348,7 +364,7 @@ test("D02.07 the gallery renders its real sections in light and dark", { skip: !
   }
 });
 
-test("D02.07 every gallery focus stop shows a visible ring", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 every gallery focus stop shows a visible ring", { skip }, () => {
   for (const [name, stops] of [["desktop", report.gallery.focus.desktop], ["mobile", report.gallery.focus.mobile]]) {
     assert.ok(stops.length > 8, `the ${name} gallery walk only reached ${stops.length} stops`);
     for (const stop of stops) {
@@ -359,7 +375,7 @@ test("D02.07 every gallery focus stop shows a visible ring", { skip: !built && "
   }
 });
 
-test("D02.07 the gallery honours prefers-reduced-motion", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 the gallery honours prefers-reduced-motion", { skip }, () => {
   const [normal, reduced] = report.gallery.reducedMotion;
   assert.equal(normal.prefersReduce, false);
   assert.ok(normal.animated.length > 0, "the gallery fixture measured no animated element at all");
@@ -367,13 +383,13 @@ test("D02.07 the gallery honours prefers-reduced-motion", { skip: !built && "dis
   assert.deepEqual(reduced.animated, [], "the gallery still animates under reduced motion");
 });
 
-test("D02.07 the gallery has no horizontal overflow at 200% zoom", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 the gallery has no horizontal overflow at 200% zoom", { skip }, () => {
   for (const row of report.gallery.zoom200) {
     assert.equal(row.scrollWidth, row.clientWidth, `the gallery at 200% in ${row.viewport} (${row.cssViewport}) overflows by ${row.horizontalOverflow}px: ${JSON.stringify(row.offenders.slice(0, 3))}`);
   }
 });
 
-test("D02.07 every gallery touch target reaches 44px on a phone viewport", { skip: !built && "dist/web is missing" }, () => {
+test("D02.07 every gallery touch target reaches 44px on a phone viewport", { skip }, () => {
   // The application sizes a checkbox at 20px and its wrapping label at 44px
   // (styles.css:126-142), so the label is the target. Every other control has
   // to reach 44px on its own.
@@ -387,7 +403,7 @@ test("D02.07 every gallery touch target reaches 44px on a phone viewport", { ski
   }
 });
 
-test("D03.01 the shared DataTable refresh exposes a pending state", { skip: !built && "dist/web is missing" }, () => {
+test("D03.01 the shared DataTable refresh exposes a pending state", { skip }, () => {
   const refresh = report.dataTableRefresh;
   assert.equal(refresh.settled.found, true, "the shared DataTable refresh button was never rendered");
   assert.equal(refresh.heldCount > 0, true, "the refetch was never held, so no pending state could be observed");

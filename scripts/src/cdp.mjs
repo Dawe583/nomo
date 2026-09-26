@@ -1,29 +1,87 @@
 // Minimal Chrome DevTools Protocol driver for local VOID web UI measurement.
-// No new dependency: Node's global WebSocket plus the Chromium binary already
-// cached on this machine. Everything binds to 127.0.0.1 only.
+// No new dependency: Node's global WebSocket plus a Chromium binary this
+// machine already has. Everything binds to 127.0.0.1 only.
 import { spawn } from "node:child_process";
 import { existsSync, readdirSync, rmSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
-const CACHE = join(homedir(), "Library/Caches/ms-playwright");
+/** Where a Chromium might live, per platform.
+ *
+ * The previous list only ever looked at a macOS cache with macOS binary
+ * layouts, so on any other host findChromium could not succeed. Callers turned
+ * that into a thrown error and a failed suite, which is not the same as
+ * reporting that the gate did not run. The browser is optional tooling here, so
+ * absence is a value the caller can skip on and name. */
+function chromiumCandidates() {
+  const home = homedir();
+  if (process.platform === "win32") {
+    const cache = join(home, "AppData", "Local", "ms-playwright");
+    const dirs = existsSync(cache) ? readdirSync(cache) : [];
+    return dirs
+      .filter((d) => d.startsWith("chromium_headless_shell") || d.startsWith("chromium-"))
+      .sort()
+      .reverse()
+      .flatMap((d) => [
+        join(cache, d, "chrome-win", "headless_shell.exe"),
+        join(cache, d, "chrome-win", "chrome.exe"),
+      ]);
+  }
+  if (process.platform === "linux") {
+    const roots = [join(home, ".cache", "ms-playwright"), "/usr/bin", "/usr/local/bin"];
+    const cached = roots.flatMap((cache) =>
+      (existsSync(cache) ? readdirSync(cache) : [])
+        .filter((d) => d.startsWith("chromium_headless_shell") || d.startsWith("chromium-"))
+        .sort()
+        .reverse()
+        .flatMap((d) => [
+          join(cache, d, "chrome-linux", "headless_shell"),
+          join(cache, d, "chrome-linux", "chrome"),
+        ]),
+    );
+    return [...cached, "/usr/bin/chromium", "/usr/bin/chromium-browser", "/usr/bin/google-chrome"];
+  }
+  const cache = join(home, "Library/Caches/ms-playwright");
+  const dirs = existsSync(cache) ? readdirSync(cache) : [];
+  return [
+    ...dirs
+      .filter((d) => d.startsWith("chromium_headless_shell"))
+      .sort()
+      .reverse()
+      .map((d) => join(cache, d, "chrome-mac-arm64", "chrome-headless-shell")),
+    ...dirs
+      .filter((d) => d.startsWith("chromium-"))
+      .sort()
+      .reverse()
+      .flatMap((d) => [
+        join(cache, d, "chrome-mac-arm64", "Google Chrome for Testing.app", "Contents/MacOS", "Google Chrome for Testing"),
+        join(cache, d, "chrome-mac-x64", "Google Chrome for Testing.app", "Contents/MacOS", "Google Chrome for Testing"),
+      ]),
+  ];
+}
 
+/** The Chromium to drive, or null when this machine has none. */
 export function findChromium() {
-  if (process.env.VOID_QA_CHROMIUM) return process.env.VOID_QA_CHROMIUM;
-  const candidates = [];
-  const dirs = existsSync(CACHE) ? readdirSync(CACHE) : [];
-  for (const dir of dirs.filter((d) => d.startsWith("chromium_headless_shell")).sort().reverse())
-    candidates.push(join(CACHE, dir, "chrome-mac-arm64", "chrome-headless-shell"));
-  for (const dir of dirs.filter((d) => d.startsWith("chromium-")).sort().reverse())
-    candidates.push(join(CACHE, dir, "chrome-mac-arm64", "Google Chrome for Testing.app", "Contents/MacOS/Google Chrome for Testing"));
-  const found = candidates.find((path) => existsSync(path));
-  if (!found) throw new Error("No local Chromium binary found; set VOID_QA_CHROMIUM.");
-  return found;
+  if (process.env.VOID_QA_CHROMIUM) {
+    if (!existsSync(process.env.VOID_QA_CHROMIUM))
+      throw new Error(`VOID_QA_CHROMIUM does not exist: ${process.env.VOID_QA_CHROMIUM}`);
+    return process.env.VOID_QA_CHROMIUM;
+  }
+  return chromiumCandidates().find((path) => existsSync(path)) ?? null;
+}
+
+export function chromiumAvailable() {
+  return findChromium() !== null;
 }
 
 export async function launchBrowser() {
+  const binary = findChromium();
+  if (binary === null)
+    throw new Error(
+      "No local Chromium binary found on this platform; set VOID_QA_CHROMIUM to run the browser gates.",
+    );
   const profile = join(tmpdir(), "void-qa-chrome-" + process.pid);
-  const child = spawn(findChromium(), [
+  const child = spawn(binary, [
     "--headless=new",
     "--remote-debugging-port=0",
     "--disable-gpu",

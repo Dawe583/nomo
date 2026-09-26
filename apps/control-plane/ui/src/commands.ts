@@ -34,7 +34,9 @@ function searchable(item: { text?: string; name?: string; description?: string }
   return `${item.name ?? ""} ${item.description ?? ""}`;
 }
 
-/** Sort commands by fuzzy match score, then by recency (most recent first). */
+/** Sort commands by fuzzy match score, then by recency. Recency is inert until a
+ * caller passes `recentIds`; neither CommandMenu call site does today, so ordering
+ * is match score alone. Wiring it needs a persistence decision, not a sort fix. */
 export function filterPaletteRecentFirst<
   T extends { text?: string; id?: string },
 >(

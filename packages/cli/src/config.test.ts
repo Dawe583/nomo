@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { join } from "node:path";
 import { resolveConfig, runConfigCommand } from "./config.ts";
 
 function collect() {
@@ -29,7 +30,9 @@ test("config resolves explicit environment with sources", async () => {
   assert.ok(c.out.includes("version: 0.1.0-test (package)"));
   assert.ok(c.out.includes("data-dir: /data/wb (VOID_DATA_DIR)"));
   assert.ok(
-    c.out.some((line) => line.startsWith("ledger-dir: /home/op/.void/ledger (default)")),
+    // join, not a literal: the separator is the platform's, so a POSIX-shaped
+    // expectation would fail on Windows for a path that is actually correct.
+    c.out.some((line) => line.startsWith(`ledger-dir: ${join("/home/op", ".void", "ledger")} (default)`)),
   );
   assert.ok(c.out.includes("tui-color: off (VOID_TUI_COLOR)"));
   assert.ok(c.out.includes("verify-key: set (VOID_VERIFY_KEY)"));

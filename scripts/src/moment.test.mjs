@@ -2,6 +2,7 @@ import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
 const moment = new URL("./moment.mjs", import.meta.url);
@@ -9,8 +10,10 @@ const moment = new URL("./moment.mjs", import.meta.url);
 async function runMoment(...args) {
   const { stdout, stderr } = await execFileAsync(
     process.execPath,
-    [moment.pathname, ...args],
-    { cwd: new URL("../..", import.meta.url), timeout: 5000 },
+    // fileURLToPath, not moment.pathname: on Windows the pathname is "/C:/..."
+    // and execFile resolves it against the current drive into "C:\C:\...".
+    [fileURLToPath(moment), ...args],
+    { cwd: fileURLToPath(new URL("../..", import.meta.url)), timeout: 5000 },
   );
   assert.equal(stderr, "");
   return stdout;

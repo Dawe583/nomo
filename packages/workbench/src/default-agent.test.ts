@@ -73,5 +73,9 @@ test('default agent writes a captured document, restarts, verifies evidence and 
     const path = join(directory, file);
     if ((await stat(path)).isFile()) assert.equal((await readFile(path)).includes(Buffer.from(secret)), false, `Secret leaked to ${file}`);
   }
-  assert.equal((await stat(join(directory, 'workspace.enc'))).mode & 0o077, 0);
+  // Owner-only is a POSIX mode claim. Windows has no such bits, so the store
+  // narrows the file with an ACL there instead and this bit check would read
+  // 0o666 forever. Same guard as storage.test.ts; the secret scan above is what
+  // covers both platforms.
+  if (process.platform !== 'win32') assert.equal((await stat(join(directory, 'workspace.enc'))).mode & 0o077, 0);
 });

@@ -41,7 +41,13 @@ export function readStoreFile(path: string): unknown {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw error;
   }
-  if (!stat.isFile() || (stat.mode & 0o077) !== 0 || stat.size > 1024 * 1024) {
+  if (!stat.isFile() || stat.size > 1024 * 1024) {
+    throw new CompanionStoreError("corrupt_store", "companion state requires a bounded owner-only regular file");
+  }
+  // Windows reports 0666 for every file, so the mode bits are not a weaker
+  // check there, they are a meaningless one that refuses the store VOID itself
+  // just wrote. The isFile and size bounds above still hold on both platforms.
+  if (process.platform !== "win32" && (stat.mode & 0o077) !== 0) {
     throw new CompanionStoreError("corrupt_store", "companion state requires a bounded owner-only regular file");
   }
   try {
@@ -65,11 +71,16 @@ export function writeStoreFile(path: string, value: unknown): void {
       closeSync(fd);
     }
     renameSync(temporary, path);
-    const handle = openSync(directory, "r");
-    try {
-      fsyncSync(handle);
-    } finally {
-      closeSync(handle);
+    // Node cannot flush a Windows directory, and Windows does not expose the
+    // handle it would need. Contents were flushed above and the rename is
+    // journalled. Same guard as workbench/src/storage.ts.
+    if (process.platform !== "win32") {
+      const handle = openSync(directory, "r");
+      try {
+        fsyncSync(handle);
+      } finally {
+        closeSync(handle);
+      }
     }
   } catch (error) {
     try {

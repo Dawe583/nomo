@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const exec = promisify(execFile);
 const script = fileURLToPath(
-  new URL("./verify-ledger-standalone.mjs", import.meta.url),
+  new URL("../../packages/verifier/verify-ledger.mjs", import.meta.url),
 );
 
 test("standalone selftest proves roundtrip, tamper refusal and wrong key refusal", async () => {

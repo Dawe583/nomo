@@ -11,9 +11,10 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generateKeyPairSync, sign as cryptoSign } from "node:crypto";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-const root = new URL("..", import.meta.url).pathname;
-const ledger = await import(`${root}packages/ledger/src/index.ts`);
+const root = fileURLToPath(new URL("..", import.meta.url));
+const ledger = await import(pathToFileURL(join(root, "packages/ledger/src/index.ts")).href);
 
 const entries = Number.parseInt(
   (

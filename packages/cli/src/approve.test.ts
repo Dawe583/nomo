@@ -32,7 +32,12 @@ test("atomic decision round trip and broker pending flush", async (t) => {
     fsyncSync(fd) { operations.push("sync"); fs.fsyncSync(fd); },
     renameSync(from, to) { operations.push("rename"); fs.renameSync(from, to); },
   });
-  assert.deepEqual(operations, ["sync", "rename", "sync"]);
+  // The trailing directory flush only happens where Node can open a directory
+  // handle. Windows cannot, so the operation list is one shorter there.
+  assert.deepEqual(
+    operations,
+    process.platform === "win32" ? ["sync", "rename"] : ["sync", "rename", "sync"],
+  );
   assert.equal(fs.readdirSync(join(f.dir, "decisions")).length, 1);
   f.notify();
   assert.deepEqual((await f.promise).outcome, { kind: "released", release: { kind: "approved" } });
@@ -114,16 +119,27 @@ test("invalid decision kind cannot release an in-process hold", (t) => {
   assert.equal(f.queue.list().length, 1);
 });
 
-test("preexisting permissive and symlink state directories are rejected", (t) => {
+test("a state directory reached through a link is rejected", (t) => {
+  const base = fs.mkdtempSync(join(tmpdir(), "void-approve-link-"));
+  t.after(() => fs.rmSync(base, { recursive: true, force: true }));
+  const real = join(base, "real");
+  fs.mkdirSync(real, { mode: 0o700 });
+  // A junction needs no elevation on Windows; a directory symlink does.
+  fs.symlinkSync(real, join(base, "linked"), process.platform === "win32" ? "junction" : "dir");
+  assert.throws(() => new ApprovalBroker({ stateDir: join(base, "linked") }), /owner-only/);
+});
+
+// POSIX only, and named so the gap is visible rather than hidden. Windows
+// reports 0666 for every directory and has no mode bits to widen, so the
+// owner-only guarantee there rests on the inherited ACL of the operator profile
+// and is not established by this check. See packages/policy/src/approvals.ts.
+test("preexisting permissive state directories are rejected", { skip: process.platform === "win32" }, (t) => {
   const base = fs.mkdtempSync(join(tmpdir(), "void-approve-perms-"));
   t.after(() => fs.rmSync(base, { recursive: true, force: true }));
   const unsafe = join(base, "unsafe");
   fs.mkdirSync(unsafe, { mode: 0o777 });
   fs.chmodSync(unsafe, 0o777);
   assert.throws(() => new ApprovalBroker({ stateDir: unsafe }), /owner-only/);
-  fs.chmodSync(unsafe, 0o700);
-  fs.symlinkSync(unsafe, join(base, "linked"));
-  assert.throws(() => new ApprovalBroker({ stateDir: join(base, "linked") }), /owner-only/);
 });
 
 test("a second proxy refuses the state directory with a typed error", (t) => {

@@ -23,7 +23,9 @@ if (!existsSync(packagesDir)) {
 const results = [];
 
 const suites = [
-  ...readdirSync(packagesDir).sort().map((name) => ({ name, dir: join(packagesDir, name) })),
+  ...readdirSync(packagesDir)
+    .sort()
+    .map((name) => ({ name, dir: join(packagesDir, name) })),
   { name: "control-plane", dir: join(root, "apps", "control-plane") },
   { name: "scripts", dir: join(root, "scripts") },
 ];
@@ -47,10 +49,15 @@ for (const { name, dir } of suites) {
   // counts this script parses. Asking for TAP keeps the output a contract on
   // every engine version the workspace may run on.
   // Script fixtures resolve repository-relative paths, so run them from root.
-  const files = name === "scripts"
-    ? readdirSync(join(dir, "src")).filter((file) => file.endsWith(".test.mjs")).sort().map((file) => join(dir, "src", file))
-    : [];
-  if (name === "scripts" && files.length === 0) throw new Error("scripts suite has no tests");
+  const files =
+    name === "scripts"
+      ? readdirSync(join(dir, "src"))
+          .filter((file) => file.endsWith(".test.mjs"))
+          .sort()
+          .map((file) => join(dir, "src", file))
+      : [];
+  if (name === "scripts" && files.length === 0)
+    throw new Error("scripts suite has no tests");
   const run = spawnSync("node", ["--test", "--test-reporter=tap", ...files], {
     cwd: name === "scripts" ? root : dir,
     encoding: "utf8",
@@ -103,4 +110,35 @@ if (results.length === 0) {
   console.error("  no package declared a test script");
   process.exit(1);
 }
+
+// A named manifest, because deleting a guard is not a defect that guard can
+// observe. Nothing inside a test file can stop that file being deleted, and a
+// bare count floor is too coarse: this suite runs many files, so removing one
+// leaves the total comfortably above any threshold worth setting. Naming the
+// files catches the realistic accident, which is someone tidying up a gate they
+// think is redundant.
+//
+// The limit is stated rather than papered over: deleting this manifest line, or
+// one test() block inside a guarded file, is not observable from inside this
+// repository at all. That class of change is review, and a test that claimed to
+// catch it would be a false guarantee.
+const REQUIRED_SCRIPT_TESTS = [
+  "doc-truth.test.mjs",
+  "design-token.test.mjs",
+  "handbook.test.mjs",
+  "licence-line.test.mjs",
+];
+const present = new Set(
+  readdirSync(join(root, "scripts", "src"))
+    .filter((file) => file.endsWith(".test.mjs"))
+    .map((file) => file),
+);
+const absent = REQUIRED_SCRIPT_TESTS.filter((file) => !present.has(file));
+if (absent.length > 0) {
+  console.error(
+    `  scripts suite is missing required test files: ${absent.join(", ")}`,
+  );
+  process.exit(1);
+}
+
 process.exit(failed ? 1 : 0);

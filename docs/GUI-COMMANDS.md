@@ -1,10 +1,11 @@
 # GUI commands and tools
 
 The same command menu is available in the browser workspace and packaged desktop
-GUI. Type `/` at the start of an empty message, then search by name, description,
-or connector. Arrow keys move the selection, Enter/Tab selects, and Escape closes
-the menu while preserving the draft. On mobile, tap a row; ordinary Enter still
-inserts a newline outside the menu.
+GUI. Type `/` at the start of a message that contains no space yet, then search by
+name, description, or connector. Adding a space closes the menu again, so a command
+cannot be a prefix of something longer. Arrow keys move the selection, Enter/Tab
+selects, and Escape closes the menu while preserving the draft. On mobile, tap a
+row; ordinary Enter still inserts a newline outside the menu.
 
 - `/new`: new conversation.
 - `/plan` and `/review`: prepare requests for planning or review. These are prompt
@@ -14,7 +15,10 @@ inserts a newline outside the menu.
 - `/context` and `/undo`: document/context panel, including existing Undo previews.
 - `/approvals` and `/ledger`: actual VOID decision and audit views.
 - `/export`: download the currently loaded conversation transcript as Markdown.
-- `/stop`: request cancellation of a running conversation.
+  Listed only while a conversation is open, because the export reads that
+  conversation's loaded events.
+- `/stop`: request cancellation of a running conversation. Listed only while a run
+  is active; with nothing running there is nothing to cancel.
 
 Tool rows come from `/api/tools`, using the conversation's saved tool snapshot
 when a session exists. Before creation, configured tools are shown; local stdio
