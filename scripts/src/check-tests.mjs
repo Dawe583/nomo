@@ -15,6 +15,34 @@ import { spawnSync } from "node:child_process";
 const root = resolve(import.meta.dirname, "..", "..");
 const packagesDir = join(root, "packages");
 
+/**
+ * A hard ceiling on any one package suite, so a suite that stops making
+ * progress reports itself as a named failure instead of freezing this gate
+ * with no output until something upstream kills it.
+ *
+ * The default is generous on purpose. `packages/cli` runs the git.managed
+ * conformance matrix against real repositories on disk and costs minutes
+ * rather than seconds, which `.github/workflows/ci.yml` already budgets for
+ * per step, so a bound tight enough to trip on that suite would report a
+ * failure that never was. The job budget for the whole `pnpm test` step is 25
+ * minutes across every suite, so no single suite can legitimately approach
+ * this, and anything that does is wedged rather than slow.
+ *
+ * `VOID_SUITE_TIMEOUT_MS` overrides it, and accepts `0` to disable the bound
+ * for a deliberate long run.
+ */
+const DEFAULT_SUITE_TIMEOUT_MS = 15 * 60 * 1000;
+const suiteTimeoutMs = (() => {
+  const raw = process.env.VOID_SUITE_TIMEOUT_MS;
+  if (raw === undefined || raw === "") return DEFAULT_SUITE_TIMEOUT_MS;
+  // Digits only. `parseInt` alone would truncate "1.5" to 1 and "12abc" to 12,
+  // and a ceiling silently turned into a different number is worse than one
+  // refused: it looks configured and is not what anybody asked for.
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(Number(raw)))
+    throw new Error(`VOID_SUITE_TIMEOUT_MS is not a non-negative integer: ${raw}`);
+  return Number(raw);
+})();
+
 if (!existsSync(packagesDir)) {
   console.error("no packages/ directory, nothing to check");
   process.exit(1);
@@ -58,22 +86,41 @@ for (const { name, dir } of suites) {
       : [];
   if (name === "scripts" && files.length === 0)
     throw new Error("scripts suite has no tests");
+  const started = Date.now();
+  // `killSignal: SIGKILL` rather than the default SIGTERM: a suite wedged in
+  // native code or holding a child that ignores SIGTERM would otherwise keep
+  // the event loop alive past the timeout and defeat the bound entirely.
   const run = spawnSync("node", ["--test", "--test-reporter=tap", ...files], {
     cwd: name === "scripts" ? root : dir,
     encoding: "utf8",
+    timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
+    killSignal: "SIGKILL",
   });
-  const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
+  // `spawnSync` reports its own deadline as a null status with an ETIMEDOUT
+  // error, and the status is mapped to 1 further down, so without this the
+  // timeout would print as an ordinary crash and name neither the cause nor
+  // the ceiling that fired.
+  const timedOut = run.error?.code === "ETIMEDOUT";
+  const output = `${run.stdout ?? ""}${run.stderr ?? ""}${
+    timedOut
+      ? `\n# suite exceeded its ${Math.round(suiteTimeoutMs / 1000)}s budget and was killed\n`
+      : ""
+  }`;
+
   const read = (key) =>
     Number.parseInt(
       output.match(new RegExp(`^# ${key} (\\d+)$`, "m"))?.[1] ?? "-1",
       10,
     );
 
+
   results.push({
     name,
     pass: read("pass"),
     fail: read("fail"),
     code: run.status ?? 1,
+    timedOut,
+    elapsed: Date.now() - started,
     output,
   });
 }
@@ -84,6 +131,11 @@ const width = Math.max(...results.map((r) => r.name.length), 7);
 for (const r of results) {
   const reasons = [];
   if (r.code !== 0) reasons.push(`exit ${r.code}`);
+  // A suite that ran out of time is a distinct failure from one that failed an
+  // assertion: the first is this gate's bound firing, and printing it as a bare
+  // non-zero exit would point the reader at a test that may well be green. It
+  // leads the reasons, because it is the fact that explains the rest.
+  if (r.timedOut) reasons.unshift(`no completion in ${Math.round(r.elapsed / 1000)}s`);
   if (r.fail > 0) reasons.push(`${r.fail} failing`);
   if (r.pass <= 0) reasons.push("ran no tests");
 
@@ -95,7 +147,15 @@ for (const r of results) {
     console.log(
       r.output
         .split("\n")
-        .filter((l) => l.startsWith("not ok") || l.includes("Error"))
+        // A timed-out suite has no `not ok` line to find, so the injected
+        // budget line is matched explicitly or the detail block prints nothing
+        // at all for the one failure that most needs explaining.
+        .filter(
+          (l) =>
+            l.startsWith("not ok") ||
+            l.includes("Error") ||
+            l.startsWith("# suite exceeded"),
+        )
         .slice(0, 8)
         .map((l) => `      ${l}`)
         .join("\n"),
