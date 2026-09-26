@@ -305,6 +305,48 @@ test("the owner the migration writes is the owner the code names", () => {
   assert.match(schema, /PRIMARY KEY\(owner,session_id,seq\)/);
 });
 
+test("the trigger is restored under the same guard that lifted it", () => {
+  // The asymmetry this guards was a real abort, not a theoretical one. The
+  // disable step asked whether the trigger existed before disabling it; the
+  // restore asked only whether the table did. On a database that has the table
+  // and never had the trigger, the restore raised `trigger ... does not exist`,
+  // and because the file is one transaction that took the added column, the
+  // backfill, the not null and the primary key swap down with it. The header's
+  // claim that every step is conditional was false for that shape.
+  //
+  // Verified against a real PostgreSQL 17, not reasoned about: with the tables
+  // and their primary keys present and no trigger, the previous file aborted
+  // and this one commits, and with the trigger present the trigger ends the
+  // run enabled. What is asserted here is the shape that made both true, so
+  // the symmetry cannot drift back apart silently.
+  const body = readCloud("0001-account-ownership.sql").replace(/^--.*$/gm, "");
+
+  for (const [table, trigger] of [
+    ["void_cloud_ledger", "void_cloud_immutable"],
+    ["void_cloud_events", "void_cloud_events_immutable"],
+  ]) {
+    for (const action of ["DISABLE", "ENABLE"]) {
+      // The guard has to be the catalog lookup, not just the table check, or a
+      // database without the trigger aborts the whole file.
+      assert.match(
+        body,
+        new RegExp(
+          `IF EXISTS \\(SELECT 1 FROM pg_trigger\\s+WHERE tgrelid = \\w+\\s+AND tgname = '${trigger}' AND NOT tgisinternal\\) THEN\\s+EXECUTE 'ALTER TABLE ${table} ${action} TRIGGER ${trigger}'`,
+        ),
+        `${action} TRIGGER ${trigger} must be guarded by the same pg_trigger lookup`,
+      );
+    }
+  }
+
+  // Counted rather than matched once, because the bug was an asymmetry: two
+  // of one and one of the other reads as "it is guarded" to any single check.
+  assert.equal(
+    (body.match(/IF EXISTS \(SELECT 1 FROM pg_trigger/g) ?? []).length,
+    4,
+    "both tables must guard both directions, or one shape of database aborts",
+  );
+});
+
 test("the demo owns its namespace and never the operator's", () => {
   const source = readCloud("demo.mjs");
   assert.match(source, /read: \(key, c\) => store\.read\(DEMO_OWNER, key, c\)/);

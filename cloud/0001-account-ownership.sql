@@ -149,13 +149,38 @@ END $$;
 
 -- 6. Restore the append-only guarantee. Same transaction, so a failure above
 --    never leaves the ledger editable.
+--
+--    The guard matches step 2's exactly, and that symmetry is load bearing.
+--    Step 2 asks whether the trigger exists before disabling it; step 6 used
+--    to ask only whether the table did, so a database that has the table but
+--    never had the trigger reached `ENABLE TRIGGER` for a trigger that is not
+--    there, PostgreSQL raised `trigger "void_cloud_immutable" does not exist`,
+--    and because the whole file is one transaction the error took the added
+--    column, the backfill, the not null and the primary key swap down with it.
+--    Conditional on the table alone, this file was only order independent for
+--    the shape it had already been run against.
+--
+--    The conditions are nested rather than combined with AND, for the reason
+--    given in step 2: a `table::regclass` cast raises when the table is
+--    absent, and a planner is free to evaluate the right side of an AND first.
 DO $$
+DECLARE
+  ledger regclass := to_regclass('void_cloud_ledger');
+  events regclass := to_regclass('void_cloud_events');
 BEGIN
-  IF to_regclass('void_cloud_ledger') IS NOT NULL THEN
-    EXECUTE 'ALTER TABLE void_cloud_ledger ENABLE TRIGGER void_cloud_immutable';
+  IF ledger IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM pg_trigger
+                WHERE tgrelid = ledger
+                  AND tgname = 'void_cloud_immutable' AND NOT tgisinternal) THEN
+      EXECUTE 'ALTER TABLE void_cloud_ledger ENABLE TRIGGER void_cloud_immutable';
+    END IF;
   END IF;
-  IF to_regclass('void_cloud_events') IS NOT NULL THEN
-    EXECUTE 'ALTER TABLE void_cloud_events ENABLE TRIGGER void_cloud_events_immutable';
+  IF events IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM pg_trigger
+                WHERE tgrelid = events
+                  AND tgname = 'void_cloud_events_immutable' AND NOT tgisinternal) THEN
+      EXECUTE 'ALTER TABLE void_cloud_events ENABLE TRIGGER void_cloud_events_immutable';
+    END IF;
   END IF;
 END $$;
 
@@ -176,4 +201,22 @@ BEGIN
     $recover$;
   END IF;
 END $$;
+-- Public Data API roles never query the server-owned account rows.
+ALTER TABLE void_cloud_state ENABLE ROW LEVEL SECURITY;
+ALTER TABLE void_cloud_ledger ENABLE ROW LEVEL SECURITY;
+ALTER TABLE void_cloud_events ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE void_cloud_state, void_cloud_ledger, void_cloud_events FROM PUBLIC;
+DO $$
+DECLARE role_name text;
+BEGIN
+  FOREACH role_name IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
+      EXECUTE format(
+        'REVOKE ALL ON TABLE public.void_cloud_state, public.void_cloud_ledger, public.void_cloud_events FROM %I',
+        role_name
+      );
+    END IF;
+  END LOOP;
+END $$;
+
 COMMIT;
