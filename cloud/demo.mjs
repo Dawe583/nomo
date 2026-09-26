@@ -12,6 +12,7 @@ import {
   decrypt,
   ledger,
 } from "./store.mjs";
+import { DEMO_OWNER } from "./owner.mjs";
 import { mutateCloudDocument, managedCloudUndo } from "./recovery.mjs";
 import {
   CompatibleProvider,
@@ -95,13 +96,19 @@ export function reserveDemoBudget(current = {}, id, now = Date.now()) {
 }
 export function demoRouter(dependencies = {}) {
   const router = express.Router();
+  // The demo reaches no credential and no signed-in identity, so it owns its
+  // namespace outright. Every read, write and lock below runs as this one
+  // reserved owner, which is what stops an open endpoint from being a window
+  // into anybody else's rows. The owner is applied here, outside the injection
+  // point, so an injected store is handed the owner rather than being trusted
+  // with choosing one.
+  const store = { read, write, transaction, encrypt, decrypt, ...dependencies };
   const storage = {
-    read,
-    write,
-    transaction,
-    encrypt,
-    decrypt,
-    ...dependencies,
+    read: (key, c) => store.read(DEMO_OWNER, key, c),
+    write: (key, value, c) => store.write(DEMO_OWNER, key, value, c),
+    transaction: (key, run) => store.transaction(DEMO_OWNER, key, run),
+    encrypt: store.encrypt,
+    decrypt: store.decrypt,
   };
   const available = () =>
     process.env.VOID_PUBLIC_DEMO === "1" &&
@@ -327,6 +334,7 @@ export function demoRouter(dependencies = {}) {
                   );
                 return (
                   await mutateCloudDocument(
+                    DEMO_OWNER,
                     session(state.id),
                     c,
                     input,
@@ -384,13 +392,15 @@ export function demoRouter(dependencies = {}) {
       const s = await load(req.demoId, c);
       if (s.status === "running")
         throw fail("Wait for the agent to finish.", 409);
-      if (!(await managedCloudUndo(session(s.id), c, operationId)))
+      if (
+        !(await managedCloudUndo(DEMO_OWNER, session(s.id), c, operationId))
+      )
         throw fail("No managed recovery evidence exists.", 409);
     });
     res.json(await publicView(await load(req.demoId)));
   });
   router.get("/proof", async (req, res) => {
-    const proof = await ledger(session(req.demoId).workspace);
+    const proof = await ledger(DEMO_OWNER, session(req.demoId).workspace);
     res.json({ verified: proof.result.ok, entries: proof.entries });
   });
   router.use((req, res) =>

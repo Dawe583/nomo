@@ -8,6 +8,7 @@ import { verifyChain } from "../packages/ledger/src/verify.ts";
 import { resolveVerificationKey } from "../packages/ledger/src/verify-key.ts";
 import { PROVIDER_PRESETS } from "../packages/workbench/src/provider-defaults.ts";
 import { deriveRunState } from "../packages/workbench/src/gui.ts";
+import { assertOwner } from "./owner.mjs";
 let pool;
 export function database() {
   if (!process.env.DATABASE_URL)
@@ -19,13 +20,20 @@ export function database() {
     connectionTimeoutMillis: 10000,
   }));
 }
-export async function transaction(key, run) {
+
+/// Every function below that reaches a table takes `owner` as its first
+/// argument and calls `assertOwner` before it resolves a client. A caller that
+/// forgets the owner gets a throw, not a query against a shared workspace.
+export async function transaction(owner, key, run) {
+  const scope = assertOwner(owner);
   const client = await database().connect();
   try {
     await client.query("BEGIN");
+    // The lock key carries the owner, so two accounts working on same-named
+    // keys do not serialise against each other.
     await client.query(
       "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
-      [key],
+      [`${scope}:${key}`],
     );
     const result = await run(client);
     await client.query("COMMIT");
@@ -37,24 +45,28 @@ export async function transaction(key, run) {
     client.release();
   }
 }
-export async function read(key, client = database()) {
+export async function read(owner, key, client) {
+  assertOwner(owner);
   return (
-    await client.query("SELECT document FROM void_cloud_state WHERE key=$1", [
-      key,
-    ])
+    await (client ?? database()).query(
+      "SELECT document FROM void_cloud_state WHERE owner=$1 AND key=$2",
+      [owner, key],
+    )
   ).rows[0]?.document;
 }
-export async function write(key, value, client) {
-  if (!client) return transaction(key, (c) => write(key, value, c));
+export async function write(owner, key, value, client) {
+  assertOwner(owner);
+  if (!client) return transaction(owner, key, (c) => write(owner, key, value, c));
   if (key.startsWith("session:") && value?.events?.length) {
     await client.query(
-      "INSERT INTO void_cloud_events(session_id,seq,event) SELECT $1,(e->>'seq')::integer,e FROM jsonb_array_elements($2::jsonb) e ON CONFLICT DO NOTHING",
-      [value.id, JSON.stringify(value.events)],
+      "INSERT INTO void_cloud_events(owner,session_id,seq,event) SELECT $1,$2,(e->>'seq')::integer,e FROM jsonb_array_elements($3::jsonb) e ON CONFLICT DO NOTHING",
+      [owner, value.id, JSON.stringify(value.events)],
     );
   }
   await client.query(
-    "INSERT INTO void_cloud_state(key, document) VALUES ($1,$2) ON CONFLICT(key) DO UPDATE SET document=EXCLUDED.document",
+    "INSERT INTO void_cloud_state(owner,key,document) VALUES ($1,$2,$3) ON CONFLICT(owner,key) DO UPDATE SET document=EXCLUDED.document",
     [
+      owner,
       key,
       JSON.stringify(
         key.startsWith("session:") && value?.events
@@ -64,10 +76,12 @@ export async function write(key, value, client) {
     ],
   );
 }
-export async function sessions() {
+export async function sessions(owner) {
+  assertOwner(owner);
   return (
     await database().query(
-      "SELECT (document - 'messages' - 'events' - 'provider' - 'connected' - 'tools' - 'upstream' - 'pending' - 'queue') || jsonb_build_object('hasPending', document->'pending' IS NOT NULL AND document->'pending' <> 'null'::jsonb, 'contextMessages', jsonb_array_length(COALESCE(document->'messages','[]'::jsonb))) AS document FROM void_cloud_state WHERE key LIKE 'session:%' AND document->>'workspace' NOT LIKE 'qa-%' ORDER BY document->>'createdAt' DESC",
+      "SELECT (document - 'messages' - 'events' - 'provider' - 'connected' - 'tools' - 'upstream' - 'pending' - 'queue') || jsonb_build_object('hasPending', document->'pending' IS NOT NULL AND document->'pending' <> 'null'::jsonb, 'contextMessages', jsonb_array_length(COALESCE(document->'messages','[]'::jsonb))) AS document FROM void_cloud_state WHERE owner=$1 AND key LIKE 'session:%' AND document->>'workspace' NOT LIKE 'qa-%' ORDER BY document->>'createdAt' DESC",
+      [owner],
     )
   ).rows.map((row) => row.document);
 }
@@ -121,12 +135,13 @@ export async function verifier() {
   }
   return resolved.publicKey;
 }
-export async function append(body, client) {
+export async function append(owner, body, client) {
+  assertOwner(owner);
   const key = await signer();
   const previous = (
     await client.query(
-      "SELECT entry FROM void_cloud_ledger WHERE workspace=$1 ORDER BY seq DESC LIMIT 1",
-      [body.workspace],
+      "SELECT entry FROM void_cloud_ledger WHERE owner=$1 AND workspace=$2 ORDER BY seq DESC LIMIT 1",
+      [owner, body.workspace],
     )
   ).rows[0]?.entry;
   const hash = await entryHash(body, previous?.hash ?? GENESIS_PREV, sha256Hex);
@@ -142,16 +157,17 @@ export async function append(body, client) {
     signature: `${key.alg}:${Buffer.from(await key.sign(signingPreimage(key.alg, id, hash))).toString("base64")}`,
   };
   await client.query(
-    "INSERT INTO void_cloud_ledger(workspace,seq,entry) VALUES($1,$2,$3)",
-    [body.workspace, entry.seq, JSON.stringify(entry)],
+    "INSERT INTO void_cloud_ledger(owner,workspace,seq,entry) VALUES($1,$2,$3,$4)",
+    [owner, body.workspace, entry.seq, JSON.stringify(entry)],
   );
   return entry;
 }
-export async function ledger(workspace, client = database()) {
+export async function ledger(owner, workspace, client) {
+  assertOwner(owner);
   const entries = (
-    await client.query(
-      "SELECT entry FROM void_cloud_ledger WHERE workspace=$1 ORDER BY seq",
-      [workspace],
+    await (client ?? database()).query(
+      "SELECT entry FROM void_cloud_ledger WHERE owner=$1 AND workspace=$2 ORDER BY seq",
+      [owner, workspace],
     )
   ).rows.map((row) => row.entry);
   // The signing key is not allowed to answer this question about itself.
@@ -243,21 +259,29 @@ export function view(session) {
       : undefined,
   };
 }
-export async function eventsAfter(id, after = 0) {
+export async function eventsAfter(owner, id, after = 0) {
+  assertOwner(owner);
   if (!Number.isSafeInteger(after) || after < 0)
     throw new Error("Invalid event cursor.");
   return (
     await database().query(
-      "SELECT event FROM void_cloud_events WHERE session_id=$1 AND seq>$2 ORDER BY seq LIMIT 1000",
-      [id, after],
+      "SELECT event FROM void_cloud_events WHERE owner=$1 AND session_id=$2 AND seq>$3 ORDER BY seq LIMIT 1000",
+      [owner, id, after],
     )
   ).rows.map((row) => row.event);
 }
 
 // Keyset pages return metadata only. Search never inspects encrypted credentials.
-export async function sessionPage(query) {
+export async function sessionPage(owner, query) {
+  assertOwner(owner);
   const { createHash } = await import("node:crypto");
+  // The owner is inside the signature, so a cursor minted for one account is
+  // rejected by another rather than paging through a namespace it was not
+  // issued for. The predicate already prevents a leak; this prevents the
+  // cursor from being meaningful anywhere else.
   const signature = createHash("sha256")
+    .update(owner)
+    .update("\u0000")
     .update(
       [...query]
         .filter(([k]) => !["cursor", "limit"].includes(k))
@@ -265,7 +289,11 @@ export async function sessionPage(query) {
         .toString(),
     )
     .digest("hex");
-  const params = [],
+  // `owner` is bound once as $1 and written into every statement below rather
+  // than assembled into a list, so a caller cannot remove it by changing a
+  // filter. The event search reuses the same parameter, so the correlated
+  // subquery cannot widen itself past the caller's namespace either.
+  const params = [owner],
     conditions = [
       "key LIKE 'session:%'",
       "document->>'workspace' NOT LIKE 'qa-%'",
@@ -284,7 +312,7 @@ export async function sessionPage(query) {
   if (query.get("q")) {
     const q = bind(`%${query.get("q").replace(/[\\%_]/g, "\\$&")}%`);
     conditions.push(
-      `(document->>'title' ILIKE ${q} OR EXISTS (SELECT 1 FROM void_cloud_events e WHERE e.session_id=document->>'id' AND e.event->>'text' ILIKE ${q}))`,
+      `(document->>'title' ILIKE ${q} OR EXISTS (SELECT 1 FROM void_cloud_events e WHERE e.owner=$1 AND e.session_id=document->>'id' AND e.event->>'text' ILIKE ${q}))`,
     );
   }
   for (const [key, op] of [
@@ -296,7 +324,7 @@ export async function sessionPage(query) {
   const total = Number(
     (
       await database().query(
-        `SELECT count(*) FROM void_cloud_state WHERE ${conditions.join(" AND ")}`,
+        `SELECT count(*) FROM void_cloud_state WHERE owner=$1 AND ${conditions.join(" AND ")}`,
         params,
       )
     ).rows[0].count,
@@ -326,7 +354,7 @@ export async function sessionPage(query) {
   const limit = Math.min(100, Math.max(1, Number(query.get("limit")) || 50));
   const rows = (
     await database().query(
-      `SELECT (document - 'messages' - 'events' - 'provider' - 'connected' - 'tools' - 'upstream' - 'pending' - 'queue') || jsonb_build_object('hasPending', document->'pending' IS NOT NULL AND document->'pending' <> 'null'::jsonb) AS metadata, jsonb_array_length(COALESCE(document->'messages','[]'::jsonb)) AS message_count FROM void_cloud_state WHERE ${conditions.join(" AND ")} ORDER BY ${column} ${order},key ${order} LIMIT ${bind(limit + 1)}`,
+      `SELECT (document - 'messages' - 'events' - 'provider' - 'connected' - 'tools' - 'upstream' - 'pending' - 'queue') || jsonb_build_object('hasPending', document->'pending' IS NOT NULL AND document->'pending' <> 'null'::jsonb) AS metadata, jsonb_array_length(COALESCE(document->'messages','[]'::jsonb)) AS message_count FROM void_cloud_state WHERE owner=$1 AND ${conditions.join(" AND ")} ORDER BY ${column} ${order},key ${order} LIMIT ${bind(limit + 1)}`,
       params,
     )
   ).rows;
@@ -355,19 +383,23 @@ export async function sessionPage(query) {
     scope: "retained-history",
   };
 }
-export async function ledgerPage(workspace, query) {
+export async function ledgerPage(owner, workspace, query) {
+  assertOwner(owner);
   const { createHash } = await import("node:crypto");
   const signature = createHash("sha256")
+    .update(owner)
+    .update("\u0000")
+    .update(workspace)
+    .update("\u0000")
     .update(
-      workspace +
-        [...query]
-          .filter(([k]) => !["cursor", "limit"].includes(k))
-          .sort()
-          .toString(),
+      [...query]
+        .filter(([k]) => !["cursor", "limit"].includes(k))
+        .sort()
+        .toString(),
     )
     .digest("hex");
-  const params = [workspace],
-    conditions = ["workspace=$1"],
+  const params = [owner, workspace],
+    conditions = ["workspace=$2"],
     bind = (v) => {
       params.push(v);
       return `$${params.length}`;
@@ -395,7 +427,7 @@ export async function ledgerPage(workspace, query) {
   const total = Number(
       (
         await database().query(
-          `SELECT count(*) FROM void_cloud_ledger WHERE ${conditions.join(" AND ")}`,
+          `SELECT count(*) FROM void_cloud_ledger WHERE owner=$1 AND ${conditions.join(" AND ")}`,
           params,
         )
       ).rows[0].count,
@@ -412,7 +444,7 @@ export async function ledgerPage(workspace, query) {
   const limit = Math.min(100, Math.max(1, Number(query.get("limit")) || 50));
   const rows = (
       await database().query(
-        `SELECT entry FROM void_cloud_ledger WHERE ${conditions.join(" AND ")} ORDER BY seq ${asc ? "ASC" : "DESC"} LIMIT ${bind(limit + 1)}`,
+        `SELECT entry FROM void_cloud_ledger WHERE owner=$1 AND ${conditions.join(" AND ")} ORDER BY seq ${asc ? "ASC" : "DESC"} LIMIT ${bind(limit + 1)}`,
         params,
       )
     ).rows.map((r) => r.entry),
@@ -443,11 +475,12 @@ export async function ledgerPage(workspace, query) {
   };
 }
 
-export async function allEvents(id, client = database()) {
+export async function allEvents(owner, id, client) {
+  assertOwner(owner);
   return (
-    await client.query(
-      "SELECT event FROM void_cloud_events WHERE session_id=$1 ORDER BY seq",
-      [id],
+    await (client ?? database()).query(
+      "SELECT event FROM void_cloud_events WHERE owner=$1 AND session_id=$2 ORDER BY seq",
+      [owner, id],
     )
   ).rows.map((row) => row.event);
 }

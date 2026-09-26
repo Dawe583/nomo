@@ -1,4 +1,6 @@
 import { read, write, transaction, encrypt, decrypt } from "./store.mjs";
+import { assertOwner } from "./owner.mjs";
+import { openOwnerState, sealOwnerState } from "./oauth-state.mjs";
 import { catalog } from "./mcp.mjs";
 import { vercelCatalog } from "./vercel-integration.mjs";
 import {
@@ -26,18 +28,19 @@ function binding(req, id) {
     .find((x) => x.startsWith(cookieName(id) + "="))
     ?.slice(cookieName(id).length + 1);
 }
-async function clientFor(id, c) {
-  const stored = await read(prefix + "client:" + id, c);
+async function clientFor(owner, id, c) {
+  const stored = await read(owner, prefix + "client:" + id, c);
   return stored ? decrypt(stored) : undefined;
 }
-export async function integrationStatus() {
+export async function integrationStatus(owner) {
+  assertOwner(owner);
   return {
     supported: true,
     callbackBase: callbackBase(),
     integrations: await Promise.all(
       Object.entries(PROVIDERS).map(async ([id, spec]) => {
-        const client = await clientFor(id),
-          record = await read(prefix + id),
+        const client = await clientFor(owner, id),
+          record = await read(owner, prefix + id),
           value = record ? decrypt(record) : null;
         return {
           id,
@@ -56,10 +59,11 @@ export async function integrationStatus() {
     ),
   };
 }
-export async function integrationConfig(id) {
+export async function integrationConfig(owner, id) {
+  assertOwner(owner);
   providerDefinition(id);
-  return transaction(prefix + id, async (c) => {
-    const stored = await read(prefix + id, c),
+  return transaction(owner, prefix + id, async (c) => {
+    const stored = await read(owner, prefix + id, c),
       value = stored ? decrypt(stored) : null;
     if (!value?.tokens)
       throw Object.assign(
@@ -73,7 +77,7 @@ export async function integrationConfig(id) {
         throw Object.assign(new Error("Integration expired. Reconnect."), {
           status: 401,
         });
-      const refreshed = await exchange(id, await clientFor(id, c), {
+      const refreshed = await exchange(id, await clientFor(owner, id, c), {
         grant_type: "refresh_token",
         refresh_token: value.tokens.refresh_token,
       });
@@ -81,7 +85,7 @@ export async function integrationConfig(id) {
         ...refreshed,
         refresh_token: refreshed.refresh_token ?? value.tokens.refresh_token,
       };
-      await write(prefix + id, encrypt(value), c);
+      await write(owner, prefix + id, encrypt(value), c);
     }
     return {
       url: PROVIDERS[id].url,
@@ -90,12 +94,13 @@ export async function integrationConfig(id) {
     };
   });
 }
-export async function integrationCatalogs() {
+export async function integrationCatalogs(owner) {
+  assertOwner(owner);
   const result = [];
   for (const id of Object.keys(PROVIDERS)) {
-    const stored = await read(prefix + id);
+    const stored = await read(owner, prefix + id);
     if (!stored || !decrypt(stored)?.tokens) continue;
-    const data = await providerCatalog(id, await integrationConfig(id));
+    const data = await providerCatalog(id, await integrationConfig(owner, id));
     result.push({
       id: "oauth-" + id,
       provider: id,
@@ -110,9 +115,10 @@ export async function integrationCatalogs() {
   }
   return result;
 }
-export async function resolveIntegration(config) {
+export async function resolveIntegration(owner, config) {
+  assertOwner(owner);
   return config.oauthProvider
-    ? { ...config, ...(await integrationConfig(config.oauthProvider)) }
+    ? { ...config, ...(await integrationConfig(owner, config.oauthProvider)) }
     : config;
 }
 export function mountIntegrationCallback(app) {
@@ -123,19 +129,21 @@ export function mountIntegrationCallback(app) {
     const { id } = req.params;
     try {
       providerDefinition(id);
-      if (
-        typeof req.query.state !== "string" ||
-        !/^[\w-]{43}$/.test(req.query.state)
-      )
-        throw new Error("Invalid state.");
+      // The owner arrives sealed inside the state, minted behind the session
+      // gate when the flow started. A state this deployment did not seal names
+      // no owner, and the flow fails rather than falling back to a namespace.
+      const opened = openOwnerState(req.query.state);
+      if (!opened) throw new Error("Invalid state.");
+      const owner = opened.owner;
       const pending = await transaction(
-        "oauth:" + hash(req.query.state),
+        owner,
+        "oauth:" + hash(opened.nonce),
         async (c) => {
-          const key = "oauth:" + hash(req.query.state),
-            stored = await read(key, c),
+          const key = "oauth:" + hash(opened.nonce),
+            stored = await read(owner, key, c),
             pending = stored ? decrypt(stored) : null;
           validateCallback(pending, id, binding(req, id), epoch());
-          await write(key, encrypt({ ...pending, used: true }), c);
+          await write(owner, key, encrypt({ ...pending, used: true }), c);
           return pending;
         },
       );
@@ -143,11 +151,11 @@ export function mountIntegrationCallback(app) {
       if (req.query.error) return res.redirect("/connections?oauth=denied");
       if (typeof req.query.code !== "string" || req.query.code.length > 4096)
         throw new Error("Invalid code.");
-      const client = await clientFor(id);
+      const client = await clientFor(owner, id);
       if (!client || pending.clientHash !== hash(JSON.stringify(client)))
         throw new Error("OAuth registration changed. Start again.");
       if (
-        ((await read(prefix + "version:" + id)) ?? 0) !==
+        ((await read(owner, prefix + "version:" + id)) ?? 0) !==
         pending.connectionVersion
       )
         throw new Error("OAuth connection was disconnected. Start again.");
@@ -162,13 +170,14 @@ export function mountIntegrationCallback(app) {
         token: tokens.access_token,
         teamId: tokens.teamId,
       });
-      await transaction(prefix + id, async (c) => {
+      await transaction(owner, prefix + id, async (c) => {
         if (
-          ((await read(prefix + "version:" + id, c)) ?? 0) !==
+          ((await read(owner, prefix + "version:" + id, c)) ?? 0) !==
           pending.connectionVersion
         )
           throw new Error("Connection changed. Start again.");
         await write(
+          owner,
           prefix + id,
           encrypt({
             tokens,
@@ -187,7 +196,7 @@ export function mountIntegrationCallback(app) {
 }
 export function mountIntegrationRoutes(app) {
   app.get("/api/integrations", async (req, res) =>
-    res.json(await integrationStatus()),
+    res.json(await integrationStatus(req.owner)),
   );
   app.post("/api/integrations/:id/client", async (req, res) => {
     const { id } = req.params;
@@ -213,8 +222,9 @@ export function mountIntegrationRoutes(app) {
         .status(400)
         .json({ message: "Enter the registered OAuth client ID and secret." });
     // Changing client registration invalidates previous grants.
-    await transaction(prefix + id, async (c) => {
+    await transaction(req.owner, prefix + id, async (c) => {
       await write(
+        req.owner,
         prefix + "client:" + id,
         encrypt({
           client_id: clientId.trim(),
@@ -223,16 +233,16 @@ export function mountIntegrationRoutes(app) {
         }),
         c,
       );
-      await write(prefix + id, null, c);
-      await write(prefix + "version:" + id, Date.now(), c);
+      await write(req.owner, prefix + id, null, c);
+      await write(req.owner, prefix + "version:" + id, Date.now(), c);
     });
     res.json({ ok: true });
   });
   app.post("/api/integrations/:id/start", async (req, res) => {
     const { id } = req.params;
     providerDefinition(id);
-    const flow = await transaction(prefix + id, async (c) => {
-      const client = await clientFor(id, c);
+    const flow = await transaction(req.owner, prefix + id, async (c) => {
+      const client = await clientFor(req.owner, id, c);
       if (!client)
         throw Object.assign(new Error("Register the OAuth app first."), {
           status: 409,
@@ -243,6 +253,7 @@ export function mountIntegrationRoutes(app) {
         callbackBase() + "/" + id + "/callback",
       );
       await write(
+        req.owner,
         "oauth:" + hash(flow.state),
         encrypt({
           provider: id,
@@ -252,11 +263,12 @@ export function mountIntegrationRoutes(app) {
           bindingHash: hash(flow.binding),
           epoch: epoch(),
           clientHash: hash(JSON.stringify(client)),
-          connectionVersion: (await read(prefix + "version:" + id, c)) ?? 0,
+          connectionVersion:
+            (await read(req.owner, prefix + "version:" + id, c)) ?? 0,
         }),
         c,
       );
-      return flow;
+      return sealOwnerState(req.owner, flow);
     });
     res.setHeader("set-cookie", cookie(id, flow.binding, 600));
     res.json({ url: flow.url });
@@ -264,13 +276,14 @@ export function mountIntegrationRoutes(app) {
   app.post("/api/integrations/:id/refresh", async (req, res) => {
     const { id } = req.params;
     providerDefinition(id);
-    const data = await providerCatalog(id, await integrationConfig(id));
-    await transaction(prefix + id, async (c) => {
-      const stored = await read(prefix + id, c);
+    const data = await providerCatalog(id, await integrationConfig(req.owner, id));
+    await transaction(req.owner, prefix + id, async (c) => {
+      const stored = await read(req.owner, prefix + id, c);
       if (!stored) throw new Error("Disconnected.");
       const value = decrypt(stored);
       if (!value?.tokens) throw new Error("Disconnected.");
       await write(
+        req.owner,
         prefix + id,
         encrypt({ ...value, tools: data.tools, status: "connected" }),
         c,
@@ -281,9 +294,9 @@ export function mountIntegrationRoutes(app) {
   app.delete("/api/integrations/:id", async (req, res) => {
     const { id } = req.params;
     providerDefinition(id);
-    await transaction(prefix + id, async (c) => {
-      await write(prefix + id, null, c);
-      await write(prefix + "version:" + id, Date.now(), c);
+    await transaction(req.owner, prefix + id, async (c) => {
+      await write(req.owner, prefix + id, null, c);
+      await write(req.owner, prefix + "version:" + id, Date.now(), c);
     });
     res.json({ ok: true });
   });

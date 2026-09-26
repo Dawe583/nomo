@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import express from "express";
 import { mountRecoveryRoutes } from "./recovery-routes.mjs";
 import { view } from "./store.mjs";
+import { OPERATOR_OWNER } from "./owner.mjs";
 
 async function fixture(t) {
   const state = { session: { id: "session", workspace: "agent-session", status: "idle" }, applies: 0, reads: [] };
@@ -11,19 +12,36 @@ async function fixture(t) {
   state.status = state.plan;
   const client = {};
   const deps = {
-    transaction: async (_id, run) => { if (state.race) state.session.status = "running"; return run(client); },
-    read: async (_key, c) => { state.reads.push(c); return state.session; },
-    write: async (_key, session, c) => { assert.equal(c, client); state.saved = structuredClone(session); },
+    transaction: async (owner, _id, run) => {
+      assert.equal(owner, OPERATOR_OWNER);
+      if (state.race) state.session.status = "running";
+      return run(client);
+    },
+    read: async (owner, _key, c) => {
+      assert.equal(owner, OPERATOR_OWNER);
+      state.reads.push(c);
+      return state.session;
+    },
+    write: async (owner, _key, session, c) => {
+      assert.equal(owner, OPERATOR_OWNER);
+      assert.equal(c, client);
+      state.saved = structuredClone(session);
+    },
     planCloudRecoveryJob: async () => state.plan,
     cloudRecoveryJobStatus: async () => state.status,
     cloudRecoveryJobPlanDigest: async () => state.plan.digest,
-    runCloudRecoveryJob: async (_s, _c, _id, approve) => {
+    runCloudRecoveryJob: async (_owner, _s, _c, _id, approve) => {
       assert.equal(await approve(state.plan), true);
       state.applies++;
       return state.status = { jobId: "job", status: state.applyStatus ?? "restored", checkpoint: 1, outcomes: [{ operationId: "op", status: "restored" }], residuals: [] };
     },
   };
-  const app = express(); app.use(express.json()); mountRecoveryRoutes(app, deps);
+  const app = express();
+  app.use(express.json());
+  // Stands in for the session gate in cloud/server.mjs, which is what puts an
+  // owner on the request. The route itself refuses a request that has none.
+  app.use((req, _res, next) => { if (!state.anonymous) req.owner = OPERATOR_OWNER; next(); });
+  mountRecoveryRoutes(app, deps);
   const server = app.listen(0, "127.0.0.1"); await new Promise(resolve => server.once("listening", resolve));
   t.after(() => { server.closeAllConnections(); server.close(); });
   const request = async (path, body) => {
@@ -32,7 +50,14 @@ async function fixture(t) {
     });
     return { status: response.status, body: await response.json() };
   };
-  return { state, deps, request, digest, client };
+  return {
+    state,
+    deps,
+    request,
+    digest,
+    client,
+    anonymous: () => { state.anonymous = true; },
+  };
 }
 
 test("recovery route projects immutable plans without capture contents", async t => {
@@ -134,4 +159,16 @@ test("admitted recovery retains only public job identity across completion and r
   const count = f.state.applies;
   assert.equal((await f.request("job")).body.status, "restored");
   assert.equal(f.state.applies, count);
+});
+
+test("recovery refuses a request that carries no owner instead of planning against shared state", async (t) => {
+  const f = await fixture(t);
+  f.anonymous();
+  const refused = await f.request("plan", {
+    jobId: "job",
+    selection: { kind: "operations", operationIds: ["op"] },
+  });
+  assert.equal(refused.status, 401);
+  assert.deepEqual(f.state.reads, [], "a refused request must not read any session row");
+  assert.equal(f.state.saved, undefined, "a refused request must not write any session row");
 });

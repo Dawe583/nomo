@@ -4,6 +4,28 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- The hosted cloud workspace is now scoped by an owner. Every row in
+  `void_cloud_state`, `void_cloud_ledger` and `void_cloud_events` carries the
+  verified identity it belongs to, and that identity is the first column of
+  every primary key, so two accounts cannot address each other's rows even by
+  the same session identifier. Every statement in the cloud data layer carries
+  the owner as a bound parameter, the owner is the first argument of every store
+  function so a call that forgets it throws instead of querying, and a test
+  parses the queries rather than trusting review. The owner is resolved once, in
+  the session middleware, from a verified session and from nowhere else: a
+  header, a query parameter or a body field is not a source. The operator's
+  access token keeps working and now resolves to one reserved owner, `operator`,
+  which sees its own rows and nothing else; there is no token that reads every
+  account. The public demo is still open with no credential and is still its own
+  surface, but its rows are owned too, as `public-demo`, so an open endpoint is
+  no longer a window into somebody else's namespace. Accounts are not enabled:
+  signup is refused, and the switch is `VOID_ACCOUNT_SIGNUP`. An existing
+  database is moved to the new shape by `cloud/0001-account-ownership.sql`,
+  which is additive, runs cleanly more than once, and lifts the append-only
+  trigger for exactly the backfill that trigger would otherwise refuse. Run it
+  before deploying a build that carries this change, once, with the deploy
+  paused.
+
 - VOID no longer ships a default provider or a default model. `providerId` and
   `defaultModel` are `null` in a workspace with nothing configured, the provider
   panel says no provider is connected instead of naming a vendor, and the first

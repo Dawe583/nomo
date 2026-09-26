@@ -1,5 +1,6 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { read, write, transaction, database, event, append } from "./store.mjs";
+import { OPERATOR_OWNER } from "./owner.mjs";
 import { digest } from "../packages/runtime/src/journal.ts";
 const publicStatus = (state) => ({
   agent: "prime-agent",
@@ -9,12 +10,15 @@ const publicStatus = (state) => ({
   boundary:
     "Local PC execution. Local tools do not have automatic VOID Undo. Remote services retain their own authentication requirements.",
 });
+// The bridge is the operator's own PC. Its presence is operator state, not
+// a fact about an account, so it lives in the operator's namespace and an
+// account cannot read or forge it.
 export async function primeStatus() {
-  return publicStatus(await read("prime-worker"));
+  return publicStatus(await read(OPERATOR_OWNER, "prime-worker"));
 }
-export async function enqueuePrime(session) {
-  await transaction(session.id, async (c) => {
-    const current = await read(`session:${session.id}`, c);
+export async function enqueuePrime(owner, session) {
+  await transaction(owner, session.id, async (c) => {
+    const current = await read(owner, `session:${session.id}`, c);
     if (
       current?.status !== "running" ||
       current.generation !== session.generation
@@ -26,7 +30,7 @@ export async function enqueuePrime(session) {
       "tool",
       "Queued for your local prime-agent. Local tool changes are not covered by document Undo.",
     );
-    await write(`session:${session.id}`, current, c);
+    await write(owner, `session:${session.id}`, current, c);
   });
 }
 const workerAllowed = (req) => {
@@ -67,21 +71,24 @@ export function mountPrimeRoutes(app) {
       )
     )
       return res.status(400).json({ error: "invalid_tool_inventory" });
-    await write("prime-worker", { at: Date.now(), tools: names });
+    await write(OPERATOR_OWNER, "prime-worker", { at: Date.now(), tools: names });
+    // The claim scans the operator's sessions only. A worker token is a machine
+    // credential with no account behind it, so it is bound to the namespace it
+    // is allowed to act in rather than to whoever happens to be signed in.
     const candidate = (
       await database().query(
         `SELECT document->>'id' AS id FROM void_cloud_state
-          WHERE key LIKE 'session:%' AND document->>'agent'='prime-agent' AND (
+          WHERE owner=$1 AND key LIKE 'session:%' AND document->>'agent'='prime-agent' AND (
             (document->>'status'='running' AND document->'primeJob'->>'state'='queued') OR
             (document->>'status' IN ('running','stopping') AND document->'primeJob'->>'state'='claimed'
-              AND (document->'primeJob'->>'at')::bigint < $1)
+              AND (document->'primeJob'->>'at')::bigint < $2)
           ) ORDER BY key LIMIT 1`,
-        [Date.now() - 90000],
+        [OPERATOR_OWNER, Date.now() - 90000],
       )
     ).rows[0];
     if (!candidate) return res.json({ job: null });
-    const job = await transaction(candidate.id, async (c) => {
-      const s = await read(`session:${candidate.id}`, c);
+    const job = await transaction(OPERATOR_OWNER, candidate.id, async (c) => {
+      const s = await read(OPERATOR_OWNER, `session:${candidate.id}`, c);
       if (
         ["running", "stopping"].includes(s.status) &&
         s.primeJob?.state === "claimed" &&
@@ -90,6 +97,7 @@ export function mountPrimeRoutes(app) {
         s.status = "unknown";
         s.primeJob.state = "unknown";
         await append(
+          OPERATOR_OWNER,
           {
             workspace: s.workspace,
             at: new Date().toISOString(),
@@ -107,7 +115,7 @@ export function mountPrimeRoutes(app) {
           "error",
           "Local worker disconnected. Tool outcome is unknown; the job will not be retried automatically.",
         );
-        await write(`session:${s.id}`, s, c);
+        await write(OPERATOR_OWNER, `session:${s.id}`, s, c);
         return null;
       }
       if (s.status !== "running" || s.primeJob?.state !== "queued") return null;
@@ -122,6 +130,7 @@ export function mountPrimeRoutes(app) {
         .filter((m) => m.role === "user")
         .at(-1)?.content;
       await append(
+        OPERATOR_OWNER,
         {
           workspace: s.workspace,
           at: new Date().toISOString(),
@@ -136,7 +145,7 @@ export function mountPrimeRoutes(app) {
         c,
       );
       event(s, "tool", "prime-agent connected to your PC.");
-      await write(`session:${s.id}`, s, c);
+      await write(OPERATOR_OWNER, `session:${s.id}`, s, c);
       return {
         id: s.id,
         generation: s.generation,
@@ -150,8 +159,8 @@ export function mountPrimeRoutes(app) {
     res.json({ job });
   });
   app.post("/api/prime/jobs/:id", async (req, res) => {
-    const result = await transaction(req.params.id, async (c) => {
-      const s = await read(`session:${req.params.id}`, c),
+    const result = await transaction(OPERATOR_OWNER, req.params.id, async (c) => {
+      const s = await read(OPERATOR_OWNER, `session:${req.params.id}`, c),
         input = req.body ?? {};
       if (
         !s ||
@@ -164,16 +173,17 @@ export function mountPrimeRoutes(app) {
         s.status = "unknown";
         s.primeJob.state = "unknown";
         event(s, "error", "Worker stop requested. Previously dispatched tool outcomes require reconciliation.");
-        await append({ workspace: s.workspace, at: new Date().toISOString(), tool: "prime_agent_run", klass: "r3",
+        await append(OPERATOR_OWNER, { workspace: s.workspace, at: new Date().toISOString(), tool: "prime_agent_run", klass: "r3",
           decision: "execute:unknown", operationId: s.primeJob.claim, reason: "operator-stop", recovery: "not-captured" }, c);
-        await write(`session:${s.id}`, s, c);
+        await write(OPERATOR_OWNER, `session:${s.id}`, s, c);
         return { cancel: true };
       }
       if (s.status !== "running" || s.primeJob.state === "completed")
         return { cancel: true };
       s.primeJob.at = Date.now();
-      const worker = await read("prime-worker", c);
-      if (worker) await write("prime-worker", { ...worker, at: Date.now() }, c);
+      const worker = await read(OPERATOR_OWNER, "prime-worker", c);
+      if (worker)
+        await write(OPERATOR_OWNER, "prime-worker", { ...worker, at: Date.now() }, c);
       if (input.type === "tool") {
         if (
           typeof input.name !== "string" ||
@@ -203,6 +213,7 @@ export function mountPrimeRoutes(app) {
         event(s, input.failed ? "error" : "assistant", text);
         event(s, "tool", s.status, { status: s.status }, "run.status");
         await append(
+          OPERATOR_OWNER,
           {
             workspace: s.workspace,
             at: new Date().toISOString(),
@@ -217,7 +228,7 @@ export function mountPrimeRoutes(app) {
         );
       } else if (input.type !== "heartbeat")
         throw new Error("Invalid worker event.");
-      await write(`session:${s.id}`, s, c);
+      await write(OPERATOR_OWNER, `session:${s.id}`, s, c);
       return { cancel: false };
     });
     res.json(result);

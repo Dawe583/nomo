@@ -1,125 +1,140 @@
 # Account ownership for the cloud
 
-**Status: design, not implemented. Nothing in this document has been built.**
+**Status: the data layer is scoped. Accounts are not enabled and signup is
+still off.** Everything below that says "must" is a condition on enabling
+signup, not a description of what exists.
 
-This is the plan for making `cloud.voidagent.tech` multi-tenant, so that an
-account created on the marketing site sees only its own data. It exists because
+This is how `chat.voidagent.tech` becomes multi-tenant, so that an account
+created on the marketing site sees only its own data. It exists because
 `docs/APPWRITE-AUTH.md` forbids enabling public signup until every cloud read
-and write is scoped by a verified owner, and that gate is the whole reason this
-document was written rather than the code.
+and write is scoped by a verified owner.
 
-Read this before writing any of it. The refactor touches every query in the
-cloud data layer, and a query that forgets its owner predicate is a cross
-account read that no test in this repository would notice.
+## What the data looks like now
 
-## What the data looks like today
+Three tables, in `cloud/schema.sql`, and all three have an owner that is the
+first column of the primary key:
 
-Three tables, in `cloud/schema.sql`, and none of them has an owner:
-
-| table | key today | written by |
+| table | key | written by |
 | --- | --- | --- |
-| `void_cloud_state` | `key`, which is `session:<id>`, `workspace:<id>` or `hold:<id>` | `cloud/store.mjs`, `cloud/demo.mjs` |
-| `void_cloud_ledger` | `(workspace, seq)` | `cloud/store.mjs` `append` |
-| `void_cloud_events` | `(session_id, seq)` | `cloud/store.mjs` `event` |
+| `void_cloud_state` | `(owner, key)`, where `key` is `session:<id>`, `workspace:<id>` or `hold:<id>` | `cloud/store.mjs`, `cloud/demo.mjs` |
+| `void_cloud_ledger` | `(owner, workspace, seq)` | `cloud/store.mjs` `append` |
+| `void_cloud_events` | `(owner, session_id, seq)` | `cloud/store.mjs` `event` |
 
-Seventeen statements read or write them, spread across `cloud/store.mjs` (fourteen),
-`cloud/server.mjs` (two), `cloud/prime.mjs` (one) and three test files. There is
-no other writer. In particular there is no bridge from the local control plane
-into this database: the hosted web UI is the only thing that writes here, so
-scoping the rows by account does not change what the local product does on a
-visitor's own machine, and the local path keeps its `VOID_CONTROL_TOKEN` and its
-loopback.
+Seventeen statements read or write them, spread across `cloud/store.mjs`
+(fourteen), `cloud/server.mjs` (two) and `cloud/prime.mjs` (one). Four more
+sit in the test fixtures. Every one of them now carries an owner predicate or
+supplies the owner column, and `cloud/owner.test.mjs` parses the queries in
+every file under `cloud/` and fails if one does not.
 
-That fact is the reason this is tractable. If a local process pushed state here,
-an account would have to be involved in a push it knows nothing about, and the
-shape of the product would have to change first.
-
-## The shape of the change
-
-An `owner` column on all three tables, holding the provider's user id, and every
-statement gains a predicate on it.
-
-- `void_cloud_state`: add `owner text`, and change the key to `(owner, key)`.
-  The two partial indexes on `void_cloud_state` already filter `key LIKE
-  'session:%'` and are unaffected by an added column, but the primary key change
-  is a rewrite of the table, so this is the one migration that needs a window.
-- `void_cloud_ledger`: add `owner text` and move the primary key to
-  `(owner, workspace, seq)`. The append only trigger stays as it is; it is about
-  immutability, not identity.
-- `void_cloud_events`: add `owner text` and move the primary key to
-  `(owner, session_id, seq)`. Same trigger argument.
-
-The owner value is never read from a request. It comes from the verified session
-and nowhere else, and the rule that makes this reviewable is simple: **if you
-cannot name the line that produces the owner, the statement does not get written.**
-A header, a query parameter or a body field is not a source.
+There is still no bridge from the local control plane into this database: the
+hosted web UI is the only thing that writes here, so scoping the rows by
+account does not change what the local product does on a visitor's own machine,
+and the local path keeps its `VOID_CONTROL_TOKEN` and its loopback.
 
 ## Where the owner comes from
 
-A new authenticated request carries two things: the `__Host-void-user` cookie
-this repository already knows how to seal (`cloud/auth.mjs` does exactly this,
-with `node:crypto` and no dependency), and the session it names. The middleware
-resolves that cookie into an owner id before any route runs, and stores it on the
-request. Routes read `req.owner`. A route that needs a session and has no owner
-refuses, rather than falling back to a shared workspace.
+The middleware in `cloud/server.mjs` resolves `req.owner` before any route
+runs, from a verified session and from nowhere else. There are two sources and
+only two:
 
-`cloud/auth.mjs` is Appwrite backed and is currently imported by nothing but its
-own test. Two honest options, and the choice is not yet made:
+- The operator's control token, cookie or bearer header, resolves to
+  `OPERATOR_OWNER`.
+- A sealed `__Host-void-account` cookie, opened with
+  `VOID_ACCOUNT_SEAL_KEY` and then confirmed against the provider over TLS,
+  resolves to the provider's user id.
 
-1. **Mount it** and keep Appwrite as this deployment's identity provider. The
-   module, its sealed cookie and its tests already exist, so this is the smaller
-   change, and it contradicts nothing in this repository.
-2. **Replace it with Supabase Auth**, which is what the marketing site's accounts
-   use, so one person has one account across both origins. That is a larger
-   change: a new broker, and the module that exists is deleted rather than
-   adapted.
+A request that presents neither is refused. It is not served from a shared
+workspace and it is not served an empty result, because an empty result reads
+as "you have nothing" and hides the refusal.
 
-Option 2 is the one the product wants, because a person who registers on the
-marketing site and signs in at the chat origin should be the same person. Option 1
-is the one that ships sooner. This is a decision for the operator, not for an
-implementer.
+The second source is `cloud/account.mjs`: the same design the marketing site
+already uses for its accounts, and it is server side only, so `vercel.json`
+keeps `connect-src 'self'` and the browser never holds a provider token. Sign up
+is refused unless `VOID_ACCOUNT_SIGNUP` is `1`, and it is not set.
 
-## What must be true before signup is enabled
+`cloud/owner.mjs` holds the reserved owners and the one validation every store
+function applies first. `cloud/owner.test.mjs` reads the signatures and fails
+if a store function stops taking the owner, and reads every source file and
+fails if an owner is put on a request anywhere but the middleware.
 
-The gate in `docs/APPWRITE-AUTH.md` stands until all of these hold, and each one
-is checkable:
+## The operator's own rows
 
-1. Every statement in the list above carries an owner predicate, and a statement
-   that cannot be scoped is deleted rather than left shared.
-2. Two accounts exist in a test database, and no read or write issued for one can
-   return the other's rows. This is a test, not a review, and it needs an
-   isolated database: the suite already gates its database tests behind
-   `VOID_GUI_DATABASE_TEST=1` and refuses to run them otherwise.
-3. The operator's own access keeps working. That is a decision, not an
-   assumption: either the operator is an account like anybody else and sees one
-   workspace, or the operator gets a distinct scoped role with no implicit access
-   to anybody's rows. There is no third option where a token reads everything,
-   because that is the hole this document exists to close.
-4. The demo namespace, which is mounted before the auth middleware today
-   (`cloud/server.mjs` mounts it at line 78 and the gate at 85), is either moved
-   behind the owner or explicitly documented as public shared state. It is
-   currently reachable with no credential, and scoping everything else while
-   leaving that open is the kind of half measure that reads as done.
+The operator is a distinct scoped role, not an account, and not a token that
+reads everything.
 
-## The order, because it is the only order that is safe
+`VOID_CONTROL_TOKEN` resolves to one reserved owner, `operator`. It reads
+exactly the rows owned by `operator`, which is one namespace and not the union
+of the others. `cloud/0001-account-ownership.sql` moves every row that existed
+before this change into that namespace, so the beta the operator is using today
+keeps working unchanged.
 
-1. Add the column and the new primary keys, nullable, with no behaviour change.
-2. Backfill every existing row to one owner, the operator's.
-3. Add the owner to the session middleware and resolve it per request.
-4. Add the predicate to every statement, one at a time, each with a test.
-5. Only then enable an account on the chat origin.
+There is no third option where a token reads every account's rows. That is the
+hole this whole change exists to close, and `cloud/owner.test.mjs` fails if
+anything else is introduced.
 
-Step 4 is the one that will take the longest and the one where a mistake is
-silent. The mitigation is mechanical rather than clever: make the owner predicate
-part of the signature of the store functions, so a statement that forgets it
-does not compile.
+## The public demo
+
+`cloud/server.mjs` still mounts the demo before the session gate, and the demo
+is still reachable with no credential. That is its purpose and it is not
+changing.
+
+What has changed is that the demo is not shared state any more: every read,
+write and lock it issues runs as the reserved owner `public-demo`, applied in
+`cloud/demo.mjs` outside the dependency injection point, so an injected store is
+handed the owner rather than trusted to choose one. A demo visitor can neither
+read nor collide with a row belonging to the operator or to an account. The
+open endpoint is no longer a window into anybody's namespace; it is a window
+into its own.
+
+## What still has to be true before signup is enabled
+
+The gate in `docs/APPWRITE-AUTH.md` stands. Of its four conditions:
+
+1. **Done, and enforced by a test rather than by review.** Every statement
+   carries an owner, `cloud/owner.test.mjs` parses them, and a statement that
+   cannot be scoped was deleted rather than left shared.
+2. **Not done.** Two accounts in a test database with no read or write issued
+   for one able to return the other's rows. The suite gates its database tests
+   behind `VOID_GUI_DATABASE_TEST=1` and refuses to run them without an
+   explicitly supplied isolated database, so the row-level isolation proved so
+   far is a migration proof against a local PostgreSQL, not a test in this
+   repository. Write it before the switch.
+3. **Done, as a decision.** The operator is a distinct scoped role with no
+   implicit access to anybody's rows, as described above.
+4. **Done, as a decision.** The demo namespace is owned.
+
+Two further conditions are not in that list and have to hold anyway:
+
+- **A Supabase project exists.** There is none on the operator's side, so
+  nothing can be signed in against. Until there is, the broker is inert and
+  every request must present the control token.
+- **The Prime bridge is either given a per-owner credential or refused to
+  accounts.** It authenticates with a machine token and is bound to the
+  operator's namespace, and `POST /api/sessions` refuses `prime-agent` for any
+  owner that is not the operator. That is a deliberate refusal rather than a
+  queued run no worker may claim.
+
+## The order it was done in
+
+1. `cloud/0001-account-ownership.sql`: the column and the new primary keys,
+   additive and idempotent, with every existing row backfilled to `operator`.
+2. The owner in the middleware.
+3. The owner on every statement, with the owner as the first parameter of
+   every store function.
+4. Sign up left off.
+
+The migration is a separate file rather than an edit to `cloud/schema.sql`
+because it is a table rewrite against a database that is already serving a
+beta. `cloud/schema.sql` is the shape a new database gets; the migration is
+what moves an existing one, and running it against a database provisioned from
+the schema is a no-op.
 
 ## What this does not do
 
 It does not make the local product multi user. VOID still runs on the
-operator's machine, still talks to it over loopback, and still authenticates with
-`VOID_CONTROL_TOKEN`. It does not give anybody a hosted VOID, and the marketing
-site's copy says so on purpose.
+operator's machine, still talks to it over loopback, and still authenticates
+with `VOID_CONTROL_TOKEN`. It does not give anybody a hosted VOID, and the
+marketing site's copy says so on purpose.
 
 It does not store a password anywhere in this database, and it will not: the
 identity, including its hash, belongs to the provider.

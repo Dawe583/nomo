@@ -8,7 +8,11 @@ import {
   PROVIDER_PRESETS,
 } from "../packages/workbench/src/provider-defaults.ts";
 import { read, write, encrypt, decrypt } from "./store.mjs";
+import { assertOwner } from "./owner.mjs";
 
+// Every `read` and `write` here, injected or not, takes the owner first, so no
+// path through this module can reach a provider row without one. A test that
+// injects its own pair is handed the owner rather than trusted with choosing it.
 const dependencies = (overrides) => ({
   read, write, encrypt, decrypt, env: process.env, fetch,
   oidc: getVercelOidcToken, ...overrides,
@@ -19,9 +23,9 @@ const dependencies = (overrides) => ({
 const snapshotKey = snapshot => createHash("sha256")
   .update(JSON.stringify(snapshot ?? null)).digest("hex");
 
-export async function rememberProviderFailure(snapshot, failure, client, overrides) {
+export async function rememberProviderFailure(owner, snapshot, failure, client, overrides) {
   const deps = dependencies(overrides);
-  await deps.write("provider-failure", {
+  await deps.write(owner, "provider-failure", {
     provider: snapshotKey(snapshot), status: failure.status,
     retryAt: failure.retryAfter === undefined ? null : new Date(Date.now() + failure.retryAfter * 1000).toISOString(),
   }, client);
@@ -47,14 +51,14 @@ async function configuration(config, deps) {
   return { baseUrl: NVIDIA_URL, apiKey: deps.env.NVIDIA_API_KEY, kind: "compatible" };
 }
 
-export async function provider(snapshot, overrides) {
+export async function provider(owner, snapshot, overrides) {
   const deps = dependencies(overrides);
-  const config = await configuration(snapshot ?? (await deps.read("provider")), deps);
+  const config = await configuration(snapshot ?? (await deps.read(owner, "provider")), deps);
   if (!config) throw new Error("Connect the saved provider or configure NVIDIA_API_KEY for NVIDIA NIM.");
   return new CompatibleProvider(config, deps.fetch);
 }
 
-export async function providerState(overrides) {
+export async function providerState(owner, overrides) {
   const deps = dependencies(overrides);
   let credentials = Boolean(deps.env.NVIDIA_API_KEY);
   // No provider and no model until one is configured. The presets are the
@@ -71,16 +75,16 @@ export async function providerState(overrides) {
     setupRequired: false,
   };
   try {
-    const saved = await deps.read("provider");
+    const saved = await deps.read(owner, "provider");
     if (saved?.secret) {
       credentials = true;
       const raw = deps.decrypt(saved.secret), normalized = normalizeProviderConfig(raw);
       if (raw.kind !== normalized.kind) {
-        const secret = deps.encrypt(normalized), profiles = (await deps.read("provider-profiles")) ?? {};
-        await deps.write("provider", { ...saved, secret });
+        const secret = deps.encrypt(normalized), profiles = (await deps.read(owner, "provider-profiles")) ?? {};
+        await deps.write(owner, "provider", { ...saved, secret });
         if (profiles[normalized.baseUrl]) {
           profiles[normalized.baseUrl] = secret;
-          await deps.write("provider-profiles", profiles);
+          await deps.write(owner, "provider-profiles", profiles);
         }
       }
     }
@@ -93,13 +97,13 @@ export async function providerState(overrides) {
       providerId: PROVIDER_PRESETS.find((p) => p.baseUrl === config.baseUrl)?.id ?? "custom",
     });
     const models = await new CompatibleProvider(config, deps.fetch).models();
-    const failure = await deps.read("provider-failure");
+    const failure = await deps.read(owner, "provider-failure");
     const observed = failure?.status && failure.provider === snapshotKey(saved) ? failure : null;
     return {
       ...defaults,
       connected: true,
       models,
-      profiles: Object.keys((await deps.read("provider-profiles")) ?? {}),
+      profiles: Object.keys((await deps.read(owner, "provider-profiles")) ?? {}),
       mode: defaults.providerId,
       ...providerStateFromFailure(true, observed, true),
     };

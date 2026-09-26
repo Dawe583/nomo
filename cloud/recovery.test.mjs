@@ -17,6 +17,7 @@ import {
   runCloudRecoveryJob,
 } from "./recovery.mjs";
 import { validateCloudTestEnvironment } from "../scripts/src/cloud-test-config.mjs";
+import { OPERATOR_OWNER } from "./owner.mjs";
 if (process.env.VOID_GUI_DATABASE_TEST === "1")
   validateCloudTestEnvironment(process.env);
 
@@ -33,36 +34,36 @@ test(
     const id = randomUUID(),
       session = { id, workspace: `agent-${id}`, generation: 2 };
     const mutate = (operationId, content) =>
-      transaction(id, (c) =>
-        mutateCloudDocument(session, c, {
+      transaction(OPERATOR_OWNER, id, (c) =>
+        mutateCloudDocument(OPERATOR_OWNER, session, c, {
           id: operationId,
           name: "void_workspace_write",
           arguments: { path: "check.txt", content },
         }),
       );
-    const state = async () => decrypt(await read(`workspace:${id}`));
+    const state = async () => decrypt(await read(OPERATOR_OWNER, `workspace:${id}`));
     try {
       await mutate("first", "before");
       await mutate("second", "after");
       await assert.rejects(
-        transaction(id, (c) => managedCloudUndo(session, c, "first")),
+        transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(OPERATOR_OWNER, session, c, "first")),
         /newer changes/,
       );
       assert.equal(
-        await transaction(id, (c) => managedCloudUndo(session, c, "second")),
+        await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(session, c, "second")),
         true,
       );
       assert.equal((await state()).files["check.txt"], "before");
       const count = (await state()).operations.length;
-      await transaction(id, (c) => managedCloudUndo(session, c, "second"));
+      await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(session, c, "second"));
       assert.equal((await state()).operations.length, count);
-      const proof = await ledger(session.workspace);
+      const proof = await ledger(OPERATOR_OWNER, session.workspace);
       assert.ok(
         proof.entries.some((e) => e.body.runtimeEvent?.stage === "restored"),
       );
       await assert.rejects(
-        transaction(id, async (c) => {
-          await mutateCloudDocument(session, c, {
+        transaction(OPERATOR_OWNER, id, async (c) => {
+          await mutateCloudDocument(OPERATOR_OWNER, session, c, {
             id: "rollback",
             name: "void_workspace_write",
             arguments: { path: "check.txt", content: "must roll back" },
@@ -73,18 +74,18 @@ test(
       );
       assert.equal((await state()).files["check.txt"], "before");
       assert.equal(
-        (await ledger(session.workspace)).entries.length,
+        (await ledger(OPERATOR_OWNER, session.workspace)).entries.length,
         proof.entries.length,
       );
       await assert.rejects(
-        transaction(id, async (c) => {
-          const quota = await read(`recovery-quota:${id}`, c);
-          await write(
+        transaction(OPERATOR_OWNER, id, async (c) => {
+          const quota = await read(OPERATOR_OWNER, `recovery-quota:${id}`, c);
+          await write(OPERATOR_OWNER, 
             `recovery-quota:${id}`,
             { ...quota, bytes: 64 * 1024 * 1024 },
             c,
           );
-          await mutateCloudDocument(session, c, {
+          await mutateCloudDocument(OPERATOR_OWNER, session, c, {
             id: "no-space",
             name: "void_workspace_write",
             arguments: { path: "check.txt", content: "no space" },
@@ -94,15 +95,16 @@ test(
       );
       assert.equal((await state()).files["check.txt"], "before");
       await assert.rejects(
-        transaction(id, async (c) => {
-          await c.query("DELETE FROM void_cloud_state WHERE key LIKE $1", [
+        transaction(OPERATOR_OWNER, id, async (c) => {
+          await c.query("DELETE FROM void_cloud_state WHERE owner=$1 AND key LIKE $2", [
+            OPERATOR_OWNER,
             `recovery-artifact:${id}:%`,
           ]);
-          await managedCloudUndo(session, c, "first");
+          await managedCloudUndo(OPERATOR_OWNER, session, c, "first");
         }),
         /artifact/,
       );
-      await transaction(id, (c) => managedCloudUndo(session, c, "first"));
+      await transaction(OPERATOR_OWNER, id, (c) => managedCloudUndo(session, c, "first"));
       assert.equal((await state()).files["check.txt"], undefined);
       await mutate("job-first", "job before");
       await mutate("job-second", "job after");
@@ -111,8 +113,9 @@ test(
         kind: "operations",
         operationIds: ["job-first", "job-second", "missing"],
       };
-      const plan = await transaction(id, (c) =>
+      const plan = await transaction(OPERATOR_OWNER, id, (c) =>
         planCloudRecoveryJob(
+          OPERATOR_OWNER,
           { workspace: session.workspace, jobId, selection },
           session,
           c,
@@ -126,10 +129,10 @@ test(
       assert.deepEqual(plan.residuals, [
         { operationId: "missing", status: "missing" },
       ]);
-      const boundary = (await ledger(session.workspace)).entries.length;
+      const boundary = (await ledger(OPERATOR_OWNER, session.workspace)).entries.length;
       await assert.rejects(
-        transaction(id, (c) =>
-          runCloudRecoveryJob(session, c, jobId, async () => false),
+        transaction(OPERATOR_OWNER, id, (c) =>
+          runCloudRecoveryJob(OPERATOR_OWNER, session, c, jobId, async () => false),
         ),
         /authorized/,
       );
@@ -138,32 +141,33 @@ test(
         "do not widen the closed plan silently",
       );
       const beforeStatuses = [];
-      const staleResult = await transaction(id, (c) =>
-        runCloudRecoveryJob(session, c, jobId, async (stored) => {
+      const staleResult = await transaction(OPERATOR_OWNER, id, (c) =>
+        runCloudRecoveryJob(OPERATOR_OWNER, session, c, jobId, async (stored) => {
           beforeStatuses.push(stored.digest);
           return true;
         }),
       ).catch((error) => error);
       assert.match(String(staleResult?.message ?? staleResult), /stale/);
-      const stored = await transaction(id, (c) =>
-        cloudRecoveryJobStatus(session, c, jobId),
+      const stored = await transaction(OPERATOR_OWNER, id, (c) =>
+        cloudRecoveryJobStatus(OPERATOR_OWNER, session, c, jobId),
       );
       assert.equal(stored.jobId, jobId);
       assert.equal(stored.digest, plan.digest);
-      assert.ok((await ledger(session.workspace)).entries.length > boundary);
-      await transaction(id, (c) =>
-        managedCloudUndo(session, c, "forward-after-plan"),
+      assert.ok((await ledger(OPERATOR_OWNER, session.workspace)).entries.length > boundary);
+      await transaction(OPERATOR_OWNER, id, (c) =>
+        managedCloudUndo(OPERATOR_OWNER, session, c, "forward-after-plan"),
       );
       const resumedJobId = "recovery-job-after-stale";
-      const resumedPlan = await transaction(id, (c) =>
+      const resumedPlan = await transaction(OPERATOR_OWNER, id, (c) =>
         planCloudRecoveryJob(
+          OPERATOR_OWNER,
           { workspace: session.workspace, jobId: resumedJobId, selection },
           session,
           c,
         ),
       );
-      const applied = await transaction(id, (c) =>
-        runCloudRecoveryJob(session, c, resumedJobId, async (candidate) => {
+      const applied = await transaction(OPERATOR_OWNER, id, (c) =>
+        runCloudRecoveryJob(OPERATOR_OWNER, session, c, resumedJobId, async (candidate) => {
           assert.equal(candidate.digest, resumedPlan.digest);
           return true;
         }),
@@ -178,20 +182,21 @@ test(
         { operationId: "missing", status: "missing" },
       ]);
       assert.equal((await state()).files["check.txt"], undefined);
-      const proofAfter = await ledger(session.workspace);
+      const proofAfter = await ledger(OPERATOR_OWNER, session.workspace);
       assert.ok(
         proofAfter.entries.some(
           (entry) => entry.body.runtimeJobEvent?.stage === "partial",
         ),
       );
       assert.deepEqual(
-        await transaction(id, (c) =>
-          runCloudRecoveryJob(session, c, resumedJobId, async () => false),
+        await transaction(OPERATOR_OWNER, id, (c) =>
+          runCloudRecoveryJob(OPERATOR_OWNER, session, c, resumedJobId, async () => false),
         ),
         applied,
       );
-      const nextPlan = await transaction(id, (c) =>
+      const nextPlan = await transaction(OPERATOR_OWNER, id, (c) =>
         planCloudRecoveryJob(
+          OPERATOR_OWNER,
           { workspace: session.workspace, jobId: resumedJobId, selection },
           session,
           c,
@@ -199,8 +204,9 @@ test(
       );
       assert.equal(nextPlan.digest, resumedPlan.digest);
       await mutate("run-selection-operation", "run selection");
-      const runPlan = await transaction(id, (c) =>
+      const runPlan = await transaction(OPERATOR_OWNER, id, (c) =>
         planCloudRecoveryJob(
+          OPERATOR_OWNER,
           {
             workspace: session.workspace,
             jobId: "run-recovery-job",

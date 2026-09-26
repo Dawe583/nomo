@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { database, read, write, transaction } from "./store.mjs";
 import { enqueuePrime } from "./prime.mjs";
+import { OPERATOR_OWNER } from "./owner.mjs";
 test(
   "prime worker authenticates, claims once, rejects stale results and never replays lost jobs",
   {
@@ -31,7 +32,7 @@ test(
       });
       return { status: r.status, body: await r.json() };
     };
-    const previous = await read("prime-worker"),
+    const previous = await read(OPERATOR_OWNER, "prime-worker"),
       id = randomUUID();
     try {
       const catalog = await (await fetch(base + "/api/agents", { headers })).json();
@@ -59,8 +60,8 @@ test(
         events: [],
         messages: [{ role: "user", content: "Test fixture" }],
       };
-      await write(`session:${id}`, s);
-      await enqueuePrime(s);
+      await write(OPERATOR_OWNER, `session:${id}`, s);
+      await enqueuePrime(OPERATOR_OWNER, s);
       const claims = await Promise.all([
         post("/api/prime/claim", { tools: ["MCP: test"] }),
         post("/api/prime/claim", { tools: ["MCP: test"] }),
@@ -88,9 +89,9 @@ test(
         ).status,
         200,
       );
-      assert.equal((await read(`session:${id}`)).status, "idle");
-      await transaction(id, async (c) => {
-        const current = await read(`session:${id}`, c);
+      assert.equal((await read(OPERATOR_OWNER, `session:${id}`)).status, "idle");
+      await transaction(OPERATOR_OWNER, id, async (c) => {
+        const current = await read(OPERATOR_OWNER, `session:${id}`, c);
         current.status = "running";
         current.generation = 2;
         current.primeJob = {
@@ -99,13 +100,13 @@ test(
           generation: 2,
           at: 0,
         };
-        await write(`session:${id}`, current, c);
+        await write(OPERATOR_OWNER, `session:${id}`, current, c);
       });
       assert.equal(
         (await post("/api/prime/claim", { tools: [] })).body.job,
         null,
       );
-      assert.equal((await read(`session:${id}`)).primeJob.state, "unknown");
+      assert.equal((await read(OPERATOR_OWNER, `session:${id}`)).primeJob.state, "unknown");
       assert.equal(
         (
           await post(`/api/prime/jobs/${id}`, {
@@ -118,33 +119,35 @@ test(
         ).body.cancel,
         true,
       );
-      assert.equal((await read(`session:${id}`)).status, "unknown");
-      await transaction(id, async (c) => {
-        const current = await read(`session:${id}`, c);
+      assert.equal((await read(OPERATOR_OWNER, `session:${id}`)).status, "unknown");
+      await transaction(OPERATOR_OWNER, id, async (c) => {
+        const current = await read(OPERATOR_OWNER, `session:${id}`, c);
         current.status = "stopping";
         current.generation = 3;
         current.primeJob = { state: "claimed", claim: "stopped-lost", generation: 3, at: 0 };
-        await write(`session:${id}`, current, c);
+        await write(OPERATOR_OWNER, `session:${id}`, current, c);
       });
       assert.equal((await post("/api/prime/claim", { tools: [] })).body.job, null);
-      assert.equal((await read(`session:${id}`)).status, "unknown", "a disconnected stopping worker is unknown, never stuck or reclaimed");
-      await transaction(id, async (c) => {
-        const current = await read(`session:${id}`, c);
+      assert.equal((await read(OPERATOR_OWNER, `session:${id}`)).status, "unknown", "a disconnected stopping worker is unknown, never stuck or reclaimed");
+      await transaction(OPERATOR_OWNER, id, async (c) => {
+        const current = await read(OPERATOR_OWNER, `session:${id}`, c);
         current.status = "stopping";
         current.generation = 4;
         current.primeJob = { state: "claimed", claim: "stop-heartbeat", generation: 4, at: Date.now() };
-        await write(`session:${id}`, current, c);
+        await write(OPERATOR_OWNER, `session:${id}`, current, c);
       });
       assert.equal((await post(`/api/prime/jobs/${id}`, { claim: "stop-heartbeat", generation: 4, type: "heartbeat" })).body.cancel, true);
-      assert.equal((await read(`session:${id}`)).status, "unknown", "heartbeat cannot prove that dispatched tool effects stopped");
+      assert.equal((await read(OPERATOR_OWNER, `session:${id}`)).status, "unknown", "heartbeat cannot prove that dispatched tool effects stopped");
     } finally {
-      await database().query("DELETE FROM void_cloud_state WHERE key=$1", [
+      await database().query("DELETE FROM void_cloud_state WHERE owner=$1 AND key=$2", [
+        OPERATOR_OWNER,
         `session:${id}`,
       ]);
-      if (previous) await write("prime-worker", previous);
+      if (previous) await write(OPERATOR_OWNER, "prime-worker", previous);
       else
         await database().query(
-          "DELETE FROM void_cloud_state WHERE key='prime-worker'",
+          "DELETE FROM void_cloud_state WHERE owner=$1 AND key='prime-worker'",
+          [OPERATOR_OWNER],
         );
       server.closeAllConnections();
       await new Promise((r) => server.close(r));

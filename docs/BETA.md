@@ -90,6 +90,15 @@ never share the signing or encryption keys. Enter the access token in the web
 connection form. Authentication uses Secure, HttpOnly, SameSiteStrict cookies.
 This beta is a single-operator workspace, not a multiuser RBAC product.
 
+Accounts are not on for this beta and the access token still means the
+operator's own workspace. Before deploying a build that carries account
+ownership, run `cloud/0001-account-ownership.sql` against the database. It is
+additive, it is safe to run twice, it moves every existing row into the
+operator's namespace so nothing changes for the token you already have, and it
+takes a short exclusive lock while it swaps the primary keys, so run it once
+with the deploy paused. Skipping it leaves the server writing a column the
+database does not have, and every cloud read fails until it is applied.
+
 VOID has no default provider and no default model. Add `NVIDIA_API_KEY` through
 Provider settings or the local runtime environment, or connect another provider
 from the preset list, and the first conversation asks which model to use from

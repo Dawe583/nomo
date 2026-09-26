@@ -69,6 +69,8 @@ import {
   DATA_EDGE_HONESTY_NOTE,
 } from "../packages/ledger/src/taint/graph.ts";
 import { neighbors } from "../packages/ledger/src/taint/query.ts";
+import { accountServiceFromEnv, readSessionCookie } from "./account.mjs";
+import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "64kb" }));
@@ -80,10 +82,28 @@ const matches = (a, b) =>
   b.length >= 32 &&
   Buffer.byteLength(a) === Buffer.byteLength(b) &&
   timingSafeEqual(Buffer.from(a), Buffer.from(b));
-app.use((req, res, next) => {
+const accounts = accountServiceFromEnv();
+/**
+ * The owner of a request, resolved here and from nowhere else.
+ *
+ * There are exactly two ways in, and both produce an owner before any route
+ * runs. The operator's control token produces `OPERATOR_OWNER`, which is one
+ * namespace and not a view over anybody else's. An account cookie produces the
+ * provider's user id, and only after the provider has confirmed over TLS that
+ * the token in that cookie still belongs to that person: a sealed cookie proves
+ * it is ours, not that its holder is still its holder.
+ *
+ * A request that presents neither is refused. It is not served from a shared
+ * workspace and it is not served an empty list, because an empty list reads as
+ * "you have nothing" and would hide the refusal.
+ */
+app.use(async (req, res, next) => {
   res.set({ "cache-control": "no-store", "x-content-type-options": "nosniff" });
   const token = process.env.VOID_CONTROL_TOKEN;
-  if (!token || token.length < 32)
+  const operatorConfigured = typeof token === "string" && token.length >= 32;
+  // Absent both providers this deployment is being configured, which is what
+  // the operator sees. It is not a state an account can be handed.
+  if (!operatorConfigured && !accounts.isConfigured())
     return res.status(503).json({
       error: "setup_required",
       message: "Cloud access is being configured.",
@@ -123,23 +143,44 @@ app.use((req, res, next) => {
     );
   } catch {}
   if (
-    !matches(cookie, token) &&
-    !matches(req.headers.authorization?.replace(/^Bearer /, ""), token)
-  )
-    return res.status(401).json({
-      error: "authentication_required",
-      message: "Enter your workspace access token to connect.",
-    });
-  if (matches(cookie, token))
-    res.setHeader("set-cookie", workspaceSessionCookie(token));
-  next();
+    operatorConfigured &&
+    (matches(cookie, token) ||
+      matches(req.headers.authorization?.replace(/^Bearer /, ""), token))
+  ) {
+    req.owner = OPERATOR_OWNER;
+    if (matches(cookie, token))
+      res.setHeader("set-cookie", workspaceSessionCookie(token));
+    return next();
+  }
+  if (accounts.isConfigured()) {
+    const session = accounts.openSession(readSessionCookie(req));
+    if (session) {
+      let user = null;
+      try {
+        user = await accounts.whoIs(session.accessToken);
+      } catch {
+        user = null;
+      }
+      if (user && isOwner(user.id)) {
+        req.owner = user.id;
+        req.account = session;
+        return next();
+      }
+    }
+  }
+  return res.status(401).json({
+    error: "authentication_required",
+    message: accounts.isConfigured()
+      ? "Sign in to open your workspace."
+      : "Enter your workspace access token to connect.",
+  });
 });
 mountIntegrationRoutes(app);
 mountPrimeRoutes(app);
 
 const queryOf = (req) =>
   new URLSearchParams(req.originalUrl.split("?")[1] ?? "");
-const preferences = async () => ({
+const preferences = async (req) => ({
   // No default model and no default provider: the deployment asks, and a
   // conversation without a chosen model is refused rather than answered by a
   // vendor the operator never picked.
@@ -147,18 +188,18 @@ const preferences = async () => ({
   locale: "cs",
   appearance: "system",
   sendBehavior: "enter",
-  ...(await read("preferences")),
+  ...(await read(req.owner, "preferences")),
 });
 app.get("/api/preferences", async (req, res) =>
   res.json({ preferences: await preferences() }),
 );
 app.patch("/api/preferences", async (req, res) => {
-  const value = await transaction("preferences", async (c) => {
+  const value = await transaction(req.owner, "preferences", async (c) => {
     const current = {
-      ...(await preferences()),
+      ...(await preferences(req)),
       ...preferencePatch(req.body ?? {}),
     };
-    await write("preferences", current, c);
+    await write(req.owner, "preferences", current, c);
     return current;
   });
   res.json({ preferences: value });
@@ -168,8 +209,8 @@ app.get("/api/capabilities", (req, res) => res.json({
   contextCompaction: true, recoveryJobs: true, backgroundQueue: false,
 }));
 app.post("/api/sessions/:id/compact", async (req, res) => {
-  const result = await transaction(req.params.id, async c => {
-    const session = await read(`session:${req.params.id}`, c);
+  const result = await transaction(req.owner, req.params.id, async c => {
+    const session = await read(req.owner, `session:${req.params.id}`, c);
     if (!session) throw Object.assign(new Error("Session not found."), { status: 404 });
     if (!settledSession(session))
       throw Object.assign(new Error("Wait for a known, settled run before compacting."), { status: 409 });
@@ -178,27 +219,27 @@ app.post("/api/sessions/:id/compact", async (req, res) => {
     session.messageIds = compacted.messageIds;
     session.compaction = compacted.result;
     event(session, "tool", "Context compacted.", compacted.result, "context.compacted");
-    await write(`session:${session.id}`, session, c);
+    await write(req.owner, `session:${session.id}`, session, c);
     return { session: view(session), compaction: compacted.result };
   });
   res.json(result);
 });
 app.patch("/api/sessions/:id", async (req, res) => {
-  const value = await transaction(req.params.id, async (c) => {
-    const current = await read(`session:${req.params.id}`, c);
+  const value = await transaction(req.owner, req.params.id, async (c) => {
+    const current = await read(req.owner, `session:${req.params.id}`, c);
     if (!current) throw new Error("Session not found.");
     Object.assign(current, sessionPatch(req.body ?? {}), {
       updatedAt: new Date().toISOString(),
     });
-    await write(`session:${current.id}`, current, c);
+    await write(req.owner, `session:${current.id}`, current, c);
     return current;
   });
   res.json({ session: view(value) });
 });
 app.get("/api/sessions/:id/events", async (req, res) => {
-  const s = await read(`session:${req.params.id}`);
+  const s = await read(req.owner, `session:${req.params.id}`);
   if (!s) return res.status(404).json({ message: "Session not found." });
-  const items = await eventsAfter(s.id, Number(req.query.after) || 0);
+  const items = await eventsAfter(req.owner, s.id, Number(req.query.after) || 0);
   res.json({
     items,
     after: items.at(-1)?.seq ?? (Number(req.query.after) || 0),
@@ -207,11 +248,11 @@ app.get("/api/sessions/:id/events", async (req, res) => {
     status: s.status,
     asOf: new Date().toISOString(),
     scope: s.id,
-    historyComplete: (await eventsAfter(s.id, 0))[0]?.seq === 1,
+    historyComplete: (await eventsAfter(req.owner, s.id, 0))[0]?.seq === 1,
   });
 });
 app.get("/api/sessions/:id/stream", async (req, res) => {
-  const s = await read(`session:${req.params.id}`);
+  const s = await read(req.owner, `session:${req.params.id}`);
   if (!s) return res.status(404).json({ message: "Session not found." });
   const requestedAfter =
     Number(req.headers["last-event-id"] ?? req.query.after) || 0;
@@ -230,7 +271,7 @@ app.get("/api/sessions/:id/stream", async (req, res) => {
   });
   const deadline = Date.now() + 55000;
   while (!closed && Date.now() < deadline) {
-    const items = await eventsAfter(s.id, after);
+    const items = await eventsAfter(req.owner, s.id, after);
     for (const e of items) {
       res.write(`id: ${e.seq}\ndata: ${JSON.stringify(e)}\n\n`);
       after = e.seq;
@@ -241,9 +282,9 @@ app.get("/api/sessions/:id/stream", async (req, res) => {
   res.end();
 });
 app.get("/api/sessions/:id/documents", async (req, res) => {
-  const s = await read(`session:${req.params.id}`);
+  const s = await read(req.owner, `session:${req.params.id}`);
   if (!s) return res.status(404).json({ message: "Session not found." });
-  const saved = await read(`workspace:${s.id}`);
+  const saved = await read(req.owner, `workspace:${s.id}`);
   res.json({
     document: documentView(
       saved ? decrypt(saved) : createWorkspace(),
@@ -256,11 +297,11 @@ const settledSession = session =>
   ["idle", "cancelled", "failed"].includes(session.status) && !session.executing &&
   !session.pending && !session.queue?.length && !session.recoveryBlock;
 app.patch("/api/sessions/:id/documents", async (req, res) => {
-  const document = await transaction(req.params.id, async (c) => {
-    const s = await read(`session:${req.params.id}`, c);
+  const document = await transaction(req.owner, req.params.id, async (c) => {
+    const s = await read(req.owner, `session:${req.params.id}`, c);
     if (!s) throw new Error("Session not found.");
     if (!settledSession(s)) throw Object.assign(new Error("Wait for a settled run. Reconcile uncertain outcomes or branch from stopped work with retained calls."), { status: 409 });
-    const saved = await read(`workspace:${s.id}`, c),
+    const saved = await read(req.owner, `workspace:${s.id}`, c),
       state = saved ? decrypt(saved) : createWorkspace(),
       input = req.body ?? {};
     if (
@@ -272,7 +313,7 @@ app.patch("/api/sessions/:id/documents", async (req, res) => {
       error.status = 409;
       throw error;
     }
-    const changed = await mutateCloudDocument(
+    const changed = await mutateCloudDocument(req.owner, 
       s,
       c,
       {
@@ -289,16 +330,16 @@ app.patch("/api/sessions/:id/documents", async (req, res) => {
       { path: input.path, operationId: changed.operation.id },
       "document.changed",
     );
-    await write(`session:${s.id}`, s, c);
+    await write(req.owner, `session:${s.id}`, s, c);
     return documentView(changed.state, input.path, s.id);
   });
   res.json({ document });
 });
 app.get("/api/documents", async (req, res) => {
-  const all = await sessions(),
+  const all = await sessions(req.owner),
     rows = [];
   for (const s of all) {
-    const saved = await read(`workspace:${s.id}`),
+    const saved = await read(req.owner, `workspace:${s.id}`),
       state = saved ? decrypt(saved) : createWorkspace();
     for (const path of Object.keys(state.files)) {
       const { content, ...item } = documentView(state, path, s.id);
@@ -309,10 +350,11 @@ app.get("/api/documents", async (req, res) => {
 });
 for (const name of ["runs", "usage", "overview"])
   app.get(`/api/${name}`, async (req, res) => {
-    const all = await sessions();
+    const all = await sessions(req.owner);
     const metricEvents = (
       await database().query(
-        "SELECT session_id,jsonb_agg(event ORDER BY seq) AS events FROM void_cloud_events WHERE event->>'kind'='usage' OR event->>'type' IN ('tool.started','run.status','run.error') OR event->>'kind'='user' GROUP BY session_id",
+        "SELECT session_id,jsonb_agg(event ORDER BY seq) AS events FROM void_cloud_events WHERE owner=$1 AND (event->>'kind'='usage' OR event->>'type' IN ('tool.started','run.status','run.error') OR event->>'kind'='user') GROUP BY session_id",
+        [req.owner],
       )
     ).rows;
     const data = activity(
@@ -330,10 +372,10 @@ for (const name of ["runs", "usage", "overview"])
     );
   });
 app.post("/api/sessions/:id/branches", async (req, res) => {
-  const child = await transaction(req.params.id, async (c) => {
-    const parent = await read(`session:${req.params.id}`, c),
+  const child = await transaction(req.owner, req.params.id, async (c) => {
+    const parent = await read(req.owner, `session:${req.params.id}`, c),
       input = req.body ?? {};
-    if (parent) parent.events = await allEvents(parent.id, c);
+    if (parent) parent.events = await allEvents(req.owner, parent.id, c);
     if (
       !parent ||
       !Number.isSafeInteger(input.seq) ||
@@ -385,10 +427,10 @@ app.post("/api/sessions/:id/branches", async (req, res) => {
       };
     let state = createWorkspace();
     if (input.snapshotDocuments) {
-      const saved = await read(`workspace:${parent.id}`, c),
+      const saved = await read(req.owner, `workspace:${parent.id}`, c),
         original = saved ? decrypt(saved) : createWorkspace();
       for (const [path, content] of Object.entries(original.files)) {
-        const changed = await mutateCloudDocument(
+        const changed = await mutateCloudDocument(req.owner, 
           child,
           c,
           {
@@ -406,13 +448,13 @@ app.post("/api/sessions/:id/branches", async (req, res) => {
         importedFrom: parent.id,
         originalSeq: e.seq,
       });
-    await write(`workspace:${id}`, encrypt(state), c);
-    await write(`session:${id}`, child, c);
+    await write(req.owner, `workspace:${id}`, encrypt(state), c);
+    await write(req.owner, `session:${id}`, child, c);
     return child;
   });
   res.status(201).json({ session: view(child) });
 });
-app.get("/api/provider", async (req, res) => res.json(await providerState()));
+app.get("/api/provider", async (req, res) => res.json(await providerState(req.owner)));
 app.post("/api/provider", async (req, res) => {
   if (
     typeof req.body?.baseUrl !== "string" ||
@@ -424,12 +466,12 @@ app.post("/api/provider", async (req, res) => {
     req.body.baseUrl.replace(/\/$/, "") === "https://ai-gateway.vercel.sh/v1" &&
     !req.body.apiKey
   ) {
-    const client = await provider({ mode: "gateway" }),
+    const client = await provider(req.owner, { mode: "gateway" }),
       models = await client.models();
-    await write("provider", { mode: "gateway" });
+    await write(req.owner, "provider", { mode: "gateway" });
     return res.json({ connected: true, models, keyStorage: "encrypted-cloud" });
   }
-  const profiles = (await read("provider-profiles")) ?? {};
+  const profiles = (await read(req.owner, "provider-profiles")) ?? {};
   const previous = profiles[req.body.baseUrl]
     ? decrypt(profiles[req.body.baseUrl])
     : {};
@@ -438,17 +480,17 @@ app.post("/api/provider", async (req, res) => {
     apiKey: req.body.apiKey || previous.apiKey || "",
     kind: req.body.kind,
   }));
-  const client = await provider({ secret });
+  const client = await provider(req.owner, { secret });
   const models = await client.models();
   if (req.body.activate !== false) {
-    await write("provider", { secret });
-    const current = await preferences();
+    await write(req.owner, "provider", { secret });
+    const current = await preferences(req);
     const selected =
       models.find((m) => m.id === current.defaultModel) ??
       models.find((m) => m.id === "muse-spark-1.3-contributor-free") ??
       models[0];
     if (selected)
-      await write("preferences", {
+      await write(req.owner, "preferences", {
         ...current,
         defaultModel: selected.id,
         defaultProvider:
@@ -457,19 +499,19 @@ app.post("/api/provider", async (req, res) => {
       });
   }
   profiles[req.body.baseUrl] = secret;
-  await write("provider-profiles", profiles);
+  await write(req.owner, "provider-profiles", profiles);
   res.json({ connected: true, models, keyStorage: "encrypted-cloud" });
 });
 app.delete("/api/provider", async (req, res) => {
-  const saved = await read("provider"),
-    profiles = (await read("provider-profiles")) ?? {};
+  const saved = await read(req.owner, "provider"),
+    profiles = (await read(req.owner, "provider-profiles")) ?? {};
   if (saved?.secret) delete profiles[decrypt(saved.secret).baseUrl];
-  await write("provider-profiles", profiles);
-  await write("provider", { disabled: true });
+  await write(req.owner, "provider-profiles", profiles);
+  await write(req.owner, "provider", { disabled: true });
   res.json({ ok: true });
 });
 app.get("/api/upstream", async (req, res) => {
-  const saved = await read("upstream");
+  const saved = await read(req.owner, "upstream");
   const config = saved ? decrypt(saved) : {};
   res.json({
     url: config.url ?? "",
@@ -516,16 +558,16 @@ app.post("/api/upstream", async (req, res) => {
     mapping: body.mapping,
   };
   const listed = await catalog(config);
-  await write("upstream", encrypt(config));
+  await write(req.owner, "upstream", encrypt(config));
   res.json({ configured: true, tools: listed.tools.map((t) => t.name) });
 });
 app.delete("/api/upstream", async (req, res) => {
-  await write("upstream", null);
+  await write(req.owner, "upstream", null);
   res.json({ ok: true });
 });
 app.get("/api/tools", async (req, res) => {
   if (req.query.session) {
-    const session = await read(`session:${req.query.session}`);
+    const session = await read(req.owner, `session:${req.query.session}`);
     if (!session)
       return res.status(404).json({ message: "Session not found." });
     return res.json({
@@ -538,7 +580,7 @@ app.get("/api/tools", async (req, res) => {
       ),
     });
   }
-  const saved = (await read("connectors")) ?? [];
+  const saved = (await read(req.owner, "connectors")) ?? [];
   const secrets = saved.map((item) => decrypt(item.secret).token);
   const tools = [
     ...workspaceTools,
@@ -549,7 +591,7 @@ app.get("/api/tools", async (req, res) => {
       })),
     ),
   ];
-  const upstream = await read("upstream");
+  const upstream = await read(req.owner, "upstream");
   if (upstream) {
     const config = decrypt(upstream);
     secrets.push(config.token);
@@ -560,12 +602,12 @@ app.get("/api/tools", async (req, res) => {
       })),
     );
   }
-  for (const integration of await integrationCatalogs())
+  for (const integration of await integrationCatalogs(req.owner))
     tools.push(...integration.tools);
   return res.json({ scope: "configured", tools: toolCatalog(tools, secrets) });
 });
 app.get("/api/connectors", async (req, res) => {
-  const saved = (await read("connectors")) ?? [];
+  const saved = (await read(req.owner, "connectors")) ?? [];
   res.json({
     connectors: [
       {
@@ -597,19 +639,19 @@ app.post("/api/connectors", async (req, res) => {
     name: String(body.name || new URL(url).hostname).slice(0, 80),
   };
   const listed = await catalog(config);
-  await transaction("connectors", async (c) => {
-    const items = (await read("connectors", c)) ?? [];
+  await transaction(req.owner, "connectors", async (c) => {
+    const items = (await read(req.owner, "connectors", c)) ?? [];
     if (items.length >= 12) throw new Error("Connector limit reached.");
     items.push({
       id: randomUUID(),
       secret: encrypt({ ...config, tools: listed.tools }),
     });
-    await write("connectors", items, c);
+    await write(req.owner, "connectors", items, c);
   });
   res.json({ ok: true, tools: listed.tools.map((t) => t.name) });
 });
 app.patch("/api/connectors/:id", async (req, res) => {
-  const items = (await read("connectors")) ?? [],
+  const items = (await read(req.owner, "connectors")) ?? [],
     previous = items.find((item) => item.id === req.params.id);
   if (!previous)
     return res.status(404).json({ message: "Connector not found." });
@@ -626,8 +668,8 @@ app.patch("/api/connectors/:id", async (req, res) => {
     },
     listed = await catalog(config),
     replacement = { ...config, tools: listed.tools };
-  await transaction("connectors", async (c) => {
-    const current = (await read("connectors", c)) ?? [];
+  await transaction(req.owner, "connectors", async (c) => {
+    const current = (await read(req.owner, "connectors", c)) ?? [];
     if (
       current.find((item) => item.id === previous.id)?.secret !==
       previous.secret
@@ -636,7 +678,7 @@ app.patch("/api/connectors/:id", async (req, res) => {
       error.status = 409;
       throw error;
     }
-    await write(
+    await write(req.owner, 
       "connectors",
       current.map((item) =>
         item.id === previous.id
@@ -649,7 +691,7 @@ app.patch("/api/connectors/:id", async (req, res) => {
   res.json({ connector: publicConnector({ ...replacement, id: previous.id }) });
 });
 app.post("/api/connectors/:id/test", async (req, res) => {
-  const items = (await read("connectors")) ?? [],
+  const items = (await read(req.owner, "connectors")) ?? [],
     item = items.find((item) => item.id === req.params.id);
   if (!item) return res.status(404).json({ message: "Connector not found." });
   const config = decrypt(item.secret),
@@ -663,9 +705,9 @@ app.post("/api/connectors/:id/test", async (req, res) => {
   });
 });
 app.delete("/api/connectors/:id", async (req, res) => {
-  await transaction("connectors", async (c) => {
-    const items = (await read("connectors", c)) ?? [];
-    await write(
+  await transaction(req.owner, "connectors", async (c) => {
+    const items = (await read(req.owner, "connectors", c)) ?? [];
+    await write(req.owner, 
       "connectors",
       items.filter((item) => item.id !== req.params.id),
       c,
@@ -674,18 +716,18 @@ app.delete("/api/connectors/:id", async (req, res) => {
   res.json({ ok: true });
 });
 app.get("/api/sessions/:id/workspace", async (req, res) => {
-  const s = await read(`session:${req.params.id}`);
+  const s = await read(req.owner, `session:${req.params.id}`);
   if (!s) return res.status(404).json({ message: "Session not found." });
-  const stored = await read(`workspace:${s.id}`);
+  const stored = await read(req.owner, `workspace:${s.id}`);
   res.json({ workspace: stored ? decrypt(stored) : createWorkspace() });
 });
-async function undoProof(id, operationId, client) {
-  const s = await read(`session:${id}`, client);
+async function undoProof(req, id, operationId, client) {
+  const s = await read(req.owner, `session:${id}`, client);
   if (!s) throw new Error("Session not found.");
-  const data = await read(`workspace:${id}`, client),
+  const data = await read(req.owner, `workspace:${id}`, client),
     state = data ? decrypt(data) : createWorkspace();
   const operation = state.operations.find((op) => op.id === operationId);
-  const proof = await ledger(s.workspace, client);
+  const proof = await ledger(req.owner, s.workspace, client);
   const digest = operation ? await sha256Hex(canonicalJson(operation)) : "";
   if (
     !operation ||
@@ -701,9 +743,9 @@ async function undoProof(id, operationId, client) {
 }
 app.get("/api/sessions/:id/undo/:operation", async (req, res) => {
   res.json(
-    await transaction(req.params.id, async (c) => {
-      const proof = await undoProof(req.params.id, req.params.operation, c);
-      await managedCloudUndo(proof.s, c, req.params.operation, true);
+    await transaction(req.owner, req.params.id, async (c) => {
+      const proof = await undoProof(req, req.params.id, req.params.operation, c);
+      await managedCloudUndo(req.owner, proof.s, c, req.params.operation, true);
       return proof.preview;
     }),
   );
@@ -713,16 +755,16 @@ app.post("/api/sessions/:id/undo/:operation", async (req, res) => {
     return res
       .status(409)
       .json({ message: "Preview this exact operation first." });
-  await applyManagedUndo(req.params.id, req.params.operation);
+  await applyManagedUndo(req, req.params.id, req.params.operation);
   res.json({ ok: true });
 });
-async function applyManagedUndo(id, operationId) {
-  await transaction(id, async (c) => {
-    const { s, state } = await undoProof(id, operationId, c);
+async function applyManagedUndo(req, id, operationId) {
+  await transaction(req.owner, id, async (c) => {
+    const { s, state } = await undoProof(req, id, operationId, c);
     if (!settledSession(s)) throw Object.assign(new Error("Wait for a settled run. Uncertain outcomes require reconciliation."), { status: 409 });
-    if (await managedCloudUndo(s, c, operationId)) {
+    if (await managedCloudUndo(req.owner, s, c, operationId)) {
       event(s, "tool", "Document Undo verified.");
-      await write(`session:${s.id}`, s, c);
+      await write(req.owner, `session:${s.id}`, s, c);
       return;
     }
     const changed = applyWorkspaceUndo(state, {
@@ -734,7 +776,7 @@ async function applyManagedUndo(id, operationId) {
         "Undo refused because the document changed. Refresh its history.",
       );
     if (changed.state === state) return;
-    await append(
+    await append(req.owner, 
       {
         workspace: s.workspace,
         at: new Date().toISOString(),
@@ -749,30 +791,33 @@ async function applyManagedUndo(id, operationId) {
       },
       c,
     );
-    await write(`workspace:${s.id}`, encrypt(changed.state), c);
+    await write(req.owner, `workspace:${s.id}`, encrypt(changed.state), c);
     event(s, "tool", `Undid ${changed.operation.path}.`);
-    await write(`session:${s.id}`, s, c);
+    await write(req.owner, `session:${s.id}`, s, c);
   });
 }
 mountRecoveryRoutes(app);
 app.get("/api/sessions", async (req, res) =>
-  res.json(await sessionPage(queryOf(req))),
+  res.json(await sessionPage(req.owner, queryOf(req))),
 );
-async function launch(session) {
-  if (session.agent === "prime-agent") return enqueuePrime(session);
+async function launch(req, session) {
+  if (session.agent === "prime-agent") return enqueuePrime(req.owner, session);
   try {
-    const run = await start(runCloudSession, [session.id, session.generation]);
-    await transaction(session.id, async (c) => {
-      const s = await read(`session:${session.id}`, c);
+    // The owner is a durable argument, not something the step re-derives:
+    // the run reads exactly the rows the request that started it was verified
+    // for, however long the workflow takes to come back.
+    const run = await start(runCloudSession, [req.owner, session.id, session.generation]);
+    await transaction(req.owner, session.id, async (c) => {
+      const s = await read(req.owner, `session:${session.id}`, c);
       s.runId = run.runId;
-      await write(`session:${s.id}`, s, c);
+      await write(req.owner, `session:${s.id}`, s, c);
     });
   } catch {
-    await transaction(session.id, async (c) => {
-      const s = await read(`session:${session.id}`, c);
+    await transaction(req.owner, session.id, async (c) => {
+      const s = await read(req.owner, `session:${session.id}`, c);
       s.status = "failed";
       event(s, "error", "The cloud workflow could not start.");
-      await write(`session:${s.id}`, s, c);
+      await write(req.owner, `session:${s.id}`, s, c);
     });
     throw new Error("Workflow could not start.");
   }
@@ -786,9 +831,9 @@ function requestKey(req) {
     throw new Error("Invalid idempotency key.");
   return key;
 }
-async function priorRequest(key, digest, c) {
+async function priorRequest(req, key, digest, c) {
   if (!key) return;
-  const prior = await read(`request:${key}`, c);
+  const prior = await read(req.owner, `request:${key}`, c);
   if (prior && prior.digest !== digest) {
     const error = new Error("Idempotency key belongs to another request.");
     error.status = 409;
@@ -798,16 +843,16 @@ async function priorRequest(key, digest, c) {
 }
 app.post("/api/sessions/:id/integrations", async (req, res) => {
   const id = req.params.id;
-  const initial = await read(`session:${id}`);
+  const initial = await read(req.owner, `session:${id}`);
   if (!initial) return res.status(404).json({ message: "Session not found." });
   if (initial.status !== "idle")
     return res.status(409).json({
       message:
         "Wait for the conversation to finish before refreshing integrations.",
     });
-  const integrations = await integrationCatalogs();
-  await transaction(id, async (c) => {
-    const s = await read(`session:${id}`, c);
+  const integrations = await integrationCatalogs(req.owner);
+  await transaction(req.owner, id, async (c) => {
+    const s = await read(req.owner, `session:${id}`, c);
     if (!s || s.status !== "idle")
       throw Object.assign(new Error("Session is running."), { status: 409 });
     s.tools = s.tools.filter((t) => !t.connectorId?.startsWith("oauth-"));
@@ -830,17 +875,25 @@ app.post("/api/sessions/:id/integrations", async (req, res) => {
       { providers: integrations.map((i) => i.provider) },
       "integrations.changed",
     );
-    await write(`session:${id}`, s, c);
+    await write(req.owner, `session:${id}`, s, c);
   });
   res.json({ ok: true });
 });
 app.post("/api/sessions", async (req, res) => {
   const { prompt } = req.body ?? {};
-  const prefs = await preferences();
+  const prefs = await preferences(req);
   const model = req.body?.model ?? prefs.defaultModel;
   const agent = req.body?.agent ?? prefs.defaultAgent ?? "cloud";
   if (!["cloud", "prime-agent"].includes(agent))
     return res.status(400).json({ message: "Invalid agent." });
+  // The Prime bridge authenticates with a machine token and has no account
+  // behind it, so it is bound to the operator's namespace. An account that
+  // queued a run there would produce a job no worker may claim, so the request
+  // is refused here rather than leaving a run nothing can finish.
+  if (agent === "prime-agent" && req.owner !== OPERATOR_OWNER)
+    return res.status(403).json({
+      message: "The local Prime bridge belongs to the workspace operator.",
+    });
   if (agent === "prime-agent" && !(await primeStatus()).online)
     return res.status(409).json({
       message:
@@ -857,17 +910,17 @@ app.post("/api/sessions", async (req, res) => {
       .json({ message: "Enter a message and select a model." });
   const key = requestKey(req),
     digest = await sha256Hex(canonicalJson({ prompt, model, agent }));
-  const prior = await priorRequest(key, digest);
+  const prior = await priorRequest(req, key, digest);
   if (prior)
     return res
       .status(200)
-      .json({ session: view(await read(`session:${prior.sessionId}`)) });
-  const state = await providerState();
+      .json({ session: view(await read(req.owner, `session:${prior.sessionId}`)) });
+  const state = await providerState(req.owner);
   if (!state.connected || !state.models.some((m) => m.id === model))
     return res
       .status(409)
       .json({ message: "Select a model from the connected provider." });
-  const upstream = agent === "prime-agent" ? undefined : await read("upstream"),
+  const upstream = agent === "prime-agent" ? undefined : await read(req.owner, "upstream"),
     listed = upstream ? await catalog(decrypt(upstream)) : { tools: [] };
   const connected = {};
   const tools =
@@ -882,7 +935,7 @@ app.post("/api/sessions", async (req, res) => {
   }
   for (const item of (agent === "prime-agent"
     ? []
-    : await read("connectors")) ?? []) {
+    : await read(req.owner, "connectors")) ?? []) {
     const data = await catalog(decrypt(item.secret));
     connected[item.id] = { config: item.secret, sessionId: data.sessionId };
     tools.push(
@@ -890,7 +943,7 @@ app.post("/api/sessions", async (req, res) => {
     );
   }
   const integrations =
-    agent === "prime-agent" ? [] : await integrationCatalogs();
+    agent === "prime-agent" ? [] : await integrationCatalogs(req.owner);
   for (const item of integrations) {
     connected[item.id] = { config: item.config, sessionId: item.sessionId };
     tools.push(...item.tools);
@@ -921,33 +974,33 @@ app.post("/api/sessions", async (req, res) => {
       upstream,
       // No saved provider means no provider. The session records the absence and
       // the provider layer resolves the operator's configuration, if any.
-      provider: await read("provider"),
+      provider: await read(req.owner, "provider"),
       generation: 1,
       turn: 0,
       queue: [],
     };
   event(session, "user", prompt);
   event(session, "tool", "Running", { status: "running" }, "run.status");
-  const duplicate = await transaction("cloud-capacity", async (c) => {
-    const prior = await priorRequest(key, digest, c);
+  const duplicate = await transaction(req.owner, "cloud-capacity", async (c) => {
+    const prior = await priorRequest(req, key, digest, c);
     if (prior) return prior;
-    const all = await sessions();
+    const all = await sessions(req.owner);
     if (all.some((s) => ["running", "stopping"].includes(s.status)))
       throw Object.assign(new Error("An agent is still running or stopping."), { status: 409 });
-    await write(`session:${id}`, session, c);
-    await write(`workspace:${id}`, encrypt(createWorkspace()), c);
-    if (key) await write(`request:${key}`, { digest, sessionId: id }, c);
+    await write(req.owner, `session:${id}`, session, c);
+    await write(req.owner, `workspace:${id}`, encrypt(createWorkspace()), c);
+    if (key) await write(req.owner, `request:${key}`, { digest, sessionId: id }, c);
   });
   if (duplicate)
     return res
       .status(200)
-      .json({ session: view(await read(`session:${duplicate.sessionId}`)) });
-  await launch(session);
+      .json({ session: view(await read(req.owner, `session:${duplicate.sessionId}`)) });
+  await launch(req, session);
   res.status(201).json({ session: view(session) });
 });
 app.get("/api/sessions/:id", async (req, res) => {
-  const s = await read(`session:${req.params.id}`);
-  if (s) s.events = req.query.events === "false" ? [] : await allEvents(s.id);
+  const s = await read(req.owner, `session:${req.params.id}`);
+  if (s) s.events = req.query.events === "false" ? [] : await allEvents(req.owner, s.id);
   return s
     ? res.json({ session: view(s) })
     : res.status(404).json({ message: "Session not found." });
@@ -960,11 +1013,11 @@ app.post("/api/sessions/:id", async (req, res) => {
       .json({ message: "Enter a message up to 32000 characters." });
   const key = requestKey(req),
     digest = await sha256Hex(canonicalJson({ id: req.params.id, prompt }));
-  const s = await transaction("cloud-capacity", async (c) => {
+  const s = await transaction(req.owner, "cloud-capacity", async (c) => {
     await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [req.params.id]);
     const prior = await priorRequest(key, digest, c);
     if (prior) return null;
-    const current = await read(`session:${req.params.id}`, c);
+    const current = await read(req.owner, `session:${req.params.id}`, c);
     if (
       !current ||
       !settledSession(current) ||
@@ -973,7 +1026,7 @@ app.post("/api/sessions/:id", async (req, res) => {
       throw Object.assign(new Error(
         "Wait for this run to settle. An unknown outcome requires reconciliation, not retry.",
       ), { status: 409 });
-    if ((await sessions()).some((s) => ["running", "stopping"].includes(s.status)))
+    if ((await sessions(req.owner)).some((s) => ["running", "stopping"].includes(s.status)))
       throw Object.assign(new Error("An agent is still running or stopping."), { status: 409 });
     current.messages.push({ role: "user", content: prompt });
     current.generation++;
@@ -981,17 +1034,17 @@ app.post("/api/sessions/:id", async (req, res) => {
     current.status = "running";
     event(current, "tool", "Running", { status: "running" }, "run.status");
     current.turn = 0;
-    await write(`session:${current.id}`, current, c);
+    await write(req.owner, `session:${current.id}`, current, c);
     if (key)
-      await write(`request:${key}`, { digest, sessionId: current.id }, c);
+      await write(req.owner, `request:${key}`, { digest, sessionId: current.id }, c);
     return current;
   });
-  if (s) await launch(s);
+  if (s) await launch(req, s);
   res.status(202).json({ ok: true });
 });
 const stopSession = async (req, res) => {
-  await transaction(req.params.id, async (c) => {
-    const s = await read(`session:${req.params.id}`, c);
+  await transaction(req.owner, req.params.id, async (c) => {
+    const s = await read(req.owner, `session:${req.params.id}`, c);
     if (!s) throw new Error("Session not found.");
     if (!["running", "stopping"].includes(s.status)) return;
     s.status = s.executing || s.primeJob?.state === "claimed" ? "stopping" : "cancelled";
@@ -1002,7 +1055,7 @@ const stopSession = async (req, res) => {
         ? "Cancellation requested. The local worker stops on its next heartbeat; already dispatched changes may remain."
         : "Cancellation requested. An already dispatched tool may finish; no further tools will start.",
     );
-    await write(`session:${s.id}`, s, c);
+    await write(req.owner, `session:${s.id}`, s, c);
   });
   res.json({ ok: true });
 };
@@ -1011,7 +1064,8 @@ app.post("/api/runs/:id/stop", stopSession);
 app.get("/api/approvals", async (req, res) => {
   const rows = (
     await database().query(
-      "SELECT document FROM void_cloud_state WHERE key LIKE 'hold:%'",
+      "SELECT document FROM void_cloud_state WHERE owner=$1 AND key LIKE 'hold:%'",
+      [req.owner],
     )
   ).rows.map((r) => ({
     ...r.document,
@@ -1031,16 +1085,16 @@ app.post("/api/approvals/:id/decision", async (req, res) => {
   const decision = req.body?.kind;
   if (!["approved", "denied"].includes(decision))
     return res.status(400).json({ message: "Choose approved or denied." });
-  const hold = await read(`hold:${req.params.id}`);
+  const hold = await read(req.owner, `hold:${req.params.id}`);
   if (!hold) return res.status(404).json({ message: "Hold not found." });
   // A hold identifier is derived from public session counters, so a decision
   // must also present the unguessable token minted with the hold. This is the
   // same possession factor `packages/policy/src/approvals.ts` requires.
   if (!holdTokenMatches(hold, req.body?.token))
     return res.status(403).json({ message: "Approval token does not match this hold." });
-  await transaction(hold.sessionId, async (c) => {
-    const h = await read(`hold:${req.params.id}`, c);
-    const s = await read(`session:${h.sessionId}`, c);
+  await transaction(req.owner, hold.sessionId, async (c) => {
+    const h = await read(req.owner, `hold:${req.params.id}`, c);
+    const s = await read(req.owner, `session:${h.sessionId}`, c);
     if (
       h.status !== "pending" ||
       h.expiresAt <= Date.now() ||
@@ -1050,16 +1104,16 @@ app.post("/api/approvals/:id/decision", async (req, res) => {
     h.status = decision;
     h.decidedAt = Date.now();
     h.by = "web-operator";
-    await write(`hold:${h.holdId}`, h, c);
+    await write(req.owner, `hold:${h.holdId}`, h, c);
   });
   res.json({ ok: true, result: { queued: true } });
 });
 async function selected(req) {
   const workspace =
-    req.query.workspace ?? (await sessions())[0]?.workspace ?? "default";
+    req.query.workspace ?? (await sessions(req.owner))[0]?.workspace ?? "default";
   if (typeof workspace !== "string" || !/^[a-zA-Z0-9_.-]+$/.test(workspace))
     throw new Error("Invalid workspace.");
-  return ledger(workspace);
+  return ledger(req.owner, workspace);
 }
 const record = (e) => ({
   seq: e.seq,
@@ -1070,11 +1124,11 @@ const record = (e) => ({
 });
 app.get("/api/feed", async (req, res) => {
   const workspace = String(
-    req.query.workspace ?? (await sessions())[0]?.workspace ?? "default",
+    req.query.workspace ?? (await sessions(req.owner))[0]?.workspace ?? "default",
   );
   if (!/^[a-zA-Z0-9_.-]+$/.test(workspace))
     return res.status(400).json({ message: "Invalid workspace." });
-  res.json(await ledgerPage(workspace, queryOf(req)));
+  res.json(await ledgerPage(req.owner, workspace, queryOf(req)));
 });
 app.get("/api/ledger/verify", async (req, res) => {
   const { entries, result } = await selected(req);
@@ -1112,17 +1166,17 @@ app.all("/api/records/:seq/replay", async (req, res) => {
     return res
       .status(409)
       .json({ message: "This call has no captured document inverse." });
-  const session = (await sessions()).find(
+  const session = (await sessions(req.owner)).find(
     (s) => s.workspace === entry.workspace,
   );
   if (!session) return res.status(404).json({ message: "Session not found." });
-  const { preview } = await undoProof(session.id, entry.body.operationId);
+  const { preview } = await undoProof(req, session.id, entry.body.operationId);
   if (req.method === "POST") {
     if (req.body?.digest !== entry.hash)
       return res
         .status(409)
         .json({ message: "Preview this exact record first." });
-    await applyManagedUndo(session.id, entry.body.operationId);
+    await applyManagedUndo(req, session.id, entry.body.operationId);
   }
   res.json({
     digest: entry.hash,

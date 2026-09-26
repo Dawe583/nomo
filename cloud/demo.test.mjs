@@ -10,6 +10,7 @@ import {
   demoFailureMessage,
   DEMO_MODEL,
 } from "./demo.mjs";
+import { DEMO_OWNER } from "./owner.mjs";
 import { NVIDIA_URL } from "../packages/workbench/src/provider-defaults.ts";
 import { ProviderRequestError } from "../packages/workbench/src/provider.ts";
 test("demo failures distinguish provider limits and authentication without leaking payloads", () => {
@@ -77,14 +78,19 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
   // Serialize test transactions to reproduce the production capacity lock.
   let tail = Promise.resolve();
   const dependencies = {
-    read: async (key) => {
+    // The demo is reachable with no credential, so these assert that every
+    // row it touches is filed under the one owner it is allowed.
+    read: async (owner, key) => {
+      assert.equal(owner, DEMO_OWNER);
       reads.push(key);
       return values.get(key);
     },
-    write: async (key, value) => {
+    write: async (owner, key, value) => {
+      assert.equal(owner, DEMO_OWNER);
       values.set(key, structuredClone(value));
     },
-    transaction: async (key, run) => {
+    transaction: async (owner, key, run) => {
+      assert.equal(owner, DEMO_OWNER);
       const next = tail.then(() => run({}));
       tail = next.catch(() => {});
       return next;

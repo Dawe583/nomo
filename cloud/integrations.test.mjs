@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { read, write, encrypt, database, decrypt } from "./store.mjs";
 import { integrationConfig } from "./integrations.mjs";
 import { PROVIDERS } from "./oauth.mjs";
+import { OPERATOR_OWNER } from "./owner.mjs";
 test(
   "OAuth HTTP lifecycle: auth, CSRF, binding, denial, replay, refresh, context and disconnect",
   { skip: process.env.VOID_OAUTH_DATABASE_TEST !== "1" },
@@ -25,7 +26,7 @@ test(
         "integration:version:supabase",
         "session:" + sessionId,
       ],
-      previous = await Promise.all(keys.map((k) => read(k)));
+      previous = await Promise.all(keys.map((k) => read(OPERATOR_OWNER, k)));
     let exchanges = 0;
     globalThis.fetch = async (url, init) => {
       if (String(url) === PROVIDERS.supabase.token) {
@@ -68,7 +69,7 @@ test(
       globalThis.fetch = nativeFetch;
       try {
         for (let i = 0; i < keys.length; i++)
-          await write(keys[i], previous[i] ?? null);
+          await write(OPERATOR_OWNER, keys[i], previous[i] ?? null);
         // The isolated database intentionally retains append-only test events.
         // Restore mutable state without disabling its audit immutability trigger.
       } finally {
@@ -77,14 +78,14 @@ test(
         await database().end();
       }
     });
-    await write(
+    await write(OPERATOR_OWNER, 
       keys[0],
       encrypt({
         client_id: "isolated-client",
         client_secret: "isolated-client-secret",
       }),
     );
-    await write(keys[1], null);
+    await write(OPERATOR_OWNER, keys[1], null);
     const request = (path, method = "GET", body, extra = {}) =>
       nativeFetch(base + path, {
         method,
@@ -132,7 +133,7 @@ test(
     assert.equal(account.connected, true);
     assert.equal(account.toolCount, 1);
     assert.ok(!JSON.stringify(status).includes("isolated-secret"));
-    await write("session:" + sessionId, {
+    await write(OPERATOR_OWNER, "session:" + sessionId, {
       id: sessionId,
       workspace: "qa-oauth",
       status: "idle",
@@ -146,14 +147,14 @@ test(
         .status,
       200,
     );
-    const attached = await read("session:" + sessionId);
+    const attached = await read(OPERATOR_OWNER, "session:" + sessionId);
     assert.equal(attached.tools.length, 2);
     assert.equal(attached.tools[1].connectorId, "oauth-supabase");
     assert.ok(!JSON.stringify(attached).includes("isolated-secret-token"));
     const reference = decrypt(attached.connected["oauth-supabase"].config);
     assert.equal(reference.oauthProvider, "supabase");
     assert.equal(reference.token, undefined);
-    await write("session:" + sessionId, { ...attached, status: "running" });
+    await write(OPERATOR_OWNER, "session:" + sessionId, { ...attached, status: "running" });
     assert.equal(
       (await request("/api/sessions/" + sessionId + "/integrations", "POST"))
         .status,
@@ -165,12 +166,12 @@ test(
     });
     assert.equal(r.headers.get("location"), "/connections?oauth=failed");
     assert.equal(exchanges, 1);
-    const stored = decrypt(await read(keys[1]));
+    const stored = decrypt(await read(OPERATOR_OWNER, keys[1]));
     stored.tokens.expiresAt = 1;
-    await write(keys[1], encrypt(stored));
+    await write(OPERATOR_OWNER, keys[1], encrypt(stored));
     await Promise.all([
-      integrationConfig("supabase"),
-      integrationConfig("supabase"),
+      integrationConfig(OPERATOR_OWNER, "supabase"),
+      integrationConfig(OPERATOR_OWNER, "supabase"),
     ]);
     assert.equal(
       exchanges,
@@ -182,14 +183,14 @@ test(
       200,
     );
     await request("/api/integrations/supabase", "DELETE");
-    await assert.rejects(() => integrationConfig("supabase"), /disconnected/);
-    await write("session:" + sessionId, { ...attached, status: "idle" });
+    await assert.rejects(() => integrationConfig(OPERATOR_OWNER, "supabase"), /disconnected/);
+    await write(OPERATOR_OWNER, "session:" + sessionId, { ...attached, status: "idle" });
     assert.equal(
       (await request("/api/sessions/" + sessionId + "/integrations", "POST"))
         .status,
       200,
     );
-    assert.equal((await read("session:" + sessionId)).tools.length, 1);
+    assert.equal((await read(OPERATOR_OWNER, "session:" + sessionId)).tools.length, 1);
     const denied = await request("/api/integrations/supabase/start", "POST"),
       deniedCookie = denied.headers.get("set-cookie").split(";")[0],
       deniedState = new URL((await denied.json()).url).searchParams.get(

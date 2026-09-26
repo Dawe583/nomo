@@ -10,6 +10,7 @@ import {
 } from "../packages/workbench/src/workspace.ts";
 import { encrypt } from "./store.mjs";
 import { read, write, transaction, event, append, decrypt } from "./store.mjs";
+import { assertOwner } from "./owner.mjs";
 import { ProviderRequestError } from "../packages/workbench/src/provider.ts";
 import { provider, rememberProviderFailure } from "./provider.mjs";
 import { rpc } from "./mcp.mjs";
@@ -67,11 +68,12 @@ export function mintHoldToken() {
   crypto.getRandomValues(bytes);
   return Buffer.from(bytes).toString("base64url");
 }
-const save = (s, c) => write(`session:${s.id}`, s, c);
-export async function advance(id, generation) {
+const save = (owner, s, c) => write(owner, `session:${s.id}`, s, c);
+export async function advance(owner, id, generation) {
   "use step";
-  const claim = await transaction(id, async (c) => {
-    const s = await read(`session:${id}`, c);
+  assertOwner(owner);
+  const claim = await transaction(owner, id, async (c) => {
+    const s = await read(owner, `session:${id}`, c);
     if (!s || s.generation !== generation || s.status !== "running")
       return { kind: "done" };
     if (s.executing) {
@@ -81,15 +83,16 @@ export async function advance(id, generation) {
         "Execution was interrupted. Review the ledger; the tool will not be retried automatically.",
       );
       s.status = "unknown";
-      await save(s, c);
+      await save(owner, s, c);
       return { kind: "done" };
     }
     if (s.pending) {
-      const h = await read(`hold:${s.pending.id}`, c);
+      const h = await read(owner, `hold:${s.pending.id}`, c);
       if (h.status === "pending" && h.expiresAt > Date.now())
         return { kind: "wait" };
       const approved = h.status === "approved" && h.decidedAt <= h.expiresAt;
       await append(
+        owner,
         {
           ...s.pending.body,
           at: new Date().toISOString(),
@@ -106,7 +109,7 @@ export async function advance(id, generation) {
         s.queue.shift();
         event(s, "tool", `${s.pending.name}: denied`);
         s.pending = null;
-        await save(s, c);
+        await save(owner, s, c);
         return { kind: "next" };
       }
       s.executing = "tool";
@@ -120,7 +123,7 @@ export async function advance(id, generation) {
         connectorId: s.pending.connectorId,
       };
       s.pending = null;
-      await save(s, c);
+      await save(owner, s, c);
       return job;
     }
     if (s.queue?.length) {
@@ -189,10 +192,11 @@ export async function advance(id, generation) {
         },
         "tool.started",
       );
-      await append(body, c);
+      await append(owner, body, c);
       if (decision.kind === "hold") {
         const holdId = `${s.id}-${s.generation}-${s.turn}-${s.queue.length}`;
         await write(
+          owner,
           `hold:${holdId}`,
           {
             // A hold identifier is derived from public session counters, so the
@@ -218,7 +222,7 @@ export async function advance(id, generation) {
           connectorId: tool.connectorId,
         };
         event(s, "tool", `${tool.name}: waiting for your approval`);
-        await save(s, c);
+        await save(owner, s, c);
         return { kind: "wait" };
       }
       if (decision.kind !== "allow") {
@@ -230,11 +234,11 @@ export async function advance(id, generation) {
         });
         s.queue.shift();
         event(s, "tool", `${tool.name}: denied by VOID`);
-        await save(s, c);
+        await save(owner, s, c);
         return { kind: "next" };
       }
       s.executing = "tool";
-      await save(s, c);
+      await save(owner, s, c);
       return {
         kind: "tool",
         session: s,
@@ -249,14 +253,14 @@ export async function advance(id, generation) {
     if (s.turn >= 20 || s.messages.length > 200)
       throw new Error("Session limit reached. Start a new session.");
     s.executing = "model";
-    await save(s, c);
+    await save(owner, s, c);
     return { kind: "model", session: s };
   });
   if (claim.kind === "done" || claim.kind === "wait" || claim.kind === "next")
     return claim.kind;
   const s = claim.session;
   try {
-    const client = await provider(s.provider);
+    const client = await provider(owner, s.provider);
     if (claim.kind === "model") {
       const tools = s.tools.map((tool, index) => ({
         type: "function",
@@ -273,12 +277,12 @@ export async function advance(id, generation) {
         const text = client.redact(delta);
         delta = "";
         flushed = Date.now();
-        await transaction(id, async (c) => {
-          const current = await read(`session:${id}`, c);
+        await transaction(owner, id, async (c) => {
+          const current = await read(owner, `session:${id}`, c);
           if (current.status !== "running" || current.generation !== generation)
             return;
           event(current, "assistant", text, {}, "message.delta");
-          await save(current, c);
+          await save(owner, current, c);
         });
       };
       const reply = await client.complete(
@@ -294,14 +298,14 @@ export async function advance(id, generation) {
       await flush();
       if ((reply.message.tool_calls?.length ?? 0) > 32)
         throw new Error("Too many tool calls in a single batch.");
-      await transaction(id, async (c) => {
-        const current = await read(`session:${id}`, c);
+      await transaction(owner, id, async (c) => {
+        const current = await read(owner, `session:${id}`, c);
         if (current.generation !== generation) return;
         if (current.status === "stopping") {
           current.status = "cancelled";
           current.executing = null;
           event(current, "tool", "Stopped", { status: "cancelled" }, "run.status");
-          await save(current, c);
+          await save(owner, current, c);
           return;
         }
         if (current.status !== "running") return;
@@ -310,7 +314,7 @@ export async function advance(id, generation) {
           client.redact(JSON.stringify(reply.message)),
         );
         current.messages.push(safeMessage);
-        await rememberProviderFailure(current.provider, { status: 0 }, c);
+        await rememberProviderFailure(owner, current.provider, { status: 0 }, c);
         current.queue = safeMessage.tool_calls ?? [];
         current.turn++;
         if (reply.message.content)
@@ -326,22 +330,22 @@ export async function advance(id, generation) {
           current.status = "idle";
           event(current, "tool", "Idle", { status: "idle" }, "run.status");
         }
-        await save(current, c);
+        await save(owner, current, c);
       });
     } else {
       if (claim.builtin) {
-        await transaction(id, async (c) => {
-          const current = await read(`session:${id}`, c);
+        await transaction(owner, id, async (c) => {
+          const current = await read(owner, `session:${id}`, c);
           if (current.generation !== generation) return;
           if (current.status === "stopping") {
             current.status = "cancelled";
             current.executing = null;
             event(current, "tool", "Stopped before dispatch", { status: "cancelled" }, "run.status");
-            await save(current, c);
+            await save(owner, current, c);
             return;
           }
           if (current.status !== "running") return;
-          const saved = await read(`workspace:${id}`, c),
+          const saved = await read(owner, `workspace:${id}`, c),
             state = saved ? decrypt(saved) : createWorkspace();
           const input = {
             id: `${id}-${generation}-${s.turn}-${claim.call.id}`,
@@ -358,10 +362,11 @@ export async function advance(id, generation) {
           // from AUTHORIZED_WRITE_SURFACES, so the runtime records `denied`
           // and dispatches nothing instead of an agent self-approval.
           const transition = managed
-            ? await mutateCloudDocument(current, c, input, "cloud-agent")
+            ? await mutateCloudDocument(owner, current, c, input, "cloud-agent")
             : executeWorkspaceTool(state, input);
           if (!managed)
             await append(
+              owner,
               {
                 ...claim.body,
                 at: new Date().toISOString(),
@@ -379,7 +384,7 @@ export async function advance(id, generation) {
               },
               c,
             );
-          await write(`workspace:${id}`, encrypt(transition.state), c);
+          await write(owner, `workspace:${id}`, encrypt(transition.state), c);
           event(
             current,
             "tool",
@@ -408,7 +413,7 @@ export async function advance(id, generation) {
             tool_call_id: claim.call.id,
             content: client.redact(JSON.stringify(transition.result)),
           });
-          await save(current, c);
+          await save(owner, current, c);
         });
         return "next";
       }
@@ -416,6 +421,7 @@ export async function advance(id, generation) {
         ? s.connected?.[claim.connectorId]
         : undefined;
       const config = await resolveIntegration(
+        owner,
         decrypt(connection?.config ?? s.upstream),
       );
       const rawResult =
@@ -432,9 +438,10 @@ export async function advance(id, generation) {
             JSON.stringify(rawResult).split(config.token).join("[redacted]"),
           )
         : rawResult;
-      await transaction(id, async (c) => {
-        const current = await read(`session:${id}`, c);
+      await transaction(owner, id, async (c) => {
+        const current = await read(owner, `session:${id}`, c);
         await append(
+          owner,
           {
             ...claim.body,
             at: new Date().toISOString(),
@@ -466,17 +473,19 @@ export async function advance(id, generation) {
             : client.redact(JSON.stringify(result.result))
           ).slice(0, 64000),
         });
-        await save(current, c);
+        await save(owner, current, c);
       });
     }
     return "next";
   } catch (error) {
-    await transaction(id, async (c) => {
-      const current = await read(`session:${id}`, c);
+    await transaction(owner, id, async (c) => {
+      const current = await read(owner, `session:${id}`, c);
       if (["running", "stopping"].includes(current.status) && current.generation === generation) {
-        if (error instanceof ProviderRequestError) await rememberProviderFailure(current.provider, error, c);
+        if (error instanceof ProviderRequestError)
+          await rememberProviderFailure(owner, current.provider, error, c);
         const uncertain = claim.kind === "tool" && !claim.builtin;
-        if (uncertain) await append({ ...claim.body, at: new Date().toISOString(), decision: "execute:unknown" }, c);
+        if (uncertain)
+          await append(owner, { ...claim.body, at: new Date().toISOString(), decision: "execute:unknown" }, c);
         current.status = uncertain ? "unknown" : current.status === "stopping" ? "cancelled" : "failed";
         current.executing = null;
         event(
@@ -489,16 +498,17 @@ export async function advance(id, generation) {
             ? providerFailure(error).payload
             : {},
         );
-        await save(current, c);
+        await save(owner, current, c);
       }
     });
     return "done";
   }
 }
-export async function fail(id, generation) {
+export async function fail(owner, id, generation) {
   "use step";
-  await transaction(id, async (c) => {
-    const s = await read(`session:${id}`, c);
+  assertOwner(owner);
+  await transaction(owner, id, async (c) => {
+    const s = await read(owner, `session:${id}`, c);
     if (s && ["running", "stopping"].includes(s.status) && s.generation === generation) {
       s.status = s.executing === "tool" ? "unknown" : s.status === "stopping" ? "cancelled" : "failed";
       s.executing = null;
@@ -507,7 +517,7 @@ export async function fail(id, generation) {
         "error",
         "Cloud execution stopped. Check provider access and the tool server. An interrupted tool is never automatically retried.",
       );
-      await save(s, c);
+      await save(owner, s, c);
     }
   });
 }

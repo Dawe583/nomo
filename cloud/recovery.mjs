@@ -12,6 +12,7 @@ import {
   previewWorkspaceUndo,
 } from "../packages/workbench/src/workspace.ts";
 import { read, write, encrypt, decrypt, ledger, append } from "./store.mjs";
+import { assertOwner } from "./owner.mjs";
 
 const SLOT_BYTES = 4 * 1024 * 1024,
   CAPACITY = 64 * 1024 * 1024;
@@ -36,12 +37,14 @@ export const AUTHORIZED_WRITE_SURFACES = new Set([
  * never the event source here; the cloud ledger entries are the persisted journal.
  * Never use this transaction host for external tools or network side effects. */
 export async function cloudDocumentRuntime(
+  owner,
   session,
   client,
   approvedBy = "web-operator",
 ) {
+  assertOwner(owner);
   const workspace = session.workspace;
-  const proof = await ledger(workspace, client);
+  const proof = await ledger(owner, workspace, client);
   const events = [];
   const jobEvents = [];
   for (const entry of proof.entries) {
@@ -82,6 +85,7 @@ export async function cloudDocumentRuntime(
             throw new Error("Recovery workspace mismatch.");
           validateTransition(events, event);
           const signed = await append(
+            owner,
             {
               workspace,
               at: event.at,
@@ -106,6 +110,7 @@ export async function cloudDocumentRuntime(
           validateJobTransition(jobEvents, event);
           validateRecoveryJobPayload(jobEvents, event);
           const signed = await append(
+            owner,
             {
               workspace,
               at: event.at,
@@ -128,8 +133,8 @@ export async function cloudDocumentRuntime(
     },
   };
   const quotaKey = `recovery-quota:${session.id}`;
-  const quota = (await read(quotaKey, client)) ?? { bytes: 0, slots: {} };
-  const saveQuota = () => write(quotaKey, quota, client);
+  const quota = (await read(owner, quotaKey, client)) ?? { bytes: 0, slots: {} };
+  const saveQuota = () => write(owner, quotaKey, quota, client);
   const slotKey = (id, slot) => `${id}:${slot}`;
   const vault = {
     async reserve(scope, id, slots = ["capture", "outcome", "recovery"]) {
@@ -171,7 +176,7 @@ export async function cloudDocumentRuntime(
       if (bytes > SLOT_BYTES)
         throw new VaultCapacityError("Cloud recovery artifact exceeds quota.");
       const reference = { digest: hash, keyId: "cloud-v1", bytes };
-      await write(`recovery-artifact:${session.id}:${hash}`, encrypted, client);
+      await write(owner, `recovery-artifact:${session.id}:${hash}`, encrypted, client);
       quota.bytes += bytes - SLOT_BYTES;
       quota.slots[key] = reference;
       await saveQuota();
@@ -181,6 +186,7 @@ export async function cloudDocumentRuntime(
       if (scope !== workspace || reference.keyId !== "cloud-v1")
         throw new Error("Recovery workspace or key mismatch.");
       const stored = await read(
+        owner,
         `recovery-artifact:${session.id}:${reference.digest}`,
         client,
       );
@@ -192,7 +198,7 @@ export async function cloudDocumentRuntime(
       return bound.value;
     },
   };
-  let state = await read(`workspace:${session.id}`, client);
+  let state = await read(owner, `workspace:${session.id}`, client);
   state = state ? decrypt(state) : createWorkspace();
   const adapter = managedDocumentAdapter({
     read: async () => state,
@@ -205,6 +211,7 @@ export async function cloudDocumentRuntime(
       ),
     commit: async (transition, input) => {
       const signed = await append(
+        owner,
         {
           workspace,
           at: input.at,
@@ -223,7 +230,7 @@ export async function cloudDocumentRuntime(
       );
       proof.entries.push(signed);
       state = transition.state;
-      await write(`workspace:${session.id}`, encrypt(state), client);
+      await write(owner, `workspace:${session.id}`, encrypt(state), client);
     },
   });
   const runtime = recoveryRuntime({
@@ -238,8 +245,8 @@ export async function cloudDocumentRuntime(
   return { runtime, state: () => state };
 }
 
-export async function mutateCloudDocument(session, client, input, approvedBy) {
-  const host = await cloudDocumentRuntime(session, client, approvedBy);
+export async function mutateCloudDocument(owner, session, client, input, approvedBy) {
+  const host = await cloudDocumentRuntime(owner, session, client, approvedBy);
   const result = await host.runtime.execute({
     workspace: session.workspace,
     operationId: documentOperationId(input.id),
@@ -260,12 +267,13 @@ export async function mutateCloudDocument(session, client, input, approvedBy) {
 }
 
 export async function managedCloudUndo(
+  owner,
   session,
   client,
   operationId,
   previewOnly = false,
 ) {
-  const proof = await ledger(session.workspace, client);
+  const proof = await ledger(owner, session.workspace, client);
   const marker = proof.entries.find(
     (e) =>
       e.body.operationId === operationId &&
@@ -274,7 +282,7 @@ export async function managedCloudUndo(
   if (!marker) return false; // Only genuinely legacy, unmarked records use legacy Undo.
   if (marker !== documentOperationId(operationId))
     throw new Error("Recovery marker mismatch.");
-  const host = await cloudDocumentRuntime(session, client);
+  const host = await cloudDocumentRuntime(owner, session, client);
   const status = await host.runtime.status(session.workspace, marker);
   if (!status) throw new Error("Managed recovery evidence is missing.");
   const preview = previewWorkspaceUndo(host.state(), operationId);
@@ -342,9 +350,9 @@ const presentCloudJob = (payload, operationMap) => {
   };
 };
 
-async function cloudJobOperationMap(request, client, retainedOperationIds) {
+async function cloudJobOperationMap(owner, request, client, retainedOperationIds) {
   const key = cloudJobOperationMapKey(request.workspace, request.jobId);
-  const stored = await read(key, client);
+  const stored = await read(owner, key, client);
   if (stored) return decrypt(stored);
   const operationIds = new Set(retainedOperationIds);
   if (request.selection.kind === "operations")
@@ -356,13 +364,14 @@ async function cloudJobOperationMap(request, client, retainedOperationIds) {
       operationId,
     ]),
   );
-  await write(key, encrypt(map), client);
+  await write(owner, key, encrypt(map), client);
   return map;
 }
 
-export async function planCloudRecoveryJob(request, session, client) {
-  const host = await cloudDocumentRuntime(session, client);
+export async function planCloudRecoveryJob(owner, request, session, client) {
+  const host = await cloudDocumentRuntime(owner, session, client);
   const operationMap = await cloudJobOperationMap(
+    owner,
     request,
     client,
     host.state().operations.map((operation) => operation.id),
@@ -388,8 +397,8 @@ export async function planCloudRecoveryJob(request, session, client) {
  * again. Forward writes remain blocked outside this helper: `execute.ts` refuses
  * new operations while a retained job has not reached a terminal stage.
  */
-export async function runCloudRecoveryJob(session, client, jobId, approve) {
-  const host = await cloudDocumentRuntime(session, client);
+export async function runCloudRecoveryJob(owner, session, client, jobId, approve) {
+  const host = await cloudDocumentRuntime(owner, session, client);
   const result = await host.runtime.runRecoveryJob(
     session.workspace,
     jobId,
@@ -407,18 +416,19 @@ export async function runCloudRecoveryJob(session, client, jobId, approve) {
  * result when `runRecoveryJob` has already completed, conflicts, stayed unknown
  * or paused. No caller-supplied plan bytes are accepted.
  */
-export async function cloudRecoveryJobStatus(session, client, jobId) {
-  const host = await cloudDocumentRuntime(session, client);
+export async function cloudRecoveryJobStatus(owner, session, client, jobId) {
+  const host = await cloudDocumentRuntime(owner, session, client);
   const status = await host.runtime.recoveryJobStatus(session.workspace, jobId);
   const stored = await read(
+    owner,
     cloudJobOperationMapKey(session.workspace, jobId),
     client,
   );
   return status && presentCloudJob(status, stored ? decrypt(stored) : {});
 }
 
-export async function cloudRecoveryJobPlanDigest(session, client, jobId) {
-  const proof = await ledger(session.workspace, client);
+export async function cloudRecoveryJobPlanDigest(owner, session, client, jobId) {
+  const proof = await ledger(owner, session.workspace, client);
   return proof.entries.find(entry =>
     entry.body.runtimeJobEvent?.jobId === jobId &&
     entry.body.runtimeJobEvent.stage === "planned"

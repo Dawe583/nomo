@@ -1,14 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { provider, providerState } from "./provider.mjs";
+import { provider, providerState, rememberProviderFailure } from "./provider.mjs";
 import { NVIDIA_URL, TOKENROUTER_URL } from "../packages/workbench/src/provider-defaults.ts";
+import { OPERATOR_OWNER } from "./owner.mjs";
 
 function fixture(env = {}, saved) {
   const values = new Map(saved ? [["provider", saved]] : []), requests = [];
   const dependencies = {
     env,
-    read: async (key) => values.get(key),
-    write: async (key, value) => values.set(key, value),
+    read: async (owner, key) => {
+      assert.equal(owner, OPERATOR_OWNER);
+      return values.get(key);
+    },
+    write: async (owner, key, value) => {
+      assert.equal(owner, OPERATOR_OWNER);
+      values.set(key, value);
+    },
     encrypt: JSON.stringify,
     decrypt: JSON.parse,
     oidc: async () => "fixture-oidc",
@@ -22,7 +29,7 @@ function fixture(env = {}, saved) {
 
 test("cloud uses the NVIDIA key in the environment and never names a default model", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia", TOKENROUTER_API_KEY: "fixture-legacy" });
-  const state = await providerState(f.dependencies);
+  const state = await providerState(OPERATOR_OWNER, f.dependencies);
   assert.equal(state.status, "ready");
   assert.equal(state.connected, true);
   assert.equal(state.setupRequired, false);
@@ -37,18 +44,18 @@ test("cloud uses the NVIDIA key in the environment and never names a default mod
 
 test("missing NVIDIA credentials expose setup and make no provider request", async () => {
   const f = fixture({ TOKENROUTER_API_KEY: "fixture-legacy" });
-  const state = await providerState(f.dependencies);
+  const state = await providerState(OPERATOR_OWNER, f.dependencies);
   assert.equal(state.status, "setup-required");
   assert.equal(state.setupRequired, true);
   assert.equal(state.connected, false);
   assert.equal(state.retryAt, null);
   assert.deepEqual(f.requests, []);
-  await assert.rejects(provider(undefined, f.dependencies), /NVIDIA/);
+  await assert.rejects(provider(OPERATOR_OWNER, undefined, f.dependencies), /NVIDIA/);
 });
 
 test("a deployment with nothing saved has no provider id and no model id", async () => {
   const f = fixture({});
-  const state = await providerState(f.dependencies);
+  const state = await providerState(OPERATOR_OWNER, f.dependencies);
   assert.equal(state.status, "setup-required");
   assert.equal(state.connected, false);
   assert.equal(state.providerId, null);
@@ -65,8 +72,8 @@ test("a deployment with nothing saved has no provider id and no model id", async
 
 test("legacy snapshots retain TokenRouter while new snapshots select NVIDIA", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia", TOKENROUTER_API_KEY: "fixture-legacy" });
-  await (await provider({ mode: "tokenrouter" }, f.dependencies)).models();
-  await (await provider({ mode: "nvidia" }, f.dependencies)).models();
+  await (await provider(OPERATOR_OWNER, { mode: "tokenrouter" }, f.dependencies)).models();
+  await (await provider(OPERATOR_OWNER, { mode: "nvidia" }, f.dependencies)).models();
   assert.equal(f.requests[0].url, `${TOKENROUTER_URL}/models`);
   assert.equal(f.requests[0].options.headers.authorization, "Bearer fixture-legacy");
   assert.equal(f.requests[1].url, `${NVIDIA_URL}/models`);
@@ -75,7 +82,7 @@ test("legacy snapshots retain TokenRouter while new snapshots select NVIDIA", as
 test("saved provider profiles survive the new default without mutation", async () => {
   const secret = JSON.stringify({ baseUrl: "https://provider.test/v1", apiKey: "fixture-profile", kind: "compatible" });
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia" }, { secret });
-  const state = await providerState(f.dependencies);
+  const state = await providerState(OPERATOR_OWNER, f.dependencies);
   assert.equal(state.providerId, "custom");
   assert.equal(state.baseUrl, "https://provider.test/v1");
   assert.equal(f.values.get("provider").secret, secret);
@@ -89,7 +96,7 @@ for (const status of [401, 403, 404, 429, 503]) {
     f.dependencies.fetch = async () => new Response("private upstream payload fixture-nvidia", {
       status, headers: { "retry-after": "2" },
     });
-    const state = await providerState(f.dependencies);
+    const state = await providerState(OPERATOR_OWNER, f.dependencies);
     assert.equal(state.status, status === 429 ? "rate-limited" : "unavailable");
     assert.equal(state.setupRequired, false);
     assert.equal(state.connected, false);
@@ -101,7 +108,7 @@ for (const status of [401, 403, 404, 429, 503]) {
 
 test("disabled provider is not silently reconnected from the environment", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia" }, { disabled: true });
-  const state = await providerState(f.dependencies);
+  const state = await providerState(OPERATOR_OWNER, f.dependencies);
   assert.equal(state.status, "setup-required");
   assert.equal(f.requests.length, 0);
 });
@@ -109,7 +116,7 @@ test("disabled provider is not silently reconnected from the environment", async
 test("storage and malformed profile errors do not expose secret error payloads", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia" });
   f.dependencies.read = async () => { throw new Error("private postgres credential"); };
-  const state = await providerState(f.dependencies);
+  const state = await providerState(OPERATOR_OWNER, f.dependencies);
   assert.equal(state.status, "unavailable");
   assert.doesNotMatch(JSON.stringify(state), /private postgres credential/);
 });
@@ -117,20 +124,20 @@ test("storage and malformed profile errors do not expose secret error payloads",
 test("runtime rate limits survive a successful catalog probe and remain provider scoped", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia" });
   const { rememberProviderFailure } = await import("./provider.mjs");
-  await rememberProviderFailure(undefined, { status: 429, retryAfter: 3 }, undefined, f.dependencies);
-  const limited = await providerState(f.dependencies);
+  await rememberProviderFailure(OPERATOR_OWNER, undefined, { status: 429, retryAfter: 3 }, undefined, f.dependencies);
+  const limited = await providerState(OPERATOR_OWNER, f.dependencies);
   assert.equal(limited.status, "rate-limited");
   assert.equal(limited.connected, true);
   assert.ok(Date.parse(limited.retryAt) > Date.now());
   f.values.set("provider", { secret: JSON.stringify({ baseUrl: "https://provider.test/v1", apiKey: "fixture-other" }) });
-  assert.equal((await providerState(f.dependencies)).status, "ready");
+  assert.equal((await providerState(OPERATOR_OWNER, f.dependencies)).status, "ready");
 });
 
 test("non-rate-limit provider failures never advertise a retry clock", async () => {
   const f = fixture({ NVIDIA_API_KEY: "fixture-nvidia" });
   const { rememberProviderFailure } = await import("./provider.mjs");
-  await rememberProviderFailure(undefined, { status: 503, retryAfter: 10 }, undefined, f.dependencies);
-  const state = await providerState(f.dependencies);
+  await rememberProviderFailure(OPERATOR_OWNER, undefined, { status: 503, retryAfter: 10 }, undefined, f.dependencies);
+  const state = await providerState(OPERATOR_OWNER, f.dependencies);
   assert.equal(state.status, "unavailable");
   assert.equal(state.retryAt, null);
 });
