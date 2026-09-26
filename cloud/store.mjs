@@ -5,6 +5,7 @@ import { devKeyProvider, sha256Hex } from "../packages/ledger/src/sign.ts";
 import { entryHash, GENESIS_PREV } from "../packages/ledger/src/canonical.ts";
 import { signingPreimage } from "../packages/ledger/src/index.ts";
 import { verifyChain } from "../packages/ledger/src/verify.ts";
+import { resolveVerificationKey } from "../packages/ledger/src/verify-key.ts";
 import { PROVIDER_PRESETS } from "../packages/workbench/src/provider-defaults.ts";
 import { deriveRunState } from "../packages/workbench/src/gui.ts";
 let pool;
@@ -103,6 +104,23 @@ export async function signer() {
     throw new Error("Cloud signing key missing.");
   return devKeyProvider({ env: process.env });
 }
+
+/// Verification and signing deliberately resolve their key differently.
+/// `signer()` is the write path and must hold signing material. Verification
+/// must not derive its answer from that same material, or anyone able to
+/// replace the signing key controls both halves of the check. It goes through
+/// the shared resolution instead, which prefers an out-of-band pinned public
+/// half and reports the trust file for what it is.
+export async function verifier() {
+  const resolved = await resolveVerificationKey({ env: process.env });
+  if (!resolved?.publicKey) {
+    throw new Error(
+      "No verification key is configured, so the cloud ledger cannot be checked. " +
+        "Set VOID_VERIFY_KEY or pin one, and keep the signing key separate from it.",
+    );
+  }
+  return resolved.publicKey;
+}
 export async function append(body, client) {
   const key = await signer();
   const previous = (
@@ -136,10 +154,11 @@ export async function ledger(workspace, client = database()) {
       [workspace],
     )
   ).rows.map((row) => row.entry);
-  const key = await signer();
-  const result = await verifyChain(entries, {
-    publicKey: (id) => key.publicKey(id),
-  });
+  // The signing key is not allowed to answer this question about itself.
+  const publicKey = await verifier();
+  // `PublicKeyLookup` is already either a fixed key or a resolver, so it is
+  // handed over as it comes rather than being reshaped here.
+  const result = await verifyChain(entries, { publicKey });
   if (!result.ok)
     throw new Error("Ledger signature or integrity verification failed.");
   return { entries, result };
