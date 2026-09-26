@@ -50,3 +50,28 @@ explicit account commands and authenticated error handling before it exposes
 these helpers. Add durable server-side session storage with encrypted Appwrite
 session secrets, rate limits, and endpoint integration tests before mounting
 public auth routes.
+
+## Account deletion
+
+There is no account-deletion route, because no account can be created through
+any mounted route. `cloud/auth.mjs` is not imported by any application: its
+only importer is `cloud/auth.test.mjs`. Its signup, login, logout, account
+lookup and password recovery helpers are therefore not reachable from
+`cloud/server.mjs`, `cloud/demo.mjs` or `cloud/prime.mjs`, and the section
+above already requires durable session storage, rate limits and endpoint
+integration tests before those routes are mounted at all.
+
+`createAuth` has no deletion method of its own. It exposes exactly signup,
+login, logout, account lookup and password recovery. The one `DELETE` it issues
+is against the current session during logout, which ends a session and does not
+remove an account. `cloud/schema.sql` defines three tables and none of them
+holds an account, so there is no local account record to remove either.
+
+Mounting these helpers is what makes account deletion real work, and it becomes
+real work at that moment rather than later. There is no deletion method to hang
+a route on, so one has to be added to `cloud/auth.mjs` first, and it has to
+remove the operator's own rows rather than only the Appwrite account, because
+the cloud tables are keyed by session and workspace and are not yet scoped by
+owner. See `docs/ACCOUNT-OWNERSHIP.md` for that scoping. Until the prerequisites
+above are met, an account-deletion route would protect nothing, which is why
+this is recorded as a statement rather than left as an open task.

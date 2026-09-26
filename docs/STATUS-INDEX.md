@@ -152,6 +152,7 @@ reader who arrives at the audit first does not rebuild finished work.
 | 41 | `68dfdbb` | one operational certification run recorded in `docs/UPGRADE-CHECKPOINT.md`, with what it did not cover |
 | 49 | `ba2e042` | the iOS cache policy, Keychain-only credential storage and a removal path that leaves no credential |
 | 16 | the scope answer in `docs/DECISIONS.md` | no provider and no model is a hardcoded default any more; the product asks on first use, the retry guard identifies a free model explicitly, and both handbooks, the README and the beta document say so |
+| 9 | the statement in `docs/APPWRITE-AUTH.md` "## Account deletion" | no account can be created through any mounted route, because `createAuth` is imported only by its own test and no application mounts it, so there is nothing for a deletion route to protect. It becomes real work the moment those helpers are mounted, because the module has no deletion method to hang a route on |
 
 Two rows are partly closed and the remainder is named rather than implied. Row 23
 has its dependency, time and checkpoint selectors wired, with cross-host fencing
