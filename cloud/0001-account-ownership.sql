@@ -6,9 +6,9 @@
 --
 -- Properties this file is written to have:
 --
---   * Additive first. The very first statement adds a column and changes
---     nothing. If the migration is abandoned at that point the database is
---     still the database it was.
+--   * Additive first. It adds owner columns and pins the trigger function's
+--     search path before changing any row. If the migration is abandoned, the
+--     database retains its existing data and trigger behavior.
 --   * Idempotent. Every step is conditional, so running it twice is the same
 --     as running it once, and running it against a database that
 --     cloud/schema.sql already provisioned is a no-op.
@@ -56,6 +56,15 @@ BEGIN;
 ALTER TABLE IF EXISTS void_cloud_state ADD COLUMN IF NOT EXISTS owner text;
 ALTER TABLE IF EXISTS void_cloud_ledger ADD COLUMN IF NOT EXISTS owner text;
 ALTER TABLE IF EXISTS void_cloud_events ADD COLUMN IF NOT EXISTS owner text;
+
+-- Pin the append-only trigger function to an empty search path. Its body uses
+-- no database objects, so it does not need schema lookup.
+DO $$
+BEGIN
+  IF to_regprocedure('public.void_cloud_immutable()') IS NOT NULL THEN
+    ALTER FUNCTION public.void_cloud_immutable() SET search_path = '';
+  END IF;
+END $$;
 
 -- 2. Lift the append-only triggers for the duration of the backfill only.
 -- The two conditions are nested rather than combined with AND on purpose: a
