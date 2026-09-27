@@ -60,6 +60,33 @@ import { assertOwner } from "./owner.mjs";
 const COOKIE = "__Host-void-account";
 export const SESSION_COOKIE = COOKIE;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/**
+ * A session ends at `expiresAt`, thirty days from the sign in, and nothing
+ * moves that date. It is the floor under the cookie, not a promise about how
+ * long a person is welcome: the session also ends the moment the provider
+ * stops honouring the refresh token the cookie carries, which is what signing
+ * out anywhere does.
+ *
+ * What decides every request in between is the provider's access token, whose
+ * life is minutes to an hour and is not ours to choose. A sealed cookie is a
+ * bearer of that token, so the honest reading of a live cookie is "this
+ * person has a credential the provider still accepts", and the only thing
+ * that keeps that true past the token's own end is a refresh.
+ */
+/**
+ * How long before the provider's stated expiry a token counts as spent. One
+ * minute is enough to cover a request that has already started, and it is not
+ * a security setting: a token the provider will not accept is refused whether
+ * this number says it is fresh or not.
+ */
+const ACCESS_TOKEN_SKEW_MS = 60 * 1000;
+/**
+ * Used only when the provider's answer carries no `expires_in`. Supabase's
+ * default access token life is one hour. It decides when to refresh early; it
+ * never decides whether a token works, because that question is only ever put
+ * to the provider.
+ */
+const DEFAULT_ACCESS_TTL_MS = 60 * 60 * 1000;
 
 export const FAILURE_STATUS = Object.freeze({
   invalid_credentials: 401,
@@ -124,10 +151,21 @@ export function openSession(value, secret) {
   }
 }
 
-export function setSessionCookie(res, sealed) {
+/**
+ * `expiresAt` is passed whenever the session has one, and the header then
+ * says exactly what the sealed session inside it says. A cookie re-issued
+ * after a refresh would otherwise advertise a fresh thirty days while the
+ * session has fewer left, and the browser would go on presenting a cookie the
+ * server has already decided to refuse.
+ */
+export function setSessionCookie(res, sealed, expiresAt) {
+  const maxAge =
+    typeof expiresAt === "number"
+      ? Math.max(0, Math.floor((expiresAt - Date.now()) / 1000))
+      : Math.floor(SESSION_TTL_MS / 1000);
   res.setHeader(
     "set-cookie",
-    `${COOKIE}=${sealed}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`,
+    `${COOKIE}=${sealed}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`,
   );
 }
 
@@ -243,11 +281,26 @@ export function createAccountService(config) {
     return { id: result.body.id, email: result.body.email ?? null };
   }
 
-  const toSession = (user, accessToken, refreshToken) => ({
+  /**
+   * When the credential in a session runs out, as the provider stated it. The
+   * provider's own `expires_in` is the only honest source; the default is what
+   * to believe when it says nothing, and it is a guess about when to refresh
+   * early rather than a claim that a token works.
+   */
+  const accessTokenExpiry = (expiresIn) => {
+    const life = Number(expiresIn);
+    return (
+      now() + (Number.isFinite(life) && life > 0 ? life * 1000 : DEFAULT_ACCESS_TTL_MS)
+    );
+  };
+
+  const toSession = (user, accessToken, refreshToken, expiresIn) => ({
     userId: user.id,
     email: String(user.email ?? "").toLowerCase(),
     accessToken,
     refreshToken: refreshToken || null,
+    accessTokenExpiresAt: accessTokenExpiry(expiresIn),
+    // Counted once, at the sign in, and never moved again. See `refresh`.
     expiresAt: now() + SESSION_TTL_MS,
   });
 
@@ -266,6 +319,115 @@ export function createAccountService(config) {
     whoIs,
     openSession: (value) => openSession(value, config.sessionSecret),
     sealSession: (session) => sealSession(session, config.sessionSecret),
+
+    /**
+     * Whether the credential in this session is at its end, judged by the
+     * expiry the provider gave when it issued it. A session sealed before this
+     * field existed carries no answer, and counts as spent: refreshing a token
+     * that turns out to be good costs one request, and the alternative is
+     * trusting a guess about how long somebody's session lasts.
+     */
+    atTokenEnd(session) {
+      return (
+        typeof session?.accessTokenExpiresAt !== "number" ||
+        session.accessTokenExpiresAt - now() <= ACCESS_TOKEN_SKEW_MS
+      );
+    },
+
+    /**
+     * Trade the refresh token the cookie carries for a new access token.
+     *
+     * This is the only thing that can carry a session past the provider's
+     * access token, so it is also the only thing that can turn a copied cookie
+     * back into a working one, and what ends it is the provider revoking that
+     * refresh token. It cannot mint anything: the answer has to be an access
+     * token the provider will vouch for, and the person that token belongs to
+     * has to be the person this cookie was sealed for. A refresh that answers
+     * with somebody else's id is a refusal, not a change of owner.
+     */
+    async refresh(session) {
+      if (!service.isConfigured()) return null;
+      if (typeof session?.refreshToken !== "string" || !session.refreshToken)
+        return null;
+      let result;
+      try {
+        result = await supabase("/token?grant_type=refresh_token", {
+          method: "POST",
+          body: { refresh_token: session.refreshToken },
+        });
+      } catch {
+        return null;
+      }
+      const accessToken = result.ok
+        ? String(result.body?.access_token ?? "")
+        : "";
+      if (!accessToken) return null;
+      let user = null;
+      try {
+        user = await whoIs(accessToken);
+      } catch {
+        return null;
+      }
+      if (user?.id !== session.userId) return null;
+      return {
+        ...session,
+        accessToken,
+        // A provider may rotate the refresh token, and one that does not send
+        // a replacement has not withdrawn the one in hand. Dropping it would
+        // end a session that is still perfectly good.
+        refreshToken:
+          String(result.body?.refresh_token ?? "") || session.refreshToken,
+        accessTokenExpiresAt: accessTokenExpiry(result.body?.expires_in),
+        // The one date a refresh does not move. Thirty days is thirty days from
+        // the sign in; a refresh token is not a way to buy thirty more.
+        expiresAt: session.expiresAt,
+      };
+    },
+
+    /**
+     * The session a request may use, renewed if the credential in it is at its
+     * end, and null when there is none to use.
+     *
+     * Both refusals are the same refusal and both end the session: a provider
+     * that will not vouch for the token, and a provider that will not trade the
+     * refresh token for a new one. Nothing here falls back to a stale token, to
+     * a local decision about who the holder is, or to a session with the
+     * credential removed, because each of those is a way to be signed in
+     * without a credential.
+     */
+    async liveSession(session) {
+      if (!session) return null;
+      let current = session;
+      if (service.atTokenEnd(session)) {
+        const renewed = await service.refresh(session);
+        // A refresh the provider refused is the end of the session. Falling
+        // back to the token that was just refused would be signing the person
+        // in on the very credential that no longer works.
+        if (!renewed) return null;
+        current = renewed;
+      }
+      let user = null;
+      try {
+        user = await whoIs(current.accessToken);
+      } catch {
+        return null;
+      }
+      // The token ended sooner than the number the provider gave said it would.
+      // That happens, and the answer is one refresh and then a decision, not a
+      // loop and not a guess.
+      if (!user && current === session) {
+        const renewed = await service.refresh(session);
+        if (!renewed) return null;
+        current = renewed;
+        try {
+          user = await whoIs(current.accessToken);
+        } catch {
+          return null;
+        }
+      }
+      if (user?.id !== session.userId) return null;
+      return { session: current, user, refreshed: current !== session };
+    },
 
     /**
      * Password or magic link. A signup is attempted only when the provider says
@@ -287,6 +449,7 @@ export function createAccountService(config) {
             user,
             request.access_token,
             request.refresh_token,
+            request.expires_in,
           ),
         };
       }
@@ -319,6 +482,7 @@ export function createAccountService(config) {
               user,
               accessToken,
               String(attempt.body.refresh_token ?? "") || null,
+              attempt.body.expires_in,
             ),
           };
         return { failure: "invalid_credentials" };
@@ -349,6 +513,7 @@ export function createAccountService(config) {
           user,
           accessToken,
           String(created.body?.refresh_token ?? "") || null,
+          created.body?.expires_in,
         ),
       };
     },
@@ -378,8 +543,21 @@ export function createAccountService(config) {
       return classify(result.status, result.body);
     },
 
+    /**
+     * Revoke at the provider, which is the only act that ends a session
+     * anywhere else. That takes a bearer the provider still accepts, so a
+     * session sitting past its access token's end is renewed first: sending an
+     * expired token to `/logout` is refused, and a refused revoke leaves the
+     * refresh token alive for the other device holding the same cookie. A
+     * session that cannot be renewed has nothing left to revoke, which is the
+     * same end by a different road.
+     */
     async signOut(session) {
       if (!session?.accessToken || !service.isConfigured()) return;
+      const live = service.atTokenEnd(session)
+        ? await service.refresh(session)
+        : session;
+      if (!live?.accessToken) return;
       try {
         await doFetch(
           `${String(config.supabaseUrl).replace(/\/+$/, "")}/auth/v1/logout`,
@@ -387,11 +565,11 @@ export function createAccountService(config) {
             method: "POST",
             headers: {
               apikey: config.supabaseKey,
-              Authorization: `Bearer ${session.accessToken}`,
+              Authorization: `Bearer ${live.accessToken}`,
               "content-type": "application/json",
             },
-            body: session.refreshToken
-              ? JSON.stringify({ refresh_token: session.refreshToken })
+            body: live.refreshToken
+              ? JSON.stringify({ refresh_token: live.refreshToken })
               : undefined,
           },
         );

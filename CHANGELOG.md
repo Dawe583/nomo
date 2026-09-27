@@ -4,6 +4,27 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- A sign in now lasts as long as it says it does. The account cookie sealed a
+  thirty day expiry and the middleware asked the provider who the access token
+  in it belonged to on every request, but nothing ever renewed that token, so
+  the real lifetime was the provider's access token, about an hour by default,
+  and a person was signed out roughly an hour after signing in while the
+  cookie went on claiming thirty days. A token that is at its end, or that the
+  provider stops vouching for sooner than it said, is now traded for a new one
+  with the refresh token already sealed in the cookie, and the renewal comes
+  back as the same HttpOnly cookie, so the browser still never holds a provider
+  token and `connect-src 'self'` is unchanged. The thirty days is now a window
+  the code honours rather than a claim it does not: it is fixed at the sign in,
+  a refresh does not slide it, the `Max-Age` on the cookie is computed from
+  that same date so a renewed cookie never advertises more time than the
+  session has, and a session past its own end is refused before the provider
+  is asked anything. What actually ends a session early is the provider: a
+  refresh it refuses ends the session and clears the cookie rather than
+  falling back to a stale credential, and signing out revokes the refresh token
+  at the provider, which is what ends the same session on another device. To
+  make that revocation count, signing out renews a spent credential first,
+  because a logout sent with an expired bearer is refused and revokes nothing.
+
 - The chat origin now has a sign in screen, and the account broker finally has
   a route of its own. Previously the broker could only resolve a cookie that
   already existed, so a person could hold an account and have no way to become

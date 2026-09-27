@@ -97,6 +97,40 @@ already uses for its accounts, and it is server side only, so `vercel.json`
 keeps `connect-src 'self'` and the browser never holds a provider token. Sign up
 is refused unless `VOID_ACCOUNT_SIGNUP` is `1`, and it is not set.
 
+### What a session actually is
+
+The cookie is sealed and carries `expiresAt`, thirty days from the sign in,
+and that date never moves. What decides whether a session is alive in between
+is the provider's access token, whose own life is an hour by default and is
+not ours to choose, and the middleware asks the provider who a token belongs
+to on every request rather than trusting a claim inside it.
+
+So the session lifetime is the provider's answer, and there are two ways it
+ends. Thirty days is the outer one, and it is honoured: `openSession` refuses
+a sealed session past its own `expiresAt` before the provider is asked
+anything, and the `Max-Age` on the cookie is computed from that same date
+rather than from a fixed thirty days, so a cookie re-issued after a renewal
+never advertises more time than the session inside it has. The inner one is
+the provider's access token, and what carries a session past it is the refresh
+token sealed in the same cookie. `cloud/account.mjs` trades that for a new
+access token when the credential in hand is at its end, and also when the
+provider refuses a token that was supposed to be good, which is the case
+where a provider's stated expiry turns out to have been optimistic.
+
+Nothing here is a way to be signed in without a credential. A refresh has to
+return an access token the provider will vouch for, and the person that token
+belongs to has to be the person the cookie was sealed for; an answer naming
+somebody else is a refusal, not a change of owner. A refresh the provider
+refuses ends the session, and the cookie is cleared with the 401 rather than
+left to be presented again. Signing out revokes the refresh token at the
+provider, which is what ends the same session on every other device, and it
+renews a spent credential first because a logout the provider refuses as
+unauthenticated revokes nothing.
+
+The browser is unchanged by any of it. The renewal comes back as the same
+`__Host-void-account` cookie, sealed, `HttpOnly`, `Secure`, `SameSite=Lax`, and
+carrying no provider token, because the browser never had one.
+
 `cloud/owner.mjs` holds the reserved owners and the one validation every store
 function applies first. `cloud/owner.test.mjs` reads the signatures and fails
 if a store function stops taking the owner, and reads every source file and
@@ -114,7 +148,7 @@ credential.
 | --- | --- |
 | `GET /api/account` | `{ configured, signedIn, email? }`. The only way the interface learns which of the two gates to draw. A session the store would refuse is reported as signed out, so the screen never claims a person is in and then answers 401. |
 | `POST /api/account/signin` | Body is `{ email, password }` and nothing else. The method is named in the route, not read from the body, so this cannot be talked into a magic link or a signup. A success seals the session and returns `Set-Cookie: __Host-void-account`. |
-| `DELETE /api/account` | Revokes at the provider and clears the cookie. Signing out with no cookie is a 200. |
+| `DELETE /api/account` | Revokes at the provider and clears the cookie. Signing out with no cookie is a 200. The revocation is what ends the same session on every other device, so a session whose access token has run out is renewed first: a logout the provider refuses as unauthenticated revokes nothing. |
 
 The sign in surface over HTTP is password sign in and nothing else. A signup is
 attempted only when the provider says the address holds no account, the switch
@@ -229,8 +263,12 @@ Two further conditions are not in that list and have to hold anyway:
   and `VOID_ACCOUNT_SEAL_KEY` set, `accounts.isConfigured()` is false, the
   account routes report themselves unconfigured, and every request has to
   present the control token. Nothing has been signed in against a real identity
-  provider, so the sealed cookie path and the provider round trip have not been
-  proven against Supabase itself.
+  provider, so the sealed cookie path, the provider round trip and the refresh
+  grant have not been proven against Supabase itself. The loopback provider in
+  `cloud/account-routes.test.mjs` models what the broker depends on, which is
+  the access token's own expiry, the refresh grant, the revocation on logout and
+  a logout that is refused when the bearer is spent, and it is a model of a
+  provider rather than a measurement of one.
 - **The Prime bridge is either given a per owner credential or refused to
   accounts.** It authenticates with a machine token and is bound to the
   operator's namespace, and `POST /api/sessions` refuses `prime-agent` for any

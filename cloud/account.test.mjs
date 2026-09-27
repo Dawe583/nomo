@@ -33,6 +33,9 @@ const session = (over = {}) => ({
   email: "person@example.com",
   accessToken: "provider-access-token",
   refreshToken: "provider-refresh-token",
+  // A provider states its own access token life; this is a fixture, so it
+  // states one an hour out and the token is not spent when the test uses it.
+  accessTokenExpiresAt: Date.now() + 60 * 60 * 1000,
   expiresAt: Date.now() + 60000,
   ...over,
 });
@@ -367,6 +370,13 @@ test("a request with no verified session is refused, and the refusal is not an e
   globalThis.fetch = async (url, init) => {
     const target = String(url);
     if (target.startsWith("http://127.0.0.1")) return nativeFetch(url, init);
+    // A refresh token the provider will not trade is the end of a session, and
+    // this deployment says so rather than letting the middleware guess at it.
+    if (/\/auth\/v1\/token\?grant_type=refresh_token$/.test(target))
+      return Response.json(
+        { error_code: "refresh_token_not_found", msg: "Invalid Refresh Token" },
+        { status: 400 },
+      );
     assert.match(target, /\/auth\/v1\/user$/);
     if (init.headers.Authorization === "Bearer revoked")
       return Response.json({ msg: "invalid" }, { status: 401 });

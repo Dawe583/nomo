@@ -97,7 +97,11 @@ const accounts = accountServiceFromEnv();
  * namespace and not a view over anybody else's. An account cookie produces the
  * provider's user id, and only after the provider has confirmed over TLS that
  * the token in that cookie still belongs to that person: a sealed cookie proves
- * it is ours, not that its holder is still its holder.
+ * it is ours, not that its holder is still its holder. A token the provider
+ * has stopped accepting is traded for a new one with the refresh token the
+ * cookie carries, and if the provider will not trade it the session is over and
+ * the cookie is cleared, because that is what signing out on another device
+ * does to it.
  *
  * A request that presents neither is refused. It is not served from a shared
  * workspace and it is not served an empty list, because an empty list reads as
@@ -170,21 +174,33 @@ app.use(async (req, res, next) => {
     if (!accounts.isConfigured())
       return res.status(200).json({ configured: false, signedIn: false });
     const session = accounts.openSession(readSessionCookie(req));
-    let user = null;
-    if (session)
-      try {
-        user = await accounts.whoIs(session.accessToken);
-      } catch {
-        user = null;
-      }
-    // A session the store would refuse is reported as signed out. The other
-    // answer is a screen that tells a person they are in and then refuses every
-    // request they make, which is a worse lie than an early sign in screen.
-    return res.json({
-      configured: true,
-      signedIn: Boolean(user && isOwner(user.id)),
-      ...(user ? { email: user.email } : {}),
-    });
+    // The same answer the middleware would give, and for the same reason: a
+    // credential the provider will not vouch for is a signed out person, and
+    // the probe is where a person finds out they have been. A transport that
+    // throws is the same answer, not a 500 on the page that decides whether to
+    // ask for a password.
+    let live = null;
+    try {
+      live = await accounts.liveSession(session);
+    } catch {
+      live = null;
+    }
+    if (live) {
+      setSessionCookie(
+        res,
+        accounts.sealSession(live.session),
+        live.session.expiresAt,
+      );
+      return res.json({
+        configured: true,
+        signedIn: Boolean(isOwner(live.user.id)),
+        ...(live.user.email ? { email: live.user.email } : {}),
+      });
+    }
+    // A cookie that is over is cleared rather than left to be presented again
+    // on every request for the rest of its advertised life.
+    if (session) clearSessionCookie(res);
+    return res.json({ configured: true, signedIn: false });
   }
   if (req.path === "/api/account/signin" && req.method === "POST") {
     if (!accounts.isConfigured())
@@ -212,7 +228,11 @@ app.use(async (req, res, next) => {
           accountFailureMessage[failure] ?? accountFailureMessage.provider_error,
       });
     }
-    setSessionCookie(res, accounts.sealSession(result.session));
+    setSessionCookie(
+      res,
+      accounts.sealSession(result.session),
+      result.session.expiresAt,
+    );
     return res.json({ signedIn: true, email: result.session.email });
   }
   if (req.path === "/api/account" && req.method === "DELETE") {
@@ -243,19 +263,29 @@ app.use(async (req, res, next) => {
   }
   if (accounts.isConfigured()) {
     const session = accounts.openSession(readSessionCookie(req));
-    if (session) {
-      let user = null;
+    let live = null;
+    if (session)
       try {
-        user = await accounts.whoIs(session.accessToken);
+        live = await accounts.liveSession(session);
       } catch {
-        user = null;
+        live = null;
       }
-      if (user && isOwner(user.id)) {
-        req.owner = user.id;
-        req.account = session;
-        return next();
-      }
+    if (live && isOwner(live.user.id)) {
+      req.owner = live.user.id;
+      req.account = live.session;
+      // A renewed credential goes back into the cookie, sealed, and with the
+      // window the session really has left rather than a fresh thirty days.
+      if (live.refreshed)
+        setSessionCookie(
+          res,
+          accounts.sealSession(live.session),
+          live.session.expiresAt,
+        );
+      return next();
     }
+    // A session that was real and is not any more is ended here rather than
+    // left half alive: the cookie goes, and the answer is the refusal below.
+    if (session) clearSessionCookie(res);
   }
   return res.status(401).json({
     error: "authentication_required",
