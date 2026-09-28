@@ -1057,3 +1057,45 @@ cannot be the position, and the provider-agnostic reading is the one taken: the
 product asks on first use rather than shipping a vendor's endpoint as a default.
 The presets remain, because offering a choice is not the same as choosing for
 the operator.
+
+## Platform direction, 2026-09-28
+
+Taken after the Apple design research and after reading the Human Interface
+Guidelines directly. This section is dated after the 2026-09-24 Apple scope
+answer above and replaces its platform half. Where they disagree, this one
+governs.
+
+**The platform surfaces take the system look.** The iOS app, the macOS client
+and the web control plane adopt the platform's own typography, semantic colours,
+materials, navigation patterns and accessibility behaviour. The warm paper
+palette, the `Inter` interface face and the custom orange accent leave the
+platform surfaces. The iOS app was already close, because
+`apps/apple/VOIDApp/ChatTheme.swift` was built on system colours; the web was the
+outlier, with seventeen hand-maintained colour properties, no spacing token and
+two stylesheets that override the third. The contract is
+`docs/APPLE-DESIGN-SYSTEM.md`, which quotes the guideline tables rather than
+paraphrasing them, and the work is sequenced in
+`docs/PLATFORM-REDESIGN-PLAN.md`.
+
+**macOS becomes a SwiftUI target in the same project as iOS.** The 2026-09-24
+answer kept the Tauri presentation until a signed sandbox experiment proved a
+blocker. That is reversed: the macOS client is a native target sharing one
+codebase and one design system with iOS. What the reversal does not change is
+the packaging question. The Tauri shell still exists as the desktop
+distribution that carries the Node sidecar and the recovery engine, because that
+is where the executor runs, and a sandboxed Mac app is still gated on evidence
+this repository does not have. The two are different decisions and the earlier
+one conflated them.
+
+**The terminal is not part of this.** The ASCII identity of the TUI is
+deliberate, it is a different medium with its own ergonomics, and it is excluded
+from the redesign. No part of the platform work may migrate the terminal toward
+the platform look, and no part of the platform look may be read back as a
+proposal to restyle it.
+
+**What this costs, stated here because the strategy documents say otherwise.**
+`docs/VOID-FUTURE-DIRECTION.md` argued for dropping the Apple product and
+shipping the ledger. That argument is overridden, not refuted, and the override
+has a price: the redesign is roughly a quarter of the available sessions for two
+months, and the sequence in `docs/ROADMAP-2026-Q4.md` exists so that reaching a
+first user does not wait for the macOS client to exist.
