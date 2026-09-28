@@ -190,7 +190,12 @@ export function denialText(
 class UnknownToolOutcome extends Error {
   constructor() { super("Tool outcome is unknown. Stop and reconcile its evidence before continuing."); }
 }
-type Connector = McpConfig & { id: string; name: string; tools: McpTool[] };
+type Connector = McpConfig & {
+  id: string;
+  name: string;
+  tools: McpTool[];
+  consentState: "staged" | "probed" | "confirmed";
+};
 type Session = {
   view: SessionView;
   messages: ModelMessage[];
@@ -297,7 +302,7 @@ export class Workbench {
       config?: ProviderConfig;
       profiles?: Record<string, ProviderConfig>;
       catalog: readonly Model[];
-      connectors: Connector[];
+      connectors: Array<Omit<Connector, "consentState"> & { consentState?: Connector["consentState"] }>;
       documents: Record<string, WorkspaceState>;
       evidence: Record<string, JsonlEntry[]>;
       recoveryRequests?: Record<string, RecoveryRequest>;
@@ -380,7 +385,13 @@ export class Workbench {
         if (profile) this.profiles[baseUrl] = profile;
       }
       this.catalog = saved.catalog;
-      this.connectors = saved.connectors;
+      // A snapshot written before the consent gate records no consent state.
+      // It loads as staged with no catalog: the operator probes it explicitly.
+      this.connectors = saved.connectors.map((item): Connector => {
+        if (item.consentState) return { ...item, consentState: item.consentState };
+        migrated = true;
+        return { ...item, consentState: "staged", tools: [] };
+      });
       this.documents = saved.documents;
       this.evidence = saved.evidence;
       this.recoveryRequests = saved.recoveryRequests ?? {};
@@ -654,9 +665,11 @@ export class Workbench {
       ? (session.tools ?? [...workspaceTools])
       : [
           ...workspaceTools,
-          ...this.connectors.flatMap((c) =>
-            c.tools.map((tool) => ({ ...tool, connectorId: c.id })),
-          ),
+          ...this.connectors
+            .filter(c => c.consentState === "confirmed")
+            .flatMap((c) =>
+              c.tools.map((tool) => ({ ...tool, connectorId: c.id })),
+            ),
         ]
     ).filter((tool) => this.toolAllowedInMode(tool));
     return {
@@ -783,6 +796,7 @@ export class Workbench {
     const tools: McpTool[] = [...workspaceTools];
     const connections: NonNullable<Session["connections"]> = {};
     for (const connector of this.connectors) {
+      if (connector.consentState !== "confirmed") continue;
       const listed = await mcpCatalog(connector);
       connections[connector.id] = { ...connector, sessionId: listed.sessionId };
       tools.push(
@@ -1339,51 +1353,53 @@ export class Workbench {
           tools: workspaceTools.map((t) => t.name),
           toolDetails: workspaceTools,
           undo: true,
+          consentState: "confirmed" as const,
         },
         ...this.connectors.map(publicConnector),
       ],
     };
   }
   async addConnector(input: McpConfig & { name?: string }) {
-    input = connectorInput(input);
-    const url = validateEndpoint(input.url, true);
-    const policy = input.policy || DEFAULT_POLICY;
-    if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
-    if (this.connectors.length >= 12)
-      throw new Error("Connector limit reached. Remove an unused connector.");
-    const listed = await mcpCatalog({ ...input, url });
-    const connector = {
-      ...input,
-      url,
-      policy,
-      id: randomUUID(),
-      name: input.name?.trim().slice(0, 80) || new URL(url).hostname,
-      tools: listed.tools,
-    };
-    this.connectors.push(connector);
-    this.persist();
-    return this.connectionState();
-  }
-  async updateConnector(id: string, body: Record<string, unknown>) {
-    const previous = this.connectors.find((item) => item.id === id);
-    if (!previous) throw new Error("Connector not found.");
-    const input = connectorInput(body, previous),
-      url = validateEndpoint(input.url, true),
-      policy = input.policy || DEFAULT_POLICY;
-    if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
-    const listed = await mcpCatalog({ ...input, url, policy });
     return this.locked(async () => {
-      if (this.connectors.find((item) => item.id === id) !== previous)
-        throw new Error(
-          "Connector changed during validation. Refresh before saving.",
-        );
-      const replacement = {
+      input = connectorInput(input);
+      const url = validateEndpoint(input.url, true);
+      const policy = input.policy || DEFAULT_POLICY;
+      if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
+      if (this.connectors.length >= 12)
+        throw new Error("Connector limit reached. Remove an unused connector.");
+      const connector: Connector = {
+        ...input,
+        url,
+        policy,
+        id: randomUUID(),
+        name: input.name?.trim().slice(0, 80) || new URL(url).hostname,
+        tools: [],
+        consentState: "staged",
+      };
+      this.connectors.push(connector);
+      this.persist();
+      return this.connectionState();
+    });
+  }
+  /** Stage an edit. No network request: the URL and policy are validated, the
+   * connector returns to staged, and the operator probes it again explicitly. */
+  async updateConnector(id: string, body: Record<string, unknown>) {
+    return this.locked(async () => {
+      const previous = this.connectors.find((item) => item.id === id);
+      if (!previous) throw new Error("Connector not found.");
+      const input = connectorInput(body, previous),
+        url = validateEndpoint(input.url, true),
+        policy = input.policy || DEFAULT_POLICY;
+      if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
+      const replacement: Connector = {
+        ...previous,
         ...input,
         id,
         url,
         policy,
         name: input.name?.trim() || new URL(url).hostname,
-        tools: listed.tools,
+        tools: [],
+        consentState: "staged",
       };
       const before = this.connectors;
       this.connectors = before.map((item) =>
@@ -1408,6 +1424,129 @@ export class Workbench {
       checkedAt: new Date().toISOString(),
       tools: safe.tools,
       toolDetails: safe.toolDetails,
+    };
+  }
+  /** The one outbound request an operator can make about a connector. It is
+   * only ever reached from an explicit command, never from add, edit, load or
+   * session start. A failed probe leaves the staged connector exactly as it
+   * was: nothing is written and no catalog is kept. */
+  async probeConnector(id: string) {
+    const previous = this.connectors.find((item) => item.id === id);
+    if (!previous) throw new Error("Connector not found.");
+    const listed = await mcpCatalog(previous);
+    const updated: Connector = {
+      ...previous,
+      tools: listed.tools,
+      consentState: "probed",
+    };
+    await this.locked(async () => {
+      const before = this.connectors;
+      this.connectors = before.map((item) =>
+        item.id === id ? updated : item,
+      );
+      try {
+        this.persist();
+      } catch (error) {
+        this.connectors = before;
+        throw error;
+      }
+    });
+    return publicConnector(updated);
+  }
+  /** Operator confirmation. Only a probed catalog can be confirmed, so the
+   * tools a conversation may use are the ones the operator has seen. */
+  async confirmConnector(id: string) {
+    return this.locked(async () => {
+      const previous = this.connectors.find((item) => item.id === id);
+      if (!previous) throw new Error("Connector not found.");
+      if (previous.consentState !== "probed")
+        throw new Error("Probe this connector before confirming it.");
+      const updated: Connector = {
+        ...previous,
+        consentState: "confirmed",
+      };
+      const before = this.connectors;
+      this.connectors = before.map((item) =>
+        item.id === id ? updated : item,
+      );
+      try {
+        this.persist();
+      } catch (error) {
+        this.connectors = before;
+        throw error;
+      }
+      return publicConnector(updated);
+    });
+  }
+  /** What this connector's policy would do to each tool it lists. It is a
+   * preview and not a decision: no request leaves this process, nothing is
+   * written, and a tool the registry cannot classify is shown as denied,
+   * which is what the conversation will do with it. Blast radius stays
+   * unknown here because only a measured probe can produce one. */
+  policyPreview(id: string) {
+    const connector = this.connectors.find((item) => item.id === id);
+    if (!connector) throw new Error("Connector not found.");
+    const policy = loadPolicy(connector.policy ?? DEFAULT_POLICY);
+    if (!policy.ok) throw new Error("Invalid policy.");
+    const tools = connector.tools.map((tool) => {
+      const name = connector.mapping?.[tool.name] ?? tool.name;
+      const classification = classifyTool(name, {
+        facts: connector.facts ?? {},
+        args: {},
+      });
+      const call = {
+        tool: name,
+        connector: connector.name,
+        workspace: undefined,
+        klass:
+          classification.outcome === "classified"
+            ? classification.tone
+            : classification.outcome === "unclassified"
+              ? (classification.assumeTone ?? "r3")
+              : "r3",
+        blastRadius: undefined,
+        unclassified: classification.outcome !== "classified",
+      };
+      const decision =
+        classification.outcome === "classified"
+          ? decide(policy, call)
+          : ({
+              kind: "deny",
+              ruleIndex: -1,
+              rationale: "No registry entry covers this tool.",
+            } as const);
+      return {
+        tool: tool.name,
+        mapped: name,
+        klass: call.klass,
+        classification:
+          classification.outcome === "classified"
+            ? classification.reason
+            : classification.outcome === "unknown-tool"
+              ? "No registry entry covers this tool. Denied as r3."
+              : `No case matched. Assumed ${call.klass}; missing facts: ${classification.missingFacts.join(", ")}.`,
+        decision: decision.kind,
+        rule:
+          decision.kind === "allow"
+            ? decision.rationale ?? "allowed by an allow rule"
+            : decision.kind === "hold"
+              ? decision.rationale ?? `held for ${decision.seconds}s`
+              : decision.kind === "unmatched"
+                ? "no rule matched; the policy file changed under this connector"
+                : decision.rationale ?? "denied by rule",
+        blastRadius: "unknown",
+      };
+    });
+    return {
+      id: connector.id,
+      name: connector.name,
+      consentState: connector.consentState,
+      tools,
+      counts: {
+        allow: tools.filter((tool) => tool.decision === "allow").length,
+        hold: tools.filter((tool) => tool.decision === "hold").length,
+        deny: tools.filter((tool) => tool.decision === "deny").length,
+      },
     };
   }
   removeConnector(id: string) {

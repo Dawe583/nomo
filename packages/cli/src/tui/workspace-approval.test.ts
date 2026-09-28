@@ -99,6 +99,12 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
     mapping: { fixture_send: "aws.ses.email.send" },
     facts: { "hold.released": true },
   });
+  // The builtin document workspace shares this list and has no url.
+  const conn = app.connectionState().connectors.find(
+    (c) => "url" in c && !!c.url?.includes(String(address.port)),
+  )!;
+  await app.probeConnector(conn.id);
+  await app.confirmConnector(conn.id);
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
   async function held() {

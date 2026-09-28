@@ -89,6 +89,52 @@ type Confirmation = {
 const json = (value: unknown) =>
   JSON.stringify(value, null, 2)?.split("\n") ?? [];
 const text = (value: unknown) => String(value ?? "unknown");
+/** The one next step per consent state. A staged connector has no catalog, a
+ * probed one has tools nobody agreed to, and a confirmed one is in use. */
+const MCP_NEXT = {
+  staged: (id: string) => `/mcp probe ${id}`,
+  probed: (id: string) => `/mcp confirm ${id}`,
+  confirmed: () => "in use by new conversations",
+} as const;
+const MCP_COMMANDS: readonly string[] = [
+  "inspect",
+  "add",
+  "probe",
+  "confirm",
+  "rename",
+  "remove",
+];
+/** A policy is YAML in the record, so the view counts its rules instead of
+ * printing it: the line keeps the 80 column budget and stays comparable
+ * between connectors. */
+function policySummary(value: string | undefined) {
+  if (!value) return "default";
+  const loaded = loadPolicy(value);
+  if (!loaded.ok) return "unreadable policy";
+  return `${loaded.policy.rules.length} rules, ` +
+    loaded.policy.rules
+      .map((rule) => {
+        const scope = String(rule.match.class ?? "any");
+        return rule.decision === "hold"
+          ? `${scope} hold ${rule.seconds ?? 0}s`
+          : `${scope} ${rule.decision}`;
+      })
+      .join(", ");
+}
+
+/** One row of the /mcp view. The builtin document workspace has no endpoint,
+ * so the view flattens both record shapes into this before rendering. */
+type ConnectorRow = {
+  id: string;
+  name: string;
+  builtin: boolean;
+  consent: "staged" | "probed" | "confirmed";
+  tools: string[];
+  endpoint: string;
+  policy?: string;
+  facts?: Record<string, string | boolean>;
+  mapping?: Record<string, string>;
+};
 
 export type TuiMode = "normal" | "accept" | "plan";
 export const TUI_MODES: readonly TuiMode[] = ["normal", "accept", "plan"];
@@ -1407,6 +1453,272 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     this.scroll = 0;
     await this.refresh(true);
   }
+  /** Host and path only. A connector URL is operator supplied and this view
+   * is a screen that gets shared, so a query string never reaches it. */
+  private endpoint(value: string | undefined) {
+    if (!value) return "builtin";
+    try {
+      const url = new URL(value);
+      return `${url.host}${url.pathname === "/" ? "" : url.pathname}`;
+    } catch {
+      return "(unreadable endpoint)";
+    }
+  }
+  /** The built in document workspace and external servers arrive in one list
+   * but only external ones carry an endpoint, so the view reads a uniform row
+   * instead of narrowing at every access. */
+  private connectorRows(): ConnectorRow[] {
+    return this.workbench.connectionState().connectors.map((c) => ({
+      id: c.id,
+      name: c.name || c.id,
+      builtin: "builtin" in c,
+      consent: c.consentState,
+      tools: [...c.tools],
+      endpoint: "url" in c ? this.endpoint(c.url) : "builtin",
+      policy: "policy" in c ? c.policy : undefined,
+      facts: "facts" in c ? c.facts : undefined,
+      mapping: "mapping" in c ? c.mapping : undefined,
+    }));
+  }
+  /** A catalog can carry 100 tools, so the view names a few and counts the
+   * rest rather than growing a line past the 80 column budget. */
+  private toolNames(tools: readonly string[], width = 60) {
+    if (!tools.length) return "none";
+    const shown = tools.slice(0, 6).join(", ");
+    return tools.length > 6
+      ? `${fit(shown, width - 8)} +${tools.length - 6}`
+      : fit(shown, width);
+  }
+  /** What this connector's policy would do to each tool it lists, read from
+   * the same classify-then-decide path a call takes. The blast radius is
+   * unknown until a measured probe produces one, and this says so rather
+   * than implying a count VOID does not have. */
+  private policyPreviewLines(c: ConnectorRow) {
+    const preview = this.workbench.policyPreview(c.id);
+    return [
+      `  decisions ${preview.counts.allow} allow, ${preview.counts.hold} held, ${preview.counts.deny} denied`,
+      ...preview.tools.map(
+        (tool) =>
+          `    ${fit(tool.tool, 20)} ${tool.decision.padEnd(5)} ${tool.klass} ${fit(tool.mapped, 28)}  radius ${tool.blastRadius}`,
+      ),
+    ];
+  }
+  private connectorList() {
+    return [
+      "CONNECTORS, only confirmed ones give a conversation tools",
+      "",
+      ...this.connectorRows().flatMap((c) => [
+        `${pad(c.name, 22)}  ${c.consent}  ${c.tools.length} tools`,
+        `  ${fit(c.endpoint, 60)}`,
+        `  id ${c.id}`,
+        c.builtin
+          ? "  in use: the VOID document workspace"
+          : `  next: ${MCP_NEXT[c.consent](c.id)}`,
+        "",
+      ]),
+      "/mcp inspect ID | /mcp add URL [name] | /mcp probe ID",
+      "/mcp confirm ID | /mcp rename ID name | /mcp remove ID",
+      "Only /mcp probe contacts a server, and only after confirmation.",
+    ];
+  }
+  private connectorInspect(c: ConnectorRow) {
+    const facts = Object.entries(c.facts ?? {})
+        .map(([k, v]) => `${k} -> ${v}`)
+        .join(", "),
+      mapping = Object.entries(c.mapping ?? {})
+        .map(([k, v]) => `${k} -> ${v}`)
+        .join(", ");
+    return [
+      `CONNECTOR ${fit(c.name, 40)}`,
+      `  id ${c.id}`,
+      `  endpoint ${fit(c.endpoint, 60)}`,
+      `  consent ${c.consent}`,
+      `  policy ${fit(policySummary(c.policy), 60)}`,
+      `  facts ${fit(facts || "none", 60)}`,
+      `  mapping ${fit(mapping || "none", 60)}`,
+      `  tools ${c.tools.length}: ${this.toolNames(c.tools, 48)}`,
+      "",
+      ...(c.builtin || !c.tools.length ? [] : this.policyPreviewLines(c)),
+      c.builtin
+        ? "The document workspace is built in and always in use."
+        : `next: ${MCP_NEXT[c.consent](c.id)}`,
+    ];
+  }
+  /** An unknown id or subcommand answers with the usage block, so a mistyped
+   * id never reads as a connector that quietly does nothing. */
+  private mcpUsage(headline: string) {
+    this.detail = [
+      fit(headline, 76),
+      "",
+      "CONNECTOR COMMANDS",
+      "/mcp lists connectors and the next step for each.",
+      "/mcp inspect ID",
+      "/mcp add URL [name] stages one and contacts nothing.",
+      "/mcp probe ID is the only request, and only on confirmation.",
+      "/mcp confirm ID | /mcp rename ID name | /mcp remove ID",
+      "",
+      "KNOWN CONNECTORS",
+      ...this.connectorRows().map((c) => `  ${c.id}  ${c.consent}`),
+    ];
+    this.scroll = 0;
+    this.notice = "Nothing matched that. The usage block is on screen.";
+  }
+  /** Both staging paths say the same thing, because neither one contacted
+   * anything and the next step is the same explicit probe. */
+  private stagedView(c: {
+    id: string;
+    name?: string;
+    url?: string;
+    consentState: string;
+  }) {
+    return [
+      `STAGED ${fit(c.name || c.id, 40)}`,
+      `  id ${c.id}`,
+      `  endpoint ${fit(this.endpoint(c.url), 60)}`,
+      `  consent ${c.consentState}`,
+      "",
+      "Nothing was contacted. Staging is a local write.",
+      `next: /mcp probe ${c.id}`,
+    ];
+  }
+  private async mcpCommand(arg: string) {
+    this.choose("policy");
+    const space = arg.indexOf(" "),
+      verb = (space < 0 ? arg : arg.slice(0, space)).toLowerCase(),
+      rest = space < 0 ? "" : arg.slice(space + 1).trim(),
+      // rename carries a second argument, so its id is only the first token.
+      id = (verb === "rename" ? rest.split(" ")[0] ?? "" : rest).trim();
+    if (!verb) {
+      this.detail = this.connectorList();
+      this.scroll = 0;
+      this.notice = "Only a confirmed connector gives a conversation tools.";
+      return;
+    }
+    if (!MCP_COMMANDS.includes(verb))
+      return this.mcpUsage(`Unknown connector command: ${verb}`);
+    if (verb === "inspect") {
+      const c = this.connectorRows().find((row) => row.id === id);
+      if (!c) return this.mcpUsage(`Unknown connector: ${id}`);
+      this.detail = this.connectorInspect(c);
+      this.scroll = 0;
+      this.notice = `${c.name} is ${c.consent}.`;
+      return;
+    }
+    if (verb === "add") {
+      const [url = "", ...name] = rest.split(/\s+/);
+      if (!/^https?:\/\/\S+$/i.test(url))
+        throw Error("/mcp add https://host/mcp [name]");
+      const staged = (
+        await this.workbench.addConnector({
+          url,
+          ...(name.length ? { name: name.join(" ") } : {}),
+        })
+      ).connectors.at(-1)!;
+      this.detail = [
+        ...this.stagedView(staged),
+        "",
+        ...this.connectorList(),
+      ];
+      this.scroll = 0;
+      this.notice = `Staged ${staged.name || staged.id}. No request was made.`;
+      return;
+    }
+    const c = this.connectorRows().find((row) => row.id === id);
+    if (!c) return this.mcpUsage(`Unknown connector: ${id}`);
+    if (c.builtin)
+      throw Error(
+        "The document workspace is built in. /mcp add stages an external one.",
+      );
+    if (verb === "probe") {
+      this.confirmation = {
+        title: `PROBE ${c.name}?`,
+        lines: [
+          `This is the only request VOID makes, and it goes to ${c.endpoint}.`,
+          "",
+          c.consent === "confirmed"
+            ? "A confirmed connector returns to probed and needs confirming again."
+            : "A staged connector is probed in place. Nothing else is written.",
+          "The catalog is kept only if you confirm it with /mcp confirm.",
+          "Declining sends no request.",
+        ],
+        apply: async () => {
+          try {
+            await this.workbench.probeConnector(c.id);
+            const probed = this.connectorRows().find((r) => r.id === c.id)!;
+            this.detail = this.connectorInspect(probed);
+            this.notice =
+              `${probed.name} listed ${probed.tools.length} tools. ` +
+              "Confirm it before a conversation may use them.";
+          } catch (error) {
+            const why = this.redactSecrets(message(error));
+            this.detail = [
+              `PROBE ${fit(c.name, 40)} REFUSED`,
+              "",
+              why,
+              "",
+              `${c.name} stays ${c.consent}. No catalog was kept.`,
+            ];
+            this.notice = `Probe refused: ${why}`;
+          }
+          this.scroll = 0;
+        },
+      };
+      this.scroll = 0;
+      return;
+    }
+    if (verb === "confirm") {
+      if (c.consent !== "probed")
+        throw Error(
+          `${c.name} is ${c.consent}. Only a probed catalog can be confirmed.`,
+        );
+      this.confirmation = {
+        title: `CONFIRM ${c.name}?`,
+        lines: [
+          `New conversations may call ${c.tools.length} tools from ${c.endpoint}.`,
+          "",
+          ...c.tools.slice(0, 8).map((t) => `  ${fit(t, 60)}`),
+          ...(c.tools.length > 8 ? [`  and ${c.tools.length - 8} more`] : []),
+          "",
+          "A conversation that already started keeps the tools it snapshotted.",
+        ],
+        apply: async () => {
+          await this.workbench.confirmConnector(c.id);
+          this.detail = this.connectorList();
+          this.scroll = 0;
+          this.notice = `${c.name} is confirmed for new conversations.`;
+        },
+      };
+      this.scroll = 0;
+      return;
+    }
+    if (verb === "rename") {
+      const name = rest.slice(id.length).trim();
+      if (!id || !name) throw Error("/mcp rename connector-ID new-name");
+      const renamed = await this.workbench.updateConnector(c.id, { name });
+      this.detail = this.connectorList();
+      this.scroll = 0;
+      this.notice =
+        `Renamed to ${renamed.name || name}. It is staged again, ` +
+        "so it must be probed before use.";
+      return;
+    }
+    this.confirmation = {
+      title: `REMOVE ${c.name}?`,
+      lines: [
+        `${c.name} and its probed catalog are deleted from this workspace.`,
+        "",
+        "New conversations will not see it.",
+        "A conversation that already started keeps the tools it snapshotted.",
+      ],
+      apply: async () => {
+        this.workbench.removeConnector(c.id);
+        this.detail = this.connectorList();
+        this.scroll = 0;
+        this.notice = `${c.name} removed. New conversations will not see it.`;
+      },
+    };
+    this.scroll = 0;
+  }
   async command(raw: string): Promise<"edit" | "quit" | void> {
     const value = raw.trim();
     if (!value) return;
@@ -1581,10 +1893,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
-    if (cmd === "permissions" || cmd === "mcp") {
+    if (cmd === "permissions") {
       this.choose("policy");
       this.notice =
         "Connector policy stays authoritative. Use /tools for the catalog.";
+      return;
+    }
+    if (cmd === "mcp") {
+      await this.mcpCommand(arg);
       return;
     }
     if (cmd === "clear") {
@@ -2175,10 +2491,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "connector-file") {
       const config = JSON.parse(await readFile(resolve(arg), "utf8"));
-      await this.workbench.addConnector(config);
+      const staged = (
+        await this.workbench.addConnector(config)
+      ).connectors.at(-1)!;
       this.choose("tools");
+      // Staging contacts nothing, so saying "connected" here would be a claim
+      // no request backs.
       this.notice =
-        "MCP connected. A new conversation will load the current catalog.";
+        "MCP connector staged. Nothing was contacted; /mcp lists it.";
+      this.detail = this.stagedView(staged);
       return;
     }
     if (cmd === "test-connector") {
@@ -2431,7 +2752,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       : [
           "No entries yet.",
           this.tab === "tools"
-            ? "/connector-file file.json connects a real MCP server."
+            ? "/mcp add https://host/mcp stages a server. /mcp probe ID contacts it."
             : "",
         ];
   }
@@ -2631,7 +2952,7 @@ export const TUI_COMMANDS = [
   ["/connect opencode:zen", "Connect OpenCode Zen from local auth"],
   ["/policy", "Tool policies"],
   ["/permissions", "Tool policies and approvals"],
-  ["/mcp", "MCP connectors and policy"],
+  ["/mcp", "MCP connectors: add, probe, confirm, rename, remove"],
   ["/usage", "Model usage"],
   ["/stop", "Stop run"],
   ["/help", "All commands"],
@@ -3216,7 +3537,9 @@ const HELP = [
   "/status | /cost | /context | /compact | /rewind [operation-IDs]",
   "/rewind run exact-run-ID | /recovery [job-ID] (read-only status)",
   "/queue [resume] | /cancel (queued text)",
-  "/todos | /agents | /agent ID | /memory | /permissions | /mcp | /sessions",
+  "/todos | /agents | /agent ID | /memory | /permissions | /sessions",
+  "/mcp inspect ID | /mcp add URL [name] | /mcp probe ID",
+  "/mcp confirm ID | /mcp rename ID name | /mcp remove ID",
   "/projects | /project ID|none | /project-file path.json",
   "/agent-file path.json | /hooks | /hook-file path.json (if supported)",
   "/stop | /branch [seq] | /retry | /rename title | /archive",
@@ -3233,7 +3556,7 @@ const HELP = [
   "/config shows paths and flags without secrets; /sources lists providers.",
   "/hooks /vim /terminal-setup /output-style have no VOID equivalent.",
   "Ctrl+B background tasks, image paste, suspend and Vim editing have no VOID equivalent.",
-  "/connector-file path.json | /test-connector ID",
+  "/connector-file path.json stages a server | /test-connector ID",
   "Multiline: Up/Down move cursor | Ctrl+W delete to whitespace | Ctrl+K delete to line end | Ctrl+U clear",
   "/policy | /policy-file connector-ID path.yaml | /usage | /overview",
   "",

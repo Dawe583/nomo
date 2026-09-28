@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import { createServer } from "node:http";
 import { Workbench } from "./index.ts";
 import {
   page,
@@ -177,11 +178,9 @@ test("provider 429 persists Retry-After and never retries the generation", async
   assert.doesNotMatch(failure?.text ?? "", /private provider failure/);
 });
 
-test("connector updates validate before commit, retain secret, expose schema, and test without execution", async (t) => {
-  const { createServer } = await import("node:http");
+test("a connector keeps its secret, exposes its schema, and only an explicit probe contacts the server", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "void-connector-"));
   const methods: string[] = [];
-  let fail = false;
   const server = createServer(async (req, res) => {
     let text = "";
     for await (const chunk of req) text += chunk;
@@ -189,11 +188,6 @@ test("connector updates validate before commit, retain secret, expose schema, an
     methods.push(body.method);
     assert.equal(req.headers.authorization, "Bearer connector-private");
     res.setHeader("content-type", "application/json");
-    if (fail) {
-      res.statusCode = 503;
-      res.end("{}");
-      return;
-    }
     res.end(
       JSON.stringify({
         jsonrpc: "2.0",
@@ -234,37 +228,54 @@ test("connector updates validate before commit, retain secret, expose schema, an
     facts: { safe: true },
     mapping: { search: "search.read" },
   });
-  const connector = wb
-    .connectionState()
-    .connectors.find((c) => c.id !== "workspace")!;
-  const changed = await wb.updateConnector(connector.id, {
+  const id = wb.connectionState().connectors.find((c) => c.id !== "workspace")!.id;
+  let listed = wb.connectionState().connectors.find((c) => c.id === id)!;
+  assert.equal(listed.consentState, "staged");
+  assert.deepEqual(listed.tools, []);
+  assert.deepEqual(methods, [], "adding a connector contacts nothing");
+
+  await wb.probeConnector(id);
+  listed = wb.connectionState().connectors.find((c) => c.id === id)!;
+  assert.equal(listed.consentState, "probed");
+  assert.equal(listed.toolDetails[0]?.name, "search");
+  assert.deepEqual(listed.toolDetails[0]?.inputSchema, {
+    type: "object",
+    properties: { q: { type: "string" } },
+  });
+  assert.ok(
+    methods.every((method) =>
+      ["initialize", "notifications/initialized", "tools/list"].includes(method),
+    ),
+  );
+
+  await wb.confirmConnector(id);
+  listed = wb.connectionState().connectors.find((c) => c.id === id)!;
+  assert.equal(listed.consentState, "confirmed");
+
+  const changed = await wb.updateConnector(id, {
     name: "Changed",
     token: "",
     facts: { safe: false },
   });
   assert.equal(changed.name, "Changed");
-  assert.equal(changed.toolDetails[0]?.name, "search");
+  const restaged = wb.connectionState().connectors.find((c) => c.id === id)!;
+  assert.equal(restaged.consentState, "staged");
+  assert.deepEqual(
+    restaged.tools,
+    [],
+    "an edit drops the catalog until it is probed again",
+  );
   assert.doesNotMatch(JSON.stringify(changed), /connector-private/);
-  assert.equal((await wb.testConnector(connector.id)).ok, true);
-  assert.ok(
-    methods.every((method) =>
-      ["initialize", "notifications/initialized", "tools/list"].includes(
-        method,
-      ),
-    ),
-  );
-  await assert.rejects(
-    wb.updateConnector(connector.id, { mapping: { search: true } }),
-    /mapping/,
-  );
-  fail = true;
-  await assert.rejects(
-    wb.updateConnector(connector.id, { name: "Should not persist" }),
-    /HTTP 503/,
-  );
+
+  assert.equal((await wb.testConnector(id)).ok, true);
   assert.equal(
-    wb.connectionState().connectors.find((c) => c.id === connector.id)?.name,
-    "Changed",
+    wb.connectionState().connectors.find((c) => c.id === id)!.consentState,
+    "staged",
+    "testing a connector does not confirm it",
+  );
+  await assert.rejects(
+    wb.updateConnector(id, { mapping: { search: true } }),
+    /mapping/,
   );
 });
 

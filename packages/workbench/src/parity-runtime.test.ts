@@ -60,6 +60,9 @@ for (const cancelAfterDispatch of [false, true]) test(`uncertain connector outco
   });
   t.after(async()=>{await wb.shutdown();server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(directory,{recursive:true,force:true});});
   await wb.addConnector({url:`http://127.0.0.1:${address.port}`,mapping:{write:"aws.s3.object.put"},facts:{"bucket.versioning":"Enabled"}});
+  const conn=wb.connectionState().connectors.find(c=>!("builtin" in c)&&c.url?.includes(String(address.port)))!;
+  await wb.probeConnector(conn.id);
+  await wb.confirmConnector(conn.id);
   await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
   const session=await wb.start("Write", "fixture");await wb.settled();
   assert.equal(writes,1); assert.equal(completions,1);
@@ -104,6 +107,9 @@ test("receipt persistence failure after external dispatch stops all later genera
  });
  t.after(async()=>{assert.throws(()=>wb.close(),/another runtime/);server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(directory,{recursive:true,force:true});});
  await wb.addConnector({url:`http://127.0.0.1:${address.port}`,mapping:{write:"aws.s3.object.put"},facts:{"bucket.versioning":"Enabled"}});
+  const conn=wb.connectionState().connectors.find(c=>!("builtin" in c)&&c.url?.includes(String(address.port)))!;
+  await wb.probeConnector(conn.id);
+  await wb.confirmConnector(conn.id);
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await wb.start("Write","fixture");await wb.settled();
  assert.equal(writes,1);assert.equal(completions,1);assert.equal(wb.get(session.id)?.status,"unknown");
