@@ -1158,6 +1158,11 @@ test("provider logout refuses while a session is connecting its MCP tools", asyn
   });
   await workbench.configure({ baseUrl: "https://provider.test/v1", apiKey: "fixture-key" });
   await workbench.addConnector({ url: "https://mcp.test/mcp", name: "Slow catalog" });
+  // A staged connector is never contacted, so this session only reaches the
+  // server because the operator probed and confirmed it first.
+  const connector = workbench.connectionState().connectors.at(-1)!.id;
+  await workbench.probeConnector(connector);
+  await workbench.confirmConnector(connector);
 
   holdToolsList = true;
   const starting = workbench.start("Wait for tools", "test");

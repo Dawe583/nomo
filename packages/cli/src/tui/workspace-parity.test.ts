@@ -1007,6 +1007,128 @@ test("live thinking dots animate with motion and freeze without it", async (t) =
   assert.match(stripAnsi(still(0)), /Finishing operation \/ Esc stop/);
 });
 
+
+test("NVIDIA API key is read ONLY from env var, never from chat input", async (t) => {
+  // 1. No env key -> providerState stays null, no auto-configuration.
+  const root = await mkdtemp(join(tmpdir(), "void-nvidia-chat-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  await ui.initialize();
+  const state = await app.providerState();
+  assert.equal(state.providerId, null);
+  assert.equal(state.connected, false);
+  // 2. A prompt whose text contains "NVIDIA_API_KEY=secret" is just text:
+  // it never becomes a credential. Configure a fixture provider first so the
+  // prompt can actually be sent, and watch that no request ever carries the
+  // literal secret as an authorization header.
+  let seenAuth = "";
+  let seenBody = "";
+  const fetcher: typeof fetch = async (url, options) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "m" }] });
+    const headers = (options?.headers ?? {}) as Record<string, string>;
+    seenAuth = headers.authorization ?? "";
+    seenBody = String(options?.body ?? "");
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const app2 = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  await app2.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-key" });
+  const ui2 = new WorkspaceTui(app2, { VOID_DATA_DIR: root });
+  await ui2.initialize();
+  await ui2.command("please set NVIDIA_API_KEY=secret in the chat");
+  await app2.settled();
+  // The literal secret never becomes a credential: no auth header carries it.
+  assert.ok(!seenAuth.includes("secret"));
+  assert.ok(seenAuth.startsWith("Bearer fixture-key"));
+  // 3. Explicit env var IS the only path that configures NVIDIA.
+  const root3 = await mkdtemp(join(tmpdir(), "void-nvidia-env-"));
+  const app3 = new Workbench({ VOID_DATA_DIR: root3, NVIDIA_API_KEY: "nvkey" }, async (url) =>
+    String(url).endsWith("/models") ? Response.json({ data: [{ id: "m" }] }) : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] }));
+  t.after(async () => {
+    await app3.shutdown();
+    await rm(root3, { recursive: true, force: true });
+  });
+  const s3 = await app3.providerState();
+  assert.equal(s3.providerId, "nvidia");
+});
+
+test("no silent provider fallback - workspace with no provider says so explicitly", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-no-provider-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  await ui.initialize();
+  const lines = ui.providerLines().join("\n");
+  assert.match(lines, /Provider: unknown|Provider: unknown/);
+  assert.match(lines, /setup-required/);
+  // starting a session must not fall back silently
+  await assert.rejects(ui.command("hello"), /Select a model/);
+});
+
+test("logout preserves readable history, removes profiles and session keys", async (t) => {
+  // Build a fresh workspace with a configured provider, send a message, then
+  // run /logout and verify: history survives, provider is gone, profiles are
+  // cleared, and the env-driven auto-configuration is disabled.
+  const root = await mkdtemp(join(tmpdir(), "void-logout-"));
+  const fetcher: typeof fetch = async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "m" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "hello back" } }] });
+  const app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-secret" });
+  const configured = await app.providerState();
+  assert.equal(configured.providerId, "custom");
+  assert.equal(configured.connected, true);
+  assert.equal(configured.profiles.length, 1);
+  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  await ui.initialize();
+  await ui.command("first message");
+  await app.settled();
+  const sessId = ui.sessionId!;
+  const historyBefore = (app.get(sessId)?.events ?? []).length;
+  assert.ok(historyBefore > 0);
+  await ui.command("/logout");
+  const afterState = await app.providerState();
+  assert.equal(afterState.providerId, null);
+  assert.equal(afterState.connected, false);
+  assert.equal(afterState.profiles.length, 0);
+  // History is preserved.
+  const historyAfter = (app.get(sessId)?.events ?? []).length;
+  assert.equal(historyAfter, historyBefore);
+  // After logout the env-driven auto-configuration is disabled, so a second
+  // providerState call does not reconfigure from the host environment.
+  const secondState = await app.providerState();
+  assert.equal(secondState.providerId, null);
+  assert.equal(secondState.connected, false);
+});
+
+test("provider presets stay a choice, not a default", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-preset-choice-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const state = await app.providerState();
+  assert.equal(state.providerId, null);
+  assert.equal(state.defaultModel, null);
+  // presets are present but not active
+  assert.ok(state.presets.length >= 1);
+  // Starting a conversation cannot assume nvidia or any preset
+  await assert.rejects(app.start("hello"), /Select a model/);
+});
+
 test("new commands complete from a slash prefix", () => {
   for (const cmd of [
     "/compact",

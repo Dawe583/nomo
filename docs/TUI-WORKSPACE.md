@@ -65,9 +65,10 @@ zachovají vlastní profil.
 TUI má velké ASCII logo, barevné role zpráv, zvýrazněná rozhodnutí a nabídku
 příkazů. `/` nabídku otevře, šipky vybírají, Tab doplní a Enter spustí příkaz.
 Nabídka přijímá i fuzzy zkratku, například `/rs` pro `/resume`. `/clear`,
-`/status`, `/cost`, `/context`, `/permissions`, `/mcp`, `/resume` a `/rewind`
+`/status`, `/cost`, `/context`, `/permissions`, `/resume` a `/rewind`
 používají existující chat, přehled, usage, dokumenty, policy, historii
 konverzací a kontrolovaný Undo tok. Nevytvářejí druhou management vrstvu.
+`/mcp` je naopak správa MCP konektorů a má vlastní podpříkazy; popis je níže.
 Ctrl+R připraví hledání historie, Ctrl+O přepne úplný výpis nástrojů, Ctrl+L
 překreslí terminál a Ctrl+D ukončí pouze prázdný vstup. Potvrzení editace
 a Undo ukazuje unified diff se změněnými úseky místo plného textu před a po.
@@ -139,8 +140,45 @@ přerušení runtime má stav `interrupted` a nelze jej dodatečně uvolnit.
 Potvrzení rozhodnutí se nerovná potvrzení dokončeného externího efektu.
 Výsledek se kontroluje v ledgeru.
 
-`/connector-file /absolutní/cesta/connector.json` připojí skutečný MCP server.
-Soubor má formát již existujícího Workbench konektoru:
+## MCP konektory a souhlas
+
+`/mcp` vypíše všechny konektory: název, stav souhlasu, počet nástrojů, hosta
+bez cesty dotazu a jeden řádek `next` s dalším krokem. Zástupce dokumentů je
+zapsaný jako `builtin` a je vždy v použití.
+
+```text
+/mcp                                  seznam a další krok pro každý konektor
+/mcp inspect ID                       endpoint, policy, facts, mapping, nástroje
+/mcp add https://host/mcp [název]     zapíše konektor, nic neodesílá
+/mcp probe ID                         jediný odchozí požadavek, až po potvrzení
+/mcp confirm ID                       potvrzení prozkoumaného katalogu
+/mcp rename ID nový-název             přejmenuje a vrátí konektor do staged
+/mcp remove ID                        smaže konektor po kontrole
+```
+
+Konektor vzniká ve stavu `staged`: má název, URL a policy, ale žádné nástroje.
+Přidání, úprava, načtení i smazání neposílají žádný požadavek. `probe` je jediný
+odchozí požadavek a spustí se jen po potvrzení, které jmenuje konkrétního hosta.
+Neúspěšný probe nezapíše nic a konektor zůstane `staged` s prázdným katalogem.
+`confirm` přijímá jen prozkoumaný katalog, a jen potvrzený konektor dává nástroje
+nové konverzaci. Úprava nebo přejmenování vrátí konektor do `staged` a katalog
+zahodí. Konverzace, která už běží, si drží snapshot nástrojů a policy, se kterými
+začala.
+
+`/mcp inspect` u prozkoumaného konektoru navíc ukáže, co by jeho policy s každým
+nástrojem udělala: klasifikaci z registru, mapované jméno, rozhodnutí, pravidlo,
+které ho vydalo, a blast radius. Ten zůstává `unknown`, dokud ho neměří
+skutečný probe. Nástroj, kterému registr žádnou klasifikaci nedá, se zobrazí jako
+zamítnutý, protože tak s ním konverzace také zachází, a nástroj, který si
+provider vymyslí, je odmítnut dřív, než se cokoli kontaktuje.
+
+Stav uložený před touto bránou nemá souhlas vůbec uložený. Načte se jako
+`staged` s prázdným katalogem, takže existující konektor zůstane neaktivní, dokud
+jej operátor znovu neprozkoume a nepotvrdí. To je záměr: nepotvrzený server je
+server, jehož nástroje nikdo nečetl.
+
+`/connector-file /absolutní/cesta/connector.json` zapíše konektor stejným způsobem
+jako `/mcp add`. Soubor má formát již existujícího Workbench konektoru:
 
 ```json
 {
@@ -153,10 +191,12 @@ Soubor má formát již existujícího Workbench konektoru:
 
 Endpoint musí reálně existovat. Klasifikační mapping a facts mají odpovídat
 ověřeným vlastnostem nástroje; prázdný mapping neznámému nástroji nedá oprávnění.
-Případný `token` patří do chráněného lokálního souboru, ne do repozitáře.
-`/test-connector ID` ověří katalog. `/policy-file ID /cesta/policy.yaml` nejprve
-validuje pravidla a ukáže potvrzení. Nová pravidla platí pro nové konverzace;
-stávající si zachovávají snapshot konektorů a policy.
+Případný `token` patří do chráněného lokálního souboru, ne do repozitáře, a
+nikdy se nevypisuje do obrazovky ani do detailu.
+`/test-connector ID` ověří katalog bez změny stavu.
+`/policy-file ID /cesta/policy.yaml` nejprve validuje pravidla a ukáže
+potvrzení. Nová pravidla platí pro nové konverzace; stávající si zachovávají
+snapshot konektorů a policy.
 
 Externí write nemá automatické dokumentové Undo. TUI takovou záruku neuděluje
 samotným připojením MCP. Podrobný stav všech adaptérů je v `RECOVERY-COVERAGE.md`.

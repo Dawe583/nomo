@@ -4,6 +4,33 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- An MCP server is now something you agree to rather than something that
+  happens to you. Adding one used to contact it immediately: `addConnector`
+  fetched the tool catalogue as a side effect of a local write, so a server
+  added by a restored workspace, a config file or a mistake was already
+  trusted before anybody read a line of it, and an edit re-probed the server
+  whether or not you wanted it to. A connector now starts `staged`, with a
+  name, a URL and a policy and no tools, and adding, editing, loading and
+  removing it send nothing at all. `probe` is the single outbound request, it
+  is reached only from an explicit command, and it opens a confirmation that
+  names the exact host; a failed probe writes nothing and the connector stays
+  staged with an empty catalogue. `confirm` accepts only a probed catalogue,
+  and only a confirmed connector gives a new conversation tools, so the tools
+  a model can call are always ones you have seen. An edit or a rename returns
+  the connector to staged and drops the catalogue. A running conversation
+  keeps the tools and the policy it started with. A workspace written before
+  this gate carries no consent state at all and loads as staged, which leaves
+  an existing connector inert until it is probed and confirmed again; that is
+  deliberate, because a server nobody confirmed is one nobody has read. The
+  TUI grows a real `/mcp` view with list, inspect, add, probe, confirm, rename
+  and remove, and `/connector-file` stopped claiming a server was connected
+  when all it did was write a record. `/mcp inspect` also answers what the
+  policy would do to every tool the connector lists: the registry
+  classification, the mapped id, the decision and the rule behind it, and the
+  blast radius, which is reported as unknown rather than guessed, because only
+  a measured probe produces one. A tool the registry cannot classify is shown
+  as denied, which is what a conversation does with it, and a tool the provider
+  invents is refused before the connector is contacted at all.
 - A sign in now lasts as long as it says it does. The account cookie sealed a
   thirty day expiry and the middleware asked the provider who the access token
   in it belonged to on every request, but nothing ever renewed that token, so

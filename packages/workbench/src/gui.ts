@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { WorkspaceState } from "./workspace.ts";
+import type { McpTool } from "./mcp.ts";
 
 export function page<T>(
   source: readonly T[],
@@ -493,7 +494,8 @@ export function publicConnector(config: {
   policy?: string;
   facts?: Record<string, boolean | string>;
   mapping?: Record<string, string>;
-  tools: readonly { name: string }[];
+  tools: readonly McpTool[];
+  consentState: "staged" | "probed" | "confirmed";
 }) {
   const result = {
     id: config.id,
@@ -505,6 +507,7 @@ export function publicConnector(config: {
     tools: config.tools.map((t) => t.name),
     toolDetails: config.tools,
     undo: false,
+    consentState: config.consentState,
   };
   return config.token
     ? (JSON.parse(
