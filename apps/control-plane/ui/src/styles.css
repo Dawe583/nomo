@@ -9,53 +9,117 @@
 @import "@fontsource/jetbrains-mono/latin-400.css";
 @import "@fontsource/jetbrains-mono/latin-ext-400.css";
 
+/* design-tokens:start */
+/*
+ * Generated from scripts/design/tokens.json by
+ * scripts/src/build-design-tokens.mjs. Do not edit this block by hand:
+ * the design system test fails when it drifts from the source, and a hand
+ * edit is a second place the same value can live.
+ *
+ * `color-scheme` lets the browser's own controls and scrollbars follow the
+ * platform. The values below are this project's own, because the web
+ * cannot read the operating system's semantic colours: it approximates that
+ * family and the design system test measures the contrast rather than
+ * trusting a hex. The native surfaces resolve the same roles through the
+ * platform's own types.
+ */
 :root {
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  font-size: 14px;
+  color-scheme: light dark;
+  /* The platform's own interface font. A web font is for code and
+     identifiers, where a monospaced face carries meaning rather than brand. */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
   line-height: 1.5;
-  color: #252420;
-  background: #f8f7f4;
-  --canvas: #f8f7f4;
-  --surface: #f0efeb;
-  --raised: #e6e4de;
-  --ink: #252420;
-  --muted: #68665f;
-  --line: #d9d7d0;
-  --action: #a93805;
-  --action-text: #fff9ef;
-  --focus: #1f5f99;
-  --danger: #a22422;
-  --good: #396346;
-  /* Elevated surfaces. A shadow is a design value, so it is a token and not an
-     inline alpha in a component. Alphas are the originals over 255. */
-  --shadow-composer: 0 8px 28px rgb(0 0 0 / 0.031);
-  --shadow-dialog: 0 24px 100px rgb(0 0 0 / 0.22);
-  --shadow-float: 0 4px 18px rgb(0 0 0 / 0.031);
-  --shadow-modal: 0 4px 20px rgb(0 0 0 / 0.024);
-  --shadow-palette: 0 14px 48px rgb(0 0 0 / 0.012);
-  --shadow-focus: 0 10px 32px rgb(0 0 0 / 0.039);
-}
-:root[data-theme="dark"] {
-  --canvas: #191918;
-  --surface: #212120;
-  --raised: #2c2c2a;
-  --ink: #eeede9;
-  --muted: #b1afa7;
-  --line: #44443f;
-  --focus: #8fc7ef;
-  --action: #e8702c;
-  --action-text: #191918;
-  --danger: #ff8f85;
-  --good: #9fc899;
   color: var(--ink);
   background: var(--canvas);
-  color-scheme: dark;
+  --canvas: #ffffff;
+  --surface: #f2f2f7;
+  --raised: #ffffff;
+  --ink: #000000;
+  --muted: #58585e;
+  --line: #c6c6cb;
+  --action: #0059b3;
+  --danger: #a8231c;
+  --good: #1c6b3f;
+  --focus: #0059b3;
+  --on-action: #ffffff;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-sheet: 20px;
+  --radius-window: 12px;
+
+  --control-touch: 44px;
+  --control-pointer: 28px;
+  --control-macosMin: 20px;
+
+  --shadow-composer: 0 8px 28px rgb(0 0 0 / 0.031);
+  --shadow-float: 0 4px 18px rgb(0 0 0 / 0.031);
+  --shadow-modal: 0 4px 20px rgb(0 0 0 / 0.024);
+  --shadow-dialog: 0 24px 100px rgb(0 0 0 / 0.22);
+  --shadow-palette: 0 14px 48px rgb(0 0 0 / 0.012);
+  --shadow-focus: 0 10px 32px rgb(0 0 0 / 0.039);
+  --motion-interaction: 0.15s;
+  --space-horizontal: 40px;
+  --space-group: 100px;
+  --measure-body: 560px;
 }
+
+/* The platform preference, which is the appearance the product follows. The
+   attribute block below carries the same values for the in-app switch the
+   web phase removes, so a person who forces a mode gets the system palette
+   rather than a second one. */
+@media (prefers-color-scheme: dark) {
+  :root {
+  --canvas: #000000;
+  --surface: #1c1c1e;
+  --raised: #2c2c2e;
+  --ink: #ffffff;
+  --muted: #a3a3ab;
+  --line: #38383a;
+  --action: #64b5ff;
+  --danger: #ff9a92;
+  --good: #7fd69b;
+  --focus: #64b5ff;
+  --on-action: #000000;
+  }
+}
+
+:root[data-theme="dark"] {
+  --canvas: #000000;
+  --surface: #1c1c1e;
+  --raised: #2c2c2e;
+  --ink: #ffffff;
+  --muted: #a3a3ab;
+  --line: #38383a;
+  --action: #64b5ff;
+  --danger: #ff9a92;
+  --good: #7fd69b;
+  --focus: #64b5ff;
+  --on-action: #000000;
+}
+
+/* The semantic role each token stands in for, so a reader of the stylesheet
+   can map a value back to the platform concept it approximates. */
+  /* --canvas: systemBackground */
+  /* --surface: secondarySystemBackground */
+  /* --raised: tertiarySystemBackground */
+  /* --ink: label */
+  /* --muted: secondaryLabel */
+  /* --line: separator */
+  /* --action: systemBlue, darkened until it clears AA as text */
+  /* --danger: systemRed, adjusted for contrast */
+  /* --good: systemGreen, adjusted for contrast */
+  /* --focus: the focus ring is the action colour, so focus is never a second palette */
+  /* --on-action: the foreground of a filled action, which flips with the action colour */
+/* design-tokens:end */
 * {
   box-sizing: border-box;
 }
@@ -106,7 +170,7 @@ button:disabled {
 .primary {
   background: var(--action);
   border-color: var(--action);
-  color: var(--action-text);
+  color: var(--on-action);
   font-weight: 600;
 }
 .primary:hover {
@@ -308,7 +372,7 @@ kbd {
 .count {
   margin-left: auto;
   background: var(--action);
-  color: var(--action-text);
+  color: var(--on-action);
   font-size: 11px;
   min-width: 20px;
   text-align: center;
@@ -2021,7 +2085,7 @@ dialog::backdrop {
 }
 .badge.badge-queue {
   --queue-bg: var(--action);
-  --queue-fg: var(--action-text);
+  --queue-fg: var(--on-action);
   background: var(--queue-bg);
   color: var(--queue-fg);
   border-color: var(--queue-bg);
@@ -2029,7 +2093,7 @@ dialog::backdrop {
 /* Queue full state */
 .badge.badge-queue[data-state="full"] {
   background: var(--danger);
-  color: var(--action-text);
+  color: var(--on-action);
   border-color: var(--danger);
 }
 
