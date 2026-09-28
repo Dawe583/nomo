@@ -643,6 +643,7 @@ export class WorkspaceTui {
     for (const key of [
       "TOKENHARBOR_API_KEY",
       "TOKENROUTER_API_KEY",
+      "NVIDIA_API_KEY",
       "OPENROUTER_API_KEY",
       "VOID_SIGNING_KEY",
       "VOID_VERIFY_KEY",
@@ -689,7 +690,7 @@ export class WorkspaceTui {
       throw Error(
         partial
           ? "Local command failed. Partial output stays out of the ledger."
-          : `Local command failed. ${message(error)}`,
+          : `Local command failed. ${this.redactSecrets(message(error))}`,
       );
     }
     const shown = this.redactSecrets(out).slice(0, 4000) || "(no output)";
@@ -1958,7 +1959,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.workbench.clearProvider();
       this.provider = await this.workbench.providerState();
       this.model = "";
-      this.notice = "Provider disconnected. Saved profiles were removed.";
+      this.notice = "Logged out locally. Saved provider profiles were removed; revoke keys with their providers.";
       return;
     }
     if (cmd === "bottom") {
@@ -2068,7 +2069,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "connect" || cmd === "login") {
       if (!arg || arg === "nvidia") {
-        this.provider = await this.workbench.providerState();
+        this.provider = await this.workbench.providerState({ reconnectEnvironment: true });
         this.detail = this.providerLines();
         this.notice =
           !this.provider.providerId || this.provider.providerId === "nvidia"

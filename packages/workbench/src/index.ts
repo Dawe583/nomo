@@ -10,7 +10,6 @@ import {
 } from "../../runtime/src/index.ts";
 import {
   NVIDIA_URL,
-  TOKENROUTER_URL,
   PROVIDER_PRESETS,
 } from "./provider-defaults.ts";
 import {
@@ -190,6 +189,9 @@ export function denialText(
 class UnknownToolOutcome extends Error {
   constructor() { super("Tool outcome is unknown. Stop and reconcile its evidence before continuing."); }
 }
+class ProviderSetupSuperseded extends Error {
+  constructor() { super("Provider setup was superseded by a newer configuration."); }
+}
 type Connector = McpConfig & { id: string; name: string; tools: McpTool[] };
 type Session = {
   view: SessionView;
@@ -201,9 +203,9 @@ type Session = {
   client?: VoidClient;
   tools?: McpTool[];
   connections?: Record<string, McpConfig & { sessionId?: string }>;
-  config?: ProviderConfig;
+  config?: Pick<ProviderConfig, "baseUrl" | "kind">;
   controller: AbortController;
-  provider: CompatibleProvider;
+  provider?: CompatibleProvider;
 };
 
 /** Model tools always cross the existing VOID SDK. A provider has no shell or
@@ -227,6 +229,9 @@ export class Workbench {
   private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;
   private config: ProviderConfig | undefined;
+  private providerGeneration = 0;
+  private providerSetupCount = 0;
+  private sessionSetupCount = 0;
   private profiles: Record<string, ProviderConfig> = {};
   private connectors: Connector[] = [];
   private documents: Record<string, WorkspaceState> = {};
@@ -295,6 +300,7 @@ export class Workbench {
       requests?: Record<string, { digest: string; sessionId: string }>;
       approvalHistory?: unknown[];
       config?: ProviderConfig;
+      ignoreEnvironment?: boolean;
       profiles?: Record<string, ProviderConfig>;
       catalog: readonly Model[];
       connectors: Connector[];
@@ -309,7 +315,7 @@ export class Workbench {
         agentProfile?: AgentProfile;
         recoveryBlock?: Session["recoveryBlock"];
         queuedPrompt?: string;
-        config?: ProviderConfig;
+        config?: { baseUrl: string; kind?: string };
         tools?: McpTool[];
         connections?: Session["connections"];
       }>;
@@ -372,7 +378,9 @@ export class Workbench {
         !!saved.config ||
         !!saved.sessions.length ||
         !!saved.connectors.length ||
-        !!Object.keys(saved.profiles ?? {}).length;
+        !!Object.keys(saved.profiles ?? {}).length ||
+        saved.ignoreEnvironment === true;
+      this.ignoreEnvironment = saved.ignoreEnvironment === true;
       this.config = loadConfig(saved.config);
       this.profiles = {};
       for (const [baseUrl, value] of Object.entries(saved.profiles ?? {})) {
@@ -389,30 +397,28 @@ export class Workbench {
       if (this.config)
         this.provider = new CompatibleProvider(this.config, fetcher);
       for (const item of saved.sessions) {
-        const sessionConfig = item.config ? loadConfig(item.config) : undefined,
-          config = sessionConfig ?? this.config;
-        if (!config) {
-          const fallback = { baseUrl: TOKENROUTER_URL, apiKey: "" };
-          this.sessions.set(item.view.id, {
-            ...item,
-            config: sessionConfig,
-            view: {
-              ...item.view,
-              status: item.view.status === "running" ? "unknown" : item.view.status === "queued" ? "paused" : item.view.status,
-            },
-            provider: new CompatibleProvider(fallback, fetcher),
-            controller: new AbortController(),
-          });
-          continue;
-        }
+        const sessionBaseUrl = typeof item.config?.baseUrl === "string"
+          ? item.config.baseUrl
+          : typeof item.view.provider === "string" ? item.view.provider : undefined;
+        if (item.config && Object.hasOwn(item.config, "apiKey")) migrated = true;
+        const sessionKind = item.config?.kind === "anthropic"
+          ? "anthropic"
+          : item.config?.kind === "compatible" || item.config?.kind === "openai"
+            ? "compatible"
+            : undefined;
+        if (item.config && item.config.kind !== sessionKind) migrated = true;
+        const savedProvider = sessionBaseUrl
+          ? this.profiles[sessionBaseUrl] ?? (this.config?.baseUrl === sessionBaseUrl ? this.config : undefined)
+          : undefined;
+        const provider = sessionKind && savedProvider?.kind === sessionKind ? savedProvider : undefined;
         this.sessions.set(item.view.id, {
           ...item,
-          config: sessionConfig,
+          config: sessionBaseUrl ? { baseUrl: sessionBaseUrl, kind: sessionKind } : undefined,
           view: {
             ...item.view,
             status: item.view.status === "running" ? "unknown" : item.view.status === "queued" ? "paused" : item.view.status,
           },
-          provider: new CompatibleProvider(config, fetcher),
+          provider: provider ? new CompatibleProvider(provider, fetcher) : undefined,
           controller: new AbortController(),
         });
       }
@@ -424,7 +430,8 @@ export class Workbench {
       !this.hasState &&
       !this.config &&
       !this.sessions.size &&
-      !this.connectors.length
+      !this.connectors.length &&
+      !this.ignoreEnvironment
     )
       return;
     this.storage.save({
@@ -432,6 +439,7 @@ export class Workbench {
       requests: this.requests,
       approvalHistory: [...this.approvalHistory, ...this.holds.values()],
       config: this.config,
+      ignoreEnvironment: this.ignoreEnvironment,
       profiles: this.profiles,
       catalog: this.catalog,
       connectors: this.connectors,
@@ -448,7 +456,7 @@ export class Workbench {
           agentProfile,
           recoveryBlock,
           queuedPrompt,
-          config,
+          config: config ? { baseUrl: config.baseUrl, kind: config.kind } : undefined,
           tools,
           connections,
         }),
@@ -457,55 +465,73 @@ export class Workbench {
     this.hasState = true;
   }
   async configure(config: ProviderConfig): Promise<readonly Model[]> {
-    config = normalizeProviderConfig({
-      ...config,
-      apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || "",
-    });
-    const provider = new CompatibleProvider(config, this.fetcher);
-    const models = await provider.models();
-    if (!models.length)
-      throw new Error(
-        "Provider returned no available models. Previous configuration was kept.",
-      );
-    const previous = {
-      provider: this.provider,
-      config: this.config,
-      profiles: this.profiles,
-      catalog: this.catalog,
-      preferences: this.preferences,
-    };
-    // The preference the operator already made is honoured when this provider
-    // serves it; otherwise the first model of the validated catalog is used.
-    // No vendor's model is inserted on the operator's behalf.
-    const preferred =
-      models.find((model) => model.id === this.preferences.defaultModel)?.id ??
-      models[0]!.id;
-    this.provider = provider;
-    this.config = config;
-    this.profiles = { ...this.profiles, [config.baseUrl]: config };
-    this.catalog = models;
-    this.preferences = {
-      ...this.preferences,
-      defaultModel: preferred,
-      defaultProvider:
-        PROVIDER_PRESETS.find((p) => p.baseUrl === config.baseUrl)?.id ??
-        "custom",
-    };
+    const generation = ++this.providerGeneration;
+    this.providerSetupCount++;
     try {
-      this.persist();
-    } catch (error) {
-      Object.assign(this, previous);
-      throw error;
+      config = normalizeProviderConfig({
+        ...config,
+        apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || "",
+      });
+      const provider = new CompatibleProvider(config, this.fetcher);
+      const models = await provider.models();
+      if (generation !== this.providerGeneration)
+        throw new ProviderSetupSuperseded();
+      if (!models.length)
+        throw new Error(
+          "Provider returned no available models. Previous configuration was kept.",
+        );
+      const previous = {
+        provider: this.provider,
+        config: this.config,
+        profiles: this.profiles,
+        catalog: this.catalog,
+        preferences: this.preferences,
+      };
+      // The preference the operator already made is honoured when this provider
+      // serves it; otherwise the first model of the validated catalog is used.
+      // No vendor's model is inserted on the operator's behalf.
+      const preferred =
+        models.find((model) => model.id === this.preferences.defaultModel)?.id ??
+        models[0]!.id;
+      this.provider = provider;
+      this.config = config;
+      this.profiles = { ...this.profiles, [config.baseUrl]: config };
+      this.catalog = models;
+      this.preferences = {
+        ...this.preferences,
+        defaultModel: preferred,
+        defaultProvider:
+          PROVIDER_PRESETS.find((p) => p.baseUrl === config.baseUrl)?.id ??
+          "custom",
+      };
+      try {
+        this.persist();
+      } catch (error) {
+        Object.assign(this, previous);
+        throw error;
+      }
+      this.providerFailureState = null;
+      return models;
+    } finally {
+      this.providerSetupCount--;
     }
-    this.providerFailureState = null;
-    return models;
   }
-  async providerState() {
+  async providerState(options: { reconnectEnvironment?: boolean } = {}) {
+    if (options.reconnectEnvironment && this.ignoreEnvironment) {
+      this.ignoreEnvironment = false;
+      try {
+        this.persist();
+      } catch (error) {
+        this.ignoreEnvironment = true;
+        throw error;
+      }
+    }
     if (!this.provider && !this.ignoreEnvironment && this.env.NVIDIA_API_KEY && !this.providerFailureState) {
       try {
         await this.configure({ baseUrl: NVIDIA_URL, apiKey: this.env.NVIDIA_API_KEY });
       } catch (error) {
-        this.recordProviderFailure(error);
+        if (!this.ignoreEnvironment && !(error instanceof ProviderSetupSuperseded))
+          this.recordProviderFailure(error);
       }
     }
     const hasCredential = Boolean(this.config?.apiKey || (!this.ignoreEnvironment && this.env.NVIDIA_API_KEY));
@@ -626,13 +652,44 @@ export class Workbench {
     }
   }
   clearProvider(): void {
+    if (this.jobs.size || this.queued.size)
+      throw new Error("Stop active sessions before disconnecting the provider.");
+    if (this.providerSetupCount || this.sessionSetupCount)
+      throw new Error(
+        "Wait for provider setup or session startup to finish before disconnecting the provider.",
+      );
+    const previous = {
+      provider: this.provider,
+      config: this.config,
+      profiles: this.profiles,
+      catalog: this.catalog,
+      failure: this.providerFailureState,
+      ignoreEnvironment: this.ignoreEnvironment,
+      sessions: [...this.sessions.values()].map((session) => ({
+        session,
+        provider: session.provider,
+      })),
+    };
+    this.providerGeneration++;
     this.providerFailureState = null;
     this.ignoreEnvironment = true;
     this.provider = undefined;
-    if (this.config) delete this.profiles[this.config.baseUrl];
     this.config = undefined;
+    this.profiles = {};
     this.catalog = [];
-    this.persist();
+    for (const session of this.sessions.values()) session.provider = undefined;
+    try {
+      this.persist();
+    } catch (error) {
+      this.provider = previous.provider;
+      this.config = previous.config;
+      this.profiles = previous.profiles;
+      this.catalog = previous.catalog;
+      this.providerFailureState = previous.failure;
+      this.ignoreEnvironment = previous.ignoreEnvironment;
+      for (const item of previous.sessions) item.session.provider = item.provider;
+      throw error;
+    }
   }
   private view(session: Session): SessionView {
     const jobId = session.recoveryBlock?.jobId ?? session.view.lastRecoveryJob?.jobId;
@@ -725,6 +782,8 @@ export class Workbench {
   ): Promise<SessionView> {
     if (!this.provider)
       throw new Error("Connect and validate a provider first.");
+    if (this.providerSetupCount)
+      throw new Error("Wait for provider setup to finish before starting a session.");
     if (background && this.queued.size >= MAX_QUEUED_RUNS)
       throw new Error(`Background queue is full (${MAX_QUEUED_RUNS} queued runs). Stop a queued run before adding another.`);
     const selectedAgent = AGENT_PRESETS.find(
@@ -732,7 +791,8 @@ export class Workbench {
     );
     const selectedProfile = this.agentProfiles.find(profile => profile.id === agent);
     if (agent && !selectedAgent && !selectedProfile) throw new Error("Unknown agent preset or profile.");
-    const selectedProvider = this.provider,
+    const selectedGeneration = this.providerGeneration,
+      selectedProvider = this.provider,
       selectedConfig = this.config;
     if (!this.catalog.some((item) => item.id === model))
       throw new Error("Select a model from the validated catalog.");
@@ -782,19 +842,33 @@ export class Workbench {
       : undefined;
     const tools: McpTool[] = [...workspaceTools];
     const connections: NonNullable<Session["connections"]> = {};
-    for (const connector of this.connectors) {
-      const listed = await mcpCatalog(connector);
-      connections[connector.id] = { ...connector, sessionId: listed.sessionId };
-      tools.push(
-        ...listed.tools.map((tool) => ({ ...tool, connectorId: connector.id })),
-      );
+    this.sessionSetupCount++;
+    try {
+      for (const connector of this.connectors) {
+        const listed = await mcpCatalog(connector);
+        connections[connector.id] = { ...connector, sessionId: listed.sessionId };
+        tools.push(
+          ...listed.tools.map((tool) => ({ ...tool, connectorId: connector.id })),
+        );
+      }
+      if (client) {
+        const listed = (await client.request("tools/list")) as {
+          tools: McpTool[];
+        };
+        tools.push(
+          ...listed.tools.map((tool) => ({ ...tool, connectorId: "stdio" })),
+        );
+      }
+    } catch (error) {
+      client?.close();
+      throw error;
+    } finally {
+      this.sessionSetupCount--;
     }
-    if (client) {
-      const listed = (await client.request("tools/list")) as {
-        tools: McpTool[];
-      };
-      tools.push(
-        ...listed.tools.map((tool) => ({ ...tool, connectorId: "stdio" })),
+    if (this.providerGeneration !== selectedGeneration) {
+      client?.close();
+      throw new Error(
+        "Provider changed while connecting tools. Retry after provider setup finishes.",
       );
     }
     if (
@@ -833,7 +907,7 @@ export class Workbench {
       client,
       tools: (selectedProfile ? tools.filter(tool => selectedProfile.allowedTools.includes(tool.name)) : tools).filter(tool => this.toolAllowedInMode(tool)),
       connections,
-      config: selectedConfig,
+      config: selectedConfig ? { baseUrl: selectedConfig.baseUrl, kind: selectedConfig.kind } : undefined,
       controller: new AbortController(),
       provider: selectedProvider,
     };
@@ -885,6 +959,22 @@ export class Workbench {
       );
     if (session.messages.length >= 199)
       throw new Error("Session context limit reached. Start a new session.");
+    if (!session.provider) {
+      const config = this.config;
+      const identity = session.config;
+      if (!identity?.kind)
+        throw new Error(
+          "This conversation has no saved provider protocol. Start a new conversation rather than switching providers.",
+        );
+      if (
+        !this.provider ||
+        !config ||
+        identity.baseUrl !== config.baseUrl ||
+        identity.kind !== config.kind
+      )
+        throw new Error("Reconnect the provider used by this conversation before continuing.");
+      session.provider = this.provider;
+    }
     session.controller = new AbortController();
     const queued = session.view.status === "idle" && session.queuedPrompt === prompt;
     if (!queued) session.view = { ...session.view, runId: randomUUID() };
@@ -1040,7 +1130,7 @@ export class Workbench {
   ) {
     const seq = (session.view.events.at(-1)?.seq ?? 0) + 1,
       at = new Date().toISOString();
-    let safeText = session.provider.redact(JSON.stringify(payload));
+    let safeText = session.provider?.redact(JSON.stringify(payload)) ?? JSON.stringify(payload);
     for (const config of Object.values(session.connections ?? {}))
       if (config.token)
         safeText = safeText.split(config.token).join("[redacted]");
@@ -1057,7 +1147,7 @@ export class Workbench {
           seq,
           at,
           kind,
-          text: session.provider.redact(text).slice(0, 32000),
+          text: (session.provider?.redact(text) ?? text).slice(0, 32000),
           type:
             type ??
             {
@@ -2064,7 +2154,9 @@ export class Workbench {
     if (bound > session.agentProfile.maxContextTokens) throw new Error("Agent context budget reached. Increase the budget or compact before continuing.");
   }
   private async run(session: Session): Promise<void> {
+    const provider = session.provider;
     try {
+      if (!provider) throw new Error("Reconnect the provider used by this conversation before continuing.");
       if (session.agentProfile) {
         session.agentProfile = validateAgentProfile(session.agentProfile);
         if (session.agentProfile.policyProfile !== "default") throw new Error("Unknown agent policy profile.");
@@ -2091,7 +2183,7 @@ export class Workbench {
           );
         let delta = "";
         let flushed = Date.now();
-        const reply = await session.provider.complete(
+        const reply = await provider.complete(
           session.view.model,
           session.messages,
           tools,
@@ -2111,7 +2203,7 @@ export class Workbench {
         if (delta) this.event(session, "assistant", delta, {}, "message.delta");
         session.messages.push(reply.message);
         this.checkContextBudget(session, tools, 0);
-        if (session.provider === this.provider) this.providerFailureState = null;
+        if (provider === this.provider) this.providerFailureState = null;
         if (reply.message.content)
           this.event(session, "assistant", reply.message.content);
         if (reply.usage)
@@ -2169,7 +2261,7 @@ export class Workbench {
           session.messages.push({
             role: "tool",
             tool_call_id: call.id,
-            content: session.provider
+            content: provider
               .redact(JSON.stringify(result))
               .slice(0, 64000),
           });
@@ -2180,7 +2272,7 @@ export class Workbench {
       );
     } catch (error) {
       if (!session.controller.signal.aborted || error instanceof UnknownToolOutcome) {
-        if (error instanceof ProviderRequestError && session.provider === this.provider) this.recordProviderFailure(error);
+        if (error instanceof ProviderRequestError && provider === this.provider) this.recordProviderFailure(error);
         const failure =
           error instanceof ProviderRequestError
             ? providerFailure(error)

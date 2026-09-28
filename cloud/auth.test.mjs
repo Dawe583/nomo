@@ -59,6 +59,16 @@ test("an invalid endpoint, tampered cookie, expired cookie or invalid stored rec
   assert.equal(calls.length, 0);
 });
 
+test("me rejects an Appwrite account that differs from its stored identity", async () => {
+  const calls = [], sessions = memorySessions();
+  await sessions.create({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", secret: "synthetic-session-value", userId: "stored-user", expiresAt: 9000 });
+  const auth = createAuth({ config, sessions, fetcher: fakeFetch([{ status: 200, body: { $id: "different-user", email: "a@example.com", name: "A" } }], calls), now: () => 1000 });
+  const cookie = sealSession({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", expiresAt: 9000 }, config.sealKey);
+
+  await assert.rejects(() => auth.me(cookie), { code: "authentication_failed" });
+  assert.equal(calls.length, 1);
+});
+
 test("logout requires durable revocation, then clears cookie if remote cleanup fails", async () => {
   const calls = [], logs = [], sessions = memorySessions();
   await sessions.create({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", secret: "appwrite-session-secret", userId: "user", expiresAt: 9000 });

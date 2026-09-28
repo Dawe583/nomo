@@ -275,13 +275,20 @@ Two further conditions are not in that list and have to hold anyway:
   owner that is not the operator. That is a deliberate refusal rather than a
   queued run no worker may claim.
 
-Two things are true of the migration and are not claimed here. It has not been
-recorded in this repository as applied to the live beta database, and no
-captured output of a run against a real PostgreSQL 17 instance is committed, so
-the claim that it was verified against a 17.11 instance is unverified from the
-tree. `cloud/owner.test.mjs` proves the shape of the file, its conditional
-steps and the trigger ordering, and the CI workflow provisions a PostgreSQL 17
-service, but neither is a record of a completed run against the beta.
+The migration is not recorded as applied to the live beta database, and its
+live status remains unknown. On 2026-09-28, a local, disposable PostgreSQL
+17.11 test used synthetic rows and the exact schema from
+`e348aee^:cloud/schema.sql`, before the owner migration. The current
+`cloud/0001-account-ownership.sql` ran twice. It assigned two state rows, one
+ledger row, and two event rows to `operator`, retained primary keys with owner
+as the first column, kept row level security enabled, and restored both
+append-only triggers. A ledger update remained blocked. A second scratch
+database with a malformed event caused the migration to fail; after rollback,
+the owner columns were absent and both triggers remained enabled. This verifies
+the migration mechanics only against a disposable synthetic database. It does
+not show that the live beta is migrated or validate an Appwrite migration or
+rollback. No raw test log is committed. The CI integration runner starts from
+`cloud/schema.sql`, so it does not exercise this legacy migration path.
 
 The owner is threaded through the workflow as a durable argument rather than
 re-derived inside a step: `cloud/workflow.mjs` takes the owner the launching

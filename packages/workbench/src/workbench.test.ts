@@ -824,3 +824,475 @@ test("compaction returns CompactionResult shape", async (t) => {
   assert.ok(typeof result.createdAt === "string");
   assert.ok(result.omittedMessageCount >= 0);
 });
+
+test("provider logout removes credentials from every profile and historical session", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-logout-"));
+  let afterLogout = false;
+  let callsAfterLogout = 0;
+  const fetcher: typeof fetch = async (url) => {
+    if (afterLogout) callsAfterLogout++;
+    return String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "test", name: "Test" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const workbenches: Workbench[] = [];
+  const createWorkbench = () => {
+    const workbench = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+    workbenches.push(workbench);
+    return workbench;
+  };
+  t.after(async () => {
+    for (const workbench of workbenches) workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const workbench = createWorkbench();
+  await workbench.configure({ baseUrl: "https://first.test/v1", apiKey: "first-fixture-key" });
+  const session = await workbench.start("Keep this conversation", "test");
+  while (workbench.get(session.id)?.status === "running") await delay(5);
+  const activeState = new LocalStorage(dir).read<Record<string, unknown>>()!;
+  assert.doesNotMatch(JSON.stringify(activeState.sessions), /first-fixture-key/);
+  assert.deepEqual(
+    (activeState.sessions as Array<{ config?: unknown }>)[0]?.config,
+    { baseUrl: "https://first.test/v1", kind: "compatible" },
+  );
+  await workbench.configure({ baseUrl: "https://second.test/v1", apiKey: "second-fixture-key" });
+
+  workbench.clearProvider();
+  afterLogout = true;
+  const persisted = new LocalStorage(dir).read<Record<string, unknown>>()!;
+  assert.deepEqual(persisted.profiles, {});
+  assert.deepEqual(
+    (persisted.sessions as Array<{ config?: unknown }>)[0]?.config,
+    { baseUrl: "https://first.test/v1", kind: "compatible" },
+  );
+  assert.doesNotMatch(JSON.stringify(persisted), /first-fixture-key|second-fixture-key/);
+
+  let sendError: unknown;
+  try {
+    workbench.send(session.id, "Continue after logout");
+  } catch (error) {
+    sendError = error;
+  }
+  while (workbench.get(session.id)?.status === "running") await delay(5);
+  assert.ok(sendError instanceof Error);
+  assert.match(sendError.message, /provider/i);
+  assert.equal(callsAfterLogout, 0);
+
+  workbench.close();
+  workbenches.splice(workbenches.indexOf(workbench), 1);
+  const reopened = createWorkbench();
+  let reopenedError: unknown;
+  try {
+    reopened.send(session.id, "Continue after restart");
+  } catch (error) {
+    reopenedError = error;
+  }
+  while (reopened.get(session.id)?.status === "running") await delay(5);
+  assert.ok(reopenedError instanceof Error);
+  assert.match(reopenedError.message, /provider/i);
+  assert.equal(callsAfterLogout, 0);
+});
+
+test("provider reauthentication matches both endpoint and kind", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-reauth-kind-"));
+  let afterLogout = false;
+  let completionsAfterLogout = 0;
+  const fetcher: typeof fetch = async (url) => {
+    if (!String(url).endsWith("/models")) {
+      if (afterLogout) completionsAfterLogout++;
+      return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+    }
+    return Response.json({ data: [{ id: "test", name: "Test" }] });
+  };
+  const workbench = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  await workbench.configure({ baseUrl: "https://same.test/v1", kind: "compatible", apiKey: "first-fixture-key" });
+  const session = await workbench.start("Keep this history", "test");
+  while (workbench.get(session.id)?.status === "running") await delay(5);
+  workbench.clearProvider();
+  afterLogout = true;
+
+  await workbench.configure({ baseUrl: "https://same.test/v1", kind: "anthropic", apiKey: "other-kind-fixture-key" });
+  assert.throws(() => workbench.send(session.id, "Do not change protocol"), /provider/i);
+  assert.equal(completionsAfterLogout, 0);
+
+  await workbench.configure({ baseUrl: "https://same.test/v1", kind: "compatible", apiKey: "new-fixture-key" });
+  workbench.send(session.id, "Resume with the matching provider");
+  while (workbench.get(session.id)?.status === "running") await delay(5);
+  assert.equal(completionsAfterLogout, 1);
+});
+
+test("provider logout suppresses environment reconnect until explicit login", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-environment-logout-"));
+  const env = { VOID_DATA_DIR: dir, NVIDIA_API_KEY: "nvidia-fixture-key" };
+  let afterLogout = false;
+  let callsAfterLogout = 0;
+  const fetcher: typeof fetch = async (url) => {
+    if (afterLogout) callsAfterLogout++;
+    return String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "test", name: "Test" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const workbenches: Workbench[] = [];
+  const createWorkbench = () => {
+    const workbench = new Workbench(env, fetcher);
+    workbenches.push(workbench);
+    return workbench;
+  };
+  t.after(async () => {
+    for (const workbench of workbenches) workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const workbench = createWorkbench();
+  assert.equal((await workbench.providerState()).connected, true);
+  workbench.clearProvider();
+  afterLogout = true;
+  const persisted = new LocalStorage(dir).read<Record<string, unknown>>()!;
+  assert.equal(persisted.ignoreEnvironment, true);
+  assert.equal(persisted.config, undefined);
+  assert.deepEqual(persisted.profiles, {});
+  workbench.close();
+  workbenches.splice(workbenches.indexOf(workbench), 1);
+
+  const reopened = createWorkbench();
+  assert.equal((await reopened.providerState()).connected, false);
+  assert.equal(callsAfterLogout, 0);
+  assert.equal((await reopened.providerState({ reconnectEnvironment: true })).connected, true);
+  assert.equal(callsAfterLogout, 1);
+});
+
+test("provider logout waits for a manual provider catalog probe", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-pending-logout-"));
+  let holdModels = false;
+  let completions = 0;
+  let markRequested: () => void = () => {};
+  let finishModels: (response: Response) => void = () => {};
+  let configuration: ReturnType<Workbench["configure"]> | undefined;
+  let queuedStart: ReturnType<Workbench["start"]> | undefined;
+  const requested = new Promise<void>((resolve) => { markRequested = resolve; });
+  const pendingModels = new Promise<Response>((resolve) => { finishModels = resolve; });
+  const fetcher: typeof fetch = async (url) => {
+    if (String(url).endsWith("/models")) {
+      if (holdModels) {
+        markRequested();
+        return pendingModels;
+      }
+      return Response.json({ data: [{ id: "test", name: "Test" }] });
+    }
+    completions++;
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const workbench = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+  t.after(async () => {
+    finishModels(Response.json({ data: [{ id: "test", name: "Test" }] }));
+    await configuration?.catch(() => {});
+    await queuedStart?.catch(() => {});
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  await workbench.configure({ baseUrl: "https://initial.test/v1", apiKey: "initial-fixture-key" });
+  holdModels = true;
+  configuration = workbench.configure({ baseUrl: "https://pending.test/v1", apiKey: "pending-fixture-key" });
+  queuedStart = configuration.then(() => workbench.start("Start after catalog validation", "test"));
+  await requested;
+  await assert.rejects(workbench.start("Do not race providers", "test"), /provider setup/i);
+  assert.throws(() => workbench.clearProvider(), /provider setup/i);
+  finishModels(Response.json({ data: [{ id: "test", name: "Test" }] }));
+  await configuration;
+  const session = await queuedStart!;
+  while (workbench.get(session.id)?.status === "running") await delay(5);
+  assert.equal((await workbench.providerState()).connected, true);
+  assert.equal(completions, 1);
+  workbench.clearProvider();
+  assert.equal((await workbench.providerState()).connected, false);
+  const persisted = new LocalStorage(dir).read<Record<string, unknown>>()!;
+  assert.equal(persisted.config, undefined);
+  assert.deepEqual(persisted.profiles, {});
+  assert.doesNotMatch(JSON.stringify(persisted), /pending-fixture-key/);
+});
+
+test("a failed provider catalog probe does not keep logout blocked", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-failed-setup-"));
+  const fetcher: typeof fetch = async () => { throw new Error("fixture connection failure"); };
+  const workbench = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  await assert.rejects(
+    workbench.configure({ baseUrl: "https://failed.test/v1", apiKey: "failed-fixture-key" }),
+    /Provider connection failed/,
+  );
+  assert.doesNotThrow(() => workbench.clearProvider());
+  assert.equal((await workbench.providerState()).connected, false);
+});
+
+test("provider logout waits for the automatic environment catalog probe", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-environment-race-"));
+  const env = { VOID_DATA_DIR: dir, NVIDIA_API_KEY: "nvidia-race-fixture-key" };
+  let markRequested: () => void = () => {};
+  let finishModels: (response: Response) => void = () => {};
+  const requested = new Promise<void>((resolve) => { markRequested = resolve; });
+  const pendingModels = new Promise<Response>((resolve) => { finishModels = resolve; });
+  const fetcher: typeof fetch = async (url) => {
+    if (String(url).endsWith("/models")) {
+      markRequested();
+      return pendingModels;
+    }
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const workbench = new Workbench(env, fetcher);
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const pendingState = workbench.providerState();
+  await requested;
+  assert.throws(() => workbench.clearProvider(), /provider setup/i);
+  finishModels(Response.json({ data: [{ id: "test", name: "Test" }] }));
+  assert.equal((await pendingState).connected, true);
+  workbench.clearProvider();
+  assert.equal((await workbench.providerState()).connected, false);
+});
+
+test("a superseded environment probe does not mark the replacement unavailable", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-superseded-setup-"));
+  const env = { VOID_DATA_DIR: dir, NVIDIA_API_KEY: "nvidia-superseded-fixture-key" };
+  let markRequested: () => void = () => {};
+  let finishModels: (response: Response) => void = () => {};
+  const requested = new Promise<void>((resolve) => { markRequested = resolve; });
+  const pendingModels = new Promise<Response>((resolve) => { finishModels = resolve; });
+  const fetcher: typeof fetch = async (url) => {
+    if (String(url).startsWith("https://integrate.api.nvidia.com/v1/models")) {
+      markRequested();
+      return pendingModels;
+    }
+    return Response.json({ data: [{ id: "test", name: "Test" }] });
+  };
+  const workbench = new Workbench(env, fetcher);
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const automaticState = workbench.providerState();
+  await requested;
+  await workbench.configure({ baseUrl: "https://replacement.test/v1", apiKey: "replacement-fixture-key" });
+  finishModels(Response.json({ data: [{ id: "test", name: "Test" }] }));
+  const state = await automaticState;
+  assert.equal(state.connected, true);
+  assert.equal(state.status, "ready");
+  assert.equal(state.baseUrl, "https://replacement.test/v1");
+});
+
+test("provider logout keeps the connected state when persistence fails", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-logout-storage-conflict-"));
+  const fetcher: typeof fetch = async (url) => String(url).endsWith("/models")
+    ? Response.json({ data: [{ id: "test", name: "Test" }] })
+    : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  const workbench = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+  t.after(async () => {
+    try { workbench.close(); } catch {}
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  await workbench.configure({ baseUrl: "https://rollback.test/v1", apiKey: "rollback-fixture-key" });
+  const externalStorage = new LocalStorage(dir);
+  const saved = externalStorage.read<Record<string, unknown>>()!;
+  externalStorage.save({ ...saved, externalUpdate: true });
+  assert.throws(() => workbench.clearProvider(), /Workspace changed/);
+  const state = await workbench.providerState();
+  assert.equal(state.connected, true);
+  assert.ok(state.profiles.includes("https://rollback.test/v1"));
+});
+
+test("provider logout refuses while a session is connecting its MCP tools", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-start-"));
+  const originalFetch = globalThis.fetch;
+  let completions = 0;
+  let holdToolsList = false;
+  let failToolsList = false;
+  let markToolsListStarted!: () => void;
+  let releaseToolsList!: () => void;
+  const toolsListStarted = new Promise<void>((resolve) => { markToolsListStarted = resolve; });
+  const toolsListGate = new Promise<void>((resolve) => { releaseToolsList = resolve; });
+  globalThis.fetch = async (_url, init) => {
+    const request = JSON.parse(String(init?.body)) as { id?: string; method: string };
+    if (request.method === "tools/list" && holdToolsList) {
+      holdToolsList = false;
+      markToolsListStarted();
+      await toolsListGate;
+    }
+    if (request.method === "tools/list" && failToolsList) {
+      failToolsList = false;
+      return Response.json({ jsonrpc: "2.0", id: request.id, error: { code: -32000, message: "fixture" } });
+    }
+    return Response.json({
+      jsonrpc: "2.0",
+      id: request.id,
+      result: request.method === "initialize"
+        ? { protocolVersion: "2025-03-26", capabilities: {}, serverInfo: { name: "test", version: "1" } }
+        : { tools: [] },
+    });
+  };
+  const workbench = new Workbench({ VOID_DATA_DIR: dir }, async (url) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "test", name: "Test" }] });
+    completions++;
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  });
+  t.after(async () => {
+    releaseToolsList();
+    globalThis.fetch = originalFetch;
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  await workbench.configure({ baseUrl: "https://provider.test/v1", apiKey: "fixture-key" });
+  await workbench.addConnector({ url: "https://mcp.test/mcp", name: "Slow catalog" });
+
+  holdToolsList = true;
+  const starting = workbench.start("Wait for tools", "test");
+  await toolsListStarted;
+  assert.throws(() => workbench.clearProvider(), /startup|setup/i);
+  await workbench.configure({ baseUrl: "https://replacement.test/v1", apiKey: "replacement-fixture-key" });
+  releaseToolsList();
+  await assert.rejects(starting, /Provider changed while connecting tools/);
+  assert.equal(completions, 0);
+
+  failToolsList = true;
+  await assert.rejects(workbench.start("Reject the broken tools", "test"), /MCP request failed/);
+  assert.equal(completions, 0);
+  workbench.clearProvider();
+});
+
+test("provider logout refuses while a model run is active", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-active-logout-"));
+  let markRequested: () => void = () => {};
+  let finishResponse: (response: Response) => void = () => {};
+  const requested = new Promise<void>((resolve) => { markRequested = resolve; });
+  const pendingResponse = new Promise<Response>((resolve) => { finishResponse = resolve; });
+  const fetcher: typeof fetch = async (url) => {
+    if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "test", name: "Test" }] });
+    markRequested();
+    return pendingResponse;
+  };
+  const workbench = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  await workbench.configure({ baseUrl: "https://active.test/v1", apiKey: "active-fixture-key" });
+  const session = await workbench.start("Wait for the provider", "test");
+  await requested;
+  assert.throws(() => workbench.clearProvider(), /Stop active sessions/);
+  assert.equal((await workbench.providerState()).connected, true);
+  finishResponse(Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] }));
+  while (workbench.get(session.id)?.status === "running") await delay(5);
+  workbench.clearProvider();
+  assert.equal((await workbench.providerState()).connected, false);
+});
+
+test("legacy history without a recognized provider kind cannot resume by guessing", async (t) => {
+  const baseUrl = "https://unknown-kind.test/v1";
+  let completions = 0;
+  const fetcher: typeof fetch = async (url) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "test", name: "Test" }] });
+    completions++;
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const legacyConfigs: Array<{ label: string; config: { baseUrl: string; kind?: string } }> = [
+    { label: "missing", config: { baseUrl } },
+    { label: "unknown", config: { baseUrl, kind: "future-protocol" } },
+  ];
+
+  for (const legacy of legacyConfigs) {
+    const dir = await mkdtemp(join(tmpdir(), `void-provider-${legacy.label}-kind-`));
+    const original = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+    let originalClosed = false;
+    let reopened: Workbench | undefined;
+    t.after(async () => {
+      if (!originalClosed) original.close();
+      reopened?.close();
+      await rm(dir, { recursive: true, force: true });
+    });
+    await original.configure({ baseUrl, kind: "compatible", apiKey: "old-fixture-key" });
+    const session = await original.start("Keep the transcript", "test");
+    while (original.get(session.id)?.status === "running") await delay(5);
+    original.close();
+    originalClosed = true;
+
+    type StoredSession = { config?: unknown; view: Record<string, unknown> };
+    const storage = new LocalStorage(dir);
+    const saved = storage.read<{ sessions: StoredSession[]; [key: string]: unknown }>()!;
+    saved.sessions[0].config = legacy.config;
+    storage.save(saved);
+    const completionsBeforeResume = completions;
+    reopened = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+    assert.throws(() => reopened.send(session.id, "Do not switch protocol"), /provider|protocol/i);
+    assert.equal(completions, completionsBeforeResume);
+  }
+});
+
+
+test("legacy inline provider keys are scrubbed without borrowing another provider", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-provider-legacy-session-"));
+  let requestCount = 0;
+  const fetcher: typeof fetch = async (url) => {
+    requestCount++;
+    return String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "test", name: "Test" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const original = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+  let originalClosed = false;
+  let reopened: Workbench | undefined;
+  t.after(async () => {
+    if (!originalClosed) original.close();
+    reopened?.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  await original.configure({ baseUrl: "https://current.test/v1", apiKey: "current-fixture-key" });
+  const session = await original.start("Preserve the history", "test");
+  while (original.get(session.id)?.status === "running") await delay(5);
+  original.close();
+  originalClosed = true;
+
+  type StoredSession = { config?: { baseUrl: string; apiKey: string; kind?: string }; view: Record<string, unknown> };
+  const storage = new LocalStorage(dir);
+  const saved = storage.read<{ sessions: StoredSession[]; [key: string]: unknown }>()!;
+  for (const item of saved.sessions) {
+    item.config = { baseUrl: "https://legacy.test/v1", apiKey: "legacy-fixture-key", kind: "openai" };
+    item.view.provider = "https://legacy.test/v1";
+  }
+  storage.save(saved);
+  const requestsBeforeResume = requestCount;
+  reopened = new Workbench({ VOID_DATA_DIR: dir }, fetcher);
+  const migrated = new LocalStorage(dir).read<{ sessions: StoredSession[] }>()!;
+  assert.doesNotMatch(JSON.stringify(migrated.sessions), /legacy-fixture-key/);
+  assert.deepEqual(migrated.sessions[0].config, {
+    baseUrl: "https://legacy.test/v1",
+    kind: "compatible",
+  });
+  assert.equal(migrated.sessions[0].view.provider, "https://legacy.test/v1");
+
+  let sendError: unknown;
+  try {
+    reopened.send(session.id, "Do not switch providers silently");
+  } catch (error) {
+    sendError = error;
+  }
+  assert.ok(sendError instanceof Error);
+  assert.match(sendError.message, /provider/i);
+  assert.equal(requestCount, requestsBeforeResume);
+});

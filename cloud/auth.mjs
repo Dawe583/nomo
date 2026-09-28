@@ -86,7 +86,7 @@ export function createAuth({ config = readAuthConfig(), sessions, fetcher = fetc
       try { await request("account/sessions/current", "DELETE", undefined, stored.secret); } catch (error) { logger?.warn?.("void.auth.remote_logout_failed", { status: error.status ?? 0 }); }
       return { setCookie: clearSession() };
     },
-    async me(cookie) { const { stored } = await local(cookie); const account = await request("account", "GET", undefined, stored.secret); return { id: account.$id, email: account.email, name: account.name }; },
+    async me(cookie) { const { stored } = await local(cookie); const account = await request("account", "GET", undefined, stored.secret); if (typeof account.$id !== "string" || account.$id !== stored.userId) throw fail("authentication_failed", 401); return { id: account.$id, email: account.email, name: account.name }; },
     async recover({ email }) { await request("account/recovery", "POST", { email, url: new URL("reset-password", `${httpsUrl(config.publicOrigin, "VOID_PUBLIC_ORIGIN").origin}/`).href }); return { ok: true }; },
   };
 }

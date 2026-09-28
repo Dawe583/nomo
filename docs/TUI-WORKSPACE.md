@@ -225,8 +225,15 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
   usage bez odhadů, `/status` stav providera, běhu, fronty a kontextu.
 - `/agents` vypíše konverzace a konektory, `/config` cesty a přepínače bez
   tajemství, `/memory` rozsah uchované historie.
-- `/login [zdroj]` připojí providera stejným kódem jako `/connect`,
-  `/logout` providera odpojí a smaže uložené profily.
+- `/login [zdroj]` připojí providera stejným kódem jako `/connect`.
+  `/logout` smaže lokální profily a případné staré kopie klíčů ze session
+  konfigurací. Historii ponechá čitelnou a pokračování povolí po připojení stejné
+  adresy a uloženého protokolu. Starší relace bez uloženého protokolu zůstane
+  čitelná, ale nelze ji bezpečně pokračovat; založ novou konverzaci. Odhlášení se
+  odmítne během běhu modelu, ověřování providera nebo načítání MCP katalogu.
+  Klíč u poskytovatele nezneplatní.
+  `/login nvidia` nebo `/connect` bez argumentu znovu povolí připojení přes
+  `NVIDIA_API_KEY`.
 - `/init` připraví úložiště a v klidové konverzaci založí startovní `plan.md`,
   pokud ještě neexistuje.
 - `/hooks`, `/vim`, `/terminal-setup` a `/output-style` nemají obdobu ve

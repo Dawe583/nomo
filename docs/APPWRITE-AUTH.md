@@ -32,6 +32,25 @@ to runtime or deployment configuration. Run `node cloud/appwrite.mjs` only
 against a disposable project until a human reviews the manifest. Do not put
 any value in source, test data, logs, browser storage, URLs, or commits.
 
+## Provisioning limits and approval gate
+
+The provisioner checks that the supplied `APPWRITE_PROJECT_ID` contains the
+supplied `APPWRITE_DATABASE_ID`. It does not pin the project ID or region to an
+approved target. If resources are missing, it creates the declared bucket and
+selected platforms. It does not create or verify tables inside the database,
+copy rows, files, or sessions, or define a data migration. It has no automatic
+rollback for a partially completed additive run.
+
+The manifest labels `https://void-tui.vercel.app` as production. The current
+chat origin defaults to `https://chat.voidagent.tech` in `cloud/account.mjs`.
+Reconcile the origin before provisioning.
+
+Before any run, record and verify the endpoint and region, project ID, existing
+database and table schema, exact resources and origins to create, and a rollback
+procedure. Do not run against a shared or production project until a human
+approves that exact target and scope. This script does not perform a production
+cutover.
+
 `cloud/auth.mjs` provides server-only signup, email-password login, logout,
 account lookup, and password recovery helpers. Its `__Host-void-auth` cookie
 contains an encrypted and authenticated local session ID and expiry. It
@@ -49,6 +68,40 @@ importer, so nothing in the deployment reaches Appwrite at runtime. A reader
 who arrives here from a question about accounts in the chat origin wants
 `cloud/account.mjs`; a reader who wants the Appwrite option kept on paper is
 reading the right section.
+
+## Data migration status
+
+The current cloud data model is the owner-scoped PostgreSQL schema in
+`cloud/schema.sql`:
+
+| PostgreSQL table | Primary key | Payload |
+| --- | --- | --- |
+| `void_cloud_state` | `(owner, key)` | `document` JSONB |
+| `void_cloud_ledger` | `(owner, workspace, seq)` | `entry` JSONB |
+| `void_cloud_events` | `(owner, session_id, seq)` | `event` JSONB |
+
+A read-only metadata audit of the existing Appwrite TablesDB
+`void_control_plane` found these tables:
+
+| Appwrite table | Metadata fields |
+| --- | --- |
+| `profiles` | `user_id`, `display_name`, `email` |
+| `workspaces` | `name`, `owner_id` |
+| `workspace_members` | `workspace_id`, `user_id`, `role` |
+| `user_preferences` | `user_id`, `locale`, `theme` |
+| `appwrite_links` | `workspace_id`, `postgres_workspace`, `document_bucket` |
+
+The audit read schema metadata only. It did not read table rows, file contents,
+sessions, or keys. The two data models do not define a one-to-one migration
+mapping. Account-owned rows use the verified Supabase user ID. Legacy rows and the
+public demo use the reserved owners `operator` and `public-demo`. Appwrite
+`userId` has no approved mapping to an owner. Do not infer identity from email
+or copy JSONB payloads into normalized tables without an approved mapping.
+
+No Appwrite data migration or rollback implementation exists. Source, target,
+entity scope, identity mapping, and rollback require explicit approval before a
+migration plan can become executable. Keep staging validation separate from
+any production cutover.
 
 ## Required before public signup
 

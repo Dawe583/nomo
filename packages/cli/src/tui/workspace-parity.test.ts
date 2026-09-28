@@ -191,6 +191,7 @@ test("shell output redacts exact stored secret values", async (t) => {
   const full = {
     VOID_DATA_DIR: root,
     TOKENROUTER_API_KEY: "qk7-redact-me",
+    NVIDIA_API_KEY: "nv7-x91k3p",
   };
   const app = new Workbench(full);
   t.after(async () => {
@@ -198,10 +199,16 @@ test("shell output redacts exact stored secret values", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, full);
-  await ui.command("!echo qk7-redact-me");
+  await ui.command("!echo qk7-redact-me nv7-x91k3p");
   const shown = ui.detail?.join("\n") ?? "";
   assert.ok(shown.includes("[redacted]"));
   assert.ok(!shown.includes("qk7-redact-me"));
+  assert.ok(!shown.includes("nv7-x91k3p"));
+  await assert.rejects(ui.command("!false nv7-x91k3p"), (error) => {
+    assert.ok(error instanceof Error);
+    assert.ok(!error.message.includes("nv7-x91k3p"));
+    return error.message.includes("[redacted]");
+  });
 });
 
 test("@ tokens complete from managed paths and quote on send", async (t) => {
@@ -370,7 +377,8 @@ test("/login reuses provider setup, /logout disconnects", async (t) => {
   const ui = new WorkspaceTui(app, full);
   await assert.rejects(ui.command("/login unknown-source"), /./);
   await ui.command("/logout");
-  assert.match(ui.notice, /disconnected/);
+  assert.match(ui.notice, /logged out locally/i);
+  assert.match(ui.notice, /revoke keys with their providers/i);
   assert.equal(ui.model, "");
 });
 
