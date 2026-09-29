@@ -182,7 +182,18 @@ const terminalAdapter = (onExecute: () => void): RecoveryAdapter => ({
 test("two workers sharing one account cannot both spend the last unit", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-shared-budget-"));
   const budgetFile = join(dir, "budget.sqlite");
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  // Every handle this test opens is released before the directory goes, in one
+  // hook, because `t.after` runs in registration order rather than in reverse:
+  // a `rm` registered first would try to unlink a database three stores still
+  // hold. That is invisible on POSIX, where an open file may be unlinked, and
+  // fatal on Windows, where node:sqlite opens the file without FILE_SHARE_DELETE
+  // and the unlink fails EBUSY. The stores belong to this test, not to
+  // production, so this is where the handles are owed a close.
+  const open: Array<() => void> = [];
+  t.after(async () => {
+    for (const close of open) close();
+    await rm(dir, { recursive: true, force: true });
+  });
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const key = randomBytes(32);
   let dispatches = 0;
@@ -194,6 +205,7 @@ test("two workers sharing one account cannot both spend the last unit", async (t
   // can refuse the second dispatch is the shared account.
   const worker = async (name: string) => {
     const store = await sqliteBudgetStore(budgetFile);
+    open.push(() => store.close?.());
     return {
       runtime: recoveryRuntime({
         journal: localOperationJournal(join(dir, `journal-${name}`), signer),
@@ -208,15 +220,10 @@ test("two workers sharing one account cannot both spend the last unit", async (t
           budget: { dailyLimit: 1 },
         }),
       }),
-      close: () => store.close?.(),
     };
   };
   const left = await worker("left"),
     right = await worker("right");
-  t.after(() => {
-    left.close();
-    right.close();
-  });
   const request = (operationId: string) => ({
     workspace: "test",
     operationId,
@@ -235,7 +242,7 @@ test("two workers sharing one account cannot both spend the last unit", async (t
   // A reader that joined after both dispatches sees the charge either worker
   // wrote, and the version is the one both of them agreed on.
   const spend = await sqliteBudgetStore(budgetFile);
-  t.after(() => spend.close?.());
+  open.push(() => spend.close?.());
   const ledger = serverBudgetLedger({
     store: spend,
     account: "shared",
@@ -251,7 +258,16 @@ test("two workers sharing one account cannot both spend the last unit", async (t
 test("a restarted executor does not re-observe an already dispatched irreversible charge", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-restart-budget-"));
   const budgetFile = join(dir, "budget.sqlite");
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  // One hook closes every store this test opens, then removes the directory,
+  // because `t.after` runs in registration order and an `rm` registered first
+  // would unlink a database that `restart` still holds open. `restart` opens a
+  // fresh store per call on purpose, since the point is a process with no memory
+  // of the dead one, so each of those is a handle the test has to release too.
+  const open: Array<() => void> = [];
+  t.after(async () => {
+    for (const close of open) close();
+    await rm(dir, { recursive: true, force: true });
+  });
   const key = randomBytes(32);
   const request = {
     workspace: "test",
@@ -299,7 +315,7 @@ await recoveryRuntime({
   // A fresh store, no memory of the dead process: the unit it reserved before
   // dispatching is still charged, and still unfinished.
   const store = await sqliteBudgetStore(budgetFile);
-  t.after(() => store.close?.());
+  open.push(() => store.close?.());
   const account = serverBudgetLedger({
     store,
     account: "shared",
@@ -330,8 +346,10 @@ await recoveryRuntime({
       throw new Error("unused");
     },
   };
-  const restart = async (adapters: readonly RecoveryAdapter[]) =>
-    recoveryRuntime({
+  const restart = async (adapters: readonly RecoveryAdapter[]) => {
+    const restarted = await sqliteBudgetStore(budgetFile);
+    open.push(() => restarted.close?.());
+    return recoveryRuntime({
       journal: localOperationJournal(
         join(dir, "journal"),
         await devKeyProvider({ dir: join(dir, "keys"), env: {} }),
@@ -341,11 +359,12 @@ await recoveryRuntime({
       authorize: async () => true,
       requireRecoverable: false,
       budgetLedger: serverBudgetLedger({
-        store: await sqliteBudgetStore(budgetFile),
+        store: restarted,
         account: "shared",
         budget: { dailyLimit: 1 },
       }),
     });
+  };
   assert.equal(
     (await (await restart([adapter])).execute(request)).status,
     "unknown",

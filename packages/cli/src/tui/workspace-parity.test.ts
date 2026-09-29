@@ -186,6 +186,18 @@ test("gated shell shows output once and refuses key material", async (t) => {
   );
 });
 
+// Failing on purpose is spelled per platform, because the two shells disagree
+// on what a non-zero exit with no output looks like. `false` is a POSIX
+// builtin and a trailing argument is ignored; cmd.exe has no `false` at all
+// and answers "not recognized" on stderr, which is output the operator would
+// see and which therefore never reaches the redaction path this test exists to
+// exercise. `exit 1 <arg>` is the cmd.exe spelling: cmd ignores the extra
+// argument and exits non-zero with both streams empty, which is the same
+// observable shape `false` produces under sh. The secret rides in the argv in
+// both cases, so the error message built from the failed command still has to
+// come back scrubbed.
+const failingWithSecret = process.platform === "win32" ? "exit 1" : "false";
+
 test("shell output redacts exact stored secret values", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-redact-"));
   const full = {
@@ -199,12 +211,14 @@ test("shell output redacts exact stored secret values", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, full);
+  // echo is a builtin in both sh and cmd.exe, so the successful-output half of
+  // the property needs no per-platform spelling and runs identically on each.
   await ui.command("!echo qk7-redact-me nv7-x91k3p");
   const shown = ui.detail?.join("\n") ?? "";
   assert.ok(shown.includes("[redacted]"));
   assert.ok(!shown.includes("qk7-redact-me"));
   assert.ok(!shown.includes("nv7-x91k3p"));
-  await assert.rejects(ui.command("!false nv7-x91k3p"), (error) => {
+  await assert.rejects(ui.command(`!${failingWithSecret} nv7-x91k3p`), (error) => {
     assert.ok(error instanceof Error);
     assert.ok(!error.message.includes("nv7-x91k3p"));
     return error.message.includes("[redacted]");

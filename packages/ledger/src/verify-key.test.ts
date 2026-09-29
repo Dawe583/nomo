@@ -157,8 +157,29 @@ describe("pinVerificationKey", () => {
     assert.equal(pinned.keyId, keyId);
     assert.equal(pinned.created, true);
     assert.equal(pinned.path, join(dir, ".void", "trust", "verify-ed25519.spki"));
-    assert.equal((await stat(pinned.path)).mode & 0o777, 0o400);
+    // What this file is for is that it cannot be written back, so the mode
+    // number is only the encoding of that claim on one platform. `open(...,
+    // "wx", 0o400)` does set the read-only attribute on Windows, but Windows has
+    // no owner write bit for chmod to clear, so the mode reads back as 0o444
+    // and a test hardcoding 0o400 asserts a POSIX spelling of a claim both
+    // platforms make. The claim itself, asserted directly: no write bit is set
+    // for anyone, and the operating system refuses an overwrite of the bytes.
+    const pinnedMode = (await stat(pinned.path)).mode;
+    assert.equal(
+      pinnedMode & 0o222,
+      0,
+      `pinned verification key is writable, mode ${(pinnedMode & 0o777).toString(8)}`,
+    );
     assert.equal((await readFile(pinned.path, "utf8")).trim(), Buffer.from(spki).toString("base64"));
+    // The refusal is only assertable for an unprivileged process: a root user
+    // bypasses POSIX permission bits by design, so there the overwrite would
+    // succeed and would be a fact about root rather than about this file.
+    if (process.getuid?.() !== 0)
+      await assert.rejects(
+        writeFile(pinned.path, "replacement\n"),
+        (error: NodeJS.ErrnoException) => error.code === "EPERM" || error.code === "EACCES",
+        "the pinned verification key was written back in place",
+      );
 
     const resolved = await resolveVerificationKey({ env: {}, home: dir, allowDefaultTrustFile: true });
     assert.equal(resolved?.keyId, keyId);
