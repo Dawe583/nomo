@@ -410,9 +410,12 @@ passed 883 tests. Audit references that caused the update include
 ### G-17 WP-04b: registry breadth toward 500 entries
 
 Plan: `docs/EXECUTION-PLAN.md` WP-04b, `docs/BUILD-PLAN.md` phase 2.
-Missing: growth from the current 270 entries (`grep -c '^    id:'`
-on `packages/registry/src/registry.ts`) toward the 500 entry batch goal,
-with structured output validation per entry.
+Missing: growth from the current 268 entries (`grep -c '^    id:'`
+on `packages/registry/src/registry.ts`, re-measured 2026-09-29) toward the 500
+entry batch goal, with structured output validation per entry. Earlier
+revisions of this file said 270 and the count is not 270 now. How many of the
+268 are executable is a different question with a different denominator, and it
+is stated in the 2026-09-29 errata in `docs/ROADMAP-2026-Q4.md`.
 Evidence: entries exist as data, including Stripe cases with R0, R1 and R2
 tones, but there is no batch generation pipeline in the tree.
 Minimum change: overnight batch job with schema validation, human review

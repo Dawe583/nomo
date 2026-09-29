@@ -72,6 +72,10 @@ export const filesystemConformanceProfile = {
     sharedRuntimeChecksOnly: true,
   },
   certification: false,
+  certificationDecision: {
+    decidedOn: "2026-09-26",
+    reason: "The signer and the executor are the same principal, so a signature here would attest to nothing a second party could independently check.",
+  },
 } as const;
 export async function filesystemConformanceFixture(
   operation: "create" | "write" | "delete" | "rename" = "write",
@@ -182,6 +186,10 @@ export const gitConformanceProfile = {
     sharedRuntimeChecksOnly: true,
   },
   certification: false,
+  certificationDecision: {
+    decidedOn: "2026-09-26",
+    reason: "The signer and the executor are the same principal, so a signature here would attest to nothing a second party could independently check.",
+  },
   note: "create is a write scenario against an absent path, not a public action; commit is POSIX-only like the whole adapter, and on Windows the operation list is empty with recovery.win32 set to unsupported, so the run refuses rather than skipping the scenario",
 } as const;
 
@@ -331,6 +339,10 @@ export const managedDocumentsConformanceProfile = {
     sharedRuntimeChecksOnly: true,
   },
   certification: false,
+  certificationDecision: {
+    decidedOn: "2026-09-26",
+    reason: "The signer and the executor are the same principal, so a signature here would attest to nothing a second party could independently check.",
+  },
 } as const;
 
 /**
@@ -394,6 +406,10 @@ export const managedPostgresConformanceProfile = {
     sharedRuntimeChecksOnly: true,
   },
   certification: false,
+  certificationDecision: {
+    decidedOn: "2026-09-26",
+    reason: "The signer and the executor are the same principal, so a signature here would attest to nothing a second party could independently check.",
+  },
   note: "The adapter derives its id from the configured workspace, so this profile publishes the conformance workspace instance of version 2 and no other; PGlite is a real in-process engine, so what is measured is the local transaction boundary and the configured tenant policy, not a networked cluster.",
 } as const;
 

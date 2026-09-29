@@ -95,6 +95,55 @@ describe("capability profile schema", () => {
     assert.match(errorsOf({ ...base, certification: { ...evidence, signedBy: "us" } }), /unknown field "signedBy"/);
   });
 
+  test("a certification decision is optional, and a present one has to carry a real date", () => {
+    assert.deepEqual(validateCapabilityProfile(base), []);
+    assert.deepEqual(
+      validateCapabilityProfile({
+        ...base,
+        certificationDecision: {
+          decidedOn: "2026-09-26",
+          reason: "the signer and the executor are one principal",
+        },
+      }),
+      [],
+    );
+    // A format check alone would accept these, because `Date` reads
+    // "2026-02-30" as March 2 and "2026-13-45" as nothing at all.
+    for (const decidedOn of ["2026-02-30", "2026-13-45", "26-09-2026", "2026-09-26T00:00:00.000Z", "last week"]) {
+      assert.match(
+        errorsOf({ ...base, certificationDecision: { decidedOn, reason: "because" } }),
+        /certificationDecision\.decidedOn must be a real calendar date/,
+        decidedOn,
+      );
+    }
+    assert.match(
+      errorsOf({ ...base, certificationDecision: { decidedOn: "2026-09-26", reason: "" } }),
+      /certificationDecision\.reason must name why/,
+    );
+    assert.match(
+      errorsOf({ ...base, certificationDecision: "2026-09-26" }),
+      /certificationDecision must be an object/,
+    );
+    assert.match(
+      errorsOf({ ...base, certificationDecision: { decidedOn: "2026-09-26", verdict: "false" } }),
+      /unknown field "verdict"/,
+    );
+  });
+
+  test("a dated decision does not certify anything by itself", () => {
+    const decided: CapabilityProfile = {
+      ...base,
+      certificationDecision: {
+        decidedOn: "2026-09-26",
+        reason: "the signer and the executor are one principal",
+      },
+    };
+    assert.deepEqual(certificationStatus(decided), {
+      certified: false,
+      sharedRuntimeChecksOnly: true,
+    });
+  });
+
   test("a misspelled field is refused rather than silently ignored", () => {
     assert.deepEqual(validateCapabilityProfile({ ...base, certifcation: true }), [
       'unknown field "certifcation"',

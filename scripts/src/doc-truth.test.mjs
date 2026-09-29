@@ -381,3 +381,133 @@ test("the inventory covers every pre-split path the pack still names", () => {
     `uninventoried dead references in the context pack:\n${strays.join("\n")}`,
   );
 });
+
+/**
+ * The pointer must not carry the values it points away from.
+ *
+ * `GUI-RULES.md` stacked three visual directions by date, named colours and
+ * named fonts, and `STANDARDS.md` separately required monospace for every
+ * label, which the same file forbids elsewhere. Both were corrected by hand
+ * once and both drift back within a release, because a document that repeats a
+ * value is one more place to fix it. The design system owns the values and the
+ * token file owns the system, so the gate is that the pointer owns none: a
+ * literal, or a family from a direction a decision already removed, fails.
+ *
+ * Naming the word "monospaced" is not the defect, because the surviving rule
+ * needs it, so the standards check looks for a statement pairing it with an
+ * interface word the old rule covered. A decision log needs the same ordering,
+ * because the newest answer governs and a replacement written above the one it
+ * replaces leaves the pack with two authorities and no way to tell which is
+ * current.
+ */
+
+/** Faces a superseded direction named, and the platform faces a claim cannot. */
+const SUPERSEDED_FACES = [
+  "Inter",
+  "Instrument Serif",
+  "JetBrains Mono",
+  "SF Pro",
+  "system-ui",
+];
+
+/** Interface words the removed monospace rule covered. */
+const INTERFACE_WORDS = [
+  "label",
+  "kicker",
+  "tag",
+  "button",
+  "table header",
+  "caption",
+  "number",
+  "status word",
+];
+
+/** The newest decision in the pack. Renaming that heading renames this. */
+const NEWEST_DECISION = "## Package names, 2026-09-29";
+
+const MONO_FOR_INTERFACE = /\bmono\w*/i;
+const NAMES_INTERFACE_WORD = new RegExp(
+  `\\b(?:${INTERFACE_WORDS.join("|")})\\b`,
+  "i",
+);
+
+test("the pointer names no value, and the newest decision is the last one", () => {
+  // Pinned by count, because a loop over an emptied list asserts nothing. That
+  // hole is why the document lists above carry CORE_OPERATIONAL.
+  assert.ok(
+    SUPERSEDED_FACES.length >= 5,
+    `SUPERSEDED_FACES lists only ${SUPERSEDED_FACES.length} faces, so a named font can pass`,
+  );
+  assert.ok(
+    INTERFACE_WORDS.length >= 8,
+    `INTERFACE_WORDS lists only ${INTERFACE_WORDS.length} words, so the monospace check covers almost nothing`,
+  );
+
+  // Global, so a family name wrapped across a line break is still one match,
+  // the way deadPaths scans a whole document rather than a line at a time.
+  const literals = [
+    [/#[0-9a-f]{3,8}\b/gi, "a hex colour"],
+    [/\b(?:rgba?|hsla?)\(/gi, "an rgb or hsl literal"],
+    [
+      new RegExp(
+        `\\b(?:${SUPERSEDED_FACES.map((face) => face.replace(" ", "\\s+")).join("|")})\\b`,
+        "gi",
+      ),
+      "a named font family",
+    ],
+  ];
+  const claims = [];
+  const gui = read("docs/GUI-RULES.md");
+  for (const [pattern, what] of literals) {
+    for (const match of gui.matchAll(pattern)) {
+      const line = gui.slice(0, match.index).split("\n").length;
+      claims.push(`docs/GUI-RULES.md:${line}: ${what}: ${match[0]}`);
+    }
+  }
+  assert.deepEqual(
+    claims,
+    [],
+    `the GUI pointer restates a value the design system owns:\n${claims.join("\n")}\n` +
+      "Delete the value and point at docs/APPLE-DESIGN-SYSTEM.md instead.",
+  );
+
+  // Statement by statement, not line by line: the removed rule wrapped between
+  // "mono for everything else:" and the list of interface words, so a per-line
+  // scan passed the exact text this gate exists to reject. A bullet, and the
+  // wrapped lines inside it, is the unit a reader takes the rule in.
+  const BULLET = /^\s*[-*+] /;
+  const lines = read("docs/STANDARDS.md").split("\n");
+  const offenders = [];
+  let start = 0;
+  for (let i = 0; i <= lines.length; i++) {
+    const bullet = i < lines.length && BULLET.test(lines[i]);
+    const blank = i < lines.length && lines[i].trim() === "";
+    if (!bullet && !blank && i !== lines.length) continue;
+    const statement = lines.slice(start, i).join(" ");
+    if (MONO_FOR_INTERFACE.test(statement) && NAMES_INTERFACE_WORD.test(statement))
+      offenders.push(`docs/STANDARDS.md:${start + 1}`);
+    // A bullet opens the next statement; a blank line only closes this one.
+    start = bullet ? i : i + 1;
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `these statements require a monospaced face for interface text:\n${offenders.join("\n")}\n` +
+      "A monospaced face is for code, identifiers and numeric columns.",
+  );
+
+  // Phase 0 row 1 promised this ordering and nothing enforced it, so the newest
+  // answer is pinned by name rather than by position in a table somewhere else.
+  const dated = [
+    ...read("docs/DECISIONS.md").matchAll(/^## .*\d{4}-\d{2}-\d{2}.*$/gm),
+  ].map((match) => match[0].trim());
+  assert.ok(
+    dated.length > 0,
+    "docs/DECISIONS.md has no dated section, so no decision is pinned as current",
+  );
+  assert.equal(
+    dated.at(-1),
+    NEWEST_DECISION,
+    `the last dated section in docs/DECISIONS.md is "${dated.at(-1)}", not "${NEWEST_DECISION}", so the log ends on a decision a later one already replaced`,
+  );
+});

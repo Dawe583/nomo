@@ -18,18 +18,24 @@ What the research behind this roadmap established, and what it did not:
 - **The engineering core is real.** A governed write-path proxy over stdio, a
   signed hash-chained ledger with a dependency-free standalone verifier, a
   fail-closed policy engine, a reversibility registry with 268 entries, three
-  executable capture-and-inverse paths, and a managed runtime for filesystem,
-  Postgres and Git. The workspace gate runs 13 suites and about 1,800 tests
-  green as of 2026-09-28.
+  legacy capture-and-inverse bindings, four managed adapters, and a managed
+  runtime for filesystem, Postgres and Git. The gate that produces the number
+  is `node scripts/src/check-tests.mjs`, and on 2026-09-29 its last line read
+  `13 suites, 1817 tests` with one failing test in a file a concurrent change
+  owned, so the green count on a settled tree is unverified.
 - **The central claim is narrower than the marketing.** "Signed and verifiable"
   is true, and it is worth saying: the signature proves a process holding a key
   wrote the bytes and the chain is internally consistent. Nothing more. Until
   the signer and the executor are separated, the word "trust" is not available
   and the product says "record". `OPERATIONS.md` is the honest version and the
   website should quote it rather than paraphrase it.
-- **Three of the 268 registry entries are executable.** The other 265 are
-  description. A reader who counts 268 and then finds three has been misled, and
-  that number is a liability until the pipeline exists or the claim changes.
+- **Three of the 268 registry entries are executable, and they are not the whole
+  executable surface.** The three are the legacy proxy root's binding names, the
+  other 265 are description, and four managed adapters are executable under
+  names that are not registry entries at all. A reader who counts 268 and then
+  finds three has been misled, and that number is a liability until the pipeline
+  exists or the claim changes. The errata at the end of this document states the
+  two denominators and what executable means for each.
 - **The strongest external evidence is negative.** Two independent research
   passes found no security team buying signed, attributable agent action, and no
   competitor above a few thousand stars. This is a reasonably strong negative,
@@ -50,7 +56,7 @@ still not done.
 
 | Task | Acceptance |
 | --- | --- |
-| Collapse the three ledgers into one with a stable ID and a date; archive the other two rather than deleting them, because the history is why the work exists | every open item in the old namespaces maps to a row in the survivor, and a script fails on an ID that is not in it |
+| Refused 2026-09-26, do not execute: collapse the three ledgers into one with a stable ID and a date; archive the other two rather than deleting them, because the history is why the work exists | Refused by the scope answer in `docs/DECISIONS.md`, repeated in `docs/STATUS-INDEX.md`. The index stays, and each closed item is recorded once, in the closed table inside `docs/OPEN-WORK-AUDIT.md` |
 | Re-run the open-work audit against the current commit and correct the rows the decisions already answered | the companion write-scope row and the architecture row are no longer open decisions, because `DECISIONS.md` answers both |
 | Name the one unreproduced test failure or explain it | the matrix row stops saying an unnamed failure is open |
 | Record the 2026-09-28 platform decision in the pack | see `PLATFORM-REDESIGN-PLAN.md` phase 0 |
@@ -126,7 +132,7 @@ it is a track rather than a value.
 | --- | --- |
 | Promote the qualification from the review documents into the README | the asset that matters most externally is buried in an internal review |
 | Replace the word trust with record everywhere a person can read it | until signer separation exists, the stronger word is not available |
-| Reconcile the registry count claim, or stop making it | 268 entries and three executables is a liability in that order |
+| Reconcile the registry count claim, or stop making it | 268 entries against three legacy bindings and four managed adapters is a liability in that order, because the two are not one ratio; the errata states both |
 | Fix the five mobile web rules the stylesheet cascade silently defeats | they are already specified and already defeated, which is worse than either |
 | Give every connector one honest conformance fixture, and compose the standalone host | a passing test over a mocked client is the failure mode of an undo feature |
 | The site claims audit | illustrations that look like measurements are the thing this repository criticises elsewhere |
@@ -189,3 +195,83 @@ writing it. `docs/PREMISE-VERIFICATION.md` is a correction filter for
 `docs/VOID-FUTURE-DIRECTION.md`, not a strategy source, and the two disagree in
 several places where the correction is the right one. `docs/OPERATIONS.md` is
 the honest limit of every security claim; quote it rather than summarising it.
+
+## Errata, 2026-09-29: what above is wrong, and what was measured
+
+This section corrects the roadmap above and nothing else. It adds no task, no
+estimate and no order, because the document it corrects is a sequencing
+document and a second ledger here would be the fault the roadmap names in its
+own first paragraph. Every line below replaces a line above it, and each names
+the measurement that replaces it. Where a measurement could not be taken, the
+line says so rather than carrying the old number forward.
+
+**1. Phase 0 row 1 is refused, and the refusal is dated.** The row asks for the
+three ledgers to be collapsed into one. The scope answer in
+`docs/DECISIONS.md` ("One status index, not one status ledger", 2026-09-26)
+considered the collapse and rejected it, and `docs/STATUS-INDEX.md` repeats
+that refusal. This roadmap's own reading guide makes `docs/DECISIONS.md`
+authoritative over this document, so the row is marked refused in place and the
+dated decision stands; a sequencing document does not get to reverse it. What
+the row becomes instead is the two halves the decision actually leaves: the
+index stays, and each closed item is recorded once, in the closed table inside
+`docs/OPEN-WORK-AUDIT.md`, so a reader who arrives at the audit first does not
+rebuild finished work. The row is not deleted, because a reader comparing this
+roadmap against the decision log has to be able to see that the two disagreed
+and that the decision log won.
+
+**2. The test count was asserted rather than measured, and is now named.** The
+sentence above used to say "about 1,800 tests green as of 2026-09-28". Run on
+2026-09-29, `node scripts/src/check-tests.mjs` printed `13 suites, 1817 tests`
+and exited 1: the `scripts` suite reported 150 passing and one failing, the
+failure being "every static theme-color equals the canvas token of the page it
+belongs to" at `scripts/src/design-token.test.mjs`. That file was being edited
+by a concurrent change when the run happened, so the count of green tests on a
+settled tree is unverified and the old figure is not replaced with a guess. The
+count is reproducible: run the command, and its last line is the count.
+
+**3. "Three of the 268 are executable" is one denominator stated as two.** The
+registry has 268 entries, counted by importing `registry` from
+`packages/registry/src/registry.ts` and taking its length. Executable means two
+different things in this repository, and they do not share a denominator:
+
+- **The legacy proxy root, three bindings, all three of which are registry
+  entries.** `LEGACY_BINDING_NAMES` in `packages/proxy/src/legacy-root.ts` is
+  exactly `postgres.row.update`, `postgres.row.delete` and
+  `aws.s3.object.delete`, and it is the only set the legacy production root will
+  bind. Each of the three is a registry entry id, so 3 of the 268 are
+  executable through that root and the other 265 have no binding there at all.
+  The in-code rationale is that a name earns its place only when a connector can
+  capture a before image and invert it, which is why `aws.s3.object.put` is
+  present in the registry and deliberately absent from the set: a put
+  overwrites bytes the root has never read.
+- **The managed path, four adapters, none of which is a registry entry.**
+  `providerProfiles` in `packages/cli/src/conformance.ts` publishes
+  `filesystem.managed`, `git.managed`, `managed-documents` and
+  `postgres-managed-conformance`, the last one scoped to the configured
+  workspace rather than to a provider. These four run the shared conformance
+  case list in `runAdapterConformance`, and they are named by adapter id, so
+  they are not four of the 268. A managed adapter declares its own
+  `reversibility` class, as `packages/connectors/src/filesystem/managed.ts`
+  does with `r1`, rather than inheriting one from a registry entry.
+- **The set is fail-closed, which is the part worth publishing.**
+  `resolveProviderProfile` in `packages/connectors/src/capability-profiles.ts`
+  throws for an adapter id the set does not publish and names the ids that do
+  exist, and `declareProviderProfiles` refuses a set whose profiles do not fit
+  `void.adapter-capability.v2`, so an adapter cannot ship unnamed.
+
+The honest sentence is: 268 registry entries, of which 3 are executable through
+the legacy proxy root, and 4 managed adapters that are executable under names
+outside the registry. "3 of 268" is true, is about one surface, and reads as a
+ratio over the registry, which is why it is corrected here rather than repeated.
+The other documents that quote the ratio carry the same correction: the
+registry count is 268, not 270.
+
+Two phase 0 rows above are partly discharged by the same re-run, and their dated
+record is in `docs/OPEN-WORK-AUDIT.md`, not here. The audit re-run row is met:
+the rows the decisions already answered are in a closed table dated 2026-09-29.
+The row that asks for the unnamed test failure to be named or explained is
+answered in the audit's own terms, by stating that the run which produced it was
+not retained and that the failure therefore cannot be named. Its acceptance
+criterion names `docs/RELEASE-1.0.1-MATRIX.md`, and that document still records
+the failure as open; correcting another ledger is not this errata's business, so
+the remaining disagreement is stated here rather than fixed silently.

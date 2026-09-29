@@ -1,9 +1,10 @@
 # VOID open-work audit
 
-Written 2026-09-26 against `main` at `63dbd2c`. This document reconciles the
-planning and evidence documents against the tree. It is not a summary of the
-repository and it is not a roadmap: it is a list of what is still open, with
-each item classified by what is actually blocking it.
+Written 2026-09-26 against `main` at `63dbd2c`, and re-run against the tree on
+2026-09-29. This document reconciles the planning and evidence documents
+against the tree. It is not a summary of the repository and it is not a roadmap:
+it is a list of what is still open, with each item classified by what is
+actually blocking it.
 
 ## Method, and the one rule that produced the result
 
@@ -49,6 +50,14 @@ machine, not in stubs.
 One item, one row. Other places the same gap appears are listed as
 references, not repeated as rows.
 
+Three rows were closed on 2026-09-29 and struck from this list, one row is
+partly closed, and nine more were closed before the re-run. The four are in the
+re-run table at the end of this document, which governs where it and the list
+above disagree; the nine are carried in the closed list of
+`docs/STATUS-INDEX.md` with the commit that closed each. Of the 61 row numbers
+above, 49 are open. Numbers are retired, never reused, so every cross-reference
+to a row of this audit in another document still resolves to the row it named.
+
 ### 1.1 Distribution, signing and the stores — almost entirely external
 
 | # | Item | Class | Recorded in | What done looks like |
@@ -58,7 +67,6 @@ references, not repeated as rows.
 | 3 | iOS/iPadOS distribution: provisioning profile for `com.void.companion`, `DEVELOPMENT_TEAM` in the project, archive, TestFlight, App Store Connect | **X** | Matrix P10.04, P11.01–P11.06; `PLAN-GAPS.md` G-23 | An archive of the exact candidate is accepted by App Store Connect and installs on a physical device. |
 | 4 | Windows desktop: current-source packaging, installed-application smoke and Windows filesystem/Git recovery evidence before any download is advertised | **X**, with a human step — the workflow is `workflow_dispatch`-only, so somebody has to press it | Matrix P10.09; `PLAN-GAPS.md` G-07 (Windows half), G-24; `WINDOWS-DESKTOP.md` W1–W11; `RECOVERY-COVERAGE.md` filesystem and Git rows | A green run of `.github/workflows/desktop-windows.yml` on current source: NSIS installer, silent install, `--smoke-test` exit 0, SHA-256 published. |
 | 5 | Linux native packaging — not even a bundle target in `tauri.conf.json` | **X** | `PLAN-GAPS.md` G-24 only | A Linux build and a full recovery suite on the exact candidate. |
-| 6 | Whether the phone companion ever gets write scope, or stays read-only for good | **D** | Matrix P05.03, P06.03, P07.01–P07.04, D04.02; `PLAN-GAPS.md` G-23; `APPLE-APPS-PLAN.md` A4 | A written decision. `apps/apple/VOIDApp/AppCopy.swift:143` already tells the user approval and Undo happen on the Mac; if that is the answer, most of P07 stops being work. |
 | 7 | App Store metadata, privacy labels, retention/deletion policy, support contact, reviewer instructions, screenshots, age rating, accessible test executor | **X** for the review account and reachability, **W** for the documents | Matrix P10.05, P10.07 | A privacy label and a review-notes document exist, and a reviewer can reach a safe executor. |
 | 8 | Export-compliance classification for the encryption the product ships | **D** — the matrix itself says it "cannot be inferred from source" | Matrix P10.06 | An operator records the classification and sets `ITSAppUsesNonExemptEncryption` deliberately. |
 | 9 | Account deletion path | **W**, narrowly. The docs say do not invent one, and no mounted route creates an account: `cloud/server.mjs` does not mount `cloud/auth.mjs`'s signup, the Supabase broker refuses signup while `VOID_ACCOUNT_SIGNUP` is unset, and no route accepts the invitation code one would need. Note that the trigger moved: a provider account can now sign in over `POST /api/account/signin` and own rows, so deletion becomes real work at the first real sign in, not at the first mounted signup | Matrix P10.08 | Either a tested deletion route, or a recorded statement that no account exists. |
@@ -70,15 +78,14 @@ references, not repeated as rows.
 
 | # | Item | Class | Recorded in | What done looks like |
 | --- | --- | --- | --- | --- |
-| 13 | The 1.0.1 plan's eight approval bullets: Tauri vs SwiftUI, local-network-only vs funded server connectivity, pricing/IAP, locked-Mac mutation policy, one-device-approval sufficiency, and the "if 1.0.0 was never released, say why the public version is 1.0.1" question | **D** | 1.0.1 plan §1 and §10 items 1 and 6; matrix D04.09, D04.13; `PLAN-GAPS.md` §8 | Each bullet is answered in writing. |
+| 13 | The 1.0.1 plan's eight approval bullets: Tauri vs SwiftUI, local-network-only vs funded server connectivity, pricing/IAP, locked-Mac mutation policy, one-device-approval sufficiency, and the "if 1.0.0 was never released, say why the public version is 1.0.1" question. The Tauri vs SwiftUI bullet is closed and the other six are open; see the re-run table at the end of this document | **D** | 1.0.1 plan §1 and §10 items 1 and 6; matrix D04.09, D04.13; `PLAN-GAPS.md` §8 | Each open bullet is answered in writing. |
 | 14 | Approved visual direction for Mac, iPhone and iPad, and the navigation structure | **D** | Matrix D01.01–D01.05, D04.09 | One direction is chosen before the design-system work starts. |
 | 15 | Site claims audit: the site still shows latency and tool-count figures the reverse plan already flags as non-evidence; and it prices in EUR | **D** + **W** | `PLAN-GAPS.md` G-06 (the site half), §8; `GUI-ALLINONE-PLAN.md:173` | Each claim is either evidenced or removed; the pricing currency is chosen. |
 | 16 | Whether NVIDIA NIM / GLM 5.3 Flash should be the hardcoded default provider | **D** | `packages/workbench/src/provider-defaults.ts:2`; `2026-09-21-nvidia-product-parity.md` Task 1, Task 8 | A decision. The matrix's own 2026-09-26 correction says the model is the operator's choice and the surface is provider-agnostic, while the source makes one vendor the default. Both cannot be the position. |
 | 17 | Whether to publish and independently audit the standalone ledger verifier outside the repository | **D** + **W** (the fixtures) | `PLAN-GAPS.md` G-20 residual | A versioned artifact a third party can fetch, plus an independent audit of the replicated canonicaliser. |
 | 18 | npm `@void` scope ownership and release authorization | **X** + **D** | `PLAN-GAPS.md` G-16, G-20, and the consolidated external-resources list | The scope is owned and someone is authorized to publish. |
 | 19 | Production KMS and key-rotation drill | **X** for the KMS, **W** for the drill procedure | `PLAN-GAPS.md` G-25; `docs/BETA.md`, `docs/RELEASE.md` | A rotation is performed and its evidence recorded. |
-| 20 | Registry breadth target: 270 entries today, goal 500, with "human review per batch" | **D** on the target and the review, **W** on the pipeline | `PLAN-GAPS.md` G-17; `PLAN-STATUS.md` WP-04b; `EXECUTION-PLAN.md` WP-04b | A validated batch pipeline exists and someone has decided whether 500 is still the number. |
-| 21 | Whether any adapter is ever going to claim certification, or `certification: false` is the permanent honest answer | **D** | Matrix P00.02, G-06; `RECOVERY-COVERAGE.md` "Verification interpretation" | A decision, written down. The schema currently refuses a bare `certification: true` as "not evidence", so there is nowhere to record a certification that does not exist. |
+| 20 | Registry breadth target: 268 entries today (re-measured 2026-09-29; this document said 270), goal 500, with "human review per batch" | **D** on the target and the review, **W** on the pipeline | `PLAN-GAPS.md` G-17; `PLAN-STATUS.md` WP-04b; `EXECUTION-PLAN.md` WP-04b | A validated batch pipeline exists and someone has decided whether 500 is still the number. Of the 268, three are executable through the legacy proxy root and four managed adapters run under names that are not registry entries; the errata in `docs/ROADMAP-2026-Q4.md` states both denominators. |
 
 ### 1.3 The reverse/recovery engine — the largest block of genuinely writable work
 
@@ -106,7 +113,6 @@ references, not repeated as rows.
 | 41 | One operational certification run recorded | **W** — a run, not a build | `PLAN-GAPS.md` G-15; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R14 | A run in `docs/UPGRADE-CHECKPOINT.md` that says what it did and did not cover. |
 | 42 | Transport hardening tail: key-rotation drill (S09), transport bounds and backpressure (S10), typed request identity across the HTTP relay (S11), Slack URL policy (S14), Docker image, fresh-install run | **W** except the publish authorization | `PLAN-GAPS.md` G-16; `docs/PRIME-HANDOFF.md`; `EXECUTION-PLAN.md` WP-15 | Each item closed with a failing-then-passing test, or explicitly dropped. |
 | 43 | A whole-tree green under the new explicit CI time budgets | **W** — a run, not a build. `pnpm test` is 671 s against a 25-minute step budget; the old shared-deadline result was the reason a killed `git.managed` run once looked green | Matrix P02.06, P03.01, P03.06; 2026-09-23 R02 plan Task 5 | `pnpm run check` exits zero end to end, and no gate is killed by a shared deadline. |
-| 44 | The one unreproduced test failure, still unnamed | **W** | Matrix §"One unreproduced test failure, recorded rather than forgotten" | The failing test is named and either fixed or explained. The matrix is explicit that "a flake in a security product is a finding in its own right, and this one is open until it can be named." |
 
 ### 1.4 The protocol, the client and the product surfaces
 
@@ -195,24 +201,30 @@ for work that is done or asserts an absence that is false.
 
 ## 4. The ratio, and what it means
 
-Tallying all 61 rows of §1 by what actually blocks the first meaningful step.
-Every row is counted exactly once.
+Tallying the rows above by what actually blocks the first meaningful step. Every
+row is counted exactly once. The list above holds 61 rows; 12 of them are closed
+and 49 are open, and the table counts the 49. The three struck on 2026-09-29 are
+in the re-run table at the end of this document, and the nine closed before the
+re-run are carried in the closed list of `docs/STATUS-INDEX.md` with the commit
+that closed each. Rows 23 and 47 are partly closed and count as open. On
+2026-09-26, when every row was open, the same tally was 22, 11, 7, 7, 11, 2 and
+1, which is 61.
 
 | | Count |
 | --- | --- |
-| Writable code, nothing outside this machine or a human decision blocks it | **22** |
+| Writable code, nothing outside this machine or a human decision blocks it | **13** |
 | Writable code, but the stated acceptance gate needs something outside the machine | **11** |
 | Writable code, but a human decision comes first | **7** |
-| Blocked purely on a human decision | **7** |
+| Blocked purely on a human decision | **4** |
 | Blocked purely on something outside the machine | **11** |
 | Needs both a human decision and an external resource | **2** |
 | Needs a protocol-contract revision, not adapter work (item 46) | **1** |
-| **Total open items** | **61** |
+| **Total open items** | **49** |
 
-Read as the ratio the brief asks for: **40 of the 61 are code that could be
-written on this machine today** — 22 with nothing at all in the way, 11 whose
+Read as the ratio the brief asks for: **31 of the 49 are code that could be
+written on this machine today** (13 with nothing at all in the way, 11 whose
 code is writable but whose acceptance gate is an Apple account or a disposable
-bucket, and 7 that need a decision before the first line. **21 are waiting on
+bucket, and 7 that need a decision before the first line). **17 are waiting on
 the user or on something outside the machine**, and 1 needs a v1.1 contract
 rather than any implementation work.
 
@@ -230,10 +242,12 @@ The true writable backlog is also more concentrated than the documents suggest:
   identity, a provisioning profile, an App Store Connect role, and somebody to
   press the `workflow_dispatch` button on a workflow that is otherwise ready.
   Items 1–5 and 10.
-- The three decisions that actually change what the next quarter is for are
+- The three decisions that actually change what the next quarter is for were
   items 6, 21 and 16: whether the phone ever gets write scope, whether anything
-  is ever certified, and whether one vendor is the default. All three are the
-  user's calls, and all three are cheaper to make than to keep deferring.
+  is ever certified, and whether one vendor is the default. All three are
+  answered now, two of them in the re-run table at the end of this document and
+  the third in the closed list of `docs/STATUS-INDEX.md`. The re-run found no
+  fourth decision of that weight still open.
 
 So: about two thirds of what is left can be written today, and about one third
 is blocked on a person or a resource. That ratio is a finding, not a
@@ -333,8 +347,10 @@ is a documentation decision with an owner, so it is not done here.
 - Adapter set: `git/managed.ts:44`, `postgres/managed.ts:654` both export
   factories returning `RecoveryAdapter`; `git/managed.ts:357-475` dispatches
   `commit`; `recovery.ts` defines the six-method contract.
-- Conformance: `packages/cli/src/conformance.ts` publishes exactly three
-  profiles; `gitConformanceProfile.operations` is
+- Conformance: `packages/cli/src/conformance.ts` published exactly three
+  profiles on 2026-09-26 and publishes four now, `filesystem.managed`,
+  `git.managed`, `managed-documents` and `postgres-managed-conformance`;
+  `gitConformanceProfile.operations` is
   `["create","write","delete","rename","stage","unstage"]` with `commits` under
   `excluded`.
 - `ServerBudgetLedger` / `serverBudgetLedger` — zero consumers outside
@@ -351,8 +367,79 @@ is a documentation decision with an owner, so it is not done here.
 - `apps/desktop/src-tauri/tauri.conf.json:16` — bundle targets `["app","dmg"]`,
   no Linux or Windows target.
 - `.github/workflows/desktop-windows.yml` — `workflow_dispatch` only.
-- `packages/registry/src/registry.ts` — 270 entries, so the 500 target is unmet.
+- `packages/registry/src/registry.ts` — 268 entries on 2026-09-29, not the 270 this
+  list recorded on 2026-09-26, so the 500 target is unmet.
 - First-party source — no `TODO`, `FIXME` or unimplemented marker.
 
-No existing file was modified. The full `pnpm test` was not re-run; the
-targeted checks above were used instead, per the brief.
+That pass modified no existing file. The 2026-09-29 re-run at the end of this
+document modified this one and no other, and the full `pnpm test` was still not
+re-run; the measurements behind the re-run are listed with it.
+
+## 7. Re-run against the tree, 2026-09-29
+
+This is a re-run, not a second audit. Every row above was written on 2026-09-26
+against `main` at `63dbd2c` and is left as it was written, because a dated record
+that silently absorbs a later correction is not a record. What follows is what
+the tree says today, and where the two disagree this section governs.
+
+### 7.1 Closed since this audit was written
+
+| Row | Closed | By what | What closed it |
+| --- | --- | --- | --- |
+| 6 | 2026-09-26 | "The phone companion stays read-only" in `docs/DECISIONS.md` | The shipped app is read-only by construction, `apps/apple/VOIDApp/AppCopy.swift` already tells the user that approval and Undo happen on the Mac, and pairing a device with write scope is an operator opt-in that is off by default. Matrix `P05.03` is struck at line 946 of `docs/RELEASE-1.0.1-MATRIX.md`, and the read-only half that stays open is implemented and recorded in `docs/IOS-CACHE-AND-REMOVAL-POLICY.md`. |
+| 13, architecture bullet | 2026-09-28 | "macOS becomes a SwiftUI target in the same project as iOS" in `docs/DECISIONS.md` | The Tauri vs SwiftUI question is answered and dated. The Tauri shell stays as the desktop distribution that carries the Node sidecar, because that is a packaging question and the earlier answer conflated the two. Matrix `D04.09` and `D04.13`, at lines 1039 and 1043 of `docs/RELEASE-1.0.1-MATRIX.md`, still read Open; this re-run does not correct another ledger, and the disagreement is recorded here instead. The other six bullets of row 13 stay open. |
+| 21 | 2026-09-26 | "`certification: false` is the permanent honest answer" in `docs/DECISIONS.md` | Every published capability profile carries the field, `void.adapter-capability.v2` refuses a bare `certification: true` as "not evidence", and the reason is written down rather than widened into a schema for a state that does not exist. The gap the answer exposed stays visible: a profile lists the bound it measured and names the absence in `excluded` rather than leaving the field to be read as a limit. |
+| 44 | 2026-09-29 | this document, by stating what is and is not known | The failing test cannot be named, and the reason is that the run that produced it was not retained. `docs/RELEASE-1.0.1-MATRIX.md` records one test failure it could not reproduce and keeps it open "until it can be named"; no output, log, or test identifier from that run survives anywhere in the tree, so there is nothing to name, and re-running the suite would produce a different result rather than identify that one. The row is therefore closed as unnameable rather than left on the list as work nobody can pick up. This is the answer the row asked for, and it is a statement about the record rather than a fix. The matrix still records the failure as open, because the matrix is not this document and this re-run does not edit another ledger. |
+
+Nine further rows were closed before this re-run and are not duplicated here:
+9, 12, 16, 22, 28, 29, 35, 41 and 49, each with the commit that closed it in
+the closed list of `docs/STATUS-INDEX.md`. Rows 23 and 47 are partly closed and
+count as open. Twelve of the 61 rows are therefore closed and 49 are open, which
+is the set section 4 now counts.
+
+### 7.2 What else this re-run corrects
+
+- **The "exactly three profiles" line in the 2026-09-26 verification list is
+  now corrected in place.** The set publishes four ids: `filesystem.managed`,
+  `git.managed`, `managed-documents` and `postgres-managed-conformance`, the
+  last one scoped to the configured workspace rather than to a provider. The
+  count of three was true on 2026-09-26.
+- **Section 6 finding 2 is superseded for the same reason.** It reports that
+  `managed-postgres` ships a full `RecoveryAdapter` with no profile at all. That
+  stopped being true when the fourth profile was published, and the set is
+  fail-closed in both directions: `resolveProviderProfile` in
+  `packages/connectors/src/capability-profiles.ts` refuses an adapter id the set
+  does not publish and names the ids that do exist, so an adapter cannot ship
+  unnamed.
+- **Section 6 finding 4 is answered.** The companion write-scope question was
+  open when this audit was written and was decided on 2026-09-26, so the largest
+  remaining block it names is no longer gated on a decision.
+- **Row 16 is answered as well, and is not re-litigated here.** The default
+  provider question was decided on 2026-09-26 and `docs/STATUS-INDEX.md` already
+  carries it in its closed list. The row stays in the table above as it was
+  written, so this document does not duplicate a list that exists elsewhere.
+- **The registry count was wrong here twice.** Row 20 and the verification list
+  above both said 270 entries. The tree has 268, and the executable ratio is two
+  denominators rather than one; the errata at the end of `docs/ROADMAP-2026-Q4.md`
+  states both.
+
+### 7.3 Measurements taken for this re-run
+
+- `registry` in `packages/registry/src/registry.ts`, imported and measured
+  directly: 268 entries, and 48 distinct vendors from `registryVendors()`. The
+  `grep -c '^    id:'` form named in `docs/PLAN-GAPS.md` returns the same 268.
+- `LEGACY_BINDING_NAMES` in `packages/proxy/src/legacy-root.ts`: three names,
+  `postgres.row.update`, `postgres.row.delete` and `aws.s3.object.delete`, and
+  all three are registry entry ids.
+- `providerProfiles` in `packages/cli/src/conformance.ts`: the four ids named
+  above, none of which is a registry entry id.
+- `node scripts/src/check-tests.mjs`, run 2026-09-29: `13 suites, 1817 tests`,
+  exit 1, with one failing test in `scripts/src/design-token.test.mjs` in a file
+  a concurrent change owned at the moment of the run. The count of green tests
+  on a settled tree is therefore unverified, and no replacement figure is
+  asserted here.
+
+Not verified by this re-run: whether the four remaining decisions in row 13 have
+since been answered outside this tree, and whether any of the 58 open rows
+changed for a reason that leaves no trace in a commit or a dated decision. Those
+need a reading of the source, not a count.

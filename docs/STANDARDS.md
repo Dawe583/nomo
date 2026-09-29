@@ -457,8 +457,11 @@ colour literal or an unprefixed keyframe, and when a static
   alpha, because a shadow is a design value. Hover is a background tint of
   `var(--raised)`, never a lift. Cells are separated by 1px `var(--line)` rules
   at `gap: 0`.
-- Serif for headlines, sans for body copy, mono for everything else: every
-  label, kicker, tag, button, table header, caption, number and status word.
+- The interface face is the platform UI font, resolved by the platform rather
+  than downloaded. A serif is not a platform default on any VOID surface, and a
+  monospaced face is for code, identifiers and numeric columns, where the fixed
+  width carries meaning. Anywhere else it reads as machine output, and
+  interface text is not machine output.
 - Prefix every keyframe with `v-`. Tailwind ships `ping`, `spin`, `pulse` and
   `bounce`, and an unprefixed keyframe is silently overridden.
 - Never write a bare descendant `span` rule; scope to `> span`. Never set

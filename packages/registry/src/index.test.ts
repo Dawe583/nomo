@@ -10,8 +10,16 @@ import {
 } from "./index.ts";
 
 describe("@void/registry", () => {
-  test("reports the exported registry entry count", () => {
-    assert.equal(registryStats().entries, registry.length);
+  test("the registry has the breadth the record states", () => {
+    // These two numbers are a contract, not an accident. Breadth is quoted
+    // out loud in the status record, and checking only that the stats match
+    // the array pins nothing: a document could say 270 or 268 and no
+    // assertion would notice. Measured from packages/registry/src/registry.ts
+    // on 2026-09-29 and pinned here, so moving either number is a decision
+    // somebody has to make and the record has to follow, not a refactor that
+    // silently changes a published claim.
+    assert.equal(registry.length, 268, "registry entry count");
+    assert.equal(registryStats().vendors, 48, "registry vendor count");
   });
 
   test("every entry ends with an unguarded fallback case", () => {

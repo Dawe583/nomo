@@ -1099,3 +1099,40 @@ shipping the ledger. That argument is overridden, not refuted, and the override
 has a price: the redesign is roughly a quarter of the available sessions for two
 months, and the sequence in `docs/ROADMAP-2026-Q4.md` exists so that reaching a
 first user does not wait for the macOS client to exist.
+
+## Package names, 2026-09-29
+
+Taken because `docs/ROADMAP-2026-Q4.md` lists the package name as its own
+unresolved item, and because the same roadmap makes the scope the longest-lead
+external gate in the quarter. What follows is a rule. It is not a name, and it
+does not claim one exists.
+
+**Product packages keep the `@void/<package>` convention, and owning the scope is
+a human action that has not happened.** All ten packages under `packages/` are
+named `@void/registry`, `@void/ledger`, `@void/policy`, `@void/proxy`,
+`@void/cli`, `@void/connectors`, `@void/runtime`, `@void/sdk`, `@void/verifier`
+and `@void/workbench` today, and nothing in this section renames any of them. A
+scope is owned by an account, so owning `@void` means an organisation, a
+verified account and a publish authorization, and none of the three exists yet.
+That is the item the roadmap calls B2, and it is a person with a credit card
+rather than an engineer with a branch. The consequence is stated here because it
+is easy to read past: until the scope is owned, no package in this repository is
+publishable, and no build, packaging or workflow work changes that.
+
+**The unscoped name is chosen at publication time and written down then, with
+the reason.** `void` and `void-cli` are both taken on npm: `npm view void`
+returned 0.21.2 and `npm view void-cli` returned 1.0.0 when measured on
+2026-09-29. The decision is therefore not which unscoped name to use, but that
+the choice belongs to whoever is authorized to publish, is made at the moment of
+publication, and is recorded in this log with the name, the reason and the date.
+A name picked now would be a name nobody has checked, and the whole argument of
+this repository is that a claim without a measurement is not a claim. Until
+that entry exists, this repository has no unscoped name, and any document that
+reads as though it does is wrong.
+
+**This settles the shape of the question and not its answer.** In
+`docs/ROADMAP-2026-Q4.md` the scope gates B1, B3, B4, B5 and B6, and the
+ordering there already says to start it first. What this section removes is the
+possibility of treating the name as engineering work to be closed alongside the
+scope, which is the failure a roadmap invites when it lists a decision and its
+prerequisite on the same page.

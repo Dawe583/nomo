@@ -1,6 +1,7 @@
 # Status index: one question, three ledgers, and the crosswalk
 
-Written 2026-09-26 after the decision recorded in `docs/DECISIONS.md`. Three
+Written 2026-09-26 after the decision recorded in `docs/DECISIONS.md`, and
+updated 2026-09-29 against the re-run of `docs/OPEN-WORK-AUDIT.md`. Three
 documents in this repository present themselves as status ledgers, none of them
 knows about the other two, and they use three unrelated id namespaces. The
 consequence is not tidiness: a reader who asks "is this one thing done?" gets
@@ -18,7 +19,7 @@ not an agreement between them, and the three may still disagree.
 | What does the 1.0.1 release require, and what evidence grade does each requirement have? | `docs/RELEASE-1.0.1-MATRIX.md`, ids `P00.01`-`P11.06` and `D01.01`-`D04.13` | Not a schedule and not a statement that anything shipped |
 | What is missing from the reverse and recovery engine, and what is each gap blocked on? | `docs/PLAN-GAPS.md`, ids `G-01`-`G-26` | Not a requirements list; several rows have no requirement row at all |
 | What was each work package supposed to deliver? | `docs/PLAN-STATUS.md`, ids `WP-00`-`WP-15`, `R00`-`R14`, `E0`-`E9`, `A1`-`A5` | Not current. It was written on 2026-09-16 against `main` at `4c82c37` and at least nine of its rows are false against the tree |
-| What is still open, classified by what actually blocks it? | `docs/OPEN-WORK-AUDIT.md` rows 1-61 | Not a plan and not a summary |
+| What is still open, classified by what actually blocks it? | `docs/OPEN-WORK-AUDIT.md` rows 1-61, of which 49 are open after the 2026-09-29 re-run | Not a plan and not a summary |
 
 The authority for any factual claim is the tree. A status document is a record
 of what somebody believed on a date, and this repository has a gate
@@ -40,36 +41,40 @@ There is no id in one namespace that means the same thing as an id in another.
 
 ## The crosswalk
 
-One row per open gap, with every place that gap is recorded listed against it.
-The gap text, its class and its references are taken from
-`docs/OPEN-WORK-AUDIT.md` §1, which reconciled all three ledgers against the
-tree on 2026-09-26. An empty cell means no document in that namespace records
-the gap, which is itself the finding: it is why a reader asking the wrong
-document gets told a thing is finished.
+One row per gap, with every place that gap is recorded listed against it. The
+gap text, its class and its references are taken from `docs/OPEN-WORK-AUDIT.md`
+section 1, which reconciled all three ledgers against the tree on 2026-09-26.
+An empty cell means no document in that namespace records the gap, which is
+itself the finding: it is why a reader asking the wrong document gets told a
+thing is finished.
 
-| # | Open gap | Class | Recorded in the matrix (`P`/`D`) | Recorded in `PLAN-GAPS` (`G`) | Recorded in `PLAN-STATUS` (`WP`/`R`/`E`/`A`) |
+The table carries 58 rows, because rows 6, 21 and 44 left it on 2026-09-29 and
+are in the closed table below. It is not a list of open work: 49 of its rows are
+open and 12 are closed, the 9 that were already closed when this index was
+written still being here. Use the closed table, not the row count, to decide
+whether something is open.
+
+| # | Gap | Class | Recorded in the matrix (`P`/`D`) | Recorded in `PLAN-GAPS` (`G`) | Recorded in `PLAN-STATUS` (`WP`/`R`/`E`/`A`) |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Mac App Store signed-sandbox build and the seven sandbox behaviours it must support (entitlement inheritance,… | X (the architecture half is D) | P01.01, P01.02, P01.03, P01.04, P01.05, P01.06, P01.07 | — | A5 |
 | 2 | Developer ID Application identity, notarization, stapling and a published DMG with a matching SHA-256 | X | P10.03 | G-22 | A1 |
 | 3 | iOS/iPadOS distribution: provisioning profile for `com.void.companion`, `DEVELOPMENT_TEAM` in the project, arc… | X | P10.04, P11.01, P11.02, P11.03, P11.04, P11.05, P11.06 | G-23 | — |
 | 4 | Windows desktop: current-source packaging, installed-application smoke and Windows filesystem/Git recovery evi… | X, with a human step — the workflow is `workflow_dispatch`-only, so somebody has to press it | P10.09 | G-07, G-24 | — |
 | 5 | Linux native packaging — not even a bundle target in `tauri.conf.json` | X | — | G-24 | — |
-| 6 | Whether the phone companion ever gets write scope, or stays read-only for good | D | P05.03, P06.03, P07.01, P07.02, P07.03, P07.04, D04.02 | G-23 | A4 |
 | 7 | App Store metadata, privacy labels, retention/deletion policy, support contact, reviewer instructions, screens… | X for the review account and reachability, W for the documents | P10.05, P10.07 | — | — |
 | 8 | Export-compliance classification for the encryption the product ships | D — the matrix itself says it "cannot be inferred from source" | P10.06 | — | — |
 | 9 | Account deletion path | W, narrowly — the docs say do not invent one; `cloud/server.mjs` does not mount `cloud/auth.mjs`'s signup | P10.08 | — | — |
 | 10 | External beta cohort: 10 testers across the device matrix, 7 days, 100 recorded recovery journeys, incident re… | X | P11.01, P11.02, P11.03, P11.04, P11.05, P11.06 | — | — |
 | 11 | Support, legal and privacy owners named | D | P10.05 | — | — |
 | 12 | `docs/GO-TO-MARKET.md` is marked confidential and must leave the tree before any open-core publication | W (one deletion) | — | — | — |
-| 13 | The 1.0.1 plan's eight approval bullets: Tauri vs SwiftUI, local-network-only vs funded server connectivity, p… | D | D04.09, D04.13 | — | — |
+| 13 | The 1.0.1 plan's eight approval bullets: Tauri vs SwiftUI (closed 2026-09-28, see the closed table), local-network-only vs funded server connectivity, p… | D | D04.09, D04.13 | — | — |
 | 14 | Approved visual direction for Mac, iPhone and iPad, and the navigation structure | D | D01.01, D01.02, D01.03, D01.04, D01.05, D04.09 | — | — |
 | 15 | Site claims audit: the site still shows latency and tool-count figures the reverse plan already flags as non-e… | D + W | — | G-06 | — |
 | 16 | Whether NVIDIA NIM / GLM 5.3 Flash should be the hardcoded default provider | D | — | — | — |
 | 17 | Whether to publish and independently audit the standalone ledger verifier outside the repository | D + W (the fixtures) | — | G-20 | — |
 | 18 | npm `@void` scope ownership and release authorization | X + D | — | G-16, G-20 | — |
 | 19 | Production KMS and key-rotation drill | X for the KMS, W for the drill procedure | — | G-25 | — |
-| 20 | Registry breadth target: 270 entries today, goal 500, with "human review per batch" | D on the target and the review, W on the pipeline | — | G-17 | WP-04b |
-| 21 | Whether any adapter is ever going to claim certification, or `certification: false` is the permanent honest an… | D | P00.02 | G-06 | — |
+| 20 | Registry breadth target: 268 entries today (re-measured 2026-09-29; the file said 270), goal 500, with "human review per batch". Of the 268, three are executable through the legacy proxy root and four managed adapters run under names that are not registry entries, so the two are separate denominators; the errata in `docs/ROADMAP-2026-Q4.md` states both | D on the target and the review, W on the pipeline | — | G-17 | WP-04b |
 | 22 | Wire the R10 server budget ledger into a real host. `serverBudgetLedger` in `packages/runtime/src/budget.ts` h… | W | — | G-14 | R10 |
 | 23 | Planner selectors: dependency, time and checkpoint selection; independent branch continuation; a cloud MCP job… | W | — | G-03 | R06 |
 | 24 | Populate `readSet` / `writeSet` / `revision` for every adapter at dispatch, and compute descendant closure gen… | W | — | G-04 | R07 |
@@ -92,7 +97,6 @@ document gets told a thing is finished.
 | 41 | One operational certification run recorded | W — a run, not a build | — | G-15 | R14 |
 | 42 | Transport hardening tail: key-rotation drill (S09), transport bounds and backpressure (S10), typed request ide… | W except the publish authorization | — | G-16 | WP-15 |
 | 43 | A whole-tree green under the new explicit CI time budgets | W — a run, not a build. `pnpm test` is 671 s against a 25-minute step budget; the old shared-deadline result was the reason a killed `git.managed` run once looked green | P02.06, P03.01, P03.06 | — | R02 |
-| 44 | The one unreproduced test failure, still unnamed | W | — | — | — |
 | 45 | Freeze the companion protocol properly: shared Swift/TypeScript fixtures for every outcome, the boundary-and-b… | W for the fixtures and the matrix, D for who reviews | P04.01, P04.02, P04.03, P04.04, P04.05 | — | — |
 | 46 | Publish `device.pair` in the handshake capability catalog | R as an adapter change — it needs a v1.1 contract change, because the frozen catalog derives from the frozen `operations` set | — | — | — |
 | 47 | Paired-device security: start-pairing with invitation expiry and single use, native secure credential storage,… | W as code, gated on item 6 | P05.01, P05.02, P05.03, P05.04, P05.05, P05.06 | — | — |
@@ -114,16 +118,17 @@ document gets told a thing is finished.
 
 Read the coverage, not the individual rows:
 
-- **Seven gaps are recorded in none of the three ledgers**: rows 12, 16, 28, 44,
-  46, 59 and 60. Row 28 was the managed PostgreSQL adapter that no capability
-  profile named, which is now published; row 44 is the one test failure nobody
-  has named. A gap no ledger records is a gap nobody is tracking.
+- **Six gaps are recorded in none of the three ledgers**: rows 12, 16, 28, 46, 59
+  and 60. Three of those are closed, rows 12, 16 and 28, so of the 49 open gaps
+  three are tracked nowhere: 46, 59 and 60. Row 28 was the managed PostgreSQL
+  adapter that no capability profile named, which is now published. A gap no
+  ledger records is a gap nobody is tracking.
 - **Two gaps are recorded in all three**: the managed PostgreSQL capability
   profile and the Git commit lifecycle, which the audit found as code that
-  existed and no document advertised.
-- **Fifty-two of the sixty-one are recorded in one or two of them.** That is the
-  structural finding: the same work is tracked in places that cannot see each
-  other, so closing it in one leaves the other two claiming it is open.
+  existed and no document advertised. Both are closed.
+- **Fifty of the fifty-eight rows are recorded in one or two of them.** That is
+  the structural finding: the same work is tracked in places that cannot see
+  each other, so closing it in one leaves the other two claiming it is open.
 
 ## How to ask whether one thing is done
 
@@ -138,9 +143,11 @@ Read the coverage, not the individual rows:
 
 ## Closed since the audit was written
 
-The audit is a dated record against `63dbd2c`. These rows were open when it was
-written and are not open now. The tree is the authority; this list exists so a
-reader who arrives at the audit first does not rebuild finished work.
+The audit is a dated record against `63dbd2c` and it was re-run against the tree
+on 2026-09-29. These rows were open when it was written and are not open now, so
+the list holds 13 of its 61 row numbers and 49 are open. The tree is the
+authority; this list exists so a reader who arrives at the audit first does not
+rebuild finished work.
 
 | Row | Closed by | What closed it |
 | --- | --- | --- |
@@ -153,6 +160,10 @@ reader who arrives at the audit first does not rebuild finished work.
 | 49 | `ba2e042` | the iOS cache policy, Keychain-only credential storage and a removal path that leaves no credential |
 | 16 | the scope answer in `docs/DECISIONS.md` | no provider and no model is a hardcoded default any more; the product asks on first use, the retry guard identifies a free model explicitly, and both handbooks, the README and the beta document say so |
 | 9 | the statement in `docs/APPWRITE-AUTH.md` "## Account deletion" | no mounted route creates an account: the Appwrite module is imported only by its own test, the live Supabase broker refuses signup while `VOID_ACCOUNT_SIGNUP` is unset, and no mounted route accepts the invitation code a signup would need. It is no longer true that no person can hold an account, because a provider account can now sign in over `POST /api/account/signin` and own rows. Deletion therefore becomes real work when a real provider account signs in, and the module has no deletion method to hang a route on |
+| 6 | the scope answer "The phone companion stays read-only" in `docs/DECISIONS.md`, 2026-09-26 | the shipped app is read-only by construction, `apps/apple/VOIDApp/AppCopy.swift` already tells the user that approval and Undo happen on the Mac, write pairing is an operator opt-in that is off by default, matrix `P05.03` is struck, and the read-only half that stays open is recorded in `docs/IOS-CACHE-AND-REMOVAL-POLICY.md` |
+| 13, architecture bullet | the platform answer "macOS becomes a SwiftUI target in the same project as iOS" in `docs/DECISIONS.md`, 2026-09-28 | the Tauri vs SwiftUI question is answered and dated, and the Tauri shell stays as the desktop distribution carrying the Node sidecar, which is a separate packaging question. Matrix `D04.09` and `D04.13` still read Open and were not corrected here. The other six bullets of row 13 are still open, so the row stays in the crosswalk |
+| 21 | the scope answer "`certification: false` is the permanent honest answer" in `docs/DECISIONS.md`, 2026-09-26 | every published capability profile carries the field, `void.adapter-capability.v2` refuses a bare `certification: true` as "not evidence", and the reason is written down rather than widened into a schema for a state that does not exist |
+| 44 | the 2026-09-29 re-run in `docs/OPEN-WORK-AUDIT.md`, which states why it cannot be named | no output, log or test identifier from the run that produced the failure survives anywhere in the tree, so there is nothing to name and re-running the suite would produce a different result rather than identify that one. It is closed as unnameable, which is the answer the row asked for, not a fix |
 
 Two rows are partly closed and the remainder is named rather than implied. Row 23
 has its dependency, time and checkpoint selectors wired, with cross-host fencing
