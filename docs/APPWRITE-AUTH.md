@@ -88,6 +88,31 @@ answers an MCP `initialize` and a `tools/list` over it. The elevated provision
 key stays out of runtime and deployment configuration, which includes this
 function.
 
+The endpoint's own code path is covered offline, by a suite that runs the
+real adapter against a fake Appwrite function context. It lives at
+`apps/appwrite-mcp/tests` and runs under
+`python -m unittest discover -s apps/appwrite-mcp/tests -t apps/appwrite-mcp`.
+That needs an interpreter with the `mcp` SDK importable, and the system
+interpreter does not have it: `mcp` is a build requirement of the function,
+not a test-only dependency, so an ordinary developer cannot run this suite
+from the workspace as it stands. Create a virtual environment outside the
+repository, install the function's requirements into it, and run the suite
+with that interpreter:
+
+```bash
+python3 -m venv /tmp/void-mcp-venv
+/tmp/void-mcp-venv/bin/python -m pip install \
+  -r apps/appwrite-mcp/requirements.txt
+/tmp/void-mcp-venv/bin/python -m unittest discover \
+  -s apps/appwrite-mcp/tests -t apps/appwrite-mcp
+```
+
+Nothing runs either Python suite today. The workspace gate in
+`scripts/src/check-tests.mjs` runs Node suites only, so these 22 tests and
+the existing `python/void-transport` suite are executed by nobody in CI.
+Wiring them in is open work: it needs a decision about where the interpreter
+that carries the SDK comes from, and nothing here does it.
+
 `cloud/auth.mjs` provides server-only signup, email-password login, logout,
 account lookup, and password recovery helpers. Its `__Host-void-auth` cookie
 contains an encrypted and authenticated local session ID and expiry. It

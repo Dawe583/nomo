@@ -54,3 +54,18 @@ exactly `void_project_info` and `void_recovery_capabilities`. If
 `MCP_AUTH_MODE` is `bearer`, add `-H "authorization: Bearer $MCP_AUTH_TOKEN"`
 to both, with the value read from your own environment and never from a file
 in this repository.
+
+The function routes on the `MCP-Protocol-Version` request header, so what a
+client sends after the handshake decides which leg answers. Leave the header
+out, or send one of the four handshake revisions `2024-11-05`, `2025-03-26`,
+`2025-06-18` or `2025-11-25`, and the buffered leg answers `initialize`,
+`tools/list` and `tools/call` the way the two requests above do. Send any
+other revision and the strict leg takes the request instead: that leg also
+requires `io.modelcontextprotocol/protocolVersion` and
+`io.modelcontextprotocol/clientCapabilities` in `params._meta`, and answers
+400 with JSON-RPC error code `-32602` when they are missing.
+
+The endpoint is stateless and never issues an `Mcp-Session-Id` response
+header. A client must not wait for a session id and must not retry a session
+it believes it lost, because there is no session to resume: the next request
+is a new one.

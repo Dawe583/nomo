@@ -4,6 +4,15 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- The hosted reference endpoint answers a real MCP handshake now, offline,
+  against a fake Appwrite function context, so the adapter is exercised
+  rather than assumed. A handshake, the tool catalogue, a tool call, a
+  refused unknown tool, a malformed body, a plain GET and every branch of the
+  bearer-token boundary are all covered. What this proves is the code path and
+  not the deployment: the only thing standing between this repository and a
+  working hosted endpoint is the domain a person adds in the console. The
+  registry manifest now names the server it publishes, and a required field
+  missing from it fails rather than shipping.
 - Every surface now takes its values from one machine-readable file, and the
   value it used to invent is gone. `design-tokens.json` carries the type ramp,
   the 4 point spacing rhythm, the semantic colour roles, the radius scale
