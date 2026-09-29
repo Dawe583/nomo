@@ -1,0 +1,150 @@
+{
+  "document": "VOID design tokens",
+  "status": "contract, 2026-09-28, generated into every platform surface",
+  "source": "docs/APPLE-DESIGN-SYSTEM.md",
+  "note": "One machine-readable source for the iOS app, the macOS target and the web control plane. The terminal is out of scope and keeps its own values. Every platform consumer is generated from this file: the web custom properties by scripts/src/build-web.mjs, the Swift token module by scripts/src/generate-swift-tokens.mjs. A hand edit in a consumer is a defect, because the next generation overwrites it.",
+  "contrastMethod": "WCAG 2.1 relative luminance, computed by scripts/src/design-source.test.mjs from the values in this file. A recorded ratio that the test does not reproduce is a failing test, not a stale comment. Minimum 4.5 for text up to 17 points, 3 for text at 18 points and above or bold at any size, 3 for a non-text boundary that carries meaning.",
+  "colour": {
+    "note": "Colour is semantic or it does not exist. Each role names the platform appearance it comes from. A role is the platform value unless the contrast gate below forced a change, and every such change is named in the role's adjusted field.",
+    "roles": {
+      "canvas": {
+        "system": "systemBackground",
+        "light": "#ffffff",
+        "dark": "#000000"
+      },
+      "surface": {
+        "system": "secondarySystemBackground",
+        "light": "#f2f2f7",
+        "dark": "#1c1c1e"
+      },
+      "raised": {
+        "system": "tertiarySystemBackground",
+        "light": "#ffffff",
+        "dark": "#2c2c2e"
+      },
+      "text": {
+        "system": "label",
+        "light": "#1c1c1e",
+        "dark": "#f5f5f7"
+      },
+      "muted": {
+        "system": "secondaryLabel",
+        "light": "#6b6b73",
+        "dark": "#a0a0a8",
+        "adjusted": "Apple composites secondaryLabel over the canvas at 60 percent, which lands at 3.6:1 in light. The value here is the same hue at full opacity, the first step that clears 4.5:1."
+      },
+      "separator": {
+        "system": "separator",
+        "light": "#c6c6c7",
+        "dark": "#38383a",
+        "decorative": true
+      },
+      "accent": {
+        "system": "controlAccentColor",
+        "light": "#0040dd",
+        "dark": "#0a84ff",
+        "adjusted": "The platform tint in each appearance. The light value is the Increase Contrast accent, because the standard tint under white text measures 4.02:1 and this surface needs a 4.5:1 button label."
+      },
+      "onAccent": {
+        "system": "controlAccentColorText",
+        "light": "#ffffff",
+        "dark": "#000000"
+      },
+      "danger": {
+        "system": "systemRed",
+        "light": "#d70015",
+        "dark": "#ff453a",
+        "adjusted": "The light value is the Increase Contrast red. The standard red measures 3.55:1 on white, and a refusal has to be readable, not merely red."
+      },
+      "good": {
+        "system": "systemGreen",
+        "light": "#1a7733",
+        "dark": "#30d158",
+        "adjusted": "The light value is the platform green darkened until it clears 4.5:1 on both the canvas and the surface with a margin worth having, because a value that only just passes fails the moment a surface is one step away from the one it was measured on. The dark value is the standard dark appearance green."
+      },
+      "focus": {
+        "system": "controlAccentColor",
+        "light": "#0040dd",
+        "dark": "#0a84ff",
+        "adjusted": "The focus ring uses the accent role. It must be visible against both the canvas and the surface, which the contrast gate below checks."
+      }
+    },
+    "shadow": {
+      "note": "The design system drops custom chrome shadows from the functional layer, because the system bars already separate it. These stay until the web adopts the system materials, and they exist so no component holds an alpha inline. An empty value means the role has no shadow.",
+      "roles": {
+        "composer": { "light": "0 1px 2px rgb(0 0 0 / 0.06)", "dark": "0 1px 2px rgb(0 0 0 / 0.4)" },
+        "dialog": { "light": "0 24px 100px rgb(0 0 0 / 0.18)", "dark": "0 24px 100px rgb(0 0 0 / 0.6)" },
+        "float": { "light": "0 4px 18px rgb(0 0 0 / 0.06)", "dark": "0 4px 18px rgb(0 0 0 / 0.4)" },
+        "modal": { "light": "0 4px 20px rgb(0 0 0 / 0.08)", "dark": "0 4px 20px rgb(0 0 0 / 0.45)" },
+        "palette": { "light": "0 14px 48px rgb(0 0 0 / 0.04)", "dark": "0 14px 48px rgb(0 0 0 / 0.5)" },
+        "focus": { "light": "0 10px 32px rgb(0 0 0 / 0.04)", "dark": "0 10px 32px rgb(0 0 0 / 0.35)" }
+      }
+    },
+    "contrast": [
+      { "name": "text on canvas", "foreground": "text", "background": "canvas", "minimum": 4.5 },
+      { "name": "text on surface", "foreground": "text", "background": "surface", "minimum": 4.5 },
+      { "name": "text on raised", "foreground": "text", "background": "raised", "minimum": 4.5 },
+      { "name": "muted on canvas", "foreground": "muted", "background": "canvas", "minimum": 4.5 },
+      { "name": "muted on surface", "foreground": "muted", "background": "surface", "minimum": 4.5 },
+      { "name": "muted on raised", "foreground": "muted", "background": "raised", "minimum": 4.5 },
+      { "name": "label on accent", "foreground": "onAccent", "background": "accent", "minimum": 4.5 },
+      { "name": "accent as text on canvas", "foreground": "accent", "background": "canvas", "minimum": 4.5 },
+      { "name": "accent as text on surface", "foreground": "accent", "background": "surface", "minimum": 4.5 },
+      { "name": "focus ring on canvas", "foreground": "focus", "background": "canvas", "minimum": 3 },
+      { "name": "focus ring on surface", "foreground": "focus", "background": "surface", "minimum": 3 },
+      { "name": "danger on canvas", "foreground": "danger", "background": "canvas", "minimum": 4.5 },
+      { "name": "danger on surface", "foreground": "danger", "background": "surface", "minimum": 4.5 },
+      { "name": "good on canvas", "foreground": "good", "background": "canvas", "minimum": 4.5 },
+      { "name": "good on surface", "foreground": "good", "background": "surface", "minimum": 4.5 }
+    ]
+  },
+  "type": {
+    "note": "Roles map to the platform's own semantic font, so the whole surface scales when a person changes the text size. VOID never picks a point size from this table directly on a platform that has a built-in style for the role; the sizes here are the built-in styles the guideline quotes, and the web sizes are the CSS equivalent. The web interface face is the platform UI font, resolved by the platform. A downloaded face is loaded only for code, identifiers and numeric columns, where a monospaced face carries meaning rather than brand.",
+    "interfaceFont": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+    "codeFont": "ui-monospace, SFMono-Regular, Menlo, monospace",
+    "webBodyPx": 15,
+    "webBodyLineHeight": 1.5,
+    "roles": {
+      "largeTitle": { "ios": { "size": 32, "leading": 39, "weight": "regular", "emphasised": "bold" }, "macos": { "size": 31, "leading": 38, "weight": "regular", "emphasised": "bold" } },
+      "title1": { "ios": { "size": 26, "leading": 32, "weight": "regular", "emphasised": "bold" }, "macos": { "size": 25, "leading": 31, "weight": "regular", "emphasised": "bold" } },
+      "title2": { "ios": { "size": 20, "leading": 25, "weight": "regular", "emphasised": "bold" }, "macos": { "size": 19, "leading": 24, "weight": "regular", "emphasised": "bold" } },
+      "title3": { "ios": { "size": 18, "leading": 23, "weight": "regular", "emphasised": "semibold" }, "macos": { "size": 17, "leading": 22, "weight": "regular", "emphasised": "semibold" } },
+      "headline": { "ios": { "size": 15, "leading": 20, "weight": "semibold" }, "macos": { "size": 14, "leading": 19, "weight": "semibold" } },
+      "body": { "ios": { "size": 15, "leading": 20, "weight": "regular", "emphasised": "semibold" }, "macos": { "size": 14, "leading": 19, "weight": "regular", "emphasised": "semibold" } },
+      "callout": { "ios": { "size": 14, "leading": 19, "weight": "regular", "emphasised": "semibold" }, "macos": { "size": 13, "leading": 18, "weight": "regular", "emphasised": "semibold" } },
+      "subhead": { "ios": { "size": 13, "leading": 18, "weight": "regular", "emphasised": "semibold" }, "macos": { "size": 12, "leading": 16, "weight": "regular", "emphasised": "semibold" } },
+      "footnote": { "ios": { "size": 12, "leading": 16, "weight": "regular", "emphasised": "semibold" }, "macos": { "size": 12, "leading": 16, "weight": "regular", "emphasised": "semibold" } },
+      "caption1": { "ios": { "size": 11, "leading": 13, "weight": "regular", "emphasised": "semibold" }, "macos": { "size": 11, "leading": 13, "weight": "regular", "emphasised": "semibold" } },
+      "caption2": { "ios": { "size": 11, "leading": 13, "weight": "regular", "emphasised": "semibold" }, "macos": { "size": 11, "leading": 13, "weight": "regular", "emphasised": "semibold" } }
+    },
+    "minimumPx": { "ios": 11, "macos": 10 }
+  },
+  "spacing": {
+    "note": "A 4 point rhythm. A spacing value outside this list is a defect, and the token test fails on one. The two constants outside the rhythm are the guideline's own: standard horizontal spacing, and the minimum vertical spacing between unrelated content groups.",
+    "rhythm": [4, 8, 12, 16, 24, 32],
+    "contentGap": 40,
+    "sectionGap": 100,
+    "measure": {
+      "note": "The transcript keeps a readable measure rather than running edge to edge on a wide window. These are the guideline's unfocused content widths; VOID picks the one that fits the column rather than the platform.",
+      "steps": [860, 560, 410, 320, 260, 217, 184]
+    }
+  },
+  "radii": {
+    "note": "Corners are concentric with the element that contains them, which one radius cannot express. A role is named for what it rounds, and a nested element takes a smaller role than its container. A literal radius in a component rule is a defect.",
+    "roles": {
+      "inline": 4,
+      "control": 6,
+      "card": 10,
+      "sheet": 12,
+      "window": 12,
+      "capsule": 999
+    }
+  },
+  "control": {
+    "note": "Hit targets are a floor, not a suggestion. The web converts the touch rule to CSS pixels and keeps pointer targets comfortable on a trackpad rather than shrinking them.",
+    "touchPt": 44,
+    "macosPt": 28,
+    "macosMinimumPt": 20,
+    "webTouchPx": 44
+  }
+}
