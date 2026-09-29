@@ -2,10 +2,13 @@
 
 `cloud/appwrite.mjs` is a manual provisioner. It reads Appwrite values only
 from `.env.local` or the process environment. It verifies the existing
-`void_control_plane` TablesDB, creates the empty-permission `void_documents` bucket, named `VOID Documents`, and creates only these web platforms:
+`void_control_plane` TablesDB, creates the empty-permission `void_documents`
+bucket, named `VOID Documents`, creates only these web platforms:
 
 - `void_web`, named `VOID Production`, for `https://void-tui.vercel.app`
 - `void_local_web`, named `VOID Local Development`, for `http://localhost`
+
+and creates the hosted VOID MCP function described below.
 
 `APPWRITE_WEB_ORIGINS` can select only those exact origins. The localhost
 exception is limited to that configured web platform. The Appwrite endpoint is
@@ -36,10 +39,10 @@ any value in source, test data, logs, browser storage, URLs, or commits.
 
 The provisioner checks that the supplied `APPWRITE_PROJECT_ID` contains the
 supplied `APPWRITE_DATABASE_ID`. It does not pin the project ID or region to an
-approved target. If resources are missing, it creates the declared bucket and
-selected platforms. It does not create or verify tables inside the database,
-copy rows, files, or sessions, or define a data migration. It has no automatic
-rollback for a partially completed additive run.
+approved target. If resources are missing, it creates the declared bucket, the
+selected platforms, and the hosted MCP function. It does not create or verify
+tables inside the database, copy rows, files, or sessions, or define a data
+migration. It has no automatic rollback for a partially completed additive run.
 
 The manifest labels `https://void-tui.vercel.app` as production. The current
 chat origin defaults to `https://chat.voidagent.tech` in `cloud/account.mjs`.
@@ -50,6 +53,40 @@ database and table schema, exact resources and origins to create, and a rollback
 procedure. Do not run against a shared or production project until a human
 approves that exact target and scope. This script does not perform a production
 cutover.
+
+## Hosted MCP function
+
+`cloud/appwrite.mjs` also declares the hosted VOID reference MCP, function id
+`6abbae3e000f6f24ce2a`, named `MCP server`. It runs Python 3.14 with
+entrypoint `src/main.py` under root directory `apps/appwrite-mcp`, build
+command `pip install -r requirements.txt`, a 30 second timeout, and execution
+permission for `any` with no API scopes. The function exists on the live
+project, its latest deployment built successfully, and it reads
+`MCP_SERVER_NAME`, `MCP_AUTH_MODE`, `MCP_AUTH_TOKEN`, and `MCP_TOOL_TIMEOUT`,
+whose values are the operator's to set and are never written here.
+
+It serves public VOID project information and the catalogue of local recovery
+tools, read only. It holds no credential and performs no writes, and it serves
+no repository file. The provisioner creates the function when it is absent and
+refuses a project whose existing function disagrees with the manifest, naming
+the field. A deployment id changes on every redeployment and is not compared.
+
+The database tables and the `void_documents` bucket are provisioned, and every
+table is empty. The account route on the live deployment answers that the
+account feature is not configured, because the broker has no Supabase
+credentials, so no part of this Appwrite project serves a user yet.
+
+One console action is still missing: the function has no public domain, so it
+has no URL and nothing is reachable at it. A person has to register one in the
+Appwrite console, under the project's `Functions`, on `MCP server`, in its
+`Domains` tab. The domain routes answer the project service key this
+repository holds with `general_access_forbidden`, and the console-scoped
+credential that could add one is deliberately not held here, so the
+provisioner reports the missing domain instead of failing on it. The endpoint
+is not live and must not be described as live until that domain exists and
+answers an MCP `initialize` and a `tools/list` over it. The elevated provision
+key stays out of runtime and deployment configuration, which includes this
+function.
 
 `cloud/auth.mjs` provides server-only signup, email-password login, logout,
 account lookup, and password recovery helpers. Its `__Host-void-auth` cookie

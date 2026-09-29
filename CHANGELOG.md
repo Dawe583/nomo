@@ -4,6 +4,63 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Every surface now takes its values from one machine-readable file, and the
+  value it used to invent is gone. `design-tokens.json` carries the type ramp,
+  the 4 point spacing rhythm, the semantic colour roles, the radius scale
+  and the control sizes, quoted from the Human Interface Guidelines the
+  design system cites, and two generators write it out: one replaces the
+  marked region of `styles.css` before the Vite build, and one writes
+  `VoidTokens.generated.swift` for the Swift module. Either generated file is
+  a build artefact: a hand edit in one is overwritten, and because both
+  regions are compared against a fresh render, that edit is caught rather
+  than kept, because a value with two homes is a value that drifts. The web
+  control plane now paints the platform palette rather than the warm paper
+  one: a white or black canvas, the system surface greys, the platform
+  accent and the platform red and green, in both appearances, at the design
+  system's 15 pixel body size, measured at 1440 and at 320 pixels. A
+  contrast check recomputes all thirty pairings the token document declares,
+  in both appearances, and fails on one below its stated minimum, so a
+  colour claim is a measurement and not a comment. The one value it forced
+  is the light green: the platform green measures 2.2:1 on white, so the
+  role carries the platform hue darkened until it clears 4.5:1 on both the
+  canvas and the surface with a margin worth having. What is not done: the
+  components still use the old spacing, radius and font values. Adopting
+  the new tokens, removing the override layer between `styles.css`,
+  `ascii.css` and `mobile.css`, and dropping the font imports the components
+  still name are the web rebuild, and none of it has happened yet.
+- VOID now has a shared design system package for the Apple surfaces, and the
+  theme on iOS has a place to import from. `VoidDesignSystem` is a Swift
+  package for iOS 17 and macOS 14 that exposes the tokens through the
+  platform's own semantic types and imports neither UIKit nor AppKit, so the
+  same values can reach a macOS client without needing a second copy. What is
+  not done: there is no macOS client. The package makes one possible later,
+  and nothing in this repository is an app yet. `CompanionProtocolKit` now
+  declares macOS alongside iOS, and its 58 host cases still hold on both. 31
+  checks in the package cover the contrast pairs, the spacing rhythm, the
+  radii, the control floors and the type roles.
+- The record stopped contradicting itself in three places that a person
+  reading it would have hit within a minute. `GUI-RULES.md` stacked three
+  visual directions by date, named a colour and a font in each, and named a
+  default model provider that `DECISIONS.md` had already removed; it is now
+  a pointer to the design system that carries the surviving operational
+  rules and names no value at all. `STANDARDS.md` required monospace for
+  every label while the same file forbade it; the narrower rule is now the
+  one both files state. The roadmap asked for the three status ledgers to be
+  collapsed into one, which `DECISIONS.md` refused on 2026-09-26; the
+  roadmap row is marked refused with its authority rather than quietly
+  deleted, and a dated errata section records the corrections with the
+  command that measures each one. The registry breadth claim is now true in
+  the documents that make it: 268 entries and 48 vendors, measured, and
+  pinned by a check in the registry package that replaced a tautology
+  asserting nothing. Two claims the audit could not settle are now settled
+  by the tree: the capability schema carries a dated certification decision
+  on every shipped profile, so the release gate has somewhere to record the
+  answer that `certification: false` is permanent, and the matrix rows
+  `D04.09` and `D04.13` are corrected against the 2026-09-28 decision that
+  answers them. The documentation gate gained the three assertions that stop
+  all of this from returning.
+
+
 - An MCP server is now something you agree to rather than something that
   happens to you. Adding one used to contact it immediately: `addConnector`
   fetched the tool catalogue as a side effect of a local write, so a server
