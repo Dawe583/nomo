@@ -9,13 +9,10 @@ Tools:
 
 - `void_project_info`
 - `void_recovery_capabilities`
-- `void_list_documents`
-- `void_read_document`
-- `void_search_docs`
 
-Documents are fetched from a fixed allowlist in the public `Dawe583/void`
-repository. Tool arguments cannot select an arbitrary URL, path, or host. The
-endpoint contains no credential and performs no writes.
+This endpoint deliberately serves no repository files. The repository source
+is not anonymously readable, and this hosted function has no GitHub credential.
+The endpoint contains no credential and performs no writes.
 
 Appwrite settings: Python 3.14, entrypoint `src/main.py`, build command
 `pip install -r requirements.txt`, root directory `apps/appwrite-mcp`, and
