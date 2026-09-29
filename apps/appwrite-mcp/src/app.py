@@ -34,7 +34,7 @@ def void_project_info() -> str:
         {
             "name": "VOID",
             "summary": "VOID recovery MCP reference endpoint.",
-            "hosted_mcp": "Read-only public documentation and capability reference.",
+            "hosted_mcp": "Read-only project metadata and local recovery capability reference.",
             "local_recovery": "Runs through the local stdio MCP server and local operator state.",
         },
         ensure_ascii=False,
