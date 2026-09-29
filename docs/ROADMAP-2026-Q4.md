@@ -21,8 +21,8 @@ What the research behind this roadmap established, and what it did not:
   legacy capture-and-inverse bindings, four managed adapters, and a managed
   runtime for filesystem, Postgres and Git. The gate that produces the number
   is `node scripts/src/check-tests.mjs`, and on 2026-09-29 its last line read
-  `13 suites, 1817 tests` with one failing test in a file a concurrent change
-  owned, so the green count on a settled tree is unverified.
+  `13 suites, 1846 tests`, exit 0, with every one of the thirteen suites
+  reporting zero failures on a settled tree.
 - **The central claim is narrower than the marketing.** "Signed and verifiable"
   is true, and it is worth saying: the signature proves a process holding a key
   wrote the bytes and the chain is internally consistent. Nothing more. Until
@@ -220,14 +220,19 @@ roadmap against the decision log has to be able to see that the two disagreed
 and that the decision log won.
 
 **2. The test count was asserted rather than measured, and is now named.** The
-sentence above used to say "about 1,800 tests green as of 2026-09-28". Run on
-2026-09-29, `node scripts/src/check-tests.mjs` printed `13 suites, 1817 tests`
-and exited 1: the `scripts` suite reported 150 passing and one failing, the
-failure being "every static theme-color equals the canvas token of the page it
-belongs to" at `scripts/src/design-token.test.mjs`. That file was being edited
-by a concurrent change when the run happened, so the count of green tests on a
-settled tree is unverified and the old figure is not replaced with a guess. The
-count is reproducible: run the command, and its last line is the count.
+sentence above used to say "about 1,800 tests green as of 2026-09-28", a
+number nobody had run. The first run on 2026-09-29 of
+`node scripts/src/check-tests.mjs` printed `13 suites, 1817 tests` and exited
+1: the `scripts` suite reported 150 passing and one failing, the failure being
+"every static theme-color equals the canvas token of the page it belongs to" at
+`scripts/src/design-token.test.mjs`, a file a concurrent change was editing at
+the moment of the run. That figure proved nothing about a settled tree, so it
+was not promoted to a count and the old figure was not replaced with a guess.
+The settled run is the one that counts. Run again the same day against a tree
+no concurrent change was touching, the same command printed
+`13 suites, 1846 tests` and exited 0, and all thirteen suites reported zero
+failures, so the green count is now measured rather than asserted. The count
+is reproducible: run the command, and its last line is the count.
 
 **3. "Three of the 268 are executable" is one denominator stated as two.** The
 registry has 268 entries, counted by importing `registry` from
