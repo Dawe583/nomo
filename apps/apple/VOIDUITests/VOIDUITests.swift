@@ -4,9 +4,21 @@
 @MainActor
 final class VOIDUITests: XCTestCase {
     nonisolated(unsafe) private var app: XCUIApplication!
+
+    /// Every launch in this suite starts on the entry screen, and this is what
+    /// makes that true now that completion is persisted.
+    ///
+    /// iOS parses a `-key value` launch argument into the argument domain,
+    /// which outranks the app's own defaults for that launch only. The theme
+    /// and language fixtures already work this way. So the flag is real, it
+    /// survives a relaunch, and one test completing onboarding still cannot
+    /// decide what the next one is shown.
+    nonisolated private static let freshEntryScreen = ["-void-onboarding-completed", "NO"]
+
     nonisolated override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
+        app.launchArguments = Self.freshEntryScreen
         app.launch()
     }
 
@@ -50,11 +62,27 @@ final class VOIDUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Activity"].waitForExistence(timeout: 5))
     }
 
+    /// The entry screen is the first thing an operator sees, so completion has
+    /// to outlive the process. This launches with nothing in the argument
+    /// domain at all, so the flag can only have come from storage.
+    func testOnboardingCompletionIsNotAskedForAgainAfterRelaunch() {
+        completeOnboarding()
+        XCTAssertTrue(app.navigationBars["Activity"].waitForExistence(timeout: 5))
+
+        relaunch(freshEntryScreen: false)
+
+        XCTAssertTrue(
+            app.navigationBars["Activity"].waitForExistence(timeout: 5),
+            "A relaunch after completing onboarding must land on the activity list, not on the entry screen."
+        )
+        XCTAssertFalse(
+            app.buttons["Continue offline"].exists,
+            "The entry screen came back for someone who already answered it."
+        )
+    }
+
     func testEntrySupportsCzechWithoutCredentialFields() {
-        app.terminate()
-        app = XCUIApplication()
-        app.launchArguments = ["-void-entry-language", "cs"]
-        app.launch()
+        relaunch(language: "cs")
 
         XCTAssertTrue(app.staticTexts["Připojit k Macu"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["VOID nemá účet"].exists)
@@ -177,14 +205,14 @@ final class VOIDUITests: XCTestCase {
         }
     }
 
-    func testChosenAppearanceSurvivesRelaunchWithoutLaunchArgument() {
+    func testChosenAppearanceSurvivesRelaunch() {
         let appearance = app.segmentedControls["entry.theme"]
         XCTAssertTrue(appearance.waitForExistence(timeout: 5))
         appearance.buttons["Dark"].tap()
 
-        app.terminate()
-        app = XCUIApplication()
-        app.launch()
+        // The only launch argument is the one that opens the entry screen, so
+        // the appearance has to have come from storage and not from a fixture.
+        relaunch()
 
         let reloaded = app.segmentedControls["entry.theme"]
         XCTAssertTrue(reloaded.waitForExistence(timeout: 5))
@@ -575,24 +603,23 @@ final class VOIDUITests: XCTestCase {
         }
     }
 
-    private func relaunch(theme: String? = nil, chatFixture: String? = nil) {
+    private func relaunch(theme: String? = nil, chatFixture: String? = nil, language: String? = nil, freshEntryScreen: Bool = true) {
         app.terminate()
         app = XCUIApplication()
-        var arguments: [String] = []
+        var arguments: [String] = freshEntryScreen ? Self.freshEntryScreen : []
         if let theme { arguments += ["-void-theme", theme] }
         if let chatFixture { arguments += ["-VOID_CHAT_FIXTURE", chatFixture] }
+        if let language { arguments += ["-void-entry-language", language] }
         app.launchArguments = arguments
         app.launch()
     }
 
     private func openConversation(named title: String) {
-        // Onboarding completion is not persisted, so every fresh launch is
-        // still on the entry screen. This helper owns that step so a test that
-        // had to relaunch for a fixture does not have to remember it.
-        let continueButton = app.buttons["Continue offline"]
-        if continueButton.waitForExistence(timeout: 3) {
-            continueButton.tap()
-        }
+        // Every launch in this suite starts on the entry screen, so getting past
+        // it is a step rather than a maybe. It used to be the other way round:
+        // completion was not persisted, so a relaunch quietly changed what the
+        // test was looking at and the helper had to look for the button.
+        completeOnboarding()
         let row = app.staticTexts[title]
         XCTAssertTrue(row.waitForExistence(timeout: 8), "Activity row \(title) never appeared.")
         row.tap()
@@ -605,7 +632,7 @@ final class VOIDUITests: XCTestCase {
     private func measureEntryTitle(name: String, launchingWithTheme theme: String, file: StaticString = #filePath, line: UInt = #line) throws -> RenderedText {
         app.terminate()
         app = XCUIApplication()
-        app.launchArguments = ["-void-theme", theme]
+        app.launchArguments = Self.freshEntryScreen + ["-void-theme", theme]
         app.launch()
 
         // The navigation bar repeats the title, so scope to the entry body first. The

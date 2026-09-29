@@ -108,10 +108,15 @@ Wave 5 source status, pending integrated verification:
    and refusal after target drift. No production accounts or autonomous writes
    to customer data. Replay apply still needs a real executor supplied by the
    host; a configured URL alone is not a database driver.
-5. **Credential-blocked git push.** The handoff reports that pushing is blocked
-   by repository credentials. A human must restore authorized access, then
-   push the reviewed branch and release tag. No push or remote CI result is
-   claimed by this runbook.
+5. **Remote runs, blocked by the account rather than by access.** Corrected
+   2026-09-28: the earlier text here said the push was credential-blocked,
+   which is no longer true. A push from a developer machine reaches the remote
+   today. What is blocked is the run itself: every workflow fails within four
+   seconds with the annotation "The job was not started because recent account
+   payments have failed or your spending limit needs to be increased". That is
+   an account condition and only a human can clear it, from Billing and plans.
+   Until it is cleared, no remote result exists to claim, and the local gate is
+   the only evidence available.
 6. **WP-15 delivery evidence.** A published `@void/cli` version, clean-machine
    quickstart under five minutes, Docker image, and MCP registry listing still
    require release evidence. The WP-15 exit is not complete just because the

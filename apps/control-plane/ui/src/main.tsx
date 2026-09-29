@@ -38,8 +38,6 @@ import {
   useAppliedAppearance,
 } from "./ui";
 import "./styles.css";
-import "./ascii.css";
-import "./mobile.css";
 import { ComponentGallery } from "./gallery";
 import { isGalleryRequest } from "./gallery-path";
 // Imported statically, not through `lazy()`. The sign in screen is the one

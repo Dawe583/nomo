@@ -3713,3 +3713,642 @@ dialog label > textarea {
     animation: v-workspace-enter 180ms ease-out both;
   }
 }
+
+/* The two layers that used to be separate files, folded in so the cascade is
+   position rather than import order. They loaded after this file at equal
+   specificity, which meant a rule here could be silently defeated by a rule
+   there with no trace in either file. Same order, same specificity, same
+   result, and now the defeat is visible in one place. */
+/* Restrained VOID identity shared by the workspace and public demo. */
+:root {
+  --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-family: Inter, system-ui, sans-serif;
+}
+body {
+  overflow: hidden;
+}
+button,
+input,
+textarea,
+select {
+  border-radius: 6px;
+}
+button,
+.button {
+  -webkit-tap-highlight-color: transparent;
+}
+button:active,
+.button:active {
+  background: var(--raised);
+}
+.primary:active {
+  background: var(--action);
+  filter: brightness(0.85);
+}
+.shell,
+.demo-app {
+  height: var(--mobile-height, 100dvh);
+  min-height: 0;
+}
+.topbar,
+.demo-topbar {
+  border-bottom: 1px solid var(--line);
+}
+.page-title {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+}
+.brand strong,
+.demo-brand strong {
+  font-family: Inter, system-ui, sans-serif;
+  letter-spacing: 0.12em;
+}
+.sidebar nav a,
+.new-chat,
+.search-button,
+.sidebar-bottom button,
+.mobile-nav a[aria-current="page"],
+.mobile-action-list button,
+.menu-toggle,
+.mobile-new-chat,
+.mobile-options-toggle {
+  border-radius: 6px;
+}
+.sidebar nav a[aria-current="page"] {
+  border-left: 2px solid var(--action);
+}
+.ascii-wordmark {
+  font: 400 clamp(8px, 1.15vw, 13px)/1.15 var(--mono);
+  letter-spacing: 0;
+  white-space: pre;
+  color: var(--action);
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto 28px;
+  overflow: hidden;
+  user-select: none;
+}
+.welcome,
+.demo-welcome {
+  max-width: 720px;
+}
+.welcome h1,
+.demo-welcome h1 {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: clamp(24px, 2.3vw, 28px);
+  line-height: 1.3;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+.welcome > p,
+.demo-welcome > p {
+  font:
+    400 15px/1.7 Inter,
+    sans-serif;
+}
+.starters,
+.demo-starters {
+  gap: 0;
+  border-block: 1px solid var(--line);
+}
+.starters button,
+.demo-starters > button {
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+  justify-content: flex-start;
+  background: transparent;
+  box-shadow: none;
+  min-height: 48px;
+  padding: 14px 12px;
+  font: 400 12px/1.5 var(--mono);
+}
+.starters button::before,
+.demo-starters > button::before {
+  content: none;
+  color: var(--action);
+  flex: none;
+}
+.starters .starter-icon {
+  display: none;
+}
+.starters button + button,
+.demo-starters > button + button {
+  border-left: 1px solid var(--line);
+}
+.composer,
+.demo-composer {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.composer:focus-within,
+.demo-composer:focus-within {
+  border-color: var(--action);
+  box-shadow: none;
+}
+.composer textarea,
+.demo-composer textarea {
+  font:
+    400 16px/1.6 Inter,
+    sans-serif;
+}
+.composer-actions .send,
+.demo-composer-tools > button {
+  border-radius: 6px;
+}
+.message.user,
+.demo-messages article[data-role="user"] {
+  border-radius: 6px;
+  border-left: 2px solid var(--action);
+}
+.prose,
+.demo-messages article > div {
+  font-family: Inter, sans-serif;
+}
+.message-role,
+.demo-messages article > span {
+  font-family: Inter, system-ui, sans-serif;
+}
+.tool-card,
+.integration-card,
+.notice,
+.error,
+.demo-file pre,
+.demo-diff pre {
+  border-radius: 6px;
+}
+.page-content > h1 {
+  font: 600 22px/1.3 Inter, sans-serif;
+  letter-spacing: -0.05em;
+}
+dialog {
+  border-radius: 8px;
+  overscroll-behavior: contain;
+}
+.dialog-heading {
+  border-bottom: 1px solid var(--line);
+}
+.dialog-heading h2 {
+  font-family: Inter, system-ui, sans-serif;
+}
+.demo-composer-tools > span {
+  flex-wrap: wrap;
+  gap: 2px 10px;
+}
+.demo-scope,
+.composer-footnote {
+  font-size: 11px;
+}
+.demo-main,
+.demo-transcript,
+.demo-messages,
+.messages {
+  min-width: 0;
+}
+.app-recovery {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 24px;
+  gap: 16px;
+  text-align: center;
+}
+.app-recovery p {
+  max-width: 42ch;
+}
+:root[data-motion="on"] .ascii-wordmark {
+  animation: v-terminal-reveal 0.65s steps(8, end) both;
+}
+:root[data-motion="on"] .demo-thinking .void-aperture {
+  animation: v-terminal-pulse 1.2s steps(3, end) infinite;
+}
+:root[data-motion="on"] button {
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+@keyframes v-terminal-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.25;
+  }
+  to {
+    clip-path: inset(0);
+    opacity: 1;
+  }
+}
+@keyframes v-terminal-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (max-width: 767px) {
+  .ascii-wordmark {
+    font-size: clamp(8px, 2.5vw, 11px);
+    margin-bottom: 24px;
+  }
+  .welcome h1,
+  .demo-welcome h1 {
+    font-size: clamp(23px, 6vw, 30px);
+    letter-spacing: -0.05em;
+  }
+  .welcome > p,
+  .demo-welcome > p {
+    font-size: 14px;
+  }
+  .chat-empty .messages {
+    padding-inline: 20px;
+  }
+  .starters,
+  .demo-starters {
+    display: grid;
+    grid-template-columns: 1fr;
+    text-align: left;
+    margin-top: 24px;
+  }
+  .starters button,
+  .demo-starters > button {
+    width: 100%;
+    padding: 12px 8px;
+  }
+  .starters button + button,
+  .demo-starters > button + button {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .starter-copy > strong {
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .drawer-open .sidebar {
+    border-radius: 0;
+    height: var(--mobile-height, 100dvh);
+  }
+  dialog,
+  .context-panel {
+    border-radius: 4px 4px 0 0;
+  }
+  .demo-welcome {
+    padding: 24px 20px;
+  }
+  .demo-brand > span {
+    font-size: 10px;
+  }
+  .composer-actions .model-button {
+    min-width: 0;
+  }
+  .topbar > button {
+    border: 1px solid transparent;
+  }
+  .topbar > button:active {
+    border-color: var(--action);
+  }
+  .demo-compose-area {
+    padding-inline: max(12px, env(safe-area-inset-left))
+      max(12px, env(safe-area-inset-right));
+  }
+}
+@media (max-height: 520px) {
+  .ascii-wordmark {
+    display: none;
+  }
+  .welcome,
+  .demo-welcome {
+    padding-block: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-motion="on"] .ascii-wordmark,
+  :root[data-motion="on"] .demo-thinking .void-aperture {
+    animation: none;
+  }
+  :root[data-motion="on"] button {
+    transition: none;
+  }
+}
+
+.route-loading {
+  margin: auto;
+  padding: 24px;
+  color: var(--muted);
+}
+.demo-connection {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+@media (max-width: 767px) {
+  .toolbar .columns[open] {
+    flex-basis: 100%;
+  }
+  .columns .popover {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+    border-radius: 6px;
+  }
+  .popover label {
+    min-height: 44px;
+  }
+  .popover select {
+    font-size: 16px;
+  }
+  .list-view td {
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 110px;
+    padding: 4px;
+  }
+  .list-view td:first-child {
+    flex-basis: 100%;
+  }
+  .list-view td:last-child {
+    flex: 0 0 auto;
+  }
+}
+
+/* Mobile sizing is applied after the shared surfaces and ASCII identity.
+   Keep touch targets at 44px; reduce spacing and chrome, never page zoom. */
+@media (max-width: 767px) {
+  :root {
+    --mobile-gutter: clamp(12px, 4vw, 18px);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  .shell,
+  .shell.collapsed,
+  .demo-app {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .shell main,
+  .chat-container,
+  .chat,
+  .page-content {
+    min-width: 0;
+  }
+  .drawer-open .sidebar {
+    width: clamp(240px, 74vw, 280px);
+    max-width: calc(100vw - 48px);
+    padding: max(8px, env(safe-area-inset-top)) 10px
+      max(8px, env(safe-area-inset-bottom));
+    gap: 4px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    font-family: Inter, sans-serif;
+  }
+  .drawer-open .sidebar > * {
+    flex-shrink: 0;
+  }
+  .drawer-open .brand {
+    justify-content: space-between;
+    padding: 0 2px;
+  }
+  .drawer-open .brand a {
+    font-size: 17px;
+    gap: 8px;
+  }
+  .drawer-open .brand-mark {
+    width: 24px;
+    height: 24px;
+  }
+  .drawer-open .workspace-name {
+    margin: 0 0 4px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  .drawer-open .new-chat,
+  .drawer-open .search-button,
+  .drawer-open .sidebar nav a,
+  .drawer-open .sidebar-bottom a {
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: 8px;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .drawer-open .sidebar kbd {
+    display: none;
+  }
+  .drawer-open .sidebar nav {
+    flex: none;
+    gap: 0;
+    padding-bottom: 6px;
+  }
+  .drawer-open .recent {
+    flex: 1 0 auto;
+    min-height: 0;
+    overflow: visible;
+    padding-top: 6px;
+  }
+  .drawer-open .recent h2,
+  .drawer-open .recent > .muted {
+    padding: 4px 8px;
+    margin: 0;
+    font-size: 11px;
+  }
+  .drawer-open .recent a {
+    min-height: 44px;
+    font-size: 12px;
+    padding: 8px;
+  }
+  .drawer-open .connection {
+    justify-content: flex-start;
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  .topbar,
+  .demo-topbar {
+    min-height: calc(48px + env(safe-area-inset-top));
+    height: calc(48px + env(safe-area-inset-top));
+    padding-inline: max(6px, env(safe-area-inset-left))
+      max(6px, env(safe-area-inset-right));
+  }
+  .page-title {
+    font-size: 12px;
+  }
+  .messages,
+  .chat-empty .messages,
+  .demo-messages {
+    padding: 12px var(--mobile-gutter);
+  }
+  .welcome,
+  .demo-welcome {
+    padding: 12px 0;
+  }
+  .demo-welcome {
+    padding-inline: var(--mobile-gutter);
+  }
+  .ascii-wordmark {
+    font-size: clamp(8px, 2.2vw, 10px);
+    margin-bottom: 16px;
+  }
+  .welcome h1,
+  .demo-welcome h1 {
+    font-size: clamp(21px, 5.5vw, 26px);
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+  .welcome > p,
+  .demo-welcome > p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .starters,
+  .demo-starters {
+    margin-top: 16px;
+  }
+  .starters button,
+  .demo-starters > button {
+    min-height: 44px;
+    padding: 8px;
+    font-size: 12px;
+  }
+  .composer-wrap,
+  .demo-compose-area {
+    padding: 6px var(--mobile-gutter) max(8px, env(safe-area-inset-bottom));
+  }
+  .composer textarea,
+  .demo-composer textarea {
+    min-height: 48px;
+    max-height: min(120px, 24dvh);
+    line-height: 24px;
+    font-size: 16px;
+  }
+  .composer textarea {
+    padding: 10px 12px 0;
+  }
+  .composer-actions {
+    padding: 0 6px 6px;
+  }
+  .composer-footnote {
+    gap: 0 8px;
+    margin-top: 2px;
+    padding: 0;
+    font-family: Inter, sans-serif;
+  }
+  .composer-footnote > span:last-child {
+    display: none;
+  }
+  .composer-footnote button {
+    min-height: 44px;
+  }
+  .demo-composer {
+    padding: 10px;
+  }
+  .demo-composer-tools {
+    padding-top: 0;
+  }
+  .demo-scope {
+    font:
+      10px/1.4 Inter,
+      sans-serif;
+    margin-top: 6px;
+  }
+  .page-content {
+    padding: 16px var(--mobile-gutter);
+    overflow-wrap: anywhere;
+  }
+  .page-content > h1 {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+  input,
+  select,
+  textarea,
+  .toolbar select,
+  .toolbar input {
+    font-size: 16px;
+  }
+  dialog {
+    width: calc(100% - 16px);
+    max-width: 560px;
+    max-height: calc(var(--mobile-height, 100dvh) - 24px);
+    margin-inline: auto;
+    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+  }
+  dialog:has(> .mobile-action-list) {
+    width: calc(100% - 24px);
+    max-width: 320px;
+    margin-bottom: max(12px, env(safe-area-inset-bottom));
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .dialog-heading {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    gap: 8px;
+  }
+  .dialog-heading h2 {
+    min-width: 0;
+    font-size: 16px;
+  }
+  .mobile-action-list {
+    gap: 0;
+    padding-bottom: 0;
+  }
+  .mobile-action-list button {
+    min-height: 44px;
+    padding: 8px;
+    gap: 10px;
+    font:
+      13px/1.4 Inter,
+      sans-serif;
+  }
+  .mobile-action-list .demo-explanation {
+    font-size: 11px;
+    margin: 8px;
+  }
+}
+@media (max-width: 767px) and (max-height: 700px) {
+  .welcome,
+  .demo-welcome {
+    padding-block: 8px;
+  }
+  .ascii-wordmark {
+    margin-bottom: 10px;
+  }
+  .welcome h1,
+  .demo-welcome h1 {
+    font-size: 21px;
+  }
+  .welcome > p,
+  .demo-welcome > p {
+    font-size: 12px;
+  }
+  .starters,
+  .demo-starters {
+    margin-top: 10px;
+  }
+}
+@media (max-width: 767px) and (max-height: 520px) {
+  .welcome > p,
+  .demo-welcome > p {
+    display: none;
+  }
+  .composer textarea,
+  .demo-composer textarea {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 767px) {
+  .attachments button { min-width: 44px; min-height: 44px; }
+  .composer-actions { min-width: 0; gap: 0; }
+  .composer-actions > button { flex-shrink: 0; min-width: 44px; padding-inline: 6px; }
+  .composer-actions > div { flex: 1 1 0; min-width: 0; }
+  .composer-actions .model-button { min-width: 44px; max-width: 100%; }
+  .welcome { text-align: left; }
+  .welcome h1, .welcome > p { margin-inline: 0; }
+  .starters { margin-top: 14px; }
+}

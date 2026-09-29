@@ -1,118 +1,89 @@
 # VOID GUI design rules
 
-## Compact conversation layout, 2026-09-23
+Rewritten 2026-09-28. The approved direction is the system look defined in
+`docs/APPLE-DESIGN-SYSTEM.md`, and this file holds no value of its own. Every
+colour, size, radius and duration is read from there or from the token source,
+so a change to the direction lands in one document instead of in a stack of
+dated ones.
 
-This approved direction supersedes the historical large paper-terminal display
-rules below. Use neutral light/dark surfaces, Inter for interface text, and the
-VOID aperture with a restrained orange accent. Monospace is for code and short
-technical values, not the entire application. No page scaling or zoom tricks.
+It was rewritten because it held three visual directions at once, stacked by
+date with no resolution: one naming a specific interface face, one naming a
+specific accent, and an undated note deferring to the stylesheet. It also
+required a monospaced face for every label, value, caption and status word,
+which the interfaces do not use. Those directions now live in the design
+system, and what survives is here.
 
-Chat is the primary workspace. Keep the composer form outside the bounded,
-keyboard-scrollable status region. Secondary project, agent, permission controls
-and usage details live in Conversation settings; the current permission source
-and critical failures remain visible. Context compaction stays mounted in the
-transcript so closing a dialog cannot reset its pending mutation state.
+## Where the values live
 
-Use the same React assets for web and desktop. On mobile, reduce chrome and
-spacing, not 44px touch targets or 16px input text. Verify short screens, long
-drafts, overlays and populated content, not just empty screenshots.
+- `scripts/design/tokens.json` is the single source of the token values, and
+  `scripts/src/build-design-tokens.mjs` writes it into
+  `apps/control-plane/ui/src/styles.css` and
+  `apps/apple/VOIDApp/VoidDesignTokens.swift`. Neither generated file is hand
+  edited.
+- `scripts/src/design-tokens-source.test.mjs` fails the build when a generated
+  block drifts from the source or a colour pair stops clearing the contrast
+  minimum. `scripts/src/design-token.test.mjs` fails it when a component grows
+  a colour literal.
+- A value that does not exist yet is added to the token source. Not to a
+  stylesheet, not to the Swift file, and never to a component.
 
-## Shared React application
+## What a surface may do
 
-The active web application lives in `apps/control-plane/ui`. Vite emits
-`dist/web`; the local server, desktop package and Vercel serve the same build.
-The retained `apps/control-plane/web` source is a compatibility reference and
-must not be used as the starting point for new UI features.
+- Take its form from the platform and its vocabulary from VOID. A reversibility
+  class, a policy decision, a consent state and a run state are the same words
+  on every surface, and they are the words the terminal already uses.
+- Keep the transcript the primary workspace, with the composer outside the
+  bounded status region, so Send is reachable without scrolling the page.
+  Secondary controls live in Conversation settings, while the current
+  permission source and critical failures stay visible. Context compaction
+  stays mounted in the transcript, so closing a dialog cannot discard a
+  pending change.
+- Reuse the shared components in `apps/control-plane/ui/src/ui.tsx`, which are
+  `DataTable`, `Dialog` and `ErrorBox`, along with the shared query client, the
+  shell and its named routes. Lists filter on the server, and newer data never
+  silently replaces the page a person is reading: it offers Refresh.
+- Render model and connector output through the Markdown parser with raw HTML
+  disabled, and treat all of it as untrusted. Syntax highlighting loads on
+  demand. A completed assistant message replaces the fragments it streamed in,
+  tool cards merge by call id with arguments and results intact, and a partial
+  call is never executed.
+- Preserve unsaved content when a document edit conflicts. The edit carries the
+  revision it was read at, and an undo asks the server for a fresh preview
+  before it changes anything.
+- Say which of signed, verified, unavailable and unknown applies. A catalogue
+  entry named Free is not evidence of a zero invoice, and no limit or metric
+  is invented to fill a gap.
+- Follow the platform for language. A fresh browser starts in English and
+  Czech stays available; dates and numbers follow the active locale, while API
+  names, model names and conversation content are left as they are.
+- Ship the brand mark from `apps/control-plane/ui/src/brand.tsx` and nothing
+  else. A letter tile, an ASCII stand-in or a new symbol is not a substitute.
 
-- Use the paper-terminal colors defined in `ui/src/styles.css`. System, light
-  and dark appearances share semantic tokens. Keep a visible focus outline.
-- Use the shared shell and named routes. Chat occupies a bounded transcript
-  with a separate composer. Never make the whole viewport scroll to reach Send.
-- Desktop panels use CSS Grid and adjustable, bounded widths. Mobile navigation
-  uses a drawer and safe-area-aware bottom bar; context becomes a full panel.
-- Dialogs use native modal behavior. Restore focus after closing or replacing
-  controls. Background surfaces cannot receive input behind mobile overlays.
-- Body text uses system sans; headings may use serif. Monospace belongs to code
-  and identifiers. Actions have at least 44 px touch targets.
-- Reuse `DataTable`, `Dialog`, `ErrorBox` and the query client. Lists filter on the
-  server. Preserve the displayed page when newer data arrives; offer Refresh.
-- A completed assistant message replaces its streamed fragments. Merge tool
-  cards by call ID; preserve arguments and results. Never execute partial calls.
-- Render Markdown through the parser, with raw HTML disabled. Syntax highlighting
-  loads on demand. Treat all model and connector output as untrusted content.
-- Document edits require the displayed revision. Preserve unsaved content on a
-  conflict. Undo requires a fresh server preview and updates the editor revision.
-- Distinguish signed, verified, unavailable and unknown. A catalog model named
-  Free is not evidence of a zero invoice. Do not invent limits or metrics.
-- Default new conversations to NVIDIA NIM / `z-ai/glm-5.3-flash`. Credentials
-  remain server-side. Existing conversations retain their provider snapshot.
-- UI defaults to English for a fresh browser and offers Czech from the header and
-  Settings; an existing stored preference is respected. Dates and numbers follow the
-  active locale; API names, model names and conversation content remain unchanged.
+## What a surface may not do
 
-Validate changes with `pnpm run typecheck`, `pnpm test`, `pnpm build:web` and the
-relevant browser flow. Use `pnpm desktop:test` for shared runtime changes. Check
-320 px mobile layout, desktop layout, keyboard controls and long content.
+- Name a colour. A component refers to a token, and a component that needs a
+  colour the tokens do not carry is asking for a new token, not a literal.
+- Carry a state in colour alone. The colour tints the word; the word carries
+  the meaning.
+- Offer an in-app appearance switch. Appearance belongs to the platform
+  setting, and a surface follows it.
+- Zoom, scale, or set the whole application in a monospaced face. A
+  monospaced face is for code, identifiers and short technical values.
+- Shrink a desktop canvas to fit a phone, and never shrink a touch target or
+  the input text to save space on a small one. Mobile reduces chrome and
+  spacing; target size and input text do not follow it down.
+- Hide a failure, a permission source or an unknown to keep a screen tidy.
+  Density is never a reason to remove a truth.
+- Offer a hover-only affordance. Anything reachable by pointer is reachable by
+  keyboard and by touch.
+- Let motion be the only signal that something changed, or animate at all when
+  the platform asks for reduced motion.
 
-## Current visual direction, 2026-09-11
+## The terminal is out of scope
 
-The user explicitly requested the ASCII identity of Dawe583/void-empty. This
-supersedes the literal Apple marketing palette and rounded-card grammar below.
-The shared stylesheet is the only layout source; duplicate inline page styles
-were removed. Use paper #f6f0e3, panels #efe8d8, ink #12100a, burnt orange actions,
-serif display headings and monospace labels. The dark theme uses CRT-like neutral
-surfaces. ASCII symbols are text, with accessible labels on controls.
-
-Retain Apple's functional principles: clear hierarchy, system body text at 17px,
-44px minimum touch controls, visible keyboard focus, responsive content, readable
-contrast and native accessible dialogs. On narrow screens, data rows reflow and
-navigation stays in a safe-area-aware bottom bar. Never shrink a desktop canvas
-to fit a phone. Pause freezes the feed, not proxy execution or pending holds.
-
-## Historical Apple reference
-
-The following reference is retained for provenance. Its exact branding tokens
-are not the current VOID visual specification.
-
-Authoritative source: /Users/dawe/.prime/agent/skills/awesome-design-md/references/apple/DESIGN.md
-
-COLORS: Action Blue #0066cc (the ONLY interactive color; focus #0071e3; on-dark links #2997ff). Ink #1d1d1f. White #ffffff canvas, parchment #f5f5f7 alternating sections, pearl #fafafc, dark tiles #272729/#2a2a2c/#252527, black #000000 nav only. Hairline #e0e0e0, divider #f0f0f0.
-NO second accent color. NO decorative gradients. NO shadows on cards/buttons/text (single product shadow rgba(0,0,0,0.22) 3px 5px 30px reserved for imagery).
-
-TYPE: SF Pro Display/Text, system-ui fallback (Inter off-system, letter-spacing -0.01em display, line-height 1.44 body). hero 56/600/1.07/-0.28px; display-lg 40/600; display-md 34/600/-0.374px; lead 28/400; tagline 21/600; body-strong 17/600; body 17/400/1.47/-0.374px (NOT 16px); caption 14/400/-0.224px; fine-print 12; nav 12.
-Weights ONLY 300/400/600/700, never 500. Negative letter-spacing at display sizes only.
-
-CORNERS (the scale, never mix grammars): xs 5px, sm 8px (utility buttons), md 11px (pearl capsules), lg 18px (utility/store cards), pill 9999px (primary CTAs, chips, search), full 9999px circles. Full-bleed tiles are NOT rounded.
-
-SPACING: base 8; xxs 4, xs 8, sm 12, md 17, lg 24 (card padding), xl 32, xxl 48, section 80 (tile padding). Content max 1440 (store) / 980 (text).
-
-BUTTONS: primary = Action Blue pill, 17px text, padding 11x22, active scale(0.95), focus 2px #0071e3 outline. Secondary = ghost pill (transparent, 1px blue border). Dark utility = #1d1d1f bg, sm 8px radius, 14px text. Pearl capsule = #fafafc bg, 3px divider ring, md 11px, 14px. Icon circular = 44x44, rgba(210,210,215,.64), full.
-
-NAV: global nav black 44px, 12px links. Sub-nav parchment 80% + blur, 52px, 21px category + persistent primary CTA right.
-
-CARDS: store-utility-card = white, 1px hairline, lg 18px, 24px padding, no shadow, 1:1 image inside sm 8px radius. Tiles = full-bleed, 80px padding, light/parchment/dark alternation is the divider.
-
-FOOTER: parchment, 17px/2.41 dense links, 64px padding, legal 12px #7a7a7a.
-
-ACTIVE STATE: transform scale(0.95) on every button. Min touch target 44x44.
-
-BREAKPOINTS: 1440 lock, 1068, 834, 734, 640, 480. Hero 56 -> 40 (1068) -> 34 (640) -> 28 (419).
-
-## Canonical brand and motion (2026-09-11 refinement)
-
-The only approved logo is the aperture in `Dawe583/void-empty` at commit
-`25b5e62d49d614f88804b72b55609c74092d98d8`. It reached this repository through the
-removed `artifacts/` site tree, so that path no longer resolves; the component that
-now carries the mark is `apps/control-plane/ui/src/brand.tsx` (`Brand`). Preserve
-its exact SVG geometry: four brackets, orange square, central dot. Use
-`ui/src/brand.tsx` on all new GUI brand surfaces; favicon is the original
-`public/favicon.svg` from that repository. Do not substitute ASCII `[V]`, letter
-tiles, or a new symbol.
-
-Match the website's self-hosted Instrument Serif, Inter, and JetBrains Mono.
-English is the default for a fresh browser; Czech remains available through the
-header and Settings. Existing stored language preferences remain respected.
-Motion uses CSS transitions and keyframes, with an explicit user toggle and
-`prefers-reduced-motion`. Animate entrances and interaction feedback; never
-animate or invent telemetry values. Keep workspace credentials server-side and
-use the authenticated HttpOnly session for immediate testing.
+The terminal keeps its own language on purpose. It is a different medium with
+its own ergonomics, and looking at home in a terminal is not the same question
+as looking at home on a Mac. Its ASCII identity, its colours and its key
+bindings are outside this work: nothing here migrates it toward the platform
+look, and nothing here pulls the platform surfaces back toward ASCII chrome.
+Where the surfaces meet, they share vocabulary, not appearance.

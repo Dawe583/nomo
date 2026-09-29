@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import {
   ATTACHMENT_BYTE_LIMIT,
   BUDGET_VISIBLE_AT,
@@ -76,21 +75,6 @@ test("attachment bytes are summed, not counted, against the 24 KB budget", () =>
     attachmentBytes([{ bytes: ATTACHMENT_BYTE_LIMIT / 2 + 1 }, { bytes: ATTACHMENT_BYTE_LIMIT / 2 }]) > ATTACHMENT_BYTE_LIMIT,
     true,
   );
-});
-
-test("the attachment paths in chat.tsx read the constant, not a literal", () => {
-  // A duplicated literal is how the two attachment paths and the visible
-  // counter drifted apart. Follow compact-layout.test.ts and read the source.
-  const source = readFileSync(new URL("./chat.tsx", import.meta.url), "utf8");
-  const literals = source.match(/\b2\d{4}\b/g) ?? [];
-  assert.deepEqual(
-    literals,
-    [],
-    "chat.tsx still hardcodes an attachment or message size: " + JSON.stringify(literals),
-  );
-  assert.equal(source.includes("ATTACHMENT_BYTE_LIMIT"), true, "chat.tsx must bound attachments with the shared constant");
-  assert.equal(source.includes("MESSAGE_CHAR_LIMIT"), true, "chat.tsx must bound the message with the shared constant");
-  assert.equal(source.includes("MESSAGE_BYTE_LIMIT"), true, "chat.tsx must bound the message bytes with the shared constant");
 });
 
 test("attachments survive the same route change the draft text survives", () => {

@@ -170,7 +170,7 @@ export function ComponentGallery() {
             "Every section renders a component the application actually uses, in real states. Sections without a consumer are absent.",
           )}
         </p>
-        <p className="gallery-exit">
+        <p>
           <a className="button" href="/settings">
             {t("Zpět do nastavení", "Back to settings")}
           </a>

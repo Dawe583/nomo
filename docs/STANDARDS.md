@@ -457,8 +457,11 @@ colour literal or an unprefixed keyframe, and when a static
   alpha, because a shadow is a design value. Hover is a background tint of
   `var(--raised)`, never a lift. Cells are separated by 1px `var(--line)` rules
   at `gap: 0`.
-- Serif for headlines, sans for body copy, mono for everything else: every
-  label, kicker, tag, button, table header, caption, number and status word.
+- Interface text is the platform's own sans, and a monospaced face is for
+  code, identifiers and short technical values only, never for every label,
+  kicker, tag, button, table header, caption, number and status word. The type
+  ramp is defined in `docs/APPLE-DESIGN-SYSTEM.md` and the same rule is stated
+  in `docs/GUI-RULES.md`, so the two agree.
 - Prefix every keyframe with `v-`. Tailwind ships `ping`, `spin`, `pulse` and
   `bounce`, and an unprefixed keyframe is silently overridden.
 - Never write a bare descendant `span` rule; scope to `> span`. Never set

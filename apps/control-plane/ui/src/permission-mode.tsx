@@ -146,12 +146,12 @@ export function PermissionModeSwitch({
         // announces the authoritative mode as unselectable — the one thing it
         // actually is not — so the mode is stated as text and the rail on the
         // banner carries the source, as it does everywhere else.
-        <p className="muted permission-authority">
+        <p className="muted">
           {words.label} · {words.origin}
         </p>
       )}
       {onChange ? null : (
-        <p className="muted permission-authority">
+        <p className="muted">
           {t("Server určuje režim; tuto volbu nelze změnit.", "Server controls this mode; it cannot be changed here.")}
         </p>
       )}

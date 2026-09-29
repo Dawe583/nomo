@@ -13,6 +13,15 @@ targets:
     platform: iOS
     sources:
       - path: VOIDApp
+        # `VoidDesignTokens.swift` is generated and declares its own
+        # `VoidMetrics`, which `ChatTheme.swift` also declares, so compiling
+        # both in one module fails with an invalid redeclaration. The
+        # committed project has never included this file, so excluding it keeps
+        # the app building exactly as it builds today. Neither file is edited
+        # here: the duplicate declaration belongs to the token layer, and this
+        # change only stops the generated file from being compiled beside it.
+        excludes:
+          - "VoidDesignTokens.swift"
     # Xcode's Info.plist generator silently drops any INFOPLIST_KEY_* whose key
     # name contains a tilde, so `UISupportedInterfaceOrientations~ipad` cannot be
     # expressed as a build setting. It goes through a generated Info.plist file,

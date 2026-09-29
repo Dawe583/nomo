@@ -47,10 +47,16 @@ Two corroborating facts fall out of it:
   the repository, so a private repository cannot have a Pages site. The
   `.github/workflows/pages.yml` "Publish download page" workflow has therefore
   never run, and the README's only outbound link points at nothing.
-- **Every CI gate in `.github/workflows/` has never executed against a remote
-  commit.** `ci.yml` runs on `push: branches: [main]` and
-  `pull_request`. With no push, the "everything is green" state established for
-  this research was produced by local runs, not by CI.
+- ~~**Every CI gate in `.github/workflows/` has never executed against a remote
+  commit.**~~ Corrected 2026-09-28, and the correction matters: three runs
+  succeeded, on 2026-09-25, one `ci` and two `cloud integration`. CI has
+  therefore executed against a remote commit and has been green. What is true
+  now is different and worse in one way: every run since has failed within four
+  seconds with "The job was not started because recent account payments have
+  failed or your spending limit needs to be increased", so the repository has a
+  green CI record and no current one. That is an account condition, not a
+  permissions one, and it is the first thing to clear before the publish
+  workflow is worth writing.
 
 This matters more than any signing, provisioning, or store question, because
 almost every channel below has a hard dependency on a publicly reachable

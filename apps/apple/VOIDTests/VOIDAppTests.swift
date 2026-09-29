@@ -132,4 +132,91 @@ final class VOIDAppTests: XCTestCase {
         XCTAssertNotEqual(english.removalNotice(for: .failed), english.removalNotice(for: .removed))
         XCTAssertNotEqual(czech.removalNotice(for: .removed), czech.removalNotice(for: .removedLocallyOnly))
     }
+
+    /// A relaunch is a second `AppModel` over the same storage, which is the
+    /// only way this can be checked without a device: a flag held in the
+    /// process is gone, and one held in the defaults is not.
+    func testCompletingOnboardingSurvivesARelaunch() throws {
+        let suite = "com.void.companion.tests.onboarding"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let firstLaunch = AppModel(onboarding: DefaultsOnboardingStateStore(defaults: defaults))
+        XCTAssertFalse(firstLaunch.hasCompletedOnboarding, "A first launch opens on the entry screen.")
+
+        firstLaunch.completeOnboarding()
+
+        let nextLaunch = AppModel(onboarding: DefaultsOnboardingStateStore(defaults: defaults))
+        XCTAssertTrue(
+            nextLaunch.hasCompletedOnboarding,
+            "The entry screen came back for someone who already answered it."
+        )
+    }
+
+    /// Every key in `Localizable.xcstrings` has to resolve, in both shipped
+    /// languages. A key with no entry resolves to itself, so a gap in the
+    /// catalog is a sentence the operator reads rather than an empty control,
+    /// and this is what stops it shipping.
+    func testEverySentenceResolvesInBothShippedLanguages() {
+        for language in ["en", "cs"] {
+            let copy = LocalizedCopy(language: language)
+            for key in CopyKey.allCases {
+                let resolved = copy[key]
+                XCTAssertFalse(resolved.isEmpty, "\(key.rawValue) is empty in \(language).")
+                XCTAssertNotEqual(
+                    resolved, key.rawValue,
+                    "\(key.rawValue) has no \(language) entry in Localizable.xcstrings."
+                )
+            }
+        }
+    }
+
+    /// The read-only promise is the product's own sentence, and moving it into
+    /// a catalog is exactly when it would get quietly reworded.
+    func testTheReadOnlyPromiseIsSaidUnchangedInBothLanguages() {
+        let english = AppCopy(language: "en")
+        let czech = AppCopy(language: "cs")
+
+        XCTAssertEqual(english.readOnly, "Read-only")
+        XCTAssertEqual(czech.readOnly, "Jen pro čtení")
+        XCTAssertEqual(english.noWriteAuthority, "This companion build has no write authority.")
+        XCTAssertEqual(czech.noWriteAuthority, "Tato verze doprovodné aplikace nemá oprávnění zapisovat.")
+        XCTAssertEqual(english.noActionOffline, "No action is available while offline")
+        XCTAssertEqual(czech.noActionOffline, "Offline není dostupná žádná akce")
+        XCTAssertEqual(english.connectionDetail(for: .offline), "Read-only until a trusted Mac is paired.")
+        XCTAssertEqual(czech.connectionDetail(for: .offline), "Jen pro čtení, dokud není spárován důvěryhodný Mac.")
+    }
+
+    /// What a decision means is the second sentence the product owns. A tool
+    /// call that needs an operator decision and one that arrived incomplete
+    /// are two different claims, and both have to keep saying so.
+    func testWhatADecisionMeansIsSaidUnchangedInBothLanguages() {
+        let english = ChatCopy(language: "en")
+        let czech = ChatCopy(language: "cs")
+
+        XCTAssertEqual(
+            english.needsExecutorDecision,
+            "The trusted Mac has to make this decision, so this companion offers no control for it."
+        )
+        XCTAssertEqual(
+            czech.needsExecutorDecision,
+            "Rozhodnutí musí udělat důvěryhodný Mac. Tato aplikace proto nenabízí žádné tlačítko."
+        )
+        XCTAssertEqual(
+            english.incompleteCallDetail,
+            "This call arrived incomplete and was not executed. VOID does not guess the missing part."
+        )
+        XCTAssertEqual(
+            czech.incompleteCallDetail,
+            "Volání dorazilo neúplné a nebylo provedeno. VOID neuhoduje chybějící části."
+        )
+        XCTAssertEqual(
+            english.composerStatus(for: .readOnlyBuild),
+            "Composing and sending are unavailable: this build has no transport to the Mac."
+        )
+        XCTAssertEqual(
+            czech.composerStatus(for: .readOnlyBuild),
+            "Psát ani odesílat nelze: tato verze nemá přenosovou cestu k Macu."
+        )
+    }
 }

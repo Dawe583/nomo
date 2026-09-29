@@ -69,7 +69,7 @@ final class AppModel: ObservableObject {
     }
 
     @Published private(set) var connectionState: ConnectionState = .offline
-    @Published var hasCompletedOnboarding = false
+    @Published private(set) var hasCompletedOnboarding: Bool
     @Published private(set) var sessions: [Session] = []
     @Published private(set) var executorName = "No executor selected"
     @Published private(set) var removalOutcome: RemovalOutcome?
@@ -81,14 +81,23 @@ final class AppModel: ObservableObject {
     let transcript: TranscriptCache
 
     private let removal: DeviceRemovalService
+    private let onboarding: OnboardingStateStore
 
     /// Nothing this app caches is ever authority for a mutation, so the answer
     /// is a value on the model rather than something each view has to
     /// remember.
     var cachedHistoryAuthority: TranscriptAuthority { .nonAuthoritative }
 
-    init(transcript: TranscriptCache = TranscriptCache(), removal: DeviceRemovalService? = nil) {
+    init(
+        transcript: TranscriptCache = TranscriptCache(),
+        removal: DeviceRemovalService? = nil,
+        onboarding: OnboardingStateStore = DefaultsOnboardingStateStore()
+    ) {
         self.transcript = transcript
+        // Restored rather than assumed, so a relaunch lands where the operator
+        // left off instead of asking a question they already answered.
+        self.onboarding = onboarding
+        self.hasCompletedOnboarding = onboarding.hasCompletedOnboarding
         // This build has no paired transport, so it never reaches an executor
         // to revoke. The service is constructed with a revocation that reports
         // "not confirmed" rather than one that pretends it did; a build that
@@ -104,8 +113,11 @@ final class AppModel: ObservableObject {
 
     var connectionDetail: String { connectionState.statusDetail }
 
+    /// Completing the entry screen is written where the next launch reads it,
+    /// in the same call that flips the flag, so the two cannot disagree.
     func completeOnboarding() {
         hasCompletedOnboarding = true
+        onboarding.hasCompletedOnboarding = true
     }
 
     func revokePairing() {

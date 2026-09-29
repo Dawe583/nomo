@@ -37,8 +37,16 @@ What the research behind this roadmap established, and what it did not:
   bet rather than a forecast.
 - **The product has no first user yet.** The repository is private, the
   advertised download page does not resolve, the npm name is taken, and no
-  package is publishable. A push from a developer machine works, so the
-  credential problem recorded in `RELEASE.md` is no longer the blocker it was.
+  package is publishable.
+- **Remote CI ran green once and now cannot start at all.** Verified
+  2026-09-28: three runs succeeded on 2026-09-25, one `ci` and two
+  `cloud integration`, and every run since has failed within four seconds with
+  "The job was not started because recent account payments have failed or your
+  spending limit needs to be increased". A push from a developer machine works,
+  so this is an account condition rather than an access one, and it is the
+  cheapest blocker on this roadmap to clear and the one that silently invalidates
+  every remote claim until it is. `docs/RELEASE.md` and
+  `docs/DISTRIBUTION-PATH.md` carried the opposite claim and are corrected.
 
 ## Phase 0: fix the record, or nothing else is trustworthy
 
@@ -136,7 +144,7 @@ it is a track rather than a value.
 | Order | Phase | Size in sessions | Blocked by |
 | --- | --- | --- | --- |
 | 1 | phase 0, the record | 3 | nothing |
-| 2 | B2, the npm scope | 1 human action, then 1 | nothing, start in parallel with 1 |
+| 2 | B2, the npm scope, and clearing the account condition that stops CI | 1 human action, then 1 | nothing, start in parallel with 1 |
 | 3 | A1 and A2, the provable inversion and its attribution | 8 | nothing |
 | 4 | B1, the buildable packages | 6 | nothing, parallel with 3 |
 | 5 | C phase 0 and 1, the substrate and the token source | 3 | phase 0 |
