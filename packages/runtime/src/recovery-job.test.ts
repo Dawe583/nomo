@@ -263,6 +263,34 @@ test("unknown job resumes after reconciliation without a second inverse", async 
   assert.equal(f.recoveries.get("one"), 1);
 });
 
+test("unsupported recovery reconciliation stays unknown without repeating the inverse", async (t) => {
+  const f = await fixture(t);
+  f.adapter.reconcileRecovery = undefined;
+  await f.execute("one", "run");
+  await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "unsupported-reconcile",
+    selection: { kind: "run", runId: "run" },
+  });
+  f.lose("one");
+  assert.equal(
+    (
+      await f.open().runRecoveryJob(
+        "test",
+        "unsupported-reconcile",
+        async () => true,
+      )
+    ).status,
+    "unknown",
+  );
+  f.lose(undefined);
+  assert.equal(
+    (await f.open().reconcileRecovery("test", "one")).status,
+    "unknown",
+  );
+  assert.equal(f.recoveries.get("one"), 1);
+});
+
 test("compensation completes its step but keeps the job partial", async (t) => {
   const f = await fixture(t);
   f.compensate("one");

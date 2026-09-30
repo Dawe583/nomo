@@ -745,28 +745,36 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
         )
           throw new Error("No uncertain recovery exists.");
         const adapter = adapterFor(event.adapterId, event.adapterVersion);
-        if (!adapter.reconcileRecovery) return { status: "unknown" };
+        if (
+          !adapter.reconcileRecovery &&
+          !adapter.reconcileRecoveryWithContinuation
+        )
+          return { status: "unknown" };
+        const continuation = await continuationForOperation(tx, operationId);
+        if (!adapter.reconcileRecovery && !continuation)
+          return { status: "unknown" };
         await options.vault.reserve?.(workspace, operationId, ["recovery"]);
         const bundle = await loadPrepared(tx, event);
         const outcome = (await options.vault.get(
           workspace,
           artifact(tx, operationId, "succeeded"),
         )) as unknown as Outcome;
-        const continuation = await continuationForOperation(tx, operationId);
         const recoveryId = `recovery-${adapterKey(workspace, operationId)}`;
-        const result =
-          continuation && adapter.reconcileRecoveryWithContinuation
-            ? await adapter.reconcileRecoveryWithContinuation(
-                clean(bundle.prepared),
-                clean(outcome),
-                recoveryId,
-                clean(continuation),
-              )
-            : await adapter.reconcileRecovery(
-                clean(bundle.prepared),
-                clean(outcome),
-                recoveryId,
-              );
+        let result: RecoveryOutcome | { status: "unknown" };
+        if (continuation && adapter.reconcileRecoveryWithContinuation) {
+          result = await adapter.reconcileRecoveryWithContinuation(
+            clean(bundle.prepared),
+            clean(outcome),
+            recoveryId,
+            clean(continuation),
+          );
+        } else if (adapter.reconcileRecovery) {
+          result = await adapter.reconcileRecovery(
+            clean(bundle.prepared),
+            clean(outcome),
+            recoveryId,
+          );
+        } else return { status: "unknown" };
         if (result.status === "unknown") return result;
         const receipt = await options.vault.put(
           workspace,

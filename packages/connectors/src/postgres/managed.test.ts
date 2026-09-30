@@ -238,6 +238,7 @@ test("lost response after a chained PostgreSQL inverse reconciles the bound line
   let recoveryCalls = 0;
   const adapter = {
     ...base,
+    reconcileRecovery: undefined,
     async recoverWithContinuation(
       prepared: Parameters<typeof base.recover>[0],
       outcome: Parameters<typeof base.recover>[1],
