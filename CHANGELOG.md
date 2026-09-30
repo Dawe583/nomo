@@ -4,6 +4,13 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- `void_project_info` now answers with where it is being served from and a
+  pasteable client configuration, because a caller connecting for the first time
+  needs the address before it needs anything else. Both come from the operator's
+  `VOID_MCP_ENDPOINT` rather than from the source, since the domain is expected
+  to change and a value written into the code answers the wrong one the moment
+  it does. An undeclared endpoint reports itself undeclared instead of emitting
+  a configuration with an empty URL, which looks pasteable and fails on use.
 - Every precondition in the hosted registry now carries the gate the registry
   holds beside it: 491 of 491 cases publish a structured `if` alongside the
   prose, where 445 previously published nothing and did not know they were

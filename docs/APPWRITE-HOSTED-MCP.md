@@ -27,7 +27,7 @@ Six tools, all annotated `readOnlyHint: true`:
 
 | Tool | Answers |
 | --- | --- |
-| `void_project_info` | What this endpoint is, where recovery runs, and the registry's current size |
+| `void_project_info` | What this endpoint is, how to connect to it, where recovery runs, and the registry's current size |
 | `void_registry_search` | Search the reversibility registry by text, vendor, surface, tag or class |
 | `void_registry_entry` | One operation's preconditions, classes, gates, inverses and validity windows |
 | `void_registry_summary` | Registry totals, class distribution, vendor coverage, and its own disclaimer |
@@ -44,6 +44,15 @@ VOID would do can evaluate the gate; a caller reading prose can read it. The
 registry holds 491 gates and the endpoint publishes all of them, because a
 catalogue that answers "r1" without saying what has to be true to get there is
 half a catalogue.
+
+`void_project_info` answers with the address it is being served from and a
+pasteable client configuration, both read from the operator's
+`VOID_MCP_ENDPOINT` rather than written into the source, because the domain is
+expected to change and a value written into the code answers the wrong one the
+moment it does. When that variable is not set, both fields come back empty
+rather than carrying a URL that may be the wrong one: a configuration with an
+empty `url` looks pasteable and fails on use, and the failure reads as a broken
+server rather than as an undeclared address.
 
 The registry is the interesting one. VOID's claim is that reversibility is not a
 property of an API call but of the system state the call runs against: an S3
