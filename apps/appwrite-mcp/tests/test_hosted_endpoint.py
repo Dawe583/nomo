@@ -275,6 +275,38 @@ class ToolCallTest(unittest.TestCase):
         self.assertIn("error", data)
         self.assertIn("r9", data["received"])
 
+    def test_registry_entry_publishes_the_gate_and_the_note(self) -> None:
+        # The prose in `when` is what a person reads; the `if` literal is what a
+        # tool evaluates. Publishing one without the other answers a different
+        # question than the one the catalogue exists for, so both are asserted
+        # on a case that carries a conjunction rather than on the first row.
+        data = self.payload("void_registry_entry", {"operation_id": "stripe.refund.create"})
+        self.assertTrue(data["found"])
+        gates = [case for case in data["cases"] if case.get("if")]
+        self.assertGreaterEqual(len(gates), 1, "no case published its gate")
+        for case in data["cases"]:
+            self.assertIn("note", case, "a case published without its note")
+            self.assertIn("if", case, "a case published without its gate")
+        conjunction = next(
+            (case for case in gates if (case.get("if") or {}).get("kind") == "all"),
+            None,
+        )
+        self.assertIsNotNone(conjunction, "the conjunction case did not publish its gate")
+        gate = (conjunction or {}).get("if") or {}
+        self.assertTrue(
+            gate.get("of"),
+            "a conjunction published with no children, so it can never be true",
+        )
+
+    def test_registry_search_matches_a_gate_by_its_fact_name(self) -> None:
+        # A caller checks `stripe.balance_covers_refund` and a caller searches
+        # for it by that name. It appears in no prose field, so a search that
+        # read only the prose answered zero for a string the registry holds.
+        data = self.payload("void_registry_search", {"query": "balance_covers_refund", "limit": 5})
+        self.assertGreaterEqual(data["total_matched"], 1)
+        for row in data["results"]:
+            self.assertIn("if", row, "a search result published without its gate")
+
     def test_registry_entry_returns_every_precondition_for_one_operation(self) -> None:
         data = self.payload("void_registry_entry", {"operation_id": "aws.s3.object.put"})
         self.assertTrue(data["found"])

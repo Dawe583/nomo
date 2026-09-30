@@ -28,11 +28,22 @@ Six tools, all annotated `readOnlyHint: true`:
 | Tool | Answers |
 | --- | --- |
 | `void_project_info` | What this endpoint is, where recovery runs, and the registry's current size |
-| `void_registry_search` | Search the reversibility registry by id, vendor, surface, tag or class |
-| `void_registry_entry` | One operation's preconditions, classes, inverses and validity windows |
+| `void_registry_search` | Search the reversibility registry by text, vendor, surface, tag or class |
+| `void_registry_entry` | One operation's preconditions, classes, gates, inverses and validity windows |
 | `void_registry_summary` | Registry totals, class distribution, vendor coverage, and its own disclaimer |
 | `void_local_tools` | The local stdio tools with arguments and their read/write annotations |
 | `void_cli_commands` | The CLI command surface, read from the dispatcher |
+
+Each precondition is published twice, and the second form is the point. `when`
+is the sentence a person reads, and it is also what a search matches on. `if`
+is the structured gate the registry carries next to it, in the form a tool can
+evaluate: `{"kind": "fact", "fact": "stripe.charge.settled", "is": "true"}`,
+`{"kind": "always"}`, or `{"kind": "all", "of": [...]}` when a case needs more
+than one condition. A caller holding a Stripe account and wanting to know what
+VOID would do can evaluate the gate; a caller reading prose can read it. The
+registry holds 491 gates and the endpoint publishes all of them, because a
+catalogue that answers "r1" without saying what has to be true to get there is
+half a catalogue.
 
 The registry is the interesting one. VOID's claim is that reversibility is not a
 property of an API call but of the system state the call runs against: an S3

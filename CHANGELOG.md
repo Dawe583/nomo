@@ -4,6 +4,14 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Every precondition in the hosted registry now carries the gate the registry
+  holds beside it: 491 of 491 cases publish a structured `if` alongside the
+  prose, where 445 previously published nothing and did not know they were
+  missing any. A caller holding a Stripe account can evaluate
+  `{"kind": "fact", "fact": "stripe.charge.settled", "is": "true"}` instead of
+  parsing a sentence, and a conjunction publishes its children rather than a
+  gate that can never be true. The parser was reading the fields around the
+  gate and matching none of them, because the source quotes its keys.
 - A deployed hosted MCP served an **empty CLI command list and an empty local
   tool catalogue**. The registry read its fallback, because it had one; the
   other two readers did not, and in production there is no source tree to read

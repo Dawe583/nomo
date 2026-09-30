@@ -59,7 +59,8 @@ _CASE = re.compile(
     r'\{\s*when:\s*"(?P<when>[^"]*)",\s*'
     r'tone:\s*"(?P<tone>r[0-3])",\s*'
     r'inverse:\s*(?P<inverse>null|"(?:[^"\\]|\\.)*"),\s*'
-    r'window:\s*"(?P<window>[^"]*)"(?:\s*,\s*note:\s*"(?P<note>(?:[^"\\]|\\.)*)")?'
+    r'window:\s*"(?P<window>[^"]*)",\s*'
+    r'note:\s*"(?P<note>(?:[^"\\]|\\.)*)"'
 )
 
 
@@ -72,6 +73,152 @@ def _read(path: Path) -> str | None:
 
 def _tags(raw: str) -> list[str]:
     return [part.strip().strip("\"'") for part in raw.split(",") if part.strip()]
+
+
+# The precondition a case hangs on, as a structured object rather than prose.
+#
+# `if:` is a nested literal with its own braces and its own quoted strings, and
+# an `all` case carries an array of them. A regular expression cannot count
+# braces, so the object is read by balancing: the first `{` after `if:` and the
+# brace that returns the depth to zero end it. Strings are skipped so that a
+# brace inside a quoted value cannot end the object early.
+_IF_START = re.compile(r"\bif:\s*\{")
+
+
+def _precondition(text: str, case_end: int) -> dict[str, Any] | None:
+    """The `if` object belonging to the case whose `note` ended at `case_end`.
+
+    The case is an object literal that is still open at `case_end`: its `note`
+    string has been read but its closing brace has not. So the bound is that
+    brace, found by balancing from the `{` that opened the case, and anything
+    after it belongs to the next case.
+
+    Bounding by the next case's `when` instead would be wrong in the direction
+    that hides data: the source writes the next case immediately after this
+    one, so that `when` arrives before this case's closing brace and the search
+    would be cut off before reaching the `if` it is looking for.
+    """
+    depth = 1
+    in_string = False
+    escaped = False
+    for index in range(case_end, len(text)):
+        char = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                literal = _IF_START.search(text[case_end:index])
+                if literal is None:
+                    return None
+                return _read_object(text, case_end + literal.end() - 1)
+    return None
+
+
+def _read_object(text: str, brace: int) -> dict[str, Any] | None:
+    """Read the object literal whose opening brace is at `brace`."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(brace, len(text)):
+        char = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return _as_precondition(text[brace : index + 1])
+    return None
+
+
+def _as_precondition(literal: str) -> dict[str, Any] | None:
+    """Read one `if` literal. It is TypeScript, so it is read field by field.
+
+    The keys are quoted in the source (`{ kind: "fact" }` is written
+    `{ "kind": "fact", ... }` in the generated file), so every pattern has to
+    allow the quotes around the key or nothing matches at all.
+    """
+    kind = re.search(r'"?kind"?\s*:\s*"(?P<kind>\w+)"', literal)
+    if kind is None:
+        return None
+    node: dict[str, Any] = {"kind": kind.group("kind")}
+    fact = re.search(r'"?fact"?\s*:\s*"(?P<fact>[^"]*)"', literal)
+    if fact is not None:
+        node["fact"] = fact.group("fact")
+    is_value = re.search(r'"?is"?\s*:\s*"(?P<is>[^"]*)"', literal)
+    if is_value is not None:
+        node["is"] = is_value.group("is")
+    argument = re.search(r'"?argument"?\s*:\s*"(?P<argument>[^"]*)"', literal)
+    if argument is not None:
+        node["argument"] = argument.group("argument")
+    operator = re.search(r'"?operator"?\s*:\s*"(?P<operator>[^"]*)"', literal)
+    if operator is not None:
+        node["operator"] = operator.group("operator")
+    if node["kind"] == "all":
+        # `of` holds a comma-separated list of the same literals. Each one is
+        # balanced in turn, because a nested `all` would contain its own array.
+        nested: list[dict[str, Any]] = []
+        list_start = literal.find('"of"')
+        if list_start == -1:
+            list_start = literal.find("of:")
+        open_bracket = literal.find("[", list_start) if list_start != -1 else -1
+        if open_bracket != -1:
+            cursor = open_bracket + 1
+            while True:
+                opening = literal.find("{", cursor)
+                if opening == -1:
+                    break
+                depth = 0
+                in_string = False
+                escaped = False
+                for index in range(opening, len(literal)):
+                    char = literal[index]
+                    if in_string:
+                        if escaped:
+                            escaped = False
+                        elif char == "\\":
+                            escaped = True
+                        elif char == '"':
+                            in_string = False
+                        continue
+                    if char == '"':
+                        in_string = True
+                    elif char == "{":
+                        depth += 1
+                    elif char == "}":
+                        depth -= 1
+                        if depth == 0:
+                            child = _as_precondition(literal[opening : index + 1])
+                            if child is not None:
+                                nested.append(child)
+                            cursor = index + 1
+                            break
+                else:
+                    break
+                if literal.find("{", cursor) == -1:
+                    break
+        node["of"] = nested
+    return node
 
 
 @lru_cache(maxsize=1)
@@ -100,7 +247,8 @@ def registry_entries() -> tuple[dict[str, Any], ...]:
         head = _ENTRY_HEAD.match(part)
         if head is None:
             continue
-        cases = list(_CASE.finditer(part[head.end() :]))
+        body = part[head.end() :]
+        cases = list(_CASE.finditer(body))
         if not cases:
             unparsed.append(head.group("id"))
             continue
@@ -118,6 +266,11 @@ def registry_entries() -> tuple[dict[str, Any], ...]:
                     "inverse": None if inverse == "null" else json.loads(inverse),
                     "window": case.group("window"),
                     "note": case.group("note") or "",
+                    # The structured precondition, read from the text directly
+                    # after this case's note. It is a nested literal with its own
+                    # braces, which the case pattern cannot describe, so it is
+                    # read by balancing rather than by a second group.
+                    "if": _precondition(body, case.end()),
                 }
             )
     return tuple(rows)

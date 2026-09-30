@@ -35,6 +35,7 @@ def build() -> dict[str, Any]:
             "inverse": entry["inverse"],
             "window": entry["window"],
             "note": entry.get("note", ""),
+            "if": entry.get("if"),
         }
         for entry in void_data.registry_entries()
     ]

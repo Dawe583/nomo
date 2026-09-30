@@ -165,6 +165,14 @@ def void_registry_search(
                     str(row.get("window", "")),
                     str(row.get("note", "")),
                     " ".join(row["tags"]),
+                    # The gate's own fields. `stripe.balance_covers_refund` is
+                    # the fact a caller checks against and the string a caller
+                    # searches for, and it appears in no prose field at all.
+                    *(
+                        f"{key} {value}"
+                        for key, value in (row.get("if") or {}).items()
+                        if key != "of" and isinstance(value, str)
+                    ),
                 ]
             ).lower()
             # Every word has to appear, not the phrase as one substring. Nobody
@@ -244,6 +252,13 @@ def void_registry_entry(operation_id: str) -> str:
                     "tone": row["tone"],
                     "inverse": row["inverse"],
                     "window": row["window"],
+                    # The note is why the case is classified the way it is, and
+                    # the gate is the machine-readable form of the same thing:
+                    # `when` is what a person reads, `if` is what a tool can
+                    # evaluate. Publishing the prose without the gate answers a
+                    # different question than the one the catalogue exists for.
+                    "note": row.get("note", ""),
+                    "if": row.get("if"),
                 }
                 for row in rows
             ],
