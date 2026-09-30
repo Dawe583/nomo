@@ -47,11 +47,16 @@ describe("readLedgerFeed", () => {
     const page = await readLedgerFeed(file);
     assert.equal(page.verified, true);
     assert.equal(page.records.length, 2);
+    // The exact list is the point of this check: the feed publishes digests
+    // and metadata, never an argument or a payload. `keyId` is the public key
+    // identifier the stored entry already carries, published so an appender
+    // can tell whether it is signing under the key that wrote the chain.
     assert.deepEqual(Object.keys(page.records[0]!).sort(), [
       "argsDigest",
       "at",
       "decision",
       "digest",
+      "keyId",
       "klass",
       "prevDigest",
       "seq",

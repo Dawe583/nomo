@@ -71,13 +71,11 @@ export function useApi(
 }
 export function Badge({
   value,
-  pill,
   className,
   title,
   children,
 }: {
   value?: unknown;
-  pill?: boolean;
   className?: string;
   title?: string;
   children?: ReactNode;
@@ -86,7 +84,7 @@ export function Badge({
   if (children !== undefined)
     return (
       <span
-        className={"badge" + (pill ? " badge-pill" : "") + (className ? " " + className : "")}
+        className={"badge" + (className ? " " + className : "")}
         data-state={String(value)}
         title={title}
       >
@@ -95,7 +93,7 @@ export function Badge({
     );
   return (
     <span
-      className={"badge" + (pill ? " badge-pill" : "") + (className ? " " + className : "")}
+      className={"badge" + (className ? " " + className : "")}
       data-state={String(value)}
       title={title}
     >

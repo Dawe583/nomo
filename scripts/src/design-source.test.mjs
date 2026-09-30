@@ -85,11 +85,17 @@ test("the document carries the five groups phase 1 names", () => {
 });
 
 test("no colour literal sits outside the roles and the shadows", () => {
-  // A literal anywhere else is a value the contrast gate cannot see. The path
+  // A colour literal anywhere else is a value the contrast gate cannot see. The path
   // is reported rather than the count, because "3 literals" tells a reader
   // nothing about which group needs the second pair of eyes.
+  //
+  // `colour.scrim` is allowed for the same reason `colour.shadow` is: a scrim
+  // is a value the document states once and a component repeats, and it has no
+  // foreground to measure against because it is a veil rather than a text
+  // colour. Its readability is carried by the surface it dims, not by its own
+  // contrast, which is why there is no pair for it here.
   const allowed = (path) =>
-    path[0] === "colour" && (path[1] === "roles" || path[1] === "shadow");
+    (path[0] === "colour" && (path[1] === "roles" || path[1] === "shadow" || path[1] === "scrim"));
   const strays = [];
   for (const [path, value] of leaves(document_)) {
     if (typeof value !== "string") continue;
@@ -101,7 +107,7 @@ test("no colour literal sits outside the roles and the shadows", () => {
   assert.deepEqual(
     strays,
     [],
-    `a colour literal outside colour.roles and colour.shadow, where no contrast pair covers it:\n${strays.join("\n")}`,
+    `a colour literal outside colour.roles, colour.shadow and colour.scrim, where no contrast pair covers it:\n${strays.join("\n")}`,
   );
 });
 
@@ -277,5 +283,139 @@ test("a regeneration writes the same bytes and adds no diff", () => {
   );
   if (diffBefore === "") {
     assert.equal(diffAfter, "", "git diff is not empty on a clean tree");
+  }
+});
+
+/* ---------------------------------------------------------------- surfaces
+   The gates above read the document. The three below read the stylesheets, and
+   they exist because a value can be correct in the document and still be copied
+   by hand into a component rule, where no contrast pair and no regenerated
+   region can see it. */
+
+/** Every web stylesheet, in the order the entry module imports them. */
+const SURFACES = [
+  "apps/control-plane/ui/src/styles.css",
+  "apps/control-plane/ui/src/chat.css",
+];
+
+/**
+ * A stylesheet with the generated region removed.
+ *
+ * The region is the only place a literal is allowed, and it is the one part of
+ * the file the gates below must not read: it is a render of the document, so a
+ * literal there is the document's value and is already covered by the contrast
+ * gate above. Slicing it out rather than skipping the whole file is the point of
+ * these tests. The previous gate skipped `styles.css` entirely because it is a
+ * token file, and ten component rules hid in it for exactly that reason.
+ */
+function componentRules(file) {
+  const text = readFileSync(file, "utf8");
+  if (!text.includes(BEGIN)) return { file, lines: text.split("\n") };
+  const first = text.indexOf(BEGIN);
+  const last = text.indexOf(END);
+  assert.ok(last > first, `${file} has the end marker before the start marker`);
+  const head = text.slice(0, first).split("\n");
+  const tail = text.slice(last + END.length).split("\n");
+  return { file, lines: [...head, ...tail] };
+}
+
+test("no component rule holds a colour literal", () => {
+  const offenders = [];
+  for (const file of SURFACES) {
+    for (const [index, line] of componentRules(file).lines.entries()) {
+      if (/^\s*--[a-z][a-z0-9-]*\s*:/.test(line)) continue;
+      LITERAL.lastIndex = 0;
+      for (const match of line.matchAll(LITERAL)) {
+        offenders.push(`${file}:${index + 1} ${match[0]} in ${line.trim()}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `a colour literal outside the generated region, where no contrast pair covers it:\n${offenders.join("\n")}`,
+  );
+});
+
+test("no component rule holds a radius literal", () => {
+  // A radius is named for what it rounds, and the document carries a role for
+  // every size the stylesheet uses. Zero is allowed because it is a statement
+  // that the corners are square, not a fourth radius; a percentage is not,
+  // because it is a shape and not a size, so the gates below do not police it
+  // either.
+  //
+  // A shorthand is read corner by corner, so `0 8px 8px 0` is a square corner,
+  // two rounded ones and another square one. The gate accepts the mix and
+  // requires each rounded part to be a token, which is what makes a
+  // three-corner selection expressible without a new role for it.
+  const offenders = [];
+  for (const file of SURFACES) {
+    for (const [index, line] of componentRules(file).lines.entries()) {
+      // A named group, read with `.groups`, so the value and the full
+      // declaration are two different things and neither is read by offset.
+      const match = /border-radius:\s*(?<value>[^;]+);/.exec(line);
+      if (!match) continue;
+      const value = match.groups.value.trim();
+      if (value === "0" || /^var\(--radius-[a-z]+\)$/.test(value)) continue;
+      if (/^[\d.]+%(\s+[\d.]+%)*$/.test(value)) continue;
+      const corners = value.split(/\s+/);
+      if (corners.every((corner) => corner === "0" || /^var\(--radius-[a-z]+\)$/.test(corner)))
+        continue;
+      offenders.push(`${file}:${index + 1} border-radius: ${value}`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `a corner radius that is a number rather than one of the document's roles:\n${offenders.join("\n")}`,
+  );
+});
+
+test("no component rule repeats a hit target the document already carries", () => {
+  // The document states the touch and pointer floors once. A control that writes
+  // the number again is a second copy of a token, and it is the copy that
+  // drifts: the token moves and the hand written pixel does not. Only the
+  // control properties are checked, because a font size, a padding and a grid
+  // gap are type and spacing, which the document describes with other roles.
+  const CONTROL =
+    /(?<![-\w])(min-height|min-width|width|height):\s*([^;]*\b(?:44|28)px\b[^;]*);/;
+  const offenders = [];
+  for (const file of SURFACES) {
+    for (const [index, line] of componentRules(file).lines.entries()) {
+      const match = CONTROL.exec(line);
+      if (match) offenders.push(`${file}:${index + 1} ${match[1]}: ${match[2]};`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `a hit target written as a pixel count rather than read from --control-touch or --control-macos:\n${offenders.join("\n")}`,
+  );
+});
+
+test("the hit-target tokens the stylesheet reads are the ones the document declares", () => {
+  // The conversion was done by `scripts/src/tokenise-hit-targets.py`, which
+  // reads both numbers out of the document rather than restating them. This
+  // asserts the result against the document directly, so a future change to
+  // `control.touchPt` fails here instead of leaving 52 rules pointing at a
+  // token that no longer holds the value they were converted to mean.
+  const control = document_.control;
+  const stylesheetValues = new Set(
+    [...stylesheet.matchAll(/var\(--control-(touch|macos)\)/g)].map((match) => match[1]),
+  );
+  assert.ok(
+    stylesheetValues.has("touch"),
+    `no rule reads --control-touch, so the ${control.touchPt}px floor is declared and unused`,
+  );
+  assert.ok(stylesheetValues.has("macos"), "no rule reads --control-macos");
+
+  // Every `var(--control-*)` in the stylesheet must name a role the generator
+  // actually emits. An undeclared name resolves to nothing at runtime and the
+  // declaration silently drops out.
+  const declared = new Set(
+    [...stylesheet.matchAll(/^\s*--control-([a-z-]+)\s*:/gm)].map((match) => match[1]),
+  );
+  for (const used of stylesheetValues) {
+    assert.ok(declared.has(used), `--control-${used} is used but never declared in ${STYLESHEET}`);
   }
 });

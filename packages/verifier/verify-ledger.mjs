@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Standalone VOID ledger verifier, published as @void/verifier. Third
  * parties run this without VOID.

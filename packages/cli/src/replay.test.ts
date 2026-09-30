@@ -14,7 +14,7 @@ import {
   type ReplayConnector,
   type SnapshotReference,
 } from "./replay.ts";
-import type { FeedPage } from "../../ledger/src/feed.ts";
+import { readLedgerFeed, type FeedPage } from "../../ledger/src/feed.ts";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import { entryHash } from "../../ledger/src/canonical.ts";
 import { sha256Hex } from "../../ledger/src/sign.ts";
@@ -41,6 +41,7 @@ const page: FeedPage = {
       argsDigest,
       captureDigest: snapshotDigest,
       prevDigest: "0".repeat(64),
+      keyId: "dev-fixture",
       digest: "c".repeat(64),
     },
   ],
@@ -99,37 +100,62 @@ describe("runReplayCommand", () => {
     assert.doesNotMatch(out.join("\n"), /arguments|password|payload/);
   });
 
-  test("applies through the connector with the manifest image reference", async () => {
-    const snapshotDir = await manifestDir([
-      { digest: argsDigest, reference, tool: "postgres.row.update" },
-    ]);
+  test("applies, then records the inversion on the chain it read from", async (t) => {
+    const fixture = await persistedFixture();
+    t.after(() => rm(fixture.root, { recursive: true, force: true }));
     let inverseReference: SnapshotReference | undefined;
     let appliedPlan: InversePlan | undefined;
     const out: string[] = [];
-    const code = await runReplayCommand(
-      ["--ledger", "ledger.jsonl", "--snapshot-dir", snapshotDir, "--seq", "7"],
-      { stdout: (line) => out.push(line), stderr: () => {} },
-      {
-        readFeed: async () => page,
-        connectors: {
-          postgres: fakeConnector({
-            inverse: async (capture) => {
-              inverseReference = capture;
-              return { ...plan, capture };
-            },
-            apply: async (received) => {
-              appliedPlan = received;
-              return { applied: ["restore-row"], refused: [] };
-            },
-          }),
-        },
+    const err: string[] = [];
+    const code = await runReplayCommand(fixture.argv, {
+      stdout: (line) => out.push(line),
+      stderr: (line) => err.push(line),
+      env: {},
+    }, {
+      signer: fixture.signer,
+      connectors: {
+        postgres: fakeConnector({
+          inverse: async (capture) => {
+            inverseReference = capture;
+            return { ...plan, capture };
+          },
+          apply: async (received) => {
+            appliedPlan = received;
+            return { applied: ["restore-row"], refused: [] };
+          },
+        }),
       },
-    );
+    });
 
-    assert.equal(code, 0);
-    assert.deepEqual(inverseReference, reference);
-    assert.equal(appliedPlan?.capture.uri, reference.uri);
+    assert.equal(code, 0, err.join("\n"));
+    assert.equal(inverseReference?.digest, appliedPlan?.capture.digest);
+    assert.match(appliedPlan?.capture.uri ?? "", /snapshots\/postgres\//);
     assert.match(out.join("\n"), /applied: restore-row/);
+    assert.match(out.join("\n"), new RegExp(`reversal: seq 2 records the inversion of seq 1 `));
+
+    const page = await readLedgerFeed(fixture.ledgerPath, {
+      publicKey: (id) => fixture.signer.publicKey(id),
+    });
+    assert.equal(page.records.length, 2);
+    assert.deepEqual(page.records[1]?.reversal, { seq: 1, digest: page.records[0]?.digest });
+    assert.equal(page.records[1]?.decision, "execute:reversal");
+  });
+
+  test("an apply that cannot sign the inversion refuses before dispatching", async (t) => {
+    const fixture = await persistedFixture();
+    t.after(() => rm(fixture.root, { recursive: true, force: true }));
+    let applied = false;
+    const err: string[] = [];
+    const code = await runReplayCommand(fixture.argv, {
+      stdout: () => {}, stderr: (line) => err.push(line), env: {},
+    }, {
+      signer: (await devKeyProvider({ dir: join(fixture.root, "other-keys"), env: {} })),
+      connectors: { postgres: fakeConnector({ apply: async () => { applied = true; return { applied: ["restore-row"], refused: [] }; } }) },
+    });
+
+    assert.equal(code, 1);
+    assert.equal(applied, false, "the inverse must not run when it cannot be recorded");
+    assert.match(err.join("\n"), /not the key that wrote seq 1/);
   });
 
   test("a missing manifest match exits loudly", async () => {
@@ -162,10 +188,9 @@ describe("runReplayCommand", () => {
     assert.match(err.join("\n"), /no connector for tool vendor postgres/);
   });
 
-  test("drift refusal prints the report and exits one", async () => {
-    const snapshotDir = await manifestDir([
-      { digest: argsDigest, reference, tool: "postgres.row.update" },
-    ]);
+  test("drift refusal prints the report, exits one and records no inversion", async (t) => {
+    const fixture = await persistedFixture();
+    t.after(() => rm(fixture.root, { recursive: true, force: true }));
     const out: string[] = [];
     const report: ApplyReport = {
       applied: [],
@@ -187,15 +212,19 @@ describe("runReplayCommand", () => {
     };
 
     const code = await runReplayCommand(
-      ["--ledger", "ledger.jsonl", "--snapshot-dir", snapshotDir, "--seq", "7"],
-      { stdout: (line) => out.push(line), stderr: () => {} },
-      { readFeed: async () => page, connectors: { postgres: fakeConnector({ apply: async () => report }) } },
+      fixture.argv,
+      { stdout: (line) => out.push(line), stderr: () => {}, env: {} },
+      { signer: fixture.signer, connectors: { postgres: fakeConnector({ apply: async () => report }) } },
     );
 
     assert.equal(code, 1);
     assert.match(out.join("\n"), /refused restore-row: drift/);
     assert.match(out.join("\n"), /public\.accounts/);
     assert.match(out.join("\n"), /email/);
+    const after = await readLedgerFeed(fixture.ledgerPath, {
+      publicKey: (id) => fixture.signer.publicKey(id),
+    });
+    assert.equal(after.records.length, 1, "a refused inverse claims nothing");
   });
 
   test("ledger chain verification failure refuses before manifest lookup", async () => {
@@ -384,7 +413,7 @@ describe("persisted connector replay", () => {
     const err: string[] = [];
     const code = await runReplayCommand(fixture.argv, {
       stdout: (line) => out.push(line), stderr: (line) => err.push(line), env: {},
-    }, { exec });
+    }, { exec, signer: fixture.signer });
     assert.equal(code, 0, err.join("\n"));
     assert.deepEqual(events, ["begin", "commit"]);
     assert.equal(statements.length, 2);
@@ -402,7 +431,7 @@ describe("persisted connector replay", () => {
       const err: string[] = [];
       const code = await runReplayCommand(fixture.argv, {
         stdout: (line) => out.push(line), stderr: (line) => err.push(line), env: {},
-      }, { exec });
+      }, { exec, signer: fixture.signer });
       assert.equal(code, 1);
       assert.match(out.join("\n"), /refused transaction: internal_error/);
       assert.doesNotMatch([...out, ...err].join("\n"), /private-driver-credential/);
@@ -420,7 +449,7 @@ describe("persisted connector replay", () => {
     const out: string[] = [];
     const code = await runReplayCommand(fixture.argv, {
       stdout: (line) => out.push(line), stderr: () => {}, env: {},
-    }, { exec: { query, begin: async()=>{}, commit: async()=>{}, rollback: async()=>{} } as ReplayExecutor });
+    }, { exec: { query, begin: async()=>{}, commit: async()=>{}, rollback: async()=>{} } as ReplayExecutor, signer: fixture.signer });
     assert.equal(code, 1);
     assert.equal(statements.length, 1);
     assert.match(out.join("\n"), /refused update-0-public.accounts: drift/);
@@ -448,6 +477,8 @@ async function persistedFixture(tool = "postgres.row.update", snapshotBytes?: Ui
   });
   return {
     root,
+    signer,
+    ledgerPath: join(ledgerDir, "test.jsonl"),
     snapshotPath: fileURLToPath(captured.reference.uri),
     argv: ["--ledger", join(ledgerDir, "test.jsonl"), "--snapshot-dir", snapshotDir, "--seq", "1", "--key", Buffer.from((await signer.publicKey(await signer.currentKeyId()))!).toString("base64")],
   };

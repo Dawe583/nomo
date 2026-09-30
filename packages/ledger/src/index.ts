@@ -80,6 +80,7 @@ export * from "./canonical.ts";
 export * from "./sign.ts";
 export * from "./store.ts";
 export * from "./attribution.ts";
+export * from "./reversal.ts";
 export * from "./feed.ts";
 export * from "./verify.ts";
 export * from "./attest.ts";

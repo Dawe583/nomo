@@ -3,7 +3,7 @@ import { buildInverse, type InverseStep as PostgresInverseStep } from "./postgre
 import { captureBeforeImage, type BeforeImage, type CaptureSchema, type QueryExecutor } from "./postgres/capture.ts";
 import { connectorFacts } from "./postgres/classify.ts";
 import { parseStatement } from "./postgres/parse.ts";
-import { applyRestore, type ApplyReport as S3ApplyReport, type ApplyRestoreInput } from "./s3/apply.ts";
+import { applyRestore, type ApplyReport as S3ApplyReport, type ApplyRestoreInput, type RestoreReceipt } from "./s3/apply.ts";
 import { captureObject } from "./s3/capture.ts";
 import type { SnapshotReference, SnapshotStore } from "./snapshot/store.ts";
 import { s3Facts, type ConnectorFact, type S3Client, type S3DeleteCall } from "./s3/classify.ts";
@@ -54,6 +54,7 @@ export type InversePlan = {
   readonly steps: readonly InverseStep[];
   readonly facts: readonly ConnectorFact[];
 };
+export type { RestoreReceipt as S3RestoreReceipt } from "./s3/apply.ts";
 
 export type DriftChange = {
   readonly target: string;
@@ -65,7 +66,7 @@ export type DriftChange = {
 
 export type ReplayRefusal = {
   readonly stepId: string;
-  readonly reason: "drift" | "missing_target" | "permission_denied" | "internal_error";
+  readonly reason: "drift" | "missing_target" | "permission_denied" | "internal_error" | "verification_failed" | "verification_unavailable";
   readonly changed: readonly DriftChange[];
   readonly report?: string;
 };
@@ -73,6 +74,7 @@ export type ReplayRefusal = {
 export type ApplyReport = {
   readonly applied: readonly string[];
   readonly refused: readonly ReplayRefusal[];
+  readonly receipts?: readonly RestoreReceipt[];
 };
 
 export type Connector = {

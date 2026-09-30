@@ -37,9 +37,13 @@ import {
   useText,
   useAppliedAppearance,
 } from "./ui";
+// One stylesheet, imported once from the entry module. It used to be a set of
+// four loaded in a fixed order with the chat rules inside a lazy chunk, so
+// which declaration won depended on when a chunk arrived. The order here is
+// the whole cascade: tokens, then the surface, then the chat surface, and
+// nothing loads after the entry has painted.
 import "./styles.css";
-import "./ascii.css";
-import "./mobile.css";
+import "./chat.css";
 import { ComponentGallery } from "./gallery";
 import { isGalleryRequest } from "./gallery-path";
 // Imported statically, not through `lazy()`. The sign in screen is the one
@@ -474,7 +478,6 @@ function App({
         <span>{t("English", "Čeština")}</span>
       </button>
       <button
-        className="theme-toggle"
         aria-label={t("Přepnout vzhled", "Toggle theme")}
         onClick={() =>
           setAppearance(
@@ -773,11 +776,7 @@ function App({
                 </span>
                 {current && <RunStatus run={current} />}
                 {overview.data?.queueCapacity !== undefined && (
-                  <Badge
-                    pill
-                    className="badge-queue"
-                    title={t("Fronta", "Queue")}
-                  >
+                  <Badge className="badge-queue" title={t("Fronta", "Queue")}>
                     {overview.data.queueLength !== null
                       ? `${overview.data.queueLength}/${overview.data.queueCapacity}`
                       : "?/"}
@@ -888,7 +887,7 @@ function App({
               </div>
               )
             ) : (
-              <div className={"work-area " + (context ? "with-context" : "")}>
+              <div className="work-area">
                 {page === "chat" || path === "/" ? (
                   <div
                     className="chat-container"

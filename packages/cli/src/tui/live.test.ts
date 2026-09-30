@@ -6,7 +6,7 @@ import { verificationKeyLine } from "../../../ledger/src/verify-key.ts";
 
 const view: LiveView = { workspace: "local", selected: 0, filter: "", paused: false, detail: false, help: false,
   page: { verified: true, signed: true, head: "a".repeat(64), records: [
-    { seq: 1, at: "2026-09-11", tool: "postgres.row.update", klass: "r1", decision: "allow:resolved", argsDigest: "b".repeat(64), prevDigest: "0".repeat(64), digest: "a".repeat(64) },
+    { seq: 1, at: "2026-09-11", tool: "postgres.row.update", klass: "r1", decision: "allow:resolved", argsDigest: "b".repeat(64), prevDigest: "0".repeat(64), keyId: "dev-fixture", digest: "a".repeat(64) },
   ] } };
 
 for (const columns of [80, 120, 200]) test(`live ledger is bounded at ${columns} columns`, () => {

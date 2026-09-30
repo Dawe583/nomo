@@ -1,6 +1,7 @@
 import { watchFile, unwatchFile } from "node:fs";
 import type { JsonlEntry } from "./store.ts";
 import { readLedgerEntries, verifyChain, type PublicKeyLookup } from "./verify.ts";
+import { readLedgerReversal, type LedgerReversal } from "./reversal.ts";
 import { readLedgerReason, type LedgerAttribution } from "./attribution.ts";
 
 export type LedgerFeedRecord = {
@@ -17,6 +18,18 @@ export type LedgerFeedRecord = {
    * that names a policy and no rule.
    */
   readonly attribution?: LedgerAttribution;
+  /**
+   * Present only on a record that claims to invert an earlier record in this
+   * same chain. Its absence means the record inverts nothing.
+   */
+  readonly reversal?: LedgerReversal;
+  /**
+   * The key that signed this record. A writer appending to a chain signs under
+   * the key that wrote the record it is about to reverse, because a reversal
+   * signed by a second key makes the file unverifiable by whoever holds only
+   * the first.
+   */
+  readonly keyId: string;
   readonly prevDigest: string;
   readonly digest: string;
 };
@@ -122,6 +135,8 @@ function toFeedRecord(entry: JsonlEntry): LedgerFeedRecord {
   // The feed refuses what the verifier refuses, so a consumer cannot read a
   // reason the chain would reject as malformed.
   const reason = readLedgerReason(entry.body, entry.seq);
+  const reversal = readLedgerReversal(entry.body, entry.seq);
+  if (reversal.kind === "malformed") throw new Error(reversal.detail);
   if (reason.kind === "malformed") throw new Error(reason.detail);
   return {
     seq: entry.seq,
@@ -132,6 +147,8 @@ function toFeedRecord(entry: JsonlEntry): LedgerFeedRecord {
     argsDigest,
     ...(typeof body.captureDigest === "string" ? { captureDigest: body.captureDigest } : {}),
     ...(reason.kind === "attributed" ? { attribution: reason.attribution } : {}),
+    ...(reversal.kind === "reversal" ? { reversal: reversal.reversal } : {}),
+    keyId: entry.key_id,
     prevDigest: entry.prev_hash,
     digest: entry.hash,
   };

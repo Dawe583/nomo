@@ -2,6 +2,7 @@ import { readFile, stat } from "node:fs/promises";
 
 import { GENESIS_PREV, entryHash } from "./canonical.ts";
 import { readLedgerReason } from "./attribution.ts";
+import { readLedgerReversal, reversalFinding } from "./reversal.ts";
 import { sha256Hex, verifySignature } from "./sign.ts";
 import { signingPreimage } from "./index.ts";
 import type { JsonlEntry } from "./store.ts";
@@ -101,6 +102,7 @@ export async function verifyChain(
   let prev = GENESIS_PREV;
   let checked = 0;
   const lines: VerifyChainLine[] = [];
+  const proven = new Map<number, string>();
 
   for (const entry of entries) {
     checked += 1;
@@ -115,6 +117,21 @@ export async function verifyChain(
     const reason = readLedgerReason(entry.body, entry.seq);
     if (reason.kind === "malformed")
       return fail(`attribution: ${reason.detail}`);
+    // A reversal is only meaningful against the records this run has already
+    // proved, so it is enforced here with the same rule the store enforces and
+    // for the same reason: this is the function a third party runs, and a
+    // signed record asserting the inversion of something absent from the file
+    // must not pass it.
+    const reversal = readLedgerReversal(entry.body, entry.seq);
+    if (reversal.kind === "malformed")
+      return fail(`reversal: ${reversal.detail}`);
+    if (reversal.kind === "reversal") {
+      const finding = reversalFinding(reversal.reversal, entry.seq, (named) =>
+        proven.get(named),
+      );
+      if (finding !== undefined)
+        return fail(`reversal: entry ${entry.seq} ${finding}`);
+    }
     if (entry.seq !== checked)
       return fail(`expected seq ${checked}, found ${entry.seq}`);
     if (entry.prev_hash !== prev)
@@ -143,6 +160,7 @@ export async function verifyChain(
     }
 
     lines.push({ seq: entry.seq, ok: true });
+    proven.set(entry.seq, entry.hash);
     prev = entry.hash;
   }
 

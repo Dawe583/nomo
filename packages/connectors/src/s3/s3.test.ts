@@ -146,7 +146,17 @@ describe("S3 capture, inverse, and apply", () => {
 
     const report = await applyRestore(store, client, { stepId: "restore-1", call: { bucket: "b", key: "k" }, reference: captured.reference, capturedEtag: captured.etag });
 
-    assert.deepEqual(report, { applied: ["restore-1"], refused: [] });
+    // The step is reported applied only because the object was read back and
+    // matched the capture, and the proof of that is stored where the before
+    // image was.
+    assert.deepEqual(report.applied, ["restore-1"]);
+    assert.deepEqual(report.refused, []);
+    const receipt = report.receipts![0]!;
+    assert.equal(receipt.restoredDigest, captured.digest);
+    assert.equal(receipt.capturedDigest, captured.reference.digest);
+    const stored = JSON.parse(new TextDecoder().decode(await store.get({ ...captured.reference, ...{ namespace: "s3-restore", digest: receipt.reference! } })));
+    assert.equal(stored.stepId, "restore-1");
+    assert.equal(stored.restoredDigest, captured.digest);
     assert.equal(new TextDecoder().decode((await client.getObject({ bucket: "b", key: "k" })).body), "before");
   });
 });

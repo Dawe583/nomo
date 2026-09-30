@@ -110,6 +110,139 @@ if (existsSync(cloudDir)) {
 }
 
 /**
+ * The two Python suites, which until now no local gate and no CI job ran.
+ *
+ * They are separate from every suite above because they are a different kind
+ * of evidence. The Node suites read the repository with the interpreter that
+ * is already installed; these two need a decision about which Python runs
+ * them, and one of them needs the `mcp` SDK, which is a build requirement of
+ * the hosted function rather than a test-only dependency. So the runner
+ * probes for a usable interpreter and records what it tried.
+ *
+ * A suite that cannot run is reported as `UNRUN`, never as a pass, and is
+ * excluded from the passing total. That distinction is the whole point: a
+ * number in the summary that quietly counts a suite nobody executed is worse
+ * than no number, because it is read as evidence by every document that
+ * quotes it.
+ *
+ * `UNRUN` is a named warning and does not fail the gate. The alternative,
+ * failing, produces a gate that cannot pass on any machine lacking a build
+ * dependency of the hosted function, and a gate that is always red is a gate
+ * nobody runs. What is refused is the dishonest version: a suite that never
+ * executed must never be counted as a pass, which is why it prints in its own
+ * column and is subtracted from the total.
+ */
+const pythonSuites = [
+  {
+    name: "appwrite-mcp",
+    dir: join(root, "apps", "appwrite-mcp"),
+    startDir: "apps/appwrite-mcp/tests",
+    topDir: "apps/appwrite-mcp",
+    // The SDK is a build requirement of the deployed function, so an ordinary
+    // checkout cannot import it and a failing gate on every such machine
+    // would be a gate nobody runs.
+    probe: "import mcp",
+    setup: [
+      "python3 -m venv /tmp/void-mcp-venv",
+      "/tmp/void-mcp-venv/bin/python -m pip install -r apps/appwrite-mcp/requirements.txt",
+    ],
+  },
+  {
+    name: "void-transport",
+    dir: join(root, "python", "void-transport"),
+    startDir: "python/void-transport/tests",
+    topDir: "python/void-transport",
+    probe: null,
+    setup: [],
+  },
+];
+
+/**
+ * The interpreters tried, in order.
+ *
+ * An explicit override comes first so a machine with the SDK somewhere else
+ * than /tmp is not told it cannot run, and so CI can name the interpreter it
+ * built. The documented virtual environment is next, then the system `python3`
+ * for the suite that needs nothing. Each is reported with the reason it was
+ * rejected, so a reader is never left guessing which interpreter the gate
+ * meant. `VOID_MCP_PYTHON` relocates the SDK environment and `VOID_PYTHON`
+ * overrides the interpreter outright; both exist so a machine that has the
+ * SDK somewhere else, and a run that needs to reach the `UNRUN` branch, are
+ * both expressible without editing this file.
+ */
+const pythonCandidates = [
+  ...(process.env.VOID_PYTHON ? [process.env.VOID_PYTHON] : []),
+  process.env.VOID_MCP_PYTHON ?? "/tmp/void-mcp-venv/bin/python",
+  "python3",
+];
+
+function runPythonSuite(suite) {
+  const started = Date.now();
+  const tried = [];
+  for (const python of pythonCandidates) {
+    const available = spawnSync(python, ["--version"], { encoding: "utf8", timeout: 30_000 });
+    if (available.error || available.status !== 0) {
+      tried.push(`${python} (not a working interpreter)`);
+      continue;
+    }
+    if (suite.probe) {
+      const probe = spawnSync(python, ["-c", suite.probe], { encoding: "utf8", timeout: 60_000 });
+      if (probe.status !== 0) {
+        tried.push(`${python} (no ${suite.probe.replace("import ", "")})`);
+        continue;
+      }
+    }
+    const run = spawnSync(
+      python,
+      ["-m", "unittest", "discover", "-s", suite.startDir, "-t", suite.topDir],
+      {
+        cwd: root,
+        encoding: "utf8",
+        timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
+        killSignal: "SIGKILL",
+      },
+    );
+    const timedOut = run.error?.code === "ETIMEDOUT";
+    // unittest reports on stderr, and the count line is the only machine
+    // readable result it emits.
+    const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
+    const pass = Number.parseInt(output.match(/^Ran (\d+) tests?/m)?.[1] ?? "-1", 10);
+    const fail = output.match(/^(FAILED|OK)/m)?.[1] === "FAILED" ? 1 : 0;
+    return {
+      name: suite.name,
+      runner: "python",
+      pass,
+      fail: run.status === 0 ? 0 : fail || 1,
+      code: run.status ?? 1,
+      timedOut,
+      elapsed: Date.now() - started,
+      output,
+      interpreter: python,
+    };
+  }
+  return { ...unrunResult(suite.name), tried };
+}
+
+function unrunResult(name) {
+  return {
+    name,
+    runner: "python",
+    pass: 0,
+    fail: 0,
+    code: 0,
+    timedOut: false,
+    elapsed: 0,
+    output: "",
+    unrun: true,
+  };
+}
+
+for (const suite of pythonSuites) {
+  if (!existsSync(join(suite.dir, "tests"))) continue;
+  results.push(runPythonSuite(suite));
+}
+
+/**
  * Runs one suite under the ceiling and returns its result.
  *
  * The runner label travels with the result. `packages` and `cloud` are two
@@ -176,8 +309,27 @@ for (const r of results) {
   if (r.fail > 0) reasons.push(`${r.fail} failing`);
   if (r.pass <= 0) reasons.push("ran no tests");
 
+  // A suite with no usable interpreter is reported in its own column and
+  // names the commands that run it, so nobody reads an absent suite as a
+  // passing one. It is deliberately not `ok`: an unrun suite is not evidence.
+  if (r.unrun) {
+    const suite = pythonSuites.find((s) => s.name === r.name);
+    console.log(
+      `  ${`${r.runner}/${r.name}`.padEnd(width)}  --- pass    0 fail  UNRUN: no interpreter could import the SDK it needs`,
+    );
+    console.log(
+      `      tried: ${(r.tried ?? []).join(", ")}`,
+    );
+    for (const step of suite?.setup ?? [])
+      console.log(`      then run: ${step}`);
+    console.log(
+      `      ${process.env.VOID_MCP_PYTHON ?? "/tmp/void-mcp-venv/bin/python"} -m unittest discover -s ${suite?.startDir} -t ${suite?.topDir}`,
+    );
+    continue;
+  }
+
   console.log(
-    `  ${`${r.runner}/${r.name}`.padEnd(width)}  ${String(r.pass).padStart(3)} pass  ${String(r.fail).padStart(3)} fail  ${reasons.length ? "FAIL: " + reasons.join(", ") : "ok"}`,
+    `  ${`${r.runner}/${r.name}`.padEnd(width)}  ${String(r.pass).padStart(3)} pass  ${String(r.fail).padStart(3)} fail  ${reasons.length ? "FAIL: " + reasons.join(", ") : "ok"}${r.interpreter ? ` (${r.interpreter})` : ""}`,
   );
   if (reasons.length) {
     failed = true;
@@ -191,7 +343,9 @@ for (const r of results) {
           (l) =>
             l.startsWith("not ok") ||
             l.includes("Error") ||
-            l.startsWith("# suite exceeded"),
+            l.startsWith("# suite exceeded") ||
+            l.startsWith("FAIL:") ||
+            l.startsWith("ERROR:"),
         )
         .slice(0, 8)
         .map((l) => `      ${l}`)
@@ -200,8 +354,15 @@ for (const r of results) {
   }
 }
 
+// The total counts only what ran. An unrun suite contributes nothing, and the
+// count of those is printed beside it so a reader comparing this line with a
+// document that quotes a test count can see the difference rather than
+// inferring it.
 const total = results.reduce((sum, r) => sum + Math.max(r.pass, 0), 0);
-console.log(`\n  ${results.length} suites, ${total} tests`);
+const unrun = results.filter((r) => r.unrun).length;
+console.log(
+  `\n  ${results.length} suites, ${total} tests${unrun ? `, ${unrun} could not run` : ""}`,
+);
 
 if (results.length === 0) {
   console.error("  no package declared a test script");

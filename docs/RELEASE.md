@@ -212,6 +212,64 @@ verification run.
    Verify the published version with `npm view @void/cli version`. Record the
    tag, commit, artifact digests, provenance, and remote workflow URL.
 
+### What the packaging gate now executes
+
+`node --test scripts/src/release-packaging.test.mjs` runs a clean install for
+every package in the test's `PUBLISHABLE` map, and the exact commands are:
+
+1. `npm pack --pack-destination <sandbox> --json` from the package directory.
+2. `npm install --no-save --no-audit --no-fund --offline <tarball>` into a
+   fresh directory under the system temp directory, with a consumer
+   `package.json` of its own and `npm_config_registry` pointed at a discard
+   port.
+3. The installed `node_modules/.bin/<bin>` is executed as a program, and its
+   exit code and a line of its output are both required.
+
+This proves the packed tarball carries a manifest, installs with no network
+and no workspace link, and yields a bin a consumer can execute and that still
+produces real work. A metadata assertion cannot prove any of that, which is
+why the previous version of this gate did not.
+
+It does not prove the following, and none of it may be inferred from a green
+run here. It does not prove the remaining twelve directories install, because
+they are excluded: the ten under `packages/` other than `verifier`, the root,
+`apps/control-plane` and `scripts` all stay `private: true` and are absent
+from `PUBLISHABLE`. One assertion names that boundary, so a package
+un-privated without a written reason and a clean install command fails the
+gate rather than shipping untested. It does not prove signature verification
+against a trusted key, a clean-machine quickstart, policy pack loading, the
+blocker 3 compiled distribution, or that any artifact was ever published. It
+covers only the packages named publishable, which today is
+`packages/verifier` alone.
+
+`npm pack` and a local tarball install need no registry. If a future
+publishable package needs a dependency, the offline install will fail here
+rather than quietly reaching the network.
+
+### Suites outside the Node gate
+
+`scripts/src/check-tests.mjs` now also runs the two Python suites,
+`apps/appwrite-mcp/tests` and `python/void-transport/tests`. A suite that
+cannot run prints as `UNRUN`, naming the interpreters it tried and the
+commands to run it, and is excluded from the total rather than counted as a
+pass. When anything was skipped the summary reads
+`N suites, M tests, K could not run`, so a test count quoted from this gate
+cannot be read as covering a suite that never executed.
+
+`python/void-transport` runs under the system interpreter and executes on an
+ordinary checkout. `apps/appwrite-mcp` needs the `mcp` SDK and is `UNRUN`
+until that virtual environment exists. Both are run in CI by the `hosted-mcp`
+job, which provisions Python 3.14 and installs the SDK from `requirements.txt`.
+That job has never executed on a pushed commit, so no result is claimed for it.
+A release report that quotes this gate must say which of the two ran.
+
+The same workflow gained an `apple` job that runs both Swift packages and the
+`VOID` scheme on the iOS simulator, on a `macos-latest` runner, with derived
+data outside the checkout. That job was written on a darwin host and has
+never been executed by GitHub Actions, so no result is claimed for it here.
+Until a push runs it, the Apple evidence remains the local machine results
+recorded in `docs/RELEASE-1.0.1-MATRIX.md` and nothing newer.
+
 If a released artifact fails verification, stop rollout. Deprecate the bad npm
 version and ship a corrected version rather than replacing it. Restore the last
 verified binary only if its persisted-format compatibility is proven. Never

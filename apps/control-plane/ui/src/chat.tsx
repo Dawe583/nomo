@@ -46,7 +46,6 @@ import {
   type DraftFile,
 } from "./chat-composer";
 import { Badge, Dialog, Empty, ErrorBox, MotionEnabled, RedactedJson, useApi, useText } from "./ui";
-import "./chat.css";
 // VOID has no default model. The composer starts empty; the operator's saved
 // preference or the provider's validated catalog fills it in.
 function CodeBlock({ children }: { children?: ReactNode }) {
@@ -814,10 +813,7 @@ export function Chat({
   const models: Row[] = provider.data?.models ?? [];
   const catalog = models;
   return (
-    <section
-      className={"chat " + (!id ? "chat-empty" : "chat-active")}
-      ref={chatSection}
-    >
+    <section className={"chat " + (!id ? "chat-empty" : "")} ref={chatSection}>
       <div className="transcript" ref={transcript} onScroll={onTranscriptScroll}>
         <div className="messages">
           {!id && (
@@ -1092,8 +1088,8 @@ export function Chat({
         {!id && <ProviderNotice provider={provider.data} setup={() => navigate("/settings")} />}
         {id && state === "unknown" && <p className="notice" role="status">{t("Výsledek běhu není potvrzen. Před dalším pokusem zkontrolujte běh a ledger.", "The run outcome is not confirmed. Check the run and ledger before retrying.")}</p>}
         {queued && (
-          <div className="queue-banner" role="status">
-            <span className="queue-banner-text">
+          <div role="status">
+            <span>
               {t(
                 "Koncept je uložený v této kartě. Nic se neodešle automaticky.",
                 "Draft saved in this tab. Nothing sends automatically.",
@@ -1478,7 +1474,7 @@ export function Chat({
             </select>
           </label>
           <p className="muted">{t("Nastavení se zachytí při vytvoření konverzace. Oprávnění nadále řídí server.", "Settings are captured when the conversation starts. Permissions remain server-controlled.")}</p>
-          {capabilities.data?.backgroundQueue === true && <label className="project-background">
+          {capabilities.data?.backgroundQueue === true && <label>
             <input type="checkbox" checked={background} onChange={event => setBackground(event.target.checked)} />
             {t("Spustit na pozadí", "Run in background")}
           </label>}

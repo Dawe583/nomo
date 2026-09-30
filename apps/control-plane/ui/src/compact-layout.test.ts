@@ -74,8 +74,13 @@ test("composer notices announce changes politely", () => {
 
 test("compact navigation and checkbox labels keep 44px targets", () => {
   const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
-  assert.match(css, /\.sidebar a:not\(\.brand a\)\s*\{[^}]*min-height:\s*44px/s);
-  assert.match(css, /label:has\(input\[type="checkbox"\]\)\s*\{[^}]*min-height:\s*44px/s);
+  // Asserted against the token rather than the literal. The 44px these two rules
+  // carry is `--control-touch`, whose value is 44, and a test that matched the
+  // digits would fail the moment someone did the right thing and read the
+  // token — which is the same failure the design-source gate exists to end.
+  const touch = "min-height:\\s*var\\(--control-touch\\)";
+  assert.match(css, new RegExp(`\\.sidebar a:not\\(\\.brand a\\)\\s*\\{[^}]*${touch}`, "s"));
+  assert.match(css, new RegExp(`label:has\\(input\\[type="checkbox"\\]\\)\\s*\\{[^}]*${touch}`, "s"));
 });
 
 test("built-in chat metadata is localized without touching authored content", () => {

@@ -14,17 +14,20 @@
    means and the stylesheet names it for what it paints, so the two
    vocabularies differ and the difference is deliberate.
 
-   canvas    -> --canvas
-   surface   -> --surface
-   raised    -> --raised
-   text      -> --ink
-   muted     -> --muted
-   separator -> --line
-   accent    -> --action
-   onAccent  -> --action-text
-   danger    -> --danger
-   good      -> --good
-   focus     -> --focus
+   canvas        -> --canvas
+   surface       -> --surface
+   raised        -> --raised
+   text          -> --ink
+   muted         -> --muted
+   separator     -> --line
+   accent        -> --action
+   onAccent      -> --action-text
+   danger        -> --danger
+   good          -> --good
+   focus         -> --focus
+   syntaxKeyword -> --syntax-keyword
+   syntaxString  -> --syntax-string
+   syntaxNumber  -> --syntax-number
 
    A shadow role keeps the document's own name:
    --shadow-composer, --shadow-dialog, --shadow-float, --shadow-modal, --shadow-palette, --shadow-focus
@@ -51,6 +54,9 @@
   --danger: #d70015;
   --good: #1a7733;
   --focus: #0040dd;
+  --syntax-keyword: #a63d0c;
+  --syntax-string: #356344;
+  --syntax-number: #75509a;
 
   /* Elevation. */
   --shadow-composer: 0 1px 2px rgb(0 0 0 / 0.06);
@@ -59,6 +65,7 @@
   --shadow-modal: 0 4px 20px rgb(0 0 0 / 0.08);
   --shadow-palette: 0 14px 48px rgb(0 0 0 / 0.04);
   --shadow-focus: 0 10px 32px rgb(0 0 0 / 0.04);
+  --scrim-modal: rgba(18, 16, 10, 0.5);
 
   /* Type. The interface face is the platform UI font, resolved by the
      platform, and the code face is the platform monospaced face. */
@@ -81,6 +88,15 @@
   --radius-sheet: 12px;
   --radius-window: 12px;
   --radius-capsule: 999px;
+  --radius-compact: 5px;
+  --radius-popover: 8px;
+  --radius-hairline: 3px;
+  --radius-chip: 7px;
+  --radius-panel: 14px;
+  --radius-drawer: 18px;
+  --radius-overlay: 20px;
+  --radius-full: 22px;
+  --radius-sheetcap: 24px;
 
   /* Control hit targets, a floor. The touch role is the web conversion of
      the point rule, so the web and the phone agree on one number. */
@@ -100,6 +116,9 @@
   --danger: #ff453a;
   --good: #30d158;
   --focus: #0a84ff;
+  --syntax-keyword: #ee985e;
+  --syntax-string: #a0c798;
+  --syntax-number: #c4a9e2;
 
   /* Elevation. */
   --shadow-composer: 0 1px 2px rgb(0 0 0 / 0.4);
@@ -108,6 +127,7 @@
   --shadow-modal: 0 4px 20px rgb(0 0 0 / 0.45);
   --shadow-palette: 0 14px 48px rgb(0 0 0 / 0.5);
   --shadow-focus: 0 10px 32px rgb(0 0 0 / 0.35);
+  --scrim-modal: rgba(18, 16, 10, 0.5);
 
   /* The one declaration the document does not carry. It tells the browser
      which built-in widget colours to draw, which is a property of the page
@@ -136,10 +156,10 @@ select {
 }
 button,
 .button {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--control-touch);
+  min-width: var(--control-touch);
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   background: transparent;
   color: var(--ink);
   padding: 8px 12px;
@@ -178,9 +198,9 @@ select {
   background: var(--canvas);
   color: var(--ink);
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   padding: 10px 12px;
-  min-height: 44px;
+  min-height: var(--control-touch);
   max-width: 100%;
 }
 input:not([type="checkbox"]),
@@ -205,7 +225,7 @@ label:has(input[type="checkbox"]) {
   align-items: center;
 }
 label:has(input[type="checkbox"]) {
-  min-height: 44px;
+  min-height: var(--control-touch);
 }
 a {
   color: var(--action);
@@ -290,8 +310,8 @@ small,
   color: var(--ink);
 }
 .brand-mark {
-  width: 28px;
-  height: 28px;
+  width: var(--control-macos);
+  height: var(--control-macos);
 }
 .gate-logo {
   width: 64px;
@@ -330,7 +350,7 @@ kbd {
   border: 1px solid var(--line);
   padding: 0 4px;
   font-size: 11px;
-  border-radius: 3px;
+  border-radius: var(--radius-hairline);
 }
 .sidebar nav {
   display: flex;
@@ -345,8 +365,8 @@ kbd {
   gap: 10px;
   color: var(--ink);
   text-decoration: none;
-  border-radius: 4px;
-  min-height: 44px;
+  border-radius: var(--radius-inline);
+  min-height: var(--control-touch);
   padding: 8px 10px;
   font-size: 14px;
 }
@@ -371,7 +391,7 @@ kbd {
   font-size: 11px;
   min-width: 20px;
   text-align: center;
-  border-radius: 4px;
+  border-radius: var(--radius-inline);
 }
 .recent {
   flex: 1;
@@ -540,7 +560,7 @@ main {
   padding: 18px 14px;
   background: var(--surface);
   min-width: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-popover);
 }
 .starter-copy {
   display: flex;
@@ -567,7 +587,7 @@ main {
 .message.user {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   padding: 12px 16px;
   margin-left: clamp(0px, 3vw, 32px);
 }
@@ -625,7 +645,7 @@ main {
 .prose :not(pre) > code {
   font-size: 0.88em;
   background: var(--raised);
-  border-radius: 3px;
+  border-radius: var(--radius-hairline);
   padding: 2px 4px;
 }
 .message-actions {
@@ -642,7 +662,7 @@ main {
 }
 .code-block {
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   margin: 16px 0;
   background: var(--surface);
   overflow: hidden;
@@ -676,7 +696,7 @@ main {
 .tool-card {
   border: 1px solid var(--line);
   background: var(--surface);
-  border-radius: 4px;
+  border-radius: var(--radius-inline);
   padding: 12px;
   margin: 8px 0;
 }
@@ -710,7 +730,7 @@ main {
 }
 .composer {
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-card);
   background: var(--canvas);
   overflow: hidden;
 }
@@ -764,13 +784,13 @@ main {
 }
 .attach-button {
   font-size: 24px;
-  width: 44px;
-  height: 44px;
+  width: var(--control-touch);
+  height: var(--control-touch);
   justify-content: center;
   align-items: center;
   cursor: pointer;
   flex: none;
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
 }
 .attach-button:hover {
   background: var(--raised);
@@ -789,8 +809,8 @@ main {
 .send {
   font-size: 24px;
   padding: 3px;
-  width: 44px;
-  height: 44px;
+  width: var(--control-touch);
+  height: var(--control-touch);
   flex: none;
 }
 .composer-footnote {
@@ -806,7 +826,7 @@ main {
 .composer-footnote button {
   font-size: 10px;
   border: 0;
-  min-height: 28px;
+  min-height: var(--control-macos);
   padding: 2px 4px;
 }
 .attachments {
@@ -874,7 +894,7 @@ main {
   max-width: 100%;
   overflow: auto;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--radius-inline);
 }
 .table-scroll table {
   width: 100%;
@@ -948,7 +968,7 @@ main {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--line);
-  border-radius: 3px;
+  border-radius: var(--radius-hairline);
   padding: 2px 6px;
   font-size: 11px;
   font-weight: 400;
@@ -977,7 +997,7 @@ main {
   text-align: center;
   color: var(--muted);
   border: 1px dashed var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
 }
 .empty > span {
   font-family: monospace;
@@ -994,7 +1014,7 @@ main {
   font-size: 13px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   margin: 8px 0 12px;
   overflow-wrap: anywhere;
 }
@@ -1017,8 +1037,8 @@ main {
 }
 .columns > summary {
   border: 1px solid var(--line);
-  border-radius: 5px;
-  min-height: 44px;
+  border-radius: var(--radius-compact);
+  min-height: var(--control-touch);
   padding: 11px 12px;
   font-size: 12px;
   cursor: pointer;
@@ -1031,7 +1051,7 @@ main {
   width: 220px;
   background: var(--canvas);
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -1039,7 +1059,7 @@ main {
 }
 summary {
   cursor: pointer;
-  min-height: 44px;
+  min-height: var(--control-touch);
   align-content: center;
 }
 dialog {
@@ -1048,12 +1068,12 @@ dialog {
   background: var(--canvas);
   color: var(--ink);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-popover);
   padding: 24px;
   overflow: auto;
 }
 dialog::backdrop {
-  background: rgba(18, 16, 10, 0.5);
+  background: var(--scrim-modal);
 }
 .dialog-heading {
   display: flex;
@@ -1079,7 +1099,7 @@ dialog::backdrop {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--radius-inline);
 }
 .model-list,
 .search-results {
@@ -1152,7 +1172,7 @@ dialog::backdrop {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   margin: 16px 0 24px;
   overflow: hidden;
 }
@@ -1249,7 +1269,7 @@ dialog::backdrop {
 .connect-form {
   border: 1px solid var(--line);
   padding: 16px;
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
 }
 .connect-form > summary {
   font-weight: 600;
@@ -1300,7 +1320,7 @@ dialog::backdrop {
   border: 1px solid var(--action);
   padding: 16px;
   margin-top: 20px;
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
 }
 .undo-review > button {
   margin-right: 8px;
@@ -1523,13 +1543,13 @@ dialog::backdrop {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(18, 16, 10, 0.5);
+    background: var(--scrim-modal);
     border: 0;
     border-radius: 0;
     z-index: 30;
   }
   .scrim:hover {
-    background: rgba(18, 16, 10, 0.5);
+    background: var(--scrim-modal);
   }
   main {
     height: var(--mobile-height, 100dvh);
@@ -1581,7 +1601,7 @@ dialog::backdrop {
   .starters button {
     font-size: 12px;
     padding: 10px;
-    min-height: 44px;
+    min-height: var(--control-touch);
   }
   .composer-wrap {
     padding: 8px 10px 4px;
@@ -1650,14 +1670,14 @@ dialog::backdrop {
     padding: 14px;
   }
   .message-actions button {
-    min-height: 44px;
+    min-height: var(--control-touch);
   }
   .prose {
     font-size: 16px;
     line-height: 1.6;
   }
   .code-actions button {
-    min-height: 44px;
+    min-height: var(--control-touch);
   }
   .page-content {
     padding: 24px 14px;
@@ -1749,7 +1769,7 @@ dialog::backdrop {
     padding: 10px;
   }
   .notice button {
-    min-height: 44px;
+    min-height: var(--control-touch);
   }
   .new-messages {
     bottom: 185px;
@@ -1801,7 +1821,7 @@ dialog::backdrop {
 }
 .list-view td:last-child {
   margin-left: auto;
-  min-width: 44px;
+  min-width: var(--control-touch);
 }
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -1863,7 +1883,7 @@ dialog::backdrop {
   gap: 10px;
   border: 1px solid var(--action);
   padding: 10px;
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   font-size: 12px;
   margin-bottom: 8px;
 }
@@ -1873,16 +1893,16 @@ dialog::backdrop {
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-built_in {
-  color: #a63d0c;
+  color: var(--syntax-keyword);
 }
 .hljs-string,
 .hljs-attr,
 .hljs-title {
-  color: #356344;
+  color: var(--syntax-string);
 }
 .hljs-number,
 .hljs-literal {
-  color: #75509a;
+  color: var(--syntax-number);
 }
 .hljs-comment {
   color: var(--muted);
@@ -1891,16 +1911,16 @@ dialog::backdrop {
 :root[data-theme="dark"] .hljs-keyword,
 :root[data-theme="dark"] .hljs-selector-tag,
 :root[data-theme="dark"] .hljs-built_in {
-  color: #ee985e;
+  color: var(--syntax-keyword);
 }
 :root[data-theme="dark"] .hljs-string,
 :root[data-theme="dark"] .hljs-attr,
 :root[data-theme="dark"] .hljs-title {
-  color: #a0c798;
+  color: var(--syntax-string);
 }
 :root[data-theme="dark"] .hljs-number,
 :root[data-theme="dark"] .hljs-literal {
-  color: #c4a9e2;
+  color: var(--syntax-number);
 }
 @media (min-width: 1280px) {
   .shell {
@@ -1919,7 +1939,7 @@ dialog::backdrop {
   padding: 0 8px;
 }
 .panel-size input {
-  min-height: 28px;
+  min-height: var(--control-macos);
   padding: 0;
 }
 .panel-size > summary {
@@ -1964,7 +1984,7 @@ dialog::backdrop {
 }
 .line-number {
   display: inline-block;
-  min-width: 28px;
+  min-width: var(--control-macos);
   color: var(--muted);
   user-select: none;
   font-size: 10px;
@@ -1989,7 +2009,7 @@ dialog::backdrop {
 }
 .sidebar nav a {
   position: relative;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
 }
 .sidebar nav a.active {
   background: var(--raised);
@@ -2002,7 +2022,7 @@ dialog::backdrop {
   gap: 4px;
 }
 .header-actions button {
-  border-radius: 7px;
+  border-radius: var(--radius-chip);
 }
 .locale-toggle {
   font-family: "JetBrains Mono", monospace;
@@ -2012,7 +2032,7 @@ dialog::backdrop {
   color: var(--action);
 }
 .composer {
-  border-radius: 14px;
+  border-radius: var(--radius-panel);
   background: color-mix(in srgb, var(--canvas) 72%, var(--surface));
   box-shadow: var(--shadow-composer);
 }
@@ -2023,13 +2043,13 @@ dialog::backdrop {
     var(--shadow-focus);
 }
 .send {
-  border-radius: 9px;
+  border-radius: var(--radius-card);
 }
 .message.user {
-  border-radius: 14px 14px 4px 14px;
+  border-radius: var(--radius-panel) var(--radius-panel) var(--radius-inline) var(--radius-panel);
 }
 .tool-card {
-  border-radius: 8px;
+  border-radius: var(--radius-popover);
   border-left: 2px solid var(--line);
 }
 .tool-card[open] {
@@ -2042,7 +2062,7 @@ dialog::backdrop {
   letter-spacing: -1px;
 }
 .table-scroll {
-  border-radius: 9px;
+  border-radius: var(--radius-card);
 }
 .table-scroll tbody tr:hover {
   background: color-mix(in srgb, var(--action) 5%, var(--canvas));
@@ -2056,7 +2076,7 @@ dialog::backdrop {
   margin-bottom: 20px;
 }
 dialog {
-  border-radius: 14px;
+  border-radius: var(--radius-panel);
   box-shadow: var(--shadow-dialog);
 }
 dialog::backdrop {
@@ -2294,7 +2314,7 @@ dialog::backdrop {
 }
 .integration-card {
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   padding: 20px;
   min-width: 0;
 }
@@ -2430,11 +2450,11 @@ dialog::backdrop {
   .mobile-new-chat,
   .mobile-options-toggle {
     display: inline-flex;
-    width: 44px;
-    height: 44px;
+    width: var(--control-touch);
+    height: var(--control-touch);
     padding: 10px;
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-sheet);
     flex: none;
   }
   .mobile-options-toggle {
@@ -2468,7 +2488,7 @@ dialog::backdrop {
   .mobile-nav a[aria-current="page"] {
     color: var(--action);
     background: color-mix(in srgb, var(--action) 6%, transparent);
-    border-radius: 10px;
+    border-radius: var(--radius-card);
   }
   .transcript {
     scrollbar-gutter: auto;
@@ -2490,8 +2510,8 @@ dialog::backdrop {
     max-width: 400px;
   }
   .welcome-emblem {
-    width: 44px;
-    height: 44px;
+    width: var(--control-touch);
+    height: var(--control-touch);
     margin: 0 auto 20px;
   }
   .welcome-emblem .void-aperture {
@@ -2525,9 +2545,9 @@ dialog::backdrop {
     margin-top: 24px;
   }
   .starters button {
-    min-height: 44px;
+    min-height: var(--control-touch);
     padding: 8px 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-sheet);
     flex: 0 1 auto;
     text-align: center;
     background: color-mix(in srgb, var(--surface) 55%, var(--canvas));
@@ -2545,7 +2565,7 @@ dialog::backdrop {
     padding: 6px 12px max(10px, env(safe-area-inset-bottom));
   }
   .composer {
-    border-radius: 20px;
+    border-radius: var(--radius-overlay);
     box-shadow: var(--shadow-float);
   }
   .composer textarea {
@@ -2570,9 +2590,9 @@ dialog::backdrop {
     justify-content: flex-start;
   }
   .composer-actions .send {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
+    width: var(--control-touch);
+    height: var(--control-touch);
+    min-width: var(--control-touch);
     border-radius: 50%;
     font-size: 22px;
     flex: none;
@@ -2589,7 +2609,7 @@ dialog::backdrop {
   .message.user {
     margin-left: 22px;
     padding: 10px 14px;
-    border-radius: 18px 18px 5px 18px;
+    border-radius: var(--radius-drawer) var(--radius-drawer) var(--radius-compact) var(--radius-drawer);
   }
   .prose {
     font-size: 14px;
@@ -2660,11 +2680,11 @@ dialog::backdrop {
   .drawer-open .sidebar {
     padding: max(16px, env(safe-area-inset-top)) 12px
       max(12px, env(safe-area-inset-bottom));
-    border-radius: 0 20px 20px 0;
+    border-radius: 0 var(--radius-overlay) var(--radius-overlay) 0;
   }
   .sidebar nav a {
     font-size: 13px;
-    min-height: 44px;
+    min-height: var(--control-touch);
   }
   dialog {
     width: 100%;
@@ -2673,7 +2693,7 @@ dialog::backdrop {
     bottom: max(0px, calc(100dvh - var(--mobile-height, 100dvh)));
     margin: auto 0 0;
     padding: 16px 18px max(20px, env(safe-area-inset-bottom));
-    border-radius: 24px 24px 0 0;
+    border-radius: var(--radius-sheetcap) var(--radius-sheetcap) 0 0;
     border-bottom: 0;
   }
   .dialog-heading {
@@ -2684,7 +2704,7 @@ dialog::backdrop {
     font-size: 18px;
   }
   .context-panel {
-    border-radius: 20px 20px 0 0;
+    border-radius: var(--radius-overlay) var(--radius-overlay) 0 0;
     padding: 16px;
   }
   .new-messages {
@@ -2753,7 +2773,7 @@ dialog::backdrop {
   border: 0;
   background: transparent;
   color: var(--ink);
-  border-radius: 12px;
+  border-radius: var(--radius-sheet);
 }
 .mobile-action-list button > small {
   margin-left: auto;
@@ -2776,14 +2796,14 @@ dialog::backdrop {
     letter-spacing: normal;
   }
   .brand .drawer-close {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: var(--control-touch);
+    min-height: var(--control-touch);
     padding: 12px;
   }
   .dialog-heading > button {
     flex: 0 0 44px;
-    width: 44px;
-    height: 44px;
+    width: var(--control-touch);
+    height: var(--control-touch);
     padding: 10px;
   }
 }
@@ -2807,8 +2827,8 @@ dialog::backdrop {
   border-bottom: 1px solid var(--line);
 }
 .demo-topbar > button {
-  width: 44px;
-  height: 44px;
+  width: var(--control-touch);
+  height: var(--control-touch);
   padding: 12px;
   border: 0;
   background: transparent;
@@ -2871,8 +2891,8 @@ dialog::backdrop {
   width: min(100%, 720px);
 }
 .demo-welcome > .void-aperture {
-  width: 44px;
-  height: 44px;
+  width: var(--control-touch);
+  height: var(--control-touch);
   margin-bottom: 24px;
 }
 .demo-welcome h1 {
@@ -2898,9 +2918,9 @@ dialog::backdrop {
   margin-top: 28px;
 }
 .demo-starters > button {
-  min-height: 44px;
+  min-height: var(--control-touch);
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-sheet);
   font-size: 13px;
   background: transparent;
 }
@@ -2912,7 +2932,7 @@ dialog::backdrop {
 }
 .demo-composer {
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: var(--radius-full);
   padding: 14px;
   background: var(--canvas);
   box-shadow: var(--shadow-modal);
@@ -2961,8 +2981,8 @@ dialog::backdrop {
   font-size: 11px;
 }
 .demo-composer-tools > button {
-  width: 44px;
-  height: 44px;
+  width: var(--control-touch);
+  height: var(--control-touch);
   border-radius: 50%;
   padding: 12px;
   flex: none;
@@ -3013,7 +3033,7 @@ dialog::backdrop {
   cursor: pointer;
   font-size: 13px;
   overflow-wrap: anywhere;
-  min-height: 44px;
+  min-height: var(--control-touch);
 }
 .demo-file pre,
 .demo-diff pre {
@@ -3025,11 +3045,11 @@ dialog::backdrop {
   font-size: 12px;
   line-height: 1.7;
   background: var(--surface);
-  border-radius: 8px;
+  border-radius: var(--radius-popover);
 }
 .demo-file button,
 .demo-proof {
-  min-height: 44px;
+  min-height: var(--control-touch);
   font-size: 12px;
 }
 .demo-change {
@@ -3056,7 +3076,7 @@ dialog::backdrop {
 }
 .demo-change button {
   font-size: 11px;
-  min-height: 44px;
+  min-height: var(--control-touch);
   padding: 8px;
 }
 .demo-messages {
@@ -3082,7 +3102,7 @@ dialog::backdrop {
 }
 .demo-messages article[data-role="user"] {
   background: var(--surface);
-  border-radius: 18px;
+  border-radius: var(--radius-drawer);
   padding: 14px 18px;
   margin-left: min(10%, 60px);
 }
@@ -3179,7 +3199,7 @@ dialog::backdrop {
     padding: 8px 12px max(8px, env(safe-area-inset-bottom));
   }
   .demo-composer {
-    border-radius: 20px;
+    border-radius: var(--radius-overlay);
     padding: 12px;
   }
   .demo-scope {
@@ -3215,11 +3235,11 @@ dialog::backdrop {
 
 /* VOID's command surface keeps tool provenance and reversibility visible. */
 .composer, .demo-composer { position: relative; }
-.command-palette { position: absolute; z-index: 25; bottom: calc(100% + 8px); left: 0; right: 0; background: var(--surface); color: var(--ink, #252420); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-palette); overflow: hidden; max-height: min(440px, 55dvh); display: flex; flex-direction: column; }
+.command-palette { position: absolute; z-index: 25; bottom: calc(100% + 8px); left: 0; right: 0; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-panel); box-shadow: var(--shadow-palette); overflow: hidden; max-height: min(440px, 55dvh); display: flex; flex-direction: column; }
 .command-palette header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-family: var(--mono, monospace); font-size: 11px; }
 .command-palette header strong { font-weight: 500; }
 .command-results { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding: 5px; }
-.command-results > button { width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 9px 12px; text-align: left; border: 0; background: transparent; border-radius: 8px; color: inherit; }
+.command-results > button { width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 9px 12px; text-align: left; border: 0; background: transparent; border-radius: var(--radius-popover); color: inherit; }
 .command-results > button[aria-selected="true"], .command-results > button:hover { background: color-mix(in srgb, currentColor 8%, transparent); box-shadow: inset 3px 0 var(--action); }
 .command-glyph { color: var(--action); font: 20px monospace; width: 20px; flex-shrink: 0; }
 .command-copy { min-width: 0; flex: 1; display: grid; gap: 3px; }
@@ -3227,12 +3247,12 @@ dialog::backdrop {
 .command-copy > span { font-size: 11px; opacity: .65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .command-results small { font: 10px var(--mono, monospace); white-space: nowrap; opacity: .7; }
 .command-palette footer, .command-palette > p { padding: 9px 14px; margin: 0; font-size: 11px; line-height: 1.45; border-top: 1px solid var(--line); }
-.command-trigger { font: 18px monospace; min-width: 36px; }
+.command-trigger { font: 18px monospace; min-width: var(--control-touch); }
 .selected-tool { font-size: 11px; padding: 8px 12px; border-bottom: 1px solid var(--line); max-height: 140px; overflow: auto; }
 .selected-tool summary { cursor: pointer; color: var(--action); overflow-wrap: anywhere; }
 .selected-tool pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 10px; }
 @media (max-width: 767px) {
-  .command-palette { max-height: min(330px, 45dvh); border-radius: 10px; }
+  .command-palette { max-height: min(330px, 45dvh); border-radius: var(--radius-card); }
   .command-palette header { padding: 8px 10px; }
   .command-results > button { min-height: 48px; gap: 8px; padding: 8px; }
   .command-copy strong { font-size: 11px; }
@@ -3244,7 +3264,7 @@ dialog::backdrop {
 .document-history { margin-bottom: 24px; min-width: 0; }
 .document-operation-list { list-style: none; padding: 0; max-height: 22rem; overflow-y: auto; overscroll-behavior: contain; }
 .document-operation-list li + li { border-top: 1px solid var(--line); }
-.document-operation-list button { width: 100%; min-height: 44px; text-align: left; display: grid; gap: 4px; padding: 12px; }
+.document-operation-list button { width: 100%; min-height: var(--control-touch); text-align: left; display: grid; gap: 4px; padding: 12px; }
 .document-operation-list strong, .operation-id { overflow-wrap: anywhere; }
 .document-operation-list span { font-size: 12px; }
 
@@ -3270,7 +3290,7 @@ dialog::backdrop {
 .approval-card {
   border: 1px solid var(--line);
   border-left: 3px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: var(--canvas);
   padding: 14px 16px;
 }
@@ -3309,7 +3329,7 @@ dialog label > textarea {
   margin: 4px 0 16px;
 }
 .verify-block > button {
-  min-height: 44px;
+  min-height: var(--control-touch);
 }
 .verify-progress {
   display: flex;
@@ -3356,7 +3376,7 @@ dialog label > textarea {
   flex-wrap: wrap;
 }
 .perm-switch button {
-  min-height: 44px;
+  min-height: var(--control-touch);
   font-size: 12px;
 }
 .perm-switch .perm-active {
@@ -3369,7 +3389,7 @@ dialog label > textarea {
 }
 .perm-banner {
   border: 1px solid var(--action);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   padding: 10px 12px;
   font-size: 13px;
   margin: 0 0 8px;
@@ -3401,7 +3421,7 @@ dialog label > textarea {
   font-size: 13px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
 }
 .ledger-verify-scope > div {
   display: flex;
@@ -3426,15 +3446,15 @@ dialog label > textarea {
 
 .provider-state, .recovery-review, .session-context, .new-session-options { min-width: 0; overflow-wrap: anywhere; }
 .session-context, .new-session-options { margin-top: 8px; max-height: min(18rem, 30dvh); overflow-y: auto; overscroll-behavior: contain; }
-.session-context > summary, .new-session-options > summary { min-height: 44px; padding: 12px 0; cursor: pointer; }
+.session-context > summary, .new-session-options > summary { min-height: var(--control-touch); padding: 12px 0; cursor: pointer; }
 .new-session-options label { margin-bottom: 8px; }
 .recovery-review .actions, .document-history > .actions { flex-wrap: wrap; }
 .recovery-review code, .document-operation-list code { overflow-wrap: anywhere; }
-.document-operation-list label { padding: 8px 12px; min-height: 44px; }
+.document-operation-list label { padding: 8px 12px; min-height: var(--control-touch); }
 .document-operation-list input[type="checkbox"] { width: auto; margin-right: 8px; }
 
 /* Critical notices can grow independently without taking away the transcript. */
-.composer-notices { max-height: min(144px, calc(var(--mobile-height, 100dvh) * .18)); overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
+.composer-notices { max-height: min(96px, calc(var(--mobile-height, 100dvh) * .14)); overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
 .composer-notices:empty { display: none; }
 .permission-banner { margin: 0 0 6px; font-size: 12px; line-height: 1.5; color: var(--muted); }
 .provider-state { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; }
@@ -3449,7 +3469,7 @@ dialog label > textarea {
 .permission-mode[aria-checked="true"] { border-color: var(--action); color: var(--action); }
 .composer-mode-row { padding: 0; margin-bottom: 16px; }
 .chat-options-trigger { flex: none; font-size: 20px; }
-.welcome > .void-aperture, .demo-welcome > .void-aperture { width: 28px; height: 28px; margin-bottom: 16px; }
+.welcome > .void-aperture, .demo-welcome > .void-aperture { width: var(--control-macos); height: var(--control-macos); margin-bottom: 16px; }
 
 /* Final hierarchy: one primary status, quiet metrics, explicit evidence. */
 .overview-priority {
@@ -3462,7 +3482,7 @@ dialog label > textarea {
   margin: 14px 0 12px;
   border: 1px solid var(--line);
   border-left: 3px solid var(--muted);
-  border-radius: 8px;
+  border-radius: var(--radius-popover);
   background: color-mix(in srgb, var(--surface) 66%, var(--canvas));
 }
 .overview-priority[data-tone="attention"] { border-left-color: var(--danger); }
@@ -3473,7 +3493,7 @@ dialog label > textarea {
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: 7px;
+  border-radius: var(--radius-chip);
   color: var(--muted);
   background: var(--raised);
 }
@@ -3508,7 +3528,7 @@ dialog label > textarea {
   margin: 8px 0 12px;
   border: 1px solid var(--line);
   border-left: 3px solid var(--muted);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: var(--surface);
 }
 .trust-proof[data-proof="verified"],
@@ -3531,7 +3551,7 @@ dialog label > textarea {
   padding: 10px 12px;
   margin: 8px 0 16px;
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   background: var(--surface);
 }
 .recovery-evidence div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; }
@@ -3589,7 +3609,7 @@ dialog label > textarea {
   color: var(--muted);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   padding: 10px 12px;
   overflow-wrap: anywhere;
 }
@@ -3640,7 +3660,7 @@ dialog label > textarea {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: var(--control-touch);
   margin-bottom: 12px;
 }
 .gallery-badges {
@@ -3667,7 +3687,7 @@ dialog label > textarea {
   align-items: center;
   gap: 6px;
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   padding: 6px 8px;
   font-size: 11px;
 }

@@ -20,6 +20,7 @@ import { homedir } from "node:os";
 import type { LedgerStore } from "./index.ts";
 import { GENESIS_PREV, canonicalJson, entryHash } from "./canonical.ts";
 import { readLedgerReason } from "./attribution.ts";
+import { readLedgerReversal, reversalFinding } from "./reversal.ts";
 import { sha256Hex, verifySignature } from "./sign.ts";
 import { sanitizeWorkspace } from "./hardening.ts";
 
@@ -154,6 +155,10 @@ export function jsonlStore(
       let prev = GENESIS_PREV;
       let checked = 0;
       const publicKeys = new Map<string, Uint8Array>();
+      // The hashes this run has already verified, by sequence. A reversal may
+      // only name a record the chain already proved, so the rule is checked
+      // against this map rather than against anything the reversal itself says.
+      const proven = new Map<number, string>();
       for await (const entry of this.read(workspace)) {
         checked += 1;
         if (entry.workspace !== workspace || typeof entry.body !== "object" || entry.body === null ||
@@ -165,6 +170,16 @@ export function jsonlStore(
         const reason = readLedgerReason(entry.body, entry.seq);
         if (reason.kind === "malformed")
           return { ok: false, checked, reason: `attribution: ${reason.detail}` };
+        const reversal = readLedgerReversal(entry.body, entry.seq);
+        if (reversal.kind === "malformed")
+          return { ok: false, checked, reason: `reversal: ${reversal.detail}` };
+        if (reversal.kind === "reversal") {
+          const finding = reversalFinding(reversal.reversal, entry.seq, (named) =>
+            proven.get(named),
+          );
+          if (finding !== undefined)
+            return { ok: false, checked, reason: `reversal: entry ${entry.seq} ${finding}` };
+        }
         if (entry.prev_hash !== prev)
           return { ok: false, checked, reason: `link: entry ${entry.seq} points at ${entry.prev_hash.slice(0, 8)} but the chain is at ${prev.slice(0, 8)}` };
         const recomputed = await entryHash(entry.body, prev, sha256Hex);
@@ -172,6 +187,7 @@ export function jsonlStore(
           return { ok: false, checked, reason: `body: entry ${entry.seq} does not hash to its stored digest` };
         if (entry.seq !== checked)
           return { ok: false, checked, reason: `order: expected seq ${checked}, found ${entry.seq}` };
+        proven.set(entry.seq, entry.hash);
         const { signingPreimage } = await import("./index.ts");
         let spki = publicKeys.get(entry.key_id);
         if (spki === undefined) {

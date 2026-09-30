@@ -177,7 +177,23 @@ export async function runS3RoundTrip() {
 
   await client.deleteObject(call);
   const report = await applyRestore(store, client, { stepId: "restore-s3", call, reference: captured.reference, capturedEtag: captured.etag });
-  assert.deepEqual(report, { applied: ["restore-s3"], refused: [] });
+  assert.deepEqual(report.applied, ["restore-s3"]);
+  assert.deepEqual(report.refused, []);
+  // A restore is only evidence once the object has been read back, so a
+  // successful apply carries a receipt naming the digest the bucket holds. The
+  // receipt is the post-write proof, and asserting only `applied` would pass for
+  // a restore that reported success without ever checking.
+  const receipt = report.receipts?.[0];
+  assert.ok(receipt, "a successful S3 restore reported no post-write receipt");
+  assert.equal(receipt.stepId, "restore-s3");
+  assert.equal(receipt.bucket, call.bucket);
+  assert.equal(receipt.key, call.key);
+  assert.equal(
+    receipt.restoredDigest,
+    receipt.capturedDigest,
+    "the receipt claims a restore that does not match what was captured",
+  );
+  assert.ok(receipt.reference, "the receipt is not anchored in the snapshot store");
   assert.equal(decoder.decode((await client.getObject(call)).body), "before");
   return { captured, report };
 }

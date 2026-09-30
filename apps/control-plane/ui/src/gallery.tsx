@@ -170,7 +170,7 @@ export function ComponentGallery() {
             "Every section renders a component the application actually uses, in real states. Sections without a consumer are absent.",
           )}
         </p>
-        <p className="gallery-exit">
+        <p>
           <a className="button" href="/settings">
             {t("Zpět do nastavení", "Back to settings")}
           </a>
@@ -188,7 +188,6 @@ export function ComponentGallery() {
           </button>
           <button>{t("Sekundární", "Secondary")}</button>
           <button
-            className="danger"
             disabled={pending}
             aria-busy={pending}
             onClick={() => setPending(!pending)}

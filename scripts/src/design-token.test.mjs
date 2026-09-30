@@ -50,8 +50,7 @@ const LITERAL_EXEMPT = new Map([
 
 const STYLESHEETS = [
   "apps/control-plane/ui/src/styles.css",
-  "apps/control-plane/ui/src/ascii.css",
-  "apps/control-plane/ui/src/mobile.css",
+  "apps/control-plane/ui/src/chat.css",
   "apps/control-plane/web/workbench.css",
   "site/styles.css",
 ];

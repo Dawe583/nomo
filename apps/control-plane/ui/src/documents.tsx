@@ -29,7 +29,7 @@ export function Documents({
     return path && id ? { path, sessionId: id } : undefined;
   });
   return (
-    <div className="documents">
+    <div>
       {sessionId && <DocumentHistory key={sessionId} sessionId={sessionId} />}
       <DataTable
         endpoint={

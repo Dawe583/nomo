@@ -127,6 +127,7 @@ function record(seq: number, digest: string, tool: string, decision: string) {
     decision,
     argsDigest: "sha256:" + digest.repeat(64).slice(0, 64),
     prevDigest: "0".repeat(64),
+    keyId: "dev-fixture",
     digest,
   };
 }

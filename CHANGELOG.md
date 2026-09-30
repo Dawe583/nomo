@@ -4,6 +4,49 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- A deployed hosted MCP served an **empty CLI command list and an empty local
+  tool catalogue**. The registry read its fallback, because it had one; the
+  other two readers did not, and in production there is no source tree to read
+  from, so `void_cli_commands` and `void_local_tools` answered with nothing
+  while nothing in the repository noticed. Every reader now falls back to the
+  snapshot, the deployed tarball is extracted somewhere with no repository in it
+  and asked the same questions before a build can pass, and a reader pointed at
+  a missing snapshot returns empty instead of raising, so a deployed function
+  answers an honest nothing rather than no answer at all.
+- A restore that the bucket refused for lack of permission was reported as
+  `internal_error` when the refusal came from the `PUT` and as
+  `permission_denied` when it came from anywhere else: the same bucket
+  refusing the same write, classified two ways depending on which frame caught
+  it. One helper now applies both status shapes (the AWS SDK's `$metadata` and
+  a bare `statusCode` from a proxy) at both sites, because a refusal reason is
+  what tells an operator whether to fix credentials or go looking for a fault.
+- The hosted VOID MCP now publishes six tools over the reversibility
+  registry, and every fact it publishes is read out of the source tree rather
+  than written by hand. The previous build carried a literal list of eight
+  recovery tool names that nothing compared against the CLI, so it would have
+  kept publishing names which no longer existed without anybody noticing. A
+  deployed Appwrite function receives a tarball and not a checkout, so the
+  facts travel in a generated snapshot that is checked against the source it
+  was generated from, and a snapshot that drifts fails the build rather than
+  being served. Measured from the live tree: 268 operations, 491 preconditions
+  across 48 vendors and 170 surfaces, published one row per precondition
+  because an S3 PUT is reversible on a versioned bucket and permanent on an
+  unversioned one, and one class per operation would be wrong half the time.
+- The Appwrite control plane now carries the registry as data:
+  `registry_operations`, `registry_cases` and `mcp_tools`, all with row and
+  document security on and no row-level permissions, so a browser cannot read
+  a catalogue that is published by the function. Provisioning and seeding are
+  both idempotent and both refuse to run against a parse that produced nothing.
+  A signed ledger is deliberately **not** published: its value is that it is
+  signed and append-only, and a hosted unsigned copy would be a second thing
+  for a reader to argue about.
+- A hosted-mcp CI job now exists. Until it did, nothing on a remote commit had
+  ever checked the hosted function's behaviour or confirmed that the snapshot
+  it deploys still matches the repository it was generated from.
+- 52 hand-written `44px` and `28px` hit targets in the control-plane stylesheet
+  now read the tokens the design document already publishes. Each token holds
+  the identical value, so nothing about the rendered surface changes.
+
 - The hosted reference endpoint answers a real MCP handshake now, offline,
   against a fake Appwrite function context, so the adapter is exercised
   rather than assumed. A handshake, the tool catalogue, a tool call, a

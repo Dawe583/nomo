@@ -50,6 +50,13 @@ const ROLE_PROPERTIES = [
   ["danger", "--danger"],
   ["good", "--good"],
   ["focus", "--focus"],
+  // The syntax roles are named for what they mark rather than for their hue,
+  // because a component asks for "this is a keyword" and not "this is that
+  // brown". A hue-derived name would be the same value the stylesheet already
+  // had as a literal, with the drift moved rather than removed.
+  ["syntaxKeyword", "--syntax-keyword"],
+  ["syntaxString", "--syntax-string"],
+  ["syntaxNumber", "--syntax-number"],
 ];
 
 /** A CSS custom property declaration at a fixed indent. */
@@ -90,10 +97,34 @@ function shadowDeclarations(shadows, appearance) {
   });
 }
 
+/**
+ * The scrim roles, which carry both appearances under a `--scrim-` name.
+ *
+ * Separate from the shadow declarations because the family differs, not only
+ * the prefix: a shadow is an offset and a blur, a scrim is a veil. A role in
+ * the shadow family is required to have both of those, and a scrim has neither.
+ */
+function scrimDeclarations(scrims, appearance) {
+  return Object.entries(scrims).map(([role, values]) => {
+    const value = values?.[appearance];
+    if (value === undefined) {
+      throw new Error(
+        `${SOURCE} has no ${appearance} value for the ${role} scrim role`,
+      );
+    }
+    return declare(`--scrim-${role}`, value);
+  });
+}
+
 /** The whole generated region, markers included, as text. */
 export function renderWebTokens(tokens) {
   const roles = tokens.colour.roles;
   const shadows = tokens.colour.shadow.roles;
+  // A modal scrim is a full-bleed veil rather than a drop shadow, so it is
+  // declared from its own section. A scrim put in the shadow family would
+  // inherit that family's rule that every role carries an offset and a blur,
+  // which a veil has neither of.
+  const scrims = tokens.colour.scrim?.roles ?? {};
   const type = tokens.type;
   const radii = tokens.radii.roles;
 
@@ -129,6 +160,7 @@ export function renderWebTokens(tokens) {
     "",
     `  /* Elevation. */`,
     ...shadowDeclarations(shadows, "light"),
+    ...scrimDeclarations(scrims, "light"),
     "",
     `  /* Type. The interface face is the platform UI font, resolved by the`,
     `     platform, and the code face is the platform monospaced face. */`,
@@ -158,6 +190,7 @@ export function renderWebTokens(tokens) {
     "",
     `  /* Elevation. */`,
     ...shadowDeclarations(shadows, "dark"),
+    ...scrimDeclarations(scrims, "dark"),
     "",
     `  /* The one declaration the document does not carry. It tells the browser`,
     `     which built-in widget colours to draw, which is a property of the page`,

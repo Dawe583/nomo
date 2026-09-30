@@ -125,6 +125,18 @@ const INVENTORY = {
     "REVERSE-WEDGE proposal for policy attribution of assertions; never built, and attribution itself shipped as packages/ledger/src/attribution.ts",
   "docs/reference/server-json/official-registry-requirements.md":
     "DISTRIBUTION-PATH cites a vendor requirements document fetched from the web, not a file in this tree",
+
+  // Two responsive stylesheets that were merged into `styles.css` and are named
+  // by documents that predate the merge. `PLATFORM-REDESIGN-PLAN` and
+  // `VOID-DESIGN-SYSTEM-V1` describe a surface that existed, and `MOBILE-LAYOUT-QA`
+  // reports measurements taken against it. The reasoning about mobile layout
+  // that those documents carry is still the reasoning worth having; the file
+  // references are history, and the stylesheet those measurements describe is
+  // the same rules under a different filename.
+  "apps/control-plane/ui/src/mobile.css":
+    "responsive rules merged into styles.css; MOBILE-LAYOUT-QA and VOID-DESIGN-SYSTEM-V1 record measurements taken against the standalone file",
+  "apps/control-plane/ui/src/ascii.css":
+    "ASCII-art mode merged into styles.css; PLATFORM-REDESIGN-PLAN describes the split that no longer exists",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */

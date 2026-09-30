@@ -32,6 +32,13 @@ public enum VoidPalette {
             return systemBackground(for: role)
         case .onAccent, .danger, .good:
             return nil
+        // The syntax roles resolve to the recorded components for the same
+        // reason `danger` and `good` do: the document measured these against the
+        // canvas and the surface in both appearances, and there is no platform
+        // semantic colour that would reproduce the measurement. Taking a
+        // platform default would silently undo it.
+        case .syntaxKeyword, .syntaxString, .syntaxNumber:
+            return nil
         }
     }
 

@@ -62,7 +62,13 @@ class OpenModeTest(unittest.TestCase):
             response = invoke(LIST_TOOLS)
 
         self.assertEqual(response.status, 200)
-        self.assertEqual(len(response.json()["result"]["tools"]), 2)
+        # Compared against the surface rather than a literal. This test is
+        # about the auth gate, and hard-coding a tool count here would make it
+        # fail every time the catalogue grows — which trains a reader to blame
+        # the wrong thing.
+        tools = response.json()["result"]["tools"]
+        self.assertTrue(tools, "an open endpoint must publish at least one tool")
+        self.assertIn("void_project_info", [tool["name"] for tool in tools])
 
     def test_every_mode_name_that_means_open_answers(self) -> None:
         for mode in ("none", "open", "false", "0", "  NONE  "):

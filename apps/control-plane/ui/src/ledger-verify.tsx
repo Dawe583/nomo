@@ -51,7 +51,7 @@ export function LedgerVerify({ query }: { query: string }) {
     <>
       <ErrorBox error={verify.error} />
       {verify.isLoading && !fresh && (
-        <p className="ledger-verify" role="status">
+        <p role="status">
           <span className="activity-dot" aria-hidden="true" />{" "}
           {t(
             "Ověřuji ledger, rozsah zatím neznámý…",
@@ -61,7 +61,7 @@ export function LedgerVerify({ query }: { query: string }) {
         </p>
       )}
       {verified !== undefined && !verified && (
-        <p className="ledger-verify warning" role="alert">
+        <p role="alert">
           {t(
             "Ledger integrita se nepotvrdila. Data mohou být neúplná.",
             "Ledger integrity unverified. Data may be incomplete.",
@@ -134,7 +134,7 @@ export function LedgerVerify({ query }: { query: string }) {
         </dl>
       )}
       {staleCache && (
-        <p className="ledger-verify muted" role="status">
+        <p className="muted" role="status">
           {t(
             `Naposledy ověřeno: ${cached.checked ?? "?"} záznamů, head ${cached.head.slice(0, 20)}… Vztahuje se ke starší hlavě, ne k aktuální.`,
             `Last verified: ${cached.checked ?? "?"} entries, head ${cached.head.slice(0, 20)}… Against an older head, not the current one.`,

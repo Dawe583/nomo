@@ -70,6 +70,33 @@ public enum VoidColorRole: String, CaseIterable, Sendable {
     /// The value recorded here is the one that was measured, not the
     /// platform's default. The reason it moved is the point.
     case focus
+
+    /// Apple has no semantic system colour for source-code punctuation, so this
+    /// role carries the document's value and the Apple view derives from it.
+    /// The value was measured against canvas and surface in both appearances
+    /// rather than taken from a platform default.
+    ///
+    /// The value recorded here is the one that was measured, not the
+    /// platform's default. The reason it moved is the point.
+    case syntaxKeyword
+
+    /// Apple has no semantic system colour for source-code punctuation, so this
+    /// role carries the document's value and the Apple view derives from it.
+    /// The value was measured against canvas and surface in both appearances
+    /// rather than taken from a platform default.
+    ///
+    /// The value recorded here is the one that was measured, not the
+    /// platform's default. The reason it moved is the point.
+    case syntaxString
+
+    /// Apple has no semantic system colour for source-code punctuation, so this
+    /// role carries the document's value and the Apple view derives from it.
+    /// The value was measured against canvas and surface in both appearances
+    /// rather than taken from a platform default.
+    ///
+    /// The value recorded here is the one that was measured, not the
+    /// platform's default. The reason it moved is the point.
+    case syntaxNumber
 }
 
 public extension VoidColorRole {
@@ -89,6 +116,9 @@ public extension VoidColorRole {
         case .danger: "systemRed"
         case .good: "systemGreen"
         case .focus: "controlAccentColor"
+        case .syntaxKeyword: "label"
+        case .syntaxString: "secondaryLabel"
+        case .syntaxNumber: "label"
         }
     }
 
@@ -123,6 +153,9 @@ public extension VoidColorRole {
         case .danger: VoidColorComponents(red: 0.843137, green: 0.0, blue: 0.082353, alpha: 1.0)
         case .good: VoidColorComponents(red: 0.101961, green: 0.466667, blue: 0.2, alpha: 1.0)
         case .focus: VoidColorComponents(red: 0.0, green: 0.25098, blue: 0.866667, alpha: 1.0)
+        case .syntaxKeyword: VoidColorComponents(red: 0.65098, green: 0.239216, blue: 0.047059, alpha: 1.0)
+        case .syntaxString: VoidColorComponents(red: 0.207843, green: 0.388235, blue: 0.266667, alpha: 1.0)
+        case .syntaxNumber: VoidColorComponents(red: 0.458824, green: 0.313725, blue: 0.603922, alpha: 1.0)
         }
     }
 
@@ -140,6 +173,9 @@ public extension VoidColorRole {
         case .danger: VoidColorComponents(red: 1.0, green: 0.270588, blue: 0.227451, alpha: 1.0)
         case .good: VoidColorComponents(red: 0.188235, green: 0.819608, blue: 0.345098, alpha: 1.0)
         case .focus: VoidColorComponents(red: 0.039216, green: 0.517647, blue: 1.0, alpha: 1.0)
+        case .syntaxKeyword: VoidColorComponents(red: 0.933333, green: 0.596078, blue: 0.368627, alpha: 1.0)
+        case .syntaxString: VoidColorComponents(red: 0.627451, green: 0.780392, blue: 0.596078, alpha: 1.0)
+        case .syntaxNumber: VoidColorComponents(red: 0.768627, green: 0.662745, blue: 0.886275, alpha: 1.0)
         }
     }
 }
@@ -338,6 +374,15 @@ public enum VoidRadiusRole: String, CaseIterable, Sendable {
     case sheet
     case window
     case capsule
+    case compact
+    case popover
+    case hairline
+    case chip
+    case panel
+    case drawer
+    case overlay
+    case full
+    case sheetcap
 }
 
 public extension VoidRadiusRole {
@@ -350,6 +395,15 @@ public extension VoidRadiusRole {
         case .sheet: 12.0
         case .window: 12.0
         case .capsule: 999.0
+        case .compact: 5.0
+        case .popover: 8.0
+        case .hairline: 3.0
+        case .chip: 7.0
+        case .panel: 14.0
+        case .drawer: 18.0
+        case .overlay: 20.0
+        case .full: 22.0
+        case .sheetcap: 24.0
         }
     }
 }
@@ -363,6 +417,15 @@ public extension VoidRadii {
     static var sheet: CGFloat { VoidRadiusRole.sheet.radius }
     static var window: CGFloat { VoidRadiusRole.window.radius }
     static var capsule: CGFloat { VoidRadiusRole.capsule.radius }
+    static var compact: CGFloat { VoidRadiusRole.compact.radius }
+    static var popover: CGFloat { VoidRadiusRole.popover.radius }
+    static var hairline: CGFloat { VoidRadiusRole.hairline.radius }
+    static var chip: CGFloat { VoidRadiusRole.chip.radius }
+    static var panel: CGFloat { VoidRadiusRole.panel.radius }
+    static var drawer: CGFloat { VoidRadiusRole.drawer.radius }
+    static var overlay: CGFloat { VoidRadiusRole.overlay.radius }
+    static var full: CGFloat { VoidRadiusRole.full.radius }
+    static var sheetcap: CGFloat { VoidRadiusRole.sheetcap.radius }
 
     /// Every role with its radius, smallest corner first. A surface reads
     /// the order to pick the role that matches the element it is drawing.

@@ -3,12 +3,18 @@ import type { s3Executor } from "./s3.ts";
 import type { postgresExecutor } from "./postgres.ts";
 import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 import { readLedgerFeed, type FeedPage, type LedgerFeedRecord } from "../../ledger/src/feed.ts";
 import { connectorFor, makeConnector } from "../../connectors/src/registry.ts";
 import type { ConnectorId, InversePlan as ConnectorInversePlan, QueryExecutor, S3Client } from "../../connectors/src/registry.ts";
 import { LocalSnapshotStore } from "../../connectors/src/snapshot/local.ts";
+import { jsonlStore } from "../../ledger/src/store.ts";
+import { buildReversal } from "../../ledger/src/reversal.ts";
+import { retainedKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
+import { canonicalJson } from "../../ledger/src/canonical.ts";
+import { sanitizeWorkspace } from "../../ledger/src/hardening.ts";
+import type { KeyProvider } from "../../ledger/src/index.ts";
 
 export type SnapshotReference = {
   readonly namespace: string;
@@ -49,7 +55,7 @@ export type DriftChange = {
 
 export type ReplayRefusal = {
   readonly stepId: string;
-  readonly reason: "drift" | "missing_target" | "permission_denied" | "internal_error";
+  readonly reason: "drift" | "missing_target" | "permission_denied" | "internal_error" | "verification_failed" | "verification_unavailable";
   readonly changed: readonly DriftChange[];
   readonly report?: string;
 };
@@ -57,6 +63,18 @@ export type ReplayRefusal = {
 export type ApplyReport = {
   readonly applied: readonly string[];
   readonly refused: readonly ReplayRefusal[];
+  /**
+   * Post-write proof from the connector, when it has one. Postgres re-reads
+   * the rows it restored and refuses a mismatch; S3 now re-reads the object
+   * and stores the comparison through the snapshot store.
+   */
+  readonly receipts?: readonly RestoreReceipt[];
+};
+
+export type RestoreReceipt = {
+  readonly stepId: string;
+  readonly restoredDigest: string;
+  readonly reference?: string;
 };
 
 export type ReplayConnector = {
@@ -81,6 +99,12 @@ export type ReplayCommandOptions = {
   readonly connectors?: ReplayConnectorRegistry;
   readonly exec?: QueryExecutor;
   readonly s3?: S3Client;
+  /**
+   * The key the reversal record is signed with. It must be the key that
+   * signed the record being reversed, and a host that already knows it can
+   * supply it here instead of relying on the environment.
+   */
+  readonly signer?: KeyProvider;
 };
 
 export class ReplayConfigurationError extends Error {
@@ -157,9 +181,29 @@ export async function runReplayCommand(
       return 0;
     }
 
+    // Resolved before the inverse dispatches, because an inverse nobody can
+    // record is an effect that happened with no evidence it did. A reversal
+    // signed by a second key would also make the file unverifiable by whoever
+    // holds only the key that wrote the record being reversed, so the key is
+    // checked rather than assumed.
+    const signer = options.signer ?? await reversalSigner(env);
+    if ((await signer.currentKeyId()) !== record.keyId)
+      throw new Error(
+        `The local signing key is not the key that wrote seq ${record.seq} (${record.keyId}). ` +
+        "Appending a reversal under another key would leave the chain unverifiable to the reader who holds the original. Refusing replay apply.",
+      );
+
     const report = await connector.apply(plan);
     printApplyReport(report, io.stdout);
-    return report.refused.length === 0 ? 0 : 1;
+    if (report.refused.length > 0) return 1;
+    // Appended after the report and before the exit code, so a reversal that
+    // could not be written is a failure of this command rather than a line of
+    // output claiming a record that is not in the file.
+    const receipt = await appendReversal(parsed.ledger, signer, record, report);
+    io.stdout(
+      `reversal: seq ${receipt.seq} records the inversion of seq ${record.seq} ${record.digest}`,
+    );
+    return 0;
   } catch (error) {
     const reason = error instanceof ReplayConfigurationError
       ? `${error.kind}: ${error.message}`
@@ -167,6 +211,73 @@ export async function runReplayCommand(
     io.stderr(`void replay failed: ${reason}`);
     return 1;
   } finally { s3?.close(); await connection?.close(); }
+}
+
+/**
+ * The key the reversal is signed with, opened without creating one. A replay
+ * that cannot sign a reversal must not perform the inverse, so the refusal
+ * names the missing key rather than silently applying and staying silent.
+ */
+async function reversalSigner(
+  env: Readonly<NodeJS.ProcessEnv>,
+): Promise<KeyProvider> {
+  try {
+    return await retainedKeyProvider({ env });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    throw new Error(
+      "Replay apply needs the signing key that wrote the record it inverts. " +
+      "No retained key was found, and an inverse that cannot be recorded is an effect with no evidence. " +
+      "Run replay where the recorder's key is retained, or set VOID_SIGNING_KEY.",
+    );
+  }
+}
+
+/**
+ * The reversal record, appended to the same chain the inverse was read from.
+ * The workspace comes from the file name because the store writes one file per
+ * workspace and refuses any name outside its pattern, and it is re-checked
+ * through the same function rather than trusted: a ledger path that is not a
+ * store file is refused here instead of creating a second chain next to it.
+ */
+async function appendReversal(
+  ledgerPath: string,
+  signer: KeyProvider,
+  record: LedgerFeedRecord,
+  report: ApplyReport,
+): Promise<{ readonly seq: number }> {
+  const workspace = sanitizeWorkspace(
+    basename(ledgerPath, ".jsonl"),
+  );
+  const entry = await jsonlStore(signer, { dir: dirname(ledgerPath) }).append({
+    workspace,
+    at: new Date().toISOString(),
+    tool: record.tool,
+    klass: record.klass,
+    decision: "execute:reversal",
+    argsDigest: record.argsDigest,
+    // What was applied, and the post-write proof where the connector produced
+    // one. A reversal that says which record it inverts but not what was
+    // applied, or that names no proof, is a claim with nothing behind it.
+    inverseDigest: `sha256:${await sha256Hex(
+      canonicalJson({
+        capture: record.captureDigest,
+        applied: report.applied,
+        receipts: report.receipts ?? [],
+      }),
+    )}`,
+    reversal: buildReversal(record.seq, record.digest),
+    ...(report.receipts === undefined
+      ? {}
+      : {
+          receipts: report.receipts.map((receipt) => ({
+            stepId: receipt.stepId,
+            restoredDigest: receipt.restoredDigest,
+            ...(receipt.reference === undefined ? {} : { reference: receipt.reference }),
+          })),
+        }),
+  });
+  return { seq: entry.seq };
 }
 
 function printConnectors(

@@ -67,6 +67,24 @@
         "light": "#0040dd",
         "dark": "#0a84ff",
         "adjusted": "The focus ring uses the accent role. It must be visible against both the canvas and the surface, which the contrast gate below checks."
+      },
+      "syntaxKeyword": {
+        "system": "label",
+        "light": "#a63d0c",
+        "dark": "#ee985e",
+        "adjusted": "Apple has no semantic system colour for source-code punctuation, so this role carries the document's value and the Apple view derives from it. The value was measured against canvas and surface in both appearances rather than taken from a platform default."
+      },
+      "syntaxString": {
+        "system": "secondaryLabel",
+        "light": "#356344",
+        "dark": "#a0c798",
+        "adjusted": "Apple has no semantic system colour for source-code punctuation, so this role carries the document's value and the Apple view derives from it. The value was measured against canvas and surface in both appearances rather than taken from a platform default."
+      },
+      "syntaxNumber": {
+        "system": "label",
+        "light": "#75509a",
+        "dark": "#c4a9e2",
+        "adjusted": "Apple has no semantic system colour for source-code punctuation, so this role carries the document's value and the Apple view derives from it. The value was measured against canvas and surface in both appearances rather than taken from a platform default."
       }
     },
     "shadow": {
@@ -78,6 +96,11 @@
         "modal": { "light": "0 4px 20px rgb(0 0 0 / 0.08)", "dark": "0 4px 20px rgb(0 0 0 / 0.45)" },
         "palette": { "light": "0 14px 48px rgb(0 0 0 / 0.04)", "dark": "0 14px 48px rgb(0 0 0 / 0.5)" },
         "focus": { "light": "0 10px 32px rgb(0 0 0 / 0.04)", "dark": "0 10px 32px rgb(0 0 0 / 0.35)" }
+      }
+    },
+    "scrim": {
+      "roles": {
+        "modal": { "light": "rgba(18, 16, 10, 0.5)", "dark": "rgba(18, 16, 10, 0.5)" }
       }
     },
     "contrast": [
@@ -137,7 +160,16 @@
       "card": 10,
       "sheet": 12,
       "window": 12,
-      "capsule": 999
+      "capsule": 999,
+      "compact": 5,
+      "popover": 8,
+      "hairline": 3,
+      "chip": 7,
+      "panel": 14,
+      "drawer": 18,
+      "overlay": 20,
+      "full": 22,
+      "sheetcap": 24
     }
   },
   "control": {

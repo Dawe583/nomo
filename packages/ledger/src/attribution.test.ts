@@ -1,6 +1,6 @@
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -326,4 +326,126 @@ test("the writer shapes a rule with no rationale apart from one with an empty on
     policyDigest: POLICY,
     rule: { index: 2, rationale: "" },
   });
+});
+
+/**
+ * The compatibility rule, as bytes rather than as a claim about bytes. The
+ * first record carries the attribution exactly as it was written before
+ * `modelId` and `requestDigest` existed, is read back off disk, and has its
+ * keys counted. The second carries all four fields, so the two sit in one
+ * chain and the verifier has to accept both.
+ */
+test("a record written before the widening still verifies beside a widened one", async (t) => {
+  const { dir, key, store } = await fixture(t);
+  await store.append(
+    body({
+      attribution: {
+        policyDigest: POLICY,
+        rule: { index: 2, rationale: "production deletes need a human" },
+      },
+    }),
+  );
+  await store.append(
+    body({
+      decision: "allow:resolved",
+      attribution: buildAttribution(
+        OTHER_POLICY,
+        { ruleIndex: 1 },
+        { modelId: "vendor/model-1", requestDigest: "d".repeat(64) },
+      ),
+    }),
+  );
+
+  const lines = (await readFile(file(dir, []), "utf8")).trim().split("\n");
+  const stored = JSON.parse(lines[0]!) as JsonlEntry;
+  // Narrowed rather than asserted through: the point of the test is that the
+  // bytes on disk are the old shape, so the read of those bytes is the
+  // assertion and a cast would let a malformed body satisfy it.
+  const onDisk = stored.body as { readonly attribution?: unknown };
+  assert.ok(
+    typeof onDisk.attribution === "object" &&
+      onDisk.attribution !== null &&
+      !Array.isArray(onDisk.attribution),
+    "the pre-widening record carries an attribution object on disk",
+  );
+  assert.deepEqual(
+    Object.keys(onDisk.attribution).sort(),
+    ["policyDigest", "rule"],
+    "the pre-widening record must carry the old shape on disk",
+  );
+  assert.equal(readLedgerReason(stored.body, 1).kind, "attributed");
+
+  assert.deepEqual(await store.verify(workspace), { ok: true, checked: 2 });
+  const chain = await verifyChain(await collect(store), {
+    publicKey: (id) => key.publicKey(id),
+  });
+  assert.equal(chain.ok, true);
+
+  const page = await readLedgerFeed(file(dir, []), {
+    publicKey: (id) => key.publicKey(id),
+  });
+  const old = page.records[0]?.attribution;
+  assert.ok(old && !("modelId" in old) && !("requestDigest" in old));
+  assert.deepEqual(page.records[1]?.attribution, {
+    policyDigest: OTHER_POLICY,
+    modelId: "vendor/model-1",
+    requestDigest: "d".repeat(64),
+    rule: { index: 1 },
+  });
+});
+
+test("a widened attribution this reader cannot vouch for is a named finding", () => {
+  // `null` rather than `undefined` is the "this one is well-formed" sentinel:
+  // a `RegExp | undefined` element type would let a mistyped case silently stop
+  // asserting anything, which is the failure this file exists to prevent.
+  const cases: readonly (readonly [unknown, RegExp | null])[] = [
+    [{ policyDigest: POLICY, modelId: 7 }, /modelId is not a bounded string/],
+    [{ policyDigest: POLICY, modelId: "" }, /modelId is not a bounded string/],
+    [
+      { policyDigest: POLICY, modelId: "model\nforged" },
+      /modelId is not a bounded string/,
+    ],
+    [
+      { policyDigest: POLICY, requestDigest: "d".repeat(63) },
+      /requestDigest is not 64 lowercase hex characters/,
+    ],
+    [
+      { policyDigest: POLICY, requestDigest: `sha256:${"d".repeat(64)}` },
+      null,
+    ],
+  ];
+  for (const [attribution, expected] of cases) {
+    const reason = readLedgerReason({ attribution }, 2);
+    if (expected === null) {
+      assert.equal(reason.kind, "attributed");
+      continue;
+    }
+    assert.equal(reason.kind, "malformed", JSON.stringify(attribution));
+    assert.ok(reason.kind === "malformed", "a malformed finding must carry a detail");
+    assert.match(reason.detail, expected);
+  }
+});
+
+test("the writer names a model and a request only when it has both", () => {
+  assert.deepEqual(
+    buildAttribution(POLICY, { ruleIndex: 0, rationale: "r" }, {
+      modelId: "vendor/model-1",
+      requestDigest: "d".repeat(64),
+    }),
+    {
+      policyDigest: POLICY,
+      modelId: "vendor/model-1",
+      requestDigest: "d".repeat(64),
+      rule: { index: 0, rationale: "r" },
+    },
+  );
+  assert.deepEqual(
+    buildAttribution(POLICY, {}, { modelId: "vendor/model-1" }),
+    { policyDigest: POLICY, modelId: "vendor/model-1" },
+  );
+  assert.deepEqual(
+    buildAttribution(POLICY, { ruleIndex: 0 }, { requestDigest: undefined }),
+    { policyDigest: POLICY, rule: { index: 0 } },
+    "an absent request is not written as an empty one",
+  );
 });

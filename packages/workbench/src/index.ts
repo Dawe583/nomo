@@ -69,8 +69,14 @@ import type { KeyProvider } from "../../ledger/src/index.ts";
 import { verifyChain, readLedgerEntries } from "../../ledger/src/verify.ts";
 import type { JsonlEntry } from "../../ledger/src/store.ts";
 import { classifyTool } from "../../registry/src/evaluate.ts";
-import { loadPolicy } from "../../policy/src/rules.ts";
-import { decide } from "../../policy/src/decide.ts";
+import { loadPolicy, type ValidPolicy } from "../../policy/src/rules.ts";
+import { decide, type PolicyDecision } from "../../policy/src/decide.ts";
+import { policyDigest } from "../../policy/src/digest.ts";
+import {
+  buildAttribution,
+  type LedgerAttribution,
+} from "../../ledger/src/attribution.ts";
+import { buildReversal, type LedgerReversal } from "../../ledger/src/reversal.ts";
 import { setTimeout as delay } from "node:timers/promises";
 import { randomUUID } from "node:crypto";
 import { homedir, tmpdir } from "node:os";
@@ -186,6 +192,40 @@ export function denialText(
       : "Change the connector policy or ask the operator to approve this class.";
   return `VOID denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
 }
+/**
+ * The forward record an undo inverts, located in the chain this workspace
+ * already holds. The search is the same one the managed document adapter uses
+ * to prove a receipt, because both are asking the same question: which signed
+ * record says this operation completed. The latest match wins, because a
+ * retried operation appends more than one completed record and the newest is
+ * the one the undo is about.
+ *
+ * Failing here throws before the entry is hashed, so an undo whose target is
+ * not in the chain leaves the workspace untouched rather than leaving a signed
+ * claim about an inversion nobody can check.
+ */
+function reversalFor(
+  entries: readonly JsonlEntry[],
+  args: unknown,
+): LedgerReversal {
+  const operationId = (args as { readonly operationId?: unknown } | null)
+    ?.operationId;
+  if (typeof operationId !== "string" || operationId === "")
+    throw new Error("Undo record carries no operation id to reverse.");
+  const forward = entries
+    .filter((entry) => {
+      const body = entry.body as Record<string, unknown>;
+      return (
+        body.operationId === operationId && body.decision === "execute:completed"
+      );
+    })
+    .at(-1);
+  if (forward === undefined)
+    throw new Error(
+      `Undo cannot name a completed record for ${operationId} in this chain.`,
+    );
+  return buildReversal(forward.seq, forward.hash);
+}
 class UnknownToolOutcome extends Error {
   constructor() { super("Tool outcome is unknown. Stop and reconcile its evidence before continuing."); }
 }
@@ -201,6 +241,13 @@ type Connector = McpConfig & {
 type Session = {
   view: SessionView;
   messages: ModelMessage[];
+  /**
+   * Digest of the model request that is in flight for this turn. It lives
+   * here rather than in the view because it describes one turn and is not
+   * part of the session a reader sees, and a restored session correctly has
+   * none: no request is in flight, so there is nothing to name.
+   */
+  requestDigest?: string;
   messageIds?: string[];
   agentProfile?: AgentProfile;
   queuedPrompt?: string;
@@ -1987,6 +2034,7 @@ export class Workbench {
     operation?: WorkspaceOperation,
     approval?: { by?: string; reason?: string },
     metadata?: Record<string, unknown>,
+    attribution?: LedgerAttribution,
   ) {
     const workspace = session.view.workspace;
     const current = this.evidence[workspace] ?? [];
@@ -2012,6 +2060,15 @@ export class Workbench {
           }
         : {}),
       ...metadata,
+      // The decision's own account of why it was allowed goes last: a record
+      // the caller computed for the decision it just made is the truth about
+      // that decision, and metadata is a bag other bodies travel in.
+      ...(attribution === undefined ? {} : { attribution }),
+      // An undo that cannot name the record it inverts is not a record of an
+      // inversion, so it is refused here rather than written and believed.
+      ...(tool === "void_workspace_undo"
+        ? { reversal: reversalFor(current, args) }
+        : {}),
     };
     const previous = current.at(-1)?.hash ?? GENESIS_PREV,
       hash = await entryHash(body, previous, sha256Hex),
@@ -2088,7 +2145,7 @@ export class Workbench {
       }
     });
   }
-  private async authorizeTool(session: Session, call: { tool: string; workspace: string; connector: string; klass: string; blastRadius: number | undefined; reason: string; arguments: JsonObject }, decision: ReturnType<typeof decide> | { kind: "deny" }) {
+  private async authorizeTool(session: Session, call: { tool: string; workspace: string; connector: string; klass: string; blastRadius: number | undefined; reason: string; arguments: JsonObject }, decision: PolicyDecision | { kind: "deny" }, policy: ValidPolicy) {
     const name = call.tool, args = call.arguments;
     await this.locked(() =>
       this.commitWorkspace(
@@ -2100,6 +2157,7 @@ export class Workbench {
         undefined,
         undefined,
         { klass: call.klass },
+        this.sessionAttribution(session, policy, decision),
       ),
     );
     let allowed = decision.kind === "allow";
@@ -2145,12 +2203,30 @@ export class Workbench {
           undefined,
           hold,
           { klass: call.klass },
+          this.sessionAttribution(session, policy, decision),
         ),
       );
       this.approvalHistory.push({ ...hold });
       this.holds.delete(hold.holdId);
     }
     return allowed;
+  }
+  /**
+   * What this workbench knows about the decision it is about to record: the
+   * policy it was made under, the rule that fired, the model that asked, and
+   * the request that asked. Both the model and the request are omitted rather
+   * than filled in, because a record made outside a model turn has no model
+   * turn to name and an empty string is a name nobody chose.
+   */
+  private sessionAttribution(
+    session: Session,
+    policy: ValidPolicy,
+    decision: { kind: string; ruleIndex?: number; rationale?: string },
+  ): LedgerAttribution {
+    return buildAttribution(policyDigest(policy.policy), decision, {
+      modelId: session.view.model || undefined,
+      requestDigest: session.requestDigest,
+    });
   }
   private async execute(
     session: Session,
@@ -2168,7 +2244,7 @@ export class Workbench {
         if (!policy.ok) throw new Error("Invalid default operator policy.");
         const call = { tool: tool.name, workspace: session.view.workspace, connector: "workspace", klass: workspaceToolClass(tool.name) ?? "r3", blastRadius: 1, reason: "Managed document policy.", arguments: args };
         const decision = decide(policy, call);
-        if (!(await this.authorizeTool(session, call, decision))) return { isError: true, content: [{ type: "text", text: denialText(tool.name, call.klass, decision) }] };
+        if (!(await this.authorizeTool(session, call, decision, policy))) return { isError: true, content: [{ type: "text", text: denialText(tool.name, call.klass, decision) }] };
       }
     }
     if (tool.connectorId === "stdio") {
@@ -2247,7 +2323,7 @@ export class Workbench {
       classification.outcome === "classified"
         ? decide(policy, call)
         : { kind: "deny" as const };
-    const allowed = await this.authorizeTool(session, call, decision);
+    const allowed = await this.authorizeTool(session, call, decision, policy);
     if (!allowed)
       return {
         isError: true,
@@ -2261,11 +2337,13 @@ export class Workbench {
     try {
       result = await rpc(config, "tools/call", { name: tool.name, arguments: args }, config.sessionId);
       await this.locked(() => this.commitWorkspace(session, this.workspace(session.view.id), name, args,
-        result.result?.isError ? "execute:failed" : "execute:completed", undefined, undefined, { klass: call.klass }));
+        result.result?.isError ? "execute:failed" : "execute:completed", undefined, undefined,
+        { klass: call.klass }, this.sessionAttribution(session, policy, decision)));
     } catch {
       try {
         await this.locked(() => this.commitWorkspace(session, this.workspace(session.view.id), name, args,
-          "execute:unknown", undefined, undefined, { klass: call.klass }));
+          "execute:unknown", undefined, undefined, { klass: call.klass },
+          this.sessionAttribution(session, policy, decision)));
       } catch {
         // An unavailable ledger cannot turn an uncertain external effect into failure.
       }
@@ -2313,9 +2391,33 @@ export class Workbench {
         },
       }));
       const maxTurns = session.agentProfile?.maxTurns ?? 20;
+      // The prefix of the conversation that never changes. Hashing only the
+      // messages added since the last turn turns a per-turn cost of O(session)
+      // into O(turn), and the digest is identical either way: the prefix was
+      // already inside the previous digest's input, so folding it forward
+      // changes what the value means not at all. A session that reaches the
+      // 200 message limit would otherwise serialise its whole history twenty
+      // times, and canonicalJson is the expensive part, not the hash.
+      let hashed = 0;
       for (let turn = 0; turn < maxTurns; turn++) {
         if (session.controller.signal.aborted) return;
         this.checkContextBudget(session, tools);
+        // The record a tool call produces has to name what asked for it, and
+        // the conversation is the only part of that which is not derivable
+        // from the record itself. One digest for the turn, not one per tool
+        // call: every record the turn produces names the same request, and a
+        // per-call digest would hash the same growing conversation repeatedly.
+        session.requestDigest = await sha256Hex(
+          canonicalJson({
+            model: session.view.model,
+            messages: session.messages.slice(hashed),
+            tools,
+            // The count is inside the input, so two sessions with the same
+            // tail and different histories do not produce the same digest.
+            through: session.messages.length,
+          }),
+        );
+        hashed = session.messages.length;
         if (session.messages.length >= 200)
           throw new Error(
             "Session context limit reached. Start a new session.",

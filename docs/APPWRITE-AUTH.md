@@ -107,11 +107,27 @@ python3 -m venv /tmp/void-mcp-venv
   -s apps/appwrite-mcp/tests -t apps/appwrite-mcp
 ```
 
-Nothing runs either Python suite today. The workspace gate in
-`scripts/src/check-tests.mjs` runs Node suites only, so these 22 tests and
-the existing `python/void-transport` suite are executed by nobody in CI.
-Wiring them in is open work: it needs a decision about where the interpreter
-that carries the SDK comes from, and nothing here does it.
+`scripts/src/check-tests.mjs` now runs both Python suites. It looks for an
+interpreter that can import what each suite needs, tries `VOID_PYTHON`, then
+`/tmp/void-mcp-venv/bin/python`, then the system `python3`, and reports which
+one it used. A suite that runs appears in the summary with its passing count,
+and a suite that cannot run is reported as `UNRUN` with the interpreters it
+tried and the commands to run it, and is excluded from the total rather than
+counted as a pass. The summary line reads `N suites, M tests, K could not run`
+whenever anything was skipped, so a quoted test count cannot silently include
+a suite nobody executed.
+
+`python/void-transport` runs under the system interpreter with no SDK, so it
+executes on an ordinary checkout. `apps/appwrite-mcp` needs the `mcp` SDK and
+is `UNRUN` until the virtual environment above exists; on a machine without
+it, that suite is a named warning and does not fail the gate, because the SDK
+is a build requirement of the hosted function rather than a test dependency.
+What is still not true: neither suite runs in CI, because
+`.github/workflows/ci.yml` provisions no Python interpreter with the SDK, and
+no job installs `apps/appwrite-mcp/requirements.txt`. The `apple` job added
+alongside covers the Apple surface and no Python. Until a CI job builds the
+virtual environment and runs both, the local gate is the only thing executing
+these 22 checks and the `python/void-transport` suite.
 
 `cloud/auth.mjs` provides server-only signup, email-password login, logout,
 account lookup, and password recovery helpers. Its `__Host-void-auth` cookie
