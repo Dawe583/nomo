@@ -1,0 +1,11 @@
+flowchart LR
+    A[Align] --> B[Activate]
+    B --> C[Prove demand]
+    C --> D[Collect money]
+    D --> E[Repeat]
+    E --> F[Retain]
+    B -. evidence gate .-> G[Signed export + external verification]
+    C -. evidence gate .-> H[Qualified workflow + dated next step]
+    D -. evidence gate .-> I[Collected recurring payment]
+    classDef gate fill:#edf3ff,stroke:#315caa,color:#172b4d
+    class G,H,I gate

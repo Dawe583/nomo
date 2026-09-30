@@ -6,6 +6,36 @@ Source of truth: this document and the linked GitHub issue. Slack is the operati
 
 Execution layer: [10K-MRR-EXECUTION-BOARD.md](10K-MRR-EXECUTION-BOARD.md) contains the ready-to-run task board, DRI contract, weekly scorecard, evidence gates, content sequence, and stop rules. [SLACK-OPERATING-PACK.md](SLACK-OPERATING-PACK.md) contains the channel map, cadence, pin-ready rules, and message templates. Keep those documents aligned with this strategy; do not create a competing plan in Slack.
 
+> [!IMPORTANT]
+> **Executive status:** €10k MRR is an upside/stretch target. The current operating base case is **€2k–€5k MRR** until two paid accounts, repeatable activation, and source-specific conversion data exist.
+
+## Executive dashboard
+
+| Track | Green signal | Current control |
+| --- | --- | --- |
+| **Revenue** | collected MRR reconciles to source records | do not count unpaid or one-off revenue |
+| **Demand** | repeated workflow pain + dated next steps | first 20 conversations are evidence collection |
+| **Activation** | independent operator completes hold + export + verification | maintainer intervention is a blocker |
+| **Pipeline** | 3×–5× qualified recurring coverage | €30k–€50k for €10k target MRR |
+| **Delivery** | support remains within capacity | re-scope unlimited integration requests |
+
+![VOID MRR funnel](assets/rendered/void-mrr-funnel.png)
+
+### Document map
+
+```mermaid
+flowchart LR
+    A[Strategy] --> B[Execution board]
+    B --> C[Reality check]
+    C --> D[Slack operating pack]
+    D --> E[Team coordination]
+```
+
+- [Date-bound target](GO-TO-MARKET-10K-MRR-2026.md)
+- [Execution board](10K-MRR-EXECUTION-BOARD.md)
+- [Reality check](10K-MRR-REALITY-CHECK.md)
+- [Slack operating pack](SLACK-OPERATING-PACK.md)
+
 ## 1. Objective and definition of done
 
 The objective is the first €10,000 of collected monthly recurring revenue from VOID customers, measured for three consecutive months. One-off setup fees, unpaid pilots, grants, consulting that is not recurring, and illustrative numbers on the marketing site do not count.

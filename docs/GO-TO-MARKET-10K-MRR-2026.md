@@ -14,6 +14,32 @@ The quality gate follows after the deadline: keep the same or higher recurring r
 
 If VOID has an existing MRR baseline, subtract it from the new-revenue target. That baseline is currently an explicit unknown and must be recorded in Phase 0 rather than guessed.
 
+## Executive timeline
+
+```mermaid
+timeline
+    title €10k MRR operating path
+    2026-10-01 : Align offer, ICP, DRIs and evidence gates
+    2026-10-11 : Independent clean-machine activation
+    2026-10-18 : 5 qualified conversations + 1 activated evaluation
+    2026-11-01 : 3 scoped evaluations + 1 paid proposal
+    2026-11-15 : 2 collected paid accounts
+    2026-11-29 : 4 paid accounts + 12 active qualified opportunities
+    2026-12-13 : 6 paid accounts + no critical activation blocker
+    2026-12-31 : €10k upside target or honest reforecast
+```
+
+> [!NOTE]
+> This is a **decision timeline**, not a promise timeline. Missing a checkpoint triggers a reforecast; it does not justify unsupported scope or inflated reporting.
+
+![VOID €10k MRR timeline](assets/rendered/void-mrr-timeline.png)
+
+### Management navigation
+
+- [Reality check](10K-MRR-REALITY-CHECK.md)
+- [Execution board](10K-MRR-EXECUTION-BOARD.md)
+- [Slack operating pack](SLACK-OPERATING-PACK.md)
+
 ## 2. The recommended revenue path
 
 The fastest credible path is eight paid design partners at an average of €1,250 MRR. This is a scoped, recurring evaluation and support offer, not unlimited consulting and not an unsupported hosted-service promise.

@@ -1,0 +1,13 @@
+flowchart TB
+    A[GitHub: source of truth]
+    A --> B[Monday: #weekly-plan]
+    B --> C[Daily: #daily-plan]
+    C --> D[Wednesday: #operations + #projects]
+    D --> E[Friday: #weekly-review]
+    E --> F[#decisions + GitHub]
+    C --> G[#engineering / #tasks / #research]
+    D --> H[#releases / #security]
+    classDef source fill:#172b4d,stroke:#172b4d,color:#fff
+    classDef cadence fill:#e8f4ee,stroke:#2f7d59,color:#17432e
+    class A source
+    class B,C,D,E,F cadence

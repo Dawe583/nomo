@@ -10,6 +10,40 @@
 
 This is the operating board, not a revenue forecast. A row is complete only when its evidence link exists and another person can reproduce or inspect the result.
 
+## Executive control panel
+
+| Control | Green | Amber | Red |
+| --- | --- | --- | --- |
+| **Forecast** | €10k supported by cohort data | €2k–€5k base case | €0–€1k downside |
+| **Activation** | independent operator succeeds | maintainer assists | path fails or is undocumented |
+| **Pipeline** | ≥5× qualified coverage | 3×–5× | <3× |
+| **Delivery** | support within capacity | capacity warning | custom work threatens renewal |
+| **Evidence** | artifact + source + owner | partial evidence | unsupported public claim |
+
+```mermaid
+flowchart LR
+    A[Align] --> B[Activate]
+    B --> C[Prove demand]
+    C --> D[Collect money]
+    D --> E[Repeat]
+    E --> F[Retain]
+    B -. evidence gate .-> G[Signed export + external verification]
+    C -. evidence gate .-> H[Qualified workflow + dated next step]
+    D -. evidence gate .-> I[Collected recurring payment]
+    classDef gate fill:#edf3ff,stroke:#315caa,color:#172b4d
+    class G,H,I gate
+```
+
+**Operating rule:** move right only when the gate below the stage is evidenced. If a gate fails, stop adding volume and fix the bottleneck.
+
+![VOID execution flow](assets/rendered/void-execution-flow.png)
+
+### Navigation
+
+- [Reality check](10K-MRR-REALITY-CHECK.md)
+- [Date-bound calendar](GO-TO-MARKET-10K-MRR-2026.md)
+- [Slack operating pack](SLACK-OPERATING-PACK.md)
+
 ## 1. North-star outcome
 
 Reach **at least €10,000 of collected recurring monthly revenue in December 2026**, preferably through **eight scoped design partners at an average of €1,250 MRR**, then hold or exceed that level through January–March 2027. Do not count unpaid commitments, grants, one-off work, or illustrative website prices.

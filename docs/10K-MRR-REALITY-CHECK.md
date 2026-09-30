@@ -4,6 +4,43 @@
 **Reviewed artifacts:** `GO-TO-MARKET-10K-MRR.md`, `GO-TO-MARKET-10K-MRR-2026.md`, `10K-MRR-EXECUTION-BOARD.md`  
 **Purpose:** determine whether the December 2026 €10k MRR target is realistic, what must be true for it to happen, and when to reforecast.
 
+> [!IMPORTANT]
+> **Management verdict:** €10k MRR is an **upside/stretch target**, not the current base-case forecast. Until two paid accounts and source-specific conversion data exist, manage to **€2k–€5k base-case MRR**.
+
+### Executive dashboard
+
+| Signal | Current read | Management action |
+| --- | --- | --- |
+| **Upside target** | €7.5k–€10k MRR | Keep as target; do not call it expected revenue |
+| **Base case** | €2k–€5k MRR | Use for staffing, support, and cash planning |
+| **Downside** | €0–€1k MRR | Trigger activation and wedge intervention |
+| **Biggest risk** | 66.7% evaluation → paid assumption | Measure by cohort; plan 25–50% until proven |
+| **Pipeline requirement** | €30k–€50k qualified recurring pipeline | Review weekly in `#operations` |
+
+```mermaid
+flowchart LR
+    A[240 ICP accounts] --> B[120 contacts]
+    B --> C[48 conversations]
+    C --> D[24 qualified opportunities]
+    D --> E[12 evaluations]
+    E --> F[8 paid partners]
+    F --> G[€10k collected MRR]
+    classDef risk fill:#fff0e6,stroke:#bd4206,color:#542000
+    classDef target fill:#e8f4ee,stroke:#2f7d59,color:#17432e
+    class B,E risk
+    class G target
+```
+
+**Reading the chart:** the original path works only with unusually strong warm-channel conversion. The chart is a target path, not a forecast.
+
+![VOID MRR funnel](assets/rendered/void-mrr-funnel.png)
+
+### Navigation
+
+- [Execution board](10K-MRR-EXECUTION-BOARD.md)
+- [Date-bound plan](GO-TO-MARKET-10K-MRR-2026.md)
+- [Slack operating pack](SLACK-OPERATING-PACK.md)
+
 ## Executive verdict
 
 The target is **possible but not currently a realistic base-case**. It is a stretch/upside case that requires three things the repository does not yet evidence:

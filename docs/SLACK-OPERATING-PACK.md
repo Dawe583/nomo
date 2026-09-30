@@ -9,6 +9,40 @@
 
 All channel messages should be in English because the VOID workspace marks the operating channels English-only.
 
+## Operating system at a glance
+
+```mermaid
+flowchart TB
+    A[GitHub: source of truth]
+    A --> B[Monday: #weekly-plan]
+    B --> C[Daily: #daily-plan]
+    C --> D[Wednesday: #operations + #projects]
+    D --> E[Friday: #weekly-review]
+    E --> F[#decisions + GitHub]
+    C --> G[#engineering / #tasks / #research]
+    D --> H[#releases / #security]
+    classDef source fill:#172b4d,stroke:#172b4d,color:#fff
+    classDef cadence fill:#e8f4ee,stroke:#2f7d59,color:#17432e
+    class A source
+    class B,C,D,E,F cadence
+```
+
+| Layer | Channels | Output |
+| --- | --- | --- |
+| **Direction** | `#product`, `#research`, `#decisions` | priorities, evidence, durable choices |
+| **Execution** | `#weekly-plan`, `#daily-plan`, `#tasks`, `#projects` | commitments, blockers, delivery health |
+| **Proof & delivery** | `#engineering`, `#releases`, `#security`, `#lab` | tests, artifacts, incidents, limits |
+| **Business control** | `#operations`, `#weekly-review` | MRR, pipeline, capacity, lessons |
+| **Reference** | `#knowledge`, `#general`, `#announcements` | stable rules and approved communication |
+
+![VOID Slack operating architecture](assets/rendered/void-slack-architecture.png)
+
+### Navigation
+
+- [MRR strategy](GO-TO-MARKET-10K-MRR.md)
+- [Execution board](10K-MRR-EXECUTION-BOARD.md)
+- [Reality check](10K-MRR-REALITY-CHECK.md)
+
 ## 1. Channel map
 
 | Channel | Use it for | Do not use it for | Required message shape |
