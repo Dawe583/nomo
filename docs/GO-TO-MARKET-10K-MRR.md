@@ -4,6 +4,8 @@ Status: execution plan, created 2026-09-30.
 Owner: founder, with workstream DRIs assigned in the team workspace.
 Source of truth: this document and the linked GitHub issue. Slack is the operating surface, not the canonical record of product truth.
 
+Execution layer: [10K-MRR-EXECUTION-BOARD.md](10K-MRR-EXECUTION-BOARD.md) contains the ready-to-run task board, DRI contract, weekly scorecard, evidence gates, content sequence, and stop rules. [SLACK-OPERATING-PACK.md](SLACK-OPERATING-PACK.md) contains the channel map, cadence, pin-ready rules, and message templates. Keep those documents aligned with this strategy; do not create a competing plan in Slack.
+
 ## 1. Objective and definition of done
 
 The objective is the first €10,000 of collected monthly recurring revenue from VOID customers, measured for three consecutive months. One-off setup fees, unpaid pilots, grants, consulting that is not recurring, and illustrative numbers on the marketing site do not count.
