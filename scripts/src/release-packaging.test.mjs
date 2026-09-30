@@ -74,6 +74,19 @@ test("root bin mappings resolve to the development entrypoints", () => {
   assert.deepEqual(manifest("package.json").bin, bins);
 });
 
+test("checkout launchers expose the same TUI entrypoint on POSIX and Windows", () => {
+  const posix = read("void");
+  const windows = read("void.cmd");
+  assert.match(posix, /^#!\/bin\/sh\n/);
+  assert.match(posix, /packages\/cli\/bin\/void\.mjs/);
+  assert.match(posix, /exec node .*"\$@"/);
+  assert.ok(lstatSync(new URL("../../void", import.meta.url)).mode & 0o111);
+  assert.match(windows, /^@echo off\r?\n/);
+  assert.match(windows, /packages\\cli\\bin\\void\.mjs/);
+  assert.match(windows, /%\*/);
+  assert.match(manifest("package.json").scripts.void, /packages\/cli\/bin\/void\.mjs/);
+});
+
 for (const [name, path] of Object.entries(bins)) {
   test(`${name} has an executable Node shebang and valid syntax`, () => {
     assert.equal(read(path).split("\n")[0], "#!/usr/bin/env node");

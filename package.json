@@ -4,6 +4,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "preinstall": "node scripts/src/preinstall.mjs",
+    "void": "node packages/cli/bin/void.mjs",
     "tui": "node packages/cli/bin/void.mjs tui",
     "tui:preview": "pnpm --filter @void/cli run tui:preview --",
     "typecheck": "pnpm -r --filter \"./packages/**\" --filter \"./scripts\" --if-present run typecheck && tsc -p apps/control-plane/tsconfig.json && pnpm --filter @void/control-plane-ui typecheck",

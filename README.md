@@ -40,7 +40,7 @@ VOID does not make an agent safe by trusting the model. It protects the write pa
 
 ## Five-minute local path
 
-Run the live local terminal workspace with `pnpm tui` (or double-click `VOID.command` on macOS). Chat, documents, reviewed Undo, signed ledgers, approvals, policy and tool controls use real local data. See [the TUI guide](docs/TUI-WORKSPACE.md) for setup and testing. `tui:preview` remains an illustrative renderer.
+Run the live local terminal workspace with `void`, `pnpm void`, or `pnpm tui`. From a checkout, `./void` works on macOS/Linux and `.\void.cmd` works on Windows. To make the bare `void` command available from any directory after cloning, install dependencies, run `pnpm setup` once if pnpm's global bin directory is not on PATH, open a new terminal, then run `pnpm link --global` from the checkout. This links the command to that checkout; repeat the link if you move it or switch to another clone. Chat, documents, reviewed Undo, signed ledgers, approvals, policy and tool controls use real local data. See [the TUI guide](docs/TUI-WORKSPACE.md) for setup and testing. `tui:preview` remains an illustrative renderer.
 
 Use Node.js 24 or newer and `pnpm install --frozen-lockfile`. Packages are private at version 0.1.0. Start the agent GUI with `pnpm gui`, or run the native macOS app with `pnpm desktop:setup` followed by `pnpm desktop`. Connect a provider in Settings; managed documents and captured Undo work without a separate tool server. Build the installer with `pnpm desktop:build`; see [the beta runbook](docs/BETA.md) for agent configuration, terminal controls, Vercel deployment and the reviewed feature boundaries.
 
