@@ -40,6 +40,14 @@ export type RecoveryOutcome = {
   status: "restored" | "compensated" | "conflict";
   evidence: Json;
 };
+/** Runtime-derived proof that the immediately newer operation in a recovery
+ * job was restored. Callers must never supply this to standalone recovery. */
+export type RecoveryContinuation = {
+  operationId: string;
+  prepared: Prepared;
+  outcome: Outcome;
+  recovery: RecoveryOutcome;
+};
 export interface RecoveryAdapter {
   readonly id: string;
   readonly version: string;
@@ -63,6 +71,13 @@ export interface RecoveryAdapter {
     prepared: Prepared,
     outcome: Outcome,
     recoveryId: string,
+  ): Promise<RecoveryOutcome>;
+  /** Optional, narrowly-scoped continuation for a verified recovery job. */
+  recoverWithContinuation?(
+    prepared: Prepared,
+    outcome: Outcome,
+    recoveryId: string,
+    previous: RecoveryContinuation,
   ): Promise<RecoveryOutcome>;
   /** Read durable recovery evidence only. An absent receipt never authorizes another inverse. */
   reconcileRecovery?(

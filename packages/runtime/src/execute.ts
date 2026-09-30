@@ -4,6 +4,7 @@ import type {
   Outcome,
   Prepared,
   RecoveryAdapter,
+  RecoveryContinuation,
   RecoveryOutcome,
 } from "../../connectors/src/recovery.ts";
 /** WP-R02: legacy host binding contract lives here so every host imports one boundary. */
@@ -295,7 +296,9 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
   let recoverOperation!: (
     plan: RecoveryPlan,
     authorize: (plan: RecoveryPlan) => Promise<boolean>,
+    continuation?: RecoveryContinuation,
   ) => Promise<RecoveryOutcome | { status: "unknown" }>;
+  const continuationToken = Object.freeze({});
   const runtime = {
     async status(
       workspace: string,
@@ -1116,9 +1119,52 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
               );
               return { done: result } as const;
             }
+            let continuation: RecoveryContinuation | undefined;
+            if (progress.checkpoint > 0) {
+              const priorStep = plan.steps[progress.checkpoint - 1]!;
+              const priorOutcome = progress.outcomes.find(
+                (candidate) => candidate.operationId === priorStep.operationId,
+              );
+              const priorEvent = latest(tx, priorStep.operationId);
+              const currentEvent = latest(
+                tx,
+                plan.steps[progress.checkpoint]!.operationId,
+              );
+              if (
+                priorOutcome?.status === "restored" &&
+                priorEvent?.stage === "restored" &&
+                currentEvent &&
+                priorEvent.adapterId === currentEvent.adapterId &&
+                priorEvent.adapterVersion === currentEvent.adapterVersion &&
+                digest(plan.steps[progress.checkpoint]!.plan.resources) ===
+                  digest(priorStep.plan.resources) &&
+                plan.steps[progress.checkpoint]!.plan.scope === priorStep.plan.scope
+              ) {
+                const reference = priorEvent.data as unknown as { receipt?: VaultReference };
+                if (reference.receipt) {
+                  const priorBundle = await loadPrepared(tx, priorEvent);
+                  const priorForward = await options.vault.get(
+                    workspace,
+                    artifact(tx, priorStep.operationId, "succeeded"),
+                  ) as unknown as Outcome;
+                  const priorRecovery = await options.vault.get(
+                    workspace,
+                    reference.receipt,
+                  ) as unknown as RecoveryOutcome;
+                  if (priorRecovery.status === "restored")
+                    continuation = {
+                      operationId: priorStep.operationId,
+                      prepared: priorBundle.prepared,
+                      outcome: priorForward,
+                      recovery: priorRecovery,
+                    };
+                }
+              }
+            }
             return {
               progress,
               step: plan.steps[progress.checkpoint]!,
+              continuation,
             } as const;
           },
         );
@@ -1126,6 +1172,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
         const outcome = await recoverOperation(
           state.step.plan,
           async () => true,
+          state.continuation,
         );
         const terminal = await options.journal.transaction(
           workspace,
@@ -1197,7 +1244,10 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
     async recover(
       inputPlan: RecoveryPlan,
       authorize: (plan: RecoveryPlan) => Promise<boolean>,
+      continuation?: RecoveryContinuation,
+      token?: object,
     ): Promise<RecoveryOutcome | { status: "unknown" }> {
+      const trustedContinuation = token === continuationToken ? continuation : undefined;
       const plan = JSON.parse(canonicalJson(inputPlan)) as RecoveryPlan;
       return options.journal.transaction(plan.workspace, async (tx) => {
         const event = latest(tx, plan.operationId);
@@ -1260,11 +1310,10 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           reverses: event.operationId,
         });
         try {
-          const result = await adapter.recover(
-            clean(bundle.prepared),
-            clean(outcome),
-            `recovery-${adapterKey(plan.workspace, plan.operationId)}`,
-          );
+          const recoveryId = `recovery-${adapterKey(plan.workspace, plan.operationId)}`;
+          const result = trustedContinuation && adapter.recoverWithContinuation
+            ? await adapter.recoverWithContinuation(clean(bundle.prepared), clean(outcome), recoveryId, clean(trustedContinuation))
+            : await adapter.recover(clean(bundle.prepared), clean(outcome), recoveryId);
           const receipt = await options.vault.put(
             plan.workspace,
             result as unknown as Json,
@@ -1286,6 +1335,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       });
     },
   };
-  recoverOperation = runtime.recover;
+  recoverOperation = (plan, authorize, continuation) =>
+    runtime.recover(plan, authorize, continuation, continuationToken);
   return runtime;
 }

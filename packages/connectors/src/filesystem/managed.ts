@@ -19,7 +19,13 @@ import {
 } from "node:fs";
 import { resolve, join, dirname, isAbsolute } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
-import type { Json, RecoveryAdapter, Prepared } from "../recovery.ts";
+import type {
+  Json,
+  RecoveryAdapter,
+  Prepared,
+  Outcome,
+  RecoveryContinuation,
+} from "../recovery.ts";
 
 type Mutation =
   | { action: "write"; path: string; base64: string; mode?: number }
@@ -277,6 +283,79 @@ export function managedFilesystemAdapter(options: {
     return after;
   }
   const capture = (prepared: Prepared) => prepared.before as unknown as Capture;
+  async function recoverFile(
+    prepared: Prepared,
+    outcome: Outcome,
+    expectedRevision?: string,
+  ) {
+    const before = capture(prepared),
+      plan = prepared.plan as { root: string; identity: string };
+    if (plan.root !== root || plan.identity !== identity)
+      return { status: "conflict", evidence: null } as const;
+    if ("to" in before) {
+      const evidence = outcome.evidence as {
+        sourceRevision: string;
+        destinationRevision: string;
+      };
+      let source: Snapshot, destination: Snapshot;
+      try {
+        source = snapshot(before.path);
+        destination = snapshot(before.to);
+      } catch {
+        return { status: "conflict", evidence: null } as const;
+      }
+      if (
+        source.revision !== evidence.sourceRevision ||
+        destination.revision !== evidence.destinationRevision
+      )
+        return { status: "conflict", evidence: null } as const;
+      renameSync(target(before.to), target(before.path));
+      syncDirectory(target(before.path));
+      if (dirname(target(before.path)) !== dirname(target(before.to)))
+        syncDirectory(target(before.to));
+      const restored = snapshot(before.path),
+        removed = snapshot(before.to);
+      if (
+        restored.bytes !== before.snapshot.bytes ||
+        restored.mode !== before.snapshot.mode ||
+        removed.bytes !== null
+      )
+        throw new Error("File verification failed.");
+      return {
+        status: "restored",
+        evidence: {
+          path: before.path,
+          from: before.to,
+          revision: restored.revision,
+          scope: process.platform === "win32" ? "bytes" : "bytes-and-mode",
+        } as Json,
+      } as const;
+    }
+    let current: Snapshot;
+    try {
+      current = snapshot(before.path);
+    } catch {
+      return { status: "conflict", evidence: null } as const;
+    }
+    const expected =
+      expectedRevision ?? (outcome.evidence as { revision: string }).revision;
+    if (current.revision !== expected)
+      return { status: "conflict", evidence: null } as const;
+    const restored = replace(
+      before.path,
+      current,
+      before.snapshot.bytes,
+      before.snapshot.mode,
+    );
+    return {
+      status: "restored",
+      evidence: {
+        path: before.path,
+        revision: restored.revision,
+        scope: process.platform === "win32" ? "bytes" : "bytes-and-mode",
+      } as Json,
+    } as const;
+  }
   return {
     id: "filesystem.managed",
     version: "1",
@@ -318,9 +397,17 @@ export function managedFilesystemAdapter(options: {
         // read, and its revision is what an undo is measured against, so a plan
         // can prove its order instead of assuming it.
         reads: [
-          { resource: `file:${join(root, mutation.path)}`, revision: before.revision },
+          {
+            resource: `file:${join(root, mutation.path)}`,
+            revision: before.revision,
+          },
           ...(mutation.action === "rename"
-            ? [{ resource: `file:${join(root, mutation.to)}`, revision: destination!.revision }]
+            ? [
+                {
+                  resource: `file:${join(root, mutation.to)}`,
+                  revision: destination!.revision,
+                },
+              ]
             : []),
         ],
       };
@@ -427,73 +514,52 @@ export function managedFilesystemAdapter(options: {
       return { status: "unknown" };
     },
     async recover(prepared, outcome) {
-      const before = capture(prepared),
-        plan = prepared.plan as { root: string; identity: string };
-      if (plan.root !== root || plan.identity !== identity)
-        return { status: "conflict", evidence: null };
-      if ("to" in before) {
-        const evidence = outcome.evidence as {
-          sourceRevision: string;
-          destinationRevision: string;
+      return recoverFile(prepared, outcome);
+    },
+    async recoverWithContinuation(
+      prepared,
+      outcome,
+      _recoveryId,
+      previous: RecoveryContinuation,
+    ) {
+      const currentBefore = capture(prepared),
+        previousBefore = capture(previous.prepared),
+        currentPlan = prepared.plan as {
+          root: string;
+          identity: string;
+          mutation: Mutation;
+        },
+        previousPlan = previous.prepared.plan as {
+          root: string;
+          identity: string;
+          mutation: Mutation;
         };
-        let source: Snapshot, destination: Snapshot;
-        try {
-          source = snapshot(before.path);
-          destination = snapshot(before.to);
-        } catch {
-          return { status: "conflict", evidence: null };
-        }
-        if (
-          source.revision !== evidence.sourceRevision ||
-          destination.revision !== evidence.destinationRevision
-        )
-          return { status: "conflict", evidence: null };
-        renameSync(target(before.to), target(before.path));
-        syncDirectory(target(before.path));
-        if (dirname(target(before.path)) !== dirname(target(before.to)))
-          syncDirectory(target(before.to));
-        const restored = snapshot(before.path),
-          removed = snapshot(before.to);
-        if (
-          restored.bytes !== before.snapshot.bytes ||
-          restored.mode !== before.snapshot.mode ||
-          removed.bytes !== null
-        )
-          throw new Error("File verification failed.");
-        return {
-          status: "restored",
-          evidence: {
-            path: before.path,
-            from: before.to,
-            revision: restored.revision,
-            scope: process.platform === "win32" ? "bytes" : "bytes-and-mode",
-          } as Json,
-        };
-      }
-      let current: Snapshot;
-      try {
-        current = snapshot(before.path);
-      } catch {
-        return { status: "conflict", evidence: null };
-      }
       if (
-        current.revision !== (outcome.evidence as { revision: string }).revision
+        previous.recovery.status !== "restored" ||
+        currentPlan.root !== root ||
+        previousPlan.root !== root ||
+        currentPlan.identity !== identity ||
+        previousPlan.identity !== identity ||
+        currentPlan.mutation.action !== "write" ||
+        previousPlan.mutation.action !== "write" ||
+        currentPlan.mutation.path !== previousPlan.mutation.path ||
+        currentBefore.path !== previousBefore.path ||
+        currentBefore.snapshot.bytes === null ||
+        previousBefore.snapshot.bytes === null ||
+        (outcome.evidence as { revision?: string }).revision !==
+          previousBefore.snapshot.revision
       )
         return { status: "conflict", evidence: null };
-      const restored = replace(
-        before.path,
-        current,
-        before.snapshot.bytes,
-        before.snapshot.mode,
-      );
-      return {
-        status: "restored",
-        evidence: {
-          path: before.path,
-          revision: restored.revision,
-          scope: process.platform === "win32" ? "bytes" : "bytes-and-mode",
-        } as Json,
+      const receipt = previous.recovery.evidence as {
+        path?: string;
+        revision?: string;
       };
+      if (
+        receipt.path !== currentBefore.path ||
+        typeof receipt.revision !== "string"
+      )
+        return { status: "conflict", evidence: null };
+      return recoverFile(prepared, outcome, receipt.revision);
     },
   };
 }
