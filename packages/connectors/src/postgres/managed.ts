@@ -6,6 +6,8 @@ import type {
   Outcome,
   Prepared,
   RecoveryAdapter,
+  RecoveryContinuation,
+  RecoveryOutcome,
 } from "../recovery.ts";
 import type { QueryExecutor } from "./capture.ts";
 
@@ -1220,6 +1222,203 @@ export function managedPostgresAdapter(
     }
   }
 
+  function continuationEvidence(
+    prepared: Prepared,
+    outcome: Outcome,
+    previous: RecoveryContinuation,
+  ): ManagedState | undefined {
+    try {
+      const current = planFrom(prepared);
+      const prior = planFrom(previous.prepared);
+      const currentCapture = current.captures[0];
+      const priorCapture = prior.captures[0];
+      if (
+        previous.schema !== "void.recovery-lineage.v1" ||
+        previous.workspace !== options.workspace ||
+        !/^[a-f0-9]{64}$/.test(previous.planDigest) ||
+        !Number.isSafeInteger(previous.stepIndex) ||
+        previous.stepIndex < 1 ||
+        previous.recovery.status !== "restored" ||
+        current.mutation.action !== "update" ||
+        prior.mutation.action !== "update" ||
+        current.captures.length !== 1 ||
+        prior.captures.length !== 1 ||
+        current.operationKey === prior.operationKey ||
+        currentCapture!.table !== priorCapture!.table ||
+        canonicalJson(currentCapture!.key) !==
+          canonicalJson(priorCapture!.key) ||
+        currentCapture!.resource !== priorCapture!.resource ||
+        currentCapture!.relationOid !== priorCapture!.relationOid ||
+        currentCapture!.depth !== priorCapture!.depth ||
+        canonicalJson(current.tenant) !== canonicalJson(prior.tenant) ||
+        canonicalJson(outcome.evidence) !==
+          canonicalJson({ rows: prior.captures, tenant: prior.tenant })
+      )
+        return undefined;
+      const restored = previous.recovery.evidence as unknown as ManagedState;
+      const receiptCapture = restored?.rows?.[0];
+      if (
+        !restored ||
+        restored.rows?.length !== 1 ||
+        canonicalJson(restored.tenant) !== canonicalJson(prior.tenant) ||
+        !receiptCapture ||
+        receiptCapture.table !== priorCapture!.table ||
+        canonicalJson(receiptCapture.key) !==
+          canonicalJson(priorCapture!.key) ||
+        receiptCapture.resource !== priorCapture!.resource ||
+        receiptCapture.relationOid !== priorCapture!.relationOid ||
+        receiptCapture.depth !== priorCapture!.depth ||
+        canonicalJson(receiptCapture.row) !==
+          canonicalJson(priorCapture!.row) ||
+        typeof receiptCapture.revision !== "string"
+      )
+        return undefined;
+      return restored;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async function recoverPostgres(
+    prepared: Prepared,
+    outcome: Outcome,
+    id: string,
+    expectedEvidence: Json = outcome.evidence,
+    continuation?: RecoveryContinuation,
+  ): Promise<RecoveryOutcome> {
+    const plan = planFrom(prepared);
+    const connection = await options.connect();
+    try {
+      await connection.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
+      await connection.query(
+        "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
+        [operationKey(id)],
+      );
+      // The forward capture/outcome remain immutable and independently bound
+      // to the operations row. A chained receipt additionally binds the
+      // runtime-derived predecessor proof, so restart reconciliation must
+      // reconstruct the same signed-job/vault lineage before accepting it.
+      const forwardDigest = hash({ prepared, outcome });
+      const inputDigest = continuation
+        ? hash({ prepared, outcome, continuation })
+        : forwardDigest;
+      const original = (
+        await connection.query<{ capture: Prepared; outcome: Outcome }>(
+          `SELECT capture,outcome FROM ${schema}.operations WHERE id=$1`,
+          [plan.operationKey],
+        )
+      )[0];
+      if (
+        !original ||
+        hash({ prepared: original.capture, outcome: original.outcome }) !==
+          forwardDigest
+      )
+        throw new Error("Capture or outcome identity mismatch.");
+      const receipt = (
+        await connection.query<{
+          input_digest: string;
+          outcome: { status: "restored"; evidence: Json };
+        }>(
+          `SELECT input_digest,outcome FROM ${schema}.recoveries WHERE id=$1`,
+          [operationKey(id)],
+        )
+      )[0];
+      if (receipt) {
+        if (receipt.input_digest !== inputDigest)
+          throw new Error("Recovery ID belongs to another input digest.");
+        await connection.query("COMMIT");
+        return receipt.outcome;
+      }
+      await requireCurrentMetadata(connection);
+      const state = await observedCaptures(
+        connection,
+        plan.captures,
+        plan.tenant,
+        true,
+      );
+      if (canonicalJson(state) !== canonicalJson(expectedEvidence)) {
+        await connection.query("ROLLBACK");
+        return {
+          status: "conflict",
+          evidence: json({
+            resources: state.rows.map((row) => ({
+              resource: row.resource,
+              revision: row.revision,
+            })),
+          }),
+        };
+      }
+      const root = plan.captures[0]!;
+      if (plan.mutation.action === "delete") {
+        for (const capture of [...plan.captures].sort(
+          (left, right) => left.depth - right.depth,
+        )) {
+          if (capture.row === null)
+            throw new Error("Delete recovery capture is incomplete.");
+          const row = capture.row as Record<string, Json>;
+          const columns = Object.keys(row).sort();
+          await connection.query(
+            `INSERT INTO ${tableName(capture.table)} (${columns.map(ident).join(",")}) VALUES (${columns.map((_, index) => "$" + (index + 1)).join(",")})`,
+            columns.map((column) => row[column]!),
+          );
+        }
+      } else if (plan.mutation.action === "insert") {
+        const predicate = whereForKey(root.key, 0, plan.tenant);
+        await connection.query(
+          `DELETE FROM ${tableName(root.table)} WHERE ${predicate.where}`,
+          predicate.params,
+        );
+      } else {
+        if (root.row === null)
+          throw new Error("Update recovery capture is incomplete.");
+        const target = tables.get(root.table)!;
+        const before = root.row as Record<string, Json>;
+        const writable = target.columns.filter(
+          (column) =>
+            column !== plan.tenant?.column &&
+            !target.primaryKey.includes(column),
+        );
+        if (writable.length) {
+          const predicate = whereForKey(root.key, writable.length, plan.tenant);
+          await connection.query(
+            `UPDATE ${tableName(root.table)} SET ${writable.map((column, index) => `${ident(column)}=$${index + 1}`).join(",")} WHERE ${predicate.where}`,
+            [...writable.map((column) => before[column]!), ...predicate.params],
+          );
+        }
+      }
+      const restored = await observedCaptures(
+        connection,
+        plan.captures,
+        plan.tenant,
+      );
+      if (
+        canonicalJson(restored.rows.map((row) => row.row)) !==
+        canonicalJson(plan.captures.map((capture) => capture.row))
+      )
+        throw new Error("Restored rows did not match the capture.");
+      const result = {
+        status: "restored" as const,
+        evidence: json(restored),
+      };
+      await connection.query(
+        `INSERT INTO ${schema}.recoveries(id,input_digest,outcome,format_version) VALUES($1,$2,$3::jsonb,$4)`,
+        [
+          operationKey(id),
+          inputDigest,
+          canonicalJson(result),
+          MANAGED_METADATA_VERSION,
+        ],
+      );
+      await connection.query("COMMIT");
+      return result;
+    } catch (error) {
+      await connection.query("ROLLBACK").catch(() => {});
+      throw error;
+    } finally {
+      await connection.close();
+    }
+  }
+
   return {
     id: "postgres-managed-" + options.workspace,
     version: "2",
@@ -1388,28 +1587,11 @@ export function managedPostgresAdapter(
         await connection.close();
       }
     },
-    async recover(prepared, outcome, id) {
-      const plan = planFrom(prepared);
+    async reconcileRecoveryWithContinuation(prepared, outcome, id, previous) {
+      const expected = continuationEvidence(prepared, outcome, previous);
+      if (!expected) return { status: "unknown" };
       const connection = await options.connect();
       try {
-        await connection.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
-        await connection.query(
-          "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
-          [operationKey(id)],
-        );
-        const inputDigest = hash({ prepared, outcome });
-        const original = (
-          await connection.query<{ capture: Prepared; outcome: Outcome }>(
-            `SELECT capture,outcome FROM ${schema}.operations WHERE id=$1`,
-            [plan.operationKey],
-          )
-        )[0];
-        if (
-          !original ||
-          hash({ prepared: original.capture, outcome: original.outcome }) !==
-            inputDigest
-        )
-          throw new Error("Capture or outcome identity mismatch.");
         const receipt = (
           await connection.query<{
             input_digest: string;
@@ -1419,107 +1601,30 @@ export function managedPostgresAdapter(
             [operationKey(id)],
           )
         )[0];
-        if (receipt) {
-          if (receipt.input_digest !== inputDigest)
-            throw new Error("Recovery ID belongs to another input digest.");
-          await connection.query("COMMIT");
-          return receipt.outcome;
-        }
-        await requireCurrentMetadata(connection);
-        const state = await observedCaptures(
-          connection,
-          plan.captures,
-          plan.tenant,
-          true,
-        );
-        if (canonicalJson(state) !== canonicalJson(outcome.evidence)) {
-          await connection.query("ROLLBACK");
-          return {
-            status: "conflict",
-            evidence: json({
-              resources: state.rows.map((row) => ({
-                resource: row.resource,
-                revision: row.revision,
-              })),
-            }),
-          };
-        }
-        const root = plan.captures[0]!;
-        if (plan.mutation.action === "delete") {
-          for (const capture of [...plan.captures].sort(
-            (left, right) => left.depth - right.depth,
-          )) {
-            if (capture.row === null)
-              throw new Error("Delete recovery capture is incomplete.");
-            const row = capture.row as Record<string, Json>;
-            const columns = Object.keys(row).sort();
-            await connection.query(
-              `INSERT INTO ${tableName(capture.table)} (${columns.map(ident).join(",")}) VALUES (${columns.map((_, index) => "$" + (index + 1)).join(",")})`,
-              columns.map((column) => row[column]!),
-            );
-          }
-        } else if (plan.mutation.action === "insert") {
-          const predicate = whereForKey(root.key, 0, plan.tenant);
-          await connection.query(
-            `DELETE FROM ${tableName(root.table)} WHERE ${predicate.where}`,
-            predicate.params,
-          );
-        } else {
-          if (root.row === null)
-            throw new Error("Update recovery capture is incomplete.");
-          const target = tables.get(root.table)!;
-          const before = root.row as Record<string, Json>;
-          const writable = target.columns.filter(
-            (column) =>
-              column !== plan.tenant?.column &&
-              !target.primaryKey.includes(column),
-          );
-          if (writable.length) {
-            const predicate = whereForKey(
-              root.key,
-              writable.length,
-              plan.tenant,
-            );
-            await connection.query(
-              `UPDATE ${tableName(root.table)} SET ${writable.map((column, index) => `${ident(column)}=$${index + 1}`).join(",")} WHERE ${predicate.where}`,
-              [
-                ...writable.map((column) => before[column]!),
-                ...predicate.params,
-              ],
-            );
-          }
-        }
-        const restored = await observedCaptures(
-          connection,
-          plan.captures,
-          plan.tenant,
-        );
+        if (!receipt) return { status: "unknown" };
         if (
-          canonicalJson(restored.rows.map((row) => row.row)) !==
-          canonicalJson(plan.captures.map((capture) => capture.row))
+          receipt.input_digest !==
+          hash({ prepared, outcome, continuation: previous })
         )
-          throw new Error("Restored rows did not match the capture.");
-        const result = {
-          status: "restored" as const,
-          evidence: json(restored),
-        };
-        await connection.query(
-          `INSERT INTO ${schema}.recoveries(id,input_digest,outcome,format_version) VALUES($1,$2,$3::jsonb,$4)`,
-          [
-            operationKey(id),
-            inputDigest,
-            canonicalJson(result),
-            MANAGED_METADATA_VERSION,
-          ],
-        );
-        await connection.query("COMMIT");
-        return result;
-      } catch (error) {
-        await connection.query("ROLLBACK").catch(() => {});
-        throw error;
+          throw new Error("Recovery receipt input mismatch.");
+        return receipt.outcome;
       } finally {
         await connection.close();
       }
+    },
+    async recover(prepared, outcome, id) {
+      return recoverPostgres(prepared, outcome, id);
+    },
+    async recoverWithContinuation(prepared, outcome, id, previous) {
+      const restored = continuationEvidence(prepared, outcome, previous);
+      if (!restored) return { status: "conflict", evidence: null };
+      return recoverPostgres(
+        prepared,
+        outcome,
+        id,
+        restored as unknown as Json,
+        previous,
+      );
     },
   };
 }

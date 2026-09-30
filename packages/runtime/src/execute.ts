@@ -270,6 +270,91 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       data,
     });
   };
+  const continuationForJobStep = async (
+    tx: JournalTransaction,
+    plan: RecoveryJobPlan,
+    stepIndex: number,
+  ): Promise<RecoveryContinuation | undefined> => {
+    if (stepIndex < 1 || stepIndex >= plan.steps.length) return undefined;
+    const currentStep = plan.steps[stepIndex]!;
+    const priorStep = plan.steps[stepIndex - 1]!;
+    const progress = progressFrom(
+      latestJobEvent(tx.jobEvents ?? [], plan.jobId),
+      plan,
+    );
+    const priorOutcome = progress.outcomes.find(
+      (candidate) => candidate.operationId === priorStep.operationId,
+    );
+    const priorEvent = latest(tx, priorStep.operationId);
+    const currentEvent = latest(tx, currentStep.operationId);
+    if (
+      priorOutcome?.status !== "restored" ||
+      priorEvent?.stage !== "restored" ||
+      !currentEvent ||
+      priorEvent.adapterId !== currentEvent.adapterId ||
+      priorEvent.adapterVersion !== currentEvent.adapterVersion ||
+      digest(currentStep.plan.resources) !== digest(priorStep.plan.resources) ||
+      currentStep.plan.scope !== priorStep.plan.scope
+    )
+      return undefined;
+    const reference = priorEvent.data as unknown as {
+      receipt?: VaultReference;
+    };
+    if (!reference.receipt) return undefined;
+    const priorBundle = await loadPrepared(tx, priorEvent);
+    const priorForward = (await options.vault.get(
+      plan.workspace,
+      artifact(tx, priorStep.operationId, "succeeded"),
+    )) as unknown as Outcome;
+    const priorRecovery = (await options.vault.get(
+      plan.workspace,
+      reference.receipt,
+    )) as unknown as RecoveryOutcome;
+    if (priorRecovery.status !== "restored") return undefined;
+    return {
+      schema: "void.recovery-lineage.v1",
+      workspace: plan.workspace,
+      jobId: plan.jobId,
+      planDigest: plan.digest,
+      stepIndex,
+      operationId: currentStep.operationId,
+      predecessorOperationId: priorStep.operationId,
+      prepared: priorBundle.prepared,
+      outcome: priorForward,
+      recovery: priorRecovery,
+    };
+  };
+  const continuationForOperation = async (
+    tx: JournalTransaction,
+    operationId: string,
+  ): Promise<RecoveryContinuation | undefined> => {
+    const latestJobs = new Map(
+      (tx.jobEvents ?? []).map((candidate) => [candidate.jobId, candidate]),
+    );
+    for (const latestEvent of latestJobs.values()) {
+      if (
+        !["applying", "checkpoint", "unknown", "paused"].includes(
+          latestEvent.stage,
+        )
+      )
+        continue;
+      const plan = jobPlan(tx.jobEvents ?? [], latestEvent.jobId);
+      if (!plan) continue;
+      const progress = progressFrom(latestEvent, plan);
+      if (
+        progress.checkpoint >= plan.steps.length ||
+        plan.steps[progress.checkpoint]!.operationId !== operationId
+      )
+        continue;
+      const continuation = await continuationForJobStep(
+        tx,
+        plan,
+        progress.checkpoint,
+      );
+      if (continuation) return continuation;
+    }
+    return undefined;
+  };
   const resultFor = async (
     tx: JournalTransaction,
     event: OperationEvent,
@@ -317,7 +402,8 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       for (const value of [request.operationId, request.agentId])
         if (!/^[\w-]{1,120}$/.test(value))
           throw new Error("Invalid operation identity.");
-      if (!/^[\w:-]{1,120}$/.test(request.runId)) throw new Error("Invalid run identity.");
+      if (!/^[\w:-]{1,120}$/.test(request.runId))
+        throw new Error("Invalid run identity.");
       // R10: the shared account is read before the journal writer lock is
       // taken. This is a short read of prior records and it decides nothing
       // about the reservation, which is deliberate on two counts. It cannot
@@ -330,7 +416,9 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       if (options.budgetLedger) await options.budgetLedger.snapshot();
       const pending = options.journal.transaction(
         request.workspace,
-        async (tx): Promise<{ result: ExecutionResult; charge: BudgetCharge }> => {
+        async (
+          tx,
+        ): Promise<{ result: ExecutionResult; charge: BudgetCharge }> => {
           const prior = latest(tx, request.operationId);
           if (prior) {
             if (
@@ -491,7 +579,10 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
                     reason: "irreversibility-budget",
                   });
                   return {
-                    result: { status: "denied", operationId: request.operationId },
+                    result: {
+                      status: "denied",
+                      operationId: request.operationId,
+                    },
                     charge: null,
                   };
                 }
@@ -501,7 +592,10 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
                   reason: "budget-contention",
                 });
                 return {
-                  result: { status: "failed", operationId: request.operationId },
+                  result: {
+                    status: "failed",
+                    operationId: request.operationId,
+                  },
                   charge: null,
                 };
               }
@@ -511,7 +605,10 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
               approvalDigest,
               ...(budget ? { budget } : {}),
             });
-            await options.vault.reserve?.(request.workspace, request.operationId);
+            await options.vault.reserve?.(
+              request.workspace,
+              request.operationId,
+            );
             const prepared = await adapter.prepare(
               clean(request.arguments),
               clean(observation),
@@ -655,11 +752,21 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           workspace,
           artifact(tx, operationId, "succeeded"),
         )) as unknown as Outcome;
-        const result = await adapter.reconcileRecovery(
-          clean(bundle.prepared),
-          clean(outcome),
-          `recovery-${adapterKey(workspace, operationId)}`,
-        );
+        const continuation = await continuationForOperation(tx, operationId);
+        const recoveryId = `recovery-${adapterKey(workspace, operationId)}`;
+        const result =
+          continuation && adapter.reconcileRecoveryWithContinuation
+            ? await adapter.reconcileRecoveryWithContinuation(
+                clean(bundle.prepared),
+                clean(outcome),
+                recoveryId,
+                clean(continuation),
+              )
+            : await adapter.reconcileRecovery(
+                clean(bundle.prepared),
+                clean(outcome),
+                recoveryId,
+              );
         if (result.status === "unknown") return result;
         const receipt = await options.vault.put(
           workspace,
@@ -802,9 +909,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           }
         const branches = independentBranches(state, blocked);
         if (branches.kind === "refused") throw new Error(branches.reason);
-        const held = new Set(
-          branches.held.map((branch) => branch.operationId),
-        );
+        const held = new Set(branches.held.map((branch) => branch.operationId));
         const steps: Array<{
           operationId: string;
           sequence: number;
@@ -888,7 +993,9 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
         // order cannot be proven is not a plan worth guessing at.
         const ordering = orderRecoverySteps(provenance);
         if (!ordering.safe)
-          throw new Error(`Recovery job order is not provably safe: ${ordering.reason}.`);
+          throw new Error(
+            `Recovery job order is not provably safe: ${ordering.reason}.`,
+          );
         const plan = completeRecoveryJobPlan({
           schema: "void.recovery-plan.v1",
           workspace: input.workspace,
@@ -979,8 +1086,8 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
                 "paused",
               ].includes(candidate.stage),
           );
-          const reclaimable = blocking.filter((candidate) =>
-            leaseVerdict(leaseOf(candidate.data)).reclaimable,
+          const reclaimable = blocking.filter(
+            (candidate) => leaseVerdict(leaseOf(candidate.data)).reclaimable,
           );
           if (blocking.length > reclaimable.length)
             throw new Error(
@@ -994,7 +1101,9 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             // record, so the refusal stands.
             const stalePlan = jobPlan(tx.jobEvents ?? [], stale.jobId);
             if (stalePlan === undefined) {
-              throw new Error("Another recovery job is active in this workspace.");
+              throw new Error(
+                "Another recovery job is active in this workspace.",
+              );
             }
             const staleProgress = progressFrom(
               latestJobEvent(tx.jobEvents ?? [], stale.jobId),
@@ -1002,17 +1111,14 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             );
             const step = stalePlan.steps[staleProgress.checkpoint];
             if (step === undefined) {
-              throw new Error("Another recovery job is active in this workspace.");
+              throw new Error(
+                "Another recovery job is active in this workspace.",
+              );
             }
-            await recordJob(
-              tx,
-              stalePlan,
-              "paused",
-              {
-                ...staleProgress,
-                pause: { code: "lease-expired", operationId: step.operationId },
-              } as unknown as Json,
-            );
+            await recordJob(tx, stalePlan, "paused", {
+              ...staleProgress,
+              pause: { code: "lease-expired", operationId: step.operationId },
+            } as unknown as Json);
             superseded.push(stale.jobId);
           }
           if (
@@ -1119,48 +1225,11 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
               );
               return { done: result } as const;
             }
-            let continuation: RecoveryContinuation | undefined;
-            if (progress.checkpoint > 0) {
-              const priorStep = plan.steps[progress.checkpoint - 1]!;
-              const priorOutcome = progress.outcomes.find(
-                (candidate) => candidate.operationId === priorStep.operationId,
-              );
-              const priorEvent = latest(tx, priorStep.operationId);
-              const currentEvent = latest(
-                tx,
-                plan.steps[progress.checkpoint]!.operationId,
-              );
-              if (
-                priorOutcome?.status === "restored" &&
-                priorEvent?.stage === "restored" &&
-                currentEvent &&
-                priorEvent.adapterId === currentEvent.adapterId &&
-                priorEvent.adapterVersion === currentEvent.adapterVersion &&
-                digest(plan.steps[progress.checkpoint]!.plan.resources) ===
-                  digest(priorStep.plan.resources) &&
-                plan.steps[progress.checkpoint]!.plan.scope === priorStep.plan.scope
-              ) {
-                const reference = priorEvent.data as unknown as { receipt?: VaultReference };
-                if (reference.receipt) {
-                  const priorBundle = await loadPrepared(tx, priorEvent);
-                  const priorForward = await options.vault.get(
-                    workspace,
-                    artifact(tx, priorStep.operationId, "succeeded"),
-                  ) as unknown as Outcome;
-                  const priorRecovery = await options.vault.get(
-                    workspace,
-                    reference.receipt,
-                  ) as unknown as RecoveryOutcome;
-                  if (priorRecovery.status === "restored")
-                    continuation = {
-                      operationId: priorStep.operationId,
-                      prepared: priorBundle.prepared,
-                      outcome: priorForward,
-                      recovery: priorRecovery,
-                    };
-                }
-              }
-            }
+            const continuation = await continuationForJobStep(
+              tx,
+              plan,
+              progress.checkpoint,
+            );
             return {
               progress,
               step: plan.steps[progress.checkpoint]!,
@@ -1247,7 +1316,8 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       continuation?: RecoveryContinuation,
       token?: object,
     ): Promise<RecoveryOutcome | { status: "unknown" }> {
-      const trustedContinuation = token === continuationToken ? continuation : undefined;
+      const trustedContinuation =
+        token === continuationToken ? continuation : undefined;
       const plan = JSON.parse(canonicalJson(inputPlan)) as RecoveryPlan;
       return options.journal.transaction(plan.workspace, async (tx) => {
         const event = latest(tx, plan.operationId);
@@ -1311,9 +1381,19 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
         });
         try {
           const recoveryId = `recovery-${adapterKey(plan.workspace, plan.operationId)}`;
-          const result = trustedContinuation && adapter.recoverWithContinuation
-            ? await adapter.recoverWithContinuation(clean(bundle.prepared), clean(outcome), recoveryId, clean(trustedContinuation))
-            : await adapter.recover(clean(bundle.prepared), clean(outcome), recoveryId);
+          const result =
+            trustedContinuation && adapter.recoverWithContinuation
+              ? await adapter.recoverWithContinuation(
+                  clean(bundle.prepared),
+                  clean(outcome),
+                  recoveryId,
+                  clean(trustedContinuation),
+                )
+              : await adapter.recover(
+                  clean(bundle.prepared),
+                  clean(outcome),
+                  recoveryId,
+                );
           const receipt = await options.vault.put(
             plan.workspace,
             result as unknown as Json,

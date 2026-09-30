@@ -46,8 +46,15 @@ async function fixture(t: import("node:test").TestContext) {
     }),
   };
   const installed = await installManagedPostgres(options);
-  assert.deepEqual(installed, { installedTables: ["public.account"], metadataVersion: 2 });
-  assert.deepEqual(await inspectManagedPostgres(options), { metadataVersion: 2, complete: true, legacyWithoutVersion: false });
+  assert.deepEqual(installed, {
+    installedTables: ["public.account"],
+    metadataVersion: 2,
+  });
+  assert.deepEqual(await inspectManagedPostgres(options), {
+    metadataVersion: 2,
+    complete: true,
+    legacyWithoutVersion: false,
+  });
   const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} }),
     runtimeOptions = {
       journal: localOperationJournal(join(root, "journal"), signer),
@@ -111,6 +118,208 @@ test("managed PostgreSQL capture, write and outbox are integrated; restarted run
     "restored",
   );
 });
+
+test("recovery job restores consecutive updates to one PostgreSQL primary key", async (t) => {
+  const f = await fixture(t);
+  const runtime = recoveryRuntime(f.runtimeOptions);
+  await runtime.execute({
+    ...f.request,
+    operationId: "first-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 20 },
+    },
+  });
+  await runtime.execute({
+    ...f.request,
+    operationId: "second-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 30 },
+    },
+  });
+  const plan = await runtime.planRecoveryJob({
+    workspace: "test",
+    jobId: "same-row",
+    selection: { kind: "run", runId: "run" },
+  });
+  assert.deepEqual(
+    plan.steps.map((step) => step.operationId),
+    ["second-update", "first-update"],
+  );
+  const result = await runtime.runRecoveryJob(
+    "test",
+    "same-row",
+    async () => true,
+  );
+  assert.equal(result.status, "restored");
+  assert.equal(result.outcomes.length, 2);
+  assert.equal(
+    (
+      await f.db.query<{ balance: number }>(
+        "select balance from account where id=1",
+      )
+    ).rows[0]?.balance,
+    10,
+  );
+  assert.equal(
+    (
+      await f.db.query<{ n: number }>(
+        "select count(*)::int as n from void_recovery.revisions",
+      )
+    ).rows[0]?.n,
+    1,
+  );
+});
+
+test("PostgreSQL continuation refuses same-value ABA between row inverses", async (t) => {
+  const f = await fixture(t);
+  const base = f.runtimeOptions.adapters[0]!;
+  let recoverCount = 0;
+  const adapter = {
+    ...base,
+    async recover(
+      prepared: Parameters<typeof base.recover>[0],
+      outcome: Parameters<typeof base.recover>[1],
+      id: string,
+    ) {
+      const result = await base.recover(prepared, outcome, id);
+      recoverCount++;
+      if (recoverCount === 1)
+        await f.db.exec("update account set balance=20 where id=1");
+      return result;
+    },
+  };
+  const runtime = recoveryRuntime({ ...f.runtimeOptions, adapters: [adapter] });
+  await runtime.execute({
+    ...f.request,
+    operationId: "first-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 20 },
+    },
+  });
+  await runtime.execute({
+    ...f.request,
+    operationId: "second-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 30 },
+    },
+  });
+  await runtime.planRecoveryJob({
+    workspace: "test",
+    jobId: "aba",
+    selection: { kind: "run", runId: "run" },
+  });
+  const result = await runtime.runRecoveryJob("test", "aba", async () => true);
+  assert.equal(result.status, "conflict");
+  assert.equal(
+    (
+      await f.db.query<{ balance: number }>(
+        "select balance from account where id=1",
+      )
+    ).rows[0]?.balance,
+    20,
+  );
+});
+
+test("lost response after a chained PostgreSQL inverse reconciles the bound lineage after restart", async (t) => {
+  const f = await fixture(t);
+  const base = f.runtimeOptions.adapters[0]!;
+  let recoveryCalls = 0;
+  const adapter = {
+    ...base,
+    async recoverWithContinuation(
+      prepared: Parameters<typeof base.recover>[0],
+      outcome: Parameters<typeof base.recover>[1],
+      id: string,
+      previous: Parameters<NonNullable<typeof base.recoverWithContinuation>>[3],
+    ) {
+      const result = await base.recoverWithContinuation!(
+        prepared,
+        outcome,
+        id,
+        previous,
+      );
+      recoveryCalls++;
+      if (recoveryCalls === 1) throw new Error("response lost after commit");
+      return result;
+    },
+  };
+  const open = () =>
+    recoveryRuntime({ ...f.runtimeOptions, adapters: [adapter] });
+  const runtime = open();
+  await runtime.execute({
+    ...f.request,
+    operationId: "first-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 20 },
+    },
+  });
+  await runtime.execute({
+    ...f.request,
+    operationId: "second-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 30 },
+    },
+  });
+  await runtime.planRecoveryJob({
+    workspace: "test",
+    jobId: "lost-lineage-receipt",
+    selection: { kind: "run", runId: "run" },
+  });
+  assert.equal(
+    (
+      await runtime.runRecoveryJob(
+        "test",
+        "lost-lineage-receipt",
+        async () => true,
+      )
+    ).status,
+    "unknown",
+  );
+
+  const restarted = open();
+  assert.equal(
+    (await restarted.reconcileRecovery("test", "first-update")).status,
+    "restored",
+  );
+  assert.equal(
+    (
+      await restarted.runRecoveryJob(
+        "test",
+        "lost-lineage-receipt",
+        async () => false,
+      )
+    ).status,
+    "restored",
+  );
+  assert.equal(recoveryCalls, 1);
+  assert.equal(
+    (
+      await f.db.query<{ balance: number }>(
+        "select balance from account where id=1",
+      )
+    ).rows[0]?.balance,
+    10,
+  );
+});
+
 test("managed PostgreSQL INSERT and DELETE restore supported row state", async (t) => {
   const f = await fixture(t),
     runtime = recoveryRuntime(f.runtimeOptions);
@@ -414,14 +623,12 @@ test("managed PostgreSQL deletes and restores exact configured cascade descendan
   assert.deepEqual(observation.blastRadius, { count: 3, precision: "exact" });
   const prepared = await adapter.prepare(input, observation, "cascade");
   const outcome = await adapter.execute(input, prepared, "cascade");
-  assert.deepEqual(
-    (await db.query("SELECT id FROM parent ORDER BY id")).rows,
-    [{ id: 2 }],
-  );
-  assert.deepEqual(
-    (await db.query("SELECT id FROM child ORDER BY id")).rows,
-    [{ id: 20 }],
-  );
+  assert.deepEqual((await db.query("SELECT id FROM parent ORDER BY id")).rows, [
+    { id: 2 },
+  ]);
+  assert.deepEqual((await db.query("SELECT id FROM child ORDER BY id")).rows, [
+    { id: 20 },
+  ]);
   assert.deepEqual(
     (await db.query("SELECT id FROM grandchild ORDER BY id")).rows,
     [{ id: 200 }],
@@ -430,20 +637,14 @@ test("managed PostgreSQL deletes and restores exact configured cascade descendan
     (await adapter.recover(prepared, outcome, "cascade-recovery")).status,
     "restored",
   );
-  assert.deepEqual(
-    (await db.query("SELECT * FROM parent ORDER BY id")).rows,
-    [
-      { id: 1, label: "remove" },
-      { id: 2, label: "keep" },
-    ],
-  );
-  assert.deepEqual(
-    (await db.query("SELECT * FROM child ORDER BY id")).rows,
-    [
-      { id: 10, parent_id: 1, label: "remove-child" },
-      { id: 20, parent_id: 2, label: "keep-child" },
-    ],
-  );
+  assert.deepEqual((await db.query("SELECT * FROM parent ORDER BY id")).rows, [
+    { id: 1, label: "remove" },
+    { id: 2, label: "keep" },
+  ]);
+  assert.deepEqual((await db.query("SELECT * FROM child ORDER BY id")).rows, [
+    { id: 10, parent_id: 1, label: "remove-child" },
+    { id: 20, parent_id: 2, label: "keep-child" },
+  ]);
   assert.deepEqual(
     (await db.query("SELECT * FROM grandchild ORDER BY id")).rows,
     [
@@ -489,13 +690,19 @@ test("managed PostgreSQL binds tenant RLS to a server setting and rejects cross-
   const prepared = await adapter.prepare(input, observation, "tenant");
   const outcome = await adapter.execute(input, prepared, "tenant");
   assert.equal(
-    (await db.query<{ balance: number }>("SELECT balance FROM account WHERE id=1"))
-      .rows[0]?.balance,
+    (
+      await db.query<{ balance: number }>(
+        "SELECT balance FROM account WHERE id=1",
+      )
+    ).rows[0]?.balance,
     11,
   );
   assert.equal(
-    (await db.query<{ balance: number }>("SELECT balance FROM account WHERE id=2"))
-      .rows[0]?.balance,
+    (
+      await db.query<{ balance: number }>(
+        "SELECT balance FROM account WHERE id=2",
+      )
+    ).rows[0]?.balance,
     20,
   );
   await assert.rejects(
