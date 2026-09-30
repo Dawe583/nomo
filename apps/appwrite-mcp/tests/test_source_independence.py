@@ -45,7 +45,11 @@ class UnreachableSourceTest(unittest.TestCase):
         void_data.local_tool_schema.cache_clear()
         void_data.hosted_tool_surface.cache_clear()
         self.moved: list[tuple[Path, Path]] = []
-        self.scratch = Path(tempfile.mkdtemp(prefix="void-unreachable-"))
+        # Keep parked sources on the same device so Path.replace stays atomic
+        # even when the checkout and /tmp are separate mounts.
+        self.scratch = Path(
+            tempfile.mkdtemp(prefix=".void-unreachable-", dir=REPO_ROOT)
+        )
 
     def tearDown(self) -> None:
         for original, parked in self.moved:
@@ -185,7 +189,9 @@ class NoSourceAtAllTest(unittest.TestCase):
         void_data.cli_commands.cache_clear()
         void_data.local_tool_names.cache_clear()
         void_data.local_tool_schema.cache_clear()
-        scratch = Path(tempfile.mkdtemp(prefix="void-no-source-"))
+        scratch = Path(
+            tempfile.mkdtemp(prefix=".void-no-source-", dir=REPO_ROOT)
+        )
         parked: list[tuple[Path, Path]] = []
         try:
             for path in (void_data.REGISTRY_SOURCE, void_data.CLI_DISPATCH, void_data.RECOVERY_MCP):

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, chmod } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
@@ -34,6 +34,7 @@ async function repository(t: import("node:test").TestContext) {
   run("config", "user.name", "VOID test");
   run("config", "user.email", "void@example.invalid");
   await import("node:fs/promises").then(({ writeFile }) => writeFile(join(root, "tracked"), "before", { mode: 0o755 }));
+  if (process.platform !== "win32") await chmod(join(root, "tracked"), 0o755);
   run("add", "tracked"); run("commit", "-qm", "initial");
   return { root, run, adapter: managedGitAdapter({ root, cooperative: true }) };
 }

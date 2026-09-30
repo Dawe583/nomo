@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile, readFile, stat } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, readFile, stat, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
@@ -899,6 +899,8 @@ async function filesystemFixture(
   const root = await mkdtemp(join(tmpdir(), "void-recovery-chain-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(join(root, "shared.txt"), "original", { mode: 0o640 });
+  if (process.platform !== "win32")
+    await chmod(join(root, "shared.txt"), 0o640);
   const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
   const key = randomBytes(32);
   let recoverCalls = 0;
