@@ -38,6 +38,19 @@ export type ParsedInvocation =
   | { ok: true; command: Command; args: string[] }
   | { ok: false; reason: string };
 
+/** Running the installed `void` command with no subcommand opens the live TUI.
+ * TUI flags may also follow the bare command; global help/version keep their
+ * existing meanings. */
+export function withDefaultTui(argv: readonly string[]): string[] {
+  if (argv.length === 0) return ["tui"];
+  if (
+    argv[0]!.startsWith("-") &&
+    !["--help", "-h", "--version", "-v"].includes(argv[0]!)
+  )
+    return ["tui", ...argv];
+  return [...argv];
+}
+
 /**
  * Takes argv as a parameter rather than reading process.argv, so the parser is
  * testable and the process boundary stays in the bin entry point.
@@ -45,7 +58,10 @@ export type ParsedInvocation =
 export function parseInvocation(argv: readonly string[]): ParsedInvocation {
   const [name, ...args] = argv;
   if (name === undefined || name === "") {
-    return { ok: false, reason: `usage: void <${COMMANDS.join("|")}>` };
+    return {
+      ok: false,
+      reason: `usage: void (opens TUI) | void <${COMMANDS.join("|")}>`,
+    };
   }
   if (!(COMMANDS as readonly string[]).includes(name)) {
     return {

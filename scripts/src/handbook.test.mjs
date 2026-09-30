@@ -164,6 +164,8 @@ test("every pnpm script the handbook names exists", () => {
     "test",
     "add",
     "dlx",
+    "setup",
+    "link",
   ]);
   const unknown = [...named]
     .filter((name) => !notScripts.has(name))

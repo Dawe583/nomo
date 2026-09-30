@@ -123,18 +123,33 @@ VOID needs **Node.js 24 or newer** and **pnpm 10**. Check both:
 ```sh
 node --version
 pnpm --version
-void doctor
 ```
 
-`void doctor` is the one command worth running first. It reports the terminal, the
-Node version, the resolved data and ledger directories and whether they are
-writable, and whether a verification key is present. Read its output before
-anything else.
-
-From a checkout:
+From a Git checkout, install the workspace and link its `void` command:
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm setup # run once only if pnpm's global bin directory is not already on PATH
+```
+
+`pnpm setup` prepares pnpm's user-level command directory when needed;
+if it changes your shell configuration, open a new terminal. Then make the
+current checkout's `void` command available from any directory:
+
+```sh
+pnpm link --global
+void doctor
+```
+
+Repeat the link if you move the checkout or switch clones. From the repository
+root, `pnpm void`, `./void` on macOS/Linux, or `.\void.cmd` on Windows works
+without a global link. `void doctor` reports the terminal, the Node version,
+the resolved data and ledger directories and whether they are writable, and
+whether a verification key is present.
+
+Check the complete source installation:
+
+```sh
 pnpm run check
 ```
 

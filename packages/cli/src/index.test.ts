@@ -1,9 +1,22 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { parseInvocation } from "./index.ts";
+import { parseInvocation, withDefaultTui } from "./index.ts";
 
 describe("@void/cli", () => {
+  test("bare command and leading TUI flags default to the live workspace", () => {
+    assert.deepEqual(withDefaultTui([]), ["tui"]);
+    assert.deepEqual(withDefaultTui(["--once", "--view", "runs"]), [
+      "tui",
+      "--once",
+      "--view",
+      "runs",
+    ]);
+    assert.deepEqual(withDefaultTui(["doctor"]), ["doctor"]);
+    assert.deepEqual(withDefaultTui(["--help"]), ["--help"]);
+    assert.deepEqual(withDefaultTui(["--version"]), ["--version"]);
+  });
+
   test("parses a command and keeps the rest of argv intact", () => {
     const parsed = parseInvocation(["ledger", "verify", "--workspace", "demo"]);
     assert.deepEqual(parsed, {

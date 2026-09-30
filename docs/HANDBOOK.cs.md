@@ -120,17 +120,33 @@ VOID potřebuje **Node.js 24 nebo novější** a **pnpm 10**. Ověř obojí:
 ```sh
 node --version
 pnpm --version
-void doctor
 ```
 
-`void doctor` je jediný příkaz, který stojí za to spustit první. Hlásí terminál,
-verzi Node, rozřešené adresáře dat a ledgeru a zda jsou zapisitelné, a zda je
-přítomný ověřovací klíč. Přečti jeho výstup dřív, než cokoli jiného.
-
-Z checkoutu:
+Z Git checkoutu nainstaluj workspace a zpřístupni jeho příkaz `void`:
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm setup # jednou, pokud je třeba přidat globální příkazy do PATH
+```
+
+`pnpm setup` podle potřeby připraví uživatelský adresář příkazů pnpm. Pokud
+změní nastavení shellu, otevři nový terminál. Pak zpřístupni tento checkout jako
+`void` z libovolného adresáře:
+
+```sh
+pnpm link --global
+void doctor
+```
+
+Po přesunu checkoutu nebo výběru jiného klonu link spusť znovu.
+Z kořene repozitáře funguje také `pnpm void`, `./void` na macOS/Linux nebo
+`.\void.cmd` na Windows, bez globálního linku. `void doctor` hlásí terminál,
+verzi Node, rozřešené adresáře dat a ledgeru, zda jsou zapisovatelné a zda je
+přítomný ověřovací klíč.
+
+Ověř celou instalaci ze zdrojového kódu:
+
+```sh
 pnpm run check
 ```
 

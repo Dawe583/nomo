@@ -6,14 +6,28 @@
 
 ## Spuštění
 
-Z kořene repozitáře:
+Po instalaci závislostí otevře TUI samotné `void`. Z klonu GitHubu postupuj
+v kořeni repozitáře:
 
 ```sh
-pnpm tui
+pnpm install --frozen-lockfile
+pnpm setup # jednou, pokud je potřeba zpřístupnit globální příkazy
 ```
 
-Na macOS lze spustit také `VOID.command` dvojklikem. Potřebuje dostupný Node.js
-24+ a pnpm. Není to `tui:preview`: tento příkaz používá skutečný lokální Workbench,
+`pnpm setup` je jednorázový krok na počítači, pokud globální adresář pnpm ještě
+není v `PATH`; pokud jej spustíš a změní nastavení shellu, otevři nový terminál.
+Potom zpřístupni tento checkout jako `void` z libovolného adresáře:
+
+```sh
+pnpm link --global
+void
+```
+
+Po přesunu klonu nebo výběru jiného klonu příkaz spusť znovu. Bez globální
+instalace funguje `pnpm void` nebo přímo
+`./void` na macOS/Linux a `.\void.cmd` v PowerShellu či cmd na Windows. Na macOS
+lze použít také `VOID.command` dvojklikem. TUI potřebuje dostupný Node.js 24+ a
+pnpm. Není to `tui:preview`: tento příkaz používá skutečný lokální Workbench,
 šifrované uložiště, skutečný model a skutečné dokumentové operace.
 
 Výchozí provider je NVIDIA NIM, model `z-ai/glm-5.3-flash`, endpoint

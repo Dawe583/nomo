@@ -8,11 +8,12 @@
  * only once a real command is named.
  */
 import { readFileSync } from "node:fs";
-import { parseInvocation } from "../src/argv.ts";
+import { parseInvocation, withDefaultTui } from "../src/argv.ts";
 
-const argv = process.argv.slice(2);
+const rawArgv = process.argv.slice(2);
+const argv = withDefaultTui(rawArgv);
 
-const flag = argv.length === 1 ? argv[0] : undefined;
+const flag = rawArgv.length === 1 ? rawArgv[0] : undefined;
 
 if (flag === "--help" || flag === "-h") {
   const usage = parseInvocation([]);
