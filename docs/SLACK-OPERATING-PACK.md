@@ -5,6 +5,8 @@
 **Execution board:** [10K-MRR-EXECUTION-BOARD.md](10K-MRR-EXECUTION-BOARD.md)  
 **Tracking issue:** https://github.com/Dawe583/void/issues/1
 
+**Management correction:** €10k MRR is an upside/stretch target. Slack scorecards must show downside/base/upside forecast bands and qualified pipeline coverage; never report the target as expected revenue.
+
 All channel messages should be in English because the VOID workspace marks the operating channels English-only.
 
 ## 1. Channel map
@@ -42,7 +44,41 @@ VOID operating rules
 6. Never count a fixture as production certification, a signed contract as collected MRR, or a like as qualified demand.
 7. Keep discussion in threads; keep the channel top-level message scannable.
 8. Use explicit statuses: READY / IN PROGRESS / BLOCKED / DONE / STOPPED.
+9. Forecast bands are DOWNside / BASE / UPSIDE; €10k is UPSIDE until paid-cohort evidence exists.
+10. Every revenue update includes collected MRR, qualified pipeline in euros, stage aging, source cohort, and support capacity.
 ```
+
+## 2A. Canonical channel policy
+
+The workspace currently contains duplicate channels created by earlier operating experiments. Because the available Slack connector cannot rename or archive channels, use this policy immediately and perform any final Slack UI cleanup later:
+
+| Canonical channel | Legacy/duplicate channel | Policy |
+| --- | --- | --- |
+| `#daily-plan` | `#daily-standup` | New daily updates only in `#daily-plan` |
+| `#projects` | `#project-ops` | New cross-functional project updates only in `#projects` |
+| `#tasks` | `#task-board` | New execution tasks only in `#tasks` |
+| `#decisions` | `#decision-log` | New durable decisions only in `#decisions` |
+| `#knowledge` | `#knowledge-workflow` | New SOPs and definitions only in `#knowledge` |
+| `#lab` | `#agent-lab` | New experiments only in `#lab` |
+| `#ideas` | `#idea-intake` | New ideas only in `#ideas`; triage there |
+| `#operations` | `#agent-ops` | Sensitive operational alerts stay in private `#agent-ops`; normal operations stay in `#operations` |
+
+Legacy channels are read-only for historical context. Do not split the same update across both channels. Keep `#decision-log`, `#project-ops`, `#task-board`, `#knowledge-workflow`, `#agent-lab`, and `#idea-intake` available only until the team confirms migration and archives them manually.
+
+## 2B. Management information standard
+
+Every Wednesday `#operations` scorecard must contain:
+
+- collected MRR and paid account count;
+- downside / base / upside forecast;
+- qualified pipeline coverage in euros;
+- stage conversion by source cohort;
+- oldest stalled opportunity and stage age;
+- active evaluations versus operator capacity;
+- support hours/account and custom-request count;
+- one corrective action with owner and due date.
+
+Every Friday `#weekly-review` must state whether the €10k upside target is **on track / at risk / reforecasted**, with the evidence and the new expected range if reforecasted.
 
 ## 3. Weekly operating rhythm
 

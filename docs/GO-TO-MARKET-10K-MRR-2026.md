@@ -3,11 +3,12 @@
 Status: date-bound execution plan, created 2026-09-30.
 Owner: founder, with workstream DRIs assigned during Phase 0.
 Canonical general plan: docs/GO-TO-MARKET-10K-MRR.md
+Reality check: docs/10K-MRR-REALITY-CHECK.md
 Canonical tracking issue: https://github.com/Dawe583/void/issues/1
 
 ## 1. Target
 
-Reach at least €10,000 of collected recurring monthly revenue in December 2026, with the payment received or contractually collected by 2026-12-31. This is a year-end MRR attainment target, not a forecast and not a claim that the target will be achieved automatically.
+Reach at least €10,000 of collected recurring monthly revenue in December 2026, with the payment received or contractually collected by 2026-12-31. This is a stretch/upside attainment target, not the base-case forecast and not a claim that the target will be achieved automatically. Until two paid accounts and source-specific conversion data exist, the working base case is €2,000–€5,000 MRR.
 
 The quality gate follows after the deadline: keep the same or higher recurring revenue for January, February, and March 2027, reconcile churn and support load, and confirm that the revenue is not only founder-supplied custom work disguised as a subscription.
 
@@ -32,7 +33,7 @@ The Team €249 price remains a hypothesis. Keep it unchanged until five qualifi
 
 ## 3. The funnel math
 
-The year-end target needs eight paying accounts. The operating funnel is:
+The year-end upside target needs eight paying accounts. The original operating funnel is an aggressive high-conversion path, not a safe forecast:
 
 - 240 named ICP accounts by 2026-10-18.
 - 120 personalized contacts or warm introductions by 2026-11-01.
@@ -41,7 +42,11 @@ The year-end target needs eight paying accounts. The operating funnel is:
 - 12 scoped evaluations by 2026-12-06.
 - 8 paid design partners with collected recurring revenue by 2026-12-31.
 
+For planning, carry 3×–5× qualified recurring pipeline coverage. At an average of €1,250 MRR, €10k target MRR requires €30k–€50k of qualified recurring pipeline, or roughly 24–40 qualified opportunities before stage probability is applied. If evaluation-to-paid is closer to 33% than 67%, the team needs approximately 24 evaluations rather than 12.
+
 These are operating requirements, not evidence that conversion will happen. If a stage conversion is below the required rate for two consecutive weeks, change the message, channel, ICP, or offer. Do not simply double the volume without diagnosing the loss.
+
+Reforecast checkpoints: Oct 18 (≥5 qualified conversations and ≥1 activated evaluation), Nov 1 (≥3 scoped evaluations and ≥1 paid proposal), Nov 15 (≥2 collected accounts), Nov 29 (≥4 paid accounts and ≥12 active qualified opportunities), Dec 13 (≥6 paid accounts and no critical activation blocker). A missed checkpoint makes €10k stretch-only; it does not justify unsupported scope or inflated reporting.
 
 Qualification rule: a prospect is qualified only when they name a consequential agent workflow, a current failure or risk, the evaluator, the disposable evaluation environment, a budget path, and a dated next meeting.
 

@@ -6,6 +6,8 @@
 **Date-bound target:** [GO-TO-MARKET-10K-MRR-2026.md](GO-TO-MARKET-10K-MRR-2026.md)  
 **Tracking issue:** https://github.com/Dawe583/void/issues/1
 
+**Reality check:** [10K-MRR-REALITY-CHECK.md](10K-MRR-REALITY-CHECK.md). €10k is an upside/stretch target; the working base case is €2k–€5k MRR until actual paid cohorts prove otherwise.
+
 This is the operating board, not a revenue forecast. A row is complete only when its evidence link exists and another person can reproduce or inspect the result.
 
 ## 1. North-star outcome
@@ -120,6 +122,15 @@ Statuses: `READY`, `IN PROGRESS`, `BLOCKED`, `DONE`, `STOPPED`. Every task updat
 
 Update once per week in `#operations`; link the source board, not a screenshot.
 
+Add these management metrics to every scorecard:
+
+- **Forecast band:** downside / base / upside MRR;
+- **Qualified pipeline coverage:** qualified recurring pipeline value ÷ target MRR, with a 3×–5× minimum planning range;
+- **Stage aging:** days in current stage and oldest stalled opportunity;
+- **Source cohort:** warm intro, referral, partner, community, cold outbound, or inbound;
+- **Concurrent evaluation load:** active evaluations per engineering/operator capacity;
+- **Support load:** hours per account and custom-request count.
+
 | Metric | Definition | Target by 2026-12-31 | Source |
 | --- | --- | ---: | --- |
 | Named ICP accounts | Accounts with fit reason and owner | 240 | Account workboard |
@@ -135,6 +146,10 @@ Update once per week in `#operations`; link the source board, not a screenshot.
 | Renewal risk | Account-level low/medium/high with reason | 0 unknown | Account review |
 
 **Conversion diagnosis rule:** if a stage is below the required rate for two consecutive weeks, change message, channel, ICP, or offer. Do not only increase volume.
+
+**Forecast rule:** report €10k as upside until there are at least two collected paid accounts, one repeatable activation path, and source-specific conversion data. At €1,250 average MRR, carry at least €30k–€50k of qualified recurring pipeline to support an €10k target.
+
+**Reforecast checkpoints:** Oct 18 (≥5 qualified conversations and ≥1 activated evaluation), Nov 1 (≥3 scoped evaluations and ≥1 paid proposal), Nov 15 (≥2 collected accounts), Nov 29 (≥4 paid accounts and ≥12 active qualified opportunities), Dec 13 (≥6 paid accounts and no critical activation blocker). If a checkpoint fails, reforecast immediately instead of defending the original target.
 
 ## 6. Evidence gates
 
