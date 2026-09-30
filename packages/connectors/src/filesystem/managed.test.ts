@@ -56,6 +56,8 @@ test("real binary write and delete restore bytes/mode across restart and preserv
   const f = await fixture(t),
     original = randomBytes(5000);
   await writeFile(join(f.root, "file"), original, { mode: 0o751 });
+  if (process.platform !== "win32")
+    await chmod(join(f.root, "file"), 0o751);
   await writeFile(join(f.root, "human.txt"), "uncommitted human work");
   assert.equal(
     (await f.execute("write", "file", Buffer.from("new").toString("base64")))
@@ -238,6 +240,7 @@ test(
     const f = await fixture(t),
       original = randomBytes(4096);
     await writeFile(join(f.root, "source.bin"), original, { mode: 0o751 });
+    await chmod(join(f.root, "source.bin"), 0o751);
     await writeFile(join(f.root, "human.txt"), "human");
     const observation = await f
       .adapter()
