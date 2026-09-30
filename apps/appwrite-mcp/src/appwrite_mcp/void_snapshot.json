@@ -6873,7 +6873,19 @@
       "if": {
         "fact": "git.branch.tip_merged",
         "is": "true",
-        "kind": "any"
+        "kind": "any",
+        "of": [
+          {
+            "fact": "git.branch.tip_merged",
+            "is": "true",
+            "kind": "fact"
+          },
+          {
+            "fact": "git.branch.tip_recorded",
+            "is": "true",
+            "kind": "fact"
+          }
+        ]
       },
       "inverse": "git branch from the captured SHA",
       "note": "a branch is only a pointer, so the inverse is exact as long as the SHA is known",

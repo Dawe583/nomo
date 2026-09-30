@@ -85,140 +85,108 @@ def _tags(raw: str) -> list[str]:
 _IF_START = re.compile(r"\bif:\s*\{")
 
 
+def _close(text: str, start: int, depth: int = 0) -> int:
+    """The index of the brace that closes the one opened at `start`.
+
+    `depth` is how many braces are already open when this is called, so a caller
+    that is standing inside an open literal starts at 1 and one that is standing
+    on an opening brace starts at 0 and has that brace counted here. Returns -1
+    when the literal never closes, which for a source file means a truncated
+    read rather than a missing field.
+    """
+    in_string = False
+    escaped = False
+    for index in range(start, len(text)):
+        char = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return index
+    return -1
+
+
 def _precondition(text: str, case_end: int) -> dict[str, Any] | None:
     """The `if` object belonging to the case whose `note` ended at `case_end`.
 
-    The case is an object literal that is still open at `case_end`: its `note`
-    string has been read but its closing brace has not. So the bound is that
-    brace, found by balancing from the `{` that opened the case, and anything
-    after it belongs to the next case.
+    The case is an object literal still open at `case_end`: its `note` string
+    has been read but its closing brace has not. So the bound is that brace, and
+    anything after it belongs to the next case.
 
     Bounding by the next case's `when` instead would be wrong in the direction
-    that hides data: the source writes the next case immediately after this
-    one, so that `when` arrives before this case's closing brace and the search
-    would be cut off before reaching the `if` it is looking for.
+    that hides data: the source writes the next case immediately after this one,
+    so that `when` arrives before this case's closing brace and the search would
+    be cut off before reaching the `if` it is looking for.
     """
-    depth = 1
-    in_string = False
-    escaped = False
-    for index in range(case_end, len(text)):
-        char = text[index]
-        if in_string:
-            if escaped:
-                escaped = False
-            elif char == "\\":
-                escaped = True
-            elif char == '"':
-                in_string = False
-            continue
-        if char == '"':
-            in_string = True
-        elif char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                literal = _IF_START.search(text[case_end:index])
-                if literal is None:
-                    return None
-                return _read_object(text, case_end + literal.end() - 1)
-    return None
-
-
-def _read_object(text: str, brace: int) -> dict[str, Any] | None:
-    """Read the object literal whose opening brace is at `brace`."""
-    depth = 0
-    in_string = False
-    escaped = False
-    for index in range(brace, len(text)):
-        char = text[index]
-        if in_string:
-            if escaped:
-                escaped = False
-            elif char == "\\":
-                escaped = True
-            elif char == '"':
-                in_string = False
-            continue
-        if char == '"':
-            in_string = True
-        elif char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return _as_precondition(text[brace : index + 1])
-    return None
+    close = _close(text, case_end, 1)
+    if close == -1:
+        return None
+    literal = _IF_START.search(text[case_end:close])
+    if literal is None:
+        return None
+    brace = case_end + literal.end() - 1
+    end = _close(text, brace, 0)
+    return None if end == -1 else _as_precondition(text[brace : end + 1])
 
 
 def _as_precondition(literal: str) -> dict[str, Any] | None:
     """Read one `if` literal. It is TypeScript, so it is read field by field.
 
-    The keys are quoted in the source (`{ kind: "fact" }` is written
-    `{ "kind": "fact", ... }` in the generated file), so every pattern has to
-    allow the quotes around the key or nothing matches at all.
+    The keys are quoted in the source, so every pattern has to allow the quotes
+    or nothing matches at all and the gate reads as absent rather than as a
+    parse failure.
     """
     kind = re.search(r'"?kind"?\s*:\s*"(?P<kind>\w+)"', literal)
     if kind is None:
         return None
     node: dict[str, Any] = {"kind": kind.group("kind")}
-    fact = re.search(r'"?fact"?\s*:\s*"(?P<fact>[^"]*)"', literal)
-    if fact is not None:
-        node["fact"] = fact.group("fact")
-    is_value = re.search(r'"?is"?\s*:\s*"(?P<is>[^"]*)"', literal)
-    if is_value is not None:
-        node["is"] = is_value.group("is")
-    argument = re.search(r'"?argument"?\s*:\s*"(?P<argument>[^"]*)"', literal)
-    if argument is not None:
-        node["argument"] = argument.group("argument")
-    operator = re.search(r'"?operator"?\s*:\s*"(?P<operator>[^"]*)"', literal)
-    if operator is not None:
-        node["operator"] = operator.group("operator")
-    if node["kind"] == "all":
-        # `of` holds a comma-separated list of the same literals. Each one is
-        # balanced in turn, because a nested `all` would contain its own array.
-        nested: list[dict[str, Any]] = []
-        list_start = literal.find('"of"')
-        if list_start == -1:
-            list_start = literal.find("of:")
-        open_bracket = literal.find("[", list_start) if list_start != -1 else -1
-        if open_bracket != -1:
-            cursor = open_bracket + 1
-            while True:
-                opening = literal.find("{", cursor)
-                if opening == -1:
-                    break
-                depth = 0
-                in_string = False
-                escaped = False
-                for index in range(opening, len(literal)):
-                    char = literal[index]
-                    if in_string:
-                        if escaped:
-                            escaped = False
-                        elif char == "\\":
-                            escaped = True
-                        elif char == '"':
-                            in_string = False
-                        continue
-                    if char == '"':
-                        in_string = True
-                    elif char == "{":
-                        depth += 1
-                    elif char == "}":
-                        depth -= 1
-                        if depth == 0:
-                            child = _as_precondition(literal[opening : index + 1])
-                            if child is not None:
-                                nested.append(child)
-                            cursor = index + 1
-                            break
-                else:
-                    break
-                if literal.find("{", cursor) == -1:
-                    break
-        node["of"] = nested
+    for key in ("fact", "is", "argument", "operator"):
+        value = re.search(rf'"?{key}"?\s*:\s*"([^"]*)"', literal)
+        if value is not None:
+            node[key] = value.group(1)
+    # `all` and `any` both carry their conditions in `of`; the difference is
+    # only whether they must all hold or any of them may. Reading one and not
+    # the other would publish a disjunction as a bare fact, which reads as a
+    # condition the caller has to satisfy on its own.
+    if node["kind"] in ("all", "any"):
+        node["of"] = _conjunction(literal)
     return node
+
+
+def _conjunction(literal: str) -> list[dict[str, Any]]:
+    """The children of an `all` gate, each read by the same field patterns.
+
+    The list is walked by balance rather than by splitting on commas, because a
+    nested conjunction would hold its own array and a comma inside one of its
+    objects would cut the outer one in half.
+    """
+    open_bracket = literal.find("[")
+    if open_bracket == -1:
+        return []
+    children: list[dict[str, Any]] = []
+    cursor = open_bracket + 1
+    while True:
+        opening = literal.find("{", cursor)
+        if opening == -1:
+            return children
+        end = _close(literal, opening, 0)
+        if end == -1:
+            return children
+        child = _as_precondition(literal[opening : end + 1])
+        if child is not None:
+            children.append(child)
+        cursor = end + 1
 
 
 @lru_cache(maxsize=1)

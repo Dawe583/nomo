@@ -307,6 +307,21 @@ class ToolCallTest(unittest.TestCase):
         for row in data["results"]:
             self.assertIn("if", row, "a search result published without its gate")
 
+    def test_registry_search_matches_a_condition_nested_in_a_gate(self) -> None:
+        # A disjunction's second arm is a condition the caller holds and
+        # searches for by name, and it sits one level down inside `of`. Reading
+        # only the gate's own fields finds the first arm and misses this one,
+        # which answers zero for a name the registry carries.
+        data = self.payload("void_registry_search", {"query": "tip_recorded", "limit": 5})
+        self.assertGreaterEqual(data["total_matched"], 1)
+        for row in data["results"]:
+            gate = row.get("if") or {}
+            nested = gate.get("of") or []
+            self.assertTrue(
+                nested or gate.get("kind") == "always",
+                "a compound result published without its conditions",
+            )
+
     def test_registry_entry_returns_every_precondition_for_one_operation(self) -> None:
         data = self.payload("void_registry_entry", {"operation_id": "aws.s3.object.put"})
         self.assertTrue(data["found"])

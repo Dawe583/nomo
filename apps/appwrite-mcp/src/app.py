@@ -82,6 +82,20 @@ def _answered(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False)
 
 
+def _gate_text(gate: dict[str, Any]) -> list[str]:
+    """Every string in a precondition, flattened for a search.
+
+    The nested conditions matter as much as the gate's own fields: a caller
+    looking for `git.branch.tip_recorded` is holding the second arm of a
+    disjunction, and that name exists nowhere else in the registry.
+    """
+    parts = [str(value) for key, value in gate.items() if isinstance(value, str)]
+    for child in gate.get("of") or []:
+        if isinstance(child, dict):
+            parts.extend(_gate_text(child))
+    return parts
+
+
 @server.tool(
     annotations=READ_ONLY,
     description=(
@@ -165,14 +179,11 @@ def void_registry_search(
                     str(row.get("window", "")),
                     str(row.get("note", "")),
                     " ".join(row["tags"]),
-                    # The gate's own fields. `stripe.balance_covers_refund` is
-                    # the fact a caller checks against and the string a caller
-                    # searches for, and it appears in no prose field at all.
-                    *(
-                        f"{key} {value}"
-                        for key, value in (row.get("if") or {}).items()
-                        if key != "of" and isinstance(value, str)
-                    ),
+                    # The gate's own fields, including the conditions nested
+                    # inside a conjunction. `stripe.balance_covers_refund` is
+                    # what a caller checks and what a caller searches for, and
+                    # it appears in no prose field at all.
+                    *_gate_text(row.get("if") or {}),
                 ]
             ).lower()
             # Every word has to appear, not the phrase as one substring. Nobody
