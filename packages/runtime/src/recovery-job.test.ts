@@ -981,7 +981,8 @@ test("filesystem recovery job restores adjacent writes to one existing file", as
   );
   assert.equal(result.status, "restored");
   assert.equal(await readFile(join(f.root, "shared.txt"), "utf8"), "original");
-  assert.equal((await stat(join(f.root, "shared.txt"))).mode & 0o777, 0o640);
+  if (process.platform !== "win32")
+    assert.equal((await stat(join(f.root, "shared.txt"))).mode & 0o777, 0o640);
   const stored = await runtime.recoveryJobStatus("test", "chain");
   assert.equal("status" in stored ? stored.status : "plan", "restored");
   assert.equal(plan.steps.length, 2);
