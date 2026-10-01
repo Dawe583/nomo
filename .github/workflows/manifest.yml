@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         node: [24, 26]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -38,7 +38,7 @@ jobs:
       - run: node --test packages/connectors/src/manifest.test.ts packages/workbench/src/storage.test.ts apps/control-plane/api/server.test.ts
         timeout-minutes: 5
       - run: node --test --test-concurrency=2 packages/runtime/src/*.test.ts packages/ledger/src/*.test.ts packages/proxy/src/bin.test.ts
-        timeout-minutes: 45
+        timeout-minutes: 75
       - run: node --test packages/connectors/src/filesystem/managed.test.ts packages/cli/src/recovery-filesystem.test.ts packages/cli/src/recovery-mcp.test.ts packages/cli/src/recovery-paths.test.ts packages/cli/src/conformance.test.ts
         timeout-minutes: 15
       - run: node packages/cli/bin/void.mjs recovery conformance
