@@ -45,23 +45,17 @@ describe("relayServerRequest", () => {
 
 describe("relayServerResponse", () => {
   test("maps agent success response back to the upstream id", () => {
-    const session: ServerRequestRelaySession = {
-      upstreamToAgent: new Map<string | number, string | number>([[42, 7]]),
-      allocateAgentId: () => 0,
-    };
+    const upstreamToAgent = new Map<string | number, string | number>([[42, 7]]);
 
-    const relayed = relayServerResponse({ jsonrpc: "2.0", id: 7, result: { roots: [] } }, session);
+    const relayed = relayServerResponse({ jsonrpc: "2.0", id: 7, result: { roots: [] } }, upstreamToAgent);
 
     assert.deepEqual(relayed, { jsonrpc: "2.0", id: 42, result: { roots: [] } });
   });
 
   test("maps agent error response back to the upstream id", () => {
-    const session: ServerRequestRelaySession = {
-      upstreamToAgent: new Map<string | number, string | number>([[42, 7]]),
-      allocateAgentId: () => 0,
-    };
+    const upstreamToAgent = new Map<string | number, string | number>([[42, 7]]);
 
-    const relayed = relayServerResponse({ jsonrpc: "2.0", id: 7, error: { code: -32603, message: "failed", data: { retry: false } } }, session);
+    const relayed = relayServerResponse({ jsonrpc: "2.0", id: 7, error: { code: -32603, message: "failed", data: { retry: false } } }, upstreamToAgent);
 
     assert.deepEqual(relayed, { jsonrpc: "2.0", id: 42, error: { code: -32603, message: "failed", data: { retry: false } } });
   });
@@ -72,7 +66,7 @@ describe("relayServerResponse", () => {
     const request: JsonRpcRequest = { jsonrpc: "2.0", id: 5, method: "roots/list" };
 
     const relayedRequest = relayServerRequest(request, session);
-    const relayedResponse = relayServerResponse({ jsonrpc: "2.0", id: 6, result: { roots: [] } }, session);
+    const relayedResponse = relayServerResponse({ jsonrpc: "2.0", id: 6, result: { roots: [] } }, upstreamToAgent);
 
     assert.equal(relayedRequest.id, 6);
     assert.deepEqual(relayedResponse, { jsonrpc: "2.0", id: 5, result: { roots: [] } });

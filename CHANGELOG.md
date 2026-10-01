@@ -4,6 +4,14 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- An answer to a server-originated MCP request was forwarded upstream under
+  the agent's own request id. The relay read its id map off the session object,
+  where the map lives under `maps`, so the lookup found nothing and returned
+  the agent id unchanged: the upstream saw a response to an id it never issued
+  and its own question went unanswered. The relay now takes the map directly,
+  so the shape that compiles is the shape that carries the mapping, and a
+  `runProxy` fixture with a real server request asserts the reply reaches the
+  server under the id the server chose.
 - A worker that took over a recovery job whose lease had expired could not
   record the takeover. The `paused` payload it wrote named only the progress
   and the reason, and carried a `lease-expired` code the payload validator did

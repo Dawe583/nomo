@@ -373,6 +373,114 @@ describe("runProxy", () => {
   });
 });
 
+test("a server request is answered upstream under the server's own id", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "void-proxy-server-request-"));
+  const policyPath = join(dir, "policy.yml");
+  await writeFile(policyPath, policyText("allow"));
+  const agentInput = lineQueue();
+  const agentOutput: Array<Record<string, unknown>> = [];
+  const upstreamSeen: Array<Record<string, unknown>> = [];
+  const serverId = "server-42";
+
+  const run = runProxy({
+    keyProvider: keyProviderFromPkcs8(
+      generateKeyPairSync("ed25519").privateKey.export({
+        format: "der",
+        type: "pkcs8",
+      }),
+    ),
+    upstreamCommand: ["fake"],
+    policyPath,
+    posture: "fail-closed",
+    ledgerDir: join(dir, "ledger"),
+    workspace: "test",
+    input: agentInput,
+    output: (line) => {
+      agentOutput.push(JSON.parse(line) as Record<string, unknown>);
+    },
+    error: () => {},
+    upstreamSpawn: (events) => ({
+      send(line) {
+        const message = JSON.parse(line) as {
+          readonly id?: string | number;
+          readonly method?: string;
+        };
+        upstreamSeen.push(message as Record<string, unknown>);
+        if (message.method === "initialize") {
+          events.onMessage(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: {
+                protocolVersion: "2025-11-25",
+                capabilities: {},
+                serverInfo: { name: "fake", version: "1" },
+              },
+            }),
+          );
+          // A question of the server's own, carrying an id the agent never saw.
+          events.onMessage(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: serverId,
+              method: "roots/list",
+              params: {},
+            }),
+          );
+          return;
+        }
+        if (message.id !== undefined)
+          events.onMessage(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: { rootUris: [] },
+            }),
+          );
+      },
+      close() {},
+      onStderr() {
+        return () => {};
+      },
+    }),
+  });
+
+  agentInput.push(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-11-25",
+        capabilities: {},
+        clientInfo: { name: "agent", version: "1" },
+      },
+    }),
+  );
+  await waitFor(
+    () => agentOutput.some((message) => message.method === "roots/list"),
+    "the server request to reach the agent",
+  );
+  const relayed = agentOutput.find((message) => message.method === "roots/list")!;
+  assert.notEqual(relayed.id, serverId);
+
+  agentInput.push(
+    JSON.stringify({ jsonrpc: "2.0", id: relayed.id, result: { rootUris: [] } }),
+  );
+  await waitFor(
+    () => upstreamSeen.some((message) => message.id === serverId),
+    "the answer to reach the server under the server id",
+  );
+  assert.deepEqual(
+    upstreamSeen.filter((message) => message.id === serverId),
+    [{ jsonrpc: "2.0", id: serverId, result: { rootUris: [] } }],
+  );
+
+  agentInput.close();
+  await run;
+  await rm(dir, { recursive: true, force: true });
+});
+
 test("bound legacy call records capture and outcome before relay", async () => {
   const events: string[] = [];
   const outcomes: string[] = [];
