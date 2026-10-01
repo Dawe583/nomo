@@ -22,10 +22,11 @@ What the research behind this roadmap established, and what it did not:
   runtime for filesystem, Postgres and Git. The gate that produces the number
   is `node scripts/src/check-tests.mjs`. Its last line read `13 suites, 1846
   tests`, exit 0, on 2026-09-29, and that reading is historical rather than
-  current: the runner discovers its suites from the tree and now sees ten
-  package suites plus control-plane, scripts, cloud and two Python suites.
-  No total is restated here, because the current total has not been measured
-  by a full run on this date.
+  current: the runner builds its suite list from the tree and now discovers
+  fifteen, ten package suites plus control-plane, scripts, cloud and two Python
+  suites. That count is derived rather than measured, so no run is needed to
+  establish it. No test total is restated here, because nothing in the tree
+  states one and this document does not carry a number it cannot cite.
 - **The central claim is narrower than the marketing.** "Signed and verifiable"
   is true, and it is worth saying: the signature proves a process holding a key
   wrote the bytes and the chain is internally consistent. Nothing more. Until
@@ -46,10 +47,16 @@ What the research behind this roadmap established, and what it did not:
   bet rather than a forecast.
 - **The product has no first user yet.** The repository is private, the
   advertised download page does not resolve, and the npm name is taken. One
-  package is publishable today: `@void/verifier` sets no `private` flag and
-  needs no build step, because it ships one executable file of Node built-ins,
-  which `scripts/src/licence-line.test.mjs` asserts; the other nine manifests
-  under `packages/` all set `private: true`. A push from a developer machine works, so the
+  package is publishable today, and it is not the one a reader would guess:
+  `@void/verifier` sets no `private` flag and needs no build step, because it
+  ships one executable file of Node built-ins. That is asserted rather than
+  merely permitted by `scripts/src/licence-line.test.mjs`, which requires the
+  flag to be absent and the `void-verify` bin to exist on disk, and whose
+  manifest rule explicitly allows a package to skip a build when nothing in
+  its file list needs compiling. The other nine manifests under `packages/`
+  all set `private: true`, and no manifest under `packages/` declares a build
+  script at all, so npm refuses each of those nine until the flag is removed.
+  A push from a developer machine works, so the
   credential problem recorded in `RELEASE.md` is no longer the blocker it was.
 
 ## Phase 0: fix the record, or nothing else is trustworthy
@@ -225,20 +232,36 @@ rebuild finished work. The row is not deleted, because a reader comparing this
 roadmap against the decision log has to be able to see that the two disagreed
 and that the decision log won.
 
-**2. The test count was asserted rather than measured, and is now named.** The
-sentence above used to say "about 1,800 tests green as of 2026-09-28", a
-number nobody had run. The first run on 2026-09-29 of
-`node scripts/src/check-tests.mjs` printed `13 suites, 1817 tests` and exited
-1: the `scripts` suite reported 150 passing and one failing, the failure being
-"every static theme-color equals the canvas token of the page it belongs to" at
+**2. The test count was asserted rather than measured; it was then measured,
+and the measurement is now dated rather than current.** The sentence above used
+to say "about 1,800 tests green as of 2026-09-28", a number nobody had run.
+The first run on 2026-09-29 of `node scripts/src/check-tests.mjs` printed
+`13 suites, 1817 tests` and exited 1: the `scripts` suite reported 150
+passing and one failing, the failure being "every static theme-color equals
+the canvas token of the page it belongs to" at
 `scripts/src/design-token.test.mjs`, a file a concurrent change was editing at
 the moment of the run. That figure proved nothing about a settled tree, so it
 was not promoted to a count and the old figure was not replaced with a guess.
 The settled run is the one that counts. Run again the same day against a tree
 no concurrent change was touching, the same command printed
 `13 suites, 1846 tests` and exited 0, and all thirteen suites reported zero
-failures, so the green count is now measured rather than asserted. The count
-is reproducible: run the command, and its last line is the count.
+failures, so the green count was measured rather than asserted.
+
+Both figures are now historical, and neither is defensible as a statement
+about the tree as it stands. The thirteen-suite count was true on 2026-09-29
+and is not true now: commit `c5d32fc` added the two Python suites to
+`scripts/src/check-tests.mjs` on 2026-09-30, the day after both runs, so the
+runner now discovers fifteen. That count is derived, not asserted, and no test
+needs to run to establish it, because `check-tests.mjs` builds its list from
+the tree rather than carrying one. It maps every entry under `packages/` that
+has a `package.json` with a `test` script, which is ten; it then names
+`apps/control-plane` and `scripts`; it then takes the `*.test.mjs` files
+beside `cloud`; and it then adds the two Python suites `c5d32fc` introduced by
+name, `appwrite-mcp` and `void-transport`. That is fifteen. The test total is
+deliberately not restated. Nothing in the tree states a current one, and a
+figure quoted here would be a third number carrying the authority of a run
+nobody can locate. The reproducible claim is the command, not the number: run
+`node scripts/src/check-tests.mjs` and its last line is the count.
 
 **3. "Three of the 268 are executable" is one denominator stated as two.** The
 registry has 268 entries, counted by importing `registry` from
