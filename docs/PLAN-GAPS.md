@@ -113,9 +113,11 @@ reproducible network-fault harness.
 ### G-03 R06: planner selection, leases, fencing, remote job surfaces
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R06.
-Missing: durable leases and fencing, and the MCP and cloud job surfaces. The
-stored plan still covers one run or an explicit operation list in reverse
-ledger order only; a rule selector is resolved to that list and never stored.
+Missing: cross-host fencing, and the MCP and cloud job surfaces. A durable
+lease exists now: `packages/runtime/src/recovery/lease.ts` decides reclaim from
+an expired deadline **and** a provably dead holder, `execute.ts` claims and
+renews it, and a takeover records `paused` with `lease-expired`. What is still
+missing is fencing that survives more than one host.
 Evidence: `packages/runtime/src/recovery/plan.ts` exports
 `resolveRecoverySelection` and `independentBranches`, with 26 tests in
 `packages/runtime/src/recovery/selectors.test.ts`. `planRecoveryJob` in
@@ -322,14 +324,15 @@ test resources.
 ### G-12 R12: Python transport and provider certification breadth
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R12.
-Missing: Python transport client, provider specific fixtures, and broader
-capability certification profiles.
-Evidence: there is no Python client in the tree, and `packages/sdk/src`
-holds `client.ts` and `managed.ts` only, with no framework wrap module;
-`docs/ADAPTER-CONFORMANCE.md` notes Python transport and general provider
-certification as outstanding.
-Minimum change: Python transport client plus one fixture per certified
-provider. Dependency: R02. Size: L. `[EXT]` needs provider sandboxes.
+Missing: provider specific fixtures and broader capability certification
+profiles.
+Evidence: `python/void-transport` is a Python transport client with its own
+tests, so the earlier claim that no Python client existed no longer describes
+the tree. `packages/sdk/src` holds `client.ts` and `managed.ts` only, with no
+framework wrap module; `docs/ADAPTER-CONFORMANCE.md` still notes general
+provider certification as outstanding.
+Minimum change: one fixture per certified provider, then the broader capability
+certification profiles. Dependency: R02. Size: L. `[EXT]` needs provider sandboxes.
 
 ### G-13 R13: remote executor auth and managed egress
 
@@ -351,8 +354,9 @@ basics. Size: L to XL.
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R10.
 Missing: cloud accounting, visible policy modes, approval integration, and
 the full reservation fault matrix.
-Evidence: `packages/runtime/src/budget.ts` is 51 lines of local only
-accounting; `docs/REVERSE-UPGRADE-PROGRESS.md` lists cloud accounting and
+Evidence: `packages/runtime/src/budget.ts` is 795 lines of scoped, fenced
+local accounting, so the earlier "51 lines of local only accounting" no longer
+describes it; `docs/REVERSE-UPGRADE-PROGRESS.md` lists cloud accounting and
 modes as remaining.
 Minimum change: server side budget ledger with the same reservation
 semantics, surfaced modes in CLI and GUI. Dependency: R02. Size: L.
