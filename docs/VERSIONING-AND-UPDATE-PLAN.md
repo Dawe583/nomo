@@ -636,7 +636,7 @@ git -C "${VOID_HOME:-$HOME/.local/share/void-cli}" fetch --unshallow --tags
 ```
 
 That takes the same tree from 1 commit and 0 tags to the full history and every
-tag, which was measured at 408 commits and 4 tags on 2026-10-02. Then:
+tag, measured at 440 commits and 5 tags on 2026-10-02. Then:
 
 ```sh
 git -C "${VOID_HOME:-$HOME/.local/share/void-cli}" checkout v0.1.0
@@ -644,7 +644,8 @@ void --version      # prints: void 0.1.0
 ```
 
 **No `vX.Y.Z` tag exists yet, so that checkout cannot succeed today.** As of
-2026-10-02 the repository carries four tags, all `desktop-v0.1.0-beta.N`, and
+2026-10-02 the repository carries five tags, four of them
+`desktop-v0.1.0-beta.N` and one `pre-max-merge-20260926-1910`, and
 `git tag -l 'v*'` is empty. The rollback procedure above becomes usable when
 section 4's tagging step runs for the first time; until then, the honest
 rollback is a commit the operator names explicitly, and the version in
