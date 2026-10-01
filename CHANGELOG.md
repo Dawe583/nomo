@@ -4,6 +4,18 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- `void update` updates a local install in place, and a one-line installer
+  puts `void` on your PATH as a checkout you own, with no global package
+  manager and no account. `void update` fetches and moves the checkout
+  forward, `void update --check` reports whether anything is new without
+  touching anything, and `void update --force` allows a move that is not a
+  fast-forward. Nothing local is thrown away: a modified file or a local
+  commit stops the update and says which one, so an update can never eat
+  work in progress. When the install is missing or is not a VOID checkout the
+  command refuses and names the way out rather than guessing, and when no
+  account or token is configured it works from the checkout it already has.
+  Your ledger, workspace data and pending approvals live outside the
+  checkout and are never touched by an update.
 - Recovery jobs now carry runtime-derived lineage between adjacent inverses on
   the same resource. Two consecutive writes to one filesystem path restore the
   original bytes and mode after restart while a same-byte external rewrite
