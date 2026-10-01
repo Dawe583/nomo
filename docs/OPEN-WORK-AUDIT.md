@@ -636,13 +636,26 @@ from an unchecked citation is the same failure this document exists to catch,
 and it is recorded here because a reader deserves to know which of its claims
 were verified by running the code and which were not.
 
-The gate did not catch that bad citation either, and the reason is worth one
-sentence because it will hide the next one. Its path pattern requires the
-backticked value to end at the file extension, so a citation written as
-`some/file.ts:385` matches nothing and is never checked for existence. Writing
-the path and the line separately, as this paragraph now does, is the form the
-gate can see. A dead reference is exactly what that gate exists to report, and
-the common way of writing a line-numbered citation is invisible to it.
+The gate did not catch that bad citation either. Its path pattern requires the
+closing backtick immediately after the extension, so a citation written as
+`some/file.ts:385` matches nothing and is never checked for existence, while
+the same path written bare is checked. Writing the path and the line
+separately, as this paragraph now does, is the form the gate can see.
+
+How much that is worth is a narrower claim than it first looks, and the
+corpus was measured rather than assumed. Scanning every markdown file under
+`docs/` plus the two root documents with a pattern that also accepts the line
+number found 1,781 citations rooted under a `SOURCE_ROOT`, of which 1,710
+resolve and 71 do not. Every one of those 71 is already listed in the
+`INVENTORY` map with a reason, so widening the pattern today would report
+nothing new. The remaining 867 matches are bare filenames, which the gate
+exempts on purpose, and that exemption should stay.
+
+So the accurate statement is that the blind spot is real and confirmed, and
+that it has not yet produced a dead reference anywhere in `docs/`. It cost one
+bad citation, and that one was caught by re-reading the file rather than by the
+gate. This is a reason to write line-numbered citations in the form the gate
+can see, and not on its own a reason to change the gate.
 
 While correcting row 29, section 6 finding 3 was found to be stale in the same
 way and for the same reason. It reported that the `RECOVERY-COVERAGE.md`
