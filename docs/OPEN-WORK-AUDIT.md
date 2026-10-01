@@ -588,31 +588,61 @@ triggers it today; the defect is that the safety property is documented and not
 implemented, which means the first profile to gain an operation without one
 gets a green report.
 
-**Fixed on a sibling branch, not yet merged here.** `334293a` on
-`omp/selfupdate-conformance` adds one shared helper, `requireScenario` at
-`packages/cli/src/conformance.ts:45`, and calls it at `:109` for the filesystem
-fixture, `:226` for git and `:462` for managed documents. It throws
+**Fixed on a sibling branch, in two commits, not yet merged here.** `334293a`
+on `omp/selfupdate-conformance` adds a shared helper, `requireScenario` at
+`packages/cli/src/conformance.ts:45`, which throws
 `Unknown <adapter> conformance scenario "<name>".` for anything the resolved
-fixture does not implement. Verified on that branch: asking the git fixture for
-`"rebase"` now throws that message instead of returning a passing report.
-There are exactly three call sites, so the managed PostgreSQL fixture, which
-`334293a` did not touch, carries no such guard of its own and is the one
-fixture still relying on its own scenario check.
+fixture does not implement. A second commit on that branch fixes the first one,
+for the reason in the next paragraph. **Name both when merging; `334293a` alone
+does not close this.**
 
-One detail worth keeping if that commit is reviewed: the git call site at `:226`
-passes `gitConformanceProfile.operations` as its implemented list, so the guard
-checks the git fixture against the same array the profile publishes. That is
-correct for the defect fixed here, because the scenario union is derived from
-that array, and it is exactly the shape that would not catch a fixture losing
-an operation the profile still advertises. It is not the same property as the
-one the stale row 29 comment claimed.
+**The first fix did not close it, and the way it failed is the interesting
+part.** The git call site passed `gitConformanceProfile.operations` as the
+list of implemented operations, so the guard compared the profile against
+itself. It therefore approved any operation the profile listed, which is exactly
+the case the guard exists to catch: adding `rebase` to the published list and
+asking for it produced no refusal and fell through to the `write` path. The
+managed-documents site had the same hole. The filesystem site was correct only
+by accident, because it happened to pass a separate literal. A guard that
+validates a value against itself is not a guard.
 
-The fix widens no claim. The published operations list, both durable receipt
-flags and all seven passing git scenarios are unchanged by it, and `rebase` was
-never a published operation, so no document needed to move to accommodate the
-guard. What the correction in row 29 fixes is the stale claim; what `334293a`
-fixes is the fail-open, and this paragraph is the one line to revisit when the
-branch merges.
+The follow-on is the subtler half. Naming the implemented list separately is not
+enough if the profile still publishes the same array object, because a caller
+that mutates the published list in place mutates the guard's list with it. That
+is what editing the source does, and `as const` does not prevent it because the
+annotation is erased at runtime, so the profile arrays are genuinely mutable.
+The repair is for each profile to publish a copy of its scenario list rather
+than the list itself, and for each guard to be handed the original.
+
+Verified on that branch with the second commit applied: the git guard is called
+with the scenario literal while the profile publishes a spread copy of it, and
+pushing `"rebase"` onto the live `gitConformanceProfile.operations` and asking
+for that scenario is refused. The regression case mutates the real published
+array, which is what a source edit does, rather than passing a literal, and
+asserts both the refusal and that the run reports `passed=false`; it fails
+against `334293a` and passes with the repair. The shipped `git.managed` run
+still exits 0 and all seven scenarios still pass, because `rebase` was never a
+published operation, so the repair widens no claim and no document had to move
+to accommodate it.
+
+For the record on how this section was written: the first draft of this
+paragraph claimed the managed PostgreSQL fixture had no guard, on a report that
+gave a filename that exists on no branch. It does have one, at
+`packages/connectors/src/postgres/conformance-fixture.ts` at `:385`, throwing
+the equivalent error. There are four guards in total, three in the CLI module
+and one in the PostgreSQL fixture, and the count is what makes the three-site
+description wrong rather than merely incomplete. A correction made confidently
+from an unchecked citation is the same failure this document exists to catch,
+and it is recorded here because a reader deserves to know which of its claims
+were verified by running the code and which were not.
+
+The gate did not catch that bad citation either, and the reason is worth one
+sentence because it will hide the next one. Its path pattern requires the
+backticked value to end at the file extension, so a citation written as
+`some/file.ts:385` matches nothing and is never checked for existence. Writing
+the path and the line separately, as this paragraph now does, is the form the
+gate can see. A dead reference is exactly what that gate exists to report, and
+the common way of writing a line-numbered citation is invisible to it.
 
 While correcting row 29, section 6 finding 3 was found to be stale in the same
 way and for the same reason. It reported that the `RECOVERY-COVERAGE.md`
