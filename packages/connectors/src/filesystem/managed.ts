@@ -162,6 +162,15 @@ export function managedFilesystemAdapter(options: {
       );
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      // Absence is identified by the parent directory's identity, never by its
+      // ctime. A directory's ctime moves when any entry in it is created or
+      // removed, so folding it in made an absent file's revision depend on
+      // unrelated siblings: restoring an earlier step of a recovery chain
+      // invalidates the expected revision of every later step that recorded the
+      // file as absent, and the chain can never finish. `replace` already
+      // creates an absent target with link(2), which fails rather than
+      // clobbering a file that appeared in between, so the race this was
+      // watching for is covered at the write boundary instead.
       const parent = lstatSync(dirname(absolute), { bigint: true });
       return {
         bytes: null,
@@ -170,7 +179,6 @@ export function managedFilesystemAdapter(options: {
           "absent",
           String(parent.dev),
           String(parent.ino),
-          String(parent.ctimeNs),
         ]),
       };
     }
@@ -289,6 +297,7 @@ export function managedFilesystemAdapter(options: {
     prepared: Prepared,
     outcome: Outcome,
     expectedRevision?: string,
+    expectedDestinationRevision?: string,
   ) {
     const before = capture(prepared),
       plan = prepared.plan as { root: string; identity: string };
@@ -306,9 +315,14 @@ export function managedFilesystemAdapter(options: {
       } catch {
         return { status: "conflict", evidence: null } as const;
       }
+      // The destination is the only endpoint a previous inverse in the same
+      // job can have rewritten, so it is the only one whose expectation may
+      // come from that step's receipt. The source must still carry exactly what
+      // this operation left behind, or a foreign writer touched it.
       if (
         source.revision !== evidence.sourceRevision ||
-        destination.revision !== evidence.destinationRevision
+        destination.revision !==
+          (expectedDestinationRevision ?? evidence.destinationRevision)
       )
         return { status: "conflict", evidence: null } as const;
       renameSync(target(before.to), target(before.path));
@@ -536,32 +550,60 @@ export function managedFilesystemAdapter(options: {
           identity: string;
           mutation: Mutation;
         };
+      // The previous inverse can only have rewritten a path it named, and this
+      // step can only be attributed to a path it also names. Their intersection
+      // is the one path where a receipt from the previous step is evidence
+      // about this step's starting state; anything else is a conflict rather
+      // than a guess.
+      const previousPaths = new Set([
+        previousPlan.mutation.path,
+        ...("to" in previousPlan.mutation
+          ? [previousPlan.mutation.to]
+          : []),
+      ]);
+      const currentPaths = [
+        { path: currentPlan.mutation.path, endpoint: "source" as const },
+        ...("to" in currentPlan.mutation
+          ? [{ path: currentPlan.mutation.to, endpoint: "destination" as const }]
+          : []),
+      ];
+      const shared = currentPaths.find((entry) =>
+        previousPaths.has(entry.path),
+      );
+      // The revision this step's own forward execution recorded for the shared
+      // endpoint is the pre-image of the previous step, which is what proves the
+      // two are adjacent rather than merely both naming the same path. A rename
+      // records it under the destination key; a single-path step records it as
+      // `revision`.
+      const forward = outcome.evidence as {
+        revision?: string;
+        destinationRevision?: string;
+      };
       if (
         previous.recovery.status !== "restored" ||
         currentPlan.root !== root ||
         previousPlan.root !== root ||
         currentPlan.identity !== identity ||
         previousPlan.identity !== identity ||
-        currentPlan.mutation.action !== "write" ||
-        previousPlan.mutation.action !== "write" ||
-        currentPlan.mutation.path !== previousPlan.mutation.path ||
-        currentBefore.path !== previousBefore.path ||
-        currentBefore.snapshot.bytes === null ||
-        previousBefore.snapshot.bytes === null ||
-        (outcome.evidence as { revision?: string }).revision !==
-          previousBefore.snapshot.revision
+        shared === undefined ||
+        (shared.endpoint === "destination"
+          ? forward.destinationRevision
+          : forward.revision) !== previousBefore.snapshot.revision
       )
         return { status: "conflict", evidence: null };
       const receipt = previous.recovery.evidence as {
         path?: string;
         revision?: string;
       };
-      if (
-        receipt.path !== currentBefore.path ||
-        typeof receipt.revision !== "string"
-      )
+      if (receipt.path !== shared.path || typeof receipt.revision !== "string")
         return { status: "conflict", evidence: null };
-      return recoverFile(prepared, outcome, receipt.revision);
+      // The receipt's revision is the expected state of the endpoint both steps
+      // touched. A single-path step expects it for the file it will replace; a
+      // rename expects it for the destination, and its source must still carry
+      // exactly what its own forward execution left behind.
+      return shared.endpoint === "destination"
+        ? recoverFile(prepared, outcome, undefined, receipt.revision)
+        : recoverFile(prepared, outcome, receipt.revision);
     },
   };
 }
