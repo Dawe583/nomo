@@ -185,7 +185,7 @@ test("two workers sharing one account cannot both spend the last unit", async (t
   const stores: Array<{ close?: () => unknown }> = [];
   t.after(async () => {
     for (const store of stores) await store.close?.();
-    await rm(dir, { recursive: true, force: true });
+    await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   });
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const key = randomBytes(32);
@@ -260,7 +260,7 @@ test("a restarted executor does not re-observe an already dispatched irreversibl
       await exited;
     }
     for (const store of stores) await store.close?.();
-    await rm(dir, { recursive: true, force: true });
+    await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   });
   const key = randomBytes(32);
   const request = {
