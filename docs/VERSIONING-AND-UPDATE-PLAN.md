@@ -317,9 +317,17 @@ the code to this section.
 **What it operates on.** The install tree: a git clone of this repository at
 `$HOME/.local/share/void-cli`, reachable through the `VOID_HOME` environment
 variable when it is set, run through the launcher at `$HOME/.local/bin/void`.
-The updater moves code. It never touches operator state, which lives outside
-the clone under `~/.void/ledger`, `~/.void/workbench` and
-`~/.void/approvals/<workspace>` (`packages/cli/src/config.ts:31-37`).
+The updater defaults to the same tree the launcher runs from, so a `void` on
+your PATH and the tree `void update` moves are the same tree by construction.
+It never touches operator state, which lives outside the clone under
+`~/.void/ledger`, `~/.void/workbench` and `~/.void/approvals/<workspace>`
+(`packages/cli/src/config.ts:31-37`).
+
+**Why the default is `void-cli` and not `void`.** On the maintainer's machine
+`~/.local/share/void` already holds unrelated local state, and the installer
+refuses to clone into a directory that is not a VOID checkout. Naming the tree
+`void-cli` keeps a second tool's directory out of the picture instead of
+failing on it, and `VOID_HOME` moves it for anyone who wants a different path.
 
 ### Invocation
 
@@ -333,77 +341,90 @@ the clone under `~/.void/ledger`, `~/.void/workbench` and
 
 | Code | `void update` | `void update --check` |
 |---|---|---|
-| 0 | The tree is already on the tracked branch, or the update was applied. | The tree is up to date. **Also** when the check could not run at all. |
-| 1 | The move could not be completed. The tree is unchanged and still runs. | Never returned. |
-| 2 | Usage error. Nothing was touched. | Usage error. Nothing was touched. |
-| 3 | Never returned. | An update is available. Nothing was changed. |
+| 0 | The tree already sits on the tracked branch, or the update was applied. | The tree is up to date. **Also** when the check answered and there is nothing to install now: a refused update still exists, and a fetch that could not reach the remote leaves the target `unknown`. |
+| 1 | The move could not be completed, so the tree was left where it was. Also when there is no updatable tree to speak of. | Never returned. |
+| 2 | Usage. Nothing was touched. | Usage. Nothing was touched. |
+| 3 | Never returned. | An update is available. The single answer a script should branch on. |
 
-**Three outcomes share two codes, so read this part twice.** `--check` exits
-0 both when the tree is current and when the check could not run (no git, no
-remote, a tree that is not a VOID checkout). It does not exit 1 for a failed
-check; a check that could not answer is not a failed check, it is an absent
-answer, and it is reported on the verdict line instead. **A script that needs
-to tell "up to date" from "could not check" must read the verdict line, not the
-exit code.** Only "an update exists" is distinguishable by the code, and that
-is the case worth scripting.
+**Three outcomes share code 0, so read this part twice.** `--check` exits 0
+when the tree is current, when an update exists but is refused (a dirty
+worktree does not make an available update stop existing, it makes the command
+decline to apply it, so that case is 3, not 0), and when the fetch could not
+reach the remote. **A script that needs to tell "up to date" from "could not
+check" must read the verdict line or the `target-commit` line, not the exit
+code.** That is deliberate and it is the honest outcome: an unreachable remote
+is not an answer of "no", so it is reported as `target-commit: unknown` rather
+than as up to date. Only "an update exists" is worth branching on from the
+code alone.
 
 **Code 3 is a deliberate deviation from `omp update --check`, not an
 oversight.** The reasoning is scriptability: a wrapper or a scheduled job has
-to be able to branch on "an update exists" without parsing output, and 0/1
-cannot carry that because 0 is already spoken for by two other outcomes.
+to be able to branch on "an update exists" without parsing prose, and 0/1
+cannot carry that because 0 is already spoken for by three other outcomes.
 Matching the other tool's convention here would have bought consistency at
 the cost of making the answer unavailable to a script.
 
-Codes 0, 1 and 2 are otherwise the convention the binary already uses: 2 for
-an argument the command does not accept (`packages/cli/bin/void.mjs:36-38`,
-`packages/cli/src/config.ts:68-71`), and otherwise the status the command
-returns.
+Code 2 is the convention the binary already uses for an argument a command
+does not accept (`packages/cli/bin/void.mjs:36-38`,
+`packages/cli/src/config.ts:68-71`). `--check` cannot be combined with
+`--force`: one of them promises not to move the tree and the other says it
+may, so the combination is refused with the usage line and exit 2.
 
 ### Output
 
-One line per event, no progress spinners, no colour, because the output is
-read in logs and in a terminal with no TTY.
+One `key: value` line per fact, then one human verdict line. No progress
+spinners, no colour, because the output is read in logs and in a terminal with
+no TTY. The four fact lines are identical in every mode; only the verdict
+changes.
 
-**Commits, not a version transition.** The target of an update is a git ref, and
-it has no version until it is checked out, so printing `0.1.0 -> 0.2.0` would
-mean inventing a second version reader and guessing what the new tree will say.
-The identity that exists on both sides of the move is the commit. Both modes
-therefore report the installed version, the installed short sha and the target
-short sha:
+**Commits, not a version transition.** The target of an update is a git ref,
+and it has no version until it is checked out, so printing `0.1.0 -> 0.2.0`
+would mean inventing a second version reader and guessing what the new tree
+will say. The identity that exists on both sides of the move is the commit.
+Real output from a run against an installed tree:
 
 ```
 installed: void 0.1.0 at /Users/dawe/.local/share/void-cli
-  commit: a89126d1  branch target: origin/main
+installed-commit: 5b943f3deb342134b397c4d6a08f93df1e207321
+tracked-branch: origin/main
+target-commit: 5b943f3deb342134b397c4d6a08f93df1e207321
+up to date
 ```
 
-The target line is a single line so it can be matched with `grep` rather than
-with a multiline expression.
+The facts are `cut`-able by key, so a script reads them and never
+pattern-matches a line that could be reworded later.
 
-Then exactly one verdict line. For `--check`:
+Verdicts for `--check`, verbatim:
 
 ```
 up to date
 update available: run `void update`
-update blocked: <reason>
+update available, not applied: <reason>
 ```
 
-and for the default path:
+On the install path, the move is announced before it happens and confirmed
+after it:
 
 ```
 nothing to do: the tree already sits on the tracked branch
 fast-forward: git merge --ff-only origin/main
-moving onto <sha>: git reset --keep
-updated to <sha>
+moving onto 5b943f3deb34: git reset --keep
+updated to 5b943f3deb34
 ```
 
 The dependency install's own output is inherited rather than swallowed, so the
-operator sees what ran. A failure writes one line to stderr naming the cause
-and the way out, exits 1, and leaves the tree where it was:
+operator sees what ran. If the tree moved but the install failed, the command
+says so on stderr and names the command to run by hand.
+
+A refusal writes one line to stderr, exits 1, and leaves the tree where it
+was. Every one names the way out:
 
 ```
-update refused: <reason>
-git could not move the tree: <git's own message>
-git fetch failed: <git's own message>
+the installed tree has uncommitted changes; commit or discard them first. --force does not discard uncommitted work.
+the installed tree has 1 local commit the tracked branch does not have, and moving would drop it. Give it a branch, or re-run with --force.
+<path> is not a git checkout. Reinstall it with scripts/install-void.sh, or point VOID_HOME at the checkout you want to update.
+no installed tree at <path>. Run scripts/install-void.sh to create one, or point VOID_HOME at an existing checkout.
+<path> tracks no upstream branch, so there is no target to update to.
 ```
 
 A usage error writes one line to stderr and nothing else, matching `void
@@ -416,19 +437,20 @@ usage: void update [--check] [--force]
 ### What `--force` does, and what it deliberately does not
 
 **`--force` permits a non-fast-forward move onto the tracked ref. It does not
-discard anything.** Two things follow, and both are the safety property an
-operator of a recovery product cares about most:
+discard anything.** Two refusals are load-bearing and neither is
+configurable:
 
-- **A dirty worktree is refused, including under `--force`.** No flag is a
-  good enough reason to destroy an edit or a local commit. The refusal names
-  what is dirty and what to do about it.
-- **The move is `git reset --keep`, not `git reset --hard`.** A mistake stops
-  at a modified file instead of eating it. Untracked files are never deleted
-  on any path.
+- **A dirty worktree is refused, including under `--force`.** No flag is a good
+  enough reason to delete an edit somebody made in the install directory, so
+  `--force` cannot wave that through.
+- **The move is `git reset --keep`, never `--hard`.** Even a mistake then stops
+  at an uncommitted file instead of eating it. Untracked files are not edits
+  and do not block a fast-forward, and nothing deletes them on any path.
 
-The consequence an operator should know: `--force` moves history, it does not
-clean a tree. If the tree is dirty, commit, stash or check out first, then
-update.
+What `--force` does authorise is dropping local commits the tracked branch
+does not have, which is the operator saying out loud that they may go. The
+consequence to know: `--force` moves history, it does not clean a tree. If the
+tree is dirty, commit or discard first, then update.
 
 ### Channels: one, not two
 
