@@ -232,6 +232,144 @@ test("PostgreSQL continuation refuses same-value ABA between row inverses", asyn
   );
 });
 
+// The E0 acceptance asks for repeatedly updated rows restored within the
+// declared transaction and trigger boundary, with a foreign concurrent update
+// raising a conflict. Two updates are covered above; this is the mixed chain,
+// where the row is updated, updated again and then deleted, so the inverses run
+// as insert, update, update rather than the one shape already proved.
+test("E0: a recovery job restores an update, update and delete chain on one row", async (t) => {
+  const f = await fixture(t);
+  const runtime = recoveryRuntime(f.runtimeOptions);
+  await runtime.execute({
+    ...f.request,
+    operationId: "first-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 20 },
+    },
+  });
+  await runtime.execute({
+    ...f.request,
+    operationId: "second-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 30 },
+    },
+  });
+  await runtime.execute({
+    ...f.request,
+    operationId: "delete-row",
+    arguments: { table: "public.account", action: "delete", key: { id: 1 } },
+  });
+  const plan = await recoveryRuntime(f.runtimeOptions).planRecoveryJob({
+    workspace: "test",
+    jobId: "row-journey",
+    selection: { kind: "run", runId: "run" },
+  });
+  assert.deepEqual(
+    plan.steps.map((step) => step.operationId),
+    ["delete-row", "second-update", "first-update"],
+  );
+  const result = await recoveryRuntime(f.runtimeOptions).runRecoveryJob(
+    "test",
+    "row-journey",
+    async () => true,
+  );
+  assert.deepEqual(result.residuals, []);
+  assert.equal(result.status, "restored");
+  // The row must come back with its original value, not merely with a row.
+  assert.deepEqual(
+    (await f.db.query("select id, balance, note from account where id=1")).rows,
+    [{ id: 1, balance: 10, note: "original" }],
+  );
+  // The untouched row is evidence that the chain stayed inside its declared
+  // scope rather than rewriting the table.
+  assert.equal(
+    (
+      await f.db.query<{ balance: number }>(
+        "select balance from account where id=2",
+      )
+    ).rows[0]?.balance,
+    90,
+  );
+});
+
+// The same chain with a foreign writer arriving between two inverses. The row
+// must keep the foreign value, the job must say conflict rather than restored,
+// and the untouched row must still be untouched.
+test("E0: a concurrent write injected into a PostgreSQL chain conflicts and survives", async (t) => {
+  const f = await fixture(t);
+  const base = f.runtimeOptions.adapters[0]!;
+  let inverses = 0;
+  const adapter = {
+    ...base,
+    async recover(
+      prepared: Parameters<typeof base.recover>[0],
+      outcome: Parameters<typeof base.recover>[1],
+      id: string,
+    ) {
+      const result = await base.recover(prepared, outcome, id);
+      inverses++;
+      if (inverses === 1)
+        await f.db.exec("update account set balance=77 where id=1");
+      return result;
+    },
+  };
+  const runtimeOptions = { ...f.runtimeOptions, adapters: [adapter] };
+  const runtime = recoveryRuntime(runtimeOptions);
+  await runtime.execute({
+    ...f.request,
+    operationId: "first-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 20 },
+    },
+  });
+  await runtime.execute({
+    ...f.request,
+    operationId: "second-update",
+    arguments: {
+      table: "public.account",
+      action: "update",
+      key: { id: 1 },
+      values: { balance: 30 },
+    },
+  });
+  await recoveryRuntime(runtimeOptions).planRecoveryJob({
+    workspace: "test",
+    jobId: "concurrent",
+    selection: { kind: "run", runId: "run" },
+  });
+  const result = await recoveryRuntime(runtimeOptions).runRecoveryJob(
+    "test",
+    "concurrent",
+    async () => true,
+  );
+  assert.equal(result.status, "conflict");
+  assert.equal(
+    (
+      await f.db.query<{ balance: number }>(
+        "select balance from account where id=1",
+      )
+    ).rows[0]?.balance,
+    77,
+  );
+  assert.ok(
+    result.residuals.some(
+      (residual: { status: string }) =>
+        residual.status === "conflict" ||
+        residual.status === "blocked-by-conflict",
+    ),
+    `expected a conflict residual, got ${JSON.stringify(result.residuals)}`,
+  );
+});
+
 test("lost response after a chained PostgreSQL inverse reconciles the bound lineage after restart", async (t) => {
   const f = await fixture(t);
   const base = f.runtimeOptions.adapters[0]!;
