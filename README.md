@@ -7,7 +7,17 @@ guide, in English and in [Czech](docs/HANDBOOK.cs.md), and it is checked by a
 test: every command, script, path and link in it is verified to exist, so it
 cannot drift away from the product the way a README can.
 
-[Download VOID](https://dawe583.github.io/void/): Windows and macOS desktop beta, TUI source download, and setup instructions.
+**Install it as a real `void` command:** from a checkout, run
+`bash scripts/install-void.sh`. It checks for Node.js 24 or newer, git and
+pnpm, clones this repository into `$HOME/.local/share/void-cli` (set
+`VOID_HOME` to put the tree somewhere else), installs dependencies from the
+shipped lockfile, and writes a launcher at `$HOME/.local/bin/void`. It does
+not edit your PATH, so make sure that directory is on it and open a new
+terminal. From there `void` runs from any directory, `void update` moves that
+installed tree onto the tracked branch, and `void update --check` reports
+whether anything is new without moving anything. See
+[the beta runbook](docs/BETA.md) for the full flow, what an update refuses to
+do, and how to roll back.
 
 It sits between an MCP capable agent and the tools the agent can write to. For each write, VOID classifies how reversible the call is, applies a policy, and appends a signed hash chained ledger entry. Later, operators can inspect the feed, verify the chain, attest a slice, trace taint, and replay true inverses when a connector has captured enough state.
 

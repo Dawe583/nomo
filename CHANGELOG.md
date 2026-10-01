@@ -4,18 +4,25 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
-- `void update` updates a local install in place, and a one-line installer
-  puts `void` on your PATH as a checkout you own, with no global package
-  manager and no account. `void update` fetches and moves the checkout
-  forward, `void update --check` reports whether anything is new without
-  touching anything, and `void update --force` allows a move that is not a
-  fast-forward. Nothing local is thrown away: a modified file or a local
-  commit stops the update and says which one, so an update can never eat
-  work in progress. When the install is missing or is not a VOID checkout the
-  command refuses and names the way out rather than guessing, and when no
-  account or token is configured it works from the checkout it already has.
-  Your ledger, workspace data and pending approvals live outside the
-  checkout and are never touched by an update.
+- `void update` updates a local install in place, and an installer script puts
+  `void` on your PATH as a checkout you own, with no global package manager
+  and no account. The installer checks for Node.js 24 or newer, git and pnpm,
+  puts the tree at `$HOME/.local/share/void-cli` (override with `VOID_HOME`),
+  installs from the shipped lockfile, and writes a launcher at
+  `$HOME/.local/bin/void`. It does not edit your PATH: add that directory
+  yourself and open a new terminal. The repository is private, so the first
+  clone needs credentials the machine already has, and it refuses to
+  overwrite a launcher it did not write. `void update` fetches and moves the
+  checkout forward, `void update --check` reports whether anything is new
+  without moving the tree and exits 3 when an update is available, and
+  `void update --force` allows a move that is not a fast-forward. Nothing
+  local is thrown away: a modified file or a local commit stops the update
+  and says which one, so an update can never eat work in progress. When the
+  install is missing or is not a VOID checkout the command refuses and names
+  the way out rather than guessing. Your ledger, workspace data and pending
+  approvals live outside the checkout and are never touched by an update. To
+  go back, move the tree onto the commit you want and reinstall from the
+  lockfile.
 - Recovery jobs now carry runtime-derived lineage between adjacent inverses on
   the same resource. Two consecutive writes to one filesystem path restore the
   original bytes and mode after restart while a same-byte external rewrite

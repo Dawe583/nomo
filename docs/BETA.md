@@ -19,6 +19,118 @@ See [recovery coverage](RECOVERY-COVERAGE.md) for exact adapter requirements.
 The [public demo](https://void-tui.vercel.app/) operates only on isolated demo
 documents, with no access to the visitor's computer or connected accounts.
 
+## Installing and updating on a machine
+
+The installer is `scripts/install-void.sh`, run from a checkout. It resolves
+its own repository root, so the working directory you invoke it from does not
+matter. `bash scripts/install-void.sh --help` prints the same contract.
+
+What it does, in order:
+
+1. Checks prerequisites: `node` at major version 24 or newer, `git`, and
+   `pnpm` (it falls back to enabling corepack when pnpm is absent).
+2. Puts the tree at `$VOID_HOME`, default `$HOME/.local/share/void-cli`. On
+   the first run it clones the repository shallow. An existing tree is reused
+   untouched, because fetching new commits is `void update`'s job, not the
+   installer's. A directory that already exists but is not a VOID checkout is
+   refused rather than written into.
+3. Runs `pnpm install --frozen-lockfile` inside the tree, but only when
+   `node_modules` is missing or older than the lockfile.
+4. Writes the launcher at `$HOME/.local/bin/void`, a small `sh` script that
+   execs the CLI entry from `$VOID_HOME` and passes every argument through. If
+   something else already occupies that path, the installer refuses and tells
+   you to move it aside; it never overwrites a file it did not write.
+
+The installer does not change your shell profile. Add `$HOME/.local/bin` to
+PATH yourself and open a new terminal, then run `void`. `VOID_HOME` is read by
+both the installer and the launcher, so a tree anywhere else needs no edit.
+
+The repository is private, so a first-run clone needs credentials the machine
+already holds: a `gh auth login`, a git credential helper, or an SSH remote.
+Verified 2026-10-02: the repository reports `private: true` over the GitHub
+API. With no access, `git clone` prints its own refusal and the script stops
+there under `set -e`, before the dependency install and before the launcher is
+written, so nothing is left half-installed. The exit code on that path is
+git's own rather than the installer's documented 1, because `set -e` propagates
+whatever `git clone` returned; a caller branching on the installer's documented
+codes should treat any nonzero value as failure.
+
+There is no published tarball and no registry entry to install from. Every
+workspace manifest is private, which is why the install is a clone plus a
+launcher and why `void update` is a git move.
+
+Verified 2026-10-02 against a real install in a scratch `HOME`: the install
+reported the reused tree, skipped the dependency step as already current,
+wrote the launcher, and exited 0; the launcher on PATH answered
+`void --version` with `void 0.1.0` and reported a missing tree with exit 1. A
+foreign file at the launcher path was refused with exit 1 and left byte for
+byte as it was.
+
+`void update` moves the installed tree onto the branch it tracks. It prints one
+`key: value` line per fact (`installed`, `installed-commit`, `tracked-branch`,
+`target-commit`) and then a verdict, and it runs the locked dependency install
+after the move so the new source is runnable. Three forms:
+
+| Command | Effect |
+| --- | --- |
+| `void update` | Move the tree onto the tracked ref and install dependencies. |
+| `void update --check` | Report the verdict and move nothing. Exit 3 means an update exists. |
+| `void update --force` | Permit a move that is not a fast-forward. Nothing else changes. |
+
+What it refuses, and both refusals are deliberate:
+
+- **A tracked file with uncommitted changes stops the update, including under
+  `--force`.** No flag is a good enough reason to delete an edit made in the
+  install directory.
+- **Local commits the tracked branch does not have stop the update** until
+  they are given a branch or `--force` is passed. `--force` moves history with
+  `git reset --keep`, never `--hard`, so even then it stops at an uncommitted
+  file instead of eating it. Untracked files never block a move and are never
+  deleted.
+
+A missing tree, a path that is not a git checkout, and a branch with no
+upstream are each refused with the command that fixes them. Your ledger,
+workspace data and pending approvals live outside the checkout, under
+`~/.void/ledger`, `~/.void/workbench` and `~/.void/approvals`, so an update
+cannot reach them.
+
+Verified 2026-10-02 on real git trees, driving the shipped command: a tree
+already on the tracked ref printed `up to date` and exited 0; a tree one commit
+behind fast-forwarded onto the new commit and then reported the dependency
+failure with the command to run by hand; a tree with an uncommitted edit was
+refused with exit 1 both with and without `--force`, and the edit was still
+there afterwards; a tree with a local commit was refused with the reason naming
+the commit count, and `--check` reported the same situation as exit 3. With
+`--force` on a clean tree that was one commit ahead, the move landed on the
+tracked ref and the local commit was gone, while an untracked file beside it
+survived. A missing tree and a non-checkout path each exited 1 naming the
+installer.
+
+**To roll back**, fetch the history first, because the installer clones with
+`--depth 1` and a shallow tree has exactly one commit, so there is nothing to
+roll back to until it is deepened. Then name the commit you want, move the tree
+onto it, and reinstall dependencies so the older source is runnable again:
+
+```sh
+cd "$VOID_HOME" || cd ~/.local/share/void-cli
+git fetch --unshallow        # once; a full tree already reports nothing to do
+git log --oneline -5
+git reset --keep <commit>
+pnpm install --frozen-lockfile
+```
+
+`--keep` refuses rather than overwrite an uncommitted file, so a rollback
+cannot quietly discard local work either. Roll the data directories back from
+your own backup: an update never writes them, so it also never restores them.
+
+`void update` does not deepen the tree. A plain `git fetch` inside a shallow
+clone leaves it shallow, so an operator who has only ever run `void update`
+still has a single commit and still needs `git fetch --unshallow` before a
+rollback is possible. Verified 2026-10-02 on a real install: a `--depth 1`
+clone reported `git rev-list --count HEAD` as 1 and could not resolve `HEAD~1`;
+after `git fetch --unshallow` the same tree reported 419 commits and
+`git reset --keep HEAD~1` succeeded.
+
 ## Desktop and web workspace
 
 The shared agent application includes provider presets (compatible-provider APIs
