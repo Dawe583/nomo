@@ -443,3 +443,66 @@ Not verified by this re-run: whether the four remaining decisions in row 13 have
 since been answered outside this tree, and whether any of the 58 open rows
 changed for a reason that leaves no trace in a commit or a dated decision. Those
 need a reading of the source, not a count.
+
+## 8. Measured 2026-10-01
+
+Four items from the 2026-09-30 strategy audit were reproduced and fixed on this
+date, each with a test that fails on the previous code: the recovery takeover
+that could not record itself (`lease-expired`), the MCP response that reached
+the server under the agent's id, the ledger file created without a mode, and
+the agent conversation's `requestDigest`, which could not see the conversation
+it was digesting. Each is described in `CHANGELOG.md` under Unreleased with the
+file and line that carried the defect.
+
+One item from that audit is reproduced and **not** fixed, because the fix the
+defect suggests is weaker than the guarantee it would break.
+
+### Consecutive effects on one path break the recovery chain
+
+Executed against `packages/connectors/src/filesystem/managed.ts` through the
+real runtime: two writes to the same path in one run, then a recovery job over
+both operations.
+
+```
+first  write: succeeded        (file: original -> second)
+second write: succeeded        (file: second   -> third)
+job status  : conflict checkpoint 1
+residuals   : [{"operationId":"op-one","status":"conflict"}]
+file content: second
+expected    : original
+```
+
+The cause is in the comparison itself, not in the planner. `snapshot()` folds
+`dev`, `ino`, `ctimeNs`, `uid` and `gid` into `revision`
+(`managed.ts:202-211`), `execute` records that revision as the operation's
+evidence (`:418`), and `recover` refuses unless the file still carries it
+(`:479-482`). The first restore replaces the file, so the inode the second step
+recorded is gone, and the step that would finish the undo cannot start.
+
+The obvious fix is to compare content and mode instead of inode identity, and it
+makes both chain tests pass. It was reverted because it also makes the
+documented ABA case pass: `managed.test.ts:206` writes "human" over the
+agent's file and then writes the agent's own bytes back, and that test requires
+a conflict. Content equality cannot separate "an earlier step of this job
+restored this file" from "a foreign writer replaced it with identical bytes",
+because the two are the same observation. A fix therefore has to carry lineage,
+not a weaker comparison.
+
+Two shapes that would work, neither small:
+
+- **Durable, schema-bearing.** Each recovery step returns the revision it
+  wrote; the runtime records it in the checkpoint event and passes the previous
+  step's revision into the next `adapter.recover`. The payload validator in
+  `packages/runtime/src/recovery/plan.ts` enforces exact keys, so the field is a
+  signed-schema change, and it survives a restart because it lives in the
+  journal rather than in the adapter process.
+- **Process-local.** The adapter remembers the revisions it wrote per path and
+  accepts those. Two lines, and it does not survive a restart, so it would fix
+  the reproduction above and still fail the acceptance case
+  `docs/strategy-2026-09-30/BACKLOG.md` E0 asks for, which runs the chain
+  across a runtime restart. Shipping it would mean claiming less than the
+  requirement states.
+
+This is a design decision rather than a defect with an obvious patch, and the
+audit's own classification ("not a one-sitting slice if the lineage design is
+reworked") is the accurate one.
