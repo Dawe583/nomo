@@ -50,8 +50,21 @@ export type RecoveryJobResult = {
   checkpoint: number;
   outcomes: readonly RecoveryJobStepOutcome[];
   residuals: readonly RecoveryResidual[];
-  pause?: { code: "step-unavailable"; operationId: string };
+  pause?: { code: RecoveryJobPauseCode; operationId: string };
 };
+/**
+ * The two reasons a job stops, and the only two a reader may see. A step the
+ * adapter cannot run right now is `step-unavailable` and is the operator's to
+ * fix; a lease whose holder died is `lease-expired` and was written by another
+ * worker that took the job over. They are one closed set because the payload
+ * validator below is the only gate a signed, replayed journal passes through,
+ * and a code it does not know makes an honest event unreadable.
+ */
+export const RECOVERY_PAUSE_CODES = [
+  "step-unavailable",
+  "lease-expired",
+] as const;
+export type RecoveryJobPauseCode = (typeof RECOVERY_PAUSE_CODES)[number];
 /**
  * What a job request asks for: either an exact selection, or a rule the
  * resolver turns into one. The two are not the same thing and the difference
@@ -701,7 +714,7 @@ function validateProgress(
       const pause = object(data.pause, "pause");
       exactKeys(pause, ["code", "operationId"], "pause");
       if (
-        pause.code !== "step-unavailable" ||
+        !RECOVERY_PAUSE_CODES.includes(pause.code as RecoveryJobPauseCode) ||
         pause.operationId !== plan.steps[checkpoint]?.operationId
       )
         throw new Error("Invalid recovery job pause.");

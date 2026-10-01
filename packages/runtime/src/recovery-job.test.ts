@@ -11,6 +11,7 @@ import {
   localRecoveryVault,
   recoveryRuntime,
   type RecoveryAdapter,
+  type Json,
   type RecoveryJobPlan,
   type OperationJournal,
   validateRecoveryJobPlan,
@@ -403,6 +404,63 @@ test("only one recovery job can become active in a workspace", async (t) => {
     (await f.open().runRecoveryJob("test", "first", async () => false)).status,
     "restored",
   );
+});
+
+test("an expired lease is superseded with a pause the signed journal can read back", async (t) => {
+  const f = await fixture(t);
+  await f.execute("one", "run");
+  const stale = await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "stale",
+    selection: { kind: "run", runId: "run" },
+  });
+  // A worker that died holding the job: the lease has expired and its holder is
+  // provably gone, which is the only pair the workspace guard reclaims on.
+  const journal = localOperationJournal(join(f.root, "journal"), f.signer);
+  const jobEvent = (
+    stage: "approved" | "applying",
+    data: Json,
+  ) => ({
+    schema: "void.recovery-job.v1" as const,
+    workspace: "test",
+    jobId: "stale",
+    planDigest: stale.digest,
+    at: new Date().toISOString(),
+    stage,
+    data,
+  });
+  await journal.transaction("test", (tx) => tx.appendJob!(jobEvent("approved", null)));
+  await journal.transaction("test", (tx) =>
+    tx.appendJob!(
+      jobEvent("applying", {
+        checkpoint: 0,
+        outcomes: [],
+        residuals: [],
+        lease: { holder: "dead-host:2147483647", expiresAt: 1 },
+      }),
+    ),
+  );
+  await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "taker",
+    selection: { kind: "run", runId: "run" },
+  });
+  assert.equal(
+    (await f.open().runRecoveryJob("test", "taker", async () => true)).status,
+    "restored",
+  );
+  assert.equal(f.recoveries.get("one"), 1);
+  // Read through a fresh runtime: the ledger is verified and every job event is
+  // validated as a whole, so one payload its own validator rejects would take
+  // the entire workspace down, not just the job it belongs to.
+  assert.deepEqual(await f.open().recoveryJobStatus("test", "stale"), {
+    jobId: "stale",
+    status: "paused",
+    checkpoint: 0,
+    outcomes: [],
+    residuals: [],
+    pause: { code: "lease-expired", operationId: "one" },
+  });
 });
 
 test("concurrent runners share one job checkpoint and one inverse", async (t) => {

@@ -1001,14 +1001,21 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             if (step === undefined) {
               throw new Error("Another recovery job is active in this workspace.");
             }
+            // The paused payload has to name the job and the status the
+            // validator reads back, not only the progress and the reason: a
+            // signed event that fails its own validator is unreadable, and the
+            // ledger is read as a whole.
+            const supersededJob: RecoveryJobResult = {
+              jobId: stale.jobId,
+              status: "paused",
+              ...staleProgress,
+              pause: { code: "lease-expired", operationId: step.operationId },
+            };
             await recordJob(
               tx,
               stalePlan,
               "paused",
-              {
-                ...staleProgress,
-                pause: { code: "lease-expired", operationId: step.operationId },
-              } as unknown as Json,
+              supersededJob as unknown as Json,
             );
             superseded.push(stale.jobId);
           }

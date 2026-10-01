@@ -491,7 +491,7 @@ type RecoveryApplyResponse = {
   checkpoint: number;
   outcomes: Array<{ operationId: string; status: "restored" | "compensated" }>;
   residuals: Array<{ operationId: string; status: string }>;
-  pause?: { code: "step-unavailable"; operationId: string };
+  pause?: { code: "step-unavailable" | "lease-expired"; operationId: string };
 };
 ```
 

@@ -4,6 +4,15 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- A worker that took over a recovery job whose lease had expired could not
+  record the takeover. The `paused` payload it wrote named only the progress
+  and the reason, and carried a `lease-expired` code the payload validator did
+  not accept, so the write was refused with `Invalid recovery job progress
+  payload` and the takeover failed instead of being recorded. The payload now
+  carries the job ID, the status and the operation ID the validator reads back,
+  and `lease-expired` joins `step-unavailable` as the second closed pause code.
+  The journal is verified and replayed as a whole, so a code the validator
+  rejects would take the entire workspace down, not only the job it belongs to.
 - The evidence behind a managed Git commit was checked against values taken
   from the same prepared document it was supposed to check: the parent tree,
   the parent entry of the selected path and the recorded manifest digests all
