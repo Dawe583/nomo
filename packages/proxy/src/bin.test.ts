@@ -1310,7 +1310,7 @@ async function readLedgerDecisions(
 }
 
 async function waitFor(predicate: () => boolean, label: string): Promise<void> {
-  const deadline = Date.now() + 5_000;
+  const deadline = Date.now() + 15_000;
   while (Date.now() < deadline) {
     if (predicate()) return;
     await new Promise<void>((resolve) => setTimeout(resolve, 5));

@@ -11,7 +11,9 @@ jobs:
   # 1 s, 19 s and 81 s, and `void recovery conformance` 3 s for
   # `filesystem.managed`. `git.managed` alone took 94 s to 138 s over three
   # runs, so a shared 10 minute job deadline left the slow step with whatever
-  # the fast ones happened not to use.
+  # the fast ones happened not to use. Windows also pays for owner/ACL checks
+  # on private-state opens; keep enough budget for the full runtime, ledger and
+  # proxy matrix without truncating its later recovery tests.
   manifest:
     strategy:
       fail-fast: false
@@ -33,7 +35,7 @@ jobs:
       - run: node --test packages/connectors/src/manifest.test.ts packages/workbench/src/storage.test.ts apps/control-plane/api/server.test.ts
         timeout-minutes: 5
       - run: node --test --test-concurrency=1 packages/runtime/src/*.test.ts packages/ledger/src/*.test.ts packages/proxy/src/bin.test.ts
-        timeout-minutes: 10
+        timeout-minutes: 20
       - run: node --test packages/connectors/src/filesystem/managed.test.ts packages/cli/src/recovery-filesystem.test.ts packages/cli/src/recovery-mcp.test.ts packages/cli/src/recovery-paths.test.ts packages/cli/src/conformance.test.ts
         timeout-minutes: 15
       - run: node packages/cli/bin/void.mjs recovery conformance
