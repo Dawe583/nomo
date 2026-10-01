@@ -23,6 +23,7 @@ import { readLedgerReversal, reversalFinding } from "./reversal.ts";
 import { sha256Hex, verifySignature } from "./sign.ts";
 import {
   assertPrivateDirectoryPath,
+  assertPrivateDirectoryIfPresent,
   ensurePrivateDirectory,
   openPrivateFile,
   readPrivateFile,
@@ -149,7 +150,8 @@ export function jsonlStore(
     },
 
     async *read(workspace: string): AsyncIterable<JsonlEntry> {
-      await assertPrivateDirectoryPath(dir, "ledger directory");
+      if (!(await assertPrivateDirectoryIfPresent(dir, "ledger directory")))
+        return;
       const text = await readOrEmpty(file(workspace));
       for (const line of text.split("\n")) {
         if (line === "") continue;

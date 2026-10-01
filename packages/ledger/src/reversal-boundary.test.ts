@@ -65,12 +65,14 @@ async function writeChain(dir: string, key: KeyProvider, bodies: readonly unknow
   }
   const store = jsonlStore(key, { dir: join(dir, "chain") });
   const directory = join(dir, "chain");
-  const { writeFile, mkdir } = await import("node:fs/promises");
-  await mkdir(directory, { recursive: true });
+  const { writeFile, mkdir, chmod } = await import("node:fs/promises");
+  await mkdir(directory, { recursive: true, mode: 0o700 });
   await writeFile(
     join(directory, `${sanitizeWorkspace(workspace)}.jsonl`),
     entries.map((entry) => `${JSON.stringify(entry)}\n`).join(""),
+    { mode: 0o600 },
   );
+  await chmod(join(directory, `${sanitizeWorkspace(workspace)}.jsonl`), 0o600);
   return { entries, store, directory };
 }
 

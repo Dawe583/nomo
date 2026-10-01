@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
@@ -465,6 +465,7 @@ test("persisted v0 SQLite schema upgrades to the bounded vault schema in place",
   } finally {
     previous.close();
   }
+  await chmod(path, 0o600);
 
   await reservedRecoveryVault(f.root, f.keys, "first", capacity).reserve!(
     "one",
@@ -493,6 +494,7 @@ test("newer persisted vault schema is refused before accepting bounded work", as
   } finally {
     future.close();
   }
+  await chmod(path, 0o600);
 
   await assert.rejects(
     reservedRecoveryVault(f.root, f.keys, "first").reserve!("one", "op"),

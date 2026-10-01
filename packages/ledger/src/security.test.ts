@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -39,6 +39,7 @@ test("unsigned workspace relabeling cannot change signed ledger ownership", asyn
   const verified = await verifyChain([relabeled], { publicKey: (id) => key.publicKey(id) });
   assert.equal(verified.ok, false);
   await writeFile(join(dir, "target.jsonl"), `${JSON.stringify(relabeled)}\n`);
+  await chmod(join(dir, "target.jsonl"), 0o600);
   assert.equal((await store.verify("target")).ok, false);
   await assert.rejects(attestLedger(dir, "target", key));
 });
@@ -50,6 +51,7 @@ test("copying a valid ledger into another workspace cannot mint an attestation",
   const store = jsonlStore(key, { dir });
   const entry = await store.append({ workspace: "source" });
   await writeFile(join(dir, "target.jsonl"), `${JSON.stringify(entry)}\n`);
+  await chmod(join(dir, "target.jsonl"), 0o600);
   assert.equal((await store.verify("target")).ok, false);
   await assert.rejects(attestLedger(dir, "target", key));
 });

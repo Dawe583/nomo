@@ -68,6 +68,7 @@ $ErrorActionPreference = 'Stop'
 $file = $env:VOID_ACL_FILE
 $kind = $env:VOID_ACL_KIND
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+$trustedOwners = @($sid.Value, 'S-1-5-18', 'S-1-5-32-544', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464')
 $tokenSids = @($sid.Value) + @([System.Security.Principal.WindowsIdentity]::GetCurrent().Groups | ForEach-Object { $_.Value }) + @('S-1-1-0')
 if ($kind -eq 'directory') { $acl = [System.IO.Directory]::GetAccessControl($file) }
 else { $acl = [System.IO.File]::GetAccessControl($file) }
@@ -85,7 +86,8 @@ if ($env:VOID_ACL_PROTECT -eq '1') {
   if ($kind -eq 'directory') { $acl = [System.IO.Directory]::GetAccessControl($file) }
   else { $acl = [System.IO.File]::GetAccessControl($file) }
 }
-if ($acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $sid.Value) { throw 'unexpected owner' }
+$owner = $acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value
+if ($owner -notin $trustedOwners) { throw "unexpected owner: $owner" }
 $readable = $false
 $writable = $false
 $denied = $false
@@ -125,13 +127,14 @@ async function windowsPrivateTreeAcl(root: string): Promise<void> {
 $ErrorActionPreference = 'Stop'
 $root = $env:VOID_ACL_ROOT
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+$trustedOwners = @($sid.Value, 'S-1-5-18', 'S-1-5-32-544', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464')
 $tokenSids = @($sid.Value) + @([System.Security.Principal.WindowsIdentity]::GetCurrent().Groups | ForEach-Object { $_.Value }) + @('S-1-1-0')
 $items = @((Get-Item -LiteralPath $root -Force)) + @(Get-ChildItem -LiteralPath $root -Force -Recurse -ErrorAction Stop)
 foreach ($item in $items) {
   if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'state tree contains a reparse point' }
   if ($item.PSIsContainer) { $acl = [System.IO.Directory]::GetAccessControl($item.FullName) }
   else { $acl = [System.IO.File]::GetAccessControl($item.FullName) }
-  if ($acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $sid.Value) { throw 'unexpected owner in state tree' }
+  if ($acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -notin $trustedOwners) { throw 'unexpected owner in state tree' }
   $readable = $false
   $writable = $false
   $denied = $false
@@ -344,6 +347,21 @@ export async function assertPrivateDirectoryPath(
   await assertSafeAncestorChain(dirname(resolve(directory)));
   if (process.platform === "win32")
     await windowsPathAcl(directory, "directory");
+}
+
+/** Check an existing private directory, or validate its nearest existing ancestors. */
+export async function assertPrivateDirectoryIfPresent(
+  directory: string,
+  label = "local state directory",
+): Promise<boolean> {
+  try {
+    await assertPrivateDirectoryPath(directory, label);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    await assertExistingAncestorChain(dirname(resolve(directory)));
+    return false;
+  }
 }
 
 export async function assertPrivateFilePath(
