@@ -8,6 +8,9 @@ Rule used: `partial` appears only with positive evidence of a real
 implemented subset. TUI and GUI rows are summary level; sibling lanes own
 that depth. R05 commit work runs in the sibling lane.
 
+Rows added 2026-10-02 for the local install, the `void update` command and the
+versioning plan, and WP-09's evidence pointer corrected the same day.
+
 The entry point for using the product is [the handbook](HANDBOOK.md), with a
 [Czech edition](HANDBOOK.cs.md). Both are verified by
 `scripts/src/handbook.test.mjs`, which fails when a command, script, path, link
@@ -27,14 +30,42 @@ or the stated default provider stops matching the tree.
 | WP-06 connector Postgres                           | partial | Legacy capture and inverse plus restricted managed R1 in `packages/connectors/src/postgres/managed.ts`; cascade, tenant, migration, kill and partition gates open                                      |
 | WP-07 connector S3                                 | partial | Legacy byte snapshot path in `packages/connectors/src/s3/` only, fake clients in tests                                                                                                                 |
 | WP-08 probes and blast radius                      | partial | `packages/connectors/src/probes/postgres.ts` and `s3.ts` exist, provider specific certification open                                                                                                   |
-| WP-09 CLI                                          | partial | `packages/cli/src` covers classify, feed, replay, attest, taint, verify, doctor, init and recovery, but `docs/RELEASE.md` still requires real end to end verification of the approve and replay wiring |
+| WP-09 CLI                                          | partial | `packages/cli/src` covers classify, feed, replay, attest, taint, verify, doctor, init, update and recovery, but `docs/RELEASE.md` still requires real end to end verification of the approve and replay wiring |
 | WP-09b terminal interface                          | partial | `packages/cli/src/tui/` exists with tests. `void tui --help` prints its usage line and exits 0; a sibling lane owns the depth |
 | WP-10 control plane API                            | partial | `apps/control-plane/api` plus `cloud/server.mjs` serve a single operator workspace; no multitenancy, no SSO                                                                                            |
 | WP-11 control plane UI                             | partial | `apps/control-plane/ui/src` is usable and deployed; parity and acceptance tail open, sibling lane owns depth                                                                                           |
 | WP-12 taint graph                                  | partial | `packages/ledger/src/taint/` helpers tested, product integration missing                                                                                                                               |
 | WP-13 attestation                                  | partial | `packages/ledger/src/attest.ts` plus `void attest` exist, no standalone verifier artifact                                                                                                              |
 | WP-14 SDK wrap                                     | partial | `packages/sdk/src/client.ts` and `managed.ts` exist, no framework `wrap` module                                                                                                                        |
-| WP-15 hardening, docs, release                     | partial | Docs and guides exist, publish CI, installable artifacts, signing and KMS open per `docs/RELEASE.md`                                                                                                   |
+| WP-15 hardening, docs, release                     | partial | Docs and guides exist and `scripts/install-void.sh` gives a real local install, but publish CI, a distributable artifact, signing and KMS are open per `docs/RELEASE.md`                                              |
+
+## Self-installation and self-update, `omp/selfupdate` branch, 2026-10-02
+
+| Work item                                  | Status  | Evidence pointer                                                                                                                                       |
+| ------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `scripts/install-void.sh` local install    | partial | The script exists and is the whole documented install path: prereq checks, a shallow clone or reuse into `$VOID_HOME` default `~/.local/share/void-cli`, a locked dependency install and a launcher at `~/.local/bin/void`. `docs/BETA.md` documents it. Not `done`: the repository is private, so a first-run clone needs credentials and there is no public artifact, no signed release and no release tag, so the install path has been exercised from a maintainer checkout only |
+| `void update` in-place update              | partial | `packages/cli/src/update.ts` implements the fetch, the fast-forward, the `reset --keep` move, `--check` and `--force`, with the dirty-worktree and local-commit refusals and exit codes 0 to 3. Not `done`: the tracked branch of a private clone is reachable only with credentials, and no update has been run and recorded against an install on a second machine, so the loop is proven on one host |
+| `docs/VERSIONING-AND-UPDATE-PLAN.md`       | done    | The document is merged and is a plan of record, with its own dated claim about what it does not establish. `done` because the deliverable is the document; the single source of truth and the bump script it specifies are implementation, and are not in this tree |
+
+The three are `partial` on the same evidence gap: each is a real implemented
+subset with a recorded refusal path, and none has an install or an update
+proven across two machines. Calling the first two `done` would claim a
+distribution that does not exist yet; calling the third `partial` would
+mistake a merged specification for an unfinished one.
+
+The `partial` verdict rests on what was run, not on what the source reads like.
+On 2026-10-02 the installer was executed in a scratch `HOME` and returned the
+reused tree, wrote the launcher and exited 0, and the launcher on PATH answered
+`void --version` with `void 0.1.0`. A foreign file at the launcher path was
+refused with exit 1 and left untouched. The shipped `void update` was then
+driven over real git trees: up to date exited 0, a tree one commit behind
+fast-forwarded, an uncommitted edit was refused with exit 1 with and without
+`--force` and survived both, a local commit was refused by name and `--check`
+reported the same state as exit 3, and a clean `--force` move dropped the
+local commit while leaving an untracked file alone. One gap the run exposed is
+recorded in `docs/BETA.md`: the installer's `--depth 1` clone has a single
+commit, so a rollback needs `git fetch --unshallow` first, and `void update`
+does not deepen the tree by itself.
 
 ## BUILD-PLAN.md phases
 

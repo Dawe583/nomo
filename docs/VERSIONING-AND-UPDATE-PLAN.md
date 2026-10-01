@@ -95,6 +95,17 @@ follow a bump automatically.
 `package.json`, propagated by a script, and compared against by the gate
 instead of the literal.**
 
+**Implementation note, 2026-10-02.** A parallel lane is building the four
+changes above on the `omp/selfupdate-version` branch, and
+scripts/src/set-version.mjs is the name it is building under. This document
+was not rewritten to describe that work: the branch was not merged here, so
+what exists on it is not verified from this tree, and this section stays the
+specification the implementation is held to. If the shipped script and gate
+diverge from what is written above, the correction belongs in this section
+once the branch is merged and read here, and until then a reader who needs
+the current behaviour should read the script and the gate rather than this
+page. Nothing below section 2 changes on the strength of that note alone.
+
 Concretely, four changes, in this order:
 
 1. **Declare the root manifest authoritative.** `@void/workspace` is the only
