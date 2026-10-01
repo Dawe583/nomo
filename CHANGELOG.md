@@ -4,6 +4,19 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Recovery jobs now carry runtime-derived lineage between adjacent inverses on
+  the same resource. Two consecutive writes to one filesystem path restore the
+  original bytes and mode after restart while a same-byte external rewrite
+  still conflicts; a managed PostgreSQL job likewise restores consecutive
+  updates to one configured row and reconciles a lost response without
+  repeating the inverse. The continuation is bound to the signed job plan,
+  prior operation receipt, adapter and resource scope; it does not widen
+  standalone recovery or unrelated operations.
+- A recovery job that takes over an expired lease now records `supersededBy`
+  in the signed pause. The displaced pause remains visible after restart but no
+  longer blocks later safe recovery jobs. Ordinary unavailable-step pauses
+  still block. MCP server requests also retain their original string or numeric
+  IDs when concurrent success and error replies return through `runProxy`.
 - The agent conversation's `requestDigest` did not see the conversation. Each
   turn hashed only the messages added since the previous turn plus a bare
   message count, so two conversations that reached the same tail through

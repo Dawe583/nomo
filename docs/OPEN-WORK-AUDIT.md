@@ -506,3 +506,26 @@ Two shapes that would work, neither small:
 This is a design decision rather than a defect with an obvious patch, and the
 audit's own classification ("not a one-sitting slice if the lineage design is
 reworked") is the accurate one.
+
+### Follow-up, 2026-10-01: adjacent resource lineage implemented
+
+The two-write reproduction above now passes in the merged `main` tree. The
+runtime derives a continuation only from the preceding restored step in the
+same signed recovery plan, and binds it to the workspace, plan digest,
+operation order, adapter version, resource and scope. Filesystem recovery uses
+the prior signed recovery receipt as the expected revision, preserving conflict
+on an external same-byte rewrite. Managed PostgreSQL supports the bounded
+one-row `UPDATE`→`UPDATE` path and reconciles a lost inverse response after
+restart without applying it twice. Standalone recovery receives no
+continuation.
+
+Evidence: `packages/runtime/src/recovery-job.test.ts` covers filesystem
+write→write restoration and same-byte ABA refusal;
+`packages/connectors/src/postgres/managed.test.ts` covers same-row update
+chains, ABA refusal, and lost-response reconciliation. Those suites and the
+runtime/connectors typechecks passed on 2026-10-01. The
+specific two-write defect documented above is therefore closed. The larger E0
+acceptance in `docs/strategy-2026-09-30/BACKLOG.md` remains partial: its combined
+create→write→write→rename→delete journey, injected same- and cross-path edits
+throughout that journey, and every crash point around the full chain have not
+all been exercised as one acceptance scenario.
