@@ -116,7 +116,13 @@ export function jsonlStore(
       // the bytes can be fsynced before the receipt exists. Without the
       // explicit sync the durability claim in the README was false in the
       // quietest way, green on every test and absent in every crash.
-      const handle = await open(file(workspace), "a");
+      const handle = await open(file(workspace), "a", 0o600);
+      // The mode above applies when the file is created. One that already
+      // existed keeps whatever mode it was created with, so under umask 022 a
+      // ledger written by an older build stayed 0644 and the 0600 this module
+      // claims was documentation rather than behaviour.
+      if (process.platform !== "win32" && (((await handle.stat()).mode & 0o077) !== 0))
+        await handle.chmod(0o600);
       try {
         await handle.writeFile(`${JSON.stringify(entry)}\n`);
         await handle.sync();

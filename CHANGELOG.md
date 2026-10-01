@@ -4,6 +4,13 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- The ledger file was created without a mode, so on a host running umask 022
+  every workspace JSONL was world-readable while the module documented itself
+  as 0600 and `DECISIONS.md` recorded 0600 as the decision. The file is now
+  created owner-only, and an append tightens a file an earlier build left
+  broad rather than leaving the documented mode as prose. Tests run the
+  creation path under umask 022 and 077 and cover the pre-existing 0644 file;
+  Windows ACL behaviour is unchanged and is not claimed.
 - An answer to a server-originated MCP request was forwarded upstream under
   the agent's own request id. The relay read its id map off the session object,
   where the map lives under `maps`, so the lookup found nothing and returned
