@@ -1,18 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { versionedManifests } from "./set-version.mjs";
 
 const root = new URL("../../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 const manifest = (path) => JSON.parse(read(path));
-const packageDirs = readdirSync(new URL("packages/", root), { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && existsSync(new URL(`packages/${entry.name}/package.json`, root)))
-  .map((entry) => `packages/${entry.name}`);
-const directories = [".", ...packageDirs, "apps/control-plane", "scripts"];
+// The setter owns this list, so the gate and the script that writes a version
+// cannot disagree about which manifests carry one.
+const directories = versionedManifests(fileURLToPath(root));
+const ROOT_VERSION = manifest("package.json").version;
+
+/**
+ * The invariant is that every manifest moves together, not that the number is
+ * one particular value, so the comparison below is against the root manifest.
+ * This is the only place a version has to look like a version at all, and the
+ * shape is the release policy's own: three numeric parts, no prerelease.
+ */
+test("the root manifest carries a three-part numeric product version", () => {
+  assert.match(
+    ROOT_VERSION,
+    /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/,
+    `the root manifest is at ${ROOT_VERSION}, which is not a version every manifest can be moved to`,
+  );
+});
 
 /**
  * Packages allowed to be publishable, and why.
@@ -38,7 +53,11 @@ for (const directory of directories) {
     if (directory.startsWith("packages/")) {
       assert.equal(data.name, `@void/${directory.slice("packages/".length)}`);
     }
-    assert.equal(data.version, "0.1.0");
+    assert.equal(
+      data.version,
+      ROOT_VERSION,
+      `${directory} is at ${data.version}, so it did not move with the root manifest at ${ROOT_VERSION}`,
+    );
     if (PUBLISHABLE.has(directory)) {
       // Only the private flag is relaxed. Everything below still applies, and the
       // reason has to exist, or this is a silent exemption.
