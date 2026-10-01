@@ -485,7 +485,7 @@ function assertFileStat(
   if (uid !== undefined && info.uid !== uid)
     throw new Error(`${label} must be owned by the current user: ${file}`);
   if (process.platform !== "win32") {
-    const mode = info.mode & 0o7777;
+    const mode = Number(info.mode) & 0o7777;
     if (mode !== fileMode) {
       throw new Error(
         `${label} must have permissions 0600, got ${mode.toString(8).padStart(4, "0")}: ${file}`,
@@ -507,7 +507,7 @@ function assertDirectoryStat(
   if (uid !== undefined && info.uid !== uid)
     throw new Error(`${label} must be owned by the current user: ${directory}`);
   if (process.platform !== "win32") {
-    const mode = info.mode & 0o7777;
+    const mode = Number(info.mode) & 0o7777;
     if (mode !== directoryMode) {
       throw new Error(
         `${label} must have permissions 0700, got ${mode.toString(8).padStart(4, "0")}: ${directory}`,
