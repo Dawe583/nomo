@@ -8,6 +8,8 @@
 
 **Reality check:** [10K-MRR-REALITY-CHECK.md](10K-MRR-REALITY-CHECK.md). €10k is an upside/stretch target; the working base case is €2k–€5k MRR until actual paid cohorts prove otherwise.
 
+**Marketing strategy:** [VOID-MARKETING-MONETIZATION-RESEARCH-2026.md](VOID-MARKETING-MONETIZATION-RESEARCH-2026.md) · **Social pack:** [VOID-SOCIAL-CONTENT-PACK-2026.md](VOID-SOCIAL-CONTENT-PACK-2026.md)
+
 This is the operating board, not a revenue forecast. A row is complete only when its evidence link exists and another person can reproduce or inspect the result.
 
 ## Executive control panel

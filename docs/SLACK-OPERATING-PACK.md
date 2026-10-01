@@ -43,6 +43,26 @@ flowchart TB
 - [Execution board](10K-MRR-EXECUTION-BOARD.md)
 - [Reality check](10K-MRR-REALITY-CHECK.md)
 
+## Marketing and content system
+
+Use these as the canonical marketing references:
+
+- [Marketing, monetization and evidence strategy](VOID-MARKETING-MONETIZATION-RESEARCH-2026.md)
+- [Ready-to-review social content pack](VOID-SOCIAL-CONTENT-PACK-2026.md)
+
+Marketing must run from one weekly evidence asset, not from a volume calendar:
+
+1. Select one buyer decision and one consequential write workflow.
+2. Build a synthetic or approved fixture with an explicit known limit.
+3. Verify the original and tampered receipt outside the runtime.
+4. Write a claim card and source/rights manifest.
+5. Publish one canonical artifact, then create platform-native derivatives.
+6. Attribute every conversation, evaluation and paid scope to the artifact and source cohort.
+
+**Positioning rule:** do not lead with “AI guardrails,” “secure all agents,” “full visibility,” or “human in the loop.” Lead with: **“Before a consequential agent write, VOID classifies the effect, applies policy, and produces a signed receipt a separate reviewer can verify.”**
+
+**Original content rule:** every public asset must contain a runnable artifact, a counterexample or negative case, and an adjacent non-claim. Never publish a fixture as production certification, compliance proof, customer adoption, model-reasoning proof or universal reversibility.
+
 ## 1. Channel map
 
 | Channel | Use it for | Do not use it for | Required message shape |

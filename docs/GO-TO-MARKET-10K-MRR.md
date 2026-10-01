@@ -6,6 +6,8 @@ Source of truth: this document and the linked GitHub issue. Slack is the operati
 
 Execution layer: [10K-MRR-EXECUTION-BOARD.md](10K-MRR-EXECUTION-BOARD.md) contains the ready-to-run task board, DRI contract, weekly scorecard, evidence gates, content sequence, and stop rules. [SLACK-OPERATING-PACK.md](SLACK-OPERATING-PACK.md) contains the channel map, cadence, pin-ready rules, and message templates. Keep those documents aligned with this strategy; do not create a competing plan in Slack.
 
+Marketing and monetization research: [VOID-MARKETING-MONETIZATION-RESEARCH-2026.md](VOID-MARKETING-MONETIZATION-RESEARCH-2026.md). Ready-to-review social assets: [VOID-SOCIAL-CONTENT-PACK-2026.md](VOID-SOCIAL-CONTENT-PACK-2026.md). These documents sharpen positioning and demand generation; they do not override the revenue reality-check or evidence gates.
+
 > [!IMPORTANT]
 > **Executive status:** €10k MRR is an upside/stretch target. The current operating base case is **€2k–€5k MRR** until two paid accounts, repeatable activation, and source-specific conversion data exist.
 
