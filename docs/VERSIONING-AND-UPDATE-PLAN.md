@@ -622,10 +622,33 @@ code that is already on the machine.
 **The install is a git clone, so rolling back code is a checkout, not an
 uninstall.**
 
+**A shallow install cannot roll back until it is given history.** The installer
+clones with `--depth 1`, which is the right trade for a first install: it is one
+commit and no tags. Verified on 2026-10-02, a fresh `--depth 1` clone reports
+`git rev-list --count HEAD` of 1 and `git tag -l` empty, so the checkout below
+fails with `error: pathspec 'v0.1.0' did not match any file(s) known to git`.
+`void update` fetches commits but never deepens history, so an operator who has
+only ever run `void update` still has nothing to roll back to. Fetch the history
+once:
+
+```sh
+git -C "${VOID_HOME:-$HOME/.local/share/void-cli}" fetch --unshallow --tags
+```
+
+That takes the same tree from 1 commit and 0 tags to the full history and every
+tag, which was measured at 408 commits and 4 tags on 2026-10-02. Then:
+
 ```sh
 git -C "${VOID_HOME:-$HOME/.local/share/void-cli}" checkout v0.1.0
 void --version      # prints: void 0.1.0
 ```
+
+**No `vX.Y.Z` tag exists yet, so that checkout cannot succeed today.** As of
+2026-10-02 the repository carries four tags, all `desktop-v0.1.0-beta.N`, and
+`git tag -l 'v*'` is empty. The rollback procedure above becomes usable when
+section 4's tagging step runs for the first time; until then, the honest
+rollback is a commit the operator names explicitly, and the version in
+`package.json` is the only version label that exists.
 
 The launcher is version-agnostic: it execs the entrypoint inside whatever tree
 it points at, so no reinstall and no PATH change is involved. If a bad version
