@@ -13,10 +13,11 @@ jobs:
   # runs, so a shared 10 minute job deadline left the slow step with whatever
   # the fast ones happened not to use. Windows also pays for owner/ACL checks
   # on private-state opens; keep enough budget for the full runtime, ledger and
-  # proxy matrix without truncating its later recovery tests. Run 164 hit the
-  # Windows runtime step's 30 minute budget before the suite completed; the
-  # 45 minute budget must be verified by the next full Windows run before the
-  # later backup/restore step can serve as acceptance evidence.
+  # proxy matrix without truncating its later recovery tests. Run 172
+  # completed the runtime/ledger/proxy step in 51 minutes, but its conformance
+  # CLI child exceeded the test's 60 second deadline and the containing step
+  # exceeded 15 minutes. Keep bounded Windows-specific time for those complete
+  # suites; verify the new 45/15 minute limits on the next full Windows run.
   manifest:
     strategy:
       fail-fast: false
@@ -24,7 +25,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         node: [24, 26]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 160 || 120 }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -40,6 +41,6 @@ jobs:
       - run: node --test --test-concurrency=2 packages/runtime/src/*.test.ts packages/ledger/src/*.test.ts packages/proxy/src/bin.test.ts
         timeout-minutes: 75
       - run: node --test packages/connectors/src/filesystem/managed.test.ts packages/cli/src/recovery-filesystem.test.ts packages/cli/src/recovery-mcp.test.ts packages/cli/src/recovery-paths.test.ts packages/cli/src/conformance.test.ts
-        timeout-minutes: 15
+        timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 15 }}
       - run: node packages/cli/bin/void.mjs recovery conformance
-        timeout-minutes: 5
+        timeout-minutes: ${{ matrix.os == 'windows-latest' && 15 || 5 }}
