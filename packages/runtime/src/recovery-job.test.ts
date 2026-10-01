@@ -460,6 +460,27 @@ test("an expired lease is superseded with a pause the signed journal can read ba
     outcomes: [],
     residuals: [],
     pause: { code: "lease-expired", operationId: "one" },
+    supersededBy: "taker",
+  });
+  const next = await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "after-takeover",
+    selection: { kind: "run", runId: "run" },
+  });
+  assert.equal(
+    (await f.open().runRecoveryJob("test", next.jobId, async () => true))
+      .status,
+    "partial",
+  );
+  assert.equal(f.recoveries.get("one"), 1);
+  assert.deepEqual(await f.open().recoveryJobStatus("test", "stale"), {
+    jobId: "stale",
+    status: "paused",
+    checkpoint: 0,
+    outcomes: [],
+    residuals: [],
+    pause: { code: "lease-expired", operationId: "one" },
+    supersededBy: "taker",
   });
 });
 

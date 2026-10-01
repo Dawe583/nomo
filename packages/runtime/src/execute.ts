@@ -974,7 +974,14 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
                 "checkpoint",
                 "unknown",
                 "paused",
-              ].includes(candidate.stage),
+              ].includes(candidate.stage) &&
+              !(
+                candidate.stage === "paused" &&
+                typeof candidate.data === "object" &&
+                candidate.data !== null &&
+                !Array.isArray(candidate.data) &&
+                typeof candidate.data.supersededBy === "string"
+              ),
           );
           const reclaimable = blocking.filter((candidate) =>
             leaseVerdict(leaseOf(candidate.data)).reclaimable,
@@ -1010,6 +1017,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
               status: "paused",
               ...staleProgress,
               pause: { code: "lease-expired", operationId: step.operationId },
+              supersededBy: jobId,
             };
             await recordJob(
               tx,

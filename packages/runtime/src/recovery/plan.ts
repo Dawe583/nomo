@@ -51,6 +51,8 @@ export type RecoveryJobResult = {
   outcomes: readonly RecoveryJobStepOutcome[];
   residuals: readonly RecoveryResidual[];
   pause?: { code: RecoveryJobPauseCode; operationId: string };
+  /** Set only when a verified lease takeover displaces this paused job. */
+  supersededBy?: string;
 };
 /**
  * The two reasons a job stops, and the only two a reader may see. A step the
@@ -650,7 +652,15 @@ function validateProgress(
   const data = object(value, "progress payload");
   const keys =
     terminal === "paused"
-      ? ["jobId", "status", "checkpoint", "outcomes", "residuals", "pause"]
+      ? [
+          "jobId",
+          "status",
+          "checkpoint",
+          "outcomes",
+          "residuals",
+          "pause",
+          ...(data.supersededBy === undefined ? [] : ["supersededBy"]),
+        ]
       : terminal
         ? ["jobId", "status", "checkpoint", "outcomes", "residuals"]
         : ["checkpoint", "outcomes", "residuals"];
@@ -718,6 +728,11 @@ function validateProgress(
         pause.operationId !== plan.steps[checkpoint]?.operationId
       )
         throw new Error("Invalid recovery job pause.");
+      if (
+        data.supersededBy !== undefined &&
+        (typeof data.supersededBy !== "string" || data.supersededBy.length === 0)
+      )
+        throw new Error("Invalid recovery job supersession.");
     }
   }
 }

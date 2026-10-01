@@ -373,14 +373,14 @@ describe("runProxy", () => {
   });
 });
 
-test("a server request is answered upstream under the server's own id", async () => {
+test("concurrent server requests restore typed upstream ids for success and error replies", async () => {
   const dir = await mkdtemp(join(tmpdir(), "void-proxy-server-request-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText("allow"));
   const agentInput = lineQueue();
   const agentOutput: Array<Record<string, unknown>> = [];
   const upstreamSeen: Array<Record<string, unknown>> = [];
-  const serverId = "server-42";
+  const serverIds: Array<string | number> = ["server-42", 42];
 
   const run = runProxy({
     keyProvider: keyProviderFromPkcs8(
@@ -418,18 +418,21 @@ test("a server request is answered upstream under the server's own id", async ()
               },
             }),
           );
-          // A question of the server's own, carrying an id the agent never saw.
-          events.onMessage(
-            JSON.stringify({
-              jsonrpc: "2.0",
-              id: serverId,
-              method: "roots/list",
-              params: {},
-            }),
-          );
+          for (const id of serverIds)
+            events.onMessage(
+              JSON.stringify({
+                jsonrpc: "2.0",
+                id,
+                method: "roots/list",
+                params: { request: id },
+              }),
+            );
           return;
         }
-        if (message.id !== undefined)
+        if (
+          !serverIds.includes(message.id as string | number) &&
+          message.id !== undefined
+        )
           events.onMessage(
             JSON.stringify({
               jsonrpc: "2.0",
@@ -458,22 +461,59 @@ test("a server request is answered upstream under the server's own id", async ()
     }),
   );
   await waitFor(
-    () => agentOutput.some((message) => message.method === "roots/list"),
-    "the server request to reach the agent",
+    () =>
+      agentOutput.filter((message) => message.method === "roots/list").length ===
+      2,
+    "both server requests to reach the agent",
   );
-  const relayed = agentOutput.find((message) => message.method === "roots/list")!;
-  assert.notEqual(relayed.id, serverId);
-
+  const relayed = agentOutput.filter((message) => message.method === "roots/list");
+  assert.notEqual(relayed[0]!.id, relayed[1]!.id);
+  const agentIdForServerId = new Map(
+    relayed.map((message) => [
+      (message.params as { request: string | number }).request,
+      message.id as string | number,
+    ]),
+  );
   agentInput.push(
-    JSON.stringify({ jsonrpc: "2.0", id: relayed.id, result: { rootUris: [] } }),
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: agentIdForServerId.get(42),
+      error: { code: -32001, message: "declined", data: { retryable: false } },
+    }),
+  );
+  agentInput.push(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: agentIdForServerId.get("server-42"),
+      result: { rootUris: ["file:///workspace"] },
+    }),
   );
   await waitFor(
-    () => upstreamSeen.some((message) => message.id === serverId),
-    "the answer to reach the server under the server id",
+    () =>
+      serverIds.every((id) =>
+        upstreamSeen.some((message) => message.id === id),
+      ),
+    "both replies to reach upstream",
   );
-  assert.deepEqual(
-    upstreamSeen.filter((message) => message.id === serverId),
-    [{ jsonrpc: "2.0", id: serverId, result: { rootUris: [] } }],
+  assert.ok(
+    upstreamSeen.some(
+      (message) =>
+        message.id === "server-42" &&
+        JSON.stringify(message.result) ===
+          JSON.stringify({ rootUris: ["file:///workspace"] }),
+    ),
+  );
+  assert.ok(
+    upstreamSeen.some(
+      (message) =>
+        message.id === 42 &&
+        JSON.stringify(message.error) ===
+          JSON.stringify({
+            code: -32001,
+            message: "declined",
+            data: { retryable: false },
+          }),
+    ),
   );
 
   agentInput.close();
