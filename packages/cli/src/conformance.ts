@@ -70,7 +70,7 @@ export const filesystemConformanceProfile = {
   schema: "void.adapter-capability.v2",
   adapter: { id: "filesystem.managed", version: "1" },
   authority: "scope-only",
-  operations: filesystemOperations,
+  operations: [...filesystemOperations],
   boundary: "cooperative-regular-file-paths",
   maxDecodedBytes: 1024 * 1024,
   recovery: { posix: "bytes-and-mode", win32: "bytes-writable-files-only" },
@@ -187,12 +187,21 @@ export async function filesystemConformanceFixture(
   }
 }
 
+/**
+ * Every scenario `gitConformanceFixture` implements, POSIX only because the
+ * whole adapter is. This is deliberately NOT `gitConformanceProfile.operations`:
+ * a guard handed the profile's own list approves whatever the profile lists,
+ * so it would wave through the exact operation it exists to catch. The profile
+ * publishes this list instead, and the guard below checks against it.
+ */
+const gitScenarios = ["create", "write", "delete", "rename", "stage", "unstage", "commit"] as const;
+
 
 export const gitConformanceProfile = {
   schema: "void.adapter-capability.v2",
   adapter: { id: "git.managed", version: "1" },
   authority: "scope-only",
-  operations: process.platform === "win32" ? ([] as const) : (["create", "write", "delete", "rename", "stage", "unstage", "commit"] as const),
+  operations: process.platform === "win32" ? ([] as const) : [...gitScenarios],
   boundary: "cooperative-posix-single-git-surface",
   maxDecodedBytes: 1024 * 1024,
   recovery: { posix: "selected-worktree-bytes-mode-or-logical-index-entry", win32: "unsupported" },
@@ -223,7 +232,7 @@ export const gitConformanceProfile = {
 type GitScenario = (typeof gitConformanceProfile.operations)[number];
 export async function gitConformanceFixture(operation: GitScenario = "write"): Promise<ConformanceFixture> {
   if (process.platform === "win32") throw new Error("git.managed is unsupported on Windows");
-  requireScenario("git.managed", operation, gitConformanceProfile.operations);
+  requireScenario("git.managed", operation, gitScenarios);
   const dir = await mkdtemp(join(tmpdir(), "void-git-conformance-"));
   try {
     const root = join(dir, "repo");
@@ -337,11 +346,19 @@ export async function gitConformanceFixture(operation: GitScenario = "write"): P
   } catch (error) { await rm(dir, { recursive: true, force: true }); throw error; }
 }
 
+/**
+ * What `managedDocumentsConformanceFixture` implements, kept separate from
+ * the profile's published `operations` for the same reason as `gitScenarios`:
+ * a guard that reads the profile's own list cannot catch the profile
+ * advertising something the fixture does not build.
+ */
+const managedDocumentsScenarios = ["write", "delete"] as const;
+
 export const managedDocumentsConformanceProfile = {
   schema: "void.adapter-capability.v2",
   adapter: { id: "managed-documents", version: "1" },
   authority: "scope-only",
-  operations: ["write", "delete"],
+  operations: [...managedDocumentsScenarios],
   boundary: "managed-text-documents-no-host-filesystem",
   maxDecodedBytes: 256_000,
   recovery: {
@@ -459,11 +476,7 @@ type ManagedDocumentsScenario = "write" | "delete";
 export async function managedDocumentsConformanceFixture(
   operation: ManagedDocumentsScenario = "write",
 ): Promise<ConformanceFixture> {
-  requireScenario(
-    "managed-documents",
-    operation,
-    managedDocumentsConformanceProfile.operations,
-  );
+  requireScenario("managed-documents", operation, managedDocumentsScenarios);
   const dir = await mkdtemp(join(tmpdir(), "void-documents-conformance-"));
   try {
     const path = "sample.md",
