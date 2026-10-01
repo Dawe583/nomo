@@ -19,8 +19,9 @@
  * required below.
  *
  * The check is deliberately structural rather than a YAML round trip: this
- * workspace has no YAML dependency, and a line scan is enough to see whether a
- * step and its job declare a budget.
+ * workspace has no YAML dependency. Its timeout reader accepts literals and
+ * the explicit Windows-vs-Linux matrix expression used by the manifest
+ * workflow, then checks the budget separately for both platforms.
  */
 
 import assert from "node:assert/strict";
@@ -58,47 +59,86 @@ function jobs(source) {
     }
     if (!insideJobs) return;
     if (/^ {2}[A-Za-z_][\w-]*:\s*$/.test(line)) {
-      current = { name: line.trim().slice(0, -1), line: number, timeout: 0, steps: [] };
+      current = {
+        name: line.trim().slice(0, -1),
+        line: number,
+        timeout: { linux: 0, windows: 0 },
+        steps: [],
+      };
       found.push(current);
       return;
     }
     if (current === null) return;
-    const jobKey = /^ {4}timeout-minutes:\s*(\d+)/.exec(line);
+    const jobKey = /^ {4}timeout-minutes:\s*(.*?)\s*$/.exec(line);
     if (jobKey !== null) {
-      current.timeout = Number.parseInt(jobKey[1], 10);
+      current.timeout = timeoutByPlatform(jobKey[1]);
       return;
     }
     if (/^ {6}-\s+(?:run|uses|name):/.test(line)) {
-      current.steps.push({ line: number, runsCommand: /-\s+run:/.test(line), timeout: 0 });
+      current.steps.push({
+        line: number,
+        runsCommand: /-\s+run:/.test(line),
+        timeout: { linux: 0, windows: 0 },
+      });
       return;
     }
-    const stepKey = /^ {8}timeout-minutes:\s*(\d+)/.exec(line);
+    const stepKey = /^ {8}timeout-minutes:\s*(.*?)\s*$/.exec(line);
     if (stepKey !== null && current.steps.length > 0) {
-      current.steps[current.steps.length - 1].timeout = Number.parseInt(stepKey[1], 10);
+      current.steps[current.steps.length - 1].timeout = timeoutByPlatform(stepKey[1]);
     }
   });
   return found;
 }
 
+function timeoutByPlatform(value) {
+  const literal = /^(\d+)$/.exec(value);
+  if (literal !== null) {
+    const minutes = Number.parseInt(literal[1], 10);
+    return { linux: minutes, windows: minutes };
+  }
+  const matrix =
+    /^\$\{\{\s*matrix\.os\s*==\s*'windows-latest'\s*&&\s*(\d+)\s*\|\|\s*(\d+)\s*\}\}$/.exec(
+      value,
+    );
+  assert.ok(matrix !== null, `Unsupported timeout-minutes value: ${value}`);
+  return {
+    linux: Number.parseInt(matrix[2], 10),
+    windows: Number.parseInt(matrix[1], 10),
+  };
+}
+
 for (const workflow of everyWorkflow) {
   const budgetEveryStep = perStepBudgeted.includes(workflow);
-  test(`${workflow} budgets its job, and ${budgetEveryStep ? "each step" : "no step runtime is claimed unmeasured"}`, () => {
-    const entries = jobs(readFileSync(workflow, "utf8"));
-    assert.ok(entries.length > 0, `${workflow} declares no jobs`);
-    for (const entry of entries) {
-      assert.ok(entry.timeout > 0, `${workflow}: job ${entry.name} has no timeout-minutes`);
-      if (!budgetEveryStep) continue;
-      const unbudgeted = entry.steps.filter((step) => step.runsCommand && step.timeout === 0);
-      assert.deepEqual(
-        unbudgeted.map((step) => step.line),
-        [],
-        `${workflow}: job ${entry.name} runs commands with no budget of their own`,
-      );
-      const total = entry.steps.reduce((sum, step) => sum + step.timeout, 0);
-      assert.ok(
-        entry.timeout >= total,
-        `${workflow}: job ${entry.name} allows ${entry.timeout} minutes for steps totalling ${total}`,
-      );
-    }
-  });
+  test(
+    `${workflow} budgets its job, and ${budgetEveryStep ? "each step" : "no step runtime is claimed unmeasured"}`,
+    () => {
+      const entries = jobs(readFileSync(workflow, "utf8"));
+      assert.ok(entries.length > 0, `${workflow} declares no jobs`);
+      for (const entry of entries) {
+        for (const platform of ["linux", "windows"]) {
+          assert.ok(
+            entry.timeout[platform] > 0,
+            `${workflow}: job ${entry.name} has no ${platform} timeout-minutes`,
+          );
+          if (!budgetEveryStep) continue;
+          const unbudgeted = entry.steps.filter(
+            (step) => step.runsCommand && step.timeout[platform] === 0,
+          );
+          assert.deepEqual(
+            unbudgeted.map((step) => step.line),
+            [],
+            `${workflow}: job ${entry.name} runs commands with no ${platform} budget of their own`,
+          );
+          const total = entry.steps.reduce(
+            (sum, step) => sum + step.timeout[platform],
+            0,
+          );
+          assert.ok(
+            entry.timeout[platform] >= total,
+            `${workflow}: job ${entry.name} allows ${entry.timeout[platform]} ${platform} minutes for steps totalling ${total}`,
+          );
+        }
+      }
+    },
+  );
 }
