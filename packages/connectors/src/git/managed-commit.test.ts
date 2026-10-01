@@ -775,7 +775,15 @@ type PrepareDrift = {
 };
 
 const prepareDrifts: PrepareDrift[] = [
-  { name: "HEAD and branch", arrange: (f) => { f.run("commit", "-qm", "human"); } },
+  {
+    name: "HEAD and branch",
+    arrange: (f) => {
+      const parent = f.run("rev-parse", "HEAD");
+      const tree = f.run("rev-parse", "HEAD^{tree}");
+      const moved = f.run("commit-tree", tree, "-p", parent, "-m", "human");
+      f.run("update-ref", "refs/heads/main", moved, parent);
+    },
+  },
   { name: "branch reflog append", arrange: (f) => writeFile(f.gitPath("logs/refs/heads/main"), "foreign reflog\n", { flag: "a" }) },
   {
     name: "branch reflog away and back",
