@@ -101,7 +101,16 @@ if [ -d "$VOID_HOME/.git" ]; then
 else
   mkdir -p "$(dirname "$VOID_HOME")"
   echo "cloning VOID into $VOID_HOME ..."
-  git clone --depth 1 https://github.com/Dawe583/void.git "$VOID_HOME"
+  # `set -e` would let git's own 128 escape here, and this script documents 1
+  # for a failed clone. A caller checking one exit code must not have to know
+  # which tool failed.
+  if ! git clone --depth 1 https://github.com/Dawe583/void.git "$VOID_HOME"; then
+    echo "error: cloning VOID into $VOID_HOME failed." >&2
+    echo "       Check the network, and check that you can reach a private" >&2
+    echo "       repository. If VOID_HOME was created by a failed earlier run," >&2
+    echo "       remove it and run this again." >&2
+    exit 1
+  fi
 fi
 
 if [ ! -f "$VOID_HOME/$entry" ]; then
