@@ -11,6 +11,7 @@ import { retainedKeyProvider } from "../../ledger/src/sign.ts";
 import {
   auditPrivatePath,
   auditPrivateTree,
+  sanitizeWorkspace,
 } from "../../ledger/src/hardening.ts";
 import {
   pinnedKeyFile,
