@@ -75,6 +75,40 @@ test("conformance refuses production config and unknown adapters before running"
     );
 });
 
+test("a scenario no fixture implements is refused instead of measured as its nearest implemented neighbour", async () => {
+  // `fixtureFor` casts the profile's published operation to the fixture's
+  // scenario union, so an operation a profile lists and no fixture builds
+  // used to fall through to the nearest implemented one and report that
+  // operation green: the gate published a capability it had not measured.
+  // Every fixture refuses an unimplemented scenario, so the run cannot turn
+  // an absent measurement into a passing report.
+  const unimplemented = "rebase";
+  for (const [adapterId, build] of [
+    ["filesystem.managed", () => filesystemConformanceFixture(unimplemented as never)],
+    ["git.managed", () => gitConformanceFixture(unimplemented as never)],
+    ["managed-documents", () => managedDocumentsConformanceFixture(unimplemented as never)],
+  ] as const) {
+    await assert.rejects(
+      async () => {
+        const fixture = await build();
+        await fixture.dispose();
+      },
+      new RegExp(`Unknown ${adapterId.replace(".", "\\.")} conformance scenario "${unimplemented}"`),
+    );
+  }
+  // And end to end through the shared runtime: an unimplemented scenario
+  // fails every case rather than passing on the measurements of another one.
+  const report = await runAdapterConformance(
+    gitConformanceProfile.adapter,
+    () => gitConformanceFixture(unimplemented as never),
+  );
+  assert.equal(report.passed, false);
+  assert.deepEqual(
+    report.checks.map((check: { passed: boolean }) => check.passed),
+    CONFORMANCE_CASES.map(() => false),
+  );
+});
+
 test("conformance catches an adapter that reports success without changing state", async () => {
   let disposed = 0;
   const report = await runAdapterConformance(
