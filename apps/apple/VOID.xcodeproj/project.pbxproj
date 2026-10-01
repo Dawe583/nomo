@@ -17,6 +17,7 @@
 		688D33D3D5B2097353C991F5 /* ChatCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F288976D3832D6DB693729E /* ChatCopy.swift */; };
 		722993CDECFB04A1F4FBE154 /* VOIDAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E50C10522810F0B84CAC786B /* VOIDAppTests.swift */; };
 		930DD864D064C0E003D5E646 /* CompanionProtocolKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8EC5DA2354E1DA2FD25E756B /* CompanionProtocolKit */; };
+		D5A8262F03A4E9B1C17F6810 /* CompanionProtocolKit in Frameworks */ = {isa = PBXBuildFile; productRef = C78916450ED3A2967C5B84F1 /* CompanionProtocolKit */; };
 		ACDD3740696185BFCCA0B6D3 /* AppCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742A40AD788CD93EE6DD4DCD /* AppCopy.swift */; };
 		ACF2935E0160EFA29DAAA176 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD26D8B1980FF8794A50A1E3 /* OnboardingView.swift */; };
 		B849FD0F2565401FC53BD1E1 /* VOIDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09504F74A63AB5F84331C97B /* VOIDApp.swift */; };
@@ -71,6 +72,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				930DD864D064C0E003D5E646 /* CompanionProtocolKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1BD84E3BA91350D58B9F7C2A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D5A8262F03A4E9B1C17F6810 /* CompanionProtocolKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -188,6 +197,7 @@
 			buildConfigurationList = 7FD2858FFCBE002067B87CDC /* Build configuration list for PBXNativeTarget "VOIDTests" */;
 			buildPhases = (
 				4D86AB836E244C978203D710 /* Sources */,
+				1BD84E3BA91350D58B9F7C2A /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,6 +206,7 @@
 			);
 			name = VOIDTests;
 			packageProductDependencies = (
+				C78916450ED3A2967C5B84F1 /* CompanionProtocolKit */,
 			);
 			productName = VOIDTests;
 			productReference = 748B3398565D1A5E789B105E /* VOIDTests.xctest */;
@@ -592,6 +603,11 @@
 /* Begin XCSwiftPackageProductDependency section */
 		8EC5DA2354E1DA2FD25E756B /* CompanionProtocolKit */ = {
 			isa = XCSwiftPackageProductDependency;
+			productName = CompanionProtocolKit;
+		};
+		C78916450ED3A2967C5B84F1 /* CompanionProtocolKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E8AE190FFEAE08DD4A030E2 /* XCLocalSwiftPackageReference "CompanionProtocolKit" */;
 			productName = CompanionProtocolKit;
 		};
 /* End XCSwiftPackageProductDependency section */
