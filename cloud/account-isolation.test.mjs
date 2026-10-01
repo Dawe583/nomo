@@ -46,7 +46,11 @@ test("two verified accounts cannot read or change each other's cloud rows", {
   });
   const base = `http://127.0.0.1:${server.address().port}`;
   const cookie = (owner) => `__Host-void-account=${sealSession({
-    userId: owner, accessToken: `account:${owner}`, expiresAt: Date.now() + 60000,
+    userId: owner,
+    accessToken: `account:${owner}`,
+    refreshToken: `refresh:${owner}`,
+    accessTokenExpiresAt: Date.now() + 60 * 60 * 1000,
+    expiresAt: Date.now() + 60000,
   }, secret)}`;
   const request = async (owner, path, method = "GET", body) => {
     const response = await fetch(base + path, {

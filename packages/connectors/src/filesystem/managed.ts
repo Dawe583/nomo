@@ -197,6 +197,7 @@ export function managedFilesystemAdapter(options: {
       if (
         BigInt(count) !== stat.size ||
         stat.ctimeNs !== after.ctimeNs ||
+        stat.mtimeNs !== after.mtimeNs ||
         stat.size !== after.size
       )
         throw new Error("File changed during capture.");
@@ -211,6 +212,7 @@ export function managedFilesystemAdapter(options: {
           String(stat.dev),
           String(stat.ino),
           String(stat.ctimeNs),
+          String(stat.mtimeNs),
           String(stat.uid),
           String(stat.gid),
         ]),

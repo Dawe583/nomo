@@ -43,7 +43,13 @@ export type RecoveryOutcome = {
 /** Runtime-derived proof that the immediately newer operation in a recovery
  * job was restored. Callers must never supply this to standalone recovery. */
 export type RecoveryContinuation = {
+  schema: "void.recovery-lineage.v1";
+  workspace: string;
+  jobId: string;
+  planDigest: string;
+  stepIndex: number;
   operationId: string;
+  predecessorOperationId: string;
   prepared: Prepared;
   outcome: Outcome;
   recovery: RecoveryOutcome;
@@ -84,5 +90,12 @@ export interface RecoveryAdapter {
     prepared: Prepared,
     outcome: Outcome,
     recoveryId: string,
+  ): Promise<RecoveryOutcome | { status: "unknown" }>;
+  /** Reconciliation counterpart for a lineage-bound inverse receipt. */
+  reconcileRecoveryWithContinuation?(
+    prepared: Prepared,
+    outcome: Outcome,
+    recoveryId: string,
+    previous: RecoveryContinuation,
   ): Promise<RecoveryOutcome | { status: "unknown" }>;
 }

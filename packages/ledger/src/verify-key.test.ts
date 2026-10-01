@@ -157,7 +157,9 @@ describe("pinVerificationKey", () => {
     assert.equal(pinned.keyId, keyId);
     assert.equal(pinned.created, true);
     assert.equal(pinned.path, join(dir, ".void", "trust", "verify-ed25519.spki"));
-    assert.equal((await stat(pinned.path)).mode & 0o777, 0o400);
+    const trustMode = (await stat(pinned.path)).mode & 0o777;
+    if (process.platform === "win32") assert.equal(trustMode & 0o222, 0);
+    else assert.equal(trustMode, 0o400);
     assert.equal((await readFile(pinned.path, "utf8")).trim(), Buffer.from(spki).toString("base64"));
 
     const resolved = await resolveVerificationKey({ env: {}, home: dir, allowDefaultTrustFile: true });

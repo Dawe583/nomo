@@ -182,7 +182,11 @@ const terminalAdapter = (onExecute: () => void): RecoveryAdapter => ({
 test("two workers sharing one account cannot both spend the last unit", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-shared-budget-"));
   const budgetFile = join(dir, "budget.sqlite");
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const stores: Array<{ close?: () => unknown }> = [];
+  t.after(async () => {
+    for (const store of stores) await store.close?.();
+    await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  });
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const key = randomBytes(32);
   let dispatches = 0;
@@ -194,6 +198,7 @@ test("two workers sharing one account cannot both spend the last unit", async (t
   // can refuse the second dispatch is the shared account.
   const worker = async (name: string) => {
     const store = await sqliteBudgetStore(budgetFile);
+    stores.push(store);
     return {
       runtime: recoveryRuntime({
         journal: localOperationJournal(join(dir, `journal-${name}`), signer),
@@ -208,15 +213,10 @@ test("two workers sharing one account cannot both spend the last unit", async (t
           budget: { dailyLimit: 1 },
         }),
       }),
-      close: () => store.close?.(),
     };
   };
   const left = await worker("left"),
     right = await worker("right");
-  t.after(() => {
-    left.close();
-    right.close();
-  });
   const request = (operationId: string) => ({
     workspace: "test",
     operationId,
@@ -235,7 +235,7 @@ test("two workers sharing one account cannot both spend the last unit", async (t
   // A reader that joined after both dispatches sees the charge either worker
   // wrote, and the version is the one both of them agreed on.
   const spend = await sqliteBudgetStore(budgetFile);
-  t.after(() => spend.close?.());
+  stores.push(spend);
   const ledger = serverBudgetLedger({
     store: spend,
     account: "shared",
@@ -251,7 +251,17 @@ test("two workers sharing one account cannot both spend the last unit", async (t
 test("a restarted executor does not re-observe an already dispatched irreversible charge", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-restart-budget-"));
   const budgetFile = join(dir, "budget.sqlite");
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const stores: Array<{ close?: () => unknown }> = [];
+  let child: ReturnType<typeof fork> | undefined;
+  t.after(async () => {
+    if (child && child.exitCode === null && child.signalCode === null) {
+      const exited = once(child, "exit").catch(() => []);
+      child.kill("SIGKILL");
+      await exited;
+    }
+    for (const store of stores) await store.close?.();
+    await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  });
   const key = randomBytes(32);
   const request = {
     workspace: "test",
@@ -282,12 +292,9 @@ await recoveryRuntime({
 }).execute(${JSON.stringify(request)});
 `,
   );
-  const child = fork(worker, [], {
+  child = fork(worker, [], {
     env: { ...process.env, TEST_ROOT: dir, TEST_KEY: key.toString("base64") },
     stdio: ["ignore", "ignore", "pipe", "ipc"],
-  });
-  t.after(() => {
-    if (child.exitCode === null) child.kill("SIGKILL");
   });
   const [message] = await once(child, "message", {
     signal: AbortSignal.timeout(15_000),
@@ -299,7 +306,7 @@ await recoveryRuntime({
   // A fresh store, no memory of the dead process: the unit it reserved before
   // dispatching is still charged, and still unfinished.
   const store = await sqliteBudgetStore(budgetFile);
-  t.after(() => store.close?.());
+  stores.push(store);
   const account = serverBudgetLedger({
     store,
     account: "shared",

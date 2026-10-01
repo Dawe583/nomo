@@ -263,6 +263,34 @@ test("unknown job resumes after reconciliation without a second inverse", async 
   assert.equal(f.recoveries.get("one"), 1);
 });
 
+test("unsupported recovery reconciliation stays unknown without repeating the inverse", async (t) => {
+  const f = await fixture(t);
+  f.adapter.reconcileRecovery = undefined;
+  await f.execute("one", "run");
+  await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "unsupported-reconcile",
+    selection: { kind: "run", runId: "run" },
+  });
+  f.lose("one");
+  assert.equal(
+    (
+      await f.open().runRecoveryJob(
+        "test",
+        "unsupported-reconcile",
+        async () => true,
+      )
+    ).status,
+    "unknown",
+  );
+  f.lose(undefined);
+  assert.equal(
+    (await f.open().reconcileRecovery("test", "one")).status,
+    "unknown",
+  );
+  assert.equal(f.recoveries.get("one"), 1);
+});
+
 test("compensation completes its step but keeps the job partial", async (t) => {
   const f = await fixture(t);
   f.compensate("one");
@@ -955,7 +983,8 @@ test("filesystem recovery job restores adjacent writes to one existing file", as
   );
   assert.equal(result.status, "restored");
   assert.equal(await readFile(join(f.root, "shared.txt"), "utf8"), "original");
-  assert.equal((await stat(join(f.root, "shared.txt"))).mode & 0o777, 0o640);
+  if (process.platform !== "win32")
+    assert.equal((await stat(join(f.root, "shared.txt"))).mode & 0o777, 0o640);
   const stored = await runtime.recoveryJobStatus("test", "chain");
   assert.equal("status" in stored ? stored.status : "plan", "restored");
   assert.equal(plan.steps.length, 2);
