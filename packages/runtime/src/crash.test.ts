@@ -341,8 +341,10 @@ await recoveryRuntime({
       throw new Error("unused");
     },
   };
-  const restart = async (adapters: readonly RecoveryAdapter[]) =>
-    recoveryRuntime({
+  const restart = async (adapters: readonly RecoveryAdapter[]) => {
+    const restartedStore = await sqliteBudgetStore(budgetFile);
+    stores.push(restartedStore);
+    return recoveryRuntime({
       journal: localOperationJournal(
         join(dir, "journal"),
         await devKeyProvider({ dir: join(dir, "keys"), env: {} }),
@@ -352,11 +354,12 @@ await recoveryRuntime({
       authorize: async () => true,
       requireRecoverable: false,
       budgetLedger: serverBudgetLedger({
-        store: await sqliteBudgetStore(budgetFile),
+        store: restartedStore,
         account: "shared",
         budget: { dailyLimit: 1 },
       }),
     });
+  };
   assert.equal(
     (await (await restart([adapter])).execute(request)).status,
     "unknown",
