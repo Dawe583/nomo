@@ -312,7 +312,7 @@ test("every dead path in a record document is inventoried with a reason", () => 
     for (const dead of deadPaths(read(file))) {
       seen.add(dead);
       const path = dead.slice(0, dead.lastIndexOf(":"));
-      if (!(path in INVENTORY)) unlisted.push(`${file}: ${dead}`);
+      if (!Object.hasOwn(INVENTORY, path)) unlisted.push(`${file}: ${dead}`);
     }
   }
   assert.deepEqual(
@@ -398,7 +398,7 @@ test("the inventory covers every pre-split path the pack still names", () => {
   for (const file of pack) {
     for (const dead of deadPaths(read(file))) {
       const path = dead.slice(0, dead.lastIndexOf(":"));
-      if (!(path in INVENTORY)) strays.push(`${file}: ${dead}`);
+      if (!Object.hasOwn(INVENTORY, path)) strays.push(`${file}: ${dead}`);
     }
   }
   assert.deepEqual(
