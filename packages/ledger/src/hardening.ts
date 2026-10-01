@@ -15,6 +15,53 @@ const runFile = promisify(execFile);
 const directoryMode = 0o700;
 const fileMode = 0o600;
 const WORKSPACE_PATTERN = /^[a-z0-9._-]+$/;
+// Windows ACL queries start Windows PowerShell for each check. Concurrent
+// operations commonly validate the same path at once, so share only identical
+// in-flight checks and remember the ancestor chain once it has been proven
+// private. The validated ancestors are owned by the current user, SYSTEM, or
+// administrators; another principal cannot replace them after validation.
+// Hot paths can reuse directory ACL checks, while the target file ACL is still
+// checked after every open. Explicit audit/assert calls force a fresh check.
+// Same-user changes remain outside the storage isolation guarantee, and
+// opened-file identity is checked on every Windows open.
+const windowsAclChecks = new Map<string, Promise<void>>();
+const verifiedWindowsAncestors = new Set<string>();
+const verifiedWindowsPrivateParents = new Set<string>();
+const verifiedWindowsDirectories = new Set<string>();
+
+function windowsPathKey(path: string): string {
+  return resolve(path).replaceAll("/", "\\").toLowerCase();
+}
+
+function windowsDirectories(path: string, includePath: boolean): string[] {
+  const directories: string[] = [];
+  let current = includePath ? resolve(path) : dirname(resolve(path));
+  for (;;) {
+    directories.push(current);
+    const parent = dirname(current);
+    if (parent === current) return directories;
+    current = parent;
+  }
+}
+
+function shareWindowsAclCheck(
+  key: string,
+  check: () => Promise<void>,
+): Promise<void> {
+  const existing = windowsAclChecks.get(key);
+  if (existing !== undefined) return existing;
+  const pending = Promise.resolve().then(check);
+  windowsAclChecks.set(key, pending);
+  void pending.then(
+    () => {
+      if (windowsAclChecks.get(key) === pending) windowsAclChecks.delete(key);
+    },
+    () => {
+      if (windowsAclChecks.get(key) === pending) windowsAclChecks.delete(key);
+    },
+  );
+  return pending;
+}
 
 export type PrivatePathKind = "file" | "directory";
 export type PrivatePathAudit =
@@ -63,7 +110,41 @@ async function windowsPathAcl(
   kind: PrivatePathKind,
   protect = false,
   leafToCheck?: string,
+  allowVerified = false,
 ): Promise<void> {
+  const pathKey = windowsPathKey(path);
+  if (
+    allowVerified &&
+    !protect &&
+    kind === "directory" &&
+    leafToCheck === undefined &&
+    verifiedWindowsDirectories.has(pathKey)
+  )
+    return;
+  const ancestorDirectories = windowsDirectories(path, false);
+  const key = [
+    "path",
+    pathKey,
+    kind,
+    protect ? "protect" : "check",
+    leafToCheck === undefined ? "" : windowsPathKey(leafToCheck),
+  ].join(":");
+  await shareWindowsAclCheck(key, () =>
+    checkWindowsPathAcl(path, kind, protect, leafToCheck, ancestorDirectories),
+  );
+}
+
+async function checkWindowsPathAcl(
+  path: string,
+  kind: PrivatePathKind,
+  protect: boolean,
+  leafToCheck: string | undefined,
+  ancestorDirectories: readonly string[],
+): Promise<void> {
+  const immediateParent = ancestorDirectories[0]!;
+  const checkAncestors = !ancestorDirectories.every((directory) =>
+    verifiedWindowsAncestors.has(windowsPathKey(directory)),
+  ) || !verifiedWindowsPrivateParents.has(windowsPathKey(immediateParent));
   const script = `
 $ErrorActionPreference = 'Stop'
 $file = $env:VOID_ACL_FILE
@@ -90,6 +171,7 @@ if ($env:VOID_ACL_LEAF) {
     if ($null -ne $leaf -and ($leaf.Attributes -band $reparsePoint) -ne 0) { throw 'leaf path is a reparse point' }
   }
 }
+if ($env:VOID_ACL_CHECK_ANCESTORS -ne '0') {
 $current = [System.IO.DirectoryInfo]::new([System.IO.Path]::GetDirectoryName($file))
 $replaceMask = [System.Security.AccessControl.FileSystemRights]::Delete -bor [System.Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles -bor [System.Security.AccessControl.FileSystemRights]::ChangePermissions -bor [System.Security.AccessControl.FileSystemRights]::TakeOwnership
 $firstParent = $true
@@ -116,6 +198,7 @@ while ($null -ne $current) {
   if ($firstParent -and (-not $parentReadable -or -not $parentWritable -or $parentDenied)) { throw 'parent ACL does not grant owner effective read and write access' }
   $current = $current.Parent
   $firstParent = $false
+}
 }
 if ($env:VOID_ACL_PROTECT -eq '1') {
   if ($kind -eq 'directory') { $acl = New-Object System.Security.AccessControl.DirectorySecurity }
@@ -156,6 +239,7 @@ if (-not $readable -or -not $writable -or $denied) { throw 'ACL does not grant o
       VOID_ACL_FILE: path,
       VOID_ACL_KIND: kind,
       VOID_ACL_PROTECT: protect ? "1" : "0",
+      VOID_ACL_CHECK_ANCESTORS: checkAncestors ? "1" : "0",
       ...(leafToCheck ? { VOID_ACL_LEAF: leafToCheck } : {}),
     });
   } catch (error) {
@@ -170,6 +254,11 @@ if (-not $readable -or -not $writable -or $denied) { throw 'ACL does not grant o
       },
     );
   }
+  for (const directory of ancestorDirectories)
+    verifiedWindowsAncestors.add(windowsPathKey(directory));
+  verifiedWindowsPrivateParents.add(windowsPathKey(immediateParent));
+  if (kind === "directory")
+    verifiedWindowsDirectories.add(windowsPathKey(path));
 }
 
 async function windowsPrivateTreeAcl(root: string): Promise<void> {
@@ -208,6 +297,29 @@ foreach ($item in $items) {
 }
 
 async function windowsParentAcl(directory: string): Promise<void> {
+  const directories = windowsDirectories(directory, true);
+  if (
+    directories.every((candidate) =>
+      verifiedWindowsAncestors.has(windowsPathKey(candidate)),
+    )
+  )
+    return;
+  await shareWindowsAclCheck(
+    `parents:${windowsPathKey(directory)}`,
+    () => checkWindowsParentAcl(directory, directories),
+  );
+}
+
+async function checkWindowsParentAcl(
+  directory: string,
+  directories: readonly string[],
+): Promise<void> {
+  if (
+    directories.every((candidate) =>
+      verifiedWindowsAncestors.has(windowsPathKey(candidate)),
+    )
+  )
+    return;
   const script = `
 $ErrorActionPreference = 'Stop'
 $current = [System.IO.DirectoryInfo]::new($env:VOID_ACL_PARENT)
@@ -227,9 +339,20 @@ while ($null -ne $current) {
 `;
   try {
     await windowsPowerShell(script, { VOID_ACL_PARENT: directory });
-  } catch {
-    throw new Error("a parent directory ACL permits another principal to replace local state");
+  } catch (error) {
+    const detail = String(
+      (error as { stderr?: string }).stderr ??
+        (error instanceof Error ? error.message : "Windows ACL command unavailable"),
+    )
+      .trim()
+      .slice(0, 500);
+    throw new Error(
+      `a parent directory ACL permits another principal to replace local state${detail ? `: ${detail}` : ""}`,
+      { cause: error },
+    );
   }
+  for (const candidate of directories)
+    verifiedWindowsAncestors.add(windowsPathKey(candidate));
 }
 
 async function assertSafeAncestorChain(directory: string): Promise<void> {
@@ -371,6 +494,7 @@ function assertDirectoryStat(
 export async function ensurePrivateDirectory(
   directory: string,
   label = "local state directory",
+  allowVerified = false,
 ): Promise<void> {
   await assertExistingAncestorChain(dirname(resolve(directory)));
   let existed = true;
@@ -386,18 +510,19 @@ export async function ensurePrivateDirectory(
   const info = await lstat(directory);
   assertDirectoryStat(info, directory, label);
   if (process.platform === "win32")
-    await windowsPathAcl(directory, "directory", !existed);
+    await windowsPathAcl(directory, "directory", !existed, undefined, allowVerified);
 }
 
 export async function assertPrivateDirectoryPath(
   directory: string,
   label = "local state directory",
   leafToCheck?: string,
+  allowVerified = false,
 ): Promise<void> {
   const info = await lstat(directory);
   assertDirectoryStat(info, directory, label);
   if (process.platform === "win32")
-    await windowsPathAcl(directory, "directory", false, leafToCheck);
+    await windowsPathAcl(directory, "directory", false, leafToCheck, allowVerified);
   else
     await assertSafeAncestorChain(dirname(resolve(directory)));
 }
@@ -406,9 +531,10 @@ export async function assertPrivateDirectoryPath(
 export async function assertPrivateDirectoryIfPresent(
   directory: string,
   label = "local state directory",
+  allowVerified = false,
 ): Promise<boolean> {
   try {
-    await assertPrivateDirectoryPath(directory, label);
+    await assertPrivateDirectoryPath(directory, label, undefined, allowVerified);
     return true;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -427,7 +553,8 @@ export async function assertPrivateFilePath(
   if (info.isSymbolicLink())
     throw new Error(`${label} must not be a symbolic link: ${file}`);
   assertFileStat(info, file, label);
-  if (process.platform === "win32") await windowsPathAcl(file, "file");
+  if (process.platform === "win32")
+    await windowsPathAcl(file, "file");
 }
 
 export async function assertPrivateFileIfPresent(
@@ -467,6 +594,7 @@ export async function openPrivateFile(
     dirname(resolve(file)),
     `${label} parent directory`,
     process.platform === "win32" ? file : undefined,
+    true,
   );
   const noFollow =
     process.platform === "win32" ? 0 : (constants.O_NOFOLLOW ?? 0);
@@ -545,7 +673,12 @@ export async function secureGeneratedPrivateSidecar(
   file: string,
   label = "SQLite sidecar",
 ): Promise<void> {
-  await assertPrivateDirectoryPath(dirname(resolve(file)), `${label} parent directory`);
+  await assertPrivateDirectoryPath(
+    dirname(resolve(file)),
+    `${label} parent directory`,
+    undefined,
+    true,
+  );
   const noFollow =
     process.platform === "win32" ? 0 : (constants.O_NOFOLLOW ?? 0);
   const nonBlock = constants.O_NONBLOCK ?? 0;

@@ -157,7 +157,12 @@ export function reservedRecoveryVault(
       if (!entry.isDirectory())
         throw new Error("Unexpected entry in legacy vault.");
       const workspaceDir = join(rootPath, entry.name);
-      await assertPrivateDirectoryPath(workspaceDir, "legacy vault workspace directory");
+      await assertPrivateDirectoryPath(
+        workspaceDir,
+        "legacy vault workspace directory",
+        undefined,
+        true,
+      );
       for (const file of await readdir(join(rootPath, entry.name), {
         withFileTypes: true,
       })) {
@@ -281,7 +286,7 @@ export function reservedRecoveryVault(
      * transaction. No other caller may change the persisted capacity. */
     migrate?: VaultCapacityMigration,
   ): Promise<T> {
-    await ensurePrivateDirectory(rootPath, "recovery vault directory");
+    await ensurePrivateDirectory(rootPath, "recovery vault directory", true);
     const old = await legacyState();
     const path = join(rootPath, "vault.sqlite");
     await ensurePrivateFile(path, "recovery vault database");

@@ -237,7 +237,7 @@ export function localOperationJournal(
     ): Promise<T> {
       if (!/^[\w-]{1,100}$/.test(workspace))
         throw new Error("Invalid workspace.");
-      await ensurePrivateDirectory(root, "operation journal directory");
+      await ensurePrivateDirectory(root, "operation journal directory", true);
       const key = await realpath(root);
       const next = (queues.get(key) ?? Promise.resolve())
         .catch(() => {})

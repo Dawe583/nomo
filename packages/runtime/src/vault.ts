@@ -69,8 +69,8 @@ export function localRecoveryVault(
       };
       const dir = directory(workspace);
       const rootDir = resolve(root);
-      await ensurePrivateDirectory(rootDir, "recovery vault root");
-      await ensurePrivateDirectory(dir, "recovery vault workspace directory");
+      await ensurePrivateDirectory(rootDir, "recovery vault root", true);
+      await ensurePrivateDirectory(dir, "recovery vault workspace directory", true);
       const tmp = join(dir, `.tmp-${randomBytes(16).toString("hex")}`);
       try {
         const handle = await openPrivateFile(
@@ -107,8 +107,8 @@ export function localRecoveryVault(
         throw new Error("Invalid or unavailable recovery reference.");
       const rootDir = resolve(root);
       const dir = directory(workspace);
-      await assertPrivateDirectoryPath(rootDir, "recovery vault root");
-      await assertPrivateDirectoryPath(dir, "recovery vault workspace directory");
+      await assertPrivateDirectoryPath(rootDir, "recovery vault root", undefined, true);
+      await assertPrivateDirectoryPath(dir, "recovery vault workspace directory", undefined, true);
       const path = join(dir, reference.digest);
       const handle = await openPrivateFile(path, "read", "recovery vault artifact");
       let bytes: Buffer;

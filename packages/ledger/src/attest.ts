@@ -111,8 +111,8 @@ export async function attestLedger(
 
 export async function storeAttestation(dir: string, doc: AttestationDocument): Promise<string> {
   const attestations = join(dir, "attestations");
-  await assertPrivateDirectoryPath(dir, "ledger directory");
-  await ensurePrivateDirectory(attestations, "ledger attestations directory");
+  await assertPrivateDirectoryPath(dir, "ledger directory", undefined, true);
+  await ensurePrivateDirectory(attestations, "ledger attestations directory", true);
   const path = join(attestations, `${doc.headSeq}.json`);
   const temporary = join(attestations, `.tmp-${randomBytes(16).toString("hex")}`);
   try {

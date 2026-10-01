@@ -101,7 +101,7 @@ export function jsonlStore(
         typeof (body as { workspace?: unknown }).workspace === "string"
           ? sanitizeWorkspace((body as { workspace: string }).workspace)
           : throwNoWorkspace();
-      await ensurePrivateDirectory(dir, "ledger directory");
+      await ensurePrivateDirectory(dir, "ledger directory", true);
       const [prev, seq] = await headInfo(file(workspace), workspace);
       const keyId = await signer.currentKeyId();
       const hash = await entryHash(body, prev, sha256Hex);
@@ -150,7 +150,7 @@ export function jsonlStore(
     },
 
     async *read(workspace: string): AsyncIterable<JsonlEntry> {
-      if (!(await assertPrivateDirectoryIfPresent(dir, "ledger directory")))
+      if (!(await assertPrivateDirectoryIfPresent(dir, "ledger directory", true)))
         return;
       const text = await readOrEmpty(file(workspace));
       for (const line of text.split("\n")) {
@@ -160,7 +160,7 @@ export function jsonlStore(
     },
 
     async head(workspace: string): Promise<JsonlReceipt | null> {
-      await assertPrivateDirectoryPath(dir, "ledger directory");
+      await assertPrivateDirectoryPath(dir, "ledger directory", undefined, true);
       return lastEntry(file(workspace));
     },
 
