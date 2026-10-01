@@ -151,9 +151,18 @@ const SUPERSEDED = {
 
 const read = (file) => readFileSync(file, "utf8").replace(/\r\n/g, "\n");
 
-/** Backticked values that look like a repository file. */
+/**
+ * Backticked values that look like a repository file.
+ *
+ * A line-number suffix is allowed, because writing `some/file.ts:385` is the
+ * natural form of a citation and it is the form the documents actually use.
+ * The suffix is captured separately and stripped before the existence check,
+ * so a line-numbered citation is verified rather than silently ignored: the
+ * pattern used to require a backtick straight after the extension, which meant
+ * the most common way to cite a file matched nothing at all.
+ */
 const PATH_LIKE = new RegExp(
-  "`([A-Za-z0-9_][A-Za-z0-9._/-]*\\.(?:ts|tsx|mjs|md|json|yaml|yml|css|sql|py|rs|swift|html|plist|entitlements|png|svg|lock))`",
+  "`([A-Za-z0-9_][A-Za-z0-9._/-]*\\.(?:ts|tsx|mjs|md|json|yaml|yml|css|sql|py|rs|swift|html|plist|entitlements|png|svg|lock|sh))(?::(\\d+))?`",
   "g",
 );
 
