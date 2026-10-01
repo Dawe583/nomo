@@ -539,7 +539,7 @@ nabízí jen obnovení. **Neposkytuje žádnou autoritu obnovy.**
 
 ## 10. Příkazová řáda
 
-Dvacet příkazů. `void --help` vypíše seznam; `void <příkaz>` bez argumentů
+Dvacet jedna příkazů. `void --help` vypíše seznam; `void <příkaz>` bez argumentů
 vypíše usage daného příkazu.
 
 | Příkaz               | Co dělá                                                         |
@@ -564,6 +564,7 @@ vypíše usage daného příkazu.
 | `void config`        | Vypsat rozřešenou konfiguraci. Tajemství nikdy nevypíše.        |
 | `void init`          | Vytvořit rozvržení pracovního prostoru.                         |
 | `void ledger verify` | Ověřit adresář ledgeru.                                         |
+| `void update`     | Posunout instalovaný strom na sledovanou větev, jen dopředu.         |
 
 Tě s argumenty, přesně:
 
@@ -581,6 +582,7 @@ void recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|st
 void policy list | show <jméno> | validate <soubor>
 void approve <hold-id> --by <kdo> [--deny] [--reason <text>] [--dir <cesta>]
 void approvals --dir <cesta> [--json]
+void update [--check] [--force]
 ```
 
 Poznámky, které ušetří čas:
@@ -594,6 +596,19 @@ Poznámky, které ušetří čas:
 - Každá `void recovery` akce, něco měnící, vyžaduje `--approve <digest>` z
   předchozího `plan`. Digest je to, co váže tvoje schválení na přesně tu práci.
 - `void policy` bez argumentu vypíše dodávané packy: `strict`, `balanced`, `dev`.
+- `void update` posune instalovaný strom, který bydlí v `~/.local/share/void-cli`
+  a nastavuje se proměnnou `VOID_HOME`. Jde jen o dopředný posun: strom s
+  necommitnutými změnami odmítne a `--force` ho odmítne také, protože žádný
+  přepínač není důvod smazat práci provozovatele. Místní commity zahodí jen tehdy,
+  když to `--force` výslovně řekne, a i tehdy přes `git reset --keep`, takže se
+  chyba zastaví na změněném souboru.
+- `void update --check` nic nemění a vypíše čtyři fakta a pak jeden verdikt:
+  `installed:`, `installed-commit:`, `tracked-branch:`, `target-commit:` a pak
+  `up to date` nebo `update available`. Když aktualizace existuje, skončí kódem
+  3, když je strom aktuální, kódem 0. Strom, který remote nedosáhne, skončí
+  taky kódem 0 a vypíše `target-commit: unknown`, takže čti verdikt, ne kód.
+- `void update` nemá přepínač kanálu. Není tu `--stable` ani `--canary`; cílem je
+  to, na co ukazuje sledovaná větev instalovaného stromu.
 
 ## 11. Soubory policy
 
