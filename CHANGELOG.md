@@ -4,6 +4,17 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- The evidence behind a managed Git commit was checked against values taken
+  from the same prepared document it was supposed to check: the parent tree,
+  the parent entry of the selected path and the recorded manifest digests all
+  came out of that document and were compared with each other. Verification now
+  re-reads the recorded parent's commit and tree from the object store, rebuilds
+  the expected manifest from that tree and the selected index entry, and
+  requires the captured values and both recorded digests to equal the
+  re-derivation, so a document edited after dispatch can no longer corroborate
+  itself on the recovery path. Object connectivity is one `git fsck
+  --connectivity-only` over the parent and the receipt commit instead of one
+  `cat-file` per file, which also covers the parent after its branch is gone.
 - `void_project_info` now answers with where it is being served from and a
   pasteable client configuration, because a caller connecting for the first time
   needs the address before it needs anything else. Both come from the operator's

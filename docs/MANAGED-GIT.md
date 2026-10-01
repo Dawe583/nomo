@@ -56,6 +56,15 @@ refs make retries idempotent, and restart reconciliation validates the receipt,
 commit, parent, tree, metadata and repository binding instead of inferring
 success from target equality or ancestry.
 
+The tree is not taken on trust from the prepared document. Verification re-reads
+the recorded parent's commit and tree from the object store, rebuilds the
+expected manifest from that tree and the selected index entry, and requires the
+captured parent tree, the captured parent entry of the selected path, and both
+recorded manifest digests to equal the re-derivation. `git fsck
+--connectivity-only` over the parent and the receipt commit then proves every
+object both trees name is present, in one pass and without regard to whether any
+ref still reaches the parent.
+
 The recovery may follow unrelated later commits and preserves their tree entries.
 Branch ancestry, the selected index entry and selected worktree file must still
 match the forward result. Selected-path, repository, receipt or locked-ref drift
