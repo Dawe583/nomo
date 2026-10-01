@@ -778,6 +778,7 @@ const prepareDrifts: PrepareDrift[] = [
   {
     name: "HEAD and branch",
     arrange: (f) => {
+      // Keep the selected file staged; a regular commit would consume the state under test.
       const parent = f.run("rev-parse", "HEAD");
       const tree = f.run("rev-parse", "HEAD^{tree}");
       const moved = f.run("commit-tree", tree, "-p", parent, "-m", "human");
