@@ -98,7 +98,7 @@ to a row of this audit in another document still resolves to the row it named.
 | 26 | Staged hold, dependency barriers and cascading cancel | **W** | `PLAN-GAPS.md` G-05; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R11; `PLAN-STATUS.md` R11 | A provisional-receipt path behind explicit opt-in, keeping the blocking hold as the default. Nothing exists today. |
 | 27 | Cloud/distributed budgets, visible policy modes, weighted costs and staged reservations | **W** for the code, **D** for how far "cloud" is meant to go | `PLAN-GAPS.md` G-14; `RECOVERY-CONTRACT.md` "## Irreversibility budget"; `PLAN-GAPS.md` §6 item 6a | A server-side ledger with the same reservation semantics, surfaced in CLI and GUI. |
 | 28 | `managed-postgres` has no capability profile and no conformance suite. The release gate publishes exactly three profiles — `filesystem.managed`, `git.managed`, `managed-documents` — while a full `RecoveryAdapter` implementation exists at `packages/connectors/src/postgres/managed.ts` and is exercised by `reverse-exercise.ts` over PGlite. The gate is fail-closed on a *missing* profile, so the one adapter with the most adversarial coverage is the one no profile names. | **W** — PGlite is in-process, no service needed | Not recorded anywhere. Found by reading the profile set against the adapter set. | A `managedPostgresConformanceProfile` and a scenario list, with the gate refusing a release that ships the adapter unpublished. |
-| 29 | `git.managed` implements a complete commit lifecycle — capture, prepare, execute, reconcile, recover, reconcileRecovery, with `refs/void/operations/` receipts and atomic compare-and-swap — and the published profile lists `commits` under `excluded` and omits it from `operations`. The code is real; nothing advertises it. | **W** | `packages/connectors/src/git/managed.ts:357-475` vs `packages/cli/src/conformance.ts:158,164`; `PLAN-GAPS.md` G-07; `RECOVERY-COVERAGE.md` "Managed Git" row; `docs/MANAGED-GIT.md` | Either a `commit` operation in the profile with its own conformance scenarios, or a stated reason why a tested capability stays unpublished. |
+| 29 | **Closed 2026-10-02, and the finding underneath it was stale.** As written this row claimed the published profile "lists `commits` under `excluded` and omits it from `operations`". That was true of `63dbd2c` and stopped being true in `39d3c48` (2026-09-26). `gitConformanceProfile.operations` now reads `["create","write","delete","rename","stage","unstage","commit"]`, `commits` is not an entry in `excluded`, and both `durableExecutionReceipt` and `durableRecoveryReceipt` are `true`, which is what the `refs/void/operations/` receipt work earned. The commit lifecycle is implemented at `packages/connectors/src/git/managed.ts` and advertised, so the remedy this row asked for is satisfied by the tree. `managed-postgres` remains unpublished and is row 28. | **X** for the original claim, superseded by the tree | `packages/connectors/src/git/managed.ts:457-462` (commit preparation) vs `packages/cli/src/conformance.ts:164-180`; corrected against `39d3c48`; `PLAN-GAPS.md` G-07; `RECOVERY-COVERAGE.md` "Managed Git" row; `docs/MANAGED-GIT.md` | Nothing outstanding for the commit lifecycle. What this row's real defect exposed is recorded below and is a code matter, not a documentation one. |
 | 30 | Git remote recovery, append-only revert / recovery PR, and the noncooperative-writer boundary | **W** for the first two, **X** for full per-hunk cross-platform evidence | `PLAN-GAPS.md` G-07; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R05; `PLAN-STATUS.md` R05 | Never reset, never force-push; a recovery PR carries the inverse. |
 | 31 | Managed S3 and Supabase adapters with versionId and delete-marker handling | **W** for the adapter, **X** for the stated gate ("tested against disposable services") | `PLAN-GAPS.md` G-10; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R08; `PLAN-STATUS.md` R08 | A managed S3 adapter with real version semantics, plus a Supabase project. S3 today is a legacy connector path only, with no `RecoveryAdapter`. |
 | 32 | GitHub and Vercel executable recovery: file and commit with SHA binding, merge via recovery PR | **W** for the adapters, **X** for sandbox conformance | `PLAN-GAPS.md` G-11; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R09; `PLAN-STATUS.md` R09; `RECOVERY-COVERAGE.md` "GitHub/Vercel/Supabase OAuth" row | An OAuth token stops being the only thing these integrations can do. |
@@ -305,21 +305,33 @@ is a documentation decision with an owner, so it is not done here.
    are.
 
 2. **The matrix systematically understates the tree rather than overstating
-   it.** `git.managed` ships a full commit lifecycle that no published profile
-   advertises, and `managed-postgres` ships a full `RecoveryAdapter` with no
-   profile at all — while the same gate refuses a release containing an adapter
-   with no profile, so the gate's own principle is not being applied to the
-   adapter set. In the other direction I found no overstatement of capability,
-   which is the right way round. But its `P00.01` "reconcile stale gaps" row is
-   marked Done on a repository that still carries 31 stale open claims (§3),
-   which is the recursion this audit exists to break.
+   it.** `managed-postgres` ships a full `RecoveryAdapter` with no published
+   profile, while the same gate refuses a release containing an adapter with no
+   profile, so the gate's own principle is not being applied to the adapter
+   set. That is row 28 and it still stands. The `git.managed` half of this
+   finding no longer stands: as originally written it said the commit lifecycle
+   was real but unadvertised, which was true when the audit ran against
+   `63dbd2c` and stopped being true in `39d3c48` (2026-09-26), where `commit`
+   joined the published operations and both durable receipt flags became true.
+   Corrected in row 29 on 2026-10-02. In the other direction I found no
+   overstatement of capability, which is the right way round. But its `P00.01`
+   "reconcile stale gaps" row is marked Done on a repository that still carries
+   stale open claims (§3), which is the recursion this audit exists to break.
 
-3. **`RECOVERY-COVERAGE.md` is the document a reader would trust most and it is
-   the second stalest.** Its Managed Git row says "no commit"; the adapter has
-   one. `docs/MANAGED-GIT.md` does not merely drift — it contradicts *itself*,
-   documenting a commit slice with receipts in one section and "There is no
-   commit" in another. A reader cannot resolve that without reading 160 kB of
-   TypeScript.
+3. **Stale as of the audit's own baseline, corrected in the tree since.** This
+   finding said the `RECOVERY-COVERAGE.md` Managed Git row claims "no commit"
+   while the adapter has one, and that `docs/MANAGED-GIT.md` contradicts
+   *itself* by documenting a commit slice in one section and "There is no
+   commit" in another. Neither is true of the current tree. `RECOVERY-COVERAGE.md`
+   was reconciled on 2026-09-26 and its Managed Git row now describes the full
+   commit lifecycle, the `refs/void/operations/` and `refs/void/recoveries/`
+   receipts and `recoverRemote`, and the file's own header records that
+   correction and the four source files it was checked against.
+   `docs/MANAGED-GIT.md` contains no "There is no commit" sentence. Both
+   documents were corrected in the same 2026-09-26 pass that this audit's
+   `63dbd2c` baseline predates, so the finding describes a state the tree left
+   behind. Corrected 2026-10-02; the underlying Managed Git work is tracked by
+   row 30, not here.
 
 4. **The single most consequential open question is not in any of the
    requirement documents.** Nothing in the `P`/`D`/`G` series asks whether the
@@ -345,14 +357,18 @@ is a documentation decision with an owner, so it is not done here.
 - `void doctor` against a disposable `VOID_DATA_DIR` — 4 pass, 2 warn, 0 fail.
 - `void tui --help` — exit 0, contradicts `PLAN-STATUS.md` WP-09b.
 - Adapter set: `git/managed.ts:44`, `postgres/managed.ts:654` both export
-  factories returning `RecoveryAdapter`; `git/managed.ts:357-475` dispatches
-  `commit`; `recovery.ts` defines the six-method contract.
+  factories returning `RecoveryAdapter`; `git/managed.ts:457-462` prepares a
+  commit and `git/managed.ts:480,498` dispatches it; `recovery.ts` defines the
+  six-method contract.
 - Conformance: `packages/cli/src/conformance.ts` published exactly three
   profiles on 2026-09-26 and publishes four now, `filesystem.managed`,
-  `git.managed`, `managed-documents` and `postgres-managed-conformance`;
-  `gitConformanceProfile.operations` is
-  `["create","write","delete","rename","stage","unstage"]` with `commits` under
-  `excluded`.
+  `git.managed`, `managed-documents` and `postgres-managed-conformance`.
+  Corrected 2026-10-02: `gitConformanceProfile.operations` now reads
+  `["create","write","delete","rename","stage","unstage","commit"]` with
+  `durableExecutionReceipt` and `durableRecoveryReceipt` both `true`, and
+  `commits` is not an entry in `excluded`. The six-operation list and the
+  `commits`-under-`excluded` claim in this bullet were true of `63dbd2c` and
+  were overtaken by `39d3c48`.
 - `ServerBudgetLedger` / `serverBudgetLedger` — zero consumers outside
   `packages/runtime/src/budget.ts` and its test.
 - `void replay` — `packages/cli/src/replay.ts:114-145` has an apply path that
@@ -529,3 +545,127 @@ acceptance in `docs/strategy-2026-09-30/BACKLOG.md` remains partial: its combine
 create→write→write→rename→delete journey, injected same- and cross-path edits
 throughout that journey, and every crash point around the full chain have not
 all been exercised as one acceptance scenario.
+
+## 9. Measured 2026-10-02: the conformance runner failed open on an operation
+it did not implement
+
+Correcting row 29 above meant reading `packages/cli/src/conformance.ts` rather
+than trusting the row, and that surfaced a defect the audit's stale row had been
+pointing at without seeing. It is recorded here because it is a live
+correctness problem, not a documentation one, and because a green conformance
+report is exactly the kind of evidence this document has been asked to trust.
+
+**The claim above `fixtureFor` is false.** Its comment says an operation the
+resolved fixture does not accept "is refused by that fixture's own scenario
+check, so a profile that gains an operation nobody implemented stops the run
+instead of measuring the nearest operation it does have". The code does not do
+that. `fixtureFor` casts the profile's published operation to the fixture's
+scenario union with `operation as GitScenario` and the other two equivalent
+casts, which asserts a type the runtime never checks, and each fixture body
+branches on `operation ===` with a final `else` that is the `write` path.
+
+Measured 2026-10-02 on this tree, driving the shipped `runAdapterConformance`
+against the shipped `gitConformanceFixture`:
+
+```
+operation=rebase   passed=true checks=8 failing=0
+operation=write    passed=true checks=8 failing=0
+```
+
+`rebase` is not an operation `gitConformanceProfile` publishes and no fixture
+implements it. It returned `passed=true` with the same eight checks as `write`,
+which is the fail-open the comment claims cannot happen: an operation a profile
+lists and nobody built would fall through to the nearest implemented one and be
+reported as measured. The cast hides it from the type checker, and the eight
+checks are byte-identical to a real run, so nothing in the report distinguishes
+the two.
+
+**Why it matters beyond the one case.** A conformance run is the evidence a
+release rests on, and this is the one place a run could report success for work
+that was never performed. The exposure is bounded in the current tree because
+every published operation happens to have a fixture, so no shipped profile
+triggers it today; the defect is that the safety property is documented and not
+implemented, which means the first profile to gain an operation without one
+gets a green report.
+
+**Fixed on a sibling branch, in two commits, not yet merged here.** `334293a`
+on `omp/selfupdate-conformance` adds a shared helper, `requireScenario` at
+`packages/cli/src/conformance.ts:45`, which throws
+`Unknown <adapter> conformance scenario "<name>".` for anything the resolved
+fixture does not implement. A second commit on that branch fixes the first one,
+for the reason in the next paragraph. **Name both when merging; `334293a` alone
+does not close this.**
+
+**The first fix did not close it, and the way it failed is the interesting
+part.** The git call site passed `gitConformanceProfile.operations` as the
+list of implemented operations, so the guard compared the profile against
+itself. It therefore approved any operation the profile listed, which is exactly
+the case the guard exists to catch: adding `rebase` to the published list and
+asking for it produced no refusal and fell through to the `write` path. The
+managed-documents site had the same hole. The filesystem site was correct only
+by accident, because it happened to pass a separate literal. A guard that
+validates a value against itself is not a guard.
+
+The follow-on is the subtler half. Naming the implemented list separately is not
+enough if the profile still publishes the same array object, because a caller
+that mutates the published list in place mutates the guard's list with it. That
+is what editing the source does, and `as const` does not prevent it because the
+annotation is erased at runtime, so the profile arrays are genuinely mutable.
+The repair is for each profile to publish a copy of its scenario list rather
+than the list itself, and for each guard to be handed the original.
+
+Verified on that branch with the second commit applied: the git guard is called
+with the scenario literal while the profile publishes a spread copy of it, and
+pushing `"rebase"` onto the live `gitConformanceProfile.operations` and asking
+for that scenario is refused. The regression case mutates the real published
+array, which is what a source edit does, rather than passing a literal, and
+asserts both the refusal and that the run reports `passed=false`; it fails
+against `334293a` and passes with the repair. The shipped `git.managed` run
+still exits 0 and all seven scenarios still pass, because `rebase` was never a
+published operation, so the repair widens no claim and no document had to move
+to accommodate it.
+
+For the record on how this section was written: the first draft of this
+paragraph claimed the managed PostgreSQL fixture had no guard, on a report that
+gave a filename that exists on no branch. It does have one, at
+`packages/connectors/src/postgres/conformance-fixture.ts` at `:385`, throwing
+the equivalent error. There are four guards in total, three in the CLI module
+and one in the PostgreSQL fixture, and the count is what makes the three-site
+description wrong rather than merely incomplete. A correction made confidently
+from an unchecked citation is the same failure this document exists to catch,
+and it is recorded here because a reader deserves to know which of its claims
+were verified by running the code and which were not.
+
+The gate did not catch that bad citation either. Its path pattern requires the
+closing backtick immediately after the extension, so a citation written as
+`some/file.ts:385` matches nothing and is never checked for existence, while
+the same path written bare is checked. Writing the path and the line
+separately, as this paragraph now does, is the form the gate can see.
+
+How much that is worth is a narrower claim than it first looks, and the
+corpus was measured rather than assumed. Scanning every markdown file under
+`docs/` plus the two root documents with a pattern that also accepts the line
+number found 1,781 citations rooted under a `SOURCE_ROOT`, of which 1,710
+resolve and 71 do not. Every one of those 71 is already listed in the
+`INVENTORY` map with a reason, so widening the pattern today would report
+nothing new. The remaining 867 matches are bare filenames, which the gate
+exempts on purpose, and that exemption should stay.
+
+So the accurate statement is that the blind spot is real and confirmed, and
+that it has not yet produced a dead reference anywhere in `docs/`. It cost one
+bad citation, and that one was caught by re-reading the file rather than by the
+gate. This is a reason to write line-numbered citations in the form the gate
+can see, and not on its own a reason to change the gate.
+
+While correcting row 29, section 6 finding 3 was found to be stale in the same
+way and for the same reason. It reported that the `RECOVERY-COVERAGE.md`
+Managed Git row says "no commit" and that `docs/MANAGED-GIT.md` contradicts
+itself with a "There is no commit" sentence. Both were reconciled on
+2026-09-26, in the same pass that this audit's `63dbd2c` baseline predates:
+the coverage row now describes the commit lifecycle, its receipts and
+`recoverRemote`, and its own header records the correction against the four
+source files it was checked against, and `docs/MANAGED-GIT.md` contains no such
+sentence. That is the second time in this file that a row outlived the tree it
+described, and it is the argument for section 5's point about a second
+competing status ledger: a status document that is not re-read against the tree
+accumulates confident sentences about code that has since moved.
