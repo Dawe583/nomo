@@ -15,6 +15,7 @@ import { runApproveCommand, runApprovalsCommand } from "./approve.ts";
 import { runDoctorCommand } from "./doctor.ts";
 import { runConfigCommand } from "./config.ts";
 import { runInitCommand } from "./init.ts";
+import { runUpdateCommand } from "./update.ts";
 import {
   runClassifyCommand,
   runFeedCommand,
@@ -133,6 +134,18 @@ export async function runCommand(
         stderr: (line) => console.error(line),
       },
       { env: process.env },
+    );
+  }
+  if (parsed.command === "update") {
+    return await runUpdateCommand(
+      parsed.args,
+      {
+        stdout: (line) => console.log(line),
+        stderr: (line) => console.error(line),
+      },
+      // The version comes from the binary's one reader, not from a second
+      // parse of the manifest: two readers would drift on the first bump.
+      { env: process.env, version: packageVersion() },
     );
   }
   if (parsed.command === "approve" || parsed.command === "approvals") {

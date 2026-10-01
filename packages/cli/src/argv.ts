@@ -30,6 +30,7 @@ export const COMMANDS = [
   "config",
   "init",
   "metrics",
+  "update",
 ] as const;
 
 export type Command = (typeof COMMANDS)[number];
