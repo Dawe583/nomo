@@ -1,4 +1,4 @@
-import { mkdir, open, realpath, lstat, chmod } from "node:fs/promises";
+import { open, realpath, lstat } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { setTimeout as delay } from "node:timers/promises";
 import { resolve, join } from "node:path";
@@ -7,6 +7,13 @@ import { jsonlStore } from "../../ledger/src/store.ts";
 import type { KeyProvider } from "../../ledger/src/index.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
 import { validateRecoveryJobPayload } from "./recovery/plan.ts";
+import {
+  assertPrivateFileIfPresent,
+  assertPrivateFilePath,
+  ensurePrivateDirectory,
+  ensurePrivateFile,
+  secureGeneratedPrivateSidecar,
+} from "../../ledger/src/hardening.ts";
 export { digest } from "./digest.ts";
 export type Stage =
   | "received"
@@ -230,7 +237,7 @@ export function localOperationJournal(
     ): Promise<T> {
       if (!/^[\w-]{1,100}$/.test(workspace))
         throw new Error("Invalid workspace.");
-      await mkdir(root, { recursive: true, mode: 0o700 });
+      await ensurePrivateDirectory(root, "operation journal directory");
       const key = await realpath(root);
       const next = (queues.get(key) ?? Promise.resolve())
         .catch(() => {})
@@ -245,10 +252,22 @@ export function localOperationJournal(
             throw new Error(
               "Legacy writer lock exists; stop the old executor and review it before migration.",
             );
-          const lockPath = join(key, ".writer.sqlite"),
-            lock = new DatabaseSync(lockPath);
+          const lockPath = join(key, ".writer.sqlite");
+          await ensurePrivateFile(
+            lockPath,
+            "operation journal lock database",
+          );
+          for (const suffix of ["-journal", "-wal", "-shm"])
+            await assertPrivateFileIfPresent(
+              `${lockPath}${suffix}`,
+              "operation journal SQLite sidecar",
+            );
+          const lock = new DatabaseSync(lockPath);
           try {
-            await chmod(lockPath, 0o600);
+            await assertPrivateFilePath(
+              lockPath,
+              "operation journal lock database",
+            );
             lock.exec("PRAGMA busy_timeout=0");
             const deadline = Date.now() + 30_000;
             for (;;) {
@@ -333,6 +352,11 @@ export function localOperationJournal(
             });
           } finally {
             lock.close();
+            for (const suffix of ["-journal", "-wal", "-shm"])
+              await secureGeneratedPrivateSidecar(
+                `${lockPath}${suffix}`,
+                "operation journal SQLite sidecar",
+              );
           }
         });
       queues.set(key, next);

@@ -5,6 +5,11 @@ import { jsonlStore } from "../../ledger/src/store.ts";
 import { retainedKeyProvider } from "../../ledger/src/sign.ts";
 import { recoveryKeyProof } from "../../runtime/src/reserved-vault.ts";
 import type { KeyProvider } from "../../ledger/src/index.ts";
+import {
+  assertPrivateDirectoryPath,
+  assertPrivateFileIfPresent,
+  assertPrivateFilePath,
+} from "../../ledger/src/hardening.ts";
 
 export type RecoveryHealthStatus = "healthy" | "degraded" | "unavailable" | "unsafe";
 export type RecoveryHealthReport = {
@@ -58,18 +63,23 @@ const markUnavailable = (report: { status: RecoveryHealthStatus }): void => {
 async function legacyBytes(root: string): Promise<number> {
   let bytes = 0;
   const visit = async (directory: string): Promise<void> => {
+    await assertPrivateDirectoryPath(directory, "legacy recovery vault directory");
     for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name);
       if (
         entry.name === "vault.sqlite" ||
         entry.name.startsWith("vault.sqlite-")
       )
         continue;
-      const path = join(directory, entry.name);
       if (entry.isDirectory()) await visit(path);
-      else if (entry.isFile()) bytes += (await lstat(path)).size;
+      else if (entry.isFile()) {
+        await assertPrivateFilePath(path, "legacy recovery vault artifact");
+        bytes += (await lstat(path)).size;
+      }
       else throw new Error("Unexpected legacy vault entry.");
     }
   };
+  await assertPrivateDirectoryPath(root, "recovery vault directory");
   await visit(root);
   return bytes;
 }
@@ -160,10 +170,22 @@ async function readVault(
     artifacts: 0,
     reservations: 0,
   };
+  try {
+    await assertPrivateDirectoryPath(root, "recovery vault directory");
+    await assertPrivateFilePath(path, "recovery vault database");
+    for (const suffix of ["-journal", "-wal", "-shm"])
+      await assertPrivateFileIfPresent(
+        `${path}${suffix}`,
+        "recovery vault SQLite sidecar",
+      );
+  } catch (error) {
+    return {
+      status: isMissing(error) ? "missing" : "invalid",
+      capacity: empty,
+    };
+  }
   let db: DatabaseSync;
   try {
-    const stat = await lstat(path);
-    if (!stat.isFile()) return { status: "invalid", capacity: empty };
     db = new DatabaseSync(path, { readOnly: true });
   } catch (error) {
     return { status: isMissing(error) ? "missing" : "unavailable", capacity: empty };

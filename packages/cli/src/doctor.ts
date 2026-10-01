@@ -4,10 +4,14 @@
  * state is a warning, never a failure.
  */
 import { homedir } from "node:os";
-import { join } from "node:path";
-import { access, constants } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
+import { access, constants, readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { retainedKeyProvider } from "../../ledger/src/sign.ts";
+import {
+  auditPrivatePath,
+  auditPrivateTree,
+} from "../../ledger/src/hardening.ts";
 import {
   pinnedKeyFile,
   resolveVerificationKey,
@@ -67,12 +71,26 @@ export async function runDoctorCommand(
   io: DoctorIo,
   deps: DoctorDeps = {},
 ): Promise<number> {
-  if (argv.length > 0 && argv[0] !== "init") {
-    io.stderr("usage: void doctor");
-    return 2;
-  }
-  if (argv.length > 0 && argv[0] === "init") {
+  if (argv[0] === "init") {
+    if (argv.length !== 1) {
+      io.stderr("usage: void doctor init");
+      return 2;
+    }
     return runDoctorInit(argv, io, deps);
+  }
+  let recoveryConfig: string | undefined;
+  for (let i = 0; i < argv.length; i += 1) {
+    if (
+      argv[i] !== "--recovery-config" ||
+      recoveryConfig !== undefined ||
+      !argv[i + 1] ||
+      argv[i + 1]!.startsWith("--")
+    ) {
+      io.stderr("usage: void doctor [--recovery-config <file>] | void doctor init");
+      return 2;
+    }
+    recoveryConfig = resolve(argv[i + 1]!);
+    i += 1;
   }
   const env = deps.env ?? process.env;
   const run = deps.run ?? defaultRun;
@@ -106,6 +124,137 @@ export async function runDoctorCommand(
           ? { status: "WARN", name, detail: `${dir} is absent; created on first run` }
           : { status: "FAIL", name, detail: `${dir} is not writable` },
     );
+  }
+  const reportPrivatePath = async (
+    name: string,
+    path: string,
+    kind: "file" | "directory",
+  ) => {
+    const audit = await auditPrivatePath(path, kind);
+    results.push(
+      audit.state === "private"
+        ? {
+            status: "PASS",
+            name,
+            detail: `${kind} exists and meets the private mode/ACL check`,
+          }
+        : audit.state === "missing"
+          ? {
+              status: "WARN",
+              name,
+              detail: `${kind} is absent; created on first use`,
+            }
+          : { status: "FAIL", name, detail: audit.detail },
+    );
+  };
+  const keyDir = join(home, ".void", "keys");
+  const keyFile = join(keyDir, "dev-ed25519.pkcs8");
+  if (env.VOID_SIGNING_KEY !== undefined && env.VOID_SIGNING_KEY !== "") {
+    results.push({
+      status: "INFO",
+      name: "signing-key-file",
+      detail: "not used; signing key is supplied through VOID_SIGNING_KEY",
+    });
+  } else {
+    await reportPrivatePath("signing-key-dir", keyDir, "directory");
+    await reportPrivatePath("signing-key-file", keyFile, "file");
+  }
+  const ledgerAudit = await auditPrivateTree(ledgerDir);
+  results.push(
+    ledgerAudit.state === "private"
+      ? {
+          status: "PASS",
+          name: "ledger-permissions",
+          detail: `ledger tree meets private mode/ACL checks (${ledgerAudit.directories} directories, ${ledgerAudit.files} files)`,
+        }
+      : ledgerAudit.state === "missing"
+        ? { status: "WARN", name: "ledger-permissions", detail: "ledger tree is absent; created on first use" }
+        : { status: "FAIL", name: "ledger-permissions", detail: ledgerAudit.detail ?? "ledger tree failed owner-only checks" },
+  );
+  try {
+    const workspace = sanitizeWorkspace(env.VOID_WORKSPACE ?? "default");
+    await reportPrivatePath(
+      "ledger-file",
+      join(ledgerDir, `${workspace}.jsonl`),
+      "file",
+    );
+  } catch (error) {
+    results.push({ status: "FAIL", name: "ledger-file", detail: message(error) });
+  }
+  if (recoveryConfig === undefined) {
+    results.push({
+      status: "INFO",
+      name: "recovery-permissions",
+      detail: "recovery state paths are config-defined; pass --recovery-config <file> to inspect their permissions",
+    });
+  } else {
+    let rawConfig: string | undefined;
+    try {
+      rawConfig = await readFile(recoveryConfig, "utf8");
+    } catch {
+      results.push({
+        status: "FAIL",
+        name: "recovery-permissions",
+        detail: "could not read the recovery config file",
+      });
+    }
+    if (rawConfig !== undefined) {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(rawConfig);
+      } catch {
+        // Node versions differ in how much source context a SyntaxError may
+        // include. Keep the parse diagnostic fixed and never print config text.
+        results.push({
+          status: "FAIL",
+          name: "recovery-permissions",
+          detail: "recovery config is not valid JSON",
+        });
+      }
+      if (typeof parsed === "object" && parsed !== null) {
+        const config = parsed as { workspace?: unknown; stateDir?: unknown };
+        if (
+          typeof config.workspace !== "string" ||
+          typeof config.stateDir !== "string" ||
+          config.stateDir.length === 0 ||
+          !/^[\w-]{1,100}$/.test(config.workspace)
+        ) {
+          results.push({
+            status: "FAIL",
+            name: "recovery-permissions",
+            detail: "recovery config must contain a workspace and stateDir",
+          });
+        } else {
+          const stateDir = resolve(dirname(recoveryConfig), config.stateDir);
+          const audit = await auditPrivateTree(stateDir);
+          results.push(
+            audit.state === "private"
+              ? {
+                  status: "PASS",
+                  name: "recovery-permissions",
+                  detail: `configured state tree meets private mode/ACL checks (${audit.directories} directories, ${audit.files} files; point-in-time scan)`,
+                }
+              : audit.state === "missing"
+                ? {
+                    status: "WARN",
+                    name: "recovery-permissions",
+                    detail: "configured recovery state is absent; created on first use",
+                  }
+                : {
+                    status: "FAIL",
+                    name: "recovery-permissions",
+                    detail: audit.detail ?? "configured recovery state failed private mode/ACL checks",
+                  },
+          );
+        }
+      } else if (parsed !== undefined) {
+        results.push({
+          status: "FAIL",
+          name: "recovery-permissions",
+          detail: "recovery config must be a JSON object",
+        });
+      }
+    }
   }
   // Resolved the same way every verifier surface resolves it, so `doctor`
   // reports the host that is actually configured. It used to look only at
@@ -246,31 +395,22 @@ async function runDoctorInit(
     results.push({ status: "WARN", name: "pnpm-capability", detail: "not available" });
   }
 
-  // 3. Show unprotected paths
+  // 3. Check owner-only state directories without changing their permissions.
   const home = env.HOME ?? homedir();
   const dataDir = env.VOID_DATA_DIR ?? join(home, ".void", "workbench");
   const ledgerDir = env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
   for (const [name, dir] of [["data-dir", dataDir], ["ledger-dir", ledgerDir]] as const) {
-    const state = await writable(dir);
-    if (state === "ok") {
-      results.push({
-        status: "WARN",
-        name: `unprotected-${name}`,
-        detail: `${dir} is writable; consider restricting permissions`,
-      });
-    } else if (state === "missing") {
-      results.push({
-        status: "INFO",
-        name: `unprotected-${name}`,
-        detail: `${dir} is absent; will be created`,
-      });
-    } else {
-      results.push({
-        status: "FAIL",
-        name: `unprotected-${name}`,
-        detail: `${dir} is not writable; access denied`,
-      });
-    }
+    const audit = await auditPrivatePath(dir, "directory");
+    const writeState = audit.state === "private" ? await writable(dir) : undefined;
+    results.push(
+      audit.state === "unsafe"
+        ? { status: "FAIL", name: `permissions-${name}`, detail: audit.detail }
+        : audit.state === "missing"
+          ? { status: "INFO", name: `permissions-${name}`, detail: `${dir} is absent; created on first use` }
+          : writeState === "ok"
+            ? { status: "PASS", name: `permissions-${name}`, detail: "owner-only and writable" }
+            : { status: "FAIL", name: `permissions-${name}`, detail: `${dir} is private but not writable` },
+    );
   }
 
   // Primary provider state is not a recovery backup.

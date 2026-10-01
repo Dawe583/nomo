@@ -144,8 +144,22 @@ void doctor
 Repeat the link if you move the checkout or switch clones. From the repository
 root, `pnpm void`, `./void` on macOS/Linux, or `.\void.cmd` on Windows works
 without a global link. `void doctor` reports the terminal, the Node version,
-the resolved data and ledger directories and whether they are writable, and
-whether a verification key is present.
+writable data and ledger directories, and owner-only checks for the signing
+key and default ledger. For configured recovery state, pass its config file:
+
+```sh
+void doctor --recovery-config ./void-recovery.json
+```
+
+That check walks the configured state tree, including journal, vault and
+temporary files. It reads only config paths; it does not print config contents
+or secret values and does not change permissions; diagnostic failures may name
+the affected filesystem path. On POSIX it checks mode `0700` for
+directories and `0600` for files. On Windows it checks the current user's ACL
+and allows the operating system's SYSTEM and Administrators principals. It
+does not use DPAPI for the signing key and cannot isolate another process
+running as the same user or an administrator. The scan is a read-only snapshot;
+run it when the recovery executor is idle for a stable report.
 
 Check the complete source installation:
 

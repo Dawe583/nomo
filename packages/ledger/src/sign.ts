@@ -22,13 +22,17 @@ import {
   verify as cryptoVerify,
 } from "node:crypto";
 import { createHash } from "node:crypto";
-import { mkdir, open, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 
 import type { Alg, KeyProvider } from "./index.ts";
 import { canonicalJson, entryHash } from "./canonical.ts";
-import { assertPrivateKeyFileMode, windowsKeyAcl } from "./hardening.ts";
+import {
+  ensurePrivateDirectory,
+  assertPrivateDirectoryPath,
+  openPrivateFile,
+  readPrivateFile,
+} from "./hardening.ts";
 
 /** The digest engine. Swappable at the test boundary, node:crypto in production. */
 export const sha256Hex = async (input: string): Promise<string> =>
@@ -150,8 +154,8 @@ async function keyProviderFromDirectory(
 }
 
 async function readExistingKey(file: string): Promise<Buffer> {
-  await assertPrivateKeyFileMode(file);
-  return readFile(file);
+  await assertPrivateDirectoryPath(dirname(file), "development key directory");
+  return readPrivateFile(file, "development key file");
 }
 
 function isMissingFile(error: unknown): boolean {
@@ -165,14 +169,17 @@ function isAlreadyThere(error: unknown): boolean {
 async function generateAndWriteKey(dir: string, file: string): Promise<Buffer> {
   const { privateKey } = generateKeyPairSync("ed25519");
   const pkcs8 = privateKey.export({ format: "der", type: "pkcs8" });
-  await mkdir(dir, { recursive: true, mode: 0o700 });
+  await ensurePrivateDirectory(dir, "development key directory");
   // O_EXCL, never O_TRUNC: a symlink pre placed at the file path would
   // otherwise carry the private key to any path an attacker chose, and the
   // write would succeed quietly. O_CREAT|O_EXCL refuses to follow it.
-  const handle = await open(file, "wx", 0o600);
+  const handle = await openPrivateFile(
+    file,
+    "exclusive-write",
+    "development key file",
+  );
   try {
-    // Restrict the empty file before any secret bytes are written.
-    if (process.platform === "win32") await windowsKeyAcl(file, true);
+    // openPrivateFile applies the Windows ACL before any secret bytes are written.
     await handle.writeFile(pkcs8);
     await handle.sync();
   } finally {

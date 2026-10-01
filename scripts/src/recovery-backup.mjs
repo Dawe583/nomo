@@ -3,11 +3,9 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import {
-  chmod,
   cp,
   lstat,
   mkdir,
-  readFile,
   readdir,
   rm,
   writeFile,
@@ -15,7 +13,14 @@ import {
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { backup, DatabaseSync } from "node:sqlite";
 import { retainedKeyProvider } from "../../packages/ledger/src/sign.ts";
-import { windowsKeyAcl } from "../../packages/ledger/src/hardening.ts";
+import {
+  assertPrivateFilePath,
+  auditPrivateTree,
+  ensurePrivateDirectory,
+  ensurePrivateFile,
+  readPrivateFile,
+  windowsKeyAcl,
+} from "../../packages/ledger/src/hardening.ts";
 import { jsonlStore } from "../../packages/ledger/src/store.ts";
 
 const manifestName = "recovery-backup-manifest.json";
@@ -60,6 +65,9 @@ async function regularFile(path, category = "backup_incomplete") {
     throw error;
   });
   if (!stat.isFile()) refuse(category);
+  await assertPrivateFilePath(path, "recovery backup file").catch(() =>
+    refuse(category),
+  );
   return stat;
 }
 
@@ -134,6 +142,8 @@ async function createBackup({ stateDir, backupDir, encryptionKeyEnv }) {
     throw error;
   });
   if (!sourceStat.isDirectory()) refuse("backup_incomplete");
+  const sourceAudit = await auditPrivateTree(source);
+  if (sourceAudit.state !== "private") refuse("backup_incomplete");
   await lstat(destination).then(
     () => refuse("invalid_arguments"),
     (error) => {
@@ -142,9 +152,10 @@ async function createBackup({ stateDir, backupDir, encryptionKeyEnv }) {
   );
 
   await mkdir(dirname(destination), { recursive: true, mode: 0o700 });
-  await mkdir(destination, { mode: 0o700 });
+  await ensurePrivateDirectory(destination, "recovery backup destination");
   const stateCopy = join(destination, "state");
   try {
+    await ensurePrivateDirectory(stateCopy, "recovery backup state directory");
     await cp(source, stateCopy, {
       recursive: true,
       filter(path) {
@@ -160,18 +171,15 @@ async function createBackup({ stateDir, backupDir, encryptionKeyEnv }) {
     });
     const signingKey = join(stateCopy, "keys", "dev-ed25519.pkcs8");
     await regularFile(signingKey, "key_unavailable");
-    await chmod(signingKey, 0o600);
-    // fs.cp does not carry a Windows ACL, and chmod is a no-op there, so the
-    // copied key arrived readable by more than its owner. The ledger refuses
-    // exactly that on restore, which made every Windows backup unusable for the
-    // one job it exists for. Re-protect the copy the way the ledger protects a
-    // key it writes itself.
+    // The destination tree is private before copying starts. The following
+    // path ACL check confirms fs.cp inherited that protected boundary.
     if (process.platform === "win32") await windowsKeyAcl(signingKey, true);
 
     const sourceVault = join(source, "vault", "vault.sqlite");
     const restoredVault = join(stateCopy, "vault", "vault.sqlite");
     await regularFile(sourceVault, "missing_artifact");
-    await mkdir(dirname(restoredVault), { recursive: true, mode: 0o700 });
+    await ensurePrivateDirectory(dirname(restoredVault), "recovery backup vault directory");
+    await ensurePrivateFile(restoredVault, "recovery backup vault database");
     const database = new DatabaseSync(sourceVault, { readOnly: true });
     try {
       // SQLite's online backup API copies the source snapshot through SQLite,
@@ -183,7 +191,7 @@ async function createBackup({ stateDir, backupDir, encryptionKeyEnv }) {
     } finally {
       database.close();
     }
-    await chmod(restoredVault, 0o600);
+    await assertPrivateFilePath(restoredVault, "recovery backup vault database");
 
     const manifest = {
       schema: "void.recovery-backup.v1",
@@ -193,6 +201,8 @@ async function createBackup({ stateDir, backupDir, encryptionKeyEnv }) {
     };
     const bytes = Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`);
     await writeFile(join(destination, manifestName), bytes, { mode: 0o600 });
+    const backupAudit = await auditPrivateTree(destination);
+    if (backupAudit.state !== "private") refuse("backup_incomplete");
     return {
       ok: true,
       manifestDigest: sha256(bytes),
@@ -207,9 +217,14 @@ async function createBackup({ stateDir, backupDir, encryptionKeyEnv }) {
 async function verifyBackup({ backupDir, anchor }) {
   if (!anchor || !digestPattern.test(anchor)) refuse("history_unanchored");
   const destination = resolve(backupDir);
+  const destinationAudit = await auditPrivateTree(destination);
+  if (destinationAudit.state !== "private") refuse("backup_incomplete");
   let bytes;
   try {
-    bytes = await readFile(join(destination, manifestName));
+    bytes = await readPrivateFile(
+      join(destination, manifestName),
+      "recovery backup manifest",
+    );
   } catch {
     refuse("history_unanchored");
   }

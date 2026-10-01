@@ -48,6 +48,12 @@ import {
 import type { JsonlEntry } from "../../ledger/src/store.ts";
 import { verifyAnchor, type AttestationDocument } from "../../ledger/src/attest.ts";
 import {
+  assertPrivateDirectoryPath,
+  assertPrivateFileIfPresent,
+  assertPrivateFilePath,
+  readPrivateFile,
+} from "../../ledger/src/hardening.ts";
+import {
   jobStageTable,
   operationStageTable,
   validateJobTransition,
@@ -300,6 +306,7 @@ export async function createBundle(
     unreadable: "ledger_invalid",
     unverifiable: "ledger_unverifiable",
     replay: "chain",
+    privateState: true,
   });
   const journalPath = join(options.stateDir, "journal", `${workspace}.jsonl`);
   const journal = await readSignedSection(journalPath, workspace, {
@@ -308,6 +315,7 @@ export async function createBundle(
     unreadable: "journal_invalid",
     unverifiable: "journal_unverifiable",
     replay: "journal",
+    privateState: true,
   });
   const vault = await readVaultManifest(options.stateDir, workspace);
   const capability = capabilitySection(workspace);
@@ -513,6 +521,8 @@ type ReadSectionOptions = {
   readonly unverifiable: BundleCategory;
   /** `journal` replays the events through the transition tables; `chain` only verifies it. */
   readonly replay: "chain" | "journal";
+  /** Live local state is private; bundle bytes have already been hash checked. */
+  readonly privateState?: boolean;
   /** Set when verifying a bundle: the already digest checked bytes are reused. */
   readonly onDisk?: Buffer | undefined;
 };
@@ -531,6 +541,25 @@ export async function readSignedSection(
   let entries: JsonlEntry[];
   if (options.onDisk) {
     entries = parseJsonl(options.onDisk.toString("utf8"), options.unreadable, path);
+  } else if (options.privateState) {
+    let bytes: Buffer;
+    try {
+      bytes = await readPrivateFile(
+        path,
+        "local signed state file",
+        LEDGER_READ_MAX_BYTES,
+      );
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT")
+        refuse(options.missing, path);
+      refuse(options.unreadable, (error as Error).message);
+    }
+    entries = parseJsonl(bytes.toString("utf8"), options.unreadable, path);
+    if (entries.length > LEDGER_READ_MAX_ENTRIES)
+      refuse(
+        options.unreadable,
+        `${path} exceeds the ${LEDGER_READ_MAX_ENTRIES} entry read limit`,
+      );
   } else {
     const present = await lstat(path).then(
       (info) => info.isFile(),
@@ -605,14 +634,45 @@ export async function readVaultManifest(
 ): Promise<VaultManifestSection> {
   const root = join(stateDir, "vault");
   const database = join(root, "vault.sqlite");
+  const rootPresent = await lstat(root).then(
+    (info) => {
+      if (info.isSymbolicLink() || !info.isDirectory())
+        refuse("vault_invalid", root);
+      return true;
+    },
+    (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return false;
+      throw error;
+    },
+  );
+  if (!rootPresent)
+    return {
+      schema: VAULT_MANIFEST_SCHEMA,
+      workspace,
+      store: "absent",
+      unsettled: 0,
+      reservations: 0,
+      artifacts: [],
+    };
+  await assertPrivateDirectoryPath(root, "recovery vault directory");
   const isFile = await lstat(database).then(
-    (info) => info.isFile(),
+    (info) => {
+      if (info.isSymbolicLink() || !info.isFile())
+        refuse("vault_invalid", database);
+      return true;
+    },
     (error: NodeJS.ErrnoException) => {
       if (error.code === "ENOENT") return false;
       throw error;
     },
   );
   if (isFile) {
+    await assertPrivateFilePath(database, "recovery vault database");
+    for (const suffix of ["-journal", "-wal", "-shm"])
+      await assertPrivateFileIfPresent(
+        `${database}${suffix}`,
+        "recovery vault SQLite sidecar",
+      );
     const vault = new DatabaseSync(database, { readOnly: true });
     try {
       const artifacts = vault
@@ -676,7 +736,8 @@ async function legacyVaultManifest(
   const directory = join(root, workspace);
   const present = await lstat(directory).then(
     (info) => {
-      if (!info.isDirectory()) refuse("vault_invalid", directory);
+      if (info.isSymbolicLink() || !info.isDirectory())
+        refuse("vault_invalid", directory);
       return true;
     },
     (error: NodeJS.ErrnoException) => {
@@ -693,16 +754,22 @@ async function legacyVaultManifest(
       reservations: 0,
       artifacts: [],
     };
+  await assertPrivateDirectoryPath(directory, "legacy vault workspace directory");
   const artifacts: VaultArtifact[] = [];
   let unsettled = 0;
   for (const item of await readdir(directory, { withFileTypes: true })) {
     if (item.name.startsWith(".tmp-")) {
+      const path = join(directory, item.name);
+      if (!item.isFile()) refuse("vault_invalid", item.name);
+      await assertPrivateFilePath(path, "legacy vault temporary file");
       unsettled += 1;
       continue;
     }
     if (!item.isFile() || !DIGEST.test(item.name))
       refuse("vault_invalid", item.name);
-    const bytes = await readFile(join(directory, item.name));
+    const path = join(directory, item.name);
+    await assertPrivateFilePath(path, "legacy vault artifact");
+    const bytes = await readPrivateFile(path, "legacy vault artifact");
     artifacts.push({
       digest: item.name,
       contentDigest: item.name,

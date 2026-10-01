@@ -13,7 +13,6 @@
  * the JSONL implementation the free tier and the test suite run on.
  */
 
-import { mkdir, open, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -22,7 +21,13 @@ import { GENESIS_PREV, canonicalJson, entryHash } from "./canonical.ts";
 import { readLedgerReason } from "./attribution.ts";
 import { readLedgerReversal, reversalFinding } from "./reversal.ts";
 import { sha256Hex, verifySignature } from "./sign.ts";
-import { sanitizeWorkspace } from "./hardening.ts";
+import {
+  assertPrivateDirectoryPath,
+  ensurePrivateDirectory,
+  openPrivateFile,
+  readPrivateFile,
+  sanitizeWorkspace,
+} from "./hardening.ts";
 
 /**
  * What one line in the JSONL file is. The receipt is the entry plus what the
@@ -95,7 +100,7 @@ export function jsonlStore(
         typeof (body as { workspace?: unknown }).workspace === "string"
           ? sanitizeWorkspace((body as { workspace: string }).workspace)
           : throwNoWorkspace();
-      await mkdir(dir, { recursive: true, mode: 0o700 });
+      await ensurePrivateDirectory(dir, "ledger directory");
       const [prev, seq] = await headInfo(file(workspace), workspace);
       const keyId = await signer.currentKeyId();
       const hash = await entryHash(body, prev, sha256Hex);
@@ -116,7 +121,11 @@ export function jsonlStore(
       // the bytes can be fsynced before the receipt exists. Without the
       // explicit sync the durability claim in the README was false in the
       // quietest way, green on every test and absent in every crash.
-      const handle = await open(file(workspace), "a");
+      const handle = await openPrivateFile(
+        file(workspace),
+        "append",
+        "ledger file",
+      );
       try {
         await handle.writeFile(`${JSON.stringify(entry)}\n`);
         await handle.sync();
@@ -140,6 +149,7 @@ export function jsonlStore(
     },
 
     async *read(workspace: string): AsyncIterable<JsonlEntry> {
+      await assertPrivateDirectoryPath(dir, "ledger directory");
       const text = await readOrEmpty(file(workspace));
       for (const line of text.split("\n")) {
         if (line === "") continue;
@@ -148,6 +158,7 @@ export function jsonlStore(
     },
 
     async head(workspace: string): Promise<JsonlReceipt | null> {
+      await assertPrivateDirectoryPath(dir, "ledger directory");
       return lastEntry(file(workspace));
     },
 
@@ -228,7 +239,7 @@ function throwNoWorkspace(): string {
 
 async function readOrEmpty(file: string): Promise<string> {
   try {
-    return await readFile(file, "utf8");
+    return (await readPrivateFile(file, "ledger file")).toString("utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return "";
     throw error;

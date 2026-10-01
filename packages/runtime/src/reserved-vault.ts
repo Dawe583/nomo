@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { mkdir, readdir, lstat, chmod, open } from "node:fs/promises";
+import { readdir, lstat, open } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { DatabaseSync } from "node:sqlite";
@@ -14,6 +14,14 @@ import {
   type VaultSlot,
 } from "./vault.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
+import {
+  assertPrivateDirectoryPath,
+  assertPrivateFileIfPresent,
+  assertPrivateFilePath,
+  ensurePrivateDirectory,
+  ensurePrivateFile,
+  secureGeneratedPrivateSidecar,
+} from "../../ledger/src/hardening.ts";
 const slots: readonly VaultSlot[] = ["capture", "outcome", "recovery"];
 type LegacyState = {
   bytes: number;
@@ -148,11 +156,15 @@ export function reservedRecoveryVault(
         continue;
       if (!entry.isDirectory())
         throw new Error("Unexpected entry in legacy vault.");
+      const workspaceDir = join(rootPath, entry.name);
+      await assertPrivateDirectoryPath(workspaceDir, "legacy vault workspace directory");
       for (const file of await readdir(join(rootPath, entry.name), {
         withFileTypes: true,
       })) {
         if (!file.isFile()) throw new Error("Unexpected legacy artifact.");
-        const stat = await lstat(join(rootPath, entry.name, file.name));
+        const artifactPath = join(rootPath, entry.name, file.name);
+        await assertPrivateFilePath(artifactPath, "legacy vault artifact");
+        const stat = await lstat(artifactPath);
         bytes += stat.size;
         sample ??= {
           workspace: entry.name,
@@ -269,12 +281,18 @@ export function reservedRecoveryVault(
      * transaction. No other caller may change the persisted capacity. */
     migrate?: VaultCapacityMigration,
   ): Promise<T> {
-    await mkdir(rootPath, { recursive: true, mode: 0o700 });
-    const old = await legacyState(),
-      path = join(rootPath, "vault.sqlite"),
-      db = new DatabaseSync(path);
+    await ensurePrivateDirectory(rootPath, "recovery vault directory");
+    const old = await legacyState();
+    const path = join(rootPath, "vault.sqlite");
+    await ensurePrivateFile(path, "recovery vault database");
+    for (const suffix of ["-journal", "-wal", "-shm"])
+      await assertPrivateFileIfPresent(
+        `${path}${suffix}`,
+        "recovery vault SQLite sidecar",
+      );
+    const db = new DatabaseSync(path);
     try {
-      await chmod(path, 0o600);
+      await assertPrivateFilePath(path, "recovery vault database");
       db.exec("PRAGMA busy_timeout=0; PRAGMA synchronous=FULL");
       const deadline = Date.now() + 30_000;
       for (;;) {
@@ -372,6 +390,11 @@ export function reservedRecoveryVault(
       return result;
     } finally {
       db.close();
+      for (const suffix of ["-journal", "-wal", "-shm"])
+        await secureGeneratedPrivateSidecar(
+          `${path}${suffix}`,
+          "recovery vault SQLite sidecar",
+        );
     }
   }
   const decode = (
