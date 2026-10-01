@@ -35,10 +35,36 @@ import {
 } from "../../connectors/src/capability-profiles.ts";
 
 
+/**
+ * Fail-closed scenario guard, shared by the fixtures in this file and written
+ * once because three fixtures needed it: `fixtureFor` casts the profile's
+ * published operation to the fixture's scenario union, so an operation a
+ * profile lists and no fixture implements used to fall through to the
+ * nearest implemented scenario and report that operation green.
+ */
+function requireScenario(
+  adapterId: string,
+  operation: string,
+  implemented: readonly string[],
+): void {
+  if (!implemented.includes(operation))
+    throw new Error(
+      `Unknown ${adapterId} conformance scenario ${JSON.stringify(operation)}.`,
+    );
+}
+
+
 const filesystemOperations =
   process.platform === "win32"
     ? (["create", "write", "delete"] as const)
     : (["create", "write", "delete", "rename"] as const);
+
+/**
+ * Every scenario `filesystemConformanceFixture` implements, on either
+ * platform: `rename` is refused by the fixture on Windows rather than
+ * skipped, and the published operation list is what stays in step.
+ */
+const filesystemScenarios = ["create", "write", "delete", "rename"] as const;
 
 export const filesystemConformanceProfile = {
   schema: "void.adapter-capability.v2",
@@ -80,6 +106,7 @@ export const filesystemConformanceProfile = {
 export async function filesystemConformanceFixture(
   operation: "create" | "write" | "delete" | "rename" = "write",
 ): Promise<ConformanceFixture> {
+  requireScenario("filesystem.managed", operation, filesystemScenarios);
   const dir = await mkdtemp(join(tmpdir(), "void-conformance-"));
   try {
     const root = join(dir, "project");
@@ -196,6 +223,7 @@ export const gitConformanceProfile = {
 type GitScenario = (typeof gitConformanceProfile.operations)[number];
 export async function gitConformanceFixture(operation: GitScenario = "write"): Promise<ConformanceFixture> {
   if (process.platform === "win32") throw new Error("git.managed is unsupported on Windows");
+  requireScenario("git.managed", operation, gitConformanceProfile.operations);
   const dir = await mkdtemp(join(tmpdir(), "void-git-conformance-"));
   try {
     const root = join(dir, "repo");
@@ -431,6 +459,11 @@ type ManagedDocumentsScenario = "write" | "delete";
 export async function managedDocumentsConformanceFixture(
   operation: ManagedDocumentsScenario = "write",
 ): Promise<ConformanceFixture> {
+  requireScenario(
+    "managed-documents",
+    operation,
+    managedDocumentsConformanceProfile.operations,
+  );
   const dir = await mkdtemp(join(tmpdir(), "void-documents-conformance-"));
   try {
     const path = "sample.md",
