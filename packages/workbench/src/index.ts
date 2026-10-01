@@ -139,6 +139,32 @@ const RETIRED_MODEL_IDS = [
   "muse-spark-1.3-contributor-free",
   "z-ai/glm-5.3-free",
 ];
+/** Domain separator for the agent-conversation request digest, versioned
+ * because the derivation changed: v1 hashed only the messages added since the
+ * previous turn plus a count, so two conversations reaching the same tail with
+ * different histories produced the same value. A recorded digest is opaque and
+ * stays valid either way; only newly computed values use the chain. */
+const REQUEST_DIGEST_DOMAIN = "void.workbench.request.v2";
+
+/**
+ * One turn of the agent-conversation request digest chain.
+ *
+ * `previous` is the digest of every turn before this one, so a change anywhere
+ * in the conversation reaches every later value without re-serialising the
+ * prefix on each turn. `null` starts the chain; the recorded digest is opaque,
+ * so a value produced by the older unchained derivation stays readable and only
+ * newly computed turns use the chain.
+ */
+export function conversationRequestDigest(
+  previous: string | null,
+  model: string,
+  messages: readonly unknown[],
+  tools: readonly unknown[],
+): Promise<string> {
+  return sha256Hex(
+    canonicalJson({ domain: REQUEST_DIGEST_DOMAIN, previous, model, messages, tools }),
+  );
+}
 export const DEFAULT_POLICY =
   "version: 1\nrules:\n  - match:\n      class: r0\n    decision: allow\n  - match: {}\n    decision: hold\n    seconds: 300\n    notify: [cli]\n";
 export const AGENT_PRESETS = [
@@ -2391,13 +2417,16 @@ export class Workbench {
         },
       }));
       const maxTurns = session.agentProfile?.maxTurns ?? 20;
-      // The prefix of the conversation that never changes. Hashing only the
-      // messages added since the last turn turns a per-turn cost of O(session)
-      // into O(turn), and the digest is identical either way: the prefix was
-      // already inside the previous digest's input, so folding it forward
-      // changes what the value means not at all. A session that reaches the
-      // 200 message limit would otherwise serialise its whole history twenty
-      // times, and canonicalJson is the expensive part, not the hash.
+      // The digest is a chain over the turns, not a snapshot of the newest
+      // ones. Folding the previous turn's digest in keeps the cost at O(turn)
+      // while making the earlier prefix reach the current value: two
+      // conversations that arrive at the same tail through different histories
+      // now differ, because the turn where they parted changed every digest
+      // after it. The previous derivation hashed only the messages added since
+      // the last turn, plus a bare count, and its comment claimed the prefix
+      // was "already inside the previous digest's input" when nothing read the
+      // previous value at all.
+      let previous: string | null = null;
       let hashed = 0;
       for (let turn = 0; turn < maxTurns; turn++) {
         if (session.controller.signal.aborted) return;
@@ -2407,16 +2436,13 @@ export class Workbench {
         // from the record itself. One digest for the turn, not one per tool
         // call: every record the turn produces names the same request, and a
         // per-call digest would hash the same growing conversation repeatedly.
-        session.requestDigest = await sha256Hex(
-          canonicalJson({
-            model: session.view.model,
-            messages: session.messages.slice(hashed),
-            tools,
-            // The count is inside the input, so two sessions with the same
-            // tail and different histories do not produce the same digest.
-            through: session.messages.length,
-          }),
+        session.requestDigest = await conversationRequestDigest(
+          previous,
+          session.view.model,
+          session.messages.slice(hashed),
+          tools,
         );
+        previous = session.requestDigest;
         hashed = session.messages.length;
         if (session.messages.length >= 200)
           throw new Error(

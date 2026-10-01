@@ -4,6 +4,17 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- The agent conversation's `requestDigest` did not see the conversation. Each
+  turn hashed only the messages added since the previous turn plus a bare
+  message count, so two conversations that reached the same tail through
+  different histories produced the same value, and the code comment claiming
+  the prefix was already inside the previous digest's input described a value
+  nothing read. Every turn now folds in the previous turn's digest under a
+  versioned domain separator, so a difference anywhere reaches every later
+  value while the per-turn cost stays proportional to what the turn added. A
+  recorded digest is opaque and still verifies, so no historical record is
+  rewritten; the tests now call the shipped function instead of a copy of it,
+  which is how the two drifted apart.
 - The ledger file was created without a mode, so on a host running umask 022
   every workspace JSONL was world-readable while the module documented itself
   as 0600 and `DECISIONS.md` recorded 0600 as the decision. The file is now
