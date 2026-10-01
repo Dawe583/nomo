@@ -636,26 +636,35 @@ from an unchecked citation is the same failure this document exists to catch,
 and it is recorded here because a reader deserves to know which of its claims
 were verified by running the code and which were not.
 
-The gate did not catch that bad citation either. Its path pattern requires the
+The gate did not catch that bad citation either. Its path pattern required the
 closing backtick immediately after the extension, so a citation written as
-`some/file.ts:385` matches nothing and is never checked for existence, while
-the same path written bare is checked. Writing the path and the line
-separately, as this paragraph now does, is the form the gate can see.
+`some/file.ts:385` matched nothing and was never checked for existence, while
+the same path written bare was checked. That is fixed: `PATH_LIKE` in
+`scripts/src/doc-truth.test.mjs` accepts an optional line number, captured
+separately so the existence check still sees a bare path. The fix was
+falsified both ways before it was kept: a citation of a file that does not
+exist, written with a line number, failed the gate, and the restored file
+passed it.
 
-How much that is worth is a narrower claim than it first looks, and the
+How much that was worth is a narrower claim than it first looks, and the
 corpus was measured rather than assumed. Scanning every markdown file under
 `docs/` plus the two root documents with a pattern that also accepts the line
 number found 1,781 citations rooted under a `SOURCE_ROOT`, of which 1,710
 resolve and 71 do not. Every one of those 71 is already listed in the
-`INVENTORY` map with a reason, so widening the pattern today would report
-nothing new. The remaining 867 matches are bare filenames, which the gate
+`INVENTORY` map with a reason, so widening the pattern would have reported
+nothing new on this date. That number only means something once the inventory
+is known to have parsed: a parser matching the wrong line shape extracts zero
+keys and reports all 71 as new. It resolves to 23 keys covering 23 distinct
+dead paths. The remaining 867 matches are bare filenames, which the gate
 exempts on purpose, and that exemption should stay.
 
-So the accurate statement is that the blind spot is real and confirmed, and
-that it has not yet produced a dead reference anywhere in `docs/`. It cost one
+So the accurate statement is that the blind spot was real and confirmed, and
+that it had not produced a dead reference anywhere in `docs/`. It cost one
 bad citation, and that one was caught by re-reading the file rather than by the
-gate. This is a reason to write line-numbered citations in the form the gate
-can see, and not on its own a reason to change the gate.
+gate. A clean scan of today's corpus is a statement about this corpus on this
+date, not a reason to leave a gate unable to check its own documents, and the
+pattern now checks the most natural form of a citation whether or not the
+corpus happens to be clean today.
 
 While correcting row 29, section 6 finding 3 was found to be stale in the same
 way and for the same reason. It reported that the `RECOVERY-COVERAGE.md`
