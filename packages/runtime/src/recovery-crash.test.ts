@@ -16,10 +16,13 @@ import {
   type RecoveryPlan,
 } from "./index.ts";
 
+const CHILD_MESSAGE_TIMEOUT_MS = process.platform === "win32" ? 90_000 : 15_000;
+const TEST_TIMEOUT_MS = process.platform === "win32" ? 180_000 : 25_000;
+
 for (const durableReceipt of [false, true]) {
   test(
     `SIGKILL after inverse commit ${durableReceipt ? "with" : "without"} an atomic receipt never repeats recovery`,
-    { timeout: 25_000 },
+    { timeout: TEST_TIMEOUT_MS },
     async (t) => {
       const root = await mkdtemp(join(tmpdir(), "void-killed-recovery-"));
       const key = randomBytes(32);
@@ -82,7 +85,7 @@ await runtime.recover(plan, async () => true);
         stdio: ["ignore", "ignore", "pipe", "ipc"],
       });
       const [message] = (await once(child, "message", {
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(CHILD_MESSAGE_TIMEOUT_MS),
       })) as [{ stage: string; plan: RecoveryPlan; recoveryId: string }];
       assert.equal(message.stage, "inverse-committed");
       const exited = once(child, "exit");

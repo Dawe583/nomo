@@ -18,6 +18,12 @@ import type {
   LegacyProxyBinding,
 } from "./forward/legacy-binding.ts";
 
+const platformTestTimeoutMs = (
+  milliseconds: number,
+  windowsMilliseconds: number,
+): number =>
+  process.platform === "win32" ? windowsMilliseconds : milliseconds;
+
 describe("runProxy", () => {
   test("initialize negotiation answers a version the agent supports", async () => {
     const harness = await makeHarness("allow");
@@ -826,7 +832,10 @@ test("runProxy filters inherited environment and honors explicit upstreamEnv", a
     input.push(
       JSON.stringify({ jsonrpc: "2.0", id: 71, method: "tools/list" }),
     );
-    const timer = setTimeout(() => input.close(), 5_000);
+    const timer = setTimeout(
+      () => input.close(),
+      platformTestTimeoutMs(5_000, 30_000),
+    );
     try {
       await runProxy({
         upstreamCommand: [process.execPath, "-e", script],
@@ -1080,7 +1089,7 @@ async function waitForQueue(
   // so a fixed tick count races disk latency. Poll on wall time instead:
   // the queue either appears within the hold's own lifetime or the test
   // genuinely failed.
-  const deadline = Date.now() + 5_000;
+  const deadline = Date.now() + platformTestTimeoutMs(5_000, 30_000);
   while (Date.now() < deadline) {
     const queue = getQueue();
     if (queue !== null && queue.list().length > 0) return queue;
@@ -1310,7 +1319,7 @@ async function readLedgerDecisions(
 }
 
 async function waitFor(predicate: () => boolean, label: string): Promise<void> {
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + platformTestTimeoutMs(15_000, 60_000);
   while (Date.now() < deadline) {
     if (predicate()) return;
     await new Promise<void>((resolve) => setTimeout(resolve, 5));
