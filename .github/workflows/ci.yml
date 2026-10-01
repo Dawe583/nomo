@@ -139,11 +139,6 @@ jobs:
   apple:
     runs-on: macos-latest
     timeout-minutes: 60
-    env:
-      # Derived data outside the checkout, so a stale build product is never
-      # picked up from a cached path and the working tree stays clean for the
-      # next step.
-      DERIVED_DATA: ${{ runner.temp }}/VOID-derived-data
     steps:
       - uses: actions/checkout@v4
       # The XcodeGen project is committed, so the job does not need the
@@ -163,6 +158,11 @@ jobs:
       - run: swift test --package-path apps/apple/VoidDesignSystem
         timeout-minutes: 15
       - name: Run the VOID scheme on the iOS simulator
+        env:
+          # Keep derived data outside the checkout, so a stale build product is
+          # never picked up and the working tree stays clean. runner.temp is
+          # available in step env, but not in the enclosing job env.
+          DERIVED_DATA: ${{ runner.temp }}/VOID-derived-data
         run: |
           xcodebuild test \
             -project apps/apple/VOID.xcodeproj \
