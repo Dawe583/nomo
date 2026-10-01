@@ -201,11 +201,16 @@ test("no Swift file in the package imports UIKit or AppKit", () => {
 });
 
 test("the package's own test target measures every contrast pair", (t) => {
+  // Some Linux runners ship a Swift compiler but not SwiftUI, which this Apple
+  // package imports. The macOS CI job runs the package's own test target.
+  if (process.platform !== "darwin") {
+    t.skip("SwiftUI contrast measurement runs in the macOS job");
+    return;
+  }
   const toolchain = spawnSync("swift", ["--version"], { encoding: "utf8" });
   if (toolchain.error || toolchain.status !== 0) {
-    // The gate runs on a Linux job with no Swift toolchain, so the measurement
-    // belongs to the package's own suite rather than to this one. The list
-    // itself is still compared with the document above.
+    // The measurement belongs to the package's own suite. The list itself is
+    // still compared with the document above.
     t.skip("no Swift toolchain on this host");
     return;
   }
