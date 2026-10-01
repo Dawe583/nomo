@@ -26,15 +26,15 @@ All notable user-facing changes since the first repository commit.
   versioned domain separator, so a difference anywhere reaches every later
   value while the per-turn cost stays proportional to what the turn added. A
   recorded digest is opaque and still verifies, so no historical record is
-  rewritten; the tests now call the shipped function instead of a copy of it,
-  which is how the two drifted apart.
+  rewritten; the shipped function is now called directly instead of through a
+  copy of it, which is how the two drifted apart.
 - The ledger file was created without a mode, so on a host running umask 022
   every workspace JSONL was world-readable while the module documented itself
   as 0600 and `DECISIONS.md` recorded 0600 as the decision. The file is now
   created owner-only, and an append tightens a file an earlier build left
-  broad rather than leaving the documented mode as prose. Tests run the
-  creation path under umask 022 and 077 and cover the pre-existing 0644 file;
-  Windows ACL behaviour is unchanged and is not claimed.
+  broad rather than leaving the documented mode as prose. Both umask 022 and
+  077 are covered, as is the file an earlier build left at 0644; Windows ACL
+  behaviour is unchanged and is not claimed.
 - An answer to a server-originated MCP request was forwarded upstream under
   the agent's own request id. The relay read its id map off the session object,
   where the map lives under `maps`, so the lookup found nothing and returned
