@@ -20,13 +20,15 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@types/pg": "8.15.5"
+    "@types/pg": "8.15.5",
+    "@void/registry": "workspace:*"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1036.0",
     "@modelcontextprotocol/sdk": "1.30.0",
-    "@void/registry": "workspace:*",
-    "pg": "8.16.3"
+    "node-sql-parser": "^5.4.0",
+    "pg": "8.16.3",
+    "yaml": "^2.8.0"
   },
   "description": "Inspect classifications, verify ledgers, and plan replay from the VOID command line.",
   "keywords": [

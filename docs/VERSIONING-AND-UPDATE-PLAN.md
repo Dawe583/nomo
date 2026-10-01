@@ -91,20 +91,20 @@ follow a bump automatically.
 
 ## 2. Single source of truth
 
-**Recommendation: one version for the whole product, living in the root
-`package.json`, propagated by a script, and compared against by the gate
-instead of the literal.**
+**Shipped 2026-10-02 on branch `omp/selfupdate`:** one version for the whole
+product, living in the root `package.json`, propagated by a script, and
+compared against by the gate instead of a literal.
 
-**Implementation note, 2026-10-02.** A parallel lane is building the four
-changes above on the `omp/selfupdate-version` branch, and
-scripts/src/set-version.mjs is the name it is building under. This document
-was not rewritten to describe that work: the branch was not merged here, so
-what exists on it is not verified from this tree, and this section stays the
-specification the implementation is held to. If the shipped script and gate
-diverge from what is written above, the correction belongs in this section
-once the branch is merged and read here, and until then a reader who needs
-the current behaviour should read the script and the gate rather than this
-page. Nothing below section 2 changes on the strength of that note alone.
+**Status, 2026-10-02.** All four changes below are implemented and verified in
+this tree. `scripts/src/set-version.mjs` is the propagation script,
+`scripts/src/set-version.test.mjs` is its check, the gate in
+`scripts/src/release-packaging.test.mjs` compares each manifest against the
+root manifest, and `packages/cli/src/recovery-mcp.ts` reads the same manifest
+for the version its MCP `initialize` response reports. The four changes are
+kept below because they are the specification the implementation is held to,
+and because the reasoning for each one is not in the code. Where this document
+and the shipped script disagree, the script is the behaviour and this section
+is the defect.
 
 Concretely, four changes, in this order:
 
