@@ -586,12 +586,33 @@ that was never performed. The exposure is bounded in the current tree because
 every published operation happens to have a fixture, so no shipped profile
 triggers it today; the defect is that the safety property is documented and not
 implemented, which means the first profile to gain an operation without one
-gets a green report. The fix is to refuse an operation the resolved fixture
-does not implement, before any fixture is built, rather than to keep a cast
-that promises a check the code never performs. That is code work in
-`packages/cli/src/conformance.ts`, outside this document's lane, and it is
-recorded as open rather than done: the correction in row 29 fixes the stale
-claim, not this.
+gets a green report.
+
+**Fixed on a sibling branch, not yet merged here.** `334293a` on
+`omp/selfupdate-conformance` adds one shared helper, `requireScenario` at
+`packages/cli/src/conformance.ts:45`, and calls it at `:109` for the filesystem
+fixture, `:226` for git and `:462` for managed documents. It throws
+`Unknown <adapter> conformance scenario "<name>".` for anything the resolved
+fixture does not implement. Verified on that branch: asking the git fixture for
+`"rebase"` now throws that message instead of returning a passing report.
+There are exactly three call sites, so the managed PostgreSQL fixture, which
+`334293a` did not touch, carries no such guard of its own and is the one
+fixture still relying on its own scenario check.
+
+One detail worth keeping if that commit is reviewed: the git call site at `:226`
+passes `gitConformanceProfile.operations` as its implemented list, so the guard
+checks the git fixture against the same array the profile publishes. That is
+correct for the defect fixed here, because the scenario union is derived from
+that array, and it is exactly the shape that would not catch a fixture losing
+an operation the profile still advertises. It is not the same property as the
+one the stale row 29 comment claimed.
+
+The fix widens no claim. The published operations list, both durable receipt
+flags and all seven passing git scenarios are unchanged by it, and `rebase` was
+never a published operation, so no document needed to move to accommodate the
+guard. What the correction in row 29 fixes is the stale claim; what `334293a`
+fixes is the fail-open, and this paragraph is the one line to revisit when the
+branch merges.
 
 While correcting row 29, section 6 finding 3 was found to be stale in the same
 way and for the same reason. It reported that the `RECOVERY-COVERAGE.md`
