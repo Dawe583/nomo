@@ -96,16 +96,40 @@ test("a scenario no fixture implements is refused instead of measured as its nea
       new RegExp(`Unknown ${adapterId.replace(".", "\\.")} conformance scenario "${unimplemented}"`),
     );
   }
-  // And end to end through the shared runtime: an unimplemented scenario
-  // fails every case rather than passing on the measurements of another one.
-  const report = await runAdapterConformance(
-    gitConformanceProfile.adapter,
-    () => gitConformanceFixture(unimplemented as never),
-  );
-  assert.equal(report.passed, false);
+  // The gate path proper, and the regression this guard exists for: a
+  // profile that GAINS an operation no fixture implements. Mutating the
+  // real published array in place is what editing the source does, and
+  // `as const` is erased at runtime, so this is a genuine mutation.
+  // A guard handed the profile's own array approves whatever the profile
+  // lists and waves through exactly the operation it exists to catch.
+  const published = gitConformanceProfile.operations as string[];
+  published.push(unimplemented);
+  try {
+    await assert.rejects(
+      async () => {
+        const fixture = await gitConformanceFixture(unimplemented as never);
+        await fixture.dispose();
+      },
+      /Unknown git\.managed conformance scenario "rebase"/,
+    );
+    // And through the shared runtime, a profile that gained an operation
+    // no fixture implements gains no green report.
+    const gated = await runAdapterConformance(
+      gitConformanceProfile.adapter,
+      () => gitConformanceFixture(unimplemented as never),
+    );
+    assert.equal(gated.passed, false);
+    assert.deepEqual(
+      gated.checks.map((check: { passed: boolean }) => check.passed),
+      CONFORMANCE_CASES.map(() => false),
+    );
+  } finally {
+    published.pop();
+  }
+  // The published list is still exactly what the fixture implements.
   assert.deepEqual(
-    report.checks.map((check: { passed: boolean }) => check.passed),
-    CONFORMANCE_CASES.map(() => false),
+    [...gitConformanceProfile.operations],
+    ["create", "write", "delete", "rename", "stage", "unstage", "commit"],
   );
 });
 
