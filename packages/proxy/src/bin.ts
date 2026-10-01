@@ -490,7 +490,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         return;
       }
 
-      sendUpstream(relayServerResponse(message as JsonRpcResponse, session));
+      sendUpstream(relayServerResponse(message as JsonRpcResponse, session.maps.upstreamToAgent));
     } catch (error) {
       writeError(`request failed: ${errorMessage(error)}`);
       sendLocal(jsonRpcError(responseId, INTERNAL_ERROR, "Internal error"));

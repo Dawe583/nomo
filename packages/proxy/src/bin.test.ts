@@ -379,6 +379,154 @@ describe("runProxy", () => {
   });
 });
 
+test("concurrent server requests restore typed upstream ids for success and error replies", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "void-proxy-server-request-"));
+  const policyPath = join(dir, "policy.yml");
+  await writeFile(policyPath, policyText("allow"));
+  const agentInput = lineQueue();
+  const agentOutput: Array<Record<string, unknown>> = [];
+  const upstreamSeen: Array<Record<string, unknown>> = [];
+  const serverIds: Array<string | number> = ["server-42", 42];
+
+  const run = runProxy({
+    keyProvider: keyProviderFromPkcs8(
+      generateKeyPairSync("ed25519").privateKey.export({
+        format: "der",
+        type: "pkcs8",
+      }),
+    ),
+    upstreamCommand: ["fake"],
+    policyPath,
+    posture: "fail-closed",
+    ledgerDir: join(dir, "ledger"),
+    workspace: "test",
+    input: agentInput,
+    output: (line) => {
+      agentOutput.push(JSON.parse(line) as Record<string, unknown>);
+    },
+    error: () => {},
+    upstreamSpawn: (events) => ({
+      send(line) {
+        const message = JSON.parse(line) as {
+          readonly id?: string | number;
+          readonly method?: string;
+        };
+        upstreamSeen.push(message as Record<string, unknown>);
+        if (message.method === "initialize") {
+          events.onMessage(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: {
+                protocolVersion: "2025-11-25",
+                capabilities: {},
+                serverInfo: { name: "fake", version: "1" },
+              },
+            }),
+          );
+          for (const id of serverIds)
+            events.onMessage(
+              JSON.stringify({
+                jsonrpc: "2.0",
+                id,
+                method: "roots/list",
+                params: { request: id },
+              }),
+            );
+          return;
+        }
+        if (
+          !serverIds.includes(message.id as string | number) &&
+          message.id !== undefined
+        )
+          events.onMessage(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: { rootUris: [] },
+            }),
+          );
+      },
+      close() {},
+      onStderr() {
+        return () => {};
+      },
+    }),
+  });
+
+  agentInput.push(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-11-25",
+        capabilities: {},
+        clientInfo: { name: "agent", version: "1" },
+      },
+    }),
+  );
+  await waitFor(
+    () =>
+      agentOutput.filter((message) => message.method === "roots/list").length ===
+      2,
+    "both server requests to reach the agent",
+  );
+  const relayed = agentOutput.filter((message) => message.method === "roots/list");
+  assert.notEqual(relayed[0]!.id, relayed[1]!.id);
+  const agentIdForServerId = new Map(
+    relayed.map((message) => [
+      (message.params as { request: string | number }).request,
+      message.id as string | number,
+    ]),
+  );
+  agentInput.push(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: agentIdForServerId.get(42),
+      error: { code: -32001, message: "declined", data: { retryable: false } },
+    }),
+  );
+  agentInput.push(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: agentIdForServerId.get("server-42"),
+      result: { rootUris: ["file:///workspace"] },
+    }),
+  );
+  await waitFor(
+    () =>
+      serverIds.every((id) =>
+        upstreamSeen.some((message) => message.id === id),
+      ),
+    "both replies to reach upstream",
+  );
+  assert.ok(
+    upstreamSeen.some(
+      (message) =>
+        message.id === "server-42" &&
+        JSON.stringify(message.result) ===
+          JSON.stringify({ rootUris: ["file:///workspace"] }),
+    ),
+  );
+  assert.ok(
+    upstreamSeen.some(
+      (message) =>
+        message.id === 42 &&
+        JSON.stringify(message.error) ===
+          JSON.stringify({
+            code: -32001,
+            message: "declined",
+            data: { retryable: false },
+          }),
+    ),
+  );
+
+  agentInput.close();
+  await run;
+  await rm(dir, { recursive: true, force: true });
+});
+
 test("bound legacy call records capture and outcome before relay", async () => {
   const events: string[] = [];
   const outcomes: string[] = [];

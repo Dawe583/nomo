@@ -194,8 +194,10 @@ public HTTP endpoint for claude.ai or the Vercel chat application.
 - `unknown`: preserve the original identity and reconcile; no blind retry.
 - `paused`: inspect the structured status, restore the configured adapter version
   or required local state, then repeat `apply-job` with the same job ID. Status
-  exposes only `step-unavailable` and the operation ID. Forward operations stay
-  blocked until the job reaches a safe terminal state.
+  exposes the code and the operation ID, and there are exactly two codes:
+  `step-unavailable`, which is the operator's to fix, and `lease-expired`,
+  which another worker wrote when it took over a job whose holder died.
+  Forward operations stay blocked until the job reaches a safe terminal state.
 - `conflict`: keep the human change. The current release does not automatically
   replan a conflicting operation or force overwrite it.
 - Invalid journal or missing key: stop recovery and restore verified backups.

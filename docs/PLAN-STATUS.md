@@ -1,6 +1,9 @@
 # VOID plan status
 
-Date: 2026-09-16. Baseline: local `main` at `4c82c37`.
+Date: 2026-09-16. Baseline: local `main` at `4c82c37`. Rows corrected
+2026-10-01 against `main` where the tree had moved past them; each correction
+names the file that contradicts the old cell. Everything not named here is
+still the 2026-09-16 reading.
 Rule used: `partial` appears only with positive evidence of a real
 implemented subset. TUI and GUI rows are summary level; sibling lanes own
 that depth. R05 commit work runs in the sibling lane.
@@ -59,9 +62,9 @@ or the stated default provider stops matching the tree.
 | R04 PostgreSQL end to end         | partial     | `packages/connectors/src/postgres/managed.ts` with adversarial tests; cascade, tenant, migration, kill and partition gates open                               |
 | R05 filesystem and Git            | partial     | `packages/connectors/src/filesystem/managed.ts` and `git/managed.ts` with conformance; commit, remote, Windows Git and rename gates open, sibling lane active |
 | R06 persistent planner and runner | partial     | `packages/runtime/src/recovery/plan.ts` and `run.ts` with job tests; selection, leases, fencing and remote surfaces open                                      |
-| R07 provenance and dependencies   | not started | Only retained legacy helpers in `packages/ledger/src/taint/`, no runtime integration                                                                          |
-| R08 S3 and Supabase               | not started | Only legacy S3 and OAuth connections, no managed adapters                                                                                                     |
-| R09 GitHub and Vercel recovery    | not started | Only OAuth plus read tools, no executable recovery adapters                                                                                                   |
+| R07 provenance and dependencies   | partial     | `packages/runtime/src/recovery/provenance.ts` is exported by the runtime and used by the recovery planner; legacy taint helpers remain in `packages/ledger/src/taint/` |
+| R08 S3 and Supabase               | partial     | `packages/connectors/src/s3/` carries capture, classify, apply guards and inverse with tests; there is no Supabase adapter in `packages/connectors/src` |
+| R09 GitHub and Vercel recovery    | not started | No `github` or `vercel` connector exists under `packages/connectors/src`; OAuth plus read tools only |
 | R10 budgets and modes             | partial     | `packages/runtime/src/budget.ts` local accounting with tests; cloud accounting, modes and approval integration open                                           |
 | R11 staged hold and cancel        | not started | Zero provisional receipt code, blocking hold only                                                                                                             |
 | R12 adapter SDK and services      | partial     | `packages/runtime/src/conformance.ts` runner plus managed TS SDK; Python transport and provider fixtures open                                                 |
@@ -73,7 +76,7 @@ or the stated default provider stops matching the tree.
 | Stage                       | Status  | Evidence pointer                                                                                                |
 | --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
 | E0 fixtures                 | done    | Delivery report documents reproducible fixtures                                                                 |
-| E1 default model            | done    | NVIDIA NIM / GLM 5.3 Flash default, setupRequired state and migration tests                                      |
+| E1 default model            | superseded | `packages/workbench/src/provider-defaults.ts` ships no default provider or model, the retired ids are refused on sight, and the workspace picks from its own validated catalog |
 | E2 shell and routes         | done    | Shared React shell with login gate exists                                                                       |
 | E3 chat composition         | partial | Markdown, composer, drafts, picker, tool cards, project workspace and context compaction exist; management parity continues |
 | E4 streaming and reconnect  | partial | Streaming with deltas exists, long run production evidence open                                                 |
@@ -90,8 +93,8 @@ or the stated default provider stops matching the tree.
 | A1 distribution            | partial     | Tauri beta with ad hoc signature per `docs/UPGRADE-CHECKPOINT.md`, no notarization |
 | A2 SwiftUI macOS client    | not started | Plan states Swift migration is not implemented                                     |
 | A3 iOS local recovery core | not started | Plan marks iOS as deferred design                                                  |
-| A4 pairing                 | not started | No pairing implementation in the tree                                              |
-| A5 native release          | blocked     | Needs Developer ID identity, provisioning, hardware; machine has CLT only          |
+| A4 pairing                 | partial     | `apps/control-plane/api/companion/` implements devices, invitations, idempotency, routes and operations with envelope tests |
+| A5 native release          | blocked     | Xcode 27.0 (build 27A266a) is installed; the blockers are a Developer ID identity, provisioning and hardware |
 
 ## Capability and runbook docs
 

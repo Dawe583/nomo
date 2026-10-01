@@ -86,6 +86,11 @@ const INVENTORY = {
     "pre-split site tree, the query surface named in DECISIONS 6b",
   "api/tsconfig.json":
     "pre-split site tree, the rootDir and emit-layout guards in STANDARDS 5 and DECISIONS 6b",
+  // Named by SURFACES-COVERAGE as one of the five files it read in a marketing
+  // companion checkout, not as a path in this repository. The same pre-split
+  // site tree, the same reason.
+  "api/waitlist.ts":
+    "pre-split site tree, read in a companion checkout named by SURFACES-COVERAGE",
 
   // WP deliverables that were scoped and never built. An execution plan naming
   // an unbuilt deliverable is honest; a plan claiming it shipped would not be.

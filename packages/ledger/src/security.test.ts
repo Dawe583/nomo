@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmod, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -27,6 +27,39 @@ test("a missing workspace can still start an empty ledger", async (t) => {
   assert.deepEqual(await store.verify("new"), { ok: true, checked: 0 });
   await store.append({ workspace: "new" });
   assert.deepEqual(await store.verify("new"), { ok: true, checked: 1 });
+});
+
+for (const umask of [0o022, 0o077] as const) {
+  test(`a ledger file is owner-only under umask ${umask.toString(8)}`, async (t) => {
+    if (process.platform === "win32") return;
+    const dir = await mkdtemp(join(tmpdir(), "void-ledger-mode-"));
+    t.after(() => rm(dir, { recursive: true, force: true }));
+    const previous = process.umask(umask);
+    t.after(() => {
+      process.umask(previous);
+    });
+    const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
+    await jsonlStore(key, { dir }).append({ workspace: "mode" });
+    const mode = (await stat(join(dir, "mode.jsonl"))).mode & 0o777;
+    assert.equal(mode, 0o600);
+    assert.equal((await stat(dir)).mode & 0o777, 0o700);
+  });
+}
+
+test("a ledger file left broad by an earlier build is tightened on append", async (t) => {
+  if (process.platform === "win32") return;
+  const dir = await mkdtemp(join(tmpdir(), "void-ledger-broad-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
+  const file = join(dir, "broad.jsonl");
+  await writeFile(file, "");
+  await chmod(file, 0o644);
+  await jsonlStore(key, { dir }).append({ workspace: "broad" });
+  assert.equal((await stat(file)).mode & 0o777, 0o600);
+  assert.deepEqual(
+    (await jsonlStore(key, { dir }).verify("broad")).ok,
+    true,
+  );
 });
 
 test("unsigned workspace relabeling cannot change signed ledger ownership", async (t) => {

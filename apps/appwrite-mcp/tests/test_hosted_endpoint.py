@@ -42,6 +42,7 @@ PROJECT_INFO_KEYS = {
     "name",
     "version",
     "summary",
+    "connect",
     "hosted_mcp",
     "local_recovery",
     "hosted_execution",
@@ -196,6 +197,51 @@ class ToolCallTest(unittest.TestCase):
         result = envelope(self.call(name, arguments, request_id))["result"]
         self.assertFalse(result["isError"], result)
         return json.loads(result["content"][0]["text"])
+
+    def test_project_info_says_how_to_connect(self) -> None:
+        # The first thing a caller needs is where it is talking to. Without
+        # this the endpoint answers what it knows about VOID and leaves the
+        # address that reached it to be discovered by reading the config the
+        # caller already had.
+        connect = self.payload("void_project_info")["connect"]
+        self.assertEqual(connect["tools"], 6)
+        self.assertIn("HTTP", connect["transport"])
+        self.assertIn("read-only", connect["authentication"])
+
+    def test_a_declared_endpoint_is_reported_and_is_pasteable(self) -> None:
+        import os
+
+        declared = "https://chat.voidagent.tech"
+        previous = os.environ.get("VOID_MCP_ENDPOINT")
+        os.environ["VOID_MCP_ENDPOINT"] = declared
+        try:
+            connect = self.payload("void_project_info")["connect"]
+            self.assertEqual(connect["endpoint"], declared)
+            parsed = json.loads(connect["mcp_client_config"])
+            self.assertEqual(parsed["mcpServers"]["void"]["url"], declared)
+            self.assertEqual(parsed["mcpServers"]["void"]["type"], "http")
+        finally:
+            if previous is None:
+                os.environ.pop("VOID_MCP_ENDPOINT", None)
+            else:
+                os.environ["VOID_MCP_ENDPOINT"] = previous
+
+    def test_an_undeclared_endpoint_emits_no_pasteable_config(self) -> None:
+        # A configuration with an empty `url` looks pasteable and then fails on
+        # use, which is worse than reporting nothing: the caller pastes it, it
+        # fails, and the failure looks like a broken server rather than an
+        # undeclared address.
+        import os
+
+        previous = os.environ.get("VOID_MCP_ENDPOINT")
+        os.environ.pop("VOID_MCP_ENDPOINT", None)
+        try:
+            connect = self.payload("void_project_info")["connect"]
+            self.assertEqual(connect["endpoint"], "")
+            self.assertEqual(connect["mcp_client_config"], "")
+        finally:
+            if previous is not None:
+                os.environ["VOID_MCP_ENDPOINT"] = previous
 
     def test_project_info_returns_json_with_the_documented_keys(self) -> None:
         data = self.payload("void_project_info")

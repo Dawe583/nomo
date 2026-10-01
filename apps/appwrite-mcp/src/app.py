@@ -27,6 +27,7 @@ than in a comment.
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from mcp.types import ToolAnnotations
@@ -89,18 +90,50 @@ def _gate_text(gate: dict[str, Any]) -> list[str]:
     looking for `git.branch.tip_recorded` is holding the second arm of a
     disjunction, and that name exists nowhere else in the registry.
     """
-    parts = [str(value) for key, value in gate.items() if isinstance(value, str)]
-    for child in gate.get("of") or []:
-        if isinstance(child, dict):
-            parts.extend(_gate_text(child))
-    return parts
+    return [value for value in gate.values() if isinstance(value, str)] + [
+        text
+        for child in gate.get("of") or ()
+        if isinstance(child, dict)
+        for text in _gate_text(child)
+    ]
+
+
+def _endpoint() -> str:
+    """The public URL of this endpoint, or an empty string when unset.
+
+    Read from the environment rather than written down, because the domain is
+    expected to change: the same function is served on an Appwrite generated
+    domain today and on `chat.voidagent.tech` once the DNS records verify, and a
+    value written into the source would answer the wrong one the moment that
+    happened. The operator sets `VOID_MCP_ENDPOINT` when they publish, so it is
+    one place to change and one place to be wrong in.
+
+    An empty string is the honest answer when it is not set: this tool is
+    reachable at whatever host the caller just used, and the code cannot read
+    that from inside a tool call. Better to report nothing than to report an
+    address that may be the wrong one.
+    """
+    return os.environ.get("VOID_MCP_ENDPOINT", "").strip()
+
+
+def _client_config() -> str:
+    """A pasteable client configuration, or empty when there is no URL to use.
+
+    A configuration carrying an empty `url` is worse than none: it looks
+    pasteable and then fails on use, so an endpoint that has not been declared
+    is reported as undeclared instead of dressed up as something that works.
+    """
+    endpoint = _endpoint()
+    if not endpoint:
+        return ""
+    return json.dumps({"mcpServers": {"void": {"type": "http", "url": endpoint}}})
 
 
 @server.tool(
     annotations=READ_ONLY,
     description=(
-        "Return public VOID project identity, the hosted MCP boundary, and where "
-        "recovery actually executes."
+        "Return public VOID project identity, how to connect to this endpoint, the "
+        "hosted MCP boundary, and where recovery actually executes."
     )
 )
 def void_project_info() -> str:
@@ -114,13 +147,30 @@ def void_project_info() -> str:
                 "Accountable AI tool calls: classified for reversibility, written to a "
                 "signed append-only ledger, recoverable afterwards."
             ),
+            "connect": {
+                # The endpoint this answer is being read from, from the
+                # operator's environment rather than from the source, because
+                # the domain is expected to change and a value written into
+                # the code would answer the wrong one when it does.
+                #
+                # The client config is emitted only when there is a URL to put
+                # in it. A config with an empty `url` is worse than none: it
+                # looks pasteable and fails on use, so an unset endpoint is
+                # reported as unset rather than dressed up.
+                "endpoint": _endpoint(),
+                "transport": "HTTP POST, JSON-RPC 2.0 over / (streamable HTTP)",
+                "mcp_client_config": _client_config(),
+                "authentication": "none; every tool here is read-only",
+                "tools": 6,
+            },
             "hosted_mcp": (
                 "Read-only reference surface over the public classification registry "
                 "and the local tool catalogue."
             ),
             "local_recovery": (
                 "Recovery runs through the local stdio MCP server on the operator's "
-                "machine, using that machine's workspace, policy and retained key."
+                "machine, using that machine's workspace, policy and retained key. "
+                "Run `void recovery` on a machine to use it; nothing here executes it."
             ),
             "hosted_execution": False,
             "registry": {

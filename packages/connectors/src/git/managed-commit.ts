@@ -1199,14 +1199,26 @@ function verifyManagedCommitEvidence(
   requireCurrentBranch: boolean,
   requireCurrentHumanState: boolean,
 ): CommitEvidence {
+  services.validateRepository();
   if (
-    services.currentIdentity() !== captured.repository.identity ||
-    services.root !== captured.repository.root ||
-    services.gitDir !== captured.repository.gitDir ||
-    services.commonDir !== captured.repository.commonDir ||
-    services.indexPath !== captured.repository.indexPath ||
-    services.objectFormat !== captured.repository.objectFormat
-  ) throw new Error("Managed Git repository identity changed.");
+    captured.kind !== "commit" || plan.kind !== "commit" ||
+    !isDeepStrictEqual(captured.mutation, plan.mutation) ||
+    captured.selected.path !== captured.mutation.path ||
+    captured.branch.ref !== plan.branchRef ||
+    captured.branch.head !== plan.parent ||
+    !isDeepStrictEqual(plan.repository, captured.repository) ||
+    captured.repository.identity !== services.identity ||
+    captured.repository.root !== services.root ||
+    captured.repository.gitDir !== services.gitDir ||
+    captured.repository.commonDir !== services.commonDir ||
+    captured.repository.indexPath !== services.indexPath ||
+    captured.repository.objectFormat !== services.objectFormat ||
+    captured.repository.refBackend !== "files" ||
+    captured.repository.worktreeCount !== 1
+  ) throw new Error("Managed Git prepared evidence changed.");
+  validateSelectedPath(captured.selected.path);
+  services.pathTarget(captured.selected.path);
+  assertRepositoryProfile(services, captured.branch.ref);
   const branchChain = captureContainedPathChain(
     services.commonDir,
     captured.repository.destructivePaths.branchRef.target,
@@ -1239,10 +1251,43 @@ function verifyManagedCommitEvidence(
     if (added.kind !== "directory" || added.uid !== captured.repository.destructivePaths.boundary.uid)
       throw new Error("Managed Git receipt path ownership changed.");
   }
+  if (requireCurrentBranch) {
+    const head = readExactRef(plan.branchRef, services);
+    if (head === null) throw new Error("Managed Git branch is unavailable.");
+    if (head !== commit) throw new Error("Managed Git commit verification failed.");
+  }
+  if (readExactRef(plan.receiptRef, services) !== commit)
+    throw new Error("Managed Git commit verification failed.");
+  if (!services.oidPattern.test(plan.parent))
+    throw new Error("Managed Git parent commit verification failed.");
+  let parentTree: string;
+  try {
+    parentTree = services.git(["rev-parse", "--verify", `${plan.parent}^{commit}^{tree}`]);
+  } catch {
+    throw new Error("Managed Git parent commit verification failed.");
+  }
+  if (!services.oidPattern.test(parentTree) || captured.branch.tree !== parentTree)
+    throw new Error("Managed Git parent tree verification failed.");
+  const parentManifest = readTreeManifest(parentTree, services);
+  if (!isDeepStrictEqual(findEntry(parentManifest, captured.selected.path), captured.selected.head))
+    throw new Error("Managed Git selected parent entry verification failed.");
+  const selected = captured.selected.index;
+  if (selected.present) {
+    if (
+      (selected.mode !== "100644" && selected.mode !== "100755") ||
+      !services.oidPattern.test(selected.oid)
+    ) throw new Error("Managed Git selected entry verification failed.");
+  }
+  const expectedManifest = applySelectedEntry(
+    parentManifest,
+    captured.selected.path,
+    selected,
+  );
+  const independentManifestDigest = manifestDigest(expectedManifest);
   if (
-    (requireCurrentBranch && readExactRef(plan.branchRef, services) !== commit) ||
-    readExactRef(plan.receiptRef, services) !== commit
-  ) throw new Error("Managed Git commit verification failed.");
+    captured.expectedTreeManifestDigest !== independentManifestDigest ||
+    plan.expectedTreeManifestDigest !== independentManifestDigest
+  ) throw new Error("Managed Git expected manifest verification failed.");
   const raw = services.gitBuffer(["cat-file", "commit", commit]);
   if (raw.length >= 1024 || raw.includes(Buffer.from("gpgsig")))
     throw new Error("Managed Git commit verification failed.");
@@ -1255,8 +1300,12 @@ function verifyManagedCommitEvidence(
     `${plan.metadata.subject}\n`,
   );
   if (!raw.equals(expected)) throw new Error("Managed Git commit verification failed.");
-  if (manifestDigest(readTreeManifest(tree, services)) !== plan.expectedTreeManifestDigest)
+  const receiptManifest = readTreeManifest(tree, services);
+  if (!isDeepStrictEqual(receiptManifest, expectedManifest))
     throw new Error("Managed Git commit verification failed.");
+  // One spawn covers both trees, and it still covers the parent when no ref
+  // reaches it any more, which a per-blob loop over the manifests would not.
+  services.git(["fsck", "--connectivity-only", "--no-dangling", plan.parent, commit]);
   const indexDigest = requireCurrentHumanState
     ? sha256(services.rawIndex())
     : captured.index.rawDigest;

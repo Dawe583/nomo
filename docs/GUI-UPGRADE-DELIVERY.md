@@ -12,7 +12,7 @@ Plán: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md), původní audit: [GUI-UPGRADE
 - Dokumenty: editace s očekávanou revizí, konflikt 409, historie a diff; Undo používá aktuální preview a kontrolu digestu. Editor po Undo načte skutečnou novou revizi.
 - Konektory: přidání, editace, test připojení a skutečný katalog nástrojů se schématy. Prázdný token při editaci zachová existující tajemství.
 - Cloud uchovává append-only events samostatně; metadata polling nepřenáší celý transcript. Delta stránky a klientské sloučení zabraňují duplicitám. Starší zachovaná historie je dostupná přes serverové dotazy.
-- Výchozí nové konverzace: **NVIDIA NIM / GLM 5.3 Flash**, ID `z-ai/glm-5.3-flash`, endpoint `https://integrate.api.nvidia.com/v1`. NVIDIA hosted trial/free quota je účetní a není garancí neomezeného bezplatného provozu. Klíč je serverový; nepřechází do klientského buildu. Existující sessions zachovávají původní provider/model. Bez klíče se zobrazí setup state, ne tichý placený fallback.
+- Výchozí provider a model byly v tomto dokumentu původně uvedeny jako NVIDIA NIM / GLM 5.3 Flash. **Tento stav už neplatí**: VOID výchozí provider ani model neposílá (`providerId` a `defaultModel` jsou `null`), seznam vyřazených modelů se odmítá při dotazu a workspace vybírá z vlastního ověřeného katalogu. Klíč zůstává serverový a nepřechází do klientského buildu; existující sessions si ponechají původní provider/model.
 - OpenAI-compatible stream parser zvládá rozdělené UTF-8/CRLF, tool fragments, redakci klíče a neúplný stream. Chyby providera včetně 429 mají konkrétní stav; generace se automaticky neopakuje.
 
 ## Current management parity increment

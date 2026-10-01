@@ -4,6 +4,72 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Recovery jobs now carry runtime-derived lineage between adjacent inverses on
+  the same resource. Two consecutive writes to one filesystem path restore the
+  original bytes and mode after restart while a same-byte external rewrite
+  still conflicts; a managed PostgreSQL job likewise restores consecutive
+  updates to one configured row and reconciles a lost response without
+  repeating the inverse. The continuation is bound to the signed job plan,
+  prior operation receipt, adapter and resource scope; it does not widen
+  standalone recovery or unrelated operations.
+- A recovery job that takes over an expired lease now records `supersededBy`
+  in the signed pause. The displaced pause remains visible after restart but no
+  longer blocks later safe recovery jobs. Ordinary unavailable-step pauses
+  still block. MCP server requests also retain their original string or numeric
+  IDs when concurrent success and error replies return through `runProxy`.
+- The agent conversation's `requestDigest` did not see the conversation. Each
+  turn hashed only the messages added since the previous turn plus a bare
+  message count, so two conversations that reached the same tail through
+  different histories produced the same value, and the code comment claiming
+  the prefix was already inside the previous digest's input described a value
+  nothing read. Every turn now folds in the previous turn's digest under a
+  versioned domain separator, so a difference anywhere reaches every later
+  value while the per-turn cost stays proportional to what the turn added. A
+  recorded digest is opaque and still verifies, so no historical record is
+  rewritten; the tests now call the shipped function instead of a copy of it,
+  which is how the two drifted apart.
+- The ledger file was created without a mode, so on a host running umask 022
+  every workspace JSONL was world-readable while the module documented itself
+  as 0600 and `DECISIONS.md` recorded 0600 as the decision. The file is now
+  created owner-only, and an append tightens a file an earlier build left
+  broad rather than leaving the documented mode as prose. Tests run the
+  creation path under umask 022 and 077 and cover the pre-existing 0644 file;
+  Windows ACL behaviour is unchanged and is not claimed.
+- An answer to a server-originated MCP request was forwarded upstream under
+  the agent's own request id. The relay read its id map off the session object,
+  where the map lives under `maps`, so the lookup found nothing and returned
+  the agent id unchanged: the upstream saw a response to an id it never issued
+  and its own question went unanswered. The relay now takes the map directly,
+  so the shape that compiles is the shape that carries the mapping, and a
+  `runProxy` fixture with a real server request asserts the reply reaches the
+  server under the id the server chose.
+- A worker that took over a recovery job whose lease had expired could not
+  record the takeover. The `paused` payload it wrote named only the progress
+  and the reason, and carried a `lease-expired` code the payload validator did
+  not accept, so the write was refused with `Invalid recovery job progress
+  payload` and the takeover failed instead of being recorded. The payload now
+  carries the job ID, the status and the operation ID the validator reads back,
+  and `lease-expired` joins `step-unavailable` as the second closed pause code.
+  The journal is verified and replayed as a whole, so a code the validator
+  rejects would take the entire workspace down, not only the job it belongs to.
+- The evidence behind a managed Git commit was checked against values taken
+  from the same prepared document it was supposed to check: the parent tree,
+  the parent entry of the selected path and the recorded manifest digests all
+  came out of that document and were compared with each other. Verification now
+  re-reads the recorded parent's commit and tree from the object store, rebuilds
+  the expected manifest from that tree and the selected index entry, and
+  requires the captured values and both recorded digests to equal the
+  re-derivation, so a document edited after dispatch can no longer corroborate
+  itself on the recovery path. Object connectivity is one `git fsck
+  --connectivity-only` over the parent and the receipt commit instead of one
+  `cat-file` per file, which also covers the parent after its branch is gone.
+- `void_project_info` now answers with where it is being served from and a
+  pasteable client configuration, because a caller connecting for the first time
+  needs the address before it needs anything else. Both come from the operator's
+  `VOID_MCP_ENDPOINT` rather than from the source, since the domain is expected
+  to change and a value written into the code answers the wrong one the moment
+  it does. An undeclared endpoint reports itself undeclared instead of emitting
+  a configuration with an empty URL, which looks pasteable and fails on use.
 - Every precondition in the hosted registry now carries the gate the registry
   holds beside it: 491 of 491 cases publish a structured `if` alongside the
   prose, where 445 previously published nothing and did not know they were

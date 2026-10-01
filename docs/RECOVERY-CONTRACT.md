@@ -55,9 +55,12 @@ checkpoint therefore reads the operation receipt and does not authorize another
 inverse. Conflict stops the remaining steps and records them as blocked. Unknown
 stops without retry; after explicit operation reconciliation, the same job can
 resume. A deterministic setup failure after approval records `paused` with a
-redacted `step-unavailable` code and operation ID. New forward operations remain
-blocked. Restore the exact adapter version and required local state, then run the
-same job ID again. Compensation makes the job partial, never restored.
+redacted `step-unavailable` code and operation ID. A worker that takes over a
+job whose lease expired records `paused` with `lease-expired` and the operation
+ID it stopped at. Both codes validate, and both are readable after a restart.
+New forward operations remain blocked. Restore the exact adapter version and
+required local state, then run the same job ID again. Compensation makes the job
+partial, never restored.
 
 Cloud managed documents use the same signing, boundary, digest-matched single-job
 planner and durable job runner as a limited retained surface: one exact run or an

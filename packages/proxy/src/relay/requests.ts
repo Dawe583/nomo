@@ -36,11 +36,7 @@ function setMapValue(map: Map<JsonRpcId, JsonRpcId> | ReadonlyMap<JsonRpcId, Jso
   }
 }
 
-function lookupReverse(map: ReadonlyMap<JsonRpcId, JsonRpcId> | undefined, value: JsonRpcId): JsonRpcId | undefined {
-  if (map === undefined) {
-    return undefined;
-  }
-
+function lookupReverse(map: ReadonlyMap<JsonRpcId, JsonRpcId>, value: JsonRpcId): JsonRpcId | undefined {
   for (const [candidate, mapped] of map.entries()) {
     if (Object.is(mapped, value)) {
       return candidate;
@@ -65,11 +61,11 @@ export function relayServerRequest(
 
 export function relayServerResponse(
   agentResponse: JsonRpcResponse,
-  session: ServerRequestRelaySession,
+  upstreamToAgent: ReadonlyMap<JsonRpcId, JsonRpcId>,
 ): JsonRpcResponse {
   const upstreamId = agentResponse.id === null
     ? undefined
-    : lookupReverse(session.upstreamToAgent, agentResponse.id);
+    : lookupReverse(upstreamToAgent, agentResponse.id);
   const id = upstreamId ?? agentResponse.id;
 
   if ("error" in agentResponse) {

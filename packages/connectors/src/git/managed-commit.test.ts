@@ -2096,6 +2096,40 @@ posixTest(
 );
 
 posixTest(
+  "recovery refuses prepared evidence the parent tree and manifest contradict",
+  async (t) => {
+    for (const tamper of [
+      "parent-tree",
+      "capture-manifest",
+      "selected-path",
+      "branch-ref",
+      "repository-root",
+    ] as const) {
+      await t.test(tamper, async (t) => {
+        const f = await commitRepository(t);
+        await stageChange(f, "managed");
+        const { prepared, outcome } = await dispatchForward(f, `evidence-${tamper}`);
+        const changed = JSON.parse(JSON.stringify(prepared));
+        const capture = changed.before as unknown as CommitCapture;
+        if (tamper === "parent-tree") capture.branch.tree = f.run("rev-parse", "HEAD^{tree}");
+        else if (tamper === "capture-manifest") capture.expectedTreeManifestDigest = "0".repeat(64);
+        else if (tamper === "selected-path") capture.selected.path = "staged-sentinel";
+        else if (tamper === "branch-ref") capture.branch.ref = "refs/heads/other";
+        else capture.repository.root = join(f.root, "elsewhere");
+        const recoveryId = `evidence-recovery-${tamper}`;
+        const head = f.run("rev-parse", "HEAD");
+        assert.deepEqual(
+          await f.adapter.recover(changed, outcome, recoveryId),
+          { status: "conflict", evidence: null },
+        );
+        assert.equal(f.run("rev-parse", "HEAD"), head);
+        assert.throws(() => f.run("show-ref", "--verify", `refs/void/recoveries/${sha256(recoveryId)}`));
+      });
+    }
+  },
+);
+
+posixTest(
   "lost execution response reconciles once after restart without redispatch",
   async (t) => {
     const f = await commitRepository(t);
