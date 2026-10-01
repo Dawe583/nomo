@@ -40,6 +40,20 @@ export type RecoveryOutcome = {
   status: "restored" | "compensated" | "conflict";
   evidence: Json;
 };
+/** Runtime-derived proof that the immediately newer operation in a recovery
+ * job was restored. Callers must never supply this to standalone recovery. */
+export type RecoveryContinuation = {
+  schema: "void.recovery-lineage.v1";
+  workspace: string;
+  jobId: string;
+  planDigest: string;
+  stepIndex: number;
+  operationId: string;
+  predecessorOperationId: string;
+  prepared: Prepared;
+  outcome: Outcome;
+  recovery: RecoveryOutcome;
+};
 export interface RecoveryAdapter {
   readonly id: string;
   readonly version: string;
@@ -64,10 +78,24 @@ export interface RecoveryAdapter {
     outcome: Outcome,
     recoveryId: string,
   ): Promise<RecoveryOutcome>;
+  /** Optional, narrowly-scoped continuation for a verified recovery job. */
+  recoverWithContinuation?(
+    prepared: Prepared,
+    outcome: Outcome,
+    recoveryId: string,
+    previous: RecoveryContinuation,
+  ): Promise<RecoveryOutcome>;
   /** Read durable recovery evidence only. An absent receipt never authorizes another inverse. */
   reconcileRecovery?(
     prepared: Prepared,
     outcome: Outcome,
     recoveryId: string,
+  ): Promise<RecoveryOutcome | { status: "unknown" }>;
+  /** Reconciliation counterpart for a lineage-bound inverse receipt. */
+  reconcileRecoveryWithContinuation?(
+    prepared: Prepared,
+    outcome: Outcome,
+    recoveryId: string,
+    previous: RecoveryContinuation,
   ): Promise<RecoveryOutcome | { status: "unknown" }>;
 }

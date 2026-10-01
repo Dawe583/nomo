@@ -21,7 +21,7 @@ Tracked souborů celkem: **258**. Ručně inspektované části: **32 souborů**
 - `AGENTS.local.md` a root `package.json`: instrukce a script/dependency index. Novější uživatelův zákaz main write má přednost před historickým main pravidlem.
 - `docs/10K-MRR-REALITY-CHECK.md`: čtený revenue model a gates; další připojené GTM/reverse docs částečně kvůli truncation, jejich tvrzení nejsou automaticky znovu ověřena.
 - Osm competitor README přes GitHub connector: cílené feature/license texty; primární odkazy a datum v MARKET-RESEARCH.md. Codex sandbox doc je pouze rozcestník. Dvě issue searches: pět výsledků každá; nerozporovaná absence další feature se neodvozuje.
-- Marketing companion `/workspace/void-site-audit`, commit `85c6792838f5014818d48e93188342cf3c824c8e`: pouze `api/waitlist.ts`, `api/_store.ts` (325–405), `lib/db/src/schema/traffic.ts`, `artifacts/void/src/lib/pricing.ts` (1–90), `artifacts/void/src/sections/pricing.tsx` (118–145); zbytek pouze cíleně vyhledán. Toto není úplný companion audit.
+- Marketing companion `/workspace/void-site-audit`, commit `85c6792838f5014818d48e93188342cf3c824c8e`: pouze `void-site-audit/api/waitlist.ts`, `void-site-audit/api/_store.ts` (325–405), `void-site-audit/lib/db/src/schema/traffic.ts`, `void-site-audit/artifacts/void/src/lib/pricing.ts` (1–90), `void-site-audit/artifacts/void/src/sections/pricing.tsx` (118–145); prefix `void-site-audit/` označuje companion checkout, ne cestu v tomto repozitáři. Zbytek pouze cíleně vyhledán. Toto není úplný companion audit.
 
 ## Manifest po souborech
 

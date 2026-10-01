@@ -6,6 +6,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import {
   closeSync,
+  chmodSync,
   constants,
   fstatSync,
   lstatSync,
@@ -1750,6 +1751,8 @@ for (const replacementKind of ["different-mode directory", "nonempty directory",
           symlinkSyncForTest(external, replacement);
         } else {
           mkdirSync(replacement, { mode: replacementKind === "different-mode directory" ? 0o755 : 0o700 });
+          if (replacementKind === "different-mode directory")
+            chmodSync(replacement, 0o755);
           if (replacementKind === "nonempty directory")
             writeFileSync(join(replacement, "sentinel"), foreign);
         }

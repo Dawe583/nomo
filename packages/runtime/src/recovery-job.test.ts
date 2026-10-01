@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, readFile, stat, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
@@ -17,6 +17,7 @@ import {
   validateRecoveryJobPlan,
   completeRecoveryJobPlan,
 } from "./index.ts";
+import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
 
 async function fixture(t: import("node:test").TestContext) {
   const root = await mkdtemp(join(tmpdir(), "void-recovery-job-"));
@@ -260,6 +261,34 @@ test("unknown job resumes after reconciliation without a second inverse", async 
     .runRecoveryJob("test", "job", async () => false);
   assert.equal(result.status, "restored");
   assert.deepEqual(result.residuals, []);
+  assert.equal(f.recoveries.get("one"), 1);
+});
+
+test("unsupported recovery reconciliation stays unknown without repeating the inverse", async (t) => {
+  const f = await fixture(t);
+  f.adapter.reconcileRecovery = undefined;
+  await f.execute("one", "run");
+  await f.open().planRecoveryJob({
+    workspace: "test",
+    jobId: "unsupported-reconcile",
+    selection: { kind: "run", runId: "run" },
+  });
+  f.lose("one");
+  assert.equal(
+    (
+      await f.open().runRecoveryJob(
+        "test",
+        "unsupported-reconcile",
+        async () => true,
+      )
+    ).status,
+    "unknown",
+  );
+  f.lose(undefined);
+  assert.equal(
+    (await f.open().reconcileRecovery("test", "one")).status,
+    "unknown",
+  );
   assert.equal(f.recoveries.get("one"), 1);
 });
 
@@ -627,13 +656,19 @@ test("apply rejects a well-formed plan whose boundary record does not exist, inc
   );
 });
 
-test("run selection accepts cloud generation IDs without widening operation identities", async t=>{
- const f=await fixture(t);
- assert.equal((await f.execute("one","session:2")).status,"succeeded");
- const plan=await f.open().planRecoveryJob({workspace:"test",jobId:"job",selection:{kind:"run",runId:"session:2"}});
- assert.equal(plan.steps[0]?.operationId,"one");
- assert.doesNotThrow(()=>validateRecoveryJobPlan(plan));
- await assert.rejects(f.execute("bad:operation","session:2"),/identity/i);
+test("run selection accepts cloud generation IDs without widening operation identities", async (t) => {
+  const f = await fixture(t);
+  assert.equal((await f.execute("one", "session:2")).status, "succeeded");
+  const plan = await f
+    .open()
+    .planRecoveryJob({
+      workspace: "test",
+      jobId: "job",
+      selection: { kind: "run", runId: "session:2" },
+    });
+  assert.equal(plan.steps[0]?.operationId, "one");
+  assert.doesNotThrow(() => validateRecoveryJobPlan(plan));
+  await assert.rejects(f.execute("bad:operation", "session:2"), /identity/i);
 });
 
 test("R06: a recovery job lease is claimed, renewed, and only reclaimed once its holder is gone", async (t) => {
@@ -642,22 +677,38 @@ test("R06: a recovery job lease is claimed, renewed, and only reclaimed once its
   await f.execute("two", "run");
   const plan = await f
     .open()
-    .planRecoveryJob({ workspace: "test", jobId: "leased", selection: { kind: "run", runId: "run" } });
+    .planRecoveryJob({
+      workspace: "test",
+      jobId: "leased",
+      selection: { kind: "run", runId: "run" },
+    });
 
   // Nothing is claimed before a worker applies the plan, so a planned job does
   // not block a second one.
   const second = await f
     .open()
-    .planRecoveryJob({ workspace: "test", jobId: "other", selection: { kind: "run", runId: "run" } });
+    .planRecoveryJob({
+      workspace: "test",
+      jobId: "other",
+      selection: { kind: "run", runId: "run" },
+    });
   assert.equal(second.steps.length, 2);
 
   await f
     .open()
-    .runRecoveryJob("test", "leased", async (reviewed) => reviewed.digest === plan.digest);
+    .runRecoveryJob(
+      "test",
+      "leased",
+      async (reviewed) => reviewed.digest === plan.digest,
+    );
   // A finished job no longer blocks, so the second one can still run.
   const done = await f
     .open()
-    .runRecoveryJob("test", "other", async (reviewed) => reviewed.digest === second.digest);
+    .runRecoveryJob(
+      "test",
+      "other",
+      async (reviewed) => reviewed.digest === second.digest,
+    );
   assert.equal(done.status, "restored");
 });
 
@@ -666,10 +717,18 @@ test("R06: a live job blocks a new one and a dead holder with an expired lease d
   await f.execute("one", "run");
   const plan = await f
     .open()
-    .planRecoveryJob({ workspace: "test", jobId: "abandoned", selection: { kind: "run", runId: "run" } });
+    .planRecoveryJob({
+      workspace: "test",
+      jobId: "abandoned",
+      selection: { kind: "run", runId: "run" },
+    });
   await f
     .open()
-    .runRecoveryJob("test", "abandoned", async (reviewed) => reviewed.digest === plan.digest);
+    .runRecoveryJob(
+      "test",
+      "abandoned",
+      async (reviewed) => reviewed.digest === plan.digest,
+    );
 
   // A finished job leaves no live holder, so a fresh plan in the same
   // workspace is allowed rather than refused. The step is already recovered, so
@@ -677,9 +736,16 @@ test("R06: a live job blocks a new one and a dead holder with an expired lease d
   // blocked, not what it selected.
   const next = await f
     .open()
-    .planRecoveryJob({ workspace: "test", jobId: "next", selection: { kind: "run", runId: "run" } });
+    .planRecoveryJob({
+      workspace: "test",
+      jobId: "next",
+      selection: { kind: "run", runId: "run" },
+    });
   assert.equal(next.steps.length, 0);
-  assert.deepEqual(next.residuals.map((residual) => residual.status), ["already-recovered"]);
+  assert.deepEqual(
+    next.residuals.map((residual) => residual.status),
+    ["already-recovered"],
+  );
 });
 
 test("a rule selector resolves to steps and the plan records the steps it undoes", async (t) => {
@@ -826,7 +892,10 @@ test("a step another job holds keeps its connected branch out of the plan", asyn
         ...(reads
           ? {
               reads: [
-                { resource: `held:${reads}`, revision: values.get(reads) ?? null },
+                {
+                  resource: `held:${reads}`,
+                  revision: values.get(reads) ?? null,
+                },
               ],
             }
           : {}),
@@ -928,4 +997,93 @@ test("a step another job holds keeps its connected branch out of the plan", asyn
     { operationId: "op-reader", status: "blocked-by-conflict" },
   ]);
   assert.doesNotThrow(() => validateRecoveryJobPlan(continuation));
+});
+
+async function filesystemFixture(
+  t: import("node:test").TestContext,
+  tamperBetweenSteps = false,
+) {
+  const root = await mkdtemp(join(tmpdir(), "void-recovery-chain-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(join(root, "shared.txt"), "original", { mode: 0o640 });
+  if (process.platform !== "win32")
+    await chmod(join(root, "shared.txt"), 0o640);
+  const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
+  const key = randomBytes(32);
+  let recoverCalls = 0;
+  const filesystem = managedFilesystemAdapter({ root, cooperative: true });
+  const adapter: RecoveryAdapter = {
+    ...filesystem,
+    async recover(prepared, outcome, recoveryId) {
+      const result = await filesystem.recover(prepared, outcome, recoveryId);
+      recoverCalls++;
+      if (tamperBetweenSteps && recoverCalls === 1)
+        await writeFile(join(root, "shared.txt"), "first");
+      return result;
+    },
+  };
+  const runtime = () =>
+    recoveryRuntime({
+      journal: localOperationJournal(join(root, "journal"), signer),
+      vault: localRecoveryVault(join(root, "vault"), { key }, "key"),
+      adapters: [adapter],
+      authorize: async () => true,
+    });
+  const execute = (operationId: string, value: string) =>
+    runtime().execute({
+      workspace: "test",
+      operationId,
+      runId: "writes",
+      agentId: "agent",
+      adapterId: adapter.id,
+      arguments: {
+        action: "write",
+        path: "shared.txt",
+        base64: Buffer.from(value).toString("base64"),
+      },
+    });
+  return { root, runtime, execute };
+}
+
+test("filesystem recovery job restores adjacent writes to one existing file", async (t) => {
+  const f = await filesystemFixture(t);
+  await f.execute("first", "first");
+  await f.execute("second", "second");
+  const runtime = f.runtime();
+  const plan = await runtime.planRecoveryJob({
+    workspace: "test",
+    jobId: "chain",
+    selection: { kind: "run", runId: "writes" },
+  });
+  const result = await runtime.runRecoveryJob(
+    "test",
+    "chain",
+    async () => true,
+  );
+  assert.equal(result.status, "restored");
+  assert.equal(await readFile(join(f.root, "shared.txt"), "utf8"), "original");
+  if (process.platform !== "win32")
+    assert.equal((await stat(join(f.root, "shared.txt"))).mode & 0o777, 0o640);
+  const stored = await runtime.recoveryJobStatus("test", "chain");
+  assert.equal("status" in stored ? stored.status : "plan", "restored");
+  assert.equal(plan.steps.length, 2);
+});
+
+test("filesystem recovery continuation rejects ABA with identical bytes between inverses", async (t) => {
+  const f = await filesystemFixture(t, true);
+  await f.execute("first", "first");
+  await f.execute("second", "second");
+  const runtime = f.runtime();
+  await runtime.planRecoveryJob({
+    workspace: "test",
+    jobId: "drift",
+    selection: { kind: "run", runId: "writes" },
+  });
+  const result = await runtime.runRecoveryJob(
+    "test",
+    "drift",
+    async () => true,
+  );
+  assert.equal(result.status, "conflict");
+  assert.equal(await readFile(join(f.root, "shared.txt"), "utf8"), "first");
 });
