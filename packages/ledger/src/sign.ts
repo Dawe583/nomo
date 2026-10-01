@@ -22,14 +22,13 @@ import {
   verify as cryptoVerify,
 } from "node:crypto";
 import { createHash } from "node:crypto";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { homedir } from "node:os";
 
 import type { Alg, KeyProvider } from "./index.ts";
 import { canonicalJson, entryHash } from "./canonical.ts";
 import {
   ensurePrivateDirectory,
-  assertPrivateDirectoryPath,
   openPrivateFile,
   readPrivateFile,
 } from "./hardening.ts";
@@ -154,7 +153,6 @@ async function keyProviderFromDirectory(
 }
 
 async function readExistingKey(file: string): Promise<Buffer> {
-  await assertPrivateDirectoryPath(dirname(file), "development key directory");
   return readPrivateFile(file, "development key file");
 }
 

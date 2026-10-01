@@ -62,6 +62,7 @@ async function windowsPathAcl(
   path: string,
   kind: PrivatePathKind,
   protect = false,
+  leafToCheck?: string,
 ): Promise<void> {
   const script = `
 $ErrorActionPreference = 'Stop'
@@ -70,8 +71,52 @@ $kind = $env:VOID_ACL_KIND
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
 $trustedOwners = @($sid.Value, 'S-1-5-18', 'S-1-5-32-544', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464')
 $tokenSids = @($sid.Value) + @([System.Security.Principal.WindowsIdentity]::GetCurrent().Groups | ForEach-Object { $_.Value }) + @('S-1-1-0')
-if ($kind -eq 'directory') { $acl = [System.IO.Directory]::GetAccessControl($file) }
-else { $acl = [System.IO.File]::GetAccessControl($file) }
+$reparsePoint = [System.IO.FileAttributes]::ReparsePoint
+$attributes = [System.IO.File]::GetAttributes($file)
+if (($attributes -band $reparsePoint) -ne 0) { throw 'path is a reparse point' }
+$item = Get-Item -LiteralPath $file -Force -ErrorAction Stop
+if (($item.Attributes -band $reparsePoint) -ne 0) { throw 'path is a reparse point' }
+if ($env:VOID_ACL_LEAF) {
+  $leafAttributes = $null
+  try { $leafAttributes = [System.IO.File]::GetAttributes($env:VOID_ACL_LEAF) }
+  catch {
+    $exception = $_.Exception
+    if ($exception.InnerException) { $exception = $exception.InnerException }
+    if ($exception -isnot [System.IO.FileNotFoundException] -and $exception -isnot [System.IO.DirectoryNotFoundException]) { throw }
+  }
+  if ($null -ne $leafAttributes -and ($leafAttributes -band $reparsePoint) -ne 0) { throw 'leaf path is a reparse point' }
+  if ($null -eq $leafAttributes) {
+    $leaf = Get-Item -LiteralPath $env:VOID_ACL_LEAF -Force -ErrorAction SilentlyContinue
+    if ($null -ne $leaf -and ($leaf.Attributes -band $reparsePoint) -ne 0) { throw 'leaf path is a reparse point' }
+  }
+}
+$current = [System.IO.DirectoryInfo]::new([System.IO.Path]::GetDirectoryName($file))
+$replaceMask = [System.Security.AccessControl.FileSystemRights]::Delete -bor [System.Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles -bor [System.Security.AccessControl.FileSystemRights]::ChangePermissions -bor [System.Security.AccessControl.FileSystemRights]::TakeOwnership
+$firstParent = $true
+while ($null -ne $current) {
+  if (($current.Attributes -band $reparsePoint) -ne 0) { throw 'path contains a reparse point' }
+  $parentAcl = [System.IO.Directory]::GetAccessControl($current.FullName)
+  if ($parentAcl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -notin $trustedOwners) { throw 'parent has an untrusted owner' }
+  $parentReadable = $false
+  $parentWritable = $false
+  $parentDenied = $false
+  foreach ($rule in $parentAcl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])) {
+    $appliesHere = ($rule.PropagationFlags -band [System.Security.AccessControl.PropagationFlags]::InheritOnly) -eq 0
+    if ($firstParent) {
+      if ($appliesHere -and $rule.AccessControlType -eq 'Deny' -and $tokenSids -contains $rule.IdentityReference.Value -and ($rule.FileSystemRights -band ([System.Security.AccessControl.FileSystemRights]::ReadData -bor [System.Security.AccessControl.FileSystemRights]::WriteData))) { $parentDenied = $true }
+      if ($appliesHere -and $rule.AccessControlType -eq 'Allow') {
+        if ($rule.IdentityReference.Value -notin @($sid.Value, 'S-1-5-18', 'S-1-5-32-544')) { throw 'parent ACL grants another principal access' }
+        if ($rule.IdentityReference.Value -eq $sid.Value -and ($rule.FileSystemRights -band [System.Security.AccessControl.FileSystemRights]::ReadData)) { $parentReadable = $true }
+        if ($rule.IdentityReference.Value -eq $sid.Value -and ($rule.FileSystemRights -band [System.Security.AccessControl.FileSystemRights]::WriteData)) { $parentWritable = $true }
+      }
+    } elseif ($appliesHere -and $rule.AccessControlType -eq 'Allow' -and $rule.IdentityReference.Value -notin $trustedOwners -and ($rule.FileSystemRights -band $replaceMask)) {
+      throw 'parent ACL allows another principal to replace state'
+    }
+  }
+  if ($firstParent -and (-not $parentReadable -or -not $parentWritable -or $parentDenied)) { throw 'parent ACL does not grant owner effective read and write access' }
+  $current = $current.Parent
+  $firstParent = $false
+}
 if ($env:VOID_ACL_PROTECT -eq '1') {
   if ($kind -eq 'directory') { $acl = New-Object System.Security.AccessControl.DirectorySecurity }
   else { $acl = New-Object System.Security.AccessControl.FileSecurity }
@@ -85,6 +130,10 @@ if ($env:VOID_ACL_PROTECT -eq '1') {
   else { [System.IO.File]::SetAccessControl($file, $acl) }
   if ($kind -eq 'directory') { $acl = [System.IO.Directory]::GetAccessControl($file) }
   else { $acl = [System.IO.File]::GetAccessControl($file) }
+} elseif ($kind -eq 'directory') {
+  $acl = [System.IO.Directory]::GetAccessControl($file)
+} else {
+  $acl = [System.IO.File]::GetAccessControl($file)
 }
 $owner = $acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value
 if ($owner -notin $trustedOwners) { throw "unexpected owner: $owner" }
@@ -107,6 +156,7 @@ if (-not $readable -or -not $writable -or $denied) { throw 'ACL does not grant o
       VOID_ACL_FILE: path,
       VOID_ACL_KIND: kind,
       VOID_ACL_PROTECT: protect ? "1" : "0",
+      ...(leafToCheck ? { VOID_ACL_LEAF: leafToCheck } : {}),
     });
   } catch (error) {
     throw new Error(
@@ -331,7 +381,8 @@ export async function ensurePrivateDirectory(
     existed = false;
   }
   await mkdir(directory, { recursive: true, mode: directoryMode });
-  await assertSafeAncestorChain(dirname(resolve(directory)));
+  if (process.platform !== "win32")
+    await assertSafeAncestorChain(dirname(resolve(directory)));
   const info = await lstat(directory);
   assertDirectoryStat(info, directory, label);
   if (process.platform === "win32")
@@ -341,12 +392,14 @@ export async function ensurePrivateDirectory(
 export async function assertPrivateDirectoryPath(
   directory: string,
   label = "local state directory",
+  leafToCheck?: string,
 ): Promise<void> {
   const info = await lstat(directory);
   assertDirectoryStat(info, directory, label);
-  await assertSafeAncestorChain(dirname(resolve(directory)));
   if (process.platform === "win32")
-    await windowsPathAcl(directory, "directory");
+    await windowsPathAcl(directory, "directory", false, leafToCheck);
+  else
+    await assertSafeAncestorChain(dirname(resolve(directory)));
 }
 
 /** Check an existing private directory, or validate its nearest existing ancestors. */
@@ -368,7 +421,8 @@ export async function assertPrivateFilePath(
   file: string,
   label = "local state file",
 ): Promise<void> {
-  await assertPrivateDirectoryPath(dirname(resolve(file)), `${label} parent directory`);
+  if (process.platform !== "win32")
+    await assertPrivateDirectoryPath(dirname(resolve(file)), `${label} parent directory`);
   const info = await lstat(file);
   if (info.isSymbolicLink())
     throw new Error(`${label} must not be a symbolic link: ${file}`);
@@ -412,6 +466,7 @@ export async function openPrivateFile(
   await assertPrivateDirectoryPath(
     dirname(resolve(file)),
     `${label} parent directory`,
+    process.platform === "win32" ? file : undefined,
   );
   const noFollow =
     process.platform === "win32" ? 0 : (constants.O_NOFOLLOW ?? 0);
