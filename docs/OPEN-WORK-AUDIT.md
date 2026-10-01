@@ -524,8 +524,48 @@ write→write restoration and same-byte ABA refusal;
 `packages/connectors/src/postgres/managed.test.ts` covers same-row update
 chains, ABA refusal, and lost-response reconciliation. Those suites and the
 runtime/connectors typechecks passed on 2026-10-01. The
-specific two-write defect documented above is therefore closed. The larger E0
-acceptance in `docs/strategy-2026-09-30/BACKLOG.md` remains partial: its combined
-create→write→write→rename→delete journey, injected same- and cross-path edits
-throughout that journey, and every crash point around the full chain have not
-all been exercised as one acceptance scenario.
+specific two-write defect documented above is therefore closed.
+
+### Follow-up, 2026-10-01: writing the combined acceptance found three more
+
+The paragraph above closed the two-write case and left the combined journey
+unexercised. Writing that acceptance is what found the rest: the chain
+restored two writes to one path and nothing else. `create, write, rename,
+delete` on one file stopped at the first step, reporting `conflict` on a path
+no human had touched. Three causes, all inside the mechanism rather than the
+planner.
+
+An absent file's revision hashed its parent directory's `ctimeNs`. A
+directory's ctime moves when any entry in it is created or removed, so
+restoring an earlier step invalidated the expected revision of every later
+step that had recorded the file as absent, and the chain could never finish.
+The same fault rejected a create into any directory VOID was itself writing
+to. Absence is now the parent directory's identity alone; the race the ctime
+was watching for is covered at the write boundary, where `replace()` creates
+an absent target with `link(2)` and fails rather than clobbering.
+
+The runtime then required two steps to declare byte-equal resource sets and
+scope strings. A rename names two paths and its neighbour one, in either
+order depending on which way round the chain runs, so those were never equal.
+The gate is now that the two steps share at least one resource and make the
+same guarantee, where the guarantee is the scope string after the clause
+that names how many paths a step touches.
+
+The adapter's continuation compared `evidence.revision`, which a rename does
+not record, and required both steps to be writes. It now finds the one path
+both steps name, checks the revision the current step recorded for that
+endpoint, and refuses everything else as a conflict rather than guessing.
+
+The ABA refusal is unchanged and still covered: a same-byte external rewrite
+between inverses moves the revision away from the receipt the previous step
+signed.
+
+Evidence: `packages/runtime/src/recovery-job.test.ts` now carries
+`E0: one recovery job restores a create, write, write, rename and delete
+journey after restart` and `E0: a foreign edit injected mid-journey conflicts
+and is preserved`. Fifteen suites, 2024 tests, exit 0 on 2026-10-01.
+
+The larger E0 acceptance in `docs/strategy-2026-09-30/BACKLOG.md` remains
+partial. Still open: crash points around the full chain, since the existing
+crash harness establishes the property one inverse at a time, and the
+PostgreSQL half of the same combined journey.

@@ -4,6 +4,17 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- A recovery chain stopped at the first step of anything but two writes to one
+  path. Creating, renaming and deleting the same file in one run reported
+  `conflict` on a path nobody had touched, because a missing file was
+  identified by its directory's timestamp: restoring one step changed that
+  timestamp, which invalidated every later step that expected the file to be
+  missing, so the chain could never finish. A missing file is now identified by
+  its directory alone, and creating one still refuses to overwrite a file that
+  appeared in between. A create, write, write, rename and delete journey on one
+  file now restores completely after restart; an edit made between two steps
+  still conflicts and is left intact.
+
 - Recovery jobs now carry runtime-derived lineage between adjacent inverses on
   the same resource. Two consecutive writes to one filesystem path restore the
   original bytes and mode after restart while a same-byte external rewrite
