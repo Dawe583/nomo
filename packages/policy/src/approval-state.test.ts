@@ -20,9 +20,11 @@ import {
   classifyPosixApprovalState,
   inspectApprovalStateDirectory,
   loadPending,
+  verifyWindowsApprovalState,
 } from "./approvals.ts";
 import type {
   ApprovalAclEntry,
+  ApprovalAclCommander,
   ApprovalAclReader,
   ApprovalStateCode,
   ApprovalStateVerdict,
@@ -220,7 +222,7 @@ describe("approval state directory, refused on every platform", () => {
 
 describe("approval state directory, Windows DACL rule", () => {
   test(
-    "a real DACL that is not owner only is narrowed to the operator, then accepted",
+    "a real DACL that is not owner only is narrowed by the write path, then accepted",
     { skip: skipWindows },
     (t) => {
       const dir = temporary(t, "foreign-writer-real");
@@ -229,18 +231,54 @@ describe("approval state directory, Windows DACL rule", () => {
       icacls(dir, ["/grant", "*S-1-1-0:(M)"]);
       assert.match(icacls(dir), /Everyone/);
 
+      // Narrowing belongs to the path that is about to write state here, so
+      // that is the path asked to do it. Inspecting the same directory instead
+      // leaves the foreign writer alone and reports it as unsafe.
+      const broker = new ApprovalBroker({ stateDir: dir });
+
+      try {
+        const verdict = broker.stateDirectoryCheck;
+        assert.equal(verdict?.outcome, "owner-only");
+        assert.equal(
+          verdict?.outcome === "owner-only" && verdict.evidence,
+          "windows-dacl",
+        );
+        assert.equal(
+          verdict?.outcome === "owner-only" && verdict.hardened,
+          true,
+        );
+        assert.equal(
+          /Everyone/.test(icacls(dir)),
+          false,
+          "the foreign writer is gone from the real DACL",
+        );
+        assert.equal(
+          inspectApprovalStateDirectory(dir).outcome,
+          "owner-only",
+          "and inspection agrees afterwards, without having changed anything",
+        );
+      } finally {
+        broker.close();
+      }
+    },
+  );
+
+  test(
+    "inspection of a real DACL that is not owner only changes nothing and says so",
+    { skip: skipWindows },
+    (t) => {
+      const dir = temporary(t, "foreign-writer-inspect");
+      icacls(dir, ["/grant", "*S-1-1-0:(M)"]);
+
       const verdict = inspectApprovalStateDirectory(dir);
 
-      assert.equal(verdict.outcome, "owner-only");
-      assert.equal(
-        verdict.outcome === "owner-only" && verdict.evidence,
-        "windows-dacl",
-      );
-      assert.equal(verdict.outcome === "owner-only" && verdict.hardened, true);
+      assert.equal(verdict.outcome, "unsafe");
+      assert.equal(code(verdict), "foreign-write-access");
+      assert.equal(verdict.outcome === "unsafe" && verdict.hardened, false);
       assert.equal(
         /Everyone/.test(icacls(dir)),
-        false,
-        "the foreign writer is gone from the real DACL",
+        true,
+        "inspecting left the foreign writer exactly where it was",
       );
     },
   );
@@ -478,6 +516,185 @@ describe("approval state directory, Windows DACL rule", () => {
     },
   );
 });
+
+// The whole DACL branch is skipped on this platform by the tests above,
+// because approvalStateVerdict branches on process.platform before it reaches
+// it. The rule itself is exported, so these run everywhere: they are the
+// contract that inspecting a directory changes nothing, stated where a
+// reviewer on any machine can actually run it.
+describe("approval state directory, the inspection path hardens nothing", () => {
+  test("a DACL that is not owner only is reported as it stands and icacls is never run", (t) => {
+    // The operator is identifiable here, so narrowing would be possible. That
+    // is the point: the read path declines it anyway.
+    pinOperator(t);
+    let reads = 0;
+    const commands: (readonly string[])[] = [];
+    const acl: ApprovalAclReader = () => {
+      reads += 1;
+      return [{ principal: "Everyone", rights: "M" }];
+    };
+
+    const verdict = verifyWindowsApprovalState("C:\\state", {
+      stat: { dev: 1, ino: 1 },
+      acl,
+      run: recording(commands),
+      harden: false,
+    });
+
+    assert.deepEqual(
+      commands,
+      [],
+      "inspection ran no icacls command and changed no access control",
+    );
+    assert.equal(reads, 1, "the DACL is read once, and only read");
+    assert.deepEqual(verdict, {
+      outcome: "unsafe",
+      code: "foreign-write-access",
+      hardened: false,
+    });
+  });
+
+  test("an unreadable DACL is unverifiable and runs no command either", (t) => {
+    pinOperator(t);
+    const commands: (readonly string[])[] = [];
+
+    const verdict = verifyWindowsApprovalState("C:\\state", {
+      stat: { dev: 1, ino: 2 },
+      acl: () => undefined,
+      run: recording(commands),
+      harden: false,
+    });
+
+    assert.deepEqual(verdict, {
+      outcome: "unverifiable",
+      code: "acl-unreadable",
+      hardened: false,
+      acknowledged: false,
+    });
+    assert.deepEqual(commands, []);
+  });
+
+  test("the caller that is about to write state into the directory may narrow it", (t) => {
+    pinOperator(t);
+    let reads = 0;
+    const commands: (readonly string[])[] = [];
+    const acl: ApprovalAclReader = () => {
+      reads += 1;
+      return reads === 1
+        ? [{ principal: "Everyone", rights: "M" }]
+        : trustedEntries();
+    };
+
+    const verdict = verifyWindowsApprovalState("C:\\state", {
+      stat: { dev: 1, ino: 3 },
+      acl,
+      run: recording(commands),
+      harden: true,
+    });
+
+    assert.deepEqual(verdict, {
+      outcome: "owner-only",
+      evidence: "windows-dacl",
+      hardened: true,
+    });
+    assert.equal(reads, 2, "the DACL is re-read after it is narrowed");
+    assert.deepEqual(
+      commands.map((args) => args[0]),
+      ["/inheritance:r", "/remove:g"],
+      "narrowing is the only thing that runs icacls",
+    );
+  });
+
+  test("narrowing never turns an unrecognised ACL into an owner only one", (t) => {
+    pinOperator(t);
+    const commands: (readonly string[])[] = [];
+    const acl: ApprovalAclReader = () => [
+      { principal: "S-1-5-21-1-2-3-1007", rights: "F" },
+    ];
+
+    const verdict = verifyWindowsApprovalState("C:\\state", {
+      stat: { dev: 1, ino: 4 },
+      acl,
+      run: recording(commands),
+      harden: true,
+    });
+
+    assert.equal(verdict.outcome, "unverifiable");
+    assert.equal(code(verdict), "unrecognised-principal");
+    assert.equal(
+      verdict.outcome === "unverifiable" && verdict.hardened,
+      true,
+      "the DACL was touched, and still not proven",
+    );
+    assert.equal(
+      commands.length > 0,
+      true,
+      "the write path did try to narrow it",
+    );
+  });
+
+  test("a directory VOID cannot narrow keeps the verdict that was measured", (t) => {
+    pinOperator(t);
+    const acl: ApprovalAclReader = () => [{ principal: "Everyone", rights: "M" }];
+
+    const verdict = verifyWindowsApprovalState("C:\\state", {
+      stat: { dev: 1, ino: 5 },
+      acl,
+      run: () => false,
+      harden: true,
+    });
+
+    assert.deepEqual(verdict, {
+      outcome: "unsafe",
+      code: "foreign-write-access",
+      hardened: false,
+    });
+  });
+
+  test("inspectApprovalStateDirectory runs no icacls command", (t) => {
+    const dir = temporary(t, "inspect-no-command");
+    const commands: (readonly string[])[] = [];
+
+    inspectApprovalStateDirectory(dir, {
+      acl: () => [{ principal: "Everyone", rights: "M" }],
+      run: recording(commands),
+    });
+
+    // On Windows the DACL rule runs and the verdict above is what it measures.
+    // Everywhere else the mode-bit rule answers first and never asks for a DACL
+    // at all. Both reach this: nothing below the entry point runs icacls.
+    assert.deepEqual(
+      commands,
+      [],
+      "inspecting a directory never runs icacls",
+    );
+  });
+});
+
+function recording(
+  commands: (readonly string[])[],
+): ApprovalAclCommander {
+  return (_dir, args) => {
+    commands.push(args);
+    return true;
+  };
+}
+
+// Windows is where USERNAME and USERDOMAIN are set, and the operator principal
+// decides both whether narrowing can name a grant and which codes the
+// classifier reports. Pinning them keeps these tests the same test everywhere.
+function pinOperator(t: { after: (fn: () => void) => void }): void {
+  const user = process.env.USERNAME;
+  const domain = process.env.USERDOMAIN;
+  process.env.USERNAME = "operator";
+  process.env.USERDOMAIN = "VOID";
+  t.after(() => {
+    if (user === undefined) delete process.env.USERNAME;
+    else process.env.USERNAME = user;
+    if (domain === undefined) delete process.env.USERDOMAIN;
+    else process.env.USERDOMAIN = domain;
+  });
+}
 
 describe("approval state file", () => {
   test("a symlinked pending file is refused even in a verified directory", (t) => {

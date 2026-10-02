@@ -15,10 +15,11 @@
  * the whole approval path was dead there. Asserting those bits on Windows would
  * be a claim the platform cannot support, so Windows verifies the DACL with the
  * icacls binary that ships with the operating system, and a directory VOID can
- * claim is narrowed to the operator before it is accepted. What cannot be
- * proven is returned as unverifiable and refused unless the host names the
- * finding and accepts it, because an unproven control that reads as a passing
- * one is the defect this replaced.
+ * claim is narrowed to the operator before it is accepted, and only on the
+ * write path: a function that inspects a directory changes nothing about it.
+ * What cannot be proven is returned as unverifiable and refused unless the host
+ * names the finding and accepts it, because an unproven control that reads as a
+ * passing one is the defect this replaced.
  */
 
 import * as nodeFs from "node:fs";
@@ -108,9 +109,35 @@ export type ApprovalAclReader = (
   dir: string,
 ) => readonly ApprovalAclEntry[] | undefined;
 
+/**
+ * Runs icacls to change a DACL, and returns whether the command succeeded.
+ * Reached only from the write path, because it rewrites access control on a
+ * directory the operator owns.
+ */
+export type ApprovalAclCommander = (
+  dir: string,
+  args: readonly string[],
+) => boolean;
+
+/**
+ * The DACL rule's inputs. `harden` is the whole contract in one word: it is
+ * false for every caller that only reads a directory, and true only where VOID
+ * is about to write state into the one it is verifying.
+ */
+export type WindowsApprovalStateInput = {
+  readonly stat: Pick<Stats, "dev" | "ino">;
+  readonly acl: ApprovalAclReader;
+  readonly run: ApprovalAclCommander;
+  readonly harden: boolean;
+};
+
 export type ApprovalStateOptions = {
   readonly fs?: ApprovalFs;
   readonly acl?: ApprovalAclReader;
+  // Only the write path may harden a DACL, and the inspection entry point is
+  // not that path. It is accepted here so one options object configures both,
+  // and approval-state.test.ts asserts that inspection never calls it.
+  readonly run?: ApprovalAclCommander;
 };
 
 export type ApprovalBrokerOptions = {
@@ -158,6 +185,7 @@ export class ApprovalBroker {
       const check: ApprovalStateCheck = {
         fs: this.fs,
         acl: options.acl ?? readWindowsAcl,
+        run: runIcacls,
         acknowledge: options.acknowledgeUnverifiableState,
       };
       this.stateDirectoryCheck = secureDirectory(this.stateDirectory, check);
@@ -278,10 +306,11 @@ export class ApprovalBroker {
     const check: ApprovalStateCheck = {
       fs: this.fs,
       acl: readWindowsAcl,
+      run: runIcacls,
       acknowledge: this.acknowledgeUnverifiableState,
     };
-    assertPrivateDirectory(dir, check);
-    assertPrivateDirectory(join(dir, "decisions"), check);
+    assertPrivateDirectory(dir, check, false);
+    assertPrivateDirectory(join(dir, "decisions"), check, false);
     for (const name of this.fs.readdirSync(join(dir, "decisions"))) {
       if (!name.endsWith(".json")) continue;
       const path = join(dir, "decisions", name);
@@ -359,7 +388,7 @@ export function savePending(dir: string, records: readonly ApprovalRecord[], fs:
 
 export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: (code: ApprovalStateCode) => boolean): readonly ApprovalRecord[] {
   const check = stateCheck(fs, acknowledge);
-  assertPrivateDirectory(dir, check);
+  assertPrivateDirectory(dir, check, false);
   assertPrivateFile(join(dir, "pending.json"), check);
   const value: unknown = JSON.parse(fs.readFileSync(join(dir, "pending.json"), "utf8"));
   if (!Array.isArray(value) || !value.every((item: unknown) => isObject(item) &&
@@ -385,7 +414,7 @@ export function writeDecision(
 }
 
 function stateCheck(fs: ApprovalFs, acknowledge?: (code: ApprovalStateCode) => boolean): ApprovalStateCheck {
-  return { fs, acl: readWindowsAcl, acknowledge };
+  return { fs, acl: readWindowsAcl, run: runIcacls, acknowledge };
 }
 
 function atomicWrite(dir: string, name: string, value: unknown, check: ApprovalStateCheck): void {
@@ -445,11 +474,17 @@ function secureDirectory(dir: string, check: ApprovalStateCheck): ApprovalStateV
     // still a genuine failure to create the directory and propagates.
     if (!isObject(error) || error.code !== "EEXIST") throw error;
   }
-  return assertPrivateDirectory(dir, check);
+  // About to create state in this directory, so this is the one place that
+  // may harden the DACL rather than only report on it.
+  return assertPrivateDirectory(dir, check, true);
 }
 
-function assertPrivateDirectory(dir: string, check: ApprovalStateCheck): ApprovalStateVerdict {
-  const verdict = inspectApprovalStateDirectory(dir, check);
+function assertPrivateDirectory(
+  dir: string,
+  check: ApprovalStateCheck,
+  harden: boolean,
+): ApprovalStateVerdict {
+  const verdict = approvalStateVerdict(dir, check, harden);
   if (verdict.outcome === "owner-only") return verdict;
   const acknowledged =
     verdict.outcome === "unverifiable" &&
@@ -464,16 +499,26 @@ function assertPrivateDirectory(dir: string, check: ApprovalStateCheck): Approva
 /**
  * The single entry point a host can call to learn what VOID could prove about a
  * state directory, without creating a broker and without a decision to make.
+ * It reads and changes nothing: no directory is created, and on Windows no DACL
+ * is narrowed. A host that asks what VOID could prove gets the verdict that was
+ * measured, and a directory that is not owner only is still reported as not
+ * owner only. Only the write path may harden a directory, because only the
+ * write path has a reason to.
  */
 export function inspectApprovalStateDirectory(
   dir: string,
   options: ApprovalStateOptions = {},
 ): ApprovalStateVerdict {
-  return approvalStateVerdict(dir, {
-    fs: options.fs ?? nodeFs,
-    acl: options.acl ?? readWindowsAcl,
-    acknowledge: undefined,
-  });
+  return approvalStateVerdict(
+    dir,
+    {
+      fs: options.fs ?? nodeFs,
+      acl: options.acl ?? readWindowsAcl,
+      run: options.run ?? runIcacls,
+      acknowledge: undefined,
+    },
+    false,
+  );
 }
 
 /**
@@ -506,12 +551,14 @@ export function classifyPosixApprovalState(
 type ApprovalStateCheck = {
   readonly fs: ApprovalFs;
   readonly acl: ApprovalAclReader;
+  readonly run: ApprovalAclCommander;
   readonly acknowledge: ((code: ApprovalStateCode) => boolean) | undefined;
 };
 
 function approvalStateVerdict(
   dir: string,
   check: ApprovalStateCheck,
+  harden: boolean,
 ): ApprovalStateVerdict {
   const stat = check.fs.lstatSync(dir);
   // The link check runs on both platforms and before any platform rule: a
@@ -523,7 +570,12 @@ function approvalStateVerdict(
     return classifyPosixApprovalState(stat, process.getuid?.());
   if (!stat.isDirectory())
     return { outcome: "unsafe", code: "not-a-directory", hardened: false };
-  return windowsApprovalStateVerdict(dir, stat, check);
+  return verifyWindowsApprovalState(dir, {
+    stat,
+    acl: check.acl,
+    run: check.run,
+    harden,
+  });
 }
 
 // A verified DACL is remembered per process and per reader, because reading it
@@ -539,26 +591,35 @@ const verifiedDacl = new WeakMap<
 >();
 const MAX_MEMOIZED_DIRECTORIES = 32;
 
-function windowsApprovalStateVerdict(
+/**
+ * The DACL rule, split out from the platform branch so a reviewer on any
+ * machine can run the one decision that rewrites an operator's access control,
+ * exactly as classifyPosixApprovalState is split out for the mode bits.
+ *
+ * `harden` is the contract. A caller that only reads passes false and gets the
+ * verdict it measured, with icacls never run and the DACL never touched. Only
+ * the write path passes true.
+ */
+export function verifyWindowsApprovalState(
   dir: string,
-  stat: Stats,
-  check: ApprovalStateCheck,
+  input: WindowsApprovalStateInput,
 ): ApprovalStateVerdict {
-  const memo = daclMemo(check.acl);
-  const key = `${stat.dev}:${stat.ino}`;
+  const memo = daclMemo(input.acl);
+  const key = `${input.stat.dev}:${input.stat.ino}`;
   const cached = memo.get(key);
   if (cached !== undefined) return cached;
-  const entries = check.acl(dir);
+  const entries = input.acl(dir);
   if (entries === undefined) return unverifiable("acl-unreadable", false);
   const first = classifyWindowsAcl(entries, operatorPrincipals());
   if (first.outcome === "owner-only") return remember(memo, key, first);
+  if (!input.harden) return first;
   // mkdirSync above already promises mode 0o700, which Windows cannot honour.
   // Narrowing the DACL is that same promise in the unit Windows does enforce,
-  // so VOID applies it rather than refusing a directory it cannot leave as it
-  // found it. A directory it cannot narrow keeps the verdict that was measured,
-  // not the one that would have been convenient.
-  if (!narrowWindowsAcl(dir, entries)) return first;
-  const narrowed = check.acl(dir);
+  // so the write path applies it rather than refusing a directory it cannot
+  // leave as it found it. A directory it cannot narrow keeps the verdict that
+  // was measured, not the one that would have been convenient.
+  if (!narrowWindowsAcl(dir, entries, input.run)) return first;
+  const narrowed = input.acl(dir);
   const second =
     narrowed === undefined
       ? unverifiable("acl-unreadable", true)
@@ -745,11 +806,12 @@ const MAX_REMOVED_ACES = 16;
 function narrowWindowsAcl(
   dir: string,
   entries: readonly ApprovalAclEntry[],
+  run: ApprovalAclCommander,
 ): boolean {
   const operator = operatorPrincipals()[0];
   if (operator === undefined) return false;
   if (
-    !runIcacls(dir, [
+    !run(dir, [
       "/inheritance:r",
       "/grant:r",
       `${operator}:(OI)(CI)F`,
@@ -768,7 +830,7 @@ function narrowWindowsAcl(
         token !== "" && !matchesAny(token, TRUSTED_ACLS, operatorPrincipals()),
     )
     .slice(0, MAX_REMOVED_ACES);
-  for (const token of foreign) runIcacls(dir, ["/remove:g", token]);
+  for (const token of foreign) run(dir, ["/remove:g", token]);
   return true;
 }
 
@@ -779,7 +841,7 @@ function aclToken(principal: string): string {
   return token.toUpperCase().startsWith("S-1-") ? `*${token}` : token;
 }
 
-function runIcacls(dir: string, args: readonly string[]): boolean {
+const runIcacls: ApprovalAclCommander = (dir, args) => {
   try {
     execFileSync("icacls", [dir, ...args], {
       encoding: "utf8",
