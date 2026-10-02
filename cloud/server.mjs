@@ -23,7 +23,6 @@ import {
   documentView,
   sessionPatch,
   preferencePatch,
-  capabilities,
   activity,
   connectorInput,
   publicConnector,
@@ -82,6 +81,7 @@ import {
   billingRoutes,
   mountBillingWebhook,
 } from "./billing.mjs";
+import { createCapabilityGate } from "./capability-gate.mjs";
 const app = express();
 app.disable("x-powered-by");
 // A Polar delivery is signed over the exact bytes it sent, so it has to be
@@ -312,6 +312,12 @@ mountIntegrationRoutes(app);
 mountPrimeRoutes(app);
 billingRoutes(app, billing);
 
+// The licence line. `billing` is `undefined` on a deployment with no Polar
+// account, which the gate answers as the free tier rather than an error, and
+// which is why the operator's own control token still reaches every capability:
+// that token is deployment authority, not a customer identity.
+const licence = createCapabilityGate(billing);
+
 const queryOf = (req) =>
   new URLSearchParams(req.originalUrl.split("?")[1] ?? "");
 const preferences = async (req) => ({
@@ -338,10 +344,9 @@ app.patch("/api/preferences", async (req, res) => {
   });
   res.json({ preferences: value });
 });
-app.get("/api/capabilities", (req, res) => res.json({
-  ...capabilities("cloud"), projects: false, customAgents: false, hooks: false,
-  contextCompaction: true, recoveryJobs: true, backgroundQueue: false,
-}));
+app.get("/api/capabilities", async (req, res) =>
+  res.json(await licence.capabilities(req.owner)),
+);
 app.post("/api/sessions/:id/compact", async (req, res) => {
   const result = await transaction(req.owner, req.params.id, async c => {
     const session = await read(req.owner, `session:${req.params.id}`, c);
@@ -1283,7 +1288,18 @@ app.get("/api/ledger/export", async (req, res) => {
   );
   res.json({ format: "void.signed-ledger.v1", entries });
 });
+// The recorded cross-record dependency graph is on the paid side of the licence
+// line (`docs/DECISIONS.md` section 5, and `cloud/capability-gate.mjs` for the
+// argument). Refused here and not only in the capability answer, because a flag
+// the server ignores is a label. `402` rather than `403`, because nothing about
+// this caller is wrong: the capability is real and it is not theirs yet.
 app.get("/api/records/:seq/taint", async (req, res) => {
+  if (!(await licence.entitled(req.owner)))
+    return res.status(402).json({
+      error: "capability_not_included",
+      message:
+        "The recorded dependency graph is part of the paid VOID licence. Everything else on this page stays free.",
+    });
   const { entries } = await selected(req);
   const e = entries.find((e) => e.seq === Number(req.params.seq));
   if (!e) return res.status(404).json({ message: "Record not found." });
