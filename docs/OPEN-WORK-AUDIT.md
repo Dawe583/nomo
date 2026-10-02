@@ -715,9 +715,9 @@ journey after restart` and `E0: a foreign edit injected mid-journey conflicts
 and is preserved`. Fifteen suites, 2024 tests, exit 0 on 2026-10-01.
 
 The larger E0 acceptance in `docs/strategy-2026-09-30/BACKLOG.md` remains
-partial. Landed with this merge: the combined filesystem journey, the mixed
+partial. Landed: the combined filesystem journey, the mixed
 PostgreSQL update, update and delete chain with a concurrent-write conflict
-case, and the crash window between two steps of one recovery job. Still
-open: crash points around the full chain, since the crash harness
-establishes the property one inverse at a time, and cross-path edits across
+case, and the crash window at each step boundary of a two-step recovery job,
+where a checkpointed inverse is never repeated. Still
+open: crash points around longer chains and cross-path edits across
 a full chain.

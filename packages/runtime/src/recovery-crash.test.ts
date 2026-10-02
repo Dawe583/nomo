@@ -225,12 +225,14 @@ const adapter = {
     if (changed.changes !== 1) throw new Error('Fixture drift');
     db.prepare('INSERT INTO receipts VALUES (?,?)').run(id, prepared.before);
     db.exec('COMMIT');
-    if (prepared.before === 'two-before') {
-      // Killed here, on the step a recovery job runs first. Its inverse is
-      // committed and its receipt is durable, but the job checkpoint for it has
-      // not been written, so the restart has to establish that outcome from
-      // evidence before it may use the lineage the next step depends on.
-      process.send({ stage: 'first-inverse-committed' });
+    // Killed here, after this step's inverse committed with a durable
+    // receipt but before the job checkpoint for it was written, so the
+    // restart has to establish that outcome from evidence before it may use
+    // the lineage the next step depends on. The step is chosen by the parent
+    // so every crash point of the chain is covered, not just the first one.
+    const killBefore = process.env.TEST_KILL_BEFORE ?? 'two-before';
+    if (prepared.before === killBefore) {
+      process.send({ stage: 'inverse-committed', before: prepared.before });
       await new Promise(() => setInterval(() => {}, 1000));
     }
     return { status: 'restored', evidence: { value: prepared.before } };
@@ -261,7 +263,8 @@ process.send({ stage: 'finished' });
     const [message] = (await once(child, "message", {
       signal: AbortSignal.timeout(CHILD_MESSAGE_TIMEOUT_MS),
     })) as [{ stage: string }];
-    assert.equal(message.stage, "first-inverse-committed");
+    assert.equal(message.stage, "inverse-committed");
+    assert.equal(message.before, "two-before");
     const exited = once(child, "exit");
     child.kill("SIGKILL");
     const [, signal] = await exited;
@@ -337,6 +340,153 @@ process.send({ stage: 'finished' });
         { id: 2, value: "two-before", inverses: 1 },
       ],
     );
+  },
+);
+
+test(
+  "SIGKILL during the last step of a chain never repeats a checkpointed inverse",
+  { timeout: TEST_TIMEOUT_MS },
+  async (t) => {
+    const root = await mkdtemp(join(tmpdir(), "void-killed-chain-last-"));
+    const key = randomBytes(32);
+    let child: ChildProcess | undefined;
+    let closeDatabase = () => {};
+    t.after(async () => {
+      if (child && child.exitCode === null && child.signalCode === null) {
+        const exit = once(child, "exit");
+        child.kill("SIGKILL");
+        await exit;
+      }
+      closeDatabase();
+      await rm(root, { recursive: true, force: true });
+    });
+    const worker = join(root, "worker.mjs");
+    // Same chain fixture as the first-step kill, but the lethal step is the
+    // last one: the first step's inverse is committed and checkpointed, and
+    // only then does the kill land in the second inverse's commit window.
+    await writeFile(
+      worker,
+      `
+import { DatabaseSync } from 'node:sqlite';
+import { join } from 'node:path';
+import { devKeyProvider } from ${JSON.stringify(new URL("../../ledger/src/sign.ts", import.meta.url).href)};
+import { recoveryRuntime, localOperationJournal, reservedRecoveryVault } from ${JSON.stringify(new URL("./index.ts", import.meta.url).href)};
+const root = process.env.TEST_ROOT;
+const db = new DatabaseSync(join(root, 'effect.sqlite'));
+db.exec("CREATE TABLE effect(id INTEGER PRIMARY KEY, before TEXT, after TEXT, value TEXT, inverses INTEGER); INSERT INTO effect VALUES (1,'one-before','one-after','one-before',0),(2,'two-before','two-after','two-before',0); CREATE TABLE receipts(id TEXT PRIMARY KEY, value TEXT)");
+const rows = db.prepare('SELECT * FROM effect WHERE id=?');
+const adapter = {
+  id: 'chain-fixture', version: '1',
+  async preflight(args) { const id = args.id; return { effect: 'write', reversibility: 'r1', readiness: 'verified', scope: 'one fixture row', resources: ['row:' + id], revision: rows.get(id).value, blastRadius: { count: 1, precision: 'exact' } }; },
+  async prepare(args) { return { before: rows.get(args.id).before, plan: null }; },
+  async execute(args) { db.prepare('UPDATE effect SET value=after WHERE id=?').run(args.id); return { result: args.id, evidence: { id: args.id, after: rows.get(args.id).after } }; },
+  async release() {},
+  async reconcile() { return { status: 'unknown' }; },
+  async recoverWithContinuation(prepared, outcome, id, previous) {
+    const receipt = db.prepare('SELECT value FROM receipts WHERE id=?').get(id);
+    return receipt ? { status: 'restored', evidence: { value: String(receipt.value) } } : { status: 'conflict', evidence: null };
+  },
+  async recover(prepared, outcome, id) {
+    db.exec('BEGIN IMMEDIATE');
+    const changed = db.prepare('UPDATE effect SET value=?, inverses=inverses+1 WHERE value=?').run(prepared.before, outcome.evidence.after);
+    if (changed.changes !== 1) throw new Error('Fixture drift');
+    db.prepare('INSERT INTO receipts VALUES (?,?)').run(id, prepared.before);
+    db.exec('COMMIT');
+    const killBefore = process.env.TEST_KILL_BEFORE ?? 'two-before';
+    if (prepared.before === killBefore) {
+      process.send({ stage: 'inverse-committed', before: prepared.before });
+      await new Promise(() => setInterval(() => {}, 1000));
+    }
+    return { status: 'restored', evidence: { value: prepared.before } };
+  },
+  async reconcileRecovery(prepared, outcome, id) {
+    const receipt = db.prepare('SELECT value FROM receipts WHERE id=?').get(id);
+    return receipt ? { status: 'restored', evidence: { value: String(receipt.value) } } : { status: 'unknown' };
+  },
+};
+const signer = await devKeyProvider({ dir: join(root, 'keys'), env: {} });
+const options = { journal: localOperationJournal(join(root, 'journal'), signer), vault: reservedRecoveryVault(join(root, 'vault'), { test: Buffer.from(process.env.TEST_KEY, 'base64') }, 'test'), adapters: [adapter], authorize: async () => true };
+const runtime = recoveryRuntime(options);
+for (const id of [1, 2]) await runtime.execute({ workspace: 'test', agentId: 'agent', runId: 'run', operationId: 'op-' + id, adapterId: adapter.id, arguments: { id } });
+await runtime.planRecoveryJob({ workspace: 'test', jobId: 'chain', selection: { kind: 'run', runId: 'run' } });
+await runtime.runRecoveryJob('test', 'chain', async () => true);
+process.send({ stage: 'finished' });
+`,
+    );
+    child = fork(worker, [], {
+      env: {
+        ...process.env,
+        TEST_ROOT: root,
+        TEST_KEY: key.toString("base64"),
+        TEST_KILL_BEFORE: "one-before",
+      },
+      stdio: ["ignore", "ignore", "pipe", "ipc"],
+    });
+    child.stderr?.resume();
+    const [message] = (await once(child, "message", {
+      signal: AbortSignal.timeout(CHILD_MESSAGE_TIMEOUT_MS),
+    })) as [{ stage: string; before: string }];
+    assert.equal(message.stage, "inverse-committed");
+    assert.equal(message.before, "one-before");
+    const exited = once(child, "exit");
+    child.kill("SIGKILL");
+    const [, signal] = await exited;
+    assert.equal(signal, "SIGKILL");
+
+    const db = new DatabaseSync(join(root, "effect.sqlite"));
+    closeDatabase = () => db.close();
+    // The first step is committed and checkpointed; the last step's inverse
+    // committed its receipt but recorded no checkpoint.
+    const rows = () =>
+      db
+        .prepare("SELECT id, value, inverses FROM effect ORDER BY id")
+        .all()
+        .map((row) => ({ ...row }));
+    assert.deepEqual(rows(), [
+      { id: 1, value: "one-before", inverses: 1 },
+      { id: 2, value: "two-before", inverses: 1 },
+    ]);
+
+    const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
+    const runtime = recoveryRuntime({
+      journal: localOperationJournal(join(root, "journal"), signer),
+      vault: reservedRecoveryVault(join(root, "vault"), { test: key }, "test"),
+      adapters: [chainFixture(db)],
+      authorize: async () => true,
+    });
+    // The checkpointed first step is not reported and never runs again; the
+    // interrupted last step is unknown until reconciled.
+    const interrupted = await runtime.runRecoveryJob(
+      "test",
+      "chain",
+      async () => true,
+    );
+    assert.deepEqual(interrupted.residuals, [
+      { operationId: "op-1", status: "unknown" },
+    ]);
+    assert.notEqual(interrupted.status, "restored");
+    assert.deepEqual(rows(), [
+      { id: 1, value: "one-before", inverses: 1 },
+      { id: 2, value: "two-before", inverses: 1 },
+    ]);
+
+    assert.equal(
+      (await runtime.reconcileRecovery("test", "op-1")).status,
+      "restored",
+    );
+    const resumed = await runtime.runRecoveryJob(
+      "test",
+      "chain",
+      async () => true,
+    );
+    assert.deepEqual(resumed.residuals, []);
+    assert.equal(resumed.status, "restored");
+    // Exactly one inverse per row across the crash, including the step whose
+    // checkpoint survived it.
+    assert.deepEqual(rows(), [
+      { id: 1, value: "one-before", inverses: 1 },
+      { id: 2, value: "two-before", inverses: 1 },
+    ]);
   },
 );
 
