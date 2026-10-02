@@ -81,6 +81,119 @@ several selected paths and a non-POSIX host remain out of scope. Symlinks,
 submodules and unmerged index entries are rejected by the path and index
 parsers, and an unborn branch has no index to capture in the first place.
 
+## The Git child shutdown ladder
+
+The branch compare-and-swap and its receipt are one `git update-ref --stdin`
+transaction, and that protocol is a conversation: the adapter writes `start`,
+the ref commands and `prepare` into the child's stdin
+(`packages/connectors/src/git/managed-commit.ts:1011`), waits for Git to answer
+`start: ok` and `prepare: ok`, and only then sends `commit`
+(`packages/connectors/src/git/managed-commit.ts:1125`). A Git that stops
+answering does not merely slow the commit down. It is holding `.lock` files on
+the branch ref and the receipt ref, and every later Git operation that needs
+those refs is refused while they exist. One wedged child can therefore block the
+repository for writes that have nothing to do with the operation that hung. The
+transaction runner bounds this, because an unbounded child is a repository-wide
+outage caused by one commit.
+
+The bound is a ladder rather than one timeout, and the rungs exist in this
+order. The transaction deadline is 15 seconds
+(`packages/connectors/src/git/managed-commit.ts:1104`), which fires the same
+shutdown path that an oversized stdout, unexpected stdout, any stderr byte, a
+spawn error or a failed locked recheck fires. Shutdown first closes stdin,
+writing `abort` and not just EOF when the child acknowledged `prepare` but the
+adapter had not yet accepted `commit`
+(`packages/connectors/src/git/managed-commit.ts:1101`), so that a healthy Git
+rolls its own transaction back and releases its own locks. 250 milliseconds
+later comes `SIGTERM` (`packages/connectors/src/git/managed-commit.ts:1084` and
+`packages/connectors/src/git/managed-commit.ts:1077`), 250 milliseconds after
+that `SIGKILL` (`packages/connectors/src/git/managed-commit.ts:1080` and
+`packages/connectors/src/git/managed-commit.ts:1068`), and 250 milliseconds
+after that the promise rejects whatever the child is doing
+(`packages/connectors/src/git/managed-commit.ts:1071`). So the worst case from
+spawn is 15 seconds plus 750 milliseconds, after which the call returns
+regardless of whether the child died. That last rung is the important one: the
+escalation is bounded even when the process is unkillable, so a child stuck in
+uninterruptible sleep cannot hold the caller open.
+
+`SIGTERM` is what makes the repository recoverable, and it is worth being
+precise about why. Git releases its transaction locks on `SIGTERM`; `SIGKILL`
+cannot, because it gives Git no chance to run any cleanup at all. So a child
+reached by `SIGTERM` leaves the repository usable, and a child that had to be
+reached by `SIGKILL` can leave `.git/HEAD.lock` and the ref locks behind. When
+the ref locks behind. When that happens the next write to that branch fails
+with `cannot lock ref` and `Another git process seems to be running in this
+repository, or the lock file may be stale`. Read-only commands keep working;
+only the writes to the locked refs are refused. Closing stdin without `abort`
+does not strand locks and does not commit either: an ended transaction at EOF is
+rolled back, which is why the unacknowledged path is safe to close.
+
+The lock disposition above was measured against Git 2.54.0 on this machine
+rather than taken from the protocol's documentation, because it is the entire
+difference between an incident and an outage.
+
+The operator repair for a stranded lock is to confirm no Git process is running
+against the repository, then delete the stale lock files and nothing else:
+
+```sh
+pgrep -fl "git"          # must be empty before removing a lock
+find .git -name '*.lock' -type f -print -delete
+```
+
+No ref needs rewriting and no index needs rebuilding. The transaction was
+all-or-nothing, so a killed child either applied both ref updates or neither,
+and deleting the lock only releases the claim on the next attempt. What the
+operator must not do is delete a lock while a live Git process still holds it,
+which is what turns one stalled commit into two writers on one branch. This is
+the same reason the adapter itself never removes a preexisting lock, noted
+above.
+
+What the operator observes is `unknown`, and never `failed` and never a retry.
+The runtime records `dispatched` before it calls `execute`
+(`packages/runtime/src/execute.ts:639`), so a rejection after dispatch is
+recorded as `unknown` rather than `failed`
+(`packages/runtime/src/execute.ts:670`): at the moment the ladder gives up, the
+adapter genuinely cannot tell whether Git applied the transaction, because the
+child it was asking was killed mid-protocol. `unknown` is the honest answer
+rather than a retry because reconciliation is decidable from durable evidence
+the adapter wrote itself. `reconcile` re-validates the operation receipt and
+the commit behind it (`packages/connectors/src/git/managed-commit.ts:1566`), so
+the receipt's presence settles the operation as `succeeded` and its absence
+settles it as still `unknown`. Nothing is ever dispatched twice, and no
+recovery is repeated; that rule is stated under "## Limits" and holds here too.
+
+This ladder is the transaction runner's bound and it is independent of the
+15-second bound on ordinary Git plumbing. `gitBuffer` in
+`packages/connectors/src/git/managed.ts:72` passes `timeout: 15_000` to
+`spawnSync` (`packages/connectors/src/git/managed.ts:80`), which covers the
+read and plumbing commands the adapter runs around the transaction. The two
+share a number and nothing else: the transaction does not run through
+`spawnSync`, and the `spawnSync` timeout is a different mechanism with a
+different weakness. Measured on this repository's Node, that timeout sends
+`SIGTERM` only and then waits for the child to exit on its own, so it bounds a
+cooperative Git and does not bound one that ignores `SIGTERM` at all. A hung
+transaction is governed by the ladder above, because the ladder escalates to
+`SIGKILL` and then stops waiting. Remote-touching Git is a third, separate
+bound at 30 seconds with a single `SIGKILL` and no grace ladder
+(`packages/connectors/src/git/managed.ts:127`).
+
+The ladder is pinned by tests rather than asserted here. A child that ignores
+`SIGTERM` is driven through both signals and asserted to leave no surviving
+process and no lock (`packages/connectors/src/git/managed-commit.test.ts:1286`),
+a real prepared transaction is timed out and asserted to release both locks
+with `HEAD` unmoved (`packages/connectors/src/git/managed-commit.test.ts:1566`),
+and the `abort` write is asserted to be flushed before `SIGTERM` and `SIGKILL`
+(`packages/connectors/src/git/managed-commit.test.ts:1831`). What those tests
+do not claim is the stranded-lock case: they cover a child that dies from a
+signal it can act on, and no test certifies cleanup of a `SIGKILL`ed real Git,
+because there is none to certify. That gap is why the repair command above is
+written for a human rather than for the adapter.
+
+This is the direct lifecycle suite and not the conformance command. "## Limits"
+already records that the conformance scenarios simulate response loss in one
+process and do not kill a Git child; that stays true, and this ladder is the
+coverage that stands in its place.
+
 ## Managed remote recovery
 
 `recoverRemote` undoes a managed commit that has already been pushed. It takes
