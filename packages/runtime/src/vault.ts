@@ -1,9 +1,15 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { mkdir, open, readFile, rename, stat } from "node:fs/promises";
+import { open, rename, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
 import { digest } from "./journal.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
+import {
+  assertPrivateDirectoryPath,
+  assertPrivateFilePath,
+  ensurePrivateDirectory,
+  openPrivateFile,
+} from "../../ledger/src/hardening.ts";
 export type VaultReference = { digest: string; keyId: string; bytes: number };
 export class VaultCapacityError extends Error {}
 export type VaultSlot = "capture" | "outcome" | "recovery";
@@ -62,16 +68,31 @@ export function localRecoveryVault(
         bytes: bytes.length,
       };
       const dir = directory(workspace);
-      await mkdir(dir, { recursive: true, mode: 0o700 });
+      const rootDir = resolve(root);
+      await ensurePrivateDirectory(rootDir, "recovery vault root", true);
+      await ensurePrivateDirectory(dir, "recovery vault workspace directory", true);
       const tmp = join(dir, `.tmp-${randomBytes(16).toString("hex")}`);
-      const handle = await open(tmp, "wx", 0o600);
       try {
-        await handle.writeFile(bytes);
-        await handle.sync();
-      } finally {
-        await handle.close();
+        const handle = await openPrivateFile(
+          tmp,
+          "exclusive-write",
+          "recovery vault temporary file",
+        );
+        try {
+          await handle.writeFile(bytes);
+          await handle.sync();
+        } finally {
+          await handle.close();
+        }
+        await rename(tmp, join(dir, reference.digest));
+        await assertPrivateFilePath(
+          join(dir, reference.digest),
+          "recovery vault artifact",
+        );
+      } catch (error) {
+        await rm(tmp, { force: true }).catch(() => {});
+        throw error;
       }
-      await rename(tmp, join(dir, reference.digest));
       if (process.platform !== "win32") {
         const parent = await open(dir, "r");
         try { await parent.sync(); } finally { await parent.close(); }
@@ -84,23 +105,31 @@ export function localRecoveryVault(
         !Object.hasOwn(keys, reference.keyId)
       )
         throw new Error("Invalid or unavailable recovery reference.");
-      const path = join(directory(workspace), reference.digest);
-      const metadata = await stat(path);
-      if (
-        metadata.size !== reference.bytes ||
-        metadata.size > maxArtifactBytes + 28
-      )
-        throw new Error("Recovery artifact size mismatch.");
-      // Read budget. `maxArtifactBytes` already bounds what may be stored, so
-      // this only bites a host that deliberately declares a smaller working
-      // set. Refusing with the size named is the point: an unbounded
-      // `readFile` on a large artifact turns a recoverable refusal into a
-      // process-level allocation failure that takes the journal with it.
-      if (metadata.size - 28 > readBudget)
-        throw new VaultCapacityError(
-          `Recovery artifact of ${metadata.size - 28} bytes exceeds the ${readBudget} byte read budget.`,
-        );
-      const bytes = await readFile(path);
+      const rootDir = resolve(root);
+      const dir = directory(workspace);
+      await assertPrivateDirectoryPath(rootDir, "recovery vault root", undefined, true);
+      await assertPrivateDirectoryPath(dir, "recovery vault workspace directory", undefined, true);
+      const path = join(dir, reference.digest);
+      const handle = await openPrivateFile(path, "read", "recovery vault artifact");
+      let bytes: Buffer;
+      try {
+        const metadata = await handle.stat();
+        if (
+          metadata.size !== reference.bytes ||
+          metadata.size > maxArtifactBytes + 28
+        )
+          throw new Error("Recovery artifact size mismatch.");
+        // Read budget. `maxArtifactBytes` already bounds what may be stored,
+        // so this only bites a host that deliberately declares a smaller
+        // working set.
+        if (metadata.size - 28 > readBudget)
+          throw new VaultCapacityError(
+            `Recovery artifact of ${metadata.size - 28} bytes exceeds the ${readBudget} byte read budget.`,
+          );
+        bytes = await handle.readFile();
+      } finally {
+        await handle.close();
+      }
       if (digest(bytes.toString("base64")) !== reference.digest)
         throw new Error("Recovery artifact digest mismatch.");
       const cipher = createDecipheriv(

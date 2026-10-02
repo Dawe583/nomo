@@ -1239,8 +1239,15 @@ export function managedPostgresAdapter(
         !Number.isSafeInteger(previous.stepIndex) ||
         previous.stepIndex < 1 ||
         previous.recovery.status !== "restored" ||
+        // The step being inverted is always an update, because that is the only
+        // action whose inverse rewrites a row that is still present. The step
+        // before it may also have been a delete, whose inverse recreated the
+        // row at a new ledger revision; that revision is exactly the state this
+        // step has to expect, and refusing it left an update, update, delete
+        // chain permanently unrestorable.
         current.mutation.action !== "update" ||
-        prior.mutation.action !== "update" ||
+        (prior.mutation.action !== "update" &&
+          prior.mutation.action !== "delete") ||
         current.captures.length !== 1 ||
         prior.captures.length !== 1 ||
         current.operationKey === prior.operationKey ||

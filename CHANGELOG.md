@@ -23,6 +23,25 @@ All notable user-facing changes since the first repository commit.
   approvals live outside the checkout and are never touched by an update. To
   go back, move the tree onto the commit you want and reinstall from the
   lockfile.
+- Cloud recovery planning now accepts a journal checkpoint in addition to one
+  exact run or an explicit operation list. Naming a checkpoint restores
+  everything up to that point in the journal after the usual digest-bound
+  approval, and the signed plan still records the exact steps it undoes.
+  Planning the same job ID a second time with a checkpoint is refused, so a
+  fresh look needs a new job ID. Dependency and time selection remain
+  unavailable on the cloud surface.
+
+- A recovery chain stopped at the first step of anything but two writes to one
+  path. Creating, renaming and deleting the same file in one run reported
+  `conflict` on a path nobody had touched, because a missing file was
+  identified by its directory's timestamp: restoring one step changed that
+  timestamp, which invalidated every later step that expected the file to be
+  missing, so the chain could never finish. A missing file is now identified by
+  its directory alone, and creating one still refuses to overwrite a file that
+  appeared in between. A create, write, write, rename and delete journey on one
+  file now restores completely after restart; an edit made between two steps
+  still conflicts and is left intact.
+
 - Recovery jobs now carry runtime-derived lineage between adjacent inverses on
   the same resource. Two consecutive writes to one filesystem path restore the
   original bytes and mode after restart while a same-byte external rewrite
@@ -50,10 +69,12 @@ All notable user-facing changes since the first repository commit.
 - The ledger file was created without a mode, so on a host running umask 022
   every workspace JSONL was world-readable while the module documented itself
   as 0600 and `DECISIONS.md` recorded 0600 as the decision. The file is now
-  created owner-only, and an append tightens a file an earlier build left
-  broad rather than leaving the documented mode as prose. Both umask 022 and
-  077 are covered, as is the file an earlier build left at 0644; Windows ACL
-  behaviour is unchanged and is not claimed.
+  created owner-only, and a ledger an earlier build left broad is refused with
+  the mode it actually has rather than silently narrowed: the bytes were
+  readable by another user before the call, and an operator who never sees a
+  refusal has no way to learn that. Both umask 022 and 077 are covered, as is
+  the file an earlier build left at 0644; Windows ACL behaviour is unchanged and
+  is not claimed.
 - An answer to a server-originated MCP request was forwarded upstream under
   the agent's own request id. The relay read its id map off the session object,
   where the map lives under `maps`, so the lookup found nothing and returned

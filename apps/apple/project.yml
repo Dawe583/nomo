@@ -53,6 +53,7 @@ targets:
       - path: VOIDTests
     dependencies:
       - target: VOID
+      - package: CompanionProtocolKit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.void.companion.tests

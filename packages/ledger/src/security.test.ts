@@ -46,7 +46,7 @@ for (const umask of [0o022, 0o077] as const) {
   });
 }
 
-test("a ledger file left broad by an earlier build is tightened on append", async (t) => {
+test("a ledger file left broad by an earlier build is refused, not repaired", async (t) => {
   if (process.platform === "win32") return;
   const dir = await mkdtemp(join(tmpdir(), "void-ledger-broad-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
@@ -54,12 +54,15 @@ test("a ledger file left broad by an earlier build is tightened on append", asyn
   const file = join(dir, "broad.jsonl");
   await writeFile(file, "");
   await chmod(file, 0o644);
-  await jsonlStore(key, { dir }).append({ workspace: "broad" });
-  assert.equal((await stat(file)).mode & 0o777, 0o600);
-  assert.deepEqual(
-    (await jsonlStore(key, { dir }).verify("broad")).ok,
-    true,
+  // Repairing the mode would hide the exposure instead of reporting it: the
+  // bytes were world-readable before this call, and an operator who never sees
+  // a refusal has no way to learn that. The path to a clean ledger is to remove
+  // or chmod it deliberately.
+  await assert.rejects(
+    () => jsonlStore(key, { dir }).append({ workspace: "broad" }),
+    /permissions 0600/,
   );
+  assert.equal((await stat(file)).mode & 0o777, 0o644);
 });
 
 test("unsigned workspace relabeling cannot change signed ledger ownership", async (t) => {
@@ -72,6 +75,7 @@ test("unsigned workspace relabeling cannot change signed ledger ownership", asyn
   const verified = await verifyChain([relabeled], { publicKey: (id) => key.publicKey(id) });
   assert.equal(verified.ok, false);
   await writeFile(join(dir, "target.jsonl"), `${JSON.stringify(relabeled)}\n`);
+  await chmod(join(dir, "target.jsonl"), 0o600);
   assert.equal((await store.verify("target")).ok, false);
   await assert.rejects(attestLedger(dir, "target", key));
 });
@@ -83,6 +87,7 @@ test("copying a valid ledger into another workspace cannot mint an attestation",
   const store = jsonlStore(key, { dir });
   const entry = await store.append({ workspace: "source" });
   await writeFile(join(dir, "target.jsonl"), `${JSON.stringify(entry)}\n`);
+  await chmod(join(dir, "target.jsonl"), 0o600);
   assert.equal((await store.verify("target")).ok, false);
   await assert.rejects(attestLedger(dir, "target", key));
 });

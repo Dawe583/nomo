@@ -1,5 +1,26 @@
 import XCTest
+import CompanionProtocolKit
 @testable import VOID
+
+private actor InMemoryDeviceCredentialStore: DeviceCredentialStore {
+    private var credential: DeviceCredential?
+
+    init(credential: DeviceCredential?) {
+        self.credential = credential
+    }
+
+    func save(_ credential: DeviceCredential) async throws {
+        self.credential = credential
+    }
+
+    func load() async throws -> DeviceCredential? {
+        credential
+    }
+
+    func remove() async throws {
+        credential = nil
+    }
+}
 
 @MainActor
 final class VOIDAppTests: XCTestCase {
@@ -95,8 +116,19 @@ final class VOIDAppTests: XCTestCase {
         XCTAssertEqual(copy.outcomeTitle(for: .paused), "Pozastaveno")
     }
 
-    func testRemovingThisDeviceClearsSessionsAndReportsWhatItActuallyAchieved() async {
-        let model = AppModel()
+    func testRemovingThisDeviceClearsSessionsAndReportsWhatItActuallyAchieved() async throws {
+        let transcript = TranscriptCache()
+        let credentials = InMemoryDeviceCredentialStore(
+            credential: try DeviceCredential(
+                deviceId: "device-test-001",
+                workspaceId: "workspace-test",
+                token: String(repeating: "t", count: 43),
+                issuedAt: "2026-09-26T10:00:00Z",
+                expiresAt: "2026-09-26T10:15:00Z"
+            )
+        )
+        let removal = DeviceRemovalService(credentials: credentials, transcript: transcript) { _ in false }
+        let model = AppModel(transcript: transcript, removal: removal)
         model.loadCachedSessions()
         XCTAssertFalse(model.sessions.isEmpty)
 
@@ -111,6 +143,8 @@ final class VOIDAppTests: XCTestCase {
         // and the outcome must not claim it did.
         XCTAssertEqual(model.removalOutcome, .removedLocallyOnly)
         XCTAssertFalse(try XCTUnwrap(model.removalOutcome).credentialDeleted == false)
+        let remainingCredential = try await credentials.load()
+        XCTAssertNil(remainingCredential)
     }
 
     func testCachedHistoryIsNeverAuthorityForTheApp() {

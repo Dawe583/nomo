@@ -1,6 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile, readFile, stat, chmod } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  rm,
+  writeFile,
+  readFile,
+  stat,
+  chmod,
+} from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
@@ -1044,6 +1052,149 @@ async function filesystemFixture(
     });
   return { root, runtime, execute };
 }
+
+async function journeyFixture(
+  t: import("node:test").TestContext,
+  tamper: (step: number) => Promise<void> = async () => {},
+) {
+  // The managed root and VOID's own state are siblings, as in every supported
+  // configuration. Putting the journal inside the managed root would put a
+  // directory entry in the same parent the adapter snapshots, which is a
+  // fixture mistake rather than a product one.
+  const dir = await mkdtemp(join(tmpdir(), "void-recovery-journey-"));
+  const root = join(dir, "project");
+  await mkdir(root);
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
+  const key = randomBytes(32);
+  const filesystem = managedFilesystemAdapter({ root, cooperative: true });
+  let restored = 0;
+  const adapter: RecoveryAdapter = {
+    ...filesystem,
+    async recover(prepared, outcome, recoveryId) {
+      const result = await filesystem.recover(prepared, outcome, recoveryId);
+      restored++;
+      await tamper(restored);
+      return result;
+    },
+  };
+  const runtime = () =>
+    recoveryRuntime({
+      journal: localOperationJournal(join(dir, "journal"), signer),
+      vault: localRecoveryVault(join(dir, "vault"), { key }, "key"),
+      adapters: [adapter],
+      authorize: async () => true,
+    });
+  const act = (operationId: string, arguments_: Json) =>
+    runtime().execute({
+      workspace: "test",
+      operationId,
+      runId: "journey",
+      agentId: "agent",
+      adapterId: adapter.id,
+      arguments: arguments_,
+    });
+  const b64 = (value: string) => Buffer.from(value).toString("base64");
+  return { root, runtime, act, b64 };
+}
+
+// The combined E0 journey: create, write, write, rename and delete one path in
+// a single run, then recover all of it across a fresh runtime. Each step is a
+// separate operation, so this is the shape the acceptance calls for rather
+// than the two-write case already covered.
+test("E0: one recovery job restores a create, write, write, rename and delete journey after restart", async (t) => {
+  const f = await journeyFixture(t);
+  await f.act("op-create", {
+    action: "write",
+    path: "doc.txt",
+    base64: f.b64("v1"),
+  });
+  await f.act("op-write", {
+    action: "write",
+    path: "doc.txt",
+    base64: f.b64("v2"),
+  });
+  await f.act("op-write-again", {
+    action: "write",
+    path: "doc.txt",
+    base64: f.b64("v3"),
+  });
+  await f.act("op-rename", {
+    action: "rename",
+    path: "doc.txt",
+    to: "moved.txt",
+  });
+  await f.act("op-delete", {
+    action: "delete",
+    path: "moved.txt",
+  });
+
+  // A fresh runtime per call is the restart: nothing in memory carries the
+  // lineage, so the journal and the vault are the only channels.
+  const runtime = f.runtime();
+  const plan = await runtime.planRecoveryJob({
+    workspace: "test",
+    jobId: "journey",
+    selection: { kind: "run", runId: "journey" },
+  });
+  assert.equal(plan.steps.length, 5);
+  const result = await runtime.runRecoveryJob(
+    "test",
+    "journey",
+    async () => true,
+  );
+  // Reversing delete, rename, write, write and create must leave the path that
+  // never existed before the journey exactly as it was: absent.
+  assert.deepEqual(result.residuals, []);
+  assert.equal(result.status, "restored");
+  await assert.rejects(() => readFile(join(f.root, "doc.txt")), /ENOENT/);
+  await assert.rejects(() => readFile(join(f.root, "moved.txt")), /ENOENT/);
+});
+
+// Same journey, but a foreign writer replaces the bytes of the newer step after
+// the first inverse lands. The step must conflict, the foreign bytes must
+// survive, and the report must say conflict rather than restored.
+test("E0: a foreign edit injected mid-journey conflicts and is preserved", async (t) => {
+  const f = await journeyFixture(t, async (step) => {
+    if (step === 1)
+      await writeFile(join(f.root, "moved.txt"), "human wrote this");
+  });
+  await f.act("op-create", {
+    action: "write",
+    path: "doc.txt",
+    base64: f.b64("v1"),
+  });
+  await f.act("op-write", {
+    action: "write",
+    path: "doc.txt",
+    base64: f.b64("v2"),
+  });
+  await f.act("op-rename", { action: "rename", path: "doc.txt", to: "moved.txt" });
+  await f.act("op-delete", { action: "delete", path: "moved.txt" });
+  const runtime = f.runtime();
+  await runtime.planRecoveryJob({
+    workspace: "test",
+    jobId: "injected",
+    selection: { kind: "run", runId: "journey" },
+  });
+  const result = await runtime.runRecoveryJob(
+    "test",
+    "injected",
+    async () => true,
+  );
+  assert.equal(result.status, "conflict");
+  assert.equal(
+    await readFile(join(f.root, "moved.txt"), "utf8"),
+    "human wrote this",
+  );
+  assert.ok(
+    result.residuals.some(
+      (r: { operationId: string; status: string }) =>
+        r.status === "conflict" || r.status === "blocked-by-conflict",
+    ),
+    `expected a conflict residual, got ${JSON.stringify(result.residuals)}`,
+  );
+});
 
 test("filesystem recovery job restores adjacent writes to one existing file", async (t) => {
   const f = await filesystemFixture(t);

@@ -220,6 +220,77 @@ test(
       assert.ok(
         runPlan.steps.every((step) => !/^[a-f0-9]{64}$/.test(step.operationId)),
       );
+      // A checkpoint names a prefix of the journal, so it is proven in its
+      // own workspace: the shared session above already holds older work that
+      // any checkpoint would honestly include.
+      const cpId = randomUUID(),
+        cpSession = { id: cpId, workspace: `agent-${cpId}`, generation: 2 };
+      const cpMutate = (operationId, content, path = "cp.txt") =>
+        transaction(OPERATOR_OWNER, cpId, (c) =>
+          mutateCloudDocument(OPERATOR_OWNER, cpSession, c, {
+            id: operationId,
+            name: "void_workspace_write",
+            arguments: { path, content },
+          }),
+        );
+      const cpState = async () =>
+        decrypt(await read(OPERATOR_OWNER, `workspace:${cpId}`));
+      const cpPlan = (jobId, selection) =>
+        transaction(OPERATOR_OWNER, cpId, (c) =>
+          planCloudRecoveryJob(
+            OPERATOR_OWNER,
+            { workspace: cpSession.workspace, jobId, selection },
+            cpSession,
+            c,
+          ),
+        );
+      await cpMutate("cp-first", "cp before");
+      await cpMutate("cp-second", "cp after");
+      const listed = await cpPlan("cp-listed", {
+        kind: "operations",
+        operationIds: ["cp-first", "cp-second"],
+      });
+      assert.deepEqual(
+        listed.steps.map((step) => step.operationId),
+        ["cp-second", "cp-first"],
+      );
+      const at = Math.max(...listed.steps.map((step) => step.sequence));
+      const checkpoint = await cpPlan("cp-job", {
+        kind: "checkpoint",
+        sequence: at,
+      });
+      assert.deepEqual(
+        checkpoint.steps.map((step) => step.operationId),
+        ["cp-second", "cp-first"],
+      );
+      assert.deepEqual(checkpoint.residuals, []);
+      await assert.rejects(
+        cpPlan("cp-job", { kind: "checkpoint", sequence: at }),
+        /already planned/,
+      );
+      await assert.rejects(
+        cpPlan("cp-past", {
+          kind: "checkpoint",
+          sequence: checkpoint.boundary.sequence + 100,
+        }),
+        /boundary/,
+      );
+      const cpApplied = await transaction(OPERATOR_OWNER, cpId, (c) =>
+        runCloudRecoveryJob(
+          OPERATOR_OWNER,
+          cpSession,
+          c,
+          "cp-job",
+          async (candidate) => {
+            assert.equal(candidate.digest, checkpoint.digest);
+            return true;
+          },
+        ),
+      );
+      assert.equal(cpApplied.status, "restored");
+      assert.equal(cpApplied.checkpoint, 2);
+      // The first step created the file, so undoing both steps removes it.
+      assert.equal((await cpState()).files["cp.txt"], undefined);
     } finally {
       // Keep this uniquely scoped evidence in the isolated append-only test ledger.
       await database().end();

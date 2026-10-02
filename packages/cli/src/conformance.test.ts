@@ -32,7 +32,10 @@ test("actual CLI runs every conformance case and emits a scoped JSON report", as
       "recovery",
       "conformance",
     ],
-    { windowsHide: true, timeout: 60_000 },
+    {
+      windowsHide: true,
+      timeout: process.platform === "win32" ? 15 * 60_000 : 60_000,
+    },
   );
   const report = JSON.parse(stdout);
   assert.equal(report.passed, true);

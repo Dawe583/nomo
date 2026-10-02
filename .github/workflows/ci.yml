@@ -74,20 +74,31 @@ jobs:
   # matches its source is a deployed catalogue describing a product that has
   # moved on, and nothing else in CI would notice it.
   #
-  # NOT VERIFIED FROM THE COMMIT THAT ADDED IT, same as the apple job: no
-  # result is claimed for it here. The first failing run on a real push is the
-  # baseline.
+  # The Python contract tests validate the hosted function. The wire suite
+  # also starts the real Node CLI behind its HTTP relay, so this job needs both
+  # runtime dependency trees installed in its isolated runner.
   #
   # The job budget is the sum of its steps, which is what
   # `scripts/src/ci-time-budgets.test.mjs` enforces: a job whose ceiling is below
   # its own steps would kill a run that had not finished, and report it as a
-  # failure of the code under test. 5 + 5 + 10 = 20, with headroom for the SDK
-  # install and the runner's own overhead.
+  # failure of the code under test. The five-minute Python and ten-minute Node
+  # installs plus 5 + 5 + 5 + 10 minutes of checks total 40 minutes; leave five
+  # minutes for runner overhead.
   hosted-mcp:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
@@ -96,6 +107,7 @@ jobs:
           python -m venv "$RUNNER_TEMP/void-mcp-venv"
           "$RUNNER_TEMP/void-mcp-venv/bin/python" -m pip install --upgrade pip
           "$RUNNER_TEMP/void-mcp-venv/bin/python" -m pip install -r apps/appwrite-mcp/requirements.txt
+        timeout-minutes: 5
       # Fails rather than regenerating. A gate that repairs what it is meant to
       # check is not a gate, and a silently rewritten snapshot would ship a
       # catalogue whose provenance nobody reviewed.
@@ -139,11 +151,6 @@ jobs:
   apple:
     runs-on: macos-latest
     timeout-minutes: 60
-    env:
-      # Derived data outside the checkout, so a stale build product is never
-      # picked up from a cached path and the working tree stays clean for the
-      # next step.
-      DERIVED_DATA: ${{ runner.temp }}/VOID-derived-data
     steps:
       - uses: actions/checkout@v4
       # The XcodeGen project is committed, so the job does not need the
@@ -163,6 +170,11 @@ jobs:
       - run: swift test --package-path apps/apple/VoidDesignSystem
         timeout-minutes: 15
       - name: Run the VOID scheme on the iOS simulator
+        env:
+          # Keep derived data outside the checkout, so a stale build product is
+          # never picked up and the working tree stays clean. runner.temp is
+          # available in step env, but not in the enclosing job env.
+          DERIVED_DATA: ${{ runner.temp }}/VOID-derived-data
         run: |
           xcodebuild test \
             -project apps/apple/VOID.xcodeproj \

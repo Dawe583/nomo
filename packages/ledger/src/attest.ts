@@ -1,11 +1,18 @@
-import { mkdir, open } from "node:fs/promises";
+import { rename, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { randomBytes } from "node:crypto";
 
 import { canonicalJson, GENESIS_PREV } from "./canonical.ts";
 import { devKeyProvider, sha256Hex, verifySignature } from "./sign.ts";
 import type { Alg, KeyProvider } from "./index.ts";
 import { readLedgerEntries, verifyChain, type PublicKeyLookup } from "./verify.ts";
 import type { JsonlEntry } from "./store.ts";
+import {
+  assertPrivateDirectoryPath,
+  assertPrivateFilePath,
+  ensurePrivateDirectory,
+  openPrivateFile,
+} from "./hardening.ts";
 
 export type AttestationDocument = {
   readonly workspace: string;
@@ -81,6 +88,7 @@ export async function attestLedger(
 ): Promise<AttestationDocument> {
   const signer = key ?? await devKeyProvider();
   const file = join(dir, `${workspace}.jsonl`);
+  await assertPrivateFilePath(file, "ledger file");
   const entries = await readLedgerEntries(file);
   if (entries.some((entry) => entry.workspace !== workspace))
     throw new Error("cannot attest ledger from another workspace");
@@ -103,15 +111,28 @@ export async function attestLedger(
 
 export async function storeAttestation(dir: string, doc: AttestationDocument): Promise<string> {
   const attestations = join(dir, "attestations");
-  await mkdir(attestations, { recursive: true, mode: 0o700 });
+  await assertPrivateDirectoryPath(dir, "ledger directory", undefined, true);
+  await ensurePrivateDirectory(attestations, "ledger attestations directory", true);
   const path = join(attestations, `${doc.headSeq}.json`);
-  const handle = await open(path, "w", 0o600);
+  const temporary = join(attestations, `.tmp-${randomBytes(16).toString("hex")}`);
   try {
-    await handle.writeFile(`${JSON.stringify(doc, null, 2)}
+    const handle = await openPrivateFile(
+      temporary,
+      "exclusive-write",
+      "ledger attestation temporary file",
+    );
+    try {
+      await handle.writeFile(`${JSON.stringify(doc, null, 2)}
 `);
-    await handle.sync();
-  } finally {
-    await handle.close();
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    await rename(temporary, path);
+    await assertPrivateFilePath(path, "ledger attestation file");
+  } catch (error) {
+    await rm(temporary, { force: true }).catch(() => {});
+    throw error;
   }
   return path;
 }

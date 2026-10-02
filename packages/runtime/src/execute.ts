@@ -270,6 +270,10 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       data,
     });
   };
+  // A scope string names the paths it touches first and the guarantee it makes
+  // second. Only the second half is a guarantee, so only the second half may be
+  // compared between two steps.
+  const guarantee = (scope: string) => scope.replace(/^[^.]*\.\s*/, "");
   const continuationForJobStep = async (
     tx: JournalTransaction,
     plan: RecoveryJobPlan,
@@ -293,8 +297,19 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       !currentEvent ||
       priorEvent.adapterId !== currentEvent.adapterId ||
       priorEvent.adapterVersion !== currentEvent.adapterVersion ||
-      digest(currentStep.plan.resources) !== digest(priorStep.plan.resources) ||
-      currentStep.plan.scope !== priorStep.plan.scope
+      // Two steps can only be adjacent on one resource if they both name it. A
+      // rename names two resources and its neighbour one, in either order
+      // depending on which way round the chain runs, so the test is that the
+      // sets overlap at all, not that they are equal or nested.
+      !currentStep.plan.resources.some((resource) =>
+        priorStep.plan.resources.includes(resource),
+      ) ||
+      // The scope a step declares opens with how many paths it touches, so a
+      // rename and a delete of the same path can never be string-equal even
+      // when the guarantee they make is identical. Compare the guarantee, which
+      // is everything after that opening clause, because that is the part the
+      // continuation is about to rely on.
+      guarantee(currentStep.plan.scope) !== guarantee(priorStep.plan.scope)
     )
       return undefined;
     const reference = priorEvent.data as unknown as {

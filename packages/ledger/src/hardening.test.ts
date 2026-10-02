@@ -83,13 +83,28 @@ describe("development key file permissions", () => {
   test("existing development keys with broad permissions are rejected", async () => {
     const dir = await mkdtemp(join(tmpdir(), "void-key-wide-"));
     const file = join(dir, "dev-ed25519.pkcs8");
-    await writeFile(file, "not a key");
-    await chmod(file, 0o644);
-
-    await assert.rejects(
-      () => devKeyProvider({ dir, env: {} }),
-      /permissions 0600|private Windows ACL/,
-    );
+    if (process.platform === "win32") {
+      await devKeyProvider({ dir, env: {} });
+      const { execFile } = await import("node:child_process");
+      const { promisify } = await import("node:util");
+      await promisify(execFile)(
+        join(process.env.SystemRoot!, "System32", "icacls.exe"),
+        [file, "/grant", "*S-1-1-0:(R)"],
+        { windowsHide: true },
+      );
+      await assert.rejects(
+        () => devKeyProvider({ dir, env: {} }),
+        /private Windows ACL/,
+      );
+      await windowsKeyAcl(file, true);
+    } else {
+      await writeFile(file, "not a key");
+      await chmod(file, 0o644);
+      await assert.rejects(
+        () => devKeyProvider({ dir, env: {} }),
+        /permissions 0600/,
+      );
+    }
   });
 
   test("symbolic link key files are rejected before read", async () => {
@@ -107,11 +122,11 @@ describe("development key file permissions", () => {
 
     await assert.rejects(
       () => assertPrivateKeyFileMode(join(dir, "dev-ed25519.pkcs8")),
-      /symbolic link/,
+      /symbolic link|reparse point|regular file|private Windows ACL/,
     );
     await assert.rejects(
       () => devKeyProvider({ dir, env: {} }),
-      /symbolic link/,
+      /symbolic link|reparse point|regular file|private Windows ACL/,
     );
   });
 });

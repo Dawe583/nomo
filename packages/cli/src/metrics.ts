@@ -20,7 +20,7 @@
  * so a bad file is counted as unreadable or rejected and the scan continues.
  */
 
-import { readdir, stat } from "node:fs/promises";
+import { lstat, readdir, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
 import {
   LEDGER_READ_MAX_BYTES,
@@ -220,8 +220,12 @@ async function journalSamples(
   journalPublicKey: PublicKeyLookup,
 ): Promise<{ samples: MetricSample[]; signed: boolean }> {
   const path = join(stateDir, "journal", `${workspace}.jsonl`);
-  const present = await stat(path).then(
-    (info) => info.isFile(),
+  const present = await lstat(path).then(
+    (info) => {
+      if (info.isSymbolicLink() || !info.isFile())
+        throw new Error("recovery journal is not a regular file");
+      return true;
+    },
     (error: NodeJS.ErrnoException) => {
       if (error.code === "ENOENT") return false;
       throw error;
@@ -247,6 +251,7 @@ async function journalSamples(
     unreadable: "journal_invalid",
     unverifiable: "journal_unverifiable",
     replay: "journal",
+    privateState: true,
   });
   const operations = new Map<string, OperationEvent>();
   const jobs = new Map<string, RecoveryJobEvent>();
@@ -372,4 +377,3 @@ export function renderMetricsText(report: MetricsReport): string {
 
 export const renderMetricsJson = (report: MetricsReport): string =>
   `${JSON.stringify(report, null, 2)}\n`;
-

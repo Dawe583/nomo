@@ -16,7 +16,9 @@ node packages/cli/bin/void.mjs --help
 - `feed` and `watch`: verify and inspect ledger activity.
 - `approvals` and `approve`: inspect and decide durable holds.
 - `ledger verify` and `verify`: verify ledger integrity and signatures.
-- `doctor`: read-only local environment checks with PASS, WARN or FAIL lines.
+- `doctor [--recovery-config PATH]`: read-only environment and local storage
+  permission checks. Passing a recovery config audits its state tree without
+  printing its contents or any secrets.
 - `--version`: print the workspace version without touching any data.
 - `config`: print resolved paths and flags with their source. Secret values
   never print, only whether a key is set.

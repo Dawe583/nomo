@@ -10,6 +10,8 @@ const selection = value => {
   if (value.kind === "operations" && Array.isArray(value.operationIds) && value.operationIds.length > 0 &&
       value.operationIds.length <= 500 && new Set(value.operationIds).size === value.operationIds.length && value.operationIds.every(identity))
     return { kind: "operations", operationIds: [...value.operationIds] };
+  if (value.kind === "checkpoint" && Number.isSafeInteger(value.sequence) && value.sequence >= 0)
+    return { kind: "checkpoint", sequence: value.sequence };
   return null;
 };
 const response = payload => "digest" in payload ? {
@@ -46,7 +48,7 @@ export function mountRecoveryRoutes(app, overrides = {}) {
     !!session.executing || !!session.pending || !!session.queue?.length;
   app.post("/api/sessions/:id/recovery-jobs/plan", handle(async (req, session, client) => {
     const chosen = selection(req.body?.selection), jobId = req.body?.jobId;
-    if (!identity(jobId) || !chosen) return { status: 400, body: { message: "Select one exact run or a unique operation list and stable job ID." } };
+    if (!identity(jobId) || !chosen) return { status: 400, body: { message: "Select one exact run, a journal checkpoint, or a unique operation list and stable job ID." } };
     if (busy(session)) return { status: 409, body: { message: "Wait for the agent to stop." } };
     const plan = await deps.planCloudRecoveryJob(req.owner, { workspace: session.workspace, jobId, selection: chosen }, session, client);
     return { status: 200, body: response(plan) };

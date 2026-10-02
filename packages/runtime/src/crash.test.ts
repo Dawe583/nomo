@@ -18,6 +18,8 @@ import {
   type RecoveryAdapter,
 } from "./index.ts";
 
+const CHILD_MESSAGE_TIMEOUT_MS = process.platform === "win32" ? 90_000 : 15_000;
+
 test("SIGKILL releases the writer mutex; restarted executor records unknown without repeating a dispatched write", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-killed-runtime-")),
     key = randomBytes(32);
@@ -52,7 +54,7 @@ test("SIGKILL releases the writer mutex; restarted executor records unknown with
     if (child.exitCode === null) child.kill("SIGKILL");
   });
   const [message] = await once(child, "message", {
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(CHILD_MESSAGE_TIMEOUT_MS),
   });
   assert.equal(message, "dispatched");
   const exited = once(child, "exit");
@@ -118,7 +120,9 @@ test("independent processes cannot enter the local journal transaction together"
   t.after(() => {
     if (child.exitCode === null) child.kill("SIGKILL");
   });
-  await once(child, "message", { signal: AbortSignal.timeout(15_000) });
+  await once(child, "message", {
+    signal: AbortSignal.timeout(CHILD_MESSAGE_TIMEOUT_MS),
+  });
   let entered = false;
   const waiting = localOperationJournal(
     join(dir, "journal"),
@@ -297,7 +301,7 @@ await recoveryRuntime({
     stdio: ["ignore", "ignore", "pipe", "ipc"],
   });
   const [message] = await once(child, "message", {
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(CHILD_MESSAGE_TIMEOUT_MS),
   });
   assert.equal(message, "dispatched");
   const exited = once(child, "exit");
@@ -337,8 +341,10 @@ await recoveryRuntime({
       throw new Error("unused");
     },
   };
-  const restart = async (adapters: readonly RecoveryAdapter[]) =>
-    recoveryRuntime({
+  const restart = async (adapters: readonly RecoveryAdapter[]) => {
+    const restartedStore = await sqliteBudgetStore(budgetFile);
+    stores.push(restartedStore);
+    return recoveryRuntime({
       journal: localOperationJournal(
         join(dir, "journal"),
         await devKeyProvider({ dir: join(dir, "keys"), env: {} }),
@@ -348,11 +354,12 @@ await recoveryRuntime({
       authorize: async () => true,
       requireRecoverable: false,
       budgetLedger: serverBudgetLedger({
-        store: await sqliteBudgetStore(budgetFile),
+        store: restartedStore,
         account: "shared",
         budget: { dailyLimit: 1 },
       }),
     });
+  };
   assert.equal(
     (await (await restart([adapter])).execute(request)).status,
     "unknown",

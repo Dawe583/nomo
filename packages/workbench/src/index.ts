@@ -1997,7 +1997,7 @@ export class Workbench {
         dir: join(this.storage.directory, "keys"),
         env: this.env,
       });
-      return attestLedger(dir, workspace, key);
+      return await attestLedger(dir, workspace, key);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
