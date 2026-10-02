@@ -42,4 +42,16 @@ describe("@void/cli", () => {
     assert.equal(parsed.ok, false);
     assert.match(parsed.ok ? "" : parsed.reason, /^usage: void /);
   });
+
+  test("the barrel tracks the live command list, including update", () => {
+    // argv.ts gained "update" while this barrel carried a stale copy without
+    // it. Parsing through ./index.ts proves the public entry cannot drift
+    // from the parser the binary runs again.
+    const parsed = parseInvocation(["update", "--check"]);
+    assert.deepEqual(parsed, {
+      ok: true,
+      command: "update",
+      args: ["--check"],
+    });
+  });
 });
