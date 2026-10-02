@@ -23,10 +23,24 @@ passed. The Windows/Linux Node 24/26 persistence workflow includes these checks.
 This advances R05/R12 but does not complete those milestones or certify process
 death, provider integrations, concurrent hostile writers or power loss.
 
-A broader Windows CLI run also identified the existing persisted approval-state
+A broader Windows CLI run also identified the persisted approval-state
 limitation: twelve approval tests require Unix owner-only directory semantics.
-Those checks remain fail-closed; native Windows approval-directory ACL support
-is separate remaining work. No claim of a full Windows CLI suite pass is made.
+Those checks stay fail-closed. Native Windows approval-directory ACL support
+has since been added rather than left open: on POSIX the mode-bit and uid rule
+is unchanged, and on Windows `inspectApprovalStateDirectory` reads the DACL
+through the shipped icacls binary, because Node reports 0o666 for a directory
+whatever chmod was asked for and `process.getuid` is absent, which made the old
+predicate unsatisfiable there. A directory VOID can claim is narrowed to the
+operator before it is accepted; a proven foreign write grant is refused and is
+never acknowledgeable; anything unproven is reported as `unverifiable` and is
+refused unless the host names the finding and accepts it. Refusals carry a fixed
+code and never a path or an account name.
+
+That Windows branch is written and reviewed but was not executed: the verification
+below was run on macOS, where the DACL tests skip by construction, so no observed
+run covers icacls parsing, DACL narrowing or the per-directory memo. A Windows host
+run is still required before any claim about it. No claim of a full Windows CLI
+suite pass is made either way.
 
 ### Python transport client, 2026-09-25
 
