@@ -4,6 +4,36 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Billing is wired to Polar as merchant of record, on the server only. A signed
+  delivery is verified against the exact bytes Polar sent and writes one
+  subscription document into the account's own namespace, and a signed-in
+  caller can read their own state at `GET /api/billing`. The browser never
+  holds a Polar credential, a webhook secret or a customer id, and the content
+  security policy is unchanged: the chat origin still talks only to itself.
+
+  Verification is delegated to Polar's own SDK rather than reimplemented,
+  because the SDK derives two candidate keys from one secret and a
+  spec-derived implementation does not match Polar's. The webhook answers
+  before sign-in and before the body is re-parsed, because a delivery carries
+  no session and a re-parsed body is not the body that was signed. Each
+  delivery's id is recorded in the same transaction that applies it, so a
+  retried delivery applies once and two deliveries in flight at once cannot
+  both apply.
+
+  A signature that does not verify is refused. A correctly signed event type
+  this deployment has not heard of is accepted and recorded, because telling
+  Polar to redeliver a valid event forever is not a decision any deployment
+  gets to make. A subscription for a customer nobody has linked is recorded
+  and ignored, for the same reason.
+
+  What the entitlement gates today is nothing. None of the paid capabilities
+  has an enforcement point in the product yet, so the capability answer a
+  browser receives is unchanged and the open workbench surface is untouched. No
+  price, tier or limit is encoded: the prices in the go-to-market document are
+  hypotheses until somebody has had the conversation. Checkout, a customer
+  portal, usage metering and seats are not part of this, and none of it has
+  been run against a live Polar account.
+
 - `void classify --tool <id>` answers the one-call question the transcript form
   could not: what does this single entry decide for this single tool, given
   these facts and these arguments. `--facts <file>` supplies a verified facts
