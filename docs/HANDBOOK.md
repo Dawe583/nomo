@@ -570,7 +570,7 @@ arguments prints that command's usage.
 | `void tui`       | The terminal workspace.                                                   |
 | `void watch`     | A full-screen live ledger view.                                           |
 | `void run`       | The MCP proxy: `void-proxy` in front of an agent's tools.                 |
-| `void classify`  | Classify the tool calls in a transcript.                                  |
+| `void classify`  | Classify the tool calls in a transcript, or one named call.                  |
 | `void feed`      | Print ledger entries, optionally following.                               |
 | `void verify`    | Verify a ledger's chain and signatures.                                   |
 | `void ledger`    | The ledger group. `void ledger verify <dir>` verifies a ledger directory. |
@@ -593,6 +593,7 @@ The ones that take arguments, exactly:
 
 ```sh
 void classify --transcript <file> [--facts <file>]
+void classify --tool <id> [--facts <file>] [--fact k=v] [--args <json>]
 void feed --ledger <dir> [--json] [--follow]
 void verify --ledger <dir> [--attestation <file>]
 void attest --ledger <dir> --workspace <id>
@@ -614,6 +615,13 @@ Notes that save time:
   whether a verification key is set. It never prints the key.
 - `void verify` on a ledger with no entries in the current directory fails with a
   plain `ENOENT` naming the path. That is the first-run state, not a fault.
+- `void classify --tool <id>` classifies one call instead of a transcript and
+  exits 0 when the registry decided, 2 when it could not. Read the `facts:`
+  line before the `tone:` line: with no declared facts the evaluator can only
+  reach the entry's terminal case, so an `r3` there is the fail-closed
+  posture rather than a reading of your account. `--fact k=v` overrides
+  `--facts <file>` for that call, and the value is the literal text the
+  registry compares against.
 - `void replay --dry-run` reports what an inverse would do without performing it.
   Use it before any real replay.
 - Every `void recovery` action that changes something requires `--approve <digest>`

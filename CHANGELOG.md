@@ -4,6 +4,25 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- `void classify --tool <id>` answers the one-call question the transcript form
+  could not: what does this single entry decide for this single tool, given
+  these facts and these arguments. `--facts <file>` supplies a verified facts
+  file, `--fact k=v` overrides it for that call, and `--args <json>` supplies
+  the intercepted arguments, so a `versionId` on an object delete reclassifies
+  the same tool from a recoverable marker to permanent destruction. The answer
+  comes from the same evaluator an intercepted call goes through, not a second
+  one, so a tone checked by hand is the tone a call receives.
+
+  The output says which inputs it had. With no declared facts the evaluator
+  can only reach an entry's terminal case, so the `tone:` line alone would
+  read as a reading of your account when it is the fail-closed posture; the
+  `facts:` line names which it is, and the registry disclaimer travels with
+  every verdict. An unknown tool is a named outcome and exits 2 rather than
+  being given a guessed class, and a mistyped flag is refused instead of
+  quietly reading as a classification you did not ask for. `--fact` values are
+  the literal text the registry compares against, because every declared value
+  in the registry is a string and a boolean read would match no case while
+  appearing to have been measured.
 - `void update` updates a local install in place, and an installer script puts
   `void` on your PATH as a checkout you own, with no global package manager
   and no account. The installer checks for Node.js 24 or newer, git and pnpm,

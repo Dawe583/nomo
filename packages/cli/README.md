@@ -12,7 +12,11 @@ node packages/cli/bin/void.mjs --help
 - `tui`: live local terminal workspace.
 - `agent`: bounded model and tool session.
 - `run`: launch the MCP proxy through the same arguments as `void-proxy`.
-- `classify`: classify a captured transcript from declared facts.
+- `classify`: classify a captured transcript from declared facts, or one
+  named call with `void classify --tool <id> [--facts <file>] [--fact k=v]
+  [--args <json>]`. The single call form prints the tone that tool would get,
+  and says whether it came from declared facts or from the entry's
+  fail-closed fallback.
 - `feed` and `watch`: verify and inspect ledger activity.
 - `approvals` and `approve`: inspect and decide durable holds.
 - `ledger verify` and `verify`: verify ledger integrity and signatures.
