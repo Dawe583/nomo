@@ -499,12 +499,101 @@ function ringVisible(state) {
   return null;
 }
 
+/** Wait until the transcript geometry stops moving, and say whether it did.
+ *
+ * The old gate read the layout once, immediately after `waitForApp` returned.
+ * `waitForApp` proves a node exists, not that the boxes around it have reached
+ * their final size: the composer's textarea autosizes in an effect, the
+ * notices region is `display: none` until a query fills it and its contents
+ * change the composer's height, and the transcript is a `flex: 1` sibling of
+ * that composer, so a composer still growing means a transcript still
+ * shrinking. Under CPU contention the single read landed mid-settle and the
+ * share came out lower than the layout's real resting value.
+ *
+ * So the harness now waits for the geometry to repeat itself instead of
+ * assuming it has. Two consecutive identical readings of the transcript and
+ * work-area boxes are the evidence that the layout has settled; anything else
+ * is reported as unsettled with the reason, and the caller records that as
+ * outstanding rather than asserting on a mid-animation number.
+ *
+ * `fonts.ready` is awaited because the interface and display faces load with
+ * `font-display: swap`: before the swap lands, text measures in the fallback
+ * face and the transcript is a different height. */
+const LAYOUT_SAMPLE = `() => {
+  const round = (n) => Math.round(n * 100) / 100;
+  const box = (node) => (node ? round(node.getBoundingClientRect().height) : null);
+  const transcript = document.querySelector(".transcript");
+  const work = document.querySelector(".chat-container") || document.querySelector(".chat-shell");
+  return {
+    transcriptHeight: box(transcript),
+    workAreaHeight: box(work),
+    fontsLoaded: document.fonts.status === "loaded",
+  };
+}`;
+
+const LAYOUT_SAMPLE_CALLED = "(" + LAYOUT_SAMPLE + ")()";
+
+const sameLayout = (a, b) =>
+  a.transcriptHeight === b.transcriptHeight && a.workAreaHeight === b.workAreaHeight;
+
+/** The settling evidence for one viewport.
+ *
+ * `settled` is a measurement, not an inference: it is true only when two
+ * readings taken a full frame apart agreed to the hundredth of a pixel. When
+ * they did not, `reason` names what was still moving so the gap is visible
+ * rather than folded into a bogus assertion. */
+async function awaitSettledLayout(page, tries = 40, gapMs = 60) {
+  const fontsReady = await page
+    .evaluate("document.fonts.ready.then(() => true).catch(() => false)")
+    .catch(() => false);
+  let previous = null;
+  let last = null;
+  let readings = 0;
+  for (let i = 0; i < tries; i++) {
+    // Two animation frames, not one: a single frame can be scheduled before
+    // the style and layout that frame is meant to flush have been applied.
+    await page.evaluate(
+      "new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 0))))",
+    );
+    const sample = await page.evaluate(LAYOUT_SAMPLE_CALLED);
+    readings++;
+    last = sample;
+    if (previous && sameLayout(previous, sample))
+      return {
+        settled: true,
+        reason: null,
+        readings,
+        fontsReady,
+        transcriptHeight: sample.transcriptHeight,
+        workAreaHeight: sample.workAreaHeight,
+      };
+    previous = sample;
+    await new Promise((r) => setTimeout(r, gapMs));
+  }
+  const reason =
+    !last || last.transcriptHeight === null || last.workAreaHeight === null
+      ? "the transcript or the work area had no box to measure"
+      : `the layout never held still: ${readings} readings, last ${last.transcriptHeight}px of ${last.workAreaHeight}px`;
+  return {
+    settled: false,
+    reason,
+    readings,
+    fontsReady,
+    transcriptHeight: last?.transcriptHeight ?? null,
+    workAreaHeight: last?.workAreaHeight ?? null,
+  };
+}
+
 async function measureViewport(page, origin, sessionPath) {
   const rows = [];
   for (const viewport of VIEWPORTS) {
     await page.setViewport(viewport.width, viewport.height);
     await page.goto(origin + sessionPath);
     await waitForApp(page, ".composer .send");
+    // Settle before measuring. The probe below and the share recorded from it
+    // both read one layout; taking that layout before it stopped moving is how
+    // a mid-animation height came to be asserted as a resting one.
+    const settle = await awaitSettledLayout(page);
     const result = await page.evaluate(PROBE_CALLED);
     const transcriptHeight = result.transcript ? result.transcript.height : null;
     const workHeight = result.work ? result.work.height : null;
@@ -516,7 +605,12 @@ async function measureViewport(page, origin, sessionPath) {
       horizontalOverflow: result.scrollWidth - result.clientWidth,
       transcriptHeight,
       workAreaHeight: workHeight,
+      // The share is derived here, once, from the two pixels measured on the
+      // same read. A gate that recomputed it from the same two numbers and
+      // compared the two results was comparing one number with itself, so the
+      // recorded claim and the evidence behind it cannot drift apart.
       transcriptShare: transcriptHeight !== null && workHeight ? Math.round((transcriptHeight / workHeight) * 1000) / 10 + "%" : null,
+      settle,
       sendTop: result.send ? result.send.top : null,
       sendBottom: result.send ? result.send.bottom : null,
       sendHeight: result.send ? result.send.height : null,

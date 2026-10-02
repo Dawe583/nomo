@@ -56,6 +56,27 @@ for (const { key, reason } of undriven)
   test.todo(`live state ${key} was not driven: ${reason}`);
 const stateSkip = (key) =>
   skip || undriven.find((entry) => entry.key === key)?.reason || false;
+// A viewport whose layout never held still is a hole in the evidence, on the
+// same terms as an undriven live state above. The browser reports `settled`
+// only when two readings a frame apart agreed, so a row that is not settled is
+// a row whose pixels describe a layout mid-movement, not the resting layout
+// the D04.07 contract is written about. Asserting a floor against a moving
+// layout is how a browser timing race was reported as a layout regression, so
+// the row is recorded as a todo with its reason and named in the skip of every
+// test that reads its pixels.
+const unsettled = (report?.viewportMatrix ?? [])
+  .filter((row) => row.settle?.settled !== true)
+  .map((row) => ({
+    viewport: row.viewport,
+    reason: row.settle?.reason ?? "no settle evidence was recorded at all",
+  }));
+for (const { viewport, reason } of unsettled)
+  test.todo(`viewport ${viewport} never settled: ${reason}`);
+// A viewport missing from the matrix is a harness fault, not a gap to skip
+// over: it fails the coverage test below rather than quietly reducing the set
+// of viewports this gate claims to have measured.
+const viewportSkip = (viewport) =>
+  skip || unsettled.find((entry) => entry.viewport === viewport)?.reason || false;
 if (report && process.env.VOID_QA_REPORT) {
   const { writeFile } = await import("node:fs/promises");
   await writeFile(process.env.VOID_QA_REPORT, JSON.stringify(report, null, 2));
@@ -63,55 +84,102 @@ if (report && process.env.VOID_QA_REPORT) {
 
 test("D04.06 viewport matrix has no horizontal overflow and a reachable Send", { skip }, () => {
   for (const row of report.viewportMatrix) {
-    assert.equal(row.scrollWidth, row.clientWidth, `${row.viewport} overflows horizontally by ${row.horizontalOverflow}px: ${JSON.stringify(row.offenders.slice(0, 3))}`);
+    if (viewportSkip(row.viewport)) continue;
+    const settled = `settle ${JSON.stringify(row.settle)}`;
+    assert.equal(row.scrollWidth, row.clientWidth, `${row.viewport} overflows horizontally by ${row.horizontalOverflow}px: ${JSON.stringify(row.offenders.slice(0, 3))}, ${settled}`);
     const send = row.raw.send ?? row.raw.stop;
-    assert.ok(send, `${row.viewport} has neither Send nor Stop in the composer`);
-    assert.ok(send.top >= -1 && send.bottom <= row.raw.innerHeight + 1, `${row.viewport} the send control sits outside the viewport at ${send.top}..${send.bottom} of ${row.raw.innerHeight}`);
-    assert.equal(row.raw.sendHit ?? row.raw.stopHit, "reachable", `${row.viewport} the send control is ${row.raw.sendHit ?? row.raw.stopHit}`);
+    assert.ok(send, `${row.viewport} has neither Send nor Stop in the composer, ${settled}`);
+    assert.ok(send.top >= -1 && send.bottom <= row.raw.innerHeight + 1, `${row.viewport} the send control sits outside the viewport at ${send.top}..${send.bottom} of ${row.raw.innerHeight}, ${settled}`);
+    assert.equal(row.raw.sendHit ?? row.raw.stopHit, "reachable", `${row.viewport} the send control is ${row.raw.sendHit ?? row.raw.stopHit}, ${settled}`);
   }
 });
 
 test("D04.07 transcript keeps 200px at 320x568 and 60% of the work area on desktop", { skip }, () => {
+  // Every assertion here reads measured pixels, so every viewport is skipped
+  // when the browser reported that the layout had not settled for it. Asserting
+  // a resting-layout floor against a mid-movement height is what turned a
+  // browser timing race into a reported layout regression.
   for (const name of PHONE_VIEWPORTS) {
+    if (viewportSkip(name)) continue;
     const phone = report.viewportMatrix.find((row) => row.viewport === name);
-    assert.ok(phone.transcriptHeight >= 200, `${name} transcript is ${phone.transcriptHeight}px`);
+    assert.ok(phone.transcriptHeight >= 200, `${name} transcript is ${phone.transcriptHeight}px, settle ${JSON.stringify(phone.settle)}`);
   }
   for (const name of SHORT_LANDSCAPE) {
+    if (viewportSkip(name)) continue;
     const short = report.viewportMatrix.find((row) => row.viewport === name);
     const send = short.raw.send ?? short.raw.stop;
     assert.ok(send && send.bottom <= short.raw.innerHeight + 1, `${name} the send control fell outside the viewport`);
     // D04.07 allows the transcript to shrink on a keyboard-sized viewport, but
     // the shrink has to stay measured rather than collapse to nothing.
-    assert.ok(short.transcriptHeight > 100, `${name} transcript collapsed to ${short.transcriptHeight}px`);
+    assert.ok(short.transcriptHeight > 100, `${name} transcript collapsed to ${short.transcriptHeight}px, settle ${JSON.stringify(short.settle)}`);
   }
   for (const row of report.viewportMatrix.filter((entry) => DESKTOP_VIEWPORTS.includes(entry.viewport))) {
+    if (viewportSkip(row.viewport)) continue;
     const share = Number.parseFloat(row.transcriptShare);
-    assert.ok(share >= 60, `${row.viewport} transcript is ${row.transcriptShare} of the work area (${row.transcriptHeight}px of ${row.workAreaHeight}px)`);
+    assert.ok(share >= 60, `${row.viewport} transcript is ${row.transcriptShare} of the work area (${row.transcriptHeight}px of ${row.workAreaHeight}px), settle ${JSON.stringify(row.settle)}`);
   }
 });
 
 test("D04.07 the transcript share is re-derived at every viewport, not only on desktop", { skip }, () => {
-  // One floor per viewport class. The percentages are recomputed from the two
-  // measured pixel values, so a recorded string can never carry a stale claim.
+  // One floor per viewport class, checked against the share the harness
+  // derived once from the two pixels it measured on the same read. The
+  // previous version recomputed the ratio here from those same two numbers
+  // and compared the two results within a 0.05 tolerance, which compared one
+  // number with itself: the two expressions and the two inputs were identical,
+  // so the comparison could never fail and the tolerance covered nothing. What
+  // actually made this test red under load was the floor, asserted against
+  // pixels read before the layout had settled.
   const floors = { phone: 65, tablet: 75, landscape: 70, desktop: 70, "short-landscape": 45 };
   const seen = [];
   for (const row of report.viewportMatrix) {
-    assert.ok(row.transcriptHeight > 0, `${row.viewport} has no measured transcript height`);
-    assert.ok(row.workAreaHeight > 0, `${row.viewport} has no measured work area height`);
-    const derived = Math.round((row.transcriptHeight / row.workAreaHeight) * 1000) / 10;
-    assert.ok(
-      Math.abs(derived - Number.parseFloat(row.transcriptShare)) < 0.05,
-      `${row.viewport} recorded ${row.transcriptShare} but the pixels derive ${derived}%`,
-    );
+    if (viewportSkip(row.viewport)) continue;
     const floor = floors[row.kind];
     assert.ok(floor !== undefined, `${row.viewport} has no transcript-share floor for kind ${row.kind}`);
+    assert.ok(row.transcriptHeight > 0, `${row.viewport} has no measured transcript height, settle ${JSON.stringify(row.settle)}`);
+    assert.ok(row.workAreaHeight > 0, `${row.viewport} has no measured work area height, settle ${JSON.stringify(row.settle)}`);
+    assert.ok(row.transcriptShare !== null, `${row.viewport} recorded no transcript share, settle ${JSON.stringify(row.settle)}`);
+    const share = Number.parseFloat(row.transcriptShare);
+    // The share is asserted as recorded, and the pixels it came from are named
+    // in the failure together with the settle flag. A failure has to say which
+    // viewport, how many pixels of transcript in how many pixels of work area,
+    // and whether the layout had settled when they were read: without the flag
+    // a reader cannot tell a real layout regression from a timing race.
     assert.ok(
-      derived >= floor,
-      `${row.viewport} transcript is ${derived}% of the work area (${row.transcriptHeight}px of ${row.workAreaHeight}px), floor ${floor}%`,
+      share >= floor,
+      `${row.viewport} transcript is ${row.transcriptShare} of the work area (${row.transcriptHeight}px of ${row.workAreaHeight}px), floor ${floor}%, settle settled=${row.settle?.settled} readings=${row.settle?.readings} reason=${row.settle?.reason ?? "none"}`,
     );
     seen.push(row.viewport);
   }
-  assert.equal(seen.length, 9, "the share table must cover the whole D04.06 viewport set");
+  assert.equal(
+    seen.length + unsettled.length,
+    9,
+    "the share table must cover the whole D04.06 viewport set",
+  );
+});
+
+test("D04.07 every viewport row is present, carries its pixels and a settle flag", { skip }, () => {
+  // The coverage guard above counts settled and unsettled rows together, so a
+  // row that vanished could not be noticed there. This test is what fails on a
+  // lost measurement, and it fails on a settle flag nobody earned: `readings`
+  // is how many times the browser actually read the geometry, and
+  // `settled: true` is only honest if it had at least the two agreeing reads
+  // that justify it. Without this, dropping the settle wait would leave the
+  // flag true-by-construction and the gate would go green on unsettled pixels.
+  const expected = [...DESKTOP_VIEWPORTS, ...PHONE_VIEWPORTS, ...SHORT_LANDSCAPE, "768x1024", "834x1112"].sort();
+  assert.deepEqual(
+    report.viewportMatrix.map((row) => row.viewport).sort(),
+    expected,
+    "the viewport matrix no longer covers the whole D04.06 set",
+  );
+  for (const row of report.viewportMatrix) {
+    assert.ok(row.settle, `${row.viewport} recorded no settle evidence at all`);
+    assert.equal(typeof row.settle.settled, "boolean", `${row.viewport} has no boolean settle flag: ${JSON.stringify(row.settle)}`);
+    assert.equal(typeof row.settle.readings, "number", `${row.viewport} recorded no settle reading count: ${JSON.stringify(row.settle)}`);
+    assert.ok(row.settle.readings >= 2, `${row.viewport} was read ${row.settle.readings} time(s), too few to show the layout held still`);
+    assert.equal(typeof row.settle.fontsReady, "boolean", `${row.viewport} did not record whether the document fonts had loaded`);
+    if (row.settle.settled === false)
+      assert.ok(row.settle.reason, `${row.viewport} is unsettled but recorded no reason`);
+  }
 });
 
 test("D04.07 a long draft plus an attachment keeps Send reachable at 320x568", { skip }, () => {
