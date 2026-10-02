@@ -1,0 +1,164 @@
+# GitLab mirror of the GitHub Actions gates in .github/workflows.
+#
+# GitHub Actions stays the primary CI for this repository. GitHub owns the
+# Windows and macOS legs and the private-repository Actions minutes that pay
+# for them; this file is the Linux half, so that a GitLab merge request is
+# checked before it reaches GitHub rather than after.
+#
+# Three deliberate differences from the GitHub files, each of them forced:
+#
+#   * GitLab has no per-step timeout. Every GitHub job below budgets each step
+#     separately so a slow step is reported as itself; here the job timeout is
+#     the sum of its steps, and a step that overruns is reported as the job.
+#     The sums are the GitHub totals: gates 95 minutes, manifest 120.
+#   * `workflow: rules:` replaces the GitHub `on:` block. `name:` belongs under
+#     `workflow:` here, not at the top level, and the trigger conditions are
+#     written as `rules:` for the same reason.
+#   * The Pages job publishes to GitLab Pages as a per-branch preview and never
+#     from `main`. GitHub Pages deployment is the production one and stays
+#     where it is.
+
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+workflow:
+  name: 'VOID Linux gates and merge request Pages preview'
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+default:
+  interruptible: true
+
+stages:
+  - test
+  - deploy
+
+# Keyed on the lockfile, so a dependency change invalidates the store and a
+# source-only change does not. The store path is set in before_script rather
+# than by an .npmrc edit, because the committed .npmrc sets peer resolution
+# policy and nothing about where the store lives.
+cache:
+  key:
+    files:
+      - pnpm-lock.yaml
+  paths:
+    - .pnpm-store/
+
+variables:
+  # Matches packageManager in package.json. pnpm is installed with npm rather
+  # than enabled through corepack, because corepack is not present in every
+  # Node image and a gate that depends on it is a gate that sometimes cannot
+  # start.
+  GIT_DEPTH: '20'
+  npm_config_update_notifier: 'false'
+
+.node: &node
+  before_script:
+    - npm install --global pnpm@10.33.0
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+# Mirrors the `gates` job in .github/workflows/ci.yml, in the same order.
+#
+# Tests run before the build, deliberately, for the reason the GitHub file
+# gives: the build sat first long enough that a build regression made
+# seventeen consecutive GitHub runs report failure while executing zero tests.
+# When the build is what broke, the unit signal is still on the record.
+gates:
+  <<: *node
+  stage: test
+  image: node:$NODE
+  parallel:
+    matrix:
+      - NODE: ['24', '26']
+  timeout: 95 min
+  script:
+    - pnpm run typecheck
+    - pnpm test
+    - node --test apps/control-plane/api/server.test.ts apps/control-plane/web/control-plane-pages.test.mjs apps/control-plane/web/app.test.mjs
+    - node --test scripts/src/*.test.mjs
+    - node scripts/src/e2e.mjs
+    - node scripts/src/e2e-connectors.mjs
+    - node scripts/src/e2e-final.mjs all
+    - node scripts/src/e2e-arc.mjs all
+    - pnpm run build
+
+# Mirrors the `ubuntu-latest` half of the `manifest` matrix in
+# .github/workflows/manifest.yml, in the same order.
+#
+# The `windows-latest` half is absent on purpose. GitLab bills Windows and
+# macOS shared runner minutes at a multiple of the Linux rate, and this
+# namespace has a 400 minute monthly shared allowance, so the Windows manifest
+# leg and desktop-windows.yml are GitHub's to run. The Ubuntu leg is the one
+# that still fits in the allowance, and it is the leg that catches the
+# `git.managed` conformance gate, which is the slow step the GitHub file
+# budgets 15 minutes for here.
+manifest:
+  <<: *node
+  stage: test
+  image: node:$NODE
+  parallel:
+    matrix:
+      - NODE: ['24', '26']
+  timeout: 120 min
+  script:
+    - node --test packages/connectors/src/manifest.test.ts packages/workbench/src/storage.test.ts apps/control-plane/api/server.test.ts
+    - node --test --test-concurrency=2 packages/runtime/src/*.test.ts packages/ledger/src/*.test.ts packages/proxy/src/bin.test.ts
+    - node --test packages/connectors/src/filesystem/managed.test.ts packages/cli/src/recovery-filesystem.test.ts packages/cli/src/recovery-mcp.test.ts packages/cli/src/recovery-paths.test.ts packages/cli/src/conformance.test.ts
+    - node packages/cli/bin/void.mjs recovery conformance
+
+# Not mirrored: the `isolated-postgres` job in
+# .github/workflows/cloud-integration.yml. GitLab does run a Postgres service
+# container, so the service is not the obstacle. The job's decisive half is the
+# Neon wire-protocol proxy, which it builds from a third-party Go repository
+# checked out at a pinned commit, and no Node image carries a Go toolchain.
+# Every `run:` line that job has beyond
+# `node scripts/src/check-cloud-integration.mjs` is either that checkout or a
+# `go build` inside it, and neither is a script in package.json nor a path in
+# this repository. Running the SQL suite without the proxy that
+# scripts/src/cloud-test-config.mjs requires would fail rather than gate
+# anything, so the job stays on GitHub.
+
+# Not mirrored: the `hosted-mcp` job in .github/workflows/ci.yml. It runs on
+# Linux too, but it is a Python job that also needs the Node tree installed,
+# and no stock image carries both at the versions it asks for: Node 24 with
+# Python 3.14, which python/void-transport/pyproject.toml requires as
+# `>=3.14`. Installing a second toolchain into the image is a step with no
+# script in package.json and no file in this repository behind it, so the job
+# stays on GitHub where `actions/setup-python` selects the interpreter. The
+# Apple job in the same file is skipped for the same reason the Windows jobs
+# are: it needs a macOS runner.
+
+# The `site` directory published by .github/workflows/pages.yml, which deploys
+# to GitHub Pages from `main` and is the production download page.
+#
+# On GitLab this publishes a per-branch preview instead, and only from a merge
+# request pipeline: a merge request that changes the download page can be
+# opened and looked at before it merges, and `main` is never deployed from
+# here. GitHub Pages remains the production deployment.
+#
+# `interruptible: false` mirrors `cancel-in-progress: false` in the GitHub
+# file: a deploy that has started finishes rather than being killed halfway
+# through a Pages upload.
+pages:
+  stage: deploy
+  image: node:24
+  interruptible: false
+  script:
+    - test -f site/index.html
+  artifacts:
+    paths:
+      - site
+  publish: site
+  environment:
+    name: pages/$CI_COMMIT_REF_SLUG
+    url: $CI_ENVIRONMENT_URL
+    deployment_tier: staging
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - site/**/*
+        - .gitlab-ci.yml

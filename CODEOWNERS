@@ -1,0 +1,44 @@
+# Code owners
+#
+# This project is one maintainer's, so the catch-all below is the whole policy
+# and the explicit entries exist to say which files must never move without
+# someone deliberately deciding they should. A change to any of them alters
+# what production runs rather than how the code reads, so they are named here
+# instead of left to the catch-all.
+
+*                       @Dawe583
+
+# Dependency resolution. The lockfile is the record of exactly which versions
+# were reviewed, and a hand-edited entry in it is a dependency change that no
+# manifest records.
+pnpm-lock.yaml          @Dawe583
+
+# The workspace root: scripts every gate in CI runs, the packageManager pin,
+# the engines floor and the runtime dependency set.
+/package.json           @Dawe583
+
+# Deployment manifests. Each of these is read by the platform that runs the
+# product rather than by VOID, so a change here changes production without
+# failing a test that could notice.
+/vercel.json            @Dawe583
+/server.json            @Dawe583
+/Dockerfile             @Dawe583
+/nitro.config.ts        @Dawe583
+
+# The hosted function's deployment input. Appwrite receives a tarball, not a
+# checkout, so this snapshot is what a deployed function serves in place of the
+# source tree it was generated from. The GitHub gate fails rather than
+# regenerating it, which is the point of naming it here as well.
+/apps/appwrite-mcp/src/appwrite_mcp/void_snapshot.json   @Dawe583
+
+# Database schema. Applied in order and never edited in place, because the
+# ledger and the account tables underneath it are the production record of
+# accountable tool calls.
+/cloud/schema.sql       @Dawe583
+/cloud/0001-account-ownership.sql                 @Dawe583
+/cloud/0002-immutable-function-search-path.sql    @Dawe583
+
+# The reversibility registry's policy source. The decisions it makes are what
+# an intercepted tool call is answered with, so a change is a change to
+# product behaviour under the name of configuration.
+/policy/                @Dawe583
