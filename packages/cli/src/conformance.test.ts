@@ -75,6 +75,64 @@ test("conformance refuses production config and unknown adapters before running"
     );
 });
 
+test("a scenario no fixture implements is refused instead of measured as its nearest implemented neighbour", async () => {
+  // `fixtureFor` casts the profile's published operation to the fixture's
+  // scenario union, so an operation a profile lists and no fixture builds
+  // used to fall through to the nearest implemented one and report that
+  // operation green: the gate published a capability it had not measured.
+  // Every fixture refuses an unimplemented scenario, so the run cannot turn
+  // an absent measurement into a passing report.
+  const unimplemented = "rebase";
+  for (const [adapterId, build] of [
+    ["filesystem.managed", () => filesystemConformanceFixture(unimplemented as never)],
+    ["git.managed", () => gitConformanceFixture(unimplemented as never)],
+    ["managed-documents", () => managedDocumentsConformanceFixture(unimplemented as never)],
+  ] as const) {
+    await assert.rejects(
+      async () => {
+        const fixture = await build();
+        await fixture.dispose();
+      },
+      new RegExp(`Unknown ${adapterId.replace(".", "\\.")} conformance scenario "${unimplemented}"`),
+    );
+  }
+  // The gate path proper, and the regression this guard exists for: a
+  // profile that GAINS an operation no fixture implements. Mutating the
+  // real published array in place is what editing the source does, and
+  // `as const` is erased at runtime, so this is a genuine mutation.
+  // A guard handed the profile's own array approves whatever the profile
+  // lists and waves through exactly the operation it exists to catch.
+  const published = gitConformanceProfile.operations as string[];
+  published.push(unimplemented);
+  try {
+    await assert.rejects(
+      async () => {
+        const fixture = await gitConformanceFixture(unimplemented as never);
+        await fixture.dispose();
+      },
+      /Unknown git\.managed conformance scenario "rebase"/,
+    );
+    // And through the shared runtime, a profile that gained an operation
+    // no fixture implements gains no green report.
+    const gated = await runAdapterConformance(
+      gitConformanceProfile.adapter,
+      () => gitConformanceFixture(unimplemented as never),
+    );
+    assert.equal(gated.passed, false);
+    assert.deepEqual(
+      gated.checks.map((check: { passed: boolean }) => check.passed),
+      CONFORMANCE_CASES.map(() => false),
+    );
+  } finally {
+    published.pop();
+  }
+  // The published list is still exactly what the fixture implements.
+  assert.deepEqual(
+    [...gitConformanceProfile.operations],
+    ["create", "write", "delete", "rename", "stage", "unstage", "commit"],
+  );
+});
+
 test("conformance catches an adapter that reports success without changing state", async () => {
   let disposed = 0;
   const report = await runAdapterConformance(

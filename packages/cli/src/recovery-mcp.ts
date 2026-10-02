@@ -5,6 +5,8 @@ import {
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { isAbsolute } from "node:path";
+import { readFileSync } from "node:fs";
+
 import type {
   RecoveryJobPlan,
   RecoveryJobRequest,
@@ -13,6 +15,26 @@ import type {
   RecoveryRuntime,
   Json,
 } from "../../runtime/src/index.ts";
+
+/**
+ * The version this server reports in its `initialize` response.
+ *
+ * Read from the manifest rather than written here, because a literal in this
+ * file is a version nobody has to bump and no gate reads. It answers exactly
+ * what `bin/void.mjs --version` answers, from the same manifest and for the
+ * same reason. `dispatch.packageVersion()` is the reader the commands use;
+ * importing the dispatcher here would make this module carry the whole command
+ * surface, and its SQLite graph, to answer one field.
+ */
+function productVersion(): string {
+  const meta = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  );
+  if (!meta || typeof meta.version !== "string" || !meta.version) {
+    throw Error("Package version is missing.");
+  }
+  return meta.version;
+}
 
 type Runtime = Pick<
   RecoveryRuntime,
@@ -296,7 +318,7 @@ export function recoveryMcpServer(options: {
   permitted: (tool: RecoveryTool) => Promise<boolean>;
 }) {
   const server = new Server(
-    { name: "void-recovery", version: "0.1.0" },
+    { name: "void-recovery", version: productVersion() },
     { capabilities: { tools: {} } },
   );
   const definitions =

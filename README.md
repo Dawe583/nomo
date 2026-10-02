@@ -7,7 +7,17 @@ guide, in English and in [Czech](docs/HANDBOOK.cs.md), and it is checked by a
 test: every command, script, path and link in it is verified to exist, so it
 cannot drift away from the product the way a README can.
 
-[Download VOID](https://dawe583.github.io/void/): Windows and macOS desktop beta, TUI source download, and setup instructions.
+**Install it as a real `void` command:** from a checkout, run
+`bash scripts/install-void.sh`. It checks for Node.js 24 or newer, git and
+pnpm, clones this repository into `$HOME/.local/share/void-cli` (set
+`VOID_HOME` to put the tree somewhere else), installs dependencies from the
+shipped lockfile, and writes a launcher at `$HOME/.local/bin/void`. It does
+not edit your PATH, so make sure that directory is on it and open a new
+terminal. From there `void` runs from any directory, `void update` moves that
+installed tree onto the tracked branch, and `void update --check` reports
+whether anything is new without moving anything. See
+[the beta runbook](docs/BETA.md) for the full flow, what an update refuses to
+do, and how to roll back.
 
 It sits between an MCP capable agent and the tools the agent can write to. For each write, VOID classifies how reversible the call is, applies a policy, and appends a signed hash chained ledger entry. Later, operators can inspect the feed, verify the chain, attest a slice, trace taint, and replay true inverses when a connector has captured enough state.
 
@@ -42,7 +52,7 @@ VOID does not make an agent safe by trusting the model. It protects the write pa
 
 Run the live local terminal workspace with `void`, `pnpm void`, or `pnpm tui`. From a checkout, `./void` works on macOS/Linux and `.\void.cmd` works on Windows. To make the bare `void` command available from any directory after cloning, install dependencies, run `pnpm setup` once if pnpm's global bin directory is not on PATH, open a new terminal, then run `pnpm link --global` from the checkout. This links the command to that checkout; repeat the link if you move it or switch to another clone. Chat, documents, reviewed Undo, signed ledgers, approvals, policy and tool controls use real local data. See [the TUI guide](docs/TUI-WORKSPACE.md) for setup and testing. `tui:preview` remains an illustrative renderer.
 
-Use Node.js 24 or newer and `pnpm install --frozen-lockfile`. Packages are private at version 0.1.0. Start the agent GUI with `pnpm gui`, or run the native macOS app with `pnpm desktop:setup` followed by `pnpm desktop`. Connect a provider in Settings; managed documents and captured Undo work without a separate tool server. Build the installer with `pnpm desktop:build`; see [the beta runbook](docs/BETA.md) for agent configuration, terminal controls, Vercel deployment and the reviewed feature boundaries.
+Use Node.js 24 or newer and `pnpm install --frozen-lockfile`. Packages are private and unpublished, and the version lives in the root manifest rather than in this file, so `void --version` is what a reader should trust for the number. Start the agent GUI with `pnpm gui`, or run the native macOS app with `pnpm desktop:setup` followed by `pnpm desktop`. Connect a provider in Settings; managed documents and captured Undo work without a separate tool server. Build the installer with `pnpm desktop:build`; see [the beta runbook](docs/BETA.md) for agent configuration, terminal controls, Vercel deployment and the reviewed feature boundaries.
 
 The native iOS app under `apps/apple` is generated: `apps/apple/project.yml` is
 the source of truth and `apps/apple/VOID.xcodeproj` is a build artifact. Run

@@ -548,7 +548,7 @@ It reports status and offers only a refresh. **It grants no recovery authority.*
 
 ## 10. The command line
 
-Twenty commands. `void --help` prints the list; `void <command>` with no
+Twenty-one commands. `void --help` prints the list; `void <command>` with no
 arguments prints that command's usage.
 
 | Command          | What it does                                                              |
@@ -573,6 +573,7 @@ arguments prints that command's usage.
 | `void doctor`    | Report the environment.                                                   |
 | `void config`    | Print resolved configuration. Never prints secret values.                 |
 | `void init`      | Create the workspace layout.                                              |
+| `void update`    | Move the installed tree to the tracked branch, fast-forward only.         |
 
 The ones that take arguments, exactly:
 
@@ -590,6 +591,7 @@ void recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|st
 void policy list | show <name> | validate <file>
 void approve <hold-id> --by <who> [--deny] [--reason <text>] [--dir <path>]
 void approvals --dir <path> [--json]
+void update [--check] [--force]
 ```
 
 Notes that save time:
@@ -605,6 +607,20 @@ Notes that save time:
   work.
 - `void policy` with no argument lists the shipped packs: `strict`, `balanced`,
   `dev`.
+- `void update` moves the installed tree, which lives at `~/.local/share/void-cli`
+  by default and is set by `VOID_HOME`. It is a fast-forward only: a tree with
+  uncommitted changes is refused, and `--force` still refuses one, because no
+  flag is a reason to delete an operator's edits. Local commits are dropped only
+  when `--force` says so out loud, and even then with `git reset --keep`, so a
+  mistake stops at a modified file.
+- `void update --check` changes nothing and prints four facts then one verdict
+  line: `installed:`, `installed-commit:`, `tracked-branch:`, `target-commit:`,
+  then `up to date` or `update available`. It exits 3 when an update exists and
+  0 when the tree is current. A tree that cannot reach the remote also exits 0
+  and reports `target-commit: unknown`, so read the verdict line rather than
+  trusting the exit code alone.
+- `void update` has no channel flag. There is no `--stable` and no `--canary`;
+  the target is whatever the installed tree's tracked branch points at.
 
 ## 11. Policy files
 
