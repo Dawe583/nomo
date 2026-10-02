@@ -33,7 +33,7 @@ import { BEGIN, END } from "./build-web.mjs";
  */
 
 const BUDGET = {
-  "styles.css": { "font-size": 213, "border-radius": 67 },
+  "styles.css": { "font-size": 212, "border-radius": 67 },
   "chat.css": { "font-size": 13, "border-radius": 5 },
 };
 
@@ -130,23 +130,6 @@ function rootRules(source) {
   return found;
 }
 
-/**
- * The root type sizes that are not the token block's, named rather than allowed
- * by shape. A bare exemption is invisible, so each entry carries the file, the
- * at-rule, the selector and the reason, and an entry that stops matching is
- * itself a failure.
- */
-const ROOT_TYPE_EXEMPT = [
-  {
-    file: "styles.css",
-    at: "@media (max-width: 767px)",
-    selector: ":root",
-    why: "the mobile composition steps the interface down one size for a thumb-scale layout; it is scoped to the breakpoint rather than layered over the whole document, which is the shape this gate exists to catch",
-  },
-];
-
-const keyOf = (file, at, selector) => `${file}|${at ?? ""}|${selector}`;
-
 /** The type declarations a rule body makes, as `property: value` strings. */
 function typeDeclarations(body) {
   return [
@@ -169,34 +152,20 @@ for (const [file, budget] of Object.entries(BUDGET)) {
   });
 
   test(`${file} takes its type from the token block`, () => {
-    // The generated block owns the interface size and line height. A rule that
-    // sets either on body or root is re-deciding it, which is how the identity
-    // layer came to defeat the platform font in the first place. The one
-    // exception is named above, so a second one has to be written down.
-    const exempt = new Set(
-      ROOT_TYPE_EXEMPT.filter((entry) => entry.file === file).map((entry) =>
-        keyOf(entry.file, entry.at, entry.selector),
-      ),
-    );
-    const used = new Set();
+    // The generated block owns the interface size and line height, in both
+    // appearances and at the mobile breakpoint. A rule that sets either on body
+    // or root is re-deciding it, which is how the identity layer came to defeat
+    // the platform font in the first place. There is no exemption list: the one
+    // entry this file used to carry was a mobile root size that belonged in the
+    // document, and it now lives there, so a size that still has to be written
+    // here is a missing token rather than a permitted exception.
     for (const rule of rootRules(outsideTokens(surface(file)))) {
       const declared = typeDeclarations(rule.body);
       if (declared.length === 0) continue;
-      const key = keyOf(file, rule.at, rule.selector);
-      if (exempt.has(key)) {
-        used.add(key);
-        continue;
-      }
       assert.fail(
-        `${file} sets ${declared.join(" and ")} on ${rule.selector}${rule.at ? ` inside ${rule.at}` : ""}, which the token block owns`,
+        `${file} sets ${declared.join(" and ")} on ${rule.selector}${rule.at ? ` inside ${rule.at}` : ""}, which the token block owns. State it in docs/design-tokens.json and rebuild rather than writing it here.`,
       );
     }
-    const stale = [...exempt].filter((key) => !used.has(key));
-    assert.deepEqual(
-      stale,
-      [],
-      `these named root-type exemptions no longer match a rule, so they are stale entries to delete:\n${stale.join("\n")}`,
-    );
   });
 }
 
@@ -270,6 +239,16 @@ test("the token block is the only place the document's type size is set on the r
     "number",
     "docs/design-tokens.json carries no type.webBodyLineHeight",
   );
+  assert.equal(
+    typeof type.webMobileRoot?.rootPx,
+    "number",
+    "docs/design-tokens.json carries no type.webMobileRoot.rootPx, so the mobile root size is unowned again",
+  );
+  assert.equal(
+    typeof type.webMobileRoot.maxWidthPx,
+    "number",
+    "docs/design-tokens.json carries no type.webMobileRoot.maxWidthPx, so the mobile root size has no breakpoint to apply at",
+  );
   assert.match(
     type.interfaceFont,
     /-apple-system/,
@@ -286,5 +265,15 @@ test("the token block is the only place the document's type size is set on the r
   const block = text.slice(start, end);
   assert.match(block, new RegExp(`font-size:\\s*${type.webBodyPx}px`));
   assert.match(block, new RegExp(`line-height:\\s*${type.webBodyLineHeight}`));
+  assert.match(
+    block,
+    new RegExp(`@media \\(max-width: ${type.webMobileRoot.maxWidthPx}px\\)`),
+    "the token block applies no mobile breakpoint, so the mobile root size is set nowhere",
+  );
+  assert.match(
+    block,
+    new RegExp(`font-size:\\s*${type.webMobileRoot.rootPx}px`),
+    "the token block does not write the document's mobile root size",
+  );
   assert.match(block, /-apple-system/);
 });

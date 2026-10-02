@@ -127,6 +127,11 @@
     "codeFont": "ui-monospace, SFMono-Regular, Menlo, monospace",
     "webBodyPx": 15,
     "webBodyLineHeight": 1.5,
+    "webMobileRoot": {
+      "note": "The mobile composition steps the interface down one size for a thumb-scale layout. It is a type size rather than a component's opinion, so it is stated here beside the desktop body size instead of in a stylesheet rule, and the generator writes it out as its own breakpoint block. A breakpoint-scoped variant of a type role would be a second ramp, and there is only one ramp with two root sizes.",
+      "maxWidthPx": 767,
+      "rootPx": 14
+    },
     "roles": {
       "largeTitle": { "ios": { "size": 32, "leading": 39, "weight": "regular", "emphasised": "bold" }, "macos": { "size": 31, "leading": 38, "weight": "regular", "emphasised": "bold" } },
       "title1": { "ios": { "size": 26, "leading": 32, "weight": "regular", "emphasised": "bold" }, "macos": { "size": 25, "leading": 31, "weight": "regular", "emphasised": "bold" } },
