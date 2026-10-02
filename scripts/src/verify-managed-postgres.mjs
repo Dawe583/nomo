@@ -1,11 +1,13 @@
 // Opt-in real PostgreSQL test. Creates and removes only unique test-owned schemas.
 import assert from "node:assert/strict";
+import net from "node:net";
 import { fork } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import pg from "pg";
 import { Pool, neonConfig } from "@neondatabase/serverless";
 import {
   managedPostgresAdapter,
@@ -770,6 +772,78 @@ try {
       { id: 2, balance: 90 },
     ],
   );
+  // A partitioned peer is neither dead nor slow: packets vanish while both
+  // sockets stay open, so no server timeout can fire. The client must bound
+  // the wait itself, fail closed with no partial commit, and work again once
+  // the path heals. A dumb TCP proxy blackholes a direct connection; the
+  // pool carries a client-side query timeout because the server, which never
+  // receives the statement, cannot be the one that times out.
+  {
+    let blackhole = false;
+    const proxy = net.createServer((downstream) => {
+      const upstream = net.connect(5432, "127.0.0.1");
+      downstream.on("data", (chunk) => {
+        if (!blackhole) upstream.write(chunk);
+      });
+      upstream.on("data", (chunk) => {
+        if (!blackhole) downstream.write(chunk);
+      });
+      downstream.on("close", () => upstream.destroy());
+      upstream.on("close", () => downstream.destroy());
+      downstream.on("error", () => upstream.destroy());
+      upstream.on("error", () => downstream.destroy());
+    });
+    await new Promise((resolve) => proxy.listen(0, "127.0.0.1", resolve));
+    const direct = new pg.Pool({
+      host: "127.0.0.1",
+      port: proxy.address().port,
+      user: "void_test",
+      database: "void_gui_upgrade_preview",
+      max: 1,
+      query_timeout: 3000,
+    });
+    try {
+      const setup = await direct.connect();
+      try {
+        await setup.query(
+          `CREATE TABLE "${schema}".partition_probe(id integer PRIMARY KEY, v integer NOT NULL)`,
+        );
+      } finally {
+        setup.release();
+      }
+      const held = await direct.connect();
+      await held.query("BEGIN");
+      await held.query(`INSERT INTO "${schema}".partition_probe VALUES(1, 1)`);
+      blackhole = true;
+      await assert.rejects(
+        held.query(`UPDATE "${schema}".partition_probe SET v=2 WHERE id=1`),
+        /timeout/i,
+      );
+      held.release(new Error("partitioned"));
+      blackhole = false;
+      const check = await direct.connect();
+      try {
+        assert.deepEqual(
+          (await check.query(`SELECT * FROM "${schema}".partition_probe`)).rows,
+          [],
+        );
+        await check.query("BEGIN");
+        await check.query(`INSERT INTO "${schema}".partition_probe VALUES(1, 1)`);
+        await check.query("COMMIT");
+        assert.deepEqual(
+          (await check.query(
+            `SELECT v FROM "${schema}".partition_probe WHERE id=1`,
+          )).rows,
+          [{ v: 1 }],
+        );
+      } finally {
+        check.release();
+      }
+    } finally {
+      await direct.end();
+      await new Promise((resolve) => proxy.close(resolve));
+    }
+  }
   console.log(
     JSON.stringify({
       passed: true,
@@ -795,8 +869,9 @@ try {
         "unexpected metadata default rejection",
         "two-client metadata ABA rejection",
         "two-client fresh metadata race rejection",
+        "blackholed peer times out client-side with no partial commit",
       ],
-      networkPartitionTest: false,
+      networkPartitionTest: true,
     }),
   );
 } finally {
