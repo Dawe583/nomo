@@ -80,9 +80,9 @@ was touched. Items are ordered by plan priority, not by ease.
 ### G-01 R01: cloud transactional journal and full persistence fault matrix
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R01.
-Missing: cloud document integration uses the shared runtime in one SQL
-transaction, but there is no cloud transactional journal and the fault
-matrix stops at call level failures.
+Missing: disk exhaustion behavior and cross-host fencing. The cloud
+transactional journal exists, and kill faults plus a blackhole partition
+probe with no partial commit are covered.
 Evidence: `docs/UPGRADE-CHECKPOINT.md` states the twenty new tests are
 "persistence-call failures, not physical disk failure, network partition
 or PostgreSQL client process death".
@@ -97,11 +97,12 @@ Partial evidence now exists: the managed adapter has explicit v1→v2
 metadata migration, configured ON DELETE CASCADE capture/restore, and
 server-bound tenant RLS checks. The isolated verifier also covers terminated
 PostgreSQL backends and client SIGKILL after forward and recovery COMMIT.
-Remaining: real-server cascade/tenant/migration certification, an in-flight
-client-kill case, and physical network-partition behavior.
+Remaining: real-server cascade/tenant/migration certification.
 Evidence: `packages/connectors/src/postgres/managed.test.ts` is PGlite
-fixture coverage; `scripts/src/verify-managed-postgres.mjs` is the isolated
-Neon verifier and emits `networkPartitionTest: false`.
+fixture coverage with cascade, tenant and migration paths; `scripts/src/verify-managed-postgres.mjs`
+is the isolated Neon verifier covering terminated backends, in-flight
+client SIGKILL and a blackhole partition probe, and reports
+`networkPartitionTest: true`.
 Minimum change: keep fixture evidence separate from certification, and add one
 executable real-server gate per remaining case. The explicit migration command
 path is no longer outstanding here: `void recovery migrate --config <file>` and
@@ -278,8 +279,10 @@ Dependency: R03. Size: M.
 ### G-09 R03: streaming, pins, retention, GC, quota migration
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R03.
-Missing: artifact streaming, pin lifecycle, retention policy, garbage
-collection that respects pins, and quota migration for existing vaults.
+Missing: automatic collection. Artifact streaming (`putStream`/`getStream`),
+pin lifecycle (`releaseVaultPin`), operator-driven retention collection
+(`collectVaultGarbage`) and quota migration (`migrateCapacity`) are
+implemented; collection stays operator-driven rather than automatic.
 Evidence: `docs/MANAGED-RECOVERY.md` states no automatic GC deletes
 history and that changing a vault capacity needs an explicit
 administrative migration; default limits are 64 MiB per artifact and

@@ -20,9 +20,12 @@ What the research behind this roadmap established, and what it did not:
   fail-closed policy engine, a reversibility registry with 268 entries, three
   legacy capture-and-inverse bindings, four managed adapters, and a managed
   runtime for filesystem, Postgres and Git. The gate that produces the number
-  is `node scripts/src/check-tests.mjs`, and on 2026-09-29 its last line read
-  `13 suites, 1846 tests`, exit 0, with every one of the thirteen suites
-  reporting zero failures on a settled tree.
+  is `node scripts/src/check-tests.mjs`. Its last line read `13 suites, 1846
+  tests`, exit 0, on 2026-09-29, and that reading is historical rather than
+  current: the runner discovers its suites from the tree and now sees ten
+  package suites plus control-plane, scripts, cloud and two Python suites.
+  No total is restated here, because the current total has not been measured
+  by a full run on this date.
 - **The central claim is narrower than the marketing.** "Signed and verifiable"
   is true, and it is worth saying: the signature proves a process holding a key
   wrote the bytes and the chain is internally consistent. Nothing more. Until
@@ -42,8 +45,11 @@ What the research behind this roadmap established, and what it did not:
   not an absence of evidence, and it is the reason the wedge below is a
   bet rather than a forecast.
 - **The product has no first user yet.** The repository is private, the
-  advertised download page does not resolve, the npm name is taken, and no
-  package is publishable. A push from a developer machine works, so the
+  advertised download page does not resolve, and the npm name is taken. One
+  package is publishable today: `@void/verifier` sets no `private` flag and
+  needs no build step, because it ships one executable file of Node built-ins,
+  which `scripts/src/licence-line.test.mjs` asserts; the other nine manifests
+  under `packages/` all set `private: true`. A push from a developer machine works, so the
   credential problem recorded in `RELEASE.md` is no longer the blocker it was.
 
 ## Phase 0: fix the record, or nothing else is trustworthy
