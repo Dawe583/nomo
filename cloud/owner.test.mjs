@@ -14,10 +14,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import * as store from "./store.mjs";
 import { assertOwner, DEMO_OWNER, isOwner, OPERATOR_OWNER } from "./owner.mjs";
 
-const cloudDir = new URL(".", import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: on Windows the pathname of a file URL is
+// "/C:/Users/...", and join() resolves that leading slash against the current
+// drive, so readdirSync below scans "C:\C:\Users\..." and throws ENOENT while
+// loading this module, taking every assertion in the file with it.
+const cloudDir = fileURLToPath(new URL(".", import.meta.url));
 const readCloud = (name) => readFileSync(join(cloudDir, name), "utf8");
 
 const TABLES = /void_cloud_(?:state|ledger|events)/;

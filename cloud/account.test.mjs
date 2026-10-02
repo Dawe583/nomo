@@ -11,6 +11,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   FAILURE_STATUS,
   SESSION_COOKIE,
@@ -26,7 +27,11 @@ import {
 import { openOwnerState, sealOwnerState } from "./oauth-state.mjs";
 import { OPERATOR_OWNER } from "./owner.mjs";
 
-const root = new URL("..", import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: on Windows the pathname of a file URL is
+// "/C:/Users/...", and join() resolves that leading slash against the current
+// drive, so the repository root is read from "C:\C:\Users\..." and the check
+// below fails on the path rather than on the header it is asserting.
+const root = fileURLToPath(new URL("..", import.meta.url));
 const SEAL_KEY = "a".repeat(64);
 const session = (over = {}) => ({
   userId: "3f2b1c4e-0000-4000-8000-000000000000",
