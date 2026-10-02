@@ -1,0 +1,159 @@
+/**
+ * The paid side of the licence line, as one function.
+ *
+ * `docs/DECISIONS.md` section 5 lists what VOID sells and what it gives away.
+ * The Polar layer in `cloud/billing.mjs` reads and publishes an entitlement
+ * honestly; before this module, nothing read it, so a subscription granted no
+ * capability at all. An entitlement that gates nothing is worse for the buyer
+ * than no paywall at all, because they have already paid.
+ *
+ * This module is the enforcement point. It answers two questions, and the
+ * second one is the one that has to hold:
+ *
+ *   1. What does this owner's `GET /api/capabilities` say?
+ *   2. May this owner's request reach a paid route at all?
+ *
+ * The second question is what makes the first one worth anything. A capability
+ * flag the server ignores is a label, not a gate, so `cloud/server.mjs` calls
+ * `entitled()` on the paid route itself and refuses with `402` when the answer
+ * is no.
+ *
+ * The paid decision lives here, in `cloud/`, which is not Apache 2.0 open core.
+ * `packages/workbench/src/gui.ts` is never edited and never imports this file,
+ * so no paid decision can reach the open licence line.
+ */
+
+import { capabilities } from "../packages/workbench/src/gui.ts";
+import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
+
+/**
+ * The capabilities DECISIONS section 5 puts on the paid side of the line, in
+ * the spelling `GET /api/capabilities` publishes them.
+ *
+ * One entry today, and the entry is a decision rather than a convenience:
+ *
+ * - `taintGraph`, the recorded cross-record dependency graph. Section 5 settles
+ *   it against its own operational test in the rejected table: "Opening the taint
+ *   graph, budgets and attestation mappings now | They are organisational
+ *   features and belong on the paid side from day one. Moving them across later
+ *   would be the exact licence change the model forbids, so the line has to hold
+ *   before there is pressure on it." The test in the same section asks whether a
+ *   solo developer protecting one Postgres could do their job without it, and the
+ *   answer is yes: the hold, the approval, the ledger, the verification and the
+ *   captured inverse all stay open, so gating the graph costs that developer
+ *   nothing they need to protect the one database they have.
+ *
+ * The other five section 5 names are absent here on purpose, and each absence is
+ * a different reason rather than an oversight:
+ *
+ * - `apps/control-plane` and SSO do not exist in this tree, so there is nothing
+ *   to serve conditionally.
+ * - Multiple workspaces do not exist either, for the same reason.
+ * - Irreversibility budgets live in `packages/runtime/src/budget.ts`, an open
+ *   package, so gating them would be a feature flag inside Apache 2.0 code
+ *   rather than a boundary the licence can hold.
+ * - Premium connectors are enumerated by configuration rather than shipped as
+ *   code, so the honest gate is which connectors the operator has configured,
+ *   not which subscription somebody holds.
+ * - Retention beyond seven days has no time-based enforcement anywhere in this
+ *   tree to gate: the only bound today is `events.slice(-200)`, a count.
+ *
+ * The signed ledger export is deliberately NOT in this list. Section 5 pays for
+ * "attestation exports **with compliance frame mappings**", and
+ * `/api/ledger/export` emits a raw `void.signed-ledger.v1` document with no
+ * compliance frame mapping in it. Gating that route would move an open
+ * capability to the paid side, which is the one move section 5 forbids
+ * outright, so it stays open.
+ */
+export const PAID_CAPABILITIES = Object.freeze(["taintGraph"]);
+
+/**
+ * The open cloud capability surface, exactly as `cloud/server.mjs` answered it
+ * before any gate existed, plus the paid keys at their ungated value.
+ *
+ * Kept here rather than inline in the route so that `narrowCapabilities` has one
+ * subject to narrow and the test can state the invariant against a real base
+ * object rather than a hand-written stand-in.
+ */
+export const openCapabilities = () => ({
+  ...capabilities("cloud"),
+  projects: false,
+  customAgents: false,
+  hooks: false,
+  contextCompaction: true,
+  recoveryJobs: true,
+  backgroundQueue: false,
+  ...Object.fromEntries(PAID_CAPABILITIES.map((name) => [name, true])),
+});
+
+/**
+ * Apply an entitlement to an open capability surface.
+ *
+ * **The invariant: this only ever narrows.** For every key, the returned value
+ * is either the input value unchanged, or `false` where the input said `true`.
+ * There is no branch here that can turn a `false` into a `true`, so a bug in the
+ * billing read, a subscription document somebody edited by hand, or a
+ * `subscribed` that a future status string slips through all fail in the same
+ * direction: the paid capability is withheld. A gate that can widen is not a
+ * gate, it is a second way to be wrong.
+ *
+ * `entitled` is compared against `true` rather than merely checked for
+ * truthiness on purpose: an entitlement that answers `undefined`, `null`,
+ * `"yes"` or `1` has not proved a live payment, and the four must all read the
+ * same way.
+ */
+export function narrowCapabilities(open, entitled) {
+  const narrowed = { ...open };
+  if (entitled === true) return narrowed;
+  for (const name of PAID_CAPABILITIES) narrowed[name] = false;
+  return narrowed;
+}
+
+/**
+ * The gate itself, bound to a billing service that may be absent.
+ *
+ * `service` is the object `billingFromEnv()` returns, or `undefined` when this
+ * deployment has no Polar account. Absent is not an error: a self-hosted
+ * deployment is simply a deployment nobody is paying, and it is answered with
+ * the free tier rather than a 503 that would take the whole capability surface
+ * down with it.
+ */
+export function createCapabilityGate(service) {
+  /**
+   * Is this owner inside the paid line right now?
+   *
+   * Fails closed in every direction that is not a yes. Nobody who is not an
+   * owner is not entitled. A deployment with no billing configured is not
+   * entitled. A read that throws is not entitled.
+   *
+   * Failing narrow rather than throwing is deliberate and is the difference
+   * between a gate and an outage. `/api/capabilities` is read by every screen
+   * in the product, so a 503 here would refuse chat, projects and the permission
+   * mode along with the paid capability. The failure is still visible, because
+   * `/api/billing` answers `503` for the same failed read rather than the empty
+   * answer a client would otherwise read as "you are on the free tier".
+   */
+  async function entitled(owner) {
+    if (!isOwner(owner)) return false;
+    // The operator's own namespace is deployment authority, not a customer
+    // identity: the control token already reaches every document this server
+    // holds, so withholding a capability from it would be withholding it from
+    // the person who runs the instance. It is the one owner whose answer does
+    // not come from a subscription document, and it is stated here rather than
+    // left implicit because it is the single place the gate is not a payment.
+    if (owner === OPERATOR_OWNER) return true;
+    if (!service) return false;
+    try {
+      return (await service.entitlement(owner))?.subscribed === true;
+    } catch {
+      return false;
+    }
+  }
+
+  return {
+    entitled,
+    /** The capability answer for one owner, narrowed or not. */
+    capabilities: async (owner) =>
+      narrowCapabilities(openCapabilities(), await entitled(owner)),
+  };
+}
