@@ -4,34 +4,35 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
-- `cloud/billing.mjs` adds the server side of billing with Polar as merchant
-  of record. A signed delivery is verified against the exact bytes Polar sent
-  and writes one subscription document into the owner's own namespace, and a
-  signed-in caller can read their own state at `GET /api/billing`. The browser
-  never holds a Polar credential, a webhook secret or a customer id, and
-  `vercel.json`'s `connect-src 'self'` is unchanged.
+- Billing is wired to Polar as merchant of record, on the server only. A signed
+  delivery is verified against the exact bytes Polar sent and writes one
+  subscription document into the account's own namespace, and a signed-in
+  caller can read their own state at `GET /api/billing`. The browser never
+  holds a Polar credential, a webhook secret or a customer id, and the content
+  security policy is unchanged: the chat origin still talks only to itself.
 
-  Verification is delegated to `@polar-sh/sdk` rather than reimplemented: the
-  SDK derives two candidate keys from one secret, and a spec-derived
-  implementation does not match Polar's. The webhook is mounted above
-  `express.json()` and above the owner middleware, because a Polar delivery
-  carries neither the control token nor an account cookie, and because a
-  re-parsed body is not the body that was signed. The `webhook-id` is recorded
-  inside the applying transaction, so a retried delivery applies once and two
-  deliveries in flight at once cannot both apply.
+  Verification is delegated to Polar's own SDK rather than reimplemented,
+  because the SDK derives two candidate keys from one secret and a
+  spec-derived implementation does not match Polar's. The webhook answers
+  before sign-in and before the body is re-parsed, because a delivery carries
+  no session and a re-parsed body is not the body that was signed. Each
+  delivery's id is recorded in the same transaction that applies it, so a
+  retried delivery applies once and two deliveries in flight at once cannot
+  both apply.
 
-  A verification failure is a 400; a signed event type the SDK does not know
-  is a 200 with the type recorded, because telling Polar to redeliver a valid
-  event forever is not a decision any deployment gets to make. A customer
-  nobody has linked is recorded as ignored rather than refused, for the same
-  reason.
+  A signature that does not verify is refused. A correctly signed event type
+  this deployment has not heard of is accepted and recorded, because telling
+  Polar to redeliver a valid event forever is not a decision any deployment
+  gets to make. A subscription for a customer nobody has linked is recorded
+  and ignored, for the same reason.
 
   What the entitlement gates today is nothing. None of the paid capabilities
-  in DECISIONS section 5 has an enforcement point in this repository yet, so
-  the capability overlay in `cloud/server.mjs` is unchanged and the open
-  `packages/workbench` surface is untouched. No price, tier or limit is
-  encoded. Checkout, a customer portal, usage metering and seats are not built
-  here, and the module has never been run against a live Polar account.
+  has an enforcement point in the product yet, so the capability answer a
+  browser receives is unchanged and the open workbench surface is untouched. No
+  price, tier or limit is encoded: the prices in the go-to-market document are
+  hypotheses until somebody has had the conversation. Checkout, a customer
+  portal, usage metering and seats are not part of this, and none of it has
+  been run against a live Polar account.
 
 - `void classify --tool <id>` answers the one-call question the transcript form
   could not: what does this single entry decide for this single tool, given
