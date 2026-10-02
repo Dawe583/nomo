@@ -44,7 +44,7 @@ Datum: 2026-09-11. Lokální commit: `e301162`. Rozsah: všechny čtyři webové
 | A13 | P1 | Desktopový a mobilní screenshot Feed/Ledger | Velké titulky, formulář workspace a opakované statusy odsouvají data dolů. Na desktopu ledger začínal kolem y=732. Datová plocha potřebuje kompaktní header. |
 | A14 | P2 | `workbench.css:30` | Vlastní focus pravidlo neobsahuje `textarea`. Ověřit browser fallback a zavést konzistentní focus pro všechny ovladače. |
 | A15 | P1 | `sessions.js:13–16,74–80,124–132` | Aktivní session není stabilně adresovaná URL; nové konverzace nemají zachovaný draft a nový výběr nevykreslí původní welcome. Doplnit router, draft a explicitní stavy. |
-| A16 | P1 | `cloud/store.mjs:140–150`; `cloud/steps.mjs:184–188` | Spotřeba je textový event, ne strukturovaná metrika. Ceny, latence, context usage a historie modelů potřebují sběr dat. |
+| A16 | P1 | `cloud/store.mjs:153–163`; `cloud/steps.mjs:184–188` | Spotřeba je textový event, ne strukturovaná metrika. Ceny, latence, context usage a historie modelů potřebují sběr dat. |
 | A17 | P1 | `apps/desktop/scripts/prepare.mjs`; `server.ts:71,490` | Desktop kopíruje současné webové soubory; lokální server má omezené public asset cesty. Nový bundler musí řešit oba distribuční kanály. |
 | A18 | P1 | Produkční screenshot před přihlášením | Connect panel se přidává nad celý workbench a ubírá výšku. Vyhradit samostatnou přihlašovací plochu a nespouštět chráněná načítání před připojením. |
 

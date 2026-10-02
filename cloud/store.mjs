@@ -136,6 +136,19 @@ export async function verifier() {
 }
 export async function append(owner, body, client) {
   assertOwner(owner);
+  /// The ledger is keyed by (owner, workspace, seq), but the transaction that
+  /// reaches here holds its advisory lock under the session id, and two
+  /// sessions can share one workspace. Without a lock spanning the read below
+  /// and the insert after it, both transactions read the same last seq, both
+  /// compute seq+1, and the second insert fails on the primary key: an
+  /// operation that happened leaves no entry behind, and the caller sees a
+  /// unique violation instead. This lock is always taken second, after the
+  /// session lock the caller already holds, so the order is the same on every
+  /// path and the two cannot deadlock against each other.
+  await client.query(
+    "SELECT pg_advisory_xact_lock(hashtextextended($1, hashtextextended($2, 0)))",
+    [owner, body.workspace],
+  );
   const key = await signer();
   const previous = (
     await client.query(
