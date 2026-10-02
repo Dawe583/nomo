@@ -462,13 +462,53 @@ the vulnerable `fast-xml-parser` or `uuid` versions. Workflow is `4.8.9`, with
 `devalue@5.9.2`; narrow workspace overrides select `nanoid@5.1.16`,
 `undici@7.29.0` and `esbuild@0.28.2` until their parents update those pins.
 
-Fresh evidence after the lockfile change: the production dependency audit found
-zero vulnerabilities at every severity, the full check passed 1,187 workspace
-and 49 cloud tests with the same four optional integration skips, 24 focused S3
-tests passed, the production cloud build passed, and the reverse engine check
-passed 883 tests. Audit references that caused the update include
+Evidence as recorded on 2026-09-23: after the lockfile change the full check
+passed 1,187 workspace and 49 cloud tests with the same four optional
+integration skips, the production cloud build passed, and the reverse engine
+check passed 883 tests. Audit references that caused the update include
 [GHSA-m7jm-9gc2-mpf2](https://github.com/advisories/GHSA-m7jm-9gc2-mpf2) and
 [GHSA-8gc5-j5rx-235r](https://github.com/advisories/GHSA-8gc5-j5rx-235r).
+
+### Dependency audit re-measurement, 2026-10-02
+
+The 2026-09-23 note above claimed the production audit found zero
+vulnerabilities at every severity. Re-measured on 2026-10-02 that is no longer
+true, and it was already untrue before the change recorded here: the production
+audit reported 25 advisories (4 low, 12 moderate, 9 high). The `undici@7.29.0`
+pin above had itself fallen behind its advisory floor.
+
+Only one pin actually needed moving, and the lockfile diff is six lines. The
+`undici` override moves to `7.29.1`, the minimum release that clears all ten
+open undici advisories, each of which lists `>=7.29.1` as the patched range.
+That drops the production audit from 25 advisories to 15
+(1 low, 7 moderate, 7 high).
+
+The other three pins from that branch were not carried over, because each is
+already superseded or already dead weight on `main`:
+
+- `esbuild` is already `0.28.2` on `main`. The branch's `0.28.1` is a downgrade
+  that would reintroduce an older build toolchain. Left alone.
+- `nanoid` is already scoped to `@workflow/core>nanoid: 5.1.16`, which is the
+  form the branch was reaching for and is the narrower of the two. The branch's
+  `nanoid@>=4.0.0 <5.1.16` range selector would also drag the unrelated
+  dev-only `nanoid@3.3.19` under `postcss` up to `5.1.16`. `@workflow/core@4.8.9`
+  declares `nanoid: 5.1.6`, which is inside the advisory range, so the existing
+  override is load-bearing and must stay.
+- `@aws-sdk/client-s3` stays at `3.1036.0`. The GitHub advisory database returns
+  zero advisories for the package, and the resolved protocol stack still
+  excludes `fast-xml-parser`, which is not in the tree at all.
+
+The 15 remaining production advisories are `devalue` (6), `brace-expansion` (6),
+`ip-address` (2) and `fast-uri` (1), all reached through `@workflow/core`,
+`@workflow/cli` or `@modelcontextprotocol/sdk`. They are out of scope for the
+undici pin, and they are recorded here so the next reader has the measured list
+rather than the stale clean-audit claim.
+
+Observed on 2026-10-02: `pnpm install --frozen-lockfile` exits 0,
+`pnpm run typecheck` exits 0, `node --test packages/connectors/src/s3/` passes
+16 of 16 with no skips, and `packages/connectors/src/probes/s3.test.ts` passes
+2 of 2. The workspace-wide `node scripts/src/check-tests.mjs` run was not
+repeated for this change.
 
 ### G-17 WP-04b: registry breadth toward 500 entries
 
