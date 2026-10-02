@@ -31,8 +31,10 @@ is unchanged, and on Windows `inspectApprovalStateDirectory` reads the DACL
 through the shipped icacls binary, because Node reports 0o666 for a directory
 whatever chmod was asked for and `process.getuid` is absent, which made the old
 predicate unsatisfiable there. A directory VOID can claim is narrowed to the
-operator before it is accepted; a proven foreign write grant is refused and is
-never acknowledgeable; anything unproven is reported as `unverifiable` and is
+operator before it is accepted, and narrowing runs only from the write path:
+inspection reads the DACL and reports what it measured, changing nothing. A
+proven foreign write grant is refused and is never acknowledgeable; anything
+unproven is reported as `unverifiable` and is
 refused unless the host names the finding and accepts it. Refusals carry a fixed
 code and never a path or an account name.
 
