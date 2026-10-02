@@ -547,7 +547,7 @@ vypíše usage daného příkazu.
 | `void tui`           | Terminálový pracovní prostor.                                   |
 | `void watch`         | Celoobrazkový živý pohled na ledger.                            |
 | `void run`           | MCP proxy: `void-proxy` před nástroji agenta.                   |
-| `void classify`      | Klasifikovat volání nástrojů v transkriptu.                     |
+| `void classify`      | Klasifikovat volání nástrojů v transkriptu nebo jedno volání.        |
 | `void feed`          | Vypsat záznamy ledgeru, volitelně sledovat.                     |
 | `void verify`        | Ověřit řetězec a podpisy ledgeru.                               |
 | `void attest`        | Zapsat podepsanou attestaci nad záznamy workspace.              |
@@ -570,6 +570,7 @@ Tě s argumenty, přesně:
 
 ```sh
 void classify --transcript <soubor> [--facts <soubor>]
+void classify --tool <id> [--facts <soubor>] [--fact k=v] [--args <json>]
 void feed --ledger <adresář> [--json] [--follow]
 void verify --ledger <adresář> [--attestation <soubor>]
 void attest --ledger <adresář> --workspace <id>
@@ -591,6 +592,12 @@ Poznámky, které ušetří čas:
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
 - `void verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se
   jménem cesty. To je stav prvního spuštění, ne chyba.
+- `void classify --tool <id>` klasifikuje jedno volání místo transkriptu a
+  skončí kódem 0, když registry rozhodlo, kódem 2, když nemohlo. Čti řádek
+  `facts:` před řádkem `tone:`: bez deklarovaných fakt se evaluator dostane
+  jen na terminální případ entry, takže `r3` je tady fail-closed postoj, ne
+  měření tvého účtu. `--fact k=v` přepíší `--facts <soubor>` pro toto volání
+  a hodnota je doslova ten text, se kterým registry porovnává.
 - `void replay --dry-run` řekne, co by inverze udělala, bez toho, aby to provedla.
   Použij před každým skutečným přehráním.
 - Každá `void recovery` akce, něco měnící, vyžaduje `--approve <digest>` z
