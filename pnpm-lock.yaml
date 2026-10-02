@@ -96,6 +96,9 @@ importers:
       '@neondatabase/serverless':
         specifier: ^1.1.0
         version: 1.1.0
+      '@polar-sh/sdk':
+        specifier: 1.0.1
+        version: 1.0.1
       '@vercel/oidc':
         specifier: ^3.8.7
         version: 3.8.7
@@ -570,6 +573,10 @@ packages:
 
   '@oxc-project/types@0.149.0':
     resolution: {integrity: sha512-Efcc+iF0j3Bf67YjEqIqWXbX5XddXoK/Mw4K1/JuXwRCZ8N16VR7iT23nlCc9XrveFVh/E5Rqs2StT0V8v9LdA==}
+
+  '@polar-sh/sdk@1.0.1':
+    resolution: {integrity: sha512-//SIpog6sairTzqC04mIsdp8fqeHfpCd3iweLUOyCm7c4IHlRoaUEWFMGRTDPUjvyu4KBYODaI7aODr9acLQhA==}
+    engines: {node: '>=22'}
 
   '@rolldown/binding-android-arm-eabi@1.2.8':
     resolution: {integrity: sha512-tN5aztYkKCte4i5SIrrz5yK/HMjEuCqCSCJa418jOV8tZ1cBY3YF2otxB1ktPxzsLA1BeTqwapK0bfjxNvHJVw==}
@@ -3130,6 +3137,8 @@ snapshots:
       '@oclif/core': 4.11.4
 
   '@oxc-project/types@0.149.0': {}
+
+  '@polar-sh/sdk@1.0.1': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.8':
     optional: true

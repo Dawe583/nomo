@@ -4,6 +4,35 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- `cloud/billing.mjs` adds the server side of billing with Polar as merchant
+  of record. A signed delivery is verified against the exact bytes Polar sent
+  and writes one subscription document into the owner's own namespace, and a
+  signed-in caller can read their own state at `GET /api/billing`. The browser
+  never holds a Polar credential, a webhook secret or a customer id, and
+  `vercel.json`'s `connect-src 'self'` is unchanged.
+
+  Verification is delegated to `@polar-sh/sdk` rather than reimplemented: the
+  SDK derives two candidate keys from one secret, and a spec-derived
+  implementation does not match Polar's. The webhook is mounted above
+  `express.json()` and above the owner middleware, because a Polar delivery
+  carries neither the control token nor an account cookie, and because a
+  re-parsed body is not the body that was signed. The `webhook-id` is recorded
+  inside the applying transaction, so a retried delivery applies once and two
+  deliveries in flight at once cannot both apply.
+
+  A verification failure is a 400; a signed event type the SDK does not know
+  is a 200 with the type recorded, because telling Polar to redeliver a valid
+  event forever is not a decision any deployment gets to make. A customer
+  nobody has linked is recorded as ignored rather than refused, for the same
+  reason.
+
+  What the entitlement gates today is nothing. None of the paid capabilities
+  in DECISIONS section 5 has an enforcement point in this repository yet, so
+  the capability overlay in `cloud/server.mjs` is unchanged and the open
+  `packages/workbench` surface is untouched. No price, tier or limit is
+  encoded. Checkout, a customer portal, usage metering and seats are not built
+  here, and the module has never been run against a live Polar account.
+
 - `void classify --tool <id>` answers the one-call question the transcript form
   could not: what does this single entry decide for this single tool, given
   these facts and these arguments. `--facts <file>` supplies a verified facts

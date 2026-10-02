@@ -77,8 +77,22 @@ import {
   setSessionCookie,
 } from "./account.mjs";
 import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
+import {
+  billingFromEnv,
+  billingRoutes,
+  mountBillingWebhook,
+} from "./billing.mjs";
 const app = express();
 app.disable("x-powered-by");
+// A Polar delivery is signed over the exact bytes it sent, so it has to be
+// mounted above `express.json()`: once a JSON parser has re-parsed the body the
+// signed bytes are gone and no signature can match what is left. It also has to
+// sit above the owner middleware below, because a delivery carries neither the
+// control token nor an account cookie and would be refused as
+// `authentication_required` before reaching any route. Same position, and the
+// same reason, as the OAuth return that already sits above the JSON parser.
+const billing = billingFromEnv();
+mountBillingWebhook(app, billing);
 app.use(express.json({ limit: "64kb" }));
 mountIntegrationCallback(app);
 app.use("/api/demo", demoRouter());
@@ -296,6 +310,7 @@ app.use(async (req, res, next) => {
 });
 mountIntegrationRoutes(app);
 mountPrimeRoutes(app);
+billingRoutes(app, billing);
 
 const queryOf = (req) =>
   new URLSearchParams(req.originalUrl.split("?")[1] ?? "");
