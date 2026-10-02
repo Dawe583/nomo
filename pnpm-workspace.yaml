@@ -75,7 +75,9 @@ onlyBuiltDependencies:
 
 overrides:
   "@workflow/core>nanoid": "5.1.16"
-  undici: "7.29.0"
+  # Advisory floor: GHSA-8436-99hf-9mmv and nine other undici advisories are
+  # fixed in 7.29.1, so 7.29.0 is no longer a safe pin.
+  undici: "7.29.1"
   # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/freebsd-arm64": "-"
   "esbuild>@esbuild/freebsd-x64": "-"
