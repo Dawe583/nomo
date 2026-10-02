@@ -187,19 +187,6 @@ async function metadataVersion(
   return Number.isSafeInteger(value) ? value : null;
 }
 
-async function metadataColumnPresent(
-  connection: ManagedConnection,
-  schema: string,
-  table: string,
-  column: string,
-): Promise<boolean> {
-  const rows = await connection.query<{ exists: string | boolean }>(
-    "SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3) AS exists",
-    [schema, table, column],
-  );
-  return rows[0]?.exists === true || rows[0]?.exists === "true";
-}
-
 async function metadataStructureValid(
   connection: ManagedConnection,
   schemaName: string,
@@ -744,22 +731,23 @@ export function managedPostgresAdapter(
       throw new Error(
         "Recovery metadata migration is required before execution.",
       );
-    const [operations, recoveries] = await Promise.all([
-      metadataColumnPresent(
+    // The stored version number does not identify the layout on its own.
+    // Install refuses any version 2 schema whose columns, types, nullability,
+    // primary keys, defaults, indexes, constraints, triggers, rules, RLS flags
+    // or extra relations differ from the owned layout, and execution has to
+    // refuse the same set. A rewrite rule or trigger on a receipt table would
+    // otherwise swallow the receipt while the data mutation still commits,
+    // leaving a change that reported success and can never be recovered.
+    if (
+      !(await metadataStructureValid(
         connection,
         options.schema,
-        "operations",
-        "format_version",
-      ),
-      metadataColumnPresent(
-        connection,
-        options.schema,
-        "recoveries",
-        "format_version",
-      ),
-    ]);
-    if (!operations || !recoveries)
-      throw new Error("Recovery metadata migration is incomplete.");
+        metadataLayoutV2,
+      ))
+    )
+      throw new Error(
+        "Recovery metadata structure is not the installed layout.",
+      );
   }
 
   async function boundTenant(
