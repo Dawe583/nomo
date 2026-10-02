@@ -186,6 +186,13 @@ const terminalAdapter = (onExecute: () => void): RecoveryAdapter => ({
 test("two workers sharing one account cannot both spend the last unit", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-shared-budget-"));
   const budgetFile = join(dir, "budget.sqlite");
+  // Every handle this test opens is released before the directory goes, in one
+  // hook, because `t.after` runs in registration order rather than in reverse:
+  // a `rm` registered first would try to unlink a database three stores still
+  // hold. That is invisible on POSIX, where an open file may be unlinked, and
+  // fatal on Windows, where node:sqlite opens the file without FILE_SHARE_DELETE
+  // and the unlink fails EBUSY. The stores belong to this test, not to
+  // production, so this is where the handles are owed a close.
   const stores: Array<{ close?: () => unknown }> = [];
   t.after(async () => {
     for (const store of stores) await store.close?.();
@@ -255,6 +262,14 @@ test("two workers sharing one account cannot both spend the last unit", async (t
 test("a restarted executor does not re-observe an already dispatched irreversible charge", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-restart-budget-"));
   const budgetFile = join(dir, "budget.sqlite");
+  // One hook closes every store this test opens, then removes the directory,
+  // because `t.after` runs in registration order and an `rm` registered first
+  // would unlink a database that `restart` still holds open. That is invisible
+  // on POSIX, where an open file may be unlinked, and fatal on Windows, where
+  // node:sqlite opens the file without FILE_SHARE_DELETE and the unlink fails
+  // EBUSY. `restart` opens a fresh store per call on purpose, since the point is
+  // a process with no memory of the dead one, so each of those is a handle the
+  // test has to release too.
   const stores: Array<{ close?: () => unknown }> = [];
   let child: ReturnType<typeof fork> | undefined;
   t.after(async () => {
