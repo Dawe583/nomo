@@ -797,17 +797,26 @@ test("the webhook is mounted above the JSON parser and above the owner middlewar
   assert.ok(routes > owner, "the billing routes are mounted behind the owner middleware");
 });
 
-test("the capability overlay is not gated on an entitlement", async (t) => {
-  // None of the paid capabilities DECISIONS section 5 names has an enforcement
-  // point in this repository yet, so gating one here would be a limit invented
-  // rather than a decision taken. This fails the moment somebody adds one,
-  // which is the moment to have the argument before the code exists.
-  const source = readCloud("server.mjs");
-  const overlay = source.slice(
-    source.indexOf('app.get("/api/capabilities"'),
-    source.indexOf("}));", source.indexOf('app.get("/api/capabilities"')),
-  );
-  assert.doesNotMatch(overlay, /billing|entitle|subscrib|polar/i);
+test("the paid decision lives in the closed tier, never in the open capability surface", async (t) => {
+  // The invariant here is a LICENCE one, not an entitlement one: the paid
+  // decision may be taken in `cloud/`, which is not Apache 2.0 open core, but
+  // it must never reach `packages/workbench/src/gui.ts`, because that package
+  // is open and `scripts/src/licence-line.test.mjs` enforces the line.
+  //
+  // This used to assert the stronger, and now false, claim that no capability
+  // is gated at all. Issue #55 settled that argument and the taint graph is now
+  // gated on an entitlement, so the claim described the past rather than the
+  // rule.
+  //
+  // It also found the `cloud/` overlay by slicing from the route to the next
+  // `"}));"`, which worked only because the overlay happened to be a single
+  // expression. Changing the route's punctuation moves that marker far away and
+  // the assertion silently starts scanning an unrelated part of the file — a
+  // tripwire defanged by a reformat, which is worse than no tripwire. The
+  // `cloud/` half is now asserted positively by `cloud/capability-gate.test.mjs`,
+  // which checks the route reads the gate and the paid route refuses on it.
+  // What is left here, and what neither file can check from the other side, is
+  // the open package.
   const open = readFileSync(
     join(cloudDir, "..", "packages", "workbench", "src", "gui.ts"),
     "utf8",
@@ -817,15 +826,14 @@ test("the capability overlay is not gated on an entitlement", async (t) => {
     open.indexOf("export type ProviderStatus"),
   );
   assert.ok(capabilities.length > 0, "the open capability surface was found");
-  assert.doesNotMatch(capabilities, /billing|entitle|subscrib|polar/i);
+  assert.doesNotMatch(capabilities, /billing|entitle|subscrib|polar|taintGraph/i);
+  assert.doesNotMatch(open, /PAID_CAPABILITIES|capability-gate/i);
 
-  // The entitlement exists and is readable, and the open surface is untouched
-  // by it: the paid decision lives in cloud/, which is not scanned by the
-  // licence gate because it is not Apache 2.0 open core.
+  // The entitlement is readable and correct on its own terms, which is all this
+  // test claims for the billing layer.
   const f = await fixture(t);
   await f.service.linkCustomer("account-one", CUSTOMER);
-  const body = subscription();
-  await f.deliver(body);
+  await f.deliver(subscription());
   assert.equal((await f.get("/api/billing")).body.subscribed, true);
 });
 
