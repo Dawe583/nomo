@@ -452,12 +452,16 @@ verification.
 ## Cloud managed documents
 
 Cloud managed documents run the same local planner/runner inside one outer SQL
-transaction: one exact run or explicit operation ID list, plan by stable job ID,
+transaction: one exact run, one journal checkpoint, or explicit operation ID
+list, plan by stable job ID,
 digest-bound approval before application, signed planned/approved/applying/
 checkpoint/restored/partial/conflict/unknown/paused events, and blocked forward
 writes while an active job is unterminal. The HTTP surface exposes only
 `/api/sessions/:id/recovery-jobs/plan`, `/apply` and `/:job`; it projects plan
 digests, step operation IDs/sequences and operation residuals/statuses
-without operation payloads, captures or provider receipts. There is no
-dependency closure, time or checkpoint selection, scheduler, lease, fencing or
+without operation payloads, captures or provider receipts. A checkpoint
+selector resolves once through the shared resolver and is recorded as the
+steps it reached; planning it again under the same job ID is refused, so a
+second look needs a new job ID. There is no
+dependency closure or time selection, scheduler, lease, fencing or
 cloud MCP job surface. The retained local MCP host is the only MCP job surface.

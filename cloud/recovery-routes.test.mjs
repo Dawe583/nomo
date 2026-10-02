@@ -103,6 +103,16 @@ test("recovery accepts real generation run IDs and refuses invalid selections", 
   assert.equal((await f.request("plan", { jobId: "job", selection: { kind: "run", runId: "../escape" } })).status, 400);
 });
 
+test("recovery accepts a journal checkpoint and refuses malformed ones", async t => {
+  const f = await fixture(t);
+  assert.equal((await f.request("plan", { jobId: "job", selection: { kind: "checkpoint", sequence: 2 } })).status, 200);
+  assert.equal((await f.request("plan", { jobId: "job", selection: { kind: "checkpoint", sequence: 0 } })).status, 200);
+  for (const sequence of [-1, 1.5, "2", null, undefined])
+    assert.equal((await f.request("plan", { jobId: "job", selection: { kind: "checkpoint", sequence } })).status, 400);
+  assert.equal((await f.request("plan", { jobId: "job", selection: { kind: "checkpoint" } })).status, 400);
+  assert.equal((await f.request("plan", { jobId: "job", selection: { kind: "branches" } })).status, 400);
+});
+
 for (const status of ["unknown", "paused"]) {
   test(`recovery ${status} durably blocks forward work in its owning session`, async t => {
     const f = await fixture(t); f.state.applyStatus = status;

@@ -4,6 +4,14 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- Cloud recovery planning now accepts a journal checkpoint in addition to one
+  exact run or an explicit operation list. Naming a checkpoint restores
+  everything up to that point in the journal after the usual digest-bound
+  approval, and the signed plan still records the exact steps it undoes.
+  Planning the same job ID a second time with a checkpoint is refused, so a
+  fresh look needs a new job ID. Dependency and time selection remain
+  unavailable on the cloud surface.
+
 - A recovery chain stopped at the first step of anything but two writes to one
   path. Creating, renaming and deleting the same file in one run reported
   `conflict` on a path nobody had touched, because a missing file was
