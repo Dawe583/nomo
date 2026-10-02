@@ -1,6 +1,6 @@
 /** Import fixed local credential sources only. Configuration is data, never code. */
 import { constants } from 'node:fs';
-import { open } from 'node:fs/promises';
+import { lstat, open } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { PROVIDER_PRESETS } from '../../../packages/workbench/src/provider-defaults.ts';
@@ -23,9 +23,23 @@ function object(value: unknown): ObjectValue {
 async function credential(source: Source, env: Readonly<NodeJS.ProcessEnv>) {
   const home = env.HOME ?? homedir();
   if (!isAbsolute(home)) throw new Error('unavailable');
-  const file = await open(join(home, source.file), constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  const path = join(home, source.file);
+  // constants.O_NOFOLLOW and constants.O_NONBLOCK are undefined on Windows, so the
+  // flag set below collapses to a plain O_RDONLY open there and follows a symlink
+  // without complaint. fstat cannot catch it afterwards either, because a followed
+  // link reports its target as an ordinary file. lstat does not follow the final
+  // component, so demanding a regular file is the check that actually refuses a
+  // planted link on every platform.
+  const before = await lstat(path);
+  if (!before.isFile()) throw new Error('unavailable');
+  const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     const stat = await file.stat();
+    // The handle must be the object lstat just described, otherwise the path was
+    // swapped for a link inside that window. dev and ino are real on NTFS and on
+    // every POSIX filesystem, and compare equal when a filesystem cannot tell
+    // files apart, so this never refuses a legitimate credential.
+    if (stat.dev !== before.dev || stat.ino !== before.ino) throw new Error('unavailable');
     if (!stat.isFile() || stat.size > 1_048_576) throw new Error('unavailable');
     // Bound the read as well as the stat, since another process may grow the file.
     const buffer = Buffer.alloc(1_048_577);

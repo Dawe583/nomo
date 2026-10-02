@@ -93,6 +93,12 @@ test('custom credential destinations, oversized files and symlinks fail closed',
   }
 });
 
+test('a directory at the credential path is refused without being opened', async t => {
+  const f = await fixture(t, async () => { assert.fail('Must not send credentials'); });
+  await mkdir(join(f.home, auth), { recursive: true });
+  await assert.rejects(importDesktopProvider('opencode:zen', f.env, f.app), /unavailable/);
+});
+
 test('rejected credential, empty catalog and network failure keep previous provider', async t => {
   let mode = 'ok';
   const f = await fixture(t, async () => {
