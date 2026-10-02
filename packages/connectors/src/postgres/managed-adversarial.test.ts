@@ -329,3 +329,73 @@ for (const [name, mutation] of [
     }
   });
 }
+
+// `prepare` re-certifies the metadata layout, but it locks the target rows,
+// not the metadata tables, so a second session can commit DDL against
+// `void_recovery.operations` in the window before `execute` writes the
+// receipt. A rewrite rule with DO INSTEAD NOTHING and a BEFORE INSERT
+// trigger with RETURN NULL both discard that row without raising an error.
+//
+// PGlite is a single in-process connection and cannot run two sessions, so
+// the construct is created on the adapter's own still-open transaction
+// rather than committed by a competing one. The statements planted below are
+// the same ones a second session would commit, and what `execute` does with a
+// receipt insert that returns no row does not depend on who created the rule.
+// This is fixture evidence, not two-session certification.
+for (const [name, planted] of [
+  [
+    "a rewrite rule that swallows the receipt",
+    "CREATE RULE suppress_receipt AS ON INSERT TO void_recovery.operations DO INSTEAD NOTHING",
+  ],
+  [
+    "a BEFORE INSERT trigger that swallows the receipt",
+    `CREATE FUNCTION void_recovery.swallow_receipt() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NULL; END'; CREATE TRIGGER swallow_receipt BEFORE INSERT ON void_recovery.operations FOR EACH ROW EXECUTE FUNCTION void_recovery.swallow_receipt()`,
+  ],
+] as const) {
+  test(`execution refuses to commit ${name} planted after prepare`, async (t) => {
+    const f = await fixture(t);
+    const input = f.args(1, 11);
+    const prepared = await f.adapter.prepare(
+      input,
+      await f.adapter.preflight(input),
+      "one",
+    );
+    await f.db.exec(planted);
+    let refused = false;
+    try {
+      await f.adapter.execute(input, prepared, "one");
+    } catch (error) {
+      refused = true;
+      assert.match(
+        (error as Error).message,
+        /receipt|RETURNING/i,
+        "the refusal must name the receipt, not the mutation",
+      );
+    }
+    assert.equal(
+      refused,
+      true,
+      "a swallowed receipt must not report the operation as successful",
+    );
+    // `release` rolls the transaction back, so the reads below see committed
+    // state rather than the aborted one the refused execute left behind.
+    await f.adapter.release("one");
+    assert.equal(
+      (
+        await f.db.query<Record<string, unknown>>(
+          "SELECT balance FROM account WHERE id=1",
+        )
+      ).rows[0]?.balance,
+      10,
+      "a refused receipt must not leave the business mutation committed",
+    );
+    assert.equal(
+      (
+        await f.db.query<Record<string, unknown>>(
+          "SELECT count(*)::int AS n FROM void_recovery.operations",
+        )
+      ).rows[0]?.n,
+      0,
+    );
+  });
+}

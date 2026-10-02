@@ -1528,8 +1528,21 @@ export function managedPostgresAdapter(
         p.state.tenant,
       );
       const outcome = { result: after.rows[0]!.row, evidence: json(after) };
-      await connection.query(
-        `INSERT INTO ${schema}.operations(id,request_digest,capture,outcome,format_version) VALUES($1,$2,$3::jsonb,$4::jsonb,$5)`,
+      // The receipt is the only durable proof that this mutation is
+      // recoverable. A bare INSERT cannot tell us it landed: a rewrite rule
+      // with DO INSTEAD NOTHING and a BEFORE INSERT trigger with RETURN NULL
+      // both swallow the row without raising an error, so the COMMIT would
+      // make the mutation durable while reconcile answers "unknown" and
+      // recover throws an identity mismatch.
+      //
+      // RETURNING makes the swallow visible — both constructs yield zero
+      // rows, which is otherwise indistinguishable from a successful write —
+      // and the count has to be asserted here, before the COMMIT, while
+      // ROLLBACK is still reachable. Reading the row back afterwards would
+      // prove nothing: by then the mutation and the receipt are both durable
+      // and the only thing left to do is report an error too late.
+      const receipt = await connection.query<{ id: string }>(
+        `INSERT INTO ${schema}.operations(id,request_digest,capture,outcome,format_version) VALUES($1,$2,$3::jsonb,$4::jsonb,$5) RETURNING id`,
         [
           operationKey(id),
           p.digest,
@@ -1538,6 +1551,8 @@ export function managedPostgresAdapter(
           MANAGED_METADATA_VERSION,
         ],
       );
+      if (receipt.length !== 1 || receipt[0]!.id !== operationKey(id))
+        throw new Error("Execution receipt did not reach the receipt table.");
       await connection.query("COMMIT");
       pending.delete(id);
       await connection.close();
