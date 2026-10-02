@@ -3,12 +3,30 @@
  * cannot learn different decision rules. The broker has no timers by design:
  * the proxy or API server pumps expire(), which keeps tests deterministic and
  * makes a stalled event loop fail closed through the original hold timeout.
+ *
+ * A second constraint shapes every read and write of that state: only the
+ * operator may reach the state directory, because a foreign writer can release
+ * a held call by dropping one decision file, and a foreign reader learns which
+ * calls are pending and their decision tokens. POSIX states that constraint as
+ * mode bits and this file keeps asserting it there, unchanged. Windows has no
+ * such bits. Measured on this machine, 2026-09-25: Node reports 0o666 for a
+ * directory and for a file alike whatever chmod was asked for, stat uid is
+ * always 0, and getuid is absent, so the old predicate could never be true and
+ * the whole approval path was dead there. Asserting those bits on Windows would
+ * be a claim the platform cannot support, so Windows verifies the DACL with the
+ * icacls binary that ships with the operating system, and a directory VOID can
+ * claim is narrowed to the operator before it is accepted. What cannot be
+ * proven is returned as unverifiable and refused unless the host names the
+ * finding and accepts it, because an unproven control that reads as a passing
+ * one is the defect this replaced.
  */
 
 import * as nodeFs from "node:fs";
 import { randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 
+import type { Stats } from "node:fs";
 import type { HeldCall, HoldId, HoldQueue, HoldResolution, Release } from "./hold.ts";
 import type { PolicyCall } from "./decide.ts";
 import type { NotifyChannel } from "./rules.ts";
@@ -44,12 +62,70 @@ export type ApprovalChannel = {
   readonly notify: (approval: ApprovalNotification) => void;
 };
 
+export type ApprovalStateEvidence = "posix-mode" | "windows-dacl";
+
+export type ApprovalStateCode =
+  | "not-a-directory"
+  | "symbolic-link"
+  | "group-or-world-access"
+  | "foreign-owner"
+  | "foreign-write-access"
+  | "unrecognised-principal"
+  | "foreign-read-access"
+  | "operator-unidentifiable"
+  | "acl-unreadable";
+
+export type ApprovalStateVerdict =
+  | {
+      readonly outcome: "owner-only";
+      readonly evidence: ApprovalStateEvidence;
+      readonly hardened: boolean;
+    }
+  | {
+      readonly outcome: "unverifiable";
+      readonly code: ApprovalStateCode;
+      readonly hardened: boolean;
+      readonly acknowledged: boolean;
+    }
+  | {
+      readonly outcome: "unsafe";
+      readonly code: ApprovalStateCode;
+      readonly hardened: boolean;
+    };
+
+/**
+ * One access control entry as the operating system reports it. A principal is
+ * the text before the colon, which on the first line still carries the path
+ * icacls echoes, so it is matched by suffix rather than by equality.
+ */
+export type ApprovalAclEntry = {
+  readonly principal: string;
+  readonly rights: string;
+};
+
+/** Returns undefined when the DACL cannot be read. Never throws. */
+export type ApprovalAclReader = (
+  dir: string,
+) => readonly ApprovalAclEntry[] | undefined;
+
+export type ApprovalStateOptions = {
+  readonly fs?: ApprovalFs;
+  readonly acl?: ApprovalAclReader;
+};
+
 export type ApprovalBrokerOptions = {
   readonly channels?: Partial<Record<NotifyChannel, ApprovalChannel>>;
   readonly stateDir?: string;
   readonly fs?: ApprovalFs;
+  readonly acl?: ApprovalAclReader;
   readonly nonce?: () => string;
   readonly now?: () => number;
+  /**
+   * The named acknowledgement of an unverifiable control. Absent means refuse,
+   * which is the only default: an operator who wants an unproven directory
+   * says so, and the verdict the broker records then carries acknowledged.
+   */
+  readonly acknowledgeUnverifiableState?: (code: ApprovalStateCode) => boolean;
 };
 
 type ExpirableQueue = {
@@ -63,9 +139,12 @@ export class ApprovalBroker {
   private readonly channels: Partial<Record<NotifyChannel, ApprovalChannel>>;
 
   readonly stateDirectory: string | undefined;
+  readonly stateDirectoryCheck: ApprovalStateVerdict | undefined;
   readonly fs: ApprovalFs;
   private readonly nonce: () => string;
   private readonly now: () => number;
+  private readonly acknowledgeUnverifiableState:
+    ((code: ApprovalStateCode) => boolean) | undefined;
   private lockHeld = false;
 
   constructor(options: ApprovalBrokerOptions = {}) {
@@ -74,8 +153,14 @@ export class ApprovalBroker {
     this.fs = options.fs ?? nodeFs;
     this.nonce = options.nonce ?? randomUUID;
     this.now = options.now ?? Date.now;
+    this.acknowledgeUnverifiableState = options.acknowledgeUnverifiableState;
     if (this.stateDirectory !== undefined) {
-      secureDirectory(this.stateDirectory, this.fs);
+      const check: ApprovalStateCheck = {
+        fs: this.fs,
+        acl: options.acl ?? readWindowsAcl,
+        acknowledge: options.acknowledgeUnverifiableState,
+      };
+      this.stateDirectoryCheck = secureDirectory(this.stateDirectory, check);
       const lockPath = join(this.stateDirectory, "proxy.lock");
       let fd: number;
       try { fd = this.fs.openSync(lockPath, "wx", 0o600); }
@@ -89,7 +174,7 @@ export class ApprovalBroker {
           this.fs.writeFileSync(fd, String(process.pid));
           this.fs.fsyncSync(fd);
         } finally { this.fs.closeSync(fd); }
-        secureDirectory(join(this.stateDirectory, "decisions"), this.fs);
+        secureDirectory(join(this.stateDirectory, "decisions"), check);
         this.savePending(this.stateDirectory);
       } catch (error) {
         this.close();
@@ -190,13 +275,18 @@ export class ApprovalBroker {
   consumeDecisions(): void {
     const dir = this.stateDirectory;
     if (dir === undefined) return;
-    assertPrivateDirectory(dir, this.fs);
-    assertPrivateDirectory(join(dir, "decisions"), this.fs);
+    const check: ApprovalStateCheck = {
+      fs: this.fs,
+      acl: readWindowsAcl,
+      acknowledge: this.acknowledgeUnverifiableState,
+    };
+    assertPrivateDirectory(dir, check);
+    assertPrivateDirectory(join(dir, "decisions"), check);
     for (const name of this.fs.readdirSync(join(dir, "decisions"))) {
       if (!name.endsWith(".json")) continue;
       const path = join(dir, "decisions", name);
       try {
-        assertPrivateFile(path, this.fs);
+        assertPrivateFile(path, check);
         const value: unknown = JSON.parse(this.fs.readFileSync(path, "utf8"));
         if (!isObject(value) || typeof value.holdId !== "string" || typeof value.decisionToken !== "string") {
           throw new Error("invalid approval decision file");
@@ -264,12 +354,13 @@ export type ApprovalFs = Pick<typeof nodeFs,
   "renameSync" | "unlinkSync" | "readFileSync" | "readdirSync" | "lstatSync">;
 
 export function savePending(dir: string, records: readonly ApprovalRecord[], fs: ApprovalFs = nodeFs): void {
-  atomicWrite(dir, "pending.json", records, fs);
+  atomicWrite(dir, "pending.json", records, stateCheck(fs));
 }
 
-export function loadPending(dir: string, fs: ApprovalFs = nodeFs): readonly ApprovalRecord[] {
-  assertPrivateDirectory(dir, fs);
-  assertPrivateFile(join(dir, "pending.json"), fs);
+export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: (code: ApprovalStateCode) => boolean): readonly ApprovalRecord[] {
+  const check = stateCheck(fs, acknowledge);
+  assertPrivateDirectory(dir, check);
+  assertPrivateFile(join(dir, "pending.json"), check);
   const value: unknown = JSON.parse(fs.readFileSync(join(dir, "pending.json"), "utf8"));
   if (!Array.isArray(value) || !value.every((item: unknown) => isObject(item) &&
     typeof item.holdId === "string" && typeof item.decisionToken === "string" &&
@@ -282,17 +373,24 @@ export function loadPending(dir: string, fs: ApprovalFs = nodeFs): readonly Appr
 export function writeDecision(
   dir: string, holdId: string, decision: ApprovalDecision, fs: ApprovalFs = nodeFs,
   now: () => number = Date.now,
+  acknowledge?: (code: ApprovalStateCode) => boolean,
 ): void {
   validateDecision(decision);
-  const record = loadPending(dir, fs).find((pending) => pending.holdId === holdId);
+  const check = stateCheck(fs, acknowledge);
+  const record = loadPending(dir, fs, acknowledge).find((pending) => pending.holdId === holdId);
   if (record === undefined || record.expiresAt <= now()) throw new Error("hold is not pending or has expired");
   atomicWrite(join(dir, "decisions"), `${randomUUID()}.json`, {
     holdId, decisionToken: record.decisionToken, decision,
-  }, fs);
+  }, check);
 }
 
-function atomicWrite(dir: string, name: string, value: unknown, fs: ApprovalFs): void {
-  secureDirectory(dir, fs);
+function stateCheck(fs: ApprovalFs, acknowledge?: (code: ApprovalStateCode) => boolean): ApprovalStateCheck {
+  return { fs, acl: readWindowsAcl, acknowledge };
+}
+
+function atomicWrite(dir: string, name: string, value: unknown, check: ApprovalStateCheck): void {
+  secureDirectory(dir, check);
+  const fs = check.fs;
   const temporary = join(dir, `.${randomUUID()}.tmp`);
   const fd = fs.openSync(temporary, "wx", 0o600);
   try {
@@ -334,35 +432,416 @@ function validateDecision(value: unknown): asserts value is ApprovalDecision {
   }
 }
 
-function secureDirectory(dir: string, fs: ApprovalFs): void {
-  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-  assertPrivateDirectory(dir, fs);
+function secureDirectory(dir: string, check: ApprovalStateCheck): ApprovalStateVerdict {
+  try {
+    check.fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  } catch (error) {
+    // Recursive mkdir reports an existing non-directory as EEXIST, and that
+    // happens before anything can classify it. Left alone it reaches the
+    // caller as a bare errno whose message carries the full filesystem path,
+    // which is the one thing this file refuses to put in a refusal, and it
+    // makes the not-a-directory verdict unreachable. Swallowing only EEXIST
+    // lets the classification below name the real reason; any other errno is
+    // still a genuine failure to create the directory and propagates.
+    if (!isObject(error) || error.code !== "EEXIST") throw error;
+  }
+  return assertPrivateDirectory(dir, check);
 }
 
-function assertPrivateDirectory(dir: string, fs: ApprovalFs): void {
-  const stat = fs.lstatSync(dir);
-  if (!stat.isDirectory()) {
-    throw new Error("approval state requires an owner-only directory without symlinks");
+function assertPrivateDirectory(dir: string, check: ApprovalStateCheck): ApprovalStateVerdict {
+  const verdict = inspectApprovalStateDirectory(dir, check);
+  if (verdict.outcome === "owner-only") return verdict;
+  const acknowledged =
+    verdict.outcome === "unverifiable" &&
+    check.acknowledge !== undefined &&
+    check.acknowledge(verdict.code) === true;
+  if (verdict.outcome === "unverifiable" && acknowledged) {
+    return { ...verdict, acknowledged: true };
   }
-  // Windows has no POSIX mode bits: every file and directory reports 0666, so
-  // the bit test is not a weaker check there, it is a meaningless one that
-  // refuses every directory including a freshly created one. What lstat still
-  // proves on Windows is that this is a real directory rather than a symlink or
-  // junction, and that is asserted above. The owner-only guarantee itself is
-  // NOT established here on Windows: it rests on the inherited ACL of the
-  // operator profile. Narrowing it is open work, not a claim this file makes.
-  if (process.platform === "win32") return;
-  if ((stat.mode & 0o077) !== 0 ||
-    (process.getuid !== undefined && stat.uid !== process.getuid())) {
-    throw new Error("approval state requires an owner-only directory without symlinks");
+  throw new ApprovalStateUnsafeError(verdict);
+}
+
+/**
+ * The single entry point a host can call to learn what VOID could prove about a
+ * state directory, without creating a broker and without a decision to make.
+ */
+export function inspectApprovalStateDirectory(
+  dir: string,
+  options: ApprovalStateOptions = {},
+): ApprovalStateVerdict {
+  return approvalStateVerdict(dir, {
+    fs: options.fs ?? nodeFs,
+    acl: options.acl ?? readWindowsAcl,
+    acknowledge: undefined,
+  });
+}
+
+/**
+ * The POSIX rule, split out as a pure function of the stat so a reviewer on any
+ * platform can run it. It is the control the other platforms are measured
+ * against, so it must stay testable where the mode bits mean nothing.
+ */
+export function classifyPosixApprovalState(
+  stat: Pick<
+    Stats,
+    "isDirectory" | "isFile" | "isSymbolicLink" | "mode" | "uid"
+  >,
+  effectiveUid: number | undefined,
+): ApprovalStateVerdict {
+  if (stat.isSymbolicLink())
+    return { outcome: "unsafe", code: "symbolic-link", hardened: false };
+  if (!stat.isDirectory())
+    return { outcome: "unsafe", code: "not-a-directory", hardened: false };
+  if ((stat.mode & 0o077) !== 0)
+    return {
+      outcome: "unsafe",
+      code: "group-or-world-access",
+      hardened: false,
+    };
+  if (effectiveUid !== undefined && stat.uid !== effectiveUid)
+    return { outcome: "unsafe", code: "foreign-owner", hardened: false };
+  return { outcome: "owner-only", evidence: "posix-mode", hardened: false };
+}
+
+type ApprovalStateCheck = {
+  readonly fs: ApprovalFs;
+  readonly acl: ApprovalAclReader;
+  readonly acknowledge: ((code: ApprovalStateCode) => boolean) | undefined;
+};
+
+function approvalStateVerdict(
+  dir: string,
+  check: ApprovalStateCheck,
+): ApprovalStateVerdict {
+  const stat = check.fs.lstatSync(dir);
+  // The link check runs on both platforms and before any platform rule: a
+  // symlink or junction redirects the check at a directory the operator never
+  // named, and on Windows hardening it would rewrite that target's DACL.
+  if (stat.isSymbolicLink())
+    return { outcome: "unsafe", code: "symbolic-link", hardened: false };
+  if (process.platform !== "win32")
+    return classifyPosixApprovalState(stat, process.getuid?.());
+  if (!stat.isDirectory())
+    return { outcome: "unsafe", code: "not-a-directory", hardened: false };
+  return windowsApprovalStateVerdict(dir, stat, check);
+}
+
+// A verified DACL is remembered per process and per reader, because reading it
+// costs a process spawn and every state write would otherwise pay it. A
+// directory that is owner only can afterwards be changed only by the operator,
+// so the memo cannot be stale in the direction that matters, and the identity is
+// the file index, so a path deleted and recreated under the same name is read
+// again. Per reader, so an injected reader is never served a verdict it did not
+// produce.
+const verifiedDacl = new WeakMap<
+  ApprovalAclReader,
+  Map<string, ApprovalStateVerdict>
+>();
+const MAX_MEMOIZED_DIRECTORIES = 32;
+
+function windowsApprovalStateVerdict(
+  dir: string,
+  stat: Stats,
+  check: ApprovalStateCheck,
+): ApprovalStateVerdict {
+  const memo = daclMemo(check.acl);
+  const key = `${stat.dev}:${stat.ino}`;
+  const cached = memo.get(key);
+  if (cached !== undefined) return cached;
+  const entries = check.acl(dir);
+  if (entries === undefined) return unverifiable("acl-unreadable", false);
+  const first = classifyWindowsAcl(entries, operatorPrincipals());
+  if (first.outcome === "owner-only") return remember(memo, key, first);
+  // mkdirSync above already promises mode 0o700, which Windows cannot honour.
+  // Narrowing the DACL is that same promise in the unit Windows does enforce,
+  // so VOID applies it rather than refusing a directory it cannot leave as it
+  // found it. A directory it cannot narrow keeps the verdict that was measured,
+  // not the one that would have been convenient.
+  if (!narrowWindowsAcl(dir, entries)) return first;
+  const narrowed = check.acl(dir);
+  const second =
+    narrowed === undefined
+      ? unverifiable("acl-unreadable", true)
+      : {
+          ...classifyWindowsAcl(narrowed, operatorPrincipals()),
+          hardened: true,
+        };
+  if (second.outcome !== "owner-only") return second;
+  return remember(memo, key, second);
+}
+
+function daclMemo(
+  reader: ApprovalAclReader,
+): Map<string, ApprovalStateVerdict> {
+  const existing = verifiedDacl.get(reader);
+  if (existing !== undefined) return existing;
+  const created = new Map<string, ApprovalStateVerdict>();
+  verifiedDacl.set(reader, created);
+  return created;
+}
+
+function remember(
+  memo: Map<string, ApprovalStateVerdict>,
+  key: string,
+  verdict: ApprovalStateVerdict,
+): ApprovalStateVerdict {
+  if (memo.size >= MAX_MEMOIZED_DIRECTORIES) {
+    const oldest = memo.keys().next();
+    if (oldest.done !== true) memo.delete(oldest.value);
+  }
+  memo.set(key, verdict);
+  return verdict;
+}
+
+function unverifiable(
+  code: ApprovalStateCode,
+  hardened: boolean,
+): ApprovalStateVerdict {
+  return { outcome: "unverifiable", code, hardened, acknowledged: false };
+}
+
+function operatorPrincipals(): readonly string[] {
+  const user = process.env.USERNAME?.trim();
+  if (user === undefined || user === "") return [];
+  const domain = process.env.USERDOMAIN?.trim();
+  return domain === undefined || domain === ""
+    ? [user]
+    : [`${domain}\\${user}`, user];
+}
+
+function classifyWindowsAcl(
+  entries: readonly ApprovalAclEntry[],
+  operator: readonly string[],
+): ApprovalStateVerdict {
+  let unrecognised: ApprovalStateVerdict | undefined;
+  let foreignRead: ApprovalStateVerdict | undefined;
+  for (const entry of entries) {
+    const principal = entry.principal.trim();
+    if (matchesAny(principal, TRUSTED_ACLS, operator)) continue;
+    const write = writesAccess(entry.rights);
+    if (principal.toUpperCase().startsWith("MANDATORY LABEL")) {
+      // An integrity label that grants write means a low integrity process can
+      // write approval state, which is a proven foreign writer. One that grants
+      // nothing grants no access to the contents either, so it says nothing.
+      if (write)
+        return {
+          outcome: "unsafe",
+          code: "foreign-write-access",
+          hardened: false,
+        };
+      continue;
+    }
+    if (matchesAny(principal, SHARED_ACLS, [])) {
+      // Everyone and the local group are demonstrably somebody else, so a write
+      // grant here is a proven path to releasing a held call and is never
+      // acknowledgeable. A read grant only discloses which calls are pending.
+      if (write)
+        return {
+          outcome: "unsafe",
+          code: "foreign-write-access",
+          hardened: false,
+        };
+      foreignRead ??= unverifiable("foreign-read-access", false);
+      continue;
+    }
+    // A principal that is neither the operator nor a shared group may be the
+    // operator under a name this process cannot resolve, so it is reported as
+    // unproven rather than proven hostile in either direction.
+    unrecognised ??= unverifiable(
+      operator.length === 0
+        ? "operator-unidentifiable"
+        : "unrecognised-principal",
+      false,
+    );
+  }
+  return (
+    unrecognised ??
+    foreignRead ?? {
+      outcome: "owner-only",
+      evidence: "windows-dacl",
+      hardened: false,
+    }
+  );
+}
+
+const TRUSTED_ACLS = [
+  "nt authority\\system",
+  "system",
+  "s-1-5-18",
+  "builtin\\administrators",
+  "administrators",
+  "s-1-5-32-544",
+];
+
+const SHARED_ACLS = [
+  "everyone",
+  "s-1-1-0",
+  "authenticated users",
+  "s-1-5-11",
+  "builtin\\users",
+  "users",
+  "s-1-5-32-545",
+  "guests",
+  "s-1-5-32-546",
+  "nt authority\\anonymous logon",
+  "anonymous logon",
+  "s-1-5-7",
+];
+
+const INHERITANCE_FLAGS: Record<string, true> = {
+  I: true,
+  IO: true,
+  OI: true,
+  CI: true,
+  ID: true,
+  NP: true,
+  IOI: true,
+};
+
+// An allowlist, because a permission letter this file does not understand must
+// not be read as harmless. Rights icacls abbreviates as anything else, F M W D
+// S WO WDAC, are treated as write access.
+const READ_ONLY_RIGHTS: Record<string, true> = {
+  N: true,
+  R: true,
+  RX: true,
+  X: true,
+  GR: true,
+  GX: true,
+  GRGE: true,
+  GRCX: true,
+  RC: true,
+  RCD: true,
+  RCX: true,
+  RDC: true,
+  RA: true,
+};
+
+function writesAccess(rights: string): boolean {
+  for (const letter of rights.split(/[,\s]+/)) {
+    const token = letter.trim().toUpperCase();
+    if (token === "" || INHERITANCE_FLAGS[token] === true) continue;
+    if (READ_ONLY_RIGHTS[token] !== true) return true;
+  }
+  return false;
+}
+
+function matchesAny(
+  principal: string,
+  names: readonly string[],
+  extra: readonly string[],
+): boolean {
+  const lower = principal.toLowerCase();
+  for (const name of [...names, ...extra]) {
+    const wanted = name.toLowerCase();
+    if (lower === wanted || lower.endsWith(` ${wanted}`)) return true;
+  }
+  return false;
+}
+
+const ACL_TIMEOUT_MS = 5000;
+const MAX_REMOVED_ACES = 16;
+
+function narrowWindowsAcl(
+  dir: string,
+  entries: readonly ApprovalAclEntry[],
+): boolean {
+  const operator = operatorPrincipals()[0];
+  if (operator === undefined) return false;
+  if (
+    !runIcacls(dir, [
+      "/inheritance:r",
+      "/grant:r",
+      `${operator}:(OI)(CI)F`,
+      "*S-1-5-18:(OI)(CI)F",
+      "*S-1-5-32-544:(OI)(CI)F",
+    ])
+  )
+    return false;
+  // Best effort only. /inheritance:r drops inherited entries, which is most of
+  // what a shared parent contributes, and the re-read judges the result, so a
+  // removal that finds nothing left to remove must not decide the verdict.
+  const foreign = entries
+    .map((entry) => aclToken(entry.principal))
+    .filter(
+      (token) =>
+        token !== "" && !matchesAny(token, TRUSTED_ACLS, operatorPrincipals()),
+    )
+    .slice(0, MAX_REMOVED_ACES);
+  for (const token of foreign) runIcacls(dir, ["/remove:g", token]);
+  return true;
+}
+
+function aclToken(principal: string): string {
+  const trimmed = principal.trim();
+  const space = trimmed.lastIndexOf(" ");
+  const token = space === -1 ? trimmed : trimmed.slice(space + 1);
+  return token.toUpperCase().startsWith("S-1-") ? `*${token}` : token;
+}
+
+function runIcacls(dir: string, args: readonly string[]): boolean {
+  try {
+    execFileSync("icacls", [dir, ...args], {
+      encoding: "utf8",
+      timeout: ACL_TIMEOUT_MS,
+      windowsHide: true,
+      maxBuffer: 256 * 1024,
+    });
+    return true;
+  } catch {
+    return false;
   }
 }
 
-function assertPrivateFile(path: string, fs: ApprovalFs): void {
+const ACL_ENTRY = /^(.*?):((?:\([A-Z0-9,]*\))+)\s*$/i;
+
+/**
+ * Reads the DACL of one directory. Only lines shaped like an access control
+ * entry are parsed, because icacls reports failure in the console language of
+ * the machine, which is not UTF-8 and must never be matched on. A missing
+ * binary, a timeout, a non-zero exit and an unparseable listing are all one
+ * answer: the DACL could not be read here.
+ */
+const readWindowsAcl: ApprovalAclReader = (dir) => {
+  let output: string;
+  try {
+    output = execFileSync("icacls", [dir], {
+      encoding: "utf8",
+      timeout: ACL_TIMEOUT_MS,
+      windowsHide: true,
+      maxBuffer: 256 * 1024,
+    });
+  } catch {
+    return undefined;
+  }
+  const entries: ApprovalAclEntry[] = [];
+  for (const line of output.split(/\r?\n/)) {
+    const match = ACL_ENTRY.exec(line.trim());
+    if (match === null) continue;
+    const rights = (match[2] ?? "").match(/\(([^)]*)\)/g) ?? [];
+    entries.push({
+      principal: match[1] ?? "",
+      rights: rights.map((group) => group.slice(1, -1)).join(","),
+    });
+  }
+  return entries.length === 0 ? undefined : entries;
+};
+
+function assertPrivateFile(path: string, check: ApprovalStateCheck): void {
+  // lstat is what rejects a symlinked pending.json on both platforms, because a
+  // link fails isFile. The DACL of a file inside a directory that was just
+  // verified owner only cannot be widened by anyone else, so the parent verdict
+  // is the evidence there; re-reading it per file would put a process spawn in
+  // front of every pending read for a fact the parent already establishes.
+  const fs = check.fs;
   const stat = fs.lstatSync(path);
   if (!stat.isFile() || stat.size > 1024 * 1024) {
     throw new Error("approval state requires a bounded owner-only regular file");
   }
+  // Windows has no POSIX mode bits to test here, exactly as for the directory:
+  // the containing DACL was just verified by assertPrivateDirectory, and the
+  // owner-only guarantee rests on that rather than on bits the platform has
+  // none of.
   if (process.platform === "win32") return;
   if ((stat.mode & 0o077) !== 0 ||
     (process.getuid !== undefined && stat.uid !== process.getuid())) {
@@ -375,5 +854,24 @@ export class ApprovalStateInUseError extends Error {
   constructor() {
     super("approval state directory is locked; stop its proxy, or confirm it has exited before removing proxy.lock");
     this.name = "ApprovalStateInUseError";
+  }
+}
+
+export class ApprovalStateUnsafeError extends Error {
+  readonly code: ApprovalStateCode;
+  readonly verdict: Exclude<ApprovalStateVerdict, { outcome: "owner-only" }>;
+  constructor(
+    verdict: Exclude<ApprovalStateVerdict, { outcome: "owner-only" }>,
+  ) {
+    // The reason is a fixed code, never a path, an account name or anything
+    // icacls printed, because this message can reach an agent.
+    super(
+      verdict.outcome === "unsafe"
+        ? `approval state requires an owner-only directory without symlinks, and this state directory is not: ${verdict.code}`
+        : `approval state requires an owner-only directory without symlinks, which could not be verified here: ${verdict.code}`,
+    );
+    this.name = "ApprovalStateUnsafeError";
+    this.code = verdict.code;
+    this.verdict = verdict;
   }
 }
