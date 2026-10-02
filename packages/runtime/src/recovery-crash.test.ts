@@ -19,6 +19,11 @@ import {
 const CHILD_MESSAGE_TIMEOUT_MS = process.platform === "win32" ? 90_000 : 15_000;
 const TEST_TIMEOUT_MS = process.platform === "win32" ? 180_000 : 25_000;
 
+// The chain worker announces over IPC that its inverse committed and then parks
+// so the parent can SIGKILL it there. `before` is the value it restored, which
+// the parent asserts to prove the kill landed at the step it selected.
+type InverseCommittedMessage = { stage: string; before: string };
+
 for (const durableReceipt of [false, true]) {
   test(
     `SIGKILL after inverse commit ${durableReceipt ? "with" : "without"} an atomic receipt never repeats recovery`,
@@ -262,7 +267,7 @@ process.send({ stage: 'finished' });
     child.stderr?.resume();
     const [message] = (await once(child, "message", {
       signal: AbortSignal.timeout(CHILD_MESSAGE_TIMEOUT_MS),
-    })) as [{ stage: string }];
+    })) as [InverseCommittedMessage];
     assert.equal(message.stage, "inverse-committed");
     assert.equal(message.before, "two-before");
     const exited = once(child, "exit");
@@ -425,7 +430,7 @@ process.send({ stage: 'finished' });
     child.stderr?.resume();
     const [message] = (await once(child, "message", {
       signal: AbortSignal.timeout(CHILD_MESSAGE_TIMEOUT_MS),
-    })) as [{ stage: string; before: string }];
+    })) as [InverseCommittedMessage];
     assert.equal(message.stage, "inverse-committed");
     assert.equal(message.before, "one-before");
     const exited = once(child, "exit");
