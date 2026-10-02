@@ -59,8 +59,20 @@ describe("void attest publishes an anchor", () => {
 
     const printed = c.out.join("\n");
     assert.match(printed, /anchor: signed head 2 [0-9a-f]{64} over 2 entries/);
-    assert.match(printed, /retained copy: .*attestations\/2\.json/);
-    assert.match(printed, new RegExp(`anchor appended: ${outOfBand}`));
+    // Both printed paths are joined natively, so they carry the host separator
+    // rather than a slash. Comparing the whole path is stricter than matching a
+    // trailing fragment: the retained copy has to be exactly the
+    // attestations/2.json this test reads below, and the appended anchor the
+    // out-of-band file the operator named. The trailing space pins the end of
+    // the path, so a longer sibling name such as 2.json.bak cannot satisfy it.
+    // A literal comparison also keeps the path out of a regular expression,
+    // where a backslash reads as an escape and the match quietly stops
+    // happening on Windows.
+    assert.ok(
+      printed.includes(`retained copy: ${join(dir, "attestations", "2.json")} `),
+      printed,
+    );
+    assert.ok(printed.includes(`anchor appended: ${outOfBand}`), printed);
 
     // The retained local copy and the out-of-band file carry the same document.
     const retained = JSON.parse(await readFile(join(dir, "attestations", "2.json"), "utf8")) as Record<string, unknown>;

@@ -67,7 +67,15 @@ test("custom document mutations still require existing policy approval",async t=
  });
  f.app.upsertAgent({...profile,allowedTools:["void_workspace_write"]});
  const session=await f.app.start("Write","fixture",undefined,undefined,"custom");
- for(let attempt=0;attempt<100&&!f.app.pending().length&&f.app.get(session.id)?.status==="running";attempt++)await delay(5);
+ // Wait for the hold on a wall-clock deadline, not a fixed iteration count.
+ // Reaching the hold costs an ed25519 keygen, a signed ledger append and a
+ // policy decision, which costs ~370ms on an idle machine and grows with CPU
+ // contention; a 100 x 5ms budget expires first under load, and the assertion
+ // below then reports a policy refusal that never happened. The property under
+ // test is that the mutation stops at the hold, not that it stops quickly, so
+ // the wait is bounded generously and the assertions themselves are unchanged.
+ const holdDeadline=Date.now()+10000;
+ while(!f.app.pending().length&&f.app.get(session.id)?.status==="running"&&Date.now()<holdDeadline)await delay(5);
  assert.equal(f.app.pending().length,1);assert.equal(f.app.document(session.id,"note").content,null);
  const hold=f.app.pending()[0]!;assert.equal(f.app.decide(hold.holdId,{kind:"denied",by:"test-operator"}),true);
  await f.app.settled();assert.equal(f.app.document(session.id,"note").content,null);

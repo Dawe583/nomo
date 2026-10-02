@@ -271,20 +271,46 @@ function countRustTestCases(directory) {
  * three. That is the same defect the profile itself was added to fix: an
  * adapter nothing names.
  *
- * A profile that publishes no operations on this platform is skipped rather
- * than compared, because `git.managed` deliberately publishes none on Windows
- * and this matrix records the macOS run.
+ * A profile that publishes no operations on this platform cannot be compared,
+ * because `git.managed` deliberately publishes none on Windows and this matrix
+ * records the macOS run.
+ *
+ * A profile that publishes *fewer* operations here than the recorded run cannot
+ * be compared either, and comparing only the non-empty ones let a real
+ * disagreement through. `filesystem.managed` publishes create/write/delete/
+ * rename on macOS and create/write/delete on Windows, because rename recovery is
+ * POSIX-only (`excluded` names it on win32), so on this host it has three
+ * operations while the matrix truthfully records the four of a macOS run.
+ * Comparing the two reported a stale document where the document was right and
+ * only the platform differed, which is the failure mode this gate exists to
+ * prevent: a count that could not be measured here being treated as one that
+ * was measured and found wrong.
+ *
+ * So the measured comparison is scoped to the platform the matrix records, and
+ * elsewhere the count is reported as unmeasured rather than assumed. Every other
+ * property of this gate stays live on every platform: each profile is still
+ * resolved, so an adapter that stops publishing one is still an error, and each
+ * count the matrix states is still collected and checked for self-contradiction,
+ * so two sentences cannot disagree about a size here. Only the last step, the
+ * comparison against the tree, is withheld where the tree publishes a different
+ * operation list than the run that produced the record.
  */
 async function conformanceScenarioCounts() {
   const { providerProfiles } = await import("../../packages/cli/src/conformance.ts");
   const { resolveProviderProfile } = await import(
     "../../packages/connectors/src/capability-profiles.ts"
   );
+  // The matrix records a macOS run: the tooling row names Xcode at
+  // `/Applications/Xcode.app`, and every conformance count in it is a multiple
+  // of the eight shared CONFORMANCE_CASES, so it was measured where the POSIX
+  // operation lists are the published ones. Holding a macOS record against a
+  // Windows profile would compare two different experiments.
+  const onRecordedPlatform = process.platform === "darwin";
   return ADAPTERS.map((id) => {
     const profile = resolveProviderProfile(providerProfiles, id);
     if (profile === undefined) throw new Error(`no published profile for ${id}`);
-    return [id, profile.operations.length];
-  }).filter(([, count]) => count > 0);
+    return [id, onRecordedPlatform ? profile.operations.length : null];
+  });
 }
 
 /** Collapses the wrapping while remembering the source line of every character. */
@@ -355,6 +381,8 @@ function suiteCountPatterns() {
 }
 
 test("every suite count the matrix states is the count the tree has, once", async () => {
+  // Counts this platform cannot re-measure, reported rather than dropped.
+  const unmeasured = [];
   const expected = new Map([
     ["VOIDTests", countSwiftTestCases("apps/apple/VOIDTests")],
     ["VOIDUITests", countSwiftTestCases("apps/apple/VOIDUITests")],
@@ -387,10 +415,25 @@ test("every suite count the matrix states is the count the tree has, once", asyn
       [],
       `the matrix must not let two sentences disagree about ${suite}`,
     );
+    // A null expectation is a count this platform cannot measure, because the
+    // profile publishes a different operation list than the run the matrix
+    // records. The document still has to be internally consistent about it, and
+    // the two assertions above still run; only the comparison against the tree
+    // is withheld, and the run on the recorded platform is the one that makes
+    // it. Skipping is recorded rather than silent, so a count that is never
+    // checked anywhere cannot look checked.
+    const tree = expected.get(suite);
+    if (tree === null) {
+      unmeasured.push(
+        `${suite} is stated as ${numbers[0]} but not re-measured on ${process.platform}; the recorded run is macOS`,
+      );
+      continue;
+    }
     assert.equal(
       numbers[0],
-      expected.get(suite),
-      `the matrix says ${suite} has ${numbers[0]}, the tree has ${expected.get(suite)}:\n${said}`,
+      tree,
+      `the matrix says ${suite} has ${numbers[0]}, the tree has ${tree}:\n${said}`,
     );
   }
+  for (const note of unmeasured) console.log(`# not re-measured here: ${note}`);
 });
