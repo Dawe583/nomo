@@ -126,6 +126,15 @@ export function renderWebTokens(tokens) {
   // which a veil has neither of.
   const scrims = tokens.colour.scrim?.roles ?? {};
   const type = tokens.type;
+  const mobile = type.webMobileRoot;
+  if (
+    typeof mobile?.maxWidthPx !== "number" ||
+    typeof mobile?.rootPx !== "number"
+  ) {
+    throw new Error(
+      `${SOURCE} has no type.webMobileRoot, so the mobile composition has no root size to write`,
+    );
+  }
   const radii = tokens.radii.roles;
 
   // A role added to the document without a web name, or a name left behind
@@ -217,6 +226,15 @@ export function renderWebTokens(tokens) {
     `}`,
     `:root[data-theme="dark"] {`,
     ...dark,
+    `}`,
+    `/* The mobile root size. It is emitted here rather than written beside`,
+    `   the layout rules that need it, because it is a type size and the`,
+    `   document is its only owner. The block follows the two appearances so`,
+    `   that it overrides both. */`,
+    `@media (max-width: ${mobile.maxWidthPx}px) {`,
+    `  :root {`,
+    `    font-size: ${mobile.rootPx}px;`,
+    `  }`,
     `}`,
     END,
     ``,
