@@ -256,3 +256,76 @@ test("recreating a table at the same name invalidates the old target capture", a
     ],
   );
 });
+
+for (const [name, mutation] of [
+  [
+    "a rewrite rule that swallows receipts",
+    "CREATE RULE suppress_receipt AS ON INSERT TO void_recovery.operations DO INSTEAD NOTHING",
+  ],
+  [
+    "a trigger on a receipt table",
+    `CREATE FUNCTION void_recovery.reject_write() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NEW; END'; CREATE TRIGGER reject_write BEFORE INSERT ON void_recovery.operations FOR EACH ROW EXECUTE FUNCTION void_recovery.reject_write()`,
+  ],
+  [
+    "an extra relation in the metadata schema",
+    "CREATE TABLE void_recovery.unowned(id integer PRIMARY KEY)",
+  ],
+  [
+    "an extra index on a receipt table",
+    "CREATE INDEX operations_digest_idx ON void_recovery.operations(request_digest)",
+  ],
+  [
+    "an extra constraint on a receipt table",
+    "ALTER TABLE void_recovery.operations ADD CONSTRAINT digest_not_empty CHECK(request_digest <> '')",
+  ],
+  [
+    "row level security on a receipt table",
+    "ALTER TABLE void_recovery.operations ENABLE ROW LEVEL SECURITY",
+  ],
+  [
+    "a poisoned receipt format default",
+    "ALTER TABLE void_recovery.operations ALTER COLUMN format_version SET DEFAULT (2 + floor(random())::integer)",
+  ],
+  [
+    "an unexpected receipt default",
+    "ALTER TABLE void_recovery.operations ALTER COLUMN capture SET DEFAULT '{}'::jsonb",
+  ],
+] as const) {
+  test(`execution refuses ${name}`, async (t) => {
+    const f = await fixture(t);
+    await f.db.exec(mutation);
+    // Install refuses this layout, so it must not be executable either.
+    await assert.rejects(
+      installManagedPostgres(f.options),
+      /malformed|structure/i,
+    );
+    // The refusal has to land before the mutation is prepared, let alone
+    // executed: a committed change whose receipt the rule or trigger
+    // discarded reported success and can never be recovered.
+    await assert.rejects(
+      f.adapter.preflight(f.args(1, 11)),
+      /structure|migration|metadata/i,
+    );
+    assert.deepEqual(
+      (
+        await f.db.query<Record<string, unknown>>(
+          "SELECT * FROM account ORDER BY id",
+        )
+      ).rows,
+      [
+        { id: 1, balance: 10 },
+        { id: 2, balance: 20 },
+      ],
+    );
+    for (const table of ["operations", "recoveries"]) {
+      assert.deepEqual(
+        (
+          await f.db.query<{ count: number }>(
+            `SELECT count(*)::int AS count FROM void_recovery.${table}`,
+          )
+        ).rows,
+        [{ count: 0 }],
+      );
+    }
+  });
+}

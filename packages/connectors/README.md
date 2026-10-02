@@ -174,6 +174,41 @@ Drift comparison is digest based by field. The report names the table, primary
 key, field, captured digest, and current digest. A human can then choose a
 manual repair path. VOID does not choose it.
 
+## Managed PostgreSQL metadata installation
+
+`installManagedPostgres` owns metadata layout version 2, the current
+`MANAGED_METADATA_VERSION`. A fresh install creates `meta`, `revisions`,
+`operations`, and `recoveries`, where both receipt tables carry a
+`format_version` column. Reinstalling a structurally valid version 2 layout is
+idempotent and preserves existing operation and recovery receipts.
+
+Installation inspects the layout before DDL. Preflight brackets the structural
+inspection with schema and relation OID reads. Both identity snapshots must be
+equal. A transaction-scoped advisory install lock then serializes cooperating
+installers. Existing metadata tables are locked, and their schema and relation
+OIDs must still equal the closing preflight snapshot. The layout is revalidated
+before DDL and once more before the version write. It refuses a legacy partial
+layout without `meta`, a version 1 layout, an unknown version, a missing version
+row, or a version 2 layout whose columns, types, nullability, primary keys,
+defaults, indexes, constraints, triggers, rules, row-level security flags, or
+extra relations differ from the owned layout. Early rejection does not send a
+stray rollback. Rejection never repairs or migrates metadata. There is no
+general version 3 migration path. Operators must review unsupported layouts and
+use a separately reviewed migration.
+
+`migrateManagedPostgres` is the one explicit upgrade path, from the exact
+released version 1 layout to version 2. It adds the `format_version` columns
+with a default of 1, revalidates the resulting layout, and only then rewrites
+the stored version under `AND version=1`. Anything else requires manual review.
+
+Execution fails closed on the same layout. `requireCurrentMetadata` runs before
+`preflight`, `prepare`, and `recover`, and it validates the whole version 2
+layout rather than trusting the stored version number. A version 2 schema that
+`installManagedPostgres` refuses is not executable either. The distinction
+matters: a rewrite rule or trigger on a receipt table otherwise discards the
+receipt while the data mutation still commits, so the operation reports success
+and can never be recovered.
+
 ## S3 connector module map
 
 ### `s3/classify.ts`
