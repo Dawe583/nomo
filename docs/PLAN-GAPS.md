@@ -60,7 +60,7 @@ needs a Windows x64/MSVC runner.
 - G-04: adapters already observe resource keys and revisions. General read/write provenance and dependency closure remain open.
 - G-07: managed filesystem and Git recovery exist. Noncooperative writers, full per-hunk enforcement and native cross-platform evidence remain separate work.
 - G-20: `@void/verifier` is its own package with zero dependencies and no import from this repository. Never published, and the export-bundle fixtures are still missing.
-- G-26: the open core is Apache 2.0 and NOT publishable. Nine packages export TypeScript source and ten of twelve have no build, so flipping `private` would ship source Node cannot run.
+- G-26: the open core is Apache 2.0 and NOT publishable. Nine of the ten package manifests under `packages/` export TypeScript source and none of the ten has a build script, so flipping `private` would ship source Node cannot run.
 - Section 6: deterministic compaction, bounded local profiles, the twenty-item local queue and signed run/list recovery exist. Hooks, binary input, extra named permission modes, dependency-aware rewind and measured tokenizer accounting remain open.
 
 
@@ -80,15 +80,33 @@ was touched. Items are ordered by plan priority, not by ease.
 ### G-01 R01: cloud transactional journal and full persistence fault matrix
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R01.
-Missing: disk exhaustion behavior and cross-host fencing. The cloud
-transactional journal exists, and kill faults plus a blackhole partition
-probe with no partial commit are covered.
-Evidence: `docs/UPGRADE-CHECKPOINT.md` states the twenty new tests are
-"persistence-call failures, not physical disk failure, network partition
-or PostgreSQL client process death".
-Minimum change: add a cloud journal with the same lifecycle states as the
-local journal, then extend the fault tests to disk exhaustion, partition
-and client process kill. Dependency: R02 stable. Size: XL.
+Corrected 2026-10-01: the cloud transactional journal exists, so the old "add a
+cloud journal" minimum change below was stale. `cloud/store.mjs` `append` at
+line 137 signs and hash-chains each entry and inserts it into `void_cloud_ledger`
+at line 159, inside `transaction()` at line 26, which takes the owner-scoped
+`pg_advisory_xact_lock` and commits or rolls the whole group back;
+`cloud/schema.sql` line 18 installs the `void_cloud_immutable` trigger that
+refuses UPDATE and DELETE on that table; and `cloud/recovery-routes.mjs` runs
+every recovery route inside the one transaction it opens at line 37, mounting
+plan, apply and status at lines 49, 56 and 88. The runtime journal is that
+journal: `cloud/recovery.mjs` line 83 hands the runtime an `append` that signs
+each event with the same client, line 179 writes the encrypted artifact with it,
+and line 258 names the outer transaction as what rolls both back.
+Kill faults and a partition probe are now covered, so the branch's
+`networkPartitionTest: false` claim was stale against the rebased tree:
+`scripts/src/verify-managed-postgres.mjs` kills the client at lines 300 and 306,
+blackholes a held peer from line 775 and reports `networkPartitionTest: true` at
+line 874.
+Still missing: disk exhaustion behavior, the live-cluster fault matrix and
+cross-host fencing. `packages/runtime/src/persistence-fault.test.ts` line 1
+scopes itself to persistence-call failures and not physical disk faults or
+process death, and `docs/UPGRADE-CHECKPOINT.md` lines 60 to 62 record that
+PGlite is in-process so the live-cluster matrix is unrun, with disk exhaustion
+and partition named unrun again at lines 64 to 65.
+Minimum change: a disk-exhaustion harness against the cloud journal, then the
+whole matrix re-run against a live cluster and recorded in
+`docs/UPGRADE-CHECKPOINT.md`. Dependency: R02 stable. Size: XL. `[EXT]`
+needs a disposable isolated PostgreSQL target.
 
 ### G-02 R04: PostgreSQL certification tail
 
@@ -114,11 +132,25 @@ reproducible network-fault harness.
 ### G-03 R06: planner selection, leases, fencing, remote job surfaces
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R06.
-Missing: cross-host fencing, and the MCP and cloud job surfaces. A durable
-lease exists now: `packages/runtime/src/recovery/lease.ts` decides reclaim from
+Corrected 2026-10-01: selection, leases, the MCP job surface and the cloud job
+surface are all built, so only the fencing half of this row is open. Selection
+is `resolveRecoverySelection` and `independentBranches` in
+`packages/runtime/src/recovery/plan.ts` at lines 253 and 415. A durable lease
+exists: `packages/runtime/src/recovery/lease.ts` line 41 decides reclaim from
 an expired deadline **and** a provably dead holder, `execute.ts` claims and
-renews it, and a takeover records `paused` with `lease-expired`. What is still
-missing is fencing that survives more than one host.
+renews it (line 46 imports the rule, line 252 builds the `<host>:<pid>` holder),
+and a takeover records `paused` with `lease-expired`. The MCP surface is
+`void_recovery_plan_job`, `void_recovery_status_job` and
+`void_recovery_apply_job` at lines 188 to 190 of
+`packages/cli/src/recovery-mcp.ts`, dispatched at lines 497 to 503 and served
+from `packages/cli/src/recovery.ts` line 317. The cloud surface is
+`cloud/recovery-routes.mjs`, which mounts plan, apply and status over
+`planCloudRecoveryJob`, `runCloudRecoveryJob` and `cloudRecoveryJobStatus` at
+lines 49, 56 and 88, each inside the one transaction named above, which
+`cloud/recovery-routes.mjs` line 37 opens around every one of them.
+Missing: fencing that survives more than one host. `packages/runtime/src/budget.ts`
+line 99 says the store fences processes on one host by an SQLite writer mutex
+and cannot detect a second host holding an independent store.
 Evidence: `packages/runtime/src/recovery/plan.ts` exports
 `resolveRecoverySelection` and `independentBranches`, with 26 tests in
 `packages/runtime/src/recovery/selectors.test.ts`. `planRecoveryJob` in
@@ -138,8 +170,8 @@ list `provenanceEdges` returns, one edge per consumer, producer and resource,
 which is the same list `orderRecoverySteps` proves an order from, so a branch
 held by an edge and a step refused for that edge cannot name different
 dependencies.
-Minimum change: a single active worker lease with fencing, then MCP and cloud
-surfaces on top of the wired planner. Dependency: R02, R03, one R04 or R05
+Minimum change: a fencing token a second host has to present, then the lease
+takeover case re-proven against it. Dependency: R02, R03, one R04 or R05
 adapter. Size: XL.
 
 ### G-04 R07: runtime provenance and dependency aware recovery
@@ -279,22 +311,36 @@ Dependency: R03. Size: M.
 ### G-09 R03: streaming, pins, retention, GC, quota migration
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R03.
-Missing: automatic collection. Artifact streaming (`putStream`/`getStream`),
-pin lifecycle (`releaseVaultPin`), operator-driven retention collection
-(`collectVaultGarbage`) and quota migration (`migrateCapacity`) are
-implemented; collection stays operator-driven rather than automatic.
-Evidence: `docs/MANAGED-RECOVERY.md` states no automatic GC deletes
-history and that changing a vault capacity needs an explicit
-administrative migration; default limits are 64 MiB per artifact and
-1 GiB total (`docs/RECOVERY-CONTRACT.md`).
-Minimum change: retention policy plus a GC that never removes pinned
-snapshots, then a reviewed migration command. Dependency: R01. Size: M.
+Corrected 2026-10-01: all five capabilities this row called missing are
+implemented, so the old "retention policy plus a GC plus a migration command"
+minimum change was stale. Streaming is `VaultPlaintext`, an async iterable of
+chunks, plus `getStream` in `packages/runtime/src/reserved-vault.ts` at lines 38
+and 611, and that write proves the declared plaintext length against quota
+before the first chunk. Quota migration is `migrateCapacity` at line 662, which
+records what it did in the `capacity_migrations` table. Pin lifecycle, retention
+policy, garbage collection that refuses pinned evidence, and index backup and
+restore are `markVaultLifecycle`, `releaseVaultPin`, `collectVaultGarbage`,
+`backupRetentionIndex` and `restoreRetentionIndex` in
+`packages/runtime/src/retention.ts` at lines 222, 283, 380, 679 and 742, with
+`validateRetentionPolicy` at line 55 refusing a policy that could evict a pin.
+What is still missing is automatic collection and an operator path to any of it:
+`packages/runtime/src/index.ts` line 4 re-exports the retention module, and no
+file under `packages/cli/src` or `cloud/` calls `migrateCapacity`, `getStream` or
+any retention entry point, so what `docs/MANAGED-RECOVERY.md` line 75 reports is
+still the shipped behaviour.
+Minimum change: one command exposing retention policy, pin release, GC and
+capacity migration, plus the boundary already recorded at line 622 of
+`packages/runtime/src/reserved-vault.ts` where streaming covers the reserved
+vault only and a legacy file artifact has no chunked reader. Dependency: R01.
+Size: M.
 
 Local follow-up on 2026-09-23: the legacy `LocalSnapshotStore` protects pins
 across all cleanup paths, rejects uncertain sidecars, and serializes cooperating
-namespace mutations. This does not close managed-vault streaming, pin lifecycle,
-quota migration or distributed fencing. See `RECOVERY-CONTRACT.md` for the
-old-writer and missing-sidecar compatibility boundary.
+namespace mutations. It is the connector's legacy file store and not the runtime
+reserved vault, so it does not close the managed-vault streaming, pin lifecycle,
+retention or capacity migration work corrected above, and it says nothing about
+distributed fencing. See `RECOVERY-CONTRACT.md` for the old-writer and
+missing-sidecar compatibility boundary.
 
 ## 3. Provider adapters and host boundary
 
@@ -367,13 +413,23 @@ semantics, surfaced modes in CLI and GUI. Dependency: R02. Size: L.
 ### G-15 R14: export bundles, metrics, operational certification
 
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R14.
-Missing: complete export bundles with checkpoint completeness, runtime
-metrics, and an operational certification pass.
-Evidence: `packages/cli/src/operations.ts` implements export and attest
-gated on ledger verification, but there is no metrics surface and no
-checkpoint completeness check in the gate scripts.
-Minimum change: bundle format with completeness proof, minimal metrics,
-one certification run recorded in `docs/UPGRADE-CHECKPOINT.md`.
+Corrected 2026-10-01: the bundle format with its completeness proof and the
+metrics surface both shipped, so only the certification half of this row is
+open. `void export --bundle` and `void export verify` are dispatched from
+`packages/cli/src/operations.ts` lines 166 and 117 into `createBundle` and
+`verifyBundle` in `packages/cli/src/export-bundle.ts`, which publishes
+`void.export-bundle.v1` at line 67, writes the manifest-level `complete: true`
+proof at line 338 and refuses a bundle whose manifest does not carry it at line
+863. `void metrics` is dispatched from line 68 of the same file over
+`void.metrics.v1` (`packages/cli/src/metrics.ts` line 48). Both commands are
+routed by `packages/cli/src/dispatch.ts` line 56 and listed in the single
+`COMMANDS` array at lines 24 and 32 of `packages/cli/src/argv.ts`, so both are
+operator visible.
+Still missing: an operational certification pass, and a gate that reads the
+record. No file under `scripts/src` references `docs/UPGRADE-CHECKPOINT.md`, and
+that file says of itself at line 8 that it is not a certification.
+Minimum change: one certification run recorded in
+`docs/UPGRADE-CHECKPOINT.md`, and a gate that fails when that record is stale.
 Dependency: R06, R07, R12. Size: M.
 
 ### G-16 WP-15 leftovers: hardening tail and publishable artifacts
@@ -502,12 +558,13 @@ Size: S. Needs release credentials from G-26, not code.
 Measured 2026-09-26, and this is the largest remaining gap in the licence line.
 Every package declares Apache 2.0, the root LICENSE is the verbatim text, the
 NOTICE carries the registry disclaimer verbatim, and `@void/verifier` is
-publishable today. Nothing else is. Twelve packages are `private: true`, and that
-flag is not an oversight: `release-packaging.test.mjs` enforces it so nothing ships
+publishable today. Nothing else is. Nine of the ten package manifests under
+`packages/` are `private: true`, and that flag is not an oversight:
+`release-packaging.test.mjs` enforces it so nothing ships
 with incoherent release metadata, and it is what currently stops a broken release.
 
-Flipping it would make things worse rather than better. Nine packages point
-`exports` at TypeScript source and ten of the twelve have no build script, so
+Flipping it would make things worse rather than better. Those nine point
+`exports` at `./src/index.ts` and none of the ten has a build script, so
 publishing them would ship source that Node cannot run. The licence line therefore
 rests on a distribution channel that does not exist yet, which is worth stating
 plainly because DECISIONS 5 argues the MCP registry, GitHub search and the registry
