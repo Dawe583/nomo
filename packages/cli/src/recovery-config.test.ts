@@ -144,6 +144,40 @@ test("a filesystem root is refused by name the way a git root always was", async
   assert.match(message, /filesystem\.root holds "\.\."/);
   assert.match(message, /stays inside the workspace/);
 });
+test("a leading ./ on a root is accepted, because it is not a traversal", async (t) => {
+  // The shape the Python transport fixture writes, and the shape any operator
+  // writes when they mean "this directory, relative to the config file". It is
+  // not a traversal, and refusing it broke `python/void-transport` outright:
+  // the relay could not start, so nine integration tests never ran and the
+  // suite reported 75 passing instead of 84.
+  const path = await fixture(t, {
+    workspace: "dogfood",
+    stateDir: "./state",
+    encryptionKeyEnv: "KEY",
+    filesystem: { root: "./workspace", cooperative: true },
+  });
+
+  const report = await doctor(path);
+  assert.equal(report.code, 0, report.lines.join("\n"));
+  assert.match(report.lines.join("\n"), /configuration: usable/);
+  assert.doesNotMatch(await inspect(path), /filesystem\.root/);
+});
+
+test("a traversal inside the root is still refused after the leading ./ is normalised", async (t) => {
+  // The normalisation must not become a hole: `./a/../../b` still walks out.
+  const path = await fixture(t, {
+    workspace: "dogfood",
+    stateDir: "./state",
+    encryptionKeyEnv: "KEY",
+    filesystem: { root: "./a/../../b", cooperative: true },
+  });
+
+  const message = await inspect(path);
+
+  assert.match(message, /filesystem\.root holds "\.\."/);
+  assert.match(message, /stays inside the workspace/);
+});
+
 
 test("a missing workspace field is named rather than summed into one verdict", async (t) => {
   const path = await fixture(t, {

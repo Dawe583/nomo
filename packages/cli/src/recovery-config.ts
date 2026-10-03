@@ -82,7 +82,16 @@ function rootProblem(key: string, root: unknown): string | undefined {
   if (root === "") return `${key}.root is empty`;
   if (root.includes("\\")) return `${key}.root holds a backslash: use "/" separators`;
   if (root.startsWith("/")) return `${key}.root is absolute: a managed root is relative to the config file`;
-  const bad = root.split("/").find((part) => !part || part === "." || part === "..");
+  // A leading `./` is the ordinary way a relative path is written, and it is
+  // not a traversal, so it is normalised away rather than refused. Interior
+  // `.` and `..` are the security property: they can walk a managed root back
+  // out of the workspace, and a symlinked parent can redirect what the root
+  // resolves to. Those still refuse. Refusing the leading `./` would break
+  // every configuration written that way — including the Python transport
+  // fixture, which is how this was found — without refusing anything unsafe.
+  const parts = root.split("/");
+  if (parts[0] === ".") parts.shift();
+  const bad = parts.find((part) => !part || part === "." || part === "..");
   return bad === undefined
     ? undefined
     : `${key}.root holds ${JSON.stringify(bad)}: a managed root stays inside the workspace`;
