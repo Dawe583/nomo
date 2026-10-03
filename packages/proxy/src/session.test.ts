@@ -410,4 +410,36 @@ describe("Session typed request identity", () => {
 
     assert.deepEqual([...session.maps.upstreamToAgent.entries()], [["42", 9]]);
   });
+
+  test("S11: a server-originated request's progress restores the server's own token", () => {
+    const session = new Session();
+    const relayed = session.translateInbound({
+      jsonrpc: "2.0",
+      id: "srv-1",
+      method: "roots/list",
+      params: { _meta: { progressToken: "srv-token" } },
+    });
+    assert.ok(relayed !== null && "method" in relayed && "id" in relayed);
+
+    const progress = session.translateInbound({
+      jsonrpc: "2.0",
+      method: "notifications/progress",
+      params: { progressToken: relayed.id, progress: 1 },
+    });
+
+    assert.deepEqual(progress, {
+      jsonrpc: "2.0",
+      method: "notifications/progress",
+      params: { progressToken: "srv-token", progress: 1 },
+    });
+  });
+
+  test("S11: recordServerRequest reserves the upstream id against later allocation", () => {
+    const session = new Session();
+    session.recordServerRequest(7, 1);
+
+    const allocated = Array.from({ length: 7 }, () => session.translateRequestOut(request(9, "tools/list")).id);
+
+    assert.ok(!allocated.includes(7), `session re-issued the reserved upstream id: ${allocated.join(", ")}`);
+  });
 });

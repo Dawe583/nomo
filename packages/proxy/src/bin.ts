@@ -111,7 +111,14 @@ export type ProxyOptions = {
   readonly output?: (line: string) => void;
   readonly error?: (line: string) => void;
   readonly inboundMaxBytes?: number;
-  /** Cap for one outbound line and for bytes buffered in stdout behind a notification flood. Defaults to four inbound ceilings. */
+  /** Cap for one outbound line and for bytes buffered in stdout behind a notification flood. Defaults to four inbound ceilings, which cannot be reached by relayed content; see the note in runProxy. */
+  /**
+   * Cap for upstream messages parsed but not yet handled. The transport reads
+   * lines synchronously and each one joins a promise chain, so an upstream
+   * that writes faster than a legacy binding resolves grows that chain without
+   * bound. Past the cap, further lines are dropped with one named refusal.
+   */
+  readonly maxInflightUpstreamMessages?: number;
   readonly outboundMaxBytes?: number;
   readonly shutdownSignals?: ProxyShutdownSignals | false;
 };
@@ -124,10 +131,21 @@ type InitializeRequest = {
 const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
 const INTERNAL_ERROR = -32603;
+const DEFAULT_MAX_INFLIGHT_UPSTREAM_MESSAGES = 512;
 
 export async function runProxy(options: ProxyOptions): Promise<void> {
   const inboundMaxBytes = options.inboundMaxBytes ?? DEFAULT_INBOUND_MAX_BYTES;
+  // The per-message outbound ceiling is four inbound ceilings by default, and
+  // at that setting it cannot fire for relayed content: every sendJson payload
+  // derives from one upstream line, and a line above the inbound ceiling is
+  // refused at parse time. The effective bound on relayed bytes is the inbound
+  // ceiling; this one exists for messages that compose several upstream parts.
   const outboundMaxBytes = options.outboundMaxBytes ?? inboundMaxBytes * 4;
+  const maxInflightUpstreamMessages =
+    options.maxInflightUpstreamMessages ?? DEFAULT_MAX_INFLIGHT_UPSTREAM_MESSAGES;
+  if (!Number.isSafeInteger(maxInflightUpstreamMessages) || maxInflightUpstreamMessages < 1) {
+    throw new RangeError("maxInflightUpstreamMessages must be a positive safe integer");
+  }
   // The default stdout writer is drain aware: when a valid notification flood
   // leaves more than the queue cap unflushed, the line is refused with a named
   // error instead of queueing behind it without bound. Buffered bytes are read
@@ -191,6 +209,8 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   >();
   const unknownLegacy = new Set<JsonRpcId>();
   let upstreamWork = Promise.resolve();
+  let inflightUpstreamMessages = 0;
+  let upstreamBacklogRefused = false;
   let upstream: UpstreamProcess | null = null;
 
   const sendJson = (message: unknown): void => {
@@ -379,10 +399,24 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   try {
     const upstreamEvents: UpstreamEvents = {
       onMessage(line) {
+        if (inflightUpstreamMessages >= maxInflightUpstreamMessages) {
+          if (!upstreamBacklogRefused) {
+            upstreamBacklogRefused = true;
+            writeError(
+              `upstream backlog exceeded ${maxInflightUpstreamMessages} unhandled messages; further lines are dropped until it drains`,
+            );
+          }
+          return;
+        }
+        inflightUpstreamMessages += 1;
         upstreamWork = upstreamWork
           .then(() => handleUpstreamLine(line))
           .catch(() => {
             writeError("upstream message handling failed");
+          })
+          .finally(() => {
+            inflightUpstreamMessages -= 1;
+            upstreamBacklogRefused = false;
           });
       },
       onClose: handleUpstreamClose,

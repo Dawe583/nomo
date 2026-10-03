@@ -28,6 +28,7 @@ export type ServerRequestRelaySession = {
   readonly upstreamToAgent?: Map<JsonRpcId, JsonRpcId> | ReadonlyMap<JsonRpcId, JsonRpcId>;
   readonly allocateAgentId: () => JsonRpcId;
   readonly recordServerRequest?: (upstreamId: JsonRpcId, agentId: JsonRpcId) => void;
+  readonly recordProgressToken?: (agentId: JsonRpcId, token: JsonRpcId) => void;
 };
 
 function setMapValue(map: Map<JsonRpcId, JsonRpcId> | ReadonlyMap<JsonRpcId, JsonRpcId> | undefined, key: JsonRpcId, value: JsonRpcId): void {
@@ -56,7 +57,29 @@ export function relayServerRequest(
 
   return request.params === undefined
     ? { ...request, id: agentId }
-    : { ...request, id: agentId, params: { ...request.params } };
+    : { ...request, id: agentId, params: remapProgressToken(request.params, agentId, session) };
+}
+
+// The agent never receives the params object the upstream sent; it receives a
+// copy, and a copy whose progress token names the id this relay allocated.
+function remapProgressToken(
+  params: JsonObject,
+  agentId: JsonRpcId,
+  session: ServerRequestRelaySession,
+): JsonObject {
+  const meta = params._meta;
+  if (typeof meta !== "object" || meta === null || Array.isArray(meta)) {
+    return { ...params };
+  }
+
+  const record = meta as JsonObject;
+  const token = record.progressToken;
+  if (typeof token !== "string" && typeof token !== "number") {
+    return { ...params };
+  }
+
+  session.recordProgressToken?.(agentId, token);
+  return { ...params, _meta: { ...record, progressToken: agentId } };
 }
 
 export function relayServerResponse(

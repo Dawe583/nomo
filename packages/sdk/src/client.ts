@@ -71,7 +71,7 @@ export type McpLikeClient = {
 };
 
 type PendingRequest = {
-  readonly id: number;
+  readonly id: JsonRpcId;
   readonly method: string;
   readonly params: JsonObject | undefined;
   readonly promise: Promise<unknown>;
@@ -94,6 +94,16 @@ const defaultClock: VoidClock = {
   clearTimeout: (handle) => { clearTimeout(handle as ReturnType<typeof setTimeout>); },
 };
 
+/**
+ * Retention bounds for the proxy's stderr notes. Each line can be as large as
+ * the proxy's inbound ceiling, so an upstream that floods malformed messages
+ * would otherwise grow this list for the life of the client. Both ceilings are
+ * named so a caller reading `errors` knows the list is bounded rather than
+ * complete, and `errorsDropped` reports how much of it was dropped.
+ */
+export const CLIENT_MAX_ERROR_LINES = 512;
+export const CLIENT_MAX_ERROR_BYTES = 256 * 1024;
+
 export class VoidClient implements McpLikeClient {
   readonly approvals = new ApprovalBroker();
 
@@ -108,12 +118,14 @@ export class VoidClient implements McpLikeClient {
   readonly #requestTimeoutMs: number;
   readonly #holdPollMs: number;
   readonly #clock: VoidClock;
-  readonly #pending = new Map<number, PendingRequest>();
+  readonly #pending = new Map<JsonRpcId, PendingRequest>();
   readonly #registeredHolds = new Set<string>();
-  readonly #holdToRequest = new Map<string, number>();
+  readonly #holdToRequest = new Map<string, JsonRpcId>();
   readonly #holdWaiters = new Map<string, HoldWaiter[]>();
   readonly #completedHolds = new Map<string, CompletedHold>();
   readonly #errors: string[] = [];
+  #errorBytes = 0;
+  #errorsDropped = 0;
   #queue: HoldQueue | undefined;
   #running: Promise<void> | undefined;
   #nextId = 1;
@@ -150,6 +162,34 @@ export class VoidClient implements McpLikeClient {
 
   get errors(): readonly string[] {
     return [...this.#errors];
+  }
+
+  /**
+   * How many error lines were dropped because the retention ceilings were
+   * reached. Reported next to `errors` because a silently truncated list reads
+   * as "there were no more errors".
+   */
+  get errorsDropped(): number {
+    return this.#errorsDropped;
+  }
+
+  /**
+   * Retains one error line under both named ceilings, dropping the oldest
+   * beyond either. A single line larger than the byte budget is kept, since
+   * dropping it would leave a caller with no record that anything failed.
+   */
+  #recordError(line: string): void {
+    this.#errors.push(line);
+    this.#errorBytes += Buffer.byteLength(line);
+    while (
+      this.#errors.length > CLIENT_MAX_ERROR_LINES ||
+      (this.#errorBytes > CLIENT_MAX_ERROR_BYTES && this.#errors.length > 1)
+    ) {
+      const dropped = this.#errors.shift();
+      if (dropped === undefined) break;
+      this.#errorBytes -= Buffer.byteLength(dropped);
+      this.#errorsDropped += 1;
+    }
   }
 
   async request(method: string, params?: JsonObject): Promise<unknown> {
@@ -243,7 +283,7 @@ export class VoidClient implements McpLikeClient {
         workspace: this.#workspace,
         input: this.#input,
         output: (line) => { this.#receive(line); },
-        error: (line) => { this.#errors.push(line); },
+        error: (line) => { this.#recordError(line); },
         onHold: (queue) => {
           this.#queue = queue;
           this.#schedulePump();
@@ -283,7 +323,7 @@ export class VoidClient implements McpLikeClient {
     }
     this.#verification = key;
     if (key.degraded)
-      this.#errors.push(
+      this.#recordError(
         `ledger verification is DEGRADED (${key.source}): ${DEGRADED_VERIFICATION_NOTE}`,
       );
     try {
@@ -332,7 +372,7 @@ export class VoidClient implements McpLikeClient {
     return path;
   }
 
-  #pendingRequest(id: number, method: string, params: JsonObject | undefined): PendingRequest {
+  #pendingRequest(id: JsonRpcId, method: string, params: JsonObject | undefined): PendingRequest {
     let resolvePending: (value: unknown) => void = () => {};
     let rejectPending: (error: Error) => void = () => {};
     const promise = new Promise<unknown>((resolve, reject) => {
@@ -360,10 +400,9 @@ export class VoidClient implements McpLikeClient {
     }
 
     if (!isResponse(message) || message.id === undefined) return;
-    const id = numericId(message.id);
-    const pending = this.#pending.get(id);
+    const pending = this.#pending.get(message.id);
     if (pending === undefined) return;
-    this.#pending.delete(id);
+    this.#pending.delete(message.id);
 
     if ("error" in message) {
       const error = errorFromJsonRpc(message, pending.holdId);
@@ -520,13 +559,6 @@ function toolName(params: JsonObject | undefined): string | undefined {
 
 function isResponse(message: JsonRpcMessage): message is JsonRpcResult | JsonRpcError {
   return "result" in message || "error" in message;
-}
-
-function numericId(id: JsonRpcId): number {
-  if (typeof id === "number") return id;
-  const parsed = Number(id);
-  if (Number.isInteger(parsed)) return parsed;
-  throw new Error(`response id is not numeric: ${id}`);
 }
 
 function errorFromJsonRpc(message: JsonRpcError, holdId: string | undefined): Error {

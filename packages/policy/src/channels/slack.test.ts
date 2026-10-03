@@ -3,10 +3,12 @@ import assert from "node:assert/strict";
 
 import type { HeldCall } from "../hold.ts";
 import {
+  checkSlackWebhookUrl,
   SlackChannel,
   postHoldToSlack,
   slackPayload,
 } from "./slack.ts";
+
 
 const call: HeldCall = {
   id: "h0001",
@@ -52,6 +54,8 @@ describe("the Slack approval channel", () => {
         seenUrl = url;
         seenBody = init.body;
         assert.equal(init.method, "POST");
+        assert.equal(init.redirect, "error");
+
         assert.equal(init.headers["content-type"], "application/json");
         return { ok: true, status: 200, text: async () => "ok" };
       },
@@ -88,5 +92,67 @@ describe("the Slack approval channel", () => {
       kind: "failed",
       reason: "slack webhook url is required when enabled",
     });
+  });
+
+  test("a webhook URL that is not https is refused before anything is posted", () => {
+    const cases: readonly (readonly [string, string])[] = [
+      ["hooks.slack.test/T000/B000/secret", "slack webhook url is not a URL"],
+      ["http://hooks.slack.test/T000/B000/secret", "slack webhook url must be https"],
+      ["https://user:pw@hooks.slack.test/T000/B000/secret", "slack webhook url cannot carry credentials"],
+      ["https://hooks.slack.test/T000/B000/secret#x", "slack webhook url cannot carry a fragment"],
+    ];
+    for (const [url, expected] of cases) assert.equal(checkSlackWebhookUrl(url), expected);
+    assert.equal(checkSlackWebhookUrl("https://hooks.slack.test/T000/B000/secret"), undefined);
+  });
+
+  test("a refused URL never reaches the network and never quotes the secret", async () => {
+    const url = "http://hooks.slack.test/T000/B000/secret";
+    let posted = 0;
+    const channel = new SlackChannel({ enabled: true, webhookUrl: url }, async () => {
+      posted += 1;
+      return { ok: true, status: 200, text: async () => "" };
+    });
+    const result = await channel.postHold(call, () => "https://operator.example/holds/h0001");
+    assert.equal(posted, 0);
+    assert.equal(result.kind, "failed");
+    if (result.kind === "failed") {
+      assert.equal(result.reason, "slack webhook url must be https");
+      assert.ok(!result.reason.includes("secret"));
+      assert.ok(!result.reason.includes(url));
+    }
+  });
+
+  test("a failure reason is capped and stripped of control characters", async () => {
+    const esc = String.fromCharCode(27);
+    const reason = await postHoldToSlack(
+      "https://hooks.slack.test/T000/B000/secret",
+      call,
+      (id) => `https://operator.example/holds/${id}`,
+      async () => ({ ok: false, status: 500, text: async () => `${esc}[31m${"x".repeat(400)}${esc}[0m` }),
+    );
+    assert.equal(reason.kind, "failed");
+    if (reason.kind !== "failed") return;
+    assert.ok(!reason.reason.includes(esc), reason.reason);
+    assert.ok(reason.reason.length <= "slack webhook returned 500: ".length + 201, `${reason.reason.length}`);
+  });
+
+  test("a hostile endpoint cannot echo the webhook secret back into the reason", async () => {
+    const url = "https://hooks.slack.test/T000/B000/secret";
+    const hostile = await postHoldToSlack(url, call, () => "https://operator.example/holds/h0001", async () => ({
+      ok: false,
+      status: 400,
+      text: async () => `no_service for ${url} (secret) at hooks.slack.test/T000/B000/secret`,
+    }));
+    assert.equal(hostile.kind, "failed");
+    if (hostile.kind !== "failed") return;
+    assert.ok(!hostile.reason.includes("secret"), hostile.reason);
+    assert.ok(hostile.reason.includes("[redacted]"), hostile.reason);
+
+    const thrown = await postHoldToSlack(url, call, () => "https://operator.example/holds/h0001", async () => {
+      throw new Error(`connect ECONNREFUSED for ${url}`);
+    });
+    assert.equal(thrown.kind, "failed");
+    if (thrown.kind !== "failed") return;
+    assert.ok(!thrown.reason.includes("secret"), thrown.reason);
   });
 });

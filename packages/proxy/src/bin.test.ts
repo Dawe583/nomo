@@ -377,6 +377,105 @@ describe("runProxy", () => {
       ProxyStartupError,
     );
   });
+
+  test("S10: an upstream burst past the in-flight cap is dropped with a named refusal", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "void-proxy-backlog-"));
+    const policyPath = join(dir, "policy.yml");
+    await writeFile(policyPath, policyText("allow"));
+    const errors: string[] = [];
+    let events: UpstreamEvents | undefined;
+    // Two promises, one direction each: `outcome` parks until the teardown
+    // releases it, and the test waits for the park itself rather than a
+    // guessed duration. Every queued message is counted the moment it is
+    // queued, so the burst arrives while the chain is provably full.
+    let parkEntered: () => void = () => {};
+    const entered = new Promise<void>((resolve) => {
+      parkEntered = resolve;
+    });
+    let releasePark: () => void = () => {};
+    const released = new Promise<void>((resolve) => {
+      releasePark = resolve;
+    });
+    const stalling: LegacyProxyBinding = {
+      ...testLegacyBinding([], []),
+      async outcome(evidence) {
+        parkEntered();
+        await released;
+        return {
+          schema: "void.legacy.outcome.v1",
+          at: new Date().toISOString(),
+          status: "completed",
+          tool: evidence.tool,
+          workspace: evidence.workspace,
+          argsDigest: evidence.argsDigest,
+          captureDigest: evidence.captureDigest,
+        };
+      },
+    };
+
+    const upstream: UpstreamProcess = {
+      send(line) {
+        const message = JSON.parse(line) as Record<string, unknown>;
+        if (message.method === "initialize") {
+          events?.onMessage(JSON.stringify({
+            jsonrpc: "2.0",
+            id: message.id,
+            result: { protocolVersion: "2025-06-18", capabilities: {}, serverInfo: { name: "backlog", version: "1.0.0" } },
+          }));
+          return;
+        }
+        if (message.method !== "tools/call") return;
+        events?.onMessage(JSON.stringify({ jsonrpc: "2.0", id: message.id, result: { called: true } }));
+      },
+      close() {},
+      onStderr() {
+        return () => {};
+      },
+    };
+
+    const running = runProxy({
+      keyProvider: keyProviderFromPkcs8(
+        generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
+      ),
+      upstreamCommand: ["fake"],
+      policyPath,
+      // fail-closed is the posture that consults the legacy binding, and a
+      // bound call is the only path whose upstream reply is awaited: that await
+      // is the park this test needs.
+      posture: "fail-closed",
+      ledgerDir: join(dir, "ledger"),
+      workspace: "test",
+      input: fromLines([
+        JSON.stringify({ jsonrpc: "2.0", id: 0, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {} } }),
+        JSON.stringify(toolCall(1, "postgres.row.update")),
+      ]),
+      output() {},
+      error: (line) => errors.push(line),
+      legacyBinding: (call) => (call.tool === stalling.tool ? stalling : null),
+      upstreamSpawn: (upstreamEvents) => {
+        events = upstreamEvents;
+        return upstream;
+      },
+      maxInflightUpstreamMessages: 2,
+    });
+
+    try {
+      await waitFor(() => events !== undefined, "upstream spawn");
+      const upstreamEvents = events;
+      if (upstreamEvents === undefined) return;
+      await entered;
+      for (let index = 0; index < 6; index += 1) {
+        upstreamEvents.onMessage(JSON.stringify({ jsonrpc: "2.0", method: "notifications/progress", params: { progressToken: index } }));
+      }
+
+      await waitFor(() => errors.some((line) => line.includes("upstream backlog exceeded")), "backlog refusal");
+      assert.equal(errors.filter((line) => line.includes("upstream backlog exceeded")).length, 1);
+    } finally {
+      releasePark();
+      await running.catch(() => {});
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 test("concurrent server requests restore typed upstream ids for success and error replies", async () => {

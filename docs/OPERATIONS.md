@@ -222,6 +222,30 @@ pre-rotation entries will not verify against it. That is a documented cost, not
 a supported flow, and it is why the surfaces above say what the key is worth
 rather than that it is pinned.
 
+**Drill evidence, 2026-10-03.** None of the above is shipped, and nothing in
+this drill changes any of it. What landed is the write side and a test that
+pins the exact line between the two. `packages/ledger/src/sign.ts` gained
+`devKeyRing(dir)`, a `KeyProvider` that answers `publicKey(id)` for the
+current key and for every retired public key under `<dir>/retired/<keyId>.spki`,
+and `rotateDevKey(dir)`, which retires the outgoing key's public SPKI and
+installs a freshly generated private key through the same O_EXCL 0600 path as a
+first run. `sign(input, keyId)` now honours the key id its own interface
+declares and throws a named error instead of signing with whatever key it
+holds. In `packages/ledger/src/rotation-drill.test.ts`, a chain of two entries
+under key A, a rotation, and two entries under key B verifies as one chain
+(`checked === 4`, key ids `[A, A, B, B]`) through the ring and through
+`jsonlStore.verify`. What still fails, in that same file, is the shipped
+trust decision: resolving the verification key the way every surface does, one
+key, refuses the same chain with `entry 1 has no public key for dev-…`. The
+test asserts that refusal rather than working around it, so the follow-up
+cannot move the boundary quietly. The trust set in the pin, the decision about
+re-signing pre-rotation entries, the rotation entry record, revocation and the
+`void` command remain open and reserved: each one changes a persisted artifact
+or a trust decision, and none of them is implied by a signer that can produce
+a two-key chain. The ring only grows: a retired key stays answerable for as
+long as its `.spki` is on disk, and nothing in this drill removes one, so a key
+retired here is retired, not revoked.
+
 Each JSONL line is one stored entry with:
 
 - workspace

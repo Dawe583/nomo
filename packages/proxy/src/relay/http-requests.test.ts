@@ -6,10 +6,29 @@ import assert from "node:assert/strict";
 import { createHttpRequestRelay } from "./http-requests.ts";
 import type { HttpRequestRelay, HttpRequestRelayOptions } from "./http-requests.ts";
 import type { UpstreamProcess } from "../transport/stdio.ts";
+import { Session } from "../session.ts";
+import type { JsonRpcId, JsonRpcMessage, JsonRpcRequest } from "../rpc.ts";
+
+// A session whose upstream ids are strings. The relay has to carry that id as
+// an identity of its own type: nothing about it may be rejected as malformed
+// and nothing about it may be read as its numeric lookalike.
+class StringIdSession extends Session {
+  override translateRequestOut(request: JsonRpcRequest): JsonRpcRequest {
+    const translated = super.translateRequestOut(request);
+    return { ...translated, id: `up-${String(translated.id)}` };
+  }
+
+  override translateInbound(message: JsonRpcMessage): JsonRpcMessage | null {
+    if ("id" in message && typeof message.id === "string" && message.id.startsWith("up-")) {
+      return super.translateInbound({ ...message, id: Number(message.id.slice(3)) });
+    }
+    return super.translateInbound(message);
+  }
+}
 
 type SentMessage = {
   readonly jsonrpc: "2.0";
-  readonly id?: number;
+  readonly id?: JsonRpcId;
   readonly method: string;
   readonly params?: Readonly<Record<string, unknown>>;
 };
@@ -122,6 +141,25 @@ describe("createHttpRequestRelay", () => {
         { jsonrpc: "2.0", id: 1, result: { value: "first" } },
       ]);
     });
+  });
+
+  test("S11: a string upstream id routes to its own pending request", async () => {
+    await withRelay(async (url, relay, sent) => {
+      const responsePromise = fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 3, method: "tools/list" }),
+      });
+
+      await waitFor(() => sent.length === 1);
+      const upstreamId = sent[0]?.id;
+      assert.equal(typeof upstreamId, "string");
+      relay.receiveUpstreamLine(JSON.stringify({ jsonrpc: "2.0", id: upstreamId, result: { tools: [] } }));
+
+      const response = await responsePromise;
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), { jsonrpc: "2.0", id: 3, result: { tools: [] } });
+    }, { session: new StringIdSession() });
   });
 
   test("preserves large and nonnumeric string IDs through cancellation", async () => {

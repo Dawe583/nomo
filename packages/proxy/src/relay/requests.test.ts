@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { relayServerRequest, relayServerResponse } from "./requests.ts";
 import type { JsonRpcRequest, ServerRequestRelaySession } from "./requests.ts";
+import { Session } from "../session.ts";
 
 describe("relayServerRequest", () => {
   test("server request gets a fresh agent id and records the map", () => {
@@ -40,6 +41,33 @@ describe("relayServerRequest", () => {
     assert.deepEqual(relayed.map((request) => request.id), [100, 101, 102, 103, 104]);
     assert.deepEqual(relayed.map((request) => request.method), requests.map((request) => request.method));
     assert.deepEqual(relayed.map((request) => request.params), requests.map((request) => request.params));
+  });
+});
+
+describe("relayServerRequest against the production Session", () => {
+  test("S11: a server request's progress token is remapped and answered with the server's token", () => {
+    const session = new Session();
+    const relayed = relayServerRequest(
+      { jsonrpc: "2.0", id: "srv-1", method: "roots/list", params: { _meta: { progressToken: "srv-token" } } },
+      session,
+    );
+
+    const params = relayed.params;
+    assert.ok(params !== undefined && "_meta" in params);
+    const meta = params._meta;
+    assert.ok(typeof meta === "object" && meta !== null && "progressToken" in meta);
+    assert.equal(meta.progressToken, relayed.id);
+
+    const progress = session.translateInbound({
+      jsonrpc: "2.0",
+      method: "notifications/progress",
+      params: { progressToken: relayed.id, progress: 1 },
+    });
+    assert.deepEqual(progress, {
+      jsonrpc: "2.0",
+      method: "notifications/progress",
+      params: { progressToken: "srv-token", progress: 1 },
+    });
   });
 });
 

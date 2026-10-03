@@ -130,6 +130,7 @@ describe("spawnUpstream", () => {
       {},
       {
         stderr: {
+          writableLength: 0,
           write(chunk: string | Uint8Array) {
             stderrChunks.push(String(chunk));
             return true;
@@ -155,6 +156,44 @@ describe("spawnUpstream", () => {
     assert.deepEqual(messages, ['{"ok":true}']);
     assert.equal(stderrChunks.join(""), "log only\n");
     assert.equal(registeredStderr.join(""), "log only\n");
+  });
+
+  test("S10: upstream stderr past the queue ceiling is dropped, not buffered", async () => {
+    const close = onceClose();
+    const stderrChunks: string[] = [];
+    const errors: string[] = [];
+    const upstream = spawnUpstream(
+      [process.execPath, "-e", "process.stderr.write('noisy\\n');"],
+      {},
+      {
+        // A stderr pipe the operator is not draining: every forwarded chunk
+        // would otherwise sit in Node's buffer for the life of the proxy.
+        maxWriteBufferSize: 16,
+        stderr: {
+          writableLength: 64,
+          write(chunk: string | Uint8Array) {
+            stderrChunks.push(String(chunk));
+            return true;
+          },
+        },
+        events: {
+          onMessage() {},
+          onClose: close.onClose,
+          onError(err) {
+            errors.push(err.message);
+          },
+        },
+      },
+    );
+
+    await close.promise;
+
+    assert.deepEqual(stderrChunks, []);
+    assert.ok(
+      errors.some((message) => /outbound queue exceeded 16 bytes/.test(message)),
+      errors.join(" | "),
+    );
+    assert.ok(upstream !== undefined);
   });
 
   test("reports overflow and resets the buffer", async () => {

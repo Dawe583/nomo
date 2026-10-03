@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import process from "node:process";
 
+import { assertOutboundQueueCeiling } from "../hardening.ts";
+
 const STDIO_DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024;
 
 type TimerHandle = unknown;
@@ -31,7 +33,7 @@ export type StdioTransportOptions = {
   readonly maxWriteBufferSize?: number;
   readonly killDelayMs?: number;
   readonly clock?: StdioClock;
-  readonly stderr?: Pick<NodeJS.WriteStream, "write">;
+  readonly stderr?: Pick<NodeJS.WriteStream, "write" | "writableLength">;
 };
 
 export class ReadBuffer {
@@ -162,7 +164,19 @@ export function spawnUpstream(
 
   child.stderr.on("data", (chunk: Buffer) => {
     const text = chunk.toString("utf8");
-    stderr.write(text);
+    // Upstream-controlled bytes, and the same class as the stdout queue: if the
+    // operator's stderr is a slow pipe, Node buffers every chunk we forward.
+    try {
+      assertOutboundQueueCeiling(
+        stderr.writableLength,
+        Buffer.byteLength(text, "utf8"),
+        maxWriteBufferSize,
+      );
+      stderr.write(text);
+    } catch (err) {
+      events.onError(err instanceof Error ? err : new Error(String(err)));
+      return;
+    }
     for (const callback of stderrCallbacks) {
       callback(text);
     }
