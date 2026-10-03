@@ -662,7 +662,20 @@ INP and CLS, plus a documented rollback execution. Evidence: the pending
 matrix in `docs/MOBILE-ACCESSIBILITY-ACCEPTANCE.md`; the delivery report
 claims viewport checks only. `[EXT]` needs physical devices. Size: M.
 
-## 7. Apple, desktop, mobile
+## 7. Apple, desktop, mobile — OUT OF SCOPE by owner decision, 2026-10-03
+
+**Everything in this section is out of scope.** The owner's instruction on
+2026-10-03 was: no iOS and no macOS, removed from the plan rather than
+deferred. G-22 and G-23 below are kept as a record of what was true when they
+were written, and neither is engineering this project will do until the owner
+revives them immediately before a release. Nothing in this section counts
+toward any target in this document, and no session should pick an item up
+"because it is small".
+
+The Swift contrast gate is the one mechanical consequence: its guard now
+requires a full Xcode toolchain and reports `skipped` on a host without one,
+so `pnpm test` stays green without the Apple surface being measured. A skipped
+measurement is not a measurement, and nothing may claim it is.
 
 ### G-22 A1: signed and notarized macOS distribution
 
