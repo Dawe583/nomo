@@ -270,7 +270,7 @@ Wired capture + inverse implementations, in full:
   as opaque bytes and independently re-hashed (`s3/capture.ts:44-57`). Inverse
   is a `putObject` with `ifMatch`/`ifNoneMatch` (`s3/inverse.ts:16-23`). Apply
   refuses on ETag drift and re-puts with CAS (`s3/apply.ts:47-69`), and since
-  2026-10-02 the apply path returns `proveRestore(...)`
+  `c5d32fc` (2026-09-30) the apply path returns `proveRestore(...)`
   (`s3/apply.ts:115`), which re-reads the object, compares the bytes against
   the capture and refuses rather than reporting a step it could not read back.
   *This line said "no post-write re-read" and was false against the tree by the
@@ -836,11 +836,15 @@ because that is the one artefact a third party can verify without VOID.
 
 ### 11.5 Cloudflare, and what it can and cannot absorb
 
-Cloudflare appears in neither §3.1 nor §3.2, so this is additive. It is a
-distribution threat rather than a feature competitor: MCP traffic governance at
-the edge, bundled into an account a team already pays for. It can absorb
-guardrails, per-tool policy and request audit into that bundle, which is most of
-§9's table stakes, without writing a connector.
+Cloudflare appears in neither §3.1 nor §3.2, so this is additive. *The
+characterisation in this subsection comes from the review under test; no
+Cloudflare page was fetched or verified for this section, which is the same
+limitation §3 records for its own external work.*
+
+It is a distribution threat rather than a feature competitor: MCP traffic
+governance at the edge, bundled into an account a team already pays for. It can
+absorb guardrails, per-tool policy and request audit into that bundle, which is
+most of §9's table stakes, without writing a connector.
 
 What it cannot get from an edge is the part that has to understand the write: a
 per-effect before-image for a customer's table, an inverse that re-reads and
@@ -867,8 +871,10 @@ the ledger is the part fifteen projects already ship.
 ### 11.7 What this changes
 
 1. The sellable claim is Postgres: capture, restore, re-read, refuse on drift,
-   receipt a third party can check without trusting us. Everything else is
-   roadmap, and §4.3's count says how much roadmap.
+   and a receipt written into the customer's own database, which a third party
+   can check without trusting us. S3 now proves the write the same way
+   (§11.8), but its receipt stays inside VOID's own evidence, so it is not yet
+   the same claim. Everything else is roadmap, and §4.3's count says how much.
 2. Publish a latency figure only with a named disk and a durability tier.
    Today's honest line is "6.4 ms of fsynced append, decision cost
    unmeasurable", not "sub-millisecond".
@@ -879,10 +885,11 @@ the ledger is the part fifteen projects already ship.
 ### 11.8 Two of this document's own build recommendations have shipped
 
 This document was written against `63dbd2c` on 2026-09-26 and its own method
-says to read the source, not the documents. Re-running that method against
-`fc4ef9e`, the tip of `main`, finds that §7's first two recommendations are no
-longer recommendations. Neither file cited below is touched by the open
-hardening branch, so the finding holds on `main` as it stands.
+says to read the source, not the documents. Re-running that method finds that
+§7's first two recommendations were built four days later, in `c5d32fc`
+(2026-09-30), and this document was never updated to say so. `c5d32fc` is the
+commit that shipped both the S3 post-write re-read and the signed reversal
+records; it is an ancestor of `main` and of every branch since.
 
 **§7 #1, "make the inversion provable in the system you inverted".** The S3
 apply path returns `proveRestore(...)` (`packages/connectors/src/s3/apply.ts:115`),
@@ -959,6 +966,18 @@ client in every test in this repository.
 - <https://www.postgresql.org/docs/current/logical-replication-publication.html>
   (REPLICA IDENTITY); <https://kubernetes.io/docs/reference/using-api/server-side-apply/>
   (server-side apply) — the platform-native before-image primitives
+
+**Measured 2026-10-03 on this machine:** `node scripts/src/bench.mjs --scale
+200` — smoke-grade, in-process echo upstream, real signed fsynced ledger, no
+warmup, no network, no subprocess transport. The §11.3 table is this run. Also
+read today for §11.8: `packages/connectors/src/s3/apply.ts` (`:115` `proveRestore`,
+`:166` `RestoreReceipt`), `packages/ledger/src/reversal.ts` (`:55-65`),
+`packages/ledger/src/verify.ts` (`:125-134`),
+`packages/ledger/src/store.ts` (`:186-195`).
+
+**Not fetched:** any Cloudflare page. The §11.5 characterisation of what
+Cloudflare is building comes from the review under test and was not verified
+here; see the note at the head of that subsection.
 
 **Carried forward from the two existing documents and not re-verified here:**
 Anthropic's 2026-09-09 alignment assessment; ProjectDiscovery's behavioural
