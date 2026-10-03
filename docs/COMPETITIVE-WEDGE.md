@@ -880,8 +880,9 @@ the ledger is the part fifteen projects already ship.
 
 This document was written against `63dbd2c` on 2026-09-26 and its own method
 says to read the source, not the documents. Re-running that method against
-`fb7680b` finds that §7's first two recommendations are no longer
-recommendations.
+`fc4ef9e`, the tip of `main`, finds that §7's first two recommendations are no
+longer recommendations. Neither file cited below is touched by the open
+hardening branch, so the finding holds on `main` as it stands.
 
 **§7 #1, "make the inversion provable in the system you inverted".** The S3
 apply path returns `proveRestore(...)` (`packages/connectors/src/s3/apply.ts:115`),
