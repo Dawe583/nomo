@@ -547,7 +547,8 @@ decide, hold, the approval **channel interface** and the CLI channel),
 the standalone verifier as its own separately installable package with **zero
 dependency on any other VOID package**.
 
-_Paid and closed:_ `apps/control-plane`, the Slack and Teams channel
+_Paid and closed:_ `apps/control-plane`, `cloud` (added 2026-10-03, see the
+amendment at the end of this file), the Slack and Teams channel
 implementations, SSO, multiple workspaces, irreversibility budgets, the taint
 graph, attestation exports with compliance frame mappings, premium connectors
 (Stripe, Salesforce, HubSpot, Gmail, Kubernetes), retention beyond seven days,
@@ -1180,3 +1181,87 @@ assert the named field and the named adapter, and those tests fail when the
 naming is broken; that is evidence about this text and not about an operator
 finding it. No test here runs a real PostgreSQL recovery, and none of this
 changes what the executor does once a configuration is accepted.
+
+---
+
+## `cloud/` is the paid side, and every directory now has a status, 2026-10-03
+
+Amendment five to section 5, added because issue #55 found that the paid
+entitlement decision had moved into a directory no decision named and no test
+read. The operational test in section 5 is undecidable for a directory with no
+declared status, and an undeclared status is indistinguishable from an open one
+to every reader and to every tool. This names it.
+
+**`cloud/` is paid and closed, as one directory.** It carries its own `LICENSE`
+declaring `LicenseRef-VOID-Proprietary`, which is the same identifier
+`apps/control-plane` declares, so there is one dialect of closed in this
+repository rather than two.
+
+**The operational test, applied.** The test asks, of anything proposed for a
+paid package: *before anything merges into a paid package, ask whether a solo
+developer protecting one Postgres could do their job without it. If the answer
+is no, it belongs open.* The question has to be asked of each file, not of the
+directory, and the answers split cleanly:
+
+- `cloud/capability-gate.mjs` is the paid entitlement decision itself and
+  `cloud/billing.mjs` is the merchant of record behind it. A solo developer has
+  no entitlement to grant and no subscription to bill. Could they do their job
+  without them: **yes**, so they belong paid.
+- `cloud/account.mjs` is the identity broker, its sealed session cookies and its
+  provider round trips. `cloud/store.mjs` is the transactional owner-scoped
+  encrypted store holding customer documents and provider credentials.
+  `cloud/integrations.mjs` and `cloud/oauth.mjs` are the round trips that put a
+  provider token behind that store. `cloud/recovery-routes.mjs`,
+  `cloud/demo.mjs` and `cloud/prime.mjs` are the hosted surfaces on top of it.
+  A solo developer protecting one Postgres needs none of these: they run the
+  proxy, the policy engine and the ledger locally, and every one of those is
+  open. Could they do their job without this directory: **yes**, so it belongs
+  paid.
+- `cloud/mcp.mjs` is a one-line re-export of `packages/workbench`, so nothing in
+  `cloud/` re-implements an open capability. `cloud/steps.mjs` and
+  `cloud/server.mjs` read the registry, the policy engine, the ledger and the
+  runtime rather than replacing them.
+
+Nothing in `cloud/` fails the test in the direction that would force it open, so
+one status for the whole directory is the honest answer rather than a tidy one.
+A split was considered and rejected on the test's own terms: the files a split
+would have to leave open are the ones with no capability in them at all
+(`cloud/mcp.mjs` is a re-export), and the files carrying a real capability are
+the ones a developer can plainly do without. Splitting would have produced a
+boundary that a reader could not act on.
+
+**Nothing in `cloud/` is the interception spine.** Section 5's safety argument
+is that nobody puts a closed proxy in front of their production database on a
+stranger's word, so the component that intercepts, classifies and holds must be
+readable by the person putting it in their write path. That component is
+`packages/proxy`, `packages/policy`, `packages/registry` and `packages/ledger`,
+all Apache 2.0. `cloud/` reads all four and is imported by none of them, so a
+reader who cannot see `cloud/` can still read everything that decides whether an
+agent's write is allowed. Closing the deployed server does not close the hold.
+
+**Every other directory is now classified too.** The gate scans the whole tree
+and every tracked top-level directory, plus every child of `apps/`, appears in
+it with a status. `apps/apple`, `apps/desktop`, `apps/appwrite-mcp`,
+`apps/tui-preview`, `gui-web`, `python/void-transport`, `scripts/`, `docs`,
+`fixtures`, `policy`, `marketing`, `site` and the tool directories are open,
+each with the reason it is not closed. They were open before this amendment
+under the root licence; naming them narrows nothing and makes it impossible for
+a reader to guess.
+
+**Undecided now fails instead of passing.** The classification in
+`scripts/src/licence-line.test.mjs` is a partition, not a list. A top-level
+directory or an `apps/` child with no entry fails the gate with its name in the
+message. That is the assertion this amendment exists to justify: the defect was
+never that `cloud/` was open, it is that nothing would have noticed either way.
+
+**What this does not establish.** This names a status; it does not move any code
+across the boundary. Two known leaks are named rather than fixed, because fixing
+either means moving code and that is a separate work package. First,
+`packages/ledger/src/taint/graph.ts` is still Apache 2.0 while `taintGraph` is
+on the paid side, so the paid capability currently ships in open code; the
+capability gate in `cloud/capability-gate.mjs` names this and the gate asserts
+only that the decision lives in a closed directory. Second, `packages/cli` and
+`packages/workbench` import `desktop-setup.ts` and `commands.ts` out of the
+closed `apps/control-plane`, which is the reverse of the direction this
+amendment asserts for `cloud/`. Both are recorded here so they are visible
+rather than discovered.
