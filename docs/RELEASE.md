@@ -108,10 +108,14 @@ Wave 5 source status, pending integrated verification:
    and refusal after target drift. No production accounts or autonomous writes
    to customer data. Replay apply still needs a real executor supplied by the
    host; a configured URL alone is not a database driver.
-5. **Credential-blocked git push.** The handoff reports that pushing is blocked
-   by repository credentials. A human must restore authorized access, then
-   push the reviewed branch and release tag. No push or remote CI result is
-   claimed by this runbook.
+5. **Remote CI does not run.** GitHub Actions refuses to start any job on this
+   account, with the annotation that recent account payments have failed or the
+   spending limit needs raising: issues #13 and #34. Pushing itself is **not**
+   blocked. Branches pushed cleanly on 2026-10-03 and five pull requests are
+   open. What is missing is remote evidence, so no check in this repository has
+   run on a clean machine and every gate result in this document is local. A
+   human has to settle the billing; until then "CI is green" is not a claim
+   this runbook can make about anything.
 6. **WP-15 delivery evidence.** A published `@void/cli` version, clean-machine
    quickstart under five minutes, Docker image, and MCP registry listing still
    require release evidence. The WP-15 exit is not complete just because the
@@ -136,8 +140,8 @@ Wave 5 source status, pending integrated verification:
    a public release, and until the owner says so they are not engineering this
    project does. The same decision is recorded in `docs/ROADMAP-2026-Q4.md`
    (scope amendment) and `docs/PLAN-GAPS.md` §7, which takes G-24 with it:
-   item 9 below is packaging **for the desktop app** — the Tauri `deb`, `rpm`
-   and `AppImage` targets — so removing the app removes its packaging tail.
+   item 9 below is packaging **for the desktop app**, the Tauri `deb`, `rpm`
+   and `AppImage` targets, so removing the app removes its packaging tail.
    Nothing here changes the Linux or macOS *server* or CLI distribution, which
    is a different question and is not part of this decision.
 9. **Linux packaging and installer signing.** Linux targets (`deb`, `rpm`,
