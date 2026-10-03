@@ -109,6 +109,31 @@ if (existsSync(cloudDir)) {
   results.push(runSuite("cloud", root, cloudFiles, "cloud"));
 }
 
+// The paid suites are the same shape as the cloud ones: a closed top-level
+// directory that is not a pnpm workspace package, so `runSuite` is called
+// directly rather than through the package loop. `paid/channels/slack.test.ts`
+// is collected recursively because the implementation lives one level down,
+// where `cloud/` keeps its suites flat.
+//
+// The runner label is `paid` for the reason the cloud one is: a failure has to
+// name the invocation that produced it, because "the paid suite exceeded its
+// budget" sends a reader to a different directory than "packages/policy did".
+const paidDir = join(root, "paid");
+if (existsSync(paidDir)) {
+  const paidFiles = [];
+  const collect = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) collect(path);
+      else if (entry.name.endsWith(".test.ts")) paidFiles.push(path);
+    }
+  };
+  collect(paidDir);
+  paidFiles.sort();
+  if (paidFiles.length === 0) throw new Error("paid suite has no tests");
+  results.push(runSuite("paid", root, paidFiles, "paid"));
+}
+
 /**
  * The two Python suites, which until now no local gate and no CI job ran.
  *

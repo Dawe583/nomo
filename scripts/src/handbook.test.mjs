@@ -41,6 +41,7 @@ const SOURCE_ROOTS = [
   "docs",
   "fixtures",
   "packages",
+  "paid",
   "policy",
   "python",
   "scripts",
