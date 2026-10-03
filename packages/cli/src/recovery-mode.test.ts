@@ -79,6 +79,7 @@ test("an unknown mode is refused rather than ignored", async (t) => {
   await writeFile(w.config, JSON.stringify({ ...config, mode: "loud" }));
   await assert.rejects(
     runRecoveryCommand(["health", "--config", w.config], w.env, () => {}),
-    /Invalid recovery configuration/,
+    // The named field, not merely the one-sentence verdict it replaced.
+    /mode is "loud"/,
   );
 });

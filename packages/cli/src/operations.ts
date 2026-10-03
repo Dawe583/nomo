@@ -10,6 +10,7 @@ import { listPacks, loadPack } from '../../policy/src/packs.ts';
 import { loadPolicy } from '../../policy/src/rules.ts';
 import { createBundle, describeBundle, verifyBundle } from './export-bundle.ts';
 import { collectMetrics, renderMetricsJson, renderMetricsText } from './metrics.ts';
+import { resolveLedgerTarget } from './ledger-target.ts';
 
 const LEDGER_FLAGS = ['--ledger', '--workspace'] as const;
 const BUNDLE_FLAGS = [...LEDGER_FLAGS, '--state', '--bundle', '--anchor', '--attestation', '--key'] as const;
@@ -39,22 +40,25 @@ function parse(argv: readonly string[], allowed: readonly string[]): Invocation 
   return { flags, positional };
 }
 
-/** The ledger or ledger directory the operator named, or the default location. */
-function ledgerTarget(flags: ReadonlyMap<string, string>, env: Readonly<NodeJS.ProcessEnv>): string {
+/**
+ * `void export`, `void attest` and `void metrics` resolve their ledger through
+ * the same helper `void verify` uses, so a missing path is answered the same
+ * way everywhere instead of three times with three messages.
+ */
+function requestedWorkspace(flags: ReadonlyMap<string, string>): string {
   const requested = flags.get('--workspace') ?? 'default';
   if (!/^[A-Za-z0-9_-]+$/.test(requested)) throw new Error('invalid workspace');
-  return flags.get('--ledger') ?? join(env.VOID_LEDGER_DIR ?? join(homedir(), '.void', 'ledger'), `${requested}.jsonl`);
+  return requested;
 }
 
 /** Export and attest read one workspace, so a directory means its workspace file. */
 async function ledgerPath(flags: ReadonlyMap<string, string>, env: Readonly<NodeJS.ProcessEnv>): Promise<{ ledger: string; workspace: string }> {
-  const requested = flags.get('--workspace') ?? 'default';
-  let ledger = ledgerTarget(flags, env);
-  if ((await stat(ledger)).isDirectory()) ledger = join(ledger, `${requested}.jsonl`);
-  return { ledger, workspace: basename(ledger, '.jsonl') };
+  const resolution = await resolveLedgerTarget({ mode: 'workspace', ledger: flags.get('--ledger'), workspace: requestedWorkspace(flags), env });
+  if (!resolution.ok) throw new Error(resolution.message);
+  return { ledger: resolution.path, workspace: basename(resolution.path, '.jsonl') };
 }
 
-export async function runOperation(command: string, argv: readonly string[], env: Readonly<NodeJS.ProcessEnv>, output: (text: string) => void): Promise<number> {
+export async function runOperation(command: string, argv: readonly string[], env: Readonly<NodeJS.ProcessEnv>, output: (text: string) => void, error: (text: string) => void = console.error): Promise<number> {
   if (command === 'policy') {
     if (argv.length === 0 || (argv.length === 1 && argv[0] === 'list')) { output(listPacks().join('\n')); return 0; }
     if (argv.length === 2 && argv[0] === 'show') { output(JSON.stringify(await loadPack(argv[1]!), null, 2)); return 0; }
@@ -72,7 +76,15 @@ export async function runOperation(command: string, argv: readonly string[], env
       throw new Error('--format is json or text');
     // Metrics accept a ledger directory on purpose: a scan counts the ledgers
     // that do not verify, which is why it does not resolve to one workspace file.
-    const ledger = ledgerTarget(flags, env);
+    // A directory that is merely empty is therefore a measurement of zeroes, not
+    // a refusal; what cannot be measured is a path that is absent or unreadable,
+    // and that exits non-zero so a probe cannot record a healthy pipeline while
+    // nothing was counted.
+    const resolution = await resolveLedgerTarget({ mode: 'scan', ledger: flags.get('--ledger'), workspace: requestedWorkspace(flags), env });
+    if (!resolution.ok) {
+      error(`void metrics measured nothing\n  ${resolution.message}`);
+      return 1;
+    }
     const state = flags.get('--state');
     const signer = await devKeyProvider({ env });
     // A state directory without retained key material still yields metrics; the
@@ -81,7 +93,7 @@ export async function runOperation(command: string, argv: readonly string[], env
       ? await retainedKeyProvider({ dir: join(state, 'keys') }).catch(() => null)
       : null;
     const report = await collectMetrics({
-      ledgerPath: ledger,
+      ledgerPath: resolution.path,
       stateDir: state,
       publicKey: (id) => signer.publicKey(id),
       journalPublicKey: journal ? (id) => journal.publicKey(id) : undefined,

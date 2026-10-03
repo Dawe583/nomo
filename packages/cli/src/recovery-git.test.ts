@@ -37,13 +37,13 @@ posixTest("CLI rejects malformed and nonexclusive Git configuration before targe
   for (const git of [{ root: "", cooperative: true }, { root: "/tmp/repo", cooperative: true }, { root: "../repo", cooperative: true }, { root: "repo", cooperative: false }]) {
     const config = join(dir, `config-${Math.random()}.json`);
     await writeFile(config, JSON.stringify({ workspace: "test", stateDir: "state", encryptionKeyEnv: "KEY", git }));
-    await assert.rejects(runRecoveryCommand(["inspect", "--config", config, "--input", input], {}), /Invalid recovery configuration/);
+    await assert.rejects(runRecoveryCommand(["inspect", "--config", config, "--input", input], {}), /git\.(root|cooperative)/, "the refusal must name the field that was refused");
     assert.deepEqual(await unchanged(), before);
   }
   for (const branches of [{}, { git: { root: "repo", cooperative: true }, filesystem: { root: "repo", cooperative: true } }, { git: { root: "repo", cooperative: true }, postgres: { schema: "x", tables: [], urlEnv: "URL" } }, { filesystem: { root: "repo", cooperative: true }, postgres: { schema: "x", tables: [], urlEnv: "URL" } }, { git: { root: "repo", cooperative: true }, filesystem: { root: "repo", cooperative: true }, postgres: { schema: "x", tables: [], urlEnv: "URL" } }]) {
     const config = join(dir, `branches-${Math.random()}.json`);
     await writeFile(config, JSON.stringify({ workspace: "test", stateDir: "state", encryptionKeyEnv: "KEY", ...branches }));
-    await assert.rejects(runRecoveryCommand(["inspect", "--config", config, "--input", input], {}), /Invalid recovery configuration/);
+    await assert.rejects(runRecoveryCommand(["inspect", "--config", config, "--input", input], {}), /adapters? (is|are) configured/, "the refusal must say how many adapters were selected, not merely that it was invalid");
     assert.deepEqual(await unchanged(), before);
   }
 });

@@ -1136,3 +1136,47 @@ ordering there already says to start it first. What this section removes is the
 possibility of treating the name as engineering work to be closed alongside the
 scope, which is the failure a roadmap invites when it lists a decision and its
 prerequisite on the same page.
+
+## A ledger is resolved once, and a refusal names the argument, 2026-10-03
+
+Taken because issues #63 and #62 were both found by using the product rather
+than through its tests, and both are the same mistake: a command reported a
+derived path instead of the path the caller gave it.
+
+**The ledger path is resolved in one helper that returns a result, and no
+command resolves it on its own.** `packages/cli/src/ledger-target.ts` is used by
+`void verify`, `void export`, `void attest` and `void metrics`. It returns a
+result rather than throwing because the failure is an answer, not an exception:
+`absent`, `empty-directory`, `workspace-absent`, `unreadable` and `not-a-file`
+are five different operational problems and were one `ENOENT`. The standalone
+verifier cannot import that helper and does not: it keeps its own resolution
+because zero dependencies is the property that makes it checkable by a third
+party, and the duplication is the cost of that promise rather than an accident.
+
+**Every message echoes what the caller passed.** When nothing was passed the
+default location is named and labelled as the default, because that is what was
+resolved. A message naming `<dir>/default.jsonl` to someone who passed `<dir>`
+is the defect, not the detail.
+
+**`void metrics` exits non-zero when it cannot measure.** An empty directory is
+a measurement of zeroes and exits zero; an absent or unreadable path is not a
+measurement and exits 1 with nothing on stdout. A counter surface that prints an
+error and exits zero is a false pass, and a false pass on the machine-readable
+surface is the one a dashboard records forever.
+
+**A refusal names a field, and a configuration is inspectable.**
+`packages/cli/src/recovery-config.ts` describes every field `void recovery`
+reads, every required field it did not find and every field it ignores, and
+`void recovery doctor --config <file>` prints that description and exits 1 when
+it is not usable. The same description is the text of the refusal, so the
+diagnostic and the report cannot drift apart. A config carrying an adapter this
+executor does not read is answered with the adapter name and a pointer at
+`void recovery conformance`, which does read it: "unsupported" and "malformed"
+are different problems and an operator cannot fix either one from a sentence
+that names neither.
+
+**What this does not establish.** The refusal text is covered by tests that
+assert the named field and the named adapter, and those tests fail when the
+naming is broken; that is evidence about this text and not about an operator
+finding it. No test here runs a real PostgreSQL recovery, and none of this
+changes what the executor does once a configuration is accepted.
