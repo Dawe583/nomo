@@ -33,7 +33,14 @@ import {
   sign,
   verify,
 } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -328,12 +335,61 @@ function verifyEntries(entries, publicKey) {
   return { ok: true, checked, head: prev };
 }
 
+/**
+ * A caller who hands this verifier a directory means "verify what is in
+ * here". Answering `cannot read bundle <dir>` for a readable directory is the
+ * tool claiming it cannot understand its own argument, so the directory is
+ * resolved and every way that can go wrong says which of them happened: the
+ * path is absent, the directory is empty, or it holds more than one bundle and
+ * this verifier will not guess which was meant. A malformed bundle is a
+ * different failure again and is reported by `readBundle` below.
+ *
+ * Only a directory holding exactly one bundle gets a file chosen, and the
+ * chosen file is echoed, so the verdict is about something the reader can see
+ * rather than a path the tool derived silently. Zero dependencies still: this
+ * is `node:fs`, like everything else in this file.
+ */
+function resolveBundlePath(input) {
+  let info;
+  try {
+    info = statSync(input);
+  } catch (error) {
+    if (error.code === "ENOENT")
+      throw new Error(
+        `${input} does not exist: void-verify reads one JSONL bundle, named as its argument`,
+      );
+    throw new Error(
+      `cannot read ${input}: ${error.code ?? error.message} (a permissions problem, not a missing file)`,
+    );
+  }
+  if (!info.isDirectory()) return input;
+  let names;
+  try {
+    names = readdirSync(input);
+  } catch (error) {
+    throw new Error(`cannot list ${input}: ${error.code ?? error.message}`);
+  }
+  const bundles = names.filter((name) => name.endsWith(".jsonl")).sort();
+  if (!bundles.length)
+    throw new Error(
+      `${input} is an empty directory: it holds no .jsonl bundle to verify`,
+    );
+  if (bundles.length > 1)
+    throw new Error(
+      `${input} holds ${bundles.length} bundles (${bundles.join(", ")}): pass the one you mean as the argument`,
+    );
+  return join(input, bundles[0]);
+}
+
 function readBundle(path) {
+  const resolved = resolveBundlePath(path);
   let text;
   try {
-    text = readFileSync(path, "utf8");
-  } catch {
-    throw new Error(`cannot read bundle ${path}`);
+    text = readFileSync(resolved, "utf8");
+  } catch (error) {
+    throw new Error(
+      `cannot read bundle ${resolved}: ${error.code ?? error.message}`,
+    );
   }
   if (Buffer.byteLength(text) > MAX_BYTES)
     throw new Error(`bundle exceeds the ${MAX_BYTES} byte read limit`);
@@ -479,21 +535,32 @@ function main(argv) {
     attestationIndex >= 0 ? argv[attestationIndex + 1] : undefined;
   if (!file || file.startsWith("--")) {
     console.error(
-      "Usage: void-verify <bundle.jsonl> [--public-key <base64-spki> [--key-id <id>]] [--attestation <doc.json>]",
+      "Usage: void-verify <bundle.jsonl|directory> [--dir <path>] [--public-key <base64-spki> [--key-id <id>]] [--attestation <doc.json>]",
     );
     process.exitCode = 2;
     return;
   }
   // Key ids ride inside each entry, so --key-id is documentation only.
   void onlyKeyId;
-  let entries;
+  // The bundle actually read is echoed, so a verdict about a file this tool
+  // picked out of a directory is never a verdict about something invisible.
+  let resolved;
   try {
-    entries = readBundle(file);
+    resolved = resolveBundlePath(file);
   } catch (error) {
     console.error(`FAILED: ${error.message}`);
     process.exitCode = 1;
     return;
   }
+  let entries;
+  try {
+    entries = readBundle(resolved);
+  } catch (error) {
+    console.error(`FAILED: ${error.message}`);
+    process.exitCode = 1;
+    return;
+  }
+  if (resolved !== file) console.log(`BUNDLE ${resolved}`);
   let publicKey;
   if (encoded !== undefined) {
     try {

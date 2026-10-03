@@ -4,7 +4,7 @@ import { assertRecoveryStateOutsideRoot } from "./recovery-paths.ts";
 import { runConformanceCommand } from "./conformance.ts";
 import { inspectRecoveryHealth } from "./recovery-health.ts";
 import { readFile, readdir, lstat } from "node:fs/promises";
-import { resolve, join, dirname, isAbsolute } from "node:path";
+import { resolve, join, dirname } from "node:path";
 import { devKeyProvider, retainedKeyProvider } from "../../ledger/src/sign.ts";
 import {
   recoveryRuntime,
@@ -24,6 +24,11 @@ import {
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { recoveryMcpServer } from "./recovery-mcp.ts";
 import { loadPolicy, decide } from "../../policy/src/index.ts";
+import {
+  describeRecoveryConfig,
+  recoveryConfigRefusal,
+  renderRecoveryConfigReport,
+} from "./recovery-config.ts";
 import { postgresExecutor } from "./postgres.ts";
 /**
  * The operator's mode for this workspace, mirrored from the workbench's
@@ -33,8 +38,6 @@ import { postgresExecutor } from "./postgres.ts";
  * and not something a policy edit can widen by accident.
  */
 export type RecoveryMode = "audit" | "plan" | "normal";
-
-const MODES: readonly RecoveryMode[] = ["audit", "plan", "normal"];
 
 type Config = {
   vaultCapacity?: { maxArtifactBytes: number; maxTotalBytes: number };
@@ -83,6 +86,7 @@ export async function runRecoveryCommand(
       "plan-job",
       "apply-job",
       "status-job",
+      "doctor",
       "apply",
       "reconcile",
       "reconcile-recovery",
@@ -91,24 +95,22 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
+      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery doctor --config file OR void recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
-  if (
-    !/^[\w-]{1,100}$/.test(config.workspace) ||
-    (config.mode !== undefined && !MODES.includes(config.mode)) ||
-    !config.stateDir ||
-    [config.postgres, config.filesystem, config.git].filter(Boolean).length !== 1 ||
-    (config.git !== undefined &&
-      (config.git.cooperative !== true ||
-        typeof config.git.root !== "string" ||
-        !config.git.root ||
-        isAbsolute(config.git.root) ||
-        config.git.root.includes("\\") ||
-        config.git.root.split("/").some((part) => !part || part === "." || part === "..")))
-  )
-    throw new Error("Invalid recovery configuration.");
+  // `doctor` describes the file and stops there. It is the surface that answers
+  // "which field is wrong", so it must not need the rest of the configuration
+  // to be valid, and it must not need --input.
+  if (action === "doctor") {
+    const report = describeRecoveryConfig(config, configPath);
+    print(renderRecoveryConfigReport(configPath, report));
+    return report.valid ? 0 : 1;
+  }
+  // Every other action refuses with the same description, so the reason a
+  // command stopped is the report `void recovery doctor` would have printed.
+  const described = describeRecoveryConfig(config, configPath);
+  if (!described.valid) throw new Error(recoveryConfigRefusal(described));
   if (action === "health") {
     const configuredKey = env[config.encryptionKeyEnv];
     const report = await inspectRecoveryHealth({

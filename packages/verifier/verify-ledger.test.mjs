@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { tmpdir } from "node:os";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 /**
@@ -64,4 +66,96 @@ test("the package imports nothing that would need installing", () => {
       `${specifier} is not a Node built-in, so this file is no longer self contained`,
     );
   }
+});
+
+/**
+ * A third party runs this file to check an export without trusting us, so the
+ * failure text is part of what it is for. Every way the argument can fail to
+ * name a bundle gets its own sentence: the case that produced `cannot read
+ * bundle <dir>` for a readable, empty directory is the one an audit script is
+ * most likely to meet first.
+ */
+const invoke = (args) => {
+  let stdout = "";
+  let stderr = "";
+  let status = 0;
+  try {
+    stdout = execFileSync(process.execPath, [script, ...args], {
+      encoding: "utf8",
+      stdio: "pipe",
+    });
+  } catch (error) {
+    status = error.status;
+    stdout = error.stdout ?? "";
+    stderr = error.stderr ?? "";
+  }
+  return { stdout, stderr, status };
+};
+
+const scratchDir = () =>
+  mkdtempSync(join(tmpdir(), "void-verify-args-"));
+
+test("an empty directory is answered as an empty directory", (t) => {
+  const dir = scratchDir();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+
+  const result = invoke(["--dir", dir]);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /is an empty directory/);
+  assert.doesNotMatch(result.stderr, /cannot read bundle/);
+  assert.doesNotMatch(result.stderr, /ENOENT/);
+});
+
+test("a path that does not exist is a different sentence from an empty directory", (t) => {
+  const dir = scratchDir();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const missing = join(dir, "export.jsonl");
+
+  const absent = invoke([missing]);
+  const empty = invoke([dir]);
+
+  assert.notEqual(absent.status, 0);
+  assert.match(absent.stderr, /does not exist/);
+  assert.doesNotMatch(absent.stderr, /is an empty directory/);
+  assert.notEqual(absent.stderr, empty.stderr);
+});
+
+test("a malformed bundle is answered as malformed, not as a missing path", (t) => {
+  const dir = scratchDir();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const bundle = join(dir, "export.jsonl");
+  writeFileSync(bundle, "{ this is not json\n");
+
+  const result = invoke([bundle]);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /ledger line 1 is not JSON/);
+  assert.doesNotMatch(result.stderr, /does not exist|is an empty directory/);
+});
+
+test("a directory holding one bundle is read, and the file read is echoed", (t) => {
+  const dir = scratchDir();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  // An empty file is a bundle with no entries: that is a verdict about content,
+  // and it must not be confused with a verdict about the argument.
+  writeFileSync(join(dir, "export.jsonl"), "");
+
+  const result = invoke(["--dir", dir]);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /bundle holds no entries/);
+  assert.doesNotMatch(result.stderr, /is an empty directory|does not exist/);
+});
+
+test("a directory holding several bundles refuses to guess which one was meant", (t) => {
+  const dir = scratchDir();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  writeFileSync(join(dir, "a.jsonl"), "");
+  writeFileSync(join(dir, "b.jsonl"), "");
+
+  const result = invoke(["--dir", dir]);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /holds 2 bundles \(a\.jsonl, b\.jsonl\)/);
 });

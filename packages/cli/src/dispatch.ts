@@ -59,6 +59,7 @@ export async function runCommand(
       parsed.args,
       process.env,
       (text) => console.log(text),
+      (text) => console.error(text),
     );
   }
   if (parsed.command === "ledger") {

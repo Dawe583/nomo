@@ -1,8 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { readFile, stat } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import { checkAnchors, readAnchors } from "../../ledger/src/anchor.ts";
@@ -16,6 +14,7 @@ import {
 } from "../../ledger/src/verify-key.ts";
 import { readLedgerEntries, verifyChain } from "../../ledger/src/verify.ts";
 import type { PublicKeyLookup } from "../../ledger/src/verify.ts";
+import { resolveLedgerTarget } from "./ledger-target.ts";
 
 export type VerifyCommandIo = {
   readonly stdout: (line: string) => void;
@@ -55,7 +54,21 @@ export async function runVerifyCommand(
   try {
     const parsed = parseVerifyArgs(argv);
     const env = io.env ?? process.env;
-    const ledgerPath = await resolveLedgerPath(parsed, env);
+    // The resolver answers before any reading, and its answer names what the
+    // caller passed. `readLedgerEntries` used to raise the raw errno instead,
+    // so an empty directory was reported as a missing `default.jsonl` the
+    // operator never named.
+    const resolution = await resolveLedgerTarget({
+      mode: "workspace",
+      file: parsed.file,
+      ledger: parsed.ledger,
+      env,
+    });
+    if (!resolution.ok) {
+      io.stderr(resolution.message);
+      return 1;
+    }
+    const ledgerPath = resolution.path;
     // A verifier never mints a key and never falls back to the private key
     // file: an attacker who can replace that file must not be able to redefine
     // what "valid" means. The resolved source is printed, always.
@@ -257,17 +270,3 @@ function needValue(argv: readonly string[], index: number, name: string): string
   return value;
 }
 
-async function resolveLedgerPath(
-  args: VerifyArgs,
-  env: Readonly<NodeJS.ProcessEnv>,
-): Promise<string> {
-  if (args.file !== undefined) return args.file;
-  const path = args.ledger ?? join(env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"), `${env.VOID_WORKSPACE ?? "default"}.jsonl`);
-  try {
-    const info = await stat(path);
-    if (info.isDirectory()) return join(path, `${env.VOID_WORKSPACE ?? "default"}.jsonl`);
-  } catch {
-    return path;
-  }
-  return path;
-}

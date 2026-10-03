@@ -449,7 +449,8 @@ const INTERFACE_WORDS = [
 ];
 
 /** The newest decision in the pack. Renaming that heading renames this. */
-const NEWEST_DECISION = "## Package names, 2026-09-29";
+const NEWEST_DECISION =
+  "## A ledger is resolved once, and a refusal names the argument, 2026-10-03";
 
 const MONO_FOR_INTERFACE = /\bmono\w*/i;
 const NAMES_INTERFACE_WORD = new RegExp(

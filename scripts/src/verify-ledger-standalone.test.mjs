@@ -26,7 +26,7 @@ test("standalone selftest proves roundtrip, tamper refusal and wrong key refusal
 test("missing bundle and empty invocation fail with usage, not a crash", async () => {
   await assert.rejects(
     exec(process.execPath, [script, "/no/such/bundle.jsonl"]),
-    /FAILED: cannot read bundle/,
+    /FAILED: \/no\/such\/bundle\.jsonl does not exist/,
   );
   await assert.rejects(exec(process.execPath, [script]), /Usage:/);
 });

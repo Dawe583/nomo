@@ -4,6 +4,34 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
+- A missing ledger is now named as the thing the operator passed. `void verify`,
+  `void export`, `void attest` and `void metrics` resolve the ledger through one
+  helper, which returns a result rather than letting `fs.stat` raise: a readable
+  but empty directory is answered with that directory, a path that does not
+  exist says so, a path the filesystem refuses says so, and a directory holding
+  other workspaces names the workspace that was wanted. Previously all four
+  arrived as `ENOENT ... /<dir>/default.jsonl`, a file the caller never named
+  and may not have.
+
+  `void metrics` exits non-zero when it cannot measure and prints nothing to
+  stdout, so a probe cannot record a healthy pipeline while no counter was
+  counted. An empty directory is still a measurement and still exits zero: that
+  is a report of zeroes, which is what it means.
+
+  The standalone verifier takes a directory: one bundle inside it is read and
+  the file read is echoed on stdout, an empty one says it is empty, several say
+  it will not guess, and a malformed bundle is still reported as malformed. It
+  still imports nothing that would need installing.
+
+  `void recovery` no longer answers `Invalid recovery configuration.` It names
+  every reason, distinguishes an adapter this executor does not read from a
+  field that is malformed, and points a filesystem-shaped config at
+  `void recovery conformance`, which does run `filesystem.managed`.
+  `void recovery doctor --config <file>` is new: it prints every field the
+  command reads, every required field it did not find and every field it
+  ignores, with their source and never a secret, and exits 1 when the
+  configuration is unusable.
+
 - Billing is wired to Polar as merchant of record, on the server only. A signed
   delivery is verified against the exact bytes Polar sent and writes one
   subscription document into the account's own namespace, and a signed-in
