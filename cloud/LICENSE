@@ -1,0 +1,38 @@
+VOID hosted cloud server
+Copyright 2026 the VOID authors
+
+This directory is NOT licensed under the Apache License 2.0 that covers the
+rest of this repository. It is the closed, paid part of the open core and no
+licence is granted to use, copy, modify or redistribute it.
+
+    SPDX-License-Identifier: LicenseRef-VOID-Proprietary
+
+The Apache 2.0 licence at the repository root does not apply here. The root
+NOTICE explains which packages are open; this file is the per-directory
+boundary that licence line refers to, and it exists because a single root
+licence cannot describe a repository that deliberately contains both.
+
+What is open and what is not, and the hard rule that a feature never moves from
+open to paid, are in docs/DECISIONS.md section 5. In short: the interception
+spine is open, which is the part a security reviewer has to be able to read
+before putting it in a write path. The hosted server, the entitlement gate, the
+merchant of record, multi-workspace hosting and SSO are the paid side.
+
+Why this directory is closed, in the terms section 5 uses to decide it. The
+operational test asks whether a solo developer protecting one Postgres could do
+their job without it. The answer for everything here is yes, which is what puts
+it on the paid side: a solo developer needs the proxy, the policy engine, the
+ledger and the verifier, all of which are open, and none of which is here.
+
+Specifically, this directory holds the account broker and its sealed session
+cookies, the owner-scoped encrypted store holding customer documents and provider
+credentials, the OAuth round trips that put a provider token behind that store,
+the recovery and document surfaces that run on top of it, and the paid
+entitlement gate in capability-gate.mjs together with the merchant of record in
+billing.mjs that funds it. None of it is the interception spine; all of it reads
+the spine rather than replacing it, so a reader who cannot see this directory can
+still read everything that decides whether an agent's write is allowed.
+
+The independent verifier, which is what an auditor needs in order to check VOID
+without trusting VOID, is not here. It is @void/verifier, it has no dependency
+on this repository, and that independence is the point.

@@ -26,15 +26,127 @@ import { REGISTRY_DISCLAIMER } from "../../packages/registry/src/index.ts";
 const ROOT = "packages";
 
 /**
- * Directories that are the closed, paid side and carry their own licence.
+ * Every tracked directory in this repository and the licence status DECISIONS
+ * section 5 puts it on.
  *
- * Pinned by name in the drift test, not merely iterated: emptying a map makes a
- * loop over it assert nothing, which is the same hole mutation testing found in
- * the documentation gate.
+ * The earlier version of this file classified only `packages/*`, which left the
+ * deployed server — the directory that reads provider credentials, holds
+ * customer documents and makes the paid entitlement decision — in a directory
+ * no decision named and no test asserted. The trap is not that its status was
+ * wrong; it is that "nobody decided" and "open" are indistinguishable to every
+ * reader and to every tool.
+ *
+ * So this is a partition, not a list. Every tracked top-level directory and
+ * every tracked child of `apps/` appears exactly once, and a directory in
+ * neither is a failure rather than a silence. That is what makes the status of
+ * `cloud/` a decision somebody has to write down.
+ *
+ * Two real statuses, because there are only two. `open` is the root Apache 2.0
+ * licence, which already covers the whole tree; naming a directory here records
+ * that nobody has carved it out, and it narrows nothing. `closed` means the
+ * directory carries its own `LICENSE` and grants nothing, which is the
+ * direction DECISIONS 5 forbids: a feature never moves from open to paid, so a
+ * directory only earns `closed` by being named on the paid side there.
  */
-const CLOSED = new Map([
-  ["apps/control-plane", "the hosted control plane, paid and closed"],
+const LICENCE_LINE = new Map([
+  ["apps", { status: "container", why: "each child is classified on its own line below" }],
+  [
+    "apps/apple",
+    {
+      status: "open",
+      why: "the macOS client for the local workbench, and it makes no paid decision",
+    },
+  ],
+  [
+    "apps/appwrite-mcp",
+    {
+      status: "open",
+      why: "a hosted function that serves the open registry and holds no credential",
+    },
+  ],
+  [
+    "apps/control-plane",
+    { status: "closed", why: "the hosted control plane, paid and closed" },
+  ],
+  [
+    "apps/desktop",
+    {
+      status: "open",
+      why: "the Tauri client, whose manifest already declares Apache 2.0",
+    },
+  ],
+  [
+    "apps/tui-preview",
+    { status: "open", why: "a static preview of the TUI with no paid decision in it" },
+  ],
+  [
+    "cloud",
+    {
+      status: "closed",
+      why: "the deployed server: it holds provider credentials and customer documents, and capability-gate.mjs and billing.mjs make the paid entitlement decision",
+    },
+  ],
+  [".agents", { status: "open", why: "repository tooling, covered by the root licence" }],
+  [".github", { status: "open", why: "workflow definitions, covered by the root licence" }],
+  [".gitlab", { status: "open", why: "issue templates, covered by the root licence" }],
+  [".omp", { status: "open", why: "agent tooling, covered by the root licence" }],
+  [".opencode", { status: "open", why: "agent definitions, covered by the root licence" }],
+  [
+    ".playwright-mcp",
+    {
+      status: "open",
+      why: "committed browser logs; the path is gitignored and nothing ships from it",
+    },
+  ],
+  [".prime", { status: "open", why: "agent configuration, covered by the root licence" }],
+  [
+    "docs",
+    { status: "open", why: "the decision log itself, covered by the root licence" },
+  ],
+  [
+    "fixtures",
+    { status: "open", why: "test fixtures, covered by the root licence" },
+  ],
+  [
+    "gui-web",
+    {
+      status: "open",
+      why: "the browser front end for the local workbench, and it makes no paid decision",
+    },
+  ],
+  ["marketing", { status: "open", why: "site assets, covered by the root licence" }],
+  [
+    "packages",
+    {
+      status: "open",
+      why: "the open core, every package of which declares Apache 2.0",
+    },
+  ],
+  [
+    "policy",
+    { status: "open", why: "a default policy file, covered by the root licence" },
+  ],
+  [
+    "python",
+    {
+      status: "open",
+      why: "void-transport, which declares Apache 2.0 in its pyproject",
+    },
+  ],
+  ["scripts", { status: "open", why: "the local gates, which declare Apache 2.0" }],
+  ["site", { status: "open", why: "the marketing site, covered by the root licence" }],
 ]);
+
+/**
+ * The closed side, derived rather than restated.
+ *
+ * Deriving it is what keeps two views from disagreeing: a directory cannot be
+ * closed here and absent from the list the licence test walks, because there is
+ * only one place to say so.
+ */
+const CLOSED = new Map(
+  [...LICENCE_LINE].filter(([, entry]) => entry.status === "closed"),
+);
 
 /** Packages the decision log places on the open side. */
 const OPEN_CORE = [
@@ -64,6 +176,25 @@ const readJson = (file) => JSON.parse(read(file));
  * whitespace before matching is what stops a rewrap from failing a gate, and the
  * same bug hid in the handbook gate until it was mutation tested. */
 const flat = (text) => text.replace(/\s+/g, " ");
+
+/**
+ * Every file under a directory, recursively, skipping build output.
+ *
+ * Used to read the import graph rather than to lint it. `node_modules` is
+ * skipped because a source file in this repository does not import through it,
+ * and a fixture directory is skipped because a fixture is allowed to say
+ * anything it likes; the boundary this asserts is about shipped source.
+ */
+const walk = (dir) => {
+  const found = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === "node_modules" || entry.name === "__fixtures__") continue;
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) found.push(...walk(path));
+    else if (entry.isFile()) found.push(path);
+  }
+  return found;
+};
 
 const packages = readdirSync(ROOT)
   .filter((name) => existsSync(join(ROOT, name, "package.json")))
@@ -291,7 +422,7 @@ test("the verifier selftest still passes where it now lives", () => {
 });
 
 test("the closed side is marked closed", () => {
-  for (const [dir, reason] of CLOSED) {
+  for (const [dir, entry] of CLOSED) {
     assert.ok(
       existsSync(join(dir, "LICENSE")),
       `${dir} carries no licence of its own`,
@@ -302,12 +433,16 @@ test("the closed side is marked closed", () => {
       /not licensed under the Apache License/i,
       `${dir} must say the root licence does not cover it`,
     );
+    // The specific identifier rather than the bare string "SPDX-License-Identifier",
+    // which `apps/control-plane` already satisfied. A closed directory carrying
+    // only that string could be carrying the open identifier and would still pass,
+    // which is precisely the failure a licence line cannot have.
     assert.match(
       licence,
-      /SPDX-License-Identifier/,
-      `${dir} must carry an SPDX identifier`,
+      /SPDX-License-Identifier: LicenseRef-VOID-Proprietary/,
+      `${dir} must be identified as LicenseRef-VOID-Proprietary, which is what apps/control-plane declares`,
     );
-    assert.ok(reason.length > 10, `${dir} needs a reason in the gate`);
+    assert.ok(entry.why.length > 20, `${dir} needs a reason in the gate`);
   }
   // The closed UI must not claim an open licence it does not have.
   const ui = readJson("apps/control-plane/ui/package.json");
@@ -397,7 +532,14 @@ test("the classification lists did not drift from the tree", () => {
     CLOSED.size >= 1,
     "the closed-side list is empty, so nothing is checked as paid",
   );
-  for (const dir of ["apps/control-plane"]) {
+  // And both closed directories are named, so emptying CLOSED is a failure
+  // rather than a loop over nothing, and so dropping `cloud` from it cannot
+  // quietly reopen the deployed server.
+  assert.ok(
+    CLOSED.size >= 2,
+    "the closed-side list is empty, so nothing is checked as paid",
+  );
+  for (const dir of ["apps/control-plane", "cloud"]) {
     assert.ok(
       CLOSED.has(dir),
       `${dir} must stay on the closed list in the gate`,
@@ -418,4 +560,148 @@ test("the classification lists did not drift from the tree", () => {
   for (const dir of CLOSED.keys()) {
     assert.ok(existsSync(dir), `${dir} is listed as closed but is gone`);
   }
+});
+
+test("the licence line covers every directory in the tree", () => {
+  // The partition. `git ls-files` rather than readdirSync, because the question is
+  // what the repository contains rather than what a build happened to leave
+  // behind: a stale `dist/` must not decide a licence status, and a directory
+  // staged for its first commit must fail before it lands. `-co` includes
+  // untracked files, `--exclude-standard` drops what `.gitignore` already drops.
+  //
+  // Entries are filtered against the filesystem on purpose. `git ls-files`
+  // reports a path that has been deleted from the working tree but whose removal
+  // is not yet staged, and a licence gate that fails because somebody is
+  // mid-delete is a gate people stop reading. What exists on disk and is tracked
+  // or staged must be classified; a path that is gone is the other tests'
+  // business, and one of them already says a classified directory that vanished
+  // is a failure.
+  const tracked = execFileSync(
+    "git",
+    ["ls-files", "-co", "--exclude-standard"],
+    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+  )
+    .split("\n")
+    .filter((file) => file && existsSync(file));
+  assert.ok(tracked.length > 0, "git ls-files returned nothing to classify");
+
+  const topLevel = [
+    ...new Set(
+      tracked
+        .filter((file) => file.includes("/"))
+        .map((file) => file.split("/")[0]),
+    ),
+  ].sort();
+
+  // Every top-level directory is classified. This is the assertion the issue was
+  // opened for: `cloud/` was in this tree, held provider credentials and customer
+  // documents, and no decision named it and no test looked at it.
+  const undecided = topLevel.filter((dir) => !LICENCE_LINE.has(dir));
+  assert.deepEqual(
+    undecided,
+    [],
+    `these top-level directories have no licence status in the gate. Give each one the status DECISIONS section 5 puts it on. Undecided is not a status, and quietly reading one as open is how the deployed server ended up unclassified.\n${undecided.join("\n")}`,
+  );
+
+  // And every child of `apps/`, because that directory holds a closed surface and
+  // four open ones and cannot honestly be classified as a single thing.
+  for (const name of readdirSync("apps").sort()) {
+    if (!statSync(join("apps", name)).isDirectory()) continue;
+    const path = `apps/${name}`;
+    assert.ok(
+      LICENCE_LINE.has(path),
+      `${path} has no licence status in the gate. An unclassified app is not an open app.`,
+    );
+  }
+
+  // Nothing classified that is not in the tree, so a rename cannot leave the gate
+  // asserting a boundary that no longer exists.
+  for (const dir of LICENCE_LINE.keys()) {
+    assert.ok(
+      existsSync(dir) && statSync(dir).isDirectory(),
+      `${dir} is classified in the gate but is not a directory in the tree`,
+    );
+  }
+
+  // A reason for every classification, and a status from the fixed set. A bare
+  // status is an assertion nobody can check, which is the state this file exists
+  // to end.
+  for (const [dir, entry] of LICENCE_LINE) {
+    assert.ok(
+      typeof entry.why === "string" && entry.why.length > 20,
+      `${dir} is classified as ${entry.status} with no reason given`,
+    );
+    assert.ok(
+      ["open", "closed", "container"].includes(entry.status),
+      `${dir} carries an unknown status ${entry.status}`,
+    );
+  }
+
+  // `container` grants nothing on its own and earns that by classifying its
+  // children, which the loop above already checked. Assert it is not being used
+  // as a way to avoid answering.
+  assert.equal(LICENCE_LINE.get("apps").status, "container");
+  for (const [dir, entry] of LICENCE_LINE) {
+    if (entry.status !== "container") continue;
+    assert.ok(
+      readdirSync(dir).some((name) => statSync(join(dir, name)).isDirectory()),
+      `${dir} is a container with nothing in it, so the status is doing no work`,
+    );
+  }
+});
+
+test("the paid entitlement decision lives inside a closed directory", () => {
+  // The classification is only worth something if the thing being classified is
+  // where the paid decision actually is. `cloud/capability-gate.mjs` is the
+  // enforcement point and `cloud/billing.mjs` is the merchant of record behind
+  // it. If either moved into an open directory, the gate would be asserting a
+  // boundary the code does not follow, and this is the check that notices.
+  for (const file of ["cloud/capability-gate.mjs", "cloud/billing.mjs"]) {
+    assert.ok(existsSync(file), `${file} is gone, so this gate has lost its subject`);
+    const owner = file.split("/")[0];
+    assert.equal(
+      LICENCE_LINE.get(owner)?.status,
+      "closed",
+      `${file} makes the paid entitlement decision, so ${owner} must be classified closed`,
+    );
+  }
+  // And the closed directory's own licence says so, so a reader who opens
+  // `cloud/` finds the same identifier `apps/control-plane` declares rather than
+  // a second dialect of closed.
+  assert.match(
+    read(join("cloud", "LICENSE")),
+    /SPDX-License-Identifier: LicenseRef-VOID-Proprietary/,
+  );
+});
+
+test("no open package imports from the closed cloud server", () => {
+  // The direction of the dependency is what makes a closed directory a boundary
+  // rather than a label. `cloud/` reads the open core, which is correct and is
+  // what lets the hosted server be built out of parts a reviewer can read. The
+  // reverse would put a paid decision inside an Apache 2.0 file.
+  //
+  // `apps/control-plane` is deliberately not covered here. `packages/cli` and
+  // `packages/workbench` already import `desktop-setup.ts` and `commands.ts` out
+  // of it, which predates this work and is a real leak. Closing it means moving
+  // code across the boundary, which is a separate work package, so it is named
+  // here rather than quietly omitted or quietly asserted as fine.
+  const offenders = [];
+  for (const name of OPEN_CORE) {
+    const dir = join(ROOT, name, "src");
+    assert.ok(existsSync(dir), `packages/${name} has no src directory to scan`);
+    for (const file of walk(dir)) {
+      if (!/\.(ts|tsx|mts|mjs)$/.test(file)) continue;
+      for (const match of read(file).matchAll(/from\s+["']([^"']+)["']/g)) {
+        const specifier = match[1];
+        if (specifier.startsWith(".") && /(^|\/)cloud\//.test(specifier)) {
+          offenders.push(`${file} imports ${specifier}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `the open core must not import from the closed cloud server:\n${offenders.join("\n")}`,
+  );
 });

@@ -177,8 +177,12 @@ policy engine, the CLI, the connectors, and the standalone verifier. Full text i
 in `LICENSE`; the registry's own caveat travels in `NOTICE` and with the data
 wherever the data goes.
 
-`apps/control-plane` is the closed, paid part and is **not** covered by the root
-licence; it carries its own `LICENSE`. The line is in `docs/DECISIONS.md`
+`apps/control-plane` and `cloud` are the closed, paid parts and are **not**
+covered by the root licence; each carries its own `LICENSE`. `cloud` is the
+hosted server: the account broker, the encrypted store behind customer
+documents, the entitlement gate and the merchant of record. It reads the
+open spine rather than replacing it, so the part that decides whether an agent's
+write is allowed stays readable. The line is in `docs/DECISIONS.md`
 section 5, along with the rule it exists to hold: **a feature never moves from
 open to paid.** Approvals, budgets, multi-workspace, SSO and the taint graph are
 on the paid side because they are organisational, not because they are
