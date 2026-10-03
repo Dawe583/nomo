@@ -512,16 +512,40 @@ test("D04.04 a streamed reply is read in the transcript while the run is still l
   // that happened to be framed as a stream, which is not incremental delivery.
   assert.ok(state.chunkCount >= 4, `the provider sent the reply in ${state.chunkCount} chunks`);
   const partials = state.partials;
-  assert.ok(partials.length >= 3, `only ${partials.length} readings were taken while the stream was open`);
+  // Only readings the server called live on both sides of the read are
+  // counted here. The server marks the run done when the provider's stream
+  // ends, and the browser renders the last frames a moment after that, so a
+  // text read outside a live window is the finished reply and belongs in the
+  // terminal evidence below, not in the mid-stream readings.
+  assert.ok(partials.length >= 3, `only ${partials.length} readings were taken while the run was live`);
   for (let i = 1; i < partials.length; i++)
     assert.ok(partials[i].text.length > partials[i - 1].text.length, `reading ${i} is not longer than reading ${i - 1}: ${partials.map((p) => p.text.length)}`);
   // The run is read from the server, not inferred from the button: a disabled
-  // Send would also be true after a refusal, which is not a live stream.
+  // Send would also be true after a refusal, which is not a live stream. The
+  // state is read on both sides of the transcript read, so a reading only
+  // counts as live when the run was still producing across the whole read.
   for (const reading of partials)
-    assert.equal(reading.runState, "running", `the run was ${reading.runState} while the transcript still had ${reading.text.length} characters`);
+    assert.equal(
+      [reading.runStateBefore, reading.runStateAfter].join(" then "),
+      "running then running",
+      `the run was ${reading.runStateBefore} before and ${reading.runStateAfter} after a transcript read that held ${reading.text.length} characters`,
+    );
   for (const reading of partials)
     assert.ok(state.answer.startsWith(reading.text), "a mid-stream reading is not a prefix of the answer the provider streamed: " + JSON.stringify(reading.text));
-  assert.ok(partials.at(-1).text.length < state.answer.length, "the last mid-stream reading already held the whole answer, so nothing was observed arriving");
+  // Every mid-stream reading is a strict prefix, so the last one holds less
+  // than the whole answer: something was observed arriving before the run
+  // went terminal.
+  assert.ok(partials.at(-1).text.length < state.answer.length, `the last mid-stream reading already held the whole ${state.answer.length} character answer, so nothing was observed arriving`);
+  // The run really did reach a terminal state afterwards, so the readings
+  // above were live and the finished reply below is the one that ended it.
+  assert.ok(
+    ["idle", "failed", "stopped", "unknown"].includes(state.finalState),
+    `the run settled as ${state.finalState} after the last mid-stream reading`,
+  );
+  assert.ok(
+    state.terminalReading === null || state.terminalReading.text.length >= partials.at(-1).text.length,
+    "the first reading taken after the run went terminal is shorter than a reading taken while it was live: " + JSON.stringify(state.terminalReading),
+  );
   // The transcript ends on exactly what was streamed: no duplicate delta and
   // no truncation of the tail.
   assert.equal(state.completed, state.answer, "the completed reply is not the streamed answer");

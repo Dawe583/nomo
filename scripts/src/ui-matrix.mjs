@@ -755,6 +755,12 @@ const runStateProbe = (origin, id) =>
     .then((r) => (r.ok ? r.json() : null))
     .then((body) => body?.session ?? null);
 
+/** The run's own state as the server holds it, or null when it says nothing. */
+const runState = async (origin, id) => {
+  const session = await runStateProbe(origin, id);
+  return session?.state ?? session?.status ?? null;
+};
+
 /** Send a prompt and wait for the run it started to settle.
  *
  * The wait is the server's, not the DOM's: while a run is live the composer
@@ -824,22 +830,59 @@ async function measureStreaming(page, origin) {
     const id = await currentSessionId(page);
     if (!id) return { driven: false, reason: "the send never produced a conversation to read" };
     const partials = [];
+    // The transcript read and the run state have to be read together, or the
+    // two are sampled at two different moments and paired up afterwards. The
+    // server marks the run done as soon as the provider's stream ends, while
+    // the browser still renders the last frames for a moment afterwards, so a
+    // reading taken in that gap is a finished reply and not a mid-stream one.
+    // Reading the state on both sides of the read is what makes "the run was
+    // still producing while this text was on screen" a claim about the same
+    // instant instead of a claim about two of them.
+    let terminalReading = null;
+    let sawLiveRun = false;
     for (let i = 0; i < 60; i++) {
+      const before = await runState(origin, id);
       const reading = await page.evaluate(LAST_ASSISTANT);
+      const after = await runState(origin, id);
       if (reading.text) {
-        const session = await runStateProbe(origin, id);
-        const state = session?.state ?? session?.status ?? null;
-        // One reading per distinct length: a re-render that changed nothing is
-        // not evidence that anything arrived.
-        if (partials.at(-1)?.text !== reading.text)
-          partials.push({ text: reading.text, arriving: reading.arriving, flag: reading.flag, runState: state });
-        if (state !== "running" && partials.length) break;
+        const observed = {
+          text: reading.text,
+          arriving: reading.arriving,
+          flag: reading.flag,
+          runStateBefore: before,
+          runStateAfter: after,
+        };
+        if (before === "running" && after === "running") {
+          sawLiveRun = true;
+          // One reading per distinct length: a re-render that changed nothing
+          // is not evidence that anything arrived.
+          if (partials.at(-1)?.text !== reading.text) partials.push(observed);
+        } else if (sawLiveRun && !terminalReading) {
+          // The first text read with the run already terminal is kept as the
+          // evidence that the finished reply is what the run left behind, and
+          // it is not counted as a mid-stream reading. A state read before the
+          // run was ever seen live is not an ending, it is a queue the run
+          // started out in, so it is not recorded as one.
+          terminalReading = observed;
+        }
+        if (after !== "running" && partials.length) break;
       }
       await new Promise((r) => setTimeout(r, 250));
     }
     const settled = await settleRun(origin, id, ["idle", "failed", "stopped", "unknown"]);
     await page.settle();
-    const completed = await page.evaluate(LAST_ASSISTANT);
+    // The server calls the run done a moment before the browser has painted
+    // the last frame of it, so the finished reply is read once the transcript
+    // has stopped changing rather than at one arbitrary millisecond after the
+    // server settled. Bounded, and it never looks at what it expects to find.
+    let completed = await page.evaluate(LAST_ASSISTANT);
+    for (let i = 0; i < 20; i++) {
+      await new Promise((r) => setTimeout(r, 200));
+      const next = await page.evaluate(LAST_ASSISTANT);
+      const stable = next.text === completed.text;
+      completed = next;
+      if (stable) break;
+    }
     const events = await fetch(origin + "/api/sessions/" + id + "/events?after=0")
       .then((r) => r.json())
       .then((body) => body.items ?? []);
@@ -852,6 +895,7 @@ async function measureStreaming(page, origin) {
       completed: completed.text,
       finalState: settled?.state ?? settled?.status ?? null,
       deltaEvents: events.filter((e) => e.type === "message.delta").length,
+      terminalReading,
     };
   } finally {
     providerBehaviour.mode = "tool-flow";
