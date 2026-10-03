@@ -11,7 +11,7 @@ import {
   verifyChain,
   type PublicKeyLookup,
 } from "../../../ledger/src/verify.ts";
-import { retainedKeyProvider } from "../../../ledger/src/sign.ts";
+import { devKeyDir, retainedKeyProvider } from "../../../ledger/src/sign.ts";
 import {
   NO_VERIFICATION_KEY_NOTE,
   resolveVerificationKey,
@@ -74,7 +74,7 @@ export class ProxyWorkspace {
       signingKey: async () => {
         try {
           return await retainedKeyProvider({
-            dir: join(this.env.HOME ?? homedir(), ".void", "keys"),
+            dir: devKeyDir(this.env.HOME ?? homedir()),
             env: this.env,
           });
         } catch (error) {

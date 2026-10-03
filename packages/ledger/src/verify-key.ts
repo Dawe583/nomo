@@ -35,13 +35,14 @@
  */
 
 import { createPublicKey } from "node:crypto";
-import { mkdir, open, readFile } from "node:fs/promises";
+import { mkdir, open, readFile, readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
-import { devKeyIdFromSpki, keyProviderFromPkcs8, retainedKeyProvider } from "./sign.ts";
+import { devKeyDir, devKeyIdFromSpki, keyProviderFromPkcs8, retainedKeyProvider } from "./sign.ts";
 import type { KeyProvider } from "./index.ts";
-import type { PublicKeyLookup } from "./verify.ts";
+import type { JsonlEntry } from "./store.ts";
+import { readLedgerEntries, type PublicKeyLookup } from "./verify.ts";
 
 /** Base64 SPKI DER, inline. Supplied out of band, never written to a file. */
 export const PINNED_KEY_ENV = "VOID_VERIFY_KEY";
@@ -541,11 +542,27 @@ export async function pinVerificationKeyFromSigner(
 ): Promise<PinVerificationKeyResult> {
   const env = options.env ?? process.env;
   const home = options.home ?? env.HOME ?? homedir();
+  const keyDir = options.keyDir ?? devKeyDir(home);
   const inline = env.VOID_SIGNING_KEY;
-  const provider =
-    inline !== undefined && inline !== ""
-      ? keyProviderFromPkcs8(Buffer.from(inline, "base64"))
-      : await retainedKeyProvider({ dir: options.keyDir ?? join(home, ".void", "keys"), env });
+  let provider: KeyProvider;
+  if (inline !== undefined && inline !== "") {
+    provider = keyProviderFromPkcs8(Buffer.from(inline, "base64"));
+  } else {
+    try {
+      provider = await retainedKeyProvider({ dir: keyDir, env });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      // A command whose job is to anchor an existing key must never be the
+      // thing that creates it: a pin of a key this call just minted is a pin
+      // of nothing, because the key's only existence is the act of pinning
+      // it. Refuse in words an operator can act on, not as a bare lstat error.
+      throw new Error(
+        `no key to anchor: ${keyDir}/dev-ed25519.pkcs8 does not exist. ` +
+          `This command pins a key that already exists and never creates one. ` +
+          `Use \`void tui\` once to create it, or pin a key obtained out of band with \`void init --from-spki <base64>\`.`,
+      );
+    }
+  }
   const keyId = await provider.currentKeyId();
   const spki = await provider.publicKey(keyId);
   if (spki === null) throw new Error(`signing key ${keyId} published no public key to pin`);
@@ -555,4 +572,59 @@ export async function pinVerificationKeyFromSigner(
     home,
     anchoredFrom: inline !== undefined && inline !== "" ? "signing-key-env" : "signing-key-file",
   });
+}
+
+export type SigningKeyIdsInLedgersOptions = {
+  readonly env?: Readonly<NodeJS.ProcessEnv>;
+  readonly home?: string;
+  /** Ledger directory. Defaults to `VOID_LEDGER_DIR`, else `~/.void/ledger`. */
+  readonly dir?: string;
+};
+
+/**
+ * Which key ids the ledgers on disk actually carry, and how many entries each
+ * one signed.
+ *
+ * This is the question a trust anchor has to answer for itself. Whether a key
+ * has signed anything is a fact about the ledgers, not about the key file, so
+ * it is read out of the `key_id` the entries record — the same field a
+ * verifier resolves against, and the field whose mismatch produces `entry 1
+ * has no public key for ...`. A pin whose key id appears nowhere here anchors
+ * a key that has signed nothing, which a reader cannot see from the trust
+ * file alone: it looks exactly like a successful pin.
+ *
+ * A ledger that will not parse is skipped rather than thrown. It is evidence
+ * about no key either way, and a pin must not fail because some unrelated
+ * file in the ledger directory is malformed.
+ */
+export async function signingKeyIdsInLedgers(
+  options: SigningKeyIdsInLedgersOptions = {},
+): Promise<Map<string, number>> {
+  const env = options.env ?? process.env;
+  const home = options.home ?? env.HOME ?? homedir();
+  const dir = options.dir ?? env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
+  const counts = new Map<string, number>();
+  let files: string[];
+  try {
+    files = await readdir(dir);
+  } catch (error) {
+    // No ledger directory is a state, not a fault: nothing has been recorded,
+    // so nothing has signed anything, and the caller reports exactly that.
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return counts;
+    throw error;
+  }
+  for (const name of files) {
+    if (!name.endsWith(".jsonl")) continue;
+    let entries: JsonlEntry[];
+    try {
+      entries = await readLedgerEntries(join(dir, name));
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (typeof entry.key_id !== "string" || entry.key_id === "") continue;
+      counts.set(entry.key_id, (counts.get(entry.key_id) ?? 0) + 1);
+    }
+  }
+  return counts;
 }

@@ -7,11 +7,14 @@ import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { LocalStorage } from "../../workbench/src/storage.ts";
+import { devKeyDir, retainedKeyProvider } from "../../ledger/src/sign.ts";
 import {
   pinVerificationKey,
   pinVerificationKeyFromSigner,
   publicKeyFromSpkiBase64,
+  signingKeyIdsInLedgers,
 } from "../../ledger/src/verify-key.ts";
+
 
 export type InitIo = {
   readonly stdout: (line: string) => void;
@@ -73,6 +76,81 @@ const INIT_USAGE =
   "usage: void init [--data-dir PATH] [--pin-verify-key] [--from-spki base64-spki]";
 
 /**
+ * The signing key id already present in a key directory, or undefined when
+ * there is none. Never creates one: a read that minted a key would report the
+ * key it just made as pre-existing.
+ */
+async function retainedKeyId(
+  keyDir: string,
+  env: Readonly<NodeJS.ProcessEnv>,
+): Promise<string | undefined> {
+  try {
+    return await (await retainedKeyProvider({ dir: keyDir, env })).currentKeyId();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+}
+
+/**
+ * What the anchored key has actually signed, and what has signed instead.
+ *
+ * The single most important line this command can print is "this key has not
+ * signed anything yet". A pin that reads as success while naming a key no
+ * ledger has ever been signed with is the defect this reports: the operator
+ * sees `trust-file` appear in `void doctor`, concludes the setup is now
+ * authenticated, and has anchored nothing at all.
+ */
+async function signingReport(
+  keyId: string,
+  env: Readonly<NodeJS.ProcessEnv>,
+  home: string,
+): Promise<string[]> {
+  const ledgerDir = env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
+  const counts = await signingKeyIdsInLedgers({ env, home });
+  const signed = counts.get(keyId) ?? 0;
+  if (signed > 0)
+    return [`  signed ${signed} ledger entr${signed === 1 ? "y" : "ies"} in ${ledgerDir}`];
+  if (counts.size === 0)
+    return [
+      `  this key has not signed anything yet: no ledger in ${ledgerDir} carries it`,
+    ];
+  const others = [...counts]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, n]) => `${id} (${n} ${n === 1 ? "entry" : "entries"})`)
+    .join(", ");
+  return [
+    `  this key has not signed anything yet. The ${counts.size} key id${counts.size === 1 ? "" : "s"} in ${ledgerDir} are: ${others}`,
+    `  anchoring this key makes \`void verify\` refuse every existing ledger until they are re-signed with it`,
+  ];
+}
+
+/**
+ * The one line that catches a `--data-dir` naming a different key location.
+ *
+ * `--data-dir` chooses where workspace state lives. It must not silently
+ * choose which key gets anchored, and it no longer does: the anchor is always
+ * the shared signing key. When the data directory holds a key of its own this
+ * says so, because that key signs the workbench document ledger and an
+ * operator who assumed `--data-dir` moved it deserves to be told it did not.
+ */
+async function divergentKeyNote(
+  dir: string,
+  env: Readonly<NodeJS.ProcessEnv>,
+  home: string,
+  pinnedKeyId: string,
+): Promise<string[]> {
+  const keyDir = devKeyDir(home);
+  const dataKeyDir = join(dir, "keys");
+  if (resolve(dataKeyDir) === resolve(keyDir)) return [];
+  const dataKeyId = await retainedKeyId(dataKeyDir, env);
+  if (dataKeyId === undefined || dataKeyId === pinnedKeyId) return [];
+  return [
+    `  note: ${dataKeyDir}/dev-ed25519.pkcs8 holds a different key (${dataKeyId}). It signs the workbench document ledger and is not the trust anchor.`,
+    `  the anchored key is ${keyDir}/dev-ed25519.pkcs8 (${pinnedKeyId}); --data-dir did not change which key is anchored`,
+  ];
+}
+/**
  * First-run provisioning of the verification key.
  *
  * Two forms, and the difference is the whole point:
@@ -80,21 +158,29 @@ const INIT_USAGE =
  * - `--from-spki <base64>` pins a key the operator obtained out of band. It
  *   anchors itself, and it is the only form that detects a key file that was
  *   already replaced.
- * - `--pin-verify-key` derives the pin from `dev-ed25519.pkcs8`. That anchors
- *   whatever the key file holds **at this moment** and detects only subsequent
+ * - `--pin-verify-key` derives the pin from `~/.void/keys/dev-ed25519.pkcs8`,
+ *   the key ledgers in this installation are actually signed with. That anchors
+ *   whatever that file holds **at this moment** and detects only subsequent
  *   substitution. A key file replaced before this ran becomes the permanent
  *   anchor, because a pin is never silently replaced. So the SPKI is printed,
  *   for the operator to compare against what they believe is the key, and the
  *   limitation is stated rather than left to a reader of the source.
+ *
+ * `--data-dir` does not appear in the derivation. It names where workspace
+ * state lives; letting it choose the key made the trust anchor a function of
+ * an unrelated flag, and anchored a key that had signed nothing while reading
+ * as an improvement over the degraded state it replaced.
  */
 async function pinVerifyKey(
   dir: string,
   env: Readonly<NodeJS.ProcessEnv>,
   fromSpki: string | undefined,
 ): Promise<string[]> {
+  const home = env.HOME ?? homedir();
+  const keyDir = devKeyDir(home);
   const pinned =
     fromSpki === undefined
-      ? await pinVerificationKeyFromSigner({ env, keyDir: join(dir, "keys") })
+      ? await pinVerificationKeyFromSigner({ env, keyDir })
       : await pinVerificationKey(publicKeyFromSpkiBase64(fromSpki, "--from-spki"), {
           env,
           anchoredFrom: "operator-spki",
@@ -109,10 +195,13 @@ async function pinVerifyKey(
           "  this key was supplied out of band, so a key file replaced before or after this point is detected",
         ]
       : [
-          "  this anchors whatever the local key file holds right now, and detects only a LATER change to it",
+          `  anchored from ${keyDir}/dev-ed25519.pkcs8, the signing key the ledgers in this installation use`,
+          "  this anchors whatever that key file holds right now, and detects only a LATER change to it",
           "  if the key file was already replaced, this pinned the wrong key; compare the spki above against the key you expect",
           "  for a key obtained out of band, run `void init --from-spki <base64>` instead",
         ]),
+    ...(await signingReport(pinned.keyId, env, home)),
+    ...(await divergentKeyNote(dir, env, home, pinned.keyId)),
   ];
 }
 

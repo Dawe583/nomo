@@ -120,15 +120,40 @@ nothing more. See `docs/THREAT-MODEL.md` §1.1 and §2.4.
 #### Provisioning
 
 ```sh
-node packages/cli/bin/void.mjs init --pin-verify-key     # anchors the local key file
+node packages/cli/bin/void.mjs init --pin-verify-key     # anchors ~/.void/keys/dev-ed25519.pkcs8
 node packages/cli/bin/void.mjs init --from-spki <base64> # anchors a key you hold elsewhere
 ```
 
 `--from-spki` is the one that anchors something the agent did not choose, and
 the output says so. `--pin-verify-key` anchors whatever
-`keys/dev-ed25519.pkcs8` holds at that moment and detects only a *later* change
-to it; if the key file was already replaced, it pinned the wrong key. Compare
-the SPKI the command prints against the key you expect.
+`~/.void/keys/dev-ed25519.pkcs8` holds at that moment and detects only a *later*
+change to it; if the key file was already replaced, it pinned the wrong key.
+Compare the SPKI the command prints against the key you expect.
+
+Two key files exist under `~/.void`, and only one of them is the trust anchor:
+
+| Path | Signs | Trust anchor? |
+| --- | --- | --- |
+| `~/.void/keys/dev-ed25519.pkcs8` | the ledgers in `~/.void/ledger`, verified by `void verify` | **Yes.** The one `--pin-verify-key` anchors, and the key `void doctor`, `void watch` and the TUI proxy resolve against. |
+| `<data dir>/keys/dev-ed25519.pkcs8` (default `~/.void/workbench/keys`) | the workbench document ledger | No. A second recorder identity, not a second location for the first. |
+
+`--data-dir` chooses where workspace state lives. It does not choose which key
+is anchored, and it did not used to: the command derived the anchor from
+`<data dir>/keys`, so on the default path it anchored the document key while
+every ledger under `~/.void/ledger` was signed with the other one. The trust
+anchor changed identity without a ledger being written, and `void doctor` read
+as an improvement. When the data dir holds a key of its own, the command now
+prints both key ids and says which one it anchored.
+
+The command never creates a key. If `~/.void/keys/dev-ed25519.pkcs8` does not
+exist it refuses and names the path; a pin of a key whose only existence is the
+act of pinning it anchors nothing and reads as a success.
+
+The command also reports what the anchored key has signed, read from the
+`key_id` the ledger entries carry rather than from the key file. An anchored
+key that appears in no ledger entry is named as such, together with the key ids
+that did sign, because `void verify` will refuse every existing ledger until
+they are re-signed with it.
 
 `pinVerificationKey` refuses to overwrite an existing trust file with a
 different key, and says so. Removing it deliberately to repin is the supported
