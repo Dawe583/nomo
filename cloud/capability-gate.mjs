@@ -55,8 +55,41 @@ import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
  * - Premium connectors are enumerated by configuration rather than shipped as
  *   code, so the honest gate is which connectors the operator has configured,
  *   not which subscription somebody holds.
- * - Retention beyond seven days has no time-based enforcement anywhere in this
- *   tree to gate: the only bound today is `events.slice(-200)`, a count.
+ * - Retention beyond seven days does have time-based enforcement in this tree,
+ *   and it belongs on the OPEN side. The one surface that enforces an age is
+ *   the file recovery vault: `validateRetentionPolicy` and `collectVaultGarbage`
+ *   in `packages/runtime/src/retention.ts` compare a policy TTL in milliseconds
+ *   against each artifact's mtime. That package is Apache 2.0, the TTL is
+ *   already operator-selected with no upper bound, and the shipped default is
+ *   `MANUAL_RETENTION_POLICY` (`mode: "manual"`, every TTL null), so nothing is
+ *   ever collected implicitly and an operator may already select any retention
+ *   length they like, seven days or seven years. Putting a bound on that would
+ *   not withhold a capability that is absent; it would take a capability the
+ *   free tier already has and move it behind the paywall. Section 5's own hard
+ *   rule is that a feature never moves from open to paid, and its revisit clause
+ *   says the rule itself is not revisitable: open features stay open. A
+ *   retention cap here would be that forbidden move, and §5 is what has to
+ *   change, not this list.
+ *
+ *   The operational test in the same section reaches the same answer from the
+ *   other direction: could a solo developer protecting one Postgres do their
+ *   job without retention beyond seven days? No. The vault holds the encrypted
+ *   before-images that make an intercepted write reversible, and a cap expires
+ *   the exact artifact that would undo a bad migration discovered a month
+ *   later. Section 1 sells the undo as "the differentiated half"; a seven-day
+ *   cap deletes that half on a timer the operator never set.
+ *
+ *   Two other candidates were checked and ruled out rather than assumed. The
+ *   signed ledger and the recovery journal are append-only by construction:
+ *   `LedgerStore` in `packages/ledger/src/index.ts` exposes `append`, `read`,
+ *   `head` and `verify` and no mutation, `JournalTransaction` in
+ *   `packages/runtime/src/journal.ts` exposes `append` and no delete, and
+ *   `void_cloud_ledger` carries a BEFORE UPDATE OR DELETE trigger that raises.
+ *   Age is not representable there, so a retention bound would have to begin by
+ *   dismantling the append-only guarantee. And `events.slice(-200)` in
+ *   `cloud/store.mjs` is not a retention bound at all: those events are written
+ *   to `void_cloud_events` in the same transaction before the slice, so the
+ *   slice bounds one document's size and loses nothing.
  *
  * The signed ledger export is deliberately NOT in this list. Section 5 pays for
  * "attestation exports **with compliance frame mappings**", and

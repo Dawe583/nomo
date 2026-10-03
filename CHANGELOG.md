@@ -54,13 +54,42 @@ All notable user-facing changes since the first repository commit.
   gets to make. A subscription for a customer nobody has linked is recorded
   and ignored, for the same reason.
 
-  What the entitlement gates today is nothing. None of the paid capabilities
-  has an enforcement point in the product yet, so the capability answer a
-  browser receives is unchanged and the open workbench surface is untouched. No
-  price, tier or limit is encoded: the prices in the go-to-market document are
-  hypotheses until somebody has had the conversation. Checkout, a customer
-  portal, usage metering and seats are not part of this, and none of it has
-  been run against a live Polar account.
+  At the time this shipped, what the entitlement gated was nothing: none of the
+  paid capabilities had an enforcement point yet. The gate added below is that
+  enforcement point for the taint graph, and only the taint graph.
+  The capability answer a browser receives for everything else is unchanged,
+  and the open workbench surface is untouched.
+  Checkout, a customer portal, usage metering and seats are not part of this,
+  and none of it has been run against a live Polar account.
+
+- The capability gate now gates the taint graph, and it does not gate
+  retention. `GET /api/capabilities` answers `taintGraph: false` for an owner
+  who is not subscribed and `true` for one who is, the paid route answers `402`
+  without reading a ledger row, and the overlay can only ever take a capability
+  away, so a billing read that fails fails the capability off rather than the
+  whole surface open.
+
+  Section 5 lists "retention beyond seven days" as paid, and the tree was
+  recorded as having nothing to gate for it. That record was wrong, and this
+  corrects it. Time-based retention does exist: the file recovery vault
+  compares an operator-selected TTL in milliseconds against each artifact's
+  mtime, and it ships with no ceiling and a default that never collects
+  anything at all. Free retention is therefore already unbounded and already
+  open, which makes a seven-day cap the removal of a shipped capability rather
+  than the withholding of an absent one. Section 5's own hard rule is that a
+  feature never moves from open to paid, and its operational test answers the
+  same way: a developer protecting one database needs the before-image that
+  undoes a bad migration found a month later, which is the artifact a seven
+  day cap deletes. The signed ledger and the recovery journal were ruled out as
+  the surface for the same question: both are append-only by construction, so
+  an age is not representable on either without dismantling the guarantee
+  first.
+
+  Three tests pin this so it cannot be reversed quietly. All three were checked
+  by breaking the property each one names and watching it fail: adding
+  `retention` to the paid list, capping the TTL at seven days, making the
+  shipped default collect implicitly, and giving `LedgerStore` a `delete` each
+  fail the test that forbids that exact change.
 
 - `void classify --tool <id>` answers the one-call question the transcript form
   could not: what does this single entry decide for this single tool, given
