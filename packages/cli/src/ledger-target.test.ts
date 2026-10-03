@@ -204,6 +204,48 @@ describe("void verify on a ledger it cannot read", () => {
     assert.match(result.err, /is a directory, not a ledger file/);
     assert.match(result.err, new RegExp(dir));
   });
+  test("--workspace reaches the resolver rather than being swallowed by the default", async (t) => {
+    // The workspace name must NOT be `default`. The resolver falls back to
+    // `default` when nothing is forwarded, so a test using that name cannot
+    // tell forwarding from the fallback and passes with the line removed.
+    const dir = await scratch(t);
+    await writeFile(join(dir, "fresh.jsonl"), "{}\n");
+
+    // Forwarded: the named workspace resolves and no workspace is refused.
+    const named = await run(["--ledger", dir, "--workspace", "fresh"]);
+    assert.doesNotMatch(
+      named.err,
+      /has no default\.jsonl/,
+      "--workspace must reach the resolver, not be swallowed by the default",
+    );
+    assert.doesNotMatch(named.err, /unknown verify option/);
+
+    // A name that is not there is still a refusal, and it names the right one.
+    const absent = await run(["--ledger", dir, "--workspace", "other"]);
+    assert.equal(absent.code, 1);
+    assert.match(absent.err, /has no other\.jsonl/);
+  });
+
+  test("the advice to pass --workspace is advice this command can follow", async (t) => {
+    // A message that recommends a flag the command rejects is worse than the
+    // errno it replaced: it sends the operator to type something and get
+    // "unknown verify option" back. `void metrics` always could; `void verify`
+    // could not.
+    const dir = await scratch(t);
+    await writeFile(join(dir, "other.jsonl"), "{}\n");
+
+    const advised = await run(["--ledger", dir]);
+    assert.equal(advised.code, 1);
+    assert.match(advised.err, /pass --workspace <name>/);
+
+    const followed = await run(["--ledger", dir, "--workspace", "default"]);
+    assert.doesNotMatch(
+      followed.err,
+      /unknown verify option/,
+      "the flag the refusal recommends must be one this command accepts",
+    );
+  });
+
 });
 
 describe("void metrics exit code", () => {

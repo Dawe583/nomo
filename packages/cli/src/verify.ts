@@ -28,6 +28,7 @@ export type VerifyCommandOptions = {
 
 type VerifyArgs = {
   readonly ledger: string | undefined;
+  readonly workspace: string | undefined;
   readonly file: string | undefined;
   readonly attestation: string | undefined;
   readonly anchors: string | undefined;
@@ -37,7 +38,7 @@ type VerifyArgs = {
 };
 
 const USAGE =
-  "usage: void verify --ledger <dir-or-file> [--file export.jsonl] [--attestation path] [--anchors path] [--key base64-spki] [--key-id id] [--standalone]";
+  "usage: void verify --ledger <dir-or-file> [--workspace name] [--file export.jsonl] [--attestation path] [--anchors path] [--key base64-spki] [--key-id id] [--standalone]";
 
 type ResolvedVerifyKey = {
   readonly publicKey: PublicKeyLookup | undefined;
@@ -62,6 +63,7 @@ export async function runVerifyCommand(
       mode: "workspace",
       file: parsed.file,
       ledger: parsed.ledger,
+      workspace: parsed.workspace,
       env,
     });
     if (!resolution.ok) {
@@ -137,6 +139,7 @@ export async function runVerifyCommand(
 
 function parseVerifyArgs(argv: readonly string[]): VerifyArgs {
   let ledger: string | undefined;
+  let workspace: string | undefined;
   let file: string | undefined;
   let attestation: string | undefined;
   let anchors: string | undefined;
@@ -147,6 +150,9 @@ function parseVerifyArgs(argv: readonly string[]): VerifyArgs {
     const arg = argv[index]!;
     if (arg === "--ledger") {
       ledger = needValue(argv, index, "--ledger");
+      index += 1;
+    } else if (arg === "--workspace") {
+      workspace = needValue(argv, index, "--workspace");
       index += 1;
     } else if (arg === "--file") {
       file = needValue(argv, index, "--file");
@@ -169,7 +175,7 @@ function parseVerifyArgs(argv: readonly string[]): VerifyArgs {
       throw new Error(`unknown verify option ${JSON.stringify(arg)}. ${USAGE}`);
     }
   }
-  return { ledger, file, attestation, anchors, key, keyId, standalone };
+  return { ledger, workspace, file, attestation, anchors, key, keyId, standalone };
 }
 
 /**
