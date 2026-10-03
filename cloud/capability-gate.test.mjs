@@ -208,6 +208,102 @@ test("every paid capability named in the list is one the open surface actually s
   }
 });
 
+// --- retention stays open ---------------------------------------------------
+
+test("retention is not on the paid line, and the free tier already has it", () => {
+  // Broken by: adding "retention" to PAID_CAPABILITIES, which is the move
+  // section 5 forbids. This is not a preference; it is the hard rule "a feature
+  // never moves from open to paid", read against a surface the free tier
+  // already ships in full.
+  assert.ok(
+    !PAID_CAPABILITIES.some((name) => /retention|history|expiry|ttl/i.test(name)),
+    "retention must stay on the open side of the licence line",
+  );
+});
+
+test("open core already enforces an age, and leaves the bound to the operator", async () => {
+  // The claim this pins is that retention is absent because there is nothing to
+  // gate. That was wrong: the vault enforces a real TTL. The corrected reason is
+  // that the bound is already the operator's to choose and unbounded above, so a
+  // cap would remove a shipped capability rather than withhold an absent one.
+  //
+  // Broken by: any change that puts a ceiling on the operator-selected TTL, or
+  // that starts collecting implicitly. Both would make free retention narrower
+  // than it is today, which is the open-to-paid move.
+  const { MANUAL_RETENTION_POLICY, validateRetentionPolicy } = await import(
+    "../packages/runtime/src/retention.ts"
+  );
+
+  // The shipped default collects nothing: no TTL, and manual mode.
+  assert.equal(MANUAL_RETENTION_POLICY.mode, "manual");
+  assert.deepEqual(MANUAL_RETENTION_POLICY.ttlByKind, {
+    unpinned: null,
+    recovery: null,
+    operator: null,
+  });
+
+  // And a policy far beyond seven days is accepted, with no ceiling. Seven days
+  // is the number section 5 names, so a cap at it would be the paywall; proving
+  // thirty and 365 days are already legal is what makes that a removal rather
+  // than an absence.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  for (const days of [7, 30, 365]) {
+    const policy = validateRetentionPolicy({
+      version: 1,
+      mode: "age",
+      ttlByKind: { unpinned: days * DAY_MS, recovery: null, operator: null },
+    });
+    assert.equal(
+      policy.ttlByKind.unpinned,
+      days * DAY_MS,
+      `a ${days} day retention is already available in open core`,
+    );
+  }
+});
+
+test("the two durable surfaces cannot expire, so they are not the retention surface", async () => {
+  // Broken by: someone adding a delete or an expiry to either interface and
+  // then pointing at it as the thing section 5 means. Age is not representable
+  // on an append-only store, and making it so would start by dismantling the
+  // guarantee that makes the record worth keeping.
+  const ledger = readFileSync(
+    join(cloudDir, "..", "packages", "ledger", "src", "index.ts"),
+    "utf8",
+  );
+  // Only the interface body, not the rest of the file: `journal.ts` later calls
+  // `queues.delete` to drop an in-memory promise, which is queue hygiene rather
+  // than a way to expire a record, and reading that as a retention method would
+  // make this test fail for an unrelated reason.
+  const store = ledger.slice(
+    ledger.indexOf("export interface LedgerStore"),
+    ledger.indexOf("/** Version tag in the signed preimage"),
+  );
+  for (const method of ["delete", "prune", "expire", "purge", "truncate"]) {
+    assert.doesNotMatch(
+      store,
+      new RegExp(`\\b${method}\\b`, "i"),
+      `LedgerStore must not grow a ${method}, so it cannot be the retention surface`,
+    );
+  }
+
+  const journal = readFileSync(
+    join(cloudDir, "..", "packages", "runtime", "src", "journal.ts"),
+    "utf8",
+  );
+  const tx = journal.slice(
+    journal.indexOf("export interface JournalTransaction"),
+    journal.indexOf("export interface OperationJournal"),
+  );
+  assert.match(tx, /append\(/, "the journal transaction still has its one write method");
+  for (const method of ["delete", "prune", "expire", "purge"]) {
+    assert.doesNotMatch(
+      tx,
+      new RegExp(`\\b${method}\\b`, "i"),
+      `JournalTransaction must not grow a ${method}`,
+    );
+  }
+});
+
 // --- the four states a buyer can be in ------------------------------------
 
 test("an owner who never subscribed is not inside the paid line", async () => {
