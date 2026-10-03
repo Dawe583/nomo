@@ -101,7 +101,11 @@ async function forward(count, dir, signer, now) {
   };
 }
 
-async function append(count, store, now) {
+/** Concurrent appends in the group-commit burst. */
+const GROUP_APPENDS = 32;
+
+async function append(count, signer, dir, now) {
+  const store = jsonlStore(signer, { dir });
   const bodies = Array.from({ length: count }, (_, sequence) => ({
     workspace: "bench", sequence, tool: "aws.s3.bucket.delete",
     klass: "r3", decision: "allow", argsDigest: "a".repeat(64),
@@ -130,6 +134,29 @@ async function append(count, store, now) {
   const verification = await store.verify("bench");
   assert.equal(verification.ok, true, verification.reason);
   assert.equal(verification.checked, count);
+
+  // The same work again, issued at once on its own workspace, with the store's
+  // fsync seam attached. The sequential row above is what one appender pays;
+  // this row is what N appends in flight cost, and the fsync count is the
+  // mechanism rather than a latency reading of it.
+  const fsyncs = [];
+  const groupStore = jsonlStore(signer, { dir, onFsync: (event) => fsyncs.push(event) });
+  const groupLatencies = [];
+  const groupBodies = Array.from({ length: GROUP_APPENDS }, (_, sequence) => ({
+    workspace: "bench-group", sequence, tool: "aws.s3.bucket.delete",
+    klass: "r3", decision: "allow", argsDigest: "a".repeat(64),
+  }));
+  const groupBegin = now();
+  await Promise.all(groupBodies.map(async (body) => {
+    const start = now();
+    await groupStore.append(body);
+    groupLatencies.push(Number(now() - start) / 1e6);
+  }));
+  const groupElapsed = now() - groupBegin;
+  const groupVerification = await groupStore.verify("bench-group");
+  assert.equal(groupVerification.ok, true, groupVerification.reason);
+  assert.equal(groupVerification.checked, GROUP_APPENDS);
+
   return {
     ...summarize("ledger-append", latencies, elapsed),
     ledgerEntries: verification.checked,
@@ -137,6 +164,12 @@ async function append(count, store, now) {
       ...summarize("serialization-probe", serializationTimes, serializationElapsed),
       bytes,
       note: "Separate canonicalJson(body) plus JSON.stringify(receipt), not an append latency breakdown",
+    },
+    groupCommit: {
+      ...summarize("ledger-append-concurrent", groupLatencies, groupElapsed),
+      appends: GROUP_APPENDS,
+      fsyncs: fsyncs.length,
+      note: "Fsyncs issued for GROUP_APPENDS appends in flight, counted at the store's fsync seam",
     },
   };
 }
@@ -201,7 +234,7 @@ async function main(args) {
     };
     const scenarios = [
       await forward(scale, dir, signer, now),
-      await append(scale, jsonlStore(signer, { dir: join(dir, "append") }), now),
+      await append(scale, signer, join(dir, "append"), now),
       classify(scale * 100, registry, random, now),
     ];
     const report = {
@@ -217,7 +250,8 @@ async function main(args) {
       for (const row of scenarios) {
         const metrics = [row.ops.toFixed(2), ...[row.p50, row.p95, row.p99].map((value) => value.toFixed(6))];
         const extra = row.serialization === undefined ? "" : `  serialization probe p50=${row.serialization.p50.toFixed(6)}ms (separate)`;
-        console.log(`${row.name.padEnd(16)} ${metrics.map((value) => value.padStart(10)).join(" ")}${extra}`);
+        const group = row.groupCommit === undefined ? "" : `  group commit: ${row.groupCommit.appends} concurrent appends in ${row.groupCommit.fsyncs} fsyncs (p50=${row.groupCommit.p50.toFixed(6)}ms)`;
+        console.log(`${row.name.padEnd(16)} ${metrics.map((value) => value.padStart(10)).join(" ")}${extra}${group}`);
       }
     }
   } finally {
