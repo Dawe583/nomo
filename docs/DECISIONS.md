@@ -1265,3 +1265,135 @@ only that the decision lives in a closed directory. Second, `packages/cli` and
 closed `apps/control-plane`, which is the reverse of the direction this
 amendment asserts for `cloud/`. Both are recorded here so they are visible
 rather than discovered.
+
+---
+
+## The taint graph is paid at the surface and open in the builder, 2026-10-03
+
+Amendment six to section 5, added because issue #55 named a leak that the tree
+does not have in the shape the leak was described in. Amendment five above
+records `packages/ledger/src/taint/graph.ts` as "still Apache 2.0 while
+`taintGraph` is on the paid side, so the paid capability currently ships in open
+code". That sentence was accurate about the file and wrong about the
+consequence, and this amendment says which of the two is which. It moves no
+code, and it is written after the tree rather than before it.
+
+**The boundary is the productised surface, and it was already held.** PR #61
+(`c41012b`) put `taintGraph` into `PAID_CAPABILITIES` in
+`cloud/capability-gate.mjs` and refused `GET /api/records/:seq/taint` with `402
+capability_not_included` before a ledger row is read. That is the paid part.
+This amendment is the document catching up to a decision the tree had already
+made, not a decision directing the tree, and the §5 rejected table is what made
+it that way: "Opening the taint graph, budgets and attestation mappings now |
+They are organisational features and belong on the paid side from day one."
+From day one is load-bearing. The line had to be drawn before there was a user to
+move it across, and it was.
+
+**The builder stays open, and the reason is that it cannot be un-opened.**
+`packages/ledger/src/taint/graph.ts` and `query.ts` have been in an Apache 2.0
+package and in this repository's history since the graph landed. Removing them
+now would not un-license them: anyone holding an earlier clone, a tarball from
+a previous release or a fork keeps Apache 2.0 rights to those files, and §5
+amendment two commits the ledger format to remaining independently
+reimplementable, which an Apache 2.0 package that has withdrawn its own graph
+reader no longer is. So the move would yield no legal benefit and would cost a
+hole in an open package where a capability used to be. The hard rule settles it
+from the other direction anyway: a feature never moves from open to paid, and
+taking the builder away from a reader who already has it is that move. This is
+not the Slack case, and the difference is worth being exact about.
+
+**Where the two differ.** Amendment one split the channel *interface* from the
+Slack *implementation* because the collision was caught "before the file
+exists": WP-05 was about to build `channels/slack.ts` inside the open
+`packages/policy`, so there was nothing to withdraw and the open package would
+have shipped a policy engine that could not notify anyone. That reasoning holds
+a boundary drawn in advance. It cannot move a boundary already crossed, and
+`graph.ts` was crossed on the day it was written, under a licence already
+granted, in a package whose completeness §5 amendment two promises. The
+operational test in this section reaches the same answer from its own direction:
+could a solo developer protecting one Postgres do their job without the
+cross-record dependency graph? Yes — the hold, the approval, the ledger, the
+verification and the captured inverse all stay open, and
+`docs/RECOVERY-CONTRACT.md` records that the taint graph is an inspection-only
+neighbourhood whose output the retained planners never consume. Nothing a solo
+developer needs is on the paid side of this particular line.
+
+**The three kinds of taint surface, and which one is paid.** Only one of them is
+the product, and the distinction is the whole amendment:
+
+- `packages/ledger/src/taint/graph.ts`, `query.ts` and `capture.ts` are the
+  builder, its three traversal queries and the ledger reader. Apache 2.0, in
+  the open package, tested by `graph.test.ts`, `query.test.ts` and
+  `capture.test.ts` without any entitlement.
+- `void taint` in `packages/cli` is the local operator command. Open, and
+  correct: it reads a ledger file the operator already holds on their own disk.
+  `docs/HANDBOOK.md` and `README.md` document it and this amendment changes
+  neither.
+- `GET /api/records/:seq/taint` in `cloud/server.mjs` is the paid surface, and
+  it is the only one. It is the multi-tenant hosted product: it reads another
+  owner's ledger across an account boundary, which the local command never does.
+
+**What is actually enforced, checked rather than asserted.**
+`apps/control-plane` also serves a taint graph, at
+`apps/control-plane/api/server.ts:353` and
+`apps/control-plane/api/server.ts:374`, and that directory has no entitlement
+gate at all. That is not a hole in the gate: `apps/control-plane` is a closed,
+`LicenseRef-VOID-Proprietary` directory, it grants nothing under the root
+licence, and it serves a single operator workspace with no multi-tenancy and no
+billing (`docs/PLAN-STATUS.md`, the WP-10 row). A surface inside the closed side
+cannot leak open code, because nothing there is open. The allowlist at
+`apps/control-plane/api/remote-gateway.mjs:50` forwards the same path to a
+self-hosted runtime behind `VOID_CONTROL_TOKEN`, which is the deployment
+authority the capability gate already exempts as `OPERATOR_OWNER`. So the paid
+line is enforced everywhere an account boundary exists, and the two ungated
+surfaces are ungated because there is no account boundary to enforce it across.
+`scripts/src/licence-line.test.mjs` asserts the decision lives in a closed
+directory and that no open package imports from `cloud/`; it does not assert
+that the builder is closed, and this amendment is why that is not a gap in the
+gate but a statement about what the gate is for.
+
+**The rest of the paid list has the same shape.** Every item on it is now
+answered for, because a paid list entry with no answer is how the first one went
+unnoticed for as long as it did. Three are paid by name and shipped open:
+
+- **The Slack channel implementation.** `packages/policy/src/channels/slack.ts`
+  is the real thing — `postHoldToSlack`, `slackPayload`, `SlackChannel` — in an
+  Apache 2.0 package (`packages/policy/package.json` line 5), re-exported from
+  the barrel at `packages/policy/src/index.ts:21`. This is amendment one's
+  collision, unfixed and now older: the collision was real, the reasoning was
+  right, and the split was never executed. Unlike `graph.ts` this one is
+  arguably still movable, because it is a webhook client and nothing has ever
+  depended on reading it. It is named here rather than fixed here, because
+  moving it is a code change and this amendment moves no code.
+- **Irreversibility budgets.** `packages/runtime/src/budget.ts` is 30 kB of
+  accounting in an Apache 2.0 package, which `cloud/capability-gate.mjs` lines
+  51 to 54 already records as a known consequence: gating them "would be a
+  feature flag inside Apache 2.0 code rather than a boundary the licence can
+  hold."
+- **Retention beyond seven days.** There is no seven-day bound anywhere in the
+  code: `packages/runtime/src/retention.ts` has no `604800`, no `7 * 24 * ...`
+  and no `SEVEN_DAY` of any kind, and `MANUAL_RETENTION_POLICY` at line 30 is
+  `mode: "manual"` with every TTL null. The capability gate already reached this
+  and held it open, on the ground that an operator may already select any
+  retention length and a cap would take away something the free tier has.
+
+The rest are absent rather than leaked: `apps/control-plane` and `cloud` are
+closed directories that exist; SSO and multiple workspaces do not exist in this
+tree at all, which is why `cloud/capability-gate.mjs` says so; the Teams
+channel has no implementation (`grep -rn teams packages/policy/src` is empty,
+and `channels/` holds only `cli.ts` and `slack.ts`); attestation exports exist
+in `packages/ledger/src/attest.ts` and are open, and no compliance frame mapping
+exists anywhere in the tree, so the paid half of "attestation exports **with
+compliance frame mappings**" is genuinely unbuilt rather than leaked; premium
+connectors appear only as registry data, and `packages/connectors/src/registry.test.ts`
+line 20 asserts `connectorFor("stripe.refund_create")` is `null`; SLA support and
+the self-hosted enterprise licence are commercial terms with no code.
+
+**What this does not establish.** It closes no leak. The Slack implementation is
+still in Apache 2.0 code and still could be moved, by a separate work package
+that weighs the same argument again. It adds no gate, because the gate that
+exists is enforcing the line in the one place the line runs, and a new assertion
+would either restate this paragraph or forbid the move this paragraph says is
+forbidden anyway. And it asserts nothing about whether anyone will pay: the paid
+line for the taint graph is one hosted route on one plan, and whether that is
+worth a paywall is a question for a buyer, not for this file.

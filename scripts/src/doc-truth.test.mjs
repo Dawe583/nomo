@@ -450,7 +450,7 @@ const INTERFACE_WORDS = [
 
 /** The newest decision in the pack. Renaming that heading renames this. */
 const NEWEST_DECISION =
-  "## `cloud/` is the paid side, and every directory now has a status, 2026-10-03";
+  "## The taint graph is paid at the surface and open in the builder, 2026-10-03";
 
 const MONO_FOR_INTERFACE = /\bmono\w*/i;
 const NAMES_INTERFACE_WORD = new RegExp(
