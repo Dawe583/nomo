@@ -4,25 +4,24 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
-- `docs/DECISIONS.md` records what the taint graph's licence boundary actually
-  is, and no code moved to make it so. The builder,
-  `packages/ledger/src/taint/graph.ts`, has been Apache 2.0 since the graph
-  landed, so it cannot be un-licensed by removing it: anyone holding an earlier
-  clone, tarball or fork keeps those rights, and amendment two commits the open
-  package to staying complete. The paid part is the productised surface, and it
-  has been gated since the capability gate shipped: an owner without an
-  entitlement gets `402 capability_not_included` from
-  `GET /api/records/:seq/taint` before a ledger row is read, and `void taint`
-  stays open because it reads a ledger the operator already holds on disk.
+- The licensing decision behind the taint graph is now written down, and no
+  code moved to match it. The graph builder has been Apache 2.0 since the day
+  the graph landed, so it cannot be un-licensed by taking it away: anyone
+  holding an earlier clone, tarball or fork keeps those rights, and the second
+  amendment commits the open package to staying complete. The paid part is the
+  productised surface, and it has been gated since the capability gate shipped:
+  an owner without an entitlement gets `402 capability_not_included` before a
+  ledger row is read, while the local command stays open because it reads a
+  ledger the operator already holds on disk.
 
   The amendment also answers the paid list entry by entry, which is what the
   first disclosure lacked. Three items on that list are paid by name and shipped
-  open: the Slack channel implementation, which sits in Apache 2.0
-  `packages/policy/src/channels/slack.ts` and is §5 amendment one's collision
-  still unexecuted; irreversibility budgets in `packages/runtime/src/budget.ts`;
-  and retention beyond seven days, where no seven-day bound exists anywhere in
-  the code. The rest are absent rather than leaked, and the amendment says which
-  is which so the next reader does not re-derive it.
+  open: the Slack approval channel, which sat in the Apache 2.0 policy package
+  and was §5 amendment one's collision still unexecuted; irreversibility
+  budgets, which are accounting shipped inside Apache 2.0 code; and retention
+  beyond seven days, where no seven-day bound exists anywhere in the code. The
+  rest are absent rather than leaked, and the amendment says which is which so
+  the next reader does not re-derive it.
 - A missing ledger is now named as the thing the operator passed. `void verify`,
   `void export`, `void attest` and `void metrics` resolve the ledger through one
   helper, which returns a result rather than letting `fs.stat` raise: a readable
