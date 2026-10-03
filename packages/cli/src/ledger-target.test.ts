@@ -56,6 +56,46 @@ const metrics = async (
 };
 
 describe("resolveLedgerTarget", () => {
+  test("a directory holding this workspace's ledger resolves to that exact file", async (t) => {
+    // The success path, which nothing asserted while a stray `}` sat in the
+    // candidate template and every existing fixture resolved through the
+    // failure branches instead. A gate that only tests the sentences a command
+    // says when it refuses is blind to whether it reads the right bytes.
+    const dir = await scratch(t);
+    const ledger = join(dir, "e2e-final.jsonl");
+    await writeFile(ledger, "{}\n");
+    await writeFile(join(dir, "other.jsonl"), "{}\n");
+
+    const named = await resolveLedgerTarget({
+      mode: "workspace",
+      ledger: dir,
+      workspace: "e2e-final",
+      env: {},
+    });
+    assert.ok(named.ok, "a directory holding the named ledger must resolve");
+    assert.equal(named.path, ledger, "it must resolve to the file, not a near miss");
+
+    // And the same thing reached through the environment, because that is the
+    // path every CLI invocation actually takes.
+    const fromEnv = await resolveLedgerTarget({
+      mode: "workspace",
+      ledger: dir,
+      env: { VOID_WORKSPACE: "e2e-final" },
+    });
+    assert.ok(fromEnv.ok, "VOID_WORKSPACE must select the same file");
+    assert.equal(fromEnv.path, ledger);
+
+    // A workspace that is not there is still a refusal, and it must not be
+    // satisfied by the neighbour that is.
+    const absent = await resolveLedgerTarget({
+      mode: "workspace",
+      ledger: dir,
+      workspace: "default",
+      env: {},
+    });
+    assert.equal(absent.ok, false, "a neighbouring ledger is not the one asked for");
+  });
+
   test("an empty directory is named as the directory, not a file inside it", async (t) => {
     const dir = await scratch(t);
     const resolution = await resolveLedgerTarget({

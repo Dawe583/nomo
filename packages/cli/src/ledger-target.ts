@@ -139,7 +139,7 @@ export async function resolveLedgerTarget(
   if (request.mode === "scan")
     return { ok: true, path: requested, requested, requestedByCaller, directory: true };
 
-  const candidate = join(requested, `${workspace}.jsonl}`);
+  const candidate = join(requested, `${workspace}.jsonl`);
   let candidateInfo: Stats;
   try {
     candidateInfo = await stat(candidate);

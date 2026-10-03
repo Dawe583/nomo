@@ -77,19 +77,19 @@ All notable user-facing changes since the first repository commit.
   anything at all. Free retention is therefore already unbounded and already
   open, which makes a seven-day cap the removal of a shipped capability rather
   than the withholding of an absent one. Section 5's own hard rule is that a
-  feature never moves from open to paid, and its operational test answers the
-  same way: a developer protecting one database needs the before-image that
+  feature never moves from open to paid, and its own operational rule answers
+  the same way: a developer protecting one database needs the before-image that
   undoes a bad migration found a month later, which is the artifact a seven
   day cap deletes. The signed ledger and the recovery journal were ruled out as
   the surface for the same question: both are append-only by construction, so
   an age is not representable on either without dismantling the guarantee
   first.
 
-  Three tests pin this so it cannot be reversed quietly. All three were checked
-  by breaking the property each one names and watching it fail: adding
-  `retention` to the paid list, capping the TTL at seven days, making the
-  shipped default collect implicitly, and giving `LedgerStore` a `delete` each
-  fail the test that forbids that exact change.
+  Three checks in the codebase pin this so it cannot be reversed quietly.
+  Each was confirmed by breaking the property it names and watching it fail:
+  adding `retention` to the paid list, capping the time limit at seven days,
+  making the shipped default collect implicitly, and giving `LedgerStore` a
+  `delete` each break exactly the check that forbids that change.
 
 - `void classify --tool <id>` answers the one-call question the transcript form
   could not: what does this single entry decide for this single tool, given
