@@ -15,13 +15,17 @@ All notable user-facing changes since the first repository commit.
   ledger the operator already holds on disk.
 
   The amendment also answers the paid list entry by entry, which is what the
-  first disclosure lacked. Three items on that list are paid by name and shipped
-  open: the Slack approval channel, which sat in the Apache 2.0 policy package
-  and was §5 amendment one's collision still unexecuted; irreversibility
-  budgets, which are accounting shipped inside Apache 2.0 code; and retention
-  beyond seven days, where no seven-day bound exists anywhere in the code. The
-  rest are absent rather than leaked, and the amendment says which is which so
-  the next reader does not re-derive it.
+  first disclosure lacked, and the first of those three is now executed. The
+  Slack approval channel moved out of the Apache 2.0 policy package into the
+  closed paid package, so §5 amendment one's collision is closed rather than
+  recorded: the channel interface stayed open, as the amendment requires, and a
+  gate now fails if the implementation is put back in an open package. Two
+  items on the list are still paid by name and shipped open. Irreversibility
+  budgets are accounting inside Apache 2.0 code, and gating them would be a
+  feature flag in open source rather than a boundary the licence can hold.
+  Retention beyond seven days has no seven-day bound anywhere in the code at
+  all. The rest of the list is absent rather than leaked, and the amendment
+  says which is which so the next reader does not re-derive it.
 - A missing ledger is now named as the thing the operator passed. `void verify`,
   `void export`, `void attest` and `void metrics` resolve the ledger through one
   helper, which returns a result rather than letting `fs.stat` raise: a readable

@@ -129,6 +129,17 @@ Wave 5 source status, pending integrated verification:
    Apple "Notarizing macOS software before distribution", Tauri
    `distribute/Sign/macos` doc and bundler `macos/app.rs`, plus
    `apps/desktop/README.md`.
+   **Owner decision, 2026-10-03: neither the Apple surface nor the desktop
+   app is being built.** No iOS client, no macOS client, no desktop app at
+   all. These blockers therefore stay open because nobody is working on them,
+   not because the work is pending. They return as a phase immediately before
+   a public release, and until the owner says so they are not engineering this
+   project does. The same decision is recorded in `docs/ROADMAP-2026-Q4.md`
+   (scope amendment) and `docs/PLAN-GAPS.md` §7, which takes G-24 with it:
+   item 9 below is packaging **for the desktop app** — the Tauri `deb`, `rpm`
+   and `AppImage` targets — so removing the app removes its packaging tail.
+   Nothing here changes the Linux or macOS *server* or CLI distribution, which
+   is a different question and is not part of this decision.
 9. **Linux packaging and installer signing.** Linux targets (`deb`, `rpm`,
    `AppImage` via Tauri `BundleTarget`) are unverified, including the
    installed-app smoke check. The v2 updater reuses the AppImage plus a

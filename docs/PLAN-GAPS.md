@@ -662,20 +662,36 @@ INP and CLS, plus a documented rollback execution. Evidence: the pending
 matrix in `docs/MOBILE-ACCESSIBILITY-ACCEPTANCE.md`; the delivery report
 claims viewport checks only. `[EXT]` needs physical devices. Size: M.
 
-## 7. Apple, desktop, mobile — OUT OF SCOPE by owner decision, 2026-10-03
+## 7. Apple, desktop, mobile
 
-**Everything in this section is out of scope.** The owner's instruction on
-2026-10-03 was: no iOS and no macOS, removed from the plan rather than
-deferred. G-22 and G-23 below are kept as a record of what was true when they
-were written, and neither is engineering this project will do until the owner
-revives them immediately before a release. Nothing in this section counts
-toward any target in this document, and no session should pick an item up
-"because it is small".
+**Everything in this section is out of scope by owner decision, 2026-10-03.**
+The owner's instruction: no iOS app, no macOS app, and no desktop app at all.
+Not deferred, not lower priority — removed from the plan. Every row below
+stays as a record of what was true when it was written, and none of it is
+engineering this project will do until the owner revives it immediately before
+a release. No session should pick an item up "because it is small".
 
-The Swift contrast gate is the one mechanical consequence: its guard now
-requires a full Xcode toolchain and reports `skipped` on a host without one,
-so `pnpm test` stays green without the Apple surface being measured. A skipped
-measurement is not a measurement, and nothing may claim it is.
+That covers G-22 and G-23 (the Apple surface) and G-24, because G-24 is
+packaging **for the desktop app** — the Tauri `deb`, `rpm` and `AppImage`
+targets that `docs/RELEASE.md` blocker 9 asks about. Removing the desktop app
+removes its packaging tail with it.
+
+Two things this does **not** change, stated so a reader does not over-read it:
+
+- **The W-row count is unaffected.** G-22 was already tagged `[EXT]` on an Apple
+  Developer ID identity, G-23 on provisioning, App Store Connect and physical
+  hardware, and G-24 on Windows runners and a Linux packaging run. None of the
+  three was ever one of the writable rows, so removing them shrinks no target
+  in this document.
+- **The rows are not deleted.** They carry evidence a future revival will
+  want, including what the simulator run did and did not prove.
+
+One mechanical consequence: the Swift contrast gate's guard now requires a full
+Xcode toolchain rather than a compiler that the bare CommandLineTools also
+provides, so it reports `skipped` on a host without Xcode. `pnpm test` therefore
+stays green while the Apple surface goes unmeasured. A skipped measurement is
+not a measurement, and nothing may claim otherwise. The gate itself is kept,
+because whoever picks the surface up will need it.
 
 ### G-22 A1: signed and notarized macOS distribution
 

@@ -310,12 +310,17 @@ criterion names `docs/RELEASE-1.0.1-MATRIX.md`, and that document still records
 the failure as open; correcting another ledger is not this errata's business, so
 the remaining disagreement is stated here rather than fixed silently.
 
-## Scope amendment, 2026-10-03: the Apple tracks are out, by the owner's decision
+## Scope amendment, 2026-10-03: the client-app tracks are out, by the owner's decision
 
-The owner's instruction, given 2026-10-03: **no iOS and no macOS.** Not deferred, not
-parallel, not at lower priority. They are removed from this roadmap, from the goal and from
-the backlog, and they are not to be picked up "if there is time". Work resumes when the
-owner says it does, immediately before a VOID release, and until then it is not work.
+The owner's instruction, given 2026-10-03: **no iOS app, no macOS app, and no
+desktop app at all.** Not deferred, not parallel, not at lower priority. They are removed from
+this roadmap, from the goal and from the backlog, and they are not to be picked up "if there is
+time". Work resumes when the owner says it does, immediately before a VOID release, and until
+then it is not work.
+
+The desktop app going with them takes its packaging tail: the Tauri `deb`, `rpm` and `AppImage`
+targets in `RELEASE.md` blocker 9 are packaging **for that app**, so they go too. The same note
+appears in `docs/PLAN-GAPS.md` §7, which covers G-22, G-23 and G-24 for that reason.
 
 What this removes:
 
@@ -325,6 +330,7 @@ What this removes:
 | A5, App Store metadata and the seven sandbox behaviours | `OPEN-WORK-AUDIT.md` row 1 |
 | Developer ID, notarization and the published DMG | `OPEN-WORK-AUDIT.md` row 2 |
 | iOS provisioning, TestFlight and App Store Connect | `RELEASE.md` release blocker 8 |
+| The desktop app and its Linux and Windows packaging | `RELEASE.md` release blocker 9, `PLAN-GAPS.md` G-24 |
 | `apps/apple`, `apps/desktop`, `VOID.command` and every Swift target | the tree |
 | The Swift contrast gate | `scripts/src/design-source-swift.test.mjs` |
 
