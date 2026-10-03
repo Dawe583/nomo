@@ -7,7 +7,7 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { access, constants, readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
-import { retainedKeyProvider } from "../../ledger/src/sign.ts";
+import { devKeyDir, retainedKeyProvider } from "../../ledger/src/sign.ts";
 import {
   auditPrivatePath,
   auditPrivateTree,
@@ -148,7 +148,7 @@ export async function runDoctorCommand(
           : { status: "FAIL", name, detail: audit.detail },
     );
   };
-  const keyDir = join(home, ".void", "keys");
+  const keyDir = devKeyDir(home);
   const keyFile = join(keyDir, "dev-ed25519.pkcs8");
   if (env.VOID_SIGNING_KEY !== undefined && env.VOID_SIGNING_KEY !== "") {
     results.push({
@@ -276,7 +276,7 @@ export async function runDoctorCommand(
     allowDegraded: true,
     signingKey: async () => {
       try {
-        return await retainedKeyProvider({ dir: join(home, ".void", "keys"), env });
+        return await retainedKeyProvider({ dir: keyDir, env });
       } catch (error) {
         // No retained key is a state, not a fault: nothing has signed yet, so
         // there is nothing to verify with and the answer below is `unset`.

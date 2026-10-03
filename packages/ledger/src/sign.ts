@@ -33,6 +33,23 @@ import {
   readPrivateFile,
 } from "./hardening.ts";
 
+/**
+ * The one development signing key directory: `~/.void/keys`.
+ *
+ * Every surface that reads or writes the development key derives it here. The
+ * trust anchor, `doctor`, `watch` and the TUI proxy all have to agree on which
+ * key signs a ledger, and a trust anchor resolved against a different
+ * directory than the signer used is not an anchor at all — it verifies
+ * nothing and reads as an improvement. One derivation, so they cannot drift.
+ *
+ * The workbench document ledger is the one thing that keeps its own key, at
+ * `<data dir>/keys`: it is a second recorder identity, not a second location
+ * for this one, and the two are never interchangeable.
+ */
+export const devKeyDir = (home: string = homedir()): string =>
+  join(home, ".void", "keys");
+
+
 /** The digest engine. Swappable at the test boundary, node:crypto in production. */
 export const sha256Hex = async (input: string): Promise<string> =>
   createHash("sha256").update(input).digest("hex");
@@ -78,7 +95,7 @@ export interface DevKeyProviderOptions {
 export async function devKeyProvider(
   options: DevKeyProviderOptions = {},
 ): Promise<KeyProvider> {
-  const dir = options.dir ?? join(homedir(), ".void", "keys");
+  const dir = options.dir ?? devKeyDir();
   const env = options.env ?? process.env;
   const inline = env.VOID_SIGNING_KEY;
   if (inline !== undefined && inline !== "") {
