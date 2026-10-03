@@ -15,8 +15,9 @@
 
 import { join } from "node:path";
 import { homedir } from "node:os";
+import type { FileHandle } from "node:fs/promises";
 
-import type { LedgerStore } from "./index.ts";
+import type { KeyProvider, LedgerStore } from "./index.ts";
 import { GENESIS_PREV, canonicalJson, entryHash } from "./canonical.ts";
 import { readLedgerReason } from "./attribution.ts";
 import { readLedgerReversal, reversalFinding } from "./reversal.ts";
@@ -55,7 +56,40 @@ export interface JsonlStoreOptions {
   readonly dir?: string;
   /** Environment, injectable at the test boundary. */
   readonly env?: Readonly<NodeJS.ProcessEnv>;
+  /**
+   * Called after each fsync the store issues, with the highest seq that fsync
+   * covered. It cannot suppress, defer or skip the sync, so this is a
+   * measurement seam, not a durability control.
+   */
+  readonly onFsync?: (event: JsonlFsyncEvent) => void | Promise<void>;
 }
+
+/**
+ * What one completed group fsync covered. Observation only: the seam is called
+ * after the fsync has returned, so a store built with one is exactly as
+ * durable as a store built without. It exists because "the syncs were shared"
+ * is a claim about a mechanism, and a wall clock cannot demonstrate it.
+ */
+export type JsonlFsyncEvent = {
+  readonly workspace: string;
+  /** Highest seq whose bytes this fsync flushed. */
+  readonly seq: number;
+};
+
+/**
+ * One workspace file's append state. The serialisation queue and the group
+ * are per file, so two workspaces never wait on each other's disk.
+ */
+type FileState = {
+  /** Tail of the serialisation queue; the chain order is decided here. */
+  lock: Promise<unknown>;
+  /** Highest seq whose write() has returned. */
+  written: number;
+  /** Highest seq a completed fsync covered. */
+  synced: number;
+  /** The fsync in flight, if any. */
+  inFlight: Promise<void> | null;
+};
 
 export function ledgerDir(env: Readonly<NodeJS.ProcessEnv> = process.env): string {
   return env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger");
@@ -67,12 +101,21 @@ export function ledgerDir(env: Readonly<NodeJS.ProcessEnv> = process.env): strin
  * prior art normalised. Two processes on one workspace file is the Postgres
  * tier's problem, which is the documented boundary of the dev tier.
  *
+ * The fsync is the only part that batches. Appends arriving while one fsync
+ * is in flight join it instead of queueing a sync each, which is legal because
+ * an fsync flushes the whole file: a follower whose write() returned before
+ * the leader issued its sync is covered by that sync, and one whose write
+ * landed after it starts a sync of its own. Nothing else moves. The
+ * serialisation, the order of the chain and the bytes written are identical
+ * to a store that syncs every append on its own, and an append still returns
+ * only after a sync that covers its own bytes has completed.
+ *
  * The signer is injected, never imported by the store, so the store stays
  * testable with a deterministic key and the production key path stays in one
  * place.
  */
 export function jsonlStore(
-  signer: import("./index.ts").KeyProvider,
+  signer: KeyProvider,
   options: JsonlStoreOptions = {},
 ): LedgerStore<unknown, JsonlEntry, JsonlReceipt> {
   const dir = options.dir ?? ledgerDir(options.env);
@@ -82,71 +125,164 @@ export function jsonlStore(
   // not atomic: two appends racing in one process both read the same tail
   // and mint the same seq, and the chain forks silently. The store is the
   // only writer, so one in-process queue per workspace file closes the
-  // window without a filesystem lock broker.
-  const tailLocks = new Map<string, Promise<unknown>>();
-  const withTailLock = async <T>(workspace: string, run: () => Promise<T>): Promise<T> => {
-    const previous = tailLocks.get(workspace) ?? Promise.resolve();
-    const next = previous.catch(() => {}).then(run);
-    tailLocks.set(workspace, next);
+  // window without a filesystem lock broker. The queue is released as soon as
+  // the bytes are written, because holding it across the fsync is exactly what
+  // stops the next append from joining the sync in flight.
+  const states = new Map<string, FileState>();
+  const stateFor = (workspace: string): FileState => {
+    const existing = states.get(workspace);
+    if (existing !== undefined) return existing;
+    const created: FileState = { lock: Promise.resolve(), written: 0, synced: 0, inFlight: null };
+    states.set(workspace, created);
+    return created;
+  };
+  const withTailLock = async <T>(
+    workspace: string,
+    run: (state: FileState) => Promise<T>,
+  ): Promise<{ state: FileState; value: T }> => {
+    const state = stateFor(workspace);
+    const previous = state.lock;
+    const next = previous.catch(() => {}).then(() => run(state));
+    state.lock = next;
     try {
-      return await next;
+      return { state, value: await next };
     } finally {
-      if (tailLocks.get(workspace) === next) tailLocks.delete(workspace);
+      // Nothing queued behind this append, so the file's state can go. An
+      // append that arrives later starts a fresh group, which costs one sync
+      // it would have shared and can never cost a fork: the chain order was
+      // already decided under the lock this append just released.
+      if (state.lock === next && state.inFlight === null) states.delete(workspace);
     }
   };
 
-  const appendInner = async (body: JsonlEntry["body"]): Promise<JsonlReceipt> => {
-      const workspace =
-        "workspace" in (body as object) &&
-        typeof (body as { workspace?: unknown }).workspace === "string"
-          ? sanitizeWorkspace((body as { workspace: string }).workspace)
-          : throwNoWorkspace();
-      await ensurePrivateDirectory(dir, "ledger directory", true);
-      const [prev, seq] = await headInfo(file(workspace), workspace);
-      const keyId = await signer.currentKeyId();
-      const hash = await entryHash(body, prev, sha256Hex);
-      const { signingPreimage } = await import("./index.ts");
-      const preimage = signingPreimage(signer.alg, keyId, hash);
-      const signature = await signer.sign(preimage);
-      const entry: JsonlEntry = {
-        workspace,
-        seq,
-        body,
-        prev_hash: prev,
-        hash,
-        key_id: keyId,
-        alg: signer.alg,
-        signature: `${signer.alg}:${Buffer.from(signature).toString("base64")}`,
-      };
-      // O_APPEND on the flag itself, not appendFile: the handle is kept so
-      // the bytes can be fsynced before the receipt exists. Without the
-      // explicit sync the durability claim in the README was false in the
-      // quietest way, green on every test and absent in every crash.
-      const handle = await openPrivateFile(
-        file(workspace),
-        "append",
-        "ledger file",
-      );
-      try {
-        await handle.writeFile(`${JSON.stringify(entry)}\n`);
-        await handle.sync();
-      } finally {
-        await handle.close();
+  // The directory is created and checked once per store instance. Every
+  // append still validates it, twice over, inside openPrivateFile: the parent
+  // directory chain on the way in and the opened handle's own mode, owner and
+  // link count. What that duplicated walk bought was a second mkdir attempt.
+  let directoryReady: Promise<void> | null = null;
+  const ensureDirectory = (): Promise<void> => {
+    if (directoryReady !== null) return directoryReady;
+    const tracked = ensurePrivateDirectory(dir, "ledger directory", true).catch((error: unknown) => {
+      // A refusal is not cached: the operator fixes the mode or the path and
+      // appends again.
+      if (directoryReady === tracked) directoryReady = null;
+      throw error;
+    });
+    directoryReady = tracked;
+    return tracked;
+  };
+
+  /**
+   * Resolve once a sync covering `seq` has completed.
+   *
+   * The leader is whichever appender finds no sync in flight, and it takes
+   * that role before it yields, so exactly one appender ever leads. It then
+   * waits for the writers already queued behind it before issuing the fsync:
+   * an fsync flushes the file as it is when the syscall runs, so a writer that
+   * has not written yet cannot ride a sync issued now. Waiting for them is
+   * the whole mechanism, and it costs a lone appender nothing, because a lone
+   * appender has nothing queued behind it.
+   *
+   * The watermark is read after that wait and with no yield in between, so it
+   * names exactly the appends whose write() had returned and no others. An
+   * append whose bytes landed after the watermark is not covered by that sync
+   * and starts the next one.
+   */
+  const syncThrough = async (
+    state: FileState,
+    workspace: string,
+    seq: number,
+    handle: FileHandle,
+  ): Promise<void> => {
+    for (;;) {
+      if (state.synced >= seq) return;
+      const inFlight = state.inFlight;
+      if (inFlight !== null) {
+        // The round in flight has to finish before this append can start one:
+        // two concurrent fsyncs of one file would undo the sharing. Its
+        // failure is not this append's failure, so it is only waited out here;
+        // the loop then runs this append's own sync, which lands or throws.
+        await inFlight.catch(() => {});
+        continue;
       }
-      return entry;
+      const queued = state.lock;
+      const round = (async (): Promise<void> => {
+        await queued.catch(() => {});
+        const covered = state.written;
+        await handle.sync();
+        state.synced = Math.max(state.synced, covered);
+        // The seam fires before the round is released, so an observer sees the
+        // sync before any receipt that depends on it.
+        await options.onFsync?.({ workspace, seq: covered });
+      })();
+      state.inFlight = round;
+      try {
+        await round;
+        return;
+      } finally {
+        if (state.inFlight === round) state.inFlight = null;
+      }
+    }
+  };
+
+  type PendingAppend = { readonly entry: JsonlReceipt; readonly handle: FileHandle };
+
+  const appendInner = async (
+    body: JsonlEntry["body"],
+    state: FileState,
+  ): Promise<PendingAppend> => {
+    const workspace = workspaceOf(body);
+    await ensureDirectory();
+    const [prev, seq] = await headInfo(file(workspace), workspace);
+    const keyId = await signer.currentKeyId();
+    const hash = await entryHash(body, prev, sha256Hex);
+    // Imported here, not at the top: index.ts re-exports this module, so a
+    // static import would close a cycle the package resolves at run time.
+    const { signingPreimage } = await import("./index.ts");
+    const preimage = signingPreimage(signer.alg, keyId, hash);
+    const signature = await signer.sign(preimage);
+    const entry: JsonlEntry = {
+      workspace,
+      seq,
+      body,
+      prev_hash: prev,
+      hash,
+      key_id: keyId,
+      alg: signer.alg,
+      signature: `${signer.alg}:${Buffer.from(signature).toString("base64")}`,
+    };
+    // O_APPEND on the flag itself, not appendFile: the handle is kept so the
+    // bytes can be fsynced before the receipt exists. Without the explicit
+    // sync the durability claim in the README was false in the quietest way,
+    // green on every test and absent in every crash.
+    const handle = await openPrivateFile(file(workspace), "append", "ledger file");
+    try {
+      await handle.writeFile(`${JSON.stringify(entry)}\n`);
+    } catch (error) {
+      await handle.close();
+      throw error;
+    }
+    // The watermark moves under the serialisation lock, in write order, so it
+    // can only ever name appends whose write() has already returned.
+    state.written = Math.max(state.written, seq);
+    return { entry, handle };
   };
 
   return {
     async append(body: JsonlEntry["body"]): Promise<JsonlReceipt> {
-      const workspace =
-        "workspace" in (body as object) &&
-        typeof (body as { workspace?: unknown }).workspace === "string"
-          ? sanitizeWorkspace((body as { workspace: string }).workspace)
-          : throwNoWorkspace();
+      const workspace = workspaceOf(body);
       // The lock is per workspace file: the tail that decides the next seq
       // lives in one file, so appends to different workspaces can still
-      // interleave safely.
-      return withTailLock(workspace, () => appendInner(body));
+      // interleave safely. Only the serialisation runs under it.
+      const { state, value } = await withTailLock(workspace, (held) =>
+        appendInner(body, held),
+      );
+      try {
+        await syncThrough(state, workspace, value.entry.seq, value.handle);
+      } finally {
+        await value.handle.close();
+      }
+      return value.entry;
     },
 
     async *read(workspace: string): AsyncIterable<JsonlEntry> {
@@ -235,8 +371,74 @@ export function jsonlStore(
   };
 }
 
-function throwNoWorkspace(): string {
+function throwNoWorkspace(): never {
   throw new TypeError("ledger body must carry a string workspace field: the store is per workspace");
+}
+
+/**
+ * The workspace is the store's partition key, so it is read off the body with
+ * a narrowing check rather than an asserted cast: a body that is not an object
+ * or carries no string workspace is refused here, before any path is built.
+ */
+function workspaceOf(body: unknown): string {
+  if (typeof body !== "object" || body === null || !("workspace" in body))
+    throwNoWorkspace();
+  const workspace: unknown = body.workspace;
+  if (typeof workspace !== "string") throwNoWorkspace();
+  return sanitizeWorkspace(workspace);
+}
+
+/**
+ * How much of the file the tail read looks at before it gives up and reads the
+ * whole thing. An entry is one line, so a healthy ledger's last entry is
+ * always inside one window; a file whose last line is longer than this, or a
+ * body larger than the window, is read in full rather than guessed at.
+ */
+const TAIL_WINDOW_BYTES = 64 * 1024;
+
+/**
+ * The last complete line, read from the end of the file. An append only needs
+ * the tail to find the next seq, so reading the whole ledger here made append
+ * cost grow with the ledger and made N appends cost O(N squared) in bytes read.
+ *
+ * A trailing fragment with no newline is a record another writer has not
+ * finished writing. It is skipped rather than parsed, which is the same chain
+ * the reader would see after the writer's own crash.
+ */
+async function lastEntry(file: string): Promise<JsonlReceipt | null> {
+  let handle: FileHandle;
+  try {
+    handle = await openPrivateFile(file, "read", "ledger file");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+  try {
+    const { size } = await handle.stat();
+    let window = Math.min(TAIL_WINDOW_BYTES, size);
+    for (;;) {
+      const buffer = Buffer.allocUnsafe(window);
+      await handle.read(buffer, 0, window, size - window);
+      // The text between the last two newlines is the final line the file
+      // finished; anything after the last newline is a fragment.
+      const text = buffer.toString("utf8");
+      const end = text.lastIndexOf("\n");
+      const line = end < 0 ? "" : text.slice(text.lastIndexOf("\n", end - 1) + 1, end);
+      if (line !== "") {
+        try {
+          return JSON.parse(line) as JsonlReceipt;
+        } catch (error) {
+          // A line that is not JSON is a corrupt tail, not a short window:
+          // only a full read can tell those apart.
+          if (window >= size) throw error;
+        }
+      }
+      if (window >= size) return null;
+      window = Math.min(size, window * 2);
+    }
+  } finally {
+    await handle.close();
+  }
 }
 
 async function readOrEmpty(file: string): Promise<string> {
@@ -248,12 +450,6 @@ async function readOrEmpty(file: string): Promise<string> {
   }
 }
 
-async function lastEntry(file: string): Promise<JsonlReceipt | null> {
-  const text = await readOrEmpty(file);
-  const lines = text.split("\n").filter((line) => line !== "");
-  if (lines.length === 0) return null;
-  return JSON.parse(lines[lines.length - 1]!) as JsonlReceipt;
-}
 
 async function headInfo(
   file: string,
