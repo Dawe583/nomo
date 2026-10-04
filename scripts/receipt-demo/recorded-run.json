@@ -1,0 +1,44 @@
+{
+  "recordedAt": "2026-10-04T20:55:41.180Z",
+  "server": "PostgreSQL 17.11",
+  "receipt": {
+    "id": "demo:recovery-de770d577c3b3f98638a8224b1752a475d8afe981309a815a5a7784e42a802ed",
+    "input_digest": "c150dc9298bb9fc2bc6379c7dcb87b732e575071c185079d5508cd1d4be8a4bf",
+    "format_version": 2,
+    "outcome": {
+      "status": "restored",
+      "evidence": {
+        "rows": [
+          {
+            "key": {
+              "id": 1
+            },
+            "row": {
+              "id": 1,
+              "note": "opening balance",
+              "balance": 10
+            },
+            "depth": 0,
+            "table": "public.account",
+            "resource": "public.account:{\"id\": 1}",
+            "revision": "2",
+            "relationOid": "16389"
+          }
+        ],
+        "tenant": null
+      }
+    }
+  },
+  "rowsAfterRestore": [
+    {
+      "id": 1,
+      "balance": 10,
+      "note": "opening balance"
+    },
+    {
+      "id": 2,
+      "balance": 75,
+      "note": "approved by finance"
+    }
+  ]
+}

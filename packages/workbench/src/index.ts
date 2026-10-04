@@ -37,6 +37,11 @@ import {
   validateHook,
   type AgentProfile,
   type Hook,
+  hookSucceeded,
+  runHook,
+  HOOK_TIMEOUT_MS,
+  HOOK_TIMEOUT_BOUNDS,
+  type HookResult,
   type CompactionResult,
 } from "./agents.ts";
 import { LocalStorage } from "./storage.ts";
@@ -358,6 +363,9 @@ export class Workbench {
   private evidence: Record<string, JsonlEntry[]> = {};
   private recoveryRequests: Record<string, RecoveryRequest> = {};
   private agentProfiles: AgentProfile[] = [];
+  private hooks: Hook[] = [];
+  private readonly hookAllowlist: readonly string[];
+  private readonly hookTimeoutMs: number;
   private readonly holds = new Map<
     string,
     {
@@ -409,6 +417,17 @@ export class Workbench {
       : "encrypted-local";
     this.env = { ...env };
     delete (this.env as NodeJS.ProcessEnv).VOID_WORKSPACE_KEY;
+    this.hookAllowlist = Workbench.hookAllowlist(env);
+    // Operator-set and clamped at both ends: a hook cannot be made
+    // un-timeouttable by a request, and a short timeout only costs a
+    // well-behaved hook more than a long one.
+    this.hookTimeoutMs = Math.min(
+      HOOK_TIMEOUT_BOUNDS.max,
+      Math.max(
+        HOOK_TIMEOUT_BOUNDS.min,
+        Number(env.VOID_HOOK_TIMEOUT_MS) || HOOK_TIMEOUT_MS,
+      ),
+    );
     this.fetcher = fetcher;
     this.storage = new LocalStorage(
       env.VOID_DATA_DIR ??
@@ -428,6 +447,7 @@ export class Workbench {
       evidence: Record<string, JsonlEntry[]>;
       recoveryRequests?: Record<string, RecoveryRequest>;
       agentProfiles?: AgentProfile[];
+      hooks?: Hook[];
       sessions: Array<{
         view: SessionView;
         messages: ModelMessage[];
@@ -519,6 +539,14 @@ export class Workbench {
       this.evidence = saved.evidence;
       this.recoveryRequests = saved.recoveryRequests ?? {};
       this.agentProfiles = (saved.agentProfiles ?? []).map(profile => validateAgentProfile(profile));
+      // A stored hook is re-checked against the *current* operator allowlist,
+      // not trusted because it was accepted once. Narrowing the allowlist on
+      // the runtime must retire the hooks it no longer covers, so the snapshot
+      // can never outlive the authorisation that admitted it.
+      this.hooks = (saved.hooks ?? []).flatMap((hook) => {
+        try { return [validateHook(hook, this.hookAllowlist)]; }
+        catch { return []; }
+      });
       this.projectList = saved.projects ?? [];
       if (this.config)
         this.provider = new CompatibleProvider(this.config, fetcher);
@@ -573,6 +601,7 @@ export class Workbench {
       evidence: this.evidence,
       recoveryRequests: this.recoveryRequests,
       agentProfiles: this.agentProfiles,
+      hooks: this.hooks,
       projects: this.projectList,
       sessions: [...this.sessions.values()].map(
         ({ view, messages, messageIds, agentProfile, recoveryBlock, queuedPrompt, config, tools, connections }) => ({
@@ -589,6 +618,39 @@ export class Workbench {
       ),
     });
     this.hasState = true;
+  }
+
+  /**
+   * The operator hook allowlist, read once from the runtime environment.
+   *
+   * It is `VOID_HOOK_COMMANDS`, a JSON array of exact command strings, for the
+   * same reason `VOID_UPSTREAM_COMMAND` is one: the launcher that starts this
+   * process is the only place a command can be authorised. It deliberately
+   * lives on the runtime rather than in the encrypted workspace snapshot,
+   * because a snapshot is written by whoever holds the workbench API and read
+ * *by* the same API — a hook author who could persist an allowlist entry
+ * could authorise the command their own hook runs. Nothing that arrives on
+ * `upsertHook(input)` reaches this list; `input` is only ever checked *against*
+   * it, so a caller who can add a hook cannot authorise it.
+   */
+  private static hookAllowlist(env: Readonly<NodeJS.ProcessEnv>): readonly string[] {
+    if (!env.VOID_HOOK_COMMANDS) return [];
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(env.VOID_HOOK_COMMANDS);
+    } catch {
+      throw new Error("VOID_HOOK_COMMANDS must be a JSON array of command strings.");
+    }
+    if (
+      !Array.isArray(parsed) ||
+      !parsed.every(
+        (item) => typeof item === "string" && item.trim().length > 0,
+      )
+    )
+      throw new Error(
+        "Configure VOID_HOOK_COMMANDS on the runtime with the hookable commands as a JSON array.",
+      );
+    return [...new Set(parsed.map((item) => (item as string).trim()))];
   }
   async configure(config: ProviderConfig): Promise<readonly Model[]> {
     const generation = ++this.providerGeneration;
@@ -694,7 +756,9 @@ export class Workbench {
       ],
       profiles: structuredClone(this.agentProfiles),
       policyProfiles: ["default"],
-      hooks: [] as Hook[], hookCommands: [] as string[], hooksSupported: false,
+      hooks: structuredClone(this.hooks),
+      hookCommands: [...this.hookAllowlist],
+      hooksSupported: true,
     };
   }
   upsertAgent(input: unknown): AgentProfile {
@@ -709,9 +773,55 @@ export class Workbench {
     try { this.persist(); } catch (error) { this.agentProfiles = before; throw error; }
     return structuredClone(profile);
   }
+  /**
+   * Register a hook. `input` chooses *which* allowlisted command fires on
+   * *which* event; it can never introduce a command. The allowlist is the
+   * runtime's, so a request that arrives with its own copy of one is
+   * compared against the operator's list and dropped if it is not on it.
+   */
   upsertHook(input: unknown): Hook {
-    validateHook(input, []);
-    throw new Error("Hook execution is unsupported on this host.");
+    const hook = validateHook(input, this.hookAllowlist);
+    const before = this.hooks;
+    this.hooks = [...before.filter(candidate => candidate.id !== hook.id), hook];
+    this.hasState = true;
+    try { this.persist(); } catch (error) { this.hooks = before; throw error; }
+    return structuredClone(hook);
+  }
+  /**
+   * Fire every enabled hook registered for `event`, in registration order,
+   * and report each result. A `before-run` refusal is returned to the caller
+   * as a failed result rather than thrown here, so the loop decides what a
+   * refusal means for the run instead of the runner guessing.
+   */
+  private async fireHooks(
+    event: Hook["event"],
+    context: Record<string, unknown> = {},
+    session?: Session,
+  ): Promise<readonly HookResult[]> {
+    const matching = this.hooks.filter(hook => hook.event === event);
+    if (!matching.length) return [];
+    const results: HookResult[] = [];
+    for (const hook of matching) {
+      // A disabled hook is filtered before it reaches runHook, so the process
+      // is never created; runHook refuses it again as a second line.
+      if (!hook.enabled) continue;
+      const result = await runHook(hook, context, {
+        timeoutMs: this.hookTimeoutMs,
+        env: this.env,
+      });
+      results.push(result);
+      if (session)
+        this.event(
+          session,
+          "tool",
+          hookSucceeded(result)
+            ? `${hook.id}: hook exited ${result.code}`
+            : `${hook.id}: hook ${result.outcome}${result.code === null ? "" : ` (${result.code})`}`,
+          { hook: result, ...context },
+          "hook.result",
+        );
+    }
+    return results;
   }
   listProjects(): readonly {
     id: string;
@@ -2033,10 +2143,15 @@ export class Workbench {
         `${(this.evidence[workspace] ?? []).map((e) => JSON.stringify(e)).join("\n")}\n`,
         { mode: 0o600 },
       );
-      const key = await devKeyProvider({
-        dir: join(this.storage.directory, "keys"),
-        env: this.env,
-      });
+      // This is a read path. `devKeyProvider` creates a key when none exists,
+      // so calling it here would mint signing capability as a side effect of
+      // being asked to attest — the exact thing `retainedSigner` exists to
+      // prevent, and the reason `ledger()` above goes through it. A workbench
+      // that has never signed anything has nothing to attest with, and says so
+      // instead of quietly acquiring the power to sign.
+      const key = await this.retainedSigner();
+      if (!key)
+        throw new Error("No verification key is available for the workspace ledger.");
       return await attestLedger(dir, workspace, key);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -2294,14 +2409,64 @@ export class Workbench {
       requestDigest: session.requestDigest,
     });
   }
+  /**
+   * Run one tool call and fire `after-tool`.
+   *
+   * The wrapper exists so every path reports: the inner `executeTool` returns
+   * from a dozen places and throws from several more, and a hook that only
+   * fires on the happy path is a hook that silently stops describing what the
+   * agent did. `observed` is filled in by the inner method as the decision is
+   * made, then read here after the outcome is known.
+   */
   private async execute(
     session: Session,
     tool: McpTool,
     args: JsonObject,
     id: string,
   ): Promise<unknown> {
-    if (!this.toolAllowedInMode(tool))
+    const observed: { decision: string; outcome: string } = {
+      decision: "undecided",
+      outcome: "unknown",
+    };
+    let result: unknown;
+    try {
+      result = await this.executeTool(session, tool, args, id, observed);
+      observed.outcome = (result as { isError?: boolean } | undefined)?.isError
+        ? "refused"
+        : "completed";
+      return result;
+    } catch (error) {
+      observed.outcome =
+        error instanceof UnknownToolOutcome ? "unknown" : "failed";
+      throw error;
+    } finally {
+      // The tool has already run; a hook failure here reports and changes
+      // nothing, so it is never allowed to mask the tool's own outcome.
+      await this.fireHooks(
+        "after-tool",
+        {
+          tool: tool.name,
+          decision: observed.decision,
+          outcome: observed.outcome,
+          callId: id,
+          workspace: session.view.workspace,
+          runId: session.view.runId,
+        },
+        session,
+      );
+    }
+  }
+  private async executeTool(
+    session: Session,
+    tool: McpTool,
+    args: JsonObject,
+    id: string,
+    observed: { decision: string; outcome: string },
+  ): Promise<unknown> {
+    if (!this.toolAllowedInMode(tool)) {
+      observed.decision = `mode:${this.permissionMode}`;
       return { isError: true, content: [{ type: "text", text: `Server permission mode ${this.permissionMode} forbids ${tool.name}.` }] };
+    }
     if (session.agentProfile) {
       if (session.agentProfile.policyProfile !== "default" || !session.agentProfile.allowedTools.includes(tool.name))
         throw new Error("Agent policy refused a tool outside its allowed scope.");
@@ -2310,10 +2475,18 @@ export class Workbench {
         if (!policy.ok) throw new Error("Invalid default operator policy.");
         const call = { tool: tool.name, workspace: session.view.workspace, connector: "workspace", klass: workspaceToolClass(tool.name) ?? "r3", blastRadius: 1, reason: "Managed document policy.", arguments: args };
         const decision = decide(policy, call);
-        if (!(await this.authorizeTool(session, call, decision, policy))) return { isError: true, content: [{ type: "text", text: denialText(tool.name, call.klass, decision) }] };
+        const allowed = await this.authorizeTool(session, call, decision, policy);
+        observed.decision =
+          decision.kind === "hold"
+            ? allowed ? "hold:approved" : "hold:denied"
+            : decision.kind;
+        if (!allowed) return { isError: true, content: [{ type: "text", text: denialText(tool.name, call.klass, decision) }] };
       }
     }
     if (tool.connectorId === "stdio") {
+      // The stdio proxy decides upstream and reports its own decision in the
+      // ledger; this side records that it delegated rather than inventing one.
+      observed.decision = "proxy";
       if (!session.client)
         throw new Error("This stdio connection ended. Start a new session.");
       const before = this.evidence[session.view.workspace]?.length ?? 0;
@@ -2336,7 +2509,8 @@ export class Workbench {
       }
       throw new UnknownToolOutcome();
     }
-    if (!tool.connectorId)
+    if (!tool.connectorId) {
+      observed.decision = "managed-document";
       return this.locked(async () => {
         await this.ledger(session.view.workspace);
         if (
@@ -2358,6 +2532,7 @@ export class Workbench {
         );
         return transition.result;
       });
+    }
     const config = session.connections?.[tool.connectorId];
     if (!config) throw new Error("Connector not available in this session.");
     const name = config.mapping?.[tool.name] ?? tool.name;
@@ -2390,6 +2565,7 @@ export class Workbench {
         ? decide(policy, call)
         : { kind: "deny" as const };
     const allowed = await this.authorizeTool(session, call, decision, policy);
+    observed.decision = decision.kind === "hold" ? (allowed ? "hold:approved" : "hold:denied") : decision.kind;
     if (!allowed)
       return {
         isError: true,
@@ -2444,6 +2620,24 @@ export class Workbench {
         session.agentProfile = validateAgentProfile(session.agentProfile);
         if (session.agentProfile.policyProfile !== "default") throw new Error("Unknown agent policy profile.");
       }
+      // before-run gates the turn. A refusal is thrown into the same handler
+      // as every other run failure, so the session ends "failed" with the hook
+      // named — it never reaches the provider and is never recorded as a pass.
+      const gate = await this.fireHooks(
+        "before-run",
+        {
+          sessionId: session.view.id,
+          workspace: session.view.workspace,
+          runId: session.view.runId,
+          model: session.view.model,
+        },
+        session,
+      );
+      const refused = gate.find(result => !hookSucceeded(result));
+      if (refused)
+        throw new Error(
+          `Hook ${refused.hookId} refused this run: ${refused.outcome}${refused.code === null ? "" : ` (exit ${refused.code})`}.${refused.stderr ? ` ${refused.stderr}` : ""}`,
+        );
       const listed = { tools: session.tools ?? [...workspaceTools] };
       const mapping = new Map(
         listed.tools.map((tool, index) => [`tool_${index}`, tool]),
@@ -2595,6 +2789,18 @@ export class Workbench {
         session.client?.close();
       }
     } finally {
+      // after-run observes, so it never changes the status it reports: the
+      // view is already final here and a failing observer only reports.
+      await this.fireHooks(
+        "after-run",
+        {
+          sessionId: session.view.id,
+          workspace: session.view.workspace,
+          runId: session.view.runId,
+          outcome: session.view.status,
+        },
+        session,
+      );
       this.event(
         session,
         "tool",
