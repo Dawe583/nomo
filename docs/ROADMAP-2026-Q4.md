@@ -356,3 +356,62 @@ The rest of this roadmap stands. What it no longer includes is a second platform
 "roughly seven months" figure above is wrong by the size of Track C: twenty sessions of
 macOS, ten of the web rebuild, six of iOS alignment and six of acceptance evidence, which is
 forty-two sessions against roughly forty.
+
+
+## Errata, 2026-10-03: the hardening tail closed, and the write path now has a number
+
+Same convention as the section above: this corrects and extends the sequencing above and adds no
+second ledger. Each item names what produced it.
+
+**1. The four hardening items are closed, one of them by a decision deliberately not taken.** S14
+(Slack URL policy), S11 (typed request identity across the relay paths), S10 (the queues rather
+than the per-message ceilings) and S09 (the key-rotation drill) merged to `main` as PR #72 on
+2026-10-04. S09 is a drill: `packages/ledger/src/sign.ts` can rotate and `sign(input, keyId)` honours
+the key id its own interface declares, while `docs/OPERATIONS.md:195-216` items 1 to 5 stand
+byte-identical. The trust set in the pin, the rotation entry record, the re-signing decision and
+revocation are the owner's and are unbuilt. Two of the fixes in that PR ship without a
+failing-then-passing regression and say so in `packages/security-notes.md`: the HTTP relay's
+capacity reservation and the SDK's typed id lookup.
+
+**2. `docs/COMPETITIVE-WEDGE.md`'s own build list was stale and is now corrected.** Its §7
+recommendations 1 and 2 shipped in `c5d32fc` on 2026-09-30, four days after the document was
+written; §4.3 said there was "no post-write re-read" for S3 and was wrong. Its §11.3 answers the
+"prove sub-millisecond overhead" objection with a measurement and §11.5 answers the Cloudflare
+distribution question. §6's demand reading is unchanged and still binds harder than either.
+
+**3. The write path's cost is the ledger's fsync, and group commit cut it by a third.** Not yet
+on `main`: PR #75 is open and holds both the change and the measurements below.
+`node scripts/src/bench.mjs --scale 200`, quiet machine, two builds interleaved:
+
+| scenario | before p50 | after p50 |
+|---|---:|---:|
+| forward | 13.01 ms | 8.98 ms |
+| ledger-append | 5.99 ms | 4.00 ms |
+| classify | 0.00033 ms | 0.00029 ms |
+
+32 concurrent appends now issue **1** fsync where they issued 32; a lone appender still issues one
+per append; a 50-entry single-writer chain is byte-identical (sha256 `f919ca5aaafbca7…`). Two of the
+three wins are not the fsync at all: `ensurePrivateDirectory` no longer walks the directory chain
+on every append, and `lastEntry` reads a 64 KiB tail window instead of the whole file, which was
+O(file) per append and O(N²) over a ledger's life. **No latency figure should be published from
+this repository until it is taken on a named disk**; the machine moves by a factor of three under
+load and an earlier measurement taken hours apart was wrong.
+
+**4. Of the nine open issues, two were buildable.** #47 is fixed: `execute()` now re-checks the
+receipt layout under the SERIALIZABLE transaction `prepare` opened, instead of leaning on a
+certification another session could invalidate in between (merged as PR #74). #71, the Slack
+implementation sitting in the Apache-2.0 open core, moves across the licence line into a closed
+`paid/` directory with a gate that fails if anybody puts it back. The other seven are not code:
+#13 and #34 are one failed GitHub account payment, #4 is a GitHub-to-Vercel account linkage,
+#10 needs a Windows runner that #13 blocks, #32 and #1 are the human release decision, #55 is
+two-thirds already fixed and its remainder is a decision about which module crosses the line.
+
+**5. The sequence changes in one place, and the new first item is not in this document.** Track
+A's A1 is further along than the sequence assumes: the provable inversion shipped for Postgres and
+for S3. What A1 still owes is A2 (attribution) and A3 (the effect in the decision), and A3 is the
+only item left in the wedge document's §4.2. The new first item is the one no track names: the
+paid path is structurally complete and operationally untested, with **exactly one** gated
+capability (`PAID_CAPABILITIES = ['taintGraph']`, `cloud/capability-gate.mjs:101`) while
+`docs/GO-TO-MARKET-10K-MRR.md:116` sells a "signed export and verification workflow". We sell
+verification and gate the taint graph. Deciding which capability list matches the price table is
+worth more than any single engineering task above, because it decides what the product is.

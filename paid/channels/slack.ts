@@ -1,12 +1,18 @@
 /**
  * Slack approval channel, WP-05. Webhook delivery is an announcement only.
  *
+ * This file is closed and paid: it lives under `paid/`, which carries its own
+ * `LICENSE` declaring `LicenseRef-VOID-Proprietary`. DECISIONS section 5 puts
+ * the Slack and Teams channel *implementations* on the paid side while the
+ * channel interface stays open in `packages/policy`, which is why the import
+ * below points across the boundary and nothing in the open core points back.
+ *
  * The approval URL belongs to the operator, not this package, so a Slack
  * outage or a missing webhook can only report delivery failure. It must not
  * decide the held call or break the CLI approval path.
  */
 
-import type { HeldCall } from "../hold.ts";
+import type { HeldCall } from "../../packages/policy/src/hold.ts";
 
 export type SlackPostResult =
   | { readonly kind: "posted"; readonly status: number }

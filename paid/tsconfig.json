@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // Mirrors packages/policy: nothing consumes these files by path, so there
+    // is nothing to emit. Consumers import the .ts source directly, which Node
+    // strips at load time.
+    "noEmit": true,
+    // Relative imports carry an explicit .ts extension so Node's type
+    // stripping can resolve them without a build step. The one that leaves
+    // this directory is the open channel interface in packages/policy.
+    "allowImportingTsExtensions": true,
+    // Decision 6a: reject at typecheck time the syntax Node cannot strip,
+    // rather than letting node --test fail at load.
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "types": ["node"]
+  },
+  "include": ["channels"]
+}
