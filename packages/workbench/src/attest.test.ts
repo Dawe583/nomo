@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { Workbench } from "./index.ts";
 import { executeWorkspaceTool } from "./workspace.ts";
 
+import type { PublicKeyLookup } from "../../ledger/src/verify.ts";
+
 /**
  * `attest()` is a read path. It asks "show me a signed slice of this ledger",
  * and it must not hand out the power to sign in exchange for answering.
@@ -25,6 +27,12 @@ import { executeWorkspaceTool } from "./workspace.ts";
  * It has to be two workbenches because the constructor snapshots `env`; the
  * pinned key must be present when the second one is built, not assigned later.
  */
+
+/// `PublicKeyLookup` is either a fixed key or a resolver over key ids. What
+/// matters here is the answer, not which form it arrived in.
+async function answer(lookup: PublicKeyLookup, keyId: string): Promise<Uint8Array | null> {
+  return typeof lookup === "function" ? lookup(keyId) : lookup;
+}
 const fetcher = async (url: unknown) =>
   String(url).endsWith("/models")
     ? Response.json({ data: [{ id: "fixture" }] })
@@ -65,8 +73,7 @@ test("attest refuses to mint a key for a workbench that cannot sign", async (t) 
   const verified = await signer.ledger(workspace);
   assert.ok(verified, "the fixture must sign verifiable evidence");
   assert.ok(verified.entries.length > 0, "an empty chain would attest nothing");
-  const { publicKey, keyId } = verified.verification;
-  const raw = typeof publicKey === "function" ? await publicKey(keyId) : publicKey;
+  const raw = await answer(verified.verification.publicKey, verified.verification.keyId);
   assert.ok(raw, "the ledger must expose the key that signed it");
   const pinned = Buffer.from(raw).toString("base64");
   await signer.shutdown();
