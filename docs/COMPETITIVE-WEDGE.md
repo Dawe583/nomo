@@ -44,7 +44,7 @@ receipt in the right place, undocumented and unexploited: after restoring
 PostgreSQL rows it re-reads them, refuses unless they canonically equal the
 capture, and writes the result into the customer's own database —
 `INSERT INTO ${schema}.recoveries(...)` at
-`packages/connectors/src/postgres/managed.ts:1489-1497`. That row lives outside
+`packages/connectors/src/postgres/managed.ts:1398-1399`. That row lives outside
 `~/.void`, outside the ledger, and outside the recording process's own store.
 It is the only byte VOID puts in a different trust domain as a *consequence of
 its own work*, and no competitor has any equivalent. *(Corrected 2026-10-04:
@@ -247,8 +247,8 @@ exactly why it is worth doing and exactly why it is not a moat.
 facts plus call arguments (`packages/registry/src/evaluate.ts:15-21, 56-72`),
 and `blast_radius` supports only `{lt: number}`. But it arrives as an opaque
 string, and the two adapters that *do* emit effect and readiness
-(`postgres/managed.ts:1232-1236`, `git/managed.ts:387-395`,
-`filesystem/managed.ts:296-300`) are not on the `LEGACY_BINDING_NAMES` path and
+(`postgres/managed.ts:1425-1431`, `git/managed.ts:478-489`,
+`filesystem/managed.ts:391-397`) are not on the `LEGACY_BINDING_NAMES` path and
 never feed `decide`.
 
 **The Reversibility Registry.** 268 entries, 48 vendors, 10 groups,
@@ -289,8 +289,8 @@ Wired capture + inverse implementations, in full:
   (id `postgres-managed-<workspace>`, not a registry id). The managed path
   re-reads after writing, throws `"Restored rows did not match the capture."`
   unless the rows canonically equal the capture
-  (`postgres/managed.ts:1475-1484`), then **writes a durable receipt into the
-  customer's database** (`:1489-1497`).
+  (`postgres/managed.ts:1389-1393`), then **writes a durable receipt into the
+  customer's database** (`:1398-1399`).
 - `packages/connectors/src/filesystem/managed.ts`, `git/managed.ts` →
   filesystem and git effects. Not a moat: git-as-undo is what Cline, Cursor,
   Aider and OpenCode all ship.
@@ -830,21 +830,31 @@ the design, and the honest pitch is prevent-or-bound-and-prove, never undo.
 Measured, and it is not sub-millisecond. `node scripts/src/bench.mjs --scale
 200`, this machine, in-process echo, real signed fsynced ledger:
 
-| | ops/sec | p50 | p95 | p99 |
-|---|---:|---:|---:|---:|
-| forward | 69.49 | 14.01 ms | 17.98 ms | 19.98 ms |
-| ledger-append | 151.21 | 6.39 ms | 8.28 ms | 9.96 ms |
-| classify | 1352684 | 0.0004 ms | 0.0021 ms | 0.0028 ms |
+| scenario | main p50 | after p50 | change |
+|---|---|---|---|
+| forward | 14.00, 15.03, 15.03, 15.02 ms | 10.98, 12.12, 10.96, 10.91 ms | about -25% |
+| ledger-append | 7.00, 7.03, 7.96, 7.92 ms | 5.02, 5.03, 5.00, 5.01 ms | about -29% |
+| classify | 0.00046 ms | 0.00063 ms | noise, unchanged in shape |
 
-Ledger serialization is a separate probe at p50 0.0025 ms and is not part of
-the append figure. Read the table this way: **the policy decision is free**
-(classify runs 1.35M times a second, four orders of magnitude under a
-millisecond), and **the durable write is the cost**: 6.4 ms p50 on this disk,
-about 45% of a forward call. The rest of the forward figure is the in-process
-echo and the per-call clock the harness adds.
+Four interleaved pairs, measured 2026-10-04, both builds alternating so disk
+drift hits both sides rather than whichever side ran second. Ledger
+serialization is a separate probe and is not part of the append figure.
+
+**The earlier figures in this section are withdrawn.** That two-build comparison
+was measured once, in one direction, and did not reproduce under interleaving.
+It is not evidence, it is restated nowhere in this repository, and its numbers
+are deliberately not repeated here so that no reader can pick them up as
+current. What does reproduce exactly is the 32 concurrent appends landing on a
+single fsync, which is unchanged and stays.
+
+Read the table this way: **the policy decision is free** — classify is four
+orders of magnitude under a millisecond in both builds, and the small move is
+noise — and **the durable write is the cost**: roughly 5 ms p50 on this disk,
+about a third of a forward call. The rest of the forward figure is the
+in-process echo and the per-call clock the harness adds.
 
 So the claim to make is not "VOID is free". It is "the decision costs nothing
-measurable, and the durability write costs 6.4 ms". The lever is the fsync
+measurable, and the durability write costs about 5 ms". The lever is the fsync
 policy, batching or a durability tier, which is a product decision with a
 compliance trade-off attached and not a performance bug in the proxy. No latency
 figure should leave this repository until the tier exists and the number is
@@ -919,8 +929,9 @@ usable on a live system with concurrent writers.)*
    (§11.8), but its receipt stays inside VOID's own evidence, so it is not yet
    the same claim. Everything else is roadmap, and §4.3's count says how much.
 2. Publish a latency figure only with a named disk and a durability tier.
-   Today's honest line is "6.4 ms of fsynced append, decision cost
-   unmeasurable", not "sub-millisecond".
+   Today's honest line is "about 5 ms of fsynced append, decision cost
+   unmeasurable", not "sub-millisecond", and it is §11.3's interleaved figure
+   rather than the withdrawn single-direction comparison.
 3. Distribution risk is real and is not the first-order risk. Per §6 the
    first-order risk is that nobody is shopping, and no objection in this section
    changes that.
