@@ -59,7 +59,8 @@ call and stop.
    S3 path the same post-write re-read and receipt, and append a signed
    `reversal` record to the same chain that a third party can check against an
    independent read of the effect's own system. *This is the only capability no
-   competitor has, and it is 80% built.*
+   competitor has, and it is 80% built.* **Both halves shipped after this
+   document was written; see §11.8.**
 2. **Make the record that authorises the effect name what authorised it.** Bind
    policy digest, rule index and rationale on the workbench record as well as
    the proxy record, and bind model id plus a digest of the outbound request.
@@ -268,8 +269,12 @@ Wired capture + inverse implementations, in full:
   (hard-coded at `s3/capture.ts:23`). Capture is `getObject`, the body is kept
   as opaque bytes and independently re-hashed (`s3/capture.ts:44-57`). Inverse
   is a `putObject` with `ifMatch`/`ifNoneMatch` (`s3/inverse.ts:16-23`). Apply
-  refuses on ETag drift and re-puts with CAS (`s3/apply.ts:47-69`). **No
-  post-write re-read** (`s3/apply.ts:71`).
+  refuses on ETag drift and re-puts with CAS (`s3/apply.ts:47-69`), and since
+  `c5d32fc` (2026-09-30) the apply path returns `proveRestore(...)`
+  (`s3/apply.ts:115`), which re-reads the object, compares the bytes against
+  the capture and refuses rather than reporting a step it could not read back.
+  *This line said "no post-write re-read" and was false against the tree by the
+  time this section was amended; §11.8 has the correction.*
 - `packages/connectors/src/postgres/` → **`postgres.row.update`,
   `postgres.row.delete`** (legacy capture path) **plus** the `managed` adapter
   (id `postgres-managed-<workspace>`, not a registry id). The managed path
@@ -456,9 +461,9 @@ a new dependency.
   chain. The verifier can check the reversal against an **independent read of
   the effect's own system** — for PostgreSQL, a query of the
   `${schema}.recoveries` table, which is the one artefact VOID puts outside its
-  own trust domain. S3 gets the post-write re-read and a durable receipt of the
-  shape Postgres already has, because `s3/apply.ts:71` currently returns without
-  re-reading anything.
+  own trust domain. S3 has since taken the post-write re-read and a durable
+  receipt of the shape Postgres already has (`s3/apply.ts:115` and `:166`);
+  *this paragraph said it was still to be built.*
 - **Surface.** `void export --bundle` carries the reversal; `void verify` says
   *"this effect was authorised, inverted, and the inversion was verified after
   it was applied; here is the field that disagrees if it was not."* That line
@@ -761,6 +766,160 @@ pay, and the fix is to stop extending it.
 
 ---
 
+## 11. Four go-to-market objections, answered against this tree (2026-10-03)
+
+Added 2026-10-03 after a positioning review raised four objections. Three were
+already answered above with file and line; the fourth, latency, had no measured
+answer anywhere in this repository, and the measurement does not say what the
+pitch assumed. Nothing below changes the conclusion in §1 or the demand
+reading in §6.
+
+### 11.1 "Sell write-path blast radius, not AI safety"
+
+Half-true today, and the half that is false is measurable. `PolicyCall` carries
+`klass` and `blastRadius` into `packages/policy/src/decide.ts:163` as *inputs*
+(`grammar.ts:17-23`), and §4.2 already shows the registry has no effect field,
+so the decision reads a number rather than computing one. The one path that
+measures radius is the Postgres cascade capture, which is also the only place
+the number can be wrong in the dangerous direction. "Blast radius control" is
+therefore true for Postgres and a claim elsewhere. Closing that is §7 #3, not
+a copy change.
+
+### 11.2 "Universal undo is impossible; yours is Postgres and S3"
+
+Agreed, and §4.3 already says it with the count: `aws.s3.object.delete`,
+`postgres.row.update`, `postgres.row.delete` plus filesystem and git, proved for
+one (Postgres, with the receipt written into the customer's own database). The
+other ~265 registry entries are description only. The adapter contract
+(`packages/connectors/src/recovery.ts:43-73`) has no `compensate`, so "the
+inverse of a Stripe charge" is not a gap in the implementation, it is a gap in
+the design, and the honest pitch is prevent-or-bound-and-prove, never undo.
+
+### 11.3 "Prove sub-millisecond overhead"
+
+Measured, and it is not sub-millisecond. `node scripts/src/bench.mjs --scale
+200`, this machine, in-process echo, real signed fsynced ledger:
+
+| | ops/sec | p50 | p95 | p99 |
+|---|---:|---:|---:|---:|
+| forward | 69.49 | 14.01 ms | 17.98 ms | 19.98 ms |
+| ledger-append | 151.21 | 6.39 ms | 8.28 ms | 9.96 ms |
+| classify | 1352684 | 0.0004 ms | 0.0021 ms | 0.0028 ms |
+
+Ledger serialization is a separate probe at p50 0.0025 ms and is not part of
+the append figure. Read the table this way: **the policy decision is free**
+(classify runs 1.35M times a second, four orders of magnitude under a
+millisecond), and **the durable write is the cost**: 6.4 ms p50 on this disk,
+about 45% of a forward call. The rest of the forward figure is the in-process
+echo and the per-call clock the harness adds.
+
+So the claim to make is not "VOID is free". It is "the decision costs nothing
+measurable, and the durability write costs 6.4 ms". The lever is the fsync
+policy, batching or a durability tier, which is a product decision with a
+compliance trade-off attached and not a performance bug in the proxy. No latency
+figure should leave this repository until the tier exists and the number is
+taken on a named disk.
+
+### 11.4 "Sell the ledger as audit compliance; keys can be compromised"
+
+The tree is stricter than the pitch and already says so. `packages/security-notes.md`
+row S08 records that the default trust file shares a directory tree with the
+private key, that substituting both together is silent, and that the attack was
+executed. `docs/OPERATIONS.md` says a signature proves the bytes came from a
+process holding a specific key and little more. Anchors exist
+(`packages/ledger/src/anchor.ts`) and nothing publishes them, so no independent
+party holds a root hash. The dependency-free checker
+`packages/verifier/verify-ledger.mjs` is the honest third-party story and it is
+fed its keys by the operator, which is the same trust boundary in a different
+hat. "Audit compliance" is sellable today only for the Postgres receipt,
+because that is the one artefact a third party can verify without VOID.
+
+### 11.5 Cloudflare, and what it can and cannot absorb
+
+Cloudflare appears in neither §3.1 nor §3.2, so this is additive. *The
+characterisation in this subsection comes from the review under test; no
+Cloudflare page was fetched or verified for this section, which is the same
+limitation §3 records for its own external work.*
+
+It is a distribution threat rather than a feature competitor: MCP traffic
+governance at the edge, bundled into an account a team already pays for. It can
+absorb guardrails, per-tool policy and request audit into that bundle, which is
+most of §9's table stakes, without writing a connector.
+
+What it cannot get from an edge is the part that has to understand the write: a
+per-effect before-image for a customer's table, an inverse that re-reads and
+refuses on drift, and a receipt the customer can verify without us. That is a
+seat in the data path with database semantics, which is a different company
+from the one that terminates TLS.
+
+But §6 binds harder than this does. The category has no buyers at this install
+count, so a competitor arriving with distribution does not take a market that
+does not exist. Fixing the latency claim is worth more than answering
+Cloudflare.
+
+### 11.6 "Nobody has built this exact combo"
+
+Not true as written, and the correction matters. `yzhao062/auditable` claims the
+same wedge almost verbatim three months earlier (§3.2), `Justin0504/Aegis` is
+the same shape as VOID's proxy (runtime wrapper, cryptographic trail, kill
+switch), and `PrismorSec/prismor` is the most-installed signed project measured,
+at 3,330 downloads a month. What is true is narrower: **none of them captures a
+before-image and publishes a verifiable inverse.** VOID has that for Postgres
+row mutations and nothing else. The wedge is the inverse, not the ledger, and
+the ledger is the part fifteen projects already ship.
+
+### 11.7 What this changes
+
+1. The sellable claim is Postgres: capture, restore, re-read, refuse on drift,
+   and a receipt written into the customer's own database, which a third party
+   can check without trusting us. S3 now proves the write the same way
+   (§11.8), but its receipt stays inside VOID's own evidence, so it is not yet
+   the same claim. Everything else is roadmap, and §4.3's count says how much.
+2. Publish a latency figure only with a named disk and a durability tier.
+   Today's honest line is "6.4 ms of fsynced append, decision cost
+   unmeasurable", not "sub-millisecond".
+3. Distribution risk is real and is not the first-order risk. Per §6 the
+   first-order risk is that nobody is shopping, and no objection in this section
+   changes that.
+
+### 11.8 Two of this document's own build recommendations have shipped
+
+This document was written against `63dbd2c` on 2026-09-26 and its own method
+says to read the source, not the documents. Re-running that method finds that
+§7's first two recommendations were built four days later, in `c5d32fc`
+(2026-09-30), and this document was never updated to say so. `c5d32fc` is the
+commit that shipped both the S3 post-write re-read and the signed reversal
+records; it is an ancestor of `main` and of every branch since.
+
+**§7 #1, "make the inversion provable in the system you inverted".** The S3
+apply path returns `proveRestore(...)` (`packages/connectors/src/s3/apply.ts:115`),
+which re-reads the object through the same client, compares the bytes against
+the capture, and refuses rather than reporting an applied step it could not
+read back; the durable `RestoreReceipt` is written at `:166`. Signed reversal
+records exist (`packages/ledger/src/reversal.ts:55-65`) and every verifier
+enforces them: a reversal naming a record this run has not already proven is
+refused (`packages/ledger/src/verify.ts:125-134`,
+`packages/ledger/src/store.ts:186-195`). So §9's differentiator line, "the
+post-write-checked inversion exists for PostgreSQL", now holds for S3 too.
+
+**§7 #2, "make the record that authorises the effect name what authorised
+it".** Shipped with the same change: the policy digest, rule and request digest
+on the workbench record, read back on the verification path above.
+
+**§7 #3, "put the effect in the decision", is the one still open**, and §4.2
+still holds against the current tree: `PolicyCall` carries no effect,
+readiness or resource set, so the decision reads a class string rather than
+the effect.
+
+What this does *not* change is §11.4. The Postgres receipt is still the only
+artefact written into the customer's own system, and therefore still the only
+one a third party can verify without trusting VOID, its key or its ledger. The
+S3 receipt lives in VOID's own evidence and proves what its own docblock says:
+the code compares what it wrote against what it reads back, over an in-memory
+client in every test in this repository.
+
+---
+
 ## Appendix — sources
 
 **This repository, at `63dbd2c` (read directly, not via documentation):**
@@ -807,6 +966,18 @@ pay, and the fix is to stop extending it.
 - <https://www.postgresql.org/docs/current/logical-replication-publication.html>
   (REPLICA IDENTITY); <https://kubernetes.io/docs/reference/using-api/server-side-apply/>
   (server-side apply) — the platform-native before-image primitives
+
+**Measured 2026-10-03 on this machine:** `node scripts/src/bench.mjs --scale
+200` — smoke-grade, in-process echo upstream, real signed fsynced ledger, no
+warmup, no network, no subprocess transport. The §11.3 table is this run. Also
+read today for §11.8: `packages/connectors/src/s3/apply.ts` (`:115` `proveRestore`,
+`:166` `RestoreReceipt`), `packages/ledger/src/reversal.ts` (`:55-65`),
+`packages/ledger/src/verify.ts` (`:125-134`),
+`packages/ledger/src/store.ts` (`:186-195`).
+
+**Not fetched:** any Cloudflare page. The §11.5 characterisation of what
+Cloudflare is building comes from the review under test and was not verified
+here; see the note at the head of that subsection.
 
 **Carried forward from the two existing documents and not re-verified here:**
 Anthropic's 2026-09-09 alignment assessment; ProjectDiscovery's behavioural
