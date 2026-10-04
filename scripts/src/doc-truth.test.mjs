@@ -464,7 +464,7 @@ const INTERFACE_WORDS = [
 
 /** The newest decision in the pack. Renaming that heading renames this. */
 const NEWEST_DECISION =
-  "## The taint graph is paid at the surface and open in the builder, 2026-10-03";
+  "## Hosted recovery execution is the paid side; the proof stays free, 2026-10-04";
 
 const MONO_FOR_INTERFACE = /\bmono\w*/i;
 const NAMES_INTERFACE_WORD = new RegExp(

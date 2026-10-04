@@ -35,6 +35,13 @@ async function fixture(t) {
       state.applies++;
       return state.status = { jobId: "job", status: state.applyStatus ?? "restored", checkpoint: 1, outcomes: [{ operationId: "op", status: "restored" }], residuals: [] };
     },
+    // The paid capability, injected the way `cloud/server.mjs` supplies it. The
+    // operator's own token is deployment authority, so the default is entitled
+    // and `f.unpaid()` is how a free account is simulated.
+    entitled: async (owner) => {
+      assert.equal(owner, OPERATOR_OWNER);
+      return state.paid !== false;
+    },
   };
   const app = express();
   app.use(express.json());
@@ -51,6 +58,7 @@ async function fixture(t) {
     return { status: response.status, body: await response.json() };
   };
   return {
+    unpaid: () => { state.paid = false; },
     state,
     deps,
     request,
@@ -181,4 +189,43 @@ test("recovery refuses a request that carries no owner instead of planning again
   assert.equal(refused.status, 401);
   assert.deepEqual(f.state.reads, [], "a refused request must not read any session row");
   assert.equal(f.state.saved, undefined, "a refused request must not write any session row");
+});
+
+test("hosted recovery execution is refused for an unentitled owner and writes nothing", async t => {
+  // Broken by: gating `recovery-jobs/plan` instead of `apply`, which would take
+  // the proof away with the execution, or by answering 403, which blames the
+  // caller for a capability that is simply not theirs yet.
+  const f = await fixture(t);
+  f.unpaid();
+  const refused = await f.request("apply", { jobId: "job", planDigest: f.digest, approved: true });
+  assert.equal(refused.status, 402);
+  assert.equal(refused.body.error, "capability_not_included");
+  // The store is untouched: no session row is read, written or locked, and the
+  // job is never dispatched. A refusal that still ran the transaction would be
+  // a refusal the customer paid for in somebody else's lock.
+  assert.deepEqual(f.state.reads, [], "a refused apply must not read a session row");
+  assert.equal(f.state.saved, undefined, "a refused apply must not write a session row");
+  assert.equal(f.state.applies, 0, "no recovery was executed");
+  // And the message names what is still free, so the refusal is not a dead end.
+  assert.match(refused.body.message, /free/i);
+});
+
+test("the recovery proof and receipt stay free for the same unentitled owner", async t => {
+  // Broken by: putting the whole route group behind the capability. The capture
+  // and the receipt are what make a hosted incident debuggable, and the
+  // open-core CLI runs the same recovery locally forever, so both stay open.
+  // The apply refusal is asserted here too, so this cannot pass vacuously on a
+  // fixture whose owner was never actually outside the paid line.
+  const f = await fixture(t);
+  f.unpaid();
+  assert.equal(await f.deps.entitled(OPERATOR_OWNER), false, "this owner is not paying");
+  const refused = await f.request("apply", { jobId: "job", planDigest: f.digest, approved: true });
+  assert.equal(refused.status, 402, "and the same owner is refused the execution");
+  const plan = await f.request("plan", { jobId: "job", selection: { kind: "operations", operationIds: ["op"] } });
+  assert.equal(plan.status, 200, "planning is not a paid capability");
+  assert.equal(plan.body.planDigest, f.digest);
+  const status = await f.request("job");
+  assert.equal(status.status, 200, "inspecting the receipt is not a paid capability");
+  assert.equal(status.body.planDigest, f.digest);
+  assert.equal(f.state.applies, 0, "and neither of them executed anything");
 });

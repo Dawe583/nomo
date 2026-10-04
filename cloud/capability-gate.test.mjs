@@ -410,16 +410,70 @@ test("the operator's own control token is deployment authority, not a receipt", 
 test("nothing else about the free cloud surface moved", async () => {
   // Broken by: a refactor that narrows a capability nobody agreed to pay for,
   // which is the failure this change could cause and did not intend. The only
-  // difference from the overlay this server answered with before is the one new
-  // key, and for every owner who is not paying that key is the only thing that
-  // is off.
-  const { taintGraph, ...open } = openCapabilities();
+  // difference from the overlay this server answered with before is the paid
+  // keys, and for every owner who is not paying those keys are the only things
+  // that are off. They are stripped through `PAID_CAPABILITIES` rather than
+  // named one at a time, so adding a paid capability does not silently exempt
+  // it here.
+  const surface = openCapabilities();
+  const open = { ...surface };
+  for (const name of PAID_CAPABILITIES) {
+    assert.equal(open[name], true, `the ungated surface has ${name} on`);
+    delete open[name];
+  }
   assert.deepEqual(open, PREVIOUS_OVERLAY, "the open overlay is the one that was there before");
-  assert.equal(taintGraph, true, "the ungated surface has the paid capability on");
   const free = await wired().gate.capabilities(OWNER);
   for (const key of Object.keys(PREVIOUS_OVERLAY))
     assert.deepEqual(free[key], PREVIOUS_OVERLAY[key], `${key} is the same for the free tier`);
 });
+
+// --- hosted recovery execution is the second paid capability ---------------
+
+test("verifiedRecovery is paid: published off without a subscription, on with one, and never widened", async () => {
+  // Broken by: naming the capability in `PAID_CAPABILITIES` while the base
+  // surface does not serve it, which reports a flag the server never reads; by
+  // deriving it anywhere but `openCapabilities`, which would put the paid
+  // decision in the Apache 2.0 open core; or by a `narrowCapabilities` that can
+  // widen, which is the difference between a gate and a second way to be
+  // wrong. The narrow-only half is restated against the new key rather than
+  // left to the loop above, and a truthy-but-not-true entitlement is the shape
+  // a hand-edited subscription document has.
+  assert.ok(
+    PAID_CAPABILITIES.includes("verifiedRecovery"),
+    "hosted recovery execution is on the paid side of the line",
+  );
+  const open = openCapabilities();
+  assert.equal(open.verifiedRecovery, true, "the ungated surface does serve it");
+  assert.equal(
+    (await wired().gate.capabilities(OWNER)).verifiedRecovery,
+    false,
+    "an owner who never subscribed is outside the paid line",
+  );
+  assert.equal(
+    (await wired().subscribe("active")).verifiedRecovery,
+    true,
+    "a live subscription is inside it",
+  );
+  // The split the decision makes: the capture and the receipt stay free so the
+  // proof is inspectable and the open-core CLI keeps working, and only the
+  // hosted execution is withheld.
+  const free = await wired().gate.capabilities(OWNER);
+  assert.equal(free.recoveryJobs, true, "recovery jobs remain a free capability");
+  assert.equal(narrowCapabilities(open, true).verifiedRecovery, true);
+  for (const value of [false, undefined, null, 1, "yes", {}, []])
+    assert.equal(
+      narrowCapabilities(open, value).verifiedRecovery,
+      false,
+      `${String(value)} is not a live payment`,
+    );
+  assert.equal(
+    narrowCapabilities({ ...open, verifiedRecovery: false }, true).verifiedRecovery,
+    false,
+    "a base that already says false is never widened, by any argument",
+  );
+});
+
+
 
 // --- the wiring in cloud/server.mjs ---------------------------------------
 
@@ -521,8 +575,9 @@ async function server(t, { polar = false } = {}) {
     listener.close();
   });
   const base = `http://127.0.0.1:${listener.address().port}`;
-  const call = async (path, cookie) => {
-    const response = await fetch(base + path, cookie ? { headers: { cookie } } : {});
+  const call = async (path, cookie, post) => {
+    const headers = { ...(cookie ? { cookie } : {}), ...(post ? { "content-type": "application/json" } : {}) };
+    const response = await fetch(base + path, { ...(post ? { method: "POST", body: JSON.stringify(post) } : {}), headers });
     const text = await response.text();
     return { status: response.status, body: text ? JSON.parse(text) : null };
   };
@@ -559,6 +614,24 @@ test("over HTTP: a free account is told the paid capability is off and cannot re
     const open = await s.call(path, s.cookie);
     assert.notEqual(open.body?.error, "capability_not_included", `${path} is not gated`);
   }
+});
+
+test("over HTTP: the hosted recovery apply is refused while the proof stays open", async (t) => {
+  // The wiring in `cloud/server.mjs` under test, not just the module: the gate
+  // is handed to `mountRecoveryRoutes`, and the free account is told the
+  // capability is off and is refused the execution that spends it.
+  const s = await server(t);
+  const capabilities = await s.call("/api/capabilities", s.cookie);
+  assert.equal(capabilities.status, 200);
+  assert.equal(capabilities.body.verifiedRecovery, false);
+  assert.equal(capabilities.body.recoveryJobs, true, "the capture and the receipt stay free");
+  const applied = await s.call(
+    "/api/sessions/session/recovery-jobs/apply",
+    s.cookie,
+    { method: "POST", body: { jobId: "job", planDigest: "a".repeat(64), approved: true } },
+  );
+  assert.equal(applied.status, 402);
+  assert.equal(applied.body.error, "capability_not_included");
 });
 
 test("over HTTP: an unreadable entitlement fails the capability off, not the whole surface open", async (t) => {
