@@ -8,6 +8,23 @@ import { executeWorkspaceTool } from "./workspace.ts";
 
 import type { PublicKeyLookup } from "../../ledger/src/verify.ts";
 
+/// `PublicKeyLookup` is either a fixed key or a resolver over key ids. What
+/// matters here is the answer, not which form it arrived in.
+async function answer(lookup: PublicKeyLookup, keyId: string): Promise<Uint8Array | null> {
+  return typeof lookup === "function" ? lookup(keyId) : lookup;
+}
+
+const fetcher = async (url: unknown) =>
+  String(url).endsWith("/models")
+    ? Response.json({ data: [{ id: "fixture" }] })
+    : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+
+const internalsOf = (app: Workbench) =>
+  app as unknown as {
+    sessions: Map<string, { view: { workspace: string } }>;
+    commitWorkspace(...a: unknown[]): Promise<void>;
+  };
+
 /**
  * `attest()` is a read path. It asks "show me a signed slice of this ledger",
  * and it must not hand out the power to sign in exchange for answering.
@@ -27,23 +44,6 @@ import type { PublicKeyLookup } from "../../ledger/src/verify.ts";
  * It has to be two workbenches because the constructor snapshots `env`; the
  * pinned key must be present when the second one is built, not assigned later.
  */
-
-/// `PublicKeyLookup` is either a fixed key or a resolver over key ids. What
-/// matters here is the answer, not which form it arrived in.
-async function answer(lookup: PublicKeyLookup, keyId: string): Promise<Uint8Array | null> {
-  return typeof lookup === "function" ? lookup(keyId) : lookup;
-}
-const fetcher = async (url: unknown) =>
-  String(url).endsWith("/models")
-    ? Response.json({ data: [{ id: "fixture" }] })
-    : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
-
-const internalsOf = (app: Workbench) =>
-  app as unknown as {
-    sessions: Map<string, { view: { workspace: string } }>;
-    commitWorkspace(...a: unknown[]): Promise<void>;
-  };
-
 test("attest refuses to mint a key for a workbench that cannot sign", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "void-attest-read-"));
 
