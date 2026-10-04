@@ -1354,17 +1354,23 @@ gate but a statement about what the gate is for.
 
 **The rest of the paid list has the same shape.** Every item on it is now
 answered for, because a paid list entry with no answer is how the first one went
-unnoticed for as long as it did. Three are paid by name and shipped open:
+unnoticed for as long as it did. Two are paid by name and shipped open:
 
-- **The Slack channel implementation.** `packages/policy/src/channels/slack.ts`
-  is the real thing — `postHoldToSlack`, `slackPayload`, `SlackChannel` — in an
-  Apache 2.0 package (`packages/policy/package.json` line 5), re-exported from
-  the barrel at `packages/policy/src/index.ts:21`. This is amendment one's
-  collision, unfixed and now older: the collision was real, the reasoning was
-  right, and the split was never executed. Unlike `graph.ts` this one is
-  arguably still movable, because it is a webhook client and nothing has ever
-  depended on reading it. It is named here rather than fixed here, because
-  moving it is a code change and this amendment moves no code.
+- **The Slack channel implementation.** `paid/channels/slack.ts` is the real
+  thing — `postHoldToSlack`, `slackPayload`, `SlackChannel` — and it now lives
+  in a closed `paid/` directory carrying `LicenseRef-VOID-Proprietary`, rather
+  than in the Apache 2.0 policy package it used to sit in. This was amendment
+  one's collision, and it was fixed on 2026-10-03: the implementation moved
+  from `packages/policy/src/channels/slack.ts` to `paid/channels/slack.ts` with
+  its test, and the re-export is gone from the `packages/policy` barrel. The
+  channel **interface** stayed open, as amendment one requires:
+  `packages/policy/src/hold.ts` and `packages/policy/src/channels/cli.ts` are
+  unchanged and still re-exported. The move is enforced rather than asserted:
+  `scripts/src/licence-line.test.mjs` classifies `paid/` as closed, checks that
+  no open package imports it or defines the implementation, and fails if the
+  file is put back under `packages/policy`. This one was movable for the reason
+  given below — a webhook client nothing has ever depended on reading — which is
+  why moving it cost no consumer.
 - **Irreversibility budgets.** `packages/runtime/src/budget.ts` is 30 kB of
   accounting in an Apache 2.0 package, which `cloud/capability-gate.mjs` lines
   51 to 54 already records as a known consequence: gating them "would be a

@@ -18,4 +18,3 @@ export * from "./digest.ts";
 export * from "./hold.ts";
 export * from "./channels/cli.ts";
 export * from "./approvals.ts";
-export * from "./channels/slack.ts";
