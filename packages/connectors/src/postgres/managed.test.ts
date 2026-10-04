@@ -883,3 +883,61 @@ test("a managed PostgreSQL observation names the rows it read at the revision it
     { resource: after.resources[0], revision: "1" },
   ]);
 });
+
+// Issue #47: `prepare` certifies the receipt layout inside its SERIALIZABLE
+// transaction, but it locks the target rows rather than the metadata tables,
+// and `execute` reuses that same transaction from the same connection. Between
+// the two calls the layout can drift, so the check `execute` was leaning on is
+// only as old as `prepare`. PGlite is a single in-process connection and cannot
+// run two sessions, so the drift is planted on the adapter's own still-open
+// transaction; these are the statements a second session would commit, and what
+// `execute` does with a receipt layout that no longer matches does not depend
+// on who wrote the DDL. This is fixture evidence, not two-session certification.
+for (const [name, drift] of [
+  [
+    "an extra constraint",
+    "ALTER TABLE void_recovery.operations ADD CONSTRAINT drift_receipt CHECK(length(id)>0)",
+  ],
+  [
+    "a replaced format_version default",
+    "ALTER TABLE void_recovery.operations ALTER COLUMN format_version SET DEFAULT 1",
+  ],
+  ["a downgraded metadata version", "UPDATE void_recovery.meta SET version=1"],
+] as const) {
+  test(`execute refuses a receipt layout changed by ${name} between prepare and execute`, async (t) => {
+    const f = await fixture(t);
+    const adapter = managedPostgresAdapter(f.options);
+    const input = f.request.arguments;
+    // The layout is the installed one here: `prepare` passes its own
+    // re-certification, so only drift after it can be the thing refused.
+    const prepared = await adapter.prepare(
+      input,
+      await adapter.preflight(input),
+      "op",
+    );
+    await f.db.exec(drift);
+    await assert.rejects(
+      adapter.execute(input, prepared, "op"),
+      /receipt/i,
+      "execute must re-check the receipt layout under the lock it already holds",
+    );
+    await adapter.release("op");
+    assert.equal(
+      (
+        await f.db.query<Record<string, unknown>>(
+          "SELECT balance FROM account WHERE id=1",
+        )
+      ).rows[0]?.balance,
+      10,
+      "a refused receipt layout must not leave the business mutation committed",
+    );
+    assert.equal(
+      (
+        await f.db.query<Record<string, unknown>>(
+          "SELECT count(*)::int AS n FROM void_recovery.operations",
+        )
+      ).rows[0]?.n,
+      0,
+    );
+  });
+}

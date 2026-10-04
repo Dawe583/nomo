@@ -1498,6 +1498,30 @@ export function managedPostgresAdapter(
         throw new Error("Preparation does not match dispatch.");
       const m = p.mutation;
       const connection = p.connection;
+      // `prepare` certified the receipt layout, but nothing held the metadata
+      // tables still while it did: `prepare` locks the target rows, not
+      // `void_recovery`, so another session can commit DDL against the receipt
+      // tables in the window between the two calls and the guarantee `execute`
+      // would be leaning on is only as old as `prepare`.
+      //
+      // The lock already held here is `prepare`'s own
+      // `BEGIN ISOLATION LEVEL SERIALIZABLE` transaction, on this same
+      // connection — so this re-check reads the catalogue under the snapshot
+      // that is about to commit the mutation and its receipt together, rather
+      // than under a session that could commit between the read and the write.
+      // Taking the metadata tables in an explicit lock mode is the stronger
+      // fix, and it stays open pending a real two-session run; this re-check
+      // does not depend on that answer. It runs before the first mutation
+      // statement, while ROLLBACK is still reachable and no business row has
+      // been touched.
+      try {
+        await requireCurrentMetadata(connection);
+      } catch (error) {
+        throw new Error(
+          "Receipt metadata layout is not the installed layout; refusing to commit the mutation without a receipt.",
+          { cause: error },
+        );
+      }
       const target = tables.get(m.table)!;
       const values = Object.keys(m.values).sort();
       const table = tableName(m.table);
