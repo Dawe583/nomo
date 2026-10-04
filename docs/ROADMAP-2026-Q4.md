@@ -380,8 +380,7 @@ written; §4.3 said there was "no post-write re-read" for S3 and was wrong. Its 
 distribution question. §6's demand reading is unchanged and still binds harder than either.
 
 **3. The write path's cost is the ledger's fsync, and group commit cut it by about a quarter.**
-Not yet on `main`: PR #75 is open and holds both the change and the measurements below.
-
+The change merged to `main` as PR #80 on 2026-10-04.
 `node scripts/src/bench.mjs --scale 200`, this machine, four interleaved pairs measured on
 2026-10-04 (`main` and the branch alternating, so drift affects both sides):
 
