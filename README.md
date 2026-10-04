@@ -5,12 +5,14 @@ writes the proof into your own database where anyone can check it without
 trusting VOID.
 
 **Rubrik has sold "undo for agent actions" since August 2025**, so that part is
-not a differentiator and this file does not claim it is. Two things still are.
-Rubrik's audit trail lives in Rubrik Security Cloud, not in the database that was
-damaged. And its mechanism is a restore, not an inverse: rewinding a live
-database to a moment ago discards every legitimate write made since. VOID
-restores the affected rows and keeps the rest, and the receipt it leaves sits in
-your schema.
+not a differentiator and this file does not claim it is. Their own release
+describes the mechanism as using Rubrik Security Cloud to rewind "files,
+databases, configurations, or repositories", and describes the audit trail as
+living there rather than in the database that was damaged. Read that as their
+description of themselves, not as a reading of their internals. What is directly
+comparable is the consequence: rewinding a live database to a moment ago
+discards every legitimate write made since. VOID restores the affected rows and
+keeps the rest, and the receipt it leaves sits in your schema.
 
 **See it happen, then check it without VOID.** The demo drives a real PostgreSQL
 17 server: an agent write, a finance write made *outside* VOID, then the inverse.
