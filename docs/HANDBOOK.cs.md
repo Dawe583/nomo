@@ -61,7 +61,7 @@ tenhle návod na tom nestojí. Ukázané jsou dvě užší věci, a obě jdou ov
   někdo jiný. `scripts/receipt-demo/run.mjs` ukazuje obojí na jedné tabulce: zápis
   agenta, schválení financí mimo VOID a pak inverzi, po níž je první řádek zpět
   a druhý si drží svou pozdější hodnotu.
-- **Potvrzení skončí v té databázi, kde se efekt stal.** Po ověřené obnově ve
+- **Potvrzení zůstane v té databázi, kde se efekt stal.** Po ověřené obnově ve
   spravovaném Postgresu se záznam zapíše do `${schema}.recoveries`
   (`packages/connectors/src/postgres/managed.ts:1399`), takže si ho ověří kdokoli,
   kdo se k té databázi dostane, čistým SQL a bez žádného procesu VOID.
