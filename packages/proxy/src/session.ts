@@ -9,7 +9,7 @@ import type {
 } from "./rpc.ts";
 
 export type SessionMaps = {
-  readonly agentToUpstream: ReadonlyMap<JsonRpcId, number>;
+  readonly agentToUpstream: ReadonlyMap<JsonRpcId, JsonRpcId>;
   readonly upstreamToAgent: ReadonlyMap<JsonRpcId, JsonRpcId>;
 };
 
@@ -22,9 +22,9 @@ const SUPPORTED_PROTOCOL_VERSIONS = [
 ] as const;
 
 export class Session {
-  readonly #agentToUpstream = new Map<JsonRpcId, number>();
+  readonly #agentToUpstream = new Map<JsonRpcId, JsonRpcId>();
   readonly #upstreamToAgent = new Map<JsonRpcId, JsonRpcId>();
-  readonly #progressTokens = new Map<number, JsonRpcId>();
+  readonly #progressTokens = new Map<JsonRpcId, JsonRpcId>();
   readonly #usedIds = new Set<JsonRpcId>();
   #nextId = 1;
 
@@ -33,7 +33,7 @@ export class Session {
     upstreamToAgent: this.#upstreamToAgent,
   };
 
-  allocateAgentId(): number {
+  allocateAgentId(): JsonRpcId {
     return this.#allocateId();
   }
 
@@ -47,6 +47,17 @@ export class Session {
       assertRequestId(upstreamId),
       assertRequestId(agentId),
     );
+    this.#rememberId(upstreamId);
+  }
+
+  /**
+   * Records the progress token a request carried, so an inbound progress
+   * notification is answered with the token the caller chose rather than the
+   * id this session minted. The server-originated relay calls this for the
+   * requests it translates itself.
+   */
+  recordProgressToken(agentId: JsonRpcId, token: JsonRpcId): void {
+    this.#progressTokens.set(agentId, token);
   }
 
   translateRequestOut(agentRequest: JsonRpcRequest): JsonRpcRequest {
@@ -56,7 +67,7 @@ export class Session {
     this.#agentToUpstream.set(agentId, upstreamId);
     const token = readMeta(agentRequest.params)?.progressToken;
     if (typeof token === "string" || typeof token === "number") {
-      this.#progressTokens.set(upstreamId, token);
+      this.recordProgressToken(upstreamId, token);
     }
 
     const translated = { ...agentRequest, id: upstreamId };
@@ -151,7 +162,7 @@ export class Session {
   }
 
   #translateProgress(message: JsonRpcNotification): JsonRpcNotification | null {
-    const token = readNumericParam(message.params, "progressToken");
+    const token = readRequestIdParam(message.params, "progressToken");
     if (token === null) {
       return null;
     }
@@ -187,6 +198,10 @@ export class Session {
     const agentId = this.#allocateId();
     this.#upstreamToAgent.set(upstreamId, agentId);
 
+    const token = readMeta(message.params)?.progressToken;
+    if (typeof token === "string" || typeof token === "number") {
+      this.recordProgressToken(agentId, token);
+    }
     const translated = { ...message, id: agentId };
     const params = remapMetaToken(message.params, agentId);
     return params === message.params ? translated : { ...translated, params };
@@ -202,7 +217,7 @@ export class Session {
     return null;
   }
 
-  #allocateId(): number {
+  #allocateId(): JsonRpcId {
     while (this.#usedIds.has(this.#nextId)) {
       this.#nextId += 1;
     }
@@ -267,25 +282,9 @@ function readRequestIdParam(
   return null;
 }
 
-function readNumericParam(
-  params: JsonObject | undefined,
-  key: string,
-): number | null {
-  if (params === undefined || !(key in params)) {
-    return null;
-  }
-
-  const value = params[key];
-  if (typeof value !== "number" || !Number.isInteger(value)) {
-    return null;
-  }
-
-  return value;
-}
-
 function remapMetaToken(
   params: JsonObject | undefined,
-  nextToken: number,
+  nextToken: JsonRpcId,
 ): JsonObject | undefined {
   const meta = readMeta(params);
   if (meta === null || !("progressToken" in meta)) {

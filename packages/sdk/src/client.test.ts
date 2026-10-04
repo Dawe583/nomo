@@ -16,7 +16,7 @@ import {
   pinVerificationKey,
 } from "../../ledger/src/verify-key.ts";
 
-import { VoidClient, createVoidClient } from "./client.ts";
+import { VoidClient, createVoidClient, CLIENT_MAX_ERROR_BYTES, CLIENT_MAX_ERROR_LINES } from "./client.ts";
 import { legacyBindingRoot } from "../../proxy/src/legacy-root.ts";
 import { HoldDeniedError, LedgerVerifyError, RefusedError } from "./errors.ts";
 const fixtureServer = fileURLToPath(new URL("../../../fixtures/e2e-server.mjs", import.meta.url));
@@ -389,4 +389,78 @@ test("an unknown binding name is refused at construction", () => {
     }),
     /unknown|not a bound|binding/i,
   );
+});
+
+/**
+ * An upstream that answers normally and then floods stdout with malformed
+ * JSON-RPC lines. Each one becomes a proxy stderr note, so this drives the
+ * real retention path in the real client rather than a stubbed one.
+ */
+async function noisyUpstream(dir: string, noise: number): Promise<string> {
+  const path = join(dir, "noisy-upstream.mjs");
+  await writeFile(path, `
+import { createInterface } from "node:readline";
+const send = (message) => process.stdout.write(JSON.stringify(message) + "\\n");
+let emitted = 0;
+// Dripped rather than dumped: a flood written ahead of the answer fills the
+// pipe and the reply never gets read, which tests the transport rather than
+// the retention the client is responsible for.
+const flood = setInterval(() => {
+  for (let batch = 0; batch < 100 && emitted < ${noise}; batch += 1) {
+    emitted += 1;
+    process.stdout.write("this is not json-rpc at all " + emitted + "\\n");
+  }
+  if (emitted >= ${noise}) clearInterval(flood);
+}, 1);
+createInterface({ input: process.stdin }).on("line", (line) => {
+  const request = JSON.parse(line);
+  if (request.method === "initialize") {
+    send({ jsonrpc: "2.0", id: request.id, result: { protocolVersion: "2025-11-25", serverInfo: { name: "noisy-fixture", version: "1.0.0" }, capabilities: { tools: {} } } });
+    return;
+  }
+  if (request.method === "tools/list") {
+    send({ jsonrpc: "2.0", id: request.id, result: { tools: [{ name: "echo", description: "Echo.", inputSchema: { type: "object", properties: { text: { type: "string" } } } }] } });
+    return;
+  }
+  if (request.method === "tools/call") {
+    send({ jsonrpc: "2.0", id: request.id, result: { content: [{ type: "text", text: request.params?.arguments?.text ?? "answered" }] } });
+    return;
+  }
+  send({ jsonrpc: "2.0", id: request.id, error: { code: -32601, message: "no such method" } });
+});
+`, "utf8");
+  return path;
+}
+
+test("error retention is bounded and reports what it dropped", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-sdk-error-cap-"));
+  t.after(async () => { await rm(dir, { recursive: true, force: true }); });
+  const client = createVoidClient({
+    connect: { upstreamCommand: [process.execPath, await noisyUpstream(dir, 4_000)] },
+    policyPath: await fixturePolicy(),
+    ledgerDir: join(dir, "ledger"),
+    requestTimeoutMs: 30_000,
+  });
+  t.after(() => client.close());
+
+  const result = await client.request("tools/call", { name: "echo", arguments: { text: "after the flood" } });
+  assert.equal(textFrom(result), "after the flood");
+
+  // The flood is concurrent with the answer, so the drops are awaited as a
+  // condition rather than after a guessed delay.
+  await waitFor(() => (client.errorsDropped > 0 ? true : undefined), "dropped error lines");
+  const errors = client.errors;
+  assert.ok(
+    errors.length <= CLIENT_MAX_ERROR_LINES,
+    `retained ${errors.length} error lines, ceiling is ${CLIENT_MAX_ERROR_LINES}`,
+  );
+  const bytes = errors.reduce((sum, line) => sum + Buffer.byteLength(line), 0);
+  assert.ok(
+    bytes <= CLIENT_MAX_ERROR_BYTES,
+    `retained ${bytes} error bytes, ceiling is ${CLIENT_MAX_ERROR_BYTES}`,
+  );
+  // A silently truncated list reads as "there were no more errors", so the
+  // drops have to be visible next to the lines that survived.
+  assert.ok(client.errorsDropped > 0, "the dropped error count must be reported");
+  assert.match(client.errors.join(" "), /malformed JSON-RPC/);
 });

@@ -147,6 +147,48 @@ const RETIRED_MODEL_IDS = [
 const REQUEST_DIGEST_DOMAIN = "void.workbench.request.v2";
 
 /**
+ * The byte ceiling on a session view's retained events. The stream heartbeat
+ * and the events endpoint both rescan this list, so a long-running session
+ * would otherwise grow its own per-request cost without bound. Events beyond
+ * the ceiling are dropped oldest first; the sequence numbers stay monotonic,
+ * so a resuming subscriber sees the gap as an incomplete history rather than
+ * a silent one.
+ */
+export const WORKBENCH_VIEW_MAX_EVENT_BYTES = 1024 * 1024;
+
+/**
+ * The byte total of the events each session view currently retains, keyed by
+ * the array the total describes. Keying on the array rather than the session
+ * id means a view that arrived from storage is remeasured instead of trusted,
+ * and a discarded session is collected with its own events.
+ */
+const viewEventBytes = new WeakMap<readonly SessionEvent[], number>();
+
+/**
+ * Drops the oldest events until the retained list is within the ceiling. The
+ * running total for the previous list is reused when appending one event, so
+ * the cost is proportional to the events dropped rather than to the whole
+ * transcript.
+ */
+function trimViewEvents(session: Session, events: SessionEvent[]): SessionEvent[] {
+  const previous = session.view.events;
+  // The previous total is reused only when this call extends the very array it
+  // described; a view that arrived from storage is measured in full instead.
+  const carried = viewEventBytes.get(previous);
+  const fresh = carried === undefined ? events : events.slice(previous.length);
+  let bytes = carried ?? 0;
+  for (const event of fresh) bytes += Buffer.byteLength(JSON.stringify(event));
+  let first = 0;
+  while (bytes > WORKBENCH_VIEW_MAX_EVENT_BYTES && first < events.length - 1) {
+    bytes -= Buffer.byteLength(JSON.stringify(events[first]!));
+    first += 1;
+  }
+  const retained = first === 0 ? events : events.slice(first);
+  viewEventBytes.set(retained, bytes);
+  return retained;
+}
+
+/**
  * One turn of the agent-conversation request digest chain.
  *
  * `previous` is the digest of every turn before this one, so a change anywhere
@@ -1222,32 +1264,30 @@ export class Workbench {
       if (config.token)
         safeText = safeText.split(config.token).join("[redacted]");
     const safe = JSON.parse(safeText) as Record<string, unknown>;
+    const appended: SessionEvent = {
+      id: `${session.view.id}:${seq}`,
+      sessionId: session.view.id,
+      runId: session.view.runId,
+      seq,
+      at,
+      kind,
+      text: (session.provider?.redact(text) ?? text).slice(0, 32000),
+      type:
+        type ??
+        {
+          user: "message.completed",
+          assistant: "message.completed",
+          tool: "tool.result",
+          error: "run.error",
+          usage: "usage.reported",
+        }[kind],
+      payload: safe,
+      schemaVersion: 1,
+    };
     session.view = {
       ...session.view,
       updatedAt: at,
-      events: [
-        ...session.view.events,
-        {
-          id: `${session.view.id}:${seq}`,
-          sessionId: session.view.id,
-          runId: session.view.runId,
-          seq,
-          at,
-          kind,
-          text: (session.provider?.redact(text) ?? text).slice(0, 32000),
-          type:
-            type ??
-            {
-              user: "message.completed",
-              assistant: "message.completed",
-              tool: "tool.result",
-              error: "run.error",
-              usage: "usage.reported",
-            }[kind],
-          payload: safe,
-          schemaVersion: 1,
-        },
-      ],
+      events: trimViewEvents(session, [...session.view.events, appended]),
     };
   }
   getPreferences() {

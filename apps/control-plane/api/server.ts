@@ -92,6 +92,122 @@ type RouteOptions = {
 const here = fileURLToPath(new URL(".", import.meta.url));
 const defaultWebRoot = resolve(here, "../web");
 const maxBodyBytes = 64 * 1024;
+
+/**
+ * Transport bounds for a session event stream. A subscriber that stops
+ * reading must not grow the socket buffer for the life of the connection, so
+ * writes are refused once the pending bytes pass the ceiling and a write that
+ * returns false is waited on under a named drain deadline rather than left
+ * buffering. The buffer ceiling mirrors the HTTP relay's SSE default, and the
+ * drain deadline the relay's 30s abandon. One session, one stream is the
+ * honest default for a local control plane; a second concurrent subscriber is
+ * refused with a named status instead of silently splitting the stream.
+ */
+export const CONTROL_PLANE_SSE_MAX_BUFFER_BYTES = 1024 * 1024;
+export const CONTROL_PLANE_SSE_DRAIN_TIMEOUT_MS = 30_000;
+export const CONTROL_PLANE_SSE_MAX_STREAMS_PER_SESSION = 1;
+export const CONTROL_PLANE_SSE_STREAM_IN_USE_STATUS = 409;
+const CONTROL_PLANE_SSE_HEARTBEAT_MS = 1_000;
+
+/** One live subscriber per session, keyed by session id. */
+const activeStreams = new Map<string, SessionStream>();
+
+/**
+ * A session event stream with the same shape as the HTTP relay's
+ * `PendingHttpResponse`: every frame is measured against the pending bytes
+ * before it is written, a refused write queues until `drain`, and the drain
+ * deadline destroys the response rather than leaving it buffering. The
+ * heartbeat is part of the stream, so a refusal stops it too.
+ */
+class SessionStream {
+  readonly #response: ServerResponse;
+  readonly #id: string;
+  readonly #frames: string[] = [];
+  #queuedBytes = 0;
+  #backpressured = false;
+  #drainTimer: NodeJS.Timeout | null = null;
+  #heartbeat: NodeJS.Timeout | null = null;
+  #closed = false;
+
+  constructor(response: ServerResponse, id: string) {
+    this.#response = response;
+    this.#id = id;
+  }
+
+  start(workbench: Workbench, id: string, after: number): void {
+    let lastEventId = after;
+    this.#response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', 'x-accel-buffering': 'no' });
+    const emit = () => {
+      const current = workbench.get(id);
+      for (const event of current?.events.filter(e => e.seq > lastEventId) ?? []) {
+        if (!this.#sendFrame(`id: ${event.seq}\ndata: ${JSON.stringify(event)}\n\n`)) return;
+        lastEventId = event.seq;
+      }
+      this.#sendFrame(': heartbeat\n\n');
+    };
+    this.#response.once('close', () => this.#stop());
+    emit();
+    if (this.#closed) return;
+    this.#heartbeat = setInterval(emit, CONTROL_PLANE_SSE_HEARTBEAT_MS);
+  }
+
+  #sendFrame(frame: string): boolean {
+    if (this.#closed) return false;
+    const size = Buffer.byteLength(frame);
+    if (size + this.#queuedBytes + this.#response.writableLength > CONTROL_PLANE_SSE_MAX_BUFFER_BYTES) {
+      this.#stop();
+      this.#response.destroy();
+      return false;
+    }
+    if (this.#backpressured) {
+      this.#frames.push(frame);
+      this.#queuedBytes += size;
+    } else if (!this.#response.write(frame)) {
+      this.#waitForDrain();
+    }
+    return true;
+  }
+
+  #waitForDrain(): void {
+    this.#backpressured = true;
+    this.#response.once('drain', () => this.#flush());
+    this.#drainTimer = setTimeout(() => {
+      this.#stop();
+      this.#response.destroy();
+    }, CONTROL_PLANE_SSE_DRAIN_TIMEOUT_MS);
+    this.#drainTimer.unref();
+  }
+
+  #flush(): void {
+    this.#backpressured = false;
+    clearTimeout(this.#drainTimer ?? undefined);
+    this.#drainTimer = null;
+    while (this.#frames.length > 0) {
+      const frame = this.#frames.shift();
+      if (frame === undefined) break;
+      this.#queuedBytes -= Buffer.byteLength(frame);
+      if (!this.#response.write(frame)) {
+        this.#waitForDrain();
+        return;
+      }
+    }
+  }
+
+  /** Ends the stream: the heartbeat stops and the session slot is released. */
+  #stop(): void {
+    if (this.#closed) return;
+    this.#closed = true;
+    if (this.#heartbeat !== null) {
+      clearInterval(this.#heartbeat);
+      this.#heartbeat = null;
+    }
+    clearTimeout(this.#drainTimer ?? undefined);
+    this.#drainTimer = null;
+    this.#frames.length = 0;
+    this.#queuedBytes = 0;
+    if (activeStreams.get(this.#id) === this) activeStreams.delete(this.#id);
+  }
+}
 const publicScriptPaths: ReadonlySet<string> = new Set(["/app.js", "/workbench.css", "/theme.js", "/sessions.js", "/workspace-ui.js", "/cloud-settings.js", "/manifest.webmanifest", "/icon.svg"]);
 
 /**
@@ -242,10 +358,12 @@ async function route(
       }
       if (kind === 'events' && request.method === 'GET') { const items = session.events.filter(e => e.seq > Number(query.get('after') || 0)); return sendJson(response, 200, { items, after: items.at(-1)?.seq ?? Number(query.get('after') || 0), status: session.status, asOf: new Date().toISOString(), scope: id, historyComplete: session.events[0]?.seq === 1 }); }
       if (kind === 'stream' && request.method === 'GET') {
-        response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', 'x-accel-buffering': 'no' });
-        let after = Number(request.headers['last-event-id'] ?? query.get('after') ?? 0);
-        const emit = () => { const current = wb.get(id)!; for (const e of current.events.filter(e=>e.seq>after)) { response.write(`id: ${e.seq}\ndata: ${JSON.stringify(e)}\n\n`); after=e.seq; } response.write(`: heartbeat\n\n`); };
-        emit(); const timer = setInterval(emit, 1000); response.once('close', ()=>clearInterval(timer)); return;
+        if (activeStreams.has(id))
+          return sendJson(response, CONTROL_PLANE_SSE_STREAM_IN_USE_STATUS, { error: 'session_stream_in_use', message: 'Another subscriber is already streaming this session.' });
+        const stream = new SessionStream(response, id);
+        activeStreams.set(id, stream);
+        stream.start(wb, id, Number(request.headers['last-event-id'] ?? query.get('after') ?? 0));
+        return;
       }
     }
   } catch (error) { return sendJson(response, 409, { message: error instanceof Error ? error.message : 'Request failed.' }); }

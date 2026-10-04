@@ -18,7 +18,54 @@ export type SlackChannelOptions = {
   readonly webhookUrl?: string;
 };
 
-type Fetcher = (input: string, init: { method: "POST"; headers: Record<string, string>; body: string }) => Promise<{ readonly ok: boolean; readonly status: number; text(): Promise<string> }>;
+/**
+ * A Slack failure reason reaches an operator's terminal, a log line and a CI
+ * record. Two things in that text are not the operator's to publish: the
+ * webhook secret, which Slack puts in the last path segment, and control
+ * characters, which a hostile endpoint can use to repaint the terminal that
+ * prints the reason. Both are removed here and the result is capped, so a
+ * failure reason cannot become a side channel.
+ */
+const MAX_REASON = 200;
+
+/**
+ * The webhook URL is operator configuration rather than remote-user input, so
+ * this is not an SSRF boundary against an attacker. It is the boundary that
+ * stops a typo, a webhook copied out of a chat log, or a pasted secret from
+ * carrying the held call's rationale off the operator's machine, and that
+ * stops a redirect from moving the payload to a host the operator never
+ * named: a 302 would send the body somewhere else entirely.
+ */
+export function checkSlackWebhookUrl(value: string): string | undefined {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return "slack webhook url is not a URL";
+  }
+  if (url.protocol !== "https:") return "slack webhook url must be https";
+  if (url.username !== "" || url.password !== "") return "slack webhook url cannot carry credentials";
+  if (url.hash !== "") return "slack webhook url cannot carry a fragment";
+  return undefined;
+}
+
+function operatorText(text: string, webhookUrl: string): string {
+  const path = webhookUrl.split("/");
+  const secret = path[path.length - 1] ?? "";
+  const withoutSecret =
+    secret === ""
+      ? text
+      : text
+          .split(webhookUrl)
+          .join("[redacted]")
+          .split(secret)
+          .join("[redacted]");
+  const cleaned = withoutSecret.replace(/[\u0000-\u001f\u007f-\u009f]+/g, " ").replace(/ {2,}/g, " ").trim();
+  return cleaned.length <= MAX_REASON ? cleaned : `${cleaned.slice(0, MAX_REASON)}…`;
+}
+
+type Fetcher = (input: string, init: { method: "POST"; headers: Record<string, string>; body: string; redirect: "error" }) => Promise<{ readonly ok: boolean; readonly status: number; text(): Promise<string> }>;
+
 
 type SlackTextObject = {
   readonly type: "plain_text" | "mrkdwn";
@@ -83,19 +130,23 @@ export async function postHoldToSlack(
   resolveUrl: (id: string) => string,
   fetcher: Fetcher = globalThis.fetch,
 ): Promise<SlackPostResult> {
+  const refusal = checkSlackWebhookUrl(webhookUrl);
+  if (refusal !== undefined) return { kind: "failed", reason: refusal };
   try {
     const response = await fetcher(webhookUrl, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(slackPayload(call, resolveUrl)),
+      redirect: "error",
     });
     if (!response.ok) {
-      const body = await response.text();
+      const body = operatorText(await response.text(), webhookUrl);
       return { kind: "failed", reason: `slack webhook returned ${response.status}${body === "" ? "" : `: ${body}`}` };
     }
     return { kind: "posted", status: response.status };
   } catch (error) {
-    return { kind: "failed", reason: error instanceof Error ? error.message : String(error) };
+    const message = error instanceof Error ? error.message : String(error);
+    return { kind: "failed", reason: operatorText(message, webhookUrl) };
   }
 }
 

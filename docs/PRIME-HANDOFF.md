@@ -76,15 +76,39 @@ release gate. In particular:
 
 - S07 deliberately retained broad operator allow rules for unknown tools. That
   prior policy decision has not been silently reversed here.
-- Key rotation (S09), transport bounds
-  and backpressure (S10), and Slack URL policy (S14) need followup.
-- Typed request identity (S11): partial. Agent-originated requests in Session
-  keep typed ids, replies preserve that type, and progress tokens retain their
-  original value (c49aa8c, extended in 396178a). Session regressions cover typed
-  cancellation and token cleanup; runProxy coverage checks string cancellation.
-  The HTTP request relay still coerces client ids to numbers and routes progress
-  by request id rather than the original token. Session server-originated request
-  translation also still coerces ids to numbers. These paths remain open.
+- Key rotation (S09): the write-side drill landed 2026-10-03. The signer can
+  now rotate (`devKeyRing`, `rotateDevKey` in `packages/ledger/src/sign.ts`) and
+  a two-key chain verifies through the ring and through `jsonlStore.verify`
+  (`packages/ledger/src/rotation-drill.test.ts`). What a verifier trusts has not
+  moved: the same chain is still refused by the shipped single-key resolution,
+  which that test asserts. The trust set in the pin, the rotation entry record
+  and the re-signing decision are still open and still reserved for the owner.
+- Transport bounds and backpressure (S10): the per-message ceilings were
+  already in place; the queues around them were not. Closed 2026-10-03: the
+  proxy caps upstream messages parsed but not yet handled, upstream stderr goes
+  through the same queue guard as stdout, the control-plane session stream has
+  a buffer ceiling, a drain deadline and one subscriber, the workbench view
+  drops its oldest events at a byte ceiling, and the SDK client bounds the
+  error lines it retains. Two claims were corrected rather than fixed, and two
+  fixes ship without a deterministic regression; both are written out in the
+  S10 row of `packages/security-notes.md`, along with the connector retention
+  that remains open.
+- Typed request identity (S11): closed across the relay paths. `Session` keeps
+  the agent id, the upstream id and the progress token as typed identities
+  (`JsonRpcId`), the HTTP relay keys its pending maps by `JsonRpcId` instead of
+  rejecting a non-integer upstream id, and a server-originated request's
+  progress token is recorded and answered with the token the server named.
+  `recordServerRequest` now reserves the upstream id it was given, so the same
+  number cannot be live as an upstream id in one direction and an agent id in
+  the other. `relayServerRequest` remaps `_meta.progressToken`, which the live
+  `runProxy` path had been passing through untouched. Regressions: a relay whose
+  upstream ids are strings routes and answers its own request; a
+  server-originated token round trips through the production `Session`; a
+  reserved upstream id is never re-issued. Two limits remain by design: an
+  upstream that echoes a progress token with a different JSON type than it was
+  sent still gets no frame, and `VoidClient` no longer coerces a response id
+  with `Number()`, which is hardening the full stack cannot reach a test for,
+  because the proxy drops a string response id before the client sees it.
 - Ledger read limits (S13): closed at the entry boundary. `readLedgerEntries`
   caps file bytes and entries per call (95c73e6). Growth during a single read
   remains an accepted limit of the whole file read.
@@ -99,9 +123,12 @@ release gate. In particular:
   desktop sessions or full workbench orchestration. The AW sequence remains
   subject to the dependencies in EXECUTION-PLAN.md.
 
-Next local hardening step: S09 key rotation drill and S14 Slack URL policy,
-then S10 transport bounds before more agent runtime surfaces. Hosted
-verification and publication require the relevant
+Next local hardening step: the retention findings the S10 audit left open, in
+`packages/connectors/src/registry.ts` and `probes/cache.ts`, before more agent
+runtime surfaces. The S09 key rotation drill is done and is
+evidence, not a decision: the trust set in the pin, the rotation entry record
+and the re-signing decision it deliberately does not make are still open and
+still the owner's. Hosted verification and publication require the relevant
 user-provided test resources and release authorization.
 
 ## Small section 2: SDK startup signatures

@@ -21,6 +21,7 @@ import {
   sign as cryptoSign,
   verify as cryptoVerify,
 } from "node:crypto";
+import { readdir, rm } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { homedir } from "node:os";
@@ -111,7 +112,20 @@ export function retainedKeyProvider(
   return devKeyProvider({ ...options, createIfMissing: false });
 }
 
-export function keyProviderFromPkcs8(pkcs8: Buffer): KeyProvider {
+/**
+ * A provider over one private key, plus any retired public keys it may still
+ * have to answer for.
+ *
+ * `sign(input, keyId)` honours the key id the interface declares. A provider
+ * that holds the requested key signs with it; one that does not throws a
+ * named error. Signing with whatever key it happens to hold under a key id
+ * the caller named is a silent substitution, and it is exactly what makes a
+ * retired key id unverifiable after the fact.
+ */
+function providerFromPkcs8(
+  pkcs8: Buffer,
+  retired: ReadonlyMap<string, Uint8Array> = new Map(),
+): KeyProvider {
   // DER, named explicitly: a bare Buffer defaults to PEM parsing and fails
   // with an opaque OpenSSL decoder error on the exact bytes export produced.
   const privateKey = createPrivateKey({
@@ -130,20 +144,29 @@ export function keyProviderFromPkcs8(pkcs8: Buffer): KeyProvider {
     async currentKeyId() {
       return keyId;
     },
-    async sign(input: Uint8Array) {
+    async sign(input: Uint8Array, requested?: string) {
+      if (requested !== undefined && requested !== keyId)
+        throw new Error(
+          `this signing key holds no private key for ${requested}: it holds ${keyId}`,
+        );
       return cryptoSign(null, input, privateKey);
     },
     async publicKey(id: string) {
-      return id === keyId ? spki : null;
+      if (id === keyId) return spki;
+      return retired.get(id) ?? null;
     },
   };
+}
+
+export function keyProviderFromPkcs8(pkcs8: Buffer): KeyProvider {
+  return providerFromPkcs8(pkcs8);
 }
 
 async function keyProviderFromDirectory(
   dir: string,
   createIfMissing = true,
 ): Promise<KeyProvider> {
-  const file = join(dir, "dev-ed25519.pkcs8");
+  const file = devKeyFile(dir);
   try {
     return keyProviderFromPkcs8(await readExistingKey(file));
   } catch (error) {
@@ -167,6 +190,103 @@ async function keyProviderFromDirectory(
     }
     throw new Error(`development key at ${file} never became readable`);
   }
+}
+
+/**
+ * A `KeyProvider` over the development key directory that also answers for
+ * every retired public key under `<dir>/retired/`.
+ *
+ * This is the write side of rotation, and it is deliberately not a trust
+ * decision: a ring says which public keys this machine can check, not which
+ * keys a verifier should accept. Every shipped surface still resolves one key
+ * and still refuses the other key's entries — see `rotation-drill.test.ts`,
+ * where the two-key chain passes here and is refused there in the same run.
+ *
+ * Retired keys are keyed by the id derived from their own bytes, never by the
+ * file name, so a renamed file cannot make a key answer to another id. A
+ * missing retired directory is an empty ring, not an error.
+ */
+export async function devKeyRing(dir: string): Promise<KeyProvider> {
+  return providerFromPkcs8(
+    await readExistingKey(devKeyFile(dir)),
+    await readRetiredKeys(dir),
+  );
+}
+
+/**
+ * Retire the current development key and install a fresh one: the outgoing
+ * key's *public* SPKI moves to `<dir>/retired/<keyId>.spki` and a new private
+ * key is generated through the same O_EXCL 0600 path as a first run. The
+ * retired private key is not kept — anything that still needs to sign as the
+ * old key has to have kept the key material itself.
+ *
+ * Returns the provider for the new key. Callers that hold a provider from
+ * before the call still hold the old key; a rotation is therefore a boundary
+ * an operator takes between appends, not something to interleave with one.
+ */
+export async function rotateDevKey(dir: string): Promise<KeyProvider> {
+  const file = devKeyFile(dir);
+  const outgoing = providerFromPkcs8(await readExistingKey(file));
+  const outgoingId = await outgoing.currentKeyId();
+  const spki = await outgoing.publicKey(outgoingId);
+  if (spki === null)
+    throw new Error(`the development key at ${file} does not match its own id`);
+  await ensurePrivateDirectory(dir, "development key directory");
+  await ensurePrivateDirectory(retiredDir(dir), "retired development key directory");
+  // Public bytes, written through the same exclusive private-file path as the
+  // key itself: the directory is inside the signing tree, and O_EXCL means a
+  // symlink placed at the path is refused rather than followed.
+  const handle = await openPrivateFile(
+    retiredKeyFile(dir, outgoingId),
+    "exclusive-write",
+    "retired development public key file",
+  );
+  try {
+    await handle.writeFile(`${Buffer.from(spki).toString("base64")}\n`);
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+  // The old private key goes, and the new one is minted by the same first-run
+  // path a fresh install takes. A crash between the two leaves no key file at
+  // all, which is the same state a first append starts from and which the
+  // provider already handles.
+  await rm(file, { force: true });
+  return keyProviderFromDirectory(dir, true);
+}
+
+function devKeyFile(dir: string): string {
+  return join(dir, "dev-ed25519.pkcs8");
+}
+
+function retiredDir(dir: string): string {
+  return join(dir, "retired");
+}
+
+function retiredKeyFile(dir: string, keyId: string): string {
+  return join(retiredDir(dir), `${keyId}.spki`);
+}
+
+/** The retired public keys on disk, keyed by the id derived from their bytes. */
+async function readRetiredKeys(dir: string): Promise<Map<string, Uint8Array>> {
+  let names: string[];
+  try {
+    names = await readdir(retiredDir(dir));
+  } catch (error) {
+    if (isMissingFile(error)) return new Map();
+    throw error;
+  }
+  const retired = new Map<string, Uint8Array>();
+  for (const name of names) {
+    if (!name.endsWith(".spki")) continue;
+    const encoded = (await readPrivateFile(
+      retiredKeyFile(dir, name.slice(0, -".spki".length)),
+      "retired development public key file",
+    )).toString("utf8").trim();
+    const spki = new Uint8Array(Buffer.from(encoded, "base64"));
+    retired.set(devKeyIdFromSpki(spki), spki);
+  }
+  return retired;
 }
 
 async function readExistingKey(file: string): Promise<Buffer> {

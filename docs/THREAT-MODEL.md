@@ -634,8 +634,14 @@ Stated plainly rather than guessed.
    (S09) flags that signature verification accepts any key an injected lookup
    returns, with no rotation transition and no validity window. I confirmed the
    finding is still accurate in `packages/ledger/src/verify.ts:130-137` and
-   `packages/ledger/src/attest.ts:153-159`, but I did not assess rotation
-   behaviour under a multi-key provider because no such provider exists yet.
+   `packages/ledger/src/attest.ts:153-159`. A write-side drill has since landed
+   (2026-10-03, `packages/ledger/src/rotation-drill.test.ts`): a `KeyProvider`
+   over the current key plus retired public keys verifies a chain signed by two
+   keys, while every shipped surface still resolves one verification key and
+   still refuses the other key's entries with `entry N has no public key for
+   dev-…`. Multi-key behaviour under a *multi-key trust decision* remains
+   unassessed, because no such decision exists: the trust set, the rotation
+   entry record and the re-signing decision are reserved for the owner.
 6. **The `verify` key-minting behaviour was not executed.** I established
    `devKeyProvider({ env })` at `packages/cli/src/verify.ts:166` omits
    `createIfMissing`, and `packages/ledger/src/sign.ts:67` defaults it to

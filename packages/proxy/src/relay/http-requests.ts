@@ -31,7 +31,7 @@ export type HttpRequestRelay = {
 };
 
 type PendingById = {
-  readonly upstreamId: number;
+  readonly upstreamId: JsonRpcId;
   readonly agentId: JsonRpcId;
   readonly pending: PendingHttpResponse;
 };
@@ -44,8 +44,12 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
   if (!Number.isSafeInteger(maxPendingRequests) || maxPendingRequests < 1 || !Number.isSafeInteger(requestTimeoutMs) || requestTimeoutMs < 1) {
     throw new RangeError("HTTP relay limits must be positive safe integers");
   }
-  const pendingByUpstream = new Map<number, PendingById>();
+  const pendingByUpstream = new Map<JsonRpcId, PendingById>();
   const pendingByAgent = new Map<JsonRpcId, PendingById>();
+  // Reserved before the first await: reading pendingByUpstream.size after
+  // readBody resolves lets two concurrent requests both see room and both
+  // take it, and the ceiling stops being a ceiling.
+  let reservedHandles = 0;
 
   const removePending = (entry: PendingById): void => {
     pendingByUpstream.delete(entry.upstreamId);
@@ -64,6 +68,20 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
       response.end();
       return;
     }
+
+    if (reservedHandles >= maxPendingRequests) {
+      writeJson(response, 429, jsonRpcError(null, INTERNAL_ERROR, "HTTP relay pending-request limit exceeded"));
+      return;
+    }
+    reservedHandles += 1;
+    try {
+      await handleReserved(request, response);
+    } finally {
+      reservedHandles -= 1;
+    }
+  };
+
+  const handleReserved = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
 
     let parsed: unknown;
     try {
@@ -136,7 +154,7 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
       for (const clientRequest of requests) {
         const upstreamRequest = session.translateRequestOut(clientRequest);
         const entry = {
-          upstreamId: numericId(upstreamRequest.id),
+          upstreamId: upstreamRequest.id,
           agentId: clientRequest.id,
           pending,
         };
@@ -160,20 +178,20 @@ export function createHttpRequestRelay(options: HttpRequestRelayOptions): HttpRe
     }
 
     if (isProgressNotification(message)) {
-      const upstreamId = readNumericParam(message.params, "progressToken");
+      // The token on the wire is the id this session minted for the request,
+      // so the routing key is typed and read from the upstream frame. What the
+      // agent receives is Session's translation, carrying the agent's own
+      // token back.
+      const upstreamToken = readIdParam(message.params, "progressToken");
       const translated = session.translateInbound(message);
-      if (upstreamId !== null && translated !== null && isNotification(translated)) {
-        pendingByUpstream.get(upstreamId)?.pending.writeSse(translated);
+      if (upstreamToken !== null && translated !== null && isNotification(translated)) {
+        pendingByUpstream.get(upstreamToken)?.pending.writeSse(translated);
       }
       return;
     }
 
     if (isResponse(message)) {
-      if (typeof message.id !== "number" || !Number.isInteger(message.id)) {
-        return;
-      }
-      const upstreamId = message.id;
-      const entry = pendingByUpstream.get(upstreamId);
+      const entry = message.id === undefined ? undefined : pendingByUpstream.get(message.id);
       const translated = session.translateInbound(message);
       if (entry !== undefined && translated !== null && isResponse(translated)) {
         entry.pending.complete(entry, translated);
@@ -449,21 +467,9 @@ function isProgressNotification(value: JsonRpcMessage): value is JsonRpcNotifica
   return isNotification(value) && value.method === "notifications/progress";
 }
 
-function readNumericParam(params: Readonly<Record<string, unknown>> | undefined, key: string): number | null {
-  const value = params?.[key];
-  return typeof value === "number" && Number.isInteger(value) ? value : null;
-}
-
 function readIdParam(params: Readonly<Record<string, unknown>> | undefined, key: string): JsonRpcId | null {
   const value = params?.[key];
   return (typeof value === "string" && value !== "") || (typeof value === "number" && Number.isInteger(value)) ? value : null;
-}
-
-function numericId(id: JsonRpcId): number {
-  if (typeof id === "number" && Number.isInteger(id)) {
-    return id;
-  }
-  throw new Error("Upstream JSON-RPC id must be an integer");
 }
 
 function errorMessage(error: unknown): string {
