@@ -322,17 +322,19 @@ The desktop app going with them takes its packaging tail: the Tauri `deb`, `rpm`
 targets in `RELEASE.md` blocker 9 are packaging **for that app**, so they go too. The same note
 appears in `docs/PLAN-GAPS.md` §7, which covers G-22, G-23 and G-24 for that reason.
 
-What this removes:
+What this takes **out of the plan**. Nothing is deleted from the tree: the code stays
+where it is, and the last two rows say so explicitly, because a reader who meets this
+table in a merged `main` would otherwise read "removes" as "removed".
 
-| item | where it was |
-|---|---|
-| Track C in its entirety (substrate, iOS alignment, macOS target, web rebuild, acceptance evidence) | the sequence table above, orders 5, 7, 9, 11, 12 |
-| A5, App Store metadata and the seven sandbox behaviours | `OPEN-WORK-AUDIT.md` row 1 |
-| Developer ID, notarization and the published DMG | `OPEN-WORK-AUDIT.md` row 2 |
-| iOS provisioning, TestFlight and App Store Connect | `RELEASE.md` release blocker 8 |
-| The desktop app and its Linux and Windows packaging | `RELEASE.md` release blocker 9, `PLAN-GAPS.md` G-24 |
-| `apps/apple`, `apps/desktop`, `VOID.command` and every Swift target | the tree |
-| The Swift contrast gate | `scripts/src/design-source-swift.test.mjs` |
+| item | where it was | what happened |
+|---|---|---|
+| Track C in its entirety (substrate, iOS alignment, macOS target, web rebuild, acceptance evidence) | the sequence table above, orders 5, 7, 9, 11, 12 | dropped from the sequence |
+| A5, App Store metadata and the seven sandbox behaviours | `OPEN-WORK-AUDIT.md` row 1 | out of plan |
+| Developer ID, notarization and the published DMG | `OPEN-WORK-AUDIT.md` row 2 | out of plan |
+| iOS provisioning, TestFlight and App Store Connect | `RELEASE.md` release blocker 8 | out of plan |
+| The desktop app and its Linux and Windows packaging | `RELEASE.md` release blocker 9, `PLAN-GAPS.md` G-24 | out of plan |
+| `apps/apple`, `apps/desktop`, `VOID.command` and every Swift target | the tree | **kept in the tree**, still builds, still carries its 12 unit and 18 UI cases. Out of plan means nobody picks it up, not that it was deleted |
+| The Swift contrast gate | `scripts/src/design-source-swift.test.mjs` | **kept and changed.** Its guard now requires a full Xcode toolchain, so it reports `skipped` on a host without one rather than failing. Whoever picks the surface up needs the gate |
 
 Three consequences the tree now has to answer honestly rather than leave:
 
@@ -341,9 +343,11 @@ Three consequences the tree now has to answer honestly rather than leave:
    CommandLineTools also passes. On a host without Xcode it reports `skipped`, and a
    skipped measurement is not a measurement. Nothing in this document may claim the Apple
    surface is measured while this test skips.
-2. **`RELEASE.md` blocker 8 is no longer a blocker this owner will clear.** It stands in the
-   document because it is true: there is no notarized build. The difference is that nobody
-   is working on it, so it must not appear in a plan as pending engineering.
+2. **`RELEASE.md` blockers 8 and 9 are not blockers this owner will clear.** They stand in
+   the document because they are true: there is no notarized build and no Linux or Windows
+   desktop package. The difference is that nobody is working on them, so they must not appear
+   in a plan as pending engineering. Item 9 is packaging for the desktop app, so it goes when
+   the app goes; nothing about the CLI's own Linux distribution is touched by this decision.
 3. **The roadmap's own "would make this wrong" section said the macOS target is twenty
    sessions on a codebase nobody has run in a month.** That risk is now realised by
    decision rather than by drift, which is the better of the two ways it could have gone.
