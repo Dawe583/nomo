@@ -117,6 +117,36 @@ import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
  * capability to the paid side, which is the one move section 5 forbids
  * outright, so it stays open.
  */
+
+/**
+ * There is one paid line, not two, and the price table says otherwise.
+ *
+ * `docs/GO-TO-MARKET-10K-MRR.md:116-117` sells a Team tier at EUR 249 and a
+ * design partner band at EUR 1,000-1,500 with a different scope: named
+ * evaluation, a weekly working session, bounded adapter support, a written
+ * outcome. This gate cannot tell them apart. `entitled(owner)` is one boolean
+ * and `PAID_CAPABILITIES` is one flat list, so a EUR 249 subscriber answers
+ * `true` for every entry in it exactly as a design partner does. The only
+ * tier signal that exists today is Polar's `productId`, which `billing.mjs`
+ * filters on and `VOID_POLAR_PRODUCT_TEAM` names once.
+ *
+ * So the honest shape is: **the scope a subscriber gets is the whole paid
+ * list, whatever they paid.** Two consequences follow, and neither is a defect
+ * in this file.
+ *
+ * - A second tier cannot be added by editing this list. It needs a
+ *   product-to-capabilities map and a tier-aware `entitled`, consulted before
+ *   the narrowing rather than after it, because the invariant below only ever
+ *   narrows.
+ * - Nothing here is evidence about price. `docs/GO-TO-MARKET-10K-MRR.md:120`
+ *   keeps prices out of the code until five qualified conversations and two
+ *   willingness-to-pay signals exist, and this comment does not move that. A
+ *   sales page promising the design-partner scope to a EUR 249 buyer is
+ *   promising something this gate cannot currently withhold.
+ *
+ * Recorded 2026-10-04, when `verifiedRecovery` became the second entry and the
+ * mismatch stopped being hypothetical.
+ */
 export const PAID_CAPABILITIES = Object.freeze(["taintGraph", "verifiedRecovery"]);
 
 /**

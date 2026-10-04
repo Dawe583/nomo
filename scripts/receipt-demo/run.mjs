@@ -16,7 +16,7 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -81,6 +81,9 @@ const show = async (label, sql) => {
   console.table(rows);
   return rows;
 };
+
+// The raw shape, for the recorded run. `show` prints; this returns.
+const showRaw = async (sql) => (await pool.query(sql)).rows;
 
 try {
   await pool.query("DROP SCHEMA IF EXISTS void_recovery CASCADE");
@@ -156,6 +159,29 @@ try {
     receipts.length > 0
       ? "psql $VOID_PG_URL -f docs/RECEIPT-VERIFY.sql   (VOID is not involved)"
       : "NO RECEIPT WAS WRITTEN",
+  );
+
+  // A recorded run, so the claim can be read rather than taken on trust. This
+  // is evidence of one execution against a real server, not a fixture the demo
+  // can regenerate to whatever it likes: `check-recorded-receipt.mjs` holds
+  // `docs/RECEIPT-VERIFY.sql`'s own conditions against this file.
+  await writeFile(
+    new URL("./recorded-run.json", import.meta.url),
+    `${JSON.stringify(
+      {
+        recordedAt: new Date().toISOString(),
+        server: (await showRaw("select version() as v"))[0]?.v.split(" ").slice(0, 2).join(" "),
+        receipt:
+          (await showRaw(
+            "select id, input_digest, format_version, outcome from void_recovery.recoveries order by id",
+          ))[0] ?? null,
+
+        rowTheAgentWrote: rowTheAgentWrote ?? null,
+        rowsAfterRestore: await showRaw("select id, balance, note from public.account order by id"),
+      },
+      null,
+      2,
+    )}\n`,
   );
 } finally {
   await pool.end();
