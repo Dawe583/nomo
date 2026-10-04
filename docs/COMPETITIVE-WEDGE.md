@@ -47,7 +47,14 @@ capture, and writes the result into the customer's own database —
 `packages/connectors/src/postgres/managed.ts:1489-1497`. That row lives outside
 `~/.void`, outside the ledger, and outside the recording process's own store.
 It is the only byte VOID puts in a different trust domain as a *consequence of
-its own work*, and no competitor has any equivalent. Microsoft's toolkit says
+its own work*, and no competitor has any equivalent. *(Corrected 2026-10-04:
+the exclusivity half of that sentence is now false — see §4.3's correction.
+Rubrik has shipped Agent Rewind since 2025-08-12 and sells rollback of "files,
+databases, configurations, or repositories". What survives is the placement and
+the mechanism: Rubrik's receipt lives in Rubrik Security Cloud rather than in
+the database it mutated, and its mechanism is a point-in-time restore, which a
+live system with concurrent writers cannot use. It is not a per-effect inverse.)*
+Microsoft's toolkit says
 outright that its audit trail records what the agent *attempted* and does not
 verify whether the action succeeded in the external world; the others record the
 call and stop.
@@ -59,7 +66,9 @@ call and stop.
    S3 path the same post-write re-read and receipt, and append a signed
    `reversal` record to the same chain that a third party can check against an
    independent read of the effect's own system. *This is the only capability no
-   competitor has, and it is 80% built.* **Both halves shipped after this
+   competitor has, and it is 80% built* (the exclusivity half is corrected on
+   2026-10-04 — Rubrik ships rollback, not a per-effect inverse with the
+   receipt in the effect's own system; §4.3). **Both halves shipped after this
    document was written; see §11.8.**
 2. **Make the record that authorises the effect name what authorised it.** Bind
    policy digest, rule index and rationale on the workbench record as well as
@@ -482,7 +491,12 @@ a new dependency.
   byte-exact before-image and that the inversion was checked after it was
   applied — without trusting VOID's key, VOID's store, or VOID's process."*
 - **Why this is next and not something else.** It is the only capability in
-  this document that no competitor has any part of. It is 80% built: the
+  this document that no competitor had any part of when this was written.
+  *(Corrected 2026-10-04: that exclusivity is false as of Rubrik Agent
+  Rewind, 2025-08-12. No vendor ships the combination — a per-effect inverse,
+  checked after it is applied, with the evidence left in the effect's own
+  system — but Rubrik now occupies "undo for agents" outright and markets
+  itself as "the industry's only agent rewind". See §4.3.)* It is 80% built: the
   PostgreSQL half exists and works, and the S3 half is missing a re-read and a
   receipt. It is the only recommendation that creates an asset rather than
   removing a defect. And it is the only one whose failure mode is *visible* —
@@ -532,7 +546,11 @@ a new dependency.
   and approvals" since June. A vendor shipping this as a checkbox is the
   expected next twelve months. **Ship #1 and #2 as one schema change in one
   release**, so the artefact that emerges is *authorised + attributed +
-  reversed*, and no single competitor has that conjunction. If you must ship
+  reversed*, and no single competitor has that conjunction. *(Corrected
+  2026-10-04: "reversed" is no longer exclusive — Rubrik's Agent Rewind
+  ships it, since 2025-08-12. The conjunction is still unheld, but the
+  differentiating term is now the attribution bound to the effect and the
+  receipt in the effect's own system, not the undo.)* If you must ship
   them apart, ship #1 first and take #2 immediately after.
 - **Files.** `packages/workbench/src/index.ts` (`commitWorkspace` body
   `1746-1764`; the `session.provider.complete` site at `:2072-2074` for
@@ -681,8 +699,11 @@ pay, and the fix is to stop extending it.
 **Differentiator, and worth building on:**
 
 - A **verified, post-write-checked inversion of a non-filesystem effect**,
-  receipted in the effect's own system. Exists for PostgreSQL; unexploited;
-  nobody else has it (§4.3, §7 #1).
+  receipted in the effect's own system. Exists for PostgreSQL; unexploited.
+  *Nobody else shipped this combination when this section was written;
+  corrected 2026-10-04 — Rubrik ships undo and rollback, but from snapshots
+  and into its own cloud, so the differentiator is the per-effect inverse and
+  the placement of the receipt (§4.3, §7 #1).*
 - A **268-entry reversibility knowledge base** with precondition, inverse
   description and validity window per case. The knowledge is the part that took
   the work; the executability is the part that has not been built. It is
@@ -882,6 +903,13 @@ at 3,330 downloads a month. What is true is narrower: **none of them captures a
 before-image and publishes a verifiable inverse.** VOID has that for Postgres
 row mutations and nothing else. The wedge is the inverse, not the ledger, and
 the ledger is the part fifteen projects already ship.
+
+*(Corrected 2026-10-04: this section surveyed open-source projects only, and the
+answer changes once a vendor is in scope. Rubrik shipped Agent Rewind on
+2025-08-12 and does capture before-images and publish a rollback. The surviving
+claim is the one in §4.3's correction: its evidence lands in Rubrik Security
+Cloud rather than in the database it mutated, and a point-in-time restore is not
+usable on a live system with concurrent writers.)*
 
 ### 11.7 What this changes
 

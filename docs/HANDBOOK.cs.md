@@ -52,6 +52,27 @@ vrátit, pokud konektor zachytil dost stavu pro přesnou inverzi.
 Hodnota není v blokování. Hodnota je, že o měsíce později a bez důvěry v dodavatele
 umíš odpovědět: co ten agent udělal, na čí autoritě, a jestli se to dá vrátit.
 
+**Jak se to neprodává.** Vracení akcí agentů je na prodej od srpna 2025, takže
+tenhle návod na tom nestojí. Ukázané jsou dvě užší věci, a obě jdou ověřit:
+
+- **Inverze běží proti živému systému a dotkne se jen efektu, který jmenuje.**
+  Obnovení databáze do nějakého okamžiku zahodí každý legitimní zápis od té doby;
+  inverze vrátí dotčené řádky a nechá beze změny zápisy, které mezitím udělal
+  někdo jiný. `scripts/receipt-demo/run.mjs` ukazuje obojí na jedné tabulce: zápis
+  agenta, schválení financí mimo VOID a pak inverzi, po níž je první řádek zpět
+  a druhý si drží svou pozdější hodnotu.
+- **Potvrzení skončí v té databázi, kde se efekt stal.** Po ověřené obnově ve
+  spravovaném Postgresu se záznam zapíše do `${schema}.recoveries`
+  (`packages/connectors/src/postgres/managed.ts:1399`), takže si ho ověří kdokoli,
+  kdo se k té databázi dostane, čistým SQL a bez žádného procesu VOID.
+  `docs/RECEIPT-VERIFY.sql` je právě ten dotaz. Vypíše `PASS` jen tehdy, když
+  řádek, který každé potvrzení jmenuje, je řádek, který živá tabulka opravdu má,
+  a `FAIL`, když ne; byl spuštěn proti záměrně zkazené tabulce, aby se ukázalo,
+  že umí selhat (`scripts/receipt-demo/README.md`).
+
+Obnova se odmítne dřív, než se cokoli zapíše, pokud řádky nesouhlasí se
+zachycením (`packages/connectors/src/postgres/managed.ts:1393`).
+
 ## 2. Co VOID neumí
 
 Přečti tuto kapitolu před tím, než kapitola 1 vytvoří důvěru k produktu. Každá
@@ -68,6 +89,10 @@ položka je současné, změřené omezení, ne bod plánu.
 - **Ledger je odolný proti změnám, ne proti změnám nezabránění.** Kdokoli, kdo
   vlastní stroj, může JSONL přepsat. Podpis ti dokazuje, že záznam nebyl změněn
   _po_ zapsání někým, kdo neměl klíč.
+  Podpis dokazuje, že bajty pocházejí od procesu, který ten klíč držel, a nic
+  dalšího: zapisovač, podpisovač a ověřovač běží jako jeden OS principal
+  (`docs/OPERATIONS.md`). Potvrzení ve tvé databázi je trvalý nárok zapsaný vedle
+  řádků, o kterých mluví, a kontrola čte ty řádky.
 - **Hold není zámek na svět.** Hold pozastaví jedno volání. Zapisovatel, který
   nikdy nešel přes VOID, je nedotčen.
 - **Třídy vratitelnosti jsou konceptuální klasifikace, ne certifikace dodavatele.**
@@ -761,6 +786,15 @@ kořen na původní cestu a jeho inode a ctime revizi. Zkopíruj nebo přesuň t
 adresář a Undo vrátí `conflict` bez důkazu. Operace se tiše nepřepojí na novou
 cestu.
 
+**Kam se důkaz uloží.** U spravovaného adaptéru Postgresu je trvalý a místní.
+Obnova znovu přečte řádky, které zapsala, odmítne, pokud nesouhlasí se zachycením
+(`packages/connectors/src/postgres/managed.ts:1393`), a teprve pak zapíše záznam
+do `${schema}.recoveries` ve tvé vlastní databázi
+(`packages/connectors/src/postgres/managed.ts:1399`). Číst nemusíš s důvěrou v
+VOID: `docs/RECEIPT-VERIFY.sql` je čisté SQL nad tabulkami, které vlastníš, a
+byl spuštěn proti zkazenému řádku, aby potvrdil, že vypíše `FAIL`
+(`scripts/receipt-demo/README.md`).
+
 **Co není pokryto.** Spravovaný Postgres, spravovaný filesystém a spravované Git
 commity jsou adaptéry se skutečným zachycením. R08 a R09, spravované S3 a spravované
 GitHub a Vercel adaptéry, zatím jako vykonatelné adaptéry neexistují. Staged holds
@@ -958,6 +992,7 @@ Kontrolní seznam v pořadí, které chytí nejvíc.
 | Spravovaná obnova filesystému                       | [spravovaná obnova filesystému](MANAGED-FILESYSTEM.md)                             |
 | Spravovaná obnova Gitu                              | [spravovaná obnova Gitu](MANAGED-GIT.md)                                    |
 | Konformance adaptéru a co znamená certifikace       | [konformance adaptéru a co znamená certifikace](ADAPTER-CONFORMANCE.md)                            |
+| Potvrzení obnovy a jeho kontrola bez VOID             | [potvrzení obnovy ověřené bez VOID](../scripts/receipt-demo/README.md), [SQL, které spustí třetí strana](RECEIPT-VERIFY.sql) |
 | Rozhodnutí za návrhem                               | `docs/CONTEXT.md`, `docs/DECISIONS.md`                   |
 | Standardy, které si tento repozitář drží            | [standardy](STANDARDS.md)                             |
 | Matice releasových důkazů                           | [matice releasových důkazů](RELEASE-1.0.1-MATRIX.md)                           |

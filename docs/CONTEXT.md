@@ -15,11 +15,23 @@ three places it is ahead of what is buildable.
 runs against a live system and touches only the effect it names: the other rows,
 and the writes other people made in the meantime, are left alone. A point in
 time restore cannot do that, which is why a restore is not a substitute for an
-inverse. And the record of the reversal is written into the customer's own
-schema, so a third party confirms it by querying that database, without trusting
-VOID, its signing key or its ledger. `scripts/receipt-demo/` runs both halves
-against a real PostgreSQL server, and `docs/RECEIPT-VERIFY.sql` is the check a
-third party runs; it prints FAIL when the database and the receipt disagree.
+inverse. And for a managed Postgres restore the record of the reversal is
+written into the customer's own schema, so a third party confirms it by querying
+that database, without trusting VOID, its signing key or its ledger.
+`scripts/receipt-demo/` runs both halves against a real PostgreSQL server, and
+`docs/RECEIPT-VERIFY.sql` is the check a third party runs; it prints FAIL when
+the database and the receipt disagree.
+
+The managed Postgres adapter re-reads the rows it wrote and refuses unless they
+canonically equal the capture
+(`packages/connectors/src/postgres/managed.ts:1393`), and only then writes the
+record into `${schema}.recoveries` in the customer's database
+(`packages/connectors/src/postgres/managed.ts:1399`).
+
+What the signature does not add: it establishes that the bytes came from a
+process holding that key, and nothing more, because the recorder, the signer and
+the verifier run as one OS principal (`OPERATIONS.md`). The placement of the
+receipt is the claim; the cryptography is a limit to state, not a moat.
 
 This is a narrower claim than "undo for AI agents", and the narrower one is the
 defensible one: undo for agent actions has been sold since August 2025. See

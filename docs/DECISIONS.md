@@ -1423,12 +1423,18 @@ it refuses to gate them. A flag inside published code is not a boundary the
 licence can hold.
 
 **What the paid list becomes, and why this one.** `verifiedRecovery` joins
-`taintGraph`. The thing nobody else has is not the ledger and it is not the
+`taintGraph`. The thing no competitor offers is not the ledger and it is not the
 signature: it is that a reverted Postgres row leaves a durable receipt **in the
 customer's own database**, so a third party verifies the restoration without
 trusting VOID, its key or its ledger. That sentence is
-`docs/COMPETITIVE-WEDGE.md` §4.3, and it is the only claim in this repository
-that no competitor touches.
+`docs/COMPETITIVE-WEDGE.md` §4.3. *(This entry said "nobody else has" and "the
+only claim in this repository that no competitor touches". Both were corrected
+on 2026-10-04: Rubrik shipped Agent Rewind on 2025-08-12
+claiming rollback of "files, databases, configurations, or repositories", so
+the undo itself is not exclusive. What still holds is the placement and the
+mechanism — the receipt lands in the customer's own database rather than the
+vendor's cloud, and the inverse is per-effect rather than a point-in-time
+restore, which a live system with concurrent writers cannot use.)*
 
 **The split inside it, and it is the whole decision.** Capture and the receipt
 stay open. `packages/connectors` is Apache 2.0 and stays that way: the CLI

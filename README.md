@@ -1,8 +1,8 @@
 # VOID
 
-VOID reverses one bad write in a live system, leaves everything else alone, and
-writes the proof into your own database where anyone can check it without
-trusting VOID.
+VOID reverses one bad write in a live system and leaves everything else alone.
+For a managed Postgres restore, the proof is written into your own database,
+where anyone can check it without trusting VOID.
 
 **Rubrik has sold "undo for agent actions" since August 2025**, so that part is
 not a differentiator and this file does not claim it is. Their own release
@@ -12,11 +12,12 @@ living there rather than in the database that was damaged. Read that as their
 description of themselves, not as a reading of their internals. What is directly
 comparable is the consequence: rewinding a live database to a moment ago
 discards every legitimate write made since. VOID restores the affected rows and
-keeps the rest, and the receipt it leaves sits in your schema.
+keeps the rest, and for a managed Postgres restore the receipt it leaves sits in
+your own schema.
 
 **See it happen, then check it without VOID.** The demo drives a real PostgreSQL
-17 server: an agent write, a finance write made *outside* VOID, then the inverse.
-The agent's row goes back; the finance write survives.
+17.11 server: an agent write, a finance write made *outside* VOID, then the
+inverse. The agent's row goes back; the finance write survives.
 
 ```sh
 export VOID_PG_URL="postgres://void@127.0.0.1:5432/void_demo"
@@ -233,3 +234,11 @@ superuser bypasses every grant and every trigger, which is exactly why entries
 are signed. An entry signed by a compromised host key verifies, so past entries
 are only as trustworthy as the key that signed them, and why a published
 checkpoint matters.
+
+The signature buys one thing and stops there: it establishes that the bytes came
+from a process holding that key, because the recorder, the signer and the
+verifier run as one OS principal
+([`docs/OPERATIONS.md`](docs/OPERATIONS.md)). The same limit applies to the
+receipt in your database. It is a durable claim written next to the rows it
+describes, and `docs/RECEIPT-VERIFY.sql` reads your tables rather than trusting
+the claim.

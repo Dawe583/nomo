@@ -40,7 +40,11 @@ portals.
 before-image. That is still true and now more clearly so. What is new is the *position*: a portal
 that can refuse a bypass is a chokepoint, and VOID is a proxy in the same chokepoint. Being
 better at one job in a place a competitor owns is a weaker position than being the only thing
-that can undo an effect. See row 15.
+that can undo an effect. *(Corrected 2026-10-04: Rubrik's Agent Rewind, live since
+2025-08-12, is a competing undo product, so "the only thing that can undo an effect" is
+not available as written. What remains distinct is undoing one effect in a live system with
+concurrent writers and leaving the receipt in the effect's own system — see
+`DEEP-RESEARCH-DIRECTION-2026-10-04.md` §3.)* See row 15.
 
 ## The candidates
 

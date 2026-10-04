@@ -966,8 +966,13 @@ disagrees can find the exact field that disagrees.
 
 ### Release 2 — "Effect-level, not name-level"
 
-**Thesis:** finish the non-filesystem inverse story, because it is the only capability
-nobody has, and make the policy engine decide on effect rather than on tool name.
+**Thesis:** finish the non-filesystem inverse story, because when this was
+written it was the only capability nobody had, and make the policy engine decide
+on effect rather than on tool name. *(Corrected 2026-10-04: Rubrik's Agent
+Rewind has shipped undo and rollback of databases since 2025-08-12, so this is
+no longer an empty space. What is still unclaimed is the per-effect inverse
+that a live system with concurrent writers can use, with the receipt in the
+effect's own system rather than the vendor's cloud.)*
 
 | Item | Files it touches |
 |---|---|

@@ -90,7 +90,11 @@ the only strategy document that read the source while writing.
 | A3 | The effect in the decision | A machine-checkable effect on the registry case for Postgres and S3, a new policy key, and a `void policy explain` subcommand | A1 and A2 |
 | A4 | Signer and executor separation | The trust-model fix that `docs/REVERSE-WEDGE.md` names as gating everything downstream, including the analysis-assertion record | external, needs a second principal |
 
-A1 is the only capability no competitor has and it is most of the way built. A2
+A1 is the capability no competitor shipped in that form when this was written.
+*(Corrected 2026-10-04: Rubrik's Agent Rewind, live since 2025-08-12, is a
+competing undo and rollback product, so A1 is no longer unique — what survives
+is the per-effect inverse, checked after the write, with the receipt in the
+effect's own system rather than the vendor's.)* It is most of the way built. A2
 alone would be a field set; together with A1 they are a product. A3 is
 invisible until A1 and unauditable until A2, which is why it is last. A4 is the
 hardest item in the whole set and it has been deferred twice already, which is
