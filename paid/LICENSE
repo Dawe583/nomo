@@ -1,0 +1,36 @@
+VOID paid implementations
+Copyright 2026 the VOID authors
+
+This directory is NOT licensed under the Apache License 2.0 that covers the
+rest of this repository. It is the closed, paid part of the open core and no
+licence is granted to use, copy, modify or redistribute it.
+
+    SPDX-License-Identifier: LicenseRef-VOID-Proprietary
+
+The Apache 2.0 licence at the repository root does not apply here. The root
+NOTICE explains which packages are open; this file is the per-directory
+boundary that licence line refers to, and it exists because a single root
+licence cannot describe a repository that deliberately contains both.
+
+What is open and what is not, and the hard rule that a feature never moves from
+open to paid, are in docs/DECISIONS.md section 5.
+
+This directory holds the channel implementations that section 5 names on the
+paid side. `channels/slack.ts` is the Slack approval channel: a webhook client
+that posts a held call to an operator's incoming webhook with approve and deny
+buttons. It moved here from `packages/policy/src/channels/slack.ts`, which is
+Apache 2.0, on 2026-10-03.
+
+Why the implementation and not the interface. The channel interface and the
+CLI channel stay open, in `packages/policy/src/channels/hold.ts` and
+`channels/cli.ts`, because an open policy package that cannot notify anyone is
+not complete for its purpose and would break the rule in its first week. A
+paid implementation that implements an open interface is what the decision log
+means by the split: the reader can see every part of the system that decides
+whether an agent's write is allowed, and the vendor-specific announcement
+channel is the part they pay for.
+
+The dependency direction is one-way and a gate asserts it. This directory may
+import the open core, and no open package may import this one; the test that
+says so is `scripts/src/licence-line.test.mjs`, and it fails if the Slack
+implementation is put back under `packages/policy`.

@@ -116,6 +116,13 @@ const LICENCE_LINE = new Map([
   ],
   ["marketing", { status: "open", why: "site assets, covered by the root licence" }],
   [
+    "paid",
+    {
+      status: "closed",
+      why: "the paid side of the line DECISIONS section 5 draws: channel implementations the decision log names there, starting with channels/slack.ts, which shipped inside the Apache 2.0 policy package until 2026-10-03",
+    },
+  ],
+  [
     "packages",
     {
       status: "open",
@@ -532,14 +539,14 @@ test("the classification lists did not drift from the tree", () => {
     CLOSED.size >= 1,
     "the closed-side list is empty, so nothing is checked as paid",
   );
-  // And both closed directories are named, so emptying CLOSED is a failure
-  // rather than a loop over nothing, and so dropping `cloud` from it cannot
-  // quietly reopen the deployed server.
+  // And every closed directory is named, so emptying CLOSED is a failure
+  // rather than a loop over nothing, and so dropping `cloud` or `paid` from it
+  // cannot quietly reopen a directory that holds paid code.
   assert.ok(
-    CLOSED.size >= 2,
-    "the closed-side list is empty, so nothing is checked as paid",
+    CLOSED.size >= 3,
+    `the closed-side list holds only ${CLOSED.size} directories, so a dropped one is invisible`,
   );
-  for (const dir of ["apps/control-plane", "cloud"]) {
+  for (const dir of ["apps/control-plane", "cloud", "paid"]) {
     assert.ok(
       CLOSED.has(dir),
       `${dir} must stay on the closed list in the gate`,
@@ -703,5 +710,109 @@ test("no open package imports from the closed cloud server", () => {
     offenders,
     [],
     `the open core must not import from the closed cloud server:\n${offenders.join("\n")}`,
+  );
+});
+
+test("the Slack implementation is closed and the open core does not carry it", () => {
+  // Amendment one's collision, fixed. DECISIONS 5 puts the Slack and Teams
+  // channel *implementations* on the paid side and keeps the channel interface
+  // open, and `channels/slack.ts` shipped inside the Apache 2.0 policy package
+  // for as long as that stood. It moved to `paid/` on 2026-10-03.
+  //
+  // The classification is the cheap half; it says where the gate thinks the
+  // directory is. What makes the move worth making is the other half below:
+  // the implementation is absent from every open package, so putting the file
+  // back fails this test rather than passing review. A closed directory nobody
+  // can reach from the open core is a label; this is the assertion that turns
+  // the label into a boundary.
+  for (const file of [
+    "paid/LICENSE",
+    "paid/channels/slack.ts",
+    "paid/channels/slack.test.ts",
+  ]) {
+    assert.ok(existsSync(file), `${file} is gone, so this gate has lost its subject`);
+  }
+  assert.equal(
+    LICENCE_LINE.get("paid")?.status,
+    "closed",
+    "paid/ holds a paid implementation, so it must be classified closed",
+  );
+  // The same identifier `cloud/` and `apps/control-plane` declare, rather than
+  // a third dialect of closed that only this directory speaks.
+  assert.match(
+    read(join("paid", "LICENSE")),
+    /SPDX-License-Identifier: LicenseRef-VOID-Proprietary/,
+  );
+  assert.match(
+    read(join("paid", "LICENSE")),
+    /not licensed under the Apache License/i,
+    "paid/LICENSE must say the root licence does not cover it",
+  );
+
+  // The implementation itself. Scanned by the names it exports rather than by
+  // its path, because a restore under a new filename in the same package would
+  // otherwise pass, and the point is that no Apache 2.0 file defines it.
+  const exported = ["SlackChannel", "SlackPayload", "slackPayload", "postHoldToSlack"];
+  const implementation = [];
+  for (const name of OPEN_CORE) {
+    const dir = join(ROOT, name, "src");
+    assert.ok(existsSync(dir), `packages/${name} has no src directory to scan`);
+    for (const file of walk(dir)) {
+      if (!/\.(ts|tsx|mts|mjs)$/.test(file)) continue;
+      const defined = exported.filter((symbol) =>
+        new RegExp(`\\b(class|function|type|const|let)\\s+${symbol}\\b`).test(
+          read(file),
+        ),
+      );
+      if (defined.length > 0) implementation.push(`${file} defines ${defined.join(", ")}`);
+    }
+  }
+  assert.deepEqual(
+    implementation,
+    [],
+    `the Slack implementation is paid and lives in paid/, not in an open package:\n${implementation.join("\n")}`,
+  );
+
+  // And the direction of the dependency, in the same shape as the `cloud/` check
+  // above: `paid/channels/slack.ts` may import the open policy package, which is
+  // what lets a paid implementation satisfy an open interface. The reverse
+  // would put paid code inside an Apache 2.0 file, which is the entire defect.
+  const importers = [];
+  for (const name of OPEN_CORE) {
+    for (const file of walk(join(ROOT, name, "src"))) {
+      if (!/\.(ts|tsx|mts|mjs)$/.test(file)) continue;
+      for (const match of read(file).matchAll(/from\s+["']([^"']+)["']/g)) {
+        const specifier = match[1];
+        if (specifier.startsWith(".") && /(^|\/)paid\//.test(specifier)) {
+          importers.push(`${file} imports ${specifier}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(
+    importers,
+    [],
+    `the open core must not import from the closed paid directory:\n${importers.join("\n")}`,
+  );
+
+  // The open half of the split is still open. Without this the test above would
+  // also pass if someone "fixed" the collision by deleting the channel instead
+  // of moving it, and the interface the decision keeps open would be gone.
+  for (const file of [
+    "packages/policy/src/hold.ts",
+    "packages/policy/src/channels/cli.ts",
+  ]) {
+    assert.ok(existsSync(file), `${file} is open per DECISIONS 5 and must stay here`);
+  }
+  const barrel = read(join(ROOT, "policy", "src", "index.ts"));
+  assert.match(
+    barrel,
+    /export \* from "\.\/channels\/cli\.ts"/,
+    "the open barrel must still publish the open CLI channel",
+  );
+  assert.doesNotMatch(
+    barrel,
+    /slack/i,
+    "the open barrel must not re-export the paid Slack implementation",
   );
 });

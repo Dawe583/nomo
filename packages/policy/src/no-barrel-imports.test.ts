@@ -18,7 +18,10 @@ import test from "node:test";
  * dependency-shape regression that only shows up under bundler conditions is
  * worth a test that does not need the bundler.
  */
-const LEAF_MODULES = ["grammar.ts", "rules.ts", "decide.ts", "hold.ts", "channels/cli.ts", "channels/slack.ts"];
+// `channels/slack.ts` is not here: it moved to the closed `paid/` directory on
+// 2026-10-03, and a leaf list that names a file which no longer exists is a
+// readFile that throws rather than a shape that is checked.
+const LEAF_MODULES = ["grammar.ts", "rules.ts", "decide.ts", "hold.ts", "channels/cli.ts"];
 
 test("no policy leaf module imports the barrel", async () => {
   const offenders: string[] = [];

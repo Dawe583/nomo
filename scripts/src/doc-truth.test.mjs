@@ -39,6 +39,10 @@ const SOURCE_ROOTS = [
   "docs",
   "fixtures",
   "marketing",
+  // The closed paid directory. Named here so a path a reader is pointed at
+  // inside it is existence-checked like any other, rather than slipping past a
+  // gate that only knows the open side.
+  "paid",
   "packages",
   "policy",
   "python",
@@ -130,6 +134,16 @@ const INVENTORY = {
     "REVERSE-WEDGE proposal for policy attribution of assertions; never built, and attribution itself shipped as packages/ledger/src/attribution.ts",
   "docs/reference/server-json/official-registry-requirements.md":
     "DISTRIBUTION-PATH cites a vendor requirements document fetched from the web, not a file in this tree",
+
+  // The Slack channel implementation moved to the closed `paid/` directory on
+  // 2026-10-03, so its Apache 2.0 path is history rather than a broken link.
+  // DECISIONS 5 names the old path as the shipped-open collision that closed,
+  // and the dated strategy snapshot is an inventory of the tree as it stood
+  // that day; neither claim is falsified by the file having moved.
+  "packages/policy/src/channels/slack.ts":
+    "moved to paid/channels/slack.ts on 2026-10-03; DECISIONS 5 cites the old path as the shipped-open collision this closed",
+  "packages/policy/src/channels/slack.test.ts":
+    "moved to paid/channels/slack.test.ts on 2026-10-03 with the implementation, and is listed in the dated 2026-09-30 coverage snapshot",
 
   // Two responsive stylesheets that were merged into `styles.css` and are named
   // by documents that predate the merge. `PLATFORM-REDESIGN-PLAN` and
