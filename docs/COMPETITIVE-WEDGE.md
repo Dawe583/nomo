@@ -1021,9 +1021,12 @@ client in every test in this repository.
   (REPLICA IDENTITY); <https://kubernetes.io/docs/reference/using-api/server-side-apply/>
   (server-side apply) — the platform-native before-image primitives
 
-**Measured 2026-10-03 on this machine:** `node scripts/src/bench.mjs --scale
-200` — smoke-grade, in-process echo upstream, real signed fsynced ledger, no
-warmup, no network, no subprocess transport. The §11.3 table is this run. Also
+**Measured 2026-10-04 on this machine, four interleaved pairs:** `node
+scripts/src/bench.mjs --scale 200` — smoke-grade, in-process echo upstream, real
+signed fsynced ledger, no warmup, no network, no subprocess transport. Both
+builds were run alternately so disk drift hits both sides; the §11.3 table is
+this run. A single earlier run on 2026-10-03 gave different and larger figures;
+it is withdrawn and its numbers appear nowhere in this repository. Also
 read today for §11.8: `packages/connectors/src/s3/apply.ts` (`:115` `proveRestore`,
 `:166` `RestoreReceipt`), `packages/ledger/src/reversal.ts` (`:55-65`),
 `packages/ledger/src/verify.ts` (`:125-134`),
