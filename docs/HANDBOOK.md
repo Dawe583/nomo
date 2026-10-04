@@ -53,6 +53,28 @@ The value is not the block. The value is that you can answer, months later and
 without trusting the vendor: what did this agent do, on whose authority, and can
 it be put back.
 
+**What this is not pitched as.** Undo for agent actions has been on sale since
+August 2025, so this handbook does not lead with it. Two narrower things are
+what is actually demonstrated, and both are checkable:
+
+- **An inverse runs against a live system and touches only the effect it names.**
+  Restoring a database to a moment ago discards every legitimate write made
+  since; an inverse restores the affected rows and leaves the writes other people
+  made in the meantime alone. `scripts/receipt-demo/run.mjs` shows both on one
+  table: an agent write, a finance write made outside VOID, then the inverse,
+  after which the first row is back and the second keeps its later value.
+- **The receipt lands in the database the effect happened in.** After a verified
+  managed Postgres restore the record is written to `${schema}.recoveries`
+  (`packages/connectors/src/postgres/managed.ts:1399`), so anyone who can reach
+  that database checks it with plain SQL and no VOID process.
+  `docs/RECEIPT-VERIFY.sql` is that query. It prints `PASS` only when the row
+  each receipt names is the row the live table holds, and `FAIL` when it is not;
+  it was run against a deliberately tampered table to prove it can fail
+  (`scripts/receipt-demo/README.md`).
+
+The restore is refused before any receipt is written, if the rows do not match
+the capture (`packages/connectors/src/postgres/managed.ts:1393`).
+
 ## 2. What VOID does not do
 
 Read this section before section 1 makes you trust the product. Every item here
@@ -69,6 +91,10 @@ is a current, measured limit, not a roadmap item.
 - **The ledger is tamper-evident, not tamper-proof.** Anyone who owns the machine
   can rewrite a JSONL file. What a signature buys you is proof that the record was
   not edited _after_ it was written, by someone who did not hold the key.
+  The signature establishes that the bytes came from a process holding that key,
+  and nothing more: the recorder, the signer and the verifier run as one OS
+  principal (`docs/OPERATIONS.md`). A receipt in your database is a durable
+  claim written beside the rows it describes, and the check reads the rows.
 - **A hold is not a lock on the world.** A hold pauses one call. A writer that
   never went through VOID is unaffected.
 - **Reversibility classes are draft classifications, not vendor certifications.**
@@ -792,6 +818,15 @@ managed root to its original path and its inode and ctime revision. Copy or move
 that directory and Undo returns `conflict` with no evidence attached. The
 operation does not silently rebind to the new path.
 
+**Where the proof ends up.** For the managed Postgres adapter it is durable and
+it is local. The restore re-reads the rows it wrote, refuses unless they equal
+the capture (`packages/connectors/src/postgres/managed.ts:1393`), and only then
+writes the record into `${schema}.recoveries` in your own database
+(`packages/connectors/src/postgres/managed.ts:1399`). Nobody has to trust VOID
+to read it: `docs/RECEIPT-VERIFY.sql` is plain SQL over tables you own, and it
+was run against a tampered row to confirm it reports `FAIL`
+(`scripts/receipt-demo/README.md`).
+
 **What is not covered.** Managed Postgres, the managed filesystem and managed
 Git commits are the adapters with real capture. R08 and R09, managed S3 and
 managed GitHub and Vercel adapters, do not exist as executable adapters yet.
@@ -991,6 +1026,7 @@ A checklist, in the order that catches the most.
 | Managed filesystem recovery                             | [managed filesystem recovery](MANAGED-FILESYSTEM.md)                             |
 | Managed Git recovery                                    | [managed Git recovery](MANAGED-GIT.md)                                    |
 | Adapter conformance and what a certification means      | [adapter conformance and what a certification means](ADAPTER-CONFORMANCE.md)                            |
+| The receipt, and who can check it without VOID            | [a recovery receipt, verified without VOID](../scripts/receipt-demo/README.md), [the SQL a third party runs](RECEIPT-VERIFY.sql) |
 | The decisions behind the design                         | [context](CONTEXT.md), [decision log](DECISIONS.md)      |
 | The standards this repository holds itself to           | [the standards](STANDARDS.md)                             |
 | The release evidence matrix                             | [the release evidence matrix](RELEASE-1.0.1-MATRIX.md)                           |

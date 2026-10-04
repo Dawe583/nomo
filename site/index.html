@@ -8,7 +8,10 @@
     />
     <meta
       name="description"
-      content="Download VOID for macOS or run the terminal workspace from source. Real release links, requirements, and setup instructions."
+      content="VOID reverses one write in a live system and leaves everything
+      else alone. For a managed Postgres restore the receipt is written into
+      your own schema, so you can check it with SQL and without us. Download
+      for macOS or Windows, or run the terminal workspace from source."
     />
     <meta name="theme-color" content="#f6f0e3" />
     <meta
@@ -53,6 +56,13 @@
             <p class="intro">
               Chat with your agent. Review its work. Keep a signed history and a
               way back for captured document changes.
+            </p>
+            <p class="intro">
+              Undo here means one effect, not a whole database. Rewinding live
+              tables to a moment ago takes every legitimate write since; an
+              inverse puts back the rows it names and leaves the rest alone.
+              For a managed Postgres restore the receipt is written into your own
+              schema, so you can check it with SQL and without us.
             </p>
             <a class="button primary" href="#downloads"
               >Get VOID <span aria-hidden="true">↓</span></a

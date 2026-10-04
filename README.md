@@ -1,6 +1,35 @@
 # VOID
 
-VOID is an accountability and reversibility layer for AI agents.
+VOID reverses one bad write in a live system and leaves everything else alone.
+For a managed Postgres restore, the proof is written into your own database,
+where anyone can check it without trusting VOID.
+
+**Rubrik has sold "undo for agent actions" since August 2025**, so that part is
+not a differentiator and this file does not claim it is. Their own release
+describes the mechanism as using Rubrik Security Cloud to rewind "files,
+databases, configurations, or repositories", and describes the audit trail as
+living there rather than in the database that was damaged. Read that as their
+description of themselves, not as a reading of their internals. What is directly
+comparable is the consequence: rewinding a live database to a moment ago
+discards every legitimate write made since. VOID restores the affected rows and
+keeps the rest, and for a managed Postgres restore the receipt it leaves sits in
+your own schema.
+
+**See it happen, then check it without VOID.** The demo drives a real PostgreSQL
+17.11 server: an agent write, a finance write made *outside* VOID, then the
+inverse. The agent's row goes back; the finance write survives.
+
+```sh
+export VOID_PG_URL="postgres://void@127.0.0.1:5432/void_demo"
+node --experimental-strip-types scripts/receipt-demo/run.mjs
+psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
+```
+
+The second command is plain SQL over two tables you already own. It reports
+`PASS` only if the row each receipt names is the row your table actually holds,
+and `FAIL` if it is not. `scripts/receipt-demo/README.md` records what was
+observed, including a run where the check was made to fail on purpose by editing
+a row by hand, because a verification that cannot fail is not a verification.
 
 **Start here: [the VOID handbook](docs/HANDBOOK.md).** It is the complete operator
 guide, in English and in [Czech](docs/HANDBOOK.cs.md), and it is checked by a
@@ -205,3 +234,11 @@ superuser bypasses every grant and every trigger, which is exactly why entries
 are signed. An entry signed by a compromised host key verifies, so past entries
 are only as trustworthy as the key that signed them, and why a published
 checkpoint matters.
+
+The signature buys one thing and stops there: it establishes that the bytes came
+from a process holding that key, because the recorder, the signer and the
+verifier run as one OS principal
+([`docs/OPERATIONS.md`](docs/OPERATIONS.md)). The same limit applies to the
+receipt in your database. It is a durable claim written next to the rows it
+describes, and `docs/RECEIPT-VERIFY.sql` reads your tables rather than trusting
+the claim.
