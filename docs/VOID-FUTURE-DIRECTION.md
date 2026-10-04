@@ -83,11 +83,20 @@ actually is. Those are the questions this document answers.
    record the product; and treat the desktop app, the iOS companion, and the
    Mac App Store as a *later* distribution wrapper on a surface that already earns
    its keep, not as the thing being built now.
-9. **The wedge is effect-level, not file-level.** Every allowlist, sandbox and policy
-   rule in the market decides on *what the action was called*. VOID's contract already
-   decides on *what the action did* — effect, reversibility, readiness, resource set.
-   That is the one capability no competitor has, and it is the only place where
-   "policy" and "signed evidence" become the same feature.
+9. **The wedge should be effect-level, not file-level.** Every allowlist, sandbox and policy
+   rule in the market decides on *what the action was called*. VOID's contract is
+   supposed to decide on *what the action did* — effect, reversibility, readiness, resource
+   set — and it is the right place where "policy" and "signed evidence" become one feature.
+   **That sentence was true of the intent and false of the tree, and is corrected
+   2026-10-04.** `PolicyCall` carries no effect, readiness or resource set, so `decide`
+   reads a pre-computed class string; the adapters that do emit `effect` and `readiness`
+   never reach the decision path. Recorded with file and line in
+   `docs/COMPETITIVE-WEDGE.md` §4.2, where it is also tracked as build #3 (§7) and as
+   A3 in `docs/ROADMAP-2026-Q4.md`. Putting the effect in the decision is therefore
+   **open work, not a capability VOID has** — treat it as the recommendation it is and do
+   not restate it as shipped. The exclusivity claim is separate and still standing: no
+   competitor decides on the effect either, and Rubrik's Agent Rewind (2025-08-12) restores
+   rather than decides, so it does not contradict this item.
 10. **The highest-leverage single artefact available is a specification, not a
     feature.** The IETF AAT draft landed the day before this document and is almost
     exactly what VOID independently built, with a better trust model and a real
@@ -181,11 +190,18 @@ This is a real flood and it materially changes the competitive picture. Three
 consequences:
 
 1. **VOID is not first to the idea, and should stop implying that it is.** The
-   defensible claim is narrower and more specific: nobody has solved
-   **attribution** — binding a specific claim to the specific evidence, model version
-   and prompt such that a third party can re-derive it. Both Agentmetry's README and
-   the Hex-Rays plugin community have named that as the open problem in so many
-   words.
+   defensible claim is narrower and more specific: **attribution** — binding a specific
+   claim to the specific evidence, model version and prompt such that a third party can
+   re-derive it. Both Agentmetry's README and the Hex-Rays plugin community have named
+   that as the open problem in so many words.
+   *(Corrected 2026-10-04: this said "nobody has solved attribution", and that is now false
+   on our own side — VOID does it. The workbench record carries `attribution` with the
+   policy digest, rule index and rationale, plus `modelId` and a digest of the outbound
+   request; `docs/COMPETITIVE-WEDGE.md` §11.8 records that as build #2 shipping in `c5d32fc`
+   on 2026-09-30, and §4.1's list of what VOID was missing was true when written and is now
+   closed. What survives of the exclusivity claim is narrower and was never ours alone:
+   `trace-spec` has specified the same field set at the Linux Foundation since 23 June
+   2026, so what VOID adds is an implementation that runs, not the idea.)*
 2. **The flood is aimed at coding agents** (Claude Code, Codex, Copilot) because that
    is where the budget and the fear are. **Offensive and reverse-engineering agents
    are almost unrepresented in it** — Hex-Rays' MCP server, Binary Ninja 6.0's MCP
