@@ -214,6 +214,19 @@ test("the package's own test target measures every contrast pair", (t) => {
     t.skip("no Swift toolchain on this host");
     return;
   }
+  // `swift --version` succeeds on the bare CommandLineTools, which cannot
+  // resolve XCTest, so a host running those fails the build rather than
+  // skipping it. The measurement needs the full toolchain, and the guard has
+  // to say so instead of testing for a compiler that is present but useless.
+  const developerDir = spawnSync("xcode-select", ["-p"], { encoding: "utf8" });
+  const selected =
+    developerDir.status === 0 ? developerDir.stdout.trim() : "";
+  if (!selected.includes("/Applications/Xcode")) {
+    t.skip(
+      `no full Xcode toolchain selected (xcode-select -p is ${selected || "unknown"}); the contrast measurement needs XCTest, which CommandLineTools does not ship`,
+    );
+    return;
+  }
   const result = spawnSync(
     "swift",
     [
