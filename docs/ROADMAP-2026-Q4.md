@@ -394,10 +394,11 @@ The change merged to `main` as PR #80 on 2026-10-04.
 | ledger-append | 7.00, 7.03, 7.96, 7.92 ms | 5.02, 5.03, 5.00, 5.01 ms | about -29% |
 | classify | 0.00046 ms | 0.00063 ms | noise, unchanged in shape |
 
-An earlier pass reported 13.01 → 8.98 ms and 5.99 → 4.00 ms. Those were measured once, in one
+An earlier pass reported a larger improvement than this. Those figures were measured once, in one
 direction rather than interleaved, and they do not reproduce here: re-running both builds on this
-machine gives a smaller and steadier improvement. **The table above is the one to believe**, and
-the earlier figures are withdrawn.
+machine gives a smaller and steadier improvement. **The table above is the one to believe**. The
+earlier figures are withdrawn, and they are deliberately not restated here so that no reader can
+pick them up as current.
 
 32 concurrent appends now issue **1** fsync where they issued 32; that part reproduces exactly.
 A lone appender still issues one per append, and a 50-entry single-writer chain is byte-identical
