@@ -1403,3 +1403,60 @@ would either restate this paragraph or forbid the move this paragraph says is
 forbidden anyway. And it asserts nothing about whether anyone will pay: the paid
 line for the taint graph is one hosted route on one plan, and whether that is
 worth a paywall is a question for a buyer, not for this file.
+
+## Hosted recovery execution is the paid side; the proof stays free, 2026-10-04
+
+**Amendment seven to section 5. The owner delegated this decision and it is
+recorded here with the date it was taken, so a later reader does not mistake it
+for something the tree did on its own.** It moves no code across a licence line
+either, and the reason it does not is the point.
+
+**What was wrong.** `PAID_CAPABILITIES` in `cloud/capability-gate.mjs` held
+exactly one entry, `taintGraph`, while `docs/GO-TO-MARKET-10K-MRR.md:116` sells a
+Team tier whose included work is a "signed export and verification workflow".
+The product was selling verification and gating the recorded dependency graph.
+Those are not the same thing, and the second is the weaker of the two as a
+boundary: `packages/ledger/src/taint/graph.ts` has been Apache 2.0 since the day
+it landed and cannot be un-licensed by moving it, which is exactly the argument
+`cloud/capability-gate.mjs` already makes about the irreversibility budgets when
+it refuses to gate them. A flag inside published code is not a boundary the
+licence can hold.
+
+**What the paid list becomes, and why this one.** `verifiedRecovery` joins
+`taintGraph`. The thing nobody else has is not the ledger and it is not the
+signature: it is that a reverted Postgres row leaves a durable receipt **in the
+customer's own database**, so a third party verifies the restoration without
+trusting VOID, its key or its ledger. That sentence is
+`docs/COMPETITIVE-WEDGE.md` §4.3, and it is the only claim in this repository
+that no competitor touches.
+
+**The split inside it, and it is the whole decision.** Capture and the receipt
+stay open. `packages/connectors` is Apache 2.0 and stays that way: the CLI
+continues to capture, restore, re-read and refuse on drift against the
+operator's own machine, permanently, with no entitlement anywhere in that path.
+What the paywall holds is the **hosted execution**, the route that runs an
+inverse against a customer's system from a server somebody else operates, which
+lives in `cloud/` and is already the closed, paid directory.
+
+That means nothing moves between licence tiers. No module is relocated, no
+`packages/connectors` import is pointed at `cloud/`, and the gate is a flag
+inside a closed package rather than inside published open code. It is the same
+shape amendment six already settled for the taint graph, applied to the
+capability that is actually the product.
+
+**Which routes.** `POST /api/sessions/:id/recovery-jobs/apply` returns `402
+capability_not_included` before a job is written. `POST
+/api/sessions/:id/recovery-jobs/plan` and `GET
+/api/sessions/:id/recovery-jobs/:job` stay open, so an unentitled owner can
+still read the plan, the digest and the receipt and confirm for themselves that
+the shape is what they would be buying. A paywall you cannot inspect from
+outside is the thing §6 of the wedge document warns about, and the cost of
+inspecting it is zero.
+
+**What this does not decide.** It does not set a price, name a Polar product,
+or move the Slack implementation, the irreversibility budgets or the attestation
+compliance mappings. Those stay exactly where they were, and the second of them
+still refuses to be gated for the reason recorded in `capability-gate.mjs`. It
+does not claim anyone will pay: the paid line is one hosted route on one plan,
+and whether that is worth a paywall is a question for a buyer, not for this
+file.

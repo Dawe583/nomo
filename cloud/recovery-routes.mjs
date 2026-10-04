@@ -14,6 +14,11 @@ const selection = value => {
     return { kind: "checkpoint", sequence: value.sequence };
   return null;
 };
+
+// `402` rather than `403`: nothing about this caller is wrong. The capability is
+// real, it works, and it is not theirs yet. The message names what stays free,
+// so the refusal reads as a boundary rather than a dead end.
+const APPLY_PAYWALL = "Executing a recovery on this server is part of the paid VOID licence. Planning a recovery, reading its plan and receipt, and running the same recovery locally with the open-source CLI all stay free.";
 const response = payload => "digest" in payload ? {
   jobId: payload.jobId, planDigest: payload.digest, selection: payload.selection, boundary: payload.boundary,
   steps: payload.steps.map(step => ({ operationId: step.operationId, sequence: step.sequence,
@@ -28,11 +33,32 @@ const response = payload => "digest" in payload ? {
 
 export function mountRecoveryRoutes(app, overrides = {}) {
   const deps = { read, write, transaction, cloudRecoveryJobStatus, cloudRecoveryJobPlanDigest, planCloudRecoveryJob, runCloudRecoveryJob, ...overrides };
+  // Hosted execution is the paid capability (`verifiedRecovery`, see
+  // `cloud/capability-gate.mjs`), and `cloud/server.mjs` supplies it the same
+  // way the taint route reads it. It is checked here, on the route, and not
+  // only in the capability answer, because a capability flag the server ignores
+  // is a label. A throw is not an entitlement either: the gate already fails
+  // closed on a failed billing read, and a mount that wired no gate at all is
+  // the free tier, because that is the only direction a missing entitlement is
+  // allowed to fail in.
+  const entitled = deps.entitled ?? (async () => false);
+  const gate = async req => {
+    try {
+      return await entitled(req.owner) === true;
+    } catch {
+      return false;
+    }
+  };
   // Every current-state check shares the same lock as document writes and stop.
-  const handle = action => async (req, res) => {
+  // `paid` marks the one route that spends money: the gate is consulted before
+  // the transaction opens, so a refused apply takes no lock, reads no session
+  // row and writes nothing.
+  const handle = (action, paid = false) => async (req, res) => {
     // A recovery plan is a write against somebody's session. No owner, no plan.
     if (!isOwner(req.owner))
       return res.status(401).json({ message: "Sign in to plan a recovery." });
+    if (paid && !(await gate(req)))
+      return res.status(402).json({ error: "capability_not_included", message: APPLY_PAYWALL });
     try {
       const result = await deps.transaction(req.owner, req.params.id, async client => {
         const session = await deps.read(req.owner, `session:${req.params.id}`, client);
@@ -84,7 +110,7 @@ export function mountRecoveryRoutes(app, overrides = {}) {
       await deps.write(req.owner, `session:${session.id}`, session, client);
     }
     return { status: 200, body: response(result) };
-  }));
+  }, true));
   app.get("/api/sessions/:id/recovery-jobs/:job", handle(async (req, session, client) => {
     if (!identity(req.params.job)) return { status: 400, body: { message: "Invalid recovery job." } };
     const status = await deps.cloudRecoveryJobStatus(req.owner, session, client, req.params.job);

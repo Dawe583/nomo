@@ -935,7 +935,11 @@ async function applyManagedUndo(req, id, operationId) {
     await write(req.owner, `session:${s.id}`, s, c);
   });
 }
-mountRecoveryRoutes(app);
+// Hosted recovery execution is the second paid capability (`verifiedRecovery`).
+// The gate is handed in rather than imported here so this file stays the one
+// place the licence line is read; see `cloud/capability-gate.mjs` for why the
+// plan and the receipt around this route stay open.
+mountRecoveryRoutes(app, { entitled: (owner) => licence.entitled(owner) });
 app.get("/api/sessions", async (req, res) =>
   res.json(await sessionPage(req.owner, queryOf(req))),
 );

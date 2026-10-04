@@ -30,7 +30,26 @@ import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
  * The capabilities DECISIONS section 5 puts on the paid side of the line, in
  * the spelling `GET /api/capabilities` publishes them.
  *
- * One entry today, and the entry is a decision rather than a convenience:
+ * Two entries today, and each is a decision rather than a convenience:
+ *
+ * - `verifiedRecovery`, the hosted EXECUTION of a recovery job. The split is
+ *   the decision, and it is deliberately narrower than the feature:
+ *
+ *   `POST /api/sessions/:id/recovery-jobs/plan` and
+ *   `GET /api/sessions/:id/recovery-jobs/:job` stay open. The capture and the
+ *   receipt stay open so the proof is free and the receipt format stays
+ *   inspectable, and so the open-core CLI keeps running the same recovery
+ *   locally against the operator's own machine forever. What the paywall
+ *   holds is `POST .../apply`: the hosted execution, which is the thing that
+ *   touches a customer's system from a server somebody else runs. Gating the
+ *   plan instead would withhold the evidence and leave the execution as the
+ *   cheap part, which is the opposite of what is being sold.
+ *
+ *   `cloud/` is already the closed, paid directory, so no code moves across a
+ *   licence line at all: this is a flag inside a closed package, which is the
+ *   boundary the licence can actually hold. See `cloud/recovery-routes.mjs`
+ *   for where the route refuses, and `cloud/server.mjs` for where the gate is
+ *   handed to it.
  *
  * - `taintGraph`, the recorded cross-record dependency graph. Section 5 settles
  *   it against its own operational test in the rejected table: "Opening the taint
@@ -98,7 +117,7 @@ import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
  * capability to the paid side, which is the one move section 5 forbids
  * outright, so it stays open.
  */
-export const PAID_CAPABILITIES = Object.freeze(["taintGraph"]);
+export const PAID_CAPABILITIES = Object.freeze(["taintGraph", "verifiedRecovery"]);
 
 /**
  * The open cloud capability surface, exactly as `cloud/server.mjs` answered it
@@ -115,6 +134,10 @@ export const openCapabilities = () => ({
   hooks: false,
   contextCompaction: true,
   recoveryJobs: true,
+  // `recoveryJobs` stays true for a free owner and `verifiedRecovery` goes off,
+  // because that split IS the decision: capturing and reading a recovery stays
+  // free, executing it on a server somebody else runs does not. A client that
+  // saw `recoveryJobs: false` would hide the plan it is entitled to.
   backgroundQueue: false,
   ...Object.fromEntries(PAID_CAPABILITIES.map((name) => [name, true])),
 });
