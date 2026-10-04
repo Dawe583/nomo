@@ -1,6 +1,32 @@
 # VOID
 
-VOID is an accountability and reversibility layer for AI agents.
+VOID reverses one bad write in a live system, leaves everything else alone, and
+writes the proof into your own database where anyone can check it without
+trusting VOID.
+
+**Rubrik has sold "undo for agent actions" since August 2025**, so that part is
+not a differentiator and this file does not claim it is. Two things still are.
+Rubrik's audit trail lives in Rubrik Security Cloud, not in the database that was
+damaged. And its mechanism is a restore, not an inverse: rewinding a live
+database to a moment ago discards every legitimate write made since. VOID
+restores the affected rows and keeps the rest, and the receipt it leaves sits in
+your schema.
+
+**See it happen, then check it without VOID.** The demo drives a real PostgreSQL
+17 server: an agent write, a finance write made *outside* VOID, then the inverse.
+The agent's row goes back; the finance write survives.
+
+```sh
+export VOID_PG_URL="postgres://void@127.0.0.1:5432/void_demo"
+node --experimental-strip-types scripts/receipt-demo/run.mjs
+psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
+```
+
+The second command is plain SQL over two tables you already own. It reports
+`PASS` only if the row each receipt names is the row your table actually holds,
+and `FAIL` if it is not. `scripts/receipt-demo/README.md` records what was
+observed, including a run where the check was made to fail on purpose by editing
+a row by hand, because a verification that cannot fail is not a verification.
 
 **Start here: [the VOID handbook](docs/HANDBOOK.md).** It is the complete operator
 guide, in English and in [Czech](docs/HANDBOOK.cs.md), and it is checked by a
