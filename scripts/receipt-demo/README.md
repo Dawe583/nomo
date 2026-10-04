@@ -87,3 +87,23 @@ recorded here rather than omitted.
   signed, chain-verified reversal record is the local ledger's; see
   `packages/ledger/src/reversal.ts`. Neither is what check 3 above reads, because
   check 3 deliberately reads only what the database itself holds.
+
+## The check is falsifiable, and that was tested
+
+A verification file that cannot fail is a rubber stamp, so it was run against a
+database that had been tampered with after the receipt was written.
+
+```sh
+# honest database
+psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
+#   PASS: every receipt claiming a restoration is one the live table confirms
+
+# now change the row the receipt names, without touching VOID
+psql "$VOID_PG_URL" -c "UPDATE public.account SET note='tampered after the receipt' WHERE id=1;"
+psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
+#   FAIL: a receipt claims a restoration the live table does not show
+```
+
+Both results were observed against PostgreSQL 17.11 on 2026-10-04. The verdict
+changes because the table changed, which is the whole point: the answer comes
+from the customer's database, not from VOID's word.
