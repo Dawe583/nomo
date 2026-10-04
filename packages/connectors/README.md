@@ -309,7 +309,16 @@ policy decision, while capture must happen immediately before an allowed write.
 
 `inverse` consumes a snapshot reference rather than process memory because
 replay can happen in a later process. The snapshot digest binds that process to
-the exact bytes captured before the write.
+the exact bytes captured before the write. A connector holds no capture map of
+its own: the store is the only copy, so a long session cannot grow one.
+
+`probes/cache.ts` memoizes probe results per call, so it carries both a TTL and
+a named entry ceiling, `PROBE_CACHE_MAX_ENTRIES`. The TTL decides whether a
+result is usable; the ceiling decides whether it is kept, because a key hashes
+the whole call and nothing bounds how many distinct calls a session issues.
+Eviction drops the oldest write and can reach an entry still inside its TTL,
+which costs one re-probe. That is the safe direction: a missing radius is
+measured again, a stale one is trusted.
 
 `apply` returns a report rather than throwing for ordinary drift because drift is
 an expected safety outcome. It throws only for internal failures that prevent an
