@@ -8,6 +8,101 @@ import { executeWorkspaceTool } from "./workspace.ts";
 
 import type { PublicKeyLookup } from "../../ledger/src/verify.ts";
 
+const frame = (value: unknown) => `data: ${JSON.stringify(value)}\r\n\r\n`;
+
+function stream(text: string) {
+  const bytes = new TextEncoder().encode(text);
+  return new Response(
+    new ReadableStream({
+      start(c) {
+        for (let i = 0; i < bytes.length; i += 3) c.enqueue(bytes.slice(i, i + 3));
+        c.close();
+      },
+    }),
+    { headers: { "content-type": "text/event-stream" } },
+  );
+}
+
+/// Tools reach the provider as opaque `tool_N` names (`index.ts:2648`); the real
+/// name survives only as a description prefix. A test that calls a tool by its
+/// catalogue name therefore misses the mapping and fails for the wrong reason,
+/// so the name is read back out of the request the provider was actually sent.
+function advertisedWriteTool(init: unknown): string {
+  const body = JSON.parse(String((init as { body?: unknown })?.body ?? "{}")) as {
+    tools?: Array<{ function: { name: string; description?: string } }>;
+  };
+  const hit = (body.tools ?? []).find((x) => x.function.description?.startsWith("void_workspace_write:"));
+  assert.ok(hit, "the write tool must be offered to the provider");
+  return hit.function.name;
+}
+
+/// The dispatch path is the only way a tool ever runs, so this is the one test
+/// that proves a real action reaches the signed chain rather than only the
+/// in-memory snapshot. Calling `commitWorkspace` directly, as the test above
+/// does, proves the chain signs but bypasses everything that could drop it.
+test("a provider-driven tool call lands in the attested chain", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-attest-dispatch-"));
+  let turn = 0;
+  const dispatchFetcher = async (url: unknown, init?: unknown) => {
+    if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
+    turn += 1;
+    if (turn > 1)
+      return stream(
+        frame({ choices: [{ delta: { content: "Done" } }] }) +
+          frame({ choices: [{ delta: {}, finish_reason: "stop" }] }) +
+          "data: [DONE]\r\n\r\n",
+      );
+    const name = advertisedWriteTool(init);
+    return stream(
+      frame({
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                { index: 0, id: "call-1", function: { name, arguments: '{"path":"note.md",' } },
+              ],
+            },
+          },
+        ],
+      }) +
+        frame({
+          choices: [
+            {
+              delta: { tool_calls: [{ index: 0, function: { arguments: '"content":"signed evidence"}' } }] },
+              finish_reason: "tool_calls",
+            },
+          ],
+        }) +
+        frame({ choices: [], usage: { prompt_tokens: 12, completion_tokens: 8, total_tokens: 20 } }) +
+        "data: [DONE]\r\n\r\n",
+    );
+  };
+  const app = new Workbench({ VOID_DATA_DIR: directory }, dispatchFetcher);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(directory, { recursive: true, force: true });
+  });
+  await app.configure({ baseUrl: "https://api.tokenrouter.com/v1", apiKey: "fixture" });
+  const session = await app.start("Write", "fixture", undefined, undefined, undefined);
+  await app.settled();
+
+  const internals = internalsOf(app) as unknown as {
+    sessions: Map<string, { view: { workspace: string } }>;
+    evidence: Record<string, Array<Record<string, unknown>>>;
+  };
+  const { workspace } = internals.sessions.get(session.id)!.view;
+  const written = app.workspace(session.id).files;
+  assert.deepEqual(written, { "note.md": "signed evidence" }, "the dispatch must actually perform the write");
+
+  const verified = await app.ledger(workspace);
+  assert.ok(verified, "the dispatch path must leave a verifiable chain, not only a snapshot");
+  const record = verified.entries.find((entry) => (entry.body as Record<string, unknown>).tool === "void_workspace_write");
+  assert.ok(record, "the write must be present in the attested chain");
+  assert.equal((record.body as Record<string, unknown>).decision, "execute:completed");
+  assert.ok(record.signature, "an attested entry must carry its signature");
+  assert.equal(record.alg, "ed25519");
+});
+
 /// `PublicKeyLookup` is either a fixed key or a resolver over key ids. What
 /// matters here is the answer, not which form it arrived in.
 async function answer(lookup: PublicKeyLookup, keyId: string): Promise<Uint8Array | null> {
