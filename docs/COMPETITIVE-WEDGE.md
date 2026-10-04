@@ -312,7 +312,16 @@ document claims:
 > verify the restoration by querying that database, without trusting VOID, its
 > key, or its ledger at all.
 
-No competitor has any part of that sentence. That is the wedge.
+**Correction, 2026-10-04: the last line of that sentence was true when written and is not now.**
+Rubrik shipped Agent Rewind on 2025-08-12 and its own release claims "visible, auditable, and
+reversible" with "immutable snapshots", rolling back "files, databases, configurations, or
+repositories"; since 2026-06 it has been marketed as "the industry's only agent rewind". A second
+sentence in the blockquote above still holds and is now the whole of the wedge: Rubrik's audit
+lives in Rubrik Security Cloud, not in the database it mutated, and its mechanism is a restore
+rather than a per-effect inverse, so a live system with concurrent writers cannot use it. Oracle's
+Deep Data Security (2026-03-23) is database-native but governs access rather than reversing an
+effect. `docs/DEEP-RESEARCH-DIRECTION-2026-10-04.md` carries the full finding, the sources and the
+case against building on what is left.
 
 ---
 
