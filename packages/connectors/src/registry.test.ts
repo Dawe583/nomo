@@ -1,9 +1,65 @@
 import test, { describe } from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
 import { connectorFor, connectorRegistry, makeConnector, type ConnectorCall, type S3Client } from "./registry.ts";
 import type { QueryExecutor } from "./postgres/capture.ts";
 import type { SnapshotReference, SnapshotStore } from "./snapshot/store.ts";
+
+// `makeConnector` used to allocate a `Map<string, StoredPostgresCapture>` and a
+// `Map<string, StoredS3Capture>`, write every capture into them, and never read
+// them back: `inverse` and `apply` both resolve the capture through
+// `readPostgresCapture`/`readS3Capture`, which load the envelope out of the
+// snapshot store. The S3 restart test below is the proof that the map is not
+// load-bearing — a second connector built over the same store produces the
+// identical plan — so the maps were write-only retention of a full
+// before-image plus derived steps, growing for the life of the process for no
+// reader at all.
+//
+// The maps are deleted rather than capped because a cap on a map with no
+// reader only makes the leak slower. This test keeps the deletion honest: it
+// asserts the source allocates none and touches none, so a capture map cannot
+// be reintroduced unnoticed. A future in-process map that genuinely has a
+// reader must arrive with a named ceiling, as `probeCache` now does, and this
+// assertion widens to accept it at that point.
+test("the registry keeps no in-process capture map: every capture resolves through the store", () => {
+  const source = readFileSync(new URL("./registry.ts", import.meta.url), "utf8");
+
+  assert.equal(
+    /new Map<\s*string,\s*Stored(?:Postgres|S3)Capture\s*>/.test(source),
+    false,
+    "registry.ts must not allocate a capture map: captures are read back through the snapshot store, so an in-process map is unbounded retention with no reader",
+  );
+  assert.equal(
+    /\bcaptures\.(?:set|get|has|delete|clear)\(/.test(source),
+    false,
+    "registry.ts must not read or write a capture map",
+  );
+});
+
+test("captures survive many writes without any in-process retention", async () => {
+  const store = new MemorySnapshotStore();
+  const client = new FakeS3Client();
+  await client.putObject({ bucket: "bucket", key: "key", body: encoder.encode("before") });
+  const registry = makeConnector({ store, s3: client });
+
+  // Every entry the deleted maps used to hold is still reachable afterwards:
+  // the snapshot store is the only retention, and it is the one that survives
+  // a restart. This is the behaviour the maps were duplicating.
+  const references = [];
+  for (let index = 0; index < 50; index += 1) {
+    references.push(await registry.s3.capture({
+      tool: "s3.object.delete",
+      connector: "s3",
+      arguments: { bucket: "bucket", key: "key" },
+      workspace: "workspace-a",
+    }));
+  }
+  for (const capture of references) {
+    const plan = await makeConnector({ store, s3: client }).s3.inverse(capture.reference);
+    assert.equal(plan.steps[0]?.target, "s3://bucket/key");
+  }
+});
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

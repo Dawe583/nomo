@@ -119,13 +119,19 @@ export function connectorRegistry(): ConnectorRegistry {
   return makeConnector({ store: missingSnapshotStore() });
 }
 
+// Every capture is written to the snapshot store and read back out of it:
+// `inverse` and `apply` resolve their capture through `readPostgresCapture` /
+// `readS3Capture`, never from anything held here. This used to allocate a
+// per-connector map for each side and write every capture into it. Nothing
+// ever read either map back, so each entry retained a full before-image plus
+// its derived steps for the life of the process with no reader — a long session
+// grew without bound while the authoritative copy sat in the store, which is
+// also what makes a capture replayable after a restart. Deleting them is the
+// fix; capping a map with no reader would only slow the leak down.
 export function makeConnector(deps: ConnectorDeps): ConnectorRegistry {
-  const postgresCaptures = new Map<string, StoredPostgresCapture>();
-  const s3Captures = new Map<string, StoredS3Capture>();
-
   return {
-    postgres: makePostgresConnector(deps, postgresCaptures),
-    s3: makeS3Connector(deps, s3Captures),
+    postgres: makePostgresConnector(deps),
+    s3: makeS3Connector(deps),
   };
 }
 
@@ -139,7 +145,7 @@ export function connectorFor(tool: string): { readonly connectorId: ConnectorId;
   return { connectorId: vendor, connector: registry[vendor] };
 }
 
-function makePostgresConnector(deps: ConnectorDeps, captures: Map<string, StoredPostgresCapture>): Connector {
+function makePostgresConnector(deps: ConnectorDeps): Connector {
   return {
     id: "postgres",
     surface: "postgres",
@@ -168,8 +174,6 @@ function makePostgresConnector(deps: ConnectorDeps, captures: Map<string, Stored
         workspace: call.workspace ?? "",
       });
       const facts = factsFromRecord(connectorFacts(statement, image), image.capturedAt);
-      const steps = buildInverse(statement, image);
-      captures.set(captureKey(result.reference), { call, image, steps });
       return { reference: result.reference, digest: result.digest, facts, capturedAt: image.capturedAt };
     },
     inverse: async (reference) => {
@@ -199,7 +203,7 @@ function makePostgresConnector(deps: ConnectorDeps, captures: Map<string, Stored
   };
 }
 
-function makeS3Connector(deps: ConnectorDeps, captures: Map<string, StoredS3Capture>): Connector {
+function makeS3Connector(deps: ConnectorDeps): Connector {
   return {
     id: "s3",
     surface: "s3",
@@ -227,7 +231,6 @@ function makeS3Connector(deps: ConnectorDeps, captures: Map<string, StoredS3Capt
       // Bind the target and before-image reference into one content-addressed
       // envelope so replay after a restart never guesses a bucket or object key.
       const envelope = await deps.store.put(snapshotNamespace(call, "s3"), encodeJson({ version: "void.s3.capture.v1", ...stored }));
-      captures.set(captureKey(envelope.reference), stored);
       return { reference: envelope.reference, digest: envelope.digest, facts: result.facts, capturedAt: result.capturedAt };
     },
     inverse: async (reference) => {
@@ -349,10 +352,6 @@ function s3Plan(plan: InversePlan): S3Plan {
 function requireDependency<T>(value: T | undefined, name: string): T {
   if (value === undefined) throw new Error(`missing ${name} dependency`);
   return value;
-}
-
-function captureKey(reference: SnapshotReference): string {
-  return `${reference.digest}:${reference.uri}`;
 }
 
 function encodeJson(value: unknown): Uint8Array {
