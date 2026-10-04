@@ -836,15 +836,21 @@ because that is the one artefact a third party can verify without VOID.
 
 ### 11.5 Cloudflare, and what it can and cannot absorb
 
-Cloudflare appears in neither §3.1 nor §3.2, so this is additive. *The
-characterisation in this subsection comes from the review under test; no
-Cloudflare page was fetched or verified for this section, which is the same
-limitation §3 records for its own external work.*
+Cloudflare appears in neither §3.1 nor §3.2, so this is additive. **Re-read
+2026-10-04 against the product documentation itself** (Zero Trust AI Controls,
+MCP server portals, page last updated 2026-10-02; fetched and cited in the
+Appendix), which says more than the review under test assumed.
 
 It is a distribution threat rather than a feature competitor: MCP traffic
 governance at the edge, bundled into an account a team already pays for. It can
 absorb guardrails, per-tool policy and request audit into that bundle, which is
-most of §9's table stakes, without writing a connector.
+most of §9's table stakes, without writing a connector. The portal also curates
+and aliases tools and prompts, collapses every upstream tool into two via Code
+Mode, and can route through Gateway for DLP.
+
+The part that changes the assessment is enforcement rather than features. A
+portal that refuses a bypass is a **chokepoint**, and VOID is a proxy inside that
+chokepoint rather than beside it.
 
 What it cannot get from an edge is the part that has to understand the write: a
 per-effect before-image for a customer's table, an inverse that re-reads and
@@ -975,14 +981,30 @@ read today for §11.8: `packages/connectors/src/s3/apply.ts` (`:115` `proveResto
 `packages/ledger/src/verify.ts` (`:125-134`),
 `packages/ledger/src/store.ts` (`:186-195`).
 
-**Not fetched:** any Cloudflare page. The §11.5 characterisation of what
-Cloudflare is building comes from the review under test and was not verified
-here; see the note at the head of that subsection.
+**Fetched 2026-10-04:** Cloudflare MCP server portals, Zero Trust AI Controls,
+<https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/mcp-portals/>
+(page last updated 2026-10-02), read directly. It covers centralised portals, tool and prompt
+curation and aliasing, Code Mode, optional Gateway routing for DLP, and shadow-MCP detection
+with portal-only enforcement that blocks direct connections bypassing approved portals (reported
+2026-09-19). §11.5 is answered against this page rather than against the review under test.
 
 **Carried forward from the two existing documents and not re-verified here:**
 Anthropic's 2026-09-09 alignment assessment; ProjectDiscovery's behavioural
 audit; the EU AI Act Article 12 dates; the MCP `2026-07-28` revision and what
-it changed; AAT `draft-sharif-agent-audit-trail-05`; MCPS
+it changed; MCPS
 `draft-sharif-mcps-secure-mcp-01`; the Hex-Rays / Binary Ninja / Ghidra 2026
 timeline. These are the claims `PREMISE-VERIFICATION.md` corrected, and I have
 used them as corrected rather than re-deriving them.
+
+**Standards re-read 2026-10-04, both moved since this document was written:**
+
+- `draft-sharif-agent-audit-trail` is at revision **-06** (Standards Track, 29 September 2026),
+  where the documents in this repository carry -05. Nothing in the tree depends on the revision
+  number today, but any claim that VOID emits the standard format has to be re-checked against
+  -06 before it is made.
+- `draft-sahu-agent-action-receipts-00`, "Signed, Hash-Chained Action Receipts for AI Agents",
+  N. Sahu, 16 August 2026, Informational, with `draft-marques-asqav-compliance-receipts` in
+  progress. **This is VOID's central claim written down by someone else.** It validates the wedge
+  and removes "we sign the ledger" as a differentiator in the same stroke, because the shape is
+  now public. What survives is §4.3's sentence: the receipt lands in the effect's own system, so
+  a third party verifies it without trusting VOID, its key or its ledger. No draft claims that.
