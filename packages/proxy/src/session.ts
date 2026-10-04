@@ -41,6 +41,10 @@ export class Session {
    * Records a server-originated request relayed outside translateInbound,
    * so the agent response remaps to the upstream id. Ids stay typed: a
    * string upstream id never becomes its numeric lookalike.
+   *
+   * Both ids are reserved, not just the upstream one: the agent id is what
+   * #upstreamIdForServerRequest matches a reply against, so an id this
+   * session minted for something else would make that reply ambiguous.
    */
   recordServerRequest(upstreamId: JsonRpcId, agentId: JsonRpcId): void {
     this.#upstreamToAgent.set(
@@ -48,6 +52,7 @@ export class Session {
       assertRequestId(agentId),
     );
     this.#rememberId(upstreamId);
+    this.#rememberId(agentId);
   }
 
   /**
@@ -117,10 +122,62 @@ export class Session {
     };
   }
 
+  /**
+   * Releases every row this agent id holds, in whichever direction it was
+   * minted. A client request keys #agentToUpstream by its agent id; a
+   * server-originated request holds its agent id as the *value* of an
+   * #upstreamToAgent row, so that row is found by the same reverse scan
+   * #agentIdForUpstreamResponse already makes over the other map. When one
+   * agent id is live in both directions the client row wins: the id came
+   * from the client, so the terminal frame that named it is the client's,
+   * and a server row that merely holds the same number stays live.
+   */
   drop(agentId: JsonRpcId): void {
     const upstreamId = this.#agentToUpstream.get(agentId);
     this.#agentToUpstream.delete(agentId);
-    if (upstreamId !== undefined) this.#progressTokens.delete(upstreamId);
+    this.#usedIds.delete(agentId);
+
+    if (upstreamId !== undefined) {
+      this.#progressTokens.delete(upstreamId);
+      return;
+    }
+
+    // No client row claims this id, so it is the agent id this session minted
+    // for a request the upstream itself sent.
+    const serverUpstreamId = this.#upstreamIdForServerRequest(agentId);
+    if (serverUpstreamId !== null) this.#releaseServerRequest(serverUpstreamId);
+  }
+
+  /**
+   * Releases the row of a server-originated request, keyed by the upstream id
+   * it arrived with, plus the progress token filed under its agent id. Only
+   * the upstream can name that key, so a frame carrying it is the upstream
+   * retiring its own request; the frame itself is still not routed anywhere.
+   */
+  #releaseServerRequest(upstreamId: JsonRpcId): void {
+    const agentId = this.#upstreamToAgent.get(upstreamId);
+    if (agentId === undefined) return;
+
+    this.#upstreamToAgent.delete(upstreamId);
+    this.#progressTokens.delete(agentId);
+    this.#usedIds.delete(upstreamId);
+  }
+
+  /**
+   * The upstream id of the server-originated request this agent id was minted
+   * for. A reverse scan for the same reason #agentIdForUpstreamResponse is
+   * one: #upstreamToAgent is keyed by an id the upstream chose, and every
+   * terminal path arrives holding the id this session chose. The comparison
+   * is `===` so a string agent id never matches its numeric lookalike.
+   */
+  #upstreamIdForServerRequest(agentId: JsonRpcId): JsonRpcId | null {
+    for (const [upstreamId, mappedAgentId] of this.#upstreamToAgent) {
+      if (mappedAgentId === agentId) {
+        return upstreamId;
+      }
+    }
+
+    return null;
   }
 
   #translateResponse(
@@ -140,6 +197,12 @@ export class Session {
     const upstreamId = assertRequestId(message.id);
     const agentId = this.#agentIdForUpstreamResponse(upstreamId);
     if (agentId === null) {
+      // No client request claims this id. It may still name the agent id this
+      // session minted for a request the upstream itself sent, and that row
+      // belongs to the upstream to retire. The reply is dropped exactly as
+      // before; only the row goes, so the id cannot outlive the exchange.
+      const serverUpstreamId = this.#upstreamIdForServerRequest(upstreamId);
+      if (serverUpstreamId !== null) this.#releaseServerRequest(serverUpstreamId);
       return null;
     }
 
@@ -184,7 +247,14 @@ export class Session {
     }
 
     const agentId = this.#agentIdForUpstreamResponse(requestId);
-    if (agentId === null) return null;
+    if (agentId === null) {
+      // The upstream may be cancelling a request it sent itself, whose row
+      // #agentToUpstream cannot resolve. That row is released here, keyed by
+      // the id the upstream chose, and the notification is dropped as before
+      // because there is no client request for it to translate to.
+      this.#releaseServerRequest(requestId);
+      return null;
+    }
 
     this.drop(agentId);
     return { ...message, params: { ...message.params, requestId: agentId } };
@@ -217,13 +287,28 @@ export class Session {
     return null;
   }
 
+  /**
+
+   * Mints the next id. #nextId only ever climbs, so an id this session has
+   * minted is never handed out twice and needs no reservation of its own;
+   * #usedIds holds only the ids the peers are using right now. Skipping
+   * those keeps a minted id from colliding with a live peer id in either
+   * direction, which is what the reverse scans below and the typed identity
+   * of an id both depend on.
+   *
+   * A terminated request's ids leave #usedIds with its rows, so a long-dead
+   * id can be minted again. The cost is that a late frame naming a released
+   * id is attributed to whichever request holds that id now. It cannot reach
+   * a live request: while a request is live both of its peer ids sit in
+   * #usedIds and this loop skips them, so no minted id ever equals a live
+   * peer id, and the scans that route a frame match only live rows.
+   */
   #allocateId(): JsonRpcId {
     while (this.#usedIds.has(this.#nextId)) {
       this.#nextId += 1;
     }
 
     const id = this.#nextId;
-    this.#usedIds.add(id);
     this.#nextId += 1;
     return id;
   }

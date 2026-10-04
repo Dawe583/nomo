@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import { Session } from "./session.ts";
 import type {
+  JsonRpcId,
+  JsonRpcMessage,
   JsonRpcNotification,
   JsonRpcRequest,
   JsonRpcResult,
@@ -149,6 +151,13 @@ describe("Session", () => {
 
 function request(id: string | number, method: string): JsonRpcRequest {
   return { jsonrpc: "2.0", id, method };
+}
+
+// translateInbound returns a union whose JsonRpcError arm carries an optional
+// id, so a relayed request is read through this to keep its id non-optional.
+function relayedRequest(message: JsonRpcMessage | null): JsonRpcRequest {
+  assert.ok(message !== null && "method" in message && "id" in message);
+  return message;
 }
 
 describe("Session typed request identity", () => {
@@ -441,5 +450,113 @@ describe("Session typed request identity", () => {
     const allocated = Array.from({ length: 7 }, () => session.translateRequestOut(request(9, "tools/list")).id);
 
     assert.ok(!allocated.includes(7), `session re-issued the reserved upstream id: ${allocated.join(", ")}`);
+  });
+});
+
+describe("Session retention", () => {
+  test("1000 answered server-originated requests leave no upstream row", () => {
+    const session = new Session();
+    const agentIds: JsonRpcId[] = [];
+
+    for (let id = 0; id < 1000; id++) {
+      const relayed = relayedRequest(session.translateInbound(request(id, "roots/list")));
+      agentIds.push(relayed.id);
+    }
+
+    assert.equal(session.maps.upstreamToAgent.size, 1000);
+    assert.equal(session.maps.agentToUpstream.size, 0);
+
+    for (const agentId of agentIds) {
+      session.drop(agentId);
+    }
+
+    assert.equal(session.maps.upstreamToAgent.size, 0);
+    assert.equal(session.maps.agentToUpstream.size, 0);
+  });
+
+  test("a reply to a server-originated request releases only that row", () => {
+    const session = new Session();
+    const relayed = relayedRequest(session.translateInbound(request(42, "roots/list")));
+    const clientRow = session.translateRequestOut(request(1, "tools/list"));
+
+    // The frame names the id this session minted for the server request. It
+    // is not an id any client request is waiting on, so it routes nowhere and
+    // is dropped, but the server row it names retires. The client's row holds
+    // a different upstream id and must stay live: a release that resolved by
+    // number rather than by the row the frame names would drop it.
+    assert.equal(
+      session.translateInbound({ jsonrpc: "2.0", id: relayed.id, result: {} }),
+      null,
+    );
+
+    assert.equal(session.maps.upstreamToAgent.size, 0);
+    assert.deepEqual([...session.maps.agentToUpstream.entries()], [[1, clientRow.id]]);
+    assert.notEqual(
+      session.translateInbound({ jsonrpc: "2.0", id: clientRow.id, result: {} }),
+      null,
+    );
+  });
+
+  test("an inbound cancellation that names a server-originated id releases that row", () => {
+    const session = new Session();
+    session.translateInbound(request("srv-1", "roots/list"));
+
+    assert.equal(
+      session.translateInbound({
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: "srv-1" },
+      }),
+      null,
+    );
+    assert.equal(session.maps.upstreamToAgent.size, 0);
+  });
+
+  test("a released server request stops restoring its progress token", () => {
+    const session = new Session();
+    const relayed = relayedRequest(
+      session.translateInbound({
+        jsonrpc: "2.0",
+        id: "srv-1",
+        method: "roots/list",
+        params: { _meta: { progressToken: "srv-token" } },
+      }),
+    );
+    const progress: JsonRpcNotification = {
+      jsonrpc: "2.0",
+      method: "notifications/progress",
+      params: { progressToken: relayed.id, progress: 1 },
+    };
+    assert.notEqual(session.translateInbound(progress), null);
+
+    session.drop(relayed.id);
+
+    assert.equal(session.translateInbound(progress), null);
+    assert.equal(session.maps.upstreamToAgent.size, 0);
+  });
+
+  test("an id a live request holds is never re-issued while it is live", () => {
+    const session = new Session();
+    session.translateRequestOut(request(7, "tools/list"));
+    session.recordServerRequest(8, 9);
+
+    const minted = Array.from({ length: 20 }, () => session.allocateAgentId());
+
+    assert.ok(!minted.includes(7), `re-issued a live client id: ${minted.join(", ")}`);
+    assert.ok(!minted.includes(8), `re-issued a live upstream id: ${minted.join(", ")}`);
+    assert.ok(!minted.includes(9), `re-issued a live agent id: ${minted.join(", ")}`);
+    assert.deepEqual([...session.maps.upstreamToAgent.entries()], [[8, 9]]);
+    assert.deepEqual([...session.maps.agentToUpstream.entries()], [[7, 1]]);
+  });
+
+  test("a terminal request's id is released and can be minted again", () => {
+    const session = new Session();
+    session.recordServerRequest(5000, 1);
+    session.drop(1);
+    assert.equal(session.maps.upstreamToAgent.size, 0);
+
+    const minted = Array.from({ length: 5000 }, () => session.allocateAgentId());
+
+    assert.ok(minted.includes(5000), `a released id stayed reserved: ${minted.join(", ")}`);
   });
 });
