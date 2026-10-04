@@ -379,23 +379,34 @@ written; §4.3 said there was "no post-write re-read" for S3 and was wrong. Its 
 "prove sub-millisecond overhead" objection with a measurement and §11.5 answers the Cloudflare
 distribution question. §6's demand reading is unchanged and still binds harder than either.
 
-**3. The write path's cost is the ledger's fsync, and group commit cut it by a third.** Not yet
-on `main`: PR #75 is open and holds both the change and the measurements below.
-`node scripts/src/bench.mjs --scale 200`, quiet machine, two builds interleaved:
+**3. The write path's cost is the ledger's fsync, and group commit cut it by about a quarter.**
+Not yet on `main`: PR #75 is open and holds both the change and the measurements below.
 
-| scenario | before p50 | after p50 |
-|---|---:|---:|
-| forward | 13.01 ms | 8.98 ms |
-| ledger-append | 5.99 ms | 4.00 ms |
-| classify | 0.00033 ms | 0.00029 ms |
+`node scripts/src/bench.mjs --scale 200`, this machine, four interleaved pairs measured on
+2026-10-04 (`main` and the branch alternating, so drift affects both sides):
 
-32 concurrent appends now issue **1** fsync where they issued 32; a lone appender still issues one
-per append; a 50-entry single-writer chain is byte-identical (sha256 `f919ca5aaafbca7…`). Two of the
-three wins are not the fsync at all: `ensurePrivateDirectory` no longer walks the directory chain
-on every append, and `lastEntry` reads a 64 KiB tail window instead of the whole file, which was
-O(file) per append and O(N²) over a ledger's life. **No latency figure should be published from
-this repository until it is taken on a named disk**; the machine moves by a factor of three under
-load and an earlier measurement taken hours apart was wrong.
+| scenario | `main` p50 | branch p50 | change |
+|---|---:|---:|---|
+| forward | 14.00, 15.03, 15.03, 15.02 ms | 10.98, 12.12, 10.96, 10.91 ms | about -25% |
+| ledger-append | 7.00, 7.03, 7.96, 7.92 ms | 5.02, 5.03, 5.00, 5.01 ms | about -29% |
+| classify | 0.00046 ms | 0.00063 ms | noise, unchanged in shape |
+
+An earlier pass reported 13.01 → 8.98 ms and 5.99 → 4.00 ms. Those were measured once, in one
+direction rather than interleaved, and they do not reproduce here: re-running both builds on this
+machine gives a smaller and steadier improvement. **The table above is the one to believe**, and
+the earlier figures are withdrawn.
+
+32 concurrent appends now issue **1** fsync where they issued 32; that part reproduces exactly.
+A lone appender still issues one per append, and a 50-entry single-writer chain is byte-identical
+(sha256 `f919ca5aaafbca7…`). Two of the three wins are not the fsync at all:
+`ensurePrivateDirectory` no longer walks the directory chain on every append, and `lastEntry` reads
+a 64 KiB tail window instead of the whole file, which was O(file) per append and O(N²) over a
+ledger's life.
+
+**No latency figure should be published from this repository until it is taken on a named disk,
+interleaved against the build it is compared to, and reported as the range it was measured over.**
+This machine moves by a factor of two under load, and a single un-interleaved run of this same
+change disagreed with four interleaved ones.
 
 **4. Of the nine open issues, two were buildable.** #47 is fixed: `execute()` now re-checks the
 receipt layout under the SERIALIZABLE transaction `prepare` opened, instead of leaning on a
