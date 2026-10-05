@@ -116,6 +116,10 @@ background tasks, image paste, suspend and Vim editing have no VOID equivalent.
 `/providers` lists model providers including local open models.
 `/harness cloud|prime-agent` switches the agent harness; detection reads
 PATH only and never executes anything.
+`/settings` lists every harness limit with the value in force and the range it
+may be set within; `/settings key value` sets one. The table is generated from
+`packages/workbench/src/harness-settings.ts`, so a limit without a declared
+consumer cannot appear here.
 
 ### Aperture identity
 
