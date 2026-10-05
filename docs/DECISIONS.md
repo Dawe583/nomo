@@ -1466,3 +1466,21 @@ still refuses to be gated for the reason recorded in `capability-gate.mjs`. It
 does not claim anyone will pay: the paid line is one hosted route on one plan,
 and whether that is worth a paywall is a question for a buyer, not for this
 file.
+
+## External agent binaries: provenance recorded, no vendoring, 2026-10-05
+
+Decision A from `docs/VENDORING-DECISION.md`, taken by the agent on the
+owner's behalf and recorded here so it is not relitigated.
+
+`oh-my-pi` (`omp` 18.6.1) and `prime-agent` (`prime` 0.9.1) stay external
+binaries resolved from `~/.local/bin`, invisible to the pnpm lockfile and to
+`scripts/src/check-tests.mjs`. No source is copied. The evidence behind the
+refusal to vendor: the `@oh-my-pi` scope is neither an npm org nor an npm
+user, `pnpm-workspace.yaml` matches only `packages/*` so a vendored tree is a
+partial capture that fails `pnpm install --frozen-lockfile` and routes
+`pnpm test` into `bun` on runners with no bun, and the local clones
+(`omp-src` 18.6.2, `prime-src` 0.9.8) are ahead of anything published, so
+vendoring would ship code nobody has installed. What remains open is the
+largest evidence gap named in that document: how much of the installed
+binaries' behavior this repository actually consumes. That is a usage audit,
+not a vendoring task, and this decision does not close it.
