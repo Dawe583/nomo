@@ -3,6 +3,41 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- Every limit that governed a run was a literal in the run path: 20 turns,
+  4096 output tokens, a 32000 character prompt, a 20-deep queue, a 65536 byte
+  body, a 32-call tool batch, a 5s hook timeout, and a retry loop wired to the
+  free endpoint. Both agents VOID orchestrates expose this class of limit as
+  operator settings, prime-agent as `autonomous.maxTurns` and `maxTokens`, omp
+  as `task.maxConcurrency` and `maxRuntimeMs`, so a limit nobody can change is
+  a limit nobody chose. They are now settings, with VOID's own conservative
+  defaults rather than either upstream's.
+
+  `/settings` lists each one with the value in force, the range it may be set
+  within, and the symbols that read it; `/settings key value` sets one.
+  `GET`/`PATCH /api/harness-settings` is the same surface over HTTP. Values
+  are clamped rather than refused when out of range, on the patch path and on
+  the load path alike, so a hand-edited state file cannot widen a limit nobody
+  chose. An unknown key is refused by name, because a silent no-op on a
+  misspelled limit reads to an operator as applied.
+
+  Two bounds the run path enforced in more than one place did not agree with
+  each other. A branch prompt rewrite carried its own 32000 literal while start
+  and send moved to the setting, so a raised limit would have been silently
+  ignored on that path. `capabilities` still advertised 32000 after the run
+  path moved, so the web would have refused prompts the runtime accepts. Both
+  now follow the setting.
+
+  `maxRunTimeoutMs` is new behaviour and its resulting status matters: a run
+  that reaches the deadline goes to `unknown`, not `idle` and not `failed`,
+  because an outcome that was never proven has to keep Undo and reconciliation
+  available. A setting with no consumer is not shipped, so each row names the
+  symbols that read it and a test reads those files to confirm they exist;
+  that check rejected two rows in the commit that introduced the table.
+
+  `permissionMode` is deliberately not a setting and stays server-controlled.
+  See `docs/HARNESS-SETTINGS.md` for the full reference, including what is not
+  exposed and why.
+
 - `policyProfile` on an agent profile now selects a policy. It was validated,
   stored, and then admitted exactly one value, so an agent profile could not
   run under any policy but the built-in default. A profile now names a policy
