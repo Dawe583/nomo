@@ -333,6 +333,7 @@ type Session = {
   provider?: CompatibleProvider;
 };
 
+
 /** Model tools always cross the existing VOID SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
 export class Workbench {
@@ -2500,7 +2501,14 @@ export class Workbench {
       if ("result" in outcome) return outcome.result;
       // A typed denial alone can be forged by an upstream. Require fresh,
       // verified proxy evidence for this exact tool and argument digest.
-      const argsDigest = await sha256Hex(JSON.stringify(args));
+      // Bare hex, and canonical rather than `JSON.stringify`: this has to match
+      // the digest the proxy recorded on its own entry, not ours. `syncStdio`
+      // commits those with empty `args` and the proxy's digest spread in as
+      // metadata, which lands after `argsDigest` in the body literal and
+      // replaces it. `legacyArgsDigest` in the proxy package writes exactly
+      // this spelling; the two must not drift, and the prefix our own writer
+      // uses would never match it. Key order is what silently broke it.
+      const argsDigest = await sha256Hex(canonicalJson(args));
       const receipt = this.evidence[session.view.workspace]?.slice(before)
         .map(entry => entry.body as Record<string, unknown>)
         .filter(body => body.source === "stdio-proxy" && body.tool === tool.name && body.argsDigest === argsDigest).at(-1);
