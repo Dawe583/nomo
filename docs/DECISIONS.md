@@ -894,7 +894,6 @@ a preview deploy.
 | `node:crypto` signs and verifies ed25519 with no dependency                                          | Verified by two deciders on Node 22.22.2                                            |
 | PostgreSQL 16.13 starts here with `pg_ctlcluster 16 main start`                                      | Verified by Reader C, no install needed                                             |
 
-
 ## Local hardening continuation, 11 September 2026
 
 Remove the argument fallback for blast radius. The prior rollout compatibility
@@ -981,7 +980,6 @@ provider evidence resolves it. Recovery has its own signed receipt and can also
 be reconciled without repeating the inverse. The first MCP entry point is local
 stdio with operator-owned workspace and policy; interactive holds, cloud
 transport and multi-operation recovery are separate integration work.
-
 
 ## Cooperative filesystem and public demo, 2026-09-13
 
@@ -1198,9 +1196,9 @@ declaring `LicenseRef-VOID-Proprietary`, which is the same identifier
 repository rather than two.
 
 **The operational test, applied.** The test asks, of anything proposed for a
-paid package: *before anything merges into a paid package, ask whether a solo
+paid package: _before anything merges into a paid package, ask whether a solo
 developer protecting one Postgres could do their job without it. If the answer
-is no, it belongs open.* The question has to be asked of each file, not of the
+is no, it belongs open._ The question has to be asked of each file, not of the
 directory, and the answers split cleanly:
 
 - `cloud/capability-gate.mjs` is the paid entitlement decision itself and
@@ -1302,8 +1300,8 @@ from the other direction anyway: a feature never moves from open to paid, and
 taking the builder away from a reader who already has it is that move. This is
 not the Slack case, and the difference is worth being exact about.
 
-**Where the two differ.** Amendment one split the channel *interface* from the
-Slack *implementation* because the collision was caught "before the file
+**Where the two differ.** Amendment one split the channel _interface_ from the
+Slack _implementation_ because the collision was caught "before the file
 exists": WP-05 was about to build `channels/slack.ts` inside the open
 `packages/policy`, so there was nothing to withdraw and the open package would
 have shipped a policy engine that could not notify anyone. That reasoning holds
@@ -1427,14 +1425,14 @@ licence can hold.
 signature: it is that a reverted Postgres row leaves a durable receipt **in the
 customer's own database**, so a third party verifies the restoration without
 trusting VOID, its key or its ledger. That sentence is
-`docs/COMPETITIVE-WEDGE.md` §4.3. *(This entry said "nobody else has" and "the
+`docs/COMPETITIVE-WEDGE.md` §4.3. _(This entry said "nobody else has" and "the
 only claim in this repository that no competitor touches". Both were corrected
 on 2026-10-04: Rubrik shipped Agent Rewind on 2025-08-12
 claiming rollback of "files, databases, configurations, or repositories", so
 the undo itself is not exclusive. What still holds is the placement and the
 mechanism — the receipt lands in the customer's own database rather than the
 vendor's cloud, and the inverse is per-effect rather than a point-in-time
-restore, which a live system with concurrent writers cannot use.)*
+restore, which a live system with concurrent writers cannot use.)_
 
 **The split inside it, and it is the whole decision.** Capture and the receipt
 stay open. `packages/connectors` is Apache 2.0 and stays that way: the CLI
@@ -1480,7 +1478,12 @@ user, `pnpm-workspace.yaml` matches only `packages/*` so a vendored tree is a
 partial capture that fails `pnpm install --frozen-lockfile` and routes
 `pnpm test` into `bun` on runners with no bun, and the local clones
 (`omp-src` 18.6.2, `prime-src` 0.9.8) are ahead of anything published, so
-vendoring would ship code nobody has installed. What remains open is the
-largest evidence gap named in that document: how much of the installed
-binaries' behavior this repository actually consumes. That is a usage audit,
-not a vendoring task, and this decision does not close it.
+vendoring would ship code nobody has installed.
+
+The usage question the evidence pack left open is now answered, measured
+2026-10-05 and recorded in full in `docs/VENDORING-DECISION.md`: `omp` is
+consumed nowhere in code (operator config under `.omp/` only), and
+`prime-agent` is consumed as an external process through exactly three
+surfaces, `scripts/src/prime-bridge.mjs`, `cloud/prime.mjs` plus
+`scripts/team/prime-spawn.sh`, and the TUI `/harness` switch. There is no
+source-level dependency to vendor; there is a process contract.
