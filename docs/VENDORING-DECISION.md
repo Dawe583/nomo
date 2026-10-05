@@ -466,9 +466,35 @@ literally unwritable. What remains to do for A: write the provenance note
 into `docs/DECISIONS.md`, naming the binary, its version and where it came
 from, so the external dependency is visible rather than implied.
 
-The largest open gap in the evidence stands: nothing in this tree was traced
-to how much of `omp` or `prime` behavior VOID actually consumes today, and no
-engineering work here closes that. It is a usage audit, not a vendoring task.
+## Usage audit, 2026-10-05
+
+What the tree actually consumes from the two binaries, measured by grep over
+every surface outside `node_modules`:
+
+**`oh-my-pi` / `omp`: zero code-level consumption.** No import, no spawn, no
+lockfile entry, no path to `~/.local/bin/omp` anywhere in `packages/`, `apps/`,
+`cloud/`, `paid/` or `scripts/`. What exists is operator tooling config only:
+`.omp/config.yml` and `.omp/WATCHDOG.md`, classified open in
+`scripts/src/licence-line.test.mjs`. So vendoring `omp-src` would protect
+nothing VOID uses.
+
+**`prime-agent`: consumed as an external process, through three narrow
+surfaces, and no others.**
+
+1. `scripts/src/prime-bridge.mjs`: spawns the prime binary with a claimed
+   job (`primeArguments`), parses its NDJSON stdout (`primeEvent`), reads
+   `~/.prime/agent/settings.json`, `auth.json`, `models.json` and
+   `~/.prime/config.json`, and reports the text answer back to the cloud.
+2. `cloud/prime.mjs`: a session `agent` type named `prime-agent` that queues
+   work for the local worker, plus `scripts/team/prime-spawn.sh` spawning
+   `prime-agent -p --autonomous` for free-tier team members.
+3. The TUI agent switch: `/harness cloud | prime-agent` in
+   `packages/cli/src/tui/workspace.ts`, mirrored in the web chat catalog
+   (`apps/control-plane/ui/src/chat.tsx`).
+
+Nothing in `packages/*` imports prime source. The boundary is a CLI process
+and four config files, which is exactly why Option A holds: there is no
+versioned code surface to vendor, only a process contract to keep working.
 
 ## Open items marked unverified
 
@@ -480,5 +506,6 @@ engineering work here closes that. It is a usage audit, not a vendoring task.
 3. What the `omp-kata` self-hosted runner is, and its cost.
 4. What the `prime-agent` GitHub App is authorised for.
 5. Whether the owner's npm account has a scope or org available.
-6. How much of the currently-installed `omp` / `prime` behaviour VOID actually
-   consumes today — the largest gap, and the one that most affects A vs the rest.
+6. ~~How much of the currently-installed `omp` / `prime` behaviour VOID actually
+   consumes today~~ Answered 2026-10-05 in the usage audit above: `omp`
+   nowhere in code, `prime` through one process contract.
