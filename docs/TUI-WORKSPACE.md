@@ -233,6 +233,14 @@ samotným připojením MCP. Podrobný stav všech adaptérů je v `RECOVERY-COVE
   integritu. Poškozený ledger se vyznačí a blokuje export; TUI jej neopravuje
   přepsáním důkazů. `VOID_VERIFY_KEY` umožňuje dodat odpovídající veřejný klíč.
 
+Karta ledger ukazuje vedle podepsaných záznamů řetězce a naučených pravidel
+(`learned:*`) také to, kdo řetězec produkoval. Řádek `harness:current`
+ukazuje výchozí harness pro nové konverzace, vybraný agent profile a zda jsou
+hooky spustitelné. Každý uložený hook má vlastní řádek `hook:<id>` s
+událostí, příkazem a stavem zapnuto/vypnuto. Když není uložený žádný hook,
+vypíše se explicitní `hook:none`. Stejná fakta lze kdykoli vypsat přes
+`/harness` a `/hooks`.
+
 Editor je standardně `nano`; `EDITOR` může obsahovat cestu k programu.
 Argumenty se bezpečně předávají bez shellu přes JSON pole:
 
