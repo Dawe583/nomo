@@ -1244,6 +1244,28 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.notice = `New conversation model: ${row.id}. Existing conversations keep their original model.`;
       return;
     }
+    // A hook row on the ledger tab is the saved hook, so Enter toggles it
+    // through the same upsertHook path /hook uses rather than opening
+    // details: the id ties a hook to its runs, and the operator allowlist
+    // is re-checked on the write either way.
+    const hookId = /^hook:(?!none$)(.+)$/.exec(row.id)?.[1];
+    if (this.tab === "ledger" && hookId) {
+      const hook = this.workbench
+        .agents()
+        .hooks.find((candidate) => candidate.id === hookId);
+      if (!hook) throw Error("Hook not saved. Use /hooks for ids.");
+      const saved = this.workbench.upsertHook({
+        ...hook,
+        enabled: !hook.enabled,
+      });
+      this.detail = [
+        `HOOK ${saved.enabled ? "ENABLED" : "DISABLED"}`,
+        ...json(saved),
+      ];
+      this.notice = `Hook ${saved.id} is now ${saved.enabled ? "on" : "off"}. Existing conversations keep their hook snapshot.`;
+      this.scroll = 0;
+      return;
+    }
     this.detail = row.lines;
     this.scroll = 0;
   }
