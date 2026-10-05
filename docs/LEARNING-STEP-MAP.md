@@ -10,15 +10,15 @@ line reference below was read on 2026-10-05; verify before trusting it.
 
 | piece | where | state |
 |---|---|---|
-| Hook contract | `workbench/src/agents.ts:13` | `event: before-run \| after-tool \| after-run`, `command: string` |
-| Hook validation | `workbench/src/agents.ts:75` | allowlist-gated, 5s timeout |
-| Hook firing | `workbench/src/index.ts:2446` | in the `finally` of `execute()`; cannot mask the tool outcome |
-| Hook payload | `workbench/src/index.ts:2448` | `{tool, decision, outcome, callId, workspace, runId}` |
-| Signed chain | `workbench/src/index.ts:2209` | `commitWorkspace`, single chokepoint, rolls back on persist failure |
-| Chain entries | `workbench/src/index.ts:2226` | body carries `tool`, `klass`, `decision`, `argsDigest`, `operationId` |
-| Rule shape | `policy/src/rules.ts:34` | `{match, decision, seconds?, notify?, rationale?}` |
-| Decision | `policy/src/decide.ts:163` | pure; iterates `policy.policy.rules` **in order** |
-| Policy call site | `workbench/src/index.ts:2475` | loads hardcoded `DEFAULT_POLICY`, builds a `PolicyCall` |
+| Hook contract | `packages/workbench/src/agents.ts:13` | `event: before-run \| after-tool \| after-run`, `command: string` |
+| Hook validation | `packages/workbench/src/agents.ts:75` | allowlist-gated, 5s timeout |
+| Hook firing | `packages/workbench/src/index.ts:2451` | in the `finally` of `execute()`; cannot mask the tool outcome |
+| Hook payload | `packages/workbench/src/index.ts:2454` | `{tool, decision, outcome, callId, workspace, runId}` |
+| Signed chain | `packages/workbench/src/index.ts:2215` | `commitWorkspace`, single chokepoint, rolls back on persist failure |
+| Chain entries | `packages/workbench/src/index.ts:2242` | body carries `tool`, `klass`, `decision`, `argsDigest`, `operationId` |
+| Rule shape | `packages/policy/src/rules.ts:34` | `{match, decision, seconds?, notify?, rationale?}` |
+| Decision | `packages/policy/src/decide.ts:163` | pure; iterates `policy.policy.rules` **in order** |
+| Policy call site | `packages/workbench/src/index.ts:2481` | resolves the profile's policy; unresolvable denies |
 
 `Rule.rationale` already exists and is documented as *"Why the rule exists,
 shown in the hold message the model reads."* A learned rule's evidence belongs
@@ -27,7 +27,7 @@ there, and no new field is needed for provenance.
 ## What does not exist
 
 There is no learning concept anywhere. `grep -rn "learning" packages/workbench/src`
-returns nothing; `policy` has only `candidate` inside `approvals.ts:348`, which
+returns nothing; `policy` has only `candidate` inside `packages/policy/src/approvals.ts:348`, which
 is the hold queue and unrelated. The rule file is `{match, decision}` pairs
 loaded from operator YAML. Everything below is new.
 
@@ -65,7 +65,7 @@ loaded from operator YAML. Everything below is new.
 ## The hook is the wrong place for this, today
 
 Hooks are external processes allowlisted by the operator. The payload at
-`index.ts:2448` carries no `argsDigest`, no entry `hash`, and no ledger path, so
+`packages/workbench/src/index.ts:2454` carries no `argsDigest`, no entry `hash`, and no ledger path, so
 an external process cannot correlate anything across runs — it sees one event,
 with no history and nothing to key on.
 
@@ -76,9 +76,9 @@ the ledger location and the entry digest. The first is simpler and is what the
 
 ## Adjacent defect found while mapping this
 
-`workbench/src/index.ts:2303` calls `retainedSigner(join(homedir(), ".void",
+`packages/workbench/src/index.ts:2308` calls `retainedSigner(join(homedir(), ".void",
 "keys"))` with the operator's home hardcoded — it ignores `VOID_LEDGER_DIR`,
-which line 2282 in the same function respects. `~/.void/keys/dev-ed25519.pkcs8`
+which line 2287 in the same function respects. `~/.void/keys/dev-ed25519.pkcs8`
 exists on this machine, so any test that reaches the stdio branch reads real
 signing key material, and `devKeyProvider` will create one if it is missing.
 Whether that hardcoding is deliberate (the proxy's keys always live there) is

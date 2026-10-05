@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { access, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
@@ -931,7 +931,7 @@ test("/theme switches session color and motion without touching env", async (t) 
   assert.ok(commandSuggestions("/the").some(([name]) => name === "/theme"));
 });
 
-test("/attest signs the conversation slice for offline checks", async (t) => {
+test("/attest refuses when nothing has signed, and mints no key to pretend otherwise", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-attest-"));
   const { app, env } = await fixtureApp(root, "answer here");
   t.after(async () => {
@@ -942,10 +942,18 @@ test("/attest signs the conversation slice for offline checks", async (t) => {
   await ui.initialize();
   await ui.command("start here");
   await app.settled();
-  await ui.command("/attest");
-  assert.match(ui.detail?.[0] ?? "", /ATTESTATION/);
-  assert.match(ui.detail?.join("\n") ?? "", /"entriesCount": 0/);
-  assert.match(ui.notice, /Attested 0 entries/);
+
+  // The old expectation here was a successful attestation with
+  // `"entriesCount": 0`, which only worked because `attest` reached for
+  // `devKeyProvider` — a function that *creates* a signing key when none
+  // exists. Asking a workbench to prove something must never be the way it
+  // acquires the power to sign, so the read path now refuses instead. This
+  // fixture never signs anything, so refusing is the correct outcome.
+  await assert.rejects(ui.command("/attest"), /verification key/i);
+
+  // And the refusal must be a refusal, not a quiet mint: no key directory is
+  // created as a side effect of being asked to attest.
+  await assert.rejects(access(join(root, "keys")), "attest must not create the key directory");
   assert.ok(commandSuggestions("/att").some(([name]) => name === "/attest"));
 });
 

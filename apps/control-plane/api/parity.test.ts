@@ -39,7 +39,12 @@ test("local project and stop routes expose guarded additive capabilities",async 
  const listed=await(await fetch(origin+"/api/projects")).json() as {items:unknown[];projects:unknown[]};assert.deepEqual(listed.items,listed.projects);assert.equal(listed.items.length,1);
  assert.equal((await post("/api/runs/missing/stop",{})).status,404);
  const capabilities=await(await fetch(origin+"/api/capabilities")).json() as Record<string, unknown>;
- assert.equal(capabilities.projects,true);assert.equal(capabilities.recoveryJobs,true);assert.equal(capabilities.contextCompaction,true);assert.equal(capabilities.hooks,false);
+ assert.equal(capabilities.projects,true);assert.equal(capabilities.recoveryJobs,true);assert.equal(capabilities.contextCompaction,true);
+ // `hooks` was `false` here while hooks fired on the local dispatch path at all
+ // three run boundaries. A local workbench reports the capability it has; the
+ // cloud Prime runtime, which has no hook execution, still reports false.
+ assert.equal(capabilities.hooks,true);
+ assert.equal((capabilities.limitations as string[]).some(l=>/hooks are not executable/i.test(l)),false);
  assert.equal((await fetch(origin+"/api/preferences",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({preferences:{permissionMode:"plan"}})})).status,409);
  assert.equal(capabilities.permissionMode,"read-only");
  assert.equal(capabilities.permissionModeAuthority,"server");
@@ -76,6 +81,14 @@ test("local agent API persists scoped profiles but cannot enable shell hooks",as
  assert.equal((await post("/api/agents",profile)).status,200);
  const agents=await(await fetch(origin+"/api/agents")).json() as {profiles:unknown[];agents:Array<{id:string}>;hooksSupported:boolean};
  assert.deepEqual(agents.profiles,[profile]);assert.ok(agents.agents.some(a=>a.id==="reviewer"));assert.equal(agents.hooksSupported,false);
+ // `hooksSupported` is derived from the operator allowlist, so it has to be
+ // pinned in both directions: false with nothing allowlisted (the line above),
+ // and true once a command is — otherwise the flag could be hardcoded and no
+ // assertion here would notice.
+ const allowed=await listenControlPlane({env:{VOID_DATA_DIR:directory,VOID_HOOK_COMMANDS:JSON.stringify(["echo done"])}});
+ t.after(async()=>{await allowed.close();});
+ const allowedOrigin=`http://127.0.0.1:${allowed.port}`;
+ assert.equal((await fetch(allowedOrigin+"/api/agents").then(r=>r.json() as Promise<{hooksSupported:boolean}>)).hooksSupported,true);
  assert.equal((await post("/api/agents",{...profile,policyProfile:"bypass"})).status,409);
  assert.equal((await post("/api/hooks",{id:"hook",event:"before-run",command:"echo done; other",enabled:true})).status,409);
  const capabilities=await(await fetch(origin+"/api/capabilities")).json() as {customAgents:boolean};assert.equal(capabilities.customAgents,true);

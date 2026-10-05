@@ -212,10 +212,18 @@ export const capabilities = (mode: "local" | "cloud", permissionMode: Permission
   backgroundQueue: true,
   projects: mode === "local",
   customAgents: mode === "local",
-  hooks: false,
+  // Hooks fire on the live dispatch path on a local workbench (`index.ts`
+  // `fireHooks` at the three run boundaries). The cloud Prime runtime reports
+  // `hooksSupported: false` for itself, so this follows `mode` the same way
+  // `customAgents` and `contextCompaction` do rather than claiming a host
+  // limitation that does not exist.
+  hooks: mode === "local",
   contextCompaction: mode === "local",
   recoveryJobs: true,
-  limitations: ["Hooks are not executable on this host.", "Project roots are descriptive metadata, not filesystem authority."],
+  limitations: [
+    ...(mode === "local" ? [] : ["Hooks are not executable on this host."]),
+    "Project roots are descriptive metadata, not filesystem authority.",
+  ],
   streaming: true,
   documentEditing: permissionMode === "normal",
   textAttachments: true,

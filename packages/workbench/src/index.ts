@@ -763,7 +763,12 @@ export class Workbench {
       policyProfiles: listPolicyProfiles(this.env.VOID_POLICY_PATH),
       hooks: structuredClone(this.hooks),
       hookCommands: [...this.hookAllowlist],
-      hooksSupported: true,
+      // Derived, not asserted: a hardcoded `true` cannot disagree with a test
+      // that reads it, so a caller checking this flag was told nothing. The
+      // truth is that hooks are executable exactly when some command is on the
+      // operator allowlist — `validateHook` refuses everything else — and with
+      // an empty allowlist no hook can be saved or run at all.
+      hooksSupported: this.hookAllowlist.length > 0,
     };
   }
   upsertAgent(input: unknown): AgentProfile {
