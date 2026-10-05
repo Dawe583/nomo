@@ -3,7 +3,22 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- `policyProfile` on an agent profile now selects a policy. It was validated,
+  stored, and then admitted exactly one value, so an agent profile could not
+  run under any policy but the built-in default. A profile now names a policy
+  file that already exists on disk: `default` is the built-in policy, and every
+  other name is a `.yaml` file in the directory `VOID_POLICY_PATH` points at,
+  read with the same loader and decided by the same `decide` the connector path
+  already used. `agents().policyProfiles` reports the names on disk rather than
+  the literal `["default"]`, so the operator's own files are the catalogue and
+  this runtime grows no second place to configure one.
 
+  Nothing falls back. A name with no file, a file the validator rejects, and a
+  name that is a path rather than a name are all the same answer: unresolved,
+  and unresolved denies. That holds at three points, not one: creating the
+  profile, starting a turn, and deciding a tool call, so a policy file that
+  disappears after the profile was saved fails the turn instead of quietly
+  running under a policy the operator never chose.
 - The licensing decision behind the taint graph is now written down, and no
   code moved to match it. The graph builder has been Apache 2.0 since the day
   the graph landed, so it cannot be un-licensed by taking it away: anyone
