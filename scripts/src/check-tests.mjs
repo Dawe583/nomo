@@ -39,7 +39,9 @@ const suiteTimeoutMs = (() => {
   // and a ceiling silently turned into a different number is worse than one
   // refused: it looks configured and is not what anybody asked for.
   if (!/^\d+$/.test(raw) || !Number.isSafeInteger(Number(raw)))
-    throw new Error(`VOID_SUITE_TIMEOUT_MS is not a non-negative integer: ${raw}`);
+    throw new Error(
+      `VOID_SUITE_TIMEOUT_MS is not a non-negative integer: ${raw}`,
+    );
   return Number(raw);
 })();
 
@@ -205,13 +207,19 @@ function runPythonSuite(suite) {
   const started = Date.now();
   const tried = [];
   for (const python of pythonCandidates) {
-    const available = spawnSync(python, ["--version"], { encoding: "utf8", timeout: 30_000 });
+    const available = spawnSync(python, ["--version"], {
+      encoding: "utf8",
+      timeout: 30_000,
+    });
     if (available.error || available.status !== 0) {
       tried.push(`${python} (not a working interpreter)`);
       continue;
     }
     if (suite.probe) {
-      const probe = spawnSync(python, ["-c", suite.probe], { encoding: "utf8", timeout: 60_000 });
+      const probe = spawnSync(python, ["-c", suite.probe], {
+        encoding: "utf8",
+        timeout: 60_000,
+      });
       if (probe.status !== 0) {
         tried.push(`${python} (no ${suite.probe.replace("import ", "")})`);
         continue;
@@ -231,7 +239,10 @@ function runPythonSuite(suite) {
     // unittest reports on stderr, and the count line is the only machine
     // readable result it emits.
     const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
-    const pass = Number.parseInt(output.match(/^Ran (\d+) tests?/m)?.[1] ?? "-1", 10);
+    const pass = Number.parseInt(
+      output.match(/^Ran (\d+) tests?/m)?.[1] ?? "-1",
+      10,
+    );
     const fail = output.match(/^(FAILED|OK)/m)?.[1] === "FAILED" ? 1 : 0;
     return {
       name: suite.name,
@@ -316,7 +327,10 @@ function runSuite(name, dir, files, runner) {
 }
 
 let failed = false;
-const width = Math.max(...results.map((r) => `${r.runner}/${r.name}`.length), 7);
+const width = Math.max(
+  ...results.map((r) => `${r.runner}/${r.name}`.length),
+  7,
+);
 
 for (const r of results) {
   const reasons = [];
@@ -342,9 +356,7 @@ for (const r of results) {
     console.log(
       `  ${`${r.runner}/${r.name}`.padEnd(width)}  --- pass    0 fail  UNRUN: no interpreter could import the SDK it needs`,
     );
-    console.log(
-      `      tried: ${(r.tried ?? []).join(", ")}`,
-    );
+    console.log(`      tried: ${(r.tried ?? []).join(", ")}`);
     for (const step of suite?.setup ?? [])
       console.log(`      then run: ${step}`);
     console.log(
@@ -358,23 +370,37 @@ for (const r of results) {
   );
   if (reasons.length) {
     failed = true;
+    // A `not ok` line alone names the test; the cause is the indented TAP
+    // diagnostic block that follows it (actual vs expected, the file and
+    // line). Without that block the remote-runner reader gets a name like
+    // "commit refuses shallow without writes" and no way to know whether
+    // the cause is a version, a platform, or the code under review. The
+    // block is bounded so one verbose crash cannot drown the other suites.
+    const detail = [];
+    const lines = r.output.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (
+        line &&
+        (line.startsWith("not ok") ||
+          line.includes("Error") ||
+          line.startsWith("# suite exceeded") ||
+          line.startsWith("FAIL:") ||
+          line.startsWith("ERROR:"))
+      ) {
+        detail.push(line);
+        for (let j = i + 1; j < lines.length && detail.length < 80; j++) {
+          const next = lines[j];
+          if (!next || !/^\s/.test(next)) break;
+          detail.push(next.slice(0, 160));
+        }
+      }
+    }
     console.log(
-      r.output
-        .split("\n")
-        // A timed-out suite has no `not ok` line to find, so the injected
-        // budget line is matched explicitly or the detail block prints nothing
-        // at all for the one failure that most needs explaining.
-        .filter(
-          (l) =>
-            l.startsWith("not ok") ||
-            l.includes("Error") ||
-            l.startsWith("# suite exceeded") ||
-            l.startsWith("FAIL:") ||
-            l.startsWith("ERROR:"),
-        )
-        .slice(0, 8)
+      detail
+        .slice(0, 80)
         .map((l) => `      ${l}`)
-        .join("\n"),
+        .join("\n") || "      (no failure detail in suite output)",
     );
   }
 }
