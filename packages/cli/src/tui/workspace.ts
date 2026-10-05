@@ -2074,6 +2074,22 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
+    if (cmd === "hook") {
+      const [action, id] = (arg ?? "").split(/\s+/).filter(Boolean);
+      if (action !== "enable" && action !== "disable")
+        throw Error("/hook enable id | /hook disable id");
+      const catalog = this.workbench.agents();
+      const hook = catalog.hooks.find((item) => item.id === id);
+      if (!hook) throw Error("Unknown hook. Use /hooks for ids.");
+      // Re-saving the same hook with the flag flipped rather than adding one:
+      // the id is what ties a hook to its runs, and `upsertHook` re-checks the
+      // operator allowlist on the way through either way.
+      const saved = this.workbench.upsertHook({ ...hook, enabled: action === "enable" });
+      this.detail = [`HOOK ${action.toUpperCase()}D`, ...json(saved)];
+      this.notice = `Hook ${action}d. Existing conversations keep their hook snapshot.`;
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "agents" || cmd === "agent") {
       if (cmd === "agent" && arg) {
         const agent = this.workbench

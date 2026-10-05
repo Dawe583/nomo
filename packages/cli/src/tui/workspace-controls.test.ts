@@ -475,3 +475,49 @@ test("recovery holds queued text until explicit resume and never overrides unkno
   await ui.command("/queue resume");
   assert.equal(ui.takeQueued(), "later follow-up");
 });
+
+test("/hook flips a saved hook without rewriting it", async (t) => {
+  // `/hooks` reports what exists and `/hook-file` writes a new one from disk.
+  // Nothing could take one off, which meant a hook an operator no longer
+  // wanted could only be silenced by editing a JSON file outside the TUI.
+  const root = await mkdtemp(join(tmpdir(), "void-tui-hook-edit-"));
+  const env = {
+    VOID_DATA_DIR: root,
+    VOID_HOOK_COMMANDS: JSON.stringify(["echo"]),
+  };
+  const app = new Workbench(env, async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({
+          choices: [
+            { message: { role: "assistant", content: "Fixture reply" } },
+          ],
+        }),
+  );
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  app.upsertHook({ id: "h1", event: "after-tool", command: "echo", enabled: true });
+  assert.equal(app.agents().hooksSupported, true, "an allowlisted command makes hooks supported");
+
+  await ui.command("/hook disable h1");
+  const off = app.agents().hooks.find((hook) => hook.id === "h1");
+  assert.equal(off?.enabled, false, "disable must turn the hook off");
+  // The flag is the whole edit. Rewriting command or event would silently
+  // detach the hook from whatever it was written to do.
+  assert.equal(off?.command, "echo", "the command must survive the edit");
+  assert.equal(off?.event, "after-tool", "so must the event");
+
+  await ui.command("/hook enable h1");
+  assert.equal(
+    app.agents().hooks.find((hook) => hook.id === "h1")?.enabled,
+    true,
+    "enable must turn it back on",
+  );
+
+  await assert.rejects(ui.command("/hook disable nope"), /Unknown hook/);
+  await assert.rejects(ui.command("/hook remove h1"), /enable id/);
+});
