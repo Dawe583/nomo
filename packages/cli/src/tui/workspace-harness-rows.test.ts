@@ -94,3 +94,32 @@ test("a saved hook gets its own row, and none means an explicit row", async (t) 
   assert.ok(off, "the saved hook lost its row after a toggle");
   assert.match(off.label, /hook audit off/);
 });
+
+test("Enter on a ledger hook row toggles it and names the new state", async (t) => {
+  const { ui, app } = await ledgerRows(t);
+  app.upsertHook({
+    id: "audit",
+    event: "after-tool",
+    command: "echo done",
+    enabled: true,
+  });
+
+  const index = rowsOf(ui).findIndex((r) => r.id === "hook:audit");
+  assert.ok(index >= 0, "no hook row to select");
+  ui.selected = index;
+  // The keypress path: return runs ui.openSelected().
+  await ui.openSelected();
+
+  const off = rowsOf(ui).find((r) => r.id === "hook:audit");
+  assert.ok(off, "the hook row disappeared after the toggle");
+  assert.match(off.label, /hook audit off/);
+  assert.match(ui.notice, /Hook audit is now off/);
+
+  // Toggling again flips it back on.
+  const again = rowsOf(ui).findIndex((r) => r.id === "hook:audit");
+  ui.selected = again;
+  await ui.openSelected();
+  const on = rowsOf(ui).find((r) => r.id === "hook:audit");
+  assert.match(on!.label, /hook audit on/);
+  assert.match(ui.notice, /Hook audit is now on/);
+});
