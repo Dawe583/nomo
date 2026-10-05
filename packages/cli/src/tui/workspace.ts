@@ -14,6 +14,7 @@ import { activity, type ViewName } from "../../../workbench/src/gui.ts";
 import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
+import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
 import { verificationKeyNote, verificationStatus } from "../../../ledger/src/verify-key.ts";
 import {
   importDesktopProvider,
@@ -1018,6 +1019,29 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             ],
           });
         }
+      // What the chain taught, as rows of its own. The rules are mined from
+      // these same verified entries rather than recomputed from a snapshot, so
+      // an unverified refusal cannot appear here as if it had authority.
+      for (const [id, entries] of this.proofs) {
+        const learned = mineLearnedRules(entries);
+        for (const rule of learned) {
+          rows.push({
+            id: `learned:${id}:${String(rule.match.tool)}`,
+            sessionId: id,
+            label: `learned ${id.slice(0, 8)} ${text(rule.match.tool)} [${text(rule.match.class)}] -> ${rule.decision}`,
+            lines: [
+              this.managedVerificationStatus === undefined
+                ? "[OK] Mined from the verified chain"
+                : `[OK] Mined from the verified chain — ${this.managedVerificationStatus}`,
+              ...(this.managedVerificationNote === undefined
+                ? []
+                : [`Verification key: ${this.managedVerificationNote}`]),
+              rule.rationale ?? "",
+              "A learned rule is evidence, not authority: it is appended after the operator's own rules, so it can only fill a gap they left open.",
+            ],
+          });
+        }
+      }
       rows.reverse();
     }
     if (this.tab === "approvals")
@@ -2113,6 +2137,37 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.agentId = agent.id;
       }
       this.detail = this.agentsLines();
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "learned") {
+      // The rules are mined from the verified chain, not recomputed from a
+      // snapshot: `proofs` only ever holds entries `ledger()` returned as
+      // verified, so an unverified or tampered refusal cannot teach a rule.
+      // Every visible workspace, not just the selected one: a rule learned in
+      // one conversation is still in force in the next, and an operator asking
+      // what VOID has learned is asking about the ledger as a whole.
+      const learned = [...this.proofs.entries()].flatMap(([id, entries]) =>
+        mineLearnedRules(entries).map((rule) => ({ id, rule })),
+      );
+      const verified = [...this.proofs.values()].reduce((sum, e) => sum + e.length, 0);
+      this.detail = [
+        "LEARNED RULES, mined from the verified chain",
+        "",
+        verified
+          ? `${verified} verified entries, ${learned.length} recurring refusals.`
+          : "No verified entries yet, so nothing has been learned.",
+        "",
+        ...(learned.length
+          ? learned.flatMap(({ id, rule }) => [
+              `${id.slice(0, 8)} ${rule.match.tool} (${rule.match.class}) -> ${rule.decision}`,
+              `  ${rule.rationale ?? "no rationale recorded"}`,
+            ])
+          : []),
+        "",
+        "A learned rule is evidence, not authority: it is appended after the",
+        "operator's own rules, so it can only fill a gap they left open.",
+      ];
       this.scroll = 0;
       return;
     }

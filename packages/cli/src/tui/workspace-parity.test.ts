@@ -1172,3 +1172,45 @@ test("new commands complete from a slash prefix", () => {
     "/comp should suggest /compact",
   );
 });
+
+test("/learned reports what the signed chain taught, and what it may not override", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-learned-"));
+  const { app, env } = await fixtureApp(root, "answer here");
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+
+  const internals = ui as unknown as {
+    items(): { id: string }[];
+    selected: number;
+    proofs: Map<string, unknown[]>;
+  };
+  const id = app.list()[0].id;
+  // Seeded into the same map a refresh fills from `ledger()`, so this renders
+  // what a real verified chain would teach without forging one in a test.
+  internals.proofs.set(id, [
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+  ]);
+
+  await ui.command("/learned");
+  const text = ui.lines().join("\n");
+  assert.match(text, /void_workspace_delete \(r1\) -> hold/);
+  // The precedence is the whole safety property, so the view has to say it.
+  assert.match(text, /evidence, not authority/);
+  assert.match(text, /appended after the/);
+
+  // Two refusals sit below the threshold, so they teach nothing.
+  internals.proofs.set(id, [
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+  ]);
+  await ui.command("/learned");
+  assert.doesNotMatch(ui.lines().join("\n"), /void_workspace_delete \(r1\) -> hold/);
+});
