@@ -2286,20 +2286,40 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         (sum, e) => sum + e.length,
         0,
       );
+      // Per workspace, mirror the ledger tab's rule rows: a workspace that
+      // taught nothing still speaks, and in the tab's words, so the command
+      // and the tab cannot disagree about what "nothing observed" means.
+      const perWorkspace = [...this.proofs.entries()].flatMap(
+        ([id, entries]) => {
+          const rules = mineLearnedRules(entries);
+          return rules.length
+            ? rules.flatMap((rule) => [
+                `${id.slice(0, 8)} ${rule.match.tool} (${rule.match.class}) -> ${rule.decision}`,
+                `  ${rule.rationale ?? "no rationale recorded"}`,
+              ])
+            : [
+                entries.length
+                  ? `0 recurring refusals across ${entries.length} verified ${entries.length === 1 ? "entry" : "entries"}.`
+                  : "0 verified entries, so no refusal has been observed and no rule was mined.",
+              ];
+        },
+      );
       this.detail = [
         "LEARNED RULES, mined from the verified chain",
         "",
-        verified
-          ? `${verified} verified entries, ${learned.length} recurring refusals.`
-          : "No verified entries yet, so nothing has been learned.",
-        "",
-        ...(learned.length
-          ? learned.flatMap(({ id, rule }) => [
-              `${id.slice(0, 8)} ${rule.match.tool} (${rule.match.class}) -> ${rule.decision}`,
-              `  ${rule.rationale ?? "no rationale recorded"}`,
-            ])
-          : []),
-        "",
+        ...(verified
+          ? [
+              `${verified} verified entries, ${learned.length} recurring refusals.`,
+              "",
+            ]
+          : this.proofs.size === 0
+            ? [
+                "0 verified entries, so no refusal has been observed and no rule was mined.",
+                "",
+              ]
+            : []),
+        ...perWorkspace,
+        ...(perWorkspace.length ? [""] : []),
         "A learned rule is evidence, not authority: it is appended after the",
         "operator's own rules, so it can only fill a gap they left open.",
       ];
