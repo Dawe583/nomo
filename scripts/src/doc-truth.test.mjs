@@ -156,6 +156,32 @@ const INVENTORY = {
     "responsive rules merged into styles.css; MOBILE-LAYOUT-QA and VOID-DESIGN-SYSTEM-V1 record measurements taken against the standalone file",
   "apps/control-plane/ui/src/ascii.css":
     "ASCII-art mode merged into styles.css; PLATFORM-REDESIGN-PLAN describes the split that no longer exists",
+  // Preserved-lane triage, 2026-10-05. These paths are named in
+  // docs/PRESERVED-LANES.md precisely because they do not exist in main: the
+  // document's subject is work held only on remote branches, and a citation
+  // that resolved would point at something other than what it claims.
+  "packages/cli/src/export/verify.ts":
+    "held only on preserve/lane-cli-ops and preserve/lane-cli-wire2; recorded in PRESERVED-LANES as unreleased work",
+  "packages/cli/src/export/verify.test.ts":
+    "held only on preserve/lane-cli-ops and preserve/lane-cli-wire2; recorded in PRESERVED-LANES as unreleased work",
+  "packages/cli/src/config/egress.ts":
+    "held only on preserve/lane-cli-ops and preserve/lane-cli-wire2; recorded in PRESERVED-LANES as unreleased work",
+  "packages/cli/src/config/egress.test.ts":
+    "held only on preserve/lane-cli-ops and preserve/lane-cli-wire2; recorded in PRESERVED-LANES as unreleased work",
+  "packages/cli/src/doctor/status.ts":
+    "held only on preserve/lane-cli-ops and preserve/lane-cli-wire2; recorded in PRESERVED-LANES as unreleased work",
+  "packages/cli/src/doctor/status.test.ts":
+    "held only on preserve/lane-cli-ops and preserve/lane-cli-wire2; recorded in PRESERVED-LANES as unreleased work",
+  "packages/cli/src/version/version.ts":
+    "held only on preserve/lane-cli-ops and preserve/lane-cli-wire2; recorded in PRESERVED-LANES as unreleased work",
+  "packages/cli/src/version/version.test.ts":
+    "held only on preserve/lane-cli-ops and preserve/lane-cli-wire2; recorded in PRESERVED-LANES as unreleased work",
+  "docs/plans/2026-09-15-managed-git-recovery.md":
+    "the only uniquely-held file on upgrade/git-managed; recorded in PRESERVED-LANES as the one document to salvage from that branch",
+  "apps/control-plane/web/styles/mobile-ascii.css":
+    "held only on preserve/lane-mobile-ascii, unreferenced by anything in main; recorded in PRESERVED-LANES as finished accessibility work that was never integrated",
+  "apps/control-plane/web/components/mobile-ascii.js":
+    "held only on preserve/lane-mobile-ascii, unreferenced by anything in main; recorded in PRESERVED-LANES as finished accessibility work that was never integrated",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */
