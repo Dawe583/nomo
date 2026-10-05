@@ -505,7 +505,7 @@ export class Workbench {
         const config = normalizeProviderConfig(value);
         if (value.kind !== config.kind) migrated = true;
         try {
-          new CompatibleProvider(config, fetcher, this.harness);
+          new CompatibleProvider(config, fetcher, () => this.harness);
           return config;
         } catch {
           migrated = true;
@@ -584,7 +584,7 @@ export class Workbench {
       });
       this.projectList = saved.projects ?? [];
       if (this.config)
-        this.provider = new CompatibleProvider(this.config, fetcher, this.harness);
+        this.provider = new CompatibleProvider(this.config, fetcher, () => this.harness);
       for (const item of saved.sessions) {
         const sessionBaseUrl = typeof item.config?.baseUrl === "string"
           ? item.config.baseUrl
@@ -607,7 +607,7 @@ export class Workbench {
             ...item.view,
             status: item.view.status === "running" ? "unknown" : item.view.status === "queued" ? "paused" : item.view.status,
           },
-          provider: provider ? new CompatibleProvider(provider, fetcher, this.harness) : undefined,
+          provider: provider ? new CompatibleProvider(provider, fetcher, () => this.harness) : undefined,
           controller: new AbortController(),
         });
       }
@@ -696,7 +696,7 @@ export class Workbench {
         ...config,
         apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || "",
       });
-      const provider = new CompatibleProvider(config, this.fetcher, this.harness);
+      const provider = new CompatibleProvider(config, this.fetcher, () => this.harness);
       const models = await provider.models();
       if (generation !== this.providerGeneration)
         throw new ProviderSetupSuperseded();
@@ -2797,22 +2797,34 @@ export class Workbench {
           );
         let delta = "";
         let flushed = Date.now();
-        const reply = await provider.complete(
-          session.view.model,
-          session.messages,
-          tools,
-          signal,
-          (text) => {
-            if (session.controller.signal.aborted) return;
-            delta += text;
-            if (Date.now() - flushed > 250 || delta.length > 512) {
-              this.event(session, "assistant", delta, {}, "message.delta");
-              delta = "";
-              flushed = Date.now();
-              this.persist();
-            }
-          },
-        );
+        const reply = await Promise.race([
+          provider.complete(
+            session.view.model,
+            session.messages,
+            tools,
+            signal,
+            (text) => {
+              if (session.controller.signal.aborted) return;
+              delta += text;
+              if (Date.now() - flushed > 250 || delta.length > 512) {
+                this.event(session, "assistant", delta, {}, "message.delta");
+                delta = "";
+                flushed = Date.now();
+                this.persist();
+              }
+            },
+          ),
+          // Raced rather than relied on through the signal alone: a transport
+          // that never settles would otherwise keep the run alive past its
+          // ceiling, and the ceiling would only ever be checked between turns.
+          new Promise<never>((_, refuse) => {
+            if (deadline.aborted) refuse(new RunTimeout(runTimeoutMs));
+            else
+              deadline.addEventListener("abort", () => {
+                refuse(new RunTimeout(runTimeoutMs));
+              });
+          }),
+        ]);
         if (session.controller.signal.aborted) return;
         if (delta) this.event(session, "assistant", delta, {}, "message.delta");
         session.messages.push(reply.message);

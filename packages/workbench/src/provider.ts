@@ -24,13 +24,23 @@ export class CompatibleProvider {
   private readonly base: URL;
   private readonly config: ProviderConfig;
   private readonly request: typeof fetch;
-  /** The operator-settled limits this provider honours. A partial is merged
-   * over the defaults so a caller with no resolved settings still gets VOID's
-   * conservative ones rather than `undefined` at a call site. */
-  private readonly settings: HarnessSettings;
-  constructor(config: ProviderConfig, request: typeof fetch = fetch, settings: Partial<HarnessSettings> = {}) {
+  /** The operator-settled limits this provider honours. Read through a resolver
+   * rather than snapshotted: a provider outlives many `patchHarnessSettings`
+   * calls, and an operator who lowers `maxOutputTokens` expects the next
+   * request to honour it, not the one that happened to be in flight when they
+   * patched. A partial merges over the defaults so a caller with no resolved
+   * settings still gets VOID's conservative ones. */
+  private readonly resolveSettings: () => HarnessSettings;
+  constructor(
+    config: ProviderConfig,
+    request: typeof fetch = fetch,
+    settings: Partial<HarnessSettings> | (() => HarnessSettings) = {},
+  ) {
     this.config = normalizeProviderConfig(config); this.request = request;
-    this.settings = { ...defaultHarnessSettings(), ...settings };
+    this.resolveSettings =
+      typeof settings === "function"
+        ? settings
+        : () => ({ ...defaultHarnessSettings(), ...settings });
     this.base = new URL(this.config.baseUrl.endsWith('/') ? this.config.baseUrl : `${this.config.baseUrl}/`);
     const hostname = this.base.hostname.replace(/\.+$/, "").toLowerCase();
     if (hostname === "openai.com" || hostname.endsWith(".openai.com")) throw new Error("Direct OpenAI provider URLs are not supported.");
@@ -45,7 +55,8 @@ export class CompatibleProvider {
   async complete(model: string, messages: readonly ModelMessage[], tools: readonly unknown[], signal: AbortSignal, onDelta?: (text: string) => void | Promise<void>): Promise<ModelReply> {
     if (this.config.kind === 'anthropic') return this.anthropic(model, messages, tools, signal);
     signal = AbortSignal.any([signal, AbortSignal.timeout(60000)]);
-    const body = { model, messages, ...(tools.length ? { tools } : {}), max_tokens: this.settings.maxOutputTokens, stream: !!onDelta, ...(onDelta ? { stream_options: { include_usage: true } } : {}) };
+    const settings = this.resolveSettings();
+    const body = { model, messages, ...(tools.length ? { tools } : {}), max_tokens: settings.maxOutputTokens, stream: !!onDelta, ...(onDelta ? { stream_options: { include_usage: true } } : {}) };
     let response: Response;
     for (let attempt = 0; ; attempt++) {
       try { response = await this.response('chat/completions', body, signal); break; }
@@ -55,9 +66,9 @@ export class CompatibleProvider {
         // operator typed makes it free, so an unknown model is never retried.
         // Never substitute a paid model or replay a stream.
         if (FREE_MODEL_BY_ORIGIN[this.base.origin] !== model ||
-          attempt >= this.settings.retryAttempts - 1 || signal.aborted || !(error instanceof ProviderRequestError) ||
+          attempt >= settings.retryAttempts - 1 || signal.aborted || !(error instanceof ProviderRequestError) ||
           ![429, 502, 503, 504].includes(error.status) || (error.retryAfter ?? 0) > 5) throw error;
-        await delay((error.retryAfter ?? attempt + 1) * this.settings.retryBaseDelayMs, undefined, { signal });
+        await delay((error.retryAfter ?? attempt + 1) * settings.retryBaseDelayMs, undefined, { signal });
       }
     }
     if (response.headers.get('content-type')?.includes('text/event-stream')) return this.streamReply(response, signal, onDelta);
@@ -84,7 +95,7 @@ export class CompatibleProvider {
       ] });
       else converted.push({ role: m.role, content: m.content ?? '' });
     }
-    const body = await this.json('messages', { model, max_tokens: this.settings.maxOutputTokens,
+    const body = await this.json('messages', { model, max_tokens: this.resolveSettings().maxOutputTokens,
       system: messages.filter(m => m.role === 'system').map(m => m.content).join('\n'), messages: converted,
       ...(tools.length ? { tools: tools.map(value => { const tool = value as { function: { name: string; description: string; parameters: unknown } }; return { name: tool.function.name, description: tool.function.description, input_schema: tool.function.parameters }; }) } : {}),
     }, signal);
