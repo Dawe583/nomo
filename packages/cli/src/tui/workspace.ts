@@ -15,7 +15,10 @@ import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
-import { verificationKeyNote, verificationStatus } from "../../../ledger/src/verify-key.ts";
+import {
+  verificationKeyNote,
+  verificationStatus,
+} from "../../../ledger/src/verify-key.ts";
 import {
   importDesktopProvider,
   desktopSetup,
@@ -112,7 +115,8 @@ function policySummary(value: string | undefined) {
   if (!value) return "default";
   const loaded = loadPolicy(value);
   if (!loaded.ok) return "unreadable policy";
-  return `${loaded.policy.rules.length} rules, ` +
+  return (
+    `${loaded.policy.rules.length} rules, ` +
     loaded.policy.rules
       .map((rule) => {
         const scope = String(rule.match.class ?? "any");
@@ -120,7 +124,8 @@ function policySummary(value: string | undefined) {
           ? `${scope} hold ${rule.seconds ?? 0}s`
           : `${scope} ${rule.decision}`;
       })
-      .join(", ");
+      .join(", ")
+  );
 }
 
 /** One row of the /mcp view. The builtin document workspace has no endpoint,
@@ -504,7 +509,12 @@ export class WorkspaceTui {
   notice = "Tab: panels | i: type | /help: commands";
   detail?: string[];
   confirmation?: Confirmation;
-  private branchIntent?: { sessionId: string; seq: number; command: "branch" | "retry"; key: string };
+  private branchIntent?: {
+    sessionId: string;
+    seq: number;
+    command: "branch" | "retry";
+    key: string;
+  };
   provider?: Awaited<ReturnType<Workbench["providerState"]>>;
   proofs = new Map<string, JsonlEntry[]>();
   proofErrors = new Map<string, string>();
@@ -555,8 +565,12 @@ export class WorkspaceTui {
         const proof = await this.workbench.ledger(session.workspace);
         if (proof) {
           this.proofs.set(session.id, [...proof.entries]);
-          this.managedVerificationStatus = verificationStatus(proof.verification);
-          this.managedVerificationNote = verificationKeyNote(proof.verification);
+          this.managedVerificationStatus = verificationStatus(
+            proof.verification,
+          );
+          this.managedVerificationNote = verificationKeyNote(
+            proof.verification,
+          );
         }
       } catch {
         this.proofErrors.set(
@@ -716,7 +730,7 @@ export class WorkspaceTui {
       // sides, because the point is to expose a small tool set and not the
       // operator's whole environment.
       const windows = process.platform === "win32";
-      const shell = windows ? process.env.ComSpec ?? "cmd.exe" : "sh";
+      const shell = windows ? (process.env.ComSpec ?? "cmd.exe") : "sh";
       // cmd needs /c to run anything at all; /d only turns AutoRun off and
       // /s strips the surrounding quotes. Without /c it starts an interactive
       // prompt and the 10 s timeout is what ends it.
@@ -724,7 +738,11 @@ export class WorkspaceTui {
       const systemRoot = process.env.SystemRoot ?? "C:\\Windows";
       const result = await runShellFile(shell, args, {
         env: windows
-          ? { PATH: `${systemRoot}\\System32`, SystemRoot: systemRoot, ComSpec: shell }
+          ? {
+              PATH: `${systemRoot}\\System32`,
+              SystemRoot: systemRoot,
+              ComSpec: shell,
+            }
           : { PATH: "/usr/bin:/bin", LANG: "C" },
         timeout: 10000,
         maxBuffer: 1024 * 64,
@@ -1024,9 +1042,33 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // an unverified refusal cannot appear here as if it had authority.
       for (const [id, entries] of this.proofs) {
         const learned = mineLearnedRules(entries);
+        // A workspace that taught nothing still gets a record, because
+        // "nothing was mined here" and "this row was never built" are
+        // indistinguishable on screen. An operator who sees no learning row
+        // cannot otherwise tell a chain that was read and found no pattern
+        // from a chain that was never consulted. Those are different facts,
+        // so they get different wording: verified entries with no recurring
+        // refusal is a *result*, while no entries at all is simply nothing
+        // observed yet.
+        if (learned.length === 0) {
+          rows.push({
+            id: `learned:${id}:none`,
+            sessionId: id,
+            label: `learned ${id.slice(0, 8)} nothing learned`,
+            lines: [
+              entries.length
+                ? `0 recurring refusals across ${entries.length} verified ${entries.length === 1 ? "entry" : "entries"}.`
+                : "0 verified entries, so no refusal has been observed and no rule was mined.",
+              "Mined from the verified chain.",
+            ],
+          });
+        }
         for (const rule of learned) {
           rows.push({
-            id: `learned:${id}:${String(rule.match.tool)}`,
+            // The class belongs in the identity as well as the label: the
+            // same tool refused under two different classes is two separate
+            // patterns, and an id built from the tool alone collides them.
+            id: `learned:${id}:${String(rule.match.tool)}:${String(rule.match.class)}`,
             sessionId: id,
             label: `learned ${id.slice(0, 8)} ${text(rule.match.tool)} [${text(rule.match.class)}] -> ${rule.decision}`,
             lines: [
@@ -1042,6 +1084,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           });
         }
       }
+      // With no verified workspace at all there is no loop iteration to hang
+      // the empty record on, and the tab would otherwise show nothing, which
+      // an operator reads as "no learning record exists" rather than "nothing
+      // has been verified yet". Same distinction as above, one level up.
+      if (this.proofs.size === 0)
+        rows.push({
+          id: "learned:none",
+          label: "learned nothing learned",
+          lines: [
+            "0 verified entries, so no refusal has been observed and no rule was mined.",
+            "Mined from the verified chain.",
+          ],
+        });
       rows.reverse();
     }
     if (this.tab === "approvals")
@@ -1626,7 +1681,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       verb = (space < 0 ? arg : arg.slice(0, space)).toLowerCase(),
       rest = space < 0 ? "" : arg.slice(space + 1).trim(),
       // rename carries a second argument, so its id is only the first token.
-      id = (verb === "rename" ? rest.split(" ")[0] ?? "" : rest).trim();
+      id = (verb === "rename" ? (rest.split(" ")[0] ?? "") : rest).trim();
     if (!verb) {
       this.detail = this.connectorList();
       this.scroll = 0;
@@ -1653,11 +1708,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ...(name.length ? { name: name.join(" ") } : {}),
         })
       ).connectors.at(-1)!;
-      this.detail = [
-        ...this.stagedView(staged),
-        "",
-        ...this.connectorList(),
-      ];
+      this.detail = [...this.stagedView(staged), "", ...this.connectorList()];
       this.scroll = 0;
       this.notice = `Staged ${staged.name || staged.id}. No request was made.`;
       return;
@@ -2122,7 +2173,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // Re-saving the same hook with the flag flipped rather than adding one:
       // the id is what ties a hook to its runs, and `upsertHook` re-checks the
       // operator allowlist on the way through either way.
-      const saved = this.workbench.upsertHook({ ...hook, enabled: action === "enable" });
+      const saved = this.workbench.upsertHook({
+        ...hook,
+        enabled: action === "enable",
+      });
       this.detail = [`HOOK ${action.toUpperCase()}D`, ...json(saved)];
       this.notice = `Hook ${action}d. Existing conversations keep their hook snapshot.`;
       this.scroll = 0;
@@ -2150,7 +2204,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       const learned = [...this.proofs.entries()].flatMap(([id, entries]) =>
         mineLearnedRules(entries).map((rule) => ({ id, rule })),
       );
-      const verified = [...this.proofs.values()].reduce((sum, e) => sum + e.length, 0);
+      const verified = [...this.proofs.values()].reduce(
+        (sum, e) => sum + e.length,
+        0,
+      );
       this.detail = [
         "LEARNED RULES, mined from the verified chain",
         "",
@@ -2360,7 +2417,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.workbench.clearProvider();
       this.provider = await this.workbench.providerState();
       this.model = "";
-      this.notice = "Logged out locally. Saved provider profiles were removed; revoke keys with their providers.";
+      this.notice =
+        "Logged out locally. Saved provider profiles were removed; revoke keys with their providers.";
       return;
     }
     if (cmd === "bottom") {
@@ -2470,7 +2528,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "connect" || cmd === "login") {
       if (!arg || arg === "nvidia") {
-        this.provider = await this.workbench.providerState({ reconnectEnvironment: true });
+        this.provider = await this.workbench.providerState({
+          reconnectEnvironment: true,
+        });
         this.detail = this.providerLines();
         this.notice =
           !this.provider.providerId || this.provider.providerId === "nvidia"
@@ -2577,9 +2637,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "connector-file") {
       const config = JSON.parse(await readFile(resolve(arg), "utf8"));
-      const staged = (
-        await this.workbench.addConnector(config)
-      ).connectors.at(-1)!;
+      const staged = (await this.workbench.addConnector(config)).connectors.at(
+        -1,
+      )!;
       this.choose("tools");
       // Staging contacts nothing, so saying "connected" here would be a claim
       // no request backs.
@@ -3431,7 +3491,9 @@ export function renderWorkspace(
   const tokens =
     typeof usage?.total_tokens === "number" ? usage.total_tokens : "unknown";
   const cost = typeof usage?.cost === "number" ? usage.cost : "unknown";
-  const model = sanitizeText(ui.session()?.model || ui.model || "not connected");
+  const model = sanitizeText(
+    ui.session()?.model || ui.model || "not connected",
+  );
   const ctx = ui.session() ? ui.contextNumbers() : null;
   const ctxText = ctx
     ? `${ctx.contextMessages ?? "unknown"} messages`
