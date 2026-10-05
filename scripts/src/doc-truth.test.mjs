@@ -135,6 +135,12 @@ const INVENTORY = {
   "docs/reference/server-json/official-registry-requirements.md":
     "DISTRIBUTION-PATH cites a vendor requirements document fetched from the web, not a file in this tree",
 
+  // The vendoring evidence pack cites upstream paths and a hypothetical
+  // vendored layout; neither exists in this tree, and a vendored tree would
+  // land under different paths anyway.
+  "packages/prime-agent/crates/pa-core/src/main.rs":
+    "VENDORING-DECISION evidence pack: hypothetical vendored path, not a file in this tree",
+
   // The Slack channel implementation moved to the closed `paid/` directory on
   // 2026-10-03, so its Apache 2.0 path is history rather than a broken link.
   // DECISIONS 5 names the old path as the shipped-open collision that closed,
@@ -334,8 +340,7 @@ test("no operational document points at a file that does not exist", () => {
       existsSync(file),
       `${file} is listed as operational but is missing`,
     );
-    for (const dead of deadPaths(read(file)))
-      broken.push(`${file}: ${dead}`);
+    for (const dead of deadPaths(read(file))) broken.push(`${file}: ${dead}`);
   }
   assert.deepEqual(
     broken,
@@ -551,7 +556,10 @@ test("the pointer names no value, and the newest decision is the last one", () =
     const blank = i < lines.length && lines[i].trim() === "";
     if (!bullet && !blank && i !== lines.length) continue;
     const statement = lines.slice(start, i).join(" ");
-    if (MONO_FOR_INTERFACE.test(statement) && NAMES_INTERFACE_WORD.test(statement))
+    if (
+      MONO_FOR_INTERFACE.test(statement) &&
+      NAMES_INTERFACE_WORD.test(statement)
+    )
       offenders.push(`docs/STANDARDS.md:${start + 1}`);
     // A bullet opens the next statement; a blank line only closes this one.
     start = bullet ? i : i + 1;
