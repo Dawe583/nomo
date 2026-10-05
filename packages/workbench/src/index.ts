@@ -74,6 +74,11 @@ import type { KeyProvider } from "../../ledger/src/index.ts";
 import { verifyChain, readLedgerEntries } from "../../ledger/src/verify.ts";
 import type { JsonlEntry } from "../../ledger/src/store.ts";
 import { classifyTool } from "../../registry/src/evaluate.ts";
+import {
+  DEFAULT_POLICY,
+  listPolicyProfiles,
+  resolvePolicyProfile,
+} from "./policy-profile.ts";
 import { loadPolicy, type ValidPolicy } from "../../policy/src/rules.ts";
 import { decide, type PolicyDecision } from "../../policy/src/decide.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
@@ -212,8 +217,7 @@ export function conversationRequestDigest(
     canonicalJson({ domain: REQUEST_DIGEST_DOMAIN, previous, model, messages, tools }),
   );
 }
-export const DEFAULT_POLICY =
-  "version: 1\nrules:\n  - match:\n      class: r0\n    decision: allow\n  - match: {}\n    decision: hold\n    seconds: 300\n    notify: [cli]\n";
+export { DEFAULT_POLICY };
 export const AGENT_PRESETS = [
   {
     id: "default",
@@ -756,7 +760,7 @@ export class Workbench {
         ...this.agentProfiles.map(({ id, name }) => ({ id, name, description: "Custom profile with explicit tools and bounded execution." })),
       ],
       profiles: structuredClone(this.agentProfiles),
-      policyProfiles: ["default"],
+      policyProfiles: listPolicyProfiles(this.env.VOID_POLICY_PATH),
       hooks: structuredClone(this.hooks),
       hookCommands: [...this.hookAllowlist],
       hooksSupported: true,
@@ -765,7 +769,8 @@ export class Workbench {
   upsertAgent(input: unknown): AgentProfile {
     const profile = validateAgentProfile(input);
     if (AGENT_PRESETS.some(preset => preset.id === profile.id)) throw new Error("Agent id belongs to a built-in preset.");
-    if (profile.policyProfile !== "default") throw new Error("Unknown policy profile. Select the existing default operator policy.");
+    const policy = resolvePolicyProfile(profile.policyProfile, this.env.VOID_POLICY_PATH);
+    if (!policy.ok) throw new Error(`Unknown policy profile ${profile.policyProfile}. ${policy.reason}.`);
     const available = new Set([...workspaceTools, ...this.connectors.flatMap(connector => connector.tools)].map(tool => tool.name));
     if (profile.allowedTools.some(name => !available.has(name))) throw new Error("Agent allowlist contains an unavailable tool.");
     const before = this.agentProfiles;
@@ -2469,14 +2474,18 @@ export class Workbench {
       return { isError: true, content: [{ type: "text", text: `Server permission mode ${this.permissionMode} forbids ${tool.name}.` }] };
     }
     if (session.agentProfile) {
-      if (session.agentProfile.policyProfile !== "default" || !session.agentProfile.allowedTools.includes(tool.name))
+      // The profile's policyProfile names the policy its tool calls are
+      // decided under. An unresolvable name refuses here rather than
+      // falling through to the built-in policy, so a profile can never widen
+      // itself by naming something that does not resolve.
+      const profile = resolvePolicyProfile(session.agentProfile.policyProfile, this.env.VOID_POLICY_PATH);
+      if (!profile.ok) throw new Error(`Agent policy profile ${session.agentProfile.policyProfile} is unusable. ${profile.reason}.`);
+      if (!session.agentProfile.allowedTools.includes(tool.name))
         throw new Error("Agent policy refused a tool outside its allowed scope.");
       if (!tool.connectorId) {
-        const policy = loadPolicy(DEFAULT_POLICY);
-        if (!policy.ok) throw new Error("Invalid default operator policy.");
         const call = { tool: tool.name, workspace: session.view.workspace, connector: "workspace", klass: workspaceToolClass(tool.name) ?? "r3", blastRadius: 1, reason: "Managed document policy.", arguments: args };
-        const decision = decide(policy, call);
-        const allowed = await this.authorizeTool(session, call, decision, policy);
+        const decision = decide(profile.policy, call);
+        const allowed = await this.authorizeTool(session, call, decision, profile.policy);
         observed.decision =
           decision.kind === "hold"
             ? allowed ? "hold:approved" : "hold:denied"
@@ -2626,7 +2635,11 @@ export class Workbench {
       if (!provider) throw new Error("Reconnect the provider used by this conversation before continuing.");
       if (session.agentProfile) {
         session.agentProfile = validateAgentProfile(session.agentProfile);
-        if (session.agentProfile.policyProfile !== "default") throw new Error("Unknown agent policy profile.");
+        // Resolved once per turn so a profile whose policy file disappeared
+        // after it was saved fails the turn instead of quietly running under a
+        // policy its operator never chose.
+        const policy = resolvePolicyProfile(session.agentProfile.policyProfile, this.env.VOID_POLICY_PATH);
+        if (!policy.ok) throw new Error(`Unknown agent policy profile: ${policy.reason}.`);
       }
       // before-run gates the turn. A refusal is thrown into the same handler
       // as every other run failure, so the session ends "failed" with the hook
