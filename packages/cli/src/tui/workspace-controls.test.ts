@@ -521,3 +521,35 @@ test("/hook flips a saved hook without rewriting it", async (t) => {
   await assert.rejects(ui.command("/hook disable nope"), /Unknown hook/);
   await assert.rejects(ui.command("/hook remove h1"), /enable id/);
 });
+
+test("/agents prints the system prompt it names as a field", async (t) => {
+  const { app, ui } = await fixture(t);
+  await ui.initialize();
+  app.upsertAgent({
+    id: "writer",
+    name: "Writer",
+    systemPrompt: "Only claim work the tool results prove.",
+    allowedTools: ["void_workspace_write"],
+    policyProfile: "default",
+    maxTurns: 4,
+    maxContextTokens: 4096,
+  });
+  await ui.command("/agents");
+  const text = ui.lines().join("\n");
+  // The listing told the operator systemPrompt was a field it could save, and
+  // never printed one. A profile's prompt is its actual voice to the model, so
+  // an operator checking what a profile would say found nothing to read.
+  assert.match(text, /System prompt: Only claim work the tool results prove\./);
+
+  app.upsertAgent({
+    id: "quiet",
+    name: "Quiet",
+    systemPrompt: "   ",
+    allowedTools: [],
+    policyProfile: "default",
+    maxTurns: 4,
+    maxContextTokens: 4096,
+  });
+  await ui.command("/agents");
+  assert.match(ui.lines().join("\n"), /System prompt: \(empty\)/);
+});

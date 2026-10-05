@@ -892,10 +892,24 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       "/agent-file path.json reviews a custom profile before saving.",
       "File fields: id, name, systemPrompt, allowedTools, policyProfile, maxTurns, maxContextTokens.",
       `Operator policy profiles: ${catalog.policyProfiles.join(", ") || "none"}`,
-      ...catalog.profiles.flatMap((profile) => [
-        `Profile ${profile.id}: policy ${profile.policyProfile}, max turns ${profile.maxTurns}, max context tokens ${profile.maxContextTokens}`,
-        `Allowed tools: ${profile.allowedTools.join(", ") || "none"}`,
-      ]),
+      ...catalog.profiles.flatMap((profile) => {
+        // This view names systemPrompt as a saveable field and then never
+        // prints it, so the one line an operator needs to check what a profile
+        // actually says to the model was the one line missing. Bounded because
+        // a prompt is prose, and the marker says it was cut rather than
+        // letting a truncated prompt look like the whole one.
+        const prompt = profile.systemPrompt.trim();
+        const shown = !prompt
+          ? "(empty)"
+          : prompt.length > 160
+            ? `${prompt.slice(0, 160)}… (+${prompt.length - 160} chars)`
+            : prompt;
+        return [
+          `Profile ${profile.id}: policy ${profile.policyProfile}, max turns ${profile.maxTurns}, max context tokens ${profile.maxContextTokens}`,
+          `Allowed tools: ${profile.allowedTools.join(", ") || "none"}`,
+          `System prompt: ${shown}`,
+        ];
+      }),
       "Prompt text does not grant tool or policy authority.",
       "",
       "CONVERSATIONS",
@@ -2940,6 +2954,7 @@ export const TUI_COMMANDS = [
   ["/agent-file", "Review and save a custom profile from path.json"],
   ["/hooks", "Runtime hook support and operator allowlist"],
   ["/hook-file", "Review a hook if the host supports execution"],
+  ["/hook", "Enable or disable a saved hook by id"],
   ["/projects", "List persisted projects"],
   ["/project", "Select a project ID or none for new conversations"],
   ["/project-file", "Review and save a project from path.json"],
