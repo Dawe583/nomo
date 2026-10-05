@@ -1097,6 +1097,45 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "Mined from the verified chain.",
           ],
         });
+      // The harness that produced this chain: which runtime is the default,
+      // which profile new conversations get, and what hooks are wired.
+      // /harness and /hooks print the same facts on demand; this is where
+      // the chain itself is shown, so the chain and its producer stay
+      // together on one tab.
+      const harnessCatalog = this.workbench.agents();
+      const prefs = this.workbench.getPreferences();
+      rows.push({
+        id: "harness:current",
+        label: `harness ${prefs.defaultAgent ?? "cloud"}`,
+        lines: [
+          `Default for new conversations: ${prefs.defaultAgent ?? "cloud"}.`,
+          `Selected agent profile: ${this.agentId ?? "runtime default"}.`,
+          harnessCatalog.hooksSupported
+            ? `Hooks are executable; ${harnessCatalog.hooks.length} saved.`
+            : "Hook execution unsupported on this host: none can run.",
+        ],
+      });
+      for (const hook of harnessCatalog.hooks) {
+        rows.push({
+          id: `hook:${hook.id}`,
+          label: `hook ${hook.id} ${hook.enabled ? "on" : "off"}`,
+          lines: [
+            `Event: ${hook.event}.`,
+            `Command: ${hook.command}`,
+            "/hook enable|disable <id> toggles it; /hook-file reviews a save.",
+          ],
+        });
+      }
+      if (harnessCatalog.hooks.length === 0)
+        rows.push({
+          id: "hook:none",
+          label: "hook none saved",
+          lines: [
+            harnessCatalog.hooksSupported
+              ? "No hooks saved. /hook-file path.json reviews a save."
+              : "No hooks saved, and execution is unsupported on this host.",
+          ],
+        });
       rows.reverse();
     }
     if (this.tab === "approvals")
