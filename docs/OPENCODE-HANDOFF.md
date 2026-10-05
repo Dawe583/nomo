@@ -148,10 +148,10 @@ Done in this stretch:
 Open:
 
 - [x] **Fix the two defects in `7111cc0`**, row id collision, empty case vanishing. Committed on `fix/learned-row-identity-and-empty-record`, PR #91.
-- [ ] **Surface the hooks editor and the per-agent profile panel on the ledger tab.** Checked against `7111cc0`: it carried only the learning-record rows. `/hook` and the `/hooks` read overlay plus `/hook-file` write exist (`workspace.ts:2061, 2028`), `/agents` and `/agent ID` exist, but neither has an interactive field or a tab branch; the ledger tab shows chain entries and learned rows only. Both remain open.
+- [ ] **Surface the hooks editor and the per-agent profile panel on the ledger tab.** Checked against `7111cc0`: it carried only the learning-record rows. `/hook` and the `/hooks` read overlay plus `/hook-file` write exist (`workspace.ts:2061, 2028`), `/agents` and `/agent ID` exist, but neither has an interactive field or a tab branch; the ledger tab shows chain entries and learned rows only. Filed as issue #96 for outside contribution.
 - [x] **Run the full repo gate.** Final measured state: `EXIT=0`, 2271 tests, 1 suite not runnable (python/appwrite-mcp interpreter). Two failures found and fixed en route: PR #90 (vendoring path inventory) and PR #93 (NEWEST_DECISION pin).
-- [x] **Vendoring: owner picks A, B, C or D**, chosen: **Option A, record provenance only.** Recorded in `docs/VENDORING-DECISION.md` ("Decision, 2026-10-05"). Provenance note in `docs/DECISIONS.md` is the follow-up.
-- [ ] **63 unmerged branches.** Dump preserved at `/tmp/void-branch-dump-2026-10-05.txt` (84 refs, sha + subject, `git for-each-ref` format). No branches were deleted and no tree was cleaned.
+- [x] **Vendoring: owner picks A, B, C or D**, chosen: **Option A, record provenance only.** Recorded in `docs/VENDORING-DECISION.md` ("Decision, 2026-10-05") and `docs/DECISIONS.md`. The usage audit that was the largest open gap answered too: omp is consumed nowhere in code; prime-agent is a process contract via prime-bridge, cloud/prime.mjs, team/prime-spawn.sh and the TUI /harness switch. The external binary provenance page is `docs/AGENT-BINARIES.md`.
+- [ ] **63 unmerged branches.** Filed as issue #97 for outside contribution; dump at `/tmp/void-branch-dump-2026-10-05.txt` (84 refs, sha + subject). No branches were deleted and no tree was cleaned.
 
 ## Vendoring: what the evidence says
 
