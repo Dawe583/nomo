@@ -15,6 +15,7 @@ import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
+import { harnessSettingsView } from "../../../workbench/src/harness-settings.ts";
 import {
   verificationKeyNote,
   verificationStatus,
@@ -973,6 +974,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       `Storage: ${this.env.VOID_DATA_DIR ?? "default workbench directory"}`,
       "Drafts persist per conversation between runs.",
       "Conversations retain their provider/model snapshot. Unreported cost stays unknown.",
+    ];
+  }
+  settingsLines() {
+    return [
+      "HARNESS SETTINGS, limits this workspace runs under",
+      "",
+      ...harnessSettingsView(this.workbench.harnessSettings()).flatMap((row) => [
+        `${row.key}  ${row.value}  [${row.min}-${row.max}]${row.changed ? "  (changed)" : ""}`,
+        `  ${row.label}: ${row.description}`,
+        `  read by ${row.consumer}`,
+      ]),
+      "",
+      "/settings KEY VALUE sets one limit; the range is what the run path can honour.",
     ];
   }
   session() {
@@ -2337,6 +2351,33 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
+    if (cmd === "settings") {
+      const [key, raw] = arg.split(/\s+/).filter(Boolean);
+      if (!key) {
+        this.detail = this.settingsLines();
+        this.scroll = 0;
+        return;
+      }
+      if (raw === undefined)
+        throw Error("/settings key value, or /settings alone to list them.");
+      // Number() turns a typo into NaN and an empty field into 0, and the
+      // server clamp would then store the minimum as though the operator had
+      // chosen it, so the value is proved numeric here before the patch sees it.
+      const value = Number(raw);
+      if (!Number.isFinite(value))
+        throw Error(`/settings ${key}: ${raw} is not a number.`);
+      const stored = this.workbench.patchHarnessSettings({ [key]: value });
+      // Read back from the resolved set rather than echoing the argument: the
+      // server clamps, so the number that takes effect may not be the number
+      // that was typed, and a notice naming the wrong one would be a lie.
+      const applied = harnessSettingsView(stored).find(
+        (row) => row.key === key,
+      );
+      this.notice = `${applied?.label ?? key} is now ${applied?.value ?? value}.`;
+      this.detail = this.settingsLines();
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "memory") {
       this.detail = this.memoryLines();
       this.scroll = 0;
@@ -3172,6 +3213,7 @@ export const TUI_COMMANDS = [
   ["/project", "Select a project ID or none for new conversations"],
   ["/project-file", "Review and save a project from path.json"],
   ["/config", "Resolved paths and flags"],
+  ["/settings", "Harness limits, or set one with /settings key value"],
   ["/memory", "Retained local history"],
   ["/model", "Set model for new chats"],
   ["/plan", "Switch to plan mode"],
@@ -3795,6 +3837,7 @@ const HELP = [
   "/harness cloud | /harness prime-agent switches the agent harness",
   "/conformance [adapter] runs the disposable adapter checks",
   "/theme [color|mono|motion|still|reset] session theme",
+  "/settings lists every harness limit; /settings key value sets one",
   "/documents | /document path | /edit | /history | /undo [operation-ID]",
   "/ledger | /verify | /filter text | /export ledger|chat|document",
   "/attest signs this conversation slice for offline third party checks",

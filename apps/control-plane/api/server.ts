@@ -5,6 +5,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { basename, extname, join, posix, relative, resolve } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
+import { harnessSettingsView } from "../../../packages/workbench/src/harness-settings.ts";
 
 import { runReplayCommand } from "../../../packages/cli/src/replay.ts";
 import type { ReplayCommandOptions } from "../../../packages/cli/src/replay.ts";
@@ -295,7 +296,7 @@ async function route(
   const query = parsed.searchParams, wb = options.workbench;
   try {
     const desktop = !!options.env.VOID_DESKTOP_WEB_ROOT && !options.env.VOID_CONTROL_TOKEN && isLocalRequest(request);
-    if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local', serverPermissionMode(options.env.VOID_PERMISSION_MODE)), desktopSetup: desktop });
+    if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local', serverPermissionMode(options.env.VOID_PERMISSION_MODE), wb.harnessSettings()), desktopSetup: desktop });
     if (parsed.pathname === '/api/projects') {
       if (request.method === 'GET') { const projects = wb.projects(); return sendJson(response, 200, { items: projects, projects }); }
       if (request.method === 'POST') return sendJson(response, 200, { project: wb.upsertProject(await readJsonBody(request) as Parameters<Workbench['upsertProject']>[0]) });
@@ -324,6 +325,14 @@ async function route(
     if (parsed.pathname === '/api/preferences') {
       if (request.method === 'GET') return sendJson(response, 200, { preferences: wb.getPreferences() });
       if (request.method === 'PATCH') return sendJson(response, 200, { preferences: wb.patchPreferences(await readJsonBody(request) as Record<string, unknown>) });
+    }
+    if (parsed.pathname === '/api/harness-settings') {
+      if (request.method === 'GET') { const settings = wb.harnessSettings(); return sendJson(response, 200, { settings, rows: harnessSettingsView(settings) }); }
+      // A refused patch throws out of `harnessSettingsPatch`, and the shared
+      // catch below turns that into the same 409 the preferences route returns
+      // for a refused one. An unknown limit must read as refused, not as a
+      // silent no-op the operator would take for an applied change.
+      if (request.method === 'PATCH') { const settings = wb.patchHarnessSettings(await readJsonBody(request) as Record<string, unknown>); return sendJson(response, 200, { settings, rows: harnessSettingsView(settings) }); }
     }
     if (['/api/runs','/api/usage','/api/overview'].includes(parsed.pathname) && request.method === 'GET') {
       const data = activity(wb.allViews()); if (parsed.pathname === '/api/overview') return sendJson(response, 200, { ...data.overview, pendingApprovals: wb.pending().length, documents: wb.documentsList().length });

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { WorkspaceState } from "./workspace.ts";
 import type { McpTool } from "./mcp.ts";
+import { defaultHarnessSettings, type HarnessSettings } from "./harness-settings.ts";
 
 export function page<T>(
   source: readonly T[],
@@ -176,7 +177,6 @@ export function filterRows<T>(rows: readonly T[], query: URLSearchParams): T[] {
     });
   return result;
 }
-export const MAX_QUEUED_RUNS = 20;
 export type PermissionMode = "plan" | "read-only" | "normal";
 
 
@@ -203,12 +203,23 @@ export function serverPermissionMode(value: unknown): PermissionMode {
     : "read-only";
 }
 
-export const capabilities = (mode: "local" | "cloud", permissionMode: PermissionMode = "read-only") => ({
+/** The advertised limits are the ones the run path will actually enforce.
+ * An operator who lowers `maxQueuedRuns` or raises `maxRequestBytes` is
+ * configuring this host, so a client that reads defaults here would size its
+ * requests against a ceiling the server no longer holds. The settings
+ * parameter is optional so a caller that genuinely has no workbench in hand
+ * (the view helpers, a test) still resolves to the documented defaults rather
+ * than to `undefined` at a limit. */
+export const capabilities = (
+  mode: "local" | "cloud",
+  permissionMode: PermissionMode = "read-only",
+  settings: HarnessSettings = defaultHarnessSettings(),
+) => ({
   mode,
   permissionMode,
   permissionModeAuthority: "server",
   maxActiveRuns: 1,
-  ...(mode === "local" ? { maxQueuedRuns: MAX_QUEUED_RUNS } : {}),
+  ...(mode === "local" ? { maxQueuedRuns: settings.maxQueuedRuns } : {}),
   backgroundQueue: true,
   projects: mode === "local",
   customAgents: mode === "local",
@@ -228,8 +239,8 @@ export const capabilities = (mode: "local" | "cloud", permissionMode: Permission
   documentEditing: permissionMode === "normal",
   textAttachments: true,
   binaryAttachments: false,
-  maxPromptCharacters: 32000,
-  maxRequestBytes: 65536,
+  maxPromptCharacters: settings.maxPromptCharacters,
+  maxRequestBytes: settings.maxRequestBytes,
   historicalEvents: "retained-only",
 });
 export type ProviderStatus =

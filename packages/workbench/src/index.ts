@@ -24,7 +24,6 @@ import {
   providerStateFromFailure,
   activity,
   deriveRunState,
-  MAX_QUEUED_RUNS,
   type ProviderStatus,
   type ViewName,
   type RunState,
@@ -39,11 +38,16 @@ import {
   type Hook,
   hookSucceeded,
   runHook,
-  HOOK_TIMEOUT_MS,
   HOOK_TIMEOUT_BOUNDS,
   type HookResult,
   type CompactionResult,
 } from "./agents.ts";
+import {
+  defaultHarnessSettings,
+  harnessSettingsPatch,
+  resolveHarnessSettings,
+  type HarnessSettings,
+} from "./harness-settings.ts";
 import { LocalStorage } from "./storage.ts";
 import {
   catalog as mcpCatalog,
@@ -307,6 +311,17 @@ function reversalFor(
 class UnknownToolOutcome extends Error {
   constructor() { super("Tool outcome is unknown. Stop and reconcile its evidence before continuing."); }
 }
+/** A run that reached its wall-clock ceiling was aborted, not finished. Its
+ * outcome was never proven, so it reports as `unknown` the way an unknown tool
+ * outcome does rather than as a failure a retry would clear: the operator has
+ * to reconcile the evidence before the session can continue. */
+class RunTimeout extends Error {
+  constructor(timeoutMs: number) {
+    super(
+      `Run exceeded its ${timeoutMs}ms limit and was aborted. Its outcome is unproven. Reconcile its evidence before continuing.`,
+    );
+  }
+}
 class ProviderSetupSuperseded extends Error {
   constructor() { super("Provider setup was superseded by a newer configuration."); }
 }
@@ -371,7 +386,13 @@ export class Workbench {
   private agentProfiles: AgentProfile[] = [];
   private hooks: Hook[] = [];
   private readonly hookAllowlist: readonly string[];
-  private readonly hookTimeoutMs: number;
+  private harness: HarnessSettings = defaultHarnessSettings();
+  /** The timeout `VOID_HOOK_TIMEOUT_MS` asked for, or undefined when the
+   * launcher set none. Kept apart from the resolved setting so an explicit
+   * runtime environment still wins: it is the more specific statement about
+   * this process, and an operator who set it before the workbench loaded must
+   * not silently lose it to a value stored in the workspace. */
+  private readonly hookTimeoutFromEnv: number | undefined;
   private readonly holds = new Map<
     string,
     {
@@ -424,16 +445,20 @@ export class Workbench {
     this.env = { ...env };
     delete (this.env as NodeJS.ProcessEnv).VOID_WORKSPACE_KEY;
     this.hookAllowlist = Workbench.hookAllowlist(env);
-    // Operator-set and clamped at both ends: a hook cannot be made
-    // un-timeouttable by a request, and a short timeout only costs a
-    // well-behaved hook more than a long one.
-    this.hookTimeoutMs = Math.min(
-      HOOK_TIMEOUT_BOUNDS.max,
-      Math.max(
-        HOOK_TIMEOUT_BOUNDS.min,
-        Number(env.VOID_HOOK_TIMEOUT_MS) || HOOK_TIMEOUT_MS,
-      ),
-    );
+    // Precedence: an explicit VOID_HOOK_TIMEOUT_MS wins over the stored
+    // harness setting, and the stored setting wins over the default. The env
+    // is the launcher's statement about this process, so an operator who set
+    // it must not lose it to a workspace value written before it. Clamped at
+    // both ends either way: a hook cannot be made un-timeouttable, and a short
+    // timeout only costs a well-behaved hook more than a long one.
+    const requestedHookTimeout = Number(env.VOID_HOOK_TIMEOUT_MS);
+    this.hookTimeoutFromEnv =
+      env.VOID_HOOK_TIMEOUT_MS && Number.isFinite(requestedHookTimeout)
+        ? Math.min(
+            HOOK_TIMEOUT_BOUNDS.max,
+            Math.max(HOOK_TIMEOUT_BOUNDS.min, requestedHookTimeout),
+          )
+        : undefined;
     this.fetcher = fetcher;
     this.storage = new LocalStorage(
       env.VOID_DATA_DIR ??
@@ -442,6 +467,7 @@ export class Workbench {
     );
     const saved = this.storage.read<{
       preferences?: Record<string, string>;
+      harnessSettings?: Record<string, unknown>;
       requests?: Record<string, { digest: string; sessionId: string }>;
       approvalHistory?: unknown[];
       config?: ProviderConfig;
@@ -479,7 +505,7 @@ export class Workbench {
         const config = normalizeProviderConfig(value);
         if (value.kind !== config.kind) migrated = true;
         try {
-          new CompatibleProvider(config, fetcher);
+          new CompatibleProvider(config, fetcher, () => this.harness);
           return config;
         } catch {
           migrated = true;
@@ -500,6 +526,9 @@ export class Workbench {
         ...preferences,
         defaultAgentPreset,
       };
+      // Resolved, not trusted: a hand-edited or truncated snapshot must not be
+      // able to put the run path in range of a limit nobody chose.
+      this.harness = resolveHarnessSettings(saved.harnessSettings);
       if (retiredModel) {
         // The retired id leaves the preference instead of being rewritten to a
         // vendor's model. A workspace with a validated catalog re-picks from it;
@@ -555,7 +584,7 @@ export class Workbench {
       });
       this.projectList = saved.projects ?? [];
       if (this.config)
-        this.provider = new CompatibleProvider(this.config, fetcher);
+        this.provider = new CompatibleProvider(this.config, fetcher, () => this.harness);
       for (const item of saved.sessions) {
         const sessionBaseUrl = typeof item.config?.baseUrl === "string"
           ? item.config.baseUrl
@@ -578,7 +607,7 @@ export class Workbench {
             ...item.view,
             status: item.view.status === "running" ? "unknown" : item.view.status === "queued" ? "paused" : item.view.status,
           },
-          provider: provider ? new CompatibleProvider(provider, fetcher) : undefined,
+          provider: provider ? new CompatibleProvider(provider, fetcher, () => this.harness) : undefined,
           controller: new AbortController(),
         });
       }
@@ -596,6 +625,7 @@ export class Workbench {
       return;
     this.storage.save({
       preferences: this.preferences,
+      harnessSettings: this.harness,
       requests: this.requests,
       approvalHistory: [...this.approvalHistory, ...this.holds.values()],
       config: this.config,
@@ -666,7 +696,7 @@ export class Workbench {
         ...config,
         apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || "",
       });
-      const provider = new CompatibleProvider(config, this.fetcher);
+      const provider = new CompatibleProvider(config, this.fetcher, () => this.harness);
       const models = await provider.models();
       if (generation !== this.providerGeneration)
         throw new ProviderSetupSuperseded();
@@ -818,7 +848,7 @@ export class Workbench {
       // is never created; runHook refuses it again as a second line.
       if (!hook.enabled) continue;
       const result = await runHook(hook, context, {
-        timeoutMs: this.hookTimeoutMs,
+        timeoutMs: this.hookTimeoutFromEnv ?? this.harness.hookTimeoutMs,
         env: this.env,
       });
       results.push(result);
@@ -1034,8 +1064,8 @@ export class Workbench {
       throw new Error("Connect and validate a provider first.");
     if (this.providerSetupCount)
       throw new Error("Wait for provider setup to finish before starting a session.");
-    if (background && this.queued.size >= MAX_QUEUED_RUNS)
-      throw new Error(`Background queue is full (${MAX_QUEUED_RUNS} queued runs). Stop a queued run before adding another.`);
+    if (background && this.queued.size >= this.harness.maxQueuedRuns)
+      throw new Error(`Background queue is full (${this.harness.maxQueuedRuns} queued runs). Stop a queued run before adding another.`);
     const selectedAgent = AGENT_PRESETS.find(
       (item) => item.id === (agent ?? this.preferences.defaultAgentPreset),
     );
@@ -1074,8 +1104,8 @@ export class Workbench {
       );
     if (command && !this.env.VOID_POLICY_PATH)
       throw new Error("Configure VOID_POLICY_PATH before starting an agent.");
-    if (!prompt.trim() || prompt.length > 32000)
-      throw new Error("Enter a prompt between 1 and 32000 characters.");
+    if (!prompt.trim() || prompt.length > this.harness.maxPromptCharacters)
+      throw new Error(`Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`);
     const id = randomUUID();
     const workspace = `agent-${id}`;
     const client = Array.isArray(command)
@@ -1186,8 +1216,8 @@ export class Workbench {
       throw new Error("Run outcome is unknown. Reconcile its evidence before continuing.");
     if (session.recoveryBlock)
       throw new Error("Recovery is unresolved. Resume the approved recovery job before continuing.");
-    if (!prompt.trim() || prompt.length > 32000)
-      throw new Error("Enter a prompt between 1 and 32000 characters.");
+    if (!prompt.trim() || prompt.length > this.harness.maxPromptCharacters)
+      throw new Error(`Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`);
     if (
       [...this.sessions.values()].some(
         (other) => other !== session && other.view.status === "running",
@@ -1393,7 +1423,10 @@ export class Workbench {
       seq,
       at,
       kind,
-      text: (session.provider?.redact(text) ?? text).slice(0, 32000),
+      text: (session.provider?.redact(text) ?? text).slice(
+        0,
+        this.harness.maxPromptCharacters,
+      ),
       type:
         type ??
         {
@@ -1420,6 +1453,23 @@ export class Workbench {
     this.hasState = true;
     this.persist();
     return this.getPreferences();
+  }
+  /** The operator-tunable limits governing runs, as resolved on load. A copy,
+   * so a caller cannot widen a limit by mutating the returned object. */
+  harnessSettings(): HarnessSettings {
+    return { ...this.harness };
+  }
+  patchHarnessSettings(body: Record<string, unknown>): HarnessSettings {
+    // Validated before anything is stored: harnessSettingsPatch refuses an
+    // unknown key by name and a non-numeric value rather than reporting a
+    // change it did not make, and clamps what it accepts.
+    this.harness = resolveHarnessSettings({
+      ...this.harness,
+      ...harnessSettingsPatch(body),
+    });
+    this.hasState = true;
+    this.persist();
+    return this.harnessSettings();
   }
   permissionModeState() {
     return this.permissionMode;
@@ -1583,7 +1633,7 @@ export class Workbench {
       if (body.prompt !== undefined) {
         if (
           !body.prompt.trim() ||
-          body.prompt.length > 32000 ||
+          body.prompt.length > this.harness.maxPromptCharacters ||
           messages.at(-1)?.kind !== "user"
         )
           throw new Error("Choose a user message to edit.");
@@ -2659,6 +2709,15 @@ export class Workbench {
   }
   private async run(session: Session): Promise<void> {
     const provider = session.provider;
+    // A run that outruns its ceiling is stopped here rather than left to the
+    // provider's own per-request timeout, which bounds one request and not the
+    // run. The deadline rides alongside the cancel signal so a cancel still
+    // cancels, and an expired deadline is reported as its own condition
+    // instead of as the generic abort the transport raises.
+    const runTimeoutMs = this.harness.maxRunTimeoutMs;
+    const deadline = AbortSignal.timeout(runTimeoutMs);
+    const signal = AbortSignal.any([session.controller.signal, deadline]);
+    const expired = () => deadline.aborted && !session.controller.signal.aborted;
     try {
       if (!provider) throw new Error("Reconnect the provider used by this conversation before continuing.");
       if (session.agentProfile) {
@@ -2699,7 +2758,11 @@ export class Workbench {
           parameters: tool.inputSchema ?? { type: "object", properties: {} },
         },
       }));
-      const maxTurns = session.agentProfile?.maxTurns ?? 20;
+      // An agent profile's own maxTurns still wins: it was validated against
+      // AGENT_LIMITS.maxTurns when the profile was accepted, so it is a limit
+      // somebody chose for that session. The harness setting is the fallback
+      // for a run with no profile, which is the case an operator is tuning.
+      const maxTurns = session.agentProfile?.maxTurns ?? this.harness.maxTurns;
       // The digest is a chain over the turns, not a snapshot of the newest
       // ones. Folding the previous turn's digest in keeps the cost at O(turn)
       // while making the earlier prefix reach the current value: two
@@ -2712,6 +2775,7 @@ export class Workbench {
       let previous: string | null = null;
       let hashed = 0;
       for (let turn = 0; turn < maxTurns; turn++) {
+        if (expired()) throw new RunTimeout(runTimeoutMs);
         if (session.controller.signal.aborted) return;
         this.checkContextBudget(session, tools);
         // The record a tool call produces has to name what asked for it, and
@@ -2733,22 +2797,34 @@ export class Workbench {
           );
         let delta = "";
         let flushed = Date.now();
-        const reply = await provider.complete(
-          session.view.model,
-          session.messages,
-          tools,
-          session.controller.signal,
-          (text) => {
-            if (session.controller.signal.aborted) return;
-            delta += text;
-            if (Date.now() - flushed > 250 || delta.length > 512) {
-              this.event(session, "assistant", delta, {}, "message.delta");
-              delta = "";
-              flushed = Date.now();
-              this.persist();
-            }
-          },
-        );
+        const reply = await Promise.race([
+          provider.complete(
+            session.view.model,
+            session.messages,
+            tools,
+            signal,
+            (text) => {
+              if (session.controller.signal.aborted) return;
+              delta += text;
+              if (Date.now() - flushed > 250 || delta.length > 512) {
+                this.event(session, "assistant", delta, {}, "message.delta");
+                delta = "";
+                flushed = Date.now();
+                this.persist();
+              }
+            },
+          ),
+          // Raced rather than relied on through the signal alone: a transport
+          // that never settles would otherwise keep the run alive past its
+          // ceiling, and the ceiling would only ever be checked between turns.
+          new Promise<never>((_, refuse) => {
+            if (deadline.aborted) refuse(new RunTimeout(runTimeoutMs));
+            else
+              deadline.addEventListener("abort", () => {
+                refuse(new RunTimeout(runTimeoutMs));
+              });
+          }),
+        ]);
         if (session.controller.signal.aborted) return;
         if (delta) this.event(session, "assistant", delta, {}, "message.delta");
         session.messages.push(reply.message);
@@ -2768,8 +2844,10 @@ export class Workbench {
               cost: null,
             },
           );
-        if ((reply.message.tool_calls?.length ?? 0) > 32)
-          throw new Error("Provider exceeded the 32-tool batch limit.");
+        if ((reply.message.tool_calls?.length ?? 0) > this.harness.maxToolCallsPerTurn)
+          throw new Error(
+            `Provider exceeded the ${this.harness.maxToolCallsPerTurn}-tool batch limit.`,
+          );
         if (!reply.message.tool_calls?.length) {
           session.view = { ...session.view, status: "idle" };
           this.persist();
@@ -2821,20 +2899,27 @@ export class Workbench {
         `Session reached the ${maxTurns}-turn limit. Review the ledger before continuing.`,
       );
     } catch (error) {
-      if (!session.controller.signal.aborted || error instanceof UnknownToolOutcome) {
-        if (error instanceof ProviderRequestError && provider === this.provider) this.recordProviderFailure(error);
+      // An expired deadline names itself. A transport that ignored the abort
+      // raises a plain AbortError, which says nothing about why the run stopped,
+      // so the cause is recovered here instead of surfacing as "failed".
+      const cause = expired() ? new RunTimeout(runTimeoutMs) : error;
+      if (!session.controller.signal.aborted || cause instanceof UnknownToolOutcome || cause instanceof RunTimeout) {
+        if (cause instanceof ProviderRequestError && provider === this.provider) this.recordProviderFailure(cause);
         const failure =
-          error instanceof ProviderRequestError
-            ? providerFailure(error)
+          cause instanceof ProviderRequestError
+            ? providerFailure(cause)
             : undefined;
         this.event(
           session,
           "error",
           failure?.text ??
-            (error instanceof Error ? error.message : "Session failed."),
+            (cause instanceof Error ? cause.message : "Session failed."),
           failure?.payload ?? {},
         );
-        session.view = { ...session.view, status: error instanceof UnknownToolOutcome ? "unknown" : "failed" };
+        // A timed-out run is `unknown`, not `failed`: nothing proved what it
+        // did, so a retry would be a guess over an unproven outcome. This is the
+        // state Undo and reconciliation both require.
+        session.view = { ...session.view, status: cause instanceof UnknownToolOutcome || cause instanceof RunTimeout ? "unknown" : "failed" };
         session.client?.close();
       }
     } finally {
