@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -29,8 +30,28 @@ def load_samples() -> list[tuple[str, Any]]:
     and 1e-7, and nesting past the depth ceiling, which both runtimes must
     refuse rather than seal.
     """
-    entries: list[dict[str, Any]] = json.loads(CANONICAL_SAMPLES.read_text("utf-8"))
+    entries: list[dict[str, Any]] = decode_corpus()
     return [(entry["name"], entry["value"]) for entry in entries]
+
+
+def decode_corpus() -> list[dict[str, Any]]:
+    """Decode the sample corpus with a parse budget above its own depth.
+
+    The corpus deliberately nests one sample 1001 levels deep, one past the
+    canonical ceiling both runtimes must refuse. Parsing the fixture is not
+    canonicalising: the iterative ``canonical_json`` still refuses the deep
+    sample with ``CanonicalError`` either way. But CPython's ``json`` decoder
+    recurses with the interpreter limit, and that limit is version dependent,
+    so without this the deep sample decodes on one interpreter and dies with
+    a nameless ``RecursionError`` on another. The budget is raised only around
+    the decode and restored after it.
+    """
+    previous = sys.getrecursionlimit()
+    sys.setrecursionlimit(max(previous, 10000))
+    try:
+        return json.loads(CANONICAL_SAMPLES.read_text("utf-8"))
+    finally:
+        sys.setrecursionlimit(previous)
 
 
 def run_node_canonical(samples: list[tuple[str, Any]]) -> list[dict[str, Any]]:

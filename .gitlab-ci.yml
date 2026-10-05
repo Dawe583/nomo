@@ -24,7 +24,7 @@ include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
 
 workflow:
-  name: 'VOID Linux gates and merge request Pages preview'
+  name: "VOID Linux gates and merge request Pages preview"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -52,11 +52,20 @@ variables:
   # than enabled through corepack, because corepack is not present in every
   # Node image and a gate that depends on it is a gate that sometimes cannot
   # start.
-  GIT_DEPTH: '20'
-  npm_config_update_notifier: 'false'
+  GIT_DEPTH: "20"
+  npm_config_update_notifier: "false"
 
 .node: &node
   before_script:
+    # The managed-git tests assert `rev-parse --show-ref-format`, which exists
+    # only in git 2.45 and newer, while the stock Node images ship whatever
+    # their Debian release carries (2.39 on bookworm). Backports is the only
+    # apt source that moves without a custom image. The final line fails the
+    # job here, in the open, rather than letting a hundred git tests fail one
+    # by one with a backend error that names no version.
+    - echo "deb http://deb.debian.org/debian bookworm-backports main" > /etc/apt/sources.list.d/backports.list
+    - apt-get update -qq && apt-get install -y -qq -t bookworm-backports git
+    - git rev-parse --show-ref-format
     - npm install --global pnpm@10.33.0
     - pnpm config set store-dir .pnpm-store
     - pnpm install --frozen-lockfile
@@ -73,7 +82,7 @@ gates:
   image: node:$NODE
   parallel:
     matrix:
-      - NODE: ['24', '26']
+      - NODE: ["24", "26"]
   timeout: 95 min
   script:
     - pnpm run typecheck
@@ -102,7 +111,7 @@ manifest:
   image: node:$NODE
   parallel:
     matrix:
-      - NODE: ['24', '26']
+      - NODE: ["24", "26"]
   timeout: 120 min
   script:
     - node --test packages/connectors/src/manifest.test.ts packages/workbench/src/storage.test.ts apps/control-plane/api/server.test.ts
