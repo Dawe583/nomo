@@ -239,7 +239,7 @@ export const capabilities = (
   documentEditing: permissionMode === "normal",
   textAttachments: true,
   binaryAttachments: false,
-  maxPromptCharacters: 32000,
+  maxPromptCharacters: settings.maxPromptCharacters,
   maxRequestBytes: settings.maxRequestBytes,
   historicalEvents: "retained-only",
 });

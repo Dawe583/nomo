@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { capabilities } from "./gui.ts";
-import { defaultHarnessSettings } from "./harness-settings.ts";
+import { defaultHarnessSettings, HARNESS_SETTINGS } from "./harness-settings.ts";
 
 /**
  * `capabilities` is the answer a client sizes itself against. If it reports the
@@ -49,14 +49,29 @@ test("a cloud host reports the configured request ceiling but queues no local ru
 
 test("passing settings does not disturb the limits capabilities has always reported", () => {
   const defaults = defaultHarnessSettings();
+  // maxPromptCharacters is excluded on purpose: it now follows the setting,
+  // because an operator may raise it to 200000 and a capabilities object still
+  // advertising 32000 would tell the web to refuse prompts the runtime
+  // accepts. maxQueuedRuns and maxRequestBytes are covered by their own tests.
   const configured = { ...defaults, maxQueuedRuns: 3, maxRequestBytes: 131072 };
 
   const before = capabilities("local", "normal");
   const after = capabilities("local", "normal", configured);
 
-  for (const key of ["maxActiveRuns", "backgroundQueue", "projects", "customAgents", "hooks", "contextCompaction", "recoveryJobs", "streaming", "textAttachments", "binaryAttachments", "maxPromptCharacters", "historicalEvents"] as const)
+  for (const key of ["maxActiveRuns", "backgroundQueue", "projects", "customAgents", "hooks", "contextCompaction", "recoveryJobs", "streaming", "textAttachments", "binaryAttachments", "historicalEvents"] as const)
     assert.deepEqual(after[key], before[key], `${key} changed`);
   assert.deepEqual(after.limitations, before.limitations);
   assert.equal(after.permissionMode, before.permissionMode);
   assert.equal(after.permissionModeAuthority, before.permissionModeAuthority);
+});
+
+test("the reported prompt ceiling is the configured one, not the shipped default", () => {
+  // The web reads this to decide whether to accept a paste. A hardcoded 32000
+  // here would make a raised limit invisible to every surface but the runtime.
+  const configured = { ...defaultHarnessSettings(), maxPromptCharacters: 100000 };
+  assert.equal(capabilities("local", "normal", configured).maxPromptCharacters, 100000);
+  assert.equal(
+    capabilities("local", "normal").maxPromptCharacters,
+    HARNESS_SETTINGS.maxPromptCharacters.default,
+  );
 });
