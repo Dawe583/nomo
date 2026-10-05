@@ -16,7 +16,7 @@ keeps the rest, and for a managed Postgres restore the receipt it leaves sits in
 your own schema.
 
 **See it happen, then check it without VOID.** The demo drives a real PostgreSQL
-17.11 server: an agent write, a finance write made *outside* VOID, then the
+17.11 server: an agent write, a finance write made _outside_ VOID, then the
 inverse. The agent's row goes back; the finance write survives.
 
 ```sh
@@ -63,19 +63,19 @@ VOID does not make an agent safe by trusting the model. It protects the write pa
 
 ## Reversibility classes
 
-| Class | Meaning | Usual posture |
-| ----- | ------- | ------------- |
-| R0 | Fully reversible with a direct inverse. | Allow with ledger. |
-| R1 | Reversible with a trace or before image. | Allow for small blast radius, hold for large blast radius. |
-| R2 | Mitigable only. | Hold or deny. |
-| R3 | Irreversible. | Hold or deny. |
+| Class | Meaning                                  | Usual posture                                              |
+| ----- | ---------------------------------------- | ---------------------------------------------------------- |
+| R0    | Fully reversible with a direct inverse.  | Allow with ledger.                                         |
+| R1    | Reversible with a trace or before image. | Allow for small blast radius, hold for large blast radius. |
+| R2    | Mitigable only.                          | Hold or deny.                                              |
+| R3    | Irreversible.                            | Hold or deny.                                              |
 
 ## Two operating postures
 
-| Posture | Behavior |
-| ------- | -------- |
+| Posture       | Behavior                                                                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `fail-closed` | The default. Unknown tools, unclassified calls, invalid policy, ledger failure, and internal errors deny. Availability is traded for safety. |
-| `observe` | Forward calls and record decisions where possible. Non-allow verdicts are printed to stderr. Use this only for trials and shadow runs. |
+| `observe`     | Forward calls and record decisions where possible. Non-allow verdicts are printed to stderr. Use this only for trials and shadow runs.       |
 
 ## Five-minute local path
 
@@ -151,29 +151,29 @@ node scripts/src/bench.mjs --scale 200
 
 The development binary is `node packages/cli/bin/void.mjs`. Packaged releases will expose the same handlers as `void`.
 
-| Need | Command surface | Current note |
-| ---- | --------------- | ------------ |
-| Live feed | `feed --ledger <ledger-file> [--json] [--follow]` | Verifies the chain before printing. |
-| Approval status | `approvals [--dir <state-dir>]` | Reads pending holds from the approvals state directory. |
-| Decide a hold | `approve <holdId> --by <actor> [--reason <text>] [--dir <state-dir>] [--deny] [--json]` | Queues a durable decision file the running proxy consumes. |
-| Approvals overview | `approvals --dir <state-dir>` | Lists what the proxy surfaced in the state dir. |
-| Replay | `replay --ledger <ledger-file> --snapshot-dir <dir> --seq <n> [--dry-run]`, `replay --list-connectors` | The binary loads the static connector set (postgres, s3). Executors come from host environment variables, so a dry-run plan works everywhere and apply fails with a typed error when an executor is absent. |
-| Taint | `taint --ledger <dir-or-file> --seq <n> [--depth <n>] [--json]` | Builds graph edges from the verified ledger. |
-| Verify | `verify --ledger <dir-or-file> [--attestation <path>]` | Recomputes body hashes, links, and signatures. |
-| Policy packs | `packages/policy/packs/strict.yaml`, `balanced.yaml`, `dev.yaml` | Ready-made policies loaded through `loadPack` in the policy package. `strict` allows only R0, `balanced` holds R2 and denies R3, `dev` holds every R3. |
+| Need               | Command surface                                                                                        | Current note                                                                                                                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live feed          | `feed --ledger <ledger-file> [--json] [--follow]`                                                      | Verifies the chain before printing.                                                                                                                                                                         |
+| Approval status    | `approvals [--dir <state-dir>]`                                                                        | Reads pending holds from the approvals state directory.                                                                                                                                                     |
+| Decide a hold      | `approve <holdId> --by <actor> [--reason <text>] [--dir <state-dir>] [--deny] [--json]`                | Queues a durable decision file the running proxy consumes.                                                                                                                                                  |
+| Approvals overview | `approvals --dir <state-dir>`                                                                          | Lists what the proxy surfaced in the state dir.                                                                                                                                                             |
+| Replay             | `replay --ledger <ledger-file> --snapshot-dir <dir> --seq <n> [--dry-run]`, `replay --list-connectors` | The binary loads the static connector set (postgres, s3). Executors come from host environment variables, so a dry-run plan works everywhere and apply fails with a typed error when an executor is absent. |
+| Taint              | `taint --ledger <dir-or-file> --seq <n> [--depth <n>] [--json]`                                        | Builds graph edges from the verified ledger.                                                                                                                                                                |
+| Verify             | `verify --ledger <dir-or-file> [--attestation <path>]`                                                 | Recomputes body hashes, links, and signatures.                                                                                                                                                              |
+| Policy packs       | `packages/policy/packs/strict.yaml`, `balanced.yaml`, `dev.yaml`                                       | Ready-made policies loaded through `loadPack` in the policy package. `strict` allows only R0, `balanced` holds R2 and denies R3, `dev` holds every R3.                                                      |
 
 ## Package map
 
-| Package | Owns |
-| ------- | ---- |
-| `@void/registry` | Registry data, preconditions, evaluation, and declared facts. It imports nothing. |
-| `@void/ledger` | Canonical JSON, entry hashes, JSONL store, signing, feed, taint, verification, and attestations. |
-| `@void/policy` | YAML policy loading, decisions, holds, approval broker, and approval channels. |
-| `@void/proxy` | MCP session plumbing, stdio and HTTP upstream transports, forwarding, interception, and approval pumping. |
-| `@void/connectors` | Connector registry, Postgres logic, S3 logic, probes, snapshots, and manifests. |
-| `@void/cli` | Development command handlers and terminal render models. |
-| `@void/workbench` | Provider discovery, bounded agent sessions and the shared GUI/CLI model loop. |
-| `@void/sdk` | In-process client wrapper for app builders: VoidClient, holdHandle, typed errors. |
+| Package            | Owns                                                                                                      |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| `@void/registry`   | Registry data, preconditions, evaluation, and declared facts. It imports nothing.                         |
+| `@void/ledger`     | Canonical JSON, entry hashes, JSONL store, signing, feed, taint, verification, and attestations.          |
+| `@void/policy`     | YAML policy loading, decisions, holds, approval broker, and approval channels.                            |
+| `@void/proxy`      | MCP session plumbing, stdio and HTTP upstream transports, forwarding, interception, and approval pumping. |
+| `@void/connectors` | Connector registry, Postgres logic, S3 logic, probes, snapshots, and manifests.                           |
+| `@void/cli`        | Development command handlers and terminal render models.                                                  |
+| `@void/workbench`  | Provider discovery, bounded agent sessions and the shared GUI/CLI model loop.                             |
+| `@void/sdk`        | In-process client wrapper for app builders: VoidClient, holdHandle, typed errors.                         |
 
 ## Beta scope
 
@@ -193,6 +193,7 @@ are not included in this beta.
 - `docs/PLAN-GAPS.md`: consolidated remaining work across active plans.
 - `docs/SDK.md`: SDK release candidate surface.
 - `docs/TESTING.md`: package test commands and test rules.
+- `docs/AGENT-BINARIES.md`: the two external agent CLIs, their versions and the contract VOID relies on.
 - `CONTRIBUTING.md`: how to contribute, and what gets declined.
 - `packages/policy/README.md`: policy pack contents and loading rules.
 - `packages/verifier/README.md`: the independent offline ledger verifier.
