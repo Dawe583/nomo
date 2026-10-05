@@ -22,11 +22,14 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
 
 async function ledgerRows(t: {
   after(fn: () => Promise<void>): void;
-}): Promise<{ ui: WorkspaceTui; app: Workbench }> {
+}, hookCommands: string[] = ["echo done"]): Promise<{
+  ui: WorkspaceTui;
+  app: Workbench;
+}> {
   const root = await mkdtemp(join(tmpdir(), "void-tui-harness-rows-"));
   const env = {
     VOID_DATA_DIR: root,
-    VOID_HOOK_COMMANDS: JSON.stringify(["echo done"]),
+    VOID_HOOK_COMMANDS: JSON.stringify(hookCommands),
   };
   const app = new Workbench(env, assistantFetcher("ok"));
   await app.configure({
@@ -122,4 +125,51 @@ test("Enter on a ledger hook row toggles it and names the new state", async (t) 
   const on = rowsOf(ui).find((r) => r.id === "hook:audit");
   assert.match(on!.label, /hook audit on/);
   assert.match(ui.notice, /Hook audit is now on/);
+});
+
+test("a hook command with credentials is redacted, and a plain one still renders", async (t) => {
+  const secret =
+    'curl -H "Authorization: Bearer sekret-123" --token=abc --key=def https://api.test/hook';
+  const { ui, app } = await ledgerRows(t, [secret, "echo done"]);
+
+  app.upsertHook({
+    id: "ship",
+    event: "after-tool",
+    command: secret,
+    enabled: true,
+  });
+  const row = rowsOf(ui).find((r) => r.id === "hook:ship");
+  assert.ok(row, "the saved hook never surfaced as a row");
+  const body = row.lines.join("\n");
+  assert.doesNotMatch(body, /sekret-123/);
+  assert.doesNotMatch(body, /abc/);
+  assert.doesNotMatch(body, /--key=def/);
+  assert.match(body, /\[redacted\]/);
+  assert.match(body, /Command: curl /);
+
+  app.upsertHook({
+    id: "plain",
+    event: "after-tool",
+    command: "echo done",
+    enabled: true,
+  });
+  const plain = rowsOf(ui).find((r) => r.id === "hook:plain");
+  assert.ok(plain, "the plain hook never surfaced as a row");
+  assert.match(plain.lines.join("\n"), /Command: echo done/);
+});
+
+test("a long hook command is bounded, with a marker saying it was cut", async (t) => {
+  const long = `echo ${"x".repeat(400)}`;
+  const { ui, app } = await ledgerRows(t, [long]);
+
+  app.upsertHook({ id: "long", event: "after-tool", command: long, enabled: true });
+  const row = rowsOf(ui).find((r) => r.id === "hook:long");
+  assert.ok(row, "the saved hook never surfaced as a row");
+  const commandLine = row.lines.find((line) => line.startsWith("Command: "));
+  assert.ok(commandLine, "no command line rendered");
+  assert.match(commandLine, /… \(\+\d+ chars\)/);
+  assert.ok(
+    commandLine.length <= "Command: ".length + 160 + 20,
+    `command line not bounded: ${commandLine.length}`,
+  );
 });
