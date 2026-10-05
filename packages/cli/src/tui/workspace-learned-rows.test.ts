@@ -152,3 +152,37 @@ test("a learned rule is never shown without the operator-written marker", async 
   assert.match(body, /evidence, not authority/);
   assert.match(body, /appended after the operator's own rules/);
 });
+
+test("/learned empty cases print the same lines as the ledger tab rows", async (t) => {
+  // One workspace that taught nothing over two verified entries, and one
+  // that has no verified entries at all.
+  const withData = await ledgerRows(t);
+  withData.ui.proofs.set("ws-1", [
+    refusal("void_workspace_delete", "r1"),
+    refusal("void_workspace_delete", "r1"),
+  ]);
+  withData.ui.proofs.set("ws-2", []);
+  const tabEmpty = learnedRows(withData.ui)
+    .flatMap((r) => r.lines)
+    .filter((line) => line.startsWith("0 "));
+  assert.deepEqual(tabEmpty.sort(), [
+    "0 recurring refusals across 2 verified entries.",
+    "0 verified entries, so no refusal has been observed and no rule was mined.",
+  ].sort());
+
+  await withData.ui.command("/learned");
+  const detail = withData.ui.lines();
+  for (const line of tabEmpty)
+    assert.ok(detail.includes(line), `detail is missing "${line}"`);
+
+  // No proofs anywhere: the tab's learned:none row and the /learned detail
+  // must carry the same global nothing-verified line.
+  const none = await ledgerRows(t);
+  const tabGlobal = learnedRows(none.ui).find((r) => r.id === "learned:none");
+  assert.ok(tabGlobal, "no global learned:none row on the tab");
+  await none.ui.command("/learned");
+  const detailNone = none.ui.lines();
+  for (const line of tabGlobal.lines)
+    if (line.startsWith("0 "))
+      assert.ok(detailNone.includes(line), `detail is missing "${line}"`);
+});
