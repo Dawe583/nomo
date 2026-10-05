@@ -312,3 +312,35 @@ test("maxOutputTokens is sent with the request", async (t) => {
   assert.equal(bodies[0]!.max_tokens, 512);
   assert.equal(HARNESS_SETTINGS.maxOutputTokens.default, 4096);
 });
+test("maxPromptCharacters also bounds a branch prompt rewrite", async (t) => {
+  // branch() rewrites a user message, so it accepts a prompt and must hold it
+  // to the same bound as start and send. It carried its own 32000 literal,
+  // which would have let a raised limit be ignored on this path entirely.
+  const f = await fixture(t, async (url) =>
+    String(url).endsWith("/models") ? models() : answer(),
+  );
+  const session = await f.app.start("Original prompt", "fixture");
+  await f.app.settled();
+
+  f.app.patchHarnessSettings({ maxPromptCharacters: 256 });
+  await assert.rejects(
+    f.app.branch(session.id, {
+      seq: 1,
+      prompt: "x".repeat(300),
+      idempotencyKey: "branch-too-long",
+    } as Parameters<Workbench["branch"]>[1]),
+    /user message/,
+  );
+
+  // The bound is a setting, not a wall: under the default a prompt this test
+  // just refused is accepted, which is what "operator-settable" has to mean.
+  f.app.patchHarnessSettings({
+    maxPromptCharacters: HARNESS_SETTINGS.maxPromptCharacters.default,
+  });
+  const child = await f.app.branch(session.id, {
+    seq: 1,
+    prompt: "x".repeat(300),
+    idempotencyKey: "branch-long-enough",
+  } as Parameters<Workbench["branch"]>[1]);
+  assert.equal(child.status, "idle");
+});

@@ -1633,7 +1633,7 @@ export class Workbench {
       if (body.prompt !== undefined) {
         if (
           !body.prompt.trim() ||
-          body.prompt.length > 32000 ||
+          body.prompt.length > this.harness.maxPromptCharacters ||
           messages.at(-1)?.kind !== "user"
         )
           throw new Error("Choose a user message to edit.");

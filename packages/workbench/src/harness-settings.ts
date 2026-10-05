@@ -87,7 +87,7 @@ export const HARNESS_SETTINGS: {
     consumerFile: "index.ts",
     // Queued text is bounded where it enters, in the TUI's own queue method,
     // not here; Workbench.send re-checks this same limit for every caller.
-    consumers: ["start", "send", "event"],
+    consumers: ["start", "send", "event", "branch"],
     default: 32000,
     min: 256,
     max: 200000,
