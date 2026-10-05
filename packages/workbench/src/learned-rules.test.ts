@@ -1,4 +1,8 @@
 import test from "node:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Workbench } from "./index.ts";
 import assert from "node:assert/strict";
 
 import { LEARNED_RULE_MIN_REPEATS, mineLearnedRules } from "./learned-rules.ts";
@@ -122,4 +126,52 @@ test("the threshold is a count, and a useless one is rejected", () => {
   assert.deepEqual(mineLearnedRules(chain, 3), []);
   assert.throws(() => mineLearnedRules(chain, 0), /positive integer/);
   assert.throws(() => mineLearnedRules(chain, 1.5), /positive integer/);
+});
+
+test("learned rules are appended, so an operator's own rule is still reached first", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-learned-order-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  // Nothing here reaches a provider — the workbench is only built so its
+  // evidence map and policy merge exist to be inspected. Without a fetcher
+  // `configure` tries a real endpoint and the test fails on the network
+  // instead of on the ordering it exists to prove.
+  const fetcher = (async (url: unknown) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] })) as typeof fetch;
+  const app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  await app.shutdown();
+
+  const internals = app as unknown as {
+    evidence: Record<string, unknown[]>;
+    policyWithLearned(policy: unknown, workspace: string): unknown;
+  };
+  const workspace = "w";
+  internals.evidence[workspace] = [
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "hold:denied" } },
+  ];
+
+  // The operator explicitly allows what the chain shows being refused. Were a
+  // learned rule placed first, `decide` would hold a call the operator allowed
+  // on purpose - a model observation overriding a human decision.
+  const operator = {
+    ok: true as const,
+    policy: {
+      version: 1,
+      rules: [{ match: { class: "r1", tool: "void_workspace_delete" }, decision: "allow" as const }],
+    },
+  };
+  const merged = internals.policyWithLearned(operator, workspace) as {
+    ok: true;
+    policy: { rules: ReadonlyArray<{ decision: string; rationale?: string }> };
+  };
+  assert.equal(merged.ok, true);
+  assert.equal(merged.policy.rules.length, 2);
+  assert.equal(merged.policy.rules[0].decision, "allow", "the operator's rule must come first");
+  assert.equal(merged.policy.rules[1].decision, "hold", "the learned rule fills the gap behind it");
+  assert.match(merged.policy.rules[1].rationale ?? "", /Not written by an operator/);
+  assert.equal(operator.policy.rules.length, 1, "the operator's policy must not be mutated");
 });

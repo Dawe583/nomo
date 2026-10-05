@@ -79,6 +79,7 @@ import {
   listPolicyProfiles,
   resolvePolicyProfile,
 } from "./policy-profile.ts";
+import { mineLearnedRules } from "./learned-rules.ts";
 import { loadPolicy, type ValidPolicy } from "../../policy/src/rules.ts";
 import { decide, type PolicyDecision } from "../../policy/src/decide.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
@@ -2340,6 +2341,24 @@ export class Workbench {
       }
     });
   }
+  /**
+   * The policy a call is decided under: the operator's own rules first, then
+   * whatever has been mined from this workspace's signed chain.
+   *
+   * Learned rules go last on purpose. `decide` takes the first matching rule,
+   * so anything placed earlier could let a pattern a model happened to repeat
+   * override a decision an operator made deliberately. A learned rule is
+   * evidence, not authority — it may only fill a gap the operator left open.
+   *
+   * The rules are not written back: this is derived on read, so a chain that
+   * is truncated or rolled back cannot leave a stale rule in force.
+   */
+  private policyWithLearned(policy: ValidPolicy, workspace: string): ValidPolicy {
+    const learned = mineLearnedRules(this.evidence[workspace] ?? []);
+    if (learned.length === 0) return policy;
+    return { ok: true, policy: { ...policy.policy, rules: [...policy.policy.rules, ...learned] } };
+  }
+
   private async authorizeTool(session: Session, call: { tool: string; workspace: string; connector: string; klass: string; blastRadius: number | undefined; reason: string; arguments: JsonObject }, decision: PolicyDecision | { kind: "deny" }, policy: ValidPolicy) {
     const name = call.tool, args = call.arguments;
     await this.locked(() =>
@@ -2492,8 +2511,9 @@ export class Workbench {
         throw new Error("Agent policy refused a tool outside its allowed scope.");
       if (!tool.connectorId) {
         const call = { tool: tool.name, workspace: session.view.workspace, connector: "workspace", klass: workspaceToolClass(tool.name) ?? "r3", blastRadius: 1, reason: "Managed document policy.", arguments: args };
-        const decision = decide(profile.policy, call);
-        const allowed = await this.authorizeTool(session, call, decision, profile.policy);
+        const policy = this.policyWithLearned(profile.policy, session.view.workspace);
+        const decision = decide(policy, call);
+        const allowed = await this.authorizeTool(session, call, decision, policy);
         observed.decision =
           decision.kind === "hold"
             ? allowed ? "hold:approved" : "hold:denied"
