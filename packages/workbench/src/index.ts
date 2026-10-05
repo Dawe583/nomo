@@ -2309,9 +2309,12 @@ export class Workbench {
       // that into an unknown tool outcome for a tool that ran perfectly well.
       // The public key still comes from the shared resolution, so an operator's
       // out-of-band pin wins and the fallback is reported as degraded.
-      const key = await this.verificationKey(() =>
-        this.retainedSigner(join(homedir(), ".void", "keys")),
-      );
+      // The proxy's key directory is overridable so a test can isolate from the
+      // operator's real `~/.void/keys`; unset, it is exactly what it always
+      // was. It is deliberately NOT `this.storage.directory`: that is the
+      // document key, and resolving against it would find nothing.
+      const proxyKeys = this.env.VOID_PROXY_KEYS ?? join(homedir(), ".void", "keys");
+      const key = await this.verificationKey(() => this.retainedSigner(proxyKeys));
       const verified = await verifyChain(entries, { publicKey: key.publicKey });
       if (!verified.ok)
         throw new Error("The stdio proxy ledger failed verification.");
