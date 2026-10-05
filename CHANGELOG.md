@@ -3,40 +3,35 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
-- Every limit that governed a run was a literal in the run path: 20 turns,
-  4096 output tokens, a 32000 character prompt, a 20-deep queue, a 65536 byte
-  body, a 32-call tool batch, a 5s hook timeout, and a retry loop wired to the
-  free endpoint. Both agents VOID orchestrates expose this class of limit as
-  operator settings, prime-agent as `autonomous.maxTurns` and `maxTokens`, omp
-  as `task.maxConcurrency` and `maxRuntimeMs`, so a limit nobody can change is
-  a limit nobody chose. They are now settings, with VOID's own conservative
-  defaults rather than either upstream's.
+- Every limit that governed a run was a literal in the code: 20 turns, 4096
+  output tokens, a 32000 character prompt, a 20-deep queue, a 65536 byte
+  request, a 32-call tool batch, a 5s hook timeout, and a retry loop tied to
+  the free endpoint. Both agent harnesses VOID drives expose this kind of limit
+  as an operator setting, so a limit nobody can change is a limit nobody chose.
+  They are now settings, keeping VOID's own conservative defaults rather than
+  either harness's.
 
-  `/settings` lists each one with the value in force, the range it may be set
-  within, and the symbols that read it; `/settings key value` sets one.
-  `GET`/`PATCH /api/harness-settings` is the same surface over HTTP. Values
-  are clamped rather than refused when out of range, on the patch path and on
-  the load path alike, so a hand-edited state file cannot widen a limit nobody
-  chose. An unknown key is refused by name, because a silent no-op on a
-  misspelled limit reads to an operator as applied.
+  `/settings` lists every limit with the value in force and the range it may be
+  set within; `/settings key value` sets one. The same is available over HTTP.
+  A value outside its range is clamped rather than refused, both when set and
+  when a stored workspace is loaded, so an edited state file cannot widen a
+  limit nobody chose. A misspelled limit is refused by name instead of being
+  ignored, because a silent no-op reads as a change that was applied.
 
-  Two bounds the run path enforced in more than one place did not agree with
-  each other. A branch prompt rewrite carried its own 32000 literal while start
-  and send moved to the setting, so a raised limit would have been silently
-  ignored on that path. `capabilities` still advertised 32000 after the run
-  path moved, so the web would have refused prompts the runtime accepts. Both
+  Two limits enforced in more than one place did not agree with each other. A
+  conversation branch rewrote a prompt against its own hardcoded ceiling while
+  the other entry points moved to the setting, so a raised limit would have
+  been silently ignored there. The web interface also kept reporting the old
+  prompt ceiling, so it would have refused prompts the runtime accepts. Both
   now follow the setting.
 
-  `maxRunTimeoutMs` is new behaviour and its resulting status matters: a run
-  that reaches the deadline goes to `unknown`, not `idle` and not `failed`,
-  because an outcome that was never proven has to keep Undo and reconciliation
-  available. A setting with no consumer is not shipped, so each row names the
-  symbols that read it and a test reads those files to confirm they exist;
-  that check rejected two rows in the commit that introduced the table.
+  A run can now be given a wall-clock deadline. The resulting state matters:
+  a run that reaches the deadline is reported as an unproven outcome rather
+  than a clean finish or a failure, so Undo and reconciliation stay available.
+  A limit is only offered when something actually reads it.
 
-  `permissionMode` is deliberately not a setting and stays server-controlled.
-  See `docs/HARNESS-SETTINGS.md` for the full reference, including what is not
-  exposed and why.
+  Permission mode is deliberately not a setting and remains controlled by the
+  server.
 
 - `policyProfile` on an agent profile now selects a policy. It was validated,
   stored, and then admitted exactly one value, so an agent profile could not
