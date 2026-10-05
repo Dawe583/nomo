@@ -3,9 +3,12 @@
 ## Release scope
 
 Windows is out of scope for the VOID 1.0.1 delivery. The current-source
-Windows gate remains open: no current packaging, installed-application smoke or
-full Windows recovery evidence is claimed. Historical beta evidence is retained
-below but cannot certify the current candidate.
+Windows evidence is green for packaging and the installed-application
+smoke on a Windows 11 local host (see the dated section below); the Windows
+gate still needs a current-source Windows CI run, installer/checksum upload
+and a recovery/attestation pass before it can be claimed for release.
+Historical beta evidence is retained below; it cannot certify the current
+candidate.
 
 The historical Windows build target used the shared VOID browser GUI and local
 guarded runtime. Its intended platform was Windows 10/11 x64 with WebView2.
@@ -28,6 +31,52 @@ download an export. Only a successful run
 uploads an installer and its SHA-256 file. Builds are unsigned previews; Windows
 may display a SmartScreen warning. No Windows download is advertised until the
 native build and installed-application smoke test succeed.
+
+## 2026-10-04 developer inner-loop map (keep TUI, mobile and desktop easy)
+
+This section is the research note for how VOID's user surfaces are
+developed day to day, so that opening one does not require remembering
+undocumented incantations. Today's surfaces and their direct entrypoints:
+
+- **TUI** — `pnpm tui` (alias of `void` with no arguments:
+  `packages/cli/bin/void.mjs` calls `withDefaultTui` and dispatches to
+  `packages/cli/src/tui/*`). Tests: `pnpm test:tui` (node --test for
+  `packages/cli/src/tui/workspace*.test.ts` plus
+  `python3 scripts/src/verify-tui-terminal.py`). The workspace TUI has its own
+  `README.md` visual contract (inline call, watch frame, hold prompt) and
+  parity tests.
+- **Desktop (native)** — `pnpm desktop` runs `apps/desktop dev`:
+  `pnpm prepare:runtime && tauri dev`. In order it needs: root
+  `pnpm install --frozen-lockfile --ignore-scripts` (**first** — without it
+  `desktop:test` fails with `Cannot find package 'node-sql-parser'`),
+  `pnpm desktop:setup` (pnpm install inside `apps/desktop` with
+  `--ignore-workspace`), and a working Rust MSVC toolchain + VS C++ build
+  tools for `cargo` (per-shell env loader in `vsenvs.ps1`). Tests:
+  `pnpm desktop:test`, `cargo test`.
+- **Desktop (smoke)** — same binary accepts `--smoke-test`, `--smoke-mobile`
+  (visible 390 × 844 window), `--smoke-runtime-exit`. These start the bundled
+  Node 24 runtime, load the local UI, exercise a download and exit with a
+  code; they exist so CI and release packaging can gate on real behaviour. The
+  Windows gate is open until a green installed `--smoke-test`.
+- **Web control plane / mobile shell** — `pnpm dev:web` (dev server for
+  `@void/control-plane-ui`), `pnpm gui` (build the web UI and serve it),
+  `pnpm build` (production nitro build). Mobile layout is the same UI at a
+  narrow viewport (see `docs/MOBILE-WEB-REFINEMENT.md`): chat-first header,
+  bottom sheets, options in a mobile popover, bottom composer.
+- **Watch / inline wrapper** — `pnpm watch` opens the second-terminal watch
+  frame for a session that also runs inline output in the first. The same
+  renderers (`renderInlineCall`, `renderWatchFrame`, `renderHoldPrompt`) are
+  shared: TUI is three surfaces of one contract, not three implementations.
+
+**Keeping this ergonomic long term:** run `pnpm install` at the workspace
+root first; keep the desktop README's per-surface smoke flags next to the
+dev commands; and make the Windows smoke export check target a tool the
+no-credential smoke workspace actually exposes — the 2026-10-04 Windows smoke
+failure came from the smoke expecting `/void_workspace_write` under
+`.command-trigger` while the fresh smoke workspace renders only the
+no-provider workspace, not from Node, packaging or the WebView2 download
+path. WP-09b parity tests keep TUI and GUI matching; we should hold the
+desktop smoke to the same "one contract, many surfaces" discipline.
 
 ## Windows workspace-key storage source audit
 
@@ -82,3 +131,57 @@ runs the Credential Manager tests, installs the freshly built NSIS package and
 passes the installed WebView/export smoke.
 Published installers and checksums:
 https://github.com/Dawe583/void/releases/tag/desktop-v0.1.0-beta.4 .
+
+
+## 2026-10-04 host verification on Windows (replaces the macOS audit as the
+`cfg(windows)` evidence for the current source)
+
+Machine: Windows 11, `LAPTOP-TAB9CBGR`, 16 cores. Added: `rustup` + Rust
+stable 1.99.0 (`x86_64-pc-windows-msvc`), Visual Studio Build Tools 2022
+17.14.41 with `Microsoft.VisualStudio.Workload.VCTools` + recommended
+components (Windows 10 SDK 10.0.26100.0). Already present: WebView2
+154.0.4258.53, Node 24.20.0, pnpm 10.33.0. Repo at `main` (aafa078).
+
+Verified on this host, against docs and the desktop package:
+
+- `pnpm install --frozen-lockfile --ignore-scripts`, then
+  `pnpm desktop:setup`: OK. An immediate `pnpm desktop:test` failure
+  (`node-sql-parser` missing) is resolved by running the root install first;
+  the test then passes 9/9, including the real-backend runtime smoke.
+- `cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml`: OK.
+- `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml`: 20/20,
+  including `keychain::windows_tests::windows_credentials_round_trip` and
+  `keychain::windows_tests::windows_credentials_persist_across_workspace_loads`
+  which run for the first time off macOS.
+- `pnpm desktop:build`: OK. Produces
+  `apps/desktop/src-tauri/target/release/bundle/nsis/VOID_1.0.1_x64-setup.exe`
+  (26.77 MB).
+- Silent install: `VOID_1.0.1_x64-setup.exe /S` installs under
+  `%LOCALAPPDATA%\VOID` (`currentUser` mode) with `uninstall.exe`; silent
+  uninstall path exists.
+
+**Resolved Windows smoke failure (root causes fixed).** The previous run
+failed because the embedded runtime inherited the HTTP control-plane's
+locked default (`DEFAULT_HTTP_PERMISSION_MODE = "read-only"` in
+`packages/workbench/src/gui.ts`): the workspace rendered "Režim: jen čtení",
+`/api/tools` exposed only read/list tools, and the smoke looking for
+`/void_workspace_write` timed out and exported its own FAIL blob. The
+desktop window is a local operator surface, so `launch_runtime` in
+`apps/desktop/src-tauri/src/main.rs` now sets
+`VOID_PERMISSION_MODE=normal` for the bundled Node runtime (accepted by
+`serverPermissionMode`). The mobile smoke also bit on a stale selector:
+it clicked `.mobile-action-list .theme-toggle`, which no longer exists —
+the current theme control is the button labelled "Toggle theme" in the
+mobile options popover. That probe now matches on `aria-label`, so both
+smoke legs are green again on current source.
+
+Next for the Windows gate:
+- Windows desktop gate now has current-source Windows 11 evidence: MSVC
+  build, `cfg(windows)` Rust tests 20/20, `desktop:test` 9/9, silent NSIS
+  install to `%LOCALAPPDATA%\VOID`, and BOTH installed smokes green —
+  `%LOCALAPPDATA%\VOID\void-desktop.exe --smoke-test` and `--smoke-mobile`:
+  bundled Node runtime, real WebView render, byte-exact Blob export, mobile
+  toolbar. Packaging/smoke packaging is ready for a human to run the manual
+  GitHub Actions `windows-desktop` workflow and, if it passes on a real
+  runner, move the gate. The remaining gate item is that manual CI run and
+  signing/publishing policy, not the desktop code.

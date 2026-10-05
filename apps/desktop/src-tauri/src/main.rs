@@ -139,6 +139,11 @@ fn launch_runtime(
         )
         .env("PATH", std::env::join_paths(search_path)?)
         .env("VOID_DESKTOP_WEB_ROOT", resources.join("web"))
+        // The desktop webview is the operator's own window on the same
+        // machine, i.e. the "local surface" of packages/workbench/src/gui.ts:
+        // absent VOID_PERMISSION_MODE it would default to the HTTP server's
+        // locked "read-only" posture and hide writable tools from the smoke.
+        .env("VOID_PERMISSION_MODE", "normal")
         .env_remove("NODE_OPTIONS")
         .env_remove("NODE_PATH")
         .env_remove("VOID_CONTROL_TOKEN")
@@ -291,11 +296,13 @@ fn main() {
                               setTimeout(() => {
                                 try {
                                   check(document.querySelector('dialog[open]'), 'options dialog open');
-                                  const actions = [...document.querySelectorAll('.mobile-action-list button')];
-                                  check(actions.length >= 4, 'options present');
-                                  check(actions.every(button => button.getBoundingClientRect().height >= 43.9), 'options touch size: ' + actions.map(button => button.getBoundingClientRect().height).join(','));
-                                  const before = document.documentElement.dataset.theme;
-                                  document.querySelector('.mobile-action-list .theme-toggle').click();
+                                   const actions = [...document.querySelectorAll('.mobile-action-list button')];
+                                   check(actions.length >= 4, 'options present');
+                                   check(actions.every(button => button.getBoundingClientRect().height >= 43.9), 'options touch size: ' + actions.map(button => button.getBoundingClientRect().height).join(','));
+                                   const before = document.documentElement.dataset.theme;
+                                   const themeButton = actions.find(button => /toggle theme|p\u0159epnout vzhled/i.test(button.getAttribute('aria-label') || ''));
+                                   check(!!themeButton, 'theme action present');
+                                   themeButton.click();
                                   setTimeout(() => {
                                     try { check(document.documentElement.dataset.theme !== before, 'theme action'); finish('VOID desktop download smoke'); }
                                     catch (error) { finish('FAIL: ' + error.message); }
