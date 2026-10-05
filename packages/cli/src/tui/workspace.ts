@@ -93,6 +93,23 @@ type Confirmation = {
 const json = (value: unknown) =>
   JSON.stringify(value, null, 2)?.split("\n") ?? [];
 const text = (value: unknown) => String(value ?? "unknown");
+/** Hook commands are operator-supplied config, but they routinely carry
+ * credentials inline (curl -H "Authorization: ...", --token=...). The
+ * ledger tab prints them, so redact before bounding and rendering, the
+ * same bound agentsLines applies to a system prompt. */
+const redactSecrets = (value: string): string =>
+  value
+    .replace(/-H\s+"Authorization:[^"]*"/gi, "[redacted]")
+    .replace(/Authorization:\s*\S+/gi, "[redacted]")
+    .replace(/Bearer\s+\S+/g, "[redacted]")
+    .replace(/\b(?:token|key|password)=\S+/gi, "[redacted]");
+const boundedHookCommand = (command: string): string => {
+  const clean = redactSecrets(command.trim());
+  if (!clean) return "(empty)";
+  return clean.length > 160
+    ? `${clean.slice(0, 160)}… (+${clean.length - 160} chars)`
+    : clean;
+};
 /** The one next step per consent state. A staged connector has no catalog, a
  * probed one has tools nobody agreed to, and a confirmed one is in use. */
 const MCP_NEXT = {
@@ -1121,7 +1138,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           label: `hook ${hook.id} ${hook.enabled ? "on" : "off"}`,
           lines: [
             `Event: ${hook.event}.`,
-            `Command: ${hook.command}`,
+            `Command: ${boundedHookCommand(hook.command)}`,
             "/hook enable|disable <id> toggles it; /hook-file reviews a save.",
           ],
         });
