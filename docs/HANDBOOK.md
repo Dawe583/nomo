@@ -354,7 +354,8 @@ Approval and recovery: `/approvals`, `/approve [hold-ID] [reason...]`, `/deny
 `/verify`, `/document <path>`, `/attest`, `/export <ledger|chat|document>`.
 
 Setup and diagnostics: `/doctor`, `/init`, `/conformance`, `/harness
-<cloud|prime-agent>`.
+<cloud|prime-agent>`. The two external agent binaries behind `/harness` are
+documented in `docs/AGENT-BINARIES.md`.
 
 Every command above takes its argument in the same place; running one with no
 argument prints its own usage line rather than failing opaquely. A command with
@@ -596,7 +597,7 @@ arguments prints that command's usage.
 | `void tui`       | The terminal workspace.                                                   |
 | `void watch`     | A full-screen live ledger view.                                           |
 | `void run`       | The MCP proxy: `void-proxy` in front of an agent's tools.                 |
-| `void classify`  | Classify the tool calls in a transcript, or one named call.                  |
+| `void classify`  | Classify the tool calls in a transcript, or one named call.               |
 | `void feed`      | Print ledger entries, optionally following.                               |
 | `void verify`    | Verify a ledger's chain and signatures.                                   |
 | `void ledger`    | The ledger group. `void ledger verify <dir>` verifies a ledger directory. |
@@ -1011,26 +1012,26 @@ A checklist, in the order that catches the most.
 
 ## 19. Where to go deeper
 
-| Subject                                                 | Document                                                 |
-| ------------------------------------------------------- | -------------------------------------------------------- |
-| The terminal workspace in Czech, with the full key list | [the terminal workspace in Czech, with the full key list](TUI-WORKSPACE.md)                                  |
-| GUI commands and tool catalogue                         | [GUI commands and the tool catalogue](GUI-COMMANDS.md)                                   |
-| Operating the proxy, approvals and the ledger layout    | [operating the proxy, approvals and the ledger layout](OPERATIONS.md)                                     |
-| The policy grammar reference                            | [the policy grammar reference](POLICY-REFERENCE.md)                               |
+| Subject                                                 | Document                                                                                                                            |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| The terminal workspace in Czech, with the full key list | [the terminal workspace in Czech, with the full key list](TUI-WORKSPACE.md)                                                         |
+| GUI commands and tool catalogue                         | [GUI commands and the tool catalogue](GUI-COMMANDS.md)                                                                              |
+| Operating the proxy, approvals and the ledger layout    | [operating the proxy, approvals and the ledger layout](OPERATIONS.md)                                                               |
+| The policy grammar reference                            | [the policy grammar reference](POLICY-REFERENCE.md)                                                                                 |
 | What is certified, and what is not                      | [the executable recovery contract and its limits](RECOVERY-CONTRACT.md), [what is certified, and what is not](RECOVERY-COVERAGE.md) |
-| The executable recovery contract and its limits         | [the executable recovery contract and its limits](RECOVERY-CONTRACT.md)                              |
-| Adding a connector                                      | [adding a connector](CONNECTOR-GUIDE.md)                                |
-| The embedding SDK                                       | [the embedding SDK](SDK.md)                                            |
-| Cloud deployment                                        | [cloud deployment](CLOUD-INTEGRATION.md)                              |
-| Managed Postgres recovery                               | [managed Postgres recovery](MANAGED-RECOVERY.md)                               |
-| Managed filesystem recovery                             | [managed filesystem recovery](MANAGED-FILESYSTEM.md)                             |
-| Managed Git recovery                                    | [managed Git recovery](MANAGED-GIT.md)                                    |
-| Adapter conformance and what a certification means      | [adapter conformance and what a certification means](ADAPTER-CONFORMANCE.md)                            |
-| The receipt, and who can check it without VOID            | [a recovery receipt, verified without VOID](../scripts/receipt-demo/README.md), [the SQL a third party runs](RECEIPT-VERIFY.sql) |
-| The decisions behind the design                         | [context](CONTEXT.md), [decision log](DECISIONS.md)      |
-| The standards this repository holds itself to           | [the standards](STANDARDS.md)                             |
-| The release evidence matrix                             | [the release evidence matrix](RELEASE-1.0.1-MATRIX.md)                           |
-| What is left to build, honestly                         | [what is left to build, honestly](PLAN-GAPS.md)                                      |
-| Windows desktop specifics                               | [Windows desktop specifics](WINDOWS-DESKTOP.md)                                |
-| Beta boundaries                                         | [beta boundaries](BETA.md)                                           |
-| How this handbook is kept true                          | [how this handbook is kept true](../scripts/src/handbook.test.mjs)                          |
+| The executable recovery contract and its limits         | [the executable recovery contract and its limits](RECOVERY-CONTRACT.md)                                                             |
+| Adding a connector                                      | [adding a connector](CONNECTOR-GUIDE.md)                                                                                            |
+| The embedding SDK                                       | [the embedding SDK](SDK.md)                                                                                                         |
+| Cloud deployment                                        | [cloud deployment](CLOUD-INTEGRATION.md)                                                                                            |
+| Managed Postgres recovery                               | [managed Postgres recovery](MANAGED-RECOVERY.md)                                                                                    |
+| Managed filesystem recovery                             | [managed filesystem recovery](MANAGED-FILESYSTEM.md)                                                                                |
+| Managed Git recovery                                    | [managed Git recovery](MANAGED-GIT.md)                                                                                              |
+| Adapter conformance and what a certification means      | [adapter conformance and what a certification means](ADAPTER-CONFORMANCE.md)                                                        |
+| The receipt, and who can check it without VOID          | [a recovery receipt, verified without VOID](../scripts/receipt-demo/README.md), [the SQL a third party runs](RECEIPT-VERIFY.sql)    |
+| The decisions behind the design                         | [context](CONTEXT.md), [decision log](DECISIONS.md)                                                                                 |
+| The standards this repository holds itself to           | [the standards](STANDARDS.md)                                                                                                       |
+| The release evidence matrix                             | [the release evidence matrix](RELEASE-1.0.1-MATRIX.md)                                                                              |
+| What is left to build, honestly                         | [what is left to build, honestly](PLAN-GAPS.md)                                                                                     |
+| Windows desktop specifics                               | [Windows desktop specifics](WINDOWS-DESKTOP.md)                                                                                     |
+| Beta boundaries                                         | [beta boundaries](BETA.md)                                                                                                          |
+| How this handbook is kept true                          | [how this handbook is kept true](../scripts/src/handbook.test.mjs)                                                                  |
