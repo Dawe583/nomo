@@ -38,3 +38,36 @@ test("each hook summary names its on/off state", () => {
     /row\.enabled \? t\("zapnutý", "on"\) : t\("vypnutý", "off"\)/,
   );
 });
+
+test("the hook toggle posts the same hook with the flag flipped", () => {
+  // The id ties a hook to its runs, so a toggle is a re-save of the same
+  // hook, not a new one and never a delete.
+  assert.match(
+    code,
+    /api\("\/api\/hooks", "POST", \{ \.\.\.row, enabled: !row\.enabled \}\)/,
+  );
+});
+
+test("the hook form can only name an allowlisted command", () => {
+  // validateHook refuses a command that is not on the operator allowlist, so
+  // a free-text command field would be a form whose only outcome is a
+  // refusal. The field is a select over the catalog's hookCommands, and the
+  // form renders only when at least one command is allowlisted.
+  assert.match(code, /save\(event, "\/api\/hooks", \(fields\) => \(\{/);
+  assert.match(code, /fields\.command,/);
+  assert.match(
+    code,
+    /agents\.data\.hookCommands \?\? \[\]\)\.map\(\(command: string\) => \(/,
+  );
+  assert.match(
+    code,
+    /\(agents\.data\.hookCommands\?\.length \?\? 0\) > 0 && \(/,
+  );
+});
+
+test("the allowlist itself stays out of the form", () => {
+  // The operator allowlist is environment-only on purpose: an interface that
+  // could add an entry would let a hook author authorise their own command.
+  // The form says so next to the command field.
+  assert.match(code, /never through this interface/);
+});

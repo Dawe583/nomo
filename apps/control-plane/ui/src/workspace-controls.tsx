@@ -14,10 +14,26 @@ export function WorkspaceControls() {
   );
   const agents = useApi("/api/agents");
   const [project, setProject] = useState<Row>(),
-    [profile, setProfile] = useState<Row>();
+    [profile, setProfile] = useState<Row>(),
+    [hook, setHook] = useState<Row>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<unknown>(),
     [saved, setSaved] = useState(false);
+  async function toggleHook(row: Row) {
+    if (busy) return;
+    setBusy(true);
+    setSaved(false);
+    setError(undefined);
+    try {
+      await api("/api/hooks", "POST", { ...row, enabled: !row.enabled });
+      await client.invalidateQueries();
+      setSaved(true);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function save(
     event: FormEvent<HTMLFormElement>,
     path: string,
@@ -300,9 +316,88 @@ export function WorkspaceControls() {
               {row.id} ({row.enabled ? t("zapnutý", "on") : t("vypnutý", "off")}
               )
             </summary>
+            <div className="actions">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void toggleHook(row)}
+              >
+                {row.enabled ? t("Vypnout", "Disable") : t("Zapnout", "Enable")}
+              </button>
+              <button type="button" onClick={() => setHook(row)}>
+                {t("Upravit", "Edit")}
+              </button>
+            </div>
             <JsonDetail value={row} />
           </details>
         ))}
+        {agents.data?.hooksSupported === true &&
+          (agents.data.hookCommands?.length ?? 0) > 0 && (
+            <form
+              key={hook?.id ?? "new-hook"}
+              onSubmit={(event) =>
+                void save(event, "/api/hooks", (fields) => ({
+                  id: fields.id,
+                  event: fields.event,
+                  command: fields.command,
+                  enabled: fields.enabled === "on",
+                }))
+              }
+            >
+              <label>
+                ID
+                <input
+                  name="id"
+                  required
+                  maxLength={160}
+                  defaultValue={hook?.id ?? ""}
+                  readOnly={!!hook}
+                />
+              </label>
+              <label>
+                {t("Událost", "Event")}
+                <select name="event" required defaultValue={hook?.event ?? ""}>
+                  <option value="before-run">before-run</option>
+                  <option value="after-tool">after-tool</option>
+                  <option value="after-run">after-run</option>
+                </select>
+              </label>
+              <label>
+                {t("Příkaz z allowlistu", "Command from the allowlist")}
+                <select
+                  name="command"
+                  required
+                  defaultValue={hook?.command ?? ""}
+                >
+                  {(agents.data.hookCommands ?? []).map((command: string) => (
+                    <option key={command}>{command}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t("Zapnutý", "Enabled")}
+                <input
+                  name="enabled"
+                  type="checkbox"
+                  defaultChecked={hook?.enabled ?? true}
+                />
+              </label>
+              <p className="muted">
+                {t(
+                  "Allowlist se mění jen v konfiguraci hostitele, nikoli přes toto rozhraní.",
+                  "The allowlist changes in the host's configuration only, never through this interface.",
+                )}
+              </p>
+              <div className="actions">
+                <button disabled={busy}>{t("Uložit hook", "Save hook")}</button>
+                {hook && (
+                  <button type="button" onClick={() => setHook(undefined)}>
+                    {t("Nový hook", "New hook")}
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
       </section>
     </>
   );
