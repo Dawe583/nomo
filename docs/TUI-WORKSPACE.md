@@ -237,9 +237,15 @@ Karta ledger ukazuje vedle podepsaných záznamů řetězce a naučených pravid
 (`learned:*`) také to, kdo řetězec produkoval. Řádek `harness:current`
 ukazuje výchozí harness pro nové konverzace, vybraný agent profile a zda jsou
 hooky spustitelné. Každý uložený hook má vlastní řádek `hook:<id>` s
-událostí, příkazem a stavem zapnuto/vypnuto. Když není uložený žádný hook,
-vypíše se explicitní `hook:none`. Stejná fakta lze kdykoli vypsat přes
-`/harness` a `/hooks`.
+událostí, příkazem a stavem zapnuto/vypnuto; Enter na řádku hook přepne přes
+stejnou cestu jako `/hook enable|disable <id>`. Když není uložený žádný hook,
+vypíše se explicitní `hook:none`. Každý volitelný agent, vestavěný preset i
+uložený profil, má řádek `agent:<id>`; u uloženého profilu panel ukazuje
+policy profil, limity, povolené nástroje a zkrácený system prompt. Enter
+profil vybere pro nové konverzace (stejná volba jako `/agent <id>`), další
+Enter výběr zruší zpět na runtime default. Existující konverzace si vždy
+ponechají svůj snapshot. Stejná fakta lze kdykoli vypsat přes `/harness`,
+`/hooks` a `/agents`.
 
 Editor je standardně `nano`; `EDITOR` může obsahovat cestu k programu.
 Argumenty se bezpečně předávají bez shellu přes JSON pole:

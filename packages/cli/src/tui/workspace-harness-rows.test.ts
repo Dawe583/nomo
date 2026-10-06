@@ -20,9 +20,12 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
   });
 };
 
-async function ledgerRows(t: {
-  after(fn: () => Promise<void>): void;
-}, hookCommands: string[] = ["echo done"]): Promise<{
+async function ledgerRows(
+  t: {
+    after(fn: () => Promise<void>): void;
+  },
+  hookCommands: string[] = ["echo done"],
+): Promise<{
   ui: WorkspaceTui;
   app: Workbench;
 }> {
@@ -127,6 +130,79 @@ test("Enter on a ledger hook row toggles it and names the new state", async (t) 
   assert.match(ui.notice, /Hook audit is now on/);
 });
 
+test("every selectable agent gets a row, and the selected one is marked", async (t) => {
+  const { ui } = await ledgerRows(t);
+
+  // Presets always exist, so the panel is never an empty list.
+  const preset = rowsOf(ui).find((r) => r.id === "agent:default");
+  assert.ok(preset, "no row for the default preset");
+  assert.match(preset.label, /^agent default$/);
+  assert.match(preset.lines.join("\n"), /Preset default: VOID default\./);
+
+  ui.agentId = "planner";
+  const marked = rowsOf(ui).find((r) => r.id === "agent:planner");
+  assert.ok(marked, "no row for the planner preset");
+  assert.match(marked.label, /\[selected\]$/);
+  assert.match(marked.lines.join("\n"), /Selected for new conversations\./);
+});
+
+test("Enter on an agent row selects it, and Enter again returns to the runtime default", async (t) => {
+  const { ui } = await ledgerRows(t);
+
+  const index = rowsOf(ui).findIndex((r) => r.id === "agent:planner");
+  assert.ok(index >= 0, "no agent row to select");
+  ui.selected = index;
+  await ui.openSelected();
+
+  assert.equal(ui.agentId, "planner");
+  assert.match(
+    ui.notice,
+    /Agent profile planner selected for new conversations\./,
+  );
+  // The harness row and the row label now agree with the selection.
+  const harness = rowsOf(ui).find((r) => r.id === "harness:current");
+  assert.match(harness!.lines.join("\n"), /Selected agent profile: planner\./);
+  assert.match(
+    rowsOf(ui).find((r) => r.id === "agent:planner")!.label,
+    /\[selected\]/,
+  );
+
+  ui.selected = rowsOf(ui).findIndex((r) => r.id === "agent:planner");
+  await ui.openSelected();
+  assert.equal(ui.agentId, undefined);
+  assert.match(
+    ui.notice,
+    /Agent profile cleared\. New conversations use the runtime default\./,
+  );
+  assert.doesNotMatch(
+    rowsOf(ui).find((r) => r.id === "agent:planner")!.label,
+    /selected/,
+  );
+});
+
+test("a saved profile row shows the full panel, with the system prompt bounded", async (t) => {
+  const { ui, app } = await ledgerRows(t);
+  app.upsertAgent({
+    id: "auditor-custom",
+    name: "Custom auditor",
+    systemPrompt: "x".repeat(300),
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 5,
+    maxContextTokens: 8192,
+  });
+
+  const row = rowsOf(ui).find((r) => r.id === "agent:auditor-custom");
+  assert.ok(row, "the saved profile never surfaced as a row");
+  const body = row.lines.join("\n");
+  assert.match(
+    body,
+    /Profile auditor-custom: policy default, max turns 5, max context tokens 8192/,
+  );
+  assert.match(body, /Allowed tools: void_workspace_list/);
+  assert.match(body, /System prompt: x{160}… \(\+140 chars\)/);
+});
+
 test("a hook command with credentials is redacted, and a plain one still renders", async (t) => {
   const secret =
     'curl -H "Authorization: Bearer sekret-123" --token=abc --key=def https://api.test/hook';
@@ -162,7 +238,12 @@ test("a long hook command is bounded, with a marker saying it was cut", async (t
   const long = `echo ${"x".repeat(400)}`;
   const { ui, app } = await ledgerRows(t, [long]);
 
-  app.upsertHook({ id: "long", event: "after-tool", command: long, enabled: true });
+  app.upsertHook({
+    id: "long",
+    event: "after-tool",
+    command: long,
+    enabled: true,
+  });
   const row = rowsOf(ui).find((r) => r.id === "hook:long");
   assert.ok(row, "the saved hook never surfaced as a row");
   const commandLine = row.lines.find((line) => line.startsWith("Command: "));

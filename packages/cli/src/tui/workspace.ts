@@ -980,11 +980,13 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     return [
       "HARNESS SETTINGS, limits this workspace runs under",
       "",
-      ...harnessSettingsView(this.workbench.harnessSettings()).flatMap((row) => [
-        `${row.key}  ${row.value}  [${row.min}-${row.max}]${row.changed ? "  (changed)" : ""}`,
-        `  ${row.label}: ${row.description}`,
-        `  read by ${row.consumer}`,
-      ]),
+      ...harnessSettingsView(this.workbench.harnessSettings()).flatMap(
+        (row) => [
+          `${row.key}  ${row.value}  [${row.min}-${row.max}]${row.changed ? "  (changed)" : ""}`,
+          `  ${row.label}: ${row.description}`,
+          `  read by ${row.consumer}`,
+        ],
+      ),
       "",
       "/settings KEY VALUE sets one limit; the range is what the run path can honour.",
     ];
@@ -1167,6 +1169,43 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               : "No hooks saved, and execution is unsupported on this host.",
           ],
         });
+      // One row per selectable agent, presets and saved profiles alike: the
+      // harness row above says which profile is selected, and these rows are
+      // the panel it is selected from. The label carries the selection so it
+      // is visible without opening anything, and Enter makes the same
+      // assignment /agent <id> makes, so selection never leaves the tab.
+      for (const agent of harnessCatalog.agents) {
+        const profile = harnessCatalog.profiles.find(
+          (candidate) => candidate.id === agent.id,
+        );
+        const selected = agent.id === this.agentId;
+        // Same bound as /agents prints: a prompt is prose, and the marker
+        // says it was cut rather than letting a truncated prompt read as
+        // the whole one.
+        const prompt = profile?.systemPrompt.trim() ?? "";
+        const shown = !prompt
+          ? "(empty)"
+          : prompt.length > 160
+            ? `${prompt.slice(0, 160)}… (+${prompt.length - 160} chars)`
+            : prompt;
+        rows.push({
+          id: `agent:${agent.id}`,
+          label: `agent ${agent.id}${selected ? " [selected]" : ""}`,
+          lines: [
+            ...(profile
+              ? [
+                  `Profile ${profile.id}: policy ${profile.policyProfile}, max turns ${profile.maxTurns}, max context tokens ${profile.maxContextTokens}`,
+                  `Allowed tools: ${profile.allowedTools.join(", ") || "none"}`,
+                  `System prompt: ${shown}`,
+                ]
+              : [`Preset ${agent.id}: ${agent.name}. ${agent.description}`]),
+            selected
+              ? "Selected for new conversations."
+              : "Enter selects it for new conversations; Enter again returns to the runtime default.",
+            "Existing conversations keep their profile snapshot. /agent-file path.json reviews a save.",
+          ],
+        });
+      }
       rows.reverse();
     }
     if (this.tab === "approvals")
@@ -1294,6 +1333,30 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ...json(saved),
       ];
       this.notice = `Hook ${saved.id} is now ${saved.enabled ? "on" : "off"}. Existing conversations keep their hook snapshot.`;
+      this.scroll = 0;
+      return;
+    }
+    // An agent row is the profile itself, so Enter makes the same selection
+    // /agent <id> makes rather than only opening details: new conversations
+    // get the profile, existing ones keep theirs, and Enter on the selected
+    // row clears the selection back to the runtime default.
+    const agentRowId = /^agent:(.+)$/.exec(row.id)?.[1];
+    if (this.tab === "ledger" && agentRowId) {
+      const agent = this.workbench
+        .agents()
+        .agents.find((candidate) => candidate.id === agentRowId);
+      if (!agent) throw Error("Agent not found. Use /agents for ids.");
+      const selected = this.agentId !== agent.id;
+      this.agentId = selected ? agent.id : undefined;
+      this.detail = [
+        selected
+          ? `AGENT PROFILE ${agent.id} SELECTED`
+          : "AGENT PROFILE CLEARED",
+        ...row.lines,
+      ];
+      this.notice = selected
+        ? `Agent profile ${agent.id} selected for new conversations. Existing conversations keep their profile.`
+        : "Agent profile cleared. New conversations use the runtime default.";
       this.scroll = 0;
       return;
     }
