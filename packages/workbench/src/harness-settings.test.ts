@@ -21,7 +21,12 @@ import { HOOK_TIMEOUT_BOUNDS, HOOK_TIMEOUT_MS } from "./agents.ts";
 
 /** The package files a spec may name as its consumer file. Static and
  * string-keyed, so it is a plain record rather than a map. */
-const CONSUMER_FILES = ["index.ts", "provider.ts", "gui.ts", "agents.ts"] as const;
+const CONSUMER_FILES = [
+  "index.ts",
+  "provider.ts",
+  "gui.ts",
+  "agents.ts",
+] as const;
 
 const consumerSource = (file: (typeof CONSUMER_FILES)[number]) =>
   readFileSync(new URL(file, import.meta.url), "utf8");
@@ -29,14 +34,22 @@ const consumerSource = (file: (typeof CONSUMER_FILES)[number]) =>
 test("every setting names a consumer, so no knob is decorative", () => {
   for (const [key, spec] of Object.entries(HARNESS_SETTINGS)) {
     assert.ok(spec.consumers.length > 0, `${key} has no consumer`);
-    assert.ok(CONSUMER_FILES.includes(spec.consumerFile), `${key} names an unknown file`);
+    assert.ok(
+      CONSUMER_FILES.includes(spec.consumerFile),
+      `${key} names an unknown file`,
+    );
     assert.ok(spec.label.length > 0, `${key} has no label`);
     assert.ok(spec.description.length > 0, `${key} has no description`);
     assert.ok(
       spec.min <= spec.default && spec.default <= spec.max,
       `${key} default ${spec.default} is outside ${spec.min}..${spec.max}`,
     );
-    assert.ok(spec.min > 0, `${key} allows zero or negative`);
+    // Some settings use 0 to mean "unlimited/off" (e.g. maxContinuations,
+    // maxRunTokens). For all others the floor is 1.
+    const zeroMeansUnlimited = ["maxContinuations", "maxRunTokens"];
+    if (!zeroMeansUnlimited.includes(key)) {
+      assert.ok(spec.min > 0, `${key} allows zero or negative`);
+    }
   }
 });
 
@@ -139,13 +152,18 @@ test("a non-numeric patch value is refused rather than clamped to a default", ()
 });
 
 test("a valid patch is clamped on the way in", () => {
-  assert.deepEqual(harnessSettingsPatch({ maxQueuedRuns: 0 }), { maxQueuedRuns: 1 });
+  assert.deepEqual(harnessSettingsPatch({ maxQueuedRuns: 0 }), {
+    maxQueuedRuns: 1,
+  });
   assert.deepEqual(harnessSettingsPatch({ maxTurns: 8 }), { maxTurns: 8 });
   assert.deepEqual(harnessSettingsPatch({}), {});
 });
 
 test("the view names the consumer and marks a value that is not the default", () => {
-  const view = harnessSettingsView({ ...defaultHarnessSettings(), maxQueuedRuns: 5 });
+  const view = harnessSettingsView({
+    ...defaultHarnessSettings(),
+    maxQueuedRuns: 5,
+  });
   const queued = view.find((row) => row.key === "maxQueuedRuns");
   assert.ok(queued);
   assert.equal(queued.value, 5);

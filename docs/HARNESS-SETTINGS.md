@@ -37,18 +37,22 @@ operator as applied while changing nothing.
 
 ## The settings
 
-| key | default | range | what it governs |
-| --- | ------- | ----- | -------------- |
-| `maxTurns` | 20 | 1 to 20 | model turns per run before the run stops and asks for review |
-| `maxOutputTokens` | 4096 | 256 to 32768 | the `max_tokens` ceiling on every provider request |
-| `maxPromptCharacters` | 32000 | 256 to 200000 | longest prompt accepted by start, send and a branch rewrite |
-| `maxQueuedRuns` | 20 | 1 to 1000 | background runs that may wait behind the active one |
-| `maxRequestBytes` | 65536 | 1024 to 10485760 | largest request body the control plane accepts |
-| `maxRunTimeoutMs` | 600000 | 1000 to 86400000 | wall-clock ceiling for one run |
-| `maxToolCallsPerTurn` | 32 | 1 to 256 | tool calls one provider reply may request |
-| `hookTimeoutMs` | 5000 | 100 to 60000 | how long one hook process may run before it is killed |
-| `retryAttempts` | 3 | 1 to 10 | attempts for a transient provider rejection |
-| `retryBaseDelayMs` | 1000 | 100 to 60000 | base wait between those attempts |
+| key                   | default | range            | what it governs                                              |
+| --------------------- | ------- | ---------------- | ------------------------------------------------------------ |
+| `maxTurns`            | 20      | 1 to 20          | model turns per run before the run stops and asks for review |
+| `maxOutputTokens`     | 4096    | 256 to 32768     | the `max_tokens` ceiling on every provider request           |
+| `maxPromptCharacters` | 32000   | 256 to 200000    | longest prompt accepted by start, send and a branch rewrite  |
+| `maxQueuedRuns`       | 20      | 1 to 1000        | background runs that may wait behind the active one          |
+| `maxRequestBytes`     | 65536   | 1024 to 10485760 | largest request body the control plane accepts               |
+| `maxRunTimeoutMs`     | 600000  | 1000 to 86400000 | wall-clock ceiling for one run                               |
+| `maxToolCallsPerTurn` | 32      | 1 to 256         | tool calls one provider reply may request                    |
+| `hookTimeoutMs`       | 5000    | 100 to 60000     | how long one hook process may run before it is killed        |
+| `retryAttempts`       | 3       | 1 to 10          | attempts for a transient provider rejection                  |
+| `retryBaseDelayMs`    | 1000    | 100 to 60000     | base wait between those attempts                             |
+| `maxConcurrentRuns`   | 1       | 1 to 10          | how many background runs may execute in parallel             |
+| `maxContinuations`    | 3       | 0 to 20          | how many times a run may continue after a hold approval      |
+| `maxRunTokens`        | 0       | 0 to 1000000     | total token budget for one run (0 = unlimited)               |
+| `retryMaxDelayMs`     | 60000   | 1000 to 600000   | ceiling on the exponential backoff between provider retries  |
 
 An agent profile's own `maxTurns` still wins over the harness setting, because
 a profile is a deliberate per-agent choice and `AGENT_LIMITS` already caps it.
@@ -103,10 +107,10 @@ consumes from each binary.
 
 ## Tests that must keep this honest
 
-| file | what it protects |
-| ---- | ---------------- |
-| `packages/workbench/src/harness-settings.test.ts` | clamping, the unknown-key refusal, the stored-state clamp, and that every declared consumer exists in the file it claims |
-| `packages/workbench/src/harness-wiring.test.ts` | that a lowered limit actually stops the run, that a raised queue bound admits more, that a timeout is not reported as a clean finish, and that settings survive a restart |
-| `packages/workbench/src/gui-harness-settings.test.ts` | that `capabilities` reports the configured limits rather than the shipped constants |
-| `apps/control-plane/api/harness-settings.test.ts` | that a refused patch is not accepted over HTTP |
-| `packages/cli/src/tui/workspace-settings.test.ts` | that `/settings` lists, sets, refuses an unknown key, refuses a non-number, and reports what actually took effect after a clamp |
+| file                                                  | what it protects                                                                                                                                                          |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/workbench/src/harness-settings.test.ts`     | clamping, the unknown-key refusal, the stored-state clamp, and that every declared consumer exists in the file it claims                                                  |
+| `packages/workbench/src/harness-wiring.test.ts`       | that a lowered limit actually stops the run, that a raised queue bound admits more, that a timeout is not reported as a clean finish, and that settings survive a restart |
+| `packages/workbench/src/gui-harness-settings.test.ts` | that `capabilities` reports the configured limits rather than the shipped constants                                                                                       |
+| `apps/control-plane/api/harness-settings.test.ts`     | that a refused patch is not accepted over HTTP                                                                                                                            |
+| `packages/cli/src/tui/workspace-settings.test.ts`     | that `/settings` lists, sets, refuses an unknown key, refuses a non-number, and reports what actually took effect after a clamp                                           |

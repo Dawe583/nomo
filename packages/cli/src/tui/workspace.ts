@@ -982,7 +982,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       "",
       ...harnessSettingsView(this.workbench.harnessSettings()).flatMap(
         (row) => [
-          `${row.key}  ${row.value}  [${row.min}-${row.max}]${row.changed ? "  (changed)" : ""}`,
+          `${row.icon} ${row.key}  ${row.value}  [${row.min}-${row.max}]${row.changed ? "  (changed)" : ""}`,
           `  ${row.label}: ${row.description}`,
           `  read by ${row.consumer}`,
         ],
@@ -1139,7 +1139,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       const prefs = this.workbench.getPreferences();
       rows.push({
         id: "harness:current",
-        label: `harness ${prefs.defaultAgent ?? "cloud"}`,
+        label: `◈ harness ${prefs.defaultAgent ?? "cloud"}`,
         lines: [
           `Default for new conversations: ${prefs.defaultAgent ?? "cloud"}.`,
           `Selected agent profile: ${this.agentId ?? "runtime default"}.`,
@@ -1151,7 +1151,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       for (const hook of harnessCatalog.hooks) {
         rows.push({
           id: `hook:${hook.id}`,
-          label: `hook ${hook.id} ${hook.enabled ? "on" : "off"}`,
+          label: `◇ hook ${hook.id} ${hook.enabled ? "on" : "off"}`,
           lines: [
             `Event: ${hook.event}.`,
             `Command: ${boundedHookCommand(hook.command)}`,
@@ -1162,7 +1162,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       if (harnessCatalog.hooks.length === 0)
         rows.push({
           id: "hook:none",
-          label: "hook none saved",
+          label: "◇ hook none saved",
           lines: [
             harnessCatalog.hooksSupported
               ? "No hooks saved. /hook-file path.json reviews a save."
@@ -1190,7 +1190,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             : prompt;
         rows.push({
           id: `agent:${agent.id}`,
-          label: `agent ${agent.id}${selected ? " [selected]" : ""}`,
+          label: `◆ agent ${agent.id}${selected ? " [selected]" : ""}`,
           lines: [
             ...(profile
               ? [

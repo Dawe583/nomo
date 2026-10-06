@@ -39,7 +39,11 @@ export type HarnessSettingKey =
   | "maxToolCallsPerTurn"
   | "hookTimeoutMs"
   | "retryAttempts"
-  | "retryBaseDelayMs";
+  | "retryBaseDelayMs"
+  | "maxConcurrentRuns"
+  | "maxContinuations"
+  | "maxRunTokens"
+  | "retryMaxDelayMs";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -54,6 +58,8 @@ export type HarnessSettingSpec = {
   default: number;
   min: number;
   max: number;
+  /** Single-cell geometric shape (U+25A0-U+25FF) for the TUI settings list. */
+  icon: string;
 };
 
 export const HARNESS_SETTINGS: {
@@ -70,6 +76,7 @@ export const HARNESS_SETTINGS: {
     // Matches AGENT_LIMITS.maxTurns, so a harness turn cap can never exceed
     // the cap an individual agent profile is allowed to carry.
     max: 20,
+    icon: "△",
   },
   maxOutputTokens: {
     label: "Output tokens per request",
@@ -79,6 +86,7 @@ export const HARNESS_SETTINGS: {
     default: 4096,
     min: 256,
     max: 32768,
+    icon: "◼",
   },
   maxPromptCharacters: {
     label: "Prompt characters",
@@ -91,6 +99,7 @@ export const HARNESS_SETTINGS: {
     default: 32000,
     min: 256,
     max: 200000,
+    icon: "▏",
   },
   maxQueuedRuns: {
     label: "Queued background runs",
@@ -103,6 +112,7 @@ export const HARNESS_SETTINGS: {
     // The queue is an in-memory Set of session ids, so the bound exists to
     // stop unbounded growth rather than to model a real capacity limit.
     max: 1000,
+    icon: "▤",
   },
   maxRequestBytes: {
     label: "Request bytes",
@@ -113,6 +123,7 @@ export const HARNESS_SETTINGS: {
     default: 65536,
     min: 1024,
     max: 10485760,
+    icon: "▓",
   },
   maxRunTimeoutMs: {
     label: "Run timeout",
@@ -125,6 +136,7 @@ export const HARNESS_SETTINGS: {
     // Zero would mean "never time out", which is exactly the unbounded run
     // this limit exists to prevent, so the floor is one second.
     max: 86400000,
+    icon: "◷",
   },
   maxToolCallsPerTurn: {
     label: "Tool calls per turn",
@@ -135,6 +147,7 @@ export const HARNESS_SETTINGS: {
     default: 32,
     min: 1,
     max: 256,
+    icon: "▣",
   },
   hookTimeoutMs: {
     label: "Hook timeout",
@@ -148,6 +161,7 @@ export const HARNESS_SETTINGS: {
     default: 5000,
     min: 100,
     max: 60000,
+    icon: "◇",
   },
   retryAttempts: {
     label: "Provider retry attempts",
@@ -161,6 +175,7 @@ export const HARNESS_SETTINGS: {
     // that an operator is usually waiting on a rate limit that will not clear,
     // and a longer wait inside one run holds the approval surface open.
     max: 10,
+    icon: "◇",
   },
   retryBaseDelayMs: {
     label: "Retry base delay",
@@ -171,6 +186,51 @@ export const HARNESS_SETTINGS: {
     default: 1000,
     min: 100,
     max: 60000,
+    icon: "◰",
+  },
+  maxConcurrentRuns: {
+    label: "Concurrent runs",
+    description:
+      "How many background runs may execute in parallel. The queue admits up to this many at once; the rest wait.",
+    consumerFile: "index.ts",
+    consumers: ["startSession", "drainQueued"],
+    default: 1,
+    min: 1,
+    max: 10,
+    icon: "▦",
+  },
+  maxContinuations: {
+    label: "Run continuations",
+    description:
+      "How many times a run may continue after a hold approval before it stops and asks again.",
+    consumerFile: "index.ts",
+    consumers: ["run", "authorizeTool"],
+    default: 3,
+    min: 0,
+    max: 20,
+    icon: "◈",
+  },
+  maxRunTokens: {
+    label: "Run token budget",
+    description:
+      "Total token ceiling for one run. When reached the run stops and asks for review. Zero means unlimited.",
+    consumerFile: "index.ts",
+    consumers: ["run", "complete"],
+    default: 0,
+    min: 0,
+    max: 1000000,
+    icon: "▧",
+  },
+  retryMaxDelayMs: {
+    label: "Retry max delay",
+    description:
+      "Ceiling on the exponential backoff between provider retry attempts. Server retry-after is still honored when smaller.",
+    consumerFile: "provider.ts",
+    consumers: ["complete"],
+    default: 60000,
+    min: 1000,
+    max: 600000,
+    icon: "◱",
   },
 };
 
@@ -198,8 +258,7 @@ export function clampHarnessSetting(
   value: unknown,
 ): number {
   const spec = HARNESS_SETTINGS[key];
-  if (typeof value !== "number" || !Number.isFinite(value))
-    return spec.default;
+  if (typeof value !== "number" || !Number.isFinite(value)) return spec.default;
   return Math.min(spec.max, Math.max(spec.min, Math.round(value)));
 }
 
@@ -260,5 +319,6 @@ export function harnessSettingsView(settings: HarnessSettings) {
     default: HARNESS_SETTINGS[key].default,
     value: settings[key],
     changed: settings[key] !== HARNESS_SETTINGS[key].default,
+    icon: HARNESS_SETTINGS[key].icon,
   }));
 }

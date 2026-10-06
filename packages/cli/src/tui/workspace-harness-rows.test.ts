@@ -136,7 +136,7 @@ test("every selectable agent gets a row, and the selected one is marked", async 
   // Presets always exist, so the panel is never an empty list.
   const preset = rowsOf(ui).find((r) => r.id === "agent:default");
   assert.ok(preset, "no row for the default preset");
-  assert.match(preset.label, /^agent default$/);
+  assert.match(preset.label, /^◆ agent default$/);
   assert.match(preset.lines.join("\n"), /Preset default: VOID default\./);
 
   ui.agentId = "planner";

@@ -1,5 +1,13 @@
 import { compactMessages } from "./context.ts";
-import { recoveryRequest, runtimeSelection, recoveryOperationMap, recoveryPreview, recoveryResult, type RecoveryRequest, type RecoveryApply } from "./recovery-jobs.ts";
+import {
+  recoveryRequest,
+  runtimeSelection,
+  recoveryOperationMap,
+  recoveryPreview,
+  recoveryResult,
+  type RecoveryRequest,
+  type RecoveryApply,
+} from "./recovery-jobs.ts";
 import { toolCatalog } from "./tool-catalog.ts";
 import { managedDocumentAdapter } from "./managed-documents.ts";
 import {
@@ -8,10 +16,7 @@ import {
   digest,
   type Json,
 } from "../../runtime/src/index.ts";
-import {
-  NVIDIA_URL,
-  PROVIDER_PRESETS,
-} from "./provider-defaults.ts";
+import { NVIDIA_URL, PROVIDER_PRESETS } from "./provider-defaults.ts";
 import {
   documentView,
   sessionPatch,
@@ -66,14 +71,21 @@ import {
   type WorkspaceState,
   type WorkspaceOperation,
 } from "./workspace.ts";
-import { devKeyProvider, retainedKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
+import {
+  devKeyProvider,
+  retainedKeyProvider,
+  sha256Hex,
+} from "../../ledger/src/sign.ts";
 import {
   canonicalJson,
   entryHash,
   GENESIS_PREV,
 } from "../../ledger/src/canonical.ts";
 import { signingPreimage } from "../../ledger/src/index.ts";
-import { resolveVerificationKey, type VerificationKey } from "../../ledger/src/verify-key.ts";
+import {
+  resolveVerificationKey,
+  type VerificationKey,
+} from "../../ledger/src/verify-key.ts";
 import type { KeyProvider } from "../../ledger/src/index.ts";
 import { verifyChain, readLedgerEntries } from "../../ledger/src/verify.ts";
 import type { JsonlEntry } from "../../ledger/src/store.ts";
@@ -91,7 +103,10 @@ import {
   buildAttribution,
   type LedgerAttribution,
 } from "../../ledger/src/attribution.ts";
-import { buildReversal, type LedgerReversal } from "../../ledger/src/reversal.ts";
+import {
+  buildReversal,
+  type LedgerReversal,
+} from "../../ledger/src/reversal.ts";
 import { setTimeout as delay } from "node:timers/promises";
 import { randomUUID } from "node:crypto";
 import { homedir, tmpdir } from "node:os";
@@ -144,8 +159,17 @@ export type SessionView = {
   readonly contextMessages?: number;
   readonly lastRecoveryJob?: { readonly jobId: string };
   readonly state?: RunState;
-  readonly status: "running" | "queued" | "idle" | "cancelled" | "failed" | "unknown" | "paused";
+  readonly status:
+    | "running"
+    | "queued"
+    | "idle"
+    | "cancelled"
+    | "failed"
+    | "unknown"
+    | "paused";
   readonly events: readonly SessionEvent[];
+  readonly continuationCount: number;
+  readonly runTokenCount: number;
 };
 /** Model ids VOID once shipped as its default. They are retired on sight: the
  * workspace picks from its own validated catalog or has no model at all. */
@@ -185,7 +209,10 @@ const viewEventBytes = new WeakMap<readonly SessionEvent[], number>();
  * the cost is proportional to the events dropped rather than to the whole
  * transcript.
  */
-function trimViewEvents(session: Session, events: SessionEvent[]): SessionEvent[] {
+function trimViewEvents(
+  session: Session,
+  events: SessionEvent[],
+): SessionEvent[] {
   const previous = session.view.events;
   // The previous total is reused only when this call extends the very array it
   // described; a view that arrived from storage is measured in full instead.
@@ -219,7 +246,13 @@ export function conversationRequestDigest(
   tools: readonly unknown[],
 ): Promise<string> {
   return sha256Hex(
-    canonicalJson({ domain: REQUEST_DIGEST_DOMAIN, previous, model, messages, tools }),
+    canonicalJson({
+      domain: REQUEST_DIGEST_DOMAIN,
+      previous,
+      model,
+      messages,
+      tools,
+    }),
   );
 }
 export { DEFAULT_POLICY };
@@ -298,7 +331,8 @@ function reversalFor(
     .filter((entry) => {
       const body = entry.body as Record<string, unknown>;
       return (
-        body.operationId === operationId && body.decision === "execute:completed"
+        body.operationId === operationId &&
+        body.decision === "execute:completed"
       );
     })
     .at(-1);
@@ -309,7 +343,11 @@ function reversalFor(
   return buildReversal(forward.seq, forward.hash);
 }
 class UnknownToolOutcome extends Error {
-  constructor() { super("Tool outcome is unknown. Stop and reconcile its evidence before continuing."); }
+  constructor() {
+    super(
+      "Tool outcome is unknown. Stop and reconcile its evidence before continuing.",
+    );
+  }
 }
 /** A run that reached its wall-clock ceiling was aborted, not finished. Its
  * outcome was never proven, so it reports as `unknown` the way an unknown tool
@@ -323,7 +361,9 @@ class RunTimeout extends Error {
   }
 }
 class ProviderSetupSuperseded extends Error {
-  constructor() { super("Provider setup was superseded by a newer configuration."); }
+  constructor() {
+    super("Provider setup was superseded by a newer configuration.");
+  }
 }
 type Connector = McpConfig & {
   id: string;
@@ -353,14 +393,16 @@ type Session = {
   provider?: CompatibleProvider;
 };
 
-
 /** Model tools always cross the existing VOID SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
   private readonly permissionMode: PermissionMode;
   private provider: CompatibleProvider | undefined;
-  private providerFailureState: { status: number; retryAt: string | null } | null = null;
+  private providerFailureState: {
+    status: number;
+    retryAt: string | null;
+  } | null = null;
   private readonly storage: LocalStorage;
   private hasState = false;
   /** VOID ships no default model and no default provider, so neither key is
@@ -438,7 +480,9 @@ export class Workbench {
     env: Readonly<NodeJS.ProcessEnv> = process.env,
     fetcher: typeof fetch = fetch,
   ) {
-    this.permissionMode = serverPermissionMode(env.VOID_PERMISSION_MODE ?? DEFAULT_LOCAL_PERMISSION_MODE);
+    this.permissionMode = serverPermissionMode(
+      env.VOID_PERMISSION_MODE ?? DEFAULT_LOCAL_PERMISSION_MODE,
+    );
     this.keyStorage = env.VOID_WORKSPACE_KEY
       ? "os-keychain"
       : "encrypted-local";
@@ -474,7 +518,11 @@ export class Workbench {
       ignoreEnvironment?: boolean;
       profiles?: Record<string, ProviderConfig>;
       catalog: readonly Model[];
-      connectors: Array<Omit<Connector, "consentState"> & { consentState?: Connector["consentState"] }>;
+      connectors: Array<
+        Omit<Connector, "consentState"> & {
+          consentState?: Connector["consentState"];
+        }
+      >;
       documents: Record<string, WorkspaceState>;
       evidence: Record<string, JsonlEntry[]>;
       recoveryRequests?: Record<string, RecoveryRequest>;
@@ -566,48 +614,77 @@ export class Workbench {
       // A snapshot written before the consent gate records no consent state.
       // It loads as staged with no catalog: the operator probes it explicitly.
       this.connectors = saved.connectors.map((item): Connector => {
-        if (item.consentState) return { ...item, consentState: item.consentState };
+        if (item.consentState)
+          return { ...item, consentState: item.consentState };
         migrated = true;
         return { ...item, consentState: "staged", tools: [] };
       });
       this.documents = saved.documents;
       this.evidence = saved.evidence;
       this.recoveryRequests = saved.recoveryRequests ?? {};
-      this.agentProfiles = (saved.agentProfiles ?? []).map(profile => validateAgentProfile(profile));
+      this.agentProfiles = (saved.agentProfiles ?? []).map((profile) =>
+        validateAgentProfile(profile),
+      );
       // A stored hook is re-checked against the *current* operator allowlist,
       // not trusted because it was accepted once. Narrowing the allowlist on
       // the runtime must retire the hooks it no longer covers, so the snapshot
       // can never outlive the authorisation that admitted it.
       this.hooks = (saved.hooks ?? []).flatMap((hook) => {
-        try { return [validateHook(hook, this.hookAllowlist)]; }
-        catch { return []; }
+        try {
+          return [validateHook(hook, this.hookAllowlist)];
+        } catch {
+          return [];
+        }
       });
       this.projectList = saved.projects ?? [];
       if (this.config)
-        this.provider = new CompatibleProvider(this.config, fetcher, () => this.harness);
+        this.provider = new CompatibleProvider(
+          this.config,
+          fetcher,
+          () => this.harness,
+        );
       for (const item of saved.sessions) {
-        const sessionBaseUrl = typeof item.config?.baseUrl === "string"
-          ? item.config.baseUrl
-          : typeof item.view.provider === "string" ? item.view.provider : undefined;
-        if (item.config && Object.hasOwn(item.config, "apiKey")) migrated = true;
-        const sessionKind = item.config?.kind === "anthropic"
-          ? "anthropic"
-          : item.config?.kind === "compatible" || item.config?.kind === "openai"
-            ? "compatible"
-            : undefined;
+        const sessionBaseUrl =
+          typeof item.config?.baseUrl === "string"
+            ? item.config.baseUrl
+            : typeof item.view.provider === "string"
+              ? item.view.provider
+              : undefined;
+        if (item.config && Object.hasOwn(item.config, "apiKey"))
+          migrated = true;
+        const sessionKind =
+          item.config?.kind === "anthropic"
+            ? "anthropic"
+            : item.config?.kind === "compatible" ||
+                item.config?.kind === "openai"
+              ? "compatible"
+              : undefined;
         if (item.config && item.config.kind !== sessionKind) migrated = true;
         const savedProvider = sessionBaseUrl
-          ? this.profiles[sessionBaseUrl] ?? (this.config?.baseUrl === sessionBaseUrl ? this.config : undefined)
+          ? (this.profiles[sessionBaseUrl] ??
+            (this.config?.baseUrl === sessionBaseUrl ? this.config : undefined))
           : undefined;
-        const provider = sessionKind && savedProvider?.kind === sessionKind ? savedProvider : undefined;
+        const provider =
+          sessionKind && savedProvider?.kind === sessionKind
+            ? savedProvider
+            : undefined;
         this.sessions.set(item.view.id, {
           ...item,
-          config: sessionBaseUrl ? { baseUrl: sessionBaseUrl, kind: sessionKind } : undefined,
+          config: sessionBaseUrl
+            ? { baseUrl: sessionBaseUrl, kind: sessionKind }
+            : undefined,
           view: {
             ...item.view,
-            status: item.view.status === "running" ? "unknown" : item.view.status === "queued" ? "paused" : item.view.status,
+            status:
+              item.view.status === "running"
+                ? "unknown"
+                : item.view.status === "queued"
+                  ? "paused"
+                  : item.view.status,
           },
-          provider: provider ? new CompatibleProvider(provider, fetcher, () => this.harness) : undefined,
+          provider: provider
+            ? new CompatibleProvider(provider, fetcher, () => this.harness)
+            : undefined,
           controller: new AbortController(),
         });
       }
@@ -640,14 +717,26 @@ export class Workbench {
       hooks: this.hooks,
       projects: this.projectList,
       sessions: [...this.sessions.values()].map(
-        ({ view, messages, messageIds, agentProfile, recoveryBlock, queuedPrompt, config, tools, connections }) => ({
+        ({
           view,
           messages,
           messageIds,
           agentProfile,
           recoveryBlock,
           queuedPrompt,
-          config: config ? { baseUrl: config.baseUrl, kind: config.kind } : undefined,
+          config,
+          tools,
+          connections,
+        }) => ({
+          view,
+          messages,
+          messageIds,
+          agentProfile,
+          recoveryBlock,
+          queuedPrompt,
+          config: config
+            ? { baseUrl: config.baseUrl, kind: config.kind }
+            : undefined,
           tools,
           connections,
         }),
@@ -664,18 +753,22 @@ export class Workbench {
    * process is the only place a command can be authorised. It deliberately
    * lives on the runtime rather than in the encrypted workspace snapshot,
    * because a snapshot is written by whoever holds the workbench API and read
- * *by* the same API — a hook author who could persist an allowlist entry
- * could authorise the command their own hook runs. Nothing that arrives on
- * `upsertHook(input)` reaches this list; `input` is only ever checked *against*
+   * *by* the same API — a hook author who could persist an allowlist entry
+   * could authorise the command their own hook runs. Nothing that arrives on
+   * `upsertHook(input)` reaches this list; `input` is only ever checked *against*
    * it, so a caller who can add a hook cannot authorise it.
    */
-  private static hookAllowlist(env: Readonly<NodeJS.ProcessEnv>): readonly string[] {
+  private static hookAllowlist(
+    env: Readonly<NodeJS.ProcessEnv>,
+  ): readonly string[] {
     if (!env.VOID_HOOK_COMMANDS) return [];
     let parsed: unknown;
     try {
       parsed = JSON.parse(env.VOID_HOOK_COMMANDS);
     } catch {
-      throw new Error("VOID_HOOK_COMMANDS must be a JSON array of command strings.");
+      throw new Error(
+        "VOID_HOOK_COMMANDS must be a JSON array of command strings.",
+      );
     }
     if (
       !Array.isArray(parsed) ||
@@ -696,7 +789,11 @@ export class Workbench {
         ...config,
         apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || "",
       });
-      const provider = new CompatibleProvider(config, this.fetcher, () => this.harness);
+      const provider = new CompatibleProvider(
+        config,
+        this.fetcher,
+        () => this.harness,
+      );
       const models = await provider.models();
       if (generation !== this.providerGeneration)
         throw new ProviderSetupSuperseded();
@@ -715,8 +812,8 @@ export class Workbench {
       // serves it; otherwise the first model of the validated catalog is used.
       // No vendor's model is inserted on the operator's behalf.
       const preferred =
-        models.find((model) => model.id === this.preferences.defaultModel)?.id ??
-        models[0]!.id;
+        models.find((model) => model.id === this.preferences.defaultModel)
+          ?.id ?? models[0]!.id;
       this.provider = provider;
       this.config = config;
       this.profiles = { ...this.profiles, [config.baseUrl]: config };
@@ -750,20 +847,37 @@ export class Workbench {
         throw error;
       }
     }
-    if (!this.provider && !this.ignoreEnvironment && this.env.NVIDIA_API_KEY && !this.providerFailureState) {
+    if (
+      !this.provider &&
+      !this.ignoreEnvironment &&
+      this.env.NVIDIA_API_KEY &&
+      !this.providerFailureState
+    ) {
       try {
-        await this.configure({ baseUrl: NVIDIA_URL, apiKey: this.env.NVIDIA_API_KEY });
+        await this.configure({
+          baseUrl: NVIDIA_URL,
+          apiKey: this.env.NVIDIA_API_KEY,
+        });
       } catch (error) {
-        if (!this.ignoreEnvironment && !(error instanceof ProviderSetupSuperseded))
+        if (
+          !this.ignoreEnvironment &&
+          !(error instanceof ProviderSetupSuperseded)
+        )
           this.recordProviderFailure(error);
       }
     }
-    const hasCredential = Boolean(this.config?.apiKey || (!this.ignoreEnvironment && this.env.NVIDIA_API_KEY));
-    const derived = providerStateFromFailure(this.provider !== undefined, this.providerFailureState, hasCredential);
+    const hasCredential = Boolean(
+      this.config?.apiKey ||
+      (!this.ignoreEnvironment && this.env.NVIDIA_API_KEY),
+    );
+    const derived = providerStateFromFailure(
+      this.provider !== undefined,
+      this.providerFailureState,
+      hasCredential,
+    );
     return {
       connected: this.provider !== undefined,
-      setupRequired:
-        derived.status === "setup-required",
+      setupRequired: derived.status === "setup-required",
       models: this.catalog,
       keyStorage: this.keyStorage,
       baseUrl: this.config?.baseUrl,
@@ -773,8 +887,8 @@ export class Workbench {
       // A workspace with nothing configured has no provider, and says so
       // instead of naming one vendor.
       providerId: this.config
-        ? (PROVIDER_PRESETS.find((p) => p.baseUrl === this.config?.baseUrl)?.id ??
-          "custom")
+        ? (PROVIDER_PRESETS.find((p) => p.baseUrl === this.config?.baseUrl)
+            ?.id ?? "custom")
         : null,
       defaultModel: this.preferences.defaultModel ?? null,
       upstreamConfigured: true,
@@ -787,8 +901,17 @@ export class Workbench {
     return {
       supported: true,
       agents: [
-        ...AGENT_PRESETS.map(({ id, name, description }) => ({ id, name, description })),
-        ...this.agentProfiles.map(({ id, name }) => ({ id, name, description: "Custom profile with explicit tools and bounded execution." })),
+        ...AGENT_PRESETS.map(({ id, name, description }) => ({
+          id,
+          name,
+          description,
+        })),
+        ...this.agentProfiles.map(({ id, name }) => ({
+          id,
+          name,
+          description:
+            "Custom profile with explicit tools and bounded execution.",
+        })),
       ],
       profiles: structuredClone(this.agentProfiles),
       policyProfiles: listPolicyProfiles(this.env.VOID_POLICY_PATH),
@@ -804,15 +927,36 @@ export class Workbench {
   }
   upsertAgent(input: unknown): AgentProfile {
     const profile = validateAgentProfile(input);
-    if (AGENT_PRESETS.some(preset => preset.id === profile.id)) throw new Error("Agent id belongs to a built-in preset.");
-    const policy = resolvePolicyProfile(profile.policyProfile, this.env.VOID_POLICY_PATH);
-    if (!policy.ok) throw new Error(`Unknown policy profile ${profile.policyProfile}. ${policy.reason}.`);
-    const available = new Set([...workspaceTools, ...this.connectors.flatMap(connector => connector.tools)].map(tool => tool.name));
-    if (profile.allowedTools.some(name => !available.has(name))) throw new Error("Agent allowlist contains an unavailable tool.");
+    if (AGENT_PRESETS.some((preset) => preset.id === profile.id))
+      throw new Error("Agent id belongs to a built-in preset.");
+    const policy = resolvePolicyProfile(
+      profile.policyProfile,
+      this.env.VOID_POLICY_PATH,
+    );
+    if (!policy.ok)
+      throw new Error(
+        `Unknown policy profile ${profile.policyProfile}. ${policy.reason}.`,
+      );
+    const available = new Set(
+      [
+        ...workspaceTools,
+        ...this.connectors.flatMap((connector) => connector.tools),
+      ].map((tool) => tool.name),
+    );
+    if (profile.allowedTools.some((name) => !available.has(name)))
+      throw new Error("Agent allowlist contains an unavailable tool.");
     const before = this.agentProfiles;
-    this.agentProfiles = [...before.filter(candidate => candidate.id !== profile.id), profile];
+    this.agentProfiles = [
+      ...before.filter((candidate) => candidate.id !== profile.id),
+      profile,
+    ];
     this.hasState = true;
-    try { this.persist(); } catch (error) { this.agentProfiles = before; throw error; }
+    try {
+      this.persist();
+    } catch (error) {
+      this.agentProfiles = before;
+      throw error;
+    }
     return structuredClone(profile);
   }
   /**
@@ -824,9 +968,17 @@ export class Workbench {
   upsertHook(input: unknown): Hook {
     const hook = validateHook(input, this.hookAllowlist);
     const before = this.hooks;
-    this.hooks = [...before.filter(candidate => candidate.id !== hook.id), hook];
+    this.hooks = [
+      ...before.filter((candidate) => candidate.id !== hook.id),
+      hook,
+    ];
     this.hasState = true;
-    try { this.persist(); } catch (error) { this.hooks = before; throw error; }
+    try {
+      this.persist();
+    } catch (error) {
+      this.hooks = before;
+      throw error;
+    }
     return structuredClone(hook);
   }
   /**
@@ -840,7 +992,7 @@ export class Workbench {
     context: Record<string, unknown> = {},
     session?: Session,
   ): Promise<readonly HookResult[]> {
-    const matching = this.hooks.filter(hook => hook.event === event);
+    const matching = this.hooks.filter((hook) => hook.event === event);
     if (!matching.length) return [];
     const results: HookResult[] = [];
     for (const hook of matching) {
@@ -871,22 +1023,43 @@ export class Workbench {
     root: string;
     updatedAt: string;
   }[] {
-    return this.projectList.map(project => ({ ...project })).sort((a, b) =>
-      b.updatedAt.localeCompare(a.updatedAt),
-    );
+    return this.projectList
+      .map((project) => ({ ...project }))
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
-  projects() { return this.listProjects(); }
+  projects() {
+    return this.listProjects();
+  }
   upsertProject(input: { id?: string; name: string; root: string }): {
     id: string;
     name: string;
     root: string;
     updatedAt: string;
   } {
-    if (!input || typeof input.name !== "string" || !input.name.trim() || input.name.length > 160) throw new Error("Project name must contain 1..160 characters.");
-    if (typeof input.root !== "string" || !input.root.trim() || input.root.length > 4096) throw new Error("Project root must contain 1..4096 characters.");
-    if (input.id !== undefined && (typeof input.id !== "string" || !/^[A-Za-z0-9][\w-]{0,119}$/.test(input.id))) throw new Error("Invalid project id.");
-    const name = input.name.trim(), root = input.root.trim();
-    const existing = this.projectList.find((p) => input.id ? p.id === input.id : p.root === root);
+    if (
+      !input ||
+      typeof input.name !== "string" ||
+      !input.name.trim() ||
+      input.name.length > 160
+    )
+      throw new Error("Project name must contain 1..160 characters.");
+    if (
+      typeof input.root !== "string" ||
+      !input.root.trim() ||
+      input.root.length > 4096
+    )
+      throw new Error("Project root must contain 1..4096 characters.");
+    if (
+      input.id !== undefined &&
+      (typeof input.id !== "string" ||
+        !/^[A-Za-z0-9][\w-]{0,119}$/.test(input.id))
+    )
+      throw new Error("Invalid project id.");
+    const name = input.name.trim(),
+      root = input.root.trim();
+    const existing = this.projectList.find((p) =>
+      input.id ? p.id === input.id : p.root === root,
+    );
     const now = new Date().toISOString();
     if (existing) {
       existing.name = name;
@@ -931,7 +1104,9 @@ export class Workbench {
   }
   clearProvider(): void {
     if (this.jobs.size || this.queued.size)
-      throw new Error("Stop active sessions before disconnecting the provider.");
+      throw new Error(
+        "Stop active sessions before disconnecting the provider.",
+      );
     if (this.providerSetupCount || this.sessionSetupCount)
       throw new Error(
         "Wait for provider setup or session startup to finish before disconnecting the provider.",
@@ -965,46 +1140,48 @@ export class Workbench {
       this.catalog = previous.catalog;
       this.providerFailureState = previous.failure;
       this.ignoreEnvironment = previous.ignoreEnvironment;
-      for (const item of previous.sessions) item.session.provider = item.provider;
+      for (const item of previous.sessions)
+        item.session.provider = item.provider;
       throw error;
     }
   }
   private view(session: Session): SessionView {
-    const jobId = session.recoveryBlock?.jobId ?? session.view.lastRecoveryJob?.jobId;
+    const jobId =
+      session.recoveryBlock?.jobId ?? session.view.lastRecoveryJob?.jobId;
     return {
       ...session.view,
       lastRecoveryJob: jobId ? { jobId } : undefined,
       contextMessages: session.messages.length,
-      state: session.view.status === "cancelled" && this.jobs.has(session.view.id)
-        ? "stopping" : deriveRunState(session.view.status, session.view.events),
+      state:
+        session.view.status === "cancelled" && this.jobs.has(session.view.id)
+          ? "stopping"
+          : deriveRunState(session.view.status, session.view.events),
     };
   }
   list(): readonly SessionView[] {
-    return this.allViews().map(view => ({ ...view, events: [] }));
+    return this.allViews().map((view) => ({ ...view, events: [] }));
   }
   availableTools(id?: string) {
     const session = id ? this.sessions.get(id) : undefined;
     if (id && !session) throw new Error("Session not found.");
-    const tools = (session
-      ? (session.tools ?? [...workspaceTools])
-      : [
-          ...workspaceTools,
-          ...this.connectors
-            .filter(c => c.consentState === "confirmed")
-            .flatMap((c) =>
-              c.tools.map((tool) => ({ ...tool, connectorId: c.id })),
-            ),
-        ]
+    const tools = (
+      session
+        ? (session.tools ?? [...workspaceTools])
+        : [
+            ...workspaceTools,
+            ...this.connectors
+              .filter((c) => c.consentState === "confirmed")
+              .flatMap((c) =>
+                c.tools.map((tool) => ({ ...tool, connectorId: c.id })),
+              ),
+          ]
     ).filter((tool) => this.toolAllowedInMode(tool));
     return {
       scope: id ? "session" : "configured",
-      tools: toolCatalog(
-        tools,
-        [
-          ...this.connectors.map((c) => c.token),
-          ...Object.values(session?.connections ?? {}).map((c) => c.token),
-        ],
-      ),
+      tools: toolCatalog(tools, [
+        ...this.connectors.map((c) => c.token),
+        ...Object.values(session?.connections ?? {}).map((c) => c.token),
+      ]),
     };
   }
   get(id: string): SessionView | undefined {
@@ -1053,6 +1230,11 @@ export class Workbench {
       return result;
     });
   }
+  private countRunning(): number {
+    return [...this.sessions.values()].filter(
+      (session) => session.view.status === "running",
+    ).length;
+  }
   private async startSession(
     prompt: string,
     model: string,
@@ -1063,27 +1245,32 @@ export class Workbench {
     if (!this.provider)
       throw new Error("Connect and validate a provider first.");
     if (this.providerSetupCount)
-      throw new Error("Wait for provider setup to finish before starting a session.");
+      throw new Error(
+        "Wait for provider setup to finish before starting a session.",
+      );
     if (background && this.queued.size >= this.harness.maxQueuedRuns)
-      throw new Error(`Background queue is full (${this.harness.maxQueuedRuns} queued runs). Stop a queued run before adding another.`);
+      throw new Error(
+        `Background queue is full (${this.harness.maxQueuedRuns} queued runs). Stop a queued run before adding another.`,
+      );
+    const running = this.countRunning();
+    if (!background && running >= this.harness.maxConcurrentRuns)
+      throw new Error(
+        `Concurrent run limit reached (${this.harness.maxConcurrentRuns}). Wait for a running session to finish or increase the limit.`,
+      );
     const selectedAgent = AGENT_PRESETS.find(
       (item) => item.id === (agent ?? this.preferences.defaultAgentPreset),
     );
-    const selectedProfile = this.agentProfiles.find(profile => profile.id === agent);
-    if (agent && !selectedAgent && !selectedProfile) throw new Error("Unknown agent preset or profile.");
+    const selectedProfile = this.agentProfiles.find(
+      (profile) => profile.id === agent,
+    );
+    if (agent && !selectedAgent && !selectedProfile)
+      throw new Error("Unknown agent preset or profile.");
     const selectedGeneration = this.providerGeneration,
       selectedProvider = this.provider,
       selectedConfig = this.config;
     if (!this.catalog.some((item) => item.id === model))
       throw new Error("Select a model from the validated catalog.");
-    if (
-      this.closing ||
-      (!background &&
-        (this.jobs.size ||
-          [...this.sessions.values()].some(
-            (session) => session.view.status === "running",
-          )))
-    )
+    if (this.closing)
       throw new Error(
         "Wait for the active session or cancel it before starting another.",
       );
@@ -1105,7 +1292,9 @@ export class Workbench {
     if (command && !this.env.VOID_POLICY_PATH)
       throw new Error("Configure VOID_POLICY_PATH before starting an agent.");
     if (!prompt.trim() || prompt.length > this.harness.maxPromptCharacters)
-      throw new Error(`Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`);
+      throw new Error(
+        `Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`,
+      );
     const id = randomUUID();
     const workspace = `agent-${id}`;
     const client = Array.isArray(command)
@@ -1127,9 +1316,15 @@ export class Workbench {
       for (const connector of this.connectors) {
         if (connector.consentState !== "confirmed") continue;
         const listed = await mcpCatalog(connector);
-        connections[connector.id] = { ...connector, sessionId: listed.sessionId };
+        connections[connector.id] = {
+          ...connector,
+          sessionId: listed.sessionId,
+        };
         tools.push(
-          ...listed.tools.map((tool) => ({ ...tool, connectorId: connector.id })),
+          ...listed.tools.map((tool) => ({
+            ...tool,
+            connectorId: connector.id,
+          })),
         );
       }
       if (client) {
@@ -1152,15 +1347,15 @@ export class Workbench {
         "Provider changed while connecting tools. Retry after provider setup finishes.",
       );
     }
+    const runningNow = this.countRunning();
     if (
       this.closing ||
       (!background &&
-        (this.jobs.size ||
-          [...this.sessions.values()].some((s) => s.view.status === "running")))
+        (this.jobs.size || runningNow >= this.harness.maxConcurrentRuns))
     ) {
       client?.close();
       throw new Error(
-        "Another session started while connecting tools. Retry after it stops.",
+        `Concurrent run limit reached (${this.harness.maxConcurrentRuns}). Wait for a running session to finish or increase the limit.`,
       );
     }
     const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}`;
@@ -1181,14 +1376,25 @@ export class Workbench {
         status: queued ? "queued" : "idle",
         ...(queued ? { runId: randomUUID() } : {}),
         events: [],
+        continuationCount: 0,
+        runTokenCount: 0,
       },
       messages: [{ role: "system", content: systemInstruction }],
-      agentProfile: selectedProfile ? structuredClone(selectedProfile) : undefined,
+      agentProfile: selectedProfile
+        ? structuredClone(selectedProfile)
+        : undefined,
       queuedPrompt: queued ? prompt : undefined,
       client,
-      tools: (selectedProfile ? tools.filter(tool => selectedProfile.allowedTools.includes(tool.name)) : tools).filter(tool => this.toolAllowedInMode(tool)),
+      tools: (selectedProfile
+        ? tools.filter((tool) =>
+            selectedProfile.allowedTools.includes(tool.name),
+          )
+        : tools
+      ).filter((tool) => this.toolAllowedInMode(tool)),
       connections,
-      config: selectedConfig ? { baseUrl: selectedConfig.baseUrl, kind: selectedConfig.kind } : undefined,
+      config: selectedConfig
+        ? { baseUrl: selectedConfig.baseUrl, kind: selectedConfig.kind }
+        : undefined,
       controller: new AbortController(),
       provider: selectedProvider,
     };
@@ -1213,17 +1419,22 @@ export class Workbench {
     )
       throw new Error("The session is not ready for another message.");
     if (session.view.status === "unknown")
-      throw new Error("Run outcome is unknown. Reconcile its evidence before continuing.");
+      throw new Error(
+        "Run outcome is unknown. Reconcile its evidence before continuing.",
+      );
     if (session.recoveryBlock)
-      throw new Error("Recovery is unresolved. Resume the approved recovery job before continuing.");
+      throw new Error(
+        "Recovery is unresolved. Resume the approved recovery job before continuing.",
+      );
     if (!prompt.trim() || prompt.length > this.harness.maxPromptCharacters)
-      throw new Error(`Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`);
-    if (
-      [...this.sessions.values()].some(
-        (other) => other !== session && other.view.status === "running",
-      )
-    )
-      throw new Error("Wait for the active session or cancel it first.");
+      throw new Error(
+        `Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`,
+      );
+    const running = this.countRunning();
+    if (running >= this.harness.maxConcurrentRuns)
+      throw new Error(
+        `Concurrent run limit reached (${this.harness.maxConcurrentRuns}). Wait for a running session to finish or increase the limit.`,
+      );
     const lastAssistant = [...session.messages]
       .reverse()
       .find((m) => m.role === "assistant");
@@ -1253,11 +1464,14 @@ export class Workbench {
         identity.baseUrl !== config.baseUrl ||
         identity.kind !== config.kind
       )
-        throw new Error("Reconnect the provider used by this conversation before continuing.");
+        throw new Error(
+          "Reconnect the provider used by this conversation before continuing.",
+        );
       session.provider = this.provider;
     }
     session.controller = new AbortController();
-    const queued = session.view.status === "idle" && session.queuedPrompt === prompt;
+    const queued =
+      session.view.status === "idle" && session.queuedPrompt === prompt;
     if (!queued) session.view = { ...session.view, runId: randomUUID() };
     delete session.queuedPrompt;
     session.messages.push({ role: "user", content: prompt });
@@ -1270,7 +1484,8 @@ export class Workbench {
     this.jobs.set(id, job);
     void job
       .catch(() => {
-        if (session.view.status !== "unknown") session.view = { ...session.view, status: "failed" };
+        if (session.view.status !== "unknown")
+          session.view = { ...session.view, status: "failed" };
       })
       .finally(() => {
         this.jobs.delete(id);
@@ -1280,42 +1495,68 @@ export class Workbench {
   compact(id: string): CompactionResult {
     const session = this.sessions.get(id);
     if (!session) throw new Error("Session not found.");
-    if (this.jobs.size || session.view.status === "running" || session.view.status === "queued")
+    if (
+      this.jobs.size ||
+      session.view.status === "running" ||
+      session.view.status === "queued"
+    )
       throw new Error("Wait for the active run to settle before compacting.");
     const before = session.messages.length;
     const compacted = compactMessages(id, session.messages, session.messageIds);
     session.messages = compacted.messages;
     session.messageIds = compacted.messageIds;
-    session.view = { ...session.view, compaction: compacted.result, contextMessages: session.messages.length };
-    if (compacted.result.omittedMessageCount) this.event(session, "tool", "Context compacted.", {
-      beforeMessages: before, afterMessages: session.messages.length,
-      omittedMessages: compacted.result.omittedMessageCount,
-    }, "context.compacted");
+    session.view = {
+      ...session.view,
+      compaction: compacted.result,
+      contextMessages: session.messages.length,
+    };
+    if (compacted.result.omittedMessageCount)
+      this.event(
+        session,
+        "tool",
+        "Context compacted.",
+        {
+          beforeMessages: before,
+          afterMessages: session.messages.length,
+          omittedMessages: compacted.result.omittedMessageCount,
+        },
+        "context.compacted",
+      );
     this.persist();
     return compacted.result;
   }
   private drainQueued(): void {
     if (this.closing || this.jobs.size) return;
-    const id = this.queued.values().next().value as string | undefined;
-    if (!id) return;
-    this.queued.delete(id);
-    const session = this.sessions.get(id);
-    if (!session || session.view.status !== "queued" || !session.queuedPrompt) {
-      this.drainQueued();
-      return;
-    }
-    const prompt = session.queuedPrompt;
-    session.view = { ...session.view, status: "idle" };
-    try {
-      this.send(id, prompt);
-    } catch (error) {
-      session.view = { ...session.view, status: "failed" };
-      this.event(
-        session,
-        "error",
-        error instanceof Error ? error.message : "Queued run failed.",
-      );
-      this.persist();
+    const running = this.countRunning();
+    const available = this.harness.maxConcurrentRuns - running;
+    if (available <= 0) return;
+    let started = 0;
+    while (started < available) {
+      const id = this.queued.values().next().value as string | undefined;
+      if (!id) return;
+      this.queued.delete(id);
+      const session = this.sessions.get(id);
+      if (
+        !session ||
+        session.view.status !== "queued" ||
+        !session.queuedPrompt
+      ) {
+        continue;
+      }
+      const prompt = session.queuedPrompt;
+      session.view = { ...session.view, status: "idle" };
+      try {
+        this.send(id, prompt);
+        started++;
+      } catch (error) {
+        session.view = { ...session.view, status: "failed" };
+        this.event(
+          session,
+          "error",
+          error instanceof Error ? error.message : "Queued run failed.",
+        );
+        this.persist();
+      }
     }
   }
   cancel(id: string): void {
@@ -1326,7 +1567,13 @@ export class Workbench {
       this.queued.delete(id);
       delete session.queuedPrompt;
       session.view = { ...session.view, status: "cancelled" };
-      this.event(session, "tool", "Queued run stopped before dispatch.", { status: "cancelled" }, "run.status");
+      this.event(
+        session,
+        "tool",
+        "Queued run stopped before dispatch.",
+        { status: "cancelled" },
+        "run.status",
+      );
       this.persist();
       return;
     }
@@ -1411,7 +1658,9 @@ export class Workbench {
   ) {
     const seq = (session.view.events.at(-1)?.seq ?? 0) + 1,
       at = new Date().toISOString();
-    let safeText = session.provider?.redact(JSON.stringify(payload)) ?? JSON.stringify(payload);
+    let safeText =
+      session.provider?.redact(JSON.stringify(payload)) ??
+      JSON.stringify(payload);
     for (const config of Object.values(session.connections ?? {}))
       if (config.token)
         safeText = safeText.split(config.token).join("[redacted]");
@@ -1476,24 +1725,32 @@ export class Workbench {
   }
   private assertNormalMutation(action: string) {
     if (this.permissionMode !== "normal")
-      throw new Error(`Server permission mode ${this.permissionMode} forbids ${action}.`);
+      throw new Error(
+        `Server permission mode ${this.permissionMode} forbids ${action}.`,
+      );
   }
   private toolAllowedInMode(tool: McpTool) {
-    return this.permissionMode === "normal" || (!tool.connectorId && (tool.name === "void_workspace_list" || tool.name === "void_workspace_read"));
+    return (
+      this.permissionMode === "normal" ||
+      (!tool.connectorId &&
+        (tool.name === "void_workspace_list" ||
+          tool.name === "void_workspace_read"))
+    );
   }
   patchSession(id: string, body: Record<string, unknown>) {
     const session = this.sessions.get(id);
     if (!session) throw new Error("Session not found.");
     const patch = sessionPatch(body);
-    session.view = { ...session.view, ...patch, updatedAt: new Date().toISOString() };
+    session.view = {
+      ...session.view,
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    };
     this.persist();
     return this.view(session);
   }
   sessionPage(query: URLSearchParams) {
-    const all = filterRows(
-      this.allViews(),
-      query,
-    )
+    const all = filterRows(this.allViews(), query)
       .filter(
         (s) =>
           query.get("archived") === "all" ||
@@ -1522,7 +1779,7 @@ export class Workbench {
     };
   }
   allViews() {
-    return [...this.sessions.values()].map(session => this.view(session));
+    return [...this.sessions.values()].map((session) => this.view(session));
   }
   approvals() {
     return [
@@ -1558,8 +1815,15 @@ export class Workbench {
   private settledSession(id: string): Session {
     const session = this.sessions.get(id);
     if (!session) throw new Error("Session not found.");
-    if (this.closing || this.jobs.size || session.recoveryBlock || !["idle", "cancelled", "failed"].includes(session.view.status))
-      throw new Error("Wait for the session to stop and settle. Reconcile unresolved recovery before changing documents.");
+    if (
+      this.closing ||
+      this.jobs.size ||
+      session.recoveryBlock ||
+      !["idle", "cancelled", "failed"].includes(session.view.status)
+    )
+      throw new Error(
+        "Wait for the session to stop and settle. Reconcile unresolved recovery before changing documents.",
+      );
     return session;
   }
   async editDocument(
@@ -1571,7 +1835,9 @@ export class Workbench {
     return this.locked(async () => {
       const s = this.settledSession(id);
       const state = this.workspace(id);
-      if (documentView(state, input.path, id).revision !== input.expectedRevision)
+      if (
+        documentView(state, input.path, id).revision !== input.expectedRevision
+      )
         throw new Error("Document revision conflict. Refresh before saving.");
       const operationId = randomUUID();
       await this.mutateDocument(
@@ -1594,13 +1860,26 @@ export class Workbench {
   }
   async branch(
     id: string,
-    body: { seq: number; prompt?: string; snapshotDocuments?: boolean; idempotencyKey: string },
+    body: {
+      seq: number;
+      prompt?: string;
+      snapshotDocuments?: boolean;
+      idempotencyKey: string;
+    },
   ) {
     return this.locked(async () => {
-      if (typeof body.idempotencyKey !== "string" || !/^[A-Za-z0-9_.:-]{1,160}$/.test(body.idempotencyKey))
+      if (
+        typeof body.idempotencyKey !== "string" ||
+        !/^[A-Za-z0-9_.:-]{1,160}$/.test(body.idempotencyKey)
+      )
         throw new Error("Invalid Idempotency key.");
       const idempotencyKey = body.idempotencyKey;
-      const requestValue = [id, body.seq, body.prompt, body.snapshotDocuments === true];
+      const requestValue = [
+        id,
+        body.seq,
+        body.prompt,
+        body.snapshotDocuments === true,
+      ];
       const prior = this.request(idempotencyKey, requestValue);
       if (prior) {
         const child = this.sessions.get(prior);
@@ -1621,9 +1900,12 @@ export class Workbench {
         state === "unknown" ||
         state === "stopping" ||
         (state === "paused" &&
-          (!parent.recoveryBlock || parent.recoveryBlock.previousStatus === "unknown"))
+          (!parent.recoveryBlock ||
+            parent.recoveryBlock.previousStatus === "unknown"))
       )
-        throw new Error("Parent session outcome is unresolved. Reconcile or settle it before branching.");
+        throw new Error(
+          "Parent session outcome is unresolved. Reconcile or settle it before branching.",
+        );
       const messages = parent.view.events.filter(
         (e) =>
           e.seq <= body.seq &&
@@ -1816,9 +2098,7 @@ export class Workbench {
     };
     await this.locked(async () => {
       const before = this.connectors;
-      this.connectors = before.map((item) =>
-        item.id === id ? updated : item,
-      );
+      this.connectors = before.map((item) => (item.id === id ? updated : item));
       try {
         this.persist();
       } catch (error) {
@@ -1841,9 +2121,7 @@ export class Workbench {
         consentState: "confirmed",
       };
       const before = this.connectors;
-      this.connectors = before.map((item) =>
-        item.id === id ? updated : item,
-      );
+      this.connectors = before.map((item) => (item.id === id ? updated : item));
       try {
         this.persist();
       } catch (error) {
@@ -1903,12 +2181,12 @@ export class Workbench {
         decision: decision.kind,
         rule:
           decision.kind === "allow"
-            ? decision.rationale ?? "allowed by an allow rule"
+            ? (decision.rationale ?? "allowed by an allow rule")
             : decision.kind === "hold"
-              ? decision.rationale ?? `held for ${decision.seconds}s`
+              ? (decision.rationale ?? `held for ${decision.seconds}s`)
               : decision.kind === "unmatched"
                 ? "no rule matched; the policy file changed under this connector"
-                : decision.rationale ?? "denied by rule",
+                : (decision.rationale ?? "denied by rule"),
         blastRadius: "unknown",
       };
     });
@@ -2012,7 +2290,8 @@ export class Workbench {
         at: new Date().toISOString(),
       } as Json,
     });
-    if (result.status === "unknown" || result.status === "dispatched") throw new UnknownToolOutcome();
+    if (result.status === "unknown" || result.status === "dispatched")
+      throw new UnknownToolOutcome();
     if (result.status !== "succeeded")
       throw new Error(
         `Managed document operation ${result.status}${result.reason ? ": " + result.reason : ""}. Reconcile its evidence before retrying.`,
@@ -2022,19 +2301,35 @@ export class Workbench {
   private recoverySession(id: string) {
     const session = this.sessions.get(id);
     if (!session) throw new Error("Session not found.");
-    if (this.closing || this.jobs.size || session.view.status === "running" || session.view.status === "queued")
+    if (
+      this.closing ||
+      this.jobs.size ||
+      session.view.status === "running" ||
+      session.view.status === "queued"
+    )
       throw new Error("Wait for the agent to stop before recovery.");
     return session;
   }
   async planRecoveryJob(id: string, input: RecoveryRequest) {
     this.assertNormalMutation("recovery planning");
     return this.locked(async () => {
-      const request = recoveryRequest(input), session = this.recoverySession(id);
+      const request = recoveryRequest(input),
+        session = this.recoverySession(id);
       const runtime = await this.documentRuntime(session);
-      const plan = await runtime.planRecoveryJob({ workspace: session.view.workspace, jobId: request.jobId, selection: runtimeSelection(request.selection) });
+      const plan = await runtime.planRecoveryJob({
+        workspace: session.view.workspace,
+        jobId: request.jobId,
+        selection: runtimeSelection(request.selection),
+      });
       this.recoveryRequests[`${id}:${request.jobId}`] = request;
       this.persist();
-      return recoveryPreview(plan, recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection));
+      return recoveryPreview(
+        plan,
+        recoveryOperationMap(
+          this.workspace(id).operations.map((op) => op.id),
+          request.selection,
+        ),
+      );
     });
   }
   async recoveryJobStatus(id: string, jobId: string) {
@@ -2044,48 +2339,90 @@ export class Workbench {
       const request = this.recoveryRequests[`${id}:${jobId}`];
       if (!request) throw new Error("Recovery job not found.");
       const runtime = await this.documentRuntime(session);
-      const status = await runtime.recoveryJobStatus(session.view.workspace, jobId);
-      const ids = recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection);
-      return "digest" in status ? recoveryPreview(status, ids) : recoveryResult(status, ids);
+      const status = await runtime.recoveryJobStatus(
+        session.view.workspace,
+        jobId,
+      );
+      const ids = recoveryOperationMap(
+        this.workspace(id).operations.map((op) => op.id),
+        request.selection,
+      );
+      return "digest" in status
+        ? recoveryPreview(status, ids)
+        : recoveryResult(status, ids);
     });
   }
-  async applyRecoveryJob(id: string, input: RecoveryApply, operator: "web-operator" | "tui-operator" = "web-operator") {
+  async applyRecoveryJob(
+    id: string,
+    input: RecoveryApply,
+    operator: "web-operator" | "tui-operator" = "web-operator",
+  ) {
     this.assertNormalMutation("recovery apply");
     return this.locked(async () => {
       const session = this.recoverySession(id);
-      if (!input || input.approved !== true) throw new Error("Explicit operator approval is required.");
+      if (!input || input.approved !== true)
+        throw new Error("Explicit operator approval is required.");
       const request = this.recoveryRequests[`${id}:${input.jobId}`];
       if (!request) throw new Error("Recovery job not found.");
       const runtime = await this.documentRuntime(session, { by: operator });
       // Reload the signed original plan even after a terminal result. A retry
       // cannot exchange its approval for another job or caller-supplied plan.
-      const plan = await runtime.planRecoveryJob({ workspace: session.view.workspace, jobId: request.jobId, selection: runtimeSelection(request.selection) });
-      if (plan.digest !== input.planDigest) throw new Error("Recovery job digest changed. Refresh the preview.");
+      const plan = await runtime.planRecoveryJob({
+        workspace: session.view.workspace,
+        jobId: request.jobId,
+        selection: runtimeSelection(request.selection),
+      });
+      if (plan.digest !== input.planDigest)
+        throw new Error("Recovery job digest changed. Refresh the preview.");
       this.recoverySession(id); // A synchronous send may have started while the signed plan loaded.
       const previousBlock = session.recoveryBlock;
-      const block = previousBlock ?? { jobId: request.jobId, previousStatus: session.view.status };
+      const block = previousBlock ?? {
+        jobId: request.jobId,
+        previousStatus: session.view.status,
+      };
       session.recoveryBlock = block;
-      session.view = { ...session.view, lastRecoveryJob: { jobId: request.jobId }, status: block.previousStatus === "unknown" ? "unknown" : "paused" };
+      session.view = {
+        ...session.view,
+        lastRecoveryJob: { jobId: request.jobId },
+        status: block.previousStatus === "unknown" ? "unknown" : "paused",
+      };
       this.persist(); // Persist the dispatch guard before any inverse can execute.
       try {
-        const result = await runtime.runRecoveryJob(session.view.workspace, request.jobId, async stored => stored.digest === input.planDigest);
+        const result = await runtime.runRecoveryJob(
+          session.view.workspace,
+          request.jobId,
+          async (stored) => stored.digest === input.planDigest,
+        );
         if (result.status === "unknown" || result.status === "paused") {
-          session.view = { ...session.view, status: block.previousStatus === "unknown" ? "unknown" : result.status };
+          session.view = {
+            ...session.view,
+            status:
+              block.previousStatus === "unknown" ? "unknown" : result.status,
+          };
         } else {
           session.view = { ...session.view, status: block.previousStatus };
           delete session.recoveryBlock;
         }
         this.persist();
-        return recoveryResult(result, recoveryOperationMap(this.workspace(id).operations.map(op => op.id), request.selection));
+        return recoveryResult(
+          result,
+          recoveryOperationMap(
+            this.workspace(id).operations.map((op) => op.id),
+            request.selection,
+          ),
+        );
       } catch (error) {
         // These runtime preflight refusals happen before the first inverse.
         // Every other thrown result remains uncertain until its job is reconciled.
-        const refused = !previousBlock && error instanceof Error && [
-          "Recovery job selection boundary is stale.",
-          "Recovery job selection boundary is invalid.",
-          "Another recovery job is active in this workspace.",
-          "Recovery job was not authorized.",
-        ].includes(error.message);
+        const refused =
+          !previousBlock &&
+          error instanceof Error &&
+          [
+            "Recovery job selection boundary is stale.",
+            "Recovery job selection boundary is invalid.",
+            "Another recovery job is active in this workspace.",
+            "Recovery job was not authorized.",
+          ].includes(error.message);
         if (refused) {
           session.view = { ...session.view, status: block.previousStatus };
           delete session.recoveryBlock;
@@ -2155,16 +2492,27 @@ export class Workbench {
     return this.locked(async () => {
       const session = this.settledSession(id);
       const preview = await this.undoPreview(id, operationId);
-      if (!preview.canApply && !this.workspace(id).operations.some(op => op.undoes === operationId))
+      if (
+        !preview.canApply &&
+        !this.workspace(id).operations.some((op) => op.undoes === operationId)
+      )
         throw new Error(preview.reason);
-      const runtime = await this.documentRuntime(session, { by: operator }), runtimeId = digest(operationId);
+      const runtime = await this.documentRuntime(session, { by: operator }),
+        runtimeId = digest(operationId);
       let status = await runtime.status(session.view.workspace, runtimeId);
       if (status === "unknown" || status === "dispatched")
-        status = (await runtime.reconcile(session.view.workspace, runtimeId)).status;
-      const plan = status === "succeeded" ? await runtime.planRecovery(session.view.workspace, runtimeId) : undefined;
+        status = (await runtime.reconcile(session.view.workspace, runtimeId))
+          .status;
+      const plan =
+        status === "succeeded"
+          ? await runtime.planRecovery(session.view.workspace, runtimeId)
+          : undefined;
       const prior = this.workspace(id);
-      const transition = status ? undefined : applyWorkspaceUndo(prior, { id: `undo-${operationId}`, operationId });
-      if (transition?.result.isError) throw new Error(transition.result.content[0]?.text ?? "Undo refused.");
+      const transition = status
+        ? undefined
+        : applyWorkspaceUndo(prior, { id: `undo-${operationId}`, operationId });
+      if (transition?.result.isError)
+        throw new Error(transition.result.content[0]?.text ?? "Undo refused.");
       if (transition?.state === prior) return { ok: true, workspace: prior };
       this.settledSession(id); // send() may have run while the signed preview loaded.
       const previousStatus = session.view.status;
@@ -2177,17 +2525,31 @@ export class Workbench {
         if (status) {
           const result = plan
             ? await runtime.recover(plan, async () => true)
-            : await runtime.reconcileRecovery(session.view.workspace, runtimeId);
+            : await runtime.reconcileRecovery(
+                session.view.workspace,
+                runtimeId,
+              );
           confirmed = result.status !== "unknown";
-          if (result.status !== "restored") throw new Error(`Managed document recovery ${result.status}.`);
+          if (result.status !== "restored")
+            throw new Error(`Managed document recovery ${result.status}.`);
         } else {
-          await this.commitWorkspace(session, transition!.state, "void_workspace_undo", { operationId }, "execute:completed", transition!.operation);
+          await this.commitWorkspace(
+            session,
+            transition!.state,
+            "void_workspace_undo",
+            { operationId },
+            "execute:completed",
+            transition!.operation,
+          );
           confirmed = true;
         }
         this.event(session, "tool", `Undid ${operationId}.`);
         return { ok: true, workspace: this.workspace(id) };
       } finally {
-        session.view = { ...session.view, status: confirmed ? previousStatus : "unknown" };
+        session.view = {
+          ...session.view,
+          status: confirmed ? previousStatus : "unknown",
+        };
         this.persist();
       }
     });
@@ -2213,7 +2575,9 @@ export class Workbench {
       // instead of quietly acquiring the power to sign.
       const key = await this.retainedSigner();
       if (!key)
-        throw new Error("No verification key is available for the workspace ledger.");
+        throw new Error(
+          "No verification key is available for the workspace ledger.",
+        );
       return await attestLedger(dir, workspace, key);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -2265,7 +2629,9 @@ export class Workbench {
       signingKey: signer,
     });
     if (resolved === undefined)
-      throw new Error("No verification key is available for the workspace ledger.");
+      throw new Error(
+        "No verification key is available for the workspace ledger.",
+      );
     return resolved;
   }
   private async commitWorkspace(
@@ -2364,8 +2730,11 @@ export class Workbench {
       // operator's real `~/.void/keys`; unset, it is exactly what it always
       // was. It is deliberately NOT `this.storage.directory`: that is the
       // document key, and resolving against it would find nothing.
-      const proxyKeys = this.env.VOID_PROXY_KEYS ?? join(homedir(), ".void", "keys");
-      const key = await this.verificationKey(() => this.retainedSigner(proxyKeys));
+      const proxyKeys =
+        this.env.VOID_PROXY_KEYS ?? join(homedir(), ".void", "keys");
+      const key = await this.verificationKey(() =>
+        this.retainedSigner(proxyKeys),
+      );
       const verified = await verifyChain(entries, { publicKey: key.publicKey });
       if (!verified.ok)
         throw new Error("The stdio proxy ledger failed verification.");
@@ -2403,14 +2772,34 @@ export class Workbench {
    * The rules are not written back: this is derived on read, so a chain that
    * is truncated or rolled back cannot leave a stale rule in force.
    */
-  private policyWithLearned(policy: ValidPolicy, workspace: string): ValidPolicy {
+  private policyWithLearned(
+    policy: ValidPolicy,
+    workspace: string,
+  ): ValidPolicy {
     const learned = mineLearnedRules(this.evidence[workspace] ?? []);
     if (learned.length === 0) return policy;
-    return { ok: true, policy: { ...policy.policy, rules: [...policy.policy.rules, ...learned] } };
+    return {
+      ok: true,
+      policy: { ...policy.policy, rules: [...policy.policy.rules, ...learned] },
+    };
   }
 
-  private async authorizeTool(session: Session, call: { tool: string; workspace: string; connector: string; klass: string; blastRadius: number | undefined; reason: string; arguments: JsonObject }, decision: PolicyDecision | { kind: "deny" }, policy: ValidPolicy) {
-    const name = call.tool, args = call.arguments;
+  private async authorizeTool(
+    session: Session,
+    call: {
+      tool: string;
+      workspace: string;
+      connector: string;
+      klass: string;
+      blastRadius: number | undefined;
+      reason: string;
+      arguments: JsonObject;
+    },
+    decision: PolicyDecision | { kind: "deny" },
+    policy: ValidPolicy,
+  ) {
+    const name = call.tool,
+      args = call.arguments;
     await this.locked(() =>
       this.commitWorkspace(
         session,
@@ -2452,6 +2841,14 @@ export class Workbench {
         await delay(100);
       allowed =
         hold.status === "approved" && !session.controller.signal.aborted;
+      if (allowed) {
+        // Track continuations: each hold approval is one continuation.
+        // The run loop will stop if the limit is reached.
+        session.view = {
+          ...session.view,
+          continuationCount: session.view.continuationCount + 1,
+        };
+      }
       if (session.controller.signal.aborted && hold.status === "pending") {
         hold.status = "denied";
         hold.by = "runtime";
@@ -2548,27 +2945,70 @@ export class Workbench {
   ): Promise<unknown> {
     if (!this.toolAllowedInMode(tool)) {
       observed.decision = `mode:${this.permissionMode}`;
-      return { isError: true, content: [{ type: "text", text: `Server permission mode ${this.permissionMode} forbids ${tool.name}.` }] };
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Server permission mode ${this.permissionMode} forbids ${tool.name}.`,
+          },
+        ],
+      };
     }
     if (session.agentProfile) {
       // The profile's policyProfile names the policy its tool calls are
       // decided under. An unresolvable name refuses here rather than
       // falling through to the built-in policy, so a profile can never widen
       // itself by naming something that does not resolve.
-      const profile = resolvePolicyProfile(session.agentProfile.policyProfile, this.env.VOID_POLICY_PATH);
-      if (!profile.ok) throw new Error(`Agent policy profile ${session.agentProfile.policyProfile} is unusable. ${profile.reason}.`);
+      const profile = resolvePolicyProfile(
+        session.agentProfile.policyProfile,
+        this.env.VOID_POLICY_PATH,
+      );
+      if (!profile.ok)
+        throw new Error(
+          `Agent policy profile ${session.agentProfile.policyProfile} is unusable. ${profile.reason}.`,
+        );
       if (!session.agentProfile.allowedTools.includes(tool.name))
-        throw new Error("Agent policy refused a tool outside its allowed scope.");
+        throw new Error(
+          "Agent policy refused a tool outside its allowed scope.",
+        );
       if (!tool.connectorId) {
-        const call = { tool: tool.name, workspace: session.view.workspace, connector: "workspace", klass: workspaceToolClass(tool.name) ?? "r3", blastRadius: 1, reason: "Managed document policy.", arguments: args };
-        const policy = this.policyWithLearned(profile.policy, session.view.workspace);
+        const call = {
+          tool: tool.name,
+          workspace: session.view.workspace,
+          connector: "workspace",
+          klass: workspaceToolClass(tool.name) ?? "r3",
+          blastRadius: 1,
+          reason: "Managed document policy.",
+          arguments: args,
+        };
+        const policy = this.policyWithLearned(
+          profile.policy,
+          session.view.workspace,
+        );
         const decision = decide(policy, call);
-        const allowed = await this.authorizeTool(session, call, decision, policy);
+        const allowed = await this.authorizeTool(
+          session,
+          call,
+          decision,
+          policy,
+        );
         observed.decision =
           decision.kind === "hold"
-            ? allowed ? "hold:approved" : "hold:denied"
+            ? allowed
+              ? "hold:approved"
+              : "hold:denied"
             : decision.kind;
-        if (!allowed) return { isError: true, content: [{ type: "text", text: denialText(tool.name, call.klass, decision) }] };
+        if (!allowed)
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: denialText(tool.name, call.klass, decision),
+              },
+            ],
+          };
       }
     }
     if (tool.connectorId === "stdio") {
@@ -2580,11 +3020,20 @@ export class Workbench {
       const before = this.evidence[session.view.workspace]?.length ?? 0;
       let outcome: { result: unknown } | { error: unknown };
       try {
-        outcome = { result: await session.client.request("tools/call", { name: tool.name, arguments: args }) };
+        outcome = {
+          result: await session.client.request("tools/call", {
+            name: tool.name,
+            arguments: args,
+          }),
+        };
       } catch (error) {
         outcome = { error };
       }
-      try { await this.syncStdio(session); } catch { throw new UnknownToolOutcome(); }
+      try {
+        await this.syncStdio(session);
+      } catch {
+        throw new UnknownToolOutcome();
+      }
       if ("result" in outcome) return outcome.result;
       // A typed denial alone can be forged by an upstream. Require fresh,
       // verified proxy evidence for this exact tool and argument digest.
@@ -2596,11 +3045,25 @@ export class Workbench {
       // this spelling; the two must not drift, and the prefix our own writer
       // uses would never match it. Key order is what silently broke it.
       const argsDigest = await sha256Hex(canonicalJson(args));
-      const receipt = this.evidence[session.view.workspace]?.slice(before)
-        .map(entry => entry.body as Record<string, unknown>)
-        .filter(body => body.source === "stdio-proxy" && body.tool === tool.name && body.argsDigest === argsDigest).at(-1);
-      if (outcome.error instanceof HoldDeniedError && (receipt?.decision === "hold:denied" || receipt?.decision === "hold:expired")) {
-        return { isError: true, content: [{ type: "text", text: outcome.error.message }] };
+      const receipt = this.evidence[session.view.workspace]
+        ?.slice(before)
+        .map((entry) => entry.body as Record<string, unknown>)
+        .filter(
+          (body) =>
+            body.source === "stdio-proxy" &&
+            body.tool === tool.name &&
+            body.argsDigest === argsDigest,
+        )
+        .at(-1);
+      if (
+        outcome.error instanceof HoldDeniedError &&
+        (receipt?.decision === "hold:denied" ||
+          receipt?.decision === "hold:expired")
+      ) {
+        return {
+          isError: true,
+          content: [{ type: "text", text: outcome.error.message }],
+        };
       }
       throw new UnknownToolOutcome();
     }
@@ -2660,7 +3123,12 @@ export class Workbench {
         ? decide(policy, call)
         : { kind: "deny" as const };
     const allowed = await this.authorizeTool(session, call, decision, policy);
-    observed.decision = decision.kind === "hold" ? (allowed ? "hold:approved" : "hold:denied") : decision.kind;
+    observed.decision =
+      decision.kind === "hold"
+        ? allowed
+          ? "hold:approved"
+          : "hold:denied"
+        : decision.kind;
     if (!allowed)
       return {
         isError: true,
@@ -2672,15 +3140,40 @@ export class Workbench {
       throw new Error("Session cancelled.");
     let result: Awaited<ReturnType<typeof rpc>>;
     try {
-      result = await rpc(config, "tools/call", { name: tool.name, arguments: args }, config.sessionId);
-      await this.locked(() => this.commitWorkspace(session, this.workspace(session.view.id), name, args,
-        result.result?.isError ? "execute:failed" : "execute:completed", undefined, undefined,
-        { klass: call.klass }, this.sessionAttribution(session, policy, decision)));
+      result = await rpc(
+        config,
+        "tools/call",
+        { name: tool.name, arguments: args },
+        config.sessionId,
+      );
+      await this.locked(() =>
+        this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          name,
+          args,
+          result.result?.isError ? "execute:failed" : "execute:completed",
+          undefined,
+          undefined,
+          { klass: call.klass },
+          this.sessionAttribution(session, policy, decision),
+        ),
+      );
     } catch {
       try {
-        await this.locked(() => this.commitWorkspace(session, this.workspace(session.view.id), name, args,
-          "execute:unknown", undefined, undefined, { klass: call.klass },
-          this.sessionAttribution(session, policy, decision)));
+        await this.locked(() =>
+          this.commitWorkspace(
+            session,
+            this.workspace(session.view.id),
+            name,
+            args,
+            "execute:unknown",
+            undefined,
+            undefined,
+            { klass: call.klass },
+            this.sessionAttribution(session, policy, decision),
+          ),
+        );
       } catch {
         // An unavailable ledger cannot turn an uncertain external effect into failure.
       }
@@ -2695,17 +3188,30 @@ export class Workbench {
   private recordProviderFailure(error: unknown) {
     this.providerFailureState = {
       status: error instanceof ProviderRequestError ? error.status : 503,
-      retryAt: error instanceof ProviderRequestError && error.retryAfter !== undefined
-        ? new Date(Date.now() + error.retryAfter * 1000).toISOString() : null,
+      retryAt:
+        error instanceof ProviderRequestError && error.retryAfter !== undefined
+          ? new Date(Date.now() + error.retryAfter * 1000).toISOString()
+          : null,
     };
   }
-  private checkContextBudget(session: Session, tools: readonly unknown[], outputTokens = 4096) {
+  private checkContextBudget(
+    session: Session,
+    tools: readonly unknown[],
+    outputTokens = 4096,
+  ) {
     if (!session.agentProfile) return;
     // UTF-8 bytes plus protocol overhead are a conservative token bound, not
     // a fabricated tokenizer measurement. Reserve the provider's fixed output
     // ceiling too; an oversized combined context never dispatches.
-    const bound = Buffer.byteLength(JSON.stringify(session.messages)) + Buffer.byteLength(JSON.stringify(tools)) + 1024 + outputTokens;
-    if (bound > session.agentProfile.maxContextTokens) throw new Error("Agent context budget reached. Increase the budget or compact before continuing.");
+    const bound =
+      Buffer.byteLength(JSON.stringify(session.messages)) +
+      Buffer.byteLength(JSON.stringify(tools)) +
+      1024 +
+      outputTokens;
+    if (bound > session.agentProfile.maxContextTokens)
+      throw new Error(
+        "Agent context budget reached. Increase the budget or compact before continuing.",
+      );
   }
   private async run(session: Session): Promise<void> {
     const provider = session.provider;
@@ -2717,16 +3223,24 @@ export class Workbench {
     const runTimeoutMs = this.harness.maxRunTimeoutMs;
     const deadline = AbortSignal.timeout(runTimeoutMs);
     const signal = AbortSignal.any([session.controller.signal, deadline]);
-    const expired = () => deadline.aborted && !session.controller.signal.aborted;
+    const expired = () =>
+      deadline.aborted && !session.controller.signal.aborted;
     try {
-      if (!provider) throw new Error("Reconnect the provider used by this conversation before continuing.");
+      if (!provider)
+        throw new Error(
+          "Reconnect the provider used by this conversation before continuing.",
+        );
       if (session.agentProfile) {
         session.agentProfile = validateAgentProfile(session.agentProfile);
         // Resolved once per turn so a profile whose policy file disappeared
         // after it was saved fails the turn instead of quietly running under a
         // policy its operator never chose.
-        const policy = resolvePolicyProfile(session.agentProfile.policyProfile, this.env.VOID_POLICY_PATH);
-        if (!policy.ok) throw new Error(`Unknown agent policy profile: ${policy.reason}.`);
+        const policy = resolvePolicyProfile(
+          session.agentProfile.policyProfile,
+          this.env.VOID_POLICY_PATH,
+        );
+        if (!policy.ok)
+          throw new Error(`Unknown agent policy profile: ${policy.reason}.`);
       }
       // before-run gates the turn. A refusal is thrown into the same handler
       // as every other run failure, so the session ends "failed" with the hook
@@ -2741,7 +3255,7 @@ export class Workbench {
         },
         session,
       );
-      const refused = gate.find(result => !hookSucceeded(result));
+      const refused = gate.find((result) => !hookSucceeded(result));
       if (refused)
         throw new Error(
           `Hook ${refused.hookId} refused this run: ${refused.outcome}${refused.code === null ? "" : ` (exit ${refused.code})`}.${refused.stderr ? ` ${refused.stderr}` : ""}`,
@@ -2777,6 +3291,31 @@ export class Workbench {
       for (let turn = 0; turn < maxTurns; turn++) {
         if (expired()) throw new RunTimeout(runTimeoutMs);
         if (session.controller.signal.aborted) return;
+        if (session.view.continuationCount >= this.harness.maxContinuations) {
+          session.view = { ...session.view, status: "idle" };
+          this.event(
+            session,
+            "tool",
+            `Continuation limit reached (${this.harness.maxContinuations}). Review the ledger before continuing.`,
+            { status: "idle" },
+            "run.status",
+          );
+          this.persist();
+          return;
+        }
+        const maxRunTokens = this.harness.maxRunTokens;
+        if (maxRunTokens > 0 && session.view.runTokenCount >= maxRunTokens) {
+          session.view = { ...session.view, status: "idle" };
+          this.event(
+            session,
+            "tool",
+            `Run token budget reached (${maxRunTokens}). Review the ledger before continuing.`,
+            { status: "idle" },
+            "run.status",
+          );
+          this.persist();
+          return;
+        }
         this.checkContextBudget(session, tools);
         // The record a tool call produces has to name what asked for it, and
         // the conversation is the only part of that which is not derivable
@@ -2844,7 +3383,17 @@ export class Workbench {
               cost: null,
             },
           );
-        if ((reply.message.tool_calls?.length ?? 0) > this.harness.maxToolCallsPerTurn)
+        if (reply.usage?.total_tokens) {
+          session.view = {
+            ...session.view,
+            runTokenCount:
+              session.view.runTokenCount + reply.usage.total_tokens,
+          };
+        }
+        if (
+          (reply.message.tool_calls?.length ?? 0) >
+          this.harness.maxToolCallsPerTurn
+        )
           throw new Error(
             `Provider exceeded the ${this.harness.maxToolCallsPerTurn}-tool batch limit.`,
           );
@@ -2877,7 +3426,10 @@ export class Workbench {
             "tool.started",
           );
           const result = await this.execute(
-            session, tool!, args as JsonObject, `${session.view.runId}-${turn}-${callIndex}`,
+            session,
+            tool!,
+            args as JsonObject,
+            `${session.view.runId}-${turn}-${callIndex}`,
           );
           if (session.controller.signal.aborted) return;
           this.event(
@@ -2889,9 +3441,7 @@ export class Workbench {
           session.messages.push({
             role: "tool",
             tool_call_id: call.id,
-            content: provider
-              .redact(JSON.stringify(result))
-              .slice(0, 64000),
+            content: provider.redact(JSON.stringify(result)).slice(0, 64000),
           });
         }
       }
@@ -2903,8 +3453,13 @@ export class Workbench {
       // raises a plain AbortError, which says nothing about why the run stopped,
       // so the cause is recovered here instead of surfacing as "failed".
       const cause = expired() ? new RunTimeout(runTimeoutMs) : error;
-      if (!session.controller.signal.aborted || cause instanceof UnknownToolOutcome || cause instanceof RunTimeout) {
-        if (cause instanceof ProviderRequestError && provider === this.provider) this.recordProviderFailure(cause);
+      if (
+        !session.controller.signal.aborted ||
+        cause instanceof UnknownToolOutcome ||
+        cause instanceof RunTimeout
+      ) {
+        if (cause instanceof ProviderRequestError && provider === this.provider)
+          this.recordProviderFailure(cause);
         const failure =
           cause instanceof ProviderRequestError
             ? providerFailure(cause)
@@ -2919,7 +3474,13 @@ export class Workbench {
         // A timed-out run is `unknown`, not `failed`: nothing proved what it
         // did, so a retry would be a guess over an unproven outcome. This is the
         // state Undo and reconciliation both require.
-        session.view = { ...session.view, status: cause instanceof UnknownToolOutcome || cause instanceof RunTimeout ? "unknown" : "failed" };
+        session.view = {
+          ...session.view,
+          status:
+            cause instanceof UnknownToolOutcome || cause instanceof RunTimeout
+              ? "unknown"
+              : "failed",
+        };
         session.client?.close();
       }
     } finally {
