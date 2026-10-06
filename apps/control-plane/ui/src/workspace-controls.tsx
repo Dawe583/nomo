@@ -233,14 +233,19 @@ export function WorkspaceControls() {
                 />
               </label>
               <label>
-                {t("Maximum tokenů kontextu (vstup a rezerva výstupu)", "Maximum context tokens (input and reserved output)")}
+                {t(
+                  "Maximum tokenů kontextu (vstup a rezerva výstupu)",
+                  "Maximum context tokens (input and reserved output)",
+                )}
                 <input
                   name="maxContextTokens"
                   type="number"
                   min="1"
                   step="1"
                   required
-                  defaultValue={profile?.maxContextTokens ?? DEFAULT_AGENT_CONTEXT_TOKENS}
+                  defaultValue={
+                    profile?.maxContextTokens ?? DEFAULT_AGENT_CONTEXT_TOKENS
+                  }
                 />
               </label>
               <div className="actions">
@@ -266,21 +271,35 @@ export function WorkspaceControls() {
       </section>
       <section>
         <h2>{t("Hooky", "Hooks")}</h2>
-        <p className="muted">
-          {t(
-            "Pouze příkazy výslovně povolené operátorem. Uložení hooku jej samo nespouští.",
-            "Only commands explicitly allowed by the operator. Saving a hook does not execute it.",
-          )}
-        </p>
-        <p>
-          {t(
-            "Spouštění hooks není na tomto hostu podporované. Žádný příkaz se nespustí.",
-            "Hook execution is not supported on this host. No command will execute.",
-          )}
-        </p>
+        {agents.isPending ? (
+          <p role="status">{t("Načítání hooků…", "Loading hooks…")}</p>
+        ) : agents.data?.hooksSupported === true ? (
+          <p className="muted">
+            {t(
+              "Hooky se spouštějí jen s příkazy na allowlistu operátora. Uložení hooku jej samo nespustí.",
+              "Hooks run only with commands on the operator allowlist. Saving a hook does not execute it.",
+            )}
+          </p>
+        ) : (
+          <p>
+            {t(
+              "Spouštění hooků není na tomto hostu podporované. Žádný příkaz se nespustí.",
+              "Hook execution is not supported on this host. No command will execute.",
+            )}
+          </p>
+        )}
+        {agents.data?.hooksSupported === true && (
+          <p className="muted">
+            {t("Povolené příkazy", "Allowed commands")}:{" "}
+            {agents.data.hookCommands?.join(", ") || t("žádné", "none")}
+          </p>
+        )}
         {(agents.data?.hooks ?? []).map((row: Row) => (
           <details key={row.id}>
-            <summary>{row.id}</summary>
+            <summary>
+              {row.id} ({row.enabled ? t("zapnutý", "on") : t("vypnutý", "off")}
+              )
+            </summary>
             <JsonDetail value={row} />
           </details>
         ))}
