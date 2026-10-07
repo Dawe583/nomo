@@ -4,12 +4,14 @@ Status: **draft for review, 2026-10-07.** Nothing in this file is implemented
 unless the "Status" column says so. Owners confirm the sections marked
 **[DAVID]** or **[MAX]** before Thursday's integration.
 
-NOMO is the agent identity and fleet control plane built on top of VOID. VOID
-already answers "how reversible is this call and what does the class policy
-say" (R0 to R3, fail-closed, signed ledger). NOMO adds the question VOID
-deliberately does not ask (`docs/DECISIONS.md`, WP-05: no identity "beyond the
+NOMO is this repository: VOID, reworked and to be renamed, not a new codebase.
+What VOID already has stays and is reused: the registry and its R0 to R3
+classes, the class policy (`policy/default.yaml`, `@void/policy`), fail-closed
+and observe postures, the proxy, the signed ledger, holds and approvals, and
+Max's fleet view (`origin/max-spike`). The rework adds the question VOID
+deliberately did not ask (`docs/DECISIONS.md`, WP-05: no identity "beyond the
 workspace"): **which agent is asking, with which token, for which scope on
-which target, and is that agent still allowed to exist.**
+which target, and is that agent still allowed to run.**
 
 ## 0. The one flow the spike must prove
 
@@ -23,20 +25,20 @@ agent ──4 tools/call + token──▶ VOID proxy ──5 re-check (token + e
                                 ▼
                           6 MCP connector ──▶ fake/test data only
                                 │
-                          7 ledger append (signed, hash chained)  +  event to stream
+                          7 ledger append (signed, hash chained)  +  fleet feed event
 operator ──8 kill-switch──▶ revocation store ──▶ next check denies, tokens dead, holds denied
 ```
 
 ## 1. Decision on layering (needs [DAVID])
 
-NOMO does **not** replace `@void/policy`. A call passes three gates in order,
+The agent policy does **not** replace `@void/policy`. A call passes three gates in order,
 and the most restrictive answer wins (`deny > hold > allow`):
 
 | Gate | Owner | Input | Source of rules |
 | ---- | ----- | ----- | --------------- |
-| 0. Kill-switch and token | NOMO (Oliver), token runtime (David) | agent id, token claims | revocation store |
-| 1. Agent policy | NOMO (Oliver) | agent, tool, target, scope, class | `policy/agents.yaml` (new) |
-| 2. Class policy | VOID (David), unchanged | tool, connector, workspace, class, blast radius | `policy/default.yaml` (existing) |
+| 0. Kill-switch and token | Oliver, token runtime (David) | agent id, token claims | revocation store |
+| 1. Agent policy | Oliver | agent, tool, target, scope, class | `policy/agents.yaml` (new) |
+| 2. Class policy | David, existing code unchanged | tool, connector, workspace, class, blast radius | `policy/default.yaml` (existing) |
 
 Why layered rather than a sixth match key in `@void/policy`: the VOID grammar
 and its loader are frozen by WP-05, the proxy, SDK and workbench already depend
@@ -200,7 +202,7 @@ export type TokenClaims = {
   `agentId/tool/target/scope/workspace` equal the call, then runs the engine
   again. A policy file that changed after issuance is fine as long as the
   re-check still allows.
-- The token value is never written to the ledger, the event stream, stderr or
+- The token value is never written to the ledger, the fleet feed, stderr or
   an error body. Only `jti`.
 
 ## 6. How the proxy calls the engine, and failure (needs [DAVID])
@@ -242,7 +244,7 @@ Fail-closed, always, including in VOID `observe` posture for gate 0:
 | tool unknown to the registry | class `unknown`; deny unless a rule lists `class: unknown` |
 | token missing, bad signature, expired, mismatched | deny, `nomo:token-*` |
 | ledger append fails | deny (existing VOID behavior) |
-| event stream unavailable | **call proceeds**; the ledger is the record, events are best effort, and a stderr line says events were dropped |
+| fleet feed unavailable | **call proceeds**; the ledger is the record, the feed is a view, and a stderr line says events were dropped |
 
 Proposal for [DAVID]: VOID `observe` posture may forward class-policy
 non-allows as it does today, but **must never forward a kill-switch or token
@@ -275,7 +277,7 @@ Calling `kill(agentId, by, reason)`:
    The proxy sends `notifications/cancelled` for it where the session still
    maps it; whether the upstream honors that is up to the upstream. The ledger
    shows that call as allowed before the kill; replay is the recovery path.
-6. Emits `agent.killed` to the event stream.
+6. Emits `agent.killed` to the fleet feed.
 
 Reinstating is a separate explicit act (`reinstate(agentId, by, reason)`),
 appended the same way. Tokens issued before the kill stay dead after a
@@ -284,52 +286,51 @@ reinstate, because their `iat` precedes the revocation.
 Target, to be measured in the demo, not promised: the next call after `kill`
 returns deny, i.e. latency is one store read, no polling interval.
 
-## 8. Event stream format (needs [MAX])
+## 8. Events: extend Max's fleet feed (needs [MAX])
 
-One JSON object per line. The event stream is for the dashboard and
-telemetry; **the ledger is the audit record.** Events reference ledger entries
-by `seq` and `hash`, never the other way around.
+Max's fleet feed already exists on `origin/max-spike`
+(`packages/workbench/src/fleet.ts`, decision "Fleet is a view of the host's own
+runs", 2026-10-07). NOMO does not define a second stream. It proposes additive
+types and fields on his `FleetEvent`, under his rules: each event is built
+field by field from a closed set, never spread from a source event; the feed
+is an in-memory ring of 500 with an epoch, not a store; **the ledger is the
+audit record**, the feed is a view.
+
+His shape today: `cursor, at, type, sessionId, runId?, agent?, model, state?,
+tool?, outcome?, totalTokens?`, with types `run.state, tool.started,
+tool.finished, approval.held, usage.reported`.
+
+Proposed additions:
 
 ```ts
-export type NomoEvent = {
-  readonly schema: "nomo.event.v0";
-  readonly eventId: string;    // ULID, sortable
-  readonly seq: number;        // per emitting process, gap means a dropped event
-  readonly at: string;         // ISO 8601 UTC, millisecond precision
-  readonly type:
-    | "token.requested" | "token.issued" | "token.denied"
-    | "policy.decided"
-    | "hold.created" | "hold.resolved"
-    | "tool.called" | "tool.completed" | "tool.failed"
-    | "agent.killed" | "agent.reinstated"
-    | "engine.error";
-  readonly workspace: string;
-  readonly requestId: string;
-  readonly agentId: string;
-  readonly sessionId?: string;
-  readonly tool?: string;
-  readonly connector?: string;
-  readonly target?: string;
-  readonly scope?: string;
-  readonly class?: string;
-  readonly decision?: "allow" | "deny" | "hold";
-  readonly ruleId?: string;
-  readonly layer?: string;
-  readonly reason?: string;
-  readonly tokenId?: string;   // jti only
-  readonly argsDigest?: string;
-  readonly durationMs?: number;
-  readonly ledger?: { readonly seq: number; readonly hash: string };
-};
+// new FLEET_EVENT_TYPES
+| "policy.decided"     // every non-allow, and allows only if Max wants volume
+| "token.issued"
+| "agent.killed"
+| "agent.reinstated"
+
+// new optional FleetEvent fields
+readonly requestId?: string;          // joins token request, call, ledger entry
+readonly decision?: "allow" | "deny" | "hold";
+readonly ruleId?: string;             // e.g. support-bot-writes-drafts, void:rule[3], nomo:kill-switch
+readonly layer?: "kill-switch" | "token" | "agent-policy" | "class-policy" | "engine";
+readonly class?: "r0" | "r1" | "r2" | "r3" | "unknown";
+readonly scope?: "read" | "write" | "delete" | "admin";
+readonly tokenId?: string;            // jti only, never the token value
+readonly ledger?: { readonly seq: number; readonly hash: string };
 ```
 
-Never in an event: token values, raw arguments, tool results, credentials,
-environment variables. `reason` is the policy rationale text, which the
-operator writes and must keep free of secrets.
+`agent` in his event should carry the NOMO agent id from `agents.yaml`.
 
-Open for [MAX]: transport (JSONL file tail, stdout, or HTTP POST), whether he
-wants `policy.decided` for every call or only non-allows, and whether the
-dashboard reads the existing `void feed --json` for ledger rows instead.
+Deliberately **not** in the feed, following his threat-model note (section
+3.4): `target`, `reason` text and argument digests. A target is a path or a
+table name taken from the arguments, and a reason can quote an operator's
+rationale. Both stay in the policy result and the ledger, where access is
+already controlled.
+
+Open for [MAX]: whether `policy.decided` is sent for allows too, whether the
+projection lives next to `projectFleetEvent` or the proxy emits these directly,
+and whether the Fleet page shows a killed agent as its own state.
 
 ## 9. Ledger (needs [DAVID])
 
@@ -351,9 +352,9 @@ documents why an additive body field keeps old entries verifying. Plus two new
 7. Who owns the revocation store file, and its location.
 
 **Max**
-1. Event shape (section 8), especially `requestId` as the join key.
-2. Transport and volume (section 8).
-3. Dashboard source for the audit view: ledger feed or event stream.
+1. The additive fleet types and fields (section 8), especially `requestId`.
+2. Volume: `policy.decided` for every call or only non-allows.
+3. Where the projection lives, and how the Fleet page shows a killed agent.
 
 ## Status
 
@@ -364,5 +365,5 @@ documents why an additive body field keeps old entries verifying. Plus two new
 | Kill-switch check, revocation JSONL store, token claim check | implemented in the same package; no `kill` CLI command, no hold cancellation, no ledger entry yet |
 | Token minting and signing | not started (David) |
 | Proxy wiring | not started (David) |
-| Event emitter | not started (Max) |
+| Fleet feed | exists on `origin/max-spike` (Max); NOMO additions not started |
 | MCP connector for the demo | not chosen yet |
