@@ -216,6 +216,8 @@ export function checkPolicy(
     readonly classify: () => EvaluationResult; // VOID registry, unchanged
     readonly revocations: RevocationView;      // kill-switch state
     readonly now: () => Date;
+    readonly blastRadius?: number;             // from a connector probe, when measured
+    readonly requireToken: boolean;            // true in the proxy, false at issuance
   },
 ): PolicyCheckResult;
 ```
@@ -265,7 +267,8 @@ Calling `kill(agentId, by, reason)`:
    `deny / nomo:kill-switch / layer kill-switch`, before any rule is read.
 3. Every outstanding token dies without enumerating them: a token is invalid
    when its agent has a revocation whose `at` is at or after the token's
-   `iat`. Nothing has to track `jti` lists.
+   `iat`. Nothing has to track `jti` lists. `iat` is in whole seconds, so a
+   token issued in the same second as a kill is treated as killed too.
 4. Every pending hold for that agent resolves as denied
    (`by: "nomo:kill-switch"`), through the existing VOID `HoldQueue`.
 5. A call already forwarded upstream before the kill **cannot be recalled**.
@@ -357,8 +360,8 @@ documents why an additive body field keeps old entries verifying. Plus two new
 | Item | Status |
 | ---- | ------ |
 | This contract | draft, not confirmed |
-| Agent policy loader and evaluation | in progress, `packages/agent-policy` |
-| Kill-switch revocation check | in progress, same package |
+| Agent policy loader and evaluation | implemented in `packages/agent-policy`, 40 tests, not wired into the proxy |
+| Kill-switch check, revocation JSONL store, token claim check | implemented in the same package; no `kill` CLI command, no hold cancellation, no ledger entry yet |
 | Token minting and signing | not started (David) |
 | Proxy wiring | not started (David) |
 | Event emitter | not started (Max) |
