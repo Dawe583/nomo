@@ -2997,7 +2997,12 @@ export class Workbench {
     try {
       this.persist();
     } catch (error) {
-      this.documents[workspace] = before!;
+      // A workspace that had no committed state before this call must not be
+      // left registered with an empty state just because the write failed: the
+      // phantom key would make `ledger()` return a verified-but-empty chain
+      // and hide the failure from the next read.
+      if (before === undefined) delete this.documents[workspace];
+      else this.documents[workspace] = before;
       this.evidence[workspace] = current;
       throw error;
     }

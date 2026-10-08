@@ -296,3 +296,42 @@ test("a proposal that quotes ordinary document text is not refused", async (t) =
   // proposal that quotes it.
   await app.refineHarness(session.id, proposal());
 });
+
+test("a failed write does not leave a phantom workspace registered", async (t) => {
+  // A workspace that had never committed before this call must not be left
+  // registered with an empty state when the write fails: the phantom key
+  // would make `ledger()` return a verified-but-empty chain and hide the
+  // failure from the next read.
+  const { app, session } = await fixture(t, {}, { seedDocument: false });
+  // Test-only access to private members, to drive the rollback path of
+  // `commitWorkspace` with a controlled failure.
+  const internals = app as unknown as {
+    sessions: Map<string, unknown>;
+    commitWorkspace: (...args: unknown[]) => Promise<void>;
+    documents: Record<string, unknown>;
+    storage: { save: (value: unknown) => void };
+  };
+  const internalSession = internals.sessions.get(session.id);
+  assert.ok(internalSession);
+  const state = app.workspace(session.id);
+  const originalSave = internals.storage.save.bind(internals.storage);
+  internals.storage.save = () => {
+    internals.storage.save = originalSave;
+    throw new Error("disk full");
+  };
+  await assert.rejects(
+    internals.commitWorkspace(
+      internalSession,
+      state,
+      "void_workspace_write",
+      { count: 0 },
+      "hold:approved",
+    ),
+    /disk full/,
+  );
+  assert.equal(
+    Object.hasOwn(internals.documents, session.workspace),
+    false,
+    "a failed write left the workspace registered with an empty state",
+  );
+});
