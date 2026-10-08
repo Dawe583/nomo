@@ -272,6 +272,8 @@ function tally(entries: readonly Entry[]): Tally {
   for (const entry of entries) {
     const record = body(entry);
     if (record === null) continue;
+    // Refinement records document harness changes, not model tool outcomes.
+    if (str(record, "tool") === "harness.refinement") continue;
     const decision = str(record, "decision");
     if (!decision) {
       out.unmeasured += 1;
@@ -338,10 +340,21 @@ export function measureBoard(
   for (const entries of cases) {
     const local = tally(entries);
     const localDecided = local.allow + local.hold + local.deny;
-    holdCases.push([rate(local.hold, localDecided)]);
-    denyCases.push([rate(local.deny, localDecided)]);
-    unknownCases.push([rate(local.unknownTool, entries.length)]);
-    passCases.push([rate(local.allow, localDecided)]);
+    const hasAttempt = entries.some((entry) => {
+      const record = body(entry);
+      if (record === null) return false;
+      const decision = str(record, "decision");
+      return (
+        decision.startsWith("deny") ||
+        decision.startsWith("hold") ||
+        decision.startsWith("execute") ||
+        decision === "proxy"
+      );
+    });
+    holdCases.push(hasAttempt ? [rate(local.hold, localDecided)] : []);
+    denyCases.push(hasAttempt ? [rate(local.deny, localDecided)] : []);
+    unknownCases.push(hasAttempt ? [rate(local.unknownTool, entries.length)] : []);
+    passCases.push(hasAttempt ? [rate(local.allow, localDecided)] : []);
 
     const approvals: number[] = [];
     const rollbacks: number[] = [];
@@ -363,7 +376,7 @@ export function measureBoard(
       }
     }
     approvalCases.push(approvals);
-    rollbackCases.push(rollbacks);
+    rollbackCases.push(hasAttempt ? [rollbacks.length] : []);
     recoveryCases.push(recoveries);
     costCases.push(costs);
   }
@@ -376,14 +389,8 @@ export function measureBoard(
     unknown_tool_rate: summariseCases(unknownCases, unmeasured),
     first_pass_rate: summariseCases(passCases, unmeasured),
     median_approval_ms: summariseCases(approvalCases, unmeasured),
-    recovery_success_rate: summariseCases(
-      recoveryCases.map((values) => values.map((value) => (values.length ? value : 0))),
-      0,
-    ),
-    rollback_count: summariseCases(
-      rollbackCases.map((values) => [values.length]),
-      unmeasured,
-    ),
+    recovery_success_rate: summariseCases(recoveryCases, 0),
+    rollback_count: summariseCases(rollbackCases, unmeasured),
     cost_usd: summariseCases(costCases, unmeasured),
   };
 
@@ -394,7 +401,7 @@ export function measureBoard(
   let verdict: ScoreVerdict = "insufficient-data";
   if (decided === 0) {
     reasons.push("no decided call in the chain, so nothing was measured");
-  } else if (holdCases.length < 2) {
+  } else if (holdCases.filter((values) => values.length > 0).length < 2) {
     reasons.push("fewer than two cases, so no interval can be computed");
   } else {
     verdict = "flat";

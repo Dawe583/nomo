@@ -281,3 +281,12 @@ test("the same cases in a different order measure the same thing", () => {
     measureBoard([second, first], "t0").metrics,
   );
 });
+
+test("empty and non-decision cases do not become zero-valued first-pass samples", () => {
+  const board = measureBoard([[], [entry({ tool: "harness.refinement", decision: "refinement:applied" })]], "t0");
+  assert.equal(board.metrics.first_pass_rate.n, 0);
+  assert.equal(board.metrics.first_pass_rate.mean, null);
+  assert.equal(board.metrics.rollback_count.n, 0);
+  assert.equal(board.metrics.first_pass_rate.unmeasured, 0);
+  assert.equal(board.verdict, "insufficient-data");
+});
