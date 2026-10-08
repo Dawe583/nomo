@@ -43,7 +43,9 @@ export type HarnessSettingKey =
   | "maxConcurrentRuns"
   | "maxContinuations"
   | "maxRunTokens"
-  | "retryMaxDelayMs";
+  | "retryMaxDelayMs"
+  | "contextEntryLimit"
+  | "contextCharsPerEntry";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -231,6 +233,28 @@ export const HARNESS_SETTINGS: {
     min: 1000,
     max: 600000,
     icon: "◱",
+  },
+  contextEntryLimit: {
+    label: "Learned entries per kind in a prompt",
+    description:
+      "How many learned entries of one kind may reach a prompt. Zero keeps the harness out of the prompt entirely.",
+    consumerFile: "index.ts",
+    consumers: ["retrievalContext"],
+    default: 3,
+    min: 0,
+    max: 20,
+    icon: "◇",
+  },
+  contextCharsPerEntry: {
+    label: "Characters per retrieved entry",
+    description:
+      "How much of a retrieved entry's text a prompt shows. The stored entry is never shortened.",
+    consumerFile: "index.ts",
+    consumers: ["retrievalContext"],
+    default: 240,
+    min: 40,
+    max: 4000,
+    icon: "▭",
   },
 };
 
