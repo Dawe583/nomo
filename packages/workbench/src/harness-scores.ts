@@ -340,21 +340,16 @@ export function measureBoard(
   for (const entries of cases) {
     const local = tally(entries);
     const localDecided = local.allow + local.hold + local.deny;
-    const hasAttempt = entries.some((entry) => {
-      const record = body(entry);
-      if (record === null) return false;
-      const decision = str(record, "decision");
-      return (
-        decision.startsWith("deny") ||
-        decision.startsWith("hold") ||
-        decision.startsWith("execute") ||
-        decision === "proxy"
-      );
-    });
-    holdCases.push(hasAttempt ? [rate(local.hold, localDecided)] : []);
-    denyCases.push(hasAttempt ? [rate(local.deny, localDecided)] : []);
-    unknownCases.push(hasAttempt ? [rate(local.unknownTool, entries.length)] : []);
-    passCases.push(hasAttempt ? [rate(local.allow, localDecided)] : []);
+    // A case contributes a sample only when something in it was decided.
+    // `rate(0, 0)` is 0, and a zero is a measurement: `execute:unknown` and
+    // `proxy` are unmeasured precisely because nobody proved what happened, so
+    // letting them in would report missing evidence as a failed run.
+    if (localDecided > 0) {
+      holdCases.push([rate(local.hold, localDecided)]);
+      denyCases.push([rate(local.deny, localDecided)]);
+      unknownCases.push([rate(local.unknownTool, entries.length)]);
+      passCases.push([rate(local.allow, localDecided)]);
+    }
 
     const approvals: number[] = [];
     const rollbacks: number[] = [];
@@ -376,7 +371,7 @@ export function measureBoard(
       }
     }
     approvalCases.push(approvals);
-    rollbackCases.push(hasAttempt ? [rollbacks.length] : []);
+    rollbackCases.push(localDecided > 0 ? [rollbacks.length] : []);
     recoveryCases.push(recoveries);
     costCases.push(costs);
   }
@@ -401,7 +396,7 @@ export function measureBoard(
   let verdict: ScoreVerdict = "insufficient-data";
   if (decided === 0) {
     reasons.push("no decided call in the chain, so nothing was measured");
-  } else if (holdCases.filter((values) => values.length > 0).length < 2) {
+  } else if (holdCases.length < 2) {
     reasons.push("fewer than two cases, so no interval can be computed");
   } else {
     verdict = "flat";

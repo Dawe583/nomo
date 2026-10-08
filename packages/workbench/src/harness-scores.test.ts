@@ -88,8 +88,8 @@ test("execute:unknown is unmeasured, not a failure", () => {
   // knowledge; counting it as a bad outcome would make an instrumentation
   // failure look like a model that misbehaves.
   const board = measureBoard([[decided("execute:unknown")]], "t0");
-  assert.equal(board.metrics.first_pass_rate.n, 1);
-  assert.equal(board.metrics.first_pass_rate.mean, 0);
+  assert.equal(board.metrics.first_pass_rate.n, 0);
+  assert.equal(board.metrics.first_pass_rate.mean, null);
   assert.equal(board.metrics.first_pass_rate.unmeasured, 1);
   assert.equal(board.metrics.deny_rate.unmeasured, 1);
 });
@@ -97,7 +97,7 @@ test("execute:unknown is unmeasured, not a failure", () => {
 test("a delegated proxy decision is not counted as the model's outcome", () => {
   const board = measureBoard([[decided("proxy")]], "t0");
   assert.equal(board.metrics.first_pass_rate.unmeasured, 1);
-  assert.equal(board.metrics.first_pass_rate.mean, 0);
+  assert.equal(board.metrics.first_pass_rate.mean, null);
 });
 
 test("a missing decision is unmeasured rather than assumed allowed", () => {
@@ -289,4 +289,29 @@ test("empty and non-decision cases do not become zero-valued first-pass samples"
   assert.equal(board.metrics.rollback_count.n, 0);
   assert.equal(board.metrics.first_pass_rate.unmeasured, 0);
   assert.equal(board.verdict, "insufficient-data");
+});
+
+test("a chain whose outcomes were never proven contributes no sample", () => {
+  // `execute:unknown` and `proxy` are unmeasured, not failed. Counting either
+  // as a zero first-pass would report missing evidence as a model that
+  // misbehaved, and a rollback count of zero would claim a baseline that was
+  // never observed.
+  const unproven = [decided("execute:unknown"), decided("proxy")];
+  const board = measureBoard(
+    [unproven, unproven, [decided("execute:completed"), decided("hold:approved")]],
+    "t0",
+  );
+  assert.equal(board.metrics.first_pass_rate.n, 1);
+  assert.equal(board.metrics.first_pass_rate.mean, 0.5);
+  assert.equal(board.metrics.rollback_count.n, 1);
+  assert.equal(board.verdict, "insufficient-data");
+});
+
+test("a chain with nothing decided has no first-pass rate at all", () => {
+  const board = measureBoard([[decided("proxy")]], "t0");
+  assert.equal(board.metrics.first_pass_rate.mean, null);
+  assert.equal(board.metrics.first_pass_rate.n, 0);
+  assert.deepEqual(board.reasons, [
+    "no decided call in the chain, so nothing was measured",
+  ]);
 });
