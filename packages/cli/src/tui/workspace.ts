@@ -13,9 +13,9 @@ import {
 import { activity, type ViewName } from "../../../workbench/src/gui.ts";
 import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
+import { measureBoard, unmeasuredMetrics } from "../../../workbench/src/harness-scores.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
-import { measureBoard } from "../../../workbench/src/harness-scores.ts";
 import { harnessSettingsView } from "../../../workbench/src/harness-settings.ts";
 import {
   verificationKeyNote,
@@ -1163,6 +1163,13 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           `Verdict: ${scoreBoard.verdict}.`,
           `First-pass rate: ${firstPassValue}.`,
           `95% CI: ${firstPassCi}; ${firstPass.n} ${firstPass.n === 1 ? "case" : "cases"}.`,
+          // The verdict is a sentence, not a grade: "flat" means nothing was
+          // compared, which reads as "measured and unchanged" unless the
+          // reason is printed next to it.
+          `Reason: ${scoreBoard.reasons.join("; ")}.`,
+          ...unmeasuredMetrics(scoreBoard).map(
+            (key) => `${key}: no sample, so no rate can be computed.`,
+          ),
           "Descriptive only; never changes a decision or permission.",
         ],
       });
@@ -2927,6 +2934,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
           `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
           `Sample count: ${firstPass.n} ${firstPass.n === 1 ? "case" : "cases"}`,
+          `Reason: ${board.reasons.join("; ")}.`,
+          ...unmeasuredMetrics(board).map(
+            (key) => `${key}: no sample, so no rate can be computed.`,
+          ),
           "Descriptive only; never changes a decision or permission.",
         ];
         this.scroll = 0;

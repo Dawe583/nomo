@@ -304,3 +304,13 @@ test("score sampling deduplicates sessions that share one verified workspace cha
   assert.match(row.lines.join("\n"), /1 case/);
   assert.match(row.lines.join("\n"), /95% CI: unavailable/);
 });
+
+test("the score row prints the reason the verdict is what it is", async (t) => {
+  // "flat" is a sentence, not a grade: without the reason it reads as
+  // "measured and unchanged", which is the one thing this row is forbidden
+  // to claim. The reason is what tells the operator nothing was compared.
+  const { ui } = await ledgerRows(t);
+  const row = rowsOf(ui).find((r) => r.id === "harness:scores");
+  assert.ok(row);
+  assert.match(row.lines.join("\n"), /Reason: no decided call in the chain/);
+});
