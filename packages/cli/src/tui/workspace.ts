@@ -15,6 +15,7 @@ import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
+import { measureBoard } from "../../../workbench/src/harness-scores.ts";
 import { harnessSettingsView } from "../../../workbench/src/harness-settings.ts";
 import {
   verificationKeyNote,
@@ -94,6 +95,17 @@ type Confirmation = {
 const json = (value: unknown) =>
   JSON.stringify(value, null, 2)?.split("\n") ?? [];
 const text = (value: unknown) => String(value ?? "unknown");
+/** A workspace chain is one score case, even when several sessions display it. */
+const verifiedScoreCases = (
+  proofs: ReadonlyMap<string, readonly JsonlEntry[]>,
+): JsonlEntry[][] => {
+  const cases = new Map<string, JsonlEntry[]>();
+  for (const [sessionId, entries] of proofs) {
+    const workspace = entries[0]?.workspace ?? sessionId;
+    if (!cases.has(workspace)) cases.set(workspace, [...entries]);
+  }
+  return [...cases.values()];
+};
 /** Hook commands are operator-supplied config, but they routinely carry
  * credentials inline (curl -H "Authorization: ...", --token=...). The
  * ledger tab prints them, so redact before bounding and rendering, the
@@ -1130,6 +1142,30 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "Mined from the verified chain.",
           ],
         });
+      // Score only the managed chains above: each verified workspace chain is
+      // one case. Proxy chains have a separate verification state and are not
+      // mixed into this descriptive, non-authoritative report.
+      const scoreBoard = measureBoard(
+        verifiedScoreCases(this.proofs),
+        new Date().toISOString(),
+      );
+      const firstPass = scoreBoard.metrics.first_pass_rate;
+      const firstPassValue =
+        firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`;
+      const firstPassCi =
+        firstPass.half === null
+          ? "unavailable"
+          : `±${(firstPass.half * 100).toFixed(1)}%`;
+      rows.push({
+        id: "harness:scores",
+        label: `◈ harness score ${scoreBoard.verdict}`,
+        lines: [
+          `Verdict: ${scoreBoard.verdict}.`,
+          `First-pass rate: ${firstPassValue}.`,
+          `95% CI: ${firstPassCi}; ${firstPass.n} ${firstPass.n === 1 ? "case" : "cases"}.`,
+          "Descriptive only; never changes a decision or permission.",
+        ],
+      });
       // The harness that produced this chain: which runtime is the default,
       // which profile new conversations get, and what hooks are wired.
       // /harness and /hooks print the same facts on demand; this is where
@@ -2880,10 +2916,26 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "harness") {
+      if (arg === "scores") {
+        const board = measureBoard(
+          verifiedScoreCases(this.proofs),
+          new Date().toISOString(),
+        );
+        const firstPass = board.metrics.first_pass_rate;
+        this.detail = [
+          `HARNESS SCORES, verdict: ${board.verdict}`,
+          `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
+          `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
+          `Sample count: ${firstPass.n} ${firstPass.n === 1 ? "case" : "cases"}`,
+          "Descriptive only; never changes a decision or permission.",
+        ];
+        this.scroll = 0;
+        return;
+      }
       // The setting is shared with the control plane. Detection only looks
       // at PATH presence; nothing is executed, so listing is always safe.
       if (arg && arg !== "cloud" && arg !== "prime-agent")
-        throw Error("/harness cloud | prime-agent");
+        throw Error("/harness cloud | prime-agent | scores");
       if (arg) {
         this.workbench.patchPreferences({ defaultAgent: arg });
         this.notice =
@@ -2903,7 +2955,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
         ),
         "",
-        "/harness cloud | /harness prime-agent switches the default.",
+        "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
       ];
       this.scroll = 0;
       return;
@@ -3288,7 +3340,7 @@ export const TUI_COMMANDS = [
   ["/export", "Save ledger, chat or document"],
   ["/attest", "Signed slice for a third party"],
   ["/providers", "Model providers and local open models"],
-  ["/harness", "Agent harness: cloud or prime-agent"],
+  ["/harness", "Agent harness: cloud or prime-agent; scores"],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],
   ["/verify", "Verify signatures"],
