@@ -868,6 +868,57 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     };
     this.scroll = 0;
   }
+  /**
+   * Review a pending prompt addendum before it is applied.
+   *
+   * The digest is what the operator approves, so the confirmation shows the
+   * exact text that would take effect rather than a description of it. A
+   * prefix is accepted because a full sha256 is not something anyone reads off
+   * a screen and copies back, but the digest it resolves to is the full one
+   * and it is what gets applied.
+   */
+  preparePromptApproval(digestPrefix: string) {
+    if (!this.sessionId) throw Error("Select a conversation.");
+    const pending = this.workbench.pendingApprovalsFor(this.sessionId);
+    const match = pending.find((approval) => approval.digest.startsWith(digestPrefix));
+    if (!match)
+      throw Error(
+        pending.length
+          ? `No pending addendum starts with ${digestPrefix}. /harness lists them.`
+          : "No prompt addendum is awaiting approval.",
+      );
+    const sessionId = this.sessionId;
+    this.confirmation = {
+      title: `APPROVE PROMPT ADDENDUM ${match.digest.slice(0, 8)}…?`,
+      lines: [
+        "A prompt addendum changes what the model is told in later sessions.",
+        "The base system prompt itself is never editable.",
+        "",
+        `Summary: ${match.summary}`,
+        `Cited chain position: ${match.atSeq}.`,
+        "",
+        ...match.addendum.split("\n"),
+        "",
+        "Approving writes one signed record naming this digest. It changes no",
+        "tool catalog, no policy, and no permission.",
+      ],
+      apply: async () => {
+        this.confirmation = undefined;
+        const result = await this.workbench.applyPromptAddendum(sessionId, match.digest);
+        this.notice = `Prompt addendum applied: ${result.applied.length} edit(s) signed.`;
+        this.detail = [
+          "PROMPT ADDENDUM APPLIED",
+          `Digest: ${match.digest}`,
+          `Summary: ${match.summary}`,
+          "",
+          "The chain records that the operator approved this exact addendum.",
+        ];
+        await this.refresh(true);
+      },
+    };
+    this.scroll = 0;
+  }
+
   costLines() {
     const usage = activity(this.workbench.allViews());
     const lines = [
@@ -2923,7 +2974,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "harness") {
-      if (arg === "scores") {
+      const [verb = "", ...rest] = arg.split(/\s+/).filter(Boolean);
+      if (verb === "scores") {
         const board = measureBoard(
           verifiedScoreCases(this.proofs),
           new Date().toISOString(),
@@ -2943,19 +2995,24 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.scroll = 0;
         return;
       }
+      if (verb === "approve") {
+        this.preparePromptApproval(rest.join(" "));
+        return;
+      }
       // The setting is shared with the control plane. Detection only looks
       // at PATH presence; nothing is executed, so listing is always safe.
-      if (arg && arg !== "cloud" && arg !== "prime-agent")
-        throw Error("/harness cloud | prime-agent | scores");
-      if (arg) {
-        this.workbench.patchPreferences({ defaultAgent: arg });
+      if (verb && verb !== "cloud" && verb !== "prime-agent")
+        throw Error("/harness cloud | prime-agent | scores | approve DIGEST");
+      if (verb) {
+        this.workbench.patchPreferences({ defaultAgent: verb });
         this.notice =
-          arg === "prime-agent"
+          verb === "prime-agent"
             ? "Harness: prime-agent. New conversations route there when the bridge runs."
             : "Harness: cloud. New conversations run in the managed session.";
       }
       const prefs = this.workbench.getPreferences();
       const found = await detectHarnesses(this.env);
+      const pending = this.sessionId ? this.workbench.pendingApprovalsFor(this.sessionId) : [];
       this.detail = [
         `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
         "",
@@ -2966,7 +3023,13 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
         ),
         "",
+        ...pending.map((approval) => `${approval.digest.slice(0, 8)}… pending since ${approval.at}`),
+        pending.length
+          ? "/harness approve DIGEST applies one after a confirmation."
+          : "No prompt addenda are awaiting approval.",
+        "",
         "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
+        "/harness approve DIGEST applies a prompt addendum the operator approved.",
       ];
       this.scroll = 0;
       return;

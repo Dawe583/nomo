@@ -55,6 +55,9 @@ const proposal = (kind: "memory" | "prompt" | "skill" = "memory"): RefinementPro
     title: "approval pattern",
     content: "The operator repeatedly approved the same action.",
     derivedFromSeq: [1],
+    ...(kind === "prompt"
+      ? { promptAddendum: "Never retry a denied call with reworded arguments." }
+      : {}),
     reason: "the pattern repeats",
   }],
 });
@@ -82,6 +85,82 @@ test("prompt edits remain pending and never claim approval from caller text", as
   const after = await app.ledger(session.workspace);
   assert.equal(after!.entries.length, before!.entries.length);
   assert.equal(after!.result.ok, true);
+});
+
+test("a prompt addendum applies only after the operator approves its digest", async (t) => {
+  const { app, session, directory, closeOriginal } = await fixture(t);
+  const before = (await app.ledger(session.workspace))!.entries.length;
+  const held = await app.refineHarness(session.id, proposal("prompt"));
+  assert.equal(held.awaitingApproval.length, 1);
+  const pending = app.pendingApprovalsFor(session.id);
+  assert.equal(pending.length, 1);
+  const addendum = "Never retry a denied call with reworded arguments.";
+  // Nothing is signed and nothing is active before the operator decides.
+  assert.equal((await app.ledger(session.workspace))!.entries.length, before);
+  assert.equal(
+    (await app.harnessEntries(session.workspace)).some(
+      (entry) => entry.content === addendum,
+    ),
+    false,
+  );
+
+  const applied = await app.applyPromptAddendum(session.id, pending[0]!.digest);
+  assert.equal(applied.applied.length, 1);
+  const ledger = await app.ledger(session.workspace);
+  const record = ledger!.entries.at(-1)!.body as Record<string, unknown>;
+  assert.equal(record.decision, "refinement:approved");
+  assert.equal(
+    (record.harnessRefinement as { digest?: string }).digest,
+    pending[0]!.digest,
+  );
+  assert.equal(app.pendingApprovalsFor(session.id).length, 0);
+
+  // The addendum is operator-approved, so it applies to later sessions and is
+  // rebuilt from the chain after a restart rather than living in memory.
+  await closeOriginal();
+  const reopened = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  try {
+    assert.deepEqual(
+      (await reopened.harnessEntries(session.workspace)).map((entry) => entry.content),
+      [addendum],
+    );
+  } finally {
+    reopened.close();
+  }
+});
+
+test("an approval is refused once the chain moved under it", async (t) => {
+  const { app, session } = await fixture(t);
+  const held = await app.refineHarness(session.id, proposal("prompt"));
+  assert.equal(held.awaitingApproval.length, 1);
+  const digest = app.pendingApprovalsFor(session.id)[0]!.digest;
+  // A new verified record lands after the operator was shown the proposal, so
+  // what they approved was derived from a chain that is no longer the one.
+  await app.editDocument(session.id, {
+    path: "after-review.md",
+    content: "a record written after the review",
+    expectedRevision: null,
+  });
+  await assert.rejects(
+    app.applyPromptAddendum(session.id, digest),
+    /chain moved after the proposal was reviewed/,
+  );
+  assert.equal(
+    (await app.harnessEntries(session.workspace)).length,
+    0,
+    "a refused approval still applied the addendum",
+  );
+});
+
+test("an unknown digest approves nothing", async (t) => {
+  const { app, session } = await fixture(t);
+  await app.refineHarness(session.id, proposal("prompt"));
+  const length = (await app.ledger(session.workspace))!.entries.length;
+  await assert.rejects(
+    app.applyPromptAddendum(session.id, "0".repeat(64)),
+    /No pending refinement matches that digest/,
+  );
+  assert.equal((await app.ledger(session.workspace))!.entries.length, length);
 });
 
 test("skill and subagent edits stay proposal-only until their schema is supported", async (t) => {

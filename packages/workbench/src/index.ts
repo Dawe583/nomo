@@ -443,6 +443,23 @@ function refinementTextIsSensitive(
   );
 }
 
+/**
+ * A prompt addendum an operator has been asked to approve, with the exact
+ * proposal and provenance it was derived from.
+ *
+ * The digest binds the approval to one proposal and one chain: approving the
+ * digest approves the addendum as it was, and a proposal that changed after
+ * review has a different digest and is a different approval. The `at` and the
+ * `atSeq` are the operator's own record of when and where, not a claim about
+ * who the operator is.
+ */
+type PendingApproval = {
+  readonly workspace: string;
+  readonly proposal: RefinementProposal;
+  readonly digest: string;
+  readonly at: string;
+  readonly atSeq: number;
+};
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
   private readonly permissionMode: PermissionMode;
@@ -487,6 +504,13 @@ export class Workbench {
    * Persisting it would mean a stored timestamp deciding what the product does.
    */
   private readonly harnessTriggers = new Map<string, TriggerState>();
+  /**
+   * Prompt addenda awaiting an operator. In memory and not in the encrypted
+   * workspace: a crash costs a lost addendum, never a changed one, because the
+   * addendum is written only when the operator approves it and is signed
+   * into the chain by `applyPromptAddendum`.
+   */
+  private readonly pendingApprovals = new Map<string, PendingApproval>();
   /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
   private readonly harnessJobs = new Set<Promise<void>>();
   /** The timeout `VOID_HOOK_TIMEOUT_MS` asked for, or undefined when the
@@ -2758,25 +2782,29 @@ export class Workbench {
         proposal,
         generatedAt,
       );
-      const mined = mineHarnessEntries(this.evidence[workspace] ?? [], { generatedAt }).entries;
-      const resultIds = new Set(result.entries.map((entry) => entry.id));
-      const suppressedIds = mined
-        .filter((entry) => !resultIds.has(entry.id))
-        .map((entry) => entry.id);
-      const minedById = new Map(mined.map((entry) => [entry.id, entry]));
-      // `createdAt` is stamped when an entry is mined, so two honest runs over
-      // the same chain never agree on it. Comparing it would mark every mined
-      // lesson as edited and store it as an override, and an override outranks
-      // the chain on every later read: the repeat count would freeze at the
-      // value it had when the refinement happened.
-      const comparable = (entry: HarnessEntry) => {
-        const { createdAt: _stamped, ...rest } = entry;
-        return canonicalJson(rest);
-      };
-      const overrides = result.entries.filter((entry) => {
-        const original = minedById.get(entry.id);
-        return original === undefined || comparable(original) !== comparable(entry);
-      });
+      const { overrides, suppressedIds } = this.refinementDelta(
+        workspace,
+        result.entries,
+        generatedAt,
+      );
+      // A prompt edit is never applied by the model. It is registered here, in
+      // memory, under the digest of the proposal it came from, so the operator
+      // approves exactly this proposal and nothing else. Nothing is signed
+      // until the operator approves.
+      //
+      // Registered rather than returned early: a proposal that also applies a
+      // memory edit must still be written, and the chain position the approval
+      // binds to is the one this record takes, not the one before it.
+      if (result.awaitingApproval.length) {
+        const digest = await sha256Hex(canonicalJson(proposal));
+        this.pendingApprovals.set(digest, {
+          workspace,
+          proposal,
+          digest,
+          at: new Date().toISOString(),
+          atSeq: (proof?.entries ?? []).length + (result.applied.length ? 1 : 0),
+        });
+      }
       if (!result.applied.length)
         return { applied: result.applied, awaitingApproval: result.awaitingApproval };
 
@@ -2803,6 +2831,157 @@ export class Workbench {
       );
       return { applied: result.applied, awaitingApproval: result.awaitingApproval };
     });
+  }
+
+  /**
+   * Apply a prompt addendum the operator approved, as one signed record.
+   *
+   * The digest is the whole point: it binds the approval to the proposal as it
+   * was when it was reviewed. A proposal that changed after review has a
+   * different digest and is a different approval, so this refuses rather than
+   * silently applying whatever the addendum now says. The `atSeq` names the
+   * chain position the approval was given at, so a later refinement cannot
+   * retroactively claim an approval that was not there.
+   */
+  async applyPromptAddendum(
+    sessionId: string,
+    digest: string,
+  ): Promise<{ applied: readonly AppliedEdit[] }> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    this.assertNormalMutation("harness refinement");
+    if (this.closing || session.recoveryBlock)
+      throw new Error(
+        "Wait for the workbench to reopen. Reconcile unresolved recovery before refining the harness.",
+      );
+    const workspace = session.view.workspace;
+    return this.locked(async () => {
+      const pending = this.pendingApprovals.get(digest);
+      if (!pending || pending.workspace !== workspace)
+        throw new Error("No pending refinement matches that digest.");
+      const proposal = pending.proposal;
+      const proof = await this.ledger(workspace);
+      if ((proof?.entries ?? []).length !== pending.atSeq)
+        throw new Error(
+          "The chain moved after the proposal was reviewed. Ask for a new proposal.",
+        );
+      const generatedAt = new Date().toISOString();
+      // Only the prompt edits go through here: everything else in this
+      // proposal was already applied and signed when the model proposed it, and
+      // re-applying it would write the same record twice.
+      const result = applyProposal(
+        await this.harnessEntries(workspace),
+        { ...proposal, edits: proposal.edits.filter((edit) => edit.kind === "prompt") },
+        generatedAt,
+        { by: "operator", digest, atSeq: pending.atSeq },
+      );
+      if (!result.applied.length)
+        throw new Error("The approved proposal has no prompt edit to apply.");
+      // The approved entry is stored as an override for the same reason every
+      // other refinement entry is: mining the chain cannot reproduce it, so
+      // without this record a restart would lose what the operator approved.
+      const { overrides, suppressedIds } = this.refinementDelta(
+        workspace,
+        result.entries,
+        generatedAt,
+      );
+      const state = this.documents[workspace] ?? createWorkspace();
+      this.documents[workspace] ??= state;
+      await this.commitWorkspace(
+        session,
+        state,
+        "harness.refinement",
+        { summary: proposal.summary, editCount: result.applied.length },
+        "refinement:approved",
+        undefined,
+        undefined,
+        {
+          harnessRefinement: {
+            summary: proposal.summary,
+            rationale: proposal.rationale,
+            expectedOutcome: proposal.expectedOutcome,
+            applied: result.applied,
+            overrides,
+            suppressedIds,
+            approvedBy: "operator",
+            at: pending.at,
+            atSeq: pending.atSeq,
+            digest,
+          },
+        },
+      );
+      this.pendingApprovals.delete(digest);
+      return { applied: result.applied };
+    });
+  }
+
+  /**
+   * What a refinement record has to carry for the entry set to rebuild.
+   *
+   * One helper rather than two copies of the same filter: the applied path and
+   * the approval path both write a record that `harnessEntries` reads back, and
+   * a record that differs between them silently resurrects a deleted mined
+   * entry or freezes a mined lesson's repeat count.
+   *
+   * `createdAt` is stamped when an entry is mined, so two honest runs over the
+   * same chain never agree on it. Comparing it would mark every mined lesson as
+   * edited and store it as an override, and an override outranks the chain on
+   * every later read: the count would freeze at the value it had when the
+   * refinement happened.
+   */
+  private refinementDelta(
+    workspace: string,
+    entries: readonly HarnessEntry[],
+    generatedAt: string,
+  ): { overrides: HarnessEntry[]; suppressedIds: string[] } {
+    const mined = mineHarnessEntries(this.evidence[workspace] ?? [], { generatedAt })
+      .entries;
+    const minedById = new Map(mined.map((entry) => [entry.id, entry]));
+    const resultIds = new Set(entries.map((entry) => entry.id));
+    const comparable = (entry: HarnessEntry) => {
+      const { createdAt: _stamped, ...rest } = entry;
+      return canonicalJson(rest);
+    };
+    return {
+      overrides: entries.filter((entry) => {
+        const original = minedById.get(entry.id);
+        return original === undefined || comparable(original) !== comparable(entry);
+      }),
+      suppressedIds: mined
+        .filter((entry) => !resultIds.has(entry.id))
+        .map((entry) => entry.id),
+    };
+  }
+
+  /**
+   * The prompt addenda awaiting an operator in this session's workspace.
+   *
+   * Named apart from the private map on purpose: the map is keyed by digest and
+   * holds every workspace, and what an operator needs to see is the ones they
+   * can actually approve right now, with the exact text that would take effect.
+   */
+  pendingApprovalsFor(sessionId: string): readonly {
+    readonly digest: string;
+    readonly at: string;
+    readonly atSeq: number;
+    readonly summary: string;
+    readonly addendum: string;
+  }[] {
+    const session = this.sessions.get(sessionId);
+    if (!session) return [];
+    const workspace = session.view.workspace;
+    return [...this.pendingApprovals.values()]
+      .filter((pending) => pending.workspace === workspace)
+      .map((pending) => ({
+        digest: pending.digest,
+        at: pending.at,
+        atSeq: pending.atSeq,
+        summary: pending.proposal.summary,
+        addendum: pending.proposal.edits
+          .filter((edit) => edit.kind === "prompt")
+          .map((edit) => edit.promptAddendum ?? "")
+          .join("\n"),
+      }));
   }
 
   async ledger(workspace: string) {

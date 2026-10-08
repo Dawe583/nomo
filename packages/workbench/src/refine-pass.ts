@@ -61,6 +61,11 @@ export type RefinementEdit = {
   readonly derivedFromSeq: readonly number[];
   /** Why this edit is worth making. Required. */
   readonly reason: string;
+  /** The addendum an operator must approve before a `prompt` edit takes
+   * effect. Absent on every other kind: a memory, skill or subagent edit is
+   * applied or refused by the proposal, but a prompt edit is never applied by
+   * the model and only ever by the operator. */
+  readonly promptAddendum?: string;
   /** Present on delete and optional elsewhere: how to undo it. */
   readonly rollbackId?: string;
 };
@@ -279,6 +284,13 @@ export function validateProposal(proposal: RefinementProposal): Validated {
       reject(`${edit.action} requires an id`);
       return;
     }
+    if (edit.kind === "prompt" && !edit.promptAddendum?.trim()) {
+      // A prompt edit is only an addendum to the standing instructions, so it
+      // has to say what the addendum is. An empty one is not an addendum: it
+      // is a request to change nothing, and that is the default.
+      reject("a prompt edit must carry the addendum it is asking for");
+      return;
+    }
     if (edit.action !== "delete" && (!edit.title || !edit.content)) {
       reject(`${edit.action} requires a title and content`);
       return;
@@ -321,11 +333,27 @@ export type AppliedEdit = {
  * the operator's approval is a precondition rather than a review step. Withholding
  * it here instead of filtering it at the call site means a caller that forgets
  * the check still cannot change a prompt.
+ *
+ * The one way through is `approval`, which is deliberately not a boolean: it
+ * names who approved and what they approved, so the call site that opts in
+ * carries its own proof and a caller that forgets cannot arrive here with
+ * `true` by accident. Omitting it is the fail-closed default.
  */
+export type PromptApproval = {
+  /** The operator's own account of who decided. Recorded, not authenticated. */
+  readonly by: string;
+  /** The digest of the proposal as it was reviewed. */
+  readonly digest: string;
+  /** The chain position the approval was given at. */
+  readonly atSeq: number;
+};
+
 export function applyProposal(
   current: readonly HarnessEntry[],
   proposal: RefinementProposal,
   now: string,
+  /** Present only when an operator has already approved this proposal. */
+  approval?: PromptApproval,
 ): {
   readonly entries: HarnessEntry[];
   readonly applied: readonly AppliedEdit[];
@@ -337,7 +365,7 @@ export function applyProposal(
   const awaitingApproval: RefinementEdit[] = [];
 
   for (const edit of proposal.edits) {
-    if (edit.kind === "prompt") {
+    if (edit.kind === "prompt" && approval === undefined) {
       awaitingApproval.push(edit);
       continue;
     }
@@ -348,7 +376,15 @@ export function applyProposal(
       applied.push({ edit, kind: before?.kind ?? "lesson", outcome: "deleted", before });
       continue;
     }
-    const id = edit.id ?? contentAddressedId(edit.kind, edit.title ?? "", edit.content ?? "");
+    // An approved prompt edit becomes a workspace-scoped lesson holding the
+    // addendum text. The operator approved it, so it applies to later sessions
+    // and survives a restart: it is rebuilt from the chain with everything
+    // else. Session scope is a different thing — a mined entry the current
+    // session observed — and that is not restored as active state.
+    const addendum =
+      edit.kind === "prompt" ? edit.promptAddendum ?? "" : edit.content ?? "";
+    const id =
+      edit.id ?? contentAddressedId(edit.kind, edit.title ?? "", addendum);
     const before = byId.get(id) ?? null;
     const entry: HarnessEntry = {
       id,
@@ -360,7 +396,7 @@ export function applyProposal(
       tool: before?.tool ?? "",
       klass: before?.klass ?? "",
       title: edit.title ?? "",
-      content: edit.content ?? "",
+      content: addendum,
       derivedFromSeq: edit.derivedFromSeq,
       repeats: edit.derivedFromSeq.length,
       createdAt: before?.createdAt ?? now,
