@@ -3,6 +3,15 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- A settled turn can now spend one model call on learning, and only when the
+  gate says it is worth one. The harness mines the signed workspace chain for
+  lessons and refusals, asks a provider for a proposal, validates it, and
+  writes the parts that are proven back to the chain. Prompt addenda stay
+  pending until an operator approves them; skill and subagent edits stay
+  proposal-only. The ledger tab shows the measured harness score with its
+  sample count and confidence interval, and `/harness scores` prints the
+  same facts on demand. The score is descriptive only and never changes a
+  decision or a permission.
 - Every limit that governed a run was a literal in the code: 20 turns, 4096
   output tokens, a 32000 character prompt, a 20-deep queue, a 65536 byte
   request, a 32-call tool batch, a 5s hook timeout, and a retry loop tied to
