@@ -52,6 +52,7 @@ export const BUILTIN_RULES = {
   unknownAgent: "nomo:unknown-agent",
   invalidRequest: "nomo:invalid-request",
   tokenMissing: "nomo:token-missing",
+  tokenInvalid: "nomo:token-invalid",
   tokenExpired: "nomo:token-expired",
   tokenMismatch: "nomo:token-mismatch",
   tokenRevoked: "nomo:token-revoked",
