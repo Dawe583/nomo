@@ -6,6 +6,7 @@ import { join } from "node:path";
 
 import {
   appendRevocation,
+  isUtcInstant,
   parseRevocations,
   readRevocations,
   revocationView,
@@ -75,6 +76,40 @@ describe("revocation store", () => {
       () =>
         parseRevocations(JSON.stringify(record({ kind: "pause" as never }))),
       /kind must be kill or reinstate/,
+    );
+  });
+
+  test("at is accepted only as a UTC instant with a Z", async () => {
+    for (const at of [
+      "2026-10-07T18:00:00Z",
+      "2026-10-07T18:00:00.123Z",
+      "2026-10-07T18:00:00.123456Z",
+      new Date("2026-10-07T18:00:00Z").toISOString(),
+    ])
+      assert.equal(isUtcInstant(at), true, at);
+    for (const at of [
+      "2026-10-07T18:00:00", // Date.parse reads this as local time
+      "2026-10-07T18:00:00+02:00",
+      "2026-10-07T18:00:00+00:00",
+      "2026-10-07T18:00:00z",
+      "2026-10-07",
+      "2026-02-30T00:00:00Z", // Date.parse rolls this into March
+      "2026-10-07T24:00:00Z",
+      " 2026-10-07T18:00:00Z",
+      1791396000000,
+    ])
+      assert.equal(isUtcInstant(at), false, String(at));
+
+    assert.throws(
+      () =>
+        parseRevocations(
+          JSON.stringify(record({ at: "2026-10-07T20:00:00+02:00" })),
+        ),
+      /revocations line 1: at must be an ISO 8601 time in UTC, ending in Z/,
+    );
+    await assert.rejects(
+      appendRevocation("unused.jsonl", record({ at: "2026-10-07T18:00:00" })),
+      RevocationStoreError,
     );
   });
 });

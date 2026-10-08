@@ -289,9 +289,19 @@ returns deny, i.e. latency is one store read, no polling interval.
 Implemented so far (`packages/agent-policy/src/kill.ts`, `packages/cli/src/kill.ts`):
 
 - `killAgent` covers steps 1 to 4 without the ledger entry. It is never
-  blocked: a corrupt store, an unseen agent or a repeated kill still appends.
+  blocked: a corrupt store, an unseen agent, a repeated kill or a store lock
+  that stays held (reported as `lockTimedOut`) still appends. A hold whose
+  denier throws does not stop the sweep: it is returned in `failedHolds`, stays
+  in the index, and the next kill retries it. An invalid clock is a
+  `KillSwitchError` and writes nothing.
   `reinstateAgent` is strict: it refuses a corrupt store, an agent that is not
-  killed, and an empty reason.
+  killed, an empty reason, a time earlier than the agent's last record, and a
+  kill that landed while it waited for the lock.
+- Kill and reinstate write under `<store>.lock` (exclusive create, broken after
+  10 s as left by a dead writer), so a reinstate cannot read the store, miss a
+  concurrent kill and append after it.
+- `at` in the store is accepted only as an ISO 8601 UTC instant ending in `Z`;
+  a zoneless time, an offset or a calendar overflow (02-30) is a corrupt store.
 - Pending holds: VOID's `HeldCall` has no agent, so the proxy records
   hold id to agent in an `AgentHoldIndex` when it parks a call, and passes
   `HoldQueue.resolve` (or `ApprovalBroker.decide`) as the denier. VOID's hold
@@ -386,8 +396,8 @@ documents why an additive body field keeps old entries verifying. Plus two new
 | This contract | draft, not confirmed |
 | Agent policy loader and evaluation | implemented in `packages/agent-policy`, not wired into the proxy |
 | Kill-switch check, revocation JSONL store, token claim check | implemented in the same package |
-| `killAgent` / `reinstateAgent`, hold sweep via `AgentHoldIndex` | implemented, 46 package tests; the index is not filled until the proxy is wired; no ledger entry yet (section 9) |
-| `void kill` / `void reinstate` CLI | implemented, 6 tests; store location provisional (item 7) |
+| `killAgent` / `reinstateAgent`, hold sweep via `AgentHoldIndex` | implemented, store lock against the reinstate race, 55 package tests; the index is not filled until the proxy is wired; no ledger entry yet (section 9) |
+| `void kill` / `void reinstate` CLI | implemented, 7 tests; store location provisional (item 7) |
 | Token minting and signing | not started (David) |
 | Proxy wiring | not started (David) |
 | Fleet feed | exists on `origin/max-spike` (Max); NOMO additions not started |

@@ -8,13 +8,14 @@
  * revive a token, because the kill that preceded it is still after its iat.
  */
 
-import { appendFile, readFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { appendFile, open, readFile, stat, unlink } from "node:fs/promises";
 import { AGENT_ID, BUILTIN_RULES, type Scope } from "./grammar.ts";
 
 export type RevocationRecord = {
   readonly kind: "kill" | "reinstate";
   readonly agentId: string;
-  /** ISO 8601 UTC. */
+  /** ISO 8601 UTC with a Z, as `Date.prototype.toISOString` writes it. */
   readonly at: string;
   readonly by: string;
   readonly reason: string;
@@ -28,6 +29,26 @@ export type RevocationView = {
 };
 
 export class RevocationStoreError extends Error {}
+
+const UTC_INSTANT =
+  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.\d{1,9})?Z$/;
+
+/**
+ * True for an ISO 8601 instant in UTC with a Z. A time without a zone is read
+ * by `Date.parse` as local time, and an offset is easy to misread in a log an
+ * operator scans by eye; either would move a kill against the token iat it is
+ * compared with. Calendar overflow, 02-30 or 24:00, is refused rather than
+ * rolled into the next day.
+ */
+export function isUtcInstant(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const match = UTC_INSTANT.exec(value);
+  if (match === null) return false;
+  const ms = Date.parse(value);
+  return (
+    !Number.isNaN(ms) && new Date(ms).toISOString().slice(0, 19) === match[1]
+  );
+}
 
 export function revocationView(
   records: readonly RevocationRecord[],
@@ -61,8 +82,8 @@ function validateRecord(value: unknown, line: number): RevocationRecord {
     fail("kind must be kill or reinstate");
   if (typeof record.agentId !== "string" || !AGENT_ID.test(record.agentId))
     fail("agentId is not a valid agent id");
-  if (typeof record.at !== "string" || Number.isNaN(Date.parse(record.at)))
-    fail("at must be an ISO 8601 time");
+  if (!isUtcInstant(record.at))
+    fail("at must be an ISO 8601 time in UTC, ending in Z");
   if (typeof record.by !== "string" || record.by === "") fail("by is required");
   if (typeof record.reason !== "string") fail("reason must be a string");
   return record as RevocationRecord;
@@ -108,6 +129,75 @@ export async function appendRevocation(
 ): Promise<void> {
   validateRecord(record, 0);
   await appendFile(path, `${JSON.stringify(record)}\n`, "utf8");
+}
+
+export class RevocationLockTimeout extends RevocationStoreError {}
+
+/** How long a writer waits for the store lock before giving up. */
+export const STORE_LOCK_WAIT_MS = 2_000;
+/** A lock older than this was left by a writer that died; it is broken. */
+export const STORE_LOCK_STALE_MS = 10_000;
+
+export type StoreLockOptions = {
+  readonly waitMs?: number;
+  readonly staleMs?: number;
+};
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Runs `run` while holding `<store>.lock`, an exclusive-create file beside the
+ * store, so a read-check-append of one writer cannot interleave with another
+ * writer's append. Writers in other processes take the same file, which is why
+ * this is a file and not an in-memory mutex.
+ *
+ * A lock whose file is older than `staleMs` is broken, because its writer
+ * died. Two waiters breaking the same stale lock at once can still race; the
+ * window is one stat and one unlink after ten idle seconds, accepted for the
+ * spike. The store's directory must exist.
+ */
+export async function withStoreLock<T>(
+  storePath: string,
+  run: () => Promise<T>,
+  options: StoreLockOptions = {},
+): Promise<T> {
+  const lockPath = `${storePath}.lock`;
+  const waitMs = options.waitMs ?? STORE_LOCK_WAIT_MS;
+  const staleMs = options.staleMs ?? STORE_LOCK_STALE_MS;
+  const token = `${process.pid} ${randomUUID()}`;
+  const started = Date.now();
+  for (;;) {
+    try {
+      const handle = await open(lockPath, "wx", 0o600);
+      try {
+        await handle.writeFile(token, "utf8");
+      } finally {
+        await handle.close();
+      }
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    }
+    const held = await stat(lockPath).catch(() => null);
+    if (held !== null && Date.now() - held.mtimeMs > staleMs) {
+      await unlink(lockPath).catch(() => undefined);
+      continue;
+    }
+    if (Date.now() - started >= waitMs)
+      throw new RevocationLockTimeout(
+        `revocations: ${lockPath} is held by another writer`,
+      );
+    await sleep(10);
+  }
+  try {
+    return await run();
+  } finally {
+    // Only our own lock is removed: if it was broken as stale meanwhile, the
+    // file now belongs to the writer that took it next.
+    const current = await readFile(lockPath, "utf8").catch(() => null);
+    if (current === token) await unlink(lockPath).catch(() => undefined);
+  }
 }
 
 /** The claims NOMO checks. Encoding and signature belong to the token runtime. */

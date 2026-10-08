@@ -78,6 +78,7 @@ async function run(
         io.stdout("every policy check from now denies this agent, and tokens issued at or before that second are dead");
         if (result.wasKilled === true) io.stdout("note: the agent was already killed; the later kill time now applies");
         if (result.wasKilled === null) io.stderr("warning: the revocation store was unreadable before this kill; every call is denied until it is repaired");
+        if (result.lockTimedOut) io.stderr(`warning: ${args.store}.lock stayed held, so the kill was written without it; remove the lock if no other writer is running`);
       }
     } else {
       const record = await reinstateAgent(input);

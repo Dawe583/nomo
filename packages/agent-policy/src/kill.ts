@@ -9,6 +9,11 @@
  * killed right now, because it is the one act here that lets an agent run
  * again.
  *
+ * Both write under `<store>.lock`, so a reinstate's read, check and append
+ * cannot interleave with a kill's append from this or another process. A kill
+ * waits for the lock only briefly and then writes anyway: stopping an agent
+ * must not depend on a lock another writer left behind.
+ *
  * Pending holds: VOID's `HeldCall` carries no agent, and this package does not
  * change VOID's hold queue. The proxy records which hold belongs to which agent
  * in an `AgentHoldIndex` when it parks a call, and `killAgent` denies those
@@ -24,8 +29,11 @@ import {
   appendRevocation,
   readRevocations,
   revocationView,
+  RevocationLockTimeout,
   RevocationStoreError,
+  withStoreLock,
   type RevocationRecord,
+  type StoreLockOptions,
 } from "./revocations.ts";
 
 /** The `by` on every hold the kill-switch denies, so the agent's error body names it. */
@@ -62,6 +70,8 @@ export type KillSwitchInput = {
   readonly by: string;
   readonly reason: string;
   readonly now?: () => Date;
+  /** Store lock timing; the defaults suit operators, tests shorten them. */
+  readonly lock?: StoreLockOptions;
   /** Present only in the process that owns the hold queue. */
   readonly holds?: { readonly index: AgentHoldIndex; readonly deny: HoldDenier };
 };
@@ -70,8 +80,12 @@ export type KillResult = {
   readonly record: RevocationRecord;
   /** Holds of this agent that were pending and are now denied. */
   readonly deniedHolds: readonly string[];
+  /** Holds whose denier threw. They may still be pending and stay indexed for the next kill. */
+  readonly failedHolds: readonly string[];
   /** Whether the agent was already killed; null when the store could not be read. */
   readonly wasKilled: boolean | null;
+  /** True when the store lock stayed held past its wait and the kill was written without it. */
+  readonly lockTimedOut: boolean;
 };
 
 function inputProblem(input: KillSwitchInput): string | null {
@@ -83,14 +97,29 @@ function inputProblem(input: KillSwitchInput): string | null {
   return null;
 }
 
+/**
+ * The clock, checked. An invalid Date would make `toISOString` throw a
+ * RangeError after the store was already touched; this names it instead.
+ */
+function clockOf(input: { readonly now?: () => Date }): () => Date {
+  const now = input.now ?? (() => new Date());
+  return () => {
+    const at = now();
+    if (!(at instanceof Date) || Number.isNaN(at.getTime()))
+      throw new KillSwitchError("the clock returned an invalid time");
+    return at;
+  };
+}
+
 function recordFor(
   kind: RevocationRecord["kind"],
   input: KillSwitchInput,
+  at: Date,
 ): RevocationRecord {
   return {
     kind,
     agentId: input.agentId,
-    at: (input.now ?? (() => new Date()))().toISOString(),
+    at: at.toISOString(),
     by: input.by,
     reason: input.reason,
   };
@@ -99,31 +128,59 @@ function recordFor(
 export async function killAgent(input: KillSwitchInput): Promise<KillResult> {
   const problem = inputProblem(input);
   if (problem !== null) throw new KillSwitchError(problem);
+  const clock = clockOf(input);
+  clock(); // refuse a broken clock before anything is written
 
-  let wasKilled: boolean | null;
+  await mkdir(dirname(input.storePath), { recursive: true, mode: 0o700 });
+  let wasKilled: boolean | null = null;
+  let record: RevocationRecord | undefined;
+  const append = async () => {
+    try {
+      wasKilled = revocationView(
+        await readRevocations(input.storePath),
+      ).isKilled(input.agentId);
+    } catch (error) {
+      if (!(error instanceof RevocationStoreError)) throw error;
+      wasKilled = null;
+    }
+    // Stamped inside the lock, so the kill is never older than a record
+    // appended by whoever held the lock before us.
+    record = recordFor("kill", input, clock());
+    await appendRevocation(input.storePath, record);
+  };
+
+  // The lock keeps a reinstate from reading the store, missing this kill and
+  // appending after it. A kill is never blocked, so a lock that stays held
+  // past the wait is written through and the result says so.
+  let lockTimedOut = false;
   try {
-    wasKilled = revocationView(await readRevocations(input.storePath)).isKilled(
-      input.agentId,
-    );
+    await withStoreLock(input.storePath, append, input.lock);
   } catch (error) {
-    if (!(error instanceof RevocationStoreError)) throw error;
-    wasKilled = null;
+    if (!(error instanceof RevocationLockTimeout)) throw error;
+    lockTimedOut = true;
+    await append();
   }
 
   // Store first, holds second: once the record is down, any approval that
-  // races the sweep meets a killed agent on its re-check.
-  const record = recordFor("kill", input);
-  await mkdir(dirname(input.storePath), { recursive: true, mode: 0o700 });
-  await appendRevocation(input.storePath, record);
-
+  // races the sweep meets a killed agent on its re-check. One denier failing
+  // must not leave the agent's other holds pending, so each is tried; a hold
+  // whose denier threw stays in the index, and the next kill tries it again.
   const deniedHolds: string[] = [];
+  const failedHolds: string[] = [];
   if (input.holds !== undefined) {
     for (const holdId of input.holds.index.holdsOf(input.agentId)) {
-      if (input.holds.deny(holdId, KILL_SWITCH_ACTOR)) deniedHolds.push(holdId);
+      let denied: boolean;
+      try {
+        denied = input.holds.deny(holdId, KILL_SWITCH_ACTOR);
+      } catch {
+        failedHolds.push(holdId);
+        continue;
+      }
+      if (denied) deniedHolds.push(holdId);
       input.holds.index.forget(holdId);
     }
   }
-  return { record, deniedHolds, wasKilled };
+  return { record: record!, deniedHolds, failedHolds, wasKilled, lockTimedOut };
 }
 
 export async function reinstateAgent(
@@ -133,11 +190,48 @@ export async function reinstateAgent(
   if (problem !== null) throw new KillSwitchError(problem);
   if (input.reason.trim() === "")
     throw new KillSwitchError("a reinstate needs a reason");
-  // Strict read: a store we cannot parse never lets an agent back in.
-  const view = revocationView(await readRevocations(input.storePath));
-  if (!view.isKilled(input.agentId))
-    throw new KillSwitchError(`agent ${input.agentId} is not killed`);
-  const record = recordFor("reinstate", input);
-  await appendRevocation(input.storePath, record);
-  return record;
+  const clock = clockOf(input);
+  clock();
+
+  const killedNow = async (): Promise<readonly RevocationRecord[]> => {
+    // Strict read: a store we cannot parse never lets an agent back in.
+    const records = (await readRevocations(input.storePath)).filter(
+      (record) => record.agentId === input.agentId,
+    );
+    if (records.at(-1)?.kind !== "kill")
+      throw new KillSwitchError(`agent ${input.agentId} is not killed`);
+    return records;
+  };
+  // Checked once without the lock, so a refused reinstate leaves no lock file
+  // behind, and once more under it, where it counts. The operator asked to
+  // lift the kill they saw; a kill that landed while this waited is a new
+  // decision by someone else, and lifting it unseen is the race this prevents.
+  const seen = await killedNow();
+  try {
+    return await withStoreLock(
+      input.storePath,
+      async () => {
+        const records = await killedNow();
+        if (records.length !== seen.length)
+          throw new KillSwitchError(
+            `agent ${input.agentId} was killed again while this reinstate waited; nothing was recorded, check the store and retry`,
+          );
+        const record = recordFor("reinstate", input, clock());
+        const lastAt = records.at(-1)!.at;
+        if (Date.parse(record.at) < Date.parse(lastAt))
+          throw new KillSwitchError(
+            `the clock (${record.at}) is behind the agent's last record (${lastAt}); a reinstate cannot predate the kill it lifts`,
+          );
+        await appendRevocation(input.storePath, record);
+        return record;
+      },
+      input.lock,
+    );
+  } catch (error) {
+    if (error instanceof RevocationLockTimeout)
+      throw new KillSwitchError(
+        "the revocation store is locked by another writer; nothing was recorded, try again",
+      );
+    throw error;
+  }
 }

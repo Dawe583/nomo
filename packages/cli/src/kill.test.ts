@@ -119,4 +119,15 @@ describe("void kill and void reinstate", () => {
       assert.match(err.at(-1)!, /agent id must match/);
       await assert.rejects(readFile(store, "utf8"), { code: "ENOENT" });
     }));
+
+  test("a held store lock never stops a kill, and the operator is told", async () =>
+    withDir(async (dir, { out, err, io }) => {
+      const store = join(dir, "revocations.jsonl");
+      await writeFile(`${store}.lock`, "another writer");
+      const code = await runKillCommand(["demo-support-bot", "--by", "oliver", "--store", store, "--force"], io, { now });
+      assert.equal(code, 0);
+      assert.match(out[0]!, /^kill recorded for demo-support-bot/);
+      assert.match(err.at(-1)!, /lock stayed held, so the kill was written without it/);
+      assert.equal((await readFile(store, "utf8")).trim().split("\n").length, 1);
+    }));
 });
