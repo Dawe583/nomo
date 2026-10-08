@@ -14,6 +14,7 @@ const fetcher = async (url: unknown) =>
 async function fixture(
   t: { after(fn: () => Promise<void>): void },
   extraEnv: Record<string, string> = {},
+  { seedDocument = true }: { seedDocument?: boolean } = {},
 ) {
   const directory = await mkdtemp(join(tmpdir(), "void-refinement-ledger-"));
   const app = new Workbench({ VOID_DATA_DIR: directory, ...extraEnv }, fetcher);
@@ -21,11 +22,14 @@ async function fixture(
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const session = await app.start("Review the workspace", "fixture");
   await app.settled();
-  await app.editDocument(session.id, {
-    path: "source.md",
-    content: "signed source record",
-    expectedRevision: null,
-  });
+  // A read-only workbench cannot take the seed write, and the session start
+  // already recorded sequence 1 for a proposal to cite.
+  if (seedDocument)
+    await app.editDocument(session.id, {
+      path: "source.md",
+      content: "signed source record",
+      expectedRevision: null,
+    });
   t.after(async () => {
     if (!appClosed) await app.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -146,6 +150,22 @@ test("the external workspace key is refused if echoed into a proposal", async (t
   );
 });
 
+test("a read-only workbench refuses a refinement, because it signs a record", async (t) => {
+  // The refinement writes to the workspace chain like any other mutation. If
+  // only the operator's own edits are gated, `read-only` would still let the
+  // model change the harness the operator can see.
+  const { app, session } = await fixture(
+    t,
+    { VOID_PERMISSION_MODE: "read-only" },
+    { seedDocument: false },
+  );
+  await assert.rejects(app.refineHarness(session.id, proposal()), /read-only/);
+  // Nothing is signed: without a committed workspace there is no chain to
+  // verify, and a refinement that produced one would have written anyway.
+  const ledger = await app.ledger(session.workspace);
+  assert.equal(ledger, undefined, "a read-only workbench signed a record");
+});
+
 test("deleting a mined entry persists as a tombstone across later refinements", async (t) => {
   const { app, session } = await fixture(t);
   const internals = app as unknown as {
@@ -236,4 +256,43 @@ test("a mined lesson the proposal did not touch is not frozen as an override", a
   const { createdAt: _minedAt, ...mined } = lesson;
   const { createdAt: _rebuiltAt, ...rebuiltFields } = rebuilt;
   assert.deepEqual(rebuiltFields, mined);
+});
+
+test("a proposal carrying a token the pattern list covers is refused", async (t) => {
+  // Tokens without a label and without one of the recognised prefixes are the
+  // gap the list exists to close: a Slack token, a GitLab token, a Hugging
+  // Face token and a JWT are all refused, and so is a private key header.
+  const { app, session } = await fixture(t);
+  for (const secret of [
+    "xoxb-2411-4471-a19d-3f0c2b8e5d61",
+    "glpat-abcdef1234567890",
+    "hf_1234567890abcdef1234567890abcdef",
+    "sk-ant-abcdef1234567890abcdef1234567890",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.0123456789",
+    "-----BEGIN RSA PRIVATE KEY-----",
+  ]) {
+    await assert.rejects(
+      app.refineHarness(session.id, {
+        ...proposal(),
+        edits: proposal().edits.map((edit) => ({ ...edit, content: secret })),
+      }),
+      /secret-like content/,
+      `refused: ${secret}`,
+    );
+  }
+  const ledger = await app.ledger(session.workspace);
+  assert.equal(ledger?.entries.length, 1);
+});
+
+test("a proposal that quotes ordinary document text is not refused", async (t) => {
+  const { app, session } = await fixture(t);
+  await app.editDocument(session.id, {
+    path: "notes.md",
+    content: "The integration token is configured in production.",
+    expectedRevision: null,
+  });
+  // Quoting the document is the point of a refinement. Only a secret-shaped
+  // value is refused; a document that holds no credential cannot stop a
+  // proposal that quotes it.
+  await app.refineHarness(session.id, proposal());
 });

@@ -419,10 +419,19 @@ const REFINEMENT_SECRET_PATTERNS = [
   /\bBearer\s+[A-Za-z0-9._~+\/-]+=*/i,
   /--(?:api[_-]?key|token|password|secret|key)(?:=|\s+)\S+/i,
   /[a-z][a-z0-9+.-]*:\/\/[^/\s:@]+:[^/\s@]+@/i,
-  /\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})\b/,
+  /\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[abprs]-[A-Za-z0-9-]{10,}|glpat-[A-Za-z0-9_-]{10,}|npm_[A-Za-z0-9]{20,}|hf_[A-Za-z0-9]{20,}|sk-ant-[A-Za-z0-9_-]{10,})\b/,
+  /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/,
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
 ];
 
+/** The proposal is scanned before it reaches the chain. A secret-shaped value
+ * is refused wherever it comes from: the model inventing it, a configured
+ * credential it was told about, or a value it copied out of the workspace
+ * documents. The documents are the material the reviewer was given, so a
+ * pattern the documents never hold cannot refuse a proposal that quotes
+ * ordinary text, and a value the model paraphrases is not detectable. The
+ * operator is expected not to place credentials in the managed workspace in
+ * the first place. */
 function refinementTextIsSensitive(
   proposal: RefinementProposal,
   knownSecrets: readonly string[],
@@ -2700,6 +2709,19 @@ export class Workbench {
   }> {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error("Session not found.");
+    // A refinement signs a new record in the workspace chain, so the operator
+    // mode that forbids writes forbids this one too. Leaving it out would make
+    // `read-only` mean "no operator edits" while the model still edits.
+    this.assertNormalMutation("harness refinement");
+    // Deliberately not `settledSession`: the automatic path calls this from the
+    // settling turn's own job, so a running job and a running turn are the
+    // state it is called in rather than a reason to refuse. A closing
+    // workbench or an unresolved recovery block is a different matter: an
+    // operator has to settle that before anything writes again.
+    if (this.closing || session.recoveryBlock)
+      throw new Error(
+        "Wait for the workbench to reopen. Reconcile unresolved recovery before refining the harness.",
+      );
     const validated = validateProposal(input);
     if (!validated.ok)
       throw new Error(`Invalid refinement proposal: ${validated.rejections.join("; ")}`);
