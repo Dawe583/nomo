@@ -187,3 +187,53 @@ test("deleting a mined entry persists as a tombstone across later refinements", 
   });
   assert.equal((await app.harnessEntries(session.workspace)).some((entry) => entry.id === lesson.id), false);
 });
+
+test("a mined lesson the proposal did not touch is not frozen as an override", async (t) => {
+  const { app, session } = await fixture(t);
+  const internals = app as unknown as {
+    sessions: Map<string, unknown>;
+    commitWorkspace: (...args: unknown[]) => Promise<void>;
+  };
+  const internalSession = internals.sessions.get(session.id);
+  assert.ok(internalSession);
+  const state = app.workspace(session.id);
+  for (let count = 0; count < 5; count++)
+    await internals.commitWorkspace(
+      internalSession,
+      state,
+      "void_workspace_write",
+      { count },
+      "hold:approved",
+    );
+
+  const before = await app.harnessEntries(session.workspace);
+  const lesson = before.find((entry) => entry.kind === "lesson");
+  assert.ok(lesson, "expected repeated signed approvals to mine a lesson");
+
+  // A proposal about something else entirely. The mined lesson must still be
+  // rebuilt from the chain afterwards: storing it as an override would freeze
+  // the repeat count the chain keeps producing, and the freeze would survive
+  // every later refinement.
+  await app.refineHarness(session.id, proposal());
+  const proof = await app.ledger(session.workspace);
+  const lastBody = proof?.entries.at(-1)?.body as
+    | Record<string, unknown>
+    | undefined;
+  const record = lastBody?.harnessRefinement as
+    | { overrides: Array<{ id: string }> }
+    | undefined;
+  assert.ok(record, "the refinement record carries no override set");
+  assert.equal(
+    record.overrides.some((entry) => entry.id === lesson.id),
+    false,
+    "an untouched mined lesson was stored as an override",
+  );
+  const after = await app.harnessEntries(session.workspace);
+  const rebuilt = after.find((entry) => entry.id === lesson.id);
+  assert.ok(rebuilt, "the mined lesson disappeared from the rebuilt set");
+  // `createdAt` is stamped from the chain's own last record, so it moves with
+  // every commit by design; everything the chain actually proves must not.
+  const { createdAt: _minedAt, ...mined } = lesson;
+  const { createdAt: _rebuiltAt, ...rebuiltFields } = rebuilt;
+  assert.deepEqual(rebuiltFields, mined);
+});

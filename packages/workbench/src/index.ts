@@ -2742,9 +2742,18 @@ export class Workbench {
         .filter((entry) => !resultIds.has(entry.id))
         .map((entry) => entry.id);
       const minedById = new Map(mined.map((entry) => [entry.id, entry]));
+      // `createdAt` is stamped when an entry is mined, so two honest runs over
+      // the same chain never agree on it. Comparing it would mark every mined
+      // lesson as edited and store it as an override, and an override outranks
+      // the chain on every later read: the repeat count would freeze at the
+      // value it had when the refinement happened.
+      const comparable = (entry: HarnessEntry) => {
+        const { createdAt: _stamped, ...rest } = entry;
+        return canonicalJson(rest);
+      };
       const overrides = result.entries.filter((entry) => {
         const original = minedById.get(entry.id);
-        return original === undefined || canonicalJson(original) !== canonicalJson(entry);
+        return original === undefined || comparable(original) !== comparable(entry);
       });
       if (!result.applied.length)
         return { applied: result.applied, awaitingApproval: result.awaitingApproval };
