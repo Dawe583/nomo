@@ -12,6 +12,7 @@ import { runAgentCommand } from "./agent.ts";
 import { runOperation } from "./operations.ts";
 import { runWatchCommand } from "./watch.ts";
 import { runApproveCommand, runApprovalsCommand } from "./approve.ts";
+import { runKillCommand, runReinstateCommand } from "./kill.ts";
 import { runDoctorCommand } from "./doctor.ts";
 import { runConfigCommand } from "./config.ts";
 import { runInitCommand } from "./init.ts";
@@ -152,6 +153,15 @@ export async function runCommand(
   if (parsed.command === "approve" || parsed.command === "approvals") {
     const run =
       parsed.command === "approve" ? runApproveCommand : runApprovalsCommand;
+    return await run(parsed.args, {
+      stdout: (line) => console.log(line),
+      stderr: (line) => console.error(line),
+      env: process.env,
+    });
+  }
+  if (parsed.command === "kill" || parsed.command === "reinstate") {
+    const run =
+      parsed.command === "kill" ? runKillCommand : runReinstateCommand;
     return await run(parsed.args, {
       stdout: (line) => console.log(line),
       stderr: (line) => console.error(line),

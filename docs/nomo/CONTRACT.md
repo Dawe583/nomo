@@ -286,6 +286,29 @@ reinstate, because their `iat` precedes the revocation.
 Target, to be measured in the demo, not promised: the next call after `kill`
 returns deny, i.e. latency is one store read, no polling interval.
 
+Implemented so far (`packages/agent-policy/src/kill.ts`, `packages/cli/src/kill.ts`):
+
+- `killAgent` covers steps 1 to 4 without the ledger entry. It is never
+  blocked: a corrupt store, an unseen agent or a repeated kill still appends.
+  `reinstateAgent` is strict: it refuses a corrupt store, an agent that is not
+  killed, and an empty reason.
+- Pending holds: VOID's `HeldCall` has no agent, so the proxy records
+  hold id to agent in an `AgentHoldIndex` when it parks a call, and passes
+  `HoldQueue.resolve` (or `ApprovalBroker.decide`) as the denier. VOID's hold
+  code stays unchanged. Until the proxy is wired, nothing fills the index.
+- `void kill <agent> --by <actor> [--reason]` and
+  `void reinstate <agent> --by <actor> --reason <text>` append to the store.
+  They refuse an id that `policy/agents.yaml` does not declare unless
+  `--force` is given, so a typo cannot read as a stopped agent. The CLI is a
+  separate process and denies no hold itself.
+- Store location, provisional until David answers item 7: `--store`, else
+  `VOID_REVOCATIONS`, else `~/.void/nomo/<workspace>/revocations.jsonl`.
+  Whoever can write that file can reinstate an agent, so it needs the same
+  operator-only protection as the approvals directory; the spike does not
+  enforce it yet.
+- Open for the proxy wiring: re-check the kill-switch when a hold is
+  approved, as a second guard alongside the sweep.
+
 ## 8. Events: extend Max's fleet feed (needs [MAX])
 
 Max's fleet feed already exists on `origin/max-spike`
@@ -361,8 +384,10 @@ documents why an additive body field keeps old entries verifying. Plus two new
 | Item | Status |
 | ---- | ------ |
 | This contract | draft, not confirmed |
-| Agent policy loader and evaluation | implemented in `packages/agent-policy`, 40 tests, not wired into the proxy |
-| Kill-switch check, revocation JSONL store, token claim check | implemented in the same package; no `kill` CLI command, no hold cancellation, no ledger entry yet |
+| Agent policy loader and evaluation | implemented in `packages/agent-policy`, not wired into the proxy |
+| Kill-switch check, revocation JSONL store, token claim check | implemented in the same package |
+| `killAgent` / `reinstateAgent`, hold sweep via `AgentHoldIndex` | implemented, 46 package tests; the index is not filled until the proxy is wired; no ledger entry yet (section 9) |
+| `void kill` / `void reinstate` CLI | implemented, 6 tests; store location provisional (item 7) |
 | Token minting and signing | not started (David) |
 | Proxy wiring | not started (David) |
 | Fleet feed | exists on `origin/max-spike` (Max); NOMO additions not started |

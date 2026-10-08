@@ -31,6 +31,8 @@ export const COMMANDS = [
   "init",
   "metrics",
   "update",
+  "kill",
+  "reinstate",
 ] as const;
 
 export type Command = (typeof COMMANDS)[number];
