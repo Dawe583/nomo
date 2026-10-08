@@ -145,15 +145,31 @@ function readEdit(value: unknown): RefinementEdit {
  * other two would only teach the model to avoid fences, at the cost of tokens.
  */
 export function extractJsonObject(text_: string): ParseResult {
+  const found = extractJsonValue(text_);
+  if (!found.ok) return { ok: false, kind: found.kind, message: found.message };
+  if (!isRecord(found.value))
+    return { ok: false, kind: "not-an-object", message: "expected a JSON object" };
+  return { ok: true, proposal: readProposal(found.value) };
+}
+
+export type RawJsonResult =
+  | { readonly ok: true; readonly value: unknown }
+  | { readonly ok: false; readonly kind: ParseErrorKind; readonly message: string };
+
+/**
+ * Pull a JSON value out of a reply without interpreting it.
+ *
+ * `extractJsonObject` answers "is this a proposal"; this answers "is there an
+ * object here at all". A caller reading a verdict needs the second question,
+ * and re-deriving the same three shapes for it would mean two parsers to keep
+ * in step on every future shape a model learns to emit.
+ */
+export function extractJsonValue(text_: string): RawJsonResult {
   const trimmed = text_.trim();
 
-  const attempt = (candidate: string): ParseResult | null => {
+  const attempt = (candidate: string): RawJsonResult | null => {
     try {
-      const value: unknown = JSON.parse(candidate);
-      if (!isRecord(value)) {
-        return { ok: false, kind: "not-an-object", message: "expected a JSON object" };
-      }
-      return { ok: true, proposal: readProposal(value) };
+      return { ok: true, value: JSON.parse(candidate) as unknown };
     } catch {
       return null;
     }

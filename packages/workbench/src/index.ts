@@ -104,6 +104,17 @@ import {
   type RefinementEdit,
   type RefinementProposal,
 } from "./refine-pass.ts";
+import { serviceHarnessBoundary } from "./harness-runtime.ts";
+import {
+  DEFAULT_REFINE_GATES,
+  type GateSurface,
+} from "./refine-gate.ts";
+import {
+  initialTriggerState,
+  onBranchMove,
+  recordSettledTurn,
+  type TriggerState,
+} from "./refine-trigger.ts";
 import { loadPolicy, type ValidPolicy } from "../../policy/src/rules.ts";
 import { decide, type PolicyDecision } from "../../policy/src/decide.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
@@ -458,6 +469,17 @@ export class Workbench {
   private hooks: Hook[] = [];
   private readonly hookAllowlist: readonly string[];
   private harness: HarnessSettings = defaultHarnessSettings();
+  /**
+   * Per-session refinement trigger state.
+   *
+   * Deliberately in memory and not in the encrypted workspace: a crash costs a
+   * delayed review, never a wrong one, because the state that decides whether
+   * to spend a model call is derived from the chain again at the next boundary.
+   * Persisting it would mean a stored timestamp deciding what the product does.
+   */
+  private readonly harnessTriggers = new Map<string, TriggerState>();
+  /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
+  private readonly harnessJobs = new Set<Promise<void>>();
   /** The timeout `VOID_HOOK_TIMEOUT_MS` asked for, or undefined when the
    * launcher set none. Kept apart from the resolved setting so an explicit
    * runtime environment still wins: it is the more specific statement about
@@ -492,7 +514,18 @@ export class Workbench {
     return this.jobs.size > 0;
   }
   async settled() {
-    await Promise.allSettled([...this.jobs.values()]);
+    // The harness boundary is awaited here but is deliberately not part of
+    // `jobs`: it runs after the turn's result is final, so holding the turn's
+    // job open across it would make a session that reads `idle` still look
+    // busy, and a document edit would be refused for a learning pass that has
+    // nothing to do with it.
+    // One snapshot is not enough: a turn registers its learning pass while the
+    // turn's own job is still resolving, so the pass that this call was asked
+    // about often does not exist yet when the list is taken. Waiting again is
+    // what makes `settled` mean every turn that started has finished,
+    // including the pass that turn scheduled.
+    while (this.jobs.size > 0 || this.harnessJobs.size > 0)
+      await Promise.allSettled([...this.jobs.values(), ...this.harnessJobs]);
   }
   async shutdown() {
     this.close();
@@ -1898,6 +1931,13 @@ export class Workbench {
     },
   ) {
     return this.locked(async () => {
+      // The conversation this session was learning from is about to be replaced.
+      // Drop the armed trigger and any retained review, and bump the version so
+      // a round already in flight can tell it describes a trajectory that no
+      // longer exists. Carrying the retained review across would be approving a
+      // different conversation by proxy.
+      const armed = this.harnessTriggers.get(id);
+      if (armed !== undefined) this.harnessTriggers.set(id, onBranchMove(armed));
       if (
         typeof body.idempotencyKey !== "string" ||
         !/^[A-Za-z0-9_.:-]{1,160}$/.test(body.idempotencyKey)
@@ -2743,6 +2783,83 @@ export class Workbench {
       throw new Error("Workspace ledger signature verification failed.");
     return { entries, result, verification: key };
   }
+  /**
+   * Service one settled turn at the harness boundary.
+   *
+   * Runs after the turn's own result is final and recorded, so a slow review
+   * never changes what the turn already reported and never leaves the session
+   * looking stuck. Every step is the runtime's: the gate refuses without a
+   * provider request, and a proposal that does not validate never reaches the
+   * chain.
+   *
+   * A failure here is reported and forgotten rather than propagated. The turn
+   * it follows succeeded, and a learning pass that failed is not a reason to
+   * mark a successful turn as failed.
+   */
+  private async serviceHarnessTurn(session: Session, surface: GateSurface): Promise<void> {
+    const provider = session.provider;
+    if (!provider) return;
+    const id = session.view.id;
+    const previous = this.harnessTriggers.get(id) ?? initialTriggerState();
+    const state = recordSettledTurn(previous);
+    this.harnessTriggers.set(id, state);
+    try {
+      const result = await serviceHarnessBoundary(state, {
+        gates: DEFAULT_REFINE_GATES,
+        surface,
+        now: () => Date.now(),
+        entries: async () => await this.harnessEntries(session.view.workspace),
+        // The refusals currently mined from this workspace's own chain. The
+        // reviewer is told how many, not what: the gate already decided the
+        // round is worth paying for, and handing over the full rule list would
+        // answer a question the chain does not support.
+        rules: () => mineLearnedRules(this.evidence[session.view.workspace] ?? []).length,
+        ask: async (request) => {
+          const reply = await provider.complete(
+            session.view.model,
+            [{ role: "user", content: request }],
+            [],
+            session.controller.signal,
+          );
+          return reply.message.content ?? "";
+        },
+        apply: async (proposal) => {
+          await this.refineHarness(id, proposal);
+        },
+      });
+      this.harnessTriggers.set(id, result.state);
+      // The boundary is silent by default, and silence here is ambiguous: an
+      // operator watching a workspace learn nothing cannot tell a gate that
+      // refused from a hook that was never reached. One line naming the refusal
+      // costs nothing when there is no work to do and settles the question when
+      // there is.
+      const note =
+        result.outcome.kind === "not-run"
+          ? result.outcome.reason
+          : result.outcome.kind === "declined"
+            ? `Review declined: ${result.outcome.reason}`
+            : result.outcome.kind === "ran"
+              ? "Harness review ran and recorded a proposal."
+              : null;
+      if (note !== null)
+        this.event(
+          session,
+          "tool",
+          note,
+          { outcome: result.outcome.kind },
+          "harness.review",
+        );
+    } catch (error) {
+      this.event(
+        session,
+        "tool",
+        `Harness review did not complete: ${error instanceof Error ? error.message : String(error)}`,
+        { status: session.view.status },
+        "harness.review.failed",
+      );
+    }
+  }
+
   /**
    * The signer this workbench would use, opened without creating one. A read
    * path that mints a key has created signing capability as a side effect of
@@ -3655,6 +3772,16 @@ export class Workbench {
         "run.status",
       );
       this.persist();
+      // A settled turn is the only boundary at which the harness may spend a
+      // model call on learning, and it is serviced after the turn's own result
+      // is final so the review cannot rewrite what already happened. A turn
+      // that failed is not settled: there is nothing to learn from an outcome
+      // nobody knows.
+      if (session.view.status === "idle") {
+        const pass = this.serviceHarnessTurn(session, "checkpoint").catch(() => {});
+        this.harnessJobs.add(pass);
+        void pass.finally(() => this.harnessJobs.delete(pass));
+      }
     }
   }
 }
