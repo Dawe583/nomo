@@ -205,6 +205,21 @@ export type TokenClaims = {
 - The token value is never written to the ledger, the fleet feed, stderr or
   an error body. Only `jti`.
 
+Implemented as a proposal in `packages/agent-policy/src/token.ts`, replaceable
+as one file: `issueToken` (steps 1 to 3), `verifyToken` and `checkCall`
+(step 5, what the proxy would call). Wire form `<payload>.<signature>` in
+base64url; the payload is canonical JSON of `{ v: "nomo.token.v0", alg, kid,
+claims }`, signed ed25519 through VOID's ledger `KeyProvider` over the
+domain separated preimage `nomo.token.v0
+<payload>`, so a token signature can
+never pass as a ledger signature. A token that fails verification is denied
+as `nomo:token-invalid`; the kill-switch still wins over it.
+
+Open for [DAVID]: issuance happens on `allow` only, so a call that the policy
+holds never gets a token, and if the issuer issued one after a human approval,
+the proxy re-check would hold the same call a second time. Either the token
+carries the approval, or holds are resolved only at the proxy.
+
 ## 6. How the proxy calls the engine, and failure (needs [DAVID])
 
 The engine is an in-process function, not a service, for the spike:
@@ -392,6 +407,7 @@ documents why an additive body field keeps old entries verifying. Plus two new
 5. Optional `agent` field in the ledger body and the two new decisions (section 9).
 6. Package name: `@void/agent-policy` now, rename with the repo later?
 7. Who owns the revocation store file, and its location.
+8. The token format proposed in section 5, and how an approved hold gets a token (section 5).
 
 **Max**
 1. The additive fleet types and fields (section 8), especially `requestId`.
@@ -405,9 +421,10 @@ documents why an additive body field keeps old entries verifying. Plus two new
 | This contract | draft, not confirmed |
 | Agent policy loader and evaluation | implemented in `packages/agent-policy`, not wired into the proxy |
 | Kill-switch check, revocation JSONL store, token claim check | implemented in the same package |
-| `killAgent` / `reinstateAgent`, hold sweep via `AgentHoldIndex` | implemented, store lock against the reinstate race, 55 package tests; the index is not filled until the proxy is wired; no ledger entry yet (section 9) |
+| `killAgent` / `reinstateAgent`, hold sweep via `AgentHoldIndex` | implemented, store lock against the reinstate race; the index is not filled until the proxy is wired; no ledger entry yet (section 9) |
 | `void kill` / `void reinstate` CLI | implemented, 7 tests; store location provisional (item 7) |
-| Token minting and signing | not started (David) |
+| Token minting and signing | proposal implemented in `token.ts` over the ledger `KeyProvider`, 25 tests; format and hold path open for David (item 8) |
+| Section 0 flow end to end | one in-process test (`spike.test.ts`): issue, call, fake connector, fleet events, kill mid run, reinstate; no proxy |
 | Proxy wiring | not started (David) |
 | Fleet feed | exists on `origin/max-spike` (Max); NOMO projection implemented in `packages/agent-policy` (7 tests), not joined to his feed |
 | MCP connector for the demo | not chosen yet |
