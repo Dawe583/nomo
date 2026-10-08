@@ -96,6 +96,14 @@ import {
   resolvePolicyProfile,
 } from "./policy-profile.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
+import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
+import {
+  applyProposal,
+  validateProposal,
+  type AppliedEdit,
+  type RefinementEdit,
+  type RefinementProposal,
+} from "./refine-pass.ts";
 import { loadPolicy, type ValidPolicy } from "../../policy/src/rules.ts";
 import { decide, type PolicyDecision } from "../../policy/src/decide.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
@@ -395,6 +403,26 @@ type Session = {
 
 /** Model tools always cross the existing VOID SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
+const REFINEMENT_SECRET_PATTERNS = [
+  /\b(?:api[_-]?key|token|password|secret|authorization)\s*[:=]\s*["']?[^\s,;"']+/i,
+  /\bBearer\s+[A-Za-z0-9._~+\/-]+=*/i,
+  /--(?:api[_-]?key|token|password|secret|key)(?:=|\s+)\S+/i,
+  /[a-z][a-z0-9+.-]*:\/\/[^/\s:@]+:[^/\s@]+@/i,
+  /\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})\b/,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+];
+
+function refinementTextIsSensitive(
+  proposal: RefinementProposal,
+  knownSecrets: readonly string[],
+): boolean {
+  const text = JSON.stringify(proposal);
+  return (
+    REFINEMENT_SECRET_PATTERNS.some((pattern) => pattern.test(text)) ||
+    knownSecrets.some((secret) => secret.length >= 4 && text.includes(secret))
+  );
+}
+
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
   private readonly permissionMode: PermissionMode;
@@ -416,6 +444,7 @@ export class Workbench {
   private requests: Record<string, { digest: string; sessionId: string }> = {};
   private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;
+  private readonly workspaceKeySecret: string | undefined;
   private config: ProviderConfig | undefined;
   private providerGeneration = 0;
   private providerSetupCount = 0;
@@ -486,6 +515,7 @@ export class Workbench {
     this.keyStorage = env.VOID_WORKSPACE_KEY
       ? "os-keychain"
       : "encrypted-local";
+    this.workspaceKeySecret = env.VOID_WORKSPACE_KEY;
     this.env = { ...env };
     delete (this.env as NodeJS.ProcessEnv).VOID_WORKSPACE_KEY;
     this.hookAllowlist = Workbench.hookAllowlist(env);
@@ -2583,6 +2613,127 @@ export class Workbench {
       await rm(dir, { recursive: true, force: true });
     }
   }
+  /**
+   * Read explicit refinement entries from the verified workspace chain, along
+   * with deterministic lessons mined from the same chain. This is descriptive
+   * context only; policy and decision paths continue to mine rules separately.
+   */
+  async harnessEntries(workspace: string): Promise<HarnessEntry[]> {
+    const proof = await this.ledger(workspace);
+    const entries = proof?.entries ?? [];
+    const latestBody = entries.at(-1)?.body as Record<string, unknown> | undefined;
+    const generatedAt =
+      typeof latestBody?.at === "string"
+        ? latestBody.at
+        : "1970-01-01T00:00:00.000Z";
+    const mined = mineHarnessEntries(entries, { generatedAt }).entries;
+    let overrides: HarnessEntry[] = [];
+    let suppressedIds = new Set<string>();
+    for (let index = entries.length - 1; index >= 0; index--) {
+      const body = entries[index]!.body as Record<string, unknown>;
+      const refinement = body.harnessRefinement;
+      if (refinement === null || typeof refinement !== "object") continue;
+      const record = refinement as Record<string, unknown>;
+      if (Array.isArray(record.overrides)) overrides = record.overrides as HarnessEntry[];
+      if (Array.isArray(record.suppressedIds))
+        suppressedIds = new Set(record.suppressedIds.filter((id): id is string => typeof id === "string"));
+      break;
+    }
+    const byId = new Map<string, HarnessEntry>();
+    for (const entry of mined)
+      if (!suppressedIds.has(entry.id)) byId.set(entry.id, entry);
+    for (const entry of overrides) byId.set(entry.id, entry);
+    return [...byId.values()];
+  }
+
+  /**
+   * Commit validated non-prompt refinements as one signed workspace record.
+   * Prompt edits stay pending because caller-supplied identity strings are not
+   * an operator authorization capability. Skill/subagent edits remain proposal-only.
+   */
+  async refineHarness(
+    sessionId: string,
+    input: RefinementProposal,
+  ): Promise<{
+    applied: readonly AppliedEdit[];
+    awaitingApproval: readonly RefinementEdit[];
+  }> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    const validated = validateProposal(input);
+    if (!validated.ok)
+      throw new Error(`Invalid refinement proposal: ${validated.rejections.join("; ")}`);
+    const proposal = validated.proposal;
+    if (proposal.edits.some((edit) => edit.kind === "skill" || edit.kind === "subagent"))
+      throw new Error("Skill and subagent edits are proposal-only until their schema is supported.");
+    const knownSecrets = [
+      ...Object.entries(this.env)
+        .filter(
+          ([name, value]) =>
+            /secret|token|password|credential|api[_-]?key|private[_-]?key|authorization/i.test(name) && value,
+        )
+        .map(([, value]) => value!),
+      this.config?.apiKey,
+      this.workspaceKeySecret,
+      ...Object.values(this.profiles).map((profile) => profile.apiKey),
+      ...this.connectors.map((connector) => connector.token),
+    ].filter((secret): secret is string => typeof secret === "string" && secret.length >= 4);
+    if (refinementTextIsSensitive(proposal, knownSecrets))
+      throw new Error("Refinement contains secret-like content and was not recorded.");
+
+    const workspace = session.view.workspace;
+    return this.locked(async () => {
+      const proof = await this.ledger(workspace);
+      const verifiedSeqs = new Set((proof?.entries ?? []).map((entry) => entry.seq));
+      for (const edit of proposal.edits)
+        for (const seq of edit.derivedFromSeq)
+          if (!verifiedSeqs.has(seq))
+            throw new Error(`Refinement cites unverified workspace sequence ${seq}.`);
+
+      const generatedAt = new Date().toISOString();
+      const result = applyProposal(
+        await this.harnessEntries(workspace),
+        proposal,
+        generatedAt,
+      );
+      const mined = mineHarnessEntries(this.evidence[workspace] ?? [], { generatedAt }).entries;
+      const resultIds = new Set(result.entries.map((entry) => entry.id));
+      const suppressedIds = mined
+        .filter((entry) => !resultIds.has(entry.id))
+        .map((entry) => entry.id);
+      const minedById = new Map(mined.map((entry) => [entry.id, entry]));
+      const overrides = result.entries.filter((entry) => {
+        const original = minedById.get(entry.id);
+        return original === undefined || canonicalJson(original) !== canonicalJson(entry);
+      });
+      if (!result.applied.length)
+        return { applied: result.applied, awaitingApproval: result.awaitingApproval };
+
+      const state = this.documents[workspace] ?? createWorkspace();
+      this.documents[workspace] ??= state;
+      await this.commitWorkspace(
+        session,
+        state,
+        "harness.refinement",
+        { summary: proposal.summary, editCount: result.applied.length },
+        "refinement:applied",
+        undefined,
+        undefined,
+        {
+          harnessRefinement: {
+            summary: proposal.summary,
+            rationale: proposal.rationale,
+            expectedOutcome: proposal.expectedOutcome,
+            applied: result.applied,
+            overrides,
+            suppressedIds,
+          },
+        },
+      );
+      return { applied: result.applied, awaitingApproval: result.awaitingApproval };
+    });
+  }
+
   async ledger(workspace: string) {
     if (!Object.hasOwn(this.documents, workspace)) return undefined;
     const entries = this.evidence[workspace] ?? [],
