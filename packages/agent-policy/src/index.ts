@@ -9,3 +9,4 @@ export * from "./evaluate.ts";
 export * from "./revocations.ts";
 export * from "./check.ts";
 export * from "./kill.ts";
+export * from "./fleet.ts";

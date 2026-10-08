@@ -361,6 +361,15 @@ table name taken from the arguments, and a reason can quote an operator's
 rationale. Both stay in the policy result and the ledger, where access is
 already controlled.
 
+Implemented without touching the workbench (`packages/agent-policy/src/fleet.ts`):
+`projectPolicyDecision(request, result, { ledger? })`, `projectTokenIssued(claims,
+requestId)` and `projectRevocation(record)` return only the fields above plus
+`type`, `agent` and `tool`, built field by field from a closed list. Values that
+fail their shape check are dropped. Cursor, `at`, `sessionId` and `model` stay
+Max's to add. The operator (`by`) and the revocation reason are not projected
+either. A test plants markers in the target, the rationale, the arguments, the
+operator and the reason, and fails if any reaches an output.
+
 Open for [MAX]: whether `policy.decided` is sent for allows too, whether the
 projection lives next to `projectFleetEvent` or the proxy emits these directly,
 and whether the Fleet page shows a killed agent as its own state.
@@ -400,5 +409,5 @@ documents why an additive body field keeps old entries verifying. Plus two new
 | `void kill` / `void reinstate` CLI | implemented, 7 tests; store location provisional (item 7) |
 | Token minting and signing | not started (David) |
 | Proxy wiring | not started (David) |
-| Fleet feed | exists on `origin/max-spike` (Max); NOMO additions not started |
+| Fleet feed | exists on `origin/max-spike` (Max); NOMO projection implemented in `packages/agent-policy` (7 tests), not joined to his feed |
 | MCP connector for the demo | not chosen yet |
