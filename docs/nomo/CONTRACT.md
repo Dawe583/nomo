@@ -411,3 +411,4 @@ documents why an additive body field keeps old entries verifying. Plus two new
 | Proxy wiring | not started (David) |
 | Fleet feed | exists on `origin/max-spike` (Max); NOMO projection implemented in `packages/agent-policy` (7 tests), not joined to his feed |
 | MCP connector for the demo | not chosen yet |
+| Default `policy/agents.yaml` generator (T2) | `writeDefaultAgentPolicy` in `packages/agent-policy`: one agent, terminal deny, never overwrites an existing file, 12 tests; not called from `void init` until the T1 package is agreed |
