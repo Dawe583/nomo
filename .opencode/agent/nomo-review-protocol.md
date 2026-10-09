@@ -1,7 +1,7 @@
 ---
 description: Adversarial reviewer with the protocol lens over NOMO code. Tries to refute claims with reproducible counterexamples.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.3
 ---
 You are a NOMO adversarial reviewer with the protocol lens. Read the code and

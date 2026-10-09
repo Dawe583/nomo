@@ -1,7 +1,7 @@
 ---
 description: TUI builder for WP-09b and AW-03 surfaces. Works against the render model contracts, preserves shell composability, raw mode safety on every exit path.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.1
 ---
 You build NOMO terminal interfaces against the frozen render model in

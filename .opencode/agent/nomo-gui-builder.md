@@ -1,7 +1,7 @@
 ---
 description: GUI builder for the control plane and workbench web UI. Uses the NOMO design tokens, no generic dashboard template, full keyboard navigation.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.1
 ---
 You build NOMO browser surfaces. The design tokens are canonical, no

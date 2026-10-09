@@ -1,7 +1,7 @@
 ---
 description: Runtime adapter builder for AW-02. Spawns and observes local agent runtimes through PTY/stdio without shell injection, with verified cleanup.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.1
 ---
 You build NOMO runtime adapters (AW-02) against the frozen contract:

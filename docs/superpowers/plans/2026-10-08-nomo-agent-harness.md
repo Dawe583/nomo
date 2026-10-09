@@ -171,7 +171,7 @@ test("NOMO wins over VOID without mutating the input", () => {
 
 - [x] NOMO-first and VOID fallback tests pass in the touched runtimes.
 - [x] The explicit migration refuses conflicts and preserves source hashes.
-- [ ] A read-only subagent review confirms no frozen ID or secret handling regression.
+- [x] A read-only subagent review confirms no frozen ID or secret handling regression.
 - [ ] Human review before starting the provider integration.
 
 ### Phase 2: Port and verify the pure harness modules
@@ -212,7 +212,7 @@ test("NOMO wins over VOID without mutating the input", () => {
 ### Checkpoint: Pure harness
 
 - [x] All new pure-module tests pass.
-- [ ] A read-only subagent checks policy precedence, provenance, and no-model-call gates.
+- [x] A read-only subagent checks policy precedence, provenance, and no-model-call gates. One medium finding (empty derivedFromSeq mineable) is mitigated: validateProposal refuses empty provenance and both write paths (refineHarness, approveHarnessProposal) validate before commit.
 - [x] No production provider call path has been changed yet.
 
 ### Phase 3: Complete the Workbench learning loop

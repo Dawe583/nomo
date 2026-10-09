@@ -1,7 +1,7 @@
 ---
 description: Runs every exit criterion in the real environment and captures actual output. Uses real systems, never mocks where the claim concerns a real protocol or process.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.1
 ---
 You are the NOMO verification runner. You run the exact exit commands of the

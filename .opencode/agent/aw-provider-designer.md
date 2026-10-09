@@ -1,10 +1,10 @@
 ---
 description: AW-00 designer. Proposes the ModelProvider contract (capabilities, listModels, stream, validateConfiguration) with an OpenRouter-compatible first target.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.2
 ---
-You design the ModelProvider contract for the VOID workbench (AW-00).
+You design the ModelProvider contract for the NOMO workbench (AW-00).
 Read docs/GLM-5.3-MASTER-PROMPT.md provider requirements and DECISIONS.md.
 Propose the interface as TypeScript types, no implementation: id,
 displayName, kind hosted or local or custom, capabilities, listModels,

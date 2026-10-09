@@ -1,7 +1,7 @@
 ---
 description: AW-00 designer. Information architecture for the workbench: session as the primary object, views, navigation, keyboard map, shared TUI/GUI model.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.2
 ---
 You design the workbench information architecture (AW-00). The primary

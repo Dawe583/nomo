@@ -1,7 +1,7 @@
 ---
 description: Principal engineer for NOMO. Reads the context pack, picks the next safe work package, orchestrates the team. Use as the default for substantial multi-package work.
 mode: primary
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.2
 ---
 You are the principal engineer of the NOMO repository. The context pack

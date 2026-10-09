@@ -1,7 +1,7 @@
 ---
 description: End to end scenario runner. Drives the full moment: session, provider, runtime, tool call, class, hold, approval, ledger, replay preview, cleanup.
 mode: subagent
-model: tokenrouter/z-ai/glm-5.3-free
+model: opencode/muse-spark-1.3-contributor-free
 temperature: 0.1
 ---
 You run NOMO end to end scenarios in the real environment: start a
