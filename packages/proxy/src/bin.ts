@@ -283,7 +283,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       readonly evidence: LegacyCaptureEvidence;
     } | null,
     beforeDispatch?: () => void,
-    onDispatched?: () => void,
+    onDispatched?: (upstreamId: JsonRpcId) => void,
   ): Promise<JsonRpcRequest> => {
     const translated = session.translateRequestOut(request);
     const checkBeforeDispatch = (): void => {
@@ -297,7 +297,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     if (bound === null) {
       checkBeforeDispatch();
       sendUpstream(translated);
-      onDispatched?.();
+      onDispatched?.(translated.id);
       return translated;
     }
     try {
@@ -321,7 +321,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     pendingLegacy.set(translated.id, bound);
     try {
       sendUpstream(translated);
-      onDispatched?.();
+      onDispatched?.(translated.id);
     } catch {
       session.drop(request.id);
       try {
@@ -536,7 +536,10 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
                 throw new Error("Request cancelled before dispatch");
               options.beforeToolDispatch?.(message.id);
             },
-            () => { state.dispatched = true; },
+            (upstreamId) => {
+              state.dispatched = true;
+              activeToolCallsByUpstream.set(upstreamId, message.id);
+            },
           ).catch((error: unknown) => {
             writeError(`request failed: ${errorMessage(error)}`);
             sendLocal(jsonRpcError(
@@ -590,9 +593,15 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         }
         const cancel = cancellationFromAgent(message, session);
         if (cancel !== null) {
-          sendUpstream(cancel);
-          if (typeof requestId === "number" || typeof requestId === "string")
-            activeToolCalls.delete(requestId);
+          try {
+            sendUpstream(cancel);
+          } finally {
+            const upstreamId = cancel.params?.requestId;
+            if (typeof upstreamId === "number" || typeof upstreamId === "string")
+              activeToolCallsByUpstream.delete(upstreamId);
+            if (typeof requestId === "number" || typeof requestId === "string")
+              activeToolCalls.delete(requestId);
+          }
           return;
         }
         sendUpstream(relayNotification(message, session.maps).notification);
@@ -741,7 +750,7 @@ async function handleToolCall(
       readonly evidence: LegacyCaptureEvidence;
     } | null,
     beforeDispatch?: () => void,
-  onDispatched?: () => void,
+    onDispatched?: (upstreamId: JsonRpcId) => void,
   ) => Promise<JsonRpcRequest>,
   sendJson: (message: unknown) => void,
   writeError: (line: string) => void,
@@ -752,7 +761,7 @@ async function handleToolCall(
   legacyBinding?: LegacyBindingResolver,
   signal?: AbortSignal,
   beforeDispatch?: () => void,
-  onDispatched?: () => void,
+  onDispatched?: (upstreamId: JsonRpcId) => void,
 ): Promise<void> {
   const call = { ...interceptedCall(request), workspace };
   let binding: LegacyProxyBinding | null = null;
