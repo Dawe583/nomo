@@ -200,7 +200,7 @@ are not included in this beta.
 - `docs/DECISIONS.md`: decision log.
 - `docs/STANDARDS.md`: coding, test, safety, and repository rules.
 - `docs/OPERATIONS.md`: operator runbook.
-- `docs/PLAN-GAPS.md`: consolidated remaining work across active plans.
+- `docs/superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md`: active NOMO MVP plan and product roadmap.
 - `docs/SDK.md`: SDK release candidate surface.
 - `docs/TESTING.md`: package test commands and test rules.
 - `docs/AGENT-BINARIES.md`: the two external agent CLIs, their versions and the contract VOID relies on.

@@ -60,7 +60,8 @@ and [Cloudflare MCP server portals](https://developers.cloudflare.com/cloudflare
 A buyer signal counts only when a real write incident or blocked write, named
 owner, named approver, incident owner, specific pilot environment and dated next
 step are recorded. A paid scope is stronger evidence. Positive feedback to a
-feature list is not validation.
+feature list is not validation. Pricing and tiers remain unvalidated hypotheses;
+this MVP makes no price claim.
 
 ## Authority and assumptions
 

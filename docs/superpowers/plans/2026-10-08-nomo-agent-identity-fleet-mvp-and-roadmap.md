@@ -527,7 +527,8 @@ The retirement set is:
   `docs/10K-MRR-EXECUTION-BOARD.md`, `docs/10K-MRR-REALITY-CHECK.md` and
   `docs/10K-MRR-TECHNICAL-BACKLOG.md`
 - `docs/VOID-MARKETING-MONETIZATION-RESEARCH-2026.md`,
-  `docs/VOID-SOCIAL-CONTENT-PACK-2026.md`, `docs/PUBLIC-DEMO.md`
+  `docs/VOID-SOCIAL-CONTENT-PACK-2026.md`, `docs/SLACK-OPERATING-PACK.md` and
+  `docs/PUBLIC-DEMO.md`
 - The complete `docs/strategy-2026-09-30/` directory
 
 Keep `docs/DECISIONS.md` as history and keep current technical contracts,

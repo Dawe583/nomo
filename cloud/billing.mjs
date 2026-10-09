@@ -38,10 +38,11 @@
  * lock is what makes two concurrent deliveries of one event apply once.
  *
  * Not built here, deliberately: checkout, a customer portal, usage metering,
- * seats, and any price. `docs/GO-TO-MARKET-10K-MRR.md` prices tiers as
- * hypotheses and says a price becomes a decision only after qualified
- * conversations and willingness-to-pay signals, so no amount, tier or limit is
- * encoded anywhere in this file.
+ * seats, and any price. The NOMO MVP spec at
+ * `docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md`
+ * separates customer qualification from engineering and says pricing and tiers
+ * remain unvalidated hypotheses. No amount, tier or limit is encoded in this
+ * module.
  */
 
 import express from "express";

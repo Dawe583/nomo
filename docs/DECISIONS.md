@@ -1527,6 +1527,7 @@ controls are active competitive areas. No empty-market, first or only claim is
 authorized. The capability map and MVP spec define a qualification test based on
 a real write incident or blocked write, four named owners, a specific pilot
 environment and a dated next step. Positive reaction alone is not demand proof.
+Pricing and tiers remain unvalidated hypotheses, and no price claim is approved.
 
 **Compatibility.** NOMO is the product name and `@nomo/*` is the public package
 target. Existing `@void/*` imports, environment names, CLI commands, state and

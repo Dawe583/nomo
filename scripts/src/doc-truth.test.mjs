@@ -99,39 +99,37 @@ const INVENTORY = {
   // WP deliverables that were scoped and never built. An execution plan naming
   // an unbuilt deliverable is honest; a plan claiming it shipped would not be.
   "docs/registry-changelog.md":
-    "WP-04b deliverable, scoped in EXECUTION-PLAN and never built",
+    "historical work package deliverable, never built; current plan is in the NOMO roadmap",
   "docs/frames.md":
-    "WP-13 deliverable, scoped in EXECUTION-PLAN and never built",
+    "historical work package deliverable, never built; current plan is in the NOMO roadmap",
 
   // Confidential by decision. It must leave the tree before open sourcing, so a
   // pointer to it is a record of the decision, not a broken link to fix.
   "docs/GO-TO-MARKET.md":
-    "confidential and deliberately absent from the repository; PLAN-GAPS and PLAN-STATUS say so",
+    "confidential and deliberately absent from the repository; the decision history preserves this boundary",
 
-  // Paths the strategy documents name as files that would be new. A proposal
-  // that says "new docs/SECURITY.md" is honest; a status document claiming the
-  // file shipped would not be. VOID-FUTURE-DIRECTION and REVERSE-WEDGE both
-  // work this way, and neither claims any of these landed.
+  // Historical product proposals named files that were never built. The current
+  // NOMO product documents do not claim these artifacts shipped.
   "docs/AAT-CROSSWALK.md":
-    "VOID-FUTURE-DIRECTION proposal for a field-by-field AAT crosswalk; never built",
+    "historical product proposal for a field-by-field AAT crosswalk; never built",
   "docs/SECURITY.md":
-    "VOID-FUTURE-DIRECTION proposal for a public guarantees page; never built, and packages/security-notes.md carries the material that did land",
+    "historical proposal for a public guarantees page; never built, and packages/security-notes.md carries the material that did land",
   "docs/otel-genai-proposal.md":
-    "VOID-FUTURE-DIRECTION proposal for an OpenTelemetry GenAI proposal; never published",
+    "historical proposal for OpenTelemetry GenAI; never published",
   "packages/cli/src/standalone-verify.mjs":
-    "VOID-FUTURE-DIRECTION proposal for a standalone verifier entry point; it shipped as packages/verifier/verify-ledger.mjs instead",
+    "historical proposal for a standalone verifier; it shipped as packages/verifier/verify-ledger.mjs instead",
   "packages/cli/src/tool-signing.ts":
-    "VOID-FUTURE-DIRECTION proposal to sign tool definitions MCPS-style; never built",
+    "historical proposal to sign tool definitions MCPS-style; never built",
   "packages/ledger/src/aat.ts":
-    "VOID-FUTURE-DIRECTION proposal for an AAT-shaped bundle; never built, and the ledger keeps its own record shape",
+    "historical proposal for an AAT-shaped bundle; never built, and the ledger keeps its own record shape",
   "packages/ledger/src/assertion.ts":
-    "REVERSE-WEDGE proposal for a new assertion body type; never built",
+    "historical recovery-wedge proposal for a new assertion body type; never built",
   "packages/ledger/src/assertion.test.ts":
-    "REVERSE-WEDGE proposal for the assertion test matrix; never built with the type it would have tested",
+    "historical recovery-wedge proposal for the assertion test matrix; never built with the type it would have tested",
   "packages/cli/src/assert.ts":
-    "REVERSE-WEDGE proposal for void assertion add and verify subcommands; never built",
+    "historical recovery-wedge proposal for assertion add and verify commands; never built",
   "packages/policy/src/attribution.ts":
-    "REVERSE-WEDGE proposal for policy attribution of assertions; never built, and attribution itself shipped as packages/ledger/src/attribution.ts",
+    "historical recovery-wedge proposal for policy attribution of assertions; the current attribution shipped as packages/ledger/src/attribution.ts",
   "docs/reference/server-json/official-registry-requirements.md":
     "DISTRIBUTION-PATH cites a vendor requirements document fetched from the web, not a file in this tree",
 
@@ -143,13 +141,11 @@ const INVENTORY = {
 
   // The Slack channel implementation moved to the closed `paid/` directory on
   // 2026-10-03, so its Apache 2.0 path is history rather than a broken link.
-  // DECISIONS 5 names the old path as the shipped-open collision that closed,
-  // and the dated strategy snapshot is an inventory of the tree as it stood
-  // that day; neither claim is falsified by the file having moved.
+  // DECISIONS 5 names the old path as the shipped-open collision that closed.
   "packages/policy/src/channels/slack.ts":
     "moved to paid/channels/slack.ts on 2026-10-03; DECISIONS 5 cites the old path as the shipped-open collision this closed",
   "packages/policy/src/channels/slack.test.ts":
-    "moved to paid/channels/slack.test.ts on 2026-10-03 with the implementation, and is listed in the dated 2026-09-30 coverage snapshot",
+    "moved to paid/channels/slack.test.ts on 2026-10-03 with the implementation; DECISIONS 5 records the old path",
 
   // Two responsive stylesheets that were merged into `styles.css` and are named
   // by documents that predate the merge. `PLATFORM-REDESIGN-PLAN` and
@@ -188,6 +184,55 @@ const INVENTORY = {
     "held only on preserve/lane-mobile-ascii, unreferenced by anything in main; recorded in PRESERVED-LANES as finished accessibility work that was never integrated",
   "apps/control-plane/web/components/mobile-ascii.js":
     "held only on preserve/lane-mobile-ascii, unreferenced by anything in main; recorded in PRESERVED-LANES as finished accessibility work that was never integrated",
+
+  // Product direction and sales documents retired on 2026-10-09. Their valid
+  // evidence now lives in the capability map, MVP spec and implementation plan.
+  "docs/BUILD-PLAN.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/BUILD-PLAN.pdf":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/EXECUTION-PLAN.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/EXECUTION-PLAN.pdf":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/PLAN-STATUS.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/PLAN-GAPS.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/STATUS-INDEX.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/OPEN-WORK-AUDIT.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/ROADMAP-2026-Q4.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/VOID-FUTURE-DIRECTION.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/DEEP-RESEARCH-DIRECTION-2026-10-04.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/COMPETITIVE-WEDGE.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/REVERSE-WEDGE.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/GO-TO-MARKET-10K-MRR.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/GO-TO-MARKET-10K-MRR-2026.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/10K-MRR-EXECUTION-BOARD.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/10K-MRR-REALITY-CHECK.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/10K-MRR-TECHNICAL-BACKLOG.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/VOID-MARKETING-MONETIZATION-RESEARCH-2026.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/VOID-SOCIAL-CONTENT-PACK-2026.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/PUBLIC-DEMO.md":
+    "Retired 2026-10-09; valid product evidence is in the NOMO capability map, MVP spec and roadmap.",
+  "docs/SLACK-OPERATING-PACK.md":
+    "Retired 2026-10-09 as a superseded MRR operating pack; customer qualification is in the NOMO MVP spec.",
+  "docs/strategy-2026-09-30/":
+    "Retired 2026-10-09; its active product and market evidence was migrated to the NOMO product docs",
 
   // Planned NOMO identity MVP deliverables. Remove each entry when its file is
   // created; an inventory entry must not hide a shipped path.
@@ -442,15 +487,16 @@ test("the pre-split note is in the standards sections that need it", () => {
   }
 });
 
-test("the inventory covers every pre-split path the pack still names", () => {
-  // A guard on the guard: if someone adds a new `api/...` reference to the context
-  // pack, it must arrive with its own inventory entry rather than joining the old
-  // ones silently.
+test("the inventory covers every historical path the active context pack still names", () => {
+  // A guard on the guard: any historical path in the active context or product
+  // docs needs an explicit inventory entry rather than joining silently.
   const pack = [
-    "docs/STANDARDS.md",
+    "docs/CONTEXT.md",
     "docs/DECISIONS.md",
-    "docs/BUILD-PLAN.md",
-    "docs/EXECUTION-PLAN.md",
+    "docs/STANDARDS.md",
+    "docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-capability-map.md",
+    "docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md",
+    "docs/superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md",
   ];
   const strays = [];
   for (const file of pack) {
