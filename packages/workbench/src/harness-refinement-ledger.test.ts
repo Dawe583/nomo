@@ -296,6 +296,27 @@ test("skill and subagent edits stay proposal-only until their schema is supporte
   assert.equal((await app.ledger(session.workspace))?.entries.length, 1);
 });
 
+test("policy edits are rejected before they reach the signed ledger", async (t) => {
+  const { app, session } = await fixture(t);
+  const before = await app.ledger(session.workspace);
+  assert.ok(before);
+  const invalid = {
+    ...proposal(),
+    edits: proposal().edits.map((edit) => ({ ...edit, kind: "policy" })),
+  } as unknown as RefinementProposal;
+
+  await assert.rejects(
+    app.refineHarness(session.id, invalid),
+    /unsupported kind "policy"/,
+  );
+
+  const after = await app.ledger(session.workspace);
+  assert.ok(after);
+  assert.equal(after.result.ok, true);
+  assert.equal(after.entries.length, before.entries.length);
+  assert.deepEqual(await app.harnessEntries(session.workspace), []);
+});
+
 test("approved refinement entries are reconstructed from the signed chain after restart", async (t) => {
   const { app, session, directory, closeOriginal } = await fixture(t);
   await app.refineHarness(session.id, proposal());
