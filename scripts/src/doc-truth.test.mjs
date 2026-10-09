@@ -188,6 +188,19 @@ const INVENTORY = {
     "held only on preserve/lane-mobile-ascii, unreferenced by anything in main; recorded in PRESERVED-LANES as finished accessibility work that was never integrated",
   "apps/control-plane/web/components/mobile-ascii.js":
     "held only on preserve/lane-mobile-ascii, unreferenced by anything in main; recorded in PRESERVED-LANES as finished accessibility work that was never integrated",
+
+  // Planned NOMO identity MVP deliverables. Remove each entry when its file is
+  // created; an inventory entry must not hide a shipped path.
+  "packages/workbench/src/agent-identity.ts":
+    "planned in the NOMO identity MVP plan; not implemented yet",
+  "packages/workbench/src/agent-identity.test.ts":
+    "planned in the NOMO identity MVP plan; not implemented yet",
+  "packages/proxy/src/transport/http-server.ts":
+    "planned in the NOMO identity MVP plan; not implemented yet",
+  "packages/proxy/src/transport/http-server.test.ts":
+    "planned in the NOMO identity MVP plan; not implemented yet",
+  "docs/NOMO-LOCAL-IDENTITY-DEMO.md":
+    "planned local demo runbook in the NOMO identity MVP plan; not written yet",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */
@@ -495,7 +508,7 @@ const INTERFACE_WORDS = [
 
 /** The newest decision in the pack. Renaming that heading renames this. */
 const NEWEST_DECISION =
-  "## External agent binaries: provenance recorded, no vendoring, 2026-10-05";
+  "## NOMO Agent Identity and Fleet Control Plane: active direction, 2026-10-08";
 
 const MONO_FOR_INTERFACE = /\bmono\w*/i;
 const NAMES_INTERFACE_WORD = new RegExp(

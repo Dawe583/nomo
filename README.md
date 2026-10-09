@@ -1,23 +1,35 @@
-# VOID
+# NOMO
 
-VOID reverses one bad write in a live system and leaves everything else alone.
-For a managed Postgres restore, the proof is written into your own database,
-where anyone can check it without trusting VOID.
+NOMO is being built as an Agent Identity & Fleet Control Plane for MCP-capable
+agents. The target runtime binds each call to a trusted principal, workspace,
+agent and run. All calls get identity and scope checks. Reads and low-risk calls
+use a measured fast path. High-risk writes receive full policy and durable
+evidence. Operators see decisions and truthful run, agent and fleet revocation
+state.
 
-**Rubrik has sold "undo for agent actions" since August 2025**, so that part is
-not a differentiator and this file does not claim it is. Their own release
-describes the mechanism as using Rubrik Security Cloud to rewind "files,
-databases, configurations, or repositories", and describes the audit trail as
-living there rather than in the database that was damaged. Read that as their
-description of themselves, not as a reading of their internals. What is directly
-comparable is the consequence: rewinding a live database to a moment ago
-discards every legitimate write made since. VOID restores the affected rows and
-keeps the rest, and for a managed Postgres restore the receipt it leaves sits in
-your own schema.
+**The coding-agent Harness is required.** Harness runs use the same identity,
+token, proxy, policy and ledger path as other managed agents. Safe learning,
+operator approval and later-session retrieval are product-v1 release gates.
 
-**See it happen, then check it without VOID.** The demo drives a real PostgreSQL
-17.11 server: an agent write, a finance write made _outside_ VOID, then the
-inverse. The agent's row goes back; the finance write survives.
+**Status:** This feature branch records the approved product direction and
+implementation plan. The fleet identity runtime is not shipped yet. Current code
+still uses `@void/*` packages and the `void` CLI. The local demo, package and
+state migration, inbound HTTP MCP endpoint, short-lived proxy grants and standard
+MCP OAuth remain planned work. No production, first/only or empty-market claim
+is made.
+
+See the [capability map](docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-capability-map.md),
+[MVP spec](docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md)
+and [implementation plan](docs/superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md)
+for boundaries and acceptance gates.
+
+## Existing local recovery evidence
+
+The current technical tree also has a managed Postgres recovery demonstration.
+It is a retained capability, not the primary NOMO product direction. The demo
+drives a real PostgreSQL 17.11 server: an agent write, a finance write made
+_outside_ the proxy, then an inverse. The agent's row goes back; the finance
+write survives.
 
 ```sh
 export VOID_PG_URL="postgres://void@127.0.0.1:5432/void_demo"
@@ -25,34 +37,32 @@ node --experimental-strip-types scripts/receipt-demo/run.mjs
 psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
 ```
 
-The second command is plain SQL over two tables you already own. It reports
-`PASS` only if the row each receipt names is the row your table actually holds,
-and `FAIL` if it is not. `scripts/receipt-demo/README.md` records what was
-observed, including a run where the check was made to fail on purpose by editing
-a row by hand, because a verification that cannot fail is not a verification.
+The SQL reports `PASS` only if the row each receipt names is the row the table
+holds, and `FAIL` if it is not. `scripts/receipt-demo/README.md` records the
+observed run, including an intentional failure after editing a row by hand.
 
-**Start here: [the VOID handbook](docs/HANDBOOK.md).** It is the complete operator
-guide, in English and in [Czech](docs/HANDBOOK.cs.md), and it is checked by a
-test: every command, script, path and link in it is verified to exist, so it
-cannot drift away from the product the way a README can.
+**Current operator guide:** [the handbook](docs/HANDBOOK.md), also available in
+[Czech](docs/HANDBOOK.cs.md). Its paths and commands are checked by a test.
 
-**Install it as a real `void` command:** from a checkout, run
-`bash scripts/install-void.sh`. It checks for Node.js 24 or newer, git and
-pnpm, clones this repository into `$HOME/.local/share/void-cli` (set
-`VOID_HOME` to put the tree somewhere else), installs dependencies from the
-shipped lockfile, and writes a launcher at `$HOME/.local/bin/void`. It does
-not edit your PATH, so make sure that directory is on it and open a new
-terminal. From there `void` runs from any directory, `void update` moves that
-installed tree onto the tracked branch, and `void update --check` reports
-whether anything is new without moving anything. See
-[the beta runbook](docs/BETA.md) for the full flow, what an update refuses to
-do, and how to roll back.
+**Current command:** install the legacy `void` executable with
+`bash scripts/install-void.sh`. It checks for Node.js 24 or newer, git and pnpm,
+clones the repository into `$HOME/.local/share/void-cli` (set `VOID_HOME` to
+choose another location), installs from the lockfile and writes a launcher at
+`$HOME/.local/bin/void`. It does not edit PATH. The NOMO rename must preserve
+this command and its data until the explicit compatibility migration is ready.
+See the [beta runbook](docs/BETA.md) for setup and rollback.
 
-It sits between an MCP capable agent and the tools the agent can write to. For each write, VOID classifies how reversible the call is, applies a policy, and appends a signed hash chained ledger entry. Later, operators can inspect the feed, verify the chain, attest a slice, trace taint, and replay true inverses when a connector has captured enough state.
+The current proxy sits between an MCP-capable agent and tools. It classifies
+writes, applies policy, and appends signed hash-chained ledger records before
+dispatch in fail-closed posture. Operators can inspect the feed, verify the
+chain, attest a slice, trace taint and use true inverses when a connector has
+captured enough state. These existing capabilities do not imply registered
+agent identity, dynamically issued per-run tokens, inbound HTTP MCP, distributed
+fleet control or standard MCP OAuth.
 
-## What VOID protects
+## Current write-path behavior
 
-VOID does not make an agent safe by trusting the model. It protects the write path.
+The existing `void` proxy does not make an agent safe by trusting the model. It protects the write path.
 
 1. Intercept the tool call.
 2. Classify the call as R0, R1, R2, or R3 from registry cases and target facts.
