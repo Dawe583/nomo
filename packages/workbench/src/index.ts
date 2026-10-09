@@ -16,6 +16,24 @@ import {
   digest,
   type Json,
 } from "../../runtime/src/index.ts";
+import { envValue, normalizeOwnedEnv } from "../../ledger/src/env-compat.ts";
+import {
+  type RefinementProposal,
+  validateProposal,
+  applyProposal,
+  promptEdits,
+  type AppliedEdit,
+  type RefinementEdit,
+} from "./refine-pass.ts";
+import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
+import { serviceHarnessBoundary } from "./harness-runtime.ts";
+import { DEFAULT_REFINE_GATES, type GateSurface } from "./refine-gate.ts";
+import {
+  initialTriggerState,
+  onBranchMove,
+  recordSettledTurn,
+  type TriggerState,
+} from "./refine-trigger.ts";
 import { NVIDIA_URL, PROVIDER_PRESETS } from "./provider-defaults.ts";
 import {
   documentView,
@@ -116,8 +134,9 @@ import {
   attestLedger,
   type AttestationDocument,
 } from "../../ledger/src/attest.ts";
-import { createVoidClient, type VoidClient } from "../../sdk/src/client.ts";
+import { createNomoClient, type NomoClient } from "../../sdk/src/client.ts";
 import { HoldDeniedError } from "../../sdk/src/errors.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
 import {
   CompatibleProvider,
   ProviderRequestError,
@@ -171,7 +190,7 @@ export type SessionView = {
   readonly continuationCount: number;
   readonly runTokenCount: number;
 };
-/** Model ids VOID once shipped as its default. They are retired on sight: the
+/** Model ids NOMO once shipped as its default. They are retired on sight: the
  * workspace picks from its own validated catalog or has no model at all. */
 const RETIRED_MODEL_IDS = [
   "openai-fast",
@@ -259,7 +278,7 @@ export { DEFAULT_POLICY };
 export const AGENT_PRESETS = [
   {
     id: "default",
-    name: "VOID default",
+    name: "NOMO default",
     description: "General-purpose accountable agent.",
     instruction: "",
   },
@@ -268,21 +287,21 @@ export const AGENT_PRESETS = [
     name: "Planner",
     description: "Break work into an explicit, reviewable plan.",
     instruction:
-      "You are the VOID planner. Start with a concise plan, identify risks and dependencies, then execute only after the plan is clear.",
+      "You are the NOMO planner. Start with a concise plan, identify risks and dependencies, then execute only after the plan is clear.",
   },
   {
     id: "reviewer",
     name: "Reviewer",
     description: "Inspect changes for correctness, security and regressions.",
     instruction:
-      "You are the VOID reviewer. Prioritize concrete defects, security risks and missing verification; do not invent praise or rewrite unrelated code.",
+      "You are the NOMO reviewer. Prioritize concrete defects, security risks and missing verification; do not invent praise or rewrite unrelated code.",
   },
   {
     id: "implementer",
     name: "Implementer",
     description: "Implement the requested change with focused verification.",
     instruction:
-      "You are the VOID implementer. Make the smallest complete change, preserve existing contracts and verify the changed behavior before claiming success.",
+      "You are the NOMO implementer. Make the smallest complete change, preserve existing contracts and verify the changed behavior before claiming success.",
   },
 ] as const;
 // Standards rule 10: a denial names the rule id, the class and what approval
@@ -305,7 +324,7 @@ export function denialText(
     decision.kind === "hold"
       ? "It needed operator approval before expiry."
       : "Change the connector policy or ask the operator to approve this class.";
-  return `VOID denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
+  return `NOMO denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
 }
 /**
  * The forward record an undo inverts, located in the chain this workspace
@@ -385,7 +404,7 @@ type Session = {
   agentProfile?: AgentProfile;
   queuedPrompt?: string;
   recoveryBlock?: { jobId: string; previousStatus: SessionView["status"] };
-  client?: VoidClient;
+  client?: NomoClient;
   tools?: McpTool[];
   connections?: Record<string, McpConfig & { sessionId?: string }>;
   config?: Pick<ProviderConfig, "baseUrl" | "kind">;
@@ -393,9 +412,174 @@ type Session = {
   provider?: CompatibleProvider;
 };
 
-/** Model tools always cross the existing VOID SDK. A provider has no shell or
- * filesystem authority; operators configure the MCP upstream on the runtime. */
+const REFINEMENT_SECRET_PATTERNS = [
+  /\b(?:api[_-]?key|token|password|secret|authorization)\s*[:=]\s*["']?[^\s,;"']+/i,
+  /\bBearer\s+[A-Za-z0-9._~+\/-]+=*/i,
+  /--(?:api[_-]?key|token|password|secret|key)(?:=|\s+)\S+/i,
+  /[a-z][a-z0-9+.-]*:\/\/[^/\s:@]+:[^/\s@]+@/i,
+  /\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})\b/,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+];
+
+function refinementTextIsSensitive(
+  proposal: RefinementProposal,
+  knownSecrets: readonly string[],
+): boolean {
+  const text = JSON.stringify(proposal);
+  return (
+    REFINEMENT_SECRET_PATTERNS.some((pattern) => pattern.test(text)) ||
+    knownSecrets.some((secret) => secret.length >= 4 && text.includes(secret))
+  );
+}
+
 export class Workbench {
+  async refineHarness(
+    sessionId: string,
+    input: RefinementProposal,
+  ): Promise<{
+    applied: readonly AppliedEdit[];
+    awaitingApproval: readonly RefinementEdit[];
+  }> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    const validated = validateProposal(input);
+    if (!validated.ok)
+      throw new Error(
+        `Invalid refinement proposal: ${validated.rejections.join("; ")}`,
+      );
+    const proposal = validated.proposal;
+    if (
+      proposal.edits.some(
+        (edit) => edit.kind === "skill" || edit.kind === "subagent",
+      )
+    )
+      throw new Error(
+        "Skill and subagent edits are proposal-only until their schema is supported.",
+      );
+    const knownSecrets = [
+      ...Object.entries(this.env)
+        .filter(
+          ([name, value]) =>
+            /secret|token|password|credential|api[_-]?key|private[_-]?key|authorization/i.test(
+              name,
+            ) && value,
+        )
+        .map(([, value]) => value!),
+      this.config?.apiKey,
+      this.workspaceKeySecret,
+      ...Object.values(this.profiles).map((profile) => profile.apiKey),
+      ...this.connectors.map((connector) => connector.token),
+    ].filter(
+      (secret): secret is string =>
+        typeof secret === "string" && secret.length >= 4,
+    );
+    if (refinementTextIsSensitive(proposal, knownSecrets))
+      throw new Error(
+        "Refinement contains secret-like content and was not recorded.",
+      );
+
+    const workspace = session.view.workspace;
+    return this.locked(async () => {
+      const proof = await this.ledger(workspace);
+      const verifiedSeqs = new Set(
+        (proof?.entries ?? []).map((entry) => entry.seq),
+      );
+      for (const edit of proposal.edits)
+        for (const seq of edit.derivedFromSeq)
+          if (!verifiedSeqs.has(seq))
+            throw new Error(
+              `Refinement cites unverified workspace sequence ${seq}.`,
+            );
+
+      const generatedAt = new Date().toISOString();
+      const result = applyProposal(
+        await this.harnessEntries(workspace),
+        proposal,
+        generatedAt,
+      );
+      const mined = mineHarnessEntries(this.evidence[workspace] ?? [], {
+        generatedAt,
+      }).entries;
+      const resultIds = new Set(result.entries.map((entry) => entry.id));
+      const suppressedIds = mined
+        .filter((entry) => !resultIds.has(entry.id))
+        .map((entry) => entry.id);
+      const minedById = new Map(mined.map((entry) => [entry.id, entry]));
+      const overrides = result.entries.filter((entry) => {
+        const original = minedById.get(entry.id);
+        return (
+          original === undefined ||
+          JSON.stringify(original) !== JSON.stringify(entry)
+        );
+      });
+      if (!result.applied.length)
+        return {
+          applied: result.applied,
+          awaitingApproval: result.awaitingApproval,
+        };
+      const state = this.documents[workspace] ?? createWorkspace();
+      this.documents[workspace] ??= state;
+
+      await this.commitWorkspace(
+        session,
+        state,
+        "harness.refinement",
+        { summary: proposal.summary, editCount: result.applied.length },
+        "refinement:applied",
+        undefined,
+        undefined,
+        {
+          harnessRefinement: {
+            summary: proposal.summary,
+            rationale: proposal.rationale,
+            expectedOutcome: proposal.expectedOutcome,
+            applied: result.applied,
+            overrides,
+            suppressedIds,
+          },
+        },
+      );
+      return {
+        applied: result.applied,
+        awaitingApproval: result.awaitingApproval,
+      };
+    });
+  }
+
+  async harnessEntries(workspace: string): Promise<HarnessEntry[]> {
+    const proof = await this.ledger(workspace);
+    const entries = proof?.entries ?? [];
+    const latestBody = entries.at(-1)?.body as
+      Record<string, unknown> | undefined;
+    const generatedAt =
+      typeof latestBody?.at === "string"
+        ? latestBody.at
+        : "1970-01-01T00:00:00.000Z";
+    const mined = mineHarnessEntries(entries, { generatedAt }).entries;
+    let overrides: HarnessEntry[] = [];
+    let suppressedIds = new Set<string>();
+    for (let index = entries.length - 1; index >= 0; index--) {
+      const body = entries[index]!.body as Record<string, unknown>;
+      const refinement = body.harnessRefinement;
+      if (refinement === null || typeof refinement !== "object") continue;
+      const record = refinement as Record<string, unknown>;
+      if (Array.isArray(record.overrides))
+        overrides = record.overrides as HarnessEntry[];
+      if (Array.isArray(record.suppressedIds))
+        suppressedIds = new Set(
+          record.suppressedIds.filter(
+            (id): id is string => typeof id === "string",
+          ),
+        );
+      break;
+    }
+    const byId = new Map<string, HarnessEntry>();
+    for (const entry of mined)
+      if (!suppressedIds.has(entry.id)) byId.set(entry.id, entry);
+    for (const entry of overrides) byId.set(entry.id, entry);
+    return [...byId.values()];
+  }
+
   private readonly env: Readonly<NodeJS.ProcessEnv>;
   private readonly permissionMode: PermissionMode;
   private provider: CompatibleProvider | undefined;
@@ -405,7 +589,7 @@ export class Workbench {
   } | null = null;
   private readonly storage: LocalStorage;
   private hasState = false;
-  /** VOID ships no default model and no default provider, so neither key is
+  /** NOMO ships no default model and no default provider, so neither key is
    * present until a provider is configured or a preference is patched. */
   private preferences: Record<string, string | undefined> = {
     defaultAgentPreset: "default",
@@ -414,8 +598,10 @@ export class Workbench {
     sendBehavior: "enter",
   };
   private requests: Record<string, { digest: string; sessionId: string }> = {};
-  private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;
+
+  private readonly workspaceKeySecret: string | undefined;
+
   private config: ProviderConfig | undefined;
   private providerGeneration = 0;
   private providerSetupCount = 0;
@@ -429,7 +615,7 @@ export class Workbench {
   private hooks: Hook[] = [];
   private readonly hookAllowlist: readonly string[];
   private harness: HarnessSettings = defaultHarnessSettings();
-  /** The timeout `VOID_HOOK_TIMEOUT_MS` asked for, or undefined when the
+  /** The timeout `NOMO_HOOK_TIMEOUT_MS` asked for, or undefined when the
    * launcher set none. Kept apart from the resolved setting so an explicit
    * runtime environment still wins: it is the more specific statement about
    * this process, and an operator who set it before the workbench loaded must
@@ -453,6 +639,25 @@ export class Workbench {
       notify: string[];
     }
   >();
+  /** Every hold this workbench has decided, kept across restarts so the UI can
+   * show what was approved rather than only what is still pending. A hold that
+   * was pending when the process died is rewritten as `interrupted` on load:
+   * it was never decided, and presenting it as decided would claim an approval
+   * nobody gave. */
+  private approvalHistory: Array<Record<string, unknown>> = [];
+
+  /**
+   * Per-session refinement trigger state.
+   *
+   * Deliberately in memory and not in the encrypted workspace: a crash costs a
+   * delayed review, never a wrong one, because the state that decides whether
+   * to spend a model call is derived from the chain again at the next boundary.
+   * Persisting it would mean a stored timestamp deciding what the product does.
+   */
+  private readonly harnessTriggers = new Map<string, TriggerState>();
+
+  /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
+  private readonly harnessJobs = new Set<Promise<void>>();
   private ignoreEnvironment = false;
   private catalog: readonly Model[] = [];
   private readonly sessions = new Map<string, Session>();
@@ -463,7 +668,20 @@ export class Workbench {
     return this.jobs.size > 0;
   }
   async settled() {
-    await Promise.allSettled([...this.jobs.values()]);
+    // The harness boundary is awaited here but is deliberately not part of
+    // `jobs`: it runs after the turn's result is final, so holding the turn's
+    // job open across it would make a session that reads `idle` still look
+    // busy, and a document edit would be refused for a learning pass that has
+    // nothing to do with it.
+    // Re-snapshot in a loop: the run job adds its harness pass to
+    // `harnessJobs` only as it finishes, so a single snapshot taken while the
+    // run is still in flight would miss the pass and return before the
+    // `harness.review` event lands.
+    for (;;) {
+      const pending = [...this.jobs.values(), ...this.harnessJobs];
+      if (pending.length === 0) return;
+      await Promise.allSettled(pending);
+    }
   }
   async shutdown() {
     this.close();
@@ -480,24 +698,37 @@ export class Workbench {
     env: Readonly<NodeJS.ProcessEnv> = process.env,
     fetcher: typeof fetch = fetch,
   ) {
+    // One normalization, at construction, before anything below reads a
+    // setting. A launcher that configured the product under `VOID_*` before
+    // the rename hands that environment in unchanged, and every reader below
+    // keeps its single `NOMO_*` lookup.
+    const resolved = normalizeOwnedEnv({ ...env });
+    this.workspaceKeySecret = envValue(resolved, "NOMO_WORKSPACE_KEY");
     this.permissionMode = serverPermissionMode(
-      env.VOID_PERMISSION_MODE ?? DEFAULT_LOCAL_PERMISSION_MODE,
+      envValue(resolved, "NOMO_PERMISSION_MODE") ??
+        DEFAULT_LOCAL_PERMISSION_MODE,
     );
-    this.keyStorage = env.VOID_WORKSPACE_KEY
+    this.keyStorage = envValue(resolved, "NOMO_WORKSPACE_KEY")
       ? "os-keychain"
       : "encrypted-local";
-    this.env = { ...env };
+    this.env = resolved;
+    // The workspace key is a secret. It selected storage above and is dropped
+    // here, so no retained copy of it can reach a log, a report or a crash
+    // dump. Both spellings go, because a legacy one that was kept would be the
+    // same secret under a name nothing redacts.
+    delete (this.env as NodeJS.ProcessEnv).NOMO_WORKSPACE_KEY;
     delete (this.env as NodeJS.ProcessEnv).VOID_WORKSPACE_KEY;
-    this.hookAllowlist = Workbench.hookAllowlist(env);
-    // Precedence: an explicit VOID_HOOK_TIMEOUT_MS wins over the stored
+    this.hookAllowlist = Workbench.hookAllowlist(this.env);
+    // Precedence: an explicit NOMO_HOOK_TIMEOUT_MS wins over the stored
     // harness setting, and the stored setting wins over the default. The env
     // is the launcher's statement about this process, so an operator who set
     // it must not lose it to a workspace value written before it. Clamped at
     // both ends either way: a hook cannot be made un-timeouttable, and a short
     // timeout only costs a well-behaved hook more than a long one.
-    const requestedHookTimeout = Number(env.VOID_HOOK_TIMEOUT_MS);
+    const hookTimeout = envValue(this.env, "NOMO_HOOK_TIMEOUT_MS");
+    const requestedHookTimeout = Number(hookTimeout);
     this.hookTimeoutFromEnv =
-      env.VOID_HOOK_TIMEOUT_MS && Number.isFinite(requestedHookTimeout)
+      hookTimeout && Number.isFinite(requestedHookTimeout)
         ? Math.min(
             HOOK_TIMEOUT_BOUNDS.max,
             Math.max(HOOK_TIMEOUT_BOUNDS.min, requestedHookTimeout),
@@ -505,9 +736,12 @@ export class Workbench {
         : undefined;
     this.fetcher = fetcher;
     this.storage = new LocalStorage(
-      env.VOID_DATA_DIR ??
-        join(env.VOID_LEDGER_DIR ?? join(homedir(), ".void"), "workbench"),
-      env.VOID_WORKSPACE_KEY,
+      envValue(this.env, "NOMO_DATA_DIR") ??
+        join(
+          envValue(this.env, "NOMO_LEDGER_DIR") ?? join(dataDir(homedir())),
+          "workbench",
+        ),
+      envValue(resolved, "NOMO_WORKSPACE_KEY"),
     );
     const saved = this.storage.read<{
       preferences?: Record<string, string>;
@@ -748,8 +982,8 @@ export class Workbench {
   /**
    * The operator hook allowlist, read once from the runtime environment.
    *
-   * It is `VOID_HOOK_COMMANDS`, a JSON array of exact command strings, for the
-   * same reason `VOID_UPSTREAM_COMMAND` is one: the launcher that starts this
+   * It is `NOMO_HOOK_COMMANDS`, a JSON array of exact command strings, for the
+   * same reason `NOMO_UPSTREAM_COMMAND` is one: the launcher that starts this
    * process is the only place a command can be authorised. It deliberately
    * lives on the runtime rather than in the encrypted workspace snapshot,
    * because a snapshot is written by whoever holds the workbench API and read
@@ -761,13 +995,13 @@ export class Workbench {
   private static hookAllowlist(
     env: Readonly<NodeJS.ProcessEnv>,
   ): readonly string[] {
-    if (!env.VOID_HOOK_COMMANDS) return [];
+    if (!env.NOMO_HOOK_COMMANDS) return [];
     let parsed: unknown;
     try {
-      parsed = JSON.parse(env.VOID_HOOK_COMMANDS);
+      parsed = JSON.parse(env.NOMO_HOOK_COMMANDS);
     } catch {
       throw new Error(
-        "VOID_HOOK_COMMANDS must be a JSON array of command strings.",
+        "NOMO_HOOK_COMMANDS must be a JSON array of command strings.",
       );
     }
     if (
@@ -777,7 +1011,7 @@ export class Workbench {
       )
     )
       throw new Error(
-        "Configure VOID_HOOK_COMMANDS on the runtime with the hookable commands as a JSON array.",
+        "Configure NOMO_HOOK_COMMANDS on the runtime with the hookable commands as a JSON array.",
       );
     return [...new Set(parsed.map((item) => (item as string).trim()))];
   }
@@ -914,7 +1148,7 @@ export class Workbench {
         })),
       ],
       profiles: structuredClone(this.agentProfiles),
-      policyProfiles: listPolicyProfiles(this.env.VOID_POLICY_PATH),
+      policyProfiles: listPolicyProfiles(this.env.NOMO_POLICY_PATH),
       hooks: structuredClone(this.hooks),
       hookCommands: [...this.hookAllowlist],
       // Derived, not asserted: a hardcoded `true` cannot disagree with a test
@@ -931,7 +1165,7 @@ export class Workbench {
       throw new Error("Agent id belongs to a built-in preset.");
     const policy = resolvePolicyProfile(
       profile.policyProfile,
-      this.env.VOID_POLICY_PATH,
+      this.env.NOMO_POLICY_PATH,
     );
     if (!policy.ok)
       throw new Error(
@@ -1276,9 +1510,9 @@ export class Workbench {
       );
     let command: unknown;
     try {
-      command = JSON.parse(this.env.VOID_UPSTREAM_COMMAND ?? "null");
+      command = JSON.parse(this.env.NOMO_UPSTREAM_COMMAND ?? "null");
     } catch {
-      throw new Error("VOID_UPSTREAM_COMMAND must be a JSON array.");
+      throw new Error("NOMO_UPSTREAM_COMMAND must be a JSON array.");
     }
     if (
       command !== null &&
@@ -1287,10 +1521,10 @@ export class Workbench {
         !command.every((item) => typeof item === "string" && item.length > 0))
     )
       throw new Error(
-        "Configure VOID_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.",
+        "Configure NOMO_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.",
       );
-    if (command && !this.env.VOID_POLICY_PATH)
-      throw new Error("Configure VOID_POLICY_PATH before starting an agent.");
+    if (command && !this.env.NOMO_POLICY_PATH)
+      throw new Error("Configure NOMO_POLICY_PATH before starting an agent.");
     if (!prompt.trim() || prompt.length > this.harness.maxPromptCharacters)
       throw new Error(
         `Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`,
@@ -1298,13 +1532,13 @@ export class Workbench {
     const id = randomUUID();
     const workspace = `agent-${id}`;
     const client = Array.isArray(command)
-      ? createVoidClient({
+      ? createNomoClient({
           workspace,
           ledgerDir:
-            this.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"),
+            this.env.NOMO_LEDGER_DIR ?? join(dataDir(homedir()), "ledger"),
           connect: { upstreamCommand: command },
-          policyPath: this.env.VOID_POLICY_PATH!,
-          factsPath: this.env.VOID_FACTS_PATH,
+          policyPath: this.env.NOMO_POLICY_PATH!,
+          factsPath: this.env.NOMO_FACTS_PATH,
           posture: "fail-closed",
           requestTimeoutMs: 180000,
         })
@@ -1358,7 +1592,7 @@ export class Workbench {
         `Concurrent run limit reached (${this.harness.maxConcurrentRuns}). Wait for a running session to finish or increase the limit.`,
       );
     }
-    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}`;
+    const systemInstruction = `You are operating through NOMO. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}`;
     const queued =
       background &&
       (this.jobs.size > 0 ||
@@ -1723,6 +1957,18 @@ export class Workbench {
   permissionModeState() {
     return this.permissionMode;
   }
+  /**
+   * Where workspace secrets live: an OS keychain when the operator named a
+   * workspace key on the launcher, encrypted local state otherwise.
+   *
+   * A read rather than a field, because a caller has to be able to report it
+   * without reaching the provider, and asking the provider to answer a
+   * question about local storage is a network call that can fail for reasons
+   * that have nothing to do with it.
+   */
+  keyStorageState(): string {
+    return this.keyStorage;
+  }
   private assertNormalMutation(action: string) {
     if (this.permissionMode !== "normal")
       throw new Error(
@@ -1733,8 +1979,8 @@ export class Workbench {
     return (
       this.permissionMode === "normal" ||
       (!tool.connectorId &&
-        (tool.name === "void_workspace_list" ||
-          tool.name === "void_workspace_read"))
+        (tool.name === "nomo_workspace_list" ||
+          tool.name === "nomo_workspace_read"))
     );
   }
   patchSession(id: string, body: Record<string, unknown>) {
@@ -1843,7 +2089,7 @@ export class Workbench {
       await this.mutateDocument(
         s,
         operationId,
-        "void_workspace_write",
+        "nomo_workspace_write",
         { path: input.path, content: input.content },
         { by: operator },
       );
@@ -1868,6 +2114,14 @@ export class Workbench {
     },
   ) {
     return this.locked(async () => {
+      // The conversation this session was learning from is about to be replaced.
+      // Drop the armed trigger and any retained review, and bump the version so
+      // a round already in flight can tell it describes a trajectory that no
+      // longer exists. Carrying the retained review across would be approving a
+      // different conversation by proxy.
+      const armed = this.harnessTriggers.get(id);
+      if (armed !== undefined)
+        this.harnessTriggers.set(id, onBranchMove(armed));
       if (
         typeof body.idempotencyKey !== "string" ||
         !/^[A-Za-z0-9_.:-]{1,160}$/.test(body.idempotencyKey)
@@ -1969,7 +2223,7 @@ export class Workbench {
           await this.mutateDocument(
             child,
             randomUUID(),
-            "void_workspace_write",
+            "nomo_workspace_write",
             { path, content },
             { by: "web-operator" },
           );
@@ -2005,7 +2259,7 @@ export class Workbench {
       connectors: [
         {
           id: "workspace",
-          name: "VOID documents",
+          name: "NOMO documents",
           builtin: true,
           tools: workspaceTools.map((t) => t.name),
           toolDetails: workspaceTools,
@@ -2021,7 +2275,7 @@ export class Workbench {
       input = connectorInput(input);
       const url = validateEndpoint(input.url, true);
       const policy = input.policy || DEFAULT_POLICY;
-      if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
+      if (!loadPolicy(policy).ok) throw new Error("Invalid NOMO policy.");
       if (this.connectors.length >= 12)
         throw new Error("Connector limit reached. Remove an unused connector.");
       const connector: Connector = {
@@ -2047,7 +2301,7 @@ export class Workbench {
       const input = connectorInput(body, previous),
         url = validateEndpoint(input.url, true),
         policy = input.policy || DEFAULT_POLICY;
-      if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
+      if (!loadPolicy(policy).ok) throw new Error("Invalid NOMO policy.");
       const replacement: Connector = {
         ...previous,
         ...input,
@@ -2248,7 +2502,7 @@ export class Workbench {
           approval,
           {
             managedRuntimeOperationId: digest(
-              input.name === "void_workspace_undo"
+              input.name === "nomo_workspace_undo"
                 ? String(input.arguments.operationId)
                 : input.id,
             ),
@@ -2536,7 +2790,7 @@ export class Workbench {
           await this.commitWorkspace(
             session,
             transition!.state,
-            "void_workspace_undo",
+            "nomo_workspace_undo",
             { operationId },
             "execute:completed",
             transition!.operation,
@@ -2560,7 +2814,7 @@ export class Workbench {
     if (!session) throw new Error("Session not found.");
     const workspace = session.view.workspace;
     await this.ledger(workspace);
-    const dir = await mkdtemp(join(tmpdir(), "void-attest-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-attest-"));
     try {
       await writeFile(
         join(dir, `${workspace}.jsonl`),
@@ -2597,6 +2851,87 @@ export class Workbench {
    * path that mints a key has created signing capability as a side effect of
    * being read, so every verification thunk goes through here.
    */
+  /**
+   * Service one settled turn at the harness boundary.
+   *
+   * Runs after the turn's own result is final and recorded, so a slow review
+   * never changes what the turn already reported and never leaves the session
+   * looking stuck. Every step is the runtime's: the gate refuses without a
+   * provider request, and a proposal that does not validate never reaches the
+   * chain.
+   *
+   * A failure here is reported and forgotten rather than propagated. The turn
+   * it follows succeeded, and a learning pass that failed is not a reason to
+   * mark a successful turn as failed.
+   */
+  private async serviceHarnessTurn(
+    session: Session,
+    surface: GateSurface,
+  ): Promise<void> {
+    const provider = session.provider;
+    if (!provider) return;
+    const id = session.view.id;
+    const previous = this.harnessTriggers.get(id) ?? initialTriggerState();
+    const state = recordSettledTurn(previous);
+    this.harnessTriggers.set(id, state);
+    try {
+      const result = await serviceHarnessBoundary(state, {
+        gates: DEFAULT_REFINE_GATES,
+        surface,
+        now: () => Date.now(),
+        entries: async () => await this.harnessEntries(session.view.workspace),
+        // The refusals currently mined from this workspace's own chain. The
+        // reviewer is told how many, not what: the gate already decided the
+        // round is worth paying for, and handing over the full rule list would
+        // answer a question the chain does not support.
+        rules: () =>
+          mineLearnedRules(this.evidence[session.view.workspace] ?? []).length,
+        ask: async (request) => {
+          const reply = await provider.complete(
+            session.view.model,
+            [{ role: "user", content: request }],
+            [],
+            session.controller.signal,
+          );
+          return reply.message.content ?? "";
+        },
+        apply: async (proposal) => {
+          await this.refineHarness(id, proposal);
+        },
+      });
+      this.harnessTriggers.set(id, result.state);
+      // The boundary is silent by default, and silence here is ambiguous: an
+      // operator watching a workspace learn nothing cannot tell a gate that
+      // refused from a hook that was never reached. One line naming the refusal
+      // costs nothing when there is no work to do and settles the question when
+      // there is.
+      const note =
+        result.outcome.kind === "not-run"
+          ? result.outcome.reason
+          : result.outcome.kind === "declined"
+            ? `Review declined: ${result.outcome.reason}`
+            : result.outcome.kind === "ran"
+              ? "Harness review ran and recorded a proposal."
+              : null;
+      if (note !== null)
+        this.event(
+          session,
+          "tool",
+          note,
+          { outcome: result.outcome.kind },
+          "harness.review",
+        );
+    } catch (error) {
+      this.event(
+        session,
+        "tool",
+        `Harness review did not complete: ${error instanceof Error ? error.message : String(error)}`,
+        { status: session.view.status },
+        "harness.review.failed",
+      );
+    }
+  }
+
   private async retainedSigner(
     dir: string = join(this.storage.directory, "keys"),
   ): Promise<KeyProvider | undefined> {
@@ -2659,7 +2994,7 @@ export class Workbench {
       tool,
       klass:
         workspaceToolClass(tool) ??
-        (tool === "void_workspace_undo" ? "r1" : "r3"),
+        (tool === "nomo_workspace_undo" ? "r1" : "r3"),
       decision,
       argsDigest: `sha256:${await sha256Hex(canonicalJson(args))}`,
       ...(operation
@@ -2675,7 +3010,7 @@ export class Workbench {
       ...(attribution === undefined ? {} : { attribution }),
       // An undo that cannot name the record it inverts is not a record of an
       // inversion, so it is refused here rather than written and believed.
-      ...(tool === "void_workspace_undo"
+      ...(tool === "nomo_workspace_undo"
         ? { reversal: reversalFor(current, args) }
         : {}),
     };
@@ -2706,7 +3041,7 @@ export class Workbench {
   private async syncStdio(session: Session) {
     return this.locked(async () => {
       const path = join(
-        this.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"),
+        this.env.NOMO_LEDGER_DIR ?? join(dataDir(homedir()), "ledger"),
         `${session.view.workspace}.jsonl`,
       );
       let entries: JsonlEntry[];
@@ -2720,18 +3055,18 @@ export class Workbench {
       // authorization events instead of hiding them behind the document ledger.
       //
       // These entries were signed by the stdio proxy, which signs with
-      // `devKeyProvider()` at its default `~/.void/keys` — *not* with the
+      // `devKeyProvider()` at its default `~/.nomo/keys` — *not* with the
       // workbench's own document key under the data directory. Resolving
       // against the wrong directory finds nothing, and the throw below turns
       // that into an unknown tool outcome for a tool that ran perfectly well.
       // The public key still comes from the shared resolution, so an operator's
       // out-of-band pin wins and the fallback is reported as degraded.
       // The proxy's key directory is overridable so a test can isolate from the
-      // operator's real `~/.void/keys`; unset, it is exactly what it always
+      // operator's real `~/.nomo/keys`; unset, it is exactly what it always
       // was. It is deliberately NOT `this.storage.directory`: that is the
       // document key, and resolving against it would find nothing.
       const proxyKeys =
-        this.env.VOID_PROXY_KEYS ?? join(homedir(), ".void", "keys");
+        this.env.NOMO_PROXY_KEYS ?? join(dataDir(homedir()), "keys");
       const key = await this.verificationKey(() =>
         this.retainedSigner(proxyKeys),
       );
@@ -2962,7 +3297,7 @@ export class Workbench {
       // itself by naming something that does not resolve.
       const profile = resolvePolicyProfile(
         session.agentProfile.policyProfile,
-        this.env.VOID_POLICY_PATH,
+        this.env.NOMO_POLICY_PATH,
       );
       if (!profile.ok)
         throw new Error(
@@ -3072,8 +3407,8 @@ export class Workbench {
       return this.locked(async () => {
         await this.ledger(session.view.workspace);
         if (
-          tool.name === "void_workspace_write" ||
-          tool.name === "void_workspace_delete"
+          tool.name === "nomo_workspace_write" ||
+          tool.name === "nomo_workspace_delete"
         )
           return this.mutateDocument(session, id, tool.name, args);
         const transition = executeWorkspaceTool(
@@ -3237,7 +3572,7 @@ export class Workbench {
         // policy its operator never chose.
         const policy = resolvePolicyProfile(
           session.agentProfile.policyProfile,
-          this.env.VOID_POLICY_PATH,
+          this.env.NOMO_POLICY_PATH,
         );
         if (!policy.ok)
           throw new Error(`Unknown agent policy profile: ${policy.reason}.`);
@@ -3421,7 +3756,7 @@ export class Workbench {
           this.event(
             session,
             "tool",
-            `Requested ${name}. VOID will decide before execution.`,
+            `Requested ${name}. NOMO will decide before execution.`,
             { tool: name, callId: call.id, arguments: args },
             "tool.started",
           );
@@ -3504,6 +3839,18 @@ export class Workbench {
         "run.status",
       );
       this.persist();
+      // A settled turn is the only boundary at which the harness may spend a
+      // model call on learning, and it is serviced after the turn's own result
+      // is final so the review cannot rewrite what already happened. A turn
+      // that failed is not settled: there is nothing to learn from an outcome
+      // nobody knows.
+      if (session.view.status === "idle") {
+        const pass = this.serviceHarnessTurn(session, "checkpoint").catch(
+          () => {},
+        );
+        this.harnessJobs.add(pass);
+        void pass.finally(() => this.harnessJobs.delete(pass));
+      }
     }
   }
 }
