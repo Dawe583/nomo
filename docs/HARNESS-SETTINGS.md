@@ -53,6 +53,8 @@ operator as applied while changing nothing.
 | `maxContinuations`    | 3       | 0 to 20          | how many times a run may continue after a hold approval      |
 | `maxRunTokens`        | 0       | 0 to 1000000     | total token budget for one run (0 = unlimited)               |
 | `retryMaxDelayMs`     | 60000   | 1000 to 600000   | ceiling on the exponential backoff between provider retries  |
+| `contextEntryLimit`   | 3       | 0 to 20          | learned entries per kind that reach a prompt (0 = none)     |
+| `contextCharsPerEntry`| 240     | 40 to 4000       | characters of each retrieved entry a prompt shows            |
 
 An agent profile's own `maxTurns` still wins over the harness setting, because
 a profile is a deliberate per-agent choice and `AGENT_LIMITS` already caps it.

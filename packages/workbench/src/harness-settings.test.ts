@@ -45,8 +45,12 @@ test("every setting names a consumer, so no knob is decorative", () => {
       `${key} default ${spec.default} is outside ${spec.min}..${spec.max}`,
     );
     // Some settings use 0 to mean "unlimited/off" (e.g. maxContinuations,
-    // maxRunTokens). For all others the floor is 1.
-    const zeroMeansUnlimited = ["maxContinuations", "maxRunTokens"];
+    // maxRunTokens, contextEntryLimit). For all others the floor is 1.
+    const zeroMeansUnlimited = [
+      "maxContinuations",
+      "maxRunTokens",
+      "contextEntryLimit",
+    ];
     if (!zeroMeansUnlimited.includes(key)) {
       assert.ok(spec.min > 0, `${key} allows zero or negative`);
     }

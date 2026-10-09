@@ -98,6 +98,11 @@ import {
 import { mineLearnedRules } from "./learned-rules.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
 import {
+  formatForPrompt,
+  queryTermsFrom,
+  rankEntries,
+} from "./harness-ranking.ts";
+import {
   applyProposal,
   validateProposal,
   type AppliedEdit,
@@ -326,6 +331,31 @@ export function denialText(
       : "Change the connector policy or ask the operator to approve this class.";
   return `VOID denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
 }
+/**
+ * The learned-entry block for one prompt, or "" when there is nothing to add.
+ *
+ * Entries arrive from the verified chain already merged with the operator's
+ * approved overrides, so this only decides what the prompt sees: which entries
+ * are relevant to this query, how many per kind, and how much of each one.
+ *
+ * A limit of zero returns nothing at all, which is the operator's way to keep
+ * the harness out of the prompt without deleting what the chain recorded.
+ *
+ * Nothing here reaches `decide`. The block is context the model may read, not
+ * an approval, and no entry's mined rule is consulted on this path.
+ */
+export function retrievalContext(
+  entries: readonly HarnessEntry[],
+  query: string,
+  settings: HarnessSettings,
+): string {
+  const ranked = rankEntries(entries, queryTermsFrom({ user: query }), {
+    perKindLimit: settings.contextEntryLimit,
+    contentChars: settings.contextCharsPerEntry,
+  });
+  return formatForPrompt(ranked, new Date().toISOString());
+}
+
 /**
  * The forward record an undo inverts, located in the chain this workspace
  * already holds. The search is the same one the managed document adapter uses
@@ -3775,6 +3805,9 @@ export class Workbench {
     const signal = AbortSignal.any([session.controller.signal, deadline]);
     const expired = () =>
       deadline.aborted && !session.controller.signal.aborted;
+    // Declared outside the try so the finally below can always take the block
+    // back out, whichever way the run ends.
+    let digestMarker: ModelMessage | undefined;
     try {
       if (!provider)
         throw new Error(
@@ -3827,6 +3860,32 @@ export class Workbench {
       // somebody chose for that session. The harness setting is the fallback
       // for a run with no profile, which is the case an operator is tuning.
       const maxTurns = session.agentProfile?.maxTurns ?? this.harness.maxTurns;
+      // Retrieved context rides follow-up turns only, never the turn that mined
+      // it: mining runs at the settled boundary after dispatch, so a first turn
+      // has nothing to retrieve by construction. Ephemeral: pushed for this
+      // run's provider calls and removed in the finally below, so the stored
+      // conversation never carries a digest block. A stale block, left by a
+      // crash between push and removal, is swept first for the same reason.
+      session.messages = session.messages.filter(
+        (message) =>
+          message.role !== "system" ||
+          typeof message.content !== "string" ||
+          !message.content.startsWith("NOMO learned-entry digest,"),
+      );
+      if (session.messages.length > 2) {
+        const latestUser = [...session.messages]
+          .reverse()
+          .find((message) => message.role === "user");
+        const block = retrievalContext(
+          await this.harnessEntries(session.view.workspace),
+          String(latestUser?.content ?? ""),
+          this.harness,
+        );
+        if (block !== "") {
+          digestMarker = { role: "system", content: block };
+          session.messages.push(digestMarker);
+        }
+      }
       // The digest is a chain over the turns, not a snapshot of the newest
       // ones. Folding the previous turn's digest in keeps the cost at O(turn)
       // while making the earlier prefix reach the current value: two
@@ -4034,6 +4093,13 @@ export class Workbench {
         session.client?.close();
       }
     } finally {
+      // The retrieval block was only ever provider input for this run. Take it
+      // back out first, so neither the stored conversation nor a later digest
+      // over these messages carries a copy of it.
+      if (digestMarker !== undefined) {
+        const at = session.messages.indexOf(digestMarker);
+        if (at >= 0) session.messages.splice(at, 1);
+      }
       // after-run observes, so it never changes the status it reports: the
       // view is already final here and a failing observer only reports.
       await this.fireHooks(
