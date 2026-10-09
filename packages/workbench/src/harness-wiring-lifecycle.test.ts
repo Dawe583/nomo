@@ -22,7 +22,9 @@ const fetcher = (replies: readonly string[]) => {
       return Response.json({ data: [{ id: "fixture" }] });
     const content = replies[index] ?? "Done.";
     index += 1;
-    return Response.json({ choices: [{ message: { role: "assistant", content } }] });
+    return Response.json({
+      choices: [{ message: { role: "assistant", content } }],
+    });
   };
 };
 
@@ -31,8 +33,14 @@ const withWorkbench = async (
   replies: readonly string[] = ["ok"],
 ): Promise<Workbench> => {
   const root = await mkdtemp(join(tmpdir(), "nomo-harness-wiring-"));
-  const app = new Workbench({ NOMO_DATA_DIR: root } as NodeJS.ProcessEnv, fetcher(replies));
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const app = new Workbench(
+    { NOMO_DATA_DIR: root } as NodeJS.ProcessEnv,
+    fetcher(replies),
+  );
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture",
+  });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -67,6 +75,100 @@ test("the settled turn reaches the gate and says why it did not run", async (t) 
   assert.deepEqual(await app.harnessEntries(session.workspace), []);
 });
 
+test("a successful compaction arms the trigger for later turns", async (t) => {
+  const app = await withWorkbench(t);
+  const session = await app.start("Say ok", "fixture");
+  await app.settled();
+  app.compact(session.id);
+
+  await app.send(session.id, "Say ok again");
+  await app.settled();
+
+  const events = app.get(session.id)?.events ?? [];
+  const reviews = events.filter((event) => event.type === "harness.review");
+  assert.ok(reviews.length > 0, "an armed turn left no trace");
+  assert.ok(
+    reviews.every((review) => review.payload?.["outcome"] === "not-run"),
+    "nothing was mined, so no review may have run",
+  );
+  assert.ok(
+    reviews.some((review) => !/no trigger is armed/i.test(review.text)),
+    "after compaction the gate must refuse for a reason other than not-armed",
+  );
+});
+
+test("a failed review leaves a failed trace, not silence", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-harness-review-failed-"));
+  // The review ask carries the verdict protocol; only that request fails, so
+  // ordinary turns keep settling while the paid call provably throws.
+  const refusing = async (url: unknown, init?: { body?: unknown }) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
+    if (
+      typeof init?.body === "string" &&
+      init.body.includes("in one of two shapes")
+    )
+      throw new Error("review provider unavailable");
+    const content = "Done.";
+    return Response.json({
+      choices: [{ message: { role: "assistant", content } }],
+    });
+  };
+  const app = new Workbench(
+    { NOMO_DATA_DIR: root } as NodeJS.ProcessEnv,
+    refusing,
+  );
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture",
+  });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const session = await app.start("Say ok", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  await app.refineHarness(session.id, {
+    summary: "repeated lesson",
+    rationale: "supported by signed records",
+    expectedOutcome: "fewer repeated approvals",
+    edits: [
+      {
+        action: "create",
+        kind: "memory",
+        title: "approval pattern",
+        content: "The operator repeatedly approved the same action.",
+        derivedFromSeq: [1],
+        reason: "the pattern repeats",
+      },
+    ],
+  });
+  app.compact(session.id);
+  // The gate needs 25 settled turns and this session banks them one send at
+  // a time; every earlier boundary refuses cheaply without a provider call.
+  for (let turn = 0; turn < 25; turn++) {
+    app.send(session.id, `Say ok ${turn}`);
+    await app.settled();
+  }
+
+  const reviews = (app.get(session.id)?.events ?? []).filter(
+    (event) => event.type === "harness.review",
+  );
+  const failed = reviews.filter(
+    (review) => review.payload?.["outcome"] === "failed",
+  );
+  assert.ok(failed.length > 0, "a thrown review must surface as failed");
+  assert.ok(
+    failed.some((review) => /Harness review failed: .+/i.test(review.text)),
+    "the failed trace must name the error instead of staying silent",
+  );
+});
+
 test("a turn that failed never reaches the harness boundary", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-harness-failed-"));
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -80,7 +182,10 @@ test("a turn that failed never reaches the harness boundary", async (t) => {
       throw new Error("provider unavailable");
     },
   );
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture",
+  });
   try {
     const session = await app.start("Say ok", "fixture");
     await app.settled();
@@ -103,7 +208,10 @@ test("the trigger survives a restart as a delay rather than a decision", async (
     { NOMO_DATA_DIR: root } as NodeJS.ProcessEnv,
     fetcher(["ok"]),
   );
-  await first.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  await first.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture",
+  });
   const session = await first.start("Say ok", "fixture");
   await first.settled();
   await first.shutdown();
@@ -116,7 +224,7 @@ test("the trigger survives a restart as a delay rather than a decision", async (
     fetcher(["ok"]),
   );
   try {
-    assert.ok(await second.harnessEntries(session.workspace) !== undefined);
+    assert.ok((await second.harnessEntries(session.workspace)) !== undefined);
   } finally {
     await second.shutdown();
   }

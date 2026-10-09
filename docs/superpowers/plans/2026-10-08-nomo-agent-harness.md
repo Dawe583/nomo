@@ -266,7 +266,7 @@ test("NOMO wins over VOID without mutating the input", () => {
 
 - [x] Run the Workbench and CLI package test suites with the repository's native `node:test` commands.
 - [x] Run `pnpm run typecheck` if time and the local quota permit; otherwise run every touched package typecheck and record the skipped suites.
-- [ ] A read-only subagent reviews the complete diff for spec compliance, security, and rename compatibility.
+- [x] A read-only subagent reviews the complete diff for spec compliance, security, and rename compatibility. Two findings fixed: failed/deferred outcomes now emit harness.review traces instead of silence, and successful compaction arms the trigger (previously nothing ever armed it, so the gate could never open).
 - [x] Resolve findings without touching unrelated local paths.
 
 ## Risks and Mitigations

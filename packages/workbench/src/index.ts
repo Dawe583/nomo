@@ -31,6 +31,7 @@ import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
 import { serviceHarnessBoundary } from "./harness-runtime.ts";
 import { DEFAULT_REFINE_GATES, type GateSurface } from "./refine-gate.ts";
 import {
+  arm,
   initialTriggerState,
   onBranchMove,
   recordSettledTurn,
@@ -1960,6 +1961,12 @@ export class Workbench {
         },
         "context.compacted",
       );
+    // A successful compaction is evidence something was worth learning: arm
+    // the refinement trigger so the next settled turns may spend one review.
+    // Without an arming source the gate below could never open and the loop
+    // would be a wired dead end that only ever reports not-armed.
+    const armed = this.harnessTriggers.get(id);
+    this.harnessTriggers.set(id, arm(armed ?? initialTriggerState()));
     this.persist();
     return compacted.result;
   }
@@ -3073,7 +3080,19 @@ export class Workbench {
     surface: GateSurface,
   ): Promise<void> {
     const provider = session.provider;
-    if (!provider) return;
+    if (!provider) {
+      // Reachable when the provider was disconnected after the turn settled:
+      // there is nobody to ask, but the boundary was reached, and saying so
+      // is what keeps "no trace" distinguishable from "never ran".
+      this.event(
+        session,
+        "tool",
+        "Harness review did not run: no provider connected.",
+        { outcome: "not-run" },
+        "harness.review",
+      );
+      return;
+    }
     const id = session.view.id;
     const previous = this.harnessTriggers.get(id) ?? initialTriggerState();
     const state = recordSettledTurn(previous);
@@ -3109,6 +3128,11 @@ export class Workbench {
       // refused from a hook that was never reached. One line naming the refusal
       // costs nothing when there is no work to do and settles the question when
       // there is.
+      // Every outcome leaves a trace. A `failed` round returns rather than
+      // throwing, so without this branch a spent review with nothing learned
+      // would be the one silence left, exactly where an operator watching
+      // cost would look. `deferred` has no producer today and stays mapped so
+      // a future one cannot reintroduce the silence by accident.
       const note =
         result.outcome.kind === "not-run"
           ? result.outcome.reason
@@ -3116,7 +3140,11 @@ export class Workbench {
             ? `Review declined: ${result.outcome.reason}`
             : result.outcome.kind === "ran"
               ? "Harness review ran and recorded a proposal."
-              : null;
+              : result.outcome.kind === "deferred"
+                ? "Harness review deferred to the next settled turn."
+                : result.outcome.kind === "failed"
+                  ? `Harness review failed: ${result.outcome.error instanceof Error ? result.outcome.error.message : String(result.outcome.error)}`
+                  : null;
       if (note !== null)
         this.event(
           session,
