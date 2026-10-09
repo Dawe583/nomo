@@ -48,6 +48,14 @@ import {
   type CompactionResult,
 } from "./agents.ts";
 import {
+  LOCAL_AGENT_GRANT_AUDIENCE,
+  LOCAL_AGENT_PRINCIPAL_ID,
+  LocalAgentIdentityIssuer,
+  type IssuedLocalAgentGrant,
+  type LocalAgentGrantRequest,
+  type LocalAgentIdentity,
+} from "./agent-identity.ts";
+import {
   defaultHarnessSettings,
   harnessSettingsPatch,
   resolveHarnessSettings,
@@ -381,6 +389,8 @@ type Session = {
    * none: no request is in flight, so there is nothing to name.
    */
   requestDigest?: string;
+  /** Run whose before-run gate passed; never persisted. */
+  proxyGrantReadyRunId?: string;
   messageIds?: string[];
   agentProfile?: AgentProfile;
   queuedPrompt?: string;
@@ -456,6 +466,7 @@ export class Workbench {
   private ignoreEnvironment = false;
   private catalog: readonly Model[] = [];
   private readonly sessions = new Map<string, Session>();
+  private readonly localIdentityIssuer = new LocalAgentIdentityIssuer();
   private readonly queued = new Set<string>();
   private readonly jobs = new Map<string, Promise<void>>();
   private closing = false;
@@ -1188,6 +1199,48 @@ export class Workbench {
     const session = this.sessions.get(id);
     return session && this.view(session);
   }
+  /**
+   * Issues a short-lived local proxy capability from the stored run and tool
+   * snapshot. Caller supplied workspace, agent and run IDs are not accepted.
+   */
+  issueLocalAgentGrant(
+    sessionId: string,
+    upstreamId: string,
+  ): IssuedLocalAgentGrant {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    if (session.view.status !== "running" || !session.view.runId)
+      throw new Error("A local agent grant requires an active run.");
+    if (session.proxyGrantReadyRunId !== session.view.runId)
+      throw new Error("The run has not passed its before-run gate.");
+    if (!session.view.agent)
+      throw new Error("The active run has no registered agent identity.");
+    const toolScope = (session.tools ?? [])
+      .filter((tool) => tool.connectorId === upstreamId)
+      .map((tool) => tool.name);
+    if (!toolScope.length)
+      throw new Error("The upstream is not configured for this run.");
+    return this.localIdentityIssuer.issue({
+      principalId: LOCAL_AGENT_PRINCIPAL_ID,
+      workspaceId: session.view.workspace,
+      agentId: session.view.agent,
+      runId: session.view.runId,
+      upstreamId,
+      toolScope,
+    });
+  }
+  /** Validate a grant against the proxy audience, upstream and requested tool. */
+  validateLocalAgentGrant(
+    token: string,
+    request: Pick<LocalAgentGrantRequest, "upstreamId" | "toolName">,
+  ): LocalAgentIdentity | null {
+    if (!request) return null;
+    return this.localIdentityIssuer.validate(token, {
+      audience: LOCAL_AGENT_GRANT_AUDIENCE,
+      upstreamId: request.upstreamId,
+      toolName: request.toolName,
+    });
+  }
   async start(
     prompt: string,
     model?: string,
@@ -1470,6 +1523,7 @@ export class Workbench {
       session.provider = this.provider;
     }
     session.controller = new AbortController();
+    session.proxyGrantReadyRunId = undefined;
     const queued =
       session.view.status === "idle" && session.queuedPrompt === prompt;
     if (!queued) session.view = { ...session.view, runId: randomUUID() };
@@ -3260,6 +3314,7 @@ export class Workbench {
         throw new Error(
           `Hook ${refused.hookId} refused this run: ${refused.outcome}${refused.code === null ? "" : ` (exit ${refused.code})`}.${refused.stderr ? ` ${refused.stderr}` : ""}`,
         );
+      session.proxyGrantReadyRunId = session.view.runId;
       const listed = { tools: session.tools ?? [...workspaceTools] };
       const mapping = new Map(
         listed.tools.map((tool, index) => [`tool_${index}`, tool]),
@@ -3484,6 +3539,8 @@ export class Workbench {
         session.client?.close();
       }
     } finally {
+      if (session.view.runId) this.localIdentityIssuer.revoke(session.view.runId);
+      session.proxyGrantReadyRunId = undefined;
       // after-run observes, so it never changes the status it reports: the
       // view is already final here and a failing observer only reports.
       await this.fireHooks(
