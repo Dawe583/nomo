@@ -1514,7 +1514,8 @@ workspace, one loopback inbound HTTP MCP endpoint, one disposable target and an
 opaque local token with a maximum 60-second lifetime and a proxy audience. The
 current proxy accepts agents over STDIO and uses HTTP only as an upstream client,
 so inbound HTTP is new work. This local test token is not MCP OAuth. The demo is
-not production, a distributed fleet or customer validation.
+not production, a distributed fleet, fleet-wide kill or revocation
+acknowledgement, or customer validation.
 
 **Product-v1 authorization.** HTTP MCP authorization must follow the current MCP
 specification, including Protected Resource Metadata, Authorization Server

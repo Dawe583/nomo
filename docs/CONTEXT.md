@@ -46,7 +46,8 @@ authorization profile, including Protected Resource Metadata, Authorization
 Server discovery, PKCE, the `resource` parameter, audience and scope validation,
 expiry, revocation and proper unauthorized responses. STDIO needs a separate
 process and environment trust design. The demo is not production, full OAuth,
-distributed fleet control or proof of customer demand.
+distributed fleet control, fleet-wide kill or revocation acknowledgement,
+or proof of customer demand.
 
 ## Trust and enforcement model
 

@@ -103,13 +103,13 @@ source-of-truth and branch audit
 - Modify: `docs/DECISIONS.md`
 - Modify: `scripts/src/doc-truth.test.mjs`
 
-- [ ] Add a dated decision that makes Agent Identity & Fleet Control Plane the
+- [x] Add a dated decision that makes Agent Identity & Fleet Control Plane the
       primary product and the coding-agent Harness a required workstream.
-- [ ] State the local 60-second demo boundary and explicitly defer full OAuth,
+- [x] State the local 60-second demo boundary and explicitly defer full OAuth,
       distributed kill, production, and market claims.
-- [ ] Preserve recovery, verification, privacy, compatibility and security
+- [x] Preserve recovery, verification, privacy, compatibility and security
       contracts that remain true.
-- [ ] Update the latest-decision assertion in the documentation truth test.
+- [x] Update the latest-decision assertion in the documentation truth test.
 
 **Acceptance:** Context and decisions agree with the approved capability map and
 spec. The new plan and spec resolve as live paths. Old decision history is not
