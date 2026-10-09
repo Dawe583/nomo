@@ -62,19 +62,81 @@ const proposal = (kind: "memory" | "prompt" | "skill" = "memory"): RefinementPro
   }],
 });
 
-test("a refinement is committed as one verified chain record and can be read back", async (t) => {
+test("a memory proposal stays inert until its exact digest is approved", async (t) => {
   const { app, session } = await fixture(t);
   const result = await app.refineHarness(session.id, proposal());
-  assert.equal(result.applied.length, 1);
-  assert.equal(result.awaitingApproval.length, 0);
+
+  assert.deepEqual(result.applied, []);
+  assert.equal(result.awaitingApproval.length, 1);
+  assert.deepEqual(await app.harnessEntries(session.workspace), []);
+  const pending = await app.pendingApprovalsFor(session.id);
+  assert.equal(pending.length, 1);
+  assert.match(pending[0]!.digest, /^[a-f0-9]{64}$/);
+  assert.deepEqual(pending[0]!.proposal, proposal());
+
+  const applied = await app.approveHarnessProposal(session.id, pending[0]!.digest);
+  assert.equal(applied.applied.length, 1);
+  assert.deepEqual(
+    (await app.harnessEntries(session.workspace)).map((entry) => entry.content),
+    ["The operator repeatedly approved the same action."],
+  );
+  const lifecycle = (await app.ledger(session.workspace))!.entries.at(-1)!
+    .body as Record<string, unknown>;
+  assert.equal(lifecycle.decision, "proposal:activated");
+  assert.deepEqual(
+    (lifecycle.harnessLifecycle as { events: string[] }).events,
+    ["proposal:approved", "proposal:activated"],
+  );
+});
+
+test("pending proposals survive restart and rejection is signed", async (t) => {
+  const { app, session, directory, closeOriginal } = await fixture(t);
+  const created = await app.refineHarness(session.id, proposal());
+  const digest = created.proposalDigest!;
+  await closeOriginal();
+
+  const reopened = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  try {
+    const pending = await reopened.pendingApprovalsFor(session.id);
+    assert.equal(pending.length, 1);
+    assert.equal(pending[0]!.digest, digest);
+    await reopened.rejectHarnessProposal(session.id, digest);
+    assert.deepEqual(await reopened.pendingApprovalsFor(session.id), []);
+    assert.deepEqual(await reopened.harnessEntries(session.workspace), []);
+    const record = (await reopened.ledger(session.workspace))!.entries.at(-1)!
+      .body as Record<string, unknown>;
+    assert.equal(record.decision, "proposal:rejected");
+    assert.equal((record.harnessProposal as { digest: string }).digest, digest);
+  } finally {
+    reopened.close();
+  }
+});
+
+test("a proposal digest cannot approve entries in another workspace", async (t) => {
+  const first = await fixture(t);
+  const other = await fixture(t);
+  const created = await first.app.refineHarness(first.session.id, proposal());
+
+  await assert.rejects(
+    other.app.approveHarnessProposal(other.session.id, created.proposalDigest!),
+    /No pending refinement matches that digest/,
+  );
+  assert.deepEqual(await other.app.harnessEntries(other.session.workspace), []);
+});
+
+test("a proposal is signed before it becomes active", async (t) => {
+  const { app, session } = await fixture(t);
+  const result = await app.refineHarness(session.id, proposal());
+  assert.deepEqual(result.applied, []);
+  assert.equal(result.awaitingApproval.length, 1);
   const ledger = await app.ledger(session.workspace);
   assert.ok(ledger);
   assert.equal(ledger.result.ok, true);
   assert.equal(ledger.entries.length, 2);
   const record = ledger.entries.at(-1)!.body as Record<string, unknown>;
-  assert.equal(record.tool, "harness.refinement");
-  assert.equal(record.decision, "refinement:applied");
-  assert.deepEqual((await app.harnessEntries(session.workspace)).map((entry) => entry.title), ["approval pattern"]);
+  assert.equal(record.tool, "harness.proposal");
+  assert.equal(record.decision, "proposal:created");
+  assert.deepEqual(await app.harnessEntries(session.workspace), []);
 });
 
 test("prompt edits remain pending and never claim approval from caller text", async (t) => {
@@ -83,7 +145,11 @@ test("prompt edits remain pending and never claim approval from caller text", as
   const held = await app.refineHarness(session.id, proposal("prompt"));
   assert.equal(held.awaitingApproval.length, 1);
   const after = await app.ledger(session.workspace);
-  assert.equal(after!.entries.length, before!.entries.length);
+  assert.equal(after!.entries.length, before!.entries.length + 1);
+  assert.equal(
+    (after!.entries.at(-1)!.body as Record<string, unknown>).decision,
+    "proposal:created",
+  );
   assert.equal(after!.result.ok, true);
 });
 
@@ -92,11 +158,11 @@ test("a prompt addendum applies only after the operator approves its digest", as
   const before = (await app.ledger(session.workspace))!.entries.length;
   const held = await app.refineHarness(session.id, proposal("prompt"));
   assert.equal(held.awaitingApproval.length, 1);
-  const pending = app.pendingApprovalsFor(session.id);
+  const pending = await app.pendingApprovalsFor(session.id);
   assert.equal(pending.length, 1);
   const addendum = "Never retry a denied call with reworded arguments.";
-  // Nothing is signed and nothing is active before the operator decides.
-  assert.equal((await app.ledger(session.workspace))!.entries.length, before);
+  // The proposal is signed as inert, and nothing is active before approval.
+  assert.equal((await app.ledger(session.workspace))!.entries.length, before + 1);
   assert.equal(
     (await app.harnessEntries(session.workspace)).some(
       (entry) => entry.content === addendum,
@@ -108,12 +174,12 @@ test("a prompt addendum applies only after the operator approves its digest", as
   assert.equal(applied.applied.length, 1);
   const ledger = await app.ledger(session.workspace);
   const record = ledger!.entries.at(-1)!.body as Record<string, unknown>;
-  assert.equal(record.decision, "refinement:approved");
+  assert.equal(record.decision, "proposal:activated");
   assert.equal(
     (record.harnessRefinement as { digest?: string }).digest,
     pending[0]!.digest,
   );
-  assert.equal(app.pendingApprovalsFor(session.id).length, 0);
+  assert.equal((await app.pendingApprovalsFor(session.id)).length, 0);
 
   // The addendum is operator-approved, so it applies to later sessions and is
   // rebuilt from the chain after a restart rather than living in memory.
@@ -133,7 +199,7 @@ test("an approval is refused once the chain moved under it", async (t) => {
   const { app, session } = await fixture(t);
   const held = await app.refineHarness(session.id, proposal("prompt"));
   assert.equal(held.awaitingApproval.length, 1);
-  const digest = app.pendingApprovalsFor(session.id)[0]!.digest;
+  const digest = (await app.pendingApprovalsFor(session.id))[0]!.digest;
   // A new verified record lands after the operator was shown the proposal, so
   // what they approved was derived from a chain that is no longer the one.
   await app.editDocument(session.id, {
@@ -169,9 +235,11 @@ test("skill and subagent edits stay proposal-only until their schema is supporte
   assert.equal((await app.ledger(session.workspace))?.entries.length, 1);
 });
 
-test("refinement entries are reconstructed from the signed chain after restart", async (t) => {
+test("approved refinement entries are reconstructed from the signed chain after restart", async (t) => {
   const { app, session, directory, closeOriginal } = await fixture(t);
   await app.refineHarness(session.id, proposal());
+  const pending = await app.pendingApprovalsFor(session.id);
+  await app.approveHarnessProposal(session.id, pending[0]!.digest);
   await closeOriginal();
   const reopened = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
   try {
@@ -266,7 +334,7 @@ test("deleting a mined entry persists as a tombstone across later refinements", 
   const mined = await app.harnessEntries(session.workspace);
   const lesson = mined.find((entry) => entry.kind === "lesson");
   assert.ok(lesson, "expected repeated signed approvals to mine a lesson");
-  await app.refineHarness(session.id, {
+  const removal = await app.refineHarness(session.id, {
     summary: "remove this mined entry",
     rationale: "the operator corrected the record",
     expectedOutcome: "the entry stays removed",
@@ -278,12 +346,22 @@ test("deleting a mined entry persists as a tombstone across later refinements", 
       reason: "the operator rejected this lesson",
     }],
   });
+  await app.approveHarnessProposal(session.id, removal.proposalDigest!);
   assert.equal((await app.harnessEntries(session.workspace)).some((entry) => entry.id === lesson.id), false);
+  const removed = (await app.ledger(session.workspace))!.entries.at(-1)!.body as
+    Record<string, unknown>;
+  const removalLifecycle = removed.harnessLifecycle as {
+    events: string[];
+    tombstones: string[];
+  };
+  assert.ok(removalLifecycle.events.includes("entry:tombstone"));
+  assert.deepEqual(removalLifecycle.tombstones, [lesson.id]);
 
-  await app.refineHarness(session.id, {
+  const later = await app.refineHarness(session.id, {
     ...proposal(),
     edits: proposal().edits.map((edit) => ({ ...edit, title: "later refinement" })),
   });
+  await app.approveHarnessProposal(session.id, later.proposalDigest!);
   assert.equal((await app.harnessEntries(session.workspace)).some((entry) => entry.id === lesson.id), false);
 });
 
@@ -313,7 +391,8 @@ test("a mined lesson the proposal did not touch is not frozen as an override", a
   // rebuilt from the chain afterwards: storing it as an override would freeze
   // the repeat count the chain keeps producing, and the freeze would survive
   // every later refinement.
-  await app.refineHarness(session.id, proposal());
+  const proposalResult = await app.refineHarness(session.id, proposal());
+  await app.approveHarnessProposal(session.id, proposalResult.proposalDigest!);
   const proof = await app.ledger(session.workspace);
   const lastBody = proof?.entries.at(-1)?.body as
     | Record<string, unknown>
@@ -413,4 +492,36 @@ test("a failed write does not leave a phantom workspace registered", async (t) =
     false,
     "a failed write left the workspace registered with an empty state",
   );
+});
+
+test("updates record signed supersession lifecycle metadata", async (t) => {
+  const { app, session } = await fixture(t);
+  const created = await app.refineHarness(session.id, proposal());
+  await app.approveHarnessProposal(session.id, created.proposalDigest!);
+  const original = (await app.harnessEntries(session.workspace))[0]!;
+
+  const updated = await app.refineHarness(session.id, {
+    summary: "correct the approval pattern",
+    rationale: "the first version was too broad",
+    expectedOutcome: "the updated lesson replaces the earlier one",
+    edits: [{
+      action: "update",
+      kind: "memory",
+      id: original.id,
+      title: "narrow approval pattern",
+      content: "The operator approved this exact action.",
+      derivedFromSeq: [1],
+      reason: "the corrected wording matches the verified record",
+    }],
+  });
+  const result = await app.approveHarnessProposal(session.id, updated.proposalDigest!);
+  assert.equal(result.applied[0]!.outcome, "superseded");
+  const body = (await app.ledger(session.workspace))!.entries.at(-1)!.body as
+    Record<string, unknown>;
+  const lifecycle = body.harnessLifecycle as {
+    events: string[];
+    supersessions: string[];
+  };
+  assert.ok(lifecycle.events.includes("entry:supersession"));
+  assert.deepEqual(lifecycle.supersessions, [original.id]);
 });

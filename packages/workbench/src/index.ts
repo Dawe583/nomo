@@ -444,21 +444,24 @@ function refinementTextIsSensitive(
 }
 
 /**
- * A prompt addendum an operator has been asked to approve, with the exact
- * proposal and provenance it was derived from.
- *
- * The digest binds the approval to one proposal and one chain: approving the
- * digest approves the addendum as it was, and a proposal that changed after
- * review has a different digest and is a different approval. The `at` and the
- * `atSeq` are the operator's own record of when and where, not a claim about
- * who the operator is.
+ * A proposal awaiting an operator decision, reconstructed from the signed
+ * workspace chain rather than held only in process memory.
  */
 type PendingApproval = {
-  readonly workspace: string;
   readonly proposal: RefinementProposal;
   readonly digest: string;
   readonly at: string;
   readonly atSeq: number;
+};
+
+export type PendingHarnessProposal = {
+  readonly digest: string;
+  readonly at: string;
+  readonly atSeq: number;
+  readonly summary: string;
+  readonly proposal: RefinementProposal;
+  /** Compatibility view for callers that only render prompt addenda. */
+  readonly addendum: string;
 };
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
@@ -504,13 +507,6 @@ export class Workbench {
    * Persisting it would mean a stored timestamp deciding what the product does.
    */
   private readonly harnessTriggers = new Map<string, TriggerState>();
-  /**
-   * Prompt addenda awaiting an operator. In memory and not in the encrypted
-   * workspace: a crash costs a lost addendum, never a changed one, because the
-   * addendum is written only when the operator approves it and is signed
-   * into the chain by `applyPromptAddendum`.
-   */
-  private readonly pendingApprovals = new Map<string, PendingApproval>();
   /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
   private readonly harnessJobs = new Set<Promise<void>>();
   /** The timeout `VOID_HOOK_TIMEOUT_MS` asked for, or undefined when the
@@ -2720,9 +2716,9 @@ export class Workbench {
   }
 
   /**
-   * Commit validated non-prompt refinements as one signed workspace record.
-   * Prompt edits stay pending because caller-supplied identity strings are not
-   * an operator authorization capability. Skill/subagent edits remain proposal-only.
+   * Record a validated refinement as an inert, signed workspace proposal.
+   * Every supported edit waits for an operator decision. Skill and subagent
+   * edits remain refused until their schema is supported.
    */
   async refineHarness(
     sessionId: string,
@@ -2730,25 +2726,18 @@ export class Workbench {
   ): Promise<{
     applied: readonly AppliedEdit[];
     awaitingApproval: readonly RefinementEdit[];
+    proposalDigest?: string;
   }> {
     const session = this.sessions.get(sessionId);
-    if (!session) throw new Error("Session not found.");
-    // A refinement signs a new record in the workspace chain, so the operator
-    // mode that forbids writes forbids this one too. Leaving it out would make
-    // `read-only` mean "no operator edits" while the model still edits.
+    if (!session || session.view.id !== sessionId) throw new Error("Session not found.");
     this.assertNormalMutation("harness refinement");
-    // Deliberately not `settledSession`: the automatic path calls this from the
-    // settling turn's own job, so a running job and a running turn are the
-    // state it is called in rather than a reason to refuse. A closing
-    // workbench or an unresolved recovery block is a different matter: an
-    // operator has to settle that before anything writes again.
     if (this.closing || session.recoveryBlock)
       throw new Error(
         "Wait for the workbench to reopen. Reconcile unresolved recovery before refining the harness.",
       );
     const validated = validateProposal(input);
     if (!validated.ok)
-      throw new Error(`Invalid refinement proposal: ${validated.rejections.join("; ")}`);
+      throw new Error(`Invalid refinement proposal: ${validated.rejections.map((item) => item.reason).join("; ")}`);
     const proposal = validated.proposal;
     if (proposal.edits.some((edit) => edit.kind === "skill" || edit.kind === "subagent"))
       throw new Error("Skill and subagent edits are proposal-only until their schema is supported.");
@@ -2766,6 +2755,8 @@ export class Workbench {
     ].filter((secret): secret is string => typeof secret === "string" && secret.length >= 4);
     if (refinementTextIsSensitive(proposal, knownSecrets))
       throw new Error("Refinement contains secret-like content and was not recorded.");
+    if (proposal.edits.length === 0)
+      return { applied: [], awaitingApproval: [] };
 
     const workspace = session.view.workspace;
     return this.locked(async () => {
@@ -2776,79 +2767,116 @@ export class Workbench {
           if (!verifiedSeqs.has(seq))
             throw new Error(`Refinement cites unverified workspace sequence ${seq}.`);
 
-      const generatedAt = new Date().toISOString();
-      const result = applyProposal(
-        await this.harnessEntries(workspace),
-        proposal,
-        generatedAt,
-      );
-      const { overrides, suppressedIds } = this.refinementDelta(
-        workspace,
-        result.entries,
-        generatedAt,
-      );
-      // A prompt edit is never applied by the model. It is registered here, in
-      // memory, under the digest of the proposal it came from, so the operator
-      // approves exactly this proposal and nothing else. Nothing is signed
-      // until the operator approves.
-      //
-      // Registered rather than returned early: a proposal that also applies a
-      // memory edit must still be written, and the chain position the approval
-      // binds to is the one this record takes, not the one before it.
-      if (result.awaitingApproval.length) {
-        const digest = await sha256Hex(canonicalJson(proposal));
-        this.pendingApprovals.set(digest, {
-          workspace,
-          proposal,
-          digest,
-          at: new Date().toISOString(),
-          atSeq: (proof?.entries ?? []).length + (result.applied.length ? 1 : 0),
-        });
-      }
-      if (!result.applied.length)
-        return { applied: result.applied, awaitingApproval: result.awaitingApproval };
-
+      const digest = await sha256Hex(canonicalJson(proposal));
       const state = this.documents[workspace] ?? createWorkspace();
       this.documents[workspace] ??= state;
       await this.commitWorkspace(
         session,
         state,
-        "harness.refinement",
-        { summary: proposal.summary, editCount: result.applied.length },
-        "refinement:applied",
+        "harness.proposal",
+        { digest },
+        "proposal:created",
         undefined,
         undefined,
-        {
-          harnessRefinement: {
-            summary: proposal.summary,
-            rationale: proposal.rationale,
-            expectedOutcome: proposal.expectedOutcome,
-            applied: result.applied,
-            overrides,
-            suppressedIds,
-          },
-        },
+        { harnessProposal: { digest, proposal } },
       );
-      return { applied: result.applied, awaitingApproval: result.awaitingApproval };
+      return {
+        applied: [],
+        awaitingApproval: proposal.edits,
+        proposalDigest: digest,
+      };
     });
   }
 
-  /**
-   * Apply a prompt addendum the operator approved, as one signed record.
-   *
-   * The digest is the whole point: it binds the approval to the proposal as it
-   * was when it was reviewed. A proposal that changed after review has a
-   * different digest and is a different approval, so this refuses rather than
-   * silently applying whatever the addendum now says. The `atSeq` names the
-   * chain position the approval was given at, so a later refinement cannot
-   * retroactively claim an approval that was not there.
-   */
-  async applyPromptAddendum(
+  private async pendingForWorkspace(
+    entries: readonly JsonlEntry[],
+  ): Promise<PendingApproval[]> {
+    const pending = new Map<string, PendingApproval>();
+    const verifiedSeqs = new Set(entries.map((entry) => entry.seq));
+    for (const entry of entries) {
+      const body = entry.body as Record<string, unknown>;
+      const stored = body.harnessProposal;
+      if (body.decision === "proposal:created" && stored !== null && typeof stored === "object") {
+        const record = stored as Record<string, unknown>;
+        const raw = record.proposal;
+        const digest = record.digest;
+        if (
+          typeof digest === "string" &&
+          /^[a-f0-9]{64}$/.test(digest) &&
+          raw !== null &&
+          typeof raw === "object" &&
+          !Array.isArray(raw)
+        ) {
+          const proposal = raw as RefinementProposal;
+          try {
+            const validated = validateProposal(proposal);
+            const actual = await sha256Hex(canonicalJson(proposal));
+            if (
+              validated.ok &&
+              proposal.edits.length > 0 &&
+              actual === digest &&
+              proposal.edits.every((edit) => edit.derivedFromSeq.every((seq) => verifiedSeqs.has(seq)))
+            ) {
+              pending.set(digest, {
+                proposal,
+                digest,
+                at: typeof body.at === "string" ? body.at : "",
+                atSeq: entry.seq,
+              });
+            }
+          } catch {
+            continue;
+          }
+        }
+      }
+      const lifecycle = body.harnessLifecycle;
+      const lifecycleRecord = lifecycle !== null && typeof lifecycle === "object"
+        ? lifecycle as Record<string, unknown>
+        : undefined;
+      const refinement = body.harnessRefinement;
+      const refinementRecord = refinement !== null && typeof refinement === "object"
+        ? refinement as Record<string, unknown>
+        : undefined;
+      const storedRecord = stored !== null && typeof stored === "object"
+        ? stored as Record<string, unknown>
+        : undefined;
+      const terminalDigest =
+        (typeof storedRecord?.digest === "string" && storedRecord.digest) ||
+        (typeof lifecycleRecord?.digest === "string" && lifecycleRecord.digest) ||
+        (typeof refinementRecord?.digest === "string" && refinementRecord.digest);
+      if (
+        terminalDigest &&
+        ["proposal:activated", "proposal:rejected", "refinement:approved"].includes(String(body.decision))
+      )
+        pending.delete(terminalDigest);
+    }
+    return [...pending.values()].sort((a, b) => a.atSeq - b.atSeq || a.digest.localeCompare(b.digest));
+  }
+
+  async pendingApprovalsFor(sessionId: string): Promise<readonly PendingHarnessProposal[]> {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.view.id !== sessionId) return [];
+    const proof = await this.ledger(session.view.workspace);
+    if (!proof) return [];
+    return (await this.pendingForWorkspace(proof.entries)).map((pending) => ({
+      digest: pending.digest,
+      at: pending.at,
+      atSeq: pending.atSeq,
+      summary: pending.proposal.summary,
+      proposal: pending.proposal,
+      addendum: pending.proposal.edits
+        .filter((edit) => edit.kind === "prompt")
+        .map((edit) => edit.promptAddendum ?? "")
+        .join("\n"),
+    }));
+  }
+
+  async approveHarnessProposal(
     sessionId: string,
     digest: string,
   ): Promise<{ applied: readonly AppliedEdit[] }> {
     const session = this.sessions.get(sessionId);
-    if (!session) throw new Error("Session not found.");
+    if (!session || session.view.id !== sessionId) throw new Error("Session not found.");
     this.assertNormalMutation("harness refinement");
     if (this.closing || session.recoveryBlock)
       throw new Error(
@@ -2856,30 +2884,25 @@ export class Workbench {
       );
     const workspace = session.view.workspace;
     return this.locked(async () => {
-      const pending = this.pendingApprovals.get(digest);
-      if (!pending || pending.workspace !== workspace)
-        throw new Error("No pending refinement matches that digest.");
-      const proposal = pending.proposal;
       const proof = await this.ledger(workspace);
-      if ((proof?.entries ?? []).length !== pending.atSeq)
+      if (!proof) throw new Error("No pending refinement matches that digest.");
+      const pending = (await this.pendingForWorkspace(proof.entries))
+        .find((proposal) => proposal.digest === digest);
+      if (!pending) throw new Error("No pending refinement matches that digest.");
+      if (proof.entries.length !== pending.atSeq)
         throw new Error(
           "The chain moved after the proposal was reviewed. Ask for a new proposal.",
         );
       const generatedAt = new Date().toISOString();
-      // Only the prompt edits go through here: everything else in this
-      // proposal was already applied and signed when the model proposed it, and
-      // re-applying it would write the same record twice.
+      const current = await this.harnessEntries(workspace);
       const result = applyProposal(
-        await this.harnessEntries(workspace),
-        { ...proposal, edits: proposal.edits.filter((edit) => edit.kind === "prompt") },
+        current,
+        pending.proposal,
         generatedAt,
         { by: "operator", digest, atSeq: pending.atSeq },
       );
       if (!result.applied.length)
-        throw new Error("The approved proposal has no prompt edit to apply.");
-      // The approved entry is stored as an override for the same reason every
-      // other refinement entry is: mining the chain cannot reproduce it, so
-      // without this record a restart would lose what the operator approved.
+        throw new Error("The approved proposal has no supported edit to activate.");
       const { overrides, suppressedIds } = this.refinementDelta(
         workspace,
         result.entries,
@@ -2887,32 +2910,93 @@ export class Workbench {
       );
       const state = this.documents[workspace] ?? createWorkspace();
       this.documents[workspace] ??= state;
+      const tombstones = result.applied
+        .filter((edit) => edit.outcome === "deleted")
+        .map((edit) => edit.edit.id)
+        .filter((id): id is string => typeof id === "string");
+      const supersessions = result.applied
+        .filter((edit) => edit.outcome === "superseded")
+        .map((edit) => edit.edit.id)
+        .filter((id): id is string => typeof id === "string");
       await this.commitWorkspace(
         session,
         state,
-        "harness.refinement",
-        { summary: proposal.summary, editCount: result.applied.length },
-        "refinement:approved",
+        "harness.activation",
+        { digest },
+        "proposal:activated",
         undefined,
-        undefined,
+        { by: "operator" },
         {
+          harnessProposal: { digest, status: "approved", proposal: pending.proposal },
+          harnessLifecycle: {
+            digest,
+            events: [
+              "proposal:approved",
+              "proposal:activated",
+              ...(tombstones.length ? ["entry:tombstone"] : []),
+              ...(supersessions.length ? ["entry:supersession"] : []),
+            ],
+            tombstones,
+            supersessions,
+            atSeq: pending.atSeq,
+          },
           harnessRefinement: {
-            summary: proposal.summary,
-            rationale: proposal.rationale,
-            expectedOutcome: proposal.expectedOutcome,
+            summary: pending.proposal.summary,
+            rationale: pending.proposal.rationale,
+            expectedOutcome: pending.proposal.expectedOutcome,
             applied: result.applied,
             overrides,
             suppressedIds,
             approvedBy: "operator",
-            at: pending.at,
-            atSeq: pending.atSeq,
             digest,
+            atSeq: pending.atSeq,
           },
         },
       );
-      this.pendingApprovals.delete(digest);
       return { applied: result.applied };
     });
+  }
+
+  async rejectHarnessProposal(sessionId: string, digest: string): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.view.id !== sessionId) throw new Error("Session not found.");
+    this.assertNormalMutation("harness refinement");
+    if (this.closing || session.recoveryBlock)
+      throw new Error(
+        "Wait for the workbench to reopen. Reconcile unresolved recovery before refining the harness.",
+      );
+    const workspace = session.view.workspace;
+    return this.locked(async () => {
+      const proof = await this.ledger(workspace);
+      if (!proof) throw new Error("No pending refinement matches that digest.");
+      const pending = (await this.pendingForWorkspace(proof.entries))
+        .find((proposal) => proposal.digest === digest);
+      if (!pending) throw new Error("No pending refinement matches that digest.");
+      const state = this.documents[workspace] ?? createWorkspace();
+      this.documents[workspace] ??= state;
+      await this.commitWorkspace(
+        session,
+        state,
+        "harness.rejection",
+        { digest },
+        "proposal:rejected",
+        undefined,
+        undefined,
+        { harnessProposal: { digest, status: "rejected" } },
+      );
+    });
+  }
+
+  async applyPromptAddendum(
+    sessionId: string,
+    digest: string,
+  ): Promise<{ applied: readonly AppliedEdit[] }> {
+    const pending = (await this.pendingApprovalsFor(sessionId))
+      .find((proposal) => proposal.digest === digest);
+    if (!pending) throw new Error("No pending refinement matches that digest.");
+    if (!pending.proposal.edits.every((edit) => edit.kind === "prompt"))
+      throw new Error("Use harness proposal approval for edits beyond prompt addenda.");
+    return this.approveHarnessProposal(sessionId, digest);
   }
 
   /**
@@ -2951,37 +3035,6 @@ export class Workbench {
         .filter((entry) => !resultIds.has(entry.id))
         .map((entry) => entry.id),
     };
-  }
-
-  /**
-   * The prompt addenda awaiting an operator in this session's workspace.
-   *
-   * Named apart from the private map on purpose: the map is keyed by digest and
-   * holds every workspace, and what an operator needs to see is the ones they
-   * can actually approve right now, with the exact text that would take effect.
-   */
-  pendingApprovalsFor(sessionId: string): readonly {
-    readonly digest: string;
-    readonly at: string;
-    readonly atSeq: number;
-    readonly summary: string;
-    readonly addendum: string;
-  }[] {
-    const session = this.sessions.get(sessionId);
-    if (!session) return [];
-    const workspace = session.view.workspace;
-    return [...this.pendingApprovals.values()]
-      .filter((pending) => pending.workspace === workspace)
-      .map((pending) => ({
-        digest: pending.digest,
-        at: pending.at,
-        atSeq: pending.atSeq,
-        summary: pending.proposal.summary,
-        addendum: pending.proposal.edits
-          .filter((edit) => edit.kind === "prompt")
-          .map((edit) => edit.promptAddendum ?? "")
-          .join("\n"),
-      }));
   }
 
   async ledger(workspace: string) {

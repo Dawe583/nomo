@@ -868,51 +868,70 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     };
     this.scroll = 0;
   }
-  /**
-   * Review a pending prompt addendum before it is applied.
-   *
-   * The digest is what the operator approves, so the confirmation shows the
-   * exact text that would take effect rather than a description of it. A
-   * prefix is accepted because a full sha256 is not something anyone reads off
-   * a screen and copies back, but the digest it resolves to is the full one
-   * and it is what gets applied.
-   */
-  preparePromptApproval(digestPrefix: string) {
+  async prepareHarnessDecision(
+    digestPrefix: string,
+    decision: "approve" | "reject",
+  ) {
     if (!this.sessionId) throw Error("Select a conversation.");
-    const pending = this.workbench.pendingApprovalsFor(this.sessionId);
-    const match = pending.find((approval) => approval.digest.startsWith(digestPrefix));
-    if (!match)
+    if (!/^[a-f0-9]{8,64}$/.test(digestPrefix))
+      throw Error("Enter at least 8 hexadecimal digest characters.");
+    const pending = await this.workbench.pendingApprovalsFor(this.sessionId);
+    const matches = pending.filter((proposal) => proposal.digest.startsWith(digestPrefix));
+    if (matches.length !== 1)
       throw Error(
-        pending.length
-          ? `No pending addendum starts with ${digestPrefix}. /harness lists them.`
-          : "No prompt addendum is awaiting approval.",
+        matches.length > 1
+          ? `Digest prefix ${digestPrefix} is ambiguous. Enter more characters.`
+          : pending.length
+            ? `No pending proposal starts with ${digestPrefix}. /harness lists them.`
+            : "No Harness proposal is awaiting an operator decision.",
       );
+    const match = matches[0]!;
     const sessionId = this.sessionId;
+    const proposalLines = JSON.stringify(match.proposal, null, 2)
+      .replace(
+        /[\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/gu,
+        (character) => `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
+      )
+      .split("\n");
     this.confirmation = {
-      title: `APPROVE PROMPT ADDENDUM ${match.digest.slice(0, 8)}…?`,
+      title: `${decision === "approve" ? "APPROVE" : "REJECT"} HARNESS PROPOSAL ${match.digest.slice(0, 8)}?`,
       lines: [
-        "A prompt addendum changes what the model is told in later sessions.",
-        "The base system prompt itself is never editable.",
+        decision === "approve"
+          ? "This applies the exact proposal after checking its digest and provenance."
+          : "This records rejection and activates none of the proposed edits.",
         "",
         `Summary: ${match.summary}`,
+        `Rationale: ${match.proposal.rationale}`,
+        `Expected outcome: ${match.proposal.expectedOutcome}`,
+        `Full digest: ${match.digest}`,
         `Cited chain position: ${match.atSeq}.`,
         "",
-        ...match.addendum.split("\n"),
+        "Full proposal:",
+        ...proposalLines,
         "",
-        "Approving writes one signed record naming this digest. It changes no",
-        "tool catalog, no policy, and no permission.",
+        "This changes no policy, permissions, tool catalog, or credentials.",
       ],
       apply: async () => {
         this.confirmation = undefined;
-        const result = await this.workbench.applyPromptAddendum(sessionId, match.digest);
-        this.notice = `Prompt addendum applied: ${result.applied.length} edit(s) signed.`;
-        this.detail = [
-          "PROMPT ADDENDUM APPLIED",
-          `Digest: ${match.digest}`,
-          `Summary: ${match.summary}`,
-          "",
-          "The chain records that the operator approved this exact addendum.",
-        ];
+        if (decision === "approve") {
+          const result = await this.workbench.approveHarnessProposal(sessionId, match.digest);
+          this.notice = `Harness proposal approved: ${result.applied.length} edit(s) activated.`;
+          this.detail = [
+            "HARNESS PROPOSAL ACTIVATED",
+            `Digest: ${match.digest}`,
+            `Summary: ${match.summary}`,
+            "The signed chain records the approval and activation.",
+          ];
+        } else {
+          await this.workbench.rejectHarnessProposal(sessionId, match.digest);
+          this.notice = `Harness proposal rejected: ${match.digest.slice(0, 8)}.`;
+          this.detail = [
+            "HARNESS PROPOSAL REJECTED",
+            `Digest: ${match.digest}`,
+            `Summary: ${match.summary}`,
+            "The signed chain records the rejection. No edit was activated.",
+          ];
+        }
         await this.refresh(true);
       },
     };
@@ -2995,14 +3014,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.scroll = 0;
         return;
       }
-      if (verb === "approve") {
-        this.preparePromptApproval(rest.join(" "));
+      if (verb === "approve" || verb === "reject") {
+        await this.prepareHarnessDecision(rest.join(" "), verb);
         return;
       }
-      // The setting is shared with the control plane. Detection only looks
-      // at PATH presence; nothing is executed, so listing is always safe.
       if (verb && verb !== "cloud" && verb !== "prime-agent")
-        throw Error("/harness cloud | prime-agent | scores | approve DIGEST");
+        throw Error("/harness cloud | prime-agent | scores | approve DIGEST | reject DIGEST");
       if (verb) {
         this.workbench.patchPreferences({ defaultAgent: verb });
         this.notice =
@@ -3012,7 +3029,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       }
       const prefs = this.workbench.getPreferences();
       const found = await detectHarnesses(this.env);
-      const pending = this.sessionId ? this.workbench.pendingApprovalsFor(this.sessionId) : [];
+      const pending = this.sessionId ? await this.workbench.pendingApprovalsFor(this.sessionId) : [];
       this.detail = [
         `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
         "",
@@ -3023,13 +3040,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
         ),
         "",
-        ...pending.map((approval) => `${approval.digest.slice(0, 8)}… pending since ${approval.at}`),
+        ...pending.map((approval) =>
+          `${approval.digest.slice(0, 8)}… ${approval.summary} (${approval.proposal.edits.length} edits)`,
+        ),
         pending.length
-          ? "/harness approve DIGEST applies one after a confirmation."
-          : "No prompt addenda are awaiting approval.",
+          ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
+          : "No Harness proposals are awaiting an operator decision.",
         "",
         "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
-        "/harness approve DIGEST applies a prompt addendum the operator approved.",
+        "/harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
       ];
       this.scroll = 0;
       return;
