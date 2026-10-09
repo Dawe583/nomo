@@ -32,7 +32,7 @@ import type { HeldCall, HoldId, HoldQueue, HoldResolution, Release } from "./hol
 import type { PolicyCall } from "./decide.ts";
 import type { NotifyChannel } from "./rules.ts";
 
-export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
+export type ApprovalStatus = "pending" | "approved" | "denied" | "expired" | "cancelled";
 
 export type ApprovalDecision = {
   readonly kind: "approved" | "denied";
@@ -253,6 +253,17 @@ export class ApprovalBroker {
       reason: decision.reason,
     });
     this.queues.delete(holdId);
+    return true;
+  }
+
+  cancel(holdId: HoldId): boolean {
+    const current = this.approvals.get(holdId);
+    const queue = this.queues.get(holdId);
+    if (current === undefined || queue === undefined || current.status !== "pending") return false;
+    if (queue.list().some((held) => held.id === holdId)) queue.cancel(holdId);
+    this.approvals.set(holdId, { ...current, status: "cancelled" });
+    this.queues.delete(holdId);
+    this.flush();
     return true;
   }
 

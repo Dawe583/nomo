@@ -167,15 +167,23 @@ function registerProxyTool(
       inputSchema: fromJsonSchema(tool.inputSchema as JsonSchemaType),
     },
     async (args, context) => {
-      let identity: LocalGrantIdentity | null;
-      try {
-        identity = options.validateGrant(token, options.upstreamId, tool.name);
-      } catch {
-        identity = null;
-      }
-      if (!isValidIdentity(identity) || !identity.toolScope.includes(tool.name))
-        throw new Error("Local agent grant is invalid or expired");
-      return await bridge.callTool(tool.name, asJsonObject(args), context.mcpReq.signal) as CallToolResult;
+      const assertCurrentGrant = (): void => {
+        let identity: LocalGrantIdentity | null;
+        try {
+          identity = options.validateGrant(token, options.upstreamId, tool.name);
+        } catch {
+          identity = null;
+        }
+        if (!isValidIdentity(identity) || !identity.toolScope.includes(tool.name))
+          throw new Error("Local agent grant is invalid or expired");
+      };
+      assertCurrentGrant();
+      return await bridge.callTool(
+        tool.name,
+        asJsonObject(args),
+        context.mcpReq.signal,
+        assertCurrentGrant,
+      ) as CallToolResult;
     },
   );
 }

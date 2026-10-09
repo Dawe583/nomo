@@ -275,3 +275,115 @@ test("serves current MCP through the grant and existing proxy path", async (t) =
   assert.equal(outOfScope.status, 200);
   assert.equal(targetMessages.filter((message) => message.method === "tools/call").length, 1);
 });
+test("rechecks a grant after hold approval and before upstream dispatch", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-grant-recheck-"));
+  const policyPath = join(directory, "policy.yml");
+  await writeFile(policyPath, [
+    "version: 1",
+    "rules:",
+    "  - match: { class: r3 }",
+    "    decision: hold",
+    "    seconds: 60",
+    "    notify: [cli]",
+    "  - match: {}",
+    "    decision: deny",
+  ].join("\n"));
+  const token = "D".repeat(43);
+  const targetMessages: Array<Record<string, unknown>> = [];
+  let grantRevoked = false;
+  let validateCalls = 0;
+  const identity = {
+    agentId: "registered-agent",
+    toolScope: ["aws.s3.bucket.delete"],
+    expiresAt: Date.now() + 60_000,
+  };
+  const server = await startLocalMcpHttpServer({
+    upstreamId: "fixture-upstream",
+    proxyOptions: {
+      upstreamCommand: ["fixture"],
+      policyPath,
+      posture: "fail-closed",
+      ledgerDir: join(directory, "ledger"),
+      workspace: "grant-recheck",
+      keyProvider: keyProviderFromPkcs8(
+        generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
+      ),
+      onHold(queue) {
+        const decideWhenReady = () => {
+          const held = queue.list()[0];
+          if (held === undefined) {
+            setImmediate(decideWhenReady);
+            return;
+          }
+          grantRevoked = true;
+          queue.resolve(held.id, { kind: "approved" });
+        };
+        setImmediate(decideWhenReady);
+      },
+      upstreamSpawn(events: UpstreamEvents): UpstreamProcess {
+        return {
+          send(line) {
+            const message = JSON.parse(line) as { id?: number; method?: string; params?: { name?: string } };
+            targetMessages.push(message as Record<string, unknown>);
+            if (message.method === "initialize") {
+              events.onMessage(JSON.stringify({
+                jsonrpc: "2.0", id: message.id,
+                result: { protocolVersion: "2025-11-25", capabilities: { tools: {} }, serverInfo: { name: "fixture", version: "1" } },
+              }));
+            } else if (message.method === "tools/list") {
+              events.onMessage(JSON.stringify({
+                jsonrpc: "2.0", id: message.id,
+                result: { tools: [{ name: "aws.s3.bucket.delete", inputSchema: { type: "object" } }] },
+              }));
+            } else if (message.method === "tools/call") {
+              events.onMessage(JSON.stringify({ jsonrpc: "2.0", id: message.id, result: { content: [] } }));
+            }
+          },
+          close() { events.onClose(0, null); },
+          onStderr() { return () => {}; },
+        };
+      },
+    },
+    resolveGrant(candidate, upstreamId) {
+      return candidate === token && upstreamId === "fixture-upstream" && !grantRevoked
+        ? identity
+        : null;
+    },
+    validateGrant(candidate, upstreamId, toolName) {
+      validateCalls += 1;
+      return candidate === token && upstreamId === "fixture-upstream" &&
+        toolName === "aws.s3.bucket.delete" && !grantRevoked
+        ? identity
+        : null;
+    },
+  });
+  t.after(async () => {
+    await server.close();
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  const response = await fetch(server.url, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      accept: "application/json, text/event-stream",
+      "content-type": "application/json",
+      "mcp-protocol-version": "2026-07-28",
+      "mcp-method": "tools/call",
+      "mcp-name": "aws.s3.bucket.delete",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: "aws.s3.bucket.delete",
+        arguments: {},
+        _meta: currentMeta,
+      },
+    }),
+  });
+  await response.text();
+  assert.ok(validateCalls >= 2, "grant must be checked again at dispatch");
+  assert.equal(targetMessages.filter((message) => message.method === "tools/call").length, 0);
+});

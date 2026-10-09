@@ -60,6 +60,41 @@ describe("pumpApprovals", () => {
     assert.equal(queue.hold, originalHold);
   });
 
+  test("cancelled holds leave approval state and cannot be approved late", async () => {
+    const broker = new ApprovalBroker();
+    const queue = new HoldQueue();
+    const pump = pumpApprovals(broker);
+    const restore = pump.onHold(queue);
+    const controller = new AbortController();
+    const waiting = queue.hold({
+      tool: "aws.s3.bucket.delete",
+      klass: "r3",
+      blastRadius: 3,
+      ruleIndex: 0,
+      rationale: "approval required",
+      args: { value: 1 },
+      notify: ["cli"],
+    }, 60, controller.signal);
+    try {
+      const record = broker.listPending()[0];
+      assert.ok(record);
+      controller.abort();
+      const timeout = new Promise<null>((resolve) => {
+        setTimeout(() => resolve(null), 50);
+      });
+      const resolution = await Promise.race([waiting, timeout]);
+      assert.ok(resolution);
+      assert.equal(resolution.outcome.kind, "cancelled");
+      await Promise.resolve();
+      assert.equal(broker.get(record.holdId)?.status, "cancelled");
+      assert.equal(broker.decide(record.holdId, { kind: "approved", by: "ops" }), false);
+      assert.equal(queue.list().length, 0);
+    } finally {
+      restore();
+      pump.stop();
+    }
+  });
+
   test("poll drains expired approvals through the hold queue", async () => {
     const { broker, notified } = brokerWithNotification();
     const harness = await makeHarness("hold", broker);

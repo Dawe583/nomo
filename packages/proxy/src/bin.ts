@@ -93,6 +93,8 @@ export type ProxyOptions = {
   readonly factsPath?: string;
   readonly posture: ProxyPosture;
   readonly onHold?: (queue: HoldQueue) => void | (() => void);
+  /** Optional synchronous check immediately before forwarding an agent tool call. */
+  readonly beforeToolDispatch?: (requestId: JsonRpcId) => void;
   /** Ledger directory for the dev tier store. Required for the fail-closed posture. */
   readonly ledgerDir?: string;
   /** Optional signer for an embedded proxy; defaults to the development key. */
@@ -131,6 +133,7 @@ type InitializeRequest = {
 const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
 const INTERNAL_ERROR = -32603;
+const REQUEST_CANCELLED = -32800;
 const DEFAULT_MAX_INFLIGHT_UPSTREAM_MESSAGES = 512;
 
 export async function runProxy(options: ProxyOptions): Promise<void> {
@@ -200,6 +203,12 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   });
 
   const initializeByUpstream = new Map<JsonRpcId, InitializeRequest>();
+  const activeToolCalls = new Map<
+    JsonRpcId,
+    { readonly controller: AbortController; dispatched: boolean }
+  >();
+  const activeToolCallsByUpstream = new Map<JsonRpcId, JsonRpcId>();
+  const pendingToolCalls = new Set<Promise<void>>();
   const pendingLegacy = new Map<
     JsonRpcId,
     {
@@ -273,15 +282,28 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       readonly binding: LegacyProxyBinding;
       readonly evidence: LegacyCaptureEvidence;
     } | null,
+    beforeDispatch?: () => void,
+    onDispatched?: () => void,
   ): Promise<JsonRpcRequest> => {
     const translated = session.translateRequestOut(request);
+    const checkBeforeDispatch = (): void => {
+      try {
+        beforeDispatch?.();
+      } catch (error) {
+        session.drop(request.id);
+        throw error;
+      }
+    };
     if (bound === null) {
+      checkBeforeDispatch();
       sendUpstream(translated);
+      onDispatched?.();
       return translated;
     }
     try {
       await bound.binding.dispatched(bound.evidence);
     } catch {
+      session.drop(request.id);
       const failed: JsonRpcError = {
         jsonrpc: "2.0",
         id: translated.id,
@@ -295,10 +317,13 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       }
       throw new Error("legacy dispatch evidence failed");
     }
+    checkBeforeDispatch();
     pendingLegacy.set(translated.id, bound);
     try {
       sendUpstream(translated);
+      onDispatched?.();
     } catch {
+      session.drop(request.id);
       try {
         await finishLegacy(translated.id, null);
       } catch {
@@ -354,8 +379,15 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         return;
       }
 
+      const completedToolId =
+        isResponse(message) && message.id !== undefined
+          ? activeToolCallsByUpstream.get(message.id)
+          : undefined;
       const translated = session.translateInbound(message);
       if (translated !== null) sendJson(translated);
+      if (isResponse(message) && message.id !== undefined)
+        activeToolCallsByUpstream.delete(message.id);
+      if (completedToolId !== undefined) activeToolCalls.delete(completedToolId);
     } catch (error) {
       // Fail closed on the relay path: a refused outbound line is dropped
       // with a named reason, never forwarded half-framed, and the session
@@ -468,6 +500,10 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       "id" in message && message.id !== undefined ? message.id : null;
     try {
       if (isRequest(message)) {
+        if (activeToolCalls.has(message.id) || session.maps.agentToUpstream.has(message.id)) {
+          sendLocal(jsonRpcError(message.id, INVALID_REQUEST, "Duplicate request id"));
+          return;
+        }
         if (message.method === "initialize") {
           const translated = session.translateRequestOut(message);
           initializeByUpstream.set(translated.id, {
@@ -479,7 +515,9 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         }
 
         if (message.method === "tools/call") {
-          await handleToolCall(
+          const state = { controller: new AbortController(), dispatched: false };
+          activeToolCalls.set(message.id, state);
+          const task = handleToolCall(
             message,
             policy,
             facts,
@@ -492,6 +530,31 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
             options.workspace ?? "default",
             options.legacyCapture,
             options.legacyBinding,
+            state.controller.signal,
+            () => {
+              if (state.controller.signal.aborted)
+                throw new Error("Request cancelled before dispatch");
+              options.beforeToolDispatch?.(message.id);
+            },
+            () => { state.dispatched = true; },
+          ).catch((error: unknown) => {
+            writeError(`request failed: ${errorMessage(error)}`);
+            sendLocal(jsonRpcError(
+              message.id,
+              state.controller.signal.aborted && !state.dispatched
+                ? REQUEST_CANCELLED
+                : INTERNAL_ERROR,
+              state.controller.signal.aborted && !state.dispatched
+                ? "Request cancelled"
+                : "Internal error",
+            ));
+          }).finally(() => {
+            if (!state.dispatched) activeToolCalls.delete(message.id);
+          });
+          pendingToolCalls.add(task);
+          void task.then(
+            () => { pendingToolCalls.delete(task); },
+            () => { pendingToolCalls.delete(task); },
           );
           return;
         }
@@ -515,9 +578,21 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       }
 
       if (isNotification(message)) {
+        const params = message.params;
+        const requestId = params?.requestId;
+        if (message.method === "notifications/cancelled" &&
+          (typeof requestId === "number" || typeof requestId === "string")) {
+          const active = activeToolCalls.get(requestId);
+          if (active !== undefined && !active.dispatched) {
+            active.controller.abort(new Error("Request cancelled by caller"));
+            return;
+          }
+        }
         const cancel = cancellationFromAgent(message, session);
         if (cancel !== null) {
           sendUpstream(cancel);
+          if (typeof requestId === "number" || typeof requestId === "string")
+            activeToolCalls.delete(requestId);
           return;
         }
         sendUpstream(relayNotification(message, session.maps).notification);
@@ -559,9 +634,13 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       await handleAgentLine(next.value);
     }
   } finally {
+    await input.return?.();
+    // A tool call parked on a human decision settles when a shutdown signal
+    // drains the hold queue, so the handlers stay live until every in-flight
+    // call has finished; unregistering first would strand them until timeout.
+    await Promise.allSettled([...pendingToolCalls]);
     shutdownSignals?.off("SIGINT", sigint);
     shutdownSignals?.off("SIGTERM", sigterm);
-    await input.return?.();
     await shutdown();
   }
 }
@@ -661,6 +740,8 @@ async function handleToolCall(
       readonly binding: LegacyProxyBinding;
       readonly evidence: LegacyCaptureEvidence;
     } | null,
+    beforeDispatch?: () => void,
+  onDispatched?: () => void,
   ) => Promise<JsonRpcRequest>,
   sendJson: (message: unknown) => void,
   writeError: (line: string) => void,
@@ -669,6 +750,9 @@ async function handleToolCall(
   workspace: string,
   legacyCapture?: (call: InterceptedCall) => Promise<unknown>,
   legacyBinding?: LegacyBindingResolver,
+  signal?: AbortSignal,
+  beforeDispatch?: () => void,
+  onDispatched?: () => void,
 ): Promise<void> {
   const call = { ...interceptedCall(request), workspace };
   let binding: LegacyProxyBinding | null = null;
@@ -702,6 +786,7 @@ async function handleToolCall(
     classify: () =>
       classifyTool(call.tool, toEvaluationContext(facts, call.args)),
     policy: policyFn,
+    signal,
     // One digest of the loaded policy, computed from the content rather than
     // the file bytes, so the record names the policy a reviewer can also
     // obtain. Scoped to this request because the policy is reloaded for one.
@@ -738,6 +823,7 @@ async function handleToolCall(
           notify: decision.notify,
         },
         seconds,
+        signal,
       );
     },
     ledger: async (entry) => {
@@ -761,6 +847,8 @@ async function handleToolCall(
       binding === null || capturedEvidence === null
         ? null
         : { binding, evidence: capturedEvidence },
+      beforeDispatch,
+      onDispatched,
     );
     return;
   }
@@ -780,6 +868,8 @@ async function handleToolCall(
     binding === null || capturedEvidence === null
       ? null
       : { binding, evidence: capturedEvidence },
+    beforeDispatch,
+    onDispatched,
   );
 }
 
@@ -1068,6 +1158,7 @@ export class LocalProxyRpcBridge {
   readonly #options: LocalProxyRpcBridgeOptions;
   readonly #input = new AsyncLineQueue();
   readonly #pending = new Map<number | string, BridgeReply>();
+  readonly #dispatchGuards = new Map<number | string, () => void>();
   readonly #signalHandlers = new Map<ProxyShutdownSignal, () => void>();
   readonly #shutdownSignals: ProxyShutdownSignals;
   #nextId = 1;
@@ -1099,13 +1190,14 @@ export class LocalProxyRpcBridge {
     name: string,
     args: Record<string, unknown>,
     signal?: AbortSignal,
+    beforeDispatch?: () => void,
   ): Promise<Record<string, unknown>> {
     await this.#start();
     if (!validProxyToolName(name)) throw new TypeError("Invalid proxy tool name");
     const result = await this.#request("tools/call", {
       name,
       arguments: args,
-    }, signal);
+    }, signal, beforeDispatch);
     if (!isObject(result)) throw new Error("Proxy tool result is invalid");
     return result;
   }
@@ -1131,6 +1223,12 @@ export class LocalProxyRpcBridge {
         input: this.#input,
         output: (line) => this.#receive(line),
         shutdownSignals: this.#shutdownSignals,
+        beforeToolDispatch: (requestId) => {
+          this.#options.beforeToolDispatch?.(requestId);
+          const guard = this.#dispatchGuards.get(requestId);
+          this.#dispatchGuards.delete(requestId);
+          guard?.();
+        },
       });
       void this.#runPromise.then(
         () => this.#fail(new Error("Upstream proxy stopped")),
@@ -1159,6 +1257,7 @@ export class LocalProxyRpcBridge {
     method: string,
     params: Record<string, unknown>,
     signal?: AbortSignal,
+    beforeDispatch?: () => void,
   ): Promise<unknown> {
     if (this.#closed) return Promise.reject(new Error("Local proxy bridge is closed"));
     if (this.#failure) return Promise.reject(this.#failure);
@@ -1167,7 +1266,10 @@ export class LocalProxyRpcBridge {
     const id = this.#nextId++;
     return new Promise((resolve, reject) => {
       let sent = false;
-      const cleanup = () => signal?.removeEventListener("abort", onAbort);
+      const cleanup = () => {
+        signal?.removeEventListener("abort", onAbort);
+        this.#dispatchGuards.delete(id);
+      };
       const pending: BridgeReply = {
         resolve(value) {
           cleanup();
@@ -1194,6 +1296,7 @@ export class LocalProxyRpcBridge {
         pending.reject(asError(signal?.reason ?? new Error("Proxy tool call cancelled")));
       };
       this.#pending.set(id, pending);
+      if (beforeDispatch !== undefined) this.#dispatchGuards.set(id, beforeDispatch);
       signal?.addEventListener("abort", onAbort, { once: true });
       if (signal?.aborted) {
         onAbort();

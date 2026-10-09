@@ -229,6 +229,77 @@ describe("runProxy", () => {
     assert.match(error.error.message, /Do not retry/);
   });
 
+  test("cancellation is read while a tool call waits for approval", { timeout: 5_000 }, async (t) => {
+    const directory = await mkdtemp(join(tmpdir(), "void-proxy-cancel-"));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const policyPath = join(directory, "policy.yml");
+    await writeFile(policyPath, policyText("hold"));
+    const messages = [
+      JSON.stringify(toolCall(230, "aws.s3.bucket.delete")),
+      JSON.stringify({
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: 230, reason: "caller cancelled" },
+      }),
+    ];
+    let nextCalls = 0;
+    let resolveSecondRead: (() => void) | undefined;
+    const secondRead = new Promise<void>((resolve) => { resolveSecondRead = resolve; });
+    const input: AsyncIterable<string> = {
+      [Symbol.asyncIterator]() {
+        return {
+          next() {
+            nextCalls += 1;
+            if (nextCalls === 2) resolveSecondRead?.();
+            const value = messages.shift();
+            return Promise.resolve(value === undefined
+              ? { done: true, value: undefined }
+              : { done: false, value });
+          },
+        };
+      },
+    };
+    const handlers = new Map<string, () => void>();
+    const upstreamMessages: Array<Record<string, unknown>> = [];
+    const outputMessages: unknown[] = [];
+    let resolveHold: (() => void) | undefined;
+    const holdReady = new Promise<void>((resolve) => { resolveHold = resolve; });
+    const run = runProxy({
+      upstreamCommand: ["fake"],
+      policyPath,
+      posture: "fail-closed",
+      ledgerDir: join(directory, "ledger"),
+      keyProvider: keyProviderFromPkcs8(
+        generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
+      ),
+      input,
+      output(line) { outputMessages.push(JSON.parse(line) as unknown); },
+      onHold() { resolveHold?.(); },
+      upstreamSpawn(events) { return fakeUpstream(events, upstreamMessages); },
+      shutdownSignals: {
+        on(signal, handler) { handlers.set(signal, handler); },
+        off(signal, handler) { if (handlers.get(signal) === handler) handlers.delete(signal); },
+      },
+    });
+    await holdReady;
+    const cancellationWasRead = await Promise.race([
+      secondRead.then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 30)),
+    ]);
+    if (!cancellationWasRead) handlers.get("SIGTERM")?.();
+    await run;
+
+    assert.equal(cancellationWasRead, true, "the input loop should read cancellation during a hold");
+    assert.equal(upstreamMessages.some((message) => message.method === "tools/call"), false);
+    const response = outputMessages[0] as {
+      readonly id: number;
+      readonly error: { readonly code: number; readonly message: string };
+    };
+    assert.equal(response.id, 230);
+    assert.equal(response.error.code, -32800);
+    assert.match(response.error.message, /cancelled before dispatch/);
+  });
+
   test("held call approved then forwards", async () => {
     const harness = await makeHarness("hold");
     let queue: HoldQueue | null = null;
