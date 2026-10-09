@@ -1,11 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { Workbench, DEFAULT_POLICY } from "./index.ts";
+import { DEFAULT_POLICY } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 import { LocalStorage } from "./storage.ts";
 import { loadPolicy } from "../../policy/src/rules.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
@@ -24,7 +22,6 @@ type Body = Record<string, unknown>;
  * undo has to name the record it inverts.
  */
 async function governedSession(t: test.TestContext) {
-  const directory = await mkdtemp(join(tmpdir(), "void-reversal-record-"));
   let turn = 0;
   const fetcher: typeof fetch = async (url, options) => {
     if (String(url).endsWith("/models"))
@@ -63,12 +60,8 @@ async function governedSession(t: test.TestContext) {
       usage: { total_tokens: 7 },
     });
   };
-  let app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
-  t.after(async () => {
-    await app.shutdown();
-    await rm(directory, { recursive: true, force: true });
-  });
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const f = await isolatedWorkbench(t, fetcher, {}, { prefix: "void-reversal-record-" });
+  const app = f.app;
   app.upsertAgent({
     id: PROFILE,
     name: "Attribution fixture",
@@ -89,14 +82,13 @@ async function governedSession(t: test.TestContext) {
     await delay(10);
   assert.equal(app.get(session.id)?.status, "idle", "the approved turn must settle");
   return {
-    directory,
+    directory: f.root,
     get app() {
-      return app;
+      return f.app;
     },
     session,
     restart() {
-      app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
-      return app;
+      return f.restart({ keepOpen: true });
     },
   };
 }

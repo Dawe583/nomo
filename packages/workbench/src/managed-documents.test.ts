@@ -1,42 +1,39 @@
 import test from "node:test";
+import type { TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, readFile } from "node:fs/promises";
+import { rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
 import { setTimeout as delay } from "node:timers/promises";
 import { DatabaseSync } from "node:sqlite";
-import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 import { digest } from "../../runtime/src/index.ts";
-async function fixture(t: import("node:test").TestContext) {
-  const root = await mkdtemp(join(tmpdir(), "void-doc-runtime-"));
+async function fixture(t: TestContext) {
   const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test" }] })
       : Response.json({
           choices: [{ message: { role: "assistant", content: "done" } }],
         });
-  let app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
-  await app.configure({
+  // `configure: false` because the session below is started after this test's
+  // own `configure`, and the fixture's placeholder base URL would be a
+  // different provider than the one the assertions describe.
+  const f = await isolatedWorkbench(t, fetcher, {}, {
+    prefix: "void-doc-runtime-",
+    configure: false,
+  });
+  await f.app.configure({
     baseUrl: "https://provider.test/v1",
     apiKey: "fixture",
   });
-  const session = await app.start("Test", "test");
-  while (app.get(session.id)?.status === "running") await delay(5);
-  t.after(async () => {
-    app.close();
-    await rm(root, { recursive: true, force: true });
-  });
+  const session = await f.app.start("Test", "test");
+  while (f.app.get(session.id)?.status === "running") await delay(5);
   return {
-    root,
+    root: f.root,
     session,
     get app() {
-      return app;
+      return f.app;
     },
-    restart() {
-      app.close();
-      app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
-      return app;
-    },
+    restart: f.restart,
   };
 }
 test("document edits and sequential Undo use signed runtime after restart without changing legacy history format", async (t) => {

@@ -4,25 +4,23 @@ import {mkdtemp,rm,readFile,writeFile,access} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {setTimeout as delay} from "node:timers/promises";
-import {Workbench} from "./index.ts";
+import {isolatedWorkbench} from "./test-fixture.ts";
 import {validateHook} from "./agents.ts";
 import * as agents from "./agents.ts";
 import type {ModelMessage} from "./provider.ts";
 
 const profile={id:"custom",name:"Custom",systemPrompt:"Only inspect",allowedTools:["void_workspace_list"],policyProfile:"default",maxTurns:2,maxContextTokens:8192};
 async function fixture(t:import("node:test").TestContext,fetcher:typeof fetch,hookCommands:string[]=[],hookTimeoutMs?:number){
- const directory=await mkdtemp(join(tmpdir(),"void-agent-profile-"));
  // The allowlist is supplied the way an operator supplies it: in the runtime
- // environment the launcher passes, never on the workbench API surface.
- const env:{VOID_DATA_DIR:string;VOID_HOOK_COMMANDS:string;VOID_HOOK_TIMEOUT_MS?:string}={
-  VOID_DATA_DIR:directory,
+ // environment the launcher passes, never on the workbench API surface. It
+ // travels as `extraEnv`, which the fixture merges with — rather than in place
+ // of — `VOID_DATA_DIR`.
+ const f=await isolatedWorkbench(t,fetcher,{
   VOID_HOOK_COMMANDS:JSON.stringify(hookCommands),
   ...(hookTimeoutMs===undefined?{}:{VOID_HOOK_TIMEOUT_MS:String(hookTimeoutMs)}),
- };
- let app=new Workbench(env,fetcher);
- await app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
- t.after(async()=>{await app.shutdown();await rm(directory,{recursive:true,force:true});});
- return {get app(){return app;},restart(){app.close();app=new Workbench(env,fetcher);}};
+ },{prefix:"void-agent-profile-",configure:false});
+ await f.app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+ return {get app(){return f.app;},restart(){f.restart();}};
 }
 const models=()=>Response.json({data:[{id:"fixture"}]});
 const response=()=>Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});

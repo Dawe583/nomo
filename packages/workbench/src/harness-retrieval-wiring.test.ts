@@ -1,9 +1,7 @@
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { Workbench, retrievalContext } from "./index.ts";
+import { retrievalContext } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 import { HARNESS_SETTINGS } from "./harness-settings.ts";
 import type { RefinementProposal } from "./refine-pass.ts";
 
@@ -43,14 +41,14 @@ const lessonProposal = (): RefinementProposal => ({
 
 async function fixture(t: TestContext) {
   const bodies: Array<Record<string, unknown>> = [];
-  const root = await mkdtemp(join(tmpdir(), "void-harness-retrieval-"));
   const capturing = async (url: unknown, init?: RequestInit) => {
     if (String(url).endsWith("/models")) return models();
     bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
     return answer();
   };
-  const app = new Workbench({ VOID_DATA_DIR: root }, capturing);
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const { app } = await isolatedWorkbench(t, capturing as typeof fetch, {}, {
+    prefix: "void-harness-retrieval-",
+  });
   const session = await app.start("Review the migration", "fixture");
   await app.settled();
   // An edit document leaves one chain record the proposal may cite, so the
@@ -59,10 +57,6 @@ async function fixture(t: TestContext) {
     path: "source.md",
     content: "signed source record",
     expectedRevision: null,
-  });
-  t.after(async () => {
-    await app.shutdown();
-    await rm(root, { recursive: true, force: true });
   });
   return { app, session, bodies };
 }

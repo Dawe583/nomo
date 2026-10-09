@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { TestContext } from "node:test";
 import { Workbench } from "./index.ts";
+import { assertIsolated } from "./test-fixture.ts";
 import {
   DEFAULT_POLICY_PROFILE,
   listPolicyProfiles,
@@ -62,6 +63,7 @@ async function fixture(t: TestContext, policies: Record<string, string>) {
   };
   const env = { VOID_DATA_DIR: join(directory, "data"), VOID_POLICY_PATH: policyPath };
   const app = new Workbench(env, fetcher);
+  assertIsolated(join(directory, "data"), env);
   t.after(async () => {
     await app.shutdown();
     await rm(directory, { recursive: true, force: true });

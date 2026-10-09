@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import {
   HARNESS_SETTINGS,
   type HarnessSettingKey,
@@ -30,6 +31,7 @@ async function settings(t: {
   const root = await mkdtemp(join(tmpdir(), "void-tui-settings-"));
   const env = { VOID_DATA_DIR: root };
   const app = new Workbench(env, assistantFetcher);
+  assertIsolated(root, env);
   await app.configure({
     baseUrl: "https://fixture.test/v1",
     apiKey: "fixture-key",

@@ -1,10 +1,8 @@
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { isolatedWorkbench } from "./test-fixture.ts";
 import { setTimeout as delay } from "node:timers/promises";
-import { Workbench } from "./index.ts";
+import type { Workbench } from "./index.ts";
 import { HARNESS_SETTINGS } from "./harness-settings.ts";
 
 /**
@@ -53,26 +51,7 @@ async function fixture(
   fetcher: typeof fetch,
   release?: () => void,
 ) {
-  const root = await mkdtemp(join(tmpdir(), "void-harness-"));
-  let app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
-  t.after(async () => {
-    // Unblock any transport parked mid-request before shutting down, or
-    // shutdown waits on a run this test deliberately made hang.
-    release?.();
-    await app.shutdown();
-    await rm(root, { recursive: true, force: true });
-  });
-  return {
-    get app() {
-      return app;
-    },
-    restart() {
-      app.close();
-      app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
-      return app;
-    },
-  };
+  return isolatedWorkbench(t, fetcher, {}, { beforeShutdown: release });
 }
 
 test("a lowered maxTurns stops the run earlier than the default would", async (t) => {

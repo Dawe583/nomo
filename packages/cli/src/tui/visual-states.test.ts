@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import { approvalReview, renderWorkspace, STATUS_ICONS, WorkspaceTui } from "./workspace.ts";
 import { previewState } from "./fixtures.ts";
 import { renderWatchFrame } from "./watch.ts";
@@ -25,6 +26,7 @@ test("status markers are single-cell ASCII, never emoji-only meaning", () => {
 test("workspace status names stopped and unknown runtime states explicitly", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-state-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -59,6 +61,7 @@ test("workspace status names stopped and unknown runtime states explicitly", asy
 test("workspace model labels are sanitized before summary rendering", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-model-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });

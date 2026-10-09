@@ -435,6 +435,11 @@ const REQUIRED_SCRIPT_TESTS = [
   "doc-truth.test.mjs",
   "design-token.test.mjs",
   "handbook.test.mjs",
+  // Reads product env vars out of every test file and compares them against
+  // the names the source actually reads, so a rename that leaves the tests
+  // setting a variable nothing consumes is a red instead of a green suite
+  // writing into the operator's real home directory.
+  "env-var-truth.test.mjs",
   "licence-line.test.mjs",
 ];
 const present = new Set(

@@ -5,19 +5,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "./index.ts";
 import { LocalStorage } from "./storage.ts";
+import { assertIsolated, isolatedWorkbench } from "./test-fixture.ts";
 
 const complete = () => Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
 test("provider setup and generation failures produce stable redacted provider states", async t => {
-  const directory=await mkdtemp(join(tmpdir(),"void-parity-"));
-  const wb=new Workbench({VOID_DATA_DIR:directory,NVIDIA_API_KEY:"never-expose-this"}, async()=> new Response("never-expose-this",{status:401}));
-  t.after(async()=>{wb.close();await rm(directory,{recursive:true,force:true});});
+  const {app:wb}=await isolatedWorkbench(t, async()=> new Response("never-expose-this",{status:401}), {NVIDIA_API_KEY:"never-expose-this"}, {configure:false, prefix:"void-parity-"});
   const unavailable=await wb.providerState();
   assert.equal(unavailable.status,"unavailable");
   assert.doesNotMatch(JSON.stringify(unavailable),/never-expose-this/);
-  const otherDirectory=await mkdtemp(join(tmpdir(),"void-parity-rate-"));
-  const other=new Workbench({VOID_DATA_DIR:otherDirectory},async url=>String(url).endsWith("/models") ? Response.json({data:[{id:"fixture"}]}) : new Response("hidden",{status:429,headers:{"retry-after":"30"}}));
-  t.after(async()=>{other.close();await rm(otherDirectory,{recursive:true,force:true});});
-  await other.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+  const {app:other}=await isolatedWorkbench(t, async url=>String(url).endsWith("/models") ? Response.json({data:[{id:"fixture"}]}) : new Response("hidden",{status:429,headers:{"retry-after":"30"}}), {}, {baseUrl:"https://fixture.test/v1",apiKey:"fixture", prefix:"void-parity-rate-"});
   await other.start("test","fixture"); await other.settled();
   const first=await other.providerState(), second=await other.providerState();
   assert.equal(first.status,"rate-limited"); assert.equal(first.retryAt,second.retryAt);
@@ -27,12 +23,14 @@ test("restart exposes interrupted runs as unknown and refuses redispatch", async
   const directory=await mkdtemp(join(tmpdir(),"void-parity-restart-"));
   const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):complete();
   let wb=new Workbench({VOID_DATA_DIR:directory},fetcher);
+ assertIsolated(directory,{VOID_DATA_DIR:directory});
   t.after(async()=>{wb.close();await rm(directory,{recursive:true,force:true});});
   await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
   const session=await wb.start("test","fixture"); await wb.settled(); wb.close();
   const storage=new LocalStorage(directory), saved=storage.read<{sessions:Array<{view:{status:string}}>}>()!;
   saved.sessions[0]!.view.status="running"; storage.save(saved);
   wb=new Workbench({VOID_DATA_DIR:directory},fetcher);
+ assertIsolated(directory,{VOID_DATA_DIR:directory});
   assert.equal(wb.get(session.id)?.status,"unknown");
   assert.equal(wb.runs()[0]?.reconcileRequired,true);
   assert.throws(()=>wb.send(session.id,"Again"),/unknown|reconcil/i);
@@ -40,7 +38,6 @@ test("restart exposes interrupted runs as unknown and refuses redispatch", async
 
 for (const cancelAfterDispatch of [false, true]) test(`uncertain connector outcome stops the batch, cancelled: ${cancelAfterDispatch}`, async t=>{
   const {createServer}=await import("node:http");
-  const directory=await mkdtemp(join(tmpdir(),"void-parity-unknown-"));
   let writes=0, completions=0;
   const server=createServer(async(req,res)=>{
     let text="";for await(const chunk of req)text+=chunk;
@@ -51,14 +48,14 @@ for (const cancelAfterDispatch of [false, true]) test(`uncertain connector outco
   });
   await new Promise<void>(resolve=>server.listen(0,"127.0.0.1",resolve));
   const address=server.address();assert.ok(address&&typeof address!=="string");
-  const wb=new Workbench({VOID_DATA_DIR:directory},async(url,init)=>{
+  const {app:wb}=await isolatedWorkbench(t,async(url,init)=>{
     if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
     if(++completions>1)return complete();
     const request=JSON.parse(String(init?.body));
     const tool=request.tools.find((tool:{function:{description:string}})=>tool.function.description.startsWith("write:"));
     return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:["first","second"].map(id=>({id,type:"function",function:{name:tool.function.name,arguments:"{}"}}))}}]});
-  });
-  t.after(async()=>{await wb.shutdown();server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(directory,{recursive:true,force:true});});
+  },{},{configure:false,prefix:"void-parity-unknown-"});
+  t.after(async()=>{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));});
   await wb.addConnector({url:`http://127.0.0.1:${address.port}`,mapping:{write:"aws.s3.object.put"},facts:{"bucket.versioning":"Enabled"}});
   const conn=wb.connectionState().connectors.find(c=>!("builtin" in c)&&c.url?.includes(String(address.port)))!;
   await wb.probeConnector(conn.id);
@@ -74,14 +71,13 @@ for (const cancelAfterDispatch of [false, true]) test(`uncertain connector outco
 });
 
 test("projects validate full bounds, return copies and persist by stable identity", async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-project-contract-"));
- let app=new Workbench({VOID_DATA_DIR:directory});
- t.after(async()=>{app.close();await rm(directory,{recursive:true,force:true});});
+ const f=await isolatedWorkbench(t,undefined,{},{configure:false,prefix:"void-project-contract-"});
+ let app=f.app;
  assert.throws(()=>app.upsertProject({name:"x".repeat(161),root:"/root"}),/name/i);
  const project=app.upsertProject({id:"example",name:"Example",root:"/descriptive-only"});
  project.name="Changed outside";
  assert.equal(app.projects()[0]?.name,"Example");
- app.close();app=new Workbench({VOID_DATA_DIR:directory});
+ app=f.restart();
  assert.equal(app.projects()[0]?.id,"example");
  assert.equal(app.upsertProject({id:"example",name:"Renamed",root:"/new"}).id,"example");
  assert.equal(app.projects().length,1);
@@ -105,6 +101,7 @@ test("receipt persistence failure after external dispatch stops all later genera
   const body=JSON.parse(String(init?.body));const tool=body.tools.find((t:{function:{description:string}})=>t.function.description.startsWith("write:"));
   return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:[{id:"one",type:"function",function:{name:tool.function.name,arguments:"{}"}}]}}]});
  });
+ assertIsolated(directory,{VOID_DATA_DIR:directory});
  t.after(async()=>{assert.throws(()=>wb.close(),/another runtime/);server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(directory,{recursive:true,force:true});});
  await wb.addConnector({url:`http://127.0.0.1:${address.port}`,mapping:{write:"aws.s3.object.put"},facts:{"bucket.versioning":"Enabled"}});
   const conn=wb.connectionState().connectors.find(c=>!("builtin" in c)&&c.url?.includes(String(address.port)))!;
@@ -132,6 +129,7 @@ for (const forged of [false,true]) test(`operator denial needs fresh signed proo
   const body=JSON.parse(String(init?.body)),tool=body.tools.find((t:{function:{description:string}})=>t.function.description.startsWith("orders_delete:"));
   return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:[{id:"held",type:"function",function:{name:tool.function.name,arguments:'{"where":"id = 1"}'}}]}}]});
  });
+ assertIsolated(join(directory,"state"),{VOID_DATA_DIR:join(directory,"state")});
  t.after(async()=>{await wb.shutdown();await rm(directory,{recursive:true,force:true});});
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await wb.start("Request delete","fixture");

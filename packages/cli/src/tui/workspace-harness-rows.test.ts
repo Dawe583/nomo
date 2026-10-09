@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import { WorkspaceTui } from "./workspace.ts";
 
 /**
@@ -35,6 +36,7 @@ async function ledgerRows(
     VOID_HOOK_COMMANDS: JSON.stringify(hookCommands),
   };
   const app = new Workbench(env, assistantFetcher("ok"));
+  assertIsolated(root, env);
   await app.configure({
     baseUrl: "https://fixture.test/v1",
     apiKey: "fixture-key",

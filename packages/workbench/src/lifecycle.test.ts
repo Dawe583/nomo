@@ -1,19 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 
 test("Stop does not release capacity until the original provider settles; shutdown drains it", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-stop-"));
   let release!: () => void;
   const blocked = new Promise<void>((resolve) => {
     release = resolve;
   });
   let calls = 0;
-  const app = new Workbench({ VOID_DATA_DIR: root }, async (url) => {
+  const { app } = await isolatedWorkbench(t, async (url) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;
@@ -21,16 +17,7 @@ test("Stop does not release capacity until the original provider settles; shutdo
     return Response.json({
       choices: [{ message: { role: "assistant", content: "Late answer" } }],
     });
-  });
-  t.after(async () => {
-    release();
-    await app.shutdown();
-    await rm(root, { recursive: true, force: true });
-  });
-  await app.configure({
-    baseUrl: "https://fixture.test/v1",
-    apiKey: "fixture",
-  });
+  }, {}, { prefix: "void-stop-", beforeShutdown: release });
   const session = await app.start("First", "fixture");
   app.cancel(session.id);
   assert.throws(() => app.send(session.id, "Second"), /not ready/);
@@ -60,13 +47,12 @@ test("Stop does not release capacity until the original provider settles; shutdo
   assert.equal(app.get(session.id)?.status, "idle");
 });
 test("background sessions queue behind the active run and drain after settlement", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-background-"));
   let release!: () => void;
   const blocked = new Promise<void>((resolve) => {
     release = resolve;
   });
   let calls = 0;
-  const app = new Workbench({ VOID_DATA_DIR: root }, async (url) => {
+  const { app } = await isolatedWorkbench(t, async (url) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;
@@ -74,16 +60,7 @@ test("background sessions queue behind the active run and drain after settlement
     return Response.json({
       choices: [{ message: { role: "assistant", content: "Done" } }],
     });
-  });
-  t.after(async () => {
-    release();
-    await app.shutdown();
-    await rm(root, { recursive: true, force: true });
-  });
-  await app.configure({
-    baseUrl: "https://fixture.test/v1",
-    apiKey: "fixture",
-  });
+  }, {}, { prefix: "void-background-", beforeShutdown: release });
   const first = await app.start("First", "fixture");
   const queued = await app.start(
     "Queued",
@@ -109,7 +86,6 @@ test("background sessions queue behind the active run and drain after settlement
 
 test("queued work keeps one run identity and retained prompt without restart dispatch", async (t) => {
   const { LocalStorage } = await import("./storage.ts");
-  const root = await mkdtemp(join(tmpdir(), "void-queued-history-"));
   let release!: () => void,
     calls = 0;
   const requests: Array<{
@@ -137,16 +113,12 @@ test("queued work keeps one run identity and retained prompt without restart dis
       choices: [{ message: { role: "assistant", content: "Done" } }],
     });
   };
-  let app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
-  t.after(async () => {
-    release();
-    await app.shutdown();
-    await rm(root, { recursive: true, force: true });
+  const f = await isolatedWorkbench(t, fetcher, {}, {
+    prefix: "void-queued-history-",
+    beforeShutdown: release,
   });
-  await app.configure({
-    baseUrl: "https://fixture.test/v1",
-    apiKey: "fixture",
-  });
+  const root = f.root;
+  let app = f.app;
   const profile = {
     id: "queued-profile",
     name: "Queued",
@@ -223,7 +195,9 @@ test("queued work keeps one run identity and retained prompt without restart dis
   storage.read();
   storage.save(snapshot);
   const before = calls;
-  app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  // `shutdown` above already persisted and closed, so the reopen must not
+  // close a second time.
+  app = f.restart({ keepOpen: true });
   assert.equal(app.get(queued.id)!.status, "paused");
   assert.equal(
     app.runs().find((run) => run.sessionId === queued.id)?.state,
@@ -234,13 +208,12 @@ test("queued work keeps one run identity and retained prompt without restart dis
 
 test("background queue is bounded and Stop removes only the selected queued session", async (t) => {
   const { capabilities } = await import("./gui.ts");
-  const directory = await mkdtemp(join(tmpdir(), "void-queue-cap-"));
   let release!: () => void,
     calls = 0;
   const blocked = new Promise<void>((resolve) => {
     release = resolve;
   });
-  const app = new Workbench({ VOID_DATA_DIR: directory }, async (url) => {
+  const { app } = await isolatedWorkbench(t, async (url) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;
@@ -248,16 +221,7 @@ test("background queue is bounded and Stop removes only the selected queued sess
     return Response.json({
       choices: [{ message: { role: "assistant", content: "Done" } }],
     });
-  });
-  t.after(async () => {
-    release();
-    await app.shutdown();
-    await rm(directory, { recursive: true, force: true });
-  });
-  await app.configure({
-    baseUrl: "https://fixture.test/v1",
-    apiKey: "fixture",
-  });
+  }, {}, { prefix: "void-queue-cap-", beforeShutdown: release });
   const active = await app.start("First", "fixture");
   const cap = (capabilities("local") as { maxQueuedRuns?: number })
     .maxQueuedRuns;

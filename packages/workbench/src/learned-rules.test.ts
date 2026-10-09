@@ -1,8 +1,5 @@
 import test from "node:test";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 import assert from "node:assert/strict";
 
 import { LEARNED_RULE_MIN_REPEATS, mineLearnedRules } from "./learned-rules.ts";
@@ -129,8 +126,6 @@ test("the threshold is a count, and a useless one is rejected", () => {
 });
 
 test("learned rules are appended, so an operator's own rule is still reached first", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-learned-order-"));
-  t.after(() => rm(directory, { recursive: true, force: true }));
   // Nothing here reaches a provider — the workbench is only built so its
   // evidence map and policy merge exist to be inspected. Without a fetcher
   // `configure` tries a real endpoint and the test fails on the network
@@ -139,8 +134,9 @@ test("learned rules are appended, so an operator's own rule is still reached fir
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] })) as typeof fetch;
-  const app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const { app } = await isolatedWorkbench(t, fetcher, {}, {
+    prefix: "void-learned-order-",
+  });
   await app.shutdown();
 
   const internals = app as unknown as {

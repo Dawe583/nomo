@@ -3,6 +3,16 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- Tests can no longer write into the operator's own workspace by accident. A
+  test that misspelled an environment variable — the kind of typo a rename
+  introduces one file at a time — used to fall back to the real
+  `~/.void/workbench` store, overwrite the operator's sessions and keys, and
+  still report green, because a test asserting against real state passes just
+  as well as one asserting against a temporary directory. Every test that
+  builds a Workbench now proves it is isolated immediately after building it,
+  and the suite fails if a test names a `VOID_` or `NOMO_` variable that no
+  source file reads, so the mistake is reported where it was made instead of
+  being written to disk.
 - A settled turn can now spend one model call on learning, and only when the
   gate says it is worth one. The harness mines the signed workspace chain for
   lessons and refusals, asks a provider for a proposal, validates it, and

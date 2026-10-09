@@ -6,11 +6,13 @@ import { tmpdir } from 'node:os';
 import { desktopSetup, importDesktopProvider } from './desktop-setup.ts';
 import { listenControlPlane } from './server.ts';
 import { Workbench } from '../../../packages/workbench/src/index.ts';
+import { assertIsolated } from '../../../packages/workbench/src/test-fixture.ts';
 
 async function fixture(t: TestContext, fetcher: typeof fetch = async () => Response.json({ data: [{ id: 'muse-spark-1.3-contributor-free' }] })) {
   const home = await mkdtemp(join(tmpdir(), 'void-setup-'));
   const env = { HOME: home, VOID_DATA_DIR: join(home, 'void'), VOID_DESKTOP_WEB_ROOT: home };
   const app = new Workbench(env, fetcher);
+  assertIsolated(env.VOID_DATA_DIR, env);
   t.after(async () => {
     try { app.close(); } catch (error) { assert.match(String(error), /Workspace changed in another runtime/); }
     finally { await rm(home, { recursive: true, force: true }); }
@@ -47,6 +49,7 @@ test('local import uses fixed endpoint, hides key, selects valid model and survi
   assert.ok(!JSON.stringify(result).includes(key));
   assert.deepEqual(await readFile(file), original);
   const restored = new Workbench(f.env);
+  assertIsolated(f.env.VOID_DATA_DIR, f.env);
   try { assert.equal((await restored.providerState()).defaultModel, 'zen-test-model'); }
   finally { restored.close(); }
   assert.ok(!(await readFile(join(f.env.VOID_DATA_DIR, 'workspace.enc'))).includes(Buffer.from(key)));
@@ -121,12 +124,14 @@ test('concurrent workspace writer prevents import and retains prior in-memory pr
   await f.app.configure({ baseUrl: 'https://prior.test/v1', apiKey: 'prior' });
   const before = await f.app.providerState();
   const second = new Workbench(f.env, async () => Response.json({ data: [{ id: 'second' }] }));
+  assertIsolated(f.env.VOID_DATA_DIR, f.env);
   try {
     await second.configure({ baseUrl: 'https://second.test/v1', apiKey: 'second' });
     await f.save(auth, { opencode: { type: 'api', key } });
     await assert.rejects(importDesktopProvider('opencode:zen', f.env, f.app), /save failed/);
     assert.deepEqual(await f.app.providerState(), before);
     const restored = new Workbench(f.env);
+    assertIsolated(f.env.VOID_DATA_DIR, f.env);
     try { assert.equal((await restored.providerState()).baseUrl, 'https://second.test/v1'); }
     finally { restored.close(); }
   } finally { assert.throws(() => second.close(), /Workspace changed in another runtime/); }

@@ -1,9 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 import { CompatibleProvider, ProviderRequestError } from "./provider.ts";
 import {
   FREE_MODEL_BY_ORIGIN,
@@ -16,9 +13,8 @@ import {
 const freeModel = FREE_MODEL_BY_ORIGIN["https://api.tokenrouter.com"];
 
 async function workspace(t: test.TestContext, models: readonly string[] = []) {
-  const dir = await mkdtemp(join(tmpdir(), "void-no-default-provider-"));
-  const workbench = new Workbench(
-    { VOID_DATA_DIR: dir },
+  const { app } = await isolatedWorkbench(
+    t,
     async (url) =>
       String(url).endsWith("/models")
         ? Response.json({ data: models.map((id) => ({ id })) })
@@ -27,12 +23,10 @@ async function workspace(t: test.TestContext, models: readonly string[] = []) {
               { message: { role: "assistant", content: "Fixture reply" } },
             ],
           }),
+    {},
+    { configure: false, prefix: "void-no-default-provider-" },
   );
-  t.after(async () => {
-    workbench.close();
-    await rm(dir, { recursive: true, force: true });
-  });
-  return workbench;
+  return app;
 }
 
 test("a workspace with no provider configured has no provider id and no model id", async (t) => {

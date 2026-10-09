@@ -4,11 +4,13 @@ import {mkdtemp,rm} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {Workbench} from "../../../packages/workbench/src/index.ts";
+import {assertIsolated} from "../../../packages/workbench/src/test-fixture.ts";
 import {listenControlPlane} from "./server.ts";
 
 test("local recovery routes require exact stored approval and retain immutable previews",async t=>{
  const directory=await mkdtemp(join(tmpdir(),"void-api-recovery-"));
  const wb=new Workbench({VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"},async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]}));
+ assertIsolated(directory);
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await wb.start("Test","fixture"); await wb.settled();
  const first=await wb.editDocument(session.id,{path:"note",content:"one",expectedRevision:null});
@@ -53,6 +55,7 @@ test("server read-only mode blocks direct document and recovery mutations",async
  const directory=await mkdtemp(join(tmpdir(),"void-api-readonly-"));
  const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
  const wb=new Workbench({VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"},fetcher);
+ assertIsolated(directory);
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await wb.start("Test","fixture");await wb.settled();
  const document=await wb.editDocument(session.id,{path:"note",content:"one",expectedRevision:null});
@@ -98,6 +101,7 @@ test("local branch route strictly validates and delegates to Workbench.branch",a
  const directory=await mkdtemp(join(tmpdir(),"void-api-branch-"));
  const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
  const wb=new Workbench({VOID_DATA_DIR:directory},fetcher);
+ assertIsolated(directory);
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const parent=await wb.start("Branch fixture","fixture"); await wb.settled(); wb.close();
  // Seeding a branch copies managed documents, which is a durable document

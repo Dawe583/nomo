@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createServer, type Server } from "node:http";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
+import type { Workbench } from "./index.ts";
 
 /** A minimal MCP server over loopback HTTP that answers the catalog handshake
  * and counts the requests it received, so a test can prove that a staged
@@ -56,15 +56,10 @@ function connectorState(app: Workbench, id: string) {
 }
 
 test("a connector is inert until the operator probes and confirms it", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-consent-"));
   const server = await catalogServer([{ name: "test-tool" }]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, provider);
-  t.after(async () => {
-    await app.shutdown();
-    await server.close();
-    await rm(directory, { recursive: true, force: true });
-  });
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  t.after(() => server.close());
+  // `configure` defaults to the same base URL and API key this test used.
+  const { app } = await isolatedWorkbench(t, provider, {}, { prefix: "void-consent-" });
 
   await app.addConnector({ url: server.url, name: "Test" });
   const id = app.connectionState().connectors.at(-1)!.id;
@@ -105,12 +100,10 @@ test("a connector is inert until the operator probes and confirms it", async (t)
 });
 
 test("a failed probe leaves the staged connector exactly as it was", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-probe-fail-"));
   const server = await catalogServer([], 503);
-  const app = new Workbench({ VOID_DATA_DIR: directory });
-  t.after(async () => {
-    await server.close();
-  });
+  t.after(() => server.close());
+  const f = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-probe-fail-" });
+  const app = f.app;
   await app.addConnector({ url: server.url, name: "Failing" });
   const id = app.connectionState().connectors.at(-1)!.id;
 
@@ -119,22 +112,16 @@ test("a failed probe leaves the staged connector exactly as it was", async (t) =
   assert.deepEqual(connectorState(app, id).tools, []);
   await app.shutdown();
 
-  const reopened = new Workbench({ VOID_DATA_DIR: directory });
-  t.after(async () => {
-    await reopened.shutdown();
-    await rm(directory, { recursive: true, force: true });
-  });
+  const reopened = f.restart({ keepOpen: true });
   assert.equal(connectorState(reopened, id).consentState, "staged");
   assert.deepEqual(connectorState(reopened, id).tools, []);
 });
 
 test("a snapshot written before the consent gate loads as staged with no catalog", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-legacy-"));
   const server = await catalogServer([{ name: "legacy-tool" }]);
-  t.after(async () => {
-    await server.close();
-  });
-  const app = new Workbench({ VOID_DATA_DIR: directory });
+  t.after(() => server.close());
+  const f = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-legacy-" });
+  const app = f.app;
   await app.addConnector({ url: server.url, name: "Legacy" });
   const id = app.connectionState().connectors.at(-1)!.id;
   await app.probeConnector(id);
@@ -142,8 +129,8 @@ test("a snapshot written before the consent gate loads as staged with no catalog
   await app.shutdown();
 
   // Rewrite the persisted snapshot the way a build without the gate wrote it.
-  const key = await readFile(join(directory, "workspace.key"));
-  const path = join(directory, "workspace.enc");
+  const key = await readFile(join(f.root, "workspace.key"));
+  const path = join(f.root, "workspace.enc");
   const stored = await readFile(path);
   const decipher = createDecipheriv("aes-256-gcm", key, stored.subarray(0, 12));
   decipher.setAuthTag(stored.subarray(12, 28));
@@ -159,22 +146,13 @@ test("a snapshot written before the consent gate loads as staged with no catalog
   ]);
   await writeFile(path, Buffer.concat([iv, cipher.getAuthTag(), bytes]));
 
-  const reopened = new Workbench({ VOID_DATA_DIR: directory });
-  t.after(async () => {
-    await reopened.shutdown();
-    await rm(directory, { recursive: true, force: true });
-  });
+  const reopened = f.restart({ keepOpen: true });
   assert.equal(connectorState(reopened, id).consentState, "staged");
   assert.deepEqual(connectorState(reopened, id).tools, []);
 });
 
 test("a connector token never appears in the public state", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-redact-"));
-  const app = new Workbench({ VOID_DATA_DIR: directory });
-  t.after(async () => {
-    await app.shutdown();
-    await rm(directory, { recursive: true, force: true });
-  });
+  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-redact-" });
   await app.addConnector({
     url: "https://mcp.example.com/mcp",
     token: "super-secret-token-12345",
@@ -184,12 +162,7 @@ test("a connector token never appears in the public state", async (t) => {
 });
 
 test("twelve connectors is the limit", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-limit-"));
-  const app = new Workbench({ VOID_DATA_DIR: directory });
-  t.after(async () => {
-    await app.shutdown();
-    await rm(directory, { recursive: true, force: true });
-  });
+  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-limit-" });
   for (let index = 0; index < 12; index += 1)
     await app.addConnector({ url: `https://mcp-${index}.example.com/mcp` });
   await assert.rejects(
@@ -199,12 +172,7 @@ test("twelve connectors is the limit", async (t) => {
 });
 
 test("a non-loopback HTTP endpoint and embedded credentials are refused", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-validation-"));
-  const app = new Workbench({ VOID_DATA_DIR: directory });
-  t.after(async () => {
-    await app.shutdown();
-    await rm(directory, { recursive: true, force: true });
-  });
+  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-validation-" });
   for (const url of [
     "http://example.com/mcp",
     "https://example.com/mcp?token=abc",
@@ -215,17 +183,12 @@ test("a non-loopback HTTP endpoint and embedded credentials are refused", async 
 });
 
 test("the policy preview shows the decision each tool would get", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-preview-"));
   const server = await catalogServer([
     { name: "unmapped_unknown_thing" },
     { name: "delete" },
   ]);
-  const app = new Workbench({ VOID_DATA_DIR: directory });
-  t.after(async () => {
-    await app.shutdown();
-    await server.close();
-    await rm(directory, { recursive: true, force: true });
-  });
+  t.after(() => server.close());
+  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-preview-" });
   await app.addConnector({
     url: server.url,
     name: "Preview",

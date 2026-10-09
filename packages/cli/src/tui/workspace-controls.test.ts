@@ -4,6 +4,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import { WorkspaceTui, renderWorkspace } from "./workspace.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
@@ -19,6 +20,7 @@ async function fixture(t: test.TestContext) {
           ],
         }),
   );
+  assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -30,6 +32,7 @@ async function fixture(t: test.TestContext) {
     restart: async () => {
       await app.shutdown();
       app = new Workbench(env);
+      assertIsolated(root, env);
       return app;
     },
   };
@@ -494,6 +497,7 @@ test("/hook flips a saved hook without rewriting it", async (t) => {
           ],
         }),
   );
+  assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });

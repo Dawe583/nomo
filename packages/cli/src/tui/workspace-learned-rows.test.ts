@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { WorkspaceTui } from "./workspace.ts";
 
@@ -30,6 +31,7 @@ async function ledgerRows(t: {
   const root = await mkdtemp(join(tmpdir(), "void-tui-learned-rows-"));
   const env = { VOID_DATA_DIR: root };
   const app = new Workbench(env, assistantFetcher("ok"));
+  assertIsolated(root, env);
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-key" });
   t.after(async () => {
     await app.shutdown();

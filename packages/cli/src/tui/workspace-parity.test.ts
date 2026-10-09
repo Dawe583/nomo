@@ -4,6 +4,7 @@ import { access, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import {
   MODE_ICON,
   TAB_ICONS,
@@ -46,6 +47,7 @@ async function fixtureApp(
 ) {
   const full = { VOID_DATA_DIR: root, ...env };
   const app = new Workbench(full, assistantFetcher(content));
+  assertIsolated(root, full);
   await app.configure({
     baseUrl: "https://fixture.test/v1",
     apiKey: "fixture-key",
@@ -106,6 +108,7 @@ test("a prompt sent during a run is queued, never dropped", async (t) => {
       return Response.json({ data: [{ id: "fixture" }] });
     return gate();
   });
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -166,6 +169,7 @@ test("gated shell shows output once and refuses key material", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-shell-"));
   const full = { VOID_DATA_DIR: root, VOID_TUI_ENV_PROBE: "probe-secret" };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -206,6 +210,7 @@ test("shell output redacts exact stored secret values", async (t) => {
     NVIDIA_API_KEY: "nv7-x91k3p",
   };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -371,6 +376,7 @@ test("provider only commands reject what VOID cannot do", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-unsupported-"));
   const full = { VOID_DATA_DIR: root };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -384,6 +390,7 @@ test("/login reuses provider setup, /logout disconnects", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-login-"));
   const full = { VOID_DATA_DIR: root };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -487,6 +494,7 @@ test("prompt frame stays continuous at every width", async (t) => {
 test("live status stays within the compact ASCII identity", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-ascii-status-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -702,6 +710,7 @@ test("arrow keys cycle panels in navigation, cursor in editing", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-arrows-"));
   const full = { VOID_DATA_DIR: root };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -837,6 +846,7 @@ test("/conformance proves the adapter behind TUI edits inside the TUI", async (t
   const root = await mkdtemp(join(tmpdir(), "void-tui-conformance-"));
   const full = { VOID_DATA_DIR: root };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -857,6 +867,7 @@ test("/plan /stats /exit /keybindings match the reference commands", async (t) =
   const root = await mkdtemp(join(tmpdir(), "void-tui-cmds-"));
   const full = { VOID_DATA_DIR: root };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -911,6 +922,7 @@ test("/theme switches session color and motion without touching env", async (t) 
   const root = await mkdtemp(join(tmpdir(), "void-tui-theme-"));
   const full = { VOID_DATA_DIR: root };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -961,6 +973,7 @@ test("/providers lists presets with local open model options", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-providers-"));
   const full = { VOID_DATA_DIR: root };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -984,6 +997,7 @@ test("/harness shows and switches the agent harness", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-harness-"));
   const full = { VOID_DATA_DIR: root, PATH: "/usr/bin:/bin" };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -1013,6 +1027,7 @@ test("live thinking dots animate with motion and freeze without it", async (t) =
   const root = await mkdtemp(join(tmpdir(), "void-tui-dots-"));
   const full = { VOID_DATA_DIR: root };
   const app = new Workbench(full);
+  assertIsolated(root, full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -1034,6 +1049,7 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
   // 1. No env key -> providerState stays null, no auto-configuration.
   const root = await mkdtemp(join(tmpdir(), "void-nvidia-chat-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -1058,6 +1074,7 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
     return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
   };
   const app2 = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  assertIsolated(root);
   await app2.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-key" });
   const ui2 = new WorkspaceTui(app2, { VOID_DATA_DIR: root });
   await ui2.initialize();
@@ -1070,6 +1087,7 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
   const root3 = await mkdtemp(join(tmpdir(), "void-nvidia-env-"));
   const app3 = new Workbench({ VOID_DATA_DIR: root3, NVIDIA_API_KEY: "nvkey" }, async (url) =>
     String(url).endsWith("/models") ? Response.json({ data: [{ id: "m" }] }) : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] }));
+  assertIsolated(root3);
   t.after(async () => {
     await app3.shutdown();
     await rm(root3, { recursive: true, force: true });
@@ -1081,6 +1099,7 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
 test("no silent provider fallback - workspace with no provider says so explicitly", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-no-provider-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -1104,6 +1123,7 @@ test("logout preserves readable history, removes profiles and session keys", asy
       ? Response.json({ data: [{ id: "m" }] })
       : Response.json({ choices: [{ message: { role: "assistant", content: "hello back" } }] });
   const app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -1138,6 +1158,7 @@ test("logout preserves readable history, removes profiles and session keys", asy
 test("provider presets stay a choice, not a default", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-preset-choice-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });

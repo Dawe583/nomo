@@ -15,6 +15,7 @@ import {
   activity,
   providerStateFromFailure,
 } from "./gui.ts";
+import { assertIsolated, isolatedWorkbench } from "./test-fixture.ts";
 
 test("cursor binds filters and preserves position when new rows arrive; finds old results", () => {
   const rows = Array.from({ length: 151 }, (_, i) => ({
@@ -64,6 +65,7 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
           usage: { prompt_tokens: 2, completion_tokens: 3, total_tokens: 5 },
         }));
   let wb = new Workbench({ VOID_DATA_DIR: directory, VOID_PERMISSION_MODE: "normal" }, fetcher);
+  assertIsolated(directory, { VOID_DATA_DIR: directory, VOID_PERMISSION_MODE: "normal" });
   t.after(async () => {
     wb.close();
     await rm(directory, { recursive: true, force: true });
@@ -140,6 +142,7 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
   wb.patchPreferences({ locale: "en" });
   wb.close();
   wb = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  assertIsolated(directory, { VOID_DATA_DIR: directory });
   assert.equal(wb.getPreferences().locale, "en");
   assert.equal(wb.sessionPage(new URLSearchParams("archived=true")).total, 1);
   assert.equal((await wb.start("First", "test", "request-one")).id, session.id);
@@ -147,25 +150,20 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
 });
 
 test("provider 429 persists Retry-After and never retries the generation", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-rate-"));
   let calls = 0;
-  const wb = new Workbench({ VOID_DATA_DIR: directory }, async (url) =>
-    String(url).endsWith("/models")
-      ? Response.json({ data: [{ id: "test" }] })
-      : (calls++,
-        new Response("private provider failure", {
-          status: 429,
-          headers: { "retry-after": "7" },
-        })),
+  const { app: wb } = await isolatedWorkbench(
+    t,
+    async (url) =>
+      String(url).endsWith("/models")
+        ? Response.json({ data: [{ id: "test" }] })
+        : (calls++,
+          new Response("private provider failure", {
+            status: 429,
+            headers: { "retry-after": "7" },
+          })),
+    {},
+    { baseUrl: "https://provider.test/v1", apiKey: "test-secret", prefix: "void-rate-" },
   );
-  t.after(async () => {
-    wb.close();
-    await rm(directory, { recursive: true, force: true });
-  });
-  await wb.configure({
-    baseUrl: "https://provider.test/v1",
-    apiKey: "test-secret",
-  });
   const session = await wb.start("Hello", "test");
   while (wb.get(session.id)?.status === "running") await delay(5);
   const failure = wb
@@ -179,7 +177,6 @@ test("provider 429 persists Retry-After and never retries the generation", async
 });
 
 test("a connector keeps its secret, exposes its schema, and only an explicit probe contacts the server", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-connector-"));
   const methods: string[] = [];
   const server = createServer(async (req, res) => {
     let text = "";
@@ -214,12 +211,13 @@ test("a connector keeps its secret, exposes its schema, and only an explicit pro
   await new Promise<void>((resolve) => server.once("listening", resolve));
   const address = server.address();
   assert.ok(address && typeof address !== "string");
-  const wb = new Workbench({ VOID_DATA_DIR: directory });
+  const { app: wb } = await isolatedWorkbench(t, undefined, {}, {
+    configure: false,
+    prefix: "void-connector-",
+  });
   t.after(async () => {
-    wb.close();
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
-    await rm(directory, { recursive: true, force: true });
   });
   await wb.addConnector({
     url: `http://127.0.0.1:${address.port}/mcp`,

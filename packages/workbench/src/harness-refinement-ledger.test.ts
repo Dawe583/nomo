@@ -1,9 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
+
 import type { RefinementProposal } from "./refine-pass.ts";
 
 const fetcher = async (url: unknown) =>
@@ -16,10 +14,13 @@ async function fixture(
   extraEnv: Record<string, string> = {},
   { seedDocument = true }: { seedDocument?: boolean } = {},
 ) {
-  const directory = await mkdtemp(join(tmpdir(), "void-refinement-ledger-"));
-  const app = new Workbench({ VOID_DATA_DIR: directory, ...extraEnv }, fetcher);
-  let appClosed = false;
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  // `extraEnv` rides along on the fixture's own environment object, so a
+  // ledger or permission override is added rather than swapped in for
+  // `VOID_DATA_DIR`.
+  const f = await isolatedWorkbench(t, fetcher, extraEnv, {
+    prefix: "void-refinement-ledger-",
+  });
+  const { app } = f;
   const session = await app.start("Review the workspace", "fixture");
   await app.settled();
   // A read-only workbench cannot take the seed write, and the session start
@@ -30,17 +31,16 @@ async function fixture(
       content: "signed source record",
       expectedRevision: null,
     });
-  t.after(async () => {
-    if (!appClosed) await app.shutdown();
-    await rm(directory, { recursive: true, force: true });
-  });
   return {
     app,
     session,
-    directory,
     async closeOriginal() {
-      appClosed = true;
       await app.shutdown();
+    },
+    // Reopens over the same root with the same environment. The previous
+    // construction rebuilt the env by hand and so dropped `extraEnv`.
+    reopen() {
+      return f.restart({ keepOpen: true });
     },
   };
 }
@@ -158,12 +158,12 @@ test("mutating a returned ledger snapshot cannot alter the signed chain", async 
 });
 
 test("pending proposals survive restart and rejection is signed", async (t) => {
-  const { app, session, directory, closeOriginal } = await fixture(t);
+  const { app, session, closeOriginal, reopen } = await fixture(t);
   const created = await app.refineHarness(session.id, proposal());
   const digest = created.proposalDigest!;
   await closeOriginal();
 
-  const reopened = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  const reopened = reopen();
   try {
     const pending = await reopened.pendingApprovalsFor(session.id);
     assert.equal(pending.length, 1);
@@ -236,7 +236,7 @@ test("prompt edits remain pending and never claim approval from caller text", as
 });
 
 test("a prompt addendum applies only after the operator approves its digest", async (t) => {
-  const { app, session, directory, closeOriginal } = await fixture(t);
+  const { app, session, closeOriginal, reopen } = await fixture(t);
   const before = (await app.ledger(session.workspace))!.entries.length;
   const held = await app.refineHarness(session.id, proposal("prompt"));
   assert.equal(held.awaitingApproval.length, 1);
@@ -266,7 +266,7 @@ test("a prompt addendum applies only after the operator approves its digest", as
   // The addendum is operator-approved, so it applies to later sessions and is
   // rebuilt from the chain after a restart rather than living in memory.
   await closeOriginal();
-  const reopened = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  const reopened = reopen();
   try {
     assert.deepEqual(
       (await reopened.harnessEntries(session.workspace)).map((entry) => entry.content),
@@ -339,12 +339,12 @@ test("policy edits are rejected before they reach the signed ledger", async (t) 
 });
 
 test("approved refinement entries are reconstructed from the signed chain after restart", async (t) => {
-  const { app, session, directory, closeOriginal } = await fixture(t);
+  const { app, session, closeOriginal, reopen } = await fixture(t);
   await app.refineHarness(session.id, proposal());
   const pending = await app.pendingApprovalsFor(session.id);
   await app.approveHarnessProposal(session.id, pending[0]!.digest);
   await closeOriginal();
-  const reopened = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  const reopened = reopen();
   try {
     assert.deepEqual(
       (await reopened.harnessEntries(session.workspace)).map((entry) => entry.content),

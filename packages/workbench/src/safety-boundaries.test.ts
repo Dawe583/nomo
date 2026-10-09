@@ -1,25 +1,22 @@
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, rename } from "node:fs/promises";
+import { rm, rename } from "node:fs/promises";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 import { LocalStorage } from "./storage.ts";
 import { activity } from "./gui.ts";
 
-async function fixture(t:import("node:test").TestContext) {
- const directory=await mkdtemp(join(tmpdir(),"void-undo-boundary-"));let calls=0;
+async function fixture(t:TestContext) {
+ let calls=0;
  const fetcher:typeof fetch=async url=>{
   if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
   calls++;return Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
  };
- let app=new Workbench({VOID_DATA_DIR:directory},fetcher);
- t.after(async()=>{await app.shutdown();await rm(directory,{recursive:true,force:true});});
- await app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
- const session=await app.start("Review","fixture");await app.settled();
- return {get app(){return app;},directory,session,calls:()=>calls,restart(){app=new Workbench({VOID_DATA_DIR:directory},fetcher);}};
+ const f=await isolatedWorkbench(t,fetcher,{},{prefix:"void-undo-boundary-"});
+ const session=await f.app.start("Review","fixture");await f.app.settled();
+ return {get app(){return f.app;},directory:f.root,session,calls:()=>calls,restart(options?:{keepOpen?:boolean}){return f.restart(options);}};
 }
-async function paused(t:import("node:test").TestContext) {
+async function paused(t:TestContext) {
  const f=await fixture(t);
  const document=await f.app.editDocument(f.session.id,{path:"note",content:"one",expectedRevision:null});
  const plan=await f.app.planRecoveryJob(f.session.id,{jobId:"paused",selection:{kind:"operations",operationIds:[document.revision!]}});
@@ -41,7 +38,7 @@ test("unknown single Undo blocks same-document writes and sends through Stop and
  assert.equal(f.app.get(id)?.status,"unknown");f.app.stopRun(id);f.app.cancel(id);assert.equal(f.app.get(id)?.status,"unknown");
  await assert.rejects(f.app.editDocument(id,{path:"note",content:"Unsafe",expectedRevision:document.revision}),/settle|reconcil|unknown/i);
  assert.throws(()=>f.app.send(id,"Unsafe"),/unknown/i);assert.equal(f.app.document(id,"note").content,"one");
- await f.app.shutdown();assert.equal(f.app.get(id)?.status,"unknown");f.restart();assert.equal(f.app.get(id)?.status,"unknown");
+ await f.app.shutdown();assert.equal(f.app.get(id)?.status,"unknown");f.restart({keepOpen:true});assert.equal(f.app.get(id)?.status,"unknown");
  await assert.rejects(f.app.editDocument(id,{path:"note",content:"Unsafe after restart",expectedRevision:document.revision}),/settle|reconcil|unknown/i);
  assert.throws(()=>f.app.send(id,"Unsafe after restart"),/unknown/i);assert.equal(f.calls(),1);
 });
@@ -64,14 +61,12 @@ test("an independent branch does not inherit its parent recovery owner or queued
  await assert.rejects(f.app.recoveryJobStatus(child.id,f.plan.jobId),/not found/i);
 });
 test("Stop projects stopping on every live surface until the provider settles",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-stopping-view-"));let release!:()=>void;
+ let release!:()=>void;
  const blocked=new Promise<void>(resolve=>{release=resolve;});
- const app=new Workbench({VOID_DATA_DIR:directory},async url=>{
+ const {app}=await isolatedWorkbench(t,async url=>{
   if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
   await blocked;return Response.json({choices:[{message:{role:"assistant",content:"Late"}}]});
- });
- t.after(async()=>{release();await app.shutdown();await rm(directory,{recursive:true,force:true});});
- await app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
+ },{},{prefix:"void-stopping-view-",beforeShutdown:release});
  const session=await app.start("Review","fixture");app.stopRun(session.id);
  assert.equal(app.running(),true);assert.equal(app.runs()[0]?.state,"stopping");
  assert.equal(activity(app.allViews()).runs[0]?.state,"stopping");

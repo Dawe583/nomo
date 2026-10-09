@@ -7,6 +7,7 @@ import net from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { Workbench, WORKBENCH_VIEW_MAX_EVENT_BYTES } from "../../../packages/workbench/src/index.ts";
+import { assertIsolated } from "../../../packages/workbench/src/test-fixture.ts";
 import { listenControlPlane, CONTROL_PLANE_SSE_DRAIN_TIMEOUT_MS } from "./server.ts";
 
 /**
@@ -38,6 +39,7 @@ async function seedHeavySession(
     { VOID_DATA_DIR: dir, VOID_PERMISSION_MODE: "normal" },
     bigReplyFetcher(replyBytes),
   );
+  assertIsolated(dir);
   await wb.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const started = await wb.start("first", "fixture");
   await wb.settled();
@@ -168,6 +170,7 @@ test("a session view drops its oldest events at a named byte ceiling", async (t)
     { VOID_DATA_DIR: dir, VOID_PERMISSION_MODE: "normal" },
     bigReplyFetcher(30_000),
   );
+  assertIsolated(dir);
   t.after(async () => {
     wb.close();
     await rm(dir, { recursive: true, force: true });

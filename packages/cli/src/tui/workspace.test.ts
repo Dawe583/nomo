@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import {
   WorkspaceTui,
   approvalBannerLines,
@@ -43,6 +44,7 @@ test("Ctrl+P requests the command palette through the input, not a submit", () =
 test("command palette handler lists the real command reference", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-palette-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -60,6 +62,7 @@ test("command palette handler lists the real command reference", async (t) => {
 test("queuePrompt(undefined) cancels a queued prompt", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-queue-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -124,6 +127,7 @@ test("multiline editing moves across Unicode lines and deletes words without tou
 test("tools show actual managed capabilities, searchable schemas and no execution on inspection", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-tools-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -151,6 +155,7 @@ test("tools show actual managed capabilities, searchable schemas and no executio
 test("Claude style management aliases open real VOID views", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-aliases-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -206,6 +211,7 @@ test("compact tool output keeps complete events available and never hides assist
 test("composer follows the actual cursor beyond literal underscores", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-cursor-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -255,6 +261,7 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
       ],
     });
   });
+  assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -320,6 +327,7 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
   assert.match(verified.stdout, /signatures and hash links/);
   await app.shutdown();
   app = new Workbench(env);
+  assertIsolated(root, env);
   assert.equal(app.workspace(id).files["plan.md"], "first");
   assert.equal((await app.ledger(app.get(id)!.workspace))?.result.ok, true);
   const restored = new WorkspaceTui(app, env);
@@ -348,6 +356,7 @@ test("input preserves Unicode and multiline paste, never submits pasted Enter", 
 test("terminal rendering contains hostile control text and complete Unicode wrapping", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-frame-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -388,6 +397,7 @@ test("stream deltas are shown once and replaced by the completed assistant messa
 test("styled frames stay bounded, motion can stop, and slash choices never include arguments", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-style-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -495,6 +505,7 @@ test("search and paging use real conversation data and return to live follow", a
           ],
         }),
   );
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -559,6 +570,7 @@ test("unified diff shows changed hunks with context and caps long output", () =>
 test("TUI doctor reuses the CLI implementation without touching state", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-doctor-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -606,6 +618,7 @@ test("rewind selects the latest recoverable operation", async (t) => {
       ],
     });
   });
+  assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -632,6 +645,7 @@ test("rewind selects the latest recoverable operation", async (t) => {
 test("rewind without a conversation asks for selection", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-rewind-empty-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -646,6 +660,7 @@ test("TUI init reuses the CLI implementation and creates storage", async (t) => 
   const root = await mkdtemp(join(tmpdir(), "void-tui-init-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
   });
@@ -697,6 +712,7 @@ test("A2 banner sanitizes hostile tool ids", () => {
 test("A2 banner stays visible across tab switches", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-banner-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -749,6 +765,7 @@ test("A4 mode label always says local only, never server enforced", () => {
 test("A4 status bar and status detail carry the local only label", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-modelabel-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -891,6 +908,7 @@ test("A1 approval review builds selectable hunks only with a diff", () => {
 test("A1 hunk toggle flips scope and the suffix rides with the decision", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-hunks-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });

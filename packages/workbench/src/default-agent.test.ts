@@ -1,15 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, readdir, rm, stat } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { Workbench } from './index.ts';
+import { isolatedWorkbench } from './test-fixture.ts';
 import { canonicalJson } from '../../ledger/src/canonical.ts';
 import { sha256Hex } from '../../ledger/src/sign.ts';
 
 test('default agent writes a captured document, restarts, verifies evidence and explicitly undoes it', async t => {
-  const directory = await mkdtemp(join(tmpdir(), 'void-default-agent-'));
   const secret = 'default-agent-test-private-api-key';
   let turns = 0;
   const fetcher: typeof fetch = async (url, options) => {
@@ -27,9 +25,16 @@ test('default agent writes a captured document, restarts, verifies evidence and 
     assert.equal(JSON.parse(result.content[0].text).completed, true);
     return Response.json({ choices: [{ message: { role: 'assistant', content: 'The document was created.' } }] });
   };
-  const env = { VOID_DATA_DIR: directory };
-  let workbench = new Workbench(env, fetcher);
-  t.after(async () => { workbench.close(); await rm(directory, { recursive: true, force: true }); });
+  const f = await isolatedWorkbench(
+    t,
+    fetcher,
+    {},
+    { prefix: 'void-default-agent-', configure: false },
+  );
+  // The fixture does not configure: the fetcher asserts on the Authorization
+  // header of every request, so the key has to be this test's own before the
+  // first one is dispatched.
+  let workbench = f.app;
   await workbench.configure({ baseUrl: 'https://provider.test/v1', apiKey: secret });
   const session = await workbench.start('Create a plan in the workspace.', 'test-tool-model');
   const deadline = Date.now() + 10000;
@@ -41,7 +46,7 @@ test('default agent writes a captured document, restarts, verifies evidence and 
   assert.equal(operation.after, 'A real managed document.');
   workbench.close();
 
-  workbench = new Workbench(env, fetcher);
+  workbench = f.restart({ keepOpen: true });
   assert.equal((await workbench.providerState()).connected, true);
   assert.equal(workbench.get(session.id)?.status, 'idle');
   assert.equal(workbench.workspace(session.id).files['notes/plan.md'], 'A real managed document.');
@@ -65,17 +70,17 @@ test('default agent writes a captured document, restarts, verifies evidence and 
   assert.equal((await workbench.ledger(session.workspace))?.result.ok, true);
   workbench.close();
 
-  workbench = new Workbench(env, fetcher);
+  workbench = f.restart({ keepOpen: true });
   assert.deepEqual(workbench.workspace(session.id).files, {});
   assert.equal(workbench.workspace(session.id).operations.length, 2);
   assert.equal((await workbench.undoPreview(session.id, operation.id)).canApply, false);
-  for (const file of await readdir(directory, { recursive: true })) {
-    const path = join(directory, file);
+  for (const file of await readdir(f.root, { recursive: true })) {
+    const path = join(f.root, file);
     if ((await stat(path)).isFile()) assert.equal((await readFile(path)).includes(Buffer.from(secret)), false, `Secret leaked to ${file}`);
   }
   // Owner-only is a POSIX mode claim. Windows has no such bits, so the store
   // narrows the file with an ACL there instead and this bit check would read
   // 0o666 forever. Same guard as storage.test.ts; the secret scan above is what
   // covers both platforms.
-  if (process.platform !== 'win32') assert.equal((await stat(join(directory, 'workspace.enc'))).mode & 0o077, 0);
+  if (process.platform !== 'win32') assert.equal((await stat(join(f.root, 'workspace.enc'))).mode & 0o077, 0);
 });

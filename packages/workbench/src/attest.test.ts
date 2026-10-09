@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "./index.ts";
 import { executeWorkspaceTool } from "./workspace.ts";
+import { assertIsolated, isolatedWorkbench } from "./test-fixture.ts";
 
 import type { PublicKeyLookup } from "../../ledger/src/verify.ts";
 
@@ -41,7 +42,6 @@ function advertisedWriteTool(init: unknown): string {
 /// in-memory snapshot. Calling `commitWorkspace` directly, as the test above
 /// does, proves the chain signs but bypasses everything that could drop it.
 test("a provider-driven tool call lands in the attested chain", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-attest-dispatch-"));
   let turn = 0;
   const dispatchFetcher = async (url: unknown, init?: unknown) => {
     if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
@@ -77,12 +77,11 @@ test("a provider-driven tool call lands in the attested chain", async (t) => {
         "data: [DONE]\r\n\r\n",
     );
   };
-  const app = new Workbench({ VOID_DATA_DIR: directory }, dispatchFetcher);
-  t.after(async () => {
-    await app.shutdown();
-    await rm(directory, { recursive: true, force: true });
+  const { app } = await isolatedWorkbench(t, dispatchFetcher, {}, {
+    baseUrl: "https://api.tokenrouter.com/v1",
+    apiKey: "fixture",
+    prefix: "void-attest-dispatch-",
   });
-  await app.configure({ baseUrl: "https://api.tokenrouter.com/v1", apiKey: "fixture" });
   const session = await app.start("Write", "fixture", undefined, undefined, undefined);
   await app.settled();
 
@@ -144,6 +143,7 @@ test("attest refuses to mint a key for a workbench that cannot sign", async (t) 
 
   // 1. Sign some evidence with the default dev key, so a key directory exists.
   const signer = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  assertIsolated(directory, { VOID_DATA_DIR: directory });
   await signer.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const first = await signer.start("Write", "fixture", undefined, undefined, undefined);
   await signer.settled();
@@ -180,6 +180,7 @@ test("attest refuses to mint a key for a workbench that cannot sign", async (t) 
 
   // 3. A fresh workbench over the same data: same workspace, no keys on disk.
   const app = new Workbench({ VOID_DATA_DIR: directory, VOID_VERIFY_KEY: pinned }, fetcher);
+  assertIsolated(directory, { VOID_DATA_DIR: directory, VOID_VERIFY_KEY: pinned });
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   // Shut down before the directory goes: `close()` persists, and after-hooks
   // run in registration order, so the removal cannot be registered first.

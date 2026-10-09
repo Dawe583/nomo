@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import type { RefinementProposal } from "../../../workbench/src/refine-pass.ts";
 import { WorkspaceTui } from "./workspace.ts";
 
@@ -15,6 +16,7 @@ async function fixture(t: test.TestContext) {
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" } }] }),
   );
+  assertIsolated(root, env);
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();

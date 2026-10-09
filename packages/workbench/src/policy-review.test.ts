@@ -1,10 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { createServer, type Server } from "node:http";
-import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
+import type { Workbench } from "./index.ts";
 
 /** An MCP server that answers the catalog handshake and records every method
  * it was asked for, so a test can prove a call never left VOID. */
@@ -87,15 +85,11 @@ const deleteCall = (tools: { function: { name: string; description: string } }[]
   tools.find((tool) => tool.function.description.startsWith("delete:"))!.function.name;
 
 test("a tool the provider invented never reaches the connector", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-invented-"));
   const server = await mcpServer([DELETE_TOOL]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(() => "not_in_catalog"));
-  t.after(async () => {
-    await app.shutdown();
-    await server.close();
-    await rm(directory, { recursive: true, force: true });
+  t.after(() => server.close());
+  const { app } = await isolatedWorkbench(t, callingProvider(() => "not_in_catalog"), {}, {
+    prefix: "void-invented-",
   });
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   await confirmedConnector(app, server.url, "Fixture", allowAll);
 
   const session = await app.start("Delete it", "fixture");
@@ -113,15 +107,11 @@ test("a tool the provider invented never reaches the connector", async (t) => {
 });
 
 test("a deny rule stops the call and the connector never sees it", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-denied-"));
   const server = await mcpServer([DELETE_TOOL]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(deleteCall));
-  t.after(async () => {
-    await app.shutdown();
-    await server.close();
-    await rm(directory, { recursive: true, force: true });
+  t.after(() => server.close());
+  const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
+    prefix: "void-denied-",
   });
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const id = await confirmedConnector(app, server.url, "Refused", denyDeletes);
   assert.equal(app.policyPreview(id).tools[0]?.classification, "always");
 
@@ -139,15 +129,11 @@ test("a deny rule stops the call and the connector never sees it", async (t) => 
 });
 
 test("the same classified tool runs when the operator policy allows it", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-allowed-"));
   const server = await mcpServer([DELETE_TOOL]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(deleteCall));
-  t.after(async () => {
-    await app.shutdown();
-    await server.close();
-    await rm(directory, { recursive: true, force: true });
+  t.after(() => server.close());
+  const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
+    prefix: "void-allowed-",
   });
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const id = await confirmedConnector(app, server.url, "Allowed", allowAll);
   assert.equal(app.policyPreview(id).tools[0]?.decision, "allow");
 
@@ -161,15 +147,11 @@ test("the same classified tool runs when the operator policy allows it", async (
 });
 
 test("a running conversation keeps the policy it started with", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-frozen-policy-"));
   const server = await mcpServer([DELETE_TOOL]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(deleteCall));
-  t.after(async () => {
-    await app.shutdown();
-    await server.close();
-    await rm(directory, { recursive: true, force: true });
+  t.after(() => server.close());
+  const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
+    prefix: "void-frozen-policy-",
   });
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const id = await confirmedConnector(app, server.url, "Fixture", allowAll);
   const session = await app.start("Delete it", "fixture");
 
