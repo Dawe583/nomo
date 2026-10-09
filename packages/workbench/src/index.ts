@@ -1,4 +1,4 @@
-import { compactMessages } from "./context.ts";
+import { buildHarnessContext, compactMessages } from "./context.ts";
 import {
   recoveryRequest,
   runtimeSelection,
@@ -22,7 +22,9 @@ import {
   validateProposal,
   applyProposal,
   promptEdits,
+  pendingProposalsFromEntries,
   type AppliedEdit,
+  type PendingProposalView,
   type RefinementEdit,
 } from "./refine-pass.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
@@ -432,7 +434,44 @@ function refinementTextIsSensitive(
   );
 }
 
+/**
+ * The identity an approval binds to. Computed over the validated proposal
+ * with the same canonicaliser the ledger uses, so the digest a reviewer saw
+ * and the digest approval checks cannot disagree about the bytes.
+ */
+async function proposalDigest(proposal: RefinementProposal): Promise<string> {
+  return `sha256:${await sha256Hex(canonicalJson(proposal))}`;
+}
+
+export type PendingProposal = PendingProposalView;
+
 export class Workbench {
+  /**
+   * Values a refinement must never carry. Environment names matching secret
+   * shapes, configured keys and connector tokens: anything four characters
+   * or longer that a proposal repeats is treated as a leak, whether the
+   * proposal arrived from a model just now or from the chain on approval.
+   */
+  private knownSecrets(): string[] {
+    return [
+      ...Object.entries(this.env)
+        .filter(
+          ([name, value]) =>
+            /secret|token|password|credential|api[_-]?key|private[_-]?key|authorization/i.test(
+              name,
+            ) && value,
+        )
+        .map(([, value]) => value!),
+      this.config?.apiKey,
+      this.workspaceKeySecret,
+      ...Object.values(this.profiles).map((profile) => profile.apiKey),
+      ...this.connectors.map((connector) => connector.token),
+    ].filter(
+      (secret): secret is string =>
+        typeof secret === "string" && secret.length >= 4,
+    );
+  }
+
   async refineHarness(
     sessionId: string,
     input: RefinementProposal,
@@ -456,24 +495,7 @@ export class Workbench {
       throw new Error(
         "Skill and subagent edits are proposal-only until their schema is supported.",
       );
-    const knownSecrets = [
-      ...Object.entries(this.env)
-        .filter(
-          ([name, value]) =>
-            /secret|token|password|credential|api[_-]?key|private[_-]?key|authorization/i.test(
-              name,
-            ) && value,
-        )
-        .map(([, value]) => value!),
-      this.config?.apiKey,
-      this.workspaceKeySecret,
-      ...Object.values(this.profiles).map((profile) => profile.apiKey),
-      ...this.connectors.map((connector) => connector.token),
-    ].filter(
-      (secret): secret is string =>
-        typeof secret === "string" && secret.length >= 4,
-    );
-    if (refinementTextIsSensitive(proposal, knownSecrets))
+    if (refinementTextIsSensitive(proposal, this.knownSecrets()))
       throw new Error(
         "Refinement contains secret-like content and was not recorded.",
       );
@@ -512,7 +534,7 @@ export class Workbench {
           JSON.stringify(original) !== JSON.stringify(entry)
         );
       });
-      if (!result.applied.length)
+      if (!result.applied.length && !result.awaitingApproval.length)
         return {
           applied: result.applied,
           awaitingApproval: result.awaitingApproval,
@@ -520,6 +542,39 @@ export class Workbench {
       const state = this.documents[workspace] ?? createWorkspace();
       this.documents[workspace] ??= state;
 
+      // Prompt edits wait for an operator. The proposal is a signed chain
+      // record first and active state only after approval, so a restart
+      // between proposal and decision loses nothing and a caller that drops
+      // the return value cannot lose the proposal with it.
+      if (result.awaitingApproval.length > 0) {
+        const digest = await proposalDigest(proposal);
+        await this.commitWorkspace(
+          session,
+          state,
+          "harness.refinement",
+          { summary: proposal.summary },
+          "refinement:proposed",
+          undefined,
+          undefined,
+          {
+            harnessRefinement: {
+              status: "proposed",
+              digest,
+              proposal: {
+                summary: proposal.summary,
+                rationale: proposal.rationale,
+                expectedOutcome: proposal.expectedOutcome,
+                edits: proposal.edits,
+              },
+            },
+          },
+        );
+      }
+      if (!result.applied.length)
+        return {
+          applied: result.applied,
+          awaitingApproval: result.awaitingApproval,
+        };
       await this.commitWorkspace(
         session,
         state,
@@ -544,6 +599,155 @@ export class Workbench {
         awaitingApproval: result.awaitingApproval,
       };
     });
+  }
+
+  /**
+   * Proposals waiting on an operator, oldest first.
+   *
+   * Read off the chain, not memory: a `refinement:proposed` record with no
+   * later `refinement:applied` or `refinement:rejected` record carrying the
+   * same digest is pending, and a restart changes nothing about that answer.
+   */
+  async pendingProposals(workspace: string): Promise<PendingProposal[]> {
+    const proof = await this.ledger(workspace);
+    return pendingProposalsFromEntries(proof?.entries ?? []);
+  }
+
+  /**
+   * Apply a pending prompt proposal after an explicit operator decision.
+   *
+   * Re-checks everything the proposal-time check did against the current
+   * chain: the digest must reproduce byte for byte, every cited sequence must
+   * still verify, and secret-like content is refused again. A proposal whose
+   * provenance moved under it is refused, never applied onto a chain it no
+   * longer describes.
+   */
+  async approveHarnessProposal(
+    sessionId: string,
+    digest: string,
+    approval?: { by?: string; reason?: string },
+  ): Promise<{ applied: readonly AppliedEdit[] }> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    const workspace = session.view.workspace;
+    const pending = (await this.pendingProposals(workspace)).find(
+      (candidate) => candidate.digest === digest,
+    );
+    if (!pending) throw new Error(`No pending proposal with digest ${digest}.`);
+    const validated = validateProposal(pending.proposal);
+    if (!validated.ok)
+      throw new Error(
+        `Pending proposal no longer validates: ${validated.rejections.join("; ")}`,
+      );
+    if ((await proposalDigest(validated.proposal)) !== digest)
+      throw new Error(
+        "Pending proposal changed after review; approval refused.",
+      );
+    return this.locked(async () => {
+      const proof = await this.ledger(workspace);
+      const verifiedSeqs = new Set(
+        (proof?.entries ?? []).map((entry) => entry.seq),
+      );
+      for (const edit of validated.proposal.edits)
+        for (const seq of edit.derivedFromSeq)
+          if (!verifiedSeqs.has(seq))
+            throw new Error(
+              `Refinement cites unverified workspace sequence ${seq}.`,
+            );
+      if (refinementTextIsSensitive(validated.proposal, this.knownSecrets()))
+        throw new Error(
+          "Refinement contains secret-like content and was not recorded.",
+        );
+      const promptOnly: RefinementProposal = {
+        ...validated.proposal,
+        edits: validated.proposal.edits.filter(
+          (edit) => edit.kind === "prompt",
+        ),
+      };
+      const generatedAt = new Date().toISOString();
+      const currentEntries = await this.harnessEntries(workspace);
+      const result = applyProposal(currentEntries, promptOnly, generatedAt, {
+        approvedPrompt: true,
+      });
+      // The same override accounting the proposal path keeps: the approved
+      // lesson has to read back through `harnessEntries`, which rebuilds
+      // active state from mined entries plus the latest record's overrides.
+      // An empty override list would hide the approval from every later read.
+      const mined = mineHarnessEntries(this.evidence[workspace] ?? [], {
+        generatedAt,
+      }).entries;
+      const resultIds = new Set(result.entries.map((entry) => entry.id));
+      const suppressedIds = mined
+        .filter((entry) => !resultIds.has(entry.id))
+        .map((entry) => entry.id);
+      const minedById = new Map(mined.map((entry) => [entry.id, entry]));
+      const overrides = result.entries.filter((entry) => {
+        const original = minedById.get(entry.id);
+        return (
+          original === undefined ||
+          JSON.stringify(original) !== JSON.stringify(entry)
+        );
+      });
+      const state = this.documents[workspace] ?? createWorkspace();
+      this.documents[workspace] ??= state;
+      await this.commitWorkspace(
+        session,
+        state,
+        "harness.refinement",
+        { summary: validated.proposal.summary },
+        "refinement:applied",
+        undefined,
+        approval,
+        {
+          harnessRefinement: {
+            status: "applied",
+            proposalDigest: digest,
+            summary: validated.proposal.summary,
+            rationale: validated.proposal.rationale,
+            expectedOutcome: validated.proposal.expectedOutcome,
+            applied: result.applied,
+            overrides,
+            suppressedIds,
+          },
+        },
+      );
+      return { applied: result.applied };
+    });
+  }
+
+  /**
+   * Refuse a pending proposal, on the record. The rejection is signed and
+   * replayable like everything else; the proposal simply never becomes state.
+   */
+  async rejectHarnessProposal(
+    sessionId: string,
+    digest: string,
+    reason = "",
+  ): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    const workspace = session.view.workspace;
+    const pending = (await this.pendingProposals(workspace)).find(
+      (candidate) => candidate.digest === digest,
+    );
+    if (!pending) throw new Error(`No pending proposal with digest ${digest}.`);
+    const state = this.documents[workspace] ?? createWorkspace();
+    this.documents[workspace] ??= state;
+    await this.commitWorkspace(
+      session,
+      state,
+      "harness.refinement",
+      { summary: pending.proposal.summary },
+      "refinement:rejected",
+      undefined,
+      reason === "" ? undefined : { reason },
+      {
+        harnessRefinement: {
+          status: "rejected",
+          proposalDigest: digest,
+        },
+      },
+    );
   }
 
   async harnessEntries(workspace: string): Promise<HarnessEntry[]> {
@@ -3560,6 +3764,7 @@ export class Workbench {
     const signal = AbortSignal.any([session.controller.signal, deadline]);
     const expired = () =>
       deadline.aborted && !session.controller.signal.aborted;
+    let digestMarker: ModelMessage | undefined;
     try {
       if (!provider)
         throw new Error(
@@ -3621,6 +3826,33 @@ export class Workbench {
       // the last turn, plus a bare count, and its comment claimed the prefix
       // was "already inside the previous digest's input" when nothing read the
       // previous value at all.
+      // Verified harness context rides follow-up turns only, never the turn
+      // that mined it: mining runs at the settled boundary after dispatch, so
+      // a first turn has nothing to retrieve by construction (messages here
+      // are exactly [system, user]). Ephemeral: pushed for this run's provider
+      // calls and removed in the finally below, so the stored conversation
+      // never carries a digest block. A stale block, left by a crash between
+      // push and removal, is swept first for the same reason.
+      session.messages = session.messages.filter(
+        (message) =>
+          message.role !== "system" ||
+          typeof message.content !== "string" ||
+          !message.content.startsWith("NOMO learned-entry digest,"),
+      );
+      if (session.messages.length > 2) {
+        const latestUser = [...session.messages]
+          .reverse()
+          .find((message) => message.role === "user");
+        const block = buildHarnessContext(
+          await this.harnessEntries(session.view.workspace),
+          String(latestUser?.content ?? ""),
+          2000,
+        );
+        if (block !== "") {
+          digestMarker = { role: "system", content: block };
+          session.messages.push(digestMarker);
+        }
+      }
       let previous: string | null = null;
       let hashed = 0;
       for (let turn = 0; turn < maxTurns; turn++) {
@@ -3819,6 +4051,13 @@ export class Workbench {
         session.client?.close();
       }
     } finally {
+      // The retrieval block was only ever provider input for this run. Take it
+      // back out first, so neither the stored conversation nor a later digest
+      // over these messages carries a copy of it.
+      if (digestMarker !== undefined) {
+        const at = session.messages.indexOf(digestMarker);
+        if (at >= 0) session.messages.splice(at, 1);
+      }
       // after-run observes, so it never changes the status it reports: the
       // view is already final here and a failing observer only reports.
       await this.fireHooks(

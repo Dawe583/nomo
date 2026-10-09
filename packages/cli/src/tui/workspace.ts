@@ -15,6 +15,9 @@ import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
+import { harnessScoreRows } from "./harness-score-rows.ts";
+import { harnessProposalRows } from "./harness-proposal-rows.ts";
+
 import { harnessSettingsView } from "../../../workbench/src/harness-settings.ts";
 import {
   verificationKeyNote,
@@ -26,7 +29,18 @@ import {
 } from "../../../../apps/control-plane/api/desktop-setup.ts";
 import { loadPolicy } from "../../../policy/src/rules.ts";
 import { REGISTRY_DISCLAIMER } from "../../../registry/src/index.ts";
-import { VOID_PALETTE } from "./theme.ts";
+import {
+  NOMO_PALETTE,
+  getThemeConfig,
+  getSymbols,
+  getPalette,
+  type ThemeConfig,
+  COLOR_THEMES,
+  SYMBOL_SETS,
+  type ColorTheme,
+  type SymbolPreset,
+  paintWithPalette,
+} from "./theme.ts";
 import { brandHeader } from "./brand.ts";
 import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
@@ -40,6 +54,7 @@ import {
   unifiedDiff,
   visibleLength,
 } from "./layout.ts";
+import { detectCapabilities } from "./caps.ts";
 
 export const WORKSPACE_TABS = [
   "overview",
@@ -81,6 +96,7 @@ type Item = {
   sessionId?: string;
   path?: string;
   operationId?: string;
+  digest?: string;
 };
 type Confirmation = {
   title: string;
@@ -479,7 +495,7 @@ const SHELL_REFUSALS = [
   /tokenharbor|tokenrouter/i,
   /secret|password|passwd|authorization|bearer/i,
   /private[_-]?key|id_rsa|\.pem\b/i,
-  /\.env\b|\.void|keychain/i,
+  /\.env\b|\.nomo|keychain/i,
 ];
 const runShellFile = promisify(execFile);
 
@@ -519,9 +535,10 @@ export class WorkspaceTui {
   filter = "";
   compactTools = true;
   mode: TuiMode = "normal";
-  /** Runtime theme overrides. Undefined keeps the VOID_TUI_* environment. */
+  /** Runtime theme overrides. Undefined keeps the NOMO_TUI_* environment. */
   colorOverride?: boolean;
   motionOverride?: boolean;
+  themeConfig: ThemeConfig;
   queuedPrompt: string | null = null;
   queuedPromptPaused = false;
   notice = "Tab: panels | i: type | /help: commands";
@@ -552,6 +569,7 @@ export class WorkspaceTui {
     this.workbench = workbench;
     this.env = env;
     this.proxy = new ProxyWorkspace(env);
+    this.themeConfig = getThemeConfig(env);
   }
   async initialize() {
     try {
@@ -724,9 +742,9 @@ export class WorkspaceTui {
       "TOKENROUTER_API_KEY",
       "NVIDIA_API_KEY",
       "OPENROUTER_API_KEY",
-      "VOID_SIGNING_KEY",
-      "VOID_VERIFY_KEY",
-      "VOID_WORKSPACE_KEY",
+      "NOMO_SIGNING_KEY",
+      "NOMO_VERIFY_KEY",
+      "NOMO_WORKSPACE_KEY",
     ]) {
       const secret = this.env[key];
       if (secret) out = out.split(secret).join("[redacted]");
@@ -971,7 +989,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       "MEMORY, retained local history, encrypted at rest",
       "",
       `Conversations: ${views.length} | Stored events: ${events}`,
-      `Storage: ${this.env.VOID_DATA_DIR ?? "default workbench directory"}`,
+      `Storage: ${this.env.NOMO_DATA_DIR ?? "default workbench directory"}`,
       "Drafts persist per conversation between runs.",
       "Conversations retain their provider/model snapshot. Unreported cost stays unknown.",
     ];
@@ -1130,6 +1148,18 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "Mined from the verified chain.",
           ],
         });
+      // What the chain costs a human, measured rather than asserted. The
+      // figures are descriptive: they print beside the records they were
+      // measured from and reach no gate, policy or permission. A metric the
+      // chain cannot support is reported as unavailable instead of being
+      // rendered as a number nobody checked.
+      for (const score of harnessScoreRows(this.proofs)) rows.push(score);
+      // Prompt proposals waiting on this operator: the exact diff and its
+      // provenance, inspectable with Enter like every other row. Approval
+      // itself stays an explicit command naming the digest, never a side
+      // effect of looking.
+      for (const proposal of harnessProposalRows(this.proofs))
+        rows.push({ ...proposal, sessionId: proposal.id.split(":")[1] });
       // The harness that produced this chain: which runtime is the default,
       // which profile new conversations get, and what hooks are wired.
       // /harness and /hooks print the same facts on demand; this is where
@@ -1257,7 +1287,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "INPUT SCHEMA",
             ...json(tool.inputSchema),
             "",
-            "The model requests tools through VOID policy and approvals.",
+            "The model requests tools through NOMO policy and approvals.",
             "",
             REGISTRY_DISCLAIMER,
           ],
@@ -1741,7 +1771,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   /** What this connector's policy would do to each tool it lists, read from
    * the same classify-then-decide path a call takes. The blast radius is
    * unknown until a measured probe produces one, and this says so rather
-   * than implying a count VOID does not have. */
+   * than implying a count NOMO does not have. */
   private policyPreviewLines(c: ConnectorRow) {
     const preview = this.workbench.policyPreview(c.id);
     return [
@@ -1761,7 +1791,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         `  ${fit(c.endpoint, 60)}`,
         `  id ${c.id}`,
         c.builtin
-          ? "  in use: the VOID document workspace"
+          ? "  in use: the NOMO document workspace"
           : `  next: ${MCP_NEXT[c.consent](c.id)}`,
         "",
       ]),
@@ -1878,7 +1908,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.confirmation = {
         title: `PROBE ${c.name}?`,
         lines: [
-          `This is the only request VOID makes, and it goes to ${c.endpoint}.`,
+          `This is the only request NOMO makes, and it goes to ${c.endpoint}.`,
           "",
           c.consent === "confirmed"
             ? "A confirmed connector returns to probed and needs confirming again."
@@ -2076,33 +2106,86 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "theme") {
-      // Session override only. Lasting choice stays in the environment,
-      // so a checked out repository can never restyle another operator.
-      if (arg === "color") this.colorOverride = true;
-      else if (arg === "mono") this.colorOverride = false;
-      else if (arg === "motion") this.motionOverride = true;
-      else if (arg === "still") this.motionOverride = false;
-      else if (arg === "reset") {
-        this.colorOverride = undefined;
-        this.motionOverride = undefined;
-      } else if (arg)
-        throw Error("/theme color | mono | motion | still | reset");
-      const color = this.colorOverride ?? this.env.VOID_TUI_COLOR !== "0";
-      const motion =
-        this.motionOverride ??
-        (this.env.VOID_TUI_MOTION !== "0" && this.env.TERM !== "dumb");
-      this.detail = [
-        `THEME this session: ${color ? "full color" : "monochrome"}, motion ${motion ? "on" : "off"}`,
-        "",
-        ...Object.entries(VOID_PALETTE).map(
-          ([name, hex]) => `${name.padEnd(6)} ${hex}`,
-        ),
-        "",
-        "Color never carries safety meaning; classes keep their markers.",
-        "Persist with VOID_TUI_COLOR=0 or VOID_TUI_MOTION=0. /theme reset restores them.",
-      ];
+      // /theme [color-theme] [symbol-preset] | list | preview | reset
+      // Session override only. Lasting choice stays in the environment
+      // (NOMO_TUI_THEME, NOMO_TUI_SYMBOLS). A checked-out repo never
+      // restyles another operator.
+      const themes = Object.keys(COLOR_THEMES) as ColorTheme[];
+      const symbols = Object.keys(SYMBOL_SETS) as SymbolPreset[];
+
+      if (!arg) {
+        this.detail = [
+          `THEME: ${this.themeConfig.colorTheme} + ${this.themeConfig.symbolPreset}`,
+          "",
+          "Color themes:",
+          ...themes.map(
+            (t) => `  ${t === this.themeConfig.colorTheme ? "▸" : " "} ${t}`,
+          ),
+          "",
+          "Symbol presets:",
+          ...symbols.map(
+            (s) => `  ${s === this.themeConfig.symbolPreset ? "▸" : " "} ${s}`,
+          ),
+          "",
+          "Usage: /theme <color-theme> [symbol-preset] | preview <color-theme> [symbol-preset] | list | reset",
+          "Examples: /theme paper unicode  |  /theme dark  |  /theme preview solarized-dark classic",
+          "Persist: NOMO_TUI_THEME=<color> NOMO_TUI_SYMBOLS=<preset> in your shell rc.",
+        ];
+        this.scroll = 0;
+        return;
+      }
+
+      const parts = arg.split(/\s+/);
+      const sub = parts[0].toLowerCase();
+
+      if (sub === "list") {
+        this.detail = [
+          "COLOR THEMES:",
+          ...themes.map((t) => `  ${t}`),
+          "",
+          "SYMBOL PRESETS:",
+          ...symbols.map((s) => `  ${s}`),
+        ];
+        this.scroll = 0;
+        return;
+      }
+
+      if (sub === "preview") {
+        const color = (parts[1] ?? "").toLowerCase() as ColorTheme;
+        const symbol = (parts[2] ?? "").toLowerCase() as SymbolPreset;
+        if (!themes.includes(color) || !symbols.includes(symbol)) {
+          throw Error(
+            `Unknown theme or preset. Use: /theme preview <color> <symbol>`,
+          );
+        }
+        const old = this.themeConfig;
+        this.themeConfig = { colorTheme: color, symbolPreset: symbol };
+        this.notice = `Preview: ${color} + ${symbol}. Press Enter to keep, /theme reset to revert.`;
+        this.scroll = 0;
+        return;
+      }
+
+      if (sub === "reset") {
+        this.themeConfig = getThemeConfig(this.env);
+        this.notice = `Theme reset to environment defaults (${this.themeConfig.colorTheme} + ${this.themeConfig.symbolPreset}).`;
+        this.scroll = 0;
+        return;
+      }
+
+      const color = sub as ColorTheme;
+      const symbol = (parts[1] ?? "").toLowerCase() as SymbolPreset;
+
+      if (!themes.includes(color))
+        throw Error(`Unknown color theme: ${color}. Run /theme list.`);
+      if (symbol && !symbols.includes(symbol))
+        throw Error(`Unknown symbol preset: ${symbol}. Run /theme list.`);
+
+      this.themeConfig = {
+        colorTheme: color,
+        symbolPreset: symbol ?? this.themeConfig.symbolPreset,
+      };
+      this.notice = `Theme set: ${this.themeConfig.colorTheme} + ${this.themeConfig.symbolPreset}. Set NOMO_TUI_THEME and NOMO_TUI_SYMBOLS to persist.`;
       this.scroll = 0;
-      this.notice = `Theme: ${color ? "full color" : "monochrome"}, motion ${motion ? "on" : "off"}.`;
       return;
     }
     if (cmd === "status") {
@@ -2355,7 +2438,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // verified, so an unverified or tampered refusal cannot teach a rule.
       // Every visible workspace, not just the selected one: a rule learned in
       // one conversation is still in force in the next, and an operator asking
-      // what VOID has learned is asking about the ledger as a whole.
+      // what NOMO has learned is asking about the ledger as a whole.
       const learned = [...this.proofs.entries()].flatMap(([id, entries]) =>
         mineLearnedRules(entries).map((rule) => ({ id, rule })),
       );
@@ -2448,7 +2531,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "vim" || cmd === "terminal-setup" || cmd === "output-style")
       throw Error(
-        `/${cmd} has no VOID equivalent. Use /expand for tool output style.`,
+        `/${cmd} has no NOMO equivalent. Use /expand for tool output style.`,
       );
     if (cmd === "resume") {
       if (!arg) {
@@ -2707,7 +2790,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           title: "RETRY IN A NEW BRANCH?",
           lines: [
             "The model will respond to the previous prompt again.",
-            "Current documents are copied. New tool calls go through VOID again.",
+            "Current documents are copied. New tool calls go through NOMO again.",
             "Historical tools are not replayed.",
           ],
           apply: async () => {
@@ -2804,6 +2887,50 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         reason.join(" "),
       );
       return;
+    }
+    // Prompt proposals are inert until one of these names their exact digest.
+    // Listing shows diffs; only approve activates, only reject settles, and
+    // both refuse an unknown digest rather than guessing.
+    if (cmd === "refine") {
+      const [sub, digest, ...reason] = arg.split(/\s+/);
+      if ((sub === "approve" || sub === "reject") && !this.sessionId)
+        throw Error("Select a conversation.");
+      if (sub === "proposals" || sub === undefined || sub === "") {
+        this.choose("ledger");
+        this.filter = "proposal";
+        return;
+      }
+      if (sub === "approve" && digest) {
+        const result = await this.workbench.approveHarnessProposal(
+          this.sessionId!,
+          digest,
+        );
+        this.detail = [
+          `REFINEMENT APPROVED ${digest.slice(0, 19)}`,
+          `${result.applied.length} edit(s) activated.`,
+          "Recorded on the signed chain; later sessions retrieve it.",
+        ];
+        this.notice = `Proposal approved: ${result.applied.length} edit(s) active.`;
+        this.scroll = 0;
+        return;
+      }
+      if (sub === "reject" && digest) {
+        await this.workbench.rejectHarnessProposal(
+          this.sessionId!,
+          digest,
+          reason.join(" "),
+        );
+        this.detail = [
+          `REFINEMENT REJECTED ${digest.slice(0, 19)}`,
+          "Recorded on the signed chain; nothing was activated.",
+        ];
+        this.notice = "Proposal rejected on the record.";
+        this.scroll = 0;
+        return;
+      }
+      throw Error(
+        "/refine proposals | /refine approve <digest> | /refine reject <digest> [reason]",
+      );
     }
     if (cmd === "rename") {
       if (!this.sessionId) throw Error("Select a conversation.");
@@ -2941,7 +3068,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     throw Error("Unknown command. Use /help to see available commands.");
   }
   async export(kind: string) {
-    const folder = resolve(this.env.VOID_EXPORT_DIR ?? "void-exports");
+    const folder = resolve(this.env.NOMO_EXPORT_DIR ?? "nomo-exports");
     await mkdir(folder, { recursive: true, mode: 0o700 });
     const name = `${kind}-${Date.now()}-${randomUUID().slice(0, 8)}`;
     let content: string, suffix: string;
@@ -3041,7 +3168,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ]
         : ["", "Plan: no open checklist items. /todos shows them all."];
       return [
-        "VOID / LOCAL WORKSPACE",
+        "NOMO / LOCAL WORKSPACE",
         "",
         ...this.providerLines(),
         `Model: ${this.model || "-"}`,
@@ -3120,12 +3247,12 @@ export function transcript(events: readonly SessionEvent[]): string[] {
     if (e.kind === "assistant") partial = "";
     if (e.type === "run.status" || e.kind === "usage") continue;
     rows.push(
-      `[${e.at.slice(11, 19)}] ${e.kind === "user" ? "YOU" : e.kind === "assistant" ? "VOID" : e.kind.toUpperCase()}`,
+      `[${e.at.slice(11, 19)}] ${e.kind === "user" ? "YOU" : e.kind === "assistant" ? "NOMO" : e.kind.toUpperCase()}`,
       ...e.text.split("\n"),
       "",
     );
   }
-  if (partial) rows.push("VOID [stream]", ...partial.split("\n"));
+  if (partial) rows.push("NOMO [stream]", ...partial.split("\n"));
   return rows;
 }
 type ChatRow = {
@@ -3204,7 +3331,7 @@ export function chatRows(
       event.kind === "user"
         ? "› You"
         : event.kind === "assistant"
-          ? "● VOID"
+          ? "● NOMO"
           : event.kind === "error"
             ? "! Error"
             : event.type === "tool.started"
@@ -3222,7 +3349,7 @@ export function chatRows(
     }
     messageRows(event.text, event.kind, `${label}  ${event.at.slice(11, 19)}`);
   }
-  if (partial) messageRows(partial, "assistant", "● VOID  streaming");
+  if (partial) messageRows(partial, "assistant", "● NOMO  streaming");
   return rows;
 }
 export function wrap(lines: readonly string[], width: number): string[] {
@@ -3335,7 +3462,7 @@ export type WorkspaceVisuals = {
 // Block capitals, one stroke width everywhere. The slashed ASCII logo
 // read as jagged because every row leaned; full blocks stay uniform at
 // any width and count one cell each in layout.ts.
-const VOID_LOGO = [
+const NOMO_LOGO = [
   "█     █   █████   █████  ████   ",
   "█     █  █     █    █    █   █  ",
   "█     █  █     █    █    █   █  ",
@@ -3432,12 +3559,18 @@ export function renderWorkspace(
 ): string {
   const width = Math.max(20, columns),
     height = Math.max(8, rows);
+  // Terminal capabilities for theme rendering (omp-style)
+  const caps = detectCapabilities(ui.env, {
+    columns: width,
+    rows: height,
+    isTTY: true,
+  });
   const ink = (value: string, code: string) =>
     visuals.color ? `\x1b[${code}m${value}\x1b[0;48;5;234;38;5;252m` : value;
   const text = (value: string) => fit(sanitizeText(value), width);
   const amber = "38;5;215",
     ice = "38;5;117",
-    muted = "38;5;245",
+    mutedAnsi = "38;5;245",
     violet = "38;5;183";
   const running = busy || ui.workbench.running();
   const frame = visuals.motion === false ? 0 : (visuals.frame ?? 0);
@@ -3476,7 +3609,7 @@ export function renderWorkspace(
     // header. The mark is 7 rows, the wordmark 5, so the wordmark rides
     // centered with one blank row top and bottom.
     const aside = [
-      "VOID / local workspace",
+      "NOMO / local workspace",
       ui.session()?.model || ui.model || "Connect a model with /connect",
       running ? "Working / Esc to stop" : "Your work. Your control.",
       `${ui.workbench.list().length} conversations / ${holds} pending approvals`,
@@ -3496,7 +3629,7 @@ export function renderWorkspace(
       const logoRow =
         i === 0 || i === mark.length - 1
           ? " ".repeat(32)
-          : (VOID_LOGO[i - 1] ?? " ".repeat(32));
+          : (NOMO_LOGO[i - 1] ?? " ".repeat(32));
       const left =
         markRow +
         "  " +
@@ -3512,7 +3645,7 @@ export function renderWorkspace(
                   sanitizeText("   " + (aside[i] ?? "")),
                   width - visibleLength(left),
                 ),
-                i === 1 ? ice : muted,
+                i === 1 ? ice : mutedAnsi,
               )
             : ""),
       );
@@ -3521,7 +3654,7 @@ export function renderWorkspace(
     header.push(
       ink(
         text(
-          ` /V/  VOID  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
+          ` /V/  NOMO  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
         ),
         `1;${amber}`,
       ),
@@ -3539,7 +3672,7 @@ export function renderWorkspace(
           const name =
             t === ui.tab
               ? ink(` [${t}] `, `1;${ice};48;5;24`)
-              : ink(` ${t} `, muted);
+              : ink(` ${t} `, mutedAnsi);
           return `${icon}${name}`;
         })
         .join(""),
@@ -3593,7 +3726,7 @@ export function renderWorkspace(
   if (ui.tab === "chat" && !ui.session() && !ui.detail && !ui.confirmation)
     content = [
       "",
-      "  Welcome to VOID.",
+      "  Welcome to NOMO.",
       "  Describe what you want to build. Follow the work here.",
       "",
       "  > Create a project plan and save it to plan.md",
@@ -3635,7 +3768,7 @@ export function renderWorkspace(
     .filter((index) => index >= 0);
   const body = lines.slice(offset, offset + bodyHeight);
   while (body.length < bodyHeight) body.push("");
-  const frameColor = ui.confirmation ? amber : muted;
+  const frameColor = ui.confirmation ? amber : mutedAnsi;
   const bodyRows = body.map((line, index) => {
     const style = styled?.[offset + index]?.style;
     const tone =
@@ -3646,7 +3779,7 @@ export function renderWorkspace(
           : style === "code"
             ? `${ice};48;5;235`
             : style === "tool"
-              ? muted
+              ? mutedAnsi
               : style === "error"
                 ? "38;5;203"
                 : style === "text"
@@ -3655,7 +3788,7 @@ export function renderWorkspace(
                     ? `1;${ice}`
                     : /YOU$/.test(line)
                       ? `1;${violet}`
-                      : /VOID(?: \[stream\])?$/.test(line)
+                      : /NOMO(?: \[stream\])?$/.test(line)
                         ? `1;${amber}`
                         : /^(Error|Invalid|Failed)/.test(line)
                           ? "38;5;203"
@@ -3691,38 +3824,77 @@ export function renderWorkspace(
   const usage = [...(ui.session()?.events ?? [])]
     .reverse()
     .find((event) => event.kind === "usage")?.payload;
-  const tokens =
-    typeof usage?.total_tokens === "number" ? usage.total_tokens : "unknown";
+  const usageTokens =
+    typeof usage?.total_tokens === "number" ? usage.total_tokens : "?";
   const cost = typeof usage?.cost === "number" ? usage.cost : "unknown";
   const model = sanitizeText(
     ui.session()?.model || ui.model || "not connected",
   );
   const ctx = ui.session() ? ui.contextNumbers() : null;
   const ctxText = ctx
-    ? `${ctx.contextMessages ?? "unknown"} messages`
+    ? `${ctx.contextMessages ?? "unknown"} msgs`
     : "no session";
-  const holdBadge =
-    holds > 0 ? ` | ◉ ${holds} approval${holds === 1 ? "" : "s"}` : "";
-  const queuedBadge = ui.queuedPrompt
-    ? ` | +1 ${ui.queuedPromptPaused ? "paused" : "queued"}`
-    : "";
-  // The tail (mode, tokens, compact) must survive narrow frames, so a long
-  // model name shrinks first instead of truncating the status fields.
-  let modelShown = fit(model, 20);
-  // Cost stays visible when it fits; the full cost report lives in /cost.
-  const costSeg = ` | cost: ${cost}`;
-  let dropCost = false;
-  const summaryTail = (): string =>
-    ` | ${MODE_ICON[ui.mode]} ${modeAuthorityLabel(ui.mode)} | ctx: ${ctxText} | ` +
-    `tokens: ${tokens}${dropCost ? "" : costSeg} | ${ui.compactTools ? "compact" : "full"}${holdBadge}${queuedBadge}`;
-  if (visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width)
-    dropCost = true;
-  while (
-    visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width &&
-    visibleLength(modelShown) > 8
-  )
-    modelShown = fit(modelShown, visibleLength(modelShown) - 1);
-  const summary = `◐ model: ${modelShown}${summaryTail()}`;
+
+  // Status segments with theme colors (omp-style segment catalog)
+  const symbols = getSymbols(ui.themeConfig.symbolPreset);
+  const palette = getPalette(ui.themeConfig.colorTheme);
+  const accent = paintWithPalette("●", "accent", palette, caps, true);
+  const muted = paintWithPalette("│", "muted", palette, caps);
+  const seg = (
+    label: string,
+    value: string,
+    tone: keyof typeof palette = "accent",
+  ) =>
+    `${paintWithPalette(label, "muted", palette, caps)} ${paintWithPalette(value, tone, palette, caps)}`;
+
+  const segments: string[] = [];
+  // Model segment
+  const modelShown = fit(
+    sanitizeText(ui.session()?.model || ui.model || "offline"),
+    24,
+  );
+  segments.push(seg("model", modelShown, "accent"));
+  // Mode segment
+  const modeLabel = modeAuthorityLabel(ui.mode);
+  segments.push(seg("mode", `${MODE_ICON[ui.mode]} ${modeLabel}`, "info"));
+  // Context
+  const ctxVal = ctx ? `${ctx.contextMessages ?? "?"} msgs` : "no session";
+  segments.push(seg("ctx", ctxVal, "warning"));
+  // Tokens & cost
+  const costStr =
+    typeof usage?.cost === "number" ? `$${usage.cost.toFixed(4)}` : "?";
+  segments.push(seg("tok", String(usageTokens), "success"));
+  segments.push(seg("cost", costStr, "warning"));
+  // Approvals & queue
+  const holdCount = ui.workbench.pending().length + ui.proxy.holds.length;
+  if (holdCount > 0) segments.push(seg("holds", `◉ ${holdCount}`, "error"));
+  if (ui.queuedPrompt)
+    segments.push(
+      seg("queue", ui.queuedPromptPaused ? "paused" : "+1", "warning"),
+    );
+  // Compact mode
+  segments.push(seg("tools", ui.compactTools ? "compact" : "full", "muted"));
+
+  // Join with theme separator, respecting width
+  const sep = paintWithPalette(symbols.separator.dot, "muted", palette, caps);
+  let summary = segments.join(` ${sep} `);
+  // Fit to width by shrinking model first, then dropping cost
+  let modelIdx = 0;
+  while (visibleLength(summary) > width - 4 && summary.length > 10) {
+    if (modelIdx < segments.length) {
+      const parts = segments[modelIdx].split(" ");
+      if (parts.length > 1 && parts[1].length > 8) {
+        parts[1] = fit(parts[1], parts[1].length - 1);
+        segments[modelIdx] = parts.join(" ");
+        summary = segments.join(` ${sep} `);
+      } else {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  const summaryLine = summary;
   const todoBadge = (() => {
     try {
       const todos = extractTodos(ui.session()?.events ?? []);
@@ -3842,7 +4014,7 @@ export const STATUS_ICONS = {
   paste: "P",
 } as const;
 const KEYBINDINGS = [
-  "KEYBINDINGS, same action as the reference terminal where VOID has it",
+  "KEYBINDINGS, same action as the reference terminal where NOMO has it",
   "",
   "Enter send | Shift+Enter, Alt+Enter, Ctrl+J or backslash+Enter newline",
   "Left/Right move cursor, or cycle panels outside editing",
@@ -3856,10 +4028,10 @@ const KEYBINDINGS = [
   "Ctrl+_ undo input | Alt+B/F or Ctrl+Left/Right word jump | Ctrl+A/E line ends",
   "Ctrl+D delete forward, twice exit | Ctrl+C clear, cancel, exit",
   "y accept, n reject, Esc cancel a review | PgUp/PgDn scroll",
-  "No VOID equivalent: background tasks, image paste, suspend, Vim editing.",
+  "No NOMO equivalent: background tasks, image paste, suspend, Vim editing.",
 ];
 const HELP = [
-  "VOID TUI: real local data, no demo metrics",
+  "NOMO TUI: real local data, no demo metrics",
   "",
   "Tab panels (Left/Right too); Shift+Tab or Alt+M: mode (normal / accept / plan); Enter: details.",
   "Chat: start typing. / opens commands; arrows select; Tab completes.",
@@ -3870,7 +4042,7 @@ const HELP = [
   "A prompt sent during a run is queued and sends when the run stops.",
   "!command runs a gated local shell; output shows once, never persists.",
   "Up/Down or Ctrl+P/Ctrl+N browse your previous prompts in single-line input.",
-  "VOID_TUI_COLOR=0 disables colors; VOID_TUI_MOTION=0 disables animation.",
+  "NOMO_TUI_COLOR=0 disables colors; NOMO_TUI_MOTION=0 disables animation.",
   "Enter sends; Shift+Enter, Alt+Enter, Ctrl+J or backslash+Enter inserts a newline.",
   "Ctrl+R searches your prompts, or conversation text from empty input.",
   "Ctrl+O toggles tool output; Ctrl+L redraws, twice clears; Ctrl+S stashes input.",
@@ -3905,20 +4077,21 @@ const HELP = [
   "/ledger | /verify | /filter text | /export ledger|chat|document",
   "/attest signs this conversation slice for offline third party checks",
   "/approvals | /approve [hold-ID] [reason] | /deny [hold-ID] [reason]",
+  "/refine proposals | /refine approve <digest> | /refine reject <digest> [reason]",
   "/tools [search] | Enter inspect tool | /expand compact/full tool output",
   "/config shows paths and flags without secrets; /sources lists providers.",
-  "/hooks /vim /terminal-setup /output-style have no VOID equivalent.",
-  "Ctrl+B background tasks, image paste, suspend and Vim editing have no VOID equivalent.",
+  "/hooks /vim /terminal-setup /output-style have no NOMO equivalent.",
+  "Ctrl+B background tasks, image paste, suspend and Vim editing have no NOMO equivalent.",
   "/connector-file path.json stages a server | /test-connector ID",
   "Multiline: Up/Down move cursor | Ctrl+W delete to whitespace | Ctrl+K delete to line end | Ctrl+U clear",
   "/policy | /policy-file connector-ID path.yaml | /usage | /overview",
   "",
-  'Editor: VOID_TUI_EDITOR is a JSON array, e.g. ["code","--wait"].',
+  'Editor: NOMO_TUI_EDITOR is a JSON array, e.g. ["code","--wait"].',
   "Otherwise EDITOR is an executable path; default: nano. Confirm edits in TUI.",
   "Revision conflicts never overwrite changes. Undo and approvals require confirmation.",
   "Branches copy text context and current documents; tools are never replayed.",
   "The free model is never automatically replaced with a paid model.",
   "Exports use file permissions 0600 and never overwrite existing files.",
-  "Data is encrypted in VOID_DATA_DIR, default: ~/.void/workbench.",
+  "Data is encrypted in NOMO_DATA_DIR, default: ~/.nomo/workbench.",
   "Local TUI does not read private cloud conversations.",
 ];
