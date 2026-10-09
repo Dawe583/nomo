@@ -177,6 +177,12 @@ export async function serviceTrigger(
   if (state.pendingReview !== null) {
     const instructions = state.pendingReview;
     const version = state.branchVersion;
+    if (branchNow() !== version)
+      return {
+        state,
+        outcome: { kind: "not-run", reason: "branch moved before the retained review could run" },
+        startedAtBranchVersion: version,
+      };
     const running: TriggerState = { ...state, inFlight: true, pending: false, pendingReview: null };
     try {
       await options.run?.(instructions);
@@ -213,6 +219,12 @@ export async function serviceTrigger(
   }
 
   const version = state.branchVersion;
+  if (branchNow() !== version)
+    return {
+      state,
+      outcome: { kind: "not-run", reason: "branch moved before the review could start" },
+      startedAtBranchVersion: version,
+    };
   const running: TriggerState = { ...state, inFlight: true, pending: false };
 
   let reviewed: Awaited<ReturnType<Reviewer>>;

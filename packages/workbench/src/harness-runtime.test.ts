@@ -224,6 +224,35 @@ test("a provider failure stamps the cooldown instead of asking again next turn",
   assert.equal(result.state.settledTurnsSinceReview, 0);
 });
 
+test("a branch move during review prevents applying its stale proposal", async () => {
+  const before = ready();
+  let currentVersion = before.branchVersion;
+  const { deps: wired, counters } = deps({
+    ask: async () => {
+      counters.asked += 1;
+      currentVersion += 1;
+      return JSON.stringify({ approve: true, proposal: PROPOSAL });
+    },
+  });
+  const versioned = Object.assign(wired, {
+    currentBranchVersion: () => currentVersion,
+  });
+
+  const result = await serviceHarnessBoundary(before, versioned);
+
+  assert.equal(result.outcome.kind, "not-run");
+  assert.match(
+    result.outcome.kind === "not-run" ? result.outcome.reason : "",
+    /branch moved during the review/,
+  );
+  assert.equal(counters.asked, 1);
+  assert.equal(counters.applied.length, 0);
+  assert.equal(
+    resultIsCurrent({ ...before, branchVersion: currentVersion }, result.startedAtBranchVersion),
+    false,
+  );
+});
+
 test("a result started on an abandoned branch is not applicable", async () => {
   // The round runs, and the conversation it was learning from is then replaced.
   // The result carries the version it started on, so the caller can tell that

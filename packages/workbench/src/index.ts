@@ -3089,8 +3089,13 @@ export class Workbench {
         apply: async (proposal) => {
           await this.refineHarness(id, proposal);
         },
+        currentBranchVersion: () =>
+          this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion,
       });
-      this.harnessTriggers.set(id, result.state);
+      // A branch move may update the map while the review awaits. Do not overwrite its newer version.
+      const currentVersion = this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion;
+      const expectedVersion = result.startedAtBranchVersion ?? state.branchVersion;
+      if (currentVersion === expectedVersion) this.harnessTriggers.set(id, result.state);
       // The boundary is silent by default, and silence here is ambiguous: an
       // operator watching a workspace learn nothing cannot tell a gate that
       // refused from a hook that was never reached. One line naming the refusal

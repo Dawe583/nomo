@@ -117,6 +117,23 @@ test("the in-flight guard releases after every outcome", async () => {
   }
 });
 
+test("a round already on a stale branch is rejected before requesting review", async () => {
+  let asked = 0;
+  const result = await serviceTrigger(
+    ready(),
+    () => GO,
+    async () => {
+      asked += 1;
+      return approve;
+    },
+    { now: clock(), currentBranchVersion: () => 1 },
+  );
+
+  assert.equal(result.outcome.kind, "not-run");
+  assert.equal(asked, 0);
+  assert.equal(result.state.lastReviewAt, null);
+});
+
 test("a branch move discards a round that resolved against the old conversation", async () => {
   let version = 0;
   const result = await serviceTrigger(

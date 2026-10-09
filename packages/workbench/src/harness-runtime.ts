@@ -67,6 +67,8 @@ export type HarnessRuntimeDeps = {
   readonly ask: (request: string) => Promise<string>;
   /** Validate-and-apply, which is the only path into the signed chain. */
   readonly apply: (proposal: RefinementProposal) => Promise<void>;
+  /** Read the live branch version so stale reviews are discarded. */
+  readonly currentBranchVersion?: () => number;
   /**
    * A session that cannot persist harness state is never armed: its trigger
    * would fire, cost a model call and then have nowhere to record what it
@@ -184,6 +186,6 @@ export async function serviceHarnessBoundary(
         deps.harnessStateAvailable ?? true,
       ),
     review,
-    { now: deps.now, run },
+    { now: deps.now, run, currentBranchVersion: deps.currentBranchVersion },
   );
 }
