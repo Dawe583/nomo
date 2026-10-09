@@ -2863,7 +2863,7 @@ export class Workbench {
       at: pending.at,
       atSeq: pending.atSeq,
       summary: pending.proposal.summary,
-      proposal: pending.proposal,
+      proposal: structuredClone(pending.proposal),
       addendum: pending.proposal.edits
         .filter((edit) => edit.kind === "prompt")
         .map((edit) => edit.promptAddendum ?? "")

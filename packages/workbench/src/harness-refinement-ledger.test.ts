@@ -89,6 +89,32 @@ test("a memory proposal stays inert until its exact digest is approved", async (
   );
 });
 
+test("mutating a returned pending proposal cannot alter the signed chain", async (t) => {
+  const { app, session } = await fixture(t);
+  await app.refineHarness(session.id, proposal());
+  const pending = (await app.pendingApprovalsFor(session.id))[0]!;
+  const mutable = pending.proposal as unknown as {
+    summary: string;
+    edits: Array<{ title: string; derivedFromSeq: number[] }>;
+  };
+
+  mutable.summary = "tampered summary";
+  mutable.edits[0]!.title = "tampered title";
+  mutable.edits[0]!.derivedFromSeq.push(999);
+
+  const ledger = await app.ledger(session.workspace);
+  assert.ok(ledger);
+  assert.equal(ledger.result.ok, true);
+  const record = ledger.entries.at(-1)!.body as {
+    harnessProposal: { proposal: RefinementProposal };
+  };
+  assert.deepEqual(record.harnessProposal.proposal, proposal());
+  assert.deepEqual(
+    (await app.pendingApprovalsFor(session.id))[0]!.proposal,
+    proposal(),
+  );
+});
+
 test("pending proposals survive restart and rejection is signed", async (t) => {
   const { app, session, directory, closeOriginal } = await fixture(t);
   const created = await app.refineHarness(session.id, proposal());
