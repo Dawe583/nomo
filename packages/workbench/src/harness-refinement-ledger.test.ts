@@ -171,6 +171,20 @@ test("a proposal digest cannot approve entries in another workspace", async (t) 
   assert.deepEqual(await other.app.harnessEntries(other.session.workspace), []);
 });
 
+test("approved Harness entries remain scoped to their workspace", async (t) => {
+  const { app, session } = await fixture(t);
+  const other = await app.start("Review another workspace", "fixture");
+  await app.settled();
+  assert.notEqual(other.workspace, session.workspace);
+
+  const created = await app.refineHarness(session.id, proposal());
+  assert.ok(created.proposalDigest);
+  await app.approveHarnessProposal(session.id, created.proposalDigest);
+
+  assert.equal((await app.harnessEntries(session.workspace)).length, 1);
+  assert.deepEqual(await app.harnessEntries(other.workspace), []);
+});
+
 test("a proposal is signed before it becomes active", async (t) => {
   const { app, session } = await fixture(t);
   const result = await app.refineHarness(session.id, proposal());
