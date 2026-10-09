@@ -128,3 +128,35 @@ test("TUI confirmation includes every field from each exact edit", async (t) => 
   assert.ok(!shown.includes("\u0085"));
   assert.ok(!shown.includes("\u200b"));
 });
+
+test("proposal free text is escaped in the pending list and confirmation", async (t) => {
+  const { app, ui, sessionId } = await fixture(t);
+  const hostile: RefinementProposal = {
+    ...proposal(),
+    summary: "summary ‮ reversed [31mred[0m",
+    rationale: "rationale ‮ reversed [2J",
+    expectedOutcome: "outcome ‮ reversed [?25l",
+  };
+  const created = await app.refineHarness(sessionId, hostile);
+
+  await ui.command("/harness");
+  const pending = ui.detail!.join("\n");
+  assert.ok(pending.includes("\\u202e"));
+  assert.ok(pending.includes("\\u001b[31m"));
+  assert.ok(!pending.includes("\u202e"));
+  assert.ok(!pending.includes("\u001b"));
+
+  await ui.command(`/harness approve ${created.proposalDigest!.slice(0, 8)}`);
+  const confirmation = ui.confirmation!.lines.join("\n");
+  assert.ok(confirmation.includes("Summary: summary \\u202e reversed \\u001b[31mred\\u001b[0m"));
+  assert.ok(confirmation.includes("Rationale: rationale \\u202e reversed \\u001b[2J"));
+  assert.ok(confirmation.includes("Expected outcome: outcome \\u202e reversed \\u001b[?25l"));
+  assert.ok(!confirmation.includes("\u202e"));
+  assert.ok(!confirmation.includes("\u001b"));
+
+  await ui.confirm();
+  const completed = ui.detail!.join("\n");
+  assert.ok(completed.includes("Summary: summary \\u202e reversed \\u001b[31mred\\u001b[0m"));
+  assert.ok(!completed.includes("\u202e"));
+  assert.ok(!completed.includes("\u001b"));
+});

@@ -94,6 +94,11 @@ type Confirmation = {
 };
 const json = (value: unknown) =>
   JSON.stringify(value, null, 2)?.split("\n") ?? [];
+const escapeTerminalText = (value: string) =>
+  value.replace(
+    /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/gu,
+    (character) => `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
+  );
 const text = (value: unknown) => String(value ?? "unknown");
 /** A workspace chain is one score case, even when several sessions display it. */
 const verifiedScoreCases = (
@@ -887,12 +892,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       );
     const match = matches[0]!;
     const sessionId = this.sessionId;
-    const proposalLines = JSON.stringify(match.proposal, null, 2)
-      .replace(
-        /[\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/gu,
-        (character) => `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
-      )
-      .split("\n");
+    const proposalLines = escapeTerminalText(
+      JSON.stringify(match.proposal, null, 2),
+    ).split("\n");
     this.confirmation = {
       title: `${decision === "approve" ? "APPROVE" : "REJECT"} HARNESS PROPOSAL ${match.digest.slice(0, 8)}?`,
       lines: [
@@ -900,9 +902,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ? "This applies the exact proposal after checking its digest and provenance."
           : "This records rejection and activates none of the proposed edits.",
         "",
-        `Summary: ${match.summary}`,
-        `Rationale: ${match.proposal.rationale}`,
-        `Expected outcome: ${match.proposal.expectedOutcome}`,
+        `Summary: ${escapeTerminalText(match.summary)}`,
+        `Rationale: ${escapeTerminalText(match.proposal.rationale)}`,
+        `Expected outcome: ${escapeTerminalText(match.proposal.expectedOutcome)}`,
         `Full digest: ${match.digest}`,
         `Cited chain position: ${match.atSeq}.`,
         "",
@@ -919,7 +921,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           this.detail = [
             "HARNESS PROPOSAL ACTIVATED",
             `Digest: ${match.digest}`,
-            `Summary: ${match.summary}`,
+            `Summary: ${escapeTerminalText(match.summary)}`,
             "The signed chain records the approval and activation.",
           ];
         } else {
@@ -928,7 +930,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           this.detail = [
             "HARNESS PROPOSAL REJECTED",
             `Digest: ${match.digest}`,
-            `Summary: ${match.summary}`,
+            `Summary: ${escapeTerminalText(match.summary)}`,
             "The signed chain records the rejection. No edit was activated.",
           ];
         }
@@ -3042,7 +3044,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ),
         "",
         ...pending.map((approval) =>
-          `${approval.digest.slice(0, 8)}… ${approval.summary} (${approval.proposal.edits.length} edits)`,
+          `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
         ),
         pending.length
           ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
