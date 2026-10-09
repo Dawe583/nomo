@@ -236,10 +236,6 @@ const INVENTORY = {
 
   // Planned NOMO identity MVP deliverables. Remove each entry when its file is
   // created; an inventory entry must not hide a shipped path.
-  "packages/workbench/src/agent-identity.ts":
-    "planned in the NOMO identity MVP plan; not implemented yet",
-  "packages/workbench/src/agent-identity.test.ts":
-    "planned in the NOMO identity MVP plan; not implemented yet",
   "packages/proxy/src/transport/http-server.ts":
     "planned in the NOMO identity MVP plan; not implemented yet",
   "packages/proxy/src/transport/http-server.test.ts":
