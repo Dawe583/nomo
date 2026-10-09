@@ -2723,6 +2723,7 @@ export class Workbench {
   async refineHarness(
     sessionId: string,
     input: RefinementProposal,
+    options: { readonly expectedBranchVersion?: number } = {},
   ): Promise<{
     applied: readonly AppliedEdit[];
     awaitingApproval: readonly RefinementEdit[];
@@ -2760,6 +2761,14 @@ export class Workbench {
 
     const workspace = session.view.workspace;
     return this.locked(async () => {
+      // branch() uses this same lock. Check after acquiring it, so a branch
+      // queued ahead of this proposal makes the stale review fail closed.
+      const currentBranchVersion = this.harnessTriggers.get(sessionId)?.branchVersion ?? 0;
+      if (
+        options.expectedBranchVersion !== undefined &&
+        currentBranchVersion !== options.expectedBranchVersion
+      )
+        throw new Error("The branch moved while the Harness review was in flight.");
       const proof = await this.ledger(workspace);
       const verifiedSeqs = new Set((proof?.entries ?? []).map((entry) => entry.seq));
       for (const edit of proposal.edits)
@@ -3086,8 +3095,8 @@ export class Workbench {
           );
           return reply.message.content ?? "";
         },
-        apply: async (proposal) => {
-          await this.refineHarness(id, proposal);
+        apply: async (proposal, expectedBranchVersion) => {
+          await this.refineHarness(id, proposal, { expectedBranchVersion });
         },
         currentBranchVersion: () =>
           this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion,

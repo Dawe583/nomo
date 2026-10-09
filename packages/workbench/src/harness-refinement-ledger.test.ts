@@ -89,6 +89,27 @@ test("a memory proposal stays inert until its exact digest is approved", async (
   );
 });
 
+test("a review waiting for the workspace lock is refused after a branch move", async (t) => {
+  const { app, session } = await fixture(t);
+  const before = await app.ledger(session.workspace);
+  assert.ok(before);
+
+  // Queue the branch first, then the proposal write. refineHarness captures the
+  // old workspace before it waits for the same workbench lock.
+  const branch = app.branch(session.id, {
+    seq: session.events.at(-1)!.seq,
+    idempotencyKey: "stale-harness-review",
+  });
+  const staleReview = app.refineHarness(session.id, proposal(), {
+    expectedBranchVersion: 0,
+  });
+
+  await branch;
+  await assert.rejects(staleReview, /branch moved/i);
+  assert.equal((await app.ledger(session.workspace))!.entries.length, before.entries.length);
+  assert.deepEqual(await app.pendingApprovalsFor(session.id), []);
+});
+
 test("mutating a returned pending proposal cannot alter the signed chain", async (t) => {
   const { app, session } = await fixture(t);
   await app.refineHarness(session.id, proposal());

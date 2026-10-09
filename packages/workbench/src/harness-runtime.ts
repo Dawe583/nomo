@@ -66,7 +66,7 @@ export type HarnessRuntimeDeps = {
   /** The one model call. Never reached unless the gate proceeds. */
   readonly ask: (request: string) => Promise<string>;
   /** Validate-and-apply, which is the only path into the signed chain. */
-  readonly apply: (proposal: RefinementProposal) => Promise<void>;
+  readonly apply: (proposal: RefinementProposal, expectedBranchVersion: number) => Promise<void>;
   /** Read the live branch version so stale reviews are discarded. */
   readonly currentBranchVersion?: () => number;
   /**
@@ -164,14 +164,14 @@ export async function serviceHarnessBoundary(
     return parseReviewVerdict(reply);
   };
 
-  const run = async (instructions: string): Promise<void> => {
+  const run = async (instructions: string, expectedBranchVersion: number): Promise<void> => {
     const parsed = extractJsonObject(instructions);
     if (!parsed.ok)
       throw new Error(`Refinement reply was not a proposal: ${parsed.message}`);
     const validated = validateProposal(parsed.proposal);
     if (!validated.ok)
       throw new Error(`Invalid refinement proposal: ${validated.rejections.join("; ")}`);
-    await deps.apply(validated.proposal);
+    await deps.apply(validated.proposal, expectedBranchVersion);
   };
 
   return serviceTrigger(
