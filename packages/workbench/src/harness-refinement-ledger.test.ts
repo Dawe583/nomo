@@ -386,8 +386,6 @@ test("secret-shaped proposal content is refused before it reaches the signed led
   await assert.rejects(app.refineHarness(session.id, configuredSecret), /secret-like content/);
 });
 
-
-
 test("the external workspace key is refused if echoed into a proposal", async (t) => {
   const key = Buffer.alloc(32, 7).toString("base64");
   const { app, session } = await fixture(t, { VOID_WORKSPACE_KEY: key });
@@ -414,6 +412,28 @@ test("a read-only workbench refuses a refinement, because it signs a record", as
   // verify, and a refinement that produced one would have written anyway.
   const ledger = await app.ledger(session.workspace);
   assert.equal(ledger, undefined, "a read-only workbench signed a record");
+});
+
+test("a restart keeps the environment that refused the refinement", async (t) => {
+  // `reopen` used to rebuild the environment by hand, which dropped
+  // `extraEnv`: the reopened workbench came back in `normal` mode and signed
+  // the very record the original refused. The refusal is the witness — a
+  // reopened workbench that had lost its mode would happily sign here.
+  const { session, closeOriginal, reopen } = await fixture(
+    t,
+    { VOID_PERMISSION_MODE: "read-only" },
+    { seedDocument: false },
+  );
+  await closeOriginal();
+
+  const reopened = reopen();
+  try {
+    await assert.rejects(reopened.refineHarness(session.id, proposal()), /read-only/);
+    const ledger = await reopened.ledger(session.workspace);
+    assert.equal(ledger, undefined, "a reopened workbench signed a record");
+  } finally {
+    reopened.close();
+  }
 });
 
 test("deleting a mined entry persists as a tombstone across later refinements", async (t) => {

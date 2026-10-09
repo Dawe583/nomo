@@ -99,6 +99,11 @@ export function assertIsolated(
  * `extraEnv` is merged into the same environment object as `VOID_DATA_DIR`
  * rather than replacing it, so a caller supplying `VOID_PERMISSION_MODE` or
  * `VOID_POLICY_PATH` cannot accidentally drop the data directory.
+ *
+ * A caller naming `VOID_DATA_DIR` in `extraEnv` loses that name: see the merge
+ * below. A fixture that let a test redirect its own store would leave
+ * `assertIsolated` checking a directory nobody wrote to, which is the one
+ * outcome this file exists to rule out.
  */
 export async function isolatedWorkbench(
   t: FixtureContext,
@@ -116,9 +121,12 @@ export async function isolatedWorkbench(
 
   const root = await mkdtemp(join(tmpdir(), prefix));
   // One object, so extraEnv can add to the environment but never displace the
-  // data directory. `VOID_DATA_DIR` is written first and last is not allowed
-  // to win, which is exactly the mistake this fixture exists to prevent.
-  const env = { VOID_DATA_DIR: root, ...extraEnv } as NodeJS.ProcessEnv;
+  // data directory. `VOID_DATA_DIR` is written last and last wins, so a caller
+  // who names it in `extraEnv` still gets the temporary root. Spreading
+  // `extraEnv` first is the whole point of this line: the other order builds a
+  // workbench that is silently not the one under test, and points
+  // `assertIsolated` at a directory nobody wrote to.
+  const env = { ...extraEnv, VOID_DATA_DIR: root } as NodeJS.ProcessEnv;
 
   let app = new Workbench(env, fetcher);
   assertIsolated(root, env);
