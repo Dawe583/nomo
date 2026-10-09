@@ -996,7 +996,7 @@ Kontrolní seznam v pořadí, které chytí nejvíc.
 | Rozhodnutí za návrhem                               | `docs/CONTEXT.md`, `docs/DECISIONS.md`                   |
 | Standardy, které si tento repozitář drží            | [standardy](STANDARDS.md)                             |
 | Matice releasových důkazů                           | [matice releasových důkazů](RELEASE-1.0.1-MATRIX.md)                           |
-| Co zbývá postavit, poctivě                          | [co zbývá postavit, poctivě](PLAN-GAPS.md)                                      |
+| Aktivní plán NOMO MVP a roadmapa                  | [plán implementace NOMO](superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md) |
 | Specifika Windows desktopu                          | [specifika Windows desktopu](WINDOWS-DESKTOP.md)                                |
 | Hranice beta                                        | [hranice beta](BETA.md)                                           |
 | Jak se tento návod udržuje pravdivý                 | [jak se tento návod udržuje pravdivý](../scripts/src/handbook.test.mjs)                          |
