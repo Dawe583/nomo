@@ -1232,7 +1232,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         lines: [
           `Verdict: ${scoreBoard.verdict}.`,
           `First-pass rate: ${firstPassValue}.`,
-          `95% CI: ${firstPassCi}; ${firstPass.n} ${firstPass.n === 1 ? "case" : "cases"}.`,
+          `95% CI: ${firstPassCi}; ${firstPass.n} first-pass samples across ${scoreBoard.caseCount} cases.`,
           // The verdict is a sentence, not a grade: "flat" means nothing was
           // compared, which reads as "measured and unchanged" unless the
           // reason is printed next to it.
@@ -3004,7 +3004,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           `HARNESS SCORES, verdict: ${board.verdict}`,
           `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
           `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
-          `Sample count: ${firstPass.n} ${firstPass.n === 1 ? "case" : "cases"}`,
+          `Sample count: ${firstPass.n} first-pass samples`,
+          `Case count: ${board.caseCount} verified tool-call cases`,
           `Reason: ${board.reasons.join("; ")}.`,
           ...unmeasuredMetrics(board).map(
             (key) => `${key}: no sample, so no rate can be computed.`,

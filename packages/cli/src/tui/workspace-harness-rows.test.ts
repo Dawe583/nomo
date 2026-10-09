@@ -271,7 +271,8 @@ test("/harness scores reports the verified sample count and CI without authority
   const output = (ui.detail ?? []).join("\n");
   assert.match(output, /HARNESS SCORES, verdict: insufficient-data/);
   assert.match(output, /95% CI: unavailable/);
-  assert.match(output, /Sample count: 0 cases/);
+  assert.match(output, /Sample count: 0 first-pass samples/);
+  assert.match(output, /Case count: 0 verified tool-call cases/);
   assert.match(output, /never changes a decision or permission/);
 });
 

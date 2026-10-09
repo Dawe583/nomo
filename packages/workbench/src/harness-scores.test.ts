@@ -114,7 +114,8 @@ test("an expired hold costs a human but is not a refusal", () => {
   // an expired hold means nobody answered, not that anyone said no.
   assert.equal(board.metrics.hold_rate.mean, 2 / 3);
   assert.equal(board.metrics.deny_rate.mean, 0);
-  assert.equal(board.metrics.first_pass_rate.mean, 1 / 3);
+  assert.equal(board.metrics.first_pass_rate.mean, null);
+  assert.equal(board.metrics.first_pass_rate.unmeasured, 3);
 });
 
 test("entries that are not records are skipped rather than crashing the board", () => {
@@ -122,7 +123,57 @@ test("entries that are not records are skipped rather than crashing the board", 
     [[entry({ decision: "execute:completed" }), { body: null }, { body: [1] }, { body: 7 }]],
     "t0",
   );
-  assert.equal(board.metrics.first_pass_rate.mean, 1);
+  assert.equal(board.metrics.first_pass_rate.mean, null);
+});
+
+test("case count remains visible when first-pass outcome data is unavailable", () => {
+  const board = measureBoard(
+    [[decided("execute:completed")], [entry({ tool: "harness.proposal" })], []],
+    "t0",
+  );
+  assert.equal(board.caseCount, 1);
+  assert.equal(board.metrics.first_pass_rate.n, 0);
+});
+
+test("unknown_tool_rate is unavailable until classification outcomes are recorded", () => {
+  const board = measureBoard(
+    [[decided("execute:completed"), decided("deny:policy")]],
+    "t0",
+  );
+  assert.deepEqual(board.metrics.unknown_tool_rate, {
+    n: 0,
+    mean: null,
+    half: null,
+    unmeasured: 2,
+  });
+  assert.ok(unmeasuredMetrics(board).includes("unknown_tool_rate"));
+});
+
+test("Harness lifecycle records are not counted as tool attempts", () => {
+  const board = measureBoard(
+    [[
+      entry({ tool: "harness.proposal", decision: "proposal:created" }),
+      entry({ tool: "harness.activation", decision: "proposal:activated" }),
+      entry({ tool: "harness.rejection", decision: "proposal:rejected" }),
+    ]],
+    "t0",
+  );
+  assert.equal(board.metrics.first_pass_rate.unmeasured, 0);
+  assert.equal(board.metrics.unknown_tool_rate.unmeasured, 0);
+});
+
+test("first_pass_rate is unavailable without observed correction or retry data", () => {
+  const board = measureBoard(
+    [[decided("execute:completed"), decided("execute:completed")]],
+    "t0",
+  );
+  assert.deepEqual(board.metrics.first_pass_rate, {
+    n: 0,
+    mean: null,
+    half: null,
+    unmeasured: 2,
+  });
+  assert.ok(unmeasuredMetrics(board).includes("first_pass_rate"));
 });
 
 test("a chain with nothing decided reports insufficient data and says why", () => {
@@ -150,14 +201,7 @@ test("every metric declares a direction and a unit", () => {
   }
 });
 
-test("a guardrail regression withholds an otherwise improving verdict", () => {
-  // The failure this module exists to prevent: a policy that stops waiting on
-  // people scores a better first_pass_rate, and some of those calls come back
-  // refused. The headline rises, deny_rate rises with it, and the change is
-  // withheld rather than reported as progress.
-  //
-  // before: 2 allow / 6 hold / 2 deny  -> first_pass 0.2, deny_rate 0.2
-  // after:  6 allow / 0 hold / 4 deny  -> first_pass 0.6, deny_rate 0.4
+test("guardrail regressions are reported while first-pass data is unavailable", () => {
   const busy = (allow: number, hold: number, deny: number) => () =>
     Array.from({ length: allow }, () => decided("execute:completed"))
       .concat(Array.from({ length: hold }, () => decided("hold:approved")))
@@ -165,23 +209,17 @@ test("a guardrail regression withholds an otherwise improving verdict", () => {
 
   const before = measureBoard([busy(2, 6, 2)(), busy(2, 6, 2)()], "before");
   const after = measureBoard([busy(6, 0, 4)(), busy(6, 0, 4)()], "after");
-
-  assert.ok(
-    after.metrics.first_pass_rate.mean! > before.metrics.first_pass_rate.mean!,
-    "the headline must genuinely improve, or this test proves nothing",
-  );
-  assert.ok(
-    after.metrics.deny_rate.mean! > before.metrics.deny_rate.mean!,
-    "the guardrail must genuinely regress, or this test proves nothing",
-  );
+  assert.equal(before.metrics.first_pass_rate.mean, null);
+  assert.equal(after.metrics.first_pass_rate.mean, null);
+  assert.ok(after.metrics.deny_rate.mean! > before.metrics.deny_rate.mean!);
 
   const verdict = compareBoards(before, after);
-  assert.equal(verdict.verdict, "flat", "the headline improved but the conditions did not");
-  assert.ok(verdict.guardrailBreaches.length > 0, "the breach must be named");
+  assert.equal(verdict.verdict, "insufficient-data");
+  assert.ok(verdict.guardrailBreaches.some((line) => line.includes("deny_rate")));
   assert.match(verdict.reasons[0] ?? "", /withheld/);
 });
 
-test("a real improvement with guardrails held reads as improving", () => {
+test("boards do not claim improvement without observed correction data", () => {
   const before = measureBoard(
     [
       [decided("hold:approved"), decided("execute:completed"), decided("execute:completed")],
@@ -197,11 +235,11 @@ test("a real improvement with guardrails held reads as improving", () => {
     "after",
   );
   const verdict = compareBoards(before, after);
-  assert.equal(verdict.verdict, "improving");
+  assert.equal(verdict.verdict, "insufficient-data");
   assert.deepEqual(verdict.guardrailBreaches, []);
 });
 
-test("a guardrail breach is flat, not declining, because the headline did not fall", () => {
+test("a guardrail breach is retained when the primary metric is unavailable", () => {
   const before = measureBoard([[decided("execute:completed")], [decided("execute:completed")]], "b");
   const after = measureBoard(
     [
@@ -211,7 +249,7 @@ test("a guardrail breach is flat, not declining, because the headline did not fa
     "a",
   );
   const verdict = compareBoards(before, after);
-  assert.equal(verdict.verdict, "flat");
+  assert.equal(verdict.verdict, "insufficient-data");
   assert.ok(verdict.guardrailBreaches.some((line) => line.includes("rollback_count")));
 });
 
@@ -220,7 +258,7 @@ test("metrics with no measurement are named for a surface to show", () => {
   const missing = unmeasuredMetrics(board);
   assert.ok(missing.includes("median_approval_ms"));
   assert.ok(missing.includes("cost_usd"));
-  assert.ok(!missing.includes("first_pass_rate"));
+  assert.ok(missing.includes("first_pass_rate"));
 });
 
 test("operator decision time and spend are read when the record carries them", () => {
@@ -301,8 +339,9 @@ test("a chain whose outcomes were never proven contributes no sample", () => {
     [unproven, unproven, [decided("execute:completed"), decided("hold:approved")]],
     "t0",
   );
-  assert.equal(board.metrics.first_pass_rate.n, 1);
-  assert.equal(board.metrics.first_pass_rate.mean, 0.5);
+  assert.equal(board.metrics.first_pass_rate.n, 0);
+  assert.equal(board.metrics.first_pass_rate.mean, null);
+  assert.equal(board.metrics.first_pass_rate.unmeasured, 6);
   assert.equal(board.metrics.rollback_count.n, 1);
   assert.equal(board.verdict, "insufficient-data");
 });

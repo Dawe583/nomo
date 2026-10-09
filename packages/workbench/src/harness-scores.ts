@@ -146,6 +146,8 @@ export type SplitSummary = {
 export type ScoreVerdict = "improving" | "declining" | "flat" | "insufficient-data";
 
 export type ScoreBoard = {
+  /** Input chains containing at least one recorded, non-Harness tool attempt. */
+  readonly caseCount: number;
   readonly metrics: Readonly<Record<string, SplitSummary>>;
   readonly guardrails: Readonly<Record<string, SplitSummary>>;
   readonly verdict: ScoreVerdict;
@@ -261,10 +263,10 @@ function num(record: Record<string, unknown>, key: string): number | undefined {
  * is a gap in our knowledge, and counting it as a bad outcome would make an
  * instrumentation failure look like a model that misbehaves.
  */
-type Tally = { allow: number; hold: number; deny: number; unknownTool: number; unmeasured: number };
+type Tally = { allow: number; hold: number; deny: number; attempts: number; unmeasured: number };
 
 function emptyTally(): Tally {
-  return { allow: 0, hold: 0, deny: 0, unknownTool: 0, unmeasured: 0 };
+  return { allow: 0, hold: 0, deny: 0, attempts: 0, unmeasured: 0 };
 }
 
 function tally(entries: readonly Entry[]): Tally {
@@ -272,8 +274,9 @@ function tally(entries: readonly Entry[]): Tally {
   for (const entry of entries) {
     const record = body(entry);
     if (record === null) continue;
-    // Refinement records document harness changes, not model tool outcomes.
-    if (str(record, "tool") === "harness.refinement") continue;
+    const tool = str(record, "tool");
+    if (tool.startsWith("harness.")) continue;
+    if (tool) out.attempts += 1;
     const decision = str(record, "decision");
     if (!decision) {
       out.unmeasured += 1;
@@ -330,15 +333,15 @@ export function measureBoard(
 
   const holdCases: number[][] = [];
   const denyCases: number[][] = [];
-  const unknownCases: number[][] = [];
-  const passCases: number[][] = [];
   const approvalCases: number[][] = [];
   const rollbackCases: number[][] = [];
   const recoveryCases: number[][] = [];
   const costCases: number[][] = [];
+  let caseCount = 0;
 
   for (const entries of cases) {
     const local = tally(entries);
+    if (local.attempts > 0) caseCount += 1;
     const localDecided = local.allow + local.hold + local.deny;
     // A case contributes a sample only when something in it was decided.
     // `rate(0, 0)` is 0, and a zero is a measurement: `execute:unknown` and
@@ -347,8 +350,6 @@ export function measureBoard(
     if (localDecided > 0) {
       holdCases.push([rate(local.hold, localDecided)]);
       denyCases.push([rate(local.deny, localDecided)]);
-      unknownCases.push([rate(local.unknownTool, entries.length)]);
-      passCases.push([rate(local.allow, localDecided)]);
     }
 
     const approvals: number[] = [];
@@ -378,11 +379,12 @@ export function measureBoard(
 
   const unmeasured = totals.unmeasured;
 
+  // Decisions alone do not prove either correction history or tool classification.
   const metrics: Record<string, SplitSummary> = {
     hold_rate: summariseCases(holdCases, unmeasured),
     deny_rate: summariseCases(denyCases, unmeasured),
-    unknown_tool_rate: summariseCases(unknownCases, unmeasured),
-    first_pass_rate: summariseCases(passCases, unmeasured),
+    unknown_tool_rate: summariseCases([], totals.attempts),
+    first_pass_rate: summariseCases([], totals.attempts),
     median_approval_ms: summariseCases(approvalCases, unmeasured),
     recovery_success_rate: summariseCases(recoveryCases, 0),
     rollback_count: summariseCases(rollbackCases, unmeasured),
@@ -403,7 +405,7 @@ export function measureBoard(
     reasons.push("no baseline was supplied, so there is nothing to compare against");
   }
 
-  return { metrics, guardrails, verdict, reasons, generatedAt };
+  return { caseCount, metrics, guardrails, verdict, reasons, generatedAt };
 }
 
 /**
