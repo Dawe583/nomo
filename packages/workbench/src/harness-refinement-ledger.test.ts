@@ -115,6 +115,27 @@ test("mutating a returned pending proposal cannot alter the signed chain", async
   );
 });
 
+test("mutating a returned ledger snapshot cannot alter the signed chain", async (t) => {
+  const { app, session } = await fixture(t);
+  await app.refineHarness(session.id, proposal());
+  const snapshot = await app.ledger(session.workspace);
+  assert.ok(snapshot);
+  const record = snapshot.entries.at(-1)!.body as {
+    harnessProposal: { proposal: RefinementProposal };
+  };
+
+  const mutable = record.harnessProposal.proposal as unknown as { summary: string };
+  mutable.summary = "tampered ledger snapshot";
+
+  const reread = await app.ledger(session.workspace);
+  assert.ok(reread);
+  assert.equal(reread.result.ok, true);
+  const rereadRecord = reread.entries.at(-1)!.body as {
+    harnessProposal: { proposal: RefinementProposal };
+  };
+  assert.deepEqual(rereadRecord.harnessProposal.proposal, proposal());
+});
+
 test("pending proposals survive restart and rejection is signed", async (t) => {
   const { app, session, directory, closeOriginal } = await fixture(t);
   const created = await app.refineHarness(session.id, proposal());

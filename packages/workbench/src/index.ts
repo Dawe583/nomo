@@ -3044,7 +3044,7 @@ export class Workbench {
     const result = await verifyChain(entries, { publicKey: key.publicKey });
     if (!result.ok)
       throw new Error("Workspace ledger signature verification failed.");
-    return { entries, result, verification: key };
+    return { entries: structuredClone(entries), result, verification: key };
   }
   /**
    * Service one settled turn at the harness boundary.
