@@ -3,6 +3,40 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- The agent now learns from its own signed ledger, and what it learned shows
+  up where the operator already looks. A cleanly finished turn is the only
+  moment the agent may spend a model call on learning, and a cheap
+  deterministic gate decides first, so an ordinary run spends nothing. When
+  the gate opens, the review's output is a proposal, never authority: it is
+  validated against the verified chain, every edit must cite existing
+  sequence numbers from that same chain, and anything shaped like a secret
+  is refused before it is recorded. A review that fails is stamped the same
+  as one that succeeds, and a branch moved in between discards the result,
+  so money is never spent twice on the same silence.
+
+  Lessons mined from the chain take effect on their own, but a change to the
+  agent's prompt never does. A prompt edit waits as a signed proposal on the
+  ledger tab, where the exact diff and the chain sequences it rests on are
+  inspectable, and `/refine approve <digest>` activates it only when the
+  digest still reproduces byte for byte and every cited sequence still
+  verifies. Rejection is recorded the same way, and deciding twice is a
+  replay, not a second decision. The base system prompt is immutable;
+  approved additions reach only later turns of the same workspace, ranked,
+  bounded by a caller ceiling, and never another workspace's, and they are
+  rebuilt from the signed chain after a restart rather than restored from a
+  file.
+
+  Learned rules stay pauses for a human and stay behind the operator's own
+  rules: they can fill a gap the operator left open and can never override a
+  deliberate choice, and nothing the model proposes can change how a
+  decision is made.
+
+  The ledger tab now also carries the measured score: hold rate and deny
+  rate with confidence intervals over case counts, and a first-pass rate
+  only when the chain carries an observed correction signal, because a call
+  the operator allowed and then had to roll back is not a pass. Below two
+  cases there is no interval, and the tab says so instead of showing a
+  number nobody checked. No score changes a gate, a policy or a permission.
 - Every limit that governed a run was a literal in the code: 20 turns, 4096
   output tokens, a 32000 character prompt, a 20-deep queue, a 65536 byte
   request, a 32-call tool batch, a 5s hook timeout, and a retry loop tied to

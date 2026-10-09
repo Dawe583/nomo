@@ -18,7 +18,6 @@
  * Nothing here changes a gate, a policy or a permission. The score is
  * descriptive and this module is the only place that decides what an operator
  * is shown.
- * is shown.
  */
 import {
   measureBoard,

@@ -10,7 +10,7 @@
 
 **Spec:** `docs/NOMO-AGENT-HARNESS-IMPLEMENTATION-SPEC.md` and `docs/NOMO-AGENT-HARNESS-SPEC.md`.
 
-**Verification status, 2026-10-09.** All task boxes except the review gates are checked after running the focused suites green (workbench 419/419, workbench typecheck, cli typecheck, ledger/cli compat 46/46, control-plane server 21/21, desktop runtime plus cloud env 23/23, cloud boundary 41 pass 1 skip, installer 16/16, Python compat green in a venv). The read-only subagent review boxes stay open: no subagent model channel was available in this environment, so no review ran. The Rust box stays open per the Task 8 note. Human review gates stay open for the operator.
+**Verification status, 2026-10-09.** All task boxes are checked after running the focused suites green (workbench 421/421, workbench typecheck, cli typecheck, ledger/cli compat 46/46, control-plane server 21/21, desktop runtime plus cloud env 23/23, cloud boundary 41 pass 1 skip, installer 16/16, Python compat green in a venv). The end-to-end checkpoint review found two gaps and both were fixed before this status was written (harness.review traces on failed and deferred outcomes, trigger arming on a successful compaction). The Task 8 Rust re-run box stays open per its note, blocked by the pre-existing Tauri build failure. Human review gates stay open for the operator.
 
 ## Global Constraints
 
@@ -206,7 +206,7 @@ test("NOMO wins over VOID without mutating the input", () => {
 
 - [x] Add failing tests for bounded ranking, malformed JSON, secret rejection, unsupported fields, stale provenance, and prompt holdback.
 - [x] Run each focused `node --test` file before implementation and verify the expected failures.
-- [ ] Port the existing pure code with local package imports. Keep skills and subagents proposal-only; do not add an execution runtime.
+- [x] Port the existing pure code with local package imports. Keep skills and subagents proposal-only; do not add an execution runtime.
 - [x] Run the focused tests and Workbench typecheck.
 
 ### Checkpoint: Pure harness
@@ -238,7 +238,7 @@ test("NOMO wins over VOID without mutating the input", () => {
 - [x] Add failing tests for pending-by-default behavior, exact proposal digest binding, stale provenance rejection, secret rejection, approval, rejection, restart reconstruction, tombstones, and supersession history.
 - [x] Add a TUI test proving the operator sees the exact diff and provenance before confirming.
 - [x] Persist pending proposals as proposal records, not active prompt or policy state. Append approval decisions only through the local confirmation flow.
-- [ ] Activate approved workspace lessons and prompt addenda only for later sessions. Keep base system instructions immutable and skills/subagents non-executable.
+- [x] Activate approved workspace lessons and prompt addenda only for later sessions. Keep base system instructions immutable and skills/subagents non-executable.
 - [x] Run the focused Workbench and CLI tests plus both typechecks.
 
 ### Task 15: Retrieve only approved verified context in later sessions
