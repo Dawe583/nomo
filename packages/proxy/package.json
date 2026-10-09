@@ -15,7 +15,9 @@
     "@types/node": "catalog:"
   },
   "dependencies": {
+    "@modelcontextprotocol/node": "2.1.1",
     "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/server": "2.3.1",
     "@void/ledger": "workspace:*",
     "@void/policy": "workspace:*",
     "@void/registry": "workspace:*"

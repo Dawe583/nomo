@@ -189,18 +189,20 @@ telemetry and ledger records.
 - Modify: `packages/proxy/src/bin.ts`
 - Modify: `packages/proxy/src/index.ts`
 
-- [ ] First verify the pinned MCP SDK server-transport API and the current MCP
+- [x] First verify the pinned MCP SDK server-transport API and the current MCP
       HTTP specification. Do not hand-roll protocol framing or reuse the
       upstream HTTP client as a server.
-- [ ] Implement one loopback-only inbound `/mcp` endpoint for the local demo.
-- [ ] Validate the `Authorization` bearer with the in-memory issuer before
+- [x] Implement one loopback-only inbound `/mcp` endpoint for the local demo.
+- [x] Validate the `Authorization` bearer with the in-memory issuer before
       accepting `tools/list` or `tools/call`.
-- [ ] Return a standards-shaped unauthorized response for invalid local grants,
+- [x] Return a standards-shaped unauthorized response for invalid local grants,
       without claiming OAuth compliance.
-- [ ] Pass accepted requests into the existing proxy interception path. Keep
+- [x] Pass accepted requests into the existing proxy interception path. Keep
       upstream auth separate; do not forward the NOMO bearer.
-- [ ] Cover origin/host checks, unsupported methods, malformed protocol input,
+- [x] Cover origin/host checks, unsupported methods, malformed protocol input,
       request size limits, expired grants, wrong audience and clean shutdown.
+
+**Implementation note.** The inbound endpoint uses `@modelcontextprotocol/server@2.3.1` and `@modelcontextprotocol/node@2.1.1` for MCP `2026-07-28`. The existing `@modelcontextprotocol/sdk@1.30.0` remains on the upstream client path. The local bridge forwards request cancellation through the existing proxy path.
 
 **Acceptance:** A valid local MCP client can connect through the endpoint to the
 disposable target. Invalid auth and malformed requests never reach upstream.
@@ -264,11 +266,15 @@ are not reported as cancelled, reverted or successful.
 
 **Files:**
 - Modify: `packages/workbench/src/mcp.ts`
+- Modify: `packages/workbench/package.json`
 - Modify: `packages/workbench/src/index.ts`
 - Modify: `packages/workbench/src/agents.ts`
 - Extend: `packages/workbench/src/harness-wiring.test.ts`
 - Extend: `packages/workbench/src/workbench.test.ts`
 
+- [ ] Update the Workbench client to MCP `2026-07-28`, including required
+      per-request metadata headers and connectionless request flow. Depend
+      directly on `@void/proxy` for the inbound local server.
 - [ ] Replace static-token-only wiring for the local demo with an in-memory
       token provider bound to the Workbench run.
 - [ ] Prove the provider does not place bearer text in model prompts, tool

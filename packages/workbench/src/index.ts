@@ -1241,6 +1241,16 @@ export class Workbench {
       toolName: request.toolName,
     });
   }
+  /** Resolve a grant for the local proxy without authorizing a specific tool. */
+  resolveLocalAgentGrant(
+    token: string,
+    upstreamId: string,
+  ): LocalAgentIdentity | null {
+    return this.localIdentityIssuer.authenticate(token, {
+      audience: LOCAL_AGENT_GRANT_AUDIENCE,
+      upstreamId,
+    });
+  }
   async start(
     prompt: string,
     model?: string,

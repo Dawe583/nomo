@@ -9,7 +9,7 @@ import { join } from "node:path";
 import type { AddressInfo } from "node:net";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 
-import { ProxyStartupError, runProxy } from "./bin.ts";
+import { createLocalProxyRpcBridge, ProxyStartupError, runProxy } from "./bin.ts";
 import type { ProxyOptions, UpstreamEvents } from "./bin.ts";
 import type { HoldQueue } from "../../policy/src/index.ts";
 import type { UpstreamProcess } from "./transport/stdio.ts";
@@ -23,6 +23,120 @@ const platformTestTimeoutMs = (
   windowsMilliseconds: number,
 ): number =>
   process.platform === "win32" ? windowsMilliseconds : milliseconds;
+
+test("local proxy bridge initializes, lists tools and forwards tool calls", { timeout: 5_000 }, async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-proxy-bridge-"));
+  const policyPath = join(directory, "policy.yml");
+  await writeFile(policyPath, policyText("allow"));
+  const ledgerDir = join(directory, "ledger");
+  const upstreamMessages: Array<Record<string, unknown>> = [];
+  let upstreamClosed = false;
+  let resolveCancelToolDispatched: (() => void) | undefined;
+  let resolveCancelNotification: (() => void) | undefined;
+  const cancelToolDispatched = new Promise<void>((resolve) => {
+    resolveCancelToolDispatched = resolve;
+  });
+  const cancelNotificationSeen = new Promise<void>((resolve) => {
+    resolveCancelNotification = resolve;
+  });
+  const bridge = createLocalProxyRpcBridge({
+    upstreamCommand: ["fake"],
+    policyPath,
+    posture: "fail-closed",
+    ledgerDir,
+    workspace: "bridge-test",
+    keyProvider: keyProviderFromPkcs8(
+      generateKeyPairSync("ed25519").privateKey.export({
+        format: "der",
+        type: "pkcs8",
+      }),
+    ),
+    upstreamSpawn(events) {
+      return {
+        send(line) {
+          const message = JSON.parse(line) as {
+            id?: number | string;
+            method?: string;
+            params?: { name?: string; arguments?: Record<string, unknown> };
+          };
+          upstreamMessages.push(message as Record<string, unknown>);
+          if (message.method === "notifications/cancelled")
+            resolveCancelNotification?.();
+          if (message.method === "initialize") {
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: {
+                protocolVersion: "2025-11-25",
+                capabilities: { tools: {} },
+                serverInfo: { name: "fixture", version: "1" },
+              },
+            }));
+          } else if (message.method === "tools/list") {
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: {
+                tools: [{
+                  name: "aws.s3.bucket.delete",
+                  description: "Echo",
+                  inputSchema: { type: "object", properties: { value: { type: "string" } } },
+                }],
+              },
+            }));
+          } else if (message.method === "tools/call" &&
+            message.params?.arguments?.value === "cancel") {
+            resolveCancelToolDispatched?.();
+          } else if (message.method === "tools/call") {
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: { content: [{ type: "text", text: message.params?.arguments?.value }] },
+            }));
+          }
+        },
+        close() {
+          if (upstreamClosed) return;
+          upstreamClosed = true;
+          events.onClose(0, null);
+        },
+        onStderr() {
+          return () => {};
+        },
+      };
+    },
+  });
+  t.after(async () => {
+    await bridge.close();
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  assert.deepEqual((await bridge.listTools()).map((tool) => tool.name), ["aws.s3.bucket.delete"]);
+  assert.deepEqual(await bridge.callTool("aws.s3.bucket.delete", { value: "hello" }), {
+    content: [{ type: "text", text: "hello" }],
+  });
+  assert.equal(upstreamMessages.filter((message) => message.method === "tools/call").length, 1);
+  assert.equal(JSON.stringify(upstreamMessages).includes("local-grant"), false);
+
+  const controller = new AbortController();
+  const cancelledCall = bridge.callTool(
+    "aws.s3.bucket.delete",
+    { value: "cancel" },
+    controller.signal,
+  );
+  await cancelToolDispatched;
+  controller.abort();
+  await cancelNotificationSeen;
+  await assert.rejects(cancelledCall);
+  assert.equal(
+    upstreamMessages.some((message) => message.method === "notifications/cancelled"),
+    true,
+  );
+
+  await bridge.close();
+  assert.equal(upstreamClosed, true);
+  await assert.rejects(bridge.listTools());
+});
 
 describe("runProxy", () => {
   test("initialize negotiation answers a version the agent supports", async () => {

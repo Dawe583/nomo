@@ -1004,3 +1004,287 @@ function cleanEnv(env: NodeJS.ProcessEnv): Record<string, string> {
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
+
+export type LocalProxyRpcBridgeOptions = Omit<
+  ProxyOptions,
+  "input" | "output" | "shutdownSignals"
+>;
+
+export type LocalProxyTool = Readonly<{
+  name: string;
+  description?: string;
+  inputSchema: Record<string, unknown>;
+}>;
+
+type BridgeReply = {
+  readonly resolve: (value: unknown) => void;
+  readonly reject: (error: Error) => void;
+};
+
+class AsyncLineQueue implements AsyncIterable<string> {
+  readonly #lines: string[] = [];
+  readonly #readers: Array<(result: IteratorResult<string>) => void> = [];
+  #closed = false;
+
+  [Symbol.asyncIterator](): AsyncIterator<string> {
+    return {
+      next: () => this.#next(),
+      return: async () => {
+        this.close();
+        return { done: true, value: undefined };
+      },
+    };
+  }
+
+  push(line: string): void {
+    if (this.#closed) throw new Error("Local proxy input is closed");
+    const reader = this.#readers.shift();
+    if (reader) reader({ done: false, value: line });
+    else this.#lines.push(line);
+  }
+
+  close(discard = false): void {
+    if (this.#closed) return;
+    this.#closed = true;
+    if (discard) this.#lines.length = 0;
+    for (const reader of this.#readers.splice(0))
+      reader({ done: true, value: undefined });
+  }
+
+  #next(): Promise<IteratorResult<string>> {
+    const line = this.#lines.shift();
+    if (line !== undefined) return Promise.resolve({ done: false, value: line });
+    if (this.#closed) return Promise.resolve({ done: true, value: undefined });
+    return new Promise((resolve) => this.#readers.push(resolve));
+  }
+}
+
+/**
+ * Runs the established JSON-RPC interception path behind an in-process line
+ * bridge. The inbound HTTP server owns the local grant; it is never added to
+ * these upstream proxy options or forwarded to the target.
+ */
+export class LocalProxyRpcBridge {
+  readonly #options: LocalProxyRpcBridgeOptions;
+  readonly #input = new AsyncLineQueue();
+  readonly #pending = new Map<number | string, BridgeReply>();
+  readonly #signalHandlers = new Map<ProxyShutdownSignal, () => void>();
+  readonly #shutdownSignals: ProxyShutdownSignals;
+  #nextId = 1;
+  #runPromise: Promise<void> | null = null;
+  #readyPromise: Promise<readonly LocalProxyTool[]> | null = null;
+  #failure: Error | null = null;
+  #closeRequested = false;
+  #closed = false;
+
+  constructor(options: LocalProxyRpcBridgeOptions) {
+    this.#options = options;
+    this.#shutdownSignals = {
+      on: (signal, handler) => {
+        this.#signalHandlers.set(signal, handler);
+        if (this.#closeRequested && signal === "SIGTERM") handler();
+      },
+      off: (signal, handler) => {
+        if (this.#signalHandlers.get(signal) === handler)
+          this.#signalHandlers.delete(signal);
+      },
+    };
+  }
+
+  listTools(): Promise<readonly LocalProxyTool[]> {
+    return this.#start();
+  }
+
+  async callTool(
+    name: string,
+    args: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<Record<string, unknown>> {
+    await this.#start();
+    if (!validProxyToolName(name)) throw new TypeError("Invalid proxy tool name");
+    const result = await this.#request("tools/call", {
+      name,
+      arguments: args,
+    }, signal);
+    if (!isObject(result)) throw new Error("Proxy tool result is invalid");
+    return result;
+  }
+
+  async close(): Promise<void> {
+    if (this.#closed) return;
+    this.#closed = true;
+    this.#closeRequested = true;
+    this.#rejectPending(new Error("Local proxy bridge is closed"));
+    this.#signalHandlers.get("SIGTERM")?.();
+    this.#input.close(true);
+    await this.#runPromise?.catch(() => {});
+  }
+
+  #start(): Promise<readonly LocalProxyTool[]> {
+    if (this.#closed) return Promise.reject(new Error("Local proxy bridge is closed"));
+    if (this.#failure) return Promise.reject(this.#failure);
+    if (this.#readyPromise) return this.#readyPromise;
+
+    this.#readyPromise = (async () => {
+      this.#runPromise = runProxy({
+        ...this.#options,
+        input: this.#input,
+        output: (line) => this.#receive(line),
+        shutdownSignals: this.#shutdownSignals,
+      });
+      void this.#runPromise.then(
+        () => this.#fail(new Error("Upstream proxy stopped")),
+        (error: unknown) => this.#fail(asError(error)),
+      );
+
+      await this.#request("initialize", {
+        protocolVersion: "2025-11-25",
+        capabilities: {},
+        clientInfo: { name: "nomo-local-proxy", version: "1" },
+      });
+      this.#input.push(
+        JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+      );
+      const result = await this.#request("tools/list", {});
+      return parseProxyTools(result);
+    })().catch((error: unknown) => {
+      const failure = asError(error);
+      this.#fail(failure);
+      throw failure;
+    });
+    return this.#readyPromise;
+  }
+
+  #request(
+    method: string,
+    params: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
+    if (this.#closed) return Promise.reject(new Error("Local proxy bridge is closed"));
+    if (this.#failure) return Promise.reject(this.#failure);
+    if (signal?.aborted)
+      return Promise.reject(asError(signal.reason ?? new Error("Proxy tool call cancelled")));
+    const id = this.#nextId++;
+    return new Promise((resolve, reject) => {
+      let sent = false;
+      const cleanup = () => signal?.removeEventListener("abort", onAbort);
+      const pending: BridgeReply = {
+        resolve(value) {
+          cleanup();
+          resolve(value);
+        },
+        reject(error) {
+          cleanup();
+          reject(error);
+        },
+      };
+      const onAbort = () => {
+        this.#pending.delete(id);
+        if (sent) {
+          try {
+            this.#input.push(JSON.stringify({
+              jsonrpc: "2.0",
+              method: "notifications/cancelled",
+              params: { requestId: id },
+            }));
+          } catch {
+            // The proxy is already closing, so no cancellation can be relayed.
+          }
+        }
+        pending.reject(asError(signal?.reason ?? new Error("Proxy tool call cancelled")));
+      };
+      this.#pending.set(id, pending);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      if (signal?.aborted) {
+        onAbort();
+        return;
+      }
+      try {
+        this.#input.push(JSON.stringify({ jsonrpc: "2.0", id, method, params }));
+        sent = true;
+      } catch (error) {
+        this.#pending.delete(id);
+        pending.reject(asError(error));
+      }
+    });
+  }
+
+  #receive(line: string): void {
+    let message: unknown;
+    try {
+      message = JSON.parse(line) as unknown;
+    } catch {
+      this.#fail(new Error("Proxy emitted invalid JSON"));
+      return;
+    }
+    if (!isObject(message) ||
+      (typeof message.id !== "number" && typeof message.id !== "string"))
+      return;
+    const pending = this.#pending.get(message.id);
+    if (!pending) return;
+    this.#pending.delete(message.id);
+    if (isObject(message.error)) {
+      const messageText = typeof message.error.message === "string"
+        ? message.error.message
+        : "Proxy request failed";
+      pending.reject(new Error(messageText));
+      return;
+    }
+    if (!("result" in message)) {
+      pending.reject(new Error("Proxy response has no result"));
+      return;
+    }
+    pending.resolve(message.result);
+  }
+
+  #fail(error: Error): void {
+    if (this.#failure) return;
+    this.#failure = error;
+    this.#rejectPending(error);
+  }
+
+  #rejectPending(error: Error): void {
+    for (const pending of this.#pending.values()) pending.reject(error);
+    this.#pending.clear();
+  }
+}
+
+export function createLocalProxyRpcBridge(
+  options: LocalProxyRpcBridgeOptions,
+): LocalProxyRpcBridge {
+  return new LocalProxyRpcBridge(options);
+}
+
+function parseProxyTools(result: unknown): readonly LocalProxyTool[] {
+  if (!isObject(result) || !Array.isArray(result.tools))
+    throw new Error("Upstream tools/list result is invalid");
+  const seen = new Set<string>();
+  const tools: LocalProxyTool[] = [];
+  for (const value of result.tools) {
+    if (!isObject(value) ||
+      !validProxyToolName(value.name) ||
+      !isObject(value.inputSchema) ||
+      value.inputSchema.type !== "object" ||
+      seen.has(value.name))
+      throw new Error("Upstream tools/list contains an invalid tool");
+    seen.add(value.name);
+    tools.push(Object.freeze({
+      name: value.name,
+      ...(typeof value.description === "string" && { description: value.description }),
+      inputSchema: Object.freeze(structuredClone(value.inputSchema)),
+    }));
+  }
+  return Object.freeze(tools);
+}
+
+function validProxyToolName(value: unknown): value is string {
+  return typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= 128 &&
+    value.trim() === value &&
+    !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+function asError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
+}

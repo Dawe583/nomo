@@ -74,6 +74,37 @@ test("opaque grant returns stored identity, not caller supplied identity fields"
   assert.equal(issuer.validate(grant.token, request), null);
 });
 
+test("authenticates a grant for its upstream without authorizing a tool", () => {
+  const issuer = new LocalAgentIdentityIssuer({ now: () => 5000, wallNow: () => 5000 });
+  const grant = issuer.issue(binding);
+
+  assert.deepEqual(
+    issuer.authenticate(grant.token, {
+      audience: "nomo-inbound-proxy",
+      upstreamId: "fixture-mcp",
+    })?.toolScope,
+    ["read", "write"],
+  );
+  assert.equal(
+    issuer.authenticate(grant.token, {
+      audience: "wrong-audience",
+      upstreamId: "fixture-mcp",
+    }),
+    null,
+  );
+  assert.equal(
+    issuer.authenticate(grant.token, {
+      audience: "nomo-inbound-proxy",
+      upstreamId: "other-upstream",
+    }),
+    null,
+  );
+  assert.equal(issuer.authenticate("malformed", {
+    audience: "nomo-inbound-proxy",
+    upstreamId: "fixture-mcp",
+  }), null);
+});
+
 test("revoking a run invalidates its capability", () => {
   const issuer = new LocalAgentIdentityIssuer({ now: () => 5000, wallNow: () => 5000 });
   const grant = issuer.issue({ ...binding, runId: "run-to-revoke" });
@@ -211,6 +242,10 @@ test("Workbench issues grants from stored active session identity and revokes at
   assert.equal(app.get(session.id)?.status, "running");
 
   const grant = app.issueLocalAgentGrant(session.id, connectorId);
+  const resolved = app.resolveLocalAgentGrant(grant.token, connectorId);
+  assert.ok(resolved);
+  assert.deepEqual(resolved.toolScope, ["read"]);
+  assert.equal(app.resolveLocalAgentGrant(grant.token, "other-upstream"), null);
   assert.ok(grant.expiresAt > Date.now());
   assert.ok(grant.expiresAt <= Date.now() + 60_000);
   const forgedRequest = {

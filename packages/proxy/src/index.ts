@@ -42,3 +42,5 @@ export * from "./relay/http-requests.ts";
 export * from "./approval-loop.ts";
 export * from "./legacy-root.ts";
 export * from "./hardening.ts";
+export { startLocalMcpHttpServer } from "./transport/http-server.ts";
+export type { LocalGrantIdentity, LocalMcpHttpServer, LocalMcpHttpServerOptions } from "./transport/http-server.ts";

@@ -15,6 +15,11 @@ export type LocalAgentGrantBinding = Readonly<{
   toolScope: readonly string[];
 }>;
 
+export type LocalAgentGrantAuthenticationRequest = Readonly<{
+  audience: string;
+  upstreamId: string;
+}>;
+
 export type LocalAgentGrantRequest = Readonly<{
   audience: string;
   upstreamId: string;
@@ -128,9 +133,9 @@ export class LocalAgentIdentityIssuer {
     return Object.freeze({ token, expiresAt });
   }
 
-  validate(
+  authenticate(
     token: string,
-    request: LocalAgentGrantRequest,
+    request: LocalAgentGrantAuthenticationRequest,
   ): LocalAgentIdentity | null {
     const now = this.#readNow();
     if (
@@ -139,8 +144,7 @@ export class LocalAgentIdentityIssuer {
       !TOKEN_PATTERN.test(token) ||
       !request ||
       request.audience !== LOCAL_AGENT_GRANT_AUDIENCE ||
-      !validIdentifier(request.upstreamId) ||
-      !validIdentifier(request.toolName)
+      !validIdentifier(request.upstreamId)
     ) {
       return null;
     }
@@ -151,11 +155,7 @@ export class LocalAgentIdentityIssuer {
     const { identity } = record;
     const expired =
       now.monotonic >= record.expiresAtMonotonic || now.wall >= identity.expiresAt;
-    if (
-      expired ||
-      request.upstreamId !== identity.upstreamId ||
-      !identity.toolScope.includes(request.toolName)
-    ) {
+    if (expired || request.upstreamId !== identity.upstreamId) {
       if (expired) this.#dropRun(identity.runId);
       return null;
     }
@@ -164,6 +164,15 @@ export class LocalAgentIdentityIssuer {
       ...identity,
       toolScope: Object.freeze([...identity.toolScope]),
     });
+  }
+
+  validate(
+    token: string,
+    request: LocalAgentGrantRequest,
+  ): LocalAgentIdentity | null {
+    if (!request || !validIdentifier(request.toolName)) return null;
+    const identity = this.authenticate(token, request);
+    return identity?.toolScope.includes(request.toolName) ? identity : null;
   }
 
   revoke(runId: string): boolean {
