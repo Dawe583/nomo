@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer, type Server } from "node:http";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { isolatedWorkbench } from "./test-fixture.ts";
 import { Workbench, type Workbench as WorkbenchType } from "./index.ts";
 import type { RefinementProposal } from "./refine-pass.ts";
@@ -62,28 +65,6 @@ async function mcpServer() {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     },
   };
-}
-
-/**
- * The read-only fixture cannot take the ordinary document write every other
- * harness test seeds with, because that write is exactly what the mode
- * forbids. The record is committed through the same internal the ledger tests
- * use, so the proposal still cites a verified sequence instead of a bare [1].
- */
-async function commitSeedRecord(app: WorkbenchType, sessionId: string) {
-  const internals = app as unknown as {
-    sessions: Map<string, unknown>;
-    commitWorkspace: (...args: unknown[]) => Promise<void>;
-  };
-  const internalSession = internals.sessions.get(sessionId);
-  assert.ok(internalSession);
-  await internals.commitWorkspace(
-    internalSession,
-    app.workspace(sessionId),
-    "void_workspace_read",
-    { path: "source.md" },
-    "hold:approved",
-  );
 }
 
 /** A provider that asks for the delete tool once, then closes the turn. */
@@ -168,16 +149,14 @@ function systemTexts(body: Record<string, unknown>): string {
 
 /** A session whose workspace already holds a signed record the proposal can
  * cite, so the provenance check verifies a real sequence. */
-async function seededSession(app: WorkbenchType, prompt: string, readOnly = false) {
+async function seededSession(app: WorkbenchType, prompt: string) {
   const session = await app.start(prompt, "fixture");
   await app.settled();
-  if (readOnly) await commitSeedRecord(app, session.id);
-  else
-    await app.editDocument(session.id, {
-      path: "source.md",
-      content: "signed source record",
-      expectedRevision: null,
-    });
+  await app.editDocument(session.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
   return session;
 }
 
@@ -288,4 +267,78 @@ test("a retrieved entry does not change the mode or the catalogue", async (t) =>
     catalogueBefore,
     "the entry changed the tool catalogue",
   );
+});
+
+test("an entry approved under normal cannot lift a read-only mode on restart", async (t) => {
+  const server = await mcpServer();
+  const root = await mkdtemp(join(tmpdir(), "void-harness-override-restart-"));
+  t.after(async () => {
+    await server.close();
+    await rm(root, { recursive: true, force: true });
+  });
+  const bodies: Array<Record<string, unknown>> = [];
+  const capturing = async (url: unknown, init?: RequestInit) => {
+    bodies.push(JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>);
+    return answeringProvider(url);
+  };
+
+  // Read-only refuses `refineHarness` outright, so an entry can never be minted
+  // under the narrow mode. The sequence the boundary actually has to survive is
+  // the one where an entry approved yesterday is retrieved today by a process
+  // the operator has since started read-only.
+  //
+  // Both runtimes are built here rather than through the shared fixture: the
+  // fixture's cleanup shuts its workbench down and removes its root at the end
+  // of the test, which is exactly wrong for a test that needs a second runtime
+  // to outlive the first on the same directory.
+  const first = new Workbench({ VOID_DATA_DIR: root }, capturing as typeof fetch);
+  await first.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  await first.addConnector({
+    url: server.url,
+    name: "Restarted read-only",
+    mapping: { delete: DELETE },
+    facts,
+  });
+  const id = first.connectionState().connectors.at(-1)!.id;
+  await first.probeConnector(id);
+  await first.confirmConnector(id);
+  const seeded = await seededSession(first, "Delete it");
+  await approvedOverride(first, seeded.id);
+  // Shut down before the next runtime opens the directory: a first runtime that
+  // is still alive when the second writes leaves the first holding a stale
+  // revision, and its own shutdown then fails.
+  await first.shutdown();
+
+  const app = new Workbench(
+    { VOID_DATA_DIR: root, VOID_PERMISSION_MODE: "read-only" },
+    capturing as typeof fetch,
+  );
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  try {
+    const internals = app as unknown as {
+      sessions: Map<string, { view: { id: string } }>;
+    };
+    const restored = [...internals.sessions.values()][0]!.view.id;
+
+    bodies.length = 0;
+    app.send(restored, "Now run the delete you learned about");
+    await app.settled();
+
+    // The entry really is retrieved under the narrower mode, so what follows is
+    // about what it could not do rather than about it never arriving.
+    const prompt = bodies.map(systemTexts).join("\n");
+    assert.ok(prompt.includes("learned-entry digest"), "the digest was not retrieved");
+    assert.ok(prompt.includes(OVERRIDE_ATTEMPT), "the override attempt was not in the prompt");
+
+    assert.equal(app.permissionModeState(), "read-only");
+    const offered = app.availableTools(restored).tools.map((tool) => tool.name).sort();
+    assert.deepEqual(
+      offered,
+      ["void_workspace_list", "void_workspace_read"],
+      "a read-only workbench offered a tool it must not run",
+    );
+    assert.equal(server.methods.includes("tools/call"), false);
+  } finally {
+    await app.shutdown();
+  }
 });
