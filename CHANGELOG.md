@@ -3,6 +3,34 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- The harness could not learn anything, and nothing said so. A review is
+  triggered when a compaction arms it, but nothing armed it: the trigger
+  started disarmed, the gate refused every boundary as "not armed", and that
+  refusal is final. The whole loop — the mined entries, the interval, the
+  cooldown, the reviewer — was reachable code that nothing reached, and every
+  test passed because each one armed the trigger by hand before asserting.
+  Reviews now happen, and a review's own tokens are recorded, so an operator
+  watching usage sees what the harness spent rather than only what the
+  conversation did.
+- The gate that decides when the harness spends a model call was a constant in
+  the code. An operator could not change the interval, could not change the
+  cooldown, and could not switch refinement off at all. Those are settings now:
+  turns between reviews, review cooldown, and the switch itself.
+- An approved prompt addendum was reintroduced to the model as something no
+  operator had decided. The approval is in the signed chain, but the entry it
+  produced reached a prompt under a header stating that nothing in it was
+  operator-decided. Approved and mined entries are now shown separately, and
+  the claim about operator decisions is scoped to the mined ones.
+- A model could not propose a prompt edit at all. The addendum text was dropped
+  while parsing the reply, and a second validation rule then required the same
+  field the first one did. The operator approval path existed with nothing that
+  could ever reach it. A proposal a model produces is now parsed, validated and
+  signable end to end.
+- A branch request that was refused — a malformed idempotency key, a sequence
+  no event carries — still moved the harness onto a new branch version and
+  discarded any review waiting for approval, so a later refinement would
+  report that the branch had moved when no branch had happened. Invalidation
+  now runs only once a branch actually succeeds.
 - Tests can no longer write into the operator's own workspace by accident. A
   test that misspelled an environment variable — the kind of typo a rename
   introduces one file at a time — used to fall back to the real
