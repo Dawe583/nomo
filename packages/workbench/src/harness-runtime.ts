@@ -76,6 +76,13 @@ export type HarnessRuntimeDeps = {
    * not silently refusing to learn.
    */
   readonly harnessStateAvailable?: boolean;
+  /**
+   * The operator's prompt ceiling, applied to the review request. Optional so
+   * a caller that knows nothing is not forced to invent a bound, but index.ts
+   * always passes it: without it the request grows with the chain, and a
+   * thousand mined entries measured at 557k characters against a 32k default.
+   */
+  readonly maxPromptCharacters?: number;
 };
 
 /**
@@ -156,8 +163,27 @@ export async function serviceHarnessBoundary(
   const review = async (): Promise<ReviewVerdict> => {
     const settledTurns = state.settledTurnsSinceReview;
     const rules = deps.rules();
-    const evidence = buildRefineRequest({ entries, rules, settledTurns });
-    const question = buildReviewRequest({ entries, rules, settledTurns }).question;
+    // The ceiling is for the whole request, so the fixed instructions and the
+    // verdict protocol come off it first and the remainder is split between the
+    // two variable halves. Both halves list the same entries in different
+    // forms, so neither can be budgeted alone and added afterwards.
+    const fixed = `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n\n\n`.length;
+    const ceiling =
+      deps.maxPromptCharacters === undefined
+        ? undefined
+        : Math.max(0, Math.floor((deps.maxPromptCharacters - fixed) / 2));
+    const evidence = buildRefineRequest({
+      entries,
+      rules,
+      settledTurns,
+      maxCharacters: ceiling,
+    });
+    const question = buildReviewRequest({
+      entries,
+      rules,
+      settledTurns,
+      maxCharacters: ceiling,
+    }).question;
     const reply = await deps.ask(
       `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}`,
     );

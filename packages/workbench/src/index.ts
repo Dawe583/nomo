@@ -3111,6 +3111,10 @@ export class Workbench {
         surface,
         now: () => Date.now(),
         entries: async () => await this.harnessEntries(session.view.workspace),
+        // The operator's prompt ceiling governs this request like any other.
+        // It did not before: the user-prompt path enforces maxPromptCharacters
+        // in three places and this one read the setting for nothing.
+        maxPromptCharacters: this.harness.maxPromptCharacters,
         // The refusals currently mined from this workspace's own chain. The
         // reviewer is told how many, not what: the gate already decided the
         // round is worth paying for, and handing over the full rule list would

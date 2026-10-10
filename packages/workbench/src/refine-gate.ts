@@ -183,19 +183,60 @@ export function buildReviewRequest(input: {
   readonly entries: readonly HarnessEntry[];
   readonly rules: number;
   readonly settledTurns: number;
+  /** The operator's prompt ceiling. Candidates are dropped whole, never cut,
+   * and the question says how many were dropped so a reader cannot take a
+   * bounded list for the whole set. */
+  readonly maxCharacters?: number;
 }): { readonly question: string; readonly candidates: readonly string[] } {
-  const candidates = input.entries.map(
-    (entry) => `- [${entry.kind}] ${entry.tool} (${entry.klass}): ${entry.title}`,
-  );
-  const question = [
+  const total = input.entries.length;
+  const budget = input.maxCharacters ?? Infinity;
+  const preamble = [
     "These observations were mined from a signed ledger without a model call.",
-    `${input.rules} refusal rule(s) and ${input.entries.length} candidate(s) were derived across ${input.settledTurns} settled turns.`,
     "",
     "Decide whether there is a durable lesson here worth an operator reading.",
     "Decline one-off noise, unsupported hypotheses, and transient tool output.",
     "The chain records what happened; it does not record why, so an explanation",
     "of a cause is unsupported however plausible it sounds.",
     "",
+  ];
+  const tally =
+    `${input.rules} refusal rule(s) and ${total} candidate(s) were derived ` +
+    `across ${input.settledTurns} settled turns.`;
+  const notice = (shown: number, dropped: number) =>
+    ` Showing the first ${shown}; the other ${dropped} were dropped to fit ` +
+    `the ${input.maxCharacters}-character ceiling, so this is a sample and not ` +
+    `the whole set.`;
+  const overhead = preamble.join("\n").length + tally.length;
+  const candidates: string[] = [];
+  let used = overhead;
+  for (const entry of input.entries) {
+    const line = `- [${entry.kind}] ${entry.tool} (${entry.klass}): ${entry.title}`;
+    if (used + line.length + 1 > budget) break;
+    candidates.push(line);
+    used += line.length + 1;
+  }
+  // The notice is part of the request, so it has to fit too. Dropping from the
+  // end until it does keeps the ceiling a ceiling rather than an allowance the
+  // last sentence spends. It is emitted only when something was really dropped:
+  // with no ceiling the loop would otherwise announce a truncation that did not
+  // happen, which is the one thing a truncation notice must never do.
+  let headline = "";
+  if (candidates.length < total) {
+    while (candidates.length > 0) {
+      const candidate = notice(candidates.length, total - candidates.length);
+      if (used + candidate.length <= budget) {
+        headline = candidate;
+        break;
+      }
+      used -= candidates.pop()!.length + 1;
+    }
+    if (headline === "")
+      headline = notice(candidates.length, total - candidates.length);
+  }
+  const question = [
+    preamble[0],
+    tally + headline,
+    ...preamble.slice(1),
     ...candidates,
   ].join("\n");
   return { question, candidates };

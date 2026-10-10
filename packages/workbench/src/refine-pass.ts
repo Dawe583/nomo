@@ -477,20 +477,59 @@ export const REFINEMENT_INSTRUCTIONS = [
  * The candidates go in whole rather than summarised, because the pass has
  * already been paid for by the gate and a summary would answer a different
  * question than the one the evidence can answer.
+ *
+ * Whole is also how they are bounded. The list stops at `maxCharacters` by
+ * dropping trailing entries whole, never by cutting an entry's text, because a
+ * half-quoted observation is the summary this function refuses to produce. The
+ * budget is the operator's own prompt ceiling: without it the request grows
+ * with the chain, and a thousand mined entries measured at 557k characters,
+ * seventeen times the default ceiling, on every review the gate allows.
+ *
+ * When anything is dropped the request says so, because a list presented as
+ * complete invites the reader to conclude the dropped entries held nothing.
  */
 export function buildRefineRequest(input: {
   readonly entries: readonly HarnessEntry[];
   readonly rules: number;
   readonly settledTurns: number;
+  readonly maxCharacters?: number;
 }): string {
-  const count = input.entries.length;
-  const listed = input.entries.map(
-    (entry) =>
-      `- [${entry.kind}] ${entry.id} (${entry.tool}/${entry.klass}, ${entry.repeats} records, seq ${entry.derivedFromSeq.join(", ") || "none"}): ${entry.content}`,
-  );
-  return [
-    `${count} mined ${count === 1 ? "entry" : "entries"} and ${input.rules} refusal rule(s) across ${input.settledTurns} settled turns.`,
-    "",
-    ...listed,
-  ].join("\n");
+  const total = input.entries.length;
+  const budget = input.maxCharacters ?? Infinity;
+  const summary =
+    `${total} mined ${total === 1 ? "entry" : "entries"} and ` +
+    `${input.rules} refusal rule(s) across ${input.settledTurns} settled turns.`;
+  const notice = (shown: number, dropped: number) =>
+    ` Showing the first ${shown} of ${total}; the other ${dropped} were ` +
+    `dropped to fit the ${input.maxCharacters}-character ceiling, so this is a ` +
+    `sample and not the whole set.`;
+  const listed: string[] = [];
+  let used = summary.length;
+  for (const entry of input.entries) {
+    const line =
+      `- [${entry.kind}] ${entry.id} (${entry.tool}/${entry.klass}, ` +
+      `${entry.repeats} records, seq ${entry.derivedFromSeq.join(", ") || "none"}): ` +
+      entry.content;
+    if (used + line.length + 1 > budget) break;
+    listed.push(line);
+    used += line.length + 1;
+  }
+  // The notice spends budget too, so give it room before committing to a list.
+  // It is also only true once something has actually been dropped: with no
+  // ceiling the loop would otherwise add it to a complete list, which is the
+  // one thing a truncation notice must never do.
+  let tail = "";
+  if (listed.length < total) {
+    while (listed.length > 0) {
+      const candidate = notice(listed.length, total - listed.length);
+      if (used + candidate.length <= budget) {
+        tail = candidate;
+        break;
+      }
+      used -= listed.pop()!.length + 1;
+    }
+    if (tail === "")
+      tail = notice(listed.length, total - listed.length);
+  }
+  return [summary + tail, "", ...listed].join("\n");
 }

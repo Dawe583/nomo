@@ -64,6 +64,7 @@ function deps(
     readonly surface?: "checkpoint" | "dispose";
     readonly now?: () => number;
     readonly harnessStateAvailable?: boolean;
+    readonly maxPromptCharacters?: number;
   } = {},
 ): { readonly deps: Parameters<typeof serviceHarnessBoundary>[1]; readonly counters: Counters } {
   const counters: Counters = { asked: 0, applied: [] };
@@ -97,6 +98,7 @@ function deps(
         counters.applied.push(proposal);
       },
       harnessStateAvailable: overrides.harnessStateAvailable ?? true,
+      maxPromptCharacters: overrides.maxPromptCharacters,
     },
   };
 }
@@ -277,4 +279,70 @@ test("a result started on an abandoned branch is not applicable", async () => {
     "a round that ran before the branch moved must not be applied afterwards",
   );
   assert.equal(counters.asked, 1);
+});
+
+/** Evidence lines quote the entry body; candidate lines quote the title. */
+const evidenceLines = (request: string) =>
+  request.split("\n").filter((line) => line.includes("records, seq "));
+
+test("the review request never exceeds the operator's prompt ceiling", async () => {
+  // A thousand entries is the case that broke it: unbounded, the request
+  // measured 557k characters against a 32k default ceiling.
+  const many = Array.from({ length: 1000 }, (_, i) => entry(`lesson-${i}`, i + 1));
+  let sent = "";
+  const { deps: wired } = deps({
+    entries: many,
+    maxPromptCharacters: 32000,
+    ask: async (request) => {
+      sent = request;
+      return JSON.stringify({ verdict: "decline" });
+    },
+  });
+  await serviceHarnessBoundary(ready(), wired);
+
+  assert.ok(sent.length > 0, "the gate should still have asked");
+  assert.ok(
+    sent.length <= 32000,
+    `request was ${sent.length} characters against a 32000 ceiling`,
+  );
+  assert.ok(
+    evidenceLines(sent).length < 1000,
+    "a bounded request must actually drop entries",
+  );
+});
+
+test("a bounded request says it is a sample rather than the whole set", async () => {
+  const many = Array.from({ length: 500 }, (_, i) => entry(`lesson-${i}`, i + 1));
+  let sent = "";
+  const { deps: wired } = deps({
+    entries: many,
+    maxPromptCharacters: 4000,
+    ask: async (request) => {
+      sent = request;
+      return JSON.stringify({ verdict: "decline" });
+    },
+  });
+  await serviceHarnessBoundary(ready(), wired);
+
+  assert.match(sent, /sample and not the whole set/);
+  // The entries that survived are quoted whole, never cut mid-sentence.
+  const kept = evidenceLines(sent);
+  assert.ok(kept.length > 0, "a bounded request must still show something");
+  for (const line of kept) assert.ok(line.endsWith("refused 5 times"), line);
+});
+
+test("without a ceiling the request keeps every entry it was given", async () => {
+  const many = Array.from({ length: 40 }, (_, i) => entry(`lesson-${i}`, i + 1));
+  let sent = "";
+  const { deps: wired } = deps({
+    entries: many,
+    ask: async (request) => {
+      sent = request;
+      return JSON.stringify({ verdict: "decline" });
+    },
+  });
+  await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(evidenceLines(sent).length, 40);
+  assert.doesNotMatch(sent, /sample and not the whole set/);
 });
