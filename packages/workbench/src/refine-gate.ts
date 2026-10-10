@@ -82,7 +82,7 @@ export function resolveRefineGates(raw: Partial<RefineGates> | undefined): Refin
 export type GateInput = {
   /** Gates resolved from settings. */
   readonly gates: RefineGates;
-  /** The trigger is armed — by a compaction, or by a manual request. */
+  /** The trigger is armed — by a compaction. */
   readonly pending: boolean;
   /** A review is already retained from an earlier boundary. */
   readonly hasPendingReview: boolean;

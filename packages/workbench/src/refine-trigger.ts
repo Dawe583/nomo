@@ -49,7 +49,7 @@ export type ReviewVerdict =
 export type Reviewer = (instructions: string) => Promise<ReviewVerdict>;
 
 export type TriggerState = {
-  /** A compaction or a manual request armed the trigger. */
+  /** A compaction armed the trigger. */
   pending: boolean;
   /** Settled, non-error turns since the last review attempt. */
   settledTurnsSinceReview: number;
@@ -96,7 +96,13 @@ export function onBranchMove(state: TriggerState): TriggerState {
   };
 }
 
-/** Arm the trigger, as a successful compaction or a manual request does. */
+/** Arm the trigger, as a successful compaction does.
+ *
+ * A manual request is the other obvious way to arm it and does not exist yet:
+ * `/harness` offers scores, approve and reject, and the harness-kind switch,
+ * but nothing that asks for a review. The docblock used to claim one, which is
+ * how a missing caller read as a finished feature for as long as it did.
+ */
 export function arm(state: TriggerState): TriggerState {
   return { ...state, pending: true };
 }
