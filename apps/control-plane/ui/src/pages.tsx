@@ -218,6 +218,66 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
           </button>
         ))}
       </div>
+      <section className="fleet-status">
+        <h2>{t("Registrovaný agent", "Registered agent")}</h2>
+        <ul className="fleet-meta">
+          <li>
+            <span>{t("Agent", "Agent")}</span>
+            <strong>{data?.agentId ?? "—"}</strong>
+          </li>
+          <li>
+            <span>{t("Stav běhu", "Run state")}</span>
+            <strong>{data?.runState ?? t("neznámý", "unknown")}</strong>
+          </li>
+          <li>
+            <span>{t("Nevyřízená volání v běhu", "Unresolved in-flight calls")}</span>
+            <strong>{data?.inFlight ?? "—"}</strong>
+            {typeof data?.inFlight === "number" && data.inFlight > 0 && (
+              <small>
+                {t(
+                  "Volání už odeslaná upstreamu zůstávají ve stavu neznámo, dokud nepřijde výsledek.",
+                  "Calls already dispatched upstream stay unknown until their result confirms.",
+                )}
+              </small>
+            )}
+          </li>
+          <li>
+            <span>{t("Potvrzení zastavení", "Stop acknowledgement")}</span>
+            <strong>
+              {data?.stopAck === "acknowledged"
+                ? t("potvrzeno", "acknowledged")
+                : data?.stopAck === "pending"
+                  ? t("čeká", "pending")
+                  : t("neznámý", "unknown")}
+            </strong>
+          </li>
+        </ul>
+        <h3>{t("Poslední události", "Latest events")}</h3>
+        <ul className="fleet-events">
+          {(data?.latestEvents ?? []).slice(0, 5).map((event) => {
+            // Metadata allow-list only (kind/at/label/verdict): render each
+            // field by name so no prompt content can slip in even if the
+            // server sent more.
+            const fields: [string, unknown][] = [
+              ["kind", event.kind],
+              ["at", event.at],
+              ["label", event.label],
+              ["verdict", event.verdict],
+            ];
+            return (
+              <li key={event.seq ?? String(event.at) + String(event.label)}>
+                {fields
+                  .filter(([, value]) => value !== undefined)
+                  .map(([name, value]) => (
+                    <span key={name} data-field={name}>
+                      {String(value)}
+                    </span>
+                  ))}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
       <h2>{t("Nedávná práce", "Recent work")}</h2>
       <DataTable
         endpoint="/api/sessions?archived=false"
