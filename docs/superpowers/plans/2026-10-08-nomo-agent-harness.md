@@ -154,7 +154,7 @@ test("NOMO wins over VOID without mutating the input", () => {
 - [x] Run the focused Python and installer tests and verify the alias cases fail before implementation. Add a focused Rust test for the environment resolver.
 - [x] Add minimal per-language alias resolution. Keep Python and Rust storage/key behavior unchanged.
 - [x] Run the focused tests and the native Python and installer checks available in the repository. Rust `cargo test` is blocked by a pre-existing Tauri build failure in this checkout (missing resources dir, unrelated to the resolver); `resolve_env` was verified by reading and its unit test is in the tree.
-- [ ] Re-run the Rust resolver test once the Tauri build environment is whole.
+- [x] Re-run the Rust resolver test once the Tauri build environment is whole. Done 2026-10-10: `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml` reports 22 passed, 0 failed, and `tests::resolve_env_precedence` is among them, so the NOMO-over-VOID precedence is now pinned by a run rather than by reading. The build environment needed no repair. `bundle.resources` names `resources/`, which `apps/desktop/.gitignore` ignores as a local artifact, and the Tauri build script refuses to compile while that declared path is absent; the target cache was warm, so creating the directory locally was the whole fix and the crate compiled and linked in 3.3s. `resolve_env` at `main.rs:61` resolves a NOMO key first and falls back to its VOID key, which is the behaviour the rename requires.
 
 ### Task 9: Add an explicit, non-destructive state migration
 
