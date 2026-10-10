@@ -1065,7 +1065,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       "",
       ...harnessSettingsView(this.workbench.harnessSettings()).flatMap(
         (row) => [
-          `${row.icon} ${row.key}  ${row.value}  [${row.min}-${row.max}]${row.changed ? "  (changed)" : ""}`,
+          `${row.key}  ${row.value}  [${row.min}-${row.max}]${row.changed ? "  (changed)" : ""}`,
           `  ${row.label}: ${row.description}`,
           `  read by ${row.consumer}`,
         ],
