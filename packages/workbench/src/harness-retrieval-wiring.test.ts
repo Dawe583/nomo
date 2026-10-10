@@ -163,3 +163,58 @@ test("the harness entries themselves are never clipped by contextCharsPerEntry",
     "the stored entry is never shortened",
   );
 });
+
+test("the harness reviewer's own tokens are recorded, not just the turn's", async (t) => {
+  // The review is a second model call per qualifying round. The turn path
+  // records reply.usage; this one used to discard it, so an operator watching
+  // usage saw only what the conversation cost.
+  let calls = 0;
+  const billed = async (url: unknown) => {
+    if (String(url).endsWith("/models")) return models();
+    calls += 1;
+    return Response.json({
+      choices: [
+        { message: { role: "assistant", content: JSON.stringify({ verdict: "decline" }) } },
+      ],
+      usage: { prompt_tokens: 11, completion_tokens: 7, total_tokens: 18 },
+    });
+  };
+  const { app } = await isolatedWorkbench(t, billed as typeof fetch, {}, {
+    prefix: "void-harness-usage-",
+  });
+  const session = await app.start("Review the migration", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  await app.refineHarness(session.id, lessonProposal());
+  const pending = await app.pendingApprovalsFor(session.id);
+  await app.approveHarnessProposal(session.id, pending[0]!.digest);
+
+  // Compaction is what arms the trigger. Without it the gate refuses every
+  // boundary with "not-armed" and no review ever runs.
+  app.compact(session.id);
+
+  // The gate is a fixed 25 settled turns and is not operator-tunable, so the
+  // test walks to it rather than pretending the threshold moved.
+  for (let turn = 0; turn <= 25; turn += 1) {
+    app.send(session.id, `turn ${turn}`);
+    await app.settled();
+  }
+
+  assert.ok(calls > 1, "the reviewer must have been called at least once");
+  const usage = app
+    .get(session.id)!
+    .events.filter((event) => event.kind === "usage");
+  const fromHarness = usage.filter(
+    (event) => event.payload?.source === "harness",
+  );
+  assert.equal(
+    fromHarness.length,
+    1,
+    `expected one harness-sourced usage record, got ${JSON.stringify(usage.map((event) => event.payload?.source))}`,
+  );
+  assert.equal(fromHarness[0]!.payload?.total_tokens, 18);
+});

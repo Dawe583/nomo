@@ -366,7 +366,16 @@ export function activity(
           e.payload?.completion_tokens ?? e.payload?.output_tokens ?? null,
         totalTokens: e.payload?.total_tokens ?? null,
         cost: null,
-        source: e.payload ? "provider" : "legacy-unavailable",
+        // Read the source the caller recorded rather than inferring it from the
+        // presence of a payload. Both the turn path and the harness reviewer
+        // write one, and an operator asking "what did this cost me" needs the
+        // autonomous calls separable from the conversation.
+        source:
+          typeof e.payload?.source === "string"
+            ? e.payload.source
+            : e.payload
+              ? "provider"
+              : "legacy-unavailable",
       })),
   );
   return {

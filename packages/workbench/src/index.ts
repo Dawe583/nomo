@@ -115,6 +115,7 @@ import {
   type GateSurface,
 } from "./refine-gate.ts";
 import {
+  arm,
   initialTriggerState,
   onBranchMove,
   recordSettledTurn,
@@ -1644,6 +1645,13 @@ export class Workbench {
         },
         "context.compacted",
       );
+    // Compaction is the documented arming point for the harness. Without this
+    // the trigger can never become pending, the gate refuses every boundary
+    // with "not-armed", and the whole learning loop is dead code.
+    this.harnessTriggers.set(
+      id,
+      arm(this.harnessTriggers.get(id) ?? initialTriggerState()),
+    );
     this.persist();
     return compacted.result;
   }
@@ -3127,6 +3135,22 @@ export class Workbench {
             [],
             session.controller.signal,
           );
+          // The review is a model call like any other and costs money like any
+          // other. The turn path records reply.usage; this one used to throw it
+          // away, so an operator reading usage saw conversation turns only and
+          // the harness spent on its own account without appearing anywhere.
+          if (reply.usage)
+            this.event(
+              session,
+              "usage",
+              `${reply.usage.total_tokens ?? "Unknown"} tokens reported by the harness reviewer`,
+              {
+                ...reply.usage,
+                model: session.view.model,
+                source: "harness",
+                cost: null,
+              },
+            );
           return reply.message.content ?? "";
         },
         apply: async (proposal, expectedBranchVersion) => {
