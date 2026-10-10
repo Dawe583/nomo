@@ -274,18 +274,18 @@ are not reported as cancelled, reverted or successful.
 - Extend: `packages/workbench/src/harness-wiring.test.ts`
 - Extend: `packages/workbench/src/workbench.test.ts`
 
-- [ ] Update the Workbench client to MCP `2026-07-28`, including required
+- [x] Update the Workbench client to MCP `2026-07-28`, including required
       per-request metadata headers and connectionless request flow. Depend
       directly on `@void/proxy` for the inbound local server.
-- [ ] Replace static-token-only wiring for the local demo with an in-memory
+- [x] Replace static-token-only wiring for the local demo with an in-memory
       token provider bound to the Workbench run.
-- [ ] Prove the provider does not place bearer text in model prompts, tool
+- [x] Prove the provider does not place bearer text in model prompts, tool
       descriptions, saved settings, debug output or recovery context.
-- [ ] Run one deterministic, constrained Harness task through the inbound proxy,
+- [x] Run one deterministic, constrained Harness task through the inbound proxy,
       policy and ledger.
-- [ ] Keep learning activation disabled in the demo. Do not claim this completes
+- [x] Keep learning activation disabled in the demo. Do not claim this completes
       proposal approval or subsequent-session retrieval.
-- [ ] Preserve existing provider, workspace, permission-mode and recovery
+- [x] Preserve existing provider, workspace, permission-mode and recovery
       behavior unless the feature spec explicitly changes it.
 
 **Acceptance:** The local Harness run has server-bound identity, uses the same
