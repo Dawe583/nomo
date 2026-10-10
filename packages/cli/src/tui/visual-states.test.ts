@@ -5,22 +5,30 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
-import { approvalReview, renderWorkspace, STATUS_ICONS, WorkspaceTui } from "./workspace.ts";
+import { approvalReview, renderWorkspace, WorkspaceTui } from "./workspace.ts";
 import { previewState } from "./fixtures.ts";
 import { renderWatchFrame } from "./watch.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
-test("status markers are single-cell ASCII, never emoji-only meaning", () => {
-  for (const icon of Object.values(STATUS_ICONS)) {
-    assert.equal(visibleLength(icon), 1, icon);
-    assert.match(icon, /^[\x20-\x7e]$/u, icon);
-  }
-  assert.equal(STATUS_ICONS.success, "+");
-  assert.equal(STATUS_ICONS.error, "!");
-  assert.equal(STATUS_ICONS.running, ">");
-  assert.equal(STATUS_ICONS.waiting, "?");
-  assert.equal(STATUS_ICONS.approval, "!");
-  assert.equal(STATUS_ICONS.document, "#");
+// The workspace draws no glyph to stand in for a name, a status or a state.
+// This covers box drawing, block elements, geometric shapes and the braille
+// spinner, because all four were decoration rather than information: the tab
+// strip names every destination in words, the composer is a labelled block, and
+// a running turn is stated in text. The markers that do carry meaning are
+// untouched: [0] to [3] for a reversibility class, [+]/[!]/[x] for a decision.
+const DECORATIVE_GLYPH = /[\u2500-\u25FF\u2800-\u28FF]/u;
+
+test("the workspace renders no decorative glyph", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-glyph-"));
+  const app = new Workbench({ VOID_DATA_DIR: root });
+  assertIsolated(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app);
+  const rendered = renderWorkspace(ui, 100, 40, "", false, false, { color: true });
+  assert.equal(stripAnsi(rendered).match(DECORATIVE_GLYPH), null);
 });
 
 test("workspace status names stopped and unknown runtime states explicitly", async (t) => {

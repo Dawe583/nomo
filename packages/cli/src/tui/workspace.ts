@@ -28,7 +28,6 @@ import {
 import { loadPolicy } from "../../../policy/src/rules.ts";
 import { REGISTRY_DISCLAIMER } from "../../../registry/src/index.ts";
 import { VOID_PALETTE } from "./theme.ts";
-import { brandHeader } from "./brand.ts";
 import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
 import { runConformanceCommand } from "../conformance.ts";
@@ -1230,7 +1229,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           : `±${(firstPass.half * 100).toFixed(1)}%`;
       rows.push({
         id: "harness:scores",
-        label: `◈ harness score ${scoreBoard.verdict}`,
+        label: `harness score ${scoreBoard.verdict}`,
         lines: [
           `Verdict: ${scoreBoard.verdict}.`,
           `First-pass rate: ${firstPassValue}.`,
@@ -1254,7 +1253,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       const prefs = this.workbench.getPreferences();
       rows.push({
         id: "harness:current",
-        label: `◈ harness ${prefs.defaultAgent ?? "cloud"}`,
+        label: `harness ${prefs.defaultAgent ?? "cloud"}`,
         lines: [
           `Default for new conversations: ${prefs.defaultAgent ?? "cloud"}.`,
           `Selected agent profile: ${this.agentId ?? "runtime default"}.`,
@@ -1305,7 +1304,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             : prompt;
         rows.push({
           id: `agent:${agent.id}`,
-          label: `◆ agent ${agent.id}${selected ? " [selected]" : ""}`,
+          label: `agent ${agent.id}${selected ? " [selected]" : ""}`,
           lines: [
             ...(profile
               ? [
@@ -3352,12 +3351,12 @@ export function chatRows(
       event.kind === "user"
         ? "› You"
         : event.kind === "assistant"
-          ? "● VOID"
+          ? "VOID"
           : event.kind === "error"
             ? "! Error"
             : event.type === "tool.started"
               ? "◇ Tool request"
-              : "◆ Tool result";
+              : "Tool result";
     if (compactTools && event.kind === "tool") {
       const output = wrap(event.text.split("\n"), width);
       if (output.length > 4) {
@@ -3370,7 +3369,7 @@ export function chatRows(
     }
     messageRows(event.text, event.kind, `${label}  ${event.at.slice(11, 19)}`);
   }
-  if (partial) messageRows(partial, "assistant", "● VOID  streaming");
+  if (partial) messageRows(partial, "assistant", "VOID  streaming");
   return rows;
 }
 export function wrap(lines: readonly string[], width: number): string[] {
@@ -3480,95 +3479,11 @@ export type WorkspaceVisuals = {
   suggestion?: number;
   cursor?: number;
 };
-// Block capitals, one stroke width everywhere. The slashed ASCII logo
-// read as jagged because every row leaned; full blocks stay uniform at
-// any width and count one cell each in layout.ts.
-const VOID_LOGO = [
-  "█     █   █████   █████  ████   ",
-  "█     █  █     █    █    █   █  ",
-  "█     █  █     █    █    █   █  ",
-  " █   █   █     █    █    █   █  ",
-  "  █ █     █████   █████  ████   ",
-];
-// Decorative tab identity colors. Safety state never rides on these;
-// classes and decisions keep their text markers in every surface.
-export const TAB_ICON_TONE: Record<WorkspaceTab, string> = {
-  overview: "38;5;215",
-  chat: "38;5;117",
-  sessions: "38;5;183",
-  documents: "38;5;78",
-  ledger: "38;5;179",
-  approvals: "38;5;203",
-  policy: "38;5;245",
-  tools: "38;5;214",
-  models: "38;5;75",
-  usage: "38;5;228",
-  help: "38;5;245",
-};
-// Single cell symbols only, so visibleLength stays exact on every terminal.
-// Geometric shapes (U+25A0 to U+25FF) count one cell in layout.ts, while emoji
-// and dingbat ranges count two. Icons never carry safety meaning alone, the
-// [0] to [3] and [+]/[!]/[x] markers stay authoritative.
-export const TAB_ICONS: Record<WorkspaceTab, string> = {
-  overview: "◈",
-  chat: "●",
-  sessions: "≡",
-  documents: "▤",
-  ledger: "▪",
-  approvals: "◉",
-  policy: "§",
-  tools: "+",
-  models: "◐",
-  usage: "◔",
-  help: "?",
-};
-export const MODE_ICON: Record<TuiMode, string> = {
-  normal: "◆",
-  accept: "●",
-  plan: "○",
-};
-// Continuous prompt frame. The old dashed rails left the composer sides open,
-// which read as interrupted lines. Box drawing with joined corners keeps one
-// unbroken border at every width.
-export function promptFrameTop(title: string, width: number): string {
-  // Titles longer than the frame truncate with a marker, never wrap past it.
-  const fitted = fit(title, Math.max(1, width - 6));
-  const head = `╭─ ${fitted} `;
-  const tail = Math.max(0, width - visibleLength(head) - 1);
-  return `${head}${"─".repeat(tail)}╮`;
-}
-export function promptFrameBottom(width: number): string {
-  return `╰${"─".repeat(Math.max(0, width - 2))}╯`;
-}
-export function promptFrameRow(content: string, width: number): string {
-  return `│ ${pad(content, Math.max(0, width - 4))} │`;
-}
-// Progress bar with gradient
-export function progressBar(
-  current: number,
-  total: number,
-  width: number,
-): string {
-  const filled = Math.max(
-    0,
-    Math.min(width, Math.round((current / Math.max(1, total)) * width)),
-  );
-  const empty = Math.max(0, width - filled);
-  return `█`.repeat(filled) + `░`.repeat(empty);
-}
-// Spinner frames for loading
-export const SPINNER_FRAMES = [
-  "⠋",
-  "⠙",
-  "⠹",
-  "⠸",
-  "⠼",
-  "⠴",
-  "⠦",
-  "⠧",
-  "⠇",
-  "⠏",
-];
+// The tab strip labels every destination in words and marks the selected one
+// with brackets. Nothing in this file draws a glyph to stand in for a name, and
+// nothing animates a logo to stand in for a title. Safety state never rides on
+// decoration either way: classes and decisions keep their own text markers in
+// every surface, and color stays redundant information the text already gives.
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -3589,7 +3504,6 @@ export function renderWorkspace(
     violet = "38;5;183";
   const running = busy || ui.workbench.running();
   const frame = visuals.motion === false ? 0 : (visuals.frame ?? 0);
-  const spinner = running ? SPINNER_FRAMES[frame % SPINNER_FRAMES.length] : "◆";
   const pending = ui.workbench.pending();
   const holds = pending.length + ui.proxy.holds.length;
   const waiting = pending.some((hold) =>
@@ -3632,44 +3546,15 @@ export function renderWorkspace(
       "/keybindings lists every shortcut",
       "Shift+Tab mode | Tab panels",
     ];
-    const mark = brandHeader("", {
-      interactive: true,
-      ansi: visuals.color === true,
-      colorDepth: visuals.color === true ? 24 : 0,
-      columns: width,
-      rows: height,
-      reason: "interactive",
-    });
-    mark.forEach((markRow, i) => {
-      const logoRow =
-        i === 0 || i === mark.length - 1
-          ? " ".repeat(32)
-          : (VOID_LOGO[i - 1] ?? " ".repeat(32));
-      const left =
-        markRow +
-        "  " +
-        ink(
-          logoRow,
-          `1;${(visuals.boot || running) && frame % 5 === i ? ice : amber}`,
-        );
-      header.push(
-        left +
-          (width >= 78
-            ? ink(
-                fit(
-                  sanitizeText("   " + (aside[i] ?? "")),
-                  width - visibleLength(left),
-                ),
-                i === 1 ? ice : muted,
-              )
-            : ""),
-      );
-    });
+    header.push(
+      ink(text(`NOMO  ${ui.session()?.model || ui.model || ui.tab}`), `1;${amber}`),
+    );
+    for (const row of aside) header.push(ink(text(row), muted));
   } else
     header.push(
       ink(
         text(
-          ` /V/  VOID  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
+          `NOMO  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
         ),
         `1;${amber}`,
       ),
@@ -3682,14 +3567,9 @@ export function renderWorkspace(
   header.push(
     fit(
       tabs
-        .map((t) => {
-          const icon = ink(`${TAB_ICONS[t]}`, TAB_ICON_TONE[t]);
-          const name =
-            t === ui.tab
-              ? ink(` [${t}] `, `1;${ice};48;5;24`)
-              : ink(` ${t} `, muted);
-          return `${icon}${name}`;
-        })
+        .map((t) =>
+          t === ui.tab ? ink(` [${t}] `, `1;${ice};48;5;24`) : ink(` ${t} `, muted),
+        )
         .join(""),
       width,
     ),
@@ -3850,7 +3730,7 @@ export function renderWorkspace(
     ? `${ctx.contextMessages ?? "unknown"} messages`
     : "no session";
   const holdBadge =
-    holds > 0 ? ` | ◉ ${holds} approval${holds === 1 ? "" : "s"}` : "";
+    holds > 0 ? ` | ${holds} approval${holds === 1 ? "" : "s"}` : "";
   const queuedBadge = ui.queuedPrompt
     ? ` | +1 ${ui.queuedPromptPaused ? "paused" : "queued"}`
     : "";
@@ -3861,16 +3741,16 @@ export function renderWorkspace(
   const costSeg = ` | cost: ${cost}`;
   let dropCost = false;
   const summaryTail = (): string =>
-    ` | ${MODE_ICON[ui.mode]} ${modeAuthorityLabel(ui.mode)} | ctx: ${ctxText} | ` +
+    ` | ${modeAuthorityLabel(ui.mode)} | ctx: ${ctxText} | ` +
     `tokens: ${tokens}${dropCost ? "" : costSeg} | ${ui.compactTools ? "compact" : "full"}${holdBadge}${queuedBadge}`;
-  if (visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width)
+  if (visibleLength(`model: ${modelShown}${summaryTail()}`) > width)
     dropCost = true;
   while (
-    visibleLength(`◐ model: ${modelShown}${summaryTail()}`) > width &&
+    visibleLength(`model: ${modelShown}${summaryTail()}`) > width &&
     visibleLength(modelShown) > 8
   )
     modelShown = fit(modelShown, visibleLength(modelShown) - 1);
-  const summary = `◐ model: ${modelShown}${summaryTail()}`;
+  const summary = `model: ${modelShown}${summaryTail()}`;
   const todoBadge = (() => {
     try {
       const todos = extractTodos(ui.session()?.events ?? []);
@@ -3885,7 +3765,7 @@ export function renderWorkspace(
   const status = ui.confirmation
     ? "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
     : running && (busy || ui.session()?.status === "running")
-      ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}`
+      ? `${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}`
       : (historyStatus ?? ui.notice);
   const menuRows = menu.map(([name, description], i) =>
     ink(
@@ -3895,28 +3775,26 @@ export function renderWorkspace(
       i + menuStart === selection ? `1;${ice};48;5;24` : muted,
     ),
   );
-  // Add mode indicator with icon
-  const modeIndicator =
-    ui.mode === "plan" ? "○" : ui.mode === "accept" ? "●" : "◆";
-  // One frame, joined corners, no gaps: top, rows with vertical sides, bottom.
+  // The composer is a labelled block, not a drawn box. A title line states what
+  // the block is, and the prompt prefix carries the cursor, so nothing has to
+  // be outlined to be understood.
   const frameTitle = editing
-    ? `${modeIndicator} Write a prompt [${ui.mode.toUpperCase()}]`
-    : `${TAB_ICONS[ui.tab]} ${ui.tab} / navigation`;
+    ? `Write a prompt [${ui.mode.toUpperCase()}]`
+    : `${ui.tab} / navigation`;
+  // fit, not pad: the frame used to enforce the width by drawing its own sides,
+  // and mono mode pads nothing, so the composer has to bound itself or a long
+  // line wraps in a terminal that cannot scroll it back.
   const promptBox = [
-    promptFrameTop(frameTitle, width),
+    fit(frameTitle, width),
     ...composer
       .slice(composerStart, composerStart + composerHeight)
       .map((value, i) =>
-        promptFrameRow(
-          `${i === 0 ? (editing ? "› " : ": ") : "  "}${value}`,
-          width,
-        ),
+        fit(`${i === 0 ? (editing ? "› " : ": ") : "  "}${value}`, width),
       ),
-    promptFrameBottom(width),
   ];
-  // The frame border follows the permission mode, like the reference
-  // terminal: ice for normal, green for accept, blue for plan. The title
-  // always states the mode in text, so color stays redundant information.
+  // The composer follows the permission mode, like the reference terminal: ice
+  // for normal, green for accept, blue for plan. The title always states the
+  // mode in text, so color stays redundant information.
   const frameTone = !editing
     ? muted
     : ui.mode === "plan"
@@ -3938,9 +3816,9 @@ export function renderWorkspace(
           ? "↑↓ select / Tab complete / Enter run / Esc close"
           : editing
             ? ui.mode === "plan"
-              ? "○ PLAN / Enter sends a plan request / Shift+Tab or Alt+M mode / Ctrl+J newline / Ctrl+T todos / Esc navigate"
+              ? "PLAN / Enter sends a plan request / Shift+Tab or Alt+M mode / Ctrl+J newline / Ctrl+T todos / Esc navigate"
               : ui.mode === "accept"
-                ? "● ACCEPT / approvals stay explicit / Enter send / Shift+Tab or Alt+M mode / Ctrl+J newline / Ctrl+T todos"
+                ? "ACCEPT / approvals stay explicit / Enter send / Shift+Tab or Alt+M mode / Ctrl+J newline / Ctrl+T todos"
                 : "Enter send / Shift+Enter or Ctrl+J or \\+Enter newline / Ctrl+R search / Ctrl+O output / Ctrl+T todos / Esc Esc clear / Esc navigate"
             : "Tab panels / i type / Enter open / Esc back / u Undo / ? keys",
       ),
@@ -3953,42 +3831,6 @@ export function renderWorkspace(
     )
     .join("\n");
 }
-export const STATUS_ICONS = {
-  success: "+",
-  error: "!",
-  warning: "!",
-  info: "i",
-  pending: "?",
-  running: ">",
-  waiting: "?",
-  approval: "!",
-  document: "#",
-  ledger: "=",
-  tool: "+",
-  model: "@",
-  session: "#",
-  document_list: "=",
-  approval_list: "!",
-  settings: "*",
-  help: "?",
-  search: "/",
-  filter: "/",
-  undo: "<",
-  redo: ">",
-  save: "S",
-  export: "E",
-  import: "I",
-  connect: "+",
-  disconnect: "-",
-  theme: "*",
-  keybindings: "?",
-  quit: "Q",
-  new: "+",
-  edit: "E",
-  delete: "X",
-  copy: "C",
-  paste: "P",
-} as const;
 const KEYBINDINGS = [
   "KEYBINDINGS, same action as the reference terminal where VOID has it",
   "",

@@ -1,4 +1,3 @@
-import { brandHeader } from "./brand.ts";
 import { CLASS_MARKER, classLabel, decisionLabel, paint } from "./theme.ts";
 import { box, columns, crop, fit, meter, pad, progressBar, rule, sanitizeText } from "./layout.ts";
 import type {
@@ -66,7 +65,7 @@ function header(
     : "";
 
   return [
-    ...brandHeader("VOID", capabilities),
+    "NOMO",
     right,
     ctxLine,
     billingLine,

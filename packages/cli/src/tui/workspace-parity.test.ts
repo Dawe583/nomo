@@ -6,9 +6,6 @@ import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import {
-  MODE_ICON,
-  TAB_ICONS,
-  TAB_ICON_TONE,
   WorkspaceTui,
   filterKeyForTab,
   approvalLabel,
@@ -18,9 +15,6 @@ import {
   isDoubleEscape,
   mentionCandidates,
   mentionToken,
-  promptFrameBottom,
-  promptFrameRow,
-  promptFrameTop,
   renderWorkspace,
   searchHistoryPrompts,
 } from "./workspace.ts";
@@ -446,12 +440,7 @@ test("review needs an explicit accept or reject key", async (t) => {
   assert.ok(frame.includes("Tab panels"));
 });
 
-test("prompt frame stays continuous at every width", async (t) => {
-  assert.equal(visibleLength(promptFrameTop("Write a prompt", 80)), 80);
-  assert.equal(visibleLength(promptFrameBottom(80)), 80);
-  assert.equal(visibleLength(promptFrameRow("> hello_", 80)), 80);
-  assert.ok(promptFrameTop("Write a prompt", 20).startsWith("╭"));
-  assert.ok(promptFrameTop("Write a prompt", 20).endsWith("╮"));
+test("the composer stays inside the frame at every width", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "void-tui-frame-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -463,31 +452,25 @@ test("prompt frame stays continuous at every width", async (t) => {
   for (const [width, height] of [
     [20, 8],
     [40, 12],
-
     [80, 24],
     [100, 32],
     [160, 45],
   ]) {
-    const frame = stripAnsi(
+    const rendered = stripAnsi(
       renderWorkspace(ui, width!, height!, "hello_", true, false, {
         cursor: 6,
       }),
     );
-    const rows = frame.split("\n");
-    assert.equal(rows.length, height);
+    const rows = rendered.split("\n");
+    // The composer no longer has a bottom edge to close, so the view is
+    // top-aligned and the terminal pads the rest rather than the block
+    // padding itself to exactly height rows.
+    assert.ok(rows.length <= height);
     assert.ok(rows.every((line) => visibleLength(line) <= width!));
-    const top = rows.find((line) => line.startsWith("╭"))!;
-    const bottom = rows.find((line) => line.startsWith("╰"))!;
-    assert.ok(top.endsWith("╮"), top);
-    assert.ok(bottom.endsWith("╯"), bottom);
-    assert.equal(visibleLength(top), width);
-    assert.equal(visibleLength(bottom), width);
-    const promptRows = rows.filter((line) => line.startsWith("│"));
-    assert.ok(promptRows.length > 0);
-    for (const row of promptRows) {
-      assert.ok(row.endsWith("│"), row);
-      assert.equal(visibleLength(row), width);
-    }
+    const title = rows.findIndex((line) => line.startsWith("Write a prompt"));
+    assert.ok(title >= 0, `no composer title at ${width}x${height}`);
+    assert.equal(rows[title]!.match(/[\u2500-\u25FF\u2800-\u28FF]/u), null);
+    assert.ok(rows[title + 1]!.startsWith("› "), rows[title + 1]!);
   }
 });
 
@@ -536,8 +519,8 @@ test("branch intent reuses its idempotency key after a transient failure", async
   assert.match(keys[0]!, /^[0-9a-f-]{36}$/);
 });
 
-test("logo is one stroke width and every row aligns", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-logo-"));
+test("the header names the product in text and draws nothing for it", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-header-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -545,16 +528,12 @@ test("logo is one stroke width and every row aligns", async (t) => {
   });
   const ui = new WorkspaceTui(app, env);
   const rows = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n");
-  // Aperture mark plus wordmark: 7 rows, the wordmark rides centered.
-  assert.ok(rows.slice(0, 7).every((line) => /[█▀▄]/.test(line)));
-  const wordmark = rows.slice(1, 6).map((line) => line.slice(17, 49));
-  assert.ok(wordmark.every((line) => /^[ █]{32}$/.test(line)));
+  assert.match(rows[0]!, /^NOMO\b/);
+  assert.equal(rows[0]!.match(/[\u2500-\u25FF\u2800-\u28FF]/u), null);
 });
 
-test("tab icons carry fixed colors in color mode only", async (t) => {
-  for (const tone of Object.values(TAB_ICON_TONE))
-    assert.match(tone, /^38;5;\d+$/);
-  const root = await mkdtemp(join(tmpdir(), "void-tui-icon-tone-"));
+test("color mode adds escape sequences and mono mode adds none", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "void-tui-mono-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -562,17 +541,10 @@ test("tab icons carry fixed colors in color mode only", async (t) => {
   });
   const ui = new WorkspaceTui(app, env);
   const color = renderWorkspace(ui, 200, 40, "_", true, false, { color: true });
-  assert.ok(color.includes("38;5;203"));
-  assert.ok(color.includes("38;5;78"));
+  assert.ok(color.includes("\u001b["));
   const mono = stripAnsi(renderWorkspace(ui, 100, 32, "_", true));
   assert.ok(!mono.includes("38;5;"));
-});
-
-test("icons stay one cell wide and never carry safety meaning", () => {
-  for (const icon of [...Object.values(TAB_ICONS), ...Object.values(MODE_ICON)])
-    assert.equal(visibleLength(icon), 1, icon);
-  assert.equal(TAB_ICONS.chat, "●");
-  assert.equal(MODE_ICON.plan, "○");
+  assert.ok(!mono.includes("\u001b["));
 });
 
 test("newline keys match the reference terminal", () => {

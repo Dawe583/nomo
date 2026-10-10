@@ -428,12 +428,17 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
     assert.ok(frame.split("\n").length <= h!);
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= w!));
   }
-  const still = (frame: number) =>
-    renderWorkspace(ui, 80, 30, "_", true, true, { frame, motion: false });
-  assert.equal(still(0), still(9));
+  // Motion now lives only in the running dots. The idle header used to animate
+  // a logo and draws nothing that could move, so motion is asserted in the
+  // state that actually renders it: a run in flight, where the dots grow and
+  // reset, and motion:false holds them still.
+  assert.equal(
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 0, motion: false }),
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 9, motion: false }),
+  );
   assert.notEqual(
     renderWorkspace(ui, 80, 30, "_", true, true, { frame: 0 }),
-    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 1 }),
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 3 }),
   );
   assert.deepEqual(
     commandSuggestions("/led").map(([name]) => name),
@@ -442,7 +447,7 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
   assert.ok(commandSuggestions("/rs").some(([name]) => name === "/resume"));
   assert.ok(commandSuggestions("/rw").some(([name]) => name === "/rewind"));
   assert.equal(commandSuggestions("/new delete everything").length, 0);
-  assert.ok(stripAnsi(renderWorkspace(ui, 100, 32)).includes("█     █"));
+  assert.match(stripAnsi(renderWorkspace(ui, 100, 32)).split("\n")[0]!, /^NOMO\b/);
 });
 
 test("chat presentation preserves code, sanitizes escapes, and distinguishes event roles", async () => {
@@ -543,7 +548,9 @@ test("search and paging use real conversation data and return to live follow", a
       color: true,
     });
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width!));
-    assert.equal(frame.split("\n").length, height);
+    // The composer has no bottom edge to close, so the rendered view can be
+    // shorter than the terminal and the terminal pads the rest.
+    assert.ok(frame.split("\n").length <= height);
   }
 });
 

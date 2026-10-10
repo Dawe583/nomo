@@ -1,5 +1,3 @@
-import { brandHeader } from "./tui/brand.ts";
-import { detectCapabilities } from "./tui/caps.ts";
 import { createInterface } from 'node:readline/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Workbench } from '../../workbench/src/index.ts';
@@ -26,7 +24,7 @@ export async function runAgentCommand(argv: readonly string[]): Promise<number> 
     prompt ??= await input?.question('[v] Task > ');
     if (!prompt) throw new Error('A piped session requires --prompt.');
     const started = await workbench.start(prompt, model);
-    process.stdout.write(`${brandHeader(`VOID / ${started.workspace}`, detectCapabilities()).join("\n")}\n# intent -> # classify -> # decide -> . seal\n`);
+    process.stdout.write(`NOMO / ${started.workspace}\n# intent -> # classify -> # decide -> . seal\n`);
     let shown = 0;
     const decided = new Set<string>();
     while (!cancelled) {
