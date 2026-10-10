@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createWorkspace, executeWorkspaceTool, applyWorkspaceUndo, previewWorkspaceUndo, workspaceToolClass, type WorkspaceState } from './workspace.ts';
 
 function write(state: WorkspaceState, id: string, content: string, path = 'notes/task.md') {
-  return executeWorkspaceTool(state, { id, name: 'void_workspace_write', arguments: { path, content } });
+  return executeWorkspaceTool(state, { id, name: 'nomo_workspace_write', arguments: { path, content } });
 }
 
 test('managed workspace captures create, replace and delete and restores across JSON persistence', () => {
@@ -12,7 +12,7 @@ test('managed workspace captures create, replace and delete and restores across 
   assert.equal(initial.files['notes/task.md'], undefined);
   assert.equal(created.operation?.before, null);
   const updated = write(created.state, 'update', 'second');
-  const deleted = executeWorkspaceTool(updated.state, { id: 'delete', name: 'void_workspace_delete', arguments: { path: 'notes/task.md' } });
+  const deleted = executeWorkspaceTool(updated.state, { id: 'delete', name: 'nomo_workspace_delete', arguments: { path: 'notes/task.md' } });
   assert.equal(deleted.operation?.before, 'second');
   let state = JSON.parse(JSON.stringify(deleted.state)) as WorkspaceState;
   for (const operationId of ['delete', 'update', 'create']) {
@@ -63,12 +63,12 @@ test('document namespace rejects traversal, prototype paths and oversized conten
 test('read tools are nonmutating and independent document changes do not block undo', () => {
   const first = write(createWorkspace(), 'one', 'A');
   const second = write(first.state, 'two', 'B', 'other.md');
-  const read = executeWorkspaceTool(second.state, { id: 'read', name: 'void_workspace_read', arguments: { path: 'notes/task.md' } });
+  const read = executeWorkspaceTool(second.state, { id: 'read', name: 'nomo_workspace_read', arguments: { path: 'notes/task.md' } });
   assert.equal(JSON.parse(read.result.content[0]!.text).content, 'A');
   assert.equal(read.state, second.state);
   assert.equal(previewWorkspaceUndo(second.state, 'one').canApply, true);
-  assert.equal(workspaceToolClass('void_workspace_read'), 'r0');
-  assert.equal(workspaceToolClass('void_workspace_write'), 'r1');
+  assert.equal(workspaceToolClass('nomo_workspace_read'), 'r0');
+  assert.equal(workspaceToolClass('nomo_workspace_write'), 'r1');
   assert.equal(workspaceToolClass('shell'), undefined);
 });
 

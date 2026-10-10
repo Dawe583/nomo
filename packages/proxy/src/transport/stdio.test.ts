@@ -306,16 +306,16 @@ describe("spawnUpstream", () => {
     }
   });
 
-  test("S15: strips VOID_SIGNING_KEY even when explicitly provided", async () => {
+  test("S15: strips NOMO_SIGNING_KEY even when explicitly provided", async () => {
     const close = onceClose();
     const messages: string[] = [];
     spawnUpstream(
       [
         process.execPath,
         "-e",
-        "process.stdout.write(JSON.stringify({ key: process.env.VOID_SIGNING_KEY ?? null }) + '\\n');",
+        "process.stdout.write(JSON.stringify({ key: process.env.NOMO_SIGNING_KEY ?? null }) + '\\n');",
       ],
-      { VOID_SIGNING_KEY: "synthetic-secret" },
+      { NOMO_SIGNING_KEY: "synthetic-secret" },
       {
         events: {
           onMessage(line) {

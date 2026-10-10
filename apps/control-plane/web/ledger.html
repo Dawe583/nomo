@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" href="icon.svg">
-<title>VOID Ledger</title>
+<title>NOMO Ledger</title>
 
 <script src="theme.js"></script>
 <link rel="stylesheet" href="workbench.css">
@@ -14,7 +14,7 @@
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-<header class="top-nav"><div class="inner"><a class="brand" href="index.html"><svg class="brand-mark" width="24" height="24" viewBox="55 55 146 146" fill="none" aria-hidden="true"><path d="M73 102V73h29M183 102V73h-29M73 154v29h29M183 154v29h-29" stroke="currentColor" stroke-width="15" stroke-linecap="square"/><path d="M108 108h40v40h-40z" stroke="var(--accent)" stroke-width="12"/><circle cx="128" cy="128" r="6" fill="currentColor"/></svg> VOID</a><button class="theme-toggle secondary" id="theme-toggle" type="button" aria-label="Toggle color theme">[t] Theme</button><nav class="nav-links" aria-label="Primary"><a href="feed.html">Feed</a><a href="approvals.html">Approvals</a><a href="ledger.html" aria-current="page">Ledger</a></nav></div></header>
+<header class="top-nav"><div class="inner"><a class="brand" href="index.html"><svg class="brand-mark" width="24" height="24" viewBox="55 55 146 146" fill="none" aria-hidden="true"><path d="M73 102V73h29M183 102V73h-29M73 154v29h29M183 154v29h-29" stroke="currentColor" stroke-width="15" stroke-linecap="square"/><path d="M108 108h40v40h-40z" stroke="var(--accent)" stroke-width="12"/><circle cx="128" cy="128" r="6" fill="currentColor"/></svg> NOMO</a><button class="theme-toggle secondary" id="theme-toggle" type="button" aria-label="Toggle color theme">[t] Theme</button><nav class="nav-links" aria-label="Primary"><a href="feed.html">Feed</a><a href="approvals.html">Approvals</a><a href="ledger.html" aria-current="page">Ledger</a></nav></div></header>
 <main id="main">
 <section id="connection-panel" class="section" hidden aria-labelledby="connection-title"><h2 id="connection-title">Connect your workspace</h2><p id="connection-message" class="muted"></p><form id="connection-form" class="workspace-form"><div class="filter"><label for="access-token">Workspace access token</label><input id="access-token" type="password" autocomplete="current-password" required minlength="32"></div><button class="primary" type="submit">Connect</button></form><p id="connection-status" role="status"></p></section>
 <section class="hero"><p class="eyebrow">Ledger browser</p><h1>A signed chain for every decision.</h1><p class="lead">The API checks the ledger chain. This is tamper evident, not tamper proof. This view does not replace offline signature verification.</p></section>
@@ -24,11 +24,11 @@
 <p id="last-updated" role="status">Not updated yet. Connecting to the API.</p>
 <p id="feed-scope" aria-live="polite">Loading ledger verification state.</p>
 <div class="activity-tools"><label class="activity-search" for="activity-search">Find a call<input id="activity-search" type="search" placeholder="Tool, decision, class or record number" autocomplete="off"></label><button class="secondary" id="pause-feed" type="button" aria-pressed="false">Pause activity</button></div><p id="activity-count" role="status"></p>
-<p class="export-line"><a id="export-records" href="/api/ledger/export" download="void-records.json">Download record metadata</a></p><div class="table-wrap" tabindex="0" role="region" aria-label="Ledger entries"><table><caption>Latest 50 ledger entries in the selected workspace</caption><thead><tr><th scope="col">Seq</th><th scope="col">At</th><th scope="col">Tool</th><th scope="col">Class</th><th scope="col">Decision</th><th scope="col">Digest</th></tr></thead><tbody id="feed-list" aria-live="polite"><tr><td colspan="6">Loading ledger entries from the API.</td></tr></tbody></table></div>
+<p class="export-line"><a id="export-records" href="/api/ledger/export" download="nomo-records.json">Download record metadata</a></p><div class="table-wrap" tabindex="0" role="region" aria-label="Ledger entries"><table><caption>Latest 50 ledger entries in the selected workspace</caption><thead><tr><th scope="col">Seq</th><th scope="col">At</th><th scope="col">Tool</th><th scope="col">Class</th><th scope="col">Decision</th><th scope="col">Digest</th></tr></thead><tbody id="feed-list" aria-live="polite"><tr><td colspan="6">Loading ledger entries from the API.</td></tr></tbody></table></div>
 </div></section>
 </main>
 <dialog id="record-dialog" aria-labelledby="record-title"><div class="inspector-top"><h2 id="record-title">Call details</h2><form method="dialog"><button class="secondary" type="submit" aria-label="Close call details">Close</button></form></div><div id="record-details"></div><div class="actions"><button class="secondary" id="record-taint" type="button">Trace dependencies</button><button class="secondary" id="replay-preview" type="button">Preview inverse</button><button class="primary" id="replay-apply" type="button" hidden>Apply previewed inverse</button></div><pre id="record-action-result" role="status"></pre></dialog>
-<footer><div class="inner">VOID / Recorded decisions. Verifiable evidence. Leave workspace blank to use the default ledger and view all pending holds.</div></footer>
+<footer><div class="inner">NOMO / Recorded decisions. Verifiable evidence. Leave workspace blank to use the default ledger and view all pending holds.</div></footer>
 <nav class="tabbar" aria-label="Primary"><a class="tab" href="index.html"><span class="ascii-icon" aria-hidden="true">[.]</span>Home</a><a class="tab" href="feed.html"><span class="ascii-icon" aria-hidden="true">[~]</span>Feed</a><a class="tab" href="approvals.html"><span class="ascii-icon" aria-hidden="true">[!]</span>Approvals</a><a class="tab" href="ledger.html" aria-current="page"><span class="ascii-icon" aria-hidden="true">[#]</span>Ledger</a></nav>
 <noscript><p>JavaScript is required to load current API data. No live status is available without it.</p></noscript>
 <script type="module" src="app.js" data-page="ledger"></script>

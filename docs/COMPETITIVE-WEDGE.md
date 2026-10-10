@@ -1,11 +1,11 @@
-# Where VOID is genuinely unclaimed, and what to build because of it
+# Where NOMO is genuinely unclaimed, and what to build because of it
 
 Written 2026-09-26 against commit `63dbd2c` on `main`, read alongside
-`docs/VOID-FUTURE-DIRECTION.md` (1202 lines, same day, known error rate),
+`docs/NOMO-FUTURE-DIRECTION.md` (1202 lines, same day, known error rate),
 `docs/PREMISE-VERIFICATION.md` (the adversarial check on it) and
 `docs/THREAT-MODEL.md`.
 
-This document answers one question — *where is VOID genuinely unclaimed, and
+This document answers one question — *where is NOMO genuinely unclaimed, and
 what should be built next because of that* — and it exists to be acted on, not
 to summarise the repository. It is deliberately written against the two
 research documents rather than alongside them: where they are right I say what
@@ -19,9 +19,9 @@ it and leaves it alone.
 
 ## 1. The answer, first
 
-**The attribution wedge is not unclaimed, and in VOID it is half-built.** Two
+**The attribution wedge is not unclaimed, and in NOMO it is half-built.** Two
 projects claim the same field set — one of them at the Linux Foundation, one of
-them with a sentence that is almost VOID's own pitch — and VOID binds policy and
+them with a sentence that is almost NOMO's own pitch — and NOMO binds policy and
 rule on only one of its two record shapes and binds no model and no prompt on
 either. That is a false published claim, not a missing feature, and it is why
 attribution is not the first thing to build.
@@ -33,20 +33,20 @@ and `MATCH_KEYS` is `{class, tool, connector, workspace, blast_radius}`
 (`packages/policy/src/grammar.ts:17-23`). Effect, readiness, resource set,
 registry inverse and validity window never cross into the decision. The
 268-entry Reversibility Registry has **no effect-class field at all**
-(`packages/registry/src/registry.ts:24-53`). So "VOID's contract decides on what
+(`packages/registry/src/registry.ts:24-53`). So "NOMO's contract decides on what
 the action did" is not true today: it decides on what the action was *called*,
 plus one pre-computed class string.
 
 **The thing that is genuinely unclaimed is narrower and better than either
 wedge: a provable inversion of a non-filesystem effect, proved in the system
-that was inverted.** VOID already does this for one effect and already has the
+that was inverted.** NOMO already does this for one effect and already has the
 receipt in the right place, undocumented and unexploited: after restoring
 PostgreSQL rows it re-reads them, refuses unless they canonically equal the
 capture, and writes the result into the customer's own database —
 `INSERT INTO ${schema}.recoveries(...)` at
 `packages/connectors/src/postgres/managed.ts:1398-1399`. That row lives outside
-`~/.void`, outside the ledger, and outside the recording process's own store.
-It is the only byte VOID puts in a different trust domain as a *consequence of
+`~/.nomo`, outside the ledger, and outside the recording process's own store.
+It is the only byte NOMO puts in a different trust domain as a *consequence of
 its own work*, and no competitor has any equivalent. *(Corrected 2026-10-04:
 the exclusivity half of that sentence is now false — see §4.3's correction.
 Rubrik has shipped Agent Rewind since 2025-08-12 and sells rollback of "files,
@@ -92,7 +92,7 @@ second effect is weaker than the first; and the before-image is becoming free,
 because S3 versioning, PostgreSQL logical replication with `REPLICA IDENTITY
 FULL`, and Kubernetes server-side apply all hand you the previous state for
 nothing. If in twelve months every effectful platform retains its own history,
-"byte-exact before-image" is a platform feature and VOID's proof is a receipt
+"byte-exact before-image" is a platform feature and NOMO's proof is a receipt
 about a platform feature. **[INFERENCE]** — the primitives are confirmed in the
 vendors' own documentation; the commoditisation is my reading, not a
 measurement. The mitigation is to build the *proof*, not the capture: the
@@ -104,23 +104,23 @@ for.
 
 ## 2. Claims in the existing documents that are now wrong
 
-`docs/PREMISE-VERIFICATION.md` corrected `VOID-FUTURE-DIRECTION.md` on the
+`docs/PREMISE-VERIFICATION.md` corrected `NOMO-FUTURE-DIRECTION.md` on the
 MCP version count, the signing cost and the 54-run denominator. Three further
 corrections, all checked against source today, all of which change what is
 worth building. **I am not editing these documents.**
 
 | Document and line | Claim | What the source says |
 |---|---|---|
-| `docs/THREAT-MODEL.md:206-208` and `:481-486` | `storeAttestation` / `attestLedger` "have no production caller — only tests and `scripts/src/e2e-final.mjs`" | **False.** `void attest` is a shipped command: `packages/cli/src/operations.ts:145-160` calls `attestLedger` at `:147` and `storeAttestation` at `:148`, prints a signed head, and tells the operator to publish it out of band. `Workbench.attest` is a second production caller (`packages/workbench/src/index.ts:1660-1680`). |
-| `docs/THREAT-MODEL.md:183-202` (§2.4) | "Every verification path resolves the *public* key by loading the *private* key file" | **False as of this tree.** `packages/ledger/src/verify.ts:1-7` imports only `readFile`/`stat`, `GENESIS_PREV`/`entryHash`, `readLedgerReason`, `sha256Hex`/`verifySignature` and `signingPreimage` — no key provider, no key file. The key comes from `packages/ledger/src/verify-key.ts`, which resolves it from `VOID_VERIFY_KEY` (pinned-env), a trust file, or — only under the explicit opt-in `VOID_VERIFY_ALLOW_SIGNING_KEY` (`verify-key.ts:53`) — the signing key, and then labels the result `degraded: true` and prints `DEGRADED` on every surface (`verify-key.ts:171-204`). There is a regression test asserting that substituting the key file is detected by a pinned key (`verify-key.test.ts:97`) and one asserting the opposite for the degraded path (`verify-key.test.ts:188-192`). |
-| `docs/THREAT-MODEL.md:212-215` | "`void verify` can mint a key" | **Stale in effect.** The CLI resolves through `resolveVerificationKey` (`packages/cli/src/verify.ts:190`) and returns `signature NOT VERIFIED` when nothing resolves (`:192-198`); `retainedKeyProvider` exists precisely to open signing state without creating it (`packages/ledger/src/sign.ts:88-92`). I did not execute `void verify` on a clean machine, so I report the code path, not an observation. |
-| `docs/VOID-FUTURE-DIRECTION.md` §1.9 and the task brief | "VOID's contract decides on what the action did — effect, reversibility, readiness and resource set" | **Half false.** `decide` sees `klass` and `blastRadius` and nothing else effect-shaped. See §4.2. |
-| `docs/VOID-FUTURE-DIRECTION.md` §4 | "Byte-level capture and byte-exact restore of a non-filesystem effect" is offered as VOID's one capability with a real analogue, and §9 Release 2 says the `LEGACY_BINDING_NAMES` promotion "is a week" | **Understated and mis-costed respectively.** Byte-exact S3 restore is real and tested (`packages/connectors/src/reverse-engine.test.ts:390-394`), but S3 emits **no post-write verification receipt** — `packages/connectors/src/s3/apply.ts:71` returns `{applied:[stepId], refused:[]}` immediately after `putObject`. PostgreSQL does re-read and does write a receipt. And `LEGACY_BINDING_NAMES` is three names (`packages/proxy/src/legacy-root.ts:42-46`) covering two connectors (`packages/connectors/src/registry.ts:12`) plus `filesystem.managed` and `git.managed`, which are *not* in that list and are selected by CLI config, not tool name. |
+| `docs/THREAT-MODEL.md:206-208` and `:481-486` | `storeAttestation` / `attestLedger` "have no production caller — only tests and `scripts/src/e2e-final.mjs`" | **False.** `nomo attest` is a shipped command: `packages/cli/src/operations.ts:145-160` calls `attestLedger` at `:147` and `storeAttestation` at `:148`, prints a signed head, and tells the operator to publish it out of band. `Workbench.attest` is a second production caller (`packages/workbench/src/index.ts:1660-1680`). |
+| `docs/THREAT-MODEL.md:183-202` (§2.4) | "Every verification path resolves the *public* key by loading the *private* key file" | **False as of this tree.** `packages/ledger/src/verify.ts:1-7` imports only `readFile`/`stat`, `GENESIS_PREV`/`entryHash`, `readLedgerReason`, `sha256Hex`/`verifySignature` and `signingPreimage` — no key provider, no key file. The key comes from `packages/ledger/src/verify-key.ts`, which resolves it from `NOMO_VERIFY_KEY` (pinned-env), a trust file, or — only under the explicit opt-in `NOMO_VERIFY_ALLOW_SIGNING_KEY` (`verify-key.ts:53`) — the signing key, and then labels the result `degraded: true` and prints `DEGRADED` on every surface (`verify-key.ts:171-204`). There is a regression test asserting that substituting the key file is detected by a pinned key (`verify-key.test.ts:97`) and one asserting the opposite for the degraded path (`verify-key.test.ts:188-192`). |
+| `docs/THREAT-MODEL.md:212-215` | "`nomo verify` can mint a key" | **Stale in effect.** The CLI resolves through `resolveVerificationKey` (`packages/cli/src/verify.ts:190`) and returns `signature NOT VERIFIED` when nothing resolves (`:192-198`); `retainedKeyProvider` exists precisely to open signing state without creating it (`packages/ledger/src/sign.ts:88-92`). I did not execute `nomo verify` on a clean machine, so I report the code path, not an observation. |
+| `docs/NOMO-FUTURE-DIRECTION.md` §1.9 and the task brief | "NOMO's contract decides on what the action did — effect, reversibility, readiness and resource set" | **Half false.** `decide` sees `klass` and `blastRadius` and nothing else effect-shaped. See §4.2. |
+| `docs/NOMO-FUTURE-DIRECTION.md` §4 | "Byte-level capture and byte-exact restore of a non-filesystem effect" is offered as NOMO's one capability with a real analogue, and §9 Release 2 says the `LEGACY_BINDING_NAMES` promotion "is a week" | **Understated and mis-costed respectively.** Byte-exact S3 restore is real and tested (`packages/connectors/src/reverse-engine.test.ts:390-394`), but S3 emits **no post-write verification receipt** — `packages/connectors/src/s3/apply.ts:71` returns `{applied:[stepId], refused:[]}` immediately after `putObject`. PostgreSQL does re-read and does write a receipt. And `LEGACY_BINDING_NAMES` is three names (`packages/proxy/src/legacy-root.ts:42-46`) covering two connectors (`packages/connectors/src/registry.ts:12`) plus `filesystem.managed` and `git.managed`, which are *not* in that list and are selected by CLI config, not tool name. |
 
 The pattern matters: **the two documents describing the current state most
 optimistically are the ones whose detail is most stale, and the one that
 audited them hardest got the architecture right and the delivery status
-wrong.** Read `VOID-FUTURE-DIRECTION.md` for the market and
+wrong.** Read `NOMO-FUTURE-DIRECTION.md` for the market and
 `PREMISE-VERIFICATION.md` for the corrections, and read the source for anything
 that decides what to build next.
 
@@ -163,10 +163,10 @@ practitioner audience.
 | Project | Stars | Licence | Downloads / 30d | Why it matters here |
 |---|---:|---|---:|---|
 | **`agentrust-io/trace-spec`** | 35 | Spec: Community Specification 1.0. Code: Apache-2.0 | `pip install agentrust-trace` | **The direct attack on the attribution wedge, and it is a specification.** A **Linux Foundation project in its own series**, launched at Confidential Computing Summit 23 June 2026, spec v0.2. A TRACE Trust Record answers "what model ran" (`model.model_id` + `model.weights_digest`), "under which policy" (`policy.bundle_hash` + `policy.enforcement_mode`), "what data did it touch" (`data_class`), "which tools were called" (`tool_transcript.hash`) — "signed so any third party can check it offline", anchored to a transparency log with a SCITT receipt. 28 forks, 29 open issues |
-| **`yzhao062/auditable`** | 26 | Apache-2.0 | **138 PyPI / 30d, 20 / 7d** | **Claims VOID's intended wedge almost verbatim, three months earlier** (repo created 2026-06-16). "Your logs show what the agent did. `auditable` shows what it relied on, replays it under live state, and rolls it back." Records `model_id` + `decision_basis` + a dependency snapshot in a content-addressed, chained, signed record. Its `Rail` protocol is a pluggable commit/compensate backend and the **only implementation is an in-process `ReferenceLedger` — "For demo and tests"** (`src/auditable/harness/__init__.py`). Zero required dependencies, `Development Status :: 3 - Alpha`. The flagship demo reverses a $2,083.20 payment by adjusting an in-memory float |
+| **`yzhao062/auditable`** | 26 | Apache-2.0 | **138 PyPI / 30d, 20 / 7d** | **Claims NOMO's intended wedge almost verbatim, three months earlier** (repo created 2026-06-16). "Your logs show what the agent did. `auditable` shows what it relied on, replays it under live state, and rolls it back." Records `model_id` + `decision_basis` + a dependency snapshot in a content-addressed, chained, signed record. Its `Rail` protocol is a pluggable commit/compensate backend and the **only implementation is an in-process `ReferenceLedger` — "For demo and tests"** (`src/auditable/harness/__init__.py`). Zero required dependencies, `Development Status :: 3 - Alpha`. The flagship demo reverses a $2,083.20 payment by adjusting an in-memory float |
 | **`busabase/busabase`** | 240 | MIT | **4,744 npm / 30d** | The counter-evidence with adoption. An agent workspace where "every write travels as a Change Request, so it carries a message, a diff, an author, and a full history", with field-level diffs, comments, approvals, commits and audit trails. It answers "what did the agent write to my database" with **a reviewable diff and an approval inbox, not with a signature** — and it has more monthly installs than every signed-ledger project in this report combined |
-| `bkuan001/halo-record` | 80 | Apache-2.0 | 1,023 npm / 30d | "Dependency-free recorder that seals tool calls, **model calls**, and approvals into a SHA-256 hash-chained JSONL log verifiable without trusting the operator", with optional RFC 3161 timestamping and OTel GenAI span ingestion. The most direct one-tool competitor to VOID's ledger, and it is 80 stars to VOID's zero |
-| `Justin0504/Aegis` | 431 | MIT | 209 npm / 30d | Runtime policy enforcement as a wrapper around agent code, "zero code changes", cryptographic audit trail, kill switch. Closest in *shape* to VOID's proxy |
+| `bkuan001/halo-record` | 80 | Apache-2.0 | 1,023 npm / 30d | "Dependency-free recorder that seals tool calls, **model calls**, and approvals into a SHA-256 hash-chained JSONL log verifiable without trusting the operator", with optional RFC 3161 timestamping and OTel GenAI span ingestion. The most direct one-tool competitor to NOMO's ledger, and it is 80 stars to NOMO's zero |
+| `Justin0504/Aegis` | 431 | MIT | 209 npm / 30d | Runtime policy enforcement as a wrapper around agent code, "zero code changes", cryptographic audit trail, kill switch. Closest in *shape* to NOMO's proxy |
 | `makerchecker/MakerChecker` | 54 | AGPL-3.0 | — | RBAC, HITL approvals, segregation of duties, cryptographically signed offline-verifiable log. Static scanner + gateway |
 | `KongFangXun/sofagent` | 49 | MIT | 1,021 npm / 30d | Commit-time audit engine: checks git diffs against 25 rules and writes a local hash-chained history with optional HMAC. Notable design — it audits **the change**, not the call |
 | `Continuum-AI-Corp/OrcaReplay` | 267 | Apache-2.0 | — | Records a run *below the harness*, then **re-executes the agent against the recorded model responses and reports divergence**, or forks from a filesystem checkpoint onto a different model. The closest thing to "re-derive rather than observe" |
@@ -193,19 +193,19 @@ important fact in this report, and it cuts against the whole thesis, not for it.
 explicitly, at the LF, with a conformance test suite and a reference
 implementation (`agentrust-io/cmcp`). `yzhao062/auditable` implements a
 narrower version in software, and it records `model_id` and `decision_basis`
-where **VOID records no model at all**. Agentmetry names the gap in so many
+where **NOMO records no model at all**. Agentmetry names the gap in so many
 words and then does not close it. So: *the attribution wedge is not unclaimed,
 and the claim is held by a standards body and by a package with 138 monthly
 downloads.* Neither has a product. Both have the vocabulary.
 
-**What VOID has.** `attribution` is present on **the proxy decision record
+**What NOMO has.** `attribution` is present on **the proxy decision record
 only**. The type at `packages/ledger/src/attribution.ts:38-57` is
 `{policyDigest, rule?: {index, rationale}}`, built by `buildAttribution`
 (`:71-88`) and read by `readLedgerReason` (`:95-140`), which correctly keeps
 "names no policy", "names a policy and no rule" and "a rule fired with no
 rationale" apart.
 
-**What VOID is missing, precisely.** Verified against source:
+**What NOMO is missing, precisely.** Verified against source:
 
 1. **The workbench record binds no policy and no rule.** The signed body literal
    is `packages/workbench/src/index.ts:1746-1764`: `approvedBy`,
@@ -225,7 +225,7 @@ rationale" apart.
    `sequence_number`, no deny reason code, no heartbeat, no tombstone, no
    crosswalk document.
 
-So the claim "VOID binds a specific claim to specific evidence, model version
+So the claim "NOMO binds a specific claim to specific evidence, model version
 and prompt" is **one fifth true on one of two paths**: it binds a policy digest
 and a rule index, on the proxy path, and nothing else anywhere. That is not a
 wedge, it is a defect in a published claim — and it is cheap to fix, which is
@@ -309,16 +309,16 @@ are caller-authored and only validated (`runtime/src/recovery/plan.ts:166-168`).
 The word "saga" does not occur in `packages/`. Microsoft's saga engine is the
 same shape: "The Saga pattern solves this by pairing every forward action with
 a *compensating action*", where `undo_api` is developer-supplied and
-"`None`" means the step cannot be compensated. **On compensation, VOID's design
+"`None`" means the step cannot be compensated. **On compensation, NOMO's design
 and Microsoft's are the same design, and neither one captures anything.**
 
 So the real, checkable claim is this, and it is much narrower than either
 document claims:
 
-> For a PostgreSQL row mutation, VOID captures the row, restores it, re-reads it,
+> For a PostgreSQL row mutation, NOMO captures the row, restores it, re-reads it,
 > refuses unless it matches the capture byte for byte, and writes a durable,
 > signed receipt **into the database it just mutated** — and a third party can
-> verify the restoration by querying that database, without trusting VOID, its
+> verify the restoration by querying that database, without trusting NOMO, its
 > key, or its ledger at all.
 
 **Correction, 2026-10-04: the last line of that sentence was true when written and is not now.**
@@ -366,7 +366,7 @@ false positive of exactly the text-vs-effect kind. **This is the single most
 threatening thing I found for the effect-level wedge, and it is not a
 rumour — it is an open pull request with a diff.** It is still a shell-text
 facet model with no reversibility, no readiness, no resource set and no inverse,
-so VOID's *policy* claim survives it; but "decide on what the command did, not
+so NOMO's *policy* claim survives it; but "decide on what the command did, not
 what it carries" will be a shipped checkbox in Prismor long before it is a
 default anywhere else.
 
@@ -380,7 +380,7 @@ atomic across concurrent verifications. **This closes the loop on the brief's
 a roadmap item, it is merged and hardened at a company with 6,347 stars.**
 
 **The before-image becomes free — this is the threat to the effect wedge that
-nobody is talking about.** S3 versioning is already the substrate of VOID's own
+nobody is talking about.** S3 versioning is already the substrate of NOMO's own
 S3 inverse. PostgreSQL logical replication with `REPLICA IDENTITY FULL` gives
 old row values natively. Kubernetes server-side apply makes desired state
 declarative, which makes it invertible by construction. **[INFERENCE]** Every
@@ -441,7 +441,7 @@ thesis — signed or not — is answering a question nobody is urgently asking.
    installs and one vendor has 85 open issues on a repo created in March is a
    category where **nobody is shopping**, and the honest reading of "nobody has
    built it" may be "nobody wants it."
-3. **AgentLock's design position is the opposite of VOID's.** It "decides from
+3. **AgentLock's design position is the opposite of NOMO's.** It "decides from
    provenance, not content", deny-by-default. The thesis is *prevent the
    action*, not *prove what happened after*. 19 stars, 961 downloads a month.
    Prevention is cheaper to sell and easier to demo than evidence.
@@ -478,18 +478,18 @@ a new dependency.
   hash-chained ledger, so the forward authorisation and the reversal sit in one
   chain. The verifier can check the reversal against an **independent read of
   the effect's own system** — for PostgreSQL, a query of the
-  `${schema}.recoveries` table, which is the one artefact VOID puts outside its
+  `${schema}.recoveries` table, which is the one artefact NOMO puts outside its
   own trust domain. S3 has since taken the post-write re-read and a durable
   receipt of the shape Postgres already has (`s3/apply.ts:115` and `:166`);
   *this paragraph said it was still to be built.*
-- **Surface.** `void export --bundle` carries the reversal; `void verify` says
+- **Surface.** `nomo export --bundle` carries the reversal; `nomo verify` says
   *"this effect was authorised, inverted, and the inversion was verified after
   it was applied; here is the field that disagrees if it was not."* That line
   is the product.
 - **Claim.** *"A third party holding the bundle, the public key, and read access
   to the affected system can re-derive that a named effect was inverted to a
   byte-exact before-image and that the inversion was checked after it was
-  applied — without trusting VOID's key, VOID's store, or VOID's process."*
+  applied — without trusting NOMO's key, NOMO's store, or NOMO's process."*
 - **Why this is next and not something else.** It is the only capability in
   this document that no competitor had any part of when this was written.
   *(Corrected 2026-10-04: that exclusivity is false as of Rubrik Agent
@@ -512,7 +512,7 @@ a new dependency.
   `packages/connectors/src/reverse-engine.test.ts`.
 - **Proof of done.** Export a bundle containing a PostgreSQL row delete and an
   S3 object delete, plus both inversions. On a second machine holding only the
-  public key and read access to the database, `void verify` reports both
+  public key and read access to the database, `nomo verify` reports both
   reversals verified and prints the receipt ids. Corrupt one byte of the
   `verification.observedDigest` and the verifier refuses, naming the field.
   Query `${schema}.recoveries` directly and the row is there with the same
@@ -527,17 +527,17 @@ a new dependency.
   record; `model_id` and a `requestDigest` over the outbound request bound into
   both. `readLedgerReason` keeps its four-way distinction and gains the
   model/answer, so "names a policy but no model" is reportable as itself.
-- **Surface.** The same `void verify` line, extended: *"this decision was made
+- **Surface.** The same `nomo verify` line, extended: *"this decision was made
   by rule 7 of policy sha256:…, on model X, against request sha256:…"* — and,
   for a record that predates it, *"this record names no policy"*, which is
   already how it reads.
-- **Claim.** *"For every effect VOID authorised, the signed record names the
+- **Claim.** *"For every effect NOMO authorised, the signed record names the
   policy, the rule, the model and a digest of the request — or says plainly
   that it does not."*
 - **Why this is next and not something else — and why it is second, not first.**
   The reason it must happen at all is that the claim is currently false on the
   path that dispatches the tools, and a security reviewer can produce that in
-  five minutes with `void verify`. The reason it is *not first* is adversarial
+  five minutes with `nomo verify`. The reason it is *not first* is adversarial
   and, I think, decisive: **done alone, this ships `trace-spec`'s field set.**
   TRACE has specified `model.model_id`, `policy.bundle_hash`,
   `tool_transcript.hash` and offline verification at the Linux Foundation since
@@ -563,7 +563,7 @@ a new dependency.
 - **Proof of done.** A workbench-written record verifies and names policy, rule,
   model and request digest. A record written before the change still verifies
   and reports "names no policy" — no migration, none invented. Tampering with
-  `model_id` breaks the chain. `void verify --bundle` on a machine with no
+  `model_id` breaks the chain. `nomo verify --bundle` on a machine with no
   private key reports `integrity only` and names where the key came from, which
   is what `verificationStatus` (`packages/ledger/src/verify-key.ts:200-205`)
   already does.
@@ -581,14 +581,14 @@ a new dependency.
   only** — the ones that have a working capture — and say so in the registry
   version bump.
 - **Surface.** `policy.yaml` gains `effect: "row.delete" | "object.delete"`, and
-  a new `void policy explain <file> --tool <id> --args <json>` prints the
+  a new `nomo policy explain <file> --tool <id> --args <json>` prints the
   effect the rule saw, not the tool name — the missing half of
   `packages/cli/src/operations.ts:58-66`, which today offers only
   `list | show | validate` and has no way to ask "what would you do with this
   call, and why". The demo: *the same tool, one read allowed and one write
   denied by effect, with the ledger record naming which effect the rule
   matched.*
-- **Claim.** *"VOID's policy decides on what the action did. The same tool is
+- **Claim.** *"NOMO's policy decides on what the action did. The same tool is
   allowed to read and denied to write, and the record says which effect the
   rule saw."*
 - **Why this is third.** It is the actual unclaimed decision surface — and it is
@@ -607,7 +607,7 @@ a new dependency.
   `packages/proxy/src/forward/tools.ts:334-353`,
   `packages/cli/src/operations.ts:58-66` (the new `explain` subcommand).
 - **Proof of done.** A policy with one `effect: row.read` allow and no write
-  allow, against the same tool: `void policy explain` prints the effect and
+  allow, against the same tool: `nomo policy explain` prints the effect and
   the rule index for the read and the refusal for the write; dispatching both
   through the proxy produces a ledger record for the read that carries the
   effect and the rule. A pre-existing policy file with no `effect:` key still
@@ -622,7 +622,7 @@ a new dependency.
 
 ## 8. Two things to drop from the roadmap
 
-`VOID-FUTURE-DIRECTION.md` §9 has thirteen items across three releases and
+`NOMO-FUTURE-DIRECTION.md` §9 has thirteen items across three releases and
 §"What should be stopped now" has four. A roadmap that only grows is not a
 strategy, so here are two more, with the reason each is costing more than it
 returns.
@@ -639,19 +639,19 @@ in the entire corpus.
   `PREMISE-VERIFICATION.md` correctly notes the six-shard field it rests on
   (Hex-Rays' MCP server, Binary Ninja Sidekick, Ghidra 12.1.4) is the largest
   unchecked gap in the parent document.
-- **The work is not "a week".** It needs an effect taxonomy for artefacts VOID
+- **The work is not "a week".** It needs an effect taxonomy for artefacts NOMO
   has never touched (a function rename, a patch application, a script
   decompilation and a "mark as commented" genuinely are four effects with four
   inverses) *and* a capture/inverse for a proprietary decompiler database
   (IDB/BNDB) whose format is undocumented. The parent document's own estimate of
   "a week, not a year" is an estimate made without having opened either.
 - **It re-imports the ambiguity that is the project's most expensive problem.**
-  `VOID-FUTURE-DIRECTION.md` §1 and `PREMISE-VERIFICATION.md` both conclude that
+  `NOMO-FUTURE-DIRECTION.md` §1 and `PREMISE-VERIFICATION.md` both conclude that
   "reverse engineering" in the framing sends the distribution plan toward
   conferences and the App Store instead of `npm` and procurement. This item
   re-litigates the framing instead of resolving it.
 - **And there is no inverse to be had.** A decompiler database is not a file you
-  can before-image cleanly, which means the one thing VOID does well is the one
+  can before-image cleanly, which means the one thing NOMO does well is the one
   thing it would struggle to do here.
 
 If the flank matters, it is reached by #1 and #3 with a real database and a
@@ -662,7 +662,7 @@ real S3 bucket. Not with an IDB.
 Three items, one reason, and the reason is checkable in an afternoon.
 
 - **You cannot standardise a record shape your own writer does not produce.**
-  VOID's ledger has no `trust_level`, no `record_phase`, no `sequence_number`,
+  NOMO's ledger has no `trust_level`, no `record_phase`, no `sequence_number`,
   no deny reason code, no heartbeat, no tombstone, no effect class, and no
   AAT crosswalk. Proposing those field names to a CNCF repository *before*
   emitting them would be proposing names for fields the product does not have.
@@ -674,7 +674,7 @@ Three items, one reason, and the reason is checkable in an afternoon.
   checkbox — the exact outcome §2.3 of the parent document warns about when it
   says a vendor shipping "signed hash-chained audit" as a checkbox collapses
   the differentiator.
-- **MCPS tool-definition signing is a claim MCPS makes, not one VOID makes.**
+- **MCPS tool-definition signing is a claim MCPS makes, not one NOMO makes.**
   It answers "did the client's tool definitions change under it", which is a
   proxy-routing concern. Microsoft's gateway will do it, and is already doing
   the adjacent half (PRs #4131 and #4132, 24 September 2026). P-256 is a
@@ -714,7 +714,7 @@ pay, and the fix is to stop extending it.
   (`feed.ts:69`, `server.ts:375`); destructive operations refuse without a key
   (`server.ts:382`); `verificationStatus` prints `integrity only, verified
   against a key supplied out of band` and never says only that something was
-  verified (asserted by `verify-key.test.ts:262-272`); `void attest` prints
+  verified (asserted by `verify-key.test.ts:262-272`); `nomo attest` prints
   "retained copy … same trust domain as the ledger, so not an anchor on its
   own". **This is the most underrated asset in the repository and it is worth
   more externally than it is internally.**
@@ -732,7 +732,7 @@ pay, and the fix is to stop extending it.
 **Liabilities that look like features:**
 
 - **The signed ledger in its current trust domain.** One principal records,
-  signs, executes and verifies on every shipped surface. VOID already says so
+  signs, executes and verifies on every shipped surface. NOMO already says so
   in six code paths and in `THREAT-MODEL.md`, and every one of those
   qualifications should be promoted to the README rather than buried in a review
   file. A reader who hears "ed25519-signed audit trail" and infers AAT §5.2-grade
@@ -776,7 +776,7 @@ pay, and the fix is to stop extending it.
    said "we evaluated signed agent ledgers and decided not to use them", that is
    exactly the evidence this report is missing and I did not see it.
 4. **Antigravity CLI's governance model** — the same unexamined gap
-   `VOID-FUTURE-DIRECTION.md` §10.3 named, and it could still change §3.
+   `NOMO-FUTURE-DIRECTION.md` §10.3 named, and it could still change §3.
 5. **The `trace-spec` roadmap.** Whether `agentrust-io/cmcp` is a reference
    implementation, a demo, or a stub; and what the v0.3 runtime evidence profile
    would add. I read the top-level README, not the spec or the RFC.
@@ -853,7 +853,7 @@ noise — and **the durable write is the cost**: roughly 5 ms p50 on this disk,
 about a third of a forward call. The rest of the forward figure is the
 in-process echo and the per-call clock the harness adds.
 
-So the claim to make is not "VOID is free". It is "the decision costs nothing
+So the claim to make is not "NOMO is free". It is "the decision costs nothing
 measurable, and the durability write costs about 5 ms". The lever is the fsync
 policy, batching or a durability tier, which is a product decision with a
 compliance trade-off attached and not a performance bug in the proxy. No latency
@@ -872,7 +872,7 @@ party holds a root hash. The dependency-free checker
 `packages/verifier/verify-ledger.mjs` is the honest third-party story and it is
 fed its keys by the operator, which is the same trust boundary in a different
 hat. "Audit compliance" is sellable today only for the Postgres receipt,
-because that is the one artefact a third party can verify without VOID.
+because that is the one artefact a third party can verify without NOMO.
 
 ### 11.5 Cloudflare, and what it can and cannot absorb
 
@@ -889,7 +889,7 @@ and aliases tools and prompts, collapses every upstream tool into two via Code
 Mode, and can route through Gateway for DLP.
 
 The part that changes the assessment is enforcement rather than features. A
-portal that refuses a bypass is a **chokepoint**, and VOID is a proxy inside that
+portal that refuses a bypass is a **chokepoint**, and NOMO is a proxy inside that
 chokepoint rather than beside it.
 
 What it cannot get from an edge is the part that has to understand the write: a
@@ -907,10 +907,10 @@ Cloudflare.
 
 Not true as written, and the correction matters. `yzhao062/auditable` claims the
 same wedge almost verbatim three months earlier (§3.2), `Justin0504/Aegis` is
-the same shape as VOID's proxy (runtime wrapper, cryptographic trail, kill
+the same shape as NOMO's proxy (runtime wrapper, cryptographic trail, kill
 switch), and `PrismorSec/prismor` is the most-installed signed project measured,
 at 3,330 downloads a month. What is true is narrower: **none of them captures a
-before-image and publishes a verifiable inverse.** VOID has that for Postgres
+before-image and publishes a verifiable inverse.** NOMO has that for Postgres
 row mutations and nothing else. The wedge is the inverse, not the ledger, and
 the ledger is the part fifteen projects already ship.
 
@@ -926,7 +926,7 @@ usable on a live system with concurrent writers.)*
 1. The sellable claim is Postgres: capture, restore, re-read, refuse on drift,
    and a receipt written into the customer's own database, which a third party
    can check without trusting us. S3 now proves the write the same way
-   (§11.8), but its receipt stays inside VOID's own evidence, so it is not yet
+   (§11.8), but its receipt stays inside NOMO's own evidence, so it is not yet
    the same claim. Everything else is roadmap, and §4.3's count says how much.
 2. Publish a latency figure only with a named disk and a durability tier.
    Today's honest line is "about 5 ms of fsynced append, decision cost
@@ -967,8 +967,8 @@ the effect.
 
 What this does *not* change is §11.4. The Postgres receipt is still the only
 artefact written into the customer's own system, and therefore still the only
-one a third party can verify without trusting VOID, its key or its ledger. The
-S3 receipt lives in VOID's own evidence and proves what its own docblock says:
+one a third party can verify without trusting NOMO, its key or its ledger. The
+S3 receipt lives in NOMO's own evidence and proves what its own docblock says:
 the code compares what it wrote against what it reads back, over an in-memory
 client in every test in this repository.
 
@@ -1051,11 +1051,11 @@ used them as corrected rather than re-deriving them.
 
 - `draft-sharif-agent-audit-trail` is at revision **-06** (Standards Track, 29 September 2026),
   where the documents in this repository carry -05. Nothing in the tree depends on the revision
-  number today, but any claim that VOID emits the standard format has to be re-checked against
+  number today, but any claim that NOMO emits the standard format has to be re-checked against
   -06 before it is made.
 - `draft-sahu-agent-action-receipts-00`, "Signed, Hash-Chained Action Receipts for AI Agents",
   N. Sahu, 16 August 2026, Informational, with `draft-marques-asqav-compliance-receipts` in
-  progress. **This is VOID's central claim written down by someone else.** It validates the wedge
+  progress. **This is NOMO's central claim written down by someone else.** It validates the wedge
   and removes "we sign the ledger" as a differentiator in the same stroke, because the shape is
   now public. What survives is §4.3's sentence: the receipt lands in the effect's own system, so
-  a third party verifies it without trusting VOID, its key or its ledger. No draft claims that.
+  a third party verifies it without trusting NOMO, its key or its ledger. No draft claims that.

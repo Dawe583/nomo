@@ -1,11 +1,11 @@
-# VOID: plán dalšího vývoje
+# NOMO: plán dalšího vývoje
 
 Auditní baseline: GitHub `main` commit `4c560dd98668da06e24b2189e854203fdcaa80a2`, načtený 30. září 2026. Plán vzniká na větvi `codex/void-strategy-2026-09-30`. Je to návrh k diskusi; jednotlivé nově navržené vlastnosti nejsou automaticky schválené k implementaci.
 
 ## Rozhodnutí, která už zazněla
 
 - Produkt porovnáváme podle zákaznické hodnoty, opakovaného používání a nákladů. Uživatel chce nejdřív vidět směry a o návrzích rozhodovat průběžně.
-- Zvolený produktový vstup je doplněk ke stávajícím agentům: **Codex, Claude Code, Hermes a OpenCode**. VOID nemá vyžadovat, aby developer opustil svůj běžný chat.
+- Zvolený produktový vstup je doplněk ke stávajícím agentům: **Codex, Claude Code, Hermes a OpenCode**. NOMO nemá vyžadovat, aby developer opustil svůj běžný chat.
 - Cílová demonstrace používá **soubory, Git a Postgres**.
 - Uživatel plánuje kapacitu většího týmu; počet lidí ani dostupné úvazky zatím nejsou známé. Plán proto uvádí škálovací varianty.
 - Souběžná práce má nejdřív používat oddělené worktrees a bezpečné zastavení při konfliktu. Automatické slučování až po vlastním důkazu.
@@ -29,9 +29,9 @@ Auditní baseline: GitHub `main` commit `4c560dd98668da06e24b2189e854203fdcaa80a
 
 ## Hlavní závěr
 
-VOID má rozsáhlý kód i propracovanou lokální auditní a recovery infrastrukturu. Další funkcí se nestane ultimátním nástrojem, pokud současně nezkrátí cestu od instalace k viditelnému výsledku, spolehlivě zachová práci uživatele a doloží, co bylo skutečně zkontrolováno. Konkurenti už mají vlastní chat, Git checkpointy, undo, schvalování a připojování MCP. Vstupní slib proto musí být mnohem přesnější:
+NOMO má rozsáhlý kód i propracovanou lokální auditní a recovery infrastrukturu. Další funkcí se nestane ultimátním nástrojem, pokud současně nezkrátí cestu od instalace k viditelnému výsledku, spolehlivě zachová práci uživatele a doloží, co bylo skutečně zkontrolováno. Konkurenti už mají vlastní chat, Git checkpointy, undo, schvalování a připojování MCP. Vstupní slib proto musí být mnohem přesnější:
 
-> **Nech svůj oblíbený agent změnit podporované zdroje, uvidíš skutečný rozsah změny a ověřenou obnovu; když se mezitím změní práce někoho dalšího, VOID se zastaví a ochrání ji.**
+> **Nech svůj oblíbený agent změnit podporované zdroje, uvidíš skutečný rozsah změny a ověřenou obnovu; když se mezitím změní práce někoho dalšího, NOMO se zastaví a ochrání ji.**
 
 Před rozšiřováním nabídky opravit a nezávisle otestovat nalezené recovery, attribution a MCP response problémy. Pak nabídnout tři srozumitelné povrchy téhož jádra: CLI/proxy pro stávající host, desktopový reviewer/installer pro jednotlivce a hosted týmovou evidenci jen tehdy, když z ní pilot získá opakovanou hodnotu.
 

@@ -90,7 +90,7 @@ async function strictFactsPath() {
   for (const [name, value] of Object.entries(raw)) {
     facts[name] = { value, verifiedAt: "2026-09-08T00:00:00Z", source: "fixture" };
   }
-  const dir = await mkdtemp(join(tmpdir(), "void-e2e-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-e2e-"));
   const path = join(dir, "facts.json");
   await writeFile(path, `${JSON.stringify({ facts })}\n`);
   return path;
@@ -105,7 +105,7 @@ async function runApiPass(factsPath) {
   const output = [];
   const errors = [];
   let holdQueue = null;
-  const ledgerDir = await mkdtemp(join(tmpdir(), "void-e2e-ledger-"));
+  const ledgerDir = await mkdtemp(join(tmpdir(), "nomo-e2e-ledger-"));
   const running = runProxy({
     upstreamCommand: ["node", "fixtures/e2e-server.mjs"],
     policyPath: "fixtures/e2e-policy.yaml",
@@ -132,9 +132,9 @@ async function runApiPass(factsPath) {
   });
 
   await check("api echo forwards result", async () => {
-    input.push({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "echo", arguments: { text: "hello void" } } });
+    input.push({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "echo", arguments: { text: "hello nomo" } } });
     await waitFor(() => output.length >= 3, "echo response");
-    assert.equal(textFrom(output[2]), "hello void");
+    assert.equal(textFrom(output[2]), "hello nomo");
   });
 
   let heldId = "";
@@ -177,7 +177,7 @@ async function runApiPass(factsPath) {
 
 async function runBinaryObservePass(factsPath) {
   const child = spawn(process.execPath, [
-    "packages/proxy/bin/void-proxy.mjs",
+    "packages/proxy/bin/nomo-proxy.mjs",
     "--upstream", process.execPath,
     "--args", "fixtures/e2e-server.mjs",
     "--policy", "fixtures/e2e-policy.yaml",

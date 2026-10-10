@@ -24,7 +24,7 @@ import {
 type Fault = { boundary: Stage | VaultSlot; timing: "before" | "after" };
 
 async function fixture(t: TestContext) {
-  const dir = await mkdtemp(join(tmpdir(), "void-persistence-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-persistence-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const keys = { test: randomBytes(32) };

@@ -53,7 +53,11 @@ const PROPOSAL: RefinementProposal = {
   ],
 };
 
-type Counters = { asked: number; applied: RefinementProposal[] };
+type Counters = {
+  asked: number;
+  applied: RefinementProposal[];
+  appliedBranchVersions: (number | undefined)[];
+};
 
 function deps(
   overrides: {
@@ -63,10 +67,11 @@ function deps(
     readonly ask?: (request: string) => Promise<string>;
     readonly surface?: "checkpoint" | "dispose";
     readonly now?: () => number;
+    readonly currentBranchVersion?: () => number;
     readonly harnessStateAvailable?: boolean;
   } = {},
 ): { readonly deps: Parameters<typeof serviceHarnessBoundary>[1]; readonly counters: Counters } {
-  const counters: Counters = { asked: 0, applied: [] };
+  const counters: Counters = { asked: 0, applied: [], appliedBranchVersions: [] };
   const reply =
     overrides.reply ??
     JSON.stringify({
@@ -93,9 +98,11 @@ function deps(
           assert.ok(request.includes("derivedFromSeq"), "the review request states the provenance rule");
           return reply;
         }),
-      apply: async (proposal) => {
+      apply: async (proposal, expectedBranchVersion?: number) => {
         counters.applied.push(proposal);
+        counters.appliedBranchVersions.push(expectedBranchVersion);
       },
+      currentBranchVersion: overrides.currentBranchVersion,
       harnessStateAvailable: overrides.harnessStateAvailable ?? true,
     },
   };
@@ -248,4 +255,44 @@ test("a result started on an abandoned branch is not applicable", async () => {
     "a round that ran before the branch moved must not be applied afterwards",
   );
   assert.equal(counters.asked, 1);
+});
+
+test("a branch that moved before review spends no provider request", async () => {
+  const before = ready();
+  const { deps: wired, counters } = deps({
+    currentBranchVersion: () => before.branchVersion + 1,
+  });
+  const result = await serviceHarnessBoundary(before, wired);
+
+  assert.equal(result.outcome.kind, "not-run");
+  assert.equal(counters.asked, 0);
+  assert.equal(counters.applied.length, 0);
+});
+
+test("a branch move during review prevents applying its stale proposal", async () => {
+  const before = ready();
+  let currentVersion = before.branchVersion;
+  const { deps: wired, counters } = deps({
+    currentBranchVersion: () => currentVersion,
+    ask: async () => {
+      counters.asked += 1;
+      currentVersion += 1;
+      return JSON.stringify({ approve: true, proposal: PROPOSAL });
+    },
+  });
+  const result = await serviceHarnessBoundary(before, wired);
+
+  assert.equal(result.outcome.kind, "not-run");
+  assert.equal(counters.applied.length, 0);
+});
+
+test("the review's branch version reaches its writer", async () => {
+  const before = ready();
+  const { deps: wired, counters } = deps({
+    currentBranchVersion: () => before.branchVersion,
+  });
+  const result = await serviceHarnessBoundary(before, wired);
+
+  assert.equal(result.outcome.kind, "ran");
+  assert.deepEqual(counters.appliedBranchVersions, [before.branchVersion]);
 });

@@ -198,7 +198,7 @@ importers:
       '@types/pg':
         specifier: 8.15.5
         version: 8.15.5
-      '@void/registry':
+      '@nomo/registry':
         specifier: workspace:*
         version: link:../registry
 
@@ -236,13 +236,13 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0
-      '@void/ledger':
+      '@nomo/ledger':
         specifier: workspace:*
         version: link:../ledger
-      '@void/policy':
+      '@nomo/policy':
         specifier: workspace:*
         version: link:../policy
-      '@void/registry':
+      '@nomo/registry':
         specifier: workspace:*
         version: link:../registry
     devDependencies:
@@ -264,19 +264,19 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@void/connectors':
+      '@nomo/connectors':
         specifier: workspace:*
         version: link:../connectors
-      '@void/ledger':
+      '@nomo/ledger':
         specifier: workspace:*
         version: link:../ledger
-      '@void/policy':
+      '@nomo/policy':
         specifier: workspace:*
         version: link:../policy
-      '@void/proxy':
+      '@nomo/proxy':
         specifier: workspace:*
         version: link:../proxy
-      '@void/runtime':
+      '@nomo/runtime':
         specifier: workspace:*
         version: link:../runtime
     devDependencies:
@@ -288,7 +288,7 @@ importers:
 
   packages/workbench:
     dependencies:
-      '@void/runtime':
+      '@nomo/runtime':
         specifier: workspace:*
         version: link:../runtime
     devDependencies:

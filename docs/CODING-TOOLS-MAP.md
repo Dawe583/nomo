@@ -21,7 +21,7 @@ export type McpTool = { name: string; description?: string; inputSchema?: unknow
 
 `connectorId` is the only discriminator: it is `undefined` for managed workspace
 tools, the connector's own id for remote MCP connectors, and the literal
-`"stdio"` for tools proxied through the VOID SDK. Every dispatch decision in
+`"stdio"` for tools proxied through the NOMO SDK. Every dispatch decision in
 `executeTool` keys off it (`packages/workbench/src/index.ts:2474`, `:2487`,
 `:2520`, `:2544`).
 
@@ -40,7 +40,7 @@ does initialize + `tools/list` and caps the catalogue at 100 tools.
 The workspace set is defined once, in `packages/workbench/src/workspace.ts:25-30`:
 
 ```
-void_workspace_list, void_workspace_read, void_workspace_write, void_workspace_delete
+nomo_workspace_list, nomo_workspace_read, nomo_workspace_write, nomo_workspace_delete
 ```
 
 Connector tools are added only when `connector.consentState === "confirmed"`
@@ -81,7 +81,7 @@ This is the load-bearing gate for question 2. See below.
 ### Two filters sit between the catalogue and the model
 
 - `toolAllowedInMode` (`packages/workbench/src/index.ts:1420-1422`) — outside
-  `normal` mode, only `void_workspace_list` and `void_workspace_read` survive,
+  `normal` mode, only `nomo_workspace_list` and `nomo_workspace_read` survive,
   and only when `connectorId` is unset.
 - The agent-profile allowlist, applied at session construction
   (`packages/workbench/src/index.ts:1148`) and re-checked at dispatch
@@ -99,7 +99,7 @@ This is the load-bearing gate for question 2. See below.
 
 The comment in full (`packages/workbench/src/index.ts:337-338`):
 
-> `/** Model tools always cross the existing VOID SDK. A provider has no shell or`
+> `/** Model tools always cross the existing NOMO SDK. A provider has no shell or`
 > ` * filesystem authority; operators configure the MCP upstream on the runtime. */`
 
 It sits directly above `export class Workbench` (`:339`).
@@ -126,16 +126,16 @@ merely absent-from-the-catalogue for everything else.** The distinction matters
 because the catalogue is assembled in one place (`:1082-1101`) from three
 sources, and an operator-configured MCP upstream is one of them. If the operator
 configures an upstream that itself touches the host, the model gets that tool —
-VOID proxies it (`:2487-2519`) but does not remove its capability. The
+NOMO proxies it (`:2487-2519`) but does not remove its capability. The
 security review already states this in the open:
 
 > `packages/security-notes.md:12-14` — "A local upstream running as the proxy OS
 > user is not sandboxed. It can read that user's files."
 
 The comment's phrasing "no shell or filesystem authority" is therefore accurate
-about VOID's own tool surface and *not* accurate as a statement about the
-process: `VOID_UPSTREAM_COMMAND` (`:1051`) spawns an arbitrary operator-named
-command (`packages/sdk/src/client.ts:272-278`), and `VOID_HOOK_COMMANDS`
+about NOMO's own tool surface and *not* accurate as a statement about the
+process: `NOMO_UPSTREAM_COMMAND` (`:1051`) spawns an arbitrary operator-named
+command (`packages/sdk/src/client.ts:272-278`), and `NOMO_HOOK_COMMANDS`
 spawns hook processes (`packages/workbench/src/agents.ts:237`), both as the
 host user.
 
@@ -167,8 +167,8 @@ Per-class policy posture, `docs/HANDBOOK.md:118-123`:
 ```ts
 // packages/workbench/src/workspace.ts:34-38
 export function workspaceToolClass(name: string): 'r0' | 'r1' | undefined {
-  if (name === 'void_workspace_list' || name === 'void_workspace_read') return 'r0';
-  if (name === 'void_workspace_write' || name === 'void_workspace_delete') return 'r1';
+  if (name === 'nomo_workspace_list' || name === 'nomo_workspace_read') return 'r0';
+  if (name === 'nomo_workspace_write' || name === 'nomo_workspace_delete') return 'r1';
   return undefined;
 }
 ```
@@ -180,7 +180,7 @@ policy call), and `packages/workbench/src/tool-catalog.ts:12` (display). The
 `?? "r3"` fallbacks are the fail-closed posture stated in
 `packages/policy/src/grammar.ts:45-46`.
 
-`void_workspace_undo` is classified `r1` at `:2235` but is explicitly **not a
+`nomo_workspace_undo` is classified `r1` at `:2235` but is explicitly **not a
 model tool**: `packages/workbench/src/workspace.ts:73` says "Do not expose this
 as a model tool. The operator explicitly approves undo." It is reachable only
 through the operator surface.
@@ -253,7 +253,7 @@ below. The workbench returns `isError` content with `denialText`
 | Broker registration + notification fan-out | `packages/policy/src/approvals.ts:214-234` |
 | Broker `decide` resolves the queue and persists | `packages/policy/src/approvals.ts:236-257` |
 | `HoldDeniedError` constructed by the SDK client | `packages/sdk/src/client.ts:566-567` |
-| The class itself | `packages/sdk/src/errors.ts:10-21`, `code = "VOID_HOLD_DENIED"` |
+| The class itself | `packages/sdk/src/errors.ts:10-21`, `code = "NOMO_HOLD_DENIED"` |
 
 `HoldDeniedError` is only thrown when the upstream reports `result: "denied"` or
 `"expired"` (`packages/sdk/src/client.ts:566`). The workbench deliberately does
@@ -352,19 +352,19 @@ prospective. Not checked against code.
 
 | Mechanism | Exists | Scope | Reachable by a model? |
 | --- | --- | --- | --- |
-| Managed workspace documents | `packages/workbench/src/workspace.ts`, adapter `packages/workbench/src/managed-documents.ts:25-29` | In-memory/`workspace.enc` string map, 256 kB/doc, 100 files (`workspace.ts:24`) | **Yes** — `void_workspace_*` |
+| Managed workspace documents | `packages/workbench/src/workspace.ts`, adapter `packages/workbench/src/managed-documents.ts:25-29` | In-memory/`workspace.enc` string map, 256 kB/doc, 100 files (`workspace.ts:24`) | **Yes** — `nomo_workspace_*` |
 | Managed documents recovery runtime | `packages/workbench/src/index.ts:1875-1932` (`documentRuntime`) | Journal + vault under the data dir | Operator-only (`planRecoveryJob`/`applyRecoveryJob`/`undo`) |
-| `VOID_LEDGER_DIR` | `packages/workbench/src/index.ts:1074`, `:2282` | Ledger JSONL path; read at `:2287`, verified at `:2305` | No — VOID reads its own ledger |
+| `NOMO_LEDGER_DIR` | `packages/workbench/src/index.ts:1074`, `:2282` | Ledger JSONL path; read at `:2287`, verified at `:2305` | No — NOMO reads its own ledger |
 | `homedir()` uses | `:435` (data dir default), `:1074` (ledger default), `:2282` (ledger default), `:2303` (key dir) | Path defaults only | No |
-| `VOID_UPSTREAM_COMMAND` | Parsed `:1049-1065`, requires `VOID_POLICY_PATH` `:1064-1065`, spawned via `packages/sdk/src/client.ts:272-278` | Arbitrary operator-named MCP server command, run as the host user | Its tools reach the model as `connectorId: "stdio"` |
-| `VOID_HOOK_COMMANDS` | `packages/workbench/src/index.ts:637-655`, spawn at `packages/workbench/src/agents.ts:237` | Exact-command-string allowlist from the launcher; comment at `:626-636` explains why it is env-only | Hooks observe; `before-run` can refuse a run (`:2644-2648`) |
-| `filesystem.managed` adapter | `packages/connectors/src/filesystem/managed.ts:41-51` | Real host filesystem, but confined to one `realpath`'d root with a directory identity check (`:47-51`, `:76-86`) | **No** — CLI `void recovery` only |
-| `git.managed` adapter | `packages/connectors/src/git/managed.ts`, capability `packages/cli/src/conformance.ts:201-216` | One cooperative POSIX repo; explicitly excludes remotes, hooks, arbitrary git, history rewriting | **No** — CLI `void recovery` only |
-| Recovery MCP server | `packages/cli/src/recovery-mcp.ts:313-440`, launched by `void recovery serve` (`packages/cli/src/recovery.ts:316-332`) | `void_execute`, `void_recovery_plan`, `void_reconcile`, and the job tools — this *is* a host-filesystem tool surface, and it is model-shaped | **No** — a separately launched stdio MCP server, not in `Workbench`'s catalogue |
-| Self-update via git | `packages/cli/src/update.ts:186-198` | `VOID_HOME` clone, argument-array git only | No |
+| `NOMO_UPSTREAM_COMMAND` | Parsed `:1049-1065`, requires `NOMO_POLICY_PATH` `:1064-1065`, spawned via `packages/sdk/src/client.ts:272-278` | Arbitrary operator-named MCP server command, run as the host user | Its tools reach the model as `connectorId: "stdio"` |
+| `NOMO_HOOK_COMMANDS` | `packages/workbench/src/index.ts:637-655`, spawn at `packages/workbench/src/agents.ts:237` | Exact-command-string allowlist from the launcher; comment at `:626-636` explains why it is env-only | Hooks observe; `before-run` can refuse a run (`:2644-2648`) |
+| `filesystem.managed` adapter | `packages/connectors/src/filesystem/managed.ts:41-51` | Real host filesystem, but confined to one `realpath`'d root with a directory identity check (`:47-51`, `:76-86`) | **No** — CLI `nomo recovery` only |
+| `git.managed` adapter | `packages/connectors/src/git/managed.ts`, capability `packages/cli/src/conformance.ts:201-216` | One cooperative POSIX repo; explicitly excludes remotes, hooks, arbitrary git, history rewriting | **No** — CLI `nomo recovery` only |
+| Recovery MCP server | `packages/cli/src/recovery-mcp.ts:313-440`, launched by `nomo recovery serve` (`packages/cli/src/recovery.ts:316-332`) | `nomo_execute`, `nomo_recovery_plan`, `nomo_reconcile`, and the job tools — this *is* a host-filesystem tool surface, and it is model-shaped | **No** — a separately launched stdio MCP server, not in `Workbench`'s catalogue |
+| Self-update via git | `packages/cli/src/update.ts:186-198` | `NOMO_HOME` clone, argument-array git only | No |
 
-The recovery path is the closest precedent and it is instructive: `void recovery
-serve` publishes `void_execute` with a closed mutation union
+The recovery path is the closest precedent and it is instructive: `nomo recovery
+serve` publishes `nomo_execute` with a closed mutation union
 (`packages/cli/src/recovery-mcp.ts:332-390`), policy-checked through
 `allowed()` (`packages/cli/src/recovery.ts:272-292`), with `blastRadius: 0` for
 plan and `1` otherwise (`:324-329`), and mode gating that refuses dispatch
@@ -389,7 +389,7 @@ already resolves. The `shell.command.exec` note at `:1866` is the sharpest
 statement in the codebase on this question:
 
 > "an arbitrary command cannot be classified before it runs, so it is the worst
-> case by definition, and this is why VOID intercepts at the tool boundary
+> case by definition, and this is why NOMO intercepts at the tool boundary
 > rather than the shell"
 
 Classification knowledge for host operations exists. Execution surface does not.
@@ -399,17 +399,17 @@ Classification knowledge for host operations exists. Execution surface does not.
 ## Comment vs. code
 
 1. **`packages/workbench/src/index.ts:337-338`** — "Model tools always cross the
-   existing VOID SDK." Only `connectorId === "stdio"` tools cross the SDK
+   existing NOMO SDK." Only `connectorId === "stdio"` tools cross the SDK
    (`:2487`). Workspace tools execute in-process (`:2520-2543`); connector tools
    go over plain HTTPS via `rpc` (`:2588`). "A provider has no shell or
    filesystem authority" is true of the model's *tool surface* and false of the
-   *process* — `VOID_UPSTREAM_COMMAND` (`:1051`) and `VOID_HOOK_COMMANDS`
+   *process* — `NOMO_UPSTREAM_COMMAND` (`:1051`) and `NOMO_HOOK_COMMANDS`
    (`:637`) both spawn host processes as the operator's user, which
    `packages/security-notes.md:12-14` already concedes.
 
 2. **`packages/workbench/src/index.ts:1125`** — the system instruction tells the
    model "These tools do not access the host filesystem." True for
-   `void_workspace_*`. It is the *only* statement of the property the model
+   `nomo_workspace_*`. It is the *only* statement of the property the model
    receives, and it is a prompt, not an enforced invariant. The enforced
    invariant is the positional-name mapping (`:2739-2744`).
 
@@ -500,8 +500,8 @@ test("read-only tool catalog exposes only read tools for plan and read-only mode
   for (const mode of ["plan", "read-only"] as const) {
     ...
     const names = app.availableTools().tools.map((tool) => tool.name);
-    assert.deepEqual(names, ["void_workspace_list", "void_workspace_read"]);
-    assert.deepEqual(app.availableTools(session.id).tools.map((tool) => tool.name), ["void_workspace_list", "void_workspace_read"]);
+    assert.deepEqual(names, ["nomo_workspace_list", "nomo_workspace_read"]);
+    assert.deepEqual(app.availableTools(session.id).tools.map((tool) => tool.name), ["nomo_workspace_list", "nomo_workspace_read"]);
   }
 });
 ```
@@ -523,10 +523,10 @@ snapshot obeys mode (`:78-107`); the two defaults are explicit and differ
 the filtered catalogue, and it is the only one in the package. But it is scoped
 to `permissionMode !== "normal"`, where `toolAllowedInMode`
 (`packages/workbench/src/index.ts:1425-1427`) already hardcodes
-`tool.name === "void_workspace_list" || tool.name === "void_workspace_read"`.
+`tool.name === "nomo_workspace_list" || tool.name === "nomo_workspace_read"`.
 The test is asserting the output of a name allowlist, and would fail if that
 allowlist changed. It says nothing about whether those tools touch the host — a
-host-touching `void_workspace_read` would sail through it. The model-call test
+host-touching `nomo_workspace_read` would sail through it. The model-call test
 at `:42-61` asserts only that the managed document map is still empty; it does
 not assert that any file outside the data directory is untouched.
 
@@ -563,10 +563,10 @@ test('document namespace rejects traversal, prototype paths and oversized conten
 
 This is the strongest existing guard, and it is a *unit* test of
 `validPath` (`packages/workbench/src/workspace.ts:106-109`) via `write`, which
-is `executeWorkspaceTool(..., name: 'void_workspace_write')`
+is `executeWorkspaceTool(..., name: 'nomo_workspace_write')`
 (`workspace.test.ts:5-7`). It proves `/etc/passwd` and `../secrets` are refused
 **as document names inside the managed map**. It does not prove that
-`void_workspace_read` — or any other tool in the set — goes through `validPath`.
+`nomo_workspace_read` — or any other tool in the set — goes through `validPath`.
 `validPath` is called once, unconditionally, at
 `packages/workbench/src/workspace.ts:44`, before the read/write/delete branch —
 so today every path-taking workspace tool shares it. That sharing is structural,
@@ -584,7 +584,7 @@ process" already exists and is reused:
 // packages/workbench/src/policy-review.test.ts:104-107
 assert.ok(
   !server.methods.includes("tools/call"),
-  "the connector is never asked to run a tool VOID does not know",
+  "the connector is never asked to run a tool NOMO does not know",
 );
 ```
 
@@ -606,8 +606,8 @@ against itself, so they hold for any membership:
 | `tool-catalog.test.ts:39` — `assert.deepEqual(snapshot.tools.map(t => t.name), workspaceTools.map(t => t.name))` | compares the runtime catalogue to `workspaceTools` itself; true for 4 tools or 40 |
 | `tool-catalog.test.ts:8-10` — indexes `tools[2]` and `tools[4]` | a *fifth* tool would still be `tools[4]`; the impersonation fixture appends one entry and this passes |
 | `tool-catalog.test.ts:17` — `assert.equal(filterCommands(tools, '/').length, 4)` | this is a count, but it counts `filterCommands(workspaceTools, '/')` — i.e. the literal — **not** the dispatched catalogue. Adding a fifth workspace tool *would* fail this one line. It is an incidental count inside a slash-search test (`tool-catalog.test.ts:15-23`) whose subject is the filter, not the set. |
-| `apps/control-plane/api/parity.test.ts:66` — `assert.deepEqual(tools.tools.map(t => t.name), ["void_workspace_list", "void_workspace_read"])` | pinned, but only in read-only mode, i.e. the output of the same `toolAllowedInMode` name allowlist as `permission-authority.test.ts:37` |
-| `agents.test.ts:38` and `:42` — `assert.equal(tools.length, 1)` | a profile whose `allowedTools` is `["void_workspace_list"]` (`agents.test.ts:12`) filters the set down to one. True for any set size |
+| `apps/control-plane/api/parity.test.ts:66` — `assert.deepEqual(tools.tools.map(t => t.name), ["nomo_workspace_list", "nomo_workspace_read"])` | pinned, but only in read-only mode, i.e. the output of the same `toolAllowedInMode` name allowlist as `permission-authority.test.ts:37` |
+| `agents.test.ts:38` and `:42` — `assert.equal(tools.length, 1)` | a profile whose `allowedTools` is `["nomo_workspace_list"]` (`agents.test.ts:12`) filters the set down to one. True for any set size |
 | `workspace.test.ts:70-72` — `assert.equal(workspaceToolClass('shell'), undefined)` | the only negative class assertion, and it uses a name that is not in the set |
 
 So the accurate statement is: **`workspaceTools` is frozen only in the type
@@ -623,7 +623,7 @@ no message about tool membership.
 // packages/workbench/src/policy-review.test.ts:89-113
 test("a tool the provider invented never reaches the connector", async (t) => {
   ...
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(() => "not_in_catalog"));
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, callingProvider(() => "not_in_catalog"));
   ...
   await confirmedConnector(app, server.url, "Fixture", allowAll);
   const session = await app.start("Delete it", "fixture");
@@ -631,7 +631,7 @@ test("a tool the provider invented never reaches the connector", async (t) => {
   assert.equal(app.get(session.id)?.status, "failed");
   assert.ok(
     !server.methods.includes("tools/call"),
-    "the connector is never asked to run a tool VOID does not know",
+    "the connector is never asked to run a tool NOMO does not know",
   );
   assert.ok(
     app.get(session.id)?.events.some((event) => /outside the approved MCP catalog/.test(event.text)),
@@ -700,8 +700,8 @@ shows exactly the weakness: it asserts `app.workspace(session.id).files` is
 assertion has to be on something the tool *could* have modified outside that map.
 
 **Cheapest form that is still discriminating:** extend the loopback fixture at
-`policy-review.test.ts:11-38` to also record any request VOID's own process
-makes to a path outside `VOID_DATA_DIR` — or, simpler and with no new harness,
+`policy-review.test.ts:11-38` to also record any request NOMO's own process
+makes to a path outside `NOMO_DATA_DIR` — or, simpler and with no new harness,
 assert on the *return shape*: that a host-shaped path argument produces an
 `isError` result whose text is `validPath`'s message
 (`workspace.ts:107`), for **every** tool in the enumerated set. That fails the
@@ -737,10 +737,10 @@ concurrent change to `packages/workbench/src/` shifted `index.ts` by +5 to +9.
 ## What was built
 
 `packages/workbench/src/workspace-tools-guard.test.ts` — option (A) only, and
-only for the source VOID owns.
+only for the source NOMO owns.
 
 It drives the real `executeWorkspaceTool`, enumerates `workspaceTools` rather
-than asserting a count or a membership list, exempts `void_workspace_list`
+than asserting a count or a membership list, exempts `nomo_workspace_list`
 explicitly on the basis of its own `inputSchema` having no `path` property, and
 asserts the refusal text is `validPath`'s exact string rather than merely
 `isError`.
@@ -748,7 +748,7 @@ asserts the refusal text is `validPath`'s exact string rather than merely
 Option (B), the host canary, was deliberately **not** implemented.
 `packages/security-notes.md:12-14` already concedes that a local upstream
 running as the proxy OS user is not sandboxed and can read that user's files.
-VOID proxies stdio tools (`connectorId === "stdio"`, `index.ts:2496`) and removes
+NOMO proxies stdio tools (`connectorId === "stdio"`, `index.ts:2496`) and removes
 nothing. A canary asserting "the host is untouched after a model tool call"
 would therefore fail by design against an operator-configured upstream, and
 encoding a guarantee the product does not make is worse than having no test.
@@ -769,7 +769,7 @@ name. **It does not.** Two cases failed against the unmodified source:
 Probed directly against the current source:
 
 ```
-$ node -e "…executeWorkspaceTool(createWorkspace(),{id:'probe',name:'void_workspace_write',arguments:{path:'~/.ssh/id_rsa',content:'c'}})"
+$ node -e "…executeWorkspaceTool(createWorkspace(),{id:'probe',name:'nomo_workspace_write',arguments:{path:'~/.ssh/id_rsa',content:'c'}})"
 write "~/.ssh/id_rsa" ACCEPTED stored=["~/.ssh/id_rsa"]
 write "C:/Windows/System32" ACCEPTED stored=["C:/Windows/System32"]
 ```
@@ -788,8 +788,8 @@ classes it is written for, and the two names it does not refuse stay inert
 because they are opaque keys. The second half is now a test, not a comment.
 
 **Verdict on the question asked:** no workspace tool validates fewer inputs
-than `validPath` does. All three path-taking tools — `void_workspace_read`,
-`void_workspace_write`, `void_workspace_delete` — refuse all nine hostile
+than `validPath` does. All three path-taking tools — `nomo_workspace_read`,
+`nomo_workspace_write`, `nomo_workspace_delete` — refuse all nine hostile
 classes identically, because `validPath` is called once, unconditionally, at
 `workspace.ts:44`, ahead of every branch. The gap was in the *premise* of the
 first draft, not in the source.
@@ -805,13 +805,13 @@ fifth tool to the `workspaceTools` literal alone did **not** fail the path
 assertions — only the class assertion fired:
 
 ```
-✔ void_workspace_read_host refuses parent segments escape the document namespace (0.032125ms)
-✔ void_workspace_read_host refuses traversal can hide behind a plausible first segment (0.041291ms)
-✔ void_workspace_read_host refuses a backslash separator is a separator on Windows (0.035875ms)
-✔ void_workspace_read_host refuses __proto__ is a reserved segment, not a document name (0.034555ms)
+✔ nomo_workspace_read_host refuses parent segments escape the document namespace (0.032125ms)
+✔ nomo_workspace_read_host refuses traversal can hide behind a plausible first segment (0.041291ms)
+✔ nomo_workspace_read_host refuses a backslash separator is a separator on Windows (0.035875ms)
+✔ nomo_workspace_read_host refuses __proto__ is a reserved segment, not a document name (0.034555ms)
 …
 ✖ every workspace tool is classified, so none of them falls back to r3 (0.370583ms)
-  AssertionError [ERR_ASSERTION]: void_workspace_read_host has no class; it would be recorded as r3
+  AssertionError [ERR_ASSERTION]: nomo_workspace_read_host has no class; it would be recorded as r3
 ℹ tests 42
 ℹ pass 41
 ℹ fail 1
@@ -826,15 +826,15 @@ independent facts, and only the second one is the property.
 bypasses it:**
 
 ```
-✖ void_workspace_read_host refuses a leading slash is an absolute host path (0.619041ms)
-✖ void_workspace_read_host refuses parent segments escape the document namespace (0.093083ms)
-✖ void_workspace_read_host refuses traversal can hide behind a plausible first segment (0.076875ms)
-✖ void_workspace_read_host refuses a backslash separator is a separator on Windows (0.060083ms)
-✖ void_workspace_read_host refuses __proto__ is a reserved segment, not a document name (0.055625ms)
-✖ void_workspace_read_host refuses a reserved segment can hide mid-path (0.079375ms)
-✖ void_workspace_read_host refuses a NUL byte truncates the name at the syscall boundary (0.058416ms)
-✖ void_workspace_read_host refuses an empty segment is not a name (0.05925ms)
-✖ void_workspace_read_host refuses the current directory is not a document name (0.08825ms)
+✖ nomo_workspace_read_host refuses a leading slash is an absolute host path (0.619041ms)
+✖ nomo_workspace_read_host refuses parent segments escape the document namespace (0.093083ms)
+✖ nomo_workspace_read_host refuses traversal can hide behind a plausible first segment (0.076875ms)
+✖ nomo_workspace_read_host refuses a backslash separator is a separator on Windows (0.060083ms)
+✖ nomo_workspace_read_host refuses __proto__ is a reserved segment, not a document name (0.055625ms)
+✖ nomo_workspace_read_host refuses a reserved segment can hide mid-path (0.079375ms)
+✖ nomo_workspace_read_host refuses a NUL byte truncates the name at the syscall boundary (0.058416ms)
+✖ nomo_workspace_read_host refuses an empty segment is not a name (0.05925ms)
+✖ nomo_workspace_read_host refuses the current directory is not a document name (0.08825ms)
 ✖ every workspace tool is classified, so none of them falls back to r3 (0.110959ms)
 ℹ tests 42
 ℹ pass 32
@@ -844,8 +844,8 @@ bypasses it:**
 First failure, unedited:
 
 ```
-✖ void_workspace_read_host refuses a leading slash is an absolute host path
-  AssertionError [ERR_ASSERTION]: void_workspace_read_host accepted "/etc/passwd"
+✖ nomo_workspace_read_host refuses a leading slash is an absolute host path
+  AssertionError [ERR_ASSERTION]: nomo_workspace_read_host accepted "/etc/passwd"
   + actual - expected
   + undefined
   - true

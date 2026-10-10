@@ -401,7 +401,10 @@ def local_tool_schema() -> tuple[dict[str, Any], ...]:
         flag = re.match(r"\s*(true|false)\s*$", arguments[4])
         if name is None or description is None or flag is None:
             continue
-        if not name.startswith("void_"):
+        # The current spelling. A name under the old prefix is a frozen
+        # identifier in stored records, not a tool this runtime serves, so it
+        # is not published as one.
+        if not name.startswith("nomo_"):
             continue
         rows.append(
             {

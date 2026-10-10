@@ -1,4 +1,4 @@
-# Navržený backlog produktu VOID
+# Navržený backlog produktu NOMO
 
 Vlastník epiku přiřadit v týmovém kick-offu. „P0/P1“ popisuje pořadí v návrhu, ne zákaznickou ani regulatorní severity bez triage. Implementaci každé nové vlastnosti uživatel výslovně zvažuje.
 
@@ -12,7 +12,7 @@ Vlastník epiku přiřadit v týmovém kick-offu. „P0/P1“ popisuje pořadí 
 
 1. Filesystem test create→write→write→rename→delete→restore na skutečném temp FS po novém runtime i restartu.
 2. Obnovou se vrátí přesné file contents a deklarovaný metadata scope; inode/ACL/xattrs mimo kontrakt se neslibují.
-3. Uprostřed jobu přidej nezávislou novější editaci stejné i jiné cesty. VOID konflikt správně lokalizuje, zachová ji a reportuje partial, nikdy „restored“.
+3. Uprostřed jobu přidej nezávislou novější editaci stejné i jiné cesty. NOMO konflikt správně lokalizuje, zachová ji a reportuje partial, nikdy „restored“.
 4. Každý write/recovery má replay-safe transition identity; timeout po commit před receipt dává `unknown` a vyžádá reconciliation.
 5. Postgres stejné řádky opakovaně upraví a obnoví v deklarované transakční/trigger boundary; cizí concurrent update vyvolá konflikt.
 6. Označení restored vyžaduje read-back obsahu/state, ověřený signed outcome a uzavřené všechny intended steps.
@@ -42,9 +42,9 @@ Nahradit `hash(prefix tail + through length)` incremental chain `d₀ = SHA256(d
 ### Navržené modely coverage
 
 - `native-managed`: skutečná mutation cesta hosta je řízená adapterem.
-- `mcp-managed`: pouze konkrétní tool requesty směrované přes VOID MCP.
+- `mcp-managed`: pouze konkrétní tool requesty směrované přes NOMO MCP.
 - `observe`: event vidíme a logujeme, ale nemůžeme zaručit blokaci ani obnovu.
-- `unsupported`: VOID nevidí / neresolvuje.
+- `unsupported`: NOMO nevidí / neresolvuje.
 
 Každý záznam má `host name`, tested version, OS, transport, effect/connector, preconditions, conflict guarantee, tested source/branch, fixtures SHA, CI link, known exclusions, last verified date. Neexistuje jeden boolean „agent protected“.
 
@@ -54,7 +54,7 @@ Každý záznam má `host name`, tested version, OS, transport, effect/connector
 
 Build pro Codex, Claude Code, Hermes, OpenCode. Nejprve one host end-to-end; zbývající adaptéry mohou běžet v paralelních squads, ale nespustí se do `supported`, dokud jejich conformance matrix neprojde.
 
-**Funkce k posouzení:** `void doctor adapters`; dry-run plán config změn; backup a atomická instalace; uživatel vidí diff a vybere scopes; update idempotentní; uninstall obnoví config bez odstranění user changes; profile/worktree discovery; health/protocol status; přesný návod pro native vs MCP vs shell; redacted troubleshooting bundle. Bez „one-click enables all permissions“.
+**Funkce k posouzení:** `nomo doctor adapters`; dry-run plán config změn; backup a atomická instalace; uživatel vidí diff a vybere scopes; update idempotentní; uninstall obnoví config bez odstranění user changes; profile/worktree discovery; health/protocol status; přesný návod pro native vs MCP vs shell; redacted troubleshooting bundle. Bez „one-click enables all permissions“.
 
 **Acceptance pro každého hosta:** nejnovější a jedna starší supported verze; fresh host config, existing custom config, 2 parallel sessions, abort/cancel, provider non-deterministic refusal, restart after crash, path with spaces/Unicode, Windows/macOS/Linux podle support policy. Změřit tři instalace od nezávislých lidí.
 
@@ -74,7 +74,7 @@ Fixtures v repo demonstraci samostatně izolované:
 
 User-selected direction: create/suggest isolated worktrees and display sessions/tasks/current branch. Preserve own dirty files and unrelated index state. Warn when agent writes outside assigned workspace. Resource lock advisory only; filesystem revision conflict authoritative. On cancel/crash show UNKNOWN until reconcile. No auto merge initially.
 
-Future merge proposal gets separate user approval and normal version control; VOID does not change branch history. Respect repository ignored files, secret scanning boundaries and symlink/path containment.
+Future merge proposal gets separate user approval and normal version control; NOMO does not change branch history. Respect repository ignored files, secret scanning boundaries and symlink/path containment.
 
 ## E8 — Low-friction policy, bez approval fatigue
 
@@ -94,11 +94,11 @@ Future report contains: user task/acceptance, changed paths/effects, workspace d
 
 ## E10 — Review/recovery UX
 
-- One 60-second overview: what the agent asked, what VOID allowed/held/denied, resources, resulting diff, evidence, recovery status.
+- One 60-second overview: what the agent asked, what NOMO allowed/held/denied, resources, resulting diff, evidence, recovery status.
 - Before recovery show exact eligible operations, dependency/order graph, collisions, captured artifacts/time/source and exclusions.
 - After recovery verify values and print restored/conflict/partial/unknown separately; offer next safe step. Never retry external effects silently.
 - Full keyboard navigation/readers, mobile dialog and empty/loading/error/permission-required/degraded states.
-- Workbench Desktop option remains optional. Original host remains source of conversation; VOID adds an inspect/recovery link or MCP result, not duplicate navigation by default.
+- Workbench Desktop option remains optional. Original host remains source of conversation; NOMO adds an inspect/recovery link or MCP result, not duplicate navigation by default.
 
 ## E11 — Outputs, evaluace a regression set
 

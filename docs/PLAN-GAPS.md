@@ -1,4 +1,4 @@
-# VOID remaining work
+# NOMO remaining work
 
 ## Current bounded parity update
 
@@ -7,7 +7,7 @@ The 2026-09-25 Apple 1.0.1 inventory is in `RELEASE-1.0.1-MATRIX.md`. That
 matrix also records the same day's disposable-fixture local acceptance run: 67
 live control-plane scenarios passed, the named repository suites passed, and
 the resulting P09 rows are scoped rather than closed. One finding from that
-run, that `GET /api/tools` advertised `void_workspace_write` while
+run, that `GET /api/tools` advertised `nomo_workspace_write` while
 `documentEditing` was `false`, has been corrected in the working tree:
 `availableTools()` now filters through `toolAllowedInMode`, with cases in
 `packages/workbench/src/permission-authority.test.ts` and
@@ -18,17 +18,17 @@ harness now asserts the read-only catalog and re-passed at 67/67, and
 G-22/G-23 below describe the old distribution proposal. The native iOS target
 is a paired-Mac SwiftUI client. On 2026-09-25 Xcode 27.0 build 27A266a was
 confirmed selected at `/Applications/Xcode.app`; `xcodebuild -list` resolved
-the `VOID` project and its schemes, a Release `iphonesimulator` build of the
-`VOID` scheme succeeded, and the built product installed and launched on an
+the `NOMO` project and its schemes, a Release `iphonesimulator` build of the
+`NOMO` scheme succeeded, and the built product installed and launched on an
 iPad Pro 11-inch (M5) simulator. That product is ad-hoc signed with no team
 identifier, no entitlements and no app icon, so it is simulator evidence only.
-Current source contains 12 `VOIDTests` cases and 18 `VOIDUITests` cases. A
-2026-09-26 simulator run passed `VOIDTests` 9/9 and `VOIDUITests` 18/18 on an
+Current source contains 12 `NOMOTests` cases and 18 `NOMOUITests` cases. A
+2026-09-26 simulator run passed `NOMOTests` 9/9 and `NOMOUITests` 18/18 on an
 iPad Pro 11-inch (M5) at iOS 27.0 with Xcode 27.0, ending `** TEST SUCCEEDED
-**`, and a later run the same day passed `VOIDTests` 12/12 after the
+**`, and a later run the same day passed `NOMOTests` 12/12 after the
 paired-device and cache-policy work landed. The 18-case UI run has not been
 repeated against that newer source. The earlier 2026-09-25 run on both an iPhone 18 Pro and that iPad passed
-`VOIDTests` 9/9 and `VOIDUITests` 8/8 against the smaller UI tree of that day,
+`NOMOTests` 9/9 and `NOMOUITests` 8/8 against the smaller UI tree of that day,
 so both it and the earlier 6/6 unit figure are superseded. The
 `CompanionProtocolKit` package passes 58/58 under `swift test` on a macOS
 host, which is not an iOS simulator or device result. Reserved-vault evidence
@@ -48,7 +48,7 @@ short-circuited built-in managed-document writes to `allow` and passed an
 unconditional authorize to the recovery runtime, so an r1 write ran with no
 human in the loop and the signed journal named the agent as its own approver;
 `Workbench.branch` seeded a child workspace with durable document writes under
-no permission-mode gate; and an absent `VOID_PERMISSION_MODE` resolved through
+no permission-mode gate; and an absent `NOMO_PERMISSION_MODE` resolved through
 two unrelated literals. The first companion transport routes and the
 single-endpoint envelope adapter also landed, and the R12 Python transport
 client now exists. None of that closes an external certification gate: P09.02
@@ -59,7 +59,7 @@ needs a Windows x64/MSVC runner.
 - G-03: local API, cloud routes and MCP expose retained recovery jobs for an exact run or explicit operation list, and `planRecoveryJob` now also consumes dependency, time and checkpoint selectors and independent branch continuation, resolved to that same exact list. Leases and fencing remain open.
 - G-04: adapters already observe resource keys and revisions. General read/write provenance and dependency closure remain open.
 - G-07: managed filesystem and Git recovery exist. Noncooperative writers, full per-hunk enforcement and native cross-platform evidence remain separate work.
-- G-20: `@void/verifier` is its own package with zero dependencies and no import from this repository. Never published, and the export-bundle fixtures are still missing.
+- G-20: `@nomo/verifier` is its own package with zero dependencies and no import from this repository. Never published, and the export-bundle fixtures are still missing.
 - G-26: the open core is Apache 2.0 and NOT publishable. Nine of the ten package manifests under `packages/` export TypeScript source and none of the ten has a build script, so flipping `private` would ship source Node cannot run.
 - Section 6: deterministic compaction, bounded local profiles, the twenty-item local queue and signed run/list recovery exist. Hooks, binary input, extra named permission modes, dependency-aware rewind and measured tokenizer accounting remain open.
 
@@ -123,7 +123,7 @@ client SIGKILL and a blackhole partition probe, and reports
 `networkPartitionTest: true`.
 Minimum change: keep fixture evidence separate from certification, and add one
 executable real-server gate per remaining case. The explicit migration command
-path is no longer outstanding here: `void recovery migrate --config <file>` and
+path is no longer outstanding here: `nomo recovery migrate --config <file>` and
 the refusal inside tool execution are documented in `docs/RECOVERY-COVERAGE.md`
 under "Managed PostgreSQL metadata migration".
 Size: XL. `[EXT]` needs a disposable isolated PostgreSQL target and a
@@ -140,8 +140,8 @@ exists: `packages/runtime/src/recovery/lease.ts` line 41 decides reclaim from
 an expired deadline **and** a provably dead holder, `execute.ts` claims and
 renews it (line 46 imports the rule, line 252 builds the `<host>:<pid>` holder),
 and a takeover records `paused` with `lease-expired`. The MCP surface is
-`void_recovery_plan_job`, `void_recovery_status_job` and
-`void_recovery_apply_job` at lines 188 to 190 of
+`nomo_recovery_plan_job`, `nomo_recovery_status_job` and
+`nomo_recovery_apply_job` at lines 188 to 190 of
 `packages/cli/src/recovery-mcp.ts`, dispatched at lines 497 to 503 and served
 from `packages/cli/src/recovery.ts` line 317. The cloud surface is
 `cloud/recovery-routes.mjs`, which mounts plan, apply and status over
@@ -375,7 +375,7 @@ test resources.
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R12.
 Missing: provider specific fixtures and broader capability certification
 profiles.
-Evidence: `python/void-transport` is a Python transport client with its own
+Evidence: `python/nomo-transport` is a Python transport client with its own
 tests, so the earlier claim that no Python client existed no longer describes
 the tree. `packages/sdk/src` holds `client.ts` and `managed.ts` only, with no
 framework wrap module; `docs/ADAPTER-CONFORMANCE.md` still notes general
@@ -389,7 +389,7 @@ Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R13.
 Missing: authenticated remote executor, managed egress boundary, and
 OpenCode host setup beyond read only checks.
 Evidence: `packages/cli/src/doctor.ts` header states it is read only and
-never touches the network, and `void doctor` plus `void init` exist as
+never touches the network, and `nomo doctor` plus `nomo init` exist as
 read only CLI; a tree wide search for egress finds only an unrelated
 comment in `packages/connectors/src/postgres/capture.ts`.
 Minimum change: authenticated executor handshake, explicit egress
@@ -415,12 +415,12 @@ semantics, surfaced modes in CLI and GUI. Dependency: R02. Size: L.
 Plan: `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R14.
 Corrected 2026-10-01: the bundle format with its completeness proof and the
 metrics surface both shipped, so only the certification half of this row is
-open. `void export --bundle` and `void export verify` are dispatched from
+open. `nomo export --bundle` and `nomo export verify` are dispatched from
 `packages/cli/src/operations.ts` lines 166 and 117 into `createBundle` and
 `verifyBundle` in `packages/cli/src/export-bundle.ts`, which publishes
 `void.export-bundle.v1` at line 67, writes the manifest-level `complete: true`
 proof at line 338 and refuses a bundle whose manifest does not carry it at line
-863. `void metrics` is dispatched from line 68 of the same file over
+863. `nomo metrics` is dispatched from line 68 of the same file over
 `void.metrics.v1` (`packages/cli/src/metrics.ts` line 48). Both commands are
 routed by `packages/cli/src/dispatch.ts` line 56 and listed in the single
 `COMMANDS` array at lines 24 and 32 of `packages/cli/src/argv.ts`, so both are
@@ -571,7 +571,7 @@ provenance module now uses it honestly: a taint edge is `confirmed-data`,
 `observed-resource` or `conservative-potential`, and a `ProvenanceFact` with
 no recorded read set is a conservative potential dependency that contributes
 no edge and is reported as unproven. The inspection surface stays exactly
-where it is — `void taint` in the CLI over the decision feed, no file under
+where it is — `nomo taint` in the CLI over the decision feed, no file under
 `packages/runtime/src` importing it — and `docs/RECOVERY-CONTRACT.md` already
 says the retained planners never consume it.
 
@@ -583,8 +583,8 @@ decision feed carries no producer for them today, and a caller-supplied
 ### G-20 WP-13 standalone verifier
 
 Plan: `docs/EXECUTION-PLAN.md` WP-13.
-Partly closed 2026-09-26. The verifier is now `@void/verifier`, its own
-installable package with a `void-verify` binary, zero dependencies of any kind and
+Partly closed 2026-09-26. The verifier is now `@nomo/verifier`, its own
+installable package with a `nomo-verify` binary, zero dependencies of any kind and
 no import from this repository, and it carries a README that commits in writing to
 keeping both properties. `scripts/src/licence-line.test.mjs` fails the build if
 either is lost.
@@ -597,7 +597,7 @@ Size: S. Needs release credentials from G-26, not code.
 
 Measured 2026-09-26, and this is the largest remaining gap in the licence line.
 Every package declares Apache 2.0, the root LICENSE is the verbatim text, the
-NOTICE carries the registry disclaimer verbatim, and `@void/verifier` is
+NOTICE carries the registry disclaimer verbatim, and `@nomo/verifier` is
 publishable today. Nothing else is. Nine of the ten package manifests under
 `packages/` are `private: true`, and that flag is not an oversight:
 `release-packaging.test.mjs` enforces it so nothing ships
@@ -625,7 +625,7 @@ Plan: `docs/EXECUTION-PLAN.md` WP-14.
 Missing: the `wrap` adapters for Vercel AI SDK, OpenAI Agents SDK and
 LangGraph.
 Evidence: `packages/sdk/src` contains no wrap module; the in process
-`VoidClient` and managed runtime integration are the implemented subset.
+`NomoClient` and managed runtime integration are the implemented subset.
 Minimum change: framework neutral wrap plus three adapters, each proven by
 the WP-05 moment scenario. Dependency: a real proxy user. Size: L.
 
@@ -711,9 +711,9 @@ Plan: `docs/APPLE-APPS-PLAN.md` A2 through A5.
 Missing: the remaining native client implementation, Mac pairing, complete
 recovery/review journeys, physical-device acceptance, and the native release.
 Evidence: the native iOS 17 project, Swift package, app, unit tests and UI-test
-source now exist under `apps/apple/`. Xcode metadata and the `VOID` simulator
-build succeeded. Current source contains 12 `VOIDTests` cases and 18
-`VOIDUITests` cases; the last recorded sequential simulator run against the
+source now exist under `apps/apple/`. Xcode metadata and the `NOMO` simulator
+build succeeded. Current source contains 12 `NOMOTests` cases and 18
+`NOMOUITests` cases; the last recorded sequential simulator run against the
 source of that day passed 9/9 unit and 18/18 UI, and a later run the same day
 passed 12/12 unit after the paired-device and cache-policy work landed. Reserved-vault evidence is 12/12. These results do not prove
 pairing, TLS, recovery, physical-device behavior, signing, App Store Connect or
@@ -772,5 +772,5 @@ the MCP registry listing. Size: S. `[EXT]` blocked on human decisions.
 - Physical iOS and Android devices, VoiceOver and TalkBack, a real 200
   percent zoom pass.
 - Windows and Linux machines for packaging and full recovery suites.
-- npm `@void` scope ownership and release authorization.
+- npm `@nomo` scope ownership and release authorization.
 - Authorized production like KMS for the rotation drill.

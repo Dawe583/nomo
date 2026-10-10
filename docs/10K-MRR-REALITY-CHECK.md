@@ -1,4 +1,4 @@
-# VOID €10k MRR reality-check
+# NOMO €10k MRR reality-check
 
 **Review date:** 2026-09-30  
 **Reviewed artifacts:** `GO-TO-MARKET-10K-MRR.md`, `GO-TO-MARKET-10K-MRR-2026.md`, `10K-MRR-EXECUTION-BOARD.md`  
@@ -33,7 +33,7 @@ flowchart LR
 
 **Reading the chart:** the original path works only with unusually strong warm-channel conversion. The chart is a target path, not a forecast.
 
-![VOID MRR funnel](assets/rendered/void-mrr-funnel.png)
+![NOMO MRR funnel](assets/rendered/nomo-mrr-funnel.png)
 
 ### Navigation
 
@@ -78,7 +78,7 @@ That is not impossible for a very warm, founder-led network. It is not a safe as
 
 ## 2. Benchmark comparison
 
-Public benchmark sources are directional, not a substitute for VOID's own data:
+Public benchmark sources are directional, not a substitute for NOMO's own data:
 
 - HiBob, summarizing First Page Sage and Gartner ranges, reports roughly **50–62% SQL→opportunity** and **15–30% opportunity→close** for common B2B funnel stages: https://www.hibob.com/blog/sales-funnel-conversion-rate/
 - Outreach describes broad B2B **opportunity-to-close ranges of 25–50%**, with enterprise SaaS lower because buying committees and sales cycles are more complex: https://www.outreach.ai/resources/blog/pipeline-conversion-rate-benchmarks
@@ -90,7 +90,7 @@ Implications for the current plan:
 - **Contacts → first conversations at 40%:** too high for generic cold outreach. Retain only for warm introductions or highly signal-based outreach. For cold/mixed outbound, plan on a lower rate and measure separately.
 - **Conversations → qualified at 50%:** plausible if the qualification rule is enforced and conversations are strongly ICP-filtered; otherwise it is inflated.
 - **Qualified → scoped evaluation at 50%:** possible for urgent pain with a disposable environment; too high for curiosity-led conversations.
-- **Evaluation → paid at 66.7%:** the most optimistic assumption. It should be treated as an upside outcome, not a base conversion rate. Use 25–50% as an initial planning range until VOID has its own 90-day cohort data.
+- **Evaluation → paid at 66.7%:** the most optimistic assumption. It should be treated as an upside outcome, not a base conversion rate. Use 25–50% as an initial planning range until NOMO has its own 90-day cohort data.
 
 ## 3. Scenario model
 

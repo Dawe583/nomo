@@ -50,7 +50,7 @@ const AGE_POLICY: RetentionPolicy = {
 };
 
 const fixture = async (t: TestContext) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-retention-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-retention-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const root = join(dir, "vault"),
     index = join(dir, "retention"),

@@ -300,11 +300,11 @@ describe("approval state directory, Windows DACL rule", () => {
   );
 
   test(
-    "a foreign writer that VOID cannot narrow is refused, never acknowledged",
+    "a foreign writer that NOMO cannot narrow is refused, never acknowledged",
     { skip: skipWindows },
     (t) => {
       const dir = temporary(t, "foreign-writer");
-      // A reader that keeps reporting the same DACL is a directory VOID cannot
+      // A reader that keeps reporting the same DACL is a directory NOMO cannot
       // narrow, which is the only way a not owner only ACL survives.
       const refusing: ApprovalAclReader = () => [
         { principal: "Everyone", rights: "M" },
@@ -633,7 +633,7 @@ describe("approval state directory, the inspection path hardens nothing", () => 
     );
   });
 
-  test("a directory VOID cannot narrow keeps the verdict that was measured", (t) => {
+  test("a directory NOMO cannot narrow keeps the verdict that was measured", (t) => {
     pinOperator(t);
     const acl: ApprovalAclReader = () => [{ principal: "Everyone", rights: "M" }];
 
@@ -687,7 +687,7 @@ function pinOperator(t: { after: (fn: () => void) => void }): void {
   const user = process.env.USERNAME;
   const domain = process.env.USERDOMAIN;
   process.env.USERNAME = "operator";
-  process.env.USERDOMAIN = "VOID";
+  process.env.USERDOMAIN = "NOMO";
   t.after(() => {
     if (user === undefined) delete process.env.USERNAME;
     else process.env.USERNAME = user;

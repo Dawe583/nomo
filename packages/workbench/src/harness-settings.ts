@@ -3,12 +3,12 @@
  *
  * Every entry here replaces a number that used to be a literal inside the
  * run path. A limit nobody can change is a limit nobody chose, and the two
- * external agents VOID orchestrates both expose theirs: prime-agent has
+ * external agents NOMO orchestrates both expose theirs: prime-agent has
  * `autonomous.maxTurns`, `autonomous.maxTokens` and `autonomous.timeoutMs`
  * (prime-src `crates/pa-core/src/autonomous/mod.rs:26-29`), and omp has
  * `task.maxConcurrency`, `task.maxRecursionDepth` and `task.maxRuntimeMs`
- * (omp-src `packages/coding-agent/src/task/settings.ts:235-295`). VOID keeps
- * its own fail-closed defaults rather than either upstream's, because VOID's
+ * (omp-src `packages/coding-agent/src/task/settings.ts:235-295`). NOMO keeps
+ * its own fail-closed defaults rather than either upstream's, because NOMO's
  * defaults are the conservative ones.
  *
  * Three rules hold for every setting, and they are the reason this is one
@@ -281,7 +281,7 @@ export function resolveHarnessSettings(
  *
  * A key that is not in the table is refused by name rather than ignored: a
  * silent no-op on a misspelled limit reads to an operator as "applied", and
- * VOID does not let a surface claim a change it did not make.
+ * NOMO does not let a surface claim a change it did not make.
  */
 export function harnessSettingsPatch(
   body: Record<string, unknown>,

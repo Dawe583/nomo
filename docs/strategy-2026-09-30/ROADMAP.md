@@ -1,4 +1,4 @@
-# Doporučená roadmapa VOID
+# Doporučená roadmapa NOMO
 
 Řazení odstraňuje nejprve známé chyby v autoritě, obnově a důkazech. Čas je v týmových týdnech pro **jeden 4–6členný cross-functional squad**. Nejsou to kalendářní sliby ani týmová FTE data. U většího týmu práce paralelizovatelná až po vytvoření společného kontraktu. Řady s externí závislostí čekají na příslušný environment/buyer.
 
@@ -18,10 +18,10 @@
 
 1. Zafixovat jeden verzovaný host-adapter contract pro instrukce, MCP tools, metadata, trust boundary, cancellation, restart a explicit capabilities.
 2. Vydat první reálně ověřený adapter pro Codex. Zbytek hostů je discovery/conformance práce, dokud testy nepřejdou.
-3. Zjednodušit první instalaci přes `void doctor`/Desktop setup: host config backup, diff, explicit opt-in, uninstall/rollback config, secret-safe diagnostics, read-only diagnosis.
-4. Ukázat supported/unsupported write coverage v plain language vedle host statusu. U každé cesty uvést „plně zachyceno“, „jen MCP“, „observe“, „mimo VOID“, bez vizuálního implied safety.
+3. Zjednodušit první instalaci přes `nomo doctor`/Desktop setup: host config backup, diff, explicit opt-in, uninstall/rollback config, secret-safe diagnostics, read-only diagnosis.
+4. Ukázat supported/unsupported write coverage v plain language vedle host statusu. U každé cesty uvést „plně zachyceno“, „jen MCP“, „observe“, „mimo NOMO“, bez vizuálního implied safety.
 5. Připravit fixture/workspace s filesystem, Git a Postgres a přesným ledger capture. U každého resource ukázat recovery eligibility a checkpoint.
-6. Předvést současně tři případy: bezpečně obnoveno; konflikt s novou prací je bezpečně odmítnut; akce nikdy neprošla capture a UI explicitně řekne, že ji VOID nemůže vrátit.
+6. Předvést současně tři případy: bezpečně obnoveno; konflikt s novou prací je bezpečně odmítnut; akce nikdy neprošla capture a UI explicitně řekne, že ji NOMO nemůže vrátit.
 7. Implementovat „not atomic“ multi-effect job orchestration pouze pokud umí resumovat/idempotentně pokračovat po částečném efektu. Každý krok má stav, dependency a residual; jeden globální green status nesmí zakrýt částečnou obnovu.
 
 **Exit:** 8 nezávislých developerů na čistém stroji dokončí fixture bez autora; při jejich úmyslném conflict/untracked/crash scénáři nedojde ke ztrátě novějších dat; žádné produkční credentials; export ověří standalone verifier mimo běžící runtime. Malý vzorek testuje friction, netvrdí market share.
@@ -30,7 +30,7 @@
 
 - Implementovat Claude Code, Hermes a OpenCode přes tentýž kontrakt; stejné testy golden tasks, host-specific conformance k profilu/verzi.
 - Paralelně zapojit workstreams: konektor soubory/Git; Postgres adapter a transaction boundaries; install/onboarding; docs/release; eval/evidence UI. Jeden architekturní owner hlídá společný security contract.
-- Upřednostnit opakované workflows pozorované u pilotů před budováním dalších providerů. Provider může zůstat libovolný nastavený lokálně; VOID nemá přebírat inference bill jako podmínku používání.
+- Upřednostnit opakované workflows pozorované u pilotů před budováním dalších providerů. Provider může zůstat libovolný nastavený lokálně; NOMO nemá přebírat inference bill jako podmínku používání.
 - Přidat task done report: git diff/stat, dotčené resources, výsledky uživatelem definovaných testů, coverage gap, ledger proof digest/verification key source a obnovení/konflikt state. Případný agent summary je jasně odlišen od strojově ověřených faktů.
 - Zlepšit napojení na existing status/IDE/CI bez paralelního log dashboardu: odkazy na diff, approval, test command, evidence export; notifications opt-in.
 - Přidat policy presets jen s explain-why a friction evidence. Repeated no-op approvalse zmenšit přes scope/TTL/operation identity, nikdy přes skryté rozšíření oprávnění.

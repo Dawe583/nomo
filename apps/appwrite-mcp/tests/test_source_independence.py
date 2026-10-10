@@ -1,7 +1,7 @@
 """Every published fact must survive the loss of the source tree.
 
 The offline suite in ``test_hosted_endpoint.py`` runs from a checkout, so
-``void_data`` reads the registry, the CLI dispatcher and the recovery server
+``nomo_data`` reads the registry, the CLI dispatcher and the recovery server
 through relative paths that exist. A deployed Appwrite function receives a
 tarball: no ``packages/``, no ``registry.ts``, no ``dispatch.ts``. If a reader
 forgets its fallback, every tool returns an empty catalogue and all of those
@@ -22,9 +22,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from appwrite_mcp import void_data
+from appwrite_mcp import nomo_data
 
-REPO_ROOT = void_data.REPO_ROOT
+REPO_ROOT = nomo_data.REPO_ROOT
 
 
 class UnreachableSourceTest(unittest.TestCase):
@@ -35,20 +35,20 @@ class UnreachableSourceTest(unittest.TestCase):
         # hide a missing fallback: the first call populates the cache and every
         # later call answers from it. Clearing it after the move is what makes
         # this test able to fail at all.
-        void_data.registry_entries.cache_clear()
-        void_data.registry_summary.cache_clear()
-        void_data.unparsed_entries.cache_clear()
-        void_data.registry_version.cache_clear()
-        void_data.registry_disclaimer.cache_clear()
-        void_data.cli_commands.cache_clear()
-        void_data.local_tool_names.cache_clear()
-        void_data.local_tool_schema.cache_clear()
-        void_data.hosted_tool_surface.cache_clear()
+        nomo_data.registry_entries.cache_clear()
+        nomo_data.registry_summary.cache_clear()
+        nomo_data.unparsed_entries.cache_clear()
+        nomo_data.registry_version.cache_clear()
+        nomo_data.registry_disclaimer.cache_clear()
+        nomo_data.cli_commands.cache_clear()
+        nomo_data.local_tool_names.cache_clear()
+        nomo_data.local_tool_schema.cache_clear()
+        nomo_data.hosted_tool_surface.cache_clear()
         self.moved: list[tuple[Path, Path]] = []
         # Keep parked sources on the same device so Path.replace stays atomic
         # even when the checkout and /tmp are separate mounts.
         self.scratch = Path(
-            tempfile.mkdtemp(prefix=".void-unreachable-", dir=REPO_ROOT)
+            tempfile.mkdtemp(prefix=".nomo-unreachable-", dir=REPO_ROOT)
         )
 
     def tearDown(self) -> None:
@@ -56,15 +56,15 @@ class UnreachableSourceTest(unittest.TestCase):
             parked.replace(original)
         shutil.rmtree(self.scratch, ignore_errors=True)
         for cache in (
-            void_data.registry_entries,
-            void_data.registry_summary,
-            void_data.unparsed_entries,
-            void_data.registry_version,
-            void_data.registry_disclaimer,
-            void_data.cli_commands,
-            void_data.local_tool_names,
-            void_data.local_tool_schema,
-            void_data.hosted_tool_surface,
+            nomo_data.registry_entries,
+            nomo_data.registry_summary,
+            nomo_data.unparsed_entries,
+            nomo_data.registry_version,
+            nomo_data.registry_disclaimer,
+            nomo_data.cli_commands,
+            nomo_data.local_tool_names,
+            nomo_data.local_tool_schema,
+            nomo_data.hosted_tool_surface,
         ):
             cache.cache_clear()
 
@@ -78,57 +78,57 @@ class UnreachableSourceTest(unittest.TestCase):
 
     def clear(self) -> None:
         for cache in (
-            void_data.registry_entries,
-            void_data.registry_summary,
-            void_data.unparsed_entries,
-            void_data.registry_version,
-            void_data.registry_disclaimer,
-            void_data.cli_commands,
-            void_data.local_tool_names,
-            void_data.local_tool_schema,
+            nomo_data.registry_entries,
+            nomo_data.registry_summary,
+            nomo_data.unparsed_entries,
+            nomo_data.registry_version,
+            nomo_data.registry_disclaimer,
+            nomo_data.cli_commands,
+            nomo_data.local_tool_names,
+            nomo_data.local_tool_schema,
         ):
             cache.cache_clear()
 
     def test_the_registry_falls_back_to_the_snapshot(self) -> None:
-        expected_operations = void_data.registry_summary()["operations"]
-        expected_cases = void_data.registry_summary()["cases"]
+        expected_operations = nomo_data.registry_summary()["operations"]
+        expected_cases = nomo_data.registry_summary()["cases"]
         self.assertGreater(expected_operations, 0, "the checkout itself read nothing")
 
-        self.hide(void_data.REGISTRY_SOURCE)
+        self.hide(nomo_data.REGISTRY_SOURCE)
         self.clear()
 
-        summary = void_data.registry_summary()
-        self.assertFalse(void_data.REGISTRY_SOURCE.exists())
+        summary = nomo_data.registry_summary()
+        self.assertFalse(nomo_data.REGISTRY_SOURCE.exists())
         self.assertEqual(summary["operations"], expected_operations)
         self.assertEqual(summary["cases"], expected_cases)
         self.assertEqual(summary["unparsed"], 0)
         self.assertTrue(summary["version"], "the snapshot carries no registry version")
-        self.assertEqual(len(void_data.registry_entries()), expected_cases)
+        self.assertEqual(len(nomo_data.registry_entries()), expected_cases)
 
     def test_the_cli_commands_fall_back_to_the_snapshot(self) -> None:
-        expected = void_data.cli_commands()
+        expected = nomo_data.cli_commands()
         self.assertGreater(len(expected), 0, "the checkout itself read nothing")
         self.assertIn("replay", expected)
 
-        self.hide(void_data.CLI_DISPATCH)
+        self.hide(nomo_data.CLI_DISPATCH)
         self.clear()
 
-        self.assertFalse(void_data.CLI_DISPATCH.exists())
+        self.assertFalse(nomo_data.CLI_DISPATCH.exists())
         # The failure this guards against is a client reading an empty list as
         # "the command line has no commands" rather than as "this build cannot
         # see the source".
-        self.assertEqual(void_data.cli_commands(), expected)
+        self.assertEqual(nomo_data.cli_commands(), expected)
 
     def test_the_local_tool_catalogue_falls_back_to_the_snapshot(self) -> None:
-        expected = void_data.local_tool_schema()
+        expected = nomo_data.local_tool_schema()
         self.assertEqual(len(expected), 8, "the checkout itself read a different count")
-        self.assertIn("void_execute", {tool["name"] for tool in expected})
+        self.assertIn("nomo_execute", {tool["name"] for tool in expected})
 
-        self.hide(void_data.RECOVERY_MCP)
+        self.hide(nomo_data.RECOVERY_MCP)
         self.clear()
 
-        self.assertFalse(void_data.RECOVERY_MCP.exists())
-        served = void_data.local_tool_schema()
+        self.assertFalse(nomo_data.RECOVERY_MCP.exists())
+        served = nomo_data.local_tool_schema()
         self.assertEqual(len(served), len(expected))
         # The annotations are what a host acts on, so the fallback has to carry
         # them and not only the names.
@@ -142,30 +142,30 @@ class UnreachableSourceTest(unittest.TestCase):
 
     def test_everything_the_endpoint_publishes_survives_no_source_at_all(self) -> None:
         """The whole surface at once, which is the shape a deployment has."""
-        for path in (void_data.REGISTRY_SOURCE, void_data.CLI_DISPATCH, void_data.RECOVERY_MCP):
+        for path in (nomo_data.REGISTRY_SOURCE, nomo_data.CLI_DISPATCH, nomo_data.RECOVERY_MCP):
             self.hide(path)
         self.clear()
 
         from app import (  # noqa: PLC0415 - imported after the files are moved
-            void_cli_commands,
-            void_local_tools,
-            void_project_info,
-            void_registry_entry,
-            void_registry_search,
-            void_registry_summary,
+            nomo_cli_commands,
+            nomo_local_tools,
+            nomo_project_info,
+            nomo_registry_entry,
+            nomo_registry_search,
+            nomo_registry_summary,
         )
 
-        self.assertIn("VOID", void_project_info())
-        self.assertIn("operations", void_registry_summary())
-        self.assertIn("replay", void_cli_commands())
-        self.assertIn("void_execute", void_local_tools())
-        self.assertIn("void_recovery_plan", void_local_tools())
+        self.assertIn("NOMO", nomo_project_info())
+        self.assertIn("operations", nomo_registry_summary())
+        self.assertIn("replay", nomo_cli_commands())
+        self.assertIn("nomo_execute", nomo_local_tools())
+        self.assertIn("nomo_recovery_plan", nomo_local_tools())
 
-        entry = json.loads(void_registry_entry("aws.s3.object.put"))
+        entry = json.loads(nomo_registry_entry("aws.s3.object.put"))
         self.assertTrue(entry["found"])
         self.assertGreaterEqual(entry["case_count"], 2)
 
-        search = json.loads(void_registry_search(tone="r3", limit=3))
+        search = json.loads(nomo_registry_search(tone="r3", limit=3))
         self.assertLessEqual(len(search["results"]), 3)
         for row in search["results"]:
             self.assertEqual(row["tone"], "r3")
@@ -175,41 +175,41 @@ class NoSourceAtAllTest(unittest.TestCase):
     """The snapshot has to be the whole answer, not a partial one."""
 
     def test_a_missing_snapshot_is_refused_rather_than_serving_nothing(self) -> None:
-        # `VOID_SNAPSHOT_PATH` is the documented way to relocate the snapshot, and
+        # `NOMO_SNAPSHOT_PATH` is the documented way to relocate the snapshot, and
         # it is the lever this uses: pointing it at a file that does not exist
         # leaves every reader with nothing. Each has to come back empty rather
         # than raise, because a deployed function that raises on a tool call
         # answers no request at all — and an empty answer is at least an honest
         # one, which is the difference this module exists to preserve.
-        void_data.registry_entries.cache_clear()
-        void_data.registry_summary.cache_clear()
-        void_data.unparsed_entries.cache_clear()
-        void_data.registry_version.cache_clear()
-        void_data.registry_disclaimer.cache_clear()
-        void_data.cli_commands.cache_clear()
-        void_data.local_tool_names.cache_clear()
-        void_data.local_tool_schema.cache_clear()
+        nomo_data.registry_entries.cache_clear()
+        nomo_data.registry_summary.cache_clear()
+        nomo_data.unparsed_entries.cache_clear()
+        nomo_data.registry_version.cache_clear()
+        nomo_data.registry_disclaimer.cache_clear()
+        nomo_data.cli_commands.cache_clear()
+        nomo_data.local_tool_names.cache_clear()
+        nomo_data.local_tool_schema.cache_clear()
         scratch = Path(
-            tempfile.mkdtemp(prefix=".void-no-source-", dir=REPO_ROOT)
+            tempfile.mkdtemp(prefix=".nomo-no-source-", dir=REPO_ROOT)
         )
         parked: list[tuple[Path, Path]] = []
         try:
-            for path in (void_data.REGISTRY_SOURCE, void_data.CLI_DISPATCH, void_data.RECOVERY_MCP):
+            for path in (nomo_data.REGISTRY_SOURCE, nomo_data.CLI_DISPATCH, nomo_data.RECOVERY_MCP):
                 if path.exists():
                     destination = scratch / path.name
                     path.replace(destination)
                     parked.append((path, destination))
             with mock.patch.dict(
                 os.environ,
-                {"VOID_SNAPSHOT_PATH": str(scratch / "void-no-such-snapshot.json")},
+                {"NOMO_SNAPSHOT_PATH": str(scratch / "nomo-no-such-snapshot.json")},
             ):
-                self.assertEqual(void_data._snapshot(), {})
-                self.assertEqual(void_data.cli_commands(), ())
-                self.assertEqual(void_data.local_tool_names(), ())
-                self.assertEqual(void_data.local_tool_schema(), ())
-                self.assertEqual(void_data.registry_entries(), ())
+                self.assertEqual(nomo_data._snapshot(), {})
+                self.assertEqual(nomo_data.cli_commands(), ())
+                self.assertEqual(nomo_data.local_tool_names(), ())
+                self.assertEqual(nomo_data.local_tool_schema(), ())
+                self.assertEqual(nomo_data.registry_entries(), ())
                 # A summary built from nothing is still a summary, and says so.
-                summary = void_data.registry_summary()
+                summary = nomo_data.registry_summary()
                 self.assertEqual(summary["operations"], 0)
                 self.assertEqual(summary["cases"], 0)
         finally:
@@ -217,13 +217,13 @@ class NoSourceAtAllTest(unittest.TestCase):
                 destination.replace(original)
             shutil.rmtree(scratch, ignore_errors=True)
             for cache in (
-                void_data.registry_entries,
-                void_data.registry_summary,
-                void_data.unparsed_entries,
-                void_data.registry_version,
-                void_data.registry_disclaimer,
-                void_data.cli_commands,
-                void_data.local_tool_names,
-                void_data.local_tool_schema,
+                nomo_data.registry_entries,
+                nomo_data.registry_summary,
+                nomo_data.unparsed_entries,
+                nomo_data.registry_version,
+                nomo_data.registry_disclaimer,
+                nomo_data.cli_commands,
+                nomo_data.local_tool_names,
+                nomo_data.local_tool_schema,
             ):
                 cache.cache_clear()

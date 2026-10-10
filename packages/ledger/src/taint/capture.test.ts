@@ -22,7 +22,7 @@ type TaintBody = {
 };
 
 async function seedLedger(): Promise<{ readonly dir: string; readonly file: string }> {
-  const dir = await mkdtemp(join(tmpdir(), "void-taint-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-taint-"));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(signer, { dir });
   const bodies: TaintBody[] = [

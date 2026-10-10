@@ -1,8 +1,8 @@
 # External agent binaries
 
-VOID orchestrates two agent CLIs that live outside this repository and are
+NOMO orchestrates two agent CLIs that live outside this repository and are
 never vendored into it. This page names what they are, where they come from,
-how to update them safely, and the exact contract VOID relies on. The
+how to update them safely, and the exact contract NOMO relies on. The
 decision behind this arrangement, with the rejected alternatives and their
 measured costs, is in `docs/DECISIONS.md` (entry dated 2026-10-05) and
 `docs/VENDORING-DECISION.md`.
@@ -16,10 +16,10 @@ measured costs, is in `docs/DECISIONS.md` (entry dated 2026-10-05) and
 | Source            | `~/.local/bin/omp`, resolved from PATH |
 | How to update     | see Provenance and verification        |
 
-VOID consumes nothing from `omp` in code: no import, no spawn, no lockfile
+NOMO consumes nothing from `omp` in code: no import, no spawn, no lockfile
 entry. `.omp/config.yml` and `.omp/WATCHDOG.md` are operator tooling
 configuration in this tree, classified open by the licence-line gate. If the
-upstream binary changes behaviour, VOID is unaffected; if it is absent, VOID
+upstream binary changes behaviour, NOMO is unaffected; if it is absent, NOMO
 runs unchanged.
 
 ## prime-agent (`prime`)
@@ -31,7 +31,7 @@ runs unchanged.
 | Source            | `~/.local/bin/prime`, resolved from PATH        |
 | How to update     | see Provenance and verification                 |
 
-VOID consumes `prime-agent` as an external process through three narrow
+NOMO consumes `prime-agent` as an external process through three narrow
 surfaces, and nothing else:
 
 1. `scripts/src/prime-bridge.mjs` spawns the binary with a claimed job

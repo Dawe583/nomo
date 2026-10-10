@@ -1,5 +1,5 @@
 {
-  "name": "@void/control-plane-ui",
+  "name": "@nomo/control-plane-ui",
   "private": true,
   "type": "module",
   "scripts": {

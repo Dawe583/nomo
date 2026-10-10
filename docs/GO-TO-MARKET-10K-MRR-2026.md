@@ -1,4 +1,4 @@
-# VOID: €10k MRR by 2026-12-31
+# NOMO: €10k MRR by 2026-12-31
 
 Status: date-bound execution plan, created 2026-09-30.
 Owner: founder, with workstream DRIs assigned during Phase 0.
@@ -12,7 +12,7 @@ Reach at least €10,000 of collected recurring monthly revenue in December 2026
 
 The quality gate follows after the deadline: keep the same or higher recurring revenue for January, February, and March 2027, reconcile churn and support load, and confirm that the revenue is not only founder-supplied custom work disguised as a subscription.
 
-If VOID has an existing MRR baseline, subtract it from the new-revenue target. That baseline is currently an explicit unknown and must be recorded in Phase 0 rather than guessed.
+If NOMO has an existing MRR baseline, subtract it from the new-revenue target. That baseline is currently an explicit unknown and must be recorded in Phase 0 rather than guessed.
 
 ## Executive timeline
 
@@ -32,7 +32,7 @@ timeline
 > [!NOTE]
 > This is a **decision timeline**, not a promise timeline. Missing a checkpoint triggers a reforecast; it does not justify unsupported scope or inflated reporting.
 
-![VOID €10k MRR timeline](assets/rendered/void-mrr-timeline.png)
+![NOMO €10k MRR timeline](assets/rendered/nomo-mrr-timeline.png)
 
 ### Management navigation
 
@@ -76,7 +76,7 @@ Reforecast checkpoints: Oct 18 (≥5 qualified conversations and ≥1 activated 
 
 Qualification rule: a prospect is qualified only when they name a consequential agent workflow, a current failure or risk, the evaluator, the disposable evaluation environment, a budget path, and a dated next meeting.
 
-Activation rule: an evaluation is activated only when it reaches one governed hold and independently verifies one signed ledger export outside the VOID runtime.
+Activation rule: an evaluation is activated only when it reaches one governed hold and independently verifies one signed ledger export outside the NOMO runtime.
 
 Revenue rule: MRR is collected recurring revenue in euros. Unpaid pilots, signed-but-not-collected contracts, one-off implementation, grants, and illustrative website numbers do not count.
 
@@ -90,9 +90,9 @@ Avoid these first:
 - broad compliance buyers with no evaluation owner;
 - teams asking for a complete hosted platform before the install path is proven;
 - integrations selected because they look impressive rather than because a qualified buyer needs them;
-- a broad observability or agent analytics position that makes VOID interchangeable with logging.
+- a broad observability or agent analytics position that makes NOMO interchangeable with logging.
 
-The message is narrow: VOID puts a policy-checked, fail-closed, signed record in front of agent writes and makes the record independently verifiable. It does not make every action reversible, prove that the agent's reasoning is correct, or substitute for a customer's full security and compliance program.
+The message is narrow: NOMO puts a policy-checked, fail-closed, signed record in front of agent writes and makes the record independently verifiable. It does not make every action reversible, prove that the agent's reasoning is correct, or substitute for a customer's full security and compliance program.
 
 ## 5. Week-by-week execution calendar
 

@@ -1,8 +1,8 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.providers = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.providers = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
-  var API = window.VOID_API;
+  var F = window.NOMO_FIXTURES;
+  var API = window.NOMO_API;
   var wrap = document.createElement("div");
   wrap.className = "section";
 
@@ -40,7 +40,7 @@ window.VOID_VIEWS.providers = function (root) {
       var key = wrap.querySelector("#pv-key").value;
       API.setConfig(base, key);
       wrap.querySelector("#pv-key").value = "";
-      if (window.VOID_TOAST) window.VOID_TOAST("Connection saved in this browser.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Connection saved in this browser.");
       if (window.updateStatus) window.updateStatus();
       paint();
     };
@@ -49,7 +49,7 @@ window.VOID_VIEWS.providers = function (root) {
       msg.textContent = "Pinging...";
       API.testConnection().then(function (res) {
         msg.textContent = res.ok ? "Connected in " + res.ms + "ms, " + res.models + " models listed." : "Failed: " + res.error;
-        if (window.VOID_TOAST) window.VOID_TOAST(res.ok ? "Provider answers." : "Provider unreachable.");
+        if (window.NOMO_TOAST) window.NOMO_TOAST(res.ok ? "Provider answers." : "Provider unreachable.");
       });
     };
     wrap.querySelectorAll("button[data-t]").forEach(function (b) {
@@ -58,18 +58,18 @@ window.VOID_VIEWS.providers = function (root) {
         if (b.getAttribute("data-t") === "test") {
           if (p.status === "connected") {
             p.latency = (100 + Math.floor(Math.random() * 400)) + "ms (mock)";
-            if (window.VOID_TOAST) window.VOID_TOAST(p.name + " answers, mock ping " + p.latency + ".");
+            if (window.NOMO_TOAST) window.NOMO_TOAST(p.name + " answers, mock ping " + p.latency + ".");
           } else {
-            if (window.VOID_TOAST) window.VOID_TOAST(p.name + " is " + p.status + ", nothing to ping.");
+            if (window.NOMO_TOAST) window.NOMO_TOAST(p.name + " is " + p.status + ", nothing to ping.");
           }
           paint();
         } else {
           var v = prompt("Paste key for " + p.name + " (mock, never stored):", "");
           if (v) {
             p.key = "set, ends " + v.slice(-4);
-            if (window.VOID_TOAST) window.VOID_TOAST("Key accepted for " + p.name + ", masked everywhere.");
+            if (window.NOMO_TOAST) window.NOMO_TOAST("Key accepted for " + p.name + ", masked everywhere.");
             paint();
-          } else if (window.VOID_TOAST) window.VOID_TOAST("No key entered.");
+          } else if (window.NOMO_TOAST) window.NOMO_TOAST("No key entered.");
         }
       };
     });

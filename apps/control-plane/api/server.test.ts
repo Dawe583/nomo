@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import { request as httpRequest } from "node:http";
 import { mkdtemp, readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import type { IncomingMessage } from "node:http";
 import { dirname, join } from "node:path";
 
 import { devKeyProvider, sha256Hex } from "../../../packages/ledger/src/sign.ts";
 import { entryHash } from "../../../packages/ledger/src/canonical.ts";
 import { jsonlStore } from "../../../packages/ledger/src/store.ts";
+import { authorizedRemote } from "./auth.ts";
 import { listenControlPlane, type ApprovalBroker, type PendingApproval } from "./server.ts";
 
 type FeedBody = {
@@ -23,7 +25,7 @@ type FeedBody = {
 const workspace = "default";
 
 async function seedLedger(count = 2): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "void-control-plane-api-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-control-plane-api-"));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(signer, { dir });
   for (let index = 1; index <= count; index += 1) {
@@ -51,12 +53,12 @@ async function withServer<T>(
   run: (origin: string) => Promise<T>,
   options: WithServerOptions = {},
 ): Promise<T> {
-  const dataDir = await mkdtemp(join(tmpdir(), "void-api-workbench-"));
+  const dataDir = await mkdtemp(join(tmpdir(), "nomo-api-workbench-"));
   const handle = await listenControlPlane({
     ledgerPath,
     webRoot: join(import.meta.dirname, '../web'),
     approvals: options.approvals,
-    env: { VOID_DATA_DIR: dataDir, ...options.env },
+    env: { NOMO_DATA_DIR: dataDir, ...options.env },
   });
   try {
     return await run(`http://127.0.0.1:${handle.port}`);
@@ -68,13 +70,13 @@ async function withServer<T>(
 
 describe("control plane API", () => {
   test("serves built assets on every host and refuses Windows path separators", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-built-assets-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-built-assets-"));
     const webRoot = join(dir, "web");
     await mkdir(join(webRoot, "assets"), { recursive: true });
     await writeFile(join(webRoot, "index.html"), '<script src="/assets/app-123.js"></script>');
     await writeFile(join(webRoot, "assets", "app-123.js"), 'console.log("fixture")');
     await writeFile(join(webRoot, "assets", "app-123.css"), 'body{color:red}');
-    const handle = await listenControlPlane({ webRoot, env: { VOID_DATA_DIR: join(dir, "data") } });
+    const handle = await listenControlPlane({ webRoot, env: { NOMO_DATA_DIR: join(dir, "data") } });
     try {
       const origin = `http://127.0.0.1:${handle.port}`;
       for (const [path, mime] of [["/", "text/html"], ["/chat/new", "text/html"],
@@ -153,7 +155,7 @@ describe("control plane API", () => {
   });
 
   test("returns an explicit empty feed when no ledger exists yet", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-control-plane-api-empty-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-control-plane-api-empty-"));
     try {
       await withServer(join(dir, "default.jsonl"), async (origin) => {
         // The ledger file was never created, so this is a fresh workspace.
@@ -206,7 +208,7 @@ describe("control plane API", () => {
       assert.equal(verifyBody.verified, true);
       assert.equal(verifyBody.integrity, true);
       assert.equal(verifyBody.signed, true);
-    }, { env: { VOID_SIGNING_KEY: keyMaterial.toString("base64") } });
+    }, { env: { NOMO_SIGNING_KEY: keyMaterial.toString("base64") } });
   });
 
   test("a rewritten and rehashed ledger fails verification when a key is configured", async () => {
@@ -230,7 +232,7 @@ describe("control plane API", () => {
       assert.equal(body.ok, false);
       assert.equal(body.verified, false);
       assert.match(body.reason ?? "", /signature/);
-    }, { env: { VOID_SIGNING_KEY: keyMaterial.toString("base64") } });
+    }, { env: { NOMO_SIGNING_KEY: keyMaterial.toString("base64") } });
     // Without a key the same forged file reports integrity only, and the
     // response must say verified false rather than pass it as checked.
     await withServer(ledgerPath, async (origin) => {
@@ -249,7 +251,7 @@ describe("control plane API", () => {
       const response = await fetch(`${origin}/feed.html`);
       assert.equal(response.status, 200);
       assert.match(response.headers.get("content-type") ?? "", /^text\/html/);
-      assert.match(await response.text(), /VOID Call Feed/);
+      assert.match(await response.text(), /NOMO Call Feed/);
     });
   });
 
@@ -387,4 +389,133 @@ test("internal API failures do not echo dependency secrets", async () => {
     assert.equal(response.status, 500);
     assert.doesNotMatch(await response.text(), /SENTINEL_PRIVATE_VALUE/);
   }, { approvals: { pending: () => { throw new Error("SENTINEL_PRIVATE_VALUE"); }, decide: () => {} } });
+});
+
+const legacyToken = "legacy-".padEnd(40, "a");
+const currentToken = "current-".padEnd(40, "b");
+
+function bearerRequest(authorization: string): IncomingMessage {
+  return { headers: { authorization } } as unknown as IncomingMessage;
+}
+
+test("the remote gate accepts a bearer only from the configured token, current name or legacy name", () => {
+  assert.equal(authorizedRemote(bearerRequest(`Bearer ${currentToken}`), { NOMO_CONTROL_TOKEN: currentToken }), true);
+  // The name the product carried before the rename is still the name an
+  // operator typed into their shell, so a machine configured before the
+  // rename must not report itself unconfigured.
+  assert.equal(authorizedRemote(bearerRequest(`Bearer ${legacyToken}`), { VOID_CONTROL_TOKEN: legacyToken }), true);
+  assert.equal(authorizedRemote(bearerRequest(`Bearer ${legacyToken}`), { NOMO_CONTROL_TOKEN: currentToken }), false);
+  // A present current name wins, so an operator who replaced the token is not
+  // still admitted with the value they replaced.
+  assert.equal(authorizedRemote(bearerRequest(`Bearer ${currentToken}`), { VOID_CONTROL_TOKEN: legacyToken, NOMO_CONTROL_TOKEN: currentToken }), true);
+  assert.equal(authorizedRemote(bearerRequest(`Bearer ${legacyToken}`), { VOID_CONTROL_TOKEN: legacyToken, NOMO_CONTROL_TOKEN: currentToken }), false);
+});
+
+test("a refused remote request answers the same generic refusal and never echoes a token", async () => {
+  await withServer("unused.jsonl", async (origin) => {
+    // The legacy name is a configured token, so the remote gate is closed and
+    // only the bearer carrying it is admitted.
+    assert.equal((await fetch(`${origin}/api/provider`, { headers: { authorization: `Bearer ${legacyToken}` } })).status, 200);
+    for (const headers of [{}, { authorization: `Bearer wrong-${legacyToken}` }]) {
+      const response = await fetch(`${origin}/api/provider`, { headers });
+      assert.equal(response.status, 403);
+      const text = await response.text();
+      assert.deepEqual(JSON.parse(text), { error: "local_origin_required" });
+      assert.doesNotMatch(text, new RegExp(legacyToken));
+    }
+  }, { env: { VOID_CONTROL_TOKEN: legacyToken } });
+});
+
+test("a legacy data directory holds the workspace state", async () => {
+  const data = await mkdtemp(join(tmpdir(), "nomo-legacy-data-"));
+  try {
+    await withServer("unused.jsonl", async (origin) => {
+      const response = await fetch(`${origin}/api/projects`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "legacy", root: "/tmp/legacy" }),
+      });
+      assert.equal(response.status, 200);
+    }, { env: { NOMO_DATA_DIR: undefined, VOID_DATA_DIR: data } });
+    assert.ok(await readFile(join(data, "workspace.key"), "utf8"), "the legacy data directory is where the state was written");
+  } finally {
+    await rm(data, { recursive: true, force: true });
+  }
+});
+
+async function seedWorkspace(dir: string, name: string, count: number): Promise<void> {
+  const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
+  const store = jsonlStore(signer, { dir });
+  for (let index = 1; index <= count; index += 1) {
+    await store.append({
+      workspace: name,
+      at: `2026-09-0${index}T00:00:00.000Z`,
+      tool: `${name}.call.${index}`,
+      klass: "r1",
+      decision: "allow:resolved",
+      argsDigest: `${index}`.repeat(64),
+    });
+  }
+}
+
+async function withEnvironment<T>(env: Readonly<NodeJS.ProcessEnv>, run: (origin: string) => Promise<T>): Promise<T> {
+  const data = await mkdtemp(join(tmpdir(), "nomo-api-env-"));
+  const handle = await listenControlPlane({ webRoot: join(import.meta.dirname, "../web"), env: { NOMO_DATA_DIR: data, ...env } });
+  try {
+    return await run(`http://127.0.0.1:${handle.port}`);
+  } finally {
+    await handle.close();
+    await rm(data, { recursive: true, force: true });
+  }
+}
+
+test("the feed resolves a legacy ledger directory and workspace name", async () => {
+  const ledgerDir = await mkdtemp(join(tmpdir(), "nomo-legacy-ledger-"));
+  try {
+    await seedWorkspace(ledgerDir, "legacy-ws", 2);
+    await withEnvironment({ VOID_LEDGER_DIR: ledgerDir, VOID_WORKSPACE: "legacy-ws" }, async (origin) => {
+      const response = await fetch(`${origin}/api/feed`);
+      assert.equal(response.status, 200);
+      const body = await response.json() as { scope: string; entries: Array<{ tool: string }> };
+      assert.equal(body.scope, "legacy-ws");
+      assert.deepEqual(body.entries.map(entry => entry.tool).sort(), ["legacy-ws.call.1", "legacy-ws.call.2"]);
+    });
+  } finally {
+    await rm(ledgerDir, { recursive: true, force: true });
+  }
+});
+
+test("the current ledger directory and workspace name win over the legacy ones", async () => {
+  const ledgerDir = await mkdtemp(join(tmpdir(), "nomo-current-ledger-"));
+  const legacyDir = await mkdtemp(join(tmpdir(), "nomo-legacy-ledger-"));
+  try {
+    await seedWorkspace(ledgerDir, "current-ws", 3);
+    await seedWorkspace(legacyDir, "legacy-ws", 1);
+    await withEnvironment({
+      NOMO_LEDGER_DIR: ledgerDir,
+      VOID_LEDGER_DIR: legacyDir,
+      NOMO_WORKSPACE: "current-ws",
+      VOID_WORKSPACE: "legacy-ws",
+    }, async (origin) => {
+      const response = await fetch(`${origin}/api/feed`);
+      assert.equal(response.status, 200);
+      const body = await response.json() as { scope: string; entries: Array<{ tool: string }> };
+      assert.equal(body.scope, "current-ws");
+      assert.deepEqual(body.entries.map(entry => entry.tool).sort(), ["current-ws.call.1", "current-ws.call.2", "current-ws.call.3"]);
+    });
+  } finally {
+    await rm(ledgerDir, { recursive: true, force: true });
+    await rm(legacyDir, { recursive: true, force: true });
+  }
+});
+
+test("the permission mode resolves under both names and the current one wins", async () => {
+  await withEnvironment({ VOID_PERMISSION_MODE: "normal" }, async (origin) => {
+    const body = await (await fetch(`${origin}/api/capabilities`)).json() as { permissionMode: string };
+    assert.equal(body.permissionMode, "normal");
+  });
+  await withEnvironment({ VOID_PERMISSION_MODE: "normal", NOMO_PERMISSION_MODE: "read-only" }, async (origin) => {
+    const body = await (await fetch(`${origin}/api/capabilities`)).json() as { permissionMode: string };
+    assert.equal(body.permissionMode, "read-only");
+  });
 });

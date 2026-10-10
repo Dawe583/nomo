@@ -1,5 +1,5 @@
 {
-  "name": "@void/connectors",
+  "name": "@nomo/connectors",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -20,7 +20,7 @@
   },
   "description": "Capture snapshots and build guarded inverses for Postgres and S3 tool calls.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "postgres",
     "s3",

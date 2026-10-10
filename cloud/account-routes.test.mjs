@@ -135,11 +135,11 @@ await new Promise((resolve) => provider.listen(0, "127.0.0.1", resolve));
 
 process.env.SUPABASE_URL = `http://127.0.0.1:${provider.address().port}`;
 process.env.SUPABASE_ANON_KEY = "provider-anon-key";
-process.env.VOID_ACCOUNT_SEAL_KEY = randomBytes(32).toString("hex");
+process.env.NOMO_ACCOUNT_SEAL_KEY = randomBytes(32).toString("hex");
 // A control token is configured, so the deployment is not in the 503 setup state
 // and the account routes are what is under test rather than that refusal.
-process.env.VOID_CONTROL_TOKEN = "account-routes-test-token-".repeat(2);
-const sealKey = process.env.VOID_ACCOUNT_SEAL_KEY;
+process.env.NOMO_CONTROL_TOKEN = "account-routes-test-token-".repeat(2);
+const sealKey = process.env.NOMO_ACCOUNT_SEAL_KEY;
 
 const { default: app } = await import("./server.mjs");
 const server = createServer(app);
@@ -350,7 +350,7 @@ test("this route signs a person in and never creates an account", async () => {
   // Broken by: accepting a `method`, an `invite` or an otp flag from the body,
   // which is how a magic link, an invited signup or a registration would reach
   // a screen the broker cannot complete.
-  assert.equal(process.env.VOID_ACCOUNT_SIGNUP, undefined);
+  assert.equal(process.env.NOMO_ACCOUNT_SIGNUP, undefined);
   const invited = await post("/api/account/signin", {
     email: "newcomer@example.com",
     password: "a password",

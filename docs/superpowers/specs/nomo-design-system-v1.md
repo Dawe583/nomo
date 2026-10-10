@@ -1,4 +1,4 @@
-# VOID design system v1
+# NOMO design system v1
 
 Status: D01 source and design audit, 2026-09-24. This document describes the current web surface and two coherent directions for user review. It does not implement a UI, change routes, change product behavior, add an Apple build, or make a release-ready claim.
 
@@ -188,7 +188,7 @@ Status: proposal, pending user approval.
 
 ### Intent
 
-Keep the current compact neutral surface and make operational hierarchy more explicit. This direction treats VOID as a focused work console: calm neutral canvas, one orange action accent, compact evidence rows, and restrained motion. It borrows functional principles from dense product interfaces without copying another product's branding.
+Keep the current compact neutral surface and make operational hierarchy more explicit. This direction treats NOMO as a focused work console: calm neutral canvas, one orange action accent, compact evidence rows, and restrained motion. It borrows functional principles from dense product interfaces without copying another product's branding.
 
 ### Visual language
 

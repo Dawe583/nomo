@@ -66,7 +66,7 @@ function handle(message) {
     return result(message.id, {
       protocolVersion: "2025-06-18",
       capabilities: { tools: { listChanged: false } },
-      serverInfo: { name: "void-e2e-http-fixture", version: "1.0.0" },
+      serverInfo: { name: "nomo-e2e-http-fixture", version: "1.0.0" },
     });
   }
   if (message.method === "tools/list") return result(message.id, toolList());
@@ -75,7 +75,7 @@ function handle(message) {
 }
 
 const server = createServer((req, res) => {
-  res.setHeader("mcp-session-id", "void-e2e-http");
+  res.setHeader("mcp-session-id", "nomo-e2e-http");
   if (req.method === "GET") {
     res.writeHead(200, { "content-type": "text/event-stream" });
     res.write(": ready\n\n");
@@ -94,10 +94,10 @@ const server = createServer((req, res) => {
   req.on("end", () => {
     try {
       const reply = handle(JSON.parse(body));
-      res.writeHead(200, { "content-type": "application/json", "mcp-session-id": "void-e2e-http" });
+      res.writeHead(200, { "content-type": "application/json", "mcp-session-id": "nomo-e2e-http" });
       res.end(reply === null ? "" : JSON.stringify(reply));
     } catch (error) {
-      res.writeHead(200, { "content-type": "application/json", "mcp-session-id": "void-e2e-http" });
+      res.writeHead(200, { "content-type": "application/json", "mcp-session-id": "nomo-e2e-http" });
       res.end(JSON.stringify(failure(null, -32700, error instanceof Error ? error.message : String(error))));
     }
   });

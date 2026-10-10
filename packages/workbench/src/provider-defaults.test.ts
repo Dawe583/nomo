@@ -16,9 +16,9 @@ import {
 const freeModel = FREE_MODEL_BY_ORIGIN["https://api.tokenrouter.com"];
 
 async function workspace(t: test.TestContext, models: readonly string[] = []) {
-  const dir = await mkdtemp(join(tmpdir(), "void-no-default-provider-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-no-default-provider-"));
   const workbench = new Workbench(
-    { VOID_DATA_DIR: dir },
+    { NOMO_DATA_DIR: dir },
     async (url) =>
       String(url).endsWith("/models")
         ? Response.json({ data: models.map((id) => ({ id })) })

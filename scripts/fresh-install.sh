@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# fresh-install.sh - clean VOID install from lockfile plus first hold moment.
+# fresh-install.sh - clean NOMO install from lockfile plus first hold moment.
 #
 # Usage:
 #   ./scripts/fresh-install.sh        run from anywhere; script cds to repo root

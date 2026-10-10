@@ -1,6 +1,6 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.taint = function (root) {
-  var F = window.VOID_FIXTURES;
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.taint = function (root) {
+  var F = window.NOMO_FIXTURES;
   var wrap = document.createElement("div");
   wrap.className = "section";
   var html = "<h2>Taint graph</h2><p class='muted'>Reads linked to later writes, so a replay knows its real scope. The scope is a superset of the causal set, by design.</p>" +

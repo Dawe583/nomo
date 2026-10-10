@@ -16,7 +16,7 @@ async function fixture(t: import("node:test").TestContext) {
   );
   const options: ManagedPostgresOptions = {
     workspace: "test",
-    schema: "void_recovery",
+    schema: "nomo_recovery",
     tables: [
       { table: "public.account", primaryKey: ["id"], columns: ["balance"] },
     ],
@@ -117,7 +117,7 @@ test("a replacement trigger function cannot conceal intervening human ABA writes
   ).rows[0]!.name;
   assert.match(fn, /^revision_[a-f0-9]+$/);
   await f.db.exec(
-    `CREATE OR REPLACE FUNCTION void_recovery.${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NULL; END $$; UPDATE account SET balance=30 WHERE id=1; UPDATE account SET balance=11 WHERE id=1`,
+    `CREATE OR REPLACE FUNCTION nomo_recovery.${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NULL; END $$; UPDATE account SET balance=30 WHERE id=1; UPDATE account SET balance=11 WHERE id=1`,
   );
   let rejected = false;
   try {
@@ -150,7 +150,7 @@ test("a replacement trigger function cannot conceal intervening human ABA writes
 test("failed receipt insertion rolls back the business mutation", async (t) => {
   const f = await fixture(t);
   await f.db.exec(
-    "ALTER TABLE void_recovery.operations ADD CONSTRAINT reject_receipt CHECK(false)",
+    "ALTER TABLE nomo_recovery.operations ADD CONSTRAINT reject_receipt CHECK(false)",
   );
   await assert.rejects(f.execute("one", 1, 11));
   assert.equal(
@@ -164,7 +164,7 @@ test("failed receipt insertion rolls back the business mutation", async (t) => {
   assert.equal(
     (
       await f.db.query<Record<string, unknown>>(
-        "SELECT count(*)::int AS n FROM void_recovery.operations",
+        "SELECT count(*)::int AS n FROM nomo_recovery.operations",
       )
     ).rows[0]?.n,
     0,
@@ -175,7 +175,7 @@ test("failed recovery receipt insertion rolls back the inverse", async (t) => {
   const f = await fixture(t),
     operation = await f.execute("one", 1, 11);
   await f.db.exec(
-    "ALTER TABLE void_recovery.recoveries ADD CONSTRAINT reject_receipt CHECK(false)",
+    "ALTER TABLE nomo_recovery.recoveries ADD CONSTRAINT reject_receipt CHECK(false)",
   );
   await assert.rejects(
     f.adapter.recover(operation.prepared, operation.outcome, "recovery"),
@@ -191,7 +191,7 @@ test("failed recovery receipt insertion rolls back the inverse", async (t) => {
   assert.equal(
     (
       await f.db.query<Record<string, unknown>>(
-        "SELECT count(*)::int AS n FROM void_recovery.recoveries",
+        "SELECT count(*)::int AS n FROM nomo_recovery.recoveries",
       )
     ).rows[0]?.n,
     0,
@@ -212,7 +212,7 @@ test("inbound foreign keys, rules and generated columns fail closed as uncertifi
   assert.equal(
     (
       await f.db.query<Record<string, unknown>>(
-        "SELECT count(*)::int AS n FROM void_recovery.operations",
+        "SELECT count(*)::int AS n FROM nomo_recovery.operations",
       )
     ).rows[0]?.n,
     0,
@@ -260,35 +260,35 @@ test("recreating a table at the same name invalidates the old target capture", a
 for (const [name, mutation] of [
   [
     "a rewrite rule that swallows receipts",
-    "CREATE RULE suppress_receipt AS ON INSERT TO void_recovery.operations DO INSTEAD NOTHING",
+    "CREATE RULE suppress_receipt AS ON INSERT TO nomo_recovery.operations DO INSTEAD NOTHING",
   ],
   [
     "a trigger on a receipt table",
-    `CREATE FUNCTION void_recovery.reject_write() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NEW; END'; CREATE TRIGGER reject_write BEFORE INSERT ON void_recovery.operations FOR EACH ROW EXECUTE FUNCTION void_recovery.reject_write()`,
+    `CREATE FUNCTION nomo_recovery.reject_write() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NEW; END'; CREATE TRIGGER reject_write BEFORE INSERT ON nomo_recovery.operations FOR EACH ROW EXECUTE FUNCTION nomo_recovery.reject_write()`,
   ],
   [
     "an extra relation in the metadata schema",
-    "CREATE TABLE void_recovery.unowned(id integer PRIMARY KEY)",
+    "CREATE TABLE nomo_recovery.unowned(id integer PRIMARY KEY)",
   ],
   [
     "an extra index on a receipt table",
-    "CREATE INDEX operations_digest_idx ON void_recovery.operations(request_digest)",
+    "CREATE INDEX operations_digest_idx ON nomo_recovery.operations(request_digest)",
   ],
   [
     "an extra constraint on a receipt table",
-    "ALTER TABLE void_recovery.operations ADD CONSTRAINT digest_not_empty CHECK(request_digest <> '')",
+    "ALTER TABLE nomo_recovery.operations ADD CONSTRAINT digest_not_empty CHECK(request_digest <> '')",
   ],
   [
     "row level security on a receipt table",
-    "ALTER TABLE void_recovery.operations ENABLE ROW LEVEL SECURITY",
+    "ALTER TABLE nomo_recovery.operations ENABLE ROW LEVEL SECURITY",
   ],
   [
     "a poisoned receipt format default",
-    "ALTER TABLE void_recovery.operations ALTER COLUMN format_version SET DEFAULT (2 + floor(random())::integer)",
+    "ALTER TABLE nomo_recovery.operations ALTER COLUMN format_version SET DEFAULT (2 + floor(random())::integer)",
   ],
   [
     "an unexpected receipt default",
-    "ALTER TABLE void_recovery.operations ALTER COLUMN capture SET DEFAULT '{}'::jsonb",
+    "ALTER TABLE nomo_recovery.operations ALTER COLUMN capture SET DEFAULT '{}'::jsonb",
   ],
 ] as const) {
   test(`execution refuses ${name}`, async (t) => {
@@ -321,7 +321,7 @@ for (const [name, mutation] of [
       assert.deepEqual(
         (
           await f.db.query<{ count: number }>(
-            `SELECT count(*)::int AS count FROM void_recovery.${table}`,
+            `SELECT count(*)::int AS count FROM nomo_recovery.${table}`,
           )
         ).rows,
         [{ count: 0 }],
@@ -332,7 +332,7 @@ for (const [name, mutation] of [
 
 // `prepare` re-certifies the metadata layout, but it locks the target rows,
 // not the metadata tables, so a second session can commit DDL against
-// `void_recovery.operations` in the window before `execute` writes the
+// `nomo_recovery.operations` in the window before `execute` writes the
 // receipt. A rewrite rule with DO INSTEAD NOTHING and a BEFORE INSERT
 // trigger with RETURN NULL both discard that row without raising an error.
 //
@@ -345,11 +345,11 @@ for (const [name, mutation] of [
 for (const [name, planted] of [
   [
     "a rewrite rule that swallows the receipt",
-    "CREATE RULE suppress_receipt AS ON INSERT TO void_recovery.operations DO INSTEAD NOTHING",
+    "CREATE RULE suppress_receipt AS ON INSERT TO nomo_recovery.operations DO INSTEAD NOTHING",
   ],
   [
     "a BEFORE INSERT trigger that swallows the receipt",
-    `CREATE FUNCTION void_recovery.swallow_receipt() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NULL; END'; CREATE TRIGGER swallow_receipt BEFORE INSERT ON void_recovery.operations FOR EACH ROW EXECUTE FUNCTION void_recovery.swallow_receipt()`,
+    `CREATE FUNCTION nomo_recovery.swallow_receipt() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NULL; END'; CREATE TRIGGER swallow_receipt BEFORE INSERT ON nomo_recovery.operations FOR EACH ROW EXECUTE FUNCTION nomo_recovery.swallow_receipt()`,
   ],
 ] as const) {
   test(`execution refuses to commit ${name} planted after prepare`, async (t) => {
@@ -392,7 +392,7 @@ for (const [name, planted] of [
     assert.equal(
       (
         await f.db.query<Record<string, unknown>>(
-          "SELECT count(*)::int AS n FROM void_recovery.operations",
+          "SELECT count(*)::int AS n FROM nomo_recovery.operations",
         )
       ).rows[0]?.n,
       0,

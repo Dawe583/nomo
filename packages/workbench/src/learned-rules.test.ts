@@ -13,12 +13,12 @@ const entry = (tool: string, klass: string, decision: string) => ({
 
 test("a repeated refusal becomes a hold rule naming the tool and the class", () => {
   const rules = mineLearnedRules([
-    entry("void_workspace_delete", "r1", "deny:policy"),
-    entry("void_workspace_delete", "r1", "deny:policy"),
-    entry("void_workspace_delete", "r1", "hold:denied"),
+    entry("nomo_workspace_delete", "r1", "deny:policy"),
+    entry("nomo_workspace_delete", "r1", "deny:policy"),
+    entry("nomo_workspace_delete", "r1", "hold:denied"),
   ]);
   assert.equal(rules.length, 1);
-  assert.deepEqual(rules[0].match, { class: "r1", tool: "void_workspace_delete" });
+  assert.deepEqual(rules[0].match, { class: "r1", tool: "nomo_workspace_delete" });
   // Hold, never deny: an operator who did not ask for this must be able to
   // undo it, and a permanent ban should not come from one observed pattern.
   assert.equal(rules[0].decision, "hold");
@@ -28,8 +28,8 @@ test("a repeated refusal becomes a hold rule naming the tool and the class", () 
 test("a single refusal teaches nothing", () => {
   assert.deepEqual(
     mineLearnedRules([
-      entry("void_workspace_delete", "r1", "deny:policy"),
-      entry("void_workspace_write", "r1", "hold:denied"),
+      entry("nomo_workspace_delete", "r1", "deny:policy"),
+      entry("nomo_workspace_write", "r1", "hold:denied"),
     ]),
     [],
   );
@@ -39,10 +39,10 @@ test("a successful call does not count towards a refusal", () => {
   // The tool the model over-uses will also succeed sometimes. Counting
   // successes would let one denial manufacture a rule from a handful of calls.
   const rules = mineLearnedRules([
-    entry("void_workspace_write", "r1", "execute:completed"),
-    entry("void_workspace_write", "r1", "execute:completed"),
-    entry("void_workspace_write", "r1", "deny:policy"),
-    entry("void_workspace_write", "r1", "execute:completed"),
+    entry("nomo_workspace_write", "r1", "execute:completed"),
+    entry("nomo_workspace_write", "r1", "execute:completed"),
+    entry("nomo_workspace_write", "r1", "deny:policy"),
+    entry("nomo_workspace_write", "r1", "execute:completed"),
   ]);
   assert.deepEqual(rules, []);
 });
@@ -129,7 +129,7 @@ test("the threshold is a count, and a useless one is rejected", () => {
 });
 
 test("learned rules are appended, so an operator's own rule is still reached first", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-learned-order-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-learned-order-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   // Nothing here reaches a provider — the workbench is only built so its
   // evidence map and policy merge exist to be inspected. Without a fetcher
@@ -139,7 +139,7 @@ test("learned rules are appended, so an operator's own rule is still reached fir
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] })) as typeof fetch;
-  const app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   await app.shutdown();
 
@@ -149,9 +149,9 @@ test("learned rules are appended, so an operator's own rule is still reached fir
   };
   const workspace = "w";
   internals.evidence[workspace] = [
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "hold:denied" } },
+    { body: { tool: "nomo_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "nomo_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "nomo_workspace_delete", klass: "r1", decision: "hold:denied" } },
   ];
 
   // The operator explicitly allows what the chain shows being refused. Were a
@@ -161,7 +161,7 @@ test("learned rules are appended, so an operator's own rule is still reached fir
     ok: true as const,
     policy: {
       version: 1,
-      rules: [{ match: { class: "r1", tool: "void_workspace_delete" }, decision: "allow" as const }],
+      rules: [{ match: { class: "r1", tool: "nomo_workspace_delete" }, decision: "allow" as const }],
     },
   };
   const merged = internals.policyWithLearned(operator, workspace) as {

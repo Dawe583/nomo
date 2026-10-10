@@ -3849,7 +3849,7 @@ export function renderWorkspace(
 
   const segments: string[] = [];
   // Model segment
-  const modelShown = fit(
+  let modelShown = fit(
     sanitizeText(ui.session()?.model || ui.model || "offline"),
     24,
   );
@@ -3878,21 +3878,17 @@ export function renderWorkspace(
   // Join with theme separator, respecting width
   const sep = paintWithPalette(symbols.separator.dot, "muted", palette, caps);
   let summary = segments.join(` ${sep} `);
-  // Fit to width by shrinking model first, then dropping cost
-  let modelIdx = 0;
-  while (visibleLength(summary) > width - 4 && summary.length > 10) {
-    if (modelIdx < segments.length) {
-      const parts = segments[modelIdx].split(" ");
-      if (parts.length > 1 && parts[1].length > 8) {
-        parts[1] = fit(parts[1], parts[1].length - 1);
-        segments[modelIdx] = parts.join(" ");
-        summary = segments.join(` ${sep} `);
-      } else {
-        break;
-      }
-    } else {
-      break;
-    }
+  // Measure the raw model value. Fitting the ANSI-painted segment sees only
+  // visible cells, returns it unchanged, and can leave this loop stuck.
+  while (
+    visibleLength(summary) > width - 4 &&
+    visibleLength(modelShown) > 8
+  ) {
+    const next = fit(modelShown, visibleLength(modelShown) - 1);
+    if (next === modelShown) break;
+    modelShown = next;
+    segments[0] = seg("model", modelShown, "accent");
+    summary = segments.join(` ${sep} `);
   }
   const summaryLine = summary;
   const todoBadge = (() => {
@@ -3952,7 +3948,7 @@ export function renderWorkspace(
     ...header,
     ...banner.map((row) => ink(text(row), `1;${amber}`)),
     ...bodyRows,
-    ink(text(summary), ice),
+    ink(fit(summary, width), ice),
     ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
     ...menuRows,
     ...promptBox.map((row) => ink(row, frameTone)),

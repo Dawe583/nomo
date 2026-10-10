@@ -18,13 +18,13 @@ import {
 } from "./recovery.mjs";
 import { validateCloudTestEnvironment } from "../scripts/src/cloud-test-config.mjs";
 import { OPERATOR_OWNER } from "./owner.mjs";
-if (process.env.VOID_GUI_DATABASE_TEST === "1")
+if (process.env.NOMO_GUI_DATABASE_TEST === "1")
   validateCloudTestEnvironment(process.env);
 
 test(
   "cloud managed documents commit evidence atomically, refuse drift and missing artifacts",
   {
-    skip: process.env.VOID_GUI_DATABASE_TEST !== "1",
+    skip: process.env.NOMO_GUI_DATABASE_TEST !== "1",
   },
   async () => {
     assert.equal(
@@ -37,7 +37,7 @@ test(
       transaction(OPERATOR_OWNER, id, (c) =>
         mutateCloudDocument(OPERATOR_OWNER, session, c, {
           id: operationId,
-          name: "void_workspace_write",
+          name: "nomo_workspace_write",
           arguments: { path, content },
         }),
       );
@@ -65,7 +65,7 @@ test(
         transaction(OPERATOR_OWNER, id, async (c) => {
           await mutateCloudDocument(OPERATOR_OWNER, session, c, {
             id: "rollback",
-            name: "void_workspace_write",
+            name: "nomo_workspace_write",
             arguments: { path: "check.txt", content: "must roll back" },
           });
           throw new Error("Injected transaction failure");
@@ -87,7 +87,7 @@ test(
           );
           await mutateCloudDocument(OPERATOR_OWNER, session, c, {
             id: "no-space",
-            name: "void_workspace_write",
+            name: "nomo_workspace_write",
             arguments: { path: "check.txt", content: "no space" },
           });
         }),
@@ -229,7 +229,7 @@ test(
         transaction(OPERATOR_OWNER, cpId, (c) =>
           mutateCloudDocument(OPERATOR_OWNER, cpSession, c, {
             id: operationId,
-            name: "void_workspace_write",
+            name: "nomo_workspace_write",
             arguments: { path, content },
           }),
         );

@@ -31,7 +31,7 @@ export function managedDocumentAdapter(host: {
     const input = value as unknown as Input;
     if (
       !input ||
-      !["void_workspace_write", "void_workspace_delete"].includes(input.name) ||
+      !["nomo_workspace_write", "nomo_workspace_delete"].includes(input.name) ||
       typeof input.id !== "string" ||
       typeof input.at !== "string" ||
       !input.arguments ||
@@ -199,7 +199,7 @@ export function managedDocumentAdapter(host: {
         throw new Error("Document recovery failed.");
       await host.commit(next, {
         id: recoveryId,
-        name: "void_workspace_undo",
+        name: "nomo_workspace_undo",
         arguments: { operationId: p.operation.id },
         at: next.operation.at,
       });

@@ -1,7 +1,7 @@
 {
-  "name": "@void/verifier",
+  "name": "@nomo/verifier",
   "version": "0.1.0",
-  "description": "Offline verifier for a VOID ledger export. Node built-ins only, no VOID dependency, no runtime dependencies at all.",
+  "description": "Offline verifier for a NOMO ledger export. Node built-ins only, no NOMO dependency, no runtime dependencies at all.",
   "license": "Apache-2.0",
   "keywords": [
     "ledger",
@@ -13,7 +13,7 @@
   ],
   "type": "module",
   "bin": {
-    "void-verify": "./verify-ledger.mjs"
+    "nomo-verify": "./verify-ledger.mjs"
   },
   "main": "./verify-ledger.mjs",
   "exports": {

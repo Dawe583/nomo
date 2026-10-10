@@ -58,6 +58,13 @@ impl Drop for Runtime {
     }
 }
 
+fn resolve_env(nomo_key: &str, void_key: &str) -> Option<String> {
+    match std::env::var(nomo_key) {
+        Ok(val) => Some(val),
+        Err(_) => std::env::var(void_key).ok(),
+    }
+}
+
 #[derive(serde::Deserialize)]
 struct Ready {
     port: u16,
@@ -132,21 +139,21 @@ fn launch_runtime(
     let mut child = command
         .arg(resources.join("runtime/runtime.mjs"))
         .current_dir(&data)
-        .env("VOID_DATA_DIR", &data)
+        .env("NOMO_DATA_DIR", &data)
         .env(
-            "VOID_WORKSPACE_KEY",
+            "NOMO_WORKSPACE_KEY",
             base64::engine::general_purpose::STANDARD.encode(&workspace_key.bytes),
         )
         .env("PATH", std::env::join_paths(search_path)?)
-        .env("VOID_DESKTOP_WEB_ROOT", resources.join("web"))
+        .env("NOMO_DESKTOP_WEB_ROOT", resources.join("web"))
         // The desktop webview is the operator's own window on the same
         // machine, i.e. the "local surface" of packages/workbench/src/gui.ts:
-        // absent VOID_PERMISSION_MODE it would default to the HTTP server's
+        // absent NOMO_PERMISSION_MODE it would default to the HTTP server's
         // locked "read-only" posture and hide writable tools from the smoke.
-        .env("VOID_PERMISSION_MODE", "normal")
+        .env("NOMO_PERMISSION_MODE", "normal")
         .env_remove("NODE_OPTIONS")
         .env_remove("NODE_PATH")
-        .env_remove("VOID_CONTROL_TOKEN")
+        .env_remove("NOMO_CONTROL_TOKEN")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -176,7 +183,7 @@ fn main() {
     let runtime_exit_smoke = std::env::args().any(|argument| argument == "--smoke-runtime-exit");
     let smoke = mobile_smoke || runtime_exit_smoke || std::env::args().any(|argument| argument == "--smoke-test");
     let smoke_data =
-        std::env::temp_dir().join(format!("void-desktop-native-smoke-{}", std::process::id()));
+        std::env::temp_dir().join(format!("nomo-desktop-native-smoke-{}", std::process::id()));
     let cleanup_data = smoke_data.clone();
     let runtime_exited = Arc::new(AtomicBool::new(false));
     let setup_runtime_exited = runtime_exited.clone();
@@ -222,13 +229,13 @@ fn main() {
                 )?;
                 let mut response = String::new();
                 socket.take(1_048_576).read_to_string(&mut response)?;
-                if !response.starts_with("HTTP/1.1 200") || !response.contains("VOID") {
+                if !response.starts_with("HTTP/1.1 200") || !response.contains("NOMO") {
                     return Err("Packaged desktop runtime did not serve the workbench".into());
                 }
                 let timeout_app = app.handle().clone();
                 std::thread::spawn(move || {
                     std::thread::sleep(Duration::from_secs(20));
-                    eprintln!("VOID native desktop smoke timed out waiting for the webview download.");
+                    eprintln!("NOMO native desktop smoke timed out waiting for the webview download.");
                     timeout_app.exit(1);
                 });
             }
@@ -236,7 +243,7 @@ fn main() {
             let download_origin = origin.clone();
             let download_root = if smoke { data.clone() } else { app.path().download_dir()? };
             std::fs::create_dir_all(&download_root)?;
-            let smoke_file = data.join("void-desktop-download-smoke.txt");
+            let smoke_file = data.join("nomo-desktop-download-smoke.txt");
             let finish_file = smoke_file.clone();
             let download_app = app.handle().clone();
             WebviewWindowBuilder::new(
@@ -244,7 +251,7 @@ fn main() {
                 "main",
                 WebviewUrl::External(format!("{origin}/").parse()?),
             )
-            .title("VOID")
+            .title("NOMO")
             .visible(!smoke || mobile_smoke)
             .inner_size(if mobile_smoke { 390.0 } else { 1200.0 }, if mobile_smoke { 844.0 } else { 820.0 })
             .min_inner_size(360.0, 520.0)
@@ -261,9 +268,9 @@ fn main() {
                     }
                     tauri::webview::DownloadEvent::Finished { success, .. } => {
                         if smoke {
-                            let correct = success && std::fs::read(&finish_file).ok().as_deref() == Some(b"VOID desktop download smoke");
-                            if correct { println!("VOID native desktop smoke passed: bundled runtime, rendered WebView and Blob download verified. Mobile toolbar checks: {}.", mobile_smoke); }
-                            else { eprintln!("VOID native desktop smoke failed: the expected local export was not saved"); }
+                            let correct = success && std::fs::read(&finish_file).ok().as_deref() == Some(b"NOMO desktop download smoke");
+                            if correct { println!("NOMO native desktop smoke passed: bundled runtime, rendered WebView and Blob download verified. Mobile toolbar checks: {}.", mobile_smoke); }
+                            else { eprintln!("NOMO native desktop smoke failed: the expected local export was not saved"); }
                             download_app.exit(if correct { 0 } else { 1 });
                         }
                         true
@@ -277,7 +284,7 @@ fn main() {
                     // as the production document and conversation export buttons.
                     if mobile_smoke {
                         let _ = window.eval(r#"(() => {
-                          const finish = text => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'void-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
+                          const finish = text => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'nomo-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
                           const check = (ok, reason) => { if (!ok) throw Error(reason); };
                           let attempts = 0;
                           const timer = setInterval(() => {
@@ -304,7 +311,7 @@ fn main() {
                                    check(!!themeButton, 'theme action present');
                                    themeButton.click();
                                   setTimeout(() => {
-                                    try { check(document.documentElement.dataset.theme !== before, 'theme action'); finish('VOID desktop download smoke'); }
+                                    try { check(document.documentElement.dataset.theme !== before, 'theme action'); finish('NOMO desktop download smoke'); }
                                     catch (error) { finish('FAIL: ' + error.message); }
                                   }, 100);
                                 } catch (error) { finish('FAIL: ' + error.message); }
@@ -314,7 +321,7 @@ fn main() {
                         })()"#);
                     } else {
                     let _ = window.eval(r#"(() => {
-                      const finish = text => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'void-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
+                      const finish = text => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'nomo-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
                       let attempts = 0, opened = false;
                       const timer = setInterval(() => {
                         if (++attempts > 150) { clearInterval(timer); finish('FAIL: React command menu or bundled tool API unavailable'); return; }
@@ -322,7 +329,7 @@ fn main() {
                         if (!trigger) return;
                         if (!opened) { opened = true; trigger.click(); return; }
                         const options = [...document.querySelectorAll('.command-results [role=option]')];
-                        const write = options.find(option => option.textContent.includes('/void_workspace_write'));
+                        const write = options.find(option => option.textContent.includes('/nomo_workspace_write'));
                         if (!write) return;
                         clearInterval(timer);
                         const palette = document.querySelector('.command-palette');
@@ -331,7 +338,7 @@ fn main() {
                         write.click();
                         setTimeout(() => {
                           const draft = document.querySelector('.composer textarea');
-                          finish(draft?.value.includes('void_workspace_write') && document.querySelector('.selected-tool') ? 'VOID desktop download smoke' : 'FAIL: tool selection did not prepare a request');
+                          finish(draft?.value.includes('nomo_workspace_write') && document.querySelector('.selected-tool') ? 'NOMO desktop download smoke' : 'FAIL: tool selection did not prepare a request');
                         }, 150);
                       }, 100);
                     })()"#);
@@ -346,7 +353,7 @@ fn main() {
                     if monitor_app.state::<Runtime>().wait_for_exit() {
                         monitor_exited.store(true, Ordering::SeqCst);
                         let _ = diagnostics::write_startup(&monitor_data, "RUNTIME_EXITED");
-                        eprintln!("VOID native desktop runtime exited unexpectedly.");
+                        eprintln!("NOMO native desktop runtime exited unexpectedly.");
                         if runtime_exit_smoke {
                             let _ = std::fs::remove_dir_all(&monitor_data);
                             std::process::exit(1);
@@ -383,7 +390,7 @@ fn main() {
             match guidance {
                 Some(guidance) => eprintln!("{guidance}"),
                 None => eprintln!(
-                    "VOID could not start. Check desktop-startup.log in the application data directory; the log contains only a safe failure category."
+                    "NOMO could not start. Check desktop-startup.log in the application data directory; the log contains only a safe failure category."
                 ),
             }
             std::process::exit(1);
@@ -407,17 +414,17 @@ fn main() {
 fn startup_guidance(code: &str) -> Option<&'static str> {
     match code {
         "KEYCHAIN_ACCESS_DENIED" => Some(
-            "VOID could not read its workspace key.\n\
+            "NOMO could not read its workspace key.\n\
              \n\
              The key exists in your login keychain under the service\n\
              dev.void.desktop.workspace, but this build of the app is not on\n\
-             that item's allowed list. There is no VOID password and no\n\
+             that item's allowed list. There is no NOMO password and no\n\
              workspace password to enter.\n\
              \n\
              Fix it with either:\n\
              1. Keychain Access, search dev.void.desktop.workspace, open it,\n\
                 Access Control tab, choose \"Allow all applications to access\n\
-                this item\", save, then start VOID again.\n\
+                this item\", save, then start NOMO again.\n\
              2. Build with a stable signing identity instead of an ad-hoc one,\n\
                 so the allowed list survives every rebuild:\n\
              \x20  APPLE_SIGNING_IDENTITY=\"<your identity>\" pnpm --dir apps/desktop build\n\
@@ -426,7 +433,7 @@ fn startup_guidance(code: &str) -> Option<&'static str> {
              cannot be read without its key.",
         ),
         "RUNTIME_STARTUP_FAILED" | "RUNTIME_NETWORK_FAILED" => Some(
-            "VOID could not start its bundled local runtime.\n\
+            "NOMO could not start its bundled local runtime.\n\
              \n\
              This is the desktop runtime that serves the workbench on a local\n\
              loopback port, not a remote service. It either did not come up or\n\
@@ -437,7 +444,7 @@ fn startup_guidance(code: &str) -> Option<&'static str> {
              \x20  pnpm --dir apps/desktop prepare:runtime\n\
              2. Confirm nothing else needs the port, and that no firewall or\n\
                 VPN client is intercepting loopback traffic.\n\
-             3. Start VOID again. No credentials are involved in this path.",
+             3. Start NOMO again. No credentials are involved in this path.",
         ),
         _ => None,
     }
@@ -488,5 +495,22 @@ mod tests {
             .contains("Do not delete the keychain item"));
         assert!(startup_guidance("STARTUP_FAILED").is_none());
         assert!(startup_guidance("WORKSPACE_ACCESS_FAILED").is_none());
+    }
+
+    #[test]
+    fn resolve_env_precedence() {
+        std::env::set_var("NOMO_TEST", "nomo");
+        std::env::set_var("VOID_TEST", "void");
+        assert_eq!(resolve_env("NOMO_TEST", "VOID_TEST"), Some("nomo".to_string()));
+
+        std::env::remove_var("NOMO_TEST");
+        assert_eq!(resolve_env("NOMO_TEST", "VOID_TEST"), Some("void".to_string()));
+
+        std::env::set_var("NOMO_TEST", "");
+        assert_eq!(resolve_env("NOMO_TEST", "VOID_TEST"), Some("".to_string()));
+
+        std::env::remove_var("NOMO_TEST");
+        std::env::remove_var("VOID_TEST");
+        assert_eq!(resolve_env("NOMO_TEST", "VOID_TEST"), None);
     }
 }

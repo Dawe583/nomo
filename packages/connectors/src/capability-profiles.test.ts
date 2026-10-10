@@ -95,7 +95,7 @@ describe("per-provider capability profile set", () => {
             conformance: { ...foreign.conformance, runtime: "postgres-managed-runtime" },
           },
         ]),
-      /binds runtime "postgres-managed-runtime", the set declares "void-recovery-runtime"/,
+      /binds runtime "postgres-managed-runtime", the set declares "nomo-recovery-runtime"/,
     );
   });
 
@@ -119,7 +119,7 @@ describe("per-provider capability profile set", () => {
   test("a set declared against another runtime refuses the profiles that bind this one", () => {
     assert.throws(
       () => declareProviderProfiles([profileFor("git.managed")], { id: "postgres-managed-runtime" }),
-      /binds runtime "void-recovery-runtime", the set declares "postgres-managed-runtime"/,
+      /binds runtime "nomo-recovery-runtime", the set declares "postgres-managed-runtime"/,
     );
   });
 

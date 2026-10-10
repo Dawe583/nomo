@@ -1,8 +1,8 @@
 import test, { before, describe } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { isBuiltin } from "node:module";
-import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,18 +22,21 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
  * the bundler that produces it was broken. The build is ~1s and the output goes
  * to a temp directory, so nothing is written inside the repository.
  */
+let packageDir;
 let outDir;
 let artifact;
 let chunks;
 before(async () => {
-  outDir = mkdtempSync(join(tmpdir(), "void-bundle-test-"));
+  packageDir = mkdtempSync(join(tmpdir(), "nomo-bundle-test-"));
+  outDir = join(packageDir, "dist");
+  writeFileSync(join(packageDir, "package.json"), read("packages/cli/package.json"));
   const built = await buildBundle({ root, outDir, quiet: true });
   chunks = built.chunks;
   artifact = readFileSync(join(outDir, ENTRY_FILE), "utf8");
 });
 
 process.on("exit", () => {
-  if (outDir) rmSync(outDir, { recursive: true, force: true });
+  if (packageDir) rmSync(packageDir, { recursive: true, force: true });
 });
 
 /**
@@ -67,11 +70,11 @@ describe("the distribution bundle", () => {
     assert.ok(statSync(file).mode & 0o111, "the entry chunk is not executable");
   });
 
-  test("emits more than one chunk, because one chunk breaks void run", () => {
-    // `void run` imports packages/proxy/bin/void-proxy.mjs for its side effect,
+  test("emits more than one chunk, because one chunk breaks nomo run", () => {
+    // `nomo run` imports packages/proxy/bin/nomo-proxy.mjs for its side effect,
     // and that module runs main() at module scope. inliningDynamicImports folds
-    // that call into the importing scope, so `void run` dies on a temporal dead
-    // zone error and `void doctor` prints the proxy usage and exits 1. The split
+    // that call into the importing scope, so `nomo run` dies on a temporal dead
+    // zone error and `nomo doctor` prints the proxy usage and exits 1. The split
     // is what keeps the entry deferring its graph, so this asserts the shape
     // rather than a size: collapsing the graph is a behavioural regression.
     assert.ok(chunks.length > 1, `expected a chunk graph, got ${chunks.length} chunk`);
@@ -102,7 +105,7 @@ describe("the distribution bundle", () => {
   });
 
   test("carries no workspace protocol specifier a consumer cannot resolve", () => {
-    // This is the assertion the whole bundler exists for. `@void/registry` is
+    // This is the assertion the whole bundler exists for. `@nomo/registry` is
     // declared `workspace:*`, and npm rejects that protocol outright with
     // EUNSUPPORTEDPROTOCOL, so a single surviving specifier makes the tarball
     // uninstallable no matter how correct the rest of it is. Every chunk is
@@ -124,13 +127,13 @@ describe("the distribution bundle", () => {
 
 
   test("imports no sibling workspace package by name", () => {
-    // Every sibling must be inlined. A bare `@void/...` import would resolve in
+    // Every sibling must be inlined. A bare `@nomo/...` import would resolve in
     // this checkout through the workspace link and nowhere else, so the artifact
     // would prove nothing about a consumer.
     for (const chunk of chunks) {
       const code = readFileSync(join(outDir, chunk), "utf8");
       const workspaceImports = bareSpecifiers(code).filter((specifier) =>
-        specifier.startsWith("@void/"),
+        specifier.startsWith("@nomo/"),
       );
       assert.deepEqual(
         workspaceImports,
@@ -164,12 +167,41 @@ describe("the distribution bundle", () => {
     }
   });
 
-  test("the packed file allowlist ships the artifact and nothing else", () => {
+  test("npm packs only the manifest and distribution chunks", () => {
     // A tarball that also carried src, tests or a node_modules tree would put
     // unbuilt TypeScript and workspace links back in front of the consumer.
     const manifest = JSON.parse(read("packages/cli/package.json"));
     assert.deepEqual(manifest.files, ["dist/"]);
-    assert.deepEqual(manifest.bin, { void: `./dist/${ENTRY_FILE}` });
+    assert.deepEqual(manifest.bin, { nomo: `./dist/${ENTRY_FILE}` });
+    const packed = JSON.parse(
+      execFileSync("npm", ["pack", "--dry-run", "--json"], {
+        cwd: packageDir,
+        encoding: "utf8",
+      }),
+    );
+    const files = packed[0].files.map(({ path }) => path).sort();
+    assert.deepEqual(files, [...chunks.map((chunk) => `dist/${chunk}`), "package.json"].sort());
+  });
+
+  test("the staged executable answers help and version from a clean consumer cwd", () => {
+    const consumer = mkdtempSync(join(tmpdir(), "nomo-consumer-test-"));
+    try {
+      const bin = join(outDir, ENTRY_FILE);
+      const help = spawnSync(bin, ["--help"], { cwd: consumer, encoding: "utf8" });
+      assert.ifError(help.error);
+      assert.equal(help.status, 0, help.stderr);
+      assert.match(help.stdout, /^usage: nomo /);
+      assert.equal(help.stderr, "");
+
+      const version = spawnSync(bin, ["--version"], { cwd: consumer, encoding: "utf8" });
+      assert.ifError(version.error);
+      assert.equal(version.status, 0, version.stderr);
+      const manifest = JSON.parse(read("packages/cli/package.json"));
+      assert.equal(version.stdout, `nomo ${manifest.version}\n`);
+      assert.equal(version.stderr, "");
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+    }
   });
 
   test("the default output directory is the one the manifest ships", () => {

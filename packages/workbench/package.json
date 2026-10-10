@@ -1,5 +1,5 @@
 {
-  "name": "@void/workbench",
+  "name": "@nomo/workbench",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,9 +14,9 @@
   "devDependencies": {
     "@types/node": "catalog:"
   },
-  "description": "Run model sessions through the VOID policy and signed ledger.",
+  "description": "Run model sessions through the NOMO policy and signed ledger.",
   "keywords": [
-    "void",
+    "nomo",
     "agents",
     "workbench"
   ],
@@ -30,6 +30,6 @@
   },
   "homepage": "https://github.com/Dawe583/void/tree/main/packages/workbench",
   "dependencies": {
-    "@void/runtime": "workspace:*"
+    "@nomo/runtime": "workspace:*"
   }
 }

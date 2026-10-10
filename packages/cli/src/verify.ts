@@ -38,7 +38,7 @@ type VerifyArgs = {
 };
 
 const USAGE =
-  "usage: void verify --ledger <dir-or-file> [--workspace name] [--file export.jsonl] [--attestation path] [--anchors path] [--key base64-spki] [--key-id id] [--standalone]";
+  "usage: nomo verify --ledger <dir-or-file> [--workspace name] [--file export.jsonl] [--attestation path] [--anchors path] [--key base64-spki] [--key-id id] [--standalone]";
 
 type ResolvedVerifyKey = {
   readonly publicKey: PublicKeyLookup | undefined;
@@ -83,7 +83,7 @@ export async function runVerifyCommand(
       io.stdout(line.ok ? `seq ${line.seq}: ok` : `seq ${line.seq}: fail ${line.reason}`);
     }
     if (!chain.ok) {
-      io.stderr(`void verify failed: ${chain.reason}`);
+      io.stderr(`nomo verify failed: ${chain.reason}`);
       return 1;
     }
     io.stdout(`chain: ${chain.checked} entries ok`);
@@ -132,7 +132,7 @@ export async function runVerifyCommand(
     }
     return 0;
   } catch (error) {
-    io.stderr(`void verify failed: ${error instanceof Error ? error.message : String(error)}`);
+    io.stderr(`nomo verify failed: ${error instanceof Error ? error.message : String(error)}`);
     return 1;
   }
 }
@@ -181,7 +181,7 @@ function parseVerifyArgs(argv: readonly string[]): VerifyArgs {
 /**
  * Where the key came from, printed before anything is called verified. This
  * was the last surface still calling a default-path trust file "pinned",
- * which claimed a separation the file does not have: it shares `~/.void/`
+ * which claimed a separation the file does not have: it shares `~/.nomo/`
  * with the signing key, so anyone who can replace the key file can replace it
  * too. The wording now comes from `verificationKeyLine`, the same derivation
  * every other surface renders, so the two cannot drift apart again.
@@ -213,7 +213,7 @@ async function resolveVerifyKey(
       spki: undefined,
       lines: [
         "verification key: none, signature NOT VERIFIED",
-        "  pin one with `void init --pin-verify-key`, or set VOID_VERIFY_KEY to a base64 SPKI public key",
+        "  pin one with `nomo init --pin-verify-key`, or set NOMO_VERIFY_KEY to a base64 SPKI public key",
       ],
     };
   return {
@@ -264,7 +264,7 @@ async function runStandalone(
   });
   if (key.publicKey !== undefined) return code;
   io.stderr(
-    "void verify failed: no verification key was resolved, so no signature was checked",
+    "nomo verify failed: no verification key was resolved, so no signature was checked",
   );
   return code === 0 ? 1 : code;
 }

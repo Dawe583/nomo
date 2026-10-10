@@ -44,7 +44,7 @@ async function fixtureApp(
   content = "ok",
   env: Record<string, string> = {},
 ) {
-  const full = { VOID_DATA_DIR: root, ...env };
+  const full = { NOMO_DATA_DIR: root, ...env };
   const app = new Workbench(full, assistantFetcher(content));
   await app.configure({
     baseUrl: "https://fixture.test/v1",
@@ -54,7 +54,7 @@ async function fixtureApp(
 }
 
 test("Shift+Tab modes cycle with a visible indicator", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-mode-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-mode-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -76,7 +76,7 @@ test("Shift+Tab modes cycle with a visible indicator", async (t) => {
 });
 
 test("plan mode prefixes prompts so the model plans first", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-plan-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-plan-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -94,13 +94,13 @@ test("plan mode prefixes prompts so the model plans first", async (t) => {
 });
 
 test("a prompt sent during a run is queued, never dropped", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-queue-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-queue-"));
   let release: ((value: Response) => void) | undefined;
   const gate = () =>
     new Promise<Response>((done) => {
       release = done;
     });
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full, async (url: unknown) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
@@ -163,8 +163,8 @@ test("double Escape opens checkpoints, single Escape only closes", () => {
 });
 
 test("gated shell shows output once and refuses key material", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-shell-"));
-  const full = { VOID_DATA_DIR: root, VOID_TUI_ENV_PROBE: "probe-secret" };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-shell-"));
+  const full = { NOMO_DATA_DIR: root, NOMO_TUI_ENV_PROBE: "probe-secret" };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -176,12 +176,12 @@ test("gated shell shows output once and refuses key material", async (t) => {
   assert.match(ui.notice, /never persisted/);
   await assert.rejects(ui.command("!echo $TOKENHARBOR_API_KEY"), /Refused/);
   await assert.rejects(
-    ui.command("!cat ~/.void/keys/dev-ed25519.pkcs8"),
+    ui.command("!cat ~/.nomo/keys/dev-ed25519.pkcs8"),
     /Refused/,
   );
   await assert.rejects(ui.command("!printenv OPENROUTER_API_KEY"), /Refused/);
   await assert.rejects(
-    ui.command("!printenv VOID_TUI_ENV_PROBE"),
+    ui.command("!printenv NOMO_TUI_ENV_PROBE"),
     /Local command failed/,
   );
 });
@@ -199,9 +199,9 @@ test("gated shell shows output once and refuses key material", async (t) => {
 const failingWithSecret = process.platform === "win32" ? "exit 1" : "false";
 
 test("shell output redacts exact stored secret values", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-redact-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-redact-"));
   const full = {
-    VOID_DATA_DIR: root,
+    NOMO_DATA_DIR: root,
     TOKENROUTER_API_KEY: "qk7-redact-me",
     NVIDIA_API_KEY: "nv7-x91k3p",
   };
@@ -218,11 +218,14 @@ test("shell output redacts exact stored secret values", async (t) => {
   assert.ok(shown.includes("[redacted]"));
   assert.ok(!shown.includes("qk7-redact-me"));
   assert.ok(!shown.includes("nv7-x91k3p"));
-  await assert.rejects(ui.command(`!${failingWithSecret} nv7-x91k3p`), (error) => {
-    assert.ok(error instanceof Error);
-    assert.ok(!error.message.includes("nv7-x91k3p"));
-    return error.message.includes("[redacted]");
-  });
+  await assert.rejects(
+    ui.command(`!${failingWithSecret} nv7-x91k3p`),
+    (error) => {
+      assert.ok(error instanceof Error);
+      assert.ok(!error.message.includes("nv7-x91k3p"));
+      return error.message.includes("[redacted]");
+    },
+  );
 });
 
 test("@ tokens complete from managed paths and quote on send", async (t) => {
@@ -246,7 +249,7 @@ test("@ tokens complete from managed paths and quote on send", async (t) => {
     ]),
     ["a.md", "b.md", "c.md", "d.md", "e.md", "f.md", "g.md", "h.md"],
   );
-  const root = await mkdtemp(join(tmpdir(), "void-tui-mention-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-mention-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -285,7 +288,7 @@ test("todos come from real agent output, /todos lists them", async (t) => {
   assert.equal(direct.length, 2);
   assert.equal(direct[0]!.text, "step one");
   assert.equal(direct[0]!.done, false);
-  const root = await mkdtemp(join(tmpdir(), "void-tui-todos-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-todos-"));
   const { app, env } = await fixtureApp(root, "- [ ] ship it\n- [x] done");
   t.after(async () => {
     await app.shutdown();
@@ -302,7 +305,7 @@ test("todos come from real agent output, /todos lists them", async (t) => {
 });
 
 test("/context /cost /status report retained numbers, cost stays unknown", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-numbers-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-numbers-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -327,7 +330,7 @@ test("/context /cost /status report retained numbers, cost stays unknown", async
 });
 
 test("/compact reports a confirmed no-op without claiming provider summarization", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-compact-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -347,7 +350,7 @@ test("/compact reports a confirmed no-op without claiming provider summarization
 });
 
 test("/agents /config /memory read live data without secrets", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-agents-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-agents-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -358,7 +361,7 @@ test("/agents /config /memory read live data without secrets", async (t) => {
   await ui.command("agent work");
   await app.settled();
   await ui.command("/agents");
-  assert.ok(ui.detail?.join("\n").includes("connector: VOID documents"));
+  assert.ok(ui.detail?.join("\n").includes("connector: NOMO documents"));
   await ui.command("/config");
   const config = ui.detail?.join("\n") ?? "";
   assert.ok(config.includes("data-dir"));
@@ -367,9 +370,9 @@ test("/agents /config /memory read live data without secrets", async (t) => {
   assert.ok(ui.detail?.join("\n").includes("Conversations: 1"));
 });
 
-test("provider only commands reject what VOID cannot do", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-unsupported-"));
-  const full = { VOID_DATA_DIR: root };
+test("provider only commands reject what NOMO cannot do", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-unsupported-"));
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -377,12 +380,12 @@ test("provider only commands reject what VOID cannot do", async (t) => {
   });
   const ui = new WorkspaceTui(app, full);
   for (const cmd of ["/vim", "/terminal-setup", "/output-style"])
-    await assert.rejects(ui.command(cmd), /no VOID equivalent/);
+    await assert.rejects(ui.command(cmd), /no NOMO equivalent/);
 });
 
 test("/login reuses provider setup, /logout disconnects", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-login-"));
-  const full = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-login-"));
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -397,7 +400,7 @@ test("/login reuses provider setup, /logout disconnects", async (t) => {
 });
 
 test("/init creates a starter plan when the run is idle", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-init-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-init-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -412,7 +415,7 @@ test("/init creates a starter plan when the run is idle", async (t) => {
 });
 
 test("review needs an explicit accept or reject key", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-review-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-review-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -445,7 +448,7 @@ test("prompt frame stays continuous at every width", async (t) => {
   assert.equal(visibleLength(promptFrameRow("> hello_", 80)), 80);
   assert.ok(promptFrameTop("Write a prompt", 20).startsWith("╭"));
   assert.ok(promptFrameTop("Write a prompt", 20).endsWith("╮"));
-  const root = await mkdtemp(join(tmpdir(), "void-tui-frame-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-frame-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -485,13 +488,13 @@ test("prompt frame stays continuous at every width", async (t) => {
 });
 
 test("live status stays within the compact ASCII identity", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-ascii-status-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-ascii-status-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   ui.choose("chat");
   const frame = renderWorkspace(ui, 80, 30, "_", true, true, {
     frame: 4,
@@ -502,7 +505,7 @@ test("live status stays within the compact ASCII identity", async (t) => {
 });
 
 test("branch intent reuses its idempotency key after a transient failure", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-branch-key-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-branch-key-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -513,15 +516,24 @@ test("branch intent reuses its idempotency key after a transient failure", async
   await ui.command("first prompt");
   await app.settled();
   const parent = ui.sessionId!;
-  const seq = app.get(parent)!.events.find((event) => event.kind === "user")!.seq;
+  const seq = app
+    .get(parent)!
+    .events.find((event) => event.kind === "user")!.seq;
   const original = app.branch.bind(app);
   const keys: string[] = [];
-  t.mock.method(app, "branch", async (id: string, body: Parameters<Workbench["branch"]>[1]) => {
-    keys.push(body.idempotencyKey);
-    if (keys.length === 1) throw Error("transient branch failure");
-    return original(id, body);
-  });
-  await assert.rejects(ui.command(`/branch ${seq}`), /transient branch failure/);
+  t.mock.method(
+    app,
+    "branch",
+    async (id: string, body: Parameters<Workbench["branch"]>[1]) => {
+      keys.push(body.idempotencyKey);
+      if (keys.length === 1) throw Error("transient branch failure");
+      return original(id, body);
+    },
+  );
+  await assert.rejects(
+    ui.command(`/branch ${seq}`),
+    /transient branch failure/,
+  );
   await ui.command(`/branch ${seq}`);
   assert.equal(keys.length, 2);
   assert.equal(keys[0], keys[1]);
@@ -529,7 +541,7 @@ test("branch intent reuses its idempotency key after a transient failure", async
 });
 
 test("logo is one stroke width and every row aligns", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-logo-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-logo-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -546,7 +558,7 @@ test("logo is one stroke width and every row aligns", async (t) => {
 test("tab icons carry fixed colors in color mode only", async (t) => {
   for (const tone of Object.values(TAB_ICON_TONE))
     assert.match(tone, /^38;5;\d+$/);
-  const root = await mkdtemp(join(tmpdir(), "void-tui-icon-tone-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-icon-tone-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -652,7 +664,7 @@ test("prompt jumps move between user rows only", () => {
 });
 
 test("prompt frame follows the permission mode color", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-frame-tone-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-frame-tone-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -681,7 +693,7 @@ test("prompt frame follows the permission mode color", async (t) => {
 });
 
 test("render collects user prompt rows for jumps", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-prompt-rows-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-prompt-rows-"));
   const { app, env } = await fixtureApp(root, "answer one");
   t.after(async () => {
     await app.shutdown();
@@ -699,8 +711,8 @@ test("render collects user prompt rows for jumps", async (t) => {
 });
 
 test("arrow keys cycle panels in navigation, cursor in editing", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-arrows-"));
-  const full = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-arrows-"));
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -734,7 +746,7 @@ test("block cursor, Ctrl arrows and queued badge", async (t) => {
   assert.equal(input.cursor, 14);
   input.key(undefined, { name: "right", ctrl: true });
   assert.equal(input.cursor, 16);
-  const root = await mkdtemp(join(tmpdir(), "void-tui-queued-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-queued-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -810,7 +822,7 @@ test("approval rows carry class, radius and the matched case", () => {
 });
 
 test("undo review states the drift check before the diff", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-undo-drift-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-undo-drift-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -834,8 +846,8 @@ test("undo review states the drift check before the diff", async (t) => {
 });
 
 test("/conformance proves the adapter behind TUI edits inside the TUI", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-conformance-"));
-  const full = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-conformance-"));
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -854,8 +866,8 @@ test("/conformance proves the adapter behind TUI edits inside the TUI", async (t
 });
 
 test("/plan /stats /exit /keybindings match the reference commands", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-cmds-"));
-  const full = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-cmds-"));
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -880,7 +892,7 @@ test("/plan /stats /exit /keybindings match the reference commands", async (t) =
 });
 
 test("/diff shows outstanding changes and empties after undo", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-diff-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-diff-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -907,32 +919,61 @@ test("/diff shows outstanding changes and empties after undo", async (t) => {
   assert.match(ui.detail?.join("\n") ?? "", /No outstanding changes/);
 });
 
-test("/theme switches session color and motion without touching env", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-theme-"));
-  const full = { VOID_DATA_DIR: root };
+test("/theme switches color theme and symbol preset without touching env", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-theme-"));
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, full);
-  await ui.command("/theme mono");
-  assert.equal(ui.colorOverride, false);
-  assert.match(ui.notice, /monochrome/);
-  assert.ok(ui.detail?.join("\n").includes("accent"));
-  await ui.command("/theme color");
-  assert.equal(ui.colorOverride, true);
-  await ui.command("/theme still");
-  assert.equal(ui.motionOverride, false);
+  await ui.initialize();
+  const initialColor = ui.themeConfig.colorTheme;
+  const initialSymbol = ui.themeConfig.symbolPreset;
+
+  await ui.command("/theme paper unicode");
+  assert.equal(ui.themeConfig.colorTheme, "paper");
+  assert.equal(ui.themeConfig.symbolPreset, "unicode");
+  assert.match(ui.notice, /Theme set: paper \+ unicode/);
+
+  await ui.command("/theme dark classic");
+  assert.equal(ui.themeConfig.colorTheme, "dark");
+  assert.equal(ui.themeConfig.symbolPreset, "classic");
+
+  await ui.command("/theme preview solarized-dark classic");
+  assert.equal(ui.themeConfig.colorTheme, "solarized-dark");
+  assert.equal(ui.themeConfig.symbolPreset, "classic");
+
   await ui.command("/theme reset");
-  assert.equal(ui.colorOverride, undefined);
-  assert.equal(ui.motionOverride, undefined);
-  await assert.rejects(ui.command("/theme pink"), /\/theme color/);
+  assert.equal(ui.themeConfig.colorTheme, initialColor);
+  assert.equal(ui.themeConfig.symbolPreset, initialSymbol);
+
+  await assert.rejects(
+    ui.command("/theme unknown-theme"),
+    /Unknown color theme/,
+  );
+  await assert.rejects(
+    ui.command("/theme paper unknown-preset"),
+    /Unknown symbol preset/,
+  );
+});
+
+test("command suggestions include /theme", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-suggest-"));
+  const full = { NOMO_DATA_DIR: root };
+  const app = new Workbench(full);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, full);
+  await ui.initialize();
   assert.ok(commandSuggestions("/the").some(([name]) => name === "/theme"));
 });
 
 test("/attest refuses when nothing has signed, and mints no key to pretend otherwise", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-attest-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-attest-"));
   const { app, env } = await fixtureApp(root, "answer here");
   t.after(async () => {
     await app.shutdown();
@@ -953,13 +994,16 @@ test("/attest refuses when nothing has signed, and mints no key to pretend other
 
   // And the refusal must be a refusal, not a quiet mint: no key directory is
   // created as a side effect of being asked to attest.
-  await assert.rejects(access(join(root, "keys")), "attest must not create the key directory");
+  await assert.rejects(
+    access(join(root, "keys")),
+    "attest must not create the key directory",
+  );
   assert.ok(commandSuggestions("/att").some(([name]) => name === "/attest"));
 });
 
 test("/providers lists presets with local open model options", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-providers-"));
-  const full = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-providers-"));
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -981,8 +1025,8 @@ test("/providers lists presets with local open model options", async (t) => {
 });
 
 test("/harness shows and switches the agent harness", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-harness-"));
-  const full = { VOID_DATA_DIR: root, PATH: "/usr/bin:/bin" };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-harness-"));
+  const full = { NOMO_DATA_DIR: root, PATH: "/usr/bin:/bin" };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1010,8 +1054,8 @@ test("/harness shows and switches the agent harness", async (t) => {
 });
 
 test("live thinking dots animate with motion and freeze without it", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-dots-"));
-  const full = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-dots-"));
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1029,16 +1073,15 @@ test("live thinking dots animate with motion and freeze without it", async (t) =
   assert.match(stripAnsi(still(0)), /Finishing operation \/ Esc stop/);
 });
 
-
 test("NVIDIA API key is read ONLY from env var, never from chat input", async (t) => {
   // 1. No env key -> providerState stays null, no auto-configuration.
-  const root = await mkdtemp(join(tmpdir(), "void-nvidia-chat-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const root = await mkdtemp(join(tmpdir(), "nomo-nvidia-chat-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.initialize();
   const state = await app.providerState();
   assert.equal(state.providerId, null);
@@ -1055,11 +1098,16 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
     const headers = (options?.headers ?? {}) as Record<string, string>;
     seenAuth = headers.authorization ?? "";
     seenBody = String(options?.body ?? "");
-    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+    return Response.json({
+      choices: [{ message: { role: "assistant", content: "ok" } }],
+    });
   };
-  const app2 = new Workbench({ VOID_DATA_DIR: root }, fetcher);
-  await app2.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-key" });
-  const ui2 = new WorkspaceTui(app2, { VOID_DATA_DIR: root });
+  const app2 = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
+  await app2.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture-key",
+  });
+  const ui2 = new WorkspaceTui(app2, { NOMO_DATA_DIR: root });
   await ui2.initialize();
   await ui2.command("please set NVIDIA_API_KEY=secret in the chat");
   await app2.settled();
@@ -1067,9 +1115,16 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
   assert.ok(!seenAuth.includes("secret"));
   assert.ok(seenAuth.startsWith("Bearer fixture-key"));
   // 3. Explicit env var IS the only path that configures NVIDIA.
-  const root3 = await mkdtemp(join(tmpdir(), "void-nvidia-env-"));
-  const app3 = new Workbench({ VOID_DATA_DIR: root3, NVIDIA_API_KEY: "nvkey" }, async (url) =>
-    String(url).endsWith("/models") ? Response.json({ data: [{ id: "m" }] }) : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] }));
+  const root3 = await mkdtemp(join(tmpdir(), "nomo-nvidia-env-"));
+  const app3 = new Workbench(
+    { NOMO_DATA_DIR: root3, NVIDIA_API_KEY: "nvkey" },
+    async (url) =>
+      String(url).endsWith("/models")
+        ? Response.json({ data: [{ id: "m" }] })
+        : Response.json({
+            choices: [{ message: { role: "assistant", content: "ok" } }],
+          }),
+  );
   t.after(async () => {
     await app3.shutdown();
     await rm(root3, { recursive: true, force: true });
@@ -1079,13 +1134,13 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
 });
 
 test("no silent provider fallback - workspace with no provider says so explicitly", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-no-provider-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const root = await mkdtemp(join(tmpdir(), "nomo-no-provider-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.initialize();
   const lines = ui.providerLines().join("\n");
   assert.match(lines, /Provider: unknown|Provider: unknown/);
@@ -1098,22 +1153,27 @@ test("logout preserves readable history, removes profiles and session keys", asy
   // Build a fresh workspace with a configured provider, send a message, then
   // run /logout and verify: history survives, provider is gone, profiles are
   // cleared, and the env-driven auto-configuration is disabled.
-  const root = await mkdtemp(join(tmpdir(), "void-logout-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-logout-"));
   const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "m" }] })
-      : Response.json({ choices: [{ message: { role: "assistant", content: "hello back" } }] });
-  const app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+      : Response.json({
+          choices: [{ message: { role: "assistant", content: "hello back" } }],
+        });
+  const app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-secret" });
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture-secret",
+  });
   const configured = await app.providerState();
   assert.equal(configured.providerId, "custom");
   assert.equal(configured.connected, true);
   assert.equal(configured.profiles.length, 1);
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.initialize();
   await ui.command("first message");
   await app.settled();
@@ -1136,8 +1196,8 @@ test("logout preserves readable history, removes profiles and session keys", asy
 });
 
 test("provider presets stay a choice, not a default", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-preset-choice-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const root = await mkdtemp(join(tmpdir(), "nomo-preset-choice-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -1174,7 +1234,7 @@ test("new commands complete from a slash prefix", () => {
 });
 
 test("/learned reports what the signed chain taught, and what it may not override", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-learned-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-learned-"));
   const { app, env } = await fixtureApp(root, "answer here");
   t.after(async () => {
     await app.shutdown();
@@ -1194,23 +1254,56 @@ test("/learned reports what the signed chain taught, and what it may not overrid
   // Seeded into the same map a refresh fills from `ledger()`, so this renders
   // what a real verified chain would teach without forging one in a test.
   internals.proofs.set(id, [
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    {
+      body: {
+        tool: "nomo_workspace_delete",
+        klass: "r1",
+        decision: "deny:policy",
+      },
+    },
+    {
+      body: {
+        tool: "nomo_workspace_delete",
+        klass: "r1",
+        decision: "deny:policy",
+      },
+    },
+    {
+      body: {
+        tool: "nomo_workspace_delete",
+        klass: "r1",
+        decision: "deny:policy",
+      },
+    },
   ]);
 
   await ui.command("/learned");
   const text = ui.lines().join("\n");
-  assert.match(text, /void_workspace_delete \(r1\) -> hold/);
+  assert.match(text, /nomo_workspace_delete \(r1\) -> hold/);
   // The precedence is the whole safety property, so the view has to say it.
   assert.match(text, /evidence, not authority/);
   assert.match(text, /appended after the/);
 
   // Two refusals sit below the threshold, so they teach nothing.
   internals.proofs.set(id, [
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    {
+      body: {
+        tool: "nomo_workspace_delete",
+        klass: "r1",
+        decision: "deny:policy",
+      },
+    },
+    {
+      body: {
+        tool: "nomo_workspace_delete",
+        klass: "r1",
+        decision: "deny:policy",
+      },
+    },
   ]);
   await ui.command("/learned");
-  assert.doesNotMatch(ui.lines().join("\n"), /void_workspace_delete \(r1\) -> hold/);
+  assert.doesNotMatch(
+    ui.lines().join("\n"),
+    /nomo_workspace_delete \(r1\) -> hold/,
+  );
 });

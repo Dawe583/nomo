@@ -1,7 +1,7 @@
 /**
  * The paid side of the licence line, as one function.
  *
- * `docs/DECISIONS.md` section 5 lists what VOID sells and what it gives away.
+ * `docs/DECISIONS.md` section 5 lists what NOMO sells and what it gives away.
  * The Polar layer in `cloud/billing.mjs` reads and publishes an entitlement
  * honestly; before this module, nothing read it, so a subscription granted no
  * capability at all. An entitlement that gates nothing is worse for the buyer
@@ -128,7 +128,7 @@ import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
  * and `PAID_CAPABILITIES` is one flat list, so a EUR 249 subscriber answers
  * `true` for every entry in it exactly as a design partner does. The only
  * tier signal that exists today is Polar's `productId`, which `billing.mjs`
- * filters on and `VOID_POLAR_PRODUCT_TEAM` names once.
+ * filters on and `NOMO_POLAR_PRODUCT_TEAM` names once.
  *
  * So the honest shape is: **the scope a subscriber gets is the whole paid
  * list, whatever they paid.** Two consequences follow, and neither is a defect

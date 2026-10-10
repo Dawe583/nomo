@@ -1,4 +1,4 @@
-// Minimal Chrome DevTools Protocol driver for local VOID web UI measurement.
+// Minimal Chrome DevTools Protocol driver for local NOMO web UI measurement.
 // No new dependency: Node's global WebSocket plus a Chromium binary this
 // machine already has. Everything binds to 127.0.0.1 only.
 import { spawn } from "node:child_process";
@@ -62,10 +62,10 @@ function chromiumCandidates() {
 
 /** The Chromium to drive, or null when this machine has none. */
 export function findChromium() {
-  if (process.env.VOID_QA_CHROMIUM) {
-    if (!existsSync(process.env.VOID_QA_CHROMIUM))
-      throw new Error(`VOID_QA_CHROMIUM does not exist: ${process.env.VOID_QA_CHROMIUM}`);
-    return process.env.VOID_QA_CHROMIUM;
+  if (process.env.NOMO_QA_CHROMIUM) {
+    if (!existsSync(process.env.NOMO_QA_CHROMIUM))
+      throw new Error(`NOMO_QA_CHROMIUM does not exist: ${process.env.NOMO_QA_CHROMIUM}`);
+    return process.env.NOMO_QA_CHROMIUM;
   }
   return chromiumCandidates().find((path) => existsSync(path)) ?? null;
 }
@@ -78,9 +78,9 @@ export async function launchBrowser() {
   const binary = findChromium();
   if (binary === null)
     throw new Error(
-      "No local Chromium binary found on this platform; set VOID_QA_CHROMIUM to run the browser gates.",
+      "No local Chromium binary found on this platform; set NOMO_QA_CHROMIUM to run the browser gates.",
     );
-  const profile = join(tmpdir(), "void-qa-chrome-" + process.pid);
+  const profile = join(tmpdir(), "nomo-qa-chrome-" + process.pid);
   const child = spawn(binary, [
     "--headless=new",
     "--remote-debugging-port=0",

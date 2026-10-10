@@ -2,7 +2,7 @@
 
 ## Definice dobrého výsledku
 
-Developer zadá úkol ve svém vybraném agentovi. Agent splní explicitní acceptance criteria, vytvoří čitelný diff a spustí uživatelem požadované kontroly. VOID správně rozliší zachycené/mimo scope akce, prokáže policy rozhodnutí a stav vykonání, zabrání rollbacku přes cizí novou práci a nabídne čestnou obnovu jen pro podporované effects. Uživatel může dokončenou změnu rychle přijmout nebo přesně odmítnout.
+Developer zadá úkol ve svém vybraném agentovi. Agent splní explicitní acceptance criteria, vytvoří čitelný diff a spustí uživatelem požadované kontroly. NOMO správně rozliší zachycené/mimo scope akce, prokáže policy rozhodnutí a stav vykonání, zabrání rollbacku přes cizí novou práci a nabídne čestnou obnovu jen pro podporované effects. Uživatel může dokončenou změnu rychle přijmout nebo přesně odmítnout.
 
 Výstupní kvalita a bezpečné write governance jsou dva samostatné rozměry. Skvěle napsaný patch, který omylem mění špatný source, není úspěch. Úspěšné zablokování útoku není úspěšná programovací odpověď. Dashboard tyto metriky neslepuje do jednoho „AI quality score“.
 
@@ -40,7 +40,7 @@ Vyhodnocení rozdělit na deterministic fixtures (capability, no-effect, policy,
 
 ```text
 Task / suite revision / code commit:
-Host + version / VOID + connector versions / OS / policy digest:
+Host + version / NOMO + connector versions / OS / policy digest:
 Provider + model (if captured), no secret material:
 Expected acceptance / actual commands / exit codes:
 Changed resources / effect IDs / protected path and observed exclusions:

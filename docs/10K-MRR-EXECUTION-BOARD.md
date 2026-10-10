@@ -1,4 +1,4 @@
-# VOID €10k MRR execution board
+# NOMO €10k MRR execution board
 
 **Status:** ready for team execution  
 **Created:** 2026-09-30  
@@ -8,7 +8,7 @@
 
 **Reality check:** [10K-MRR-REALITY-CHECK.md](10K-MRR-REALITY-CHECK.md). €10k is an upside/stretch target; the working base case is €2k–€5k MRR until actual paid cohorts prove otherwise.
 
-**Marketing strategy:** [VOID-MARKETING-MONETIZATION-RESEARCH-2026.md](VOID-MARKETING-MONETIZATION-RESEARCH-2026.md) · **Social pack:** [VOID-SOCIAL-CONTENT-PACK-2026.md](VOID-SOCIAL-CONTENT-PACK-2026.md)
+**Marketing strategy:** [NOMO-MARKETING-MONETIZATION-RESEARCH-2026.md](NOMO-MARKETING-MONETIZATION-RESEARCH-2026.md) · **Social pack:** [NOMO-SOCIAL-CONTENT-PACK-2026.md](NOMO-SOCIAL-CONTENT-PACK-2026.md)
 
 This is the operating board, not a revenue forecast. A row is complete only when its evidence link exists and another person can reproduce or inspect the result.
 
@@ -38,7 +38,7 @@ flowchart LR
 
 **Operating rule:** move right only when the gate below the stage is evidenced. If a gate fails, stop adding volume and fix the bottleneck.
 
-![VOID execution flow](assets/rendered/void-execution-flow.png)
+![NOMO execution flow](assets/rendered/nomo-execution-flow.png)
 
 ### Navigation
 
@@ -50,7 +50,7 @@ flowchart LR
 
 Reach **at least €10,000 of collected recurring monthly revenue in December 2026**, preferably through **eight scoped design partners at an average of €1,250 MRR**, then hold or exceed that level through January–March 2027. Do not count unpaid commitments, grants, one-off work, or illustrative website prices.
 
-The company is not allowed to trade away product truth for the target. VOID must continue to distinguish:
+The company is not allowed to trade away product truth for the target. NOMO must continue to distinguish:
 
 - integrity from correctness;
 - an inverse from a promise of universal reversibility;

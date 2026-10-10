@@ -6,7 +6,7 @@ import { assertUniqueIds, findConnector, type Connector } from "./index.ts";
 const postgres: Connector = { id: "postgres", surface: "postgres.row" };
 const s3: Connector = { id: "s3", surface: "aws.s3.object" };
 
-describe("@void/connectors", () => {
+describe("@nomo/connectors", () => {
   test("resolves by id from the list it is handed", () => {
     assert.equal(findConnector([postgres, s3], "s3"), s3);
   });

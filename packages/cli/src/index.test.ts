@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { parseInvocation, withDefaultTui } from "./index.ts";
 
-describe("@void/cli", () => {
+describe("@nomo/cli", () => {
   test("bare command and leading TUI flags default to the live workspace", () => {
     assert.deepEqual(withDefaultTui([]), ["tui"]);
     assert.deepEqual(withDefaultTui(["--once", "--view", "runs"]), [
@@ -40,7 +40,7 @@ describe("@void/cli", () => {
   test("no arguments is a usage line, not a crash", () => {
     const parsed = parseInvocation([]);
     assert.equal(parsed.ok, false);
-    assert.match(parsed.ok ? "" : parsed.reason, /^usage: void /);
+    assert.match(parsed.ok ? "" : parsed.reason, /^usage: nomo /);
   });
 
   test("the barrel tracks the live command list, including update", () => {

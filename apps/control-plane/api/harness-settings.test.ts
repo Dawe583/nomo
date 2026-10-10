@@ -14,8 +14,8 @@ import {listenControlPlane} from "./server.ts";
  */
 
 test("PATCH /api/harness-settings applies a limit and GET reports it with its consumer",async t=>{
-  const directory=await mkdtemp(join(tmpdir(),"void-api-harness-settings-"));
-  const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+  const directory=await mkdtemp(join(tmpdir(),"nomo-api-harness-settings-"));
+  const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
   t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
   const origin=`http://127.0.0.1:${server.port}`;
   const patch=(body:unknown)=>fetch(origin+"/api/harness-settings",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -48,8 +48,8 @@ test("PATCH /api/harness-settings applies a limit and GET reports it with its co
 });
 
 test("PATCH /api/harness-settings refuses an unknown key rather than ignoring it",async t=>{
-  const directory=await mkdtemp(join(tmpdir(),"void-api-harness-unknown-"));
-  const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+  const directory=await mkdtemp(join(tmpdir(),"nomo-api-harness-unknown-"));
+  const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
   t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
   const origin=`http://127.0.0.1:${server.port}`;
   const patch=(body:unknown)=>fetch(origin+"/api/harness-settings",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -68,4 +68,39 @@ test("PATCH /api/harness-settings refuses an unknown key rather than ignoring it
   // absent from the misspelled body, so it must still read as the default.
   const unchanged=await(await fetch(origin+"/api/harness-settings")).json() as {settings:{maxQueuedRuns:number}};
   assert.equal(unchanged.settings.maxQueuedRuns,20);
+});
+
+test("maxRequestBytes is the bound the server enforces, not only the one it advertises",async t=>{
+  const directory=await mkdtemp(join(tmpdir(),"nomo-api-harness-body-"));
+  const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
+  t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
+  const origin=`http://127.0.0.1:${server.port}`;
+  const post=(body:unknown)=>fetch(origin+"/api/sessions",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+  // Comfortably over the shipped 64 KiB default, and small enough that the
+  // clamp ceiling of 10 MiB is nowhere near.
+  const longModel="m".repeat(200_000);
+
+  // 413, and not the 500 this used to produce: a body the operator sent is
+  // too big, which is a refusal rather than a fault in NOMO.
+  const refused=await post({prompt:"hello",model:longModel});
+  assert.equal(refused.status,413,"a body over the default bound was accepted");
+  const refusal=await refused.json() as {error:string;message:string};
+  assert.equal(refusal.error,"request_too_large");
+  assert.match(refusal.message,/maxRequestBytes/);
+
+  const raised=await fetch(origin+"/api/harness-settings",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({maxRequestBytes:1048576})});
+  assert.equal(raised.status,200);
+
+  // Past both the shipped literal and the old default. The transport bound has
+  // to stop governing here, or raising the setting moved only the number
+  // `capabilities` advertises.
+  const accepted=await post({prompt:"hello",model:longModel});
+  assert.notEqual(accepted.status,413,"maxRequestBytes did not widen the enforced bound");
+
+  // Lowering it must tighten the transport again, or the setting could only
+  // ever widen the bound and an operator could not reduce their own exposure.
+  const lowered=await fetch(origin+"/api/harness-settings",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({maxRequestBytes:2048})});
+  assert.equal(lowered.status,200);
+  const tightened=await post({prompt:"hello",model:longModel});
+  assert.equal(tightened.status,413,"maxRequestBytes did not narrow the enforced bound");
 });

@@ -79,7 +79,7 @@ export type CachedVerify = {
   readonly at: string;
 };
 
-const CACHE_KEY = "void-ledger-verify";
+const CACHE_KEY = "nomo-ledger-verify";
 
 function readAll(
   store: Pick<Storage, "getItem">,

@@ -1,4 +1,4 @@
-// Real browser measurement for the VOID web workbench (D04.01, D04.04 - D04.08).
+// Real browser measurement for the NOMO web workbench (D04.01, D04.04 - D04.08).
 //
 //   node scripts/src/build-web.mjs
 //   node scripts/src/ui-matrix.mjs            # markdown report on stdout
@@ -165,16 +165,16 @@ async function startFixture() {
     const messages = Array.isArray(input.messages) ? input.messages : [];
     const last = messages.at(-1) ?? { role: "user" };
     const write = (Array.isArray(input.tools) ? input.tools : []).find((tool) =>
-      (tool.function?.description ?? "").startsWith("void_workspace_write:"),
+      (tool.function?.description ?? "").startsWith("nomo_workspace_write:"),
     );
     // A slow reply keeps a real "running" state observable for Stop and cancel.
-    if (process.env.VOID_QA_SLOW) await new Promise((r) => setTimeout(r, 8000));
+    if (process.env.NOMO_QA_SLOW) await new Promise((r) => setTimeout(r, 8000));
     const message = last.role === "tool"
       ? { role: "assistant", content: LONG_REPLY }
       : write
         ? {
             role: "assistant",
-            content: "QA fixture: writing the plan through the real VOID document tool.",
+            content: "QA fixture: writing the plan through the real NOMO document tool.",
             tool_calls: [{
               id: "qa-" + Date.now(),
               type: "function",
@@ -200,10 +200,10 @@ export async function startDemoServer() {
   // has to stay in place for the whole measurement run.
   const previous = { ...process.env };
   Object.assign(process.env, {
-    VOID_PUBLIC_DEMO: "1",
-    VOID_DEMO_NVIDIA_KEY: "qa-fixture",
-    VOID_SECRET_KEY: "ui-matrix-only-".repeat(4),
-    VOID_LOCAL_TEST: "1",
+    NOMO_PUBLIC_DEMO: "1",
+    NOMO_DEMO_NVIDIA_KEY: "qa-fixture",
+    NOMO_SECRET_KEY: "ui-matrix-only-".repeat(4),
+    NOMO_LOCAL_TEST: "1",
   });
   const values = new Map();
   const app = express();
@@ -244,12 +244,12 @@ export async function startDemoServer() {
 }
 
 async function startWorkspace(fixturePort) {
-  const directory = await mkdtemp(join(tmpdir(), "void-ui-matrix-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-ui-matrix-"));
   const app = createControlPlaneServer({
     env: {
-      VOID_DATA_DIR: directory,
-      VOID_LEDGER_DIR: join(directory, "ledger"),
-      VOID_PERMISSION_MODE: "normal",
+      NOMO_DATA_DIR: directory,
+      NOMO_LEDGER_DIR: join(directory, "ledger"),
+      NOMO_PERMISSION_MODE: "normal",
     },
   });
   await new Promise((resolve) => app.listen(0, "127.0.0.1", resolve));
@@ -637,8 +637,8 @@ async function measureThemesAndLocales(page, origin, sessionPath) {
       await page.goto(origin + sessionPath);
     await waitForApp(page, ".composer .send");
       await page.evaluate(`(() => {
-        localStorage.setItem("void-appearance", ${JSON.stringify(theme)});
-        localStorage.setItem("void-locale", ${JSON.stringify(locale)});
+        localStorage.setItem("nomo-appearance", ${JSON.stringify(theme)});
+        localStorage.setItem("nomo-locale", ${JSON.stringify(locale)});
         return true;
       })()`);
       await page.goto(origin + sessionPath);
@@ -659,7 +659,7 @@ async function measureThemesAndLocales(page, origin, sessionPath) {
       });
     }
   }
-  await page.evaluate(`(() => { localStorage.removeItem("void-appearance"); localStorage.removeItem("void-locale"); return true; })()`);
+  await page.evaluate(`(() => { localStorage.removeItem("nomo-appearance"); localStorage.removeItem("nomo-locale"); return true; })()`);
   return rows;
 }
 
@@ -719,7 +719,7 @@ async function seedConversation(page, origin) {
   await waitForApp(page);
   for (let i = 0; i < 3; i++) {
     await page.evaluate(setDraft(
-      "Popiš prosím migrační plán pro VOID workbench, včetně doložitelného ledger záznamu a vratné operace. Bod " + (i + 1) + ".",
+      "Popiš prosím migrační plán pro NOMO workbench, včetně doložitelného ledger záznamu a vratné operace. Bod " + (i + 1) + ".",
     ));
     await page.settle();
     await page.evaluate(`(() => {
@@ -1046,7 +1046,7 @@ async function measureApproval(page, origin) {
     set("id", "qa-approver");
     set("name", "QA approver");
     set("systemPrompt", "Write the plan document through the managed workspace tool.");
-    set("allowedTools", "void_workspace_write\\nvoid_workspace_read");
+    set("allowedTools", "nomo_workspace_write\\nvoid_workspace_read");
     set("maxTurns", "4");
     set("maxContextTokens", "32768");
     form.requestSubmit();
@@ -1365,7 +1365,7 @@ async function measureDemo(page, demo) {
       await page.goto(demo.origin + "/demo");
       await waitForApp(page, ".demo-composer", "document.body.innerText.trim().length > 150");
       await page.evaluate(
-        `(() => { localStorage.setItem("void-appearance", ${JSON.stringify(theme)}); localStorage.setItem("void-locale", ${JSON.stringify(locale)}); return true; })()`,
+        `(() => { localStorage.setItem("nomo-appearance", ${JSON.stringify(theme)}); localStorage.setItem("nomo-locale", ${JSON.stringify(locale)}); return true; })()`,
       );
       await page.goto(demo.origin + "/demo");
       await waitForApp(page, ".demo-composer");
@@ -1381,7 +1381,7 @@ async function measureDemo(page, demo) {
       });
     }
   }
-  await page.evaluate(`(() => { localStorage.removeItem("void-appearance"); localStorage.removeItem("void-locale"); return true; })()`);
+  await page.evaluate(`(() => { localStorage.removeItem("nomo-appearance"); localStorage.removeItem("nomo-locale"); return true; })()`);
   return rows;
 }
 
@@ -1452,11 +1452,11 @@ async function measureGallery(page, origin) {
   for (const theme of ["light", "dark"]) {
     await page.setViewport(1280, 800);
     await page.goto(origin + path);
-    await page.evaluate(`(() => { localStorage.setItem("void-appearance", ${JSON.stringify(theme)}); return true; })()`);
+    await page.evaluate(`(() => { localStorage.setItem("nomo-appearance", ${JSON.stringify(theme)}); return true; })()`);
     const result = await load(1280, 800);
     themes.push({ theme, appliedTheme: result.theme, ...pick(result) });
   }
-  await page.evaluate(`(() => { localStorage.removeItem("void-appearance"); return true; })()`);
+  await page.evaluate(`(() => { localStorage.removeItem("nomo-appearance"); return true; })()`);
 
   // D04.08 every keyboard focus stop shows a visible ring.
   await load(1280, 800);
@@ -1637,7 +1637,7 @@ export async function measure() {
     ).join("\n");
     await page.evaluate(setDraft(longDraft));
     await page.settle();
-    const attachment = join(tmpdir(), "void-ui-matrix-attachment.md");
+    const attachment = join(tmpdir(), "nomo-ui-matrix-attachment.md");
     await writeFile(attachment, "# Přiložený dokument\n\nObsah pro ověření výšky composeru.\n");
     const inputNode = await page.evaluate(
       `(() => { const input = document.querySelector('.attach-button input[type=file]'); return input ? 1 : 0; })()`,
@@ -1754,11 +1754,11 @@ export async function measure() {
       const area = document.querySelector(".composer textarea");
       if (!area) return false;
       area.focus();
-      window.__voidKeys = [];
+      window.__nomoKeys = [];
       // A recorder, never a canceller: preventing the default here would hide
       // exactly the behaviour under test.
       area.addEventListener("keydown", (e) => {
-        window.__voidKeys.push({ key: e.key, isComposing: e.isComposing, ctrl: e.ctrlKey, meta: e.metaKey });
+        window.__nomoKeys.push({ key: e.key, isComposing: e.isComposing, ctrl: e.ctrlKey, meta: e.metaKey });
       });
       return true;
     })()`);
@@ -1789,7 +1789,7 @@ export async function measure() {
         // The newest user row by its content, not a row count: a refetch can
         // add and drop rows, but the sent text either arrived or it did not.
         lastUser: [...document.querySelectorAll(".message.user .prose")].map((node) => node.innerText.trim()).at(-1) ?? null,
-        keys: window.__voidKeys ?? [],
+        keys: window.__nomoKeys ?? [],
       }))()`);
     await page.send("Input.imeSetComposition", { text: "př", selectionStart: 2, selectionEnd: 2 });
     await page.settle();
@@ -1828,7 +1828,7 @@ export async function measure() {
     };
 
     // D04.04 focus after cancelling a stream
-    process.env.VOID_QA_SLOW = "1";
+    process.env.NOMO_QA_SLOW = "1";
     await page.setViewport(1280, 800);
     await page.goto(workspace.origin + sessionPath);
     await waitForApp(page, ".composer .send");
@@ -1863,7 +1863,7 @@ export async function measure() {
         return node.tagName.toLowerCase() + "." + (typeof node.className === "string" ? node.className : "");
       })()`),
     };
-    delete process.env.VOID_QA_SLOW;
+    delete process.env.NOMO_QA_SLOW;
 
     // D04.08 keyboard focus walk
     await page.setViewport(1280, 800);
@@ -1947,7 +1947,7 @@ export async function measure() {
     // until the end keeps the other three from being measured through a
     // composer that is not allowed to transmit. The locale is pinned so the
     // exact strings under test are the ones an operator would read.
-    await page.evaluate(`(() => { localStorage.setItem("void-locale", "en"); return true; })()`);
+    await page.evaluate(`(() => { localStorage.setItem("nomo-locale", "en"); return true; })()`);
     // A state whose measurement broke is a state that was not driven, and the
     // reason travels with it into the gate's output. Letting the throw escape
     // would fail the whole report instead of naming this one hole.
@@ -1967,7 +1967,7 @@ export async function measure() {
       recovery: await drive("recovery", () => measureRecovery(page, workspace.origin)),
       rateLimit: await drive("rateLimit", () => measureRateLimit(page, workspace.origin)),
     };
-    await page.evaluate(`(() => { localStorage.removeItem("void-locale"); return true; })()`);
+    await page.evaluate(`(() => { localStorage.removeItem("nomo-locale"); return true; })()`);
 
     // D04.01/D04.05/D04.06 for the public demo surface
     report.demo = await measureDemo(page, demo);

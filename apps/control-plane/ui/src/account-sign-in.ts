@@ -241,8 +241,8 @@ export function accountCopy(t: Copy) {
   return {
     heading: t("Přihlaste se ke svému účtu.", "Sign in to your account."),
     intro: t(
-      "Toto je váš účet VOID. Pozná vás e-mail a heslo.",
-      "This is your VOID account. You are recognised by your email and password.",
+      "Toto je váš účet NOMO. Pozná vás e-mail a heslo.",
+      "This is your NOMO account. You are recognised by your email and password.",
     ),
     machine: t(
       "Přístupový token pro pracovní prostor je jiná věc: patří tomu, kdo tento server provozuje, ne vám. Tento formulář token nechce.",

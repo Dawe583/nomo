@@ -223,9 +223,9 @@ async function main(args) {
     throw new Error("Usage: node scripts/src/bench.mjs [--scale N] [--json]; N must be a positive safe integer");
   }
   const scale = Number(values.scale);
-  const dir = await mkdtemp(join(tmpdir(), "void-bench-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-bench-"));
   try {
-    const signer = keyProviderFromPkcs8(Buffer.from(process.env.VOID_SIGNING_KEY ?? "", "base64"));
+    const signer = keyProviderFromPkcs8(Buffer.from(process.env.NOMO_SIGNING_KEY ?? "", "base64"));
     const now = () => process.hrtime.bigint();
     let seed = 42;
     const random = () => {
@@ -263,7 +263,7 @@ if (process.send === undefined) {
   const { privateKey } = generateKeyPairSync("ed25519");
   const key = privateKey.export({ format: "der", type: "pkcs8" }).toString("base64");
   const child = fork(new URL(import.meta.url), process.argv.slice(2), {
-    env: { ...process.env, VOID_SIGNING_KEY: key },
+    env: { ...process.env, NOMO_SIGNING_KEY: key },
     execArgv: [],
   });
   child.on("error", (error) => { console.error(error.message); process.exitCode = 1; });

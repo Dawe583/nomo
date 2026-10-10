@@ -1,27 +1,27 @@
-# A recovery receipt, verified without VOID
+# A recovery receipt, verified without NOMO
 
 This directory produces one receipt against a real PostgreSQL server and then
-checks it with SQL that does not involve VOID at all.
+checks it with SQL that does not involve NOMO at all.
 
 The claim being demonstrated has two halves, and the second half is the one
 that matters:
 
-1. VOID reverses a single effect in a live system and does not disturb anything
+1. NOMO reverses a single effect in a live system and does not disturb anything
    else.
 2. A third party can confirm the reversal **from the database alone**, without
-   trusting VOID, its signing key, or its ledger.
+   trusting NOMO, its signing key, or its ledger.
 
 ## What it does
 
-`run.mjs` connects to a PostgreSQL database named by `VOID_PG_URL`, installs the
+`run.mjs` connects to a PostgreSQL database named by `NOMO_PG_URL`, installs the
 managed recovery schema, and then:
 
 1. Creates a two-row table, `public.account`.
 2. Dispatches one agent write through the runtime: `public.account` row 1,
    `balance` 10 to 0. The write succeeds.
-3. **Outside VOID**, a finance approval writes to row 2: `balance` 90 to 75.
+3. **Outside NOMO**, a finance approval writes to row 2: `balance` 90 to 75.
 4. Plans the recovery and applies the inverse.
-5. Prints the receipt from `void_recovery.recoveries`.
+5. Prints the receipt from `nomo_recovery.recoveries`.
 
 The result is that row 1 is back to 10 and row 2 keeps 75. A point-in-time
 restore to the moment before step 2 would have destroyed row 2's legitimate
@@ -30,14 +30,14 @@ change; a per-effect inverse does not. That difference is the product.
 ## Run it
 
 ```sh
-export VOID_PG_URL="postgres://void@127.0.0.1:5432/void_demo"
+export NOMO_PG_URL="postgres://void@127.0.0.1:5432/void_demo"
 node --experimental-strip-types scripts/receipt-demo/run.mjs
 ```
 
 Then, as anyone who can reach the database:
 
 ```sh
-psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
+psql "$NOMO_PG_URL" -f docs/RECEIPT-VERIFY.sql
 ```
 
 `docs/RECEIPT-VERIFY.sql` prints three checks and a final verdict:
@@ -53,7 +53,7 @@ psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
 Run against PostgreSQL 17.11 on 2026-10-04:
 
 - agent write: `succeeded` (row 1 to `balance 0`, note "spent by agent")
-- finance write, outside VOID: row 2 to `balance 75`
+- finance write, outside NOMO: row 2 to `balance 75`
 - inverse: `restored`
 - after: row 1 is `balance 10`, row 2 is still `balance 75`
 - `RECEIPT-VERIFY.sql`: `PASS`
@@ -95,15 +95,15 @@ database that had been tampered with after the receipt was written.
 
 ```sh
 # honest database
-psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
+psql "$NOMO_PG_URL" -f docs/RECEIPT-VERIFY.sql
 #   PASS: every receipt claiming a restoration is one the live table confirms
 
-# now change the row the receipt names, without touching VOID
-psql "$VOID_PG_URL" -c "UPDATE public.account SET note='tampered after the receipt' WHERE id=1;"
-psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
+# now change the row the receipt names, without touching NOMO
+psql "$NOMO_PG_URL" -c "UPDATE public.account SET note='tampered after the receipt' WHERE id=1;"
+psql "$NOMO_PG_URL" -f docs/RECEIPT-VERIFY.sql
 #   FAIL: a receipt claims a restoration the live table does not show
 ```
 
 Both results were observed against PostgreSQL 17.11 on 2026-10-04. The verdict
 changes because the table changed, which is the whole point: the answer comes
-from the customer's database, not from VOID's word.
+from the customer's database, not from NOMO's word.

@@ -1,6 +1,6 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.live = function (root) {
-  var F = window.VOID_FIXTURES;
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.live = function (root) {
+  var F = window.NOMO_FIXTURES;
   var wrap = document.createElement("div");
   var paused = false;
   var filter = "all";
@@ -52,7 +52,7 @@ window.VOID_VIEWS.live = function (root) {
   paint();
   root.appendChild(wrap);
   function stop() { if (timer) clearInterval(timer); timer = null; }
-  window.VOID_LIVE_STOP = stop;
+  window.NOMO_LIVE_STOP = stop;
   if (!reduce) {
     timer = setInterval(function () { if (!paused && document.body.contains(wrap) && extra < 30) { extra++; paint(); } }, 3000);
   }

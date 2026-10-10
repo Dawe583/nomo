@@ -17,6 +17,7 @@
     "update",
     "approve",
     "approvals",
+    "state",
     "attest",
     "export",
     "policy",

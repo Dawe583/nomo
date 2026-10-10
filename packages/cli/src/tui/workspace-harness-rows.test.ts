@@ -29,10 +29,10 @@ async function ledgerRows(
   ui: WorkspaceTui;
   app: Workbench;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-harness-rows-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-harness-rows-"));
   const env = {
-    VOID_DATA_DIR: root,
-    VOID_HOOK_COMMANDS: JSON.stringify(hookCommands),
+    NOMO_DATA_DIR: root,
+    NOMO_HOOK_COMMANDS: JSON.stringify(hookCommands),
   };
   const app = new Workbench(env, assistantFetcher("ok"));
   await app.configure({
@@ -137,7 +137,7 @@ test("every selectable agent gets a row, and the selected one is marked", async 
   const preset = rowsOf(ui).find((r) => r.id === "agent:default");
   assert.ok(preset, "no row for the default preset");
   assert.match(preset.label, /^◆ agent default$/);
-  assert.match(preset.lines.join("\n"), /Preset default: VOID default\./);
+  assert.match(preset.lines.join("\n"), /Preset default: NOMO default\./);
 
   ui.agentId = "planner";
   const marked = rowsOf(ui).find((r) => r.id === "agent:planner");
@@ -186,7 +186,7 @@ test("a saved profile row shows the full panel, with the system prompt bounded",
     id: "auditor-custom",
     name: "Custom auditor",
     systemPrompt: "x".repeat(300),
-    allowedTools: ["void_workspace_list"],
+    allowedTools: ["nomo_workspace_list"],
     policyProfile: "default",
     maxTurns: 5,
     maxContextTokens: 8192,
@@ -199,7 +199,7 @@ test("a saved profile row shows the full panel, with the system prompt bounded",
     body,
     /Profile auditor-custom: policy default, max turns 5, max context tokens 8192/,
   );
-  assert.match(body, /Allowed tools: void_workspace_list/);
+  assert.match(body, /Allowed tools: nomo_workspace_list/);
   assert.match(body, /System prompt: x{160}… \(\+140 chars\)/);
 });
 

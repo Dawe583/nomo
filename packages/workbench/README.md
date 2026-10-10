@@ -1,13 +1,13 @@
-# VOID agent workbench
+# NOMO agent workbench
 
-A compatible-provider model loop whose tools always go through the VOID SDK and
+A compatible-provider model loop whose tools always go through the NOMO SDK and
 its fail-closed MCP proxy. There is no direct shell or database tool bypass.
 
 The runtime owns provider validation, model discovery, session state, cancellation
-and the shared approval broker. GUI and `void agent` consume this domain.
+and the shared approval broker. GUI and `nomo agent` consume this domain.
 
-Configure `VOID_UPSTREAM_COMMAND` as a JSON array, `VOID_POLICY_PATH` as a policy
-file, and optionally `VOID_FACTS_PATH` and `VOID_LEDGER_DIR`. A missing upstream or
+Configure `NOMO_UPSTREAM_COMMAND` as a JSON array, `NOMO_POLICY_PATH` as a policy
+file, and optionally `NOMO_FACTS_PATH` and `NOMO_LEDGER_DIR`. A missing upstream or
 policy refuses the session. Each session has its own ledger workspace, avoiding
 concurrent writers to the same JSONL chain.
 
@@ -47,7 +47,7 @@ contacted at all.
 Provider profiles and conversations are stored in the encrypted local workspace
 snapshot. Session snapshots keep the provider endpoint and kind, not duplicate
 API keys. By default, `workspace.enc` is encrypted with `workspace.key` in the
-same owner-only directory. The host can provide `VOID_WORKSPACE_KEY`; the
+same owner-only directory. The host can provide `NOMO_WORKSPACE_KEY`; the
 desktop shell can source it from OS credential storage. This protects stored
 state from other accounts, not from the same user or copies of the directory.
 

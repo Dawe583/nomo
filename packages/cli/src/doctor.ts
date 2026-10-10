@@ -18,6 +18,7 @@ import {
   resolveVerificationKey,
   verificationKeyNote,
 } from "../../ledger/src/verify-key.ts";
+import { dataDir as productDataDir } from "../../ledger/src/paths.ts";
 
 export type DoctorIo = {
   readonly stdout: (line: string) => void;
@@ -74,7 +75,7 @@ export async function runDoctorCommand(
 ): Promise<number> {
   if (argv[0] === "init") {
     if (argv.length !== 1) {
-      io.stderr("usage: void doctor init");
+      io.stderr("usage: nomo doctor init");
       return 2;
     }
     return runDoctorInit(argv, io, deps);
@@ -87,7 +88,7 @@ export async function runDoctorCommand(
       !argv[i + 1] ||
       argv[i + 1]!.startsWith("--")
     ) {
-      io.stderr("usage: void doctor [--recovery-config <file>] | void doctor init");
+      io.stderr("usage: nomo doctor [--recovery-config <file>] | nomo doctor init");
       return 2;
     }
     recoveryConfig = resolve(argv[i + 1]!);
@@ -114,8 +115,8 @@ export async function runDoctorCommand(
     results.push({ status: "WARN", name: "pnpm", detail: "not found; only needed to build from source" });
   }
   const home = env.HOME ?? homedir();
-  const dataDir = env.VOID_DATA_DIR ?? join(home, ".void", "workbench");
-  const ledgerDir = env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
+  const dataDir = env.NOMO_DATA_DIR ?? join(productDataDir(home), "workbench");
+  const ledgerDir = env.NOMO_LEDGER_DIR ?? join(productDataDir(home), "ledger");
   for (const [name, dir] of [["data-dir", dataDir], ["ledger-dir", ledgerDir]] as const) {
     const state = await writable(dir);
     results.push(
@@ -150,11 +151,11 @@ export async function runDoctorCommand(
   };
   const keyDir = devKeyDir(home);
   const keyFile = join(keyDir, "dev-ed25519.pkcs8");
-  if (env.VOID_SIGNING_KEY !== undefined && env.VOID_SIGNING_KEY !== "") {
+  if (env.NOMO_SIGNING_KEY !== undefined && env.NOMO_SIGNING_KEY !== "") {
     results.push({
       status: "INFO",
       name: "signing-key-file",
-      detail: "not used; signing key is supplied through VOID_SIGNING_KEY",
+      detail: "not used; signing key is supplied through NOMO_SIGNING_KEY",
     });
   } else {
     await reportPrivatePath("signing-key-dir", keyDir, "directory");
@@ -173,7 +174,7 @@ export async function runDoctorCommand(
         : { status: "FAIL", name: "ledger-permissions", detail: ledgerAudit.detail ?? "ledger tree failed owner-only checks" },
   );
   try {
-    const workspace = sanitizeWorkspace(env.VOID_WORKSPACE ?? "default");
+    const workspace = sanitizeWorkspace(env.NOMO_WORKSPACE ?? "default");
     await reportPrivatePath(
       "ledger-file",
       join(ledgerDir, `${workspace}.jsonl`),
@@ -259,11 +260,11 @@ export async function runDoctorCommand(
   }
   // Resolved the same way every verifier surface resolves it, so `doctor`
   // reports the host that is actually configured. It used to look only at
-  // `VOID_VERIFY_KEY`, which reported a host with a perfectly good trust file
+  // `NOMO_VERIFY_KEY`, which reported a host with a perfectly good trust file
   // pinned as unconfigured and never mentioned the pin at all.
   //
   // `allowDegraded` and the retained key are what make the third state
-  // reachable. Without them an operator who set `VOID_VERIFY_ALLOW_SIGNING_KEY`
+  // reachable. Without them an operator who set `NOMO_VERIFY_ALLOW_SIGNING_KEY`
   // was reported as `unset` here while every other surface was quietly
   // verifying with signing key material — so the one command whose job is to
   // tell an operator they are in a degraded mode was the one that could not
@@ -296,7 +297,7 @@ export async function runDoctorCommand(
   );
   // One vocabulary, one derivation. `verificationKeyNote` decides what is
   // worth disclosing; this decides how loudly to say it. The out-of-tree trust
-  // file is a `WARN` and not a `PASS` because VOID infers `operatorSupplied`
+  // file is a `WARN` and not a `PASS` because NOMO infers `operatorSupplied`
   // from the path alone and cannot tell who wrote the bytes, so calling it
   // supplied out of band would claim more than the code knows.
   results.push(
@@ -332,10 +333,10 @@ export async function runDoctorCommand(
   results.push(
     saved
       ? { status: "PASS", name: "provider-state", detail: "saved encrypted state found" }
-      : { status: "WARN", name: "provider-state", detail: "no saved state; connect with /connect or void tui" },
+      : { status: "WARN", name: "provider-state", detail: "no saved state; connect with /connect or nomo tui" },
   );
-  const color = env.VOID_TUI_COLOR === "0" ? "off" : "on";
-  const motion = env.VOID_TUI_MOTION === "0" || env.TERM === "dumb" ? "off" : "on";
+  const color = env.NOMO_TUI_COLOR === "0" ? "off" : "on";
+  const motion = env.NOMO_TUI_MOTION === "0" || env.TERM === "dumb" ? "off" : "on";
   io.stdout(`info terminal: TERM=${env.TERM ?? "unset"} color=${color} motion=${motion}`);
   for (const result of results) io.stdout(`${result.status} ${result.name}: ${result.detail}`);
   const fails = results.filter((r) => r.status === "FAIL").length;
@@ -362,14 +363,14 @@ async function runDoctorInit(
     { status: "PASS", name: "mcp-surfaces", detail: "enumerating configured MCP tool surfaces" },
   );
   const mcpTools: readonly string[] = [
-    "void_recovery_reconcile",
-    "void_execute",
-    "void_recovery_plan",
-    "void_recovery_apply",
-    "void_reconcile",
-    "void_recovery_plan_job",
-    "void_recovery_status_job",
-    "void_recovery_apply_job",
+    "nomo_recovery_reconcile",
+    "nomo_execute",
+    "nomo_recovery_plan",
+    "nomo_recovery_apply",
+    "nomo_reconcile",
+    "nomo_recovery_plan_job",
+    "nomo_recovery_status_job",
+    "nomo_recovery_apply_job",
   ] as const;
   for (const tool of mcpTools) {
     results.push({
@@ -398,8 +399,8 @@ async function runDoctorInit(
 
   // 3. Check owner-only state directories without changing their permissions.
   const home = env.HOME ?? homedir();
-  const dataDir = env.VOID_DATA_DIR ?? join(home, ".void", "workbench");
-  const ledgerDir = env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
+  const dataDir = env.NOMO_DATA_DIR ?? join(productDataDir(home), "workbench");
+  const ledgerDir = env.NOMO_LEDGER_DIR ?? join(productDataDir(home), "ledger");
   for (const [name, dir] of [["data-dir", dataDir], ["ledger-dir", ledgerDir]] as const) {
     const audit = await auditPrivatePath(dir, "directory");
     const writeState = audit.state === "private" ? await writable(dir) : undefined;

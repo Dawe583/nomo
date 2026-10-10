@@ -1,7 +1,7 @@
 """Finish the fully 3D v2 edit; preserve v1 and reuse its original score.
 
-python marketing/teaser/finish_v2.py /tmp/void-teaser-v2 marketing/teaser --prepare
-python marketing/teaser/finish_v2.py /tmp/void-teaser-v2 marketing/teaser
+python marketing/teaser/finish_v2.py /tmp/nomo-teaser-v2 marketing/teaser --prepare
+python marketing/teaser/finish_v2.py /tmp/nomo-teaser-v2 marketing/teaser
 """
 import subprocess
 import sys
@@ -53,7 +53,7 @@ def main():
         for i,f in enumerate(frames):sheet.paste(compose(f).resize((270,480)),((i%5)*270,(i//5)*480))
         sheet.save(OUT/'v2-storyboard.jpg',quality=96);return
     score()
-    target=OUT/'VOID-TEASER-V2-3D-1080x1920.mp4'
+    target=OUT/'NOMO-TEASER-V2-3D-1080x1920.mp4'
     cmd=['ffmpeg','-y','-hide_banner','-loglevel','warning',
          '-f','rawvideo','-pix_fmt','rgb24','-s','1080x1920','-r','30','-i','-',
          '-i',str(WORK/'score-v2.wav'),'-map','0:v','-map','1:a',
@@ -66,7 +66,7 @@ def main():
     p=subprocess.Popen(cmd,stdin=subprocess.PIPE)
     for f in range(450):
         im=compose(f);p.stdin.write(im.tobytes())
-        if f==410:im.save(OUT/'VOID-TEASER-V2-cover.jpg',quality=96)
+        if f==410:im.save(OUT/'NOMO-TEASER-V2-cover.jpg',quality=96)
         if f%30==0:print(f'V2_FINISH {f}/450',flush=True)
     p.stdin.close();assert p.wait()==0,'FFmpeg export failed'
 

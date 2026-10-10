@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { ApprovalBroker } from "../../policy/src/approvals.ts";
 import { pumpApprovals } from "../src/approval-loop.ts";
 import { runProxy, PolicyStartupError, ProxyStartupError, UpstreamStartError } from "../src/bin.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
 
 const args = process.argv.slice(2);
 
@@ -37,7 +38,7 @@ async function main() {
   if (posture !== "fail-closed" && posture !== "observe") throw new Error("--posture must be fail-closed or observe");
 
   if (!/^[a-zA-Z0-9_-]+$/.test(workspace)) throw new Error("invalid workspace");
-  const stateDir = approvalsDir ?? join(homedir(), ".nomo", "approvals", workspace);
+  const stateDir = approvalsDir ?? join(dataDir(homedir()), "approvals", workspace);
   let pump;
   const upstreamArgs = rawArgs === undefined || rawArgs === "" ? [] : rawArgs.split(",");
   try {

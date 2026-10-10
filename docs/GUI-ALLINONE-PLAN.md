@@ -1,6 +1,6 @@
-# VOID all-in-one GUI plan
+# NOMO all-in-one GUI plan
 
-Goal: one VOID application that operators use all day. It keeps the
+Goal: one NOMO application that operators use all day. It keeps the
 reversibility core (classify, decide, signed ledger, verified undo,
 offline attestation) and adds the daily driver surfaces of Hermes Agent
 Desktop, with the operator's real tools preconfigured: the 16 MCP
@@ -32,9 +32,9 @@ Each has one honest line below and stays out of the phases.
 - opencode user config: tokenharbor provider, chrome-devtools,
   playwright, fetch MCP, prettier formatter, prime-model-sync plugin.
 
-## 2. Hermes feature map to VOID equivalents
+## 2. Hermes feature map to NOMO equivalents
 
-| Hermes surface                     | VOID equivalent                                         | State                      |
+| Hermes surface                     | NOMO equivalent                                         | State                      |
 | ---------------------------------- | ------------------------------------------------------- | -------------------------- |
 | Chat-first window, left sidebar    | Control plane chat plus sessions                        | Exists, needs F1 polish    |
 | Same sessions everywhere           | Shared Workbench across TUI, GUI, desktop               | Exists                     |
@@ -115,7 +115,7 @@ No phase starts until the previous gate is green.
 - Context meter with per-category tokens in chat; queue editing for
   prompts sent during a run.
 - Status bar: model, approvals count, ctx, ledger head, theme toggle.
-- Exit: `pnpm --filter @void/control-plane-ui typecheck`,
+- Exit: `pnpm --filter @nomo/control-plane-ui typecheck`,
   `node scripts/src/check-tests.mjs` green, manual pass on 13 inch
   and 4K widths with keyboard only.
 

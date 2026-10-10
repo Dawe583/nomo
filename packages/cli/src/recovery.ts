@@ -95,7 +95,7 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: void recovery conformance [--adapter filesystem.managed] OR void recovery doctor --config file OR void recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
+      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -108,7 +108,7 @@ export async function runRecoveryCommand(
     return report.valid ? 0 : 1;
   }
   // Every other action refuses with the same description, so the reason a
-  // command stopped is the report `void recovery doctor` would have printed.
+  // command stopped is the report `nomo recovery doctor` would have printed.
   const described = describeRecoveryConfig(config, configPath);
   if (!described.valid) throw new Error(recoveryConfigRefusal(described));
   if (action === "health") {
@@ -306,7 +306,7 @@ export async function runRecoveryCommand(
         return false;
       return action === "serve"
         ? allowed(
-            "void_execute",
+            "nomo_execute",
             proposal.observation.reversibility,
             proposal.observation.blastRadius.count ?? undefined,
           )
@@ -324,8 +324,8 @@ export async function runRecoveryCommand(
       permitted: (tool) =>
         allowed(
           tool,
-          tool === "void_recovery_plan" ? "r0" : "r1",
-          tool === "void_recovery_plan" ? 0 : 1,
+          tool === "nomo_recovery_plan" ? "r0" : "r1",
+          tool === "nomo_recovery_plan" ? 0 : 1,
         ),
     });
     await server.connect(new StdioServerTransport());

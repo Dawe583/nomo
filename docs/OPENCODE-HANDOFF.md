@@ -42,7 +42,7 @@ separate patterns. The label carried the class, so the rows _looked_ distinct, b
 `rows` is indexed by id, so selection was ambiguous.
 
 ```
-rules mined: 2 [{"class":"r1","tool":"void_run"},{"class":"r3","tool":"void_run"}]
+rules mined: 2 [{"class":"r1","tool":"nomo_run"},{"class":"r3","tool":"nomo_run"}]
 distinct row ids: 1 -> collision: true
 ```
 
@@ -82,7 +82,7 @@ marker`, passes against unfixed code too: that marker already existed in
 `7111cc0`. It pins a pre-existing invariant, not a fix. Do not count it as
 evidence for the repair.
 
-`pnpm --filter @void/cli run typecheck` and the workbench equivalent are clean with
+`pnpm --filter @nomo/cli run typecheck` and the workbench equivalent are clean with
 the fix applied.
 
 ## What the workbench learned-rules step actually is
@@ -108,11 +108,11 @@ Updated 2026-10-05 by the successor session.
 
 | What                                          | State                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm --filter @void/workbench run typecheck` | clean, measured with the fix applied                                                                                                                                                                                                                                                                                                                                                                                              |
-| `pnpm --filter @void/cli run typecheck`       | clean, measured with the fix applied                                                                                                                                                                                                                                                                                                                                                                                              |
+| `pnpm --filter @nomo/workbench run typecheck` | clean, measured with the fix applied                                                                                                                                                                                                                                                                                                                                                                                              |
+| `pnpm --filter @nomo/cli run typecheck`       | clean, measured with the fix applied                                                                                                                                                                                                                                                                                                                                                                                              |
 | `packages/workbench` suite                    | **194 passing, 0 failing**, measured                                                                                                                                                                                                                                                                                                                                                                                              |
 | `workspace-learned-rows.test.ts`              | **4 passing** with the fix; **1 pass / 3 fail** with the fix stashed, so it has teeth                                                                                                                                                                                                                                                                                                                                             |
-| Full repo `pnpm test`                         | **green, EXIT=0, 2271 tests, 1 could not run** (python/appwrite-mcp has no usable interpreter; noted, not a failure). Measured on `main` 9c37779 detached: `pnpm test` wrote EXIT=0 into `/tmp/void-gate3.log`. Two earlier findings were fixed on the way: the vendoring pack's uninventoried hypothetical path (PR #90) and the `NEWEST_DECISION` pin not moved when the vendoring decision was added to DECISIONS.md (PR #93). |
+| Full repo `pnpm test`                         | **green, EXIT=0, 2271 tests, 1 could not run** (python/appwrite-mcp has no usable interpreter; noted, not a failure). Measured on `main` 9c37779 detached: `pnpm test` wrote EXIT=0 into `/tmp/nomo-gate3.log`. Two earlier findings were fixed on the way: the vendoring pack's uninventoried hypothetical path (PR #90) and the `NEWEST_DECISION` pin not moved when the vendoring decision was added to DECISIONS.md (PR #93). |
 | `packages/cli` full suite                     | 370 passing, 0 failing, measured inside the gate run above                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## The fix, landed
@@ -138,7 +138,7 @@ Done in this stretch:
 - [x] Map what adding read/write/search/run behind the policy and hold path requires
 - [x] Decide where a promoted rule lives and its precedence, owner decision, resolved: derived on read, appended last
 - [x] Implement the mining and promotion once those two decisions were made
-- [x] `index.ts` homedir() no longer reads real `~/.void` keys, deliberate, gated, documented
+- [x] `index.ts` homedir() no longer reads real `~/.nomo` keys, deliberate, gated, documented
 - [x] Repair the red pnpm test gate
 - [x] Commit `docs/TUI-HARNESS-MAP.md` once its line numbers were re-verified against the settled tree
 - [x] Profile `systemPrompt` is visible; `/hook` works and is discoverable
@@ -151,7 +151,7 @@ Open:
 - [ ] **Surface the hooks editor and the per-agent profile panel on the ledger tab.** Checked against `7111cc0`: it carried only the learning-record rows. `/hook` and the `/hooks` read overlay plus `/hook-file` write exist (`workspace.ts:2061, 2028`), `/agents` and `/agent ID` exist, but neither has an interactive field or a tab branch; the ledger tab shows chain entries and learned rows only. Filed as issue #96 for outside contribution.
 - [x] **Run the full repo gate.** Final measured state: `EXIT=0`, 2271 tests, 1 suite not runnable (python/appwrite-mcp interpreter). Two failures found and fixed en route: PR #90 (vendoring path inventory) and PR #93 (NEWEST_DECISION pin).
 - [x] **Vendoring: owner picks A, B, C or D**, chosen: **Option A, record provenance only.** Recorded in `docs/VENDORING-DECISION.md` ("Decision, 2026-10-05") and `docs/DECISIONS.md`. The usage audit that was the largest open gap answered too: omp is consumed nowhere in code; prime-agent is a process contract via prime-bridge, cloud/prime.mjs, team/prime-spawn.sh and the TUI /harness switch. The external binary provenance page is `docs/AGENT-BINARIES.md`.
-- [ ] **63 unmerged branches.** Filed as issue #97 for outside contribution; dump at `/tmp/void-branch-dump-2026-10-05.txt` (84 refs, sha + subject). No branches were deleted and no tree was cleaned.
+- [ ] **63 unmerged branches.** Filed as issue #97 for outside contribution; dump at `/tmp/nomo-branch-dump-2026-10-05.txt` (84 refs, sha + subject). No branches were deleted and no tree was cleaned.
 
 ## Vendoring: what the evidence says
 
@@ -170,7 +170,7 @@ rebrand surface is the library graph, not the binary.
 **Vendoring under `packages/` is partial capture, which is worse than breaking.**
 `pnpm-workspace.yaml` is literally `packages/*`, single-segment. It matches
 `packages/oh-my-pi` and matches nothing deeper. So the vendored root manifest becomes
-a VOID workspace project, its dependencies enter the lockfile, and
+a NOMO workspace project, its dependencies enter the lockfile, and
 `pnpm install --frozen-lockfile`, step 1 of both the `gates` and `hosted-mcp` jobs,
 fails hard, while the 17 real sub-packages stay invisible to pnpm. Worse,
 `scripts/src/check-tests.mjs:53` does `readdirSync` over every directory in

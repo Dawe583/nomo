@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make VOID a coherent coding workspace across web, packaged desktop, and TUI, with NVIDIA NIM `z-ai/glm-5.3-flash` as the default for new sessions when configured, and add the highest-value Claude Code-like workflows without weakening VOID's approval, ledger, and recovery guarantees.
+Make NOMO a coherent coding workspace across web, packaged desktop, and TUI, with NVIDIA NIM `z-ai/glm-5.3-flash` as the default for new sessions when configured, and add the highest-value Claude Code-like workflows without weakening NOMO's approval, ledger, and recovery guarantees.
 
 ## Current facts
 
@@ -67,7 +67,7 @@ The provider adapter sends NVIDIA-compatible request fields only when supported 
 - Publishing or notarizing a desktop installer without signing credentials.
 - Treating NVIDIA trial quotas as a permanent free-service guarantee.
 - Adding a paid fallback that can surprise users.
-- Replacing the existing VOID runtime, policy engine, ledger, or recovery authority.
+- Replacing the existing NOMO runtime, policy engine, ledger, or recovery authority.
 
 ## Official provider reference
 

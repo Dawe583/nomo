@@ -1,7 +1,7 @@
-# VOID €10k MRR technical backlog
+# NOMO €10k MRR technical backlog
 
 **Status:** proposed implementation sequence; no code or release evidence is claimed by this document.
-**Target:** enable a first independent evaluator to install VOID, reach one governed hold, produce a signed sample ledger, and verify it outside the VOID runtime before the December 2026 acquisition push.
+**Target:** enable a first independent evaluator to install NOMO, reach one governed hold, produce a signed sample ledger, and verify it outside the NOMO runtime before the December 2026 acquisition push.
 **Strategy:** [GO-TO-MARKET-10K-MRR.md](GO-TO-MARKET-10K-MRR.md)
 **Date-bound plan:** [GO-TO-MARKET-10K-MRR-2026.md](GO-TO-MARKET-10K-MRR-2026.md)
 **Execution board:** [10K-MRR-EXECUTION-BOARD.md](10K-MRR-EXECUTION-BOARD.md)
@@ -15,10 +15,10 @@ This backlog separates source readiness from publication. The GitHub repository 
 
 | Item | Current source evidence | Status |
 |---|---|---|
-| CLI package metadata | packages/cli/package.json is private, has no package bin, exports raw src/index.ts, and depends on @void/registry via workspace:* | Distribution blocker; keep private until the artifact is self-contained and tested |
-| CLI entry point | packages/cli/bin/void.mjs imports TypeScript and development workspace paths | Must be bundled or compiled for the published consumer artifact |
-| Standalone verifier | packages/verifier/verify-ledger.mjs uses Node built-ins and has an existing self-test; @void/verifier is currently the allowlisted package in scripts/src/release-packaging.test.mjs | Reuse it; add a representative sample bundle and external verification evidence |
-| Existing first-run command | packages/cli/src/init.ts creates local workspace storage and can pin a verification key; it does not emit the complete MCP config and starter policy described in distribution research | Define an explicit MCP bootstrap path without changing ordinary void init semantics |
+| CLI package metadata | packages/cli/package.json is private, has no package bin, exports raw src/index.ts, and depends on @nomo/registry via workspace:* | Distribution blocker; keep private until the artifact is self-contained and tested |
+| CLI entry point | packages/cli/bin/nomo.mjs imports TypeScript and development workspace paths | Must be bundled or compiled for the published consumer artifact |
+| Standalone verifier | packages/verifier/verify-ledger.mjs uses Node built-ins and has an existing self-test; @nomo/verifier is currently the allowlisted package in scripts/src/release-packaging.test.mjs | Reuse it; add a representative sample bundle and external verification evidence |
+| Existing first-run command | packages/cli/src/init.ts creates local workspace storage and can pin a verification key; it does not emit the complete MCP config and starter policy described in distribution research | Define an explicit MCP bootstrap path without changing ordinary nomo init semantics |
 | Registry metadata | server.json and release tests already exist; distribution research records that tool titles and a chosen npm package identity remain open | Validate current manifest, fill remaining metadata, do not publish yet |
 | External release proof | docs/RELEASE.md still requires a clean consumer install, real-service tests, credential-safe CI, and release evidence | No public release claim until every relevant gate passes |
 
@@ -37,7 +37,7 @@ The standalone verifier lane can proceed in parallel with T1. Registry publicati
 - Restore authorized GitHub push access through the existing trusted account flow; do not paste a token into chat, Slack, or a repository file.
 - Run a full-history secret scan over every commit and record scanner, scanned ref/range, findings disposition, and exact commit.
 - Decide whether to make Dawe583/void public. If history is not suitable, choose a clean distribution repository without rewriting product history.
-- Verify who owns the chosen npm name/scope through normal account UI; do not assume @void is controlled by this repository.
+- Verify who owns the chosen npm name/scope through normal account UI; do not assume @nomo is controlled by this repository.
 - Choose one package name from the candidates in DISTRIBUTION-PATH.md; keep a fallback name documented.
 
 **Acceptance:** a dated decision record links the scan result and identifies the public source of truth, release owner, package identity, and rollback owner. Until then the repo and packages stay private.
@@ -46,7 +46,7 @@ The standalone verifier lane can proceed in parallel with T1. Registry publicati
 
 **Owner:** Engineering + Distribution DRIs. **Target:** first engineering slice.
 
-**Source files:** packages/cli/package.json; packages/cli/bin/void.mjs; packages/proxy/bin/void-proxy.mjs; rollup.config.mjs (confirm the actual root config before modifying); scripts/src/release-packaging.test.mjs; relevant CLI build scripts and lockfile only when the chosen change needs them.
+**Source files:** packages/cli/package.json; packages/cli/bin/nomo.mjs; packages/proxy/bin/nomo-proxy.mjs; rollup.config.mjs (confirm the actual root config before modifying); scripts/src/release-packaging.test.mjs; relevant CLI build scripts and lockfile only when the chosen change needs them.
 
 **Work**
 
@@ -59,7 +59,7 @@ The standalone verifier lane can proceed in parallel with T1. Registry publicati
 **Acceptance**
 
 - A packed tarball installs in a clean temporary consumer directory outside the workspace with no workspace symlink and no network access unless a reviewed runtime dependency is explicitly required.
-- Its installed void --help and void --version run as executable programs and return the expected result.
+- Its installed nomo --help and nomo --version run as executable programs and return the expected result.
 - npm pack --dry-run contains no private keys, .env, test-only secrets, unrelated apps, or accidental workspace files.
 - The release packaging test executes the installed bin, not the source-tree entrypoint.
 - All unaffected workspace packages remain private and the release test fails if an unlisted package becomes publishable.
@@ -71,7 +71,7 @@ The standalone verifier lane can proceed in parallel with T1. Registry publicati
 **Owner:** Engineering DRI with Product review. **Target:** after T1's package layout is agreed.
 **Source files:** packages/cli/src/init.ts; packages/cli/src/argv.ts; packages/cli/src/dispatch.ts; policy/config schema and fixtures referenced by the existing CLI path; CLI init tests and clean-install acceptance in scripts/src/release-packaging.test.mjs.
 
-Add an explicit opt-in MCP bootstrap mode, proposed as void init --mcp, that writes a minimal server configuration, a generated agent identity, the selected state directory, a starter policy, and references to encryption/signing key locations. Keep existing ordinary void init behavior intact unless Product review explicitly chooses a migration.
+Add an explicit opt-in MCP bootstrap mode, proposed as nomo init --mcp, that writes a minimal server configuration, a generated agent identity, the selected state directory, a starter policy, and references to encryption/signing key locations. Keep existing ordinary nomo init behavior intact unless Product review explicitly chooses a migration.
 
 **Safety requirements**
 
@@ -102,7 +102,7 @@ Add an explicit opt-in MCP bootstrap mode, proposed as void init --mcp, that wri
 
 **Acceptance**
 
-- The sample bundle verifies outside the runtime with no VOID package import.
+- The sample bundle verifies outside the runtime with no NOMO package import.
 - Both tampered bytes and a wrong public key exit nonzero.
 - The artifact and result are reproducible from documented commands and contain no customer or production data.
 - The README/post points to the bundle, exact verifier command, digest, and limitations.

@@ -1,6 +1,6 @@
-# VOID interface and interaction research
+# NOMO interface and interaction research
 
-VOID should make agent work inspectable and recoverable without turning the chat
+NOMO should make agent work inspectable and recoverable without turning the chat
 into an administration console. The strongest direction is a calm conversation
 surface with a document and recovery inspector, progressive disclosure of
 infrastructure, and an explicit difference between private work and a public
@@ -15,7 +15,7 @@ macOS release uses Tauri and WKWebView; its interface is not implemented in Swif
 
 ## Product identity
 
-The source of the VOID identity is the aperture mark in
+The source of the NOMO identity is the aperture mark in
 `Dawe583/void-empty`, pinned to commit
 `25b5e62d49d614f88804b72b55609c74092d98d8`. Its corner frame, central square and
 center dot are preserved exactly. The current shared SVG uses the same paths.
@@ -32,7 +32,7 @@ documents and the existing signed recovery runtime.
 Claude is useful as a composition reference: a restrained header, a dominant
 conversation, and a composer within reach. This is a design interpretation of
 the requested direction, not a claim that Claude's private component system or
-current iOS application was reverse engineered. VOID retains its own mark,
+current iOS application was reverse engineered. NOMO retains its own mark,
 colors, type and recovery terminology.
 
 ## Mobile Safari and the toolbar
@@ -49,7 +49,7 @@ overcrowding. Less important commands can move into a More menu; native macOS
 and iPadOS also provide automatic toolbar overflow. That automatic native
 behavior should not be confused with a custom web menu.[^2]
 
-For VOID mobile web, the selected layout is a four-column header: menu, a title
+For NOMO mobile web, the selected layout is a four-column header: menu, a title
 that can truncate, new conversation, and options. The title owns the remaining
 width through `minmax(0, 1fr)`. Each icon has a fixed 20 by 20 CSS pixel viewport
 inside a 44 by 44 CSS pixel button. This separates the visible symbol from its
@@ -64,7 +64,7 @@ mobile sheet, reducing the chance that one platform receives a different action.
 
 W3C's WCAG 2.2 minimum target criterion is 24 by 24 CSS pixels with documented
 exceptions. The chosen 44-pixel toolbar targets exceed that minimum; they are a
-VOID product requirement, not a claim that WCAG universally requires 44 pixels.
+NOMO product requirement, not a claim that WCAG universally requires 44 pixels.
 Spacing, focus visibility and target overlap still require inspection.[^3]
 
 Safe-area padding belongs to the outer header and composer edges. WebKit's
@@ -83,14 +83,14 @@ VoiceOver order or physical touch accuracy. Those remain device acceptance gates
 
 ## Component systems
 
-| Candidate | Relevant documented capability | Fit for VOID | Decision |
+| Candidate | Relevant documented capability | Fit for NOMO | Decision |
 | --- | --- | --- | --- |
 | Native HTML dialog | Browser modal behavior and shared existing component | Smallest change to the current stack | Use now, test focus and dismissal |
 | Base UI Dialog / Drawer | Accessible primitives; documentation distinguishes dialogs from gesture drawers | Strong candidate when gestures or nested overlay behavior become requirements | Evaluate Drawer before inventing drag-to-dismiss |
 | Radix Dialog | Focus trapping, controlled state, title/description and Escape handling | Mature alternative for a broader primitive migration | Keep as alternative; do not install alongside Base UI |
 | React Aria Modal | Modal, overlay, dialog and sheet patterns | Strong accessibility and internationalization-oriented option | Prefer if complex keyboard or cross-input requirements dominate |
-| shadcn Sidebar | Controlled sidebar state, mobile width and off-canvas variants | Useful reference for responsive composition | Adapt patterns, preserve current VOID semantics |
-| assistant-ui | Chat primitives with custom runtime integration | Potentially useful for future branching, attachments and richer tool rendering | Prototype against VOID event history before adoption |
+| shadcn Sidebar | Controlled sidebar state, mobile width and off-canvas variants | Useful reference for responsive composition | Adapt patterns, preserve current NOMO semantics |
+| assistant-ui | Chat primitives with custom runtime integration | Potentially useful for future branching, attachments and richer tool rendering | Prototype against NOMO event history before adoption |
 
 Base UI documents that Dialog itself does not support gestures and recommends
 Drawer when gestures or snap points are required. This distinction matters:
@@ -101,15 +101,15 @@ These are alternative foundations, not features that justify installing all
 three into one application.
 
 The existing shadcn Sidebar documentation includes separate mobile width,
-controlled state and off-canvas behavior.[^9] VOID already has a working sidebar
+controlled state and off-canvas behavior.[^9] NOMO already has a working sidebar
 and navigation model, so replacing it wholesale would add migration work
 without addressing the specific icon-sizing defect. The useful changes are
 predictable dimensions, a single icon treatment, preserved scroll position and
 clear focus restoration.
 
 assistant-ui supports a custom server and multiple runtime integration paths.
-That makes adoption possible without replacing VOID's backend.[^10] However,
-VOID's signed events, unknown outcomes, operation identities and operator-only
+That makes adoption possible without replacing NOMO's backend.[^10] However,
+NOMO's signed events, unknown outcomes, operation identities and operator-only
 Undo must survive any adapter. A chat library must not infer success from a
 finished animation or manufacture a recovery action from ordinary tool output.
 A future prototype should replay a captured conversation and compare message,
@@ -141,7 +141,7 @@ The interaction hierarchy is deliberate:
 Large, repeated background movement should not compete with reading. Motion's
 accessibility guidance recommends reducing large transform movement and
 avoiding parallax or automatic video for users requesting reduced motion.[^11]
-VOID combines the operating-system preference with its own animation switch.
+NOMO combines the operating-system preference with its own animation switch.
 The public demonstration follows the same preference, including dialog entry
 and button feedback.
 
@@ -163,7 +163,7 @@ text and available to assistive technology.
 ## Framer and visual inspiration
 
 Framer's SaaS category presents templates for explaining a product, comparing
-plans and converting visitors.[^13] That makes it useful for VOID's marketing
+plans and converting visitors.[^13] That makes it useful for NOMO's marketing
 site, screenshots and introductory storytelling. It does not establish a
 production interaction model for chat history, signed operations, keyboard
 navigation or recovery conflicts.
@@ -175,7 +175,7 @@ should not be copied into a daily working surface without a functional reason.
 No template purchase, reuse license or compatibility claim is implied here.
 
 The selected visual system keeps the existing warm paper direction because it
-matches the requested Claude-inspired composition and the VOID site. Its
+matches the requested Claude-inspired composition and the NOMO site. Its
 identity comes from the aperture and the recovery workflow, rather than an
 additional decorative motif. The current tokens are:
 
@@ -234,9 +234,9 @@ migration.
 
 Apple's `NavigationSplitView` supplies a two- or three-column structure with
 selection-driven detail presentation.[^14] That is a suitable future native
-shell for VOID: workspace/history, conversation, and the recovery inspector.
+shell for NOMO: workspace/history, conversation, and the recovery inspector.
 SwiftUI toolbars should use standard navigation and system symbols for controls,
-while the product mark remains the exact VOID aperture. Native file pickers,
+while the product mark remains the exact NOMO aperture. Native file pickers,
 Keychain and platform accessibility should be retained rather than recreated in
 JavaScript when the SwiftUI shell becomes the chosen implementation.
 
@@ -301,7 +301,7 @@ work, not features supplied by a UI library.
 
 ## Sources
 
-[^1]: VOID. [Canonical site shell at pinned commit](https://github.com/Dawe583/void-empty/blob/25b5e62d49d614f88804b72b55609c74092d98d8/artifacts/void/src/components/site/shell.tsx). Read through authenticated repository access, 13 September 2026.
+[^1]: NOMO. [Canonical site shell at pinned commit](https://github.com/Dawe583/void-empty/blob/25b5e62d49d614f88804b72b55609c74092d98d8/artifacts/void/src/components/site/shell.tsx). Read through authenticated repository access, 13 September 2026.
 [^2]: Apple. [Toolbars, Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/toolbars). Current documentation content read through Apple's documentation JSON, 13 September 2026.
 [^3]: W3C WAI. [Understanding SC 2.5.8: Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html). WCAG 2.2 explanation, accessed 13 September 2026.
 [^4]: WebKit. [Designing Websites for iPhone X](https://webkit.org/blog/7929/designing-websites-for-iphone-x/). Historical safe-area guidance, accessed 13 September 2026.

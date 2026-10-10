@@ -37,7 +37,7 @@ test("a suite that exceeds its budget is reported as itself, not as a crash", ()
   // 1ms cannot be met by a real suite, so every package is killed as it starts.
   // That is the point: this asserts the path that used to be silent, on the
   // real runner, rather than a copy of its logic.
-  const run = runGate({ VOID_SUITE_TIMEOUT_MS: "1" });
+  const run = runGate({ NOMO_SUITE_TIMEOUT_MS: "1" });
   const output = outputOf(run);
 
   assert.notEqual(run.status, 0, "a gate whose ceiling fired must not report green");
@@ -56,7 +56,7 @@ test("the cloud half of the gate is under the same ceiling as the packages", () 
   // nothing. That is where this branch put its new work: owner.test.mjs,
   // account.test.mjs and account-routes.test.mjs all run there. A bound that
   // covered only the packages would have left the code under review unprotected.
-  const run = runGate({ VOID_SUITE_TIMEOUT_MS: "1" });
+  const run = runGate({ NOMO_SUITE_TIMEOUT_MS: "1" });
   const output = outputOf(run);
 
   assert.match(
@@ -75,7 +75,7 @@ test("the report says which runner produced a failure", () => {
   // `packages` and `cloud` are two separate `node --test` invocations over
   // disjoint files. A line that named only the suite would send a reader to
   // the wrong directory, which is the whole reason the label exists.
-  const output = outputOf(runGate({ VOID_SUITE_TIMEOUT_MS: "1" }));
+  const output = outputOf(runGate({ NOMO_SUITE_TIMEOUT_MS: "1" }));
   // The runner is a prefix, so the cloud row reads `cloud/cloud`: the second
   // half of `pnpm test` is both the runner and the suite name. Deliberate
   // rather than tidied away, because the row has to be traceable to the
@@ -118,12 +118,12 @@ test("an unparseable ceiling is refused rather than silently ignored", () => {
   // configuration behind a bound that looks enabled and is not the one asked
   // for, so this has to be an error naming the variable.
   for (const bad of ["-1", "abc", "1.5"]) {
-    const run = runGate({ VOID_SUITE_TIMEOUT_MS: bad });
-    assert.notEqual(run.status, 0, `VOID_SUITE_TIMEOUT_MS=${bad} must not be accepted`);
+    const run = runGate({ NOMO_SUITE_TIMEOUT_MS: bad });
+    assert.notEqual(run.status, 0, `NOMO_SUITE_TIMEOUT_MS=${bad} must not be accepted`);
     assert.match(
       outputOf(run),
-      /VOID_SUITE_TIMEOUT_MS is not a non-negative integer/,
-      `VOID_SUITE_TIMEOUT_MS=${bad} must say why it was refused`,
+      /NOMO_SUITE_TIMEOUT_MS is not a non-negative integer/,
+      `NOMO_SUITE_TIMEOUT_MS=${bad} must say why it was refused`,
     );
   }
 });

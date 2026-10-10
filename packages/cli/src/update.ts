@@ -1,7 +1,7 @@
 /**
  * Self-update for a git-installed tree.
  *
- * VOID ships as a clone plus a launcher, so "update" is a git fast-forward and
+ * NOMO ships as a clone plus a launcher, so "update" is a git fast-forward and
  * a dependency install. There is no registry to publish to and no tarball to
  * download: every workspace manifest is private, so there is nothing to fetch
  * from a registry even if a registry were reachable. The installed tree is
@@ -56,19 +56,19 @@ export type UpdateDeps = {
   readonly version?: string;
 };
 
-const UPDATE_USAGE = "usage: void update [--check] [--force]";
+const UPDATE_USAGE = "usage: nomo update [--check] [--force]";
 
 /**
  * The installer that creates an updatable tree. Named in every refusal that
  * leaves the operator without one, because "this is not a git checkout" is not
  * an instruction.
  */
-const INSTALLER = "scripts/install-void.sh";
+const INSTALLER = "scripts/install-nomo.sh";
 
 /**
  * The tree the running code was loaded from. This file sits at
  * `<tree>/packages/cli/src/update.ts`, so the tree is three levels up. It is
- * the last fallback: an installed tree is named by `VOID_HOME` or by `HOME`,
+ * the last fallback: an installed tree is named by `NOMO_HOME` or by `HOME`,
  * and only a checkout run in place has nothing else to go on.
  */
 const SOURCE_TREE = fileURLToPath(new URL("../../../", import.meta.url));
@@ -106,10 +106,10 @@ export function parseUpdateArgs(argv: readonly string[]): UpdateFlags {
 }
 
 /**
- * `$VOID_HOME` wins, then the location the installer uses, then the tree this
+ * `$NOMO_HOME` wins, then the location the installer uses, then the tree this
  * file was loaded from.
  *
- * The default is `void-cli` and not `void` because `scripts/install-void.sh`
+ * The default is `nomo-cli` and not `nomo` because `scripts/install-nomo.sh`
  * writes that name into the launcher it installs, and this command has to land
  * on the same tree the launcher runs from. It is spelled out here rather than
  * imported from the installer because a shell script is not a module, and two
@@ -121,8 +121,8 @@ export function resolveUpdateHome(
   sourceTree: string,
 ): string {
   return (
-    env.VOID_HOME ??
-    (env.HOME ? join(env.HOME, ".local", "share", "void-cli") : sourceTree)
+    env.NOMO_HOME ??
+    (env.HOME ? join(env.HOME, ".local", "share", "nomo-cli") : sourceTree)
   );
 }
 
@@ -170,8 +170,8 @@ export function planUpdate(facts: UpdateFacts, force: boolean): UpdatePlan {
  * the installer, because naming the way out is the useful half. */
 function noCheckout(home: string): string {
   return existsSync(home)
-    ? `${home} is not a git checkout. Reinstall it with ${INSTALLER}, or point VOID_HOME at the checkout you want to update.`
-    : `no installed tree at ${home}. Run ${INSTALLER} to create one, or point VOID_HOME at an existing checkout.`;
+    ? `${home} is not a git checkout. Reinstall it with ${INSTALLER}, or point NOMO_HOME at the checkout you want to update.`
+    : `no installed tree at ${home}. Run ${INSTALLER} to create one, or point NOMO_HOME at an existing checkout.`;
 }
 
 type GitResult =
@@ -290,7 +290,7 @@ export async function runUpdateCommand(
   // One fact per line, `key: value`, full hashes. A script reads these with
   // `cut` and never with a pattern that has to survive reformatting; the
   // verdict below is the line a human reads.
-  io.stdout(`installed: void ${deps.version ?? "unknown"} at ${home}`);
+  io.stdout(`installed: nomo ${deps.version ?? "unknown"} at ${home}`);
   io.stdout(`installed-commit: ${head.out}`);
   io.stdout(`tracked-branch: ${upstream.out}`);
 
@@ -329,7 +329,7 @@ export async function runUpdateCommand(
       io.stdout(`update available, not applied: ${plan.reason}`);
       return 3;
     }
-    io.stdout("update available: run `void update`");
+    io.stdout("update available: run `nomo update`");
     return 3;
   }
 

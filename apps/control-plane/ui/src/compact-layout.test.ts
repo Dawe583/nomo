@@ -87,11 +87,11 @@ test("built-in chat metadata is localized without touching authored content", ()
   const source = readFileSync(new URL("./chat.tsx", import.meta.url), "utf8");
   assert.match(source, /t\("cena neznámá", "cost unknown"\)/);
   assert.match(source, /t\("Místní PC", "Local PC"\)/);
-  assert.match(source, /t\("Místní VOID", "VOID Local"\)/);
-  assert.match(source, /t\("VOID Cloud", "VOID Cloud"\)/);
+  assert.match(source, /t\("Místní NOMO", "NOMO Local"\)/);
+  assert.match(source, /t\("NOMO Cloud", "NOMO Cloud"\)/);
   assert.doesNotMatch(source, /\? " · cost unknown"/);
   assert.doesNotMatch(source, /\? "prime-agent · Local PC"/);
-  assert.doesNotMatch(source, /\? "VOID Local"/);
+  assert.doesNotMatch(source, /\? "NOMO Local"/);
 });
 
 test("branch intent keeps one stable idempotency key across retries", () => {

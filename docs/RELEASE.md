@@ -1,15 +1,15 @@
-# VOID 0.1.0 release runbook
+# NOMO 0.1.0 release runbook
 
 Apple 1.0.1 release planning and exact evidence now live in
-`docs/superpowers/specs/void-1.0.1-product.md` and
+`docs/superpowers/specs/nomo-1.0.1-product.md` and
 `docs/RELEASE-1.0.1-MATRIX.md`. This 0.1.0 development/npm runbook remains
 historical; it does not certify a Mac App Store or native iOS release.
 
 ## Status and version policy
 
 0.1.0 is a coherent development release, not an npm publication or a production
-readiness claim. Product packages use the `@void/<package>` convention. The
-root is `@void/workspace`. Keep `private: true` throughout this release. Do not
+readiness claim. Product packages use the `@nomo/<package>` convention. The
+root is `@nomo/workspace`. Keep `private: true` throughout this release. Do not
 remove that safeguard to make a publish command pass.
 
 Versions move together while cross-package contracts and the on-disk formats
@@ -72,22 +72,22 @@ NOTE. Fixture executors do not prove restoration against a real service.
 
 Wave 5 source status, pending integrated verification:
 
-- `void approve` and the proxy share a filesystem request path. The proxy uses
-  `--approvals-dir`, then `VOID_APPROVALS_DIR`, then
-  `~/.void/approvals/<workspace>`. An exclusive `proxy.lock` prevents a second
+- `nomo approve` and the proxy share a filesystem request path. The proxy uses
+  `--approvals-dir`, then `NOMO_APPROVALS_DIR`, then
+  `~/.nomo/approvals/<workspace>`. An exclusive `proxy.lock` prevents a second
   proxy writer. Binary wiring is implemented; real end-to-end verification is
   still required before closing the baseline NOTE. These files do not prove
   human identity. After a crash, remove a stale lock only after confirming the
   prior proxy exited.
 - Replay can plan from persisted Postgres snapshots without an executor. Apply
   reports `ExecutorNotConfigured` without configuration and
-  `ExecutorAdapterUnavailable` even when `VOID_PG_URL` is present. No production
+  `ExecutorAdapterUnavailable` even when `NOMO_PG_URL` is present. No production
   driver is installed. Persisted S3 replay and live binary drift proof remain
   open. In-process injected-executor tests do not close those gaps.
 
 ## Blocks public release
 
-1. **npm organization and credential.** Confirm ownership of the `@void` scope
+1. **npm organization and credential.** Confirm ownership of the `@nomo` scope
    and choose a scoped publish token or trusted publishing identity. No npm
    credential has been verified here. Never put tokens in a manifest, shell
    transcript, log, test, or release document.
@@ -116,7 +116,7 @@ Wave 5 source status, pending integrated verification:
    run on a clean machine and every gate result in this document is local. A
    human has to settle the billing; until then "CI is green" is not a claim
    this runbook can make about anything.
-6. **WP-15 delivery evidence.** A published `@void/cli` version, clean-machine
+6. **WP-15 delivery evidence.** A published `@nomo/cli` version, clean-machine
    quickstart under five minutes, Docker image, and MCP registry listing still
    require release evidence. The WP-15 exit is not complete just because the
    source and metadata are present.
@@ -156,7 +156,7 @@ Wave 5 source status, pending integrated verification:
     storage (AES-256-GCM snapshot, macOS Keychain / Windows Credential
     Manager, mode-0600 key file) exists, but production KMS and a key
     rotation drill remain open per `docs/PLAN-GAPS.md` item 10 and the
-    Production-secrets row. `VOID_SIGNING_KEY` rotation today means
+    Production-secrets row. `NOMO_SIGNING_KEY` rotation today means
     redeploy plus `provision-cloud.mjs`; it is not a KMS rotation.
     Physical iOS/Android keyboards, VoiceOver/TalkBack, and true 200%
     browser zoom at desktop and mobile widths are pending per
@@ -193,8 +193,8 @@ verification run.
 2. Check entrypoint syntax and release metadata:
 
    ```sh
-   node --check packages/cli/bin/void.mjs
-   node --check packages/proxy/bin/void-proxy.mjs
+   node --check packages/cli/bin/nomo.mjs
+   node --check packages/proxy/bin/nomo-proxy.mjs
    node --test --test-reporter=tap scripts/src/release-packaging.test.mjs
    ```
 
@@ -224,7 +224,7 @@ verification run.
    bins, policy pack loading, and the five-minute first-hold quickstart.
 7. Obtain human approval for publishing, confirm npm identity without exposing
    credentials, run protected CI, and publish only the reviewed artifacts.
-   Verify the published version with `npm view @void/cli version`. Record the
+   Verify the published version with `npm view @nomo/cli version`. Record the
    tag, commit, artifact digests, provenance, and remote workflow URL.
 
 ### What the packaging gate now executes
@@ -264,14 +264,14 @@ rather than quietly reaching the network.
 ### Suites outside the Node gate
 
 `scripts/src/check-tests.mjs` now also runs the two Python suites,
-`apps/appwrite-mcp/tests` and `python/void-transport/tests`. A suite that
+`apps/appwrite-mcp/tests` and `python/nomo-transport/tests`. A suite that
 cannot run prints as `UNRUN`, naming the interpreters it tried and the
 commands to run it, and is excluded from the total rather than counted as a
 pass. When anything was skipped the summary reads
 `N suites, M tests, K could not run`, so a test count quoted from this gate
 cannot be read as covering a suite that never executed.
 
-`python/void-transport` runs under the system interpreter and executes on an
+`python/nomo-transport` runs under the system interpreter and executes on an
 ordinary checkout. `apps/appwrite-mcp` needs the `mcp` SDK and is `UNRUN`
 until that virtual environment exists. Both are run in CI by the `hosted-mcp`
 job, which provisions Python 3.14 and installs the SDK from `requirements.txt`.
@@ -279,7 +279,7 @@ That job has never executed on a pushed commit, so no result is claimed for it.
 A release report that quotes this gate must say which of the two ran.
 
 The same workflow gained an `apple` job that runs both Swift packages and the
-`VOID` scheme on the iOS simulator, on a `macos-latest` runner, with derived
+`NOMO` scheme on the iOS simulator, on a `macos-latest` runner, with derived
 data outside the checkout. That job was written on a darwin host and has
 never been executed by GitHub Actions, so no result is claimed for it here.
 Until a push runs it, the Apple evidence remains the local machine results
@@ -302,7 +302,7 @@ truncate, rewrite, or delete ledger records as a release rollback.
 - [ ] API, CLI, policy grammar, snapshot format, and ledger format compatibility
       promises have migration and downgrade tests.
 - [ ] Offline attestation verification has trusted key distribution and a
-      separately installable verifier with no VOID package dependency.
+      separately installable verifier with no NOMO package dependency.
 - [ ] Security review findings are resolved, accepted risks are explicit, and
       key rotation, backup, recovery, and checkpoint procedures are exercised.
 - [ ] License boundaries, NOTICE, registry disclaimers, and contribution terms

@@ -13,7 +13,7 @@
 -- meant to reach.
 CREATE TABLE IF NOT EXISTS void_cloud_state (owner text NOT NULL, key text NOT NULL, document jsonb NOT NULL, PRIMARY KEY(owner,key));
 CREATE TABLE IF NOT EXISTS void_cloud_ledger (owner text NOT NULL, workspace text NOT NULL, seq integer NOT NULL, entry jsonb NOT NULL, PRIMARY KEY(owner,workspace,seq));
-CREATE OR REPLACE FUNCTION void_cloud_immutable() RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$ BEGIN RAISE EXCEPTION 'VOID ledger is append only'; END $$;
+CREATE OR REPLACE FUNCTION void_cloud_immutable() RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$ BEGIN RAISE EXCEPTION 'NOMO ledger is append only'; END $$;
 DROP TRIGGER IF EXISTS void_cloud_immutable ON void_cloud_ledger;
 CREATE TRIGGER void_cloud_immutable BEFORE UPDATE OR DELETE ON void_cloud_ledger FOR EACH ROW EXECUTE FUNCTION void_cloud_immutable();
 

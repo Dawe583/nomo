@@ -13,7 +13,7 @@ webhook client, it is paid by name in the decision log, and it lives here
 instead of in an Apache 2.0 package. A paid implementation of an open interface
 is what that decision prescribes.
 
-The dependency runs one way: this directory may import `@void/policy`, and no
+The dependency runs one way: this directory may import `@nomo/policy`, and no
 open package may import this one. `scripts/src/licence-line.test.mjs` asserts
 both directions and the licence identifier here, so putting the implementation
 back under `packages/policy` fails a gate rather than passing review.

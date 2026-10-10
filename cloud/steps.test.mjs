@@ -26,7 +26,7 @@ const builtinCall = (name) => {
 };
 
 test("a built-in managed document write is held for human approval, not allowed", () => {
-  for (const name of ["void_workspace_write", "void_workspace_delete"]) {
+  for (const name of ["nomo_workspace_write", "nomo_workspace_delete"]) {
     const { classification, callInfo } = builtinCall(name);
     assert.equal(classification.tone, "r1", `${name} must classify as r1`);
     const decision = cloudToolDecision(policy, classification, callInfo);
@@ -40,7 +40,7 @@ test("a built-in managed document write is held for human approval, not allowed"
 });
 
 test("a built-in managed document read stays allowed", () => {
-  for (const name of ["void_workspace_read", "void_workspace_list"]) {
+  for (const name of ["nomo_workspace_read", "nomo_workspace_list"]) {
     const { classification, callInfo } = builtinCall(name);
     const decision = cloudToolDecision(policy, classification, callInfo);
     assert.equal(decision.kind, "allow", `${name} is r0 and must not be held`);

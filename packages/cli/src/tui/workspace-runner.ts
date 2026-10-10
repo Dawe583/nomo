@@ -20,6 +20,9 @@ import {
 } from "./workspace.ts";
 import { DiffScreenWriter } from "./watch.ts";
 import { sanitizeText } from "./layout.ts";
+import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
+import { envValue } from "../../../ledger/src/env-compat.ts";
+import { normalizeOwnedEnv } from "../env-keys.ts";
 
 export type WorkspaceShortcut =
   | "redraw"
@@ -318,7 +321,7 @@ export async function runWorkspaceTui(
     if (arg === "--once") once = true;
     else if (arg === "--help") {
       console.log(
-        "void tui [--once] [--view runs|overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
+        "nomo tui [--once] [--view runs|overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
       );
       return 0;
     } else if (
@@ -339,13 +342,17 @@ export async function runWorkspaceTui(
   }
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    ...(directory ? { VOID_DATA_DIR: directory } : {}),
+    ...(directory ? { NOMO_DATA_DIR: directory } : {}),
   };
+  // Normalized here rather than only in the binary so a test that drives the
+  // TUI entry point directly sees the same settings an operator configured
+  // under the old names.
+  Object.assign(env, normalizeOwnedEnv(env));
   const app = new Workbench(env),
     ui = new WorkspaceTui(app, env);
   const dataDir =
-    env.VOID_DATA_DIR ??
-    join(env.VOID_LEDGER_DIR ?? join(homedir(), ".void"), "workbench");
+    envValue(env, "NOMO_DATA_DIR") ??
+    join(envValue(env, "NOMO_LEDGER_DIR") ?? join(productDataDir(homedir())), "workbench");
   const store = new LocalStorage(join(dataDir, "tui"));
   const saved = store.read<{
     sessionId?: string;
@@ -411,9 +418,9 @@ export async function runWorkspaceTui(
   let lastCtrlD = 0;
   const chord = new ChordTracker();
   const startedAt = Date.now();
-  // VOID has its own explicit color preference; inherited NO_COLOR must not hide its UI.
-  const color = env.VOID_TUI_COLOR !== "0";
-  const motion = env.VOID_TUI_MOTION !== "0" && env.TERM !== "dumb";
+  // NOMO has its own explicit color preference; inherited NO_COLOR must not hide its UI.
+  const color = env.NOMO_TUI_COLOR !== "0";
+  const motion = env.NOMO_TUI_MOTION !== "0" && env.TERM !== "dumb";
   const screen = new DiffScreenWriter(process.stdout);
   let busy = false,
     suspended = false,
@@ -496,8 +503,8 @@ export async function runWorkspaceTui(
   };
   const editor = async () => {
     const target = ui.editTarget();
-    const config: unknown = env.VOID_TUI_EDITOR
-      ? JSON.parse(env.VOID_TUI_EDITOR)
+    const config: unknown = env.NOMO_TUI_EDITOR
+      ? JSON.parse(env.NOMO_TUI_EDITOR)
       : [env.EDITOR || "nano"];
     if (
       !Array.isArray(config) ||
@@ -505,9 +512,9 @@ export async function runWorkspaceTui(
       !config.every((v) => typeof v === "string" && v.length)
     )
       throw Error(
-        "VOID_TUI_EDITOR must be a JSON array of an executable and its arguments.",
+        "NOMO_TUI_EDITOR must be a JSON array of an executable and its arguments.",
       );
-    const temp = await mkdtemp(join(tmpdir(), "void-editor-")),
+    const temp = await mkdtemp(join(tmpdir(), "nomo-editor-")),
       file = join(temp, "document.txt");
     let captured = false;
     await writeFile(file, target.content, { mode: 0o600 });
@@ -577,7 +584,7 @@ export async function runWorkspaceTui(
       }
       if (draftError) console.error("Could not save the draft.");
       console.log(
-        "VOID: stopping the run and saving history. A dispatched external tool may still complete.",
+        "NOMO: stopping the run and saving history. A dispatched external tool may still complete.",
       );
       void (async () => {
         app.close();

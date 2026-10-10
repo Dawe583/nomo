@@ -28,14 +28,14 @@ in the cryptography:
 1. The thing called "pinned" is a file in the same directory tree as the key it
    is supposed to anchor, and it reports itself as the safe path. Replacing both
    is silent and total. **[CONFIRMED]**
-2. Two shipped verification surfaces — the TUI and `void watch` — were never
+2. Two shipped verification surfaces — the TUI and `nomo watch` — were never
    converted, and both report success while using the private key file. **[CONFIRMED]**
 3. `verificationSummary` reports `degraded: false` when nothing was authenticated
    at all. **[CONFIRMED]**
 4. The anchor file's own truncation is undetectable, and the operator-visible
    output is identical to the honest case. **[CONFIRMED]**
 5. The documentation tells operators the pin is "out of band". It is not, and
-   `void doctor` reports a fully-pinned host as unconfigured. **[CONFIRMED]**
+   `nomo doctor` reports a fully-pinned host as unconfigured. **[CONFIRMED]**
 
 ---
 
@@ -44,11 +44,11 @@ in the cryptography:
 `packages/ledger/src/verify-key.ts:94-113` (`pinnedKeyFile`),
 `packages/ledger/src/verify-key.ts:161-166` (the `pinned-file` branch).
 
-The pinned key is stored at `~/.void/trust/verify-ed25519.spki`. The signing key
-is at `~/.void/keys/dev-ed25519.pkcs8` (proxy, `sign.ts:66`) or
-`~/.void/workbench/keys/dev-ed25519.pkcs8` (workbench, `index.ts:1405`). The
-common ancestor is `~/.void/`. The module comment at `verify-key.ts:90-93`
-claims the separation is deliberate — *"deliberately not under `~/.void/keys/`
+The pinned key is stored at `~/.nomo/trust/verify-ed25519.spki`. The signing key
+is at `~/.nomo/keys/dev-ed25519.pkcs8` (proxy, `sign.ts:66`) or
+`~/.nomo/workbench/keys/dev-ed25519.pkcs8` (workbench, `index.ts:1405`). The
+common ancestor is `~/.nomo/`. The module comment at `verify-key.ts:90-93`
+claims the separation is deliberate — *"deliberately not under `~/.nomo/keys/`
 next to the private key: a trust anchor reachable by taking the key file is not
 an anchor"* — and `docs/OPERATIONS.md:73` puts it in a column headed
 **"pinned, out of band"**. Neither is true of an attacker who has filesystem
@@ -57,8 +57,8 @@ targets.
 
 ### Attack
 
-1. Operator runs the documented setup, `void init --pin-verify-key`. Trust file
-   exists at `~/.void/trust/verify-ed25519.spki`, mode `0400`, containing the
+1. Operator runs the documented setup, `nomo init --pin-verify-key`. Trust file
+   exists at `~/.nomo/trust/verify-ed25519.spki`, mode `0400`, containing the
    honest SPKI. `resolveVerificationKey` returns
    `{source: "pinned-file", degraded: false}`. Correct so far.
 2. Attacker (malware as the user, or agent-level code execution) generates an
@@ -68,11 +68,11 @@ targets.
    fails with `EACCES`) but not `unlink` + `create`, which any owner of the
    containing directory may do. File mode is an access control against other
    users, not against the owner.
-4. Attacker replaces `~/.void/keys/dev-ed25519.pkcs8` with their private key.
+4. Attacker replaces `~/.nomo/keys/dev-ed25519.pkcs8` with their private key.
 5. Attacker rewrites the ledger with whatever body they like and re-signs the
    whole chain. `entryHash` + `signingPreimage` are three lines
    (`canonical.ts:94-105`, `index.ts:69-77`), so this is trivial.
-6. Any VOID verifier — CLI, workbench, control-plane API — resolves the
+6. Any NOMO verifier — CLI, workbench, control-plane API — resolves the
    attacker's key and reports the forged chain as fully valid.
 
 ### What I observed **[CONFIRMED]**
@@ -81,7 +81,7 @@ targets.
 operator-pinned trust file mode: 400
 after honest pin  -> dev-ed25519:a840eb412fe97669 pinned-file degraded: false
 attacker key id  -> dev-ed25519:97b4e1e3e4089142 (honest: dev-ed25519:a840eb412fe97669)
-attacker overwrote both ~/.void/keys/ and ~/.void/trust/
+attacker overwrote both ~/.nomo/keys/ and ~/.nomo/trust/
 after attack     -> dev-ed25519:97b4e1e3e4089142 pinned-file degraded: false
 forged chain verifyChain -> true
 with the honest pin       -> false entry 1 has no public key for dev-ed25519:97b4e1e3e4089142
@@ -95,7 +95,7 @@ reported nowhere, and which the documentation tells the operator is impossible.
 
 Nothing. The CLI prints `verification key: pinned dev-ed25519:97b4... (pinned-file)`.
 The API returns `verification: {source: "pinned-file", degraded: false}`. The
-trust file is still `0400` and still parses. `void doctor` is silent on the pin
+trust file is still `0400` and still parses. `nomo doctor` is silent on the pin
 entirely (F10). The forged chain verifies clean and is presented as the
 strongest possible evidence — better than the honest chain, which now fails.
 
@@ -105,10 +105,10 @@ Three parts, all small:
 
 - The trust file must not be described or reported as "pinned". Introduce a
   distinct `source` (`"trust-file"`) and a separate boolean
-  (`operatorSupplied`) that is only ever true for `VOID_VERIFY_KEY` /
-  `VOID_VERIFY_KEY_FILE` configured out of band. Never derive `degraded: false`
+  (`operatorSupplied`) that is only ever true for `NOMO_VERIFY_KEY` /
+  `NOMO_VERIFY_KEY_FILE` configured out of band. Never derive `degraded: false`
   from the fact that a file was read.
-- Move the default trust path out of `~/.void/` (e.g. `~/.config/void/trust/`)
+- Move the default trust path out of `~/.nomo/` (e.g. `~/.config/nomo/trust/`)
   and, at minimum, state in `verify-key.ts` and `OPERATIONS.md` that this mode
   defends only against an attacker who can reach the *ledger* but not the home
   directory — the same caveat the anchor file already gets at `anchor.ts:9-15`.
@@ -126,37 +126,37 @@ Three parts, all small:
 Neither file is in the diff. Both are user-facing verifier surfaces and both
 still resolve the verification key from `dev-ed25519.pkcs8`:
 
-- `ProxyWorkspace.refresh()` prefers `VOID_VERIFY_KEY`, else `VOID_SIGNING_KEY`,
-  else reads `~/.void/keys/dev-ed25519.pkcs8` directly with `readFile`. It
+- `ProxyWorkspace.refresh()` prefers `NOMO_VERIFY_KEY`, else `NOMO_SIGNING_KEY`,
+  else reads `~/.nomo/keys/dev-ed25519.pkcs8` directly with `readFile`. It
   **never consults the trust file**, so an operator who did exactly what
   `OPERATIONS.md` tells them to do gets no benefit. It then sets
   `this.signed = publicKey !== undefined` (`workspace-proxy.ts:84`), and the TUI
   renders that as `Proxy signatures: verified` (`workspace.ts:2339`) and
   `Signatures checked against the configured key` (`live.ts:38`).
 - `watch.ts:51` calls `devKeyProvider()` with no options at all — no `env`, no
-  `dir` — so it reads the real `~/.void/keys`, ignores `VOID_VERIFY_KEY` and the
+  `dir` — so it reads the real `~/.nomo/keys`, ignores `NOMO_VERIFY_KEY` and the
   trust file, **mints a key if none exists** (`sign.ts:67` defaults
   `createIfMissing` to `true`), and prints no degraded notice anywhere.
 
 ### Attack
 
 Identical to F1 step 5, minus the second file: the attacker replaces only
-`~/.void/keys/dev-ed25519.pkcs8`, re-signs the chain, and opens the TUI or runs
-`void watch`.
+`~/.nomo/keys/dev-ed25519.pkcs8`, re-signs the chain, and opens the TUI or runs
+`nomo watch`.
 
 ### What I observed **[CONFIRMED]**
 
 ```
-operator pinned: dev-ed25519:... at /tmp/.../home/.void/trust/verify-ed25519.spki
-attacker key installed at ~/.void/keys/, chain re-signed
+operator pinned: dev-ed25519:... at /tmp/.../home/.nomo/trust/verify-ed25519.spki
+attacker key installed at ~/.nomo/keys/, chain re-signed
 
 TUI ProxyWorkspace.signed      : true   <- TUI renders this as 'Proxy signatures: verified'
 TUI entries loaded             : 2 entries
 TUI errors                     : []
 pinned key actually used?      : no -- ProxyWorkspace reads the private key file and never looks at the trust file
 
-void watch  feed.signed : true  using keyId dev-ed25519:dfde6a43574d8756
-void watch  records shown: 2  (incl. the forged aws.s3.object.put)
+nomo watch  feed.signed : true  using keyId dev-ed25519:dfde6a43574d8756
+nomo watch  records shown: 2  (incl. the forged aws.s3.object.put)
 ```
 
 Note this is *worse* than the pre-change state on the TUI: the operator has now
@@ -284,7 +284,7 @@ which has a properly-shaped failure response.
 ### What I observed **[CONFIRMED]**
 
 ```
-(a) no pin, no VOID_SIGNING_KEY -- a plain GET /api/feed:
+(a) no pin, no NOMO_SIGNING_KEY -- a plain GET /api/feed:
       /api/feed?workspace=poc           -> HTTP 500 {"error":"internal_error",...}
       /api/ledger/verify?workspace=poc  -> HTTP 500 {"error":"internal_error",...}
       /api/ledger/export?workspace=poc  -> HTTP 500 {"error":"internal_error",...}
@@ -320,7 +320,7 @@ every path I could construct threw.
 
 ---
 
-## F6 — MEDIUM. `void verify --standalone` exits 0 when signatures were not verified
+## F6 — MEDIUM. `nomo verify --standalone` exits 0 when signatures were not verified
 
 `packages/cli/src/verify.ts:236-244`.
 
@@ -332,10 +332,10 @@ key, so this stopped being an edge case and became the normal outcome.
 ### What I observed **[CONFIRMED]**
 
 ```
-=== void verify --standalone with NO key (nothing pinned) ===
+=== nomo verify --standalone with NO key (nothing pinned) ===
   exit code: 0
   | verification key: none, signature NOT VERIFIED
-  |   pin one with `void init --pin-verify-key`, or set VOID_VERIFY_KEY to a base64 SPKI public key
+  |   pin one with `nomo init --pin-verify-key`, or set NOMO_VERIFY_KEY to a base64 SPKI public key
   | VERIFIED 2 entries, head 0557... (hash links only, signature NOT VERIFIED)
 ```
 
@@ -350,7 +350,7 @@ prints `signature NOT VERIFIED`. Keep the existing text; it is the right text.
 
 ---
 
-## F7 — MEDIUM. `void export verify` is unusable on a clean reviewer machine, and its error message gives the wrong remedy
+## F7 — MEDIUM. `nomo export verify` is unusable on a clean reviewer machine, and its error message gives the wrong remedy
 
 `packages/cli/src/operations.ts:100-110`.
 
@@ -361,14 +361,14 @@ configured key.
 ### What I observed **[CONFIRMED]**
 
 ```
-=== void export verify on a clean reviewer machine ===
-  THREW: A verification key is required: set VOID_VERIFY_KEY, or pin one with `void init --pin-verify-key`.
+=== nomo export verify on a clean reviewer machine ===
+  THREW: A verification key is required: set NOMO_VERIFY_KEY, or pin one with `nomo init --pin-verify-key`.
 ```
 
 `--pin-verify-key` is the wrong advice for a reviewer: on their machine it runs
 `pinVerificationKeyFromSigner`, which mints a *new* key of the reviewer's own
 and pins that. It matches nothing and will fail confusingly later. There is also
-no `--key` flag on `export verify`, though `void verify --key` exists
+no `--key` flag on `export verify`, though `nomo verify --key` exists
 (`verify.ts:130-134`), and the bundle does **not** carry the SPKI — I checked
 `export-bundle.ts`: no created section contains a public key, so a reviewer has
 no in-band way to obtain the right one.
@@ -395,7 +395,7 @@ out of scope for this change.
 
 `pinVerificationKeyFromSigner` derives the pin from
 `<dataDir>/keys/dev-ed25519.pkcs8`. If that file was replaced before the
-operator ever ran `void init --pin-verify-key`, the attacker's key becomes the
+operator ever ran `nomo init --pin-verify-key`, the attacker's key becomes the
 permanent trust anchor. `pinVerificationKey` (`:255-263`) then *refuses* to
 change it: `"a different verification key is already pinned at ... remove it
 deliberately to repin"`. The poisoning is therefore sticky, and the operator who
@@ -420,7 +420,7 @@ out-of-band case, and mention that in `OPERATIONS.md`.
 
 ---
 
-## F9 — MEDIUM. `void export --bundle` verifies with the recorder's own signing key and reports nothing
+## F9 — MEDIUM. `nomo export --bundle` verifies with the recorder's own signing key and reports nothing
 
 `packages/cli/src/operations.ts:128-133` and `:148-160`.
 
@@ -431,7 +431,7 @@ printed in the `attest` branch (`:141`) and the `export verify` branch (`:120`)
 `describeBundle(created)`, and `describeBundle` (`export-bundle.ts:866-878`)
 contains no key line.
 
-**[SOURCE]** — read from source; I did not execute `void export --bundle`. The
+**[SOURCE]** — read from source; I did not execute `nomo export --bundle`. The
 new test file `packages/cli/src/evidence-integrity.test.ts` covers `attest` and
 `verify` but not `--bundle`, so nothing catches this either.
 
@@ -445,27 +445,27 @@ Emit the same one-line DEGRADED report from the `--bundle` branch. Three lines.
 
 Four separate places, three of them confirmed by execution.
 
-1. **`docs/OPERATIONS.md:73`** lists `~/.void/trust/verify-ed25519.spki` as
+1. **`docs/OPERATIONS.md:73`** lists `~/.nomo/trust/verify-ed25519.spki` as
    **"pinned, out of band"**, and `:90-92` states that replacing
    `dev-ed25519.pkcs8` *"no longer changes what 'valid' means for anything that
    verifies against a pin."* Both are false per F1. The default trust file and
-   the default key file share the ancestor `~/.void/`. This is the operator's
+   the default key file share the ancestor `~/.nomo/`. This is the operator's
    only guide to whether the mechanism protects them and it overstates the
    protection in the one direction that causes harm.
-2. **`packages/cli/src/doctor.ts:104-108`** checks only `env.VOID_VERIFY_KEY`.
+2. **`packages/cli/src/doctor.ts:104-108`** checks only `env.NOMO_VERIFY_KEY`.
    **[CONFIRMED]** with a valid trust file pinned:
    ```
-   trust file pinned at: ~/.void/trust/verify-ed25519.spki
+   trust file pinned at: ~/.nomo/trust/verify-ed25519.spki
    WARN verify-key: unset; proxy entries show hash integrity only
    doctor: 5 pass, 1 warn, 0 fail
    ```
    The one command whose job is "is this host set up safely" reports a
    fully-pinned host as unconfigured, and never mentions the pin exists.
 3. **`packages/security-notes.md:34` (S08)** still describes the pre-change
-   resolution — *"the server resolves a read-only key from `VOID_SIGNING_KEY` or
-   `VOID_VERIFY_KEY`"*. It was not updated for the trust file, the degraded
+   resolution — *"the server resolves a read-only key from `NOMO_SIGNING_KEY` or
+   `NOMO_VERIFY_KEY`"*. It was not updated for the trust file, the degraded
    reporting, or the removal of the private-key-file read.
-4. **`VOID_VERIFY_ALLOW_SIGNING_KEY`** (`verify-key.ts:38`,
+4. **`NOMO_VERIFY_ALLOW_SIGNING_KEY`** (`verify-key.ts:38`,
    `DEGRADED_KEY_ENV`) is the one explicit opt-in that unlocks the key-file
    path, and it appears **nowhere** in `docs/` or `security-notes.md`. An
    operator cannot discover it. It is at least correctly named and it does set
@@ -557,7 +557,7 @@ inference.
   `createBundle` and the manifest section list are untouched, so the bundle
   manifest digest is unaffected.
 
-New on-disk artefacts only: `~/.void/trust/verify-ed25519.spki` and the
+New on-disk artefacts only: `~/.nomo/trust/verify-ed25519.spki` and the
 operator-named anchor file. Nothing existing changes meaning.
 
 **The no-mint change broke nothing in the suites.** ledger 69/69, CLI 283/283,
@@ -584,10 +584,10 @@ holds — both of those I tried to break and failed, and the pinned-key-to-one-
 key-id binding is a genuine detection primitive where the pin genuinely came
 from outside. What they **can** do is rewrite the entire local history, and make
 it report `pinned-file, degraded: false` while doing it, because the file called
-the pin sits in the same `~/.void/` tree as the key it is supposed to anchor and
+the pin sits in the same `~/.nomo/` tree as the key it is supposed to anchor and
 is only a `0400` file against its own owner; they can simply leave the TUI and
-`void watch` reporting `verified` off the private key they replaced, because
-neither surface was converted; they can get `void verify --standalone` to exit
+`nomo watch` reporting `verified` off the private key they replaced, because
+neither surface was converted; they can get `nomo verify --standalone` to exit
 0 on a chain whose signatures were never checked, and can read `degraded: false`
 from an API response that authenticated nothing. The change does not cross the
 principal boundary, and `docs/THREAT-MODEL.md` §6 was right that it could not

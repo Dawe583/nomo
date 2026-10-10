@@ -1,4 +1,4 @@
-# Where VOID should go, and what is left to build
+# Where NOMO should go, and what is left to build
 
 Written 2026-10-04 against `main` at the amendment-seven merge. **This document exists because the
 positioning it inherits is wrong**, not because the research was thin. Two claims in
@@ -64,7 +64,7 @@ Two properties are not claimed by anyone above.
 **a. Point-in-time restore is not an answer for a live system.** Rubrik's mechanism is
 immutable snapshots and restore. Restoring a production database to 14:03 discards every
 legitimate write after 14:03. For a database with humans and agents writing concurrently — which is
-the only place this problem is expensive — a coarse restore is not usable. VOID restores **the
+the only place this problem is expensive — a coarse restore is not usable. NOMO restores **the
 affected rows and nothing else**, and leaves everything written since untouched.
 
 This is a structural difference, not a feature gap. It is also why nobody with a backup-shaped
@@ -72,9 +72,9 @@ product can simply add it: a per-effect inverse needs before-images at the row l
 re-derivation of the original state, which is a different engineering discipline from snapshot
 management.
 
-**b. The receipt lands in the effect's own system.** After a verified Postgres restore, VOID writes
+**b. The receipt lands in the effect's own system.** After a verified Postgres restore, NOMO writes
 a durable signed record into `${schema}.recoveries`, in the customer's database. A third party
-verifies the restoration by querying it, without trusting VOID, its key or its ledger. Every
+verifies the restoration by querying it, without trusting NOMO, its key or its ledger. Every
 vendor above keeps the audit in their own product. Rubrik's audit lives in Rubrik Security Cloud;
 Oracle's lives inside Oracle.
 
@@ -84,9 +84,9 @@ their products profitable, and they cannot hand it to the customer without givin
 **This is the whole remaining moat, and it is one sentence.** If the strategy is not built on
 (a) plus (b), there is nothing to build.
 
-## 4. Standards are converging on VOID's vocabulary
+## 4. Standards are converging on NOMO's vocabulary
 
-Four IETF drafts now describe what VOID already does, and one is VOID's claim almost verbatim:
+Four IETF drafts now describe what NOMO already does, and one is NOMO's claim almost verbatim:
 
 - `draft-sahu-agent-action-receipts-00`, "Signed, Hash-Chained Action Receipts for AI Agents",
   2026-08-16, Informational.

@@ -13,15 +13,17 @@
 #           because `nomo update` owns fetching new commits.
 #   Step 3: pnpm install --frozen-lockfile inside the tree, but only when
 #           node_modules is absent or older than the lockfile.
-#   Step 4: write the launcher at ~/.local/bin/void, which execs the CLI entry
+#   Step 4: write the launcher at ~/.local/bin/nomo, which execs the CLI entry
 #           from $NOMO_HOME and passes every argument through untouched.
 #
 # Environment:
 #   NOMO_HOME   tree location, default $HOME/.local/share/nomo-cli. The
 #               launcher reads the same variable, so a custom tree needs no
-#               edit. The default is deliberately not ~/.local/share/void,
+#               edit. The default is deliberately not ~/.local/share/nomo,
 #               which on some machines already holds unrelated state.
-#
+#               The legacy VOID_HOME is still accepted, and is read only when
+#               NOMO_HOME is absent. An explicitly empty NOMO_HOME is honoured
+#               as written and is never replaced by the legacy value.
 # Exit codes:
 #   0  install finished; `nomo` is runnable.
 #   1  prereq failure, a refused overwrite, a failed clone, or a failed install.
@@ -31,6 +33,29 @@ set -euo pipefail
 # truncate the help the way a fixed line range would.
 usage() {
   awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"
+}
+
+# Resolve one owned `NOMO_*` name, falling back to its legacy `VOID_*` spelling.
+#
+# This is the same rule the TypeScript runtimes use in
+# `packages/ledger/src/env-compat.ts`, which plain shell cannot import, so the
+# lookup is written out here once for both this script and the launcher it
+# writes. An owned name that is present wins, including when its value is the
+# empty string, because an operator who exported an empty value chose it and
+# silently reading the legacy value would run with a setting nobody typed. Only
+# an absent owned name falls back.
+#
+# A name that does not start with NOMO_ is never looked up, which is what keeps
+# an unrelated variable out of it: VOID_HOME would otherwise answer for a HOME
+# the product does not own.
+owned_env() {
+  local current="$1" legacy
+  legacy="VOID_${current#NOMO_}"
+  if [ -n "${!current+set}" ]; then
+    printf '%s' "${!current}"
+  else
+    printf '%s' "${!legacy-}"
+  fi
 }
 
 case "${1:-}" in
@@ -48,9 +73,23 @@ esac
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 
-NOMO_HOME="${NOMO_HOME:-$HOME/.local/share/nomo-cli}"
+# The documented default applies only when neither spelling names a tree. An
+# empty NOMO_HOME stays empty here, so the checks below refuse it instead of
+# cloning into a path the operator never named.
+if [ -z "${NOMO_HOME+set}" ] && [ -z "${VOID_HOME+set}" ]; then
+  NOMO_HOME="$HOME/.local/share/nomo-cli"
+else
+  NOMO_HOME="$(owned_env NOMO_HOME)"
+fi
+
+if [ -z "$NOMO_HOME" ]; then
+  echo "error: NOMO_HOME is set but empty; that is a choice, so nothing is installed." >&2
+  echo "       Unset it to use the default (\$HOME/.local/share/nomo-cli), or set it" >&2
+  echo "       to the tree you want." >&2
+  exit 1
+fi
 launcher_dir="$HOME/.local/bin"
-launcher="$launcher_dir/void"
+launcher="$launcher_dir/nomo"
 entry="packages/cli/bin/nomo.mjs"
 # The launcher recognises its own kind by this line. Anything else at that path
 # is somebody else's file and is never overwritten.
@@ -140,7 +179,17 @@ cat >"$launcher" <<LAUNCHER
 #!/bin/sh
 # nomo launcher, $marker. Do not edit, re-run the installer instead.
 set -eu
-NOMO_HOME="\${NOMO_HOME:-\$HOME/.local/share/nomo-cli}"
+# The owned name wins whenever it is set, including when it is empty; only an
+# absent NOMO_HOME falls back to the legacy VOID_HOME. Written out rather than
+# inherited because the launcher runs from any shell, under \`set -u\`, with no
+# access to the helpers above.
+if [ -n "\${NOMO_HOME+set}" ]; then
+  NOMO_HOME="\$NOMO_HOME"
+elif [ -n "\${VOID_HOME+set}" ]; then
+  NOMO_HOME="\$VOID_HOME"
+else
+  NOMO_HOME="\$HOME/.local/share/nomo-cli"
+fi
 entry="\$NOMO_HOME/$entry"
 if [ ! -f "\$entry" ]; then
   echo "error: no NOMO install at \$NOMO_HOME (\$entry is missing)" >&2

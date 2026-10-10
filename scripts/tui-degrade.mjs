@@ -23,11 +23,11 @@ function runInPty(width, env) {
   const command = `stty cols ${width} rows 40; exec ${quote(process.execPath)} ${quote(preview)} ${width} 40 --hold --modal`;
   if (process.platform === "darwin") {
     const program =
-      "set timeout 15; spawn -noecho sh -c $env(VOID_TUI_COMMAND); expect eof; set result [wait]; exit [lindex $result 3]";
+      "set timeout 15; spawn -noecho sh -c $env(NOMO_TUI_COMMAND); expect eof; set result [wait]; exit [lindex $result 3]";
     return spawnSync("expect", ["-c", program], {
       cwd: root,
       encoding: "utf8",
-      env: { ...process.env, ...env, VOID_TUI_COMMAND: command },
+      env: { ...process.env, ...env, NOMO_TUI_COMMAND: command },
     });
   }
   return spawnSync("script", ["-q", "-c", command, "/dev/null"], {

@@ -34,7 +34,7 @@ test("missing bundle and empty invocation fail with usage, not a crash", async (
 test("standalone verifier agrees with the real ledger on a real export", async (t) => {
   // The replicated canonicaliser, entry hash and preimage must match the
   // repository byte for byte, or offline verification is decoration.
-  const root = await mkdtemp(join(tmpdir(), "void-standalone-cross-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-standalone-cross-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const generator = join(root, "generate.mts");
   await writeFile(
@@ -45,8 +45,8 @@ const dir = ${JSON.stringify(join(root, "ledger"))};
 const keys = ${JSON.stringify(join(root, "keys"))};
 const key = await devKeyProvider({ dir: keys });
 const store = jsonlStore(key, { dir });
-await store.append({ workspace: "cross", tool: "void_workspace_write", klass: "r1", decision: "execute:completed" });
-await store.append({ workspace: "cross", tool: "void_workspace_undo", klass: "r1", decision: "execute:completed" });
+await store.append({ workspace: "cross", tool: "nomo_workspace_write", klass: "r1", decision: "execute:completed" });
+await store.append({ workspace: "cross", tool: "nomo_workspace_undo", klass: "r1", decision: "execute:completed" });
 const keyId = await key.currentKeyId();
 const spki = await key.publicKey(keyId);
 console.log(JSON.stringify({ bundle: dir + "/cross.jsonl", keyId, spki: Buffer.from(spki).toString("base64") }));

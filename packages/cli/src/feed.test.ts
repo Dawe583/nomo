@@ -114,6 +114,6 @@ describe("runFeedCommand", () => {
       },
     });
     assert.equal(code, 1);
-    assert.match(err.join("\n"), /void feed failed: ENOENT/);
+    assert.match(err.join("\n"), /nomo feed failed: ENOENT/);
   });
 });

@@ -15,9 +15,9 @@ const prefix = "integration:";
 const providerCatalog = (id, config) =>
   id === "vercel" ? vercelCatalog(config) : catalog(config);
 const callbackBase = () =>
-  (process.env.VOID_PUBLIC_ORIGIN || "https://void-tui.vercel.app") +
+  (process.env.NOMO_PUBLIC_ORIGIN || "https://void-tui.vercel.app") +
   "/api/integrations";
-const epoch = () => hash(process.env.VOID_CONTROL_TOKEN || "");
+const epoch = () => hash(process.env.NOMO_CONTROL_TOKEN || "");
 const cookieName = (id) => `__Host-void-oauth-${id}`;
 const cookie = (id, value, age) =>
   `${cookieName(id)}=${value}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${age}`;

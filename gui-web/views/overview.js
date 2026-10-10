@@ -1,10 +1,10 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.overview = function (root) {
-  var F = window.VOID_FIXTURES;
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.overview = function (root) {
+  var F = window.NOMO_FIXTURES;
   var hero = document.createElement("div");
   hero.className = "hero-dark";
   hero.innerHTML = "<h1>Every write, reversible or accounted for</h1>" +
-    "<p>VOID sits between the agent and its tools, classifies each call, and records it. Press Cmd or Ctrl K to jump anywhere.</p>" +
+    "<p>NOMO sits between the agent and its tools, classifies each call, and records it. Press Cmd or Ctrl K to jump anywhere.</p>" +
     "<div class='cta-row'><a class='btn-primary' style='text-decoration:none' href='#/live'>Open live feed</a>" +
     "<a class='btn-ghost' style='text-decoration:none' href='#/holds'>Review holds</a></div>";
   root.appendChild(hero);

@@ -26,7 +26,7 @@ export type S3SnapshotStoreOptions = {
  */
 export function S3SnapshotStore(client: S3LikeClient, options: S3SnapshotStoreOptions = {}): SnapshotStore {
   const bucket = options.bucket ?? "snapshot";
-  const prefix = trimSlashes(options.prefix ?? "void-snapshots");
+  const prefix = trimSlashes(options.prefix ?? "nomo-snapshots");
   const redaction = options.redaction;
 
   return {

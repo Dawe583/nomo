@@ -6,7 +6,7 @@ import type { Row } from "./api";
 export function plainAction(record: Row): string {
   const tool = record.call?.tool ?? record.tool ?? "unknown tool";
   const decision = record.decision ?? record.status;
-  if (decision === "denied" || record.status === "denied") return `VOID denied ${tool}`;
+  if (decision === "denied" || record.status === "denied") return `NOMO denied ${tool}`;
   if (decision === "approved" || record.status === "approved") return `Approve ${tool}`;
   return `Run ${tool}`;
 }

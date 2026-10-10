@@ -1,4 +1,4 @@
-# The hosted VOID MCP surface
+# The hosted NOMO MCP surface
 
 What this document records: what the hosted endpoint publishes, where every
 published fact comes from, what has been verified against the live Appwrite
@@ -11,7 +11,7 @@ Read with `apps/appwrite-mcp/README.md` (the function's own operator note) and
 ## The boundary this endpoint holds
 
 The hosted endpoint is **read-only reference surface**. It answers questions
-about VOID and never performs a governed operation.
+about NOMO and never performs a governed operation.
 
 That boundary is not a limitation of the implementation, it is the product. A
 recovery needs a local workspace, a local policy, and the retained signing key
@@ -27,12 +27,12 @@ Six tools, all annotated `readOnlyHint: true`:
 
 | Tool | Answers |
 | --- | --- |
-| `void_project_info` | What this endpoint is, how to connect to it, where recovery runs, and the registry's current size |
-| `void_registry_search` | Search the reversibility registry by text, vendor, surface, tag or class |
-| `void_registry_entry` | One operation's preconditions, classes, gates, inverses and validity windows |
-| `void_registry_summary` | Registry totals, class distribution, vendor coverage, and its own disclaimer |
-| `void_local_tools` | The local stdio tools with arguments and their read/write annotations |
-| `void_cli_commands` | The CLI command surface, read from the dispatcher |
+| `nomo_project_info` | What this endpoint is, how to connect to it, where recovery runs, and the registry's current size |
+| `nomo_registry_search` | Search the reversibility registry by text, vendor, surface, tag or class |
+| `nomo_registry_entry` | One operation's preconditions, classes, gates, inverses and validity windows |
+| `nomo_registry_summary` | Registry totals, class distribution, vendor coverage, and its own disclaimer |
+| `nomo_local_tools` | The local stdio tools with arguments and their read/write annotations |
+| `nomo_cli_commands` | The CLI command surface, read from the dispatcher |
 
 Each precondition is published twice, and the second form is the point. `when`
 is the sentence a person reads, and it is also what a search matches on. `if`
@@ -40,21 +40,21 @@ is the structured gate the registry carries next to it, in the form a tool can
 evaluate: `{"kind": "fact", "fact": "stripe.charge.settled", "is": "true"}`,
 `{"kind": "always"}`, or `{"kind": "all", "of": [...]}` when a case needs more
 than one condition. A caller holding a Stripe account and wanting to know what
-VOID would do can evaluate the gate; a caller reading prose can read it. The
+NOMO would do can evaluate the gate; a caller reading prose can read it. The
 registry holds 491 gates and the endpoint publishes all of them, because a
 catalogue that answers "r1" without saying what has to be true to get there is
 half a catalogue.
 
-`void_project_info` answers with the address it is being served from and a
+`nomo_project_info` answers with the address it is being served from and a
 pasteable client configuration, both read from the operator's
-`VOID_MCP_ENDPOINT` rather than written into the source, because the domain is
+`NOMO_MCP_ENDPOINT` rather than written into the source, because the domain is
 expected to change and a value written into the code answers the wrong one the
 moment it does. When that variable is not set, both fields come back empty
 rather than carrying a URL that may be the wrong one: a configuration with an
 empty `url` looks pasteable and fails on use, and the failure reads as a broken
 server rather than as an undeclared address.
 
-The registry is the interesting one. VOID's claim is that reversibility is not a
+The registry is the interesting one. NOMO's claim is that reversibility is not a
 property of an API call but of the system state the call runs against: an S3
 PUT is `r0` on a versioned bucket and `r3` on an unversioned one. A catalogue
 that published one class per operation would therefore be wrong half the time,
@@ -68,8 +68,8 @@ Measured from the live project on 2026-09-30, registry `2026.09.2`:
 
 ## Where every published fact comes from
 
-Nothing in `app.py` is written by hand. The facts are read out of the VOID source
-tree by `apps/appwrite-mcp/src/appwrite_mcp/void_data.py`:
+Nothing in `app.py` is written by hand. The facts are read out of the NOMO source
+tree by `apps/appwrite-mcp/src/appwrite_mcp/nomo_data.py`:
 
 | Published | Read from |
 | --- | --- |
@@ -90,8 +90,8 @@ with nothing comparing it to the product.
 ### The deployed function has no repository
 
 An Appwrite Function receives a tarball, not a git checkout, so
-`void_data.py` cannot read the source tree at run time. It falls back to
-`void_snapshot.json`, which is generated from that same tree by
+`nomo_data.py` cannot read the source tree at run time. It falls back to
+`nomo_snapshot.json`, which is generated from that same tree by
 `apps/appwrite-mcp/scripts/generate-snapshot.py`.
 
 The snapshot is only honest while it equals its source, and that is enforced
@@ -101,8 +101,8 @@ snapshot against a fresh build and fails if they differ. A stale snapshot
 therefore fails the gate rather than being published as a current catalogue.
 
 ```
-/tmp/void-mcp-venv/bin/python apps/appwrite-mcp/scripts/generate-snapshot.py
-/tmp/void-mcp-venv/bin/python apps/appwrite-mcp/scripts/generate-snapshot.py --check
+/tmp/nomo-mcp-venv/bin/python apps/appwrite-mcp/scripts/generate-snapshot.py
+/tmp/nomo-mcp-venv/bin/python apps/appwrite-mcp/scripts/generate-snapshot.py --check
 ```
 
 The generator calls `appwrite_mcp.snapshot_builder`, which lives in the function
@@ -210,7 +210,7 @@ because a blocker a reader cannot see in the manifest is a blocker they
 discover by trying.
 
 For the registry entry itself, `server.json` also needs `remotes[]` rather than
-`packages[]`, because VOID is a hosted endpoint and not an npm package. The
+`packages[]`, because NOMO is a hosted endpoint and not an npm package. The
 npm `mcpName` ownership check applies to packages and is not required for a
 remote-only server.
 

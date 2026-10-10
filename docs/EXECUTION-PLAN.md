@@ -1,4 +1,4 @@
-# VOID: execution plan, in workflow sized pieces
+# NOMO: execution plan, in workflow sized pieces
 
 Companion to `BUILD-PLAN.md`. That document says what to build and in which
 order. This one says how each piece gets built by Claude running subagents, so
@@ -61,7 +61,7 @@ anything. This is the stable prefix from `BUILD-PLAN.md` section 3, made
 concrete, and WP-00 creates it:
 
 ```
-docs/CONTEXT.md        what VOID is, in 400 words, plus the vocabulary
+docs/CONTEXT.md        what NOMO is, in 400 words, plus the vocabulary
 docs/DECISIONS.md      the decision log, one paragraph per decision
 docs/STANDARDS.md      coding rules, test rules, commit rules, no dashes
 packages/*/README.md   the contract of each package, kept to one screen
@@ -182,7 +182,7 @@ in, and write the four files every later agent will read first.
   contract and every consumer of it.
 - Reader C: `lib/db/` and the Drizzle schema. Return what exists, what the
   ledger table will need to add.
-- Reader D: `artifacts/void/`. Return the design tokens and the component
+- Reader D: `artifacts/nomo/`. Return the design tokens and the component
   primitives the control plane UI will reuse, so WP-11 does not reinvent them.
 - Deciders 1 to 3: each writes a full decision log for the five decisions in
   `BUILD-PLAN.md` section 5 phase 0, from a different bias: fastest to demo,
@@ -269,13 +269,13 @@ scout step confirms the version and pins it.
   the agent saw a clean error.
 
 **Produces.** `packages/proxy` with stdio transport, session, forwarders,
-notification relay, tests, and a `void-proxy` binary that takes an upstream
+notification relay, tests, and a `nomo-proxy` binary that takes an upstream
 command.
 
 **Exit.**
 
 ```
-pnpm --filter @void/proxy test
+pnpm --filter @nomo/proxy test
 node scripts/transcript-diff.mjs --direct --via-proxy   # prints "0 differences"
 ```
 
@@ -316,12 +316,12 @@ agents when they are missing.
   lens (does a dropped connection leak the upstream process), and protocol
   lens (session id handling on reconnect).
 
-**Produces.** Both transports, and `void-proxy --http :7777`.
+**Produces.** Both transports, and `nomo-proxy --http :7777`.
 
 **Exit.**
 
 ```
-pnpm --filter @void/proxy test
+pnpm --filter @nomo/proxy test
 node scripts/scenario.mjs progress      # streams, completes
 node scripts/scenario.mjs cancel        # upstream saw the cancel within 100ms
 node scripts/scenario.mjs reconnect     # in flight call errored, next call succeeded
@@ -363,14 +363,14 @@ failures.
   entries, and append an entry with a forged signature. Each returns whether
   the verifier caught it. Any uncaught forgery fails the package.
 
-**Produces.** `packages/ledger`, `void ledger verify`.
+**Produces.** `packages/ledger`, `nomo ledger verify`.
 
 **Exit.**
 
 ```
-void ledger verify                 # 1000 entries, chain intact, signature valid
-void ledger verify --tamper 42     # body check fails at 42
-void ledger verify --drop 42       # link check fails at 43
+nomo ledger verify                 # 1000 entries, chain intact, signature valid
+nomo ledger verify --tamper 42     # body check fails at 42
+nomo ledger verify --drop 42       # link check fails at 43
 psql -c "UPDATE ledger SET klass='r0' WHERE seq=42"   # trigger raises
 ```
 
@@ -415,14 +415,14 @@ case out.
   Each returns cases where the evaluator answered wrongly.
 
 **Produces.** `packages/registry` with `evaluate()`, `schema.json`, the
-migrated registry, and a `void classify --dry-run` command that prints the
+migrated registry, and a `nomo classify --dry-run` command that prints the
 class distribution over a transcript.
 
 **Exit.**
 
 ```
-pnpm --filter @void/registry test
-void classify --transcript fixtures/session.jsonl
+pnpm --filter @nomo/registry test
+nomo classify --transcript fixtures/session.jsonl
 # prints a distribution; unclassified below 20 percent on the fixture
 ```
 
@@ -472,7 +472,7 @@ explicitly when you start it, or split it by vendor group into four runs.
 **Exit.**
 
 ```
-pnpm --filter @void/registry test
+pnpm --filter @nomo/registry test
 node -e "..." # prints entries >= 240, dupes 0, every entry ends with an unguarded case
 ```
 
@@ -512,7 +512,7 @@ enough for the exit criterion.
 - Builders: `rules.ts` (load, validate, first match wins), `decide.ts` (class
   and blast radius and tool in, allow or deny or hold out), `hold.ts`
   (pending map, timer, resolve or expire, the MCP error body on cancel that a
-  model can read), `channels/cli.ts` (a `void approvals` command that lists
+  model can read), `channels/cli.ts` (a `nomo approvals` command that lists
   and resolves), `channels/slack.ts` (webhook post with two buttons, behind a
   feature flag until tested).
 - End to end runner: starts a local Postgres and a Postgres MCP server, runs
@@ -523,13 +523,13 @@ enough for the exit criterion.
   restart, two holds resolving out of order, and an approval from an
   unauthenticated caller.
 
-**Produces.** `packages/policy`, `void approvals`, the first policy file
+**Produces.** `packages/policy`, `nomo approvals`, the first policy file
 `policy/default.yaml`.
 
 **Exit.**
 
 ```
-pnpm --filter @void/policy test
+pnpm --filter @nomo/policy test
 node scripts/moment.mjs
 # expected output:
 #   held: postgres.row.delete (r1, 41883 rows)  waiting for approval
@@ -581,7 +581,7 @@ keeps customer data in the customer's bucket.
   redaction applied before the bytes leave the process).
 - Runner: seeds `orders`, `order_items`, `refund_queue` with the cascade from
   the site's blast radius demo, runs the agent script through the proxy to
-  delete draft orders, runs `void replay --to <before>`, then queries all three
+  delete draft orders, runs `nomo replay --to <before>`, then queries all three
   tables with `psql` and diffs against a dump taken before. Returns the diff.
   Empty diff passes.
 - Skeptics: a `DELETE` with a subquery predicate, a table with a composite
@@ -589,12 +589,12 @@ keeps customer data in the customer's bucket.
   and a snapshot bucket that rejects the write.
 
 **Produces.** `packages/connectors/postgres`, `packages/connectors/snapshot`,
-`void replay`.
+`nomo replay`.
 
 **Exit.**
 
 ```
-pnpm --filter @void/connectors test
+pnpm --filter @nomo/connectors test
 node scripts/undo-postgres.mjs
 # expected: "replayed 3 compensations; pg_dump diff: 0 lines"
 ```
@@ -687,7 +687,7 @@ and put a real number in every hold notification.
   side effects (`SELECT` calling a volatile function), and a probe result that
   is stale because the table changed between probe and call.
 
-**Produces.** `packages/probes`, blast radius in every hold, `void probe`.
+**Produces.** `packages/probes`, blast radius in every hold, `nomo probe`.
 
 **Exit.**
 
@@ -723,20 +723,20 @@ product gets debugged for the next year, so it is built before any dashboard.
 
 **Agents.**
 
-- Designer: `void run`, `void approvals`, `void ledger`, `void replay`,
-  `void policy test`, `void export`. Human output by default, `--json` for
+- Designer: `nomo run`, `nomo approvals`, `nomo ledger`, `nomo replay`,
+  `nomo policy test`, `nomo export`. Human output by default, `--json` for
   everything. Exit codes that mean something.
 - Builders: one per command, each with tests against the package APIs.
 - Runners: one walks through a full session using only the CLI; one installs
-  from a clean clone and runs `void --help` and `void run` against the
+  from a clean clone and runs `nomo --help` and `nomo run` against the
   reference server within five minutes, timing it.
 
-**Produces.** `packages/cli`, `npx void`.
+**Produces.** `packages/cli`, `npx nomo`.
 
 **Exit.**
 
 ```
-pnpm --filter @void/cli test
+pnpm --filter @nomo/cli test
 bash scripts/fresh-install.sh     # "first hold in 4m12s" or better
 ```
 
@@ -772,7 +772,7 @@ after the terminal one and not instead of it.
 
 #### The decision the design phase has to settle
 
-`void run` wraps the agent, so the agent's stdout and VOID's output share one
+`nomo run` wraps the agent, so the agent's stdout and NOMO's output share one
 terminal. A full screen interface would fight it, destroy the scrollback the
 developer needs, and break the moment the output is piped. So the two designers
 argue the split rather than the framework:
@@ -781,7 +781,7 @@ argue the split rather than the framework:
   except while a hold is pending. Composes with everything, survives a pipe,
   keeps scrollback intact. Argue for what fits in one line at 80 columns and
   what has to be dropped.
-- Designer B, **full screen**: `void watch` in a second terminal, alternate
+- Designer B, **full screen**: `nomo watch` in a second terminal, alternate
   screen buffer, live feed plus budget gauges plus the ledger head plus pending
   holds. Argue for the layout at 80, 120 and 200 columns and what reflows.
 
@@ -791,7 +791,7 @@ call formatting is written once and rendered twice.
 The insight the judge should be handed, because it decides the modal design: a
 blocking hold means the agent is stopped waiting for its tool result, so nothing
 else is writing to the terminal for exactly as long as the hold lasts. That is
-the one window where VOID can safely take raw mode, draw a countdown in place
+the one window where NOMO can safely take raw mode, draw a countdown in place
 and read a single keypress, without racing the agent's output.
 
 **Agents.**
@@ -835,19 +835,19 @@ and read a single keypress, without racing the agent's output.
   `SIGHUP` while a hold modal holds raw mode, and after each one check that
   `stty -a` reports `echo` and `icanon` restored. A TUI that dies in raw mode
   leaves the developer with a shell that does not echo what they type, and they
-  will blame VOID for it correctly.
+  will blame NOMO for it correctly.
 - Skeptic 2, **the racing writer**: have the wrapped agent print continuously
   while a hold is pending, resize the terminal in the middle of the countdown,
   and open a hold while another is already pending. Return what the terminal
   actually looked like.
 
-**Produces.** `packages/cli/src/tui/`, `void watch`, and holds that can be
+**Produces.** `packages/cli/src/tui/`, `nomo watch`, and holds that can be
 resolved with one keypress where the agent is already running.
 
 **Exit.**
 
 ```
-pnpm --filter @void/cli test
+pnpm --filter @nomo/cli test
 node scripts/tui-capture.mjs --cols 80 --cols 120 --cols 200
 # no line exceeds the width, no wrap, R0 to R3 distinguishable in the capture
 
@@ -875,7 +875,7 @@ themselves whether colour is on, they will disagree.
 
 The third is subtler: a countdown that repaints every second in inline mode is
 correct only while nothing else prints. The blocking hold guarantees that for
-the wrapped agent, but not for a second VOID instance or a background job in the
+the wrapped agent, but not for a second NOMO instance or a background job in the
 same shell. Inline mode therefore repaints only the line it wrote last, and
 gives up and prints a fresh line the moment it cannot prove it still owns the
 bottom of the screen.
@@ -914,7 +914,7 @@ feed, approvals, ledger browsing with verification status, replay preview.
 **Exit.**
 
 ```
-pnpm --filter @void/control-plane-api test
+pnpm --filter @nomo/control-plane-api test
 curl -N localhost:8081/feed | head -3        # three events from a live proxy
 ```
 
@@ -949,7 +949,7 @@ scrubber, and a view over more history than fits on a screen.
 **Agents.**
 
 - Pages: feed, approvals, ledger, replay. Each reuses `Section`, `Reveal`,
-  the tone tags and the crop mark figures from `artifacts/void`.
+  the tone tags and the crop mark figures from `artifacts/nomo`.
 - Browser runner: Playwright over every page at 320, 768 and 1440, both
   themes, no console errors, no horizontal overflow, and an approval
   performed through the UI that a proxy actually honours.
@@ -1032,17 +1032,17 @@ the product it verifies is not evidence.
   each field named against the ledger schema), `packages/verify` (a separate
   package with zero runtime dependencies, published on its own).
 - Runner: exports a month, copies only the export and the public key to a
-  clean checkout with nothing else installed, runs `npx void-verify`, returns
+  clean checkout with nothing else installed, runs `npx nomo-verify`, returns
   the result.
 - Forgers: same four attacks as WP-03, but against the export file.
 
-**Produces.** `void export`, `packages/verify`, `docs/frames.md`.
+**Produces.** `nomo export`, `packages/verify`, `docs/frames.md`.
 
 **Exit.**
 
 ```
-void export --period 2026-09 --sign > attest.jsonl
-npx void-verify attest.jsonl --key prod.pub    # "14203 links intact, signature valid"
+nomo export --period 2026-09 --sign > attest.jsonl
+npx nomo-verify attest.jsonl --key prod.pub    # "14203 links intact, signature valid"
 ```
 
 **Budget.** About 1.0M tokens.
@@ -1119,7 +1119,7 @@ node scripts/moment.mjs --shape sdk --framework vercel|openai|langgraph
 ```
 gh run view --latest              # green
 bash scripts/fresh-install.sh     # under five minutes to first hold
-npm view @void/cli version        # 0.1.0
+npm view @nomo/cli version        # 0.1.0
 ```
 
 **Budget.** About 1.8M tokens.
@@ -1184,10 +1184,10 @@ should be given one.
 
 ## 7. The Agent Workbench workstream, AW
 
-The WP sequence above builds VOID's core: registry, ledger, proxy, policy,
+The WP sequence above builds NOMO's core: registry, ledger, proxy, policy,
 connectors, CLI, TUI, control plane. The AW workstream extends that core into
 a developer workbench where the operator can also run agent sessions against
-model providers through their own API keys, without VOID becoming a competing
+model providers through their own API keys, without NOMO becoming a competing
 agent framework. The core principle is unchanged and is the test for every AW
 feature: does this make the agent write path safer, more observable, more
 reversible, or more useful to operate? If not, it does not ship.
@@ -1206,7 +1206,7 @@ Dependencies, stated explicitly so nothing is skipped:
 The user's stated goal for this workstream: a TUI workbench where the
 operator works with agents the way they work in a terminal agent today,
 talking to model providers through an OpenRouter compatible token router
-with the operator's own API key, with VOID's accountability, classification,
+with the operator's own API key, with NOMO's accountability, classification,
 holds and ledger around every tool call the agent makes.
 
 ### AW-00: architecture and design-system alignment

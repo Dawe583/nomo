@@ -236,7 +236,7 @@ function renderProposal(input: {
     ...claimed,
     digest,
     body: [
-      "VOID managed Git recovery proposal.",
+      "NOMO managed Git recovery proposal.",
       "",
       `Undoes managed Git operation ${operation.id}.`,
       `Operation receipt: ${operation.receiptRef}`,

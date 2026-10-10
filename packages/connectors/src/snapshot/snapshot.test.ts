@@ -13,7 +13,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 async function tempRoot(): Promise<string> {
-  return mkdtemp(join(tmpdir(), "void-snapshots-"));
+  return mkdtemp(join(tmpdir(), "nomo-snapshots-"));
 }
 
 describe("snapshot stores", () => {

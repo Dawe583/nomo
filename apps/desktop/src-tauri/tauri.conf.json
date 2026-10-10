@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "VOID",
+  "productName": "NOMO",
   "version": "1.0.1",
   "identifier": "dev.void.desktop",
   "build": { "frontendDist": "../ui" },

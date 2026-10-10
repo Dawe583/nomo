@@ -24,7 +24,7 @@ async function seedLedger(): Promise<{
   readonly file: string;
   readonly key: Awaited<ReturnType<typeof devKeyProvider>>;
 }> {
-  const dir = await mkdtemp(join(tmpdir(), "void-verify-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-verify-"));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(key, { dir });
   for (let index = 1; index <= 4; index += 1) {
@@ -73,7 +73,7 @@ describe("verifyLedgerFile", () => {
 
   test("the wrong public key fails signature verification", async () => {
     const { file } = await seedLedger();
-    const wrongDir = await mkdtemp(join(tmpdir(), "void-wrong-key-"));
+    const wrongDir = await mkdtemp(join(tmpdir(), "nomo-wrong-key-"));
     const wrongKey = await devKeyProvider({ dir: wrongDir, env: {} });
     const wrongKeyId = await wrongKey.currentKeyId();
     const publicKey = await wrongKey.publicKey(wrongKeyId);

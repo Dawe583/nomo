@@ -1,5 +1,5 @@
-VOID hosted cloud server
-Copyright 2026 the VOID authors
+NOMO hosted cloud server
+Copyright 2026 the NOMO authors
 
 This directory is NOT licensed under the Apache License 2.0 that covers the
 rest of this repository. It is the closed, paid part of the open core and no
@@ -33,6 +33,6 @@ billing.mjs that funds it. None of it is the interception spine; all of it reads
 the spine rather than replacing it, so a reader who cannot see this directory can
 still read everything that decides whether an agent's write is allowed.
 
-The independent verifier, which is what an auditor needs in order to check VOID
-without trusting VOID, is not here. It is @void/verifier, it has no dependency
+The independent verifier, which is what an auditor needs in order to check NOMO
+without trusting NOMO, is not here. It is @nomo/verifier, it has no dependency
 on this repository, and that independence is the point.

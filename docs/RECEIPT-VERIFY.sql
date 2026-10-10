@@ -1,10 +1,10 @@
--- Third-party verification of a VOID recovery receipt.
+-- Third-party verification of a NOMO recovery receipt.
 --
 -- Run it with any PostgreSQL client against the database the agent wrote to:
 --
 --   psql "$DATABASE_URL" -f docs/RECEIPT-VERIFY.sql
 --
--- VOID is not involved in producing this output, not even as a library: this is
+-- NOMO is not involved in producing this output, not even as a library: this is
 -- SQL over two tables the customer already owns. That is the claim, and anyone
 -- who can reach the database can check it.
 --
@@ -19,7 +19,7 @@ select
   outcome->>'status' as claimed_status,
   format_version,
   jsonb_array_length(outcome->'evidence'->'rows') as rows_named
-from void_recovery.recoveries
+from nomo_recovery.recoveries
 order by id;
 
 \echo ''
@@ -32,7 +32,7 @@ with claimed as (
     e.value->>'table' as table_name,
     e.value->'key' as claimed_key,
     e.value->'row' as row_claimed
-  from void_recovery.recoveries r,
+  from nomo_recovery.recoveries r,
        lateral jsonb_array_elements(r.outcome->'evidence'->'rows') as e(value)
 )
 select
@@ -66,7 +66,7 @@ with written as (
     o.outcome->'evidence'->'rows'->0->'key' as claimed_key,
     o.outcome->'result' as row_written,
     (o.outcome->'evidence'->'rows'->0->>'revision') as revision_after_write
-  from void_recovery.operations o
+  from nomo_recovery.operations o
 ),
 restored as (
   select
@@ -75,7 +75,7 @@ restored as (
     r.outcome->'evidence'->'rows'->0->'key' as claimed_key,
     r.outcome->'evidence'->'rows'->0->'row' as row_restored,
     (r.outcome->'evidence'->'rows'->0->>'revision') as revision_after_restore
-  from void_recovery.recoveries r
+  from nomo_recovery.recoveries r
 )
 select
   w.operation_id,
@@ -108,7 +108,7 @@ with claimed as (
     e.value->>'table' as table_name,
     e.value->'key' as claimed_key,
     e.value->'row' as row_claimed
-  from void_recovery.recoveries r,
+  from nomo_recovery.recoveries r,
        lateral jsonb_array_elements(r.outcome->'evidence'->'rows') as e(value)
 ),
 verdicts as (

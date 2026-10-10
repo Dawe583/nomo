@@ -16,7 +16,7 @@ const WORKSPACE = "exercise";
  * The database half of the agentic reverse exercise: the loop this product is
  * actually sold on, against a real database with a real transaction boundary.
  *
- * Recovering a schema and data change means restoring a row VOID captured
+ * Recovering a schema and data change means restoring a row NOMO captured
  * before it wrote, not reconstructing one from a guess, so the assertion is on
  * the captured values and on a row outside the declared scope staying untouched.
  *
@@ -33,11 +33,11 @@ export async function runDatabaseReverseExercise() {
       "CREATE TABLE ledger_entry(id integer PRIMARY KEY, amount integer NOT NULL, memo text); " +
         "INSERT INTO ledger_entry VALUES(1, 4200, 'original memo'),(2, 900, 'untouched')",
     );
-    root = await mkdtemp(join(tmpdir(), "void-reverse-db-"));
+    root = await mkdtemp(join(tmpdir(), "nomo-reverse-db-"));
 
     const options: ManagedPostgresOptions = {
       workspace: WORKSPACE,
-      schema: "void_recovery",
+      schema: "nomo_recovery",
       tables: [{ table: "public.ledger_entry", primaryKey: ["id"], columns: ["amount", "memo"] }],
       connect: async () => ({
         query: async <T>(sql: string, params?: readonly unknown[]) =>
@@ -126,7 +126,7 @@ export async function runDatabaseReverseExercise() {
     return { steps };
   } finally {
     await db.close();
-    if (root !== undefined && process.env.VOID_KEEP_EXERCISE !== "1") {
+    if (root !== undefined && process.env.NOMO_KEEP_EXERCISE !== "1") {
       await rm(root, { recursive: true, force: true });
     }
   }

@@ -7,22 +7,22 @@ import { OPERATOR_OWNER } from "./owner.mjs";
 test(
   "prime worker authenticates, claims once, rejects stale results and never replays lost jobs",
   {
-    skip: process.env.VOID_GUI_DATABASE_TEST !== "1",
+    skip: process.env.NOMO_GUI_DATABASE_TEST !== "1",
   },
   async () => {
     assert.equal(
       new URL(process.env.DATABASE_URL).pathname,
       "/void_gui_upgrade_preview",
     );
-    process.env.VOID_BRIDGE_TOKEN = "worker-test-token-".repeat(3);
+    process.env.NOMO_BRIDGE_TOKEN = "worker-test-token-".repeat(3);
     const { default: app } = await import("./server.mjs");
     const server = app.listen(0, "127.0.0.1");
     await new Promise((r) => server.once("listening", r));
     const base = `http://127.0.0.1:${server.address().port}`;
     const headers = {
-      authorization: `Bearer ${process.env.VOID_CONTROL_TOKEN}`,
+      authorization: `Bearer ${process.env.NOMO_CONTROL_TOKEN}`,
       "content-type": "application/json",
-      "x-void-worker-token": process.env.VOID_BRIDGE_TOKEN,
+      "x-void-worker-token": process.env.NOMO_BRIDGE_TOKEN,
     };
     const post = async (path, body, h = headers) => {
       const r = await fetch(base + path, {

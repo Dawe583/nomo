@@ -28,7 +28,7 @@ function collect() {
 }
 
 test("init creates fresh workspace storage and reports paths", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-init-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-init-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const c = collect();
   const code = await runInitCommand(["--data-dir", join(root, "wb")], c.io, {
@@ -37,7 +37,7 @@ test("init creates fresh workspace storage and reports paths", async (t) => {
   assert.equal(code, 0);
   assert.ok(existsSync(join(root, "wb", "tui", "workspace.key")));
   assert.ok(c.out.some((line) => line.startsWith("created: ")));
-  assert.ok(c.out.some((line) => line.includes("void doctor")));
+  assert.ok(c.out.some((line) => line.includes("nomo doctor")));
 });
 
 /**
@@ -49,9 +49,9 @@ test("init creates fresh workspace storage and reports paths", async (t) => {
  */
 const seedSignedLedger = async (root: string) => {
   const env = { HOME: root };
-  const signer = await devKeyProvider({ dir: join(root, ".void", "keys"), env: {} });
+  const signer = await devKeyProvider({ dir: join(root, ".nomo", "keys"), env: {} });
   const keyId = await signer.currentKeyId();
-  const entry = await jsonlStore(signer, { dir: join(root, ".void", "ledger") }).append({
+  const entry = await jsonlStore(signer, { dir: join(root, ".nomo", "ledger") }).append({
     workspace: "demo",
     at: new Date().toISOString(),
     tool: "fixture.echo",
@@ -59,11 +59,11 @@ const seedSignedLedger = async (root: string) => {
     decision: "allow",
     argsDigest: "a".repeat(64),
   });
-  return { signer, keyId, entry, ledger: join(root, ".void", "ledger", "demo.jsonl") };
+  return { signer, keyId, entry, ledger: join(root, ".nomo", "ledger", "demo.jsonl") };
 };
 
 test("pinning without --data-dir anchors the key the default ledger was signed with", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-init-pin-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-init-pin-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const { keyId, entry, ledger } = await seedSignedLedger(root);
 
@@ -74,28 +74,28 @@ test("pinning without --data-dir anchors the key the default ledger was signed w
   // id read back out of the ledger, not against the id the signer reported,
   // is the whole test: a pin of any other key passes the second and fails this.
   assert.equal(entry.key_id, keyId);
-  assert.ok(c.out.some((line) => line === `pinned verification key ${entry.key_id} at ${join(root, ".void", "trust", "verify-ed25519.spki")}`));
+  assert.ok(c.out.some((line) => line === `pinned verification key ${entry.key_id} at ${join(root, ".nomo", "trust", "verify-ed25519.spki")}`));
 
-  // And it is the key `void verify` would be given: resolving a verification
+  // And it is the key `nomo verify` would be given: resolving a verification
   // key now names the same id, because both read the one location.
   const resolved = await resolveVerificationKey({ env: { HOME: root } });
   assert.equal(resolved?.keyId, entry.key_id);
 
   // The claim about what is anchored points at the file the ledger was signed
   // with, not at a data dir that happens to be nearby.
-  assert.ok(c.out.some((line) => line.includes(`${join(root, ".void", "keys", "dev-ed25519.pkcs8")}, the signing key the ledgers`)));
+  assert.ok(c.out.some((line) => line.includes(`${join(root, ".nomo", "keys", "dev-ed25519.pkcs8")}, the signing key the ledgers`)));
   assert.equal(
     c.out.some((line) => /anchors whatever the local key file holds/.test(line)),
     false,
   );
   // And it says the truth about having signed something.
-  assert.ok(c.out.some((line) => line === `  signed 1 ledger entry in ${join(root, ".void", "ledger")}`));
+  assert.ok(c.out.some((line) => line === `  signed 1 ledger entry in ${join(root, ".nomo", "ledger")}`));
   assert.ok(c.out.some((line) => /has not signed anything yet/.test(line) === false));
   assert.ok(existsSync(ledger));
 });
 
 test("pinning refuses when no key exists anywhere, and creates none", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-init-nokey-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-init-nokey-"));
   t.after(() => rm(root, { recursive: true, force: true }));
 
   const c = collect();
@@ -105,18 +105,18 @@ test("pinning refuses when no key exists anywhere, and creates none", async (t) 
   // The refusal names the file it looked for and says it will not create it.
   assert.match(c.err.join("\n"), /does not exist/);
   assert.match(c.err.join("\n"), /never creates one/);
-  assert.ok(c.err.join("\n").includes(join(root, ".void", "keys", "dev-ed25519.pkcs8")));
+  assert.ok(c.err.join("\n").includes(join(root, ".nomo", "keys", "dev-ed25519.pkcs8")));
   assert.deepEqual(c.out, []);
 
   // A command that anchors a key must never be what makes it. Both the key and
   // the trust file stay absent, so a later pin cannot "succeed" against a key
   // this one quietly invented.
-  assert.equal(existsSync(join(root, ".void", "keys", "dev-ed25519.pkcs8")), false);
-  assert.equal(existsSync(join(root, ".void", "trust", "verify-ed25519.spki")), false);
+  assert.equal(existsSync(join(root, ".nomo", "keys", "dev-ed25519.pkcs8")), false);
+  assert.equal(existsSync(join(root, ".nomo", "trust", "verify-ed25519.spki")), false);
 });
 
 test("--data-dir holding a different key does not change which key is anchored", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-init-datadir-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-init-datadir-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const { keyId } = await seedSignedLedger(root);
   const dir = join(root, "wb");
@@ -137,13 +137,13 @@ test("--data-dir holding a different key does not change which key is anchored",
   assert.equal(c.out.some((line) => line.startsWith(`pinned verification key ${dataKeyId} `)), false);
 
   // ...and it says why the other key was passed over rather than leaving the
-  // divergence to be discovered by a later `void verify` failure.
+  // divergence to be discovered by a later `nomo verify` failure.
   assert.ok(c.out.some((line) => line.includes(join(dir, "keys", "dev-ed25519.pkcs8")) && line.includes(dataKeyId)));
   assert.ok(c.out.some((line) => line.includes("--data-dir did not change which key is anchored")));
 });
 
 test("the not-signed-yet report names the ids the ledger actually carries", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-init-report-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-init-report-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const { entry, ledger } = await seedSignedLedger(root);
   // Anchor a different key from an out-of-band SPKI, so the anchored key id
@@ -169,15 +169,15 @@ test("the not-signed-yet report names the ids the ledger actually carries", asyn
   assert.equal(onDisk.length, 1);
   assert.equal(onDisk[0]?.key_id, entry.key_id);
 
-  assert.ok(c.out.some((line) => line === `  this key has not signed anything yet. The 1 key id in ${join(root, ".void", "ledger")} are: ${entry.key_id} (1 entry)`));
-  assert.ok(c.out.some((line) => line.includes("anchoring this key makes `void verify` refuse every existing ledger")));
+  assert.ok(c.out.some((line) => line === `  this key has not signed anything yet. The 1 key id in ${join(root, ".nomo", "ledger")} are: ${entry.key_id} (1 entry)`));
+  assert.ok(c.out.some((line) => line.includes("anchoring this key makes `nomo verify` refuse every existing ledger")));
 });
 
 test("init pins a key derived from the shared location, once", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-init-pin-once-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-init-pin-once-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const { signer, keyId } = await seedSignedLedger(root);
-  const trustFile = join(root, ".void", "trust", "verify-ed25519.spki");
+  const trustFile = join(root, ".nomo", "trust", "verify-ed25519.spki");
 
   const c = collect();
   assert.equal(await runInitCommand(["--pin-verify-key"], c.io, { env: { HOME: root } }), 0);
@@ -192,7 +192,7 @@ test("init pins a key derived from the shared location, once", async (t) => {
   assert.ok(c.out.some((line) => line.includes("--from-spki")));
 
   // The trust file holds only a public key, and it is a separate file from the
-  // private key. It is not a separate trust domain: `~/.void/` holds both, so
+  // private key. It is not a separate trust domain: `~/.nomo/` holds both, so
   // the resolution reports `operatorSupplied: false` and does not call itself
   // a pin.
   const pinned = await resolveVerificationKey({ env: { HOME: root } });
@@ -200,7 +200,7 @@ test("init pins a key derived from the shared location, once", async (t) => {
   assert.equal(pinned?.source, "trust-file");
   assert.equal(pinned?.degraded, false);
   assert.equal(pinned?.operatorSupplied, false);
-  assert.notEqual(dirname(trustFile), join(root, ".void", "keys"));
+  assert.notEqual(dirname(trustFile), join(root, ".nomo", "keys"));
 
   const again = collect();
   assert.equal(await runInitCommand(["--pin-verify-key"], again.io, { env: { HOME: root } }), 0);
@@ -208,7 +208,7 @@ test("init pins a key derived from the shared location, once", async (t) => {
 });
 
 test("init refuses an initialized directory without touching it", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-init-twice-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-init-twice-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const dir = join(root, "wb");
   const first = collect();
@@ -230,5 +230,5 @@ test("init rejects unknown flags with usage and exit two", async () => {
   const c = collect();
   const code = await runInitCommand(["--force"], c.io, { env: {} });
   assert.equal(code, 2);
-  assert.match(c.err[0] ?? "", /usage: void init/);
+  assert.match(c.err[0] ?? "", /usage: nomo init/);
 });

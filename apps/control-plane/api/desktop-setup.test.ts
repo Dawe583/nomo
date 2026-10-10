@@ -8,8 +8,8 @@ import { listenControlPlane } from './server.ts';
 import { Workbench } from '../../../packages/workbench/src/index.ts';
 
 async function fixture(t: TestContext, fetcher: typeof fetch = async () => Response.json({ data: [{ id: 'muse-spark-1.3-contributor-free' }] })) {
-  const home = await mkdtemp(join(tmpdir(), 'void-setup-'));
-  const env = { HOME: home, VOID_DATA_DIR: join(home, 'void'), VOID_DESKTOP_WEB_ROOT: home };
+  const home = await mkdtemp(join(tmpdir(), 'nomo-setup-'));
+  const env = { HOME: home, NOMO_DATA_DIR: join(home, 'nomo'), NOMO_DESKTOP_WEB_ROOT: home };
   const app = new Workbench(env, fetcher);
   t.after(async () => {
     try { app.close(); } catch (error) { assert.match(String(error), /Workspace changed in another runtime/); }
@@ -49,7 +49,7 @@ test('local import uses fixed endpoint, hides key, selects valid model and survi
   const restored = new Workbench(f.env);
   try { assert.equal((await restored.providerState()).defaultModel, 'zen-test-model'); }
   finally { restored.close(); }
-  assert.ok(!(await readFile(join(f.env.VOID_DATA_DIR, 'workspace.enc'))).includes(Buffer.from(key)));
+  assert.ok(!(await readFile(join(f.env.NOMO_DATA_DIR, 'workspace.enc'))).includes(Buffer.from(key)));
 });
 
 test('Prime TokenRouter import takes the first validated catalog model when none is configured', async t => {
@@ -136,11 +136,11 @@ test('desktop API blocks remote mode and hostile origins and rejects extra impor
   const f = await fixture(t);
   await f.save(auth, { opencode: { type: 'api', key } });
   for (const mode of ['desktop', 'plain', 'remote']) {
-    const env = { ...f.env, VOID_DATA_DIR: join(f.home, mode), ...(mode === 'plain' ? { VOID_DESKTOP_WEB_ROOT: '' } : {}), ...(mode === 'remote' ? { VOID_CONTROL_TOKEN: 'a'.repeat(64) } : {}) };
+    const env = { ...f.env, NOMO_DATA_DIR: join(f.home, mode), ...(mode === 'plain' ? { NOMO_DESKTOP_WEB_ROOT: '' } : {}), ...(mode === 'remote' ? { NOMO_CONTROL_TOKEN: 'a'.repeat(64) } : {}) };
     const server = await listenControlPlane({ env });
     try {
       const url = `http://127.0.0.1:${server.port}/api/desktop/setup`;
-      const headers = mode === 'remote' ? { authorization: `Bearer ${env.VOID_CONTROL_TOKEN}` } : {};
+      const headers = mode === 'remote' ? { authorization: `Bearer ${env.NOMO_CONTROL_TOKEN}` } : {};
       const response = await fetch(url, { headers });
       assert.equal(response.status, mode === 'desktop' ? 200 : 404);
       assert.ok(!(await response.text()).includes(key));

@@ -24,7 +24,7 @@ type Body = Record<string, unknown>;
  * undo has to name the record it inverts.
  */
 async function governedSession(t: test.TestContext) {
-  const directory = await mkdtemp(join(tmpdir(), "void-reversal-record-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-reversal-record-"));
   let turn = 0;
   const fetcher: typeof fetch = async (url, options) => {
     if (String(url).endsWith("/models"))
@@ -34,7 +34,7 @@ async function governedSession(t: test.TestContext) {
       const request = JSON.parse(String(options?.body));
       const tool = request.tools.find(
         (item: { function: { description: string } }) =>
-          item.function.description.startsWith("void_workspace_write:"),
+          item.function.description.startsWith("nomo_workspace_write:"),
       );
       assert.ok(tool, "the profile must offer the document write tool");
       return Response.json({
@@ -63,7 +63,7 @@ async function governedSession(t: test.TestContext) {
       usage: { total_tokens: 7 },
     });
   };
-  let app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  let app = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
   t.after(async () => {
     await app.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -73,7 +73,7 @@ async function governedSession(t: test.TestContext) {
     id: PROFILE,
     name: "Attribution fixture",
     systemPrompt: "Write the requested document.",
-    allowedTools: ["void_workspace_write"],
+    allowedTools: ["nomo_workspace_write"],
     policyProfile: "default",
     maxTurns: 4,
     maxContextTokens: 131_072,
@@ -95,7 +95,7 @@ async function governedSession(t: test.TestContext) {
     },
     session,
     restart() {
-      app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+      app = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
       return app;
     },
   };
@@ -115,7 +115,7 @@ test("a governed workbench record names the policy, the rule, the model and the 
     .map((entry) => entry.body as Body)
     .filter(
       (entry) =>
-        entry.tool === "void_workspace_write" &&
+        entry.tool === "nomo_workspace_write" &&
         typeof entry.decision === "string" &&
         entry.decision.startsWith("hold"),
     );
@@ -147,7 +147,7 @@ test("an undo names the record it inverts, and the chain still verifies", async 
   assert.equal(after!.result.ok, true);
   const undo = (after!.entries as JsonlEntry[])
     .map((entry) => entry.body as Body)
-    .filter((body) => body.tool === "void_workspace_undo");
+    .filter((body) => body.tool === "nomo_workspace_undo");
   assert.equal(undo.length, 1);
   assert.deepEqual(undo[0]!.reversal, { seq: forward.seq, digest: forward.hash });
 });
@@ -173,7 +173,7 @@ test("an undo whose forward record is not in the chain is refused", async (t) =>
   const evidence = await restarted.ledger(f.session.workspace);
   assert.equal(
     (evidence!.entries as JsonlEntry[]).some(
-      (entry) => (entry.body as Body).tool === "void_workspace_undo",
+      (entry) => (entry.body as Body).tool === "nomo_workspace_undo",
     ),
     false,
     "a refused undo writes no record",

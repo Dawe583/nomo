@@ -21,7 +21,7 @@ import {
 import { devKeyProvider } from "../../../ledger/src/sign.ts";
 async function fixture(t: import("node:test").TestContext) {
   const db = new PGlite(),
-    root = await mkdtemp(join(tmpdir(), "void-managed-pg-"));
+    root = await mkdtemp(join(tmpdir(), "nomo-managed-pg-"));
   t.after(async () => {
     await db.close();
     await rm(root, { recursive: true, force: true });
@@ -31,7 +31,7 @@ async function fixture(t: import("node:test").TestContext) {
   );
   const options: ManagedPostgresOptions = {
     workspace: "test",
-    schema: "void_recovery",
+    schema: "nomo_recovery",
     tables: [
       {
         table: "public.account",
@@ -88,7 +88,7 @@ test("managed PostgreSQL capture, write and outbox are integrated; restarted run
   assert.equal(
     (
       await f.db.query<Record<string, unknown>>(
-        "select count(*)::int as n from void_recovery.operations",
+        "select count(*)::int as n from nomo_recovery.operations",
       )
     ).rows[0]?.n,
     1,
@@ -169,7 +169,7 @@ test("recovery job restores consecutive updates to one PostgreSQL primary key", 
   assert.equal(
     (
       await f.db.query<{ n: number }>(
-        "select count(*)::int as n from void_recovery.revisions",
+        "select count(*)::int as n from nomo_recovery.revisions",
       )
     ).rows[0]?.n,
     1,
@@ -541,7 +541,7 @@ test("target drift during authorization blocks dispatch; constraints roll back m
   assert.equal(
     (
       await f.db.query<Record<string, unknown>>(
-        "select count(*)::int as n from void_recovery.operations",
+        "select count(*)::int as n from nomo_recovery.operations",
       )
     ).rows[0]?.n,
     0,
@@ -589,7 +589,7 @@ test("lost PostgreSQL commit response reconciles from transactionally stored out
   assert.equal(
     (
       await f.db.query<Record<string, unknown>>(
-        "select count(*)::int as n from void_recovery.operations",
+        "select count(*)::int as n from nomo_recovery.operations",
       )
     ).rows[0]?.n,
     1,
@@ -645,7 +645,7 @@ test("lost recovery response reconciles durable receipt after restart without a 
   assert.equal(
     (
       await f.db.query<Record<string, unknown>>(
-        "select count(*)::int as n from void_recovery.recoveries",
+        "select count(*)::int as n from nomo_recovery.recoveries",
       )
     ).rows[0]?.n,
     1,
@@ -680,11 +680,11 @@ test("managed PostgreSQL metadata migration is explicit, transactional and idemp
   const db = new PGlite();
   t.after(() => db.close());
   await db.exec(
-    "CREATE TABLE account(id integer PRIMARY KEY, balance integer NOT NULL); CREATE SCHEMA void_recovery; CREATE TABLE void_recovery.meta(key text PRIMARY KEY, version integer NOT NULL); CREATE TABLE void_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL); CREATE TABLE void_recovery.operations(id text PRIMARY KEY, request_digest text NOT NULL, capture jsonb NOT NULL, outcome jsonb NOT NULL); CREATE TABLE void_recovery.recoveries(id text PRIMARY KEY, input_digest text NOT NULL, outcome jsonb NOT NULL); INSERT INTO void_recovery.meta VALUES('version',1)",
+    "CREATE TABLE account(id integer PRIMARY KEY, balance integer NOT NULL); CREATE SCHEMA nomo_recovery; CREATE TABLE nomo_recovery.meta(key text PRIMARY KEY, version integer NOT NULL); CREATE TABLE nomo_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL); CREATE TABLE nomo_recovery.operations(id text PRIMARY KEY, request_digest text NOT NULL, capture jsonb NOT NULL, outcome jsonb NOT NULL); CREATE TABLE nomo_recovery.recoveries(id text PRIMARY KEY, input_digest text NOT NULL, outcome jsonb NOT NULL); INSERT INTO nomo_recovery.meta VALUES('version',1)",
   );
   const options: ManagedPostgresOptions = {
     workspace: "test",
-    schema: "void_recovery",
+    schema: "nomo_recovery",
     tables: [
       {
         table: "public.account",
@@ -730,7 +730,7 @@ test("managed PostgreSQL deletes and restores exact configured cascade descendan
   );
   const options: ManagedPostgresOptions = {
     workspace: "test",
-    schema: "void_recovery",
+    schema: "nomo_recovery",
     tables: [
       { table: "public.parent", primaryKey: ["id"], columns: ["label"] },
       {
@@ -802,7 +802,7 @@ test("managed PostgreSQL binds tenant RLS to a server setting and rejects cross-
   await db.query("SELECT set_config('void.tenant_id','tenant-a',false)");
   const options: ManagedPostgresOptions = {
     workspace: "test",
-    schema: "void_recovery",
+    schema: "nomo_recovery",
     tenant: { column: "tenant_id", setting: "void.tenant_id" },
     tables: [
       {
@@ -896,13 +896,13 @@ test("a managed PostgreSQL observation names the rows it read at the revision it
 for (const [name, drift] of [
   [
     "an extra constraint",
-    "ALTER TABLE void_recovery.operations ADD CONSTRAINT drift_receipt CHECK(length(id)>0)",
+    "ALTER TABLE nomo_recovery.operations ADD CONSTRAINT drift_receipt CHECK(length(id)>0)",
   ],
   [
     "a replaced format_version default",
-    "ALTER TABLE void_recovery.operations ALTER COLUMN format_version SET DEFAULT 1",
+    "ALTER TABLE nomo_recovery.operations ALTER COLUMN format_version SET DEFAULT 1",
   ],
-  ["a downgraded metadata version", "UPDATE void_recovery.meta SET version=1"],
+  ["a downgraded metadata version", "UPDATE nomo_recovery.meta SET version=1"],
 ] as const) {
   test(`execute refuses a receipt layout changed by ${name} between prepare and execute`, async (t) => {
     const f = await fixture(t);
@@ -934,7 +934,7 @@ for (const [name, drift] of [
     assert.equal(
       (
         await f.db.query<Record<string, unknown>>(
-          "SELECT count(*)::int AS n FROM void_recovery.operations",
+          "SELECT count(*)::int AS n FROM nomo_recovery.operations",
         )
       ).rows[0]?.n,
       0,

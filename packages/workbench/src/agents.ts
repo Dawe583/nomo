@@ -280,17 +280,17 @@ export function runHook(
     child.stdin.end(
       JSON.stringify({
         ...context,
-        VOID_HOOK_EVENT: hook.event,
-        VOID_HOOK_ID: hook.id,
+        NOMO_HOOK_EVENT: hook.event,
+        NOMO_HOOK_ID: hook.id,
         ...(context.tool === undefined
           ? {}
-          : { VOID_HOOK_TOOL: String(context.tool) }),
+          : { NOMO_HOOK_TOOL: String(context.tool) }),
         ...(context.decision === undefined
           ? {}
-          : { VOID_HOOK_DECISION: String(context.decision) }),
+          : { NOMO_HOOK_DECISION: String(context.decision) }),
         ...(context.outcome === undefined
           ? {}
-          : { VOID_HOOK_OUTCOME: String(context.outcome) }),
+          : { NOMO_HOOK_OUTCOME: String(context.outcome) }),
       }),
     );
   });

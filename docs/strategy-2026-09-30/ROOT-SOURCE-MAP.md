@@ -10,9 +10,9 @@ Automatický strukturální průchod textových souborů na baseline `4c560dd`. 
 | `.github/workflows/manifest.yml` | 40 | — | 0 |
 | `.github/workflows/pages.yml` | 38 | — | 0 |
 | `packages/cli/README.md` | 73 | — | 0 |
-| `packages/cli/bin/void.mjs` | 50 | argv, flag, parsed | 0 |
-| `packages/cli/design/void-hold.tui` | 55 | — | 0 |
-| `packages/cli/design/void-operations.tui` | 152 | — | 0 |
+| `packages/cli/bin/nomo.mjs` | 50 | argv, flag, parsed | 0 |
+| `packages/cli/design/nomo-hold.tui` | 55 | — | 0 |
+| `packages/cli/design/nomo-operations.tui` | 152 | — | 0 |
 | `packages/cli/package.json` | 42 | — | 0 |
 | `packages/cli/src/agent.ts` | 57 | runAgentCommand | 0 |
 | `packages/cli/src/approve.test.ts` | 174 | call, fixture | 11 |
@@ -71,7 +71,7 @@ Automatický strukturální průchod textových souborů na baseline `4c560dd`. 
 | `packages/cli/src/tui/modal.ts` | 182 | renderHoldPrompt, HoldResolution, RawInput, promptForHold | 0 |
 | `packages/cli/src/tui/preview.ts` | 39 | ILLUSTRATIVE, dimensions, width, height, detected, capabilities, state | 0 |
 | `packages/cli/src/tui/runtime.ts` | 103 | WatchRuntimeOptions, WatchRuntime | 0 |
-| `packages/cli/src/tui/theme.ts` | 126 | VOID_PALETTE, CLASS_MARKER, DECISION_MARKER, Tone, ANSI_16, ANSI_256, trueColor, paint | 0 |
+| `packages/cli/src/tui/theme.ts` | 126 | NOMO_PALETTE, CLASS_MARKER, DECISION_MARKER, Tone, ANSI_16, ANSI_256, trueColor, paint | 0 |
 | `packages/cli/src/tui/tui.test.ts` | 591 | capabilities | 35 |
 | `packages/cli/src/tui/types.ts` | 143 | ReversibilityClass, CallDecision, CallStatus, PipelineStage, InterceptedCall, PendingHold, ResolvedState, ResolvedHold | 0 |
 | `packages/cli/src/tui/views.ts` | 118 | renderHelp, renderReplayPreview, renderLedgerVerification | 0 |

@@ -11,7 +11,7 @@ import {
   resolvePolicyProfile,
 } from "./policy-profile.ts";
 
-/** The built-in policy holds every class above r0, so a `void_workspace_write`
+/** The built-in policy holds every class above r0, so a `nomo_workspace_write`
  * (r1) under `default` reaches an operator as a pending hold. The two files
  * below are the same shape of decision made permanent: one that lets r1
  * through, one that refuses it. Neither can be told apart from the built-in
@@ -27,7 +27,7 @@ const done = () =>
  * managed-document tool call per turn. The policy path is the operator's, so
  * the names a profile can select are the files sitting next to it. */
 async function fixture(t: TestContext, policies: Record<string, string>) {
-  const directory = await mkdtemp(join(tmpdir(), "void-policy-profile-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-policy-profile-"));
   const policyDir = join(directory, "policies");
   await mkdir(policyDir);
   for (const [name, text] of Object.entries(policies))
@@ -60,7 +60,7 @@ async function fixture(t: TestContext, policies: Record<string, string>) {
       ],
     });
   };
-  const env = { VOID_DATA_DIR: join(directory, "data"), VOID_POLICY_PATH: policyPath };
+  const env = { NOMO_DATA_DIR: join(directory, "data"), NOMO_POLICY_PATH: policyPath };
   const app = new Workbench(env, fetcher);
   t.after(async () => {
     await app.shutdown();
@@ -71,7 +71,7 @@ async function fixture(t: TestContext, policies: Record<string, string>) {
     id: "writer",
     name: "Writer",
     systemPrompt: "Write the requested document.",
-    allowedTools: ["void_workspace_write"],
+    allowedTools: ["nomo_workspace_write"],
     policyProfile,
     maxTurns: 2,
     maxContextTokens: 131_072,
@@ -84,7 +84,7 @@ test("the catalogue offers the operator's policy files, and only readable valid 
   await writeFile(join(f.policyDir, ".hidden.yaml"), CLOSED);
   const names = listPolicyProfiles(f.policyPath);
   assert.equal(names[0], DEFAULT_POLICY_PROFILE);
-  // `operator` is the operator's own VOID_POLICY_PATH, so it is a real file
+  // `operator` is the operator's own NOMO_POLICY_PATH, so it is a real file
   // in that directory and therefore a name a profile can select.
   assert.deepEqual(names.slice(1), ["broken", "closed", "open", "operator"]);
   assert.equal(f.app.agents().policyProfiles.includes("open"), true);
@@ -124,7 +124,7 @@ test("a profile that names a closed policy is refused at the call, not held", as
   const evidence = await f.app.ledger(session.workspace);
   const denied = (evidence!.entries as Array<{ body: Record<string, unknown> }>)
     .map((entry) => entry.body)
-    .filter((body) => body.decision === "deny" && body.tool === "void_workspace_write");
+    .filter((body) => body.decision === "deny" && body.tool === "nomo_workspace_write");
   assert.ok(denied.length >= 1, "the refused call is recorded as a denial");
 });
 

@@ -1,7 +1,7 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.audit = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.audit = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   var wrap = document.createElement("div");
   wrap.className = "section";
   var period = "2026-09";
@@ -43,10 +43,10 @@ window.VOID_VIEWS.audit = function (root) {
       var blob = new Blob([JSON.stringify({ mock: true, period: period, entries: F.ledgerEntries }, null, 2)], { type: "application/json" });
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "void-attestation-mock.json";
+      a.download = "nomo-attestation-mock.json";
       a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
-      if (window.VOID_TOAST) window.VOID_TOAST("Attestation exported, mock file.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Attestation exported, mock file.");
     };
     wrap.querySelector("#au-vok").onclick = function () {
       var r = checkLinks();

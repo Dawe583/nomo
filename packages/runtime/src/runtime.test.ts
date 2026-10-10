@@ -15,7 +15,7 @@ import {
   type Outcome,
 } from "./index.ts";
 async function fixture(t: import("node:test").TestContext) {
-  const dir = await mkdtemp(join(tmpdir(), "void-runtime-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-runtime-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} }),
     keys = { test: randomBytes(32) };

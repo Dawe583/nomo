@@ -41,8 +41,8 @@ function parse(argv: readonly string[], allowed: readonly string[]): Invocation 
 }
 
 /**
- * `void export`, `void attest` and `void metrics` resolve their ledger through
- * the same helper `void verify` uses, so a missing path is answered the same
+ * `nomo export`, `nomo attest` and `nomo metrics` resolve their ledger through
+ * the same helper `nomo verify` uses, so a missing path is answered the same
  * way everywhere instead of three times with three messages.
  */
 function requestedWorkspace(flags: ReadonlyMap<string, string>): string {
@@ -67,7 +67,7 @@ export async function runOperation(command: string, argv: readonly string[], env
       if (!result.ok) throw new Error('Policy is invalid; fix its structure before starting the proxy.');
       output('Policy valid'); return 0;
     }
-    throw new Error('usage: void policy list | show <strict|balanced|dev> | validate <file>');
+    throw new Error('usage: nomo policy list | show <strict|balanced|dev> | validate <file>');
   }
   if (command === 'metrics') {
     const { flags } = parse(argv, METRICS_FLAGS);
@@ -82,7 +82,7 @@ export async function runOperation(command: string, argv: readonly string[], env
     // nothing was counted.
     const resolution = await resolveLedgerTarget({ mode: 'scan', ledger: flags.get('--ledger'), workspace: requestedWorkspace(flags), env });
     if (!resolution.ok) {
-      error(`void metrics measured nothing\n  ${resolution.message}`);
+      error(`nomo metrics measured nothing\n  ${resolution.message}`);
       return 1;
     }
     const state = flags.get('--state');
@@ -112,10 +112,10 @@ export async function runOperation(command: string, argv: readonly string[], env
     const bundleDir = flags.get('--bundle');
     const anchor = flags.get('--anchor');
     if (!bundleDir || !anchor || positional.length > 1)
-      throw new Error('usage: void export verify --bundle <dir> --anchor <manifest-sha256> --key <base64-spki> [--attestation anchor.json] [--state <dir>]');
+      throw new Error('usage: nomo export verify --bundle <dir> --anchor <manifest-sha256> --key <base64-spki> [--attestation anchor.json] [--state <dir>]');
     // A reviewer holds a bundle and the key that signed it, not a local
     // ledger. `--key` is how that key is handed in, and it leads the remedy:
-    // telling an unconfigured reviewer to run `void init --pin-verify-key`
+    // telling an unconfigured reviewer to run `nomo init --pin-verify-key`
     // mints a key of their own and pins that, which matches nothing and fails
     // confusingly later. A verifier must not mint key material either way, so
     // an unconfigured review is a refusal.
@@ -123,7 +123,7 @@ export async function runOperation(command: string, argv: readonly string[], env
     const reviewer = supplied === undefined
       ? await resolveVerificationKey({ env })
       : verificationKeyFromBase64(supplied, '--key');
-    if (!reviewer) throw new Error('A verification key is required: pass --key <base64-spki>, or set VOID_VERIFY_KEY. Do not run `void init --pin-verify-key` to get one: that mints a key of your own and pins it.');
+    if (!reviewer) throw new Error('A verification key is required: pass --key <base64-spki>, or set NOMO_VERIFY_KEY. Do not run `nomo init --pin-verify-key` to get one: that mints a key of your own and pins it.');
     const journal = state ? await retainedKeyProvider({ dir: join(state, 'keys') }) : null;
     const attestation = flags.get('--attestation');
     const verification = await verifyBundle({
@@ -150,12 +150,12 @@ export async function runOperation(command: string, argv: readonly string[], env
   // The recorder signs; a pinned public key verifies when there is one, and
   // the recorder's own key is the reported fallback rather than a silent one.
   const verification = await resolveVerificationKey({ env, allowDegraded: true, signingKey: async () => signer });
-  if (!verification) throw new Error('No verification key is available; pin one with `void init --pin-verify-key`.');
+  if (!verification) throw new Error('No verification key is available; pin one with `nomo init --pin-verify-key`.');
   const entries = await readLedgerEntries(ledger);
   const result = await verifyChain(entries, { publicKey: verification.publicKey });
   if (!result.ok) throw new Error('Ledger verification failed; export and attestation refused.');
   if (command === 'attest') {
-    if (positional.length > 0) throw new Error('usage: void attest [--ledger <file> | --workspace <name>] [--anchor <file>]');
+    if (positional.length > 0) throw new Error('usage: nomo attest [--ledger <file> | --workspace <name>] [--anchor <file>]');
     const doc = await attestLedger(dirname(ledger), workspace, signer);
     const retained = await storeAttestation(dirname(ledger), doc);
     output(JSON.stringify(doc, null, 2));
@@ -164,7 +164,7 @@ export async function runOperation(command: string, argv: readonly string[], env
     output(`retained copy: ${retained} (same trust domain as the ledger, so not an anchor on its own)`);
     const published = flags.get('--anchor');
     if (published === undefined)
-      output('publish it out of band to anchor this head: void attest --anchor <a file the agent cannot write>');
+      output('publish it out of band to anchor this head: nomo attest --anchor <a file the agent cannot write>');
     else {
       await appendAnchor(published, doc);
       output(`anchor appended: ${published}`);
@@ -173,7 +173,7 @@ export async function runOperation(command: string, argv: readonly string[], env
   }
   else if (command === 'export' && flags.has('--bundle')) {
     if (!state) throw new Error('--state is required: the journal and vault sections cannot be declared without it');
-    if (positional.length > 0) throw new Error('usage: void export --ledger <file> --state <dir> --bundle <dir>');
+    if (positional.length > 0) throw new Error('usage: nomo export --ledger <file> --state <dir> --bundle <dir>');
     const journal = await retainedKeyProvider({ dir: join(state, 'keys') });
     const created = await createBundle({
       ledgerPath: ledger,
@@ -192,7 +192,7 @@ export async function runOperation(command: string, argv: readonly string[], env
     output(describeBundle(created, verificationKeyLine(verification)).join('\n'));
   }
   else if (command === 'export') {
-    if (positional.length > 0) throw new Error('usage: void export [--ledger <file> | --workspace <name>]');
+    if (positional.length > 0) throw new Error('usage: nomo export [--ledger <file> | --workspace <name>]');
     output(entries.map(entry => JSON.stringify(entry)).join('\n'));
   }
   else throw new Error('unknown operation');

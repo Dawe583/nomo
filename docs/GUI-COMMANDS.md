@@ -13,7 +13,7 @@ row; ordinary Enter still inserts a newline outside the menu.
 - `/tools`: connector configuration.
 - `/model`: model selection for new chats; existing chats retain their snapshot.
 - `/context` and `/undo`: document/context panel, including existing Undo previews.
-- `/approvals` and `/ledger`: actual VOID decision and audit views.
+- `/approvals` and `/ledger`: actual NOMO decision and audit views.
 - `/export`: download the currently loaded conversation transcript as Markdown.
   Listed only while a conversation is open, because the export reads that
   conversation's loaded events.
@@ -26,7 +26,7 @@ catalogues are discovered when the conversation starts. External tools retain
 connector provenance and are classified at execution. Only built-in document
 writes/deletes claim captured Undo. A tool selection prepares a request and opens
 its parameter schema; it does not execute a tool or grant approval. Sending the
-request goes through the normal model, VOID policy, approvals and ledger.
+request goes through the normal model, NOMO policy, approvals and ledger.
 
 Public demo uses the same menu component with `/context`, `/workspace`, and only
 its four isolated managed-document tools. Its catalogue never reads private

@@ -1,4 +1,4 @@
-# VOID desktop
+# NOMO desktop
 
 The native macOS and Windows apps run the same GUI and local control-plane API as `pnpm gui`.
 Tauri 2 keeps one app instance per user and owns an isolated Node process and binds the backend to an ephemeral
@@ -12,11 +12,11 @@ desktop release sources: `apps/desktop/package.json`,
 `apps/desktop/src-tauri/Cargo.toml` and `apps/desktop/src-tauri/tauri.conf.json`.
 `apps/desktop/src-tauri/Cargo.lock` records the same package version. The
 bundled Node runtime remains pinned independently at `24.21.0`; that runtime
-version is not the VOID product version.
+version is not the NOMO product version.
 
 The direct-download profile is the only supported local Mac packaging path in
 this repository. `apps/desktop/scripts/build.mjs` resolves that policy before
-invoking Tauri: it refuses `VOID_DISTRIBUTION=store` on macOS and resolves the
+invoking Tauri: it refuses `NOMO_DISTRIBUTION=store` on macOS and resolves the
 Apple signing identity in order, as `APPLE_SIGNING_IDENTITY` used verbatim,
 otherwise a stable code-signing identity already in the keychain, listed
 read-only through `security find-identity -v -p codesigning` without opening any
@@ -94,12 +94,12 @@ setup/recovery stages. iOS implementation is deferred until macOS release gates.
 
 Provider selection, model catalogs, connectors, sessions, approvals, signed
 history and guarded undo are implemented in the shared workbench/backend. The
-shell neither bypasses nor duplicates VOID policy or replay logic. Basic local
+shell neither bypasses nor duplicates NOMO policy or replay logic. Basic local
 inspection is independent of the hosted web app; model calls still require a
 configured provider or a running local model server.
 
 Data is stored under the OS application data directory (`~/Library/Application
-Support/dev.void.desktop` on macOS). The backend receives `VOID_DATA_DIR` and a
+Support/dev.void.desktop` on macOS). The backend receives `NOMO_DATA_DIR` and a
 local ledger directory. The workspace encryption key is retained in macOS
 Keychain or the current user’s Windows Credential Manager, and passed privately to the backend for startup. It is removed from the
 runtime environment before MCP processes are launched. A legacy `workspace.key`
@@ -125,7 +125,7 @@ cloud operator tokens. A remote page cannot become the desktop workbench.
 
 The shell currently does not embed a PTY or native external-agent adapters.
 These require explicit process and terminal permission boundaries; the built-in
-VOID agent uses the shared guarded tool interface.
+NOMO agent uses the shared guarded tool interface.
 
 ## Verification
 
@@ -143,7 +143,7 @@ server. It does not contact a paid provider.
 After packaging, exercise the native executable and its embedded Node runtime:
 
 ```sh
-apps/desktop/src-tauri/target/release/bundle/macos/VOID.app/Contents/MacOS/void-desktop --smoke-test
+apps/desktop/src-tauri/target/release/bundle/macos/NOMO.app/Contents/MacOS/nomo-desktop --smoke-test
 ```
 
 The debug lifecycle smoke exercises that failure path without a provider or

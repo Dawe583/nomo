@@ -36,7 +36,7 @@ const rationaleAttribution: LedgerAttribution = {
 };
 
 async function fixture(t: TestContext) {
-  const dir = await mkdtemp(join(tmpdir(), "void-attribution-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-attribution-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const attacker = await devKeyProvider({ dir: join(dir, "attacker"), env: {} });

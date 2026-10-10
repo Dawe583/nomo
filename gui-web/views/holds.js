@@ -1,6 +1,6 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.holds = function (root) {
-  var F = window.VOID_FIXTURES;
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.holds = function (root) {
+  var F = window.NOMO_FIXTURES;
   var wrap = document.createElement("div");
   wrap.className = "section";
 
@@ -64,7 +64,7 @@ window.VOID_VIEWS.holds = function (root) {
     var h = F.holds.find(function (x) { return x.id === id; });
     if (!h || h.status !== "pending") return;
     h.status = action + "d";
-    if (window.VOID_TOAST) window.VOID_TOAST(h.id + " " + h.status);
+    if (window.NOMO_TOAST) window.NOMO_TOAST(h.id + " " + h.status);
     paint();
   }
 
@@ -132,7 +132,7 @@ window.VOID_VIEWS.holds = function (root) {
   }
 
   // Keyboard: register on render, always remove a previous listener first.
-  if (window.VOID_HOLDS_CLEANUP) window.VOID_HOLDS_CLEANUP();
+  if (window.NOMO_HOLDS_CLEANUP) window.NOMO_HOLDS_CLEANUP();
   keyHandler = function (e) {
     var pal = document.getElementById("palette");
     if (pal && !pal.hidden) return;
@@ -158,12 +158,12 @@ window.VOID_VIEWS.holds = function (root) {
     }
   };
   document.addEventListener("keydown", keyHandler);
-  window.VOID_HOLDS_CLEANUP = function () {
+  window.NOMO_HOLDS_CLEANUP = function () {
     document.removeEventListener("keydown", keyHandler);
     if (ticker) clearInterval(ticker);
     ticker = null;
     keyHandler = null;
-    window.VOID_HOLDS_CLEANUP = null;
+    window.NOMO_HOLDS_CLEANUP = null;
   };
 
   paint();

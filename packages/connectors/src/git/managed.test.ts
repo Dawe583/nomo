@@ -13,10 +13,10 @@ import { recoveryRuntime, localOperationJournal, reservedRecoveryVault } from ".
 import { devKeyProvider } from "../../../ledger/src/sign.ts";
 
 posixTest("captures a disposable repository without mutation", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-git-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-git-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   execFileSync("git", ["init", "-q", root]);
-  execFileSync("git", ["-C", root, "config", "user.name", "VOID test"]);
+  execFileSync("git", ["-C", root, "config", "user.name", "NOMO test"]);
   execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
   execFileSync("git", ["-C", root, "commit", "--allow-empty", "-qm", "initial"]);
   const adapter = managedGitAdapter({ root, cooperative: true });
@@ -27,11 +27,11 @@ posixTest("captures a disposable repository without mutation", async (t) => {
 
 
 async function repository(t: import("node:test").TestContext) {
-  const root = await mkdtemp(join(tmpdir(), "void-git-life-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-git-life-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const run = (...args: string[]) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8" }).trim();
   run("init", "-q");
-  run("config", "user.name", "VOID test");
+  run("config", "user.name", "NOMO test");
   run("config", "user.email", "void@example.invalid");
   await import("node:fs/promises").then(({ writeFile }) => writeFile(join(root, "tracked"), "before", { mode: 0o755 }));
   if (process.platform !== "win32") await chmod(join(root, "tracked"), 0o755);
@@ -145,10 +145,10 @@ posixTest("rejects no-op writes and turns repository drift during recovery into 
 
 
 posixTest("supports SHA-256 and linked worktree identity without exposing administrative paths", async (t) => {
-  const base = await mkdtemp(join(tmpdir(), "void-git-layout-"));
+  const base = await mkdtemp(join(tmpdir(), "nomo-git-layout-"));
   t.after(() => rm(base, { recursive: true, force: true }));
   execFileSync("git", ["init", "-q", "--object-format=sha256", base]);
-  execFileSync("git", ["-C", base, "config", "user.name", "VOID test"]);
+  execFileSync("git", ["-C", base, "config", "user.name", "NOMO test"]);
   execFileSync("git", ["-C", base, "config", "user.email", "void@example.invalid"]);
   execFileSync("git", ["-C", base, "commit", "--allow-empty", "-qm", "initial"]);
   assert.equal((await managedGitAdapter({ root: base, cooperative: true }).preflight({ action: "write", path: "file", base64: "" })).readiness, "verified");
@@ -173,7 +173,7 @@ posixTest("fixed Git plumbing does not invoke hooks, remotes or credential helpe
 });
 
 test("Windows refusal occurs at adapter construction before mutation", { skip: process.platform !== "win32" }, async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-windows-refusal-")); t.after(() => rm(root, { recursive: true, force: true }));
+  const root = await mkdtemp(join(tmpdir(), "nomo-windows-refusal-")); t.after(() => rm(root, { recursive: true, force: true }));
   execFileSync("git", ["init", "-q", root]); await import("node:fs/promises").then(({ writeFile }) => writeFile(join(root, "sentinel"), "unchanged")); execFileSync("git", ["-C", root, "add", "sentinel"]);
   const { readFile } = await import("node:fs/promises"), index = join(root, execFileSync("git", ["-C", root, "rev-parse", "--git-path", "index"], { encoding: "utf8" }).trim()), beforeIndex = await readFile(index), beforeBytes = await readFile(join(root, "sentinel"));
   assert.throws(() => managedGitAdapter({ root, cooperative: true }), /POSIX only/);
@@ -297,9 +297,9 @@ posixTest("refusal table covers every active marker, split index, bare and nonre
     await assert.rejects(adapter.preflight(request), /Active/); await rm(path, { recursive: true, force: true });
   }
   run("update-index", "--split-index"); await assert.rejects(adapter.preflight(request), /Split/);
-  const nonrepo = await mkdtemp(join(tmpdir(), "void-not-git-")); t.after(() => rm(nonrepo, { recursive: true, force: true }));
+  const nonrepo = await mkdtemp(join(tmpdir(), "nomo-not-git-")); t.after(() => rm(nonrepo, { recursive: true, force: true }));
   assert.throws(() => managedGitAdapter({ root: nonrepo, cooperative: true }), /Managed Git command failed/);
-  const bare = await mkdtemp(join(tmpdir(), "void-bare-git-")); t.after(() => rm(bare, { recursive: true, force: true })); execFileSync("git", ["init", "--bare", "-q", bare]);
+  const bare = await mkdtemp(join(tmpdir(), "nomo-bare-git-")); t.after(() => rm(bare, { recursive: true, force: true })); execFileSync("git", ["init", "--bare", "-q", bare]);
   assert.throws(() => managedGitAdapter({ root: bare, cooperative: true }), /Bare/);
 });
 
@@ -369,7 +369,7 @@ posixTest("v2 parser rejects checksum-valid nonzero entry padding", async (t) =>
 
 posixTest("v2 parser accepts long pathname length fields in SHA-1 and SHA-256 repositories", async (t) => {
   for (const format of ["sha1", "sha256"] as const) {
-    const root = await mkdtemp(join(tmpdir(), `void-long-${format}-`)); t.after(() => rm(root, { recursive: true, force: true })); execFileSync("git", ["init", "-q", `--object-format=${format}`, root]); execFileSync("git", ["-C", root, "config", "user.name", "VOID test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
+    const root = await mkdtemp(join(tmpdir(), `nomo-long-${format}-`)); t.after(() => rm(root, { recursive: true, force: true })); execFileSync("git", ["init", "-q", `--object-format=${format}`, root]); execFileSync("git", ["-C", root, "config", "user.name", "NOMO test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
     const parts = Array.from({ length: 10 }, (_, index) => `segment-${index.toString().padStart(2, "0")}-${"x".repeat(45)}`), relative = `${parts.join("/")}/file`;
     await import("node:fs/promises").then(async ({ mkdir, writeFile }) => { await mkdir(join(root, ...parts), { recursive: true }); await writeFile(join(root, relative), "long"); }); execFileSync("git", ["-C", root, "add", "--", relative]); execFileSync("git", ["-C", root, "commit", "-qm", "long"]);
     assert.equal((await managedGitAdapter({ root, cooperative: true }).preflight({ action: "write", path: "new", base64: "" })).readiness, "verified");

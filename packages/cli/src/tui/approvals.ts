@@ -30,7 +30,7 @@ export function approvalsView(
   now: number,
 ): string[] {
   const width = 96;
-  const lines = ["VOID APPROVALS", "held calls waiting for one key decision"];
+  const lines = ["NOMO APPROVALS", "held calls waiting for one key decision"];
   if (holds.length === 0) {
     lines.push("", "No held calls.", "[q] quit");
     return lines;

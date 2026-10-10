@@ -26,4 +26,4 @@ const api = json(file(apiRoot, '.vc-config.json'));
 assert.match(api.runtime, /^nodejs\d+\.x$/, 'Cloud API must use the Node runtime');
 assert.equal(api.supportsResponseStreaming, true, 'Agent streaming support is missing');
 file(apiRoot, api.handler);
-console.log(`VOID cloud artifact verified: ${assets.length} frontend assets, Node API and streaming route.`);
+console.log(`NOMO cloud artifact verified: ${assets.length} frontend assets, Node API and streaming route.`);

@@ -58,7 +58,7 @@ export function renderHoldPrompt(
     ...tail,
   ];
   return crop(
-    box("VOID / HUMAN DECISION", contents, width),
+    box("NOMO / HUMAN DECISION", contents, width),
     capabilities.columns,
     capabilities.rows,
   ).join("\n");

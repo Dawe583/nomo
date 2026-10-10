@@ -6,12 +6,12 @@ import { fileURLToPath } from "node:url";
 import { configureCloudTest } from "./cloud-test-config.mjs";
 
 await configureCloudTest(); // Refuse unsafe configuration before importing the store.
-process.env.VOID_GUI_DATABASE_TEST = "1";
-process.env.VOID_OAUTH_DATABASE_TEST = "1";
-process.env.VOID_RECOVERY_DATABASE_TEST = "1";
-process.env.VOID_CONTROL_TOKEN = randomBytes(32).toString("hex");
-process.env.VOID_SECRET_KEY = randomBytes(32).toString("base64");
-process.env.VOID_SIGNING_KEY = generateKeyPairSync("ed25519")
+process.env.NOMO_GUI_DATABASE_TEST = "1";
+process.env.NOMO_OAUTH_DATABASE_TEST = "1";
+process.env.NOMO_RECOVERY_DATABASE_TEST = "1";
+process.env.NOMO_CONTROL_TOKEN = randomBytes(32).toString("hex");
+process.env.NOMO_SECRET_KEY = randomBytes(32).toString("base64");
+process.env.NOMO_SIGNING_KEY = generateKeyPairSync("ed25519")
   .privateKey.export({ type: "pkcs8", format: "der" })
   .toString("base64");
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -39,9 +39,9 @@ function run(args) {
   let output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
   for (const key of [
     "DATABASE_URL",
-    "VOID_CONTROL_TOKEN",
-    "VOID_SECRET_KEY",
-    "VOID_SIGNING_KEY",
+    "NOMO_CONTROL_TOKEN",
+    "NOMO_SECRET_KEY",
+    "NOMO_SIGNING_KEY",
   ])
     output = output.replaceAll(process.env[key], "[redacted]");
   process.stdout.write(output);

@@ -1,10 +1,10 @@
-# @void/sdk
+# @nomo/sdk
 
-In-process SDK wrapper for VOID.
+In-process SDK wrapper for NOMO.
 
 ## Responsible for
 
-`@void/sdk` lets application code use the same proxy, policy, hold, and ledger path without shelling out to the development binary. It presents a small MCP-like client and maps common safety failures to typed errors.
+`@nomo/sdk` lets application code use the same proxy, policy, hold, and ledger path without shelling out to the development binary. It presents a small MCP-like client and maps common safety failures to typed errors.
 
 This package is landing in wave 4. Its README documents only the public barrel exported by `src/index.ts`.
 
@@ -18,15 +18,15 @@ This package is landing in wave 4. Its README documents only the public barrel e
 
 ## Public surface
 
-- `VoidClient`, `createVoidClient`
-- `McpLikeClient`, `VoidClientOptions`, `VoidClock`, `VoidConnect`
+- `NomoClient`, `createNomoClient`
+- `McpLikeClient`, `NomoClientOptions`, `NomoClock`, `NomoConnect`
 - `holdHandle`, `HoldHandle`, `HoldHandleOptions`
 - `HoldDeniedError`, `LedgerVerifyError`, `PolicyStartupError`, `RefusedError`
-- `RefusalReason`, `VoidErrorCode`
+- `RefusalReason`, `NomoErrorCode`
 
 ## Upstreams
 
-`VoidConnect` supports two shapes:
+`NomoConnect` supports two shapes:
 
 ```ts
 { upstreamCommand: ["node", "server.mjs"], upstreamEnv: {} }
@@ -56,6 +56,6 @@ operationId, runId, arguments)`, `planRecovery(operationId)`,
 `reconcileRecovery(operationId)`. The host supplies authorization; there is no
 default allow. Operation IDs must remain stable across retries.
 
-This is separate from the legacy `VoidClient` interception API. Only registered
+This is separate from the legacy `NomoClient` interception API. Only registered
 executable `RecoveryAdapter` implementations provide managed capture and
 recovery. See `docs/MANAGED-RECOVERY.md` and `docs/RECOVERY-COVERAGE.md`.

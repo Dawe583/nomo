@@ -1,5 +1,5 @@
 {
-  "name": "@void/runtime",
+  "name": "@nomo/runtime",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,7 +19,7 @@
   },
   "description": "Durable managed execution, encrypted captures, signed recovery and reconciliation.",
   "keywords": [
-    "void",
+    "nomo",
     "recovery",
     "runtime",
     "mcp"

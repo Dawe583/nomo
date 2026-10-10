@@ -27,8 +27,8 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
 async function ledgerRows(t: {
   after(fn: () => Promise<void>): void;
 }): Promise<{ ui: WorkspaceTui; app: Workbench; env: Record<string, string> }> {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-learned-rows-"));
-  const env = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-learned-rows-"));
+  const env = { NOMO_DATA_DIR: root };
   const app = new Workbench(env, assistantFetcher("ok"));
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-key" });
   t.after(async () => {
@@ -67,12 +67,12 @@ test("one tool refused under two classes is two rows, and two identities", async
   // repeat threshold. This is the case that breaks a tool-only identity: the
   // miner treats it as two separate patterns, so the rows must too.
   ui.proofs.set("ws-1", [
-    refusal("void_run", "r1"),
-    refusal("void_run", "r1"),
-    refusal("void_run", "r1"),
-    refusal("void_run", "r3"),
-    refusal("void_run", "r3"),
-    refusal("void_run", "r3"),
+    refusal("nomo_run", "r1"),
+    refusal("nomo_run", "r1"),
+    refusal("nomo_run", "r1"),
+    refusal("nomo_run", "r3"),
+    refusal("nomo_run", "r3"),
+    refusal("nomo_run", "r3"),
   ]);
 
   const learned = learnedRows(ui);
@@ -88,8 +88,8 @@ test("one tool refused under two classes is two rows, and two identities", async
   assert.deepEqual(
     learned.map((r) => r.label).sort(),
     [
-      "learned ws-1 void_run [r1] -> hold",
-      "learned ws-1 void_run [r3] -> hold",
+      "learned ws-1 nomo_run [r1] -> hold",
+      "learned ws-1 nomo_run [r3] -> hold",
     ],
   );
 });
@@ -102,8 +102,8 @@ test("a chain with no recurring refusal still gets a record, and it counts zero"
   // able to tell those apart: one says "read, found nothing", the other says
   // "nothing was ever read".
   ui.proofs.set("ws-1", [
-    refusal("void_workspace_delete", "r1"),
-    refusal("void_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
   ]);
 
   const learned = learnedRows(ui);
@@ -117,8 +117,8 @@ test("a chain with no recurring refusal still gets a record, and it counts zero"
 test("no verified entries at all is worded differently from no recurring refusal", async (t) => {
   const withEntries = await ledgerRows(t);
   withEntries.ui.proofs.set("ws-1", [
-    refusal("void_workspace_delete", "r1"),
-    refusal("void_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
   ]);
 
   const none = await ledgerRows(t);
@@ -136,9 +136,9 @@ test("no verified entries at all is worded differently from no recurring refusal
 test("a learned rule is never shown without the operator-written marker", async (t) => {
   const { ui } = await ledgerRows(t);
   ui.proofs.set("ws-1", [
-    refusal("void_workspace_delete", "r1"),
-    refusal("void_workspace_delete", "r1"),
-    refusal("void_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
   ]);
 
   const learned = learnedRows(ui);
@@ -158,8 +158,8 @@ test("/learned empty cases print the same lines as the ledger tab rows", async (
   // that has no verified entries at all.
   const withData = await ledgerRows(t);
   withData.ui.proofs.set("ws-1", [
-    refusal("void_workspace_delete", "r1"),
-    refusal("void_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
+    refusal("nomo_workspace_delete", "r1"),
   ]);
   withData.ui.proofs.set("ws-2", []);
   const tabEmpty = learnedRows(withData.ui)

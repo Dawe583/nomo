@@ -29,7 +29,7 @@ const body = (extra: Record<string, unknown> = {}) => ({
 });
 
 async function fixture(t: TestContext) {
-  const dir = await mkdtemp(join(tmpdir(), "void-reversal-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-reversal-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const attacker = await devKeyProvider({ dir: join(dir, "attacker"), env: {} });
@@ -86,7 +86,7 @@ test("a reversal that names an earlier record in the same chain verifies", async
   await store.append(body({ decision: "execute:failed" }));
   const reversing = await store.append(
     body({
-      tool: "void_workspace_undo",
+      tool: "nomo_workspace_undo",
       decision: "execute:reversal",
       reversal: buildReversal(forward.seq, forward.hash),
     }),

@@ -1,13 +1,13 @@
-# How VOID reaches one real user
+# How NOMO reaches one real user
 
 Written 2026-09-26 against commit `63dbd2c` on `main`, read from source, and
 checked against the vendors' own live documentation rather than against the
 project's planning documents.
 
 **This document answers one question: what is the shortest path from here to a
-single person who is not on this machine using VOID, what does it genuinely
+single person who is not on this machine using NOMO, what does it genuinely
 cost, and how long does one person actually take.** It is not a restatement of
-`docs/VOID-FUTURE-DIRECTION.md` §6 ("Distribution reality"), and where the two
+`docs/NOMO-FUTURE-DIRECTION.md` §6 ("Distribution reality"), and where the two
 disagree it says so and gives the source.
 
 **Method and its limits.** Every local claim was read from source or observed
@@ -60,7 +60,7 @@ repository, and one of them (npm provenance) says so in as many words.
 
 ## 2. What the CLI and the MCP server actually are today
 
-The claim to test is "VOID's server is one command away from being installable
+The claim to test is "NOMO's server is one command away from being installable
 by a stranger." Reading the source, it is closer than that claim implies and
 further than "one command".
 
@@ -74,9 +74,9 @@ projects at zero users.
 (`packages/cli/src/recovery-mcp.ts:162-171`). They already carry the annotations
 that matter most for client-side safety — `readOnlyHint`, `destructiveHint`,
 `idempotentHint`, `openWorldHint` (`recovery-mcp.ts:188-193`) — and they are
-already split into read tools (`void_recovery_plan`,
-`void_recovery_status_job`) and write tools (`void_execute`,
-`void_recovery_apply`, `void_recovery_apply_job`), which is exactly the split
+already split into read tools (`nomo_recovery_plan`,
+`nomo_recovery_status_job`) and write tools (`nomo_execute`,
+`nomo_recovery_apply`, `nomo_recovery_apply_job`), which is exactly the split
 Anthropic's connector review checklist demands.
 
 **The gap is packaging, and it is four specific things:**
@@ -89,26 +89,26 @@ Anthropic's connector review checklist demands.
    publishable is therefore a *deliberate change to a tested invariant*, not a
    flag someone forgot. That is good engineering and it is still a blocker.
 2. **The `bin` is on the wrong package.** `package.json:39-42` declares
-   `void` and `void-proxy` pointing at `packages/cli/bin/void.mjs` and
-   `packages/proxy/bin/void-proxy.mjs` — on the *root workspace* package, which
+   `nomo` and `nomo-proxy` pointing at `packages/cli/bin/nomo.mjs` and
+   `packages/proxy/bin/nomo-proxy.mjs` — on the *root workspace* package, which
    is private. `packages/cli/package.json` has no `bin` at all, and its
    `exports` points at `"./src/index.ts"`, raw TypeScript.
 3. **The bin crosses package boundaries at runtime.**
-   `packages/cli/bin/void.mjs:6-22` imports `../src/recovery.ts`,
+   `packages/cli/bin/nomo.mjs:6-22` imports `../src/recovery.ts`,
    `../src/agent.ts`, `../src/index.ts` and more, and those in turn import
-   `@void/registry`, which is declared as `"workspace:*"`. npm cannot resolve
+   `@nomo/registry`, which is declared as `"workspace:*"`. npm cannot resolve
    `workspace:*`. Either all nine packages get published with `workspace:*`
    rewritten to real versions, or the CLI is bundled. `rollup` is already a root
    dependency, so bundling is the cheaper of the two and produces one artifact
    with no version skew.
-4. **There is no zero-config entry point.** `void recovery serve` requires
+4. **There is no zero-config entry point.** `nomo recovery serve` requires
    `--config` as an explicit path (`packages/cli/src/recovery.ts:96`, read with a
    non-null assertion, so it is mandatory), and the config it reads must supply
    `workspace`, an `agentId` matching `^[\w-]{1,120}$`, a `stateDir`, an
    `encryptionKeyEnv`, a `policyPath`, and **exactly one** of
    `postgres` / `filesystem` / `git` (`recovery.ts:99-103`). The key is a
    stable random 32-byte base64 value the operator must retain across restarts.
-   `void init` does not help here: `packages/cli/src/init.ts:1-5` states it
+   `nomo init` does not help here: `packages/cli/src/init.ts:1-5` states it
    "Creates the local encrypted storage layout and nothing else". Nothing writes
    a recovery config for the user.
 
@@ -124,7 +124,7 @@ steps below are mechanical.
 Money column: what a single maintainer must spend that they have not agreed to
 spend. "Free" means no spend beyond an account that can be created at $0.
 
-| Channel | What it assumes | Money | Realistic time, one maintainer in sessions | Review queue | Would it get VOID a user? |
+| Channel | What it assumes | Money | Realistic time, one maintainer in sessions | Review queue | Would it get NOMO a user? |
 |---|---|---|---|---|---|
 | **Make the repo public** | Nothing but a decision. Credentials restored. | $0 | 1 session incl. a secret scan of full history | No | Prerequisite for six of the rows below. Not a channel. |
 | **npm, unscoped/scoped** | Public repo; a `bin`; bundle or publish chain; a version policy | $0 | 3–4 sessions | No | Yes. The install funnel. |
@@ -137,13 +137,13 @@ spend. "Free" means no spend beyond an account that can be created at $0.
 | **MCPB bundle (Claude Desktop)** | A `.mcpb` zip: `manifest.json` + server, bundled Node | $0 | 2–3 sessions | No | Yes for Claude Desktop users. Narrow host. |
 | **Claude Code plugin marketplace** | A git repo with `.claude-plugin/marketplace.json`. **May be private.** | $0 | 1–2 sessions | No | Only reaches people you hand the URL to. |
 | **Anthropic's directory (plugin bundle)** | Public GitHub repo, a paid claude.ai plan | Paid Claude plan (Pro/Max) | 2–3 sessions to package | **Yes — a person reviews every new listing** | Real reach inside Claude. Not a first-user channel. |
-| **Anthropic's directory (MCP connector)** | A *hosted remote* MCP server URL with OAuth | Hosting (free tier possible) | Much more than 3–4 sessions: it is a different product | Automated scan by default; escalates to human Verified review | Wrong shape for VOID today. See §7. |
+| **Anthropic's directory (MCP connector)** | A *hosted remote* MCP server URL with OAuth | Hosting (free tier possible) | Much more than 3–4 sessions: it is a different product | Automated scan by default; escalates to human Verified review | Wrong shape for NOMO today. See §7. |
 | **Smithery** | Now part of Arcade.dev. Either a hosted streamable-HTTP URL, or an `.mcpb` bundle | $0 | 2–3 sessions for the MCPB route | Automated scan | Secondary discovery. Third-party dependency on an acquired company. |
 | **TestFlight** | A paid Apple team, a real device, provisioning, a build that satisfies App Review | **$99/yr** | Weeks, plus a device that is offline | Beta App Review on first build; no published SLA | No, for a thin companion. |
 | **Mac App Store** | Sandboxing the product's core function | **$99/yr** | Not a timeline question. See §5. | Full App Review | **No.** |
 | **winget** | A Windows artefact, a manifest PR to `microsoft/winget-pkgs` | $0 | Blocked on the Windows surface, which is source-only | "Automatically validated and may also be reviewed manually" | No, today. The Windows app does not exist. |
 | **Microsoft Store** | A packaged Windows app, a Partner Center account | $0–$19/yr (region-dependent; not verified here) | Blocked on the same | Yes | No, today. |
-| **Container image on GHCR** | A real image. GitHub Packages usage is **free for public packages**. | $0 | 1 session | No | No. Wrong shape — VOID is local-first. |
+| **Container image on GHCR** | A real image. GitHub Packages usage is **free for public packages**. | $0 | 1 session | No | No. Wrong shape — NOMO is local-first. |
 | **Show HN** | Something worth reading | $0 | 1 session to write, then a lottery | No | **The shortest path to a first stranger.** |
 | **Conference talk** | A story and 3–9 months | Varies | 3–9 months | CFP review | No. |
 
@@ -202,12 +202,12 @@ spend. "Free" means no spend beyond an account that can be created at $0.
 
 ### On `npm i -g void`
 
-`docs/VOID-FUTURE-DIRECTION.md` §6 ranks "`npm i -g void` + GitHub Releases" as
+`docs/NOMO-FUTURE-DIRECTION.md` §6 ranks "`npm i -g void` + GitHub Releases" as
 path #1. **The name is taken.** `registry.npmjs.org/void` returns a live
 package — `void@0.20.3`, repository `github.com/voidzero-dev/void`, maintainers
 `yyx990803` and `cpojer`, last modified 2026-09-24. `void-cli` is also taken
 (HTTP 200). Checked free at the time of writing: `void-mcp`, `voidrecovery`,
-`void-ledger`, and the `@void` scope entirely (`@void/cli` → 404). This is a
+`void-ledger`, and the `@nomo` scope entirely (`@nomo/cli` → 404). This is a
 five-minute decision, not a blocker, but the plan's headline command cannot be
 the plan's headline command.
 
@@ -221,7 +221,7 @@ today.
 ### What it is, verified against the live API
 
 `https://registry.modelcontextprotocol.io/v0.1/servers?limit=3` returns real
-servers with real metadata. A search for `void` returns five unrelated servers
+servers with real metadata. A search for `nomo` returns five unrelated servers
 (`bible.void/reader`, `io.github.VoidNullable/lific`, and three others) — so
 the name is contested but `io.github.Dawe583/...` is free. The service is in
 **preview**: every document in the registry repository opens with "The MCP
@@ -248,7 +248,7 @@ and `docs/reference/server-json/official-registry-requirements.md`:
    `repository` (`url` + `source: "github"`), and a `packages[]` entry with
    `registryType: "npm"`, `identifier`, `version`, and
    `transport: { "type": "stdio" }`. Monorepos use `repository.subfolder` — which
-   is exactly VOID's shape.
+   is exactly NOMO's shape.
 5. **A supported package registry.** "NPM: `https://registry.npmjs.org` only."
    Also PyPI, NuGet, Cargo, and OCI images from Docker Hub / `ghcr.io` / Quay /
    Google / Azure / MCR, plus MCPB from GitHub and GitLab releases.
@@ -263,7 +263,7 @@ registry's side: a device-code login and an API call.**
 The moderation policy (`docs/modelcontextprotocol-io/moderation-policy.mdx`) is
 explicitly permissive: "We only remove illegal content, malware, spam, and
 completely broken servers." What it *will* remove includes "hacking tools" as a
-category of illegal content. VOID is a governed-write-path and recovery server,
+category of illegal content. NOMO is a governed-write-path and recovery server,
 not a hacking tool, so this is a description-writing discipline rather than a
 risk — but a listing whose description reads like an offensive toolkit would be
 a legitimate moderation target, and that is worth knowing before writing the
@@ -291,21 +291,21 @@ Three properties, all verified:
   listing, and npm provenance (a different channel, same repo) explicitly
   requires public. Treat public as required.
 - **It composes with the channel people actually use.** `claude mcp add
-  --transport stdio void -- npx -y <pkg>` is the install command. The registry
+  --transport stdio nomo -- npx -y <pkg>` is the install command. The registry
   is how a stranger finds out that command exists.
 
-### What it will not do for VOID
+### What it will not do for NOMO
 
 It will not make anyone install. The registry is a catalogue, not a funnel. Its
 contribution is that the catalogue entry is permanent, machine-readable, and
-scraped — which means the *second* wave of users finds VOID without VOID doing
+scraped — which means the *second* wave of users finds NOMO without NOMO doing
 anything. The *first* user still comes from a person writing a post.
 
 ---
 
 ## 5. The Mac App Store: the plans are right and the reason is wrong
 
-`docs/VOID-FUTURE-DIRECTION.md` §6 says the Mac App Store is "structurally
+`docs/NOMO-FUTURE-DIRECTION.md` §6 says the Mac App Store is "structurally
 disqualifying: guidelines 2.4.5(ii)–(iv) and 2.5.2 describe the exact negation
 of a tool that manages files outside its container and spawns child processes."
 It should not attempt it.
@@ -344,7 +344,7 @@ kept a whole track closed for the wrong reason.**
    App Store app as a first-class technique —
    <https://developer.apple.com/documentation/xcode/embedding-a-helper-tool-in-a-sandboxed-app>
    walks through creating a Command Line Tool target, embedding it with Code
-   Sign On Copy, and exporting to App Store Connect. VOID bundles a Node runtime
+   Sign On Copy, and exporting to App Store Connect. NOMO bundles a Node runtime
    and a sidecar CLI. That is the documented shape, not the forbidden one.
 2. **"Manages files outside its container" is not a violation either, as long
    as the user chooses the locations.** From
@@ -370,9 +370,9 @@ kept a whole track closed for the wrong reason.**
 **So why is the verdict still no?** Because the disqualifier is 2.4.5(i), not
 2.4.5(ii)–(iv), and 2.4.5(vii):
 
-- **2.4.5(i) requires the app to be sandboxed.** VOID's function is to govern
+- **2.4.5(i) requires the app to be sandboxed.** NOMO's function is to govern
   writes by *another process* — the agent, which is a different app with its
-  own sandbox. A sandboxed VOID can only see what it has personally been
+  own sandbox. A sandboxed NOMO can only see what it has personally been
   granted. It cannot observe an agent writing to `~/.gitconfig`, to a package
   manager's cache, or to any path the user never picked in a panel. The
   governed write path is the product; the sandbox is defined by what the user
@@ -388,7 +388,7 @@ kept a whole track closed for the wrong reason.**
   will happily update its own sidecar cannot ship that way.
 
 **The corrected statement is: the Mac App Store is not disqualifying because
-VOID spawns processes or touches files outside the container — both are
+NOMO spawns processes or touches files outside the container — both are
 sanctioned. It is disqualifying because 2.4.5(i) requires the product's central
 guarantee to be scoped to what a user selected in a panel, and because a tool
 whose pitch is provable integrity is a poor candidate for a review that cannot
@@ -414,7 +414,7 @@ packaging is where estimates go wrong in the optimistic direction.
 | 2 | Add a `bin` to a publishable CLI package; bundle with the rollup already in the tree so there is no nine-package publish chain; drop the `private: true` assertion for that one package in `release-packaging.test.mjs` **deliberately**, with a test that the built artifact runs | 2 | Yes |
 | 3 | `mcpName` in the manifest; `server.json`; `npm publish --access public`; a CI publish workflow with npm trusted publishing (provenance automatic, no long-lived token) | 1.5 | **Yes — this is the install funnel** |
 | 4 | `mcp-publisher login github`; `init`; `validate`; `publish`. Add `title` to all eight tool definitions while you are there — Anthropic's checklist requires it and clients use it | 0.5 | Yes |
-| 5 | A bootstrap command: `void init --mcp` that writes a working `config.json` (workspace, generated `agentId`, `stateDir`, `encryptionKeyEnv`, generated key, a starter `policy.yml`) so the README's install is two commands | 2 | **Yes — this is the difference between a demo and a product** |
+| 5 | A bootstrap command: `nomo init --mcp` that writes a working `config.json` (workspace, generated `agentId`, `stateDir`, `encryptionKeyEnv`, generated key, a starter `policy.yml`) so the README's install is two commands | 2 | **Yes — this is the difference between a demo and a product** |
 | 6 | A README that leads with the ledger, a Show HN post, a GitHub Release carrying a sample signed ledger | 1 | Yes |
 
 Total: **about 8 sessions, roughly 2.5–3 weeks** at three sessions a week.
@@ -424,7 +424,7 @@ honest path to *usable by someone who is not you*.
 ### Tier 2 — completable, but each one is progress, not a user
 
 - **MCPB bundle for Claude Desktop** (2–3 sessions). Real reach, narrow host,
-  and Claude Desktop already ships the Node runtime VOID would otherwise demand.
+  and Claude Desktop already ships the Node runtime NOMO would otherwise demand.
 - **A public GitHub repo holding just the CLI + MCP server + verifier**, separate
   from the Apple apps. This is a variant of step 1, not extra work, and it is
   the right move if the full history is not publishable.
@@ -476,18 +476,18 @@ Concretely: restore push credentials and make the repository public after a
 full-history secret scan; add a real `bin` to a publishable CLI package and
 bundle it with the rollup already in the tree so there is one artifact and no
 nine-package version chain; publish it to npm under a name that is actually
-free (`@void/cli`, `void-mcp`, or `voidrecovery` — `void` and `void-cli` are
+free (`@void/cli`, `void-mcp`, or `voidrecovery` — `nomo` and `nomo-cli` are
 taken); add `mcpName` and a `server.json` with `repository.subfolder` set for
 the monorepo; publish to `registry.modelcontextprotocol.io` under
 `io.github.Dawe583/`, which costs nothing and involves no human; add `title` to
-the eight tool definitions; add a `void init --mcp` that writes a working config
+the eight tool definitions; add a `nomo init --mcp` that writes a working config
 and a starter policy so the install is two commands instead of a hand-authored
 JSON file; then write the Show HN post, whose artefact is the thing the ledger
 is for — publish a signed ledger bundle and let readers verify it and try to
 break the guarantee, because a competitor with a nicer UI cannot fake that. The
 whole thing is about eight focused sessions, roughly two and a half to three
 weeks of evenings, and the first real user is the post, not the registry — the
-registry is what makes the *second* and *third* user find VOID without anyone
+registry is what makes the *second* and *third* user find NOMO without anyone
 doing anything.
 
 **Prerequisites genuinely required:** push credentials; a decision to make the
@@ -511,7 +511,7 @@ honest expectation for a well-written, technically-credible Show HN post from an
 unknown account with no prior following is a few dozen upvotes, a handful of
 substantive comments, and somewhere between zero and a handful of installs in the
 first month. The goal of this path is not traction. It is that the next person
-who hears about VOID finds a URL, an install command, and something they can
+who hears about NOMO finds a URL, an install command, and something they can
 verify — instead of a README pointing at a 404.
 
 ---
@@ -519,7 +519,7 @@ verify — instead of a README pointing at a 404.
 ## 8. Two alternatives, with their costs
 
 **Alternative A — the hosted web app, which is more provisioned than anyone
-realises.** A Vercel project named `void-tui` is already linked
+realises.** A Vercel project named `nomo-tui` is already linked
 (`.vercel/project.json`, `projectId prj_zri74ziz7CjG3zWlvhMvCqxm3SHB`,
 `orgId team_GLVZEvWLcDk83n7rHy8QsjGB`), `vercel.json` is complete with a build
 command, a strict CSP, no-store on HTML and immutable caching on assets, and
@@ -562,7 +562,7 @@ and with a stated refusal to spend the $99.
 | **A downloadable artefact at all** | `README.md` links `https://dawe583.github.io/void/` | A static landing page plus a GitHub Release needs no signing, no Apple, and no review. The Pages workflow already exists. |
 | **A publishable CLI** | `release-packaging.test.mjs:23` asserts `private: true` | Deliberate and enforced — but `rollup` is already a root dependency, so a bundled single-package CLI is roughly two sessions, not a project. |
 | **MCP tool review-readiness** | Not on any list | All eight tools already carry `readOnlyHint`/`destructiveHint` and are already split read/write. Only the `title` field that Anthropic's checklist requires is missing. Under an hour. |
-| **A stranger-facing quickstart** | `docs/MANAGED-RECOVERY.md` is complete but assumes a cloned repo | The guide is genuinely good. What it assumes is `node packages/cli/bin/void.mjs`, which requires a clone and a `pnpm install`. One bootstrap command removes that. |
+| **A stranger-facing quickstart** | `docs/MANAGED-RECOVERY.md` is complete but assumes a cloned repo | The guide is genuinely good. What it assumes is `node packages/cli/bin/nomo.mjs`, which requires a clone and a `pnpm install`. One bootstrap command removes that. |
 | **Hosted web deployment** | "bounded-cost provider sandbox" and "local-network scope" listed as blocking inputs | The Vercel project exists and is linked, and the config is complete. What is unknown is whether the hosted build has a write path — one session to determine, and that is a finding, not a blocker. |
 | **CI as a distribution mechanism** | "No push or remote CI result is claimed by this runbook" | Correct today, and free the moment the repo is public: GitHub Actions is free for public repositories, and GitHub Packages is free for public packages. |
 | **A `server.json` and an MCP listing** | `docs/RELEASE.md:115-118` lists "MCP registry listing" as missing WP-15 evidence | The registry is live, in preview, costs nothing, and has no human on the critical path. It is one `mcp-publisher publish` away and depends only on the npm step above it. |
@@ -578,7 +578,7 @@ and with a stated refusal to spend the $99.
    non-store updates. Anyone who restates the old reason to a reviewer will be
    corrected, and the correction will be used to reopen the question.
 2. **`npm i -g void` cannot be the headline.** The name belongs to
-   `voidzero-dev/void`, maintained and published two days ago. `void-cli` is
+   `voidzero-dev/void`, maintained and published two days ago. `nomo-cli` is
    also taken. This is a five-minute rename, but the plan's first-ranked path is
    not executable as written.
 3. **The blocker list conflates "blocks an Apple release" with "blocks a
@@ -596,7 +596,7 @@ and with a stated refusal to spend the $99.
    depends on the MCPB format, which is fine — but this is a vendor that changed
    hands, and the plan does not reflect it.
 6. **One number in the sibling pair survives but should be read as stated.** The
-   direction document's claim that `void recovery serve` answers
+   direction document's claim that `nomo recovery serve` answers
    `protocolVersion: "2024-11-05"` is refuted by `PREMISE-VERIFICATION.md` and by
    the source: `packages/cli/src/recovery-mcp.ts:298-300` constructs a plain
    `new Server(...)` and the version is chosen by the pinned SDK. I did not
@@ -656,4 +656,4 @@ Smithery: `smithery.ai/docs`, `/docs/build/publish`. Local: `package.json`,
 `.vercel/project.json`, `Dockerfile`, `.github/workflows/{ci,pages}.yml`,
 `README.md`, `docs/{RELEASE,MANAGED-RECOVERY,MANAGED-FILESYSTEM,RELEASE-1.0.1-MATRIX}.md`,
 `scripts/src/release-packaging.test.mjs`,
-`packages/cli/bin/void.mjs`, `packages/cli/src/{recovery,recovery-mcp,init}.ts`.
+`packages/cli/bin/nomo.mjs`, `packages/cli/src/{recovery,recovery-mcp,init}.ts`.

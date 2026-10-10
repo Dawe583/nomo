@@ -1,5 +1,5 @@
 /**
- * The one bundling rule for the VOID distribution artifact.
+ * The one bundling rule for the NOMO distribution artifact.
  *
  * `packages/cli` is a workspace package whose source reaches its siblings by
  * relative path and whose registry import is `workspace:*`. Neither survives
@@ -25,7 +25,7 @@ import { stripTypeScriptTypes } from "node:module";
 
 /** Packages whose `exports` point at raw TypeScript, which npm cannot resolve. */
 const WORKSPACE_TYPED = {
-  "@void/registry": "packages/registry/src/index.ts",
+  "@nomo/registry": "packages/registry/src/index.ts",
 };
 
 /**
@@ -46,7 +46,7 @@ export function isExternal(id) {
 
 /** Rollup plugin: map a workspace-typed specifier to its source entry. */
 const workspaceSource = {
-  name: "void-workspace-source",
+  name: "nomo-workspace-source",
   resolveId(source) {
     const entry = WORKSPACE_TYPED[source];
     return entry ? new URL(entry, import.meta.url).pathname : null;
@@ -63,7 +63,7 @@ const workspaceSource = {
  * stripped source it describes.
  */
 const stripTypes = {
-  name: "void-strip-types",
+  name: "nomo-strip-types",
   transform(code, id) {
     if (!/\.(ts|mts|cts)$/.test(id)) return null;
     return { code: stripTypeScriptTypes(code, { mode: "strip", sourceUrl: id }), map: null };
@@ -77,7 +77,7 @@ const stripTypes = {
 export function bundleOptions({ root, outDir } = {}) {
   const base = root ?? new URL("./", import.meta.url).pathname;
   return {
-    input: new URL("packages/cli/bin/void.mjs", import.meta.url).pathname,
+    input: new URL("packages/cli/bin/nomo.mjs", import.meta.url).pathname,
     external: isExternal,
     plugins: [workspaceSource, stripTypes],
     // A cycle between workspace siblings is a property of the source graph, not
@@ -96,11 +96,11 @@ export function bundleOptions({ root, outDir } = {}) {
  * Code splitting is a correctness requirement here, not a size preference. The
  * repository's entry point deliberately defers its heavy graph behind a dynamic
  * import so `--help` and `--version` never load a database engine, and
- * `packages/proxy/bin/void-proxy.mjs` is imported for its side effect and runs
+ * `packages/proxy/bin/nomo-proxy.mjs` is imported for its side effect and runs
  * `main()` at module scope. `inlineDynamicImports` inlines a dynamic import's
  * body into the importing scope, which hoists that `main()` call to the top of
- * every invocation: `void doctor` printed the proxy usage line and exited 1, and
- * `void run` died on `Cannot access 'voidProxy' before initialization`. Keeping
+ * every invocation: `doctor` printed the proxy usage line and exited 1, and
+ * `run` died on `Cannot access 'proxy' before initialization`. Keeping
  * the split preserves both the deferral and the side-effect ordering, and the
  * entry chunk stays a few kB importing only `node:fs`.
  */
@@ -108,9 +108,9 @@ export function bundleOutput(outDir) {
   return {
     dir: outDir,
     format: "esm",
-    // `void.mjs` is the bin target. Rollup keeps the entry's shebang, and a
+    // `nomo.mjs` is the bin target. Rollup keeps the entry's shebang, and a
     // second banner would emit two, so none is added here.
-    entryFileNames: "void.mjs",
+    entryFileNames: "nomo.mjs",
     chunkFileNames: "[name].mjs",
     exports: "none",
     generatedCode: "es2015",

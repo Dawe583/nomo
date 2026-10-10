@@ -1,4 +1,4 @@
-# VOID terminal interface
+# NOMO terminal interface
 
 The terminal interface has three surfaces because they solve different problems.
 
@@ -61,8 +61,8 @@ the result into every renderer.
 
 The editable source designs live in `packages/cli/design/`:
 
-- `void-operations.tui`, the 120 by 40 operations screen
-- `void-hold.tui`, the 76 by 18 human decision modal
+- `nomo-operations.tui`, the 120 by 40 operations screen
+- `nomo-hold.tui`, the 76 by 18 human decision modal
 
 TUIStudio export is still an alpha feature, so the production renderer is
 maintained here rather than generated. The `.tui` files are the visual source
@@ -71,9 +71,9 @@ of truth and remain loadable in TUIStudio for layout work.
 ## Preview
 
 ```sh
-pnpm --filter @void/cli run tui:preview -- 80 40
-pnpm --filter @void/cli run tui:preview -- 120 40 --hold
-pnpm --filter @void/cli run tui:preview -- 200 48 --modal
+pnpm --filter @nomo/cli run tui:preview -- 80 40
+pnpm --filter @nomo/cli run tui:preview -- 120 40 --hold
+pnpm --filter @nomo/cli run tui:preview -- 200 48 --modal
 node scripts/tui-capture.mjs --cols 80 --cols 120 --cols 200
 node scripts/tui-degrade.mjs
 node scripts/tui-raw-mode-safety.mjs
@@ -91,7 +91,7 @@ already runs in. Until then the render model is proven by the scripts above.
 
 ## Live ledger watch
 
-`node packages/cli/bin/void.mjs watch --workspace default` now runs a real,
+`node packages/cli/bin/nomo.mjs watch --workspace default` now runs a real,
 read-only ledger view. `--ledger /path/to/file.jsonl` selects a file directly;
 `--once` prints a snapshot. Piped, CI, dumb and NO_COLOR output also uses a
 plain snapshot without terminal control sequences. The watch authenticates
@@ -111,7 +111,7 @@ clears input or opens checkpoints when empty; Shift+Tab or Alt+M cycles modes;
 Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws, twice
 clears; Ctrl+S stashes input; Ctrl+G opens the editor; Meta+P opens models;
 Ctrl+C clears, cancels or exits; Ctrl+D exits from empty input. Ctrl+B
-background tasks, image paste, suspend and Vim editing have no VOID equivalent.
+background tasks, image paste, suspend and Vim editing have no NOMO equivalent.
 `/conformance [adapter]` runs the disposable adapter checks behind the TUI.
 `/providers` lists model providers including local open models.
 `/harness cloud|prime-agent` switches the agent harness; detection reads

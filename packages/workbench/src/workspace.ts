@@ -23,31 +23,31 @@ export type WorkspaceUndoPreview = { readonly operationId: string; readonly path
 
 export const WORKSPACE_LIMITS = { files: 100, fileBytes: 256_000, totalBytes: 2_000_000, mutations: 250, operations: 500 } as const;
 export const workspaceTools = [
-  { name: 'void_workspace_list', description: 'List documents in the managed VOID workspace. These are not files on the host computer.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
-  { name: 'void_workspace_read', description: 'Read a managed VOID document.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
-  { name: 'void_workspace_write', description: 'Create or replace a managed VOID text document. VOID captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'], additionalProperties: false } },
-  { name: 'void_workspace_delete', description: 'Delete a managed VOID document. VOID captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
+  { name: 'nomo_workspace_list', description: 'List documents in the managed NOMO workspace. These are not files on the host computer.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
+  { name: 'nomo_workspace_read', description: 'Read a managed NOMO document.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
+  { name: 'nomo_workspace_write', description: 'Create or replace a managed NOMO text document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'], additionalProperties: false } },
+  { name: 'nomo_workspace_delete', description: 'Delete a managed NOMO document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
 ] as const;
 
 export function createWorkspace(): WorkspaceState { return { version: 1, files: {}, operations: [] }; }
 
 export function workspaceToolClass(name: string): 'r0' | 'r1' | undefined {
-  if (name === 'void_workspace_list' || name === 'void_workspace_read') return 'r0';
-  if (name === 'void_workspace_write' || name === 'void_workspace_delete') return 'r1';
+  if (name === 'nomo_workspace_list' || name === 'nomo_workspace_read') return 'r0';
+  if (name === 'nomo_workspace_write' || name === 'nomo_workspace_delete') return 'r1';
   return undefined;
 }
 
 export function executeWorkspaceTool(state: WorkspaceState, input: { readonly id: string; readonly name: string; readonly arguments: Readonly<Record<string, unknown>>; readonly at?: string }): WorkspaceTransition {
   try {
     if (!workspaceTools.some(tool => tool.name === input.name)) throw new Error('Unknown managed workspace tool.');
-    if (input.name === 'void_workspace_list') return { state, result: result({ files: Object.keys(state.files).sort().map(path => ({ path, bytes: bytes(state.files[path]!) })) }) };
+    if (input.name === 'nomo_workspace_list') return { state, result: result({ files: Object.keys(state.files).sort().map(path => ({ path, bytes: bytes(state.files[path]!) })) }) };
     const path = validPath(input.arguments.path);
     const before = Object.hasOwn(state.files, path) ? state.files[path]! : null;
-    if (input.name === 'void_workspace_read') {
+    if (input.name === 'nomo_workspace_read') {
       if (before === null) throw new Error('Document does not exist.');
       return { state, result: result({ path, content: before }) };
     }
-    const kind = input.name === 'void_workspace_write' ? 'write' : 'delete';
+    const kind = input.name === 'nomo_workspace_write' ? 'write' : 'delete';
     const after = kind === 'write' ? validContent(input.arguments.content) : null;
     const digest = hash([kind, path, after]);
     const prior = duplicate(state, input.id, digest);

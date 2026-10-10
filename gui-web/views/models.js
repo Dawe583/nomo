@@ -1,7 +1,7 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.models = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.models = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   var R = F.routing;
   var U = F.usage;
   var wrap = document.createElement("div");
@@ -48,18 +48,18 @@ window.VOID_VIEWS.models = function (root) {
     b.onclick = function () {
       var m = F.models[parseInt(b.getAttribute("data-m"), 10)];
       R.def = m.id;
-      if (window.VOID_TOAST) window.VOID_TOAST("Default is now " + m.id + ", mock.");
-      window.VOID_VIEWS.models(root);
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Default is now " + m.id + ", mock.");
+      window.NOMO_VIEWS.models(root);
     };
   });
-  wrap.querySelector("#md-sort").onchange = function (e) { R.sort = e.target.value; if (window.VOID_TOAST) window.VOID_TOAST("Sort by " + R.sort + ", mock."); };
-  wrap.querySelector("#md-tier").onchange = function (e) { R.tier = e.target.value; if (window.VOID_TOAST) window.VOID_TOAST("Tier " + R.tier + ", mock."); };
-  wrap.querySelector("#md-cap").onchange = function (e) { R.maxPrice = e.target.value + " per 1M"; if (window.VOID_TOAST) window.VOID_TOAST("Cap $" + R.maxPrice + ", mock."); };
-  wrap.querySelector("#md-data").onchange = function (e) { R.dataPolicy = e.target.value; if (window.VOID_TOAST) window.VOID_TOAST("Data policy saved, mock."); };
+  wrap.querySelector("#md-sort").onchange = function (e) { R.sort = e.target.value; if (window.NOMO_TOAST) window.NOMO_TOAST("Sort by " + R.sort + ", mock."); };
+  wrap.querySelector("#md-tier").onchange = function (e) { R.tier = e.target.value; if (window.NOMO_TOAST) window.NOMO_TOAST("Tier " + R.tier + ", mock."); };
+  wrap.querySelector("#md-cap").onchange = function (e) { R.maxPrice = e.target.value + " per 1M"; if (window.NOMO_TOAST) window.NOMO_TOAST("Cap $" + R.maxPrice + ", mock."); };
+  wrap.querySelector("#md-data").onchange = function (e) { R.dataPolicy = e.target.value; if (window.NOMO_TOAST) window.NOMO_TOAST("Data policy saved, mock."); };
   wrap.querySelector("#md-fb").onclick = function () {
     R.allowFallbacks = !R.allowFallbacks;
-    if (window.VOID_TOAST) window.VOID_TOAST("Fallbacks " + (R.allowFallbacks ? "on" : "off") + ", mock.");
-    window.VOID_VIEWS.models(root);
+    if (window.NOMO_TOAST) window.NOMO_TOAST("Fallbacks " + (R.allowFallbacks ? "on" : "off") + ", mock.");
+    window.NOMO_VIEWS.models(root);
   };
   root.appendChild(wrap);
 };

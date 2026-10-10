@@ -1,5 +1,5 @@
 {
-  "name": "@void/registry",
+  "name": "@nomo/registry",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -16,7 +16,7 @@
   },
   "description": "Classify tool calls against draft reversibility cases and declared target facts.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "registry",
     "reversibility"

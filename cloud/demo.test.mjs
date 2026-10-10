@@ -57,17 +57,17 @@ test("durable demo budget bounds visitors, total requests and day rollover", () 
 test("anonymous demo isolates visitors and refuses arbitrary provider, host tools and private routes", async (t) => {
   const prior = { ...process.env };
   Object.assign(process.env, {
-    VOID_PUBLIC_DEMO: "1",
-    VOID_DEMO_NVIDIA_KEY: "test-key",
-    VOID_SECRET_KEY: "s".repeat(44),
-    VOID_LOCAL_TEST: "1",
+    NOMO_PUBLIC_DEMO: "1",
+    NOMO_DEMO_NVIDIA_KEY: "test-key",
+    NOMO_SECRET_KEY: "s".repeat(44),
+    NOMO_LOCAL_TEST: "1",
   });
   t.after(() => {
     for (const key of [
-      "VOID_PUBLIC_DEMO",
-      "VOID_DEMO_NVIDIA_KEY",
-      "VOID_SECRET_KEY",
-      "VOID_LOCAL_TEST",
+      "NOMO_PUBLIC_DEMO",
+      "NOMO_DEMO_NVIDIA_KEY",
+      "NOMO_SECRET_KEY",
+      "NOMO_LOCAL_TEST",
     ])
       if (prior[key] === undefined) delete process.env[key];
       else process.env[key] = prior[key];
@@ -139,7 +139,7 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
   );
   assert.equal((await request("/state")).status, 401);
   const publicTools = await (await request('/tools')).json();
-  assert.deepEqual(publicTools.tools.map(tool => tool.name), ['void_workspace_list', 'void_workspace_read', 'void_workspace_write', 'void_workspace_delete']);
+  assert.deepEqual(publicTools.tools.map(tool => tool.name), ['nomo_workspace_list', 'nomo_workspace_read', 'nomo_workspace_write', 'nomo_workspace_delete']);
   assert.ok(publicTools.tools.every(tool => tool.source === 'workspace'));
   assert.equal(reads.length, 0, 'Public tool metadata must not read private workspace state');
   const first = await request("/start", "POST"),
@@ -173,7 +173,7 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
   assert.equal((await (await request("/status")).json()).model, DEMO_MODEL);
   assert.ok(
     calls[0].tools.every((tool) =>
-      tool.function.name.startsWith("void_workspace_"),
+      tool.function.name.startsWith("nomo_workspace_"),
     ),
   );
   assert.equal(
@@ -194,7 +194,7 @@ test("anonymous demo isolates visitors and refuses arbitrary provider, host tool
       (key) => key.startsWith("demo") || key.startsWith("workspace:demo-"),
     ),
   );
-  const firstId = demoIdentity(firstCookie, process.env.VOID_SECRET_KEY);
+  const firstId = demoIdentity(firstCookie, process.env.NOMO_SECRET_KEY);
   const saved = JSON.parse(values.get(`demo:${firstId}`));
   saved.status = "running";
   saved.startedAt = Date.now() - 80000;

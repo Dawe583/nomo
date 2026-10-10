@@ -28,8 +28,8 @@ export const CLOUD_POLICY =
  * The policy decision for one cloud tool call.
  *
  * Exported so the approval boundary can be tested without a database. A
- * built-in workspace tool gets no exemption: `void_workspace_write` and
- * `void_workspace_delete` are r1 and `CLOUD_POLICY` holds everything that is
+ * built-in workspace tool gets no exemption: `nomo_workspace_write` and
+ * `nomo_workspace_delete` are r1 and `CLOUD_POLICY` holds everything that is
  * not r0, so returning `allow` for built-ins would let the agent write managed
  * documents with no human in the loop and no hold to approve.
  */
@@ -104,7 +104,7 @@ export async function advance(owner, id, generation) {
         s.messages.push({
           role: "tool",
           tool_call_id: s.pending.call.id,
-          content: "VOID denied the request. Do not retry.",
+          content: "NOMO denied the request. Do not retry.",
         });
         s.queue.shift();
         event(s, "tool", `${s.pending.name}: denied`);
@@ -230,10 +230,10 @@ export async function advance(owner, id, generation) {
           role: "tool",
           tool_call_id: call.id,
           content:
-            "VOID denied an unknown, unclassified or disallowed tool. Do not retry.",
+            "NOMO denied an unknown, unclassified or disallowed tool. Do not retry.",
         });
         s.queue.shift();
-        event(s, "tool", `${tool.name}: denied by VOID`);
+        event(s, "tool", `${tool.name}: denied by NOMO`);
         await save(owner, s, c);
         return { kind: "next" };
       }
@@ -353,8 +353,8 @@ export async function advance(owner, id, generation) {
             arguments: claim.args,
           };
           const managed = [
-            "void_workspace_write",
-            "void_workspace_delete",
+            "nomo_workspace_write",
+            "nomo_workspace_delete",
           ].includes(claim.name);
           // Defence in depth. A managed document write is r1, so the policy
           // decision above has already parked it behind a human hold. If this

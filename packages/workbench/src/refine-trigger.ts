@@ -134,7 +134,7 @@ export async function serviceTrigger(
   review: Reviewer,
   options: {
     readonly now: () => number;
-    readonly run?: (instructions: string) => Promise<void>;
+    readonly run?: (instructions: string, branchVersion: number) => Promise<void>;
     /**
      * The session's current branch version, read live.
      *
@@ -177,9 +177,15 @@ export async function serviceTrigger(
   if (state.pendingReview !== null) {
     const instructions = state.pendingReview;
     const version = state.branchVersion;
+    if (branchNow() !== version)
+      return {
+        state,
+        outcome: { kind: "not-run", reason: "branch moved before the retained review could run" },
+        startedAtBranchVersion: version,
+      };
     const running: TriggerState = { ...state, inFlight: true, pending: false, pendingReview: null };
     try {
-      await options.run?.(instructions);
+      await options.run?.(instructions, version);
     } catch (error) {
       // A failed *run* on a retained approval keeps the approval for a retry
       // after the cooldown, and stamps the cooldown. The approval is not
@@ -196,15 +202,6 @@ export async function serviceTrigger(
         startedAtBranchVersion: version,
       };
     }
-    if (branchNow() !== version) {
-      // The branch moved while the run was in flight. Its writes never land,
-      // and its cooldown must not be stamped on the branch it never ran against.
-      return {
-        state: { ...running, inFlight: false },
-        outcome: { kind: "not-run", reason: "branch moved during the run" },
-        startedAtBranchVersion: version,
-      };
-    }
     return {
       state: { ...running, inFlight: false, lastReviewAt: options.now(), settledTurnsSinceReview: 0 },
       outcome: { kind: "ran", instructions },
@@ -213,6 +210,12 @@ export async function serviceTrigger(
   }
 
   const version = state.branchVersion;
+  if (branchNow() !== version)
+    return {
+      state,
+      outcome: { kind: "not-run", reason: "branch moved before the review could start" },
+      startedAtBranchVersion: version,
+    };
   const running: TriggerState = { ...state, inFlight: true, pending: false };
 
   let reviewed: Awaited<ReturnType<Reviewer>>;
@@ -258,7 +261,7 @@ export async function serviceTrigger(
   }
 
   try {
-    await options.run?.(reviewed.instructions);
+    await options.run?.(reviewed.instructions, version);
   } catch (error) {
     return {
       state: {

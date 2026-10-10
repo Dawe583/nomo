@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "./index.ts";
+import { initialTriggerState, type TriggerState } from "./refine-trigger.ts";
 
 /**
  * These tests hold the wiring, not the runtime. The runtime's own tests prove
@@ -95,6 +96,145 @@ test("a successful compaction arms the trigger for later turns", async (t) => {
     reviews.some((review) => !/no trigger is armed/i.test(review.text)),
     "after compaction the gate must refuse for a reason other than not-armed",
   );
+});
+
+test("a real branch during review blocks the stale proposal", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-harness-branch-race-"));
+  let releaseReview!: (response: Response) => void;
+  const heldReview = new Promise<Response>((resolve) => {
+    releaseReview = resolve;
+  });
+  let resolveReviewStarted!: () => void;
+  const reviewStarted = new Promise<void>((resolve) => {
+    resolveReviewStarted = resolve;
+  });
+  let reviewRequests = 0;
+  let reviewTask: Promise<void> | undefined;
+  const staleProposal = {
+    summary: "stale branch lesson",
+    rationale: "supported by signed records",
+    expectedOutcome: "fewer repeated approvals",
+    edits: [
+      {
+        action: "create" as const,
+        kind: "memory" as const,
+        title: "stale review lesson",
+        content: "This proposal must not cross a branch move.",
+        derivedFromSeq: [1],
+        reason: "recurring approval",
+      },
+    ],
+  };
+  const reviewerReply = () =>
+    Response.json({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: JSON.stringify({ approve: true, proposal: staleProposal }),
+          },
+        },
+      ],
+    });
+  const app = new Workbench(
+    { NOMO_DATA_DIR: root } as NodeJS.ProcessEnv,
+    async (url: unknown, init?: { body?: unknown }) => {
+      if (String(url).endsWith("/models"))
+        return Response.json({ data: [{ id: "fixture" }] });
+      if (
+        typeof init?.body === "string" &&
+        init.body.includes("in one of two shapes")
+      ) {
+        reviewRequests += 1;
+        resolveReviewStarted();
+        return await heldReview;
+      }
+      return Response.json({
+        choices: [{ message: { role: "assistant", content: "Ready" } }],
+      });
+    },
+  );
+  t.after(async () => {
+    releaseReview(reviewerReply());
+    await reviewTask?.catch(() => {});
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Review the workspace", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  const seeded = await app.refineHarness(session.id, {
+    summary: "seed a candidate",
+    rationale: "supported by signed records",
+    expectedOutcome: "fewer repeated approvals",
+    edits: [
+      {
+        action: "create",
+        kind: "memory",
+        title: "existing lesson",
+        content: "The operator repeatedly approved the same action.",
+        derivedFromSeq: [1],
+        reason: "the pattern repeats",
+      },
+    ],
+  });
+  assert.equal(seeded.applied.length, 1);
+  const before = await app.ledger(session.workspace);
+  assert.ok(before);
+
+  const internals = app as unknown as {
+    sessions: Map<string, unknown>;
+    harnessTriggers: Map<string, TriggerState>;
+    serviceHarnessTurn: (session: never, surface: "checkpoint") => Promise<void>;
+  };
+  const internalSession = internals.sessions.get(session.id);
+  assert.ok(internalSession);
+  internals.harnessTriggers.set(session.id, {
+    ...initialTriggerState(),
+    pending: true,
+    settledTurnsSinceReview: 24,
+  });
+  reviewTask = internals.serviceHarnessTurn(internalSession as never, "checkpoint");
+  const started = await Promise.race([
+    reviewStarted.then(() => true),
+    reviewTask.then(() => false),
+  ]);
+  assert.equal(started, true, "the wired Workbench boundary should reach the reviewer");
+
+  const live = app.get(session.id);
+  assert.ok(live);
+  await app.branch(session.id, {
+    seq: live.events.at(-1)!.seq,
+    idempotencyKey: "branch-during-harness-review",
+  });
+  releaseReview(reviewerReply());
+  await reviewTask;
+
+  const after = await app.ledger(session.workspace);
+  assert.equal(after!.entries.length, before.entries.length);
+  assert.equal(reviewRequests, 1);
+  assert.equal(
+    internals.harnessTriggers.get(session.id)?.branchVersion,
+    1,
+    "the completed stale review must not overwrite the branch's newer trigger state",
+  );
+  assert.equal(
+    internals.harnessTriggers.get(session.id)?.inFlight,
+    false,
+    "the completed stale review must release its in-flight guard on the new branch",
+  );
+  const reviews = (app.get(session.id)?.events ?? []).filter(
+    (event) => event.type === "harness.review",
+  );
+  assert.equal(reviews.at(-1)?.payload?.["outcome"], "not-run");
 });
 
 test("a failed review leaves a failed trace, not silence", async (t) => {

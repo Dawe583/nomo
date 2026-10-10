@@ -22,7 +22,7 @@
 --
 -- `void_cloud_ledger` and `void_cloud_events` carry
 -- `void_cloud_immutable()`, a BEFORE UPDATE OR DELETE trigger that raises
--- `VOID ledger is append only`. The backfill below is an UPDATE on both of
+-- `NOMO ledger is append only`. The backfill below is an UPDATE on both of
 -- them, so with the triggers in place the backfill fails against its own
 -- trigger on the first row. That is the trigger working as designed: these
 -- tables are append only for the application, and a migration is not the

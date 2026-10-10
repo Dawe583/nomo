@@ -8,7 +8,7 @@
  * way to export private key material because exported key material reaches
  * a log or a crash dump eventually.
  *
- * Development keys are generated on first append into ~/.void/keys at mode
+ * Development keys are generated on first append into ~/.nomo/keys at mode
  * 0600 and carry a dev- prefix in the key id, so the verifier can report
  * "valid, development key" and never plain valid. In production the same
  * interface is backed by KMS and no calling code changes.
@@ -33,9 +33,11 @@ import {
   openPrivateFile,
   readPrivateFile,
 } from "./hardening.ts";
+import { dataDir } from "./paths.ts";
+import { envValue } from "./env-compat.ts";
 
 /**
- * The one development signing key directory: `~/.void/keys`.
+ * The one development signing key directory: `<data dir>/keys`.
  *
  * Every surface that reads or writes the development key derives it here. The
  * trust anchor, `doctor`, `watch` and the TUI proxy all have to agree on which
@@ -48,7 +50,7 @@ import {
  * for this one, and the two are never interchangeable.
  */
 export const devKeyDir = (home: string = homedir()): string =>
-  join(home, ".void", "keys");
+  join(dataDir(home), "keys");
 
 
 /** The digest engine. Swappable at the test boundary, node:crypto in production. */
@@ -78,7 +80,7 @@ export const devKeyIdFromSpki = (spki: Uint8Array): string =>
   `dev-${keyIdFromSpki(spki)}`;
 
 export interface DevKeyProviderOptions {
-  /** Directory for the development key material. Defaults to ~/.void/keys. */
+  /** Directory for the development key material. Defaults to ~/.nomo/keys. */
   readonly dir?: string;
   /** Environment, injectable at the test boundary. */
   readonly env?: Readonly<NodeJS.ProcessEnv>;
@@ -87,7 +89,7 @@ export interface DevKeyProviderOptions {
 }
 
 /**
- * The dev tier key path. VOID_SIGNING_KEY wins if set (base64 PKCS8); the
+ * The dev tier key path. NOMO_SIGNING_KEY wins if set (base64 PKCS8); the
  * key file is generated and written once, 0600, and reused after. The one
  * loud line about a development key being in use is printed by the caller
  * (the CLI), not here, because a library that prints at import time is a
@@ -98,7 +100,7 @@ export async function devKeyProvider(
 ): Promise<KeyProvider> {
   const dir = options.dir ?? devKeyDir();
   const env = options.env ?? process.env;
-  const inline = env.VOID_SIGNING_KEY;
+  const inline = envValue(env, "NOMO_SIGNING_KEY");
   if (inline !== undefined && inline !== "") {
     return keyProviderFromPkcs8(Buffer.from(inline, "base64"));
   }

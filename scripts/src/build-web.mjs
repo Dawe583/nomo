@@ -280,7 +280,7 @@ async function build() {
     [
       ...(packageManager ? [packageManager] : []),
       "--filter",
-      "@void/control-plane-ui",
+      "@nomo/control-plane-ui",
       "build",
     ],
     { cwd: root, stdio: "inherit" },
@@ -293,7 +293,7 @@ async function build() {
       new URL(`../../apps/control-plane/web/${name}`, import.meta.url),
       new URL(name, output),
     );
-  console.log("VOID web build ready: dist/web");
+  console.log("NOMO web build ready: dist/web");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

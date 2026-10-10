@@ -382,7 +382,7 @@ function denyError(
       message:
         `The call to ${call.tool} (${policyCall.klass}, blast radius ${policyCall.blastRadius ?? "unknown"}) was denied. ` +
         `Rule ${ruleIndex} denied it${rationale === undefined ? "." : `: ${rationale}.`} ` +
-        "Do not retry the same call; VOID rejected it.",
+        "Do not retry the same call; NOMO rejected it.",
       data: {
         tool: call.tool,
         class: policyCall.klass,
@@ -427,7 +427,7 @@ function holdError(
       code: ERROR_CODE,
       message: body.message.includes("Do not retry")
         ? body.message
-        : `${body.message} Do not retry the same call; VOID rejected it.`,
+        : `${body.message} Do not retry the same call; NOMO rejected it.`,
       data: body.data,
     },
   };

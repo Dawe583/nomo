@@ -8,11 +8,11 @@ fixtures, signed sandbox installs and physical-device checks in
 Run the built-in disposable filesystem checks from the checkout:
 
 ```sh
-node packages/cli/bin/void.mjs recovery conformance
-node packages/cli/bin/void.mjs recovery conformance --adapter filesystem.managed
-node packages/cli/bin/void.mjs recovery conformance --adapter git.managed
-node packages/cli/bin/void.mjs recovery conformance --adapter managed-documents
-node packages/cli/bin/void.mjs recovery conformance --adapter postgres-managed-conformance
+node packages/cli/bin/nomo.mjs recovery conformance
+node packages/cli/bin/nomo.mjs recovery conformance --adapter filesystem.managed
+node packages/cli/bin/nomo.mjs recovery conformance --adapter git.managed
+node packages/cli/bin/nomo.mjs recovery conformance --adapter managed-documents
+node packages/cli/bin/nomo.mjs recovery conformance --adapter postgres-managed-conformance
 ```
 
 The command creates its own temporary directories, signing key and encryption
@@ -101,7 +101,7 @@ versioned schema it was the one profile that left the field out.
 All four providers really do run on one runtime: the case list belongs to
 `runAdapterConformance` in `packages/runtime/src/conformance.ts`, so the
 eight cases are the same for every provider. The profile states that as
-`conformance.runtime: "void-recovery-runtime"` and
+`conformance.runtime: "nomo-recovery-runtime"` and
 `conformance.sharedRuntimeChecksOnly: true` per provider, and
 `declareProviderProfiles` refuses a set whose profiles disagree on either. A
 provider with its own runtime therefore shows up as a different
@@ -119,7 +119,7 @@ derives for the conformance workspace, `postgres-managed-conformance`, by callin
 that factory at import rather than writing the id out by hand, so the profile
 cannot claim an id no adapter reports. Its scenarios need PGlite, which is a
 dev dependency, so the import is dynamic and its absence is a named refusal
-rather than a load failure for `void.mjs`. The fixture lives in
+rather than a load failure for `nomo.mjs`. The fixture lives in
 `packages/connectors/src/postgres/conformance-fixture.ts`; the profile itself
 stays in `packages/cli/src/conformance.ts`.
 

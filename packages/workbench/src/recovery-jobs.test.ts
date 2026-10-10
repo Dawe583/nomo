@@ -7,13 +7,13 @@ import {Workbench} from "./index.ts";
 import {filterRows} from "./gui.ts";
 
 async function fixture(t:import("node:test").TestContext){
- const directory=await mkdtemp(join(tmpdir(),"void-workbench-jobs-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-workbench-jobs-"));
  const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
- let app=new Workbench({VOID_DATA_DIR:directory},fetcher);
+ let app=new Workbench({NOMO_DATA_DIR:directory},fetcher);
  t.after(async()=>{await app.shutdown();await rm(directory,{recursive:true,force:true});});
  await app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await app.start("Test","fixture");await app.settled();
- return {directory,session,get app(){return app;},restart(reload=false){if(!reload)app.close();app=new Workbench({VOID_DATA_DIR:directory},fetcher);}};
+ return {directory,session,get app(){return app;},restart(reload=false){if(!reload)app.close();app=new Workbench({NOMO_DATA_DIR:directory},fetcher);}};
 }
 
 test("managed jobs preserve exact run selection and IDs across restart and repeated apply",async t=>{

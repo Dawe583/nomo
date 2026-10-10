@@ -1,3 +1,4 @@
+import { envValue } from './env.mjs';
 /**
  * The account broker for the chat origin, and the only code in this repository
  * that talks to Supabase Auth.
@@ -43,7 +44,7 @@
  * to answer an unknown address the way it answers a wrong password, so a
  * defence that leaned on it answering both alike would not be a defence.
  *
- * Sign up is off. `signupAllowed()` reads `VOID_ACCOUNT_SIGNUP`, which is not
+ * Sign up is off. `signupAllowed()` reads `NOMO_ACCOUNT_SIGNUP`, which is not
  * set, and no code path here creates an account unless it is. The gate is in
  * `docs/APPWRITE-AUTH.md` and the conditions that have to hold before it is
  * turned on are listed in `docs/ACCOUNT-OWNERSHIP.md`.
@@ -106,7 +107,7 @@ export function sealSession(session, secret) {
   const iv = randomBytes(12);
   const cipher = createCipheriv(
     "aes-256-gcm",
-    hexKey(secret, "VOID_ACCOUNT_SEAL_KEY"),
+    hexKey(secret, "NOMO_ACCOUNT_SEAL_KEY"),
     iv,
   );
   const body = Buffer.concat([
@@ -130,7 +131,7 @@ export function openSession(value, secret) {
   try {
     const decipher = createDecipheriv(
       "aes-256-gcm",
-      hexKey(secret, "VOID_ACCOUNT_SEAL_KEY"),
+      hexKey(secret, "NOMO_ACCOUNT_SEAL_KEY"),
       Buffer.from(parts[0], "base64url"),
     );
     decipher.setAuthTag(Buffer.from(parts[1], "base64url"));
@@ -194,7 +195,7 @@ export function readSessionCookie(req) {
  * line of configuration and not an archaeology exercise.
  */
 export const signupAllowed = (env = process.env) =>
-  env.VOID_ACCOUNT_SIGNUP === "1";
+  envValue(env, 'NOMO_ACCOUNT_SIGNUP') === "1";
 
 /**
  * The codes and the sentences a provider reaches for when the answer is about
@@ -581,9 +582,15 @@ export function createAccountService(config) {
   return service;
 }
 
-const envValue = (name, env) => {
-  const raw = env[name];
-  return raw && raw.trim() !== "" ? raw.trim() : undefined;
+/**
+ * The shared lookup answers "which name is set"; the broker additionally
+ * refuses a blank value, because an operator who exported nothing but the name
+ * has not configured a setting. Trimming here keeps that judgement in one place
+ * instead of at every call site.
+ */
+const setting = (env, value) => {
+  const raw = typeof value === "string" ? value : undefined;
+  return raw !== undefined && raw.trim() !== "" ? raw.trim() : undefined;
 };
 
 /**
@@ -591,13 +598,17 @@ const envValue = (name, env) => {
  * when a variable is missing: a deployment without them is a deployment whose
  * account routes say the feature is not configured here, which is the same
  * degradation the store already uses when `DATABASE_URL` is absent.
+ *
+ * `SUPABASE_URL` and `SUPABASE_ANON_KEY` are Supabase's names and are read
+ * straight from `env`: aliasing them would mean claiming ownership of variables
+ * the provider defines, and the lookup refuses any key we do not own anyway.
  */
 export function accountServiceFromEnv(env = process.env) {
   return createAccountService({
-    supabaseUrl: envValue("SUPABASE_URL", env) ?? "",
-    supabaseKey: envValue("SUPABASE_ANON_KEY", env) ?? "",
-    sessionSecret: envValue("VOID_ACCOUNT_SEAL_KEY", env),
-    siteOrigin: envValue("VOID_PUBLIC_ORIGIN", env) ?? "https://chat.voidagent.tech",
+    supabaseUrl: setting(env, env.SUPABASE_URL) ?? "",
+    supabaseKey: setting(env, env.SUPABASE_ANON_KEY) ?? "",
+    sessionSecret: envValue(env, "NOMO_ACCOUNT_SEAL_KEY"),
+    siteOrigin: setting(env, envValue(env, "NOMO_PUBLIC_ORIGIN")) ?? "https://chat.voidagent.tech",
     env,
   });
 }
@@ -610,16 +621,10 @@ export function accountServiceFromEnv(env = process.env) {
  * means a key derived here can never open anything sealed for another purpose.
  */
 export function derivedKey(purpose) {
-  const material = Buffer.from(process.env.VOID_SECRET_KEY ?? "", "base64");
+  const material = Buffer.from(envValue(process.env, 'NOMO_SECRET_KEY') ?? "", "base64");
   if (material.length !== 32)
     throw new Error("Cloud encryption key is not configured.");
   return Buffer.from(
-    hkdfSync(
-      "sha256",
-      material,
-      Buffer.from("void-cloud"),
-      Buffer.from(String(purpose)),
-      32,
-    ),
+    hkdfSync("sha256", material, Buffer.alloc(0), purpose, 32),
   );
 }

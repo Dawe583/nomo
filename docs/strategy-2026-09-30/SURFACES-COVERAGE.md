@@ -21,7 +21,7 @@ Tracked souborů celkem: **258**. Ručně inspektované části: **32 souborů**
 - `AGENTS.local.md` a root `package.json`: instrukce a script/dependency index. Novější uživatelův zákaz main write má přednost před historickým main pravidlem.
 - `docs/10K-MRR-REALITY-CHECK.md`: čtený revenue model a gates; další připojené GTM/reverse docs částečně kvůli truncation, jejich tvrzení nejsou automaticky znovu ověřena.
 - Osm competitor README přes GitHub connector: cílené feature/license texty; primární odkazy a datum v MARKET-RESEARCH.md. Codex sandbox doc je pouze rozcestník. Dvě issue searches: pět výsledků každá; nerozporovaná absence další feature se neodvozuje.
-- Marketing companion `/workspace/void-site-audit`, commit `85c6792838f5014818d48e93188342cf3c824c8e`: pouze `void-site-audit/api/waitlist.ts`, `void-site-audit/api/_store.ts` (325–405), `void-site-audit/lib/db/src/schema/traffic.ts`, `void-site-audit/artifacts/void/src/lib/pricing.ts` (1–90), `void-site-audit/artifacts/void/src/sections/pricing.tsx` (118–145); prefix `void-site-audit/` označuje companion checkout, ne cestu v tomto repozitáři. Zbytek pouze cíleně vyhledán. Toto není úplný companion audit.
+- Marketing companion `/workspace/void-site-audit`, commit `85c6792838f5014818d48e93188342cf3c824c8e`: pouze `void-site-audit/api/waitlist.ts`, `void-site-audit/api/_store.ts` (325–405), `void-site-audit/lib/db/src/schema/traffic.ts`, `void-site-audit/artifacts/nomo/src/lib/pricing.ts` (1–90), `void-site-audit/artifacts/nomo/src/sections/pricing.tsx` (118–145); prefix `void-site-audit/` označuje companion checkout, ne cestu v tomto repozitáři. Zbytek pouze cíleně vyhledán. Toto není úplný companion audit.
 
 ## Manifest po souborech
 
@@ -54,39 +54,39 @@ Tracked souborů celkem: **258**. Ručně inspektované části: **32 souborů**
 | `apps/apple/Fixtures/Protocol/succeeded.json` | 62 | generated/snapshot/fixture | I — textový index |
 | `apps/apple/Fixtures/Protocol/unknown.json` | 68 | generated/snapshot/fixture | I — textový index |
 | `apps/apple/Fixtures/Protocol/unsupported-version.json` | 55 | generated/snapshot/fixture | I — textový index |
-| `apps/apple/VOID.xcodeproj/project.pbxproj` | 600 | generated/snapshot/fixture | I — textový index |
-| `apps/apple/VOID.xcodeproj/project.xcworkspace/contents.xcworkspacedata` | 7 | config/docs/metadata | I — textový index |
-| `apps/apple/VOIDApp/AppCopy.swift` | 286 | authored source | I — textový index |
-| `apps/apple/VOIDApp/AppModel.swift` | 179 | authored source | D — ručně vybrané části |
-| `apps/apple/VOIDApp/ChatCopy.swift` | 176 | authored source | I — textový index |
-| `apps/apple/VOIDApp/ChatMessageRow.swift` | 271 | authored source | I — textový index |
-| `apps/apple/VOIDApp/ChatModel.swift` | 376 | authored source | D — ručně vybrané části |
-| `apps/apple/VOIDApp/ChatTheme.swift` | 217 | authored source | I — textový index |
-| `apps/apple/VOIDApp/ChatView.swift` | 480 | authored source | I — textový index |
-| `apps/apple/VOIDApp/Info.plist` | 29 | config/docs/metadata | I — textový index |
-| `apps/apple/VOIDApp/MarkdownText.swift` | 523 | authored source | I — textový index |
-| `apps/apple/VOIDApp/OnboardingView.swift` | 333 | authored source | I — textový index |
-| `apps/apple/VOIDApp/RootView.swift` | 76 | authored source | I — textový index |
-| `apps/apple/VOIDApp/SampleChatTransport.swift` | 197 | authored source | D — ručně vybrané části |
-| `apps/apple/VOIDApp/SessionDetailView.swift` | 86 | authored source | I — textový index |
-| `apps/apple/VOIDApp/VOIDApp.swift` | 13 | authored source | I — textový index |
-| `apps/apple/VOIDTests/VOIDAppTests.swift` | 135 | test | I — textový index |
-| `apps/apple/VOIDUITests/VOIDUITests.swift` | 771 | test | I — textový index |
-| `apps/apple/VoidDesignSystem/Package.swift` | 17 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift` | 34 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift` | 67 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift` | 36 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift` | 86 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift` | 22 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift` | 29 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidTokens.generated.swift` | 495 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift` | 93 | authored source | I — textový index |
-| `apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift` | 73 | test | I — textový index |
-| `apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift` | 52 | test | I — textový index |
-| `apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift` | 88 | test | I — textový index |
-| `apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift` | 24 | test | I — textový index |
-| `apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift` | 60 | test | I — textový index |
-| `apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift` | 57 | test | I — textový index |
+| `apps/apple/NOMO.xcodeproj/project.pbxproj` | 600 | generated/snapshot/fixture | I — textový index |
+| `apps/apple/NOMO.xcodeproj/project.xcworkspace/contents.xcworkspacedata` | 7 | config/docs/metadata | I — textový index |
+| `apps/apple/NOMOApp/AppCopy.swift` | 286 | authored source | I — textový index |
+| `apps/apple/NOMOApp/AppModel.swift` | 179 | authored source | D — ručně vybrané části |
+| `apps/apple/NOMOApp/ChatCopy.swift` | 176 | authored source | I — textový index |
+| `apps/apple/NOMOApp/ChatMessageRow.swift` | 271 | authored source | I — textový index |
+| `apps/apple/NOMOApp/ChatModel.swift` | 376 | authored source | D — ručně vybrané části |
+| `apps/apple/NOMOApp/ChatTheme.swift` | 217 | authored source | I — textový index |
+| `apps/apple/NOMOApp/ChatView.swift` | 480 | authored source | I — textový index |
+| `apps/apple/NOMOApp/Info.plist` | 29 | config/docs/metadata | I — textový index |
+| `apps/apple/NOMOApp/MarkdownText.swift` | 523 | authored source | I — textový index |
+| `apps/apple/NOMOApp/OnboardingView.swift` | 333 | authored source | I — textový index |
+| `apps/apple/NOMOApp/RootView.swift` | 76 | authored source | I — textový index |
+| `apps/apple/NOMOApp/SampleChatTransport.swift` | 197 | authored source | D — ručně vybrané části |
+| `apps/apple/NOMOApp/SessionDetailView.swift` | 86 | authored source | I — textový index |
+| `apps/apple/NOMOApp/NOMOApp.swift` | 13 | authored source | I — textový index |
+| `apps/apple/NOMOTests/NOMOAppTests.swift` | 135 | test | I — textový index |
+| `apps/apple/NOMOUITests/NOMOUITests.swift` | 771 | test | I — textový index |
+| `apps/apple/NomoDesignSystem/Package.swift` | 17 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift` | 34 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift` | 67 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift` | 36 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift` | 86 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift` | 22 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift` | 29 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoTokens.generated.swift` | 495 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift` | 93 | authored source | I — textový index |
+| `apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift` | 73 | test | I — textový index |
+| `apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift` | 52 | test | I — textový index |
+| `apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift` | 88 | test | I — textový index |
+| `apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift` | 24 | test | I — textový index |
+| `apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift` | 60 | test | I — textový index |
+| `apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift` | 57 | test | I — textový index |
 | `apps/apple/project.yml` | 73 | config/docs/metadata | I — textový index |
 | `apps/appwrite-mcp/README.md` | 94 | config/docs/metadata | D — ručně vybrané části |
 | `apps/appwrite-mcp/requirements.txt` | 1 | config/docs/metadata | I — textový index |
@@ -98,8 +98,8 @@ Tracked souborů celkem: **258**. Ručně inspektované části: **32 souborů**
 | `apps/appwrite-mcp/src/appwrite_mcp/dispatch.py` | 292 | authored source | I — textový index |
 | `apps/appwrite-mcp/src/appwrite_mcp/snapshot_builder.py` | 67 | authored source | I — textový index |
 | `apps/appwrite-mcp/src/appwrite_mcp/transport.py` | 145 | authored source | I — textový index |
-| `apps/appwrite-mcp/src/appwrite_mcp/void_data.py` | 591 | authored source | I — textový index |
-| `apps/appwrite-mcp/src/appwrite_mcp/void_snapshot.json` | 10516 | generated/snapshot/fixture | I — textový index |
+| `apps/appwrite-mcp/src/appwrite_mcp/nomo_data.py` | 591 | authored source | I — textový index |
+| `apps/appwrite-mcp/src/appwrite_mcp/nomo_snapshot.json` | 10516 | generated/snapshot/fixture | I — textový index |
 | `apps/appwrite-mcp/src/main.py` | 17 | authored source | I — textový index |
 | `apps/appwrite-mcp/tests/__init__.py` | 33 | test | I — textový index |
 | `apps/appwrite-mcp/tests/support_context.py` | 149 | test | I — textový index |
@@ -276,10 +276,10 @@ Tracked souborů celkem: **258**. Ručně inspektované části: **32 souborů**
 | `cloud/workflow.mjs` | 22 | authored source | I — textový index |
 | `marketing/teaser/.gitignore` | 1 | config/docs/metadata | I — textový index |
 | `marketing/teaser/README.md` | 62 | config/docs/metadata | D — ručně vybrané části |
-| `marketing/teaser/VOID-TEASER-1080x1920.mp4` | — | binary | B — pouze metadata |
-| `marketing/teaser/VOID-TEASER-V2-3D-1080x1920.mp4` | — | binary | B — pouze metadata |
-| `marketing/teaser/VOID-TEASER-V2-cover.jpg` | — | binary | B — pouze metadata |
-| `marketing/teaser/VOID-TEASER-cover.jpg` | — | binary | B — pouze metadata |
+| `marketing/teaser/NOMO-TEASER-1080x1920.mp4` | — | binary | B — pouze metadata |
+| `marketing/teaser/NOMO-TEASER-V2-3D-1080x1920.mp4` | — | binary | B — pouze metadata |
+| `marketing/teaser/NOMO-TEASER-V2-cover.jpg` | — | binary | B — pouze metadata |
+| `marketing/teaser/NOMO-TEASER-cover.jpg` | — | binary | B — pouze metadata |
 | `marketing/teaser/finish.py` | 225 | authored source | I — textový index |
 | `marketing/teaser/finish_v2.py` | 73 | authored source | I — textový index |
 | `marketing/teaser/scene.py` | 193 | authored source | I — textový index |

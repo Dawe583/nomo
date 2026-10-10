@@ -1,6 +1,6 @@
-# VOID 1.0.1 product contract
+# NOMO 1.0.1 product contract
 
-Status: implementation authorized on 2026-09-24; release NOT ready. This contract records the initial scope from `docs/superpowers/plans/2026-09-23-void-1.0.1-apple-release.md`. The release matrix tracks evidence, not promises.
+Status: implementation authorized on 2026-09-24; release NOT ready. This contract records the initial scope from `docs/superpowers/plans/2026-09-23-nomo-1.0.1-apple-release.md`. The release matrix tracks evidence, not promises.
 
 ## Platforms and execution
 

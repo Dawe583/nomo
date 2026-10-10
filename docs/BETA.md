@@ -1,6 +1,6 @@
-# VOID 0.1 beta
+# NOMO 0.1 beta
 
-> New here? Start with [the VOID handbook](HANDBOOK.md), or its
+> New here? Start with [the NOMO handbook](HANDBOOK.md), or its
 > [Czech edition](HANDBOOK.cs.md). This document is the capability and boundary
 > record; the handbook is the operating guide.
 
@@ -21,28 +21,28 @@ documents, with no access to the visitor's computer or connected accounts.
 
 ## Installing and updating on a machine
 
-The installer is `scripts/install-void.sh`, run from a checkout. It resolves
+The installer is `scripts/install-nomo.sh`, run from a checkout. It resolves
 its own repository root, so the working directory you invoke it from does not
-matter. `bash scripts/install-void.sh --help` prints the same contract.
+matter. `bash scripts/install-nomo.sh --help` prints the same contract.
 
 What it does, in order:
 
 1. Checks prerequisites: `node` at major version 24 or newer, `git`, and
    `pnpm` (it falls back to enabling corepack when pnpm is absent).
-2. Puts the tree at `$VOID_HOME`, default `$HOME/.local/share/void-cli`. On
+2. Puts the tree at `$NOMO_HOME`, default `$HOME/.local/share/nomo-cli`. On
    the first run it clones the repository shallow. An existing tree is reused
-   untouched, because fetching new commits is `void update`'s job, not the
-   installer's. A directory that already exists but is not a VOID checkout is
+   untouched, because fetching new commits is `nomo update`'s job, not the
+   installer's. A directory that already exists but is not a NOMO checkout is
    refused rather than written into.
 3. Runs `pnpm install --frozen-lockfile` inside the tree, but only when
    `node_modules` is missing or older than the lockfile.
-4. Writes the launcher at `$HOME/.local/bin/void`, a small `sh` script that
-   execs the CLI entry from `$VOID_HOME` and passes every argument through. If
+4. Writes the launcher at `$HOME/.local/bin/nomo`, a small `sh` script that
+   execs the CLI entry from `$NOMO_HOME` and passes every argument through. If
    something else already occupies that path, the installer refuses and tells
    you to move it aside; it never overwrites a file it did not write.
 
 The installer does not change your shell profile. Add `$HOME/.local/bin` to
-PATH yourself and open a new terminal, then run `void`. `VOID_HOME` is read by
+PATH yourself and open a new terminal, then run `nomo`. `NOMO_HOME` is read by
 both the installer and the launcher, so a tree anywhere else needs no edit.
 
 The repository is private, so a first-run clone needs credentials the machine
@@ -57,25 +57,25 @@ codes should treat any nonzero value as failure.
 
 There is no published tarball and no registry entry to install from. Every
 workspace manifest is private, which is why the install is a clone plus a
-launcher and why `void update` is a git move.
+launcher and why `nomo update` is a git move.
 
 Verified 2026-10-02 against a real install in a scratch `HOME`: the install
 reported the reused tree, skipped the dependency step as already current,
 wrote the launcher, and exited 0; the launcher on PATH answered
-`void --version` with `void 0.1.0` and reported a missing tree with exit 1. A
+`nomo --version` with `void 0.1.0` and reported a missing tree with exit 1. A
 foreign file at the launcher path was refused with exit 1 and left byte for
 byte as it was.
 
-`void update` moves the installed tree onto the branch it tracks. It prints one
+`nomo update` moves the installed tree onto the branch it tracks. It prints one
 `key: value` line per fact (`installed`, `installed-commit`, `tracked-branch`,
 `target-commit`) and then a verdict, and it runs the locked dependency install
 after the move so the new source is runnable. Three forms:
 
 | Command | Effect |
 | --- | --- |
-| `void update` | Move the tree onto the tracked ref and install dependencies. |
-| `void update --check` | Report the verdict and move nothing. Exit 3 means an update exists. |
-| `void update --force` | Permit a move that is not a fast-forward. Nothing else changes. |
+| `nomo update` | Move the tree onto the tracked ref and install dependencies. |
+| `nomo update --check` | Report the verdict and move nothing. Exit 3 means an update exists. |
+| `nomo update --force` | Permit a move that is not a fast-forward. Nothing else changes. |
 
 What it refuses, and both refusals are deliberate:
 
@@ -91,7 +91,7 @@ What it refuses, and both refusals are deliberate:
 A missing tree, a path that is not a git checkout, and a branch with no
 upstream are each refused with the command that fixes them. Your ledger,
 workspace data and pending approvals live outside the checkout, under
-`~/.void/ledger`, `~/.void/workbench` and `~/.void/approvals`, so an update
+`~/.nomo/ledger`, `~/.nomo/workbench` and `~/.nomo/approvals`, so an update
 cannot reach them.
 
 Verified 2026-10-02 on real git trees, driving the shipped command: a tree
@@ -112,7 +112,7 @@ roll back to until it is deepened. Then name the commit you want, move the tree
 onto it, and reinstall dependencies so the older source is runnable again:
 
 ```sh
-cd "$VOID_HOME" || cd ~/.local/share/void-cli
+cd "$NOMO_HOME" || cd ~/.local/share/nomo-cli
 git fetch --unshallow        # once; a full tree already reports nothing to do
 git log --oneline -5
 git reset --keep <commit>
@@ -123,8 +123,8 @@ pnpm install --frozen-lockfile
 cannot quietly discard local work either. Roll the data directories back from
 your own backup: an update never writes them, so it also never restores them.
 
-`void update` does not deepen the tree. A plain `git fetch` inside a shallow
-clone leaves it shallow, so an operator who has only ever run `void update`
+`nomo update` does not deepen the tree. A plain `git fetch` inside a shallow
+clone leaves it shallow, so an operator who has only ever run `nomo update`
 still has a single commit and still needs `git fetch --unshallow` before a
 rollback is possible. Verified 2026-10-02 on a real install: a `--depth 1`
 clone reported `git rev-list --count HEAD` as 1 and could not resolve `HEAD~1`;
@@ -151,8 +151,8 @@ For the native macOS application use `pnpm desktop:setup`, `pnpm desktop`, or
 Keychain migration and signing requirements. macOS 13.5 or newer is required.
 
 Local sessions, provider profiles, connector credentials, documents and signed
-history persist in an atomic AES-256-GCM snapshot under `VOID_DATA_DIR` (default
-`~/.void/workbench`). The desktop keeps its encryption key in macOS Keychain;
+history persist in an atomic AES-256-GCM snapshot under `NOMO_DATA_DIR` (default
+`~/.nomo/workbench`). The desktop keeps its encryption key in macOS Keychain;
 standalone CLI/GUI uses a mode-0600 key file. A conflicting writer is rejected.
 
 The document connector automatically captures before and after content. Every
@@ -163,53 +163,53 @@ modified captures are refused. Limits are 100 documents, 256 KB per document,
 2 MB total and 250 mutations, with another 250 history slots reserved for undo.
 Documents are managed storage, not arbitrary files on the host computer.
 
-Add external HTTP MCP servers in Settings. VOID discovers their tools and applies
+Add external HTTP MCP servers in Settings. NOMO discovers their tools and applies
 the configured policy and registry mapping. Unknown tools fail closed. External
 MCP has no automatic inverse unless a specific capture integration exists. A
-legacy stdio upstream can still be supplied with `VOID_UPSTREAM_COMMAND` (JSON
-array), `VOID_POLICY_PATH`, optional `VOID_FACTS_PATH` and `VOID_LEDGER_DIR`.
-`OPENROUTER_API_KEY` and `VOID_PROVIDER_URL` remain optional bootstrap settings.
+legacy stdio upstream can still be supplied with `NOMO_UPSTREAM_COMMAND` (JSON
+array), `NOMO_POLICY_PATH`, optional `NOMO_FACTS_PATH` and `NOMO_LEDGER_DIR`.
+`OPENROUTER_API_KEY` and `NOMO_PROVIDER_URL` remain optional bootstrap settings.
 The provider catalog validates before a session starts. Live generation also
 requires provider authorization, model access and an available balance.
 
-For terminal agents run `node packages/cli/bin/void.mjs agent --model <id>`.
-For the live operator interface run `node packages/cli/bin/void.mjs watch` with
+For terminal agents run `node packages/cli/bin/nomo.mjs agent --model <id>`.
+For the live operator interface run `node packages/cli/bin/nomo.mjs watch` with
 its ledger options. Press `h` for holds, select with arrows, then `a` or `d` and
 `y` to confirm. Noninteractive agent execution denies holds.
 
 ## Web deployment on Vercel
 
-The web application and backend run in the existing `void-tui` Vercel project,
-team `sitespot`. No Mac, Raspberry Pi or separate VOID server is required.
+The web application and backend run in the existing `nomo-tui` Vercel project,
+team `sitespot`. No Mac, Raspberry Pi or separate NOMO server is required.
 Nitro builds the HTTP API into Vercel Functions. Vercel Workflow runs agent
 turns and durable approval waits. Neon, provisioned through Vercel Marketplace,
 stores sessions, transcripts, configuration and the signed ledger.
 
-The `void` project is the separate reference landing site and is untouched.
+The `nomo` project is the separate reference landing site and is untouched.
 
 Server environment variables:
 
 - `DATABASE_URL`: supplied by the Neon integration.
-- `VOID_CONTROL_TOKEN`: single-operator access token, at least 32 characters.
-- `VOID_SECRET_KEY`: 32 random bytes, base64, for AES-256-GCM secret encryption.
-- `VOID_SIGNING_KEY`: Ed25519 PKCS8 DER, base64, stable across deployments.
+- `NOMO_CONTROL_TOKEN`: single-operator access token, at least 32 characters.
+- `NOMO_SECRET_KEY`: 32 random bytes, base64, for AES-256-GCM secret encryption.
+- `NOMO_SIGNING_KEY`: Ed25519 PKCS8 DER, base64, stable across deployments.
 - Optional `AI_GATEWAY_API_KEY`: otherwise Vercel OIDC authenticates AI Gateway.
 
 The account identity layer reads four more, and none of them is set here:
 
 - `SUPABASE_URL` and `SUPABASE_ANON_KEY`: the Supabase Auth project the chat
   origin signs in against.
-- `VOID_ACCOUNT_SEAL_KEY`: 64 hexadecimal characters, 32 bytes, the key the
+- `NOMO_ACCOUNT_SEAL_KEY`: 64 hexadecimal characters, 32 bytes, the key the
   `__Host-void-account` cookie is sealed with.
-- `VOID_ACCOUNT_SIGNUP`: the signup switch. It is off, and setting it alone
+- `NOMO_ACCOUNT_SIGNUP`: the signup switch. It is off, and setting it alone
   would not open registration, because a signup also needs an invitation code
   that no mounted route accepts.
 
 With those three account values absent the broker reports itself
 unconfigured, the account routes say so, and every request must present the
-control token. The Prime bridge reads `VOID_BRIDGE_TOKEN`, the public demo
-reads `VOID_PUBLIC_DEMO` and `VOID_DEMO_NVIDIA_KEY`, and the OAuth callback
-derives its base from `VOID_PUBLIC_ORIGIN`. See
+control token. The Prime bridge reads `NOMO_BRIDGE_TOKEN`, the public demo
+reads `NOMO_PUBLIC_DEMO` and `NOMO_DEMO_NVIDIA_KEY`, and the OAuth callback
+derives its base from `NOMO_PUBLIC_ORIGIN`. See
 [account ownership](ACCOUNT-OWNERSHIP.md).
 
 `node --env-file=.env.local scripts/src/provision-cloud.mjs` installs the schema
@@ -232,7 +232,7 @@ same transaction. Skipping it leaves the server writing a column the database
 does not have, and every cloud read fails until it is applied. See
 [account ownership](ACCOUNT-OWNERSHIP.md).
 
-VOID has no default provider and no default model. Add `NVIDIA_API_KEY` through
+NOMO has no default provider and no default model. Add `NVIDIA_API_KEY` through
 Provider settings or the local runtime environment, or connect another provider
 from the preset list, and the first conversation asks which model to use from
 the catalog that provider returns. Existing conversations retain their saved
@@ -243,8 +243,8 @@ Custom keys and tool-server credentials are encrypted before database storage.
 Prompts and tool results are sent to the selected provider.
 
 Connect an HTTPS MCP server in Tool server and policy. It is the system the
-agent operates on, not an external VOID runtime. Without tools, sessions support
-chat only. Tool names can map explicitly to VOID registry IDs; unknown or
+agent operates on, not an external NOMO runtime. Without tools, sessions support
+chat only. Tool names can map explicitly to NOMO registry IDs; unknown or
 unclassified tools are denied. Target facts are operator declarations, never
 invented measurements. Policy changes apply to new sessions.
 
@@ -263,11 +263,11 @@ connector replay remains available as described below.
 
 ## Replay boundaries
 
-Postgres replay uses `VOID_PG_URL`, a serializable transaction, drift checks and
+Postgres replay uses `NOMO_PG_URL`, a serializable transaction, drift checks and
 parent-before-child restoration. The cascade walker follows real foreign keys,
 including nested and composite references; cycles are refused. S3 replay uses
-`VOID_S3_ENABLED=1`, standard AWS credentials and `AWS_REGION`; an optional
-`VOID_S3_ENDPOINT` supports compatible hosts. Conditional writes refuse races.
+`NOMO_S3_ENABLED=1`, standard AWS credentials and `AWS_REGION`; an optional
+`NOMO_S3_ENDPOINT` supports compatible hosts. Conditional writes refuse races.
 S3 restoration writes a new version and does not reverse object history.
 
 A host must capture snapshots and produce a manifest through the connector API.
@@ -333,8 +333,8 @@ native tool_use/tool_result conversion and usage accounting.
 Neon database, then that database was removed. It exercised real HTTP cloud
 routes, two model turns, signed encrypted capture, authentication, confirmation,
 drift and forgery refusal, and idempotent undo. Production data was untouched.
-For repeat runs supply `VOID_TEST_DATABASE_URL` and
-`VOID_TEST_DATABASE_ISOLATED=1`; the script refuses the deployment database by
+For repeat runs supply `NOMO_TEST_DATABASE_URL` and
+`NOMO_TEST_DATABASE_ISOLATED=1`; the script refuses the deployment database by
 default. No real paid model was used by this deterministic integration test.
 
 Browser QA exercised create, captured history, preview and explicit Undo, with

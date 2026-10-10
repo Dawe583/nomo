@@ -1,4 +1,4 @@
-# VOID: trh, odlišení, retence a opakované příjmy
+# NOMO: trh, odlišení, retence a opakované příjmy
 
 Research k 30. září 2026, jako podklad k rozhodnutí. Uživatel zvolil **add-on pro Codex, Claude Code, Hermes a OpenCode**, s wow scénářem filesystem + Git + Postgres. Monetizační doporučení je delegované; nové funkce zůstávají návrhy k projednání.
 
@@ -6,20 +6,20 @@ Research k 30. září 2026, jako podklad k rozhodnutí. Uživatel zvolil **add-
 
 Bylo načteno osm primárních GitHub README (Codex, Cline, Claude Code, OpenHands, Continue, agentgateway, Langfuse, Portkey), dokumentační rozcestník Codex sandbox a dvě veřejná GitHub issue searches s pěti položkami. Research je proveden GitHub connector nástrojem `github_fetch`, nikoli nativní službou Deep Research: taková callable služba nebyla v dostupných nástrojích nalezena. Přímé HTTPS dotazy ze shellu na raw GitHub a vendor ceníky skončily proxy `403 Forbidden`; konektor veřejná GitHub data načetl úspěšně. Proto neuvádíme domnělé aktuální ceníky Cursor/Claude/OpenAI/Langfuse/Portkey ani tvrzení o úplném trhu.
 
-Evidence má tři odlišné úrovně: (1) vendor README tvrzení o vlastním produktu; (2) uživatelský issue report, bez vlastní reprodukce; (3) analytický závěr/hypotéza VOID. README nezaručuje kvalitu provozu; issue nezaručuje existenci chyby ve všech verzích; search počet není počet postižených lidí ani market size. Nenalezená feature neznamená, že neexistuje. Konkurentní ceny citované ve starých VOID dokumentech zde nebyly znovu ověřeny.
+Evidence má tři odlišné úrovně: (1) vendor README tvrzení o vlastním produktu; (2) uživatelský issue report, bez vlastní reprodukce; (3) analytický závěr/hypotéza NOMO. README nezaručuje kvalitu provozu; issue nezaručuje existenci chyby ve všech verzích; search počet není počet postižených lidí ani market size. Nenalezená feature neznamená, že neexistuje. Konkurentní ceny citované ve starých NOMO dokumentech zde nebyly znovu ověřeny.
 
 ## 2. Konkurenční mapa z primárních zdrojů
 
-| Produkt / zdroj | Co primární text skutečně uvádí | Strategická implikace pro VOID |
+| Produkt / zdroj | Co primární text skutečně uvádí | Strategická implikace pro NOMO |
 |---|---|---|
-| [Codex README](https://github.com/openai/codex/blob/main/README.md), modified 2026-07-23 | Lokální coding CLI, IDE, desktop i cloud; ChatGPT login nebo API key; Apache-2.0 repo | Uživatelé už mají hosta i placený modelový plán. Povinné přesměrování do dalšího chatu zvyšuje switching cost. VOID musí přidat jasně viditelnou bezpečnou operaci/evidence. Cenu ChatGPT z README neodvozujeme. |
+| [Codex README](https://github.com/openai/codex/blob/main/README.md), modified 2026-07-23 | Lokální coding CLI, IDE, desktop i cloud; ChatGPT login nebo API key; Apache-2.0 repo | Uživatelé už mají hosta i placený modelový plán. Povinné přesměrování do dalšího chatu zvyšuje switching cost. NOMO musí přidat jasně viditelnou bezpečnou operaci/evidence. Cenu ChatGPT z README neodvozujeme. |
 | [Claude Code README](https://github.com/anthropics/claude-code/blob/main/README.md), modified 2026-01-12 | Terminal, IDE, GitHub; codebase understanding a Git workflows; plugins/custom agents | Plugin/host integration je distribuční povrch, ne automatická intercept coverage všech nativních toolů. |
 | [Cline README](https://github.com/cline/cline/blob/main/README.md), modified 2026-09-17 | IDE, CLI, desktop, SDK, checkpoints/undo, plan/act approvals a auto-approve, BYO model, MCP/plugins, multiagent, schedules | Undo, approvals, multiagent ani desktop samy o sobě nejsou unikátní differentiator. SDK výslovně nabízí lifecycle hooks pro logging/auditing/policy enforcement; může být partner i konkurent. |
 | [OpenHands README](https://github.com/OpenHands/OpenHands/blob/main/README.md), live fetch 2026-09-30 | Agent Canvas: self-hosted control center, third-party agents včetně Codex/Claude přes ACP, automations, local/VM/cloud, BYO model; local without sandbox warning | „Jeden dashboard pro všechny agenty“ je existující nabídka. Integrace pod workflow má menší switching cost než stavba druhého agent canvas. Warning je doklad potřeby jasné execution boundary, ne důkaz, že OpenHands vždy běží bez sandboxu. |
 | [Continue README](https://github.com/continuedev/continue/blob/main/README.md), live fetch 2026-09-30 | Repo hlásí read-only/no longer actively maintained a final 2.0.0 release; CLI/VSCode/JetBrains | Neopisovat historické aktivní obchodní positioning jako současný fakt. Lesson: široká kompatibilita bez maintenance modelu sama nezaručí trvalý produkt. Příčinu ukončení zdroj nedokládá. |
-| [agentgateway README](https://github.com/agentgateway/agentgateway/blob/main/README.md), modified 2026-09-10 | MCP/A2A proxy; stdio/HTTP/SSE/Streamable HTTP; OAuth, JWT/API keys, RBAC/CEL policy, rate limiting, TLS, OTel, model budget/spend | Generic gateway/governance vrstva má dobře vybaveného OSS konkurenta. VOID musí demonstrovat effect-specific recovery/preconditions a evidence, nebo se s gateway integrovat. README absence určitého recovery tvrzení není důkaz, že produkt nemá recovery. |
+| [agentgateway README](https://github.com/agentgateway/agentgateway/blob/main/README.md), modified 2026-09-10 | MCP/A2A proxy; stdio/HTTP/SSE/Streamable HTTP; OAuth, JWT/API keys, RBAC/CEL policy, rate limiting, TLS, OTel, model budget/spend | Generic gateway/governance vrstva má dobře vybaveného OSS konkurenta. NOMO musí demonstrovat effect-specific recovery/preconditions a evidence, nebo se s gateway integrovat. README absence určitého recovery tvrzení není důkaz, že produkt nemá recovery. |
 | [Portkey gateway README](https://github.com/Portkey-AI/gateway/blob/main/README.md), modified 2026-02-19 | MCP gateway auth, tool access control, identity forwarding a logged tool calls; LLM routing, governance, cost, enterprise/private-cloud nabídka | Organizace mohou kupovat control/observability v existující službě. Billing per call vyžaduje skutečně měřitelnou jednotku a diferenciace nesmí být jen „máme audit“. |
-| [Langfuse README](https://github.com/langfuse/langfuse/blob/main/README.md), modified 2026-09-24 | Observability, prompt management, datasets/evals; self-hosting; MIT mimo ee složky; v README výslovně basic telemetry bez raw traces/prompts | Outputs se zlepšují eval/data/feedback, ne množstvím UI features. VOID může exportovat evidence do existujícího observability stacku místo budování plného eval dashboardu od začátku. |
+| [Langfuse README](https://github.com/langfuse/langfuse/blob/main/README.md), modified 2026-09-24 | Observability, prompt management, datasets/evals; self-hosting; MIT mimo ee složky; v README výslovně basic telemetry bez raw traces/prompts | Outputs se zlepšují eval/data/feedback, ne množstvím UI features. NOMO může exportovat evidence do existujícího observability stacku místo budování plného eval dashboardu od začátku. |
 
 Poznámka: Hermes a OpenCode jsou uživatelsky zvolené hosty, nikoli v této dílčí konkurenční tabulce zdrojově auditované konkurenty. Adapter proveditelnost a upstream contract musí ověřit technický workstream; neodvozujeme podporu z marketingové analogie s jinými MCP hosty.
 
@@ -27,7 +27,7 @@ Poznámka: Hermes a OpenCode jsou uživatelsky zvolené hosty, nikoli v této d�
 
 GitHub search `repo:cline/cline checkpoint is:issue` vrátil 251 matches; `repo:openai/codex approval is:issue` 3 858 matches. To jsou textové matches včetně starých/nesouvisejících reportů. Výběr prvních pěti v každém dotazu není reprezentativní studie. Podstatné jsou reprodukční scénáře pro vlastní acceptance suite, nikoli velikost počtu.
 
-| Zdroj | Co report tvrdí | Co ověřit ve VOID |
+| Zdroj | Co report tvrdí | Co ověřit ve NOMO |
 |---|---|---|
 | [Cline #14367](https://github.com/cline/cline/issues/14367), vytvořeno 2026-09-21, open při čtení | Checkpoint restore může po necommitnuté `.gitignore` a `git reset --hard` + `git clean -fd` nevratně odstranit untracked data; report jmenuje SDK implementation | Dirty worktree, ignored/untracked, změna ignore pravidla; nikdy nevymazat soubory mimo deklarovaný a zachycený efekt. Před restored ověřit všechny preconditions. Nereprodukováno u Cline v tomto auditu. |
 | [Cline #12388](https://github.com/cline/cline/issues/12388), 2026-07-18 | Interní continuation/retry rozbije lookup staršího checkpointu | Stable operation id napříč retry/continue, user-turn vs execution-attempt identity; crash/reconnect nesmí ztratit vazbu journal/artefact/effect. |
@@ -46,7 +46,7 @@ Z těchto reportů plyne hypotéza: lidé nechtějí více varování; chtějí 
 
 **Pracovní positioning:** „Přidejte ke svému coding agentu chráněné změny a konfliktově bezpečnou obnovu souborů, Git operací a Postgres dat, s důkazem o tom, co bylo skutečně pokryto.“ Toto je cílový slib, ne tvrzení, že všechny tyto kombinace jsou nyní production ready.
 
-Odlišení otestovat proti třem alternativám: stávající Git workflow/checkpoint v hostovi; sandbox + manuální backup; existující gateway/control plane. Test musí být „zákazník dokončil stejný task a zachoval práci druhého developera“, ne porovnání počtu features. Pokud VOID jen přesune approval do jiné obrazovky, přidaná hodnota není prokázána.
+Odlišení otestovat proti třem alternativám: stávající Git workflow/checkpoint v hostovi; sandbox + manuální backup; existující gateway/control plane. Test musí být „zákazník dokončil stejný task a zachoval práci druhého developera“, ne porovnání počtu features. Pokud NOMO jen přesune approval do jiné obrazovky, přidaná hodnota není prokázána.
 
 Navržená obhajitelná hodnota:
 
@@ -109,7 +109,7 @@ Marketing repo na `85c6792838f5014818d48e93188342cf3c824c8e` má vlastní pricin
 | Installation + doctor pro čtyři hosty | Přidám ochranu bez opuštění hosta | Nejvyšší, shared contract; vybraný host testovat end-to-end | Čistý stroj, known version, diagnostic coverage native/MCP/shell, bez secrets v logs. |
 | Filesystem/Git/Postgres proof pack | Rozumím obnově svého workflow | Nejvyšší; nejdřív fixtures a supported effects | Dirty/untracked/concurrent/crash scenarios; nezávislý verifier; žádný fake atomic claim. |
 | Coverage/status panel | Vím, co je chráněné | Současně s adaptery | Nezachycený action se netváří jako guarded; unknown má next step; UI/readme stejné capability. |
-| Low-friction policy presets | Dokončím rutinní task bez approval loops | Po policy integrity proof | Baseline vs VOID task time a approvals; žádný scope escalation při retry. |
+| Low-friction policy presets | Dokončím rutinní task bez approval loops | Po policy integrity proof | Baseline vs NOMO task time a approvals; žádný scope escalation při retry. |
 | Evidence/review bundle | Team lead může doložit změnu | Recurring Team value | Diff/effect/test/refusal/verification scope, redaction, export, named policy version. |
 | Org roles + policy sharing | Onboard kolegu a omezím oprávnění | Po pilot feedback, před hosted Team | Tenant + role + revocation negative suite, ownership migration, no implicit operator all-tenants. |
 | Outcome eval hooks/export | Lepší outputs doložené task tests | Po bezpečném tool contract | Referenční tasks, test pass, human rating; provider/model změna jen explicitní. |

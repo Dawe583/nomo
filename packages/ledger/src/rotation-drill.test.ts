@@ -40,7 +40,7 @@ const body = (extra: Record<string, unknown> = {}) => ({
 });
 
 async function fixture(t: TestContext) {
-  const dir = await mkdtemp(join(tmpdir(), "void-rotation-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-rotation-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   return { dir, keyDir: join(dir, "keys"), ledgerDir: join(dir, "ledger") };
 }

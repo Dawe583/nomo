@@ -1,4 +1,4 @@
-# Pokrytí core auditu VOID — 30. září 2026
+# Pokrytí core auditu NOMO — 30. září 2026
 
 Výchozí commit: `4c560dd98668da06e24b2189e854203fdcaa80a2`. Bez změn implementace. CLI/workbench vlastní hlavní agent, apps druhý subagent.
 
@@ -15,9 +15,9 @@ Pro TS/MJS/Python indexované vzory: import/export/def/class, test/posixTest/des
 
 ## Ověření
 
-1. Core Node testy runtime, recovery, ledger, filesystem, Git: 484 testů,477 pass,5 fail,2 skip. Prostředí umask077; pět selhání souviselo s implicitními oprávněními fixtures. Log `/tmp/void-core-tests.log`.
-2. Opakování affected FS/Git souborů s umask022: 222 testů,220 pass,0 fail,2 skip. Log `/tmp/void-core-tests-umask022.log`. Restriktivní umask zůstává pokrytí, které je třeba opravit.
-3. Python unittest:84/84 pass včetně skutečného loopback relay a CLI recovery serveru; `/tmp/void-python-tests.log`.
+1. Core Node testy runtime, recovery, ledger, filesystem, Git: 484 testů,477 pass,5 fail,2 skip. Prostředí umask077; pět selhání souviselo s implicitními oprávněními fixtures. Log `/tmp/nomo-core-tests.log`.
+2. Opakování affected FS/Git souborů s umask022: 222 testů,220 pass,0 fail,2 skip. Log `/tmp/nomo-core-tests-umask022.log`. Restriktivní umask zůstává pokrytí, které je třeba opravit.
+3. Python unittest:84/84 pass včetně skutečného loopback relay a CLI recovery serveru; `/tmp/nomo-python-tests.log`.
 4. Ad hoc skutečný FS runtime: dva zápisy stejného souboru; recovery job končí konfliktem po jednom checkpointu.
 5. Skutečný Session+relay: server id server-42 se vrací jako1.
 6. Skutečný ledger append při umask022 vytváří0644.
@@ -156,7 +156,7 @@ Celkem 242 souborů; D=40, I=146, P=13, R=43.
 | `packages/policy/src/skeptics.test.ts` | 143 | `5d737f1bfa0a` | I: strukturální index | 11 | 5 |
 | `packages/policy/tsconfig.json` | 18 | `4d1e3014cd01` | D: inventář data/config/docs | 0 | 0 |
 | `packages/proxy/README.md` | 77 | `3fb72bb6c2c9` | D: inventář data/config/docs | 1 | 0 |
-| `packages/proxy/bin/void-proxy.mjs` | 76 | `5e0fc016c0ff` | I: strukturální index | 5 | 1 |
+| `packages/proxy/bin/nomo-proxy.mjs` | 76 | `5e0fc016c0ff` | I: strukturální index | 5 | 1 |
 | `packages/proxy/docs/interface.md` | 249 | `6cf38fb05e1f` | D: inventář data/config/docs | 8 | 0 |
 | `packages/proxy/docs/message-inventory.md` | 249 | `ff69e8599c97` | D: inventář data/config/docs | 1 | 0 |
 | `packages/proxy/docs/message-inventory.verified.md` | 25 | `757fae327bae` | D: inventář data/config/docs | 0 | 0 |
@@ -255,20 +255,20 @@ Celkem 242 souborů; D=40, I=146, P=13, R=43.
 | `packages/verifier/package.json` | 40 | `635327cbed88` | D: inventář data/config/docs | 0 | 0 |
 | `packages/verifier/verify-ledger.mjs` | 545 | `496fa127e00d` | I: strukturální index | 8 | 8 |
 | `packages/verifier/verify-ledger.test.mjs` | 67 | `494e94af53d3` | I: strukturální index | 9 | 3 |
-| `python/void-transport/README.md` | 127 | `24bd6bf15b7e` | D: inventář data/config/docs | 1 | 0 |
-| `python/void-transport/pyproject.toml` | 22 | `dda110047453` | D: inventář data/config/docs | 0 | 0 |
-| `python/void-transport/src/void_transport/__init__.py` | 69 | `3c955e80418f` | R: celé znění | 4 | 0 |
-| `python/void-transport/src/void_transport/canonical.py` | 264 | `760f4711e86b` | R: celé znění | 14 | 0 |
-| `python/void-transport/src/void_transport/client.py` | 733 | `2c1944783d62` | R: celé znění | 17 | 0 |
-| `python/void-transport/src/void_transport/errors.py` | 128 | `9b584a58461f` | R: celé znění | 7 | 0 |
-| `python/void-transport/tests/__init__.py` | 15 | `8eb10cdc7a7a` | I: strukturální index | 3 | 0 |
-| `python/void-transport/tests/fixtures/canonical_node.mjs` | 39 | `b0725f646054` | I: strukturální index | 2 | 0 |
-| `python/void-transport/tests/fixtures/canonical_samples.json` | 15 | `f405d5e4b91b` | D: inventář data/config/docs | 0 | 0 |
-| `python/void-transport/tests/fixtures/void_proxy_http.mjs` | 74 | `03e5cd251505` | I: strukturální index | 3 | 0 |
-| `python/void-transport/tests/support.py` | 62 | `c60059dedbee` | I: strukturální index | 7 | 0 |
-| `python/void-transport/tests/support_http.py` | 141 | `07ebe45aaf9e` | I: strukturální index | 10 | 0 |
-| `python/void-transport/tests/support_proxy.py` | 144 | `86a5cf9ddaad` | I: strukturální index | 11 | 0 |
-| `python/void-transport/tests/test_canonical.py` | 181 | `9e193497931a` | I: strukturální index | 10 | 22 |
-| `python/void-transport/tests/test_client.py` | 559 | `1d571a1c6714` | I: strukturální index | 13 | 39 |
-| `python/void-transport/tests/test_errors.py` | 117 | `9ad9c53937fd` | I: strukturální index | 5 | 12 |
-| `python/void-transport/tests/test_integration.py` | 202 | `d1fae70e87d3` | I: strukturální index | 9 | 11 |
+| `python/nomo-transport/README.md` | 127 | `24bd6bf15b7e` | D: inventář data/config/docs | 1 | 0 |
+| `python/nomo-transport/pyproject.toml` | 22 | `dda110047453` | D: inventář data/config/docs | 0 | 0 |
+| `python/nomo-transport/src/nomo_transport/__init__.py` | 69 | `3c955e80418f` | R: celé znění | 4 | 0 |
+| `python/nomo-transport/src/nomo_transport/canonical.py` | 264 | `760f4711e86b` | R: celé znění | 14 | 0 |
+| `python/nomo-transport/src/nomo_transport/client.py` | 733 | `2c1944783d62` | R: celé znění | 17 | 0 |
+| `python/nomo-transport/src/nomo_transport/errors.py` | 128 | `9b584a58461f` | R: celé znění | 7 | 0 |
+| `python/nomo-transport/tests/__init__.py` | 15 | `8eb10cdc7a7a` | I: strukturální index | 3 | 0 |
+| `python/nomo-transport/tests/fixtures/canonical_node.mjs` | 39 | `b0725f646054` | I: strukturální index | 2 | 0 |
+| `python/nomo-transport/tests/fixtures/canonical_samples.json` | 15 | `f405d5e4b91b` | D: inventář data/config/docs | 0 | 0 |
+| `python/nomo-transport/tests/fixtures/nomo_proxy_http.mjs` | 74 | `03e5cd251505` | I: strukturální index | 3 | 0 |
+| `python/nomo-transport/tests/support.py` | 62 | `c60059dedbee` | I: strukturální index | 7 | 0 |
+| `python/nomo-transport/tests/support_http.py` | 141 | `07ebe45aaf9e` | I: strukturální index | 10 | 0 |
+| `python/nomo-transport/tests/support_proxy.py` | 144 | `86a5cf9ddaad` | I: strukturální index | 11 | 0 |
+| `python/nomo-transport/tests/test_canonical.py` | 181 | `9e193497931a` | I: strukturální index | 10 | 22 |
+| `python/nomo-transport/tests/test_client.py` | 559 | `1d571a1c6714` | I: strukturální index | 13 | 39 |
+| `python/nomo-transport/tests/test_errors.py` | 117 | `9ad9c53937fd` | I: strukturální index | 5 | 12 |
+| `python/nomo-transport/tests/test_integration.py` | 202 | `d1fae70e87d3` | I: strukturální index | 9 | 11 |

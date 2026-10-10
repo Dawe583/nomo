@@ -39,12 +39,24 @@ if (!parsed.ok) {
   process.exit(2);
 }
 
+// One normalization, before anything is dispatched. Commands read `NOMO_*`
+// only, so a machine configured before the rename under `VOID_*` behaves the
+// same without each call site re-implementing the fallback.
+const asTyped = { ...process.env };
+
 try {
+  const { normalizeOwnedEnv } = await import("../src/env-keys.ts");
+  const normalized = normalizeOwnedEnv();
+  if (normalized !== process.env) Object.assign(process.env, normalized);
   const { runCommand } = await import("../src/dispatch.ts");
   // Assign exitCode, never process.exit(). A forced exit truncates a stdout
   // write that has not drained yet, which silently swallowed the first JSON-RPC
   // response of `nomo recovery serve` and killed the MCP host handshake.
-  process.exitCode = await runCommand(parsed);
+  // `nomo config` prints which spelling of a setting is in force, and after the
+  // normalization above every setting looks current. It is handed the
+  // environment as the operator typed it, so the report names `VOID_*` when
+  // `VOID_*` is what is actually running.
+  process.exitCode = await runCommand(parsed, { rawEnv: asTyped });
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;

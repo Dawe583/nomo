@@ -34,7 +34,7 @@ export type CapabilityAuthority = "scope-only";
 export interface CapabilityConformanceRef {
   readonly schema: string;
   /**
-   * Id of the runtime that executed the checks, e.g. "void-recovery-runtime".
+   * Id of the runtime that executed the checks, e.g. "nomo-recovery-runtime".
    * The runtime owns the case list, so two profiles with the same runtime id
    * ran the same cases and two profiles with different ids did not.
    */

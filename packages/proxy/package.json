@@ -1,5 +1,5 @@
 {
-  "name": "@void/proxy",
+  "name": "@nomo/proxy",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -16,13 +16,13 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
-    "@void/ledger": "workspace:*",
-    "@void/policy": "workspace:*",
-    "@void/registry": "workspace:*"
+    "@nomo/ledger": "workspace:*",
+    "@nomo/policy": "workspace:*",
+    "@nomo/registry": "workspace:*"
   },
   "description": "Intercept MCP tool calls over stdio or HTTP upstreams with policy and ledger checks.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "mcp",
     "proxy",

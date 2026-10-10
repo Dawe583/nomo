@@ -1,4 +1,4 @@
-# VOID upgrade checkpoint
+# NOMO upgrade checkpoint
 
 One operational certification run, recorded for the reverse and recovery
 upgrade programme. This file exists because the programme kept shipping

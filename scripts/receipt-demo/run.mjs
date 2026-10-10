@@ -3,16 +3,16 @@
  *
  * This is the only artefact that answers the question the product now rests
  * on: after a verified inverse, is there a record a third party can check
- * without running VOID?
+ * without running NOMO?
  *
- * It is deliberately a throwaway script rather than a test. "VOID can restore
+ * It is deliberately a throwaway script rather than a test. "NOMO can restore
  * a row" is already proved by the suite, against PGlite. What is being claimed
  * here is that the evidence ends up in the customer's own database, and proving
  * that means writing to a real server, breaking it on purpose, repairing it,
  * and then stepping out of the way.
  *
  * Usage:
- *   VOID_PG_URL=postgres://user@127.0.0.1:5432/void_demo node --experimental-strip-types scripts/receipt-demo/run.mjs
+ *   NOMO_PG_URL=postgres://user@127.0.0.1:5432/void_demo node --experimental-strip-types scripts/receipt-demo/run.mjs
  */
 
 import { randomBytes } from "node:crypto";
@@ -33,14 +33,14 @@ import {
 } from "../../packages/runtime/src/index.ts";
 import { devKeyProvider } from "../../packages/ledger/src/sign.ts";
 
-const url = process.env.VOID_PG_URL;
+const url = process.env.NOMO_PG_URL;
 if (url === undefined || url === "") {
-  console.error("set VOID_PG_URL to a disposable PostgreSQL database");
+  console.error("set NOMO_PG_URL to a disposable PostgreSQL database");
   process.exit(2);
 }
 
 const pool = new pg.Pool({ connectionString: url });
-const root = await mkdtemp(join(tmpdir(), "void-receipt-"));
+const root = await mkdtemp(join(tmpdir(), "nomo-receipt-"));
 
 /**
  * One dedicated client per ManagedConnection, never the pool.
@@ -70,7 +70,7 @@ const connect = async () => {
 
 const options = {
   workspace: "demo",
-  schema: "void_recovery",
+  schema: "nomo_recovery",
   tables: [{ table: "public.account", primaryKey: ["id"], columns: ["balance", "note"] }],
   connect,
 };
@@ -86,7 +86,7 @@ const show = async (label, sql) => {
 const showRaw = async (sql) => (await pool.query(sql)).rows;
 
 try {
-  await pool.query("DROP SCHEMA IF EXISTS void_recovery CASCADE");
+  await pool.query("DROP SCHEMA IF EXISTS nomo_recovery CASCADE");
   await pool.query("DROP TABLE IF EXISTS account");
   await pool.query(
     "CREATE TABLE account(id integer PRIMARY KEY, balance integer NOT NULL CHECK(balance>=0), note text)",
@@ -130,10 +130,10 @@ try {
     throw new Error("the agent write did not succeed, so there is nothing to invert");
   }
 
-  // A legitimate write that happened after the agent's, from outside VOID
+  // A legitimate write that happened after the agent's, from outside NOMO
   // entirely. This is the row a point-in-time restore would destroy.
   await pool.query("UPDATE account SET balance = 75, note = 'approved by finance' WHERE id = 2");
-  console.log("finance then approved a change to account 2, outside VOID");
+  console.log("finance then approved a change to account 2, outside NOMO");
   await show("2. after the agent write and the later human write", "select * from account order by id");
 
   // A fresh runtime, so the repair reaches nothing the writer held.
@@ -147,17 +147,17 @@ try {
   await show("3. after the inverse", "select * from account order by id");
   const receipts = await show(
     "4. the receipt, in the customer's own database",
-    "select id, input_digest, format_version, outcome->>'status' as status, outcome->'evidence'->'rows'->0->'row' as restored_row from void_recovery.recoveries order by id",
+    "select id, input_digest, format_version, outcome->>'status' as status, outcome->'evidence'->'rows'->0->'row' as restored_row from nomo_recovery.recoveries order by id",
   );
   await show(
     "5. the audit trail beside it",
-    "select id, format_version, outcome->>'status' as status, capture->'statement'->>'operation' as operation from void_recovery.operations order by id",
+    "select id, format_version, outcome->>'status' as status, capture->'statement'->>'operation' as operation from nomo_recovery.operations order by id",
   );
 
   console.log("\n--- what a third party runs next ---");
   console.log(
     receipts.length > 0
-      ? "psql $VOID_PG_URL -f docs/RECEIPT-VERIFY.sql   (VOID is not involved)"
+      ? "psql $NOMO_PG_URL -f docs/RECEIPT-VERIFY.sql   (NOMO is not involved)"
       : "NO RECEIPT WAS WRITTEN",
   );
 
@@ -173,7 +173,7 @@ try {
         server: (await showRaw("select version() as v"))[0]?.v.split(" ").slice(0, 2).join(" "),
         receipt:
           (await showRaw(
-            "select id, input_digest, format_version, outcome from void_recovery.recoveries order by id",
+            "select id, input_digest, format_version, outcome from nomo_recovery.recoveries order by id",
           ))[0] ?? null,
 
         rowTheAgentWrote: rowTheAgentWrote ?? null,

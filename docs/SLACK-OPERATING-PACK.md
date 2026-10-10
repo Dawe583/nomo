@@ -1,4 +1,4 @@
-# VOID Slack operating pack
+# NOMO Slack operating pack
 
 **Purpose:** turn Slack into a clear coordination layer for the €10k MRR program without making Slack a second database.  
 **Canonical strategy:** [GO-TO-MARKET-10K-MRR.md](GO-TO-MARKET-10K-MRR.md)  
@@ -7,7 +7,7 @@
 
 **Management correction:** €10k MRR is an upside/stretch target. Slack scorecards must show downside/base/upside forecast bands and qualified pipeline coverage; never report the target as expected revenue.
 
-All channel messages should be in English because the VOID workspace marks the operating channels English-only.
+All channel messages should be in English because the NOMO workspace marks the operating channels English-only.
 
 ## Operating system at a glance
 
@@ -35,7 +35,7 @@ flowchart TB
 | **Business control** | `#operations`, `#weekly-review` | MRR, pipeline, capacity, lessons |
 | **Reference** | `#knowledge`, `#general`, `#announcements` | stable rules and approved communication |
 
-![VOID Slack operating architecture](assets/rendered/void-slack-architecture.png)
+![NOMO Slack operating architecture](assets/rendered/nomo-slack-architecture.png)
 
 ### Navigation
 
@@ -47,8 +47,8 @@ flowchart TB
 
 Use these as the canonical marketing references:
 
-- [Marketing, monetization and evidence strategy](VOID-MARKETING-MONETIZATION-RESEARCH-2026.md)
-- [Ready-to-review social content pack](VOID-SOCIAL-CONTENT-PACK-2026.md)
+- [Marketing, monetization and evidence strategy](NOMO-MARKETING-MONETIZATION-RESEARCH-2026.md)
+- [Ready-to-review social content pack](NOMO-SOCIAL-CONTENT-PACK-2026.md)
 
 Marketing must run from one weekly evidence asset, not from a volume calendar:
 
@@ -59,7 +59,7 @@ Marketing must run from one weekly evidence asset, not from a volume calendar:
 5. Publish one canonical artifact, then create platform-native derivatives.
 6. Attribute every conversation, evaluation and paid scope to the artifact and source cohort.
 
-**Positioning rule:** do not lead with “AI guardrails,” “secure all agents,” “full visibility,” or “human in the loop.” Lead with: **“Before a consequential agent write, VOID classifies the effect, applies policy, and produces a signed receipt a separate reviewer can verify.”**
+**Positioning rule:** do not lead with “AI guardrails,” “secure all agents,” “full visibility,” or “human in the loop.” Lead with: **“Before a consequential agent write, NOMO classifies the effect, applies policy, and produces a signed receipt a separate reviewer can verify.”**
 
 **Original content rule:** every public asset must contain a runnable artifact, a counterexample or negative case, and an adjacent non-claim. Never publish a fixture as production certification, compliance proof, customer adoption, model-reasoning proof or universal reversibility.
 
@@ -88,7 +88,7 @@ Marketing must run from one weekly evidence asset, not from a volume calendar:
 Pin this in the core operating channels:
 
 ```text
-VOID operating rules
+NOMO operating rules
 
 1. GitHub documents and issues are the durable source of product and strategy truth.
 2. Slack is for coordination, decisions, evidence pointers, and follow-ups.
@@ -166,7 +166,7 @@ Every Friday `#weekly-review` must state whether the €10k upside target is **o
 ### 4.1 `#announcements` — program kickoff
 
 ```text
-VOID €10k MRR program is now in execution.
+NOMO €10k MRR program is now in execution.
 
 Target: at least €10,000 of collected recurring revenue in December 2026, with a quality gate through March 2027.
 Primary path: eight scoped design partners at an average of €1,250 MRR.

@@ -5,7 +5,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { basename, extname, join, posix, relative, resolve } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { harnessSettingsView } from "../../../packages/workbench/src/harness-settings.ts";
+import { HARNESS_SETTINGS, harnessSettingsView } from "../../../packages/workbench/src/harness-settings.ts";
 
 import { runReplayCommand } from "../../../packages/cli/src/replay.ts";
 import type { ReplayCommandOptions } from "../../../packages/cli/src/replay.ts";
@@ -17,6 +17,8 @@ import { readLedgerFeed, type LedgerFeedRecord } from "../../../packages/ledger/
 import type { PublicKeyLookup } from "../../../packages/ledger/src/verify.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
 import { normalizeProviderConfig } from "../../../packages/workbench/src/provider.ts";
+import { normalizeEnv, type NomoEnvKey } from "../../../packages/ledger/src/env-compat.ts";
+
 import { authorizedRemote } from "./auth.ts";
 import { localApprovals } from "./local-approvals.ts";
 import { desktopSetup, importDesktopProvider } from './desktop-setup.ts';
@@ -29,6 +31,35 @@ import {
 } from "../../../packages/ledger/src/verify-key.ts";
 import { handleCompanionRequest } from "./companion/routes.ts";
 import { handleCompanionEnvelopeRequest } from "./companion/envelope.ts";
+
+/**
+ * The owned names this API reads, or hands to the workbench, the approvals
+ * broker and the companion store below it.
+ *
+ * The list is resolved once, here, rather than at each read below. An operator
+ * who configured this machine before the rename typed the old names into a
+ * shell, a launch agent or a `.env` file, and those settings are still there;
+ * reading only the current names would report an unconfigured product on a
+ * configured machine. Normalizing at the boundary keeps one lookup per reader
+ * instead of an alias expression at every one of them, and the returned
+ * object is the injected environment itself when there is nothing to add.
+ */
+const CONTROL_PLANE_ENV_KEYS = [
+  "NOMO_APPROVALS_DIR",
+  "NOMO_COMPANION_DIR",
+  "NOMO_COMPANION_WRITE_PAIRING",
+  "NOMO_CONTROL_HOST",
+  "NOMO_CONTROL_TOKEN",
+  "NOMO_DATA_DIR",
+  "NOMO_DESKTOP_WEB_ROOT",
+  "NOMO_LEDGER_DIR",
+  "NOMO_PERMISSION_MODE",
+  "NOMO_SIGNING_KEY",
+  "NOMO_SNAPSHOT_DIR",
+  "NOMO_VERIFY_KEY",
+  "NOMO_WORKSPACE",
+  "NOMO_WORKSPACE_KEY",
+] as const satisfies readonly NomoEnvKey[];
 
 export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
 
@@ -92,7 +123,6 @@ type RouteOptions = {
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const defaultWebRoot = resolve(here, "../web");
-const maxBodyBytes = 64 * 1024;
 
 /**
  * Transport bounds for a session event stream. A subscriber that stops
@@ -216,10 +246,10 @@ const publicScriptPaths: ReadonlySet<string> = new Set(["/app.js", "/workbench.c
  * reading the private key file the ledger was signed with: a key resolved
  * from `dev-ed25519.pkcs8` is the writer's key, so a server that resolved it
  * that way would report an attacker's rewritten chain as valid
- * (docs/THREAT-MODEL.md §2.4). A public key comes from `VOID_VERIFY_KEY` or a
- * trust file; a trust file at the default `~/.void/trust/` path reports
+ * (docs/THREAT-MODEL.md §2.4). A public key comes from `NOMO_VERIFY_KEY` or a
+ * trust file; a trust file at the default `~/.nomo/trust/` path reports
  * `operatorSupplied: false`, because it shares a tree with the key it is
- * supposed to anchor. A configured `VOID_SIGNING_KEY` is still honoured,
+ * supposed to anchor. A configured `NOMO_SIGNING_KEY` is still honoured,
  * because naming it is an explicit operator choice, and the response says it
  * was degraded. With nothing configured the lookup stays undefined and every
  * feed and verify view reports integrity without claiming authentication.
@@ -239,7 +269,11 @@ async function resolveVerifyKey(
 }
 
 export function createControlPlaneServer(options: ControlPlaneOptions = {}): Server {
-  const env = options.env ?? process.env;
+  // Resolved once here so every reader below, including the workbench, the
+  // approvals broker and the companion store, sees the same configuration an
+  // operator typed whichever spelling they used. The injected environment is
+  // never written to.
+  const env = normalizeEnv(options.env ?? process.env, CONTROL_PLANE_ENV_KEYS);
   const built = fileURLToPath(new URL('../../../dist/web', import.meta.url));
   const webRoot = resolve(options.webRoot ?? (existsSync(join(built, 'index.html')) ? built : defaultWebRoot));
 
@@ -247,15 +281,19 @@ export function createControlPlaneServer(options: ControlPlaneOptions = {}): Ser
   // Stated as a named constant so the divergence from the local operator
   // default is deliberate and reviewable, not an accident of two different
   // expressions in two files.
-  const workbench = new Workbench({ ...env, VOID_PERMISSION_MODE: serverPermissionMode(env.VOID_PERMISSION_MODE ?? DEFAULT_HTTP_PERMISSION_MODE) });
+  const workbench = new Workbench({ ...env, NOMO_PERMISSION_MODE: serverPermissionMode(env.NOMO_PERMISSION_MODE ?? DEFAULT_HTTP_PERMISSION_MODE) });
   const server = createServer((request, response) => {
-    if (env.VOID_CONTROL_TOKEN ? !authorizedRemote(request, env) : !isLocalRequest(request)) {
+    if (env.NOMO_CONTROL_TOKEN ? !authorizedRemote(request, env) : !isLocalRequest(request)) {
       sendJson(response, 403, { error: "local_origin_required" });
       return;
     }
     void resolveVerifyKey(env).then((verificationKey) =>
       route(request, response, { ...options, env, webRoot, publicKey: verificationKey?.publicKey, verificationKey, workbench, approvals: workbench.list().length ? { pending: async () => [...await readPendingApprovals(options.approvals), ...workbench.pending()], decide: (id, decision) => id.includes(":") ? workbench.decide(id, decision) : options.approvals?.decide(id, decision) } : options.approvals })).catch(() => {
-      sendJson(response, 500, {
+      // A route that already answered, as it does when it refuses an oversized
+      // body, must not be answered twice: this used to throw
+      // ERR_HTTP_HEADERS_SENT from a handler whose only job was to report that
+      // something had failed.
+      sendOnce(response, 500, {
         error: "internal_error",
         message: "The request failed; operator review required",
       });
@@ -294,12 +332,41 @@ async function route(
   if (parsed === null) return sendJson(response, 400, { error: "bad_url" });
 
   const query = parsed.searchParams, wb = options.workbench;
+  // The body bound is resolved per request rather than captured at import, so
+  // a limit the operator changes through /settings or
+  // PATCH /api/harness-settings applies to the next request rather than the
+  // next process. The companion routes keep their own literal: the frozen v1
+  // protocol fixes that bound and it may not move without a new reviewed
+  // protocol version.
+  //
+  // An oversized body is answered as the client error it is. It used to
+  // propagate to the server's outer catch and come back as 500 "operator
+  // review required", which reads as NOMO having failed rather than the
+  // request having been refused, and sent the operator looking for a fault
+  // that is in the size of what they sent.
+  //
+  const readBody = async (): Promise<unknown> => {
+    try {
+      return await readJsonBody(request, wb.harnessSettings().maxRequestBytes);
+    } catch (error) {
+      // Answered here, then rethrown so the route's own handler stops rather
+      // than acting on a body that was never read. `sendOnce` keeps the route
+      // catch that catches this from writing a second response.
+      if (error instanceof RequestBodyTooLarge) {
+        sendOnce(response, 413, {
+          error: "request_too_large",
+          message: error.message,
+        });
+      }
+      throw error;
+    }
+  };
   try {
-    const desktop = !!options.env.VOID_DESKTOP_WEB_ROOT && !options.env.VOID_CONTROL_TOKEN && isLocalRequest(request);
-    if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local', serverPermissionMode(options.env.VOID_PERMISSION_MODE), wb.harnessSettings()), desktopSetup: desktop });
+    const desktop = !!options.env.NOMO_DESKTOP_WEB_ROOT && !options.env.NOMO_CONTROL_TOKEN && isLocalRequest(request);
+    if (parsed.pathname === '/api/capabilities' && request.method === 'GET') return sendJson(response, 200, { ...capabilities('local', serverPermissionMode(options.env.NOMO_PERMISSION_MODE), wb.harnessSettings()), desktopSetup: desktop });
     if (parsed.pathname === '/api/projects') {
       if (request.method === 'GET') { const projects = wb.projects(); return sendJson(response, 200, { items: projects, projects }); }
-      if (request.method === 'POST') return sendJson(response, 200, { project: wb.upsertProject(await readJsonBody(request) as Parameters<Workbench['upsertProject']>[0]) });
+      if (request.method === 'POST') return sendJson(response, 200, { project: wb.upsertProject(await readBody() as Parameters<Workbench['upsertProject']>[0]) });
     }
     const stopRun = /^\/api\/runs\/([A-Za-z0-9_-]+)\/stop$/.exec(parsed.pathname);
     if (stopRun && request.method === 'POST') {
@@ -307,15 +374,15 @@ async function route(
       wb.stopRun(stopRun[1]!); return sendJson(response, 200, { ok: true });
     }
     if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, options.workbench.agents());
-    if (request.method === 'POST' && parsed.pathname === '/api/agents') return sendJson(response, 200, { agent: wb.upsertAgent(await readJsonBody(request)) });
-    if (request.method === 'POST' && parsed.pathname === '/api/hooks') return sendJson(response, 200, { hook: wb.upsertHook(await readJsonBody(request)) });
+    if (request.method === 'POST' && parsed.pathname === '/api/agents') return sendJson(response, 200, { agent: wb.upsertAgent(await readBody()) });
+    if (request.method === 'POST' && parsed.pathname === '/api/hooks') return sendJson(response, 200, { hook: wb.upsertHook(await readBody()) });
     if (request.method === 'GET' && parsed.pathname === '/api/integrations') return sendJson(response, 200, { supported: false, integrations: [] });
     if (request.method === 'GET' && parsed.pathname === '/api/demo/status') return sendJson(response, 200, { supported: false, available: false });
     if (parsed.pathname === '/api/desktop/setup') {
       if (!desktop) return sendJson(response, 404, { error: 'not_available' });
       if (request.method === 'GET') return sendJson(response, 200, await desktopSetup(options.env));
       if (request.method === 'POST') {
-        const body = await readJsonBody(request) as Record<string, unknown> | null;
+        const body = await readBody() as Record<string, unknown> | null;
         if (!body || typeof body !== 'object' || Object.keys(body).some(key => key !== 'source')) return sendJson(response, 400, { error: 'invalid_import' });
         return sendJson(response, 200, await importDesktopProvider(body.source, options.env, wb));
       }
@@ -324,7 +391,7 @@ async function route(
     if (parsed.pathname === '/api/tools' && request.method === 'GET') return sendJson(response, 200, wb.availableTools(query.get('session') || undefined));
     if (parsed.pathname === '/api/preferences') {
       if (request.method === 'GET') return sendJson(response, 200, { preferences: wb.getPreferences() });
-      if (request.method === 'PATCH') return sendJson(response, 200, { preferences: wb.patchPreferences(await readJsonBody(request) as Record<string, unknown>) });
+      if (request.method === 'PATCH') return sendJson(response, 200, { preferences: wb.patchPreferences(await readBody() as Record<string, unknown>) });
     }
     if (parsed.pathname === '/api/harness-settings') {
       if (request.method === 'GET') { const settings = wb.harnessSettings(); return sendJson(response, 200, { settings, rows: harnessSettingsView(settings) }); }
@@ -332,7 +399,7 @@ async function route(
       // catch below turns that into the same 409 the preferences route returns
       // for a refused one. An unknown limit must read as refused, not as a
       // silent no-op the operator would take for an applied change.
-      if (request.method === 'PATCH') { const settings = wb.patchHarnessSettings(await readJsonBody(request) as Record<string, unknown>); return sendJson(response, 200, { settings, rows: harnessSettingsView(settings) }); }
+      if (request.method === 'PATCH') { const settings = wb.patchHarnessSettings(await readBody() as Record<string, unknown>); return sendJson(response, 200, { settings, rows: harnessSettingsView(settings) }); }
     }
     if (['/api/runs','/api/usage','/api/overview'].includes(parsed.pathname) && request.method === 'GET') {
       const data = activity(wb.allViews()); if (parsed.pathname === '/api/overview') return sendJson(response, 200, { ...data.overview, pendingApprovals: wb.pending().length, documents: wb.documentsList().length });
@@ -344,8 +411,8 @@ async function route(
     if (recovery) {
       const id = recovery[1]!, action = recovery[2]!;
       if (!wb.get(id)) return sendJson(response, 404, { message: 'Session not found.' });
-      if (action === 'plan' && request.method === 'POST') return sendJson(response, 200, await wb.planRecoveryJob(id, await readJsonBody(request) as Parameters<Workbench['planRecoveryJob']>[1]));
-      if (action === 'apply' && request.method === 'POST') return sendJson(response, 200, await wb.applyRecoveryJob(id, await readJsonBody(request) as Parameters<Workbench['applyRecoveryJob']>[1]));
+      if (action === 'plan' && request.method === 'POST') return sendJson(response, 200, await wb.planRecoveryJob(id, await readBody() as Parameters<Workbench['planRecoveryJob']>[1]));
+      if (action === 'apply' && request.method === 'POST') return sendJson(response, 200, await wb.applyRecoveryJob(id, await readBody() as Parameters<Workbench['applyRecoveryJob']>[1]));
       if (request.method === 'GET') return sendJson(response, 200, await wb.recoveryJobStatus(id, action));
       return sendJson(response, 405, { error: 'method_not_allowed' });
     }
@@ -356,14 +423,14 @@ async function route(
       if (kind === 'branches') {
         if (request.method !== 'POST') return sendJson(response, 405, { error: 'method_not_allowed' });
         let body: unknown;
-        try { body = await readJsonBody(request); } catch { return sendJson(response, 400, { error: 'invalid_branch' }); }
+        try { body = await readBody(); } catch { return sendJson(response, 400, { error: 'invalid_branch' }); }
         const input = parseBranchInput(body);
         if (!input) return sendJson(response, 400, { error: 'invalid_branch' });
         return sendJson(response, 201, { session: await wb.branch(id, input) });
       }
       if (kind === 'documents') {
         if (request.method === 'GET') return sendJson(response, 200, { document: wb.document(id, query.get('path') ?? '') });
-        if (request.method === 'PATCH') return sendJson(response, 200, { document: await wb.editDocument(id, await readJsonBody(request) as { path: string; content: string; expectedRevision: string | null }) });
+        if (request.method === 'PATCH') return sendJson(response, 200, { document: await wb.editDocument(id, await readBody() as { path: string; content: string; expectedRevision: string | null }) });
       }
       if (kind === 'events' && request.method === 'GET') { const items = session.events.filter(e => e.seq > Number(query.get('after') || 0)); return sendJson(response, 200, { items, after: items.at(-1)?.seq ?? Number(query.get('after') || 0), status: session.status, asOf: new Date().toISOString(), scope: id, historyComplete: session.events[0]?.seq === 1 }); }
       if (kind === 'stream' && request.method === 'GET') {
@@ -381,7 +448,7 @@ async function route(
       if (request.method === "GET") return sendJson(response, 200, await options.workbench.providerState());
       if (request.method === "DELETE") { options.workbench.clearProvider(); return sendJson(response, 200, { ok: true }); }
       if (request.method === "POST") {
-        const body = await readJsonBody(request) as { baseUrl?: string; apiKey?: string; kind?: string } | null;
+        const body = await readBody() as { baseUrl?: string; apiKey?: string; kind?: string } | null;
         const { baseUrl, apiKey, kind } = body ?? {};
         if (typeof baseUrl !== "string" || typeof apiKey !== "string") return sendJson(response, 400, { error: "invalid_provider" });
         const models = await options.workbench.configure(normalizeProviderConfig({ baseUrl, apiKey, kind }));
@@ -393,13 +460,13 @@ async function route(
     try {
       if (request.method === 'GET') return sendJson(response, 200, options.workbench.connectionState());
       if (request.method === 'POST') {
-        const body = await readJsonBody(request) as { url: string; name?: string; token?: string; policy?: string; facts?: Record<string, boolean | string>; mapping?: Record<string, string> };
+        const body = await readBody() as { url: string; name?: string; token?: string; policy?: string; facts?: Record<string, boolean | string>; mapping?: Record<string, string> };
         return sendJson(response, 200, await options.workbench.addConnector(body));
       }
     } catch (error) { return sendJson(response, 400, { message: error instanceof Error ? error.message : 'Connector unavailable.' }); }
   }
   const connectorMatch = /^\/api\/connectors\/([a-f0-9-]+)$/.exec(parsed.pathname);
-  if (connectorMatch && request.method === 'PATCH') { try { return sendJson(response, 200, { connector: await options.workbench.updateConnector(connectorMatch[1]!, await readJsonBody(request) as Record<string, unknown>) }); } catch(error) { return sendJson(response, 409, { message: error instanceof Error ? error.message : 'Connector update failed.' }); } }
+  if (connectorMatch && request.method === 'PATCH') { try { return sendJson(response, 200, { connector: await options.workbench.updateConnector(connectorMatch[1]!, await readBody() as Record<string, unknown>) }); } catch(error) { return sendJson(response, 409, { message: error instanceof Error ? error.message : 'Connector update failed.' }); } }
   const connectorTest = /^\/api\/connectors\/([a-f0-9-]+)\/test$/.exec(parsed.pathname);
   if (connectorTest && request.method === 'POST') { try { return sendJson(response, 200, await options.workbench.testConnector(connectorTest[1]!)); } catch(error) { return sendJson(response, 400, { message: error instanceof Error ? error.message : 'Connector test failed.' }); } }
   if (connectorMatch && request.method === 'DELETE') { options.workbench.removeConnector(connectorMatch[1]!); return sendJson(response, 200, { ok: true }); }
@@ -410,7 +477,7 @@ async function route(
       if (workspaceMatch[2] === 'workspace' && request.method === 'GET') return sendJson(response, 200, { workspace: options.workbench.workspace(id) });
       if (workspaceMatch[2] === 'undo' && request.method === 'GET') return sendJson(response, 200, await options.workbench.undoPreview(id, operation));
       if (workspaceMatch[2] === 'undo' && request.method === 'POST') {
-        const body = await readJsonBody(request) as { confirm?: string };
+        const body = await readBody() as { confirm?: string };
         if (body.confirm !== operation) return sendJson(response, 409, { message: 'Preview and confirm this change first.' });
         return sendJson(response, 200, await options.workbench.undo(id, operation));
       }
@@ -438,7 +505,7 @@ async function route(
       const verification = verificationSummary(proof.verification);
       if (parsed.pathname === '/api/feed') { const result = page(filterRows(proof.entries.map(e => ({ seq: e.seq, ...(e.body as JsonObject), hash: e.hash, digest: e.hash, prev_hash: e.prev_hash })).reverse(), query), query, workspace); return sendJson(response, 200, { ...result, entries: result.items, verified: true, signed: true, substitutionDetected: verification["substitutionDetected"] === true, integrity: true, checked: proof.entries.length, verificationKey: verification }); }
       if (parsed.pathname === '/api/ledger/verify') return sendJson(response, 200, { ok: true, verified: true, signed: true, substitutionDetected: verification["substitutionDetected"] === true, integrity: true, checked: proof.entries.length, head: proof.result.head, verificationKey: verification });
-      response.setHeader('content-disposition', 'attachment; filename="void-ledger.json"');
+      response.setHeader('content-disposition', 'attachment; filename="nomo-ledger.json"');
       // A bundle without the key that authenticated it is silently
       // unverifiable downstream, so the verification block travels with it.
       return sendJson(response, 200, { format: 'void.signed-ledger.v1', entries: proof.entries, checked: proof.entries.length, head: proof.result.head, verificationKey: verification });
@@ -447,7 +514,7 @@ async function route(
   if (parsed.pathname === "/api/sessions") {
     if (request.method === "GET") return sendJson(response, 200, options.workbench.sessionPage(query));
     if (request.method === "POST") {
-      const body = await readJsonBody(request) as { prompt?: string; model?: string; project?: string; agent?: string; background?: boolean; idempotencyKey?: string } | null;
+      const body = await readBody() as { prompt?: string; model?: string; project?: string; agent?: string; background?: boolean; idempotencyKey?: string } | null;
       if (typeof body?.prompt !== "string" || (body.model !== undefined && typeof body.model !== "string") || (body.project !== undefined && typeof body.project !== "string") || (body.agent !== undefined && typeof body.agent !== "string") || (body.background !== undefined && typeof body.background !== "boolean")) return sendJson(response, 400, { error: "invalid_session" });
       try { return sendJson(response, 201, { session: await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent, body.background) }); }
       catch (error) { return sendJson(response, 409, { error: "session_not_started", message: error instanceof Error ? error.message : "Session not started" }); }
@@ -458,11 +525,11 @@ async function route(
     const id = sessionMatch[1]!;
     const session = options.workbench.get(id);
     if (!session) return sendJson(response, 404, { error: "session_not_found" });
-    if (request.method === "PATCH") { try { return sendJson(response, 200, { session: wb.patchSession(id, await readJsonBody(request) as Record<string, unknown>) }); } catch (error) { return sendJson(response, 400, { message: error instanceof Error ? error.message : "Invalid update." }); } }
+    if (request.method === "PATCH") { try { return sendJson(response, 200, { session: wb.patchSession(id, await readBody() as Record<string, unknown>) }); } catch (error) { return sendJson(response, 400, { message: error instanceof Error ? error.message : "Invalid update." }); } }
     if (request.method === "GET") return sendJson(response, 200, { session: query.get("events") === "false" ? { ...session, events: [] } : session });
     if (request.method === "DELETE") { options.workbench.cancel(id); return sendJson(response, 200, { ok: true }); }
     if (request.method === "POST") {
-      const body = await readJsonBody(request) as { prompt?: string; idempotencyKey?: string } | null;
+      const body = await readBody() as { prompt?: string; idempotencyKey?: string } | null;
       if (typeof body?.prompt !== "string") return sendJson(response, 400, { error: "invalid_message" });
       try { options.workbench.send(id, body.prompt, body.idempotencyKey); return sendJson(response, 202, { ok: true }); }
       catch (error) { return sendJson(response, 409, { error: "session_not_ready", message: error instanceof Error ? error.message : "Session not ready" }); }
@@ -483,7 +550,7 @@ async function route(
       try {
         const preview = await options.workbench.undoPreview(managed.id, operationId);
         if (request.method === 'POST') {
-          const body = await readJsonBody(request) as { digest?: string };
+          const body = await readBody() as { digest?: string };
           if (body.digest !== entry.hash) return sendJson(response, 409, { message: 'Preview this exact record first.' });
           await options.workbench.undo(managed.id, operationId);
         }
@@ -504,12 +571,12 @@ async function route(
     if (recordAction[2] === "replay") {
       const apply = request.method === "POST";
       if (apply) {
-        const body = await readJsonBody(request) as { digest?: string } | null;
+        const body = await readBody() as { digest?: string } | null;
         if (body?.digest !== entry.hash) return sendJson(response, 409, { error: "preview_digest_required" });
         if (!options.publicKey) return sendJson(response, 409, { error: "signature_key_required", message: "Replay requires verified signatures." });
       }
-      const snapshots = options.env.VOID_SNAPSHOT_DIR;
-      if (!snapshots) return sendJson(response, 409, { error: "snapshots_not_configured", message: "Set VOID_SNAPSHOT_DIR on the runtime to preview captured inverses." });
+      const snapshots = options.env.NOMO_SNAPSHOT_DIR;
+      if (!snapshots) return sendJson(response, 409, { error: "snapshots_not_configured", message: "Set NOMO_SNAPSHOT_DIR on the runtime to preview captured inverses." });
       const lines: string[] = [];
       const errors: string[] = [];
       const code = await runReplayCommand(["--ledger", ledger, "--snapshot-dir", snapshots, "--seq", String(seq), ...(apply ? [] : ["--dry-run"])], { stdout: line => lines.push(line), stderr: line => errors.push(line), env: options.env }, options.replay);
@@ -522,7 +589,7 @@ async function route(
     // Same shape as the workbench-backed export above: a bundle that does not
     // carry the key that authenticated it cannot be re-verified downstream.
     const page = await readLedgerFeed(ledger, { publicKey: options.publicKey }).catch(() => undefined);
-    response.setHeader("content-disposition", 'attachment; filename="void-records.json"');
+    response.setHeader("content-disposition", 'attachment; filename="nomo-records.json"');
     if (page === undefined)
       return sendJson(response, 200, {
         format: "void.signed-ledger.v1",
@@ -558,7 +625,7 @@ async function route(
   }
   const approvalMatch = /^\/api\/approvals\/([^/]+)\/decision$/.exec(parsed.pathname);
   if (request.method === "POST" && approvalMatch !== null) {
-    return handleApprovalDecision(request, response, options.approvals, decodeURIComponent(approvalMatch[1]!));
+    return handleApprovalDecision(response, options.approvals, decodeURIComponent(approvalMatch[1]!), readBody);
   }
   if (parsed.pathname === "/api/companion/envelope") {
     // The envelope adapter speaks the frozen `void.companion.v1` wire contract
@@ -629,13 +696,13 @@ async function handleFeed(response: ServerResponse, options: RouteOptions, searc
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       // A missing ledger means no calls were recorded yet. That is a valid
       // empty state with the same page shape, not a failed request.
-      const fresh = searchParams.get("workspace") ?? options.env.VOID_WORKSPACE ?? basename(ledgerPath, ".jsonl");
+      const fresh = searchParams.get("workspace") ?? options.env.NOMO_WORKSPACE ?? basename(ledgerPath, ".jsonl");
       const empty = page(filterRows([], searchParams), searchParams, fresh);
-      return sendJson(response, 200, { ...empty, entries: empty.items, verified: false, signed: false, integrity: false, checked: 0, message: "No recorded calls yet. Start an agent session or connect an existing VOID workspace." });
+      return sendJson(response, 200, { ...empty, entries: empty.items, verified: false, signed: false, integrity: false, checked: 0, message: "No recorded calls yet. Start an agent session or connect an existing NOMO workspace." });
     }
     throw error;
   }
-  const workspace = searchParams.get("workspace") ?? options.env.VOID_WORKSPACE ?? basename(ledgerPath, ".jsonl");
+  const workspace = searchParams.get("workspace") ?? options.env.NOMO_WORKSPACE ?? basename(ledgerPath, ".jsonl");
   let feed: Awaited<ReturnType<typeof readLedgerFeed>>;
   try {
     feed = await readLedgerFeed(ledgerPath, { publicKey: options.publicKey });
@@ -686,7 +753,7 @@ async function handleVerify(response: ServerResponse, options: RouteOptions, sea
       checked: 0,
       head: GENESIS_PREV,
       verificationKey: verificationSummary(options.verificationKey),
-      reason: (error as NodeJS.ErrnoException).code === "ENOENT" ? "No ledger yet. Run an agent through void-proxy in this workspace, then refresh." : "Ledger integrity or signature validation failed. Inspect the ledger locally before trusting these records.",
+      reason: (error as NodeJS.ErrnoException).code === "ENOENT" ? "No ledger yet. Run an agent through nomo-proxy in this workspace, then refresh." : "Ledger integrity or signature validation failed. Inspect the ledger locally before trusting these records.",
     });
   }
 }
@@ -697,10 +764,10 @@ async function handleApprovals(response: ServerResponse, approvals: ApprovalBrok
 }
 
 async function handleApprovalDecision(
-  request: IncomingMessage,
   response: ServerResponse,
   approvals: ApprovalBroker | undefined,
   holdId: string,
+  readBody: () => Promise<unknown>,
 ): Promise<void> {
   if (approvals === undefined) {
     return sendJson(response, 503, {
@@ -709,7 +776,7 @@ async function handleApprovalDecision(
     });
   }
 
-  const body = await readJsonBody(request);
+  const body = await readBody();
   const decision = parseDecision(body);
   if (decision === null) return sendJson(response, 400, { error: "invalid_decision" });
   const result = await approvals.decide(holdId, decision);
@@ -840,21 +907,61 @@ function parseBranchInput(value: unknown): { seq: number; prompt?: string; snaps
   };
 }
 
-async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+/**
+ * A body past the configured `maxRequestBytes`. Typed rather than a bare Error
+ * so the route can answer 413 for it while leaving every other failure to the
+ * handler that owns that route.
+ */
+class RequestBodyTooLarge extends Error {
+  readonly maxBytes: number;
+
+  constructor(maxBytes: number) {
+    super(`request body exceeds maxRequestBytes (${maxBytes} bytes)`);
+    this.name = "RequestBodyTooLarge";
+    this.maxBytes = maxBytes;
+  }
+}
+
+async function readJsonBody(
+  request: IncomingMessage,
+  maxBytes: number,
+): Promise<unknown> {
   // Browsers block cross-origin application/json form posts behind a preflight,
   // but a text/plain form body can still be crafted to parse as JSON. Requiring
   // the explicit content type keeps the decision endpoint a fetch-only surface,
   // so a hostile page cannot post a decision through a victim browser session.
   const contentType = request.headers["content-type"];
-  if (contentType === undefined || !applicationJsonContentType(contentType)) return null;
+  if (contentType === undefined || !applicationJsonContentType(contentType))
+    return null;
   const chunks: Buffer[] = [];
-  let size = 0;
+  let size = 0, overflow = false;
   for await (const chunk of request) {
     const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
     size += buffer.length;
-    if (size > maxBodyBytes) throw new Error("request body exceeds 64 KiB");
+    if (size > maxBytes) {
+      // Stop buffering but keep reading. Answering while the client is still
+      // writing leaves unread bytes in the socket, and the close that follows
+      // the answer reaches the caller as a reset instead of as the response,
+      // so an oversized body read as a connection error rather than as the
+      // refusal that names the limit.
+      //
+      // The drain is capped by the widest bound the setting allows rather than
+      // by the one in force. A cap relative to the live value destroys the
+      // socket for every body once an operator lowers their own limit, which is
+      // exactly when the refusal matters most. Past the absolute cap the socket
+      // is destroyed, because an unbounded drain would trade a refused body for
+      // a stream whose length the sender chooses.
+      overflow = true;
+      chunks.length = 0;
+      if (size > HARNESS_SETTINGS.maxRequestBytes.max) {
+        request.destroy();
+        throw new RequestBodyTooLarge(maxBytes);
+      }
+      continue;
+    }
     chunks.push(buffer);
   }
+  if (overflow) throw new RequestBodyTooLarge(maxBytes);
   if (chunks.length === 0) return null;
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
@@ -870,6 +977,16 @@ function sendJson(response: ServerResponse, statusCode: number, value: JsonObjec
   response.statusCode = statusCode;
   response.setHeader("content-type", "application/json; charset=utf-8");
   response.end(JSON.stringify(value));
+}
+
+// One response per request. Several routes read a body inside a try whose catch
+// answers with a status of its own, so a refusal that has already been sent
+// would otherwise be written a second time and throw ERR_HTTP_HEADERS_SENT out
+// of a handler that was only trying to report a refusal.
+function sendOnce(response: ServerResponse, statusCode: number, value: JsonObject): boolean {
+  if (response.headersSent) return false;
+  sendJson(response, statusCode, value);
+  return true;
 }
 
 function staticPath(webRoot: string, pathname: string): string | null {
@@ -904,15 +1021,17 @@ function contentType(filePath: string): string {
 
 function selectLedgerPath(options: RouteOptions, workspace: string | null): string | null {
   if (options.ledgerPath !== undefined) return options.ledgerPath;
-  const name = workspace ?? options.env.VOID_WORKSPACE ?? "default";
+  const name = workspace ?? options.env.NOMO_WORKSPACE ?? "default";
   if (!/^[A-Za-z0-9_.-]+$/.test(name)) return null;
-  const dir = options.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger");
+  const dir = options.env.NOMO_LEDGER_DIR ?? join(homedir(), ".nomo", "ledger");
   return join(dir, `${name}.jsonl`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const env = normalizeEnv(process.env, CONTROL_PLANE_ENV_KEYS);
   const port = Number.parseInt(process.env.PORT ?? "8081", 10);
-  createControlPlaneServer({ approvals: localApprovals(process.env) }).listen(port, process.env.VOID_CONTROL_TOKEN && process.env.VOID_CONTROL_TOKEN.length >= 32 ? process.env.VOID_CONTROL_HOST ?? "127.0.0.1" : "127.0.0.1", () => {
-    console.log(`VOID control plane API listening on http://127.0.0.1:${port}`);
+  const token = env.NOMO_CONTROL_TOKEN;
+  createControlPlaneServer({ env, approvals: localApprovals(env) }).listen(port, token && token.length >= 32 ? env.NOMO_CONTROL_HOST ?? "127.0.0.1" : "127.0.0.1", () => {
+    console.log(`NOMO control plane API listening on http://127.0.0.1:${port}`);
   });
 }

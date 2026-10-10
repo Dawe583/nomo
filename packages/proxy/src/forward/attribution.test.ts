@@ -139,7 +139,7 @@ test("a host with no policy to name writes no attribution at all", async () => {
 });
 
 test("what the proxy writes, a third party reads back and re-derives", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-proxy-attribution-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-attribution-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(key, { dir });

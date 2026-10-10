@@ -1,4 +1,4 @@
-# VOID roadmap, Q4 2026
+# NOMO roadmap, Q4 2026
 
 Status: sequencing document, 2026-09-28. This is not a status ledger. It says
 what the next work is and in what order, and it points at the ledgers that
@@ -7,7 +7,7 @@ and reproduce the problem phase 0 exists to fix.
 
 ## Where the product actually stands
 
-The thesis has not changed. VOID is a process between an AI agent and the tools
+The thesis has not changed. NOMO is a process between an AI agent and the tools
 it can write to: it decides a reversibility class, applies an operator policy,
 appends a signed record to a hash-chained ledger, and can later replay a
 verified inverse. That sentence is in `CONTEXT.md` and every piece of the
@@ -48,10 +48,10 @@ What the research behind this roadmap established, and what it did not:
 - **The product has no first user yet.** The repository is private, the
   advertised download page does not resolve, and the npm name is taken. One
   package is publishable today, and it is not the one a reader would guess:
-  `@void/verifier` sets no `private` flag and needs no build step, because it
+  `@nomo/verifier` sets no `private` flag and needs no build step, because it
   ships one executable file of Node built-ins. That is asserted rather than
   merely permitted by `scripts/src/licence-line.test.mjs`, which requires the
-  flag to be absent and the `void-verify` bin to exist on disk, and whose
+  flag to be absent and the `nomo-verify` bin to exist on disk, and whose
   manifest rule explicitly allows a package to skip a build when nothing in
   its file list needs compiling. The other nine manifests under `packages/`
   all set `private: true`, and no manifest under `packages/` declares a build
@@ -85,9 +85,9 @@ the only strategy document that read the source while writing.
 
 | Rank | Capability | What it changes | Depends on |
 | --- | --- | --- | --- |
-| A1 | A provable inversion of a non-filesystem effect | Every effect with a real inverse emits a signed reversal record on the same chain, and the Postgres path re-reads after writing and refuses a mismatch, as it already does, while S3 gains the same post-write verification and a durable receipt. The surface is one `void verify` line a person can hand to somebody else. | nothing, this is the first increment |
+| A1 | A provable inversion of a non-filesystem effect | Every effect with a real inverse emits a signed reversal record on the same chain, and the Postgres path re-reads after writing and refuses a mismatch, as it already does, while S3 gains the same post-write verification and a durable receipt. The surface is one `nomo verify` line a person can hand to somebody else. | nothing, this is the first increment |
 | A2 | The record that authorises the effect names what authorised it | `attribution` on the workbench record, plus the model id and a request digest, shipped in the same release as A1, because alone it is a field set | nothing, but ship with A1 |
-| A3 | The effect in the decision | A machine-checkable effect on the registry case for Postgres and S3, a new policy key, and a `void policy explain` subcommand | A1 and A2 |
+| A3 | The effect in the decision | A machine-checkable effect on the registry case for Postgres and S3, a new policy key, and a `nomo policy explain` subcommand | A1 and A2 |
 | A4 | Signer and executor separation | The trust-model fix that `docs/REVERSE-WEDGE.md` names as gating everything downstream, including the analysis-assertion record | external, needs a second principal |
 
 A1 is the capability no competitor shipped in that form when this was written.
@@ -119,7 +119,7 @@ anything to a person who cannot install the thing.
 | B3 | A gated publish workflow with an explicit package allowlist, a protected environment, provenance, and a clean-install test | a green run on a pushed commit, not a green local suite | B1, B2 |
 | B4 | Publish the standalone verifier on its own, with the export-bundle fixtures a third party needs | an independent person fetches it and verifies a bundle | B2, B3 |
 | B5 | Docker image, a five-minute quickstart on a clean machine, and a listing in the official MCP registry | the three exit commands the execution plan names, with their output read | B3 |
-| B6 | Decide the package name, because `void` and `void-cli` are taken | a recorded decision | B2 |
+| B6 | Decide the package name, because `nomo` and `nomo-cli` are taken | a recorded decision | B2 |
 
 B2 is the item most likely to sit still, because it is the only one that needs
 somebody else to do something. Start it first and do not plan around it.
@@ -134,7 +134,7 @@ untouched.
 The honest cost, stated because it is not in the platform plan itself: this is
 roughly a quarter of the available sessions for the next two months, and it is
 the largest single claim in the roadmap. The research in
-`docs/VOID-FUTURE-DIRECTION.md` argued the opposite, that the Apple product
+`docs/NOMO-FUTURE-DIRECTION.md` argued the opposite, that the Apple product
 should be dropped and the ledger shipped. The user has overridden that on
 2026-09-28. The override is recorded, and so is its price: Track A does not get
 faster, and if A1 slips past the redesign the product will have three handsome
@@ -209,7 +209,7 @@ differentiated property instead of a second platform.
 document and the code disagree. `docs/COMPETITIVE-WEDGE.md` is the most
 recently written strategic document and the only one that read the source while
 writing it. `docs/PREMISE-VERIFICATION.md` is a correction filter for
-`docs/VOID-FUTURE-DIRECTION.md`, not a strategy source, and the two disagree in
+`docs/NOMO-FUTURE-DIRECTION.md`, not a strategy source, and the two disagree in
 several places where the correction is the right one. `docs/OPERATIONS.md` is
 the honest limit of every security claim; quote it rather than summarising it.
 
@@ -261,7 +261,7 @@ the tree rather than carrying one. It maps every entry under `packages/` that
 has a `package.json` with a `test` script, which is ten; it then names
 `apps/control-plane` and `scripts`; it then takes the `*.test.mjs` files
 beside `cloud`; and it then adds the two Python suites `c5d32fc` introduced by
-name, `appwrite-mcp` and `void-transport`. That is fifteen. The test total is
+name, `appwrite-mcp` and `nomo-transport`. That is fifteen. The test total is
 deliberately not restated. Nothing in the tree states a current one, and a
 figure quoted here would be a third number carrying the authority of a run
 nobody can locate. The reproducible claim is the command, not the number: run
@@ -319,7 +319,7 @@ the remaining disagreement is stated here rather than fixed silently.
 The owner's instruction, given 2026-10-03: **no iOS app, no macOS app, and no
 desktop app at all.** Not deferred, not parallel, not at lower priority. They are removed from
 this roadmap, from the goal and from the backlog, and they are not to be picked up "if there is
-time". Work resumes when the owner says it does, immediately before a VOID release, and until
+time". Work resumes when the owner says it does, immediately before a NOMO release, and until
 then it is not work.
 
 The desktop app going with them takes its packaging tail: the Tauri `deb`, `rpm` and `AppImage`
@@ -337,7 +337,7 @@ table in a merged `main` would otherwise read "removes" as "removed".
 | Developer ID, notarization and the published DMG | `OPEN-WORK-AUDIT.md` row 2 | out of plan |
 | iOS provisioning, TestFlight and App Store Connect | `RELEASE.md` release blocker 8 | out of plan |
 | The desktop app and its Linux and Windows packaging | `RELEASE.md` release blocker 9, `PLAN-GAPS.md` G-24 | out of plan |
-| `apps/apple`, `apps/desktop`, `VOID.command` and every Swift target | the tree | **kept in the tree**, still builds, still carries its 12 unit and 18 UI cases. Out of plan means nobody picks it up, not that it was deleted |
+| `apps/apple`, `apps/desktop`, `NOMO.command` and every Swift target | the tree | **kept in the tree**, still builds, still carries its 12 unit and 18 UI cases. Out of plan means nobody picks it up, not that it was deleted |
 | The Swift contrast gate | `scripts/src/design-source-swift.test.mjs` | **kept and changed.** Its guard now requires a full Xcode toolchain, so it reports `skipped` on a host without one rather than failing. Whoever picks the surface up needs the gate |
 
 Three consequences the tree now has to answer honestly rather than leave:

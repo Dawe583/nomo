@@ -9,7 +9,7 @@ import { Workbench } from "../../../workbench/src/index.ts";
 import { WorkspaceTui } from "./workspace.ts";
 
 test("TUI approvals dispatch once only after confirmation; denial, cancellation and restart cannot release a tool", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-approval-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-approval-"));
   let dispatched = 0;
   const server = createServer(async (req, res) => {
     let raw = "";
@@ -52,7 +52,7 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   assert.ok(address && typeof address !== "string");
-  const env = { VOID_DATA_DIR: root };
+  const env = { NOMO_DATA_DIR: root };
   const app = new Workbench(env, async (url, options) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
@@ -144,7 +144,7 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
   await mkdir(recoveredDir);
   for (const file of ["workspace.key", "workspace.enc"])
     await copyFile(join(root, file), join(recoveredDir, file));
-  const recovered = new Workbench({ VOID_DATA_DIR: recoveredDir });
+  const recovered = new Workbench({ NOMO_DATA_DIR: recoveredDir });
   assert.equal(recovered.pending().length, 0);
   assert.ok(
     recovered

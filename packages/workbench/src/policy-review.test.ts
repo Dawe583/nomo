@@ -7,7 +7,7 @@ import { createServer, type Server } from "node:http";
 import { Workbench } from "./index.ts";
 
 /** An MCP server that answers the catalog handshake and records every method
- * it was asked for, so a test can prove a call never left VOID. */
+ * it was asked for, so a test can prove a call never left NOMO. */
 async function mcpServer(tools: { name: string; description: string }[]) {
   const methods: string[] = [];
   const server: Server = createServer(async (req, res) => {
@@ -87,9 +87,9 @@ const deleteCall = (tools: { function: { name: string; description: string } }[]
   tools.find((tool) => tool.function.description.startsWith("delete:"))!.function.name;
 
 test("a tool the provider invented never reaches the connector", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-invented-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-invented-"));
   const server = await mcpServer([DELETE_TOOL]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(() => "not_in_catalog"));
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, callingProvider(() => "not_in_catalog"));
   t.after(async () => {
     await app.shutdown();
     await server.close();
@@ -103,7 +103,7 @@ test("a tool the provider invented never reaches the connector", async (t) => {
   assert.equal(app.get(session.id)?.status, "failed");
   assert.ok(
     !server.methods.includes("tools/call"),
-    "the connector is never asked to run a tool VOID does not know",
+    "the connector is never asked to run a tool NOMO does not know",
   );
   assert.ok(
     app
@@ -113,9 +113,9 @@ test("a tool the provider invented never reaches the connector", async (t) => {
 });
 
 test("a deny rule stops the call and the connector never sees it", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-denied-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-denied-"));
   const server = await mcpServer([DELETE_TOOL]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(deleteCall));
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, callingProvider(deleteCall));
   t.after(async () => {
     await app.shutdown();
     await server.close();
@@ -139,9 +139,9 @@ test("a deny rule stops the call and the connector never sees it", async (t) => 
 });
 
 test("the same classified tool runs when the operator policy allows it", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-allowed-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-allowed-"));
   const server = await mcpServer([DELETE_TOOL]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(deleteCall));
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, callingProvider(deleteCall));
   t.after(async () => {
     await app.shutdown();
     await server.close();
@@ -161,9 +161,9 @@ test("the same classified tool runs when the operator policy allows it", async (
 });
 
 test("a running conversation keeps the policy it started with", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-frozen-policy-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-frozen-policy-"));
   const server = await mcpServer([DELETE_TOOL]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, callingProvider(deleteCall));
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, callingProvider(deleteCall));
   t.after(async () => {
     await app.shutdown();
     await server.close();

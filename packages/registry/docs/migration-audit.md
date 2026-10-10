@@ -193,6 +193,6 @@ These entries can affect a variable number of targets. A policy may want `blast_
 
 Commands run after writing this file:
 
-- `node --test /tmp/void-migration-audit.test.mjs`
+- `node --test /tmp/nomo-migration-audit.test.mjs`
 - `CI=true npx tsc -p tsconfig.json` from `packages/registry`
 

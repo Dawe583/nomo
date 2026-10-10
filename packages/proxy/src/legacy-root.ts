@@ -6,7 +6,7 @@
  * decide which tool is bound, does not translate an intercepted call into the
  * shape a connector captures, and does not make the capture durable before the
  * upstream is reached. That composition is this module, and it is reachable
- * from the package entry `@void/proxy` rather than from a test: a host
+ * from the package entry `@nomo/proxy` rather than from a test: a host
  * resolves a name here and hands the resolver to `runProxy({ legacyBinding })`.
  *
  * Binding selection is explicit. A name outside `LEGACY_BINDING_NAMES` throws

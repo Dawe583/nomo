@@ -1,4 +1,4 @@
-# VOID: first €10k MRR go-to-market and operating plan
+# NOMO: first €10k MRR go-to-market and operating plan
 
 Status: execution plan, created 2026-09-30.
 Owner: founder, with workstream DRIs assigned in the team workspace.
@@ -6,7 +6,7 @@ Source of truth: this document and the linked GitHub issue. Slack is the operati
 
 Execution layer: [10K-MRR-EXECUTION-BOARD.md](10K-MRR-EXECUTION-BOARD.md) contains the ready-to-run task board, DRI contract, weekly scorecard, evidence gates, content sequence, and stop rules. [SLACK-OPERATING-PACK.md](SLACK-OPERATING-PACK.md) contains the channel map, cadence, pin-ready rules, and message templates. Keep those documents aligned with this strategy; do not create a competing plan in Slack.
 
-Marketing and monetization research: [VOID-MARKETING-MONETIZATION-RESEARCH-2026.md](VOID-MARKETING-MONETIZATION-RESEARCH-2026.md). Ready-to-review social assets: [VOID-SOCIAL-CONTENT-PACK-2026.md](VOID-SOCIAL-CONTENT-PACK-2026.md). These documents sharpen positioning and demand generation; they do not override the revenue reality-check or evidence gates.
+Marketing and monetization research: [NOMO-MARKETING-MONETIZATION-RESEARCH-2026.md](NOMO-MARKETING-MONETIZATION-RESEARCH-2026.md). Ready-to-review social assets: [NOMO-SOCIAL-CONTENT-PACK-2026.md](NOMO-SOCIAL-CONTENT-PACK-2026.md). These documents sharpen positioning and demand generation; they do not override the revenue reality-check or evidence gates.
 
 > [!IMPORTANT]
 > **Executive status:** €10k MRR is an upside/stretch target. The current operating base case is **€2k–€5k MRR** until two paid accounts, repeatable activation, and source-specific conversion data exist.
@@ -21,7 +21,7 @@ Marketing and monetization research: [VOID-MARKETING-MONETIZATION-RESEARCH-2026.
 | **Pipeline** | 3×–5× qualified recurring coverage | €30k–€50k for €10k target MRR |
 | **Delivery** | support remains within capacity | re-scope unlimited integration requests |
 
-![VOID MRR funnel](assets/rendered/void-mrr-funnel.png)
+![NOMO MRR funnel](assets/rendered/nomo-mrr-funnel.png)
 
 ### Document map
 
@@ -40,13 +40,13 @@ flowchart LR
 
 ## 1. Objective and definition of done
 
-The objective is the first €10,000 of collected monthly recurring revenue from VOID customers, measured for three consecutive months. One-off setup fees, unpaid pilots, grants, consulting that is not recurring, and illustrative numbers on the marketing site do not count.
+The objective is the first €10,000 of collected monthly recurring revenue from NOMO customers, measured for three consecutive months. One-off setup fees, unpaid pilots, grants, consulting that is not recurring, and illustrative numbers on the marketing site do not count.
 
 The program is complete when all of the following are true:
 
 - €10,000 or more of recurring revenue is collected in month three of the target run.
 - Every paying account has a named owner, contract scope, renewal date, support path, and a recorded reason for purchase.
-- At least one customer can independently verify a signed VOID ledger export without trusting the VOID runtime.
+- At least one customer can independently verify a signed NOMO ledger export without trusting the NOMO runtime.
 - The install, first hold, approval, ledger verification, and recovery path are reproducible by a person who did not build the product.
 - The team can answer which channel produced each qualified conversation, pilot, and paid account.
 - No customer, logo, security certification, performance number, or compliance claim is published unless it is verified and approved for publication.
@@ -55,7 +55,7 @@ This document is a revenue execution plan. It does not turn a development status
 
 ## 2. Current reality
 
-VOID is an accountability and reversibility layer for AI agent actions. The product intercepts a tool call, classifies its effect, applies policy, allows, denies, or holds it, and records the decision in a signed ledger. The current source repository is Dawe583/void. Dawe583/void-empty is the marketing site and API mirror; product capabilities and registry data originate in Dawe583/void.
+NOMO is an accountability and reversibility layer for AI agent actions. The product intercepts a tool call, classifies its effect, applies policy, allows, denies, or holds it, and records the decision in a signed ledger. The current source repository is Dawe583/void. Dawe583/void-empty is the marketing site and API mirror; product capabilities and registry data originate in Dawe583/void.
 
 The current evidence does not prove market demand. The Q4 roadmap records negative external evidence: no security team buying signed, attributable agent action was found in the research available to the repository. That is not a reason to stop. It is a reason to treat the first 20 buyer conversations as an evidence collection program, not as a launch celebration.
 
@@ -85,9 +85,9 @@ The first wedge is governed writes, not general observability, compliance consul
 
 ### Initial promise
 
-VOID helps a team put a fail-closed, policy-checked, signed record in front of agent writes, and makes the record independently verifiable. Where a true inverse exists, it can plan recovery. Where it does not, VOID must say so before the write proceeds.
+NOMO helps a team put a fail-closed, policy-checked, signed record in front of agent writes, and makes the record independently verifiable. Where a true inverse exists, it can plan recovery. Where it does not, NOMO must say so before the write proceeds.
 
-Do not say that VOID makes every action reversible. Do not say that a signed ledger proves the agent's reasoning is correct. Do not say that a fixture test proves production performance, provider certification, or compliance.
+Do not say that NOMO makes every action reversible. Do not say that a signed ledger proves the agent's reasoning is correct. Do not say that a fixture test proves production performance, provider certification, or compliance.
 
 ### Discovery questions
 
@@ -196,7 +196,7 @@ Outcome: the team knows whether the wedge creates urgency for real buyers.
 - Build a list of 100 ICP accounts with a one-line reason for fit.
 - Run 20 qualified discovery calls, not generic feedback calls.
 - Offer a two-week paid or explicitly sponsored evaluation with a disposable target.
-- Publish one technical proof artifact: a signed ledger bundle and a failure case where VOID refuses an unsafe or unclassified action.
+- Publish one technical proof artifact: a signed ledger bundle and a failure case where NOMO refuses an unsafe or unclassified action.
 - Publish one founder post that leads with the problem and the reproducible proof, not the feature list.
 - Record objections by category: no urgency, no budget, no install, no authority, no trust, or no current agent write.
 
@@ -220,7 +220,7 @@ Outcome: a second person can run the funnel and a second engineer can support th
 
 - Reach four to six paid accounts, depending on evaluation cycle length.
 - Convert the top three objections into product, docs, or content work.
-- Publish a comparison that names what VOID does and does not prove against ordinary logs, guardrails, and agent observability.
+- Publish a comparison that names what NOMO does and does not prove against ordinary logs, guardrails, and agent observability.
 - Establish a weekly customer review and a monthly renewal review.
 - Decide whether Team remains €249 or changes, based on scope actually delivered and the buyer's stated value.
 - Add only integrations that are pulled by qualified demand and have a bounded, testable effect surface.

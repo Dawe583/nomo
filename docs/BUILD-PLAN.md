@@ -1,4 +1,4 @@
-# VOID: build plan
+# NOMO: build plan
 
 How to get from a marketing site to a product people run in their write path.
 Written 3 September 2026. Assumes one developer with heavy model assistance,
@@ -25,7 +25,7 @@ harder than they look, and the plan below sequences around that:
 | --- | --- |
 | Held calls return a provisional receipt and the agent keeps working | Needs speculative execution and a dependency graph. Version one holds the call **blocking**, which works with every agent today and needs nothing from the framework. |
 | 89 registry entries with compensations | Data, not code. Each real compensation is its own connector with its own auth, snapshot format and failure modes. Ship three. |
-| Preconditions evaluated at intercept time | Requires probing the target, which requires credentials VOID does not have in proxy mode. See section 7. |
+| Preconditions evaluated at intercept time | Requires probing the target, which requires credentials NOMO does not have in proxy mode. See section 7. |
 
 None of these make the pitch dishonest. They make it a roadmap.
 
@@ -97,7 +97,7 @@ only arrives on reuse. The discipline this implies:
   not a preference.
 
 **2. A million tokens removes most retrieval plumbing at this size.** The whole
-VOID codebase, the MCP specification and a vendor's API docs fit in one call
+NOMO codebase, the MCP specification and a vendor's API docs fit in one call
 together. Do not build a RAG pipeline for a repository this small. Feed it the
 files.
 
@@ -125,7 +125,7 @@ model for mechanical edits is waste. A rough split:
 
 Astra is the first model OpenAI has placed at the **critical** cybersecurity
 threshold in its preparedness framework: it can find and exploit unknown
-vulnerabilities across defended systems without step by step guidance. VOID is a
+vulnerabilities across defended systems without step by step guidance. NOMO is a
 product that will hold credentials and sit in a privileged position in someone
 else's infrastructure.
 
@@ -150,7 +150,7 @@ packages/
   proxy/           the MCP proxy: server side, client side, transports
   policy/          match rules, decisions, approval channels
   connectors/      one directory per tool surface, snapshot and inverse
-  cli/             void run, void ledger verify, void replay, void attest
+  cli/             void run, nomo ledger verify, void replay, nomo attest
 apps/
   site/            the current marketing site
   control-plane/   approvals, live feed, ledger browser
@@ -222,9 +222,9 @@ development and from KMS in production.
 **Exit:** three commands pass.
 
 ```
-void ledger verify              # 1000 real entries, chain intact
-void ledger verify --tamper 42  # edit entry 42, body check catches it
-void ledger verify --drop 42    # delete entry 42, link check catches it
+nomo ledger verify              # 1000 real entries, chain intact
+nomo ledger verify --tamper 42  # edit entry 42, body check catches it
+nomo ledger verify --drop 42    # delete entry 42, link check catches it
 ```
 
 Those two failures are different failures. If your verifier only walks links, an
@@ -298,11 +298,11 @@ The cascade case in number two is the one that teaches you the shape of the
 problem. One statement becomes writes across several tables, and the inverse has
 to run in dependency order or the foreign keys reject it.
 
-Snapshots go to a bucket the operator nominates. VOID stores the reference and
+Snapshots go to a bucket the operator nominates. NOMO stores the reference and
 the digest, never the payload. Get this boundary right now, because changing it
 later means a migration through customer data.
 
-**Exit:** make a real change through an agent, run `void replay --to <time>`,
+**Exit:** make a real change through an agent, run `nomo replay --to <time>`,
 then open a database client and confirm with your own eyes that the row is back
 and identical. Not a test assertion. Your eyes, then a test.
 
@@ -324,7 +324,7 @@ when you check it by hand.
 
 ### Phase 7: control plane (2 to 3 weeks)
 
-The smallest thing that makes VOID usable by someone who is not you:
+The smallest thing that makes NOMO usable by someone who is not you:
 
 - A live feed of intercepted calls with class and decision.
 - An approval queue with the blast radius and the compensation plan visible.
@@ -393,12 +393,12 @@ surprises you, and phase 1 and phase 8 will both surprise you.
 Every project has a small number of problems that decide whether it works. Find
 them now rather than in month three.
 
-### 7.1 In proxy mode, VOID does not hold the credentials
+### 7.1 In proxy mode, NOMO does not hold the credentials
 
 This is the architectural problem at the centre of the product and the site does
 not show it.
 
-In MCP proxy mode the upstream MCP server holds the tool credentials. VOID sees
+In MCP proxy mode the upstream MCP server holds the tool credentials. NOMO sees
 the calls but cannot independently ask S3 whether versioning is on, because it
 has no S3 credentials of its own. So the precondition it needs in order to
 classify is exactly the thing it cannot reach.
@@ -406,14 +406,14 @@ classify is exactly the thing it cannot reach.
 Three ways out, in the order you should try them:
 
 1. **Declared facts (phase 3).** The operator states the facts in config and
-   VOID records when they were last verified. Cheap, auditable, and honest about
+   NOMO records when they were last verified. Cheap, auditable, and honest about
    what it knows. Ships first.
 2. **Probe through the upstream server.** Most MCP servers expose read tools
-   next to their write tools. VOID calls the read tool to establish the fact
+   next to their write tools. NOMO calls the read tool to establish the fact
    before forwarding the write. Elegant, no new credentials, and it works
    whenever the server exposes the right read. Ships in phase 6.
 3. **Its own read only credentials per connector.** Most accurate, and it moves
-   VOID from a transparent proxy to a component with standing access, which is a
+   NOMO from a transparent proxy to a component with standing access, which is a
    much larger security and sales conversation. Offer it, do not require it.
 
 Decide the order now. Building option 3 first is the mistake that turns a proxy
@@ -436,7 +436,7 @@ and building it twice is how you end up with two half implementations.
 
 ### 7.3 Snapshots are the only place real data lands
 
-Everything else VOID stores is metadata and digests. Before images are actual
+Everything else NOMO stores is metadata and digests. Before images are actual
 customer data, which means:
 
 - Retention policy per connector, enforced, defaulting to short.
@@ -466,7 +466,7 @@ good idea that would cost you a month.
 - **Multi tenancy, billing, SSO.** Not before the second paying user.
 - **A dashboard before the CLI.** The CLI is how you will debug the proxy for the
   next year. Build it first and keep it good.
-- **Your own agent framework.** VOID is valuable precisely because it is
+- **Your own agent framework.** NOMO is valuable precisely because it is
   framework agnostic. The moment it has opinions about the agent loop, it becomes
   a competitor to the thing it should plug into.
 - **The taint graph before compensation works.** Scope is only interesting once
@@ -577,7 +577,7 @@ worth more this week than it was last week.
 
 That does not make you first. Rubrik has been in this positioning for a year and
 the MCP gateway category is crowded. It makes the question the market is asking
-louder, and the specific answer VOID gives, which is that reversibility is a
+louder, and the specific answer NOMO gives, which is that reversibility is a
 property of a call evaluated against the state of its target, is still nobody
 else's answer.
 

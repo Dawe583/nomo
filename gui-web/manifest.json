@@ -1,6 +1,6 @@
 {
-  "name": "VOID Workbench",
-  "short_name": "VOID",
+  "name": "NOMO Workbench",
+  "short_name": "NOMO",
   "start_url": "./index.html#/chat",
   "display": "standalone",
   "background_color": "#0d0c09",

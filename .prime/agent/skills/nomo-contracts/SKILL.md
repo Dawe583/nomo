@@ -1,5 +1,5 @@
 ---
-name: void-contracts
+name: nomo-contracts
 description: "NOMO repository contracts every agent must follow: context pack authority, package boundaries, no dashes rule, node:test, secrets policy, commit format, worktree isolation."
 ---
 

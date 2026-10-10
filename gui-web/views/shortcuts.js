@@ -1,5 +1,5 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.shortcuts = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.shortcuts = function (root) {
   // Grouped keymap. Keep in sync with app.js and views/holds.js.
   var groups = [
     { title: "Chat", rows: [

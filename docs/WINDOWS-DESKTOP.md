@@ -2,7 +2,7 @@
 
 ## Release scope
 
-Windows is out of scope for the VOID 1.0.1 delivery. The current-source
+Windows is out of scope for the NOMO 1.0.1 delivery. The current-source
 Windows evidence is green for packaging and the installed-application
 smoke on a Windows 11 local host (see the dated section below); the Windows
 gate still needs a current-source Windows CI run, installer/checksum upload
@@ -10,7 +10,7 @@ and a recovery/attestation pass before it can be claimed for release.
 Historical beta evidence is retained below; it cannot certify the current
 candidate.
 
-The historical Windows build target used the shared VOID browser GUI and local
+The historical Windows build target used the shared NOMO browser GUI and local
 guarded runtime. Its intended platform was Windows 10/11 x64 with WebView2.
 Node 24 was bundled and verified against a pinned official SHA-256. Workspace
 encryption keys were stored in the current user's Windows Credential Manager;
@@ -34,12 +34,12 @@ native build and installed-application smoke test succeed.
 
 ## 2026-10-04 developer inner-loop map (keep TUI, mobile and desktop easy)
 
-This section is the research note for how VOID's user surfaces are
+This section is the research note for how NOMO's user surfaces are
 developed day to day, so that opening one does not require remembering
 undocumented incantations. Today's surfaces and their direct entrypoints:
 
-- **TUI** — `pnpm tui` (alias of `void` with no arguments:
-  `packages/cli/bin/void.mjs` calls `withDefaultTui` and dispatches to
+- **TUI** — `pnpm tui` (alias of `nomo` with no arguments:
+  `packages/cli/bin/nomo.mjs` calls `withDefaultTui` and dispatches to
   `packages/cli/src/tui/*`). Tests: `pnpm test:tui` (node --test for
   `packages/cli/src/tui/workspace*.test.ts` plus
   `python3 scripts/src/verify-tui-terminal.py`). The workspace TUI has its own
@@ -59,7 +59,7 @@ undocumented incantations. Today's surfaces and their direct entrypoints:
   code; they exist so CI and release packaging can gate on real behaviour. The
   Windows gate is open until a green installed `--smoke-test`.
 - **Web control plane / mobile shell** — `pnpm dev:web` (dev server for
-  `@void/control-plane-ui`), `pnpm gui` (build the web UI and serve it),
+  `@nomo/control-plane-ui`), `pnpm gui` (build the web UI and serve it),
   `pnpm build` (production nitro build). Mobile layout is the same UI at a
   narrow viewport (see `docs/MOBILE-WEB-REFINEMENT.md`): chat-first header,
   bottom sheets, options in a mobile popover, bottom composer.
@@ -72,7 +72,7 @@ undocumented incantations. Today's surfaces and their direct entrypoints:
 root first; keep the desktop README's per-surface smoke flags next to the
 dev commands; and make the Windows smoke export check target a tool the
 no-credential smoke workspace actually exposes — the 2026-10-04 Windows smoke
-failure came from the smoke expecting `/void_workspace_write` under
+failure came from the smoke expecting `/nomo_workspace_write` under
 `.command-trigger` while the fresh smoke workspace renders only the
 no-provider workspace, not from Node, packaging or the WebView2 download
 path. WP-09b parity tests keep TUI and GUI matching; we should hold the
@@ -91,7 +91,7 @@ compile or runtime result on Windows.
 | Visibility of a persisted key | Microsoft `CREDENTIAL` documentation | `CRED_PERSIST_LOCAL_MACHINE` is visible to other logon sessions of the same user on the same computer, and not to other users or to other computers. The stored workspace key is therefore per-user, which matches the macOS keychain item, not a machine-wide secret. |
 | Unsupported editions | Microsoft `CREDENTIAL` documentation | The documentation lists `Windows Vista Home Basic`, `Windows Vista Home Premium`, `Windows Vista Starter` and `Windows XP Home Edition` as not supporting this value. It does not state support for modern Windows 10/11 Home, so Home-edition behaviour is unverified and is not claimed either way here. |
 | Read path | `WindowsCredentials::get` | `CredReadW` returns `Ok(None)` only on `ERROR_NOT_FOUND`. A zero or non-32-byte blob is a hard error, not a silent new key, and the Windows-owned allocation is released with `CredFree`. |
-| Failure mode if persistence degrades | `keychain.rs` `load_or_create` | Fails closed with `Encrypted workspace exists without its encryption key; restore the original key before opening VOID` rather than generating a new key over existing ciphertext. The post-write check compares the stored key in the same logon session, so it cannot detect a session-only persist downgrade; the cost is an availability failure after sign-out, not a silent key loss. |
+| Failure mode if persistence degrades | `keychain.rs` `load_or_create` | Fails closed with `Encrypted workspace exists without its encryption key; restore the original key before opening NOMO` rather than generating a new key over existing ciphertext. The post-write check compares the stored key in the same logon session, so it cannot detect a session-only persist downgrade; the cost is an availability failure after sign-out, not a silent key loss. |
 | Test coverage | `keychain.rs` `windows_tests` | Gated `#[cfg(all(test, windows))]`, so it does not run on a macOS host. |
 
 Toolchain limit on the audit machine: `rustc`/`cargo` are Homebrew `1.98.0`
@@ -154,10 +154,10 @@ Verified on this host, against docs and the desktop package:
   `keychain::windows_tests::windows_credentials_persist_across_workspace_loads`
   which run for the first time off macOS.
 - `pnpm desktop:build`: OK. Produces
-  `apps/desktop/src-tauri/target/release/bundle/nsis/VOID_1.0.1_x64-setup.exe`
+  `apps/desktop/src-tauri/target/release/bundle/nsis/NOMO_1.0.1_x64-setup.exe`
   (26.77 MB).
-- Silent install: `VOID_1.0.1_x64-setup.exe /S` installs under
-  `%LOCALAPPDATA%\VOID` (`currentUser` mode) with `uninstall.exe`; silent
+- Silent install: `NOMO_1.0.1_x64-setup.exe /S` installs under
+  `%LOCALAPPDATA%\NOMO` (`currentUser` mode) with `uninstall.exe`; silent
   uninstall path exists.
 
 **Resolved Windows smoke failure (root causes fixed).** The previous run
@@ -165,10 +165,10 @@ failed because the embedded runtime inherited the HTTP control-plane's
 locked default (`DEFAULT_HTTP_PERMISSION_MODE = "read-only"` in
 `packages/workbench/src/gui.ts`): the workspace rendered "Režim: jen čtení",
 `/api/tools` exposed only read/list tools, and the smoke looking for
-`/void_workspace_write` timed out and exported its own FAIL blob. The
+`/nomo_workspace_write` timed out and exported its own FAIL blob. The
 desktop window is a local operator surface, so `launch_runtime` in
 `apps/desktop/src-tauri/src/main.rs` now sets
-`VOID_PERMISSION_MODE=normal` for the bundled Node runtime (accepted by
+`NOMO_PERMISSION_MODE=normal` for the bundled Node runtime (accepted by
 `serverPermissionMode`). The mobile smoke also bit on a stale selector:
 it clicked `.mobile-action-list .theme-toggle`, which no longer exists —
 the current theme control is the button labelled "Toggle theme" in the
@@ -178,8 +178,8 @@ smoke legs are green again on current source.
 Next for the Windows gate:
 - Windows desktop gate now has current-source Windows 11 evidence: MSVC
   build, `cfg(windows)` Rust tests 20/20, `desktop:test` 9/9, silent NSIS
-  install to `%LOCALAPPDATA%\VOID`, and BOTH installed smokes green —
-  `%LOCALAPPDATA%\VOID\void-desktop.exe --smoke-test` and `--smoke-mobile`:
+  install to `%LOCALAPPDATA%\NOMO`, and BOTH installed smokes green —
+  `%LOCALAPPDATA%\VOID\nomo-desktop.exe --smoke-test` and `--smoke-mobile`:
   bundled Node runtime, real WebView render, byte-exact Blob export, mobile
   toolbar. Packaging/smoke packaging is ready for a human to run the manual
   GitHub Actions `windows-desktop` workflow and, if it passes on a real

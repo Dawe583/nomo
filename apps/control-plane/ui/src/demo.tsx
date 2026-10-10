@@ -31,7 +31,7 @@ export function PublicDemo({
     reduced = useReducedMotion() || !motion;
   const [state, setState] = useState<Row>(),
     [draft, setDraft] = useState(
-      () => sessionStorage.getItem("void-demo-draft") ?? "",
+      () => sessionStorage.getItem("nomo-demo-draft") ?? "",
     ),
     [starting, setStarting] = useState(false),
     [busy, setBusy] = useState(false),
@@ -99,7 +99,7 @@ export function PublicDemo({
     void start();
   }, []);
   useEffect(() => {
-    sessionStorage.setItem("void-demo-draft", draft);
+    sessionStorage.setItem("nomo-demo-draft", draft);
   }, [draft]);
   useEffect(() => {
     transcript.current?.scrollTo({
@@ -127,8 +127,8 @@ export function PublicDemo({
           <Icon name="documents" />
           <p>
             {t(
-              "Požádej VOID o vytvoření prvního dokumentu.",
-              "Ask VOID to create your first document.",
+              "Požádej NOMO o vytvoření prvního dokumentu.",
+              "Ask NOMO to create your first document.",
             )}
           </p>
         </div>
@@ -257,7 +257,7 @@ export function PublicDemo({
             </button>
             <a className="demo-brand" href="/demo">
               <BrandMark />
-              <strong>VOID</strong>
+              <strong>NOMO</strong>
               <span>{t("Zkušební prostor", "Demo workspace")}</span>
             </a>
             <button
@@ -307,8 +307,8 @@ export function PublicDemo({
                           "Create notes.md with three ideas for a weekend project. Then change the first idea so I can test Undo.",
                         ],
                         [
-                          "Co umí VOID?",
-                          "What can VOID do?",
+                          "Co umí NOMO?",
+                          "What can NOMO do?",
                           "Explain what this demo can reverse and what remains outside its scope.",
                         ],
                       ].map(([cs, en, prompt]) => (
@@ -336,7 +336,7 @@ export function PublicDemo({
                             ? t("Ty", "You")
                             : message.role === "tool"
                               ? t("Nástroj", "Tool")
-                              : "VOID"}
+                              : "NOMO"}
                         </span>
                         <div
                           className={
@@ -358,7 +358,7 @@ export function PublicDemo({
                     {(busy || state.status === "running") && (
                       <div className="demo-thinking" role="status">
                         <BrandMark />
-                        {t("VOID pracuje…", "VOID is working…")}
+                        {t("NOMO pracuje…", "NOMO is working…")}
                       </div>
                     )}
                   </div>
@@ -405,12 +405,12 @@ export function PublicDemo({
                     ref={composerInput}
                     aria-autocomplete="list"
                     aria-controls={
-                      commandOpen ? "void-command-list" : undefined
+                      commandOpen ? "nomo-command-list" : undefined
                     }
                     aria-expanded={commandOpen}
                     aria-activedescendant={
                       commandOpen && commandItems.length
-                        ? `void-command-${activeCommand}`
+                        ? `nomo-command-${activeCommand}`
                         : undefined
                     }
                     aria-label={t("Zpráva", "Message")}
@@ -509,7 +509,7 @@ export function PublicDemo({
             <Dialog
               title={
                 panel === "menu"
-                  ? "VOID"
+                  ? "NOMO"
                   : t("Dokumenty a historie", "Documents and history")
               }
               close={() => setPanel(null)}

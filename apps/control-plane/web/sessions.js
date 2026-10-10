@@ -22,7 +22,7 @@ if (root) {
   const status = text => { byId('session-status').textContent = text; };
   function models(items) {
     if (items) catalog = items;
-    const chosen = byId('session-model').value || localStorage.getItem('void-model');
+    const chosen = byId('session-model').value || localStorage.getItem('nomo-model');
     const query = byId('model-search').value.toLowerCase();
     byId('session-model').replaceChildren(...catalog.filter(m => `${m.name} ${m.id}`.toLowerCase().includes(query)).map(model => {
       const option = document.createElement('option'); option.value = model.id; option.textContent = model.name; return option;
@@ -30,7 +30,7 @@ if (root) {
     if ([...byId('session-model').options].some(o => o.value === chosen)) byId('session-model').value = chosen;
   }
   byId('model-search').addEventListener('input', () => models());
-  byId('session-model').addEventListener('change', () => localStorage.setItem('void-model', byId('session-model').value));
+  byId('session-model').addEventListener('change', () => localStorage.setItem('nomo-model', byId('session-model').value));
   async function provider() {
     try {
       const state = await api('/api/provider');
@@ -45,7 +45,7 @@ if (root) {
   }
   function show(session) {
     status(`${session.status} / ${session.title ?? session.model}`);
-    window.dispatchEvent(new CustomEvent('void-session', { detail: session }));
+    window.dispatchEvent(new CustomEvent('nomo-session', { detail: session }));
     byId('session-submit').disabled = session.status !== 'idle';
     byId('session-model').disabled = true; byId('model-search').disabled = true;
     if (!catalog.some(m => m.id === session.model)) models([...catalog, { id: session.model, name: session.model }]);
@@ -113,7 +113,7 @@ if (root) {
     try {
       if (active) await api(`/api/sessions/${active}`, 'POST', { prompt: prompt.value });
       else active = (await api('/api/sessions', 'POST', { prompt: prompt.value, model: byId('session-model').value })).session.id;
-      localStorage.setItem('void-model', byId('session-model').value); prompt.value = ''; await refresh();
+      localStorage.setItem('nomo-model', byId('session-model').value); prompt.value = ''; await refresh();
     } catch (error) { status(error.message); byId('session-submit').disabled = false; }
   });
   byId('session-cancel').addEventListener('click', async () => {
@@ -122,13 +122,13 @@ if (root) {
     catch (error) { status(error.message); }
   });
   byId('new-session').addEventListener('click', () => {
-    active = undefined; renderedEvents = ''; byId('session-model').disabled = false; byId('model-search').disabled = false; window.dispatchEvent(new CustomEvent('void-session', { detail: null })); byId('session-transcript').replaceChildren(); byId('session-ledger').hidden = true; byId('session-approvals').hidden = true;
+    active = undefined; renderedEvents = ''; byId('session-model').disabled = false; byId('model-search').disabled = false; window.dispatchEvent(new CustomEvent('nomo-session', { detail: null })); byId('session-transcript').replaceChildren(); byId('session-ledger').hidden = true; byId('session-approvals').hidden = true;
     byId('session-submit').disabled = !byId('session-model').options.length; status('Ready for a new session.'); byId('session-prompt').focus();
   });
   byId('session-search').addEventListener('input', refresh);
-  window.addEventListener('void-refresh', refresh);
+  window.addEventListener('nomo-refresh', refresh);
   const timer = setInterval(refresh, 2000);
   window.addEventListener('pagehide', () => { stopped = true; clearInterval(timer); }, { once: true });
-  window.addEventListener("void-connected", () => { void provider(); void refresh(); });
+  window.addEventListener("nomo-connected", () => { void provider(); void refresh(); });
   void provider(); void refresh();
 }

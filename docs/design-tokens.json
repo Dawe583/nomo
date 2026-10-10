@@ -1,5 +1,5 @@
 {
-  "document": "VOID design tokens",
+  "document": "NOMO design tokens",
   "status": "contract, 2026-09-28, generated into every platform surface",
   "source": "docs/APPLE-DESIGN-SYSTEM.md",
   "note": "One machine-readable source for the iOS app, the macOS target and the web control plane. The terminal is out of scope and keeps its own values. Every platform consumer is generated from this file: the web custom properties by scripts/src/build-web.mjs, the Swift token module by scripts/src/generate-swift-tokens.mjs. A hand edit in a consumer is a defect, because the next generation overwrites it.",
@@ -122,7 +122,7 @@
     ]
   },
   "type": {
-    "note": "Roles map to the platform's own semantic font, so the whole surface scales when a person changes the text size. VOID never picks a point size from this table directly on a platform that has a built-in style for the role; the sizes here are the built-in styles the guideline quotes, and the web sizes are the CSS equivalent. The web interface face is the platform UI font, resolved by the platform. A downloaded face is loaded only for code, identifiers and numeric columns, where a monospaced face carries meaning rather than brand.",
+    "note": "Roles map to the platform's own semantic font, so the whole surface scales when a person changes the text size. NOMO never picks a point size from this table directly on a platform that has a built-in style for the role; the sizes here are the built-in styles the guideline quotes, and the web sizes are the CSS equivalent. The web interface face is the platform UI font, resolved by the platform. A downloaded face is loaded only for code, identifiers and numeric columns, where a monospaced face carries meaning rather than brand.",
     "interfaceFont": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
     "codeFont": "ui-monospace, SFMono-Regular, Menlo, monospace",
     "webBodyPx": 15,
@@ -153,7 +153,7 @@
     "contentGap": 40,
     "sectionGap": 100,
     "measure": {
-      "note": "The transcript keeps a readable measure rather than running edge to edge on a wide window. These are the guideline's unfocused content widths; VOID picks the one that fits the column rather than the platform.",
+      "note": "The transcript keeps a readable measure rather than running edge to edge on a wide window. These are the guideline's unfocused content widths; NOMO picks the one that fits the column rather than the platform.",
       "steps": [860, 560, 410, 320, 260, 217, 184]
     }
   },

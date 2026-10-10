@@ -1,4 +1,4 @@
-# @void/proxy
+# @nomo/proxy
 
 The MCP proxy terminates an agent's local stdio connection and opens either a
 stdio process or HTTP connection to one upstream MCP server. Both upstream
@@ -7,11 +7,11 @@ transports use the same session translation and `tools/call` interception path.
 ## Runnable binary
 
 ```sh
-node packages/proxy/bin/void-proxy.mjs \
+node packages/proxy/bin/nomo-proxy.mjs \
   --upstream node \
   --args fixtures/e2e-server.mjs \
   --policy fixtures/e2e-policy.yaml \
-  --ledger-dir /tmp/void-ledger \
+  --ledger-dir /tmp/nomo-ledger \
   --workspace demo
 ```
 
@@ -45,7 +45,7 @@ class. Hold outcomes name their approval state.
 Without `upstreamEnv`, `runProxy` inherits only HOME, PATH, TMPDIR, TEMP, TMP,
 USERPROFILE, LANG, LC_ALL, SYSTEMROOT, COMSPEC, APPDATA, LOCALAPPDATA and
 PROGRAMFILES. Windows variable names are matched case-insensitively. Provider
-credentials, VOID signing keys and runtime injection variables are not inherited.
+credentials, NOMO signing keys and runtime injection variables are not inherited.
 Embedded hosts can explicitly provide `upstreamEnv` to grant required variables;
 the stdio transport still supplies the parent PATH when it is absent. This is
 an environment boundary, not a process or filesystem sandbox. Windows behavior
@@ -61,7 +61,7 @@ The generic proxy records authorization and hold resolution. It does not
 automatically call PostgreSQL, S3, filesystem, OAuth, or other connector
 capture. An approved or `allow:resolved` entry is not proof that an external
 mutation completed and does not create an inverse. Hosts that need managed
-capture and signed execution outcomes must use `@void/runtime` through a
+capture and signed execution outcomes must use `@nomo/runtime` through a
 registered recovery adapter.
 
 Target facts are operator declarations unless a composed host supplies probe

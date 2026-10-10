@@ -41,24 +41,24 @@ export function CommandMenu({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: animate ? 0.14 : 0 }}
       className="command-palette"
-      aria-label={t("Příkazy a nástroje VOID", "VOID commands and tools")}
+      aria-label={t("Příkazy a nástroje NOMO", "NOMO commands and tools")}
     >
       <header>
         <span>
-          ╱ VOID <strong>{t("Příkazy a nástroje", "Commands & tools")}</strong>
+          ╱ NOMO <strong>{t("Příkazy a nástroje", "Commands & tools")}</strong>
         </span>
         <small>↑ ↓ · Enter · Esc</small>
       </header>
       <div
         className="command-results"
         role="listbox"
-        id="void-command-list"
+        id="nomo-command-list"
         aria-label={t("Dostupné příkazy", "Available commands")}
       >
         {filtered.map((item, index) => (
           <button
             key={item.id}
-            id={`void-command-${index}`}
+            id={`nomo-command-${index}`}
             ref={index === active ? selected : undefined}
             type="button"
             role="option"
@@ -79,7 +79,7 @@ export function CommandMenu({
                   : item.klass === "r0"
                     ? t("r0 · Čtení", "r0 · Read")
                     : t("Dle policy", "Policy")
-                : "VOID"}
+                : "NOMO"}
             </small>
           </button>
         ))}

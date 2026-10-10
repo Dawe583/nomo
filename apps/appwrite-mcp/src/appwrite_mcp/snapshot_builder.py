@@ -18,11 +18,11 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from . import void_data
+from . import nomo_data
 
 
 def build() -> dict[str, Any]:
-    """Derive every published fact from the VOID source tree."""
+    """Derive every published fact from the NOMO source tree."""
     registry: list[dict[str, Any]] = [
         {
             "id": entry["id"],
@@ -37,12 +37,12 @@ def build() -> dict[str, Any]:
             "note": entry.get("note", ""),
             "if": entry.get("if"),
         }
-        for entry in void_data.registry_entries()
+        for entry in nomo_data.registry_entries()
     ]
     return {
         "schema": "void.snapshot.v1",
         "registry": registry,
-        "registry_summary": void_data.registry_summary(),
+        "registry_summary": nomo_data.registry_summary(),
         "local_tools": [
             {
                 "name": tool["name"],
@@ -51,9 +51,9 @@ def build() -> dict[str, Any]:
                 "required": tool["required"],
                 "properties": tool["properties"],
             }
-            for tool in void_data.local_tool_schema()
+            for tool in nomo_data.local_tool_schema()
         ],
-        "cli_commands": list(void_data.cli_commands()),
+        "cli_commands": list(nomo_data.cli_commands()),
     }
 
 
@@ -64,4 +64,4 @@ def render() -> str:
 
 def committed_snapshot() -> dict[str, Any]:
     """The snapshot file as it exists on disk."""
-    return json.loads(void_data.SNAPSHOT_PATH.read_text(encoding="utf-8"))
+    return json.loads(nomo_data.SNAPSHOT_PATH.read_text(encoding="utf-8"))

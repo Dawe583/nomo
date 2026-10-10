@@ -21,7 +21,7 @@ import { generateKeyPairSync } from "node:crypto";
 import { signingPreimage, type KeyProvider } from "./index.ts";
 
 const workspace = "test-ws";
-const dir = await mkdtemp(join(tmpdir(), "void-ledger-"));
+const dir = await mkdtemp(join(tmpdir(), "nomo-ledger-"));
 const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
 
 // Each test seeds its own directory: the store is per workspace file, and a
@@ -110,7 +110,7 @@ describe("the dev key path", () => {
     assert.equal(await first.publicKey("unknown"), null);
   });
 
-  test("VOID_SIGNING_KEY wins over the directory", async () => {
+  test("NOMO_SIGNING_KEY wins over the directory", async () => {
     const { privateKey } = generateKeyPairSync("ed25519");
     const pkcs8 = privateKey.export({ format: "der", type: "pkcs8" });
     const inline = keyProviderFromPkcs8(Buffer.from(pkcs8));
@@ -275,7 +275,7 @@ describe("the four forger attacks", () => {
   test("verifySignature itself separates keys", async () => {
     const a = generateKeyPairSync("ed25519");
     const b = generateKeyPairSync("ed25519");
-    const message = new TextEncoder().encode("void test");
+    const message = new TextEncoder().encode("nomo test");
     const signature = (await import("node:crypto")).sign(null, message, a.privateKey);
     const spkiA = new Uint8Array(a.publicKey.export({ format: "der", type: "spki" }));
     const spkiB = new Uint8Array(b.publicKey.export({ format: "der", type: "spki" }));

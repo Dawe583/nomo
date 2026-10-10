@@ -4,7 +4,7 @@
  * A verifier that opens the private key file is asking the writer's key
  * whether the writer's signatures are good. An attacker who replaces
  * `dev-ed25519.pkcs8` can therefore re-sign a fully rewritten chain and every
- * VOID verifier reports it valid (docs/THREAT-MODEL.md §2.4). The default
+ * NOMO verifier reports it valid (docs/THREAT-MODEL.md §2.4). The default
  * resolution below never opens private key material: a public key comes from
  * the environment or from a trust file, and the degraded paths that do read a
  * private key are named, opt-in, and always report themselves as degraded.
@@ -15,7 +15,7 @@
  * `key_id` and fails with "has no public key for ...", instead of being
  * verified by the very key that signed it. That detection is worth exactly
  * what the binding is out of reach of. The trust file at the default path
- * lives under `~/.void/`, which is the same tree as `~/.void/keys/`; its mode
+ * lives under `~/.nomo/`, which is the same tree as `~/.nomo/keys/`; its mode
  * is `0400`, which stops an in-place write by a different user and stops
  * nothing at all for its own owner, who may `unlink` it and create a new file.
  * So substituting the trust file and the signing key together is silent, and
@@ -24,7 +24,7 @@
  *
  * Substitution is therefore detectable **only** by a holder of a key that was
  * obtained out of band and never written to a file the agent can reach:
- * `VOID_VERIFY_KEY`, or a trust file at a path under `VOID_TRUST_DIR` that the
+ * `NOMO_VERIFY_KEY`, or a trust file at a path under `NOMO_TRUST_DIR` that the
  * agent process has no credentials for. For everyone else — including every
  * install using the default path — the signature still proves close to nothing
  * against the agent itself, because the recorder, the signer and the verifier
@@ -43,16 +43,20 @@ import { devKeyDir, devKeyIdFromSpki, keyProviderFromPkcs8, retainedKeyProvider 
 import type { KeyProvider } from "./index.ts";
 import type { JsonlEntry } from "./store.ts";
 import { readLedgerEntries, type PublicKeyLookup } from "./verify.ts";
+import { dataDir } from "./paths.ts";
+import { envValue } from "./env-compat.ts";
 
 /** Base64 SPKI DER, inline. Supplied out of band, never written to a file. */
-export const PINNED_KEY_ENV = "VOID_VERIFY_KEY";
+export const PINNED_KEY_ENV = "NOMO_VERIFY_KEY";
 /** Path to a file holding one base64 SPKI DER public key. */
-export const PINNED_KEY_FILE_ENV = "VOID_VERIFY_KEY_FILE";
+export const PINNED_KEY_FILE_ENV = "NOMO_VERIFY_KEY_FILE";
 /** Directory holding the pinned key file when the path is not given. */
-export const TRUST_DIR_ENV = "VOID_TRUST_DIR";
-/** Explicit opt-in to the degraded private-key paths, on top of VOID_SIGNING_KEY. */
-export const DEGRADED_KEY_ENV = "VOID_VERIFY_ALLOW_SIGNING_KEY";
+export const TRUST_DIR_ENV = "NOMO_TRUST_DIR";
+/** Explicit opt-in to the degraded private-key paths, on top of NOMO_SIGNING_KEY. */
+export const DEGRADED_KEY_ENV = "NOMO_VERIFY_ALLOW_SIGNING_KEY";
 export const PINNED_KEY_FILE_NAME = "verify-ed25519.spki";
+/** Inline base64 PKCS8 private signing key, used by the dev tier and the degraded paths. */
+export const SIGNING_KEY_ENV = "NOMO_SIGNING_KEY";
 
 /**
  * The one line every surface prints when it is verifying in a degraded mode.
@@ -65,7 +69,7 @@ export const PINNED_KEY_FILE_NAME = "verify-ed25519.spki";
  * this string rather than restating it.
  */
 export const DEGRADED_VERIFICATION_NOTE =
-  "VOID_VERIFY_ALLOW_SIGNING_KEY / VOID_SIGNING_KEY: the verification key came from signing key material, so a replaced key file cannot be detected in this mode";
+  "NOMO_VERIFY_ALLOW_SIGNING_KEY / NOMO_SIGNING_KEY: the verification key came from signing key material, so a replaced key file cannot be detected in this mode";
 
 /**
  * The one line every surface prints beside a trust file that lives where the
@@ -74,17 +78,17 @@ export const DEGRADED_VERIFICATION_NOTE =
  * with the signing key is.
  */
 export const TRUST_FILE_NOTE =
-  "the trust file shares ~/.void/ with the signing key, so anyone who can replace the key file can replace this one too; key substitution is only detected by a holder of a key obtained out of band";
+  "the trust file shares ~/.nomo/ with the signing key, so anyone who can replace the key file can replace this one too; key substitution is only detected by a holder of a key obtained out of band";
 
 /**
- * A trust file outside the VOID data tree is reported as operator-supplied,
- * but VOID infers that from the path alone. It cannot tell who wrote the
+ * A trust file outside the NOMO data tree is reported as operator-supplied,
+ * but NOMO infers that from the path alone. It cannot tell who wrote the
  * bytes, so a path the agent happens to have credentials for is accepted the
  * same way. This is the weakest claim in the resolution order, and it used to
  * be printed as a bare `PASS` with no caveat at all.
  */
 export const OUT_OF_TREE_TRUST_FILE_NOTE =
-  "this trust file is outside the VOID data tree, which VOID takes as operator-supplied from the path alone; it cannot prove who wrote the bytes, so a path the agent can also write is accepted";
+  "this trust file is outside the NOMO data tree, which NOMO takes as operator-supplied from the path alone; it cannot prove who wrote the bytes, so a path the agent can also write is accepted";
 
 /**
  * The one line every surface prints when nothing at all was configured. No
@@ -99,7 +103,7 @@ export const NO_VERIFICATION_KEY_NOTE =
  * Where the key came from. The file branch is called `trust-file`, not
  * "pinned": the file it names lives in the same tree as the signing key, and
  * reading it proves nothing about who wrote it. Only a key supplied out of
- * band, or a trust file outside the VOID data tree, is a pin.
+ * band, or a trust file outside the NOMO data tree, is a pin.
  */
 export type VerificationKeySource =
   | "pinned-env"
@@ -126,8 +130,8 @@ export type VerificationKey = {
   readonly degraded: boolean;
   /**
    * True only when the bytes came from the operator and the agent could not
-   * have chosen them: `VOID_VERIFY_KEY`, or a trust file at a path outside the
-   * default `~/.void/trust/` location. False for a trust file at the default
+   * have chosen them: `NOMO_VERIFY_KEY`, or a trust file at a path outside the
+   * default `~/.nomo/trust/` location. False for a trust file at the default
    * path, and for every source that reads signing key material.
    */
   readonly operatorSupplied: boolean;
@@ -263,8 +267,8 @@ export type PinnedKeyFileOptions = {
 /**
  * The default trust file, and what it is worth.
  *
- * The default lives under `~/.void/trust/`, which is **not** a separate trust
- * domain from `~/.void/keys/`: `~/.void/` is the common ancestor, so anyone who
+ * The default lives under `~/.nomo/trust/`, which is **not** a separate trust
+ * domain from `~/.nomo/keys/`: `~/.nomo/` is the common ancestor, so anyone who
  * can replace the signing key file can replace this one too. The file mode is
  * `0400`, which refuses an in-place write by a different user and is no defence
  * at all against its own owner, who may unlink and recreate it.
@@ -272,16 +276,16 @@ export type PinnedKeyFileOptions = {
  * It stays there anyway. There is no location on a single-user host that a
  * same-uid attacker cannot also write, so moving it would buy no security and
  * would silently strand every pin already provisioned at the old path. The
- * out-of-tree location is `VOID_TRUST_DIR`, and a key there is what
+ * out-of-tree location is `NOMO_TRUST_DIR`, and a key there is what
  * `operatorSupplied: true` reports.
  */
 export function pinnedKeyFile(
   env: Readonly<NodeJS.ProcessEnv> = process.env,
   options: PinnedKeyFileOptions = {},
 ): string | undefined {
-  const explicit = env[PINNED_KEY_FILE_ENV];
+  const explicit = envValue(env, PINNED_KEY_FILE_ENV);
   if (explicit !== undefined && explicit !== "") return explicit;
-  const trustDir = env[TRUST_DIR_ENV];
+  const trustDir = envValue(env, TRUST_DIR_ENV);
   if (trustDir !== undefined && trustDir !== "") return join(trustDir, PINNED_KEY_FILE_NAME);
   // `HOME` set means the caller named the home it operates in, which is what
   // an injected env carries. Without it the default trust file is not read at
@@ -289,7 +293,7 @@ export function pinnedKeyFile(
   if (options.allowDefault ?? (env === process.env || env.HOME !== undefined))
     return join(
       options.home ?? env.HOME ?? homedir(),
-      ".void",
+      ".nomo",
       "trust",
       PINNED_KEY_FILE_NAME,
     );
@@ -306,7 +310,7 @@ export function pinnedKey(spki: Uint8Array): BoundKey {
  * A key the operator handed in directly, as base64 SPKI. This is the only
  * resolution that is unambiguously out of band, because no file the agent can
  * write holds these bytes: a bundle reviewer passes the recorder's key on the
- * command line, and `void verify --key` does the same.
+ * command line, and `nomo verify --key` does the same.
  */
 export function verificationKeyFromBase64(
   encoded: string,
@@ -325,7 +329,7 @@ export type ResolveVerificationKeyOptions = {
   readonly home?: string;
   /**
    * Opt in to the degraded paths that read private key material. A configured
-   * `VOID_SIGNING_KEY` counts as opting in on its own: naming a signing key is
+   * `NOMO_SIGNING_KEY` counts as opting in on its own: naming a signing key is
    * an explicit choice, and the result still reports itself as degraded.
    */
   readonly allowDegraded?: boolean;
@@ -358,7 +362,7 @@ export async function resolveVerificationKey(
   const allowDefault =
     options.allowDefaultTrustFile ?? (env === process.env || env.HOME !== undefined);
 
-  const inline = env[PINNED_KEY_ENV];
+  const inline = envValue(env, PINNED_KEY_ENV);
   if (inline !== undefined && inline !== "") {
     const spki = publicKeyFromSpkiBase64(inline, PINNED_KEY_ENV);
     return verificationKeyFrom(pinnedKey(spki), spki, {
@@ -381,13 +385,13 @@ export async function resolveVerificationKey(
     }
     if (text !== undefined) {
       const spki = publicKeyFromSpkiBase64(text, file);
-      // The default path is inside the VOID data tree, the same tree the
+      // The default path is inside the NOMO data tree, the same tree the
       // signing key lives in, so calling it pinned would claim a separation it
       // does not have. An explicitly configured path counts as
       // operator-supplied only when it is somewhere else entirely.
       const defaultPath = join(
         options.home ?? env.HOME ?? homedir(),
-        ".void",
+        ".nomo",
         "trust",
         PINNED_KEY_FILE_NAME,
       );
@@ -399,8 +403,8 @@ export async function resolveVerificationKey(
     }
   }
 
-  const inlineSigning = env.VOID_SIGNING_KEY;
-  const opt = env[DEGRADED_KEY_ENV];
+  const inlineSigning = envValue(env, SIGNING_KEY_ENV);
+  const opt = envValue(env, DEGRADED_KEY_ENV);
   if (
     !(
       options.allowDegraded === true ||
@@ -485,7 +489,7 @@ export async function pinVerificationKey(
   const file =
     options.file ??
     pinnedKeyFile(env, { home }) ??
-    join(home, ".void", "trust", PINNED_KEY_FILE_NAME);
+    join(dataDir(home), "trust", PINNED_KEY_FILE_NAME);
   const keyId = devKeyIdFromSpki(spki);
   await mkdir(dirname(file), { recursive: true, mode: 0o700 });
   try {
@@ -543,7 +547,7 @@ export async function pinVerificationKeyFromSigner(
   const env = options.env ?? process.env;
   const home = options.home ?? env.HOME ?? homedir();
   const keyDir = options.keyDir ?? devKeyDir(home);
-  const inline = env.VOID_SIGNING_KEY;
+  const inline = envValue(env, SIGNING_KEY_ENV);
   let provider: KeyProvider;
   if (inline !== undefined && inline !== "") {
     provider = keyProviderFromPkcs8(Buffer.from(inline, "base64"));
@@ -559,7 +563,7 @@ export async function pinVerificationKeyFromSigner(
       throw new Error(
         `no key to anchor: ${keyDir}/dev-ed25519.pkcs8 does not exist. ` +
           `This command pins a key that already exists and never creates one. ` +
-          `Use \`void tui\` once to create it, or pin a key obtained out of band with \`void init --from-spki <base64>\`.`,
+          `Use \`nomo tui\` once to create it, or pin a key obtained out of band with \`nomo init --from-spki <base64>\`.`,
       );
     }
   }
@@ -577,7 +581,7 @@ export async function pinVerificationKeyFromSigner(
 export type SigningKeyIdsInLedgersOptions = {
   readonly env?: Readonly<NodeJS.ProcessEnv>;
   readonly home?: string;
-  /** Ledger directory. Defaults to `VOID_LEDGER_DIR`, else `~/.void/ledger`. */
+  /** Ledger directory. Defaults to `NOMO_LEDGER_DIR`, else `~/.nomo/ledger`. */
   readonly dir?: string;
 };
 
@@ -602,7 +606,7 @@ export async function signingKeyIdsInLedgers(
 ): Promise<Map<string, number>> {
   const env = options.env ?? process.env;
   const home = options.home ?? env.HOME ?? homedir();
-  const dir = options.dir ?? env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
+  const dir = options.dir ?? envValue(env, "NOMO_LEDGER_DIR") ?? join(dataDir(home), "ledger");
   const counts = new Map<string, number>();
   let files: string[];
   try {

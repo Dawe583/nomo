@@ -50,7 +50,7 @@ const git = (cwd: string): GitRunner => (...args: string[]) =>
 
 /** A real local remote: a bare repository plus the cooperative worktree. */
 async function remoteRepository(t: TestContext): Promise<RemoteFixture> {
-  const base = await realpath(await mkdtemp(join(tmpdir(), "void-git-remote-")));
+  const base = await realpath(await mkdtemp(join(tmpdir(), "nomo-git-remote-")));
   const root = join(base, "work");
   const remote = join(base, "remote.git");
   t.after(() => rm(base, { recursive: true, force: true }));
@@ -62,7 +62,7 @@ async function remoteRepository(t: TestContext): Promise<RemoteFixture> {
   onRemote("config", "core.logAllRefUpdates", "true");
   onRemote("symbolic-ref", "HEAD", "refs/heads/main");
   execFileSync("git", ["init", "-q", "-b", "main", root]);
-  run("config", "user.name", "VOID test");
+  run("config", "user.name", "NOMO test");
   run("config", "user.email", "void@example.invalid");
   run("config", "commit.gpgsign", "false");
   await writeFile(join(root, "selected"), "before");
@@ -100,7 +100,7 @@ async function remoteRepository(t: TestContext): Promise<RemoteFixture> {
       const other = join(base, "other");
       execFileSync("git", ["clone", "-q", remote, other]);
       const otherRun = git(other);
-      otherRun("config", "user.name", "VOID outsider");
+      otherRun("config", "user.name", "NOMO outsider");
       otherRun("config", "user.email", "outsider@example.invalid");
       context.after(() => rm(other, { recursive: true, force: true }));
       otherRun("config", "commit.gpgsign", "false");
@@ -403,11 +403,11 @@ posixTest("a published recovery branch has no managed inverse, and the runtime r
 });
 
 posixTest("a local-only repository refuses remote recovery and keeps every existing action", async (t) => {
-  const root = await realpath(await mkdtemp(join(tmpdir(), "void-git-localonly-")));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "nomo-git-localonly-")));
   t.after(() => rm(root, { recursive: true, force: true }));
   const run = git(root);
   execFileSync("git", ["init", "-q", "-b", "main", root]);
-  run("config", "user.name", "VOID test");
+  run("config", "user.name", "NOMO test");
   run("config", "user.email", "void@example.invalid");
   await writeFile(join(root, "tracked"), "before");
   run("add", "tracked");

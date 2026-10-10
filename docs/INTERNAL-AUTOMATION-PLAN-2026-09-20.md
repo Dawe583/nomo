@@ -1,7 +1,7 @@
-# VOID internal automation and agent capability plan
+# NOMO internal automation and agent capability plan
 
 Date: 2026-09-20
-Canonical repository target: `VOID-harness/void`
+Canonical repository target: `NOMO-harness/nomo`
 Baseline reviewed: `main` at `75289f4ce1caf2c6a05feb5fa3337b867c702261`
 Status: implementation plan. Items marked “verified now” already exist; all other items are proposed work.
 
@@ -22,7 +22,7 @@ The target system should:
 
 ### Repository
 
-- `Dawe583/void` was mirrored into `VOID-harness/void` with complete commit history.
+- `Dawe583/void` was mirrored into `NOMO-harness/nomo` with complete commit history.
 - Five branches were copied with matching SHAs: `main`, `GUI-WEB`, `claude/poradna-design-animations-wwbc1l`, `codex/gui-upgrade`, `codex/void-beta`.
 - Four desktop beta tags were copied with matching SHAs.
 - Existing CI covers Node 24 and 26, typecheck, build, package tests, control-plane tests and four end-to-end programs.
@@ -35,7 +35,7 @@ The target system should:
 - Oliver's Agent transport exists but has no owner until Oliver joins the Slack workspace.
 - Existing runtime already provides tasks, weekly planning, approvals, reminders, standups, decisions, SOP proposals, private drafts, process discovery, knowledge search, project status and read-only GitHub search.
 - Existing PostgreSQL, n8n, scheduler, durable outbox, approval buttons and audit log are sufficient. No Kafka, Redis or second task store is needed.
-- The Slack Agents runtime now supports multiple owner-scoped GitHub App installations, selected-repository access, active-repository tracking, open and closed work, and deterministic stale-mirror warnings. Production still has only the `Dawe583` installation configured, so `VOID-harness` remains unavailable until the organization installation is approved.
+- The Slack Agents runtime now supports multiple owner-scoped GitHub App installations, selected-repository access, active-repository tracking, open and closed work, and deterministic stale-mirror warnings. Production still has only the `Dawe583` installation configured, so `NOMO-harness` remains unavailable until the organization installation is approved.
 - Agent configuration has drift: repository agent files still reference the retired `tokenrouter/z-ai/glm-5.3-free` route, while workspace policy requires `opencode-zen` by default and token-based providers only through environment or local authentication.
 
 ### Product and market
@@ -147,7 +147,7 @@ Team agent. No access to private personal memory.
 Add these skills:
 
 1. **Complete GitHub change intelligence**
-   - Ingest push, pull request, issue, workflow, release, deployment and security-status events for `VOID-harness`.
+   - Ingest push, pull request, issue, workflow, release, deployment and security-status events for `NOMO-harness`.
    - Post immediate alerts for failed protected workflows, force pushes, permission/ruleset changes, failed deployments and release failures.
    - Post compact merge notices and one daily digest for normal activity.
 2. **Version planner**
@@ -181,10 +181,10 @@ Coordinator must not write product code, approve its own release, bypass branch 
 
 ### 5.1 Canonical repository cutover
 
-1. Treat `VOID-harness/void` as the new canonical repository after team confirmation.
+1. Treat `NOMO-harness/nomo` as the new canonical repository after team confirmation.
 2. Update developer remotes, Vercel project linkage, status badges, repository links and Slack project metadata.
 3. Keep `Dawe583/void` unchanged until the cutover is verified. Later make it read-only or archive it with a pointer; do not delete history.
-4. Install the existing read-only GitHub App into `VOID-harness` for visibility.
+4. Install the existing read-only GitHub App into `NOMO-harness` for visibility.
 5. Use a separate write-capable installation or separately scoped credentials for release actions. Read-only search must not inherit release permissions.
 
 ### 5.2 Permissions
@@ -289,7 +289,7 @@ Default 35–55 seconds, 9:16, captions always on.
 ```text
 0–3 s   concrete failure or question
 3–10 s  why ordinary logs or git revert are insufficient
-10–32 s real VOID screen or terminal evidence
+10–32 s real NOMO screen or terminal evidence
 32–45 s result and honest limitation
 45–55 s one CTA
 ```
@@ -312,7 +312,7 @@ Every script includes:
    - CTA: run the local hold demo.
 2. **“Git revert is not agent undo.”**
    - Contrast source rollback with an external database mutation.
-   - CTA: inspect VOID’s R0–R3 model.
+   - CTA: inspect NOMO’s R0–R3 model.
 3. **“Four classes of AI-agent actions in 40 seconds.”**
    - R0 direct inverse, R1 before image, R2 mitigation, R3 irreversible.
    - State that class depends on target facts, not tool name.
@@ -354,7 +354,7 @@ Week: Monday 2026-09-21 through Sunday 2026-09-27. Current configured capacity i
 
 David / David's Agent:
 
-1. Confirm `VOID-harness/void` as canonical and audit all links/deployments that still point to `Dawe583/void` — 2 h.
+1. Confirm `NOMO-harness/nomo` as canonical and audit all links/deployments that still point to `Dawe583/void` — 2 h.
 2. Approve the pre-1.0 version policy and release gate in this document — 1.5 h.
 3. Select one honest product proof for the first video and reproduce it locally — 2.5 h.
 4. Review current release blockers R00, R02, R03, R04 and choose one next vertical slice — 2 h.
@@ -417,10 +417,10 @@ Weekend:
 
 ### Phase A — visibility, one to two days
 
-1. Install read-only GitHub App into `VOID-harness`.
+1. Install read-only GitHub App into `NOMO-harness`.
 2. Remove retired hard-coded model routes from every agent configuration; set the workspace-approved default and keep credentials out of Git.
 3. Verify agent display names, avatars, ownership and production model identity after the Slack owner signs in.
-4. Configure the implemented multi-installation GitHub sync for `VOID-harness` after the organization installation is approved.
+4. Configure the implemented multi-installation GitHub sync for `NOMO-harness` after the organization installation is approved.
 5. Add workflow, release and deployment status ingestion.
 6. Add GitHub event digest jobs and Slack notification templates.
 7. Update Graphify after accepted `main` changes and expose query results through the existing knowledge path.
@@ -503,7 +503,7 @@ Every write tool uses strict JSON schema, ownership checks, idempotency and audi
 - Do not expose GitHub, Slack or social tokens to an LLM.
 - Public messages, outreach, releases, deployments, credentials, permission changes and destructive operations require human approval.
 - Store tool event, requester, agent, model, permissions, policy decision, approver, target, digest, result and reversal reference.
-- Run all product-affecting writes through VOID when the relevant connector becomes certified. Until then, ordinary protected-branch and approval controls remain mandatory.
+- Run all product-affecting writes through NOMO when the relevant connector becomes certified. Until then, ordinary protected-branch and approval controls remain mandatory.
 
 ## 11. Success metrics
 
@@ -534,7 +534,7 @@ Marketing:
 
 ## 12. External prerequisites
 
-- GitHub login and organization-owner approval to install/configure the GitHub App in `VOID-harness`.
+- GitHub login and organization-owner approval to install/configure the GitHub App in `NOMO-harness`.
 - Slack admin login to upload final bot avatars and display names.
 - Oliver must join Slack before Oliver's Agent and Oliver’s plan can activate.
 - Social account ownership and OAuth approvals are not configured.

@@ -1,15 +1,15 @@
 // Run against an isolated Neon branch, never the application's DATABASE_URL:
-// VOID_TEST_DATABASE_ISOLATED=1 node --env-file=.env.cloud-test scripts/src/check-managed-cloud.mjs
-// .env.cloud-test contains VOID_TEST_DATABASE_URL. No production settings change.
+// NOMO_TEST_DATABASE_ISOLATED=1 node --env-file=.env.cloud-test scripts/src/check-managed-cloud.mjs
+// .env.cloud-test contains NOMO_TEST_DATABASE_URL. No production settings change.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { randomBytes, randomUUID, generateKeyPairSync } from 'node:crypto';
 import { validateCloudTestEnvironment } from './cloud-test-config.mjs';
 
-const testUrl = process.env.VOID_TEST_DATABASE_URL;
-if (!testUrl || process.env.VOID_TEST_DATABASE_ISOLATED !== '1') {
-  throw new Error('An explicitly isolated VOID_TEST_DATABASE_URL and VOID_TEST_DATABASE_ISOLATED=1 are required. The production database is never a fallback.');
+const testUrl = process.env.NOMO_TEST_DATABASE_URL;
+if (!testUrl || process.env.NOMO_TEST_DATABASE_ISOLATED !== '1') {
+  throw new Error('An explicitly isolated NOMO_TEST_DATABASE_URL and NOMO_TEST_DATABASE_ISOLATED=1 are required. The production database is never a fallback.');
 }
 function target(value) {
   const url = new URL(value);
@@ -21,10 +21,10 @@ if (process.env.DATABASE_URL && target(testUrl) === target(process.env.DATABASE_
   validateCloudTestEnvironment(process.env);
 }
 process.env.DATABASE_URL = testUrl;
-process.env.VOID_CONTROL_TOKEN = randomBytes(32).toString('hex');
-process.env.VOID_SECRET_KEY = randomBytes(32).toString('base64');
-process.env.VOID_SIGNING_KEY = generateKeyPairSync('ed25519').privateKey.export({ type: 'pkcs8', format: 'der' }).toString('base64');
-process.env.VOID_LOCAL_TEST = '1';
+process.env.NOMO_CONTROL_TOKEN = randomBytes(32).toString('hex');
+process.env.NOMO_SECRET_KEY = randomBytes(32).toString('base64');
+process.env.NOMO_SIGNING_KEY = generateKeyPairSync('ed25519').privateKey.export({ type: 'pkcs8', format: 'der' }).toString('base64');
+process.env.NOMO_LOCAL_TEST = '1';
 
 const { transaction, write, read, encrypt, decrypt, ledger, database } = await import('../../cloud/store.mjs');
 const { advance } = await import('../../cloud/steps.mjs');
@@ -43,7 +43,7 @@ const fixture = createServer(async (req, res) => {
     for await (const chunk of req) raw += chunk;
     const input = JSON.parse(raw);
     turns++;
-    const tool = input.tools.find(item => item.function.description.startsWith('void_workspace_write:'));
+    const tool = input.tools.find(item => item.function.description.startsWith('nomo_workspace_write:'));
     assert.ok(tool);
     const message = input.messages.at(-1).role === 'tool'
       ? { role: 'assistant', content: `No document was created. ${secret}` }
@@ -64,7 +64,7 @@ try {
   const providerUrl = `http://127.0.0.1:${fixture.address().port}/v1`;
   const origin = `http://127.0.0.1:${server.address().port}`;
   const api = async (path, method = 'GET', body) => {
-    const response = await fetch(`${origin}${path}`, { method, headers: { authorization: `Bearer ${process.env.VOID_CONTROL_TOKEN}`, 'content-type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(15000) });
+    const response = await fetch(`${origin}${path}`, { method, headers: { authorization: `Bearer ${process.env.NOMO_CONTROL_TOKEN}`, 'content-type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(15000) });
     return { status: response.status, body: await response.json() };
   };
   assert.equal((await fetch(`${origin}/api/sessions/${id}/workspace`)).status, 401);
@@ -118,7 +118,7 @@ try {
   assert.deepEqual(decrypt(await read(OPERATOR_OWNER, `workspace:${id}`)).files, {});
   const after = await ledger(OPERATOR_OWNER, workspace);
   assert.equal(after.result.ok, true);
-  assert.equal(after.entries.filter(entry => entry.body.tool === 'void_workspace_undo').length, 1);
+  assert.equal(after.entries.filter(entry => entry.body.tool === 'nomo_workspace_undo').length, 1);
   assert.equal((await api(path, 'POST', { confirm: operation.id })).status, 200);
   assert.equal((await ledger(OPERATOR_OWNER, workspace)).entries.length, after.entries.length);
   assert.equal((await api(`/api/sessions/${id}/workspace`)).body.workspace.operations.length, 2);

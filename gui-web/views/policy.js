@@ -1,7 +1,7 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.policy = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.policy = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   if (!F.policyChannel) F.policyChannel = "Control plane";
   var wrap = document.createElement("div");
   wrap.className = "section";
@@ -19,14 +19,14 @@ window.VOID_VIEWS.policy = function (root) {
       b.onclick = function () {
         var r = F.policyRules[parseInt(b.getAttribute("data-i"), 10)];
         r.on = !r.on;
-        if (window.VOID_TOAST) window.VOID_TOAST(r.name + (r.on ? " enabled" : " disabled"));
+        if (window.NOMO_TOAST) window.NOMO_TOAST(r.name + (r.on ? " enabled" : " disabled"));
         paint();
       };
     });
     wrap.querySelector("#pl-ch").onchange = function (e) {
       F.policyChannel = e.target.value;
       wrap.querySelector("#pl-msg").textContent = "Current: " + F.policyChannel + ".";
-      if (window.VOID_TOAST) window.VOID_TOAST("Approval channel is " + F.policyChannel + ", mock.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Approval channel is " + F.policyChannel + ", mock.");
     };
   }
 

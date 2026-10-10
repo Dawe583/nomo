@@ -1,3 +1,4 @@
+import { envValue } from './env.mjs';
 import { Pool } from "pg";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { devKeyProvider, sha256Hex } from "../packages/ledger/src/sign.ts";
@@ -10,10 +11,11 @@ import { deriveRunState } from "../packages/workbench/src/gui.ts";
 import { assertOwner } from "./owner.mjs";
 let pool;
 export function database() {
-  if (!process.env.DATABASE_URL)
+  const url = envValue(process.env, 'NOMO_DATABASE_URL') ?? process.env.DATABASE_URL;
+  if (!url)
     throw new Error("Cloud database is not configured.");
   return (pool ??= new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: url,
     max: 3,
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000,
@@ -85,7 +87,7 @@ export async function sessions(owner) {
   ).rows.map((row) => row.document);
 }
 export function encrypt(value) {
-  const key = Buffer.from(process.env.VOID_SECRET_KEY ?? "", "base64");
+  const key = Buffer.from(envValue(process.env, 'NOMO_SECRET_KEY') ?? "", "base64");
   if (key.length !== 32)
     throw new Error("Cloud encryption key is not configured.");
   const iv = randomBytes(12);
@@ -104,7 +106,7 @@ export function decrypt(value) {
     .map((s) => Buffer.from(s, "base64"));
   const cipher = createDecipheriv(
     "aes-256-gcm",
-    Buffer.from(process.env.VOID_SECRET_KEY ?? "", "base64"),
+    Buffer.from(envValue(process.env, 'NOMO_SECRET_KEY') ?? "", "base64"),
     iv,
   );
   cipher.setAuthTag(tag);
@@ -113,7 +115,7 @@ export function decrypt(value) {
   );
 }
 export async function signer() {
-  if (!process.env.VOID_SIGNING_KEY)
+  if (!envValue(process.env, 'NOMO_SIGNING_KEY'))
     throw new Error("Cloud signing key missing.");
   return devKeyProvider({ env: process.env });
 }
@@ -129,7 +131,7 @@ export async function verifier() {
   if (!resolved?.publicKey) {
     throw new Error(
       "No verification key is configured, so the cloud ledger cannot be checked. " +
-        "Set VOID_VERIFY_KEY or pin one, and keep the signing key separate from it.",
+        "Set NOMO_VERIFY_KEY or pin one, and keep the signing key separate from it.",
     );
   }
   return resolved.publicKey;

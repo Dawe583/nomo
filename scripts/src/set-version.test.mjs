@@ -35,39 +35,39 @@ const script = join(root, "scripts", "src", "set-version.mjs");
  * touched, and one manifest with no trailing newline.
  */
 function fixture() {
-  const tree = mkdtempSync(join(tmpdir(), "void-set-version-"));
+  const tree = mkdtempSync(join(tmpdir(), "nomo-set-version-"));
   const manifests = {
     "package.json": `{
-  "name": "@void/workspace",
+  "name": "@nomo/workspace",
   "version": "0.1.0",
   "private": true,
   "scripts": { "test": "node --test" }
 }
 `,
     "packages/cli/package.json": `{
-    "name": "@void/cli",
+    "name": "@nomo/cli",
     "private": true,
     "license": "Apache-2.0",
     "version": "0.1.0",
     "dependencies": {
-        "@void/registry": { "version": "0.1.0", "note": "a nested version is not the product version" }
+        "@nomo/registry": { "version": "0.1.0", "note": "a nested version is not the product version" }
     }
 }
 `,
     "packages/verifier/package.json": `{
-  "name": "@void/verifier",
+  "name": "@nomo/verifier",
   "description": "Offline verifier, node built-ins only.",
   "version": "0.1.0",
-  "bin": { "void-verify": "verify-ledger.mjs" }
+  "bin": { "nomo-verify": "verify-ledger.mjs" }
 }`,
     "apps/control-plane/package.json": `{
-  "name": "@void/control-plane-api",
+  "name": "@nomo/control-plane-api",
   "version": "0.1.0",
   "private": true
 }
 `,
     "scripts/package.json": `{
-  "name": "@void/scripts",
+  "name": "@nomo/scripts",
   "version": "0.1.0",
   "private": true
 }
@@ -131,7 +131,7 @@ test("one argument moves every manifest the gate enumerates, and nothing else", 
     assert.equal(JSON.parse(after).name, JSON.parse(before[path]).name);
   }
   // A package root with no manifest is not a manifest, so it is not reported.
-  assert.equal(JSON.parse(readFileSync(join(tree, "packages/cli/package.json"), "utf8")).dependencies["@void/registry"].version, "0.1.0");
+  assert.equal(JSON.parse(readFileSync(join(tree, "packages/cli/package.json"), "utf8")).dependencies["@nomo/registry"].version, "0.1.0");
   assert.equal(snapshot(tree)["packages/notes/README.md"], before["packages/notes/README.md"]);
   // The write goes through a temporary file, so one left behind is the visible
   // evidence that the rename path did not run.

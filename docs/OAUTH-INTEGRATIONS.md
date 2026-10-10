@@ -1,6 +1,6 @@
 # Cloud account connections
 
-The cloud app exposes GitHub, Vercel and Supabase in **Tools and connections**. Connections belong to the authenticated personal VOID workspace. They are not per-user grants for a multi-tenant service.
+The cloud app exposes GitHub, Vercel and Supabase in **Tools and connections**. Connections belong to the authenticated personal NOMO workspace. They are not per-user grants for a multi-tenant service.
 
 ## Agent access
 
@@ -20,7 +20,7 @@ Callback URLs for the production app:
 - Vercel: `https://void-tui.vercel.app/api/integrations/vercel/callback`
 - Supabase: `https://void-tui.vercel.app/api/integrations/supabase/callback`
 
-For a different canonical deployment origin, set server variable `VOID_PUBLIC_ORIGIN` and register the corresponding callbacks. Preview deployment URLs do not automatically become authorized callbacks.
+For a different canonical deployment origin, set server variable `NOMO_PUBLIC_ORIGIN` and register the corresponding callbacks. Preview deployment URLs do not automatically become authorized callbacks.
 
 ### GitHub
 
@@ -28,7 +28,7 @@ Register a confidential OAuth app at <https://github.com/settings/developers>. E
 
 ### Vercel
 
-Create a **connectable integration** in the team's integration console, using private visibility for personal use. Register the callback above. Enable the permissions required for projects, deployments, domains and environment variables. Enter the integration slug, client ID and client secret in VOID, then install the integration for the intended team/projects.
+Create a **connectable integration** in the team's integration console, using private visibility for personal use. Register the callback above. Enable the permissions required for projects, deployments, domains and environment variables. Enter the integration slug, client ID and client secret in NOMO, then install the integration for the intended team/projects.
 
 **Sign in with Vercel is identity-only and is not a platform integration credential.** Vercel Connect was also unavailable for the current team during this implementation. This app therefore uses the documented external integration flow at `https://vercel.com/integrations/:slug/new` and exchanges the one-time code at `https://api.vercel.com/v2/oauth/access_token`. Team selection comes from the token response and cannot be overridden by tool arguments. A real project-list request validates the grant before it is saved.
 
@@ -46,7 +46,7 @@ State and browser binding contain 256 bits of randomness. Pending authorization 
 
 Callback state is invalidated by a changed registration, disconnect or workspace control-key rotation. Mutating workspace routes require authentication and pass the existing origin/CSRF checks. Fixed provider URLs, rejected redirects, encrypted token storage and serialized refresh protect credentials. OAuth errors do not expose provider response bodies.
 
-Disconnect removes the local grant. It does **not** claim to revoke authorization at the provider; use the provider's authorized-app/integration settings for that. Other copies of a provider token are outside VOID's control.
+Disconnect removes the local grant. It does **not** claim to revoke authorization at the provider; use the provider's authorized-app/integration settings for that. Other copies of a provider token are outside NOMO's control.
 
 ## Verification
 
@@ -60,7 +60,7 @@ pnpm test
 OAuth unit tests use fake HTTP providers. The opt-in `cloud/integrations.test.mjs` additionally uses a real isolated Neon database and an HTTP instance of the cloud server. It checks authentication, CSRF, callback binding, replay, expiry/refresh behavior, session attachment, running-session refusal, secret isolation and disconnect. It explicitly refuses any database whose name is not `void_gui_upgrade_preview`. Supply that database and test workspace keys through environment variables, then run:
 
 ```sh
-VOID_OAUTH_DATABASE_TEST=1 node --test cloud/integrations.test.mjs
+NOMO_OAUTH_DATABASE_TEST=1 node --test cloud/integrations.test.mjs
 ```
 
 This is not evidence of completed production consent for every provider. On 2026-09-11, Supabase client registration and the live redirect to its login page were verified. GitHub login/client registration and Vercel integration registration/consent remained user-dependent. No production external write was performed to test OAuth.

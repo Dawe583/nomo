@@ -1,6 +1,6 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.intercept = function (root) {
-  var F = window.VOID_FIXTURES;
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.intercept = function (root) {
+  var F = window.NOMO_FIXTURES;
   var tools = Object.keys(F.registryCases);
   var tool = "db.query";
   var wrap = document.createElement("div");
@@ -61,7 +61,7 @@ window.VOID_VIEWS.intercept = function (root) {
       var prev = F.ledgerEntries[F.ledgerEntries.length - 1].hash;
       var hash = "m" + seq + "k" + String(seq * 7).padStart(2, "0");
       F.ledgerEntries.push({ seq: seq, hash: hash, prev: prev, sig: "OK", cls: r.cls, tool: tool, decision: r.rule.action });
-      if (window.VOID_TOAST) window.VOID_TOAST("Mock entry " + seq + " appended.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Mock entry " + seq + " appended.");
     };
   }
 

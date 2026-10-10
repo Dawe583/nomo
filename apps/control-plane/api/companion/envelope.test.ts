@@ -26,11 +26,11 @@ const implementation = { server: "pending", apple: "pending", transport: "pendin
 type Harness = { readonly origin: string; readonly dataDir: string; readonly close: () => Promise<void> };
 
 async function startHarness(workspace = "alpha", extraEnv: Record<string, string> = {}): Promise<Harness> {
-  const directory = await mkdtemp(join(tmpdir(), "void-envelope-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-envelope-"));
   // The write scope is an operator decision, so the harness that exercises it
   // opts in the way a host operator would.
   const server: ListenHandle = await listenControlPlane({
-    env: { VOID_DATA_DIR: directory, VOID_WORKSPACE: workspace, VOID_COMPANION_WRITE_PAIRING: "1", ...extraEnv },
+    env: { NOMO_DATA_DIR: directory, NOMO_WORKSPACE: workspace, NOMO_COMPANION_WRITE_PAIRING: "1", ...extraEnv },
   });
   return {
     origin: `http://127.0.0.1:${server.port}`,
@@ -129,7 +129,7 @@ function fixtureOf(name: string, sourceRoutes: readonly string[], request: Envel
 }
 
 function record(harness: Harness, operationId: string, deviceId: string, status: string): void {
-  recordOperation({ VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" }, {
+  recordOperation({ NOMO_DATA_DIR: harness.dataDir, NOMO_WORKSPACE: "alpha" }, {
     operationId,
     workspaceId: "alpha",
     deviceId,
@@ -147,7 +147,7 @@ test("a live envelope round trip is a frozen fixture for every bound operation",
   record(harness, "op-retained-001", device.deviceId, "succeeded");
 
   const handshakeBody = {
-    client: { name: "VOID Apple companion", version: "0.0.0-fixture", platform: "ios" },
+    client: { name: "NOMO Apple companion", version: "0.0.0-fixture", platform: "ios" },
     requestedCapabilities: ["capability.handshake", "operation.status", "device.revoke", "diagnostics.read"],
   };
   const cases: ReadonlyArray<{ readonly name: string; readonly routes: readonly string[]; readonly request: Envelope; readonly response: Envelope }> = [

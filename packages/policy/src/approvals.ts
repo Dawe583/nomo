@@ -14,7 +14,7 @@
  * always 0, and getuid is absent, so the old predicate could never be true and
  * the whole approval path was dead there. Asserting those bits on Windows would
  * be a claim the platform cannot support, so Windows verifies the DACL with the
- * icacls binary that ships with the operating system, and a directory VOID can
+ * icacls binary that ships with the operating system, and a directory NOMO can
  * claim is narrowed to the operator before it is accepted, and only on the
  * write path: a function that inspects a directory changes nothing about it.
  * What cannot be proven is returned as unverifiable and refused unless the host
@@ -121,7 +121,7 @@ export type ApprovalAclCommander = (
 
 /**
  * The DACL rule's inputs. `harden` is the whole contract in one word: it is
- * false for every caller that only reads a directory, and true only where VOID
+ * false for every caller that only reads a directory, and true only where NOMO
  * is about to write state into the one it is verifying.
  */
 export type WindowsApprovalStateInput = {
@@ -497,10 +497,10 @@ function assertPrivateDirectory(
 }
 
 /**
- * The single entry point a host can call to learn what VOID could prove about a
+ * The single entry point a host can call to learn what NOMO could prove about a
  * state directory, without creating a broker and without a decision to make.
  * It reads and changes nothing: no directory is created, and on Windows no DACL
- * is narrowed. A host that asks what VOID could prove gets the verdict that was
+ * is narrowed. A host that asks what NOMO could prove gets the verdict that was
  * measured, and a directory that is not owner only is still reported as not
  * owner only. Only the write path may harden a directory, because only the
  * write path has a reason to.

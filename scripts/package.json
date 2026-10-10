@@ -1,14 +1,14 @@
 {
-  "name": "@void/scripts",
+  "name": "@nomo/scripts",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "devDependencies": {
     "@types/node": "catalog:"
   },
-  "description": "Run VOID workspace checks, local end-to-end scenarios, and benchmarks.",
+  "description": "Run NOMO workspace checks, local end-to-end scenarios, and benchmarks.",
   "keywords": [
-    "void",
+    "nomo",
     "testing",
     "benchmarks"
   ],

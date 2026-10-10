@@ -53,8 +53,8 @@ async function fixture(
   fetcher: typeof fetch,
   release?: () => void,
 ) {
-  const root = await mkdtemp(join(tmpdir(), "void-harness-"));
-  let app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  const root = await mkdtemp(join(tmpdir(), "nomo-harness-"));
+  let app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   t.after(async () => {
     // Unblock any transport parked mid-request before shutting down, or
@@ -69,7 +69,7 @@ async function fixture(
     },
     restart() {
       app.close();
-      app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+      app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
       return app;
     },
   };
@@ -110,7 +110,7 @@ test("an agent profile maxTurns still wins over the harness setting", async (t) 
     id: "tight",
     name: "Tight",
     systemPrompt: "Only inspect",
-    allowedTools: ["void_workspace_list"],
+    allowedTools: ["nomo_workspace_list"],
     policyProfile: "default",
     maxTurns: 1,
     maxContextTokens: 8192,

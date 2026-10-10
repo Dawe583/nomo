@@ -15,7 +15,7 @@ test('tool catalogue never claims Undo for a connector impersonating a built-in 
 test('slash search filters metadata, does not capture prose, and selection only prepares a request', () => {
   const tools = toolCatalog(workspaceTools);
   assert.equal(filterCommands(tools, '/').length, 4);
-  assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read']);
+  assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['nomo_workspace_read']);
   assert.equal(filterCommands(tools, '/unknown').length, 0);
   assert.equal(filterCommands(tools, '/read document').length, 0);
   assert.equal(filterCommands(tools, 'a /read').length, 0);
@@ -27,8 +27,8 @@ test('session tool catalogue uses its snapshot and rejects unknown sessions', as
   const { mkdtemp, rm } = await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
-  const directory = await mkdtemp(join(tmpdir(), 'void-tools-'));
-  const app = new Workbench({ VOID_DATA_DIR: directory }, async url => String(url).endsWith('/models') ? Response.json({ data: [{ id: 'fixture' }] }) : Response.json({ choices: [{ message: { role: 'assistant', content: 'Ready' } }] }));
+  const directory = await mkdtemp(join(tmpdir(), 'nomo-tools-'));
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, async url => String(url).endsWith('/models') ? Response.json({ data: [{ id: 'fixture' }] }) : Response.json({ choices: [{ message: { role: 'assistant', content: 'Ready' } }] }));
   t.after(async () => { await app.shutdown(); await rm(directory, { recursive: true, force: true }); });
   assert.equal(app.availableTools().scope, 'configured');
   assert.throws(() => app.availableTools('missing'), /Session not found/);

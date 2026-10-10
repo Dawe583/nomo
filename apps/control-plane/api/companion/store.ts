@@ -22,13 +22,13 @@ export class CompanionStoreError extends Error {
 }
 
 export function companionDirectory(env: Readonly<NodeJS.ProcessEnv>): string {
-  return env.VOID_COMPANION_DIR ?? join(env.VOID_DATA_DIR ?? join(homedir(), ".void"), "companion");
+  return env.NOMO_COMPANION_DIR ?? join(env.NOMO_DATA_DIR ?? join(homedir(), ".nomo"), "companion");
 }
 
 /** The workspace is host configuration, never a request field: the protocol
  * derives it from the device credential and the executor it is paired to. */
 export function companionWorkspace(env: Readonly<NodeJS.ProcessEnv>): string {
-  const workspace = env.VOID_WORKSPACE ?? "default";
+  const workspace = env.NOMO_WORKSPACE ?? "default";
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(workspace)) throw new CompanionStoreError("invalid_workspace", "invalid companion workspace");
   return workspace;
 }
@@ -45,7 +45,7 @@ export function readStoreFile(path: string): unknown {
     throw new CompanionStoreError("corrupt_store", "companion state requires a bounded owner-only regular file");
   }
   // Windows reports 0666 for every file, so the mode bits are not a weaker
-  // check there, they are a meaningless one that refuses the store VOID itself
+  // check there, they are a meaningless one that refuses the store NOMO itself
   // just wrote. The isFile and size bounds above still hold on both platforms.
   if (process.platform !== "win32" && (stat.mode & 0o077) !== 0) {
     throw new CompanionStoreError("corrupt_store", "companion state requires a bounded owner-only regular file");

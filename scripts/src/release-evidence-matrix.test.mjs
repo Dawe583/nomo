@@ -110,8 +110,8 @@ test("no requirement row claims device-tested evidence", () => {
 });
 
 test("the evidence documents print the native test-case counts the tree actually has", () => {
-  const unitCases = countSwiftTestCases("apps/apple/VOIDTests");
-  const uiCases = countSwiftTestCases("apps/apple/VOIDUITests");
+  const unitCases = countSwiftTestCases("apps/apple/NOMOTests");
+  const uiCases = countSwiftTestCases("apps/apple/NOMOUITests");
 
   for (const [name, text] of [
     ["docs/RELEASE-1.0.1-MATRIX.md", matrix],
@@ -121,35 +121,35 @@ test("the evidence documents print the native test-case counts the tree actually
     // Each document wraps the sentence differently, so compare against the
     // prose with its line wrapping collapsed.
     const prose = text.replace(/\s+/gu, " ");
-    assert.match(prose, new RegExp(`\\b${unitCases} \`VOIDTests\` cases`), name);
-    assert.match(prose, new RegExp(`\\b${uiCases} \`VOIDUITests\` cases`), name);
+    assert.match(prose, new RegExp(`\\b${unitCases} \`NOMOTests\` cases`), name);
+    assert.match(prose, new RegExp(`\\b${uiCases} \`NOMOUITests\` cases`), name);
   }
 });
 
 test("a recorded simulator run is never separated from the current source counts", () => {
-  const unitCases = countSwiftTestCases("apps/apple/VOIDTests");
-  const uiCases = countSwiftTestCases("apps/apple/VOIDUITests");
+  const unitCases = countSwiftTestCases("apps/apple/NOMOTests");
+  const uiCases = countSwiftTestCases("apps/apple/NOMOUITests");
   const runClaims = matrix
     .split("\n")
-    .filter((line) => /passed `VOID(?:UI)?Tests` \d+\/\d+/.test(line));
+    .filter((line) => /passed `NOMO(?:UI)?Tests` \d+\/\d+/.test(line));
 
   assert.ok(runClaims.length > 0, "the matrix no longer records a simulator run");
   for (const line of runClaims) {
     // A quoted run count that outnumbers the cases in the tree is fabricated
     // evidence, and a run count quoted without the current source counts reads
     // as coverage of the current candidate.
-    for (const [, suite, passed, total] of line.matchAll(/passed `(VOID(?:UI)?Tests)` (\d+)\/(\d+)/g)) {
+    for (const [, suite, passed, total] of line.matchAll(/passed `(NOMO(?:UI)?Tests)` (\d+)\/(\d+)/g)) {
       assert.equal(passed, total, line);
-      assert.ok(Number(total) <= (suite === "VOIDTests" ? unitCases : uiCases), line);
+      assert.ok(Number(total) <= (suite === "NOMOTests" ? unitCases : uiCases), line);
     }
-    assert.match(line, new RegExp(`\\b${unitCases} \`VOIDTests\``), line);
-    assert.match(line, new RegExp(`\\b${uiCases} \`VOIDUITests\``), line);
+    assert.match(line, new RegExp(`\\b${unitCases} \`NOMOTests\``), line);
+    assert.match(line, new RegExp(`\\b${uiCases} \`NOMOUITests\``), line);
   }
 });
 
 test("the matrix prints the Apple version metadata the project declares", () => {
   const declared = readFileSync("apps/apple/project.yml", "utf8");
-  const project = readFileSync("apps/apple/VOID.xcodeproj/project.pbxproj", "utf8");
+  const project = readFileSync("apps/apple/NOMO.xcodeproj/project.pbxproj", "utf8");
   const marketing = declared.match(/MARKETING_VERSION:\s*(\S+)/)?.[1];
   const build = declared.match(/CURRENT_PROJECT_VERSION:\s*(\S+)/)?.[1];
 
@@ -187,7 +187,7 @@ test("the evidence documents keep the physical-device and store boundary explici
 
   assert.match(
     windows,
-    /Windows is out of scope for the VOID 1\.0\.1 delivery/,
+    /Windows is out of scope for the NOMO 1\.0\.1 delivery/,
     "docs/WINDOWS-DESKTOP.md no longer states the Windows release scope",
   );
   assert.match(
@@ -259,7 +259,7 @@ function countRustTestCases(directory) {
 }
 
 /**
- * `void recovery conformance` emits one scenario per declared operation, so
+ * `nomo recovery conformance` emits one scenario per declared operation, so
  * an adapter's scenario count is the operation list in its capability
  * profile.
  *
@@ -360,12 +360,12 @@ function suiteCountPatterns() {
   const patterns = [
     ["desktop rust crate", /`cargo test`\s+(\d+)\/\d+/gu],
     ["desktop rust crate", /desktop crate is (\d+)\/\d+/gu],
-    ["VOIDTests", /(\d+)\s+`VOIDTests`(?:\s+source)?\s+cases/gu],
-    ["VOIDTests", /`VOIDTests`\s+(\d+)\/\d+/gu],
-    ["VOIDTests", /`VOIDTests\s+(\d+)\/\d+`/gu],
-    ["VOIDUITests", /(\d+)\s+`VOIDUITests`(?:\s+source)?\s+cases/gu],
-    ["VOIDUITests", /`VOIDUITests`\s+(\d+)\/\d+/gu],
-    ["VOIDUITests", /`VOIDUITests\s+(\d+)\/\d+`/gu],
+    ["NOMOTests", /(\d+)\s+`NOMOTests`(?:\s+source)?\s+cases/gu],
+    ["NOMOTests", /`NOMOTests`\s+(\d+)\/\d+/gu],
+    ["NOMOTests", /`NOMOTests\s+(\d+)\/\d+`/gu],
+    ["NOMOUITests", /(\d+)\s+`NOMOUITests`(?:\s+source)?\s+cases/gu],
+    ["NOMOUITests", /`NOMOUITests`\s+(\d+)\/\d+/gu],
+    ["NOMOUITests", /`NOMOUITests\s+(\d+)\/\d+`/gu],
   ];
   for (const adapter of ADAPTERS) {
     const id = adapter.replace(/\./gu, "\\.");
@@ -384,8 +384,8 @@ test("every suite count the matrix states is the count the tree has, once", asyn
   // Counts this platform cannot re-measure, reported rather than dropped.
   const unmeasured = [];
   const expected = new Map([
-    ["VOIDTests", countSwiftTestCases("apps/apple/VOIDTests")],
-    ["VOIDUITests", countSwiftTestCases("apps/apple/VOIDUITests")],
+    ["NOMOTests", countSwiftTestCases("apps/apple/NOMOTests")],
+    ["NOMOUITests", countSwiftTestCases("apps/apple/NOMOUITests")],
     ["desktop rust crate", countRustTestCases("apps/desktop/src-tauri/src")],
     ...(await conformanceScenarioCounts()),
   ]);

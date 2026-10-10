@@ -5,7 +5,7 @@ Object.assign(
   process.env,
   JSON.parse(await readFile(".env.cloud-secrets", "utf8")),
 );
-process.env.VOID_LOCAL_TEST = "1";
+process.env.NOMO_LOCAL_TEST = "1";
 const { default: api } = await import("../../cloud/server.mjs");
 const app = express();
 app.use((req, res, next) => {
@@ -15,7 +15,7 @@ app.use((req, res, next) => {
   )
     return res.sendStatus(403);
   if (!["GET", "HEAD"].includes(req.method)) return res.sendStatus(405);
-  req.headers.authorization = `Bearer ${process.env.VOID_CONTROL_TOKEN}`;
+  req.headers.authorization = `Bearer ${process.env.NOMO_CONTROL_TOKEN}`;
   next();
 });
 app.use("/api", (req, res, next) => {

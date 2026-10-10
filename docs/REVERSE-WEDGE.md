@@ -1,7 +1,7 @@
-# The reverse-engineering wedge: should VOID become an RE tool, and what is the first defensible move
+# The reverse-engineering wedge: should NOMO become an RE tool, and what is the first defensible move
 
 Written 2026-09-26 against commit `63dbd2c` on `main`. Companion to
-`docs/VOID-FUTURE-DIRECTION.md` (the outside-in assessment) and
+`docs/NOMO-FUTURE-DIRECTION.md` (the outside-in assessment) and
 `docs/PREMISE-VERIFICATION.md` (its adversarial check). This document is a third
 thing: it asks a narrower question and answers it with a decision.
 
@@ -11,7 +11,7 @@ decompilation, no symbolic execution, no YARA, no PCAP, no firmware work, no
 protocol reconstruction, no exploit generation and no fuzzing. It has a signed
 hash-chained ledger, an effect-level policy engine, a recovery substrate, an MCP
 server, and — as of `63dbd2c` — a record of which policy decided each call and
-which rule fired. The question is not whether VOID can analyse binaries. It is
+which rule fired. The question is not whether NOMO can analyse binaries. It is
 what the defensible first move from a governed-executor substrate into reverse
 engineering is.
 
@@ -45,7 +45,7 @@ private material.
 
 **Things I did not verify and will not guess at:**
 
-- Binary Ninja **Sidekick** subscription pricing. `VOID-FUTURE-DIRECTION.md`
+- Binary Ninja **Sidekick** subscription pricing. `NOMO-FUTURE-DIRECTION.md`
   §2.4 quotes "$0 / $30 / $100 / $300 per month, or $5,000 per concurrent user
   per year self-hosted". I verified the *licence* pricing for Binary Ninja
   itself (below) and found Sidekick's own blog post saying only that "we recently
@@ -56,7 +56,7 @@ private material.
   server — hash-only, no LLM". Not checked.
 - The **Doyensec** XBOW-vs-Aikido measurement and the **ProjectDiscovery**
   54-target behavioural audit. Both are quoted at second hand from
-  `VOID-FUTURE-DIRECTION.md` and I did not re-fetch either primary. I do not
+  `NOMO-FUTURE-DIRECTION.md` and I did not re-fetch either primary. I do not
   lean on them below except where I say I do.
 - Whether the **181-repository** "ghidra mcp" GitHub search figure still holds. I
   checked the leading repo directly, not the search.
@@ -80,8 +80,8 @@ of them has a write surface that can be named.**
   40,512 downloads at read time. Source: `api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest`.
 - **Licence.** **Apache-2.0.** Some NSA-authored portions are additionally
   dedicated to the public domain; the effect is permissive either way. Apache-2.0
-  is the same licence VOID ships, so there is no distribution incompatibility
-  between a VOID that drives Ghidra and a VOID that is Ghidra.
+  is the same licence NOMO ships, so there is no distribution incompatibility
+  between a NOMO that drives Ghidra and a NOMO that is Ghidra.
 - **Agent surface.** **None from NSA.** The leading third-party server,
   `LaurieWired/GhidraMCP`, is **Apache-2.0**, **10,188★**, but its last push is
   **2025-06-23** — dormant for fifteen months — with 84 open issues. It is not
@@ -100,7 +100,7 @@ first-party MCP server.
   perpetual-licence-plus-updates: Free $0, Non-Commercial **$199**, Commercial
   **$1,799**, Headless **$1,259**, Ultimate **$3,499**. Non-Commercial went
   *down* from $299; Commercial went *up*.
-- **The MCP surface, precisely.** Two variants, and `VOID-FUTURE-DIRECTION.md`
+- **The MCP surface, precisely.** Two variants, and `NOMO-FUTURE-DIRECTION.md`
   §2.4's phrase "in every edition, including free" is **only true of one of
   them**. From `docs.binary.ninja/guide/mcp.html`, read today:
   - *GUI server* — binary `binaryninja`, **HTTP only**, "Included with every
@@ -125,7 +125,7 @@ first-party MCP server.
   surface to wrap at all, and the whole "wrap the analyser" option has nothing
   to wrap.**
 - **What this means.** Binary Ninja is the strongest agentic RE product in
-  existence and it is not open source. A VOID that drives it is a VOID that
+  existence and it is not open source. A NOMO that drives it is a NOMO that
   requires the user to hold a $199–$1,799 licence, and whose Free tier cannot be
   used commercially. Under the standing constraint that the first step must not
   require the user to pay, **Binary Ninja is disqualified as a first step** and
@@ -139,11 +139,11 @@ first-party MCP server.
   built and maintained by Hex-Rays, not a community project.
 - **Vintage.** Repo **created 2026-08-27**; last push **2026-09-26**; **153★**,
   4 forks, 4 open issues. Announced by Duncan Ogilvie on the Hex-Rays blog
-  **2026-09-25**. So the date in `VOID-FUTURE-DIRECTION.md` is right; the
+  **2026-09-25**. So the date in `NOMO-FUTURE-DIRECTION.md` is right; the
   adoption is thirty days old and 153 stars.
 - **The incumbent it displaces.** `mrexodia/ida-pro-mcp` is **MIT**, **12,347★**,
   pushed today, and its own README now opens with "I recommend using the
-  **Official Hex-Rays IDA MCP Server** instead!". `VOID-FUTURE-DIRECTION.md`
+  **Official Hex-Rays IDA MCP Server** instead!". `NOMO-FUTURE-DIRECTION.md`
   does not mention this 12k★ project at all. That omission matters more than the
   Hex-Rays launch does, because 12,347★ is the actual adoption number for
   agent-driven IDA and it is what a competitor would measure against.
@@ -165,7 +165,7 @@ first-party MCP server.
   the script does. This is not a gap in IDA MCP; it is a consequence of the Code
   Mode design that Hex-Rays chose on purpose for a stated reason (token
   efficiency: "approximately 20%" token reduction, on an internal benchmark with
-  no published numbers). **The design decision and VOID's design requirement are
+  no published numbers). **The design decision and NOMO's design requirement are
   in direct conflict, and no amount of integration fixes it.**
 - **The evidence artefact is a gist.** The post's demo concludes: "If you're
   curious about how the agent came to these conclusions, you can read through the
@@ -219,7 +219,7 @@ distributed with different licenses. Probably the only concern for distributing
 static builds of radare2 is the **GPL** license, and you can skip the related
 code with the `--without-gpl` configure flag."
 
-For a VOID that *subprocesses* `r2` rather than linking it, LGPLv3 is not a
+For a NOMO that *subprocesses* `r2` rather than linking it, LGPLv3 is not a
 distribution problem. The problem is that r2 has no first-party MCP server, so
 integrating it means writing the bridge — which is a project, not an increment.
 
@@ -249,7 +249,7 @@ is *measured* from what is *asserted by a vendor about its own product*.
 ### 3.1 Measured: the models are not reliable, and the field knows it
 
 - **REFORGE** (Koller & Schmidt, arXiv **2607.07738**, 2026-07-07) makes the
-  methodological point that matters most for VOID: "Existing benchmarks for
+  methodological point that matters most for NOMO: "Existing benchmarks for
   LLM-assisted binary analysis **treat the construction of function-level ground
   truth as a solved pre-processing step and report accuracy without disclosing
   how many functions were reliably evaluable**." Its own controlled
@@ -334,7 +334,7 @@ is *measured* from what is *asserted by a vendor about its own product*.
 | Published accuracy cannot be reproduced | **REFORGE: 87.2%→65.9%, survivorship bias** | a denominator: how many claims were independently checkable |
 | Analysis sessions are concurrent and shared | IDA Nexus; angr's `_serialized` project lock | ordering across agents — which is exactly what a hash chain gives and a local log does not |
 
-**Every row in that table is a field VOID's ledger already knows how to carry,
+**Every row in that table is a field NOMO's ledger already knows how to carry,
 and none of them is a field any RE tool currently records in a portable,
 third-party-checkable form.** That is the finding.
 
@@ -344,7 +344,7 @@ third-party-checkable form.** That is the finding.
 
 ### Option A — Wrap an existing analyser. Rejected.
 
-**What it would look like.** VOID becomes the governed, signed, undoable wrapper
+**What it would look like.** NOMO becomes the governed, signed, undoable wrapper
 around Ghidra or Binary Ninja over MCP, proxying the agent's analysis calls
 through the existing policy engine and into the ledger.
 
@@ -359,7 +359,7 @@ through the existing policy engine and into the ledger.
    Option A, done right, is Option A against angr specifically. That is fine,
    but it is a narrower claim than it looks.
 2. **The best-integrated option's write surface is unclassifiable.** Hex-Rays'
-   entire write surface is `execute_python`. VOID's effect classifier decides on
+   entire write surface is `execute_python`. NOMO's effect classifier decides on
    what an action *did* — effect, reversibility, readiness, resource set. It
    cannot decide on "a Python script." The moment the tool's write surface is a
    general scripting escape, the effect-level policy engine has nothing to
@@ -370,13 +370,13 @@ through the existing policy engine and into the ledger.
    write at all. I could not resolve it. Designing a governed wrapper around a
    surface whose write capability is undocumented is not a plan.
 4. **Even when the write surface is named, there is nothing to invert.** A
-   rename in a `.bndb` or an IDB is not a before-image VOID can capture. The
+   rename in a `.bndb` or an IDB is not a before-image NOMO can capture. The
    state lives inside the analyser's serialisation format, which is
-   undocumented, version-specific, and not the analyser's bytes. VOID's one real
+   undocumented, version-specific, and not the analyser's bytes. NOMO's one real
    byte-level inversion is S3 object bodies, and it works because an S3 object
    body is a byte array. An IDB is not a byte array with a documented mapping.
-   Wrapping Ghidra or Binary Ninja would therefore give VOID a *policy* over RE
-   and *no* *recovery* over RE — strictly worse than what VOID does today for
+   Wrapping Ghidra or Binary Ninja would therefore give NOMO a *policy* over RE
+   and *no* *recovery* over RE — strictly worse than what NOMO does today for
    files, where it has both.
 5. **It is the work someone else already did, for free, better.** Shipping
    another RE MCP server in 2026 is shipping a worse version of a free
@@ -390,7 +390,7 @@ built on top of something that already records claims.
 
 ### Option B — Build the layer underneath. **Chosen.**
 
-VOID does not analyse. It governs and attests whatever agent drives whatever
+NOMO does not analyse. It governs and attests whatever agent drives whatever
 tool. The concrete capability that makes this more than a logging wrapper is
 **re-derivation**: every assertion an agent makes about a binary is a ledger
 record that names the bytes it was derived from, the tool and tool version that
@@ -401,7 +401,7 @@ be reproduced.
 
 The reason this is not a logging wrapper: **a log records that a call happened.
 A re-derivation record makes a specific claim falsifiable.** The difference is
-the same one VOID already draws for policy attribution, generalised from *why a
+the same one NOMO already draws for policy attribution, generalised from *why a
 call was allowed* to *what an agent asserted and on what basis*. Commit `63dbd2c`
 is the precedent: the body is `unknown`, the entry hash covers canonical JSON of
 whatever is in it, and the chain has no per-field schema. Adding an assertion
@@ -415,10 +415,10 @@ structural requirement is a string `workspace` field, enforced at
 is a single dependency-free file importing only `node:crypto` and `node:fs`,
 which re-implements the canonicaliser, entry hash, signing preimage and Merkle
 digest byte-for-byte, with a `--selftest` pinning six shared vectors. A RE claim
-in the chain is verified by that same file with no VOID installed. That is the
+in the chain is verified by that same file with no NOMO installed. That is the
 whole delivery mechanism and it already works.
 
-**The honest limit, stated up front.** As of today, every VOID verification
+**The honest limit, stated up front.** As of today, every NOMO verification
 surface says `integrity only` alongside its claim, because in every shipped
 topology the recorder, the signer and the verifier are one OS principal. A
 signed RE assertion therefore proves *the same thing* the ledger already
@@ -431,14 +431,14 @@ this is still the right move and also states the strongest objection to it.
 
 ### Option C — Reframe the goal. Rejected, but its diagnosis is adopted.
 
-The honest position is that VOID is an agent-governance and recovery substrate of
+The honest position is that NOMO is an agent-governance and recovery substrate of
 which reverse engineering is one eventual user, and saying so plainly beats
 claiming a capability that is not there.
 
 **I agree with the diagnosis and reject the response.** `PREMISE-VERIFICATION.md`
 §1b holds: the gap is "real, total, and correctly named." But the diagnosis does
 not force a *reframe*; it forces a *sequencing change inside the same goal*. The
-question was never "does VOID have disassembly." It was "what is the defensible
+question was never "does NOMO have disassembly." It was "what is the defensible
 first move from a governed-executor substrate into reverse engineering." The
 substrate is not beside the RE goal. It is the part of the RE goal that nobody
 has built, that the one paid vendor in the field decided not to build, and that
@@ -449,9 +449,9 @@ the reframed sentence does not already say.
 **What is lost by not reframing:** the ability to say "we are a reverse-engineering
 tool" for as long as that remains false. **What is gained:** a first increment
 that is real, provable, free to build, and cannot be shipped by anyone else,
-because it requires VOID's specific existing assets — the opaque-body hash chain,
+because it requires NOMO's specific existing assets — the opaque-body hash chain,
 the attribution pattern from `63dbd2c`, the out-of-band anchor in
-`void export verify`, and the dependency-free standalone verifier — used together
+`nomo export verify`, and the dependency-free standalone verifier — used together
 in a combination that has no other holder.
 
 ---
@@ -477,20 +477,20 @@ Option B, and Option A later plugs into it.
    - `derivation`: `{ procedure, inputs, output }` — enough to *redo* the
      derivation, not just to observe it.
    - `confidence`: the analyser's own declared confidence, carried verbatim and
-     never recomputed by VOID.
+     never recomputed by NOMO.
 2. A named refusal in the verifier, mirroring `packages/ledger/src/attribution.ts`:
    a **missing** assertion field passes (pre-existing entries), a **malformed**
    one is a named finding that fails the chain, and a **rewritten** one fails
    because the whole-file rewrite changes every hash. Three states, kept apart by
    construction — the same three-state discipline `63dbd2c` established.
-3. **One re-derivation procedure VOID ships and can always run**, with no third
+3. **One re-derivation procedure NOMO ships and can always run**, with no third
    party: `sha256(file, offset, length)`. It is trivial, deterministic, and it is
    the honest minimum. The point is not that `sha256` is a hard analysis. The
    point is that the *machinery* — a claim bound to bytes, a third-party
    re-derivation that either reproduces the claim or refuses — exists and is
    proven end to end before anyone depends on it.
-4. A CLI surface: `void assertion add`, `void assertion verify --standalone`,
-   and the existing `void verify --standalone` extended to the new body shape.
+4. A CLI surface: `nomo assertion add`, `nomo assertion verify --standalone`,
+   and the existing `nomo verify --standalone` extended to the new body shape.
 
 ### 5.2 The files it touches
 
@@ -505,9 +505,9 @@ changes**, and no frozen recovery format moves.
 | `packages/ledger/src/verify.ts` | Route the new finding into `verifyChain`, mirroring the four-line attribution hook. |
 | `packages/ledger/src/store.ts` | Route the new finding into the store's own check, so the feed refuses exactly what the verifier refuses. |
 | `packages/ledger/src/feed.ts` | Same routing on the read path. |
-| `packages/verifier/verify-ledger.mjs` | Re-implement the assertion parse and the `sha256(range)` re-derivation with **no VOID imports**, and pin the vectors in the existing `--selftest`. |
+| `packages/verifier/verify-ledger.mjs` | Re-implement the assertion parse and the `sha256(range)` re-derivation with **no NOMO imports**, and pin the vectors in the existing `--selftest`. |
 | `packages/cli/src/assert.ts` | **New.** `add` and `verify` subcommands. |
-| `packages/cli/bin/void.mjs` | Two dispatch lines. |
+| `packages/cli/bin/nomo.mjs` | Two dispatch lines. |
 | `packages/policy/src/attribution.ts` | **No change.** An assertion is not a tool call, so no policy decision exists. It is appended directly, and the record says so in a field the verifier checks, so a host cannot synthesise a policy-attributed assertion. |
 | `fixtures/` | **New.** A checked-in, minimal, *real* ELF with magic bytes and one function — see §5.4. |
 
@@ -522,12 +522,12 @@ the first increment is entirely inside the ledger and the CLI.
 
 Four proofs, in increasing hostility. Every one is a command, not a claim.
 
-1. **Round trip.** `void assertion add` on the fixture, then
+1. **Round trip.** `nomo assertion add` on the fixture, then
    `node packages/verifier/verify-ledger.mjs <bundle> --public-key <spki>`
    → `VERIFIED n entries, head <hash> (signatures and hash links)`, exit 0.
    Proves the new body shape is hashed, chained and signed by the existing
    machinery with no format change.
-2. **Re-derivation succeeds.** `void assertion verify --standalone` recomputes
+2. **Re-derivation succeeds.** `nomo assertion verify --standalone` recomputes
    `sha256` over every declared `(offset, length)` range of the fixture and
    matches every declared digest. Proves the evidence binding is real, not a
    label.
@@ -543,7 +543,7 @@ Four proofs, in increasing hostility. Every one is a command, not a claim.
    `scripts/ledger-verify.mjs` is the existing harness and is the template.
 
 Additionally, and this is a requirement not a nicety: the same rewrite must be
-caught by the **dependency-free** verifier with no VOID on the path. If the
+caught by the **dependency-free** verifier with no NOMO on the path. If the
 standalone script can be made to pass a rewritten chain, the increment is not
 done.
 
@@ -589,8 +589,8 @@ Stated as scope, not as an estimate I cannot support.
   missing attribution by passing rather than failing; the assertion finding
   must do the same, and proof 1 must run against a ledger produced by the
   *previous* commit to demonstrate it.
-- **What it does not cost:** it does not make VOID able to analyse anything. It
-  makes VOID able to *say what an agent claimed, about which bytes, from which
+- **What it does not cost:** it does not make NOMO able to analyse anything. It
+  makes NOMO able to *say what an agent claimed, about which bytes, from which
   tool version, and let a third party check that binding.* Every RE capability
   built on top of it inherits the property for free; without it, none of them
   have it.
@@ -602,7 +602,7 @@ Only after the first is proven: govern angr's `rename` / `set_type` /
 already in angr mainline. This is the first genuinely new governed effect class
 — a durable, batched, partially-failing write to *analysis state* rather than to
 a file or a row — and it is the first place angr's documented "edits already
-applied are NOT rolled back" becomes VOID's problem to solve. It will require a
+applied are NOT rolled back" becomes NOMO's problem to solve. It will require a
 new effect class in `packages/policy/src/grammar.ts` and `rules.ts` and a new
 tool in `packages/cli/src/recovery-mcp.ts`, because those vocabularies are
 closed in code by design. That cost is real and is why it is second.
@@ -651,7 +651,7 @@ in a RE product.** The three failure modes that recur across every source I read
 — torn batch edits with no rollback, dry-runs with side effects, and claims that
 cannot be attributed to a tool version or a denominator — are not RE problems.
 They are *ledger* problems. They have the same shape as the ones
-`VOID-FUTURE-DIRECTION.md` §2.5 documents in offensive agents ("nobody can read
+`NOMO-FUTURE-DIRECTION.md` §2.5 documents in offensive agents ("nobody can read
 what they did") and §3 discusses for the ledger generally. Reverse engineering is
 simply the domain where these failures are most expensive and most visible,
 because the output is a claim about someone else's code and the person who has
@@ -677,7 +677,7 @@ revenue data. I am not going to manufacture one.
   See §6.
 - Whether the AAT draft's requirement — that the recorder run under a different
   OS principal holding a key the agent cannot read — can be met on macOS in a
-  shipping product. `VOID-FUTURE-DIRECTION.md` §1.4 says every 2026 governance
+  shipping product. `NOMO-FUTURE-DIRECTION.md` §1.4 says every 2026 governance
   tool has the same gap. I did not re-verify that survey and it is the single
   most consequential unknown for this document; see §8.
 - Whether Ghidra 12.1.4's `analyzeHeadless` output is stable enough to be a
@@ -694,7 +694,7 @@ revenue data. I am not going to manufacture one.
 establishes: a chain signature "proves the bytes came from a process holding a
 key and that the chain is internally consistent, and **it does not prove nobody
 rewrote the history, since in every shipped topology the recorder, the signer
-and the verifier are one principal**." Every VOID verification surface now says
+and the verifier are one principal**." Every NOMO verification surface now says
 `integrity only` alongside its claim, and `docs/OPERATIONS.md:374-376` scopes the
 anchor as detecting "tampering by a third party, **not by the agent itself, not
 non-repudiation**, and not a claim of trust level L2."
@@ -710,15 +710,15 @@ content to a substrate whose own commit message says the signature is
 `integrity only`, and whose documented scope explicitly excludes the agent.
 
 And the asymmetry that makes it worse: **you can restore a row. You cannot
-restore the truth of a claim.** VOID's undo story works because the inverse of
+restore the truth of a claim.** NOMO's undo story works because the inverse of
 `postgres.row.update` is a write. The inverse of a *true* function analysis does
 not exist — the only available action is to re-run the analysis, with a possibly
 different tool version, a possibly different model, and a decompiler that is
 deterministic only in the sense that it is deterministic for one build of one
 tool. So the one thing this wedge produces is precisely the one kind of artefact
-VOID cannot make reversible, and it is the one kind that matters most.
+NOMO cannot make reversible, and it is the one kind that matters most.
 
-If the AAT-style trust model in `VOID-FUTURE-DIRECTION.md` §1.4 is right — and
+If the AAT-style trust model in `NOMO-FUTURE-DIRECTION.md` §1.4 is right — and
 every competitor has the same gap, which is the only reason I do not treat it as
 fatal — then the honest sequencing is that the **trust-model fix gates this
 wedge, and the wedge gates Option A.** That is why the first increment is the
@@ -737,7 +737,7 @@ today and cannot be upgraded.
 
 Reported, not edited, per the standing instruction.
 
-1. **`docs/VOID-FUTURE-DIRECTION.md` §2.4** — "Binary Ninja shipped a first-party
+1. **`docs/NOMO-FUTURE-DIRECTION.md` §2.4** — "Binary Ninja shipped a first-party
    MCP server on 2026-09-03 (in every edition, including free)". True of the
    **GUI HTTP** variant only. The headless `binaryninja_mcp` stdio binary is
    "Included with Binary Ninja Commercial or Ultimate" and, stated twice in
@@ -745,19 +745,19 @@ Reported, not edited, per the standing instruction.
    Binary Ninja Free is also "Not for commercial purposes" and has "No API /
    plugin access". The claim as written would lead a reader to think a free,
    headless, agent-drivable decompiler exists. It does not.
-2. **`docs/VOID-FUTURE-DIRECTION.md` §2.4** — the same section names Hex-Rays'
+2. **`docs/NOMO-FUTURE-DIRECTION.md` §2.4** — the same section names Hex-Rays'
    IDA MCP and GhidraMCP but **omits `mrexodia/ida-pro-mcp` entirely**, which is
    MIT, has **12,347★** (as of 2026-09-26), is pushed today, and is the
    incumbent that Hex-Rays' own new first-party server is displacing — its
    README now opens by recommending the official one. For a market-adoption
    argument, 12,347★ is the more important number and it is missing.
-3. **`docs/VOID-FUTURE-DIRECTION.md` §2.4** — "angr merged an MCP server into
+3. **`docs/NOMO-FUTURE-DIRECTION.md` §2.4** — "angr merged an MCP server into
    mainline" is correct and materially understates it. `angr/mcp/` contains
    `edit_tools.py` with batched `rename` / `set_type` / `set_comments` over
    named kinds, `dry_run`, `stop_on_error`, `allow_overwrite`, per-item
    `old`/`new`/status results, and `restore_user_edits` imported. The write
    surface is the entire wedge and the document does not mention that it exists.
-4. **`docs/VOID-FUTURE-DIRECTION.md` §2.3** — "Hex-Rays explicitly warns you to
+4. **`docs/NOMO-FUTURE-DIRECTION.md` §2.3** — "Hex-Rays explicitly warns you to
    sandbox them yourself". **Verified verbatim** and stronger than stated: the
    warning is attached specifically to the fact that "IDA does not yet isolate
    its Python interpreter from the wider system, [so] the agent can evaluate
@@ -772,7 +772,7 @@ Reported, not edited, per the standing instruction.
    "read-only BinaryView information" three times and warns "The exact tool list
    may change as the MCP server develops." I could not resolve this and it
    should be recorded as unresolved rather than assumed.
-6. **`docs/VOID-FUTURE-DIRECTION.md` §2.4** — Ghidra "12.1.4 (2026-09-21)".
+6. **`docs/NOMO-FUTURE-DIRECTION.md` §2.4** — Ghidra "12.1.4 (2026-09-21)".
    **Confirmed exactly**: tag `Ghidra_12.1.4_build`, published 2026-09-21T17:38:59Z.
 7. **Unconfirmed by me, flagged not corrected:** the Sidekick price figures
    ("$0 / $30 / $100 / $300 per month … $5,000 per concurrent user per year")
@@ -844,4 +844,4 @@ Local, at `63dbd2c`:
 - `fixtures/` (registry JSON plus five text fixtures; no binary fixture)
 - `packages/cli/src/mcp-reverse-exercise.ts:14-18,51-52` and
   `scripts/src/agentic-reverse-exercise.mjs:35-40,51-52` (the 11-byte literal)
-- `LICENSE`, `NOTICE` (Apache-2.0, `Copyright 2026 the VOID authors`)
+- `LICENSE`, `NOTICE` (Apache-2.0, `Copyright 2026 the NOMO authors`)

@@ -7,7 +7,7 @@ import { PROVIDERS } from "./oauth.mjs";
 import { OPERATOR_OWNER } from "./owner.mjs";
 test(
   "OAuth HTTP lifecycle: auth, CSRF, binding, denial, replay, refresh, context and disconnect",
-  { skip: process.env.VOID_OAUTH_DATABASE_TEST !== "1" },
+  { skip: process.env.NOMO_OAUTH_DATABASE_TEST !== "1" },
   async (t) => {
     assert.equal(
       new URL(process.env.DATABASE_URL).pathname,
@@ -90,7 +90,7 @@ test(
       nativeFetch(base + path, {
         method,
         headers: {
-          authorization: "Bearer " + process.env.VOID_CONTROL_TOKEN,
+          authorization: "Bearer " + process.env.NOMO_CONTROL_TOKEN,
           "content-type": "application/json",
           ...extra,
         },

@@ -53,7 +53,7 @@ test("permission mode is server authoritative and fails closed",()=>{
 });
 
 test("GUI edits use revisions and signed undo, branches do not replay tools, requests survive restart", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-gui-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-gui-"));
   let requests = 0;
   const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
@@ -63,7 +63,7 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
           choices: [{ message: { role: "assistant", content: "Complete." } }],
           usage: { prompt_tokens: 2, completion_tokens: 3, total_tokens: 5 },
         }));
-  let wb = new Workbench({ VOID_DATA_DIR: directory, VOID_PERMISSION_MODE: "normal" }, fetcher);
+  let wb = new Workbench({ NOMO_DATA_DIR: directory, NOMO_PERMISSION_MODE: "normal" }, fetcher);
   t.after(async () => {
     wb.close();
     await rm(directory, { recursive: true, force: true });
@@ -139,7 +139,7 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
   });
   wb.patchPreferences({ locale: "en" });
   wb.close();
-  wb = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  wb = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
   assert.equal(wb.getPreferences().locale, "en");
   assert.equal(wb.sessionPage(new URLSearchParams("archived=true")).total, 1);
   assert.equal((await wb.start("First", "test", "request-one")).id, session.id);
@@ -147,9 +147,9 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
 });
 
 test("provider 429 persists Retry-After and never retries the generation", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-rate-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-rate-"));
   let calls = 0;
-  const wb = new Workbench({ VOID_DATA_DIR: directory }, async (url) =>
+  const wb = new Workbench({ NOMO_DATA_DIR: directory }, async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test" }] })
       : (calls++,
@@ -179,7 +179,7 @@ test("provider 429 persists Retry-After and never retries the generation", async
 });
 
 test("a connector keeps its secret, exposes its schema, and only an explicit probe contacts the server", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-connector-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-connector-"));
   const methods: string[] = [];
   const server = createServer(async (req, res) => {
     let text = "";
@@ -214,7 +214,7 @@ test("a connector keeps its secret, exposes its schema, and only an explicit pro
   await new Promise<void>((resolve) => server.once("listening", resolve));
   const address = server.address();
   assert.ok(address && typeof address !== "string");
-  const wb = new Workbench({ VOID_DATA_DIR: directory });
+  const wb = new Workbench({ NOMO_DATA_DIR: directory });
   t.after(async () => {
     wb.close();
     server.closeAllConnections();

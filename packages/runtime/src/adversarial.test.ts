@@ -16,7 +16,7 @@ import {
 import type { Observation, Outcome } from "../../connectors/src/recovery.ts";
 
 async function fixture(t: import("node:test").TestContext) {
-  const root = await mkdtemp(join(tmpdir(), "void-adversarial-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-adversarial-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
   const keys = { first: randomBytes(32) };

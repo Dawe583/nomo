@@ -232,6 +232,56 @@ test("an outcome with no round reports no version, so nothing can be applied", a
   assert.equal(resultIsCurrent(result.state, null), false);
 });
 
+test("a branch already moved before review is not sent to the provider", async () => {
+  const state = ready();
+  let reviews = 0;
+  const result = await serviceTrigger(
+    state,
+    () => GO,
+    async () => {
+      reviews += 1;
+      return approve;
+    },
+    { now: clock(), currentBranchVersion: () => state.branchVersion + 1 },
+  );
+
+  assert.equal(result.outcome.kind, "not-run");
+  assert.equal(reviews, 0);
+});
+
+test("a branch already moved before a retained review is not applied", async () => {
+  const state = ready({ pendingReview: "retained" });
+  let runs = 0;
+  const result = await serviceTrigger(
+    state,
+    () => GO,
+    async () => approve,
+    {
+      now: clock(),
+      currentBranchVersion: () => state.branchVersion + 1,
+      run: async () => {
+        runs += 1;
+      },
+    },
+  );
+
+  assert.equal(result.outcome.kind, "not-run");
+  assert.equal(runs, 0);
+});
+
+test("the branch version is passed to the writer", async () => {
+  const state = ready();
+  const versions: (number | undefined)[] = [];
+  await serviceTrigger(state, () => GO, async () => approve, {
+    now: clock(),
+    run: async (_instructions, branchVersion?: number) => {
+      versions.push(branchVersion);
+    },
+  });
+
+  assert.deepEqual(versions, [state.branchVersion]);
+});
+
 test("every outcome names itself", async () => {
   const outcomes: RoundOutcome[] = [];
   for (const reviewer of [async () => approve, async () => decline]) {

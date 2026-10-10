@@ -1,4 +1,4 @@
-# VOID policy file reference
+# NOMO policy file reference
 
 This is the field-by-field reference for version 1 policy files.
 It is generated from the types and the validator in

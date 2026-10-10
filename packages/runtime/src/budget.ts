@@ -746,15 +746,15 @@ export async function sqliteBudgetStore(file: string): Promise<BudgetStore> {
   await chmod(path, 0o600);
   db.exec("PRAGMA busy_timeout=0");
   db.exec(
-    "CREATE TABLE IF NOT EXISTS void_budget_day (key TEXT PRIMARY KEY, version INTEGER NOT NULL, body TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS nomo_budget_day (key TEXT PRIMARY KEY, version INTEGER NOT NULL, body TEXT NOT NULL)",
   );
   // Prepared once: both call sites sit on a commit path, so re-preparing per
   // read would compile a statement per operation.
   const selectDay = db.prepare(
-    "SELECT version, body FROM void_budget_day WHERE key = ?",
+    "SELECT version, body FROM nomo_budget_day WHERE key = ?",
   );
   const writeDay = db.prepare(
-    "INSERT INTO void_budget_day (key, version, body) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET version = excluded.version, body = excluded.body",
+    "INSERT INTO nomo_budget_day (key, version, body) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET version = excluded.version, body = excluded.body",
   );
   const rowAt = (key: string) =>
     selectDay.get(key) as { version: number; body: string } | undefined;

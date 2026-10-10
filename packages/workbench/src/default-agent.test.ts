@@ -9,7 +9,7 @@ import { canonicalJson } from '../../ledger/src/canonical.ts';
 import { sha256Hex } from '../../ledger/src/sign.ts';
 
 test('default agent writes a captured document, restarts, verifies evidence and explicitly undoes it', async t => {
-  const directory = await mkdtemp(join(tmpdir(), 'void-default-agent-'));
+  const directory = await mkdtemp(join(tmpdir(), 'nomo-default-agent-'));
   const secret = 'default-agent-test-private-api-key';
   let turns = 0;
   const fetcher: typeof fetch = async (url, options) => {
@@ -18,7 +18,7 @@ test('default agent writes a captured document, restarts, verifies evidence and 
     const request = JSON.parse(String(options?.body));
     turns++;
     if (turns === 1) {
-      const tool = request.tools.find((item: { function: { description: string } }) => item.function.description.startsWith('void_workspace_write:'));
+      const tool = request.tools.find((item: { function: { description: string } }) => item.function.description.startsWith('nomo_workspace_write:'));
       assert.ok(tool, 'default document tools must be available without an MCP server');
       return Response.json({ choices: [{ message: { role: 'assistant', content: null, tool_calls: [{ id: 'write-document', type: 'function', function: { name: tool.function.name, arguments: JSON.stringify({ path: 'notes/plan.md', content: 'A real managed document.' }) } }] } }] });
     }
@@ -27,7 +27,7 @@ test('default agent writes a captured document, restarts, verifies evidence and 
     assert.equal(JSON.parse(result.content[0].text).completed, true);
     return Response.json({ choices: [{ message: { role: 'assistant', content: 'The document was created.' } }] });
   };
-  const env = { VOID_DATA_DIR: directory };
+  const env = { NOMO_DATA_DIR: directory };
   let workbench = new Workbench(env, fetcher);
   t.after(async () => { workbench.close(); await rm(directory, { recursive: true, force: true }); });
   await workbench.configure({ baseUrl: 'https://provider.test/v1', apiKey: secret });

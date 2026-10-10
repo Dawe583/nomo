@@ -36,7 +36,7 @@ rename. This is a deliberate refusal, not permission to force
 a restore. Existing files must have one hard link and no special permission bits.
 
 Traversal, symlinks, non-regular files, oversized captures, `.git`, `.ssh`, `.aws`,
-`.env*` and `.void*` path segments are refused. The configured runtime state
+`.env*` and `.nomo*` path segments are refused. The configured runtime state
 must live outside the managed root, including through symlinks/junctions and
 native Windows paths. Alternate data streams, reserved device names, trailing
 dots/spaces and Windows-invalid characters are refused on every platform to
@@ -49,7 +49,7 @@ other tools installed on the machine.
 {
   "workspace": "my-project",
   "stateDir": "recovery-state",
-  "encryptionKeyEnv": "VOID_PROJECT_RECOVERY_KEY",
+  "encryptionKeyEnv": "NOMO_PROJECT_RECOVERY_KEY",
   "agentId": "coding-agent",
   "policyPath": "recovery-policy.yaml",
   "filesystem": {
@@ -81,7 +81,7 @@ An execution request identifies the exact operation and run:
 }
 ```
 
-Use `void recovery inspect --config config.json --input request.json`, review
+Use `nomo recovery inspect --config config.json --input request.json`, review
 the observation, then execute the identical request with `--approve` and the
 returned approval digest. `plan` returns a recovery plan for the operation;
 `apply` requires that exact plan and its digest. Changed requests or state
@@ -89,8 +89,8 @@ invalidate the approval. Delete accepts only `action` and `path`. Rename accepts
 only `action`, `path` and `to`. Both rename paths use the same traversal, protected-path and symlink
 validation.
 
-For local MCP, run `void recovery serve --config config.json`. The existing five
-managed recovery tools remain available; `void_execute` advertises the configured
+For local MCP, run `nomo recovery serve --config config.json`. The existing five
+managed recovery tools remain available; `nomo_execute` advertises the configured
 filesystem mutation schema. Operator policy must explicitly allow these tools.
 A connected MCP client does not bypass the approval policy.
 
@@ -119,6 +119,6 @@ on-disk state. They do not certify concurrent hostile writers, Git, full R05
 or Windows rename behavior. Windows rename is explicitly refused until separate
 CI evidence supports equivalent readiness.
 
-On POSIX, `void recovery conformance` additionally runs 32 disposable
+On POSIX, `nomo recovery conformance` additionally runs 32 disposable
 create/write/delete/rename checks. Windows runs the existing 24
 disposable create/write/delete checks and emits a versioned JSON report. See [Adapter conformance](ADAPTER-CONFORMANCE.md).

@@ -6,9 +6,9 @@ import type { ApprovalBroker } from './server.ts';
 /** Queue decisions for the existing proxy; never create a second broker that
  * would overwrite its pending state or claim a held call has been released. */
 export function localApprovals(env: Readonly<NodeJS.ProcessEnv>): ApprovalBroker {
-  const workspace = env.VOID_WORKSPACE ?? 'default';
+  const workspace = env.NOMO_WORKSPACE ?? 'default';
   if (!/^[A-Za-z0-9_-]+$/.test(workspace)) throw new Error('invalid approval workspace');
-  const dir = env.VOID_APPROVALS_DIR ?? join(homedir(), '.void', 'approvals', workspace);
+  const dir = env.NOMO_APPROVALS_DIR ?? join(homedir(), '.nomo', 'approvals', workspace);
   return {
     listPending() {
       try { return loadPending(dir).filter(record => record.expiresAt > Date.now()); }

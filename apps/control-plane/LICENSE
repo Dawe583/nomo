@@ -1,5 +1,5 @@
-VOID control plane
-Copyright 2026 the VOID authors
+NOMO control plane
+Copyright 2026 the NOMO authors
 
 This directory is NOT licensed under the Apache License 2.0 that covers the
 rest of this repository. It is the closed, paid part of the open core and no
@@ -18,6 +18,6 @@ spine is open, which is the part a security reviewer has to be able to read
 before putting it in a write path. Approvals, budgets, multi-workspace, SSO and
 the taint graph are the paid side.
 
-The independent verifier, which is what an auditor needs in order to check VOID
-without trusting VOID, is not here. It is @void/verifier, it has no dependency
+The independent verifier, which is what an auditor needs in order to check NOMO
+without trusting NOMO, is not here. It is @nomo/verifier, it has no dependency
 on this repository, and that independence is the point.

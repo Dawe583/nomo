@@ -9,7 +9,7 @@ import {
 } from './workspace.ts';
 
 /**
- * The managed workspace is the one tool source VOID owns outright. Its safety
+ * The managed workspace is the one tool source NOMO owns outright. Its safety
  * argument is that a document name is never a host path: `validPath` refuses a
  * leading slash, backslashes, control characters, empty and dot segments, and
  * the reserved prototype names, and it is called before any tool branches on
@@ -174,7 +174,7 @@ for (const { why, name } of ACCEPTED_BUT_INERT_NAMES) {
     // same key round-trips through read.
     const written = executeWorkspaceTool(createWorkspace(), {
       id: 'inert',
-      name: 'void_workspace_write',
+      name: 'nomo_workspace_write',
       arguments: { path: name, content: 'hostile' },
     });
     assert.equal(written.result.isError, undefined, `${JSON.stringify(name)} was refused unexpectedly`);
@@ -184,7 +184,7 @@ for (const { why, name } of ACCEPTED_BUT_INERT_NAMES) {
 
     const read = executeWorkspaceTool(written.state, {
       id: 'inert-read',
-      name: 'void_workspace_read',
+      name: 'nomo_workspace_read',
       arguments: { path: name },
     });
     assert.equal(read.result.isError, undefined);

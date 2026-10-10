@@ -16,12 +16,12 @@ import {
   pinVerificationKey,
 } from "../../ledger/src/verify-key.ts";
 
-import { VoidClient, createVoidClient, CLIENT_MAX_ERROR_BYTES, CLIENT_MAX_ERROR_LINES } from "./client.ts";
+import { NomoClient, createNomoClient, CLIENT_MAX_ERROR_BYTES, CLIENT_MAX_ERROR_LINES } from "./client.ts";
 import { legacyBindingRoot } from "../../proxy/src/legacy-root.ts";
 import { HoldDeniedError, LedgerVerifyError, RefusedError } from "./errors.ts";
 const fixtureServer = fileURLToPath(new URL("../../../fixtures/e2e-server.mjs", import.meta.url));
 async function fixturePolicy(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "void-sdk-policy-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-policy-"));
   const path = join(dir, "policy.yaml");
   await writeFile(path, [
     "version: 1",
@@ -44,9 +44,9 @@ async function fixturePolicy(): Promise<string> {
   return path;
 }
 
-async function makeClient(workspace: string): Promise<VoidClient> {
-  return new VoidClient({
-    ledgerDir: await mkdtemp(join(tmpdir(), "void-sdk-ledger-")),
+async function makeClient(workspace: string): Promise<NomoClient> {
+  return new NomoClient({
+    ledgerDir: await mkdtemp(join(tmpdir(), "nomo-sdk-ledger-")),
     workspace,
     policyPath: await fixturePolicy(),
     connect: { upstreamCommand: [process.execPath, fixtureServer] },
@@ -68,7 +68,7 @@ function textFrom(result: unknown): string | undefined {
   return content?.[0]?.text;
 }
 
-describe("VoidClient", () => {
+describe("NomoClient", () => {
   test("forwards a request and resolves the matching id", async () => {
     const client = await makeClient("forward");
     try {
@@ -101,7 +101,7 @@ describe("VoidClient", () => {
       assert.equal(client.hold(held.holdId).decide({ kind: "denied", by: "tester", reason: "fixture denial" }), true);
       await assert.rejects(client.awaitHold(held.holdId), (error: unknown) => {
         assert.ok(error instanceof HoldDeniedError);
-        assert.equal(error.code, "VOID_HOLD_DENIED");
+        assert.equal(error.code, "NOMO_HOLD_DENIED");
         assert.equal(error.holdId, held.holdId);
         return true;
       });
@@ -113,11 +113,11 @@ describe("VoidClient", () => {
 
 
   test("maps invalid policy startup to PolicyStartupError", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-sdk-invalid-policy-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-invalid-policy-"));
     const policyPath = join(dir, "policy.yaml");
     await writeFile(policyPath, "version: 1\nrules: []\n");
-    const client = new VoidClient({
-      ledgerDir: await mkdtemp(join(tmpdir(), "void-sdk-ledger-")),
+    const client = new NomoClient({
+      ledgerDir: await mkdtemp(join(tmpdir(), "nomo-sdk-ledger-")),
       workspace: "invalid-policy",
       policyPath,
       connect: { upstreamCommand: [process.execPath, fixtureServer] },
@@ -127,7 +127,7 @@ describe("VoidClient", () => {
       await assert.rejects(client.request("tools/call", { name: "echo", arguments: { text: "never" } }), (error: unknown) => {
         assert.ok(error instanceof Error);
         assert.equal(error.name, "PolicyStartupError");
-        assert.equal((error as { readonly code?: string }).code, "VOID_POLICY_STARTUP");
+        assert.equal((error as { readonly code?: string }).code, "NOMO_POLICY_STARTUP");
         return true;
       });
     } finally {
@@ -136,9 +136,9 @@ describe("VoidClient", () => {
   });
 
   test("refuses startup when ledger verification fails", async () => {
-    const ledgerDir = await mkdtemp(join(tmpdir(), "void-sdk-bad-ledger-"));
+    const ledgerDir = await mkdtemp(join(tmpdir(), "nomo-sdk-bad-ledger-"));
     await writeFile(join(ledgerDir, "bad.jsonl"), "not json\n");
-    const client = new VoidClient({
+    const client = new NomoClient({
       ledgerDir,
       workspace: "bad",
       policyPath: await fixturePolicy(),
@@ -148,7 +148,7 @@ describe("VoidClient", () => {
     try {
       await assert.rejects(client.request("tools/call", { name: "echo", arguments: { text: "never" } }), (error: unknown) => {
         assert.ok(error instanceof LedgerVerifyError);
-        assert.equal(error.code, "VOID_LEDGER_VERIFY");
+        assert.equal(error.code, "NOMO_LEDGER_VERIFY");
         return true;
       });
     } finally {
@@ -163,7 +163,7 @@ test("RefusedError maps connector drift refusal reports", () => {
     refused: [{ stepId: "restore-1", reason: "drift", changed: [] }],
   });
   assert.ok(error instanceof RefusedError);
-  assert.equal(error.code, "VOID_REFUSED");
+  assert.equal(error.code, "NOMO_REFUSED");
   assert.equal(error.reason, "drift");
 });
 
@@ -174,7 +174,7 @@ test("RefusedError maps connector drift refusal reports", () => {
 // makes detectable, so the pin is what they are asserted against now.
 for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
   test(`startup authenticates existing ledger: ${scenario}`, async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-sdk-signatures-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-signatures-"));
     const workspace = "signed";
     const path = join(dir, `${workspace}.jsonl`);
     const marker = join(dir, "upstream-started");
@@ -198,9 +198,9 @@ for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
     }
     // A fresh hash chain also passes for forged content and an untrusted signer.
     assert.equal((await verifyLedgerFile(path)).ok, true);
-    const client = new VoidClient({
+    const client = new NomoClient({
       ledgerDir: dir, workspace, policyPath: await fixturePolicy(),
-      env: { VOID_TRUST_DIR: trust },
+      env: { NOMO_TRUST_DIR: trust },
       connect: { upstreamCommand: scenario === "trusted"
         ? [process.execPath, fixtureServer]
         : [process.execPath, "-e", "require('node:fs').writeFileSync(process.argv[1], 'started')", marker] },
@@ -225,13 +225,13 @@ for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
 }
 
 test("an existing ledger with no pinned key is refused, not checked with the private key file", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "void-sdk-unpinned-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-unpinned-"));
   const workspace = "unpinned";
   const home = join(dir, "home");
-  const signer = await devKeyProvider({ dir: join(home, ".void", "keys"), env: {} });
+  const signer = await devKeyProvider({ dir: join(home, ".nomo", "keys"), env: {} });
   await jsonlStore(signer, { dir }).append({ workspace, tool: "echo", decision: "deny" });
   const marker = join(dir, "upstream-started");
-  const client = new VoidClient({
+  const client = new NomoClient({
     ledgerDir: dir,
     workspace,
     policyPath: await fixturePolicy(),
@@ -242,7 +242,7 @@ test("an existing ledger with no pinned key is refused, not checked with the pri
     requestTimeoutMs: 1_000,
   });
   try {
-    // The signing key sits right there at ~/.void/keys and would verify this
+    // The signing key sits right there at ~/.nomo/keys and would verify this
     // chain perfectly. Reading it is the defect: it would also verify a chain
     // an attacker re-signed after replacing that file, so the check is refused
     // and named instead.
@@ -262,7 +262,7 @@ test("an existing ledger with no pinned key is refused, not checked with the pri
 });
 
 test("a signing key named in the environment is a degraded answer, and says so", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "void-sdk-degraded-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-degraded-"));
   const workspace = "degraded";
   // Written straight from a generated pair and used only in this process; the
   // value never reaches a log or a fixture file.
@@ -270,11 +270,11 @@ test("a signing key named in the environment is a degraded answer, and says so",
   const pkcs8 = privateKey.export({ type: "pkcs8", format: "der" }).toString("base64");
   const signer = keyProviderFromPkcs8(Buffer.from(pkcs8, "base64"));
   await jsonlStore(signer, { dir }).append({ workspace, tool: "echo", decision: "deny" });
-  const client = new VoidClient({
+  const client = new NomoClient({
     ledgerDir: dir,
     workspace,
     policyPath: await fixturePolicy(),
-    env: { VOID_SIGNING_KEY: pkcs8 },
+    env: { NOMO_SIGNING_KEY: pkcs8 },
     connect: { upstreamCommand: [process.execPath, fixtureServer] },
     requestTimeoutMs: 5_000,
   });
@@ -334,7 +334,7 @@ async function boundPolicy(dir: string): Promise<string> {
 }
 
 test("a legacy binding supplied to the client is what the proxy uses", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-sdk-binding-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-binding-"));
   t.after(async () => { await rm(dir, { recursive: true, force: true }); });
   const captured: string[] = [];
   const binding = legacyBindingRoot("postgres.row.update", {
@@ -352,7 +352,7 @@ test("a legacy binding supplied to the client is what the proxy uses", async (t)
     ledger: { append: async () => ({}) },
     completed: () => true,
   });
-  const client = createVoidClient({
+  const client = createNomoClient({
     connect: { upstreamCommand: [process.execPath, await boundUpstream(dir)] },
     policyPath: await boundPolicy(dir),
     ledgerDir: join(dir, "ledger"),
@@ -367,7 +367,7 @@ test("a legacy binding supplied to the client is what the proxy uses", async (t)
   // it. That is the honest difference and the reason supplying a binding is not
   // optional decoration: the tool is available either way, but only one of them
   // leaves a capture, an outcome and an undo path behind.
-  const bare = createVoidClient({
+  const bare = createNomoClient({
     connect: { upstreamCommand: [process.execPath, await boundUpstream(dir)] },
     policyPath: await boundPolicy(dir),
     ledgerDir: join(dir, "ledger-bare"),
@@ -433,9 +433,9 @@ createInterface({ input: process.stdin }).on("line", (line) => {
 }
 
 test("error retention is bounded and reports what it dropped", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-sdk-error-cap-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-error-cap-"));
   t.after(async () => { await rm(dir, { recursive: true, force: true }); });
-  const client = createVoidClient({
+  const client = createNomoClient({
     connect: { upstreamCommand: [process.execPath, await noisyUpstream(dir, 4_000)] },
     policyPath: await fixturePolicy(),
     ledgerDir: join(dir, "ledger"),

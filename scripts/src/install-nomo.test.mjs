@@ -18,6 +18,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -87,6 +88,12 @@ function sandbox({ fakeNode = false, fakePnpm = false } = {}) {
     // about the default deletes this again.
     NOMO_HOME: join(home, "tree"),
   };
+  // Legacy names from the developer's own shell must not leak in: an ambient
+  // VOID_HOME would answer for the tree a test means to be unset. Each test
+  // that wants a legacy name sets it explicitly on top of this.
+  for (const key of Object.keys(env)) {
+    if (key.startsWith("VOID_")) delete env[key];
+  }
   const sh = (command, args, extra = {}) =>
     spawnSync(command, args, { encoding: "utf8", env, timeout: 60_000, ...extra });
 
@@ -95,12 +102,14 @@ function sandbox({ fakeNode = false, fakePnpm = false } = {}) {
 
 
 /**
- * A NOMO_HOME that already looks installed, so the installer's clone step is
- * never reached. `git init` is what makes it a tree the installer reuses rather
- * than refuses.
+ * A tree that already looks installed, so the installer's clone step is never
+ * reached. `git init` is what makes it a tree the installer reuses rather than
+ * refuses. `dir` places it somewhere other than the fixture default, for the
+ * tests that need the tree at the documented default path or under a legacy
+ * name.
  */
-function makeTree(home, { withModules = true, stale = false } = {}) {
-  const tree = join(home, "tree");
+function makeTree(home, { withModules = true, stale = false, dir } = {}) {
+  const tree = dir ?? join(home, "tree");
   mkdirSync(join(tree, "packages", "cli", "bin"), { recursive: true });
   writeFileSync(join(tree, entry), "#!/usr/bin/env node\n");
   writeFileSync(join(tree, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
@@ -231,7 +240,7 @@ test("a missing tree refuses, explains the recovery, and runs no CLI", () => {
     const run = box.sh(join(box.home, ".local", "bin", "nomo"), [], { input: "" });
     assert.notEqual(run.status, 0, "a launcher with no tree must not report success");
     assert.match(run.stderr, /no NOMO install at/);
-    assert.match(run.stderr, /install-void\.sh/);
+    assert.match(run.stderr, /install-nomo\.sh/);
     assert.match(run.stderr, /git clone https:\/\/github\.com\/Dawe583\/void\.git/);
     assert.equal(readLog(box.argvLog), null, "nothing may be exec'd when the tree is gone");
   } finally {
@@ -270,6 +279,107 @@ test("NOMO_HOME is read from the environment, with the documented default", () =
   }
 });
 
+test("a legacy VOID_HOME alone installs and runs the same tree NOMO_HOME would", () => {
+  const box = sandbox({ fakeNode: true });
+  try {
+    const tree = makeTree(box.home, { dir: join(box.home, "void-tree") });
+    const legacy = { ...box.env, VOID_HOME: tree };
+    delete legacy.NOMO_HOME;
+
+    const installed = box.sh(installer, [], { env: legacy });
+    assert.equal(installed.status, 0, outputOf(installed));
+    assert.match(installed.stdout, /reusing existing NOMO tree/);
+
+    // The launcher reads the same names the installer resolved, or a machine
+    // that only ever exported the legacy one installs into a tree the launcher
+    // cannot find.
+    const run = box.sh(join(box.home, ".local", "bin", "nomo"), ["--version"], {
+      input: "",
+      env: legacy,
+    });
+    assert.equal(run.status, 0, outputOf(run));
+    assert.deepEqual(forwardedArgs(box.argvLog, tree), ["--version"]);
+  } finally {
+    rmSync(box.home, { recursive: true, force: true });
+  }
+});
+
+test("NOMO_HOME wins over VOID_HOME when both are set", () => {
+  const box = sandbox({ fakeNode: true });
+  try {
+    const owned = makeTree(box.home);
+    const legacy = makeTree(box.home, { dir: join(box.home, "void-tree") });
+    const both = { ...box.env, NOMO_HOME: owned, VOID_HOME: legacy };
+
+    assert.equal(box.sh(installer, [], { env: both }).status, 0);
+    const run = box.sh(join(box.home, ".local", "bin", "nomo"), ["--version"], {
+      input: "",
+      env: both,
+    });
+    assert.equal(run.status, 0, outputOf(run));
+    assert.deepEqual(forwardedArgs(box.argvLog, owned), ["--version"]);
+  } finally {
+    rmSync(box.home, { recursive: true, force: true });
+  }
+});
+
+test("an empty NOMO_HOME is the operator's choice and does not fall back", () => {
+  const box = sandbox({ fakeNode: true });
+  try {
+    const legacy = makeTree(box.home, { dir: join(box.home, "void-tree") });
+    // Empty is not unset. Silently reading VOID_HOME here would run with a tree
+    // nobody asked for, so the installer is expected to fail loudly instead.
+    const empty = { ...box.env, NOMO_HOME: "", VOID_HOME: legacy };
+    const installed = box.sh(installer, [], { env: empty });
+    assert.notEqual(installed.status, 0);
+    assert.equal(
+      readLog(box.argvLog),
+      null,
+      "no tree may be launched after an empty NOMO_HOME",
+    );
+
+    // The launcher resolves the same names, so it must refuse the same way.
+    makeTree(box.home);
+    assert.equal(box.sh(installer, []).status, 0);
+    const run = box.sh(join(box.home, ".local", "bin", "nomo"), [], {
+      input: "",
+      env: empty,
+    });
+    assert.notEqual(run.status, 0, "the launcher must not fall back to VOID_HOME");
+    assert.match(run.stderr, /no NOMO install at/);
+  } finally {
+    rmSync(box.home, { recursive: true, force: true });
+  }
+});
+
+test("only NOMO_ names are aliased, so VOID_HOME never answers for anything else", () => {
+  const box = sandbox({ fakeNode: true });
+  try {
+    // An unrelated name that merely starts with the legacy prefix must not be
+    // mistaken for a spelling of a setting the installer owns.
+    const env = { ...box.env, VOID_DATA_DIR: join(box.home, "void-data") };
+    delete env.NOMO_HOME;
+    const tree = makeTree(box.home, { dir: join(box.home, ".local", "share", "nomo-cli") });
+    const installed = box.sh(installer, [], { env });
+    assert.equal(installed.status, 0, outputOf(installed));
+    assert.match(installed.stdout, /reusing existing NOMO tree/);
+
+    const run = box.sh(join(box.home, ".local", "bin", "nomo"), ["--version"], {
+      input: "",
+      env,
+    });
+    assert.equal(run.status, 0, outputOf(run));
+    assert.deepEqual(forwardedArgs(box.argvLog, tree), ["--version"]);
+    assert.equal(
+      existsSync(join(box.home, "void-data")),
+      false,
+      "an unrelated legacy name must not be read at all",
+    );
+  } finally {
+    rmSync(box.home, { recursive: true, force: true });
+  }
+});
+
 test("the installed launcher keeps the shape the repo root launcher is held to", () => {
   const box = sandbox({ fakeNode: true });
   try {
@@ -280,7 +390,7 @@ test("the installed launcher keeps the shape the repo root launcher is held to",
     // release-packaging.test.mjs holds the repo root to exactly this shape. A
     // second convention here would leave two launchers to keep in agreement.
     assert.match(text, /^#!\/bin\/sh\n/);
-    assert.match(text, /packages\/cli\/bin\/void\.mjs/);
+    assert.match(text, /packages\/cli\/bin\/nomo\.mjs/);
     assert.match(text, /exec node .*"\$@"/);
   } finally {
     rmSync(box.home, { recursive: true, force: true });
@@ -371,8 +481,13 @@ test("--help explains the install and an unknown argument is refused", () => {
     const help = box.sh(installer, ["--help"]);
     assert.equal(help.status, 0, outputOf(help));
     assert.match(help.stdout, /NOMO_HOME/);
-    assert.match(help.stdout, /\.local\/share\/void/);
+    assert.match(help.stdout, /\.local\/share\/nomo-cli/);
     assert.match(help.stdout, /\.local\/bin/);
+    assert.match(
+      help.stdout,
+      /VOID_HOME/,
+      "the legacy name must stay documented as accepted",
+    );
 
     const unknown = box.sh(installer, ["--reinstall-everything"]);
     assert.equal(unknown.status, 1);

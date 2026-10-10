@@ -1,7 +1,7 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.sessions = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.sessions = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   var wrap = document.createElement("div");
   wrap.className = "section";
 
@@ -24,7 +24,7 @@ window.VOID_VIEWS.sessions = function (root) {
     wrap.querySelector("#ss-start").onclick = function () {
       var id = "sess-demo-" + String(F.sessions.length).padStart(2, "0");
       F.sessions.push({ id: id, agent: "demo-agent", host: wrap.querySelector("#ss-host").value, surface: wrap.querySelector("#ss-surface").value, transport: wrap.querySelector("#ss-trans").value, posture: "fail closed", status: "active", calls: 0, holds: 0 });
-      if (window.VOID_TOAST) window.VOID_TOAST(id + " started, mock.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST(id + " started, mock.");
       paint();
     };
     wrap.querySelectorAll("button[data-inspect]").forEach(function (b) {

@@ -476,6 +476,7 @@ export class Workbench {
   async refineHarness(
     sessionId: string,
     input: RefinementProposal,
+    options: { readonly expectedBranchVersion?: number } = {},
   ): Promise<{
     applied: readonly AppliedEdit[];
     awaitingApproval: readonly RefinementEdit[];
@@ -503,6 +504,12 @@ export class Workbench {
 
     const workspace = session.view.workspace;
     return this.locked(async () => {
+      const currentBranchVersion = this.harnessTriggers.get(sessionId)?.branchVersion ?? 0;
+      if (
+        options.expectedBranchVersion !== undefined &&
+        currentBranchVersion !== options.expectedBranchVersion
+      )
+        throw new Error("The branch moved while the Harness review was in flight.");
       const proof = await this.ledger(workspace);
       const verifiedSeqs = new Set(
         (proof?.entries ?? []).map((entry) => entry.seq),
@@ -2325,14 +2332,6 @@ export class Workbench {
     },
   ) {
     return this.locked(async () => {
-      // The conversation this session was learning from is about to be replaced.
-      // Drop the armed trigger and any retained review, and bump the version so
-      // a round already in flight can tell it describes a trajectory that no
-      // longer exists. Carrying the retained review across would be approving a
-      // different conversation by proxy.
-      const armed = this.harnessTriggers.get(id);
-      if (armed !== undefined)
-        this.harnessTriggers.set(id, onBranchMove(armed));
       if (
         typeof body.idempotencyKey !== "string" ||
         !/^[A-Za-z0-9_.:-]{1,160}$/.test(body.idempotencyKey)
@@ -2349,6 +2348,7 @@ export class Workbench {
       if (prior) {
         const child = this.sessions.get(prior);
         if (!child) throw new Error("Idempotent branch result is unavailable.");
+        this.persist();
         return child.view;
       }
       if (this.jobs.size)
@@ -2389,6 +2389,12 @@ export class Workbench {
           text: body.prompt,
         };
       }
+      if (body.snapshotDocuments)
+        this.assertNormalMutation("branch document snapshot");
+      // Invalidate only after validation, but before any write that can fail
+      // after leaving a partial child behind.
+      const armed = this.harnessTriggers.get(id) ?? initialTriggerState();
+      this.harnessTriggers.set(id, onBranchMove(armed));
       const childId = randomUUID(),
         workspace = `agent-${childId}`;
       const child: Session = {
@@ -2423,11 +2429,16 @@ export class Workbench {
       };
       this.sessions.set(childId, child);
       this.documents[workspace] = createWorkspace();
+      this.recordRequest(idempotencyKey, requestValue, childId);
+      for (const e of messages)
+        this.event(child, e.kind, e.text, {
+          importedFrom: id,
+          originalSeq: e.seq,
+        });
       if (body.snapshotDocuments) {
         // Seeding the child workspace is a durable document write, so it obeys
         // the same server permission mode as every other managed-document
         // mutation. Branching itself only creates session state and therefore
-        this.assertNormalMutation("branch document snapshot");
         for (const [path, content] of Object.entries(
           this.workspace(id).files,
         )) {
@@ -2440,12 +2451,6 @@ export class Workbench {
           );
         }
       }
-      for (const e of messages)
-        this.event(child, e.kind, e.text, {
-          importedFrom: id,
-          originalSeq: e.seq,
-        });
-      this.persist();
       this.remember(body.idempotencyKey, requestValue, childId);
       return child.view;
     });
@@ -2459,9 +2464,12 @@ export class Workbench {
       throw new Error("Idempotency key belongs to another request.");
     return prior?.sessionId;
   }
+  private recordRequest(key: string, value: unknown, sessionId: string) {
+    this.requests[key] = { digest: JSON.stringify(value), sessionId };
+  }
   private remember(key: string | undefined, value: unknown, sessionId: string) {
     if (key) {
-      this.requests[key] = { digest: JSON.stringify(value), sessionId };
+      this.recordRequest(key, value, sessionId);
       this.persist();
     }
   }
@@ -3118,11 +3126,16 @@ export class Workbench {
           );
           return reply.message.content ?? "";
         },
-        apply: async (proposal) => {
-          await this.refineHarness(id, proposal);
+        apply: async (proposal, expectedBranchVersion) => {
+          await this.refineHarness(id, proposal, { expectedBranchVersion });
         },
+        currentBranchVersion: () =>
+          this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion,
       });
-      this.harnessTriggers.set(id, result.state);
+      // A branch may move while the reviewer awaits. Do not overwrite its newer state.
+      const currentVersion = this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion;
+      const expectedVersion = result.startedAtBranchVersion ?? state.branchVersion;
+      if (currentVersion === expectedVersion) this.harnessTriggers.set(id, result.state);
       // The boundary is silent by default, and silence here is ambiguous: an
       // operator watching a workspace learn nothing cannot tell a gate that
       // refused from a hook that was never reached. One line naming the refusal

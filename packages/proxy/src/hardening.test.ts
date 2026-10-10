@@ -198,7 +198,7 @@ describe("runProxy hardening", () => {
   });
 
   test("S10: an oversized relayed notification is dropped with a named reason", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-proxy-s10-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-s10-"));
     const policyPath = join(dir, "policy.yml");
     await writeFile(
       policyPath,
@@ -253,7 +253,7 @@ type Harness = {
 };
 
 async function makeHarness(inboundMaxBytes?: number): Promise<Harness> {
-  const dir = await mkdtemp(join(tmpdir(), "void-proxy-hardening-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-hardening-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(
     policyPath,
@@ -370,7 +370,7 @@ function fakeSignals(): SignalHarness {
 async function makeHoldHarness(
   signals: ProxyShutdownSignals,
 ): Promise<Harness & { queue: HoldQueue | null }> {
-  const dir = await mkdtemp(join(tmpdir(), "void-proxy-hardening-hold-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-hardening-hold-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(
     policyPath,
@@ -388,7 +388,7 @@ async function makeHoldHarness(
         policyPath,
         posture: "fail-closed",
         ledgerDir: await mkdtemp(
-          join(tmpdir(), "void-proxy-hardening-ledger-"),
+          join(tmpdir(), "nomo-proxy-hardening-ledger-"),
         ),
         workspace: "test",
         input: fromLines(lines),

@@ -1,4 +1,4 @@
-# Obchodní plán VOID: pravdivý opakovaný příjem
+# Obchodní plán NOMO: pravdivý opakovaný příjem
 
 ## Doporučení
 
@@ -44,7 +44,7 @@ Retenci přináší měnící se projekt, jemuž developer důvěřuje i nadále
 
 - před každým taskem vidí stejné coverage state;
 - review report vybere true changed effects a jejich testy;
-- čerstvá editace jiné práce vede ke konfliktu, kterou VOID bezpečně zachová;
+- čerstvá editace jiné práce vede ke konfliktu, kterou NOMO bezpečně zachová;
 - recovery může kdykoliv ověřit v local sandboxu;
 - team pravidla a reviewer evidence se přenesou při změně agenta.
 
@@ -68,7 +68,7 @@ V každé hraně uvést N, zdroj leadu, týden cohorty, host/effects a drop-off 
 
 ## Náklady, support a finanční kontrola
 
-- Měřit cloud DB/workflow retention/export, model provider $/task podle customer key vs VOID key, storage/vault growth, installer/update signing, GitHub macOS/Windows runner, incident/support engineering hours.
+- Měřit cloud DB/workflow retention/export, model provider $/task podle customer key vs NOMO key, storage/vault growth, installer/update signing, GitHub macOS/Windows runner, incident/support engineering hours.
 - Brutto marže počítat s support labor jako shadow cost. Limit custom adapters hours na pilot contract.
 - Hosted tools provádějí customer write operations: termy jasně odlišují customer-owned credentials, access window, data handling, incident notification a responsabilité. Nezakládat auto billing bez account deletion, offboard, backup/export a proration design.
 - Budoucí usage limit nesmí během obnovy zrušit store write/podpis; accounting metering nemá být v critical commit path.

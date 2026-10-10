@@ -24,3 +24,12 @@ launcher. Its only writable filesystem scope is
 `~/.local/share/void-prime-dogfood/project`. Use only the configured five-tool
 allowlist. Do not regenerate its retained recovery key or expand its scope.
 This managed path does not intercept ordinary shell or editor writes.
+
+## NOMO memory source
+
+- Canonical human-readable NOMO project memory lives in the Obsidian vault at `/Users/dawe/Library/Mobile Documents/iCloud~md~obsidian/Documents/NOMO`.
+- Start at `NOMO Project Home.md`. Use `NOMO Memory Rules.md` for storage boundaries and `NOMO Work Log.md` for current status.
+- Use the installed `kepano/obsidian-skills` for Obsidian Markdown and CLI operations. When Obsidian is running, target the vault explicitly with `obsidian vault=NOMO ...`.
+- Use Graphify for source navigation. Its index lives in `Graphify-Index/graphify-out/` inside the vault. Check `.graphify_root`, the active worktree and current source before trusting the graph.
+- Store durable NOMO decisions, status, risks and project knowledge in the vault. Do not duplicate project facts in ChatGPT, Codex or agent memory. Do not store full transcripts, secrets or credentials.
+- Keep new project status and decision history out of this file. Repository contracts in `docs/CONTEXT.md`, `docs/DECISIONS.md` and `docs/STANDARDS.md` remain authoritative for code.

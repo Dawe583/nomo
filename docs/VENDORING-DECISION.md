@@ -20,7 +20,7 @@ belongs to the owner.
 | ------------------- | -------------------------------------------------------------------- | -------------------- |
 | `oh-my-pi` clone    | `/Users/dawe/Developer/upstream/omp-src` @ `1c0993c` / tag `v18.6.2` | measured             |
 | `prime-agent` clone | `/Users/dawe/Developer/upstream/prime-src` @ `41e1f41`               | measured             |
-| This repository     | `/Users/dawe/Developer/Claude-Projects/VOID` @ `0791c1f`             | measured             |
+| This repository     | `/Users/dawe/Developer/Claude-Projects/NOMO` @ `0791c1f`             | measured             |
 | npm registry        | `registry.npmjs.org`                                                 | measured, 2026-10-05 |
 
 Both clones are present on this machine. Nothing in this document about the
@@ -78,7 +78,7 @@ Existing home for this: `docs/VERSIONING-AND-UPDATE-PLAN.md` and
 | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Files landing in repo      | 0 source files. A `package.json` dependency line plus lockfile churn.                                           |
 | Lines landing              | ~1 dependency entry; `pnpm-lock.yaml` is currently 173.2 KB and would grow.                                     |
-| New build systems in CI    | none from the fork itself — the fork's CI is upstream's problem, not VOID's. VOID installs a published tarball. |
+| New build systems in CI    | none from the fork itself — the fork's CI is upstream's problem, not NOMO's. NOMO installs a published tarball. |
 | Collision with `packages/` | none, unless the fork is consumed via `workspace:`.                                                             |
 | Left undone                | The rebrand still has to happen somewhere. See §2 — it is ~15,949 import statements.                            |
 
@@ -106,17 +106,17 @@ _name_. Renaming a package's `name` field therefore invalidates every
 
 ---
 
-### Option C — port selected capabilities, reimplement in VOID's idiom
+### Option C — port selected capabilities, reimplement in NOMO's idiom
 
 | Cost                       | Value                                                                                                                                                                                                                                                                                                             |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Files landing              | Only the ported capability. Unbounded by this document; depends on the selection.                                                                                                                                                                                                                                 |
 | Lines landing              | Unbounded by this document. For scale only: `omp-src` is 2.27 M source lines across TS/Rust/Python (measured), so "selected capabilities" must be named before this option can be costed.                                                                                                                         |
-| New build systems in CI    | none, **if** the port is TS-only. VOID's `packages/*` are TS (`packages/cli/package.json` → `"exports": { ".": "./src/index.ts" }`, measured).                                                                                                                                                                    |
-| Collision with `packages/` | Depends on placement. All ten existing packages are named `@void/*` (measured: `pnpm m ls --depth -1 --json` returns `@void/cli`, `@void/connectors`, `@void/ledger`, `@void/policy`, `@void/proxy`, `@void/registry`, `@void/runtime`, `@void/sdk`, `@void/verifier`, `@void/workbench`, all `"private": true`). |
+| New build systems in CI    | none, **if** the port is TS-only. NOMO's `packages/*` are TS (`packages/cli/package.json` → `"exports": { ".": "./src/index.ts" }`, measured).                                                                                                                                                                    |
+| Collision with `packages/` | Depends on placement. All ten existing packages are named `@nomo/*` (measured: `pnpm m ls --depth -1 --json` returns `@nomo/cli`, `@nomo/connectors`, `@nomo/ledger`, `@nomo/policy`, `@nomo/proxy`, `@nomo/registry`, `@nomo/runtime`, `@nomo/sdk`, `@nomo/verifier`, `@nomo/workbench`, all `"private": true`). |
 | Left undone                | Whatever is not ported. This option has no defined boundary in the brief; the boundary _is_ the cost.                                                                                                                                                                                                             |
 
-**measured:** VOID's own runner is Node 24 and 26 on ubuntu-latest
+**measured:** NOMO's own runner is Node 24 and 26 on ubuntu-latest
 (`.github/workflows/ci.yml`, `gates` matrix `node-version: [24, 26]`), pnpm
 10.33.0, TypeScript ~5.9.3 (`package.json`). A TS-only port inherits this
 toolchain unchanged.
@@ -220,22 +220,22 @@ Evidence:
 **unverified:** whether the owner's npm account has any existing scope, org, or
 2FA/publish token configured. Not determinable from this machine.
 
-### Q2 — Which build systems would VOID's CI have to acquire?
+### Q2 — Which build systems would NOMO's CI have to acquire?
 
 **Answer: bun, Rust (nightly), Bazel, and Nix. prime-agent adds only Rust, which
-VOID already has for its Apple job. The Rust halves of both trees are therefore
+NOMO already has for its Apple job. The Rust halves of both trees are therefore
 the cheaper half to vendor; the TypeScript half of `oh-my-pi` is what drags in
 bun and Bazel.**
 
-What VOID's CI runs today (measured, `.github/workflows/ci.yml`):
+What NOMO's CI runs today (measured, `.github/workflows/ci.yml`):
 
 | Job          | Toolchain                                                                                                                                                                                           |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `gates`      | `ubuntu-latest`, matrix Node **24, 26**; `pnpm/action-setup@v4` pin `10.33.0`; `pnpm install --frozen-lockfile`; `pnpm run typecheck`; `pnpm test`; `node --test`; 4 × `e2e*.mjs`; `pnpm run build` |
-| `hosted-mcp` | same pnpm/Node, plus `actions/setup-python@v5` **Python 3.14**, a venv from `apps/appwrite-mcp/requirements.txt`, and `python -m unittest` over `python/void-transport/tests`                       |
-| `apple`      | `macos-latest`; `xcodebuild`, `swift test` over `apps/apple/CompanionProtocolKit` and `apps/apple/VoidDesignSystem`, `VOID.xcodeproj` on the `iPad Pro 11-inch (M5)` simulator                      |
+| `hosted-mcp` | same pnpm/Node, plus `actions/setup-python@v5` **Python 3.14**, a venv from `apps/appwrite-mcp/requirements.txt`, and `python -m unittest` over `python/nomo-transport/tests`                       |
+| `apple`      | `macos-latest`; `xcodebuild`, `swift test` over `apps/apple/CompanionProtocolKit` and `apps/apple/NomoDesignSystem`, `NOMO.xcodeproj` on the `iPad Pro 11-inch (M5)` simulator                      |
 
-So VOID's existing matrix is **pnpm + Node 24/26 + Python 3.14 + Xcode/Swift**.
+So NOMO's existing matrix is **pnpm + Node 24/26 + Python 3.14 + Xcode/Swift**.
 No Rust toolchain step, no bun, no Bazel, no Nix.
 
 What each upstream needs (measured):
@@ -251,7 +251,7 @@ What each upstream needs (measured):
 
 Two of these are not merely "new tools" but new **infrastructure**:
 
-- **`omp-kata` is a self-hosted runner label.** VOID's `ci.yml` uses only
+- **`omp-kata` is a self-hosted runner label.** NOMO's `ci.yml` uses only
   `ubuntu-latest` and `macos-latest` (measured). Reproducing `omp-src`'s CI
   means standing up or renting that runner. **unverified** what it is.
 - **The `prime-agent` workflows need a GitHub App token** via
@@ -296,10 +296,10 @@ that is the worst of the two:
    root is invisible to pnpm.
 2. **`omp-src` ships a root `package.json`** (`"name": "omp"`, `"private": true`,
    measured), so the captured directory **has a manifest**. `pnpm install
---frozen-lockfile` — the first step of VOID's `gates` and `hosted-mcp` jobs
-   — would then treat `packages/oh-my-pi` as a VOID workspace project and pull
+--frozen-lockfile` — the first step of NOMO's `gates` and `hosted-mcp` jobs
+   — would then treat `packages/oh-my-pi` as a NOMO workspace project and pull
    its `dependencies` (measured: `sherpa-onnx`, `sherpa-onnx-darwin-arm64`,
-   `sherpa-onnx-node` plus 11 `catalog:` devDependencies) into the VOID
+   `sherpa-onnx-node` plus 11 `catalog:` devDependencies) into the NOMO
    lockfile. The `--frozen-lockfile` flag turns that into a hard failure, not a
    silent merge. **inferred** from the manifest + the flag; the exact pnpm error
    text is **unverified** without running an install.
@@ -307,7 +307,7 @@ that is the worst of the two:
    `packages/oh-my-pi/packages/*`, which `packages/*` does not match. So pnpm
    would install the vendored root's dependencies while ignoring the 16 nested
    package manifests — a split state that matches neither the upstream repo's
-   intent nor VOID's.
+   intent nor NOMO's.
 4. **`prime-src` has no `package.json` anywhere** (`git ls-files | grep -c package.json`
    → `0`, measured). `packages/prime-agent/` matches the glob but has no
    manifest. Whether pnpm skips such a directory silently or errors is
@@ -371,15 +371,15 @@ packages/*/src/**/*.js.map
 ### 4.1 Both upstreams are already running, and one is already a `devDependency` neighbour
 
 `omp` (`omp/18.6.1`) and `prime` (`Prime CLI version: 0.9.1`) are installed on
-this machine (measured). Separately, `@void/policy` and `@void/ledger` exist as
+this machine (measured). Separately, `@nomo/policy` and `@nomo/ledger` exist as
 workspace packages, and `packages/cli/package.json` depends on
-`@void/registry` via `"workspace:*"` (measured).
+`@nomo/registry` via `"workspace:*"` (measured).
 
 **unverified:** how much of the working behaviour in those two binaries is
-already consumed by VOID today. The 84 installed markdown skills described in
+already consumed by NOMO today. The 84 installed markdown skills described in
 `/Users/dawe/Developer/Claude-Projects/prime-agent-setup/PRIME-AGENT-SETUP.md`
 (136 lines, measured) appear to be _this agent's own_ skills installed by
-`prime lab sync`, not a VOID dependency. Nothing in the VOID tree was traced to
+`prime lab sync`, not a NOMO dependency. Nothing in the NOMO tree was traced to
 either binary. **This is the largest unverified item in the document and it
 bears directly on A vs B/C/D.**
 
@@ -389,8 +389,8 @@ bears directly on A vs B/C/D.**
 
 ### 4.3 Licence posture differs and `NOTICE` is a real obligation
 
-VOID is Apache-2.0 (`LICENSE`, 11.1 KB, measured) and carries a populated
-`NOTICE` (765 B, measured) that already reproduces a `@void/registry` caveat.
+NOMO is Apache-2.0 (`LICENSE`, 11.1 KB, measured) and carries a populated
+`NOTICE` (765 B, measured) that already reproduces a `@nomo/registry` caveat.
 `omp-src/LICENSE` is MIT, `Copyright (c) 2025 Mario Zechner` (measured).
 `prime-src/LICENSE` is 1,234 bytes and `Cargo.toml` declares
 `license = "MIT"` (measured).
@@ -401,9 +401,9 @@ obligation that does bite is attribution — 236 files mention `can1357`, and
 MIT §"include the copyright notice" makes a redistribution artefact, not a
 discardable build file. **inferred:** a D or B rebrand must regenerate that file.
 
-### 4.4 `oh-my-pi` uses `catalog:` where VOID uses `workspace:*`
+### 4.4 `oh-my-pi` uses `catalog:` where NOMO uses `workspace:*`
 
-VOID's cross-package wiring is `"workspace:*"` (measured,
+NOMO's cross-package wiring is `"workspace:*"` (measured,
 `packages/cli/package.json`). `omp-src` uses `catalog:` for **119 of 120**
 cross-package references (measured). A rebrand therefore has to move two
 mechanisms, not one, and bun's `catalog:` resolution-by-name is the part that is
@@ -428,7 +428,7 @@ is contending with an in-flight edit.
 
 ### 4.7 `.omp/` and `.prime/` already exist in this repo
 
-VOID already has `.omp/config.yml` (504 B) and `.omp/WATCHDOG.md` (888 B), plus
+NOMO already has `.omp/config.yml` (504 B) and `.omp/WATCHDOG.md` (888 B), plus
 `.prime/agent/` (measured, `ls -la`). `omp-src` also ships a `.omp/` directory
 whose 3 files contain `@oh-my-pi` references (measured, top-level dir tally).
 A vendored `omp-src` would bring a second `.omp/` into the tree. Naming
@@ -478,7 +478,7 @@ lockfile entry, no path to `~/.local/bin/omp` anywhere in `packages/`, `apps/`,
 `cloud/`, `paid/` or `scripts/`. What exists is operator tooling config only:
 `.omp/config.yml` and `.omp/WATCHDOG.md`, classified open in
 `scripts/src/licence-line.test.mjs`. So vendoring `omp-src` would protect
-nothing VOID uses.
+nothing NOMO uses.
 
 **`prime-agent`: consumed as an external process, through three narrow
 surfaces, and no others.**
@@ -508,6 +508,6 @@ versioned code surface to vendor, only a process contract to keep working.
 3. What the `omp-kata` self-hosted runner is, and its cost.
 4. What the `prime-agent` GitHub App is authorised for.
 5. Whether the owner's npm account has a scope or org available.
-6. ~~How much of the currently-installed `omp` / `prime` behaviour VOID actually
+6. ~~How much of the currently-installed `omp` / `prime` behaviour NOMO actually
    consumes today~~ Answered 2026-10-05 in the usage audit above: `omp`
    nowhere in code, `prime` through one process contract.

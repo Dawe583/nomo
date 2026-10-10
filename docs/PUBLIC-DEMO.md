@@ -1,4 +1,4 @@
-# Public VOID demo
+# Public NOMO demo
 
 Anonymous visitors to the Vercel web app enter an isolated demonstration.
 `/demo` opens it explicitly even when the browser already has private workspace
@@ -6,9 +6,9 @@ access. The default model is `z-ai/glm-5.3-free` at TokenRouter's fixed HTTPS
 endpoint. Provider availability and rate limits can still prevent a reply.
 
 The private workspace token is not embedded in JavaScript, HTML or URLs.
-`VOID_DEMO_TOKENROUTER_KEY` is a server-only Vercel secret; `VOID_PUBLIC_DEMO=1`
+`NOMO_DEMO_TOKENROUTER_KEY` is a server-only Vercel secret; `NOMO_PUBLIC_DEMO=1`
 enables the feature. Changing those variables requires a new deployment.
-The existing `VOID_SECRET_KEY`, database and signing key support encrypted demo
+The existing `NOMO_SECRET_KEY`, database and signing key support encrypted demo
 state and signed managed-document evidence.
 
 ## Scope

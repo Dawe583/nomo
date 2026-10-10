@@ -1,8 +1,8 @@
-# VOID operations runbook
+# NOMO operations runbook
 
 This runbook is for the dev-tier product in this repository. For the operator
 guide that walks through using the product end to end, see
-[the VOID handbook](HANDBOOK.md) or [its Czech edition](HANDBOOK.cs.md).
+[the NOMO handbook](HANDBOOK.md) or [its Czech edition](HANDBOOK.cs.md).
 
 ## Policy grammar quick table
 
@@ -54,38 +54,38 @@ rules:
 The dev-tier ledger is JSONL.
 
 ```text
-<VOID_LEDGER_DIR>/
+<NOMO_LEDGER_DIR>/
   <workspace>.jsonl
   attestations/
     <head-seq>.json
 ```
 
-If `VOID_LEDGER_DIR` is not set, the default ledger directory is under the user's home directory. The development private key is not in the ledger directory by default. It comes from `VOID_SIGNING_KEY` or from the local development key path managed by `devKeyProvider`.
+If `NOMO_LEDGER_DIR` is not set, the default ledger directory is under the user's home directory. The development private key is not in the ledger directory by default. It comes from `NOMO_SIGNING_KEY` or from the local development key path managed by `devKeyProvider`.
 
 ### The verification key is not the signing key
 
 Verification reads a **public key**, and in every shipped default that public
-key comes from a file inside `~/.void/`, the same directory tree as the
+key comes from a file inside `~/.nomo/`, the same directory tree as the
 private signing key. The table below is the resolution order and, in the
 last column, what each answer is actually **worth**. Read the last column
 before treating any verification result as tamper-proofing.
 
 | Source | How it is set | Worth |
 | --- | --- | --- |
-| `VOID_VERIFY_KEY` | base64 SPKI DER of the ed25519 public key | **pinned, out of band.** Supplied as a value, never written to a file. This is the only source that earns the word *pinned*. |
-| `VOID_VERIFY_KEY_FILE` | path to a file holding that key | Trusted **because you named the path**. VOID infers the bytes are yours from the path alone and cannot prove who wrote them. Worth a pin only if the agent has no credentials for that path. |
-| `VOID_TRUST_DIR` | directory holding `verify-ed25519.spki` | Same as above: trusted on the strength of the path, not the contents. |
-| `~/.void/trust/verify-ed25519.spki` | written once by `void init --pin-verify-key` | **Not pinned.** This is the default, and it shares `~/.void/` with `keys/dev-ed25519.pkcs8`. See below. |
-| `VOID_SIGNING_KEY` | base64 PKCS#8 private key | **Degraded.** The key that signs is the key that verifies. |
-| `VOID_VERIFY_ALLOW_SIGNING_KEY=1` | explicit opt-in to the local `keys/dev-ed25519.pkcs8` file | **Degraded.** The same file, reached by opting in. Undocumented opt-ins are how operators end up in a mode they did not choose, so every surface now names this variable. |
+| `NOMO_VERIFY_KEY` | base64 SPKI DER of the ed25519 public key | **pinned, out of band.** Supplied as a value, never written to a file. This is the only source that earns the word *pinned*. |
+| `NOMO_VERIFY_KEY_FILE` | path to a file holding that key | Trusted **because you named the path**. NOMO infers the bytes are yours from the path alone and cannot prove who wrote them. Worth a pin only if the agent has no credentials for that path. |
+| `NOMO_TRUST_DIR` | directory holding `verify-ed25519.spki` | Same as above: trusted on the strength of the path, not the contents. |
+| `~/.nomo/trust/verify-ed25519.spki` | written once by `nomo init --pin-verify-key` | **Not pinned.** This is the default, and it shares `~/.nomo/` with `keys/dev-ed25519.pkcs8`. See below. |
+| `NOMO_SIGNING_KEY` | base64 PKCS#8 private key | **Degraded.** The key that signs is the key that verifies. |
+| `NOMO_VERIFY_ALLOW_SIGNING_KEY=1` | explicit opt-in to the local `keys/dev-ed25519.pkcs8` file | **Degraded.** The same file, reached by opting in. Undocumented opt-ins are how operators end up in a mode they did not choose, so every surface now names this variable. |
 
 #### Why the default trust file is not a pin
 
 The trust file is created with mode `0400`. That refuses an in-place write by a
 different user. It stops **nothing** for its own owner, who may `unlink` it and
 create a new file in its place. An attacker who can replace
-`~/.void/keys/dev-ed25519.pkcs8` can equally replace
-`~/.void/trust/verify-ed25519.spki`, re-sign the entire local history with a key
+`~/.nomo/keys/dev-ed25519.pkcs8` can equally replace
+`~/.nomo/trust/verify-ed25519.spki`, re-sign the entire local history with a key
 of their own, and have it verify clean.
 
 This was executed, not assumed. The attack lands: after `unlink` and recreate
@@ -96,7 +96,7 @@ forged chain verifies `ok=true`. See `docs/EVIDENCE-FIXES-VERIFICATION.md` (F1).
 The trust file stays at the default path on purpose. There is no location on a
 single-user host that a same-uid attacker cannot also write, so moving it buys
 no security and would silently strand every key already provisioned at the old
-path. The honest response is to say so on every surface, which is what VOID
+path. The honest response is to say so on every surface, which is what NOMO
 does.
 
 #### What the one-key-id binding does and does not buy
@@ -105,7 +105,7 @@ A key is bound to the one key id the records carry. An entry signed by any other
 key fails with `has no public key for <key id>`.
 
 This detects key substitution **only when the verification key is itself out of
-the agent's reach**. That means `VOID_VERIFY_KEY`, or a trust file at a path the
+the agent's reach**. That means `NOMO_VERIFY_KEY`, or a trust file at a path the
 agent has no credentials for. It does **not** mean replacing
 `dev-ed25519.pkcs8` is always detected: if the trust file is replaced alongside
 it, the substituted key becomes the anchor and the forged chain verifies. The
@@ -120,39 +120,39 @@ nothing more. See `docs/THREAT-MODEL.md` §1.1 and §2.4.
 #### Provisioning
 
 ```sh
-node packages/cli/bin/void.mjs init --pin-verify-key     # anchors ~/.void/keys/dev-ed25519.pkcs8
-node packages/cli/bin/void.mjs init --from-spki <base64> # anchors a key you hold elsewhere
+node packages/cli/bin/nomo.mjs init --pin-verify-key     # anchors ~/.nomo/keys/dev-ed25519.pkcs8
+node packages/cli/bin/nomo.mjs init --from-spki <base64> # anchors a key you hold elsewhere
 ```
 
 `--from-spki` is the one that anchors something the agent did not choose, and
 the output says so. `--pin-verify-key` anchors whatever
-`~/.void/keys/dev-ed25519.pkcs8` holds at that moment and detects only a *later*
+`~/.nomo/keys/dev-ed25519.pkcs8` holds at that moment and detects only a *later*
 change to it; if the key file was already replaced, it pinned the wrong key.
 Compare the SPKI the command prints against the key you expect.
 
-Two key files exist under `~/.void`, and only one of them is the trust anchor:
+Two key files exist under `~/.nomo`, and only one of them is the trust anchor:
 
 | Path | Signs | Trust anchor? |
 | --- | --- | --- |
-| `~/.void/keys/dev-ed25519.pkcs8` | the ledgers in `~/.void/ledger`, verified by `void verify` | **Yes.** The one `--pin-verify-key` anchors, and the key `void doctor`, `void watch` and the TUI proxy resolve against. |
-| `<data dir>/keys/dev-ed25519.pkcs8` (default `~/.void/workbench/keys`) | the workbench document ledger | No. A second recorder identity, not a second location for the first. |
+| `~/.nomo/keys/dev-ed25519.pkcs8` | the ledgers in `~/.nomo/ledger`, verified by `nomo verify` | **Yes.** The one `--pin-verify-key` anchors, and the key `nomo doctor`, `nomo watch` and the TUI proxy resolve against. |
+| `<data dir>/keys/dev-ed25519.pkcs8` (default `~/.nomo/workbench/keys`) | the workbench document ledger | No. A second recorder identity, not a second location for the first. |
 
 `--data-dir` chooses where workspace state lives. It does not choose which key
 is anchored, and it did not used to: the command derived the anchor from
 `<data dir>/keys`, so on the default path it anchored the document key while
-every ledger under `~/.void/ledger` was signed with the other one. The trust
-anchor changed identity without a ledger being written, and `void doctor` read
+every ledger under `~/.nomo/ledger` was signed with the other one. The trust
+anchor changed identity without a ledger being written, and `nomo doctor` read
 as an improvement. When the data dir holds a key of its own, the command now
 prints both key ids and says which one it anchored.
 
-The command never creates a key. If `~/.void/keys/dev-ed25519.pkcs8` does not
+The command never creates a key. If `~/.nomo/keys/dev-ed25519.pkcs8` does not
 exist it refuses and names the path; a pin of a key whose only existence is the
 act of pinning it anchors nothing and reads as a success.
 
 The command also reports what the anchored key has signed, read from the
 `key_id` the ledger entries carry rather than from the key file. An anchored
 key that appears in no ledger entry is named as such, together with the key ids
-that did sign, because `void verify` will refuse every existing ledger until
+that did sign, because `nomo verify` will refuse every existing ledger until
 they are re-signed with it.
 
 `pinVerificationKey` refuses to overwrite an existing trust file with a
@@ -164,8 +164,8 @@ story would need.
 
 With nothing configured, every surface reports
 `verification key: none, signature NOT VERIFIED` and checks hash links only.
-`void verify` and `void export`/`void attest` print the key line first,
-`/api/ledger/verify` returns it as `verificationKey`, and the TUI and `void
+`nomo verify` and `nomo export`/`nomo attest` print the key line first,
+`/api/ledger/verify` returns it as `verificationKey`, and the TUI and `nomo
 watch` render it beside the signed boolean.
 
 The word *pinned* appears only where it is earned, meaning a key supplied as
@@ -183,8 +183,8 @@ asymmetric in a way worth knowing before you try it.
 
 What happens: entries signed by the retired key carry its `key_id`, the
 verification key is the new one, and the chain is refused with
-`entry 1 has no public key for dev-ed25519:<old id>`. `void attest` exits 1 with
-that error naming a key id the operator never asked about. `void export
+`entry 1 has no public key for dev-ed25519:<old id>`. `nomo attest` exits 1 with
+that error naming a key id the operator never asked about. `nomo export
 --ledger` does not verify, so it can still succeed, and a workflow that
 exports after a rotation and then attests will discover the problem at the
 second step.
@@ -207,15 +207,15 @@ following, and each one changes a persisted artifact or a trust decision:
    correct answer here, and picking one silently is worse than not shipping.
 3. **Anchor and attestation interaction.** Anchors and attestations are signed
    by a named key id. After a rotation, an existing anchor names a key the
-   verifier no longer trusts, and `void verify --anchors` starts failing on
+   verifier no longer trusts, and `nomo verify --anchors` starts failing on
    anchors that were valid when written. That is a second format decision.
 4. **Revocation.** "Accepted" and "still trusted" are different. Without a
    revocation story, an allowlist only ever grows.
-5. **A `void` command for it.** Not a library function. `void init
+5. **A `nomo` command for it.** Not a library function. `nomo init
    --rotate-verify-key` would have to print what it is about to stop trusting,
    because the operator is trading a guarantee for a different one.
 
-Until those exist: pin out of band with `void init --from-spki`, keep the old
+Until those exist: pin out of band with `nomo init --from-spki`, keep the old
 public key somewhere you control, and treat a rotation as a deliberate
 re-anchoring: re-provision the trust file with the new key and accept that the
 pre-rotation entries will not verify against it. That is a documented cost, not
@@ -240,7 +240,7 @@ key, refuses the same chain with `entry 1 has no public key for dev-…`. The
 test asserts that refusal rather than working around it, so the follow-up
 cannot move the boundary quietly. The trust set in the pin, the decision about
 re-signing pre-rotation entries, the rotation entry record, revocation and the
-`void` command remain open and reserved: each one changes a persisted artifact
+`nomo` command remain open and reserved: each one changes a persisted artifact
 or a trust decision, and none of them is implied by a signer that can produce
 a two-key chain. The ring only grows: a retired key stays answerable for as
 long as its `.spki` is on disk, and nothing in this drill removes one, so a key
@@ -261,7 +261,7 @@ The ledger stores argument digests, not payloads.
 
 ## Fail-closed guarantees
 
-In `fail-closed` posture, VOID denies when it cannot keep the safety contract.
+In `fail-closed` posture, NOMO denies when it cannot keep the safety contract.
 
 It denies on:
 
@@ -296,19 +296,19 @@ Use it as a safety gate for the agent write path. Do not treat it as proof that 
 Use `verify` before trusting any feed, replay, taint graph, or attestation.
 
 ```sh
-node packages/cli/bin/void.mjs verify --ledger <ledger-dir-or-file>
+node packages/cli/bin/nomo.mjs verify --ledger <ledger-dir-or-file>
 ```
 
 To verify a ledger against an attestation:
 
 ```sh
-node packages/cli/bin/void.mjs verify --ledger <ledger-dir-or-file> --attestation <attestation-json>
+node packages/cli/bin/nomo.mjs verify --ledger <ledger-dir-or-file> --attestation <attestation-json>
 ```
 
 To verify a ledger against a published anchor file:
 
 ```sh
-node packages/cli/bin/void.mjs verify --ledger <ledger-dir-or-file> --anchors <anchors.jsonl>
+node packages/cli/bin/nomo.mjs verify --ledger <ledger-dir-or-file> --anchors <anchors.jsonl>
 ```
 
 The verifier checks sequence order, previous hash links, body hashes, and
@@ -324,7 +324,7 @@ is written last, so a directory that exists always describes bytes that are on
 disk.
 
 ```sh
-node packages/cli/bin/void.mjs export --ledger <ledger-file> --state <state-dir> --bundle <bundle-dir>
+node packages/cli/bin/nomo.mjs export --ledger <ledger-file> --state <state-dir> --bundle <bundle-dir>
 ```
 
 `--state` is the recovery state root the backup script reads: it holds
@@ -345,7 +345,7 @@ history whose tail was cut is still internally consistent, so a reviewer
 without an anchor cannot tell an honest bundle from a rewritten one.
 
 ```sh
-node packages/cli/bin/void.mjs export verify --bundle <bundle-dir> --anchor <manifest-sha256> [--state <state-dir>]
+node packages/cli/bin/nomo.mjs export verify --bundle <bundle-dir> --anchor <manifest-sha256> [--state <state-dir>]
 ```
 
 Verification is fail closed. A missing section, a digest or byte-length
@@ -369,8 +369,8 @@ exist. Nothing new is persisted, so the numbers can be thrown away and
 recomputed at any time.
 
 ```sh
-node packages/cli/bin/void.mjs metrics --ledger <ledger-file> --state <state-dir> [--format text|json]
-node packages/cli/bin/void.mjs metrics --ledger <ledger-dir> [--format json]
+node packages/cli/bin/nomo.mjs metrics --ledger <ledger-file> --state <state-dir> [--format text|json]
+node packages/cli/bin/nomo.mjs metrics --ledger <ledger-dir> [--format json]
 ```
 
 Counter families: ledger files, entries and bytes, decisions by the closed
@@ -382,9 +382,9 @@ The label sets are closed and there is no PII, no secret and no workspace label
 in a sample name. A named ledger must verify before it is counted, and a
 command that cannot read the journal fails rather than reporting a quiet zero.
 A directory scan is the exception and the reason it exists: it counts the
-ledgers that could not be read (`void_ledger_files_unreadable_total`) apart from
+ledgers that could not be read (`nomo_ledger_files_unreadable_total`) apart from
 the ones that were read and did not verify
-(`void_ledger_files_rejected_total`). Stages that never happened are reported as
+(`nomo_ledger_files_rejected_total`). Stages that never happened are reported as
 zero, so failed, unknown and conflict work cannot be hidden by omission.
 
 Not covered: capture latency, reconciliation time, recovery success rate and
@@ -393,7 +393,7 @@ claim to read.
 
 ## Attestation flow
 
-An attestation is a signed summary of a ledger slice. It lets a reviewer check a head sequence, head hash, entry count, Merkle digest, key id, algorithm, and signature without trusting a VOID process.
+An attestation is a signed summary of a ledger slice. It lets a reviewer check a head sequence, head hash, entry count, Merkle digest, key id, algorithm, and signature without trusting a NOMO process.
 
 ### The anchor is what makes truncation detectable
 
@@ -402,7 +402,7 @@ A chain verifies clean on any prefix, so a dropped tail is invisible to
 somebody else holds. Publish one with:
 
 ```sh
-node packages/cli/bin/void.mjs attest --ledger <ledger-file> --anchor <anchors.jsonl>
+node packages/cli/bin/nomo.mjs attest --ledger <ledger-file> --anchor <anchors.jsonl>
 ```
 
 `attest` verifies the chain against the verification key above, signs the head,
@@ -432,7 +432,7 @@ one that was published, the head proves the ledger inside it is the one that
 was anchored.
 
 ```sh
-node packages/cli/bin/void.mjs export verify --bundle <bundle-dir> --anchor <manifest-sha256> --attestation <anchor.json>
+node packages/cli/bin/nomo.mjs export verify --bundle <bundle-dir> --anchor <manifest-sha256> --attestation <anchor.json>
 ```
 
 Operational flow:
@@ -455,13 +455,13 @@ node scripts/src/e2e-final.mjs all
 The feed prints only after the ledger verifies.
 
 ```sh
-node packages/cli/bin/void.mjs feed --ledger <ledger-file>
+node packages/cli/bin/nomo.mjs feed --ledger <ledger-file>
 ```
 
 Use JSON for scripts:
 
 ```sh
-node packages/cli/bin/void.mjs feed --ledger <ledger-file> --json
+node packages/cli/bin/nomo.mjs feed --ledger <ledger-file> --json
 ```
 
 Use `--follow` for a live local view. It stays attached until the process is closed.
@@ -473,22 +473,22 @@ The proxy surfaces held calls through a per-run state directory. One proxy owns 
 Start the proxy with a state directory:
 
 ```sh
-node packages/proxy/bin/void-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/void-ledger --approvals-dir /tmp/void-approvals --workspace demo
+node packages/proxy/bin/nomo-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/nomo-ledger --approvals-dir /tmp/nomo-approvals --workspace demo
 ```
 
-Without `--approvals-dir`, the proxy defaults to `$VOID_APPROVALS_DIR`, then `~/.void/approvals/<workspace>`.
+Without `--approvals-dir`, the proxy defaults to `$NOMO_APPROVALS_DIR`, then `~/.nomo/approvals/<workspace>`.
 
 List pending holds from a second terminal:
 
 ```sh
-node packages/cli/bin/void.mjs approvals --dir /tmp/void-approvals
+node packages/cli/bin/nomo.mjs approvals --dir /tmp/nomo-approvals
 ```
 
 Approve or deny a hold:
 
 ```sh
-node packages/cli/bin/void.mjs approve <holdId> --by <actor> --reason <text> --dir /tmp/void-approvals
-node packages/cli/bin/void.mjs approve <holdId> --by <actor> --deny --dir /tmp/void-approvals
+node packages/cli/bin/nomo.mjs approve <holdId> --by <actor> --reason <text> --dir /tmp/nomo-approvals
+node packages/cli/bin/nomo.mjs approve <holdId> --by <actor> --deny --dir /tmp/nomo-approvals
 ```
 
 The CLI writes a decision file and prints that the decision is queued. The running proxy polls the directory and resolves the hold. The CLI cannot know whether the proxy was still running when the decision landed, so it never claims the release.
@@ -516,10 +516,10 @@ Replay is only valid for R0 and R1 calls with a captured inverse. The connector 
 The binary wires the static connector set. Check what is wired and which executors are available:
 
 ```sh
-node packages/cli/bin/void.mjs replay --list-connectors
+node packages/cli/bin/nomo.mjs replay --list-connectors
 ```
 
-Executors come from the host environment. For Postgres, set `VOID_PG_URL` before apply. Without it, apply fails with a typed `ExecutorNotConfigured` error that names the missing variable. S3 replay additionally needs a host adapter and persisted replay metadata, which the local binary does not write yet. The connector end-to-end script proves replay and drift refusal in process:
+Executors come from the host environment. For Postgres, set `NOMO_PG_URL` before apply. Without it, apply fails with a typed `ExecutorNotConfigured` error that names the missing variable. S3 replay additionally needs a host adapter and persisted replay metadata, which the local binary does not write yet. The connector end-to-end script proves replay and drift refusal in process:
 
 ```sh
 node scripts/src/e2e-connectors.mjs
@@ -533,20 +533,20 @@ Drift refusal means the current target no longer matches the captured before ima
 4. If the original change still needs rollback, create a new manual plan against current state.
 5. Record that manual action separately.
 
-VOID refuses drift to avoid overwriting later human work.
+NOMO refuses drift to avoid overwriting later human work.
 
 ## Taint
 
 Taint uses the verified ledger to show what later calls depend on a prior call.
 
 ```sh
-node packages/cli/bin/void.mjs taint --ledger <ledger-dir-or-file> --seq <n>
+node packages/cli/bin/nomo.mjs taint --ledger <ledger-dir-or-file> --seq <n>
 ```
 
 Use JSON for tooling:
 
 ```sh
-node packages/cli/bin/void.mjs taint --ledger <ledger-dir-or-file> --seq <n> --json
+node packages/cli/bin/nomo.mjs taint --ledger <ledger-dir-or-file> --seq <n> --json
 ```
 
 Data edges require `outputDigest` on a producing ledger entry. Entries without output digests can still produce resource edges.
@@ -584,19 +584,19 @@ node scripts/src/bench.mjs --scale 200
 Stdio fixture command:
 
 ```sh
-node packages/proxy/bin/void-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/void-ledger --workspace demo
+node packages/proxy/bin/nomo-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/nomo-ledger --workspace demo
 ```
 
 HTTP upstream builds in wave 4 use this shape:
 
 ```sh
-node packages/proxy/bin/void-proxy.mjs --transport http --upstream-url <url> --policy <policy-yaml> --ledger-dir <ledger-dir> --workspace <workspace>
+node packages/proxy/bin/nomo-proxy.mjs --transport http --upstream-url <url> --policy <policy-yaml> --ledger-dir <ledger-dir> --workspace <workspace>
 ```
 
 Use `observe` only for trials:
 
 ```sh
-node packages/proxy/bin/void-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --posture observe --workspace demo
+node packages/proxy/bin/nomo-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --posture observe --workspace demo
 ```
 
 ## Web and cloud production build
@@ -617,7 +617,7 @@ A successful frontend build alone does not establish that the cloud build works.
 
 Local secrets live in the AES-256-GCM snapshot, macOS Keychain, Windows
 Credential Manager, or a mode-0600 key file. There is no production KMS in
-this tree. Rotating `VOID_SIGNING_KEY` today means generating a new key,
+this tree. Rotating `NOMO_SIGNING_KEY` today means generating a new key,
 redeploying, and running `scripts/src/provision-cloud.mjs`; old signed rows
 verify only against the key that signed them. A KMS-backed rotation drill
 is an open release gate (`docs/RELEASE.md` blocker 10, `docs/PLAN-GAPS.md`

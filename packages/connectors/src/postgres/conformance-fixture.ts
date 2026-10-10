@@ -5,7 +5,7 @@
  * no capability profile behind it, so nothing published what it could
  * recover. The profile lives in `packages/cli/src/conformance.ts`; the
  * fixtures live here because PGlite is a devDependency of this package, and
- * `void.mjs` must not need it to print a profile list or run the other three
+ * `nomo.mjs` must not need it to print a profile list or run the other three
  * adapters. A run for this adapter without it is refused, and the refusal
  * names the missing precondition.
  *
@@ -54,7 +54,7 @@ export const MANAGED_POSTGRES_SCENARIOS = [
 export type ManagedPostgresScenario = (typeof MANAGED_POSTGRES_SCENARIOS)[number];
 
 const WORKSPACE = "conformance";
-const SCHEMA = "void_recovery";
+const SCHEMA = "nomo_recovery";
 const ACCOUNT = "public.conformance_account";
 const PARENT = "public.conformance_parent";
 const CHILD = "public.conformance_child";
@@ -65,14 +65,14 @@ const TENANT_VALUE = "acme";
 
 /**
  * Dynamic, unlike every other import in this file: @electric-sql/pglite is a
- * devDependency of @void/connectors, so a static import would make the
+ * devDependency of @nomo/connectors, so a static import would make the
  * shipped CLI fail to load for anyone who installs production dependencies.
  * Only these fixtures need the engine, and the refusal names what is missing.
  */
 const startEngine = async (): Promise<PGlite> => {
   const { PGlite: Engine } = await import("@electric-sql/pglite").catch(() => {
     throw new Error(
-      "Managed PostgreSQL conformance needs @electric-sql/pglite, a devDependency of @void/connectors; it is not installed in this checkout.",
+      "Managed PostgreSQL conformance needs @electric-sql/pglite, a devDependency of @nomo/connectors; it is not installed in this checkout.",
     );
   });
   return new Engine();
@@ -388,7 +388,7 @@ export async function managedPostgresConformanceFixture(
     );
   const spec = specFor(operation);
   const db = await startEngine();
-  const dir = await mkdtemp(join(tmpdir(), `void-postgres-${spec.name}-`));
+  const dir = await mkdtemp(join(tmpdir(), `nomo-postgres-${spec.name}-`));
   const managed: ManagedPostgresOptions = {
     workspace: WORKSPACE,
     schema: SCHEMA,
