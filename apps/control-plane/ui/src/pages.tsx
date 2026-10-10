@@ -254,7 +254,7 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
         </ul>
         <h3>{t("Poslední události", "Latest events")}</h3>
         <ul className="fleet-events">
-          {(data?.latestEvents ?? []).slice(0, 5).map((event) => {
+          {(data?.latestEvents ?? []).slice(0, 5).map((event: Row) => {
             // Metadata allow-list only (kind/at/label/verdict): render each
             // field by name so no prompt content can slip in even if the
             // server sent more.
