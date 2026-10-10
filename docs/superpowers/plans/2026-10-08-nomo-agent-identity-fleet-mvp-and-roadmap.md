@@ -256,7 +256,9 @@ are not reported as cancelled, reverted or successful.
 - [x] Valid MCP requests use the existing policy and ledger path.
 - [ ] `Allow`, `Deny`, `Hold`, fast path and explicit observe mode have focused
       tests.
-- [x] No NOMO token reaches upstream, logs, prompts, events or durable storage.
+- [x] No NOMO token reaches the upstream request, the response, the proxy error
+      log or durable storage. Prompts and event payloads are not covered by this
+      test and stay an open claim.
 - [x] `pnpm run typecheck` passes.
 - [ ] Read-only security reviewer checks trust boundaries before UI work starts.
 

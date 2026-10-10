@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { generateKeyPairSync } from "node:crypto";
+import { generateKeyPairSync, randomBytes } from "node:crypto";
 import { request as httpRequest } from "node:http";
 import test from "node:test";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -393,13 +393,24 @@ test("keeps the grant token out of the ledger and the upstream request", async (
   const policyPath = join(directory, "policy.yml");
   await writeFile(policyPath, "version: 1\nrules:\n  - match: {}\n    decision: allow\n");
   const ledgerDir = join(directory, "ledger");
-  const token = "S".repeat(43);
+  // A distinctive random value, not a repeated character, so an accidental
+  // collision elsewhere in the output cannot make the absence look proven.
+  const token = randomBytes(32).toString("base64url");
   const identity = {
     agentId: "registered-agent",
     toolScope: ["aws.s3.bucket.delete"],
     expiresAt: Date.now() + 60_000,
   };
   const targetMessages: Array<Record<string, unknown>> = [];
+  const stderr: string[] = [];
+  // tsconfig.base.json pins lib es2022, so Promise.withResolvers is unavailable.
+  // The executor runs synchronously, so the callback below closes over the real
+  // resolver assigned here.
+  let noteLogLine: () => void = () => {};
+  const logWritten = new Promise<void>((resolve) => {
+    noteLogLine = resolve;
+  });
+  let upstreamEvents: UpstreamEvents | undefined;
   const server = await startLocalMcpHttpServer({
     upstreamId: "fixture-upstream",
     port: 0,
@@ -415,10 +426,15 @@ test("keeps the grant token out of the ledger and the upstream request", async (
       posture: "fail-closed" as const,
       ledgerDir,
       workspace: "token-containment",
+      error: (line: string) => {
+        stderr.push(line);
+        noteLogLine();
+      },
       keyProvider: keyProviderFromPkcs8(
         generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
       ),
       upstreamSpawn(events: UpstreamEvents): UpstreamProcess {
+        upstreamEvents = events;
         return {
           send(line) {
             const message = JSON.parse(line) as {
@@ -518,4 +534,18 @@ test("keeps the grant token out of the ledger and the upstream request", async (
       `the grant token must never reach durable storage (${file})`,
     );
   }
+  // A clean fail-closed allow writes nothing to the error log, so an empty
+  // capture would make the assertion below vacuous. Push a malformed upstream
+  // line first: bin.ts routes that to writeError, proving the log was really
+  // written and the check is looking at real content.
+  upstreamEvents?.onMessage("{not json");
+  // bin.ts awaits markPendingLegacyUnknown before writeError, so wait for the
+  // error callback itself rather than a guessed duration.
+  await logWritten;
+  assert.ok(stderr.length > 0, "the error log must have been written to for this check to mean anything");
+  assert.equal(
+    stderr.join("\n").includes(token),
+    false,
+    "the grant token must never be written to the proxy error log",
+  );
 });
