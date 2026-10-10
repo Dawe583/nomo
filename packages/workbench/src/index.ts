@@ -2745,6 +2745,7 @@ export class Workbench {
     const mined = mineHarnessEntries(entries, { generatedAt }).entries;
     let overrides: HarnessEntry[] = [];
     let suppressedIds = new Set<string>();
+    let approvedByOperator = false;
     for (let index = entries.length - 1; index >= 0; index--) {
       const body = entries[index]!.body as Record<string, unknown>;
       const refinement = body.harnessRefinement;
@@ -2753,12 +2754,17 @@ export class Workbench {
       if (Array.isArray(record.overrides)) overrides = record.overrides as HarnessEntry[];
       if (Array.isArray(record.suppressedIds))
         suppressedIds = new Set(record.suppressedIds.filter((id): id is string => typeof id === "string"));
+      approvedByOperator = record.approvedBy === "operator";
       break;
     }
     const byId = new Map<string, HarnessEntry>();
     for (const entry of mined)
       if (!suppressedIds.has(entry.id)) byId.set(entry.id, entry);
-    for (const entry of overrides) byId.set(entry.id, entry);
+    // Only the approval path writes overrides, but the flag is gated on the
+    // signed record rather than inferred from that: a future write that was
+    // not an approval must not label mined text as an operator instruction.
+    for (const entry of overrides)
+      byId.set(entry.id, approvedByOperator ? { ...entry, decidedByOperator: true } : entry);
     return [...byId.values()];
   }
 

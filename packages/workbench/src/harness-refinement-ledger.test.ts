@@ -779,3 +779,27 @@ test("a proposal the model actually produced can be signed", async (t) => {
   assert.equal(result.proposalDigest !== undefined, true, "the proposal was signed");
   assert.equal((await app.pendingApprovalsFor(session.id)).length, 1);
 });
+
+test("an approved addendum reaches a later prompt marked as operator-decided", async (t) => {
+  // The chain records the approval, harnessEntries used to discard it, and the
+  // digest then told the model nothing in it had been decided by an operator.
+  // This walks the whole way: approve, reopen from the chain, and check the
+  // flag survives on the entry rather than only on the record.
+  const { app, session, reopen } = await fixture(t);
+  await app.refineHarness(session.id, proposal("prompt"));
+  const pending = await app.pendingApprovalsFor(session.id);
+  await app.approveHarnessProposal(session.id, pending[0]!.digest);
+
+  const entries = await app.harnessEntries(session.workspace);
+  const addendum = entries.find((entry) => entry.content.includes("Never retry"));
+  assert.ok(addendum, "the approved addendum is an entry");
+  assert.equal(addendum.decidedByOperator, true);
+
+  // And it survives a restart, because the chain is the only truth.
+  const after = await reopen().harnessEntries(session.workspace);
+  assert.equal(
+    after.find((entry) => entry.id === addendum.id)?.decidedByOperator,
+    true,
+    "the approval is rebuilt from the chain, not kept in memory",
+  );
+});
