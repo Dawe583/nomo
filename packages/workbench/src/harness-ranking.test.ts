@@ -224,7 +224,7 @@ test("rendered fields are clipped so one entry cannot fill the window", () => {
   assert.ok((ranked[0]?.entry.content.length ?? 0) <= 20);
 });
 
-test("the digest says it is not an instruction", () => {
+test("the digest says mined entries are not instructions", () => {
   // Injected text that reads like an instruction is an instruction, which is the
   // distinction context.ts draws for compaction summaries too.
   const ranked = rankEntries(
@@ -236,6 +236,31 @@ test("the digest says it is not an instruction", () => {
   assert.match(text, /not instructions/);
   assert.match(text, /changes a policy/);
   assert.match(text, /not permission to act/);
+});
+
+test("an operator-approved addendum is not filed under 'no operator decided this'", () => {
+  // The approval an operator gives is the only one in the system. Filing its
+  // text under a blanket claim that nothing here was operator-decided is a
+  // contradiction the model is entitled to resolve against the operator, and
+  // it demotes exactly the text a human spent a review to put there.
+  const ranked = rankEntries(
+    [
+      { ...entry("a", "inventory", "read the inventory first"), decidedByOperator: true },
+      entry("b", "postgres tuning", "postgres was approved 6 times"),
+    ],
+    queryTermsFrom({ user: "postgres inventory" }),
+    OPTS,
+  );
+  const text = formatForPrompt(ranked, "2026-10-07");
+  assert.match(text, /Operator-approved instructions/);
+  assert.match(text, /no entry in this section has been decided by an operator/);
+  // The scoped claim must not sit above the approved entry as a blanket one.
+  const approvedIndex = text.indexOf("read the inventory first");
+  const approvedHeader = text.indexOf("Operator-approved instructions");
+  const minedHeader = text.indexOf("Observations mined from the signed ledger");
+  assert.ok(approvedHeader < approvedIndex, "approved text comes after its own header");
+  assert.ok(minedHeader > approvedIndex, "and not under the mined section's header");
+  assert.match(text, /nothing here changes a policy/, "the policy boundary still holds");
 });
 
 test("an empty ranking renders nothing rather than an empty section", () => {

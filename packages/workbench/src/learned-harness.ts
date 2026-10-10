@@ -85,6 +85,11 @@ export type HarnessEntry = {
   readonly derivedFromSeq: readonly number[];
   readonly repeats: number;
   readonly createdAt: string;
+  /** Set when an operator read this exact text and approved it by digest. The
+   * chain records the approval; without this flag an approved instruction is
+   * indistinguishable from a mined observation, and a prompt that tells the
+   * model nothing here was operator-decided would be contradicting itself. */
+  readonly decidedByOperator?: boolean;
   /** Set when a later entry corrects this one. The entry is kept, not removed. */
   readonly supersededBy?: string;
   /** The mined rule, when `kind` is `rule`. Absent otherwise. */
