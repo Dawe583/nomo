@@ -1,11 +1,20 @@
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
+import { generateKeyPairSync } from "node:crypto";
+import { writeFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { Workbench } from "./index.ts";
 import { HARNESS_SETTINGS } from "./harness-settings.ts";
+import { keyProviderFromPkcs8 } from "../../ledger/src/sign.ts";
+import type { UpstreamEvents } from "../../proxy/src/bin.ts";
+import type { UpstreamProcess } from "../../proxy/src/transport/stdio.ts";
+import { LocalStorage } from "./storage.ts";
+import type { McpConfig } from "./mcp.ts";
+
+type LocalHarnessTaskInput = Parameters<Workbench["runLocalHarnessTask"]>[0];
 
 /**
  * The settings table is only a claim about the run path until something proves
@@ -343,4 +352,386 @@ test("maxPromptCharacters also bounds a branch prompt rewrite", async (t) => {
     idempotencyKey: "branch-long-enough",
   } as Parameters<Workbench["branch"]>[1]);
   assert.equal(child.status, "idle");
+});
+
+/**
+ * Task 6, the two halves that only a real run can settle: a harness task that
+ * actually crosses the inbound proxy, and the bearer that must not survive it.
+ *
+ * These are the tests the plan's acceptance rests on. "Cannot choose a
+ * caller-supplied identity or secret" is not a property of a type signature —
+ * it is a property of what is still on disk and in the prompt afterwards, so
+ * both are read back and searched rather than asserted from the code.
+ */
+
+/**
+ * A real registry entry, not an invented name. An unregistered tool is
+ * `unknown-tool` and fails closed, so the demo would never reach the upstream
+ * at all. With `bucket.versioning = Enabled` this case classifies r0, which
+ * is what makes the call an allow rather than a hold.
+ */
+const upstreamTool = {
+  name: "aws.s3.object.put",
+  description: "Overwrite the demo bucket object",
+  inputSchema: {
+    type: "object" as const,
+    properties: { key: { type: "string" }, body: { type: "string" } },
+    required: ["key", "body"],
+    additionalProperties: false,
+  },
+};
+
+/** The scope and facts the task declares, shared by the four tests below. */
+const taskScope = ["aws.s3.object.put"];
+const taskFacts = { "bucket.versioning": "Enabled" };
+
+/**
+ * A disposable upstream: one tool, one answer, no external process.
+ *
+ * The policy body is a parameter rather than a constant so a test can change
+ * the verdict without changing anything else. A fixture that always allows
+ * cannot tell a policy that decides from one that is merely consulted.
+ */
+function demoProxy(
+  directory: string,
+  calls: string[],
+  policy = "version: 1\nrules:\n  - match: {}\n    decision: allow\n",
+): Parameters<Workbench["runLocalHarnessTask"]>[0]["proxy"] {
+  return {
+    upstreamCommand: ["fixture"],
+    policyPath: writeProxyPolicy(directory, policy),
+    posture: "fail-closed" as const,
+    ledgerDir: join(directory, "ledger"),
+    workspace: "demo-workspace",
+    keyProvider: keyProviderFromPkcs8(
+      generateKeyPairSync("ed25519").privateKey.export({
+        format: "der",
+        type: "pkcs8",
+      }),
+    ),
+    upstreamSpawn(events: UpstreamEvents): UpstreamProcess {
+      return {
+        send(line: string) {
+          const message = JSON.parse(line) as {
+            id?: number | string;
+            method?: string;
+            params?: { name?: string };
+          };
+          // The bridge speaks to the upstream before it will serve a caller,
+          // so a fixture that ignores `initialize` stalls every later request
+          // rather than failing one.
+          if (message.method === "initialize")
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: {
+                protocolVersion: "2025-11-25",
+                capabilities: { tools: {} },
+                serverInfo: { name: "fixture", version: "1" },
+              },
+            }));
+          else if (message.method === "tools/list")
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: { tools: [upstreamTool] },
+            }));
+          else if (message.method === "tools/call") {
+            calls.push(message.params?.name ?? "");
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: { content: [{ type: "text", text: "demo-state" }] },
+            }));
+          }
+        },
+        close() {
+          events.onClose(0, null);
+        },
+        onStderr() {
+          return () => {};
+        },
+      };
+    },
+  };
+}
+
+/** Writes the interception policy the proxy will load, and returns its path. */
+function writeProxyPolicy(directory: string, policy: string): string {
+  const path = join(directory, "policy.yml");
+  writeFileSync(path, policy);
+  return path;
+}
+
+async function identityFixture(t: TestContext) {
+  const directory = await mkdtemp(join(tmpdir(), "void-local-identity-"));
+  writeProxyPolicy(
+    directory,
+    "version: 1\nrules:\n  - match: {}\n    decision: allow\n",
+  );
+  const calls: string[] = [];
+  let usedUpstream = false;
+  const app = new Workbench({ VOID_DATA_DIR: join(directory, "state") }, async (
+    url,
+    init,
+  ) => {
+    if (String(url).endsWith("/models")) return models();
+    // The upstream tool is advertised by description, not by name: the workbench
+    // renumbers tools per turn. Keying on a turn counter would couple this
+    // fixture to how many sessions ran before it.
+    const tools = (JSON.parse(String(init?.body)).tools ?? []) as Array<{
+      function?: { name?: string; description?: string };
+    }>;
+    const upstreamIndex = tools.findIndex((tool) =>
+      String(tool.function?.description ?? "").includes("Overwrite the demo bucket object"),
+    );
+    if (upstreamIndex >= 0 && !usedUpstream) {
+      usedUpstream = true;
+      return Response.json({
+        choices: [{
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [{
+              id: "call-1",
+              type: "function",
+              function: {
+                name: tools[upstreamIndex]!.function!.name!,
+                arguments: '{"key":"demo","body":"hello"}',
+              },
+            }],
+          },
+        }],
+      });
+    }
+    return answer();
+  });
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const originalFetch = globalThis.fetch;
+  const seen: string[] = [];
+  globalThis.fetch = (async (url: any, init?: any) => {
+    seen.push(String(init?.body ?? ""));
+    return originalFetch(url as never, init);
+  }) as typeof fetch;
+  t.after(async () => {
+    globalThis.fetch = originalFetch;
+    await app.shutdown();
+    await rm(directory, { recursive: true, force: true });
+  });
+  return { app, directory, calls, seen };
+}
+
+test("one harness task runs through the inbound proxy, policy and ledger", async (t) => {
+  const { app, directory, calls } = await identityFixture(t);
+
+  const result = await app.runLocalHarnessTask({
+    upstreamId: "local-demo-upstream",
+    prompt: "Read the demo bucket state",
+    toolScope: taskScope,
+    facts: taskFacts,
+    proxy: demoProxy(directory, calls),
+    learning: { enabled: false },
+  });
+
+  // The run crossed the real listener: the disposable upstream saw the call.
+  assert.deepEqual(calls, ["aws.s3.object.put"]);
+  // The identity is the server's, bound to this run, and carries the scope the
+  // task was granted rather than anything the caller supplied.
+  assert.equal(result.identity.upstreamId, "local-demo-upstream");
+  assert.equal(result.identity.audience, "nomo-inbound-proxy");
+  assert.deepEqual([...result.identity.toolScope], taskScope);
+  assert.match(result.identity.runId, /^[0-9a-f-]{36}$/);
+  // The same evidence path as every other guarded call: policy decided and the
+  // ledger recorded it, with no bypass.
+  assert.ok(result.ledger.entries.length > 0);
+  assert.ok(
+    result.ledger.entries.some((entry) =>
+      JSON.stringify(entry).includes("aws.s3.object.put"),
+    ),
+  );
+});
+
+test("a caller-supplied identity or secret cannot reach the grant", async (t) => {
+  const { app, directory, calls } = await identityFixture(t);
+
+  await assert.rejects(
+    app.runLocalHarnessTask({
+      upstreamId: "local-demo-upstream",
+      prompt: "Read the demo bucket state",
+      toolScope: taskScope,
+    facts: taskFacts,
+      // Neither of these may reach the wire. They are the two ways a caller
+      // would try to act as somebody else on a shared enforcement path.
+      agentId: "caller-chosen-agent",
+      token: "caller-chosen-secret",
+      proxy: demoProxy(directory, calls),
+      learning: { enabled: false },
+    } as unknown as LocalHarnessTaskInput),
+    /unknown|caller|identity|token|agent/i,
+  );
+  assert.deepEqual(calls, []);
+});
+
+test("harness learning activation is refused on the identity path", async (t) => {
+  const { app, directory, calls } = await identityFixture(t);
+
+  // The plan keeps learning off for the demo. That has to be a refusal the
+  // caller can see, not a default that a later default change could lift.
+  await assert.rejects(
+    app.runLocalHarnessTask({
+      upstreamId: "local-demo-upstream",
+      prompt: "Read the demo bucket state",
+      toolScope: taskScope,
+    facts: taskFacts,
+      proxy: demoProxy(directory, calls),
+      learning: { enabled: true },
+    } as unknown as LocalHarnessTaskInput),
+    /learning/i,
+  );
+  await assert.rejects(
+    app.runLocalHarnessTask({
+      upstreamId: "local-demo-upstream",
+      prompt: "Read the demo bucket state",
+      toolScope: taskScope,
+    facts: taskFacts,
+      proxy: demoProxy(directory, calls),
+    } as unknown as LocalHarnessTaskInput),
+    /learning/i,
+  );
+  assert.deepEqual(calls, []);
+});
+
+test("the granted bearer survives no prompt, catalog, snapshot or recovery context", async (t) => {
+  const { app, directory, calls, seen } = await identityFixture(t);
+
+  const result = await app.runLocalHarnessTask({
+    upstreamId: "local-demo-upstream",
+    prompt: "Read the demo bucket state",
+    toolScope: taskScope,
+    facts: taskFacts,
+    proxy: demoProxy(directory, calls),
+    learning: { enabled: false },
+  });
+  const bearer = result.grantToken;
+  assert.match(bearer, /^[A-Za-z0-9_-]{43}$/);
+
+  // Model prompts: every request body the provider was sent.
+  assert.ok(seen.length > 0, "the run sent no model request to search");
+  for (const body of seen) assert.doesNotMatch(body, new RegExp(bearer));
+  // Tool descriptions, as the run and the API surface them.
+  const catalog = JSON.stringify(app.connectionState());
+  assert.doesNotMatch(catalog, new RegExp(bearer));
+  // Saved settings and durable state, read back off disk rather than from the
+  // in-memory object that produced it.
+  const state = join(directory, "state");
+  const snapshot = new LocalStorage(state).read<Record<string, unknown>>()!;
+  assert.doesNotMatch(JSON.stringify(snapshot), new RegExp(bearer));
+  // Recovery context: the requests that resume a run after an outage, which is
+  // where a bearer would be most useful to an attacker and least expected.
+  assert.deepEqual(snapshot.recoveryRequests, {});
+  for (const session of (snapshot.sessions ?? []) as Array<Record<string, unknown>>)
+    assert.doesNotMatch(JSON.stringify(session), new RegExp(bearer));
+});
+
+/**
+ * The other half of "through the inbound proxy, policy and ledger".
+ *
+ * The run above proves a call crossed the proxy: the disposable upstream saw
+ * it. That is not the same as proving policy decided anything. An allow-every
+ * fixture cannot tell a policy that decides from one that is consulted and
+ * ignored, so the only way to witness a verdict is to change it and watch the
+ * run change with it.
+ *
+ * Hold is in the same test on purpose. At this layer a hold that expires is
+ * indistinguishable from a deny — the run ends the same way and the upstream
+ * sees nothing either time — so the third case asserts only what is actually
+ * true, and the way it bites is the same: a proxy that ignored policy would
+ * turn the hold into an allow and the upstream would see the call.
+ */
+test("the policy verdict decides the outcome, and the ledger records which one", async (t) => {
+  const runWith = async (policy: string) => {
+    const fixture = await identityFixture(t);
+    const result = await fixture.app.runLocalHarnessTask({
+      upstreamId: "local-demo-upstream",
+      prompt: "Overwrite the demo object",
+      toolScope: taskScope,
+      facts: taskFacts,
+      proxy: demoProxy(fixture.directory, fixture.calls, policy),
+      learning: { enabled: false },
+    });
+    return {
+      calls: fixture.calls,
+      ledger: JSON.stringify(result.ledger.entries),
+    };
+  };
+
+  const allowed = await runWith(
+    "version: 1\nrules:\n  - match: {}\n    decision: allow\n",
+  );
+  const denied = await runWith(
+    "version: 1\nrules:\n  - match: {}\n    decision: deny\n",
+  );
+  // A one second hold expires on its own, so the case costs a second instead of
+  // blocking a turn until the transport gives up.
+  const held = await runWith(
+    "version: 1\nrules:\n  - match: {}\n    decision: hold\n    seconds: 1\n",
+  );
+
+  assert.deepEqual(allowed.calls, taskScope, "an allowed call never reached the upstream");
+  assert.deepEqual(denied.calls, [], "a denied call still reached the upstream");
+  assert.deepEqual(held.calls, [], "a held call was dispatched before it was released");
+  assert.match(allowed.ledger, /aws\.s3\.object\.put/);
+  assert.match(allowed.ledger, /execute:completed/);
+  // Neither refusal is signed off as work that happened. This is the part a
+  // "consult policy, then proceed anyway" regression would break while still
+  // leaving the upstream call count right.
+  assert.doesNotMatch(denied.ledger, /execute:completed/);
+  assert.doesNotMatch(held.ledger, /execute:completed/);
+  assert.match(denied.ledger, /aws\.s3\.object\.put/);
+});
+
+/**
+ * A provider-owned bearer has two homes: the live connection, which holds the
+ * closure that mints it, and the snapshot, which must hold neither the closure
+ * nor anything derived from it. The second is the one that matters — the
+ * snapshot is what a later run, a backup, or an operator reads.
+ *
+ * The live half is asserted too, because a test that only checked the snapshot
+ * would pass on a Workbench that never had a provider connection at all.
+ */
+test("a session's saved connection keeps the live provider and drops the saved one", async (t) => {
+  const { app, directory } = await identityFixture(t);
+  const result = await app.runLocalHarnessTask({
+    upstreamId: "local-demo-upstream",
+    prompt: "Overwrite the demo object",
+    toolScope: taskScope,
+    facts: taskFacts,
+    proxy: demoProxy(directory, []),
+    learning: { enabled: false },
+  });
+
+  const internals = app as unknown as {
+    sessions: Map<string, { connections?: Record<string, McpConfig> }>;
+  };
+  const live = internals.sessions.get(result.sessionId)?.connections ?? {};
+  const liveEntries = Object.entries(live);
+  assert.ok(liveEntries.length > 0, "the run left no connector connection to compare");
+  // The live connection really does carry the provider that owns the bearer.
+  for (const [, config] of liveEntries)
+    assert.equal(typeof config.tokenProvider, "function");
+
+  const snapshot = new LocalStorage(join(directory, "state"))
+    .read<{ sessions?: Array<{ connections?: Record<string, Record<string, unknown>> }> }>()!;
+  const stored = snapshot.sessions?.flatMap((session) =>
+    Object.values(session.connections ?? {}),
+  ) ?? [];
+  assert.ok(stored.length > 0, "no connection was saved to compare against the live one");
+  for (const connection of stored) {
+    assert.equal(
+      "tokenProvider" in connection,
+      false,
+      "a saved connection kept its token provider",
+    );
+    assert.equal(connection.token, undefined, "a saved connection kept a bearer");
+  }
 });

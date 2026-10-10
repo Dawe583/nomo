@@ -46,6 +46,8 @@ import {
   HOOK_TIMEOUT_BOUNDS,
   type HookResult,
   type CompactionResult,
+  validateLocalHarnessTask,
+  type LocalHarnessTask,
 } from "./agents.ts";
 import {
   LOCAL_AGENT_GRANT_AUDIENCE,
@@ -69,6 +71,11 @@ import {
   type McpTool,
   type McpConfig,
 } from "./mcp.ts";
+import {
+  startLocalMcpHttpServer,
+  type LocalGrantIdentity,
+} from "@void/proxy";
+import type { LocalProxyRpcBridgeOptions } from "../../proxy/src/bin.ts";
 import {
   createWorkspace,
   workspaceTools,
@@ -403,6 +410,27 @@ type Session = {
   provider?: CompatibleProvider;
 };
 
+/**
+ * What survives into the snapshot. A `tokenProvider` is a closure over a grant
+ * this process issued to itself; JSON would drop it silently, which would
+ * leave a connector that looks configured and can never authenticate. It is
+ * removed on purpose instead, so a restored connector carries no credential
+ * and has to be re-probed by the operator who owns it.
+ */
+function persistedMcpConfig<T extends McpConfig>(config: T): Omit<T, "tokenProvider"> {
+  const { tokenProvider: _dropped, ...rest } = config;
+  return rest;
+}
+
+function mapConnections(
+  connections: Session["connections"],
+): Session["connections"] {
+  if (!connections) return undefined;
+  return Object.fromEntries(
+    Object.entries(connections).map(([id, config]) => [id, persistedMcpConfig(config)]),
+  ) as Session["connections"];
+}
+
 /** Model tools always cross the existing VOID SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
 export class Workbench {
@@ -720,7 +748,7 @@ export class Workbench {
       ignoreEnvironment: this.ignoreEnvironment,
       profiles: this.profiles,
       catalog: this.catalog,
-      connectors: this.connectors,
+      connectors: this.connectors.map(persistedMcpConfig),
       documents: this.documents,
       evidence: this.evidence,
       recoveryRequests: this.recoveryRequests,
@@ -749,7 +777,7 @@ export class Workbench {
             ? { baseUrl: config.baseUrl, kind: config.kind }
             : undefined,
           tools,
-          connections,
+          connections: mapConnections(connections),
         }),
       ),
     });
@@ -2101,6 +2129,181 @@ export class Workbench {
       this.persist();
       return this.connectionState();
     });
+  }
+
+  /**
+   * Registers the inbound local connector for a run that carries its own
+   * grant. Unlike `addConnector` this does not take a caller-supplied token:
+   * the only field that may carry a bearer is a provider, and the provider is
+   * supplied by the caller that issued the grant. The URL is validated exactly
+   * as an operator-supplied one is, so the local exemption is not a way past
+   * it.
+   */
+  async addLocalAgentConnector(
+    input: McpConfig & {
+      name?: string;
+      tokenProvider: () => string | undefined;
+    },
+  ) {
+    if (input.token !== undefined)
+      throw new Error(
+        "A local agent connector takes a token provider, not a static token.",
+      );
+    return this.locked(async () => {
+      const url = validateEndpoint(input.url, true);
+      const policy = input.policy || DEFAULT_POLICY;
+      if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
+      if (this.connectors.length >= 12)
+        throw new Error("Connector limit reached. Remove an unused connector.");
+      const connector: Connector = {
+        ...input,
+        url,
+        policy,
+        id: randomUUID(),
+        name: input.name?.trim().slice(0, 80) || "local-agent-proxy",
+        tools: [],
+        consentState: "staged",
+        connectionless: true,
+      };
+      this.connectors.push(connector);
+      this.persist();
+      return this.connectionState();
+    });
+  }
+
+  /**
+   * Runs the one constrained task the identity demo allows, end to end.
+   *
+   * The order matters and is the point of the method. The session exists
+   * first, so the run id the grant is bound to is one this Workbench issued
+   * rather than one the caller named. The grant is minted second and lives
+   * only in memory. The local listener comes third and is told how to check a
+   * token by consulting the issuer, not by comparing against a secret it was
+   * handed — so the endpoint never learns the value it is validating. Only
+   * then does a single turn go out, through the ordinary workspace tool path:
+   * policy decides and the ledger records, with no branch of this method
+   * reaching either one directly.
+   */
+  async runLocalHarnessTask(
+    input: LocalHarnessTask & {
+      proxy: LocalProxyRpcBridgeOptions;
+      /** Read back so a caller can prove the credential never left memory. */
+    },
+  ): Promise<{
+    identity: LocalAgentIdentity;
+    grantToken: string;
+    sessionId: string;
+    ledger: { entries: unknown[] };
+  }> {
+    const task = validateLocalHarnessTask(input);
+    // The task may not name a model, and there is no default to fall back on:
+    // the operator picks, exactly as for any other run on this Workbench.
+    const model = this.preferences.defaultModel ?? this.catalog[0]?.id;
+    if (!model)
+      throw new Error("Select a model before running the local harness task.");
+
+    // Deliberately distinct from the task prompt: `start` returns an existing
+    // session for an identical prompt, and the task turn must not be answered
+    // by the run that exists only to bind the grant.
+    const BINDING_PROMPT = "Bind the demo workspace for the local identity run.";
+    // A run id has to exist before a grant can be bound to it, but a session's
+    // tool list is captured when it starts — so the connector cannot be
+    // confirmed until a run exists, and the run that will carry the connector's
+    // tools cannot start until the connector is confirmed. The two phases are
+    // therefore structural, not a convenience: the first binds the workspace
+    // and mints the run id, the second is the task turn itself.
+    const binding = await this.start(BINDING_PROMPT, model);
+    await this.settled();
+    // `start` binds both before it returns; a session missing either has no run
+    // for a grant to bind to, and guessing would mint a credential for a run
+    // that does not exist.
+    if (
+      typeof binding.workspace !== "string" ||
+      typeof binding.runId !== "string"
+    )
+      throw new Error("The session has no bound run to bind a grant to.");
+    const issuer = new LocalAgentIdentityIssuer();
+    const issued = issuer.issue({
+      principalId: LOCAL_AGENT_PRINCIPAL_ID,
+      workspaceId: binding.workspace,
+      agentId: `${LOCAL_AGENT_PRINCIPAL_ID}-agent`,
+      runId: binding.runId,
+      upstreamId: task.upstreamId,
+      toolScope: task.toolScope,
+    });
+    const asGrantIdentity = (
+      identity: LocalAgentIdentity | null,
+    ): LocalGrantIdentity | null =>
+      identity === null
+        ? null
+        : {
+            agentId: identity.agentId,
+            toolScope: identity.toolScope,
+            expiresAt: identity.expiresAt,
+          };
+
+    const server = await startLocalMcpHttpServer({
+      upstreamId: task.upstreamId,
+      proxyOptions: input.proxy,
+      resolveGrant: (token, upstreamId) =>
+        asGrantIdentity(
+          issuer.authenticate(token, {
+            audience: LOCAL_AGENT_GRANT_AUDIENCE,
+            upstreamId,
+          }),
+        ),
+      validateGrant: (token, upstreamId, toolName) =>
+        asGrantIdentity(
+          issuer.validate(token, {
+            audience: LOCAL_AGENT_GRANT_AUDIENCE,
+            upstreamId,
+            toolName,
+          }),
+        ),
+    });
+
+    try {
+      await this.addLocalAgentConnector({
+        url: server.url.href,
+        tokenProvider: () =>
+          issuer.authenticate(issued.token, {
+            audience: LOCAL_AGENT_GRANT_AUDIENCE,
+            upstreamId: task.upstreamId,
+          })
+            ? issued.token
+            : undefined,
+        facts: { ...task.facts },
+        // No `policy` here: the upstream interception policy belongs to the
+        // proxy as a file path, while the connector carries the Workbench's
+        // own policy object. Collapsing them would make one look like the
+        // other to whoever reads this later.
+      });
+      const connector = this.connectors.at(-1)!.id;
+      // Probed and confirmed like any operator connector, so the consent
+      // gate is exercised rather than bypassed.
+      await this.probeConnector(connector);
+      await this.confirmConnector(connector);
+
+      const run = await this.start(task.prompt, model);
+      await this.settled();
+      if (typeof run.workspace !== "string")
+        throw new Error("The task run recorded no workspace.");
+      const ledger = await this.ledger(run.workspace);
+      const identity = issuer.authenticate(issued.token, {
+        audience: LOCAL_AGENT_GRANT_AUDIENCE,
+        upstreamId: task.upstreamId,
+      });
+      if (!identity) throw new Error("The local agent grant did not verify.");
+      return {
+        identity,
+        grantToken: issued.token,
+        sessionId: run.id,
+        ledger: { entries: [...(ledger?.entries ?? [])] },
+      };
+    } finally {
+      issuer.revoke(binding.runId);
+      await server.close();
+    }
   }
   /** Stage an edit. No network request: the URL and policy are validated, the
    * connector returns to staged, and the operator probes it again explicitly. */

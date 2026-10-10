@@ -11,6 +11,7 @@ import { CompatibleProvider } from "./provider.ts";
 import { LocalStorage } from "./storage.ts";
 import { readLedgerFeed } from "../../ledger/src/feed.ts";
 import { validateAgentProfile, validateHook } from "./agents.ts";
+import { catalog as mcpCatalog } from "./mcp.ts";
 
 const secret = "fixture-provider-secret";
 const reply = (body: unknown) =>
@@ -1300,4 +1301,145 @@ test("legacy inline provider keys are scrubbed without borrowing another provide
   assert.ok(sendError instanceof Error);
   assert.match(sendError.message, /provider/i);
   assert.equal(requestCount, requestsBeforeResume);
+});
+
+/**
+ * Task 6: the Workbench MCP client, the inbound local proxy, and the identity
+ * a harness run is allowed to act under.
+ *
+ * The grant is the whole point of this section. A caller that can hand the
+ * Workbench its own bearer text has chosen its own identity, which would make
+ * the shared enforcement path decorative, so the tests below assert both
+ * halves: that the token never appears anywhere it could be read back, and
+ * that a run reaches the proxy with an identity the server chose itself.
+ */
+
+type CapturedRequest = {
+  headers: Record<string, string>;
+  body: { method?: string; id?: string; params?: Record<string, unknown> };
+};
+
+/** Replaces fetch with a recorder for the duration of one test. */
+async function recordingFetch(
+  t: { after(fn: () => void): void },
+  respond: (request: CapturedRequest) => unknown,
+) {
+  const original = globalThis.fetch;
+  const requests: CapturedRequest[] = [];
+  globalThis.fetch = (async (_url: unknown, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body)) as CapturedRequest["body"];
+    const request = {
+      headers: (init?.headers ?? {}) as Record<string, string>,
+      body,
+    };
+    requests.push(request);
+    return reply(respond(request));
+  }) as typeof fetch;
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  return requests;
+}
+
+test("the MCP client speaks 2026-07-28 and its connectionless flow carries no session", async (t) => {
+  const requests = await recordingFetch(t, (request) => ({
+    jsonrpc: "2.0",
+    id: request.body.id,
+    result: { tools: [] },
+  }));
+
+  const listed = await mcpCatalog({
+    url: "https://mcp.test/mcp",
+    connectionless: true,
+  });
+  assert.deepEqual(listed.tools, []);
+  // A stateless client issues exactly one list. Anything more means it opened a
+  // session the local endpoint never granted.
+  assert.deepEqual(requests.map((request) => request.body.method), ["tools/list"]);
+  for (const request of requests) {
+    assert.equal(request.headers["mcp-protocol-version"], "2026-07-28");
+    assert.equal(request.headers["mcp-session-id"], undefined);
+    assert.equal(
+      (request.body.params?._meta as Record<string, unknown> | undefined)?.[
+        "io.modelcontextprotocol/protocolVersion"
+      ],
+      "2026-07-28",
+    );
+    assert.equal(request.headers["mcp-method"], "tools/list");
+  }
+});
+
+test("a connector that is not connectionless keeps its initialize handshake", async (t) => {
+  const requests = await recordingFetch(t, (request) => ({
+    jsonrpc: "2.0",
+    id: request.body.id,
+    ...(request.body.method === "tools/list" ? { result: { tools: [] } } : { result: {} }),
+  }));
+
+  await mcpCatalog({ url: "https://mcp.test/mcp" });
+  // Preserving the stateful path is what keeps the outbound HTTPS connectors
+  // working; the version bump alone may not silently retire them.
+  assert.deepEqual(requests.map((request) => request.body.method), [
+    "initialize",
+    "notifications/initialized",
+    "tools/list",
+  ]);
+  for (const request of requests)
+    assert.equal(request.headers["mcp-protocol-version"], "2026-07-28");
+});
+
+test("a token provider is asked per request and never becomes a static token", async (t) => {
+  const issued = ["first-token-value", "second-token-value"];
+  const seen: (string | undefined)[] = [];
+  const requests = await recordingFetch(t, (request) => ({
+    jsonrpc: "2.0",
+    id: request.body.id,
+    result: { tools: [] },
+  }));
+
+  await mcpCatalog({
+    url: "https://mcp.test/mcp",
+    connectionless: true,
+    tokenProvider: () => issued.shift(),
+  });
+  // The provider is consulted per request rather than read once, so a grant
+  // that expires or is revoked mid-run is not honoured by a cached header.
+  assert.equal(requests.length, 1);
+  seen.push(requests[0]!.headers.authorization);
+  assert.equal(seen[0], "Bearer first-token-value");
+});
+
+test("a config carrying both a static token and a provider is refused", async () => {
+  // Two sources of authority for one bearer is the ambiguity the provider
+  // exists to remove; picking one silently would hide a caller still trying to
+  // choose its own secret.
+  await assert.rejects(
+    mcpCatalog({
+      url: "https://mcp.test/mcp",
+      connectionless: true,
+      token: "caller-supplied",
+      tokenProvider: () => "server-bound",
+    }),
+    /token/i,
+  );
+});
+
+test("the Workbench refuses to persist a bearer a provider owns", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-local-connector-"));
+  const workbench = new Workbench({ VOID_DATA_DIR: dir });
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  await workbench.addLocalAgentConnector({
+    url: "http://127.0.0.1:9/mcp",
+    tokenProvider: () => "in-memory-grant-text",
+  });
+  const persisted = new LocalStorage(dir).read<Record<string, unknown>>()!;
+  const connectors = persisted.connectors as Array<Record<string, unknown>>;
+  assert.equal(connectors.length, 1);
+  assert.equal(connectors[0]!.token, undefined, "a provider bearer was persisted");
+  assert.equal(connectors[0]!.tokenProvider, undefined, "a provider was persisted");
+  assert.doesNotMatch(JSON.stringify(persisted), /in-memory-grant-text/);
 });

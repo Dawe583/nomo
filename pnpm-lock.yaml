@@ -294,6 +294,9 @@ importers:
 
   packages/workbench:
     dependencies:
+      '@void/proxy':
+        specifier: workspace:*
+        version: link:../proxy
       '@void/runtime':
         specifier: workspace:*
         version: link:../runtime
