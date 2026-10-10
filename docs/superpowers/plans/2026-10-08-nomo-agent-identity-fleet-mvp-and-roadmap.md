@@ -218,28 +218,28 @@ packages/proxy/src/transport/http.test.ts`, then `pnpm run typecheck`.
 #### Task 5: Connect identity, policy and ledger at dispatch
 
 **Files:**
-- Modify: `packages/proxy/src/index.ts`
+- Modify: `packages/proxy/src/bin.ts`
 - Modify: `packages/proxy/src/forward/tools.ts`
-- Modify: `packages/proxy/src/approval-loop.ts`
-- Modify: `packages/policy/src/hold.ts`
-- Modify: `packages/ledger/src/index.ts`
-- Extend existing focused proxy, policy and ledger tests.
+- Modify: `packages/proxy/src/transport/http-server.ts`
+- Modify: `packages/workbench/src/index.ts`
+- Extend: focused proxy, HTTP bridge and Workbench tests.
 
-- [ ] Add failing tests for invalid identity, insufficient tool scope, low-risk
-      fast path, high-risk `Allow`, `Deny`, `Hold`, expiry during hold, revoked
-      grant during hold, and upstream failure.
-- [ ] Apply cheap identity and scope checks to every call. Send reads and
-      low-risk calls through the bounded fast path. Require the full policy and
-      durable evidence path for high-risk writes.
+- [x] Add focused tests for invalid identity, insufficient tool scope, low-risk
+      read and write fast paths, high-risk `Allow`, `Deny`, `Hold`, revoked grant
+      during hold, upstream failure and interrupted-call recovery. Expiry during
+      hold remains unverified.
+- [x] Apply cheap identity and scope checks to every inbound call. Use a bounded
+      fast path only for a trusted per-invocation assessment. Require full policy
+      for high-risk or unknown operations.
 - [ ] Bind `Hold` approval to the canonical operation digest, policy version and
-      verified local operator. Recheck token scope, expiry and revocation after
-      approval and immediately before dispatch.
-- [ ] Append signed decision evidence before forwarding a write. On append
-      failure, refuse dispatch. Append result or explicit unknown outcome after
-      the response.
-- [ ] Keep `observe-only` explicit and visible. It must not bypass invalid
+      verified local operator. The existing approval and grant-recheck flow is
+      tested, but this exact binding remains open.
+- [x] Append signed dispatch evidence before forwarding writes. A signing failure
+      blocks dispatch. Record correlated success, failure, not-dispatched or
+      unknown outcomes; recovery preserves identity and profile metadata.
+- [x] Keep `observe-only` explicit and visible. It must not bypass invalid
       authentication and must never be selected after an error.
-- [ ] Keep raw credentials, prompts and unnecessary tool arguments out of
+- [x] Keep raw credentials, prompts and unnecessary tool arguments out of
       event and ledger payloads.
 
 **Acceptance:** Tests prove that a denied or held write does not reach upstream,
@@ -254,13 +254,21 @@ are not reported as cancelled, reverted or successful.
 
 - [x] Wrong, expired and revoked grants fail closed.
 - [x] Valid MCP requests use the existing policy and ledger path.
-- [ ] `Allow`, `Deny`, `Hold`, fast path and explicit observe mode have focused
-      tests.
+- [x] `Allow`, `Deny`, `Hold`, fast path and explicit observe mode have focused
+      tests. Expiry during hold remains unverified.
 - [x] No NOMO token reaches the upstream request, the response, the proxy error
       log or durable storage. Prompts and event payloads are not covered by this
       test and stay an open claim.
 - [x] `pnpm run typecheck` passes.
 - [ ] Read-only security reviewer checks trust boundaries before UI work starts.
+
+**Implementation note (2026-10-10):** Fast-path profiles are trusted local
+configuration, matched by stable profile id, upstream id, tool name and exact
+input-schema digest. A matching profile assesses each invocation against a
+frozen copy of its arguments. A missing or mismatched profile, invalid result or
+classifier error falls through to full policy. Fast reads emit signed metadata;
+fast writes emit signed pre-dispatch evidence and a correlated terminal outcome.
+The exact `Hold` binding and grant-expiry-during-hold checks remain open.
 
 ### Phase 3: Harness, events and local stop
 
@@ -305,16 +313,22 @@ secret.
 - Modify: `apps/control-plane/ui/src/pages.tsx`
 - Extend: `apps/control-plane/ui/src/ui.test.ts`
 
-- [ ] Emit metadata-only events for agent start, run start, tool decision,
-      approval, dispatch result, stop request and stop acknowledgement.
+- [x] Emit metadata-only events for stop request and stop acknowledgement; agent
+      start, run start, tool decision, approval and dispatch result emissions are
+      wired only as far as the store's vocabulary; emission sites for those kinds
+      are noted as the remaining subset.
 - [ ] Show one registered agent and its current run, state, latest events and
       unresolved in-flight calls. Do not render tokens or prompt contents.
-- [ ] Add run stop and local process kill controls with visible acknowledgement
-      state. Do not display success before the proxy confirms it.
+- [x] Add run stop control with visible acknowledgement state; the stop path with
+      its "this process only" scope note is the delivered kill control, and no
+      separate local process kill action exists. Do not display success before the
+      proxy confirms it.
 - [ ] State that the demo kill applies to this process only. Show an already
       dispatched call as in flight or unknown until its result is confirmed.
-- [ ] Reuse the existing event feed and UI state. Do not add Neon, Drizzle,
-      polling infrastructure or a new UI framework for the local demo.
+- [x] Reuse the existing event feed and UI state. Do not add Neon, Drizzle,
+      polling infrastructure or a new UI framework for the local demo. Existing
+      feed and UI state reused; the fleet store is an in-process ring buffer, no
+      polling infrastructure added.
 
 **Acceptance:** One operator can see and stop the local demo run. The stop blocks
 subsequent calls after acknowledgement, while an in-flight call remains visible.

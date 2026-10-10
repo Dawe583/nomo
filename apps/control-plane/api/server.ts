@@ -324,7 +324,11 @@ async function route(
       return sendJson(response, 200, { ok: true, ack: options.fleetEvents.stopAck(stopRun[1]!), scope: "this process only" });
     }
     if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, options.workbench.agents());
-    if (request.method === 'POST' && parsed.pathname === '/api/agents') return sendJson(response, 200, { agent: wb.upsertAgent(await readJsonBody(request)) });
+    if (request.method === 'POST' && parsed.pathname === '/api/agents') {
+      const agent = wb.upsertAgent(await readJsonBody(request));
+      options.fleetEvents.record({ kind: "agent_started", agentId: agent.id, label: "agent registered" });
+      return sendJson(response, 200, { agent });
+    }
     if (request.method === 'POST' && parsed.pathname === '/api/hooks') return sendJson(response, 200, { hook: wb.upsertHook(await readJsonBody(request)) });
     if (request.method === 'GET' && parsed.pathname === '/api/integrations') return sendJson(response, 200, { supported: false, integrations: [] });
     if (request.method === 'GET' && parsed.pathname === '/api/demo/status') return sendJson(response, 200, { supported: false, available: false });
@@ -483,7 +487,11 @@ async function route(
     if (request.method === "POST") {
       const body = await readJsonBody(request) as { prompt?: string; model?: string; project?: string; agent?: string; background?: boolean; idempotencyKey?: string } | null;
       if (typeof body?.prompt !== "string" || (body.model !== undefined && typeof body.model !== "string") || (body.project !== undefined && typeof body.project !== "string") || (body.agent !== undefined && typeof body.agent !== "string") || (body.background !== undefined && typeof body.background !== "boolean")) return sendJson(response, 400, { error: "invalid_session" });
-      try { return sendJson(response, 201, { session: await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent, body.background) }); }
+      try {
+        const session = await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent, body.background);
+        options.fleetEvents.record({ kind: "run_started", agentId: session.id, sessionId: session.id, label: "run started for session" });
+        return sendJson(response, 201, { session });
+      }
       catch (error) { return sendJson(response, 409, { error: "session_not_started", message: error instanceof Error ? error.message : "Session not started" }); }
     }
   }
@@ -605,7 +613,7 @@ async function route(
   }
   const approvalMatch = /^\/api\/approvals\/([^/]+)\/decision$/.exec(parsed.pathname);
   if (request.method === "POST" && approvalMatch !== null) {
-    return handleApprovalDecision(request, response, options.approvals, decodeURIComponent(approvalMatch[1]!));
+    return handleApprovalDecision(request, response, options.approvals, decodeURIComponent(approvalMatch[1]!), options.fleetEvents);
   }
   if (parsed.pathname === "/api/companion/envelope") {
     // The envelope adapter speaks the frozen `void.companion.v1` wire contract
@@ -748,6 +756,7 @@ async function handleApprovalDecision(
   response: ServerResponse,
   approvals: ApprovalBroker | undefined,
   holdId: string,
+  fleetEvents: FleetEventStore,
 ): Promise<void> {
   if (approvals === undefined) {
     return sendJson(response, 503, {
@@ -760,6 +769,7 @@ async function handleApprovalDecision(
   const decision = parseDecision(body);
   if (decision === null) return sendJson(response, 400, { error: "invalid_decision" });
   const result = await approvals.decide(holdId, decision);
+  fleetEvents.record({ kind: "approval", agentId: holdId, sessionId: undefined, label: "approval decided", verdict: decision.kind });
   response.setHeader("cache-control", "no-store");
   sendJson(response, 200, { ok: true, result });
 }

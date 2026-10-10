@@ -475,3 +475,84 @@ test("the overview carries the fleet view fields for one registered agent", asyn
     assert.equal(overview.stopAck, "unknown", "no stop has been requested yet");
   }, { workbench });
 });
+
+test("a decided approval records the approval event with its verdict", async () => {
+  const decisions: Array<Record<string, unknown>> = [];
+  await withServer("unused.jsonl", async (origin) => {
+    const decision = await fetch(origin + "/api/approvals/hold-fixture-1/decision", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "approved", by: "fixture-operator" }),
+    });
+    assert.equal(decision.status, 200, "the fixture broker accepted the decision");
+    const feed = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: Array<Record<string, unknown>> };
+    const recorded = feed.items.find((event) => event.kind === "approval");
+    assert.ok(recorded, "the approval decision is in the feed");
+    assert.equal(recorded?.agentId, "hold-fixture-1", "the feed names the hold");
+    assert.equal(recorded?.verdict, "approved", "the feed carries the verdict");
+  }, {
+    approvals: {
+      decide: (holdId, decision) => {
+        decisions.push({ holdId, decision });
+        return { ok: true };
+      },
+    },
+  });
+  assert.equal(decisions.length, 1, "the broker saw exactly one decision");
+});
+
+test("a started run and a decided approval land in the fleet feed", async () => {
+  const fetcher: typeof fetch = async (input) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url === "https://fixture.test/v1/models")
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    throw new Error(`fixture fetcher must not be called for ${url}`);
+  };
+  const workbench = new Workbench(
+    { VOID_DATA_DIR: await mkdtemp(join(tmpdir(), "void-fleet-wb-")) },
+    fetcher,
+  );
+  await workbench.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-private-key-never-expose" });
+  await withServer("unused.jsonl", async (origin) => {
+    const start = await fetch(origin + "/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt: "leak-probe-prompt-xyz" }),
+    });
+    assert.equal(start.status, 201, "the fixture created a session");
+    const created = (await start.json()) as { session?: { id?: string } };
+    const id = created?.session?.id;
+    assert.ok(typeof id === "string", "the session response names the run");
+
+    const feed = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: Array<Record<string, unknown>> };
+    assert.ok(feed.items.some((event) => event.kind === "run_started"), "the run start is in the feed");
+    for (const event of feed.items) {
+      const flat = JSON.stringify(event);
+      assert.doesNotMatch(flat, /leak-probe-prompt-xyz/, "no prompt text in the fleet feed");
+    }
+  }, { workbench });
+});
+
+test("registering an agent emits agent_started", async () => {
+  await withServer("unused.jsonl", async (origin) => {
+    const response = await fetch(origin + "/api/agents", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        id: "fleet-fixture-agent",
+        name: "FleetFixture",
+        systemPrompt: "fixture",
+        allowedTools: ["void_workspace_list"],
+        policyProfile: "default",
+        maxTurns: 5,
+        maxContextTokens: 4096,
+      }),
+    });
+    assert.equal(response.status, 200, "the fixture registered an agent");
+
+    const feed = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: Array<Record<string, unknown>> };
+    const started = feed.items.find((event) => event.kind === "agent_started");
+    assert.ok(started, "the registration is in the feed");
+    assert.equal(started?.agentId, "fleet-fixture-agent", "the feed names the upserted agent");
+  });
+});
