@@ -1,18 +1,35 @@
 # OMP Session Handoff — Agent Harness (2026-10-07)
 
-> **Superseded 2026-10-09.** Kus 6 (chain integration) and kus 7 (TUI score
+> **Superseded twice. The live harness work is branch `feat/agent-harness`, not
+> this one.**
+>
+> _Superseded 2026-10-10, kus 7._ The note below claims that kus 6 and kus 7
+> "landed on the main checkout, branch `harness/settled-review-race`" and that
+> the TUI ledger tab carries `harness-score-rows.ts` and
+> `harness-proposal-rows.ts`. That branch is stale and its kus 7 is
+> **superseded**, not carried forward. A port of those two modules was
+> attempted and was abandoned for two reasons, both verified by running the
+> tree: `harness-score-rows.test.ts` asserts that no line matching
+> `/verdict|allow|deny the call/i` appears, which forbids exactly the
+> `Verdict:` row that `feat/agent-harness` requires in thirteen places, and
+> `harness-proposal-rows.ts` imports `pendingProposalsFromEntries`, an export
+> that does not exist on `feat/agent-harness` and cannot without changing the
+> shape of the signed ledger. The full reasoning, with line references, is in
+> a note titled `OMPHARNESS-SUPERSEDED-KUS7.md` on branch `feat/agent-harness`
+> at commit `6c99a67`. **Do not port it.**
+>
+> _Superseded 2026-10-09._ Kus 6 (chain integration) and kus 7 (TUI score
 > row) landed on the main checkout, branch `harness/settled-review-race`:
 > `f939ca8` wires retrieval, signed proposal persistence and operator review
 > (`pendingProposals`, digest-bound `approveHarnessProposal`,
 > `rejectHarnessProposal`, TUI proposal rows and `/refine approve|reject`),
 > and `30d4583` closes the silent review paths and arms the trigger on
-> compaction. The TUI ledger tab carries `harness-score-rows.ts`
-> (score, CI, case count) and `harness-proposal-rows.ts` (pending diffs).
-> Workbench suite: 421/421 green, typecheck clean. The live tracking
-> document is `docs/superpowers/plans/2026-10-08-nomo-agent-harness.md`.
-> Kus 8 is decided by the implementation spec, rule 9: skill and subagent
-> edits stay proposal-only; `refineHarness` refuses them. Everything below
-> describes the old `feat/agent-harness` worktree and is historical.
+> compaction. Workbench suite: 421/421 green, typecheck clean. The live
+> tracking document is
+> `docs/superpowers/plans/2026-10-08-nomo-agent-harness.md`. Kus 8 is decided
+> by the implementation spec, rule 9: skill and subagent edits stay
+> proposal-only; `refineHarness` refuses them. Everything below describes the
+> old `feat/agent-harness` worktree and is historical.
 
 Written by the omp session on 2026-10-07. For whoever picks this tree up next.
 
