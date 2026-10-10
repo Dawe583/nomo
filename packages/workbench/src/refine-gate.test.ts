@@ -133,7 +133,6 @@ test("gates default to the interval and cooldown prime uses", () => {
   assert.equal(DEFAULT_REFINE_GATES.turnInterval, 25);
   assert.equal(DEFAULT_REFINE_GATES.cooldownMs, 20 * 60 * 1000);
   assert.equal(DEFAULT_REFINE_GATES.enabled, true);
-  assert.equal(DEFAULT_REFINE_GATES.compact, true);
 });
 
 test("a partial settings block resolves against the defaults", () => {

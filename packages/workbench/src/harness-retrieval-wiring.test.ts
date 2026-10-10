@@ -218,3 +218,47 @@ test("the harness reviewer's own tokens are recorded, not just the turn's", asyn
   );
   assert.equal(fromHarness[0]!.payload?.total_tokens, 18);
 });
+
+test("an operator can switch refinement off, and the gate obeys", async (t) => {
+  // The gate decided when to spend a model call, and no setting reached it:
+  // index.ts passed DEFAULT_REFINE_GATES directly, so "refinement is disabled
+  // by settings" was a refusal no production path could ever produce.
+  let calls = 0;
+  const billed = async (url: unknown) => {
+    if (String(url).endsWith("/models")) return models();
+    calls += 1;
+    return Response.json({
+      choices: [
+        { message: { role: "assistant", content: JSON.stringify({ verdict: "decline" }) } },
+      ],
+      usage: { prompt_tokens: 11, completion_tokens: 7, total_tokens: 18 },
+    });
+  };
+  const { app } = await isolatedWorkbench(t, billed as typeof fetch, {}, {
+    prefix: "void-harness-off-",
+  });
+  const session = await app.start("Review the migration", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  await app.refineHarness(session.id, lessonProposal());
+  const pending = await app.pendingApprovalsFor(session.id);
+  await app.approveHarnessProposal(session.id, pending[0]!.digest);
+
+  assert.equal(app.patchHarnessSettings({ refinementEnabled: 0 }).refinementEnabled, 0);
+  app.compact(session.id);
+  for (let turn = 0; turn <= 25; turn += 1) {
+    app.send(session.id, `turn ${turn}`);
+    await app.settled();
+  }
+
+  const fromHarness = app
+    .get(session.id)!
+    .events.filter(
+      (event) => event.kind === "usage" && event.payload?.source === "harness",
+    );
+  assert.deepEqual(fromHarness, [], "a disabled harness must not call the model");
+});

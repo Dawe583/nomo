@@ -111,7 +111,7 @@ import {
 } from "./refine-pass.ts";
 import { serviceHarnessBoundary } from "./harness-runtime.ts";
 import {
-  DEFAULT_REFINE_GATES,
+  resolveRefineGates,
   type GateSurface,
 } from "./refine-gate.ts";
 import {
@@ -3115,7 +3115,14 @@ export class Workbench {
     this.harnessTriggers.set(id, state);
     try {
       const result = await serviceHarnessBoundary(state, {
-        gates: DEFAULT_REFINE_GATES,
+        // The gate decides when the harness spends a model call, so an operator
+        // has to be able to move it. It was passed DEFAULT_REFINE_GATES
+        // directly, which left resolveRefineGates reachable only from tests.
+        gates: resolveRefineGates({
+          enabled: this.harness.refinementEnabled === 1,
+          turnInterval: this.harness.refinementTurnInterval,
+          cooldownMs: this.harness.refinementCooldownMs,
+        }),
         surface,
         now: () => Date.now(),
         entries: async () => await this.harnessEntries(session.view.workspace),

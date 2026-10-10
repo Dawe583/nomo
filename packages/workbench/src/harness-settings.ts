@@ -45,7 +45,10 @@ export type HarnessSettingKey =
   | "maxRunTokens"
   | "retryMaxDelayMs"
   | "contextEntryLimit"
-  | "contextCharsPerEntry";
+  | "contextCharsPerEntry"
+  | "refinementEnabled"
+  | "refinementTurnInterval"
+  | "refinementCooldownMs";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -237,6 +240,36 @@ export const HARNESS_SETTINGS: {
     default: 240,
     min: 40,
     max: 4000,
+  },
+  refinementEnabled: {
+    label: "Harness refinement",
+    description:
+      "Whether the harness may spend a model call reviewing what it learned. Zero switches it off entirely.",
+    consumerFile: "index.ts",
+    consumers: ["resolveRefineGates"],
+    default: 1,
+    min: 0,
+    max: 1,
+  },
+  refinementTurnInterval: {
+    label: "Turns between reviews",
+    description:
+      "Settled turns that must pass before an armed trigger can pay for a review.",
+    consumerFile: "index.ts",
+    consumers: ["resolveRefineGates"],
+    default: 25,
+    min: 1,
+    max: 1000,
+  },
+  refinementCooldownMs: {
+    label: "Review cooldown (ms)",
+    description:
+      "How long a review attempt blocks the next one. Zero means no wait at all.",
+    consumerFile: "index.ts",
+    consumers: ["resolveRefineGates"],
+    default: 1_200_000,
+    min: 0,
+    max: 86_400_000,
   },
 };
 

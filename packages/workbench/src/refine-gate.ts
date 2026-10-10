@@ -42,16 +42,19 @@ export type GateSurface = "checkpoint" | "dispose";
  * The settings that decide whether refinement may run at all.
  *
  * Defaults match `prime-src` (`session_engine/refine.rs:39-72`) rather than
- * being invented here: `enabled` and `compact` on, a turn interval of 25 and a
- * cooldown of 20 minutes. The interval is clamped to at least 1 because a
- * trigger that can fire on every turn is a trigger with no interval.
+ * being invented here: `enabled` on, a turn interval of 25 and a cooldown of
+ * 20 minutes. The interval is clamped to at least 1 because a trigger that can
+ * fire on every turn is a trigger with no interval.
+ *
+ * There is deliberately no `compact` flag here. One existed, was resolved
+ * from settings and was named in the defaults, but no decision ever read it:
+ * a boolean on an operator-facing surface that reads like a switch and does
+ * nothing is worse than no boolean at all. Compaction arms the trigger.
  */
 export type RefineGates = {
   readonly enabled: boolean;
   /** Settled turns between reviews. Clamped to at least 1. */
   readonly turnInterval: number;
-  /** Whether a successful compaction arms the trigger. */
-  readonly compact: boolean;
   /** Milliseconds an attempt blocks the next one. Zero is allowed and means no
    * wait, which is a deliberate setting rather than a default. */
   readonly cooldownMs: number;
@@ -60,7 +63,6 @@ export type RefineGates = {
 export const DEFAULT_REFINE_GATES: RefineGates = {
   enabled: true,
   turnInterval: 25,
-  compact: true,
   cooldownMs: 20 * 60 * 1000,
 };
 
@@ -73,7 +75,6 @@ export function resolveRefineGates(raw: Partial<RefineGates> | undefined): Refin
   return {
     enabled: raw.enabled ?? fallback.enabled,
     turnInterval: Number.isFinite(turnInterval) ? Math.max(1, Math.floor(turnInterval)) : fallback.turnInterval,
-    compact: raw.compact ?? fallback.compact,
     cooldownMs: Number.isFinite(cooldownMs) ? Math.max(0, Math.floor(cooldownMs)) : fallback.cooldownMs,
   };
 }
