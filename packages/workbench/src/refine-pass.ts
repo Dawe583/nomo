@@ -139,6 +139,12 @@ function readEdit(value: unknown): RefinementEdit {
     derivedFromSeq: seqs(raw.derivedFromSeq),
     reason: text(raw.reason),
     rollbackId: raw.rollbackId === undefined ? undefined : text(raw.rollbackId),
+    // A prompt edit carries the addendum text in its own field, not in
+    // content. Dropping it here meant validateProposal rejected every prompt
+    // edit a model could produce, and the approval path the operator reads
+    // had nothing a review could ever put in it.
+    promptAddendum:
+      raw.promptAddendum === undefined ? undefined : text(raw.promptAddendum),
   };
 }
 
@@ -291,7 +297,11 @@ export function validateProposal(proposal: RefinementProposal): Validated {
       reject("a prompt edit must carry the addendum it is asking for");
       return;
     }
-    if (edit.action !== "delete" && (!edit.title || !edit.content)) {
+    // A prompt edit carries its text in promptAddendum, which the check above
+    // already required. Demanding content as well made the two rules
+    // unsatisfiable together: no prompt edit a model could write was ever
+    // valid, so the operator approval path had nothing to approve.
+    if (edit.action !== "delete" && (!edit.title || (!edit.content && edit.kind !== "prompt"))) {
       reject(`${edit.action} requires a title and content`);
       return;
     }
@@ -463,6 +473,11 @@ export const REFINEMENT_INSTRUCTIONS = [
   '  "edits": [ { "action": "create|update|delete", "kind": "memory|skill|subagent|prompt",',
   '    "id": "required for update and delete", "title": "", "content": "",',
   '    "reason": "why this is worth keeping", "derivedFromSeq": [1, 2] } ] }',
+  "",
+  'A "prompt" edit changes the standing instructions, so it puts the text it',
+  'wants added in "promptAddendum" and leaves "content" empty. It still reaches',
+  'nothing on its own: an operator reads the exact addendum and approves it',
+  'before it is written.',
 ].join("\n");
 
 /**

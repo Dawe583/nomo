@@ -267,3 +267,75 @@ test("applying twice changes nothing the second time", () => {
     twice.entries.map((e) => [e.id, e.title, e.content]),
   );
 });
+
+test("a well-formed model reply reaches the operator as a prompt edit", () => {
+  // The whole model-driven path in one reply: what a model actually sends —
+  // fenced, with prose around it, shaped exactly as the refinement
+  // instructions describe — through parsing and validation to the queue that
+  // needs a human.
+  //
+  // The prompt addendum here is the `kind: "prompt"` edit itself, an append to
+  // the standing instructions. Approval is what gates it, not validation: a
+  // valid one must survive parsing and reach the approval queue, because
+  // refusing it at the gate would leave the approval flow with nothing to
+  // approve.
+  const reply = [
+    "Reviewing the ledger, one thing repeats:",
+    "```json",
+    JSON.stringify({
+      summary: "inventory before editing",
+      rationale: "18 of 41 edits followed an unannounced inventory sweep",
+      expectedOutcome: "fewer blind edits; check the edit failure rate",
+      edits: [
+        {
+          action: "create",
+          kind: "prompt",
+          title: "Inventory before editing",
+          content: "",
+          promptAddendum: "Read the inventory before proposing an edit.",
+          reason: "it repeats on the signed ledger",
+          derivedFromSeq: [12, 19, 40],
+        },
+      ],
+    }),
+    "```",
+  ].join("\n");
+
+  const parsed = extractJsonObject(reply);
+  assert.ok(parsed.ok, "a fenced reply from a model parses");
+
+  const validated = validateProposal(parsed.proposal);
+  assert.deepEqual(
+    rejections(validated),
+    [],
+    "a well-formed prompt edit is not refused for being a prompt edit",
+  );
+
+  // Approval is the gate, so the edit is withheld and waits for an operator
+  // rather than being applied on the strength of the model's own reply.
+  const applied = applyProposal([], parsed.proposal, "2026-10-10T00:00:00.000Z");
+  assert.equal(applied.awaitingApproval.length, 1, "the reply survives as a prompt edit");
+  assert.deepEqual(
+    applied.awaitingApproval[0]?.derivedFromSeq,
+    [12, 19, 40],
+    "the provenance the validator requires survives parsing",
+  );
+  assert.equal(
+    applied.awaitingApproval[0]?.promptAddendum,
+    "Read the inventory before proposing an edit.",
+    "the addendum text the operator would read survives parsing",
+  );
+  // And what approval writes is the addendum itself, not the empty content.
+  const approved = applyProposal(
+    [],
+    parsed.proposal,
+    "2026-10-10T00:00:00.000Z",
+    { by: "operator", digest: "d", atSeq: 1 },
+  );
+  assert.equal(
+    approved.entries[0]?.content,
+    "Read the inventory before proposing an edit.",
+    "an approved addendum becomes the entry text",
+  );
+  assert.deepEqual(applied.applied, [], "and reaches no entry without an operator");
+});

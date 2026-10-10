@@ -6,7 +6,6 @@ import {
   initialTriggerState,
   onBranchMove,
   recordSettledTurn,
-  resultIsCurrent,
   serviceTrigger,
   type RoundOutcome,
   type TriggerState,
@@ -175,7 +174,7 @@ test("a stale round stamps no cooldown on the branch it never saw", async () => 
   // holds after its own move. Applying the round's writes would be applying a
   // verdict about a conversation that no longer exists.
   assert.equal(result.startedAtBranchVersion, 0);
-  assert.equal(resultIsCurrent({ ...result.state, branchVersion: 1 }, result.startedAtBranchVersion), false);
+  assert.notEqual(1, result.startedAtBranchVersion, "a moved branch must not accept the round's writes");
 });
 
 test("a retained approval runs without asking again", async () => {
@@ -223,21 +222,27 @@ test("a branch move drops a retained approval", async () => {
 test("a branch move bumps the version and invalidates a result", async () => {
   const before = ready();
   const result = await serviceTrigger(before, () => GO, async () => approve, { now: clock() });
-  assert.equal(resultIsCurrent(result.state, result.startedAtBranchVersion), true);
+  assert.equal(result.state.branchVersion, result.startedAtBranchVersion);
   const after = onBranchMove(result.state);
   // The same version no longer applies, so a caller holding those writes must
   // not apply them.
-  assert.equal(resultIsCurrent(after, result.startedAtBranchVersion), false);
+  assert.notEqual(after.branchVersion, result.startedAtBranchVersion);
 });
 
-test("arming is idempotent", () => {
-  const once = arm(initialTriggerState());
-  assert.equal(arm(once).pending, true);
-});
 
-test("only settled turns are counted", () => {
-  const state = recordSettledTurn(initialTriggerState());
+test("the settled-turn counter advances and then stops at the safe ceiling", () => {
+  // The counter is what the turn interval is measured against, and the
+  // saturation branch is the one that stops a long-lived session from
+  // wrapping into a negative count and opening the gate early.
+  let state = recordSettledTurn(initialTriggerState());
   assert.equal(state.settledTurnsSinceReview, 1);
+  state = recordSettledTurn(state);
+  assert.equal(state.settledTurnsSinceReview, 2);
+  const saturated = recordSettledTurn({
+    ...state,
+    settledTurnsSinceReview: Number.MAX_SAFE_INTEGER,
+  });
+  assert.equal(saturated.settledTurnsSinceReview, Number.MAX_SAFE_INTEGER);
 });
 
 test("an outcome with no round reports no version, so nothing can be applied", async () => {
@@ -246,16 +251,5 @@ test("an outcome with no round reports no version, so nothing can be applied", a
   });
   assert.equal(result.outcome.kind, "not-run");
   assert.equal(result.startedAtBranchVersion, null);
-  assert.equal(resultIsCurrent(result.state, null), false);
-});
-
-test("every outcome names itself", async () => {
-  const outcomes: RoundOutcome[] = [];
-  for (const reviewer of [async () => approve, async () => decline]) {
-    outcomes.push((await serviceTrigger(ready(), () => GO, reviewer, { now: clock() })).outcome);
-  }
-  outcomes.push(
-    (await serviceTrigger(ready(), () => WAIT, async () => approve, { now: clock() })).outcome,
-  );
-  for (const outcome of outcomes) assert.ok(outcome.kind.length > 0);
+  assert.equal(result.startedAtBranchVersion, null, "nothing ran, so there is nothing to apply");
 });

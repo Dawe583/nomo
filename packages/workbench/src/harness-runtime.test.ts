@@ -11,7 +11,6 @@ import {
   initialTriggerState,
   onBranchMove,
   recordSettledTurn,
-  resultIsCurrent,
   type TriggerState,
 } from "./refine-trigger.ts";
 import type { HarnessEntry } from "./learned-harness.ts";
@@ -249,9 +248,10 @@ test("a branch move during review prevents applying its stale proposal", async (
   );
   assert.equal(counters.asked, 1);
   assert.equal(counters.applied.length, 0);
-  assert.equal(
-    resultIsCurrent({ ...before, branchVersion: currentVersion }, result.startedAtBranchVersion),
-    false,
+  assert.notEqual(
+    currentVersion,
+    result.startedAtBranchVersion,
+    "the round ran on the version the branch has since left behind",
   );
 });
 
@@ -273,11 +273,6 @@ test("a result started on an abandoned branch is not applicable", async () => {
 
   const after = onBranchMove(result.state);
   assert.notEqual(after.branchVersion, result.startedAtBranchVersion);
-  assert.equal(
-    resultIsCurrent(after, result.startedAtBranchVersion),
-    false,
-    "a round that ran before the branch moved must not be applied afterwards",
-  );
   assert.equal(counters.asked, 1);
 });
 

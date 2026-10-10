@@ -30,11 +30,13 @@
  * carries out.
  */
 
-/** Why a round ended, or that none ran. */
-/** What one round did. `not-run` means nothing was spent. */
+/** What one round did. `not-run` means nothing was spent.
+ *
+ * There is deliberately no `deferred` variant. One existed and nothing ever
+ * constructed it: a gate that is merely not ready already leaves the trigger
+ * and the counter alone, which is what deferral means. */
 export type RoundOutcome =
   | { readonly kind: "not-run"; readonly reason: string }
-  | { readonly kind: "deferred"; readonly instructions: string }
   | { readonly kind: "declined"; readonly reason: string }
   | { readonly kind: "ran"; readonly instructions: string }
   | { readonly kind: "failed"; readonly error: unknown };
@@ -121,12 +123,11 @@ export type ServiceResult = {
  * `decide` is the gate from `refine-gate.ts`, injected so this file holds no
  * knowledge about thresholds and the two can be tested apart.
  *
- * The three exits that do *not* stamp the cooldown are the interesting ones and
- * are all deliberate. A gate that is merely not ready (`cheapGate` said
+ * The two exits that do *not* stamp the cooldown are the interesting ones and
+ * are both deliberate. A gate that is merely not ready (`cheapGate` said
  * `held: true`) leaves the trigger and the counter alone, so evidence survives
- * to a later boundary. A deferred review is retained without stamping, because
- * it has not been acted on yet. And a round that lost its branch is discarded
- * without stamping, because stamping would throttle a branch it never saw.
+ * to a later boundary. And a round that lost its branch is discarded without
+ * stamping, because stamping would throttle a branch it never saw.
  */
 export async function serviceTrigger(
   state: TriggerState,
@@ -294,15 +295,4 @@ export async function serviceTrigger(
     outcome: { kind: "ran", instructions: reviewed.instructions },
     startedAtBranchVersion: version,
   };
-}
-
-/**
- * Whether a round's result may still be applied.
- *
- * A caller that wrote something based on a round must call this first. It is the
- * same check the trigger makes internally, exposed because the caller is the one
- * holding the writes.
- */
-export function resultIsCurrent(state: TriggerState, startedAtBranchVersion: number | null): boolean {
-  return startedAtBranchVersion !== null && state.branchVersion === startedAtBranchVersion;
 }
