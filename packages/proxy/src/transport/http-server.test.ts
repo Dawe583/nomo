@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { generateKeyPairSync } from "node:crypto";
 import { request as httpRequest } from "node:http";
 import test from "node:test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -386,4 +386,136 @@ test("rechecks a grant after hold approval and before upstream dispatch", async 
   await response.text();
   assert.ok(validateCalls >= 2, "grant must be checked again at dispatch");
   assert.equal(targetMessages.filter((message) => message.method === "tools/call").length, 0);
+});
+
+test("keeps the grant token out of the ledger and the upstream request", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-token-containment-"));
+  const policyPath = join(directory, "policy.yml");
+  await writeFile(policyPath, "version: 1\nrules:\n  - match: {}\n    decision: allow\n");
+  const ledgerDir = join(directory, "ledger");
+  const token = "S".repeat(43);
+  const identity = {
+    agentId: "registered-agent",
+    toolScope: ["aws.s3.bucket.delete"],
+    expiresAt: Date.now() + 60_000,
+  };
+  const targetMessages: Array<Record<string, unknown>> = [];
+  const server = await startLocalMcpHttpServer({
+    upstreamId: "fixture-upstream",
+    port: 0,
+    resolveGrant: (candidate, upstreamId) =>
+      candidate === token && upstreamId === "fixture-upstream" ? identity : null,
+    validateGrant: (candidate, upstreamId, toolName) =>
+      candidate === token && upstreamId === "fixture-upstream" && toolName === "aws.s3.bucket.delete"
+        ? identity
+        : null,
+    proxyOptions: {
+      upstreamCommand: ["fixture"],
+      policyPath,
+      posture: "fail-closed" as const,
+      ledgerDir,
+      workspace: "token-containment",
+      keyProvider: keyProviderFromPkcs8(
+        generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
+      ),
+      upstreamSpawn(events: UpstreamEvents): UpstreamProcess {
+        return {
+          send(line) {
+            const message = JSON.parse(line) as {
+              id?: number | string;
+              method?: string;
+            };
+            targetMessages.push(message as Record<string, unknown>);
+            if (message.method === "initialize") {
+              events.onMessage(JSON.stringify({
+                jsonrpc: "2.0",
+                id: message.id,
+                result: {
+                  protocolVersion: "2025-11-25",
+                  capabilities: { tools: {} },
+                  serverInfo: { name: "fixture", version: "1" },
+                },
+              }));
+            } else if (message.method === "tools/list") {
+              events.onMessage(JSON.stringify({
+                jsonrpc: "2.0",
+                id: message.id,
+                result: {
+                  tools: [{
+                    name: "aws.s3.bucket.delete",
+                    description: "Echo the provided value",
+                    inputSchema: {
+                      type: "object",
+                      properties: { value: { type: "string" } },
+                      additionalProperties: false,
+                    },
+                  }],
+                },
+              }));
+            } else if (message.method === "tools/call") {
+              events.onMessage(JSON.stringify({
+                jsonrpc: "2.0",
+                id: message.id,
+                result: { content: [{ type: "text", text: "ok" }] },
+              }));
+            }
+          },
+          close() {
+            events.onClose(0, null);
+          },
+          onStderr() {
+            return () => {};
+          },
+        };
+      },
+    },
+  });
+  t.after(async () => {
+    await server.close();
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  const call = await fetch(server.url, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      accept: "application/json, text/event-stream",
+      "content-type": "application/json",
+      "mcp-protocol-version": "2026-07-28",
+      "mcp-method": "tools/call",
+      "mcp-name": "aws.s3.bucket.delete",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: "aws.s3.bucket.delete",
+        arguments: { value: "hello" },
+        _meta: currentMeta,
+      },
+    }),
+  });
+  const responseText = await call.text();
+  assert.equal(call.status, 200, "the in-scope call must succeed for this proof to mean anything");
+
+  // The upstream saw the tools/call, so the request really was dispatched.
+  assert.equal(targetMessages.filter((message) => message.method === "tools/call").length, 1);
+  assert.equal(
+    targetMessages.some((message) => JSON.stringify(message).includes(token)),
+    false,
+    "the grant token must never be forwarded upstream",
+  );
+  assert.equal(responseText.includes(token), false, "the grant token must never be echoed back");
+
+  const ledgerFiles = await readdir(join(ledgerDir)).catch(() => [] as string[]);
+  assert.ok(ledgerFiles.length > 0, "a decided call must leave a ledger record");
+  for (const file of ledgerFiles) {
+    const contents = await readFile(join(ledgerDir, file), "utf8");
+    assert.equal(
+      contents.includes(token),
+      false,
+      `the grant token must never reach durable storage (${file})`,
+    );
+  }
 });

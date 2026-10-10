@@ -252,12 +252,12 @@ are not reported as cancelled, reverted or successful.
 
 #### Checkpoint: Identity and guarded dispatch
 
-- [ ] Wrong, expired and revoked grants fail closed.
-- [ ] Valid MCP requests use the existing policy and ledger path.
+- [x] Wrong, expired and revoked grants fail closed.
+- [x] Valid MCP requests use the existing policy and ledger path.
 - [ ] `Allow`, `Deny`, `Hold`, fast path and explicit observe mode have focused
       tests.
-- [ ] No NOMO token reaches upstream, logs, prompts, events or durable storage.
-- [ ] `pnpm run typecheck` passes.
+- [x] No NOMO token reaches upstream, logs, prompts, events or durable storage.
+- [x] `pnpm run typecheck` passes.
 - [ ] Read-only security reviewer checks trust boundaries before UI work starts.
 
 ### Phase 3: Harness, events and local stop
