@@ -1,4 +1,4 @@
-# VOID open-work audit
+# NOMO open-work audit
 
 Written 2026-09-26 against `main` at `63dbd2c`, and re-run against the tree on
 2026-09-29. This document reconciles the planning and evidence documents
@@ -29,7 +29,7 @@ Where an item is genuinely two things, the class cell names the split rather
 than forcing one label. That is the common case for the provider and platform
 work, where the code is writable and only the acceptance gate is external.
 
-**What the tree can do today that it could not a week ago.** Twenty `void`
+**What the tree can do today that it could not a week ago.** Twenty `nomo`
 subcommands, all exercised. A signed ledger where every record now names the
 policy and rule that decided it, with the rationale, and a malformed
 attribution fails the chain while a pre-existing ledger still verifies. Every
@@ -69,7 +69,7 @@ to a row of this audit in another document still resolves to the row it named.
 | 5 | Linux native packaging — not even a bundle target in `tauri.conf.json` | **X** | `PLAN-GAPS.md` G-24 only | A Linux build and a full recovery suite on the exact candidate. |
 | 7 | App Store metadata, privacy labels, retention/deletion policy, support contact, reviewer instructions, screenshots, age rating, accessible test executor | **X** for the review account and reachability, **W** for the documents | Matrix P10.05, P10.07 | A privacy label and a review-notes document exist, and a reviewer can reach a safe executor. |
 | 8 | Export-compliance classification for the encryption the product ships | **D** — the matrix itself says it "cannot be inferred from source" | Matrix P10.06 | An operator records the classification and sets `ITSAppUsesNonExemptEncryption` deliberately. |
-| 9 | Account deletion path | **W**, narrowly. The docs say do not invent one, and no mounted route creates an account: `cloud/server.mjs` does not mount `cloud/auth.mjs`'s signup, the Supabase broker refuses signup while `VOID_ACCOUNT_SIGNUP` is unset, and no route accepts the invitation code one would need. Note that the trigger moved: a provider account can now sign in over `POST /api/account/signin` and own rows, so deletion becomes real work at the first real sign in, not at the first mounted signup | Matrix P10.08 | Either a tested deletion route, or a recorded statement that no account exists. |
+| 9 | Account deletion path | **W**, narrowly. The docs say do not invent one, and no mounted route creates an account: `cloud/server.mjs` does not mount `cloud/auth.mjs`'s signup, the Supabase broker refuses signup while `NOMO_ACCOUNT_SIGNUP` is unset, and no route accepts the invitation code one would need. Note that the trigger moved: a provider account can now sign in over `POST /api/account/signin` and own rows, so deletion becomes real work at the first real sign in, not at the first mounted signup | Matrix P10.08 | Either a tested deletion route, or a recorded statement that no account exists. |
 | 10 | External beta cohort: 10 testers across the device matrix, 7 days, 100 recorded recovery journeys, incident review, retained binaries, documented rollback, emergency disablement | **X** | Matrix P11.01–P11.06; 1.0.1 plan §4 | The cohort runs and its incidents are reviewed. |
 | 11 | Support, legal and privacy owners named | **D** | Matrix P10.05; 1.0.1 plan §8 | Three names exist. Nothing can be written until then. |
 | 12 | `docs/GO-TO-MARKET.md` is marked confidential and must leave the tree before any open-core publication | **W** (one deletion) | `PLAN-GAPS.md` §8 | The file is gone or un-confidentialised. |
@@ -83,7 +83,7 @@ to a row of this audit in another document still resolves to the row it named.
 | 15 | Site claims audit: the site still shows latency and tool-count figures the reverse plan already flags as non-evidence; and it prices in EUR | **D** + **W** | `PLAN-GAPS.md` G-06 (the site half), §8; `GUI-ALLINONE-PLAN.md:173` | Each claim is either evidenced or removed; the pricing currency is chosen. |
 | 16 | Whether NVIDIA NIM / GLM 5.3 Flash should be the hardcoded default provider | **D** | `packages/workbench/src/provider-defaults.ts:2`; `2026-09-21-nvidia-product-parity.md` Task 1, Task 8 | A decision. The matrix's own 2026-09-26 correction says the model is the operator's choice and the surface is provider-agnostic, while the source makes one vendor the default. Both cannot be the position. |
 | 17 | Whether to publish and independently audit the standalone ledger verifier outside the repository | **D** + **W** (the fixtures) | `PLAN-GAPS.md` G-20 residual | A versioned artifact a third party can fetch, plus an independent audit of the replicated canonicaliser. |
-| 18 | npm `@void` scope ownership and release authorization | **X** + **D** | `PLAN-GAPS.md` G-16, G-20, and the consolidated external-resources list | The scope is owned and someone is authorized to publish. |
+| 18 | npm `@nomo` scope ownership and release authorization | **X** + **D** | `PLAN-GAPS.md` G-16, G-20, and the consolidated external-resources list | The scope is owned and someone is authorized to publish. |
 | 19 | Production KMS and key-rotation drill | **X** for the KMS, **W** for the drill procedure | `PLAN-GAPS.md` G-25; `docs/BETA.md`, `docs/RELEASE.md` | A rotation is performed and its evidence recorded. |
 | 20 | Registry breadth target: 268 entries today (re-measured 2026-09-29; this document said 270), goal 500, with "human review per batch" | **D** on the target and the review, **W** on the pipeline | `PLAN-GAPS.md` G-17; `PLAN-STATUS.md` WP-04b; `EXECUTION-PLAN.md` WP-04b | A validated batch pipeline exists and someone has decided whether 500 is still the number. Of the 268, three are executable through the legacy proxy root and four managed adapters run under names that are not registry entries; the errata in `docs/ROADMAP-2026-Q4.md` states both denominators. |
 
@@ -107,9 +107,9 @@ to a row of this audit in another document still resolves to the row it named.
 | 35 | Document the explicit `migrateManagedPostgres` v1→v2 metadata command path, which tool execution deliberately never performs | **W** | `PLAN-GAPS.md` G-02 code half; `RECOVERY-COVERAGE.md` "## PostgreSQL limitations" | An operator can migrate metadata on purpose and the refusal inside tool execution is explained. |
 | 36 | Real-server Postgres certification: cascade, tenant/RLS, migration, in-flight client kill, network partition | **X** — needs a disposable isolated Postgres and a network-fault harness; the gates are code, the target is not | `PLAN-GAPS.md` G-02; `RECOVERY-COVERAGE.md`; matrix P09.03 | One executable real-server gate per remaining case, with `verify-managed-postgres.mjs` no longer emitting `networkPartitionTest: false`. |
 | 37 | Provider-specific blast-radius measurement and provider certification fixtures | **W** for the fixtures, **X** for the sandboxes | `PLAN-GAPS.md` G-12 residual, G-18; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R12, WP-R08 | One measurement proof per certified provider, never a sample standing in for an exact count. |
-| 38 | Remote executor authentication and a managed egress allowlist, with `void doctor` / `void init` verifying them | **W** | `PLAN-GAPS.md` G-13; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R13 | `doctor` stops being read-only and reports the boundary it enforces. |
+| 38 | Remote executor authentication and a managed egress allowlist, with `nomo doctor` / `nomo init` verifying them | **W** | `PLAN-GAPS.md` G-13; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R13 | `doctor` stops being read-only and reports the boundary it enforces. |
 | 39 | SDK framework `wrap` for Vercel AI SDK, OpenAI Agents SDK and LangGraph | **W**, human-gated — the stated dependency is literally "a real proxy user" | `PLAN-GAPS.md` G-21; `EXECUTION-PLAN.md` WP-14 | A framework-neutral wrap plus three adapters, each proven by the moment scenario. |
-| 40 | Legacy proxy binding in a production composition root, plus one honest conformance fixture per external tool | **W**, with the S3/cloud fixtures waiting on item 31 | `PLAN-GAPS.md` G-08; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R02; `PLAN-STATUS.md` R02 | Standalone `void-proxy` composes an operator-selected binding; every bindable tool has a cross-layer fixture. |
+| 40 | Legacy proxy binding in a production composition root, plus one honest conformance fixture per external tool | **W**, with the S3/cloud fixtures waiting on item 31 | `PLAN-GAPS.md` G-08; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R02; `PLAN-STATUS.md` R02 | Standalone `nomo-proxy` composes an operator-selected binding; every bindable tool has a cross-layer fixture. |
 | 41 | One operational certification run recorded | **W** — a run, not a build | `PLAN-GAPS.md` G-15; `REVERSE-TOOL-UPGRADE-PLAN.md` WP-R14 | A run in `docs/UPGRADE-CHECKPOINT.md` that says what it did and did not cover. |
 | 42 | Transport hardening tail: key-rotation drill (S09), transport bounds and backpressure (S10), typed request identity across the HTTP relay (S11), Slack URL policy (S14), Docker image, fresh-install run | **W** except the publish authorization | `PLAN-GAPS.md` G-16; `docs/PRIME-HANDOFF.md`; `EXECUTION-PLAN.md` WP-15 | Each item closed with a failing-then-passing test, or explicitly dropped. |
 | 43 | A whole-tree green under the new explicit CI time budgets | **W** — a run, not a build. `pnpm test` is 671 s against a 25-minute step budget; the old shared-deadline result was the reason a killed `git.managed` run once looked green | Matrix P02.06, P03.01, P03.06; 2026-09-23 R02 plan Task 5 | `pnpm run check` exits zero end to end, and no gate is killed by a shared deadline. |
@@ -139,7 +139,7 @@ to a row of this audit in another document still resolves to the row it named.
 ### 1.5 Verified-true test counts, for reference
 
 The four iOS simulator destinations, `pnpm test` and typecheck all pass today;
-`VOIDTests` is 9/9 and `VOIDUITests` is 18/18 on iPhone Air, iPhone 18 Pro,
+`NOMOTests` is 9/9 and `NOMOUITests` is 18/18 on iPhone Air, iPhone 18 Pro,
 iPad Pro 11-inch (M5) and iPad Pro 13-inch (M5). These are not open items and
 appear nowhere in the table above. They are stated here once because four
 documents record *older* figures for them (§3).
@@ -170,7 +170,7 @@ for work that is done or asserts an absence that is false.
 | All 22 checkboxes open | `superpowers/plans/2026-09-15-managed-git-recovery.md` | The entire plan is implemented: `git/managed.ts`, `git/managed.test.ts`, the `git.managed` profile, the third recovery config branch, the action-specific MCP schema, `recovery-git.test.ts` and `docs/MANAGED-GIT.md` all exist. |
 | All 21 steps open | `superpowers/plans/2026-09-23-r02-legacy-proxy-binding.md` | Tasks 1–4 are delivered plus two extras the plan did not ask for (an S3 cross-layer fixture, `legacy-root.ts`), and `reverse-engine.test.ts:407` asserts completeness over the whole bindable set. |
 | Task 1, all 6 items open | 2026-09-21 NVIDIA parity plan | `provider-defaults.ts:2-14` satisfies all three Interface promises literally: `DEFAULT_PROVIDER_ID = "nvidia"`, `DEFAULT_MODEL_ID = "z-ai/glm-5.3-flash"`, and the NIM preset. |
-| "there is no Python client in the tree" | `PLAN-GAPS.md` G-12 body | `python/void-transport` exists, has no third-party dependency, and runs 84 tests. The same file's preamble says so. |
+| "there is no Python client in the tree" | `PLAN-GAPS.md` G-12 body | `python/nomo-transport` exists, has no third-party dependency, and runs 84 tests. The same file's preamble says so. |
 | "no separate verifier artifact is published" / "current attestation verifies inside the repo toolchain" | `PLAN-GAPS.md` G-20 body | `packages/verifier/verify-ledger.mjs` imports only `node:crypto`/`fs`/`os`/`path`, has `--selftest`, and is spawned by `packages/cli/src/verify.ts:225` and named in the shipped TUI. What is genuinely open is publication and independent audit — item 17. |
 | "a tree wide search for lease or fencing terms returns zero hits" | `PLAN-GAPS.md` G-03 body | `packages/runtime/src/recovery/lease.ts` exists, is imported by `execute.ts:39`, and is claimed, renewed and reclaimed there. |
 | "The runtime records no resource read or write sets, no revisions … the planner uses no graph" | `PLAN-GAPS.md` G-04 body | `journal.ts:37-45` declares and `:140-149` validates `resourceKeys`, `readSet`, `writeSet` and `revision`; `recovery/provenance.ts` exports the ordering that `execute.ts:42` consumes. |
@@ -180,14 +180,14 @@ for work that is done or asserts an absence that is false.
 | "## Limits": "There is no commit" and "Both reconciliation methods return unknown" | `docs/MANAGED-GIT.md` | The same file's "## Managed commit slice" section documents commit with `refs/void/operations/` receipts and restart reconciliation. The document contradicts itself. |
 | A4 pairing: "not started — No pairing implementation in the tree" | `PLAN-STATUS.md` | `apps/control-plane/api/companion/` exists with a pairing model, five bound operations, hashed device tokens, `timingSafeEqual` comparison, and a 0700-scoped revocation path. |
 | A5: "blocked — machine has CLT only" | `PLAN-STATUS.md` | Xcode 27.0 (27A266a) is installed, the Release `iphonesimulator` build succeeds, and four simulator destinations pass. |
-| WP-09b: "`void tui --help` currently prints a parse error, needs sibling lane check" | `PLAN-STATUS.md` | Run today: it prints the full view list and exits 0. |
+| WP-09b: "`nomo tui --help` currently prints a parse error, needs sibling lane check" | `PLAN-STATUS.md` | Run today: it prints the full view list and exits 0. |
 | A1: "Tauri beta with ad hoc signature" | `PLAN-STATUS.md` | `apps/desktop/scripts/build-policy.mjs` resolves `APPLE_SIGNING_IDENTITY`, then a stable keychain identity, then ad-hoc with a spelled-out warning; a notarized run refuses ad-hoc outright. |
 | R07 "not started"; R12 "Python transport open"; R14 "bundles, metrics open"; R06 "leases open"; R03 "pins, GC and retention open" | `PLAN-STATUS.md`, REVERSE-TOOL-UPGRADE-PLAN rows | All five shipped in the 2026-09-25/26 wave and are in `CHANGELOG.md` under R03, R06, R07, R12 and R14. |
-| "no postgres or git recovery adapter" and "There is no replay apply" | Matrix §"every user-operable surface launched" | `managedPostgresAdapter` (`postgres/managed.ts:654`) and `managedGitAdapter` (`git/managed.ts:44`) both exist and satisfy `RecoveryAdapter`. `void replay` has a real apply path that refuses without signed execution completion and a manifest bound to the capture digest, and opens `VOID_PG_URL` when it has one. What is untested is a run against a *real* Postgres — item 36, not item "no code". |
-| "no `keyboardShortcut` in the target" | Matrix D04.03 | `apps/apple/VOIDApp/ChatView.swift:377` has `.keyboardShortcut(.return, modifiers: .command)`. The iPad shortcut work is still open (item 50); this evidence for it is not. |
+| "no postgres or git recovery adapter" and "There is no replay apply" | Matrix §"every user-operable surface launched" | `managedPostgresAdapter` (`postgres/managed.ts:654`) and `managedGitAdapter` (`git/managed.ts:44`) both exist and satisfy `RecoveryAdapter`. `nomo replay` has a real apply path that refuses without signed execution completion and a manifest bound to the capture digest, and opens `NOMO_PG_URL` when it has one. What is untested is a run against a *real* Postgres — item 36, not item "no code". |
+| "no `keyboardShortcut` in the target" | Matrix D04.03 | `apps/apple/NOMOApp/ChatView.swift:377` has `.keyboardShortcut(.return, modifiers: .command)`. The iPad shortcut work is still open (item 50); this evidence for it is not. |
 | `doctor` reports "5 pass, 1 warn" | Matrix §"every user-operable surface launched" | Run today: 4 pass, 2 warn. The new warn is the deliberate degraded-mode notice that verification key material came from signing key material — a change the matrix predates. |
-| Windows audit: "16/16 macOS cargo tests" | `WINDOWS-DESKTOP.md` | The matrix says 21/21 and the source has 21 buildable `#[test]` functions. |
-| iOS test counts of 6/6, 8/8 and 11 `VOIDUITests` | Matrix, `PLAN-GAPS.md` G-23, `APPLE-APPS-PLAN.md` | 18 `VOIDUITests` and 9 `VOIDTests` today, 18/18 on four destinations. The documents disagree with each other as well as with the tree. |
+| Windows audit: "16/16 macOS cargo tests" | `WINDOWS-DESKTOP.md` | The matrix says 22/22, and `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml` now runs 22 on macOS in this tree, 0 failures. The 22nd is `tests::resolve_env_precedence`, from the rename compatibility work. |
+| iOS test counts of 6/6, 8/8 and 11 `NOMOUITests` | Matrix, `PLAN-GAPS.md` G-23, `APPLE-APPS-PLAN.md` | 18 `NOMOUITests` and 9 `NOMOTests` today, 18/18 on four destinations. The documents disagree with each other as well as with the tree. |
 | `budget.ts` is "51 lines of local only accounting" | `PLAN-GAPS.md` G-14 evidence line | The module carries scope guarantees, compare-and-swap fences, lease expiry and a stale-fence test. The *unwired* part of that module is item 22, which is real. |
 | "ledger read limits" both closed (G-16) and missing (G-25) | `PLAN-GAPS.md` G-16 vs G-25 | G-16 records it closed; G-25 lists it as missing. One of the two is wrong and the same file contains both. G-25's remaining scope is item 19. |
 | "Status: planning only … not an implemented capability" | 1.0.1 plan header | Superseded by the matrix's own evidence ledger. |
@@ -297,7 +297,7 @@ is a documentation decision with an owner, so it is not done here.
    grading and it is right about boundaries. It is *not* current. Three of its
    claims are contradicted by today's tree, all in the section headed "2026-09-26
    every user-operable surface launched": there is "no postgres or git recovery
-   adapter" (both exist), "no replay apply" (`void replay` has one), and a
+   adapter" (both exist), "no replay apply" (`nomo replay` has one), and a
    `doctor` count of 5 pass / 1 warn where running it today gives 4 pass / 2
    warn. A fourth is elsewhere in the document: D04.03's "no `keyboardShortcut`
    in the target", against `ChatView.swift:377`. The section is not uniformly
@@ -352,10 +352,10 @@ is a documentation decision with an owner, so it is not done here.
 
 ### Verification performed for this audit
 
-- `node packages/cli/bin/void.mjs --help` and `recovery --help` — 20 subcommands
+- `node packages/cli/bin/nomo.mjs --help` and `recovery --help` — 20 subcommands
   confirmed, both exit 0.
-- `void doctor` against a disposable `VOID_DATA_DIR` — 4 pass, 2 warn, 0 fail.
-- `void tui --help` — exit 0, contradicts `PLAN-STATUS.md` WP-09b.
+- `nomo doctor` against a disposable `NOMO_DATA_DIR` — 4 pass, 2 warn, 0 fail.
+- `nomo tui --help` — exit 0, contradicts `PLAN-STATUS.md` WP-09b.
 - Adapter set: `git/managed.ts:44`, `postgres/managed.ts:654` both export
   factories returning `RecoveryAdapter`; `git/managed.ts:457-462` prepares a
   commit and `git/managed.ts:480,498` dispatches it; `recovery.ts` defines the
@@ -371,11 +371,11 @@ is a documentation decision with an owner, so it is not done here.
   were overtaken by `39d3c48`.
 - `ServerBudgetLedger` / `serverBudgetLedger` — zero consumers outside
   `packages/runtime/src/budget.ts` and its test.
-- `void replay` — `packages/cli/src/replay.ts:114-145` has an apply path that
-  refuses without signed execution completion and opens `VOID_PG_URL`.
+- `nomo replay` — `packages/cli/src/replay.ts:114-145` has an apply path that
+  refuses without signed execution completion and opens `NOMO_PG_URL`.
 - Route inventory: `apps/control-plane/api/server.ts` and
   `api/companion/`.
-- iOS source: 9 `VOIDTests`, 18 `VOIDUITests`; no `URLCache`, logout or
+- iOS source: 9 `NOMOTests`, 18 `NOMOUITests`; no `URLCache`, logout or
   `signOut` in `apps/apple/`; `keyboardShortcut` at `ChatView.swift:377`.
 - `apps/control-plane/api/server.ts:196` — `/api/demo/status` is hardcoded
   `{supported:false, available:false}`; `cloud/demo.mjs:92` exports a real
@@ -402,7 +402,7 @@ the tree says today, and where the two disagree this section governs.
 
 | Row | Closed | By what | What closed it |
 | --- | --- | --- | --- |
-| 6 | 2026-09-26 | "The phone companion stays read-only" in `docs/DECISIONS.md` | The shipped app is read-only by construction, `apps/apple/VOIDApp/AppCopy.swift` already tells the user that approval and Undo happen on the Mac, and pairing a device with write scope is an operator opt-in that is off by default. Matrix `P05.03` is struck at line 946 of `docs/RELEASE-1.0.1-MATRIX.md`, and the read-only half that stays open is implemented and recorded in `docs/IOS-CACHE-AND-REMOVAL-POLICY.md`. |
+| 6 | 2026-09-26 | "The phone companion stays read-only" in `docs/DECISIONS.md` | The shipped app is read-only by construction, `apps/apple/NOMOApp/AppCopy.swift` already tells the user that approval and Undo happen on the Mac, and pairing a device with write scope is an operator opt-in that is off by default. Matrix `P05.03` is struck at line 946 of `docs/RELEASE-1.0.1-MATRIX.md`, and the read-only half that stays open is implemented and recorded in `docs/IOS-CACHE-AND-REMOVAL-POLICY.md`. |
 | 13, architecture bullet | 2026-09-28 | "macOS becomes a SwiftUI target in the same project as iOS" in `docs/DECISIONS.md` | The Tauri vs SwiftUI question is answered and dated. The Tauri shell stays as the desktop distribution that carries the Node sidecar, because that is a packaging question and the earlier answer conflated the two. Matrix `D04.09` and `D04.13`, at lines 1039 and 1043 of `docs/RELEASE-1.0.1-MATRIX.md`, still read Open; this re-run does not correct another ledger, and the disagreement is recorded here instead. The other six bullets of row 13 stay open. |
 | 21 | 2026-09-26 | "`certification: false` is the permanent honest answer" in `docs/DECISIONS.md` | Every published capability profile carries the field, `void.adapter-capability.v2` refuses a bare `certification: true` as "not evidence", and the reason is written down rather than widened into a schema for a state that does not exist. The gap the answer exposed stays visible: a profile lists the bound it measured and names the absence in `excluded` rather than leaving the field to be read as a limit. |
 | 44 | 2026-09-29 | this document, by stating what is and is not known | The failing test cannot be named, and the reason is that the run that produced it was not retained. `docs/RELEASE-1.0.1-MATRIX.md` records one test failure it could not reproduce and keeps it open "until it can be named"; no output, log, or test identifier from that run survives anywhere in the tree, so there is nothing to name, and re-running the suite would produce a different result rather than identify that one. The row is therefore closed as unnameable rather than left on the list as work nobody can pick up. This is the answer the row asked for, and it is a statement about the record rather than a fix. The matrix still records the failure as open, because the matrix is not this document and this re-run does not edit another ledger. |
@@ -688,7 +688,7 @@ An absent file's revision hashed its parent directory's `ctimeNs`. A
 directory's ctime moves when any entry in it is created or removed, so
 restoring an earlier step invalidated the expected revision of every later
 step that had recorded the file as absent, and the chain could never finish.
-The same fault rejected a create into any directory VOID was itself writing
+The same fault rejected a create into any directory NOMO was itself writing
 to. Absence is now the parent directory's identity alone; the race the ctime
 was watching for is covered at the write boundary, where `replace()` creates
 an absent target with `link(2)` and fails rather than clobbering.
