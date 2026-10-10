@@ -103,6 +103,19 @@ const INVENTORY = {
   "docs/frames.md":
     "WP-13 deliverable, scoped in EXECUTION-PLAN and never built",
 
+  // Named by the 2026-10-08 agent harness plan as the files tasks 13 to 16 are
+  // to create. Tasks 13 to 15 landed and the "not stale" check removed each
+  // entry as its file arrived, so none of these can become a permanent waiver.
+  // Task 14's two workbench modules were never built under these names: the
+  // approval and ledger logic became methods on the Workbench class in
+  // index.ts, tested by harness-approval.test.ts and
+  // harness-refinement-ledger.test.ts, with RefinementProposal in
+  // refine-pass.ts.
+  "packages/workbench/src/harness-refinement.ts":
+    "named by the 2026-10-08 agent harness plan, task 14; never built as a module, the approval and ledger logic lives on the Workbench class in index.ts",
+  "packages/workbench/src/harness-refinement.test.ts":
+    "named by the 2026-10-08 agent harness plan, task 14; never built under this name, that coverage lives in harness-approval.test.ts and harness-refinement-ledger.test.ts",
+
   // Confidential by decision. It must leave the tree before open sourcing, so a
   // pointer to it is a record of the decision, not a broken link to fix.
   "docs/GO-TO-MARKET.md":
@@ -110,20 +123,20 @@ const INVENTORY = {
 
   // Paths the strategy documents name as files that would be new. A proposal
   // that says "new docs/SECURITY.md" is honest; a status document claiming the
-  // file shipped would not be. VOID-FUTURE-DIRECTION and REVERSE-WEDGE both
+  // file shipped would not be. NOMO-FUTURE-DIRECTION and REVERSE-WEDGE both
   // work this way, and neither claims any of these landed.
   "docs/AAT-CROSSWALK.md":
-    "VOID-FUTURE-DIRECTION proposal for a field-by-field AAT crosswalk; never built",
+    "NOMO-FUTURE-DIRECTION proposal for a field-by-field AAT crosswalk; never built",
   "docs/SECURITY.md":
-    "VOID-FUTURE-DIRECTION proposal for a public guarantees page; never built, and packages/security-notes.md carries the material that did land",
+    "NOMO-FUTURE-DIRECTION proposal for a public guarantees page; never built, and packages/security-notes.md carries the material that did land",
   "docs/otel-genai-proposal.md":
-    "VOID-FUTURE-DIRECTION proposal for an OpenTelemetry GenAI proposal; never published",
+    "NOMO-FUTURE-DIRECTION proposal for an OpenTelemetry GenAI proposal; never published",
   "packages/cli/src/standalone-verify.mjs":
-    "VOID-FUTURE-DIRECTION proposal for a standalone verifier entry point; it shipped as packages/verifier/verify-ledger.mjs instead",
+    "NOMO-FUTURE-DIRECTION proposal for a standalone verifier entry point; it shipped as packages/verifier/verify-ledger.mjs instead",
   "packages/cli/src/tool-signing.ts":
-    "VOID-FUTURE-DIRECTION proposal to sign tool definitions MCPS-style; never built",
+    "NOMO-FUTURE-DIRECTION proposal to sign tool definitions MCPS-style; never built",
   "packages/ledger/src/aat.ts":
-    "VOID-FUTURE-DIRECTION proposal for an AAT-shaped bundle; never built, and the ledger keeps its own record shape",
+    "NOMO-FUTURE-DIRECTION proposal for an AAT-shaped bundle; never built, and the ledger keeps its own record shape",
   "packages/ledger/src/assertion.ts":
     "REVERSE-WEDGE proposal for a new assertion body type; never built",
   "packages/ledger/src/assertion.test.ts":
@@ -153,13 +166,13 @@ const INVENTORY = {
 
   // Two responsive stylesheets that were merged into `styles.css` and are named
   // by documents that predate the merge. `PLATFORM-REDESIGN-PLAN` and
-  // `VOID-DESIGN-SYSTEM-V1` describe a surface that existed, and `MOBILE-LAYOUT-QA`
+  // `NOMO-DESIGN-SYSTEM-V1` describe a surface that existed, and `MOBILE-LAYOUT-QA`
   // reports measurements taken against it. The reasoning about mobile layout
   // that those documents carry is still the reasoning worth having; the file
   // references are history, and the stylesheet those measurements describe is
   // the same rules under a different filename.
   "apps/control-plane/ui/src/mobile.css":
-    "responsive rules merged into styles.css; MOBILE-LAYOUT-QA and VOID-DESIGN-SYSTEM-V1 record measurements taken against the standalone file",
+    "responsive rules merged into styles.css; MOBILE-LAYOUT-QA and NOMO-DESIGN-SYSTEM-V1 record measurements taken against the standalone file",
   "apps/control-plane/ui/src/ascii.css":
     "ASCII-art mode merged into styles.css; PLATFORM-REDESIGN-PLAN describes the split that no longer exists",
   // Preserved-lane triage, 2026-10-05. These paths are named in
