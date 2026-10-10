@@ -4,6 +4,28 @@ import { readFileSync } from "node:fs";
 
 const main = readFileSync(new URL("./main.tsx", import.meta.url), "utf8");
 const ui = readFileSync(new URL("./ui.tsx", import.meta.url), "utf8");
+const pages = readFileSync(new URL("./pages.tsx", import.meta.url), "utf8");
+
+test("a run stop shows server acknowledgement, never a local success guess", () => {
+  // The dialog gates the ack line on the server response: "acknowledged" only
+  // after /stop returns ack: acknowledged, and the scope note names this
+  // process as the kill boundary with in-flight work left unknown.
+  assert.match(
+    pages,
+    /result\.ack === "acknowledged" \? "acknowledged" : "unknown"/,
+    "ack state follows the server, not a local optimist",
+  );
+  assert.match(pages, /Kill scope is this process only/);
+  assert.match(pages, /stay unknown until their result confirms/);
+  // A missing acknowledgement must be rendered as not-success, explicitly.
+  assert.match(pages, /No stop acknowledgement yet\. Success is not shown\./);
+});
+
+test("the in-flight call stays visible after an acknowledged stop", () => {
+  // overview-state carries inFlight even when stopAck is acknowledged, so the
+  // operator still sees the call whose result has not landed.
+  assert.match(pages, /inFlight|stay unknown until their result confirms/);
+});
 
 test("a session change remounts the conversation, so an open branch dialog cannot outlive it", () => {
   // The branch dialog carries the seq and the prompt of the conversation it was
