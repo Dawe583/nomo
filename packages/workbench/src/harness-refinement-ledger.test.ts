@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { isolatedWorkbench } from "./test-fixture.ts";
 
-import type { RefinementProposal } from "./refine-pass.ts";
+import { extractJsonObject, type RefinementProposal } from "./refine-pass.ts";
+import { initialTriggerState, type TriggerState } from "./refine-trigger.ts";
 
 const fetcher = async (url: unknown) =>
   String(url).endsWith("/models")
@@ -108,6 +109,101 @@ test("a review waiting for the workspace lock is refused after a branch move", a
   await assert.rejects(staleReview, /branch moved/i);
   assert.equal((await app.ledger(session.workspace))!.entries.length, before.entries.length);
   assert.deepEqual(await app.pendingApprovalsFor(session.id), []);
+});
+
+test("a branch request that fails validation leaves the harness version alone", async (t) => {
+  const { app, session } = await fixture(t);
+
+  // Two requests that are about to be refused, at two different
+  // preconditions. Neither of them branched anything, so neither may move the
+  // version a review already in flight is holding. The invalidation used to
+  // run first, so the first refusal alone was enough to strand it.
+  await assert.rejects(
+    app.branch(session.id, {
+      seq: session.events.at(-1)!.seq,
+      idempotencyKey: "not a valid key!",
+    }),
+    /idempotency key/i,
+  );
+  await assert.rejects(
+    app.branch(session.id, { seq: 99_999, idempotencyKey: "no-such-message" }),
+    /existing message/i,
+  );
+
+  // The observable: a review that started on version 0 still lands, so the
+  // operator is still asked about it.
+  const landed = await app.refineHarness(session.id, proposal(), {
+    expectedBranchVersion: 0,
+  });
+  assert.ok(landed.proposalDigest);
+  const pending = await app.pendingApprovalsFor(session.id);
+  assert.equal(pending.length, 1);
+  assert.deepEqual(pending[0]!.proposal, proposal());
+});
+
+test("a refused branch request does not discard a retained review", async (t) => {
+  const { app, session } = await fixture(t);
+  const internals = app as unknown as {
+    sessions: Map<string, unknown>;
+    commitWorkspace: (...args: unknown[]) => Promise<void>;
+    harnessTriggers: Map<string, TriggerState>;
+  };
+  const internalSession = internals.sessions.get(session.id);
+  assert.ok(internalSession);
+  // Repeated signed approvals, so the gate has something to review and lets a
+  // round run without a model call.
+  const state = app.workspace(session.id);
+  for (let count = 0; count < 5; count++)
+    await internals.commitWorkspace(
+      internalSession,
+      state,
+      "void_workspace_write",
+      { count },
+      "hold:approved",
+    );
+  app.patchHarnessSettings({ refinementTurnInterval: 1, refinementCooldownMs: 0 });
+
+  // An approving review already paid for and waiting behind an active turn. No
+  // production path creates one, so it is seeded here; what the boundary then
+  // does with it is the runtime's own code. Every optional edit field is
+  // spelled out because the reply parser writes the absent ones as an explicit
+  // `undefined`, which the digest cannot serialise -- a separate defect in
+  // refine-pass.ts, not one this test is here to pin down.
+  const retained = {
+    ...proposal(),
+    summary: "retained across a refused branch",
+    edits: proposal().edits.map((edit) => ({
+      ...edit,
+      id: "",
+      rollbackId: "",
+      promptAddendum: "",
+    })),
+  };
+  internals.harnessTriggers.set(session.id, {
+    ...initialTriggerState(),
+    pending: true,
+    pendingReview: JSON.stringify(retained),
+  });
+
+  await assert.rejects(
+    app.branch(session.id, {
+      seq: session.events.at(-1)!.seq,
+      idempotencyKey: "not a valid key!",
+    }),
+    /idempotency key/i,
+  );
+
+  app.send(session.id, "carry on");
+
+  await app.settled();
+
+  // The retained review still reaches the chain, so the operator is asked
+  // about a proposal the refused request never invalidated.
+  const pending = await app.pendingApprovalsFor(session.id);
+  assert.deepEqual(
+    pending.map((entry) => entry.proposal.summary),
+    [retained.summary],
+  );
 });
 
 test("mutating a returned pending proposal cannot alter the signed chain", async (t) => {
@@ -647,4 +743,39 @@ test("updates record signed supersession lifecycle metadata", async (t) => {
   };
   assert.ok(lifecycle.events.includes("entry:supersession"));
   assert.deepEqual(lifecycle.supersessions, [original.id]);
+});
+
+test("a proposal the model actually produced can be signed", async (t) => {
+  // Every other test in this file builds its proposal as a literal. A literal
+  // omits absent optional keys; a parsed edit carries whatever the parser put
+  // there. Feeding a parsed proposal into refineHarness is the one path a real
+  // review takes, and it is what proved the two shapes had drifted apart: the
+  // digest threw on an absent field set to undefined.
+  const { app, session } = await fixture(t, {}, { seedDocument: true });
+  const reply = [
+    "Reviewing the workspace, one lesson repeats:",
+    "```json",
+    JSON.stringify({
+      summary: "inventory before editing",
+      rationale: "supported by signed records",
+      expectedOutcome: "fewer repeated approvals",
+      edits: [
+        {
+          action: "create",
+          kind: "memory",
+          title: "read the inventory",
+          content: "Check the inventory before editing.",
+          reason: "it repeats on the signed ledger",
+          derivedFromSeq: [1],
+        },
+      ],
+    }),
+    "```",
+  ].join("\n");
+
+  const parsed = extractJsonObject(reply);
+  assert.ok(parsed.ok, "the reviewer's reply parses");
+  const result = await app.refineHarness(session.id, parsed.proposal);
+  assert.equal(result.proposalDigest !== undefined, true, "the proposal was signed");
+  assert.equal((await app.pendingApprovalsFor(session.id)).length, 1);
 });

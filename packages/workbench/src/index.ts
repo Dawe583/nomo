@@ -1998,13 +1998,6 @@ export class Workbench {
     },
   ) {
     return this.locked(async () => {
-      // The conversation this session was learning from is about to be replaced.
-      // Drop the armed trigger and any retained review, and bump the version so
-      // a round already in flight can tell it describes a trajectory that no
-      // longer exists. Carrying the retained review across would be approving a
-      // different conversation by proxy.
-      const armed = this.harnessTriggers.get(id);
-      if (armed !== undefined) this.harnessTriggers.set(id, onBranchMove(armed));
       if (
         typeof body.idempotencyKey !== "string" ||
         !/^[A-Za-z0-9_.:-]{1,160}$/.test(body.idempotencyKey)
@@ -2061,6 +2054,22 @@ export class Workbench {
           text: body.prompt,
         };
       }
+
+      // Every precondition above has passed, so a branch is about to happen and
+      // only now is it safe to invalidate. This ran first, which meant a request
+      // that was about to be refused -- a bad key, a message that does not
+      // exist, an unsettled parent -- still dropped the armed trigger and any
+      // retained review. An approval earned against this conversation was
+      // destroyed by a request that never branched anything, and a round in
+      // flight was told to discard a trajectory that was still the live one.
+      //
+      // Dropping the retained review rather than carrying it across is
+      // deliberate: it was an approval of a trajectory that no longer exists,
+      // and approving a different one by proxy is not a smaller mistake than
+      // skipping the review entirely.
+      const armed = this.harnessTriggers.get(id);
+      if (armed !== undefined) this.harnessTriggers.set(id, onBranchMove(armed));
+
       const childId = randomUUID(),
         workspace = `agent-${childId}`;
       const child: Session = {

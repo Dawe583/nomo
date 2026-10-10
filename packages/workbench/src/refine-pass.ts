@@ -130,21 +130,28 @@ function seqs(value: unknown): number[] {
 
 function readEdit(value: unknown): RefinementEdit {
   const raw = isRecord(value) ? value : {};
+  // An absent optional field is left absent, not set to undefined. refineHarness
+  // signs the proposal, canonicalJson refuses undefined because it does not
+  // round trip, and JSON.stringify drops the key — so a parser-produced edit
+  // would carry three keys a hand-built one never has, and could not be
+  // written to the chain at all. Every test builds proposals as literals, so
+  // nothing exercised the parsed shape end to end.
+  const optional = (key: "id" | "title" | "content" | "rollbackId" | "promptAddendum") =>
+    raw[key] === undefined ? {} : { [key]: text(raw[key]) };
   return {
     action: text(raw.action) as RefinementAction,
     kind: text(raw.kind) as RefinementKind,
-    id: raw.id === undefined ? undefined : text(raw.id),
-    title: raw.title === undefined ? undefined : text(raw.title),
-    content: raw.content === undefined ? undefined : text(raw.content),
+    ...optional("id"),
+    ...optional("title"),
+    ...optional("content"),
     derivedFromSeq: seqs(raw.derivedFromSeq),
     reason: text(raw.reason),
-    rollbackId: raw.rollbackId === undefined ? undefined : text(raw.rollbackId),
+    ...optional("rollbackId"),
     // A prompt edit carries the addendum text in its own field, not in
     // content. Dropping it here meant validateProposal rejected every prompt
     // edit a model could produce, and the approval path the operator reads
     // had nothing a review could ever put in it.
-    promptAddendum:
-      raw.promptAddendum === undefined ? undefined : text(raw.promptAddendum),
+    ...optional("promptAddendum"),
   };
 }
 
