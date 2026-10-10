@@ -9,6 +9,7 @@ import { approvalReview, renderWorkspace, WorkspaceTui } from "./workspace.ts";
 import { previewState } from "./fixtures.ts";
 import { renderWatchFrame } from "./watch.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
+import { WorkspaceInput } from "./workspace-runner.ts";
 
 // The workspace draws no glyph to stand in for a name, a status or a state.
 // This covers box drawing, block elements, geometric shapes and the braille
@@ -16,6 +17,11 @@ import { stripAnsi, visibleLength } from "./layout.ts";
 // strip names every destination in words, the composer is a labelled block, and
 // a running turn is stated in text. The markers that do carry meaning are
 // untouched: [0] to [3] for a reversibility class, [+]/[!]/[x] for a decision.
+//
+// The edit cursor is the one deliberate exception, and it is rendered from
+// WorkspaceInput.display() rather than from a literal here, so the two cannot
+// drift apart. A block is used over an underscore because a typed underscore
+// must never be mistaken for the cursor.
 const DECORATIVE_GLYPH = /[\u2500-\u25FF\u2800-\u28FF]/u;
 
 test("the workspace renders no decorative glyph", async (t) => {
@@ -27,8 +33,22 @@ test("the workspace renders no decorative glyph", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app);
-  const rendered = renderWorkspace(ui, 100, 40, "", false, false, { color: true });
-  assert.equal(stripAnsi(rendered).match(DECORATIVE_GLYPH), null);
+  const cursor = new WorkspaceInput();
+  const typed = cursor.display();
+  assert.ok(typed.length > 0);
+
+  const idle = stripAnsi(renderWorkspace(ui, 100, 40, "", false, false, { color: true }));
+  assert.equal(idle.match(DECORATIVE_GLYPH), null);
+
+  // Editing with a cursor, so the one allowed glyph is actually on screen and
+  // the exception is asserted rather than merely assumed.
+  const editing = stripAnsi(
+    renderWorkspace(ui, 100, 40, typed, true, false, { color: true }),
+  );
+  const found = editing.match(new RegExp(DECORATIVE_GLYPH, "gu")) ?? [];
+  assert.equal(found.length, 1, `expected only the cursor, got ${found.join("")}`);
+  assert.equal(found[0], typed.slice(typed.length - 1));
+  assert.equal(editing.replace(found[0]!, "").match(DECORATIVE_GLYPH), null);
 });
 
 test("workspace status names stopped and unknown runtime states explicitly", async (t) => {

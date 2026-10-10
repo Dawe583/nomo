@@ -1265,7 +1265,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       for (const hook of harnessCatalog.hooks) {
         rows.push({
           id: `hook:${hook.id}`,
-          label: `◇ hook ${hook.id} ${hook.enabled ? "on" : "off"}`,
+          label: `hook ${hook.id} ${hook.enabled ? "on" : "off"}`,
           lines: [
             `Event: ${hook.event}.`,
             `Command: ${boundedHookCommand(hook.command)}`,
@@ -1276,7 +1276,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       if (harnessCatalog.hooks.length === 0)
         rows.push({
           id: "hook:none",
-          label: "◇ hook none saved",
+          label: "hook none saved",
           lines: [
             harnessCatalog.hooksSupported
               ? "No hooks saved. /hook-file path.json reviews a save."
@@ -3309,21 +3309,21 @@ export function chatRows(
             !marker[2]!.trim()))
       ) {
         if (fence) {
-          add("  └ end code", "tool");
+          add("  + end code", "tool");
           fence = "";
         } else {
           fence = marker[1]!;
           lineNumber = 0;
-          add(`  ┌ ${marker[2]!.trim() || "code"}`, "code");
+          add(`  + ${marker[2]!.trim() || "code"}`, "code");
         }
       } else if (fence) {
-        const prefix = `  ${String(++lineNumber).padStart(2)} │ `;
+        const prefix = `  ${String(++lineNumber).padStart(2)} | `;
         for (const [i, chunk] of wrap(
           [raw],
           Math.max(1, width - prefix.length),
         ).entries())
           add(
-            (i ? " ".repeat(prefix.length - 2) + "│ " : prefix) + chunk,
+            (i ? " ".repeat(prefix.length - 2) + "| " : prefix) + chunk,
             "code",
           );
       } else
@@ -3355,7 +3355,7 @@ export function chatRows(
           : event.kind === "error"
             ? "! Error"
             : event.type === "tool.started"
-              ? "◇ Tool request"
+              ? "Tool request"
               : "Tool result";
     if (compactTools && event.kind === "tool") {
       const output = wrap(event.text.split("\n"), width);

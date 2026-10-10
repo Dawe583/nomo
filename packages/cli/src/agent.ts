@@ -24,7 +24,14 @@ export async function runAgentCommand(argv: readonly string[]): Promise<number> 
     prompt ??= await input?.question('[v] Task > ');
     if (!prompt) throw new Error('A piped session requires --prompt.');
     const started = await workbench.start(prompt, model);
-    process.stdout.write(`NOMO / ${started.workspace}\n# intent -> # classify -> # decide -> . seal\n`);
+    // The stage names are the design vocabulary; the bracketed kinds are what
+    // the loop below actually prints. The old legend used # and . markers for
+    // stages that emit no event, so a reader waited for output that never came.
+    process.stdout.write(
+      `NOMO / ${started.workspace}\n` +
+        "intent -> classify -> decide -> seal\n" +
+        "events: [user] [hold] [approved] [denied] [tool] [ran] [failed] [lesson] [rule]\n",
+    );
     let shown = 0;
     const decided = new Set<string>();
     while (!cancelled) {
