@@ -341,8 +341,8 @@ apps/control-plane/ui/src/ui.test.ts apps/control-plane/api/server.test.ts`, the
 - [ ] Review all Git changes and stage only this feature's files.
 - [ ] Obtain the two existing read-only reviews: security/spec compliance and
       product/document contradiction review. Do not create more subagents.
-- [ ] Commit and push the verified increment to the existing GitLab feature
-      branch. Do not open a PR.
+- [ ] Commit and push the verified increment to the GitLab and GitHub feature
+      branches. Do not open a PR.
 
 **Acceptance:** Another engineer can reproduce the local demo from a clean
 checkout using the runbook. All Sunday exit criteria in the spec pass. No
@@ -359,8 +359,10 @@ production account, hidden token, or unsupported fleet claim is used.
       local process.
 - [ ] The full test suite, typecheck, build and docs truth test pass.
 - [ ] Two read-only reviews are resolved or explicitly listed as blockers.
-- [ ] GitLab feature ref points at the verified commit; GitHub remains unchanged
-      until final review.
+- [ ] GitLab and GitHub feature refs point at the verified commit. The GitHub
+      feature ref is already moving with the user instruction of 2026-10-10, so
+      it no longer waits for the final review; the GitLab push is still blocked
+      on credentials.
 - [ ] Customer demand remains unvalidated unless the qualification evidence is
       actually collected.
 
