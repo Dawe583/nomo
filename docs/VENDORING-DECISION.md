@@ -462,9 +462,11 @@ Why not the others, in one line each: D vendors 2.86 M source lines whose
 while needing bun, Rust nightly, Bazel, Nix and a self-hosted runner LABEL to
 be reproduced; B defers the same 15,949 import-statement rebrand to a fork and
 pushes CI reproducibility onto upstream; C has no boundary, so its cost is
-literally unwritable. What remains to do for A: write the provenance note
-into `docs/DECISIONS.md`, naming the binary, its version and where it came
-from, so the external dependency is visible rather than implied.
+literally unwritable. What remains to do for A: the provenance note is now
+written. `docs/DECISIONS.md` carries the decision itself under the entry dated
+2026-10-05, and `docs/AGENT-BINARIES.md` names each binary, where it is
+installed, what version was measured on what date, and how to check it, so the
+external dependency is visible rather than implied.
 
 ## Usage audit, 2026-10-05
 
