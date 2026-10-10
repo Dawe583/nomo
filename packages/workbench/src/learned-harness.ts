@@ -350,27 +350,3 @@ export function mineHarnessEntries(
 
   return { entries: entriesOut, rules };
 }
-
-/**
- * Whether every entry can name what it was derived from.
- *
- * Exposed because it is the check a caller must make before promoting anything,
- * and a rule with no provenance should be dropped rather than promoted — a
- * promotion is a write, and this module is not allowed to make one.
- */
-export function provenanceIsComplete(entries: readonly HarnessEntry[]): boolean {
-  return entries.every((entry) => entry.derivedFromSeq.length > 0);
-}
-
-/** Entries for one call shape, newest observation last. */
-export function entriesForTool(
-  entries: readonly HarnessEntry[],
-  tool: string,
-): HarnessEntry[] {
-  return entries.filter((entry) => entry.tool === tool);
-}
-
-/** Entries superseded by a later one, kept so a correction is auditable. */
-export function supersededEntries(entries: readonly HarnessEntry[]): HarnessEntry[] {
-  return entries.filter((entry) => entry.supersededBy !== undefined);
-}

@@ -6,7 +6,6 @@ import {
   HARNESS_KINDS,
   LEARNED_LESSON_MIN_REPEATS,
   mineHarnessEntries,
-  provenanceIsComplete,
 } from "./learned-harness.ts";
 import { LEARNED_RULE_MIN_REPEATS, mineLearnedRules } from "./learned-rules.ts";
 
@@ -189,18 +188,18 @@ test("a record with no tool or no class cannot be grouped", () => {
   assert.deepEqual(mine(chain).entries, []);
 });
 
-test("provenance is complete only when the chain carried sequences", () => {
-  // `seq` is optional in the ledger type, so a caller may pass entries without
-  // it. Those still teach, but nothing about them can be traced, and a caller
-  // about to promote one has to be able to see that before it writes.
+test("entries mined without chain positions cite nothing", () => {
+  // `seq` is optional in the ledger type, so mining can see calls that carry
+  // no chain position. Such an entry teaches, but nothing about it can be
+  // traced, and refine-pass refuses an edit whose derivedFromSeq is empty —
+  // so mining has to produce the empty citation rather than invent one.
   const withoutSeq = Array.from({ length: 9 }, () => ({
     body: { tool: "fs.write", klass: "r1", decision: "hold:approved" },
   }));
   const mined = mine(withoutSeq);
   assert.equal(mined.entries.length, 1);
   assert.deepEqual(mined.entries[0].derivedFromSeq, []);
-  assert.equal(provenanceIsComplete(mined.entries), false);
-  assert.equal(provenanceIsComplete(mine(repeat(6, "fs.write")).entries), true);
+  assert.deepEqual(mine(repeat(6, "fs.write")).entries[0].derivedFromSeq.length > 0, true);
 });
 
 test("the threshold is a count, and a useless one is refused", () => {
@@ -233,7 +232,4 @@ test("mining lessons does not disturb the rules the sibling produces", () => {
 
 test("an empty chain proposes nothing and proves nothing", () => {
   assert.deepEqual(mine([]), { entries: [], rules: [] });
-  // Nothing to prove is not a failure; the check is only meaningful once there
-  // is something to check.
-  assert.equal(provenanceIsComplete([]), true);
 });

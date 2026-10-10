@@ -201,6 +201,24 @@ test("every metric declares a direction and a unit", () => {
   }
 });
 
+test("a declared metric cannot silently go missing from a measured board", () => {
+  // measureBoard builds its metric record from a literal key list while
+  // SCORE_METRICS is the declared table, and nothing tied the two together. A
+  // metric added to the table alone would be reported nowhere, and the TUI
+  // reads the board by key, so the omission would look like a zero.
+  const board = measureBoard(
+    [
+      [decided("deny:policy"), decided("hold:approved"), decided("execute:completed")],
+      [decided("hold:approved"), decided("execute:completed")],
+    ],
+    "t0",
+  );
+  for (const key of Object.keys(SCORE_METRICS))
+    assert.ok(key in board.metrics, `${key} is declared but never measured`);
+  for (const key of Object.keys(board.metrics))
+    assert.ok(key in SCORE_METRICS, `${key} is measured but never declared`);
+});
+
 test("guardrail regressions are reported while first-pass data is unavailable", () => {
   const busy = (allow: number, hold: number, deny: number) => () =>
     Array.from({ length: allow }, () => decided("execute:completed"))

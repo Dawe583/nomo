@@ -419,12 +419,6 @@ function contentAddressedId(kind: string, title: string, content: string): strin
   return `re_${hash.toString(16).padStart(8, "0")}`;
 }
 
-/** The edits that a caller must escalate rather than apply silently. */
-export function promptEdits(proposal: RefinementProposal): RefinementEdit[] {
-  return proposal.edits.filter((edit) => edit.kind === "prompt");
-}
-
-
 /**
  * The instruction given to the reviewing model.
  *

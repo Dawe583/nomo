@@ -8,7 +8,6 @@ import {
   applyProposal,
   extractJsonObject,
   isIncompleteJson,
-  promptEdits,
   validateProposal,
   type RefinementEdit,
   type RefinementProposal,
@@ -257,14 +256,6 @@ test("withholding a prompt edit does not hold back the others", () => {
   assert.equal(result.entries[0]?.kind, "lesson");
   assert.equal(result.applied.length, 1);
   assert.equal(result.awaitingApproval.length, 1);
-});
-
-test("promptEdits and the withheld list cannot disagree", () => {
-  // Two ways of finding the same edits is one too many, so they are pinned
-  // together here rather than trusting them to stay in step.
-  const p = proposal([edit({ kind: "prompt" }), edit({ kind: "skill" }), edit({ kind: "prompt" })]);
-  const withheld = applyProposal([], p, "2026-10-07T00:00:00.000Z").awaitingApproval;
-  assert.deepEqual(promptEdits(p), withheld);
 });
 
 test("applying twice changes nothing the second time", () => {
