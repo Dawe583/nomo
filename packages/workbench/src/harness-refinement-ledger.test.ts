@@ -387,8 +387,13 @@ test("a retry commits an in-memory branch after an initial save failure", async 
   }
 });
 
-test("a snapshot retry reuses a child after a committed copy reports unknown", async (t) => {
+test("a snapshot retry completes missing files after a committed copy reports unknown", async (t) => {
   const { app, session, directory, closeOriginal } = await fixture(t);
+  const secondDocument = await app.editDocument(session.id, {
+    path: "second.md",
+    content: "second signed record",
+    expectedRevision: null,
+  });
   const internals = app as unknown as {
     sessions: Map<string, { view: { id: string; parentId?: string } }>;
     mutateDocument: (
@@ -430,6 +435,27 @@ test("a snapshot retry reuses a child after a committed copy reports unknown", a
   assert.ok(child);
   const sessionCountAfterFailure = internals.sessions.size;
   internals.mutateDocument = originalMutateDocument;
+  const copiedSource = app.document(child.view.id, "source.md");
+  assert.ok(copiedSource);
+  await app.editDocument(child.view.id, {
+    path: "source.md",
+    content: "changed in the incomplete child",
+    expectedRevision: copiedSource.revision!,
+  });
+  const changedParent = await app.editDocument(session.id, {
+    path: "second.md",
+    content: "changed after the branch attempt",
+    expectedRevision: secondDocument.revision!,
+  });
+  await assert.rejects(
+    app.branch(session.id, request),
+    /parent workspace changed while the branch snapshot was incomplete/i,
+  );
+  await app.editDocument(session.id, {
+    path: "second.md",
+    content: "second signed record",
+    expectedRevision: changedParent.revision!,
+  });
   const retry = await app.branch(session.id, request);
 
   assert.equal(retry.id, child.view.id);
@@ -443,6 +469,10 @@ test("a snapshot retry reuses a child after a committed copy reports unknown", a
     assert.equal(
       reopened.workspace(afterRestart.id).files["source.md"],
       "signed source record",
+    );
+    assert.equal(
+      reopened.workspace(afterRestart.id).files["second.md"],
+      "second signed record",
     );
   } finally {
     await reopened.shutdown();

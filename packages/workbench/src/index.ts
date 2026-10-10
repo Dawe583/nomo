@@ -414,6 +414,18 @@ type Session = {
   controller: AbortController;
   provider?: CompatibleProvider;
 };
+type WorkbenchRequestRecord = {
+  digest: string;
+  sessionId: string;
+  snapshotSourceDigest?: string;
+};
+
+function branchSnapshotDigest(files: Record<string, string>): string {
+  const entries = Object.entries(files).sort(([left], [right]) =>
+    left < right ? -1 : left > right ? 1 : 0,
+  );
+  return digest(JSON.stringify(entries));
+}
 
 const REFINEMENT_SECRET_PATTERNS = [
   /\b(?:api[_-]?key|token|password|secret|authorization)\s*[:=]\s*["']?[^\s,;"']+/i,
@@ -809,7 +821,7 @@ export class Workbench {
     appearance: "system",
     sendBehavior: "enter",
   };
-  private requests: Record<string, { digest: string; sessionId: string }> = {};
+  private requests: Record<string, WorkbenchRequestRecord> = {};
   private readonly keyStorage: string;
 
   private readonly workspaceKeySecret: string | undefined;
@@ -958,7 +970,7 @@ export class Workbench {
     const saved = this.storage.read<{
       preferences?: Record<string, string>;
       harnessSettings?: Record<string, unknown>;
-      requests?: Record<string, { digest: string; sessionId: string }>;
+      requests?: Record<string, WorkbenchRequestRecord>;
       approvalHistory?: unknown[];
       config?: ProviderConfig;
       ignoreEnvironment?: boolean;
@@ -2348,7 +2360,19 @@ export class Workbench {
       if (prior) {
         const child = this.sessions.get(prior);
         if (!child) throw new Error("Idempotent branch result is unavailable.");
-        this.persist();
+        const priorRecord = this.requests[idempotencyKey];
+        if (priorRecord?.snapshotSourceDigest !== undefined) {
+          this.assertNormalMutation("branch document snapshot");
+          await this.resumeBranchSnapshot(
+            id,
+            child,
+            idempotencyKey,
+            requestValue,
+            priorRecord.snapshotSourceDigest,
+          );
+        } else {
+          this.persist();
+        }
         return child.view;
       }
       if (this.jobs.size)
@@ -2391,6 +2415,13 @@ export class Workbench {
       }
       if (body.snapshotDocuments)
         this.assertNormalMutation("branch document snapshot");
+      const snapshotFiles = body.snapshotDocuments
+        ? { ...this.workspace(id).files }
+        : undefined;
+      const snapshotSourceDigest =
+        snapshotFiles === undefined
+          ? undefined
+          : branchSnapshotDigest(snapshotFiles);
       // Invalidate only after validation, but before any write that can fail
       // after leaving a partial child behind.
       const armed = this.harnessTriggers.get(id) ?? initialTriggerState();
@@ -2429,7 +2460,7 @@ export class Workbench {
       };
       this.sessions.set(childId, child);
       this.documents[workspace] = createWorkspace();
-      this.recordRequest(idempotencyKey, requestValue, childId);
+      this.recordRequest(idempotencyKey, requestValue, childId, snapshotSourceDigest);
       for (const e of messages)
         this.event(child, e.kind, e.text, {
           importedFrom: id,
@@ -2439,9 +2470,7 @@ export class Workbench {
         // Seeding the child workspace is a durable document write, so it obeys
         // the same server permission mode as every other managed-document
         // mutation. Branching itself only creates session state and therefore
-        for (const [path, content] of Object.entries(
-          this.workspace(id).files,
-        )) {
+        for (const [path, content] of Object.entries(snapshotFiles ?? {})) {
           await this.mutateDocument(
             child,
             randomUUID(),
@@ -2455,6 +2484,32 @@ export class Workbench {
       return child.view;
     });
   }
+  private async resumeBranchSnapshot(
+    parentId: string,
+    child: Session,
+    idempotencyKey: string,
+    requestValue: unknown,
+    expectedSourceDigest: string,
+  ): Promise<void> {
+    const sourceFiles = { ...this.workspace(parentId).files };
+    if (branchSnapshotDigest(sourceFiles) !== expectedSourceDigest)
+      throw new Error(
+        "The parent workspace changed while the branch snapshot was incomplete.",
+      );
+    const childFiles = this.workspace(child.view.id).files;
+    // A pending snapshot is unfinished, so restore any mismatched source file.
+    for (const [path, content] of Object.entries(sourceFiles)) {
+      if (childFiles[path] === content) continue;
+      await this.mutateDocument(
+        child,
+        randomUUID(),
+        "nomo_workspace_write",
+        { path, content },
+        { by: "web-operator" },
+      );
+    }
+    this.remember(idempotencyKey, requestValue, child.view.id);
+  }
   private request(key: string | undefined, value: unknown) {
     if (!key) return;
     if (!/^[A-Za-z0-9_.:-]{1,160}$/.test(key))
@@ -2464,8 +2519,17 @@ export class Workbench {
       throw new Error("Idempotency key belongs to another request.");
     return prior?.sessionId;
   }
-  private recordRequest(key: string, value: unknown, sessionId: string) {
-    this.requests[key] = { digest: JSON.stringify(value), sessionId };
+  private recordRequest(
+    key: string,
+    value: unknown,
+    sessionId: string,
+    snapshotSourceDigest?: string,
+  ) {
+    this.requests[key] = {
+      digest: JSON.stringify(value),
+      sessionId,
+      ...(snapshotSourceDigest === undefined ? {} : { snapshotSourceDigest }),
+    };
   }
   private remember(key: string | undefined, value: unknown, sessionId: string) {
     if (key) {
