@@ -4695,7 +4695,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         ...this.listRows(),
       ];
-    if (this.tab === "help") return helpLines();
+    if (this.tab === "help") {
+      const commands = TUI_COMMANDS.length;
+      return [
+        `HELP, ${commands} commands, ${DISCOVERY_GROUPS.length} groups`,
+        "",
+        ...helpLines(),
+      ];
+    }
     // Tools are grouped by class, low risk first, because that is the order
     // an operator reasoning about authority reads them in. A flat list put a
     // read next to a write with nothing between them.
