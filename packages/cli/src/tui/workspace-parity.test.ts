@@ -16,6 +16,7 @@ import {
   extractTodos,
   isDoubleEscape,
   holdSeverity,
+  holdSecondsLeft,
   mentionCandidates,
   mentionToken,
   promptFrameBottom,
@@ -307,6 +308,19 @@ test("the sessions tab groups by state and words the summary for the tab", async
   // and parse, which is the whole cost the line exists to avoid.
   assert.match(shown, /0 groups collapsed, 0 conversations hidden/);
   assert.ok(!shown.includes("documents"), "the summary speaks about sessions");
+});
+
+test("a hold with a deadline says so, and a closed one says it closed", () => {
+  const now = 1_000_000;
+  // A hold with no deadline is not an eternal one, it is a hold whose
+  // deadline the server did not send. A countdown for it would invent a
+  // number the terminal was never given.
+  assert.equal(holdSecondsLeft({}, now), null);
+  assert.equal(holdSecondsLeft({ expiresAt: Number.NaN }, now), null);
+  // Rounded, and never negative: "0s left" reads like a value about to change.
+  assert.equal(holdSecondsLeft({ expiresAt: now + 45_000 }, now), 45);
+  assert.equal(holdSecondsLeft({ expiresAt: now - 10_000 }, now), 0);
+  assert.equal(holdSecondsLeft({ expiresAt: now + 400 }, now), 0);
 });
 
 test("Shift+Tab modes cycle with a visible indicator", async (t) => {

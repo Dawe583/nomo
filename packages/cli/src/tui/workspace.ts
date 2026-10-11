@@ -398,6 +398,50 @@ function approvalInspectLines(
 }
 
 /**
+ * How long a hold can still be answered, in seconds, or null when it has no
+ * deadline.
+ *
+ * A hold without an expiry is not an eternal one, it is a hold whose deadline
+ * the server did not send. Printing a countdown for it would invent a number
+ * the terminal was never given.
+ */
+export function holdSecondsLeft(
+  hold: { readonly expiresAt?: number },
+  now: number,
+): number | null {
+  if (!Number.isFinite(hold.expiresAt)) return null;
+  return Math.max(0, Math.round(((hold.expiresAt as number) - now) / 1000));
+}
+
+/** The window in which a hold is announced as about to close. */
+const EXPIRY_WARNING_SECONDS = 60;
+
+/**
+ * The glyph for an approval row. A hold the operator already answered is not
+ * an open obligation, so it does not carry the pending mark. The status word
+ * beside it stays authoritative either way.
+ */
+function holdRowIcon(hold: { status: string }): string {
+  return /reject|deny/i.test(hold.status)
+    ? ROW_ICONS.rejected
+    : ROW_ICONS.approval;
+}
+
+/**
+ * The trailing countdown on an approval row.
+ *
+ * A hold with no deadline gets nothing: that means the server sent no
+ * deadline, not that it never closes. A hold already past its deadline says
+ * so in a word, because "0s left" reads like a value that is about to change.
+ */
+function expirySuffix(hold: { expiresAt?: number }, now: number): string {
+  const left = holdSecondsLeft(hold, now);
+  if (left === null) return "";
+  if (left <= 0) return "EXPIRED | ";
+  return `${left}s left | `;
+}
+
+/**
  * The group a conversation is filed under on the sessions tab.
  *
  * Archived conversations get their own group rather than being mixed into a
@@ -1035,6 +1079,45 @@ export class WorkspaceTui {
     this.selected = Math.max(0, this.selected);
     return true;
   }
+  /**
+   * Announce holds that are about to close, or already have.
+   *
+   * An expired approval cannot release its tool, so silence is the one
+   * response that is actively misleading: the operator sees a pending row,
+   * presses the key, and only then learns the window closed. Keyed by hold id
+   * so one hold raises one notice that updates in place, rather than a new
+   * line on every refresh tick.
+   *
+   * Sticky in both cases. A hold closing in twenty seconds and one that
+   * closed a minute ago are both things the operator has to see, and neither
+   * should time out while they are looking somewhere else.
+   */
+  watchHoldsForExpiry(now = Date.now()) {
+    for (const hold of this.workbench.pending()) {
+      const left = holdSecondsLeft(hold as { expiresAt?: number }, now);
+      if (left === null) continue;
+      const tool = String(
+        (hold.call as { tool?: unknown } | undefined)?.tool ?? "tool",
+      );
+      if (left <= 0) {
+        this.notify(
+          `expiry:${hold.holdId}`,
+          "danger",
+          `Approval for ${tool} expired. It can no longer release the tool.`,
+          0,
+        );
+        continue;
+      }
+      if (left <= EXPIRY_WARNING_SECONDS)
+        this.notify(
+          `expiry:${hold.holdId}`,
+          "warning",
+          `Approval for ${tool} closes in ${left}s.`,
+          0,
+        );
+    }
+  }
+
   /** Drop expired toasts. A sticky one survives any amount of elapsed time. */
   expireToasts(now = Date.now()) {
     this.toasts = expireToasts(this.toasts, now);
@@ -1818,7 +1901,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             // A rejected hold is not an open obligation, so it gets a
             // different glyph from a pending one. The status word beside it
             // stays authoritative either way.
-            label: `${h.status.toLowerCase().includes("reject") || h.status.toLowerCase().includes("deny") ? ROW_ICONS.rejected : ROW_ICONS.approval} ${approvalLabel(h)}`,
+            // The countdown rides on the row because the row is what the
+            // operator is looking at when they decide whether to read the
+            // detail first. A hold with no deadline prints nothing: that
+            // means the server sent no deadline, not that it never closes.
+            label:
+              expirySuffix(h, Date.now()) +
+              holdRowIcon(h) +
+              " " +
+              approvalLabel(h),
             lines: json(h),
           };
         })

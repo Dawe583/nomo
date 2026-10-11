@@ -1255,6 +1255,10 @@ export async function runWorkspaceTui(
       // runs in the finally below, and a toast that expires without a frame
       // would leave its row behind until the next unrelated event.
       ui.expireToasts();
+      // Holds that are closing get announced on the same tick. Waiting for
+      // the decision to fail would mean the operator only learns the window
+      // closed after pressing the key that would have used it.
+      ui.watchHoldsForExpiry();
       void ui
         .refresh()
         .catch((e) => {
