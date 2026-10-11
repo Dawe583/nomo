@@ -2641,6 +2641,76 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     const row = this.items()[this.selected];
     if (!row) return;
     if (this.tab === "overview") {
+      // The overview rows are runs. Enter inspects the run rather than
+      // jumping to the chat, because the operator is on the overview to see
+      // what's running, and the run details answer that question.
+      const run = this.workbench.runs().find((r) => r.id === row.id);
+      if (run) {
+        // Keep session context so the operator stays oriented.
+        this.useSession(row.sessionId!);
+        const session = this.workbench
+          .list()
+          .find((s) => s.id === run.sessionId);
+        this.detail = [
+          ...renderInspector(
+            {
+              title: `RUN ${run.id.slice(0, 8)}`,
+              subtitle: run.sessionId.slice(0, 8),
+              icon: run.reconcileRequired
+                ? ROW_ICONS.unknown
+                : stateIcon(run.state),
+              sections: [
+                {
+                  title: "run",
+                  fields: [
+                    {
+                      label: "state",
+                      value: run.state,
+                      tone: run.reconcileRequired ? "warning" : "default",
+                    },
+                    { label: "model", value: run.model },
+                    {
+                      label: "progress",
+                      value:
+                        run.progress === null
+                          ? "unknown"
+                          : `${Math.round(run.progress * 100)}%`,
+                    },
+                    {
+                      label: "reconciliation",
+                      value: run.reconcileRequired
+                        ? "required — outcome unknown"
+                        : "not needed",
+                    },
+                    { label: "started", value: run.createdAt ?? "neznámo" },
+                    {
+                      label: "ended",
+                      value:
+                        run.updatedAt ??
+                        (run.state === "running" ? "probíhá" : "neznámo"),
+                    },
+                  ],
+                },
+                {
+                  title: "session",
+                  fields: [
+                    { label: "title", value: session?.title ?? run.sessionId },
+                    { label: "model", value: session?.model ?? run.model },
+                    { label: "status", value: session?.status ?? "unknown" },
+                  ],
+                },
+              ],
+              hint: "Reconcile with /runs. /chat opens the conversation.",
+            },
+            { width: 76 },
+          ),
+          "",
+          "RAW RECORD",
+          ...row.lines,
+        ];
+        this.scroll = 0;
+        return;
+      }
       this.useSession(row.sessionId!);
       this.detail = row.lines;
       this.scroll = 0;
