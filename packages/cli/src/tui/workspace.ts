@@ -4203,6 +4203,27 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.providerSummary(),
         `Model: ${this.model || "-"} | ${this.workbench.running() ? "running or settling" : "idle"}`,
         `Conversations ${this.workbench.list().length} | Documents ${this.workbench.documentsList().length} | Runs ${o.runs}`,
+        // Which runs are live, named. The count says there is work; this says
+        // which work, so an operator looking at a busy workspace knows where
+        // to go rather than only that somewhere is busy.
+        ...(this.workbench.running()
+          ? [
+              "Active:",
+              ...[...this.workbench.runs()]
+                .filter(
+                  (run) =>
+                    run.state === "running" ||
+                    run.state === "stopping" ||
+                    run.state === "paused" ||
+                    run.state === "awaiting-approval",
+                )
+                .slice(0, 4)
+                .map(
+                  (run) =>
+                    `  ${stateIcon(run.state)} ${run.sessionId.slice(0, 8)} ${run.model} / progress ${run.progress === null ? "unknown" : `${Math.round(run.progress * 100)}%`}${run.reconcileRequired ? " / reconcile first" : ""}`,
+                ),
+            ]
+          : []),
         `Ledger ${[...this.proofs.values()].reduce((n, p) => n + p.length, 0)} managed + ${[...this.proxy.entries.values()].reduce((n, p) => n + p.length, 0)} proxy`,
         // The bare word "verified" is the defect the audit named here: it does
         // not say which key answered, so a chain checked against a trust file
