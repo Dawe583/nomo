@@ -1415,6 +1415,48 @@ export class WorkspaceTui {
     // whatever the tree is pointing at rather than whatever it pointed at
     // before the tree was folded.
     this.selected = Math.max(0, this.selected);
+    // Live document preview: when cursor lands on a document (leaf), show
+    // a preview in the detail pane without requiring Enter. The operator
+    // can scan documents with arrow keys and see content instantly.
+    if (this.tab === "documents") {
+      const visible = flattenTree(tree.nodes, tree.state);
+      const node = visible[tree.state.cursor];
+      if (node && !node.hasChildren && node.id) {
+        const [sessionId, path] = node.id.split(":");
+        if (sessionId && path) {
+          const doc = this.workbench.document(sessionId, path);
+          if (doc) {
+            const preview = doc.content
+              ? doc.content.split("\n").slice(0, 20).join("\n")
+              : "(empty)";
+            this.detail = [
+              ...renderInspector(
+                {
+                  title: path,
+                  subtitle: `${sessionId.slice(0, 8)} · ${doc.bytes} B`,
+                  icon: ROW_ICONS.document,
+                  sections: [
+                    {
+                      title: "preview (first 20 lines)",
+                      fields: [
+                        {
+                          label: "content",
+                          value: preview,
+                          tone: "muted",
+                        },
+                      ],
+                    },
+                  ],
+                  hint: "Enter opens editor. Left/Right folds tree.",
+                },
+                { width: 76 },
+              ),
+            ];
+            this.scroll = 0;
+          }
+        }
+      }
+    }
     return true;
   }
   /**
