@@ -442,7 +442,21 @@ function expirySuffix(hold: { expiresAt?: number }, now: number): string {
 }
 
 /**
- * The group a conversation is filed under on the sessions tab.
+ * The glyph for a connector's consent state.
+ *
+ * The state word is printed beside it in every case, so the glyph is only
+ * there to let a column of connectors be scanned by shape. An unknown state
+ * gets the question mark rather than one of the known marks: it was never
+ * measured into a state, and showing a check for it would claim it is ready.
+ */
+export function connectorConsentIcon(consent: string): string {
+  if (consent === "confirmed") return "●";
+  if (consent === "probed") return "◐";
+  if (consent === "staged") return "○";
+  return "?";
+}
+
+/** The group a conversation is filed under on the sessions tab.
  *
  * Archived conversations get their own group rather than being mixed into a
  * status: an archived conversation is not idle, it was put away on purpose,
@@ -2508,16 +2522,35 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     ];
   }
   private connectorList() {
+    // Grouped by consent state, because the question an operator opens this
+    // view with is "what can I actually use yet", and the answer is one group
+    // rather than a consent word repeated down a column. Confirmed comes
+    // first because it is the only state that grants a conversation tools.
+    const order = ["confirmed", "probed", "staged"] as const;
+    const rows = this.connectorRows();
+    const groups: { consent: string; members: ConnectorRow[] }[] = order
+      .map((consent) => ({
+        consent: String(consent),
+        members: rows.filter((c) => c.consent === consent),
+      }))
+      .filter((group) => group.members.length);
+    // Anything the server reports in a state this list does not name still
+    // gets shown. An unknown state is not "none".
+    const known = new Set(order.map((c) => String(c)));
+    const other = rows.filter((c) => !known.has(String(c.consent)));
+    if (other.length) groups.push({ consent: "other", members: other });
     return [
       "CONNECTORS, only confirmed ones give a conversation tools",
       "",
-      ...this.connectorRows().flatMap((c) => [
-        `${pad(c.name, 22)}  ${c.consent}  ${c.tools.length} tools`,
-        `  ${fit(c.endpoint, 60)}`,
-        `  id ${c.id}`,
-        c.builtin
-          ? "  in use: the NOMO document workspace"
-          : `  next: ${MCP_NEXT[c.consent](c.id)}`,
+      ...groups.flatMap((group) => [
+        `${connectorConsentIcon(group.consent)} ${String(group.consent).toUpperCase()} / ${group.members.length}`,
+        ...group.members.flatMap((c) => [
+          `  ${pad(c.name, 22)} ${String(c.tools.length).padStart(3)} tools  ${fit(c.endpoint, 34)}`,
+          `    id ${c.id}`,
+          c.builtin
+            ? "    in use: the NOMO document workspace"
+            : `    next: ${MCP_NEXT[c.consent as keyof typeof MCP_NEXT]?.(c.id) ?? "/mcp inspect " + c.id}`,
+        ]),
         "",
       ]),
       "/mcp inspect ID | /mcp add URL [name] | /mcp probe ID",

@@ -60,7 +60,9 @@ async function upstream(t: { after: (fn: () => unknown) => void }) {
       }),
     );
   });
-  await new Promise<void>((resolve) => listener.listen(0, "127.0.0.1", resolve));
+  await new Promise<void>((resolve) =>
+    listener.listen(0, "127.0.0.1", resolve),
+  );
   const address = listener.address();
   assert.ok(address && typeof address !== "string");
   t.after(async () => {
@@ -104,22 +106,32 @@ test("/mcp lists every connector with its consent state and next step", async (t
   await ui.command(`/mcp add ${server.url} counter`);
   const id = last().id;
   let text = ui.lines().join("\n");
-  assert.match(text, /counter +staged +0 tools/);
+  // Grouped by consent, confirmed first: the question an operator opens this
+  // view with is what can I use yet, and the answer is one group rather than
+  // a consent word repeated down a column.
+  assert.match(text, /STAGED \/ 1/);
+  assert.match(text, /counter +0 tools/);
   assert.match(text, new RegExp(`next: /mcp probe ${id}`));
   // The document workspace shares this list and has no endpoint of its own.
-  assert.match(text, /NOMO documents +confirmed +4 tools/);
+  assert.match(text, /CONFIRMED \//);
+  assert.match(text, /NOMO documents +4 tools/);
   assert.match(text, /in use: the NOMO document workspace/);
 
   await app.probeConnector(id);
   await ui.command("/mcp");
   text = ui.lines().join("\n");
-  assert.match(text, /counter +probed +1 tools/);
+  assert.match(text, /PROBED \/ 1/);
+  assert.match(text, /counter +1 tools/);
   assert.match(text, new RegExp(`next: /mcp confirm ${id}`));
 
   await app.confirmConnector(id);
   await ui.command("/mcp");
   text = ui.lines().join("\n");
-  assert.match(text, /counter +confirmed +1 tools/);
+  // Consent is the group heading now, not a column on the row. Both
+  // connectors sit under CONFIRMED, which is the fact that matters: this is
+  // the state in which a conversation actually gets tools.
+  assert.match(text, /● CONFIRMED \/ 2/);
+  assert.match(text, /counter +1 tools/);
   assert.match(text, /in use by new conversations/);
   for (const line of ui.lines()) assert.ok(visibleLength(line) <= 80, line);
 });
@@ -195,8 +207,7 @@ test("only a confirmed connector reaches a new conversation", async (t) => {
   const server = await upstream(t);
   await ui.command(`/mcp add ${server.url} counter`);
   const id = last().id;
-  const configured = () =>
-    app.availableTools().tools.map((tool) => tool.name);
+  const configured = () => app.availableTools().tools.map((tool) => tool.name);
 
   await ui.command("what can you do");
   await app.settled();
@@ -232,7 +243,11 @@ test("no rendered line carries the connector token", async (t) => {
     mapping: { fixture_send: "aws.ses.email.send" },
   });
   const id = last().id;
-  for (const command of ["/mcp", `/mcp inspect ${id}`, "/mcp inspect workspace"]) {
+  for (const command of [
+    "/mcp",
+    `/mcp inspect ${id}`,
+    "/mcp inspect workspace",
+  ]) {
     await ui.command(command);
     const shown = [
       ...ui.lines(),
