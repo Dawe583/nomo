@@ -44,8 +44,8 @@
  * remain unvalidated hypotheses. No amount, tier or limit is encoded in this
  * module.
  */
-
 import express from "express";
+import { envValue as readEnvValue } from "./env.mjs";
 import { read, write, transaction } from "./store.mjs";
 import { assertOwner, isOwner, OPERATOR_OWNER } from "./owner.mjs";
 
@@ -93,8 +93,14 @@ const WEBHOOK_MEMORY = 200;
 
 const ENVIRONMENT = new Set(["sandbox", "production"]);
 
+/**
+ * The shared lookup answers "which name is set". Billing additionally refuses
+ * a blank or untrimmed value, because a half configured deployment is not a
+ * deployment that can be charged, and reporting `configured: false` for it is
+ * more honest than serving an entitlement nobody can manage.
+ */
 const envValue = (name, env) => {
-  const raw = env[name];
+  const raw = readEnvValue(env, name);
   return typeof raw === "string" && raw.trim() !== "" ? raw.trim() : undefined;
 };
 
@@ -240,7 +246,7 @@ export function createBillingService(config, overrides = {}) {
    * into this object, so rotating the secret takes effect without a restart and
    * so no copy of it exists anywhere it could be printed by accident.
    */
-  const secret = () => envValue("VOID_POLAR_WEBHOOK_SECRET", config.env);
+  const secret = () => envValue("NOMO_POLAR_WEBHOOK_SECRET", config.env);
 
   return {
     /**
@@ -304,7 +310,7 @@ export function createBillingService(config, overrides = {}) {
      * the honest cost of it: until an operator clears the stale entry, a
      * migrated owner cannot re-link, and clearing it deliberately requires
      * confirming with Polar that they hold the customer. That confirmation is
-     * the first thing `VOID_POLAR_ACCESS_TOKEN` is for, and it is not built in
+     * the first thing `NOMO_POLAR_ACCESS_TOKEN` is for, and it is not built in
      * this change.
      */
     async linkCustomer(owner, customerId) {
@@ -393,12 +399,12 @@ export function createBillingService(config, overrides = {}) {
  * account nobody can manage.
  */
 export function billingFromEnv(env = process.env, overrides = {}) {
-  const environment = envValue("VOID_POLAR_ENVIRONMENT", env) ?? "production";
+  const environment = envValue("NOMO_POLAR_ENVIRONMENT", env) ?? "production";
   const complete =
     ENVIRONMENT.has(environment) &&
-    Boolean(envValue("VOID_POLAR_ACCESS_TOKEN", env)) &&
-    Boolean(envValue("VOID_POLAR_ORGANIZATION_ID", env)) &&
-    Boolean(envValue("VOID_POLAR_WEBHOOK_SECRET", env));
+    Boolean(envValue("NOMO_POLAR_ACCESS_TOKEN", env)) &&
+    Boolean(envValue("NOMO_POLAR_ORGANIZATION_ID", env)) &&
+    Boolean(envValue("NOMO_POLAR_WEBHOOK_SECRET", env));
   if (!complete) return undefined;
   // Only what is read later is kept: `env`, because the secret is read through
   // it on every verification, and `productId`, because it decides which of
@@ -409,7 +415,7 @@ export function billingFromEnv(env = process.env, overrides = {}) {
   // because a deployment holding only a webhook secret cannot manage the
   // account that secret belongs to.
   return createBillingService(
-    { env, productId: envValue("VOID_POLAR_PRODUCT_TEAM", env) },
+    { env, productId: envValue("NOMO_POLAR_PRODUCT_TEAM", env) },
     overrides,
   );
 }

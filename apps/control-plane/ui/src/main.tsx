@@ -128,7 +128,7 @@ class AppBoundary extends Component<
       return (
         <div className="app-recovery" role="alert">
           <BrandMark />
-          <h1>VOID</h1>
+          <h1>NOMO</h1>
           <p>
             {document.documentElement.lang === "cs"
               ? "Rozhraní se nepodařilo načíst. Načtěte aktuální verzi."
@@ -172,23 +172,23 @@ function MotionShell({
 }
 function Root() {
   const [locale, setLocale] = useState<"cs" | "en">(() =>
-    localStorage.getItem("void-locale") === "cs" ? "cs" : "en",
+    localStorage.getItem("nomo-locale") === "cs" ? "cs" : "en",
   );
   // The internal gallery replaces the whole application before App mounts.
   // That is what keeps it free of workspace data: none of App's provider,
   // session, approval or overview probes ever fire.
   const internal = isGalleryRequest(location);
   useEffect(() => {
-    localStorage.setItem("void-locale", locale);
+    localStorage.setItem("nomo-locale", locale);
     document.documentElement.lang = locale;
     if (internal)
       document.title =
         locale === "en"
-          ? "VOID — Internal component gallery"
-          : "VOID — Interní galerie komponent";
+          ? "NOMO — Internal component gallery"
+          : "NOMO — Interní galerie komponent";
     else
       document.title =
-        locale === "en" ? "VOID — Workspace" : "VOID — Pracovní prostor";
+        locale === "en" ? "NOMO — Workspace" : "NOMO — Pracovní prostor";
   }, [locale, internal]);
   return (
     <Locale value={locale}>
@@ -196,13 +196,13 @@ function Root() {
         <Suspense
           fallback={
             <div className="app-loading" role="status">
-              VOID
+              NOMO
             </div>
           }
         >
           {internal ? (
             <MotionShell
-              motion={localStorage.getItem("void-motion") !== "off"}
+              motion={localStorage.getItem("nomo-motion") !== "off"}
             >
               <ComponentGallery />
             </MotionShell>
@@ -230,10 +230,10 @@ function App({
   const contextRef = useRef<HTMLElement>(null),
     sidebarRef = useRef<HTMLElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState(
-      () => Number(localStorage.getItem("void-sidebar-width")) || 224,
+      () => Number(localStorage.getItem("nomo-sidebar-width")) || 224,
     ),
     [contextWidth, setContextWidth] = useState(
-      () => Number(localStorage.getItem("void-context-width")) || 360,
+      () => Number(localStorage.getItem("nomo-context-width")) || 360,
     );
   const [path, setPath] = useState(location.pathname),
     [drawer, setDrawer] = useState(false),
@@ -243,18 +243,18 @@ function App({
     [search, setSearch] = useState(false),
     [query, setQuery] = useState(""),
     [appearance, setAppearance] = useState(
-      () => localStorage.getItem("void-appearance") ?? "system",
+      () => localStorage.getItem("nomo-appearance") ?? "system",
     ),
     [online, setOnline] = useState(navigator.onLine),
     [token, setToken] = useState(""),
     [error, setError] = useState<unknown>(),
     [connecting, setConnecting] = useState(false);
   const [motion, setMotion] = useState(
-    () => localStorage.getItem("void-motion") !== "off",
+    () => localStorage.getItem("nomo-motion") !== "off",
   );
   useEffect(() => {
     document.documentElement.dataset.motion = motion ? "on" : "off";
-    localStorage.setItem("void-motion", motion ? "on" : "off");
+    localStorage.setItem("nomo-motion", motion ? "on" : "off");
   }, [motion]);
   const [privateLogin, setPrivateLogin] = useState(false);
   const demo = useApi(
@@ -286,8 +286,8 @@ function App({
   const privateQueries = path !== "/demo" && !needsAuth;
   const prefs = useApi("/api/preferences", privateQueries);
   const initialPreferences = useRef({
-    appearance: !localStorage.getItem("void-appearance"),
-    locale: !localStorage.getItem("void-locale"),
+    appearance: !localStorage.getItem("nomo-appearance"),
+    locale: !localStorage.getItem("nomo-locale"),
   });
   useEffect(() => {
     const value = prefs.data?.preferences;
@@ -507,7 +507,7 @@ function App({
             try {
               const result = await api("/api/sessions/" + chatId);
               download(
-                "void-" + chatId + ".json",
+                "nomo-" + chatId + ".json",
                 json(result.session),
                 "application/json",
               );
@@ -622,7 +622,7 @@ function App({
                 }}
               >
                 <BrandMark className="brand-mark" />
-                <strong>VOID</strong>
+                <strong>NOMO</strong>
               </a>
               <button
                 className="collapse-button"
@@ -720,7 +720,7 @@ function App({
                     onChange={(e) => {
                       setSidebarWidth(Number(e.target.value));
                       localStorage.setItem(
-                        "void-sidebar-width",
+                        "nomo-sidebar-width",
                         e.target.value,
                       );
                     }}
@@ -974,7 +974,7 @@ function App({
                         onChange={(e) => {
                           setContextWidth(Number(e.target.value));
                           localStorage.setItem(
-                            "void-context-width",
+                            "nomo-context-width",
                             e.target.value,
                           );
                         }}

@@ -2,7 +2,7 @@
 
 ## Adapter conformance and Windows filesystem follow-up, 2026-09-15
 
-`void recovery conformance` runs eight common runtime checks for each supported
+`nomo recovery conformance` runs eight common runtime checks for each supported
 filesystem operation. POSIX runs 32 checks across create, write, delete and
 rename. Windows runs 24 checks across create, write and delete; rename is
 explicitly refused until separate Windows evidence exists. Its JSON report
@@ -30,7 +30,7 @@ has since been added rather than left open: on POSIX the mode-bit and uid rule
 is unchanged, and on Windows `inspectApprovalStateDirectory` reads the DACL
 through the shipped icacls binary, because Node reports 0o666 for a directory
 whatever chmod was asked for and `process.getuid` is absent, which made the old
-predicate unsatisfiable there. A directory VOID can claim is narrowed to the
+predicate unsatisfiable there. A directory NOMO can claim is narrowed to the
 operator before it is accepted, and narrowing runs only from the write path:
 inspection reads the DACL and reports what it measured, changing nothing. A
 proven foreign write grant is refused and is never acknowledgeable; anything
@@ -46,7 +46,7 @@ suite pass is made either way.
 
 ### Python transport client, 2026-09-25
 
-`python/void-transport` adds the standard library Python client WP-R12 asks
+`python/nomo-transport` adds the standard library Python client WP-R12 asks
 for. It speaks the same wire as `packages/proxy/src/transport/http.ts` --
 JSON-RPC 2.0 over HTTP POST to one explicit `host:port` -- and refuses rather
 than guesses: a response whose `id` is not the id that was sent, a body over
@@ -58,7 +58,7 @@ text, exact UTF-8 bytes and the `sha256:<hex>` digest over a shared corpus
 that includes Unicode, empty containers and the JavaScript number
 boundaries. The integration tests spawn the real relay: `createHttpRequestRelay`
 from `packages/proxy/src/relay/http-requests.ts` bound to a loopback port, with
-`void recovery serve` behind it as the real MCP server. The client has no TLS
+`nomo recovery serve` behind it as the real MCP server. The client has no TLS
 or certificate pinning, verifies no ledger, runs no replay, and covers no
 provider behaviour, so provider certification and the broader capability
 profiles remain open R12 work.
@@ -70,7 +70,7 @@ by the existence of a prototype or a narrow passing test.
 | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | R00     | Contract, coverage, context corrections, descriptor vs executable adapter distinction                                                                                  | Machine-readable provider certification and public-site alignment                                                                      |
 | R01     | Signed local journal, immutable operation identity, unknown results, adapter reconciliation                                                                            | Cloud transactional journal, full persistence fault matrix                                                                             |
-| R02     | Shared runtime used by managed CLI/MCP, TS SDK and local workbench document writes/Undo, plus a production composition root at `packages/proxy/src/legacy-root.ts` with explicit operator selection, an unknown-name refusal, and three bound tools (`postgres.row.update`, `postgres.row.delete`, `aws.s3.object.delete`) each with a cross-layer fixture | Wiring the root into `void-proxy` and the SDK client, and S3 conformance against a real bucket rather than a modelled ETag client || R03     | Encrypted durable artifacts, reserved capture/outcome/recovery capacity, shared quota, legacy reads, key rotation, plus an explicit operator-driven file-vault collector with a manual-by-default policy, an external pin-evidence index and a journaled run report                                                                 | True streaming of a large artifact, pin lifecycle and release, reserved-vault GC, retention index backup, quota migration. A host that will not load that much now gets a refusal naming the size instead of an allocation it cannot satisfy; the read budget defaults to the write quota so nothing changes by default                                                                 |
+| R02     | Shared runtime used by managed CLI/MCP, TS SDK and local workbench document writes/Undo, plus a production composition root at `packages/proxy/src/legacy-root.ts` with explicit operator selection, an unknown-name refusal, and three bound tools (`postgres.row.update`, `postgres.row.delete`, `aws.s3.object.delete`) each with a cross-layer fixture | Wiring the root into `nomo-proxy` and the SDK client, and S3 conformance against a real bucket rather than a modelled ETag client || R03     | Encrypted durable artifacts, reserved capture/outcome/recovery capacity, shared quota, legacy reads, key rotation, plus an explicit operator-driven file-vault collector with a manual-by-default policy, an external pin-evidence index and a journaled run report                                                                 | True streaming of a large artifact, pin lifecycle and release, reserved-vault GC, retention index backup, quota migration. A host that will not load that much now gets a refusal naming the size instead of an allocation it cannot satisfy; the read budget defaults to the write quota so nothing changes by default                                                                 |
 | R04     | Structured row mutations, revision trigger, atomic outbox, verified restore, real prepare serialization conflict, managed deadlock, terminated sessions, client SIGKILL after COMMIT, cascade/tenant/migration fixture paths | Physical network partition, in-flight client kill, and real-server certification of cascade, tenant and migration                       |
 | R06     | Persistent run and explicit-list plans, full boundary digest, checkpoints, paused/unknown/conflict states, one active workspace job, and a durable lease on that job that is reclaimed only when it expired and its holder is provably gone | Dependency/time selection, cluster-wide fencing across hosts, MCP/cloud job surfaces                                              |
 | R07     | Existing taint modules retained, plus recovery provenance: the adapter's read and write sets are recorded in the durable capture, and a recovery plan whose undo order cannot be proven is refused rather than run | Cross-agent dependency closure, and read sets from the adapters that do not report one                             |
@@ -162,7 +162,7 @@ path. The cloud follow-up below supersedes that limitation for managed documents
 
 The isolated verifier now terminates only its own acquired PostgreSQL backend
 sessions at the COMMIT boundary. Before COMMIT, both row mutation and receipt
-roll back; VOID keeps an unknown outcome and refuses automatic redispatch or
+roll back; NOMO keeps an unknown outcome and refuses automatic redispatch or
 recovery without evidence. After COMMIT, a fresh adapter reconciles the durable
 receipt and restores the row. A terminated recovery connection after COMMIT is
 also reconciled without a second recovery receipt.

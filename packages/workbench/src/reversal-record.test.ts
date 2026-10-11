@@ -24,7 +24,7 @@ type Body = Record<string, unknown>;
  * undo has to name the record it inverts.
  */
 async function governedSession(t: test.TestContext) {
-  const directory = await mkdtemp(join(tmpdir(), "void-reversal-record-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-reversal-record-"));
   let turn = 0;
   const fetcher: typeof fetch = async (url, options) => {
     if (String(url).endsWith("/models"))
@@ -63,7 +63,7 @@ async function governedSession(t: test.TestContext) {
       usage: { total_tokens: 7 },
     });
   };
-  let app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  let app = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
   t.after(async () => {
     await app.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -95,7 +95,7 @@ async function governedSession(t: test.TestContext) {
     },
     session,
     restart() {
-      app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+      app = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
       return app;
     },
   };

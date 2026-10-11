@@ -115,47 +115,47 @@ export async function collectMetrics(
     : await scanLedgerFile(options.ledgerPath, options.publicKey);
 
   const samples: MetricSample[] = [
-    { name: "void_ledger_files_total", value: scan.files },
-    { name: "void_ledger_files_verified_total", value: scan.verified },
-    { name: "void_ledger_files_unreadable_total", value: scan.unreadable },
-    { name: "void_ledger_files_rejected_total", value: scan.rejected },
-    { name: "void_ledger_entries_total", value: scan.entries },
-    { name: "void_ledger_bytes_total", value: scan.bytes },
+    { name: "nomo_ledger_files_total", value: scan.files },
+    { name: "nomo_ledger_files_verified_total", value: scan.verified },
+    { name: "nomo_ledger_files_unreadable_total", value: scan.unreadable },
+    { name: "nomo_ledger_files_rejected_total", value: scan.rejected },
+    { name: "nomo_ledger_entries_total", value: scan.entries },
+    { name: "nomo_ledger_bytes_total", value: scan.bytes },
     ...DECISIONS.map((decision) => ({
-      name: "void_ledger_decisions_total",
+      name: "nomo_ledger_decisions_total",
       labels: { decision },
       value: scan.decisions[decision] ?? 0,
     })),
-    { name: "void_ledger_decisions_total", labels: { decision: OTHER_DECISION }, value: scan.decisions[OTHER_DECISION] ?? 0 },
-    { name: "void_ledger_read_max_bytes", value: LEDGER_READ_MAX_BYTES },
-    { name: "void_ledger_read_max_entries", value: LEDGER_READ_MAX_ENTRIES },
-    { name: "void_transition_operation_states_total", value: operationStageNames().length },
+    { name: "nomo_ledger_decisions_total", labels: { decision: OTHER_DECISION }, value: scan.decisions[OTHER_DECISION] ?? 0 },
+    { name: "nomo_ledger_read_max_bytes", value: LEDGER_READ_MAX_BYTES },
+    { name: "nomo_ledger_read_max_entries", value: LEDGER_READ_MAX_ENTRIES },
+    { name: "nomo_transition_operation_states_total", value: operationStageNames().length },
     {
-      name: "void_transition_operation_edges_total",
+      name: "nomo_transition_operation_edges_total",
       value: Object.values(operationStageTable).reduce(
         (total, next) => total + next.length,
         0,
       ),
     },
     {
-      name: "void_transition_operation_terminal_states_total",
+      name: "nomo_transition_operation_terminal_states_total",
       value: terminalOperationStageNames().length,
     },
-    { name: "void_transition_recovery_job_states_total", value: jobStageNames().length },
+    { name: "nomo_transition_recovery_job_states_total", value: jobStageNames().length },
     {
-      name: "void_transition_recovery_job_edges_total",
+      name: "nomo_transition_recovery_job_edges_total",
       value: Object.values(jobStageTable).reduce(
         (total, next) => total + next.length,
         0,
       ),
     },
     {
-      name: "void_transition_recovery_job_terminal_states_total",
+      name: "nomo_transition_recovery_job_terminal_states_total",
       value: terminalJobStageNames().length,
     },
   ];
 
-  // Basenames, not absolute paths. `void metrics` writes this to stdout, and a
+  // Basenames, not absolute paths. `nomo metrics` writes this to stdout, and a
   // report pasted into a tracker or a support thread should not carry the
   // operator's home directory and username.
   const sources = {
@@ -186,18 +186,18 @@ export async function collectMetrics(
     }
     const vault = await readVaultManifest(options.stateDir, workspace);
     samples.push(
-      { name: "void_vault_present", value: vault.store === "absent" ? 0 : 1 },
+      { name: "nomo_vault_present", value: vault.store === "absent" ? 0 : 1 },
       {
-        name: "void_vault_artifacts_total",
+        name: "nomo_vault_artifacts_total",
         labels: { store: vault.store },
         value: vault.artifacts.length,
       },
       {
-        name: "void_vault_bytes_total",
+        name: "nomo_vault_bytes_total",
         value: vault.artifacts.reduce((total, item) => total + item.bytes, 0),
       },
-      { name: "void_vault_unsettled_total", value: vault.unsettled },
-      { name: "void_vault_reservations_total", value: vault.reservations },
+      { name: "nomo_vault_unsettled_total", value: vault.unsettled },
+      { name: "nomo_vault_reservations_total", value: vault.reservations },
     );
     sources.vault = "vault";
   }
@@ -235,9 +235,9 @@ async function journalSamples(
     return {
       signed: false,
       samples: [
-        { name: "void_journal_present", value: 0 },
+        { name: "nomo_journal_present", value: 0 },
         ...operationStageNames().map((stage) => ({
-          name: "void_journal_operation_stage_events_total",
+          name: "nomo_journal_operation_stage_events_total",
           labels: { stage },
           value: 0,
         })),
@@ -275,19 +275,19 @@ async function journalSamples(
   return {
     signed: section.signed,
     samples: [
-      { name: "void_journal_present", value: 1 },
-      { name: "void_journal_events_total", value: section.entries.length },
-      { name: "void_journal_operations_total", value: operations.size },
-      { name: "void_journal_recovery_jobs_total", value: jobs.size },
-      { name: "void_journal_operations_open_total", value: open.length },
-      { name: "void_journal_recovery_jobs_open_total", value: openJobs.length },
+      { name: "nomo_journal_present", value: 1 },
+      { name: "nomo_journal_events_total", value: section.entries.length },
+      { name: "nomo_journal_operations_total", value: operations.size },
+      { name: "nomo_journal_recovery_jobs_total", value: jobs.size },
+      { name: "nomo_journal_operations_open_total", value: open.length },
+      { name: "nomo_journal_recovery_jobs_open_total", value: openJobs.length },
       ...operationStageNames().map((stage) => ({
-        name: "void_journal_operation_stage_events_total",
+        name: "nomo_journal_operation_stage_events_total",
         labels: { stage },
         value: stageEvents[stage] ?? 0,
       })),
       ...jobStageNames().map((stage) => ({
-        name: "void_journal_recovery_job_stage_events_total",
+        name: "nomo_journal_recovery_job_stage_events_total",
         labels: { stage },
         value: stageEvents[stage] ?? 0,
       })),

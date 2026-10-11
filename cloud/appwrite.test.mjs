@@ -249,7 +249,7 @@ test("provisioning reports the console-scoped domain step instead of pretending"
     // with an unrelated body would fail that check for the wrong reason, which
     // is a confusing way to learn that the guard works.
     if (path === `/tablesdb/${config.databaseId}`)
-      return ok({ $id: config.databaseId, name: "VOID Control Plane" });
+      return ok({ $id: config.databaseId, name: "NOMO Control Plane" });
     // `ensure` compares each field it was asked about against the live value,
     // so a fake returning a generic body would be reported as drift on the very
     // first field. It has to answer with the manifest's own values.

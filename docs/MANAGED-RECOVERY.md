@@ -14,15 +14,15 @@ are read from named environment variables, never embedded in the configuration.
   "workspace": "demo",
   "agentId": "opencode-local",
   "stateDir": "./recovery-state",
-  "encryptionKeyEnv": "VOID_RECOVERY_KEY",
+  "encryptionKeyEnv": "NOMO_RECOVERY_KEY",
   "vaultCapacity": {
     "maxArtifactBytes": 67108864,
     "maxTotalBytes": 1073741824
   },
   "policyPath": "./recovery-policy.yml",
   "postgres": {
-    "urlEnv": "VOID_DATABASE_URL",
-    "schema": "void_recovery",
+    "urlEnv": "NOMO_DATABASE_URL",
+    "schema": "nomo_recovery",
     "tables": [
       {
         "table": "public.account",
@@ -34,26 +34,26 @@ are read from named environment variables, never embedded in the configuration.
 }
 ```
 
-Supply a stable random 32-byte base64 `VOID_RECOVERY_KEY` through your private
-secret store and a direct PostgreSQL connection in `VOID_DATABASE_URL`. Retain
+Supply a stable random 32-byte base64 `NOMO_RECOVERY_KEY` through your private
+secret store and a direct PostgreSQL connection in `NOMO_DATABASE_URL`. Retain
 that key across restarts. The executor creates persistent local signing keys in
 `stateDir/keys`; back them up with the vault and journal. Do not commit any keys,
 connection strings, snapshots or state directories.
 
 Explicit installation adds version 2 metadata tables and a revision trigger
 to configured tables. Installation records
-`void_recovery.meta.version = 2` and reports installed tables plus that
+`nomo_recovery.meta.version = 2` and reports installed tables plus that
 version:
 
 ```sh
-node packages/cli/bin/void.mjs recovery install --config recovery.json
+node packages/cli/bin/nomo.mjs recovery install --config recovery.json
 ```
 
 Use the operator role intended for installation. Existing version 1 metadata
 must be migrated explicitly:
 
 ```sh
-node packages/cli/bin/void.mjs recovery migrate --config recovery.json
+node packages/cli/bin/nomo.mjs recovery migrate --config recovery.json
 ```
 
 Normal tool calls never change metadata. Legacy schemas without version
@@ -104,18 +104,18 @@ An execution input has stable identities and structured arguments:
 }
 ```
 
-1. `void recovery inspect --config recovery.json --input request.json` produces
+1. `nomo recovery inspect --config recovery.json --input request.json` produces
    the exact preflight and approval digest. Review the scope and target.
-2. `void recovery execute --config recovery.json --input request.json --approve DIGEST`
+2. `nomo recovery execute --config recovery.json --input request.json --approve DIGEST`
    applies only the reviewed request and state. A changed revision refuses it.
-3. `void recovery plan --config recovery.json --input request.json` prints the
+3. `nomo recovery plan --config recovery.json --input request.json` prints the
    recovery plan. Save that JSON as `plan.json` and review it.
-4. `void recovery apply --config recovery.json --input plan.json --approve PLAN_DIGEST`
+4. `nomo recovery apply --config recovery.json --input plan.json --approve PLAN_DIGEST`
    restores the captured row if it still matches the operation's after state.
 5. For unknown results, use `reconcile` for execution or `reconcile-recovery`
    for Undo, with the original input file. Neither repeats the mutation.
 
-Use `node packages/cli/bin/void.mjs` wherever the `void` binary is not installed.
+Use `node packages/cli/bin/nomo.mjs` wherever the `nomo` binary is not installed.
 Never generate a new operation ID merely because a response was lost.
 
 For several operations, write a job request with a stable `jobId` and either
@@ -123,9 +123,9 @@ For several operations, write a job request with a stable `jobId` and either
 `{"kind":"operations","operationIds":["op-1","op-2"]}` selection. Then use:
 
 ```sh
-void recovery plan-job --config recovery.json --input job-request.json
-void recovery apply-job --config recovery.json --input job-id.json --approve PLAN_DIGEST
-void recovery status-job --config recovery.json --input job-id.json
+nomo recovery plan-job --config recovery.json --input job-request.json
+nomo recovery apply-job --config recovery.json --input job-id.json --approve PLAN_DIGEST
+nomo recovery status-job --config recovery.json --input job-id.json
 ```
 
 `job-id.json` contains only `{"workspace":"demo","jobId":"job-1"}`. Apply loads
@@ -140,14 +140,14 @@ new job ID and plan.
 
 ## MCP connection
 
-Run `void recovery serve --config recovery.json` as a local stdio MCP server.
+Run `nomo recovery serve --config recovery.json` as a local stdio MCP server.
 Use an absolute config path in the host launch command. The host must pass the
 credential environment variables to the child process. The model never receives
 them as tool arguments.
 
-The server implements eight tools: `void_execute`, `void_recovery_plan`,
-`void_recovery_apply`, `void_reconcile`, `void_recovery_reconcile`,
-`void_recovery_plan_job`, `void_recovery_status_job`, and `void_recovery_apply_job`.
+The server implements eight tools: `nomo_execute`, `nomo_recovery_plan`,
+`nomo_recovery_apply`, `nomo_reconcile`, `nomo_recovery_reconcile`,
+`nomo_recovery_plan_job`, `nomo_recovery_status_job`, and `nomo_recovery_apply_job`.
 A host can authorize a smaller allowlist. The verified local Prime Agent setup
 authorizes only the first five, not the job tools. See
 [the integration record](UPGRADE-VERIFICATION.md) for its scope and evidence.
@@ -164,17 +164,17 @@ rules:
       connector: postgres
       tool:
         [
-          void_execute,
-          void_recovery_apply,
-          void_reconcile,
-          void_recovery_reconcile,
+          nomo_execute,
+          nomo_recovery_apply,
+          nomo_reconcile,
+          nomo_recovery_reconcile,
         ]
       class: r1
       blast_radius: { lt: 2 }
     decision: allow
   - match:
       workspace: demo
-      tool: void_recovery_plan
+      tool: nomo_recovery_plan
     decision: allow
   - match: {}
     decision: deny
@@ -210,7 +210,7 @@ public HTTP endpoint for claude.ai or the Vercel chat application.
   Free space without deleting recovery artifacts, then reconcile.
 
 Run the offline suite with `pnpm test:reverse`. The real database verification
-script requires `VOID_RECOVERY_DATABASE_TEST=1`, a direct `DATABASE_URL` targeting
+script requires `NOMO_RECOVERY_DATABASE_TEST=1`, a direct `DATABASE_URL` targeting
 `void_gui_upgrade_preview`, and creates/removes only its uniquely named schemas.
 It deliberately terminates only database sessions acquired by the fixture,
 before/after execution COMMIT and after recovery COMMIT. It also exercises a real

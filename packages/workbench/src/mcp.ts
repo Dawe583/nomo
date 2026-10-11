@@ -198,7 +198,7 @@ export async function catalog(config: McpConfig) {
   const init = await rpc(config, "initialize", {
     protocolVersion: MCP_PROTOCOL_VERSION,
     capabilities: {},
-    clientInfo: { name: "void-cloud", version: "0.1.0" },
+    clientInfo: { name: "nomo-cloud", version: "0.1.0" },
   });
   await rpc(config, "notifications/initialized", {}, init.sessionId);
   const listed = await rpc(config, "tools/list", {}, init.sessionId);

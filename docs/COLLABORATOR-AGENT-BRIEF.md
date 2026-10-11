@@ -1,4 +1,4 @@
-# Collaborator agent brief — VOID
+# Collaborator agent brief — NOMO
 
 You are a second coding agent working **alongside another agent** on this
 repository. You have no shared conversation with them. Everything you need is
@@ -11,7 +11,7 @@ project conventions and hard constraints that override anything you infer.
 
 ## 1. The repository
 
-- Path: `/Users/dawe/Developer/Claude-Projects/VOID`
+- Path: `/Users/dawe/Developer/Claude-Projects/NOMO`
 - Remote: `https://github.com/Dawe583/void.git` (`sitespot/void`)
 - TypeScript monorepo, `pnpm` workspaces, `node --test`.
 - The site deploys to Vercel **on push to `main`**. Do not also run
@@ -53,7 +53,7 @@ git push -u origin <short-slug>
 
 ## 4. The active work item: vendor and rebrand two upstream projects
 
-Two repositories are to be copied into VOID and rebranded:
+Two repositories are to be copied into NOMO and rebranded:
 
 - `https://github.com/can1357/oh-my-pi`
 - `https://github.com/PrimeIntellect-ai/prime-agent`
@@ -106,7 +106,7 @@ merge it or ask — do not drop it.
 
 ```bash
 pnpm install
-pnpm --filter @void/workbench run typecheck
+pnpm --filter @nomo/workbench run typecheck
 cd packages/workbench && node --test src/*.test.ts
 ```
 
@@ -125,7 +125,7 @@ nothing — check that.
 - **Never regenerate the Prime Agent retained recovery key** and never widen
   its filesystem scope. That MCP is confined to
   `~/.local/share/void-prime-dogfood/project` with a five-tool allowlist.
-- Built-in TUI text stays **English**. `VOID_TUI_COLOR=0` is the explicit
+- Built-in TUI text stays **English**. `NOMO_TUI_COLOR=0` is the explicit
   monochrome option; the full theme is the default even under `NO_COLOR=1`.
 - Default provider is NVIDIA, model `z-ai/glm-5.3-flash`, endpoint
   `https://integrate.api.nvidia.com/v1`, key only from `NVIDIA_API_KEY` or

@@ -17,7 +17,7 @@ async function setup(t: import("node:test").TestContext) {
   let beforeQuery: ((sql: string) => Promise<void>) | undefined;
   const options: ManagedPostgresOptions = {
     workspace: "test",
-    schema: "void_recovery",
+    schema: "nomo_recovery",
     tables: [
       { table: "public.account", primaryKey: ["id"], columns: ["balance"] },
     ],
@@ -43,26 +43,26 @@ async function setup(t: import("node:test").TestContext) {
 async function receipts(db: PGlite) {
   const operations = (
     await db
-      .query("SELECT * FROM void_recovery.operations ORDER BY id")
+      .query("SELECT * FROM nomo_recovery.operations ORDER BY id")
       .catch(() => ({ rows: [] }))
   ).rows;
   const recoveries = (
     await db
-      .query("SELECT * FROM void_recovery.recoveries ORDER BY id")
+      .query("SELECT * FROM nomo_recovery.recoveries ORDER BY id")
       .catch(() => ({ rows: [] }))
   ).rows;
   return { operations, recoveries };
 }
 
 async function seedV1(db: PGlite) {
-  await db.exec(`CREATE SCHEMA void_recovery;
-    CREATE TABLE void_recovery.meta(key text PRIMARY KEY, version integer NOT NULL);
-    CREATE TABLE void_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL);
-    CREATE TABLE void_recovery.operations(id text PRIMARY KEY, request_digest text NOT NULL, capture jsonb NOT NULL, outcome jsonb NOT NULL);
-    CREATE TABLE void_recovery.recoveries(id text PRIMARY KEY, input_digest text NOT NULL, outcome jsonb NOT NULL);
-    INSERT INTO void_recovery.meta VALUES('version',1);
-    INSERT INTO void_recovery.operations VALUES('op','digest','{}','{}');
-    INSERT INTO void_recovery.recoveries VALUES('recovery','digest','{}')`);
+  await db.exec(`CREATE SCHEMA nomo_recovery;
+    CREATE TABLE nomo_recovery.meta(key text PRIMARY KEY, version integer NOT NULL);
+    CREATE TABLE nomo_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL);
+    CREATE TABLE nomo_recovery.operations(id text PRIMARY KEY, request_digest text NOT NULL, capture jsonb NOT NULL, outcome jsonb NOT NULL);
+    CREATE TABLE nomo_recovery.recoveries(id text PRIMARY KEY, input_digest text NOT NULL, outcome jsonb NOT NULL);
+    INSERT INTO nomo_recovery.meta VALUES('version',1);
+    INSERT INTO nomo_recovery.operations VALUES('op','digest','{}','{}');
+    INSERT INTO nomo_recovery.recoveries VALUES('recovery','digest','{}')`);
 }
 
 function transactionStatements(statements: readonly string[]) {
@@ -75,8 +75,8 @@ test("v2 reinstall preserves both receipt tables", async (t) => {
   const f = await setup(t);
   await installManagedPostgres(f.options);
   await f.db
-    .exec(`INSERT INTO void_recovery.operations(id,request_digest,capture,outcome) VALUES('op','digest','{}','{}');
-    INSERT INTO void_recovery.recoveries(id,input_digest,outcome) VALUES('recovery','digest','{}')`);
+    .exec(`INSERT INTO nomo_recovery.operations(id,request_digest,capture,outcome) VALUES('op','digest','{}','{}');
+    INSERT INTO nomo_recovery.recoveries(id,input_digest,outcome) VALUES('recovery','digest','{}')`);
   const before = await receipts(f.db);
   await installManagedPostgres(f.options);
   assert.deepEqual(await receipts(f.db), before);
@@ -85,17 +85,17 @@ test("v2 reinstall preserves both receipt tables", async (t) => {
 for (const [name, ddl, error] of [
   [
     "legacy partial",
-    "CREATE SCHEMA void_recovery; CREATE TABLE void_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL)",
+    "CREATE SCHEMA nomo_recovery; CREATE TABLE nomo_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL)",
     /legacy|version/i,
   ],
   [
     "unknown version",
-    "CREATE SCHEMA void_recovery; CREATE TABLE void_recovery.meta(key text PRIMARY KEY, version integer NOT NULL); INSERT INTO void_recovery.meta VALUES('version',9)",
+    "CREATE SCHEMA nomo_recovery; CREATE TABLE nomo_recovery.meta(key text PRIMARY KEY, version integer NOT NULL); INSERT INTO nomo_recovery.meta VALUES('version',9)",
     /version 9|unsupported/i,
   ],
   [
     "malformed v2",
-    `CREATE SCHEMA void_recovery; CREATE TABLE void_recovery.meta(key text PRIMARY KEY, version integer NOT NULL); INSERT INTO void_recovery.meta VALUES('version',2); CREATE TABLE void_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL); CREATE TABLE void_recovery.operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL,format_version integer); CREATE TABLE void_recovery.recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2)`,
+    `CREATE SCHEMA nomo_recovery; CREATE TABLE nomo_recovery.meta(key text PRIMARY KEY, version integer NOT NULL); INSERT INTO nomo_recovery.meta VALUES('version',2); CREATE TABLE nomo_recovery.revisions(resource text PRIMARY KEY, revision bigint NOT NULL); CREATE TABLE nomo_recovery.operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL,format_version integer); CREATE TABLE nomo_recovery.recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2)`,
     /malformed|structure/i,
   ],
 ] as const) {
@@ -117,7 +117,7 @@ test("install rejects metadata version changed after preflight and rolls back on
     if (!changed && sql.trim() === "BEGIN") {
       changed = true;
       await f.db.exec(
-        "UPDATE void_recovery.meta SET version=9 WHERE key='version'",
+        "UPDATE nomo_recovery.meta SET version=9 WHERE key='version'",
       );
     }
   });
@@ -137,7 +137,7 @@ test("install rejects exact layout replacement between inspection and lock", asy
     if (!replaced && sql.trim() === "BEGIN") {
       replaced = true;
       await f.db.exec(
-        `DROP SCHEMA void_recovery CASCADE; CREATE SCHEMA void_recovery; CREATE TABLE void_recovery.meta(key text PRIMARY KEY,version integer NOT NULL); CREATE TABLE void_recovery.revisions(resource text PRIMARY KEY,revision bigint NOT NULL); CREATE TABLE void_recovery.operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2); CREATE TABLE void_recovery.recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2); INSERT INTO void_recovery.meta VALUES('version',2)`,
+        `DROP SCHEMA nomo_recovery CASCADE; CREATE SCHEMA nomo_recovery; CREATE TABLE nomo_recovery.meta(key text PRIMARY KEY,version integer NOT NULL); CREATE TABLE nomo_recovery.revisions(resource text PRIMARY KEY,revision bigint NOT NULL); CREATE TABLE nomo_recovery.operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2); CREATE TABLE nomo_recovery.recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2); INSERT INTO nomo_recovery.meta VALUES('version',2)`,
       );
     }
   });
@@ -156,7 +156,7 @@ test("v1 migration preserves receipts and writes v2 format columns", async (t) =
   assert.deepEqual(
     (
       await f.db.query(
-        "SELECT id,request_digest,capture,outcome FROM void_recovery.operations",
+        "SELECT id,request_digest,capture,outcome FROM nomo_recovery.operations",
       )
     ).rows,
     before.operations,
@@ -164,28 +164,28 @@ test("v1 migration preserves receipts and writes v2 format columns", async (t) =
   assert.deepEqual(
     (
       await f.db.query(
-        "SELECT id,input_digest,outcome FROM void_recovery.recoveries",
+        "SELECT id,input_digest,outcome FROM nomo_recovery.recoveries",
       )
     ).rows,
     before.recoveries,
   );
   assert.deepEqual(
-    (await f.db.query("SELECT format_version FROM void_recovery.operations"))
+    (await f.db.query("SELECT format_version FROM nomo_recovery.operations"))
       .rows,
     [{ format_version: 1 }],
   );
   assert.deepEqual(
-    (await f.db.query("SELECT format_version FROM void_recovery.recoveries"))
+    (await f.db.query("SELECT format_version FROM nomo_recovery.recoveries"))
       .rows,
     [{ format_version: 1 }],
   );
   await f.db
-    .exec(`INSERT INTO void_recovery.operations(id,request_digest,capture,outcome) VALUES('new','digest','{}','{}');
-    INSERT INTO void_recovery.recoveries(id,input_digest,outcome) VALUES('new','digest','{}')`);
+    .exec(`INSERT INTO nomo_recovery.operations(id,request_digest,capture,outcome) VALUES('new','digest','{}','{}');
+    INSERT INTO nomo_recovery.recoveries(id,input_digest,outcome) VALUES('new','digest','{}')`);
   assert.deepEqual(
     (
       await f.db.query(
-        "SELECT format_version FROM void_recovery.operations WHERE id='new'",
+        "SELECT format_version FROM nomo_recovery.operations WHERE id='new'",
       )
     ).rows,
     [{ format_version: 2 }],
@@ -193,7 +193,7 @@ test("v1 migration preserves receipts and writes v2 format columns", async (t) =
   assert.deepEqual(
     (
       await f.db.query(
-        "SELECT format_version FROM void_recovery.recoveries WHERE id='new'",
+        "SELECT format_version FROM nomo_recovery.recoveries WHERE id='new'",
       )
     ).rows,
     [{ format_version: 2 }],
@@ -209,7 +209,7 @@ test("migration rejects exact layout replacement between inspection and lock", a
     if (!replaced && sql.trim() === "BEGIN") {
       replaced = true;
       await f.db.exec(
-        `DROP SCHEMA void_recovery CASCADE; CREATE SCHEMA void_recovery; CREATE TABLE void_recovery.meta(key text PRIMARY KEY,version integer NOT NULL); CREATE TABLE void_recovery.revisions(resource text PRIMARY KEY,revision bigint NOT NULL); CREATE TABLE void_recovery.operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL); CREATE TABLE void_recovery.recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL); INSERT INTO void_recovery.meta VALUES('version',1)`,
+        `DROP SCHEMA nomo_recovery CASCADE; CREATE SCHEMA nomo_recovery; CREATE TABLE nomo_recovery.meta(key text PRIMARY KEY,version integer NOT NULL); CREATE TABLE nomo_recovery.revisions(resource text PRIMARY KEY,revision bigint NOT NULL); CREATE TABLE nomo_recovery.operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL); CREATE TABLE nomo_recovery.recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL); INSERT INTO nomo_recovery.meta VALUES('version',1)`,
       );
     }
   });
@@ -224,11 +224,11 @@ test("fresh install refuses a concurrent exact metadata layout", async (t) => {
     if (!raced && sql.includes("CREATE TABLE") && sql.includes(".meta")) {
       raced = true;
       await f.db
-        .exec(`CREATE TABLE void_recovery.meta(key text PRIMARY KEY,version integer NOT NULL);
-        CREATE TABLE void_recovery.revisions(resource text PRIMARY KEY,revision bigint NOT NULL);
-        CREATE TABLE void_recovery.operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2);
-        CREATE TABLE void_recovery.recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2);
-        INSERT INTO void_recovery.meta VALUES('version',2)`);
+        .exec(`CREATE TABLE nomo_recovery.meta(key text PRIMARY KEY,version integer NOT NULL);
+        CREATE TABLE nomo_recovery.revisions(resource text PRIMARY KEY,revision bigint NOT NULL);
+        CREATE TABLE nomo_recovery.operations(id text PRIMARY KEY,request_digest text NOT NULL,capture jsonb NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2);
+        CREATE TABLE nomo_recovery.recoveries(id text PRIMARY KEY,input_digest text NOT NULL,outcome jsonb NOT NULL,format_version integer NOT NULL DEFAULT 2);
+        INSERT INTO nomo_recovery.meta VALUES('version',2)`);
     }
   });
   await assert.rejects(
@@ -241,35 +241,35 @@ test("fresh install refuses a concurrent exact metadata layout", async (t) => {
 for (const [name, mutation] of [
   [
     "extra relation",
-    "CREATE TABLE void_recovery.unowned(id integer PRIMARY KEY)",
+    "CREATE TABLE nomo_recovery.unowned(id integer PRIMARY KEY)",
   ],
   [
     "extra index",
-    "CREATE INDEX operations_digest_idx ON void_recovery.operations(request_digest)",
+    "CREATE INDEX operations_digest_idx ON nomo_recovery.operations(request_digest)",
   ],
   [
     "extra constraint",
-    "ALTER TABLE void_recovery.operations ADD CONSTRAINT digest_not_empty CHECK(request_digest <> '')",
+    "ALTER TABLE nomo_recovery.operations ADD CONSTRAINT digest_not_empty CHECK(request_digest <> '')",
   ],
   [
     "metadata trigger",
-    `CREATE FUNCTION void_recovery.reject_write() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NEW; END'; CREATE TRIGGER reject_write BEFORE INSERT ON void_recovery.operations FOR EACH ROW EXECUTE FUNCTION void_recovery.reject_write()`,
+    `CREATE FUNCTION nomo_recovery.reject_write() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN NEW; END'; CREATE TRIGGER reject_write BEFORE INSERT ON nomo_recovery.operations FOR EACH ROW EXECUTE FUNCTION nomo_recovery.reject_write()`,
   ],
   [
     "row level security",
-    "ALTER TABLE void_recovery.operations ENABLE ROW LEVEL SECURITY",
+    "ALTER TABLE nomo_recovery.operations ENABLE ROW LEVEL SECURITY",
   ],
   [
     "rewrite rule",
-    "CREATE RULE suppress_receipt AS ON INSERT TO void_recovery.operations DO INSTEAD NOTHING",
+    "CREATE RULE suppress_receipt AS ON INSERT TO nomo_recovery.operations DO INSTEAD NOTHING",
   ],
   [
     "poisoned format default",
-    "ALTER TABLE void_recovery.operations ALTER COLUMN format_version SET DEFAULT (2 + floor(random())::integer)",
+    "ALTER TABLE nomo_recovery.operations ALTER COLUMN format_version SET DEFAULT (2 + floor(random())::integer)",
   ],
   [
     "unexpected capture default",
-    "ALTER TABLE void_recovery.operations ALTER COLUMN capture SET DEFAULT '{}'::jsonb",
+    "ALTER TABLE nomo_recovery.operations ALTER COLUMN capture SET DEFAULT '{}'::jsonb",
   ],
 ] as const) {
   test(`install refuses ${name} on metadata`, async (t) => {

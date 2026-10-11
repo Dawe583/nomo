@@ -41,7 +41,7 @@ function advertisedWriteTool(init: unknown): string {
 /// in-memory snapshot. Calling `commitWorkspace` directly, as the test above
 /// does, proves the chain signs but bypasses everything that could drop it.
 test("a provider-driven tool call lands in the attested chain", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-attest-dispatch-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-attest-dispatch-"));
   let turn = 0;
   const dispatchFetcher = async (url: unknown, init?: unknown) => {
     if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
@@ -77,7 +77,7 @@ test("a provider-driven tool call lands in the attested chain", async (t) => {
         "data: [DONE]\r\n\r\n",
     );
   };
-  const app = new Workbench({ VOID_DATA_DIR: directory }, dispatchFetcher);
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, dispatchFetcher);
   t.after(async () => {
     await app.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -130,7 +130,7 @@ const internalsOf = (app: Workbench) =>
  *
  * The case that does is a workbench that holds evidence it cannot sign with:
  * the chain verifies against a key pinned out of band through
- * `VOID_VERIFY_KEY`, while the private key directory is not on disk. There the
+ * `NOMO_VERIFY_KEY`, while the private key directory is not on disk. There the
  * old line called `devKeyProvider`, which creates a key when none exists — it
  * minted signing capability on the way to answering a read question, and
  * attested with a key that was not the pinned one. The invariant is simply that
@@ -140,10 +140,10 @@ const internalsOf = (app: Workbench) =>
  * pinned key must be present when the second one is built, not assigned later.
  */
 test("attest refuses to mint a key for a workbench that cannot sign", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-attest-read-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-attest-read-"));
 
   // 1. Sign some evidence with the default dev key, so a key directory exists.
-  const signer = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  const signer = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
   await signer.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const first = await signer.start("Write", "fixture", undefined, undefined, undefined);
   await signer.settled();
@@ -179,7 +179,7 @@ test("attest refuses to mint a key for a workbench that cannot sign", async (t) 
   await rm(keys, { recursive: true, force: true });
 
   // 3. A fresh workbench over the same data: same workspace, no keys on disk.
-  const app = new Workbench({ VOID_DATA_DIR: directory, VOID_VERIFY_KEY: pinned }, fetcher);
+  const app = new Workbench({ NOMO_DATA_DIR: directory, NOMO_VERIFY_KEY: pinned }, fetcher);
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   // Shut down before the directory goes: `close()` persists, and after-hooks
   // run in registration order, so the removal cannot be registered first.

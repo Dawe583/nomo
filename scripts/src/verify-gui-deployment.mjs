@@ -13,14 +13,14 @@ if (
   target.protocol !== "https:" ||
   !/^void-[a-z0-9-]+\.vercel\.app$/.test(target.hostname)
 )
-  throw new Error("Use an exact VOID Vercel deployment URL.");
+  throw new Error("Use an exact NOMO Vercel deployment URL.");
 const secrets = JSON.parse(await readFile(process.argv[3], "utf8"));
-assert.ok(secrets.VOID_CONTROL_TOKEN);
-const directory = await mkdtemp(join(tmpdir(), "void-gui-smoke-"));
+assert.ok(secrets.NOMO_CONTROL_TOKEN);
+const directory = await mkdtemp(join(tmpdir(), "nomo-gui-smoke-"));
 const headers = join(directory, "headers");
 await writeFile(
   headers,
-  `Authorization: Bearer ${secrets.VOID_CONTROL_TOKEN}\nContent-Type: application/json\n`,
+  `Authorization: Bearer ${secrets.NOMO_CONTROL_TOKEN}\nContent-Type: application/json\n`,
   { mode: 0o600 },
 );
 function request(path, method = "GET", body) {
@@ -103,7 +103,7 @@ try {
     const key = randomUUID(),
       path = saved?.path ?? `gui-smoke-${key}.md`;
     const body = {
-      prompt: `Use the VOID document write tool to create ${path} with exactly this content: # GUI smoke\n\nVerified live model and tool. Then reply briefly. Do not call any other tool.`,
+      prompt: `Use the NOMO document write tool to create ${path} with exactly this content: # GUI smoke\n\nVerified live model and tool. Then reply briefly. Do not call any other tool.`,
       idempotencyKey: key,
     };
     const started = saved ? undefined : request("/api/sessions", "POST", body);

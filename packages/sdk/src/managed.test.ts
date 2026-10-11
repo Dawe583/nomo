@@ -14,7 +14,7 @@ import {
 } from "../../runtime/src/index.ts";
 
 test("managed SDK uses durable runtime, isolates workspace, and refuses dispatch if capture fails", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-sdk-recovery-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-recovery-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} }),
     journal = localOperationJournal(join(dir, "journal"), signer),

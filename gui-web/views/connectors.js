@@ -1,5 +1,5 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.connectors = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.connectors = function (root) {
   var wrap = document.createElement("div");
   wrap.className = "section";
   wrap.innerHTML = "<h2>Connectors</h2><p class='muted'>One connector per tool surface. Each proves its own undo. A connector never imports another connector.</p>" +
@@ -23,8 +23,8 @@ window.VOID_VIEWS.connectors = function (root) {
     "<tr><td class='mono'>Temp dev tier file store</td><td>Session only</td></tr></table>" +
     "<p>Field level redaction before bytes leave the process:</p>" +
     "<ul><li class='mono'>tokens</li><li class='mono'>secrets</li><li class='mono'>PII columns</li></ul>" +
-    "<p>The bucket belongs to the customer, never to VOID. Not negotiable, even for the first user.</p>" +
+    "<p>The bucket belongs to the customer, never to NOMO. Not negotiable, even for the first user.</p>" +
     "<p class='muted small'>GDPR: a snapshot of personal data is processing, and a deletion request has to reach it.</p>" +
-    "<p class='muted small'>Probing uses the upstream server read tools. VOID holds no standing credentials.</p></div>";
+    "<p class='muted small'>Probing uses the upstream server read tools. NOMO holds no standing credentials.</p></div>";
   root.appendChild(wrap);
 };

@@ -62,8 +62,8 @@ async function fixture(
   fetcher: typeof fetch,
   release?: () => void,
 ) {
-  const root = await mkdtemp(join(tmpdir(), "void-harness-"));
-  let app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  const root = await mkdtemp(join(tmpdir(), "nomo-harness-"));
+  let app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   t.after(async () => {
     // Unblock any transport parked mid-request before shutting down, or
@@ -78,7 +78,7 @@ async function fixture(
     },
     restart() {
       app.close();
-      app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+      app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
       return app;
     },
   };

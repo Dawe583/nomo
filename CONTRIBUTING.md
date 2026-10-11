@@ -1,6 +1,6 @@
-# Contributing to VOID
+# Contributing to NOMO
 
-VOID is one maintainer's project. This file says what actually helps, so that a
+NOMO is one maintainer's project. This file says what actually helps, so that a
 pull request is not spent discovering the ground rules by being declined.
 
 ## Sign off, do not sign a CLA
@@ -36,7 +36,7 @@ discussion. Two things make an entry good:
 
 Registry contributions are credited by name in the entry.
 
-**The standalone verifier is frozen on purpose.** `@void/verifier` has zero
+**The standalone verifier is frozen on purpose.** `@nomo/verifier` has zero
 dependencies and will not acquire a build step, because a verifier that pulls in
 a dependency tree inherits that tree's supply chain, and the supply chain is what
 an audit is supposed to be independent of. A bug report is very welcome. A
@@ -92,12 +92,12 @@ written after measuring the tree rather than from memory.
 ## No support obligation
 
 There is none on the open packages, and this is a statement of fact rather than a
-disclaimer. VOID is maintained by one person. Issues are read; a response time is
+disclaimer. NOMO is maintained by one person. Issues are read; a response time is
 not promised, and a bug is not guaranteed to be fixed. If you need one, that is
 what the paid tier is, and you should judge it on whether the paid features are
 worth paying for rather than on whether the open core will answer your issue.
 
-If you are reading this to decide whether to depend on VOID in something you
+If you are reading this to decide whether to depend on NOMO in something you
 maintain: the ledger is tamper **evident**, not tamper proof. A database
 superuser bypasses every grant and trigger, which is exactly why entries are
 signed and why the verifier is independent.

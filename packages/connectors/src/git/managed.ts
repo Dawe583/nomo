@@ -362,14 +362,14 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     const absolute = pathTarget(path);
     if (!same(worktree(path), expected)) throw new Error("Git worktree conflict.");
     if (!wanted.present) { if (expected.present) { unlinkSync(absolute); syncParent(absolute); } return; }
-    const temporary = join(dirname(absolute), `.void-git-${randomUUID()}`), fd = openSync(temporary, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600);
+    const temporary = join(dirname(absolute), `.nomo-git-${randomUUID()}`), fd = openSync(temporary, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600);
     try { writeFileSync(fd, Buffer.from(wanted.bytes, "base64")); fchmodSync(fd, wanted.mode); fsyncSync(fd); } finally { closeSync(fd); }
     try { const current = worktree(path); if (expected.present ? !same(current, expected) : current.present) throw new Error("Git worktree conflict."); renameSync(temporary, absolute); syncParent(absolute); } finally { try { unlinkSync(temporary); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; } }
   }
   function setIndex(path: string, entry: IndexEntry, expected: State, writeObject?: Worktree) {
-    const lockPath = `${indexPath}.lock`, privatePath = `${indexPath}.void-${randomUUID()}`;
+    const lockPath = `${indexPath}.lock`, privatePath = `${indexPath}.nomo-${randomUUID()}`;
     let lock: number | undefined, ownedLock = false, installed = false;
-    const token = Buffer.from(`void-git-lock:${randomUUID()}`);
+    const token = Buffer.from(`nomo-git-lock:${randomUUID()}`);
     let lockInode: bigint | undefined;
     const original = readFileSync(indexPath);
     if (original.length > 16 * 1024 * 1024) throw new Error("Git index exceeds the managed limit.");

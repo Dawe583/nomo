@@ -10,10 +10,10 @@ import { sealSession } from "./account.mjs";
 import { append, database, event, read, transaction, write } from "./store.mjs";
 import { OPERATOR_OWNER } from "./owner.mjs";
 
-if (process.env.VOID_GUI_DATABASE_TEST === "1") validateCloudTestEnvironment(process.env);
+if (process.env.NOMO_GUI_DATABASE_TEST === "1") validateCloudTestEnvironment(process.env);
 
 test("two verified accounts cannot read or change each other's cloud rows", {
-  skip: process.env.VOID_GUI_DATABASE_TEST !== "1",
+  skip: process.env.NOMO_GUI_DATABASE_TEST !== "1",
 }, async (t) => {
   const ownerA = randomUUID(), ownerB = randomUUID();
   const owners = [ownerA, ownerB];
@@ -22,8 +22,8 @@ test("two verified accounts cannot read or change each other's cloud rows", {
   const secret = randomBytes(32).toString("hex");
   process.env.SUPABASE_URL = "https://provider.invalid";
   process.env.SUPABASE_ANON_KEY = "disposable-test-key";
-  process.env.VOID_ACCOUNT_SEAL_KEY = secret;
-  assert.notEqual(process.env.VOID_ACCOUNT_SIGNUP, "1");
+  process.env.NOMO_ACCOUNT_SEAL_KEY = secret;
+  assert.notEqual(process.env.NOMO_ACCOUNT_SIGNUP, "1");
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (input, init) => {
     if (String(input) === "https://provider.invalid/auth/v1/user") {
@@ -57,7 +57,7 @@ test("two verified accounts cannot read or change each other's cloud rows", {
       method,
       headers: {
         cookie: owner === OPERATOR_OWNER ? "" : cookie(owner),
-        ...(owner === OPERATOR_OWNER ? { authorization: `Bearer ${process.env.VOID_CONTROL_TOKEN}` } : {}),
+        ...(owner === OPERATOR_OWNER ? { authorization: `Bearer ${process.env.NOMO_CONTROL_TOKEN}` } : {}),
         "content-type": "application/json",
       },
       body: body === undefined ? undefined : JSON.stringify(body),

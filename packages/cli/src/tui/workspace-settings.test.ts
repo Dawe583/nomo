@@ -27,8 +27,8 @@ const assistantFetcher = async (url: unknown) =>
 async function settings(t: {
   after(fn: () => Promise<void>): void;
 }): Promise<{ ui: WorkspaceTui; app: Workbench }> {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-settings-"));
-  const env = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-settings-"));
+  const env = { NOMO_DATA_DIR: root };
   const app = new Workbench(env, assistantFetcher);
   await app.configure({
     baseUrl: "https://fixture.test/v1",

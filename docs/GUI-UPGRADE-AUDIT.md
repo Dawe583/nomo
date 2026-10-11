@@ -18,11 +18,11 @@ Datum: 2026-09-11. Lokální commit: `e301162`. Rozsah: všechny čtyři webové
 - Prohlédnuty `vercel.json`, `nitro.config.ts`, `scripts/src/build-web.mjs`, `apps/desktop/runtime.mjs`, `apps/desktop/scripts/prepare.mjs` a desktopová vstupní stránka.
 - Použit existující graphify graf. Je z 6. září a nepopisuje spolehlivě nejnovější webový workbench. Sloužil k orientaci; níže uvedené nálezy vycházejí z aktuálního kódu a prohlížeče.
 - V prohlížeči spuštěn izolovaný `scripts/src/preview-workspace.mjs`. QA model byl výslovně označený fixture, nikoli TokenRouter.
-- Na desktopu 1440 × 900 ověřeno odeslání zprávy, dokončená odpověď a reálné vytvoření `plan.md` přes VOID document tool.
+- Na desktopu 1440 × 900 ověřeno odeslání zprávy, dokončená odpověď a reálné vytvoření `plan.md` přes NOMO document tool.
 - Na mobilním viewportu 390 × 844 ověřen chat, dokumenty, náhled Undo, Feed a prázdná stránka Approvals. Ledger ověřen také na desktopu.
 - Zobrazená změna měla podepsaný ledger; UI hlásilo `chain ok, signatures checked: 1 records checked`.
 - Produkční vstupní stránka `https://void-tui.vercel.app` je dostupná a požaduje workspace token. Produkční přihlášené toky nebyly v tomto auditu ověřeny.
-- Vercel MCP: projekt `void-tui`, Node `24.x`, framework `null`; poslední produkční deployment `dpl_BBh53V4VMvZvMKAJbz7BCxkScseV` měl `readyState: READY`. To samo nepotvrzuje funkčnost autentizovaných API.
+- Vercel MCP: projekt `nomo-tui`, Node `24.x`, framework `null`; poslední produkční deployment `dpl_BBh53V4VMvZvMKAJbz7BCxkScseV` měl `readyState: READY`. To samo nepotvrzuje funkčnost autentizovaných API.
 - Lokální OpenCode konfigurace obsahuje TokenRouter, endpoint `https://api.tokenrouter.com/v1` a model `z-ai/glm-5.3-free` s názvem `GLM 5.3 Free`. Dostupnost generování u providera se v tomto auditu netestovala. Tajné klíče nebyly vypsány ani přeneseny do cloudu.
 
 ## Nálezy a jejich důsledky

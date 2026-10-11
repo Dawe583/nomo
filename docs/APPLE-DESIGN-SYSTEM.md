@@ -1,4 +1,4 @@
-# Apple-aligned design system for VOID
+# Apple-aligned design system for NOMO
 
 Status: contract, 2026-09-28. Approved direction, decided by the user on
 2026-09-28: the visual language of every Apple-platform surface and of the web
@@ -14,7 +14,7 @@ document defines the appearance and those two define the order.
 
 | Surface | In scope | Notes |
 | --- | --- | --- |
-| iOS app | yes | `apps/apple/VOIDApp`, currently four screens, iOS 17 |
+| iOS app | yes | `apps/apple/NOMOApp`, currently four screens, iOS 17 |
 | macOS app | yes | new SwiftUI target in the same Xcode project, does not exist today |
 | Web control plane | yes | `apps/control-plane/ui/src`, four hand-written stylesheets |
 | Desktop shell (Tauri) | chrome only | the window, menu and update surface follow the same tokens; the web view carries the rest |
@@ -50,7 +50,7 @@ adoption guide for the current material system is
 
 Dynamic Type is the system, not an option. The guideline's minimum legible body
 size for iOS and iPadOS is 17 points with 11 as the floor, and macOS is 13 with
-10. VOID uses semantic roles only, so the whole surface scales when a person
+10. NOMO uses semantic roles only, so the whole surface scales when a person
 changes the text size.
 
 iOS and iPadOS built-in styles, from the guideline's type table:
@@ -71,7 +71,7 @@ iOS and iPadOS built-in styles, from the guideline's type table:
 
 macOS built-in styles are one step tighter throughout: Large Title 31/38, Title 1
 25/31, Title 2 19/24, Title 3 17/22, Headline 14/19, Body 14/19, Callout 13/18,
-Subhead 12/16, Footnote 12/16, Caption 1 and 2 both 11/13. VOID does not pick
+Subhead 12/16, Footnote 12/16, Caption 1 and 2 both 11/13. NOMO does not pick
 one table for both platforms; it maps roles to the platform's own semantic font,
 which is what makes the same screen feel native on each.
 
@@ -103,7 +103,7 @@ Contrast is a gate, not a preference. The guideline's WCAG-derived minimums are
 text at any size. Every pairing the design system introduces is measured in both
 appearances, and the measurement is a test, not a comment. The existing iOS
 theme already does this: `ChatTheme.swift` records the measured ratios for its
-muted text and accent, and `VOIDUITests` re-measures rendered pixels. That
+muted text and accent, and `NOMOUITests` re-measures rendered pixels. That
 practice moves to the web, where it does not exist yet.
 
 Three colour rules that are not negotiable here:
@@ -111,7 +111,7 @@ Three colour rules that are not negotiable here:
 - **No state is carried by colour alone.** A reversibility class, a policy
   decision, a connector consent state and a run state are always text first.
   Colour tints; the word carries the meaning. This is already true of the iOS
-  `VoidStatePill` and stays true everywhere.
+  `NomoStatePill` and stays true everywhere.
 - **No app-specific appearance toggle.** The guideline calls this out directly:
   an in-app light and dark switch asks a person to configure two settings and
   makes a correct app look broken. The web control plane today switches on
@@ -121,13 +121,13 @@ Three colour rules that are not negotiable here:
   cases.** Every colour pair and every material is checked in both appearances
   with both settings on separately and together.
 
-VOID drops its warm paper palette (`#f8f7f4` canvas, `#252420` ink, `#a93805`
+NOMO drops its warm paper palette (`#f8f7f4` canvas, `#252420` ink, `#a93805`
 accent) on the platform surfaces. That palette stays in the terminal, where it
 was never a competing identity.
 
 ### Spacing and shape
 
-A 4 point rhythm: 4, 8, 12, 16, 24, 32. The existing `VoidMetrics` already uses
+A 4 point rhythm: 4, 8, 12, 16, 24, 32. The existing `NomoMetrics` already uses
 it on iOS and the web has no spacing token at all today, which is why the same
 concept appears at fourteen different radii and twenty-nine font sizes across
 the stylesheets.
@@ -136,7 +136,7 @@ Two guideline constants apply outside the rhythm. Standard horizontal spacing
 is 40 points, and the minimum vertical spacing between unrelated content groups
 is 100 points. The transcript keeps a readable measure rather than running edge
 to edge on a wide window; the guideline's unfocused content widths are 860, 560,
-410, 320, 260, 217 and 184 points for the standard size classes, and VOID picks
+410, 320, 260, 217 and 184 points for the standard size classes, and NOMO picks
 the one that fits the column rather than the platform.
 
 Control hit targets are a floor, not a suggestion: 44 by 44 points on iOS and
@@ -165,7 +165,7 @@ current material system:
   guideline is blunt about this: using it in the content layer produces
   complexity and a confused hierarchy.
 
-The practical consequence for VOID: adopting the current Apple look on the
+The practical consequence for NOMO: adopting the current Apple look on the
 platform surfaces is mostly a matter of *removing* custom chrome, not adding
 glass. The web control plane's hand-drawn shadows on the composer, dialogs,
 palette and floating controls are exactly the custom effects the adoption guide
@@ -173,7 +173,7 @@ says to drop, because the system bars already provide the separation.
 
 Liquid Glass is adopted only where a standard component already provides it, and
 never on a custom control unless the control is the app's single most important
-one. There is no such control in VOID today.
+one. There is no such control in NOMO today.
 
 ### Motion
 
@@ -225,7 +225,7 @@ thing being removed.
 
 Modality is chosen by what the interaction is, not by convenience:
 
-| Situation | Component | VOID examples |
+| Situation | Component | NOMO examples |
 | --- | --- | --- |
 | Critical information, and the app must not proceed without an answer | alert | a ledger verification failure, a sealed session that cannot be opened |
 | A scoped task in front of the current context | sheet | reviewing a recovery plan, confirming a connector removal |
@@ -265,7 +265,7 @@ command whose output was read, or by a recorded run on hardware.
 | --- | --- | --- |
 | Text scaling | the interface remains usable at 200 percent text, with no clipped text and no overlapping controls | iOS and macOS: accessibility inspector run; web: 200 percent browser zoom plus the largest Dynamic Type equivalent |
 | Minimum text | nothing renders below 11 points on iOS or 10 on macOS except a legal or code caption | a rendered-pixel test in the existing UI test suite |
-| Contrast | 4.5:1 up to 17 points, 3:1 at 18 points or bold, in both appearances, with Increase Contrast on | the existing pixel measurement in `VOIDUITests`, extended to the web |
+| Contrast | 4.5:1 up to 17 points, 3:1 at 18 points or bold, in both appearances, with Increase Contrast on | the existing pixel measurement in `NOMOUITests`, extended to the web |
 | Colour independence | every state, class and decision is readable with no colour at all | a greyscale render of each state |
 | VoiceOver | every control has a name, every custom view is an accessibility element, the transcript navigates by message | a recorded VoiceOver pass on iOS and macOS |
 | Keyboard | every action reachable on macOS and on the web, with a visible focus indicator at 3:1 against its background | a keyboard-only pass per surface |
@@ -289,9 +289,9 @@ command whose output was read, or by a recorded run on hardware.
 | Cursor | system default | pointer affordances are not load-bearing | no hover-only affordance, pointer where the platform shows one |
 | Text entry | system keyboard, Dynamic Type | system keyboard, no Dynamic Type | the platform's own controls, no custom text input |
 
-## What VOID adds on top
+## What NOMO adds on top
 
-The platform gives the form. VOID gives the vocabulary, and the vocabulary does
+The platform gives the form. NOMO gives the vocabulary, and the vocabulary does
 not change with the platform:
 
 - A reversibility class is r0, r1, r2 or r3, always written as text, never as a

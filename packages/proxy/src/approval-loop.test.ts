@@ -125,7 +125,7 @@ type Harness = {
 };
 
 async function makeHarness(decision: Decision, broker: ApprovalBroker, posture: ProxyOptions["posture"] = "fail-closed"): Promise<Harness> {
-  const dir = await mkdtemp(join(tmpdir(), "void-approval-loop-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-approval-loop-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText(decision));
   const upstreamMessages: Array<Record<string, unknown>> = [];
@@ -141,7 +141,7 @@ async function makeHarness(decision: Decision, broker: ApprovalBroker, posture: 
         upstreamCommand: ["fake"],
         policyPath,
         posture,
-        ledgerDir: await mkdtemp(join(tmpdir(), "void-approval-ledger-")),
+        ledgerDir: await mkdtemp(join(tmpdir(), "nomo-approval-ledger-")),
         workspace: "test",
         input: fromLines(messages.map((message) => JSON.stringify(message))),
         output(line) { outputMessages.push(JSON.parse(line) as unknown); },

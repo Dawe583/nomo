@@ -1,5 +1,5 @@
 /**
- * Browser regression gate for the VOID web workbench.
+ * Browser regression gate for the NOMO web workbench.
  *
  * Measures the real built application in a real headless Chromium against
  * disposable loopback fixtures. Every assertion here corresponds to a measured
@@ -35,7 +35,7 @@ import { chromiumAvailable } from "./cdp.mjs";
 const gateGap = !existsSync(new URL("../../dist/web/index.html", import.meta.url))
   ? "dist/web is missing; run node scripts/src/build-web.mjs"
   : !chromiumAvailable()
-    ? "no Chromium on this host; set VOID_QA_CHROMIUM to run the browser gate"
+    ? "no Chromium on this host; set NOMO_QA_CHROMIUM to run the browser gate"
     : null;
 const skip = gateGap === null ? false : gateGap;
 const reportPromise = gateGap === null ? measure() : null;
@@ -77,9 +77,9 @@ for (const { viewport, reason } of unsettled)
 // of viewports this gate claims to have measured.
 const viewportSkip = (viewport) =>
   skip || unsettled.find((entry) => entry.viewport === viewport)?.reason || false;
-if (report && process.env.VOID_QA_REPORT) {
+if (report && process.env.NOMO_QA_REPORT) {
   const { writeFile } = await import("node:fs/promises");
-  await writeFile(process.env.VOID_QA_REPORT, JSON.stringify(report, null, 2));
+  await writeFile(process.env.NOMO_QA_REPORT, JSON.stringify(report, null, 2));
 }
 
 test("D04.06 viewport matrix has no horizontal overflow and a reachable Send", { skip }, () => {
@@ -260,7 +260,7 @@ test("D04.01 every required Mac route has a server-served, rendering surface", {
   }
   const chat = report.routes.rows.find((entry) => entry.route === "chat");
   assert.equal(chat.errorBoundary, false, "chat fell into the error boundary");
-  // /conversations is not a VOID route. The Conversations destination is
+  // /conversations is not a NOMO route. The Conversations destination is
   // /sessions, and it must stay reachable from the sidebar.
   const conversations = report.routes.rows.find((entry) => entry.route === "conversations");
   assert.equal(conversations.served, false, "/conversations must not pretend to be a route");

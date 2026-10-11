@@ -12,9 +12,9 @@ try {
 } catch (error) {
   if (error.code !== "ENOENT") throw error;
   secrets = {
-    VOID_CONTROL_TOKEN: randomBytes(32).toString("hex"),
-    VOID_SECRET_KEY: randomBytes(32).toString("base64"),
-    VOID_SIGNING_KEY: generateKeyPairSync("ed25519")
+    NOMO_CONTROL_TOKEN: randomBytes(32).toString("hex"),
+    NOMO_SECRET_KEY: randomBytes(32).toString("base64"),
+    NOMO_SIGNING_KEY: generateKeyPairSync("ed25519")
       .privateKey.export({ type: "pkcs8", format: "der" })
       .toString("base64"),
   };
@@ -22,7 +22,7 @@ try {
     mode: 0o600,
   });
 }
-await writeFile(".env.void-access", secrets.VOID_CONTROL_TOKEN + "\n", {
+await writeFile(".env.nomo-access", secrets.NOMO_CONTROL_TOKEN + "\n", {
   mode: 0o600,
 });
 for (const [name, value] of Object.entries(secrets))

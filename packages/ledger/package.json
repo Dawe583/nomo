@@ -16,7 +16,7 @@
   },
   "description": "Persist signed, hash chained audit records and verify their integrity.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "audit",
     "ed25519",

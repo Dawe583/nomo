@@ -1,4 +1,4 @@
-# VOID upgrade checkpoint
+# NOMO upgrade checkpoint
 
 One operational run, recorded for the reverse and recovery upgrade programme.
 This file records one end-to-end run on one machine. It is a historical test

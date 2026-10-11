@@ -16,7 +16,7 @@
   },
   "description": "Classify tool calls against draft reversibility cases and declared target facts.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "registry",
     "reversibility"

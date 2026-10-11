@@ -15,9 +15,9 @@ const fixture = async (
   t: { after: (fn: () => unknown) => void },
   config: unknown,
 ): Promise<string> => {
-  const dir = await mkdtemp(join(tmpdir(), "void-recovery-doctor-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-recovery-doctor-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
-  const path = join(dir, "void-recovery.json");
+  const path = join(dir, "nomo-recovery.json");
   await writeFile(path, JSON.stringify(config));
   return path;
 };
@@ -58,7 +58,7 @@ test("a filesystem-shaped config names the adapter and points at the command tha
   const message = await inspect(path);
 
   assert.match(message, /filesystem\.managed/);
-  assert.match(message, /void recovery conformance --adapter filesystem\.managed/);
+  assert.match(message, /nomo recovery conformance --adapter filesystem\.managed/);
   assert.match(message, /adapters/);
   // The specific reason is still there, not merely a longer sentence.
   assert.match(message, /stateDir is required/);
@@ -92,7 +92,7 @@ test("doctor lists what was read, what was required and missing, and what is ign
   assert.equal(code, 1);
   assert.match(text, /field workspace: dogfood \(config\)/);
   assert.match(text, /field stateDir: \(absent\) \(required, not found\)/);
-  assert.match(text, /field adapters: 1 entry \(ignored, not read by void recovery\)/);
+  assert.match(text, /field adapters: 1 entry \(ignored, not read by nomo recovery\)/);
   assert.match(text, /field vault: block with 1 field\(s\) \(ignored/);
   assert.match(text, /problem: /);
   assert.match(text, /configuration: not usable/);
@@ -117,14 +117,14 @@ test("doctor never prints the encryption key, only the variable that holds it", 
   const path = await fixture(t, {
     workspace: "dogfood",
     stateDir: "state",
-    encryptionKeyEnv: "VOID_VAULT_KEY",
+    encryptionKeyEnv: "NOMO_VAULT_KEY",
     filesystem: { root: "project", cooperative: true },
   });
 
   const { lines } = await doctor(path);
   const text = lines.join("\n");
 
-  assert.match(text, /field encryptionKeyEnv: VOID_VAULT_KEY \(config,/);
+  assert.match(text, /field encryptionKeyEnv: NOMO_VAULT_KEY \(config,/);
   // The report names the variable and says where the key itself lives: a
   // diagnostic that echoed a key would be the defect, not the fix.
   assert.match(text, /the key itself is never in this file/);
@@ -147,7 +147,7 @@ test("a filesystem root is refused by name the way a git root always was", async
 test("a leading ./ on a root is accepted, because it is not a traversal", async (t) => {
   // The shape the Python transport fixture writes, and the shape any operator
   // writes when they mean "this directory, relative to the config file". It is
-  // not a traversal, and refusing it broke `python/void-transport` outright:
+  // not a traversal, and refusing it broke `python/nomo-transport` outright:
   // the relay could not start, so nine integration tests never ran and the
   // suite reported 75 passing instead of 84.
   const path = await fixture(t, {
@@ -183,7 +183,7 @@ test("a missing workspace field is named rather than summed into one verdict", a
   const path = await fixture(t, {
     stateDir: "state",
     encryptionKeyEnv: "KEY",
-    postgres: { schema: "void", tables: [], urlEnv: "URL" },
+    postgres: { schema: "nomo", tables: [], urlEnv: "URL" },
   });
   const message = await inspect(path);
 

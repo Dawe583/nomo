@@ -29,10 +29,10 @@ async function ledgerRows(
   ui: WorkspaceTui;
   app: Workbench;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-harness-rows-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-harness-rows-"));
   const env = {
-    VOID_DATA_DIR: root,
-    VOID_HOOK_COMMANDS: JSON.stringify(hookCommands),
+    NOMO_DATA_DIR: root,
+    NOMO_HOOK_COMMANDS: JSON.stringify(hookCommands),
   };
   const app = new Workbench(env, assistantFetcher("ok"));
   await app.configure({
@@ -137,7 +137,7 @@ test("every selectable agent gets a row, and the selected one is marked", async 
   const preset = rowsOf(ui).find((r) => r.id === "agent:default");
   assert.ok(preset, "no row for the default preset");
   assert.match(preset.label, /^◆ agent default$/);
-  assert.match(preset.lines.join("\n"), /Preset default: VOID default\./);
+  assert.match(preset.lines.join("\n"), /Preset default: NOMO default\./);
 
   ui.agentId = "planner";
   const marked = rowsOf(ui).find((r) => r.id === "agent:planner");

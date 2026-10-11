@@ -104,7 +104,7 @@ export async function advance(owner, id, generation) {
         s.messages.push({
           role: "tool",
           tool_call_id: s.pending.call.id,
-          content: "VOID denied the request. Do not retry.",
+          content: "NOMO denied the request. Do not retry.",
         });
         s.queue.shift();
         event(s, "tool", `${s.pending.name}: denied`);
@@ -230,10 +230,10 @@ export async function advance(owner, id, generation) {
           role: "tool",
           tool_call_id: call.id,
           content:
-            "VOID denied an unknown, unclassified or disallowed tool. Do not retry.",
+            "NOMO denied an unknown, unclassified or disallowed tool. Do not retry.",
         });
         s.queue.shift();
-        event(s, "tool", `${tool.name}: denied by VOID`);
+        event(s, "tool", `${tool.name}: denied by NOMO`);
         await save(owner, s, c);
         return { kind: "next" };
       }

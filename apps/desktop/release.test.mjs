@@ -14,7 +14,7 @@ test('local Mac release metadata agrees on 1.0.1', async () => {
   assert.match(cargo, /^version = "1\.0\.1"$/m);
   // \r? on every line break: a CRLF checkout would otherwise fail this on the
   // line ending rather than on the version, which is the whole claim.
-  assert.match(lock, /name = "void-desktop"\r?\nversion = "1\.0\.1"/);
+  assert.match(lock, /name = "nomo-desktop"\r?\nversion = "1\.0\.1"/);
 });
 
 /** A keychain with no code-signing identity, so the ad-hoc path is reachable. */
@@ -49,7 +49,7 @@ test('Mac build policy keeps direct local ad-hoc builds and refuses App Store pa
   );
   assert.throws(
     () => resolveBuildPolicy({ platform: 'darwin', distribution: 'unknown', env: {}, listIdentities: noIdentities, warn }),
-    /Unknown VOID_DISTRIBUTION profile/,
+    /Unknown NOMO_DISTRIBUTION profile/,
   );
   assert.equal(warnings.length, 2, 'only the two ad-hoc resolutions warn');
 });
@@ -67,14 +67,14 @@ test('Mac build policy prefers the operator identity over anything in the keycha
   });
   // A blank override is not a usable identity, so it resolves like an unset one.
   assert.equal(
-    resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: { APPLE_SIGNING_IDENTITY: '   ' }, listIdentities: () => ['VOID Local Signing'] }).signingIdentitySource,
+    resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: { APPLE_SIGNING_IDENTITY: '   ' }, listIdentities: () => ['NOMO Local Signing'] }).signingIdentitySource,
     'keychain',
   );
 });
 
 test('Mac build policy signs with a stable keychain identity instead of ad-hoc', () => {
   const discovered = () => [
-    'VOID Local Signing',
+    'NOMO Local Signing',
     'Apple Development: Someone (TEAMID)',
     'Developer ID Application: Example (TEAMID)',
   ];
@@ -87,14 +87,14 @@ test('Mac build policy signs with a stable keychain identity instead of ad-hoc',
   // Without a Developer ID identity the next best stable name is used, and a
   // self-signed name is still stable enough to be preferred to ad-hoc.
   assert.equal(
-    resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: () => ['VOID Local Signing', 'Apple Development: Someone (TEAMID)'] }).signingIdentity,
+    resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: () => ['NOMO Local Signing', 'Apple Development: Someone (TEAMID)'] }).signingIdentity,
     'Apple Development: Someone (TEAMID)',
   );
   assert.equal(
-    resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: () => ['VOID Local Signing'] }).signingIdentity,
-    'VOID Local Signing',
+    resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: () => ['NOMO Local Signing'] }).signingIdentity,
+    'NOMO Local Signing',
   );
-  assert.equal(resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: () => ['VOID Local Signing', 'VOID Local Signing'] }).signingIdentitySource, 'keychain');
+  assert.equal(resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: () => ['NOMO Local Signing', 'NOMO Local Signing'] }).signingIdentitySource, 'keychain');
   assert.deepEqual(warnings, [], 'a stable identity is not a fallback and must stay quiet');
 });
 
@@ -105,8 +105,8 @@ test('an ad-hoc Mac fallback names the consequence and the override', () => {
   const [warning] = warnings;
   assert.match(warning, /ad-hoc/);
   assert.match(warning, /APPLE_SIGNING_IDENTITY="<identity name>"/);
-  assert.match(warning, /dev\.void\.desktop\.workspace/);
-  assert.match(warning, /Cannot unlock the VOID workspace key in macOS/);
+  assert.match(warning, /dev\.nomo\.desktop\.workspace/);
+  assert.match(warning, /Cannot unlock the NOMO workspace key in macOS/);
 });
 
 test('a notarised Mac run refuses an ad-hoc signature', () => {

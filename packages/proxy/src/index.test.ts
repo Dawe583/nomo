@@ -5,7 +5,7 @@ import { DEFAULT_POSTURE, isSupportedTransport } from "./index.ts";
 
 describe("@void/proxy", () => {
   test("the default posture is fail closed", () => {
-    // Availability is traded for safety here on purpose: a VOID crash becomes
+    // Availability is traded for safety here on purpose: a NOMO crash becomes
     // an outage of the agent's write path rather than an unrecorded write.
     assert.equal(DEFAULT_POSTURE, "fail-closed");
   });

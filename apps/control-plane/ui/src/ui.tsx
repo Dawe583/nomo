@@ -27,7 +27,7 @@ export function useText() {
  */
 export function useAppliedAppearance(appearance: string) {
   useEffect(() => {
-    localStorage.setItem("void-appearance", appearance);
+    localStorage.setItem("nomo-appearance", appearance);
     const media = matchMedia("(prefers-color-scheme: dark)");
     const update = () => {
       const dark =
@@ -433,7 +433,7 @@ export function DataTable({
             <button
               onClick={() =>
                 localStorage.setItem(
-                  "void-view:" + endpoint,
+                  "nomo-view:" + endpoint,
                   json({ hidden, size, sort, view }),
                 )
               }
@@ -444,7 +444,7 @@ export function DataTable({
               onClick={() => {
                 try {
                   const v = JSON.parse(
-                    localStorage.getItem("void-view:" + endpoint) ?? "{}",
+                    localStorage.getItem("nomo-view:" + endpoint) ?? "{}",
                   );
                   setHidden(v.hidden ?? []);
                   setSize(v.size ?? "50");
@@ -461,7 +461,7 @@ export function DataTable({
           disabled={!rows.length}
           onClick={() =>
             download(
-              "void-page.json",
+              "nomo-page.json",
               json({ scope: data?.scope, asOf: data?.asOf, items: rows }),
               "application/json",
             )

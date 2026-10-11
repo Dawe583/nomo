@@ -23,13 +23,13 @@ test("status markers are single-cell ASCII, never emoji-only meaning", () => {
 });
 
 test("workspace status names stopped and unknown runtime states explicitly", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-state-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-state-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   ui.sessionId = "fixture";
   t.mock.method(app, "runs", () => [
     {
@@ -57,13 +57,13 @@ test("workspace status names stopped and unknown runtime states explicitly", asy
 });
 
 test("workspace model labels are sanitized before summary rendering", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-model-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-model-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   ui.model = "evil\x1b[2J\x1b]0;pwned";
   for (const color of [false, true]) {
     const frame = renderWorkspace(ui, 80, 24, "", false, false, { color });

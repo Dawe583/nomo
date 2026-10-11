@@ -187,7 +187,7 @@ describe("manifest", () => {
 });
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "void-manifest-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-manifest-"));
   test.after(async () => {
     await rm(dir, { recursive: true, force: true });
   });

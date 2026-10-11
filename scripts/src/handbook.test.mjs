@@ -12,12 +12,12 @@ import {
 /**
  * The handbook is a gate, not prose.
  *
- * docs/HANDBOOK.md exists to tell an operator how to use VOID. The moment it
+ * docs/HANDBOOK.md exists to tell an operator how to use NOMO. The moment it
  * drifts from the product it is worse than nothing, because it is the document
  * people trust when they cannot check the source. This walks the claims that can
  * be checked mechanically and fails the build on each one:
  *
- *   - every `void <command>` named anywhere is a command the binary accepts,
+ *   - every `nomo <command>` named anywhere is a command the binary accepts,
  *   - every command the binary accepts is documented,
  *   - every `pnpm <script>` named is a script that exists,
  *   - every repository path in backticks exists,
@@ -67,10 +67,10 @@ const enProse = withoutFences(en);
 const csProse = withoutFences(cs);
 const both = `${en}\n${cs}`;
 
-/** Words that follow "void" in a sentence rather than naming a command. Derived
+/** Words that follow "nomo" in a sentence rather than naming a command. Derived
  * from the documents themselves, so a new one shows up as a failure naming the
  * word instead of being silently allowed. */
-const PROSE_AFTER_VOID = new Set([
+const PROSE_AFTER_NOMO = new Set([
   "a",
   "and",
   "carefully",
@@ -101,16 +101,16 @@ test("both handbook editions exist and are real documents", () => {
     const text = read(file);
     assert.ok(text.length > 4000, `${file} is too short to be a handbook`);
     assert.ok(
-      text.startsWith("# VOID handbook"),
+      text.startsWith("# NOMO handbook"),
       `${file} must open with its title`,
     );
   }
 });
 
-test("every void command the handbook names is a real command", () => {
+test("every nomo command the handbook names is a real command", () => {
   const named = new Set(
-    occurrences(both, /\bvoid ([a-z][a-z-]*)\b/g).filter(
-      (name) => !PROSE_AFTER_VOID.has(name),
+    occurrences(both, /\bnomo ([a-z][a-z-]*)\b/g).filter(
+      (name) => !PROSE_AFTER_NOMO.has(name),
     ),
   );
   // Assert the extraction found the real surface first, so a broken pattern
@@ -129,14 +129,14 @@ test("every void command the handbook names is a real command", () => {
 
 test("every command the binary accepts is documented", () => {
   const missing = COMMANDS.filter(
-    (command) => !both.includes(`void ${command}`),
+    (command) => !both.includes(`nomo ${command}`),
   );
   assert.deepEqual(missing, [], `undocumented commands: ${missing.join(", ")}`);
   // The reference table is where a reader looks, so every command must appear
   // there, not only somewhere in prose.
   for (const command of COMMANDS) {
     assert.ok(
-      en.includes(`| \`void ${command}\``),
+      en.includes(`| \`nomo ${command}\``),
       `the English reference table is missing ${command}`,
     );
   }
@@ -334,12 +334,12 @@ test("the handbook states its own limits instead of only its features", () => {
   const heading = (text) => (text.match(/^## 2\..*$/m) ?? [""])[0];
   assert.match(
     heading(en),
-    /what void does not do/i,
+    /what nomo does not do/i,
     "section 2 of the English edition must be the limits section",
   );
   assert.match(
     heading(cs),
-    /co void neumí/i,
+    /co nomo neumí/i,
     "section 2 of the Czech edition must be the limits section",
   );
   // And the section must carry the substance, not only the heading.
@@ -387,8 +387,8 @@ test("the gate is not vacuous", () => {
   assert.equal(parseInvocation(["approve"]).ok, true);
   assert.equal(parseInvocation(["definitely-not-a-command"]).ok, false);
   assert.ok(
-    occurrences(both, /\bvoid [a-z][a-z-]*\b/g).length > 40,
-    "too few void mentions",
+    occurrences(both, /\bnomo [a-z][a-z-]*\b/g).length > 40,
+    "too few nomo mentions",
   );
   assert.ok(
     occurrences(both, /`\/[a-z]/g).length > 80,

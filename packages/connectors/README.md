@@ -1,4 +1,4 @@
-# @void/connectors contract
+# @nomo/connectors contract
 
 This README freezes the connector contract for WP-06 and WP-07. It is the
 contract every concrete connector implements. The first implementations are
@@ -172,7 +172,7 @@ export type ReplayPostgres = (
 
 Drift comparison is digest based by field. The report names the table, primary
 key, field, captured digest, and current digest. A human can then choose a
-manual repair path. VOID does not choose it.
+manual repair path. NOMO does not choose it.
 
 ## Managed PostgreSQL metadata installation
 
@@ -269,7 +269,7 @@ Fact names must match `packages/registry/docs/facts.md`.
 | Fact | Source | Meaning |
 | ---- | ------ | ------- |
 | `pg.capture.before_image` | Postgres capture | Every matched row before image was captured. |
-| `pg.transaction.void_controlled` | Postgres execution | The statement runs inside a transaction VOID controls. |
+| `pg.transaction.void_controlled` | Postgres execution | The statement runs inside a transaction NOMO controls. |
 | `pg.cascade.traversed` | Postgres capture | An `ON DELETE CASCADE` edge was traversed. |
 | `bucket.versioning` | S3 classify | Bucket versioning state. |
 | `bucket.mfa_delete` | S3 classify | Bucket MFA delete state. |

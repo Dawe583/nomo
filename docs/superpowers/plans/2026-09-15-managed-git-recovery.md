@@ -6,7 +6,7 @@
 
 **Architecture:** Reuse `RecoveryAdapter`, runtime journal, encrypted vault, CLI and MCP recovery surfaces. Keep each operation on one atomic Git surface. Use native filesystem primitives for worktree state and fixed Git plumbing for index state.
 
-**Tech Stack:** TypeScript, Node standard library, Git CLI plumbing, node:test, existing VOID runtime and CLI.
+**Tech Stack:** TypeScript, Node standard library, Git CLI plumbing, node:test, existing NOMO runtime and CLI.
 
 **Spec:** `docs/superpowers/specs/2026-09-15-managed-git-recovery-design.md`
 
@@ -100,7 +100,7 @@
 - Modify: `docs/REVERSE-UPGRADE-PROGRESS.md`
 
 **Interfaces:**
-- Produces: `void recovery conformance --adapter git.managed`
+- Produces: `nomo recovery conformance --adapter git.managed`
 
 - [ ] Add failing profile and scenario tests using a temporary repository with
   no remote and local-only author identity.

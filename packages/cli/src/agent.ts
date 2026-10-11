@@ -4,16 +4,17 @@ import { createInterface } from 'node:readline/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Workbench } from '../../workbench/src/index.ts';
 import { sanitizeText } from './tui/layout.ts';
+import { envValue } from "../../ledger/src/env-compat.ts";
 
 export async function runAgentCommand(argv: readonly string[]): Promise<number> {
-  let model = process.env.VOID_MODEL;
+  let model = envValue(process.env, "NOMO_MODEL");
   let prompt: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]; const value = argv[++i];
-    if (!value || !['--model', '--prompt'].includes(arg ?? '')) throw new Error('usage: void agent --model <id> [--prompt <task>]');
+    if (!value || !['--model', '--prompt'].includes(arg ?? '')) throw new Error('usage: nomo agent --model <id> [--prompt <task>]');
     if (arg === '--model') model = value; else prompt = value;
   }
-  if (!model) throw new Error('Select a model with --model or VOID_MODEL.');
+  if (!model) throw new Error('Select a model with --model or NOMO_MODEL.');
   const workbench = new Workbench();
   const interactive = process.stdin.isTTY && process.stdout.isTTY;
   const input = interactive ? createInterface({ input: process.stdin, output: process.stdout }) : undefined;
@@ -22,11 +23,11 @@ export async function runAgentCommand(argv: readonly string[]): Promise<number> 
   process.once('SIGINT', stop); process.once('SIGTERM', stop);
   try {
     const provider = await workbench.providerState();
-    if (!provider.connected) throw new Error('Set OPENROUTER_API_KEY and optional VOID_PROVIDER_URL on the runtime.');
+    if (!provider.connected) throw new Error('Set OPENROUTER_API_KEY and optional NOMO_PROVIDER_URL on the runtime.');
     prompt ??= await input?.question('[v] Task > ');
     if (!prompt) throw new Error('A piped session requires --prompt.');
     const started = await workbench.start(prompt, model);
-    process.stdout.write(`${brandHeader(`VOID / ${started.workspace}`, detectCapabilities()).join("\n")}\n# intent -> # classify -> # decide -> . seal\n`);
+    process.stdout.write(`${brandHeader(`NOMO / ${started.workspace}`, detectCapabilities()).join("\n")}\n# intent -> # classify -> # decide -> . seal\n`);
     let shown = 0;
     const decided = new Set<string>();
     while (!cancelled) {

@@ -20,20 +20,21 @@ import { upstreamHttp } from "../../proxy/src/transport/http.ts";
 import { HoldDeniedError, LedgerVerifyError, PolicyStartupError } from "./errors.ts";
 import { holdHandle } from "./hold.ts";
 import type { HoldHandle } from "./hold.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
 
-export type VoidConnect =
+export type NomoConnect =
   | { readonly upstreamCommand: readonly string[]; readonly upstreamEnv?: Record<string, string> }
   | { readonly httpUrl: string; readonly headers?: Readonly<Record<string, string>> };
 
-export type VoidClock = {
+export type NomoClock = {
   readonly setTimeout: (callback: () => void, ms: number) => unknown;
   readonly clearTimeout: (handle: unknown) => void;
 };
 
-export type VoidClientOptions = {
+export type NomoClientOptions = {
   readonly ledgerDir?: string;
   readonly workspace?: string;
-  readonly connect: VoidConnect;
+  readonly connect: NomoConnect;
   readonly policyPath?: string;
   readonly factsPath?: string;
   readonly posture?: ProxyPosture;
@@ -62,7 +63,7 @@ export type VoidClientOptions = {
    */
   readonly allowDegradedVerifyKey?: boolean;
   readonly holdPollMs?: number;
-  readonly clock?: VoidClock;
+  readonly clock?: NomoClock;
 };
 
 export type McpLikeClient = {
@@ -89,7 +90,7 @@ type CompletedHold =
   | { readonly ok: true; readonly value: unknown }
   | { readonly ok: false; readonly error: Error };
 
-const defaultClock: VoidClock = {
+const defaultClock: NomoClock = {
   setTimeout: (callback, ms) => setTimeout(callback, ms),
   clearTimeout: (handle) => { clearTimeout(handle as ReturnType<typeof setTimeout>); },
 };
@@ -104,20 +105,20 @@ const defaultClock: VoidClock = {
 export const CLIENT_MAX_ERROR_LINES = 512;
 export const CLIENT_MAX_ERROR_BYTES = 256 * 1024;
 
-export class VoidClient implements McpLikeClient {
+export class NomoClient implements McpLikeClient {
   readonly approvals = new ApprovalBroker();
 
   readonly #input = new ScriptInput();
   readonly #ledgerDir: string;
   readonly #workspace: string;
-  readonly #connect: VoidConnect;
+  readonly #connect: NomoConnect;
   readonly #policyPath: string | undefined;
   readonly #factsPath: string | undefined;
   readonly #posture: ProxyPosture;
   readonly #legacyBinding: LegacyBindingResolver | undefined;
   readonly #requestTimeoutMs: number;
   readonly #holdPollMs: number;
-  readonly #clock: VoidClock;
+  readonly #clock: NomoClock;
   readonly #pending = new Map<JsonRpcId, PendingRequest>();
   readonly #registeredHolds = new Set<string>();
   readonly #holdToRequest = new Map<string, JsonRpcId>();
@@ -136,7 +137,7 @@ export class VoidClient implements McpLikeClient {
   readonly #allowDegradedVerifyKey: boolean;
   #verification: VerificationKey | undefined;
 
-  constructor(options: VoidClientOptions) {
+  constructor(options: NomoClientOptions) {
     this.#ledgerDir = options.ledgerDir ?? defaultLedgerDir();
     this.#workspace = options.workspace ?? "default";
     this.#connect = options.connect;
@@ -193,7 +194,7 @@ export class VoidClient implements McpLikeClient {
   }
 
   async request(method: string, params?: JsonObject): Promise<unknown> {
-    if (this.#closed) throw new Error("VOID client is closed");
+    if (this.#closed) throw new Error("NOMO client is closed");
     const running = this.#ensureStarted();
     const id = this.#nextId;
     this.#nextId += 1;
@@ -252,7 +253,7 @@ export class VoidClient implements McpLikeClient {
     }
     this.#input.end();
     for (const pending of this.#pending.values()) {
-      pending.reject(new Error("VOID client closed"));
+      pending.reject(new Error("NOMO client closed"));
     }
     this.#pending.clear();
   }
@@ -318,7 +319,7 @@ export class VoidClient implements McpLikeClient {
     const key = await this.#verificationKey();
     if (key === undefined) {
       throw new LedgerVerifyError(
-        "no verification key is configured for an existing workspace ledger: pin one with `void init --pin-verify-key`, or set VOID_VERIFY_KEY",
+        "no verification key is configured for an existing workspace ledger: pin one with `nomo init --pin-verify-key`, or set NOMO_VERIFY_KEY",
       );
     }
     this.#verification = key;
@@ -344,7 +345,7 @@ export class VoidClient implements McpLikeClient {
    * The key an existing workspace ledger is checked with.
    *
    * The default never opens private key material: a pinned public key comes
-   * from VOID_VERIFY_KEY or the trust file. The degraded path that does read
+   * from NOMO_VERIFY_KEY or the trust file. The degraded path that does read
    * the signing key exists for an embedder that opts in by name, and the
    * answer reports itself as degraded. A missing key file resolves to no key
    * rather than an error, so an unset opt-in reads as unset.
@@ -358,13 +359,13 @@ export class VoidClient implements McpLikeClient {
       // signingKey callback, so a machine with no key yet resolves to "no
       // key" instead of an error, and so this read-only check never mints
       // signing capability.
-      keyDir: join(homedir(), ".void", "keys"),
+      keyDir: join(dataDir(homedir()), "keys"),
     });
   }
 
   async #ensureDefaultPolicyPath(): Promise<string> {
     if (this.#defaultPolicyPath !== undefined) return this.#defaultPolicyPath;
-    const dir = join(tmpdir(), `void-sdk-${process.pid}-${Date.now().toString(36)}`);
+    const dir = join(tmpdir(), `nomo-sdk-${process.pid}-${Date.now().toString(36)}`);
     await mkdir(dir, { recursive: true, mode: 0o700 });
     const path = join(dir, "policy.yaml");
     await writeFile(path, "version: 1\nrules:\n  - match: {}\n    decision: deny\n    rationale: configure an SDK policy before forwarding writes\n");
@@ -493,8 +494,8 @@ export class VoidClient implements McpLikeClient {
   }
 }
 
-export function createVoidClient(options: VoidClientOptions): VoidClient {
-  return new VoidClient(options);
+export function createNomoClient(options: NomoClientOptions): NomoClient {
+  return new NomoClient(options);
 }
 
 class ScriptInput implements AsyncIterable<string>, AsyncIterator<string> {

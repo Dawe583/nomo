@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 
 function directory(t: { after: (fn: () => void) => void }): string {
-  const path = mkdtempSync(join(tmpdir(), 'void-storage-'));
+  const path = mkdtempSync(join(tmpdir(), 'nomo-storage-'));
   t.after(() => rmSync(path, { recursive: true, force: true }));
   return path;
 }

@@ -2,11 +2,11 @@
 
 Research and implementation record, 12 September 2026. iOS is deferred.
 This document distinguishes shipped work, source findings and proposed work.
-It does not claim that VOID already fulfills every feature on the marketing site.
+It does not claim that NOMO already fulfills every feature on the marketing site.
 
 ## Direction
 
-VOID should let a new user choose a project, connect an account, preview the
+NOMO should let a new user choose a project, connect an account, preview the
 agent's proposed changes and recover the supported effects. Its distinguishing
 feature should be a verifiable recovery history across tools. A large list of
 preinstalled tools alone is not a defensible differentiator.
@@ -22,7 +22,7 @@ behind a claim that every service is already connected for every user.
 
 ## Findings from primary sources
 
-| Source | Observed capability | Consequence for VOID |
+| Source | Observed capability | Consequence for NOMO |
 | --- | --- | --- |
 | [MCP Bundles README](https://github.com/modelcontextprotocol/mcpb/blob/main/README.md) | A portable archive contains a server and manifest; desktop clients can offer single-click installation | Prefer compatibility with MCPB over inventing a proprietary package format |
 | [MCPB manifest](https://github.com/modelcontextprotocol/mcpb/blob/main/MANIFEST.md) | User configuration supports sensitive fields, directory/file selection and compatibility requirements | Generate setup forms from validated metadata; store secrets separately in Keychain |
@@ -40,7 +40,7 @@ or new connector was provisioned for this review.
 - Desktop Settings discovers supported API credentials in fixed OpenCode and
   Prime configuration files. Discovery contacts no model provider.
 - An explicit Import action validates a credential against a fixed provider
-  endpoint, saves it in VOID's encrypted local workspace and selects an available
+  endpoint, saves it in NOMO's encrypted local workspace and selects an available
   default model. It does not send the key to the web app or modify source files.
 - Supported imports: TokenRouter from Prime models configuration; OpenCode Zen
   and OpenRouter from OpenCode/Prime API-key stores. OAuth sessions, shell/env/file
@@ -83,7 +83,7 @@ helping the first project experience.
 
 ### P0: Finish the recovery boundary for macOS projects
 
-Implement WP-R05 from REVERSE-TOOL-UPGRADE-PLAN before describing VOID as a
+Implement WP-R05 from REVERSE-TOOL-UPGRADE-PLAN before describing NOMO as a
 general coding-project undo tool. Start with explicit app-managed files in a
 selected workspace; handle binary bytes, file modes, missing paths, path escapes,
 symlinks, quota failures and conflicting writes. Capture must complete before

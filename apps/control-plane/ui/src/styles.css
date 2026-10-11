@@ -244,6 +244,17 @@ a {
   outline-offset: 3px;
   box-shadow: 0 0 0 4px var(--canvas);
 }
+/* A14: the shared `:focus-visible` rule is the fallback, but every textarea
+   has to keep the ring once a component rule outranks it. The composer keeps
+   its own offset halo because the canvas halo paints canvas on canvas; the
+   document editor, approval dialog and settings forms had none and relied on
+   the generic rule winning the cascade, which it does not once a component
+   rule wins. One rule here beats three hand-placed overrides. */
+textarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--canvas);
+}
 h1,
 h2,
 h3,
@@ -312,7 +323,7 @@ small,
   font-size: 20px;
   letter-spacing: 2px;
 }
-.void-aperture {
+.nomo-aperture {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
@@ -537,7 +548,7 @@ main {
   inset: 10px;
   border-style: dotted;
 }
-.welcome-emblem .void-aperture {
+.welcome-emblem .nomo-aperture {
   width: 52px;
   height: 52px;
 }
@@ -2157,7 +2168,7 @@ dialog::backdrop {
   :root:not([data-motion="off"]) .starters button:hover .starter-arrow {
     transform: translate(2px, -2px);
   }
-  :root:not([data-motion="off"]) .brand:hover .void-aperture {
+  :root:not([data-motion="off"]) .brand:hover .nomo-aperture {
     animation: v-aperture-focus 380ms ease;
   }
   :root:not([data-motion="off"])
@@ -2242,7 +2253,7 @@ dialog::backdrop {
     height: 58px;
     margin-bottom: 20px;
   }
-  .welcome-emblem .void-aperture {
+  .welcome-emblem .nomo-aperture {
     width: 36px;
     height: 36px;
   }
@@ -2285,7 +2296,7 @@ dialog::backdrop {
     height: 50px;
     margin-bottom: 16px;
   }
-  .welcome-emblem .void-aperture {
+  .welcome-emblem .nomo-aperture {
     width: 32px;
     height: 32px;
   }
@@ -2522,7 +2533,7 @@ dialog::backdrop {
     height: var(--control-touch);
     margin: 0 auto 20px;
   }
-  .welcome-emblem .void-aperture {
+  .welcome-emblem .nomo-aperture {
     width: 30px;
     height: 30px;
   }
@@ -2859,7 +2870,7 @@ dialog::backdrop {
   text-decoration: none;
   color: inherit;
 }
-.demo-brand .void-aperture {
+.demo-brand .nomo-aperture {
   width: 25px;
   height: 25px;
 }
@@ -2898,7 +2909,7 @@ dialog::backdrop {
   padding: 40px 24px;
   width: min(100%, 720px);
 }
-.demo-welcome > .void-aperture {
+.demo-welcome > .nomo-aperture {
   width: var(--control-touch);
   height: var(--control-touch);
   margin-bottom: 24px;
@@ -3132,7 +3143,7 @@ dialog::backdrop {
   font-size: 13px;
   color: var(--muted);
 }
-.demo-thinking .void-aperture {
+.demo-thinking .nomo-aperture {
   width: 22px;
   height: 22px;
 }
@@ -3175,14 +3186,14 @@ dialog::backdrop {
   .demo-brand strong {
     font-size: 15px;
   }
-  .demo-brand .void-aperture {
+  .demo-brand .nomo-aperture {
     width: 20px;
     height: 20px;
   }
   .demo-welcome {
     padding: 24px 20px;
   }
-  .demo-welcome > .void-aperture {
+  .demo-welcome > .nomo-aperture {
     width: 32px;
     height: 32px;
     margin-bottom: 18px;
@@ -3228,7 +3239,7 @@ dialog::backdrop {
   .demo-welcome {
     padding-block: 16px;
   }
-  .demo-welcome > .void-aperture {
+  .demo-welcome > .nomo-aperture {
     display: none;
   }
   .demo-starters {
@@ -3241,7 +3252,7 @@ dialog::backdrop {
 .demo-rich h1, .demo-rich h2, .demo-rich h3 { font: 600 17px/1.4 Inter, sans-serif; margin: 20px 0 12px; }
 .app-loading { height: 100dvh; display: grid; place-items: center; font-size: 18px; letter-spacing: 2px; }
 
-/* VOID's command surface keeps tool provenance and reversibility visible. */
+/* NOMO's command surface keeps tool provenance and reversibility visible. */
 .composer, .demo-composer { position: relative; }
 .command-palette { position: absolute; z-index: 25; bottom: calc(100% + 8px); left: 0; right: 0; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-panel); box-shadow: var(--shadow-palette); overflow: hidden; max-height: min(440px, 55dvh); display: flex; flex-direction: column; }
 .command-palette header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-family: var(--mono, monospace); font-size: 11px; }
@@ -3477,7 +3488,7 @@ dialog label > textarea {
 .permission-mode[aria-checked="true"] { border-color: var(--action); color: var(--action); }
 .composer-mode-row { padding: 0; margin-bottom: 16px; }
 .chat-options-trigger { flex: none; font-size: 20px; }
-.welcome > .void-aperture, .demo-welcome > .void-aperture { width: var(--control-macos); height: var(--control-macos); margin-bottom: 16px; }
+.welcome > .nomo-aperture, .demo-welcome > .nomo-aperture { width: var(--control-macos); height: var(--control-macos); margin-bottom: 16px; }
 
 /* Final hierarchy: one primary status, quiet metrics, explicit evidence. */
 .overview-priority {

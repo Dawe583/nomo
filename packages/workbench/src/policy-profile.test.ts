@@ -27,7 +27,7 @@ const done = () =>
  * managed-document tool call per turn. The policy path is the operator's, so
  * the names a profile can select are the files sitting next to it. */
 async function fixture(t: TestContext, policies: Record<string, string>) {
-  const directory = await mkdtemp(join(tmpdir(), "void-policy-profile-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-policy-profile-"));
   const policyDir = join(directory, "policies");
   await mkdir(policyDir);
   for (const [name, text] of Object.entries(policies))
@@ -60,7 +60,7 @@ async function fixture(t: TestContext, policies: Record<string, string>) {
       ],
     });
   };
-  const env = { VOID_DATA_DIR: join(directory, "data"), VOID_POLICY_PATH: policyPath };
+  const env = { NOMO_DATA_DIR: join(directory, "data"), NOMO_POLICY_PATH: policyPath };
   const app = new Workbench(env, fetcher);
   t.after(async () => {
     await app.shutdown();
@@ -84,7 +84,7 @@ test("the catalogue offers the operator's policy files, and only readable valid 
   await writeFile(join(f.policyDir, ".hidden.yaml"), CLOSED);
   const names = listPolicyProfiles(f.policyPath);
   assert.equal(names[0], DEFAULT_POLICY_PROFILE);
-  // `operator` is the operator's own VOID_POLICY_PATH, so it is a real file
+  // `operator` is the operator's own NOMO_POLICY_PATH, so it is a real file
   // in that directory and therefore a name a profile can select.
   assert.deepEqual(names.slice(1), ["broken", "closed", "open", "operator"]);
   assert.equal(f.app.agents().policyProfiles.includes("open"), true);

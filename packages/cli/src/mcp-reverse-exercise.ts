@@ -25,7 +25,7 @@ const payload = (result: Awaited<ReturnType<Client["callTool"]>>): Record<string
   if (typeof first !== "string") throw new Error("MCP result carried no text content");
   return JSON.parse(first) as Record<string, unknown>;
 };
-const bin = () => fileURLToPath(new URL("../bin/void.mjs", import.meta.url));
+const bin = () => fileURLToPath(new URL("../bin/nomo.mjs", import.meta.url));
 
 const policy = (lines: readonly string[]) => lines.join("\n");
 
@@ -35,7 +35,7 @@ const policy = (lines: readonly string[]) => lines.join("\n");
  *
  * The other two arms drive the runtime directly, which is the right level for a
  * unit and the wrong one for a claim about the product an agent talks to. This
- * spawns the real `void recovery serve` as a child process over stdio, lets it
+ * spawns the real `nomo recovery serve` as a child process over stdio, lets it
  * negotiate its tool catalog under an operator policy, and drives execute,
  * plan and apply through JSON-RPC. Nothing is mocked: the process, the policy,
  * the journal and the vault are all the shipped ones.
@@ -45,7 +45,7 @@ const policy = (lines: readonly string[]) => lines.join("\n");
  * this exercise should assume.
  */
 export async function runMcpReverseExercise(options: { readonly keep?: boolean } = {}) {
-  const dir = await mkdtemp(join(tmpdir(), "void-mcp-exercise-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-mcp-exercise-"));
   const root = join(dir, "target");
   await mkdir(root, { recursive: true });
   const subject = join(root, "disassembly.bin");
@@ -57,7 +57,7 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
     workspace: "mcp",
     agentId: "reverse-agent",
     stateDir: "state",
-    encryptionKeyEnv: "VOID_EXERCISE_KEY",
+    encryptionKeyEnv: "NOMO_EXERCISE_KEY",
     policyPath: "policy.yaml",
     filesystem: { root: "target", cooperative: true },
   }));
@@ -65,15 +65,15 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
     "version: 1",
     "rules:",
     "  - match:",
-    "      tool: void_execute",
+    "      tool: nomo_execute",
     "      class: r1",
     "    decision: allow",
     "  - match:",
-    "      tool: void_recovery_plan",
+    "      tool: nomo_recovery_plan",
     "      class: r0",
     "    decision: allow",
     "  - match:",
-    "      tool: void_recovery_apply",
+    "      tool: nomo_recovery_apply",
     "      class: r1",
     "    decision: allow",
     "  - match: {}",
@@ -89,7 +89,7 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
     command: process.execPath,
     args: [bin(), "recovery", "serve", "--config", config],
     // A per-run key, passed by environment NAME and never printed.
-    env: { ...process.env, VOID_EXERCISE_KEY: randomBytes(32).toString("base64") },
+    env: { ...process.env, NOMO_EXERCISE_KEY: randomBytes(32).toString("base64") },
     stderr: "pipe",
   });
   try {
@@ -100,7 +100,7 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
 
     // 1. A mutation the policy permits lands on the real file.
     const execute = await client.callTool({
-      name: "void_execute",
+      name: "nomo_execute",
       arguments: {
         operationId: "op-mcp-write",
         runId: "mcp-run",
@@ -113,9 +113,9 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
 
     // 2. Preview, then apply the reviewed inverse. A plan is not permission, so
     //    the apply carries the plan the server itself issued.
-    const plan = await client.callTool({ name: "void_recovery_plan", arguments: { operationId: "op-mcp-write" } });
+    const plan = await client.callTool({ name: "nomo_recovery_plan", arguments: { operationId: "op-mcp-write" } });
     if (plan.isError === true) throw new Error(`recovery preview was refused: ${JSON.stringify(payload(plan))}`);
-    const apply = await client.callTool({ name: "void_recovery_apply", arguments: { plan: payload(plan) } });
+    const apply = await client.callTool({ name: "nomo_recovery_apply", arguments: { plan: payload(plan) } });
     if (apply.isError === true) throw new Error(`recovery apply was refused: ${JSON.stringify(payload(apply))}`);
     if (!(await readFile(subject)).equals(ORIGINAL)) throw new Error("the inverse did not restore the original bytes");
     steps.push("a previewed, applied inverse restores the exact bytes the agent overwrote");
@@ -138,7 +138,7 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
     // 4. The property the whole product rests on: a human edit between the
     //    capture and the inverse is a conflict, not something Undo overwrites.
     const contended = await client.callTool({
-      name: "void_execute",
+      name: "nomo_execute",
       arguments: {
         operationId: "op-mcp-contended",
         runId: "mcp-run-2",
@@ -147,8 +147,8 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
     });
     if (contended.isError === true) throw new Error(`the second mutation was refused: ${JSON.stringify(payload(contended))}`);
     await writeFile(subject, Buffer.from("a human edited this after the capture\n", "utf8"), { mode: 0o600 });
-    const contestedPlan = await client.callTool({ name: "void_recovery_plan", arguments: { operationId: "op-mcp-contended" } });
-    const contestedApply = await client.callTool({ name: "void_recovery_apply", arguments: { plan: payload(contestedPlan) } });
+    const contestedPlan = await client.callTool({ name: "nomo_recovery_plan", arguments: { operationId: "op-mcp-contended" } });
+    const contestedApply = await client.callTool({ name: "nomo_recovery_apply", arguments: { plan: payload(contestedPlan) } });
     const outcome = payload(contestedApply).status;
     if (outcome !== "conflict") throw new Error(`a human edit produced ${String(outcome)} instead of a conflict`);
     assert.equal(
@@ -172,14 +172,14 @@ export async function runMcpReverseExercise(options: { readonly keep?: boolean }
     const lockedTransport = new StdioClientTransport({
       command: process.execPath,
       args: [bin(), "recovery", "serve", "--config", config],
-      env: { ...process.env, VOID_EXERCISE_KEY: randomBytes(32).toString("base64") },
+      env: { ...process.env, NOMO_EXERCISE_KEY: randomBytes(32).toString("base64") },
       stderr: "pipe",
     });
     try {
       await locked.connect(lockedTransport);
       const before = await readFile(subject);
       const refused = await locked.callTool({
-        name: "void_execute",
+        name: "nomo_execute",
         arguments: {
           operationId: "op-mcp-locked",
           runId: "mcp-run-2",

@@ -21,21 +21,21 @@ test("SDK docs match the public barrel", () => {
   const barrel = readFileSync("packages/sdk/src/index.ts", "utf8");
   const docs = readFileSync("docs/SDK.md", "utf8");
   for (const name of [
-    "VoidClient",
-    "createVoidClient",
+    "NomoClient",
+    "createNomoClient",
     "holdHandle",
     "HoldDeniedError",
     "LedgerVerifyError",
     "PolicyStartupError",
     "RefusedError",
     "McpLikeClient",
-    "VoidClientOptions",
-    "VoidClock",
-    "VoidConnect",
+    "NomoClientOptions",
+    "NomoClock",
+    "NomoConnect",
     "HoldHandle",
     "HoldHandleOptions",
     "RefusalReason",
-    "VoidErrorCode",
+    "NomoErrorCode",
   ]) {
     assert.match(barrel, new RegExp(`\\b${name}\\b`), name);
     assert.match(docs, new RegExp(`\\b${name}\\b`), name);

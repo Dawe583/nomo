@@ -106,7 +106,7 @@ release gate. In particular:
   server-originated token round trips through the production `Session`; a
   reserved upstream id is never re-issued. Two limits remain by design: an
   upstream that echoes a progress token with a different JSON type than it was
-  sent still gets no frame, and `VoidClient` no longer coerces a response id
+  sent still gets no frame, and `NomoClient` no longer coerces a response id
   with `Number()`, which is hardening the full stack cannot reach a test for,
   because the proxy drops a string response id before the client sees it.
 - Ledger read limits (S13): closed at the entry boundary. `readLedgerEntries`
@@ -151,7 +151,7 @@ adds search, activity pause, keyboard-accessible record details and full digest
 inspection. Polling preserves the focused activity button. The four pages share
 workbench.css, served through an explicit static allowlist.
 
-The previously unwired `void watch` now reads the actual local ledger, checks
+The previously unwired `nomo watch` now reads the actual local ledger, checks
 signatures and provides selection, class filters, pause, detail, help and refresh.
 It offers no fake replay or approval controls. `--once`, piped output, CI,
 TERM=dumb and NO_COLOR emit a plain snapshot. This is the first runnable live
@@ -179,7 +179,7 @@ Run the current surfaces from the repository root:
 ```
 pnpm gui
 pnpm watch --workspace default
-node packages/cli/bin/void.mjs watch --workspace default --once
+node packages/cli/bin/nomo.mjs watch --workspace default --once
 ```
 
 GUI defaults to http://127.0.0.1:8081. `PORT` chooses another local port.

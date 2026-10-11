@@ -3,7 +3,7 @@
 ## Implemented
 
 Shared web and desktop React shell now uses neutral surfaces, compact spacing,
-VOID aperture branding and restrained orange accents. Secondary conversation
+NOMO aperture branding and restrained orange accents. Secondary conversation
 settings moved to the existing accessible dialog. Notices scroll separately from
 the composer form. Context compaction stays mounted in the transcript. Explicit
 public demo routes do not poll private workspace APIs. No dependency or backend

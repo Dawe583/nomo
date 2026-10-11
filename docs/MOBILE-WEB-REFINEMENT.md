@@ -14,9 +14,9 @@ native iOS application.
 - Theme, language, animation preference, export and context move into a mobile
   options popover. New conversation remains directly accessible in the header.
   The old sub-360 px rule that hid the language control is removed.
-- Model/search dialogs become bottom sheets. The original VOID aperture logo,
+- Model/search dialogs become bottom sheets. The original NOMO aperture logo,
   colors and typography families remain intact. Composition takes inspiration
-  from Claude's focused mobile chat rather than replacing VOID branding.
+  from Claude's focused mobile chat rather than replacing NOMO branding.
 - Motion 13.2 uses LazyMotion with domAnimation and lightweight m components
   for welcome/starter entrance, message entrance, drawer, backdrop, context,
   dialogs and tap feedback. Existing CSS supplies surface and focus effects.

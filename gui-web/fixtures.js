@@ -1,5 +1,5 @@
 // MOCK fixtures only. Nothing here came from a live session.
-window.VOID_FIXTURES = {
+window.NOMO_FIXTURES = {
   session: { id: "sess-demo-01", agent: "demo-agent", started: "2026-09-08T08:00:00Z" },
   calls: [
     { t: "08:00:11", tool: "fs.read", target: "/repo/README.md", cls: "R0", decision: "forward", blast: 1, note: "Read returns prior state untouched, inverse is trivial." },
@@ -85,14 +85,14 @@ window.VOID_FIXTURES = {
     { frame: "replay step", maps: "inverse or compensation plus order" }
   ],
   cliCommands: [
-    { cmd: "void run", desc: "Wrap an agent session through the proxy.", ex: "void run -- npx agent" },
-    { cmd: "void approvals", desc: "List and resolve pending holds.", ex: "void approvals --json" },
-    { cmd: "void ledger verify", desc: "Verify chain links and signatures.", ex: "void ledger verify" },
-    { cmd: "void replay", desc: "Preview or run inverses in taint order.", ex: "void replay --to 7 --dry-run" },
-    { cmd: "void policy test", desc: "Test a policy file against a transcript.", ex: "void policy test --policy policy/default.yaml --transcript fixtures/session.jsonl" },
-    { cmd: "void classify", desc: "Print class distribution over a transcript.", ex: "void classify --transcript fixtures/session.jsonl" },
-    { cmd: "void probe", desc: "Measure blast radius for one statement.", ex: "void probe -- db.query DELETE FROM orders" },
-    { cmd: "void export", desc: "Export a signed period slice.", ex: "void export --period 2026-09 --sign" }
+    { cmd: "nomo run", desc: "Wrap an agent session through the proxy.", ex: "nomo run -- npx agent" },
+    { cmd: "nomo approvals", desc: "List and resolve pending holds.", ex: "nomo approvals --json" },
+    { cmd: "nomo ledger verify", desc: "Verify chain links and signatures.", ex: "nomo ledger verify" },
+    { cmd: "nomo replay", desc: "Preview or run inverses in taint order.", ex: "nomo replay --to 7 --dry-run" },
+    { cmd: "nomo policy test", desc: "Test a policy file against a transcript.", ex: "nomo policy test --policy policy/default.yaml --transcript fixtures/session.jsonl" },
+    { cmd: "nomo classify", desc: "Print class distribution over a transcript.", ex: "nomo classify --transcript fixtures/session.jsonl" },
+    { cmd: "nomo probe", desc: "Measure blast radius for one statement.", ex: "nomo probe -- db.query DELETE FROM orders" },
+    { cmd: "nomo export", desc: "Export a signed period slice.", ex: "nomo export --period 2026-09 --sign" }
   ],
   keys: [
     { id: "dev-01", alg: "ed25519", state: "active", note: "Verify reports development key, never plain valid." },

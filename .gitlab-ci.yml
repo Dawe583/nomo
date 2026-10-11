@@ -24,7 +24,7 @@ include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
 
 workflow:
-  name: "VOID Linux gates and merge request Pages preview"
+  name: "NOMO Linux gates and merge request Pages preview"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -117,7 +117,7 @@ manifest:
     - node --test packages/connectors/src/manifest.test.ts packages/workbench/src/storage.test.ts apps/control-plane/api/server.test.ts
     - node --test --test-concurrency=2 packages/runtime/src/*.test.ts packages/ledger/src/*.test.ts packages/proxy/src/bin.test.ts
     - node --test packages/connectors/src/filesystem/managed.test.ts packages/cli/src/recovery-filesystem.test.ts packages/cli/src/recovery-mcp.test.ts packages/cli/src/recovery-paths.test.ts packages/cli/src/conformance.test.ts
-    - node packages/cli/bin/void.mjs recovery conformance
+    - node packages/cli/bin/nomo.mjs recovery conformance
 
 # Not mirrored: the `isolated-postgres` job in
 # .github/workflows/cloud-integration.yml. GitLab does run a Postgres service
@@ -134,7 +134,7 @@ manifest:
 # Not mirrored: the `hosted-mcp` job in .github/workflows/ci.yml. It runs on
 # Linux too, but it is a Python job that also needs the Node tree installed,
 # and no stock image carries both at the versions it asks for: Node 24 with
-# Python 3.14, which python/void-transport/pyproject.toml requires as
+# Python 3.14, which python/nomo-transport/pyproject.toml requires as
 # `>=3.14`. Installing a second toolchain into the image is a step with no
 # script in package.json and no file in this repository behind it, so the job
 # stays on GitHub where `actions/setup-python` selects the interpreter. The

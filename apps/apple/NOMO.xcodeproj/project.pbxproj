@@ -1,0 +1,615 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		034A0CA6BB822409BAFF2730 /* ChatMessageRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66643D18A782F8AC79775796 /* ChatMessageRow.swift */; };
+		14ACD371759AD397D6A8B4EB /* MarkdownText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 069B58CCDB2BB3DAA0C1B092 /* MarkdownText.swift */; };
+		236412136A6C257B63E48782 /* NOMOApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E0C0E217C398A155C6D5818 /* NOMOApp.swift */; };
+		24A63EB062EC8453A4F1752D /* NOMOAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C352AC5BD7C0AAB3C9F84BE6 /* NOMOAppTests.swift */; };
+		2C6E479B9B22727CF5F61850 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE3F7B521569DA9F9421304 /* ChatView.swift */; };
+		388E4B1FB90219003155ED9D /* AppCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A267C0BB7F6B06D791262 /* AppCopy.swift */; };
+		409B8F252D4D842011C5FCC6 /* CompanionProtocolKit in Frameworks */ = {isa = PBXBuildFile; productRef = BC05D6314E1AD5F868FEF1B7 /* CompanionProtocolKit */; };
+		455B5B04AF3C16C9F3FD82D1 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE89CFEF35AA0763D1A2C9E3 /* RootView.swift */; };
+		525D0803CE5AE8FE975765A2 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD22D6D45B99CA089BD82831 /* SessionDetailView.swift */; };
+		72085085647CCD718A536C60 /* ChatTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BAA73D5C5DAA079E53370A7 /* ChatTheme.swift */; };
+		AFB222E54D803A55F19DDCC4 /* NOMOUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D9BCF76AB13E84D8FCC7C92 /* NOMOUITests.swift */; };
+		B600DAE410C01DAE1BE88C8A /* CompanionProtocolKit in Frameworks */ = {isa = PBXBuildFile; productRef = 358681D50997062B3D27FB32 /* CompanionProtocolKit */; };
+		D2C4E24497C2B8BADBE57687 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E541980E06C2B67D15C4AFB /* AppModel.swift */; };
+		D882B55C825ABFF7E57900AB /* ChatModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 069AC37B7780568071E291FD /* ChatModel.swift */; };
+		DB331E729AFD1D3BD85F165F /* SampleChatTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5878C8B196127D16184CC9C4 /* SampleChatTransport.swift */; };
+		E1ACB7FC666F115341FD4839 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632D76475C8156827A866303 /* OnboardingView.swift */; };
+		F37D2A73D542DB379A0A49E4 /* ChatCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CE6B04A8608D4EF90030E15 /* ChatCopy.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1E9BBF5A7985EDF31F8629EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E5F7A800BDDA712B521F211C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3D54383970723E01C784A2DF;
+			remoteInfo = NOMO;
+		};
+		2AA1D27C5A7C9ACC13517288 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E5F7A800BDDA712B521F211C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3D54383970723E01C784A2DF;
+			remoteInfo = NOMO;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		069AC37B7780568071E291FD /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
+		069B58CCDB2BB3DAA0C1B092 /* MarkdownText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownText.swift; sourceTree = "<group>"; };
+		0BF2E57846587D9C16512D9E /* NOMOUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = NOMOUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D9BCF76AB13E84D8FCC7C92 /* NOMOUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NOMOUITests.swift; sourceTree = "<group>"; };
+		3E0C0E217C398A155C6D5818 /* NOMOApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NOMOApp.swift; sourceTree = "<group>"; };
+		4D7A267C0BB7F6B06D791262 /* AppCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCopy.swift; sourceTree = "<group>"; };
+		5878C8B196127D16184CC9C4 /* SampleChatTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleChatTransport.swift; sourceTree = "<group>"; };
+		632D76475C8156827A866303 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		64905908C1A143B7B6787BDE /* NOMOTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = NOMOTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		66643D18A782F8AC79775796 /* ChatMessageRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageRow.swift; sourceTree = "<group>"; };
+		7426F6A71101124F94882694 /* CompanionProtocolKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CompanionProtocolKit; path = CompanionProtocolKit; sourceTree = SOURCE_ROOT; };
+		79B6B76153D2B859FCA8800C /* NOMO.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = NOMO.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9AE3F7B521569DA9F9421304 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		9BAA73D5C5DAA079E53370A7 /* ChatTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatTheme.swift; sourceTree = "<group>"; };
+		9CE6B04A8608D4EF90030E15 /* ChatCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatCopy.swift; sourceTree = "<group>"; };
+		9E541980E06C2B67D15C4AFB /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		C352AC5BD7C0AAB3C9F84BE6 /* NOMOAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NOMOAppTests.swift; sourceTree = "<group>"; };
+		DD22D6D45B99CA089BD82831 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+		EE89CFEF35AA0763D1A2C9E3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		FBE5375E151ACC97D65FB88F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		41431CEFCE6BAA23EB1487C5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B600DAE410C01DAE1BE88C8A /* CompanionProtocolKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A417AD0C6CC4E157DD02FCF4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				409B8F252D4D842011C5FCC6 /* CompanionProtocolKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		12160EB4F8540451E81DD656 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				79B6B76153D2B859FCA8800C /* NOMO.app */,
+				64905908C1A143B7B6787BDE /* NOMOTests.xctest */,
+				0BF2E57846587D9C16512D9E /* NOMOUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2D21EFE2682F3583E387AC32 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				7426F6A71101124F94882694 /* CompanionProtocolKit */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		5AF8C8F2D2BDE72AADC9E036 /* NOMOTests */ = {
+			isa = PBXGroup;
+			children = (
+				C352AC5BD7C0AAB3C9F84BE6 /* NOMOAppTests.swift */,
+			);
+			path = NOMOTests;
+			sourceTree = "<group>";
+		};
+		8CF55C4691DDA831B684E068 /* NOMOApp */ = {
+			isa = PBXGroup;
+			children = (
+				4D7A267C0BB7F6B06D791262 /* AppCopy.swift */,
+				9E541980E06C2B67D15C4AFB /* AppModel.swift */,
+				9CE6B04A8608D4EF90030E15 /* ChatCopy.swift */,
+				66643D18A782F8AC79775796 /* ChatMessageRow.swift */,
+				069AC37B7780568071E291FD /* ChatModel.swift */,
+				9BAA73D5C5DAA079E53370A7 /* ChatTheme.swift */,
+				9AE3F7B521569DA9F9421304 /* ChatView.swift */,
+				FBE5375E151ACC97D65FB88F /* Info.plist */,
+				069B58CCDB2BB3DAA0C1B092 /* MarkdownText.swift */,
+				3E0C0E217C398A155C6D5818 /* NOMOApp.swift */,
+				632D76475C8156827A866303 /* OnboardingView.swift */,
+				EE89CFEF35AA0763D1A2C9E3 /* RootView.swift */,
+				5878C8B196127D16184CC9C4 /* SampleChatTransport.swift */,
+				DD22D6D45B99CA089BD82831 /* SessionDetailView.swift */,
+			);
+			path = NOMOApp;
+			sourceTree = "<group>";
+		};
+		905192DEF3360ADFF7A9E2F6 = {
+			isa = PBXGroup;
+			children = (
+				8CF55C4691DDA831B684E068 /* NOMOApp */,
+				5AF8C8F2D2BDE72AADC9E036 /* NOMOTests */,
+				EE1117A04CB8CC8566B9DB33 /* NOMOUITests */,
+				2D21EFE2682F3583E387AC32 /* Packages */,
+				12160EB4F8540451E81DD656 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		EE1117A04CB8CC8566B9DB33 /* NOMOUITests */ = {
+			isa = PBXGroup;
+			children = (
+				3D9BCF76AB13E84D8FCC7C92 /* NOMOUITests.swift */,
+			);
+			path = NOMOUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3D54383970723E01C784A2DF /* NOMO */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A849D40D9C5370976DD814B7 /* Build configuration list for PBXNativeTarget "NOMO" */;
+			buildPhases = (
+				13E5305ED63BA403AE5B7286 /* Sources */,
+				A417AD0C6CC4E157DD02FCF4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NOMO;
+			packageProductDependencies = (
+				BC05D6314E1AD5F868FEF1B7 /* CompanionProtocolKit */,
+			);
+			productName = NOMO;
+			productReference = 79B6B76153D2B859FCA8800C /* NOMO.app */;
+			productType = "com.apple.product-type.application";
+		};
+		695DAC7108272C8C7C49FDC4 /* NOMOUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F8E1CC8CD03392AED218B161 /* Build configuration list for PBXNativeTarget "NOMOUITests" */;
+			buildPhases = (
+				7585F5C83CB266DDA1AD07D6 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D74BC8C7595809536FF2F0A5 /* PBXTargetDependency */,
+			);
+			name = NOMOUITests;
+			packageProductDependencies = (
+			);
+			productName = NOMOUITests;
+			productReference = 0BF2E57846587D9C16512D9E /* NOMOUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		817709B54AADA7094F47AEA5 /* NOMOTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 58658B9CD80AD8BA5FEE2DB3 /* Build configuration list for PBXNativeTarget "NOMOTests" */;
+			buildPhases = (
+				E0D95615C2FCFFC8739C62F3 /* Sources */,
+				41431CEFCE6BAA23EB1487C5 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5C1E7B206FC4828E4C7AFFAD /* PBXTargetDependency */,
+			);
+			name = NOMOTests;
+			packageProductDependencies = (
+				358681D50997062B3D27FB32 /* CompanionProtocolKit */,
+			);
+			productName = NOMOTests;
+			productReference = 64905908C1A143B7B6787BDE /* NOMOTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E5F7A800BDDA712B521F211C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					695DAC7108272C8C7C49FDC4 = {
+						TestTargetID = 3D54383970723E01C784A2DF;
+					};
+				};
+			};
+			buildConfigurationList = D1D8839F75EB7A0006C4354E /* Build configuration list for PBXProject "NOMO" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 905192DEF3360ADFF7A9E2F6;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				553DFF880D5822FE82EF6EBA /* XCLocalSwiftPackageReference "CompanionProtocolKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 12160EB4F8540451E81DD656 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3D54383970723E01C784A2DF /* NOMO */,
+				817709B54AADA7094F47AEA5 /* NOMOTests */,
+				695DAC7108272C8C7C49FDC4 /* NOMOUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		13E5305ED63BA403AE5B7286 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				388E4B1FB90219003155ED9D /* AppCopy.swift in Sources */,
+				D2C4E24497C2B8BADBE57687 /* AppModel.swift in Sources */,
+				F37D2A73D542DB379A0A49E4 /* ChatCopy.swift in Sources */,
+				034A0CA6BB822409BAFF2730 /* ChatMessageRow.swift in Sources */,
+				D882B55C825ABFF7E57900AB /* ChatModel.swift in Sources */,
+				72085085647CCD718A536C60 /* ChatTheme.swift in Sources */,
+				2C6E479B9B22727CF5F61850 /* ChatView.swift in Sources */,
+				14ACD371759AD397D6A8B4EB /* MarkdownText.swift in Sources */,
+				236412136A6C257B63E48782 /* NOMOApp.swift in Sources */,
+				E1ACB7FC666F115341FD4839 /* OnboardingView.swift in Sources */,
+				455B5B04AF3C16C9F3FD82D1 /* RootView.swift in Sources */,
+				DB331E729AFD1D3BD85F165F /* SampleChatTransport.swift in Sources */,
+				525D0803CE5AE8FE975765A2 /* SessionDetailView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7585F5C83CB266DDA1AD07D6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFB222E54D803A55F19DDCC4 /* NOMOUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E0D95615C2FCFFC8739C62F3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				24A63EB062EC8453A4F1752D /* NOMOAppTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5C1E7B206FC4828E4C7AFFAD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3D54383970723E01C784A2DF /* NOMO */;
+			targetProxy = 1E9BBF5A7985EDF31F8629EE /* PBXContainerItemProxy */;
+		};
+		D74BC8C7595809536FF2F0A5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3D54383970723E01C784A2DF /* NOMO */;
+			targetProxy = 2AA1D27C5A7C9ACC13517288 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		11F0C076237FEA3F0A479353 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.void.companion.tests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/NOMO.app/NOMO";
+			};
+			name = Debug;
+		};
+		21BC435FB9F4D4A781635C6D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4333BD2A6BD1167053B9E8A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.void.companion.tests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/NOMO.app/NOMO";
+			};
+			name = Release;
+		};
+		4CF09E9BDEA81B2C3C194233 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.void.companion.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = NOMO;
+			};
+			name = Release;
+		};
+		5374B3D80F0B18C6DDB8166E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NOMOApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NOMO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "NOMO does not use Face ID.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "NOMO connects only to a trusted executor you explicitly pair.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.void.companion;
+				PRODUCT_NAME = NOMO;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A53B244FF73599F4473A3359 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A736757F0B68BF50C86D608B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.void.companion.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = NOMO;
+			};
+			name = Debug;
+		};
+		D434B0A34436D80BBEBB53D0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NOMOApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NOMO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "NOMO does not use Face ID.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "NOMO connects only to a trusted executor you explicitly pair.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.void.companion;
+				PRODUCT_NAME = NOMO;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		58658B9CD80AD8BA5FEE2DB3 /* Build configuration list for PBXNativeTarget "NOMOTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				11F0C076237FEA3F0A479353 /* Debug */,
+				4333BD2A6BD1167053B9E8A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A849D40D9C5370976DD814B7 /* Build configuration list for PBXNativeTarget "NOMO" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5374B3D80F0B18C6DDB8166E /* Debug */,
+				D434B0A34436D80BBEBB53D0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D1D8839F75EB7A0006C4354E /* Build configuration list for PBXProject "NOMO" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				21BC435FB9F4D4A781635C6D /* Debug */,
+				A53B244FF73599F4473A3359 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F8E1CC8CD03392AED218B161 /* Build configuration list for PBXNativeTarget "NOMOUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A736757F0B68BF50C86D608B /* Debug */,
+				4CF09E9BDEA81B2C3C194233 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		553DFF880D5822FE82EF6EBA /* XCLocalSwiftPackageReference "CompanionProtocolKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = CompanionProtocolKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		358681D50997062B3D27FB32 /* CompanionProtocolKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CompanionProtocolKit;
+		};
+		BC05D6314E1AD5F868FEF1B7 /* CompanionProtocolKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CompanionProtocolKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E5F7A800BDDA712B521F211C /* Project object */;
+}

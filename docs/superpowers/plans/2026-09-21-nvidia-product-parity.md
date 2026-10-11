@@ -15,7 +15,7 @@ Task 4 uses persisted Workbench queued-run snapshots with a twenty-item local ca
 
 **Architecture:** Extend the existing OpenAI-compatible provider and Workbench contracts instead of introducing a second transport. Keep the server/runtime as the authority for credentials, policy, ledger, run lifecycle, and recovery; web, desktop, and TUI consume the same typed view models while rendering platform-specific controls.
 
-**Tech Stack:** TypeScript, Node test runner, React 19, Vite, TanStack Query, Motion, Tauri shared web bundle, ANSI TUI, existing VOID runtime/policy/ledger/recovery modules.
+**Tech Stack:** TypeScript, Node test runner, React 19, Vite, TanStack Query, Motion, Tauri shared web bundle, ANSI TUI, existing NOMO runtime/policy/ledger/recovery modules.
 
 **Spec:** `docs/superpowers/specs/2026-09-21-nvidia-product-parity-design.md`
 
@@ -56,7 +56,7 @@ Task 4 uses persisted Workbench queued-run snapshots with a twenty-item local ca
 - [ ] Implement constants, preset selection, environment loading, and migration without rewriting existing sessions.
 - [ ] Add NVIDIA catalog/stream/tool-call fixtures and redaction assertions.
 - [ ] Run the focused workbench provider tests; confirm GREEN.
-- [ ] Run `pnpm --filter @void/workbench typecheck`.
+- [ ] Run `pnpm --filter @nomo/workbench typecheck`.
 - [ ] Commit: `feat: make nvidia glm flash the default provider`.
 
 ### Task 2: Provider setup and quota states

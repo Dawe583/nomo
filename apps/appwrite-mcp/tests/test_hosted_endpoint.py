@@ -8,7 +8,7 @@ does the code the runtime executes actually complete ``initialize``,
 returned, because a transport that returns a well formed 200 carrying the
 wrong body is the failure this endpoint would have shipped unnoticed.
 
-The tool names, the payload keys of ``void_project_info`` and the JSON-RPC
+The tool names, the payload keys of ``nomo_project_info`` and the JSON-RPC
 envelope are written out rather than imported from ``app.py``: a test that
 reads its expectation out of the code it is checking cannot fail.
 
@@ -26,16 +26,16 @@ import unittest
 
 from mcp_types.version import HANDSHAKE_PROTOCOL_VERSIONS
 
-from appwrite_mcp import void_data
+from appwrite_mcp import nomo_data
 from tests.support_context import invoke
 
 TOOL_NAMES = [
-    "void_project_info",
-    "void_registry_search",
-    "void_registry_entry",
-    "void_registry_summary",
-    "void_local_tools",
-    "void_cli_commands",
+    "nomo_project_info",
+    "nomo_registry_search",
+    "nomo_registry_entry",
+    "nomo_registry_summary",
+    "nomo_local_tools",
+    "nomo_cli_commands",
 ]
 
 PROJECT_INFO_KEYS = {
@@ -71,16 +71,16 @@ class InitializeTest(unittest.TestCase):
                 "params": {
                     "protocolVersion": "2025-06-18",
                     "capabilities": {},
-                    "clientInfo": {"name": "void-hosted-test", "version": "0.1.0"},
+                    "clientInfo": {"name": "nomo-hosted-test", "version": "0.1.0"},
                 },
             }
         )
 
         result = envelope(response)["result"]
-        self.assertEqual(result["serverInfo"]["name"], "VOID")
+        self.assertEqual(result["serverInfo"]["name"], "NOMO")
         self.assertIn("version", result["serverInfo"])
         self.assertEqual(result["protocolVersion"], "2025-06-18")
-        self.assertEqual(result["instructions"][:4], "VOID")
+        self.assertEqual(result["instructions"][:4], "NOMO")
         self.assertEqual(response.headers["content-type"], "application/json")
 
     def test_initialize_echoes_the_request_id(self) -> None:
@@ -94,7 +94,7 @@ class InitializeTest(unittest.TestCase):
                 "params": {
                     "protocolVersion": "2025-11-25",
                     "capabilities": {},
-                    "clientInfo": {"name": "void-hosted-test", "version": "0.1.0"},
+                    "clientInfo": {"name": "nomo-hosted-test", "version": "0.1.0"},
                 },
             }
         )
@@ -113,7 +113,7 @@ class InitializeTest(unittest.TestCase):
                 "params": {
                     "protocolVersion": "1999-01-01",
                     "capabilities": {},
-                    "clientInfo": {"name": "void-hosted-test", "version": "0.1.0"},
+                    "clientInfo": {"name": "nomo-hosted-test", "version": "0.1.0"},
                 },
             }
         )
@@ -136,7 +136,7 @@ class InitializeTest(unittest.TestCase):
                 "params": {
                     "protocolVersion": "2025-06-18",
                     "capabilities": {},
-                    "clientInfo": {"name": "void-hosted-test", "version": "0.1.0"},
+                    "clientInfo": {"name": "nomo-hosted-test", "version": "0.1.0"},
                 },
             }
         )
@@ -200,10 +200,10 @@ class ToolCallTest(unittest.TestCase):
 
     def test_project_info_says_how_to_connect(self) -> None:
         # The first thing a caller needs is where it is talking to. Without
-        # this the endpoint answers what it knows about VOID and leaves the
+        # this the endpoint answers what it knows about NOMO and leaves the
         # address that reached it to be discovered by reading the config the
         # caller already had.
-        connect = self.payload("void_project_info")["connect"]
+        connect = self.payload("nomo_project_info")["connect"]
         self.assertEqual(connect["tools"], 6)
         self.assertIn("HTTP", connect["transport"])
         self.assertIn("read-only", connect["authentication"])
@@ -212,19 +212,19 @@ class ToolCallTest(unittest.TestCase):
         import os
 
         declared = "https://chat.voidagent.tech"
-        previous = os.environ.get("VOID_MCP_ENDPOINT")
-        os.environ["VOID_MCP_ENDPOINT"] = declared
+        previous = os.environ.get("NOMO_MCP_ENDPOINT")
+        os.environ["NOMO_MCP_ENDPOINT"] = declared
         try:
-            connect = self.payload("void_project_info")["connect"]
+            connect = self.payload("nomo_project_info")["connect"]
             self.assertEqual(connect["endpoint"], declared)
             parsed = json.loads(connect["mcp_client_config"])
-            self.assertEqual(parsed["mcpServers"]["void"]["url"], declared)
-            self.assertEqual(parsed["mcpServers"]["void"]["type"], "http")
+            self.assertEqual(parsed["mcpServers"]["nomo"]["url"], declared)
+            self.assertEqual(parsed["mcpServers"]["nomo"]["type"], "http")
         finally:
             if previous is None:
-                os.environ.pop("VOID_MCP_ENDPOINT", None)
+                os.environ.pop("NOMO_MCP_ENDPOINT", None)
             else:
-                os.environ["VOID_MCP_ENDPOINT"] = previous
+                os.environ["NOMO_MCP_ENDPOINT"] = previous
 
     def test_an_undeclared_endpoint_emits_no_pasteable_config(self) -> None:
         # A configuration with an empty `url` looks pasteable and then fails on
@@ -233,20 +233,20 @@ class ToolCallTest(unittest.TestCase):
         # undeclared address.
         import os
 
-        previous = os.environ.get("VOID_MCP_ENDPOINT")
-        os.environ.pop("VOID_MCP_ENDPOINT", None)
+        previous = os.environ.get("NOMO_MCP_ENDPOINT")
+        os.environ.pop("NOMO_MCP_ENDPOINT", None)
         try:
-            connect = self.payload("void_project_info")["connect"]
+            connect = self.payload("nomo_project_info")["connect"]
             self.assertEqual(connect["endpoint"], "")
             self.assertEqual(connect["mcp_client_config"], "")
         finally:
             if previous is not None:
-                os.environ["VOID_MCP_ENDPOINT"] = previous
+                os.environ["NOMO_MCP_ENDPOINT"] = previous
 
     def test_project_info_returns_json_with_the_documented_keys(self) -> None:
-        data = self.payload("void_project_info")
+        data = self.payload("nomo_project_info")
         self.assertEqual(set(data), PROJECT_INFO_KEYS)
-        self.assertEqual(data["name"], "VOID")
+        self.assertEqual(data["name"], "NOMO")
         self.assertIn("local", data["local_recovery"])
         self.assertFalse(data["hosted_execution"])
 
@@ -254,15 +254,15 @@ class ToolCallTest(unittest.TestCase):
         # The number is not hard-coded here. What is asserted is that the
         # endpoint's own total equals the registry file's own total, which is
         # the property that has to survive somebody adding a vendor.
-        data = self.payload("void_registry_summary")
-        source = void_data.registry_summary()
+        data = self.payload("nomo_registry_summary")
+        source = nomo_data.registry_summary()
         self.assertEqual(data["operations"], source["operations"])
         self.assertEqual(data["cases"], source["cases"])
         self.assertEqual(data["vendors"], source["vendors"])
         self.assertEqual(data["unparsed_entries"], 0)
 
     def test_registry_search_returns_matching_cases_and_says_when_it_truncates(self) -> None:
-        data = self.payload("void_registry_search", {"query": "aws.s3.object.put"})
+        data = self.payload("nomo_registry_search", {"query": "aws.s3.object.put"})
         self.assertTrue(data["total_matched"] >= 1)
         self.assertFalse(data["truncated"])
         for row in data["results"]:
@@ -276,7 +276,7 @@ class ToolCallTest(unittest.TestCase):
         # for them — indistinguishable from an empty catalogue.
         for phrase in ("delete marker", "lifecycle rule"):
             with self.subTest(phrase=phrase):
-                data = self.payload("void_registry_search", {"query": phrase, "limit": 5})
+                data = self.payload("nomo_registry_search", {"query": phrase, "limit": 5})
                 self.assertGreaterEqual(
                     data["total_matched"],
                     1,
@@ -300,7 +300,7 @@ class ToolCallTest(unittest.TestCase):
         # one field and the summary in another — so a substring match answered
         # zero for the most obvious query against this registry, while each word
         # on its own found rows. Every word has to match, in any field.
-        data = self.payload("void_registry_search", {"query": "stripe refund", "limit": 5})
+        data = self.payload("nomo_registry_search", {"query": "stripe refund", "limit": 5})
         self.assertGreaterEqual(data["total_matched"], 1, "'stripe refund' matched nothing")
         for row in data["results"]:
             haystack = json.dumps(row).lower()
@@ -308,7 +308,7 @@ class ToolCallTest(unittest.TestCase):
             self.assertIn("refund", haystack)
 
     def test_registry_search_filters_by_class(self) -> None:
-        data = self.payload("void_registry_search", {"tone": "r3", "limit": 5})
+        data = self.payload("nomo_registry_search", {"tone": "r3", "limit": 5})
         self.assertLessEqual(len(data["results"]), 5)
         for row in data["results"]:
             self.assertEqual(row["tone"], "r3")
@@ -317,7 +317,7 @@ class ToolCallTest(unittest.TestCase):
         # A typo in the class must not be answered as an empty result set,
         # which a client reads as "nothing is r9" rather than "that is not a
         # class". The refusal names what it received.
-        data = self.payload("void_registry_search", {"tone": "r9"})
+        data = self.payload("nomo_registry_search", {"tone": "r9"})
         self.assertIn("error", data)
         self.assertIn("r9", data["received"])
 
@@ -326,7 +326,7 @@ class ToolCallTest(unittest.TestCase):
         # tool evaluates. Publishing one without the other answers a different
         # question than the one the catalogue exists for, so both are asserted
         # on a case that carries a conjunction rather than on the first row.
-        data = self.payload("void_registry_entry", {"operation_id": "stripe.refund.create"})
+        data = self.payload("nomo_registry_entry", {"operation_id": "stripe.refund.create"})
         self.assertTrue(data["found"])
         gates = [case for case in data["cases"] if case.get("if")]
         self.assertGreaterEqual(len(gates), 1, "no case published its gate")
@@ -348,7 +348,7 @@ class ToolCallTest(unittest.TestCase):
         # A caller checks `stripe.balance_covers_refund` and a caller searches
         # for it by that name. It appears in no prose field, so a search that
         # read only the prose answered zero for a string the registry holds.
-        data = self.payload("void_registry_search", {"query": "balance_covers_refund", "limit": 5})
+        data = self.payload("nomo_registry_search", {"query": "balance_covers_refund", "limit": 5})
         self.assertGreaterEqual(data["total_matched"], 1)
         for row in data["results"]:
             self.assertIn("if", row, "a search result published without its gate")
@@ -358,7 +358,7 @@ class ToolCallTest(unittest.TestCase):
         # searches for by name, and it sits one level down inside `of`. Reading
         # only the gate's own fields finds the first arm and misses this one,
         # which answers zero for a name the registry carries.
-        data = self.payload("void_registry_search", {"query": "tip_recorded", "limit": 5})
+        data = self.payload("nomo_registry_search", {"query": "tip_recorded", "limit": 5})
         self.assertGreaterEqual(data["total_matched"], 1)
         for row in data["results"]:
             gate = row.get("if") or {}
@@ -369,7 +369,7 @@ class ToolCallTest(unittest.TestCase):
             )
 
     def test_registry_entry_returns_every_precondition_for_one_operation(self) -> None:
-        data = self.payload("void_registry_entry", {"operation_id": "aws.s3.object.put"})
+        data = self.payload("nomo_registry_entry", {"operation_id": "aws.s3.object.put"})
         self.assertTrue(data["found"])
         self.assertEqual(data["vendor"], "aws")
         self.assertGreaterEqual(data["case_count"], 2)
@@ -379,24 +379,24 @@ class ToolCallTest(unittest.TestCase):
             self.assertIn("window", case)
 
     def test_an_unknown_operation_is_an_answer_not_a_failure(self) -> None:
-        data = self.payload("void_registry_entry", {"operation_id": "not.a.real.operation"})
+        data = self.payload("nomo_registry_entry", {"operation_id": "not.a.real.operation"})
         self.assertFalse(data["found"])
         self.assertEqual(data["cases"], [])
 
     def test_local_tools_publishes_the_annotations_the_local_server_declares(self) -> None:
-        data = self.payload("void_local_tools")
+        data = self.payload("nomo_local_tools")
         self.assertFalse(data["hosted_execution"])
         self.assertEqual(data["transport"], "local stdio")
         names = {tool["name"] for tool in data["tools"]}
-        self.assertIn("void_execute", names)
-        self.assertIn("void_recovery_plan", names)
+        self.assertIn("nomo_execute", names)
+        self.assertIn("nomo_recovery_plan", names)
         # Read-only and write tools both exist locally, and the endpoint has to
         # carry that distinction rather than flattening the catalogue.
         self.assertIn(True, {tool["readOnly"] for tool in data["tools"]})
         self.assertIn(False, {tool["readOnly"] for tool in data["tools"]})
 
     def test_cli_commands_lists_the_dispatcher_surface(self) -> None:
-        data = self.payload("void_cli_commands")
+        data = self.payload("nomo_cli_commands")
         self.assertEqual(data["count"], len(data["commands"]))
         for expected in ("replay", "verify", "recovery", "classify"):
             self.assertIn(expected, data["commands"])
@@ -404,16 +404,16 @@ class ToolCallTest(unittest.TestCase):
     def test_an_unknown_tool_is_refused_on_the_result_channel(self) -> None:
         # The SDK reports a refused tool as a successful envelope carrying
         # MCP isError content, not as a JSON-RPC error. That is the wire
-        # contract the rest of VOID already documents, so the test pins the
+        # contract the rest of NOMO already documents, so the test pins the
         # contract a client actually has to handle: never a 500, never an
         # empty body, always an envelope that names the refused tool.
-        response = self.call("void_recovery_apply", request_id=7)
+        response = self.call("nomo_recovery_apply", request_id=7)
 
         payload = envelope(response)
         self.assertNotIn("error", payload)
         result = payload["result"]
         self.assertTrue(result["isError"])
-        self.assertIn("void_recovery_apply", result["content"][0]["text"])
+        self.assertIn("nomo_recovery_apply", result["content"][0]["text"])
 
     def test_a_malformed_body_is_a_json_rpc_parse_error(self) -> None:
         response = invoke(raw_text='{"jsonrpc":"2.0","id":8,"method":')
@@ -434,9 +434,9 @@ class RegistryCoverageTest(unittest.TestCase):
     """
 
     def test_every_registry_entry_became_at_least_one_case(self) -> None:
-        cases = void_data.registry_entries()
+        cases = nomo_data.registry_entries()
         self.assertGreater(len(cases), 0)
-        self.assertEqual(void_data.unparsed_entries(), ())
+        self.assertEqual(nomo_data.unparsed_entries(), ())
         self.assertTrue(all(case["tone"] in {"r0", "r1", "r2", "r3"} for case in cases))
 
     def test_the_case_count_exceeds_the_operation_count(self) -> None:
@@ -444,11 +444,11 @@ class RegistryCoverageTest(unittest.TestCase):
         # flattened catalogue is larger than the operation set. An equal count
         # means the parser collapsed preconditions, which loses the answer to
         # the only question the registry exists to answer.
-        summary = void_data.registry_summary()
+        summary = nomo_data.registry_summary()
         self.assertGreater(summary["cases"], summary["operations"])
 
     def test_every_local_tool_kept_its_annotation(self) -> None:
-        tools = void_data.local_tool_schema()
+        tools = nomo_data.local_tool_schema()
         self.assertEqual(len(tools), 8)
         for tool in tools:
             with self.subTest(tool=tool["name"]):
@@ -465,7 +465,7 @@ class RegistryCoverageTest(unittest.TestCase):
         self.assertEqual(
             json.dumps(snapshot_builder.build(), sort_keys=True),
             json.dumps(snapshot_builder.committed_snapshot(), sort_keys=True),
-            "void_snapshot.json is stale; run apps/appwrite-mcp/scripts/generate-snapshot.py",
+            "nomo_snapshot.json is stale; run apps/appwrite-mcp/scripts/generate-snapshot.py",
         )
 
 

@@ -20,7 +20,7 @@ import {
 } from "../../packages/runtime/src/index.ts";
 import { devKeyProvider } from "../../packages/ledger/src/sign.ts";
 assert.equal(
-  process.env.VOID_RECOVERY_DATABASE_TEST,
+  process.env.NOMO_RECOVERY_DATABASE_TEST,
   "1",
   "Explicit isolated test opt-in required.",
 );
@@ -49,7 +49,7 @@ const suffix = randomBytes(8).toString("hex"),
   ruleMetadata = "qa_recovery_rule_" + suffix,
   defaultMetadata = "qa_recovery_default_" + suffix,
   nullDefaultMetadata = "qa_recovery_null_default_" + suffix;
-const root = await mkdtemp(join(tmpdir(), "void-real-postgres-"));
+const root = await mkdtemp(join(tmpdir(), "nomo-real-postgres-"));
 const connect = async () => {
   const c = await pool.connect();
   // Terminated test backends may report an asynchronous driver error.
@@ -272,7 +272,7 @@ try {
         stdio: ["ignore", "inherit", "inherit", "ipc"],
         env: {
           ...process.env,
-          VOID_POSTGRES_CRASH_CONFIG: JSON.stringify({
+          NOMO_POSTGRES_CRASH_CONFIG: JSON.stringify({
             mode,
             workspace: options.workspace,
             metadata: options.schema,

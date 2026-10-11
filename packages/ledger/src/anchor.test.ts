@@ -45,7 +45,7 @@ const anchorsIn = async (path: string): Promise<readonly AttestationDocument[]> 
 
 describe("verifyAnchor", () => {
   test("an anchored chain matches, and a longer one is growth rather than a failure", async (t) => {
-    const dir = await scratch(t, "void-anchor-grow-");
+    const dir = await scratch(t, "nomo-anchor-grow-");
     const { key, file } = await seed(dir, 3);
     const doc = await attestLedger(dir, workspace, key);
     const entries = await readLedgerEntries(file);
@@ -69,7 +69,7 @@ describe("verifyAnchor", () => {
   });
 
   test("a truncated but internally consistent chain fails", async (t) => {
-    const dir = await scratch(t, "void-anchor-truncate-");
+    const dir = await scratch(t, "nomo-anchor-truncate-");
     const { key, file } = await seed(dir, 4);
     const doc = await attestLedger(dir, workspace, key);
     const entries = await readLedgerEntries(file);
@@ -84,7 +84,7 @@ describe("verifyAnchor", () => {
   });
 
   test("an entry rewritten under the anchor fails on the anchored head", async (t) => {
-    const dir = await scratch(t, "void-anchor-rewrite-");
+    const dir = await scratch(t, "nomo-anchor-rewrite-");
     const { key, file } = await seed(dir, 3);
     const doc = await attestLedger(dir, workspace, key);
     const lines = (await readFile(file, "utf8"))
@@ -106,7 +106,7 @@ describe("verifyAnchor", () => {
   });
 
   test("an anchor signed by another key is not evidence of anything", async (t) => {
-    const dir = await scratch(t, "void-anchor-key-");
+    const dir = await scratch(t, "nomo-anchor-key-");
     const { key, file } = await seed(dir, 2);
     const doc = await attestLedger(dir, workspace, key);
     const other = await devKeyProvider({ dir: join(dir, "other-keys"), env: {} });
@@ -119,7 +119,7 @@ describe("verifyAnchor", () => {
 
 describe("anchor files", () => {
   test("an appended anchor file is read back and checked", async (t) => {
-    const dir = await scratch(t, "void-anchor-file-");
+    const dir = await scratch(t, "nomo-anchor-file-");
     const { key, file } = await seed(dir, 2);
     const anchorFile = join(dir, "out-of-band", "anchors.jsonl");
     const first: AttestationDocument = await attestLedger(dir, workspace, key);
@@ -146,7 +146,7 @@ describe("anchor files", () => {
   });
 
   test("a chain shorter than the anchor file fails, an empty file is not an anchor", async (t) => {
-    const dir = await scratch(t, "void-anchor-short-");
+    const dir = await scratch(t, "nomo-anchor-short-");
     const { key, file } = await seed(dir, 3);
     const anchorFile = join(dir, "anchors.jsonl");
     await appendAnchor(anchorFile, await attestLedger(dir, workspace, key));
@@ -164,7 +164,7 @@ describe("anchor files", () => {
   });
 
   test("two anchors claiming one head with different hashes are refused", async (t) => {
-    const dir = await scratch(t, "void-anchor-forged-file-");
+    const dir = await scratch(t, "nomo-anchor-forged-file-");
     const { key, file } = await seed(dir, 2);
     const anchorFile = join(dir, "anchors.jsonl");
     await appendAnchor(anchorFile, await attestLedger(dir, workspace, key));
@@ -185,7 +185,7 @@ describe("anchor files", () => {
     // nothing records how many there were, so a deleted line is invisible. The
     // only way to see it is to compare against a copy of the anchor set the
     // agent cannot rewrite.
-    const dir = await scratch(t, "void-anchor-shrink-");
+    const dir = await scratch(t, "nomo-anchor-shrink-");
     const { key, file } = await seed(dir, 3);
     const anchorFile = join(dir, "anchors.jsonl");
     await appendAnchor(anchorFile, await attestLedger(dir, workspace, key));
@@ -218,7 +218,7 @@ describe("anchor files", () => {
   });
 
   test("anchors that go backwards are refused", async (t) => {
-    const dir = await scratch(t, "void-anchor-backwards-");
+    const dir = await scratch(t, "nomo-anchor-backwards-");
     const { key, file } = await seed(dir, 2);
     const earlier = await attestLedger(dir, workspace, key, { now: () => new Date("2026-09-26T01:00:00.000Z") });
     await jsonlStore(key, { dir }).append({

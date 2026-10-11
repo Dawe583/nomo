@@ -16,10 +16,22 @@ import {
   renderWorkspace,
   searchHistoryPrompts,
   message,
+  TUI_COMMANDS,
   type WorkspaceTab,
 } from "./workspace.ts";
+import {
+  advanceSelection as advancePaletteSelection,
+  backspaceInPalette,
+  filterPalette,
+  paletteFromCommands,
+  typeInPalette,
+} from "./palette.ts";
+import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
 import { DiffScreenWriter } from "./watch.ts";
 import { sanitizeText } from "./layout.ts";
+import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
+import { envValue } from "../../../ledger/src/env-compat.ts";
+import { normalizeOwnedEnv } from "../env-keys.ts";
 
 export type WorkspaceShortcut =
   | "redraw"
@@ -318,7 +330,7 @@ export async function runWorkspaceTui(
     if (arg === "--once") once = true;
     else if (arg === "--help") {
       console.log(
-        "void tui [--once] [--view runs|overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
+        "nomo tui [--once] [--view runs|overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
       );
       return 0;
     } else if (
@@ -339,13 +351,20 @@ export async function runWorkspaceTui(
   }
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    ...(directory ? { VOID_DATA_DIR: directory } : {}),
+    ...(directory ? { NOMO_DATA_DIR: directory } : {}),
   };
+  // Normalized here rather than only in the binary so a test that drives the
+  // TUI entry point directly sees the same settings an operator configured
+  // under the old names.
+  Object.assign(env, normalizeOwnedEnv(env));
   const app = new Workbench(env),
     ui = new WorkspaceTui(app, env);
   const dataDir =
-    env.VOID_DATA_DIR ??
-    join(env.VOID_LEDGER_DIR ?? join(homedir(), ".void"), "workbench");
+    envValue(env, "NOMO_DATA_DIR") ??
+    join(
+      envValue(env, "NOMO_LEDGER_DIR") ?? join(productDataDir(homedir())),
+      "workbench",
+    );
   const store = new LocalStorage(join(dataDir, "tui"));
   const saved = store.read<{
     sessionId?: string;
@@ -411,9 +430,9 @@ export async function runWorkspaceTui(
   let lastCtrlD = 0;
   const chord = new ChordTracker();
   const startedAt = Date.now();
-  // VOID has its own explicit color preference; inherited NO_COLOR must not hide its UI.
-  const color = env.VOID_TUI_COLOR !== "0";
-  const motion = env.VOID_TUI_MOTION !== "0" && env.TERM !== "dumb";
+  // NOMO has its own explicit color preference; inherited NO_COLOR must not hide its UI.
+  const color = env.NOMO_TUI_COLOR !== "0";
+  const motion = env.NOMO_TUI_MOTION !== "0" && env.TERM !== "dumb";
   const screen = new DiffScreenWriter(process.stdout);
   let busy = false,
     suspended = false,
@@ -496,8 +515,8 @@ export async function runWorkspaceTui(
   };
   const editor = async () => {
     const target = ui.editTarget();
-    const config: unknown = env.VOID_TUI_EDITOR
-      ? JSON.parse(env.VOID_TUI_EDITOR)
+    const config: unknown = env.NOMO_TUI_EDITOR
+      ? JSON.parse(env.NOMO_TUI_EDITOR)
       : [env.EDITOR || "nano"];
     if (
       !Array.isArray(config) ||
@@ -505,9 +524,9 @@ export async function runWorkspaceTui(
       !config.every((v) => typeof v === "string" && v.length)
     )
       throw Error(
-        "VOID_TUI_EDITOR must be a JSON array of an executable and its arguments.",
+        "NOMO_TUI_EDITOR must be a JSON array of an executable and its arguments.",
       );
-    const temp = await mkdtemp(join(tmpdir(), "void-editor-")),
+    const temp = await mkdtemp(join(tmpdir(), "nomo-editor-")),
       file = join(temp, "document.txt");
     let captured = false;
     await writeFile(file, target.content, { mode: 0o600 });
@@ -577,7 +596,7 @@ export async function runWorkspaceTui(
       }
       if (draftError) console.error("Could not save the draft.");
       console.log(
-        "VOID: stopping the run and saving history. A dispatched external tool may still complete.",
+        "NOMO: stopping the run and saving history. A dispatched external tool may still complete.",
       );
       void (async () => {
         app.close();
@@ -618,6 +637,127 @@ export async function runWorkspaceTui(
     };
     const onKey = async (value: string | undefined, key: Key) => {
       if (stopped || suspended) return;
+      // An open palette consumes every key except the ones it binds itself.
+      // Letting the key fall through would move tabs or run a shortcut behind
+      // a filter surface, which is how a search box starts deleting work.
+      if (ui.palette) {
+        if (key.name === "escape") {
+          ui.palette = undefined;
+          ui.notice = "Palette closed.";
+          draw();
+          return;
+        }
+        if (key.name === "return") {
+          const matches = filterPalette(
+            paletteFromCommands(TUI_COMMANDS),
+            ui.palette.query,
+          );
+          const picked = matches[ui.palette.selected];
+          ui.palette = undefined;
+          if (!picked) {
+            ui.notice = "No command matches that.";
+            draw();
+            return;
+          }
+          input.set(picked.id);
+          await task(() => ui.command(picked.id));
+          return;
+        }
+        if (key.name === "up" || key.name === "down") {
+          ui.palette = advancePaletteSelection(
+            ui.palette,
+            filterPalette(paletteFromCommands(TUI_COMMANDS), ui.palette.query),
+            key.name === "down" ? 1 : -1,
+          );
+          draw();
+          return;
+        }
+        if (key.name === "backspace") {
+          ui.palette = backspaceInPalette(ui.palette);
+          draw();
+          return;
+        }
+        if (value && !key.ctrl && !key.meta && [...value].length === 1) {
+          ui.palette = typeInPalette(ui.palette, value);
+          draw();
+          return;
+        }
+        draw();
+        return;
+      }
+      // The diff panel owns a small set of keys while it is on screen. They
+      // are bound here rather than in the normal shortcut path because j, k
+      // and space are already filter keys on the list tabs, and the panel is
+      // the only surface where staging a hunk is the obvious meaning.
+      if (ui.diffView) {
+        if (key.name === "down" || value === "j") {
+          ui.diffView = moveHunk(ui.diffView, 1);
+          ui.rediff();
+          draw();
+          return;
+        }
+        if (key.name === "up" || value === "k") {
+          ui.diffView = moveHunk(ui.diffView, -1);
+          ui.rediff();
+          draw();
+          return;
+        }
+        if (key.name === "space") {
+          ui.diffView = toggleHunk(ui.diffView, ui.diffView.cursor);
+          ui.rediff();
+          draw();
+          return;
+        }
+        if (value === "s") {
+          ui.diffView = setSide(ui.diffView, "split");
+          ui.rediff();
+          draw();
+          return;
+        }
+        if (value === "u") {
+          ui.diffView = setSide(ui.diffView, "unified");
+          ui.rediff();
+          draw();
+          return;
+        }
+        if (value === "a") {
+          const all = ui.diffView.hunks.every((hunk) => hunk.staged);
+          ui.diffView = {
+            ...ui.diffView,
+            hunks: ui.diffView.hunks.map((hunk) => ({ ...hunk, staged: !all })),
+          };
+          ui.rediff();
+          draw();
+          return;
+        }
+      }
+      // The keybinding table is searchable in place. A thirty row reference
+      // the operator has to scroll is the reason people stop checking and
+      // guess instead, and this is the one view where looking something up is
+      // the whole task.
+      if (ui.showingKeybindings) {
+        if (key.name === "backspace") {
+          ui.keybindingQuery = ui.keybindingQuery.slice(0, -1);
+          ui.refreshKeybindings();
+          draw();
+          return;
+        }
+        // Escape with a query clears it, and with an empty query falls
+        // through to the normal close, so the key means the obvious thing at
+        // both ends without a second binding to remember.
+        if (key.name === "escape" && ui.keybindingQuery) {
+          ui.keybindingQuery = "";
+          ui.refreshKeybindings();
+          draw();
+          return;
+        }
+        if (value && !key.ctrl && !key.meta && [...value].length === 1) {
+          ui.keybindingQuery += value;
+          ui.refreshKeybindings();
+          draw();
+          return;
+        }
+      }
       // Double Escape must be consecutive, not span commands typed in between.
       if (key.name !== "escape") lastEsc = 0;
       if (
@@ -629,14 +769,22 @@ export async function runWorkspaceTui(
           const session = ui.session();
           if (session?.status === "running") {
             app.cancel(session.id);
-            ui.notice = "Run stopped. A dispatched tool may still complete.";
+            // A tool already dispatched may still complete after the cancel.
+            // That is the one case where the operator has to keep looking, so
+            // it gets a sticky toast rather than a notice the next key
+            // overwrites.
+            ui.announce(
+              "run-stopped",
+              "pending",
+              "Run stopped. A dispatched tool may still complete.",
+            );
           } else {
             if (key.name === "escape") input.editing = false;
             ui.notice =
               "Selected conversation is not running. Open the active conversation to cancel it.";
           }
         } catch (error) {
-          ui.notice = message(error);
+          ui.announce("cancel-failed", "danger", message(error));
         }
         draw();
         return;
@@ -991,8 +1139,16 @@ export async function runWorkspaceTui(
       ) {
         // Panels follow the reference: Right is next, Left is previous.
         // In editing mode the same arrows move the cursor instead.
-        ui.cycle(key.name === "right" ? 1 : -1);
-        input.editing = ui.tab === "chat";
+        //
+        // The documents tab is the one exception: its arrows fold and unfold
+        // a folder, because switching panels while reading a tree is a much
+        // bigger jump than opening or closing one branch of it.
+        if (ui.collapseOrExpand(key.name === "right")) {
+          draw();
+        } else {
+          ui.cycle(key.name === "right" ? 1 : -1);
+          input.editing = ui.tab === "chat";
+        }
       } else if (value === "q") {
         stop();
         return;
@@ -1065,14 +1221,16 @@ export async function runWorkspaceTui(
         value === "k"
       ) {
         if (ui.detail) ui.scroll = Math.max(0, ui.scroll - 1);
-        else ui.selected = Math.max(0, ui.selected - 1);
+        else if (!ui.moveDocumentCursor(-1))
+          ui.selected = Math.max(0, ui.selected - 1);
       } else if (
         key.name === "down" ||
         (key.ctrl && key.name === "n") ||
         value === "j"
       ) {
         if (ui.detail) ui.scroll++;
-        else ui.selected = Math.min(ui.items().length - 1, ui.selected + 1);
+        else if (!ui.moveDocumentCursor(1))
+          ui.selected = Math.min(ui.items().length - 1, ui.selected + 1);
       }
       draw();
     };
@@ -1092,10 +1250,18 @@ export async function runWorkspaceTui(
     timer = setInterval(() => {
       if (refreshing || stopped || suspended) return;
       refreshing = true;
+      // Expiring on the same tick as the refresh is what makes a timed toast
+      // disappear without a redraw of its own. Nothing is drawn here: draw()
+      // runs in the finally below, and a toast that expires without a frame
+      // would leave its row behind until the next unrelated event.
+      ui.expireToasts();
       void ui
         .refresh()
         .catch((e) => {
-          ui.notice = sanitizeText(message(e));
+          // A failed refresh usually means the connector or the provider went
+          // away mid run. That is not transient the way a keystroke notice is,
+          // so it gets a danger toast that will not expire on its own.
+          ui.announce("refresh-failed", "danger", sanitizeText(message(e)));
         })
         .finally(() => {
           refreshing = false;

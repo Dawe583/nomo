@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { listenControlPlane } from "./server.ts";
 
 test("built web serves deep links and hashed assets without exposing source or unknown API paths", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "void-spa-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-spa-"));
   const webRoot = join(directory, "web");
   await mkdir(join(webRoot, "assets"), { recursive: true });
   await writeFile(
@@ -15,12 +15,12 @@ test("built web serves deep links and hashed assets without exposing source or u
   );
   await writeFile(
     join(webRoot, "assets/app-123.js"),
-    'document.title = "VOID";',
+    'document.title = "NOMO";',
   );
   await writeFile(join(directory, "private.txt"), "not-public");
   const server = await listenControlPlane({
     webRoot,
-    env: { VOID_DATA_DIR: join(directory, "data") },
+    env: { NOMO_DATA_DIR: join(directory, "data") },
   });
   const base = `http://127.0.0.1:${server.port}`;
   try {

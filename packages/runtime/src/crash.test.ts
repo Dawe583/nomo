@@ -21,7 +21,7 @@ import {
 const CHILD_MESSAGE_TIMEOUT_MS = process.platform === "win32" ? 90_000 : 15_000;
 
 test("SIGKILL releases the writer mutex; restarted executor records unknown without repeating a dispatched write", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-killed-runtime-")),
+  const dir = await mkdtemp(join(tmpdir(), "nomo-killed-runtime-")),
     key = randomBytes(32);
   t.after(() => rm(dir, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
@@ -98,7 +98,7 @@ test("SIGKILL releases the writer mutex; restarted executor records unknown with
 });
 
 test("independent processes cannot enter the local journal transaction together", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-process-lock-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-process-lock-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} }),
     worker = join(dir, "worker.mjs");
@@ -184,7 +184,7 @@ const terminalAdapter = (onExecute: () => void): RecoveryAdapter => ({
 });
 
 test("two workers sharing one account cannot both spend the last unit", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-shared-budget-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-shared-budget-"));
   const budgetFile = join(dir, "budget.sqlite");
   // Every handle this test opens is released before the directory goes, in one
   // hook, because `t.after` runs in registration order rather than in reverse:
@@ -260,7 +260,7 @@ test("two workers sharing one account cannot both spend the last unit", async (t
 });
 
 test("a restarted executor does not re-observe an already dispatched irreversible charge", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-restart-budget-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-restart-budget-"));
   const budgetFile = join(dir, "budget.sqlite");
   // One hook closes every store this test opens, then removes the directory,
   // because `t.after` runs in registration order and an `rm` registered first
@@ -400,7 +400,7 @@ await recoveryRuntime({
 });
 
 test("an account that cannot be trusted is an incident, not a failed operation", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-incident-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-incident-"));
   const budgetFile = join(dir, "budget.sqlite");
   const open: Array<() => void> = [];
   t.after(async () => {
@@ -438,7 +438,7 @@ test("an account that cannot be trusted is an incident, not a failed operation",
   assert.equal((await runtime.execute(request)).status, "succeeded");
   const raw = new DatabaseSync(budgetFile);
   open.push(() => raw.close());
-  raw.prepare("UPDATE void_budget_day SET body = ?").run("{not json");
+  raw.prepare("UPDATE nomo_budget_day SET body = ?").run("{not json");
   // A torn account must be reported, not absorbed into a `failed` operation:
   // the caller has to treat it as an incident, and a second operation must
   // not be dispatched against an account nobody can read.

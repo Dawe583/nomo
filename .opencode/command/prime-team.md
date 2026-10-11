@@ -1,13 +1,13 @@
 ---
-description: "Spawn a VOID team member through prime-agent in daemon mode with autonomous gates"
-agent: void-principal
+description: "Spawn a NOMO team member through prime-agent in daemon mode with autonomous gates"
+agent: nomo-principal
 ---
 Spawn a prime-agent team member for: $ARGUMENTS
 
 Steps:
 1. Read the task brief below from the user arguments.
 2. Create a worktree if the task edits files:
-   git worktree add ../void-<role> -b claude/<wp>-<role> 2>/dev/null || true
+   git worktree add ../nomo-<role> -b claude/<wp>-<role> 2>/dev/null || true
 3. Launch ONE prime-agent run (rate limit: 8 req/min on the free tier), in
    autonomous mode with the repo gates:
    nohup prime-agent -p --autonomous \

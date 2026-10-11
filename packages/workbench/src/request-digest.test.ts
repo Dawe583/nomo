@@ -45,7 +45,7 @@ function conversation(count: number) {
 }
 
 const TOOLS = Array.from({ length: 40 }, (_, index) => ({
-  name: `void_tool_${index}`,
+  name: `nomo_tool_${index}`,
   description: `tool ${index} ${"y".repeat(120)}`,
   inputSchema: { type: "object", properties: { a: { type: "string" } } },
 }));

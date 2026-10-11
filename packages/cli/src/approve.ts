@@ -7,6 +7,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { loadPending, writeDecision } from "../../policy/src/approvals.ts";
 import type { ApprovalFs } from "../../policy/src/approvals.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
 
 export type ApproveCommandIo = {
   readonly stdout: (line: string) => void;
@@ -67,10 +68,10 @@ function parseArgs(argv: readonly string[], approve: boolean, env: Readonly<Node
     } else if (approve && holdId === undefined && !arg.startsWith("-") && arg.trim() !== "") holdId = arg;
     else throw new Error("invalid approval command option");
   }
-  if (approve && (holdId === undefined || by === undefined)) throw new Error("usage: void approve <holdId> --by actor [--reason text] [--dir path] [--deny] [--json]");
-  const workspace = env.VOID_WORKSPACE ?? "default";
-  if (dir === undefined && env.VOID_APPROVALS_DIR === undefined && !/^[a-zA-Z0-9_-]+$/.test(workspace)) throw new Error("invalid workspace");
-  return { holdId, by, reason, deny, json, dir: dir ?? env.VOID_APPROVALS_DIR ?? join(homedir(), ".void", "approvals", workspace) };
+  if (approve && (holdId === undefined || by === undefined)) throw new Error("usage: nomo approve <holdId> --by actor [--reason text] [--dir path] [--deny] [--json]");
+  const workspace = env.NOMO_WORKSPACE ?? "default";
+  if (dir === undefined && env.NOMO_APPROVALS_DIR === undefined && !/^[a-zA-Z0-9_-]+$/.test(workspace)) throw new Error("invalid workspace");
+  return { holdId, by, reason, deny, json, dir: dir ?? env.NOMO_APPROVALS_DIR ?? join(dataDir(homedir()), "approvals", workspace) };
 }
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "invalid approval arguments"; }

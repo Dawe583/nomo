@@ -1,14 +1,14 @@
-# @void/verifier
+# @nomo/verifier
 
-Offline verifier for a VOID ledger export. A third party runs this **without
-VOID, and without trusting VOID**.
+Offline verifier for a NOMO ledger export. A third party runs this **without
+NOMO, and without trusting NOMO**.
 
 ## What it checks
 
 ```sh
-npx @void/verifier ledger-bundle.jsonl
-npx @void/verifier ledger-bundle.jsonl --public-key <base64-spki> --key-id <id>
-npx @void/verifier --selftest
+npx @nomo/verifier ledger-bundle.jsonl
+npx @nomo/verifier ledger-bundle.jsonl --public-key <base64-spki> --key-id <id>
+npx @nomo/verifier --selftest
 ```
 
 With a public key it checks the ed25519 signature on every entry, the domain
@@ -23,7 +23,7 @@ verification, and this tool never reports one as the other.
 This package is the structural half of the open core licence line, and the
 commitment is written down rather than implied:
 
-- **It has zero dependencies.** Not zero VOID dependencies: zero, of any kind.
+- **It has zero dependencies.** Not zero NOMO dependencies: zero, of any kind.
   `dependencies` and `devDependencies` are both empty objects and a gate fails
   the build if either stops being empty. A verifier that pulls in a package tree
   inherits that tree's supply chain, and the supply chain is exactly what a
@@ -42,7 +42,7 @@ central claim, not a refactor.
 
 ## What it does not do
 
-It is not a client for the VOID API and it holds no key material. It reads a
+It is not a client for the NOMO API and it holds no key material. It reads a
 JSONL export bundle and nothing else. It cannot tell you whether a recorded
 decision was _correct_, only whether the record has not been altered since it
 was signed.

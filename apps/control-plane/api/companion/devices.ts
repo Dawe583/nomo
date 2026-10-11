@@ -59,7 +59,7 @@ function deviceFile(env: Readonly<NodeJS.ProcessEnv>): string {
  * devices and a request for the write scope is refused rather than silently
  * downgraded. */
 export function pairingGrantsWrite(env: Readonly<NodeJS.ProcessEnv>): boolean {
-  return env.VOID_COMPANION_WRITE_PAIRING === "1";
+  return env.NOMO_COMPANION_WRITE_PAIRING === "1";
 }
 
 function parseDevice(value: unknown): CompanionDevice {

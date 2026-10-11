@@ -19,7 +19,7 @@ corrected against `packages/connectors/src/git/managed.ts`,
 | Managed MCP tools                                           | Implemented subset          | Local stdio, operator policy, configured workspace and agent identity                                                                                                                                                         | `packages/cli/src/recovery-mcp.test.ts` uses official MCP client/in-memory transport |
 | Real PostgreSQL                                             | Verified subset             | Isolated Neon database; separate connections, ABA, restart, terminated backend sessions, managed deadlock, client SIGKILL after forward/recovery COMMIT, fresh metadata install, and cascade and tenant paths against a PGlite fixture. Version 1 metadata migration is not exercised against this server | `scripts/src/verify-managed-postgres.mjs`, `packages/connectors/src/postgres/managed.test.ts` |
 | Legacy PostgreSQL/S3 replay                                 | Existing separate path      | Earlier capture/apply contract; no automatic managed-runtime guarantees                                                                                                                                                       | `REVERSE-ENGINE-VALIDATION.md`                                                       |
-| Legacy proxy `postgres.row.update` binding                  | Verified injected subset    | `runProxy` host binding captures a real PGlite before-image before dispatch, records a digest-bound signed outcome, and permits restart recovery only for completed evidence. Standalone `void-proxy`, other tools and distributed atomicity are not certified | `packages/proxy/src/bin.test.ts`, `packages/connectors/src/reverse-engine.test.ts`   |
+| Legacy proxy `postgres.row.update` binding                  | Verified injected subset    | `runProxy` host binding captures a real PGlite before-image before dispatch, records a digest-bound signed outcome, and permits restart recovery only for completed evidence. Standalone `nomo-proxy`, other tools and distributed atomicity are not certified | `packages/proxy/src/bin.test.ts`, `packages/connectors/src/reverse-engine.test.ts`   |
 | Local workbench documents                                   | Shared runtime integrated   | Writes, deletes, branch copies and operator Undo; legacy signed history preserved                                                                                                                                             | `packages/workbench/src/managed-documents.test.ts`                                   |
 | Cloud workbench documents                                   | Shared runtime integrated   | Atomic SQL document/evidence transaction, reserved encrypted artifacts, one retained run, journal checkpoint or explicit operation-list job with digest-bound approval/apply, signed plan/checkpoint history and blocked forward writes; resource/provenance ordering, scheduler/leases/fencing/MCP surfaces and external effects remain excluded | `cloud/recovery.test.mjs`, `cloud/gui.test.mjs`                                      |
 | Local Prime web bridge                                      | Separate execution boundary | Signed R3 run, no automatic local-tool Undo; private outbound worker                                                                                                                                                          | `cloud/prime.test.mjs`, `scripts/src/prime-bridge.test.mjs`                          |
@@ -55,8 +55,8 @@ the section below is its whole documented path.
 
 ## Managed PostgreSQL metadata migration
 
-The command is `void recovery migrate --config <file>`, the same config file
-and the same `urlEnv` variable that `void recovery install` uses. It prints
+The command is `nomo recovery migrate --config <file>`, the same config file
+and the same `urlEnv` variable that `nomo recovery install` uses. It prints
 `{"fromVersion":1,"metadataVersion":2}` and exits zero. On a filesystem or Git
 configuration it refuses with "Filesystem and Git do not use PostgreSQL
 metadata migration." The dispatch is in `packages/cli/src/recovery.ts`; the
@@ -68,7 +68,7 @@ migrated version 2 layout. It reads the metadata identity, inspects the version
 and reads the identity again, refusing if it moved; it refuses a missing or
 legacy version row, any other version number, and a structure that does not
 match that version exactly. Inside one transaction it takes the
-`void-managed-metadata:<schema>` advisory lock and access-exclusive locks on
+`nomo-managed-metadata:<schema>` advisory lock and access-exclusive locks on
 the metadata, revisions, operations and recoveries tables, rechecks identity,
 version and structure, adds a `format_version` column to operations and
 recoveries, moves that column's default to 2, validates the result, and updates
@@ -98,7 +98,7 @@ schema DDL over the evidence store that records those mutations, so running it
 inside an authorized tool call would make an irreversible change to the very
 mechanism that proves reversibility, and would let a call rewrite the version
 its own verification depends on. The adapter refuses instead of repairing.
-`void recovery install` refuses the same way: it will not overwrite version 1
+`nomo recovery install` refuses the same way: it will not overwrite version 1
 metadata, and reports that version 1 requires explicit migration.
 
 The limit worth stating is what is not covered here. These are PGlite and

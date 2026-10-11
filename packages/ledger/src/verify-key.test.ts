@@ -9,11 +9,14 @@ import { devKeyProvider } from "./sign.ts";
 import { jsonlStore } from "./store.ts";
 import {
   PINNED_KEY_ENV,
+  PINNED_KEY_FILE_NAME,
   pinnedKey,
+  pinnedKeyFile,
   pinVerificationKey,
   pinVerificationKeyFromSigner,
   publicKeyFromSpkiBase64,
   resolveVerificationKey,
+  TRUST_DIR_ENV,
   verificationKeyLine,
   verificationKeyNote,
   verificationStatus,
@@ -52,7 +55,7 @@ async function answer(lookup: PublicKeyLookup, keyId: string): Promise<Uint8Arra
 
 describe("resolveVerificationKey", () => {
   test("a pinned public key is the answer, and it answers for one key id", async (t) => {
-    const dir = await scratch(t, "void-pin-");
+    const dir = await scratch(t, "nomo-pin-");
     const key = await seed(dir);
     const keyId = await key.currentKeyId();
     const spki = await key.publicKey(keyId);
@@ -70,7 +73,7 @@ describe("resolveVerificationKey", () => {
   });
 
   test("nothing configured means no key, never the private key file", async (t) => {
-    const dir = await scratch(t, "void-pin-empty-");
+    const dir = await scratch(t, "nomo-pin-empty-");
     await seed(dir);
     const resolved = await resolveVerificationKey({
       env: {},
@@ -81,7 +84,7 @@ describe("resolveVerificationKey", () => {
   });
 
   test("the degraded path is opt in and reports itself", async (t) => {
-    const dir = await scratch(t, "void-pin-degraded-");
+    const dir = await scratch(t, "nomo-pin-degraded-");
     const key = await seed(dir);
     const resolved = await resolveVerificationKey({
       env: {},
@@ -95,7 +98,7 @@ describe("resolveVerificationKey", () => {
   });
 
   test("a substituted key file is rejected by a pinned public key", async (t) => {
-    const dir = await scratch(t, "void-pin-attack-");
+    const dir = await scratch(t, "nomo-pin-attack-");
     const honest = await seed(dir);
     const honestId = await honest.currentKeyId();
     const honestSpki = await honest.publicKey(honestId);
@@ -135,7 +138,7 @@ describe("resolveVerificationKey", () => {
 
   test("an invalid pinned key is refused rather than ignored", async () => {
     assert.throws(
-      () => publicKeyFromSpkiBase64("bm90LWEtkey", "VOID_VERIFY_KEY"),
+      () => publicKeyFromSpkiBase64("bm90LWEtkey", "NOMO_VERIFY_KEY"),
       /not a valid base64 SPKI DER/,
     );
   });
@@ -143,7 +146,7 @@ describe("resolveVerificationKey", () => {
 
 describe("pinVerificationKey", () => {
   test("provisions a trust file the verifier then reads by default", async (t) => {
-    const dir = await scratch(t, "void-pin-write-");
+    const dir = await scratch(t, "nomo-pin-write-");
     const key = await seed(dir);
     const keyId = await key.currentKeyId();
     const spki = await key.publicKey(keyId);
@@ -156,7 +159,7 @@ describe("pinVerificationKey", () => {
     });
     assert.equal(pinned.keyId, keyId);
     assert.equal(pinned.created, true);
-    assert.equal(pinned.path, join(dir, ".void", "trust", "verify-ed25519.spki"));
+    assert.equal(pinned.path, join(dir, ".nomo", "trust", "verify-ed25519.spki"));
     // What this file is for is that it cannot be written back, so the mode
     // number is only the encoding of that claim on one platform. `open(...,
     // "wx", 0o400)` does set the read-only attribute on Windows, but Windows has
@@ -185,16 +188,16 @@ describe("pinVerificationKey", () => {
     assert.equal(resolved?.keyId, keyId);
     assert.equal(resolved?.source, "trust-file");
     assert.equal(resolved?.degraded, false);
-    // The default trust file is inside the VOID tree the signing key is in, so
+    // The default trust file is inside the NOMO tree the signing key is in, so
     // it is not reported as a key the agent could not have chosen.
     assert.equal(resolved?.operatorSupplied, false);
   });
 
   test("a trust file the agent can replace is reported as not operator supplied", async (t) => {
-    const dir = await scratch(t, "void-pin-substitute-");
+    const dir = await scratch(t, "nomo-pin-substitute-");
     const honest = await seed(dir);
     const honestId = await honest.currentKeyId();
-    const trustFile = join(dir, ".void", "trust", "verify-ed25519.spki");
+    const trustFile = join(dir, ".nomo", "trust", "verify-ed25519.spki");
     await pinVerificationKeyFromSigner({ env: {}, keyDir: join(dir, "keys"), home: dir });
     const before = await resolveVerificationKey({ env: {}, home: dir, allowDefaultTrustFile: true });
     assert.equal(before?.keyId, honestId);
@@ -215,7 +218,7 @@ describe("pinVerificationKey", () => {
     assert.equal(after?.source, "trust-file");
   });
   test("repinning a different key is refused", async (t) => {
-    const dir = await scratch(t, "void-pin-repin-");
+    const dir = await scratch(t, "nomo-pin-repin-");
     const first = await devKeyProvider({ dir: join(dir, "a-keys"), env: {} });
     const second = await devKeyProvider({ dir: join(dir, "b-keys"), env: {} });
     const a = await first.publicKey(await first.currentKeyId());
@@ -228,11 +231,11 @@ describe("pinVerificationKey", () => {
   });
 
   test("a trust file holding junk is an error, not an absent key", async (t) => {
-    const dir = await scratch(t, "void-pin-junk-");
+    const dir = await scratch(t, "nomo-pin-junk-");
     const file = join(dir, "verify-ed25519.spki");
     await writeFile(file, "not-a-key\n");
     await assert.rejects(
-      resolveVerificationKey({ env: { VOID_VERIFY_KEY_FILE: file } }),
+      resolveVerificationKey({ env: { NOMO_VERIFY_KEY_FILE: file } }),
       /is not a valid base64 SPKI DER/,
     );
   });
@@ -249,22 +252,22 @@ describe("the verification vocabulary", () => {
   // The word `pinned` is a claim, and this is the claim it makes: that the
   // operator handed the bytes over somewhere the agent cannot reach. The
   // default trust file does not, so it must never render the word — the exact
-  // defect the audit found in `void verify`.
+  // defect the audit found in `nomo verify`.
   test("pinned is reserved for keys supplied out of band", () => {
     assert.match(
       verificationKeyLine(key({ source: "pinned-env" })),
       /^verification key: pinned dev-ed25519:0123456789abcdef \(pinned-env\)$/,
     );
-    // A trust file at the default path shares `~/.void/` with the signing key.
+    // A trust file at the default path shares `~/.nomo/` with the signing key.
     const atDefaultPath = key({ source: "trust-file", operatorSupplied: false });
     assert.doesNotMatch(verificationKeyLine(atDefaultPath), /pinned/);
-    assert.match(verificationKeyLine(atDefaultPath), /shares ~\/\.void\//);
+    assert.match(verificationKeyLine(atDefaultPath), /shares ~\/\.nomo\//);
     // A trust file outside the tree is trusted on the strength of its path
     // alone, which is weaker than knowing who wrote it, and says so.
     const outOfTree = key({ source: "trust-file", operatorSupplied: true });
     const outOfTreeNote = verificationKeyNote(outOfTree);
     assert.ok(outOfTreeNote, "an out-of-tree trust file must say something");
-    assert.doesNotMatch(outOfTreeNote, /shares ~\/\.void\//);
+    assert.doesNotMatch(outOfTreeNote, /shares ~\/\.nomo\//);
     assert.match(outOfTreeNote, /cannot prove who wrote the bytes/);
   });
 
@@ -276,7 +279,7 @@ describe("the verification vocabulary", () => {
     // find the switch from the surface that reported it, and the switch leads
     // the line rather than ending it, because every one of these surfaces
     // truncates to terminal width and the tail is what gets cut.
-    assert.match(line, /DEGRADED dev-ed25519:[0-9a-f]+ \(signing-key-file\): VOID_VERIFY_ALLOW_SIGNING_KEY/);
+    assert.match(line, /DEGRADED dev-ed25519:[0-9a-f]+ \(signing-key-file\): NOMO_VERIFY_ALLOW_SIGNING_KEY/);
     assert.doesNotMatch(line, /pinned/);
     assert.match(verificationStatus(degraded), /^DEGRADED/);
   });
@@ -301,5 +304,82 @@ describe("the verification vocabulary", () => {
  // operator who did the right thing should not have to read a warning.
     assert.equal(verificationKeyNote(key({ source: "pinned-env" })), undefined);
     assert.equal(verificationKeyLine(key({ source: "pinned-env" })), "verification key: pinned dev-ed25519:0123456789abcdef (pinned-env)");
+  });
+});
+
+describe("the legacy VOID spellings", () => {
+  test("a pinned key under the old name still pins", async (t) => {
+    const dir = await scratch(t, "nomo-pin-legacy-");
+    const key = await seed(dir);
+    const keyId = await key.currentKeyId();
+    const spki = await key.publicKey(keyId);
+    assert.ok(spki !== null);
+
+    const resolved = await resolveVerificationKey({
+      env: { VOID_VERIFY_KEY: Buffer.from(spki).toString("base64") },
+    });
+    assert.equal(resolved?.keyId, keyId);
+    assert.equal(resolved?.source, "pinned-env");
+    assert.equal(resolved?.degraded, false);
+  });
+
+  test("the current name wins over the old one", async (t) => {
+    const dir = await scratch(t, "nomo-pin-both-");
+    const current = await devKeyProvider({ dir: join(dir, "current"), env: {} });
+    const legacy = await devKeyProvider({ dir: join(dir, "legacy"), env: {} });
+    const currentId = await current.currentKeyId();
+    const legacyId = await legacy.currentKeyId();
+
+    const resolved = await resolveVerificationKey({
+      env: {
+        NOMO_VERIFY_KEY: Buffer.from((await current.publicKey(currentId))!).toString("base64"),
+        VOID_VERIFY_KEY: Buffer.from((await legacy.publicKey(legacyId))!).toString("base64"),
+      },
+    });
+    assert.equal(resolved?.keyId, currentId);
+  });
+
+  test("an empty current value is not replaced by the old one", async (t) => {
+    const dir = await scratch(t, "nomo-pin-empty-wins-");
+    const legacy = await devKeyProvider({ dir: join(dir, "legacy"), env: {} });
+    const legacyId = await legacy.currentKeyId();
+
+    const resolved = await resolveVerificationKey({
+      env: {
+        NOMO_VERIFY_KEY: "",
+        VOID_VERIFY_KEY: Buffer.from((await legacy.publicKey(legacyId))!).toString("base64"),
+      },
+      home: dir,
+      keyDir: join(dir, "keys"),
+    });
+    assert.equal(resolved, undefined);
+  });
+
+  test("the trust directory under the old name is honoured", async (t) => {
+    const dir = await scratch(t, "nomo-pin-trust-legacy-");
+    const trust = join(dir, "trust");
+    assert.equal(
+      pinnedKeyFile({ VOID_TRUST_DIR: trust, HOME: dir } as NodeJS.ProcessEnv),
+      join(trust, PINNED_KEY_FILE_NAME),
+    );
+  });
+
+  test("the pinned key file under the old name is honoured", () => {
+    assert.equal(
+      pinnedKeyFile({ VOID_VERIFY_KEY_FILE: "/legacy/key.spki" } as NodeJS.ProcessEnv),
+      "/legacy/key.spki",
+    );
+  });
+
+  test("the degraded opt in under the old name is honoured", async (t) => {
+    const dir = await scratch(t, "nomo-pin-degraded-legacy-");
+    await seed(dir);
+    const resolved = await resolveVerificationKey({
+      env: { VOID_VERIFY_ALLOW_SIGNING_KEY: "1" },
+      home: dir,
+      keyDir: join(dir, "keys"),
+    });
+    assert.equal(resolved?.source, "signing-key-file");
+    assert.equal(resolved?.degraded, true);
   });
 });

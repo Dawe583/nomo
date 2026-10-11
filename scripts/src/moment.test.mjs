@@ -35,14 +35,14 @@ describe("moment runner", () => {
 
   test("prints approval frames for a pending then resolved hold", async () => {
     const stdout = await runMoment("--tui");
-    const secondHeader = stdout.indexOf("\n\nVOID APPROVALS", 1);
+    const secondHeader = stdout.indexOf("\n\nNOMO APPROVALS", 1);
     const frames = [
       stdout.slice(0, secondHeader),
       stdout.slice(secondHeader + 2),
     ];
 
     assert.notEqual(secondHeader, -1);
-    assert.match(frames[0], /VOID APPROVALS/);
+    assert.match(frames[0], /NOMO APPROVALS/);
     assert.match(frames[0], /postgres\.row\.delete/);
     assert.match(frames[0], /02:00/);
     assert.match(frames[1], /No held calls\./);

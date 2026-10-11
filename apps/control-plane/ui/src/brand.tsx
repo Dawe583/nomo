@@ -2,7 +2,7 @@
 export function BrandMark({ className = "" }: { className?: string }) {
   return (
     <svg
-      className={"void-aperture " + className}
+      className={"nomo-aperture " + className}
       viewBox="55 55 146 146"
       fill="none"
       aria-hidden="true"

@@ -21,9 +21,9 @@
     "@void/proxy": "workspace:*",
     "@void/runtime": "workspace:*"
   },
-  "description": "Wrap VOID interception and held call decisions in an in-process client.",
+  "description": "Wrap NOMO interception and held call decisions in an in-process client.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "sdk",
     "mcp",

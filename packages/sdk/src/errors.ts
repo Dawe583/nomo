@@ -1,14 +1,14 @@
 import { PolicyStartupError as ProxyPolicyStartupError } from "../../proxy/src/bin.ts";
 import type { ApplyReport, ReplayRefusal } from "../../connectors/src/registry.ts";
 
-export type VoidErrorCode =
-  | "VOID_HOLD_DENIED"
-  | "VOID_LEDGER_VERIFY"
-  | "VOID_POLICY_STARTUP"
-  | "VOID_REFUSED";
+export type NomoErrorCode =
+  | "NOMO_HOLD_DENIED"
+  | "NOMO_LEDGER_VERIFY"
+  | "NOMO_POLICY_STARTUP"
+  | "NOMO_REFUSED";
 
 export class HoldDeniedError extends Error {
-  readonly code = "VOID_HOLD_DENIED";
+  readonly code = "NOMO_HOLD_DENIED";
   readonly holdId: string | undefined;
   readonly data: unknown;
 
@@ -21,7 +21,7 @@ export class HoldDeniedError extends Error {
 }
 
 export class LedgerVerifyError extends Error {
-  readonly code = "VOID_LEDGER_VERIFY";
+  readonly code = "NOMO_LEDGER_VERIFY";
   readonly reason: string | undefined;
   readonly checked: number;
 
@@ -34,7 +34,7 @@ export class LedgerVerifyError extends Error {
 }
 
 export class PolicyStartupError extends ProxyPolicyStartupError {
-  readonly code = "VOID_POLICY_STARTUP";
+  readonly code = "NOMO_POLICY_STARTUP";
 
   constructor(message: string) {
     super(message);
@@ -45,12 +45,12 @@ export class PolicyStartupError extends ProxyPolicyStartupError {
 export type RefusalReason = ReplayRefusal["reason"];
 
 export class RefusedError extends Error {
-  readonly code = "VOID_REFUSED";
+  readonly code = "NOMO_REFUSED";
   readonly reason: RefusalReason;
   readonly refusal: ReplayRefusal;
 
   constructor(refusal: ReplayRefusal) {
-    super(`VOID refused replay step ${refusal.stepId}: ${refusal.reason}`);
+    super(`NOMO refused replay step ${refusal.stepId}: ${refusal.reason}`);
     this.name = "RefusedError";
     this.reason = refusal.reason;
     this.refusal = refusal;

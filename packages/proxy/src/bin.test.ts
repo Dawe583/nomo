@@ -627,7 +627,7 @@ describe("runProxy", () => {
   });
 
   test("stdio transport warns when upstreamUrl is supplied", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-"));
     const policyPath = join(dir, "policy.yml");
     await writeFile(policyPath, policyText("allow"));
     const errors: string[] = [];
@@ -643,7 +643,7 @@ describe("runProxy", () => {
       upstreamUrl: "http://127.0.0.1:1/mcp",
       policyPath,
       posture: "fail-closed",
-      ledgerDir: await mkdtemp(join(tmpdir(), "void-bin-test-")),
+      ledgerDir: await mkdtemp(join(tmpdir(), "nomo-bin-test-")),
       input: fromLines([]),
       output() {},
       error(line) {
@@ -682,7 +682,7 @@ describe("runProxy", () => {
   });
 
   test("S10: an upstream burst past the in-flight cap is dropped with a named refusal", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-proxy-backlog-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-backlog-"));
     const policyPath = join(dir, "policy.yml");
     await writeFile(policyPath, policyText("allow"));
     const errors: string[] = [];
@@ -782,7 +782,7 @@ describe("runProxy", () => {
 });
 
 test("concurrent server requests restore typed upstream ids for success and error replies", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "void-proxy-server-request-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-server-request-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText("allow"));
   const agentInput = lineQueue();
@@ -1310,7 +1310,7 @@ test("observe posture never resolves a recovery binding", async () => {
 });
 
 test("failed legacy snapshot answers deny locally and never calls upstream (exit proof)", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-"));
   const policyPath = join(dir, "policy.yml");
   // orders_delete is unclassified, so the allow path needs the explicit
   // unknown opt-in: a bare catch-all allow no longer authorizes it (S07).
@@ -1332,7 +1332,7 @@ test("failed legacy snapshot answers deny locally and never calls upstream (exit
     upstreamCommand: ["fake"],
     policyPath,
     posture: "fail-closed",
-    ledgerDir: await mkdtemp(join(tmpdir(), "void-bin-test-")),
+    ledgerDir: await mkdtemp(join(tmpdir(), "nomo-bin-test-")),
     workspace: "test",
     input: fromLines([JSON.stringify(toolCall(41, "orders_delete"))]),
     output(line) {
@@ -1361,22 +1361,22 @@ test("failed legacy snapshot answers deny locally and never calls upstream (exit
 });
 
 test("runProxy filters inherited environment and honors explicit upstreamEnv", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-proxy-env-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-env-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText("deny"));
-  const previous = process.env.VOID_ENV_PROBE_SECRET;
-  process.env.VOID_ENV_PROBE_SECRET = "synthetic-parent-value";
+  const previous = process.env.NOMO_ENV_PROBE_SECRET;
+  process.env.NOMO_ENV_PROBE_SECRET = "synthetic-parent-value";
   t.after(() => {
-    if (previous === undefined) delete process.env.VOID_ENV_PROBE_SECRET;
-    else process.env.VOID_ENV_PROBE_SECRET = previous;
+    if (previous === undefined) delete process.env.NOMO_ENV_PROBE_SECRET;
+    else process.env.NOMO_ENV_PROBE_SECRET = previous;
   });
   const script = `
     const rl = require('node:readline').createInterface({ input: process.stdin });
     rl.once('line', line => {
       const request = JSON.parse(line);
       const result = {
-        secret: process.env.VOID_ENV_PROBE_SECRET ?? null,
+        secret: process.env.NOMO_ENV_PROBE_SECRET ?? null,
         path: typeof process.env.PATH === 'string',
       };
       process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result }) + '\\n', () => process.exit(0));
@@ -1384,7 +1384,7 @@ test("runProxy filters inherited environment and honors explicit upstreamEnv", a
   `;
   for (const upstreamEnv of [
     undefined,
-    { VOID_ENV_PROBE_SECRET: "explicit-child-value" },
+    { NOMO_ENV_PROBE_SECRET: "explicit-child-value" },
   ]) {
     const input = lineQueue();
     const output: unknown[] = [];
@@ -1417,7 +1417,7 @@ test("runProxy filters inherited environment and honors explicit upstreamEnv", a
         jsonrpc: "2.0",
         id: 71,
         result: {
-          secret: upstreamEnv?.VOID_ENV_PROBE_SECRET ?? null,
+          secret: upstreamEnv?.NOMO_ENV_PROBE_SECRET ?? null,
           path: process.env.PATH !== undefined,
         },
       },
@@ -1436,7 +1436,7 @@ type BoundProxyInput = {
 };
 
 async function runBoundProxy(input: BoundProxyInput): Promise<void> {
-  const dir = await mkdtemp(join(tmpdir(), "void-bound-proxy-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-bound-proxy-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText("allow"));
   await runProxy({
@@ -1530,7 +1530,7 @@ async function makeHarness(
   decision: Decision,
   posture: ProxyOptions["posture"] = "fail-closed",
 ): Promise<Harness> {
-  const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText(decision));
   const upstreamMessages: Array<Record<string, unknown>> = [];
@@ -1558,7 +1558,7 @@ async function makeHarness(
         // Fail-closed tests exercise the real ledger path, so every harness
         // gets its own directory: a shared one would let records from one
         // test chain into another's expectations.
-        ledgerDir: await mkdtemp(join(tmpdir(), "void-bin-test-")),
+        ledgerDir: await mkdtemp(join(tmpdir(), "nomo-bin-test-")),
         workspace: "test",
         input: fromLines(lines),
         output(line) {
@@ -1682,13 +1682,13 @@ async function makeHttpHarness(
   server: HttpUpstreamHarness,
   decision: Decision,
 ): Promise<HttpHarness> {
-  const dir = await mkdtemp(join(tmpdir(), "void-proxy-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText(decision));
   const input = lineQueue();
   const outputMessages: unknown[] = [];
   const errors: string[] = [];
-  const ledgerDir = await mkdtemp(join(tmpdir(), "void-bin-http-test-"));
+  const ledgerDir = await mkdtemp(join(tmpdir(), "nomo-bin-http-test-"));
   const harness: HttpHarness = {
     input,
     outputMessages,

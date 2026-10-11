@@ -1,4 +1,4 @@
-# @void/policy
+# @nomo/policy
 
 Match rules, decisions, and the approval channel interface.
 
@@ -86,14 +86,14 @@ class so those calls reach the deny catch-all.
 From the repository root, point `--policy` at a YAML file, not a pack name:
 
 ```sh
-node packages/proxy/bin/void-proxy.mjs \
+node packages/proxy/bin/nomo-proxy.mjs \
   --policy packages/policy/packs/balanced.yaml \
-  --ledger-dir /tmp/void-dev-ledger \
+  --ledger-dir /tmp/nomo-dev-ledger \
   --workspace local \
   --upstream node --args /absolute/path/to/non-production-mcp-server.mjs
 ```
 
-For a `void-proxy` binary on PATH, use the same flags and the absolute path to
+For a `nomo-proxy` binary on PATH, use the same flags and the absolute path to
 your copied policy. The command above expects your own local MCP server.
 Use declared facts through `--facts path` when its registry cases require them.
 

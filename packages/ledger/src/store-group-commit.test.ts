@@ -55,7 +55,7 @@ type Fixture = {
 };
 
 async function fixture(t: { after: (fn: () => unknown) => void }): Promise<Fixture> {
-  const dir = await mkdtemp(join(tmpdir(), "void-group-commit-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-group-commit-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const ledgerDir = join(dir, "ledger");
@@ -169,7 +169,7 @@ describe("group commit", () => {
  */
 async function crashHalf(t: { after: (fn: () => unknown) => void }): Promise<void> {
   const acknowledged = 3;
-  const dir = await mkdtemp(join(tmpdir(), "void-group-commit-crash-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-group-commit-crash-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   // The child opens this same directory, so the parent can verify with the key.
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });

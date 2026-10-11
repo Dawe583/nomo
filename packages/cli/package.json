@@ -8,7 +8,7 @@
     ".": "./src/index.ts"
   },
   "bin": {
-    "void": "./dist/void.mjs"
+    "nomo": "./dist/nomo.mjs"
   },
   "files": [
     "dist/"
@@ -30,9 +30,9 @@
     "pg": "8.16.3",
     "yaml": "^2.8.0"
   },
-  "description": "Inspect classifications, verify ledgers, and plan replay from the VOID command line.",
+  "description": "Inspect classifications, verify ledgers, and plan replay from the NOMO command line.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "cli",
     "replay",

@@ -11,13 +11,13 @@ import type {ModelMessage} from "./provider.ts";
 
 const profile={id:"custom",name:"Custom",systemPrompt:"Only inspect",allowedTools:["void_workspace_list"],policyProfile:"default",maxTurns:2,maxContextTokens:8192};
 async function fixture(t:import("node:test").TestContext,fetcher:typeof fetch,hookCommands:string[]=[],hookTimeoutMs?:number){
- const directory=await mkdtemp(join(tmpdir(),"void-agent-profile-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-agent-profile-"));
  // The allowlist is supplied the way an operator supplies it: in the runtime
  // environment the launcher passes, never on the workbench API surface.
- const env:{VOID_DATA_DIR:string;VOID_HOOK_COMMANDS:string;VOID_HOOK_TIMEOUT_MS?:string}={
-  VOID_DATA_DIR:directory,
-  VOID_HOOK_COMMANDS:JSON.stringify(hookCommands),
-  ...(hookTimeoutMs===undefined?{}:{VOID_HOOK_TIMEOUT_MS:String(hookTimeoutMs)}),
+ const env:{NOMO_DATA_DIR:string;NOMO_HOOK_COMMANDS:string;NOMO_HOOK_TIMEOUT_MS?:string}={
+  NOMO_DATA_DIR:directory,
+  NOMO_HOOK_COMMANDS:JSON.stringify(hookCommands),
+  ...(hookTimeoutMs===undefined?{}:{NOMO_HOOK_TIMEOUT_MS:String(hookTimeoutMs)}),
  };
  let app=new Workbench(env,fetcher);
  await app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
@@ -123,7 +123,7 @@ const marker=(path:string)=>`import{writeFileSync}from"node:fs";writeFileSync(${
 async function wasRun(path:string){return access(path).then(()=>true,()=>false);}
 
 test("only an allowlisted hook command executes, and its stdout reaches the caller",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-allowlist-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-allowlist-"));
  const ran=join(directory,"ran.txt"),blocked=join(directory,"blocked.txt");
  // The allowlisted command writes a marker and prints a token; the command
  // that is NOT on the allowlist writes a different marker, so a test can tell
@@ -152,7 +152,7 @@ test("only an allowlisted hook command executes, and its stdout reaches the call
 });
 
 test("a before-run hook that exits non-zero prevents the run",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-gate-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-gate-"));
  const ran=join(directory,"ran.txt");
  const command=await hookScript(directory,"refuse",`${marker(ran)}process.stderr.write("policy check failed");process.exit(3);`);
  t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -174,7 +174,7 @@ test("a before-run hook that exits non-zero prevents the run",async t=>{
 });
 
 test("a disabled hook does not execute",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-disabled-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-disabled-"));
  const ran=join(directory,"ran.txt");
  const command=await hookScript(directory,"off",marker(ran));
  t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -189,7 +189,7 @@ test("a disabled hook does not execute",async t=>{
 });
 
 test("a hook that never exits is killed and does not hang the run",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-timeout-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-timeout-"));
  // The child never ends on its own; there is no event to await and no fake
  // clock that can kill a real process. The bound under test is the runner's
  // own wall-clock kill, so a real deadline is the thing being exercised.
@@ -212,7 +212,7 @@ test("a hook that never exits is killed and does not hang the run",async t=>{
 });
 
 test("an after-tool hook receives the tool name, the decision and the outcome",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-aftertool-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-aftertool-"));
  const seen=join(directory,"seen.json");
  // The hook reads its context from stdin and writes it back, so the assertion
  // is on what the hook actually received rather than on what we meant to send.
@@ -231,12 +231,12 @@ test("an after-tool hook receives the tool name, the decision and the outcome",a
  await f.app.start("Read","fixture",undefined,undefined,"observer");await f.app.settled();
  const context=JSON.parse(await readFile(seen,"utf8")) as Record<string,unknown>;
  assert.equal(context.tool,"void_workspace_list");
- assert.equal(context.VOID_HOOK_TOOL,"void_workspace_list");
- assert.equal(context.VOID_HOOK_EVENT,"after-tool");
+ assert.equal(context.NOMO_HOOK_TOOL,"void_workspace_list");
+ assert.equal(context.NOMO_HOOK_EVENT,"after-tool");
  // The decision and the outcome are both present and both meaningful: a
  // reader downstream can tell a refusal from a completion without guessing.
  assert.equal(typeof context.decision,"string");
- assert.equal(context.VOID_HOOK_DECISION,context.decision);
+ assert.equal(context.NOMO_HOOK_DECISION,context.decision);
  assert.equal(context.outcome,"completed");
- assert.equal(context.VOID_HOOK_OUTCOME,"completed");
+ assert.equal(context.NOMO_HOOK_OUTCOME,"completed");
 });

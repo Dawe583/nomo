@@ -13,7 +13,7 @@ public timeline.
 
 Include the platform and Node version, the commit you tested, the exact command
 or request, and what an attacker gains. `docs/THREAT-MODEL.md` is worth reading
-before writing it up, because it states plainly which of VOID's guarantees are
+before writing it up, because it states plainly which of NOMO's guarantees are
 signature properties and which are not, and a report framed against the wrong
 one reads as a false positive.
 
@@ -28,26 +28,26 @@ that nothing in this tree has ever needed to hold one.
 
 What is held elsewhere, and where:
 
-- **Signing and workspace keys.** `VOID_SIGNING_KEY` and
-  `VOID_ACCOUNT_SEAL_KEY` live in the AES-256-GCM snapshot, the macOS
+- **Signing and workspace keys.** `NOMO_SIGNING_KEY` and
+  `NOMO_ACCOUNT_SEAL_KEY` live in the AES-256-GCM snapshot, the macOS
   Keychain, the Windows Credential Manager, or a mode-0600 key file beside the
   data they sign. `docs/THREAT-MODEL.md` records what that custody is worth:
   the recorder, the executor, the policy engine and the signature all run in
   one process under one OS principal, so the signature defends against a third
   party who can edit the ledger but cannot read the key file, and against
   nothing else.
-- **The cloud database.** `DATABASE_URL` and `VOID_PG_URL` are deployment
+- **The cloud database.** `DATABASE_URL` and `NOMO_PG_URL` are deployment
   variables on Vercel. The hosted ledger is the production record of accountable
   tool calls, so a credential here is a credential over that record.
 - **The hosted function.** The Appwrite project id and endpoint, and the project
   API key the console actions need, are Appwrite-side configuration and local
   environment values. Nothing in `apps/appwrite-mcp` carries a key; the
   directory holds source, the deployed snapshot and the requirements.
-- **Control plane tokens.** `VOID_CONTROL_TOKEN` and `VOID_SECRET_KEY` are
+- **Control plane tokens.** `NOMO_CONTROL_TOKEN` and `NOMO_SECRET_KEY` are
   issued per workspace at run time and are present in no file, no fixture and no
   test.
 
-Rotating `VOID_SIGNING_KEY` means generating a new key, redeploying and running
+Rotating `NOMO_SIGNING_KEY` means generating a new key, redeploying and running
 `scripts/src/provision-cloud.mjs`; entries signed by the old key verify only
 against it. `docs/OPERATIONS.md` covers the boundary, including the absence of a
 production KMS.

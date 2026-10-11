@@ -103,7 +103,7 @@ async function commitRepository(
   t: TestContext,
   format: "sha1" | "sha256" = "sha1",
 ) {
-  const createdRoot = await mkdtemp(join(tmpdir(), "void-git-commit-"));
+  const createdRoot = await mkdtemp(join(tmpdir(), "nomo-git-commit-"));
   const root = await realpath(createdRoot);
   const extras: string[] = [];
   t.after(async () => {
@@ -116,7 +116,7 @@ async function commitRepository(
       env: { ...process.env, LC_ALL: "C" },
     }).trim();
   execFileSync("git", ["init", "-q", "-b", "main", `--object-format=${format}`, root]);
-  run("config", "user.name", "VOID test");
+  run("config", "user.name", "NOMO test");
   run("config", "user.email", "void@example.invalid");
   await writeFile(join(root, "selected"), "before");
   await writeFile(join(root, "staged-sentinel"), "base");
@@ -374,7 +374,7 @@ async function commitRepository(
       snapshotSeam = seam;
     },
     async temp() {
-      const path = await mkdtemp(join(tmpdir(), "void-git-external-"));
+      const path = await mkdtemp(join(tmpdir(), "nomo-git-external-"));
       extras.push(path);
       return path;
     },
@@ -449,7 +449,7 @@ posixTest(
     assert.equal(capture.repository.root, f.root);
     assert.ok(capture.branch.reflogDigest);
     assert.ok(capture.branch.reflogGeneration);
-    assert.equal(JSON.stringify(capture).includes("VOID test"), false);
+    assert.equal(JSON.stringify(capture).includes("NOMO test"), false);
     assert.equal(JSON.stringify(capture).includes("initial"), false);
   },
 );
@@ -795,7 +795,7 @@ const prepareDrifts: PrepareDrift[] = [
       await writeFile(path, bytes);
     },
   },
-  { name: "repository config", arrange: (f) => { f.run("config", "void.drift", "changed"); } },
+  { name: "repository config", arrange: (f) => { f.run("config", "nomo.drift", "changed"); } },
   { name: "raw index format", arrange: (f) => { f.run("update-index", "--index-version", "3"); } },
   {
     name: "logical index entry",
@@ -982,7 +982,7 @@ for (const scenario of ["add", "modify", "delete", "binary", "executable"] as co
     assert.match(raw, /^tree [0-9a-f]+\nparent [0-9a-f]+\nauthor VOID Managed Git <managed-git@void.invalid> \d+ \+0000\ncommitter VOID Managed Git <managed-git@void.invalid> \d+ \+0000\n\nVOID managed commit [0-9a-f]{16}\n$/);
     assert.equal(raw.includes("gpgsig"), false);
     assert.ok(Buffer.byteLength(raw) < 1024);
-    assert.equal((await readdir(dirname(f.gitPath("index")))).some((name) => name.startsWith(".void-git-index-")), false);
+    assert.equal((await readdir(dirname(f.gitPath("index")))).some((name) => name.startsWith(".nomo-git-index-")), false);
   });
 }
 
@@ -1371,7 +1371,7 @@ posixTest("private index cleanup runs after an injected Git failure", async (t) 
   );
   assert.deepEqual(await readFile(f.gitPath("index")), realIndex);
   assert.deepEqual(await readFile(join(f.root, "selected")), worktree);
-  assert.equal((await readdir(dirname(f.gitPath("index")))).some((name) => name.startsWith(".void-git-index-")), false);
+  assert.equal((await readdir(dirname(f.gitPath("index")))).some((name) => name.startsWith(".nomo-git-index-")), false);
 });
 
 
@@ -1552,13 +1552,13 @@ for (const event of ["random", "open", "write", "close", "lstat", "validation"] 
   posixTest(`private index initialization cleans up an injected ${event} failure`, async (t) => {
     const f = await commitRepository(t);
     const parent = dirname(f.gitPath("index"));
-    const before = (await readdir(parent)).filter((name) => name.startsWith(".void-git-index-")).sort();
+    const before = (await readdir(parent)).filter((name) => name.startsWith(".nomo-git-index-")).sort();
     assert.throws(() => createPrivateIndexWorkspace(f.gitPath("index"), {
       seam(actual) {
         if (actual === event) throw new Error(`injected ${event} failure`);
       },
     }), new RegExp(`injected ${event}`));
-    const after = (await readdir(parent)).filter((name) => name.startsWith(".void-git-index-")).sort();
+    const after = (await readdir(parent)).filter((name) => name.startsWith(".nomo-git-index-")).sort();
     assert.deepEqual(after, before);
   });
 }
@@ -1730,13 +1730,13 @@ for (const protocol of preparedProtocolFailures) {
 posixTest("private index actual first directory lstat failure cleans its owned directory", async (t) => {
   const f = await commitRepository(t);
   const parent = dirname(f.gitPath("index"));
-  const before = (await readdir(parent)).filter((name) => name.startsWith(".void-git-index-")).sort();
+  const before = (await readdir(parent)).filter((name) => name.startsWith(".nomo-git-index-")).sort();
   assert.throws(() => createPrivateIndexWorkspace(f.gitPath("index"), {
     directoryLstat() {
       throw new Error("injected actual first lstat failure");
     },
   }), /injected actual first lstat/);
-  const after = (await readdir(parent)).filter((name) => name.startsWith(".void-git-index-")).sort();
+  const after = (await readdir(parent)).filter((name) => name.startsWith(".nomo-git-index-")).sort();
   assert.deepEqual(after, before);
 });
 
@@ -1871,7 +1871,7 @@ posixTest("private index initialization never deletes a replaced foreign token",
     seam(event) {
       if (event !== "validation") return;
       const directory = readdirSync(parent).map((name) => join(parent, name))
-        .find((path) => !before.has(path.slice(parent.length + 1)) && path.includes(".void-git-index-"));
+        .find((path) => !before.has(path.slice(parent.length + 1)) && path.includes(".nomo-git-index-"));
       assert.ok(directory);
       tokenPath = join(directory, "owner");
       unlinkSync(tokenPath);
@@ -1893,7 +1893,7 @@ posixTest("private index initialization preserves a token with reused inode numb
     seam(event) {
       if (event !== "validation") return;
       const directory = readdirSync(parent).map((name) => join(parent, name))
-        .find((path) => !before.has(path.slice(parent.length + 1)) && path.includes(".void-git-index-"));
+        .find((path) => !before.has(path.slice(parent.length + 1)) && path.includes(".nomo-git-index-"));
       assert.ok(directory);
       tokenPath = join(directory, "owner");
       const owned = lstatSync(tokenPath, { bigint: true });
@@ -2354,7 +2354,7 @@ posixTest("ref transaction disables reference-transaction hooks", async (t) => {
 });
 
 posixTest("recovery refuses destructive ref path drift", async (t) => {
-  for (const drift of ["packed", "void-alias"] as const) await t.test(drift, async (t) => {
+  for (const drift of ["packed", "nomo-alias"] as const) await t.test(drift, async (t) => {
     const f = await commitRepository(t);
     await stageChange(f, "managed");
     const { prepared, outcome } = await dispatchForward(f, `path-${drift}`);
@@ -2430,7 +2430,7 @@ posixTest("recovery rejects packed-branch refs heads directory replacement", asy
 posixTest("recovery rejects same-owner refs void directory replacement", async (t) => {
   const f = await commitRepository(t);
   await stageChange(f, "managed");
-  const { prepared, outcome } = await dispatchForward(f, "void-directory-op");
+  const { prepared, outcome } = await dispatchForward(f, "nomo-directory-op");
   const plan = prepared.plan as unknown as CommitPlan;
   const head = f.run("rev-parse", "HEAD");
   const namespace = f.gitPath("refs/void");
@@ -2439,9 +2439,9 @@ posixTest("recovery rejects same-owner refs void directory replacement", async (
   await rename(namespace, moved);
   await mkdir(join(namespace, "operations"), { recursive: true });
   await writeFile(f.gitPath(plan.receiptRef), receipt);
-  assert.deepEqual(await f.adapter.recover(prepared, outcome, "void-directory-recovery"), {
+  assert.deepEqual(await f.adapter.recover(prepared, outcome, "nomo-directory-recovery"), {
     status: "conflict", evidence: null,
   });
   assert.equal(f.run("rev-parse", "HEAD"), head);
-  assert.throws(() => f.run("show-ref", "--verify", `refs/void/recoveries/${sha256("void-directory-recovery")}`));
+  assert.throws(() => f.run("show-ref", "--verify", `refs/void/recoveries/${sha256("nomo-directory-recovery")}`));
 });

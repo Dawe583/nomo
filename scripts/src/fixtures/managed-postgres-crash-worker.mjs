@@ -9,8 +9,8 @@ import {
 } from "../../../packages/runtime/src/index.ts";
 import { devKeyProvider } from "../../../packages/ledger/src/sign.ts";
 
-assert.equal(process.env.VOID_RECOVERY_DATABASE_TEST, "1");
-const config = JSON.parse(process.env.VOID_POSTGRES_CRASH_CONFIG ?? "null");
+assert.equal(process.env.NOMO_RECOVERY_DATABASE_TEST, "1");
+const config = JSON.parse(process.env.NOMO_POSTGRES_CRASH_CONFIG ?? "null");
 assert.ok(config && process.send, "Crash worker requires IPC configuration.");
 const url = new URL(process.env.DATABASE_URL);
 assert.equal(url.pathname, "/void_gui_upgrade_preview");

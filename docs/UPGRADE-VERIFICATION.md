@@ -30,7 +30,7 @@ Final review found and reproduced legacy single-Undo lifecycle, branch ownership
 
 ## Prime Agent MCP
 
-The current local host authorizes five tools: `void_execute`, `void_recovery_plan`, `void_recovery_apply`, `void_reconcile`, `void_recovery_reconcile`. The server implements three additional job tools; they are not authorized in this dogfood setup.
+The current local host authorizes five tools: `nomo_execute`, `nomo_recovery_plan`, `nomo_recovery_apply`, `nomo_reconcile`, `nomo_recovery_reconcile`. The server implements three additional job tools; they are not authorized in this dogfood setup.
 
 Filesystem authority is only `$HOME/.local/share/void-prime-dogfood/project`. Config, policy, launcher, encrypted captures and journal remain outside that writable directory. A native launcher obtains the existing key from macOS Keychain (`dev.void.prime-recovery`, account `prime-dogfood`) and passes it only through the child environment. Missing or unavailable keys refuse startup; never generate a replacement for retained state. No plaintext key file or key argument is needed.
 

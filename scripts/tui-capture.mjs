@@ -21,14 +21,14 @@ function quote(value) {
 function runInPty(command) {
   if (process.platform === "darwin") {
     const program =
-      "set timeout 15; spawn -noecho sh -c $env(VOID_TUI_COMMAND); expect eof; set result [wait]; exit [lindex $result 3]";
+      "set timeout 15; spawn -noecho sh -c $env(NOMO_TUI_COMMAND); expect eof; set result [wait]; exit [lindex $result 3]";
     return spawnSync("expect", ["-c", program], {
       cwd: root,
       encoding: "utf8",
       env: {
         ...process.env,
         TERM: "xterm-256color",
-        VOID_TUI_COMMAND: command,
+        NOMO_TUI_COMMAND: command,
       },
     });
   }
@@ -54,7 +54,7 @@ for (const width of widths(process.argv.slice(2))) {
     .filter(
       (line) =>
         !/^Script (started|done)/.test(line) &&
-        line !== "spawn sh -c $env(VOID_TUI_COMMAND)",
+        line !== "spawn sh -c $env(NOMO_TUI_COMMAND)",
     );
   const longest = Math.max(0, ...content.map((line) => line.length));
   if (longest > width)

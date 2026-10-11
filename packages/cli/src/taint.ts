@@ -31,7 +31,7 @@ export type ResolvedLedger = {
   readonly workspace: string;
 };
 
-const USAGE = "usage: void taint --ledger <dir> --seq <n> [--depth <n>] [--json]";
+const USAGE = "usage: nomo taint --ledger <dir> --seq <n> [--depth <n>] [--json]";
 
 export async function runTaintCommand(
   argv: readonly string[],
@@ -53,7 +53,7 @@ export async function runTaintCommand(
     }
     return 0;
   } catch (error) {
-    io.stderr(`void taint failed: ${error instanceof Error ? error.message : String(error)}`);
+    io.stderr(`nomo taint failed: ${error instanceof Error ? error.message : String(error)}`);
     return 1;
   }
 }
@@ -110,7 +110,7 @@ async function resolveLedgerPath(path: string, env: Readonly<NodeJS.ProcessEnv>)
     throw new Error(`ledger dir missing: ${path}`);
   }
   if (info.isDirectory()) {
-    const workspace = env.VOID_WORKSPACE ?? "default";
+    const workspace = env.NOMO_WORKSPACE ?? "default";
     return { path: join(path, `${workspace}.jsonl`), dir: path, workspace };
   }
   const workspace = basename(path).endsWith(".jsonl") ? basename(path).slice(0, -6) : basename(path);

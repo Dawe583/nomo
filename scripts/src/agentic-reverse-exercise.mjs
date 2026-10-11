@@ -1,4 +1,4 @@
-// A disposable, end-to-end exercise of VOID as an agentic reverse tool.
+// A disposable, end-to-end exercise of NOMO as an agentic reverse tool.
 //
 // The unit and route suites prove each boundary in isolation. This proves the
 // loop an agentic reverse workflow actually depends on, in order, against real
@@ -43,7 +43,7 @@ const base64 = (bytes) => bytes.toString("base64");
 const revision = (root, name) => join(root, name);
 
 export async function runAgenticReverseExercise(options = {}) {
-  const root = await mkdtemp(join(tmpdir(), "void-reverse-exercise-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-reverse-exercise-"));
   const project = join(root, "target");
   const journalDir = join(root, "journal");
   const vaultDir = join(root, "vault");
@@ -72,9 +72,9 @@ export async function runAgenticReverseExercise(options = {}) {
 
   try {
     let host = runtime();
-    // 1. The agent inspects the target. Reading is not a VOID-mediated action:
+    // 1. The agent inspects the target. Reading is not a NOMO-mediated action:
     //    the managed adapter governs create, write, delete and rename, so an
-    //    inspection is the agent's own business and proves nothing about VOID.
+    //    inspection is the agent's own business and proves nothing about NOMO.
     //    That is exactly why the mutations below are the part that matters.
     const observed = await readFile(subject);
     if (!observed.equals(ORIGINAL)) throw new Error("the fixture target was not written as expected");
@@ -148,7 +148,7 @@ export async function runAgenticReverseExercise(options = {}) {
     if (!(await readFile(subject)).equals(PATCHED)) throw new Error("a restart changed the target");
     steps.push("a restarted runtime acts on the same workspace and history");
 
-    // 7. The inverse. VOID's recovery is a separate, confirmed action on a
+    // 7. The inverse. NOMO's recovery is a separate, confirmed action on a
     //    plan, not a side effect of the write, which is the whole point of
     //    holding a before image.
     const plan = await host.planRecovery(WORKSPACE, "op-write-1");

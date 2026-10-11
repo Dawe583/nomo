@@ -8,8 +8,8 @@ import { WorkspaceTui, renderWorkspace } from "./workspace.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
 async function fixture(t: test.TestContext) {
-  const root = await mkdtemp(join(tmpdir(), "void-parity-controls-"));
-  const env = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-parity-controls-"));
+  const env = { NOMO_DATA_DIR: root };
   let app = new Workbench(env, async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
@@ -116,7 +116,7 @@ test("projects and preset agents apply only to new conversations and projects su
   await ui.command("original");
   await app.settled();
   const original = ui.sessionId!;
-  const file = join(env.VOID_DATA_DIR, "project.json");
+  const file = join(env.NOMO_DATA_DIR, "project.json");
   await writeFile(
     file,
     JSON.stringify({ name: "Writing", root: "/descriptive/project/root" }),
@@ -254,7 +254,7 @@ test("custom agent files use Workbench validation and persist without broadening
     maxTurns: 2,
     maxContextTokens: 4000,
   };
-  const file = join(env.VOID_DATA_DIR, "profile.json");
+  const file = join(env.NOMO_DATA_DIR, "profile.json");
   await writeFile(file, JSON.stringify(profile));
   await ui.command(`/agent-file ${file}`);
   assert.match(ui.confirmation!.title, /SAVE AGENT/);
@@ -480,10 +480,10 @@ test("/hook flips a saved hook without rewriting it", async (t) => {
   // `/hooks` reports what exists and `/hook-file` writes a new one from disk.
   // Nothing could take one off, which meant a hook an operator no longer
   // wanted could only be silenced by editing a JSON file outside the TUI.
-  const root = await mkdtemp(join(tmpdir(), "void-tui-hook-edit-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-hook-edit-"));
   const env = {
-    VOID_DATA_DIR: root,
-    VOID_HOOK_COMMANDS: JSON.stringify(["echo"]),
+    NOMO_DATA_DIR: root,
+    NOMO_HOOK_COMMANDS: JSON.stringify(["echo"]),
   };
   const app = new Workbench(env, async (url) =>
     String(url).endsWith("/models")

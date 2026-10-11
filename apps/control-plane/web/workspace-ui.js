@@ -8,9 +8,9 @@
   function download(name, content, type = 'text/plain') { const url = URL.createObjectURL(new Blob([content], { type })); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   el('settings-open').addEventListener('click', () => el('settings-dialog').showModal());
   el('documents-toggle').addEventListener('click', () => { el('documents-panel').hidden = !el('documents-panel').hidden; el('documents-toggle').setAttribute('aria-expanded', String(!el('documents-panel').hidden)); });
-  el('starter-prompt')?.addEventListener('click', () => { el('session-prompt').value = 'Create a concise project plan in plan.md using the VOID document workspace.'; el('session-prompt').focus(); });
+  el('starter-prompt')?.addEventListener('click', () => { el('session-prompt').value = 'Create a concise project plan in plan.md using the NOMO document workspace.'; el('session-prompt').focus(); });
   el('session-prompt').addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !el('session-submit').disabled) { event.preventDefault(); el('session-form').requestSubmit(); } });
-  el('session-export').addEventListener('click', () => { if (session) download(`void-${session.id}.json`, JSON.stringify(session, null, 2), 'application/json'); });
+  el('session-export').addEventListener('click', () => { if (session) download(`nomo-${session.id}.json`, JSON.stringify(session, null, 2), 'application/json'); });
   el('document-download').addEventListener('click', () => { if (state && selectedPath) download(selectedPath.split('/').at(-1), state.files[selectedPath]); });
   function select(path) { selectedPath = path; el('document-content').textContent = state.files[path] ?? ''; el('document-download').disabled = !Object.hasOwn(state.files, path); }
   let revision = '';
@@ -40,8 +40,8 @@
   el('undo-confirm').addEventListener('click', async () => {
     if (!pending || session?.id !== pending.session) return;
     el('undo-confirm').disabled = true;
-    try { await request(`undo/${encodeURIComponent(pending.operation)}`, 'POST', { confirm: pending.operation }); el('undo-status').textContent = 'Change undone and recorded in the signed ledger.'; revision = ''; await refresh(); window.dispatchEvent(new Event('void-refresh')); }
+    try { await request(`undo/${encodeURIComponent(pending.operation)}`, 'POST', { confirm: pending.operation }); el('undo-status').textContent = 'Change undone and recorded in the signed ledger.'; revision = ''; await refresh(); window.dispatchEvent(new Event('nomo-refresh')); }
     catch (error) { el('undo-status').textContent = error.message; }
   });
-  window.addEventListener('void-session', event => { session = event.detail; el('session-export').disabled = !session; if (session) void refresh(); else { revision = ''; state = undefined; el('documents-status').textContent = 'Start a session to create documents.'; el('document-list').replaceChildren(); el('changes-list').replaceChildren(); el('document-content').textContent = ''; el('document-download').disabled = true; } });
+  window.addEventListener('nomo-session', event => { session = event.detail; el('session-export').disabled = !session; if (session) void refresh(); else { revision = ''; state = undefined; el('documents-status').textContent = 'Start a session to create documents.'; el('document-list').replaceChildren(); el('changes-list').replaceChildren(); el('document-content').textContent = ''; el('document-download').disabled = true; } });
 })();

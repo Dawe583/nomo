@@ -1,4 +1,4 @@
-# VOID testing
+# NOMO testing
 
 This repository uses Node's built in test runner only. Tests import from `node:test` and `node:assert/strict`. Do not add test dependencies and do not use loose `node:assert`.
 
@@ -59,7 +59,7 @@ The script loads `policy/default.yaml`, classifies a sample `postgres.row.delete
 Run:
 
 ```sh
-node packages/cli/bin/void.mjs classify --transcript fixtures/session.jsonl --facts fixtures/facts.json
+node packages/cli/bin/nomo.mjs classify --transcript fixtures/session.jsonl --facts fixtures/facts.json
 ```
 
 This reads the fixture transcript and declared facts, then prints call counts by class and the unclassified rate.

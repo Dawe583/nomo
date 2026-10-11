@@ -1,4 +1,4 @@
-# VOID — plán velkého upgradu GUI
+# NOMO — plán velkého upgradu GUI
 
 ## Current contract and delivery boundary
 
@@ -13,7 +13,7 @@ Datum: 2026-09-11. Stav: **implementace nasazena; výsledky a otevřené ověře
 
 ## 1. Cíl a pevná rozhodnutí
 
-Vytvořit plnohodnotný webový pracovní prostor na Vercelu. Pohodlí konverzací, historie a práce s dokumenty se má přiblížit claude.ai; transparentnost modelů, nástrojů a běhu agenta OpenCode. Zachovat specifickou hodnotu VOID: u každé důležité operace vidět stav, důvod rozhodnutí, důkaz a skutečnou možnost vrácení.
+Vytvořit plnohodnotný webový pracovní prostor na Vercelu. Pohodlí konverzací, historie a práce s dokumenty se má přiblížit claude.ai; transparentnost modelů, nástrojů a běhu agenta OpenCode. Zachovat specifickou hodnotu NOMO: u každé důležité operace vidět stav, důvod rozhodnutí, důkaz a skutečnou možnost vrácení.
 
 „Všechno důležité“ znamená úplné pokrytí entit a jejich historie, dostupné filtrováním a detailem. Neznamená zobrazit všechna data současně v chatu. Chat je primární pracovní plocha; přehledy, tabulky a inspektor poskytují potřebnou hloubku.
 
@@ -31,7 +31,7 @@ Pevné požadavky:
 
 ## 2. Vizuální směr
 
-Navázat na aktuální požadavek zaznamenaný v `docs/GUI-RULES.md`: identita VOID / paper-terminal / ASCII. Převzít pracovní návyky referenčních aplikací, nikoli jejich branding. Hlavním vizuálním motivem je drobný ASCII znak a čitelná historie akcí, ne dekorativní panely.
+Navázat na aktuální požadavek zaznamenaný v `docs/GUI-RULES.md`: identita NOMO / paper-terminal / ASCII. Převzít pracovní návyky referenčních aplikací, nikoli jejich branding. Hlavním vizuálním motivem je drobný ASCII znak a čitelná historie akcí, ne dekorativní panely.
 
 | Token | Light | Dark | Použití |
 |---|---|---|---|
@@ -73,7 +73,7 @@ Chat, přehled a ledger nesmí mít vzájemně odlišné názvy navigace. UI tex
 
 ```text
 ┌────────────────┬──────────────────────────────────┬───────────────────┐
-│ VOID workspace │ Konverzace / projekt   stav       │ Kontext           │
+│ NOMO workspace │ Konverzace / projekt   stav       │ Kontext           │
 │ Nový chat      ├──────────────────────────────────┤ Dokumenty         │
 │ Hledat         │                                  │ Nástroje          │
 │                │ Zprávy, Markdown, kód            │ Změny / diff      │
@@ -214,7 +214,7 @@ Implementace defaultu musí zasáhnout frontend, cloudový bootstrap a lokální
 5. Ověřit `/models`, přesné model ID, krátkou generaci, tool call a streaming. Pokud katalog model nevrací, ověřit dokumentovaný způsob jeho dostupnosti; nedeklarovat připojení za funkční jen podle názvu v OpenCode.
 6. API `model` posílat jako `z-ai/glm-5.3-free`, nikoli provider-prefixed OpenCode ID.
 7. Nové sessions bez explicitního výběru používají tento default. Stávající sessions si zachovají snapshot modelu a providera.
-8. Starý globální `void-model` migrovat na preference scoped podle workspace a provider profile; nesmí přebít nový serverový default náhodnou starší volbou. Explicitní novější uživatelská změna má přednost.
+8. Starý globální `nomo-model` migrovat na preference scoped podle workspace a provider profile; nesmí přebít nový serverový default náhodnou starší volbou. Explicitní novější uživatelská změna má přednost.
 9. Při 429 respektovat Retry-After a zobrazit čekání; při 401 obnovu credential; při 403/404 nedostupný model. Žádný tichý přechod na placený model.
 10. „Free“ zachovat v názvu. Cena 0 se zobrazí jen s doloženou tarifní informací; jinak „cena neověřena“. Neodhadovat context window nebo rate limits podle jiného GLM modelu.
 

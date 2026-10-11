@@ -161,8 +161,8 @@ async function checkWindowsPathAcl(
     !verifiedWindowsPrivateParents.has(windowsPathKey(immediateParent));
   const script = `
 $ErrorActionPreference = 'Stop'
-$file = $env:VOID_ACL_FILE
-$kind = $env:VOID_ACL_KIND
+$file = $env:NOMO_ACL_FILE
+$kind = $env:NOMO_ACL_KIND
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
 $trustedOwners = @($sid.Value, 'S-1-5-18', 'S-1-5-32-544', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464')
 $tokenSids = @($sid.Value) + @([System.Security.Principal.WindowsIdentity]::GetCurrent().Groups | ForEach-Object { $_.Value }) + @('S-1-1-0')
@@ -171,9 +171,9 @@ $attributes = [System.IO.File]::GetAttributes($file)
 if (($attributes -band $reparsePoint) -ne 0) { throw 'path is a reparse point' }
 $item = Get-Item -LiteralPath $file -Force -ErrorAction Stop
 if (($item.Attributes -band $reparsePoint) -ne 0) { throw 'path is a reparse point' }
-if ($env:VOID_ACL_LEAF) {
+if ($env:NOMO_ACL_LEAF) {
   $leafAttributes = $null
-  try { $leafAttributes = [System.IO.File]::GetAttributes($env:VOID_ACL_LEAF) }
+  try { $leafAttributes = [System.IO.File]::GetAttributes($env:NOMO_ACL_LEAF) }
   catch {
     $exception = $_.Exception
     if ($exception.InnerException) { $exception = $exception.InnerException }
@@ -181,11 +181,11 @@ if ($env:VOID_ACL_LEAF) {
   }
   if ($null -ne $leafAttributes -and ($leafAttributes -band $reparsePoint) -ne 0) { throw 'leaf path is a reparse point' }
   if ($null -eq $leafAttributes) {
-    $leaf = Get-Item -LiteralPath $env:VOID_ACL_LEAF -Force -ErrorAction SilentlyContinue
+    $leaf = Get-Item -LiteralPath $env:NOMO_ACL_LEAF -Force -ErrorAction SilentlyContinue
     if ($null -ne $leaf -and ($leaf.Attributes -band $reparsePoint) -ne 0) { throw 'leaf path is a reparse point' }
   }
 }
-if ($env:VOID_ACL_CHECK_ANCESTORS -ne '0') {
+if ($env:NOMO_ACL_CHECK_ANCESTORS -ne '0') {
 $current = [System.IO.DirectoryInfo]::new([System.IO.Path]::GetDirectoryName($file))
 $replaceMask = [System.Security.AccessControl.FileSystemRights]::Delete -bor [System.Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles -bor [System.Security.AccessControl.FileSystemRights]::ChangePermissions -bor [System.Security.AccessControl.FileSystemRights]::TakeOwnership
 $firstParent = $true
@@ -214,7 +214,7 @@ while ($null -ne $current) {
   $firstParent = $false
 }
 }
-if ($env:VOID_ACL_PROTECT -eq '1') {
+if ($env:NOMO_ACL_PROTECT -eq '1') {
   if ($kind -eq 'directory') { $acl = New-Object System.Security.AccessControl.DirectorySecurity }
   else { $acl = New-Object System.Security.AccessControl.FileSecurity }
   $acl.SetOwner($sid)
@@ -250,11 +250,11 @@ if (-not $readable -or -not $writable -or $denied) { throw 'ACL does not grant o
 `;
   try {
     await windowsPowerShell(script, {
-      VOID_ACL_FILE: path,
-      VOID_ACL_KIND: kind,
-      VOID_ACL_PROTECT: protect ? "1" : "0",
-      VOID_ACL_CHECK_ANCESTORS: checkAncestors ? "1" : "0",
-      ...(leafToCheck ? { VOID_ACL_LEAF: leafToCheck } : {}),
+      NOMO_ACL_FILE: path,
+      NOMO_ACL_KIND: kind,
+      NOMO_ACL_PROTECT: protect ? "1" : "0",
+      NOMO_ACL_CHECK_ANCESTORS: checkAncestors ? "1" : "0",
+      ...(leafToCheck ? { NOMO_ACL_LEAF: leafToCheck } : {}),
     });
   } catch (error) {
     throw new Error(
@@ -278,7 +278,7 @@ if (-not $readable -or -not $writable -or $denied) { throw 'ACL does not grant o
 async function windowsPrivateTreeAcl(root: string): Promise<void> {
   const script = `
 $ErrorActionPreference = 'Stop'
-$root = $env:VOID_ACL_ROOT
+$root = $env:NOMO_ACL_ROOT
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
 $trustedOwners = @($sid.Value, 'S-1-5-18', 'S-1-5-32-544', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464')
 $tokenSids = @($sid.Value) + @([System.Security.Principal.WindowsIdentity]::GetCurrent().Groups | ForEach-Object { $_.Value }) + @('S-1-1-0')
@@ -304,7 +304,7 @@ foreach ($item in $items) {
 }
 `;
   try {
-    await windowsPowerShell(script, { VOID_ACL_ROOT: root });
+    await windowsPowerShell(script, { NOMO_ACL_ROOT: root });
   } catch {
     throw new Error("configured state tree failed the Windows ACL check");
   }
@@ -342,7 +342,7 @@ async function checkWindowsParentAcl(
     return;
   const script = `
 $ErrorActionPreference = 'Stop'
-$current = [System.IO.DirectoryInfo]::new($env:VOID_ACL_PARENT)
+$current = [System.IO.DirectoryInfo]::new($env:NOMO_ACL_PARENT)
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
 $trustedOwners = @($sid.Value, 'S-1-5-18', 'S-1-5-32-544', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464')
 $replaceMask = [System.Security.AccessControl.FileSystemRights]::Delete -bor [System.Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles -bor [System.Security.AccessControl.FileSystemRights]::ChangePermissions -bor [System.Security.AccessControl.FileSystemRights]::TakeOwnership
@@ -358,7 +358,7 @@ while ($null -ne $current) {
 }
 `;
   try {
-    await windowsPowerShell(script, { VOID_ACL_PARENT: directory });
+    await windowsPowerShell(script, { NOMO_ACL_PARENT: directory });
   } catch (error) {
     const detail = String(
       (error as { stderr?: string }).stderr ??

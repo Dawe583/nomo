@@ -11,7 +11,7 @@ import type {
 } from "../../runtime/src/index.ts";
 
 test("CLI persists, approves and resumes a run recovery job by jobId", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-cli-recovery-job-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-cli-recovery-job-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, "project"));
   await writeFile(join(root, "project", "a.txt"), "before-a");

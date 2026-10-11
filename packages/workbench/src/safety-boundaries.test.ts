@@ -8,16 +8,16 @@ import { LocalStorage } from "./storage.ts";
 import { activity } from "./gui.ts";
 
 async function fixture(t:import("node:test").TestContext) {
- const directory=await mkdtemp(join(tmpdir(),"void-undo-boundary-"));let calls=0;
+ const directory=await mkdtemp(join(tmpdir(),"nomo-undo-boundary-"));let calls=0;
  const fetcher:typeof fetch=async url=>{
   if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
   calls++;return Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
  };
- let app=new Workbench({VOID_DATA_DIR:directory},fetcher);
+ let app=new Workbench({NOMO_DATA_DIR:directory},fetcher);
  t.after(async()=>{await app.shutdown();await rm(directory,{recursive:true,force:true});});
  await app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await app.start("Review","fixture");await app.settled();
- return {get app(){return app;},directory,session,calls:()=>calls,restart(){app=new Workbench({VOID_DATA_DIR:directory},fetcher);}};
+ return {get app(){return app;},directory,session,calls:()=>calls,restart(){app=new Workbench({NOMO_DATA_DIR:directory},fetcher);}};
 }
 async function paused(t:import("node:test").TestContext) {
  const f=await fixture(t);
@@ -64,9 +64,9 @@ test("an independent branch does not inherit its parent recovery owner or queued
  await assert.rejects(f.app.recoveryJobStatus(child.id,f.plan.jobId),/not found/i);
 });
 test("Stop projects stopping on every live surface until the provider settles",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-stopping-view-"));let release!:()=>void;
+ const directory=await mkdtemp(join(tmpdir(),"nomo-stopping-view-"));let release!:()=>void;
  const blocked=new Promise<void>(resolve=>{release=resolve;});
- const app=new Workbench({VOID_DATA_DIR:directory},async url=>{
+ const app=new Workbench({NOMO_DATA_DIR:directory},async url=>{
   if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
   await blocked;return Response.json({choices:[{message:{role:"assistant",content:"Late"}}]});
  });

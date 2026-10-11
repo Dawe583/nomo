@@ -41,11 +41,11 @@ const serve = async (
   env: Readonly<NodeJS.ProcessEnv>,
   run: (origin: string) => Promise<void>,
 ) => {
-  const dataDir = await mkdtemp(join(tmpdir(), "void-verify-key-workbench-"));
+  const dataDir = await mkdtemp(join(tmpdir(), "nomo-verify-key-workbench-"));
   const handle = await listenControlPlane({
     ledgerPath,
     webRoot: join(import.meta.dirname, "../web"),
-    env: { VOID_DATA_DIR: dataDir, ...env },
+    env: { NOMO_DATA_DIR: dataDir, ...env },
   });
   try {
     await run(`http://127.0.0.1:${handle.port}`);
@@ -134,13 +134,13 @@ describe("control plane verification key", () => {
     // The defect: resolving verification from the signing key file lets anyone
     // who replaces that file redefine what "valid" means. The server reports
     // integrity only, and says that is what it did.
-    const root = await mkdtemp(join(tmpdir(), "void-verify-key-home-"));
+    const root = await mkdtemp(join(tmpdir(), "nomo-verify-key-home-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     await seed(root, "ledger", ["fixture.one", "fixture.two"]);
-    await mkdir(join(root, ".void", "keys"), { recursive: true, mode: 0o700 });
+    await mkdir(join(root, ".nomo", "keys"), { recursive: true, mode: 0o700 });
     await copyFile(
       join(root, "ledger", "keys", "dev-ed25519.pkcs8"),
-      join(root, ".void", "keys", "dev-ed25519.pkcs8"),
+      join(root, ".nomo", "keys", "dev-ed25519.pkcs8"),
     );
 
     await serve(join(root, "ledger", `${workspace}.jsonl`), { HOME: root }, async (origin) => {
@@ -154,7 +154,7 @@ describe("control plane verification key", () => {
   });
 
   test("a pinned public key rejects a chain re-signed with a substituted key", async (t) => {
-    const root = await mkdtemp(join(tmpdir(), "void-verify-key-attack-"));
+    const root = await mkdtemp(join(tmpdir(), "nomo-verify-key-attack-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     const honest = await seed(root, "honest", ["fixture.one"]);
     const honestId = await honest.currentKeyId();
@@ -172,7 +172,7 @@ describe("control plane verification key", () => {
     assert.equal(entries[0]!.key_id, await attacker.currentKeyId());
     assert.notEqual(entries[0]!.key_id, honestId);
 
-    await serve(forged, { HOME: root, VOID_VERIFY_KEY_FILE: trustFile }, async (origin) => {
+    await serve(forged, { HOME: root, NOMO_VERIFY_KEY_FILE: trustFile }, async (origin) => {
       // The API reports the refusal without the verifier's internal reason;
       // the reason itself is asserted where the verifier is called directly.
       const body = await verify(origin);
@@ -182,7 +182,7 @@ describe("control plane verification key", () => {
     });
   });
   test("a configured signing key is honoured and reported as degraded", async (t) => {
-    const root = await mkdtemp(join(tmpdir(), "void-verify-key-degraded-"));
+    const root = await mkdtemp(join(tmpdir(), "nomo-verify-key-degraded-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     const key = await seed(root, "ledger", ["fixture.one"]);
     const keyId = await key.currentKeyId();
@@ -192,7 +192,7 @@ describe("control plane verification key", () => {
 
     await serve(
       join(root, "ledger", `${workspace}.jsonl`),
-      { HOME: root, VOID_SIGNING_KEY: material },
+      { HOME: root, NOMO_SIGNING_KEY: material },
       async (origin) => {
         const body = await verify(origin);
         assert.equal(body.signed, true);
@@ -208,10 +208,10 @@ describe("control plane verification key", () => {
   // reached it. It is the branch that hardcodes `signed: true`, so the claim
   // that survived every earlier fix is the one this proves.
   test("the workbench-backed path reports a trust file as authenticated without claiming substitution is detected", async (t) => {
-    const root = await mkdtemp(join(tmpdir(), "void-verify-key-workbench-path-"));
+    const root = await mkdtemp(join(tmpdir(), "nomo-verify-key-workbench-path-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     const home = join(root, "home");
-    await mkdir(join(home, ".void", "trust"), { recursive: true, mode: 0o700 });
+    await mkdir(join(home, ".nomo", "trust"), { recursive: true, mode: 0o700 });
     const key = await devKeyProvider({ dir: join(root, "signer", "keys"), env: {} });
     const store = jsonlStore(key, { dir: join(root, "signer") });
     await store.append({
@@ -223,17 +223,17 @@ describe("control plane verification key", () => {
       argsDigest: "a".repeat(64),
     });
     const keyId = await key.currentKeyId();
-    // The default trust file, at the default path inside `~/.void/`. This is
+    // The default trust file, at the default path inside `~/.nomo/`. This is
     // the configuration the audit substituted against.
     await pinVerificationKey(await spkiOf(key), {
-      file: join(home, ".void", "trust", "verify-ed25519.spki"),
+      file: join(home, ".nomo", "trust", "verify-ed25519.spki"),
       anchoredFrom: "signing-key-file",
     });
 
     const dataDir = join(root, "data");
     await mkdir(dataDir, { recursive: true, mode: 0o700 });
     // The workbench holds a managed session whose evidence is the chain above.
-    // It verifies through the same `~/.void/trust/` file, because that is the
+    // It verifies through the same `~/.nomo/trust/` file, because that is the
     // resolution every workbench read uses.
     const entries = (await readLedgerEntries(join(root, "signer", "managed.jsonl"))) as JsonlEntry[];
     assert.equal(entries.length, 1);
@@ -241,7 +241,7 @@ describe("control plane verification key", () => {
 
     const handle = await listenControlPlane({
       webRoot: join(import.meta.dirname, "../web"),
-      env: { VOID_DATA_DIR: dataDir, HOME: home },
+      env: { NOMO_DATA_DIR: dataDir, HOME: home },
     });
     try {
       const origin = `http://127.0.0.1:${handle.port}`;
@@ -258,7 +258,7 @@ describe("control plane verification key", () => {
       assert.equal(body.verificationKey?.operatorSupplied, false);
       assert.equal(body.verificationKey?.substitutionDetected, false);
       assert.equal(body.substitutionDetected, false);
-      assert.match(body.verificationKey?.note ?? "", /shares ~\/\.void\//);
+      assert.match(body.verificationKey?.note ?? "", /shares ~\/\.nomo\//);
       assert.equal(keyId, entries[0]!.key_id);
     } finally {
       await handle.close();
@@ -269,7 +269,7 @@ describe("control plane verification key", () => {
   // it had no regression guard. Asserting the response looks right is not the
   // claim; asserting no key material appeared is.
   test("a read-only GET mints no key material, on either API path", async (t) => {
-    const root = await mkdtemp(join(tmpdir(), "void-verify-key-no-mint-"));
+    const root = await mkdtemp(join(tmpdir(), "nomo-verify-key-no-mint-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     const home = join(root, "home");
     await mkdir(home, { recursive: true, mode: 0o700 });
@@ -297,7 +297,7 @@ describe("control plane verification key", () => {
     const handle = await listenControlPlane({
       ledgerPath,
       webRoot: join(import.meta.dirname, "../web"),
-      env: { VOID_DATA_DIR: dataDir, HOME: home },
+      env: { NOMO_DATA_DIR: dataDir, HOME: home },
     });
     try {
       const origin = `http://127.0.0.1:${handle.port}`;

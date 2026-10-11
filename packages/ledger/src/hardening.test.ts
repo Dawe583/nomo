@@ -29,7 +29,7 @@ describe("sanitizeWorkspace", () => {
   });
 
   test("jsonlStore rejects unsafe workspace names before opening a path", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-ledger-hardening-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-ledger-hardening-"));
     const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
     const store = jsonlStore(key, { dir: join(dir, "ledger") });
 
@@ -53,7 +53,7 @@ describe("development key file permissions", () => {
     test("Windows rejects an explicitly broadened ACL and restores private access", async () => {
       const { execFile } = await import("node:child_process");
       const { promisify } = await import("node:util");
-      const dir = await mkdtemp(join(tmpdir(), "void key ' acl-"));
+      const dir = await mkdtemp(join(tmpdir(), "nomo key ' acl-"));
       const file = join(dir, "dev-ed25519.pkcs8");
       await devKeyProvider({ dir, env: {} });
       await promisify(execFile)(
@@ -69,7 +69,7 @@ describe("development key file permissions", () => {
       await assertPrivateKeyFileMode(file);
     });
   test("new development keys are private and reusable", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-key-mode-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-key-mode-"));
 
     const first = await devKeyProvider({ dir, env: {} });
     const second = await devKeyProvider({ dir, env: {} });
@@ -81,7 +81,7 @@ describe("development key file permissions", () => {
   });
 
   test("existing development keys with broad permissions are rejected", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-key-wide-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-key-wide-"));
     const file = join(dir, "dev-ed25519.pkcs8");
     if (process.platform === "win32") {
       await devKeyProvider({ dir, env: {} });
@@ -108,8 +108,8 @@ describe("development key file permissions", () => {
   });
 
   test("symbolic link key files are rejected before read", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-key-link-"));
-    const targetDir = await mkdtemp(join(tmpdir(), "void-key-target-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-key-link-"));
+    const targetDir = await mkdtemp(join(tmpdir(), "nomo-key-target-"));
     const target = join(targetDir, "target.pkcs8");
     await writeFile(target, "not a key");
     // Junctions exercise reparse-point rejection without requiring Windows

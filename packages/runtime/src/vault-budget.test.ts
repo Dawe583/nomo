@@ -13,7 +13,7 @@ import { devKeyProvider } from "../../ledger/src/sign.ts";
 const big = (bytes: number) => ({ blob: "x".repeat(bytes) });
 
 test("the read budget defaults to the write quota, so nothing changes by default", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-budget-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-budget-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const vault = localRecoveryVault(root, { k: randomBytes(32) }, "k", 1024 * 1024);
   const value = big(4096);
@@ -22,7 +22,7 @@ test("the read budget defaults to the write quota, so nothing changes by default
 });
 
 test("a host that declares a smaller read budget gets a refusal naming the size", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-budget-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-budget-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   // Written against a generous quota, so the artifact is legitimately stored,
   // and then read by a host that will not load that much.
@@ -40,7 +40,7 @@ test("a host that declares a smaller read budget gets a refusal naming the size"
 });
 
 test("a read budget below the cipher overhead cannot be satisfied by any artifact", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-budget-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-budget-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const vault = localRecoveryVault(root, { k: randomBytes(32) }, "k", 1024 * 1024, 0);
   const reference = await vault.put("w", big(16));
@@ -48,7 +48,7 @@ test("a read budget below the cipher overhead cannot be satisfied by any artifac
 });
 
 test("the refusal happens before the read, so a hostile size cannot cost an allocation", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-budget-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-budget-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, "project"), { recursive: true });
   // A real capture is written through the generous default, then a runtime with

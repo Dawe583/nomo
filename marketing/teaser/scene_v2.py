@@ -1,7 +1,7 @@
-"""VOID v2: six animated 3D sets, physical typography and deterministic effects.
+"""NOMO v2: six animated 3D sets, physical typography and deterministic effects.
 
 Prepare fonts with finish_v2.py --prepare, then run with Blender 4.5 LTS:
-blender -b --python marketing/teaser/scene_v2.py -- /tmp/void-teaser-v2/frames
+blender -b --python marketing/teaser/scene_v2.py -- /tmp/nomo-teaser-v2/frames
 Add --preview to render only the editorial contact-sheet frames.
 """
 import math
@@ -185,7 +185,7 @@ def copyline(body,y,size,mat=cream,kind='serif',start=0,end=15,depth=.035):
     copy.append((ob,start,end,Vector(ob.location),Vector(ob.scale)))
     return ob
 
-copyline('VOID  /  SYSTEM ONLINE',4.72,.18,orange,'mono',0,9.75)
+copyline('NOMO  /  SYSTEM ONLINE',4.72,.18,orange,'mono',0,9.75)
 copyline('AI moves',.55,1.4,start=0,end=1.5)
 copyline('fast.',-.75,1.95,orange,start=0,end=1.5)
 copyline('Keep control.',-2.8,1.28,start=1.5,end=3)
@@ -198,8 +198,8 @@ copyline('VERIFIABLE AUDIT TRAIL',-4.17,.19,orange,'mono',5.25,7.5)
 copyline('Undo changes.',-2.80,1.19,start=7.5,end=9.75)
 copyline('RESTORE CAPTURED,',-3.65,.26,cream,'mono',7.5,9.75)
 copyline('REVERSIBLE ACTIONS',-4.06,.26,cream,'mono',7.5,9.75)
-copyline('ENTER THE VOID',-3.5,.34,orange,'mono',9.75,10.5)
-copyline('VOID',-2.68,1.75,start=10.5,end=15)
+copyline('ENTER THE NOMO',-3.5,.34,orange,'mono',9.75,10.5)
+copyline('NOMO',-2.68,1.75,start=10.5,end=15)
 copyline('CONTROL FOR AI AGENTS',-3.80,.25,cream,'mono',10.5,12.375)
 copyline('COMING SOON',-3.87,.37,orange,'mono',12.375,15)
 copyline('APPROVE  /  AUDIT  /  UNDO',-4.8,.14,dim,'mono',1.5,12.375)
@@ -349,4 +349,4 @@ if __name__=='__main__':
         if (OUT/f'{f:04d}.png').exists():continue
         animate(f);S.render.filepath=str(OUT/f'{f:04d}.png')
         bpy.ops.render.render(write_still=True)
-        print(f'VOID_V2_FRAME {f}',flush=True)
+        print(f'NOMO_V2_FRAME {f}',flush=True)

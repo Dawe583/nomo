@@ -10,7 +10,7 @@ import { runRecoveryCommand, type RecoveryMode } from "./recovery.ts";
 /** A real workspace, a real config and a real retained key. Nothing is faked:
  * the mode is enforced by the same `authorize` path an operator hits. */
 async function workspace(t: import("node:test").TestContext, mode?: RecoveryMode) {
-  const dir = await mkdtemp(join(tmpdir(), "void-mode-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-mode-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   await mkdir(join(dir, "project"));
   await writeFile(join(dir, "project", "notes.md"), "User original");

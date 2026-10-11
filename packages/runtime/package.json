@@ -19,7 +19,7 @@
   },
   "description": "Durable managed execution, encrypted captures, signed recovery and reconciliation.",
   "keywords": [
-    "void",
+    "nomo",
     "recovery",
     "runtime",
     "mcp"

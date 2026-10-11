@@ -9,7 +9,7 @@ import { previewHold, previewState } from "./fixtures.ts";
 import { renderInlineCall } from "./inline.ts";
 import { sanitizeText, stripAnsi, visibleLength, progressBar } from "./layout.ts";
 import { promptForHold, renderHoldPrompt, type RawInput } from "./modal.ts";
-import { CLASS_MARKER, VOID_PALETTE } from "./theme.ts";
+import { CLASS_MARKER, NOMO_PALETTE } from "./theme.ts";
 import type { InterceptedCall, TerminalCapabilities } from "./types.ts";
 import {
   renderHelp,
@@ -59,9 +59,9 @@ describe("terminal capabilities", () => {
   });
 });
 
-describe("VOID visual language", () => {
+describe("NOMO visual language", () => {
   test("uses the product palette and a non-colour marker for every class", () => {
-    assert.equal(VOID_PALETTE.r3, "#f47a88");
+    assert.equal(NOMO_PALETTE.r3, "#f47a88");
     assert.deepEqual(CLASS_MARKER, {
       r0: "[0]",
       r1: "[1]",
@@ -100,7 +100,7 @@ describe("VOID visual language", () => {
 
 describe("external strings cannot inject terminal control", () => {
   // The intercepted call's tool id, agent, workspace, rule and reason all
-  // originate outside VOID, and the hold modal is the screen a human reads
+  // originate outside NOMO, and the hold modal is the screen a human reads
   // immediately before approving a write. A CSI clear screen, an OSC title
   // change or a colour code injected there is not cosmetic: it can hide the
   // real class of the call or spoof an allow verdict.
@@ -372,7 +372,7 @@ describe("approvals view", () => {
   test("lists held calls with a countdown and y/n legend", () => {
     const lines = approvalsView([held()], 31_000);
     const view = lines.join("\n");
-    assert.match(view, /VOID APPROVALS/);
+    assert.match(view, /NOMO APPROVALS/);
     assert.match(view, /01:00/);
     assert.match(view, /stripe\.refund\.create/);
     assert.match(view, /1 target/);
@@ -489,7 +489,7 @@ describe("terminal lifecycle", () => {
 });
 
 describe("TUIStudio sources", () => {
-  for (const name of ["void-operations.tui", "void-hold.tui"]) {
+  for (const name of ["nomo-operations.tui", "nomo-hold.tui"]) {
     test(`${name} is a loadable version 1 project`, async () => {
       const source = await readFile(
         new URL(`../../design/${name}`, import.meta.url),

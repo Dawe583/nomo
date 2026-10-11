@@ -6,7 +6,7 @@
 
 **Architecture:** The proxy exposes an optional connector-agnostic binding resolver. A resolved binding captures durable evidence before send and records a digest-bound dispatched and terminal outcome around the translated JSON-RPC request. A cross-layer PGlite fixture supplies the Postgres connector and proves restart recovery without adding a connector import to the proxy.
 
-**Tech Stack:** TypeScript, Node.js 24 `node:test`, MCP JSON-RPC, VOID signed JSONL ledger, VOID connector registry, PGlite.
+**Tech Stack:** TypeScript, Node.js 24 `node:test`, MCP JSON-RPC, NOMO signed JSONL ledger, NOMO connector registry, PGlite.
 
 **Spec:** `docs/superpowers/specs/2026-09-23-r02-legacy-proxy-binding-design.md`
 
@@ -92,7 +92,7 @@ Run:
 
 ```bash
 node --test packages/proxy/src/forward/legacy-binding.test.ts packages/proxy/src/forward/tools.test.ts
-pnpm --filter @void/proxy typecheck
+pnpm --filter @nomo/proxy typecheck
 ```
 
 Expected: all pass.
@@ -154,7 +154,7 @@ Run:
 
 ```bash
 node --test packages/proxy/src/bin.test.ts packages/proxy/src/forward/legacy-binding.test.ts packages/proxy/src/forward/tools.test.ts
-pnpm --filter @void/proxy typecheck
+pnpm --filter @nomo/proxy typecheck
 ```
 
 Expected: all pass, including prior proxy behavior.
@@ -202,8 +202,8 @@ Run:
 
 ```bash
 node --test packages/proxy/src/bin.test.ts packages/connectors/src/reverse-engine.test.ts
-pnpm --filter @void/proxy typecheck
-pnpm --filter @void/connectors typecheck
+pnpm --filter @nomo/proxy typecheck
+pnpm --filter @nomo/connectors typecheck
 ```
 
 Expected: all pass.
@@ -231,7 +231,7 @@ git commit -m "Prove Postgres recovery through the legacy proxy"
 
 - [ ] **Step 1: Update coverage and validation evidence**
 
-State that `postgres.row.update` has a tested injected host binding over `runProxy`. State that standalone `void-proxy`, arbitrary external MCP tools, S3 and distributed atomicity remain unsupported. Record the exact focused commands and results.
+State that `postgres.row.update` has a tested injected host binding over `runProxy`. State that standalone `nomo-proxy`, arbitrary external MCP tools, S3 and distributed atomicity remain unsupported. Record the exact focused commands and results.
 
 - [ ] **Step 2: Update plan status without closing the broader gap**
 
@@ -268,8 +268,8 @@ git commit -m "Document the certified legacy Postgres binding"
 
 ```bash
 node --test packages/proxy/src/forward/legacy-binding.test.ts packages/proxy/src/bin.test.ts packages/connectors/src/reverse-engine.test.ts
-pnpm --filter @void/proxy typecheck
-pnpm --filter @void/connectors typecheck
+pnpm --filter @nomo/proxy typecheck
+pnpm --filter @nomo/connectors typecheck
 ```
 
 - [ ] **Step 2: Run repository quality gates**

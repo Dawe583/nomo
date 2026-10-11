@@ -44,7 +44,7 @@ const operationEvent = (operationId: string, stage: string) => ({
 
 /** Ledger, journal and vault in the layout the recovery backup reads. */
 async function fixture(t: { after: (fn: () => unknown) => void }): Promise<Fixture> {
-  const root = await mkdtemp(join(tmpdir(), 'void-r14-bundle-'));
+  const root = await mkdtemp(join(tmpdir(), 'nomo-r14-bundle-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const stateDir = join(root, 'state');
   const ledgerDir = join(root, 'ledger');
@@ -52,7 +52,7 @@ async function fixture(t: { after: (fn: () => unknown) => void }): Promise<Fixtu
   await mkdir(ledgerDir, { recursive: true, mode: 0o700 });
   const signer = await devKeyProvider({ dir: join(stateDir, 'keys'), env: {} });
   const env = {
-    VOID_SIGNING_KEY: (
+    NOMO_SIGNING_KEY: (
       await readFile(join(stateDir, 'keys', 'dev-ed25519.pkcs8'))
     ).toString('base64'),
   };
@@ -372,48 +372,48 @@ test('a bundle verification without a state directory says what it did not check
 test('metrics count a known fixture ledger, journal and vault exactly', async t => {
   const f = await fixture(t);
   const counts = await counters(['--ledger', f.ledgerPath, '--state', f.stateDir], f);
-  assert.equal(counts.get('void_ledger_files_total'), 1);
-  assert.equal(counts.get('void_ledger_files_verified_total'), 1);
-  assert.equal(counts.get('void_ledger_files_unreadable_total'), 0);
-  assert.equal(counts.get('void_ledger_files_rejected_total'), 0);
-  assert.equal(counts.get('void_ledger_entries_total'), 3);
-  assert.equal(counts.get('void_ledger_bytes_total'), (await stat(f.ledgerPath)).size);
-  assert.equal(counts.get('void_ledger_decisions_total{decision="allow"}'), 2);
-  assert.equal(counts.get('void_ledger_decisions_total{decision="deny"}'), 1);
-  assert.equal(counts.get('void_ledger_decisions_total{decision="hold"}'), 0);
-  assert.equal(counts.get('void_ledger_decisions_total{decision="other"}'), 0);
+  assert.equal(counts.get('nomo_ledger_files_total'), 1);
+  assert.equal(counts.get('nomo_ledger_files_verified_total'), 1);
+  assert.equal(counts.get('nomo_ledger_files_unreadable_total'), 0);
+  assert.equal(counts.get('nomo_ledger_files_rejected_total'), 0);
+  assert.equal(counts.get('nomo_ledger_entries_total'), 3);
+  assert.equal(counts.get('nomo_ledger_bytes_total'), (await stat(f.ledgerPath)).size);
+  assert.equal(counts.get('nomo_ledger_decisions_total{decision="allow"}'), 2);
+  assert.equal(counts.get('nomo_ledger_decisions_total{decision="deny"}'), 1);
+  assert.equal(counts.get('nomo_ledger_decisions_total{decision="hold"}'), 0);
+  assert.equal(counts.get('nomo_ledger_decisions_total{decision="other"}'), 0);
   // Stage universe and edge counts come from the journal transition table.
-  assert.equal(counts.get('void_transition_operation_states_total'), 13);
-  assert.equal(counts.get('void_transition_operation_edges_total'), 21);
-  assert.equal(counts.get('void_transition_operation_terminal_states_total'), 5);
-  assert.equal(counts.get('void_transition_recovery_job_states_total'), 9);
-  assert.equal(counts.get('void_transition_recovery_job_edges_total'), 16);
-  assert.equal(counts.get('void_transition_recovery_job_terminal_states_total'), 3);
-  assert.equal(counts.get('void_journal_present'), 1);
-  assert.equal(counts.get('void_journal_events_total'), 10);
-  assert.equal(counts.get('void_journal_operation_stage_events_total{stage="received"}'), 2);
-  assert.equal(counts.get('void_journal_operation_stage_events_total{stage="authorized"}'), 2);
-  assert.equal(counts.get('void_journal_operation_stage_events_total{stage="prepared"}'), 2);
-  assert.equal(counts.get('void_journal_operation_stage_events_total{stage="dispatched"}'), 2);
-  assert.equal(counts.get('void_journal_operation_stage_events_total{stage="succeeded"}'), 1);
-  assert.equal(counts.get('void_journal_operation_stage_events_total{stage="unknown"}'), 1);
-  assert.equal(counts.get('void_journal_operation_stage_events_total{stage="denied"}'), 0);
-  assert.equal(counts.get('void_journal_operation_stage_events_total{stage="conflict"}'), 0);
-  assert.equal(counts.get('void_journal_recovery_job_stage_events_total{stage="planned"}'), 0);
-  assert.equal(counts.get('void_vault_present'), 1);
-  assert.equal(counts.get('void_vault_artifacts_total{store="sqlite"}'), 2);
-  assert.ok((counts.get('void_vault_bytes_total') ?? 0) > 0);
-  assert.equal(counts.get('void_vault_unsettled_total'), 0);
+  assert.equal(counts.get('nomo_transition_operation_states_total'), 13);
+  assert.equal(counts.get('nomo_transition_operation_edges_total'), 21);
+  assert.equal(counts.get('nomo_transition_operation_terminal_states_total'), 5);
+  assert.equal(counts.get('nomo_transition_recovery_job_states_total'), 9);
+  assert.equal(counts.get('nomo_transition_recovery_job_edges_total'), 16);
+  assert.equal(counts.get('nomo_transition_recovery_job_terminal_states_total'), 3);
+  assert.equal(counts.get('nomo_journal_present'), 1);
+  assert.equal(counts.get('nomo_journal_events_total'), 10);
+  assert.equal(counts.get('nomo_journal_operation_stage_events_total{stage="received"}'), 2);
+  assert.equal(counts.get('nomo_journal_operation_stage_events_total{stage="authorized"}'), 2);
+  assert.equal(counts.get('nomo_journal_operation_stage_events_total{stage="prepared"}'), 2);
+  assert.equal(counts.get('nomo_journal_operation_stage_events_total{stage="dispatched"}'), 2);
+  assert.equal(counts.get('nomo_journal_operation_stage_events_total{stage="succeeded"}'), 1);
+  assert.equal(counts.get('nomo_journal_operation_stage_events_total{stage="unknown"}'), 1);
+  assert.equal(counts.get('nomo_journal_operation_stage_events_total{stage="denied"}'), 0);
+  assert.equal(counts.get('nomo_journal_operation_stage_events_total{stage="conflict"}'), 0);
+  assert.equal(counts.get('nomo_journal_recovery_job_stage_events_total{stage="planned"}'), 0);
+  assert.equal(counts.get('nomo_vault_present'), 1);
+  assert.equal(counts.get('nomo_vault_artifacts_total{store="sqlite"}'), 2);
+  assert.ok((counts.get('nomo_vault_bytes_total') ?? 0) > 0);
+  assert.equal(counts.get('nomo_vault_unsettled_total'), 0);
   // Every stage in the table is reported, so an unreached stage shows as zero.
   assert.equal(
     [...counts.keys()].filter((key) =>
-      key.startsWith('void_journal_operation_stage_events_total'),
+      key.startsWith('nomo_journal_operation_stage_events_total'),
     ).length,
     13,
   );
   assert.equal(
     [...counts.keys()].filter((key) =>
-      key.startsWith('void_journal_recovery_job_stage_events_total'),
+      key.startsWith('nomo_journal_recovery_job_stage_events_total'),
     ).length,
     9,
   );
@@ -430,13 +430,13 @@ test('metrics count unreadable and rejected ledgers apart in a directory scan', 
   );
   await writeFile(join(scan, 'broken.jsonl'), 'not a ledger line\n');
   const counts = await counters(['--ledger', scan], f);
-  assert.equal(counts.get('void_ledger_files_total'), 3);
-  assert.equal(counts.get('void_ledger_files_verified_total'), 1);
-  assert.equal(counts.get('void_ledger_files_unreadable_total'), 1);
-  assert.equal(counts.get('void_ledger_files_rejected_total'), 1);
-  assert.equal(counts.get('void_ledger_entries_total'), 3);
-  assert.equal(counts.get('void_ledger_decisions_total{decision="allow"}'), 2);
-  assert.equal(counts.get('void_ledger_decisions_total{decision="hold"}'), 0);
+  assert.equal(counts.get('nomo_ledger_files_total'), 3);
+  assert.equal(counts.get('nomo_ledger_files_verified_total'), 1);
+  assert.equal(counts.get('nomo_ledger_files_unreadable_total'), 1);
+  assert.equal(counts.get('nomo_ledger_files_rejected_total'), 1);
+  assert.equal(counts.get('nomo_ledger_entries_total'), 3);
+  assert.equal(counts.get('nomo_ledger_decisions_total{decision="allow"}'), 2);
+  assert.equal(counts.get('nomo_ledger_decisions_total{decision="hold"}'), 0);
 });
 
 test('metrics refuse a named ledger that does not verify', async t => {

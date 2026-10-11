@@ -129,7 +129,7 @@ test("the threshold is a count, and a useless one is rejected", () => {
 });
 
 test("learned rules are appended, so an operator's own rule is still reached first", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-learned-order-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-learned-order-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   // Nothing here reaches a provider — the workbench is only built so its
   // evidence map and policy merge exist to be inspected. Without a fetcher
@@ -139,7 +139,7 @@ test("learned rules are appended, so an operator's own rule is still reached fir
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] })) as typeof fetch;
-  const app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   await app.shutdown();
 

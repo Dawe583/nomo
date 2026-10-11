@@ -1,7 +1,7 @@
 // GitHub integration. Token paste is the real path today: stored ONLY
 // in localStorage void.github, masked everywhere, never in URLs.
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.github = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.github = function (root) {
   root.innerHTML = "";
   var wrap = document.createElement("div");
   wrap.className = "section";
@@ -35,7 +35,7 @@ window.VOID_VIEWS.github = function (root) {
       "<p class='muted small'>Scopes needed: repo for private repos and PRs, read:user for profile. Token never leaves this browser except to api.github.com.</p></div>";
     wrap.querySelector("#gh-save").onclick = function () {
       var v = wrap.querySelector("#gh-token").value.trim();
-      if (!v) { if (window.VOID_TOAST) window.VOID_TOAST("Paste a token first."); return; }
+      if (!v) { if (window.NOMO_TOAST) window.NOMO_TOAST("Paste a token first."); return; }
       try { localStorage.setItem(LS, v); } catch (e) { /* storage blocked */ }
       paintMain();
     };
@@ -84,7 +84,7 @@ window.VOID_VIEWS.github = function (root) {
     }).catch(function () {
       try { localStorage.removeItem(LS); } catch (e) { /* ignore */ }
       paintSetup();
-      if (window.VOID_TOAST) window.VOID_TOAST("Token rejected, paste a valid one.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Token rejected, paste a valid one.");
     });
   }
 

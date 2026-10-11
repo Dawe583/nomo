@@ -14,12 +14,12 @@ import termios
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-with tempfile.TemporaryDirectory(prefix="void-tui-pty-") as data:
-    env = {"PATH": os.environ["PATH"], "HOME": data, "VOID_DATA_DIR": data,
+with tempfile.TemporaryDirectory(prefix="nomo-tui-pty-") as data:
+    env = {"PATH": os.environ["PATH"], "HOME": data, "NOMO_DATA_DIR": data,
            "TERM": "xterm-256color", "NO_COLOR": "1"}
     seed = """
 import { Workbench } from './packages/workbench/src/index.ts';
-const app = new Workbench({VOID_DATA_DIR:process.env.VOID_DATA_DIR}, async url => String(url).endsWith('/models') ? Response.json({data:[{id:'fixture'}]}) : Response.json({choices:[{message:{role:'assistant',content:'fixture'}}]}));
+const app = new Workbench({NOMO_DATA_DIR:process.env.NOMO_DATA_DIR}, async url => String(url).endsWith('/models') ? Response.json({data:[{id:'fixture'}]}) : Response.json({choices:[{message:{role:'assistant',content:'fixture'}}]}));
 await app.configure({baseUrl:'https://fixture.invalid/v1',apiKey:'fixture'});
 const session=await app.start('PTY test','fixture'); await app.settled();
 await app.editDocument(session.id,{path:'pty.md',content:'Original',expectedRevision:null});
@@ -35,14 +35,14 @@ DiffScreenWriter.prototype.write = function(frame) {
   const result = write.call(this, frame);
   // A notice may render before the runner completes its async refresh.
   if (!stripAnsi(frame).includes('Finishing operation'))
-    process.stdout.write('\\x1b]777;void-test-ready\\x07');
+    process.stdout.write('\\x1b]777;nomo-test-ready\\x07');
   return result;
 };
 """ % ((ROOT / "packages/cli/src/tui/watch.ts").as_uri(),
        (ROOT / "packages/cli/src/tui/layout.ts").as_uri()))
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 80, 0, 0))
-    process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/void.mjs", "tui", "--session", session, "--view", "documents"], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+    process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/nomo.mjs", "tui", "--session", session, "--view", "documents"], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
     os.close(slave)
     output = bytearray()
 
@@ -59,7 +59,7 @@ DiffScreenWriter.prototype.write = function(frame) {
                     break
                 output.extend(chunk)
             found = output.find(marker.encode(), start)
-            if found >= 0 and (not ready or b"void-test-ready" in output[found:]):
+            if found >= 0 and (not ready or b"nomo-test-ready" in output[found:]):
                 return
         raise AssertionError(f"Missing terminal state: {marker}; tail={output[-1000:]!r}")
 
@@ -84,13 +84,13 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.kill(process.pid, signal.SIGWINCH)
         time.sleep(0.1)
         os.write(master, b"q")
-        read_until("VOID: stopping")
+        read_until("NOMO: stopping")
         assert process.wait(timeout=5) == 0, "TUI failed to exit cleanly"
         assert b"\x1b[?1049l" in output and b"\x1b[?2004l" in output, "Terminal mode not restored"
         os.close(master)
         master, slave = pty.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
-        process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/void.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+        process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/nomo.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
         os.close(slave)
         read_until("Write a prompt", ready=True)
         os.write(master, b"draft first")
@@ -112,7 +112,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"/bottom\r")
         read_until("Following latest messages", ready=True)
         os.write(master, b"/tools write\r")
-        read_until("void_workspace_write", ready=True)
+        read_until("nomo_workspace_write", ready=True)
         os.write(master, b"\r")
         read_until("INPUT SCHEMA", ready=True)
         # Escape clears a list filter before closing its detail. A diff renderer
@@ -120,7 +120,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"\x1b")
         read_until("Filter cleared.", ready=True)
         os.write(master, b"\x1b")
-        read_until("void_workspace_write", ready=True)
+        read_until("nomo_workspace_write", ready=True)
         os.write(master, b"/chat\r")
         read_until("Write a prompt", ready=True)
         os.write(master, b"/expand\r")
@@ -141,7 +141,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"\x15\x04")
         read_until("Press Ctrl+D again to exit.", ready=True)
         os.write(master, b"\x04")
-        read_until("VOID: stopping")
+        read_until("NOMO: stopping")
         assert process.wait(timeout=5) == 0
         print("PASS: PTY logo, typing, history, fuzzy commands, Ctrl+O, Ctrl+L, Ctrl+R, Ctrl+D, safe Undo and clean exit")
     finally:
@@ -151,7 +151,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.close(master)
 
 # Keep the slave descriptor: escape bytes alone do not prove termios restoration.
-with tempfile.TemporaryDirectory(prefix="void-tui-safety-") as data:
+with tempfile.TemporaryDirectory(prefix="nomo-tui-safety-") as data:
     preload = Path(data) / "fatal.mjs"
     preload.write_text("""
 const write = process.stdout.write.bind(process.stdout);
@@ -161,7 +161,7 @@ process.stdout.write = (...args) => {
   if (!armed && String(args[0]).includes('\\x1b[?2004h')) {
     armed = true;
     setImmediate(() => {
-      if (process.env.VOID_TEST_EXIT) process.exit(7);
+      if (process.env.NOMO_TEST_EXIT) process.exit(7);
       throw Error('fixture fatal terminal failure');
     });
   }
@@ -172,13 +172,13 @@ process.stdout.write = (...args) => {
         master, slave = pty.openpty()
         original = termios.tcgetattr(slave)
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, width, 0, 0))
-        env = {"PATH": os.environ["PATH"], "HOME": data, "VOID_DATA_DIR": data,
-               "TERM": "xterm-256color", "NO_COLOR": "1", "VOID_TUI_MOTION": "0",
-               "VOID_TEST_EXIT": "1" if termination == "exit" else ""}
+        env = {"PATH": os.environ["PATH"], "HOME": data, "NOMO_DATA_DIR": data,
+               "TERM": "xterm-256color", "NO_COLOR": "1", "NOMO_TUI_MOTION": "0",
+               "NOMO_TEST_EXIT": "1" if termination == "exit" else ""}
         command = ["node"]
         if termination in ["fatal", "exit"]:
             command.extend(["--import", str(preload)])
-        command.extend(["packages/cli/bin/void.mjs", "tui"])
+        command.extend(["packages/cli/bin/nomo.mjs", "tui"])
         process = subprocess.Popen(command, cwd=ROOT, env=env, stdin=slave,
                                    stdout=slave, stderr=slave, start_new_session=True)
         captured = bytearray()
@@ -216,7 +216,7 @@ process.stdout.write = (...args) => {
             os.close(master)
             os.close(slave)
 
-with tempfile.TemporaryDirectory(prefix="void-tui-cancel-") as data:
+with tempfile.TemporaryDirectory(prefix="nomo-tui-cancel-") as data:
     preload = Path(data) / "runs.mjs"
     state = Path(data) / "cancelled.json"
     workspace_module = (ROOT / "packages/cli/src/tui/workspace.ts").as_uri()
@@ -237,11 +237,11 @@ WorkspaceTui.prototype.initialize = async function () {
   const first = await this.workbench.start('Selected run', 'fixture');
   await this.workbench.settled();
   const second = await this.workbench.start('Other run', 'fixture');
-  this.sessionId = process.env.VOID_SELECT_ACTIVE ? second.id : first.id;
+  this.sessionId = process.env.NOMO_SELECT_ACTIVE ? second.id : first.id;
   process.stdin.on('keypress', (_, key) => {
     if (key.name !== 'escape' && !(key.ctrl && key.name === 'c')) return;
     setImmediate(() => {
-      writeFileSync(process.env.VOID_CANCEL_STATE, JSON.stringify({
+      writeFileSync(process.env.NOMO_CANCEL_STATE, JSON.stringify({
         selected:this.workbench.get(first.id).status,
         other:this.workbench.get(second.id).status
       }));
@@ -255,10 +255,10 @@ WorkspaceTui.prototype.initialize = async function () {
         master, slave = pty.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
         with tempfile.TemporaryDirectory(dir=data) as workspace:
-            env = {"PATH": os.environ["PATH"], "HOME": workspace, "VOID_DATA_DIR": workspace,
-                   "TERM": "xterm-256color", "VOID_CANCEL_STATE": str(state),
-                   "VOID_SELECT_ACTIVE": "1" if active else ""}
-            process = subprocess.Popen(["node", "--import", str(preload), "packages/cli/bin/void.mjs", "tui"],
+            env = {"PATH": os.environ["PATH"], "HOME": workspace, "NOMO_DATA_DIR": workspace,
+                   "TERM": "xterm-256color", "NOMO_CANCEL_STATE": str(state),
+                   "NOMO_SELECT_ACTIVE": "1" if active else ""}
+            process = subprocess.Popen(["node", "--import", str(preload), "packages/cli/bin/nomo.mjs", "tui"],
                                        cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave)
             output = bytearray()
             try:

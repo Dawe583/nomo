@@ -81,8 +81,8 @@ async function workspace(
   t: { after: (fn: () => unknown) => void },
   name: string,
 ) {
-  const root = await mkdtemp(join(tmpdir(), `void-tui-${name}-`));
-  const env = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), `nomo-tui-${name}-`));
+  const env = { NOMO_DATA_DIR: root };
   const app = new Workbench(env, assistant);
   t.after(async () => {
     await app.shutdown();
@@ -107,8 +107,8 @@ test("/mcp lists every connector with its consent state and next step", async (t
   assert.match(text, /counter +staged +0 tools/);
   assert.match(text, new RegExp(`next: /mcp probe ${id}`));
   // The document workspace shares this list and has no endpoint of its own.
-  assert.match(text, /VOID documents +confirmed +4 tools/);
-  assert.match(text, /in use: the VOID document workspace/);
+  assert.match(text, /NOMO documents +confirmed +4 tools/);
+  assert.match(text, /in use: the NOMO document workspace/);
 
   await app.probeConnector(id);
   await ui.command("/mcp");

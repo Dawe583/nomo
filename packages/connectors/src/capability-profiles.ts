@@ -24,7 +24,7 @@ import {
 
 /** The runtime that owns the conformance case list every provider runs. */
 export const CONFORMANCE_RUNTIME = {
-  id: "void-recovery-runtime",
+  id: "nomo-recovery-runtime",
   surface: "runAdapterConformance",
   /** The case list belongs to the runtime, so it is shared by construction. */
   shared: true,

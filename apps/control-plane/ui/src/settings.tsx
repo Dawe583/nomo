@@ -7,7 +7,7 @@ import { api, items, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useApi, useText } from "./ui";
 import { DESKTOP_DOWNLOADS } from "./desktop-downloads";
 import { GALLERY_PATH } from "./gallery-path";
-// VOID has no default provider and no default model. The panel below reports
+// NOMO has no default provider and no default model. The panel below reports
 // what is connected and, when nothing is, says that.
 export function Settings({
   appearance,
@@ -46,12 +46,12 @@ export function Settings({
       <DesktopSetup />
       <WorkspaceControls />
       <section aria-labelledby="install-heading">
-        <h2 id="install-heading">{t("Aplikace VOID", "VOID apps")}</h2>
+        <h2 id="install-heading">{t("Aplikace NOMO", "NOMO apps")}</h2>
         <h3>macOS</h3>
         <p>
           {t(
-            "Lokální desktopová beta 4 pro Apple Silicon. macOS 13.5 nebo novější. Obsahuje vlastní VOID runtime.",
-            "Local desktop beta 4 for Apple Silicon. Requires macOS 13.5 or later. Includes its own VOID runtime.",
+            "Lokální desktopová beta 4 pro Apple Silicon. macOS 13.5 nebo novější. Obsahuje vlastní NOMO runtime.",
+            "Local desktop beta 4 for Apple Silicon. Requires macOS 13.5 or later. Includes its own NOMO runtime.",
           )}
         </p>
         <a className="button" href={DESKTOP_DOWNLOADS.macos}>
@@ -66,8 +66,8 @@ export function Settings({
         <h3>Windows</h3>
         <p>
           {t(
-            "Lokální desktopová beta 4 pro Windows 10 nebo 11 na x64. Vyžaduje WebView2 a obsahuje vlastní VOID runtime.",
-            "Local desktop beta 4 for Windows 10 or 11 on x64. Requires WebView2 and includes its own VOID runtime.",
+            "Lokální desktopová beta 4 pro Windows 10 nebo 11 na x64. Vyžaduje WebView2 a obsahuje vlastní NOMO runtime.",
+            "Local desktop beta 4 for Windows 10 or 11 on x64. Requires WebView2 and includes its own NOMO runtime.",
           )}
         </p>
         <a className="button" href={DESKTOP_DOWNLOADS.windows}>
@@ -82,7 +82,7 @@ export function Settings({
         <h3>iOS / iPadOS</h3>
         <details>
           <summary>
-            {t("Jak přidat VOID na plochu", "Install VOID on your Home Screen")}
+            {t("Jak přidat NOMO na plochu", "Install NOMO on your Home Screen")}
           </summary>
           <ol>
             <li>
@@ -139,8 +139,8 @@ export function Settings({
             </label>
             <p className="muted">
               {t(
-                "Agent určuje pracovní styl. Nástroje a oprávnění stále řídí VOID policy.",
-                "The agent selects working style. Tools and permissions remain governed by VOID policy.",
+                "Agent určuje pracovní styl. Nástroje a oprávnění stále řídí NOMO policy.",
+                "The agent selects working style. Tools and permissions remain governed by NOMO policy.",
               )}
             </p>
           </>
@@ -393,14 +393,14 @@ function DesktopSetup() {
       </h2>
       <p>
         {t(
-          "Importujte uložený API klíč z OpenCode nebo Prime. VOID ověří poskytovatele a vybere dostupný model pro nové konverzace.",
-          "Import a saved API key from OpenCode or Prime. VOID validates the provider and selects an available model for new conversations.",
+          "Importujte uložený API klíč z OpenCode nebo Prime. NOMO ověří poskytovatele a vybere dostupný model pro nové konverzace.",
+          "Import a saved API key from OpenCode or Prime. NOMO validates the provider and selects an available model for new conversations.",
         )}
       </p>
       <p className="muted">
         {t(
-          "Import přepne aktivního poskytovatele. Klíč zůstane v šifrovaném lokálním úložišti a odešle se pouze jeho poskytovateli, nikoli do VOID Cloud. OAuth přihlášení se nepřenášejí.",
-          "Import switches the active provider. The key stays in encrypted local storage and is sent only to its provider, not to VOID Cloud. OAuth logins are not transferred.",
+          "Import přepne aktivního poskytovatele. Klíč zůstane v šifrovaném lokálním úložišti a odešle se pouze jeho poskytovateli, nikoli do NOMO Cloud. OAuth přihlášení se nepřenášejí.",
+          "Import switches the active provider. The key stays in encrypted local storage and is sent only to its provider, not to NOMO Cloud. OAuth logins are not transferred.",
         )}
       </p>
       <ErrorBox error={setup.error ?? error} />
@@ -448,8 +448,8 @@ function DesktopSetup() {
       </p>
       <p>
         {t(
-          "Dokumenty VOID: lokální ukládání a řízené Undo jsou připravené. Libovolné soubory na disku a externí nástroje zatím nemají automatické Undo.",
-          "VOID documents: local storage and guarded Undo are ready. Arbitrary disk files and external tools do not yet have automatic Undo.",
+          "Dokumenty NOMO: lokální ukládání a řízené Undo jsou připravené. Libovolné soubory na disku a externí nástroje zatím nemají automatické Undo.",
+          "NOMO documents: local storage and guarded Undo are ready. Arbitrary disk files and external tools do not yet have automatic Undo.",
         )}
       </p>
       {provider.data?.connected && (

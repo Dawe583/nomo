@@ -7,13 +7,13 @@ import { setTimeout as delay } from "node:timers/promises";
 import { Workbench } from "./index.ts";
 
 test("Stop does not release capacity until the original provider settles; shutdown drains it", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-stop-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-stop-"));
   let release!: () => void;
   const blocked = new Promise<void>((resolve) => {
     release = resolve;
   });
   let calls = 0;
-  const app = new Workbench({ VOID_DATA_DIR: root }, async (url) => {
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;
@@ -60,13 +60,13 @@ test("Stop does not release capacity until the original provider settles; shutdo
   assert.equal(app.get(session.id)?.status, "idle");
 });
 test("background sessions queue behind the active run and drain after settlement", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-background-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-background-"));
   let release!: () => void;
   const blocked = new Promise<void>((resolve) => {
     release = resolve;
   });
   let calls = 0;
-  const app = new Workbench({ VOID_DATA_DIR: root }, async (url) => {
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;
@@ -109,7 +109,7 @@ test("background sessions queue behind the active run and drain after settlement
 
 test("queued work keeps one run identity and retained prompt without restart dispatch", async (t) => {
   const { LocalStorage } = await import("./storage.ts");
-  const root = await mkdtemp(join(tmpdir(), "void-queued-history-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-queued-history-"));
   let release!: () => void,
     calls = 0;
   const requests: Array<{
@@ -137,7 +137,7 @@ test("queued work keeps one run identity and retained prompt without restart dis
       choices: [{ message: { role: "assistant", content: "Done" } }],
     });
   };
-  let app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  let app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   t.after(async () => {
     release();
     await app.shutdown();
@@ -223,7 +223,7 @@ test("queued work keeps one run identity and retained prompt without restart dis
   storage.read();
   storage.save(snapshot);
   const before = calls;
-  app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   assert.equal(app.get(queued.id)!.status, "paused");
   assert.equal(
     app.runs().find((run) => run.sessionId === queued.id)?.state,
@@ -234,13 +234,13 @@ test("queued work keeps one run identity and retained prompt without restart dis
 
 test("background queue is bounded and Stop removes only the selected queued session", async (t) => {
   const { capabilities } = await import("./gui.ts");
-  const directory = await mkdtemp(join(tmpdir(), "void-queue-cap-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-queue-cap-"));
   let release!: () => void,
     calls = 0;
   const blocked = new Promise<void>((resolve) => {
     release = resolve;
   });
-  const app = new Workbench({ VOID_DATA_DIR: directory }, async (url) => {
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, async (url) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;

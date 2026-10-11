@@ -79,7 +79,7 @@ function handle(message) {
     result(message.id, {
       protocolVersion: "2025-06-18",
       capabilities: { tools: { listChanged: false } },
-      serverInfo: { name: "void-e2e-fixture", version: "1.0.0" },
+      serverInfo: { name: "nomo-e2e-fixture", version: "1.0.0" },
     });
     return;
   }

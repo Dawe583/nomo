@@ -27,8 +27,8 @@ test('session tool catalogue uses its snapshot and rejects unknown sessions', as
   const { mkdtemp, rm } = await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
-  const directory = await mkdtemp(join(tmpdir(), 'void-tools-'));
-  const app = new Workbench({ VOID_DATA_DIR: directory }, async url => String(url).endsWith('/models') ? Response.json({ data: [{ id: 'fixture' }] }) : Response.json({ choices: [{ message: { role: 'assistant', content: 'Ready' } }] }));
+  const directory = await mkdtemp(join(tmpdir(), 'nomo-tools-'));
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, async url => String(url).endsWith('/models') ? Response.json({ data: [{ id: 'fixture' }] }) : Response.json({ choices: [{ message: { role: 'assistant', content: 'Ready' } }] }));
   t.after(async () => { await app.shutdown(); await rm(directory, { recursive: true, force: true }); });
   assert.equal(app.availableTools().scope, 'configured');
   assert.throws(() => app.availableTools('missing'), /Session not found/);

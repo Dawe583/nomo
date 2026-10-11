@@ -140,8 +140,8 @@ export function parseTranscript(text: string): TranscriptCall[] {
 export const REGISTRY_SIZE = registry.length;
 
 const USAGE =
-  "usage: void classify --transcript <file> [--facts <file>] | " +
-  "void classify --tool <id> [--facts <file>] [--fact k=v] [--args <json>]";
+  "usage: nomo classify --transcript <file> [--facts <file>] | " +
+  "nomo classify --tool <id> [--facts <file>] [--fact k=v] [--args <json>]";
 
 /**
  * One JSON object, or a load error naming what was wrong with it. Both the

@@ -47,7 +47,7 @@ pub fn load_or_create(data: &Path, store: &impl SecretStore) -> Result<Workspace
         (Some(stored), Some(legacy)) if &stored != legacy => return Err("Keychain and legacy workspace keys disagree; data was left unchanged".into()),
         (Some(stored), _) => stored,
         (None, Some(legacy)) => legacy.clone(),
-        (None, None) if data.join("workspace.enc").exists() => return Err("Encrypted workspace exists without its encryption key; restore the original key before opening VOID".into()),
+        (None, None) if data.join("workspace.enc").exists() => return Err("Encrypted workspace exists without its encryption key; restore the original key before opening NOMO".into()),
         (None, None) => random_key()?,
     };
     if needs_store {
@@ -93,7 +93,7 @@ pub const WINDOWS_CREDENTIAL_BLOB_BYTES: usize = 32;
 /// signed app gets a fresh code signature on every rebuild, and macOS binds
 /// a keychain item's access control to that signature, so after a rebuild the
 /// item is still there and the app is simply no longer on its trusted list.
-/// Reading that as "absent" would make VOID mint a fresh key on top of an
+/// Reading that as "absent" would make NOMO mint a fresh key on top of an
 /// existing encrypted workspace.
 #[cfg(target_os = "macos")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -144,10 +144,10 @@ impl SecretStore for MacKeychain {
                 // grant this build access to the item, or build with a stable
                 // signing identity so a rebuild does not lose the grant.
                 MacKeychainRead::Denied => {
-                    Err("VOID workspace key exists but this build is not authorised to read it".into())
+                    Err("NOMO workspace key exists but this build is not authorised to read it".into())
                 }
                 MacKeychainRead::Unavailable => {
-                    Err("Cannot unlock the VOID workspace key in macOS Keychain".into())
+                    Err("Cannot unlock the NOMO workspace key in macOS Keychain".into())
                 }
             },
         }
@@ -158,7 +158,7 @@ impl SecretStore for MacKeychain {
             &self.account,
             key,
         )
-        .map_err(|_| "Cannot save the VOID workspace key in macOS Keychain".into())
+        .map_err(|_| "Cannot save the NOMO workspace key in macOS Keychain".into())
     }
 }
 
@@ -187,7 +187,7 @@ impl SecretStore for WindowsCredentials {
                 if GetLastError() == ERROR_NOT_FOUND {
                     return Ok(None);
                 }
-                return Err("Cannot unlock the VOID key in Windows Credential Manager".into());
+                return Err("Cannot unlock the NOMO key in Windows Credential Manager".into());
             }
             let entry = &*credential;
             let key = if entry.CredentialBlobSize as usize == WINDOWS_CREDENTIAL_BLOB_BYTES
@@ -208,7 +208,7 @@ impl SecretStore for WindowsCredentials {
             return Err("Invalid workspace key length".into());
         }
         let mut target = self.target();
-        let mut username: Vec<u16> = "VOID".encode_utf16().chain(Some(0)).collect();
+        let mut username: Vec<u16> = "NOMO".encode_utf16().chain(Some(0)).collect();
         let mut bytes = key.to_vec();
         let entry = CREDENTIALW {
             Type: CRED_TYPE_GENERIC,
@@ -222,7 +222,7 @@ impl SecretStore for WindowsCredentials {
         let saved = unsafe { CredWriteW(&entry, 0) };
         bytes.fill(0);
         if saved == 0 {
-            return Err("Cannot save the VOID key in Windows Credential Manager".into());
+            return Err("Cannot save the NOMO key in Windows Credential Manager".into());
         }
         Ok(())
     }
@@ -270,7 +270,7 @@ mod windows_tests {
         };
         let _cleanup = CredentialCleanup(store.target());
         let directory = std::env::temp_dir().join(format!(
-            "void-windows-credential-persistence-{}",
+            "nomo-windows-credential-persistence-{}",
             std::process::id()
         ));
         std::fs::create_dir_all(&directory).unwrap();
@@ -308,7 +308,7 @@ mod tests {
     }
     fn directory(name: &str) -> PathBuf {
         let path =
-            std::env::temp_dir().join(format!("void-keychain-{}-{name}", std::process::id()));
+            std::env::temp_dir().join(format!("nomo-keychain-{}-{name}", std::process::id()));
         std::fs::create_dir_all(&path).unwrap();
         path
     }

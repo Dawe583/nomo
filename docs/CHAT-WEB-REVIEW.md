@@ -117,7 +117,7 @@ Fix: `disabled={busy || running || retryWait > 0 || !draft.trim() || size.over}`
 `chat-composer.ts:74-81` · `draft-state.ts:submitDraft` · `chat.tsx:750-753`
 
 `send()` on success calls `submitDraft`, which imperatively does
-`storage.removeItem(draftKey)`. The matching `void-files:` key is removed only
+`storage.removeItem(draftKey)`. The matching `nomo-files:` key is removed only
 by the React effect at `chat.tsx:488-493`, which fires because `setAttachments([])`
 was called at `:753`. Two reachable ways that effect never runs:
 
@@ -128,7 +128,7 @@ was called at `:753`. Two reachable ways that effect never runs:
   key is then never removed, because every subsequent effect writes the *new*
   key.
 
-Result: `void-draft:ws:new` is gone but `void-files:ws:new` survives. Navigate
+Result: `nomo-draft:ws:new` is gone but `nomo-files:ws:new` survives. Navigate
 back to `/chat/new` and the composer restores attachments against an **empty
 draft** — the precise "a different message than the one on screen" failure the
 author set out to prevent, reappearing one layer down. The symmetric case is
@@ -393,9 +393,9 @@ the byte bound to the prompt alone — whichever the server actually enforces.
   setting `follow`. Defensible (you are now following, so invite the reply), but
   the button announces as "New messages ↓" and silently moves focus to a
   different control. Either move focus and say so, or do not.
-* `chat-composer.ts:45` `filesKey = key.replace(/^void-draft:/, "void-files:")` —
+* `chat-composer.ts:45` `filesKey = key.replace(/^nomo-draft:/, "nomo-files:")` —
   `String.prototype.replace` with a non-matching pattern is a no-op, so a caller
-  that passes a key not prefixed `void-draft:` writes the files JSON *into the
+  that passes a key not prefixed `nomo-draft:` writes the files JSON *into the
   draft key itself*, corrupting the draft. Today `chat.tsx` always builds the
   prefix, so it cannot happen. A `startsWith` guard, or deriving both keys from
   one function, would make that structural instead of conventional.

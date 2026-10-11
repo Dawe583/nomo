@@ -1,4 +1,4 @@
-# VOID: standards
+# NOMO: standards
 
 The rules code in this repository must follow. Written 4 September 2026, at
 WP-00. Read with `docs/CONTEXT.md` and `docs/DECISIONS.md`; those three are the
@@ -234,7 +234,7 @@ all three triggers intact.
 
 Anything under `api/` may import **only** npm packages that resolve from the
 **repository root** `node_modules`, and relative files that live **inside**
-`api/`. No `@workspace/*`, no `@void/*` unless it is declared in the root
+`api/`. No `@workspace/*`, no `@nomo/*` unless it is declared in the root
 `package.json`, and never a relative path that leaves the directory.
 
 Two different failures, and the second is worse:
@@ -335,7 +335,7 @@ From BUILD-PLAN.md section 3, and it is a hard rule, not a guideline.
 Test accounts, disposable projects, a separate cloud account with a spend cap,
 and a non production database for every end to end run. The model classes now in
 use can find and exploit unknown vulnerabilities across defended systems without
-step by step guidance, and VOID is a product that will hold credentials and sit
+step by step guidance, and NOMO is a product that will hold credentials and sit
 in a privileged position in someone else's infrastructure.
 
 The moment you are tired and it would be convenient is the moment it costs you.
@@ -458,7 +458,7 @@ colour literal or an unprefixed keyframe, and when a static
   `var(--raised)`, never a lift. Cells are separated by 1px `var(--line)` rules
   at `gap: 0`.
 - The interface face is the platform UI font, resolved by the platform rather
-  than downloaded. A serif is not a platform default on any VOID surface, and a
+  than downloaded. A serif is not a platform default on any NOMO surface, and a
   monospaced face is for code, identifiers and numeric columns, where the fixed
   width carries meaning. Anywhere else it reads as machine output, and
   interface text is not machine output.

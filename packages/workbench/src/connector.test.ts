@@ -56,9 +56,9 @@ function connectorState(app: Workbench, id: string) {
 }
 
 test("a connector is inert until the operator probes and confirms it", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-consent-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-consent-"));
   const server = await catalogServer([{ name: "test-tool" }]);
-  const app = new Workbench({ VOID_DATA_DIR: directory }, provider);
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, provider);
   t.after(async () => {
     await app.shutdown();
     await server.close();
@@ -105,9 +105,9 @@ test("a connector is inert until the operator probes and confirms it", async (t)
 });
 
 test("a failed probe leaves the staged connector exactly as it was", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-probe-fail-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-probe-fail-"));
   const server = await catalogServer([], 503);
-  const app = new Workbench({ VOID_DATA_DIR: directory });
+  const app = new Workbench({ NOMO_DATA_DIR: directory });
   t.after(async () => {
     await server.close();
   });
@@ -119,7 +119,7 @@ test("a failed probe leaves the staged connector exactly as it was", async (t) =
   assert.deepEqual(connectorState(app, id).tools, []);
   await app.shutdown();
 
-  const reopened = new Workbench({ VOID_DATA_DIR: directory });
+  const reopened = new Workbench({ NOMO_DATA_DIR: directory });
   t.after(async () => {
     await reopened.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -129,12 +129,12 @@ test("a failed probe leaves the staged connector exactly as it was", async (t) =
 });
 
 test("a snapshot written before the consent gate loads as staged with no catalog", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-legacy-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-legacy-"));
   const server = await catalogServer([{ name: "legacy-tool" }]);
   t.after(async () => {
     await server.close();
   });
-  const app = new Workbench({ VOID_DATA_DIR: directory });
+  const app = new Workbench({ NOMO_DATA_DIR: directory });
   await app.addConnector({ url: server.url, name: "Legacy" });
   const id = app.connectionState().connectors.at(-1)!.id;
   await app.probeConnector(id);
@@ -159,7 +159,7 @@ test("a snapshot written before the consent gate loads as staged with no catalog
   ]);
   await writeFile(path, Buffer.concat([iv, cipher.getAuthTag(), bytes]));
 
-  const reopened = new Workbench({ VOID_DATA_DIR: directory });
+  const reopened = new Workbench({ NOMO_DATA_DIR: directory });
   t.after(async () => {
     await reopened.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -169,8 +169,8 @@ test("a snapshot written before the consent gate loads as staged with no catalog
 });
 
 test("a connector token never appears in the public state", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-redact-"));
-  const app = new Workbench({ VOID_DATA_DIR: directory });
+  const directory = await mkdtemp(join(tmpdir(), "nomo-redact-"));
+  const app = new Workbench({ NOMO_DATA_DIR: directory });
   t.after(async () => {
     await app.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -184,8 +184,8 @@ test("a connector token never appears in the public state", async (t) => {
 });
 
 test("twelve connectors is the limit", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-limit-"));
-  const app = new Workbench({ VOID_DATA_DIR: directory });
+  const directory = await mkdtemp(join(tmpdir(), "nomo-limit-"));
+  const app = new Workbench({ NOMO_DATA_DIR: directory });
   t.after(async () => {
     await app.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -199,8 +199,8 @@ test("twelve connectors is the limit", async (t) => {
 });
 
 test("a non-loopback HTTP endpoint and embedded credentials are refused", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-validation-"));
-  const app = new Workbench({ VOID_DATA_DIR: directory });
+  const directory = await mkdtemp(join(tmpdir(), "nomo-validation-"));
+  const app = new Workbench({ NOMO_DATA_DIR: directory });
   t.after(async () => {
     await app.shutdown();
     await rm(directory, { recursive: true, force: true });
@@ -215,12 +215,12 @@ test("a non-loopback HTTP endpoint and embedded credentials are refused", async 
 });
 
 test("the policy preview shows the decision each tool would get", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-preview-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-preview-"));
   const server = await catalogServer([
     { name: "unmapped_unknown_thing" },
     { name: "delete" },
   ]);
-  const app = new Workbench({ VOID_DATA_DIR: directory });
+  const app = new Workbench({ NOMO_DATA_DIR: directory });
   t.after(async () => {
     await app.shutdown();
     await server.close();

@@ -133,13 +133,13 @@ test("API rejected decision is not shown as accepted", async () => {
 });
 
 test("real server supplies feed shape and serves only the public browser module", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "void-ui-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-ui-"));
   let handle;
   try {
     const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
     const store = jsonlStore(signer, { dir });
     await store.append({ workspace: "default", ...entry, argsDigest: "b".repeat(64) });
-    handle = await listenControlPlane({ ledgerPath: join(dir, "default.jsonl"), webRoot: import.meta.dirname, env: { VOID_DATA_DIR: join(dir, "workbench") } });
+    handle = await listenControlPlane({ ledgerPath: join(dir, "default.jsonl"), webRoot: import.meta.dirname, env: { NOMO_DATA_DIR: join(dir, "workbench") } });
     const origin = `http://127.0.0.1:${handle.port}`;
     const feed = await fetch(origin + feedUrl("default", 1));
     const body = await feed.json();

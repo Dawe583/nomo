@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Standalone VOID ledger verifier, published as @void/verifier. Third
- * parties run this without VOID.
+ * Standalone NOMO ledger verifier, published as @void/verifier. Third
+ * parties run this without NOMO.
  *
  * Only Node built-ins are used: node:crypto and node:fs for verification,
  * node:os and node:path in the selftest. Nothing is imported from this
@@ -17,9 +17,9 @@
  * either is lost.
  *
  * Usage:
- *   void-verify <bundle.jsonl>
- *   void-verify <bundle.jsonl> --public-key <base64-spki> --key-id <id>
- *   void-verify --selftest
+ *   nomo-verify <bundle.jsonl>
+ *   nomo-verify <bundle.jsonl> --public-key <base64-spki> --key-id <id>
+ *   nomo-verify --selftest
  *
  * Without a public key only hash links, sequence and body digests are
  * checked, and the verdict says so. That is integrity evidence, not
@@ -356,7 +356,7 @@ function resolveBundlePath(input) {
   } catch (error) {
     if (error.code === "ENOENT")
       throw new Error(
-        `${input} does not exist: void-verify reads one JSONL bundle, named as its argument`,
+        `${input} does not exist: nomo-verify reads one JSONL bundle, named as its argument`,
       );
     throw new Error(
       `cannot read ${input}: ${error.code ?? error.message} (a permissions problem, not a missing file)`,
@@ -415,7 +415,7 @@ function readBundle(path) {
 }
 
 function selftest() {
-  const dir = mkdtempSync(join(tmpdir(), "void-standalone-verify-"));
+  const dir = mkdtempSync(join(tmpdir(), "nomo-standalone-verify-"));
   try {
     const { privateKey, publicKey } = generateKeyPairSync("ed25519");
     const spki = publicKey.export({ format: "der", type: "spki" });
@@ -535,7 +535,7 @@ function main(argv) {
     attestationIndex >= 0 ? argv[attestationIndex + 1] : undefined;
   if (!file || file.startsWith("--")) {
     console.error(
-      "Usage: void-verify <bundle.jsonl|directory> [--dir <path>] [--public-key <base64-spki> [--key-id <id>]] [--attestation <doc.json>]",
+      "Usage: nomo-verify <bundle.jsonl|directory> [--dir <path>] [--public-key <base64-spki> [--key-id <id>]] [--attestation <doc.json>]",
     );
     process.exitCode = 2;
     return;

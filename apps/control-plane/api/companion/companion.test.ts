@@ -28,11 +28,11 @@ type Harness = {
 };
 
 async function startHarness(workspace = "alpha", dataDir?: string, extraEnv: Record<string, string> = {}): Promise<Harness> {
-  const directory = dataDir ?? await mkdtemp(join(tmpdir(), "void-companion-"));
+  const directory = dataDir ?? await mkdtemp(join(tmpdir(), "nomo-companion-"));
   // The write scope is an operator decision, so the harness that exercises it
   // opts in explicitly, the way a host operator would.
   const server: ListenHandle = await listenControlPlane({
-    env: { VOID_DATA_DIR: directory, VOID_WORKSPACE: workspace, VOID_COMPANION_WRITE_PAIRING: "1", ...extraEnv },
+    env: { NOMO_DATA_DIR: directory, NOMO_WORKSPACE: workspace, NOMO_COMPANION_WRITE_PAIRING: "1", ...extraEnv },
   });
   return {
     origin: `http://127.0.0.1:${server.port}`,
@@ -207,7 +207,7 @@ test("device authentication fails closed for missing, wrong, expired, and revoke
   assert.equal((await fetch(`${harness.origin}/api/companion/operations/op-any`, { headers: { authorization: "Bearer" } })).status, 403);
   assert.equal((await revokeRequest(harness, device.deviceId, wrong)).status, 403);
 
-  const env = { VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" };
+  const env = { NOMO_DATA_DIR: harness.dataDir, NOMO_WORKSPACE: "alpha" };
   assert.equal(authenticateDevice(env, device.deviceToken, Date.now() + 16 * 60 * 1000), null);
   assert.equal(authenticateDevice(env, device.deviceToken, Date.now())?.deviceId, device.deviceId);
   assert.equal(authenticateDevice(env, stranger.deviceToken, Date.now())?.deviceId, stranger.deviceId);
@@ -257,7 +257,7 @@ test("revocation is idempotent and keeps the dispatched effect readable", async 
 });
 
 test("a device of another workspace sees neither another workspace's data nor its credential", async t => {
-  const dataDir = await mkdtemp(join(tmpdir(), "void-companion-tenant-"));
+  const dataDir = await mkdtemp(join(tmpdir(), "nomo-companion-tenant-"));
   const alpha = await startHarness("alpha", dataDir);
   const beta = await startHarness("beta", dataDir);
   t.after(async () => {
@@ -359,7 +359,7 @@ test("operation status speaks the frozen void.companion.v1 outcome vocabulary", 
     const harness = await startHarness();
     try {
       const device = await pair(harness);
-      await recordOperation({ VOID_DATA_DIR: harness.dataDir }, {
+      await recordOperation({ NOMO_DATA_DIR: harness.dataDir }, {
         operationId: "op-vocabulary",
         workspaceId: "alpha",
         deviceId: device.deviceId,
@@ -379,7 +379,7 @@ test("operation status speaks the frozen void.companion.v1 outcome vocabulary", 
     t.diagnostic(`rejected status: ${JSON.stringify(status)}`);
     try {
       const device = await pair(harness);
-      await recordOperation({ VOID_DATA_DIR: harness.dataDir }, {
+      await recordOperation({ NOMO_DATA_DIR: harness.dataDir }, {
         operationId: "op-vocabulary",
         workspaceId: "alpha",
         deviceId: device.deviceId,
@@ -480,7 +480,7 @@ test("minted identities and answers stay inside the Apple client acceptance rule
   const harness = await startHarness();
   t.after(() => harness.close());
   const device = await pair(harness, [readScope, writeScope]);
-  const env = { VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" };
+  const env = { NOMO_DATA_DIR: harness.dataDir, NOMO_WORKSPACE: "alpha" };
   recordOperation(env, { operationId: "00123", workspaceId: "alpha", deviceId: device.deviceId, operation: "device.revoke", status: "succeeded", updatedAt: new Date().toISOString() });
 
   assert.equal(isBoundedId(device.deviceId), true);
@@ -515,7 +515,7 @@ test("operation status refuses a request body that names a different operation",
   const harness = await startHarness();
   t.after(() => harness.close());
   const device = await pair(harness, [readScope, writeScope]);
-  recordOperation({ VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" }, {
+  recordOperation({ NOMO_DATA_DIR: harness.dataDir, NOMO_WORKSPACE: "alpha" }, {
     operationId: "op-bound-identity", workspaceId: "alpha", deviceId: device.deviceId, operation: "device.revoke", status: "succeeded", updatedAt: new Date().toISOString(),
   });
   // `fetch` refuses a body on GET and Node's HTTP client drops it, so the
@@ -545,9 +545,9 @@ test("operation status refuses a request body that names a different operation",
 });
 
 test("a caller cannot grant itself the write scope; the host operator decides", async t => {
-  // No VOID_COMPANION_WRITE_PAIRING here: the default is read-only, so a
+  // No NOMO_COMPANION_WRITE_PAIRING here: the default is read-only, so a
   // request for the write scope is refused rather than silently downgraded.
-  const harness = await startHarness("alpha", undefined, { VOID_COMPANION_WRITE_PAIRING: "0" });
+  const harness = await startHarness("alpha", undefined, { NOMO_COMPANION_WRITE_PAIRING: "0" });
   t.after(() => harness.close());
 
   const refused = await pairRequest(harness, { invitation: (await mint(harness)).invitation, label: "self-promoted", scopes: ["companion:read", "companion:write"] });
@@ -574,7 +574,7 @@ test("a caller cannot grant itself the write scope; the host operator decides", 
 test("a pairing invitation expires and is refused by name once it has", async t => {
   const harness = await startHarness();
   t.after(() => harness.close());
-  const env = { VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" };
+  const env = { NOMO_DATA_DIR: harness.dataDir, NOMO_WORKSPACE: "alpha" };
 
   const minted = mintInvitation(env, 1_000_000);
   assert.match(minted.invitation, /^invite-[A-Za-z0-9_-]{32}$/);
@@ -663,7 +663,7 @@ test("two devices racing for one invitation produce exactly one winner", async t
 });
 
 test("a pairing invitation belongs to one workspace and cannot be spent in another", async t => {
-  const dataDir = await mkdtemp(join(tmpdir(), "void-companion-invite-"));
+  const dataDir = await mkdtemp(join(tmpdir(), "nomo-companion-invite-"));
   const alpha = await startHarness("alpha", dataDir);
   const beta = await startHarness("beta", dataDir);
   t.after(async () => {
@@ -684,7 +684,7 @@ test("a pairing invitation belongs to one workspace and cannot be spent in anoth
 test("a host holds a bounded number of unspent invitations", async t => {
   const harness = await startHarness();
   t.after(() => harness.close());
-  const env = { VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" };
+  const env = { NOMO_DATA_DIR: harness.dataDir, NOMO_WORKSPACE: "alpha" };
   const minted = Array.from({ length: 32 }, () => mintInvitation(env));
   assert.throws(() => mintInvitation(env), (error: unknown) => error instanceof CompanionStoreError && error.code === "invitation_limit");
   // The refusal is on the operator's authority to invite, not on the
@@ -714,14 +714,14 @@ test("revocation takes effect on an open event stream and names the refusal", as
   assert.equal(afterRevoke.status, 403);
   assert.deepEqual(await afterRevoke.json(), { error: "device_forbidden" });
   assert.equal((await authorized(harness, `/api/companion/operations/${revokeOperationId(device.deviceId)}`, device.deviceToken)).status, 403);
-  assert.equal(authenticateDevice({ VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" }, device.deviceToken), null);
+  assert.equal(authenticateDevice({ NOMO_DATA_DIR: harness.dataDir, NOMO_WORKSPACE: "alpha" }, device.deviceToken), null);
 });
 
 test("revocation during a pending approval stops the work and keeps its outcome evidence", async t => {
   const harness = await startHarness();
   t.after(() => harness.close());
   const device = await pair(harness, [readScope, writeScope], "Kitchen iPhone");
-  const env = { VOID_DATA_DIR: harness.dataDir, VOID_WORKSPACE: "alpha" };
+  const env = { NOMO_DATA_DIR: harness.dataDir, NOMO_WORKSPACE: "alpha" };
   const approvalId = "approval-pending-001";
   recordOperation(env, {
     operationId: approvalId,

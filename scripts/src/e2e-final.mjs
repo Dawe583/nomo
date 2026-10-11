@@ -81,7 +81,7 @@ function hasApproveSurface() {
 }
 
 function hasHttpSurface() {
-  const source = readFileSyncText("packages/proxy/bin/void-proxy.mjs");
+  const source = readFileSyncText("packages/proxy/bin/nomo-proxy.mjs");
   return source.includes("--transport") && source.includes("--upstream-url");
 }
 
@@ -113,7 +113,7 @@ async function runCommand(command, args, options = {}) {
 }
 
 async function runCli(args, env) {
-  return runCommand(process.execPath, ["packages/cli/bin/void.mjs", ...args], { env });
+  return runCommand(process.execPath, ["packages/cli/bin/nomo.mjs", ...args], { env });
 }
 
 async function strictFactsPath(rootDir) {
@@ -149,7 +149,7 @@ rules:
 }
 
 function spawnProxy(args, env) {
-  const child = spawn(process.execPath, ["packages/proxy/bin/void-proxy.mjs", ...args], {
+  const child = spawn(process.execPath, ["packages/proxy/bin/nomo-proxy.mjs", ...args], {
     cwd: rootPath,
     env,
     stdio: ["pipe", "pipe", "pipe"],
@@ -198,15 +198,15 @@ async function readLedgerRecords(ledgerFile) {
 }
 
 async function runStdioProductMoment() {
-  const base = await mkdtemp(join(tmpdir(), "void-e2e-final-"));
+  const base = await mkdtemp(join(tmpdir(), "nomo-e2e-final-"));
   const ledgerDir = join(base, "ledger");
   const approvalsDir = join(base, "approvals");
   const home = join(base, "home");
   const workspace = "e2e-final";
-  const env = { ...process.env, HOME: home, VOID_WORKSPACE: workspace };
+  const env = { ...process.env, HOME: home, NOMO_WORKSPACE: workspace };
   const facts = await strictFactsPath(base);
   const policy = await policyPath(base);
-  assert.ok(hasApproveSurface(), "void approve is a real command in this tree");
+  assert.ok(hasApproveSurface(), "nomo approve is a real command in this tree");
 
   const proxy = spawnProxy([
     "--upstream", process.execPath,
@@ -228,11 +228,11 @@ async function runStdioProductMoment() {
     await waitFor(() => proxy.output.length >= 2 && proxy.output[1], "tools/list response");
     assert.deepEqual(proxy.output[1].result.tools.map((tool) => tool.name), ["echo", "orders_delete"]);
 
-    send(proxy.child, { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "echo", arguments: { text: "hello void" } } });
+    send(proxy.child, { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "echo", arguments: { text: "hello nomo" } } });
     await waitFor(() => proxy.output.length >= 3 && proxy.output[2], "echo response");
-    assert.equal(textFrom(proxy.output[2]), "hello void");
+    assert.equal(textFrom(proxy.output[2]), "hello nomo");
 
-    // First held call: approved through the real void approve command and the state dir.
+    // First held call: approved through the real nomo approve command and the state dir.
     send(proxy.child, { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "orders_delete", arguments: { where: "status = stale", rows: 2 } } });
     const firstHoldId = await waitFor(async () => {
       try {
@@ -328,7 +328,7 @@ async function runAttestationMoment(state) {
 
 async function runTamperMoment(state) {
   assert.ok(state);
-  const dir = await mkdtemp(join(tmpdir(), "void-e2e-final-tamper-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-e2e-final-tamper-"));
   const tampered = join(dir, "tampered.jsonl");
   await copyFile(state.ledgerFile, tampered);
   const text = await readFile(tampered, "utf8");
@@ -342,7 +342,7 @@ async function runTamperMoment(state) {
 
   const feed = await runCli(["feed", "--ledger", tampered, "--json"], state.env);
   assert.equal(feed.code, 1);
-  assert.match(feed.stderr, /ledger chain invalid|body does not match digest|void feed failed/);
+  assert.match(feed.stderr, /ledger chain invalid|body does not match digest|nomo feed failed/);
   await rm(dir, { recursive: true, force: true });
   return { verify, feed };
 }
@@ -351,7 +351,7 @@ async function runDriftMoment() {
   // Real binary, real ledger, real manifest and real snapshot bytes: the dry-run plan comes
   // from the binary's static connector set, and apply without an executor fails with the
   // typed not-configured error instead of guessing a driver.
-  const dir = await mkdtemp(join(tmpdir(), "void-e2e-final-drift-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-e2e-final-drift-"));
   try {
     const sql = "update public.orders set status = 'paid' where id = 1";
     const statement = parseStatement(sql);
@@ -393,7 +393,7 @@ async function runDriftMoment() {
 
     const apply = await runCli(["replay", "--ledger", join(dir, "ledger", `${workspace}.jsonl`), "--snapshot-dir", join(dir, "snapshots"), "--seq", "1", "--key", Buffer.from(await signer.publicKey(await signer.currentKeyId())).toString("base64")], {});
     assert.equal(apply.code, 1);
-    assert.match(`${apply.stdout}\n${apply.stderr}`, /ExecutorNotConfigured: postgres executor not configured: VOID_PG_URL is absent/);
+    assert.match(`${apply.stdout}\n${apply.stderr}`, /ExecutorNotConfigured: postgres executor not configured: NOMO_PG_URL is absent/);
     return { dry, apply };
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -402,15 +402,15 @@ async function runDriftMoment() {
 
 async function runHttpMoment() {
   if (!hasHttpSurface()) {
-    note("HTTP moment", "void-proxy does not expose --transport and --upstream-url yet");
+    note("HTTP moment", "nomo-proxy does not expose --transport and --upstream-url yet");
     return;
   }
 
-  const base = await mkdtemp(join(tmpdir(), "void-e2e-final-http-"));
+  const base = await mkdtemp(join(tmpdir(), "nomo-e2e-final-http-"));
   const ledgerDir = join(base, "ledger");
   const home = join(base, "home");
   const workspace = "e2e-final-http";
-  const env = { ...process.env, HOME: home, VOID_WORKSPACE: workspace };
+  const env = { ...process.env, HOME: home, NOMO_WORKSPACE: workspace };
   const facts = await strictFactsPath(base);
   const policy = await policyPath(base);
   const server = spawn(process.execPath, ["fixtures/e2e-http-server.mjs"], {

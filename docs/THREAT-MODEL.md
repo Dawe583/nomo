@@ -1,4 +1,4 @@
-# Threat model: what VOID's signature can and cannot prove
+# Threat model: what NOMO's signature can and cannot prove
 
 Scope: the trust boundaries, key custody, and attestation coverage of the
 `runtime`, `ledger`, `policy`, `proxy`, `control-plane` and `desktop` components
@@ -8,7 +8,7 @@ keychain secret was read, printed or created.
 
 The question this document answers is narrow and load-bearing: **against a
 compromised agent, a hostile local operator, or malware running as the user on
-the host, does VOID's ed25519 signature prove anything?**
+the host, does NOMO's ed25519 signature prove anything?**
 
 The short answer, established from source below:
 
@@ -26,7 +26,7 @@ The short answer, established from source below:
   the signature is real and does work. Against anyone with agent-level code
   execution, or any other process running as the same user, it is worth close
   to nothing on its own.
-- VOID's own code already refuses to claim more than that, in six places. This
+- NOMO's own code already refuses to claim more than that, in six places. This
   is therefore a **ceiling on what the signature can ever prove**, not a live
   vulnerability against a stated guarantee. See §6.
 
@@ -42,13 +42,13 @@ There are two shipped topologies. Both collapse to one OS principal.
 
 | Process | What it is | Evidence |
 | --- | --- | --- |
-| `VOID.app` (Rust/Tauri) | Window shell. Reads the workspace key from the OS keychain, hands it to Node **as a base64 environment variable**, spawns the Node runtime as a direct child. | `apps/desktop/src-tauri/src/main.rs:98`, `:107`, `:126`, `:137` |
+| `NOMO.app` (Rust/Tauri) | Window shell. Reads the workspace key from the OS keychain, hands it to Node **as a base64 environment variable**, spawns the Node runtime as a direct child. | `apps/desktop/src-tauri/src/main.rs:98`, `:107`, `:126`, `:137` |
 | `node runtime/runtime.mjs` | The control-plane HTTP server **and** the entire workbench: agent loop, provider client, tool dispatch, connector code, policy, journal, vault, ledger store, signer, verifier. | `apps/desktop/runtime.mjs:15-18` → `apps/control-plane/api/server.ts:113` |
 
 The Tauri shell is a genuine second process, but it runs as the same login
 user, and its only security-relevant act is to read a secret and hand it to the
 child. It contributes no isolation: `apps/desktop/src-tauri/src/main.rs:137`
-sets `VOID_WORKSPACE_KEY` in the child environment.
+sets `NOMO_WORKSPACE_KEY` in the child environment.
 
 Inside the Node process:
 
@@ -74,7 +74,7 @@ The single strongest citation for the whole claim is
 worse for the claim: the proxy *is* the recorder, and the proxy *spawns the
 audited agent as its own child*.
 
-- `packages/proxy/bin/void-proxy.mjs:44` runs the proxy.
+- `packages/proxy/bin/nomo-proxy.mjs:44` runs the proxy.
 - `packages/proxy/src/bin.ts:11-15` imports policy and ledger into the proxy
   process; `:172-178` builds the ledger store with `devKeyProvider()`.
 - `packages/proxy/src/bin.ts:705-717` writes the signed decision record.
@@ -88,13 +88,13 @@ anywhere in the source tree — I grepped for all of them and found nothing.
 
 ### 1.2 The one piece of boundary work that does exist, and what it is worth
 
-`packages/proxy/src/transport/stdio.ts:113` deletes `VOID_SIGNING_KEY` from the
+`packages/proxy/src/transport/stdio.ts:113` deletes `NOMO_SIGNING_KEY` from the
 upstream child's environment, with a comment stating the threat model
 precisely: "An upstream that can sign ledger entries can forge the audit trail
 it is audited by." That is correct, and the regression test is real.
 
 It is environment hygiene, not isolation. It protects the *env-carried* key on
-the stdio path. It does nothing about the `~/.void/keys/dev-ed25519.pkcs8` file,
+the stdio path. It does nothing about the `~/.nomo/keys/dev-ed25519.pkcs8` file,
 which the child reads at the same UID, and it does nothing at all on the
 desktop path, where the key is only ever a file. The project says so itself in
 `packages/security-notes.md:41` (finding S15): "Same-user key-file readability
@@ -110,10 +110,10 @@ as defense in depth only."
 | Deployment | Location | Who can read it | Reference |
 | --- | --- | --- | --- |
 | CLI / local workbench | `<workbench dir>/keys/dev-ed25519.pkcs8`, mode `0600`, dir `0700` | Any process as the login user | `packages/ledger/src/sign.ts:61`, `:105-133`, `:147-165`; dir from `packages/workbench/src/index.ts:282-286` |
-| Default (no dir override) | `~/.void/keys/dev-ed25519.pkcs8` | Same | `packages/ledger/src/sign.ts:61` |
-| Proxy | Same, or `VOID_SIGNING_KEY` from env | Same | `packages/proxy/src/bin.ts:176` |
-| Desktop | `$VOID_DATA_DIR/keys/dev-ed25519.pkcs8`, `0600` | Any process as the login user; **not** gated by the keychain | `packages/workbench/src/index.ts:1403-1406`, `:1705-1708` |
-| Cloud tier | `process.env.VOID_SIGNING_KEY` | Anything that can read the server process environment or a core dump | `cloud/store.mjs:101-104` |
+| Default (no dir override) | `~/.nomo/keys/dev-ed25519.pkcs8` | Same | `packages/ledger/src/sign.ts:61` |
+| Proxy | Same, or `NOMO_SIGNING_KEY` from env | Same | `packages/proxy/src/bin.ts:176` |
+| Desktop | `$NOMO_DATA_DIR/keys/dev-ed25519.pkcs8`, `0600` | Any process as the login user; **not** gated by the keychain | `packages/workbench/src/index.ts:1403-1406`, `:1705-1708` |
+| Cloud tier | `process.env.NOMO_SIGNING_KEY` | Anything that can read the server process environment or a core dump | `cloud/store.mjs:101-104` |
 
 The key is generated with `generateKeyPairSync("ed25519")`
 (`packages/ledger/src/sign.ts:147`) and written with `O_CREAT|O_EXCL` at `0600`
@@ -139,7 +139,7 @@ because the correction changes the fix.
 (`keychain.rs:32-58`, `random_key` at `:26`). It is read from
 `MacKeychain` (`keychain.rs:130-160`, service `dev.void.desktop.workspace`) or
 `WindowsCredentials` (`keychain.rs:166-215`, `CredReadW`/`CredWriteW`), and is
-handed to the Node child as `VOID_WORKSPACE_KEY`
+handed to the Node child as `NOMO_WORKSPACE_KEY`
 (`apps/desktop/src-tauri/src/main.rs:137`).
 
 `apps/desktop/src-tauri/` contains **no reference to the ledger signing key at
@@ -176,7 +176,7 @@ why `Denied` is distinguished from `Absent`.
 | Workspace encryption key (desktop) | macOS Keychain / Windows Credential Manager, then env var into the agent's process | **Same** (the agent decrypts everything) |
 | Workspace encryption key (CLI) | `workspace.key`, `0600`, **in the same directory as `workspace.enc`** (`packages/workbench/src/storage.ts:17-25`) | **Same** |
 | Cloud signing key | Environment variable on the server | Same host; separate from any local agent, but not a KMS |
-| Upstream agent process | `VOID_SIGNING_KEY` scrubbed from env (`stdio.ts:113`) | Still same UID; still reads the key file |
+| Upstream agent process | `NOMO_SIGNING_KEY` scrubbed from env (`stdio.ts:113`) | Still same UID; still reads the key file |
 
 ### 2.4 The verifier reads the private key
 
@@ -187,14 +187,14 @@ Every verification path resolves the *public* key by loading the *private* key
 file:
 
 - `apps/control-plane/api/server.ts:97` — reads
-  `~/.void/keys/dev-ed25519.pkcs8` and returns `keyProviderFromPkcs8(...).publicKey`.
+  `~/.nomo/keys/dev-ed25519.pkcs8` and returns `keyProviderFromPkcs8(...).publicKey`.
 - `packages/cli/src/verify.ts:166` — `devKeyProvider({ env })`, same default dir.
 - `packages/workbench/src/index.ts:1682-1688` and `:1767-1770` — same.
 
 Consequence: an attacker who replaces `dev-ed25519.pkcs8` controls both halves
 of verification. They do not need to re-sign anything to make old entries look
 forged — but more usefully, they can re-sign **everything** with their own key
-and every VOID verifier will report the rewritten chain as valid, because the
+and every NOMO verifier will report the rewritten chain as valid, because the
 verifier is asking the attacker's key whether the attacker's signatures are
 good. Rewriting is cheap: `entryHash` and `signingPreimage` are three lines
 (`packages/ledger/src/canonical.ts:94-105`, `packages/ledger/src/index.ts:69-77`).
@@ -207,7 +207,7 @@ Two secondary consequences of the same design:
   (`packages/ledger/src/attest.ts:61-74`) has **no production caller** — only
   tests and `scripts/src/e2e-final.mjs:310`. The anchoring mechanism exists and
   is not shipped.
-- **`void verify` can mint a key.** `packages/cli/src/verify.ts:166` calls
+- **`nomo verify` can mint a key.** `packages/cli/src/verify.ts:166` calls
   `devKeyProvider({ env })` with no `createIfMissing: false`, and
   `packages/ledger/src/sign.ts:67` defaults it to `true`. On a machine with no
   key, running the verifier creates one. That is a footgun, not a vulnerability,
@@ -299,8 +299,8 @@ Almost everything that matters.
 - **Everything about the model.** No model id, no prompt, no digest. Nothing in
   `packages/ledger/`, `packages/runtime/src/journal.ts` or `execute.ts` mentions
   either. AAT §13.6 ("Attestation Closure") is the direct reference here, and
-  VOID is far outside it — though §13.6 is about decision *reproducibility*, a
-  stronger property than VOID claims.
+  NOMO is far outside it — though §13.6 is about decision *reproducibility*, a
+  stronger property than NOMO claims.
 - **The evidence itself.** The workbench keeps `evidence` in memory
   (`packages/workbench/src/index.ts:1681`, `:1743`) and serialises it into
   `workspace.enc` via `this.persist()` (`:1745`) — the same process, same key,
@@ -317,19 +317,19 @@ What the signature *does* hold, and it is not nothing:
 - **The decision is written before the verdict**, deliberately
   (`packages/proxy/src/forward/tools.ts:97-98`): a crash after the decision
   still leaves a record saying what was about to happen. That is the
-  pre-execution property AAT §4.2 is about, and VOID has it.
+  pre-execution property AAT §4.2 is about, and NOMO has it.
 - **Durability is real**: `fsync` before the receipt
   (`packages/ledger/src/store.ts:117-123`), directory `fsync`
   (`packages/runtime/src/journal.ts:288-296`).
 - **Algorithm agility is absent by design**: `verifyChain` rejects any `alg`
   other than `ed25519` (`packages/ledger/src/verify.ts:123`, `store.ts:180`).
   AAT §-04 asks for ML-DSA-65 alongside ECDSA P-256. This is a small gap and
-  VOID is behind, not exposed.
+  NOMO is behind, not exposed.
 
 ### 3.3 Two things the verifier is already honest about
 
 Credit where due, because these are the reason this document does not call
-VOID's signature worthless:
+NOMO's signature worthless:
 
 1. **Signature checking is conditional and the difference is reported.**
    `verifyChain` verifies signatures only when a public key is supplied
@@ -342,7 +342,7 @@ VOID's signature worthless:
 2. **Destructive operations refuse to run unverified.**
    `apps/control-plane/api/server.ts:344` returns
    `signature_key_required` for ledger replay without a key. And
-   `void verify --standalone` runs the check in a child process that does not
+   `nomo verify --standalone` runs the check in a child process that does not
    import the repository (`packages/cli/src/verify.ts:113-136`), printing
    `signature NOT VERIFIED` rather than implying otherwise.
 
@@ -397,9 +397,9 @@ external party — "MUST be assigned a `trust_level` of L2 or above by default,"
 and downgrading one requires an explicit, signed `trust_assignment` naming the
 classifier and the `policy_version` in force.
 
-### 4.2 How far VOID is from it
+### 4.2 How far NOMO is from it
 
-| AAT §5.2 / §5.3 requirement | VOID status |
+| AAT §5.2 / §5.3 requirement | NOMO status |
 | --- | --- |
 | Records written by a component independent of the agent | **Not met.** Recorder and agent share a process on every surface (§1.1). |
 | Recording component under a **distinct OS security principal** | **Not met anywhere.** No setuid, launchd, service, or helper exists. |
@@ -408,7 +408,7 @@ classifier and the `policy_version` in force.
 | Signing key **not accessible** to the audited agent process | **Not met.** It is read and used in that process (`workbench/src/index.ts:1705`, `:1739`). |
 | Verification outside the recorder's principal | **Not met.** The HTTP verifier runs in the recorder process (`server.ts:113`, `:331`). |
 | `policy_digest` / `policy_version` recorded, digest of canonical policy | **Not met.** Neither field exists; `PolicyFile.version` is a format constant (`rules.ts:46-49`, `:73`). |
-| Downgrade is an attributable recorded event | **Not applicable** — VOID has no trust-level field to suppress. |
+| Downgrade is an attributable recorded event | **Not applicable** — NOMO has no trust-level field to suppress. |
 | `recording_component` URI distinct from `agent_id` | **Not met.** No `recording_component` field; `key_id` is derived from the same key that signs everything. |
 | `signer_kid` distinct from the agent's key thumbprint | **Not met, and unmeetable in principle here** — there is only one key, used for both roles (`store.ts:99-104`). |
 | Pre-execution record for denied decisions (§4.2) | **Met**, and deliberately (`forward/tools.ts:97-106`, record written before the verdict). |
@@ -420,9 +420,9 @@ above*. At L0/L1 the draft explicitly permits self-recording (§5.1: "At trust
 levels L0 and L1, the agent itself MAY write its own audit records"), requiring
 only that the genesis record declare `recording_mode: "self"`.
 
-VOID's actual trust level is **L1** — self-signed identity, no trust
+NOMO's actual trust level is **L1** — self-signed identity, no trust
 authority, no external attestation (§2 terminology, lines 388-399 of the
-fetched text). Under the draft as written, VOID **is not in violation**. It is
+fetched text). Under the draft as written, NOMO **is not in violation**. It is
 **not capable of claiming L2 or above**, and it must not market itself as
 though it could. That is the correct, non-alarming framing of the finding: the
 gap is a *ceiling*, not a breach.
@@ -433,7 +433,7 @@ gap is a *ceiling*, not a breach.
 
 ### 5.1 What is true today, stated so it survives contact with a sceptic
 
-> The VOID signature proves that the bytes in `~/.void/ledger/*.jsonl` were
+> The NOMO signature proves that the bytes in `~/.nomo/ledger/*.jsonl` were
 > produced by a process that held a specific ed25519 key, and that no entry was
 > reordered, removed from the middle, or altered after writing. It does not
 > prove that any recorded event occurred, that any was omitted, that the policy
@@ -460,16 +460,16 @@ rebuilds. Consequences:
   (`docs/RELEASE-1.0.1-MATRIX.md:16-17`, `:286`). A privileged helper is an
   installer, an entitlements story, and a signing identity.
 - The key becomes non-exportable, which invalidates every current `KeyProvider`
-  call site and the `VOID_SIGNING_KEY` env path, and the "dev tier key" in
+  call site and the `NOMO_SIGNING_KEY` env path, and the "dev tier key" in
   `sign.ts` is explicitly designed to be swappable for a KMS ("In production
   the same interface is backed by KMS and no calling code changes",
   `sign.ts:12-14`) — so the *interface* is ready and the *deployment* is not.
-- It buys nothing against the agent itself, because in VOID's topology the
+- It buys nothing against the agent itself, because in NOMO's topology the
   agent is the process being recorded. A compromised agent would simply stop
   recording and the absence would be the signal.
 
 Estimate: weeks of work per platform, an installer, and a code-signing
-identity the project does not currently have — to move VOID from L1 to L2.
+identity the project does not currently have — to move NOMO from L1 to L2.
 
 ### 5.3 The single change that closes the most of the gap
 
@@ -482,7 +482,7 @@ Concretely, two coupled pieces:
    already computes a Merkle root over all entry hashes
    (`packages/ledger/src/attest.ts:53`, `:113-127`) and `storeAttestation`
    already writes a signed document (`:61-74`) — and neither has a production
-   caller. Ship a `void attest` command that emits the signed
+   caller. Ship a `nomo attest` command that emits the signed
    `{headSeq, headHash, treeDigest}` and push it to somewhere the agent
    process has no credentials for: the operator's cloud account
    (`cloud/store.mjs` already holds an append-only `void_cloud_ledger` table),
@@ -494,7 +494,7 @@ Concretely, two coupled pieces:
    public key (`keyProviderFromSpki` → base64 SPKI) into the attestation
    document and into any exported bundle, and have `server.ts:85-102` and
    `cli/verify.ts:161-168` prefer a pinned, independently obtained public key
-   over `~/.void/keys/dev-ed25519.pkcs8`. Today `--key base64-spki` already
+   over `~/.nomo/keys/dev-ed25519.pkcs8`. Today `--key base64-spki` already
    exists (`verify.ts:33`, `:165`); it is simply not the default.
 
 Why this is the right single change:
@@ -612,7 +612,7 @@ Stated plainly rather than guessed.
    `apps/desktop/scripts/prepare.mjs` and is not tracked, so this historical
    observation does not show that a signed release artifact matches source.
 2. **Whether `cloud/` is deployed with a real KMS or with an env-var key.**
-   `cloud/store.mjs:101-104` reads `process.env.VOID_SIGNING_KEY` and
+   `cloud/store.mjs:101-104` reads `process.env.NOMO_SIGNING_KEY` and
    `scripts/src/provision-cloud.mjs:17` generates a keypair for it, so the
    deployment configuration is what decides this, and I have no access to it.
    If it is an env var, the hosted tier has the same class of problem at a
@@ -628,7 +628,7 @@ Stated plainly rather than guessed.
    `apps/desktop/src-tauri/src/keychain.rs:145-160` sets no access control on
    `set_generic_password`, so it inherits the default login-keychain
    protection. I did not inspect a live keychain — deliberately, per the task
-   constraints — so I cannot state the real-world protection level of a VOID
+   constraints — so I cannot state the real-world protection level of a NOMO
    workspace key on an operator's machine.
 5. **Key rotation and multi-key verification.** `packages/security-notes.md:35`
    (S09) flags that signature verification accepts any key an injected lookup
@@ -645,7 +645,7 @@ Stated plainly rather than guessed.
 6. **The `verify` key-minting behaviour was not executed.** I established
    `devKeyProvider({ env })` at `packages/cli/src/verify.ts:166` omits
    `createIfMissing`, and `packages/ledger/src/sign.ts:67` defaults it to
-   `true`. I did not run `void verify` in a clean environment to observe the key
+   `true`. I did not run `nomo verify` in a clean environment to observe the key
    being created, per the no-build instruction. The code path is unambiguous.
 7. **Companion/remote-gateway authorisation** was read only far enough to
    confirm it runs in the same Node process

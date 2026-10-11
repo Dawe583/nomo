@@ -25,7 +25,7 @@ export type ApplyReport = {
 
 /**
  * The proof that a restore reached the bucket, kept in the customer's own
- * snapshot store rather than in a VOID log. It says the bytes read back from
+ * snapshot store rather than in a NOMO log. It says the bytes read back from
  * the object hash to the bytes that were captured, and nothing more: it does
  * not say a delete marker was removed, which a put cannot do, and it is not a
  * statement about any bucket's semantics beyond the one object it read.

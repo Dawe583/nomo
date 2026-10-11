@@ -24,7 +24,7 @@ and the barrel `packages/cli/src/tui/index.ts:1-11`.
 | `workspace-runner.ts` | 1106 | `runWorkspaceTui` (`:308`); raw-mode key loop, 250 ms `ui.refresh()` poll (`:1092-1104`). |
 | `workspace-proxy.ts` | 132 | `ProxyWorkspace` (`:25`); reads the proxy's own `.jsonl` ledgers and approval dir from disk. |
 | `layout.ts` | 349 | `sanitizeText` (`:19`), `visibleLength` (`:77`), `fit` (`:83`), `unifiedDiff`, `renderHunkSelection`. |
-| `theme.ts` | 126 | `VOID_PALETTE` (`:7`), class/decision markers (`:27`, `:34`), `paint` (`:87`). |
+| `theme.ts` | 126 | `NOMO_PALETTE` (`:7`), class/decision markers (`:27`, `:34`), `paint` (`:87`). |
 | `types.ts` | 143 | `ReversibilityClass`, `CallDecision`, `PipelineStage` — the render model. |
 | `caps.ts` | 71 | `detectCapabilities` (`:13`); the only TTY/env reader. |
 | `brand.ts` | 28 | `brandHeader` (`:16`); rasterizes the aperture mark to half blocks. |
@@ -197,7 +197,7 @@ has the POST endpoint and no UI for it.
    `catalog.hooksSupported`, which `agents()` always sets to `true`, so the hint
    is always shown while `:2926` still advertises `/hook-file` as *"(if supported)"*.
 
-The allowlist is the runtime env `VOID_HOOK_COMMANDS`, deliberately not writable
+The allowlist is the runtime env `NOMO_HOOK_COMMANDS`, deliberately not writable
 through the API (`packages/workbench/src/index.ts:628-659`, comment at `:636-639`:
 *"a hook author who could persist an allowlist entry could authorise the command
 their own hook runs"*).
@@ -281,7 +281,7 @@ a promotion, or a policy write.
   built from `workbench.allViews()` (`packages/cli/src/tui/workspace.ts:538-543`).
 
 The second boundary is the filesystem, for the proxy's own stores:
-`ProxyWorkspace.refresh` `readdir`s `~/.void/…/ledger` and calls `readLedgerEntries`
+`ProxyWorkspace.refresh` `readdir`s `~/.nomo/…/ledger` and calls `readLedgerEntries`
 + `verifyChain` (`packages/cli/src/tui/workspace-proxy.ts:99-114`); `decide()` writes
 an approval decision file (`:129-131`).
 

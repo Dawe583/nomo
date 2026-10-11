@@ -23,10 +23,10 @@ export type WorkspaceUndoPreview = { readonly operationId: string; readonly path
 
 export const WORKSPACE_LIMITS = { files: 100, fileBytes: 256_000, totalBytes: 2_000_000, mutations: 250, operations: 500 } as const;
 export const workspaceTools = [
-  { name: 'void_workspace_list', description: 'List documents in the managed VOID workspace. These are not files on the host computer.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
-  { name: 'void_workspace_read', description: 'Read a managed VOID document.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
-  { name: 'void_workspace_write', description: 'Create or replace a managed VOID text document. VOID captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'], additionalProperties: false } },
-  { name: 'void_workspace_delete', description: 'Delete a managed VOID document. VOID captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
+  { name: 'void_workspace_list', description: 'List documents in the managed NOMO workspace. These are not files on the host computer.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
+  { name: 'void_workspace_read', description: 'Read a managed NOMO document.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
+  { name: 'void_workspace_write', description: 'Create or replace a managed NOMO text document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'], additionalProperties: false } },
+  { name: 'void_workspace_delete', description: 'Delete a managed NOMO document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
 ] as const;
 
 export function createWorkspace(): WorkspaceState { return { version: 1, files: {}, operations: [] }; }

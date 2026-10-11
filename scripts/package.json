@@ -6,9 +6,9 @@
   "devDependencies": {
     "@types/node": "catalog:"
   },
-  "description": "Run VOID workspace checks, local end-to-end scenarios, and benchmarks.",
+  "description": "Run NOMO workspace checks, local end-to-end scenarios, and benchmarks.",
   "keywords": [
-    "void",
+    "nomo",
     "testing",
     "benchmarks"
   ],

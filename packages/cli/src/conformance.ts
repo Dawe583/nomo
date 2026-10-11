@@ -107,7 +107,7 @@ export async function filesystemConformanceFixture(
   operation: "create" | "write" | "delete" | "rename" = "write",
 ): Promise<ConformanceFixture> {
   requireScenario("filesystem.managed", operation, filesystemScenarios);
-  const dir = await mkdtemp(join(tmpdir(), "void-conformance-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-conformance-"));
   try {
     const root = join(dir, "project");
     await mkdir(root);
@@ -233,12 +233,12 @@ type GitScenario = (typeof gitConformanceProfile.operations)[number];
 export async function gitConformanceFixture(operation: GitScenario = "write"): Promise<ConformanceFixture> {
   if (process.platform === "win32") throw new Error("git.managed is unsupported on Windows");
   requireScenario("git.managed", operation, gitScenarios);
-  const dir = await mkdtemp(join(tmpdir(), "void-git-conformance-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-git-conformance-"));
   try {
     const root = join(dir, "repo");
     execFileSync("git", ["init", "-q", root]);
     const run = (...args: string[]) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8" }).trim();
-    run("config", "user.name", "VOID conformance");
+    run("config", "user.name", "NOMO conformance");
     run("config", "user.email", "void@example.invalid");
     const file = join(root, "sample.bin"), moved = join(root, "moved.bin");
     const originalBuffer = Buffer.from([0, 255, 1, 128, 10]), editedBuffer = Buffer.from("conformance agent edit"), humanBuffer = Buffer.from("conformance human edit"), otherOriginal = Buffer.from("conformance other original"), otherEdited = Buffer.from("conformance other edit");
@@ -477,7 +477,7 @@ export async function managedDocumentsConformanceFixture(
   operation: ManagedDocumentsScenario = "write",
 ): Promise<ConformanceFixture> {
   requireScenario("managed-documents", operation, managedDocumentsScenarios);
-  const dir = await mkdtemp(join(tmpdir(), "void-documents-conformance-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-documents-conformance-"));
   try {
     const path = "sample.md",
       original = "conformance original document",
@@ -587,7 +587,7 @@ export async function runConformanceCommand(
 ): Promise<number> {
   const selected = argv.length === 0 ? "filesystem.managed" : argv.length === 2 && argv[0] === "--adapter" ? argv[1] : undefined;
   if (selected === undefined || !hasProviderProfile(providerProfiles, selected))
-    throw new Error(`usage: void recovery conformance [--adapter ${providerProfiles.ids.join("|")}] (disposable local fixtures only); no capability profile for ${JSON.stringify(selected)}`);
+    throw new Error(`usage: nomo recovery conformance [--adapter ${providerProfiles.ids.join("|")}] (disposable local fixtures only); no capability profile for ${JSON.stringify(selected)}`);
   // Fail-closed resolution: the profile set is the only source, so an adapter
   // that lost or never had a profile refuses the run instead of inheriting
   // another provider's scope.

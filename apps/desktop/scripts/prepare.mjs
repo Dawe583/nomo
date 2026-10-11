@@ -50,11 +50,11 @@ await build({
   format: 'esm',
   target: 'node24',
   external: ['pg-native'],
-  banner: { js: "import { createRequire as __voidCreateRequire } from 'node:module'; const require = __voidCreateRequire(import.meta.url);" },
+  banner: { js: "import { createRequire as __nomoCreateRequire } from 'node:module'; const require = __nomoCreateRequire(import.meta.url);" },
   logLevel: 'info',
 });
 await execute(process.execPath, [process.env.npm_execpath, 'run', 'build:web'], { cwd: root });
 await cp(join(root, 'dist/web'), join(resources, 'web'), { recursive: true });
 await cp(join(root, 'packages/policy/packs'), join(resources, 'packs'), { recursive: true });
 await execute(process.execPath, [join(desktop, 'node_modules/@tauri-apps/cli/tauri.js'), 'icon', join(root, 'apps/control-plane/web/icon.svg'), '-o', join(desktop, 'src-tauri/icons')], { cwd: desktop });
-console.log(`VOID desktop resources prepared with verified Node ${version} (${target}).`);
+console.log(`NOMO desktop resources prepared with verified Node ${version} (${target}).`);

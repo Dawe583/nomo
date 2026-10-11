@@ -5,7 +5,7 @@
  * no capability profile behind it, so nothing published what it could
  * recover. The profile lives in `packages/cli/src/conformance.ts`; the
  * fixtures live here because PGlite is a devDependency of this package, and
- * `void.mjs` must not need it to print a profile list or run the other three
+ * `nomo.mjs` must not need it to print a profile list or run the other three
  * adapters. A run for this adapter without it is refused, and the refusal
  * names the missing precondition.
  *
@@ -54,7 +54,7 @@ export const MANAGED_POSTGRES_SCENARIOS = [
 export type ManagedPostgresScenario = (typeof MANAGED_POSTGRES_SCENARIOS)[number];
 
 const WORKSPACE = "conformance";
-const SCHEMA = "void_recovery";
+const SCHEMA = "nomo_recovery";
 const ACCOUNT = "public.conformance_account";
 const PARENT = "public.conformance_parent";
 const CHILD = "public.conformance_child";
@@ -388,7 +388,7 @@ export async function managedPostgresConformanceFixture(
     );
   const spec = specFor(operation);
   const db = await startEngine();
-  const dir = await mkdtemp(join(tmpdir(), `void-postgres-${spec.name}-`));
+  const dir = await mkdtemp(join(tmpdir(), `nomo-postgres-${spec.name}-`));
   const managed: ManagedPostgresOptions = {
     workspace: WORKSPACE,
     schema: SCHEMA,

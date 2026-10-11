@@ -1,6 +1,6 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.registry = function (root) {
-  var F = window.VOID_FIXTURES;
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.registry = function (root) {
+  var F = window.NOMO_FIXTURES;
   var tools = Object.keys(F.registryCases);
   var tool = tools[2];
   var wrap = document.createElement("div");

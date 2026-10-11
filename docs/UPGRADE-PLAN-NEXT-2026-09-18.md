@@ -1,4 +1,4 @@
-# VOID — plán dalšího upgradu (TUI + GUI + AI agentic reverse tool)
+# NOMO — plán dalšího upgradu (TUI + GUI + AI agentic reverse tool)
 
 ## Current status correction
 
@@ -15,7 +15,7 @@ Vstupní dokumenty: `PLAN-GAPS.md` (audit 2026-09-16), `REVERSE-TOOL-UPGRADE-PLA
 
 ## 0. Co je nového na GitHubu (ověřeno lokálně)
 
-- `git clone https://github.com/Dawe583/void.git` do prázdného `VOID/` — OK. `git status` čistý.
+- `git clone https://github.com/Dawe583/void.git` do prázdného `NOMO/` — OK. `git status` čistý.
 - `main` HEAD `5eac884` „Default to TokenHarbor mimo-v2.5:free from the opencode setup".
   Předtím: `27acd74` standalone CLI verify, `8929f9e` Pollinations keyless fallback,
   `2d1f792` all-in-one GUI s Hermes paritou, `39194c3` web aperture + wordmark,
@@ -55,11 +55,11 @@ Vstupní dokumenty: `PLAN-GAPS.md` (audit 2026-09-16), `REVERSE-TOOL-UPGRADE-PLA
 
 ## 3. Deep-research: má to smysl? (fakt → inference → rozhodnutí)
 
-- **Reversibilita jako tier, ne flag** — fakt: Tian Pan 04–07/2026 (4-tier model T0–T3), Toffoli (reversibilita = funkce akce × recovery stavu, unknown → escalate), IETF draft Agent Action Manifest 07/2026 (machine-readable manifest, effects advisory, fail-closed receipt), Microsoft agent-governance-toolkit (rings + saga orchestration). Inference: VOID R0–R3 + `exact/bounded/unknown` + readiness je správný směr a nikdo z mapovaných ho nedělá jako neutrální vrstvu. **Rozhodnutí: STAVĚT, kritická cesta M1.**
+- **Reversibilita jako tier, ne flag** — fakt: Tian Pan 04–07/2026 (4-tier model T0–T3), Toffoli (reversibilita = funkce akce × recovery stavu, unknown → escalate), IETF draft Agent Action Manifest 07/2026 (machine-readable manifest, effects advisory, fail-closed receipt), Microsoft agent-governance-toolkit (rings + saga orchestration). Inference: NOMO R0–R3 + `exact/bounded/unknown` + readiness je správný směr a nikdo z mapovaných ho nedělá jako neutrální vrstvu. **Rozhodnutí: STAVĚT, kritická cesta M1.**
 - **Undo = saga s kompenzacemi, ne stack** — fakt: Tian Pan „Undo Button Is a Saga", DevRev 08/2026 (version rollback ≠ action reversibility), agentic-design.ai saga pattern (idempotency key povinně). Inference: LIFO je jen default nezávislých akcí; závislosti = reverse-topologicky; kompenzace je forward-akce s vlastním failure modem. **Rozhodnutí: STAVĚT R06+R07 minimálně, R11 staged až M5.**
 - **Inverse počítat při zápisu, ne při Undo** — fakt: prior value Y zachytit v momentě writu, jinak human/agent mezitím změní na Z; ABA odhalí jen revision/CAS. Inference: capture-before-dispatch + revision binding je non-negotiable. **Rozhodnutí: STAVĚT R02+R03 před jakýmkoli novým adaptérem.**
 - **Hold komoditizuje, registr+ledger ne** — fakt: Claude auto-mode klasifikátor (default 08/2026, 93–97 % approve, 62 % bypass = approval fatigue), OpenAI Agents SDK guardrails+HITL, Vercel AI SDK 7 (HMAC approvals, WorkflowAgent). Inference: samotný hold není diference; diference = registry + třída + ledger + offline verifier. **Rozhodnutí: do TUI/GUI investovat do approval-důkazů (args/schema/pre-post/rule), ne do dalšího chat-bling.**
-- **Konkurence neumí VOID的核心** — Rubrik (snapshot-model, enterprise), Portkey/MintMCP (allow/deny+log, žádný hold třetí stav ani kompenzace), Composio (šíře 1000+ integrací, $0,30/1K calls, žádný ledger), opendot (terminálový undo, content-addressed store — nejblíž TUI duchu). **Rozhodnutí: distribuce přes MCP Registry + `void-verify` standalone + registry stránky `/registry/<id>`, NE vlastní gateway.**
+- **Konkurence neumí NOMO的核心** — Rubrik (snapshot-model, enterprise), Portkey/MintMCP (allow/deny+log, žádný hold třetí stav ani kompenzace), Composio (šíře 1000+ integrací, $0,30/1K calls, žádný ledger), opendot (terminálový undo, content-addressed store — nejblíž TUI duchu). **Rozhodnutí: distribuce přes MCP Registry + `nomo-verify` standalone + registry stránky `/registry/<id>`, NE vlastní gateway.**
 
 ## 4. Základní body plánu
 
@@ -107,7 +107,7 @@ Vstupní dokumenty: `PLAN-GAPS.md` (audit 2026-09-16), `REVERSE-TOOL-UPGRADE-PLA
 9. R10-core: race 100×limit 2, restart/retry/unknown drží rezervaci (S, should).
 10. R13-základ: `doctor/init` inventura, cooperative/managed label (S, should).
 11. R14-min: offline bundle + completeness + externí verifier (M, should).
-12. R12-test: `void adapter test` + drift→uncertified (L, should).
+12. R12-test: `nomo adapter test` + drift→uncertified (L, should).
 - Defer po M1: R08 S3/Supabase, R09 GitHub/Vercel, R11 staged, plný R06-lease/fencing, plný R07-graf, Python transport, registry 500 entries.
 
 ### D. Co NEDĚLAT (společné, s důvodem)
@@ -116,17 +116,17 @@ Vstupní dokumenty: `PLAN-GAPS.md` (audit 2026-09-16), `REVERSE-TOOL-UPGRADE-PLA
 3. Žádná tichá auto-compaction přepisující ledger; summary jen vedle, verzovaně.
 4. Žádné binárky/multimodálko bez storage + policy; žádný vlastní Markdown parser/druhý store/3 vizuální kity.
 5. NE vlastní LLM/MCP gateway, NE univerzální SaaS snapshot-platforma v betě, NE multi-workspace RBAC/SSO v 0.1, NE placené ads před 10 platícími.
-6. Neklonovat Claude Code naslepo (themes/pluginy/hooks) — VOID TUI je ovládání ledgeru, ne klon.
+6. Neklonovat Claude Code naslepo (themes/pluginy/hooks) — NOMO TUI je ovládání ledgeru, ne klon.
 
 ## 5. Postupné fáze (každá: rozsah → závislost → důkaz → odhad)
 
 | Fáze | Rozsah | Závisí na | Důkaz dokončení | Odhad |
 |---|---|---|---|---|
-| F0 Kontrakt + distribuce | R00 profil + claim audit; registry stránka `/registry/<id>` návrh; `void-verify` standalone spec | Tento plán | Každá podporovaná akce má scope/failure/test-ref; `check-registry-mirror` zelený | 2–4 dny (S) |
+| F0 Kontrakt + distribuce | R00 profil + claim audit; registry stránka `/registry/<id>` návrh; `nomo-verify` standalone spec | Tento plán | Každá podporovaná akce má scope/failure/test-ref; `check-registry-mirror` zelený | 2–4 dny (S) |
 | F1 M1-jádro (DB cesta) | R02-bind + R03-pin + R04-PG + R06-min + R01-cloud parita | F0 | `write přes proxy → restart → Undo → DB+receipt OK`; ztracený COMMIT bez slepého retry; lidská změna = konflikt | 4–8 týdnů (XL) |
 | F2 Coding-agent cesta | R05 FS/Git + R07-min + R10-core + R13-základ + TUI A1–A4 + GUI B1–B5 | F1 částečně paralelně | Selektivní Undo po restartu; sticky banner + per-hunk review s enforce; plan/read-only blokuje write | 3–5 týdnů (L/XL) |
 | F3 Důvěra + provoz | R14-min bundle + verifier; GUI B4+B6+B12; TUI A5+A6+A12; metriky p95/p99 | F1+F2 | Externí verifier odmítne tamper; recovery po backup+rotaci klíče; LCP/INP/CLS baseline | 2–4 týdny (M) |
-| F4 Šíře + parita | R12-test + `void adapter test`; GUI B7–B13; TUI A7–A10; managed commit/revert slice (append-only, žádný force-push) | F3 | Nový adaptér bez změny jádra; drift→uncertified; fronta/queue viditelná | 3–6 týdnů (L/XL) |
+| F4 Šíře + parita | R12-test + `nomo adapter test`; GUI B7–B13; TUI A7–A10; managed commit/revert slice (append-only, žádný force-push) | F3 | Nový adaptér bez změny jádra; drift→uncertified; fronta/queue viditelná | 3–6 týdnů (L/XL) |
 | F5 Vize | R11 staged + cascading cancel; plný R06/R07 (lease/fencing/graf); R08/R09 disposable-cloud certifikace; GUI B14 | F4 | Parent-cancel = 0 externích writů; cross-system plan s residual impact; incident-referenční test 10 kroků zelený | 2–4 měsíce (XL) |
 
 Každá fáze končí 4-sloupcovým DoD: **kontrakt** (specify-first) + **testy** (`node:test`, seed) +
@@ -154,5 +154,5 @@ tvrdé `restored` u R2) musí shodit testy — jinak je zelená podezřelá.
 5. Práce na `main`, malé ověřené commity, push = Vercel deploy (dle AGENTS.local.md); `GO-TO-MARKET.md` ven před open-core publikací.
 
 *Design tokeny GUI zůstávají paper-terminal (`#f6f0e3/#12100a`, action `#bd4206/#e8702c`), pohyb 120–180 ms
-jen jako odpověď na akci + `prefers-reduced-motion`, TUI anglicky + plné barvy default (`VOID_TUI_COLOR=0` = mono).
+jen jako odpověď na akci + `prefers-reduced-motion`, TUI anglicky + plné barvy default (`NOMO_TUI_COLOR=0` = mono).
 Ceny/limity providera jen doložené, jinak `unknown`. Sampling nikdy ≠ exact.*

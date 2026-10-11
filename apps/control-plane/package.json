@@ -8,9 +8,9 @@
     "test": "node --test",
     "typecheck": "tsc -p tsconfig.json"
   },
-  "description": "Serve local development approvals, ledger views, and VOID control plane pages.",
+  "description": "Serve local development approvals, ledger views, and NOMO control plane pages.",
   "keywords": [
-    "void",
+    "nomo",
     "approvals",
     "control-plane"
   ],

@@ -89,7 +89,7 @@ export async function cloudDocumentRuntime(
             {
               workspace,
               at: event.at,
-              tool: "void_recovery",
+              tool: "nomo_recovery",
               klass: "r1",
               decision: `recovery:${event.stage}`,
               runtimeEvent: event,
@@ -114,7 +114,7 @@ export async function cloudDocumentRuntime(
             {
               workspace,
               at: event.at,
-              tool: "void_recovery",
+              tool: "nomo_recovery",
               klass: "r1",
               decision: `recovery:job:${event.stage}`,
               runtimeJobEvent: event,

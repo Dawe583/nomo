@@ -1,7 +1,7 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.cli = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.cli = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   var wrap = document.createElement("div");
   wrap.className = "section";
   wrap.innerHTML = "<h2>CLI builder</h2><p class='muted'>Compose void commands. Human output by default, JSON with flag. The CLI never prints a secret. Select a table row to load it.</p>" +
@@ -31,13 +31,13 @@ window.VOID_VIEWS.cli = function (root) {
       ta.value = t;
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand("copy"); if (window.VOID_TOAST) window.VOID_TOAST("Command copied."); }
-      catch (e) { if (window.VOID_TOAST) window.VOID_TOAST("Copy failed, select the text manually."); }
+      try { document.execCommand("copy"); if (window.NOMO_TOAST) window.NOMO_TOAST("Command copied."); }
+      catch (e) { if (window.NOMO_TOAST) window.NOMO_TOAST("Copy failed, select the text manually."); }
       ta.remove();
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(t).then(function () {
-        if (window.VOID_TOAST) window.VOID_TOAST("Command copied.");
+        if (window.NOMO_TOAST) window.NOMO_TOAST("Command copied.");
       }, fallback);
     } else fallback();
   };

@@ -20,6 +20,7 @@ import {
   type VerificationFacts,
 } from "../../../ledger/src/verify-key.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
+import { dataDir } from "../../../ledger/src/paths.ts";
 
 /** Read the existing proxy stores; never instantiate a competing approval broker. */
 export class ProxyWorkspace {
@@ -46,11 +47,11 @@ export class ProxyWorkspace {
   constructor(env: Readonly<NodeJS.ProcessEnv>) {
     this.env = env;
     const home = env.HOME ?? homedir();
-    const base = env.VOID_DATA_DIR ?? join(home, ".void");
-    this.ledgerDir = env.VOID_LEDGER_DIR ?? join(base, "ledger");
+    const base = env.NOMO_DATA_DIR ?? join(dataDir(home));
+    this.ledgerDir = env.NOMO_LEDGER_DIR ?? join(base, "ledger");
     this.approvalDir =
-      env.VOID_APPROVALS_DIR ??
-      join(base, "approvals", env.VOID_WORKSPACE ?? "default");
+      env.NOMO_APPROVALS_DIR ??
+      join(base, "approvals", env.NOMO_WORKSPACE ?? "default");
   }
   async refresh(force = false) {
     if (!force && Date.now() - this.checked < 1000) return;

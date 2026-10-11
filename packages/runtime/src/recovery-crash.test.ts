@@ -29,7 +29,7 @@ for (const durableReceipt of [false, true]) {
     `SIGKILL after inverse commit ${durableReceipt ? "with" : "without"} an atomic receipt never repeats recovery`,
     { timeout: TEST_TIMEOUT_MS },
     async (t) => {
-      const root = await mkdtemp(join(tmpdir(), "void-killed-recovery-"));
+      const root = await mkdtemp(join(tmpdir(), "nomo-killed-recovery-"));
       const key = randomBytes(32);
       let child: ChildProcess | undefined;
       let closeDatabase = () => {};
@@ -186,7 +186,7 @@ test(
   "SIGKILL between two steps of one recovery job resumes without repeating either inverse",
   { timeout: TEST_TIMEOUT_MS },
   async (t) => {
-    const root = await mkdtemp(join(tmpdir(), "void-killed-chain-"));
+    const root = await mkdtemp(join(tmpdir(), "nomo-killed-chain-"));
     const key = randomBytes(32);
     let child: ChildProcess | undefined;
     let closeDatabase = () => {};
@@ -352,7 +352,7 @@ test(
   "SIGKILL during the last step of a chain never repeats a checkpointed inverse",
   { timeout: TEST_TIMEOUT_MS },
   async (t) => {
-    const root = await mkdtemp(join(tmpdir(), "void-killed-chain-last-"));
+    const root = await mkdtemp(join(tmpdir(), "nomo-killed-chain-last-"));
     const key = randomBytes(32);
     let child: ChildProcess | undefined;
     let closeDatabase = () => {};

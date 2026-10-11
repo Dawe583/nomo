@@ -18,7 +18,7 @@ const selection = value => {
 // `402` rather than `403`: nothing about this caller is wrong. The capability is
 // real, it works, and it is not theirs yet. The message names what stays free,
 // so the refusal reads as a boundary rather than a dead end.
-const APPLY_PAYWALL = "Executing a recovery on this server is part of the paid VOID licence. Planning a recovery, reading its plan and receipt, and running the same recovery locally with the open-source CLI all stay free.";
+const APPLY_PAYWALL = "Executing a recovery on this server is part of the paid NOMO licence. Planning a recovery, reading its plan and receipt, and running the same recovery locally with the open-source CLI all stay free.";
 const response = payload => "digest" in payload ? {
   jobId: payload.jobId, planDigest: payload.digest, selection: payload.selection, boundary: payload.boundary,
   steps: payload.steps.map(step => ({ operationId: step.operationId, sequence: step.sequence,

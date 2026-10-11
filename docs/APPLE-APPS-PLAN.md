@@ -1,22 +1,22 @@
-# VOID for macOS and iOS
+# NOMO for macOS and iOS
 
 Release scope update, 2026-09-24: the approved implementation target is
-`docs/superpowers/plans/2026-09-23-void-1.0.1-apple-release.md`, with the
-product contract in `docs/superpowers/specs/void-1.0.1-product.md` and evidence
+`docs/superpowers/plans/2026-09-23-nomo-1.0.1-apple-release.md`, with the
+product contract in `docs/superpowers/specs/nomo-1.0.1-product.md` and evidence
 in `docs/RELEASE-1.0.1-MATRIX.md`. This older A2/A3 direction of a mandatory
 SwiftUI Mac rewrite and iOS-local recovery core is superseded. Keep the
 historical rationale below; do not execute both architectures.
 
 Release evidence update, 2026-09-25: the native iOS 17 Xcode project, Swift
 package, app, unit tests, UI-test source and protocol fixtures exist under
-`apps/apple/`. Current source contains 12 `VOIDTests` cases and 18
-`VOIDUITests` cases. On 2026-09-25 a Release `iphonesimulator` build of the
-`VOID` scheme succeeded and the built product installed and launched on an
+`apps/apple/`. Current source contains 12 `NOMOTests` cases and 18
+`NOMOUITests` cases. On 2026-09-25 a Release `iphonesimulator` build of the
+`NOMO` scheme succeeded and the built product installed and launched on an
 iPad Pro 11-inch (M5) simulator rendering the read-only onboarding/entry
 screen. A 2026-09-26 simulator test run against the source of that day passed
-`VOIDTests` 9/9 and `VOIDUITests` 18/18, and a later run the same day passed
-`VOIDTests` 12/12 after the paired-device and cache-policy work landed,
-superseding the 6 `VOIDUITests` cases that the 2026-09-25 run covered. The
+`NOMOTests` 9/9 and `NOMOUITests` 18/18, and a later run the same day passed
+`NOMOTests` 12/12 after the paired-device and cache-policy work landed,
+superseding the 6 `NOMOUITests` cases that the 2026-09-25 run covered. The
 18-case UI run has not been repeated against that newer source. That product is ad-hoc signed with no team
 identifier, no entitlements and no app icon, so it is simulator evidence and
 not a device or store claim. The `CompanionProtocolKit` package passes 58/58
@@ -113,7 +113,7 @@ Security and CryptoKit before adding dependencies.
    and MCP settings. Preserve the current API's conflict and unknown outcomes.
 4. Select a workspace with the system file picker and explicit scope. Connect
    Prime as a separate executor with its real status. Do not label arbitrary
-   Prime tool calls as captured by VOID.
+   Prime tool calls as captured by NOMO.
 5. Migrate credentials through a user-authorized Keychain flow. Never compile the
    current user's token into an app, downloadable archive or public configuration.
 6. Package both arm64 and x86_64 only after testing each architecture with its

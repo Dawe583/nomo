@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
+import { envValue } from "../../../packages/ledger/src/env-compat.ts";
 
 export function matchesToken(value: string | undefined, token: string): boolean {
   const a = Buffer.from(value ?? '');
@@ -8,7 +9,7 @@ export function matchesToken(value: string | undefined, token: string): boolean 
 }
 
 export function authorizedRemote(request: IncomingMessage, env: Readonly<NodeJS.ProcessEnv>): boolean {
-  const token = env.VOID_CONTROL_TOKEN;
+  const token = envValue(env, "NOMO_CONTROL_TOKEN");
   if (!token || token.length < 32) return false;
   // Remote access is opt-in and bearer-only. A gateway attaches the credential
   // server-side; untrusted websites never get a cross-origin cookie authority.

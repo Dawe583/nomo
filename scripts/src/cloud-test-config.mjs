@@ -5,11 +5,11 @@ export function validateCloudTestEnvironment(env) {
       "Cloud integration requires an explicitly isolated loopback void_gui_upgrade_preview database.",
     );
   };
-  if (env.VOID_TEST_DATABASE_ISOLATED !== "1" || !env.VOID_TEST_DATABASE_URL)
+  if (env.NOMO_TEST_DATABASE_ISOLATED !== "1" || !env.NOMO_TEST_DATABASE_URL)
     fail();
   let url;
   try {
-    url = new URL(env.VOID_TEST_DATABASE_URL);
+    url = new URL(env.NOMO_TEST_DATABASE_URL);
   } catch {
     fail();
   }
@@ -23,13 +23,13 @@ export function validateCloudTestEnvironment(env) {
     url.hash
   )
     fail();
-  if (env.DATABASE_URL && env.DATABASE_URL !== env.VOID_TEST_DATABASE_URL)
+  if (env.DATABASE_URL && env.DATABASE_URL !== env.NOMO_TEST_DATABASE_URL)
     fail();
   return url.href;
 }
 
 export function validateCloudTestProxy(env) {
-  const proxy = env.VOID_TEST_WS_PROXY ?? "127.0.0.1:5433/v1";
+  const proxy = env.NOMO_TEST_WS_PROXY ?? "127.0.0.1:5433/v1";
   const match = /^127\.0\.0\.1:([0-9]+)\/v1$/.exec(proxy);
   const port = Number(match?.[1]);
   if (!match || !Number.isInteger(port) || port < 1 || port > 65535)
@@ -44,5 +44,5 @@ export async function configureCloudTest() {
   neonConfig.useSecureWebSocket = false;
   neonConfig.pipelineConnect = false;
   neonConfig.pipelineTLS = false;
-  process.env.VOID_LOCAL_TEST = "1";
+  process.env.NOMO_LOCAL_TEST = "1";
 }

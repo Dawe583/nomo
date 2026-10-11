@@ -30,6 +30,8 @@ import {
   readPrivateFile,
   sanitizeWorkspace,
 } from "./hardening.ts";
+import { dataDir } from "./paths.ts";
+import { envValue } from "./env-compat.ts";
 
 /**
  * What one line in the JSONL file is. The receipt is the entry plus what the
@@ -52,7 +54,7 @@ export type JsonlEntry = {
 export type JsonlReceipt = JsonlEntry;
 
 export interface JsonlStoreOptions {
-  /** Directory holding <workspace>.jsonl. Defaults to ~/.void/ledger. */
+  /** Directory holding <workspace>.jsonl. Defaults to ~/.nomo/ledger. */
   readonly dir?: string;
   /** Environment, injectable at the test boundary. */
   readonly env?: Readonly<NodeJS.ProcessEnv>;
@@ -91,8 +93,15 @@ type FileState = {
   inFlight: Promise<void> | null;
 };
 
+/**
+ * Where workspace ledger files live.
+ *
+ * The legacy `VOID_LEDGER_DIR` still answers, because a machine configured
+ * before the rename keeps its ledgers exactly where it put them and reading
+ * only the current name would report an empty ledger over real records.
+ */
 export function ledgerDir(env: Readonly<NodeJS.ProcessEnv> = process.env): string {
-  return env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger");
+  return envValue(env, "NOMO_LEDGER_DIR") ?? join(dataDir(homedir()), "ledger");
 }
 
 /**

@@ -153,7 +153,7 @@ test("with the switch on, an invited unknown account is created and the provider
     supabaseKey: "anon",
     sessionSecret: SEAL_KEY,
     siteOrigin: "https://chat.voidagent.tech",
-    env: { VOID_ACCOUNT_SIGNUP: "1" },
+    env: { NOMO_ACCOUNT_SIGNUP: "1" },
     fetchImpl: async (url) => {
       asked.push(String(url));
       if (String(url).includes("/token"))
@@ -335,7 +335,7 @@ test("a token is a bearer string, and a decodable claim inside one is not an ide
 });
 
 test("the OAuth state carries the owner sealed, and the provider cannot read it", () => {
-  process.env.VOID_SECRET_KEY = Buffer.alloc(32, 3).toString("base64");
+  process.env.NOMO_SECRET_KEY = Buffer.alloc(32, 3).toString("base64");
   const nonce = "A".repeat(43);
   const authorize = "https://provider.invalid/authorize?state=" + nonce + "&scope=x";
   const flow = { state: nonce, binding: "B".repeat(43), url: authorize };
@@ -369,8 +369,8 @@ test("a request with no verified session is refused, and the refusal is not an e
   const providerUser = "3f2b1c4e-0000-4000-8000-000000000000";
   process.env.SUPABASE_URL = "https://provider.invalid";
   process.env.SUPABASE_ANON_KEY = "anon";
-  process.env.VOID_ACCOUNT_SEAL_KEY = SEAL_KEY;
-  process.env.VOID_CONTROL_TOKEN = "operator-token-for-this-test-".padEnd(40, "x");
+  process.env.NOMO_ACCOUNT_SEAL_KEY = SEAL_KEY;
+  process.env.NOMO_CONTROL_TOKEN = "operator-token-for-this-test-".padEnd(40, "x");
   const nativeFetch = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
     const target = String(url);
@@ -406,7 +406,7 @@ test("a request with no verified session is refused, and the refusal is not an e
 
   // The operator's own path keeps working.
   assert.equal(
-    await call({ authorization: `Bearer ${process.env.VOID_CONTROL_TOKEN}` }),
+    await call({ authorization: `Bearer ${process.env.NOMO_CONTROL_TOKEN}` }),
     200,
   );
   // A verified account is in.

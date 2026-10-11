@@ -17,13 +17,13 @@ test("OAuth uses random state and browser binding; supported providers use S256"
       {
         client_id: "public-id",
         client_secret: "must-not-leak",
-        integration_slug: "void-agent-tools",
+        integration_slug: "nomo-agent-tools",
       },
       "https://void-tui.vercel.app/api/integrations/" + id + "/callback",
     );
     const b = authorization(
         id,
-        { client_id: "public-id", integration_slug: "void-agent-tools" },
+        { client_id: "public-id", integration_slug: "nomo-agent-tools" },
         a.callback,
       ),
       u = new URL(a.url);
@@ -37,7 +37,7 @@ test("OAuth uses random state and browser binding; supported providers use S256"
       );
       assert.equal(u.searchParams.get("code_challenge_method"), "S256");
     } else {
-      assert.equal(u.pathname, "/integrations/void-agent-tools/new");
+      assert.equal(u.pathname, "/integrations/nomo-agent-tools/new");
       assert.equal(u.searchParams.get("code_challenge"), null);
     }
     assert.ok(!a.url.includes("must-not-leak"));

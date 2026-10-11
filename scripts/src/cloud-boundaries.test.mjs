@@ -16,11 +16,11 @@ test("cloud MCP rejects credential URLs and local network literals", () => {
   );
 });
 test("cloud secrets are authenticated and ciphertext tampering is refused", (t) => {
-  const previous = process.env.VOID_SECRET_KEY;
-  process.env.VOID_SECRET_KEY = Buffer.alloc(32, 7).toString("base64");
+  const previous = process.env.NOMO_SECRET_KEY;
+  process.env.NOMO_SECRET_KEY = Buffer.alloc(32, 7).toString("base64");
   t.after(() => {
-    if (previous === undefined) delete process.env.VOID_SECRET_KEY;
-    else process.env.VOID_SECRET_KEY = previous;
+    if (previous === undefined) delete process.env.NOMO_SECRET_KEY;
+    else process.env.NOMO_SECRET_KEY = previous;
   });
   const secret = encrypt({ key: "private-test-value" });
   assert.ok(!secret.includes("private-test-value"));
@@ -62,16 +62,16 @@ test("MCP consumes its matching SSE result without waiting for stream closure", 
 test("cloud API authenticates cookies and bearer tokens and rejects cross-origin requests", async (t) => {
   const { createServer } = await import("node:http");
   const { default: app } = await import("../../cloud/server.mjs");
-  const previous = process.env.VOID_CONTROL_TOKEN;
+  const previous = process.env.NOMO_CONTROL_TOKEN;
   const token = "cloud-test-token-".repeat(3);
-  process.env.VOID_CONTROL_TOKEN = token;
+  process.env.NOMO_CONTROL_TOKEN = token;
   const server = createServer(app);
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const url = `http://127.0.0.1:${server.address().port}`;
   t.after(async () => {
     await new Promise((resolve) => server.close(resolve));
-    if (previous === undefined) delete process.env.VOID_CONTROL_TOKEN;
-    else process.env.VOID_CONTROL_TOKEN = previous;
+    if (previous === undefined) delete process.env.NOMO_CONTROL_TOKEN;
+    else process.env.NOMO_CONTROL_TOKEN = previous;
   });
   assert.equal((await fetch(url + "/api/not-found")).status, 401);
   assert.equal(
@@ -114,11 +114,11 @@ test("cloud API authenticates cookies and bearer tokens and rejects cross-origin
   assert.equal(denied.headers.get("set-cookie"), null);
   const logout = await fetch(url + "/api/session", { method: "DELETE" });
   assert.match(logout.headers.get("set-cookie"), /Max-Age=0$/);
-  process.env.VOID_CONTROL_TOKEN = "rotated-token-".repeat(4);
+  process.env.NOMO_CONTROL_TOKEN = "rotated-token-".repeat(4);
   assert.equal((await fetch(url + "/api/capabilities", {
     headers: { cookie: cookie.split(";")[0] },
   })).status, 401);
-  process.env.VOID_CONTROL_TOKEN = token;
+  process.env.NOMO_CONTROL_TOKEN = token;
 
   assert.equal(
     (

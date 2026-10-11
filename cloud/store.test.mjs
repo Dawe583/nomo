@@ -17,15 +17,15 @@ test("cloud database uses a standard PostgreSQL Pool for Supabase", async () => 
  * database and without touching the developer's real key directory. */
 const withSigningKey = async (run) => {
   const { privateKey } = generateKeyPairSync("ed25519");
-  const previous = process.env.VOID_SIGNING_KEY;
-  process.env.VOID_SIGNING_KEY = privateKey
+  const previous = process.env.NOMO_SIGNING_KEY;
+  process.env.NOMO_SIGNING_KEY = privateKey
     .export({ format: "der", type: "pkcs8" })
     .toString("base64");
   try {
     return await run();
   } finally {
-    if (previous === undefined) delete process.env.VOID_SIGNING_KEY;
-    else process.env.VOID_SIGNING_KEY = previous;
+    if (previous === undefined) delete process.env.NOMO_SIGNING_KEY;
+    else process.env.NOMO_SIGNING_KEY = previous;
   }
 };
 

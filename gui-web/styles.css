@@ -1,4 +1,4 @@
-/* VOID Aperture web theme. Exact tokens from apps/tui-preview.
+/* NOMO Aperture web theme. Exact tokens from apps/tui-preview.
    Dark first, light via [data-theme="light"]. System stacks only. */
 :root {
   --bg: #0d0c09;
@@ -68,7 +68,7 @@ body {
 .dim { color: var(--dim); }
 a { color: var(--accent); }
 
-/* ASCII eyebrow labels: VOID / SECTION / 01 */
+/* ASCII eyebrow labels: NOMO / SECTION / 01 */
 .eyebrow {
   font-family: var(--mono);
   font-size: 11px;

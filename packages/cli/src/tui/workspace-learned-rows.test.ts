@@ -27,10 +27,13 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
 async function ledgerRows(t: {
   after(fn: () => Promise<void>): void;
 }): Promise<{ ui: WorkspaceTui; app: Workbench; env: Record<string, string> }> {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-learned-rows-"));
-  const env = { VOID_DATA_DIR: root };
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-learned-rows-"));
+  const env = { NOMO_DATA_DIR: root };
   const app = new Workbench(env, assistantFetcher("ok"));
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-key" });
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture-key",
+  });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -43,8 +46,7 @@ async function ledgerRows(t: {
 
 type Row = { id: string; label: string; lines: string[] };
 
-const rowsOf = (ui: WorkspaceTui): Row[] =>
-  ui.items() as unknown as Row[];
+const rowsOf = (ui: WorkspaceTui): Row[] => ui.items() as unknown as Row[];
 
 /** Only the learning rows, the tab also carries the chain entries themselves. */
 const learnedRows = (ui: WorkspaceTui): Row[] =>
@@ -67,16 +69,20 @@ test("one tool refused under two classes is two rows, and two identities", async
   // repeat threshold. This is the case that breaks a tool-only identity: the
   // miner treats it as two separate patterns, so the rows must too.
   ui.proofs.set("ws-1", [
-    refusal("void_run", "r1"),
-    refusal("void_run", "r1"),
-    refusal("void_run", "r1"),
-    refusal("void_run", "r3"),
-    refusal("void_run", "r3"),
-    refusal("void_run", "r3"),
+    refusal("nomo_run", "r1"),
+    refusal("nomo_run", "r1"),
+    refusal("nomo_run", "r1"),
+    refusal("nomo_run", "r3"),
+    refusal("nomo_run", "r3"),
+    refusal("nomo_run", "r3"),
   ]);
 
   const learned = learnedRows(ui);
-  assert.equal(learned.length, 2, "both classes should surface as their own row");
+  assert.equal(
+    learned.length,
+    2,
+    "both classes should surface as their own row",
+  );
 
   // The defect: an id built from the tool alone collapses these two rows onto
   // one identity, so selecting one selects the other and the tab cannot tell
@@ -84,14 +90,13 @@ test("one tool refused under two classes is two rows, and two identities", async
   const ids = learned.map((r) => r.id);
   assert.equal(new Set(ids).size, 2, `row ids collided: ${ids.join(", ")}`);
 
-  // And the class is what tells the operator which pattern they are looking at.
-  assert.deepEqual(
-    learned.map((r) => r.label).sort(),
-    [
-      "learned ws-1 void_run [r1] -> hold",
-      "learned ws-1 void_run [r3] -> hold",
-    ],
-  );
+  // And the class is what tells the operator which pattern they are looking
+  // at. The leading glyph is the row icon; the words after it are the
+  // contract, so the assertion strips the glyph rather than pinning it here.
+  assert.deepEqual(learned.map((r) => r.label.replace(/^\S+\s/, "")).sort(), [
+    "learned ws-1 nomo_run [r1] -> hold",
+    "learned ws-1 nomo_run [r3] -> hold",
+  ]);
 });
 
 test("a chain with no recurring refusal still gets a record, and it counts zero", async (t) => {
@@ -165,10 +170,13 @@ test("/learned empty cases print the same lines as the ledger tab rows", async (
   const tabEmpty = learnedRows(withData.ui)
     .flatMap((r) => r.lines)
     .filter((line) => line.startsWith("0 "));
-  assert.deepEqual(tabEmpty.sort(), [
-    "0 recurring refusals across 2 verified entries.",
-    "0 verified entries, so no refusal has been observed and no rule was mined.",
-  ].sort());
+  assert.deepEqual(
+    tabEmpty.sort(),
+    [
+      "0 recurring refusals across 2 verified entries.",
+      "0 verified entries, so no refusal has been observed and no rule was mined.",
+    ].sort(),
+  );
 
   await withData.ui.command("/learned");
   const detail = withData.ui.lines();

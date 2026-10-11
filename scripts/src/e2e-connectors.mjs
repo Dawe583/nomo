@@ -56,7 +56,7 @@ export async function runAllChecks() {
   await check("postgres update replay refuses drift", async () => {
     await runPostgresDrift();
   });
-  await check("void replay dry-run reads ledger and manifest", async () => {
+  await check("nomo replay dry-run reads ledger and manifest", async () => {
     await runReplayDryRun();
   });
   await check("s3 capture and restore round trip", async () => {
@@ -74,11 +74,11 @@ export async function runPostgresRoundTrip() {
   const statement = parseStatement("update public.orders set status = 'paid' where id = 1");
   const image = await captureBeforeImage(exec, statement, postgresSchema());
   const facts = connectorFacts(statement, image);
-  const snapshotRoot = await mkdtemp(join(tmpdir(), "void-e2e-pg-snapshot-"));
+  const snapshotRoot = await mkdtemp(join(tmpdir(), "nomo-e2e-pg-snapshot-"));
   try {
     const store = LocalSnapshotStore(snapshotRoot);
     const snapshot = await putSnapshot(store, "e2e-pg", image);
-    const snapshotDir = await mkdtemp(join(tmpdir(), "void-e2e-pg-manifest-"));
+    const snapshotDir = await mkdtemp(join(tmpdir(), "nomo-e2e-pg-manifest-"));
     await writeManifest(snapshotDir, { digest: argsDigest({ sql: statement.sql }), reference: snapshot.reference, tool: "postgres.row.update" });
     await exec.applyUpdate("public.orders", { id: "1" }, { status: "paid" });
     const steps = buildInverse(statement, image);
@@ -109,7 +109,7 @@ export async function runPostgresDrift() {
 }
 
 export async function runReplayDryRun() {
-  const root = await mkdtemp(join(tmpdir(), "void-e2e-replay-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-e2e-replay-"));
   const ledgerDir = join(root, "ledger");
   const keysDir = join(root, "keys");
   const snapshotDir = join(root, "snapshots");
@@ -118,7 +118,7 @@ export async function runReplayDryRun() {
   const reference = {
     namespace: "e2e-pg",
     digest: "sha256:" + "b".repeat(64),
-    uri: "file:///tmp/void-e2e-postgres-before-image.json",
+    uri: "file:///tmp/nomo-e2e-postgres-before-image.json",
   };
   const plan = {
     connector: "postgres",
@@ -154,7 +154,7 @@ export async function runReplayDryRun() {
     assert.equal(err.length, 0);
     assert.match(text, /tool: postgres\.row\.update/);
     assert.match(text, new RegExp(escapeRegExp(digest)));
-    assert.match(text, /snapshot: file:\/\/\/tmp\/void-e2e-postgres-before-image\.json/);
+    assert.match(text, /snapshot: file:\/\/\/tmp\/nomo-e2e-postgres-before-image\.json/);
     assert.match(text, /step restore-orders-1: update public\.orders/);
     return { out, ledger: join(ledgerDir, `${workspace}.jsonl`) };
   } finally {
@@ -164,7 +164,7 @@ export async function runReplayDryRun() {
 
 export async function runS3RoundTrip() {
   const client = new FakeS3Client();
-  const store = S3SnapshotStore(client, { bucket: "snapshots", prefix: "void" });
+  const store = S3SnapshotStore(client, { bucket: "snapshots", prefix: "nomo" });
   const call = { bucket: "app", key: "orders.csv" };
   await client.putObject({ bucket: call.bucket, key: call.key, body: encoder.encode("before") });
   const captured = await captureObject(store, client, call, () => new Date("2026-09-08T00:00:00Z"));
@@ -200,7 +200,7 @@ export async function runS3RoundTrip() {
 
 export async function runS3Drift() {
   const client = new FakeS3Client();
-  const store = S3SnapshotStore(client, { bucket: "snapshots", prefix: "void" });
+  const store = S3SnapshotStore(client, { bucket: "snapshots", prefix: "nomo" });
   const call = { bucket: "app", key: "orders.csv" };
   await client.putObject({ bucket: call.bucket, key: call.key, body: encoder.encode("before") });
   const captured = await captureObject(store, client, call, () => new Date("2026-09-08T00:00:00Z"));

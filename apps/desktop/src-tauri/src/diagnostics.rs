@@ -74,7 +74,7 @@ mod tests {
 
     #[test]
     fn classifies_startup_failures_without_returning_error_text() {
-        assert_eq!(classify(&io::Error::other("Cannot unlock the VOID workspace key in macOS Keychain")), "KEYCHAIN_UNAVAILABLE");
+        assert_eq!(classify(&io::Error::other("Cannot unlock the NOMO workspace key in macOS Keychain")), "KEYCHAIN_UNAVAILABLE");
         assert_eq!(classify(&io::Error::other("Runtime exited before readiness")), "RUNTIME_STARTUP_FAILED");
         assert_eq!(classify(&io::Error::other("Desktop runtime did not bind loopback")), "RUNTIME_NETWORK_FAILED");
         assert_eq!(classify(&io::Error::other("workspace.enc exists with a secret-bearing path")), "WORKSPACE_ACCESS_FAILED");
@@ -84,7 +84,7 @@ mod tests {
     fn classifies_windows_credential_failures_as_secure_store_failures() {
         assert_eq!(
             classify(&io::Error::other(
-                "Cannot unlock the VOID key in Windows Credential Manager"
+                "Cannot unlock the NOMO key in Windows Credential Manager"
             )),
             "KEYCHAIN_UNAVAILABLE"
         );
@@ -97,7 +97,7 @@ mod tests {
     fn classifies_a_refused_keychain_read_as_its_own_category() {
         assert_eq!(
             classify(&io::Error::other(
-                "VOID workspace key exists but this build is not authorised to read it"
+                "NOMO workspace key exists but this build is not authorised to read it"
             )),
             "KEYCHAIN_ACCESS_DENIED"
         );
@@ -107,7 +107,7 @@ mod tests {
     #[test]
     fn startup_log_never_persists_unallowlisted_input() {
         let directory = std::env::temp_dir().join(format!(
-            "void-startup-diagnostics-unallowlisted-{}",
+            "nomo-startup-diagnostics-unallowlisted-{}",
             std::process::id()
         ));
         let _ = std::fs::remove_dir_all(&directory);
@@ -120,7 +120,7 @@ mod tests {
     }
     #[test]
     fn startup_log_contains_only_allowlisted_categories() {
-        let directory = std::env::temp_dir().join(format!("void-startup-diagnostics-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!("nomo-startup-diagnostics-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&directory);
         std::fs::create_dir_all(&directory).unwrap();
         write_startup(&directory, "KEYCHAIN_UNAVAILABLE").unwrap();
@@ -132,7 +132,7 @@ mod tests {
     #[test]
     fn startup_log_describes_only_the_latest_failure() {
         let directory = std::env::temp_dir().join(format!(
-            "void-startup-diagnostics-latest-{}",
+            "nomo-startup-diagnostics-latest-{}",
             std::process::id()
         ));
         let _ = std::fs::remove_dir_all(&directory);
@@ -148,7 +148,7 @@ mod tests {
     #[test]
     fn successful_start_removes_a_stale_failure() {
         let directory = std::env::temp_dir().join(format!(
-            "void-startup-diagnostics-clear-{}",
+            "nomo-startup-diagnostics-clear-{}",
             std::process::id()
         ));
         let _ = std::fs::remove_dir_all(&directory);

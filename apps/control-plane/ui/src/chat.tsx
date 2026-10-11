@@ -46,7 +46,7 @@ import {
   type DraftFile,
 } from "./chat-composer";
 import { Badge, Dialog, Empty, ErrorBox, MotionEnabled, RedactedJson, useApi, useText } from "./ui";
-// VOID has no default model. The composer starts empty; the operator's saved
+// NOMO has no default model. The composer starts empty; the operator's saved
 // preference or the provider's validated catalog fills it in.
 function CodeBlock({ children }: { children?: ReactNode }) {
   const ref = useRef<HTMLPreElement>(null),
@@ -234,7 +234,7 @@ export function Chat({
   const running = runBlocksInput(session);
   const state = runState(session);
   const search = new URLSearchParams(location.search);
-  const draftKey = "void-draft:" + search.get("workspace") + ":" + (id ?? "new");
+  const draftKey = "nomo-draft:" + search.get("workspace") + ":" + (id ?? "new");
   const [draft, setDraft] = useState(
     () => loadDraft(sessionStorage, draftKey).text,
   );
@@ -250,7 +250,7 @@ export function Chat({
   const [modelSearch, setModelSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem("void-model-favorites") ?? "[]");
+      return JSON.parse(localStorage.getItem("nomo-model-favorites") ?? "[]");
     } catch {
       return [];
     }
@@ -395,8 +395,8 @@ export function Chat({
       id: "ledger",
       name: "ledger",
       description: t(
-        "Podepsaný audit operací VOID",
-        "VOID signed operation audit",
+        "Podepsaný audit operací NOMO",
+        "NOMO signed operation audit",
       ),
     },
     ...(id
@@ -463,7 +463,7 @@ export function Chat({
     } else if (command.id === "context" || command.id === "undo") onContext();
     else if (command.id === "export")
       download(
-        "void-transcript-" + id + ".md",
+        "nomo-transcript-" + id + ".md",
         events.map((event) => `## ${event.kind}\n\n${event.text}`).join("\n\n"),
         "text/markdown",
       );
@@ -957,7 +957,7 @@ export function Chat({
                     {kind === "user"
                       ? t("Vy", "You")
                       : kind === "assistant"
-                        ? "VOID"
+                        ? "NOMO"
                         : kind}
                   </span>
                   {arriving && (
@@ -1117,7 +1117,7 @@ export function Chat({
                     ? t("r1 · vratná změna", "r1 · reversible")
                     : selectedTool.klass === "r0"
                       ? t("r0 · čtení", "r0 · read")
-                      : t("podle VOID policy", "by VOID policy")}
+                      : t("podle NOMO policy", "by NOMO policy")}
                 </span>
                 <span className="selected-tool-hint">
                   {t("jen připraveno", "prepared only")}
@@ -1127,8 +1127,8 @@ export function Chat({
               <pre>{json(selectedTool.inputSchema)}</pre>
               <p>
                 {t(
-                  "Požadavek vykoná agent přes běžné schvalování VOID. Dostupnost neznamená oprávnění.",
-                  "The agent handles this request through normal VOID approval. Availability is not permission.",
+                  "Požadavek vykoná agent přes běžné schvalování NOMO. Dostupnost neznamená oprávnění.",
+                  "The agent handles this request through normal NOMO approval. Availability is not permission.",
                 )}
               </p>
             </details>
@@ -1182,11 +1182,11 @@ export function Chat({
             ref={textarea}
             aria-label={t("Zpráva", "Message")}
             aria-autocomplete="list"
-            aria-controls={commandOpen ? "void-command-list" : undefined}
+            aria-controls={commandOpen ? "nomo-command-list" : undefined}
             aria-expanded={commandOpen}
             aria-activedescendant={
               commandOpen && commandItems.length
-                ? `void-command-${activeCommand}`
+                ? `nomo-command-${activeCommand}`
                 : undefined
             }
             aria-describedby={budget ? "composer-budget" : undefined}
@@ -1429,8 +1429,8 @@ export function Chat({
             "prime-agent"
               ? `prime-agent · ${t("Místní PC", "Local PC")}`
               : capabilities.data?.mode === "local"
-                ? t("Místní VOID", "VOID Local")
-                : t("VOID Cloud", "VOID Cloud")}
+                ? t("Místní NOMO", "NOMO Local")
+                : t("NOMO Cloud", "NOMO Cloud")}
           </span>
           <button onClick={() => { setChatOptions(false); onContext(); }}>
             {t("Dokumenty a kontext", "Documents and context")}
@@ -1575,7 +1575,7 @@ export function Chat({
                         ? favorites.filter((f) => f !== m.id)
                         : [...favorites, m.id];
                       setFavorites(next);
-                      localStorage.setItem("void-model-favorites", json(next));
+                      localStorage.setItem("nomo-model-favorites", json(next));
                     }}
                   >
                     {favorites.includes(m.id) ? "★" : "☆"}

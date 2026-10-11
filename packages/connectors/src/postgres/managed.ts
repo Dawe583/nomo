@@ -430,7 +430,7 @@ export async function installManagedPostgres(
     begun = true;
     await connection.query(
       "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
-      [`void-managed-metadata:${options.schema}`],
+      [`nomo-managed-metadata:${options.schema}`],
     );
     if (existing)
       await connection.query(
@@ -565,7 +565,7 @@ export async function migrateManagedPostgres(
     begun = true;
     await connection.query(
       "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
-      [`void-managed-metadata:${options.schema}`],
+      [`nomo-managed-metadata:${options.schema}`],
     );
     await connection.query(
       `LOCK TABLE ${schema}.meta,${schema}.revisions,${schema}.operations,${schema}.recoveries IN ACCESS EXCLUSIVE MODE`,
@@ -1500,7 +1500,7 @@ export function managedPostgresAdapter(
       const connection = p.connection;
       // `prepare` certified the receipt layout, but nothing held the metadata
       // tables still while it did: `prepare` locks the target rows, not
-      // `void_recovery`, so another session can commit DDL against the receipt
+      // `nomo_recovery`, so another session can commit DDL against the receipt
       // tables in the window between the two calls and the guarantee `execute`
       // would be leaning on is only as old as `prepare`.
       //

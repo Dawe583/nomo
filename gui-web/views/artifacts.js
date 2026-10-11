@@ -6,8 +6,8 @@
 // counters on span.line, so the pre keeps textContent exactly equal
 // to the artifact text and Copy, Download and manual selection never
 // pick the numbers up.
-window.VOID_ARTIFACTS = (function () {
-  var STYLE_ID = "void-artifact-style";
+window.NOMO_ARTIFACTS = (function () {
+  var STYLE_ID = "nomo-artifact-style";
 
   // This file owns no stylesheet, so the toggle classes pre.ln,
   // pre.wrap, pre.nowrap and span.line get their rules from one small
@@ -18,10 +18,10 @@ window.VOID_ARTIFACTS = (function () {
     var st = document.createElement("style");
     st.id = STYLE_ID;
     st.textContent =
-      ".artifact-drawer pre.ln{counter-reset:voidline}" +
-      ".artifact-drawer pre.ln span.line{counter-increment:voidline}" +
-      ".artifact-drawer pre.ln span.line::before{content:counter(voidline);" +
-        "display:inline-block;min-width:var(--void-ln-w,3ch);margin-right:2ch;" +
+      ".artifact-drawer pre.ln{counter-reset:nomoline}" +
+      ".artifact-drawer pre.ln span.line{counter-increment:nomoline}" +
+      ".artifact-drawer pre.ln span.line::before{content:counter(nomoline);" +
+        "display:inline-block;min-width:var(--nomo-ln-w,3ch);margin-right:2ch;" +
         "text-align:right;color:var(--dim);-webkit-user-select:none;user-select:none}" +
       ".artifact-drawer pre.wrap{white-space:pre-wrap;" +
         "overflow-wrap:break-word;overflow-wrap:anywhere}" +
@@ -44,14 +44,14 @@ window.VOID_ARTIFACTS = (function () {
   }
 
   function copyText(t) {
-    function done() { if (window.VOID_TOAST) window.VOID_TOAST("Artifact copied."); }
+    function done() { if (window.NOMO_TOAST) window.NOMO_TOAST("Artifact copied."); }
     function fallback() {
       var ta = document.createElement("textarea");
       ta.value = t;
       document.body.appendChild(ta);
       ta.select();
       try { document.execCommand("copy"); done(); }
-      catch (e) { if (window.VOID_TOAST) window.VOID_TOAST("Copy failed, select manually."); }
+      catch (e) { if (window.NOMO_TOAST) window.NOMO_TOAST("Copy failed, select manually."); }
       ta.remove();
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -69,7 +69,7 @@ window.VOID_ARTIFACTS = (function () {
     a.click();
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    if (window.VOID_TOAST) window.VOID_TOAST("Artifact saved, check downloads.");
+    if (window.NOMO_TOAST) window.NOMO_TOAST("Artifact saved, check downloads.");
   }
 
   function open(art) {
@@ -127,7 +127,7 @@ window.VOID_ARTIFACTS = (function () {
     // Gutter width follows the line count so numbers stay right
     // aligned from 9 lines to 9000, instead of a fixed width that
     // misaligns on big files.
-    pre.style.setProperty("--void-ln-w", String(lines.length).length + "ch");
+    pre.style.setProperty("--nomo-ln-w", String(lines.length).length + "ch");
     // One span.line per rendered line, "\n" text nodes between them,
     // so pre.textContent stays exactly the artifact text and the Copy
     // and Download handlers below keep working unchanged.

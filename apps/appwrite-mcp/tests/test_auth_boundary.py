@@ -28,8 +28,8 @@ from tests.support_context import invoke
 
 # Long and obviously synthetic, so that a substring search over a refusal body
 # means something. A short token would also match unrelated words.
-FAKE_TOKEN = "void-unit-test-bearer-token-not-a-secret"
-WRONG_TOKEN = "void-unit-test-bearer-token-wrong"
+FAKE_TOKEN = "nomo-unit-test-bearer-token-not-a-secret"
+WRONG_TOKEN = "nomo-unit-test-bearer-token-wrong"
 
 AUTH_VARS = ("MCP_AUTH_MODE", "MCP_AUTH_TOKEN", "MCP_DEBUG")
 
@@ -68,7 +68,7 @@ class OpenModeTest(unittest.TestCase):
         # the wrong thing.
         tools = response.json()["result"]["tools"]
         self.assertTrue(tools, "an open endpoint must publish at least one tool")
-        self.assertIn("void_project_info", [tool["name"] for tool in tools])
+        self.assertIn("nomo_project_info", [tool["name"] for tool in tools])
 
     def test_every_mode_name_that_means_open_answers(self) -> None:
         for mode in ("none", "open", "false", "0", "  NONE  "):
@@ -126,7 +126,7 @@ class BearerModeTest(unittest.TestCase):
                 self.assertNotIn(FAKE_TOKEN, body)
                 self.assertNotIn(WRONG_TOKEN, body)
                 # A refused request must not leak the catalogue either.
-                self.assertNotIn("void_project_info", body)
+                self.assertNotIn("nomo_project_info", body)
 
     def test_bearer_mode_without_a_configured_token_fails_loudly(self) -> None:
         # Silently accepting would be the dangerous reading of a blank token.

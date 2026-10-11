@@ -21,7 +21,7 @@ import type {
  *
  * Read from the manifest rather than written here, because a literal in this
  * file is a version nobody has to bump and no gate reads. It answers exactly
- * what `bin/void.mjs --version` answers, from the same manifest and for the
+ * what `bin/nomo.mjs --version` answers, from the same manifest and for the
  * same reason. `dispatch.packageVersion()` is the reader the commands use;
  * importing the dispatcher here would make this module carry the whole command
  * surface, and its SQLite graph, to answer one field.
@@ -151,7 +151,7 @@ const validateWorkspacePath = (value: unknown): void => {
         /[<>:"|?*\x00-\x1f]/.test(part) ||
         /[. ]$/.test(part) ||
         /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(part) ||
-        /^(\.git|\.ssh|\.aws|\.env.*|\.void.*)$/i.test(part),
+        /^(\.git|\.ssh|\.aws|\.env.*|\.nomo.*)$/i.test(part),
     )
   )
     throw new RecoveryMcpError("invalid_path");
@@ -182,14 +182,14 @@ const validJobSelection = (selection: RecoveryJobRequest["selection"]): boolean 
 const identity = { type: "string", pattern: "^[\\w-]{1,120}$" };
 const operation = { operationId: identity };
 const names = [
-  "void_execute",
-  "void_recovery_plan",
-  "void_recovery_apply",
-  "void_recovery_plan_job",
-  "void_recovery_status_job",
-  "void_recovery_apply_job",
-  "void_reconcile",
-  "void_recovery_reconcile",
+  "nomo_execute",
+  "nomo_recovery_plan",
+  "nomo_recovery_apply",
+  "nomo_recovery_plan_job",
+  "nomo_recovery_status_job",
+  "nomo_recovery_apply_job",
+  "nomo_reconcile",
+  "nomo_recovery_reconcile",
 ] as const;
 export type RecoveryTool = (typeof names)[number];
 const tool = (
@@ -216,14 +216,14 @@ const tool = (
 });
 const tools: Tool[] = [
   tool(
-    "void_recovery_reconcile",
+    "nomo_recovery_reconcile",
     "Read durable evidence after an unknown Undo outcome. Never repeats the inverse; may update the local journal.",
     operation,
     ["operationId"],
     false,
   ),
   tool(
-    "void_execute",
+    "nomo_execute",
     "Execute one configured PostgreSQL row mutation with durable capture. Reuse operationId and runId only for the identical request. Unknown results must be reconciled, never resubmitted under another ID.",
     {
       ...operation,
@@ -247,14 +247,14 @@ const tools: Tool[] = [
     false,
   ),
   tool(
-    "void_recovery_plan",
+    "nomo_recovery_plan",
     "Preview the exact scope and digest for restoring one confirmed operation. This does not execute recovery.",
     operation,
     ["operationId"],
     true,
   ),
   tool(
-    "void_recovery_apply",
+    "nomo_recovery_apply",
     "Apply the reviewed recovery plan if operator policy permits it. Concurrent human changes produce a conflict. A plan digest is not permission.",
     {
       plan: {
@@ -282,28 +282,28 @@ const tools: Tool[] = [
     false,
   ),
   tool(
-    "void_reconcile",
+    "nomo_reconcile",
     "Look up durable execution evidence after an unknown outcome. Does not repeat the original mutation; may update the local journal.",
     operation,
     ["operationId"],
     false,
   ),
   tool(
-    "void_recovery_plan_job",
+    "nomo_recovery_plan_job",
     "Plan one retained recovery job for an exact run or explicit operation list. Load or create by stable job ID; validates the signed stored plan rather than trusting caller plan bytes.",
     { jobId: identityShape("Stable job ID reused across retries"), selection: { type: "object", description: "One exact run or explicit operation ID list" } },
     ["jobId", "selection"],
     true,
   ),
   tool(
-    "void_recovery_status_job",
+    "nomo_recovery_status_job",
     "Return the stored retained job plan or its terminal restored/partial/conflict/unknown/paused result by stable job ID.",
     { jobId: identityShape("Stable job ID") },
     ["jobId"],
     true,
   ),
   tool(
-    "void_recovery_apply_job",
+    "nomo_recovery_apply_job",
     "Apply one already-planned retained job after operator policy checks the stored plan digest. The job ID alone is not permission.",
     { jobId: identityShape("Stable job ID"), planDigest: { type: "string", pattern: "^[a-f0-9]{64}$", description: "Digest of the stored plan" } },
     ["jobId", "planDigest"],
@@ -318,13 +318,13 @@ export function recoveryMcpServer(options: {
   permitted: (tool: RecoveryTool) => Promise<boolean>;
 }) {
   const server = new Server(
-    { name: "void-recovery", version: productVersion() },
+    { name: "nomo-recovery", version: productVersion() },
     { capabilities: { tools: {} } },
   );
   const definitions =
     options.adapterId === "filesystem.managed"
       ? tools.map((definition) =>
-          definition.name !== "void_execute"
+          definition.name !== "nomo_execute"
             ? definition
             : {
                 ...definition,
@@ -392,7 +392,7 @@ export function recoveryMcpServer(options: {
         )
       : options.adapterId === "git.managed"
         ? tools.map((definition) =>
-            definition.name !== "void_execute"
+            definition.name !== "nomo_execute"
               ? definition
               : {
                   ...definition,
@@ -462,7 +462,7 @@ export function recoveryMcpServer(options: {
       if (!(await options.permitted(name)))
         throw new RecoveryMcpError("policy_denied");
       let result: unknown;
-      if (name === "void_execute") {
+      if (name === "nomo_execute") {
         if (
           !args.mutation ||
           typeof args.mutation !== "object" ||
@@ -479,28 +479,28 @@ export function recoveryMcpServer(options: {
           runId: args.runId as string,
           arguments: args.mutation as Json,
         });
-      } else if (name === "void_recovery_plan")
+      } else if (name === "nomo_recovery_plan")
         result = await options.runtime.planRecovery(
           options.workspace,
           args.operationId as string,
         );
-      else if (name === "void_recovery_reconcile")
+      else if (name === "nomo_recovery_reconcile")
         result = await options.runtime.reconcileRecovery(
           options.workspace,
           args.operationId as string,
         );
-      else if (name === "void_reconcile")
+      else if (name === "nomo_reconcile")
         result = await options.runtime.reconcile(
           options.workspace,
           args.operationId as string,
         );
-      else if (name === "void_recovery_plan_job") {
+      else if (name === "nomo_recovery_plan_job") {
         const request = { workspace: options.workspace, jobId: args.jobId, selection: args.selection } as RecoveryJobRequest;
         if (request.workspace !== options.workspace) throw new Error("Recovery job belongs to another workspace.");
         result = await options.runtime.planRecoveryJob(request);
-      } else if (name === "void_recovery_status_job") {
+      } else if (name === "nomo_recovery_status_job") {
         result = await options.runtime.recoveryJobStatus(options.workspace, args.jobId as string);
-      } else if (name === "void_recovery_apply_job") {
+      } else if (name === "nomo_recovery_apply_job") {
         if (!(await options.permitted(name)))
           throw new RecoveryMcpError("policy_denied");
         const stored = await options.runtime.recoveryJobStatus(options.workspace, args.jobId as string);

@@ -29,5 +29,5 @@
     catch (error) { status.textContent = error.message; }
     finally { byId('upstream-token').value = ''; button.disabled = false; }
   });
-  window.addEventListener('void-connected', load); void load();
+  window.addEventListener('nomo-connected', load); void load();
 })();

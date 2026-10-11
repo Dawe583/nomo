@@ -1,4 +1,4 @@
-# @void/ledger
+# @nomo/ledger
 
 The append only record: hash chain, canonicalisation, signing, verification.
 
@@ -56,7 +56,7 @@ independently. This chain stores all 64, truncated only at the render boundary.
 - `devKeyProvider`, `keyProviderFromPkcs8`, `verifySignature`: the ed25519 dev
   key path and signature verification, node:crypto only.
 - `jsonlStore`: the dev tier store. One JSONL file per workspace at
-  `VOID_LEDGER_DIR` (default `~/.void/ledger`), 0700 directory, fsync before
+  `NOMO_LEDGER_DIR` (default `~/.nomo/ledger`), 0700 directory, fsync before
   the append is acknowledged.
 
 The Postgres store is the hosted tier and lands with its own migrations at

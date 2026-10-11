@@ -24,7 +24,7 @@ const base: CapabilityProfile = {
   excluded: ["concurrent-external-writers", "shell-effects"],
   conformance: {
     schema: CONFORMANCE_SCHEMA,
-    runtime: "void-recovery-runtime",
+    runtime: "nomo-recovery-runtime",
     fixture: "disposable-local-file-create-write-delete",
     checks: ["restart-and-idempotence", "human-drift", "lost-execution-response"],
     sharedRuntimeChecksOnly: true,

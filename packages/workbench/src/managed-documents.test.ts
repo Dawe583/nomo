@@ -8,14 +8,14 @@ import { DatabaseSync } from "node:sqlite";
 import { Workbench } from "./index.ts";
 import { digest } from "../../runtime/src/index.ts";
 async function fixture(t: import("node:test").TestContext) {
-  const root = await mkdtemp(join(tmpdir(), "void-doc-runtime-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-doc-runtime-"));
   const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test" }] })
       : Response.json({
           choices: [{ message: { role: "assistant", content: "done" } }],
         });
-  let app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  let app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   await app.configure({
     baseUrl: "https://provider.test/v1",
     apiKey: "fixture",
@@ -34,7 +34,7 @@ async function fixture(t: import("node:test").TestContext) {
     },
     restart() {
       app.close();
-      app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+      app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
       return app;
     },
   };
