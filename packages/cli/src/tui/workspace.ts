@@ -5302,6 +5302,20 @@ export function renderWorkspace(
     richChat && ui.scroll >= 0
       ? `History ${offset + 1}-${Math.min(offset + bodyHeight, lines.length)}/${lines.length} / /bottom to follow`
       : undefined;
+  // Context pressure on the chat tab itself. The status bar carries it too,
+  // but the chat is where an operator decides whether to compact, so the
+  // answer has to be in the pane that prompts the decision.
+  //
+  // Only where a ceiling was declared. A meter against an invented maximum
+  // would report pressure where the honest answer is that no limit is known.
+  const chatContext = ui.session() ? ui.contextNumbers() : null;
+  const chatContextBadge =
+    chatContext &&
+    typeof chatContext.contextTokens === "number" &&
+    chatContext.contextTokens > 0 &&
+    typeof chatContext.contextUsed === "number"
+      ? `ctx ${levelMeter(chatContext.contextUsed, chatContext.contextTokens, 6, motion)} ${Math.round((chatContext.contextUsed / chatContext.contextTokens) * 100)}% / /compact`
+      : undefined;
   const usage = [...(ui.session()?.events ?? [])]
     .reverse()
     .find((event) => event.kind === "usage")?.payload;
@@ -5451,8 +5465,8 @@ export function renderWorkspace(
     : ui.confirmation
       ? "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
       : running && (busy || ui.session()?.status === "running")
-        ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}`
-        : (historyStatus ?? ui.notice);
+        ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}${chatContextBadge ? ` / ${chatContextBadge}` : ""}`
+        : `${historyStatus ?? ui.notice}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
   const menuRows = menu.map(([name, description], i) =>
     ink(
       text(
