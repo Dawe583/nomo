@@ -5174,14 +5174,19 @@ export function renderWorkspace(
   const lastEvent = [...events]
     .reverse()
     .find((e) => e.type !== "run.status" && e.kind !== "usage");
-  // The phase icon carries the same word as the label beside it, so the glyph is
-  // recognition speed rather than the only signal.
+  // The phase icon carries the same word as the label beside it, so the glyph
+  // is recognition speed rather than the only signal.
+  //
+  // Every glyph here is single cell. The pencil U+270E that would read as
+  // "writing" counts two in layout.ts, which would push this status row one
+  // column past its width and, on a narrow terminal, drop the Esc stop hint
+  // off the end.
   const phase =
     lastEvent?.type === "tool.started"
-      ? `⌘ Calling tool`
+      ? `${ROW_ICONS.tool} Calling tool`
       : lastEvent?.type === "message.delta"
-        ? `✎ Writing response`
-        : `◐ Thinking`;
+        ? `${ROW_ICONS.edit} Writing response`
+        : `${ROW_ICONS.unknown} Thinking`;
   // Live ellipsis, frozen when motion is off so paused frames stay equal.
   const dots =
     visuals.motion === false ? "" : ".".repeat(1 + (Math.floor(frame / 3) % 3));

@@ -469,6 +469,52 @@ test("each tab builds only its own rows, and the usage tab leads with a summary"
   }
 });
 
+test("no rendered row exceeds its width, whatever glyphs it carries", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-width-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+
+  // layout.ts counts U+2600 to U+27BF as two cells. A glyph from that range
+  // looks like one character on screen and shifts every column after it, so
+  // the failure shows up as a dropped hint rather than as an obvious overflow.
+  // Every pane, at every tab, at a width narrow enough for a row to be tight.
+  const tabs = [
+    "overview",
+    "chat",
+    "sessions",
+    "documents",
+    "ledger",
+    "approvals",
+    "policy",
+    "tools",
+    "models",
+    "usage",
+    "help",
+  ] as const;
+  for (const tab of tabs) {
+    ui.choose(tab);
+    ui.items();
+    for (const width of [24, 32, 40, 60, 80, 100, 140]) {
+      const rendered = renderWorkspace(ui, width, 40, "hi", false, false, {
+        frame: 3,
+        color: true,
+      });
+      for (const row of stripAnsi(rendered).split("\n"))
+        assert.ok(
+          visibleLength(row) <= width,
+          `${tab} at ${width} produced a ${visibleLength(row)} cell row: ${JSON.stringify(row)}`,
+        );
+    }
+  }
+});
+
 test("Shift+Tab modes cycle with a visible indicator", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-mode-"));
   const { app, env } = await fixtureApp(root);
