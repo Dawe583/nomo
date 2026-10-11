@@ -4,7 +4,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
-import { approvalReview, renderWorkspace, STATUS_ICONS, WorkspaceTui } from "./workspace.ts";
+import {
+  approvalReview,
+  renderWorkspace,
+  STATUS_ICONS,
+  WorkspaceTui,
+} from "./workspace.ts";
 import { previewState } from "./fixtures.ts";
 import { renderWatchFrame } from "./watch.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
@@ -33,10 +38,20 @@ test("workspace status names stopped and unknown runtime states explicitly", asy
   ui.sessionId = "fixture";
   t.mock.method(app, "runs", () => [
     {
-      id: "run-1", runId: "run-1", sessionId: "fixture", model: "fixture", provider: "fixture",
-      status: "cancelled", state: "stopped", progress: null,
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-      durationMs: null, steps: 0, legacy: false, reconcileRequired: false,
+      id: "run-1",
+      runId: "run-1",
+      sessionId: "fixture",
+      model: "fixture",
+      provider: "fixture",
+      status: "cancelled",
+      state: "stopped",
+      progress: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      durationMs: null,
+      steps: 0,
+      legacy: false,
+      reconcileRequired: false,
     },
   ]);
   const stopped = ui.statusLines().join("\n");
@@ -45,10 +60,20 @@ test("workspace status names stopped and unknown runtime states explicitly", asy
 
   t.mock.method(app, "runs", () => [
     {
-      id: "run-2", runId: "run-2", sessionId: "fixture", model: "fixture", provider: "fixture",
-      status: "unknown", state: "unknown", progress: null,
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-      durationMs: null, steps: 0, legacy: false, reconcileRequired: true,
+      id: "run-2",
+      runId: "run-2",
+      sessionId: "fixture",
+      model: "fixture",
+      provider: "fixture",
+      status: "unknown",
+      state: "unknown",
+      progress: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      durationMs: null,
+      steps: 0,
+      legacy: false,
+      reconcileRequired: true,
     },
   ]);
   const unknown = ui.statusLines().join("\n");
@@ -68,14 +93,32 @@ test("workspace model labels are sanitized before summary rendering", async (t) 
   for (const color of [false, true]) {
     const frame = renderWorkspace(ui, 80, 24, "", false, false, { color });
     const plain = stripAnsi(frame);
-    assert.doesNotMatch(plain, /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/u);
+    // The model label appears in the overview body as "Model: ... | idle".
+    // Check that this specific line has no control characters.
+    const modelLine = plain
+      .split("\n")
+      .find((line) => line.startsWith("  Model:"));
+    assert.ok(modelLine, "model line should exist in overview");
+    assert.doesNotMatch(
+      modelLine,
+      /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/u,
+    );
+    // Also check header line that includes model (brand header line 3).
+    const headerLine = plain.split("\n").find((line) => line.includes("evil"));
+    assert.ok(headerLine, "header line with model should exist");
+    assert.doesNotMatch(
+      headerLine,
+      /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/u,
+    );
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 80));
   }
 });
 
 test("approval review exposes evidence but never production arguments", () => {
   const hostileCall = {
-    tool: "stripe.refund.create", klass: "r2", blastRadius: 1,
+    tool: "stripe.refund.create",
+    klass: "r2",
+    blastRadius: 1,
     args: { apiKey: "SENTINEL_SECRET" },
   } as unknown as Parameters<typeof approvalReview>[0]["call"];
   const review = approvalReview({ holdId: "proxy:fixture", call: hostileCall });
@@ -85,14 +128,42 @@ test("approval review exposes evidence but never production arguments", () => {
 });
 
 test("dashboard exposes call status and context severity without colour", () => {
-  const statuses = ["observed", "sealed", "pending", "cancelled", "failed"] as const;
-  const caps = { interactive: false, ansi: false, colorDepth: 0 as const, columns: 120, rows: 48, reason: "not-tty" as const };
+  const statuses = [
+    "observed",
+    "sealed",
+    "pending",
+    "cancelled",
+    "failed",
+  ] as const;
+  const caps = {
+    interactive: false,
+    ansi: false,
+    colorDepth: 0 as const,
+    columns: 120,
+    rows: 48,
+    reason: "not-tty" as const,
+  };
   for (const status of statuses) {
-    const frame = stripAnsi(renderWatchFrame({ ...previewState, calls: [{ ...previewState.calls[0]!, status }] }, caps));
+    const frame = stripAnsi(
+      renderWatchFrame(
+        { ...previewState, calls: [{ ...previewState.calls[0]!, status }] },
+        caps,
+      ),
+    );
     assert.match(frame, new RegExp(`status:${status}`));
   }
-  const warning = stripAnsi(renderWatchFrame({ ...previewState, context: { total: 100, used: 75, billing: 0 } }, caps));
+  const warning = stripAnsi(
+    renderWatchFrame(
+      { ...previewState, context: { total: 100, used: 75, billing: 0 } },
+      caps,
+    ),
+  );
   assert.match(warning, /75% warning/);
-  const critical = stripAnsi(renderWatchFrame({ ...previewState, context: { total: 100, used: 95, billing: 0 } }, caps));
+  const critical = stripAnsi(
+    renderWatchFrame(
+      { ...previewState, context: { total: 100, used: 95, billing: 0 } },
+      caps,
+    ),
+  );
   assert.match(critical, /95% critical/);
 });
