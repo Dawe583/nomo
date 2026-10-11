@@ -5001,6 +5001,47 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "Enter opens a conversation. /resume picks one by number.",
       ];
     }
+    // The approvals tab answers "what is waiting on me", and the answer is a
+    // deadline, not a list. The list below is sorted by blast radius, which
+    // answers a different question: which is riskiest. Both matter, so the
+    // summary leads with how many are waiting and how long the soonest one
+    // has, then the list follows.
+    if (this.tab === "approvals" && rows.length) {
+      const byStatus = new Map<string, number>();
+      for (const row of rows) {
+        const match = /\[([^\]]+)\]/.exec(row.label);
+        const status = match?.[1] ?? "unknown";
+        byStatus.set(status, (byStatus.get(status) ?? 0) + 1);
+      }
+      const counts = [...byStatus.entries()]
+        .map(([status, count]) => `${count} ${status}`)
+        .join(", ");
+      // The deadline rides at the front of the label in one of two shapes:
+      // "NNNs left | " while it runs and "EXPIRED | " once it has. Matching the
+      // shape rather than any number is what keeps a hold id or a tool name
+      // from being read as a deadline.
+      const expiries = rows
+        .map((row) => /^(\d+)s left \| /.exec(row.label)?.[1])
+        .filter((v): v is string => !!v)
+        .map(Number);
+      const expired = rows.filter((row) =>
+        row.label.startsWith("EXPIRED"),
+      ).length;
+      const soonest = expiries.length ? `${Math.min(...expiries)}s` : undefined;
+      return [
+        `APPROVALS, ${rows.length} waiting: ${counts}`,
+        "",
+        expired
+          ? `${expired} already expired and did not run.`
+          : soonest
+            ? `soonest deadline: ${soonest}`
+            : "no deadline reported",
+        "",
+        ...this.listRows(),
+        "",
+        "Enter opens the decision. a approves, d denies, y accepts a diff.",
+      ];
+    }
     return rows.length ? this.listRows() : ["No entries yet.", ""];
   }
   /**
