@@ -1675,49 +1675,100 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   agentsLines() {
     const catalog = this.workbench.agents();
     const rows = [...this.workbench.list()].reverse();
+    // An agent profile is a set of limits, and an operator checking one is
+    // reading numbers, not prose. The system prompt stays last and bounded,
+    // because it is the one field that is text rather than a limit.
     return [
-      "AGENTS, runtime catalog",
-      `Selected for new conversations: ${this.agentId ?? "runtime default"}`,
-      ...catalog.agents.map(
-        (agent) =>
-          `${agent.id === this.agentId ? ">" : " "} ${agent.id}: ${agent.name} / ${agent.description}`,
+      ...renderInspector(
+        {
+          title: "AGENTS",
+          subtitle: `selected: ${this.agentId ?? "runtime default"}`,
+          icon: ROW_ICONS.agent,
+          sections: [
+            {
+              title: "runtime catalog",
+              fields: catalog.agents.map((agent) => ({
+                label: agent.id,
+                value: agent.description,
+                badge: agent.id === this.agentId ? "selected" : undefined,
+                tone: agent.id === this.agentId ? "success" : "default",
+              })),
+            },
+            {
+              title: "profiles and their limits",
+              fields: catalog.profiles.flatMap((profile) => [
+                { label: profile.id, value: `policy ${profile.policyProfile}` },
+                {
+                  label: `  max turns`,
+                  value: String(profile.maxTurns),
+                },
+                {
+                  label: `  max context`,
+                  value: `${profile.maxContextTokens} tokens`,
+                },
+                {
+                  label: `  tools`,
+                  value: profile.allowedTools.join(", ") || "none",
+                  tone: profile.allowedTools.length ? "default" : "warning",
+                },
+              ]),
+            },
+            {
+              title: "available policy profiles",
+              fields: [
+                {
+                  label: "profiles",
+                  value: catalog.policyProfiles.join(", ") || "none",
+                },
+              ],
+            },
+            {
+              // The prompt is the one field that is text rather than a limit,
+              // and this view names it as saveable, so not printing it left
+              // the operator unable to check what a profile actually says to
+              // the model. Bounded because a prompt is prose, and the marker
+              // says it was cut rather than letting a truncated prompt read
+              // as the whole one.
+              title: "system prompts",
+              fields: catalog.profiles.map((profile) => {
+                const prompt = profile.systemPrompt.trim();
+                return {
+                  // The label keeps the field's own name. This view tells the
+                  // operator that systemPrompt is saveable, so the row has to
+                  // be findable by that word and not only by the profile id.
+                  label: `System prompt / ${profile.id}`,
+                  value: !prompt
+                    ? "(empty)"
+                    : prompt.length > 160
+                      ? `${prompt.slice(0, 160)}… (+${prompt.length - 160} chars)`
+                      : prompt,
+                  tone: prompt ? ("default" as const) : ("warning" as const),
+                };
+              }),
+            },
+          ],
+          hint: "/agent ID selects. Existing conversations keep their own snapshot.",
+        },
+        { width: 76 },
       ),
-      "/agent ID selects a profile. Existing conversations keep their snapshot.",
+      "",
+      "Prompt text does not grant tool or policy authority.",
       "/agent-file path.json reviews a custom profile before saving.",
       "File fields: id, name, systemPrompt, allowedTools, policyProfile, maxTurns, maxContextTokens.",
-      `Operator policy profiles: ${catalog.policyProfiles.join(", ") || "none"}`,
-      ...catalog.profiles.flatMap((profile) => {
-        // This view names systemPrompt as a saveable field and then never
-        // prints it, so the one line an operator needs to check what a profile
-        // actually says to the model was the one line missing. Bounded because
-        // a prompt is prose, and the marker says it was cut rather than
-        // letting a truncated prompt look like the whole one.
-        const prompt = profile.systemPrompt.trim();
-        const shown = !prompt
-          ? "(empty)"
-          : prompt.length > 160
-            ? `${prompt.slice(0, 160)}… (+${prompt.length - 160} chars)`
-            : prompt;
-        return [
-          `Profile ${profile.id}: policy ${profile.policyProfile}, max turns ${profile.maxTurns}, max context tokens ${profile.maxContextTokens}`,
-          `Allowed tools: ${profile.allowedTools.join(", ") || "none"}`,
-          `System prompt: ${shown}`,
-        ];
-      }),
-      "Prompt text does not grant tool or policy authority.",
       "",
       "CONVERSATIONS",
       ...(rows.length
         ? rows.map(
             (item) =>
-              `[${item.status}] ${item.title ?? item.id} ${item.id.slice(0, 8)} ${item.model}`,
+              `${stateIcon(item.status)} [${item.status}] ${item.title ?? item.id} ${item.id.slice(0, 8)} ${item.model}`,
           )
         : ["No conversations yet."]),
       "",
       ...this.workbench
         .connectionState()
         .connectors.map(
-          (item) => `connector: ${item.name} (${item.tools.length} tools)`,
+          (item) =>
+            `${ROW_ICONS.connector} connector: ${item.name} (${item.tools.length} tools)`,
         ),
     ];
   }
