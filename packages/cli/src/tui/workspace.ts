@@ -4251,20 +4251,73 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ...this.proxy.errors,
       ];
     }
-    if (this.tab === "policy")
+    // The policy tab used to open with the raw YAML and then a JSON dump per
+    // connector. The question it exists to answer is what this workspace is
+    // allowed to do, and that is a summary of classes and decisions, not the
+    // text of the rules. The YAML stays below for the operator who wants it.
+    if (this.tab === "policy") {
+      const connectors = this.workbench.connectionState().connectors;
+      const policyTools = connectors.flatMap((c) =>
+        c.tools.map((tool) => ({ name: tool, source: c.name || c.id })),
+      );
+      const byClass = new Map<string, number>();
+      for (const connector of connectors) {
+        const summary = policySummary(
+          "policy" in connector ? (connector.policy as string) : undefined,
+        );
+        byClass.set(String(summary), (byClass.get(String(summary)) ?? 0) + 1);
+      }
       return [
-        "MANAGED DOCUMENTS",
-        "R0 reads; R1 writes with capture and verified Undo.",
+        ...renderInspector(
+          {
+            title: "POLICY",
+            subtitle: "R0 reads; R1 writes with capture and verified Undo",
+            icon: ROW_ICONS.harness,
+            sections: [
+              {
+                title: "what is allowed",
+                fields: [
+                  { label: "classes", value: "R0 read, R1 write, R2 bulk" },
+                  {
+                    label: "unknown tools",
+                    value: "denied",
+                    tone: "success",
+                  },
+                  {
+                    label: "expired approval",
+                    value: "cannot release a tool",
+                    tone: "warning",
+                  },
+                  {
+                    label: "snapshot",
+                    value: "each conversation takes its own copy",
+                  },
+                  {
+                    label: "connectors",
+                    value: `${connectors.length} connected, ${policyTools.length} tools offered`,
+                  },
+                ],
+              },
+              {
+                title: "per connector",
+                fields: connectors.map((c) => ({
+                  label: (c.name || c.id).slice(0, 22),
+                  value: `${c.tools.length} tools, ${c.consentState}`,
+                  tone: c.consentState === "confirmed" ? "success" : "warning",
+                })),
+              },
+            ],
+            hint: "/policy-file ID path.yaml changes the policy for one connector.",
+          },
+          { width: 76 },
+        ),
         "",
         "DEFAULT POLICY FOR EXTERNAL MCP",
         ...DEFAULT_POLICY.split("\n"),
-        "Unknown tools are denied. Expired approvals cannot release tools.",
-        "Each new conversation snapshots its policy.",
-        "",
-        "/policy-file ID path.yaml changes the policy for a specific connector.",
         "",
         ...this.items().flatMap((r) => [r.label, ...r.lines, ""]),
       ];
+    }
     const rows = this.items();
     // Documents group by folder and conversations by state, for the same
     // reason: a flat list of forty rows cannot be scanned, and a group the
