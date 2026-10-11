@@ -6560,6 +6560,62 @@ export function renderWorkspace(
     }
   }
 
+  // Live run badges – named sessions that are actively running.
+  // Shows up to 3 running sessions with their progress.
+  const runningRuns = [...ui.workbench.runs()].filter(
+    (run: { state: string; sessionId: string }) =>
+      run.state === "running" ||
+      run.state === "stopping" ||
+      run.state === "paused",
+  );
+  if (runningRuns.length > 0) {
+    const runBadges = runningRuns.slice(0, 3).map((run) => {
+      const sess = ui.workbench.list().find((s) => s.id === run.sessionId);
+      const title = sess?.title ?? run.sessionId.slice(0, 8);
+      const pct =
+        run.progress === null ? "?" : `${Math.round(run.progress * 100)}%`;
+      return `${title} ${pct}`;
+    });
+    segments.push(
+      paintWithPalette("▶", "accent", palette, caps) +
+        " " +
+        runBadges.join(" · "),
+    );
+  }
+
+  // Live approval pulse – the oldest pending hold gets a breathing dot.
+  // Only when there are holds and not in a confirmation modal.
+  const pendingHolds = ui.workbench.pending();
+  if (pendingHolds.length > 0 && !ui.confirmation) {
+    // Holds have expiresAt; the one expiring soonest is the most urgent.
+    const oldest = pendingHolds.reduce((a, b) =>
+      a.expiresAt < b.expiresAt ? a : b,
+    );
+    const pulse =
+      motion.enabled && !motion.reduced ? approvalPulse(motion) : "●";
+    const tool = oldest.call?.tool ?? "tool";
+    const badge = paintWithPalette(
+      `${pulse} ${tool} ${oldest.holdId.slice(0, 6)}`,
+      "error",
+      palette,
+      caps,
+    );
+    segments.push(badge);
+  }
+
+  // Queue indicator with live count and animation.
+  if (ui.queuedPrompt) {
+    const qPulse =
+      motion.enabled && !motion.reduced
+        ? ".".repeat(1 + (Math.floor(motion.frame / 4) % 3))
+        : "";
+    const qState = ui.queuedPromptPaused ? "paused" : `+1${qPulse}`;
+    segments.push(
+      paintWithPalette("⏳", "warning", palette, caps) +
+        ` ${seg("queue", qState, "warning")}`,
+    );
+  }
+
   // Join with theme separator, respecting width
   const sep = paintWithPalette(symbols.separator.dot, "muted", palette, caps);
   let summary = segments.join(` ${sep} `);
