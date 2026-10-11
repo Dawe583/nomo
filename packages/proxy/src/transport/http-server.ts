@@ -10,10 +10,16 @@ import {
   type LocalProxyRpcBridge,
   type LocalProxyRpcBridgeOptions,
   type LocalProxyTool,
+  type TrustedToolCallContext,
 } from "../bin.ts";
+import { legacyArgsDigest } from "../forward/legacy-binding.ts";
+import type { OperationAssessment } from "../forward/tools.ts";
 
 export type LocalGrantIdentity = Readonly<{
+  principalId: string;
   agentId: string;
+  runId: string;
+  workspaceId: string;
   toolScope: readonly string[];
   expiresAt: number;
 }>;
@@ -160,6 +166,7 @@ function registerProxyTool(
   token: string,
   tool: LocalProxyTool,
 ): void {
+  const schemaDigestPromise = legacyArgsDigest(tool.inputSchema);
   server.registerTool(
     tool.name,
     {
@@ -167,22 +174,63 @@ function registerProxyTool(
       inputSchema: fromJsonSchema(tool.inputSchema as JsonSchemaType),
     },
     async (args, context) => {
-      const assertCurrentGrant = (): void => {
-        let identity: LocalGrantIdentity | null;
+      let capturedIdentity: LocalGrantIdentity | undefined;
+      const assertCurrentGrant = (): LocalGrantIdentity => {
+        let current: LocalGrantIdentity | null;
         try {
-          identity = options.validateGrant(token, options.upstreamId, tool.name);
+          current = options.validateGrant(token, options.upstreamId, tool.name);
         } catch {
-          identity = null;
+          current = null;
         }
-        if (!isValidIdentity(identity) || !identity.toolScope.includes(tool.name))
+        if (!isValidIdentity(current) || !current.toolScope.includes(tool.name))
           throw new Error("Local agent grant is invalid or expired");
+        if (capturedIdentity !== undefined && !sameGrantIdentity(current, capturedIdentity))
+          throw new Error("Local agent grant identity changed");
+        return current;
       };
-      assertCurrentGrant();
+      const identity = snapshotGrantIdentity(assertCurrentGrant());
+      capturedIdentity = identity;
+      const callArgs = asJsonObject(args);
+      const schemaDigest = await schemaDigestPromise;
+      const profile = options.proxyOptions.operationProfiles?.find((candidate) =>
+        validIdentifier(candidate.profileId) &&
+        candidate.upstreamId === options.upstreamId &&
+        candidate.tool === tool.name &&
+        candidate.schemaDigest === schemaDigest,
+      );
+      let assessment: OperationAssessment | undefined;
+      try {
+        const candidate = profile?.assess({
+          upstreamId: options.upstreamId,
+          tool: tool.name,
+          schemaDigest,
+          args: deepFreeze(structuredClone(callArgs)),
+          principalId: identity.principalId,
+          agentId: identity.agentId,
+          runId: identity.runId,
+          workspaceId: identity.workspaceId,
+        });
+        if (isOperationAssessment(candidate)) assessment = candidate;
+      } catch {
+        assessment = undefined;
+      }
+      const trustedContext: TrustedToolCallContext = {
+        upstreamId: options.upstreamId,
+        tool: tool.name,
+        schemaDigest,
+        principalId: identity.principalId,
+        agentId: identity.agentId,
+        runId: identity.runId,
+        workspaceId: identity.workspaceId,
+        ...(profile === undefined ? {} : { profileId: profile.profileId }),
+        ...(assessment === undefined ? {} : { assessment }),
+      };
       return await bridge.callTool(
         tool.name,
-        asJsonObject(args),
+        callArgs,
         context.mcpReq.signal,
         assertCurrentGrant,
+        trustedContext,
       ) as CallToolResult;
     },
   );
@@ -203,12 +251,45 @@ function resolveIdentity(
 
 function isValidIdentity(value: LocalGrantIdentity | null): value is LocalGrantIdentity {
   return value !== null &&
+    validIdentifier(value.principalId) &&
     validIdentifier(value.agentId) &&
+    validIdentifier(value.runId) &&
+    validIdentifier(value.workspaceId) &&
     Number.isFinite(value.expiresAt) &&
     value.expiresAt > Date.now() &&
     Array.isArray(value.toolScope) &&
     value.toolScope.length > 0 &&
     value.toolScope.every(validIdentifier);
+}
+
+function snapshotGrantIdentity(identity: LocalGrantIdentity): LocalGrantIdentity {
+  return Object.freeze({
+    ...identity,
+    toolScope: Object.freeze([...identity.toolScope]),
+  });
+}
+
+function sameGrantIdentity(
+  current: LocalGrantIdentity,
+  captured: LocalGrantIdentity,
+): boolean {
+  return current.principalId === captured.principalId &&
+    current.agentId === captured.agentId &&
+    current.runId === captured.runId &&
+    current.workspaceId === captured.workspaceId &&
+    current.expiresAt === captured.expiresAt &&
+    current.toolScope.length === captured.toolScope.length &&
+    current.toolScope.every((tool, index) => tool === captured.toolScope[index]);
+}
+
+function isOperationAssessment(value: unknown): value is OperationAssessment {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Partial<OperationAssessment>;
+  return (candidate.effect === "read" || candidate.effect === "write" ||
+    candidate.effect === "mixed" || candidate.effect === "unknown") &&
+    (candidate.risk === "low" || candidate.risk === "high" ||
+      candidate.risk === "unknown") &&
+    (candidate.fastPath === "allow" || candidate.fastPath === "full");
 }
 
 function bearerToken(value: string | undefined): string | null {
@@ -223,6 +304,13 @@ function validIdentifier(value: unknown): value is string {
     value.length <= 160 &&
     value.trim() === value &&
     !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+function deepFreeze<T>(value: T): T {
+  if (typeof value !== "object" || value === null || Object.isFrozen(value))
+    return value;
+  for (const nested of Object.values(value)) deepFreeze(nested);
+  return Object.freeze(value);
 }
 
 function asJsonObject(value: unknown): Record<string, unknown> {

@@ -1,7 +1,7 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { HoldQueue } from "../hold.ts";
+import { HoldQueue, verifiedLocalOperatorId } from "../hold.ts";
 import {
   renderQueue,
   renderHold,
@@ -20,6 +20,43 @@ const call = {
 };
 
 describe("the CLI approval channel", () => {
+  test("bound holds display operation, policy and local operator before a keypress", async () => {
+    const queue = new HoldQueue();
+    const binding = {
+      operationId: "operation-1",
+      operationDigest: "a".repeat(64),
+      policyVersion: 3,
+      policyDigest: "b".repeat(64),
+      operatorId: verifiedLocalOperatorId(),
+      principalId: "principal-1",
+      agentId: "agent-1",
+      runId: "run-1",
+      workspaceId: "workspace-1",
+      upstreamId: "upstream-1",
+      schemaDigest: "c".repeat(64),
+    };
+    const waiting = queue.hold({
+      ...call,
+      args: { bucket: "archive-primary", apiKey: "nomo-secret-sentinel" },
+      binding,
+    }, 120);
+    const view = renderQueue(queue);
+
+    assert.match(view.lines[0] ?? "", new RegExp(`op=sha256:${"a".repeat(64)}`));
+    assert.match(view.lines[0] ?? "", /policy=v3:sha256:b{64}/);
+    assert.ok(view.lines[0]?.includes(`operator=${binding.operatorId}`));
+    assert.ok(view.lines[0]?.includes("principal=principal-1 agent=agent-1 run=run-1"));
+    assert.ok(view.lines[0]?.includes("workspace=workspace-1 upstream=upstream-1"));
+    assert.ok(view.lines[0]?.includes("schema=sha256:" + "c".repeat(64)));
+    assert.ok(view.lines[0]?.includes("archive-primary"));
+    assert.doesNotMatch(view.lines[0] ?? "", /nomo-secret-sentinel/);
+    assert.equal(decideKeypress(queue, view, "y", 0), true);
+    assert.deepEqual((await waiting).outcome, {
+      kind: "released",
+      release: { kind: "approved", by: binding.operatorId },
+    });
+  });
+
   test("the queue renders oldest first with the seconds left", async () => {
     const queue = new HoldQueue();
     const first = queue.hold(call, 120);
@@ -74,5 +111,7 @@ describe("the CLI approval channel", () => {
     assert.ok(line.includes("r1"));
     assert.ok(line.includes("41883"));
     assert.ok(line.includes("human looks first"));
+    assert.ok(line.includes("binding=none"));
+    assert.ok(line.includes("not bound to an operation identity"));
   });
 });

@@ -24,20 +24,40 @@ Run the deterministic end-to-end script, which drives the proxy against
 node scripts/src/e2e.mjs
 ```
 
-Expected output: every check prints `PASS`, including:
+Expected output: all 14 checks print `PASS`, in this order:
 
-1. `api initialize version` — the proxy and fixture negotiate MCP.
-2. `api echo forwards result` — the low-risk allowed call forwards.
-3. `api orders_delete parks without response` — the destructive tool is held.
-4. `api hold approval releases upstream result` — approving the hold lets the
+In-process proxy pass (`runProxy` API):
+
+1. `api initialize version`: the proxy and fixture negotiate MCP.
+2. `api tools/list fixture tools`: the fixture exposes `echo` and `orders_delete`.
+3. `api echo forwards result`: the low-risk allowed call forwards.
+4. `api orders_delete parks without response`: the destructive tool is held
+   (the script prints `held h0001` on stderr between checks 3 and 4).
+5. `api hold approval releases upstream result`: approving the hold lets the
    original call resolve; the ledger records `hold:approved`.
-5. `api ledger recorded every decided call` — one signed entry per decision,
-   metadata only (`tool`, `klass`, `decision`, `argsDigest`); raw arguments are
-   digest-hashed, never stored.
-6. `binary observe ...` — `--posture observe` forwards held calls and says so,
-   the observe path is explicit, never a silent bypass.
-7. `fail-closed startup refuses to run without a ledger directory` — a missing
-   evidence store is a refusal, not a degraded run.
+6. `api no unexpected stderr`: nothing noisy leaked from the run.
+7. `api ledger recorded every decided call`: signed entries for every
+   decision, metadata only (`tool`, `klass`, `decision`, `argsDigest`); raw
+   arguments are digest-hashed, never stored.
+
+Binary pass (spawned `packages/proxy/bin/void-proxy.mjs --posture observe`;
+every forwarded call needs a ledger directory for its pre-dispatch evidence
+record, so the script passes `--ledger-dir` here too):
+
+8. `binary observe initialize`: the binary negotiates MCP.
+9. `binary observe echo`: observe forwards the allowed call with its result.
+10. `binary observe orders_delete forwards`: observe forwards the held call
+    with its upstream result and says so on stderr
+    (`observe: hold verdict for orders_delete forwarded`): explicit, never a
+    silent bypass.
+11. `binary observe exits zero`: the binary run exits 0.
+
+Wiring checks:
+
+12. `bin exposes the hold queue through the onHold hook`.
+13. `bin wires a real ledger store into every decided call`.
+14. `fail-closed startup refuses to run without a ledger directory`: a
+    missing evidence store is a refusal, not a degraded run.
 
 ## What the policy demonstrates
 
@@ -50,7 +70,11 @@ scenarios from the spec.
 
 The workbench identity path runs the same proxy in-process with an in-memory
 issuer. See `packages/proxy/src/transport/http-server.test.ts` for the
-verified behavior: grants fail closed on wrong audience, expiry, revocation;
+verified behavior: grants fail closed on wrong audience, expiry, revocation
+(an expired token answers 401, and an expiry that lands mid-hold blocks the
+recheck so the call never reaches upstream); a schema-bound low-risk read or
+write may take the bounded fast path with identity metadata on the ledger
+record, while high-risk or unknown operations always get full policy;
 scope is enforced per call; the grant token never reaches upstream requests,
 responses, the error log or durable storage. The harness wiring test
 (`packages/workbench/src/harness-wiring.test.ts`) proves a run crosses the

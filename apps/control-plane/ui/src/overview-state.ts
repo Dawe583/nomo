@@ -6,9 +6,9 @@ export type OverviewState = {
   readonly kind: "decisions" | "failures" | "running" | "clear" | "unknown";
   /**
    * Fleet view fields (plan Task 7): one registered agent's current run, the
-   * stop acknowledgement of this process, and in-flight calls whose result is
-   * not confirmed yet. In flight reads as unknown on purpose — a killed local
-   * process cannot prove what an already dispatched call did.
+   * stop acknowledgement of this process, and a count of running or stopping
+   * runs. This is not a per-call count; run state cannot prove whether an
+   * upstream call was dispatched or whether its result was confirmed.
    */
   readonly agentId: string | undefined;
   readonly runState: string | undefined;

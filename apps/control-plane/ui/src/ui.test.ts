@@ -5,6 +5,26 @@ import { readFileSync } from "node:fs";
 const main = readFileSync(new URL("./main.tsx", import.meta.url), "utf8");
 const ui = readFileSync(new URL("./ui.tsx", import.meta.url), "utf8");
 const pages = readFileSync(new URL("./pages.tsx", import.meta.url), "utf8");
+const approvalReview = readFileSync(new URL("./approval-review.tsx", import.meta.url), "utf8");
+
+test("approval review shows a redacted target and the exact identity binding", () => {
+  assert.match(approvalReview, /record\.operationSummary/);
+  for (const field of [
+    "operationId",
+    "operationDigest",
+    "policyVersion",
+    "policyDigest",
+    "operatorId",
+    "principalId",
+    "agentId",
+    "runId",
+    "workspaceId",
+    "upstreamId",
+    "schemaDigest",
+  ]) assert.match(approvalReview, new RegExp(`binding\.${field}`));
+  assert.match(approvalReview, /No safe summary is available/);
+  assert.doesNotMatch(approvalReview, /record\.(args|arguments)/);
+});
 
 test("a run stop shows server acknowledgement, never a local success guess", () => {
   // The dialog gates the ack line on the server response: "acknowledged" only
@@ -21,10 +41,11 @@ test("a run stop shows server acknowledgement, never a local success guess", () 
   assert.match(pages, /No stop acknowledgement yet\. Success is not shown\./);
 });
 
-test("the in-flight call stays visible after an acknowledged stop", () => {
-  // overview-state carries inFlight even when stopAck is acknowledged, so the
-  // operator still sees the call whose result has not landed.
-  assert.match(pages, /inFlight|stay unknown until their result confirms/);
+test("the active-run count stays visible after an acknowledged stop", () => {
+  // overview-state carries the running or stopping run count alongside the
+  // separate note that individual call outcomes may still be unknown.
+  assert.match(pages, /Running or stopping runs/);
+  assert.match(pages, /Run count, not call count/);
 });
 
 test("a session change remounts the conversation, so an open branch dialog cannot outlive it", () => {

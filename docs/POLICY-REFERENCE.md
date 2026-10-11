@@ -298,13 +298,14 @@ fires (packages/policy/src/hold.ts:1-11):
    The broker owns no timers by design; the proxy pumps `expire()`
    (packages/policy/src/approvals.ts:1-6,
    packages/policy/src/approvals.ts:146-161).
-3. A human approves or denies through `broker.decide(holdId,
-   decision)`, where a decision is `{ kind: "approved" | "denied",
-   by, reason? }` with a non-empty `by`
-   (packages/policy/src/approvals.ts:123-144,
-   packages/policy/src/approvals.ts:318-325). Deciding an unknown,
-   finished, or non-pending id returns `false`, never a crash
-   (packages/policy/src/approvals.ts:128,
+3. A local approval channel submits `broker.decide(holdId, decision)`.
+   The required `by` field is a compatibility label, not identity evidence;
+   the broker records `verifiedLocalOperatorId()` for every decision. A bound
+   hold also requires that OS-account ID to match its binding. An unbound hold
+   has no operation or identity binding, and the UI must say so.
+   Deciding an unknown, finished, or non-pending id returns `false`, never a
+   crash (packages/policy/src/approvals.ts:123-144,
+   packages/policy/src/approvals.ts:318-325,
    packages/policy/src/hold.ts:141-147).
 4. Expiry resolves the hold as expired
    (packages/policy/src/approvals.ts:146-161). The agent-facing error
@@ -323,11 +324,20 @@ fires (packages/policy/src/hold.ts:1-11):
    the per-hold nonce so a stale file cannot replay onto a later hold
    with the same id (packages/policy/src/approvals.ts:190-211,
    packages/policy/src/approvals.ts:282-292). The CLI surfaces this
-   with `approvals --dir` and `approve <holdId> --by`
-   (docs/OPERATIONS.md:174-181). Payload arguments are never stored beyond the
-   process and are not part of `ApprovalRecord`
-   (packages/policy/src/hold.ts:29,
-   packages/policy/src/approvals.ts:254-261).
+   with `approvals --dir` and `approve <holdId> --by`; the value after
+   `--by` is not trusted as identity (docs/OPERATIONS.md:174-181).
+   The local HTTP decision route is a loopback/origin boundary, not
+   browser-level or cross-OS-user authentication. Raw argument objects stay
+   in process memory.
+   Approval notifications and the CLI receive a bounded, redacted operation
+   summary instead of `args`. `ApprovalRecord` persists only that summary so a
+   separate local control plane can show the target; pending-state loading
+   rejects raw `args` and `arguments` fields. The redactor hides common
+   credential key names, `prompt`, `message` and `content` fields, and token
+   forms. It cannot identify every secret in arbitrary values, so approval
+   notification destinations must be trusted
+   (see `safeOperationSummary` in `packages/policy/src/hold.ts` and
+   `register` and `loadPending` in `packages/policy/src/approvals.ts`).
 
 ## End-to-end example (actually run)
 

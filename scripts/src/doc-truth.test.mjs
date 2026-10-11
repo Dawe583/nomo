@@ -236,8 +236,6 @@ const INVENTORY = {
 
   // Planned NOMO identity MVP deliverables. Remove each entry when its file is
   // created; an inventory entry must not hide a shipped path.
-  "docs/NOMO-LOCAL-IDENTITY-DEMO.md":
-    "planned local demo runbook in the NOMO identity MVP plan; not written yet",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */

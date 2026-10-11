@@ -230,13 +230,13 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
             <strong>{data?.runState ?? t("neznámý", "unknown")}</strong>
           </li>
           <li>
-            <span>{t("Nevyřízená volání v běhu", "Unresolved in-flight calls")}</span>
+            <span>{t("Běhy v chodu nebo při zastavení", "Running or stopping runs")}</span>
             <strong>{data?.inFlight ?? "—"}</strong>
             {typeof data?.inFlight === "number" && data.inFlight > 0 && (
               <small>
                 {t(
-                  "Volání už odeslaná upstreamu zůstávají ve stavu neznámo, dokud nepřijde výsledek.",
-                  "Calls already dispatched upstream stay unknown until their result confirms.",
+                  "Jde o počet běhů, ne jednotlivých volání. Volání už odeslaná upstreamu zůstávají neznámá, dokud nepřijde výsledek.",
+                  "Run count, not call count. Calls already dispatched upstream stay unknown until their result confirms.",
                 )}
               </small>
             )}

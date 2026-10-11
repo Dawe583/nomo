@@ -9,6 +9,7 @@
  * call looks like on screen and which key decides it.
  */
 
+import { safeOperationSummary } from "../hold.ts";
 import type { HoldQueue, HeldCall, Release } from "../hold.ts";
 
 export type ApprovalView = {
@@ -22,7 +23,16 @@ export function renderHold(call: HeldCall, index: number, now: number): string {
   const left = Math.max(0, Math.round((call.expiresAt - now) / 1000));
   const radius = call.blastRadius === undefined ? "unknown" : `${call.blastRadius}`;
   const reason = call.rationale === undefined ? "" : `: ${call.rationale}`;
-  return `[${index}] ${call.id} ${call.tool} (${call.klass}, ${radius} touched) ${left}s left${reason}`;
+  const binding = call.binding === undefined
+    ? " binding=none (not bound to an operation identity; operator label is not trusted)"
+    : ` profile=${call.binding.operationId} op=sha256:${call.binding.operationDigest}` +
+      ` policy=v${call.binding.policyVersion}:sha256:${call.binding.policyDigest}` +
+      ` operator=${call.binding.operatorId} principal=${call.binding.principalId}` +
+      ` agent=${call.binding.agentId} run=${call.binding.runId}` +
+      ` workspace=${call.binding.workspaceId} upstream=${call.binding.upstreamId}` +
+      ` schema=sha256:${call.binding.schemaDigest}`;
+  const summary = safeOperationSummary(call.args);
+  return `[${index}] ${call.id} ${call.tool} (${call.klass}, ${radius} touched) ${left}s left${reason} args=${summary}${binding}`;
 }
 
 /** The whole queue as one view, oldest first, because that is the order they expire. */

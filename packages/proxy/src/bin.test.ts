@@ -1,5 +1,6 @@
 import { generateKeyPairSync } from "node:crypto";
 import { keyProviderFromPkcs8 } from "../../ledger/src/sign.ts";
+import { jsonlStore } from "../../ledger/src/store.ts";
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -31,6 +32,7 @@ test("local proxy bridge initializes, lists tools and forwards tool calls", { ti
   const ledgerDir = join(directory, "ledger");
   const upstreamMessages: Array<Record<string, unknown>> = [];
   let upstreamClosed = false;
+  const mutatedValues: string[] = [];
   let resolveCancelToolDispatched: (() => void) | undefined;
   let resolveCancelNotification: (() => void) | undefined;
   const cancelToolDispatched = new Promise<void>((resolve) => {
@@ -87,6 +89,22 @@ test("local proxy bridge initializes, lists tools and forwards tool calls", { ti
           } else if (message.method === "tools/call" &&
             message.params?.arguments?.value === "cancel") {
             resolveCancelToolDispatched?.();
+          } else if (message.method === "tools/call" &&
+            message.params?.arguments?.value === "fail") {
+            mutatedValues.push("fail");
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              error: { code: -32000, message: "fixture failure" },
+            }));
+          } else if (message.method === "tools/call" &&
+            message.params?.arguments?.value === "isError") {
+            mutatedValues.push("isError");
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: { isError: true, content: [{ type: "text", text: "fixture error" }] },
+            }));
           } else if (message.method === "tools/call") {
             events.onMessage(JSON.stringify({
               jsonrpc: "2.0",
@@ -115,8 +133,21 @@ test("local proxy bridge initializes, lists tools and forwards tool calls", { ti
   assert.deepEqual(await bridge.callTool("aws.s3.bucket.delete", { value: "hello" }), {
     content: [{ type: "text", text: "hello" }],
   });
+  const ledgerEntries = (await readFile(join(ledgerDir, "bridge-test.jsonl"), "utf8"))
+    .trim()
+    .split("\n")
+    .map((line) => (JSON.parse(line) as { body: Record<string, unknown> }).body);
+  const dispatch = ledgerEntries.find((entry) => entry.phase === "dispatch");
+  const outcome = ledgerEntries.find((entry) => entry.phase === "outcome");
+  assert.ok(dispatch, "durable dispatch evidence must precede upstream calls");
+  assert.equal(outcome?.outcome, "success");
+  assert.equal(outcome?.operationId, dispatch.operationId);
   assert.equal(upstreamMessages.filter((message) => message.method === "tools/call").length, 1);
   assert.equal(JSON.stringify(upstreamMessages).includes("local-grant"), false);
+  await assert.rejects(bridge.callTool("aws.s3.bucket.delete", { value: "fail" }));
+  const isErrorResult = await bridge.callTool("aws.s3.bucket.delete", { value: "isError" });
+  assert.equal((isErrorResult as { isError?: unknown }).isError, true);
+  assert.deepEqual(mutatedValues, ["fail", "isError"]);
 
   const controller = new AbortController();
   const cancelledCall = bridge.callTool(
@@ -136,6 +167,156 @@ test("local proxy bridge initializes, lists tools and forwards tool calls", { ti
   await bridge.close();
   assert.equal(upstreamClosed, true);
   await assert.rejects(bridge.listTools());
+  const terminalOutcomes = (await readFile(join(ledgerDir, "bridge-test.jsonl"), "utf8"))
+    .trim()
+    .split("\n")
+    .map((line) => (JSON.parse(line) as { body: Record<string, unknown> }).body)
+    .filter((entry) => entry.phase === "outcome")
+    .map((entry) => entry.outcome);
+  assert.deepEqual(terminalOutcomes, ["success", "unknown", "unknown", "unknown"]);
+});
+
+
+
+test("refuses to dispatch a low-risk write when signed pre-dispatch evidence fails", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-proxy-dispatch-sign-failure-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const policyPath = join(directory, "policy.yml");
+  const ledgerDir = join(directory, "ledger");
+  await writeFile(policyPath, policyText("allow"));
+  const upstreamMessages: Array<Record<string, unknown>> = [];
+  const output: unknown[] = [];
+  const failingKeyProvider = {
+    alg: "ed25519" as const,
+    async currentKeyId() { return "failing-test-key"; },
+    async sign() { throw new Error("simulated signer failure"); },
+    async publicKey() { return null; },
+  };
+
+  await runProxy({
+    upstreamCommand: ["fake"],
+    policyPath,
+    posture: "fail-closed",
+    ledgerDir,
+    workspace: "dispatch-sign-failure",
+    keyProvider: failingKeyProvider,
+    trustedCallContext: () => ({
+      upstreamId: "fixture-upstream",
+      tool: "fixture.write",
+      schemaDigest: "a".repeat(64),
+      principalId: "fixture-principal",
+      agentId: "fixture-agent",
+      runId: "fixture-run",
+      workspaceId: "dispatch-sign-failure",
+      assessment: { effect: "write", risk: "low", fastPath: "allow" },
+    }),
+    input: fromLines([JSON.stringify(toolCall(999, "fixture.write"))]),
+    output(line) { output.push(JSON.parse(line) as unknown); },
+    error() {},
+    upstreamSpawn(events) {
+      return fakeUpstream(events, upstreamMessages);
+    },
+  });
+
+  assert.equal(upstreamMessages.some((message) => message.method === "tools/call"), false);
+  assert.equal(output.length, 1);
+  assert.equal(JSON.stringify(output).includes("simulated signer failure"), false);
+});
+
+test("runProxy records unresolved dispatches as unknown during recovery", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-proxy-recovery-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const policyPath = join(directory, "policy.yml");
+  const ledgerDir = join(directory, "ledger");
+  const workspace = "recovery-test";
+  await writeFile(policyPath, policyText("allow"));
+  const keyProvider = keyProviderFromPkcs8(
+    generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
+  );
+  const store = jsonlStore(keyProvider, { dir: ledgerDir });
+  await store.append({
+    at: new Date().toISOString(),
+    workspace,
+    tool: "aws.s3.object.delete",
+    operationId: "interrupted-operation",
+    phase: "dispatch",
+    decision: "dispatch:started",
+  });
+  await store.append({
+    at: new Date().toISOString(),
+    workspace,
+    tool: "fixture.lookup",
+    operationId: "safe-read-operation",
+    phase: "dispatch",
+    decision: "dispatch:started",
+    effect: "read",
+    risk: "low",
+    fastPath: "allow",
+  });
+  await store.append({
+    at: new Date().toISOString(),
+    workspace,
+    tool: "fixture.write",
+    operationId: "interrupted-write-operation",
+    phase: "dispatch",
+    decision: "dispatch:started",
+    operationDigest: "d".repeat(64),
+    policyVersion: 1,
+    policyDigest: "c".repeat(64),
+    operatorId: "uid:fixture-operator",
+    upstreamId: "fixture-upstream",
+    schemaDigest: "b".repeat(64),
+    principalId: "fixture-principal",
+    agentId: "fixture-agent",
+    runId: "fixture-run",
+    workspaceId: workspace,
+    profileId: "fixture-write-v1",
+    effect: "write",
+    risk: "low",
+    fastPath: "allow",
+  });
+
+  await runProxy({
+    upstreamCommand: ["fake"],
+    policyPath,
+    posture: "fail-closed",
+    ledgerDir,
+    workspace,
+    keyProvider,
+    input: fromLines([]),
+    upstreamSpawn(events) {
+      return {
+        send() {},
+        close() { events.onClose(0, null); },
+        onStderr() { return () => {}; },
+      };
+    },
+    output() {},
+    error() {},
+  });
+
+  const entries = (await readFile(join(ledgerDir, `${workspace}.jsonl`), "utf8"))
+    .trim()
+    .split("\n")
+    .map((line) => (JSON.parse(line) as { body: Record<string, unknown> }).body);
+  const recovered = entries.find((entry) => entry.operationId === "interrupted-operation" && entry.phase === "outcome");
+  assert.equal(recovered?.outcome, "unknown");
+  assert.equal(entries.some((entry) => entry.operationId === "safe-read-operation" && entry.phase === "outcome"), false);
+  const recoveredWrite = entries.find((entry) =>
+    entry.operationId === "interrupted-write-operation" && entry.phase === "outcome",
+  );
+  assert.equal(recoveredWrite?.outcome, "unknown");
+  assert.equal(recoveredWrite?.operationDigest, "d".repeat(64));
+  assert.equal(recoveredWrite?.policyVersion, 1);
+  assert.equal(recoveredWrite?.policyDigest, "c".repeat(64));
+  assert.equal(recoveredWrite?.operatorId, "uid:fixture-operator");
+  assert.equal(recoveredWrite?.upstreamId, "fixture-upstream");
+  assert.equal(recoveredWrite?.principalId, "fixture-principal");
+  assert.equal(recoveredWrite?.agentId, "fixture-agent");
+  assert.equal(recoveredWrite?.runId, "fixture-run");
+  assert.equal(recoveredWrite?.workspaceId, workspace);
+  assert.equal(recoveredWrite?.profileId, "fixture-write-v1");
+  assert.equal(recoveredWrite?.schemaDigest, "b".repeat(64));
 });
 
 describe("runProxy", () => {

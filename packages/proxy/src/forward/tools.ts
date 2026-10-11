@@ -7,6 +7,7 @@ import {
 import {
   holdErrorMessage,
   type HeldCall,
+  type HoldBinding,
   type HoldResolution,
 } from "../../../policy/src/index.ts";
 
@@ -17,12 +18,29 @@ import { legacyArgsDigest } from "./legacy-binding.ts";
 
 export type { JsonRpcError, JsonRpcResult } from "../rpc.ts";
 
+export type OperationAssessment = Readonly<{
+  effect: "read" | "write" | "mixed" | "unknown";
+  risk: "low" | "high" | "unknown";
+  fastPath: "allow" | "full";
+}>;
+
 export type InterceptedCall = {
   readonly tool: string;
   readonly args: Readonly<Record<string, unknown>>;
   readonly connector: string;
   readonly workspace?: string;
+  readonly operationId?: string;
+  readonly approvalBinding?: HoldBinding;
+  readonly assessment?: OperationAssessment;
 };
+
+export function isFastPathEligible(
+  assessment: OperationAssessment | undefined,
+): boolean {
+  return assessment?.fastPath === "allow" &&
+    assessment.risk === "low" &&
+    (assessment.effect === "read" || assessment.effect === "write");
+}
 
 export type CallVerdict =
   | { readonly kind: "allow" }
@@ -38,12 +56,33 @@ export type LedgerEntryInput = {
   readonly klass: string;
   readonly decision: string;
   readonly argsDigest: string;
+  readonly operationId?: string;
+  readonly operationDigest?: string;
+  readonly policyVersion?: number;
+  readonly operatorId?: string;
   /**
    * Why this record exists, bound into the entry hash and its signature.
    * Absent only when no policy was consulted, which is a different claim
    * from an attribution that names a policy and no rule.
    */
   readonly attribution?: LedgerAttribution;
+};
+
+/**
+ * Metadata-only mirror of one ledger record, for a host that surfaces tool
+ * decisions in an operator feed. The field set is closed: a digest of the
+ * args, never the args themselves, and no prompt, token or credential text.
+ * `agentId`/`sessionId` are stamped by the caller that knows a run identity;
+ * the interception path itself does not invent one.
+ */
+export type ToolDecisionEvent = {
+  readonly at: string;
+  readonly tool: string;
+  readonly klass: string;
+  readonly decision: string;
+  readonly argsDigest: string;
+  readonly agentId?: string;
+  readonly sessionId?: string;
 };
 
 export type InterceptDeps = {
@@ -72,6 +111,8 @@ export type InterceptDeps = {
    * policy is reloaded per request.
    */
   readonly policyDigest?: () => string;
+  readonly operationEvidence?: Pick<HoldBinding, "operationDigest" | "policyVersion" | "operatorId">;
+  readonly verifyHoldBinding?: (binding: HoldBinding, resolution: HoldResolution) => boolean;
   readonly probe?: ProbeProvider;
   readonly now?: () => Date;
   /**
@@ -93,6 +134,40 @@ export async function interceptCall(
 ): Promise<CallVerdict> {
   const now = deps.now ?? (() => new Date());
   try {
+    if (isFastPathEligible(call.assessment)) {
+      if (call.assessment?.effect === "write") {
+        const digest = await legacyArgsDigest(call.args);
+        const policyCall: PolicyCall = {
+          tool: call.tool,
+          connector: call.connector,
+          workspace: call.workspace,
+          klass: UNCLASSIFIED_CLASS,
+          blastRadius: undefined,
+        };
+        const captured = await runCaptureGate(
+          deps,
+          now,
+          call,
+          policyCall,
+          digest,
+          "fast-path",
+          undefined,
+        );
+        if (captured === null) {
+          return {
+            kind: "deny",
+            error: denyError(
+              call,
+              policyCall,
+              -1,
+              "snapshot capture failed; upstream was not called",
+            ),
+          };
+        }
+      }
+      return { kind: "allow" };
+    }
+
     const digest = await legacyArgsDigest(call.args);
     const baseClassification = deps.classify({});
     const probeResult = await runProbe(
@@ -127,6 +202,7 @@ export async function interceptCall(
       decision.kind,
       digest,
       attribution,
+      call.operationId,
     );
 
     if (decision.kind === "allow") {
@@ -158,6 +234,7 @@ export async function interceptCall(
         "allow:resolved",
         digest,
         attribution,
+        call.operationId,
       );
       return { kind: "allow" };
     }
@@ -180,6 +257,7 @@ export async function interceptCall(
         `${decision.kind}:resolved`,
         digest,
         attribution,
+        call.operationId,
       );
       return { kind: "deny", error };
     }
@@ -190,6 +268,28 @@ export async function interceptCall(
         resolution.outcome.kind === "released" &&
         resolution.outcome.release.kind === "approved"
       ) {
+        if (
+          !sameHoldBinding(call.approvalBinding, resolution.call.binding) ||
+          (call.approvalBinding !== undefined &&
+            (resolution.outcome.release.by !== call.approvalBinding.operatorId ||
+              deps.verifyHoldBinding?.(call.approvalBinding, resolution) !== true))
+        ) {
+          await writeLedger(
+            deps,
+            now,
+            call.tool,
+            policyCall.klass,
+            "hold:binding-failed",
+            digest,
+            attribution,
+            call.operationId,
+          );
+          return holdError(
+            resolution.call,
+            { kind: "released", release: { kind: "denied", by: "approval binding check failed" } },
+            "hold",
+          );
+        }
         const captured = await runCaptureGate(
           deps,
           now,
@@ -220,6 +320,7 @@ export async function interceptCall(
           "hold:approved",
           digest,
           attribution,
+          call.operationId,
         );
         return {
           jsonrpc: "2.0",
@@ -240,6 +341,7 @@ export async function interceptCall(
         `hold:${result}`,
         digest,
         attribution,
+        call.operationId,
       );
       return holdError(resolution.call, resolution.outcome, "hold");
     });
@@ -337,6 +439,7 @@ async function runCaptureGate(
       `${decision}:capture-failed`,
       argsDigest,
       attribution,
+      call.operationId,
     );
     return null;
   }
@@ -350,6 +453,7 @@ async function writeLedger(
   decision: string,
   argsDigest: string,
   attribution: LedgerAttribution | undefined,
+  operationId?: string,
 ): Promise<void> {
   await deps.ledger({
     at: now().toISOString(),
@@ -357,6 +461,12 @@ async function writeLedger(
     klass,
     decision,
     argsDigest,
+    ...(operationId === undefined ? {} : { operationId }),
+    ...(deps.operationEvidence === undefined ? {} : {
+      operationDigest: deps.operationEvidence.operationDigest,
+      policyVersion: deps.operationEvidence.policyVersion,
+      operatorId: deps.operationEvidence.operatorId,
+    }),
     // Spread rather than a bare undefined: canonicalJson refuses undefined,
     // and a record that names no policy must simply not carry the field.
     ...(attribution === undefined ? {} : { attribution }),
@@ -423,7 +533,23 @@ function toHeldCall(
     heldAt,
     expiresAt: heldAt + decision.seconds * 1000,
     notify: decision.notify,
+    ...(call.approvalBinding === undefined ? {} : { binding: call.approvalBinding }),
   };
+}
+
+function sameHoldBinding(left: HoldBinding | undefined, right: HoldBinding | undefined): boolean {
+  if (left === undefined || right === undefined) return left === right;
+  return left.operationId === right.operationId &&
+    left.operationDigest === right.operationDigest &&
+    left.policyVersion === right.policyVersion &&
+    left.policyDigest === right.policyDigest &&
+    left.operatorId === right.operatorId &&
+    left.principalId === right.principalId &&
+    left.agentId === right.agentId &&
+    left.runId === right.runId &&
+    left.workspaceId === right.workspaceId &&
+    left.upstreamId === right.upstreamId &&
+    left.schemaDigest === right.schemaDigest;
 }
 
 function holdError(

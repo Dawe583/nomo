@@ -2237,14 +2237,17 @@ export class Workbench {
       identity === null
         ? null
         : {
+            principalId: identity.principalId,
             agentId: identity.agentId,
+            runId: identity.runId,
+            workspaceId: identity.workspaceId,
             toolScope: identity.toolScope,
             expiresAt: identity.expiresAt,
           };
 
     const server = await startLocalMcpHttpServer({
       upstreamId: task.upstreamId,
-      proxyOptions: input.proxy,
+      proxyOptions: { ...input.proxy, workspace: binding.workspace },
       resolveGrant: (token, upstreamId) =>
         asGrantIdentity(
           issuer.authenticate(token, {

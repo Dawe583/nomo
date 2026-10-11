@@ -70,7 +70,7 @@ export function pumpApprovals(
       ) => {
         const promise = runHold(call, seconds, signal);
         const held = newestHold(queue, call.tool);
-        broker.register(queue, policyCallFromHeld(held));
+        broker.register(queue, policyCallFromHeld(held), held.id);
         void promise.then((resolution) => {
           if (resolution.outcome.kind === "cancelled") broker.cancel(resolution.id);
           else poll();

@@ -5,7 +5,8 @@ export type VoidErrorCode =
   | "VOID_HOLD_DENIED"
   | "VOID_LEDGER_VERIFY"
   | "VOID_POLICY_STARTUP"
-  | "VOID_REFUSED";
+  | "VOID_REFUSED"
+  | "VOID_REQUEST_OUTCOME_UNKNOWN";
 
 export class HoldDeniedError extends Error {
   readonly code = "VOID_HOLD_DENIED";
@@ -17,6 +18,20 @@ export class HoldDeniedError extends Error {
     this.name = "HoldDeniedError";
     this.holdId = options.holdId;
     this.data = options.data;
+  }
+}
+
+export class RequestOutcomeUnknownError extends Error {
+  readonly code = "VOID_REQUEST_OUTCOME_UNKNOWN";
+  readonly outcome = "unknown" as const;
+  readonly method: string;
+  readonly requestId: string | number;
+
+  constructor(method: string, requestId: string | number) {
+    super(`request ${method} timed out; its outcome is unknown. Do not retry until the signed ledger is reconciled.`);
+    this.name = "RequestOutcomeUnknownError";
+    this.method = method;
+    this.requestId = requestId;
   }
 }
 

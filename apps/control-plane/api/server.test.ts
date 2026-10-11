@@ -314,12 +314,29 @@ describe("control plane API", () => {
     const pending: PendingApproval[] = [{
       holdId: "hold-1",
       call: { tool: "postgres.row.delete" },
+      binding: {
+        operationId: "operation-1",
+        operationDigest: "a".repeat(64),
+        policyVersion: 1,
+        policyDigest: "b".repeat(64),
+        operatorId: "uid:501",
+        principalId: "principal-1",
+        agentId: "agent-1",
+        runId: "run-1",
+        workspaceId: "workspace-1",
+        upstreamId: "upstream-1",
+        schemaDigest: "c".repeat(64),
+      },
       expiresAt: "2026-09-08T00:00:00.000Z",
       status: "pending",
     }];
     const decisions: unknown[] = [];
     const approvals: ApprovalBroker = {
       pending: () => pending,
+      review: (holdId) => {
+        assert.equal(holdId, "hold-1");
+        return { summary: '{"bucket":"archive-primary"}' };
+      },
       decide(holdId, decision) {
         decisions.push({ holdId, decision });
         return { status: "approved" };
@@ -328,7 +345,9 @@ describe("control plane API", () => {
     await withServer(ledgerPath, async (origin) => {
       const list = await fetch(`${origin}/api/approvals`);
       assert.equal(list.status, 200);
-      assert.deepEqual(await list.json(), { approvals: pending });
+      assert.deepEqual(await list.json(), {
+        approvals: [{ ...pending[0], operationSummary: '{"bucket":"archive-primary"}' }],
+      });
 
       const response = await fetch(`${origin}/api/approvals/hold-1/decision`, {
         method: "POST",
@@ -470,7 +489,7 @@ test("the overview carries the fleet view fields for one registered agent", asyn
     assert.ok(typeof overview.agentId === "string", "the overview names the registered agent's run");
     assert.ok("runState" in overview, "the overview names the run state");
     assert.ok("stopAck" in overview, "the overview names the stop acknowledgement");
-    assert.ok("inFlight" in overview, "the overview counts unconfirmed in-flight calls");
+    assert.ok("inFlight" in overview, "the overview reports active runs, not a call count");
     assert.ok(Array.isArray(overview.latestEvents), "the overview carries the latest fleet events");
     assert.equal(overview.stopAck, "unknown", "no stop has been requested yet");
   }, { workbench });
@@ -499,6 +518,24 @@ test("a decided approval records the approval event with its verdict", async () 
     },
   });
   assert.equal(decisions.length, 1, "the broker saw exactly one decision");
+});
+
+test("a rejected approval creates no success response or approval event", async () => {
+  await withServer("unused.jsonl", async (origin) => {
+    const response = await fetch(origin + "/api/approvals/stale-hold/decision", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "approved", by: "fixture-operator" }),
+    });
+    assert.equal(response.status, 409, "a broker refusal is a conflict, not success");
+    assert.deepEqual(await response.json(), { error: "approval_not_accepted" });
+    const feed = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: Array<Record<string, unknown>> };
+    assert.equal(
+      feed.items.some((event) => event.kind === "approval"),
+      false,
+      "a rejected decision does not create an approval event",
+    );
+  }, { approvals: { decide: () => false } });
 });
 
 test("a started run and a decided approval land in the fleet feed", async () => {

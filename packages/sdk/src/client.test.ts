@@ -1,5 +1,6 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { mkdtemp, writeFile, readFile, rm, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -90,6 +91,95 @@ describe("VoidClient", () => {
       assert.equal(await call, heldResult);
     } finally {
       client.close();
+    }
+  });
+
+  test("a timed-out held write is cancelled and remains explicitly unknown", async () => {
+    const ledgerDir = await mkdtemp(join(tmpdir(), "void-sdk-timeout-ledger-"));
+    const client = new VoidClient({
+      ledgerDir,
+      workspace: "sdk-timeout",
+      policyPath: await fixturePolicy(),
+      connect: { upstreamCommand: [process.execPath, fixtureServer] },
+      requestTimeoutMs: 1_000,
+      holdPollMs: 1,
+    });
+    try {
+      const request = client.request("tools/call", {
+        name: "orders_delete",
+        arguments: { where: "status = stale", rows: 2 },
+      });
+      const held = await waitFor(() => client.pendingHolds()[0], "pending hold before timeout");
+      await assert.rejects(request, (error: unknown) => {
+        assert.equal((error as { code?: unknown }).code, "VOID_REQUEST_OUTCOME_UNKNOWN");
+        assert.equal((error as { outcome?: unknown }).outcome, "unknown");
+        return true;
+      });
+      assert.equal(
+        client.hold(held.holdId).decide({ kind: "approved", by: "late-operator" }),
+        false,
+        "a timed-out hold cannot be approved later",
+      );
+      await delay(30);
+      const ledger = await readFile(join(ledgerDir, "sdk-timeout.jsonl"), "utf8").catch(() => "");
+      const entries = ledger.split("\n").filter(Boolean).map((line) =>
+        (JSON.parse(line) as { body: Record<string, unknown> }).body,
+      );
+      assert.equal(entries.some((entry) => entry.phase === "dispatch"), false);
+    } finally {
+      client.close();
+      await rm(ledgerDir, { recursive: true, force: true });
+    }
+  });
+
+  test("a timeout after dispatch reports unknown even when success arrives later", async () => {
+    const ledgerDir = await mkdtemp(join(tmpdir(), "void-sdk-late-outcome-"));
+    const marker = join(ledgerDir, "upstream-dispatched");
+    const server = [
+      "import { createInterface } from 'node:readline';",
+      "import { writeFileSync } from 'node:fs';",
+      "const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });",
+      "const send = (value) => process.stdout.write(JSON.stringify(value) + '\\n');",
+      "for await (const line of rl) {",
+      "  const message = JSON.parse(line);",
+      "  if (message.method === 'initialize') send({ jsonrpc: '2.0', id: message.id, result: { protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'slow', version: '1' } } });",
+      "  else if (message.method === 'tools/list') send({ jsonrpc: '2.0', id: message.id, result: { tools: [{ name: 'echo', inputSchema: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] } }] } });",
+      "  else if (message.method === 'tools/call') { writeFileSync(process.argv[1], 'sent'); setTimeout(() => send({ jsonrpc: '2.0', id: message.id, result: { content: [{ type: 'text', text: 'late success' }] } }), 3000); }",
+      "}",
+    ].join("\n");
+    const client = new VoidClient({
+      ledgerDir,
+      workspace: "sdk-late-outcome",
+      policyPath: await fixturePolicy(),
+      connect: { upstreamCommand: [process.execPath, "-e", server, marker] },
+      requestTimeoutMs: 2_000,
+    });
+    try {
+      const request = client.request("tools/call", {
+        name: "echo",
+        arguments: { text: "wait for the late result" },
+      });
+      const timedOut = assert.rejects(request, (error: unknown) => {
+        assert.equal((error as { code?: unknown }).code, "VOID_REQUEST_OUTCOME_UNKNOWN");
+        assert.equal((error as { outcome?: unknown }).outcome, "unknown");
+        return true;
+      });
+      await waitFor(() => existsSync(marker) ? true : undefined, "upstream dispatch marker");
+      await timedOut;
+      const dispatchLedger = await readFile(join(ledgerDir, "sdk-late-outcome.jsonl"), "utf8");
+      const dispatchBodies = dispatchLedger.split("\n").filter(Boolean).map((line) =>
+        (JSON.parse(line) as { body: Record<string, unknown> }).body,
+      );
+      assert.equal(dispatchBodies.some((entry) => entry.phase === "dispatch"), true);
+      await delay(1_200);
+      const completedLedger = await readFile(join(ledgerDir, "sdk-late-outcome.jsonl"), "utf8");
+      const completedBodies = completedLedger.split("\n").filter(Boolean).map((line) =>
+        (JSON.parse(line) as { body: Record<string, unknown> }).body,
+      );
+      assert.equal(completedBodies.some((entry) => entry.phase === "outcome" && entry.outcome === "success"), true);
+    } finally {
+      client.close();
+      await rm(ledgerDir, { recursive: true, force: true });
     }
   });
 
@@ -200,6 +290,7 @@ for (const scenario of ["trusted", "rehashed", "foreign-key"] as const) {
     assert.equal((await verifyLedgerFile(path)).ok, true);
     const client = new VoidClient({
       ledgerDir: dir, workspace, policyPath: await fixturePolicy(),
+      keyProvider: signer,
       env: { VOID_TRUST_DIR: trust },
       connect: { upstreamCommand: scenario === "trusted"
         ? [process.execPath, fixtureServer]
@@ -402,16 +493,18 @@ async function noisyUpstream(dir: string, noise: number): Promise<string> {
 import { createInterface } from "node:readline";
 const send = (message) => process.stdout.write(JSON.stringify(message) + "\\n");
 let emitted = 0;
-// Dripped rather than dumped: a flood written ahead of the answer fills the
-// pipe and the reply never gets read, which tests the transport rather than
-// the retention the client is responsible for.
-const flood = setInterval(() => {
-  for (let batch = 0; batch < 100 && emitted < ${noise}; batch += 1) {
-    emitted += 1;
-    process.stdout.write("this is not json-rpc at all " + emitted + "\\n");
-  }
-  if (emitted >= ${noise}) clearInterval(flood);
-}, 1);
+let floodStarted = false;
+function startFlood() {
+  if (floodStarted) return;
+  floodStarted = true;
+  const flood = setInterval(() => {
+    for (let batch = 0; batch < 100 && emitted < ${noise}; batch += 1) {
+      emitted += 1;
+      process.stdout.write("this is not json-rpc at all " + emitted + "\\n");
+    }
+    if (emitted >= ${noise}) clearInterval(flood);
+  }, 1);
+}
 createInterface({ input: process.stdin }).on("line", (line) => {
   const request = JSON.parse(line);
   if (request.method === "initialize") {
@@ -424,6 +517,8 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   }
   if (request.method === "tools/call") {
     send({ jsonrpc: "2.0", id: request.id, result: { content: [{ type: "text", text: request.params?.arguments?.text ?? "answered" }] } });
+    // Let the valid reply reach the client before starting the malformed flood.
+    startFlood();
     return;
   }
   send({ jsonrpc: "2.0", id: request.id, error: { code: -32601, message: "no such method" } });
@@ -446,8 +541,8 @@ test("error retention is bounded and reports what it dropped", async (t) => {
   const result = await client.request("tools/call", { name: "echo", arguments: { text: "after the flood" } });
   assert.equal(textFrom(result), "after the flood");
 
-  // The flood is concurrent with the answer, so the drops are awaited as a
-  // condition rather than after a guessed delay.
+  // The malformed flood starts after the valid tool response, so this checks
+  // error retention without relying on dispatch through a saturated upstream.
   await waitFor(() => (client.errorsDropped > 0 ? true : undefined), "dropped error lines");
   const errors = client.errors;
   assert.ok(

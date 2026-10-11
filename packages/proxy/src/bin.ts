@@ -1,4 +1,5 @@
 import process from "node:process";
+import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 import {
@@ -8,12 +9,19 @@ import {
   validateFactsFile,
 } from "../../registry/src/index.ts";
 import type { FactsFile, FactsReport } from "../../registry/src/index.ts";
-import { decide, HoldQueue, loadPolicy, policyDigest } from "../../policy/src/index.ts";
-import { devKeyProvider } from "../../ledger/src/sign.ts";
+import {
+  decide,
+  HoldQueue,
+  loadPolicy,
+  policyDigest,
+  verifiedLocalOperatorId,
+} from "../../policy/src/index.ts";
+import { canonicalDigest, devKeyProvider } from "../../ledger/src/sign.ts";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import type { JsonlEntry, JsonlReceipt } from "../../ledger/src/store.ts";
 import type { LedgerStore, KeyProvider } from "../../ledger/src/index.ts";
 import type {
+  HoldBinding,
   PolicyCall,
   PolicyDecision,
   ValidPolicy,
@@ -23,17 +31,19 @@ import { forwardPromptMessage } from "./forward/prompts.ts";
 import { forwardResourceMessage } from "./forward/resources.ts";
 import {
   captureLegacyEnvelope,
+  legacyArgsDigest,
   validateLegacyCapture,
   validateLegacyOutcome,
   type LegacyBindingResolver,
   type LegacyCaptureEvidence,
   type LegacyProxyBinding,
 } from "./forward/legacy-binding.ts";
-import { interceptCall } from "./forward/tools.ts";
+import { interceptCall, isFastPathEligible } from "./forward/tools.ts";
 import type {
   InterceptedCall,
   JsonRpcError,
   JsonRpcResult,
+  OperationAssessment,
 } from "./forward/tools.ts";
 import type {
   JsonObject,
@@ -84,6 +94,37 @@ export type UpstreamEvents = {
   readonly onError: (error: Error) => void;
 };
 
+export type OperationClassifierInput = Readonly<{
+  upstreamId: string;
+  tool: string;
+  schemaDigest: string;
+  args: Readonly<Record<string, unknown>>;
+  principalId: string;
+  agentId: string;
+  runId: string;
+  workspaceId: string;
+}>;
+
+export type TrustedOperationProfile = Readonly<{
+  profileId: string;
+  upstreamId: string;
+  tool: string;
+  schemaDigest: string;
+  assess: (input: OperationClassifierInput) => OperationAssessment | undefined;
+}>;
+
+export type TrustedToolCallContext = Readonly<{
+  upstreamId: string;
+  tool: string;
+  schemaDigest: string;
+  principalId: string;
+  agentId: string;
+  runId: string;
+  workspaceId: string;
+  profileId?: string;
+  assessment?: OperationAssessment;
+}>;
+
 export type ProxyOptions = {
   readonly upstreamCommand?: readonly string[];
   readonly upstreamEnv?: Record<string, string>;
@@ -100,6 +141,12 @@ export type ProxyOptions = {
   /** Optional signer for an embedded proxy; defaults to the development key. */
   readonly keyProvider?: KeyProvider;
   readonly workspace?: string;
+  /** Exact-match trusted profiles; a schema or upstream change disables the fast path. */
+  readonly operationProfiles?: readonly TrustedOperationProfile[];
+  /** Internal bridge context; external RPC fields never populate this value. */
+  readonly trustedCallContext?: (
+    requestId: JsonRpcId,
+  ) => TrustedToolCallContext | undefined;
   /**
    * WP-R02 capture gate for the legacy proxy path. Defaults to an envelope
    * snapshot of the call; rejection blocks the upstream forward. Tests inject
@@ -129,6 +176,28 @@ type InitializeRequest = {
   readonly agentId: JsonRpcId;
   readonly requestedVersion: string;
 };
+
+type ToolOutcomeContext = {
+  readonly operationId: string;
+  readonly tool: string;
+  readonly workspace: string;
+  readonly klass: string;
+  readonly argsDigest: string;
+  readonly operationDigest?: string;
+  readonly policyVersion?: number;
+  readonly policyDigest?: string;
+  readonly operatorId?: string;
+  readonly upstreamId?: string;
+  readonly schemaDigest?: string;
+  readonly principalId?: string;
+  readonly agentId?: string;
+  readonly runId?: string;
+  readonly workspaceId?: string;
+  readonly profileId?: string;
+  readonly assessment?: OperationAssessment;
+};
+
+type ToolOutcome = "success" | "failure" | "unknown" | "not-dispatched";
 
 const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
@@ -197,6 +266,9 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       : jsonlStore(options.keyProvider ?? (await devKeyProvider()), {
           dir: options.ledgerDir,
         });
+  const workspace = options.workspace ?? "default";
+  if (ledgerStore !== undefined)
+    await recoverPendingToolOutcomes(ledgerStore, workspace);
   let resolveUpstreamClosed: () => void = () => {};
   const upstreamClosed = new Promise<void>((resolve) => {
     resolveUpstreamClosed = resolve;
@@ -208,6 +280,8 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     { readonly controller: AbortController; dispatched: boolean }
   >();
   const activeToolCallsByUpstream = new Map<JsonRpcId, JsonRpcId>();
+  const pendingToolOutcomes = new Map<JsonRpcId, ToolOutcomeContext>();
+  const unknownToolOutcomes = new Set<JsonRpcId>();
   const pendingToolCalls = new Set<Promise<void>>();
   const pendingLegacy = new Map<
     JsonRpcId,
@@ -276,6 +350,18 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     }
   };
 
+  const markPendingToolOutcomesUnknown = async (): Promise<void> => {
+    for (const [upstreamId, context] of [...pendingToolOutcomes]) {
+      try {
+        await writeToolOutcome(ledgerStore!, context, "unknown");
+      } catch {
+        writeError("tool unknown-outcome recording failed");
+      }
+      pendingToolOutcomes.delete(upstreamId);
+      unknownToolOutcomes.add(upstreamId);
+    }
+  };
+
   const forwardToolCall = async (
     request: JsonRpcRequest,
     bound: {
@@ -296,8 +382,8 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     };
     if (bound === null) {
       checkBeforeDispatch();
-      sendUpstream(translated);
       onDispatched?.(translated.id);
+      sendUpstream(translated);
       return translated;
     }
     try {
@@ -320,8 +406,8 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     checkBeforeDispatch();
     pendingLegacy.set(translated.id, bound);
     try {
-      sendUpstream(translated);
       onDispatched?.(translated.id);
+      sendUpstream(translated);
     } catch {
       session.drop(request.id);
       try {
@@ -340,12 +426,17 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       message = parseMessage(line, inboundMaxBytes);
     } catch {
       await markPendingLegacyUnknown();
+      await markPendingToolOutcomesUnknown();
       writeError("upstream sent malformed JSON-RPC message");
       return;
     }
 
     try {
       if (isResponse(message) && message.id !== undefined) {
+        if (unknownToolOutcomes.has(message.id)) {
+          writeError("late tool response dropped after unknown outcome");
+          return;
+        }
         if (unknownLegacy.has(message.id)) {
           writeError("late legacy response dropped after unknown outcome");
           return;
@@ -383,6 +474,29 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         isResponse(message) && message.id !== undefined
           ? activeToolCallsByUpstream.get(message.id)
           : undefined;
+      if (isResponse(message) && message.id !== undefined) {
+        const outcomeContext = pendingToolOutcomes.get(message.id);
+        if (outcomeContext !== undefined) {
+          try {
+            await writeToolOutcome(ledgerStore!, outcomeContext, toolOutcome(message, outcomeContext));
+          } catch {
+            pendingToolOutcomes.delete(message.id);
+            unknownToolOutcomes.add(message.id);
+            writeError("tool outcome recording failed; outcome is unknown");
+            if (completedToolId !== undefined) {
+              sendLocal(jsonRpcError(
+                completedToolId,
+                INTERNAL_ERROR,
+                "Tool outcome is unknown; do not retry",
+              ));
+              activeToolCalls.delete(completedToolId);
+            }
+            activeToolCallsByUpstream.delete(message.id);
+            return;
+          }
+          pendingToolOutcomes.delete(message.id);
+        }
+      }
       const translated = session.translateInbound(message);
       if (translated !== null) sendJson(translated);
       if (isResponse(message) && message.id !== undefined)
@@ -413,7 +527,10 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     shutdownPromise ??= (async () => {
       drainHolds();
       if (!upstreamClosedFlag) upstream?.close();
-      upstreamWork = upstreamWork.then(markPendingLegacyUnknown);
+      upstreamWork = upstreamWork.then(async () => {
+        await markPendingLegacyUnknown();
+        await markPendingToolOutcomesUnknown();
+      });
       await upstreamWork;
       resolveUpstreamClosed();
     })();
@@ -424,7 +541,10 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     upstreamClosedFlag = true;
     drainHolds();
     upstreamWork = upstreamWork
-      .then(markPendingLegacyUnknown)
+      .then(async () => {
+        await markPendingLegacyUnknown();
+        await markPendingToolOutcomesUnknown();
+      })
       .finally(resolveUpstreamClosed);
   };
 
@@ -454,7 +574,10 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       onClose: handleUpstreamClose,
       onError() {
         writeError("upstream error");
-        upstreamWork = upstreamWork.then(markPendingLegacyUnknown);
+        upstreamWork = upstreamWork.then(async () => {
+          await markPendingLegacyUnknown();
+          await markPendingToolOutcomesUnknown();
+        });
       },
     };
     upstream =
@@ -527,7 +650,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
             writeError,
             normalizePosture(options.posture),
             ledgerStore,
-            options.workspace ?? "default",
+            workspace,
             options.legacyCapture,
             options.legacyBinding,
             state.controller.signal,
@@ -536,10 +659,19 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
                 throw new Error("Request cancelled before dispatch");
               options.beforeToolDispatch?.(message.id);
             },
-            (upstreamId) => {
+            (upstreamId, outcomeContext) => {
               state.dispatched = true;
               activeToolCallsByUpstream.set(upstreamId, message.id);
+              if (outcomeContext !== undefined)
+                pendingToolOutcomes.set(upstreamId, outcomeContext);
             },
+            (upstreamId) => {
+              if (pendingToolOutcomes.delete(upstreamId))
+                unknownToolOutcomes.add(upstreamId);
+              activeToolCallsByUpstream.delete(upstreamId);
+              activeToolCalls.delete(message.id);
+            },
+            options.trustedCallContext?.(message.id),
           ).catch((error: unknown) => {
             writeError(`request failed: ${errorMessage(error)}`);
             sendLocal(jsonRpcError(
@@ -761,9 +893,50 @@ async function handleToolCall(
   legacyBinding?: LegacyBindingResolver,
   signal?: AbortSignal,
   beforeDispatch?: () => void,
-  onDispatched?: (upstreamId: JsonRpcId) => void,
+  onDispatched?: (upstreamId: JsonRpcId, context: ToolOutcomeContext | undefined) => void,
+  onDispatchFailed?: (upstreamId: JsonRpcId) => void,
+  trustedContext?: TrustedToolCallContext,
 ): Promise<void> {
-  const call = { ...interceptedCall(request), workspace };
+  const untrustedCall = interceptedCall(request);
+  if (trustedContext !== undefined &&
+    (trustedContext.tool !== untrustedCall.tool || trustedContext.workspaceId !== workspace))
+    throw new Error("Trusted tool call context mismatch");
+  const operationId = randomUUID();
+  const operationPolicyDigest = policyDigest(policy.policy);
+  const approvalBinding: HoldBinding | undefined = trustedContext === undefined
+    ? undefined
+    : {
+        operationId,
+        operationDigest: canonicalDigest({
+          domain: "nomo-agent-operation-v1",
+          upstreamId: trustedContext.upstreamId,
+          tool: untrustedCall.tool,
+          args: untrustedCall.args,
+          schemaDigest: trustedContext.schemaDigest,
+          principalId: trustedContext.principalId,
+          agentId: trustedContext.agentId,
+          runId: trustedContext.runId,
+          workspaceId: trustedContext.workspaceId,
+        }),
+        policyVersion: policy.policy.version,
+        policyDigest: operationPolicyDigest,
+        operatorId: verifiedLocalOperatorId(),
+        principalId: trustedContext.principalId,
+        agentId: trustedContext.agentId,
+        runId: trustedContext.runId,
+        workspaceId: trustedContext.workspaceId,
+        upstreamId: trustedContext.upstreamId,
+        schemaDigest: trustedContext.schemaDigest,
+      };
+  const call: InterceptedCall = {
+    ...untrustedCall,
+    workspace,
+    operationId,
+    ...(approvalBinding === undefined ? {} : { approvalBinding }),
+    ...(trustedContext?.assessment === undefined
+      ? {}
+      : { assessment: trustedContext.assessment }),
+  };
   let binding: LegacyProxyBinding | null = null;
   if (posture === "fail-closed" && legacyBinding !== undefined) {
     try {
@@ -799,7 +972,20 @@ async function handleToolCall(
     // One digest of the loaded policy, computed from the content rather than
     // the file bytes, so the record names the policy a reviewer can also
     // obtain. Scoped to this request because the policy is reloaded for one.
-    policyDigest: () => policyDigest(policy.policy),
+    policyDigest: () => operationPolicyDigest,
+    ...(approvalBinding === undefined ? {} : {
+      operationEvidence: {
+        operationDigest: approvalBinding.operationDigest,
+        policyVersion: approvalBinding.policyVersion,
+        operatorId: approvalBinding.operatorId,
+      },
+      verifyHoldBinding: (expected, resolution) =>
+        expected.operationId === call.operationId &&
+        expected.operatorId === verifiedLocalOperatorId() &&
+        expected.policyVersion === policy.policy.version &&
+        expected.policyDigest === operationPolicyDigest &&
+        resolution.call.binding?.operationId === expected.operationId,
+    }),
     capture:
       binding === null
         ? (legacyCapture ??
@@ -830,6 +1016,7 @@ async function handleToolCall(
           rationale: decision.rationale,
           args: call.args,
           notify: decision.notify,
+          ...(approvalBinding === undefined ? {} : { binding: approvalBinding }),
         },
         seconds,
         signal,
@@ -850,15 +1037,77 @@ async function handleToolCall(
     },
   });
 
+  const forwardAuthorized = async (): Promise<void> => {
+    const fastRead = isFastPathEligible(call.assessment) &&
+      call.assessment?.effect === "read";
+    const argsDigest = await legacyArgsDigest(call.args);
+    const context: ToolOutcomeContext = {
+      operationId: call.operationId!,
+      tool: call.tool,
+      workspace,
+      klass: lastPolicyCall?.klass ?? "r3",
+      argsDigest,
+      ...(approvalBinding === undefined ? {} : {
+        operationDigest: approvalBinding.operationDigest,
+        policyVersion: approvalBinding.policyVersion,
+        policyDigest: approvalBinding.policyDigest,
+        operatorId: approvalBinding.operatorId,
+      }),
+      ...(trustedContext === undefined ? {} : {
+        upstreamId: trustedContext.upstreamId,
+        schemaDigest: trustedContext.schemaDigest,
+        principalId: trustedContext.principalId,
+        agentId: trustedContext.agentId,
+        runId: trustedContext.runId,
+        workspaceId: trustedContext.workspaceId,
+        ...(trustedContext.profileId === undefined ? {} : {
+          profileId: trustedContext.profileId,
+        }),
+        ...(trustedContext.assessment === undefined ? {} : {
+          assessment: trustedContext.assessment,
+        }),
+      }),
+    };
+    if (ledgerStore === undefined)
+      throw new Error("durable dispatch evidence requires a ledger directory");
+    await ledgerStore.append({
+      at: new Date().toISOString(),
+      workspace,
+      tool: call.tool,
+      operationId: context.operationId,
+      phase: fastRead ? "metadata" : "dispatch",
+      decision: fastRead ? "fast-path:read" : "dispatch:started",
+      ...toolContextFields(context),
+    });
+    const outcomeContext = fastRead ? undefined : context;
+    let dispatchedId: JsonRpcId | undefined;
+    try {
+      await forward(
+        request,
+        binding === null || capturedEvidence === null
+          ? null
+          : { binding, evidence: capturedEvidence },
+        beforeDispatch,
+        (upstreamId) => {
+          dispatchedId = upstreamId;
+          onDispatched?.(upstreamId, outcomeContext);
+        },
+      );
+    } catch (error) {
+      if (outcomeContext !== undefined) {
+        await writeToolOutcome(
+          ledgerStore,
+          outcomeContext,
+          dispatchedId === undefined ? "not-dispatched" : "unknown",
+        );
+      }
+      if (dispatchedId !== undefined) onDispatchFailed?.(dispatchedId);
+      throw error;
+    }
+  };
+
   if (verdict.kind === "allow") {
-    await forward(
-      request,
-      binding === null || capturedEvidence === null
-        ? null
-        : { binding, evidence: capturedEvidence },
-      beforeDispatch,
-      onDispatched,
-    );
+    await forwardAuthorized();
     return;
   }
 
@@ -872,14 +1121,137 @@ async function handleToolCall(
     sendJson({ ...held, id: request.id });
     return;
   }
-  await forward(
-    request,
-    binding === null || capturedEvidence === null
-      ? null
-      : { binding, evidence: capturedEvidence },
-    beforeDispatch,
-    onDispatched,
-  );
+  await forwardAuthorized();
+}
+
+async function recoverPendingToolOutcomes(
+  store: LedgerStore<unknown, JsonlEntry, JsonlReceipt>,
+  workspace: string,
+): Promise<void> {
+  const verified = await store.verify(workspace);
+  if (!verified.ok)
+    throw new Error(`ledger verification failed: ${verified.reason ?? "unknown reason"}`);
+  const pending = new Map<string, ToolOutcomeContext>();
+  for await (const entry of store.read(workspace)) {
+    if (!isObject(entry.body)) continue;
+    const body = entry.body;
+    if (body.workspace !== workspace || typeof body.operationId !== "string") continue;
+    if (body.phase === "dispatch" && typeof body.tool === "string") {
+      if (body.effect === "read" && body.risk === "low" && body.fastPath === "allow")
+        continue;
+      pending.set(body.operationId, {
+        operationId: body.operationId,
+        tool: body.tool,
+        workspace,
+        klass: typeof body.klass === "string" && body.klass !== "" ? body.klass : "r3",
+        argsDigest: typeof body.argsDigest === "string" && body.argsDigest !== ""
+          ? body.argsDigest
+          : "unknown",
+        ...ledgerStringField(body, "operationDigest"),
+        ...ledgerNumberField(body, "policyVersion"),
+        ...ledgerStringField(body, "policyDigest"),
+        ...ledgerStringField(body, "operatorId"),
+        ...ledgerStringField(body, "upstreamId"),
+        ...ledgerStringField(body, "schemaDigest"),
+        ...ledgerStringField(body, "principalId"),
+        ...ledgerStringField(body, "agentId"),
+        ...ledgerStringField(body, "runId"),
+        ...ledgerStringField(body, "workspaceId"),
+        ...ledgerStringField(body, "profileId"),
+        ...(ledgerAssessment(body) === undefined ? {} : {
+          assessment: ledgerAssessment(body),
+        }),
+      });
+    } else if (body.phase === "outcome") {
+      pending.delete(body.operationId);
+    }
+  }
+  for (const context of pending.values())
+    await writeToolOutcome(store, context, "unknown");
+}
+
+function ledgerStringField(
+  body: Record<string, unknown>,
+  key: string,
+): Record<string, string> {
+  const value = body[key];
+  return typeof value === "string" ? { [key]: value } : {};
+}
+
+function ledgerNumberField(
+  body: Record<string, unknown>,
+  key: string,
+): Record<string, number> {
+  const value = body[key];
+  return typeof value === "number" && Number.isSafeInteger(value)
+    ? { [key]: value }
+    : {};
+}
+
+function ledgerAssessment(body: Record<string, unknown>): OperationAssessment | undefined {
+  const effect = body.effect;
+  const risk = body.risk;
+  const fastPath = body.fastPath;
+  if (
+    (effect === "read" || effect === "write" || effect === "mixed" || effect === "unknown") &&
+    (risk === "low" || risk === "high" || risk === "unknown") &&
+    (fastPath === "allow" || fastPath === "full")
+  ) {
+    return { effect, risk, fastPath };
+  }
+  return undefined;
+}
+
+function toolContextFields(
+  context: ToolOutcomeContext,
+): Record<string, string | number> {
+  return {
+    klass: context.klass,
+    argsDigest: context.argsDigest,
+    ...(context.operationDigest === undefined ? {} : { operationDigest: context.operationDigest }),
+    ...(context.policyVersion === undefined ? {} : { policyVersion: context.policyVersion }),
+    ...(context.policyDigest === undefined ? {} : { policyDigest: context.policyDigest }),
+    ...(context.operatorId === undefined ? {} : { operatorId: context.operatorId }),
+    ...(context.upstreamId === undefined ? {} : { upstreamId: context.upstreamId }),
+    ...(context.schemaDigest === undefined ? {} : { schemaDigest: context.schemaDigest }),
+    ...(context.principalId === undefined ? {} : { principalId: context.principalId }),
+    ...(context.agentId === undefined ? {} : { agentId: context.agentId }),
+    ...(context.runId === undefined ? {} : { runId: context.runId }),
+    ...(context.workspaceId === undefined ? {} : { workspaceId: context.workspaceId }),
+    ...(context.profileId === undefined ? {} : { profileId: context.profileId }),
+    ...(context.assessment === undefined ? {} : {
+      effect: context.assessment.effect,
+      risk: context.assessment.risk,
+      fastPath: context.assessment.fastPath,
+    }),
+  };
+}
+
+async function writeToolOutcome(
+  store: LedgerStore<unknown, JsonlEntry, JsonlReceipt>,
+  context: ToolOutcomeContext,
+  outcome: ToolOutcome,
+): Promise<void> {
+  await store.append({
+    at: new Date().toISOString(),
+    workspace: context.workspace,
+    tool: context.tool,
+    operationId: context.operationId,
+    ...toolContextFields(context),
+    phase: "outcome",
+    decision: `outcome:${outcome}`,
+    outcome,
+  });
+}
+
+function toolOutcome(
+  message: JsonRpcMessage,
+  context: ToolOutcomeContext,
+): Exclude<ToolOutcome, "not-dispatched"> {
+  const responseFailed = "error" in message ||
+    ("result" in message && isObject(message.result) && message.result.isError === true);
+  if (!responseFailed) return "success";
+  return context.assessment?.effect === "read" ? "failure" : "unknown";
 }
 
 function interceptedCall(request: JsonRpcRequest): InterceptedCall {
@@ -1106,7 +1478,7 @@ function errorMessage(error: unknown): string {
 
 export type LocalProxyRpcBridgeOptions = Omit<
   ProxyOptions,
-  "input" | "output" | "shutdownSignals"
+  "input" | "output" | "shutdownSignals" | "trustedCallContext"
 >;
 
 export type LocalProxyTool = Readonly<{
@@ -1167,6 +1539,7 @@ export class LocalProxyRpcBridge {
   readonly #options: LocalProxyRpcBridgeOptions;
   readonly #input = new AsyncLineQueue();
   readonly #pending = new Map<number | string, BridgeReply>();
+  readonly #trustedCallContexts = new Map<number | string, TrustedToolCallContext>();
   readonly #dispatchGuards = new Map<number | string, () => void>();
   readonly #signalHandlers = new Map<ProxyShutdownSignal, () => void>();
   readonly #shutdownSignals: ProxyShutdownSignals;
@@ -1200,13 +1573,16 @@ export class LocalProxyRpcBridge {
     args: Record<string, unknown>,
     signal?: AbortSignal,
     beforeDispatch?: () => void,
+    trustedContext?: TrustedToolCallContext,
   ): Promise<Record<string, unknown>> {
     await this.#start();
     if (!validProxyToolName(name)) throw new TypeError("Invalid proxy tool name");
+    if (trustedContext !== undefined && trustedContext.tool !== name)
+      throw new TypeError("Trusted call context tool mismatch");
     const result = await this.#request("tools/call", {
       name,
       arguments: args,
-    }, signal, beforeDispatch);
+    }, signal, beforeDispatch, trustedContext);
     if (!isObject(result)) throw new Error("Proxy tool result is invalid");
     return result;
   }
@@ -1232,6 +1608,7 @@ export class LocalProxyRpcBridge {
         input: this.#input,
         output: (line) => this.#receive(line),
         shutdownSignals: this.#shutdownSignals,
+        trustedCallContext: (requestId) => this.#trustedCallContexts.get(requestId),
         beforeToolDispatch: (requestId) => {
           this.#options.beforeToolDispatch?.(requestId);
           const guard = this.#dispatchGuards.get(requestId);
@@ -1267,6 +1644,7 @@ export class LocalProxyRpcBridge {
     params: Record<string, unknown>,
     signal?: AbortSignal,
     beforeDispatch?: () => void,
+    trustedContext?: TrustedToolCallContext,
   ): Promise<unknown> {
     if (this.#closed) return Promise.reject(new Error("Local proxy bridge is closed"));
     if (this.#failure) return Promise.reject(this.#failure);
@@ -1278,6 +1656,7 @@ export class LocalProxyRpcBridge {
       const cleanup = () => {
         signal?.removeEventListener("abort", onAbort);
         this.#dispatchGuards.delete(id);
+        this.#trustedCallContexts.delete(id);
       };
       const pending: BridgeReply = {
         resolve(value) {
@@ -1305,6 +1684,7 @@ export class LocalProxyRpcBridge {
         pending.reject(asError(signal?.reason ?? new Error("Proxy tool call cancelled")));
       };
       this.#pending.set(id, pending);
+      if (trustedContext !== undefined) this.#trustedCallContexts.set(id, trustedContext);
       if (beforeDispatch !== undefined) this.#dispatchGuards.set(id, beforeDispatch);
       signal?.addEventListener("abort", onAbort, { once: true });
       if (signal?.aborted) {

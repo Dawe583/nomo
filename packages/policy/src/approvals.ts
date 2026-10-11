@@ -28,7 +28,21 @@ import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 
 import type { Stats } from "node:fs";
-import type { HeldCall, HoldId, HoldQueue, HoldResolution, Release } from "./hold.ts";
+import {
+  MAX_OPERATION_SUMMARY_LENGTH,
+  reviewableHeldCall,
+  safeOperationSummary,
+  verifiedLocalOperatorId,
+} from "./hold.ts";
+import type {
+  HeldCall,
+  HoldBinding,
+  HoldId,
+  HoldQueue,
+  HoldResolution,
+  Release,
+  ReviewableHeldCall,
+} from "./hold.ts";
 import type { PolicyCall } from "./decide.ts";
 import type { NotifyChannel } from "./rules.ts";
 
@@ -36,6 +50,7 @@ export type ApprovalStatus = "pending" | "approved" | "denied" | "expired" | "ca
 
 export type ApprovalDecision = {
   readonly kind: "approved" | "denied";
+  /** Compatibility label only. The broker records the local OS operator instead. */
   readonly by: string;
   readonly reason?: string;
 };
@@ -44,6 +59,8 @@ export type ApprovalRecord = {
   readonly holdId: HoldId;
   readonly decisionToken?: string;
   readonly call: PolicyCall;
+  readonly binding?: HoldBinding;
+  readonly operationSummary?: string;
   readonly expiresAt: number;
   readonly status: ApprovalStatus;
   readonly notify: readonly NotifyChannel[];
@@ -60,7 +77,7 @@ export type ApprovalNotification = {
   readonly call: PolicyCall;
   readonly expiresAt: number;
   readonly notify: readonly NotifyChannel[];
-  readonly held: HeldCall;
+  readonly held: ReviewableHeldCall;
 };
 
 export type ApprovalChannel = {
@@ -215,12 +232,18 @@ export class ApprovalBroker {
     }
   }
 
-  register(queue: HoldQueue, call: PolicyCall): ApprovalRecord {
-    const held = this.findUnregisteredHold(queue, call);
+  register(queue: HoldQueue, call: PolicyCall, holdId?: HoldId): ApprovalRecord {
+    const held = this.findUnregisteredHold(queue, call, holdId);
+    if (held.binding !== undefined && !isHoldBinding(held.binding))
+      throw new Error("invalid hold binding");
     const record: ApprovalRecord = {
       holdId: held.id,
       decisionToken: this.nonce(),
       call,
+      ...(held.binding === undefined
+        ? {}
+        : { binding: Object.freeze({ ...held.binding }) }),
+      operationSummary: safeOperationSummary(held.args),
       expiresAt: held.expiresAt,
       status: "pending",
       notify: notifyChannels(held.notify),
@@ -243,17 +266,21 @@ export class ApprovalBroker {
     const current = this.approvals.get(holdId);
     const queue = this.queues.get(holdId);
     if (current === undefined || queue === undefined || current.status !== "pending") return false;
+    const held = queue.list().find((candidate) => candidate.id === holdId);
+    if (held === undefined || !sameHoldBinding(current.binding, held.binding)) return false;
+    const by = verifiedLocalOperatorId();
+    if (current.binding !== undefined && by !== current.binding.operatorId) return false;
     const release: Release = decision.kind === "approved"
-      ? { kind: "approved" }
-      : { kind: "denied", by: decision.by };
+      ? current.binding === undefined ? { kind: "approved" } : { kind: "approved", by }
+      : { kind: "denied", by };
     if (this.stateDirectory !== undefined) {
       savePending(this.stateDirectory, this.pending().filter((record) => record.holdId !== holdId), this.fs);
     }
-    if (!queue.resolve(holdId, release)) return false;
+    if (!queue.resolve(holdId, release, by)) return false;
     this.approvals.set(holdId, {
       ...current,
       status: decision.kind,
-      by: decision.by,
+      by,
       reason: decision.reason,
     });
     this.queues.delete(holdId);
@@ -307,6 +334,12 @@ export class ApprovalBroker {
     return this.pending();
   }
 
+  review(holdId: HoldId): ReviewableHeldCall | undefined {
+    if (this.approvals.get(holdId)?.status !== "pending") return undefined;
+    const held = this.queues.get(holdId)?.list().find((candidate) => candidate.id === holdId);
+    return held === undefined ? undefined : reviewableHeldCall(held);
+  }
+
   close(): void {
     if (!this.lockHeld || this.stateDirectory === undefined) return;
     this.fs.unlinkSync(join(this.stateDirectory, "proxy.lock"));
@@ -356,13 +389,17 @@ export class ApprovalBroker {
       call: record.call,
       expiresAt: record.expiresAt,
       notify: record.notify,
-      held,
+      held: reviewableHeldCall(held),
     };
     for (const name of record.notify) this.channels[name]?.notify(notification);
   }
 
-  private findUnregisteredHold(queue: HoldQueue, call: PolicyCall): HeldCall {
-    const held = queue.list().find((candidate) => !this.approvals.has(candidate.id) && sameCall(candidate, call));
+  private findUnregisteredHold(queue: HoldQueue, call: PolicyCall, holdId?: HoldId): HeldCall {
+    const held = queue.list().find((candidate) =>
+      !this.approvals.has(candidate.id) &&
+      (holdId === undefined || candidate.id === holdId) &&
+      sameCall(candidate, call),
+    );
     if (held === undefined) throw new Error(`no pending hold matches ${call.tool}`);
     return held;
   }
@@ -387,13 +424,42 @@ function sameCall(held: HeldCall, call: PolicyCall): boolean {
   return held.tool === call.tool && held.klass === call.klass && held.blastRadius === call.blastRadius;
 }
 
+function sameHoldBinding(left: HoldBinding | undefined, right: HoldBinding | undefined): boolean {
+  if (left === undefined || right === undefined) return left === right;
+  return left.operationId === right.operationId &&
+    left.operationDigest === right.operationDigest &&
+    left.policyVersion === right.policyVersion &&
+    left.policyDigest === right.policyDigest &&
+    left.operatorId === right.operatorId &&
+    left.principalId === right.principalId &&
+    left.agentId === right.agentId &&
+    left.runId === right.runId &&
+    left.workspaceId === right.workspaceId &&
+    left.upstreamId === right.upstreamId &&
+    left.schemaDigest === right.schemaDigest;
+}
+
+function isHoldBinding(value: unknown): value is HoldBinding {
+  if (!isObject(value)) return false;
+  const strings = [
+    "operationId", "operatorId", "principalId", "agentId", "runId",
+    "workspaceId", "upstreamId",
+  ] as const;
+  const digests = ["operationDigest", "policyDigest", "schemaDigest"] as const;
+  return strings.every((key) => typeof value[key] === "string" && value[key] !== "") &&
+    digests.every((key) => typeof value[key] === "string" && /^[0-9a-f]{64}$/.test(value[key] as string)) &&
+    Number.isSafeInteger(value.policyVersion) && (value.policyVersion as number) > 0 &&
+    Object.keys(value).length === strings.length + digests.length + 1;
+}
+
 /**
  * Local owner-only files avoid a new network listener. One proxy owns a state
  * directory, enforced by an exclusive lock. After a crash an operator must
  * confirm the old process is gone before removing proxy.lock; guessing from a
  * reused PID could admit two writers. Nonces bind decisions to this hold, because queue ids repeat after
  * restart. A crash leaves only complete files or ignored temporary files; it
- * never restores a held call. Payload arguments are not part of ApprovalRecord.
+ * never restores a held call. Raw arguments are excluded; only a bounded,
+ * redacted operation summary may cross the state boundary.
  */
 export type ApprovalFs = Pick<typeof nodeFs,
   "mkdirSync" | "openSync" | "writeFileSync" | "fsyncSync" | "closeSync" |
@@ -412,7 +478,12 @@ export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: 
     typeof item.holdId === "string" && typeof item.decisionToken === "string" &&
     item.status === "pending" && typeof item.expiresAt === "number" && Number.isFinite(item.expiresAt) &&
     isObject(item.call) && typeof item.call.tool === "string" && typeof item.call.klass === "string" &&
-    Array.isArray(item.notify))) throw new Error("invalid pending approvals file");
+    !("args" in item.call) && !("arguments" in item.call) &&
+    !("args" in item) && !("arguments" in item) &&
+    (item.operationSummary === undefined || typeof item.operationSummary === "string" &&
+      item.operationSummary.length <= MAX_OPERATION_SUMMARY_LENGTH) &&
+    Array.isArray(item.notify) && (item.binding === undefined || isHoldBinding(item.binding))))
+    throw new Error("invalid pending approvals file");
   return value as PendingApprovalRecord[];
 }
 

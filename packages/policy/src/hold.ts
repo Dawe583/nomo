@@ -10,11 +10,37 @@
  * instead of posing as a transport failure.
  */
 
+import { userInfo } from "node:os";
+
 import type { Decision } from "./grammar.ts";
 
 export type HoldId = string;
 
-/** The call that waits, everything the message to the human needs. */
+/** The immutable context that a local operator approves for one held call. */
+export type HoldBinding = Readonly<{
+  operationId: string;
+  operationDigest: string;
+  policyVersion: number;
+  policyDigest: string;
+  operatorId: string;
+  principalId: string;
+  agentId: string;
+  runId: string;
+  workspaceId: string;
+  upstreamId: string;
+  schemaDigest: string;
+}>;
+
+/** Identifies the OS account running the local approval authority. */
+export function verifiedLocalOperatorId(): string {
+  const uid = process.getuid?.();
+  if (typeof uid === "number") return `uid:${uid}`;
+  const username = userInfo().username.trim();
+  if (username === "") throw new Error("local operator identity is unavailable");
+  return `user:${username}`;
+}
+
+/** In-process request state; use reviewableHeldCall for human-facing surfaces. */
 export type HeldCall = {
   readonly id: HoldId;
   /** Registry entry id. */
@@ -26,15 +52,82 @@ export type HeldCall = {
   /** The rule index that held it, and its stated reason. */
   readonly ruleIndex: number;
   readonly rationale: string | undefined;
-  /** The intercepted arguments, shown to the approver, never stored beyond this process. */
+  /** Raw arguments stay in process; approval surfaces receive only a redacted summary. */
   readonly args: Readonly<Record<string, unknown>>;
   readonly heldAt: number;
   readonly expiresAt: number;
   readonly notify: readonly string[];
+  readonly binding?: HoldBinding;
 };
 
+export type ReviewableHeldCall = Omit<HeldCall, "args"> & {
+  readonly summary: string;
+};
+
+const SECRET_REVIEW_KEYS = [
+  "apikey",
+  "authorization",
+  "authheader",
+  "password",
+  "passwd",
+  "secret",
+  "token",
+  "credential",
+  "privatekey",
+  "accesskey",
+  "clientsecret",
+  "cookie",
+  "prompt",
+  "message",
+  "content",
+  "session",
+  "signature",
+  "signedurl",
+];
+const SECRET_REVIEW_VALUE = /\b(?:bearer\s+[A-Za-z0-9._~+/-]+|(?:sk|rk|pk|gh[pousr]|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{8,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,})\b|(?:password|passwd|secret|token|api[_-]?key|authorization)\s*[:=]\s*\S+/i;
+export const MAX_OPERATION_SUMMARY_LENGTH = 1_000;
+
+/** Build a bounded, redacted summary without retaining raw arguments in approval records. */
+export function safeOperationSummary(args: Readonly<Record<string, unknown>>): string {
+  const summary = JSON.stringify(redactReviewValue(args, "", 0)) ?? "{}";
+  return summary.length <= MAX_OPERATION_SUMMARY_LENGTH
+    ? summary
+    : `${summary.slice(0, MAX_OPERATION_SUMMARY_LENGTH - 3)}...`;
+}
+
+export function reviewableHeldCall(call: HeldCall): ReviewableHeldCall {
+  const { args, ...details } = call;
+  return { ...details, summary: safeOperationSummary(args) };
+}
+
+function redactReviewValue(value: unknown, key: string, depth: number): unknown {
+  const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (SECRET_REVIEW_KEYS.some((secretKey) => normalizedKey.includes(secretKey)))
+    return "[redacted]";
+  if (typeof value === "string") {
+    if (SECRET_REVIEW_VALUE.test(value)) return "[redacted]";
+    return value.length <= 120 ? value : `${value.slice(0, 117)}...`;
+  }
+  if (value === null || typeof value === "boolean" || typeof value === "number")
+    return value;
+  if (typeof value !== "object") return "[unsupported]";
+  if (depth >= 3) return "[nested]";
+  if (Array.isArray(value)) {
+    const selected = value.slice(0, 4).map((item) => redactReviewValue(item, "", depth + 1));
+    if (value.length > 4) selected.push(`+${value.length - 4} more`);
+    return selected;
+  }
+  const entries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
+  const visible: [string, unknown][] = entries.slice(0, 8).map(([childKey, childValue]) => [
+    childKey.length <= 80 ? childKey : `${childKey.slice(0, 77)}...`,
+    redactReviewValue(childValue, childKey, depth + 1),
+  ]);
+  if (entries.length > 8) visible.push(["...", `+${entries.length - 8} more`]);
+  return Object.fromEntries(visible);
+}
+
 export type Release =
-  | { readonly kind: "approved" }
+  | { readonly kind: "approved"; readonly by?: string }
   | { readonly kind: "denied"; readonly by: string };
 
 export type HoldOutcome =
@@ -125,6 +218,9 @@ export class HoldQueue {
     const heldAt = Date.now();
     const full: HeldCall = {
       ...call,
+      ...(call.binding === undefined
+        ? {}
+        : { binding: Object.freeze({ ...call.binding }) }),
       id,
       heldAt,
       expiresAt: heldAt + seconds * 1000,
@@ -158,11 +254,22 @@ export class HoldQueue {
     return true;
   }
 
-  /** A human decided. Resolving an unknown or already finished id is false, never a crash. */
-  resolve(id: HoldId, release: Release, by = "cli"): boolean {
-    if (!this.pending.has(id)) return false;
+  /**
+   * Resolves a pending hold. Caller-provided operator labels are retained in
+   * the signature for compatibility, but never treated as identity evidence.
+   */
+  resolve(id: HoldId, release: Release, by?: string): boolean {
+    void by;
+    const call = this.pending.get(id);
+    if (call === undefined) return false;
+    const operator = verifiedLocalOperatorId();
+    if (call.binding !== undefined && operator !== call.binding.operatorId)
+      return false;
+    const localRelease: Release = release.kind === "approved"
+      ? call.binding === undefined ? { kind: "approved" } : { kind: "approved", by: operator }
+      : { kind: "denied", by: operator };
     this.clearTimer(id);
-    this.finish(id, { kind: "released", release });
+    this.finish(id, { kind: "released", release: localRelease });
     return true;
   }
 

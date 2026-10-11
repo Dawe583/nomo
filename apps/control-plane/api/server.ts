@@ -6,6 +6,7 @@ import { basename, extname, join, posix, relative, resolve } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { harnessSettingsView } from "../../../packages/workbench/src/harness-settings.ts";
+import type { HoldBinding } from "../../../packages/policy/src/hold.ts";
 
 import { runReplayCommand } from "../../../packages/cli/src/replay.ts";
 import type { ReplayCommandOptions } from "../../../packages/cli/src/replay.ts";
@@ -40,6 +41,8 @@ export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
 export type PendingApproval = {
   readonly holdId: string;
   readonly call: unknown;
+  readonly binding?: HoldBinding;
+  readonly operationSummary?: string;
   readonly expiresAt: string | number;
   readonly status: ApprovalStatus;
 };
@@ -53,6 +56,7 @@ export type ApprovalDecision = {
 export type ApprovalBroker = {
   readonly pending?: () => Promise<readonly PendingApproval[]> | readonly PendingApproval[];
   readonly listPending?: () => Promise<readonly PendingApproval[]> | readonly PendingApproval[];
+  readonly review?: (holdId: string) => { readonly summary: string } | undefined;
   readonly decide: (holdId: string, decision: ApprovalDecision) => Promise<unknown> | unknown;
 };
 
@@ -369,7 +373,10 @@ async function route(
           documents: wb.documentsList().length,
           agentId: agentRun?.id,
           runState: agentRun?.state,
-          inFlight: agentRun?.state === "stopping" ? 1 : 0,
+          // This counts running or stopping runs, not individual calls. Run
+          // state cannot prove whether an upstream call was dispatched or its
+          // result was confirmed.
+          inFlight: data.runs.filter((run) => run.state === "running" || run.state === "stopping").length,
           stopAck: options.fleetEvents.stopAck(agentRun?.sessionId ?? undefined),
           latestEvents: events,
         });
@@ -769,8 +776,10 @@ async function handleApprovalDecision(
   const decision = parseDecision(body);
   if (decision === null) return sendJson(response, 400, { error: "invalid_decision" });
   const result = await approvals.decide(holdId, decision);
-  fleetEvents.record({ kind: "approval", agentId: holdId, sessionId: undefined, label: "approval decided", verdict: decision.kind });
   response.setHeader("cache-control", "no-store");
+  if (result === false)
+    return sendJson(response, 409, { error: "approval_not_accepted" });
+  fleetEvents.record({ kind: "approval", agentId: holdId, sessionId: undefined, label: "approval decided", verdict: decision.kind });
   sendJson(response, 200, { ok: true, result });
 }
 
@@ -826,6 +835,8 @@ function toApiApproval(record: PendingApproval): JsonObject {
   return {
     holdId: record.holdId,
     call: record.call,
+    ...(record.binding === undefined ? {} : { binding: record.binding }),
+    ...(record.operationSummary === undefined ? {} : { operationSummary: record.operationSummary }),
     expiresAt: record.expiresAt,
     status: record.status,
   };
@@ -862,9 +873,15 @@ function parseLimit(raw: string | null): number {
 }
 
 async function readPendingApprovals(approvals: ApprovalBroker | undefined): Promise<readonly PendingApproval[]> {
-  if (approvals?.listPending !== undefined) return approvals.listPending();
-  if (approvals?.pending !== undefined) return approvals.pending();
-  return [];
+  const pending = approvals?.listPending !== undefined
+    ? await approvals.listPending()
+    : approvals?.pending !== undefined
+      ? await approvals.pending()
+      : [];
+  return pending.map((record) => {
+    const operationSummary = record.operationSummary ?? approvals?.review?.(record.holdId)?.summary;
+    return operationSummary === undefined ? record : { ...record, operationSummary };
+  });
 }
 
 function parseDecision(value: unknown): ApprovalDecision | null {

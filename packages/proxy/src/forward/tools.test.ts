@@ -52,6 +52,72 @@ describe("interceptCall", () => {
     assert.deepEqual(order, ["allow", "allow:resolved"]);
   });
 
+
+  test("trusted low-risk read uses fast path without policy, probe or ledger work", async () => {
+    let policyCalls = 0;
+    let probeCalls = 0;
+    let captureCalls = 0;
+    const ledger: unknown[] = [];
+    const verdict = await interceptCall({
+      ...call,
+      assessment: { effect: "read", risk: "low", fastPath: "allow" },
+    }, {
+      classify: () => { throw new Error("classification must not run on fast path"); },
+      policy: () => { policyCalls += 1; return { kind: "allow" }; },
+      probe: async () => { probeCalls += 1; return { radius: 1 }; },
+      hold: async () => { throw new Error("hold should not run"); },
+      capture: async () => { captureCalls += 1; return true; },
+      ledger: (entry) => { ledger.push(entry); },
+    });
+
+    assert.deepEqual(verdict, { kind: "allow" });
+    assert.equal(policyCalls, 0);
+    assert.equal(probeCalls, 0);
+    assert.equal(captureCalls, 0);
+    assert.deepEqual(ledger, []);
+  });
+
+  test("low-risk write fast path still runs the capture gate", async () => {
+    let policyCalls = 0;
+    let captureCalls = 0;
+    const verdict = await interceptCall({
+      ...call,
+      assessment: { effect: "write", risk: "low", fastPath: "allow" },
+    }, {
+      classify: () => { throw new Error("classification must not run on fast path"); },
+      policy: () => { policyCalls += 1; return { kind: "allow" }; },
+      hold: async () => { throw new Error("hold should not run"); },
+      capture: async () => { captureCalls += 1; return true; },
+      ledger: () => {},
+    });
+
+    assert.deepEqual(verdict, { kind: "allow" });
+    assert.equal(policyCalls, 0);
+    assert.equal(captureCalls, 1);
+  });
+
+
+  test("high or mixed operation assessments cannot claim the fast path", async () => {
+    for (const assessment of [
+      { effect: "write", risk: "high", fastPath: "allow" },
+      { effect: "mixed", risk: "low", fastPath: "allow" },
+      { effect: "unknown", risk: "low", fastPath: "allow" },
+    ] as const) {
+      let probeCalls = 0;
+      let policyCalls = 0;
+      const verdict = await interceptCall({ ...call, assessment }, {
+        classify: () => classified("r0"),
+        policy: () => { policyCalls += 1; return { kind: "deny", ruleIndex: 1, rationale: "full path" }; },
+        probe: async () => { probeCalls += 1; return { radius: 1 }; },
+        hold: async () => { throw new Error("hold should not run"); },
+        ledger: () => {},
+      });
+      assert.equal(verdict.kind, "deny");
+      assert.equal(probeCalls, 1);
+      assert.equal(policyCalls, 1);
+    }
+  });
+
   test("denies with a readable application error that names the call", async () => {
     const verdict = await interceptCall(call, {
       classify: () => classified("r3"),

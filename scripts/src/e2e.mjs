@@ -176,6 +176,11 @@ async function runApiPass(factsPath) {
 }
 
 async function runBinaryObservePass(factsPath) {
+  // Dispatch evidence is mandatory on every forwarded call, observe posture
+  // included: without a ledger directory the proxy answers
+  // "durable dispatch evidence requires a ledger directory" instead of the
+  // upstream result, so the binary pass opens a store exactly like the api pass.
+  const ledgerDir = await mkdtemp(join(tmpdir(), "void-e2e-ledger-"));
   const child = spawn(process.execPath, [
     "packages/proxy/bin/void-proxy.mjs",
     "--upstream", process.execPath,
@@ -183,6 +188,7 @@ async function runBinaryObservePass(factsPath) {
     "--policy", "fixtures/e2e-policy.yaml",
     "--facts", factsPath,
     "--posture", "observe",
+    "--ledger-dir", ledgerDir,
   ], { stdio: ["pipe", "pipe", "pipe"] });
 
   const output = [];

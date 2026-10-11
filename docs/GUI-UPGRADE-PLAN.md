@@ -285,7 +285,7 @@ Navržená rozšíření, která teprve vzniknou:
 | `GET /api/documents?...` | Přehled napříč dostupnými sessions |
 | `GET/PATCH /api/sessions/:id/documents/...` | Obsah a editace s očekávanou revizí |
 | Rozšířený `GET /api/feed` | Cursor, interval, filtry, řazení, count scope |
-| Rozšířený `GET /api/approvals` | Historie rozhodnutí a vysvětlení politiky |
+| Rozšířený `GET /api/approvals` | Historie, vysvětlení politiky, redigovaný souhrn cílové operace a kontext vazby identity |
 
 Každý seznam vrací `items`, `nextCursor`, `hasMore`, `asOf`, `scope`; případný `total` je přesný počet nebo explicitně označený odhad. Cursor obsahuje stabilní pořadí, např. timestamp + ID, a je svázaný s filtrem. Ledger používá workspace + seq. Žádné filtrování celé historie jen v aktuální stránce.
 

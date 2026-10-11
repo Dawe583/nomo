@@ -4,7 +4,10 @@ import assert from "node:assert/strict";
 import {
   HoldQueue,
   holdErrorMessage,
+  safeOperationSummary,
+  verifiedLocalOperatorId,
   type HeldCall,
+  type HoldBinding,
   type HoldOutcome,
 } from "./hold.ts";
 
@@ -24,6 +27,45 @@ const held = (over: Partial<HeldCall> = {}): HeldCall => ({
   expiresAt: 120001,
   ...baseCall,
   ...over,
+});
+
+describe("safe approval summaries", () => {
+  test("a target remains reviewable while credential values are redacted", () => {
+    const first = safeOperationSummary({
+      bucket: "archive-primary",
+      apiKey: "nomo-secret-sentinel",
+      note: "Bearer nomo-token-sentinel",
+    });
+    const changedTarget = safeOperationSummary({
+      bucket: "archive-backup",
+      apiKey: "nomo-secret-sentinel",
+      note: "Bearer nomo-token-sentinel",
+    });
+    assert.match(first, /archive-primary/);
+    assert.match(first, /\[redacted\]/);
+    assert.doesNotMatch(first, /nomo-secret-sentinel|nomo-token-sentinel|Bearer/);
+    assert.notEqual(first, changedTarget, "a different target has different review content");
+  });
+
+  test("prompt and message content stay out of approval summaries", () => {
+    const summary = safeOperationSummary({
+      bucket: "archive-primary",
+      prompt: "fixture-private-prompt-sentinel",
+      messages: [{ role: "user", content: "fixture-private-message-sentinel" }],
+    });
+    assert.match(summary, /archive-primary/);
+    assert.doesNotMatch(
+      summary,
+      /fixture-private-prompt-sentinel|fixture-private-message-sentinel/,
+    );
+  });
+
+  test("deeply nested arrays cannot exhaust the summary renderer", () => {
+    let nested: unknown = "leaf";
+    for (let index = 0; index < 5_000; index += 1) nested = [nested];
+    assert.doesNotThrow(() => safeOperationSummary({ nested }));
+    assert.match(safeOperationSummary({ nested }), /\[nested\]/);
+  });
 });
 
 describe("holdErrorMessage, the body the model reads", () => {
@@ -125,6 +167,46 @@ describe("HoldQueue, the pending map and its timers", () => {
     const firstResolution = await first;
     assert.equal(firstResolution.call.tool, "a");
     assert.equal(firstResolution.outcome.kind, "released");
+    queue.close();
+  });
+
+  test("a bound hold rejects a caller-asserted matching operator", async () => {
+    const queue = new HoldQueue();
+    const binding: HoldBinding = {
+      operationId: "op-bound",
+      operationDigest: "a".repeat(64),
+      policyVersion: 1,
+      policyDigest: "b".repeat(64),
+      operatorId: `${verifiedLocalOperatorId()}-forged`,
+      principalId: "principal-1",
+      agentId: "agent-1",
+      runId: "run-1",
+      workspaceId: "workspace-1",
+      upstreamId: "upstream-1",
+      schemaDigest: "c".repeat(64),
+    };
+    const waiting = queue.hold({ ...baseCall, binding }, 120);
+    assert.equal(
+      queue.resolve("h0001", { kind: "approved" }, binding.operatorId),
+      false,
+    );
+    assert.equal(queue.list().length, 1, "the forged decision leaves the hold pending");
+    queue.close();
+    assert.equal((await waiting).outcome.kind, "expired");
+  });
+
+  test("an unbound hold ignores caller-supplied operator labels", async () => {
+    const queue = new HoldQueue();
+    const waiting = queue.hold(baseCall, 120);
+
+    assert.equal(
+      queue.resolve("h0001", { kind: "denied", by: "forged-operator" }, "forged-operator"),
+      true,
+    );
+    assert.deepEqual((await waiting).outcome, {
+      kind: "released",
+      release: { kind: "denied", by: verifiedLocalOperatorId() },
+    });
     queue.close();
   });
 

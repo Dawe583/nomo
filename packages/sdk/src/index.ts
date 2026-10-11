@@ -22,5 +22,6 @@ export {
   LedgerVerifyError,
   PolicyStartupError,
   RefusedError,
+  RequestOutcomeUnknownError,
 } from "./errors.ts";
 export type { RefusalReason, VoidErrorCode } from "./errors.ts";

@@ -2,6 +2,8 @@ import { mkdir, stat, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
+import type { KeyProvider } from "../../ledger/src/index.ts";
+import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { ledgerDir as defaultLedgerDir } from "../../ledger/src/store.ts";
 import { verifyLedgerFile } from "../../ledger/src/verify.ts";
 import {
@@ -17,7 +19,12 @@ import type { LegacyBindingResolver } from "../../proxy/src/forward/legacy-bindi
 import type { JsonObject, JsonRpcError, JsonRpcId, JsonRpcMessage, JsonRpcResult } from "../../proxy/src/rpc.ts";
 import { upstreamHttp } from "../../proxy/src/transport/http.ts";
 
-import { HoldDeniedError, LedgerVerifyError, PolicyStartupError } from "./errors.ts";
+import {
+  HoldDeniedError,
+  LedgerVerifyError,
+  PolicyStartupError,
+  RequestOutcomeUnknownError,
+} from "./errors.ts";
 import { holdHandle } from "./hold.ts";
 import type { HoldHandle } from "./hold.ts";
 
@@ -61,6 +68,8 @@ export type VoidClientOptions = {
    * and is not authentication against the agent either way.
    */
   readonly allowDegradedVerifyKey?: boolean;
+  /** Optional signer for this client's proxy. It does not authenticate an existing ledger. */
+  readonly keyProvider?: KeyProvider;
   readonly holdPollMs?: number;
   readonly clock?: VoidClock;
 };
@@ -134,6 +143,7 @@ export class VoidClient implements McpLikeClient {
   #defaultPolicyPath: string | undefined;
   readonly #env: Readonly<NodeJS.ProcessEnv>;
   readonly #allowDegradedVerifyKey: boolean;
+  readonly #keyProvider: KeyProvider | undefined;
   #verification: VerificationKey | undefined;
 
   constructor(options: VoidClientOptions) {
@@ -149,6 +159,7 @@ export class VoidClient implements McpLikeClient {
     this.#clock = options.clock ?? defaultClock;
     this.#env = options.env ?? process.env;
     this.#allowDegradedVerifyKey = options.allowDegradedVerifyKey ?? false;
+    this.#keyProvider = options.keyProvider;
   }
 
   /**
@@ -201,12 +212,41 @@ export class VoidClient implements McpLikeClient {
     this.#pending.set(id, pending);
     this.#input.push({ jsonrpc: "2.0", id, method, ...(params === undefined ? {} : { params }) });
     this.#adoptHolds();
+    const timeoutError = method === "tools/call"
+      ? new RequestOutcomeUnknownError(method, id)
+      : new Error(`request ${method} timed out`);
     return this.#withTimeout(
       pending.promise,
       this.#requestTimeoutMs,
-      `request ${method} timed out`,
+      timeoutError,
       () => {
+        if (method === "tools/call") {
+          try {
+            this.#adoptHolds();
+          } catch {
+            this.#recordError("hold adoption failed during request timeout");
+          }
+          if (pending.holdId !== undefined) {
+            try {
+              this.approvals.cancel(pending.holdId);
+            } catch {
+              this.#recordError("hold cancellation failed during request timeout");
+            }
+            this.#holdToRequest.delete(pending.holdId);
+          }
+          try {
+            this.#input.push({
+              jsonrpc: "2.0",
+              method: "notifications/cancelled",
+              params: { requestId: id },
+            });
+          } catch {
+            // The proxy is already closing, so its outcome remains unknown.
+          }
+        }
         this.#pending.delete(id);
+        pending.reject(timeoutError);
+        this.#completeHold(pending, { ok: false, error: timeoutError });
       },
       running,
     );
@@ -271,6 +311,7 @@ export class VoidClient implements McpLikeClient {
         : undefined;
       const upstreamCommand = "upstreamCommand" in connect ? connect.upstreamCommand : ["http", connect.httpUrl];
       const upstreamEnv = "upstreamEnv" in connect ? connect.upstreamEnv : undefined;
+      const keyProvider = this.#keyProvider ?? await devKeyProvider({ env: this.#env });
       await runProxy({
         upstreamCommand,
         upstreamEnv,
@@ -281,6 +322,7 @@ export class VoidClient implements McpLikeClient {
         posture: this.#posture,
         ledgerDir: this.#ledgerDir,
         workspace: this.#workspace,
+        keyProvider,
         input: this.#input,
         output: (line) => { this.#receive(line); },
         error: (line) => { this.#recordError(line); },
@@ -424,7 +466,7 @@ export class VoidClient implements McpLikeClient {
     if (this.#queue === undefined) return;
     for (const held of this.#queue.list()) {
       if (this.#registeredHolds.has(held.id)) continue;
-      this.approvals.register(this.#queue, callFromHeld(held, this.#workspace));
+      this.approvals.register(this.#queue, callFromHeld(held, this.#workspace), held.id);
       this.#registeredHolds.add(held.id);
       this.#bindHoldToPending(held);
     }
@@ -466,15 +508,19 @@ export class VoidClient implements McpLikeClient {
   #withTimeout(
     promise: Promise<unknown>,
     ms: number,
-    message: string,
+    timeoutError: Error,
     onTimeout: () => void,
     running: Promise<void>,
   ): Promise<unknown> {
     if (ms <= 0) return promise;
     return new Promise((resolve, reject) => {
       const timer = this.#clock.setTimeout(() => {
-        onTimeout();
-        reject(new Error(message));
+        try {
+          onTimeout();
+        } catch {
+          this.#recordError("request timeout cleanup failed");
+        }
+        reject(timeoutError);
       }, ms);
       if (hasUnref(timer)) timer.unref();
       const done = (): void => { this.#clock.clearTimeout(timer); };

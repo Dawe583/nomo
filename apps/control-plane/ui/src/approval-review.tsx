@@ -34,6 +34,7 @@ export function ApprovalReview({
   }, []);
   const expired = new Date(record.expiresAt).getTime() <= now;
   const settled = record.status !== "pending";
+  const binding = record.binding as Row | undefined;
   // B2: R3 and unknown holds arm first and confirm second. The server stays
   // authoritative; this only slows the hand on destructive approvals.
   const gate = requiresConfirm(record);
@@ -139,6 +140,40 @@ export function ApprovalReview({
           {t("Rozsah", "Blast radius")}: {blastSummary(record)}
         </span>
       </div>
+      <section className="approval-operation" aria-label={t("Souhrn operace", "Operation summary")}>
+        <h3>{t("Cílová operace", "Target operation")}</h3>
+        <p>{t("Redigovaný souhrn argumentů", "Redacted argument summary")}</p>
+        <code>{record.operationSummary ?? t("Bezpečný souhrn není dostupný.", "No safe summary is available.")}</code>
+      </section>
+      {binding ? (
+        <section className="approval-binding" aria-label={t("Kontext schválení", "Approval context")}>
+          <h3>{t("Kontext schválení", "Approval context")}</h3>
+          <dl>
+            {[
+              [t("Profil operace", "Operation profile"), binding.operationId],
+              [t("Digest operace", "Operation digest"), binding.operationDigest],
+              [t("Verze politiky", "Policy version"), binding.policyVersion],
+              [t("Digest politiky", "Policy digest"), binding.policyDigest],
+              [t("Operátor", "Operator"), binding.operatorId],
+              [t("Principal", "Principal"), binding.principalId],
+              [t("Agent", "Agent"), binding.agentId],
+              [t("Běh", "Run"), binding.runId],
+              [t("Workspace", "Workspace"), binding.workspaceId],
+              [t("Upstream", "Upstream"), binding.upstreamId],
+              [t("Digest schématu", "Schema digest"), binding.schemaDigest],
+            ].map(([label, value]) => (
+              <div key={String(label)}>
+                <dt>{label}</dt>
+                <dd><code>{String(value ?? "unknown")}</code></dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : (
+        <p className="notice" role="status">
+          {t("Toto schválení nemá vazbu identity. Neověřujte je jako schválení konkrétní identity.", "This approval has no identity binding. Do not treat it as an identity-bound approval.")}
+        </p>
+      )}
       <p className="approval-rationale">
         <strong>{t("Důvod politiky", "Policy rationale")}:</strong>{" "}
         {record.reason ??

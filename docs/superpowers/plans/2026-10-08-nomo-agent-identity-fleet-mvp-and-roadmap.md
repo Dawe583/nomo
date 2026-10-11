@@ -218,22 +218,24 @@ packages/proxy/src/transport/http.test.ts`, then `pnpm run typecheck`.
 #### Task 5: Connect identity, policy and ledger at dispatch
 
 **Files:**
-- Modify: `packages/proxy/src/bin.ts`
-- Modify: `packages/proxy/src/forward/tools.ts`
-- Modify: `packages/proxy/src/transport/http-server.ts`
-- Modify: `packages/workbench/src/index.ts`
-- Extend: focused proxy, HTTP bridge and Workbench tests.
+- Modify: `apps/control-plane/api/server.ts` and `apps/control-plane/ui/src/pages.tsx`.
+- Modify: `packages/policy/src/approvals.ts`, `hold.ts` and CLI approval display.
+- Modify: proxy dispatch, approval loop and HTTP bridge.
+- Modify: `packages/sdk/src/client.ts` and `packages/workbench/src/index.ts`.
+- Modify: `docs/NOMO-LOCAL-IDENTITY-DEMO.md` and its `scripts/src/e2e.mjs` runner.
+- Extend: focused policy, proxy, SDK, HTTP bridge and Workbench tests.
 
 - [x] Add focused tests for invalid identity, insufficient tool scope, low-risk
-      read and write fast paths, high-risk `Allow`, `Deny`, `Hold`, revoked grant
-      during hold, upstream failure and interrupted-call recovery. Expiry during
-      hold remains unverified.
+      read and write fast paths, high-risk `Allow`, `Deny`, `Hold`, revoked and
+      expired grants during hold, upstream failure and interrupted-call recovery.
 - [x] Apply cheap identity and scope checks to every inbound call. Use a bounded
       fast path only for a trusted per-invocation assessment. Require full policy
       for high-risk or unknown operations.
-- [ ] Bind `Hold` approval to the canonical operation digest, policy version and
-      verified local operator. The existing approval and grant-recheck flow is
-      tested, but this exact binding remains open.
+- [x] Bind `Hold` approval to the canonical operation digest, policy version and
+      digest, identity and schema context, and OS-derived local operator ID. The
+      broker persists the binding, matches the exact hold, and ignores caller-
+      supplied operator labels for every approval. Unbound holds remain visibly
+      unbound and do not claim operation identity.
 - [x] Append signed dispatch evidence before forwarding writes. A signing failure
       blocks dispatch. Record correlated success, failure, not-dispatched or
       unknown outcomes; recovery preserves identity and profile metadata.
@@ -254,13 +256,14 @@ are not reported as cancelled, reverted or successful.
 
 - [x] Wrong, expired and revoked grants fail closed.
 - [x] Valid MCP requests use the existing policy and ledger path.
-- [x] `Allow`, `Deny`, `Hold`, fast path and explicit observe mode have focused
-      tests. Expiry during hold remains unverified.
+- [x] `Allow`, `Deny`, `Hold`, fast path, explicit observe mode, grant revocation
+      and grant expiry during a hold have focused tests.
 - [x] No NOMO token reaches the upstream request, the response, the proxy error
       log or durable storage. Prompts and event payloads are not covered by this
       test and stay an open claim.
 - [x] `pnpm run typecheck` passes.
-- [ ] Read-only security reviewer checks trust boundaries before UI work starts.
+- [x] Read-only security review checked approval, grant, dispatch and recovery
+      trust boundaries. Findings were addressed or documented before completion.
 
 **Implementation note (2026-10-10):** Fast-path profiles are trusted local
 configuration, matched by stable profile id, upstream id, tool name and exact
@@ -268,7 +271,14 @@ input-schema digest. A matching profile assesses each invocation against a
 frozen copy of its arguments. A missing or mismatched profile, invalid result or
 classifier error falls through to full policy. Fast reads emit signed metadata;
 fast writes emit signed pre-dispatch evidence and a correlated terminal outcome.
-The exact `Hold` binding and grant-expiry-during-hold checks remain open.
+`Hold` approval now persists the canonical operation digest, policy version
+and digest, tool schema digest, agent identity and OS-derived operator ID. The
+broker checks the binding and exact hold before release; all decisions ignore
+caller-supplied operator labels. Unbound holds still do not claim operation
+identity. The dispatch ledger carries the same digest, policy version and
+operator ID for bound calls. The local HTTP approval route remains a
+loopback/origin boundary, not authentication between local OS users or proof of
+a human identity.
 
 ### Phase 3: Harness, events and local stop
 
@@ -317,14 +327,17 @@ secret.
       start, run start, tool decision, approval and dispatch result emissions are
       wired only as far as the store's vocabulary; emission sites for those kinds
       are noted as the remaining subset.
-- [ ] Show one registered agent and its current run, state, latest events and
-      unresolved in-flight calls. Do not render tokens or prompt contents.
+- [ ] Show one registered agent and its current run, state and latest events.
+      Display the count of running or stopping runs, not a fabricated per-call
+      count, and mark unresolved call outcomes unknown. Do not render tokens or
+      prompt contents.
 - [x] Add run stop control with visible acknowledgement state; the stop path with
       its "this process only" scope note is the delivered kill control, and no
       separate local process kill action exists. Do not display success before the
       proxy confirms it.
 - [ ] State that the demo kill applies to this process only. Show an already
-      dispatched call as in flight or unknown until its result is confirmed.
+      dispatched call as in flight or unknown until its result is confirmed;
+      keep its outcome distinct from the active-run count.
 - [x] Reuse the existing event feed and UI state. Do not add Neon, Drizzle,
       polling infrastructure or a new UI framework for the local demo. Existing
       feed and UI state reused; the fleet store is an in-process ring buffer, no
