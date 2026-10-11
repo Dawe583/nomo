@@ -849,7 +849,9 @@ test("/agents /config /memory read live data without secrets", async (t) => {
   assert.ok(config.includes("data-dir"));
   assert.ok(!config.includes("fixture-key"));
   await ui.command("/memory");
-  assert.ok(ui.detail?.join("\n").includes("Conversations: 1"));
+  // The memory view is an inspector now, so the count is an aligned field
+  // rather than a sentence. What this protects is that it reports live data.
+  assert.match(ui.detail?.join("\n") ?? "", /conversations *: *1/);
 });
 
 test("provider only commands reject what NOMO cannot do", async (t) => {

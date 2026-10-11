@@ -1775,13 +1775,57 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   memoryLines() {
     const views = this.workbench.allViews();
     const events = views.reduce((sum, item) => sum + item.events.length, 0);
+    const drafts = this.workbench.documentsList().length;
+    // This view listed two totals and four sentences. An operator opening it
+    // wants to know what they have and where it is, so both are now said
+    // plainly and the per-conversation breakdown follows.
+    const byConversation = views
+      .map((view) => ({ view, count: view.events.length }))
+      .sort((a, b) => b.count - a.count);
     return [
-      "MEMORY, retained local history, encrypted at rest",
+      ...renderInspector(
+        {
+          title: "MEMORY",
+          subtitle: "retained local history, encrypted at rest",
+          icon: ROW_ICONS.learned,
+          sections: [
+            {
+              title: "what is stored",
+              fields: [
+                { label: "conversations", value: String(views.length) },
+                { label: "events", value: String(events) },
+                { label: "managed documents", value: String(drafts) },
+                {
+                  label: "location",
+                  value: this.env.NOMO_DATA_DIR ?? "~/.nomo/workbench",
+                  tone: this.env.NOMO_DATA_DIR ? "default" : "warning",
+                },
+              ],
+            },
+            {
+              title: "what is kept",
+              fields: [],
+              body: [
+                "Drafts persist per conversation between runs.",
+                "Conversations retain their provider and model snapshot.",
+                "Unreported cost stays unknown rather than being estimated.",
+                "Nothing is read from private cloud conversations.",
+              ],
+            },
+          ],
+        },
+        { width: 76 },
+      ),
       "",
-      `Conversations: ${views.length} | Stored events: ${events}`,
-      `Storage: ${this.env.NOMO_DATA_DIR ?? "default workbench directory"}`,
-      "Drafts persist per conversation between runs.",
-      "Conversations retain their provider/model snapshot. Unreported cost stays unknown.",
+      "LARGEST CONVERSATIONS",
+      ...(byConversation.length
+        ? byConversation
+            .slice(0, 10)
+            .map(
+              ({ view, count }) =>
+                `  ${ROW_ICONS.session} ${view.id.slice(0, 8)} ${String(count).padStart(4)} events  ${view.status}`,
+            )
+        : ["  No conversations yet."]),
     ];
   }
   settingsLines() {
