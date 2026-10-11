@@ -115,7 +115,8 @@ approved product direction and `@nomo/*` is the public package target. Preserve
 existing package imports, environment variables, CLI commands, encrypted state
 and ledgers through an explicit, tested, versioned migration. NOMO environment
 names win over VOID compatibility aliases when both are present, including an
-explicitly empty NOMO value. No silent rename or state deletion.
+explicitly empty NOMO value. No silent rename or state deletion. The exact
+compatibility contract lives in `docs/NOMO-COMPATIBILITY-MATRIX.md`.
 
 The main code boundaries are:
 

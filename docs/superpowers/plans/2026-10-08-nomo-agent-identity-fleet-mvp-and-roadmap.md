@@ -127,25 +127,41 @@ rewritten.
 - Later implementation may touch package manifests, CLI migration code, state
   path helpers and their existing tests.
 
-- [ ] Record canonical `NOMO_*` names and `VOID_*` fallback behavior. NOMO wins
+- [x] Record canonical `NOMO_*` names and `VOID_*` fallback behavior. NOMO wins
       when both are present, including an explicitly empty NOMO value.
-- [ ] Define explicit, non-destructive state migration. Existing `.void` data
+- [x] Define explicit, non-destructive state migration. Existing `.void` data
       stays readable if `.nomo` is absent. Migration copies to a temporary
       location, validates encrypted state and signed ledgers, and installs
       atomically. It never deletes the source.
-- [ ] Decide package rename order. Public product-v1 names target `@nomo/*`;
+- [x] Decide package rename order. Public product-v1 names target `@nomo/*`;
       existing `@void/*` imports, data, commands and ledgers remain compatible
       through a versioned migration.
-- [ ] Review the isolated compatibility branch and dirty state. Do not copy
+- [x] Review the isolated compatibility branch and dirty state. Do not copy
       uncommitted files or rewrite its history.
 
-**Acceptance:** One authoritative compatibility matrix covers env keys, package
-imports, CLI commands, state directories and ledger data. No code path silently
-moves or deletes user state.
+**Read-only audit result:** `feat/rename-compat` at `4b7fb2e` contains a
+committed environment helper without production call sites. Its allowlist omits
+current control-plane and cloud settings and includes names without active env
+readers. `applyOwnedEnv()` mutates the
+supplied environment. Since child processes inherit environment values and the
+signing-key scrub currently removes only `VOID_SIGNING_KEY`, wiring the helper
+into global environment could expose the NOMO alias. Its migration helper checks
+a byte manifest but does not validate encrypted state or ledger signatures;
+its path resolver selects any existing `.nomo`. The migration and ledger-path
+helpers remain untracked and untested. No files were copied or changed on that
+branch. The matrix defines the implementation contract for this worktree, but
+no compatibility implementation is integrated yet.
 
-**Verify:** Tests cover NOMO precedence, VOID fallback, empty values, no input
-mutation, migration validation, atomic install and source preservation. Use
-`node:test` and the focused package tests before `pnpm test`.
+**Acceptance:** One authoritative compatibility matrix covers env keys, package
+imports, CLI commands, state directories and ledger data. The active worktree
+has no automatic state migration and does not integrate the partial compatibility
+branch.
+
+**Verify:** `node --test scripts/src/doc-truth.test.mjs` checks the documentation.
+Runtime tests for NOMO precedence, VOID fallback, empty values, no input mutation,
+migration validation, destination conflicts, atomic install and source
+preservation remain required before Milestone C item 1 can be marked complete.
+Use `node:test` and focused package tests before `pnpm test`.
 
 **Dependencies:** Task 1.
 

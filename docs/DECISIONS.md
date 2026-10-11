@@ -1535,6 +1535,14 @@ target. Existing `@void/*` imports, environment names, CLI commands, state and
 ledgers remain compatible through a tested, explicit, versioned migration.
 Never silently rename or delete user state.
 
+`docs/NOMO-COMPATIBILITY-MATRIX.md` is the implementation contract. It requires
+pure, allowlisted NOMO-first environment lookup, explicit state migration, and
+a valid versioned marker before `.nomo` can replace `.void` while both roots
+exist. An ambiguous pair fails closed. Keep private workspace imports under
+`@void/*` until the `@nomo/*` target and its `@void/*` compatibility wrappers
+are ready for release. New CLI names must call the same implementation as the
+legacy names.
+
 **Documents and authority.** The capability map, MVP spec and implementation
 plan are the active product-design references. Conflicting older product
 strategy and sales documents will be removed from the active feature branch
