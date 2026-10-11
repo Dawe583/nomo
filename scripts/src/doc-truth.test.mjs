@@ -544,7 +544,7 @@ const INTERFACE_WORDS = [
 
 /** The newest decision in the pack. Renaming that heading renames this. */
 const NEWEST_DECISION =
-  "## NOMO Agent Identity and Fleet Control Plane: active direction, 2026-10-08";
+  "## NOMO-only product rename and state migration, 2026-10-11";
 
 const MONO_FOR_INTERFACE = /\bmono\w*/i;
 const NAMES_INTERFACE_WORD = new RegExp(

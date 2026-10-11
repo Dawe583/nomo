@@ -110,13 +110,13 @@ browser storage or durable user settings.
 
 ## Repository and naming
 
-The current source tree and workspace package names use `@void/*`. NOMO is the
-approved product direction and `@nomo/*` is the public package target. Preserve
-existing package imports, environment variables, CLI commands, encrypted state
-and ledgers through an explicit, tested, versioned migration. NOMO environment
-names win over VOID compatibility aliases when both are present, including an
-explicitly empty NOMO value. No silent rename or state deletion. The exact
-compatibility contract lives in `docs/NOMO-COMPATIBILITY-MATRIX.md`.
+The Milestone C rename contract is NOMO-only. Active code, workspace packages,
+commands, product environment names, APIs, app identifiers and current docs
+must converge on NOMO with no old aliases. New user state uses `~/.nomo`;
+`~/.void` is only an explicit, validated migration source and is never read at
+normal startup. Preserve source data and never overwrite or delete it. The
+contract and implementation plan live in `docs/NOMO-COMPATIBILITY-MATRIX.md`
+and `docs/superpowers/plans/2026-10-11-nomo-only-rename.md`.
 
 The main code boundaries are:
 

@@ -1,4 +1,4 @@
-# VOID project guidance
+# NOMO project guidance
 
 For the GUI upgrade, read `docs/GUI-UPGRADE-PLAN.md` and `docs/GUI-UPGRADE-AUDIT.md` first. These documents describe the requested target and the verified baseline, not completed implementation.
 
@@ -11,7 +11,12 @@ The intended default for new conversations is NVIDIA: provider `nvidia`, endpoin
 
 The user reaffirmed on 2026-09-13: work directly on `main`, commit and push completed verified changes to GitHub `main` for automatic Vercel deployment. Preserve unrelated files and never commit secrets. Use caveman and ponytail by default for all work. Mobile usability and a stronger ASCII identity are current design priorities.
 
-The user requested on 2026-09-14: all built-in TUI interface text must default to English. The interactive TUI must use its full color theme by default, even when the host inherits NO_COLOR=1. Use VOID_TUI_COLOR=0 as its explicit monochrome option; keep noninteractive output plain. Preserve user-authored messages and documents in their original language.
+For the approved Milestone C rename, the later task-specific instruction
+supersedes direct-to-main: use the isolated feature worktree, push only verified
+commits to its GitHub feature branch, and do not merge or deploy before the
+intended integration point.
+
+The user requested on 2026-09-14: all built-in TUI interface text must default to English. The interactive TUI must use its full color theme by default, even when the host inherits NO_COLOR=1. Use NOMO_TUI_COLOR=0 as its explicit monochrome option; keep noninteractive output plain. Preserve user-authored messages and documents in their original language.
 
 Historical preference, superseded by the NVIDIA default above: on 2026-09-18
 the user removed Token Harbor and selected OpenCode Zen. Explicit legacy

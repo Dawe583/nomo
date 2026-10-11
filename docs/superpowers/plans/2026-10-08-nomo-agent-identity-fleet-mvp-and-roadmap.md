@@ -119,53 +119,34 @@ rewritten.
 
 **Dependencies:** None.
 
-#### Task 2: Freeze package and state compatibility rules
+#### Task 2: Rename the active product surface to NOMO
 
-**Files:**
-- Review existing manifests, environment lookups, state paths and install
-  scripts without modifying the other worktrees.
-- Later implementation may touch package manifests, CLI migration code, state
-  path helpers and their existing tests.
+**Decision and contract:**
+- [x] Replace the earlier compatibility-alias proposal. Product-owned
+      commands, packages, environment names, APIs and app identifiers use
+      NOMO only. Do not keep `VOID_*`, `@void/*`, old command or symbol aliases.
+- [x] Keep `~/.void` only as the source for an explicit, validated, non-
+      destructive migration to `~/.nomo`. Normal startup never reads the old
+      root. Historical decision records and dated evidence remain unchanged.
+- [ ] Implement and verify the full rename across active code, manifests,
+      scripts, CI, apps, tests and current documentation.
 
-- [x] Record canonical `NOMO_*` names and `VOID_*` fallback behavior. NOMO wins
-      when both are present, including an explicitly empty NOMO value.
-- [x] Define explicit, non-destructive state migration. Existing `.void` data
-      stays readable if `.nomo` is absent. Migration copies to a temporary
-      location, validates encrypted state and signed ledgers, and installs
-      atomically. It never deletes the source.
-- [x] Decide package rename order. Public product-v1 names target `@nomo/*`;
-      existing `@void/*` imports, data, commands and ledgers remain compatible
-      through a versioned migration.
-- [x] Review the isolated compatibility branch and dirty state. Do not copy
-      uncommitted files or rewrite its history.
+**Implementation plan:**
+`docs/superpowers/plans/2026-10-11-nomo-only-rename.md` defines the capability
+map, migration contract, ordered implementation and verification gates. The
+read-only audit of `feat/rename-compat` remains historical; none of its
+uncommitted helpers were copied.
 
-**Read-only audit result:** `feat/rename-compat` at `4b7fb2e` contains a
-committed environment helper without production call sites. Its allowlist omits
-current control-plane and cloud settings and includes names without active env
-readers. `applyOwnedEnv()` mutates the
-supplied environment. Since child processes inherit environment values and the
-signing-key scrub currently removes only `VOID_SIGNING_KEY`, wiring the helper
-into global environment could expose the NOMO alias. Its migration helper checks
-a byte manifest but does not validate encrypted state or ledger signatures;
-its path resolver selects any existing `.nomo`. The migration and ledger-path
-helpers remain untracked and untested. No files were copied or changed on that
-branch. The matrix defines the implementation contract for this worktree, but
-no compatibility implementation is integrated yet.
+**Acceptance:** The active product uses the names and migration rules in
+`docs/NOMO-COMPATIBILITY-MATRIX.md`. Migration tests prove state integrity,
+conflict handling, safe retry and source preservation. No old aliases remain.
 
-**Acceptance:** One authoritative compatibility matrix covers env keys, package
-imports, CLI commands, state directories and ledger data. The active worktree
-has no automatic state migration and does not integrate the partial compatibility
-branch.
-
-**Verify:** `node --test scripts/src/doc-truth.test.mjs` checks the documentation.
-Runtime tests for NOMO precedence, VOID fallback, empty values, no input mutation,
-migration validation, destination conflicts, atomic install and source
-preservation remain required before Milestone C item 1 can be marked complete.
-Use `node:test` and focused package tests before `pnpm test`.
+**Verify:** Run focused package tests sequentially, then `pnpm run typecheck`,
+`pnpm test`, and `pnpm run build`. Finish with naming, secret, dash and diff
+scans. Push each verified commit to the feature branch and verify the remote
+hash. Do not merge or deploy before the intended integration point.
 
 **Dependencies:** Task 1.
-
-### Phase 1: Local identity and transport
 
 #### Task 3: Add trusted local run identity and test issuer
 

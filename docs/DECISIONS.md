@@ -1548,3 +1548,27 @@ plan are the active product-design references. Conflicting older product
 strategy and sales documents will be removed from the active feature branch
 after valid evidence is migrated. Keep `DECISIONS.md` history, current technical
 contracts and valid operations documentation. Do not rewrite Git history.
+
+
+## NOMO-only product rename and state migration, 2026-10-11
+
+**Decision.** NOMO is the only active product name. Rename commands, package
+names, environment settings, APIs, generated process values, app identifiers,
+current docs and CI. Do not ship `VOID_*`, `@void/*`, command or symbol aliases.
+New state uses `~/.nomo`. Existing `~/.void` data is preserved and is accessed
+only by an explicit migration command. Normal startup never reads or writes the
+old root.
+
+**Rationale.** The product direction changed from a staged compatibility
+release to a complete product rename. Keeping old aliases would leave two
+active identities and complicate support, tests and release tooling. The only
+compatibility need is preserving local user data, so migration remains explicit,
+verified and non-destructive.
+
+**Consequences.** Migration validates encrypted Workbench state and signed
+ledgers, checks a canonical file manifest, installs into an absent destination,
+records a versioned marker last and never deletes or overwrites the source.
+Historical decision records stay intact. Language-level `void` and semantic
+third-party operation names are not product identifiers and are not renamed.
+The contract is `docs/NOMO-COMPATIBILITY-MATRIX.md`; implementation is tracked
+in `docs/superpowers/plans/2026-10-11-nomo-only-rename.md`.
