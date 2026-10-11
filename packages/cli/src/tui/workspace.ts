@@ -4186,29 +4186,34 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               .map((item) => `[ ] ${item.text} (#${item.seq})`),
           ]
         : ["", "Plan: no open checklist items. /todos shows them all."];
+      const holds = this.workbench.pending().length + this.proxy.holds.length;
+      const errors = this.proofErrors.size + this.proxy.errors.length;
+      // The overview answers "is anything wrong right now" before it answers
+      // "what does this workspace contain". The counts were there; what was
+      // missing was the order, so a workspace with three conversations and
+      // one unverified chain looked identical to a quiet one.
+      const attention = holds || errors || o.failed;
       return [
         "NOMO / LOCAL WORKSPACE",
         "",
-        // One line, not the inspector: this pane has run counts, ledger
-        // counts and a plan below it, and a twelve row provider block pushed
-        // those off the bottom of a fixed height frame. /status is where the
-        // provider is the subject.
+        attention
+          ? `${ROW_ICONS.approval} Needs attention: ${holds} approvals waiting, ${errors} errors, ${o.failed} failed runs.`
+          : `${ROW_ICONS.settled} Nothing waiting. No approvals, no errors, no failed runs.`,
+        "",
         this.providerSummary(),
-        `Model: ${this.model || "-"}`,
-        `Active work: ${this.workbench.running() ? "running or settling" : "none"}`,
-        `Conversations: ${this.workbench.list().length} | Documents: ${this.workbench.documentsList().length} | Pending approvals: ${this.workbench.pending().length + this.proxy.holds.length}`,
-        `Ledger: ${[...this.proofs.values()].reduce((n, p) => n + p.length, 0)} managed + ${[...this.proxy.entries.values()].reduce((n, p) => n + p.length, 0)} proxy entries`,
+        `Model: ${this.model || "-"} | ${this.workbench.running() ? "running or settling" : "idle"}`,
+        `Conversations ${this.workbench.list().length} | Documents ${this.workbench.documentsList().length} | Runs ${o.runs}`,
+        `Ledger ${[...this.proofs.values()].reduce((n, p) => n + p.length, 0)} managed + ${[...this.proxy.entries.values()].reduce((n, p) => n + p.length, 0)} proxy`,
         // The bare word "verified" is the defect the audit named here: it does
         // not say which key answered, so a chain checked against a trust file
         // the agent can also replace read the same as one checked against a
         // key the operator handed over. The status names the answer, and the
         // long caveat follows it on its own line.
-        `Proxy signatures: ${this.proxy.entries.size ? (this.proxy.signed ? this.proxy.verificationStatus : "NOT VERIFIED (integrity only)") : "no entries"} | Errors: ${this.proofErrors.size + this.proxy.errors.length}`,
+        `Signatures: ${this.proxy.entries.size ? (this.proxy.signed ? this.proxy.verificationStatus : "NOT VERIFIED (integrity only)") : "no entries"}`,
         ...(this.proxy.entries.size && this.proxy.verificationNote
           ? [`Proxy verification key: ${this.proxy.verificationNote}`]
           : []),
         "",
-        `Runs: ${o.runs} | Failures: ${o.failed}`,
         ...this.listRows(),
         `Provider tokens: ${o.totalTokens ?? "unknown"} | Cost: unknown`,
         ...planLines,

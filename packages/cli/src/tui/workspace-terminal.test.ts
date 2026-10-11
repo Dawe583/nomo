@@ -51,7 +51,8 @@ test("bare nomo and TUI flags open the real workspace", async (t) => {
       env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
     },
   );
-  assert.match(result.stdout, /Runs: 0/);
+  // The overview leads with whether anything needs attention, then counts.
+  assert.match(result.stdout, /Runs 0/);
   assert.doesNotMatch(result.stdout, /usage: nomo/);
   assert.equal(result.stderr, "");
 });
@@ -77,7 +78,7 @@ test("checkout launcher exposes the same bare nomo command on POSIX", async (t) 
       env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
     },
   );
-  assert.match(tui.stdout, /Runs: 0/);
+  assert.match(tui.stdout, /Runs 0/);
   assert.doesNotMatch(tui.stdout, /usage: nomo/);
 });
 
@@ -110,7 +111,8 @@ test("shared runs view is available in plain one-shot output", async (t) => {
       env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
     },
   );
-  assert.match(result.stdout, /Runs: 0/);
+  // The overview leads with whether anything needs attention, then counts.
+  assert.match(result.stdout, /Runs 0/);
   assert.match(result.stdout, /setup-required/);
   assert.doesNotMatch(result.stdout, /\x1b/);
 });
