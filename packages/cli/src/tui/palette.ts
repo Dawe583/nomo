@@ -33,6 +33,8 @@ export interface PaletteState {
   readonly query: string;
   readonly selected: number;
   readonly visible: number;
+  /** Frecency: command id -> { count, lastUsed timestamp }. */
+  readonly recent: ReadonlyMap<string, { count: number; lastUsed: number }>;
 }
 
 export interface PaletteView {
@@ -158,15 +160,49 @@ export function fuzzyScore(
   return best;
 }
 
+/** Record a command execution for frecency. */
+export function recordPaletteCommand(
+  state: PaletteState,
+  commandId: string,
+): PaletteState {
+  const recent = new Map(state.recent);
+  const now = Date.now();
+  const existing = recent.get(commandId);
+  recent.set(commandId, {
+    count: (existing?.count ?? 0) + 1,
+    lastUsed: now,
+  });
+  return { ...state, recent };
+}
+
+/** Score bonus for frecency: up to +500 for very recent/frequent commands. */
+function frecencyBonus(
+  recent: ReadonlyMap<string, { count: number; lastUsed: number }>,
+  id: string,
+): number {
+  const rec = recent.get(id);
+  if (!rec) return 0;
+  const ageMs = Date.now() - rec.lastUsed;
+  const ageHours = ageMs / 3_600_000;
+  // Decay: recent use gives big bonus, frequency gives smaller sustained bonus
+  const recencyBoost = Math.max(0, 300 - ageHours * 10); // decays over ~30 hours
+  const frequencyBoost = Math.min(rec.count * 15, 200); // caps at ~13 uses
+  return recencyBoost + frequencyBoost;
+}
+
 export function filterPalette(
   items: readonly PaletteItem[],
   query: string,
+  recent?: ReadonlyMap<string, { count: number; lastUsed: number }>,
 ): PaletteItem[] {
   const scored: Array<{ readonly item: PaletteItem; readonly score: number }> =
     [];
   for (const item of items) {
     const score = fuzzyScore(item, query);
-    if (score !== undefined) scored.push({ item, score });
+    if (score !== undefined) {
+      const bonus = recent ? frecencyBonus(recent, item.id) : 0;
+      scored.push({ item, score: score + bonus });
+    }
   }
   // Score descending for relevance, id ascending for a stable order the
   // operator can learn (and shorter ids already won ties inside the score).
@@ -195,7 +231,7 @@ export function initialPaletteState(
 ): PaletteState {
   // Eight rows fit the overlay without covering the transcript; 0 would mean
   // "render all" and flood narrow terminals on open.
-  return { query: "", selected: 0, visible: 8 };
+  return { query: "", selected: 0, visible: 8, recent: new Map() };
 }
 
 export function advanceSelection(

@@ -62,6 +62,7 @@ import {
   filterPalette,
   initialPaletteState,
   paletteFromCommands,
+  recordPaletteCommand,
   renderPalette,
   typeInPalette,
   type PaletteState,
@@ -1010,6 +1011,8 @@ export class WorkspaceTui {
   queuedPromptPaused = false;
   /** Live command palette. Present means the overlay owns the keyboard. */
   palette?: PaletteState;
+  /** Frecency state persists across palette opens. */
+  paletteState?: { recent: Map<string, { count: number; lastUsed: number }> };
   /** The typed prefix Ctrl+P carried into the palette, consumed on open. */
   pendingPaletteQuery?: string;
   /**
@@ -3868,6 +3871,16 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     const cmd = match[1]!,
       arg = match[2]?.trim() ?? "";
+    // Record frecency for palette (slash commands only, not shell or prompts).
+    const fullCmd = "/" + cmd;
+    const baseState: PaletteState = {
+      query: "",
+      selected: 0,
+      visible: 8,
+      recent: this.paletteState?.recent ?? new Map(),
+    };
+    const updated = recordPaletteCommand(baseState, fullCmd);
+    this.paletteState = { recent: new Map(updated.recent) };
     const tab = workspaceTab(cmd);
     if (tab) {
       this.choose(tab);
@@ -4903,7 +4916,13 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // the query from whatever the operator already typed after Ctrl+P, so
       // the keystroke that summoned the palette narrows it immediately.
       const seed = this.pendingPaletteQuery ?? "";
+      // Palette keeps frecency across opens: recent commands float to top.
       this.palette = initialPaletteState(paletteFromCommands(TUI_COMMANDS));
+      if (this.paletteState?.recent) {
+        this.palette = { ...this.palette, recent: this.paletteState.recent };
+      }
+      // palette.recent is ReadonlyMap, paletteState.recent is Map
+      this.paletteState = { recent: new Map(this.palette.recent) };
       if (seed) this.palette = typeInPalette(this.palette, seed);
       this.choose("help");
       this.detail = undefined;
@@ -6158,7 +6177,11 @@ export function renderWorkspace(
   const paletteView = ui.palette
     ? renderPalette(
         ui.palette,
-        filterPalette(paletteFromCommands(TUI_COMMANDS), ui.palette.query),
+        filterPalette(
+          paletteFromCommands(TUI_COMMANDS),
+          ui.palette.query,
+          ui.palette.recent,
+        ),
         width - 4,
         { color: visuals.color },
       )
