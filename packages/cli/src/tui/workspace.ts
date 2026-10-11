@@ -4716,8 +4716,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         selected: this.selected,
         motion: motionContext(this.frame),
       });
+      const byClass = new Map<string, number>();
+      for (const tool of summaries) {
+        const klass = tool.klass ?? "unknown";
+        byClass.set(klass, (byClass.get(klass) ?? 0) + 1);
+      }
+      const classCounts = [...byClass.entries()]
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([klass, count]) => `${count} ${klass}`)
+        .join(", ");
       return [
-        `TOOLS, ${summaries.length} available, grouped by class, R0 first`,
+        `TOOLS, ${summaries.length} available: ${classCounts}`,
         "",
         ...browser,
         "",
