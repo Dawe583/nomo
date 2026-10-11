@@ -718,9 +718,40 @@ test("each tab builds only its own rows, and the usage tab leads with a summary"
   if (ui.items().length) {
     assert.match(usage, /^USAGE, \d+ records/);
     assert.match(usage, /Each record, newest last/);
+    // Enter on a usage row opens a readable panel, not the transcript. The
+    // operator came to the spend tab to read spend, and being sent to the
+    // chat would leave that unanswered.
+    await ui.openSelected();
+    assert.match(ui.detail!.join("\n"), /total/);
+    assert.ok(
+      !ui.detail!.join("\n").includes("CZK"),
+      "no invented currency figure",
+    );
   } else {
     assert.match(usage, /No entries yet\./);
   }
+});
+
+test("Enter on a connector row opens the policy, not a JSON dump", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-policy-open-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  ui.choose("policy");
+  const rows = ui.items();
+  assert.ok(rows.length > 0, "the policy tab has connector rows");
+  await ui.openSelected();
+  const detail = ui.detail!.join("\n");
+  // The two facts the operator came for are the first thing on the panel,
+  // not buried inside a dump.
+  assert.match(detail, /consent/);
+  assert.match(detail, /granted|not granted/);
+  assert.match(detail, /tools/);
+  assert.ok(!detail.startsWith("{"), "the panel is not a raw JSON dump");
 });
 
 test("no rendered row exceeds its width, whatever glyphs it carries", async (t) => {
