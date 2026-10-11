@@ -4866,7 +4866,18 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         );
         byClass.set(String(summary), (byClass.get(String(summary)) ?? 0) + 1);
       }
+      const byConsent = new Map<string, number>();
+      for (const connector of connectors) {
+        const consent =
+          "consentState" in connector ? connector.consentState : "unknown";
+        byConsent.set(consent, (byConsent.get(consent) ?? 0) + 1);
+      }
+      const consentCounts = [...byConsent.entries()]
+        .map(([state, count]) => `${count} ${state}`)
+        .join(", ");
       return [
+        `POLICY, ${connectors.length} connectors: ${consentCounts}`,
+        "",
         ...renderInspector(
           {
             title: "POLICY",
