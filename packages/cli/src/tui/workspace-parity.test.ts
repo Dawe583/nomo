@@ -387,6 +387,37 @@ test("the ledger tab groups mixed records in the order they are read", async (t)
   assert.ok(numbered.length >= headings.length);
 });
 
+test("Enter on a model inspects it; it does not switch the model", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-modelinspect-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  const models = ui.provider?.models ?? [];
+  if (!models.length) return;
+  ui.choose("models");
+  ui.selected = 0;
+  const before = ui.model;
+  await ui.openSelected();
+  // Choosing a model changes what every future conversation runs on. Doing
+  // that from a list row with no second look was the one irreversible action
+  // on this tab, so Enter only looks now.
+  assert.equal(ui.model, before, "inspecting must not change the model");
+  const detail = ui.detail?.join("\n") ?? "";
+  assert.match(detail, /MODEL/);
+  assert.match(detail, /\/model ID selects it/);
+
+  // And the way to actually choose still works, by naming the model.
+  const target = models[0]!.id;
+  await ui.command(`/model ${target}`);
+  assert.equal(ui.model, target);
+});
+
 test("Shift+Tab modes cycle with a visible indicator", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-mode-"));
   const { app, env } = await fixtureApp(root);

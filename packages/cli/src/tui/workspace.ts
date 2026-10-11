@@ -2177,6 +2177,22 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         )
       : rows;
   }
+  /**
+   * How many existing conversations already ran on a model.
+   *
+   * Switching does not move a conversation: a conversation keeps the model
+   * it started on. An operator about to switch needs to know how much of
+   * their history that leaves behind, and the honest answer is a count rather
+   * than a reassurance.
+   */
+  conversationsOnModel(modelId: string): string {
+    const count = this.workbench
+      .list()
+      .filter((s) => s.model === modelId).length;
+    if (!count) return "no existing conversation";
+    return `${count} existing conversation${count === 1 ? "" : "s"} (they keep their own model)`;
+  }
+
   async openSelected() {
     const row = this.items()[this.selected];
     if (!row) return;
@@ -2206,8 +2222,52 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (this.tab === "models") {
-      this.model = row.id;
-      this.notice = `New conversation model: ${row.id}. Existing conversations keep their original model.`;
+      // Enter inspects rather than selects. Choosing a model changes what
+      // every future conversation runs on, and doing that from a list row
+      // with no second look was the one irreversible action on this tab.
+      // /model <id> stays the way to choose, and it names the model.
+      const model = (this.provider?.models ?? []).find((m) => m.id === row.id);
+      this.detail = model
+        ? [
+            ...renderInspector(
+              {
+                title: model.name || model.id,
+                subtitle: model.id,
+                icon: ROW_ICONS.model,
+                sections: [
+                  {
+                    title: "model",
+                    fields: [
+                      {
+                        label: "id",
+                        value: model.id,
+                        tone: "muted",
+                      },
+                      {
+                        label: "selected",
+                        value:
+                          model.id === this.model
+                            ? "yes, new conversations use this"
+                            : "no, /model " + model.id + " selects it",
+                        tone: model.id === this.model ? "success" : "default",
+                      },
+                      {
+                        label: "in use by",
+                        value: this.conversationsOnModel(model.id),
+                      },
+                    ],
+                  },
+                ],
+                hint: "/model ID selects it for new conversations.",
+              },
+              { width: 76 },
+            ),
+            "",
+            "RAW RECORD",
+            ...row.lines,
+          ]
+        : row.lines;
+      this.scroll = 0;
       return;
     }
     // A hook row on the ledger tab is the saved hook, so Enter toggles it
@@ -4203,6 +4263,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       ];
     // The tools tab is answered earlier, by the grouped browser, so the
     // /mcp hint that used to sit here has no tab left to attach to.
+    // The models tab gets a hint of its own because Enter means something
+    // different here than on every other list: it inspects rather than
+    // selects.
+    if (this.tab === "models" && rows.length)
+      return [
+        ...this.listRows(),
+        "",
+        "Enter inspects a model. /model ID selects it for new conversations.",
+      ];
     return rows.length ? this.listRows() : ["No entries yet.", ""];
   }
   /**
