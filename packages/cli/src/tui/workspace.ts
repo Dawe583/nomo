@@ -2652,6 +2652,69 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // make them come back to ask it a second time. It inspects instead, the
     // same way a model row does.
     if (this.tab === "sessions") {
+      // Enter inspects the conversation rather than jumping to it. The
+      // operator is on the sessions tab to read about conversations, and
+      // being sent to the transcript would leave the question they arrived
+      // with unanswered. /chat and the session list both still open it.
+      const session = this.workbench.list().find((s) => s.id === row.sessionId);
+      if (session) {
+        const events = session.events ?? [];
+        const last = events.at(-1);
+        const model = session.model ?? "unknown";
+        const status = session.status ?? "unknown";
+        const archived = session.archived === true;
+        const messageCount = events.filter(
+          (e) => e.type === "message" || e.type === "message.delta",
+        ).length;
+        const toolCount = events.filter((e) => e.type === "tool").length;
+        const errorCount = events.filter((e) => e.type === "error").length;
+        this.detail = [
+          ...renderInspector(
+            {
+              title: session.title ?? session.id,
+              subtitle: session.id,
+              icon: archived ? ROW_ICONS.archived : stateIcon(status),
+              sections: [
+                {
+                  title: "conversation",
+                  fields: [
+                    {
+                      label: "status",
+                      value: archived ? "archived" : status,
+                      tone: archived ? "muted" : "default",
+                    },
+                    { label: "model", value: model },
+                    {
+                      label: "messages",
+                      value: String(messageCount),
+                    },
+                    {
+                      label: "tool calls",
+                      value: String(toolCount),
+                    },
+                    {
+                      label: "errors",
+                      value: String(errorCount),
+                      tone: errorCount ? "warning" : "success",
+                    },
+                    {
+                      label: "last event",
+                      value: last?.type ?? "none",
+                    },
+                  ],
+                },
+              ],
+              hint: "Enter opens the conversation. /resume picks one by number.",
+            },
+            { width: 76 },
+          ),
+          "",
+          "RAW RECORD",
+          ...row.lines,
+        ];
+        this.scroll = 0;
+        return;
+      }
       this.useSession(row.sessionId!);
       this.choose("chat");
       return;

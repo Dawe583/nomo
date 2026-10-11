@@ -732,6 +732,30 @@ test("each tab builds only its own rows, and the usage tab leads with a summary"
   }
 });
 
+test("Enter on a session row opens a readable panel, not the transcript", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-session-open-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  ui.choose("sessions");
+  const rows = ui.items();
+  assert.ok(rows.length > 0, "the sessions tab has rows");
+  await ui.openSelected();
+  const detail = ui.detail!.join("\n");
+  // The facts the operator came for are the first thing on the panel.
+  assert.match(detail, /status/);
+  assert.match(detail, /model/);
+  assert.match(detail, /messages/);
+  assert.match(detail, /tool calls/);
+  assert.ok(!detail.startsWith("{"), "the panel is not a raw JSON dump");
+});
+
 test("Enter on a connector row opens the policy, not a JSON dump", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-policy-open-"));
   const { app, env } = await fixtureApp(root);
