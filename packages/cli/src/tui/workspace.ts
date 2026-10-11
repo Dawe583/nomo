@@ -5001,6 +5001,60 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "Enter opens a conversation. /resume picks one by number.",
       ];
     }
+    // The documents tab is a tree, so the summary line goes under it rather
+    // than over it. The tree already answers "what is here"; the summary says
+    // how much of it is still open.
+    if (this.tab === "documents" && rows.length) {
+      const bySession = new Map<string, number>();
+      for (const row of rows) {
+        const session = row.sessionId ?? "unknown";
+        bySession.set(session, (bySession.get(session) ?? 0) + 1);
+      }
+      const counts = [...bySession.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .map(([session, count]) => `${session.slice(0, 8)}: ${count}`)
+        .join(", ");
+      const openOps = this.recoveryRows().filter(
+        (row) => row.recoverable === "recoverable",
+      );
+      return [
+        ...this.listRows(),
+        "",
+        `DOCUMENTS, ${rows.length} total across ${bySession.size} conversations`,
+        "",
+        counts + (bySession.size > 4 ? ", ..." : ""),
+        "",
+        openOps.length
+          ? `${openOps.length} of ${this.recoveryRows().length} changes can still be undone. /diff steps through them.`
+          : "Every change has been decided: undone or kept.",
+        "Enter opens a document. Left/Right folds the tree.",
+      ];
+    }
+    // The ledger tab groups by kind, but the question an operator arrives with
+    // is "is this chain intact and how long is it", which the grouping answers
+    // only by listing every group.
+    if (this.tab === "ledger" && rows.length) {
+      const byKind = new Map<string, number>();
+      for (const row of rows) {
+        const kind = row.kind ?? "entry";
+        byKind.set(kind, (byKind.get(kind) ?? 0) + 1);
+      }
+      const counts = [...byKind.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([kind, count]) => `${count} ${kind}`)
+        .join(", ");
+      const errors = this.proofErrors.size + this.proxy.errors.length;
+      return [
+        `LEDGER, ${rows.length} entries: ${counts}`,
+        "",
+        errors
+          ? `${errors} chain(s) could not be verified. /verify rechecks.`
+          : `All ${rows.length} entries verified against the managed chain.`,
+        "",
+        ...this.listRows(),
+      ];
+    }
     // The approvals tab answers "what is waiting on me", and the answer is a
     // deadline, not a list. The list below is sorted by blast radius, which
     // answers a different question: which is riskiest. Both matter, so the
