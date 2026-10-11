@@ -204,6 +204,36 @@ type Item = {
     expiresAt: number;
     call: { tool: string; klass?: string; blastRadius?: number };
   };
+  /**
+   * The connector behind a policy row, kept so Enter can read it as a policy
+   * rather than as a JSON dump. Carried, never rendered on the row: the label
+   * and the ordering already use it.
+   */
+  connector?: {
+    id: string;
+    name?: string;
+    tools: readonly string[];
+    consentState: string;
+  };
+  /**
+   * The usage record behind a usage row, for the same reason. The row already
+   * shows the tokens; this is what makes the detail readable instead of a dump.
+   *
+   * The token counts are unknown to the type, not nullable to the caller: the
+   * activity layer types them as unknown because they can be absent, and the
+   * detail renders whatever number is actually there.
+   */
+  usage?: {
+    id: string;
+    model: string;
+    sessionId: string;
+    at?: string;
+    provider?: string;
+    totalTokens?: unknown;
+    inputTokens?: unknown;
+    outputTokens?: unknown;
+    source?: string;
+  };
 };
 type Confirmation = {
   title: string;
@@ -216,6 +246,19 @@ type Confirmation = {
 };
 const json = (value: unknown) =>
   JSON.stringify(value, null, 2)?.split("\n") ?? [];
+/**
+ * A token count as a number, or the word unknown.
+ *
+ * The activity layer types token counts as unknown because a run that never
+ * reported them has none, and absent is not zero. Rendering the absence as 0
+ * would make a conversation that spent nothing look identical to one whose
+ * costs were never recorded.
+ */
+function numberOr(value: unknown, absent: string): string {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value.toLocaleString("en-US")
+    : absent;
+}
 /** Median of a non-empty numeric list. The mean of a run that includes one
  * outlier hides the outlier, and the median is what an operator comparing
  * typical runs actually wants to see. */
@@ -2543,6 +2586,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       rows = this.workbench.connectionState().connectors.map((c) => ({
         id: c.id,
         label: `${ROW_ICONS.connector} ${c.name} (${c.tools.length} tools)`,
+        connector: {
+          id: c.id,
+          name: c.name,
+          tools: c.tools,
+          consentState: c.consentState,
+        },
         lines: json(c),
       }));
     if (this.tab === "models")
@@ -2558,6 +2607,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         id: r.id,
         sessionId: r.sessionId,
         label: `${ROW_ICONS.ledgerEntry} ${r.model} ${r.sessionId.slice(0, 8)} | tokens ${r.totalTokens ?? "unknown"} | cost unknown`,
+        // The row's own numbers stay on the row. The detail repeats them in a
+        // readable block rather than leaving the operator to find them inside
+        // a JSON dump, which is where they used to be.
+        usage: r,
         lines: json(r),
       }));
     return this.filter
@@ -2593,7 +2646,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
-    if (this.tab === "sessions" || this.tab === "usage") {
+    // A session row is the conversation, so Enter goes to it. A usage row is
+    // not: the operator is on the spend tab to read spend, and jumping to the
+    // transcript would leave the question they arrived with unanswered and
+    // make them come back to ask it a second time. It inspects instead, the
+    // same way a model row does.
+    if (this.tab === "sessions") {
       this.useSession(row.sessionId!);
       this.choose("chat");
       return;
@@ -2609,6 +2667,115 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // row for ordering, so this reads the same object the list sorted by.
     if (this.tab === "approvals" && row.hold) {
       this.detail = approvalInspectLines(row.hold, row.lines);
+      this.scroll = 0;
+      return;
+    }
+    // Same reasoning for a connector. What the operator came to this tab to
+    // find out is what a connector is allowed to do and whether they have
+    // agreed to it, and both are two lines down inside the JSON dump they used
+    // to get.
+    if (this.tab === "policy" && row.connector) {
+      const c = row.connector;
+      const confirmed = c.consentState === "confirmed";
+      this.detail = [
+        ...renderInspector(
+          {
+            title: c.name || c.id,
+            subtitle: c.id,
+            icon: ROW_ICONS.connector,
+            sections: [
+              {
+                title: "consent",
+                fields: [
+                  {
+                    label: "state",
+                    value: c.consentState,
+                    // Not confirmed is not a warning about the connector. It
+                    // is a statement that nothing has been granted yet, and
+                    // colouring it as a problem would imply otherwise.
+                    badge: confirmed ? "granted" : "not granted",
+                    tone: confirmed ? "success" : "muted",
+                  },
+                  {
+                    label: "means",
+                    value: confirmed
+                      ? "Calls go through without asking again."
+                      : "Calls ask before they run. /connector-file confirms it.",
+                  },
+                  {
+                    label: "tools",
+                    value: `${c.tools.length}`,
+                    tone: c.tools.length ? "default" : "warning",
+                  },
+                ],
+              },
+              {
+                title: "tool list",
+                fields: c.tools.map((tool) => ({
+                  label: tool,
+                  value: "available through this connector",
+                  tone: "muted",
+                })),
+              },
+            ],
+            hint: "/mcp lists connectors; /connector-file reviews a save.",
+          },
+          { width: 76 },
+        ),
+        "",
+        "RAW RECORD",
+        ...row.lines,
+      ];
+      this.scroll = 0;
+      return;
+    }
+    // And for usage. The row carries one number; the detail breaks it into
+    // where it went, which is the question the row cannot answer at a glance.
+    if (this.tab === "usage" && row.usage) {
+      const u = row.usage;
+      const total = numberOr(u.totalTokens, "unknown");
+      const input = numberOr(u.inputTokens, "unknown");
+      const output = numberOr(u.outputTokens, "unknown");
+      this.detail = [
+        ...renderInspector(
+          {
+            title: u.model,
+            subtitle: u.sessionId.slice(0, 8),
+            icon: ROW_ICONS.ledgerEntry,
+            sections: [
+              {
+                title: "tokens",
+                fields: [
+                  { label: "total", value: total, badge: "all calls" },
+                  { label: "in", value: input },
+                  { label: "out", value: output },
+                  {
+                    label: "cost",
+                    // Not computed anywhere. Printing a currency figure from
+                    // a price this software does not hold would be a number
+                    // with no source behind it.
+                    value: "unknown, this build does not price",
+                    tone: "muted",
+                  },
+                ],
+              },
+              {
+                title: "where it came from",
+                fields: [
+                  { label: "provider", value: u.provider ?? "unknown" },
+                  { label: "source", value: u.source ?? "unknown" },
+                  { label: "at", value: u.at ?? "not stamped" },
+                ],
+              },
+            ],
+            hint: "Every number here is what the provider recorded, not an estimate.",
+          },
+          { width: 76 },
+        ),
+        "",
+        "RAW RECORD",
+        ...row.lines,
+      ];
       this.scroll = 0;
       return;
     }
