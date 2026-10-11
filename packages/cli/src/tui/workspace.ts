@@ -4565,6 +4565,75 @@ export function commandSuggestions(input: string) {
       Number(!left[0].startsWith(input)) - Number(!right[0].startsWith(input)),
   );
 }
+/**
+ * The argument each command takes, for the hint that appears once the
+ * operator has typed the command and a space.
+ *
+ * Declared rather than inferred. TUI_COMMANDS carries a description and no
+ * argument, and the only other place the shape of an argument appears is the
+ * error message a handler throws when it is missing. Reading a contract out
+ * of an error string would couple the hint to wording that exists for a
+ * different reader, and a command whose error message was reworded would
+ * silently start showing a stale placeholder.
+ *
+ * Commands absent here take no argument, and the hint stays silent for them
+ * rather than guessing.
+ */
+const COMMAND_ARGUMENTS: Record<string, string> = {
+  "/model": "exact-ID",
+  "/agent": "ID",
+  "/document": "path",
+  "/open": "number-or-ID",
+  "/resume": "number-or-ID",
+  "/branch": "seq",
+  "/rename": "title",
+  "/project": "ID or none",
+  "/undo": "operation-ID",
+  "/rewind": "operation-IDs",
+  "/recovery": "job-ID",
+  "/queue": "",
+  "/export": "ledger, chat or document",
+  "/filter": "text",
+  "/settings": "key value",
+  "/harness": "cloud or prime-agent",
+  "/theme": "color, mono, motion, still or reset",
+  "/approve": "hold-ID [reason]",
+  "/deny": "hold-ID [reason]",
+  "/refine": "approve <digest> or reject <digest> [reason]",
+  "/tools": "search text",
+  "/policy-file": "connector-ID path.yaml",
+  "/connector-file": "path.json",
+  "/agent-file": "path.json",
+  "/hook-file": "path.json",
+  "/conformance": "adapter",
+  "/compact": "",
+  "/new": "conversation",
+  "/mcp": "inspect, add, probe, confirm, rename or remove",
+  "/mcp inspect": "ID",
+  "/mcp add": "URL [name]",
+  "/mcp probe": "ID",
+  "/mcp confirm": "ID",
+  "/mcp rename": "ID name",
+  "/mcp remove": "ID",
+};
+
+/**
+ * The argument a command takes, or undefined when it takes none.
+ *
+ * A subcommand carries its own shape: "/mcp probe" takes an id while "/mcp"
+ * alone takes several. The longest matching prefix wins, so a hint never
+ * says "verb" when the operator has already typed the noun.
+ */
+export function commandArgumentHint(command: string): string | undefined {
+  if (!command.startsWith("/")) return undefined;
+  const words = command.trim().split(/\s+/);
+  for (let take = words.length; take > 0; take -= 1) {
+    const key = words.slice(0, take).join(" ");
+    if (key in COMMAND_ARGUMENTS) return COMMAND_ARGUMENTS[key] || undefined;
+  }
+  return undefined;
+}
+
 export type WorkspaceVisuals = {
   now?: number;
   color?: boolean;
@@ -4915,6 +4984,14 @@ export function renderWorkspace(
     menuStart,
     menuStart + Math.min(5, Math.max(0, height - header.length - 8)),
   );
+  // Once a command and a space are typed, the useful hint is what it wants
+  // next rather than which command it is. A hint that has not been earned
+  // yet, before the space, would only repeat the command list.
+  const typedCommand = visuals.command ?? "";
+  const argumentHint =
+    editing && !ui.confirmation && /^\/\S*\s/.test(typedCommand)
+      ? commandArgumentHint(typedCommand)
+      : undefined;
   // Inside the frame the row keeps 2 side cells plus a 2 cell prompt prefix,
   // so text wraps at width - 6 and the border never breaks mid line.
   const composerInner = Math.max(1, width - 6);
@@ -5417,6 +5494,14 @@ export function renderWorkspace(
     ink(fit(summary, width), ice),
     ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
     ...menuRows,
+    ...(argumentHint
+      ? [
+          ink(
+            fit(`  ${ROW_ICONS.unknown} expects: ${argumentHint}`, width),
+            muted,
+          ),
+        ]
+      : []),
     // The legend sits above the composer, never after it. A legend placed
     // below would be the last thing the slice(0, height) drops on a short
     // terminal, and the operator would lose the prompt frame's bottom rule.

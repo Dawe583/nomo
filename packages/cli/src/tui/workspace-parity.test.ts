@@ -12,6 +12,7 @@ import {
   filterKeyForTab,
   approvalLabel,
   detectHarnesses,
+  commandArgumentHint,
   commandSuggestions,
   extractTodos,
   isDoubleEscape,
@@ -513,6 +514,25 @@ test("no rendered row exceeds its width, whatever glyphs it carries", async (t) 
         );
     }
   }
+});
+
+test("a typed command hints what argument it wants, and stays silent otherwise", () => {
+  // Once the command and a space are typed, the useful thing to say is what
+  // it wants next, not what it is called.
+  assert.equal(commandArgumentHint("/model "), "exact-ID");
+  assert.equal(commandArgumentHint("/mcp probe "), "ID");
+  // A subcommand carries its own shape. The longest matching prefix wins, so
+  // the hint never says "verb" once the noun is already typed.
+  assert.equal(
+    commandArgumentHint("/mcp "),
+    "inspect, add, probe, confirm, rename or remove",
+  );
+  // Commands that take nothing say nothing. A guessed placeholder would put a
+  // word on screen the command does not accept.
+  assert.equal(commandArgumentHint("/todos "), undefined);
+  assert.equal(commandArgumentHint("/compact "), undefined);
+  assert.equal(commandArgumentHint("/nonsense "), undefined);
+  assert.equal(commandArgumentHint("plain text"), undefined);
 });
 
 test("Shift+Tab modes cycle with a visible indicator", async (t) => {
