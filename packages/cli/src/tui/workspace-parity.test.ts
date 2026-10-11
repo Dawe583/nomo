@@ -1549,8 +1549,13 @@ test("no silent provider fallback - workspace with no provider says so explicitl
   const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.initialize();
   const lines = ui.providerLines().join("\n");
-  assert.match(lines, /Provider: unknown|Provider: unknown/);
-  assert.match(lines, /setup-required/);
+  // The provider is an inspector now, so "there is no provider" is the
+  // heading and its state is a field. What this protects is that the
+  // workspace names the gap out loud and never falls back silently.
+  assert.match(lines, /unknown provider/);
+  assert.match(lines, /status *: *setup-required/);
+  assert.match(lines, /model *: *not selected/);
+  assert.match(lines, /Never type a key into the terminal/);
   // starting a session must not fall back silently
   await assert.rejects(ui.command("hello"), /Select a model/);
 });

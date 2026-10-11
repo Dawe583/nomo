@@ -421,6 +421,21 @@ const EXPIRY_WARNING_SECONDS = 60;
  * an open obligation, so it does not carry the pending mark. The status word
  * beside it stays authoritative either way.
  */
+/**
+ * The glyph for a provider state.
+ *
+ * The state word is printed beside it in every use, so the glyph is only for
+ * scanning a column. A state this table does not name gets the failed mark
+ * rather than the ready one, because an unrecognised state has never been
+ * shown to be working.
+ */
+export function providerStatusIcon(status: string): string {
+  if (status === "ready") return ROW_ICONS.settled;
+  if (status === "setup-required" || status === "rate-limited")
+    return ROW_ICONS.queued;
+  return ROW_ICONS.failed;
+}
+
 function holdRowIcon(hold: { status: string }): string {
   return /reject|deny/i.test(hold.status)
     ? ROW_ICONS.rejected
@@ -1494,17 +1509,82 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       lines.push("No usage records yet. Send a prompt first.");
     return lines;
   }
+  /**
+   * The provider as one line, for the panes that have other things to say.
+   *
+   * The overview pane is a fixed height frame, and a twelve row inspector in
+   * the middle of it pushed the run counts off the bottom. The full inspector
+   * belongs to /status, where the provider is the subject; here it only has to
+   * be findable, which one line with the state word in it achieves.
+   */
+  providerSummary(): string {
+    const provider = this.provider;
+    const status = String(provider?.status ?? "unavailable");
+    return `${providerStatusIcon(status)} Provider ${provider?.providerId ?? "unknown"} | ${status}`;
+  }
   providerLines() {
     const provider = this.provider;
+    // The provider is the single most common source of a run that silently
+    // does nothing, and it used to be one loose line of text in a column of
+    // many. As fields it is the thing an operator looks for by name, and the
+    // status carries a tone rather than only a word.
+    const status = String(provider?.status ?? "unavailable");
+    const tone =
+      status === "ready"
+        ? "success"
+        : status === "rate-limited"
+          ? "warning"
+          : status === "setup-required"
+            ? "warning"
+            : "error";
     return [
-      `Provider: ${provider?.providerId ?? "unknown"} | ${provider?.status ?? "unavailable"}`,
-      ...(provider?.detail ? [provider.detail] : []),
-      ...(provider?.retryAt ? [`Retry at: ${provider.retryAt}`] : []),
-      ...(provider?.status === "setup-required"
-        ? [
-            "/connect shows credential setup. Never type a key into the terminal.",
-          ]
-        : []),
+      ...renderInspector(
+        {
+          title: provider?.providerId ?? "unknown provider",
+          subtitle: status,
+          icon:
+            tone === "success"
+              ? ROW_ICONS.settled
+              : tone === "error"
+                ? ROW_ICONS.failed
+                : ROW_ICONS.unknown,
+          sections: [
+            {
+              title: "provider",
+              fields: [
+                {
+                  label: "status",
+                  value: status,
+                  // Colour is decoration: the word says the same thing on a
+                  // monochrome terminal and to a screen reader.
+                  tone,
+                },
+                {
+                  label: "model",
+                  value: this.session()?.model || this.model || "not selected",
+                },
+                ...(provider?.retryAt
+                  ? [{ label: "retry at", value: provider.retryAt }]
+                  : []),
+              ],
+              body: provider?.detail ? [provider.detail] : [],
+            },
+            ...(provider?.status === "setup-required"
+              ? [
+                  {
+                    title: "what to do",
+                    fields: [] as const,
+                    body: [
+                      "/connect shows credential setup.",
+                      "Never type a key into the terminal.",
+                    ],
+                  },
+                ]
+              : []),
+          ],
+        },
+        { width: 76 },
+      ),
     ];
   }
   statusLines() {
@@ -3962,7 +4042,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return [
         "NOMO / LOCAL WORKSPACE",
         "",
-        ...this.providerLines(),
+        // One line, not the inspector: this pane has run counts, ledger
+        // counts and a plan below it, and a twelve row provider block pushed
+        // those off the bottom of a fixed height frame. /status is where the
+        // provider is the subject.
+        this.providerSummary(),
         `Model: ${this.model || "-"}`,
         `Active work: ${this.workbench.running() ? "running or settling" : "none"}`,
         `Conversations: ${this.workbench.list().length} | Documents: ${this.workbench.documentsList().length} | Pending approvals: ${this.workbench.pending().length + this.proxy.holds.length}`,
