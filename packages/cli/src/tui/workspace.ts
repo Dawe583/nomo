@@ -5065,8 +5065,18 @@ export function renderWorkspace(
   // A run in flight may get a timeline above the status bar. What it would
   // cost is measured here; whether it is affordable is decided below, from
   // the shared budget rather than from a second guess at the same numbers.
+  //
+  // The timeline follows the run this process started, not whichever run is
+  // newest. During the initial pass a busy run can be reported from a
+  // different conversation than the one just sent, and the operator watching
+  // a stopwatch saw another conversation's phases.
+  const ownRun =
+    ui.workbench
+      .runs()
+      .find((run: { sessionId?: string }) => run.sessionId === ui.sessionId)
+      ?.runId ?? ui.session()?.runId;
   const timelineRows =
-    running && !waiting
+    running && !waiting && ownRun
       ? renderTimeline(buildTimeline(ui.session()?.events ?? []), width, 8, {
           motion,
           paint: (value, tone, bold) =>
