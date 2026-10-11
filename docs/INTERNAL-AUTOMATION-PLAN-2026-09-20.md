@@ -1,4 +1,8 @@
-# VOID internal automation and agent capability plan
+# Historical VOID internal automation and agent capability plan
+
+> Historical proposal from 2026-09-20. Product and go-to-market claims below
+> are not current. The NOMO product direction and Harness acceptance gates are
+> in the active context, spec and implementation plan.
 
 Date: 2026-09-20
 Canonical repository target: `VOID-harness/void`

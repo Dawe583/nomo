@@ -1487,3 +1487,56 @@ consumed nowhere in code (operator config under `.omp/` only), and
 surfaces, `scripts/src/prime-bridge.mjs`, `cloud/prime.mjs` plus
 `scripts/team/prime-spawn.sh`, and the TUI `/harness` switch. There is no
 source-level dependency to vendor; there is a process contract.
+
+## NOMO Agent Identity and Fleet Control Plane: active direction, 2026-10-08
+
+This decision records the product direction the owner selected on 2026-10-08.
+It supersedes the earlier recovery-first product recommendation and any
+conflicting strategy or sales plan. It does not silently repeal the technical,
+security, privacy, compatibility, recovery or operations contracts below.
+
+**Choice.** Make NOMO an Agent Identity & Fleet Control Plane for MCP-capable
+agents. Bind each tool call to a trusted principal, workspace, registered agent
+and run. Apply identity and scope checks to every call. Use a measured fast path
+for reads and low-risk calls. Apply the complete policy and durable-evidence
+path to high-risk writes. Give operators agent and run visibility, exact-digest
+approval, and truthful stop and revocation state.
+
+**Required host integration.** The coding-agent Harness remains in scope and is
+a product-v1 release gate, not a separate product pitch. Harness runs use the
+same identity, token, proxy, policy and ledger path. Learning proposals stay
+inert until an operator approves the exact proposal digest. Later-session
+retrieval is bounded, same-workspace and sourced only from approved, verified
+records. It never changes policy, permissions or credentials.
+
+**Local demo.** The target for 2026-10-11 is one trusted local Workbench run, one
+workspace, one loopback inbound HTTP MCP endpoint, one disposable target and an
+opaque local token with a maximum 60-second lifetime and a proxy audience. The
+current proxy accepts agents over STDIO and uses HTTP only as an upstream client,
+so inbound HTTP is new work. This local test token is not MCP OAuth. The demo is
+not production, a distributed fleet, fleet-wide kill or revocation
+acknowledgement, or customer validation.
+
+**Product-v1 authorization.** HTTP MCP authorization must follow the current MCP
+specification, including Protected Resource Metadata, Authorization Server
+discovery, PKCE, `resource`, audience and scope validation, expiry, revocation
+and proper unauthorized responses. STDIO requires a separate process and
+environment trust design. The NOMO proxy token is never forwarded upstream.
+
+**Market position.** Identity, credential brokerage, MCP gateways and runtime
+controls are active competitive areas. No empty-market, first or only claim is
+authorized. The capability map and MVP spec define a qualification test based on
+a real write incident or blocked write, four named owners, a specific pilot
+environment and a dated next step. Positive reaction alone is not demand proof.
+Pricing and tiers remain unvalidated hypotheses, and no price claim is approved.
+
+**Compatibility.** NOMO is the product name and `@nomo/*` is the public package
+target. Existing `@void/*` imports, environment names, CLI commands, state and
+ledgers remain compatible through a tested, explicit, versioned migration.
+Never silently rename or delete user state.
+
+**Documents and authority.** The capability map, MVP spec and implementation
+plan are the active product-design references. Conflicting older product
+strategy and sales documents will be removed from the active feature branch
+after valid evidence is migrated. Keep `DECISIONS.md` history, current technical
+contracts and valid operations documentation. Do not rewrite Git history.

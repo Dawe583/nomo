@@ -29,6 +29,11 @@ import {
 } from "../../../packages/ledger/src/verify-key.ts";
 import { handleCompanionRequest } from "./companion/routes.ts";
 import { handleCompanionEnvelopeRequest } from "./companion/envelope.ts";
+import {
+  FleetEventStore,
+  type FleetEvent,
+  type FleetEventInput,
+} from "./fleet-events.ts";
 
 export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
 
@@ -57,6 +62,10 @@ export type ControlPlaneOptions = {
   readonly ledgerPath?: string;
   readonly approvals?: ApprovalBroker;
   readonly replay?: ReplayCommandOptions;
+  /** Test seam: a pre-configured Workbench replaces the default instance. */
+  readonly workbench?: Workbench;
+  /** Per-server fleet event store; tests create many servers, so no module singleton. */
+  readonly fleetEvents?: FleetEventStore;
 };
 
 export type ListenHandle = {
@@ -74,6 +83,7 @@ type RouteOptions = {
   readonly ledgerPath?: string;
   readonly approvals?: ApprovalBroker;
   readonly replay?: ReplayCommandOptions;
+  readonly fleetEvents: FleetEventStore;
   readonly publicKey?: PublicKeyLookup;
   /**
    * The resolved key, with its origin. `degraded` means private key material
@@ -247,14 +257,15 @@ export function createControlPlaneServer(options: ControlPlaneOptions = {}): Ser
   // Stated as a named constant so the divergence from the local operator
   // default is deliberate and reviewable, not an accident of two different
   // expressions in two files.
-  const workbench = new Workbench({ ...env, VOID_PERMISSION_MODE: serverPermissionMode(env.VOID_PERMISSION_MODE ?? DEFAULT_HTTP_PERMISSION_MODE) });
+  const workbench = options.workbench ?? new Workbench({ ...env, VOID_PERMISSION_MODE: serverPermissionMode(env.VOID_PERMISSION_MODE ?? DEFAULT_HTTP_PERMISSION_MODE) });
+  const fleetEventStore = options.fleetEvents ?? new FleetEventStore();
   const server = createServer((request, response) => {
     if (env.VOID_CONTROL_TOKEN ? !authorizedRemote(request, env) : !isLocalRequest(request)) {
       sendJson(response, 403, { error: "local_origin_required" });
       return;
     }
     void resolveVerifyKey(env).then((verificationKey) =>
-      route(request, response, { ...options, env, webRoot, publicKey: verificationKey?.publicKey, verificationKey, workbench, approvals: workbench.list().length ? { pending: async () => [...await readPendingApprovals(options.approvals), ...workbench.pending()], decide: (id, decision) => id.includes(":") ? workbench.decide(id, decision) : options.approvals?.decide(id, decision) } : options.approvals })).catch(() => {
+      route(request, response, { ...options, env, webRoot, publicKey: verificationKey?.publicKey, verificationKey, workbench, fleetEvents: fleetEventStore, approvals: workbench.list().length ? { pending: async () => [...await readPendingApprovals(options.approvals), ...workbench.pending()], decide: (id, decision) => id.includes(":") ? workbench.decide(id, decision) : options.approvals?.decide(id, decision) } : options.approvals })).catch(() => {
       sendJson(response, 500, {
         error: "internal_error",
         message: "The request failed; operator review required",
@@ -304,10 +315,20 @@ async function route(
     const stopRun = /^\/api\/runs\/([A-Za-z0-9_-]+)\/stop$/.exec(parsed.pathname);
     if (stopRun && request.method === 'POST') {
       if (!wb.get(stopRun[1]!)) return sendJson(response, 404, { message: 'Session not found.' });
-      wb.stopRun(stopRun[1]!); return sendJson(response, 200, { ok: true });
+      // The acknowledgement records that this process accepted the stop, not
+      // that every in-flight call has resolved: an already dispatched call
+      // stays visible as in flight until its result is confirmed.
+      options.fleetEvents.record({ kind: "stop_requested", agentId: stopRun[1]!, sessionId: stopRun[1]!, label: "operator requested run stop" });
+      wb.stopRun(stopRun[1]!);
+      options.fleetEvents.record({ kind: "stop_acknowledged", agentId: stopRun[1]!, sessionId: stopRun[1]!, label: "this process acknowledged the stop; local kill scope only" });
+      return sendJson(response, 200, { ok: true, ack: options.fleetEvents.stopAck(stopRun[1]!), scope: "this process only" });
     }
     if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, options.workbench.agents());
-    if (request.method === 'POST' && parsed.pathname === '/api/agents') return sendJson(response, 200, { agent: wb.upsertAgent(await readJsonBody(request)) });
+    if (request.method === 'POST' && parsed.pathname === '/api/agents') {
+      const agent = wb.upsertAgent(await readJsonBody(request));
+      options.fleetEvents.record({ kind: "agent_started", agentId: agent.id, label: "agent registered" });
+      return sendJson(response, 200, { agent });
+    }
     if (request.method === 'POST' && parsed.pathname === '/api/hooks') return sendJson(response, 200, { hook: wb.upsertHook(await readJsonBody(request)) });
     if (request.method === 'GET' && parsed.pathname === '/api/integrations') return sendJson(response, 200, { supported: false, integrations: [] });
     if (request.method === 'GET' && parsed.pathname === '/api/demo/status') return sendJson(response, 200, { supported: false, available: false });
@@ -335,7 +356,24 @@ async function route(
       if (request.method === 'PATCH') { const settings = wb.patchHarnessSettings(await readJsonBody(request) as Record<string, unknown>); return sendJson(response, 200, { settings, rows: harnessSettingsView(settings) }); }
     }
     if (['/api/runs','/api/usage','/api/overview'].includes(parsed.pathname) && request.method === 'GET') {
-      const data = activity(wb.allViews()); if (parsed.pathname === '/api/overview') return sendJson(response, 200, { ...data.overview, pendingApprovals: wb.pending().length, documents: wb.documentsList().length });
+      const data = activity(wb.allViews()); if (parsed.pathname === '/api/overview') {
+        // Fleet view (plan Task 7): one registered agent and its current run,
+        // this process's stop acknowledgement, and unconfirmed in-flight calls.
+        // Labels only — the event store's input type cannot carry a token or a
+        // prompt, so the overview cannot leak one either.
+        const events = options.fleetEvents.latest(5);
+        const agentRun = data.runs[0];
+        return sendJson(response, 200, {
+          ...data.overview,
+          pendingApprovals: wb.pending().length,
+          documents: wb.documentsList().length,
+          agentId: agentRun?.id,
+          runState: agentRun?.state,
+          inFlight: agentRun?.state === "stopping" ? 1 : 0,
+          stopAck: options.fleetEvents.stopAck(agentRun?.sessionId ?? undefined),
+          latestEvents: events,
+        });
+      }
       const rows = parsed.pathname === '/api/runs' ? data.runs : data.usage; return sendJson(response, 200, page(filterRows(rows as readonly Record<string, unknown>[], query), query));
     }
     if (parsed.pathname === '/api/documents' && request.method === 'GET') return sendJson(response, 200, page(filterRows(wb.documentsList(), query), query));
@@ -449,7 +487,11 @@ async function route(
     if (request.method === "POST") {
       const body = await readJsonBody(request) as { prompt?: string; model?: string; project?: string; agent?: string; background?: boolean; idempotencyKey?: string } | null;
       if (typeof body?.prompt !== "string" || (body.model !== undefined && typeof body.model !== "string") || (body.project !== undefined && typeof body.project !== "string") || (body.agent !== undefined && typeof body.agent !== "string") || (body.background !== undefined && typeof body.background !== "boolean")) return sendJson(response, 400, { error: "invalid_session" });
-      try { return sendJson(response, 201, { session: await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent, body.background) }); }
+      try {
+        const session = await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent, body.background);
+        options.fleetEvents.record({ kind: "run_started", agentId: session.id, sessionId: session.id, label: "run started for session" });
+        return sendJson(response, 201, { session });
+      }
       catch (error) { return sendJson(response, 409, { error: "session_not_started", message: error instanceof Error ? error.message : "Session not started" }); }
     }
   }
@@ -550,6 +592,19 @@ async function route(
   if (request.method === "GET" && parsed.pathname === "/api/feed") {
     return handleFeed(response, options, parsed.searchParams);
   }
+  if (request.method === "GET" && parsed.pathname === "/api/fleet/events") {
+    const after = Number(query.get("after") ?? 0);
+    const events = Number.isFinite(after) ? options.fleetEvents.after(after) : [];
+    return sendJson(response, 200, {
+      items: events,
+      after: events.at(-1)?.seq ?? after,
+      stopAck: options.fleetEvents.stopAck(query.get("sessionId") ?? undefined),
+      asOf: new Date().toISOString(),
+      // Honest scope note for the operator: these events describe this
+      // process only; a killed child's final state is not observable here.
+      scope: "this process only",
+    });
+  }
   if (request.method === "GET" && parsed.pathname === "/api/ledger/verify") {
     return handleVerify(response, options, parsed.searchParams);
   }
@@ -558,7 +613,7 @@ async function route(
   }
   const approvalMatch = /^\/api\/approvals\/([^/]+)\/decision$/.exec(parsed.pathname);
   if (request.method === "POST" && approvalMatch !== null) {
-    return handleApprovalDecision(request, response, options.approvals, decodeURIComponent(approvalMatch[1]!));
+    return handleApprovalDecision(request, response, options.approvals, decodeURIComponent(approvalMatch[1]!), options.fleetEvents);
   }
   if (parsed.pathname === "/api/companion/envelope") {
     // The envelope adapter speaks the frozen `void.companion.v1` wire contract
@@ -701,6 +756,7 @@ async function handleApprovalDecision(
   response: ServerResponse,
   approvals: ApprovalBroker | undefined,
   holdId: string,
+  fleetEvents: FleetEventStore,
 ): Promise<void> {
   if (approvals === undefined) {
     return sendJson(response, 503, {
@@ -713,6 +769,7 @@ async function handleApprovalDecision(
   const decision = parseDecision(body);
   if (decision === null) return sendJson(response, 400, { error: "invalid_decision" });
   const result = await approvals.decide(holdId, decision);
+  fleetEvents.record({ kind: "approval", agentId: holdId, sessionId: undefined, label: "approval decided", verdict: decision.kind });
   response.setHeader("cache-control", "no-store");
   sendJson(response, 200, { ok: true, result });
 }

@@ -218,6 +218,66 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
           </button>
         ))}
       </div>
+      <section className="fleet-status">
+        <h2>{t("Registrovaný agent", "Registered agent")}</h2>
+        <ul className="fleet-meta">
+          <li>
+            <span>{t("Agent", "Agent")}</span>
+            <strong>{data?.agentId ?? "—"}</strong>
+          </li>
+          <li>
+            <span>{t("Stav běhu", "Run state")}</span>
+            <strong>{data?.runState ?? t("neznámý", "unknown")}</strong>
+          </li>
+          <li>
+            <span>{t("Nevyřízená volání v běhu", "Unresolved in-flight calls")}</span>
+            <strong>{data?.inFlight ?? "—"}</strong>
+            {typeof data?.inFlight === "number" && data.inFlight > 0 && (
+              <small>
+                {t(
+                  "Volání už odeslaná upstreamu zůstávají ve stavu neznámo, dokud nepřijde výsledek.",
+                  "Calls already dispatched upstream stay unknown until their result confirms.",
+                )}
+              </small>
+            )}
+          </li>
+          <li>
+            <span>{t("Potvrzení zastavení", "Stop acknowledgement")}</span>
+            <strong>
+              {data?.stopAck === "acknowledged"
+                ? t("potvrzeno", "acknowledged")
+                : data?.stopAck === "pending"
+                  ? t("čeká", "pending")
+                  : t("neznámý", "unknown")}
+            </strong>
+          </li>
+        </ul>
+        <h3>{t("Poslední události", "Latest events")}</h3>
+        <ul className="fleet-events">
+          {(data?.latestEvents ?? []).slice(0, 5).map((event: Row) => {
+            // Metadata allow-list only (kind/at/label/verdict): render each
+            // field by name so no prompt content can slip in even if the
+            // server sent more.
+            const fields: [string, unknown][] = [
+              ["kind", event.kind],
+              ["at", event.at],
+              ["label", event.label],
+              ["verdict", event.verdict],
+            ];
+            return (
+              <li key={event.seq ?? String(event.at) + String(event.label)}>
+                {fields
+                  .filter(([, value]) => value !== undefined)
+                  .map(([name, value]) => (
+                    <span key={name} data-field={name}>
+                      {String(value)}
+                    </span>
+                  ))}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
       <h2>{t("Nedávná práce", "Recent work")}</h2>
       <DataTable
         endpoint="/api/sessions?archived=false"
@@ -246,18 +306,22 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
 export function Runs({ navigate }: { navigate: (path: string) => void }) {
   const t = useText(), client = useQueryClient();
   const [state, setState] = useState(""), [selected, setSelected] = useState<Row>(),
-    [stopping, setStopping] = useState(false), [error, setError] = useState<unknown>();
+    [stopping, setStopping] = useState(false), [error, setError] = useState<unknown>(),
+    [ack, setAck] = useState<"pending" | "acknowledged" | "unknown">("unknown");
   const overview = useApi("/api/overview");
   const detail = useApi("/api/runs?sessionId=" + encodeURIComponent(selected?.sessionId ?? ""), !!selected, 3000);
   const run = items(detail.data).find(row => row.id === selected?.id) ?? selected;
   const running = overview.data?.running ?? overview.data?.overview?.running ?? null;
   async function stop() {
     if (!run || stopping || !runCanStop(run)) return;
-    setStopping(true); setError(undefined);
+    setStopping(true); setError(undefined); setAck("pending");
     try {
-      await api("/api/runs/" + encodeURIComponent(run.sessionId) + "/stop", "POST");
+      const result = await api("/api/runs/" + encodeURIComponent(run.sessionId) + "/stop", "POST") as Row;
+      // The server's acknowledgement names this process's scope. UI success
+      // follows the server response, never a local guess.
+      setAck(result.ack === "acknowledged" ? "acknowledged" : "unknown");
       await client.invalidateQueries();
-    } catch (error) { setError(error); }
+    } catch (error) { setError(error); setAck("unknown"); }
     finally { setStopping(false); }
   }
   return <>
@@ -288,6 +352,9 @@ export function Runs({ navigate }: { navigate: (path: string) => void }) {
       <ErrorBox error={error ?? detail.error} />
       {(runState(run) === "unknown" || run.reconcileRequired) && <p className="notice" role="status">{t("Výsledek není potvrzen. Zkontrolujte nástroje a ledger. Běh se automaticky neopakuje.", "The outcome is not confirmed. Inspect tools and the ledger. The run will not automatically repeat.")}</p>}
       {runState(run) === "stopping" && <p role="status">{t("Požadavek na zastavení byl odeslán. Dříve spuštěný nástroj může ještě dokončit práci.", "Stop requested. An already dispatched tool may still finish.")}</p>}
+      {ack !== "unknown" && <p role="status">{ack === "acknowledged"
+        ? t("Tento proces potvrdil zastavení. Kill platí jen pro tento proces; volání už odeslaná upstreamu zůstávají ve stavu neznámo, dokud nepřijde výsledek.", "This process acknowledged the stop. Kill scope is this process only; calls already dispatched upstream stay unknown until their result confirms.")
+        : t("Potvrzení zastavení zatím nepřišlo. Nezobrazuji úspěch.", "No stop acknowledgement yet. Success is not shown.")}</p>}
       <JsonDetail value={run} />
       <div className="actions">
         <button onClick={() => navigate("/chat/" + run.sessionId)}>{t("Otevřít konverzaci", "Open conversation")}</button>

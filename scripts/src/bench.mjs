@@ -89,8 +89,10 @@ async function forward(count, dir, signer, now) {
   });
   assert.deepEqual(errors, []);
   assert.equal(responses.length, count);
+  const responsesById = new Map(responses.map((response) => [response.id, response]));
+  assert.equal(responsesById.size, count);
   for (let id = 0; id < count; id += 1) {
-    assert.deepEqual(responses[id], { jsonrpc: "2.0", id, result: { sequence: id } });
+    assert.deepEqual(responsesById.get(id), { jsonrpc: "2.0", id, result: { sequence: id } });
   }
   const verification = await jsonlStore(signer, { dir: ledgerDir }).verify("bench");
   assert.equal(verification.ok, true, verification.reason);

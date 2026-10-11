@@ -32,7 +32,7 @@ import type { HeldCall, HoldId, HoldQueue, HoldResolution, Release } from "./hol
 import type { PolicyCall } from "./decide.ts";
 import type { NotifyChannel } from "./rules.ts";
 
-export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
+export type ApprovalStatus = "pending" | "approved" | "denied" | "expired" | "cancelled";
 
 export type ApprovalDecision = {
   readonly kind: "approved" | "denied";
@@ -49,6 +49,10 @@ export type ApprovalRecord = {
   readonly notify: readonly NotifyChannel[];
   readonly by?: string;
   readonly reason?: string;
+};
+
+export type PendingApprovalRecord = Omit<ApprovalRecord, "status"> & {
+  readonly status: "pending";
 };
 
 export type ApprovalNotification = {
@@ -256,6 +260,17 @@ export class ApprovalBroker {
     return true;
   }
 
+  cancel(holdId: HoldId): boolean {
+    const current = this.approvals.get(holdId);
+    const queue = this.queues.get(holdId);
+    if (current === undefined || queue === undefined || current.status !== "pending") return false;
+    if (queue.list().some((held) => held.id === holdId)) queue.cancel(holdId);
+    this.approvals.set(holdId, { ...current, status: "cancelled" });
+    this.queues.delete(holdId);
+    this.flush();
+    return true;
+  }
+
   expire(dueAt: number): readonly ApprovalRecord[] {
     const expired: ApprovalRecord[] = [];
     for (const record of this.approvals.values()) {
@@ -282,11 +297,13 @@ export class ApprovalBroker {
     return [...this.approvals.values()].map((record) => ({ ...record }));
   }
 
-  pending(): readonly ApprovalRecord[] {
-    return this.list().filter((record) => record.status === "pending");
+  pending(): readonly PendingApprovalRecord[] {
+    return this.list().filter(
+      (record): record is PendingApprovalRecord => record.status === "pending",
+    );
   }
 
-  listPending(): readonly ApprovalRecord[] {
+  listPending(): readonly PendingApprovalRecord[] {
     return this.pending();
   }
 
@@ -386,7 +403,7 @@ export function savePending(dir: string, records: readonly ApprovalRecord[], fs:
   atomicWrite(dir, "pending.json", records, stateCheck(fs));
 }
 
-export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: (code: ApprovalStateCode) => boolean): readonly ApprovalRecord[] {
+export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: (code: ApprovalStateCode) => boolean): readonly PendingApprovalRecord[] {
   const check = stateCheck(fs, acknowledge);
   assertPrivateDirectory(dir, check, false);
   assertPrivateFile(join(dir, "pending.json"), check);
@@ -396,7 +413,7 @@ export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: 
     item.status === "pending" && typeof item.expiresAt === "number" && Number.isFinite(item.expiresAt) &&
     isObject(item.call) && typeof item.call.tool === "string" && typeof item.call.klass === "string" &&
     Array.isArray(item.notify))) throw new Error("invalid pending approvals file");
-  return value as ApprovalRecord[];
+  return value as PendingApprovalRecord[];
 }
 
 export function writeDecision(

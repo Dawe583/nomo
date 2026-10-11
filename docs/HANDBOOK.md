@@ -1031,7 +1031,7 @@ A checklist, in the order that catches the most.
 | The decisions behind the design                         | [context](CONTEXT.md), [decision log](DECISIONS.md)                                                                                 |
 | The standards this repository holds itself to           | [the standards](STANDARDS.md)                                                                                                       |
 | The release evidence matrix                             | [the release evidence matrix](RELEASE-1.0.1-MATRIX.md)                                                                              |
-| What is left to build, honestly                         | [what is left to build, honestly](PLAN-GAPS.md)                                                                                     |
+| Current NOMO MVP plan and roadmap                      | [active NOMO implementation plan](superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md)                           |
 | Windows desktop specifics                               | [Windows desktop specifics](WINDOWS-DESKTOP.md)                                                                                     |
 | Beta boundaries                                         | [beta boundaries](BETA.md)                                                                                                          |
 | How this handbook is kept true                          | [how this handbook is kept true](../scripts/src/handbook.test.mjs)                                                                  |

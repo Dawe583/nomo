@@ -207,6 +207,7 @@ export async function startDemoServer() {
   });
   const values = new Map();
   const app = express();
+  const webRoot = resolve(ROOT, "dist/web");
   app.use(express.json());
   app.use(
     "/api/demo",
@@ -226,8 +227,9 @@ export async function startDemoServer() {
       }),
     }),
   );
-  app.use(express.static(resolve(ROOT, "dist/web")));
-  app.get("/demo", (_req, res) => res.sendFile(resolve(ROOT, "dist/web/index.html")));
+  app.use(express.static(webRoot));
+  // A relative path keeps Express from treating the worktree parent as a dotfile.
+  app.get("/demo", (_req, res) => res.sendFile("index.html", { root: webRoot }));
   const server = app.listen(0, "127.0.0.1");
   await new Promise((r) => server.once("listening", r));
   return {

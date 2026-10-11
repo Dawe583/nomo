@@ -1048,4 +1048,4 @@ Provisioning, App Store Connect access, Mac App Store team/App ID/signing and se
 
 ## Reconciliation of older audits
 
-`docs/PLAN-GAPS.md` and `docs/APPLE-APPS-PLAN.md` predate this scope decision. Their iOS local-core and mandatory macOS SwiftUI claims are superseded. G-01 cloud journal, G-03 local/cloud job availability, G-04 recorded resource sets and G-20 standalone verifier already have bounded implementations; their remaining cross-system, certification, distribution and network gates remain open. The old `docs/RELEASE.md` 0.1.0/npm release runbook is historical and does not certify Apple 1.0.1.
+Earlier audit material and `docs/APPLE-APPS-PLAN.md` predate this scope decision. The older iOS local-core and mandatory macOS SwiftUI claims are superseded. G-01 cloud journal, G-03 local/cloud job availability, G-04 recorded resource sets and G-20 standalone verifier already have bounded implementations; their remaining cross-system, certification, distribution and network gates remain open. The old `docs/RELEASE.md` 0.1.0/npm release runbook is historical and does not certify Apple 1.0.1.

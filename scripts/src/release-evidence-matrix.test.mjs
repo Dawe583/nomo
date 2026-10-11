@@ -16,7 +16,6 @@ import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 
 const matrix = readFileSync("docs/RELEASE-1.0.1-MATRIX.md", "utf8");
-const gaps = readFileSync("docs/PLAN-GAPS.md", "utf8");
 const applePlan = readFileSync("docs/APPLE-APPS-PLAN.md", "utf8");
 const windows = readFileSync("docs/WINDOWS-DESKTOP.md", "utf8");
 
@@ -115,7 +114,6 @@ test("the evidence documents print the native test-case counts the tree actually
 
   for (const [name, text] of [
     ["docs/RELEASE-1.0.1-MATRIX.md", matrix],
-    ["docs/PLAN-GAPS.md", gaps],
     ["docs/APPLE-APPS-PLAN.md", applePlan],
   ]) {
     // Each document wraps the sentence differently, so compare against the
@@ -173,7 +171,6 @@ test("the evidence documents keep the physical-device and store boundary explici
 
   for (const [name, text] of [
     ["docs/RELEASE-1.0.1-MATRIX.md", matrix],
-    ["docs/PLAN-GAPS.md", gaps],
     ["docs/APPLE-APPS-PLAN.md", applePlan],
   ]) {
     // The boundary sentence is line wrapped in these documents, so compare

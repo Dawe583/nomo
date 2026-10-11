@@ -9,7 +9,7 @@ import { join } from "node:path";
 import type { AddressInfo } from "node:net";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 
-import { ProxyStartupError, runProxy } from "./bin.ts";
+import { createLocalProxyRpcBridge, ProxyStartupError, runProxy } from "./bin.ts";
 import type { ProxyOptions, UpstreamEvents } from "./bin.ts";
 import type { HoldQueue } from "../../policy/src/index.ts";
 import type { UpstreamProcess } from "./transport/stdio.ts";
@@ -23,6 +23,120 @@ const platformTestTimeoutMs = (
   windowsMilliseconds: number,
 ): number =>
   process.platform === "win32" ? windowsMilliseconds : milliseconds;
+
+test("local proxy bridge initializes, lists tools and forwards tool calls", { timeout: 5_000 }, async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-proxy-bridge-"));
+  const policyPath = join(directory, "policy.yml");
+  await writeFile(policyPath, policyText("allow"));
+  const ledgerDir = join(directory, "ledger");
+  const upstreamMessages: Array<Record<string, unknown>> = [];
+  let upstreamClosed = false;
+  let resolveCancelToolDispatched: (() => void) | undefined;
+  let resolveCancelNotification: (() => void) | undefined;
+  const cancelToolDispatched = new Promise<void>((resolve) => {
+    resolveCancelToolDispatched = resolve;
+  });
+  const cancelNotificationSeen = new Promise<void>((resolve) => {
+    resolveCancelNotification = resolve;
+  });
+  const bridge = createLocalProxyRpcBridge({
+    upstreamCommand: ["fake"],
+    policyPath,
+    posture: "fail-closed",
+    ledgerDir,
+    workspace: "bridge-test",
+    keyProvider: keyProviderFromPkcs8(
+      generateKeyPairSync("ed25519").privateKey.export({
+        format: "der",
+        type: "pkcs8",
+      }),
+    ),
+    upstreamSpawn(events) {
+      return {
+        send(line) {
+          const message = JSON.parse(line) as {
+            id?: number | string;
+            method?: string;
+            params?: { name?: string; arguments?: Record<string, unknown> };
+          };
+          upstreamMessages.push(message as Record<string, unknown>);
+          if (message.method === "notifications/cancelled")
+            resolveCancelNotification?.();
+          if (message.method === "initialize") {
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: {
+                protocolVersion: "2025-11-25",
+                capabilities: { tools: {} },
+                serverInfo: { name: "fixture", version: "1" },
+              },
+            }));
+          } else if (message.method === "tools/list") {
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: {
+                tools: [{
+                  name: "aws.s3.bucket.delete",
+                  description: "Echo",
+                  inputSchema: { type: "object", properties: { value: { type: "string" } } },
+                }],
+              },
+            }));
+          } else if (message.method === "tools/call" &&
+            message.params?.arguments?.value === "cancel") {
+            resolveCancelToolDispatched?.();
+          } else if (message.method === "tools/call") {
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: { content: [{ type: "text", text: message.params?.arguments?.value }] },
+            }));
+          }
+        },
+        close() {
+          if (upstreamClosed) return;
+          upstreamClosed = true;
+          events.onClose(0, null);
+        },
+        onStderr() {
+          return () => {};
+        },
+      };
+    },
+  });
+  t.after(async () => {
+    await bridge.close();
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  assert.deepEqual((await bridge.listTools()).map((tool) => tool.name), ["aws.s3.bucket.delete"]);
+  assert.deepEqual(await bridge.callTool("aws.s3.bucket.delete", { value: "hello" }), {
+    content: [{ type: "text", text: "hello" }],
+  });
+  assert.equal(upstreamMessages.filter((message) => message.method === "tools/call").length, 1);
+  assert.equal(JSON.stringify(upstreamMessages).includes("local-grant"), false);
+
+  const controller = new AbortController();
+  const cancelledCall = bridge.callTool(
+    "aws.s3.bucket.delete",
+    { value: "cancel" },
+    controller.signal,
+  );
+  await cancelToolDispatched;
+  controller.abort();
+  await cancelNotificationSeen;
+  await assert.rejects(cancelledCall);
+  assert.equal(
+    upstreamMessages.some((message) => message.method === "notifications/cancelled"),
+    true,
+  );
+
+  await bridge.close();
+  assert.equal(upstreamClosed, true);
+  await assert.rejects(bridge.listTools());
+});
 
 describe("runProxy", () => {
   test("initialize negotiation answers a version the agent supports", async () => {
@@ -61,6 +175,124 @@ describe("runProxy", () => {
     assert.deepEqual(harness.outputMessages, [
       { jsonrpc: "2.0", id: 21, result: { called: "aws.s3.bucket.delete" } },
     ]);
+  });
+
+  test("duplicate outstanding request ids are rejected before a second dispatch", async () => {
+    const harness = await makeHarness("allow");
+
+    await harness.run([
+      toolCall(210, "aws.s3.bucket.delete"),
+      toolCall(210, "aws.s3.bucket.delete"),
+    ]);
+
+    assert.equal(harness.upstreamMessages.filter((message) => message.method === "tools/call").length, 1);
+    assert.equal(harness.outputMessages.filter((message) =>
+      (message as { error?: { code?: number } }).error?.code === -32600,
+    ).length, 1);
+    assert.equal(harness.outputMessages.filter((message) =>
+      (message as { result?: unknown }).result !== undefined,
+    ).length, 1);
+  });
+
+  test("a low risk call is not blocked by a separate pending hold", { timeout: 5_000 }, async (t) => {
+    const directory = await mkdtemp(join(tmpdir(), "void-proxy-independent-dispatch-"));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const policyPath = join(directory, "policy.yml");
+    const factsPath = join(directory, "facts.yml");
+    const verifiedAt = new Date().toISOString();
+    await writeFile(policyPath, [
+      "version: 1",
+      "rules:",
+      "  - match:",
+      "      tool: aws.s3.bucket.delete",
+      "    decision: hold",
+      "    seconds: 60",
+      "    notify: [cli]",
+      "  - match:",
+      "      tool: aws.s3.object.delete",
+      "      class: r0",
+      "    decision: allow",
+      "  - match: {}",
+      "    decision: deny",
+      "",
+    ].join("\n"));
+    await writeFile(factsPath, JSON.stringify({
+      facts: {
+        "bucket.versioning": { value: "Enabled", verifiedAt, source: "manual" },
+        "bucket.mfa_delete": { value: "off", verifiedAt, source: "manual" },
+      },
+    }));
+
+    const input = lineQueue();
+    const upstreamMessages: Array<Record<string, unknown>> = [];
+    const outputMessages: unknown[] = [];
+    let queue: HoldQueue | null = null;
+    let resolveLowRiskDispatch: (() => void) | undefined;
+    const lowRiskDispatched = new Promise<void>((resolve) => {
+      resolveLowRiskDispatch = resolve;
+    });
+    const run = runProxy({
+      upstreamCommand: ["fake"],
+      policyPath,
+      factsPath,
+      posture: "fail-closed",
+      ledgerDir: join(directory, "ledger"),
+      workspace: "test",
+      keyProvider: keyProviderFromPkcs8(
+        generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
+      ),
+      input,
+      output(line) { outputMessages.push(JSON.parse(line) as unknown); },
+      onHold(held) { queue = held; },
+      shutdownSignals: false,
+      upstreamSpawn(events) {
+        return {
+          send(line) {
+            const message = JSON.parse(line) as {
+              readonly id?: number;
+              readonly method?: string;
+              readonly params?: { readonly name?: string };
+            };
+            upstreamMessages.push(message as Record<string, unknown>);
+            if (message.method !== "tools/call") return;
+            if (message.params?.name === "aws.s3.object.delete") resolveLowRiskDispatch?.();
+            events.onMessage(JSON.stringify({
+              jsonrpc: "2.0",
+              id: message.id,
+              result: { called: message.params?.name },
+            }));
+          },
+          close() {},
+          onStderr() { return () => {}; },
+        };
+      },
+    });
+
+    input.push(JSON.stringify(toolCall(231, "aws.s3.bucket.delete")));
+    const held = await waitForQueue(() => queue);
+    input.push(JSON.stringify(toolCall(232, "aws.s3.object.delete")));
+    const dispatchedBeforeApproval = await Promise.race([
+      lowRiskDispatched.then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(
+        () => resolve(false),
+        platformTestTimeoutMs(150, 1_000),
+      )),
+    ]);
+    held.resolve(held.list()[0]!.id, { kind: "approved" });
+    input.close();
+    await run;
+
+    assert.equal(dispatchedBeforeApproval, true);
+    assert.deepEqual(
+      upstreamMessages
+        .filter((message) => message.method === "tools/call")
+        .map((message) => (message.params as { readonly name: string }).name),
+      ["aws.s3.object.delete", "aws.s3.bucket.delete"],
+    );
+    assert.deepEqual(
+      outputMessages.map((message) => (message as { readonly id: number }).id).sort(),
+      [231, 232],
+    );
   });
 
   test("string cancellation maps upstream without cancelling the matching numeric id", async () => {
@@ -113,6 +345,77 @@ describe("runProxy", () => {
     assert.equal(error.id, 22);
     assert.match(error.error.message, /denied/);
     assert.match(error.error.message, /Do not retry/);
+  });
+
+  test("cancellation is read while a tool call waits for approval", { timeout: 5_000 }, async (t) => {
+    const directory = await mkdtemp(join(tmpdir(), "void-proxy-cancel-"));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const policyPath = join(directory, "policy.yml");
+    await writeFile(policyPath, policyText("hold"));
+    const messages = [
+      JSON.stringify(toolCall(230, "aws.s3.bucket.delete")),
+      JSON.stringify({
+        jsonrpc: "2.0",
+        method: "notifications/cancelled",
+        params: { requestId: 230, reason: "caller cancelled" },
+      }),
+    ];
+    let nextCalls = 0;
+    let resolveSecondRead: (() => void) | undefined;
+    const secondRead = new Promise<void>((resolve) => { resolveSecondRead = resolve; });
+    const input: AsyncIterable<string> = {
+      [Symbol.asyncIterator]() {
+        return {
+          next() {
+            nextCalls += 1;
+            if (nextCalls === 2) resolveSecondRead?.();
+            const value = messages.shift();
+            return Promise.resolve(value === undefined
+              ? { done: true, value: undefined }
+              : { done: false, value });
+          },
+        };
+      },
+    };
+    const handlers = new Map<string, () => void>();
+    const upstreamMessages: Array<Record<string, unknown>> = [];
+    const outputMessages: unknown[] = [];
+    let resolveHold: (() => void) | undefined;
+    const holdReady = new Promise<void>((resolve) => { resolveHold = resolve; });
+    const run = runProxy({
+      upstreamCommand: ["fake"],
+      policyPath,
+      posture: "fail-closed",
+      ledgerDir: join(directory, "ledger"),
+      keyProvider: keyProviderFromPkcs8(
+        generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
+      ),
+      input,
+      output(line) { outputMessages.push(JSON.parse(line) as unknown); },
+      onHold() { resolveHold?.(); },
+      upstreamSpawn(events) { return fakeUpstream(events, upstreamMessages); },
+      shutdownSignals: {
+        on(signal, handler) { handlers.set(signal, handler); },
+        off(signal, handler) { if (handlers.get(signal) === handler) handlers.delete(signal); },
+      },
+    });
+    await holdReady;
+    const cancellationWasRead = await Promise.race([
+      secondRead.then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 30)),
+    ]);
+    if (!cancellationWasRead) handlers.get("SIGTERM")?.();
+    await run;
+
+    assert.equal(cancellationWasRead, true, "the input loop should read cancellation during a hold");
+    assert.equal(upstreamMessages.some((message) => message.method === "tools/call"), false);
+    const response = outputMessages[0] as {
+      readonly id: number;
+      readonly error: { readonly code: number; readonly message: string };
+    };
+    assert.equal(response.id, 230);
+    assert.equal(response.error.code, -32800);
+    assert.match(response.error.message, /cancelled before dispatch/);
   });
 
   test("held call approved then forwards", async () => {
@@ -919,32 +1222,42 @@ test("bound legacy call records unknown on close after dispatch", async () => {
 test("bound legacy calls keep numeric and string ids distinct", async () => {
   const lifecycle: string[] = [];
   const outcomes: string[] = [];
-  const captures: LegacyCaptureEvidence[] = [];
+  const captureByLabel = new Map<string, string>();
   const base = testLegacyBinding(lifecycle, outcomes);
   const binding: LegacyProxyBinding = {
     ...base,
     async capture(call, argsDigest) {
       const evidence = await base.capture(call, argsDigest);
-      const index = captures.length + 1;
-      const captureDigest = `sha256:${String(index).repeat(64)}`;
+      const label = String(call.args.label);
+      const captureDigest = `sha256:${(label === "numeric" ? "1" : "2").repeat(64)}`;
       const next = {
         ...evidence,
         captureDigest,
         reference: { ...evidence.reference, digest: captureDigest },
       };
-      captures.push(next);
+      captureByLabel.set(label, captureDigest);
       return next;
     },
   };
-  const pending: Array<{ id: number }> = [];
+  const pending: Array<{ id: number; label: string }> = [];
+  const request = (id: number | string, label: string): Record<string, unknown> => ({
+    jsonrpc: "2.0",
+    id,
+    method: "tools/call",
+    params: { name: binding.tool, arguments: { label } },
+  });
 
   await runBoundProxy({
     binding,
-    messages: [toolCall(1, binding.tool), toolCall("1", binding.tool)],
+    messages: [request(1, "numeric"), request("1", "string")],
     upstream(eventsApi) {
       return {
         send(line) {
-          pending.push(JSON.parse(line) as { id: number });
+          const message = JSON.parse(line) as {
+            readonly id: number;
+            readonly params: { readonly arguments: { readonly label: string } };
+          };
+          pending.push({ id: message.id, label: message.params.arguments.label });
           if (pending.length === 2) {
             eventsApi.onMessage(
               JSON.stringify({
@@ -971,10 +1284,10 @@ test("bound legacy calls keep numeric and string ids distinct", async () => {
   });
 
   assert.notEqual(pending[0]?.id, pending[1]?.id);
-  assert.deepEqual(outcomes, [
-    captures[1]!.captureDigest,
-    captures[0]!.captureDigest,
-  ]);
+  assert.deepEqual(
+    outcomes,
+    [...pending].reverse().map(({ label }) => captureByLabel.get(label)),
+  );
 });
 
 test("observe posture never resolves a recovery binding", async () => {

@@ -4,6 +4,28 @@ import { readFileSync } from "node:fs";
 
 const main = readFileSync(new URL("./main.tsx", import.meta.url), "utf8");
 const ui = readFileSync(new URL("./ui.tsx", import.meta.url), "utf8");
+const pages = readFileSync(new URL("./pages.tsx", import.meta.url), "utf8");
+
+test("a run stop shows server acknowledgement, never a local success guess", () => {
+  // The dialog gates the ack line on the server response: "acknowledged" only
+  // after /stop returns ack: acknowledged, and the scope note names this
+  // process as the kill boundary with in-flight work left unknown.
+  assert.match(
+    pages,
+    /result\.ack === "acknowledged" \? "acknowledged" : "unknown"/,
+    "ack state follows the server, not a local optimist",
+  );
+  assert.match(pages, /Kill scope is this process only/);
+  assert.match(pages, /stay unknown until their result confirms/);
+  // A missing acknowledgement must be rendered as not-success, explicitly.
+  assert.match(pages, /No stop acknowledgement yet\. Success is not shown\./);
+});
+
+test("the in-flight call stays visible after an acknowledged stop", () => {
+  // overview-state carries inFlight even when stopAck is acknowledged, so the
+  // operator still sees the call whose result has not landed.
+  assert.match(pages, /inFlight|stay unknown until their result confirms/);
+});
 
 test("a session change remounts the conversation, so an open branch dialog cannot outlive it", () => {
   // The branch dialog carries the seq and the prompt of the conversation it was
@@ -47,4 +69,35 @@ test("the generic page slot cannot be where that identity is fixed", () => {
     ["navigate", "appearance", "setAppearance", "locale", "setLocale"],
     "no routed page receives a route parameter",
   );
+});
+
+test("the overview page renders the registered agent and its run state", () => {
+  // Fleet view (plan Task 7): the overview shows one registered agent and its
+  // current run state, falling back to a placeholder / "unknown" when the
+  // server has nothing to report.
+  assert.match(pages, /data\?\.agentId \?\? /, "agent id rendered with fallback");
+  assert.match(pages, /data\?\.runState \?\? t\("neznámý", "unknown"\)/, "run state rendered with unknown fallback");
+  assert.match(pages, /data\?\.stopAck === "acknowledged"/, "stop ack status line rendered");
+});
+
+test("the overview page shows only metadata fields for latest events", () => {
+  // The event row rendering hardcodes a metadata allow-list (kind/at/label/
+  // verdict). Slice from the latestEvents block to the end of its list and
+  // assert no prompt-carrying field name appears inside it.
+  const start = pages.indexOf("data?.latestEvents");
+  assert.ok(start >= 0, "latestEvents rendered on the overview");
+  const block = pages
+    .slice(start, pages.indexOf("</ul>", start))
+    .replace(/\/\/[^\n]*/g, "");
+  assert.match(block, /kind/, "kind rendered");
+  assert.match(block, /at/, "at rendered");
+  assert.match(block, /label/, "label rendered");
+  assert.match(block, /verdict/, "verdict rendered");
+  assert.doesNotMatch(block, /\btext\b|\bpayload\b|\bprompt\b|\btoken\b/);
+});
+
+test("in-flight calls show the unknown-until-confirmed note", () => {
+  // An unconfirmed dispatched call must never read as resolved; the overview
+  // carries the same scope note as the stop dialog.
+  assert.match(pages, /Calls already dispatched upstream stay unknown until their result confirms\./);
 });

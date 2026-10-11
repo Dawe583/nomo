@@ -620,7 +620,7 @@ Credential Manager, or a mode-0600 key file. There is no production KMS in
 this tree. Rotating `VOID_SIGNING_KEY` today means generating a new key,
 redeploying, and running `scripts/src/provision-cloud.mjs`; old signed rows
 verify only against the key that signed them. A KMS-backed rotation drill
-is an open release gate (`docs/RELEASE.md` blocker 10, `docs/PLAN-GAPS.md`
-item 10), not a procedure documented here.
+is an open release gate (`docs/RELEASE.md` blocker 10), not a procedure
+documented here.
 The frontend launcher also supports direct `node scripts/src/build-web.mjs`
 invocation without `npm_execpath`, as used by older Vercel project settings.

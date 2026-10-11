@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/Dawe583/void/tree/main/packages/workbench",
   "dependencies": {
+    "@void/proxy": "workspace:*",
     "@void/runtime": "workspace:*"
   }
 }

@@ -1,12 +1,13 @@
 ---
-description: "Use when starting or continuing a VOID work package (WP-NN or AW-NN). The exact phase protocol, exit evidence requirements, and commit rules from docs/EXECUTION-PLAN.md and docs/GLM-5.3-MASTER-PROMPT.md."
+description: "Use when starting or continuing a NOMO work package. Follow docs/CONTEXT.md, docs/DECISIONS.md, docs/STANDARDS.md, the active capability map, MVP spec and implementation plan."
 ---
 
-# VOID work package protocol
+# NOMO work package protocol
 
 Read first, in order: docs/CONTEXT.md, docs/DECISIONS.md, docs/STANDARDS.md,
-the package READMEs involved. The pack is authoritative; code that disagrees
-is wrong; a pack that is wrong gets updated by a package, never silently.
+the NOMO capability map, MVP spec, implementation plan and package READMEs
+involved. The pack is authoritative; code that disagrees is wrong; a pack that
+is wrong gets updated by a package, never silently.
 
 ## Phases per package
 
@@ -16,7 +17,7 @@ B Design: at least two independent proposals for material decisions, one
 judge recording selected, rejected, trade offs, migration, testing and
 security consequences. Freeze the contract before parallel implementation.
 C Implement: parallel writers each in an isolated git worktree:
-  git worktree add ../void-<role> -b claude/<wp>-<role>
+  git worktree add ../nomo-<role> -b claude/<wp>-<role>
 D Integrate: one merger, conservative, no features, typecheck and tests.
 E Verify: run every exit criterion, capture real output. pnpm test here needs
   node --test --test-reporter=tap through scripts/src/check-tests.mjs aware
