@@ -2994,6 +2994,97 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
+    // A ledger entry or proxy entry is the core record. Enter reads it as
+    // an aligned inspector rather than a JSON dump. The row already carries
+    // the parsed body in lines, so we render it the same way approvals do.
+    if (
+      this.tab === "ledger" &&
+      (row.kind === "entry" || row.kind === "proxy")
+    ) {
+      const b = row.lines[0] ? JSON.parse(row.lines.slice(2).join("\n")) : {};
+      const isProxy = row.kind === "proxy";
+      const workspace = isProxy ? row.id.split(":")[1] : row.sessionId;
+      this.detail = [
+        ...renderInspector(
+          {
+            title: isProxy
+              ? `PROXY LEDGER ${workspace}`
+              : `MANAGED LEDGER ${workspace?.slice(0, 8)}`,
+            subtitle: row.id,
+            icon: isProxy ? ROW_ICONS.proxyEntry : ROW_ICONS.ledgerEntry,
+            sections: [
+              {
+                title: "record",
+                fields: [
+                  {
+                    label: "kind",
+                    value: text(b.klass),
+                    tone: "muted",
+                  },
+                  {
+                    label: "decision",
+                    value: text(b.decision),
+                    tone:
+                      text(b.decision) === "approved"
+                        ? "success"
+                        : text(b.decision) === "denied"
+                          ? "error"
+                          : "warning",
+                  },
+                  {
+                    label: "tool",
+                    value: text(b.tool) || "unknown",
+                  },
+                  {
+                    label: "operation",
+                    value: row.operationId ?? "n/a",
+                    tone: "muted",
+                  },
+                  {
+                    label: "sequence",
+                    value: row.id.split(":").pop() ?? "?",
+                  },
+                ],
+              },
+              {
+                title: isProxy ? "proxy verification" : "managed verification",
+                fields: [
+                  {
+                    label: isProxy ? "status" : "hash chain",
+                    value: isProxy
+                      ? this.proxy.signed
+                        ? "verified"
+                        : "integrity only"
+                      : (this.managedVerificationStatus ?? "unknown"),
+                    tone: isProxy
+                      ? this.proxy.signed
+                        ? "success"
+                        : "warning"
+                      : this.managedVerificationStatus?.startsWith("verified")
+                        ? "success"
+                        : "muted",
+                  },
+                  {
+                    label: isProxy ? "verification key" : "verification note",
+                    value: isProxy
+                      ? (this.proxy.verificationNote ?? "unknown")
+                      : (this.managedVerificationNote ?? "unknown"),
+                    tone: "muted",
+                  },
+                ],
+              },
+            ],
+            hint: "Enter on a hook or agent row acts on it. Other rows are read only.",
+          },
+          { width: 76 },
+        ),
+        "",
+        "RAW RECORD",
+        ...row.lines,
+      ];
+      this.scroll = 0;
+      return;
+    }
     this.detail = row.lines;
     this.scroll = 0;
   }
