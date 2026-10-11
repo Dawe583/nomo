@@ -1,7 +1,7 @@
 # NOMO interface contract, v0 (spike draft)
 
-Status: **draft for review, 2026-10-07.** Nothing in this file is implemented
-unless the "Status" column says so. Owners confirm the sections marked
+Status: **draft for review, 2026-10-07; identity sections revised 2026-10-11.**
+Nothing in this file is implemented unless the "Status" column says so. Owners confirm the sections marked
 **[DAVID]** or **[MAX]** before Thursday's integration.
 
 NOMO is this repository: VOID, reworked and to be renamed, not a new codebase.
@@ -13,20 +13,30 @@ deliberately did not ask (`docs/DECISIONS.md`, WP-05: no identity "beyond the
 workspace"): **which agent is asking, with which token, for which scope on
 which target, and is that agent still allowed to run.**
 
+Revision 2026-10-11: identity is David's, not this package's. The Workbench
+local agent grant (`packages/workbench/src/agent-identity.ts`,
+`LocalAgentIdentityIssuer`) issues the token, binds it to principal,
+workspace, agent, run, upstream and tool scope, and is validated by the
+inbound proxy per call. Stopping a run revokes its grant. The earlier NOMO
+proposals for a signed token, a revocation store, a kill-switch CLI and a
+fleet projection were removed from `packages/agent-policy`; the agent policy
+now takes the identity a verified grant carries and decides what that agent
+may do with it.
+
 ## 0. The one flow the spike must prove
 
 ```
-agent ──1 token request──▶ NOMO issuer ──2 policy check──▶ engine (allow/deny/hold)
+run start ──1──▶ Workbench LocalAgentIdentityIssuer.issue (agent, run, workspace, upstream, tool scope, 60 s)
+agent ──2 tools/call + grant──▶ inbound proxy ──3 validate(token, audience, upstream, tool)
+                                │ identity (or null)
+                                ▼
+                          4 checkPolicy: grant gate, agents.yaml, VOID class policy
                                 │ allow
                                 ▼
-                          3 mint 60 s token (jti, agent, tool, target, scope)
-agent ──4 tools/call + token──▶ VOID proxy ──5 re-check (token + engine + VOID class policy)
-                                │ allow
-                                ▼
-                          6 MCP connector ──▶ fake/test data only
+                          5 MCP connector ──▶ fake/test data only
                                 │
-                          7 ledger append (signed, hash chained)  +  fleet feed event
-operator ──8 kill-switch──▶ revocation store ──▶ next check denies, tokens dead, holds denied
+                          6 ledger append (signed, hash chained)
+run stop ──7 issuer.revoke(runId)──▶ next validate returns null ──▶ deny nomo:no-grant
 ```
 
 ## 1. Decision on layering (needs [DAVID])
@@ -36,7 +46,7 @@ and the most restrictive answer wins (`deny > hold > allow`):
 
 | Gate | Owner | Input | Source of rules |
 | ---- | ----- | ----- | --------------- |
-| 0. Kill-switch and token | Oliver, token runtime (David) | agent id, token claims | revocation store |
+| 0. Grant | David (issuer, proxy validation, stop) | identity from `validate`, tool | Workbench local agent grant |
 | 1. Agent policy | Oliver | agent, tool, target, scope, class | `policy/agents.yaml` (new) |
 | 2. Class policy | David, existing code unchanged | tool, connector, workspace, class, blast radius | `policy/default.yaml` (existing) |
 
@@ -55,12 +65,18 @@ export type PolicyCheckRequest = {
   readonly contract: "nomo.policy-check.v0";
   /** Correlates token request, call, ledger entry and every event. ULID or UUID. */
   readonly requestId: string;
-  readonly agent: {
-    /** Stable agent identity, ^[a-z0-9][a-z0-9._-]{0,63}$. Declared in agents.yaml. */
-    readonly id: string;
-    /** Optional run or conversation id, for the dashboard only; never matched on. */
-    readonly sessionId?: string;
-  };
+  /**
+   * What `LocalAgentIdentityIssuer.validate` returned for this call, never an
+   * agent id from the request body. Null when the grant is missing, expired or
+   * revoked. agentId must match ^[a-z0-9][a-z0-9._-]{0,63}$ and be declared in
+   * agents.yaml; workspaceId is the workspace rules match on.
+   */
+  readonly identity: {
+    readonly agentId: string;
+    readonly runId: string;
+    readonly workspaceId: string;
+    readonly toolScope: readonly string[];
+  } | null;
   /** VOID registry entry id, for example fs.file.write or postgres.row.delete. Unregistered tools are class unknown. */
   readonly tool: string;
   /** Connector of the upstream, for example fs or postgres. Same as PolicyCall.connector. */
@@ -75,10 +91,6 @@ export type PolicyCheckRequest = {
   readonly target: string;
   /** What the agent asks to be allowed to do. Closed set; unknown value = deny. */
   readonly scope: "read" | "write" | "delete" | "admin";
-  /** VOID workspace tag the proxy runs with. */
-  readonly workspace: string;
-  /** Present on the call-time check (step 5), absent on the issuance check (step 2). */
-  readonly token?: TokenClaims;
 };
 ```
 
@@ -102,12 +114,12 @@ export type PolicyCheckResult = {
    * The rule that decided. Agent-policy rules carry their own id, for example
    * support-bot-read-notes. VOID class-policy rules have no id field today, so
    * they are named void:rule[<index>]. Built-in outcomes use the nomo: prefix:
-   * nomo:kill-switch, nomo:unknown-agent, nomo:token-invalid, nomo:token-expired,
-   * nomo:token-mismatch, nomo:engine-error, nomo:default-deny.
+   * nomo:no-grant, nomo:outside-grant, nomo:unknown-agent,
+   * nomo:invalid-request, nomo:engine-error, nomo:default-deny.
    */
   readonly ruleId: string;
   /** Which gate produced the decision. */
-  readonly layer: "kill-switch" | "token" | "agent-policy" | "class-policy" | "engine";
+  readonly layer: "grant" | "agent-policy" | "class-policy" | "engine";
   /** Present only on hold; the smaller of the two layers' timers, max 900. */
   readonly holdSeconds?: number;
   /** Every gate that was evaluated, in order, for the audit view. */
@@ -116,14 +128,15 @@ export type PolicyCheckResult = {
     readonly decision: "allow" | "deny" | "hold" | "skipped";
     readonly ruleId: string;
   }[];
-  /** sha256 of agents.yaml content and of the VOID policy content, as VOID's policyDigest. */
-  readonly agentPolicyDigest: string;
-  readonly classPolicyDigest: string;
+  /** sha256 of agents.yaml content and of the VOID policy content, as VOID's policyDigest; null when a policy did not load. */
+  readonly agentPolicyDigest: string | null;
+  readonly classPolicyDigest: string | null;
 };
 ```
 
-Determinism: same request, same `agents.yaml`, same VOID policy, same facts,
-same revocation store state and same clock second give the same result. No
+Determinism: same request (including the identity), same `agents.yaml`, same
+VOID policy and same facts give the same result. Time lives in the issuer:
+expiry and revocation reach the check as a null identity. No
 randomness, no network calls inside the engine, first match wins by file order.
 
 ## 4. Agent policy file (`policy/agents.yaml`)
@@ -175,50 +188,30 @@ VOID). A rule naming an agent that is not declared under `agents` is a load
 error. An agent id not declared at all is denied with `nomo:unknown-agent`
 before any rule is read.
 
-## 5. Ephemeral token (needs [DAVID])
+## 5. The grant (David's, on main)
 
-NOMO defines the claims and the checks. David's runtime defines the encoding
-and the signature (ed25519 via the existing `KeyProvider` is the obvious fit).
+The token is the Workbench local agent grant, not a NOMO format:
 
-```ts
-export type TokenClaims = {
-  readonly jti: string;          // unique token id; the only thing ever logged
-  readonly agentId: string;
-  readonly tool: string;
-  readonly target: string;
-  readonly scope: "read" | "write" | "delete" | "admin";
-  readonly workspace: string;
-  readonly iat: number;          // unix seconds
-  readonly exp: number;          // iat + 60, never more
-  readonly agentPolicyDigest: string; // policy the token was issued under
-};
-```
+- `LocalAgentIdentityIssuer.issue(binding)` returns an opaque 32 byte
+  base64url token, stored only as a sha256 digest, valid 60 seconds on both a
+  monotonic and a wall clock, one live grant per run.
+- `validate(token, { audience, upstreamId, toolName })` returns the
+  `LocalAgentIdentity` (principal, workspace, agent, run, upstream, sorted
+  tool scope, issuer, audience, issuedAt, expiresAt) or null: wrong audience,
+  wrong upstream, a tool outside the scope, expiry, revocation or a clock that
+  went backwards are all null.
+- `revoke(runId)` drops the run's grant. The Workbench calls it when a run
+  ends or is stopped, so a stopped agent's next call validates to null.
 
-- TTL is 60 seconds and not renewable. A new action needs a new request.
-- Issued only on `allow`. On `hold` the issuer waits for the human; approval
-  issues the token, deny or expiry issues nothing.
-- At call time (step 5) the proxy checks, in this order: signature, `exp`
-  against its own clock (no skew allowance in the spike), kill-switch, that
-  `agentId/tool/target/scope/workspace` equal the call, then runs the engine
-  again. A policy file that changed after issuance is fine as long as the
-  re-check still allows.
-- The token value is never written to the ledger, the fleet feed, stderr or
-  an error body. Only `jti`.
+`checkPolicy` takes that identity as given. It checks its shape again and
+that the tool is in its scope (`nomo:outside-grant`), as a second guard for a
+caller that passed `authenticate` output instead of `validate` output. The
+grant names the tool, not the target or the scope; those are what
+`agents.yaml` decides.
 
-Implemented as a proposal in `packages/agent-policy/src/token.ts`, replaceable
-as one file: `issueToken` (steps 1 to 3), `verifyToken` and `checkCall`
-(step 5, what the proxy would call). Wire form `<payload>.<signature>` in
-base64url; the payload is canonical JSON of `{ v: "nomo.token.v0", alg, kid,
-claims }`, signed ed25519 through VOID's ledger `KeyProvider` over the
-domain separated preimage `nomo.token.v0
-<payload>`, so a token signature can
-never pass as a ledger signature. A token that fails verification is denied
-as `nomo:token-invalid`; the kill-switch still wins over it.
-
-Open for [DAVID]: issuance happens on `allow` only, so a call that the policy
-holds never gets a token, and if the issuer issued one after a human approval,
-the proxy re-check would hold the same call a second time. Either the token
-carries the approval, or holds are resolved only at the proxy.
+Open for [DAVID]: the Workbench grant today names one agent per principal
+(`workbench-local-agent`). Per agent rules in `agents.yaml` need the grant to
+carry the NOMO agent id the operator declared.
 
 ## 6. How the proxy calls the engine, and failure (needs [DAVID])
 
@@ -231,10 +224,7 @@ export function checkPolicy(
     readonly agentPolicy: LoadedAgentPolicy;  // from loadAgentPolicy(text)
     readonly classPolicy: LoadedPolicy;       // VOID loadPolicy, unchanged
     readonly classify: () => EvaluationResult; // VOID registry, unchanged
-    readonly revocations: RevocationView;      // kill-switch state
-    readonly now: () => Date;
     readonly blastRadius?: number;             // from a connector probe, when measured
-    readonly requireToken: boolean;            // true in the proxy, false at issuance
   },
 ): PolicyCheckResult;
 ```
@@ -243,176 +233,68 @@ The natural hook is the existing `policy` dependency of `interceptCall` in
 `packages/proxy/src/forward/tools.ts`: today it calls `decide(policy, call)`;
 under NOMO it calls `checkPolicy` and maps the result back to the
 `PolicyDecision` the proxy already understands, so holds, ledger writes and
-error bodies keep working unchanged. The proxy must additionally pass the agent
-id and token, which today it does not receive: **David picks where the agent
-identity enters the proxy** (MCP `_meta` on `tools/call`, a per-session
-`initialize` claim, or a proxy started per agent).
+error bodies keep working unchanged. The inbound proxy already validates the
+grant per call (`validateGrant` in `startLocalMcpHttpServer`); the identity it
+gets back is what it passes as `identity`.
 
 Fail-closed, always, including in VOID `observe` posture for gate 0:
 
 | Failure | Result |
 | ------- | ------ |
 | `agents.yaml` missing, unreadable, invalid | deny, `nomo:engine-error`, proxy refuses startup |
-| revocation store unreadable | deny every call, `nomo:engine-error` |
 | engine throws | deny, `nomo:engine-error` |
 | agent not declared | deny, `nomo:unknown-agent` |
 | tool unknown to the registry | class `unknown`; deny unless a rule lists `class: unknown` |
-| token missing, bad signature, expired, mismatched | deny, `nomo:token-*` |
+| grant missing, expired, revoked, wrong audience or upstream | deny, `nomo:no-grant` |
+| tool outside the grant's scope | deny, `nomo:outside-grant` (or `nomo:no-grant` when `validate` already refused it) |
 | ledger append fails | deny (existing VOID behavior) |
 | fleet feed unavailable | **call proceeds**; the ledger is the record, the feed is a view, and a stderr line says events were dropped |
 
 Proposal for [DAVID]: VOID `observe` posture may forward class-policy
-non-allows as it does today, but **must never forward a kill-switch or token
-denial**. A trial mode that runs revoked agents is not a trial of NOMO.
+non-allows as it does today, but **must never forward a grant denial**. A
+trial mode that runs stopped agents is not a trial of NOMO.
 
-## 7. Kill-switch
+## 7. Stopping an agent
 
-```ts
-export type Revocation = {
-  readonly agentId: string;
-  readonly at: string;       // ISO 8601 UTC
-  readonly by: string;       // the operator
-  readonly reason: string;
-};
-```
+David's stop path on main is the kill-switch: when a run ends or is stopped,
+the Workbench calls `LocalAgentIdentityIssuer.revoke(runId)`, and every later
+call with that grant validates to null and is denied as `nomo:no-grant`
+before any rule is read. A call already forwarded upstream cannot be
+recalled; `docs/NOMO-LOCAL-IDENTITY-DEMO.md` covers stop acknowledgement and
+in-flight calls.
 
-Calling `kill(agentId, by, reason)`:
+The earlier NOMO proposal (an append-only revocation store, `void kill` and
+`void reinstate`, an agent hold index) was removed so there is one stop path.
+Stopping every run of one agent at once, across runs, is not covered by a
+per-run revoke; open for [DAVID] if the demo needs it.
 
-1. Appends a `Revocation` to the revocation store (append-only JSONL for the
-   spike) and a signed ledger entry `decision: "agent:killed"`.
-2. From that moment every `checkPolicy` for that agent returns
-   `deny / nomo:kill-switch / layer kill-switch`, before any rule is read.
-3. Every outstanding token dies without enumerating them: a token is invalid
-   when its agent has a revocation whose `at` is at or after the token's
-   `iat`. Nothing has to track `jti` lists. `iat` is in whole seconds, so a
-   token issued in the same second as a kill is treated as killed too.
-4. Every pending hold for that agent resolves as denied
-   (`by: "nomo:kill-switch"`), through the existing VOID `HoldQueue`.
-5. A call already forwarded upstream before the kill **cannot be recalled**.
-   The proxy sends `notifications/cancelled` for it where the session still
-   maps it; whether the upstream honors that is up to the upstream. The ledger
-   shows that call as allowed before the kill; replay is the recovery path.
-6. Emits `agent.killed` to the fleet feed.
+## 8. Events (needs [MAX])
 
-Reinstating is a separate explicit act (`reinstate(agentId, by, reason)`),
-appended the same way. Tokens issued before the kill stay dead after a
-reinstate, because their `iat` precedes the revocation.
-
-Target, to be measured in the demo, not promised: the next call after `kill`
-returns deny, i.e. latency is one store read, no polling interval.
-
-Implemented so far (`packages/agent-policy/src/kill.ts`, `packages/cli/src/kill.ts`):
-
-- `killAgent` covers steps 1 to 4 without the ledger entry. It is never
-  blocked: a corrupt store, an unseen agent, a repeated kill or a store lock
-  that stays held (reported as `lockTimedOut`) still appends. A hold whose
-  denier throws does not stop the sweep: it is returned in `failedHolds`, stays
-  in the index, and the next kill retries it. An invalid clock is a
-  `KillSwitchError` and writes nothing.
-  `reinstateAgent` is strict: it refuses a corrupt store, an agent that is not
-  killed, an empty reason, a time earlier than the agent's last record, and a
-  kill that landed while it waited for the lock.
-- Kill and reinstate write under `<store>.lock` (exclusive create, broken after
-  10 s as left by a dead writer), so a reinstate cannot read the store, miss a
-  concurrent kill and append after it.
-- `at` in the store is accepted only as an ISO 8601 UTC instant ending in `Z`;
-  a zoneless time, an offset or a calendar overflow (02-30) is a corrupt store.
-- Pending holds: VOID's `HeldCall` has no agent, so the proxy records
-  hold id to agent in an `AgentHoldIndex` when it parks a call, and passes
-  `HoldQueue.resolve` (or `ApprovalBroker.decide`) as the denier. VOID's hold
-  code stays unchanged. Until the proxy is wired, nothing fills the index.
-- `void kill <agent> --by <actor> [--reason]` and
-  `void reinstate <agent> --by <actor> --reason <text>` append to the store.
-  They refuse an id that `policy/agents.yaml` does not declare unless
-  `--force` is given, so a typo cannot read as a stopped agent. The CLI is a
-  separate process and denies no hold itself.
-- Store location, provisional until David answers item 7: `--store`, else
-  `VOID_REVOCATIONS`, else `~/.void/nomo/<workspace>/revocations.jsonl`.
-  Whoever can write that file can reinstate an agent, so it needs the same
-  operator-only protection as the approvals directory; the spike does not
-  enforce it yet.
-- Open for the proxy wiring: re-check the kill-switch when a hold is
-  approved, as a second guard alongside the sweep.
-
-## 8. Events: extend Max's fleet feed (needs [MAX])
-
-Max's fleet feed already exists on `origin/max-spike`
-(`packages/workbench/src/fleet.ts`, decision "Fleet is a view of the host's own
-runs", 2026-10-07). NOMO does not define a second stream. It proposes additive
-types and fields on his `FleetEvent`, under his rules: each event is built
-field by field from a closed set, never spread from a source event; the feed
-is an in-memory ring of 500 with an epoch, not a store; **the ledger is the
-audit record**, the feed is a view.
-
-His shape today: `cursor, at, type, sessionId, runId?, agent?, model, state?,
-tool?, outcome?, totalTokens?`, with types `run.state, tool.started,
-tool.finished, approval.held, usage.reported`.
-
-Proposed additions:
-
-```ts
-// new FLEET_EVENT_TYPES
-| "policy.decided"     // every non-allow, and allows only if Max wants volume
-| "token.issued"
-| "agent.killed"
-| "agent.reinstated"
-
-// new optional FleetEvent fields
-readonly requestId?: string;          // joins token request, call, ledger entry
-readonly decision?: "allow" | "deny" | "hold";
-readonly ruleId?: string;             // e.g. support-bot-writes-drafts, void:rule[3], nomo:kill-switch
-readonly layer?: "kill-switch" | "token" | "agent-policy" | "class-policy" | "engine";
-readonly class?: "r0" | "r1" | "r2" | "r3" | "unknown";
-readonly scope?: "read" | "write" | "delete" | "admin";
-readonly tokenId?: string;            // jti only, never the token value
-readonly ledger?: { readonly seq: number; readonly hash: string };
-```
-
-`agent` in his event should carry the NOMO agent id from `agents.yaml`.
-
-Deliberately **not** in the feed, following his threat-model note (section
-3.4): `target`, `reason` text and argument digests. A target is a path or a
-table name taken from the arguments, and a reason can quote an operator's
-rationale. Both stay in the policy result and the ledger, where access is
-already controlled.
-
-Implemented without touching the workbench (`packages/agent-policy/src/fleet.ts`):
-`projectPolicyDecision(request, result, { ledger? })`, `projectTokenIssued(claims,
-requestId)` and `projectRevocation(record)` return only the fields above plus
-`type`, `agent` and `tool`, built field by field from a closed list. Values that
-fail their shape check are dropped. Cursor, `at`, `sessionId` and `model` stay
-Max's to add. The operator (`by`) and the revocation reason are not projected
-either. A test plants markers in the target, the rationale, the arguments, the
-operator and the reason, and fails if any reaches an output.
-
-Open for [MAX]: whether `policy.decided` is sent for allows too, whether the
-projection lives next to `projectFleetEvent` or the proxy emits these directly,
-and whether the Fleet page shows a killed agent as its own state.
+The fleet projection proposed here earlier was removed with the token and
+kill-switch code. David's control plane emits run, agent and approval fleet
+events on main. Open for [MAX] and [DAVID]: whether a `policy.decided` event
+with `ruleId`, `layer` and `class` joins those, under the same rule that a
+target, a reason text and argument digests never reach the feed.
 
 ## 9. Ledger (needs [DAVID])
 
 The VOID ledger body today has `at, tool, klass, decision, argsDigest,
 attribution, workspace` and no agent. Proposal: add an optional
-`agent: { id, tokenId? }` object to the body. `packages/ledger/src/attribution.ts`
-documents why an additive body field keeps old entries verifying. Plus two new
-`decision` strings: `agent:killed`, `agent:reinstated`.
+`agent: { id, runId? }` object to the body. `packages/ledger/src/attribution.ts`
+documents why an additive body field keeps old entries verifying.
 
 ## 10. Confirm list
 
 **David**
 1. Layering (section 1) or new match keys in `@void/policy`.
-2. Where agent id and token enter the proxy (section 6).
-3. Token encoding and signing, TTL 60 s non-renewable (section 5).
-4. Kill-switch and token denials bypass `observe` never (section 6).
-5. Optional `agent` field in the ledger body and the two new decisions (section 9).
-6. Package name: `@void/agent-policy` now, rename with the repo later?
-7. Who owns the revocation store file, and its location.
-8. The token format proposed in section 5, and how an approved hold gets a token (section 5).
+2. The grant carrying the declared NOMO agent id instead of `workbench-local-agent` (section 5).
+3. Grant denials never bypassed by `observe` (section 6).
+4. Optional `agent` field in the ledger body (section 9).
+5. Package name: `@void/agent-policy` now, rename with the repo later?
+6. Stopping all runs of one agent at once, if the demo needs it (section 7).
 
 **Max**
-1. The additive fleet types and fields (section 8), especially `requestId`.
-2. Volume: `policy.decided` for every call or only non-allows.
-3. Where the projection lives, and how the Fleet page shows a killed agent.
+1. Whether `policy.decided` joins the fleet events, and for allows too (section 8).
 
 ## Status
 
@@ -420,12 +302,9 @@ documents why an additive body field keeps old entries verifying. Plus two new
 | ---- | ------ |
 | This contract | draft, not confirmed |
 | Agent policy loader and evaluation | implemented in `packages/agent-policy`, not wired into the proxy |
-| Kill-switch check, revocation JSONL store, token claim check | implemented in the same package |
-| `killAgent` / `reinstateAgent`, hold sweep via `AgentHoldIndex` | implemented, store lock against the reinstate race; the index is not filled until the proxy is wired; no ledger entry yet (section 9) |
-| `void kill` / `void reinstate` CLI | implemented, 7 tests; store location provisional (item 7) |
-| Token minting and signing | proposal implemented in `token.ts` over the ledger `KeyProvider`, 25 tests; format and hold path open for David (item 8) |
-| Section 0 flow end to end | one in-process test (`spike.test.ts`): issue, call, fake connector, fleet events, kill mid run, reinstate; no proxy |
-| Proxy wiring | not started (David) |
-| Fleet feed | exists on `origin/max-spike` (Max); NOMO projection implemented in `packages/agent-policy` (7 tests), not joined to his feed |
+| Grant gate (`nomo:no-grant`, `nomo:outside-grant`) over the Workbench grant identity | implemented in `checkPolicy` |
+| Token, revocation store, kill-switch, `void kill` / `void reinstate`, fleet projection | removed 2026-10-11 in favour of David's grant and stop path on main |
+| Section 0 flow end to end | one in-process test (`spike.test.ts`) through David's real `LocalAgentIdentityIssuer`: issue, validate per call, agents.yaml, fake connector, stop, expiry; no proxy |
+| Proxy wiring of `checkPolicy` | not started (David) |
 | MCP connector for the demo | not chosen yet |
 | Default `policy/agents.yaml` generator (T2) | `writeDefaultAgentPolicy` in `packages/agent-policy`: one agent, terminal deny, never overwrites an existing file, 12 tests; not called from `void init` until the T1 package is agreed |

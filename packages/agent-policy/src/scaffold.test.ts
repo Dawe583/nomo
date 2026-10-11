@@ -8,7 +8,6 @@ import { loadPolicy } from "../../policy/src/rules.ts";
 import { classifyTool } from "../../registry/src/evaluate.ts";
 import { checkPolicy } from "./check.ts";
 import { loadAgentPolicy } from "./load.ts";
-import { revocationView } from "./revocations.ts";
 import {
   AgentPolicyScaffoldError,
   DEFAULT_AGENT_ID,
@@ -54,21 +53,22 @@ describe("default agent policy", () => {
         {
           contract: "nomo.policy-check.v0",
           requestId: `req-${scope}`,
-          agent: { id: DEFAULT_AGENT_ID },
+          identity: {
+            agentId: DEFAULT_AGENT_ID,
+            runId: "run-1",
+            workspaceId: "default",
+            toolScope: ["notes.read"],
+          },
           tool: "notes.read",
           connector: "fs",
           args: {},
           target: "fs:sandbox/notes/todo.md",
           scope,
-          workspace: "default",
         },
         {
           agentPolicy,
           classPolicy: allowEverything,
           classify: () => classifyTool("notes.read", { facts: {}, args: {} }),
-          revocations: revocationView([]),
-          now: () => new Date("2026-10-08T10:00:00Z"),
-          requireToken: false,
         },
       );
       assert.equal(result.decision, "deny", scope);
@@ -80,7 +80,10 @@ describe("default agent policy", () => {
   test("ids that YAML would read as numbers, null or booleans stay strings", () => {
     for (const agentId of ["123", "null", "true", "1e3", "0.5", "no"]) {
       const loaded = loadAgentPolicy(defaultAgentPolicy({ agentId }));
-      assert.ok(loaded.ok, `${agentId}: ${JSON.stringify(!loaded.ok && loaded.errors)}`);
+      assert.ok(
+        loaded.ok,
+        `${agentId}: ${JSON.stringify(!loaded.ok && loaded.errors)}`,
+      );
       assert.equal(loaded.policy.agents[0]!.id, agentId);
     }
   });
@@ -153,7 +156,9 @@ describe("writeDefaultAgentPolicy", () => {
     withDir(async (dir) => {
       const path = join(dir, "agents.yaml");
       await writeDefaultAgentPolicy(path, { agentId: "first-agent" });
-      const result = await writeDefaultAgentPolicy(path, { agentId: "second-agent" });
+      const result = await writeDefaultAgentPolicy(path, {
+        agentId: "second-agent",
+      });
       assert.equal(result.status, "kept");
       assert.match(await readFile(path, "utf8"), /first-agent/);
     }));

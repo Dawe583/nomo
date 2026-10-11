@@ -8,13 +8,9 @@ import { loadAgentPolicy } from "./load.ts";
 import {
   checkPolicy,
   type CheckDeps,
+  type GrantedIdentity,
   type PolicyCheckRequest,
 } from "./check.ts";
-import {
-  revocationView,
-  type RevocationRecord,
-  type TokenClaims,
-} from "./revocations.ts";
 
 const agentsYaml = readFileSync(
   new URL("../../../policy/agents.yaml", import.meta.url),
@@ -50,39 +46,57 @@ rules:
     decision: deny
 `;
 
-const NOW = new Date("2026-10-07T18:00:00.000Z");
-const nowSeconds = Math.floor(NOW.getTime() / 1000);
+/** Every tool these tests call, so the grant gate passes unless a test narrows it. */
+const ALL_TOOLS = [
+  "fs.file.delete",
+  "fs.file.shred",
+  "fs.file.write",
+  "fs.path.remove_recursive",
+  "notes.read",
+  "postgres.table.drop",
+];
 
-const request = (
-  over: Partial<PolicyCheckRequest> = {},
-): PolicyCheckRequest => ({
-  contract: "nomo.policy-check.v0",
-  requestId: "req-1",
-  agent: { id: "demo-support-bot" },
-  tool: "fs.file.write",
-  connector: "fs",
-  args: { path: "drafts/reply.md" },
-  target: "fs:sandbox/drafts/reply.md",
-  scope: "write",
-  workspace: "demo",
+/** What `LocalAgentIdentityIssuer.validate` hands over for a verified grant. */
+const grant = (
+  agentId = "demo-support-bot",
+  over: Partial<GrantedIdentity> = {},
+): GrantedIdentity => ({
+  agentId,
+  runId: "run-1",
+  workspaceId: "demo",
+  toolScope: ALL_TOOLS,
   ...over,
 });
+
+/** `agent` is shorthand for a grant to that agent; the request itself carries no agent id. */
+const request = (
+  over: Partial<PolicyCheckRequest> & { agent?: { id: string } } = {},
+): PolicyCheckRequest => {
+  const { agent, ...rest } = over;
+  return {
+    contract: "nomo.policy-check.v0",
+    requestId: "req-1",
+    identity: grant(agent?.id),
+    tool: "fs.file.write",
+    connector: "fs",
+    args: { path: "drafts/reply.md" },
+    target: "fs:sandbox/drafts/reply.md",
+    scope: "write",
+    ...rest,
+  };
+};
 
 const deps = (
   over: Partial<CheckDeps> & {
     facts?: Record<string, string>;
     tool?: string;
-    revocationRecords?: RevocationRecord[];
   } = {},
 ): CheckDeps => {
-  const { facts = {}, tool, revocationRecords = [], ...rest } = over;
+  const { facts = {}, tool, ...rest } = over;
   return {
     agentPolicy: loadAgentPolicy(agentsYaml),
     classPolicy: loadPolicy(demoClassYaml),
     classify: () => classifyTool(tool ?? "fs.file.write", { facts, args: {} }),
-    revocations: revocationView(revocationRecords),
-    now: () => NOW,
-    requireToken: false,
     ...rest,
   };
 };
@@ -99,7 +113,7 @@ describe("checkPolicy: allow, deny, hold", () => {
     assert.deepEqual(
       result.trace.map((s) => [s.layer, s.decision, s.ruleId]),
       [
-        ["kill-switch", "allow", "nomo:kill-switch"],
+        ["grant", "allow", "nomo:grant-valid"],
         ["agent-policy", "allow", "support-bot-writes-drafts"],
         ["class-policy", "allow", "void:rule[2]"],
       ],
@@ -354,129 +368,76 @@ describe("checkPolicy: broken input fails closed", () => {
   });
 });
 
-describe("checkPolicy: kill-switch and tokens", () => {
-  const kill = (at: string): RevocationRecord => ({
-    kind: "kill",
-    agentId: "demo-support-bot",
-    at,
-    by: "oliver",
-    reason: "demo",
-  });
-  const reinstate = (at: string): RevocationRecord => ({
-    kind: "reinstate",
-    agentId: "demo-support-bot",
-    at,
-    by: "oliver",
-    reason: "demo over",
-  });
-  const token = (over: Partial<TokenClaims> = {}): TokenClaims => ({
-    jti: "tok-1",
-    agentId: "demo-support-bot",
-    tool: "fs.file.write",
-    target: "fs:sandbox/drafts/reply.md",
-    scope: "write",
-    workspace: "demo",
-    iat: nowSeconds - 10,
-    exp: nowSeconds + 50,
-    agentPolicyDigest: "0".repeat(64),
-    ...over,
-  });
-
-  test("a killed agent is denied even with a valid token for an allowed call", () => {
+describe("checkPolicy: the Workbench grant decides who is asking", () => {
+  test("no grant, or an expired or revoked one, is a deny before any rule", () => {
     const result = checkPolicy(
-      request({ token: token() }),
-      deps({
-        facts: shadowCaptured,
-        requireToken: true,
-        revocationRecords: [kill("2026-10-07T17:59:55.000Z")],
-      }),
+      request({ identity: null }),
+      deps({ facts: shadowCaptured }),
     );
     assert.equal(result.decision, "deny");
-    assert.equal(result.layer, "kill-switch");
-    assert.equal(result.ruleId, "nomo:kill-switch");
+    assert.equal(result.layer, "grant");
+    assert.equal(result.ruleId, "nomo:no-grant");
+    assert.deepEqual(result.trace, [
+      { layer: "grant", decision: "deny", ruleId: "nomo:no-grant" },
+    ]);
   });
 
-  test("after a reinstate the agent works again, but its old token stays dead", () => {
-    const records = [
-      kill("2026-10-07T17:59:55.000Z"),
-      reinstate("2026-10-07T17:59:58.000Z"),
-    ];
-    const old = checkPolicy(
-      request({ token: token() }),
-      deps({
-        facts: shadowCaptured,
-        requireToken: true,
-        revocationRecords: records,
-      }),
-    );
-    assert.equal(old.decision, "deny");
-    assert.equal(old.ruleId, "nomo:token-revoked");
-
-    const fresh = checkPolicy(
+  test("a tool outside the grant is denied even when agents.yaml allows it", () => {
+    const result = checkPolicy(
       request({
-        token: token({
-          jti: "tok-2",
-          iat: nowSeconds - 1,
-          exp: nowSeconds + 59,
-        }),
+        identity: grant("demo-support-bot", { toolScope: ["notes.read"] }),
       }),
-      deps({
-        facts: shadowCaptured,
-        requireToken: true,
-        revocationRecords: records,
-      }),
+      deps({ facts: shadowCaptured }),
     );
-    assert.equal(fresh.decision, "allow");
+    assert.equal(result.decision, "deny");
+    assert.equal(result.ruleId, "nomo:outside-grant");
+    assert.match(result.reason, /run-1/);
   });
 
-  test("a kill of another agent changes nothing for this one", () => {
-    const result = checkPolicy(
-      request({ token: token() }),
-      deps({
-        facts: shadowCaptured,
-        requireToken: true,
-        revocationRecords: [
-          { ...kill("2026-10-07T17:59:55.000Z"), agentId: "demo-report-bot" },
-        ],
-      }),
+  test("the agent is whoever the grant names: the same call as the report bot is denied", () => {
+    const asSupport = checkPolicy(request(), deps({ facts: shadowCaptured }));
+    const asReport = checkPolicy(
+      request({ identity: grant("demo-report-bot") }),
+      deps({ facts: shadowCaptured }),
     );
-    assert.equal(result.decision, "allow");
+    assert.equal(asSupport.decision, "allow");
+    assert.equal(asReport.decision, "deny");
+    assert.equal(asReport.ruleId, "default-deny");
   });
 
-  test("at call time a token is required", () => {
-    const result = checkPolicy(
+  test("the workspace comes from the grant", () => {
+    const yaml = agentsYaml.replace(
+      "      scope: write\n      class: [r0, r1]\n",
+      "      scope: write\n      class: [r0, r1]\n      workspace: demo\n",
+    );
+    assert.notEqual(yaml, agentsYaml);
+    const policy = loadAgentPolicy(yaml);
+    const inDemo = checkPolicy(
       request(),
-      deps({ facts: shadowCaptured, requireToken: true }),
+      deps({ facts: shadowCaptured, agentPolicy: policy }),
     );
-    assert.equal(result.decision, "deny");
-    assert.equal(result.ruleId, "nomo:token-missing");
+    const elsewhere = checkPolicy(
+      request({ identity: grant("demo-support-bot", { workspaceId: "prod" }) }),
+      deps({ facts: shadowCaptured, agentPolicy: policy }),
+    );
+    assert.equal(inDemo.decision, "allow");
+    assert.equal(elsewhere.decision, "deny");
   });
 
-  test("an expired token is refused", () => {
-    const result = checkPolicy(
-      request({ token: token({ iat: nowSeconds - 61, exp: nowSeconds - 1 }) }),
-      deps({ facts: shadowCaptured, requireToken: true }),
-    );
-    assert.equal(result.ruleId, "nomo:token-expired");
-  });
-
-  test("a token longer than 60 seconds is refused", () => {
-    const result = checkPolicy(
-      request({
-        token: token({ iat: nowSeconds - 1, exp: nowSeconds + 3600 }),
-      }),
-      deps({ facts: shadowCaptured, requireToken: true }),
-    );
-    assert.equal(result.ruleId, "nomo:token-expired");
-  });
-
-  test("a token for another target is refused", () => {
-    const result = checkPolicy(
-      request({ token: token({ target: "fs:sandbox/drafts/other.md" }) }),
-      deps({ facts: shadowCaptured, requireToken: true }),
-    );
-    assert.equal(result.decision, "deny");
-    assert.equal(result.ruleId, "nomo:token-mismatch");
-    assert.match(result.reason, /target/);
+  test("a grant whose agent id the policy cannot hold, or a malformed one, is refused", () => {
+    for (const identity of [
+      grant("Workbench Agent"),
+      grant("demo-support-bot", { runId: "" }),
+      grant("demo-support-bot", { workspaceId: "" }),
+      { ...grant(), toolScope: "fs.file.write" } as unknown as GrantedIdentity,
+      "demo-support-bot" as unknown as GrantedIdentity,
+    ]) {
+      const result = checkPolicy(
+        request({ identity }),
+        deps({ facts: shadowCaptured }),
+      );
+      assert.equal(result.decision, "deny");
+      assert.equal(result.ruleId, "nomo:no-grant");
+    }
   });
 });

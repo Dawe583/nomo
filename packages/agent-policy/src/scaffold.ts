@@ -1,7 +1,7 @@
 /**
  * The default `policy/agents.yaml` a new workspace starts with: one declared
- * agent and a single rule that denies. The agent is known, so the kill-switch
- * and the CLI can name it, and it can do nothing until someone writes a grant.
+ * agent and a single rule that denies. The agent is known, so it can be named
+ * in a grant, and it can do nothing until someone writes a rule for it.
  *
  * Writing never replaces a file that is already there. A file identical to the
  * default is reported as unchanged; any other file is the operator's and is

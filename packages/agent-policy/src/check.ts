@@ -1,6 +1,12 @@
 /**
- * The NOMO policy check: kill-switch, token, agent policy, then the VOID class
- * policy, and the strictest answer wins. Contract: docs/nomo/CONTRACT.md.
+ * The NOMO policy check: the verified grant, the agent policy, then the VOID
+ * class policy, and the strictest answer wins. Contract: docs/nomo/CONTRACT.md.
+ *
+ * Identity is not this module's job. The Workbench local agent grant
+ * (`packages/workbench/src/agent-identity.ts`) authenticates the token, binds
+ * it to agent, run, workspace, upstream and tool scope, and revokes it on
+ * stop. This module takes the identity that grant verified, never an agent id
+ * from the request body, and decides what that agent may do with it.
  *
  * Gate 2 is VOID's own `decide`, called unchanged. This module adds identity
  * on top of the reversibility class; it does not re-implement the class rules.
@@ -25,29 +31,34 @@ import {
 } from "./grammar.ts";
 import { evaluateAgentPolicy } from "./evaluate.ts";
 import type { LoadedAgentPolicy } from "./load.ts";
-import {
-  checkTokenClaims,
-  type RevocationView,
-  type TokenClaims,
-} from "./revocations.ts";
 
 export const POLICY_CHECK_CONTRACT = "nomo.policy-check.v0" as const;
+
+/**
+ * The identity a verified Workbench grant carries: the fields of
+ * `LocalAgentIdentity` this check reads. Null when the grant is missing,
+ * expired or revoked, which is a deny here as it is at the proxy.
+ */
+export type GrantedIdentity = {
+  readonly agentId: string;
+  readonly runId: string;
+  readonly workspaceId: string;
+  readonly toolScope: readonly string[];
+};
 
 export type PolicyCheckRequest = {
   readonly contract: typeof POLICY_CHECK_CONTRACT;
   readonly requestId: string;
-  readonly agent: { readonly id: string; readonly sessionId?: string };
+  /** From `LocalAgentIdentityIssuer.validate`, never from the agent. */
+  readonly identity: GrantedIdentity | null;
   readonly tool: string;
   readonly connector: string;
   readonly args: Readonly<Record<string, unknown>>;
   readonly target: string;
   readonly scope: Scope;
-  readonly workspace: string;
-  readonly token?: TokenClaims;
 };
 
-export type CheckLayer =
-  "kill-switch" | "token" | "agent-policy" | "class-policy" | "engine";
+export type CheckLayer = "grant" | "agent-policy" | "class-policy" | "engine";
 
 export type TraceStep = {
   readonly layer: CheckLayer;
@@ -74,12 +85,8 @@ export type CheckDeps = {
   readonly classPolicy: LoadedPolicy;
   /** The VOID registry classification for this call, as the proxy computes it. */
   readonly classify: () => EvaluationResult;
-  readonly revocations: RevocationView;
-  readonly now: () => Date;
   /** Measured blast radius from a connector probe, when there is one. */
   readonly blastRadius?: number;
-  /** True at call time (proxy), false at token issuance. */
-  readonly requireToken: boolean;
 };
 
 /** A target is a connector-derived resource name. Dot segments would walk out of a prefix. */
@@ -99,17 +106,31 @@ function requestProblem(request: PolicyCheckRequest): string | null {
     return `contract must be ${POLICY_CHECK_CONTRACT}`;
   if (typeof request.requestId !== "string" || request.requestId === "")
     return "requestId is required";
-  if (typeof request.agent?.id !== "string" || !AGENT_ID.test(request.agent.id))
-    return "agent.id is not a valid agent id";
   if (typeof request.tool !== "string" || request.tool === "")
     return "tool is required";
   if (typeof request.connector !== "string" || request.connector === "")
     return "connector is required";
   if (!isScope(request.scope))
     return "scope must be read, write, delete or admin";
-  if (typeof request.workspace !== "string" || request.workspace === "")
-    return "workspace is required";
   return targetProblem(request.target);
+}
+
+/** The grant is checked for shape again: a caller that passes junk gets a deny, not a match. */
+function identityProblem(identity: GrantedIdentity): string | null {
+  if (typeof identity !== "object" || identity === null)
+    return "the grant identity is not an object";
+  if (typeof identity.agentId !== "string" || !AGENT_ID.test(identity.agentId))
+    return "the grant names an agent id the agent policy cannot hold";
+  if (typeof identity.runId !== "string" || identity.runId === "")
+    return "the grant names no run";
+  if (typeof identity.workspaceId !== "string" || identity.workspaceId === "")
+    return "the grant names no workspace";
+  if (
+    !Array.isArray(identity.toolScope) ||
+    !identity.toolScope.every((tool) => typeof tool === "string")
+  )
+    return "the grant tool scope is not a list of tool names";
+  return null;
 }
 
 const STRICTNESS: Record<AgentDecision, number> = {
@@ -178,25 +199,40 @@ export function checkPolicy(
       agentPolicyDigest: canonicalDigest(deps.agentPolicy.policy),
       classPolicyDigest: policyDigest(deps.classPolicy.policy),
     };
-    const agentId = request.agent.id;
-
-    // Gate 0: the kill-switch is read before anything else, so a killed
-    // agent is denied even with a valid token and a permissive file.
-    if (deps.revocations.isKilled(agentId))
+    // Gate 0: the grant. A missing, expired or revoked grant reaches here as
+    // null; stopping a run revokes its grant, so this is also where a stopped
+    // agent ends.
+    if (request.identity === null || request.identity === undefined)
       return deny(
-        "kill-switch",
-        BUILTIN_RULES.killSwitch,
-        `agent ${agentId} was stopped by the kill-switch`,
+        "grant",
+        BUILTIN_RULES.noGrant,
+        "no valid grant: it is missing, expired or revoked",
+        "unknown",
+        [],
+        digests,
+      );
+    const identityIssue = identityProblem(request.identity);
+    if (identityIssue !== null)
+      return deny(
+        "grant",
+        BUILTIN_RULES.noGrant,
+        identityIssue,
+        "unknown",
+        [],
+        digests,
+      );
+    const { agentId, workspaceId: workspace } = request.identity;
+    if (!request.identity.toolScope.includes(request.tool))
+      return deny(
+        "grant",
+        BUILTIN_RULES.outsideGrant,
+        `the grant for run ${request.identity.runId} does not cover ${request.tool}`,
         "unknown",
         [],
         digests,
       );
     const trace: TraceStep[] = [
-      {
-        layer: "kill-switch",
-        decision: "allow",
-        ruleId: BUILTIN_RULES.killSwitch,
-      },
+      { layer: "grant", decision: "allow", ruleId: "nomo:grant-valid" },
     ];
 
     if (!deps.agentPolicy.policy.agents.some((agent) => agent.id === agentId))
@@ -209,45 +245,6 @@ export function checkPolicy(
         digests,
       );
 
-    if (request.token !== undefined || deps.requireToken) {
-      if (request.token === undefined)
-        return deny(
-          "token",
-          BUILTIN_RULES.tokenMissing,
-          "a token is required for this call",
-          "unknown",
-          trace,
-          digests,
-        );
-      const tokenCheck = checkTokenClaims(
-        request.token,
-        { ...request, agentId },
-        deps.revocations,
-        deps.now(),
-      );
-      if (!tokenCheck.ok)
-        return deny(
-          "token",
-          tokenCheck.ruleId,
-          tokenCheck.reason,
-          "unknown",
-          trace,
-          digests,
-        );
-      if (request.token.agentPolicyDigest !== digests.agentPolicyDigest)
-        trace.push({
-          layer: "token",
-          decision: "allow",
-          ruleId: "nomo:token-policy-changed",
-        });
-      else
-        trace.push({
-          layer: "token",
-          decision: "allow",
-          ruleId: "nomo:token-valid",
-        });
-    }
-
     const classification = deps.classify();
     const classified = classification.outcome === "classified";
     const klass: CallClass = classified ? classification.tone : "unknown";
@@ -259,7 +256,7 @@ export function checkPolicy(
       connector: request.connector,
       target: request.target,
       scope: request.scope,
-      workspace: request.workspace,
+      workspace,
       klass,
     });
     trace.push({
@@ -272,7 +269,7 @@ export function checkPolicy(
     const policyCall: PolicyCall = {
       tool: request.tool,
       connector: request.connector,
-      workspace: request.workspace,
+      workspace,
       klass: classified ? classification.tone : "r3",
       blastRadius: deps.blastRadius,
       ...(classified ? {} : { unclassified: true as const }),

@@ -48,14 +48,10 @@ export const RULE_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;
 
 /** Rule ids for outcomes no rule in the file produced. */
 export const BUILTIN_RULES = {
-  killSwitch: "nomo:kill-switch",
+  noGrant: "nomo:no-grant",
+  outsideGrant: "nomo:outside-grant",
   unknownAgent: "nomo:unknown-agent",
   invalidRequest: "nomo:invalid-request",
-  tokenMissing: "nomo:token-missing",
-  tokenInvalid: "nomo:token-invalid",
-  tokenExpired: "nomo:token-expired",
-  tokenMismatch: "nomo:token-mismatch",
-  tokenRevoked: "nomo:token-revoked",
   engineError: "nomo:engine-error",
   unmatched: "nomo:default-deny",
 } as const;

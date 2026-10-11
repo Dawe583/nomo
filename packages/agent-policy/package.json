@@ -17,13 +17,12 @@
   "dependencies": {
     "yaml": "^2.8.0"
   },
-  "description": "NOMO: per-agent rules, kill-switch and token claim checks layered over the VOID class policy.",
+  "description": "NOMO: per-agent rules over a verified Workbench agent grant, layered over the VOID class policy.",
   "keywords": [
     "nomo",
     "void",
     "agent-identity",
-    "policy",
-    "kill-switch"
+    "policy"
   ],
   "engines": {
     "node": ">=24"
