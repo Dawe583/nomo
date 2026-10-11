@@ -4959,12 +4959,25 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // The models tab gets a hint of its own because Enter means something
     // different here than on every other list: it inspects rather than
     // selects.
-    if (this.tab === "models" && rows.length)
+    if (this.tab === "models" && rows.length) {
+      const byProvider = new Map<string, number>();
+      for (const row of rows) {
+        const match = /\[([^\]]+)\]/.exec(row.label);
+        const provider = match?.[1] ?? "unknown";
+        byProvider.set(provider, (byProvider.get(provider) ?? 0) + 1);
+      }
+      const counts = [...byProvider.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([provider, count]) => `${count} ${provider}`)
+        .join(", ");
       return [
+        `MODELS, ${rows.length} available: ${counts}`,
+        "",
         ...this.listRows(),
         "",
         "Enter inspects a model. /model ID selects it for new conversations.",
       ];
+    }
     // The usage tab is one row per record, which answers "what happened" and
     // not "what did it cost me". Records arrive newest last, so the summary
     // leads with the shape and the list follows it.
