@@ -4978,6 +4978,29 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ...this.listRows(),
       ];
     }
+    // The sessions tab falls through to the default list below. It gets a
+    // summary of its own because the question it answers is not "which
+    // conversation" but "what state is everything in", and a flat list of
+    // titles says nothing about that until it is read.
+    if (this.tab === "sessions" && rows.length) {
+      const byState = new Map<string, number>();
+      for (const row of rows) {
+        const match = /\[([^\]]+)\]/.exec(row.label);
+        const state = match?.[1] ?? "unknown";
+        byState.set(state, (byState.get(state) ?? 0) + 1);
+      }
+      const counts = [...byState.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([state, count]) => `${count} ${state}`)
+        .join(", ");
+      return [
+        `CONVERSATIONS, ${rows.length} total: ${counts}`,
+        "",
+        ...this.listRows(),
+        "",
+        "Enter opens a conversation. /resume picks one by number.",
+      ];
+    }
     return rows.length ? this.listRows() : ["No entries yet.", ""];
   }
   /**
