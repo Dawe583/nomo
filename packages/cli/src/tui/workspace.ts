@@ -2720,6 +2720,63 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (this.tab === "documents") {
+      // Enter inspects the document rather than opening it in the editor.
+      // The operator is on the documents tab to read about documents, and
+      // being sent to the editor would leave the question they arrived with
+      // unanswered. /document path and Enter on the opened document both
+      // still open it.
+      const doc = this.workbench
+        .documentsList()
+        .find(
+          (d) =>
+            d.sessionId === row.sessionId &&
+            (d.path === row.path || `${d.sessionId}:${d.path}` === row.id),
+        );
+      if (doc) {
+        const bytes = doc.bytes ?? 0;
+        const revision = doc.revision ?? "unknown";
+        this.detail = [
+          ...renderInspector(
+            {
+              title: doc.path,
+              subtitle: doc.sessionId.slice(0, 8),
+              icon: ROW_ICONS.document,
+              sections: [
+                {
+                  title: "document",
+                  fields: [
+                    {
+                      label: "path",
+                      value: doc.path,
+                      tone: "muted",
+                    },
+                    {
+                      label: "size",
+                      value: `${bytes} B`,
+                    },
+                    {
+                      label: "revision",
+                      value: String(revision),
+                    },
+                    {
+                      label: "session",
+                      value: doc.sessionId.slice(0, 8),
+                      tone: "muted",
+                    },
+                  ],
+                },
+              ],
+              hint: "Enter opens the document. /document path opens it too.",
+            },
+            { width: 76 },
+          ),
+          "",
+          "RAW RECORD",
+          ...row.lines,
+        ];
+        this.scroll = 0;
+        return;
+      }
       this.useSession(row.sessionId!);
       this.documentPath = row.path;
       this.showDocument();
