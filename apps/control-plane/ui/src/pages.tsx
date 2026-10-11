@@ -170,7 +170,15 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
   const data = query.data;
   const metrics =
     data?.counts ?? data?.overview?.counts ?? data?.overview ?? data ?? {};
-  const state = overviewState(metrics);
+  const state = overviewState({
+    ...metrics,
+    agentId: data?.agentId,
+    runId: data?.runId,
+    runState: data?.runState,
+    stopAck: data?.stopAck,
+    inFlight: data?.inFlight,
+    unresolvedCalls: data?.unresolvedCalls,
+  });
   const priorityLabel =
     state.kind === "decisions"
       ? t("Vyžaduje rozhodnutí", "Needs a decision")
@@ -223,20 +231,36 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
         <ul className="fleet-meta">
           <li>
             <span>{t("Agent", "Agent")}</span>
-            <strong>{data?.agentId ?? "—"}</strong>
+            <strong>{state.agentId ?? t("neznámý", "unknown")}</strong>
+          </li>
+          <li>
+            <span>{t("ID běhu", "Run ID")}</span>
+            <strong>{state.runId ?? t("neznámý", "unknown")}</strong>
           </li>
           <li>
             <span>{t("Stav běhu", "Run state")}</span>
-            <strong>{data?.runState ?? t("neznámý", "unknown")}</strong>
+            <strong>{state.runState ?? t("neznámý", "unknown")}</strong>
           </li>
           <li>
             <span>{t("Běhy v chodu nebo při zastavení", "Running or stopping runs")}</span>
-            <strong>{data?.inFlight ?? "—"}</strong>
-            {typeof data?.inFlight === "number" && data.inFlight > 0 && (
+            <strong>{state.inFlight ?? t("neznámý", "unknown")}</strong>
+            {typeof state.inFlight === "number" && state.inFlight > 0 && (
               <small>
                 {t(
-                  "Jde o počet běhů, ne jednotlivých volání. Volání už odeslaná upstreamu zůstávají neznámá, dokud nepřijde výsledek.",
-                  "Run count, not call count. Calls already dispatched upstream stay unknown until their result confirms.",
+                  "Jde o počet běhů, ne jednotlivých volání. Nevyřešená volání jsou uvedena zvlášť.",
+                  "Run count, not call count. Unresolved calls are shown separately.",
+                )}
+              </small>
+            )}
+          </li>
+          <li>
+            <span>{t("Nevyřešená nástrojová volání", "Unconfirmed tool calls")}</span>
+            <strong>{state.unresolvedCalls ?? t("neznámý", "unknown")}</strong>
+            {typeof state.unresolvedCalls === "number" && state.unresolvedCalls > 0 && (
+              <small>
+                {t(
+                  "Výsledek není potvrzen. Zkontrolujte nástroje a ledger.",
+                  "The outcome is not confirmed. Inspect tools and the ledger.",
                 )}
               </small>
             )}
@@ -244,9 +268,9 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
           <li>
             <span>{t("Potvrzení zastavení", "Stop acknowledgement")}</span>
             <strong>
-              {data?.stopAck === "acknowledged"
+              {state.stopAck === "acknowledged"
                 ? t("potvrzeno", "acknowledged")
-                : data?.stopAck === "pending"
+                : state.stopAck === "pending"
                   ? t("čeká", "pending")
                   : t("neznámý", "unknown")}
             </strong>

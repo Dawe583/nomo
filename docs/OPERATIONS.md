@@ -491,7 +491,7 @@ node packages/cli/bin/void.mjs approve <holdId> --by <actor> --reason <text> --d
 node packages/cli/bin/void.mjs approve <holdId> --by <actor> --deny --dir /tmp/void-approvals
 ```
 
-The CLI writes a decision file and prints that the decision is queued. The running proxy polls the directory and resolves the hold. The CLI cannot know whether the proxy was still running when the decision landed, so it never claims the release. `--by <actor>` is a compatibility label, not identity evidence; the broker records the local OS account ID instead.
+The CLI writes a decision file and prints that the decision is queued. The running proxy polls the directory and resolves the hold. The CLI cannot know whether the proxy was still running when the decision landed, so it never claims the release. `--by <actor>` is a compatibility label, not identity evidence; the broker records the proxy process OS account ID instead. That value does not authenticate the CLI or API caller.
 
 State directory layout:
 

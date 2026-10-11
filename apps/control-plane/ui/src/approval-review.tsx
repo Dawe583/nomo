@@ -154,7 +154,7 @@ export function ApprovalReview({
               [t("Digest operace", "Operation digest"), binding.operationDigest],
               [t("Verze politiky", "Policy version"), binding.policyVersion],
               [t("Digest politiky", "Policy digest"), binding.policyDigest],
-              [t("Operátor", "Operator"), binding.operatorId],
+              [t("Účet OS procesu", "Local process OS account"), binding.operatorId],
               [t("Principal", "Principal"), binding.principalId],
               [t("Agent", "Agent"), binding.agentId],
               [t("Běh", "Run"), binding.runId],
@@ -168,6 +168,12 @@ export function ApprovalReview({
               </div>
             ))}
           </dl>
+          <p className="notice" role="status">
+            {t(
+              "Toto ID je účet OS místního procesu NOMO. Kontrola loopbacku a Origin neověřuje volajícího. Bez sdíleného control tokenu může rozhodnutí odeslat každý místní proces, který dosáhne portu.",
+              "This is the local NOMO process OS account. Loopback and Origin checks do not authenticate the caller. Without a shared control token, any local process that can reach the port may submit a decision.",
+            )}
+          </p>
         </section>
       ) : (
         <p className="notice" role="status">

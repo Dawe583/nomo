@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { matchesToken, authorizedRemote } from './auth.ts';
 import { localApprovals } from './local-approvals.ts';
 import { ApprovalBroker } from '../../../packages/policy/src/approvals.ts';
-import { HoldQueue } from '../../../packages/policy/src/hold.ts';
+import { HoldQueue, verifiedLocalOperatorId } from '../../../packages/policy/src/hold.ts';
 import { listenControlPlane } from './server.ts';
 import type { IncomingMessage } from 'node:http';
 
@@ -39,7 +39,7 @@ test('standalone HTTP decision reaches the proxy broker through durable state', 
     assert.equal(queue.list().length, 1);
     broker.consumeDecisions();
     const result = await waiting;
-    assert.deepEqual(result.outcome, { kind: 'released', release: { kind: 'denied', by: 'beta-test' } });
+    assert.deepEqual(result.outcome, { kind: 'released', release: { kind: 'denied', by: verifiedLocalOperatorId() } });
     assert.equal(queue.list().length, 0);
   } finally { await server.close(); broker.close(); await rm(dir, { recursive: true, force: true }); }
 });

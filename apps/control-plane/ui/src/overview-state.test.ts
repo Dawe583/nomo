@@ -67,48 +67,66 @@ test("invalid or fractional counts never masquerade as real work", () => {
   assert.equal(overviewState(source.overview).tone, "unknown");
 });
 
-test("fleet fields carry the agent, its run state and the local stop ack", () => {
+test("fleet fields keep agent, run and unresolved-call identifiers separate", () => {
   const row = {
     pendingApprovals: 0,
     failed: 0,
     running: 1,
     agentId: "registered-agent",
+    runId: "run-1",
     runState: "running",
     stopAck: "pending",
     inFlight: 1,
+    unresolvedCalls: 0,
   };
   assert.deepEqual(overviewState(row), {
     tone: "active",
     count: 1,
     kind: "running",
     agentId: "registered-agent",
+    runId: "run-1",
     runState: "running",
     stopAck: "pending",
     inFlight: 1,
+    unresolvedCalls: 0,
   });
 });
 
-test("a stop that this process acknowledged is not success for in-flight work", () => {
+test("a stopped run keeps unresolved calls separate from the active-run count", () => {
   const row = {
     pendingApprovals: 0,
     failed: 0,
     running: 0,
     agentId: "registered-agent",
-    runState: "stopped",
+    runId: "run-1",
+    runState: "unknown",
     stopAck: "acknowledged",
-    inFlight: 1,
+    inFlight: 0,
+    unresolvedCalls: 1,
   };
   const state = overviewState(row);
   assert.equal(state.stopAck, "acknowledged");
-  // An unconfirmed dispatched call stays visible as unknown, never as success.
-  assert.equal(state.inFlight, 1);
+  assert.equal(state.inFlight, 0);
+  assert.equal(state.unresolvedCalls, 1);
 });
 
 test("unrecognized ack values and free-text run states degrade to unknown", () => {
-  const row = { pendingApprovals: 0, failed: 0, running: 0, agentId: "  ", runState: 7, stopAck: "maybe", inFlight: 0.5 };
+  const row = {
+    pendingApprovals: 0,
+    failed: 0,
+    running: 0,
+    agentId: "  ",
+    runId: 7,
+    runState: 7,
+    stopAck: "maybe",
+    inFlight: 0.5,
+    unresolvedCalls: 0.5,
+  };
   const state = overviewState(row);
   assert.equal(state.agentId, undefined, "blank labels are not an agent identity");
+  assert.equal(state.runId, undefined, "a numeric run ID is not an identity");
   assert.equal(state.runState, undefined, "a numeric run state is not a state");
+  assert.equal(state.unresolvedCalls, undefined, "a fractional call count is not evidence");
   assert.equal(state.stopAck, "unknown");
   assert.equal(state.inFlight, undefined, "a fractional in-flight count is not evidence");
 });

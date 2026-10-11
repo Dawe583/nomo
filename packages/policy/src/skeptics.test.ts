@@ -2,7 +2,7 @@ import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 
 import { decide } from "./decide.ts";
-import { HoldQueue } from "./hold.ts";
+import { HoldQueue, verifiedLocalOperatorId } from "./hold.ts";
 import type { PolicyCall } from "./decide.ts";
 import type { HeldCall, HoldResolution, Release } from "./hold.ts";
 import type { LoadedPolicy } from "./rules.ts";
@@ -115,28 +115,26 @@ describe("two holds resolving out of order", () => {
   });
 });
 
-describe("an approval from an unauthenticated caller", () => {
-  test("an unauthenticated channel can still pass caller metadata to the ledger edge", async () => {
+describe("caller supplied approval identity", () => {
+  test("an unbound approval drops an untrusted operator label", async () => {
     const queue = new HoldQueue();
     const waiting = queue.hold(baseCall(), 120);
 
     assert.equal(approveAs(queue, "h0001", { kind: "approved" }, "unknown"), true);
-    const release = assertReleased(await waiting) as Release & { readonly by?: string };
-    assert.equal(release.kind, "approved");
-    assert.equal(release.by, "unknown");
+    const release = assertReleased(await waiting);
+    assert.deepEqual(release, { kind: "approved" });
 
     queue.close();
   });
 
-  test("the by field is carried but not yet authenticated", async () => {
+  test("a denial records the local operator instead of a caller label", async () => {
     const queue = new HoldQueue();
     const waiting = queue.hold(baseCall(), 120);
 
-    // Authentication belongs at the boundary: WP-06/07 webhook code must verify a signature before it calls resolve().
-    assert.equal(approveAs(queue, "h0001", { kind: "approved" }, "stranger"), true);
-    const release = assertReleased(await waiting) as Release & { readonly by?: string };
-    assert.equal(release.kind, "approved");
-    assert.equal(release.by, "stranger");
+    // A channel still authenticates before it calls resolve; the caller label is not identity evidence.
+    assert.equal(approveAs(queue, "h0001", { kind: "denied", by: "stranger" }, "stranger"), true);
+    const release = assertReleased(await waiting);
+    assert.deepEqual(release, { kind: "denied", by: verifiedLocalOperatorId() });
 
     queue.close();
   });

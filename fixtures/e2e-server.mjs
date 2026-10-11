@@ -1,6 +1,11 @@
 #!/usr/bin/env node
+import { appendFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 
+const identityMode = process.argv.includes("--identity");
+const identityE2eTools = identityMode
+  ? (await import("./identity-e2e-tools.mjs")).identityE2eTools
+  : [];
 const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });
 
 function write(message) {
@@ -20,6 +25,7 @@ function isObject(value) {
 }
 
 function toolList() {
+  if (identityMode) return { tools: identityE2eTools };
   return {
     tools: [
       {
@@ -40,6 +46,15 @@ function toolList() {
           required: ["where"],
         },
       },
+      {
+        name: "orders_update",
+        description: "Writes a status to matching orders.",
+        inputSchema: {
+          type: "object",
+          properties: { where: { type: "string" }, status: { type: "string" } },
+          required: ["where", "status"],
+        },
+      },
     ],
   };
 }
@@ -51,6 +66,31 @@ function callTool(id, params) {
   }
 
   const args = isObject(params.arguments) ? params.arguments : {};
+  if (identityMode) {
+    if (process.env.NOMO_E2E_TRACE)
+      // The disposable trace includes arguments so the E2E can detect credential forwarding.
+      appendFileSync(
+        process.env.NOMO_E2E_TRACE,
+        `${JSON.stringify({ tool: params.name, arguments: args })}\n`,
+      );
+    if (params.name === "aws.s3.object.put") {
+      const key = typeof args.key === "string" ? args.key : "";
+      result(id, { content: [{ type: "text", text: `stored ${key}` }] });
+      return;
+    }
+    if (params.name === "aws.s3.bucket.delete") {
+      const bucket = typeof args.bucket === "string" ? args.bucket : "";
+      result(id, { content: [{ type: "text", text: `deleted ${bucket}` }] });
+      return;
+    }
+    if (params.name === "aws.s3.object.delete") {
+      const key = typeof args.key === "string" ? args.key : "";
+      result(id, { content: [{ type: "text", text: `deleted ${key}` }] });
+      return;
+    }
+    error(id, -32601, `unknown tool ${params.name}`);
+    return;
+  }
   if (params.name === "echo") {
     const text = typeof args.text === "string" ? args.text : "";
     result(id, { content: [{ type: "text", text }] });
@@ -61,6 +101,12 @@ function callTool(id, params) {
     const where = typeof args.where === "string" ? args.where : "";
     const count = where.includes("status") ? 2 : 1;
     result(id, { content: [{ type: "text", text: `deleted ${count}` }], count });
+    return;
+  }
+
+  if (params.name === "orders_update") {
+    const status = typeof args.status === "string" ? args.status : "";
+    result(id, { content: [{ type: "text", text: `updated to ${status}` }] });
     return;
   }
 

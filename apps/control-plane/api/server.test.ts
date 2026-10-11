@@ -425,24 +425,35 @@ test("fleet events are metadata-only, cursor-paginated and carry this-process sc
   });
 });
 
-test("a stop records request and acknowledgement and reports the ack state", async () => {
+test("stop events identify the registered agent and target session", async (t) => {
   const fetcher: typeof fetch = async (input) => {
     const url = String(input instanceof Request ? input.url : input);
     if (url === "https://fixture.test/v1/models")
       return Response.json({ data: [{ id: "fixture-model" }] });
     throw new Error(`fixture fetcher must not be called for ${url}`);
   };
-  const workbench = new Workbench(
-    { VOID_DATA_DIR: await mkdtemp(join(tmpdir(), "void-fleet-wb-")) },
-    fetcher,
-  );
+  const workbenchDir = await mkdtemp(join(tmpdir(), "void-fleet-wb-"));
+  const workbench = new Workbench({ VOID_DATA_DIR: workbenchDir }, fetcher);
   await workbench.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-private-key-never-expose" });
+  workbench.upsertAgent({
+    id: "registered-agent",
+    name: "Registered agent",
+    systemPrompt: "Only inspect",
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 2,
+    maxContextTokens: 8192,
+  });
+  t.after(async () => {
+    await workbench.shutdown();
+    await rm(workbenchDir, { recursive: true, force: true });
+  });
   await withServer("unused.jsonl", async (origin) => {
     // Seed a session through the injected workbench so /stop has a target.
     const start = await fetch(origin + "/api/sessions", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ prompt: "not a prompt leak: metadata only" }),
+      body: JSON.stringify({ prompt: "not a prompt leak: metadata only", agent: "registered-agent" }),
     });
     const created = (await start.json()) as { session?: { id?: string } };
     const id = created?.session?.id;
@@ -458,9 +469,12 @@ test("a stop records request and acknowledgement and reports the ack state", asy
     const feed = (await fetch(origin + `/api/fleet/events?sessionId=${id}`).then((r) => r.json())) as { items: Array<Record<string, unknown>>; stopAck: string };
     assert.equal(feed.stopAck, "acknowledged");
     const kinds = feed.items.map((e: { kind: string }) => e.kind);
+    assert.ok(kinds.includes("run_started"), "the run event is in the feed");
     assert.ok(kinds.includes("stop_requested"), "the stop request is in the feed");
     assert.ok(kinds.includes("stop_acknowledged"), "the ack is in the feed");
     for (const event of feed.items) {
+      assert.equal(event.agentId, "registered-agent", "events name the registered agent");
+      assert.equal(event.sessionId, id, "events retain the target session ID");
       const flat = JSON.stringify(event);
       assert.doesNotMatch(flat, /not a prompt leak/, "no prompt text in the fleet feed");
       assert.doesNotMatch(flat, /bearer/i, "no credential text in the fleet feed");
@@ -468,29 +482,122 @@ test("a stop records request and acknowledgement and reports the ack state", asy
   }, { workbench });
 });
 
-test("the overview carries the fleet view fields for one registered agent", async () => {
+test("the overview separates agent, current run and unresolved-call identifiers", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-overview-unresolved-"));
+  const workbench = new Workbench({ VOID_DATA_DIR: directory });
+  const view = {
+    id: "session-1",
+    agent: "registered-agent",
+    runId: "run-current",
+    model: "fixture-model",
+    status: "cancelled",
+    events: [
+      {
+        seq: 1,
+        at: "2026-10-11T00:00:00.000Z",
+        kind: "tool",
+        type: "tool.started",
+        runId: "run-old",
+        payload: { callId: "old-call", tool: "read" },
+      },
+      {
+        seq: 2,
+        at: "2026-10-11T00:00:01.000Z",
+        kind: "tool",
+        type: "tool.result",
+        runId: "run-old",
+        payload: { callId: "old-call", result: { ok: true } },
+      },
+      {
+        seq: 3,
+        at: "2026-10-11T00:00:02.000Z",
+        kind: "tool",
+        type: "run.status",
+        runId: "run-old",
+        payload: { status: "completed" },
+      },
+      {
+        seq: 4,
+        at: "2026-10-11T00:00:03.000Z",
+        kind: "tool",
+        type: "tool.started",
+        runId: "run-current",
+        payload: { callId: "call-1", tool: "aws.s3.object.put" },
+      },
+      {
+        seq: 5,
+        at: "2026-10-11T00:00:04.000Z",
+        kind: "tool",
+        type: "run.status",
+        runId: "run-current",
+        payload: { status: "cancelled" },
+      },
+    ],
+  };
+  workbench.allViews = () => [view] as unknown as ReturnType<Workbench["allViews"]>;
+  workbench.get = (id) => id === view.id
+    ? view as unknown as NonNullable<ReturnType<Workbench["get"]>>
+    : undefined;
+  t.after(async () => {
+    await workbench.shutdown();
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  await withServer("unused.jsonl", async (origin) => {
+    const overview = await fetch(origin + "/api/overview").then((response) => response.json()) as Record<string, unknown>;
+    assert.equal(overview.agentId, "registered-agent");
+    assert.equal(overview.runId, "run-current");
+    assert.equal(overview.runState, "stopped");
+    assert.equal(overview.inFlight, 0);
+    assert.equal(overview.unresolvedCalls, 1);
+  }, { workbench });
+});
+
+test("the overview carries separate agent and run identities", async (t) => {
   const fetcher: typeof fetch = async (input) => {
     const url = String(input instanceof Request ? input.url : input);
     if (url === "https://fixture.test/v1/models")
       return Response.json({ data: [{ id: "fixture-model" }] });
     throw new Error(`fixture fetcher must not be called for ${url}`);
   };
-  const workbench = new Workbench({ VOID_DATA_DIR: await mkdtemp(join(tmpdir(), "void-fleet-wb-")) }, fetcher);
+  const workbenchDir = await mkdtemp(join(tmpdir(), "void-fleet-wb-"));
+  const workbench = new Workbench({ VOID_DATA_DIR: workbenchDir }, fetcher);
   await workbench.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-private-key-never-expose" });
+  workbench.upsertAgent({
+    id: "registered-agent",
+    name: "Registered agent",
+    systemPrompt: "Only inspect",
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 2,
+    maxContextTokens: 8192,
+  });
+  t.after(async () => {
+    await workbench.shutdown();
+    await rm(workbenchDir, { recursive: true, force: true });
+  });
   await withServer("unused.jsonl", async (origin) => {
-    // The overview names a run only when one exists, so seed a session first.
     const start = await fetch(origin + "/api/sessions", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ prompt: "overview seed" }),
+      body: JSON.stringify({ prompt: "overview seed", agent: "registered-agent" }),
     });
     assert.equal(start.status, 201, "the fixture created a session");
-    const overview = (await fetch(origin + "/api/overview").then((r) => r.json())) as Record<string, unknown> & { latestEvents: unknown[]; stopAck: string };
-    assert.ok(typeof overview.agentId === "string", "the overview names the registered agent's run");
+    const overview = (await fetch(origin + "/api/overview").then((r) => r.json())) as Record<string, unknown> & {
+      latestEvents: Array<Record<string, unknown>>;
+      stopAck: string;
+    };
+    assert.equal(overview.agentId, "registered-agent", "the overview names the registered agent");
+    assert.ok(typeof overview.runId === "string", "the run has a separate identifier");
+    assert.notEqual(overview.runId, overview.agentId, "a run ID is not an agent identity");
     assert.ok("runState" in overview, "the overview names the run state");
     assert.ok("stopAck" in overview, "the overview names the stop acknowledgement");
-    assert.ok("inFlight" in overview, "the overview reports active runs, not a call count");
+    assert.ok("inFlight" in overview, "the overview reports active runs");
+    assert.ok("unresolvedCalls" in overview, "the overview reports unresolved tool calls separately");
     assert.ok(Array.isArray(overview.latestEvents), "the overview carries the latest fleet events");
+    const runStarted = overview.latestEvents.at(-1)!;
+    assert.equal(runStarted.agentId, "registered-agent");
+    assert.equal(runStarted.sessionId, (await start.json() as { session: { id: string } }).session.id);
     assert.equal(overview.stopAck, "unknown", "no stop has been requested yet");
   }, { workbench });
 });
@@ -507,7 +614,8 @@ test("a decided approval records the approval event with its verdict", async () 
     const feed = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: Array<Record<string, unknown>> };
     const recorded = feed.items.find((event) => event.kind === "approval");
     assert.ok(recorded, "the approval decision is in the feed");
-    assert.equal(recorded?.agentId, "hold-fixture-1", "the feed names the hold");
+    assert.equal(recorded?.holdId, "hold-fixture-1", "the feed names the hold separately");
+    assert.equal(recorded?.agentId, undefined, "a hold ID is not an agent identity");
     assert.equal(recorded?.verdict, "approved", "the feed carries the verdict");
   }, {
     approvals: {

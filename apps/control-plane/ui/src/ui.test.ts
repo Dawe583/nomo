@@ -23,29 +23,27 @@ test("approval review shows a redacted target and the exact identity binding", (
     "schemaDigest",
   ]) assert.match(approvalReview, new RegExp(`binding\.${field}`));
   assert.match(approvalReview, /No safe summary is available/);
+  assert.match(approvalReview, /Local process OS account/);
+  assert.match(approvalReview, /do not authenticate the caller/);
+  assert.match(approvalReview, /any local process that can reach the port/);
   assert.doesNotMatch(approvalReview, /record\.(args|arguments)/);
 });
 
 test("a run stop shows server acknowledgement, never a local success guess", () => {
-  // The dialog gates the ack line on the server response: "acknowledged" only
-  // after /stop returns ack: acknowledged, and the scope note names this
-  // process as the kill boundary with in-flight work left unknown.
   assert.match(
     pages,
     /result\.ack === "acknowledged" \? "acknowledged" : "unknown"/,
     "ack state follows the server, not a local optimist",
   );
   assert.match(pages, /Kill scope is this process only/);
-  assert.match(pages, /stay unknown until their result confirms/);
-  // A missing acknowledgement must be rendered as not-success, explicitly.
+  assert.match(pages, /Unresolved calls are shown separately\./);
   assert.match(pages, /No stop acknowledgement yet\. Success is not shown\./);
 });
 
-test("the active-run count stays visible after an acknowledged stop", () => {
-  // overview-state carries the running or stopping run count alongside the
-  // separate note that individual call outcomes may still be unknown.
+test("the active-run count and unresolved calls use separate fields", () => {
   assert.match(pages, /Running or stopping runs/);
   assert.match(pages, /Run count, not call count/);
+  assert.match(pages, /state\.unresolvedCalls/);
 });
 
 test("a session change remounts the conversation, so an open branch dialog cannot outlive it", () => {
@@ -92,13 +90,11 @@ test("the generic page slot cannot be where that identity is fixed", () => {
   );
 });
 
-test("the overview page renders the registered agent and its run state", () => {
-  // Fleet view (plan Task 7): the overview shows one registered agent and its
-  // current run state, falling back to a placeholder / "unknown" when the
-  // server has nothing to report.
-  assert.match(pages, /data\?\.agentId \?\? /, "agent id rendered with fallback");
-  assert.match(pages, /data\?\.runState \?\? t\("neznámý", "unknown"\)/, "run state rendered with unknown fallback");
-  assert.match(pages, /data\?\.stopAck === "acknowledged"/, "stop ack status line rendered");
+test("the overview page separates the registered agent from its run ID", () => {
+  assert.match(pages, /state\.agentId \?\? /, "agent id rendered with fallback");
+  assert.match(pages, /state\.runId \?\? /, "run ID rendered separately");
+  assert.match(pages, /state\.runState \?\? t\("neznámý", "unknown"\)/, "run state rendered with unknown fallback");
+  assert.match(pages, /state\.stopAck === "acknowledged"/, "stop ack status line rendered");
 });
 
 test("the overview page shows only metadata fields for latest events", () => {
@@ -117,8 +113,8 @@ test("the overview page shows only metadata fields for latest events", () => {
   assert.doesNotMatch(block, /\btext\b|\bpayload\b|\bprompt\b|\btoken\b/);
 });
 
-test("in-flight calls show the unknown-until-confirmed note", () => {
-  // An unconfirmed dispatched call must never read as resolved; the overview
-  // carries the same scope note as the stop dialog.
-  assert.match(pages, /Calls already dispatched upstream stay unknown until their result confirms\./);
+test("unconfirmed calls are separate from the active-run count", () => {
+  assert.match(pages, /state\.unresolvedCalls/);
+  assert.match(pages, /Unconfirmed tool calls/);
+  assert.match(pages, /Unresolved calls are shown separately\./);
 });

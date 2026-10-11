@@ -540,6 +540,10 @@ test("one harness task runs through the inbound proxy, policy and ledger", async
   assert.equal(result.identity.upstreamId, "local-demo-upstream");
   assert.equal(result.identity.audience, "nomo-inbound-proxy");
   assert.deepEqual([...result.identity.toolScope], taskScope);
+  const taskRun = app.get(result.sessionId)!;
+  assert.equal(app.list().length, 1);
+  assert.equal(result.identity.runId, taskRun.runId);
+  assert.equal(result.identity.workspaceId, taskRun.workspace);
   assert.match(result.identity.runId, /^[0-9a-f-]{36}$/);
   // The same evidence path as every other guarded call: policy decided and the
   // ledger recorded it, with no bypass.

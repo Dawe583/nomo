@@ -386,6 +386,11 @@ type Connector = McpConfig & {
   tools: McpTool[];
   consentState: "staged" | "probed" | "confirmed";
 };
+type LocalHarnessRunBinding = {
+  sessionId: string;
+  workspaceId: string;
+  runId: string;
+};
 type Session = {
   view: SessionView;
   messages: ModelMessage[];
@@ -409,6 +414,15 @@ type Session = {
   controller: AbortController;
   provider?: CompatibleProvider;
 };
+
+function hasIncompleteToolBatch(messages: readonly ModelMessage[]): boolean {
+  const lastAssistant = [...messages].reverse().find((message) => message.role === "assistant");
+  if (!lastAssistant?.tool_calls?.length) return false;
+  const laterMessages = messages.slice(messages.indexOf(lastAssistant) + 1);
+  return lastAssistant.tool_calls.some(
+    (call) => !laterMessages.some((message) => message.role === "tool" && message.tool_call_id === call.id),
+  );
+}
 
 /**
  * What survives into the snapshot. A `tokenProvider` is a closure over a grant
@@ -1117,6 +1131,7 @@ export class Workbench {
   }
   runs(): readonly {
     id: string;
+    agentId: string | undefined;
     runId: string;
     sessionId: string;
     model: string;
@@ -1129,6 +1144,7 @@ export class Workbench {
     durationMs: number | null;
     steps: number;
     legacy: boolean;
+    unresolvedCallCount: number;
     reconcileRequired: boolean;
   }[] {
     const activityResult = activity(this.allViews());
@@ -1287,6 +1303,24 @@ export class Workbench {
     agent?: string,
     background = false,
   ): Promise<SessionView> {
+    return this.startWithRunBinding(
+      prompt,
+      model,
+      key,
+      project,
+      agent,
+      background,
+    );
+  }
+  private async startWithRunBinding(
+    prompt: string,
+    model?: string,
+    key?: string,
+    project?: string,
+    agent?: string,
+    background = false,
+    preparedRun?: LocalHarnessRunBinding,
+  ): Promise<SessionView> {
     return this.locked(async () => {
       const selected = model ?? this.preferences.defaultModel;
       const prior = selected
@@ -1312,6 +1346,7 @@ export class Workbench {
         project,
         agent,
         background,
+        preparedRun,
       );
       this.remember(
         key,
@@ -1332,6 +1367,7 @@ export class Workbench {
     project?: string,
     agent?: string,
     background = false,
+    preparedRun?: LocalHarnessRunBinding,
   ): Promise<SessionView> {
     if (!this.provider)
       throw new Error("Connect and validate a provider first.");
@@ -1386,8 +1422,8 @@ export class Workbench {
       throw new Error(
         `Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`,
       );
-    const id = randomUUID();
-    const workspace = `agent-${id}`;
+    const id = preparedRun?.sessionId ?? randomUUID();
+    const workspace = preparedRun?.workspaceId ?? `agent-${id}`;
     const client = Array.isArray(command)
       ? createVoidClient({
           workspace,
@@ -1495,10 +1531,18 @@ export class Workbench {
       this.event(session, "user", prompt);
       this.event(session, "tool", "Queued", { status: "queued" }, "run.status");
       this.persist();
-    } else this.send(id, prompt);
+    } else this.sendWithRunId(id, prompt, undefined, preparedRun?.runId);
     return session.view;
   }
   send(id: string, prompt: string, key?: string): void {
+    this.sendWithRunId(id, prompt, key);
+  }
+  private sendWithRunId(
+    id: string,
+    prompt: string,
+    key?: string,
+    runId?: string,
+  ): void {
     if (this.request(key, [id, prompt])) return;
     const session = this.sessions.get(id);
     if (
@@ -1526,17 +1570,7 @@ export class Workbench {
       throw new Error(
         `Concurrent run limit reached (${this.harness.maxConcurrentRuns}). Wait for a running session to finish or increase the limit.`,
       );
-    const lastAssistant = [...session.messages]
-      .reverse()
-      .find((m) => m.role === "assistant");
-    if (
-      lastAssistant?.tool_calls?.some(
-        (call) =>
-          !session.messages
-            .slice(session.messages.indexOf(lastAssistant) + 1)
-            .some((m) => m.role === "tool" && m.tool_call_id === call.id),
-      )
-    )
+    if (hasIncompleteToolBatch(session.messages))
       throw new Error(
         "Previous tool batch is incomplete. Create a branch before continuing; historical tools will not be replayed.",
       );
@@ -1564,7 +1598,8 @@ export class Workbench {
     session.proxyGrantReadyRunId = undefined;
     const queued =
       session.view.status === "idle" && session.queuedPrompt === prompt;
-    if (!queued) session.view = { ...session.view, runId: randomUUID() };
+    if (!queued)
+      session.view = { ...session.view, runId: runId ?? randomUUID() };
     delete session.queuedPrompt;
     session.messages.push({ role: "user", content: prompt });
     if (!queued) this.event(session, "user", prompt);
@@ -1671,12 +1706,13 @@ export class Workbench {
     }
     session.controller.abort();
     session.client?.close();
-    session.view = { ...session.view, status: "cancelled" };
+    const status = hasIncompleteToolBatch(session.messages) ? "unknown" : "cancelled";
+    session.view = { ...session.view, status };
     this.event(
       session,
       "tool",
       "Cancellation requested. An already dispatched tool may finish.",
-      { status: "cancelled" },
+      { status },
       "run.status",
     );
     this.persist();
@@ -1686,8 +1722,12 @@ export class Workbench {
     for (const session of this.sessions.values()) {
       session.controller.abort();
       session.client?.close();
-      if (session.view.status === "running" || session.view.status === "queued")
-        session.view = { ...session.view, status: "cancelled" };
+      if (session.view.status === "running" || session.view.status === "queued") {
+        const status = session.view.status === "running" && hasIncompleteToolBatch(session.messages)
+          ? "unknown"
+          : "cancelled";
+        session.view = { ...session.view, status };
+      }
     }
     this.queued.clear();
     this.persist();
@@ -2174,15 +2214,12 @@ export class Workbench {
   /**
    * Runs the one constrained task the identity demo allows, end to end.
    *
-   * The order matters and is the point of the method. The session exists
-   * first, so the run id the grant is bound to is one this Workbench issued
-   * rather than one the caller named. The grant is minted second and lives
-   * only in memory. The local listener comes third and is told how to check a
-   * token by consulting the issuer, not by comparing against a secret it was
-   * handed — so the endpoint never learns the value it is validating. Only
-   * then does a single turn go out, through the ordinary workspace tool path:
-   * policy decides and the ledger records, with no branch of this method
-   * reaching either one directly.
+   * Workbench reserves a session id, workspace and run id internally. The
+   * grant uses those values and lives only in memory. The local listener checks
+   * tokens through the issuer without receiving the secret. The connector is
+   * confirmed before the task session starts, so that single run snapshots its
+   * tools. Calls then use the ordinary path where policy decides and the ledger
+   * records the outcome.
    */
   async runLocalHarnessTask(
     input: LocalHarnessTask & {
@@ -2202,32 +2239,20 @@ export class Workbench {
     if (!model)
       throw new Error("Select a model before running the local harness task.");
 
-    // Deliberately distinct from the task prompt: `start` returns an existing
-    // session for an identical prompt, and the task turn must not be answered
-    // by the run that exists only to bind the grant.
-    const BINDING_PROMPT = "Bind the demo workspace for the local identity run.";
-    // A run id has to exist before a grant can be bound to it, but a session's
-    // tool list is captured when it starts — so the connector cannot be
-    // confirmed until a run exists, and the run that will carry the connector's
-    // tools cannot start until the connector is confirmed. The two phases are
-    // therefore structural, not a convenience: the first binds the workspace
-    // and mints the run id, the second is the task turn itself.
-    const binding = await this.start(BINDING_PROMPT, model);
-    await this.settled();
-    // `start` binds both before it returns; a session missing either has no run
-    // for a grant to bind to, and guessing would mint a credential for a run
-    // that does not exist.
-    if (
-      typeof binding.workspace !== "string" ||
-      typeof binding.runId !== "string"
-    )
-      throw new Error("The session has no bound run to bind a grant to.");
+    // These IDs are created inside Workbench so the grant and task share one
+    // run without accepting caller-supplied identity metadata.
+    const sessionId = randomUUID();
+    const preparedRun: LocalHarnessRunBinding = {
+      sessionId,
+      workspaceId: `agent-${sessionId}`,
+      runId: randomUUID(),
+    };
     const issuer = new LocalAgentIdentityIssuer();
     const issued = issuer.issue({
       principalId: LOCAL_AGENT_PRINCIPAL_ID,
-      workspaceId: binding.workspace,
+      workspaceId: preparedRun.workspaceId,
       agentId: `${LOCAL_AGENT_PRINCIPAL_ID}-agent`,
-      runId: binding.runId,
+      runId: preparedRun.runId,
       upstreamId: task.upstreamId,
       toolScope: task.toolScope,
     });
@@ -2247,7 +2272,7 @@ export class Workbench {
 
     const server = await startLocalMcpHttpServer({
       upstreamId: task.upstreamId,
-      proxyOptions: { ...input.proxy, workspace: binding.workspace },
+      proxyOptions: { ...input.proxy, workspace: preparedRun.workspaceId },
       resolveGrant: (token, upstreamId) =>
         asGrantIdentity(
           issuer.authenticate(token, {
@@ -2287,10 +2312,22 @@ export class Workbench {
       await this.probeConnector(connector);
       await this.confirmConnector(connector);
 
-      const run = await this.start(task.prompt, model);
+      const run = await this.startWithRunBinding(
+        task.prompt,
+        model,
+        undefined,
+        undefined,
+        undefined,
+        false,
+        preparedRun,
+      );
       await this.settled();
-      if (typeof run.workspace !== "string")
-        throw new Error("The task run recorded no workspace.");
+      if (
+        run.id !== preparedRun.sessionId ||
+        run.workspace !== preparedRun.workspaceId ||
+        run.runId !== preparedRun.runId
+      )
+        throw new Error("The task run does not match its local agent grant.");
       const ledger = await this.ledger(run.workspace);
       const identity = issuer.authenticate(issued.token, {
         audience: LOCAL_AGENT_GRANT_AUDIENCE,
@@ -2304,7 +2341,7 @@ export class Workbench {
         ledger: { entries: [...(ledger?.entries ?? [])] },
       };
     } finally {
-      issuer.revoke(binding.runId);
+      issuer.revoke(preparedRun.runId);
       await server.close();
     }
   }

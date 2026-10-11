@@ -19,34 +19,27 @@ test("after() returns only events newer than the cursor", () => {
   assert.equal(store.after(0).length, 3);
 });
 
-test("stop acknowledgement is pending on request and acknowledged after the ack", () => {
+test("stop acknowledgement is keyed by session rather than agent ID", () => {
   const store = new FleetEventStore();
-  const id = "s1";
-  assert.equal(store.stopAck(id), "unknown");
-  store.record({ kind: "stop_requested", agentId: id, sessionId: id, label: "stop" });
-  assert.equal(store.stopAck(id), "pending");
-  store.record({ kind: "stop_acknowledged", agentId: id, sessionId: id, label: "ack" });
-  assert.equal(store.stopAck(id), "acknowledged");
+  const sessionId = "session-1";
+  assert.equal(store.stopAck(sessionId), "unknown");
+  store.record({ kind: "stop_requested", agentId: "agent-1", sessionId, label: "stop" });
+  assert.equal(store.stopAck(sessionId), "pending");
+  store.record({ kind: "stop_acknowledged", agentId: "agent-1", sessionId, label: "ack" });
+  assert.equal(store.stopAck(sessionId), "acknowledged");
   assert.equal(store.stopAck(undefined), "unknown");
 });
 
-test("the store cannot hold a token or prompt: the input type has no such field", () => {
-  // Structural proof rather than a runtime scan: a payload carrying a bearer
-  // does not type-check against FleetEventInput, so the leak is impossible by
-  // construction. Here we verify the recorded shape carries only metadata.
+test("events carry explicit fields but do not sanitize caller strings", () => {
   const store = new FleetEventStore();
   const event = store.record({
     kind: "approval",
-    agentId: "a",
+    holdId: "hold-1",
     label: "hold approved",
     verdict: "approved",
   });
-  const keys = Object.keys(event);
-  for (const key of keys)
-    assert.ok(
-      ["kind", "agentId", "label", "verdict", "seq", "at", "sessionId"].includes(key),
-      `unexpected metadata field: ${key}`,
-    );
+  assert.deepEqual(Object.keys(event).sort(), ["at", "holdId", "kind", "label", "seq", "verdict"]);
+  assert.equal(event.label, "hold approved");
 });
 
 test("the store keeps a bounded window instead of growing without limit", () => {

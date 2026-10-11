@@ -5,15 +5,17 @@ export type OverviewState = {
   readonly count: number | undefined;
   readonly kind: "decisions" | "failures" | "running" | "clear" | "unknown";
   /**
-   * Fleet view fields (plan Task 7): one registered agent's current run, the
-   * stop acknowledgement of this process, and a count of running or stopping
-   * runs. This is not a per-call count; run state cannot prove whether an
-   * upstream call was dispatched or whether its result was confirmed.
+   * Fleet view fields (plan Task 7): registered agent and run IDs, active-run
+   * count, unresolved tool-call count and this process's stop acknowledgement.
+   * The active-run count is not a per-call count. Unresolved calls are matched
+   * from start/result evidence and remain conservative when the result is absent.
    */
   readonly agentId: string | undefined;
+  readonly runId?: string;
   readonly runState: string | undefined;
   readonly stopAck: "pending" | "acknowledged" | "unknown";
   readonly inFlight: number | undefined;
+  readonly unresolvedCalls?: number;
 };
 
 const wholeCount = (value: unknown): number | undefined =>
@@ -32,11 +34,15 @@ export function overviewState(data: Row | undefined): OverviewState {
   const failures = wholeCount(data?.failed);
   const running = wholeCount(data?.running);
   const inFlight = wholeCount(data?.inFlight);
+  const runId = oneLine(data?.runId);
+  const unresolvedCalls = wholeCount(data?.unresolvedCalls);
   const base = {
     agentId: oneLine(data?.agentId),
+    ...(runId === undefined ? {} : { runId }),
     runState: oneLine(data?.runState),
     stopAck: ackState(data?.stopAck),
     inFlight,
+    ...(unresolvedCalls === undefined ? {} : { unresolvedCalls }),
   };
   if (decisions !== undefined && decisions > 0)
     return { tone: "attention", count: decisions, kind: "decisions", ...base };

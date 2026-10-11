@@ -327,8 +327,11 @@ fires (packages/policy/src/hold.ts:1-11):
    with `approvals --dir` and `approve <holdId> --by`; the value after
    `--by` is not trusted as identity (docs/OPERATIONS.md:174-181).
    The local HTTP decision route is a loopback/origin boundary, not
-   browser-level or cross-OS-user authentication. Raw argument objects stay
-   in process memory.
+   browser-level or cross-OS-user authentication. The recorded operator ID is
+   derived from the process hosting ApprovalBroker, not the HTTP caller. The
+   loopback/origin gate is not a process credential; without a shared control
+   token, any local process that can reach the port can submit a decision. Raw
+   argument objects stay in process memory.
    Approval notifications and the CLI receive a bounded, redacted operation
    summary instead of `args`. `ApprovalRecord` persists only that summary so a
    separate local control plane can show the target; pending-state loading

@@ -287,6 +287,7 @@ export function deriveRunState(
 export function activity(
   views: readonly {
     id: string;
+    agent?: string;
     model: string;
     status: string;
     state?: RunState;
@@ -330,9 +331,30 @@ export function activity(
         progressCandidate <= 1
           ? progressCandidate
           : null;
+      const startedCallIds = new Set(
+        events.flatMap((event) =>
+          event.type === "tool.started" &&
+          typeof event.payload?.callId === "string"
+            ? [event.payload.callId]
+            : [],
+        ),
+      );
+      const completedCallIds = new Set(
+        events.flatMap((event) =>
+          event.kind === "tool" &&
+          event.type !== "tool.started" &&
+          typeof event.payload?.callId === "string"
+            ? [event.payload.callId]
+            : [],
+        ),
+      );
+      const unresolvedCallCount = [...startedCallIds].filter(
+        (callId) => !completedCallIds.has(callId),
+      ).length;
       const state = (id === s.runId ? s.state : undefined) ?? deriveRunState(status, events);
       return {
         id,
+        agentId: s.agent,
         runId: id,
         sessionId: s.id,
         model: s.model,
@@ -346,7 +368,8 @@ export function activity(
         legacy: id.endsWith(":legacy"),
         state,
         progress,
-        reconcileRequired: status === "unknown",
+        unresolvedCallCount,
+        reconcileRequired: status === "unknown" || unresolvedCallCount > 0,
       };
     });
   });

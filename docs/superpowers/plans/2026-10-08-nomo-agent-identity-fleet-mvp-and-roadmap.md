@@ -317,81 +317,105 @@ secret.
 #### Task 7: Add one-process fleet view and kill acknowledgement
 
 **Files:**
-- Modify: `apps/control-plane/api/server.ts`
-- Modify: `apps/control-plane/ui/src/overview-state.ts`
-- Extend: `apps/control-plane/ui/src/overview-state.test.ts`
-- Modify: `apps/control-plane/ui/src/pages.tsx`
-- Extend: `apps/control-plane/ui/src/ui.test.ts`
+- Modify: `apps/control-plane/api/server.ts` and `apps/control-plane/api/fleet-events.ts`
+- Extend: `apps/control-plane/api/server.test.ts` and `apps/control-plane/api/fleet-events.test.ts`
+- Modify: `packages/workbench/src/gui.ts` and `packages/workbench/src/index.ts`
+- Extend: `packages/workbench/src/gui.test.ts` and `packages/workbench/src/parity-runtime.test.ts`
+- Modify: `apps/control-plane/ui/src/overview-state.ts`, `pages.tsx` and `approval-review.tsx`
+- Extend: `apps/control-plane/ui/src/overview-state.test.ts` and `ui.test.ts`
 
-- [x] Emit metadata-only events for stop request and stop acknowledgement; agent
-      start, run start, tool decision, approval and dispatch result emissions are
-      wired only as far as the store's vocabulary; emission sites for those kinds
-      are noted as the remaining subset.
-- [ ] Show one registered agent and its current run, state and latest events.
-      Display the count of running or stopping runs, not a fabricated per-call
-      count, and mark unresolved call outcomes unknown. Do not render tokens or
-      prompt contents.
+- [x] Emit stop, run, agent and approval events with distinct fields. Stop/run
+      events carry the registered agent ID when present and the target session ID;
+      approval events carry a hold ID, never as `agentId`. The store has no general
+      payload field but does not sanitize strings; current call sites use stable
+      IDs and fixed labels. Tool-decision and dispatch-result events remain in the
+      signed ledger.
+- [x] Show the registered agent ID and current run ID separately. Select the
+      current run through the Workbench session binding, not by relabeling a run
+      or session ID as an agent. Show running/stopping run count separately from
+      unresolved tool-call count, matched from start/result evidence. The stop
+      path keeps an unfinished tool batch unknown. The UI uses a field allow-list
+      and does not render tokens or prompt contents.
 - [x] Add run stop control with visible acknowledgement state; the stop path with
       its "this process only" scope note is the delivered kill control, and no
-      separate local process kill action exists. Do not display success before the
-      proxy confirms it.
-- [ ] State that the demo kill applies to this process only. Show an already
-      dispatched call as in flight or unknown until its result is confirmed;
-      keep its outcome distinct from the active-run count.
+      separate local process kill action exists. A stop acknowledgement is not a
+      claim that an upstream tool call completed.
+- [x] State that the demo kill applies to this process only. If cancellation
+      interrupts an unresolved tool batch, keep the run unknown and show the
+      unresolved-call count separately from active runs. API, Workbench and UI
+      tests cover acknowledgement, active dispatch and unresolved outcomes.
 - [x] Reuse the existing event feed and UI state. Do not add Neon, Drizzle,
       polling infrastructure or a new UI framework for the local demo. Existing
       feed and UI state reused; the fleet store is an in-process ring buffer, no
       polling infrastructure added.
 
-**Acceptance:** One operator can see and stop the local demo run. The stop blocks
-subsequent calls after acknowledgement, while an in-flight call remains visible.
+**Acceptance:** The local operator can see the registered agent and current run
+as distinct IDs. A stop blocks later calls in that session, while any unresolved
+tool outcome remains visible as unknown after acknowledgement.
 
-**Verify:** Run `node --test apps/control-plane/ui/src/overview-state.test.ts
-apps/control-plane/ui/src/ui.test.ts apps/control-plane/api/server.test.ts`, then
-`pnpm run typecheck`.
+**Verify:** Workbench serial suite 243/243; focused control-plane API suite
+28/28; UI and overview-state suites 16/16; serial workspace typecheck exit 0.
+Browser visual smoke was not run because the Chrome DevTools profile was active.
 
 **Dependencies:** Tasks 5 and 6.
 
 #### Task 8: Rehearse and freeze the local demo
 
 **Files:**
-- Create: `docs/NOMO-LOCAL-IDENTITY-DEMO.md`
-- Extend: `scripts/src/e2e.mjs` only if a deterministic end-to-end check is
-  missing.
-- Reuse: `fixtures/e2e-server.mjs` and `fixtures/e2e-policy.yaml`.
+- Create: `docs/NOMO-LOCAL-IDENTITY-DEMO.md` and `fixtures/identity-e2e-tools.mjs`
+- Modify: `scripts/src/e2e.mjs` and `fixtures/e2e-server.mjs` for integrated checks
+- Reuse: `fixtures/e2e-policy.yaml`
+- Clarify process-account identity limits in `docs/OPERATIONS.md` and
+  `docs/POLICY-REFERENCE.md`.
 
-- [ ] Document setup, one low-risk fast-path call, one allowed high-risk write,
-      one denied write, one held write, one explicit observe-only run, token
-      expiry, kill acknowledgement and unresolved in-flight behavior.
-- [ ] Run only against the disposable local MCP fixture. Record the exact
-      verified output, not screenshots with live secrets.
-- [ ] Run focused tests, `pnpm run check`, `pnpm run build`, and the documentation
-      truth test.
-- [ ] Review all Git changes and stage only this feature's files.
-- [ ] Obtain the two existing read-only reviews: security/spec compliance and
-      product/document contradiction review. Do not create more subagents.
-- [ ] Commit and push the verified increment to the GitLab and GitHub feature
-      branches. Do not open a PR.
+- [x] Document setup, the low-risk fast path, the destructive write held and
+      allowed after approval, a denied write, explicit observe-only behavior,
+      token expiry, kill acknowledgement and unresolved in-flight behavior.
+- [x] Run the end-to-end script against the disposable local MCP fixture and
+      record its exact 19 passing checks, including the separate Workbench and
+      identity-bound proxy approval gates. No live-secret screenshots were taken.
+- [x] Make the fixture trace record actual tool arguments, assert the trace is
+      non-empty, and scan those recorded arguments for the grant token.
+- [x] Document that `orders_update` is rejected by the catch-all deny rule, not
+      by explicit write-risk classification. State that approval identity is the
+      local broker process OS account, not authenticated API-caller identity.
+- [x] Run focused proxy HTTP, Workbench wiring, control-plane API, UI and proxy
+      tests sequentially at low priority.
+- [x] Run the documentation truth test: 9/9 passed.
+- [x] Run the serialized workspace typechecks and `pnpm run build`; both pass.
+- [x] Run affected package suites individually at workspace concurrency 1. The
+      aggregate `pnpm run check` was not rerun because the earlier aggregate test
+      runner did not complete reliably; results and scope are recorded accurately.
+- [x] Review all Git changes and stage only this feature's files.
+- [x] Complete the two existing read-only reviews: security/spec compliance and
+      product/document contradiction. Findings were resolved or documented; do
+      not create more subagents.
+- [ ] Commit and push the verified increment to the GitHub feature branch. GitLab
+      credentials are unavailable. Do not open a PR.
 
 **Acceptance:** Another engineer can reproduce the local demo from a clean
-checkout using the runbook. All Sunday exit criteria in the spec pass. No
-production account, hidden token, or unsupported fleet claim is used.
+checkout using the runbook. The verified local-demo criteria pass. Package test
+suites were run individually because the aggregate `pnpm run check` runner did
+not complete reliably; no full-repository aggregate claim is made. No production
+account, hidden token, or unsupported fleet claim is used.
 
-**Verify:** `pnpm run check`, `pnpm run build`,
-`node --test scripts/src/doc-truth.test.mjs`, and the documented local demo.
+**Verify:** Individually serialized package suites, serial workspace typecheck,
+`pnpm run build`, `node --test scripts/src/doc-truth.test.mjs`, and the documented
+local demo.
 
 **Dependencies:** Tasks 1 through 7.
 
 #### Checkpoint: Sunday demo
 
-- [ ] The identity, policy, evidence, Harness, event and stop paths work in one
-      local process.
-- [ ] The full test suite, typecheck, build and docs truth test pass.
-- [ ] Two read-only reviews are resolved or explicitly listed as blockers.
-- [ ] GitLab and GitHub feature refs point at the verified commit. The GitHub
-      feature ref is already moving with the user instruction of 2026-10-10, so
-      it no longer waits for the final review; the GitLab push is still blocked
-      on credentials.
+- [x] The identity, policy, evidence, Harness, event and stop paths work in one
+      local process; the disposable identity E2E passes 19/19 checks.
+- [x] Individually serialized relevant package suites, typecheck, build and docs
+      truth test pass. The aggregate `pnpm run check` runner was not rerun, so no
+      full-repository aggregate result is claimed.
+- [x] Two read-only reviews completed; findings were resolved or the remaining
+      caller-authentication limitation was documented.
+- [ ] Push the verified commit to the GitHub feature ref. The GitLab push remains
+      blocked on unavailable credentials.
 - [ ] Customer demand remains unvalidated unless the qualification evidence is
       actually collected.
 

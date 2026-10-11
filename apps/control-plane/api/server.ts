@@ -318,14 +318,15 @@ async function route(
     }
     const stopRun = /^\/api\/runs\/([A-Za-z0-9_-]+)\/stop$/.exec(parsed.pathname);
     if (stopRun && request.method === 'POST') {
-      if (!wb.get(stopRun[1]!)) return sendJson(response, 404, { message: 'Session not found.' });
+      const session = wb.get(stopRun[1]!);
+      if (!session) return sendJson(response, 404, { message: 'Session not found.' });
+      const agent = session.agent === undefined ? {} : { agentId: session.agent };
       // The acknowledgement records that this process accepted the stop, not
-      // that every in-flight call has resolved: an already dispatched call
-      // stays visible as in flight until its result is confirmed.
-      options.fleetEvents.record({ kind: "stop_requested", agentId: stopRun[1]!, sessionId: stopRun[1]!, label: "operator requested run stop" });
-      wb.stopRun(stopRun[1]!);
-      options.fleetEvents.record({ kind: "stop_acknowledged", agentId: stopRun[1]!, sessionId: stopRun[1]!, label: "this process acknowledged the stop; local kill scope only" });
-      return sendJson(response, 200, { ok: true, ack: options.fleetEvents.stopAck(stopRun[1]!), scope: "this process only" });
+      // that every in-flight call has resolved.
+      options.fleetEvents.record({ kind: "stop_requested", ...agent, sessionId: session.id, label: "operator requested run stop" });
+      wb.stopRun(session.id);
+      options.fleetEvents.record({ kind: "stop_acknowledged", ...agent, sessionId: session.id, label: "this process acknowledged the stop; local kill scope only" });
+      return sendJson(response, 200, { ok: true, ack: options.fleetEvents.stopAck(session.id), scope: "this process only" });
     }
     if (request.method === 'GET' && parsed.pathname === '/api/agents') return sendJson(response, 200, options.workbench.agents());
     if (request.method === 'POST' && parsed.pathname === '/api/agents') {
@@ -361,22 +362,28 @@ async function route(
     }
     if (['/api/runs','/api/usage','/api/overview'].includes(parsed.pathname) && request.method === 'GET') {
       const data = activity(wb.allViews()); if (parsed.pathname === '/api/overview') {
-        // Fleet view (plan Task 7): one registered agent and its current run,
-        // this process's stop acknowledgement, and unconfirmed in-flight calls.
-        // Labels only — the event store's input type cannot carry a token or a
-        // prompt, so the overview cannot leak one either.
+        // Fleet view (plan Task 7): keep the registered agent, current run,
+        // active-run count, unresolved-call count and stop acknowledgement distinct.
+        // Event strings are not sanitized by the store; this route supplies fixed
+        // labels and validated agent identifiers rather than prompt or tool data.
         const events = options.fleetEvents.latest(5);
-        const agentRun = data.runs[0];
+        const currentRuns = data.runs.filter(
+          (run) => wb.get(run.sessionId)?.runId === run.runId,
+        );
+        const noteworthyRuns = currentRuns.filter(
+          (run) => run.state === "running" || run.state === "stopping" ||
+            run.state === "awaiting-approval" || run.state === "unknown",
+        );
+        const agentRun = noteworthyRuns.at(-1) ?? currentRuns.at(-1) ?? data.runs.at(-1);
         return sendJson(response, 200, {
           ...data.overview,
           pendingApprovals: wb.pending().length,
           documents: wb.documentsList().length,
-          agentId: agentRun?.id,
+          agentId: agentRun?.agentId,
+          runId: agentRun?.runId,
           runState: agentRun?.state,
-          // This counts running or stopping runs, not individual calls. Run
-          // state cannot prove whether an upstream call was dispatched or its
-          // result was confirmed.
           inFlight: data.runs.filter((run) => run.state === "running" || run.state === "stopping").length,
+          unresolvedCalls: data.runs.reduce((count, run) => count + run.unresolvedCallCount, 0),
           stopAck: options.fleetEvents.stopAck(agentRun?.sessionId ?? undefined),
           latestEvents: events,
         });
@@ -496,7 +503,8 @@ async function route(
       if (typeof body?.prompt !== "string" || (body.model !== undefined && typeof body.model !== "string") || (body.project !== undefined && typeof body.project !== "string") || (body.agent !== undefined && typeof body.agent !== "string") || (body.background !== undefined && typeof body.background !== "boolean")) return sendJson(response, 400, { error: "invalid_session" });
       try {
         const session = await options.workbench.start(body.prompt, body.model, body.idempotencyKey, body.project, body.agent, body.background);
-        options.fleetEvents.record({ kind: "run_started", agentId: session.id, sessionId: session.id, label: "run started for session" });
+        const agent = session.agent === undefined ? {} : { agentId: session.agent };
+        options.fleetEvents.record({ kind: "run_started", ...agent, sessionId: session.id, label: "run started for session" });
         return sendJson(response, 201, { session });
       }
       catch (error) { return sendJson(response, 409, { error: "session_not_started", message: error instanceof Error ? error.message : "Session not started" }); }
@@ -779,7 +787,7 @@ async function handleApprovalDecision(
   response.setHeader("cache-control", "no-store");
   if (result === false)
     return sendJson(response, 409, { error: "approval_not_accepted" });
-  fleetEvents.record({ kind: "approval", agentId: holdId, sessionId: undefined, label: "approval decided", verdict: decision.kind });
+  fleetEvents.record({ kind: "approval", holdId, label: "approval decided", verdict: decision.kind });
   sendJson(response, 200, { ok: true, result });
 }
 

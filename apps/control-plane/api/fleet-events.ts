@@ -1,15 +1,15 @@
 /**
- * One-process metadata-only fleet event store for the local control plane.
+ * One-process event store for the local control plane.
  *
  * Task 7 of the identity-fleet plan needs an operator to see one registered
  * agent and its current run, and to stop it with a visible acknowledgement.
- * The ledger records tool-call *evidence*; this store records fleet *state
- * changes* — agent start, run start, tool decision, approval, dispatch result,
- * stop request, stop acknowledgement.
+ * The ledger records tool-call evidence; this store records fleet state
+ * changes: agent start, run start, tool decision, approval, dispatch result,
+ * stop request and stop acknowledgement.
  *
- * Metadata-only by construction: the store's input type has no field that
- * could carry a token or prompt text. A caller cannot leak a bearer into the
- * feed by accident, because there is nowhere to put one.
+ * The input has no general payload field, but the store does not sanitize its
+ * string values. Call sites must use stable identifiers, fixed labels and
+ * bounded verdicts. Consumers must not treat those strings as secret-free.
  */
 
 export type FleetEventKind =
@@ -23,20 +23,20 @@ export type FleetEventKind =
 
 export type FleetEventInput = {
   readonly kind: FleetEventKind;
-  readonly agentId: string;
+  readonly agentId?: string;
   readonly sessionId?: string;
-  /** Short operator-facing label; never a prompt body. */
+  readonly holdId?: string;
+  /** Current call sites use fixed operator-facing labels. */
   readonly label: string;
-  /** A bounded decision/approval verdict, e.g. "allow" | "deny" | "hold". */
+  /** Current call sites use bounded decision values such as "allow" or "deny". */
   readonly verdict?: string;
   readonly at?: string;
 };
 
-export type FleetEvent = Required<Pick<FleetEventInput, "kind" | "agentId" | "label">> &
-  FleetEventInput & {
-    readonly seq: number;
-    readonly at: string;
-  };
+export type FleetEvent = FleetEventInput & {
+  readonly seq: number;
+  readonly at: string;
+};
 
 const MAX_EVENTS = 500;
 

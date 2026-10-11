@@ -362,6 +362,69 @@ test("activity sets reconcileRequired true for unknown status", () => {
   assert.equal(result.runs[0]!.state, "unknown");
 });
 
+test("activity surfaces a stopped tool call until its result arrives", () => {
+  const view = {
+    id: "session-1",
+    runId: "run-1",
+    model: "fixture",
+    status: "cancelled",
+    createdAt: "2024-01-01T00:00:00.000Z",
+    events: [
+      {
+        seq: 1,
+        at: "2024-01-01T00:00:01.000Z",
+        kind: "tool",
+        type: "tool.started",
+        runId: "run-1",
+        payload: { callId: "call-1", tool: "write" },
+      },
+      {
+        seq: 2,
+        at: "2024-01-01T00:00:02.000Z",
+        kind: "tool",
+        type: "run.status",
+        runId: "run-1",
+        payload: { status: "cancelled" },
+      },
+    ],
+  };
+  const pending = activity([view]).runs[0]!;
+  assert.equal(pending.unresolvedCallCount, 1);
+  assert.equal(pending.reconcileRequired, true);
+  assert.equal(pending.state, "stopped");
+
+  const settled = activity([{
+    ...view,
+    events: [...view.events, {
+      seq: 3,
+      at: "2024-01-01T00:00:03.000Z",
+      kind: "tool",
+      runId: "run-1",
+      payload: { callId: "call-1", result: { ok: true } },
+    }],
+  }]).runs[0]!;
+  assert.equal(settled.unresolvedCallCount, 0);
+  assert.equal(settled.reconcileRequired, false);
+});
+
+test("activity keeps agent and run identifiers separate", () => {
+  const result = activity([{
+    id: "session-1",
+    agent: "registered-agent",
+    runId: "run-1",
+    model: "fixture",
+    status: "idle",
+    events: [{
+      seq: 1,
+      at: "2024-01-01T00:00:00.000Z",
+      kind: "user",
+      runId: "run-1",
+    }],
+  }]);
+  assert.equal(result.runs[0]?.agentId, "registered-agent");
+  assert.equal(result.runs[0]?.runId, "run-1");
+});
+
 test("activity clamps progress outside 0..1 to null", () => {
   // use static import
   const views = [
