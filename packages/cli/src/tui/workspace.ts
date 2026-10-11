@@ -166,6 +166,22 @@ type Item = {
   path?: string;
   operationId?: string;
   digest?: string;
+  /**
+   * What kind of record this is, used to group a tab that mixes several.
+   * The ledger tab holds signed entries, proxy entries, mined rules, harness
+   * scores, proposals, hooks and agents in one list, and a reader scanning it
+   * for a refusal was stepping over four other kinds to get there.
+   */
+  kind?:
+    | "entry"
+    | "proxy"
+    | "learned"
+    | "score"
+    | "proposal"
+    | "harness"
+    | "hook"
+    | "agent"
+    | "verification";
   /** The raw hold behind an approval row, kept only so the list can order by
    * severity. It is not rendered: the label and the lines carry everything. */
   hold?: {
@@ -429,6 +445,49 @@ const EXPIRY_WARNING_SECONDS = 60;
  * rather than the ready one, because an unrecognised state has never been
  * shown to be working.
  */
+/**
+ * Group headings for a tab that mixes several kinds of record.
+ *
+ * The order is the order an operator reasons in: what was signed, then what
+ * the chain taught, then the machinery that produced it. Signed entries come
+ * first because they are the only ones that are evidence of anything.
+ */
+const LEDGER_GROUP_ORDER = [
+  "verification",
+  "entry",
+  "proxy",
+  "learned",
+  "proposal",
+  "score",
+  "harness",
+  "agent",
+  "hook",
+] as const;
+
+const LEDGER_GROUP_TITLE: Record<string, string> = {
+  verification: "VERIFICATION",
+  entry: "SIGNED ENTRIES",
+  proxy: "PROXY ENTRIES",
+  learned: "LEARNED FROM THE CHAIN",
+  proposal: "PROPOSALS WAITING",
+  score: "HARNESS SCORE",
+  harness: "HARNESS",
+  agent: "AGENTS",
+  hook: "HOOKS",
+};
+
+const LEDGER_GROUP_ICON: Record<string, string> = {
+  verification: "◕",
+  entry: "▪",
+  proxy: "▫",
+  learned: "◇",
+  proposal: "◉",
+  score: "▰",
+  harness: "◈",
+  agent: "◆",
+  hook: "◔",
+};
+
 export function providerStatusIcon(status: string): string {
   if (status === "ready") return ROW_ICONS.settled;
   if (status === "setup-required" || status === "rate-limited")
@@ -1774,6 +1833,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             ...(typeof b.operationId === "string"
               ? { operationId: b.operationId }
               : {}),
+            kind: "entry",
             label: `${ROW_ICONS.ledgerEntry} ${id.slice(0, 8)} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
             lines: [
               this.managedVerificationStatus === undefined
@@ -1791,6 +1851,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           const b = e.body as Record<string, unknown>;
           rows.push({
             id: `proxy:${workspace}:${e.seq}`,
+            kind: "proxy",
             label: `${ROW_ICONS.proxyEntry} proxy:${workspace} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
             lines: [
               this.proxy.signed
@@ -1820,6 +1881,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           rows.push({
             id: `learned:${id}:none`,
             sessionId: id,
+            kind: "learned",
             label: `${ROW_ICONS.learned} learned ${id.slice(0, 8)} nothing learned`,
             lines: [
               entries.length
@@ -1836,6 +1898,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             // patterns, and an id built from the tool alone collides them.
             id: `learned:${id}:${String(rule.match.tool)}:${String(rule.match.class)}`,
             sessionId: id,
+            kind: "learned",
             label: `${ROW_ICONS.learned} learned ${id.slice(0, 8)} ${text(rule.match.tool)} [${text(rule.match.class)}] -> ${rule.decision}`,
             lines: [
               this.managedVerificationStatus === undefined
@@ -1868,7 +1931,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // measured from and reach no gate, policy or permission. A metric the
       // chain cannot support is reported as unavailable instead of being
       // rendered as a number nobody checked.
-      for (const score of harnessScoreRows(this.proofs)) rows.push(score);
+      for (const score of harnessScoreRows(this.proofs))
+        rows.push({ ...score, kind: "score" });
       // The ring closes as the chain verifies. Its shape reports how far the
       // check got, so an operator can see progress without reading a count,
       // and the word beside it stays authoritative.
@@ -1881,6 +1945,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         const ok = Math.max(0, total - failed);
         rows.push({
           id: "ledger:verification",
+          kind: "verification",
           label: `${completionRing(ok, Math.max(1, total), motionContext(this.frame))} ${ok} of ${total} ledger entries verified`,
           lines: [
             failed
@@ -1895,7 +1960,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // itself stays an explicit command naming the digest, never a side
       // effect of looking.
       for (const proposal of harnessProposalRows(this.proofs))
-        rows.push({ ...proposal, sessionId: proposal.id.split(":")[1] });
+        rows.push({
+          ...proposal,
+          kind: "proposal",
+          sessionId: proposal.id.split(":")[1],
+        });
       // The harness that produced this chain: which runtime is the default,
       // which profile new conversations get, and what hooks are wired.
       // /harness and /hooks print the same facts on demand; this is where
@@ -1905,6 +1974,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       const prefs = this.workbench.getPreferences();
       rows.push({
         id: "harness:current",
+        kind: "harness",
         label: `${ROW_ICONS.harness} harness ${prefs.defaultAgent ?? "cloud"}`,
         lines: [
           `Default for new conversations: ${prefs.defaultAgent ?? "cloud"}.`,
@@ -1917,6 +1987,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       for (const hook of harnessCatalog.hooks) {
         rows.push({
           id: `hook:${hook.id}`,
+          kind: "hook",
           label: `${hook.enabled ? ROW_ICONS.hook : ROW_ICONS.archived} hook ${hook.id} ${hook.enabled ? "on" : "off"}`,
           lines: [
             `Event: ${hook.event}.`,
@@ -1928,6 +1999,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       if (harnessCatalog.hooks.length === 0)
         rows.push({
           id: "hook:none",
+          kind: "hook",
           label: `${ROW_ICONS.hook} hook none saved`,
           lines: [
             harnessCatalog.hooksSupported
@@ -1956,6 +2028,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             : prompt;
         rows.push({
           id: `agent:${agent.id}`,
+          kind: "agent",
           label: `◆ agent ${agent.id}${selected ? " [selected]" : ""}`,
           lines: [
             ...(profile
@@ -1973,6 +2046,20 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         });
       }
       rows.reverse();
+      // Grouped by kind, in the order an operator reasons in. Without this
+      // the groups rendered in whatever order the records happened to be
+      // built in, so agents came before the signed entries they relate to.
+      // Sorting the rows themselves rather than the rendered lines is what
+      // keeps the printed numbers matching the selection index.
+      rows.sort(
+        (a, b) =>
+          LEDGER_GROUP_ORDER.indexOf(
+            (a.kind ?? "entry") as (typeof LEDGER_GROUP_ORDER)[number],
+          ) -
+          LEDGER_GROUP_ORDER.indexOf(
+            (b.kind ?? "entry") as (typeof LEDGER_GROUP_ORDER)[number],
+          ),
+      );
     }
     if (this.tab === "approvals")
       rows = this.workbench
@@ -4133,10 +4220,27 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // rather than blinking: a blinking cursor is hard to follow in a redraw
     // that happens four times a second.
     const motion = motionContext(this.frame);
-    return rows.map((row, index) => {
-      const mark = cursorMarker(index === this.selected, motion);
-      return `${mark}${index + 1}. ${row.label}`;
+    const mark = (index: number) =>
+      cursorMarker(index === this.selected, motion);
+    // A tab that mixes kinds gets a heading above each run of them. Headings
+    // carry no number on purpose: the number is how an operator refers to a
+    // row, and a number that counts a heading would make every reference
+    // after it wrong.
+    if (!rows.some((row) => row.kind))
+      return rows.map((row, i) => `${mark(i)}${i + 1}. ${row.label}`);
+    const out: string[] = [];
+    let kind: string | undefined;
+    rows.forEach((row, index) => {
+      if (row.kind !== kind) {
+        kind = row.kind;
+        const key = row.kind ?? "";
+        out.push(
+          `${LEDGER_GROUP_ICON[key] ?? "-"} ${LEDGER_GROUP_TITLE[key] ?? key}`,
+        );
+      }
+      out.push(`${mark(index)}${index + 1}. ${row.label}`);
     });
+    return out;
   }
 }
 

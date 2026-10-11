@@ -323,6 +323,70 @@ test("a hold with a deadline says so, and a closed one says it closed", () => {
   assert.equal(holdSecondsLeft({ expiresAt: now + 400 }, now), 0);
 });
 
+test("the ledger tab groups mixed records in the order they are read", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-ledger-groups-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  await app.editDocument(
+    ui.sessionId!,
+    { path: "doc.md", content: "a", expectedRevision: null },
+    "tui-operator",
+  );
+  await ui.refresh(true);
+  ui.choose("ledger");
+  const rows = ui.lines();
+  const text = rows.join("\n");
+
+  // The ledger tab holds signed entries, mined rules, harness scores,
+  // proposals, hooks and agents in one list. Grouped, a reader looking for a
+  // refusal stops in the right block instead of stepping over four kinds.
+  const order = [
+    "VERIFICATION",
+    "SIGNED ENTRIES",
+    "LEARNED FROM THE CHAIN",
+    "HARNESS SCORE",
+    "HARNESS",
+    "AGENTS",
+    "HOOKS",
+  ].filter((title) => text.includes(title));
+  assert.ok(
+    order.length >= 4,
+    `expected several groups, got ${order.join(", ")}`,
+  );
+  // And in the order an operator reasons in, not the order the records
+  // happened to be built in.
+  const positions = order.map((title) =>
+    rows.findIndex((r) => r.includes(title)),
+  );
+  assert.deepEqual(
+    positions,
+    [...positions].sort((a, b) => a - b),
+    `groups out of reading order: ${order.join(" -> ")}`,
+  );
+  // Signed entries come first because they are the only rows that are
+  // evidence of anything.
+  assert.ok(text.indexOf("SIGNED ENTRIES") < text.indexOf("AGENTS"));
+
+  // A heading carries no number. The number is how a row is referred to, and
+  // one that counts a heading would make every reference after it wrong.
+  const numbered = rows.filter((row) => /\d+\.\s/.test(row));
+  const headings = rows.filter((row) =>
+    ["VERIFICATION", "SIGNED ENTRIES", "AGENTS", "HOOKS"].some((t) =>
+      row.startsWith(t),
+    ),
+  );
+  for (const heading of headings)
+    assert.ok(!/\d+\.\s/.test(heading), `heading carries a number: ${heading}`);
+  assert.ok(numbered.length >= headings.length);
+});
+
 test("Shift+Tab modes cycle with a visible indicator", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-mode-"));
   const { app, env } = await fixtureApp(root);
