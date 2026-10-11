@@ -123,6 +123,11 @@ import {
   type CommandEntry,
 } from "./discover.ts";
 import { activitySummary, buildActivity, renderActivity } from "./activity.ts";
+import {
+  buildMinimapEvents,
+  minimapSummary,
+  renderMinimap,
+} from "./minimap.ts";
 import { bindingsFor, filterBindings, renderCheatSheet } from "./cheatsheet.ts";
 import { buildTimeline, renderTimeline } from "./run-timeline.ts";
 import {
@@ -6336,6 +6341,11 @@ export function renderWorkspace(
     .filter((index) => index >= 0);
   const body = lines.slice(offset, offset + bodyHeight);
   while (body.length < bodyHeight) body.push("");
+  // Build minimap events for chat tab (just events, no palette needed)
+  const minimapEvents =
+    richChat && ui.session() ? buildMinimapEvents(ui.session()!.events) : [];
+  // Placeholder, will be re-rendered after palette is available
+  let minimapRows: string[] = [];
   const frameColor = ui.confirmation ? amber : mutedAnsi;
   const bodyRows = body.map((line, index) => {
     const style = styled?.[offset + index]?.style;
@@ -6378,7 +6388,10 @@ export function renderWorkspace(
     return (
       ink(ui.confirmation ? "! " : "  ", frameColor) +
       ink(painted, tone) +
-      (ui.confirmation ? ink(" !", frameColor) : "  ")
+      (ui.confirmation ? ink(" !", frameColor) : "  ") +
+      (richChat && minimapRows[index]
+        ? paintWithPalette(" " + minimapRows[index], "muted", palette, caps)
+        : "")
     );
   });
   const events = ui.session()?.events ?? [];
@@ -6441,6 +6454,19 @@ export function renderWorkspace(
   // Status segments with theme colors (omp-style segment catalog)
   const symbols = getSymbols(ui.themeConfig.symbolPreset);
   const palette = getPalette(ui.themeConfig.colorTheme);
+  // Render minimap rows now that palette is available
+  minimapRows =
+    richChat && minimapEvents.length > 0
+      ? renderMinimap(minimapEvents, {
+          height: bodyHeight,
+          motion,
+          paint: (text: string, tone: string, bold?: boolean) =>
+            paintWithPalette(text, tone as any, palette, caps, bold),
+          viewportStart: offset,
+          viewportEnd: offset + bodyHeight,
+          totalEvents: minimapEvents.length,
+        })
+      : [];
   const accent = paintWithPalette("●", "accent", palette, caps, true);
   const muted = paintWithPalette("│", "muted", palette, caps);
   const seg = (
