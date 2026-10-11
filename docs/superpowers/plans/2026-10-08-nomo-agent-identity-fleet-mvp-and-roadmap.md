@@ -390,14 +390,14 @@ Browser visual smoke was not run because the Chrome DevTools profile was active.
 - [x] Complete the two existing read-only reviews: security/spec compliance and
       product/document contradiction. Findings were resolved or documented; do
       not create more subagents.
-- [ ] Commit and push the verified increment to the GitHub feature branch. GitLab
-      credentials are unavailable. Do not open a PR.
+- [x] Commit `6d4a315` and push to the GitHub feature branch; the remote hash
+      matches. GitLab credentials are unavailable. No PR was opened.
 
-**Acceptance:** Another engineer can reproduce the local demo from a clean
-checkout using the runbook. The verified local-demo criteria pass. Package test
-suites were run individually because the aggregate `pnpm run check` runner did
-not complete reliably; no full-repository aggregate claim is made. No production
-account, hidden token, or unsupported fleet claim is used.
+**Acceptance:** The runbook and integrated local demo pass in the active feature
+worktree. A fresh-checkout reproduction was not independently exercised. Package
+test suites were run individually because the aggregate `pnpm run check` runner
+did not complete reliably; no full-repository aggregate claim is made. No
+production account, hidden token, or unsupported fleet claim is used.
 
 **Verify:** Individually serialized package suites, serial workspace typecheck,
 `pnpm run build`, `node --test scripts/src/doc-truth.test.mjs`, and the documented
@@ -414,8 +414,8 @@ local demo.
       full-repository aggregate result is claimed.
 - [x] Two read-only reviews completed; findings were resolved or the remaining
       caller-authentication limitation was documented.
-- [ ] Push the verified commit to the GitHub feature ref. The GitLab push remains
-      blocked on unavailable credentials.
+- [x] GitHub feature ref points at `6d4a315`; the remote hash was verified. The
+      GitLab push remains blocked on unavailable credentials.
 - [ ] Customer demand remains unvalidated unless the qualification evidence is
       actually collected.
 
