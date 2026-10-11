@@ -109,6 +109,8 @@ import {
   toolSchemaLines,
   type ToolSummary,
 } from "./tool-browser.ts";
+import { renderRecovery, type RecoveryRow } from "./recovery-view.ts";
+import { bindingsFor, filterBindings, renderCheatSheet } from "./cheatsheet.ts";
 import { buildTimeline, renderTimeline } from "./run-timeline.ts";
 import {
   buildDocumentTree,
@@ -894,6 +896,26 @@ export class WorkspaceTui {
   /** True while the visible detail is the keybinding table. */
   keybindingDetail = false;
   /**
+   * The cheat sheet, summoned from anywhere.
+   *
+   * Separate from keybindingDetail on purpose. The keybinding table is a page
+   * an operator visits to read every binding, and it renders into the detail
+   * pane. The cheat sheet answers "that key did not do what I expected",
+   * which is a question about right now, and it opens over whatever was on
+   * screen. It still renders into detail because that pane is the only thing
+   * in the frame that does not disturb the body behind it, and re-laying the
+   * body would drop the scroll position the operator was reading at.
+   */
+  cheatSheet = false;
+  /**
+   * The filter typed into the cheat sheet. Its own field, not keybindingQuery,
+   * for the reason the keybinding query has its own field: two overlays sharing
+   * one filter would let a keystroke meant for one narrow the other.
+   */
+  cheatQuery = "";
+  /** Terminal width the cheat sheet was last laid out for. */
+  cheatWidth = 0;
+  /**
    * Grouping for the documents and sessions tabs. Present only while one of
    * those is open, which is what makes its presence the signal that the tree
    * keys are live rather than another meaning for left and right.
@@ -908,6 +930,15 @@ export class WorkspaceTui {
    * the same way for the same reason.
    */
   frame = 0;
+  /**
+   * Whether the composer is taking typing, published by the renderer.
+   *
+   * The runner owns that state as input.editing and the model has no other way
+   * to see it. Published the same way as frame, for the same reason: the
+   * cheat sheet asks which keys apply now, and "now" includes whether the
+   * keyboard belongs to the prompt.
+   */
+  editingInput = false;
   compactTools = true;
   mode: TuiMode = "normal";
   /** Runtime theme overrides. Undefined keeps the NOMO_TUI_* environment. */
@@ -1021,6 +1052,10 @@ export class WorkspaceTui {
     // detail view, because a stale flag would make ordinary typing filter a
     // table that is no longer on screen.
     this.keybindingDetail = false;
+    // Same reason, same hazard: the sheet is filtered by ordinary typing, so a
+    // flag left set after the panel changed would eat every letter typed next.
+    this.cheatSheet = false;
+    this.cheatQuery = "";
     // The tree belongs to the documents tab. Left on elsewhere it would let
     // the arrow keys collapse a folder the operator is not even looking at.
     this.groupTree = undefined;
@@ -1233,6 +1268,64 @@ export class WorkspaceTui {
   refreshKeybindings(width = 72) {
     this.detail = keybindingLines(this.keybindingQuery, width);
     this.keybindingWidth = width;
+    this.scroll = 0;
+  }
+  /**
+   * True while the cheat sheet is the visible detail.
+   *
+   * The flag is checked together with a content test, same as the keybinding
+   * table. Roughly a dozen command paths replace detail with something else
+   * without knowing an overlay flag exists, and a stale flag would leave the
+   * ordinary typing keys filtering a sheet nobody can see.
+   */
+  get showingCheatSheet(): boolean {
+    return (
+      this.cheatSheet && this.detail?.[0]?.startsWith("? Cheat sheet") === true
+    );
+  }
+  /**
+   * Which bindings apply right now.
+   *
+   * The context is read from published fields rather than passed in, because
+   * the runner knows the keyboard state and the model knows what is on screen,
+   * and neither of them alone can answer "which keys work now".
+   */
+  liveBindings() {
+    return bindingsFor({
+      editing: this.editingInput,
+      running: this.workbench.running(),
+      reviewing: !!this.diffView || !!this.confirmation,
+    });
+  }
+  /** Open the cheat sheet, optionally with a filter already typed. */
+  openCheatSheet(query = "") {
+    this.cheatSheet = true;
+    this.cheatQuery = query;
+    this.refreshCheatSheet();
+  }
+  /**
+   * Close it and hand the frame back to whatever was on screen.
+   *
+   * The detail is dropped rather than restored, because nothing under it
+   * changed while the sheet was open, so re-deriving it would cost a render
+   * pass to produce a result identical to the one already in the body rows.
+   */
+  closeCheatSheet() {
+    this.cheatSheet = false;
+    this.cheatQuery = "";
+    this.detail = undefined;
+    this.scroll = 0;
+    this.notice = "Cheat sheet closed.";
+  }
+  /** Re-lay the cheat sheet after a keystroke or a terminal width change. */
+  refreshCheatSheet(width = 72) {
+    const all = this.liveBindings();
+    const shown = filterBindings(all, this.cheatQuery);
+    this.detail = renderCheatSheet(
+      { bindings: shown, query: this.cheatQuery },
+      { width },
+    );
+    this.cheatWidth = width;
     this.scroll = 0;
   }
   reject() {
@@ -1458,6 +1551,45 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         !undone.has(o.id) &&
         (!this.documentPath || o.path === this.documentPath),
     );
+  }
+  /**
+   * Every operation in this workspace as recovery rows, settled ones included.
+   *
+   * openOperations answers "what can I still undo", which is the diff panel's
+   * question. This answers "what happened to this workspace and what is still
+   * open", which nobody could answer before. Same source, different filter,
+   * and the reason for that filter is named rather than left in the reader.
+   */
+  recoveryRows(): RecoveryRow[] {
+    if (!this.sessionId) return [];
+    const ops = this.workbench.workspace(this.sessionId).operations;
+    const undone = new Set(ops.flatMap((o) => (o.undoes ? [o.undoes] : [])));
+    return ops.map((o) => {
+      const settled = o.kind === "undo" || undone.has(o.id);
+      return {
+        id: o.id,
+        kind:
+          o.kind === "undo"
+            ? ("undo" as const)
+            : o.kind === "delete"
+              ? ("delete" as const)
+              : ("edit" as const),
+        path: o.path,
+        seq: 0,
+        // A decided operation is not something to act on. An operation still
+        // open is recoverable, because the captured state is what makes it so.
+        recoverable: settled
+          ? o.kind === "undo"
+            ? "already-undone"
+            : "kept"
+          : "recoverable",
+        // The workspace record carries no timestamp and no reason. Both are
+        // left undefined rather than derived: an age the terminal worked out
+        // itself would not be the age the system recorded.
+        at: undefined,
+        undoesId: typeof o.undoes === "string" ? o.undoes : undefined,
+      };
+    });
   }
   /** The /diff panel body for the currently selected operation. */
   diffDetailLines(
@@ -4414,11 +4546,18 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       ];
     }
     const rows = this.items();
-    // Documents group by folder and conversations by state, for the same
+    // Documents group by folder and conversations by state, for the same</path>
     // reason: a flat list of forty rows cannot be scanned, and a group the
     // operator does not care about should be one keystroke to hide rather
     // than forty rows to scroll past.
-    if (this.groupTree && rows.length)
+    if (this.groupTree && rows.length) {
+      // A folder tree answers "what is here". It does not answer "what
+      // happened to it", so the recovery line sits under it rather than
+      // replacing it. Two panes for one tab would mean the operator has to
+      // choose which question to be able to ask at all.
+      const openOps = this.recoveryRows().filter(
+        (row) => row.recoverable === "recoverable",
+      );
       return [
         ...renderTree(this.groupTree.nodes, this.groupTree.state, 76, 24, {
           motion: motionContext(this.frame),
@@ -4431,10 +4570,18 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             ? { group: "folder", row: "document" }
             : { group: "group", row: "conversation" },
         ),
+        ...(this.tab === "documents"
+          ? [
+              openOps.length
+                ? `${openOps.length} of ${this.recoveryRows().length} changes can still be undone. /diff steps through them.`
+                : "Every change has been decided: undone or kept.",
+            ]
+          : []),
         this.tab === "documents"
           ? "Left/Right collapse and expand a folder. Enter opens the document."
           : "Left/Right collapse and expand a group. Enter opens the conversation.",
       ];
+    }
     // The tools tab is answered earlier, by the grouped browser, so the
     // /mcp hint that used to sit here has no tab left to attach to.
     // The models tab gets a hint of its own because Enter means something
@@ -4959,6 +5106,11 @@ export function renderWorkspace(
   // happens when the width actually moved.
   if (ui.showingKeybindings && ui.keybindingWidth !== width)
     ui.refreshKeybindings(width);
+  // Same for the cheat sheet: it sizes its columns to the terminal, so a
+  // resize has to re-lay it. Only on an actual width change, for the same
+  // reason the keybinding table does not re-lay every frame.
+  if (ui.showingCheatSheet && ui.cheatWidth !== width)
+    ui.refreshCheatSheet(width);
   // Terminal capabilities for theme rendering (omp-style)
   const caps = detectCapabilities(ui.env, {
     columns: width,
@@ -4980,6 +5132,10 @@ export function renderWorkspace(
   // Published before anything asks the model for lines, because the list rows
   // animate their cursor marker and are built on the model side.
   ui.frame = motion.frame;
+  // Published before the detail is asked for lines, same reason as the frame
+  // above: the cheat sheet lists editing bindings and has to know whether the
+  // keyboard currently belongs to the prompt.
+  ui.editingInput = editing;
   const pending = ui.workbench.pending();
   const holds = pending.length + ui.proxy.holds.length;
   const waiting = pending.some((hold) =>

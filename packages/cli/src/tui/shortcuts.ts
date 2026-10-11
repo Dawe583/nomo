@@ -148,7 +148,10 @@ export function shortcutHintsFor(
   }
   push("Shift+Tab", "cycle mode", "mode");
   push("u", "undo", "action");
-  push("?", "keys", "panel");
+  // The label says cheat, not keys, because that is what the key does: it
+  // opens a filterable sheet over the current view, not a page listing every
+  // binding. The legend has to describe the press, not the intent behind it.
+  push("?", "cheat", "panel");
   return hints;
 }
 

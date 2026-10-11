@@ -758,6 +758,52 @@ export async function runWorkspaceTui(
           return;
         }
       }
+      // The cheat sheet is filtered the same way, for the same reason, and it
+      // is reachable from anywhere so this block has to work in every mode.
+      // Escape with a filter clears it, with an empty filter closes the sheet,
+      // so one key covers both ends of the same action.
+      if (ui.showingCheatSheet) {
+        if (key.name === "backspace") {
+          ui.cheatQuery = ui.cheatQuery.slice(0, -1);
+          ui.refreshCheatSheet();
+          draw();
+          return;
+        }
+        if (key.name === "escape" && ui.cheatQuery) {
+          ui.cheatQuery = "";
+          ui.refreshCheatSheet();
+          draw();
+          return;
+        }
+        if (key.name === "escape") {
+          ui.closeCheatSheet();
+          draw();
+          return;
+        }
+        if (value && !key.ctrl && !key.meta && [...value].length === 1) {
+          ui.cheatQuery += value;
+          ui.refreshCheatSheet();
+          draw();
+          return;
+        }
+      }
+      // Shift+/ opens the sheet. It has to be a binding of its own because
+      // plain question mark is a printable character the operator can type,
+      // and stealing it would put a stray character from a paste at risk.
+      if (
+        value === "?" &&
+        key.shift &&
+        !key.ctrl &&
+        !key.meta &&
+        !input.editing
+      ) {
+        // Not while the composer has focus. A question mark mid sentence is
+        // ordinary text, and an overlay that swallowed it would corrupt the
+        // prompt without the operator doing anything unusual.
+        ui.openCheatSheet();
+        draw();
+        return;
+      }
       // Double Escape must be consecutive, not span commands typed in between.
       if (key.name !== "escape") lastEsc = 0;
       if (

@@ -163,6 +163,88 @@ test("/keybindings is a grouped, searchable table that lays out to the terminal"
   assert.equal(ui.showingKeybindings, false);
 });
 
+test("the cheat sheet opens over any view and only lists keys that work now", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-cheat-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+
+  // It opens without leaving the panel it was opened from, because the whole
+  // reason to open it is a key that did not do what was expected here.
+  ui.choose("agents");
+  const tabBefore = ui.tab;
+  ui.openCheatSheet();
+  assert.ok(ui.showingCheatSheet, "the sheet is the visible detail");
+  assert.equal(ui.tab, tabBefore, "the panel behind it is untouched");
+  assert.ok(ui.detail!.length > 0, "it renders rows");
+  assert.match(ui.detail![0], /Cheat sheet/);
+
+  // Grouped by situation, in the order a person needs them: always first.
+  const sheet = ui.detail!.join("\n");
+  assert.ok(sheet.includes("ALWAYS"), "the always group leads");
+  assert.ok(sheet.includes("Ctrl+P"), "a known binding is listed");
+  assert.match(sheet, /of \d+ bindings/);
+
+  // Filtering matches the key and the action, not only the key.
+  ui.cheatQuery = "palette";
+  ui.refreshCheatSheet(80);
+  assert.match(ui.detail!.join("\n"), /1 of/);
+  assert.ok(
+    !ui.detail!.join("\n").includes("undo last change"),
+    "an unrelated binding is filtered out",
+  );
+
+  // A query matching nothing says so. An empty screen is indistinguishable
+  // from a sheet that failed to load.
+  ui.cheatQuery = "zzzz";
+  ui.refreshCheatSheet(80);
+  assert.match(ui.detail!.join("\n"), /No bindings match/);
+
+  // Only keys that apply right now. A sheet listing a key that does nothing is
+  // a sheet the operator learns to distrust, so review keys must be absent
+  // while no review is open.
+  ui.cheatQuery = "";
+  ui.refreshCheatSheet(80);
+  const idle = ui.detail!.join("\n");
+  assert.ok(
+    !/\bstaged hunks\b|\btoggle hunks\b/i.test(idle),
+    "review keys are not listed outside a review",
+  );
+
+  // Opening a review adds them, and closing returns to the previous panel.
+  ui.diffView = {
+    hunks: [],
+    cursor: 0,
+    side: "split",
+    staged: new Set<string>(),
+  } as unknown as NonNullable<typeof ui.diffView>;
+  ui.refreshCheatSheet(80);
+  assert.match(ui.detail!.join("\n"), /REVIEW/);
+  assert.match(ui.detail!.join("\n"), /accept hunk/);
+  // Back to no review, and the review group is gone again.
+  ui.diffView = undefined;
+  ui.refreshCheatSheet(80);
+  assert.ok(
+    !ui.detail!.join("\n").includes("accept hunk"),
+    "the review group closes with the review",
+  );
+
+  ui.closeCheatSheet();
+  assert.equal(ui.showingCheatSheet, false);
+  assert.equal(ui.detail, undefined, "the detail pane is handed back");
+
+  // Changing panel clears the flag, so ordinary typing is not swallowed by a
+  // filter for a sheet that is no longer on screen.
+  ui.openCheatSheet();
+  ui.choose("models");
+  assert.equal(ui.showingCheatSheet, false);
+  assert.equal(ui.cheatQuery, "");
+});
+
 test("the documents tab groups by folder and the arrows fold it", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-doctree-"));
   const { app, env } = await fixtureApp(root);
