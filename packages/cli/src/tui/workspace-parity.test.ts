@@ -418,6 +418,57 @@ test("Enter on a model inspects it; it does not switch the model", async (t) => 
   assert.equal(ui.model, target);
 });
 
+test("each tab builds only its own rows, and the usage tab leads with a summary", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-tabrows-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  await app.editDocument(
+    ui.sessionId!,
+    { path: "doc.md", content: "x", expectedRevision: null },
+    "tui-operator",
+  );
+
+  // A row builder that forgets its tab guard does not fail loudly. It
+  // silently replaces every other tab's rows with its own, and the symptom
+  // is a tab that is empty for no reason anybody can see.
+  for (const tab of [
+    "sessions",
+    "documents",
+    "ledger",
+    "tools",
+    "approvals",
+  ] as const) {
+    ui.choose(tab);
+    const rows = ui.items();
+    if (tab === "sessions" || tab === "documents")
+      assert.ok(rows.length > 0, `${tab} built no rows`);
+    for (const row of rows)
+      assert.ok(
+        !/\| tokens /.test(row.label),
+        `${tab} shows a usage row: ${row.label}`,
+      );
+  }
+
+  ui.choose("usage");
+  // The fixture returns a plain answer, so it records no usage. With nothing
+  // to summarise the tab has to say so rather than print an empty summary,
+  // and that empty case is the one worth pinning.
+  const usage = ui.lines().join("\n");
+  if (ui.items().length) {
+    assert.match(usage, /^USAGE, \d+ records/);
+    assert.match(usage, /Each record, newest last/);
+  } else {
+    assert.match(usage, /No entries yet\./);
+  }
+});
+
 test("Shift+Tab modes cycle with a visible indicator", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-mode-"));
   const { app, env } = await fixtureApp(root);

@@ -4272,6 +4272,28 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         "Enter inspects a model. /model ID selects it for new conversations.",
       ];
+    // The usage tab is one row per record, which answers "what happened" and
+    // not "what did it cost me". Records arrive newest last, so the summary
+    // leads with the shape and the list follows it.
+    if (this.tab === "usage" && rows.length) {
+      const known = rows
+        .map((r) => /tokens (\d+)/.exec(r.label)?.[1])
+        .filter((v): v is string => !!v)
+        .map(Number);
+      return [
+        `USAGE, ${rows.length} records across ${new Set(rows.map((r) => r.sessionId)).size} conversations`,
+        "",
+        known.length
+          ? `tokens, last ${Math.min(24, known.length)} records  ${sparkline({ values: known.slice(-24) }, 40)}`
+          : "No token counts reported yet.",
+        known.length
+          ? `median ${median(known)} / peak ${Math.max(...known)} / total ${known.reduce((a, b) => a + b, 0)} tokens`
+          : "",
+        "",
+        "Each record, newest last.",
+        ...this.listRows(),
+      ];
+    }
     return rows.length ? this.listRows() : ["No entries yet.", ""];
   }
   /**
