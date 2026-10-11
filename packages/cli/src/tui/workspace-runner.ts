@@ -787,23 +787,15 @@ export async function runWorkspaceTui(
           return;
         }
       }
-      // Shift+/ opens the sheet. It has to be a binding of its own because
-      // plain question mark is a printable character the operator can type,
-      // and stealing it would put a stray character from a paste at risk.
-      if (
-        value === "?" &&
-        key.shift &&
-        !key.ctrl &&
-        !key.meta &&
-        !input.editing
-      ) {
-        // Not while the composer has focus. A question mark mid sentence is
-        // ordinary text, and an overlay that swallowed it would corrupt the
-        // prompt without the operator doing anything unusual.
-        ui.openCheatSheet();
-        draw();
-        return;
-      }
+      // ? is bound twice on purpose, and neither binding is here. One sits in
+      // the composer path and fires only for a lone ? on an empty prompt,
+      // because a question mark mid sentence is ordinary text that has to
+      // reach the model. The other sits in the shortcut path below and only
+      // runs when the composer does not have focus. A single binding placed
+      // here would have to guess which of those two situations it was in, and
+      // a guess that swallowed a typed question mark would corrupt a prompt
+      // the operator never meant to change.
+      //
       // Double Escape must be consecutive, not span commands typed in between.
       if (key.name !== "escape") lastEsc = 0;
       if (
@@ -1045,10 +1037,12 @@ export async function runWorkspaceTui(
         return;
       }
       if (input.editing || key.name === "paste-start") {
-        // A lone ? on empty input opens help instead of typing, like the
-        // reference. Any other text keeps the keystroke as typed input.
+        // A lone ? on empty input opens the cheat sheet, like the
+        // reference. Any other text keeps the keystroke as typed input, because
+        // a question mark in the middle of a sentence is ordinary text and
+        // must reach the model.
         if (!input.pasting && input.value === "" && value === "?") {
-          ui.choose("help");
+          ui.openCheatSheet();
           input.editing = false;
           draw();
           return;
@@ -1219,7 +1213,12 @@ export async function runWorkspaceTui(
           ui.prepareApproval(value === "a" ? "approved" : "denied"),
         );
       else if (value === "r") void task(() => ui.refresh(true));
-      else if (value === "?") ui.choose("help");
+      // ? opens the cheat sheet over whatever is on screen. It used to jump
+      // to the help tab, which is a fine destination and the wrong response to
+      // the actual press: an operator who opened it because a key did not work
+      // loses the panel they were looking at, and has to find their way back.
+      // The help tab is still one keystroke away through /help and Tab.
+      else if (value === "?") ui.openCheatSheet();
       else if (key.name === "escape") {
         // An active filter clears first, before details or checkpoints.
         if (ui.filter) {

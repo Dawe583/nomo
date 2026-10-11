@@ -25,7 +25,16 @@ import {
   promptFrameTop,
   renderWorkspace,
   searchHistoryPrompts,
+  TUI_COMMANDS,
 } from "./workspace.ts";
+import { healthSummary, healthWord, renderHealth } from "./health.ts";
+import {
+  absentCapabilities,
+  discoveryRows,
+  DISCOVERY_GROUPS,
+  groupTitle,
+} from "./discover.ts";
+import { activityStrip, activitySummary, buildActivity } from "./activity.ts";
 import {
   ChordTracker,
   WorkspaceInput,
@@ -175,7 +184,7 @@ test("the cheat sheet opens over any view and only lists keys that work now", as
 
   // It opens without leaving the panel it was opened from, because the whole
   // reason to open it is a key that did not do what was expected here.
-  ui.choose("agents");
+  ui.choose("documents");
   const tabBefore = ui.tab;
   ui.openCheatSheet();
   assert.ok(ui.showingCheatSheet, "the sheet is the visible detail");
@@ -243,6 +252,168 @@ test("the cheat sheet opens over any view and only lists keys that work now", as
   ui.choose("models");
   assert.equal(ui.showingCheatSheet, false);
   assert.equal(ui.cheatQuery, "");
+});
+
+test("/health never calls a check it could not run healthy", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-health-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+
+  const checks = ui.healthChecks();
+  assert.ok(checks.length >= 4, "several subsystems are checked");
+
+  // Every state carries a word, never only a colour or a glyph. A state shown
+  // as a shape alone is unreadable to anyone who cannot see it.
+  const rendered = ui.healthLines().join("\n");
+  for (const word of ["ok", "warn", "fail", "unknown", "skipped"])
+    assert.match(healthWord(word as never), /\w/);
+
+  // A provider that was never read is unknown, not ok. This is the single
+  // rule that makes the panel worth opening: reporting a subsystem it could
+  // not reach as healthy turns an absence of information into an assurance.
+  ui.provider = undefined;
+  const blind = ui.healthChecks().find((c) => c.name === "provider");
+  assert.equal(blind?.state, "unknown", "an unread provider is unknown");
+  assert.notEqual(blind?.state, "ok", "never reported as a pass");
+  assert.ok(blind?.remedy, "an unknown names what to do about it");
+
+  // A ledger with no verification yet is unknown too, not a pass.
+  ui.provider = await app.providerState();
+  const unverified = ui.healthChecks().find((c) => c.name === "ledger");
+  assert.ok(
+    unverified?.state === "unknown" || unverified?.state === "ok",
+    "the ledger is either verified or unverified, never assumed",
+  );
+
+  // A run needing reconciliation is a warn and says so.
+  assert.ok(
+    ui.healthChecks().every((c) => c.detail.length > 0),
+    "no check has an empty explanation",
+  );
+
+  // The summary names the worst thing, not an average that hides it.
+  const worst = renderHealth(
+    [
+      { name: "good", area: "a", state: "ok", detail: "fine" },
+      { name: "bad", area: "b", state: "fail", detail: "chain break" },
+      { name: "also-good", area: "c", state: "ok", detail: "fine" },
+    ],
+    60,
+  ).join("\n");
+  assert.match(worst, /chain break/, "the failure is visible");
+  assert.ok(
+    worst.indexOf("bad") < worst.indexOf("also-good"),
+    "the failing check is ordered first",
+  );
+  assert.match(
+    healthSummary([]),
+    /\w/,
+    "an empty check set still says something",
+  );
+
+  // Every row fits the width it was given, at every width the terminal has.
+  for (const width of [24, 40, 60, 100, 140]) {
+    for (const line of renderHealth(ui.healthChecks(), width)) {
+      assert.ok(
+        visibleLength(line) <= width,
+        `health row exceeds ${width}: ${JSON.stringify(line)}`,
+      );
+    }
+  }
+});
+
+test("/discover groups the command set by the task it serves", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-discover-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("/discover");
+  const text = ui.detail!.join("\n");
+
+  // Groups lead in the order a person arrives in, not alphabetically and not
+  // in the order the commands happen to be declared.
+  const order = DISCOVERY_GROUPS.map((group) =>
+    text.indexOf(groupTitle(group)),
+  );
+  assert.ok(
+    order.every((position) => position >= 0),
+    "every group is present",
+  );
+  for (let i = 1; i < order.length; i++)
+    assert.ok(order[i]! > order[i - 1]!, `group ${i} is out of order`);
+  assert.match(text, /commands in \d+ groups/, "the count is stated");
+
+  // An operator who expected a feature finds out it is absent on purpose
+  // rather than assuming it is broken.
+  const absent = absentCapabilities();
+  assert.ok(absent.length >= 1, "the absent list is never empty");
+  assert.match(absent.join("\n"), /background/i);
+
+  // Every row fits, and nothing renders as an empty screen.
+  for (const width of [24, 40, 60, 76, 120]) {
+    const rows = discoveryRows(
+      TUI_COMMANDS.map(([id, summary]) => ({ id, summary, group: "reading" })),
+      { width },
+    );
+    assert.ok(rows.length >= 1, "the panel always renders rows");
+    for (const row of rows)
+      assert.ok(
+        visibleLength(row) <= width,
+        `discover row exceeds ${width}: ${JSON.stringify(row)}`,
+      );
+  }
+
+  // An empty command set says so rather than printing nothing.
+  const empty = discoveryRows([], { width: 60 });
+  assert.ok(empty.length >= 1, "an empty set still renders");
+  assert.match(empty.join("\n"), /No commands/i);
+});
+
+test("the chat panel leads with the shape of the conversation", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-activity-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  ui.choose("chat");
+  const rows = ui.lines();
+  const joined = rows.join("\n");
+
+  // The strip comes before the transcript. An operator returning after an hour
+  // wants to see where it got to, and scrolling to find that is the work the
+  // strip is meant to remove.
+  const strip = activityStrip(buildActivity(ui.session()!.events), 76);
+  assert.ok(strip.length > 0, "the strip is never empty");
+  assert.ok(
+    joined.startsWith(strip),
+    "the strip is the first thing in the panel, not an aside",
+  );
+  const firstWord = rows.findIndex((row) => / YOU$| YOU |NOMO|TOOL/.test(row));
+  assert.ok(firstWord > 0, "the words follow the strip");
+
+  // Recency, stated in words, so an operator knows whether to trust it.
+  const summary = activitySummary(
+    buildActivity(ui.session()!.events),
+    Date.now(),
+  );
+  assert.match(summary, /\w/, "the summary says something");
+  assert.match(summary, /event|no activity/i);
+  // An empty conversation still renders a panel rather than an empty screen.
+  assert.match(activitySummary(buildActivity([]), 0), /\w/);
 });
 
 test("the documents tab groups by folder and the arrows fold it", async (t) => {

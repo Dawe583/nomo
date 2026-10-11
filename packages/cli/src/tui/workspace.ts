@@ -110,6 +110,19 @@ import {
   type ToolSummary,
 } from "./tool-browser.ts";
 import { renderRecovery, type RecoveryRow } from "./recovery-view.ts";
+import {
+  healthSummary,
+  renderHealth,
+  type Check,
+  type HealthState,
+} from "./health.ts";
+import {
+  absentCapabilities,
+  discoveryRows,
+  DISCOVERY_GROUPS,
+  type CommandEntry,
+} from "./discover.ts";
+import { activitySummary, buildActivity, renderActivity } from "./activity.ts";
 import { bindingsFor, filterBindings, renderCheatSheet } from "./cheatsheet.ts";
 import { buildTimeline, renderTimeline } from "./run-timeline.ts";
 import {
@@ -1166,6 +1179,157 @@ export class WorkspaceTui {
         ? 0
         : DEFAULT_TOAST_LIMITS.defaultTtl,
     );
+  }
+  /**
+   * Every subsystem, checked, with the reason it is in that state.
+   *
+   * The point of this is a single answer to "is this workspace actually
+   * working", which until now meant checking the provider here, the ledger
+   * there, and connectors somewhere else, and noticing a corrupted ledger only
+   * after a run had already failed on it.
+   *
+   * A check that could not run is reported as unknown and never as ok. A panel
+   * that says a subsystem it could not reach is healthy turns an absence of
+   * information into an assurance, which is strictly worse than no panel.
+   */
+  healthChecks(): Check[] {
+    const checks: Check[] = [];
+    const add = (
+      name: string,
+      area: string,
+      state: HealthState,
+      detail: string,
+      remedy?: string,
+    ) => checks.push({ name, area, state, detail, remedy });
+
+    // Provider. It is undefined only when providerState threw, and that is
+    // exactly the case that must not read as fine.
+    if (!this.provider) {
+      add(
+        "provider",
+        "runtime",
+        "unknown",
+        "Provider state has not been read yet.",
+        "Run /connect, or r to retry.",
+      );
+    } else {
+      const connected = this.provider.connected;
+      add(
+        "provider",
+        "runtime",
+        connected ? "ok" : "fail",
+        connected
+          ? `Connected to ${this.provider.providerId ?? "a provider"}.`
+          : "No provider is connected.",
+        connected ? undefined : "Run /connect to attach one.",
+      );
+      const models = this.provider.models?.length ?? 0;
+      add(
+        "models",
+        "runtime",
+        connected && models === 0 ? "warn" : "ok",
+        connected
+          ? models === 0
+            ? "Connected, but no model is listed."
+            : `${models} model(s) available.`
+          : "Not listed until a provider is connected.",
+        connected && models === 0
+          ? "Reconnect to refresh the model list."
+          : undefined,
+      );
+    }
+
+    // Ledger. A proof error is the one failure that invalidates recovery and
+    // export, so it is a fail and not a warn.
+    if (this.proofErrors.size) {
+      for (const [id, error] of this.proofErrors)
+        add(
+          `ledger ${id.slice(0, 8)}`,
+          "records",
+          "fail",
+          error,
+          "Run /verify, then /rewind to inspect what the chain lost.",
+        );
+    } else if (this.managedVerificationStatus) {
+      add(
+        "ledger",
+        "records",
+        this.managedVerificationStatus.startsWith("verified") ||
+          /verified/i.test(this.managedVerificationStatus)
+          ? "ok"
+          : "warn",
+        `Hash chain ${this.managedVerificationStatus}.`,
+        this.managedVerificationNote,
+      );
+    } else {
+      add(
+        "ledger",
+        "records",
+        "unknown",
+        "No managed workspace has been verified yet.",
+        "Run /verify.",
+      );
+    }
+
+    // Runs needing reconciliation are work that stopped without a decision.
+    const stuck = this.workbench.runs().filter((run) => run.reconcileRequired);
+    add(
+      "runs",
+      "records",
+      stuck.length ? "warn" : "ok",
+      stuck.length
+        ? `${stuck.length} run(s) need reconciliation.`
+        : "No run needs reconciliation.",
+      stuck.length ? "Open /runs to decide each one." : undefined,
+    );
+
+    // Connectors, by consent state. An unconfirmed connector is skipped, not
+    // failed: it has not been asked for anything yet.
+    const connectors = this.workbench.connectionState().connectors;
+    const unconfirmed = connectors.filter(
+      (c) => "consentState" in c && c.consentState !== "confirmed",
+    );
+    add(
+      "connectors",
+      "integrations",
+      unconfirmed.length ? "warn" : "ok",
+      connectors.length
+        ? `${connectors.length} connector(s), ${unconfirmed.length} not confirmed.`
+        : "No connector configured.",
+      unconfirmed.length ? "Confirm the ones you intend to use." : undefined,
+    );
+
+    // Workspace storage. An init that never ran is the difference between a
+    // workspace that survives a restart and one that does not.
+    const storage = this.workbench.allViews().length;
+    add(
+      "storage",
+      "runtime",
+      storage ? "ok" : "warn",
+      storage
+        ? `${storage} workspace view(s) on disk.`
+        : "No workspace view has been created.",
+      storage ? undefined : "Run /init to set up workspace storage.",
+    );
+
+    return checks;
+  }
+  /**
+   * The health panel body, plus a line saying which way to read it.
+   *
+   * The summary comes first because a panel an operator has to read to the
+   * bottom before finding out whether anything is wrong is a panel they will
+   * not open twice.
+   */
+  healthLines(): string[] {
+    const checks = this.healthChecks();
+    return [
+      ...renderHealth(checks, 72, {
+        motion: motionContext(this.frame),
+      }),
+      "",
+      healthSummary(checks),
+    ];
   }
   /**
    * Fold or unfold the folder under the cursor in the documents tree.
@@ -3407,7 +3571,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "status") {
       this.choose("overview");
-      this.detail = this.statusLines();
+      this.detail = [...this.statusLines(), "", ...this.healthLines()];
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "health") {
+      this.choose("overview");
+      this.detail = this.healthLines();
+      this.scroll = 0;
+      return;
+    }
+    if (cmd === "discover") {
+      this.choose("help");
+      this.detail = discoverLines();
       this.scroll = 0;
       return;
     }
@@ -4386,7 +4562,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (this.tab === "chat")
       return this.session()
-        ? transcript(this.session()!.events)
+        ? [
+            // The shape of the conversation before the words of it. An
+            // operator opening a chat after an hour away wants to see where it
+            // got to, and scrolling a wall of events to find that is the work
+            // the strip is meant to remove.
+            ...renderActivity(buildActivity(this.session()!.events), 76, {
+              motion: motionContext(this.frame),
+            }),
+            "",
+            ...transcript(this.session()!.events),
+          ]
         : [
             "NEW CONVERSATION",
             "",
@@ -4428,7 +4614,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           : `${ROW_ICONS.settled} Nothing waiting. No approvals, no errors, no failed runs.`,
         "",
         this.providerSummary(),
+        // The health verdict, as one line, before the numbers below it. An
+        // operator reads the top of this panel and decides whether to keep
+        // reading; a verdict four rows down is a verdict nobody gets to.
+        healthSummary(this.healthChecks()),
         `Model: ${this.model || "-"} | ${this.workbench.running() ? "running or settling" : "idle"}`,
+        // Where the selected conversation got to and when, in one sentence.
+        // Recency is what an operator who was away actually wants, and it was
+        // previously only available by scrolling for the last timestamp.
+        ...(this.session()
+          ? [activitySummary(buildActivity(this.session()!.events), Date.now())]
+          : []),
         `Conversations ${this.workbench.list().length} | Documents ${this.workbench.documentsList().length} | Runs ${o.runs}`,
         // Which runs are live, named. The count says there is work; this says
         // which work, so an operator looking at a busy workspace knows where
@@ -4821,6 +5017,8 @@ export const TUI_COMMANDS = [
   ["/init", "Set up workspace storage"],
   ["/conformance", "Run adapter conformance checks"],
   ["/status", "Workspace status"],
+  ["/health", "Pass, warn, fail or unknown for every subsystem"],
+  ["/discover", "Commands grouped by the task you arrived with"],
   ["/cost", "Token usage and cost"],
   ["/compact", "Review real context compaction"],
   ["/todos", "Checklist from agent output"],
@@ -6092,6 +6290,143 @@ function keybindingLines(query: string, width: number): string[] {
  * new command to be forgotten. The list now lives in exactly one place and
  * this view says where it is.
  */
+/**
+ * The command set grouped by the task it serves, plus what is not here.
+ *
+ * The palette searches by name, so it answers "what is the command for X" for
+ * someone who already knows what X is called. This answers the earlier
+ * question: an operator who has just opened the product and knows five
+ * commands has no idea which of the sixty seven to reach for, and a flat list
+ * gives them no way to find out.
+ */
+function discoverLines(): string[] {
+  const entries: CommandEntry[] = TUI_COMMANDS.map(([id, summary]) => ({
+    id,
+    summary,
+    group: discoveryGroupFor(id),
+  }));
+  const rows = discoveryRows(entries, { width: 72 });
+  return [...rows, "", ...absentCapabilities().map((line) => `  ${line}`)];
+}
+/**
+ * Which task a command belongs to.
+ *
+ * Derived from the command name rather than declared per entry, because the
+ * table below and the command list would then be two lists that could drift.
+ * A command with no entry falls through as unrecognised, which the panel shows
+ * last instead of guessing a group for it.
+ */
+function discoveryGroupFor(id: string): string {
+  const name = id.slice(1).split(" ")[0] ?? "";
+  if (COMMAND_GROUPS[name]) return COMMAND_GROUPS[name]!;
+  return (
+    DISCOVERY_GROUPS.find((group) =>
+      DISCOVERY_MEMBERS[group]?.some((member) => name.startsWith(member)),
+    ) ?? ""
+  );
+}
+/**
+ * Commands grouped by the situation a person arrives in, not the order they
+ * happen to be declared in. The order is the one a first time operator thinks
+ * in: start something, read what is there, change it, run it, watch it, share
+ * it, configure it.
+ */
+const DISCOVERY_MEMBERS: Record<string, readonly string[]> = {
+  starting: ["new", "resume", "sessions", "chat", "init", "bottom", "clear"],
+  reading: [
+    "documents",
+    "context",
+    "ledger",
+    "history",
+    "runs",
+    "find",
+    "todos",
+    "memory",
+    "stats",
+    "cost",
+    "usage",
+    "keybindings",
+    "help",
+    "diff",
+  ],
+  writing: [
+    "edit",
+    "document",
+    "undo",
+    "approval",
+    "approve",
+    "deny",
+    "compact",
+    "refine",
+    "rewrite",
+    "expand",
+    "export",
+  ],
+  running: [
+    "queue",
+    "cancel",
+    "stop",
+    "retry",
+    "branch",
+    "rewind",
+    "recovery",
+    "verify",
+    "attest",
+    "conformance",
+  ],
+  watching: [
+    "status",
+    "health",
+    "policy",
+    "permissions",
+    "mcp",
+    "doctor",
+    "tools",
+    "models",
+    "agents",
+    "overview",
+    "config",
+    "settings",
+    "themes",
+  ],
+  sharing: [
+    "projects",
+    "project",
+    "project-file",
+    "agent-file",
+    "hook",
+    "hook-file",
+    "hooks",
+    "connector-file",
+    "test-connector",
+    "policy-file",
+  ],
+  configuring: [
+    "model",
+    "connect",
+    "login",
+    "logout",
+    "providers",
+    "harness",
+    "theme",
+    "vim",
+    "terminal-setup",
+    "output-style",
+    "init",
+    "agent",
+  ],
+};
+/** Which group each command belongs to, for the handful that do not match. */
+const COMMAND_GROUPS: Record<string, string> = {
+  chat: "starting",
+  plan: "writing",
+  open: "reading",
+  rename: "sharing",
+  sources: "reading",
+  harness: "configuring",
+  agent: "configuring",
+  command: "starting",
+};
 function helpLines(): string[] {
   const commands = TUI_COMMANDS.length;
   return renderInspector(
