@@ -153,6 +153,35 @@ export function columns(
   return result;
 }
 
+export interface WorkspaceShellLayout {
+  readonly width: number;
+  readonly height: number;
+  readonly navigation: number;
+  readonly conversation: number;
+  readonly inspector: number;
+  readonly split: boolean;
+}
+
+/** Reserve side panes only when both terminal dimensions can support them. */
+export function workspaceShellLayout(
+  terminalColumns: number,
+  terminalRows: number,
+): WorkspaceShellLayout {
+  const width = Math.max(
+    20,
+    Math.floor(Number.isFinite(terminalColumns) ? terminalColumns : 20),
+  );
+  const height = Math.max(
+    8,
+    Math.floor(Number.isFinite(terminalRows) ? terminalRows : 8),
+  );
+  const split = width >= 160 && height >= 22;
+  const navigation = split ? 20 : 0;
+  const inspector = split ? 34 : 0;
+  const conversation = width - navigation - inspector - (split ? 2 : 0);
+  return { width, height, navigation, conversation, inspector, split };
+}
+
 export function crop(
   lines: readonly string[],
   width: number,

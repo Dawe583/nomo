@@ -100,6 +100,35 @@ test("migrates legacy generic provider state to compatible and retires the legac
   await rm(bare, { recursive: true, force: true });
 });
 
+test("Workbench uses NOMO environment values before VOID aliases", async (t) => {
+  const rootDir = await mkdtemp(join(tmpdir(), "nomo-workbench-env-"));
+  const dataDir = join(rootDir, "current");
+  const legacyDir = join(rootDir, "legacy");
+  const currentKey = Buffer.alloc(32, 1).toString("base64");
+  const legacyKey = Buffer.alloc(32, 2).toString("base64");
+  const workbench = new Workbench({
+    NOMO_DATA_DIR: dataDir,
+    VOID_DATA_DIR: legacyDir,
+    NOMO_WORKSPACE_KEY: currentKey,
+    VOID_WORKSPACE_KEY: legacyKey,
+    NOMO_HOOK_COMMANDS: JSON.stringify(["echo nomo"]),
+    VOID_HOOK_COMMANDS: JSON.stringify(["echo void"]),
+  });
+  t.after(() => workbench.close());
+  // Cleanup runs after close: the Workbench persists on close and the
+  // encrypted snapshot must still have its directory when that happens.
+  t.after(() => rm(rootDir, { recursive: true, force: true }));
+  assert.deepEqual(workbench.agents().hookCommands, ["echo nomo"]);
+  workbench.upsertHook({
+    id: "nomo-hook",
+    event: "after-run",
+    command: "echo nomo",
+    enabled: true,
+  });
+  const persisted = new LocalStorage(dataDir, currentKey).read<{ hooks?: Array<{ id: string }> }>();
+  assert.equal(persisted?.hooks?.[0]?.id, "nomo-hook");
+});
+
 test("model tool calls cross a real VOID proxy and produce a ledger", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "void-agent-beta-"));
   let turn = 0;

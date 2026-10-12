@@ -26,6 +26,7 @@ import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
+import { configuredEnvValue } from "./env-compat.ts";
 import type { Alg, KeyProvider } from "./index.ts";
 import { canonicalJson, entryHash } from "./canonical.ts";
 import {
@@ -87,7 +88,7 @@ export interface DevKeyProviderOptions {
 }
 
 /**
- * The dev tier key path. VOID_SIGNING_KEY wins if set (base64 PKCS8); the
+ * The dev tier key path. NOMO_SIGNING_KEY wins over its VOID alias (base64 PKCS8); the
  * key file is generated and written once, 0600, and reused after. The one
  * loud line about a development key being in use is printed by the caller
  * (the CLI), not here, because a library that prints at import time is a
@@ -98,7 +99,7 @@ export async function devKeyProvider(
 ): Promise<KeyProvider> {
   const dir = options.dir ?? devKeyDir();
   const env = options.env ?? process.env;
-  const inline = env.VOID_SIGNING_KEY;
+  const inline = configuredEnvValue(env, "NOMO_SIGNING_KEY");
   if (inline !== undefined && inline !== "") {
     return keyProviderFromPkcs8(Buffer.from(inline, "base64"));
   }

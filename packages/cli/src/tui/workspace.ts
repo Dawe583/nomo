@@ -27,7 +27,6 @@ import {
 import { loadPolicy } from "../../../policy/src/rules.ts";
 import { REGISTRY_DISCLAIMER } from "../../../registry/src/index.ts";
 import { VOID_PALETTE } from "./theme.ts";
-import { brandHeader } from "./brand.ts";
 import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
 import { runConformanceCommand } from "../conformance.ts";
@@ -39,6 +38,7 @@ import {
   splitDiffHunks,
   unifiedDiff,
   visibleLength,
+  workspaceShellLayout,
 } from "./layout.ts";
 
 export const WORKSPACE_TABS = [
@@ -3041,7 +3041,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ]
         : ["", "Plan: no open checklist items. /todos shows them all."];
       return [
-        "VOID / LOCAL WORKSPACE",
+        "NOMO / LOCAL WORKSPACE",
         "",
         ...this.providerLines(),
         `Model: ${this.model || "-"}`,
@@ -3120,12 +3120,12 @@ export function transcript(events: readonly SessionEvent[]): string[] {
     if (e.kind === "assistant") partial = "";
     if (e.type === "run.status" || e.kind === "usage") continue;
     rows.push(
-      `[${e.at.slice(11, 19)}] ${e.kind === "user" ? "YOU" : e.kind === "assistant" ? "VOID" : e.kind.toUpperCase()}`,
+      `[${e.at.slice(11, 19)}] ${e.kind === "user" ? "YOU" : e.kind === "assistant" ? "NOMO" : e.kind.toUpperCase()}`,
       ...e.text.split("\n"),
       "",
     );
   }
-  if (partial) rows.push("VOID [stream]", ...partial.split("\n"));
+  if (partial) rows.push("NOMO [stream]", ...partial.split("\n"));
   return rows;
 }
 type ChatRow = {
@@ -3204,7 +3204,7 @@ export function chatRows(
       event.kind === "user"
         ? "› You"
         : event.kind === "assistant"
-          ? "● VOID"
+          ? "● NOMO"
           : event.kind === "error"
             ? "! Error"
             : event.type === "tool.started"
@@ -3222,7 +3222,7 @@ export function chatRows(
     }
     messageRows(event.text, event.kind, `${label}  ${event.at.slice(11, 19)}`);
   }
-  if (partial) messageRows(partial, "assistant", "● VOID  streaming");
+  if (partial) messageRows(partial, "assistant", "● NOMO  streaming");
   return rows;
 }
 export function wrap(lines: readonly string[], width: number): string[] {
@@ -3332,16 +3332,6 @@ export type WorkspaceVisuals = {
   suggestion?: number;
   cursor?: number;
 };
-// Block capitals, one stroke width everywhere. The slashed ASCII logo
-// read as jagged because every row leaned; full blocks stay uniform at
-// any width and count one cell each in layout.ts.
-const VOID_LOGO = [
-  "█     █   █████   █████  ████   ",
-  "█     █  █     █    █    █   █  ",
-  "█     █  █     █    █    █   █  ",
-  " █   █   █     █    █    █   █  ",
-  "  █ █     █████   █████  ████   ",
-];
 // Decorative tab identity colors. Safety state never rides on these;
 // classes and decisions keep their text markers in every surface.
 export const TAB_ICON_TONE: Record<WorkspaceTab, string> = {
@@ -3421,6 +3411,62 @@ export const SPINNER_FRAMES = [
   "⠇",
   "⠏",
 ];
+function shellNavigationLines(ui: WorkspaceTui, rowCount: number): string[] {
+  if (rowCount <= 0) return [];
+  const items = WORKSPACE_TABS.map((tab) =>
+    `${tab === ui.tab ? "›" : " "} ${TAB_ICONS[tab]} ${tab}`,
+  );
+  const itemCount = Math.max(0, rowCount - 1);
+  const active = Math.max(0, WORKSPACE_TABS.indexOf(ui.tab));
+  const start = Math.max(
+    0,
+    Math.min(active - Math.floor(itemCount / 2), items.length - itemCount),
+  );
+  return ["  NAVIGATION", ...items.slice(start, start + itemCount)].slice(
+    0,
+    rowCount,
+  );
+}
+
+function shellInspectorLines(
+  ui: WorkspaceTui,
+  pendingCount: number,
+  rowCount: number,
+): string[] {
+  const session = ui.session();
+  const runs = ui.workbench.runs().filter((run) => run.sessionId === ui.sessionId);
+  const run = runs.find((item) => item.runId === session?.runId) ?? runs.at(-1);
+  const context = session ? ui.contextNumbers() : undefined;
+  const runIsUnselected = !session && ui.workbench.running();
+  const state =
+    run?.state ??
+    session?.state ??
+    (runIsUnselected ? "running, not selected" : "no active run");
+  const selectSession = runIsUnselected ? "select a session" : undefined;
+  const evidence = !session
+    ? "unknown"
+    : ui.proofErrors.has(session.id)
+      ? "verification error"
+      : ui.proofs.has(session.id)
+        ? "available, unknown"
+        : "unknown";
+  return [
+    "  RUN INSPECTOR",
+    "",
+    `  STATE       ${state.toUpperCase()}`,
+    `  MODEL       ${runIsUnselected ? "select a session" : session?.model || ui.model || "not connected"}`,
+    `  SESSION     ${session?.id?.slice(0, 8) ?? selectSession ?? "none"}`,
+    `  RUN         ${run?.runId?.slice(0, 8) ?? session?.runId?.slice(0, 8) ?? selectSession ?? (session ? "unknown" : "none")}`,
+    `  PROGRESS    ${run ? (run.progress === null ? "unknown" : `${Math.round(run.progress * 100)}%`) : "unknown"}`,
+    `  RECONCILE   ${run ? (run.reconcileRequired ? "required" : "not required") : "unknown"}`,
+    `  APPROVALS   ${pendingCount}`,
+    `  EVIDENCE    ${evidence}`,
+    `  PROFILE     ${ui.agentId ?? "runtime default"}`,
+    `  CONTEXT     ${context?.contextMessages ?? "unknown"} messages`,
+    `  MODE ${ui.mode.toUpperCase()} / not enforced`,
+  ].slice(0, Math.max(0, rowCount));
+}
+
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -3430,8 +3476,11 @@ export function renderWorkspace(
   busy = false,
   visuals: WorkspaceVisuals = {},
 ): string {
-  const width = Math.max(20, columns),
-    height = Math.max(8, rows);
+  const layout = workspaceShellLayout(columns, rows);
+  const width = layout.width;
+  const height = layout.height;
+  const splitShell = layout.split && !ui.confirmation && !ui.detail;
+  const contentWidth = splitShell ? layout.conversation - 4 : width - 4;
   const ink = (value: string, code: string) =>
     visuals.color ? `\x1b[${code}m${value}\x1b[0;48;5;234;38;5;252m` : value;
   const text = (value: string) => fit(sanitizeText(value), width);
@@ -3466,86 +3515,33 @@ export function renderWorkspace(
     width,
   );
   const header: string[] = [];
-  if (
-    height >= 22 &&
-    width >= 50 &&
-    !ui.confirmation &&
-    (!ui.session() || ui.tab !== "chat" || visuals.boot)
-  ) {
-    // Web aperture mark plus the wordmark, the same pair as the site
-    // header. The mark is 7 rows, the wordmark 5, so the wordmark rides
-    // centered with one blank row top and bottom.
-    const aside = [
-      "VOID / local workspace",
-      ui.session()?.model || ui.model || "Connect a model with /connect",
-      running ? "Working / Esc to stop" : "Your work. Your control.",
-      `${ui.workbench.list().length} conversations / ${holds} pending approvals`,
-      "[/] commands   [Esc] navigation",
-      "/keybindings lists every shortcut",
-      "Shift+Tab mode | Tab panels",
-    ];
-    const mark = brandHeader("", {
-      interactive: true,
-      ansi: visuals.color === true,
-      colorDepth: visuals.color === true ? 24 : 0,
-      columns: width,
-      rows: height,
-      reason: "interactive",
-    });
-    mark.forEach((markRow, i) => {
-      const logoRow =
-        i === 0 || i === mark.length - 1
-          ? " ".repeat(32)
-          : (VOID_LOGO[i - 1] ?? " ".repeat(32));
-      const left =
-        markRow +
-        "  " +
-        ink(
-          logoRow,
-          `1;${(visuals.boot || running) && frame % 5 === i ? ice : amber}`,
-        );
-      header.push(
-        left +
-          (width >= 78
-            ? ink(
-                fit(
-                  sanitizeText("   " + (aside[i] ?? "")),
-                  width - visibleLength(left),
-                ),
-                i === 1 ? ice : muted,
-              )
-            : ""),
-      );
-    });
-  } else
+  const modelLabel = ui.session()?.model || ui.model || "not connected";
+  const title = splitShell
+    ? `∞ NOMO / OPERATOR COCKPIT / ${ui.tab.toUpperCase()}`
+    : `∞ NOMO / ${ui.tab.toUpperCase()} / ${modelLabel} / ${holds} approvals`;
+  header.push(ink(text(title), `1;${ice}`));
+  if (!splitShell) {
+    const tabIndex = WORKSPACE_TABS.indexOf(ui.tab);
+    const tabs =
+      WORKSPACE_TABS.join("  ").length < width - 2
+        ? WORKSPACE_TABS
+        : WORKSPACE_TABS.slice(Math.max(0, tabIndex - 1), tabIndex + 3);
     header.push(
-      ink(
-        text(
-          ` /V/  VOID  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
-        ),
-        `1;${amber}`,
+      fit(
+        tabs
+          .map((t) => {
+            const icon = ink(`${TAB_ICONS[t]}`, TAB_ICON_TONE[t]);
+            const name =
+              t === ui.tab
+                ? ink(` [${t}] `, `1;${ice};48;5;24`)
+                : ink(` ${t} `, muted);
+            return `${icon}${name}`;
+          })
+          .join(""),
+        width,
       ),
     );
-  const tabIndex = WORKSPACE_TABS.indexOf(ui.tab);
-  const tabs =
-    WORKSPACE_TABS.join("  ").length < width - 2
-      ? WORKSPACE_TABS
-      : WORKSPACE_TABS.slice(Math.max(0, tabIndex - 1), tabIndex + 3);
-  header.push(
-    fit(
-      tabs
-        .map((t) => {
-          const icon = ink(`${TAB_ICONS[t]}`, TAB_ICON_TONE[t]);
-          const name =
-            t === ui.tab
-              ? ink(` [${t}] `, `1;${ice};48;5;24`)
-              : ink(` ${t} `, muted);
-          return `${icon}${name}`;
-        })
-        .join(""),
-      width,
-    ),
-  );
+  }
   const candidates =
     editing && !ui.confirmation
       ? commandSuggestions(visuals.command ?? "")
@@ -3593,7 +3589,7 @@ export function renderWorkspace(
   if (ui.tab === "chat" && !ui.session() && !ui.detail && !ui.confirmation)
     content = [
       "",
-      "  Welcome to VOID.",
+      "  Welcome to NOMO.",
       "  Describe what you want to build. Follow the work here.",
       "",
       "  > Create a project plan and save it to plan.md",
@@ -3605,9 +3601,9 @@ export function renderWorkspace(
       "  / commands     Tab complete     Esc navigate",
     ];
   const styled = richChat
-    ? chatRows(ui.session()!.events, width - 4, ui.compactTools)
+    ? chatRows(ui.session()!.events, contentWidth, ui.compactTools)
     : undefined;
-  const lines = styled?.map((row) => row.text) ?? wrap(content, width - 4);
+  const lines = styled?.map((row) => row.text) ?? wrap(content, contentWidth);
   let offset = ui.scroll;
   if (!ui.detail && !ui.confirmation && ui.tab === "chat" && ui.scroll < 0)
     offset = Math.max(0, lines.length - bodyHeight);
@@ -3636,6 +3632,12 @@ export function renderWorkspace(
   const body = lines.slice(offset, offset + bodyHeight);
   while (body.length < bodyHeight) body.push("");
   const frameColor = ui.confirmation ? amber : muted;
+  const navigationRows = splitShell
+    ? shellNavigationLines(ui, bodyHeight)
+    : [];
+  const inspectorRows = splitShell
+    ? shellInspectorLines(ui, holds, bodyHeight)
+    : [];
   const bodyRows = body.map((line, index) => {
     const style = styled?.[offset + index]?.style;
     const tone =
@@ -3655,15 +3657,29 @@ export function renderWorkspace(
                     ? `1;${ice}`
                     : /YOU$/.test(line)
                       ? `1;${violet}`
-                      : /VOID(?: \[stream\])?$/.test(line)
+                      : /NOMO(?: \[stream\])?$/.test(line)
                         ? `1;${amber}`
                         : /^(Error|Invalid|Failed)/.test(line)
                           ? "38;5;203"
                           : "38;5;252";
-    return (
+    const center =
       ink(ui.confirmation ? "! " : "  ", frameColor) +
-      ink(pad(line, width - 4), tone) +
-      (ui.confirmation ? ink(" !", frameColor) : "  ")
+      ink(pad(line, contentWidth), tone) +
+      (ui.confirmation ? ink(" !", frameColor) : "  ");
+    if (!splitShell) return center;
+    const navigation = navigationRows[index] ?? "";
+    const inspector = inspectorRows[index] ?? "";
+    const navigationTone = navigation.startsWith("›") ? `1;${ice}` : muted;
+    const inspectorTone =
+      index === 0 || inspector.startsWith("  STATE")
+        ? `1;${ice}`
+        : "38;5;252";
+    return (
+      ink(pad(navigation, layout.navigation), navigationTone) +
+      ink("│", muted) +
+      center +
+      ink("│", muted) +
+      ink(pad(inspector, layout.inspector), inspectorTone)
     );
   });
   const events = ui.session()?.events ?? [];

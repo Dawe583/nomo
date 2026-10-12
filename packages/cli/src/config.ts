@@ -6,6 +6,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 
+import { configuredEnvEntry } from "../../ledger/src/env-compat.ts";
+
 export type ConfigIo = {
   readonly stdout: (line: string) => void;
   readonly stderr: (line: string) => void;
@@ -20,43 +22,45 @@ export function resolveConfig(env: Readonly<NodeJS.ProcessEnv>): ConfigEntry[] {
   const home = env.HOME ?? homedir();
   const pick = (
     key: string,
-    envKey: string,
-    value: string | undefined,
+    selected: { readonly name: string; readonly value: string } | undefined,
     fallback: string,
   ): ConfigEntry =>
-    value === undefined || value === ""
+    selected === undefined
       ? { key, value: fallback, source: "default" }
-      : { key, value, source: envKey };
+      : { key, value: selected.value, source: selected.name };
+  const motion = configuredEnvEntry(env, "NOMO_TUI_MOTION");
+  const workspace = configuredEnvEntry(env, "NOMO_WORKSPACE")?.value ?? "default";
+  const verifyKey = configuredEnvEntry(env, "NOMO_VERIFY_KEY");
+  const color = configuredEnvEntry(env, "NOMO_TUI_COLOR");
   return [
-    pick("data-dir", "VOID_DATA_DIR", env.VOID_DATA_DIR, join(home, ".void", "workbench")),
-    pick("ledger-dir", "VOID_LEDGER_DIR", env.VOID_LEDGER_DIR, join(home, ".void", "ledger")),
+    pick("data-dir", configuredEnvEntry(env, "NOMO_DATA_DIR"), join(home, ".void", "workbench")),
+    pick("ledger-dir", configuredEnvEntry(env, "NOMO_LEDGER_DIR"), join(home, ".void", "ledger")),
     pick(
       "approvals-dir",
-      "VOID_APPROVALS_DIR",
-      env.VOID_APPROVALS_DIR,
-      join(home, ".void", "approvals", env.VOID_WORKSPACE ?? "default"),
+      configuredEnvEntry(env, "NOMO_APPROVALS_DIR"),
+      join(home, ".void", "approvals", workspace),
     ),
     {
       key: "verify-key",
-      value: env.VOID_VERIFY_KEY ? "set" : "unset",
-      source: env.VOID_VERIFY_KEY ? "VOID_VERIFY_KEY" : "default",
+      value: verifyKey?.value ? "set" : "unset",
+      source: verifyKey?.name ?? "default",
     },
     {
       key: "tui-color",
-      value: env.VOID_TUI_COLOR === "0" ? "off" : "on",
-      source: env.VOID_TUI_COLOR === undefined ? "default" : "VOID_TUI_COLOR",
+      value: color?.value === "0" ? "off" : "on",
+      source: color?.name ?? "default",
     },
     {
       key: "tui-motion",
-      value: env.VOID_TUI_MOTION === "0" || env.TERM === "dumb" ? "off" : "on",
+      value: motion?.value === "0" || env.TERM === "dumb" ? "off" : "on",
       source:
-        env.VOID_TUI_MOTION === undefined && env.TERM !== "dumb"
+        motion === undefined && env.TERM !== "dumb"
           ? "default"
-          : [env.VOID_TUI_MOTION === undefined ? "" : "VOID_TUI_MOTION", env.TERM === "dumb" ? "TERM" : ""]
+          : [motion?.name ?? "", env.TERM === "dumb" ? "TERM" : ""]
               .filter(Boolean)
               .join("+"),
     },
-    pick("term", "TERM", env.TERM, "unset"),
+    pick("term", configuredEnvEntry(env, "TERM"), "unset"),
   ];
 }
 

@@ -376,13 +376,72 @@ test("stream deltas are shown once and replaced by the completed assistant messa
   };
   assert.deepEqual(
     transcript([{ ...base, type: "message.delta", text: "Hello" }]),
-    ["VOID [stream]", "Hello"],
+    ["NOMO [stream]", "Hello"],
   );
   const result = transcript([
     { ...base, type: "message.delta", text: "Hello" },
     { ...base, seq: 2, type: "message.completed", text: "Hello" },
   ]);
   assert.equal(result.filter((s) => s === "Hello").length, 1);
+});
+
+test("wide TUI presents navigation, conversation, and a truthful run inspector", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-shell-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.managedVerificationStatus = "verified for another session";
+  const wide = stripAnsi(renderWorkspace(ui, 160, 40));
+  assert.match(wide, /NOMO \/ OPERATOR COCKPIT/);
+  assert.match(wide, /NAVIGATION/);
+  assert.match(wide, /RUN INSPECTOR/);
+  assert.match(wide, /NO ACTIVE RUN/);
+  assert.match(wide, /RUN\s+none/);
+  assert.match(wide, /PROGRESS\s+unknown/);
+  assert.match(wide, /RECONCILE\s+unknown/);
+  assert.match(wide, /APPROVALS\s+0/);
+  assert.match(wide, /EVIDENCE\s+unknown/);
+  assert.match(wide, /MODE NORMAL \/ not enforced/);
+  assert.match(wide, /chat/);
+  assert.doesNotMatch(wide, /VOID/);
+  assert.ok(wide.split("\n").every((line) => visibleLength(line) <= 160));
+
+  const medium = stripAnsi(renderWorkspace(ui, 120, 32));
+  assert.doesNotMatch(medium, /RUN INSPECTOR/);
+  const short = stripAnsi(renderWorkspace(ui, 160, 18));
+  assert.doesNotMatch(short, /RUN INSPECTOR/);
+
+  ui.detail = ["DETAIL OWNS THE WORKSPACE"];
+  const detail = stripAnsi(renderWorkspace(ui, 160, 40));
+  assert.match(detail, /DETAIL OWNS THE WORKSPACE/);
+  assert.doesNotMatch(detail, /NAVIGATION|RUN INSPECTOR/);
+
+  ui.detail = undefined;
+  ui.confirmation = {
+    title: "CONFIRMATION OWNS THE WORKSPACE",
+    lines: [],
+    apply: async () => {},
+  };
+  const confirmation = stripAnsi(renderWorkspace(ui, 160, 40));
+  assert.match(confirmation, /CONFIRMATION OWNS THE WORKSPACE/);
+  assert.doesNotMatch(confirmation, /NAVIGATION|RUN INSPECTOR/);
+});
+
+test("welcome brand uses an infinity and NOMO wordmark, not a raster logo", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-brand-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const welcome = stripAnsi(renderWorkspace(ui, 100, 32, "", false, false, { boot: true }));
+  assert.match(welcome, /∞ NOMO/);
+  assert.doesNotMatch(welcome, /█|VOID/);
 });
 
 test("styled frames stay bounded, motion can stop, and slash choices never include arguments", async (t) => {
@@ -432,7 +491,7 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
   assert.ok(commandSuggestions("/rs").some(([name]) => name === "/resume"));
   assert.ok(commandSuggestions("/rw").some(([name]) => name === "/rewind"));
   assert.equal(commandSuggestions("/new delete everything").length, 0);
-  assert.ok(stripAnsi(renderWorkspace(ui, 100, 32)).includes("█     █"));
+  assert.ok(stripAnsi(renderWorkspace(ui, 100, 32)).includes("∞ NOMO"));
 });
 
 test("chat presentation preserves code, sanitizes escapes, and distinguishes event roles", async () => {

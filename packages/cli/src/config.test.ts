@@ -40,6 +40,25 @@ test("config resolves explicit environment with sources", async () => {
   assert.equal(c.err.length, 0);
 });
 
+test("NOMO values win over VOID aliases, including empty values", () => {
+  const entries = resolveConfig({
+    HOME: "/home/op",
+    NOMO_DATA_DIR: "",
+    VOID_DATA_DIR: "/legacy/data",
+    NOMO_VERIFY_KEY: "",
+    VOID_VERIFY_KEY: "legacy-secret",
+    NOMO_TUI_COLOR: "",
+    VOID_TUI_COLOR: "0",
+    NOMO_TUI_MOTION: "",
+    VOID_TUI_MOTION: "0",
+  });
+  const byKey = new Map(entries.map((entry) => [entry.key, entry]));
+  assert.deepEqual(byKey.get("data-dir"), { key: "data-dir", value: "", source: "NOMO_DATA_DIR" });
+  assert.deepEqual(byKey.get("verify-key"), { key: "verify-key", value: "unset", source: "NOMO_VERIFY_KEY" });
+  assert.deepEqual(byKey.get("tui-color"), { key: "tui-color", value: "on", source: "NOMO_TUI_COLOR" });
+  assert.deepEqual(byKey.get("tui-motion"), { key: "tui-motion", value: "on", source: "NOMO_TUI_MOTION" });
+});
+
 test("config marks defaults and an unset key", () => {
   const entries = resolveConfig({ HOME: "/home/op" });
   const byKey = new Map(entries.map((e) => [e.key, e]));

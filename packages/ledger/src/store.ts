@@ -18,6 +18,7 @@ import { homedir } from "node:os";
 import type { FileHandle } from "node:fs/promises";
 
 import type { KeyProvider, LedgerStore } from "./index.ts";
+import { configuredEnvValue } from "./env-compat.ts";
 import { GENESIS_PREV, canonicalJson, entryHash } from "./canonical.ts";
 import { readLedgerReason } from "./attribution.ts";
 import { readLedgerReversal, reversalFinding } from "./reversal.ts";
@@ -92,7 +93,7 @@ type FileState = {
 };
 
 export function ledgerDir(env: Readonly<NodeJS.ProcessEnv> = process.env): string {
-  return env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger");
+  return configuredEnvValue(env, "NOMO_LEDGER_DIR") ?? join(homedir(), ".void", "ledger");
 }
 
 /**

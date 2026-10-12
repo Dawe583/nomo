@@ -66,7 +66,7 @@ function header(
     : "";
 
   return [
-    ...brandHeader("VOID", capabilities),
+    ...brandHeader("NOMO", capabilities),
     right,
     ctxLine,
     billingLine,

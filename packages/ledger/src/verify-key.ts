@@ -1,6 +1,9 @@
 /**
  * Where a verifier gets the public key it checks signatures with.
  *
+ * NOMO environment names are canonical. Product-owned VOID names remain
+ * accepted through the allowlist in env-compat.ts.
+ *
  * A verifier that opens the private key file is asking the writer's key
  * whether the writer's signatures are good. An attacker who replaces
  * `dev-ed25519.pkcs8` can therefore re-sign a fully rewritten chain and every
@@ -39,19 +42,21 @@ import { mkdir, open, readFile, readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
+import { configuredEnvValue } from "./env-compat.ts";
+
 import { devKeyDir, devKeyIdFromSpki, keyProviderFromPkcs8, retainedKeyProvider } from "./sign.ts";
 import type { KeyProvider } from "./index.ts";
 import type { JsonlEntry } from "./store.ts";
 import { readLedgerEntries, type PublicKeyLookup } from "./verify.ts";
 
 /** Base64 SPKI DER, inline. Supplied out of band, never written to a file. */
-export const PINNED_KEY_ENV = "VOID_VERIFY_KEY";
+export const PINNED_KEY_ENV = "NOMO_VERIFY_KEY";
 /** Path to a file holding one base64 SPKI DER public key. */
-export const PINNED_KEY_FILE_ENV = "VOID_VERIFY_KEY_FILE";
+export const PINNED_KEY_FILE_ENV = "NOMO_VERIFY_KEY_FILE";
 /** Directory holding the pinned key file when the path is not given. */
-export const TRUST_DIR_ENV = "VOID_TRUST_DIR";
-/** Explicit opt-in to the degraded private-key paths, on top of VOID_SIGNING_KEY. */
-export const DEGRADED_KEY_ENV = "VOID_VERIFY_ALLOW_SIGNING_KEY";
+export const TRUST_DIR_ENV = "NOMO_TRUST_DIR";
+/** Explicit opt-in to degraded private-key paths, on top of NOMO_SIGNING_KEY. */
+export const DEGRADED_KEY_ENV = "NOMO_VERIFY_ALLOW_SIGNING_KEY";
 export const PINNED_KEY_FILE_NAME = "verify-ed25519.spki";
 
 /**
@@ -65,7 +70,7 @@ export const PINNED_KEY_FILE_NAME = "verify-ed25519.spki";
  * this string rather than restating it.
  */
 export const DEGRADED_VERIFICATION_NOTE =
-  "VOID_VERIFY_ALLOW_SIGNING_KEY / VOID_SIGNING_KEY: the verification key came from signing key material, so a replaced key file cannot be detected in this mode";
+  "NOMO_VERIFY_ALLOW_SIGNING_KEY / NOMO_SIGNING_KEY: the verification key came from signing key material, so a replaced key file cannot be detected in this mode";
 
 /**
  * The one line every surface prints beside a trust file that lives where the
@@ -279,9 +284,9 @@ export function pinnedKeyFile(
   env: Readonly<NodeJS.ProcessEnv> = process.env,
   options: PinnedKeyFileOptions = {},
 ): string | undefined {
-  const explicit = env[PINNED_KEY_FILE_ENV];
+  const explicit = configuredEnvValue(env, PINNED_KEY_FILE_ENV);
   if (explicit !== undefined && explicit !== "") return explicit;
-  const trustDir = env[TRUST_DIR_ENV];
+  const trustDir = configuredEnvValue(env, TRUST_DIR_ENV);
   if (trustDir !== undefined && trustDir !== "") return join(trustDir, PINNED_KEY_FILE_NAME);
   // `HOME` set means the caller named the home it operates in, which is what
   // an injected env carries. Without it the default trust file is not read at
@@ -358,7 +363,7 @@ export async function resolveVerificationKey(
   const allowDefault =
     options.allowDefaultTrustFile ?? (env === process.env || env.HOME !== undefined);
 
-  const inline = env[PINNED_KEY_ENV];
+  const inline = configuredEnvValue(env, PINNED_KEY_ENV);
   if (inline !== undefined && inline !== "") {
     const spki = publicKeyFromSpkiBase64(inline, PINNED_KEY_ENV);
     return verificationKeyFrom(pinnedKey(spki), spki, {
@@ -399,8 +404,8 @@ export async function resolveVerificationKey(
     }
   }
 
-  const inlineSigning = env.VOID_SIGNING_KEY;
-  const opt = env[DEGRADED_KEY_ENV];
+  const inlineSigning = configuredEnvValue(env, "NOMO_SIGNING_KEY");
+  const opt = configuredEnvValue(env, DEGRADED_KEY_ENV);
   if (
     !(
       options.allowDegraded === true ||
@@ -543,7 +548,7 @@ export async function pinVerificationKeyFromSigner(
   const env = options.env ?? process.env;
   const home = options.home ?? env.HOME ?? homedir();
   const keyDir = options.keyDir ?? devKeyDir(home);
-  const inline = env.VOID_SIGNING_KEY;
+  const inline = configuredEnvValue(env, "NOMO_SIGNING_KEY");
   let provider: KeyProvider;
   if (inline !== undefined && inline !== "") {
     provider = keyProviderFromPkcs8(Buffer.from(inline, "base64"));
@@ -602,7 +607,7 @@ export async function signingKeyIdsInLedgers(
 ): Promise<Map<string, number>> {
   const env = options.env ?? process.env;
   const home = options.home ?? env.HOME ?? homedir();
-  const dir = options.dir ?? env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
+  const dir = options.dir ?? configuredEnvValue(env, "NOMO_LEDGER_DIR") ?? join(home, ".void", "ledger");
   const counts = new Map<string, number>();
   let files: string[];
   try {

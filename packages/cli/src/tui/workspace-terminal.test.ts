@@ -42,7 +42,7 @@ test("bare void and TUI flags open the real workspace", async (t) => {
   const bare = await exec(process.execPath, [binary], {
     env: { PATH: process.env.PATH, HOME: root, VOID_DATA_DIR: root },
   });
-  assert.match(bare.stdout, /Welcome to VOID|VOID \/ local workspace/);
+  assert.match(bare.stdout, /Welcome to NOMO|NOMO \/ CHAT/);
   assert.doesNotMatch(bare.stdout, /usage: void/);
   const result = await exec(
     process.execPath,

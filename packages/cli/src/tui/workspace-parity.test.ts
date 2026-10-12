@@ -537,10 +537,10 @@ test("logo is one stroke width and every row aligns", async (t) => {
   });
   const ui = new WorkspaceTui(app, env);
   const rows = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n");
-  // Aperture mark plus wordmark: 7 rows, the wordmark rides centered.
-  assert.ok(rows.slice(0, 7).every((line) => /[█▀▄]/.test(line)));
-  const wordmark = rows.slice(1, 6).map((line) => line.slice(17, 49));
-  assert.ok(wordmark.every((line) => /^[ █]{32}$/.test(line)));
+  // The infinity mark rides the wordmark in one header line; the block
+  // raster is gone, so no row may carry stray logo blocks.
+  assert.match(rows[0] ?? "", /∞ NOMO/);
+  assert.ok(rows.slice(1).every((line) => !/[█▀▄]{3,}/.test(line)));
 });
 
 test("tab icons carry fixed colors in color mode only", async (t) => {
@@ -553,7 +553,7 @@ test("tab icons carry fixed colors in color mode only", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, env);
-  const color = renderWorkspace(ui, 200, 40, "_", true, false, { color: true });
+  const color = renderWorkspace(ui, 120, 32, "_", true, false, { color: true });
   assert.ok(color.includes("38;5;203"));
   assert.ok(color.includes("38;5;78"));
   const mono = stripAnsi(renderWorkspace(ui, 100, 32, "_", true));

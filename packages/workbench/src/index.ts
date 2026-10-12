@@ -86,6 +86,7 @@ import {
   type WorkspaceState,
   type WorkspaceOperation,
 } from "./workspace.ts";
+import { configuredEnvValue } from "../../ledger/src/env-compat.ts";
 import {
   devKeyProvider,
   retainedKeyProvider,
@@ -481,7 +482,7 @@ export class Workbench {
   private hooks: Hook[] = [];
   private readonly hookAllowlist: readonly string[];
   private harness: HarnessSettings = defaultHarnessSettings();
-  /** The timeout `VOID_HOOK_TIMEOUT_MS` asked for, or undefined when the
+  /** The timeout `NOMO_HOOK_TIMEOUT_MS` asked for, or undefined when the
    * launcher set none. Kept apart from the resolved setting so an explicit
    * runtime environment still wins: it is the more specific statement about
    * this process, and an operator who set it before the workbench loaded must
@@ -533,24 +534,25 @@ export class Workbench {
     env: Readonly<NodeJS.ProcessEnv> = process.env,
     fetcher: typeof fetch = fetch,
   ) {
+    const workspaceKey = configuredEnvValue(env, "NOMO_WORKSPACE_KEY");
     this.permissionMode = serverPermissionMode(
-      env.VOID_PERMISSION_MODE ?? DEFAULT_LOCAL_PERMISSION_MODE,
+      configuredEnvValue(env, "NOMO_PERMISSION_MODE") ?? DEFAULT_LOCAL_PERMISSION_MODE,
     );
-    this.keyStorage = env.VOID_WORKSPACE_KEY
-      ? "os-keychain"
-      : "encrypted-local";
+    this.keyStorage = workspaceKey ? "os-keychain" : "encrypted-local";
     this.env = { ...env };
+    delete (this.env as NodeJS.ProcessEnv).NOMO_WORKSPACE_KEY;
     delete (this.env as NodeJS.ProcessEnv).VOID_WORKSPACE_KEY;
     this.hookAllowlist = Workbench.hookAllowlist(env);
-    // Precedence: an explicit VOID_HOOK_TIMEOUT_MS wins over the stored
+    // Precedence: an explicit NOMO_HOOK_TIMEOUT_MS wins over the stored
     // harness setting, and the stored setting wins over the default. The env
     // is the launcher's statement about this process, so an operator who set
     // it must not lose it to a workspace value written before it. Clamped at
     // both ends either way: a hook cannot be made un-timeouttable, and a short
     // timeout only costs a well-behaved hook more than a long one.
-    const requestedHookTimeout = Number(env.VOID_HOOK_TIMEOUT_MS);
+    const hookTimeoutValue = configuredEnvValue(env, "NOMO_HOOK_TIMEOUT_MS");
+    const requestedHookTimeout = Number(hookTimeoutValue);
     this.hookTimeoutFromEnv =
-      env.VOID_HOOK_TIMEOUT_MS && Number.isFinite(requestedHookTimeout)
+      hookTimeoutValue && Number.isFinite(requestedHookTimeout)
         ? Math.min(
             HOOK_TIMEOUT_BOUNDS.max,
             Math.max(HOOK_TIMEOUT_BOUNDS.min, requestedHookTimeout),
@@ -558,9 +560,9 @@ export class Workbench {
         : undefined;
     this.fetcher = fetcher;
     this.storage = new LocalStorage(
-      env.VOID_DATA_DIR ??
-        join(env.VOID_LEDGER_DIR ?? join(homedir(), ".void"), "workbench"),
-      env.VOID_WORKSPACE_KEY,
+      configuredEnvValue(env, "NOMO_DATA_DIR") ??
+        join(configuredEnvValue(env, "NOMO_LEDGER_DIR") ?? join(homedir(), ".void"), "workbench"),
+      workspaceKey,
     );
     const saved = this.storage.read<{
       preferences?: Record<string, string>;
@@ -801,8 +803,8 @@ export class Workbench {
   /**
    * The operator hook allowlist, read once from the runtime environment.
    *
-   * It is `VOID_HOOK_COMMANDS`, a JSON array of exact command strings, for the
-   * same reason `VOID_UPSTREAM_COMMAND` is one: the launcher that starts this
+   * It is `NOMO_HOOK_COMMANDS`, a JSON array of exact command strings, for the
+   * same reason `NOMO_UPSTREAM_COMMAND` is one: the launcher that starts this
    * process is the only place a command can be authorised. It deliberately
    * lives on the runtime rather than in the encrypted workspace snapshot,
    * because a snapshot is written by whoever holds the workbench API and read
@@ -814,13 +816,14 @@ export class Workbench {
   private static hookAllowlist(
     env: Readonly<NodeJS.ProcessEnv>,
   ): readonly string[] {
-    if (!env.VOID_HOOK_COMMANDS) return [];
+    const commands = configuredEnvValue(env, "NOMO_HOOK_COMMANDS");
+    if (!commands) return [];
     let parsed: unknown;
     try {
-      parsed = JSON.parse(env.VOID_HOOK_COMMANDS);
+      parsed = JSON.parse(commands);
     } catch {
       throw new Error(
-        "VOID_HOOK_COMMANDS must be a JSON array of command strings.",
+        "NOMO_HOOK_COMMANDS must be a JSON array of command strings.",
       );
     }
     if (
@@ -830,7 +833,7 @@ export class Workbench {
       )
     )
       throw new Error(
-        "Configure VOID_HOOK_COMMANDS on the runtime with the hookable commands as a JSON array.",
+        "Configure NOMO_HOOK_COMMANDS on the runtime with the hookable commands as a JSON array.",
       );
     return [...new Set(parsed.map((item) => (item as string).trim()))];
   }
@@ -967,7 +970,7 @@ export class Workbench {
         })),
       ],
       profiles: structuredClone(this.agentProfiles),
-      policyProfiles: listPolicyProfiles(this.env.VOID_POLICY_PATH),
+      policyProfiles: listPolicyProfiles(configuredEnvValue(this.env, "NOMO_POLICY_PATH")),
       hooks: structuredClone(this.hooks),
       hookCommands: [...this.hookAllowlist],
       // Derived, not asserted: a hardcoded `true` cannot disagree with a test
@@ -984,7 +987,7 @@ export class Workbench {
       throw new Error("Agent id belongs to a built-in preset.");
     const policy = resolvePolicyProfile(
       profile.policyProfile,
-      this.env.VOID_POLICY_PATH,
+      configuredEnvValue(this.env, "NOMO_POLICY_PATH"),
     );
     if (!policy.ok)
       throw new Error(
@@ -1403,9 +1406,9 @@ export class Workbench {
       );
     let command: unknown;
     try {
-      command = JSON.parse(this.env.VOID_UPSTREAM_COMMAND ?? "null");
+      command = JSON.parse(configuredEnvValue(this.env, "NOMO_UPSTREAM_COMMAND") ?? "null");
     } catch {
-      throw new Error("VOID_UPSTREAM_COMMAND must be a JSON array.");
+      throw new Error("NOMO_UPSTREAM_COMMAND must be a JSON array.");
     }
     if (
       command !== null &&
@@ -1414,10 +1417,10 @@ export class Workbench {
         !command.every((item) => typeof item === "string" && item.length > 0))
     )
       throw new Error(
-        "Configure VOID_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.",
+        "Configure NOMO_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.",
       );
-    if (command && !this.env.VOID_POLICY_PATH)
-      throw new Error("Configure VOID_POLICY_PATH before starting an agent.");
+    if (command && !configuredEnvValue(this.env, "NOMO_POLICY_PATH"))
+      throw new Error("Configure NOMO_POLICY_PATH before starting an agent.");
     if (!prompt.trim() || prompt.length > this.harness.maxPromptCharacters)
       throw new Error(
         `Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`,
@@ -1428,10 +1431,10 @@ export class Workbench {
       ? createVoidClient({
           workspace,
           ledgerDir:
-            this.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"),
+            configuredEnvValue(this.env, "NOMO_LEDGER_DIR") ?? join(homedir(), ".void", "ledger"),
           connect: { upstreamCommand: command },
-          policyPath: this.env.VOID_POLICY_PATH!,
-          factsPath: this.env.VOID_FACTS_PATH,
+          policyPath: configuredEnvValue(this.env, "NOMO_POLICY_PATH")!,
+          factsPath: configuredEnvValue(this.env, "NOMO_FACTS_PATH"),
           posture: "fail-closed",
           requestTimeoutMs: 180000,
         })
@@ -3013,7 +3016,7 @@ export class Workbench {
   private async syncStdio(session: Session) {
     return this.locked(async () => {
       const path = join(
-        this.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"),
+        configuredEnvValue(this.env, "NOMO_LEDGER_DIR") ?? join(homedir(), ".void", "ledger"),
         `${session.view.workspace}.jsonl`,
       );
       let entries: JsonlEntry[];
@@ -3038,7 +3041,7 @@ export class Workbench {
       // was. It is deliberately NOT `this.storage.directory`: that is the
       // document key, and resolving against it would find nothing.
       const proxyKeys =
-        this.env.VOID_PROXY_KEYS ?? join(homedir(), ".void", "keys");
+        configuredEnvValue(this.env, "NOMO_PROXY_KEYS") ?? join(homedir(), ".void", "keys");
       const key = await this.verificationKey(() =>
         this.retainedSigner(proxyKeys),
       );
@@ -3269,7 +3272,7 @@ export class Workbench {
       // itself by naming something that does not resolve.
       const profile = resolvePolicyProfile(
         session.agentProfile.policyProfile,
-        this.env.VOID_POLICY_PATH,
+        configuredEnvValue(this.env, "NOMO_POLICY_PATH"),
       );
       if (!profile.ok)
         throw new Error(
@@ -3544,7 +3547,7 @@ export class Workbench {
         // policy its operator never chose.
         const policy = resolvePolicyProfile(
           session.agentProfile.policyProfile,
-          this.env.VOID_POLICY_PATH,
+          configuredEnvValue(this.env, "NOMO_POLICY_PATH"),
         );
         if (!policy.ok)
           throw new Error(`Unknown agent policy profile: ${policy.reason}.`);

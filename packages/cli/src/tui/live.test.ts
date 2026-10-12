@@ -64,7 +64,7 @@ test("a degraded live feed carries the opt-in that caused it", () => {
   );
   // The switch that put the operator in this mode survives truncation, which
   // is why the note leads with it rather than ending with it.
-  assert.match(frame, /VOID_VERIFY_ALLOW_SIGNING_KEY/);
+  assert.match(frame, /NOMO_VERIFY_ALLOW_SIGNING_KEY/);
   // The note names itself once. Prefixing it again read as a stutter.
   assert.equal(frame.match(/verification key:/g)?.length, 1, frame);
 });
