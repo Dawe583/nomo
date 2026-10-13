@@ -54,7 +54,16 @@ export type InterceptDeps = {
   readonly classify: (
     probeFacts: Readonly<Record<string, string>>,
   ) => EvaluationResult;
-  readonly policy: (call: PolicyCall) => PolicyDecision;
+  /**
+   * The decision seam. The classification is handed over rather than left to
+   * the hook, because the hook and the ledger entry must judge the same call:
+   * recomputing it here would drop the probe facts and let the agent policy
+   * and the signed record disagree about what was classified.
+   */
+  readonly policy: (
+    call: PolicyCall,
+    classification?: EvaluationResult,
+  ) => PolicyDecision;
   readonly hold: (
     seconds: number,
     signal?: AbortSignal,
@@ -115,7 +124,7 @@ export async function interceptCall(
       classification,
       chooseBlastRadius(probeResult),
     );
-    const decision = deps.policy(policyCall);
+    const decision = deps.policy(policyCall, classification);
     const attribution = decisionAttribution(deps, decision);
     // The decision record lands before the verdict, so a crash after the
     // decision still leaves the ledger saying what was about to happen.

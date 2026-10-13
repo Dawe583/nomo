@@ -8,6 +8,7 @@ import {
   validateFactsFile,
 } from "../../registry/src/index.ts";
 import type { FactsFile, FactsReport } from "../../registry/src/index.ts";
+import type { EvaluationResult } from "../../registry/src/index.ts";
 import { decide, HoldQueue, loadPolicy, policyDigest } from "../../policy/src/index.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { jsonlStore } from "../../ledger/src/store.ts";
@@ -30,6 +31,16 @@ import {
   type LegacyProxyBinding,
 } from "./forward/legacy-binding.ts";
 import { interceptCall } from "./forward/tools.ts";
+import {
+  evaluateWithAgentPolicy,
+  type AgentPolicyGate,
+} from "./forward/agent-policy.ts";
+import {
+  loadAgentPolicy,
+  type GrantedIdentity,
+  type LoadedAgentPolicy,
+  type Scope,
+} from "../../agent-policy/src/index.ts";
 import type {
   InterceptedCall,
   JsonRpcError,
@@ -97,6 +108,27 @@ export type ProxyOptions = {
   readonly beforeToolDispatch?: (requestId: JsonRpcId) => void;
   /** Ledger directory for the dev tier store. Required for the fail-closed posture. */
   readonly ledgerDir?: string;
+  /**
+   * NOMO agent policy, `policy/agents.yaml`. Setting it puts the grant gate
+   * and the per-agent rules in front of every call. Absent, the proxy decides
+   * with the class policy alone, which is the pre-NOMO behaviour and what
+   * every STDIO host still gets.
+   */
+  readonly agentPolicyPath?: string;
+  /**
+   * The identity the Workbench local agent grant verified for this call.
+   * Required alongside agentPolicyPath: with no identity every call is
+   * `nomo:no-grant`, which is the point, not a fallback to the class policy.
+   */
+  readonly agentIdentity?: () => GrantedIdentity | null;
+  /**
+   * The resource the connector acts on, as it derives it. Absent means every
+   * call is an invalid request. The proxy will not invent one, because a
+   * guessed scope turns a delete into a read.
+   */
+  readonly agentTarget?: (call: InterceptedCall) => string | null;
+  /** What the agent asks to be allowed to do. Absent is invalid, never a default. */
+  readonly agentScope?: (call: InterceptedCall) => Scope | null;
   /** Optional signer for an embedded proxy; defaults to the development key. */
   readonly keyProvider?: KeyProvider;
   readonly workspace?: string;
@@ -171,9 +203,11 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   const startup = validateStartup(options, writeError);
   let policy: ValidPolicy;
   let facts: FactsReport;
+  let agentPolicy: LoadedAgentPolicy | undefined;
   try {
     policy = await readPolicy(options.policyPath);
     facts = await readFacts(options.factsPath);
+    agentPolicy = await readAgentPolicy(options.agentPolicyPath);
   } catch (error) {
     writeError(`startup failed: ${errorMessage(error)}`);
     throw error;
@@ -186,6 +220,18 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   }
   const session = new Session();
   const queue = new HoldQueue();
+  // Built once, decided per call. A configured agent policy changes the answer
+  // for every tool call on this transport, so it is not an opt-in per request.
+  let agentPolicyRequests = 0;
+  const agentPolicyGate =
+    agentPolicy === undefined
+      ? undefined
+      : buildAgentPolicyGate(
+          agentPolicy,
+          policy,
+          options,
+          () => `nomo-${++agentPolicyRequests}`,
+        );
   const stopHold = options.onHold?.(queue);
   // The dev tier ledger is a JSONL file store with a local ed25519 signer. In the
   // fail-closed posture the store must open before the first call routes, because
@@ -540,6 +586,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
               state.dispatched = true;
               activeToolCallsByUpstream.set(upstreamId, message.id);
             },
+            agentPolicyGate,
           ).catch((error: unknown) => {
             writeError(`request failed: ${errorMessage(error)}`);
             sendLocal(jsonRpcError(
@@ -730,6 +777,42 @@ async function readPolicy(path: string): Promise<ValidPolicy> {
   return loaded;
 }
 
+/**
+ * The agent policy is read once, next to the class policy, and a broken file is
+ * a startup refusal rather than a runtime deny: an operator who wrote a rule
+ * that does not load should learn that from the proxy refusing to start, not
+ * from every call coming back as `nomo:engine-error`.
+ */
+async function readAgentPolicy(
+  path: string | undefined,
+): Promise<LoadedAgentPolicy | undefined> {
+  if (path === undefined) return undefined;
+  const loaded = loadAgentPolicy(await readFile(path, "utf8"));
+  if (!loaded.ok) throw new PolicyStartupError(loaded.errors.join("; "));
+  return loaded;
+}
+
+/**
+ * The gate every call is decided through once an agent policy is configured.
+ * The identity, target and scope resolvers are the host's to supply; each one
+ * that is absent makes the check fail closed rather than widening it.
+ */
+function buildAgentPolicyGate(
+  agentPolicy: LoadedAgentPolicy,
+  classPolicy: ValidPolicy,
+  options: ProxyOptions,
+  requestId: () => string,
+): AgentPolicyGate {
+  return {
+    agentPolicy,
+    classPolicy,
+    requestId,
+    identity: () => options.agentIdentity?.() ?? null,
+    target: (call) => options.agentTarget?.(call) ?? null,
+    scope: (call) => options.agentScope?.(call) ?? null,
+  };
+}
+
 async function readFacts(path: string | undefined): Promise<FactsReport> {
   if (path === undefined) return loadFacts({ facts: {} }, new Date());
   const raw = JSON.parse(await readFile(path, "utf8")) as unknown;
@@ -762,6 +845,7 @@ async function handleToolCall(
   signal?: AbortSignal,
   beforeDispatch?: () => void,
   onDispatched?: (upstreamId: JsonRpcId) => void,
+  agentPolicyGate?: AgentPolicyGate,
 ): Promise<void> {
   const call = { ...interceptedCall(request), workspace };
   let binding: LegacyProxyBinding | null = null;
@@ -778,8 +862,38 @@ async function handleToolCall(
   let capturedEvidence: LegacyCaptureEvidence | null = null;
   let lastPolicyCall: PolicyCall | null = null;
   let lastDecision: PolicyDecision | null = null;
-  const policyFn = (policyCall: PolicyCall): PolicyDecision => {
+  const policyFn = (
+    policyCall: PolicyCall,
+    classification?: EvaluationResult,
+  ): PolicyDecision => {
     lastPolicyCall = policyCall;
+    if (agentPolicyGate !== undefined && classification !== undefined) {
+      const verdict = evaluateWithAgentPolicy(
+        agentPolicyGate,
+        policyCall,
+        classification,
+        call,
+      );
+      lastDecision = verdict.decision;
+      if (verdict.decision.kind !== "allow") {
+        // Observe posture forwards a class-policy non-allow so an operator can
+        // watch what a rule would have caught. It never forwards a decision
+        // the grant or the engine produced: a trial mode that runs an expired,
+        // revoked or unidentifiable agent is not a trial of anything.
+        // docs/nomo/CONTRACT.md section 6.
+        if (posture === "observe" && verdict.identityBound) {
+          writeError(
+            `observe: ${verdict.result.ruleId} is identity-bound and was not forwarded`,
+          );
+          return verdict.decision;
+        }
+        if (posture === "observe")
+          writeError(
+            `observe: ${verdict.decision.kind} verdict for ${policyCall.tool} forwarded`,
+          );
+      }
+      return verdict.decision;
+    }
     const decision = decide(policy, policyCall);
     lastDecision = decision;
     if (posture === "observe" && decision.kind !== "allow") {
