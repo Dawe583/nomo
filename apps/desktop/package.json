@@ -9,7 +9,7 @@
     "prepare:runtime": "node scripts/prepare.mjs",
     "dev": "pnpm prepare:runtime && tauri dev",
     "build": "pnpm prepare:runtime && node scripts/build.mjs",
-    "test": "node --test runtime.test.mjs release.test.mjs"
+    "test": "node --import ../../scripts/src/test-temp.mjs --test runtime.test.mjs release.test.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.11.4",

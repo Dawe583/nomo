@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "node --test"
+    "test": "node --import ../../scripts/src/test-temp.mjs --test"
   },
   "devDependencies": {
     "@types/node": "catalog:"

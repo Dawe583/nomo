@@ -117,7 +117,10 @@ test("compaction metadata survives restart without rewriting ledger evidence",as
 async function hookScript(directory:string,name:string,body:string){
  const path=join(directory,`${name}.mjs`);
  await writeFile(path,body);
- return `${process.execPath} ${path}`;
+ // Quoted, because `hookArgv` splits on whitespace unless a path is quoted and a
+// stock Windows Node lives under `C:\Program Files\nodejs`. Unquoted, this
+// helper only works on a host whose Node path happens to contain no space.
+ return `"${process.execPath}" ${path}`;
 }
 const marker=(path:string)=>`import{writeFileSync}from"node:fs";writeFileSync(${JSON.stringify(path)},"ran");`;
 async function wasRun(path:string){return access(path).then(()=>true,()=>false);}

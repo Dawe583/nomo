@@ -33,7 +33,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test verify-ledger.test.mjs"
+    "test": "node --import ../../scripts/src/test-temp.mjs --test verify-ledger.test.mjs"
   },
   "dependencies": {},
   "devDependencies": {}

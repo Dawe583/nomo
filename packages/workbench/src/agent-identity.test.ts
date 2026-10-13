@@ -177,12 +177,19 @@ async function identityCatalogServer() {
 test("Workbench issues grants from stored active session identity and revokes at run end", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "nomo-agent-identity-"));
   const target = await identityCatalogServer();
-  const gateCommand = join(directory, "before-run-gate.mjs");
+  const gateScript = join(directory, "before-run-gate.mjs");
   await writeFile(
-    gateCommand,
-    `#!${process.execPath}\nawait new Promise((resolve) => setTimeout(resolve, 750));\n`,
+    gateScript,
+    `await new Promise((resolve) => setTimeout(resolve, 750));\n`,
     { mode: 0o700 },
   );
+  // The interpreter is named explicitly rather than left to a `#!` line. A
+  // shebang is honoured by the kernel on macOS and Linux and ignored by Windows,
+  // so a hook registered that way spawns there and fails `spawn EFTYPE` here —
+  // a failure that says nothing about the identity this test is about. Quoting
+  // matters for the same reason: a stock Node lives under `C:\Program Files`,
+  // and `hookArgv` splits on spaces unless the path is quoted.
+  const gateCommand = `"${process.execPath}" ${gateScript}`;
   let releaseCompletion: (response: Response) => void = () => {};
   const completion = new Promise<Response>((resolve) => {
     releaseCompletion = resolve;

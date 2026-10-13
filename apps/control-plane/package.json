@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "node --import ../../scripts/src/test-temp.mjs --test",
     "typecheck": "tsc -p tsconfig.json"
   },
   "description": "Serve local development approvals, ledger views, and NOMO control plane pages.",

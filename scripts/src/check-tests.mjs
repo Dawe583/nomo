@@ -11,9 +11,21 @@
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 const root = resolve(import.meta.dirname, "..", "..");
 const packagesDir = join(root, "packages");
+/**
+ * Every suite gets a temp root that passes the ledger's private-directory
+ * check. A stock Windows profile does not, so without this a Windows host sees
+ * ledger-dependent suites fail on their ACLs while reporting nothing about the
+ * code under test. Absolute, because each suite runs with its own package
+ * directory as the working directory; a no-op everywhere the default is
+ * already private, which includes CI.
+ */
+const privateTestTemp = pathToFileURL(
+  join(root, "scripts", "src", "test-temp.mjs"),
+).href;
 
 /**
  * A hard ceiling on any one package suite, so a suite that stops making
@@ -291,12 +303,16 @@ function runSuite(name, dir, files, runner) {
   // `killSignal: SIGKILL` rather than the default SIGTERM: a suite wedged in
   // native code or holding a child that ignores SIGTERM would otherwise keep
   // the event loop alive past the timeout and defeat the bound entirely.
-  const run = spawnSync("node", ["--test", "--test-reporter=tap", ...files], {
-    cwd: dir,
-    encoding: "utf8",
-    timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
-    killSignal: "SIGKILL",
-  });
+  const run = spawnSync(
+    "node",
+    ["--import", privateTestTemp, "--test", "--test-reporter=tap", ...files],
+    {
+      cwd: dir,
+      encoding: "utf8",
+      timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
+      killSignal: "SIGKILL",
+    },
+  );
   // `spawnSync` reports its own deadline as a null status with an ETIMEDOUT
   // error, and the status is mapped to 1 further down, so without this the
   // timeout would print as an ordinary crash and name neither the cause nor

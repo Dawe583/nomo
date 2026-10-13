@@ -8,7 +8,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --import ../../scripts/src/test-temp.mjs --test",
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
