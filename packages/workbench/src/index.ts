@@ -2776,7 +2776,10 @@ export class Workbench {
     const issued = issuer.issue({
       principalId: LOCAL_AGENT_PRINCIPAL_ID,
       workspaceId: binding.workspace,
-      agentId: `${LOCAL_AGENT_PRINCIPAL_ID}-agent`,
+      // The agent the operator declared for this run, not one derived from the
+      // principal. The policy file decides what this id may do; an id no policy
+      // declares is `nomo:unknown-agent`, which is the refusal working.
+      agentId: task.declaredAgentId,
       runId: binding.runId,
       upstreamId: task.upstreamId,
       toolScope: task.toolScope,

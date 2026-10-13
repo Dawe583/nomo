@@ -528,6 +528,7 @@ test("one harness task runs through the inbound proxy, policy and ledger", async
     upstreamId: "local-demo-upstream",
     prompt: "Read the demo bucket state",
     toolScope: taskScope,
+    declaredAgentId: "demo-support-bot",
     facts: taskFacts,
     proxy: demoProxy(directory, calls),
     learning: { enabled: false },
@@ -541,6 +542,11 @@ test("one harness task runs through the inbound proxy, policy and ledger", async
   assert.equal(result.identity.audience, "nomo-inbound-proxy");
   assert.deepEqual([...result.identity.toolScope], taskScope);
   assert.match(result.identity.runId, /^[0-9a-f-]{36}$/);
+  // The NOMO agent id is the one the operator declared, so a rule in
+  // `policy/agents.yaml` can name this run's agent. CONTRACT.md section 10,
+  // item 2: it used to be `workbench-local-agent`, which no policy declares,
+  // so every per-agent rule was unreachable.
+  assert.equal(result.identity.agentId, "demo-support-bot");
   // The same evidence path as every other guarded call: policy decided and the
   // ledger recorded it, with no bypass.
   assert.ok(result.ledger.entries.length > 0);
@@ -608,6 +614,7 @@ test("the granted bearer survives no prompt, catalog, snapshot or recovery conte
     upstreamId: "local-demo-upstream",
     prompt: "Read the demo bucket state",
     toolScope: taskScope,
+    declaredAgentId: "demo-support-bot",
     facts: taskFacts,
     proxy: demoProxy(directory, calls),
     learning: { enabled: false },
@@ -655,6 +662,7 @@ test("the policy verdict decides the outcome, and the ledger records which one",
       upstreamId: "local-demo-upstream",
       prompt: "Overwrite the demo object",
       toolScope: taskScope,
+      declaredAgentId: "demo-support-bot",
       facts: taskFacts,
       proxy: demoProxy(fixture.directory, fixture.calls, policy),
       learning: { enabled: false },
@@ -705,6 +713,7 @@ test("a session's saved connection keeps the live provider and drops the saved o
     upstreamId: "local-demo-upstream",
     prompt: "Overwrite the demo object",
     toolScope: taskScope,
+    declaredAgentId: "demo-support-bot",
     facts: taskFacts,
     proxy: demoProxy(directory, []),
     learning: { enabled: false },

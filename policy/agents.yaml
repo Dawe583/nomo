@@ -2,6 +2,12 @@
 # Evaluated together with policy/default.yaml (the VOID class policy); the
 # stricter answer wins. First match wins. The last rule must deny.
 # Agents and targets below are invented for the demo; no real accounts.
+#
+# The id under `agents` is the id a run's grant has to carry. The Workbench
+# local agent grant used to carry `workbench-local-agent`, derived from the
+# principal, which matched nothing here and left every call at
+# `nomo:unknown-agent`. A declared id below that is not the granted id is the
+# same refusal, so keep the two the same when you rename either.
 version: 1
 agents:
   - id: demo-support-bot

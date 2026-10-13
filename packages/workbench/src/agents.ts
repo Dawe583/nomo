@@ -1,5 +1,10 @@
 import { spawn } from "node:child_process";
 
+// The grammar is the agent policy's, not a second copy of it: the id in a grant
+// and the ids in `policy/agents.yaml` have to be the same set, or a declared
+// agent silently becomes an undeclared one.
+import { AGENT_ID } from "../../agent-policy/src/grammar.ts";
+
 export type AgentProfile = {
   id: string;
   name: string;
@@ -328,6 +333,23 @@ export type LocalHarnessTask = Readonly<{
   prompt: string;
   toolScope: readonly string[];
   /**
+   * The NOMO agent id this run acts as, declared by the operator and carried by
+   * the grant so a rule in `policy/agents.yaml` can name it.
+   *
+   * It is required and has no default. The default this replaces was
+   * `workbench-local-agent`, derived from the principal id, which no policy file
+   * declares: every per-agent rule was unreachable and every real call ended at
+   * `nomo:unknown-agent`. A silent fallback is the defect, not the fix.
+   *
+   * This is deliberately not the reserved `agentId` above. That one names the
+   * identity the call is *bound to*, which is minted here and may not be
+   * supplied; this one names the agent the operator has registered in policy.
+   * The authority stays in the policy file: an id no policy declares is refused
+   * by the engine as `nomo:unknown-agent`, so naming an undeclared agent
+   * grants nothing.
+   */
+  declaredAgentId: string;
+  /**
    * Declared facts about the demo target, forwarded to the connector so the
    * registry can classify its tools. This is the operator's configuration
    * input, not an authority decision: a fact the registry does not recognise
@@ -375,6 +397,12 @@ export function validateLocalHarnessTask(input: unknown): LocalHarnessTask {
       throw new Error("A local harness task takes at most 64 string or boolean facts.");
   }
 
+  const declaredAgentId = input.declaredAgentId;
+  if (typeof declaredAgentId !== "string" || !AGENT_ID.test(declaredAgentId))
+    throw new Error(
+      "A local harness task declares the NOMO agent id it acts as, matching the agent policy grammar.",
+    );
+
   const scope = input.toolScope;
   if (
     !Array.isArray(scope) ||
@@ -388,6 +416,7 @@ export function validateLocalHarnessTask(input: unknown): LocalHarnessTask {
     upstreamId,
     prompt,
     toolScope: Object.freeze([...(scope as string[])]),
+    declaredAgentId,
     facts: Object.freeze({ ...(rawFacts as Record<string, string | boolean>) }),
     learning: Object.freeze({ enabled: false as const }),
   });

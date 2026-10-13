@@ -209,9 +209,11 @@ caller that passed `authenticate` output instead of `validate` output. The
 grant names the tool, not the target or the scope; those are what
 `agents.yaml` decides.
 
-Open for [DAVID]: the Workbench grant today names one agent per principal
-(`workbench-local-agent`). Per agent rules in `agents.yaml` need the grant to
-carry the NOMO agent id the operator declared.
+Resolved 2026-10-13 (was open for [DAVID]): the Workbench grant carried one
+agent per principal (`workbench-local-agent`). It now carries the NOMO agent id
+the operator declared on the harness task, which is what lets a rule in
+`agents.yaml` name the agent. The field is required and has no default,
+because the derived default matched no policy and silently denied every call.
 
 ## 6. How the proxy calls the engine, and failure (needs [DAVID])
 
@@ -287,8 +289,15 @@ documents why an additive body field keeps old entries verifying.
 
 **David**
 1. Layering (section 1) or new match keys in `@void/policy`.
-2. The grant carrying the declared NOMO agent id instead of `workbench-local-agent` (section 5).
-3. Grant denials never bypassed by `observe` (section 6).
+2. ~~The grant carrying the declared NOMO agent id instead of
+   `workbench-local-agent` (section 5).~~ **Resolved 2026-10-13.** The
+   Workbench local agent grant carries the operator-declared `declaredAgentId`
+   on the harness task, validated with the same `AGENT_ID` grammar the policy
+   file uses and with no default. Authority stays in the policy file: an id no
+   policy declares is still `nomo:unknown-agent`, so declaring an undeclared
+   agent grants nothing. `packages/workbench/src/agent-grant-policy.test.ts`,
+   `packages/workbench/src/harness-wiring.test.ts`.
+3. Grant denials never bypassed by `observe` (section 6). **Resolved in c6a78ce.**
 4. Optional `agent` field in the ledger body (section 9).
 5. Package name: `@void/agent-policy` now, rename with the repo later?
 6. Stopping all runs of one agent at once, if the demo needs it (section 7).
@@ -301,10 +310,12 @@ documents why an additive body field keeps old entries verifying.
 | Item | Status |
 | ---- | ------ |
 | This contract | draft, not confirmed |
-| Agent policy loader and evaluation | implemented in `packages/agent-policy`, not wired into the proxy |
+| Agent policy loader and evaluation | implemented in `packages/agent-policy`, evaluated by the proxy |
 | Grant gate (`nomo:no-grant`, `nomo:outside-grant`) over the Workbench grant identity | implemented in `checkPolicy` |
 | Token, revocation store, kill-switch, `void kill` / `void reinstate`, fleet projection | removed 2026-10-11 in favour of David's grant and stop path on main |
 | Section 0 flow end to end | one in-process test (`spike.test.ts`) through David's real `LocalAgentIdentityIssuer`: issue, validate per call, agents.yaml, fake connector, stop, expiry; no proxy |
-| Proxy wiring of `checkPolicy` | not started (David) |
+| Proxy wiring of `checkPolicy` | implemented in c6a78ce: `agentPolicyPath`, `agentIdentity`, `agentTarget`, `agentScope` in `packages/proxy/src/bin.ts` |
+| Grant carries the declared NOMO agent id (section 10 item 2) | implemented 2026-10-13: required `declaredAgentId`, no default; `nomo:unknown-agent` for an undeclared id |
+| Target and scope derivation for the inbound HTTP ingress | open: the ingress verifies the grant but does not yet hand it to the gate as `agentIdentity`, and no connector derives `target`/`scope` |
 | MCP connector for the demo | not chosen yet |
 | Default `policy/agents.yaml` generator (T2) | `writeDefaultAgentPolicy` in `packages/agent-policy`: one agent, terminal deny, never overwrites an existing file, 12 tests; not called from `void init` until the T1 package is agreed |
