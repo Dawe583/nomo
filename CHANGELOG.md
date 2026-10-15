@@ -62,7 +62,7 @@ All notable user-facing changes since the first repository commit.
 - Settings an operator configured before the rename kept working after it.
   Names like `NOMO_LEDGER_DIR` and `NOMO_DATA_DIR` are the current spelling,
   but a machine whose shell profile, launch agent or `.env` still says
-  `VOID_LEDGER_DIR` was reading nothing at all: every setting fell back to its
+  `NOMO_LEDGER_DIR` was reading nothing at all: every setting fell back to its
   default while looking configured, which reads as data loss and loses
   nothing. The old names now answer wherever the new ones do.
 
@@ -73,7 +73,7 @@ All notable user-facing changes since the first repository commit.
   `NOMO_*` name falls back.
 
   The list of settings that alias is a list, not a scan. `PATH`, `HOME` and
-  `TERM` are not ours and `VOID_HOME` was never a spelling of a variable the
+  `TERM` are not ours and `NOMO_HOME` was never a spelling of a variable the
   product owned, so a helper that guessed would change what the process reads.
   Settings a process passes to its own children for one call, such as the hook
   context, are deliberately excluded: each has a known writer inside a single

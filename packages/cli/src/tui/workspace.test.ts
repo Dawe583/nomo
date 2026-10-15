@@ -53,7 +53,7 @@ test("Ctrl+P requests the command palette through the input, not a submit", () =
 
 test("command palette opens a live filter over the real command list", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-palette-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -89,7 +89,7 @@ test("command palette opens a live filter over the real command list", async (t)
 
 test("queuePrompt(undefined) cancels a queued prompt", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-queue-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -153,7 +153,7 @@ test("multiline editing moves across Unicode lines and deletes words without tou
 
 test("tools show actual managed capabilities, searchable schemas and no execution on inspection", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-tools-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -187,7 +187,7 @@ test("tools show actual managed capabilities, searchable schemas and no executio
 
 test("Claude style management aliases open real NOMO views", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-aliases-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -242,7 +242,7 @@ test("compact tool output keeps complete events available and never hides assist
 
 test("composer follows the actual cursor beyond literal underscores", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-cursor-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -257,7 +257,7 @@ test("composer follows the actual cursor beyond literal underscores", async (t) 
 
 test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, signed export and restart", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-"));
-  const env = { VOID_DATA_DIR: root, VOID_EXPORT_DIR: join(root, "exports") };
+  const env = { NOMO_DATA_DIR: root, NOMO_EXPORT_DIR: join(root, "exports") };
   let app = new Workbench(env, async (url, options) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
@@ -328,8 +328,8 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
   assert.equal(app.workspace(id).files["plan.md"], "first");
   await ui.command("/export ledger");
   const bundlePath = join(
-    env.VOID_EXPORT_DIR,
-    (await readdir(env.VOID_EXPORT_DIR))[0]!,
+    env.NOMO_EXPORT_DIR,
+    (await readdir(env.NOMO_EXPORT_DIR))[0]!,
   );
   const exported = await readFile(bundlePath, "utf8");
   assert.ok(exported.includes("signature"));
@@ -381,7 +381,7 @@ test("input preserves Unicode and multiline paste, never submits pasted Enter", 
 
 test("terminal rendering contains hostile control text and complete Unicode wrapping", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-frame-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -421,12 +421,12 @@ test("stream deltas are shown once and replaced by the completed assistant messa
 
 test("styled frames stay bounded, motion can stop, and slash choices never include arguments", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-style-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   ui.choose("chat");
   ui.model = "界".repeat(120);
   ui.notice = "untrusted \x1b[2J";
@@ -514,7 +514,7 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
 
 test("search and paging use real conversation data and return to live follow", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-reading-"));
-  const app = new Workbench({ VOID_DATA_DIR: root }, async (url) =>
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
@@ -539,7 +539,7 @@ test("search and paging use real conversation data and return to live follow", a
     baseUrl: "https://fixture.test/v1",
     apiKey: "fixture",
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.command("Read this");
   await app.settled();
   renderWorkspace(ui, 80, 24, "_", true);
@@ -594,12 +594,12 @@ test("unified diff shows changed hunks with context and caps long output", () =>
 
 test("TUI doctor reuses the CLI implementation without touching state", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-doctor-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.command("/doctor");
   assert.equal(ui.detail?.[0], "doctor exit 0");
   assert.ok(ui.detail?.some((line) => line.startsWith("PASS node")));
@@ -607,7 +607,7 @@ test("TUI doctor reuses the CLI implementation without touching state", async (t
 
 test("rewind selects the latest recoverable operation", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-rewind-"));
-  const env = { VOID_DATA_DIR: root };
+  const env = { NOMO_DATA_DIR: root };
   const app = new Workbench(env, async (url, options) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
@@ -667,12 +667,12 @@ test("rewind selects the latest recoverable operation", async (t) => {
 
 test("rewind without a conversation asks for selection", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-rewind-empty-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.command("/rewind");
   assert.equal(ui.tab, "ledger");
   assert.match(ui.notice, /select a conversation/i);
@@ -681,11 +681,11 @@ test("rewind without a conversation asks for selection", async (t) => {
 test("TUI init reuses the CLI implementation and creates storage", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-init-"));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.command("/init");
   assert.equal(ui.detail?.[0], "init exit 0");
   assert.ok(ui.detail?.some((line) => line.startsWith("created: ")));
@@ -732,12 +732,12 @@ test("A2 banner sanitizes hostile tool ids", () => {
 
 test("A2 banner stays visible across tab switches", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-banner-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   ui.proxy.holds = [
     {
       holdId: "bannerhold01",
@@ -784,12 +784,12 @@ test("A4 mode label always says local only, never server enforced", () => {
 
 test("A4 status bar and status detail carry the local only label", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-modelabel-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   ui.mode = "plan";
   assert.match(
     stripAnsi(renderWorkspace(ui, 100, 32)),
@@ -926,12 +926,12 @@ test("A1 approval review builds selectable hunks only with a diff", () => {
 
 test("A1 hunk toggle flips scope and the suffix rides with the decision", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-hunks-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   assert.equal(ui.hunkScopeSuffix(), "", "no review means no payload");
   const review = approvalReview({
     holdId: "h",

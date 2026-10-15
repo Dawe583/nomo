@@ -60,6 +60,8 @@ export type HarnessSettingSpec = {
   /** The symbols in `consumerFile` that read this value. Required, and
    * asserted to exist, so the table cannot drift into naming nothing. */
   consumers: readonly string[];
+  /** Single-cell geometric shape (U+25A0-U+25FF) for the TUI settings list. */
+  icon: string;
   default: number;
   min: number;
   max: number;
@@ -79,6 +81,7 @@ export const HARNESS_SETTINGS: {
     // Matches AGENT_LIMITS.maxTurns, so a harness turn cap can never exceed
     // the cap an individual agent profile is allowed to carry.
     max: 20,
+    icon: "△",
   },
   maxOutputTokens: {
     label: "Output tokens per request",
@@ -88,6 +91,7 @@ export const HARNESS_SETTINGS: {
     default: 4096,
     min: 256,
     max: 32768,
+    icon: "◼",
   },
   maxPromptCharacters: {
     label: "Prompt characters",
@@ -100,6 +104,7 @@ export const HARNESS_SETTINGS: {
     default: 32000,
     min: 256,
     max: 200000,
+    icon: "▏",
   },
   maxQueuedRuns: {
     label: "Queued background runs",
@@ -112,6 +117,7 @@ export const HARNESS_SETTINGS: {
     // The queue is an in-memory Set of session ids, so the bound exists to
     // stop unbounded growth rather than to model a real capacity limit.
     max: 1000,
+    icon: "▤",
   },
   maxRequestBytes: {
     label: "Request bytes",
@@ -122,6 +128,7 @@ export const HARNESS_SETTINGS: {
     default: 65536,
     min: 1024,
     max: 10485760,
+    icon: "▓",
   },
   maxRunTimeoutMs: {
     label: "Run timeout",
@@ -134,6 +141,7 @@ export const HARNESS_SETTINGS: {
     // Zero would mean "never time out", which is exactly the unbounded run
     // this limit exists to prevent, so the floor is one second.
     max: 86400000,
+    icon: "◷",
   },
   maxToolCallsPerTurn: {
     label: "Tool calls per turn",
@@ -144,6 +152,7 @@ export const HARNESS_SETTINGS: {
     default: 32,
     min: 1,
     max: 256,
+    icon: "▣",
   },
   hookTimeoutMs: {
     label: "Hook timeout",
@@ -157,6 +166,7 @@ export const HARNESS_SETTINGS: {
     default: 5000,
     min: 100,
     max: 60000,
+    icon: "◇",
   },
   retryAttempts: {
     label: "Provider retry attempts",
@@ -170,6 +180,7 @@ export const HARNESS_SETTINGS: {
     // that an operator is usually waiting on a rate limit that will not clear,
     // and a longer wait inside one run holds the approval surface open.
     max: 10,
+    icon: "◇",
   },
   retryBaseDelayMs: {
     label: "Retry base delay",
@@ -180,6 +191,7 @@ export const HARNESS_SETTINGS: {
     default: 1000,
     min: 100,
     max: 60000,
+    icon: "◰",
   },
   maxConcurrentRuns: {
     label: "Concurrent runs",
@@ -190,6 +202,7 @@ export const HARNESS_SETTINGS: {
     default: 1,
     min: 1,
     max: 10,
+    icon: "▦",
   },
   maxContinuations: {
     label: "Run continuations",
@@ -200,6 +213,7 @@ export const HARNESS_SETTINGS: {
     default: 3,
     min: 0,
     max: 20,
+    icon: "◈",
   },
   maxRunTokens: {
     label: "Run token budget",
@@ -210,6 +224,7 @@ export const HARNESS_SETTINGS: {
     default: 0,
     min: 0,
     max: 1000000,
+    icon: "▧",
   },
   retryMaxDelayMs: {
     label: "Retry max delay",
@@ -220,6 +235,7 @@ export const HARNESS_SETTINGS: {
     default: 60000,
     min: 1000,
     max: 600000,
+    icon: "◱",
   },
   contextEntryLimit: {
     label: "Learned entries per kind in a prompt",
@@ -230,6 +246,7 @@ export const HARNESS_SETTINGS: {
     default: 3,
     min: 0,
     max: 20,
+    icon: "▥",
   },
   contextCharsPerEntry: {
     label: "Characters per retrieved entry",
@@ -240,6 +257,7 @@ export const HARNESS_SETTINGS: {
     default: 240,
     min: 40,
     max: 4000,
+    icon: "▨",
   },
   refinementEnabled: {
     label: "Harness refinement",
@@ -250,6 +268,7 @@ export const HARNESS_SETTINGS: {
     default: 1,
     min: 0,
     max: 1,
+    icon: "◭",
   },
   refinementTurnInterval: {
     label: "Turns between reviews",
@@ -260,6 +279,7 @@ export const HARNESS_SETTINGS: {
     default: 25,
     min: 1,
     max: 1000,
+    icon: "◵",
   },
   refinementCooldownMs: {
     label: "Review cooldown (ms)",
@@ -270,6 +290,7 @@ export const HARNESS_SETTINGS: {
     default: 1_200_000,
     min: 0,
     max: 86_400_000,
+    icon: "◲",
   },
 };
 
@@ -353,6 +374,7 @@ export function harnessSettingsView(settings: HarnessSettings) {
     label: HARNESS_SETTINGS[key].label,
     description: HARNESS_SETTINGS[key].description,
     consumer: HARNESS_SETTINGS[key].consumers.join(", "),
+    icon: HARNESS_SETTINGS[key].icon,
     min: HARNESS_SETTINGS[key].min,
     max: HARNESS_SETTINGS[key].max,
     default: HARNESS_SETTINGS[key].default,

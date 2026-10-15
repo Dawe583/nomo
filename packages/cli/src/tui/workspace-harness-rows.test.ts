@@ -31,8 +31,8 @@ async function ledgerRows(
 }> {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-harness-rows-"));
   const env = {
-    VOID_DATA_DIR: root,
-    VOID_HOOK_COMMANDS: JSON.stringify(hookCommands),
+    NOMO_DATA_DIR: root,
+    NOMO_HOOK_COMMANDS: JSON.stringify(hookCommands),
   };
   const app = new Workbench(env, assistantFetcher("ok"));
   await app.configure({

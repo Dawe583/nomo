@@ -64,8 +64,8 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
           choices: [{ message: { role: "assistant", content: "Complete." } }],
           usage: { prompt_tokens: 2, completion_tokens: 3, total_tokens: 5 },
         }));
-  let wb = new Workbench({ VOID_DATA_DIR: directory, VOID_PERMISSION_MODE: "normal" }, fetcher);
-  assertIsolated(directory, { VOID_DATA_DIR: directory, VOID_PERMISSION_MODE: "normal" });
+  let wb = new Workbench({ NOMO_DATA_DIR: directory, NOMO_PERMISSION_MODE: "normal" }, fetcher);
+  assertIsolated(directory, { NOMO_DATA_DIR: directory, NOMO_PERMISSION_MODE: "normal" });
   t.after(async () => {
     wb.close();
     await rm(directory, { recursive: true, force: true });
@@ -141,8 +141,8 @@ test("GUI edits use revisions and signed undo, branches do not replay tools, req
   });
   wb.patchPreferences({ locale: "en" });
   wb.close();
-  wb = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
-  assertIsolated(directory, { VOID_DATA_DIR: directory });
+  wb = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
+  assertIsolated(directory, { NOMO_DATA_DIR: directory });
   assert.equal(wb.getPreferences().locale, "en");
   assert.equal(wb.sessionPage(new URLSearchParams("archived=true")).total, 1);
   assert.equal((await wb.start("First", "test", "request-one")).id, session.id);

@@ -32,9 +32,9 @@ _outside_ the proxy, then an inverse. The agent's row goes back; the finance
 write survives.
 
 ```sh
-export VOID_PG_URL="postgres://void@127.0.0.1:5432/void_demo"
+export NOMO_PG_URL="postgres://void@127.0.0.1:5432/void_demo"
 node --experimental-strip-types scripts/receipt-demo/run.mjs
-psql "$VOID_PG_URL" -f docs/RECEIPT-VERIFY.sql
+psql "$NOMO_PG_URL" -f docs/RECEIPT-VERIFY.sql
 ```
 
 The SQL reports `PASS` only if the row each receipt names is the row the table
@@ -46,7 +46,7 @@ observed run, including an intentional failure after editing a row by hand.
 
 **Current command:** install the legacy `void` executable with
 `bash scripts/install-void.sh`. It checks for Node.js 24 or newer, git and pnpm,
-clones the repository into `$HOME/.local/share/void-cli` (set `VOID_HOME` to
+clones the repository into `$HOME/.local/share/void-cli` (set `NOMO_HOME` to
 choose another location), installs from the lockfile and writes a launcher at
 `$HOME/.local/bin/void`. It does not edit PATH. The NOMO rename must preserve
 this command and its data until the explicit compatibility migration is ready.

@@ -48,6 +48,14 @@ import {
   type CompactionResult,
 } from "./agents.ts";
 import {
+  LOCAL_AGENT_GRANT_AUDIENCE,
+  LOCAL_AGENT_PRINCIPAL_ID,
+  LocalAgentIdentityIssuer,
+  type IssuedLocalAgentGrant,
+  type LocalAgentGrantRequest,
+  type LocalAgentIdentity,
+} from "./agent-identity.ts";
+import {
   defaultHarnessSettings,
   harnessSettingsPatch,
   resolveHarnessSettings,
@@ -82,6 +90,8 @@ import {
   GENESIS_PREV,
 } from "../../ledger/src/canonical.ts";
 import { signingPreimage } from "../../ledger/src/index.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
+import { envValue, normalizeOwnedEnv } from "../../ledger/src/env-compat.ts";
 import {
   resolveVerificationKey,
   type VerificationKey,
@@ -143,7 +153,7 @@ import {
   attestLedger,
   type AttestationDocument,
 } from "../../ledger/src/attest.ts";
-import { createVoidClient, type VoidClient } from "../../sdk/src/client.ts";
+import { createNomoClient, type NomoClient } from "../../sdk/src/client.ts";
 import { HoldDeniedError } from "../../sdk/src/errors.ts";
 import {
   catalogFor,
@@ -287,7 +297,7 @@ export { DEFAULT_POLICY };
 export const AGENT_PRESETS = [
   {
     id: "default",
-    name: "VOID default",
+    name: "NOMO default",
     description: "General-purpose accountable agent.",
     instruction: "",
   },
@@ -425,6 +435,9 @@ type Connector = McpConfig & {
   consentState: "staged" | "probed" | "confirmed";
 };
 type Session = {
+  /** The run that passed its before-run gate, or undefined once it is
+   * torn down. A local agent grant is only issued against a gated run. */
+  proxyGrantReadyRunId?: string;
   view: SessionView;
   messages: ModelMessage[];
   /**
@@ -438,7 +451,7 @@ type Session = {
   agentProfile?: AgentProfile;
   queuedPrompt?: string;
   recoveryBlock?: { jobId: string; previousStatus: SessionView["status"] };
-  client?: VoidClient;
+  client?: NomoClient;
   tools?: McpTool[];
   connections?: Record<string, McpConfig & { sessionId?: string }>;
   config?: Pick<ProviderConfig, "baseUrl" | "kind">;
@@ -562,8 +575,9 @@ export class Workbench {
    */
   private readonly harnessTriggers = new Map<string, TriggerState>();
   /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
+  private readonly localIdentityIssuer = new LocalAgentIdentityIssuer();
   private readonly harnessJobs = new Set<Promise<void>>();
-  /** The timeout `VOID_HOOK_TIMEOUT_MS` asked for, or undefined when the
+  /** The timeout `NOMO_HOOK_TIMEOUT_MS` asked for, or undefined when the
    * launcher set none. Kept apart from the resolved setting so an explicit
    * runtime environment still wins: it is the more specific statement about
    * this process, and an operator who set it before the workbench loaded must
@@ -625,25 +639,39 @@ export class Workbench {
     env: Readonly<NodeJS.ProcessEnv> = process.env,
     fetcher: typeof fetch = fetch,
   ) {
+    // One normalization, at construction, before anything below reads a
+    // setting. A launcher that configured the product under `VOID_*` before
+    // the rename hands that environment in unchanged, and every reader below
+    // keeps its single `NOMO_*` lookup.
+    const resolved = normalizeOwnedEnv({ ...env });
+    // The workspace key is resolved through the legacy-aware reader: a machine
+    // configured before the rename keeps its keychain-backed storage instead of
+    // silently starting a second encrypted-local store.
+    this.workspaceKeySecret = envValue(resolved, "NOMO_WORKSPACE_KEY");
     this.permissionMode = serverPermissionMode(
-      env.VOID_PERMISSION_MODE ?? DEFAULT_LOCAL_PERMISSION_MODE,
+      envValue(resolved, "NOMO_PERMISSION_MODE") ?? DEFAULT_LOCAL_PERMISSION_MODE,
     );
-    this.keyStorage = env.VOID_WORKSPACE_KEY
+    this.keyStorage = envValue(resolved, "NOMO_WORKSPACE_KEY")
       ? "os-keychain"
       : "encrypted-local";
-    this.workspaceKeySecret = env.VOID_WORKSPACE_KEY;
-    this.env = { ...env };
+    this.env = resolved;
+    // The workspace key is a secret. It selected storage above and is dropped
+    // here, so no retained copy of it can reach a log, a report or a crash
+    // dump. Both spellings go, because a legacy one that was kept would be the
+    // same secret under a name nothing redacts.
+    delete (this.env as NodeJS.ProcessEnv).NOMO_WORKSPACE_KEY;
     delete (this.env as NodeJS.ProcessEnv).VOID_WORKSPACE_KEY;
-    this.hookAllowlist = Workbench.hookAllowlist(env);
-    // Precedence: an explicit VOID_HOOK_TIMEOUT_MS wins over the stored
+    this.hookAllowlist = Workbench.hookAllowlist(this.env);
+    // Precedence: an explicit NOMO_HOOK_TIMEOUT_MS wins over the stored
     // harness setting, and the stored setting wins over the default. The env
     // is the launcher's statement about this process, so an operator who set
     // it must not lose it to a workspace value written before it. Clamped at
     // both ends either way: a hook cannot be made un-timeouttable, and a short
     // timeout only costs a well-behaved hook more than a long one.
-    const requestedHookTimeout = Number(env.VOID_HOOK_TIMEOUT_MS);
+    const hookTimeout = envValue(this.env, "NOMO_HOOK_TIMEOUT_MS");
+    const requestedHookTimeout = Number(hookTimeout);
     this.hookTimeoutFromEnv =
-      env.VOID_HOOK_TIMEOUT_MS && Number.isFinite(requestedHookTimeout)
+      hookTimeout && Number.isFinite(requestedHookTimeout)
         ? Math.min(
             HOOK_TIMEOUT_BOUNDS.max,
             Math.max(HOOK_TIMEOUT_BOUNDS.min, requestedHookTimeout),
@@ -651,9 +679,12 @@ export class Workbench {
         : undefined;
     this.fetcher = fetcher;
     this.storage = new LocalStorage(
-      env.VOID_DATA_DIR ??
-        join(env.VOID_LEDGER_DIR ?? join(homedir(), ".void"), "workbench"),
-      env.VOID_WORKSPACE_KEY,
+      envValue(this.env, "NOMO_DATA_DIR") ??
+        join(
+          envValue(this.env, "NOMO_LEDGER_DIR") ?? join(dataDir(homedir())),
+          "workbench",
+        ),
+      envValue(this.env, "NOMO_WORKSPACE_KEY"),
     );
     const saved = this.storage.read<{
       preferences?: Record<string, string>;
@@ -894,8 +925,8 @@ export class Workbench {
   /**
    * The operator hook allowlist, read once from the runtime environment.
    *
-   * It is `VOID_HOOK_COMMANDS`, a JSON array of exact command strings, for the
-   * same reason `VOID_UPSTREAM_COMMAND` is one: the launcher that starts this
+   * It is `NOMO_HOOK_COMMANDS`, a JSON array of exact command strings, for the
+   * same reason `NOMO_UPSTREAM_COMMAND` is one: the launcher that starts this
    * process is the only place a command can be authorised. It deliberately
    * lives on the runtime rather than in the encrypted workspace snapshot,
    * because a snapshot is written by whoever holds the workbench API and read
@@ -907,13 +938,14 @@ export class Workbench {
   private static hookAllowlist(
     env: Readonly<NodeJS.ProcessEnv>,
   ): readonly string[] {
-    if (!env.VOID_HOOK_COMMANDS) return [];
+    const commands = envValue(env, "NOMO_HOOK_COMMANDS");
+    if (!commands) return [];
     let parsed: unknown;
     try {
-      parsed = JSON.parse(env.VOID_HOOK_COMMANDS);
+      parsed = JSON.parse(commands);
     } catch {
       throw new Error(
-        "VOID_HOOK_COMMANDS must be a JSON array of command strings.",
+        "NOMO_HOOK_COMMANDS must be a JSON array of command strings.",
       );
     }
     if (
@@ -923,7 +955,7 @@ export class Workbench {
       )
     )
       throw new Error(
-        "Configure VOID_HOOK_COMMANDS on the runtime with the hookable commands as a JSON array.",
+        "Configure NOMO_HOOK_COMMANDS on the runtime with the hookable commands as a JSON array.",
       );
     return [...new Set(parsed.map((item) => (item as string).trim()))];
   }
@@ -1091,7 +1123,7 @@ export class Workbench {
         })),
       ],
       profiles: structuredClone(this.agentProfiles),
-      policyProfiles: listPolicyProfiles(this.env.VOID_POLICY_PATH),
+      policyProfiles: listPolicyProfiles(this.env.NOMO_POLICY_PATH),
       hooks: structuredClone(this.hooks),
       hookCommands: [...this.hookAllowlist],
       // Derived, not asserted: a hardcoded `true` cannot disagree with a test
@@ -1108,7 +1140,7 @@ export class Workbench {
       throw new Error("Agent id belongs to a built-in preset.");
     const policy = resolvePolicyProfile(
       profile.policyProfile,
-      this.env.VOID_POLICY_PATH,
+      this.env.NOMO_POLICY_PATH,
     );
     if (!policy.ok)
       throw new Error(
@@ -1453,9 +1485,9 @@ export class Workbench {
       );
     let command: unknown;
     try {
-      command = JSON.parse(this.env.VOID_UPSTREAM_COMMAND ?? "null");
+      command = JSON.parse(this.env.NOMO_UPSTREAM_COMMAND ?? "null");
     } catch {
-      throw new Error("VOID_UPSTREAM_COMMAND must be a JSON array.");
+      throw new Error("NOMO_UPSTREAM_COMMAND must be a JSON array.");
     }
     if (
       command !== null &&
@@ -1464,10 +1496,10 @@ export class Workbench {
         !command.every((item) => typeof item === "string" && item.length > 0))
     )
       throw new Error(
-        "Configure VOID_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.",
+        "Configure NOMO_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.",
       );
-    if (command && !this.env.VOID_POLICY_PATH)
-      throw new Error("Configure VOID_POLICY_PATH before starting an agent.");
+    if (command && !this.env.NOMO_POLICY_PATH)
+      throw new Error("Configure NOMO_POLICY_PATH before starting an agent.");
     if (!prompt.trim() || prompt.length > this.harness.maxPromptCharacters)
       throw new Error(
         `Enter a prompt between 1 and ${this.harness.maxPromptCharacters} characters.`,
@@ -1475,13 +1507,13 @@ export class Workbench {
     const id = randomUUID();
     const workspace = `agent-${id}`;
     const client = Array.isArray(command)
-      ? createVoidClient({
+      ? createNomoClient({
           workspace,
           ledgerDir:
-            this.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"),
+            this.env.NOMO_LEDGER_DIR ?? join(dataDir(homedir()), "ledger"),
           connect: { upstreamCommand: command },
-          policyPath: this.env.VOID_POLICY_PATH!,
-          factsPath: this.env.VOID_FACTS_PATH,
+          policyPath: this.env.NOMO_POLICY_PATH!,
+          factsPath: this.env.NOMO_FACTS_PATH,
           posture: "fail-closed",
           requestTimeoutMs: 180000,
         })
@@ -2205,7 +2237,7 @@ export class Workbench {
       connectors: [
         {
           id: "workspace",
-          name: "VOID documents",
+          name: "NOMO documents",
           builtin: true,
           tools: workspaceTools.map((t) => t.name),
           toolDetails: workspaceTools,
@@ -3073,7 +3105,11 @@ export class Workbench {
     });
   }
 
-  async rejectHarnessProposal(sessionId: string, digest: string): Promise<void> {
+  async rejectHarnessProposal(
+    sessionId: string,
+    digest: string,
+    reason = "",
+  ): Promise<void> {
     const session = this.sessions.get(sessionId);
     if (!session || session.view.id !== sessionId) throw new Error("Session not found.");
     this.assertNormalMutation("harness refinement");
@@ -3094,13 +3130,74 @@ export class Workbench {
         session,
         state,
         "harness.rejection",
-        { digest },
+        { digest, reason },
         "proposal:rejected",
         undefined,
         undefined,
         { harnessProposal: { digest, status: "rejected" } },
       );
     });
+  }
+
+  /**
+   * Issues a short-lived local proxy capability from the stored run and tool
+   * snapshot. Caller supplied workspace, agent and run IDs are not accepted.
+   */
+  issueLocalAgentGrant(
+    sessionId: string,
+    upstreamId: string,
+  ): IssuedLocalAgentGrant {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    if (session.view.status !== "running" || !session.view.runId)
+      throw new Error("A local agent grant requires an active run.");
+    if (session.proxyGrantReadyRunId !== session.view.runId)
+      throw new Error("The run has not passed its before-run gate.");
+    if (!session.view.agent)
+      throw new Error("The active run has no registered agent identity.");
+    const toolScope = (session.tools ?? [])
+      .filter((tool) => tool.connectorId === upstreamId)
+      .map((tool) => tool.name);
+    if (!toolScope.length)
+      throw new Error("The upstream is not configured for this run.");
+    return this.localIdentityIssuer.issue({
+      principalId: LOCAL_AGENT_PRINCIPAL_ID,
+      workspaceId: session.view.workspace,
+      agentId: session.view.agent,
+      runId: session.view.runId,
+      upstreamId,
+      toolScope,
+    });
+  }
+  /** Validate a grant against the proxy audience, upstream and requested tool. */
+  validateLocalAgentGrant(
+    token: string,
+    request: Pick<LocalAgentGrantRequest, "upstreamId" | "toolName">,
+  ): LocalAgentIdentity | null {
+    if (!request) return null;
+    return this.localIdentityIssuer.validate(token, {
+      audience: LOCAL_AGENT_GRANT_AUDIENCE,
+      upstreamId: request.upstreamId,
+      toolName: request.toolName,
+    });
+  }
+  /** Resolve a grant for the local proxy without authorizing a specific tool. */
+  resolveLocalAgentGrant(
+    token: string,
+    upstreamId: string,
+  ): LocalAgentIdentity | null {
+    return this.localIdentityIssuer.authenticate(token, {
+      audience: LOCAL_AGENT_GRANT_AUDIENCE,
+      upstreamId,
+    });
+  }
+  /**
+   * The local key storage answer, without reaching the provider: asking the
+   * provider to answer a question about local storage is a network call that
+   * can fail for reasons that have nothing to do with it.
+   */
+  keyStorageState(): string {
+    return this.keyStorage;
   }
 
   async applyPromptAddendum(
@@ -3493,7 +3590,7 @@ export class Workbench {
   private async syncStdio(session: Session) {
     return this.locked(async () => {
       const path = join(
-        this.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"),
+        this.env.NOMO_LEDGER_DIR ?? join(dataDir(homedir()), "ledger"),
         `${session.view.workspace}.jsonl`,
       );
       let entries: JsonlEntry[];
@@ -3518,7 +3615,7 @@ export class Workbench {
       // was. It is deliberately NOT `this.storage.directory`: that is the
       // document key, and resolving against it would find nothing.
       const proxyKeys =
-        this.env.VOID_PROXY_KEYS ?? join(homedir(), ".void", "keys");
+        this.env.NOMO_PROXY_KEYS ?? join(dataDir(homedir()), "keys");
       const key = await this.verificationKey(() =>
         this.retainedSigner(proxyKeys),
       );
@@ -3749,7 +3846,7 @@ export class Workbench {
       // itself by naming something that does not resolve.
       const profile = resolvePolicyProfile(
         session.agentProfile.policyProfile,
-        this.env.VOID_POLICY_PATH,
+        this.env.NOMO_POLICY_PATH,
       );
       if (!profile.ok)
         throw new Error(
@@ -4027,7 +4124,7 @@ export class Workbench {
         // policy its operator never chose.
         const policy = resolvePolicyProfile(
           session.agentProfile.policyProfile,
-          this.env.VOID_POLICY_PATH,
+          this.env.NOMO_POLICY_PATH,
         );
         if (!policy.ok)
           throw new Error(`Unknown agent policy profile: ${policy.reason}.`);
@@ -4050,6 +4147,7 @@ export class Workbench {
         throw new Error(
           `Hook ${refused.hookId} refused this run: ${refused.outcome}${refused.code === null ? "" : ` (exit ${refused.code})`}.${refused.stderr ? ` ${refused.stderr}` : ""}`,
         );
+      session.proxyGrantReadyRunId = session.view.runId;
       const listed = { tools: session.tools ?? [...workspaceTools] };
       const mapping = new Map(
         listed.tools.map((tool, index) => [`tool_${index}`, tool]),
@@ -4300,6 +4398,16 @@ export class Workbench {
         session.client?.close();
       }
     } finally {
+      // The retrieval block was only ever provider input for this run. Take it
+      // back out first, so neither the stored conversation nor a later digest
+      // over these messages carries a copy of it.
+      // Two independent teardown steps in the same finally block, both needed
+      // whichever way the run ended. A run that failed still held a capability
+      // this process issued to itself; leaving it alive after the run would let
+      // a later call reuse it.
+      if (session.view.runId)
+        this.localIdentityIssuer.revoke(session.view.runId);
+      session.proxyGrantReadyRunId = undefined;
       // The retrieval block was only ever provider input for this run. Take it
       // back out first, so neither the stored conversation nor a later digest
       // over these messages carries a copy of it.

@@ -57,7 +57,7 @@ async function fixtureApp(
   content = "ok",
   env: Record<string, string> = {},
 ) {
-  const full = { VOID_DATA_DIR: root, ...env };
+  const full = { NOMO_DATA_DIR: root, ...env };
   const app = new Workbench(full, assistantFetcher(content));
   await app.configure({
     baseUrl: "https://fixture.test/v1",
@@ -890,7 +890,7 @@ test("a prompt sent during a run is queued, never dropped", async (t) => {
     new Promise<Response>((done) => {
       release = done;
     });
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full, async (url: unknown) => {
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "fixture" }] });
@@ -954,7 +954,7 @@ test("double Escape opens checkpoints, single Escape only closes", () => {
 
 test("gated shell shows output once and refuses key material", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-shell-"));
-  const full = { VOID_DATA_DIR: root, VOID_TUI_ENV_PROBE: "probe-secret" };
+  const full = { NOMO_DATA_DIR: root, NOMO_TUI_ENV_PROBE: "probe-secret" };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -971,7 +971,7 @@ test("gated shell shows output once and refuses key material", async (t) => {
   );
   await assert.rejects(ui.command("!printenv OPENROUTER_API_KEY"), /Refused/);
   await assert.rejects(
-    ui.command("!printenv VOID_TUI_ENV_PROBE"),
+    ui.command("!printenv NOMO_TUI_ENV_PROBE"),
     /Local command failed/,
   );
 });
@@ -991,7 +991,7 @@ const failingWithSecret = process.platform === "win32" ? "exit 1" : "false";
 test("shell output redacts exact stored secret values", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-redact-"));
   const full = {
-    VOID_DATA_DIR: root,
+    NOMO_DATA_DIR: root,
     TOKENROUTER_API_KEY: "qk7-redact-me",
     NVIDIA_API_KEY: "nv7-x91k3p",
   };
@@ -1164,7 +1164,7 @@ test("/agents /config /memory read live data without secrets", async (t) => {
 
 test("provider only commands reject what NOMO cannot do", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-unsupported-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1177,7 +1177,7 @@ test("provider only commands reject what NOMO cannot do", async (t) => {
 
 test("/login reuses provider setup, /logout disconnects", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-login-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1287,12 +1287,12 @@ test("prompt frame stays continuous at every width", async (t) => {
 
 test("live status stays within the compact ASCII identity", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-ascii-status-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   ui.choose("chat");
   const frame = renderWorkspace(ui, 80, 30, "_", true, true, {
     frame: 4,
@@ -1518,7 +1518,7 @@ test("render collects user prompt rows for jumps", async (t) => {
 
 test("arrow keys cycle panels in navigation, cursor in editing", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-arrows-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1653,7 +1653,7 @@ test("undo review states the drift check before the diff", async (t) => {
 
 test("/conformance proves the adapter behind TUI edits inside the TUI", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-conformance-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1673,7 +1673,7 @@ test("/conformance proves the adapter behind TUI edits inside the TUI", async (t
 
 test("/plan /stats /exit /keybindings match the reference commands", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-cmds-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1849,7 +1849,7 @@ test("/diff-next steps through outstanding operations and wraps", async (t) => {
 
 test("/theme switches color theme and symbol preset without touching env", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-theme-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1889,7 +1889,7 @@ test("/theme switches color theme and symbol preset without touching env", async
 
 test("command suggestions include /theme", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-suggest-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1931,7 +1931,7 @@ test("/attest refuses when nothing has signed, and mints no key to pretend other
 
 test("/providers lists presets with local open model options", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-providers-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1954,7 +1954,7 @@ test("/providers lists presets with local open model options", async (t) => {
 
 test("/harness shows and switches the agent harness", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-harness-"));
-  const full = { VOID_DATA_DIR: root, PATH: "/usr/bin:/bin" };
+  const full = { NOMO_DATA_DIR: root, PATH: "/usr/bin:/bin" };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -1983,7 +1983,7 @@ test("/harness shows and switches the agent harness", async (t) => {
 
 test("live thinking dots animate with motion and freeze without it", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-dots-"));
-  const full = { VOID_DATA_DIR: root };
+  const full = { NOMO_DATA_DIR: root };
   const app = new Workbench(full);
   t.after(async () => {
     await app.shutdown();
@@ -2004,12 +2004,12 @@ test("live thinking dots animate with motion and freeze without it", async (t) =
 test("NVIDIA API key is read ONLY from env var, never from chat input", async (t) => {
   // 1. No env key -> providerState stays null, no auto-configuration.
   const root = await mkdtemp(join(tmpdir(), "nomo-nvidia-chat-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.initialize();
   const state = await app.providerState();
   assert.equal(state.providerId, null);
@@ -2030,12 +2030,12 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
       choices: [{ message: { role: "assistant", content: "ok" } }],
     });
   };
-  const app2 = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  const app2 = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   await app2.configure({
     baseUrl: "https://fixture.test/v1",
     apiKey: "fixture-key",
   });
-  const ui2 = new WorkspaceTui(app2, { VOID_DATA_DIR: root });
+  const ui2 = new WorkspaceTui(app2, { NOMO_DATA_DIR: root });
   await ui2.initialize();
   await ui2.command("please set NVIDIA_API_KEY=secret in the chat");
   await app2.settled();
@@ -2045,7 +2045,7 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
   // 3. Explicit env var IS the only path that configures NVIDIA.
   const root3 = await mkdtemp(join(tmpdir(), "nomo-nvidia-env-"));
   const app3 = new Workbench(
-    { VOID_DATA_DIR: root3, NVIDIA_API_KEY: "nvkey" },
+    { NOMO_DATA_DIR: root3, NVIDIA_API_KEY: "nvkey" },
     async (url) =>
       String(url).endsWith("/models")
         ? Response.json({ data: [{ id: "m" }] })
@@ -2063,12 +2063,12 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
 
 test("no silent provider fallback - workspace with no provider says so explicitly", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-no-provider-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.initialize();
   const lines = ui.providerLines().join("\n");
   // The provider is an inspector now, so "there is no provider" is the
@@ -2093,7 +2093,7 @@ test("logout preserves readable history, removes profiles and session keys", asy
       : Response.json({
           choices: [{ message: { role: "assistant", content: "hello back" } }],
         });
-  const app = new Workbench({ VOID_DATA_DIR: root }, fetcher);
+  const app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -2106,7 +2106,7 @@ test("logout preserves readable history, removes profiles and session keys", asy
   assert.equal(configured.providerId, "custom");
   assert.equal(configured.connected, true);
   assert.equal(configured.profiles.length, 1);
-  const ui = new WorkspaceTui(app, { VOID_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   await ui.initialize();
   await ui.command("first message");
   await app.settled();
@@ -2130,7 +2130,7 @@ test("logout preserves readable history, removes profiles and session keys", asy
 
 test("provider presets stay a choice, not a default", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-preset-choice-"));
-  const app = new Workbench({ VOID_DATA_DIR: root });
+  const app = new Workbench({ NOMO_DATA_DIR: root });
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });

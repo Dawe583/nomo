@@ -28,7 +28,7 @@ async function ledgerRows(t: {
   after(fn: () => Promise<void>): void;
 }): Promise<{ ui: WorkspaceTui; app: Workbench; env: Record<string, string> }> {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-learned-rows-"));
-  const env = { VOID_DATA_DIR: root };
+  const env = { NOMO_DATA_DIR: root };
   const app = new Workbench(env, assistantFetcher("ok"));
   await app.configure({
     baseUrl: "https://fixture.test/v1",

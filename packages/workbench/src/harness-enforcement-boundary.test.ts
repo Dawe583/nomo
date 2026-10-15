@@ -291,7 +291,7 @@ test("an entry approved under normal cannot lift a read-only mode on restart", a
   // fixture's cleanup shuts its workbench down and removes its root at the end
   // of the test, which is exactly wrong for a test that needs a second runtime
   // to outlive the first on the same directory.
-  const first = new Workbench({ VOID_DATA_DIR: root }, capturing as typeof fetch);
+  const first = new Workbench({ NOMO_DATA_DIR: root }, capturing as typeof fetch);
   await first.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   await first.addConnector({
     url: server.url,
@@ -310,7 +310,7 @@ test("an entry approved under normal cannot lift a read-only mode on restart", a
   await first.shutdown();
 
   const app = new Workbench(
-    { VOID_DATA_DIR: root, VOID_PERMISSION_MODE: "read-only" },
+    { NOMO_DATA_DIR: root, NOMO_PERMISSION_MODE: "read-only" },
     capturing as typeof fetch,
   );
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });

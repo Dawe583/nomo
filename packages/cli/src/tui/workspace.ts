@@ -15,8 +15,7 @@ import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
-import { harnessScoreRows } from "./harness-score-rows.ts";
-import { harnessProposalRows } from "./harness-proposal-rows.ts";
+import { measureBoard, unmeasuredMetrics } from "../../../workbench/src/harness-scores.ts";
 
 import { harnessSettingsView } from "../../../workbench/src/harness-settings.ts";
 import {
@@ -190,7 +189,7 @@ type Item = {
   /**
    * What kind of record this is, used to group a tab that mixes several.
    * The ledger tab holds signed entries, proxy entries, mined rules, harness
-   * scores, proposals, hooks and agents in one list, and a reader scanning it
+   * scores, hooks and agents in one list, and a reader scanning it
    * for a refusal was stepping over four other kinds to get there.
    */
   kind?:
@@ -198,7 +197,6 @@ type Item = {
     | "proxy"
     | "learned"
     | "score"
-    | "proposal"
     | "harness"
     | "hook"
     | "agent"
@@ -277,6 +275,25 @@ function median(values: readonly number[]): number {
     : Math.round((sorted[middle - 1]! + sorted[middle]!) / 2);
 }
 const text = (value: unknown) => String(value ?? "unknown");
+/** Operator-authored and model-authored text reaches the ledger tab through
+ * proposal rows. A control character in it would move the cursor and rewrite
+ * rows the operator is reading, so it is escaped before paint, not after. */
+const escapeTerminalText = (value: string) =>
+  value.replace(
+    /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/gu,
+    (character) => `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
+  );
+/** A workspace chain is one score case, even when several sessions display it. */
+const verifiedScoreCases = (
+  proofs: ReadonlyMap<string, readonly JsonlEntry[]>,
+): JsonlEntry[][] => {
+  const cases = new Map<string, JsonlEntry[]>();
+  for (const [sessionId, entries] of proofs) {
+    const workspace = entries[0]?.workspace ?? sessionId;
+    if (!cases.has(workspace)) cases.set(workspace, [...entries]);
+  }
+  return [...cases.values()];
+};
 /** Hook commands are operator-supplied config, but they routinely carry
  * credentials inline (curl -H "Authorization: ...", --token=...). The
  * ledger tab prints them, so redact before bounding and rendering, the
@@ -521,7 +538,6 @@ const LEDGER_GROUP_ORDER = [
   "entry",
   "proxy",
   "learned",
-  "proposal",
   "score",
   "harness",
   "agent",
@@ -533,7 +549,6 @@ const LEDGER_GROUP_TITLE: Record<string, string> = {
   entry: "SIGNED ENTRIES",
   proxy: "PROXY ENTRIES",
   learned: "LEARNED FROM THE CHAIN",
-  proposal: "PROPOSALS WAITING",
   score: "HARNESS SCORE",
   harness: "HARNESS",
   agent: "AGENTS",
@@ -545,7 +560,6 @@ const LEDGER_GROUP_ICON: Record<string, string> = {
   entry: "▪",
   proxy: "▫",
   learned: "◇",
-  proposal: "◉",
   score: "▰",
   harness: "◈",
   agent: "◆",
@@ -1891,6 +1905,91 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // hunk the operator just moved to may be off screen.
     this.scroll = Math.max(0, this.detail.length - 1);
   }
+  /**
+   * The confirmation behind `/harness approve` and `/harness reject`.
+   *
+   * The operator sees the complete proposal before anything is decided: the
+   * summary, the rationale, the expected outcome, the full digest, the cited
+   * chain position and the exact diff. The approve path is the only one in
+   * this file that changes the prompt every later conversation runs under,
+   * so it is the one path that never acts on a list row or a bare command.
+   */
+  async prepareHarnessDecision(
+    digestPrefix: string,
+    decision: "approve" | "reject",
+  ) {
+    if (!this.sessionId) throw Error("Select a conversation.");
+    if (!/^[a-f0-9]{8,64}$/.test(digestPrefix))
+      throw Error("Enter at least 8 hexadecimal digest characters.");
+    const pending = await this.workbench.pendingApprovalsFor(this.sessionId);
+    const matches = pending.filter((proposal) =>
+      proposal.digest.startsWith(digestPrefix),
+    );
+    if (matches.length !== 1)
+      throw Error(
+        matches.length > 1
+          ? `Digest prefix ${digestPrefix} is ambiguous. Enter more characters.`
+          : pending.length
+            ? `No pending proposal starts with ${digestPrefix}. /harness lists them.`
+            : "No Harness proposal is awaiting an operator decision.",
+      );
+    const match = matches[0]!;
+    const sessionId = this.sessionId;
+    // Proposal text is operator- and model-authored and lands in terminal
+    // rows, so control characters are escaped before paint, not after.
+    const proposalLines = escapeTerminalText(
+      JSON.stringify(match.proposal, null, 2),
+    ).split("\n");
+    this.confirmation = {
+      title: `${decision === "approve" ? "APPROVE" : "REJECT"} HARNESS PROPOSAL ${match.digest.slice(0, 8)}?`,
+      lines: [
+        decision === "approve"
+          ? "This applies the exact proposal after checking its digest and provenance."
+          : "This records rejection and activates none of the proposed edits.",
+        "",
+        `Summary: ${escapeTerminalText(match.summary)}`,
+        `Rationale: ${escapeTerminalText(match.proposal.rationale)}`,
+        `Expected outcome: ${escapeTerminalText(match.proposal.expectedOutcome)}`,
+        `Full digest: ${match.digest}`,
+        `Cited chain position: ${match.atSeq}.`,
+        "",
+        "Full proposal:",
+        ...proposalLines,
+        "",
+        "This changes no policy, permissions, tool catalog, or credentials.",
+      ],
+      apply: async () => {
+        this.confirmation = undefined;
+        if (decision === "approve") {
+          const result = await this.workbench.approveHarnessProposal(
+            sessionId,
+            match.digest,
+          );
+          this.notice = `Harness proposal approved: ${result.applied.length} edit(s) activated.`;
+          this.detail = [
+            "HARNESS PROPOSAL ACTIVATED",
+            `Digest: ${match.digest}`,
+            `Summary: ${escapeTerminalText(match.summary)}`,
+            "The signed chain records the approval and activation.",
+          ];
+        } else {
+          await this.workbench.rejectHarnessProposal(
+            sessionId,
+            match.digest,
+          );
+          this.notice = `Harness proposal rejected: ${match.digest.slice(0, 8)}.`;
+          this.detail = [
+            "HARNESS PROPOSAL REJECTED",
+            `Digest: ${match.digest}`,
+            `Summary: ${escapeTerminalText(match.summary)}`,
+            "The signed chain records the rejection. No edit was activated.",
+          ];
+        }
+        await this.refresh(true);
+      },
+    };
+    this.scroll = 0;
+  }
   costLines() {
     const usage = activity(this.workbench.allViews());
     const lines = [
@@ -2415,8 +2514,42 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // measured from and reach no gate, policy or permission. A metric the
       // chain cannot support is reported as unavailable instead of being
       // rendered as a number nobody checked.
-      for (const score of harnessScoreRows(this.proofs))
-        rows.push({ ...score, kind: "score" });
+      {
+        // Score only the managed chains above: each verified workspace chain
+        // is one case. Proxy chains have a separate verification state and are
+        // not mixed into this descriptive, non-authoritative report.
+        const scoreBoard = measureBoard(
+          verifiedScoreCases(this.proofs),
+          new Date().toISOString(),
+        );
+        const firstPass = scoreBoard.metrics.first_pass_rate;
+        const firstPassValue =
+          firstPass.mean === null
+            ? "unmeasured"
+            : `${(firstPass.mean * 100).toFixed(1)}%`;
+        const firstPassCi =
+          firstPass.half === null
+            ? "unavailable"
+            : `±${(firstPass.half * 100).toFixed(1)}%`;
+        rows.push({
+          id: "harness:scores",
+          kind: "score",
+          label: `${ROW_ICONS.harness} harness score ${scoreBoard.verdict}`,
+          lines: [
+            `Verdict: ${scoreBoard.verdict}.`,
+            `First-pass rate: ${firstPassValue}.`,
+            `95% CI: ${firstPassCi}; ${firstPass.n} first-pass samples across ${scoreBoard.caseCount} cases.`,
+            // The verdict is a sentence, not a grade: "flat" means nothing was
+            // compared, which reads as "measured and unchanged" unless the
+            // reason is printed next to it.
+            `Reason: ${scoreBoard.reasons.join("; ")}.`,
+            ...unmeasuredMetrics(scoreBoard).map(
+              (key) => `${key}: no sample, so no rate can be computed.`,
+            ),
+            "Descriptive only; never changes a decision or permission.",
+          ],
+        });
+      }
       // The ring closes as the chain verifies. Its shape reports how far the
       // check got, so an operator can see progress without reading a count,
       // and the word beside it stays authoritative.
@@ -2439,16 +2572,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ],
         });
       }
-      // Prompt proposals waiting on this operator: the exact diff and its
-      // provenance, inspectable with Enter like every other row. Approval
-      // itself stays an explicit command naming the digest, never a side
-      // effect of looking.
-      for (const proposal of harnessProposalRows(this.proofs))
-        rows.push({
-          ...proposal,
-          kind: "proposal",
-          sessionId: proposal.id.split(":")[1],
-        });
       // The harness that produced this chain: which runtime is the default,
       // which profile new conversations get, and what hooks are wired.
       // /harness and /hooks print the same facts on demand; this is where
@@ -4790,50 +4913,109 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       );
       return;
     }
-    // Prompt proposals are inert until one of these names their exact digest.
-    // Listing shows diffs; only approve activates, only reject settles, and
-    // both refuse an unknown digest rather than guessing.
-    if (cmd === "refine") {
-      const [sub, digest, ...reason] = arg.split(/\s+/);
-      if ((sub === "approve" || sub === "reject") && !this.sessionId)
-        throw Error("Select a conversation.");
-      if (sub === "proposals" || sub === undefined || sub === "") {
-        this.choose("ledger");
-        this.filter = "proposal";
-        return;
-      }
-      if (sub === "approve" && digest) {
-        const result = await this.workbench.approveHarnessProposal(
-          this.sessionId!,
-          digest,
-        );
-        this.detail = [
-          `REFINEMENT APPROVED ${digest.slice(0, 19)}`,
-          `${result.applied.length} edit(s) activated.`,
-          "Recorded on the signed chain; later sessions retrieve it.",
-        ];
-        this.notice = `Proposal approved: ${result.applied.length} edit(s) active.`;
-        this.scroll = 0;
-        return;
-      }
-      if (sub === "reject" && digest) {
-        await this.workbench.rejectHarnessProposal(
-          this.sessionId!,
-          digest,
-          reason.join(" "),
-        );
-        this.detail = [
-          `REFINEMENT REJECTED ${digest.slice(0, 19)}`,
-          "Recorded on the signed chain; nothing was activated.",
-        ];
-        this.notice = "Proposal rejected on the record.";
-        this.scroll = 0;
-        return;
-      }
-      throw Error(
-        "/refine proposals | /refine approve <digest> | /refine reject <digest> [reason]",
-      );
-    }
+     // Prompt proposals are inert until one of these names their exact digest.
+     // Listing shows diffs; only approve activates, only reject settles, and
+     // both refuse an unknown digest rather than guessing. Approval runs through
+     // a confirmation that prints the complete proposal first: it is the one
+     // path that changes the prompt every later conversation runs under.
+     if (cmd === "harness") {
+       const [verb = "", ...rest] = arg.split(/\s+/).filter(Boolean);
+       if (verb === "scores") {
+         const board = measureBoard(
+           verifiedScoreCases(this.proofs),
+           new Date().toISOString(),
+         );
+         const firstPass = board.metrics.first_pass_rate;
+         this.detail = [
+           `HARNESS SCORES, verdict: ${board.verdict}`,
+           `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
+           `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
+           `Sample count: ${firstPass.n} first-pass samples`,
+           `Case count: ${board.caseCount} verified tool-call cases`,
+           `Reason: ${board.reasons.join("; ")}.`,
+           ...unmeasuredMetrics(board).map(
+             (key) => `${key}: no sample, so no rate can be computed.`,
+           ),
+           "Descriptive only; never changes a decision or permission.",
+         ];
+         this.scroll = 0;
+         return;
+       }
+       if (verb === "review") {
+         if (!this.sessionId) throw Error("Select a conversation.");
+         const sessionId = this.sessionId;
+         this.confirmation = {
+           title: "REQUEST A HARNESS REVIEW?",
+           lines: [
+             "This may spend one model call: the reviewer looks for a durable lesson in the signed chain.",
+             "The settled-turn interval is skipped because you asked; the harness switch, the cooldown and the nothing-new check still apply, and a refusal costs nothing.",
+             "If the conversation is running, the request is recorded and served at the next settled boundary.",
+             "The reviewer can only propose. Nothing is activated without your approval.",
+           ],
+           apply: async () => {
+             this.confirmation = undefined;
+             const result = await this.workbench.requestHarnessReview(sessionId);
+             const note = escapeTerminalText(result.note);
+             this.notice = `Harness review ${result.kind}. ${note}`;
+             this.detail = [
+               `HARNESS REVIEW ${result.kind.toUpperCase()}`,
+               "",
+               note,
+               ...(result.kind === "ran"
+                 ? [
+                     "",
+                     "The signed chain records the outcome. /harness lists any proposal awaiting a decision.",
+                   ]
+                 : []),
+               "",
+               "The reviewer can only propose. Nothing is activated without your approval.",
+             ];
+             this.scroll = 0;
+             await this.refresh(true);
+           },
+         };
+         this.scroll = 0;
+         return;
+       }
+       if (verb === "approve" || verb === "reject") {
+         await this.prepareHarnessDecision(rest.join(" "), verb);
+         return;
+       }
+       if (verb && verb !== "cloud" && verb !== "prime-agent")
+         throw Error("/harness cloud | prime-agent | scores | review | approve DIGEST | reject DIGEST");
+       if (verb) {
+         this.workbench.patchPreferences({ defaultAgent: verb });
+         this.notice =
+           verb === "prime-agent"
+             ? "Harness: prime-agent. New conversations route there when the bridge runs."
+             : "Harness: cloud. New conversations run in the managed session.";
+       }
+       const prefs = this.workbench.getPreferences();
+       const found = await detectHarnesses(this.env);
+       const pending = this.sessionId ? await this.workbench.pendingApprovalsFor(this.sessionId) : [];
+       this.detail = [
+         `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
+         "",
+         "cloud: managed session in this workspace, approvals in the TUI.",
+         "prime-agent: local harness CLI for team agents, needs the bridge.",
+         "",
+         ...found.map(
+           (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
+         ),
+         "",
+         ...pending.map((approval) =>
+           `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
+         ),
+         pending.length
+           ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
+           : "No Harness proposals are awaiting an operator decision.",
+         "",
+         "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
+         "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
+       ];
+       this.scroll = 0;
+       return;
+     }
     if (cmd === "rename") {
       if (!this.sessionId) throw Error("Select a conversation.");
       this.workbench.patchSession(this.sessionId, { title: arg });
@@ -4904,35 +5086,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         "Local entries need Ollama or LM Studio running on this machine.",
         "Keys stay encrypted in local provider storage, never in the repo.",
-      ];
-      this.scroll = 0;
-      return;
-    }
-    if (cmd === "harness") {
-      // The setting is shared with the control plane. Detection only looks
-      // at PATH presence; nothing is executed, so listing is always safe.
-      if (arg && arg !== "cloud" && arg !== "prime-agent")
-        throw Error("/harness cloud | prime-agent");
-      if (arg) {
-        this.workbench.patchPreferences({ defaultAgent: arg });
-        this.notice =
-          arg === "prime-agent"
-            ? "Harness: prime-agent. New conversations route there when the bridge runs."
-            : "Harness: cloud. New conversations run in the managed session.";
-      }
-      const prefs = this.workbench.getPreferences();
-      const found = await detectHarnesses(this.env);
-      this.detail = [
-        `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
-        "",
-        "cloud: managed session in this workspace, approvals in the TUI.",
-        "prime-agent: local harness CLI for team agents, needs the bridge.",
-        "",
-        ...found.map(
-          (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
-        ),
-        "",
-        "/harness cloud | /harness prime-agent switches the default.",
       ];
       this.scroll = 0;
       return;

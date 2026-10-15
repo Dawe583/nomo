@@ -12,7 +12,7 @@ const fetcher = async (url: unknown) =>
     ? Response.json({ data: [{ id: "fixture" }] })
     : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" } }] });
 
-test("a caller naming VOID_DATA_DIR in extraEnv cannot redirect the store", async (t) => {
+test("a caller naming NOMO_DATA_DIR in extraEnv cannot redirect the store", async (t) => {
   // The helper exists so a test cannot write into the operator's real store.
   // That guarantee is void if `extraEnv` can win the merge: the workbench
   // builds over the caller's directory while `f.root` still names the
@@ -29,7 +29,7 @@ test("a caller naming VOID_DATA_DIR in extraEnv cannot redirect the store", asyn
   const f = await isolatedWorkbench(
     t,
     fetcher,
-    { VOID_DATA_DIR: stray },
+    { NOMO_DATA_DIR: stray },
     { prefix: "void-test-fixture-data-dir-" },
   );
 
@@ -45,7 +45,7 @@ test("restart keeps the permission mode the fixture was built with", async (t) =
   const f = await isolatedWorkbench(
     t,
     fetcher,
-    { VOID_PERMISSION_MODE: "read-only" },
+    { NOMO_PERMISSION_MODE: "read-only" },
     { prefix: "void-test-fixture-restart-" },
   );
   assert.equal(f.app.permissionModeState(), "read-only");

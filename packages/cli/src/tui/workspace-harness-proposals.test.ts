@@ -10,7 +10,7 @@ import { WorkspaceTui } from "./workspace.ts";
 
 async function fixture(t: test.TestContext) {
   const root = await mkdtemp(join(tmpdir(), "void-tui-harness-proposal-"));
-  const env = { VOID_DATA_DIR: root };
+  const env = { NOMO_DATA_DIR: root };
   const app = new Workbench(env, async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })

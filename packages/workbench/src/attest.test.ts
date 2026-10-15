@@ -129,7 +129,7 @@ const internalsOf = (app: Workbench) =>
  *
  * The case that does is a workbench that holds evidence it cannot sign with:
  * the chain verifies against a key pinned out of band through
- * `VOID_VERIFY_KEY`, while the private key directory is not on disk. There the
+ * `NOMO_VERIFY_KEY`, while the private key directory is not on disk. There the
  * old line called `devKeyProvider`, which creates a key when none exists — it
  * minted signing capability on the way to answering a read question, and
  * attested with a key that was not the pinned one. The invariant is simply that
@@ -142,8 +142,8 @@ test("attest refuses to mint a key for a workbench that cannot sign", async (t) 
   const directory = await mkdtemp(join(tmpdir(), "void-attest-read-"));
 
   // 1. Sign some evidence with the default dev key, so a key directory exists.
-  const signer = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
-  assertIsolated(directory, { VOID_DATA_DIR: directory });
+  const signer = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);
+  assertIsolated(directory, { NOMO_DATA_DIR: directory });
   await signer.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const first = await signer.start("Write", "fixture", undefined, undefined, undefined);
   await signer.settled();
@@ -179,8 +179,8 @@ test("attest refuses to mint a key for a workbench that cannot sign", async (t) 
   await rm(keys, { recursive: true, force: true });
 
   // 3. A fresh workbench over the same data: same workspace, no keys on disk.
-  const app = new Workbench({ VOID_DATA_DIR: directory, VOID_VERIFY_KEY: pinned }, fetcher);
-  assertIsolated(directory, { VOID_DATA_DIR: directory, VOID_VERIFY_KEY: pinned });
+  const app = new Workbench({ NOMO_DATA_DIR: directory, NOMO_VERIFY_KEY: pinned }, fetcher);
+  assertIsolated(directory, { NOMO_DATA_DIR: directory, NOMO_VERIFY_KEY: pinned });
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   // Shut down before the directory goes: `close()` persists, and after-hooks
   // run in registration order, so the removal cannot be registered first.

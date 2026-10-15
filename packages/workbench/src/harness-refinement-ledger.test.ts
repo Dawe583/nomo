@@ -17,7 +17,7 @@ async function fixture(
 ) {
   // `extraEnv` rides along on the fixture's own environment object, so a
   // ledger or permission override is added rather than swapped in for
-  // `VOID_DATA_DIR`.
+  // `NOMO_DATA_DIR`.
   const f = await isolatedWorkbench(t, fetcher, extraEnv, {
     prefix: "void-refinement-ledger-",
   });
@@ -484,7 +484,7 @@ test("secret-shaped proposal content is refused before it reaches the signed led
 
 test("the external workspace key is refused if echoed into a proposal", async (t) => {
   const key = Buffer.alloc(32, 7).toString("base64");
-  const { app, session } = await fixture(t, { VOID_WORKSPACE_KEY: key });
+  const { app, session } = await fixture(t, { NOMO_WORKSPACE_KEY: key });
   await assert.rejects(
     app.refineHarness(session.id, {
       ...proposal(),
@@ -500,7 +500,7 @@ test("a read-only workbench refuses a refinement, because it signs a record", as
   // model change the harness the operator can see.
   const { app, session } = await fixture(
     t,
-    { VOID_PERMISSION_MODE: "read-only" },
+    { NOMO_PERMISSION_MODE: "read-only" },
     { seedDocument: false },
   );
   await assert.rejects(app.refineHarness(session.id, proposal()), /read-only/);
@@ -517,7 +517,7 @@ test("a restart keeps the environment that refused the refinement", async (t) =>
   // reopened workbench that had lost its mode would happily sign here.
   const { session, closeOriginal, reopen } = await fixture(
     t,
-    { VOID_PERMISSION_MODE: "read-only" },
+    { NOMO_PERMISSION_MODE: "read-only" },
     { seedDocument: false },
   );
   await closeOriginal();

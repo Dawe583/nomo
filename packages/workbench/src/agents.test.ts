@@ -14,10 +14,10 @@ async function fixture(t:import("node:test").TestContext,fetcher:typeof fetch,ho
  // The allowlist is supplied the way an operator supplies it: in the runtime
  // environment the launcher passes, never on the workbench API surface. It
  // travels as `extraEnv`, which the fixture merges with — rather than in place
- // of — `VOID_DATA_DIR`.
+ // of — `NOMO_DATA_DIR`.
  const f=await isolatedWorkbench(t,fetcher,{
-  VOID_HOOK_COMMANDS:JSON.stringify(hookCommands),
-  ...(hookTimeoutMs===undefined?{}:{VOID_HOOK_TIMEOUT_MS:String(hookTimeoutMs)}),
+  NOMO_HOOK_COMMANDS:JSON.stringify(hookCommands),
+  ...(hookTimeoutMs===undefined?{}:{NOMO_HOOK_TIMEOUT_MS:String(hookTimeoutMs)}),
  },{prefix:"void-agent-profile-",configure:false});
  await f.app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  return {get app(){return f.app;},restart(){f.restart();}};
@@ -229,12 +229,12 @@ test("an after-tool hook receives the tool name, the decision and the outcome",a
  await f.app.start("Read","fixture",undefined,undefined,"observer");await f.app.settled();
  const context=JSON.parse(await readFile(seen,"utf8")) as Record<string,unknown>;
  assert.equal(context.tool,"void_workspace_list");
- assert.equal(context.VOID_HOOK_TOOL,"void_workspace_list");
- assert.equal(context.VOID_HOOK_EVENT,"after-tool");
+ assert.equal(context.NOMO_HOOK_TOOL,"void_workspace_list");
+ assert.equal(context.NOMO_HOOK_EVENT,"after-tool");
  // The decision and the outcome are both present and both meaningful: a
  // reader downstream can tell a refusal from a completion without guessing.
  assert.equal(typeof context.decision,"string");
- assert.equal(context.VOID_HOOK_DECISION,context.decision);
+ assert.equal(context.NOMO_HOOK_DECISION,context.decision);
  assert.equal(context.outcome,"completed");
- assert.equal(context.VOID_HOOK_OUTCOME,"completed");
+ assert.equal(context.NOMO_HOOK_OUTCOME,"completed");
 });

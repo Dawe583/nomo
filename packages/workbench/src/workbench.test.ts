@@ -20,9 +20,9 @@ const reply = (body: unknown) =>
   });
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 /**
- * `Workbench` roots its store at `VOID_DATA_DIR ?? join(VOID_LEDGER_DIR ??
+ * `Workbench` roots its store at `NOMO_DATA_DIR ?? join(NOMO_LEDGER_DIR ??
  * homedir()/".void", "workbench")`. The proxy tests below set only
- * `VOID_LEDGER_DIR`, because that is the variable the signed JSONL chain
+ * `NOMO_LEDGER_DIR`, because that is the variable the signed JSONL chain
  * reads, so their store lands one level below the ledger directory rather
  * than at it. Asserting there is what proves the temporary tree was used
  * instead of the operator's real home.
@@ -82,7 +82,7 @@ test("migrates legacy generic provider state to compatible and retires the legac
     ]),
   );
   new LocalStorage(bare).save(state([]));
-  const migrationEnv = { VOID_DATA_DIR: dir };
+  const migrationEnv = { NOMO_DATA_DIR: dir };
   const workbench = new Workbench(migrationEnv);
   // Deliberately not the shared fixture: the point of this test is that a
   // workbench reads back state a hand-built `LocalStorage` wrote into this
@@ -102,7 +102,7 @@ test("migrates legacy generic provider state to compatible and retires the legac
   assert.equal(persisted.profiles["https://provider.test/v1"]?.kind, "compatible");
   assert.doesNotMatch(JSON.stringify(persisted), /"openai"/);
   // Without a catalog there is no model to re-pick, so the preference is gone.
-  const bareEnv = { VOID_DATA_DIR: bare };
+  const bareEnv = { NOMO_DATA_DIR: bare };
   const empty = new Workbench(bareEnv);
   assertIsolated(bare, bareEnv);
   assert.equal((await empty.providerState()).defaultModel, null);
@@ -178,15 +178,15 @@ test("model tool calls cross a real VOID proxy and produce a ledger", async (t) 
     });
   };
   const proxyEnv = {
-    VOID_LEDGER_DIR: dir,
-    VOID_UPSTREAM_COMMAND: JSON.stringify([
+    NOMO_LEDGER_DIR: dir,
+    NOMO_UPSTREAM_COMMAND: JSON.stringify([
       process.execPath,
       join(root, "fixtures/e2e-server.mjs"),
     ]),
-    VOID_POLICY_PATH: join(root, "fixtures/e2e-policy.yaml"),
+    NOMO_POLICY_PATH: join(root, "fixtures/e2e-policy.yaml"),
   };
   const workbench = new Workbench(proxyEnv, fetcher);
-  // `VOID_LEDGER_DIR`, not `VOID_DATA_DIR`: the assertions below read the
+  // `NOMO_LEDGER_DIR`, not `NOMO_DATA_DIR`: the assertions below read the
   // signed feed at `join(dir, "<workspace>.jsonl")`, so this stays a direct
   // construction with the isolation assertion attached.
   assertIsolated(storeDirUnder(dir), proxyEnv);
@@ -239,12 +239,12 @@ test("a destructive model call waits for an operator in its own workspace", asyn
   const dir = await mkdtemp(join(tmpdir(), "void-agent-hold-"));
   let turn = 0;
   const proxyEnv = {
-    VOID_LEDGER_DIR: dir,
-    VOID_UPSTREAM_COMMAND: JSON.stringify([
+    NOMO_LEDGER_DIR: dir,
+    NOMO_UPSTREAM_COMMAND: JSON.stringify([
       process.execPath,
       join(root, "fixtures/e2e-server.mjs"),
     ]),
-    VOID_POLICY_PATH: join(root, "fixtures/e2e-policy.yaml"),
+    NOMO_POLICY_PATH: join(root, "fixtures/e2e-policy.yaml"),
   };
   const workbench = new Workbench(
     proxyEnv,
@@ -358,12 +358,12 @@ test("long sessions keep advancing event cursors and refuse unbounded context", 
           usage: { total_tokens: 1 },
         });
   const proxyEnv = {
-    VOID_LEDGER_DIR: dir,
-    VOID_UPSTREAM_COMMAND: JSON.stringify([
+    NOMO_LEDGER_DIR: dir,
+    NOMO_UPSTREAM_COMMAND: JSON.stringify([
       process.execPath,
       join(root, "fixtures/e2e-server.mjs"),
     ]),
-    VOID_POLICY_PATH: join(root, "fixtures/e2e-policy.yaml"),
+    NOMO_POLICY_PATH: join(root, "fixtures/e2e-policy.yaml"),
   };
   const workbench = new Workbench(proxyEnv, fetcher);
   assertIsolated(storeDirUnder(dir), proxyEnv);
@@ -462,7 +462,7 @@ test("context compaction preserves recent work and records the reduction", async
   assert.equal(workbench.get(started.id)?.status, "idle");
   assert.ok(
     lastMessages.some((message) =>
-      message.content?.includes("VOID context summary"),
+      message.content?.includes("NOMO context summary"),
     ),
   );
 });
@@ -1123,7 +1123,7 @@ test("provider logout keeps the connected state when persistence fails", async (
   const fetcher: typeof fetch = async (url) => String(url).endsWith("/models")
     ? Response.json({ data: [{ id: "test", name: "Test" }] })
     : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
-  const conflictEnv = { VOID_DATA_DIR: dir };
+  const conflictEnv = { NOMO_DATA_DIR: dir };
   const workbench = new Workbench(conflictEnv, fetcher);
   // Left on direct construction: this test deliberately puts the store into a
   // state where `close` throws, so it keeps its own `try`/`catch` cleanup
@@ -1264,7 +1264,7 @@ test("legacy history without a recognized provider kind cannot resume by guessin
 
   for (const legacy of legacyConfigs) {
     const dir = await mkdtemp(join(tmpdir(), `void-provider-${legacy.label}-kind-`));
-    const env = { VOID_DATA_DIR: dir };
+    const env = { NOMO_DATA_DIR: dir };
     // Direct by design: this test rewrites the stored session config with a
     // hand-built `LocalStorage` between two constructions over one root, and
     // that hand-off is the behaviour under test.
@@ -1306,7 +1306,7 @@ test("legacy inline provider keys are scrubbed without borrowing another provide
       ? Response.json({ data: [{ id: "test", name: "Test" }] })
       : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
   };
-  const env = { VOID_DATA_DIR: dir };
+  const env = { NOMO_DATA_DIR: dir };
   // Direct by design, as above: a hand-built `LocalStorage` rewrites the
   // stored session between the two constructions.
   const original = new Workbench(env, fetcher);
