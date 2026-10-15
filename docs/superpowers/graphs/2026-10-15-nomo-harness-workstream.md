@@ -86,7 +86,7 @@ the nodes. This mapping is honest about what exists:
 | ------- | --------------------------------------------------------------------- | ------------------------------------------------- |
 | WP-CATALOG | A provider without a model catalog (404 or empty) accepts the model the operator named; every other probe failure surfaces as itself | done: `aff5ee6`, VERIFY green (447/447 + tsc), skeptic findings 1+2 fixed, 3 refused (D-4), EVIDENCE landed |
 | WP-MANUAL  | `/harness review` arms the trigger on demand: the missing caller the refine docblocks point at | done: contract frozen (D-5), open items settled (D-6); BUILD+VERIFY green (463/463 workbench, TUI 194/195 with the one pre-existing stderr-warning failure proven on `aff5ee6`); EVIDENCE in this commit |
-| WP-MANUAL REVIEW | adversarial lenses over `7e79fe8` | parked: both reviewer subagents hit the rate limit on first attempt; resume on a later boundary (error edge), never fake the artifact. A deterministic pass over the diff confirmed every frozen-contract claim in the meantime |
+| WP-MANUAL REVIEW | adversarial lenses over `7e79fe8` | parked: both reviewer subagents hit the rate limit twice (first attempt and a later boundary); resume when the limit clears (error edge), never fake the artifact. A deterministic pass over the diff confirmed every frozen-contract claim in the meantime |
 | WP-MERGE   | Land `feat/agent-harness` on `main` after the TUI lane settles; rebase checkpoint on event edge; `nomo-merger` | queued, gated by the TUI lane |
 
 ## Decision log
