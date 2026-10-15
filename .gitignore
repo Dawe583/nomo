@@ -74,14 +74,14 @@ packages/*/src/**/*.js.map
 /.nitro
 
 # Local operator exports may contain private conversation and ledger data
-/void-exports/
+/nomo-exports/
 # OpenCOOP project history (snapshots, members)
 .opencoop/
 # Local browser/terminal diagnostics
 .playwright-mcp/
 test-results/
 
-# Nested git worktrees. Most lanes live beside the checkout in ../void-lanes/,
+# Nested git worktrees. Most lanes live beside the checkout in ../nomo-lanes/,
 # but a lane created inside it lands here, and a worktree is a full checkout:
 # without this it shows as an untracked directory in every git status and one
 # `git add -A` away from committing a second copy of the tree.
@@ -89,3 +89,6 @@ test-results/
 # Swift Package Manager and Python test artifacts
 .build/
 __pycache__/
+
+# Local advisor harness config. Personal tooling, not product code.
+WATCHDOG.yml

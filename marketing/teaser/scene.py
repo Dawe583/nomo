@@ -1,6 +1,6 @@
-"""Original VOID geometry and cinematography. Run with Blender 4.5 LTS.
+"""Original NOMO geometry and cinematography. Run with Blender 4.5 LTS.
 
-blender -b --python marketing/teaser/scene.py -- /tmp/void-teaser/frames [start] [end]
+blender -b --python marketing/teaser/scene.py -- /tmp/nomo-teaser/frames [start] [end]
 """
 import bpy
 import math
@@ -50,12 +50,12 @@ def material(name, color, metallic=0, rough=.3, emit=0):
     p.inputs['Emission Strength'].default_value=emit
     return m
 
-coal=material('VOID | graphite',(.023,.019,.013),.8,.3)
-bronze=material('VOID | burnt copper',(.34,.072,.009),.7,.24)
-paper=material('VOID | warm ceramic',(.88,.82,.69),.65,.21)
-orange=material('VOID | signal orange',(.95,.16,.014),.65,.22,.15)
-signal=material('VOID | amber light',(1,.18,.018),.1,.3,7)
-white=material('VOID | ivory light',(.95,.84,.62),.1,.3,4)
+coal=material('NOMO | graphite',(.023,.019,.013),.8,.3)
+bronze=material('NOMO | burnt copper',(.34,.072,.009),.7,.24)
+paper=material('NOMO | warm ceramic',(.88,.82,.69),.65,.21)
+orange=material('NOMO | signal orange',(.95,.16,.014),.65,.22,.15)
+signal=material('NOMO | amber light',(1,.18,.018),.1,.3,7)
+white=material('NOMO | ivory light',(.95,.84,.62),.1,.3,4)
 city=[]; hero=[]
 
 def box(name,loc,scale,mat,group,bevel=0):
@@ -110,7 +110,7 @@ corner=[(65.5,65.5),(109.5,65.5),(109.5,80.5),(80.5,80.5),(80.5,109.5),(65.5,109
 for sx,sy in [(1,1),(-1,1),(1,-1),(-1,-1)]:
     pts=[(128+sx*(x-128),128+sy*(y-128)) for x,y in corner]
     if sx*sy<0:pts.reverse()
-    extrude('VOID aperture bracket',pts,paper)
+    extrude('NOMO aperture bracket',pts,paper)
 # Continuous ring mesh prevents overlapping coplanar faces in the square stroke.
 verts=[]
 for z in [-.22,.22]:
@@ -121,14 +121,14 @@ for i in range(4):
     j=(i+1)%4
     faces += [(i,j,j+8,i+8),(i+4,i+12,j+12,j+4),(i+8,j+8,j+12,i+12),(i+4,j+4,j,i)]
 mesh=bpy.data.meshes.new('Orange ring');mesh.from_pydata(verts,[],faces);mesh.update()
-ring=bpy.data.objects.new('VOID centre square',mesh);scene.collection.objects.link(ring);ring.data.materials.append(orange);hero.append(ring)
+ring=bpy.data.objects.new('NOMO centre square',mesh);scene.collection.objects.link(ring);ring.data.materials.append(orange);hero.append(ring)
 mod=ring.modifiers.new('Precision bevel','BEVEL');mod.width=.025;mod.segments=4
 ring.modifiers.new('Weighted normals','WEIGHTED_NORMAL')
 bpy.ops.mesh.primitive_cylinder_add(vertices=64,radius=.24,depth=.45,location=(0,0,0))
-dot=bpy.context.object;dot.name='VOID centre dot';dot.data.materials.append(paper);hero.append(dot)
+dot=bpy.context.object;dot.name='NOMO centre dot';dot.data.materials.append(paper);hero.append(dot)
 bev=dot.modifiers.new('Dot bevel','BEVEL');bev.width=.025;bev.segments=3
 dot.modifiers.new('Weighted normals','WEIGHTED_NORMAL')
-bpy.ops.object.empty_add(); root=bpy.context.object;root.name='VOID logo assembly'
+bpy.ops.object.empty_add(); root=bpy.context.object;root.name='NOMO logo assembly'
 for o in hero:o.parent=root
 
 def area(name,loc,power,color,size,target=(0,0,0)):
@@ -167,7 +167,7 @@ def setup(frame):
     else:
         root.rotation_euler=(.08,0,0)
         for o in hero:
-            if o.name.startswith('VOID aperture bracket'):
+            if o.name.startswith('NOMO aperture bracket'):
                 center=sum((v.co for v in o.data.vertices),Vector())/len(o.data.vertices)
                 spread=max(0,1-(t-10.5)/.8)*.7 if t>=10.5 else 0
                 o.location=(center.x*spread,center.y*spread,spread*.25)
@@ -190,4 +190,4 @@ if __name__=='__main__':
         if (OUT/f'{frame:04d}.png').exists():continue
         setup(frame);scene.render.filepath=str(OUT/f'{frame:04d}.png')
         bpy.ops.render.render(write_still=True)
-        print(f'VOID_FRAME {frame}',flush=True)
+        print(f'NOMO_FRAME {frame}',flush=True)

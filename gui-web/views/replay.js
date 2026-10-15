@@ -1,11 +1,11 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.replay = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.replay = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   var max = F.ledgerEntries.length;
   var wrap = document.createElement("div");
   wrap.className = "section";
-  wrap.innerHTML = "<h2>Replay and attestation</h2><p class='muted'>Replay walks inverses in taint order. R3 has no inverse and stays blocked. VOID never compensates silently: preview first, commit second.</p>" +
+  wrap.innerHTML = "<h2>Replay and attestation</h2><p class='muted'>Replay walks inverses in taint order. R3 has no inverse and stays blocked. NOMO never compensates silently: preview first, commit second.</p>" +
     "<div class='card'><h3>Replay</h3><div class='toolbar'>" +
     "<label>From <input type='number' id='rp-from' value='1' min='1' max='" + max + "'></label>" +
     "<label>To <input type='number' id='rp-to' value='" + max + "' min='1' max='" + max + "'></label>" +
@@ -39,14 +39,14 @@ window.VOID_VIEWS.replay = function (root) {
     "<div class='toolbar'><label><input type='checkbox' id='rp-confirm'> I reviewed the plan</label>" +
     "<button class='btn-ghost btn-small' id='rp-commit'>Commit replay</button></div>";
     wrap.querySelector("#rp-out").innerHTML = html;
-    if (window.VOID_TOAST) window.VOID_TOAST("Replay preview for " + slice.length + " entries, nothing applied.");
+    if (window.NOMO_TOAST) window.NOMO_TOAST("Replay preview for " + slice.length + " entries, nothing applied.");
     wrap.querySelector("#rp-commit").onclick = function () {
       if (!wrap.querySelector("#rp-confirm").checked) {
-        if (window.VOID_TOAST) window.VOID_TOAST("Review the plan first, then commit.");
+        if (window.NOMO_TOAST) window.NOMO_TOAST("Review the plan first, then commit.");
         return;
       }
       wrap.querySelector(".timeline").classList.remove("running");
-      if (window.VOID_TOAST) window.VOID_TOAST("Replay committed for " + planned + " entries, mock run.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Replay committed for " + planned + " entries, mock run.");
     };
   };
 
@@ -54,10 +54,10 @@ window.VOID_VIEWS.replay = function (root) {
     var blob = new Blob([JSON.stringify({ mock: true, entries: F.ledgerEntries }, null, 2)], { type: "application/json" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "void-attestation-mock.json";
+    a.download = "nomo-attestation-mock.json";
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
-    if (window.VOID_TOAST) window.VOID_TOAST("Slice exported, mock file.");
+    if (window.NOMO_TOAST) window.NOMO_TOAST("Slice exported, mock file.");
   };
 
   root.appendChild(wrap);

@@ -32,15 +32,15 @@ as its starting line.
 
 | Fact | Where |
 | --- | --- |
-| One app target, twelve Swift files, four screens: entry and onboarding, activity list, conversation, settings | `apps/apple/VOIDApp` |
-| A real design system already exists: colours, tones, metrics, fonts, state pill, notice, primary button | `apps/apple/VOIDApp/ChatTheme.swift` |
-| The theme imports UIKit and builds colours through `Color(uiColor:)`, so it cannot compile for macOS as written | `apps/apple/VOIDApp/ChatTheme.swift` |
-| The model is hardcoded read-only and offline: pairing unavailable, actions refused, sessions are two hardcoded placeholders | `apps/apple/VOIDApp/AppModel.swift` |
-| The only shipping chat transport throws on every call; the one that returns a transcript is a debug fixture behind a launch argument | `apps/apple/VOIDApp/ChatModel.swift`, `apps/apple/VOIDApp/SampleChatTransport.swift` |
-| Onboarding completion is not persisted, so every launch restarts at the entry screen | `apps/apple/VOIDApp/AppModel.swift` |
-| Localisation is an `if language == "cs"` branch, not a resource catalog, although the build is told to emit string catalogs | `apps/apple/VOIDApp/AppCopy.swift`, `apps/apple/project.yml` |
+| One app target, twelve Swift files, four screens: entry and onboarding, activity list, conversation, settings | `apps/apple/NOMOApp` |
+| A real design system already exists: colours, tones, metrics, fonts, state pill, notice, primary button | `apps/apple/NOMOApp/ChatTheme.swift` |
+| The theme imports UIKit and builds colours through `Color(uiColor:)`, so it cannot compile for macOS as written | `apps/apple/NOMOApp/ChatTheme.swift` |
+| The model is hardcoded read-only and offline: pairing unavailable, actions refused, sessions are two hardcoded placeholders | `apps/apple/NOMOApp/AppModel.swift` |
+| The only shipping chat transport throws on every call; the one that returns a transcript is a debug fixture behind a launch argument | `apps/apple/NOMOApp/ChatModel.swift`, `apps/apple/NOMOApp/SampleChatTransport.swift` |
+| Onboarding completion is not persisted, so every launch restarts at the entry screen | `apps/apple/NOMOApp/AppModel.swift` |
+| Localisation is an `if language == "cs"` branch, not a resource catalog, although the build is told to emit string catalogs | `apps/apple/NOMOApp/AppCopy.swift`, `apps/apple/project.yml` |
 | The project is iOS only, with Mac Catalyst explicitly disabled | `apps/apple/project.yml` |
-| The generated Xcode project is committed and checked by a script | `apps/apple/VOID.xcodeproj`, `pnpm apple:project:check` |
+| The generated Xcode project is committed and checked by a script | `apps/apple/NOMO.xcodeproj`, `pnpm apple:project:check` |
 | No workflow in the repository builds or tests any Apple target | `.github/workflows/ci.yml` |
 
 The protocol library beside it is in a different state: `CompanionProtocolKit`
@@ -109,10 +109,10 @@ dependency and the two hand-picked colours, which the system palette replaces.
 
 | Task | Acceptance |
 | --- | --- |
-| Replace the hand-picked muted text and accent with system roles and the accent colour, keeping the measured ratios as a comment where a measurement still exists | `xcodebuild test` on the existing `VOIDUITests`, which re-measures rendered pixels in both appearances, stays green |
+| Replace the hand-picked muted text and accent with system roles and the accent colour, keeping the measured ratios as a comment where a measurement still exists | `xcodebuild test` on the existing `NOMOUITests`, which re-measures rendered pixels in both appearances, stays green |
 | Move the token module out of `ChatTheme.swift` into the shared package and leave that file as the chat's use of it | the app target no longer imports UIKit in the theme |
 | Replace the hand-drawn cards in the entry and settings screens with lists and sections, so selection and disclosure follow the platform | a VoiceOver pass reaches every control by name and the entry screen is reachable in one swipe per section |
-| Persist onboarding completion | a relaunch after completing onboarding lands on the activity list, and `VOIDUITests` asserts it |
+| Persist onboarding completion | a relaunch after completing onboarding lands on the activity list, and `NOMOUITests` asserts it |
 | Move the Czech and English strings into a string catalog | the app builds with the catalog present, and no source file contains an `if language` branch |
 | Add the inspector column on iPad, using the split view the app already has | the detail column is not the phone layout stretched; a screenshot at two widths shows the difference |
 | Add a keyboard shortcut for the primary action and verify the one already in the code is reachable | the existing shortcut still fires, and the test names it |
@@ -130,7 +130,7 @@ This is the largest single piece and the reason the plan exists.
 | Add a macOS application target to `apps/apple/project.yml` with its own bundle identifier and no Catalyst | `pnpm apple:project:check` is green and the generated project contains both targets |
 | Add macOS to the platform list in the package manifest of `CompanionProtocolKit` | the package builds for macOS and the existing 58 cases still pass on the host |
 | Give the macOS target a window with a sidebar and a toolbar instead of a navigation stack | the app launches, the sidebar persists selection, and resizing below the sidebar width adapts rather than clips |
-| Compile the chat surface for macOS, which means the theme package must not import UIKit | `xcodebuild -scheme VOID -destination 'platform=macOS' build` succeeds |
+| Compile the chat surface for macOS, which means the theme package must not import UIKit | `xcodebuild -scheme NOMO -destination 'platform=macOS' build` succeeds |
 | Support the pointer, the keyboard and the menu bar: every action reachable, every shortcut in the menu, the main menu carrying the app's verbs | a keyboard-only pass reaches approval, undo and export without a pointer |
 | Keep the mobile-only affordances out: no bottom tab bar, no touch-only gestures, and every gesture has a menu or button equivalent | the gesture audit in the design system acceptance passes on macOS |
 | Decide what the macOS app does about the executor | either it pairs to a paired Mac's executor over the local network like the phone does, or it is stated as a read-only client. It cannot be left implicit |

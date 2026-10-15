@@ -72,7 +72,7 @@ async function commit(tree: string, name: string, body: string): Promise<void> {
 
 /** A clone that tracks `origin/main`, plus the bare remote behind it. */
 async function installedTree(t: { after: (fn: () => unknown) => void }) {
-  const root = await mkdtemp(join(tmpdir(), "void-update-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-update-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const remote = join(root, "remote.git");
   const tree = join(root, "tree");
@@ -101,7 +101,7 @@ async function publish(remote: string, tree: string, name: string): Promise<stri
 async function makeInstallable(tree: string): Promise<void> {
   await writeFile(
     join(tree, "package.json"),
-    `${JSON.stringify({ name: "void-update-test", version: "0.0.0", private: true }, null, 2)}\n`,
+    `${JSON.stringify({ name: "nomo-update-test", version: "0.0.0", private: true }, null, 2)}\n`,
   );
   const lock = spawnSync("pnpm", ["install", "--lockfile-only"], {
     cwd: tree,
@@ -118,7 +118,7 @@ test("update refuses an unknown flag with usage and exit two", async () => {
   const c = collect();
   const code = await runUpdateCommand(["--force-update"], c.io, { env: {} });
   assert.equal(code, 2);
-  assert.deepEqual(c.err, ["usage: void update [--check] [--force]"]);
+  assert.deepEqual(c.err, ["usage: nomo update [--check] [--force]"]);
   assert.deepEqual(c.out, []);
 });
 
@@ -130,54 +130,54 @@ test("update refuses --check combined with --force, because one moves the tree a
     () => parseUpdateArgs(["--check", "--force"]),
     /--check only reports/,
   );
-  assert.throws(() => parseUpdateArgs(["--canary"]), /usage: void update/);
+  assert.throws(() => parseUpdateArgs(["--canary"]), /usage: nomo update/);
 });
 
-test("the tree is VOID_HOME, else the installer's location, else the source tree", () => {
+test("the tree is NOMO_HOME, else the installer's location, else the source tree", () => {
   assert.equal(
-    resolveUpdateHome({ VOID_HOME: "/opt/void", HOME: "/home/op" }, "/src/tree"),
+    resolveUpdateHome({ NOMO_HOME: "/opt/void", HOME: "/home/op" }, "/src/tree"),
     "/opt/void",
   );
-  // `void-cli`, and not `void`: this has to be the tree the installed
+  // `nomo-cli`, and not `nomo`: this has to be the tree the installed
   // launcher runs from, which is what the installer names in that launcher.
   assert.equal(
     resolveUpdateHome({ HOME: "/home/op" }, "/src/tree"),
-    join("/home/op", ".local", "share", "void-cli"),
+    join("/home/op", ".local", "share", "nomo-cli"),
   );
   // Neither variable: a checkout run in place is the only tree there is.
   assert.equal(resolveUpdateHome({}, "/src/tree"), "/src/tree");
 });
 
 test("a tree that is not a git checkout is refused, and the refusal names the installer", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-update-bare-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-update-bare-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, "not-a-clone"));
 
   const missing = collect();
   assert.equal(
     await runUpdateCommand([], missing.io, {
-      env: { VOID_HOME: join(root, "gone") },
+      env: { NOMO_HOME: join(root, "gone") },
     }),
     1,
   );
   assert.match(missing.err[0] ?? "", /no installed tree at/);
-  assert.match(missing.err[0] ?? "", /scripts\/install-void\.sh/);
+  assert.match(missing.err[0] ?? "", /scripts\/install-nomo\.sh/);
 
   const notAClone = collect();
   assert.equal(
     await runUpdateCommand([], notAClone.io, {
-      env: { VOID_HOME: join(root, "not-a-clone") },
+      env: { NOMO_HOME: join(root, "not-a-clone") },
     }),
     1,
   );
   assert.match(notAClone.err[0] ?? "", /is not a git checkout/);
-  assert.match(notAClone.err[0] ?? "", /scripts\/install-void\.sh/);
+  assert.match(notAClone.err[0] ?? "", /scripts\/install-nomo\.sh/);
   // A directory that exists but is not a tree is not a tree under a check
   // either, and saying so is the whole answer.
   const checked = collect();
   assert.equal(
     await runUpdateCommand(["--check"], checked.io, {
-      env: { VOID_HOME: join(root, "not-a-clone") },
+      env: { NOMO_HOME: join(root, "not-a-clone") },
     }),
     1,
   );
@@ -189,14 +189,14 @@ test("--check reports an up-to-date tree without changing it, and exits zero", a
 
   const c = collect();
   const code = await runUpdateCommand(["--check"], c.io, {
-    env: { VOID_HOME: tree },
+    env: { NOMO_HOME: tree },
     version: "0.1.0",
   });
   assert.equal(code, 0);
   // One fact per line, in full, so a script reads these with `cut` and never
   // with a pattern that has to survive reformatting.
   assert.deepEqual(c.out, [
-    `installed: void 0.1.0 at ${tree}`,
+    `installed: nomo 0.1.0 at ${tree}`,
     `installed-commit: ${before}`,
     "tracked-branch: origin/main",
     `target-commit: ${before}`,
@@ -215,7 +215,7 @@ test("--check exits three when an update is available, and moves nothing", async
 
   const c = collect();
   const code = await runUpdateCommand(["--check"], c.io, {
-    env: { VOID_HOME: tree },
+    env: { NOMO_HOME: tree },
     version: "0.1.0",
   });
   // Three, not one: the caller has to be able to branch on "an update exists"
@@ -225,7 +225,7 @@ test("--check exits three when an update is available, and moves nothing", async
     c.out.find((line) => line.startsWith("target-commit: ")),
     `target-commit: ${published}`,
   );
-  assert.equal(c.out.at(-1), "update available: run `void update`");
+  assert.equal(c.out.at(-1), "update available: run `nomo update`");
   assert.equal(git(tree, ["rev-parse", "HEAD"]), before);
   assert.equal(existsSync(join(tree, "two.txt")), false);
 });
@@ -246,7 +246,7 @@ test("a dirty worktree is refused and left alone, and --force does not override 
 
   const forced = collect();
   assert.equal(
-    await runUpdateCommand(["--force"], forced.io, { env: { VOID_HOME: tree } }),
+    await runUpdateCommand(["--force"], forced.io, { env: { NOMO_HOME: tree } }),
     1,
   );
   assert.match(forced.err.join("\n"), /uncommitted changes/);
@@ -263,7 +263,7 @@ test("a dirty worktree is refused and left alone, and --force does not override 
   // update exists whether or not this command is allowed to apply it.
   const checked = collect();
   assert.equal(
-    await runUpdateCommand(["--check"], checked.io, { env: { VOID_HOME: tree } }),
+    await runUpdateCommand(["--check"], checked.io, { env: { NOMO_HOME: tree } }),
     3,
   );
   assert.match(
@@ -281,7 +281,7 @@ test("local commits are refused, and only --force allows dropping them", async (
 
   const refused = collect();
   assert.equal(
-    await runUpdateCommand([], refused.io, { env: { VOID_HOME: tree } }),
+    await runUpdateCommand([], refused.io, { env: { NOMO_HOME: tree } }),
     1,
   );
   assert.match(
@@ -315,7 +315,7 @@ test("local commits are refused, and only --force allows dropping them", async (
   const published = await publish(remote, tree, "two.txt");
   const stale = collect();
   assert.equal(
-    await runUpdateCommand(["--check"], stale.io, { env: { VOID_HOME: tree } }),
+    await runUpdateCommand(["--check"], stale.io, { env: { NOMO_HOME: tree } }),
     3,
   );
   assert.equal(
@@ -351,7 +351,7 @@ test("the default path fast-forwards the tree onto the target and installs its d
 
   const c = collect();
   const code = await runUpdateCommand([], c.io, {
-    env: { VOID_HOME: tree },
+    env: { NOMO_HOME: tree },
     version: "0.1.0",
   });
   assert.equal(code, 0, c.err.join("\n"));
@@ -379,7 +379,7 @@ test("a tree already on the target does nothing and exits zero", async (t) => {
 
   const c = collect();
   assert.equal(
-    await runUpdateCommand([], c.io, { env: { VOID_HOME: tree } }),
+    await runUpdateCommand([], c.io, { env: { NOMO_HOME: tree } }),
     0,
   );
   assert.equal(
@@ -393,7 +393,7 @@ test("a tree already on the target does nothing and exits zero", async (t) => {
 });
 
 test("a tree with no upstream branch is refused, because there is no target", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-update-noupstream-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-update-noupstream-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const tree = join(root, "tree");
   await mkdir(tree);
@@ -405,7 +405,7 @@ test("a tree with no upstream branch is refused, because there is no target", as
   // exists" is not a question this check can answer, and three would claim
   // there is something to install.
   assert.equal(
-    await runUpdateCommand(["--check"], c.io, { env: { VOID_HOME: tree } }),
+    await runUpdateCommand(["--check"], c.io, { env: { NOMO_HOME: tree } }),
     1,
   );
   assert.match(c.err.join("\n"), /tracks no upstream branch/);
@@ -420,7 +420,7 @@ test("a check that cannot reach the remote says the target is unknown, not that 
 
   const c = collect();
   assert.equal(
-    await runUpdateCommand(["--check"], c.io, { env: { VOID_HOME: tree } }),
+    await runUpdateCommand(["--check"], c.io, { env: { NOMO_HOME: tree } }),
     0,
   );
   assert.match(c.err.join("\n"), /git fetch failed/);

@@ -76,9 +76,9 @@ the ledger location and the entry digest. The first is simpler and is what the
 
 ## Adjacent defect found while mapping this
 
-`packages/workbench/src/index.ts:2308` calls `retainedSigner(join(homedir(), ".void",
-"keys"))` with the operator's home hardcoded — it ignores `VOID_LEDGER_DIR`,
-which line 2287 in the same function respects. `~/.void/keys/dev-ed25519.pkcs8`
+`packages/workbench/src/index.ts:2308` calls `retainedSigner(join(homedir(), ".nomo",
+"keys"))` with the operator's home hardcoded — it ignores `NOMO_LEDGER_DIR`,
+which line 2287 in the same function respects. `~/.nomo/keys/dev-ed25519.pkcs8`
 exists on this machine, so any test that reaches the stdio branch reads real
 signing key material, and `devKeyProvider` will create one if it is missing.
 Whether that hardcoding is deliberate (the proxy's keys always live there) is

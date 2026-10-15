@@ -1,7 +1,7 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.facts = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.facts = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   var wrap = document.createElement("div");
   wrap.className = "section";
 
@@ -23,13 +23,13 @@ window.VOID_VIEWS.facts = function (root) {
         var f = F.facts[parseInt(b.getAttribute("data-re"), 10)];
         f.state = "fresh";
         f.verified = "2026-09-08";
-        if (window.VOID_TOAST) window.VOID_TOAST(f.fact + " reverified, mock.");
+        if (window.NOMO_TOAST) window.NOMO_TOAST(f.fact + " reverified, mock.");
         paint();
       };
     });
     wrap.querySelector("#fc-run").onclick = function () {
       F.probeCache.unshift({ target: "DELETE FROM orders", fact: "row count", ttl: "60s", status: "fresh", value: "41883 rows in 41ms" });
-      if (window.VOID_TOAST) window.VOID_TOAST("Probe finished, mock.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Probe finished, mock.");
       paint();
       wrap.querySelector("#fc-out").textContent = "Probe measured 41883 rows across 3 tables in 41ms, mock result.";
     };

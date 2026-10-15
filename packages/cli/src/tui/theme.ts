@@ -3,26 +3,33 @@ import type {
   ReversibilityClass,
   TerminalCapabilities,
 } from "./types.ts";
+import {
+  COLOR_THEMES,
+  SYMBOL_SETS,
+  type ColorPalette,
+  type ColorTheme,
+  type SymbolSet,
+  type SymbolPreset,
+  type ThemeConfig,
+  ansi16,
+  ansi256,
+  getColorPalette,
+  getSymbolSet,
+  paintWithPalette,
+  resolveThemeConfig,
+  trueColor,
+} from "./theme-config.ts";
+export {
+  COLOR_THEMES,
+  SYMBOL_SETS,
+  type ColorTheme,
+  type SymbolPreset,
+} from "./theme-config.ts";
+export type { ThemeConfig } from "./theme-config.ts";
 
-export const VOID_PALETTE = {
-  accent: "#bd4206",
-  paper: "#1d1d1f",
-  ink: "#f5f5f7",
-  muted: "#86868b",
-  rule: "#38383a",
-  r0: "#5cc094",
-  r1: "#2997ff",
-  r2: "#dcbc63",
-  r3: "#f47a88",
-  bg: "#0d0d0f",
-  fg: "#e8e8eb",
-  border: "#2a2a2e",
-  highlight: "#bd4206",
-  success: "#5cc094",
-  warning: "#dcbc63",
-  error: "#f47a88",
-  info: "#2997ff",
-} as const;
+export type Tone = keyof ColorPalette;
+
+export const NOMO_PALETTE = COLOR_THEMES.default;
 
 export const CLASS_MARKER: Record<ReversibilityClass, string> = {
   r0: "[0]",
@@ -37,52 +44,21 @@ export const DECISION_MARKER: Record<CallDecision, string> = {
   deny: "x",
 };
 
-type Tone = keyof typeof VOID_PALETTE;
+const ANSI_16: Record<Tone, number> = (() => {
+  const map: Record<Tone, number> = {} as Record<Tone, number>;
+  for (const tone of Object.keys(NOMO_PALETTE) as Tone[]) {
+    map[tone] = ansi16(NOMO_PALETTE[tone]);
+  }
+  return map;
+})();
 
-const ANSI_16: Record<Tone, number> = {
-  accent: 33,
-  paper: 30,
-  ink: 97,
-  muted: 37,
-  rule: 90,
-  r0: 32,
-  r1: 94,
-  r2: 33,
-  r3: 91,
-  bg: 30,
-  fg: 97,
-  border: 90,
-  highlight: 33,
-  success: 32,
-  warning: 33,
-  error: 91,
-  info: 94,
-};
-
-const ANSI_256: Record<Tone, number> = {
-  accent: 166,
-  paper: 233,
-  ink: 255,
-  muted: 102,
-  rule: 239,
-  r0: 78,
-  r1: 111,
-  r2: 179,
-  r3: 211,
-  bg: 233,
-  fg: 255,
-  border: 239,
-  highlight: 166,
-  success: 78,
-  warning: 179,
-  error: 211,
-  info: 111,
-};
-
-function trueColor(hex: string): string {
-  const value = Number.parseInt(hex.slice(1), 16);
-  return `38;2;${(value >> 16) & 255};${(value >> 8) & 255};${value & 255}`;
-}
+const ANSI_256: Record<Tone, number> = (() => {
+  const map: Record<Tone, number> = {} as Record<Tone, number>;
+  for (const tone of Object.keys(NOMO_PALETTE) as Tone[]) {
+    map[tone] = ansi256(NOMO_PALETTE[tone]);
+  }
+  return map;
+})();
 
 export function paint(
   text: string,
@@ -90,14 +66,7 @@ export function paint(
   capabilities: TerminalCapabilities,
   bold = false,
 ): string {
-  if (!capabilities.ansi || capabilities.colorDepth === 0) return text;
-  const color =
-    capabilities.colorDepth === 24
-      ? trueColor(VOID_PALETTE[tone])
-      : capabilities.colorDepth === 8
-        ? `38;5;${ANSI_256[tone]}`
-        : String(ANSI_16[tone]);
-  return `\u001b[${bold ? "1;" : ""}${color}m${text}\u001b[0m`;
+  return paintWithPalette(text, tone, NOMO_PALETTE, capabilities, bold);
 }
 
 export function classLabel(
@@ -124,3 +93,27 @@ export function decisionLabel(
     true,
   );
 }
+
+export function getThemeConfig(env?: Readonly<NodeJS.ProcessEnv>): ThemeConfig {
+  return resolveThemeConfig(env);
+}
+
+export function getSymbols(preset?: SymbolPreset): SymbolSet {
+  return getSymbolSet(preset ?? "unicode");
+}
+
+export function getPalette(theme?: ColorTheme): ColorPalette {
+  return getColorPalette(theme ?? "default");
+}
+
+export function paintThemed(
+  text: string,
+  tone: Tone,
+  capabilities: TerminalCapabilities,
+  config?: ThemeConfig,
+  bold = false,
+): string {
+  const palette = config ? getPalette(config.colorTheme) : NOMO_PALETTE;
+  return paintWithPalette(text, tone, palette, capabilities, bold);
+}
+export { paintWithPalette } from "./theme-config.ts";

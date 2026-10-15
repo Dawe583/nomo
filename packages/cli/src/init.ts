@@ -14,6 +14,7 @@ import {
   publicKeyFromSpkiBase64,
   signingKeyIdsInLedgers,
 } from "../../ledger/src/verify-key.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
 
 
 export type InitIo = {
@@ -65,7 +66,7 @@ export function resolveInitOptions(
   return {
     dir:
       dir === undefined
-        ? (env.VOID_DATA_DIR ?? join(env.HOME ?? homedir(), ".void", "workbench"))
+        ? (env.NOMO_DATA_DIR ?? join(dataDir(env.HOME ?? homedir()), "workbench"))
         : resolve(dir),
     pinVerifyKey,
     ...(fromSpki === undefined ? {} : { fromSpki }),
@@ -73,7 +74,7 @@ export function resolveInitOptions(
 }
 
 const INIT_USAGE =
-  "usage: void init [--data-dir PATH] [--pin-verify-key] [--from-spki base64-spki]";
+  "usage: nomo init [--data-dir PATH] [--pin-verify-key] [--from-spki base64-spki]";
 
 /**
  * The signing key id already present in a key directory, or undefined when
@@ -98,7 +99,7 @@ async function retainedKeyId(
  * The single most important line this command can print is "this key has not
  * signed anything yet". A pin that reads as success while naming a key no
  * ledger has ever been signed with is the defect this reports: the operator
- * sees `trust-file` appear in `void doctor`, concludes the setup is now
+ * sees `trust-file` appear in `nomo doctor`, concludes the setup is now
  * authenticated, and has anchored nothing at all.
  */
 async function signingReport(
@@ -106,7 +107,7 @@ async function signingReport(
   env: Readonly<NodeJS.ProcessEnv>,
   home: string,
 ): Promise<string[]> {
-  const ledgerDir = env.VOID_LEDGER_DIR ?? join(home, ".void", "ledger");
+  const ledgerDir = env.NOMO_LEDGER_DIR ?? join(dataDir(home), "ledger");
   const counts = await signingKeyIdsInLedgers({ env, home });
   const signed = counts.get(keyId) ?? 0;
   if (signed > 0)
@@ -121,7 +122,7 @@ async function signingReport(
     .join(", ");
   return [
     `  this key has not signed anything yet. The ${counts.size} key id${counts.size === 1 ? "" : "s"} in ${ledgerDir} are: ${others}`,
-    `  anchoring this key makes \`void verify\` refuse every existing ledger until they are re-signed with it`,
+    `  anchoring this key makes \`nomo verify\` refuse every existing ledger until they are re-signed with it`,
   ];
 }
 
@@ -158,7 +159,7 @@ async function divergentKeyNote(
  * - `--from-spki <base64>` pins a key the operator obtained out of band. It
  *   anchors itself, and it is the only form that detects a key file that was
  *   already replaced.
- * - `--pin-verify-key` derives the pin from `~/.void/keys/dev-ed25519.pkcs8`,
+ * - `--pin-verify-key` derives the pin from `~/.nomo/keys/dev-ed25519.pkcs8`,
  *   the key ledgers in this installation are actually signed with. That anchors
  *   whatever that file holds **at this moment** and detects only subsequent
  *   substitution. A key file replaced before this ran becomes the permanent
@@ -198,7 +199,7 @@ async function pinVerifyKey(
           `  anchored from ${keyDir}/dev-ed25519.pkcs8, the signing key the ledgers in this installation use`,
           "  this anchors whatever that key file holds right now, and detects only a LATER change to it",
           "  if the key file was already replaced, this pinned the wrong key; compare the spki above against the key you expect",
-          "  for a key obtained out of band, run `void init --from-spki <base64>` instead",
+          "  for a key obtained out of band, run `nomo init --from-spki <base64>` instead",
         ]),
     ...(await signingReport(pinned.keyId, env, home)),
     ...(await divergentKeyNote(dir, env, home, pinned.keyId)),
@@ -228,9 +229,9 @@ export async function runInitCommand(
     }
     void new LocalStorage(join(dir, "tui"));
     io.stdout(`created: ${dir}`);
-    io.stdout("next: run `void tui` to open the workspace");
+    io.stdout("next: run `nomo tui` to open the workspace");
     io.stdout("next: connect a provider with /connect inside the TUI");
-    io.stdout("next: verify the setup with `void doctor`");
+    io.stdout("next: verify the setup with `nomo doctor`");
     return 0;
   } catch (error) {
     io.stderr(`init failed: ${message(error)}`);

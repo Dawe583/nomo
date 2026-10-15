@@ -47,8 +47,8 @@ test("login uses HTTPS, keeps Appwrite secrets out of response, logs and sealed 
 });
 
 test("an invalid endpoint, tampered cookie, expired cookie or invalid stored record cannot load an account", async () => {
-  assert.throws(() => readAuthConfig({ APPWRITE_ENDPOINT: "http://localhost/v1", APPWRITE_PROJECT_ID: "project", APPWRITE_RUNTIME_KEY: "runtime", VOID_AUTH_SEAL_KEY: key, VOID_PUBLIC_ORIGIN: "https://void-tui.vercel.app" }), /HTTPS/);
-  assert.throws(() => readAuthConfig({ APPWRITE_ENDPOINT: "https://cloud.appwrite.io/v1", APPWRITE_PROJECT_ID: "project", APPWRITE_PROVISION_KEY: "elevated-only", VOID_AUTH_SEAL_KEY: key, VOID_PUBLIC_ORIGIN: "https://void-tui.vercel.app" }), /APPWRITE_RUNTIME_KEY/);
+  assert.throws(() => readAuthConfig({ APPWRITE_ENDPOINT: "http://localhost/v1", APPWRITE_PROJECT_ID: "project", APPWRITE_RUNTIME_KEY: "runtime", NOMO_AUTH_SEAL_KEY: key, NOMO_PUBLIC_ORIGIN: "https://void-tui.vercel.app" }), /HTTPS/);
+  assert.throws(() => readAuthConfig({ APPWRITE_ENDPOINT: "https://cloud.appwrite.io/v1", APPWRITE_PROJECT_ID: "project", APPWRITE_PROVISION_KEY: "elevated-only", NOMO_AUTH_SEAL_KEY: key, NOMO_PUBLIC_ORIGIN: "https://void-tui.vercel.app" }), /APPWRITE_RUNTIME_KEY/);
   const calls = [], sessions = memorySessions();
   await sessions.create({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", secret: "appwrite-session-secret", userId: "user", expiresAt: 2000 });
   const auth = createAuth({ config, sessions, fetcher: fakeFetch([], calls), now: () => 3000 });

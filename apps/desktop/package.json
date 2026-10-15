@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
-  "description": "Native Tauri desktop shell for the shared VOID workbench.",
+  "description": "Native Tauri desktop shell for the shared NOMO workbench.",
   "scripts": {
     "prepare:runtime": "node scripts/prepare.mjs",
     "dev": "pnpm prepare:runtime && tauri dev",
@@ -20,7 +20,7 @@
   },
   "packageManager": "pnpm@10.33.0",
   "keywords": [
-    "void",
+    "nomo",
     "desktop",
     "tauri",
     "agents"

@@ -9,7 +9,7 @@ import {
 } from './workspace.ts';
 
 /**
- * The managed workspace is the one tool source VOID owns outright. Its safety
+ * The managed workspace is the one tool source NOMO owns outright. Its safety
  * argument is that a document name is never a host path: `validPath` refuses a
  * leading slash, backslashes, control characters, empty and dot segments, and
  * the reserved prototype names, and it is called before any tool branches on

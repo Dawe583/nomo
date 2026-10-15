@@ -4,7 +4,7 @@ import { resolveBuildPolicy } from './build-policy.mjs';
 const desktop = fileURLToPath(new URL('../', import.meta.url));
 const policy = resolveBuildPolicy({
   platform: process.platform,
-  distribution: process.env.VOID_DISTRIBUTION,
+  distribution: process.env.NOMO_DISTRIBUTION,
   env: process.env,
 });
 // The build log names the identity the policy resolved and where it came from,

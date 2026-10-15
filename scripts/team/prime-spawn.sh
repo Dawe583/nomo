@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Spawn one VOID team member through prime-agent (free tier: 8 req/min, ONE at a time).
+# Spawn one NOMO team member through prime-agent (free tier: 8 req/min, ONE at a time).
 # Usage: prime-spawn.sh <name> <worktree-or-cwd> <brief-file> [extra gate...]
 set -u
 name="$1"; cwd="$2"; brief="$3"; shift 3

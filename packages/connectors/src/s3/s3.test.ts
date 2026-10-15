@@ -162,7 +162,7 @@ describe("S3 capture, inverse, and apply", () => {
 });
 
 async function localSnapshotStore(): Promise<ReturnType<typeof LocalSnapshotStore>> {
-  const root = await mkdtemp(join(tmpdir(), "void-s3-snapshot-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-s3-snapshot-"));
   const store = LocalSnapshotStore(root);
   test.after(async () => {
     await rm(root, { recursive: true, force: true });

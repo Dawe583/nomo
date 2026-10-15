@@ -10,7 +10,7 @@ export function renderHelp(capabilities: TerminalCapabilities): string {
   const width = Math.min(78, capabilities.columns);
   return crop(
     box(
-      "VOID / KEYS",
+      "NOMO / KEYS",
       [
         "Navigation",
         "  j / k       move through intercepted calls",

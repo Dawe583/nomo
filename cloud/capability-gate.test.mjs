@@ -545,18 +545,18 @@ async function server(t, { polar = false } = {}) {
   Object.assign(process.env, {
     SUPABASE_URL: "https://provider.invalid",
     SUPABASE_ANON_KEY: "anon",
-    VOID_ACCOUNT_SEAL_KEY: "a".repeat(64),
-    VOID_CONTROL_TOKEN: "operator-token-for-this-test-".padEnd(40, "x"),
+    NOMO_ACCOUNT_SEAL_KEY: "a".repeat(64),
+    NOMO_CONTROL_TOKEN: "operator-token-for-this-test-".padEnd(40, "x"),
   });
   // Billing configured but unreachable: the entitlement read cannot be
   // answered. That is the fail-closed case, exercised through the real route.
   if (polar)
     Object.assign(process.env, {
-      VOID_POLAR_ENVIRONMENT: "sandbox",
-      VOID_POLAR_ACCESS_TOKEN: "polar_oat_never_used",
-      VOID_POLAR_ORGANIZATION_ID: "org_2222",
-      VOID_POLAR_WEBHOOK_SECRET: "whsec_" + Buffer.from("void-capability-secret-32b").toString("base64"),
-      VOID_POLAR_PRODUCT_TEAM: PRODUCT,
+      NOMO_POLAR_ENVIRONMENT: "sandbox",
+      NOMO_POLAR_ACCESS_TOKEN: "polar_oat_never_used",
+      NOMO_POLAR_ORGANIZATION_ID: "org_2222",
+      NOMO_POLAR_WEBHOOK_SECRET: "whsec_" + Buffer.from("nomo-capability-secret-32b").toString("base64"),
+      NOMO_POLAR_PRODUCT_TEAM: PRODUCT,
     });
   t.after(() => {
     globalThis.fetch = nativeFetch;
@@ -588,7 +588,7 @@ async function server(t, { polar = false } = {}) {
   });
   assert.equal(signedIn.status, 200, "the account signed in");
   const cookie = signedIn.headers.get("set-cookie").split(";")[0];
-  return { call, cookie, operator: process.env.VOID_CONTROL_TOKEN };
+  return { call, cookie, operator: process.env.NOMO_CONTROL_TOKEN };
 }
 
 test("over HTTP: a free account is told the paid capability is off and cannot reach it", async (t) => {

@@ -19,12 +19,12 @@ import { sha256Hex } from "../packages/ledger/src/sign.ts";
 import { signingPreimage } from "../packages/ledger/src/index.ts";
 import { createWorkspace } from "../packages/workbench/src/workspace.ts";
 import { validateCloudTestEnvironment } from "../scripts/src/cloud-test-config.mjs";
-if (process.env.VOID_GUI_DATABASE_TEST === "1") validateCloudTestEnvironment(process.env);
+if (process.env.NOMO_GUI_DATABASE_TEST === "1") validateCloudTestEnvironment(process.env);
 
 // Run only against an explicitly supplied isolated test database.
 test(
   "cloud GUI retained history, indexed pages, revisions, branch and SSE",
-  { skip: process.env.VOID_GUI_DATABASE_TEST !== "1" },
+  { skip: process.env.NOMO_GUI_DATABASE_TEST !== "1" },
   async (t) => {
     const { default: app } = await import("./server.mjs");
     const server = app.listen(0, "127.0.0.1");
@@ -36,7 +36,7 @@ test(
     });
     const base = `http://127.0.0.1:${server.address().port}`,
       headers = {
-        authorization: `Bearer ${process.env.VOID_CONTROL_TOKEN}`,
+        authorization: `Bearer ${process.env.NOMO_CONTROL_TOKEN}`,
         "content-type": "application/json",
       };
     const request = async (path, method = "GET", body) => {

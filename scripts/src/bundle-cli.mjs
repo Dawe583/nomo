@@ -25,7 +25,7 @@ const USAGE = "usage: node scripts/src/bundle-cli.mjs [--out <dir>] [--quiet]";
 export const DEFAULT_OUT_DIR = "packages/cli/dist";
 
 /** The single file the packed tarball ships and the bin maps to. */
-export const ENTRY_FILE = "void.mjs";
+export const ENTRY_FILE = "nomo.mjs";
 
 const parseArgs = (argv) => {
   let outDir = DEFAULT_OUT_DIR;
@@ -49,7 +49,7 @@ const parseArgs = (argv) => {
  *
  * The output directory is cleared first so a chunk left by an earlier build
  * cannot survive into a tarball as dead weight. The result is a chunk graph
- * rather than one file, because collapsing it breaks `void run`; see
+ * rather than one file, because collapsing it breaks `nomo run`; see
  * `bundleOutput` in rollup.config.mjs for the measured reason.
  *
  * @param {{ root?: string, outDir?: string, quiet?: boolean }} [options]

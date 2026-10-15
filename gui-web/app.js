@@ -1,6 +1,6 @@
-// Hash router for VOID workbench preview. Vanilla JS, no deps.
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_TOAST = function (msg) {
+// Hash router for NOMO workbench preview. Vanilla JS, no deps.
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_TOAST = function (msg) {
   var root = document.getElementById("toast-root");
   if (!root) return;
   var el = document.createElement("div");
@@ -36,7 +36,7 @@ function toggleTheme() {
   var next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
   applyTheme(next);
   try { localStorage.setItem("void.theme", next); } catch (e) { /* storage blocked, session only */ }
-  if (window.VOID_TOAST) window.VOID_TOAST("Theme " + next + ".");
+  if (window.NOMO_TOAST) window.NOMO_TOAST("Theme " + next + ".");
 }
 // Run now, not on DOMContentLoaded: this script loads at the end of
 // body, so documentElement exists and the theme lands before first
@@ -50,8 +50,8 @@ function currentView() {
 }
 
 function render() {
-  if (window.VOID_LIVE_STOP) { window.VOID_LIVE_STOP(); window.VOID_LIVE_STOP = null; }
-  if (window.VOID_HOLDS_CLEANUP) { window.VOID_HOLDS_CLEANUP(); window.VOID_HOLDS_CLEANUP = null; }
+  if (window.NOMO_LIVE_STOP) { window.NOMO_LIVE_STOP(); window.NOMO_LIVE_STOP = null; }
+  if (window.NOMO_HOLDS_CLEANUP) { window.NOMO_HOLDS_CLEANUP(); window.NOMO_HOLDS_CLEANUP = null; }
   var pal = document.getElementById("palette");
   if (pal) pal.hidden = true;
   var name = currentView();
@@ -66,7 +66,7 @@ function render() {
     });
   });
   updateStatus();
-  if (window.VOID_PAINT_SIDEBAR) window.VOID_PAINT_SIDEBAR();
+  if (window.NOMO_PAINT_SIDEBAR) window.NOMO_PAINT_SIDEBAR();
   var root = document.getElementById("view-root");
   root.innerHTML = "";
   root.classList.remove("view-in");
@@ -78,7 +78,7 @@ function render() {
       "<div class='cta-row'><a class='btn-primary btn-small' style='text-decoration:none' href='#/chat'>Go to chat</a></div></div></div>";
     return;
   }
-  var fn = window.VOID_VIEWS[name];
+  var fn = window.NOMO_VIEWS[name];
   if (typeof fn === "function") {
     fn(root);
   } else {
@@ -87,16 +87,16 @@ function render() {
 }
 
 function updateStatus() {
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   var lh = document.getElementById("status-ledger");
   if (lh && F) lh.textContent = "ledger height " + F.ledgerEntries.length;
   var ch = document.getElementById("status-chain");
-  if (ch) ch.textContent = window.VOID_LAST_VERIFY || "chain not verified";
+  if (ch) ch.textContent = window.NOMO_LAST_VERIFY || "chain not verified";
   var sm = document.getElementById("status-model");
   if (sm) sm.textContent = "model " + ((F && F.routing && F.routing.def) || "n/a");
   var dot = document.getElementById("conn-dot");
   var lab = document.getElementById("conn-label");
-  var keyed = window.VOID_API && window.VOID_API.hasKey();
+  var keyed = window.NOMO_API && window.NOMO_API.hasKey();
   if (dot) dot.style.background = keyed ? "#30d158" : "#8e8e93";
   if (lab) lab.textContent = keyed ? "key set" : "no key";
 }
@@ -118,16 +118,16 @@ function boot() {
   }
   el.addEventListener("click", done);
   if (reduce || seen) {
-    pre.textContent = "VOID WORKBENCH\nready";
+    pre.textContent = "NOMO WORKBENCH\nready";
     setTimeout(done, 350);
     return;
   }
   var lines = [
-    "VOID WORKBENCH v0.1",
+    "NOMO WORKBENCH v0.1",
     "> ledger chain ............ <span class='warn'>FIXTURE</span>",
     "> policy .................. <span class='warn'>SIMULATED</span>",
     "> proxy ................... <span class='warn'>MOCK</span>",
-    "> provider key ............ " + (window.VOID_API && window.VOID_API.hasKey() ? "<span class='ok'>SET</span>" : "<span class='warn'>MISSING</span>"),
+    "> provider key ............ " + (window.NOMO_API && window.NOMO_API.hasKey() ? "<span class='ok'>SET</span>" : "<span class='warn'>MISSING</span>"),
     "ready"
   ];
   var i = 0;
@@ -155,7 +155,7 @@ function paletteRows(q) {
     return (VIEW_LABELS[v] + v).toLowerCase().indexOf(q.toLowerCase()) >= 0;
   }).map(function (v) { return { label: VIEW_LABELS[v], sub: "#/" + v, run: function () { location.hash = "#/" + v; } }; });
   var actions = [
-    { label: "New chat", sub: "action", run: function () { location.hash = "#/chat"; setTimeout(function () { if (window.VOID_VIEWS.chat) { var c = window.VOID_CHATS.create((window.VOID_FIXTURES.routing || {}).def || "z-ai/glm-5.3"); location.hash = "#/chat?" + c.id; } }, 50); } },
+    { label: "New chat", sub: "action", run: function () { location.hash = "#/chat"; setTimeout(function () { if (window.NOMO_VIEWS.chat) { var c = window.NOMO_CHATS.create((window.NOMO_FIXTURES.routing || {}).def || "z-ai/glm-5.3"); location.hash = "#/chat?" + c.id; } }, 50); } },
     { label: "Verify ledger chain", sub: "action", run: function () { location.hash = "#/ledger"; } },
     { label: "Export attestation", sub: "action", run: function () { location.hash = "#/audit"; } },
     { label: "Open holds queue", sub: "action", run: function () { location.hash = "#/holds"; } },
@@ -214,8 +214,8 @@ document.addEventListener("keydown", function (e) {
   }
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
     e.preventDefault();
-    var def = ((window.VOID_FIXTURES || {}).routing || {}).def || "z-ai/glm-5.3";
-    var c = window.VOID_CHATS.create(def);
+    var def = ((window.NOMO_FIXTURES || {}).routing || {}).def || "z-ai/glm-5.3";
+    var c = window.NOMO_CHATS.create(def);
     location.hash = "#/chat?" + c.id;
     return;
   }
@@ -225,7 +225,7 @@ document.addEventListener("keydown", function (e) {
     location.hash = "#/" + jump;
     return;
   }
-  if (e.key === "Escape" && window.VOID_STOP) { window.VOID_STOP(); return; }
+  if (e.key === "Escape" && window.NOMO_STOP) { window.NOMO_STOP(); return; }
   if ((e.key === "?" || (e.shiftKey && e.key === "/")) && !typing()) {
     location.hash = "#/shortcuts";
   }
@@ -249,13 +249,13 @@ document.addEventListener("DOMContentLoaded", function () {
   if (tt) tt.onclick = toggleTheme;
   var sn = document.getElementById("side-new");
   if (sn) sn.onclick = function () {
-    var def = ((window.VOID_FIXTURES || {}).routing || {}).def || "z-ai/glm-5.3";
-    var c = window.VOID_CHATS.create(def);
+    var def = ((window.NOMO_FIXTURES || {}).routing || {}).def || "z-ai/glm-5.3";
+    var c = window.NOMO_CHATS.create(def);
     location.hash = "#/chat?" + c.id;
   };
   var ss = document.getElementById("side-search");
   if (ss) ss.addEventListener("input", function () {
-    if (window.VOID_PAINT_SIDEBAR) window.VOID_PAINT_SIDEBAR();
+    if (window.NOMO_PAINT_SIDEBAR) window.NOMO_PAINT_SIDEBAR();
   });
   var st = document.getElementById("side-toggle");
   if (st) st.onclick = function () { document.body.classList.toggle("side-open"); };

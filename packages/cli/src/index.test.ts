@@ -40,7 +40,7 @@ describe("@void/cli", () => {
   test("no arguments is a usage line, not a crash", () => {
     const parsed = parseInvocation([]);
     assert.equal(parsed.ok, false);
-    assert.match(parsed.ok ? "" : parsed.reason, /^usage: void /);
+    assert.match(parsed.ok ? "" : parsed.reason, /^usage: nomo /);
   });
 
   test("the barrel tracks the live command list, including update", () => {

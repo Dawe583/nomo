@@ -15,6 +15,7 @@ import { retainedKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
 import { sanitizeWorkspace } from "../../ledger/src/hardening.ts";
 import type { KeyProvider } from "../../ledger/src/index.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
 
 export type SnapshotReference = {
   readonly namespace: string;
@@ -133,7 +134,7 @@ type ReplayArgs = {
   readonly key?: string;
 };
 
-const USAGE = "usage: void replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key base64-spki], or void replay --list-connectors";
+const USAGE = "usage: nomo replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key base64-spki], or nomo replay --list-connectors";
 
 export async function runReplayCommand(
   argv: readonly string[],
@@ -150,22 +151,22 @@ export async function runReplayCommand(
       return 0;
     }
     const parsed = await parseReplayArgs(argv, env);
-    const trustedKey = options.publicKey ?? (parsed.key || env.VOID_VERIFY_KEY ? new Uint8Array(Buffer.from(parsed.key ?? env.VOID_VERIFY_KEY!, "base64")) : undefined);
+    const trustedKey = options.publicKey ?? (parsed.key || env.NOMO_VERIFY_KEY ? new Uint8Array(Buffer.from(parsed.key ?? env.NOMO_VERIFY_KEY!, "base64")) : undefined);
     const page = await (options.readFeed ?? readLedgerFeed)(parsed.ledger, { publicKey: trustedKey });
     const record = findRecord(page, parsed.seq);
     const manifest = await (options.readManifest ?? readSnapshotManifest)(parsed.snapshotDir);
     const snapshot = findSnapshot(manifest, record);
     if (!parsed.dryRun) {
-      if (!page.signed) throw new Error("Replay apply requires authenticated ledger signatures. Supply --key or VOID_VERIFY_KEY; legacy history remains available with --dry-run.");
+      if (!page.signed) throw new Error("Replay apply requires authenticated ledger signatures. Supply --key or NOMO_VERIFY_KEY; legacy history remains available with --dry-run.");
       if (record.decision !== "execute:completed") throw new Error("Replay apply requires signed execution completion, not an authorization decision.");
       if (record.captureDigest !== snapshot.reference.digest) throw new Error("Snapshot manifest is not bound to the signed captureDigest. Refusing replay apply.");
     }
-    if (!parsed.dryRun && options.connectors === undefined && options.exec === undefined && env.VOID_PG_URL && connectorFor(record.tool)?.connectorId === "postgres") {
+    if (!parsed.dryRun && options.connectors === undefined && options.exec === undefined && env.NOMO_PG_URL && connectorFor(record.tool)?.connectorId === "postgres") {
       const { postgresExecutor } = await import("./postgres.ts");
-      connection = await postgresExecutor(env.VOID_PG_URL);
+      connection = await postgresExecutor(env.NOMO_PG_URL);
       options = { ...options, exec: connection };
     }
-    if (!parsed.dryRun && options.connectors === undefined && options.s3 === undefined && env.VOID_S3_ENABLED === "1" && connectorFor(record.tool)?.connectorId === "s3") {
+    if (!parsed.dryRun && options.connectors === undefined && options.s3 === undefined && env.NOMO_S3_ENABLED === "1" && connectorFor(record.tool)?.connectorId === "s3") {
       const { s3Executor } = await import("./s3.ts");
       s3 = s3Executor(env); options = { ...options, s3 };
     }
@@ -208,7 +209,7 @@ export async function runReplayCommand(
     const reason = error instanceof ReplayConfigurationError
       ? `${error.kind}: ${error.message}`
       : error instanceof Error ? error.message : String(error);
-    io.stderr(`void replay failed: ${reason}`);
+    io.stderr(`nomo replay failed: ${reason}`);
     return 1;
   } finally { s3?.close(); await connection?.close(); }
 }
@@ -228,7 +229,7 @@ async function reversalSigner(
     throw new Error(
       "Replay apply needs the signing key that wrote the record it inverts. " +
       "No retained key was found, and an inverse that cannot be recorded is an effect with no evidence. " +
-      "Run replay where the recorder's key is retained, or set VOID_SIGNING_KEY.",
+      "Run replay where the recorder's key is retained, or set NOMO_SIGNING_KEY.",
     );
   }
 }
@@ -293,9 +294,9 @@ function printConnectors(
   }
   stdout(options.exec !== undefined
     ? "postgres: executor configured (host injected)"
-    : env.VOID_PG_URL
-      ? "postgres: connection configured via VOID_PG_URL (validated on replay)"
-      : "postgres: executor absent (VOID_PG_URL unset; host adapter required)");
+    : env.NOMO_PG_URL
+      ? "postgres: connection configured via NOMO_PG_URL (validated on replay)"
+      : "postgres: executor absent (NOMO_PG_URL unset; host adapter required)");
   stdout(options.s3 !== undefined
     ? "s3: executor configured (host injected); persisted replay metadata unavailable"
     : "s3: executor absent (host adapter required); persisted replay metadata unavailable");
@@ -314,10 +315,10 @@ function configuredConnector(
   if (resolved === null) throw new Error(`no connector for tool vendor ${toolVendor(tool)}`);
   const id = resolved.connectorId;
   if (!args.dryRun && id === "postgres" && options.exec === undefined) {
-    throw new ReplayConfigurationError(id, env.VOID_PG_URL
+    throw new ReplayConfigurationError(id, env.NOMO_PG_URL
       ? "postgres executor adapter is not available in this binary; inject exec through runReplayCommand"
-      : "postgres executor not configured: VOID_PG_URL is absent; hosts must inject exec through runReplayCommand",
-    env.VOID_PG_URL ? "ExecutorAdapterUnavailable" : "ExecutorNotConfigured");
+      : "postgres executor not configured: NOMO_PG_URL is absent; hosts must inject exec through runReplayCommand",
+    env.NOMO_PG_URL ? "ExecutorAdapterUnavailable" : "ExecutorNotConfigured");
   }
   if (!args.dryRun && id === "s3" && options.s3 === undefined) {
     throw new ReplayConfigurationError(id, "s3 executor not configured: this binary has no S3 adapter; hosts must inject s3 through runReplayCommand");
@@ -384,10 +385,10 @@ function needValue(argv: readonly string[], index: number, name: string): string
 }
 
 async function resolveLedgerPath(ledger: string | undefined, env: Readonly<NodeJS.ProcessEnv>): Promise<string> {
-  const path = ledger ?? join(env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"), `${env.VOID_WORKSPACE ?? "default"}.jsonl`);
+  const path = ledger ?? join(env.NOMO_LEDGER_DIR ?? join(dataDir(homedir()), "ledger"), `${env.NOMO_WORKSPACE ?? "default"}.jsonl`);
   try {
     const info = await stat(path);
-    if (info.isDirectory()) return join(path, `${env.VOID_WORKSPACE ?? "default"}.jsonl`);
+    if (info.isDirectory()) return join(path, `${env.NOMO_WORKSPACE ?? "default"}.jsonl`);
   } catch {
     return path;
   }

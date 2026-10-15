@@ -97,6 +97,6 @@ export async function importDesktopProvider(id: unknown, env: Readonly<NodeJS.Pr
   catch { throw new Error('Local API key unavailable. OAuth, command references and custom endpoints cannot be imported.'); }
   // Validation talks only to the fixed provider endpoint, never a URL from disk.
   try { await workbench.configure(config); }
-  catch { throw new Error('Provider validation or local save failed. Check the provider and reopen VOID before retrying.'); }
+  catch { throw new Error('Provider validation or local save failed. Check the provider and reopen NOMO before retrying.'); }
   return workbench.providerState();
 }

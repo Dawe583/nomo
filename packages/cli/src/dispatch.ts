@@ -1,7 +1,7 @@
 /**
- * Command dispatch for the void binary.
+ * Command dispatch for the nomo binary.
  *
- * Lives here rather than in bin/void.mjs so the entry point can answer
+ * Lives here rather than in bin/nomo.mjs so the entry point can answer
  * `--help` and `--version` without loading this module. Everything below
  * reaches node:sqlite through the runtime, and an experimental-feature warning
  * on stderr for a help request is noise the operator did not ask for.
@@ -16,6 +16,8 @@ import { runDoctorCommand } from "./doctor.ts";
 import { runConfigCommand } from "./config.ts";
 import { runInitCommand } from "./init.ts";
 import { runUpdateCommand } from "./update.ts";
+import { runMigrateStateCommand, stateSummary } from "./migrate-state.ts";
+import { DATA_DIR_NAME, LEGACY_DATA_DIR_NAME } from "../../ledger/src/paths.ts";
 import {
   runClassifyCommand,
   runFeedCommand,
@@ -37,7 +39,14 @@ export function packageVersion(): string {
 /** Any command not wired yet fails loudly rather than pretending to succeed. */
 export async function runCommand(
   parsed: ParsedInvocation & { ok: true },
+  context: { readonly rawEnv?: Readonly<NodeJS.ProcessEnv> } = {},
 ): Promise<number> {
+  // Commands that take an injected environment resolve through the NOMO-first
+  // lookup themselves and are handed the environment as the operator typed
+  // it, so a report naming its settings names the spelling that is really in
+  // force. Everything else reads the process environment, which the binary
+  // normalized once before dispatch.
+  const injected = context.rawEnv ?? process.env;
   if (parsed.command === "tui") {
     const { runWorkspaceTui } = await import("./tui/workspace-runner.ts");
     return await runWorkspaceTui(parsed.args);
@@ -50,7 +59,7 @@ export async function runCommand(
     // cannot gain one without duplicating its surface, and the command only
     // needs its side effect, so the untyped module is imported for that alone.
     // @ts-expect-error -- no declaration file for the proxy bin
-    await import("../../proxy/bin/void-proxy.mjs");
+    await import("../../proxy/bin/nomo-proxy.mjs");
     return 0;
   }
   if (["attest", "export", "policy", "metrics"].includes(parsed.command)) {
@@ -65,7 +74,7 @@ export async function runCommand(
   if (parsed.command === "ledger") {
     const [action, ...args] = parsed.args;
     if (action !== "verify")
-      throw new Error("usage: void ledger verify --ledger <path>");
+      throw new Error("usage: nomo ledger verify --ledger <path>");
     return await runVerifyCommand(args, {
       stdout: console.log,
       stderr: console.error,
@@ -92,7 +101,7 @@ export async function runCommand(
     return await runReplayCommand(parsed.args, {
       stdout: (line) => console.log(line),
       stderr: (line) => console.error(line),
-      env: process.env,
+      env: injected,
     });
   }
   if (parsed.command === "taint") {
@@ -114,7 +123,7 @@ export async function runCommand(
         stdout: (line) => console.log(line),
         stderr: (line) => console.error(line),
       },
-      { env: process.env },
+      { env: injected },
     );
   }
   if (parsed.command === "config") {
@@ -124,7 +133,7 @@ export async function runCommand(
         stdout: (line) => console.log(line),
         stderr: (line) => console.error(line),
       },
-      { env: process.env, version: packageVersion() },
+      { env: injected, version: packageVersion() },
     );
   }
   if (parsed.command === "init") {
@@ -134,7 +143,7 @@ export async function runCommand(
         stdout: (line) => console.log(line),
         stderr: (line) => console.error(line),
       },
-      { env: process.env },
+      { env: injected },
     );
   }
   if (parsed.command === "update") {
@@ -146,7 +155,7 @@ export async function runCommand(
       },
       // The version comes from the binary's one reader, not from a second
       // parse of the manifest: two readers would drift on the first bump.
-      { env: process.env, version: packageVersion() },
+      { env: injected, version: packageVersion() },
     );
   }
   if (parsed.command === "approve" || parsed.command === "approvals") {
@@ -155,8 +164,30 @@ export async function runCommand(
     return await run(parsed.args, {
       stdout: (line) => console.log(line),
       stderr: (line) => console.error(line),
-      env: process.env,
+      env: injected,
     });
+  }
+  if (parsed.command === "state") {
+    const [action, ...args] = parsed.args;
+    const io = {
+      stdout: (line: string) => console.log(line),
+      stderr: (line: string) => console.error(line),
+    };
+    if (action === undefined || action === "status") {
+      // Report only. Asking where state lives must never be the thing that
+      // moves it.
+      const state = stateSummary();
+      io.stdout(`data directory: ${state.active}`);
+      io.stdout(`${LEGACY_DATA_DIR_NAME}: ${state.legacyExists ? "present" : "absent"}`);
+      io.stdout(`${DATA_DIR_NAME}: ${state.currentExists ? "present" : "absent"}`);
+      if (!state.migrationSafe && state.legacyExists) io.stdout(state.reason);
+      return 0;
+    }
+    if (action !== "migrate") {
+      io.stderr("usage: nomo state [status|migrate]");
+      return 2;
+    }
+    return await runMigrateStateCommand(args, io);
   }
   console.error(`${parsed.command} is not runnable yet`);
   return 2;

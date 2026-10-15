@@ -19,7 +19,7 @@ import { managedGitAdapter } from "../../connectors/src/git/managed.ts";
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
 
 test("MCP client executes, previews and restores through signed runtime; policy and workspace cannot be supplied by agent", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-mcp-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-mcp-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   let value: Json = { value: "before" },
@@ -92,41 +92,41 @@ test("MCP client executes, previews and restores through signed runtime; policy 
     mutation: { value: "after" },
   };
   assert.equal(
-    (await call("void_execute", { ...input, workspace: "other" })).isError,
+    (await call("nomo_execute", { ...input, workspace: "other" })).isError,
     true,
   );
   assert.equal(writes, 0);
-  denied.add("void_execute");
-  assert.equal((await call("void_execute", input)).isError, true);
+  denied.add("nomo_execute");
+  assert.equal((await call("nomo_execute", input)).isError, true);
   assert.equal(writes, 0);
   denied.clear();
-  assert.equal(payload(await call("void_execute", input)).status, "succeeded");
-  assert.equal(payload(await call("void_execute", input)).status, "succeeded");
+  assert.equal(payload(await call("nomo_execute", input)).status, "succeeded");
+  assert.equal(payload(await call("nomo_execute", input)).status, "succeeded");
   assert.equal(writes, 1);
-  const plan = payload(await call("void_recovery_plan", { operationId: "op" }));
+  const plan = payload(await call("nomo_recovery_plan", { operationId: "op" }));
   assert.equal(
     (
-      await call("void_recovery_apply", {
+      await call("nomo_recovery_apply", {
         plan: { ...plan, workspace: "other" },
       })
     ).isError,
     true,
   );
-  denied.add("void_recovery_apply");
-  assert.equal((await call("void_recovery_apply", { plan })).isError, true);
+  denied.add("nomo_recovery_apply");
+  assert.equal((await call("nomo_recovery_apply", { plan })).isError, true);
   assert.deepEqual(value, { value: "after" });
   denied.clear();
   assert.equal(
-    payload(await call("void_recovery_apply", { plan })).status,
+    payload(await call("nomo_recovery_apply", { plan })).status,
     "restored",
   );
   assert.deepEqual(value, { value: "before" });
   assert.equal(
-    payload(await call("void_recovery_apply", { plan })).status,
+    payload(await call("nomo_recovery_apply", { plan })).status,
     "restored",
   );
   assert.equal(writes, 1);
-  const second = await call("void_execute", {
+  const second = await call("nomo_execute", {
     operationId: "second",
     runId: "run",
     mutation: { value: "second-after" },
@@ -137,7 +137,7 @@ test("MCP client executes, previews and restores through signed runtime; policy 
     jobId: job,
     selection: { kind: "operations", operationIds: ["second", "missing"] },
   };
-  const stored = payload(await call("void_recovery_plan_job", request));
+  const stored = payload(await call("nomo_recovery_plan_job", request));
   assert.equal(stored.jobId, job);
   assert.deepEqual(
     stored.steps.map((step: { operationId: string }) => step.operationId),
@@ -145,13 +145,13 @@ test("MCP client executes, previews and restores through signed runtime; policy 
   );
   assert.deepEqual(stored.residuals, [{ operationId: "missing", status: "missing" }]);
   assert.equal(
-    payload(await call("void_recovery_status_job", { jobId: job })).digest,
+    payload(await call("nomo_recovery_status_job", { jobId: job })).digest,
     stored.digest,
   );
-  denied.add("void_recovery_apply_job");
+  denied.add("nomo_recovery_apply_job");
   assert.equal(
     (
-      await call("void_recovery_apply_job", {
+      await call("nomo_recovery_apply_job", {
         jobId: job,
         planDigest: stored.digest,
       })
@@ -160,7 +160,7 @@ test("MCP client executes, previews and restores through signed runtime; policy 
   );
   denied.clear();
   const applied = payload(
-    await call("void_recovery_apply_job", {
+    await call("nomo_recovery_apply_job", {
       jobId: job,
       planDigest: stored.digest,
     }),
@@ -172,19 +172,19 @@ test("MCP client executes, previews and restores through signed runtime; policy 
     [{ operationId: "missing", status: "missing" }],
   );
   assert.deepEqual(
-    payload(await call("void_recovery_status_job", { jobId: job })),
+    payload(await call("nomo_recovery_status_job", { jobId: job })),
     applied,
   );
-  const replanned = payload(await call("void_recovery_plan_job", request));
+  const replanned = payload(await call("nomo_recovery_plan_job", request));
   assert.equal(replanned.digest, stored.digest);
   assert.equal(
-    (await call("void_recovery_plan_job", { jobId: job, selection: { kind: "run", runId: "run" } }))
+    (await call("nomo_recovery_plan_job", { jobId: job, selection: { kind: "run", runId: "run" } }))
       .isError,
     true,
   );
   assert.equal(
     payload(
-      await call("void_recovery_apply_job", {
+      await call("nomo_recovery_apply_job", {
         jobId: job,
         planDigest: "0".repeat(64),
       }),
@@ -196,7 +196,7 @@ test("actual CLI stdio process remains alive after initialize and denies writes 
   const { writeFile } = await import("node:fs/promises");
   const { StdioClientTransport } =
     await import("@modelcontextprotocol/sdk/client/stdio.js");
-  const dir = await mkdtemp(join(tmpdir(), "void-mcp-cli-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-mcp-cli-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const config = join(dir, "config.json");
   await writeFile(
@@ -208,7 +208,7 @@ test("actual CLI stdio process remains alive after initialize and denies writes 
       encryptionKeyEnv: "TEST_RECOVERY_KEY",
       postgres: {
         urlEnv: "TEST_DATABASE_URL",
-        schema: "void_meta",
+        schema: "nomo_meta",
         tables: [
           { table: "public.account", primaryKey: ["id"], columns: ["balance"] },
         ],
@@ -220,7 +220,7 @@ test("actual CLI stdio process remains alive after initialize and denies writes 
     command: process.execPath,
     args: [
       (await import("node:url")).fileURLToPath(
-        new URL("../bin/void.mjs", import.meta.url),
+        new URL("../bin/nomo.mjs", import.meta.url),
       ),
       "recovery",
       "serve",
@@ -240,7 +240,7 @@ test("actual CLI stdio process remains alive after initialize and denies writes 
   assert.equal(
     (
       await client.callTool({
-        name: "void_execute",
+        name: "nomo_execute",
         arguments: {
           operationId: "op",
           runId: "run",
@@ -258,7 +258,7 @@ test("actual CLI stdio process remains alive after initialize and denies writes 
 });
 
 test("filesystem MCP advertises platform rename scope and enforces mutation schemas", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-mcp-rename-")),
+  const dir = await mkdtemp(join(tmpdir(), "nomo-mcp-rename-")),
     root = join(dir, "project");
   await mkdir(root);
   await writeFile(join(root, "source"), "before");
@@ -290,7 +290,7 @@ test("filesystem MCP advertises platform rename scope and enforces mutation sche
     await server.close();
   });
   const execute = (await client.listTools()).tools.find(
-    (entry) => entry.name === "void_execute",
+    (entry) => entry.name === "nomo_execute",
   )!;
   const mutation = execute.inputSchema.properties!.mutation as {
     oneOf: Array<{
@@ -336,7 +336,7 @@ test("filesystem MCP advertises platform rename scope and enforces mutation sche
     { action: "delete", path: "source", to: "moved" },
     { action: "write", path: "source" },
   ]) {
-    const result = await call("void_execute", {
+    const result = await call("nomo_execute", {
       operationId: `invalid-${invalidIndex++}`,
       runId: "run",
       mutation: invalid,
@@ -346,7 +346,7 @@ test("filesystem MCP advertises platform rename scope and enforces mutation sche
     else assert.equal(payload(result).status, "failed");
   }
   if (process.platform === "win32") {
-    const refused = await call("void_execute", {
+    const refused = await call("nomo_execute", {
       operationId: "rename",
       runId: "run",
       mutation: { action: "rename", path: "source", to: "moved" },
@@ -357,7 +357,7 @@ test("filesystem MCP advertises platform rename scope and enforces mutation sche
   }
   assert.equal(
     payload(
-      await call("void_execute", {
+      await call("nomo_execute", {
         operationId: "rename",
         runId: "run",
         mutation: { action: "rename", path: "source", to: "moved" },
@@ -367,10 +367,10 @@ test("filesystem MCP advertises platform rename scope and enforces mutation sche
   );
   assert.equal(await readFile(join(root, "moved"), "utf8"), "before");
   const plan = payload(
-    await call("void_recovery_plan", { operationId: "rename" }),
+    await call("nomo_recovery_plan", { operationId: "rename" }),
   );
   assert.equal(
-    payload(await call("void_recovery_apply", { plan })).status,
+    payload(await call("nomo_recovery_apply", { plan })).status,
     "restored",
   );
   assert.equal(await readFile(join(root, "source"), "utf8"), "before");
@@ -383,7 +383,7 @@ test("Git MCP schema exposes only the closed structured mutation union", async (
   const [a, b] = InMemoryTransport.createLinkedPair();
   await server.connect(a); await client.connect(b);
   t.after(async () => { await client.close(); await server.close(); });
-  const execute = (await client.listTools()).tools.find((entry) => entry.name === "void_execute")!;
+  const execute = (await client.listTools()).tools.find((entry) => entry.name === "nomo_execute")!;
   assert.match(execute.description!, /cooperative POSIX/);
   assert.match(execute.description!, /dangling blob/);
   const mutation = execute.inputSchema.properties!.mutation as { oneOf: Array<{ required: string[]; properties: { action: { enum: string[] } } }> };
@@ -394,11 +394,11 @@ test("Git MCP schema exposes only the closed structured mutation union", async (
 
 test("Git MCP validates mutations through the real signed runtime", async (t) => {
   if (process.platform === "win32") return;
-  const dir = await mkdtemp(join(tmpdir(), "void-mcp-git-")), root = join(dir, "repo");
+  const dir = await mkdtemp(join(tmpdir(), "nomo-mcp-git-")), root = join(dir, "repo");
   t.after(() => rm(dir, { recursive: true, force: true }));
   const { execFileSync } = await import("node:child_process");
   execFileSync("git", ["init", "-q", root]);
-  execFileSync("git", ["-C", root, "config", "user.name", "VOID test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]); await writeFile(join(root, "sentinel"), "unchanged"); execFileSync("git", ["-C", root, "add", "sentinel"]); execFileSync("git", ["-C", root, "commit", "-qm", "initial"]);
+  execFileSync("git", ["-C", root, "config", "user.name", "NOMO test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]); await writeFile(join(root, "sentinel"), "unchanged"); execFileSync("git", ["-C", root, "add", "sentinel"]); execFileSync("git", ["-C", root, "commit", "-qm", "initial"]);
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const runtime = recoveryRuntime({ journal: localOperationJournal(join(dir, "journal"), signer), vault: localRecoveryVault(join(dir, "vault"), { key: randomBytes(32) }, "key"), adapters: [managedGitAdapter({ root, cooperative: true })], authorize: async () => true });
   const server = recoveryMcpServer({ runtime, workspace: "test", agentId: "agent", adapterId: "git.managed", permitted: async () => true });
@@ -415,15 +415,15 @@ test("Git MCP validates mutations through the real signed runtime", async (t) =>
     { action: "stage", path: 4 },
   ]) {
     const before = await snapshot();
-    const result = await client.callTool({ name: "void_execute", arguments: { operationId: `bad-${id++}`, runId: "run", mutation } });
+    const result = await client.callTool({ name: "nomo_execute", arguments: { operationId: `bad-${id++}`, runId: "run", mutation } });
     assert.equal(result.isError === true || JSON.parse((result.content as { text: string }[])[0]!.text).status === "failed", true);
     assert.deepEqual(await snapshot(), before);
   }
   const text = (result: Awaited<ReturnType<typeof client.callTool>>) => JSON.parse((result.content as { text: string }[])[0]!.text);
-  const valid = await client.callTool({ name: "void_execute", arguments: { operationId: "valid", runId: "run", mutation: { action: "write", path: "file", base64: "" } } });
+  const valid = await client.callTool({ name: "nomo_execute", arguments: { operationId: "valid", runId: "run", mutation: { action: "write", path: "file", base64: "" } } });
   assert.equal(text(valid).status, "succeeded");
-  const plan = text(await client.callTool({ name: "void_recovery_plan", arguments: { operationId: "valid" } }));
-  assert.equal(text(await client.callTool({ name: "void_recovery_apply", arguments: { plan } })).status, "restored");
+  const plan = text(await client.callTool({ name: "nomo_recovery_plan", arguments: { operationId: "valid" } }));
+  assert.equal(text(await client.callTool({ name: "nomo_recovery_apply", arguments: { plan } })).status, "restored");
   await assert.rejects(readFile(join(root, "file")), { code: "ENOENT" });
 });
 test("MCP errors expose stable sanitized categories without path or secret disclosure", async (t) => {
@@ -434,7 +434,7 @@ test("MCP errors expose stable sanitized categories without path or secret discl
   type ErrorCase = {
     category: RecoveryErrorCategory;
     failure: string | null;
-    tool: "void_execute" | "void_recovery_plan";
+    tool: "nomo_execute" | "nomo_recovery_plan";
     args: Record<string, unknown>;
   };
   let failure = new Error("Required operation evidence is missing at /Users/private/secret.vault");
@@ -473,7 +473,7 @@ test("MCP errors expose stable sanitized categories without path or secret discl
     {
       category: "invalid_path",
       failure: null,
-      tool: "void_execute",
+      tool: "nomo_execute",
       args: {
         operationId: "invalid-path",
         runId: "run",
@@ -487,25 +487,25 @@ test("MCP errors expose stable sanitized categories without path or secret discl
     {
       category: "missing_artifact",
       failure: "Required operation evidence is missing at /Users/private/secret.vault",
-      tool: "void_recovery_plan",
+      tool: "nomo_recovery_plan",
       args: { operationId: "missing" },
     },
     {
       category: "key_unavailable",
       failure: "Recovery key unavailable for /Users/private/keyring",
-      tool: "void_recovery_plan",
+      tool: "nomo_recovery_plan",
       args: { operationId: "key" },
     },
     {
       category: "unsupported_recovery",
       failure: "Operation has no verified recovery capability.",
-      tool: "void_recovery_plan",
+      tool: "nomo_recovery_plan",
       args: { operationId: "unsupported" },
     },
     {
       category: "unknown",
       failure: "postgres://user:password@db/private and prompt body",
-      tool: "void_recovery_plan",
+      tool: "nomo_recovery_plan",
       args: { operationId: "unknown" },
     },
   ];
@@ -521,7 +521,7 @@ test("MCP errors expose stable sanitized categories without path or secret discl
     );
   }
   denied = true;
-  const deniedResult = await call("void_recovery_plan", { operationId: "policy" });
+  const deniedResult = await call("nomo_recovery_plan", { operationId: "policy" });
   assert.equal(deniedResult.isError, true);
   assert.equal(error(deniedResult).category, "policy_denied");
   assert.doesNotMatch(JSON.stringify(error(deniedResult)), /private|secret|password/i);

@@ -85,7 +85,7 @@ the proxy dropped.
 ### A held call, resolved
 
     proxy parks the tools/call response on the HoldQueue promise
-    `void approvals` renders the queue, y/n resolves
+    `nomo approvals` renders the queue, y/n resolves
     approved: forward the call now, response flows back, ledger records both
     denied:  answer the hold error body, do not forward, ledger records both
 
@@ -174,7 +174,7 @@ WP-15 exit has happened; see `docs/RELEASE.md` for blockers.
 
 ### Transport direction matters
 
-The agent connects to `void-proxy` over newline-framed stdio in both modes.
+The agent connects to `nomo-proxy` over newline-framed stdio in both modes.
 `--transport` selects the **upstream** transport:
 
 - `stdio` spawns the command given by `--upstream`, with arguments from `--args`.
@@ -198,9 +198,9 @@ this binary or through an explicitly reviewed host integration.
 | `--upstream-url <url>` | Required for HTTP | A missing or syntactically invalid URL refuses startup. In stdio mode it is ignored with a warning. Use an HTTP(S) endpoint; URL parsing alone is not an SSRF allowlist. |
 | `--facts <path>` | Empty declared facts | Reads a validated JSON facts file. An unreadable, malformed, or invalid file refuses startup. Declared facts remain an operator assertion, not proof of target state. |
 | `--posture <fail-closed\|observe>` | `fail-closed` | Invalid values refuse startup. Observe is an explicit trial mode, never an automatic fallback. The library alias `observe-only` is not a binary flag value. |
-| `--ledger-dir <directory>` | Required in fail-closed mode | Stores the local signed JSONL ledger. The binary does not substitute `VOID_LEDGER_DIR` for this flag. Observe without a directory warns for each skipped record. |
+| `--ledger-dir <directory>` | Required in fail-closed mode | Stores the local signed JSONL ledger. The binary does not substitute `NOMO_LEDGER_DIR` for this flag. Observe without a directory warns for each skipped record. |
 | `--workspace <name>` | `default` | Selects the workspace ledger and default approval state directory. The binary permits only ASCII letters, digits, underscores, and hyphens. |
-| `--approvals-dir <directory>` | `VOID_APPROVALS_DIR`, then `~/.void/approvals/<workspace>` | Shares pending hold state and decision requests with `void approve`. An exclusive `proxy.lock` rejects a second proxy writer. |
+| `--approvals-dir <directory>` | `NOMO_APPROVALS_DIR`, then `~/.nomo/approvals/<workspace>` | Shares pending hold state and decision requests with `nomo approve`. An exclusive `proxy.lock` rejects a second proxy writer. |
 
 Every value-taking flag must have a following value that does not start with
 `--`. The parser currently does not reject arbitrary unknown flag names and
@@ -215,8 +215,8 @@ exited. Do not run multiple proxy writers against one approval directory.
 Example development commands from the repository root:
 
 ```sh
-node packages/proxy/bin/void-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/void-ledger --workspace demo
-node packages/proxy/bin/void-proxy.mjs --transport http --upstream-url http://127.0.0.1:8080/mcp --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/void-ledger --workspace demo
+node packages/proxy/bin/nomo-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/nomo-ledger --workspace demo
+node packages/proxy/bin/nomo-proxy.mjs --transport http --upstream-url http://127.0.0.1:8080/mcp --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/nomo-ledger --workspace demo
 ```
 
 The HTTP endpoint must already exist. These commands do not start a database,

@@ -35,7 +35,7 @@ const script = join(root, "scripts", "src", "set-version.mjs");
  * touched, and one manifest with no trailing newline.
  */
 function fixture() {
-  const tree = mkdtempSync(join(tmpdir(), "void-set-version-"));
+  const tree = mkdtempSync(join(tmpdir(), "nomo-set-version-"));
   const manifests = {
     "package.json": `{
   "name": "@void/workspace",
@@ -58,7 +58,7 @@ function fixture() {
   "name": "@void/verifier",
   "description": "Offline verifier, node built-ins only.",
   "version": "0.1.0",
-  "bin": { "void-verify": "verify-ledger.mjs" }
+  "bin": { "nomo-verify": "verify-ledger.mjs" }
 }`,
     "apps/control-plane/package.json": `{
   "name": "@void/control-plane-api",

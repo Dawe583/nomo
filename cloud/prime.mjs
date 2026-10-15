@@ -2,13 +2,14 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { read, write, transaction, database, event, append } from "./store.mjs";
 import { OPERATOR_OWNER } from "./owner.mjs";
 import { digest } from "../packages/runtime/src/journal.ts";
+import { envValue } from "./env.mjs";
 const publicStatus = (state) => ({
   agent: "prime-agent",
   online: !!state && Date.now() - state.at < 45000,
   lastSeen: state?.at ?? null,
   tools: state?.tools ?? [],
   boundary:
-    "Local PC execution. Local tools do not have automatic VOID Undo. Remote services retain their own authentication requirements.",
+    "Local PC execution. Local tools do not have automatic NOMO Undo. Remote services retain their own authentication requirements.",
 });
 // The bridge is the operator's own PC. Its presence is operator state, not
 // a fact about an account, so it lives in the operator's namespace and an
@@ -34,7 +35,7 @@ export async function enqueuePrime(owner, session) {
   });
 }
 const workerAllowed = (req) => {
-  const expected = process.env.VOID_BRIDGE_TOKEN,
+  const expected = envValue(process.env, "NOMO_BRIDGE_TOKEN"),
     supplied = req.headers["x-void-worker-token"];
   return (
     typeof supplied === "string" &&

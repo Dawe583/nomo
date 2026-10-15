@@ -1,4 +1,9 @@
-# Premise verification: an independent check of `VOID-FUTURE-DIRECTION.md`
+# Historical premise verification: earlier VOID direction
+
+> Historical independent check of the earlier VOID recovery-first strategy,
+> written 2026-09-26. The source report was retired on 2026-10-09. This does not
+> validate the current NOMO market direction. Current market evidence and the
+> customer qualification test are in the NOMO MVP spec.
 
 Written 2026-09-26 against the working tree at `/Users/dawe/Developer/Claude-Projects/VOID`.
 Subject: `docs/VOID-FUTURE-DIRECTION.md` (1202 lines, authored the same day).

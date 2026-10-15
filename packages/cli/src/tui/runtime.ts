@@ -40,7 +40,7 @@ export class WatchRuntime {
     const capabilities = this.capabilities();
     if (!capabilities.interactive || this.input.setRawMode === undefined) {
       throw new Error(
-        `void watch requires an interactive terminal, got ${capabilities.reason}`,
+        `nomo watch requires an interactive terminal, got ${capabilities.reason}`,
       );
     }
     // Raw mode first, running flag last: setRawMode can throw on a TTY that

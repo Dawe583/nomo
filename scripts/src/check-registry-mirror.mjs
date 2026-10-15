@@ -23,12 +23,12 @@ const root = resolve(import.meta.dirname, "..", "..");
 const canonical = join(root, "packages", "registry", "src", "registry.ts");
 
 const sitePath =
-  process.env.VOID_SITE_REPO ??
+  process.env.NOMO_SITE_REPO ??
   [join(root, "..", "void-empty"), join(root, "..", "void-site")].find((d) => existsSync(d));
 
 if (!sitePath) {
   console.log("  site repository not checked out, mirror not compared");
-  console.log("  clone it beside this one, or set VOID_SITE_REPO, to enable the check");
+  console.log("  clone it beside this one, or set NOMO_SITE_REPO, to enable the check");
   process.exit(0);
 }
 

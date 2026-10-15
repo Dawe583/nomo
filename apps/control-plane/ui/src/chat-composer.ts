@@ -42,7 +42,7 @@ export const BUDGET_VISIBLE_AT = 0.8;
 
 export type DraftFile = { name: string; content: string; bytes: number };
 
-const filesKey = (key: string) => key.replace(/^void-draft:/, "void-files:");
+const filesKey = (key: string) => key.replace(/^nomo-draft:/, "nomo-files:");
 
 /** The draft text survives a route change through `draft-state`, so its
  * attachments have to survive with it. A restored draft that silently lost its

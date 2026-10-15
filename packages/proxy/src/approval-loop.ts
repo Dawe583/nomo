@@ -63,11 +63,18 @@ export function pumpApprovals(
         queue.hold = originalHold;
         active = null;
       };
-      queue.hold = ((call: Omit<HeldCall, "id" | "heldAt" | "expiresAt">, seconds: number) => {
-        const promise = runHold(call, seconds);
+      queue.hold = ((
+        call: Omit<HeldCall, "id" | "heldAt" | "expiresAt">,
+        seconds: number,
+        signal?: AbortSignal,
+      ) => {
+        const promise = runHold(call, seconds, signal);
         const held = newestHold(queue, call.tool);
         broker.register(queue, policyCallFromHeld(held));
-        void promise.then(() => { poll(); });
+        void promise.then((resolution) => {
+          if (resolution.outcome.kind === "cancelled") broker.cancel(resolution.id);
+          else poll();
+        });
         return promise;
       }) as HoldQueue["hold"];
       active = { queue, originalHold };

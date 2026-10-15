@@ -9,7 +9,7 @@ import { savePending } from "../../../policy/src/approvals.ts";
 import { ProxyWorkspace } from "./workspace-proxy.ts";
 
 test("TUI proxy reads verify signatures, refuse tampering and queue identity-bound decisions", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-proxy-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-proxy-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const keys = join(root, "keys"),
     ledger = join(root, "ledger"),
@@ -24,10 +24,10 @@ test("TUI proxy reads verify signatures, refuse tampering and queue identity-bou
     argsDigest: "test",
   });
   const env = {
-    VOID_DATA_DIR: root,
-    VOID_LEDGER_DIR: ledger,
-    VOID_APPROVALS_DIR: approvals,
-    VOID_VERIFY_KEY: Buffer.from(
+    NOMO_DATA_DIR: root,
+    NOMO_LEDGER_DIR: ledger,
+    NOMO_APPROVALS_DIR: approvals,
+    NOMO_VERIFY_KEY: Buffer.from(
       (await signer.publicKey(await signer.currentKeyId()))!,
     ).toString("base64"),
   };

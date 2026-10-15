@@ -1,4 +1,4 @@
-export { VoidClient, createVoidClient } from "./client.ts";
+export { NomoClient, createNomoClient } from "./client.ts";
 export { managedClient } from "./managed.ts";
 export type {
   RecoveryAdapter,
@@ -11,9 +11,9 @@ export type {
 } from "../../runtime/src/index.ts";
 export type {
   McpLikeClient,
-  VoidClientOptions,
-  VoidClock,
-  VoidConnect,
+  NomoClientOptions,
+  NomoClock,
+  NomoConnect,
 } from "./client.ts";
 export { holdHandle } from "./hold.ts";
 export type { HoldHandle, HoldHandleOptions } from "./hold.ts";
@@ -23,4 +23,4 @@ export {
   PolicyStartupError,
   RefusedError,
 } from "./errors.ts";
-export type { RefusalReason, VoidErrorCode } from "./errors.ts";
+export type { RefusalReason, NomoErrorCode } from "./errors.ts";

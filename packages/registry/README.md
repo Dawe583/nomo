@@ -1,4 +1,4 @@
-# @void/registry
+# @nomo/registry
 
 The Reversibility Registry: the classification data, and later the case
 evaluator that reads it.
@@ -34,7 +34,7 @@ exited 0. The decision is in `docs/DECISIONS.md` 6b. That `api/` tree no longer
 exists: the site was split out of this repository, and with it went the layout that
 made the import direction load bearing.
 
-Consumers import `@void/registry` and reach the same module the CLI, the
+Consumers import `@nomo/registry` and reach the same module the CLI, the
 workbench and the runtime use.
 
 ## Public surface

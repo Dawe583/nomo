@@ -9,6 +9,7 @@ import { devKeyProvider, sha256Hex } from "../../../packages/ledger/src/sign.ts"
 import { entryHash } from "../../../packages/ledger/src/canonical.ts";
 import { jsonlStore } from "../../../packages/ledger/src/store.ts";
 import { listenControlPlane, type ApprovalBroker, type PendingApproval } from "./server.ts";
+import { Workbench } from "../../../packages/workbench/src/index.ts";
 
 type FeedBody = {
   readonly workspace: string;
@@ -44,6 +45,7 @@ async function seedLedger(count = 2): Promise<string> {
 type WithServerOptions = {
   readonly approvals?: ApprovalBroker;
   readonly env?: Readonly<NodeJS.ProcessEnv>;
+  readonly workbench?: Workbench;
 };
 
 async function withServer<T>(
@@ -52,10 +54,12 @@ async function withServer<T>(
   options: WithServerOptions = {},
 ): Promise<T> {
   const dataDir = await mkdtemp(join(tmpdir(), "void-api-workbench-"));
+  const home = await mkdtemp(join(tmpdir(), "void-fleet-home-"));
   const handle = await listenControlPlane({
     ledgerPath,
     webRoot: join(import.meta.dirname, '../web'),
     approvals: options.approvals,
+    workbench: options.workbench,
     env: { VOID_DATA_DIR: dataDir, ...options.env },
   });
   try {
@@ -63,6 +67,7 @@ async function withServer<T>(
   } finally {
     await handle.close();
     await rm(dataDir, { recursive: true, force: true });
+    await rm(home, { recursive: true, force: true });
   }
 }
 
@@ -387,4 +392,167 @@ test("internal API failures do not echo dependency secrets", async () => {
     assert.equal(response.status, 500);
     assert.doesNotMatch(await response.text(), /SENTINEL_PRIVATE_VALUE/);
   }, { approvals: { pending: () => { throw new Error("SENTINEL_PRIVATE_VALUE"); }, decide: () => {} } });
+});
+
+test("fleet events are metadata-only, cursor-paginated and carry this-process scope", async () => {
+  await withServer("unused.jsonl", async (origin) => {
+    const first = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: unknown[]; scope: string; stopAck: string };
+    assert.deepEqual(first.items, [], "a fresh server has recorded nothing");
+    assert.equal(first.scope, "this process only");
+    assert.equal(first.stopAck, "unknown");
+
+    const stop = await fetch(origin + "/api/runs/missing-session/stop", { method: "POST" });
+    assert.equal(stop.status, 404, "an unknown session is a 404, not an ack");
+  });
+});
+
+test("a stop records request and acknowledgement and reports the ack state", async () => {
+  const fetcher: typeof fetch = async (input) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url === "https://fixture.test/v1/models")
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    throw new Error(`fixture fetcher must not be called for ${url}`);
+  };
+  const workbench = new Workbench(
+    { VOID_DATA_DIR: await mkdtemp(join(tmpdir(), "void-fleet-wb-")) },
+    fetcher,
+  );
+  await workbench.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-private-key-never-expose" });
+  await withServer("unused.jsonl", async (origin) => {
+    // Seed a session through the injected workbench so /stop has a target.
+    const start = await fetch(origin + "/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt: "not a prompt leak: metadata only" }),
+    });
+    const created = (await start.json()) as { session?: { id?: string } };
+    const id = created?.session?.id;
+    assert.equal(start.status, 201, "the fixture created a session");
+
+    const response = await fetch(origin + `/api/runs/${id}/stop`, { method: "POST" });
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as { ok: boolean; ack: string; scope: string };
+    assert.equal(body.ok, true);
+    assert.equal(body.ack, "acknowledged");
+    assert.equal(body.scope, "this process only");
+
+    const feed = (await fetch(origin + `/api/fleet/events?sessionId=${id}`).then((r) => r.json())) as { items: Array<Record<string, unknown>>; stopAck: string };
+    assert.equal(feed.stopAck, "acknowledged");
+    const kinds = feed.items.map((e: { kind: string }) => e.kind);
+    assert.ok(kinds.includes("stop_requested"), "the stop request is in the feed");
+    assert.ok(kinds.includes("stop_acknowledged"), "the ack is in the feed");
+    for (const event of feed.items) {
+      const flat = JSON.stringify(event);
+      assert.doesNotMatch(flat, /not a prompt leak/, "no prompt text in the fleet feed");
+      assert.doesNotMatch(flat, /bearer/i, "no credential text in the fleet feed");
+    }
+  }, { workbench });
+});
+
+test("the overview carries the fleet view fields for one registered agent", async () => {
+  const fetcher: typeof fetch = async (input) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url === "https://fixture.test/v1/models")
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    throw new Error(`fixture fetcher must not be called for ${url}`);
+  };
+  const workbench = new Workbench({ VOID_DATA_DIR: await mkdtemp(join(tmpdir(), "void-fleet-wb-")) }, fetcher);
+  await workbench.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-private-key-never-expose" });
+  await withServer("unused.jsonl", async (origin) => {
+    // The overview names a run only when one exists, so seed a session first.
+    const start = await fetch(origin + "/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt: "overview seed" }),
+    });
+    assert.equal(start.status, 201, "the fixture created a session");
+    const overview = (await fetch(origin + "/api/overview").then((r) => r.json())) as Record<string, unknown> & { latestEvents: unknown[]; stopAck: string };
+    assert.ok(typeof overview.agentId === "string", "the overview names the registered agent's run");
+    assert.ok("runState" in overview, "the overview names the run state");
+    assert.ok("stopAck" in overview, "the overview names the stop acknowledgement");
+    assert.ok("inFlight" in overview, "the overview counts unconfirmed in-flight calls");
+    assert.ok(Array.isArray(overview.latestEvents), "the overview carries the latest fleet events");
+    assert.equal(overview.stopAck, "unknown", "no stop has been requested yet");
+  }, { workbench });
+});
+
+test("a decided approval records the approval event with its verdict", async () => {
+  const decisions: Array<Record<string, unknown>> = [];
+  await withServer("unused.jsonl", async (origin) => {
+    const decision = await fetch(origin + "/api/approvals/hold-fixture-1/decision", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "approved", by: "fixture-operator" }),
+    });
+    assert.equal(decision.status, 200, "the fixture broker accepted the decision");
+    const feed = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: Array<Record<string, unknown>> };
+    const recorded = feed.items.find((event) => event.kind === "approval");
+    assert.ok(recorded, "the approval decision is in the feed");
+    assert.equal(recorded?.agentId, "hold-fixture-1", "the feed names the hold");
+    assert.equal(recorded?.verdict, "approved", "the feed carries the verdict");
+  }, {
+    approvals: {
+      decide: (holdId, decision) => {
+        decisions.push({ holdId, decision });
+        return { ok: true };
+      },
+    },
+  });
+  assert.equal(decisions.length, 1, "the broker saw exactly one decision");
+});
+
+test("a started run and a decided approval land in the fleet feed", async () => {
+  const fetcher: typeof fetch = async (input) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url === "https://fixture.test/v1/models")
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    throw new Error(`fixture fetcher must not be called for ${url}`);
+  };
+  const workbench = new Workbench(
+    { VOID_DATA_DIR: await mkdtemp(join(tmpdir(), "void-fleet-wb-")) },
+    fetcher,
+  );
+  await workbench.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture-private-key-never-expose" });
+  await withServer("unused.jsonl", async (origin) => {
+    const start = await fetch(origin + "/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt: "leak-probe-prompt-xyz" }),
+    });
+    assert.equal(start.status, 201, "the fixture created a session");
+    const created = (await start.json()) as { session?: { id?: string } };
+    const id = created?.session?.id;
+    assert.ok(typeof id === "string", "the session response names the run");
+
+    const feed = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: Array<Record<string, unknown>> };
+    assert.ok(feed.items.some((event) => event.kind === "run_started"), "the run start is in the feed");
+    for (const event of feed.items) {
+      const flat = JSON.stringify(event);
+      assert.doesNotMatch(flat, /leak-probe-prompt-xyz/, "no prompt text in the fleet feed");
+    }
+  }, { workbench });
+});
+
+test("registering an agent emits agent_started", async () => {
+  await withServer("unused.jsonl", async (origin) => {
+    const response = await fetch(origin + "/api/agents", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        id: "fleet-fixture-agent",
+        name: "FleetFixture",
+        systemPrompt: "fixture",
+        allowedTools: ["void_workspace_list"],
+        policyProfile: "default",
+        maxTurns: 5,
+        maxContextTokens: 4096,
+      }),
+    });
+    assert.equal(response.status, 200, "the fixture registered an agent");
+
+    const feed = (await fetch(origin + "/api/fleet/events").then((r) => r.json())) as { items: Array<Record<string, unknown>> };
+    const started = feed.items.find((event) => event.kind === "agent_started");
+    assert.ok(started, "the registration is in the feed");
+    assert.equal(started?.agentId, "fleet-fixture-agent", "the feed names the upserted agent");
+  });
 });

@@ -1,6 +1,6 @@
 # Executable recovery contract
 
-VOID can restore only the scope captured and verified by the selected executable
+NOMO can restore only the scope captured and verified by the selected executable
 adapter. A registry entry, OAuth connection, snapshot or generated inverse name
 alone is not proof of recoverability.
 
@@ -303,7 +303,7 @@ repository root:
 node scripts/src/recovery-backup.mjs create \
   --state /path/to/recovery-state \
   --backup /path/to/new-backup \
-  --encryption-key-env VOID_RECOVERY_KEY \
+  --encryption-key-env NOMO_RECOVERY_KEY \
   --executor-stopped
 ```
 

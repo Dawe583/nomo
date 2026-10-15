@@ -302,7 +302,7 @@ describe("runClassifyCommand, the single tool surface", () => {
     // classification the operator did not ask for.
     await assert.rejects(
       runClassifyCommand(["--tool"], files({}), () => {}),
-      /--tool needs a value\. usage: void classify/,
+      /--tool needs a value\. usage: nomo classify/,
     );
     await assert.rejects(
       runClassifyCommand(["--tool", s3Delete, "--fact"], files({}), () => {}),
@@ -315,10 +315,10 @@ describe("runClassifyCommand, the single tool surface", () => {
   });
 
   test("both transcript and tool flags name one usage line", async () => {
-    await assert.rejects(runClassifyCommand([], files({}), () => {}), /usage: void classify/);
+    await assert.rejects(runClassifyCommand([], files({}), () => {}), /usage: nomo classify/);
     await assert.rejects(
       runClassifyCommand(["--transcript"], files({}), () => {}),
-      /usage: void classify/,
+      /usage: nomo classify/,
     );
   });
 });

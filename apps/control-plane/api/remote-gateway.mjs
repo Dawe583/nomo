@@ -17,11 +17,11 @@ const json = (response, status, body) => {
 /** The Vercel function is a stateless gateway. Durable ledgers and active holds
  * remain with the running proxy; serverless /tmp is never treated as a store. */
 export default async function handler(request, response) {
-  const token = process.env.VOID_CONTROL_TOKEN;
-  const upstream = process.env.VOID_CONTROL_ORIGIN;
+  const token = process.env.NOMO_CONTROL_TOKEN;
+  const upstream = process.env.NOMO_CONTROL_ORIGIN;
   const url = new URL(request.url, 'https://void.invalid');
   if (!token || token.length < 32 || !upstream) return json(response, 503, {
-    error: 'setup_required', message: 'Connect your VOID runtime: configure VOID_CONTROL_ORIGIN (HTTPS) and VOID_CONTROL_TOKEN on Vercel. The token must have at least 32 characters.',
+    error: 'setup_required', message: 'Connect your NOMO runtime: configure NOMO_CONTROL_ORIGIN (HTTPS) and NOMO_CONTROL_TOKEN on Vercel. The token must have at least 32 characters.',
   });
   const origin = request.headers.origin;
   const host = request.headers.host;
@@ -65,5 +65,5 @@ export default async function handler(request, response) {
     const result = await fetch(target, { method: request.method, redirect: 'error', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(15000) });
     const payload = await result.json();
     return json(response, result.status, payload);
-  } catch { return json(response, 502, { error: 'runtime_unavailable', message: 'Your VOID runtime is unreachable. Start the runtime and check its HTTPS address.' }); }
+  } catch { return json(response, 502, { error: 'runtime_unavailable', message: 'Your NOMO runtime is unreachable. Start the runtime and check its HTTPS address.' }); }
 }

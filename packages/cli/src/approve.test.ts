@@ -10,7 +10,7 @@ import { runApproveCommand, runApprovalsCommand } from "./approve.ts";
 
 const call = { tool: "postgres.table.drop", klass: "r3", blastRadius: 1, ruleIndex: 0, rationale: "hold", args: { secret: "not persisted" }, notify: ["cli"] };
 function fixture(t: { after: (fn: () => void) => void }) {
-  const dir = fs.mkdtempSync(join(tmpdir(), "void-approve-"));
+  const dir = fs.mkdtempSync(join(tmpdir(), "nomo-approve-"));
   const queue = new HoldQueue();
   const broker = new ApprovalBroker({ stateDir: dir });
   let notify = () => {};
@@ -120,7 +120,7 @@ test("invalid decision kind cannot release an in-process hold", (t) => {
 });
 
 test("a state directory reached through a link is rejected", (t) => {
-  const base = fs.mkdtempSync(join(tmpdir(), "void-approve-link-"));
+  const base = fs.mkdtempSync(join(tmpdir(), "nomo-approve-link-"));
   t.after(() => fs.rmSync(base, { recursive: true, force: true }));
   const real = join(base, "real");
   fs.mkdirSync(real, { mode: 0o700 });
@@ -134,7 +134,7 @@ test("a state directory reached through a link is rejected", (t) => {
 // owner-only guarantee there rests on the inherited ACL of the operator profile
 // and is not established by this check. See packages/policy/src/approvals.ts.
 test("preexisting permissive state directories are rejected", { skip: process.platform === "win32" }, (t) => {
-  const base = fs.mkdtempSync(join(tmpdir(), "void-approve-perms-"));
+  const base = fs.mkdtempSync(join(tmpdir(), "nomo-approve-perms-"));
   t.after(() => fs.rmSync(base, { recursive: true, force: true }));
   const unsafe = join(base, "unsafe");
   fs.mkdirSync(unsafe, { mode: 0o777 });
@@ -152,7 +152,7 @@ test("a second proxy refuses the state directory with a typed error", (t) => {
 });
 
 test("default watcher consumes a decision while the held call waits", async (t) => {
-  const dir = fs.mkdtempSync(join(tmpdir(), "void-approve-watch-"));
+  const dir = fs.mkdtempSync(join(tmpdir(), "nomo-approve-watch-"));
   const queue = new HoldQueue();
   const broker = new ApprovalBroker({ stateDir: dir });
   const failures: string[] = [];

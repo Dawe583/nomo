@@ -1,5 +1,5 @@
 type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-const queuedKey = (key: string) => key.replace(/^void-draft:/, "void-queued:");
+const queuedKey = (key: string) => key.replace(/^nomo-draft:/, "nomo-queued:");
 
 export function loadDraft(storage: DraftStorage, key: string) {
   const queued = storage.getItem(queuedKey(key));

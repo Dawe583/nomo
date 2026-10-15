@@ -6,7 +6,7 @@ reason the rest are not.
 
 ## What changed and why
 
-Both agents VOID orchestrates expose this class of limit as operator settings.
+Both agents NOMO orchestrates expose this class of limit as operator settings.
 prime-agent has `autonomous.maxTurns`, `autonomous.maxTokens`,
 `autonomous.timeoutMs` and `autonomous.maxContinuations`
 (`/Users/dawe/Developer/upstream/prime-src/crates/pa-core/src/autonomous/mod.rs:26-29`),
@@ -14,7 +14,7 @@ and omp has `task.maxConcurrency`, `task.maxRecursionDepth` and
 `task.maxRuntimeMs`
 (`/Users/dawe/Developer/upstream/omp-src/packages/coding-agent/src/task/settings.ts:235-295`).
 
-VOID kept its own defaults rather than either upstream's, because VOID's
+NOMO kept its own defaults rather than either upstream's, because NOMO's
 defaults are the conservative ones and a governance harness should start
 restricted. What it did not keep was the hardcoding: a limit nobody can change
 is a limit nobody chose.
@@ -83,7 +83,7 @@ outcome was never established.
 ## What is deliberately not a setting
 
 **`permissionMode`.** It is an authority decision, not a preference. It comes
-from `VOID_PERMISSION_MODE`, fails closed to `read-only`, and any patch naming
+from `NOMO_PERMISSION_MODE`, fails closed to `read-only`, and any patch naming
 it is refused with `Permission mode is server-controlled.` That refusal is
 pinned by an existing test in `gui.test.ts`.
 
@@ -94,17 +94,17 @@ deliberate and commented in `provider.ts`: nothing about a model an operator
 typed makes it free, so an unknown model is never retried and a paid model is
 never substituted.
 
-**Hook command allowlisting.** `VOID_HOOK_COMMANDS` stays environment-only. An
+**Hook command allowlisting.** `NOMO_HOOK_COMMANDS` stays environment-only. An
 API that could add its own entry would let a hook author authorise the command
 their own hook runs, so `packages/workbench/src/index.ts` does not accept it.
 
-**Anything omp exposes that VOID does not have.** omp has 27 top-level config
+**Anything omp exposes that NOMO does not have.** omp has 27 top-level config
 domains. Most of them govern a coding agent's own surface: bash allowlists,
-browser control, SSH hosts, a sandbox, a judge role, an extension bus. VOID is
+browser control, SSH hosts, a sandbox, a judge role, an extension bus. NOMO is
 not a coding agent and does not have those surfaces, so exposing their settings
 would be a claim about behaviour that does not exist here. The table is
-deliberately the settings VOID can honour, not a mirror of another project's
-configuration file. See `docs/AGENT-BINARIES.md` for what VOID actually
+deliberately the settings NOMO can honour, not a mirror of another project's
+configuration file. See `docs/AGENT-BINARIES.md` for what NOMO actually
 consumes from each binary.
 
 ## Tests that must keep this honest

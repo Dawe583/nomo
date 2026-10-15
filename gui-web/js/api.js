@@ -1,6 +1,6 @@
 // Real provider client. OpenAI compatible endpoints (OpenRouter, Ollama, direct).
 // Keys live in localStorage only, never logged, never rendered back.
-window.VOID_API = (function () {
+window.NOMO_API = (function () {
   var LS_KEY = "void.provider.v1";
   var LS_MODELS = "void.models.cache.v1";
 
@@ -27,7 +27,7 @@ window.VOID_API = (function () {
     var h = { "Content-Type": "application/json" };
     if (c.key) h["Authorization"] = "Bearer " + c.key;
     h["HTTP-Referer"] = location.href;
-    h["X-Title"] = "VOID Workbench";
+    h["X-Title"] = "NOMO Workbench";
     return h;
   }
 
@@ -132,7 +132,7 @@ window.VOID_API = (function () {
   function estimateTokens(s) { return Math.max(1, Math.round(s.length / 4)); }
 
   function priceFor(modelId) {
-    var F = window.VOID_FIXTURES;
+    var F = window.NOMO_FIXTURES;
     if (!F || !F.models) return null;
     var m = F.models.find(function (x) { return x.id === modelId; });
     if (!m) return null;

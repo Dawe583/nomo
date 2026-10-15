@@ -13,7 +13,7 @@ function storage() {
     },
   };
 }
-const key = "void-draft:workspace:session";
+const key = "nomo-draft:workspace:session";
 
 test("queuing and editing preserves exact user text across a reload", () => {
   const store = storage();
@@ -23,8 +23,8 @@ test("queuing and editing preserves exact user text across a reload", () => {
   const edited = text + "\nEdited while the run is active";
   saveDraft(store, key, edited, true);
   assert.deepEqual(loadDraft(store, key), { text: edited, queued: true });
-  assert.equal(store.getItem("void-queued:workspace:session"), edited);
-  assert.deepEqual(loadDraft(store, "void-draft:workspace:other"), {
+  assert.equal(store.getItem("nomo-queued:workspace:session"), edited);
+  assert.deepEqual(loadDraft(store, "nomo-draft:workspace:other"), {
     text: "",
     queued: false,
   });
@@ -32,7 +32,7 @@ test("queuing and editing preserves exact user text across a reload", () => {
 
 test("existing queued content is recoverable when the ordinary draft is absent", () => {
   const store = storage();
-  store.setItem("void-queued:workspace:session", "Preserved text");
+  store.setItem("nomo-queued:workspace:session", "Preserved text");
   assert.deepEqual(loadDraft(store, key), {
     text: "Preserved text",
     queued: true,

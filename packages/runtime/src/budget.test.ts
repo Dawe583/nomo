@@ -27,7 +27,7 @@ import {
 } from "./index.ts";
 
 test("100 concurrent requests across runtime instances cannot exceed two daily irreversible calls; unknown and restart preserve spend", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} }),
     vault = localRecoveryVault(
@@ -162,7 +162,7 @@ const sessionStore: BudgetStore = {
 };
 
 test("server ledger decides every reservation exactly like the journal derivation", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-parity-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-parity-"));
   const budget = { dailyLimit: 3, perAgentDailyLimit: 2 };
   const ledger = serverBudgetLedger({
     store: await store(t, dir),
@@ -221,7 +221,7 @@ test("server ledger decides every reservation exactly like the journal derivatio
 });
 
 test("per agent cap refuses the same agent the journal derivation refuses", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-agent-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-agent-"));
   const budget = { dailyLimit: 5, perAgentDailyLimit: 1 };
   const ledger = serverBudgetLedger({
     store: await store(t, dir),
@@ -246,7 +246,7 @@ test("per agent cap refuses the same agent the journal derivation refuses", asyn
 });
 
 test("exhausted, unreadable and contradictory budget state all refuse", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-refuse-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-refuse-"));
   const file = join(dir, "budget.sqlite");
   // This case holds two stores and a raw handle on one file, so cleanup closes
   // all three before removing the directory.
@@ -297,7 +297,7 @@ test("exhausted, unreadable and contradictory budget state all refuse", async (t
   // Unreadable account state is an incident, never an empty budget.
   const raw = new DatabaseSync(file);
   open.push(() => raw.close());
-  raw.prepare("UPDATE void_budget_day SET body = ?").run("{not json");
+  raw.prepare("UPDATE nomo_budget_day SET body = ?").run("{not json");
   await assert.rejects(
     () => ledger.reserve({ operationId: "op-3", agentId: "agent-a" }),
     BudgetStateError,
@@ -318,7 +318,7 @@ test("exhausted, unreadable and contradictory budget state all refuse", async (t
   // forged hold itself rather than on a torn row.
   const corrupt = (hold: Record<string, unknown>) => {
     raw
-      .prepare("UPDATE void_budget_day SET version = 7, body = ?")
+      .prepare("UPDATE nomo_budget_day SET version = 7, body = ?")
       .run(
         JSON.stringify({
           schema: "void.budget.account.v1",
@@ -374,7 +374,7 @@ test("exhausted, unreadable and contradictory budget state all refuse", async (t
 });
 
 test("two workers on one account never both spend the same unit", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-race-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-race-"));
   const open: Array<() => void> = [];
   t.after(async () => {
     for (const close of open) close();
@@ -412,7 +412,7 @@ test("two workers on one account never both spend the same unit", async (t) => {
 });
 
 test("a worker killed between reserve and settle leaves a detectable charge that is never refunded", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-crash-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-crash-"));
   const open: Array<() => void> = [];
   t.after(async () => {
     for (const close of open) close();
@@ -491,7 +491,7 @@ process.kill(process.pid, "SIGKILL");
 });
 
 test("two worker processes share one account across a process boundary", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-procs-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-procs-"));
   const open: Array<() => void> = [];
   t.after(async () => {
     for (const close of open) close();
@@ -540,7 +540,7 @@ process.stdout.write(String(outcomes.filter((item) => item.ok).length));
 });
 
 test("a stale fence can never overwrite a newer account state", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-budget-fence-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-budget-fence-"));
   const budgetStore = await store(t, dir);
   const key = "shared:" + DAY;
   const fresh = (version: number) => ({

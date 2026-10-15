@@ -1,7 +1,7 @@
 # Specification: TUI MCP Server Manager & Developer-First Local Provider Workflow (V1)
 
 ## 1. Objective
-Deliver a simple, developer-first terminal interface experience (V1) in VOID for:
+Deliver a simple, developer-first terminal interface experience (V1) in NOMO for:
 1. Reusing the existing local provider setup (NVIDIA NIM via `NVIDIA_API_KEY`, local imports from OpenCode/Prime, no key entry in chat, no silent fallback).
 2. Managing external URL-based MCP servers (Add, Update, Remove, List, Inspect) with explicit operator confirmation before making outbound catalog probe requests.
 3. Reviewing connector policies, enforcing fail-closed default-deny for unknown tools, and preserving immutable per-conversation policy snapshots.
@@ -17,8 +17,8 @@ Executable plugins and stdio-spawned processes are deferred to V2 pending sandbo
 
 ## 3. Commands
 - `pnpm tui`: Run the interactive terminal workspace.
-- `pnpm --filter @void/cli test`: Run CLI and TUI test suites.
-- `pnpm --filter @void/workbench test`: Run Workbench lifecycle and connector tests.
+- `pnpm --filter @nomo/cli test`: Run CLI and TUI test suites.
+- `pnpm --filter @nomo/workbench test`: Run Workbench lifecycle and connector tests.
 - `pnpm check`: Full workspace typecheck and test verification.
 
 ## 4. Boundaries

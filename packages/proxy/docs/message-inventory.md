@@ -1,6 +1,6 @@
 # MCP message inventory (client and server halves)
 
-Single-author inventory of every message the VOID proxy can meet on the wire.
+Single-author inventory of every message the NOMO proxy can meet on the wire.
 Scope: JSON-RPC 2.0 framing, MCP lifecycle, and the `@modelcontextprotocol/sdk` 1.30.0 TypeScript SDK implementation as source of truth (`packages/proxy/node_modules/@modelcontextprotocol/sdk`).
 Every fact carries a `file:line` citation into `packages/proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/` (shortened below as `sdk/`).
 Builders implement from this file alone; do not consult the spec from memory.
@@ -229,7 +229,7 @@ Client side `StdioClientTransport`:
 - `close()` sequence: end child stdin, wait up to 2000 ms for exit, then `SIGTERM`, wait up to 2000 ms again, then `SIGKILL`; ReadBuffer cleared at the end (`:143-178`). The 2000 ms windows are `.unref()`ed so they never hold the event loop (`:158`, `:166`).
 - Overflow and parse errors on the read side mirror the server: `onerror` then `close()` on append failure; per-line parse errors are reported and the loop continues (`:90-102`, `:129-142`).
 
-Implication for the VOID proxy: the proxy is a stdio server to the agent and a stdio client to the upstream, so it owns one `StdioServerTransport` facing the agent and one `StdioClientTransport` facing the upstream. Each direction has its own `ReadBuffer`; a slow agent reading its stdout produces backpressure the proxy must forward by awaiting `send()` in order.
+Implication for the NOMO proxy: the proxy is a stdio server to the agent and a stdio client to the upstream, so it owns one `StdioServerTransport` facing the agent and one `StdioClientTransport` facing the upstream. Each direction has its own `ReadBuffer`; a slow agent reading its stdout produces backpressure the proxy must forward by awaiting `send()` in order.
 
 ## Traps for implementers
 

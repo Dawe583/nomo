@@ -1,16 +1,16 @@
 /**
- * What `void recovery` read from a configuration file, and what it refused.
+ * What `nomo recovery` read from a configuration file, and what it refused.
  *
  * The refusal used to be one sentence — `Invalid recovery configuration.` —
  * and it was the sentence an operator met first when they pointed the managed
  * executor at a filesystem root. Nothing named a field, nothing named an
- * adapter, and nothing pointed at `void recovery conformance`, which does take
+ * adapter, and nothing pointed at `nomo recovery conformance`, which does take
  * `filesystem.managed`. The failure looked transient and retryable; it was not.
  *
  * So the configuration is described rather than guessed at: every field the
  * executor reads, every required field it did not find, every field it ignored,
  * and every reason the adapter is not usable. The same description is the text
- * of `void recovery doctor`, so the diagnostic and the report cannot drift.
+ * of `nomo recovery doctor`, so the diagnostic and the report cannot drift.
  *
  * Values are printed, and no value here is a secret: the file holds path names,
  * an environment variable *name*, and the shape of a schema. The encryption key
@@ -18,7 +18,7 @@
  * is ever reported.
  */
 
-/** The adapters `void recovery conformance --adapter <name>` can be run for. */
+/** The adapters `nomo recovery conformance --adapter <name>` can be run for. */
 export const CONFORMANCE_ADAPTERS: readonly string[] = [
   "filesystem.managed",
   "git.managed",
@@ -101,7 +101,7 @@ function rootProblem(key: string, root: unknown): string | undefined {
  * The adapter an operator named, when they named one in a way this executor
  * does not read. `adapters: [{ id: "filesystem.managed", ... }]` is the shape
  * the managed-executor documentation uses, and it is worth naming the adapter
- * inside it, because the sibling `void recovery conformance` does accept that
+ * inside it, because the sibling `nomo recovery conformance` does accept that
  * exact name and an operator who was told "invalid" had no way to learn that.
  */
 function unsupportedAdapter(config: Record<string, unknown>): string | undefined {
@@ -115,8 +115,8 @@ function unsupportedAdapter(config: Record<string, unknown>): string | undefined
   if (known === undefined) return undefined;
   return (
     `\`adapters\` is not a field this command reads, so ${JSON.stringify(known)} was never selected: ` +
-    `void recovery runs one adapter per configuration, chosen by a top-level \`postgres\`, \`filesystem\` or \`git\` block. ` +
-    `\`void recovery conformance --adapter ${known}\` is the command that runs ${known}`
+    `nomo recovery runs one adapter per configuration, chosen by a top-level \`postgres\`, \`filesystem\` or \`git\` block. ` +
+    `\`nomo recovery conformance --adapter ${known}\` is the command that runs ${known}`
   );
 }
 
@@ -131,7 +131,7 @@ export function describeRecoveryConfig(
       valid: false,
       fields: [{ key: "config", value: "not a JSON object", source: "config" }],
       problems: [
-        `${configPath} does not hold a JSON object; void recovery reads its configuration from a JSON file`,
+        `${configPath} does not hold a JSON object; nomo recovery reads its configuration from a JSON file`,
       ],
     };
   }
@@ -254,7 +254,7 @@ export function describeRecoveryConfig(
         key,
         value: show(config[key]),
         source: "ignored",
-        note: "not read by void recovery",
+        note: "not read by nomo recovery",
       });
 
   return { valid: problems.length === 0, fields, problems };
@@ -265,12 +265,12 @@ export function recoveryConfigRefusal(report: RecoveryConfigReport): string {
   return [
     "Invalid recovery configuration.",
     ...report.problems.map((problem) => `  ${problem}`),
-    "  run `void recovery doctor --config <file>` to see every field this command reads and ignores",
+    "  run `nomo recovery doctor --config <file>` to see every field this command reads and ignores",
   ].join("\n");
 }
 
 /**
- * `void recovery doctor --config <file>`. The shape `cloud/config.mjs` already
+ * `nomo recovery doctor --config <file>`. The shape `cloud/config.mjs` already
  * uses: one line per field with where it came from, never a value that could be
  * sensitive. Exit 0 when the configuration is usable, 1 when it is not, so this
  * is checkable in a script rather than only readable by eye.

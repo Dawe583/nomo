@@ -125,7 +125,7 @@ export class CompatibleProvider {
    * calls, and an operator who lowers `maxOutputTokens` expects the next
    * request to honour it, not the one that happened to be in flight when they
    * patched. A partial merges over the defaults so a caller with no resolved
-   * settings still gets VOID's conservative ones. */
+   * settings still gets NOMO's conservative ones. */
   private readonly resolveSettings: () => HarnessSettings;
   constructor(
     config: ProviderConfig,

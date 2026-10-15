@@ -19,7 +19,7 @@
   },
   "description": "Evaluate ordered policy rules and hold tool calls for human approval.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "policy",
     "approvals"

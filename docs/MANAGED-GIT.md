@@ -6,8 +6,8 @@ time. Configure an existing non-bare repository with a relative root:
 ```json
 {
   "workspace": "example",
-  "stateDir": "../void-state",
-  "encryptionKeyEnv": "VOID_RECOVERY_KEY",
+  "stateDir": "../nomo-state",
+  "encryptionKeyEnv": "NOMO_RECOVERY_KEY",
   "git": { "root": "./repository", "cooperative": true }
 }
 ```
@@ -264,7 +264,7 @@ other Git command this adapter runs. There is no cross-platform evidence:
 every test here is a real local remote on POSIX.
 
 The action is not in the published `git.managed` operation list, so
-`void recovery conformance` does not run it; see "## Limits" for what
+`nomo recovery conformance` does not run it; see "## Limits" for what
 publishing it requires.
 
 ## Limits
@@ -296,7 +296,7 @@ rollback. The disposable conformance command has no remote and uses local-only
 author identity:
 
 ```sh
-node packages/cli/bin/void.mjs recovery conformance --adapter git.managed
+node packages/cli/bin/nomo.mjs recovery conformance --adapter git.managed
 ```
 
 Each published scenario runs the same set of shared runtime checks, listed by

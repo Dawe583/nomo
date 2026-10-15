@@ -4,22 +4,22 @@
   "license": "Apache-2.0",
   "scripts": {
     "preinstall": "node scripts/src/preinstall.mjs",
-    "void": "node packages/cli/bin/void.mjs",
-    "tui": "node packages/cli/bin/void.mjs tui",
+    "nomo": "node packages/cli/bin/nomo.mjs",
+    "tui": "node packages/cli/bin/nomo.mjs tui",
     "tui:preview": "pnpm --filter @void/cli run tui:preview --",
     "typecheck": "pnpm -r --filter \"./packages/**\" --filter \"./scripts\" --if-present run typecheck && tsc -p apps/control-plane/tsconfig.json && tsc -p paid/tsconfig.json && pnpm --filter @void/control-plane-ui typecheck",
     "test": "node scripts/src/check-tests.mjs",
     "check": "pnpm run typecheck && pnpm test",
     "check:mirror": "node scripts/src/check-registry-mirror.mjs",
     "gui": "pnpm build:web && node apps/control-plane/api/server.ts",
-    "watch": "node packages/cli/bin/void.mjs watch",
+    "watch": "node packages/cli/bin/nomo.mjs watch",
     "desktop:setup": "pnpm --dir apps/desktop install --ignore-workspace",
     "desktop": "pnpm --dir apps/desktop dev",
     "desktop:build": "pnpm --dir apps/desktop build",
     "desktop:test": "pnpm --dir apps/desktop test",
     "apple:project": "sh -c 'cd apps/apple && xcodegen generate'",
     "apple:project:check": "node scripts/src/check-apple-project.mjs",
-    "apple:design:test": "swift test --package-path apps/apple/VoidDesignSystem",
+    "apple:design:test": "swift test --package-path apps/apple/NomoDesignSystem",
     "build:web": "node scripts/src/build-web.mjs",
     "dev:web": "pnpm --filter @void/control-plane-ui dev",
     "test:tui": "node --test packages/cli/src/tui/workspace*.test.ts && python3 scripts/src/verify-tui-terminal.py",
@@ -36,13 +36,13 @@
   "engines": {
     "node": ">=24"
   },
-  "description": "VOID development workspace for accountable AI tool calls, signed ledgers, and guarded replay.",
+  "description": "NOMO development workspace for accountable AI tool calls, signed ledgers, and guarded replay.",
   "bin": {
-    "void": "packages/cli/bin/void.mjs",
-    "void-proxy": "packages/proxy/bin/void-proxy.mjs"
+    "nomo": "packages/cli/bin/nomo.mjs",
+    "nomo-proxy": "packages/proxy/bin/nomo-proxy.mjs"
   },
   "keywords": [
-    "void",
+    "nomo",
     "mcp",
     "ai-safety",
     "audit",

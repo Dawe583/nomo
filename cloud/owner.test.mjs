@@ -486,7 +486,7 @@ test("the owner is produced by the session middleware and nowhere else", () => {
     for (const forbidden of [
       "req.query.owner",
       "req.body.owner",
-      'req.headers["x-void-owner"]',
+      'req.headers["x-nomo-owner"]',
       "req.headers.owner",
     ])
       assert.equal(

@@ -23,7 +23,7 @@ const entries = Number.parseInt(
   10,
 );
 
-const dir = await mkdtemp(join(tmpdir(), "void-ledger-run-"));
+const dir = await mkdtemp(join(tmpdir(), "nomo-ledger-run-"));
 const keyDir = join(dir, "keys");
 const signer = await ledger.devKeyProvider({ dir: keyDir, env: {} });
 const workspace = "runner";

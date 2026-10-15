@@ -14,7 +14,7 @@ async function run(...args) {
   return execute(process.execPath, [fileURLToPath(script), ...args], {
     timeout: 30_000,
     // An unusable ambient key proves the benchmark does not read user keys.
-    env: { ...process.env, VOID_SIGNING_KEY: "not-a-signing-key" },
+    env: { ...process.env, NOMO_SIGNING_KEY: "not-a-signing-key" },
   });
 }
 

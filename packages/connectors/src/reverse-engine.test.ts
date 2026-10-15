@@ -22,7 +22,7 @@ import { devKeyProvider } from '../../ledger/src/sign.ts';
 import { verifyLedgerFile } from '../../ledger/src/verify.ts';
 
 test('40 concurrent independent manifest writers retain every capture', async t => {
-  const dir=await mkdtemp(join(tmpdir(),'void-manifest-race-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+  const dir=await mkdtemp(join(tmpdir(),'nomo-manifest-race-'));t.after(()=>rm(dir,{recursive:true,force:true}));
   await Promise.all(Array.from({length:40},(_,i)=>manifestWriter(dir).write({tool:'postgres.row.update',digest:String(i),reference:{namespace:'test',digest:`sha256:${'a'.repeat(64)}`,uri:'file:///test'}})));
   assert.equal((await manifestReader(dir)).length,40);
   await writeFile(join(dir,'manifest.jsonl.lock'),'other-owner');
@@ -31,7 +31,7 @@ test('40 concurrent independent manifest writers retain every capture', async t 
 });
 
 test('cross-layer fixture: real proxy capture, outcome, restart inverse, signed verification', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'void-reverse-'));
+  const dir = await mkdtemp(join(tmpdir(), 'nomo-reverse-'));
   const db = new PGlite();
   t.after(async () => {
     await db.close();
@@ -170,7 +170,7 @@ test('cross-layer fixture: real proxy capture, outcome, restart inverse, signed 
 // above but inverts by re-inserting the captured rows, so it earns its own
 // fixture rather than being assumed to follow from the update path.
 test('cross-layer fixture: composed root captures a cascading postgres delete, and a restarted connector reinserts the rows', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'void-reverse-delete-'));
+  const dir = await mkdtemp(join(tmpdir(), 'nomo-reverse-delete-'));
   const db = new PGlite();
   t.after(async () => {
     await db.close();
@@ -295,7 +295,7 @@ test('cross-layer fixture: composed root captures a cascading postgres delete, a
 // inverse writes those bytes back. It runs through the same production root,
 // so a second mechanism cannot grow beside the first one.
 test('cross-layer fixture: composed root captures an S3 delete, and a restarted connector restores the bytes', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'void-reverse-s3-'));
+  const dir = await mkdtemp(join(tmpdir(), 'nomo-reverse-s3-'));
   t.after(async () => { await rm(dir, { recursive: true, force: true }); });
   const client = new MemoryS3Client();
   const body = new TextEncoder().encode('account statement bytes');
@@ -431,7 +431,7 @@ test('two concurrent Undo attempts sharing a PostgreSQL connection perform one r
 });
 
 test('oversized capture refuses without evicting the existing inverse',async t=>{
-  const dir=await mkdtemp(join(tmpdir(),'void-capture-budget-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+  const dir=await mkdtemp(join(tmpdir(),'nomo-capture-budget-'));t.after(()=>rm(dir,{recursive:true,force:true}));
   const store=LocalSnapshotStore(dir,{maxBytes:4}),prior=await store.put('isolated',new Uint8Array([1,2,3]));
   await assert.rejects(store.put('isolated',new Uint8Array(5)),/exceeds/);assert.deepEqual([...await store.get(prior.reference)],[1,2,3]);
 });

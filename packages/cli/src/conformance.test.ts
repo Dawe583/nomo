@@ -28,7 +28,7 @@ test("actual CLI runs every conformance case and emits a scoped JSON report", as
   const { stdout } = await promisify(execFile)(
     process.execPath,
     [
-      fileURLToPath(new URL("../bin/void.mjs", import.meta.url)),
+      fileURLToPath(new URL("../bin/nomo.mjs", import.meta.url)),
       "recovery",
       "conformance",
     ],

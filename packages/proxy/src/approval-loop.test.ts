@@ -60,6 +60,41 @@ describe("pumpApprovals", () => {
     assert.equal(queue.hold, originalHold);
   });
 
+  test("cancelled holds leave approval state and cannot be approved late", async () => {
+    const broker = new ApprovalBroker();
+    const queue = new HoldQueue();
+    const pump = pumpApprovals(broker);
+    const restore = pump.onHold(queue);
+    const controller = new AbortController();
+    const waiting = queue.hold({
+      tool: "aws.s3.bucket.delete",
+      klass: "r3",
+      blastRadius: 3,
+      ruleIndex: 0,
+      rationale: "approval required",
+      args: { value: 1 },
+      notify: ["cli"],
+    }, 60, controller.signal);
+    try {
+      const record = broker.listPending()[0];
+      assert.ok(record);
+      controller.abort();
+      const timeout = new Promise<null>((resolve) => {
+        setTimeout(() => resolve(null), 50);
+      });
+      const resolution = await Promise.race([waiting, timeout]);
+      assert.ok(resolution);
+      assert.equal(resolution.outcome.kind, "cancelled");
+      await Promise.resolve();
+      assert.equal(broker.get(record.holdId)?.status, "cancelled");
+      assert.equal(broker.decide(record.holdId, { kind: "approved", by: "ops" }), false);
+      assert.equal(queue.list().length, 0);
+    } finally {
+      restore();
+      pump.stop();
+    }
+  });
+
   test("poll drains expired approvals through the hold queue", async () => {
     const { broker, notified } = brokerWithNotification();
     const harness = await makeHarness("hold", broker);
@@ -90,7 +125,7 @@ type Harness = {
 };
 
 async function makeHarness(decision: Decision, broker: ApprovalBroker, posture: ProxyOptions["posture"] = "fail-closed"): Promise<Harness> {
-  const dir = await mkdtemp(join(tmpdir(), "void-approval-loop-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-approval-loop-"));
   const policyPath = join(dir, "policy.yml");
   await writeFile(policyPath, policyText(decision));
   const upstreamMessages: Array<Record<string, unknown>> = [];
@@ -106,7 +141,7 @@ async function makeHarness(decision: Decision, broker: ApprovalBroker, posture: 
         upstreamCommand: ["fake"],
         policyPath,
         posture,
-        ledgerDir: await mkdtemp(join(tmpdir(), "void-approval-ledger-")),
+        ledgerDir: await mkdtemp(join(tmpdir(), "nomo-approval-ledger-")),
         workspace: "test",
         input: fromLines(messages.map((message) => JSON.stringify(message))),
         output(line) { outputMessages.push(JSON.parse(line) as unknown); },

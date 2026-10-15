@@ -74,7 +74,7 @@ test("doctor rejects arguments with usage and exit two", async () => {
   const c = collect();
   const code = await runDoctorCommand(["--fix"], c.io, healthy);
   assert.equal(code, 2);
-  assert.match(c.err[0] ?? "", /usage: void doctor/);
+  assert.match(c.err[0] ?? "", /usage: nomo doctor/);
 });
 
 /**
@@ -99,14 +99,14 @@ const doctorWith = (env: Readonly<NodeJS.ProcessEnv>) => {
 };
 
 test("doctor warns that a default-path trust file is not a pin", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-doctor-trust-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-doctor-trust-"));
   t.after(() => rm(root, { recursive: true, force: true }));
-  await mkdir(join(root, ".void", "trust"), { recursive: true, mode: 0o700 });
-  const key = await devKeyProvider({ dir: join(root, ".void", "keys"), env: {} });
+  await mkdir(join(root, ".nomo", "trust"), { recursive: true, mode: 0o700 });
+  const key = await devKeyProvider({ dir: join(root, ".nomo", "keys"), env: {} });
   const spki = await key.publicKey(await key.currentKeyId());
   assert.ok(spki !== null);
   await pinVerificationKey(spki, {
-    file: join(root, ".void", "trust", "verify-ed25519.spki"),
+    file: join(root, ".nomo", "trust", "verify-ed25519.spki"),
     anchoredFrom: "signing-key-file",
   });
 
@@ -115,22 +115,22 @@ test("doctor warns that a default-path trust file is not a pin", async (t) => {
   const line = c.out.find((entry) => entry.includes("verify-key"));
   assert.ok(line !== undefined, "doctor reported no verify-key line");
   // A `WARN`, not a `PASS`. The file is real and the key is honest, but it
-  // shares `~/.void/` with the signing key, so anyone who can replace one can
+  // shares `~/.nomo/` with the signing key, so anyone who can replace one can
   // replace the other and nothing would notice.
   assert.match(line, /^WARN verify-key: dev-ed25519:[0-9a-f]+ \(trust-file\) at /);
-  assert.match(line, /shares ~\/\.void\//);
+  assert.match(line, /shares ~\/\.nomo\//);
   assert.doesNotMatch(line, /supplied out of band/);
   assert.doesNotMatch(line, /^PASS/);
 });
 
 test("doctor passes only a key the operator supplied as a value", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-doctor-pinned-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-doctor-pinned-"));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const key = await devKeyProvider({ dir: join(root, ".void", "keys"), env: {} });
+  const key = await devKeyProvider({ dir: join(root, ".nomo", "keys"), env: {} });
   const spki = await key.publicKey(await key.currentKeyId());
   assert.ok(spki !== null);
 
-  const c = doctorWith({ HOME: root, VOID_VERIFY_KEY: Buffer.from(spki).toString("base64") });
+  const c = doctorWith({ HOME: root, NOMO_VERIFY_KEY: Buffer.from(spki).toString("base64") });
   await c.run();
   const line = c.out.find((entry) => entry.includes("verify-key"));
   assert.ok(line !== undefined);
@@ -140,11 +140,11 @@ test("doctor passes only a key the operator supplied as a value", async (t) => {
 });
 
 test("doctor warns and names the opt-in when a degraded key resolves", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-doctor-degraded-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-doctor-degraded-"));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const key = await devKeyProvider({ dir: join(root, ".void", "keys"), env: {} });
+  const key = await devKeyProvider({ dir: join(root, ".nomo", "keys"), env: {} });
 
-  const c = doctorWith({ HOME: root, VOID_VERIFY_ALLOW_SIGNING_KEY: "1" });
+  const c = doctorWith({ HOME: root, NOMO_VERIFY_ALLOW_SIGNING_KEY: "1" });
   await c.run();
   const line = c.out.find((entry) => entry.includes("verify-key"));
   assert.ok(line !== undefined, "doctor reported no verify-key line");
@@ -156,6 +156,6 @@ test("doctor warns and names the opt-in when a degraded key resolves", async (t)
   // surface, so an operator who lands here by accident can find the switch.
   // And the switch is at the front of the line, because `doctor` output is
   // read in a terminal and the tail is what gets cut.
-  assert.match(line, /DEGRADED dev-ed25519:[0-9a-f]+ \(signing-key-provider\): VOID_VERIFY_ALLOW_SIGNING_KEY/);
-  assert.match(line, /VOID_VERIFY_ALLOW_SIGNING_KEY/);
+  assert.match(line, /DEGRADED dev-ed25519:[0-9a-f]+ \(signing-key-provider\): NOMO_VERIFY_ALLOW_SIGNING_KEY/);
+  assert.match(line, /NOMO_VERIFY_ALLOW_SIGNING_KEY/);
 });

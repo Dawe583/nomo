@@ -55,7 +55,15 @@ export type InterceptDeps = {
     probeFacts: Readonly<Record<string, string>>,
   ) => EvaluationResult;
   readonly policy: (call: PolicyCall) => PolicyDecision;
-  readonly hold: (seconds: number) => Promise<HoldResolution>;
+  readonly hold: (
+    seconds: number,
+    signal?: AbortSignal,
+  ) => Promise<HoldResolution>;
+  /**
+   * Aborts the hold when the caller cancels before dispatch. A hold that
+   * cannot observe cancellation would park until its timer expires.
+   */
+  readonly signal?: AbortSignal;
   readonly ledger: (entry: LedgerEntryInput) => void | Promise<void>;
   /**
    * The digest of the policy content this call was decided under. A dep that
@@ -177,7 +185,7 @@ export async function interceptCall(
     }
 
     const heldCall = toHeldCall(call, policyCall, decision);
-    const promise = deps.hold(decision.seconds).then(async (resolution) => {
+    const promise = deps.hold(decision.seconds, deps.signal).then(async (resolution) => {
       if (
         resolution.outcome.kind === "released" &&
         resolution.outcome.release.kind === "approved"
@@ -219,8 +227,11 @@ export async function interceptCall(
           result: { approved: true },
         } satisfies JsonRpcResult;
       }
-      const result =
-        resolution.outcome.kind === "expired" ? "expired" : "denied";
+      const result = resolution.outcome.kind === "expired"
+        ? "expired"
+        : resolution.outcome.kind === "cancelled"
+          ? "cancelled"
+          : "denied";
       await writeLedger(
         deps,
         now,
@@ -382,7 +393,7 @@ function denyError(
       message:
         `The call to ${call.tool} (${policyCall.klass}, blast radius ${policyCall.blastRadius ?? "unknown"}) was denied. ` +
         `Rule ${ruleIndex} denied it${rationale === undefined ? "." : `: ${rationale}.`} ` +
-        "Do not retry the same call; VOID rejected it.",
+        "Do not retry the same call; NOMO rejected it.",
       data: {
         tool: call.tool,
         class: policyCall.klass,
@@ -424,10 +435,10 @@ function holdError(
   return {
     jsonrpc: "2.0",
     error: {
-      code: ERROR_CODE,
+      code: outcome.kind === "cancelled" ? body.code : ERROR_CODE,
       message: body.message.includes("Do not retry")
         ? body.message
-        : `${body.message} Do not retry the same call; VOID rejected it.`,
+        : `${body.message} Do not retry the same call; NOMO rejected it.`,
       data: body.data,
     },
   };

@@ -2,7 +2,7 @@
  * Proves that the committed Apple project is exactly what `apps/apple/project.yml`
  * generates, without touching the working tree.
  *
- * `apps/apple/VOID.xcodeproj/project.pbxproj` is a build artifact: XcodeGen writes
+ * `apps/apple/NOMO.xcodeproj/project.pbxproj` is a build artifact: XcodeGen writes
  * it from the yml. Regenerating in place and trusting the exit code proves nothing,
  * because XcodeGen succeeds whether or not the result matches what is committed.
  * So the check copies the source tree to a scratch directory, generates there, and
@@ -24,8 +24,8 @@ import { join, relative, resolve, sep } from "node:path";
 
 const root = resolve(import.meta.dirname, "..", "..");
 const apple = join(root, "apps", "apple");
-const projectDirectory = "VOID.xcodeproj";
-const generatedPlist = "VOIDApp/Info.plist";
+const projectDirectory = "NOMO.xcodeproj";
+const generatedPlist = "NOMOApp/Info.plist";
 /**
  * SwiftPM writes package resolution state under `project.xcworkspace/xcshareddata`.
  * XcodeGen never writes it, so comparing it would report a difference on a clean
@@ -42,7 +42,7 @@ if (generated.error) {
 }
 console.log(`xcodegen ${generated.stdout.trim()}`);
 
-const scratch = mkdtempSync(join(tmpdir(), "void-apple-project-"));
+const scratch = mkdtempSync(join(tmpdir(), "nomo-apple-project-"));
 try {
   const copy = join(scratch, "apple");
   cpSync(apple, copy, {

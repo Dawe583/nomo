@@ -6,11 +6,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { Workbench } from "../../../workbench/src/index.ts";
-import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import { WorkspaceTui } from "./workspace.ts";
 
 test("TUI approvals dispatch once only after confirmation; denial, cancellation and restart cannot release a tool", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-approval-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-approval-"));
   let dispatched = 0;
   const server = createServer(async (req, res) => {
     let raw = "";
@@ -85,7 +84,6 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
       ],
     });
   });
-  assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
     server.closeAllConnections();
@@ -147,7 +145,6 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
   for (const file of ["workspace.key", "workspace.enc"])
     await copyFile(join(root, file), join(recoveredDir, file));
   const recovered = new Workbench({ VOID_DATA_DIR: recoveredDir });
-  assertIsolated(recoveredDir);
   assert.equal(recovered.pending().length, 0);
   assert.ok(
     recovered

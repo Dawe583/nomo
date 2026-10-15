@@ -1,19 +1,19 @@
-# @void/cli
+# @nomo/cli
 
-The development `void` command. It runs locally with no production account.
+The development `nomo` command. It runs locally with no production account.
 Packages remain private workspace packages, so use the repository binary:
 
 ```sh
-node packages/cli/bin/void.mjs --help
+node packages/cli/bin/nomo.mjs --help
 ```
 
 ## Runnable surfaces
 
 - `tui`: live local terminal workspace.
 - `agent`: bounded model and tool session.
-- `run`: launch the MCP proxy through the same arguments as `void-proxy`.
+- `run`: launch the MCP proxy through the same arguments as `nomo-proxy`.
 - `classify`: classify a captured transcript from declared facts, or one
-  named call with `void classify --tool <id> [--facts <file>] [--fact k=v]
+  named call with `nomo classify --tool <id> [--facts <file>] [--fact k=v]
   [--args <json>]`. The single call form prints the tone that tool would get,
   and says whether it came from declared facts or from the entry's
   fail-closed fallback.
@@ -44,8 +44,8 @@ for supported examples.
 
 ## Boundaries
 
-The CLI does not implement the pinned marketing examples `void report`,
-`void rewind`, `void budget`, Python wrapping, or
+The CLI does not implement the pinned marketing examples `nomo report`,
+`nomo rewind`, `nomo budget`, Python wrapping, or
 `--format aiact-a12 --since 30d`. Current replay selects one signed captured
 operation. It is not a cross-system time scrubber.
 

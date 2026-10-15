@@ -1,4 +1,4 @@
-# VOID GUI design rules
+# NOMO GUI design rules
 
 Status: pointer, 2026-09-29. The appearance contract is
 `APPLE-DESIGN-SYSTEM.md`, its values are generated from `design-tokens.json`,

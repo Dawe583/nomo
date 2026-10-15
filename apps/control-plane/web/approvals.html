@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" href="icon.svg">
-<title>VOID Approvals</title>
+<title>NOMO Approvals</title>
 
 <script src="theme.js"></script>
 <link rel="stylesheet" href="workbench.css">
@@ -14,7 +14,7 @@
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-<header class="top-nav"><div class="inner"><a class="brand" href="index.html"><svg class="brand-mark" width="24" height="24" viewBox="55 55 146 146" fill="none" aria-hidden="true"><path d="M73 102V73h29M183 102V73h-29M73 154v29h29M183 154v29h-29" stroke="currentColor" stroke-width="15" stroke-linecap="square"/><path d="M108 108h40v40h-40z" stroke="var(--accent)" stroke-width="12"/><circle cx="128" cy="128" r="6" fill="currentColor"/></svg> VOID</a><button class="theme-toggle secondary" id="theme-toggle" type="button" aria-label="Toggle color theme">[t] Theme</button><nav class="nav-links" aria-label="Primary"><a href="feed.html">Feed</a><a href="approvals.html" aria-current="page">Approvals</a><a href="ledger.html">Ledger</a></nav></div></header>
+<header class="top-nav"><div class="inner"><a class="brand" href="index.html"><svg class="brand-mark" width="24" height="24" viewBox="55 55 146 146" fill="none" aria-hidden="true"><path d="M73 102V73h29M183 102V73h-29M73 154v29h29M183 154v29h-29" stroke="currentColor" stroke-width="15" stroke-linecap="square"/><path d="M108 108h40v40h-40z" stroke="var(--accent)" stroke-width="12"/><circle cx="128" cy="128" r="6" fill="currentColor"/></svg> NOMO</a><button class="theme-toggle secondary" id="theme-toggle" type="button" aria-label="Toggle color theme">[t] Theme</button><nav class="nav-links" aria-label="Primary"><a href="feed.html">Feed</a><a href="approvals.html" aria-current="page">Approvals</a><a href="ledger.html">Ledger</a></nav></div></header>
 <main id="main">
 <section id="connection-panel" class="section" hidden aria-labelledby="connection-title"><h2 id="connection-title">Connect your workspace</h2><p id="connection-message" class="muted"></p><form id="connection-form" class="workspace-form"><div class="filter"><label for="access-token">Workspace access token</label><input id="access-token" type="password" autocomplete="current-password" required minlength="32"></div><button class="primary" type="submit">Connect</button></form><p id="connection-status" role="status"></p></section>
 <section class="hero"><p class="eyebrow">Approval inbox</p><h1>Held calls need a clear yes or no.</h1><p class="lead">Review the class and measured blast radius before deciding. A queued decision takes effect when the running proxy confirms it.</p></section>
@@ -25,7 +25,7 @@
 <p id="decision-status" role="status" aria-live="polite"></p><div id="approvals-list" class="inbox" aria-live="polite"><p>Loading pending holds from the API.</p></div>
 </div></section>
 </main>
-<footer><div class="inner">VOID / Recorded decisions. Verifiable evidence. Leave workspace blank to use the default ledger and view all pending holds.</div></footer>
+<footer><div class="inner">NOMO / Recorded decisions. Verifiable evidence. Leave workspace blank to use the default ledger and view all pending holds.</div></footer>
 <nav class="tabbar" aria-label="Primary"><a class="tab" href="index.html"><span class="ascii-icon" aria-hidden="true">[.]</span>Home</a><a class="tab" href="feed.html"><span class="ascii-icon" aria-hidden="true">[~]</span>Feed</a><a class="tab" href="approvals.html" aria-current="page"><span class="ascii-icon" aria-hidden="true">[!]</span>Approvals</a><a class="tab" href="ledger.html"><span class="ascii-icon" aria-hidden="true">[#]</span>Ledger</a></nav>
 <noscript><p>JavaScript is required to load current API data. No live status is available without it.</p></noscript>
 <script type="module" src="app.js" data-page="approvals"></script>

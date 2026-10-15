@@ -1,5 +1,5 @@
 /**
- * The Appwrite resources the hosted VOID surfaces on top of the MCP function.
+ * The Appwrite resources the hosted NOMO surfaces on top of the MCP function.
  *
  * This is the manifest, not the provisioning. `cloud/appwrite.mjs` applies it
  * with `ensure` semantics — create, or verify on 409 — so a run is safe to
@@ -39,7 +39,7 @@ export const appwriteManifest = Object.freeze({
   database: Object.freeze({ id: "void_control_plane", existing: true }),
   bucket: Object.freeze({
     bucketId: "void_documents",
-    name: "VOID Documents",
+    name: "NOMO Documents",
     permissions: [],
     fileSecurity: true,
     enabled: true,
@@ -47,13 +47,13 @@ export const appwriteManifest = Object.freeze({
   platforms: Object.freeze([
     Object.freeze({
       platformId: "void_web",
-      name: "VOID Production",
+      name: "NOMO Production",
       hostname: "void-tui.vercel.app",
       origin: "https://void-tui.vercel.app",
     }),
     Object.freeze({
       platformId: "void_local_web",
-      name: "VOID Local Development",
+      name: "NOMO Local Development",
       hostname: "localhost",
       origin: "http://localhost",
     }),
@@ -100,7 +100,7 @@ export const appwriteManifest = Object.freeze({
   tables: Object.freeze([
     Object.freeze({
       tableId: "registry_operations",
-      name: "VOID Registry Operations",
+      name: "NOMO Registry Operations",
       enabled: true,
       rowSecurity: true,
       documentSecurity: true,
@@ -121,7 +121,7 @@ export const appwriteManifest = Object.freeze({
     }),
     Object.freeze({
       tableId: "registry_cases",
-      name: "VOID Registry Cases",
+      name: "NOMO Registry Cases",
       enabled: true,
       rowSecurity: true,
       documentSecurity: true,
@@ -140,7 +140,7 @@ export const appwriteManifest = Object.freeze({
     }),
     Object.freeze({
       tableId: "mcp_tools",
-      name: "VOID MCP Tools",
+      name: "NOMO MCP Tools",
       enabled: true,
       rowSecurity: true,
       documentSecurity: true,

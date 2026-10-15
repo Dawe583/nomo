@@ -25,59 +25,109 @@ All notable user-facing changes since the first repository commit.
   list now offers Puter and Qwen, and a DashScope key in the environment
   configures the Qwen preset on first use, the way the NVIDIA key already
   configures its own.
-- The harness could not learn anything, and nothing said so. A review is
-  triggered when a compaction arms it, but nothing armed it: the trigger
-  started disarmed, the gate refused every boundary as "not armed", and that
-  refusal is final. The whole loop — the mined entries, the interval, the
-  cooldown, the reviewer — was reachable code that nothing reached, and every
-  test passed because each one armed the trigger by hand before asserting.
-  Reviews now happen, and a review's own tokens are recorded, so an operator
-  watching usage sees what the harness spent rather than only what the
-  conversation did.
-- The gate that decides when the harness spends a model call was a constant in
-  the code. An operator could not change the interval, could not change the
-  cooldown, and could not switch refinement off at all. Those are settings now:
-  turns between reviews, review cooldown, and the switch itself.
-- An approved prompt addendum was reintroduced to the model as something no
-  operator had decided. The approval is in the signed chain, but the entry it
-  produced reached a prompt under a header stating that nothing in it was
-  operator-decided. Approved and mined entries are now shown separately, and
-  the claim about operator decisions is scoped to the mined ones.
-- A model could not propose a prompt edit at all. The addendum text was dropped
-  while parsing the reply, and a second validation rule then required the same
-  field the first one did. The operator approval path existed with nothing that
-  could ever reach it. A proposal a model produces is now parsed, validated and
-  signable end to end.
-- A branch request that was refused — a malformed idempotency key, a sequence
-  no event carries — still moved the harness onto a new branch version and
-  discarded any review waiting for approval, so a later refinement would
-  report that the branch had moved when no branch had happened. Invalidation
-  now runs only once a branch actually succeeds.
-- Tests can no longer write into the operator's own workspace by accident. A
-  test that misspelled an environment variable — the kind of typo a rename
-  introduces one file at a time — used to fall back to the real
-  `~/.void/workbench` store, overwrite the operator's sessions and keys, and
-  still report green, because a test asserting against real state passes just
-  as well as one asserting against a temporary directory. Every test that
-  builds a Workbench now proves it is isolated immediately after building it,
-  and the suite fails if a test names a `VOID_` or `NOMO_` variable that no
-  source file reads, so the mistake is reported where it was made instead of
-  being written to disk.
-- A settled turn can now spend one model call on learning, and only when the
-  gate says it is worth one. The harness mines the signed workspace chain for
-  lessons and refusals, asks a provider for a proposal, validates it, and
-  writes the parts that are proven back to the chain. Prompt addenda stay
-  pending until an operator approves them; skill and subagent edits stay
-  proposal-only. The ledger tab shows the measured harness score with its
-  sample count and confidence interval, and `/harness scores` prints the
-  same facts on demand. The score is descriptive only and never changes a
-  decision or a permission.
+- The agent now learns from its own signed ledger, and what it learned shows
+  up where the operator already looks. A cleanly finished turn is the only
+  moment the agent may spend a model call on learning, and a cheap
+  deterministic gate decides first, so an ordinary run spends nothing. When
+  the gate opens, the review's output is a proposal, never authority: it is
+  validated against the verified chain, every edit must cite existing
+  sequence numbers from that same chain, and anything shaped like a secret
+  is refused before it is recorded. A review that fails is stamped the same
+  as one that succeeds, and a branch moved in between discards the result,
+  so money is never spent twice on the same silence.
+
+  Lessons mined from the chain take effect on their own, but a change to the
+  agent's prompt never does. A prompt edit waits as a signed proposal on the
+  ledger tab, where the exact diff and the chain sequences it rests on are
+  inspectable, and `/refine approve <digest>` activates it only when the
+  digest still reproduces byte for byte and every cited sequence still
+  verifies. Rejection is recorded the same way, and deciding twice is a
+  replay, not a second decision. The base system prompt is immutable;
+  approved additions reach only later turns of the same workspace, ranked,
+  bounded by a caller ceiling, and never another workspace's, and they are
+  rebuilt from the signed chain after a restart rather than restored from a
+  file.
+
+  Learned rules stay pauses for a human and stay behind the operator's own
+  rules: they can fill a gap the operator left open and can never override a
+  deliberate choice, and nothing the model proposes can change how a
+  decision is made.
+
+  The ledger tab now also carries the measured score: hold rate and deny
+  rate with confidence intervals over case counts, and a first-pass rate
+  only when the chain carries an observed correction signal, because a call
+  the operator allowed and then had to roll back is not a pass. Below two
+  cases there is no interval, and the tab says so instead of showing a
+  number nobody checked. No score changes a gate, a policy or a permission.
+- Settings an operator configured before the rename kept working after it.
+  Names like `NOMO_LEDGER_DIR` and `NOMO_DATA_DIR` are the current spelling,
+  but a machine whose shell profile, launch agent or `.env` still says
+  `VOID_LEDGER_DIR` was reading nothing at all: every setting fell back to its
+  default while looking configured, which reads as data loss and loses
+  nothing. The old names now answer wherever the new ones do.
+
+  The rule is one line, and the empty case is the part that matters. A
+  `NOMO_*` name that is present wins, including when its value is the empty
+  string, because an operator who exported an empty value chose it and
+  silently falling back would run with a setting nobody typed. Only an absent
+  `NOMO_*` name falls back.
+
+  The list of settings that alias is a list, not a scan. `PATH`, `HOME` and
+  `TERM` are not ours and `VOID_HOME` was never a spelling of a variable the
+  product owned, so a helper that guessed would change what the process reads.
+  Settings a process passes to its own children for one call, such as the hook
+  context, are deliberately excluded: each has a known writer inside a single
+  run, and a second spelling would only be another name to keep in step.
+
+  Nothing gets wider. An unknown permission mode under either spelling narrows
+  to read-only exactly as it did under the new one, because the server, not the
+  environment, decides what may run. `nomo config` names the spelling that is
+  actually in force, so an operator whose legacy name is doing the work can see
+  that it is.
+
+  `nomo state` reports where state lives and `nomo state migrate` moves it.
+  Reading is free and never writes. The migration copies to a sibling
+  temporary directory, compares a SHA-256 manifest of every file against the
+  source, and only then renames it into place, so the destination is either
+  absent or complete. It refuses when both directories exist, because an
+  operator who already migrated and re-ran the command would otherwise have
+  their newest state replaced by whatever the old name still held, and there is
+  no flag that overrides this. The source is never deleted, moved or written,
+  so the migration has a rollback: the tree it came from.
+- How an agent learns and how it is scored is now written down, read out of
+  the two harnesses NOMO drives rather than assumed, together with what a NOMO
+  harness of its own would add. It is a specification and nothing in it has
+  been built.
+
+  Reading the source rather than the documentation changed the plan in three
+  places. One of those harnesses keeps what the agent learned in a plain file
+  inside the working tree, and the other keeps its refinement history in a
+  plain file beside the session, so neither can prove where a conclusion came
+  from. NOMO already derives what it learns from a signed chain, which is the
+  better position and was not recognised as such before this was read. One of
+  them holds the only honest scoring machinery of the three, but it scores
+  benchmark runs rather than safety decisions, and NOMO has no statistics at
+  all. And the other gets the safety of its own learning right in a way that
+  transfers directly: check the gates, then a cheap review, and only an
+  approving review does any work, with a cooldown stamped by every attempt
+  including the ones that fail.
+
+  The plan splits learning in two so it can learn under a token budget.
+  Reading signal out of the signed chain stays deterministic and costs nothing,
+  so an ordinary run spends no extra calls on it. The model pass is paid for
+  only when a gate says the trajectory holds something worth keeping, and what
+  it produces is written back as a signed record rather than a loose file.
+
+  What the document refuses to do is stated as plainly as what it would do. The
+  model passes and the statistics must never reach the decision itself. A
+  learned rule stays a pause for a human and stays behind the operator's own
+  rules, which is what the existing rule mining already says.
 - Every limit that governed a run was a literal in the code: 20 turns, 4096
   output tokens, a 32000 character prompt, a 20-deep queue, a 65536 byte
   request, a 32-call tool batch, a 5s hook timeout, and a retry loop tied to
-  the free endpoint. Both agent harnesses VOID drives expose this kind of limit
+  the free endpoint. Both agent harnesses NOMO drives expose this kind of limit
   as an operator setting, so a limit nobody can change is a limit nobody chose.
-  They are now settings, keeping VOID's own conservative defaults rather than
+  They are now settings, keeping NOMO's own conservative defaults rather than
   either harness's.
 
   `/settings` lists every limit with the value in force and the range it may be
@@ -106,7 +156,7 @@ All notable user-facing changes since the first repository commit.
   stored, and then admitted exactly one value, so an agent profile could not
   run under any policy but the built-in default. A profile now names a policy
   file that already exists on disk: `default` is the built-in policy, and every
-  other name is a `.yaml` file in the directory `VOID_POLICY_PATH` points at,
+  other name is a `.yaml` file in the directory `NOMO_POLICY_PATH` points at,
   read with the same loader and decided by the same `decide` the connector path
   already used. `agents().policyProfiles` reports the names on disk rather than
   the literal `["default"]`, so the operator's own files are the catalogue and
@@ -141,7 +191,7 @@ All notable user-facing changes since the first repository commit.
   all. The rest of the list is absent rather than leaked, and the amendment
   says which is which so the next reader does not re-derive it.
 - A missing ledger is now named as the thing the operator passed. `void verify`,
-  `void export`, `void attest` and `void metrics` resolve the ledger through one
+  `void export`, `void attest` and `nomo metrics` resolve the ledger through one
   helper, which returns a result rather than letting `fs.stat` raise: a readable
   but empty directory is answered with that directory, a path that does not
   exist says so, a path the filesystem refuses says so, and a directory holding
@@ -149,7 +199,7 @@ All notable user-facing changes since the first repository commit.
   arrived as `ENOENT ... /<dir>/default.jsonl`, a file the caller never named
   and may not have.
 
-  `void metrics` exits non-zero when it cannot measure and prints nothing to
+  `nomo metrics` exits non-zero when it cannot measure and prints nothing to
   stdout, so a probe cannot record a healthy pipeline while no counter was
   counted. An empty directory is still a measurement and still exits zero: that
   is a report of zeroes, which is what it means.
@@ -159,11 +209,11 @@ All notable user-facing changes since the first repository commit.
   it will not guess, and a malformed bundle is still reported as malformed. It
   still imports nothing that would need installing.
 
-  `void recovery` no longer answers `Invalid recovery configuration.` It names
+  `nomo recovery` no longer answers `Invalid recovery configuration.` It names
   every reason, distinguishes an adapter this executor does not read from a
   field that is malformed, and points a filesystem-shaped config at
-  `void recovery conformance`, which does run `filesystem.managed`.
-  `void recovery doctor --config <file>` is new: it prints every field the
+  `nomo recovery conformance`, which does run `filesystem.managed`.
+  `nomo recovery doctor --config <file>` is new: it prints every field the
   command reads, every required field it did not find and every field it
   ignores, with their source and never a secret, and exits 1 when the
   configuration is unusable.
@@ -249,7 +299,7 @@ All notable user-facing changes since the first repository commit.
 - `void update` updates a local install in place, and an installer script puts
   `void` on your PATH as a checkout you own, with no global package manager
   and no account. The installer checks for Node.js 24 or newer, git and pnpm,
-  puts the tree at `$HOME/.local/share/void-cli` (override with `VOID_HOME`),
+  puts the tree at `$HOME/.local/share/void-cli` (override with `NOMO_HOME`),
   installs from the shipped lockfile, and writes a launcher at
   `$HOME/.local/bin/void`. It does not edit your PATH: add that directory
   yourself and open a new terminal. The repository is private, so the first
@@ -260,7 +310,7 @@ All notable user-facing changes since the first repository commit.
   `void update --force` allows a move that is not a fast-forward. Nothing
   local is thrown away: a modified file or a local commit stops the update
   and says which one, so an update can never eat work in progress. When the
-  install is missing or is not a VOID checkout the command refuses and names
+  install is missing or is not a NOMO checkout the command refuses and names
   the way out rather than guessing. Your ledger, workspace data and pending
   approvals live outside the checkout and are never touched by an update. To
   go back, move the tree onto the commit you want and reinstall from the
@@ -348,7 +398,7 @@ All notable user-facing changes since the first repository commit.
 - `void_project_info` now answers with where it is being served from and a
   pasteable client configuration, because a caller connecting for the first time
   needs the address before it needs anything else. Both come from the operator's
-  `VOID_MCP_ENDPOINT` rather than from the source, since the domain is expected
+  `NOMO_MCP_ENDPOINT` rather than from the source, since the domain is expected
   to change and a value written into the code answers the wrong one the moment
   it does. An undeclared endpoint reports itself undeclared instead of emitting
   a configuration with an empty URL, which looks pasteable and fails on use.
@@ -376,7 +426,7 @@ All notable user-facing changes since the first repository commit.
   it. One helper now applies both status shapes (the AWS SDK's `$metadata` and
   a bare `statusCode` from a proxy) at both sites, because a refusal reason is
   what tells an operator whether to fix credentials or go looking for a fault.
-- The hosted VOID MCP now publishes six tools over the reversibility
+- The hosted NOMO MCP now publishes six tools over the reversibility
   registry, and every fact it publishes is read out of the source tree rather
   than written by hand. The previous build carried a literal list of eight
   recovery tool names that nothing compared against the CLI, so it would have
@@ -436,7 +486,7 @@ All notable user-facing changes since the first repository commit.
   the new tokens, removing the override layer between `styles.css`,
   `ascii.css` and `mobile.css`, and dropping the font imports the components
   still name are the web rebuild, and none of it has happened yet.
-- VOID now has a shared design system package for the Apple surfaces, and the
+- NOMO now has a shared design system package for the Apple surfaces, and the
   theme on iOS has a place to import from. `VoidDesignSystem` is a Swift
   package for iOS 17 and macOS 14 that exposes the tokens through the
   platform's own semantic types and imports neither UIKit nor AppKit, so the
@@ -554,14 +604,14 @@ All notable user-facing changes since the first repository commit.
   account. The public demo is still open with no credential and is still its own
   surface, but its rows are owned too, as `public-demo`, so an open endpoint is
   no longer a window into somebody else's namespace. Accounts are not enabled:
-  signup is refused, and the switch is `VOID_ACCOUNT_SIGNUP`. An existing
+  signup is refused, and the switch is `NOMO_ACCOUNT_SIGNUP`. An existing
   database is moved to the new shape by `cloud/0001-account-ownership.sql`,
   which is additive, runs cleanly more than once, and lifts the append-only
   trigger for exactly the backfill that trigger would otherwise refuse. Run it
   before deploying a build that carries this change, once, with the deploy
   paused.
 
-- VOID no longer ships a default provider or a default model. `providerId` and
+- NOMO no longer ships a default provider or a default model. `providerId` and
   `defaultModel` are `null` in a workspace with nothing configured, the provider
   panel says no provider is connected instead of naming a vendor, and the first
   conversation asks which model to use from the catalog the connected provider
@@ -608,7 +658,7 @@ All notable user-facing changes since the first repository commit.
   Settings in both languages.
 - Evidence: the managed PostgreSQL adapter and the Git commit lifecycle are
   now published capability profiles, so the release gate can no longer ship
-  either of them unnamed. `void recovery conformance --adapter
+  either of them unnamed. `nomo recovery conformance --adapter
   postgres-managed-conformance` runs five scenarios over an in-process
   database, including a real cascade subtree and a row-level tenant scope
   executed as an unprivileged role; `--adapter git.managed` runs seven,
@@ -617,11 +667,11 @@ All notable user-facing changes since the first repository commit.
   worktree and index actions, which still reconcile to unknown because state
   equality is ABA-unsafe.
 
-- Operator guide: there is now one entry point for using VOID. A new
+- Operator guide: there is now one entry point for using NOMO. A new
   handbook, with a Czech edition beside it, was written from the product
   rather than from the other documents: every command, TUI tab, slash
   command, GUI route, composer command, policy key and MCP tool was read out of
-  the source first. It leads with what VOID does not do, because a guide that
+  the source first. It leads with what NOMO does not do, because a guide that
   overstates the product is worse than no guide. It is a gate rather than
   prose: `scripts/src/handbook.test.mjs` fails the build when the guide names a
   command, script or path the product does not have, when it omits a command
@@ -670,7 +720,7 @@ All notable user-facing changes since the first repository commit.
   key. A key that exists but cannot be opened, because the access was denied
   or the user cancelled, is now told apart from a key that was never created,
   and a refused read prints fixed operator guidance instead of exiting with
-  `Cannot unlock the VOID workspace key in macOS Keychain`. Collapsing the two
+  `Cannot unlock the NOMO workspace key in macOS Keychain`. Collapsing the two
   cases would have let a fresh key be minted over an existing encrypted
   workspace.
 - Mac desktop builds no longer default to an ad-hoc signature. The signing
@@ -780,7 +830,7 @@ All notable user-facing changes since the first repository commit.
   `snapshotDocuments: true` performed durable managed-document writes while
   `/api/capabilities` advertised `documentEditing: false`.
 - Name the two permission-mode defaults. A local operator surface and the
-  remote-facing control plane resolve an absent `VOID_PERMISSION_MODE`
+  remote-facing control plane resolve an absent `NOMO_PERMISSION_MODE`
   differently on purpose; both are now named constants with a check instead of
   two unrelated literals that had drifted apart unnoticed.
 - Serve the frozen `void.companion.v1` outcome vocabulary from
@@ -809,7 +859,7 @@ All notable user-facing changes since the first repository commit.
 - Add a single-endpoint companion envelope adapter so the Apple client can
   round-trip the protocol it was written against, and add `device.pair` to the
   client catalog as a separate request type.
-- Add a standard-library Python client for the VOID proxy wire, closing the
+- Add a standard-library Python client for the NOMO proxy wire, closing the
   transport-client half of the R12 milestone. It has no third-party
   dependency, refuses a mismatched response identity, an oversized body, an
   unknown shape and a mutating call without an idempotency key, and never
@@ -835,7 +885,7 @@ All notable user-facing changes since the first repository commit.
   and capability profile with counts, byte lengths and digests, and writes its
   `complete` manifest last, so a failed export leaves no completeness claim on
   disk. Verification takes an out-of-band anchor and recomputes every declared
-  number from the bytes. `void metrics` recomputes 18 closed-label counters
+  number from the bytes. `nomo metrics` recomputes 18 closed-label counters
   from the existing ledger, journal and vault, with no new persisted state.
   Neither is an operational certification.
 - Move the Windows Credential Manager target name and the accepted blob length
@@ -908,7 +958,7 @@ All notable user-facing changes since the first repository commit.
   database over PGlite, where a refused row change leaves the row alone and the
   confirmed inverse restores the captured values rather than a reconstruction.
   A third arm drives the loop over real MCP stdio against a spawned
-  `void recovery serve`, so the claim covers the transport an agent actually
+  `nomo recovery serve`, so the claim covers the transport an agent actually
   uses. All three run in the gate.
 - Deduplicate a mutating companion operation by its idempotency key, bound to
   the exact request body, so a retry is distinguishable from a key reused for a
@@ -917,7 +967,7 @@ All notable user-facing changes since the first repository commit.
   to make a retry cheap. The handshake now lists what it does not enforce.
 - Stop letting a pairing caller grant itself `companion:write`. The write scope
   is the host operator's decision now, refused unless the host configured
-  `VOID_COMPANION_WRITE_PAIRING=1` and refused rather than quietly downgraded,
+  `NOMO_COMPANION_WRITE_PAIRING=1` and refused rather than quietly downgraded,
   so a client never believes it holds an authority it does not.
 
 - d125b7e9: Restored the product baseline from upstream history.
@@ -969,7 +1019,7 @@ All notable user-facing changes since the first repository commit.
 ### Changed
 
 - 69fa9a41: Refreshed the dependency set and prompt asset used by the workspace.
-- 0ce7cc61: Refreshed the VOID artifact with new interface components and assets.
+- 0ce7cc61: Refreshed the NOMO artifact with new interface components and assets.
 - 2eeae3f1: Rebuilt the site with a fuller design system, complete pages, and a working backend.
 - 9fc95d90: Changed the default site theme to light.
 - a2000b64: Restored the site to the original Replit-style visual language.

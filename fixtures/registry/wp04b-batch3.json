@@ -749,7 +749,7 @@
           "tone": "r3",
           "inverse": null,
           "window": "none",
-          "note": "Trashing hides the original recording; without a verified retained recovery path VOID cannot promise restoration.",
+          "note": "Trashing hides the original recording; without a verified retained recovery path NOMO cannot promise restoration.",
           "if": {
             "kind": "always"
           }
@@ -2938,7 +2938,7 @@
       "summary": "Void a finalized Stripe invoice.",
       "tags": [
         "stripe",
-        "void"
+        "nomo"
       ],
       "cases": [
         {
@@ -3430,6 +3430,6 @@
     "Opsgenie human API pages returned HTTP 429; official public SDK source verified the included operations instead.",
     "Basecamp API documentation says projects in trash are deleted after 30 days, but current help says 25 days or when trash is emptied. No fixed trash retention duration is promised by these cases.",
     "Cloudflare zone deletion was already in the registry and is not counted as a new entry.",
-    "A registry entry describes a canonical tool surface. It does not imply that VOID supplies a connector or that a manual administration action has a public API endpoint."
+    "A registry entry describes a canonical tool surface. It does not imply that NOMO supplies a connector or that a manual administration action has a public API endpoint."
   ]
 }

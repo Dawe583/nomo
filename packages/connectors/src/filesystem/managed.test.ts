@@ -23,7 +23,7 @@ import {
 } from "../../../runtime/src/index.ts";
 import { devKeyProvider } from "../../../ledger/src/sign.ts";
 async function fixture(t: import("node:test").TestContext) {
-  const dir = await mkdtemp(join(tmpdir(), "void-files-")),
+  const dir = await mkdtemp(join(tmpdir(), "nomo-files-")),
     root = join(dir, "project");
   await mkdir(root);
   t.after(() => rm(dir, { recursive: true, force: true }));

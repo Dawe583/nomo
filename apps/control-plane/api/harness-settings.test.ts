@@ -15,7 +15,7 @@ import {listenControlPlane} from "./server.ts";
 
 test("PATCH /api/harness-settings applies a limit and GET reports it with its consumer",async t=>{
   const directory=await mkdtemp(join(tmpdir(),"void-api-harness-settings-"));
-  const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+  const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
   t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
   const origin=`http://127.0.0.1:${server.port}`;
   const patch=(body:unknown)=>fetch(origin+"/api/harness-settings",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -49,7 +49,7 @@ test("PATCH /api/harness-settings applies a limit and GET reports it with its co
 
 test("PATCH /api/harness-settings refuses an unknown key rather than ignoring it",async t=>{
   const directory=await mkdtemp(join(tmpdir(),"void-api-harness-unknown-"));
-  const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+  const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
   t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
   const origin=`http://127.0.0.1:${server.port}`;
   const patch=(body:unknown)=>fetch(origin+"/api/harness-settings",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify(body)});

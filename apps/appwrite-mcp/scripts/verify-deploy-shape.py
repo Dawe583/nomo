@@ -1,7 +1,7 @@
 """Does the hosted function work from the tarball alone, with no repository?
 
 This is the question the offline suite cannot answer. Every test in
-``apps/appwrite-mcp/tests`` runs from a checkout, so ``void_data`` reads
+``apps/appwrite-mcp/tests`` runs from a checkout, so ``nomo_data`` reads
 ``packages/registry/src/registry.ts`` through a relative path that exists. A
 deployed function receives a tarball: no ``packages/``, no registry, no CLI. If
 the snapshot fallback is broken, every tool returns an empty catalogue and the
@@ -15,7 +15,7 @@ from the snapshot rather than from a file that is not there.
 
 Run it from the repository root:
 
-    /tmp/void-mcp-venv/bin/python apps/appwrite-mcp/scripts/verify-deploy-shape.py
+    /tmp/nomo-mcp-venv/bin/python apps/appwrite-mcp/scripts/verify-deploy-shape.py
 """
 
 from __future__ import annotations
@@ -56,20 +56,20 @@ sys.path.insert(0, "src")
 
 started = time.time()
 from app import (  # noqa: E402
-    void_cli_commands,
-    void_local_tools,
-    void_project_info,
-    void_registry_entry,
-    void_registry_search,
-    void_registry_summary,
+    nomo_cli_commands,
+    nomo_local_tools,
+    nomo_project_info,
+    nomo_registry_entry,
+    nomo_registry_search,
+    nomo_registry_summary,
 )
-from appwrite_mcp import void_data  # noqa: E402
+from appwrite_mcp import nomo_data  # noqa: E402
 
 print("import_ms", round((time.time() - started) * 1000, 1))
-print("source_reachable", void_data.REGISTRY_SOURCE.exists())
-print("cli_dispatch_reachable", void_data.CLI_DISPATCH.exists())
+print("source_reachable", nomo_data.REGISTRY_SOURCE.exists())
+print("cli_dispatch_reachable", nomo_data.CLI_DISPATCH.exists())
 
-summary = void_data.registry_summary()
+summary = nomo_data.registry_summary()
 print("summary", json.dumps({
     "operations": summary["operations"],
     "cases": summary["cases"],
@@ -78,23 +78,23 @@ print("summary", json.dumps({
     "unparsed": summary["unparsed"],
     "version": summary["version"],
 }))
-print("cli_commands", len(void_data.cli_commands()))
-print("local_tools", len(void_data.local_tool_schema()))
+print("cli_commands", len(nomo_data.cli_commands()))
+print("local_tools", len(nomo_data.local_tool_schema()))
 
 # Every tool has to answer, not merely import.
-print("project_info", "VOID" in void_project_info())
-print("summary_tool", "operations" in void_registry_summary())
-print("cli_tool", "replay" in void_cli_commands())
-print("local_tool", "void_execute" in void_local_tools())
-found = void_registry_entry("aws.s3.object.put")
+print("project_info", "NOMO" in nomo_project_info())
+print("summary_tool", "operations" in nomo_registry_summary())
+print("cli_tool", "replay" in nomo_cli_commands())
+print("local_tool", "nomo_execute" in nomo_local_tools())
+found = nomo_registry_entry("aws.s3.object.put")
 print("entry_tool", '"found": true' in found or '"found":true' in found)
-search = void_registry_search(tone="r3", limit=2)
+search = nomo_registry_search(tone="r3", limit=2)
 print("search_tool", '"tone": "r3"' in search or '"tone":"r3"' in search)
 """
 
 
 def main() -> int:
-    tarball = Path(tempfile.gettempdir()) / "void-mcp-deploy-shape.tar.gz"
+    tarball = Path(tempfile.gettempdir()) / "nomo-mcp-deploy-shape.tar.gz"
     collected = [
         path
         for path in sorted(FUNCTION.rglob("*"))
@@ -107,7 +107,7 @@ def main() -> int:
         for path in collected:
             archive.add(path, arcname=path.relative_to(FUNCTION))
 
-    scratch = Path(tempfile.mkdtemp(prefix="void-mcp-deployed-"))
+    scratch = Path(tempfile.mkdtemp(prefix="nomo-mcp-deployed-"))
     try:
         with tarfile.open(tarball) as archive:
             members = archive.getnames()

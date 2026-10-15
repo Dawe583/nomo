@@ -1,4 +1,11 @@
-# VOID 2.0: Master Prompt for GLM-5.3
+# Archived Prompt: VOID 2.0 Master Prompt for GLM-5.3
+
+> Archived on 2026-10-09. This prompt preserves an earlier VOID workbench
+> direction and is not current product authority. NOMO is active. Read
+> `docs/CONTEXT.md`, `docs/DECISIONS.md`, `docs/STANDARDS.md`, the NOMO
+> capability map, MVP spec and implementation plan before using historical
+> details below.
+
 
 ## Role
 
@@ -18,17 +25,17 @@ The long-term product should become an excellent developer-facing agent workbenc
 
 The TUI and GUI must feel like one product. They must use the existing VOID visual language, not a generic dashboard template. The desktop application must be a natural extension of the CLI and TUI, not a separate product with duplicated business logic.
 
-The existing product build plan remains the source of truth for product sequencing. Read it before coding:
+The active NOMO product plan is the source of truth for current sequencing. Read it before coding:
 
 - `README.md`
 - `docs/CONTEXT.md`
 - `docs/DECISIONS.md`
 - `docs/STANDARDS.md`
-- `docs/BUILD-PLAN.md`
-- `docs/EXECUTION-PLAN.md`
+- `docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-capability-map.md`
+- `docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md`
+- `docs/superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md`
 - every relevant `packages/*/README.md`
-- the existing site design system under `artifacts/void/`
-- the current Git history and branch state
+- the current source tree, Git history and branch state
 
 The GitHub repository is `Dawe583/void`. The local checkout on the machine where you run this prompt is the working source for implementation. GitHub is the remote source and historical reference. If local and GitHub differ, inspect both, identify the exact divergence, and do not silently overwrite either side.
 
@@ -62,7 +69,7 @@ Every proposed feature must pass this test:
 
 ## Non-negotiable repository rules
 
-1. Treat the existing build and execution plans as contracts. If a new finding changes the plan, update the plan and `docs/DECISIONS.md` in the same work package. Never diverge quietly.
+1. Treat the active NOMO context, decisions, capability map, MVP spec and implementation plan as contracts. If a finding changes one, update the relevant source and decision record in the same work package. Never diverge quietly.
 2. Do not skip an incomplete earlier work package to build a visually attractive later feature.
 3. Preserve the package boundaries:
    - `@void/registry` stays data and pure functions only.
@@ -566,9 +573,9 @@ Use the existing design tokens as the canonical source. Do not add component-loc
 
 ---
 
-## New workstream: Agent Workbench extension
+## Historical workstream: Agent Workbench extension
 
-Do not silently replace the existing WP sequence. Add the following workstream to `docs/EXECUTION-PLAN.md` only after checking the current state and documenting dependencies.
+This earlier AW proposal is archived and is not active scope. The current Workbench scope is the required Harness integration in the NOMO MVP and product roadmap. Do not use the historical task list below to extend the current plan.
 
 ### AW-00: architecture and design-system alignment
 

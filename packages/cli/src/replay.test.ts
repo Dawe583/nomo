@@ -228,7 +228,7 @@ describe("runReplayCommand", () => {
   });
 
   test("ledger chain verification failure refuses before manifest lookup", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-replay-ledger-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-replay-ledger-"));
     const ledgerPath = join(dir, "default.jsonl");
     await writeFile(
       ledgerPath,
@@ -266,7 +266,7 @@ describe("runReplayCommand", () => {
 });
 
 async function manifestDir(records: readonly unknown[]): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "void-replay-snapshots-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-replay-snapshots-"));
   await writeFile(join(dir, "manifest.jsonl"), records.map((record) => JSON.stringify(record)).join("\n") + "\n");
   return dir;
 }
@@ -286,12 +286,12 @@ describe("persisted connector replay", () => {
   test("binary lists static connectors without needing a ledger or snapshot", async () => {
     const result = await binaryReplay(["--list-connectors"]);
     assert.equal(result.code, 0, result.stderr);
-    assert.match(result.stdout, /postgres: executor absent.*VOID_PG_URL/);
+    assert.match(result.stdout, /postgres: executor absent.*NOMO_PG_URL/);
     assert.match(result.stdout, /s3: executor absent/);
   });
 
   test("connector listing does not confuse a URL with a working executor", async () => {
-    const result = await binaryReplay(["--list-connectors"], { VOID_PG_URL: "postgres://test:private-credential@127.0.0.1:1/example" });
+    const result = await binaryReplay(["--list-connectors"], { NOMO_PG_URL: "postgres://test:private-credential@127.0.0.1:1/example" });
     assert.equal(result.code, 0);
     assert.match(result.stdout, /postgres: connection configured.*validated on replay/);
     assert.doesNotMatch(result.stdout, /private-credential/);
@@ -329,14 +329,14 @@ describe("persisted connector replay", () => {
     const result = await binaryReplay(fixture.argv);
     assert.equal(result.code, 1);
     assert.match(result.stderr, /ExecutorNotConfigured: postgres executor not configured/);
-    assert.match(result.stderr, /VOID_PG_URL/);
+    assert.match(result.stderr, /NOMO_PG_URL/);
     assert.doesNotMatch(result.stdout, /applied:/);
   });
 
   test("a URL alone cannot pretend an executor adapter exists or echo credentials", async (t) => {
     const fixture = await persistedFixture();
     t.after(() => rm(fixture.root, { recursive: true, force: true }));
-    const result = await binaryReplay(fixture.argv, { VOID_PG_URL: "postgres://test:private-credential@127.0.0.1:1/example" });
+    const result = await binaryReplay(fixture.argv, { NOMO_PG_URL: "postgres://test:private-credential@127.0.0.1:1/example" });
     assert.equal(result.code, 1);
     assert.match(result.stderr, /Postgres connection failed/);
     assert.doesNotMatch(result.stderr, /private-credential/);
@@ -459,7 +459,7 @@ describe("persisted connector replay", () => {
 });
 
 async function persistedFixture(tool = "postgres.row.update", snapshotBytes?: Uint8Array) {
-  const root = await mkdtemp(join(tmpdir(), "void-replay-persisted-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-replay-persisted-"));
   const snapshotDir = join(root, "snapshots");
   const statement = parseStatement("update public.accounts set status = 'private-after-value' where id = 42");
   const image = {
@@ -485,7 +485,7 @@ async function persistedFixture(tool = "postgres.row.update", snapshotBytes?: Ui
 }
 
 async function binaryReplay(argv: readonly string[], env: NodeJS.ProcessEnv = {}) {
-  const binary = fileURLToPath(new URL("../bin/void.mjs", import.meta.url));
+  const binary = fileURLToPath(new URL("../bin/nomo.mjs", import.meta.url));
   try {
     const result = await promisify(execFile)(process.execPath, [binary, "replay", ...argv], { env, timeout: 10000 });
     return { ...result, code: 0 };

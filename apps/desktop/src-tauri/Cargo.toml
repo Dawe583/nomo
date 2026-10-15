@@ -1,8 +1,8 @@
 [package]
-name = "void-desktop"
+name = "nomo-desktop"
 version = "1.0.1"
-description = "VOID guarded agent workbench"
-authors = ["VOID contributors"]
+description = "NOMO guarded agent workbench"
+authors = ["NOMO contributors"]
 license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.77.2"

@@ -137,7 +137,7 @@ const LICENCE_LINE = new Map([
     "python",
     {
       status: "open",
-      why: "void-transport, which declares Apache 2.0 in its pyproject",
+      why: "nomo-transport, which declares Apache 2.0 in its pyproject",
     },
   ],
   ["scripts", { status: "open", why: "the local gates, which declare Apache 2.0" }],
@@ -343,7 +343,7 @@ test("the verifier package is independent and would survive publication", () => 
   );
   const manifest = readJson(join(dir, "package.json"));
 
-  // Amendment two. Zero dependencies, not zero VOID dependencies.
+  // Amendment two. Zero dependencies, not zero NOMO dependencies.
   assert.deepEqual(
     manifest.dependencies ?? {},
     {},
@@ -380,11 +380,11 @@ test("the verifier package is independent and would survive publication", () => 
     "the verifier should be publishable",
   );
   assert.ok(
-    manifest.bin?.["void-verify"],
-    "the verifier declares no void-verify bin",
+    manifest.bin?.["nomo-verify"],
+    "the verifier declares no nomo-verify bin",
   );
   assert.ok(
-    existsSync(join(dir, manifest.bin["void-verify"])),
+    existsSync(join(dir, manifest.bin["nomo-verify"])),
     "the declared bin does not exist on disk",
   );
   assert.equal(manifest.license, "Apache-2.0");

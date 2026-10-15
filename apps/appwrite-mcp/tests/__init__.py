@@ -3,7 +3,7 @@
 The Appwrite runtime receives ``src`` as the working directory, so the package
 under test has no install step and no build backend. Putting ``src`` on
 ``sys.path`` here is the whole story, the same way
-``python/void-transport/tests/__init__.py`` does it, which keeps these tests
+``python/nomo-transport/tests/__init__.py`` does it, which keeps these tests
 importable from the repository root with nothing installed.
 
 One dependency is real and cannot be dodged: the endpoint is a thin adapter

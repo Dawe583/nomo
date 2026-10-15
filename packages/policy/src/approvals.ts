@@ -14,7 +14,7 @@
  * always 0, and getuid is absent, so the old predicate could never be true and
  * the whole approval path was dead there. Asserting those bits on Windows would
  * be a claim the platform cannot support, so Windows verifies the DACL with the
- * icacls binary that ships with the operating system, and a directory VOID can
+ * icacls binary that ships with the operating system, and a directory NOMO can
  * claim is narrowed to the operator before it is accepted, and only on the
  * write path: a function that inspects a directory changes nothing about it.
  * What cannot be proven is returned as unverifiable and refused unless the host
@@ -32,7 +32,7 @@ import type { HeldCall, HoldId, HoldQueue, HoldResolution, Release } from "./hol
 import type { PolicyCall } from "./decide.ts";
 import type { NotifyChannel } from "./rules.ts";
 
-export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
+export type ApprovalStatus = "pending" | "approved" | "denied" | "expired" | "cancelled";
 
 export type ApprovalDecision = {
   readonly kind: "approved" | "denied";
@@ -49,6 +49,10 @@ export type ApprovalRecord = {
   readonly notify: readonly NotifyChannel[];
   readonly by?: string;
   readonly reason?: string;
+};
+
+export type PendingApprovalRecord = Omit<ApprovalRecord, "status"> & {
+  readonly status: "pending";
 };
 
 export type ApprovalNotification = {
@@ -121,7 +125,7 @@ export type ApprovalAclCommander = (
 
 /**
  * The DACL rule's inputs. `harden` is the whole contract in one word: it is
- * false for every caller that only reads a directory, and true only where VOID
+ * false for every caller that only reads a directory, and true only where NOMO
  * is about to write state into the one it is verifying.
  */
 export type WindowsApprovalStateInput = {
@@ -256,6 +260,17 @@ export class ApprovalBroker {
     return true;
   }
 
+  cancel(holdId: HoldId): boolean {
+    const current = this.approvals.get(holdId);
+    const queue = this.queues.get(holdId);
+    if (current === undefined || queue === undefined || current.status !== "pending") return false;
+    if (queue.list().some((held) => held.id === holdId)) queue.cancel(holdId);
+    this.approvals.set(holdId, { ...current, status: "cancelled" });
+    this.queues.delete(holdId);
+    this.flush();
+    return true;
+  }
+
   expire(dueAt: number): readonly ApprovalRecord[] {
     const expired: ApprovalRecord[] = [];
     for (const record of this.approvals.values()) {
@@ -282,11 +297,13 @@ export class ApprovalBroker {
     return [...this.approvals.values()].map((record) => ({ ...record }));
   }
 
-  pending(): readonly ApprovalRecord[] {
-    return this.list().filter((record) => record.status === "pending");
+  pending(): readonly PendingApprovalRecord[] {
+    return this.list().filter(
+      (record): record is PendingApprovalRecord => record.status === "pending",
+    );
   }
 
-  listPending(): readonly ApprovalRecord[] {
+  listPending(): readonly PendingApprovalRecord[] {
     return this.pending();
   }
 
@@ -386,7 +403,7 @@ export function savePending(dir: string, records: readonly ApprovalRecord[], fs:
   atomicWrite(dir, "pending.json", records, stateCheck(fs));
 }
 
-export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: (code: ApprovalStateCode) => boolean): readonly ApprovalRecord[] {
+export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: (code: ApprovalStateCode) => boolean): readonly PendingApprovalRecord[] {
   const check = stateCheck(fs, acknowledge);
   assertPrivateDirectory(dir, check, false);
   assertPrivateFile(join(dir, "pending.json"), check);
@@ -396,7 +413,7 @@ export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: 
     item.status === "pending" && typeof item.expiresAt === "number" && Number.isFinite(item.expiresAt) &&
     isObject(item.call) && typeof item.call.tool === "string" && typeof item.call.klass === "string" &&
     Array.isArray(item.notify))) throw new Error("invalid pending approvals file");
-  return value as ApprovalRecord[];
+  return value as PendingApprovalRecord[];
 }
 
 export function writeDecision(
@@ -497,10 +514,10 @@ function assertPrivateDirectory(
 }
 
 /**
- * The single entry point a host can call to learn what VOID could prove about a
+ * The single entry point a host can call to learn what NOMO could prove about a
  * state directory, without creating a broker and without a decision to make.
  * It reads and changes nothing: no directory is created, and on Windows no DACL
- * is narrowed. A host that asks what VOID could prove gets the verdict that was
+ * is narrowed. A host that asks what NOMO could prove gets the verdict that was
  * measured, and a directory that is not owner only is still reported as not
  * owner only. Only the write path may harden a directory, because only the
  * write path has a reason to.

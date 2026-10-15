@@ -19,7 +19,7 @@ import {
 } from "./index.ts";
 import { digest } from "./journal.ts";
 async function fixture(t: import("node:test").TestContext) {
-  const root = await mkdtemp(join(tmpdir(), "void-reserved-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-reserved-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   return { root, keys: { first: randomBytes(32), second: randomBytes(32) } };
 }
@@ -565,7 +565,7 @@ import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { reservedRecoveryVault } from ${JSON.stringify(new URL("./reserved-vault.ts", import.meta.url).href)};
 const size = ${size};
-const root = await mkdtemp(join(tmpdir(), "void-measure-"));
+const root = await mkdtemp(join(tmpdir(), "nomo-measure-"));
 const vault = reservedRecoveryVault(join(root, "vault"), { k: randomBytes(32) }, "k", ${JSON.stringify(capacity)});
 await vault.reserve("w", "op", ["capture"]);
 const plain = Buffer.from(JSON.stringify({ blob: "x".repeat(size) }));

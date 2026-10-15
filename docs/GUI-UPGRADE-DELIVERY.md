@@ -12,7 +12,7 @@ Plán: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md), původní audit: [GUI-UPGRADE
 - Dokumenty: editace s očekávanou revizí, konflikt 409, historie a diff; Undo používá aktuální preview a kontrolu digestu. Editor po Undo načte skutečnou novou revizi.
 - Konektory: přidání, editace, test připojení a skutečný katalog nástrojů se schématy. Prázdný token při editaci zachová existující tajemství.
 - Cloud uchovává append-only events samostatně; metadata polling nepřenáší celý transcript. Delta stránky a klientské sloučení zabraňují duplicitám. Starší zachovaná historie je dostupná přes serverové dotazy.
-- Výchozí provider a model byly v tomto dokumentu původně uvedeny jako NVIDIA NIM / GLM 5.3 Flash. **Tento stav už neplatí**: VOID výchozí provider ani model neposílá (`providerId` a `defaultModel` jsou `null`), seznam vyřazených modelů se odmítá při dotazu a workspace vybírá z vlastního ověřeného katalogu. Klíč zůstává serverový a nepřechází do klientského buildu; existující sessions si ponechají původní provider/model.
+- Výchozí provider a model byly v tomto dokumentu původně uvedeny jako NVIDIA NIM / GLM 5.3 Flash. **Tento stav už neplatí**: NOMO výchozí provider ani model neposílá (`providerId` a `defaultModel` jsou `null`), seznam vyřazených modelů se odmítá při dotazu a workspace vybírá z vlastního ověřeného katalogu. Klíč zůstává serverový a nepřechází do klientského buildu; existující sessions si ponechají původní provider/model.
 - OpenAI-compatible stream parser zvládá rozdělené UTF-8/CRLF, tool fragments, redakci klíče a neúplný stream. Chyby providera včetně 429 mají konkrétní stav; generace se automaticky neopakuje.
 
 ## Current management parity increment
@@ -21,7 +21,7 @@ Plán: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md), původní audit: [GUI-UPGRADE
   Missing token or cost data stays explicitly unknown.
 - Arrow Up on an empty composer opens the reviewed branch editor for the last
   user message. It never rewrites history or replays earlier tools.
-- Nová konverzace může nést projektový workspace; Sessions zobrazují projekt a nový agent katalog nabízí `default`, `planner`, `reviewer` a `implementer`. Agent preset mění pouze systémovou instrukci; nástroje a oprávnění zůstávají pod VOID policy.
+- Nová konverzace může nést projektový workspace; Sessions zobrazují projekt a nový agent katalog nabízí `default`, `planner`, `reviewer` a `implementer`. Agent preset mění pouze systémovou instrukci; nástroje a oprávnění zůstávají pod NOMO policy.
 - Chat má skutečnou akci Compact context. Server zachová systémové instrukce a poslední zprávy, vloží redigovatelný historický souhrn a zapíše `context.compacted` event.
 - Background start now creates a durable session immediately; when the single
   active-run safety capacity is occupied, the session is visibly `queued` and
@@ -59,7 +59,7 @@ dependency-aware multi-operation rewind remain in `PLAN-GAPS.md`.
 | Kontrast základních tokenů | Text/muted/action v obou tématech minimálně 4,87:1; nejde o kompletní WCAG audit |
 | JS rozpočet | Hlavní bundle přibližně 138 KB gzip, oddělený lazy highlighter přibližně 55 KB gzip |
 
-Reprodukce cloudového smoke: `node scripts/src/verify-gui-deployment.mjs <VOID-deployment-url> <ignored-secret-json> run`. Vyžaduje autorizované Vercel CLI a JSON s `VOID_CONTROL_TOKEN`. Vytvoří jednu testovací session a dokument, upraví jej a vrátí změnu. `resume` pokračuje v již založeném smoke bez opakované generace. Přístupové údaje a výsledný session locator jsou ignorované soubory, ne součást repozitáře.
+Reprodukce cloudového smoke: `node scripts/src/verify-gui-deployment.mjs <NOMO-deployment-url> <ignored-secret-json> run`. Vyžaduje autorizované Vercel CLI a JSON s `NOMO_CONTROL_TOKEN`. Vytvoří jednu testovací session a dokument, upraví jej a vrátí změnu. `resume` pokračuje v již založeném smoke bez opakované generace. Přístupové údaje a výsledný session locator jsou ignorované soubory, ne součást repozitáře.
 
 ## Release a návrat
 
@@ -125,7 +125,7 @@ Verification on this tree (2026-09-16):
 
 | Check | Result |
 |---|---|
-| `pnpm --filter @void/control-plane-ui typecheck` | pass, exit 0 |
+| `pnpm --filter @nomo/control-plane-ui typecheck` | pass, exit 0 |
 | `pnpm exec tsc -p apps/control-plane/tsconfig.json` | pass, exit 0 |
 | `node --test --test-reporter=tap src/*.test.ts` (control-plane UI) | 11 tests, 11 pass |
 | `pnpm run build:web` | pass, Vite build ready in `dist/web` |

@@ -1,0 +1,30 @@
+{
+  "name": "@void/agent-policy",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  },
+  "dependencies": {
+    "yaml": "^2.8.0"
+  },
+  "description": "NOMO: per-agent rules over a verified Workbench agent grant, layered over the VOID class policy.",
+  "keywords": [
+    "nomo",
+    "void",
+    "agent-identity",
+    "policy"
+  ],
+  "engines": {
+    "node": ">=24"
+  }
+}

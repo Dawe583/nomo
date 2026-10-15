@@ -18,7 +18,7 @@ pnpm-lock.yaml          @Dawe583
 /package.json           @Dawe583
 
 # Deployment manifests. Each of these is read by the platform that runs the
-# product rather than by VOID, so a change here changes production without
+# product rather than by NOMO, so a change here changes production without
 # failing a test that could notice.
 /vercel.json            @Dawe583
 /server.json            @Dawe583
@@ -29,7 +29,7 @@ pnpm-lock.yaml          @Dawe583
 # checkout, so this snapshot is what a deployed function serves in place of the
 # source tree it was generated from. The GitHub gate fails rather than
 # regenerating it, which is the point of naming it here as well.
-/apps/appwrite-mcp/src/appwrite_mcp/void_snapshot.json   @Dawe583
+/apps/appwrite-mcp/src/appwrite_mcp/nomo_snapshot.json   @Dawe583
 
 # Database schema. Applied in order and never edited in place, because the
 # ledger and the account tables underneath it are the production record of

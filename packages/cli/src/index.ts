@@ -1,5 +1,5 @@
 /**
- * The void command.
+ * The nomo command.
  *
  * The command surface lives in ./argv.ts alone: that module has no imports,
  * so --help and --version never load a database engine, and there is exactly

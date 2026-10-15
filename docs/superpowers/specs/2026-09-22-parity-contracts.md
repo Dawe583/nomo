@@ -1,4 +1,4 @@
-# VOID parity contracts, frozen 2026-09-22
+# NOMO parity contracts, frozen 2026-09-22
 
 These are the interfaces four parallel lanes build against. Any lane that needs a
 different shape must ask the orchestrator to update this file first; the lanes do

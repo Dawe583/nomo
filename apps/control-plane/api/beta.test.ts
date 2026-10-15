@@ -17,18 +17,18 @@ test('remote control refuses absent, short, wrong tokens and browser origins', (
   assert.equal(matchesToken('b'.repeat(64), token), false);
   assert.equal(matchesToken(token, token), true);
   const request = (headers: Record<string, string>) => ({ headers }) as IncomingMessage;
-  assert.equal(authorizedRemote(request({ authorization: `Bearer ${token}` }), { VOID_CONTROL_TOKEN: token }), true);
-  assert.equal(authorizedRemote(request({ authorization: `Bearer ${token}`, origin: 'https://evil.test' }), { VOID_CONTROL_TOKEN: token }), false);
+  assert.equal(authorizedRemote(request({ authorization: `Bearer ${token}` }), { NOMO_CONTROL_TOKEN: token }), true);
+  assert.equal(authorizedRemote(request({ authorization: `Bearer ${token}`, origin: 'https://evil.test' }), { NOMO_CONTROL_TOKEN: token }), false);
 });
 
 test('standalone HTTP decision reaches the proxy broker through durable state', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'void-beta-approvals-'));
+  const dir = await mkdtemp(join(tmpdir(), 'nomo-beta-approvals-'));
   const broker = new ApprovalBroker({ stateDir: dir });
   const queue = new HoldQueue();
   const call = { tool: 'postgres.row.delete', klass: 'r3' as const, workspace: 'default', connector: 'postgres', blastRadius: undefined };
   const waiting = queue.hold({ ...call, blastRadius: undefined, ruleIndex: 0, rationale: 'beta fixture', args: {}, notify: ['cli'] }, 10);
   const hold = broker.register(queue, call);
-  const server = await listenControlPlane({ env: { VOID_DATA_DIR: join(dir, 'workbench') }, approvals: localApprovals({ VOID_APPROVALS_DIR: dir }) });
+  const server = await listenControlPlane({ env: { NOMO_DATA_DIR: join(dir, 'workbench') }, approvals: localApprovals({ NOMO_APPROVALS_DIR: dir }) });
   try {
     const origin = `http://127.0.0.1:${server.port}`;
     const pending = await (await fetch(`${origin}/api/approvals`)).json() as { approvals: unknown[] };

@@ -1,15 +1,15 @@
-# Prime Agent in the VOID web app
+# Prime Agent in the NOMO web app
 
 Choose `prime-agent` in Settings to run new conversations through your local
 installation. Existing conversations retain their executor. The PC must be online
-and the bridge must be running. VOID Cloud remains available as a separate choice.
+and the bridge must be running. NOMO Cloud remains available as a separate choice.
 The selected model is passed to Prime's provider: OpenCode Zen maps to `opencode`;
 TokenRouter maps to the locally configured `tokenrouter` provider. Provider keys
-remain in Prime's local credential store. Saved Zen profiles in VOID are encrypted
+remain in Prime's local credential store. Saved Zen profiles in NOMO are encrypted
 server-side and can be activated in Settings without pasting the key again.
 
 The bridge polls outbound HTTPS. It opens no local listening port. Worker requests
-require both the workspace credential and a distinct `VOID_BRIDGE_TOKEN` configured
+require both the workspace credential and a distinct `NOMO_BRIDGE_TOKEN` configured
 on Vercel. `.env.prime-bridge` is ignored by Git and must have mode 0600:
 
 ```json
@@ -36,7 +36,7 @@ as local tools by copying configuration. Local commands can access the workspace
 and infrastructure available to this user; a workspace credential therefore also
 authorizes submitting work to the local executor. Do not share that credential.
 
-Local tool execution is not covered by VOID's managed document Undo. Every local
+Local tool execution is not covered by NOMO's managed document Undo. Every local
 run has a signed R3 dispatch/result digest, while tool notifications contain names
 only. Raw tool arguments and results are not uploaded. Final assistant text is
 filtered for configured credentials, but this is not a general secret detector.
@@ -55,4 +55,4 @@ setting or a claim of production tool availability.
 
 Validation: `node --test scripts/src/prime-bridge.test.mjs`; opt-in isolated DB
 checks in `cloud/prime.test.mjs` and `cloud/recovery.test.mjs` use
-`VOID_GUI_DATABASE_TEST=1` and only `void_gui_upgrade_preview`.
+`NOMO_GUI_DATABASE_TEST=1` and only `void_gui_upgrade_preview`.

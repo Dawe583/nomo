@@ -92,6 +92,6 @@ test("cache round trips per query and matches by head", () => {
 
 test("a corrupt cache reads as empty, never throws", () => {
   const store = memoryStore();
-  store.setItem("void-ledger-verify", "{broken");
+  store.setItem("nomo-ledger-verify", "{broken");
   assert.equal(readCachedVerify(store, "workspace=a"), undefined);
 });

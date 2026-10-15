@@ -1,4 +1,4 @@
-# VOID Connector Guide: Adding a Third Connector
+# NOMO Connector Guide: Adding a Third Connector
 
 This guide shows how to add a third connector next to the two that exist
 today: `postgres` and `s3`. Follow it top to bottom. Each step cites the

@@ -101,7 +101,7 @@ describe("runTaintCommand", () => {
 
   test("a missing ledger dir exits one", async () => {
     const err: string[] = [];
-    const code = await runTaintCommand(["--ledger", join(tmpdir(), "void-missing-taint-ledger"), "--seq", "1"], {
+    const code = await runTaintCommand(["--ledger", join(tmpdir(), "nomo-missing-taint-ledger"), "--seq", "1"], {
       stdout: () => {},
       stderr: (line) => err.push(line),
     }, options());
@@ -144,7 +144,7 @@ function node(seq: number, digest: string, tool: string, decision: string): Tain
 }
 
 async function ledgerFile(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "void-taint-cli-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-taint-cli-"));
   const file = join(dir, "default.jsonl");
   await writeFile(file, "");
   return file;

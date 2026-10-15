@@ -1,4 +1,4 @@
-"""Regenerate ``void_snapshot.json`` from the VOID source tree.
+"""Regenerate ``nomo_snapshot.json`` from the NOMO source tree.
 
 The hosted function ships without the repository, so the facts it publishes
 have to travel with it. This script writes them from the real source; the
@@ -8,7 +8,7 @@ that no longer matches.
 
 From the repository root:
 
-    /tmp/void-mcp-venv/bin/python apps/appwrite-mcp/scripts/generate-snapshot.py
+    /tmp/nomo-mcp-venv/bin/python apps/appwrite-mcp/scripts/generate-snapshot.py
 
 ``--check`` writes nothing and exits non-zero when the committed snapshot is
 stale, for use in the gate.
@@ -24,13 +24,13 @@ SRC = HERE.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from appwrite_mcp import snapshot_builder, void_data  # noqa: E402
+from appwrite_mcp import snapshot_builder, nomo_data  # noqa: E402
 
 
 def main(argv: list[str]) -> int:
     rendered = snapshot_builder.render()
     payload = snapshot_builder.build()
-    target = void_data.SNAPSHOT_PATH
+    target = nomo_data.SNAPSHOT_PATH
 
     if "--check" in argv:
         try:

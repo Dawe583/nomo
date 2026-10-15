@@ -122,7 +122,7 @@ const planFailureCategory = async (options: {
   await client.connect(serverTransport);
   try {
     const result = await client.callTool({
-      name: "void_recovery_plan",
+      name: "nomo_recovery_plan",
       arguments: { operationId: options.operationId },
     });
     const content = result.content;
@@ -135,7 +135,7 @@ const planFailureCategory = async (options: {
   }
 };
 test("filesystem CLI restores in place but a copied old-operation workspace fails closed as conflict", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "void-fs-cli-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-fs-cli-"));
   const env = { TEST_KEY: randomBytes(32).toString("base64") };
   try {
     await mkdir(join(dir, "project"));
@@ -310,7 +310,7 @@ test("filesystem CLI restores in place but a copied old-operation workspace fail
 });
 
 test("complete stopped-executor backup includes WAL state and restores a retained operation", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "void-complete-backup-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-complete-backup-"));
   const key = randomBytes(32);
   const wrongKey = randomBytes(32);
   const env = { TEST_KEY: key.toString("base64") };
@@ -655,7 +655,7 @@ test(
   "filesystem CLI inspects, renames and restores a binary file",
   { skip: process.platform === "win32" },
   async () => {
-    const dir = await mkdtemp(join(tmpdir(), "void-fs-rename-cli-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-fs-rename-cli-"));
     const env = { TEST_KEY: randomBytes(32).toString("base64") };
     try {
       await mkdir(join(dir, "project"));

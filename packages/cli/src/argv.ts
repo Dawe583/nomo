@@ -1,5 +1,5 @@
 /**
- * Argument parsing for the void binary, with no imports at all.
+ * Argument parsing for the nomo binary, with no imports at all.
  *
  * Split out of index.ts because that barrel re-exports the whole command
  * surface, which reaches node:sqlite through the runtime. The `--help` and
@@ -31,6 +31,7 @@ export const COMMANDS = [
   "init",
   "metrics",
   "update",
+  "state",
 ] as const;
 
 export type Command = (typeof COMMANDS)[number];
@@ -39,7 +40,7 @@ export type ParsedInvocation =
   | { ok: true; command: Command; args: string[] }
   | { ok: false; reason: string };
 
-/** Running the installed `void` command with no subcommand opens the live TUI.
+/** Running the installed `nomo` command with no subcommand opens the live TUI.
  * TUI flags may also follow the bare command; global help/version keep their
  * existing meanings. */
 export function withDefaultTui(argv: readonly string[]): string[] {
@@ -61,7 +62,7 @@ export function parseInvocation(argv: readonly string[]): ParsedInvocation {
   if (name === undefined || name === "") {
     return {
       ok: false,
-      reason: `usage: void (opens TUI) | void <${COMMANDS.join("|")}>`,
+      reason: `usage: nomo (opens TUI) | nomo <${COMMANDS.join("|")}>`,
     };
   }
   if (!(COMMANDS as readonly string[]).includes(name)) {

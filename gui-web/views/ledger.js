@@ -1,6 +1,6 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.ledger = function (root) {
-  var F = window.VOID_FIXTURES;
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.ledger = function (root) {
+  var F = window.NOMO_FIXTURES;
   var wrap = document.createElement("div");
   wrap.className = "section";
   var q = "";
@@ -81,13 +81,13 @@ window.VOID_VIEWS.ledger = function (root) {
       var msg = bad < 0
         ? "Hash links intact across " + F.ledgerEntries.length + " fixture entries. No signature is checked in this preview."
         : "Chain link broken at entry " + bad + ".";
-      window.VOID_LAST_VERIFY = bad < 0 ? "links OK, mock" : "link BROKEN at " + bad;
-      if (window.VOID_TOAST) window.VOID_TOAST(msg);
+      window.NOMO_LAST_VERIFY = bad < 0 ? "links OK, mock" : "link BROKEN at " + bad;
+      if (window.NOMO_TOAST) window.NOMO_TOAST(msg);
       wrap.querySelector("#lg-detail").innerHTML = "<div class='card'><p>" + msg + "</p></div>";
       if (window.updateStatus) window.updateStatus();
       else {
         var ch = document.getElementById("status-chain");
-        if (ch) ch.textContent = window.VOID_LAST_VERIFY;
+        if (ch) ch.textContent = window.NOMO_LAST_VERIFY;
       }
     };
     function show(seq) {

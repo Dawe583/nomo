@@ -1,7 +1,7 @@
-"""The hosted VOID MCP surface, derived from the VOID source tree.
+"""The hosted NOMO MCP surface, derived from the NOMO source tree.
 
 Everything this endpoint publishes is read out of the repository by
-``void_data`` rather than written here. The previous version of this file
+``nomo_data`` rather than written here. The previous version of this file
 carried a hand-maintained list of eight recovery tool names and two static
 tools; nothing compared either to the CLI, so both would keep answering with
 names and counts that had stopped existing. A catalogue that cannot describe
@@ -10,12 +10,12 @@ reads it as a promise.
 
 The published tools are therefore:
 
-* ``void_project_info`` — what this endpoint is and where recovery runs.
-* ``void_registry_search`` — search the reversibility registry.
-* ``void_registry_entry`` — one operation's preconditions and inverses.
-* ``void_registry_summary`` — the registry's shape: counts by tone and vendor.
-* ``void_local_tools`` — the local MCP tools, with their annotations.
-* ``void_cli_commands`` — the CLI surface, read from the dispatch router.
+* ``nomo_project_info`` — what this endpoint is and where recovery runs.
+* ``nomo_registry_search`` — search the reversibility registry.
+* ``nomo_registry_entry`` — one operation's preconditions and inverses.
+* ``nomo_registry_summary`` — the registry's shape: counts by tone and vendor.
+* ``nomo_local_tools`` — the local MCP tools, with their annotations.
+* ``nomo_cli_commands`` — the CLI surface, read from the dispatch router.
 
 What this endpoint deliberately does **not** publish is any way to execute
 recovery. Recovery needs the operator's local workspace, policy and retained
@@ -33,7 +33,7 @@ from typing import Any
 from mcp.types import ToolAnnotations
 from mcp.server.mcpserver import MCPServer
 
-from appwrite_mcp import void_data
+from appwrite_mcp import nomo_data
 
 # The version this endpoint answers with. It is the server version, not the
 # registry version, and the two change for different reasons: the registry
@@ -48,10 +48,10 @@ SERVER_VERSION = "0.2.0"
 READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True)
 
 server = MCPServer(
-    name="VOID",
+    name="NOMO",
     version=SERVER_VERSION,
     instructions=(
-        "VOID makes AI tool calls accountable: every call is classified for "
+        "NOMO makes AI tool calls accountable: every call is classified for "
         "reversibility before it runs, written to a signed append-only ledger, "
         "and recoverable afterwards. This endpoint is read-only reference "
         "surface over the public classification registry and the local tool "
@@ -71,7 +71,7 @@ DEFAULT_LIMIT = 25
 
 
 def _registry_rows() -> list[dict[str, Any]]:
-    return [dict(row) for row in void_data.registry_entries()]
+    return [dict(row) for row in nomo_data.registry_entries()]
 
 
 def _bounded(rows: list[dict[str, Any]], limit: int) -> tuple[list[dict[str, Any]], int]:
@@ -105,7 +105,7 @@ def _endpoint() -> str:
     expected to change: the same function is served on an Appwrite generated
     domain today and on `chat.voidagent.tech` once the DNS records verify, and a
     value written into the source would answer the wrong one the moment that
-    happened. The operator sets `VOID_MCP_ENDPOINT` when they publish, so it is
+    happened. The operator sets `NOMO_MCP_ENDPOINT` when they publish, so it is
     one place to change and one place to be wrong in.
 
     An empty string is the honest answer when it is not set: this tool is
@@ -113,6 +113,9 @@ def _endpoint() -> str:
     that from inside a tool call. Better to report nothing than to report an
     address that may be the wrong one.
     """
+    nomo = os.environ.get("NOMO_MCP_ENDPOINT")
+    if nomo is not None:
+        return nomo.strip()
     return os.environ.get("VOID_MCP_ENDPOINT", "").strip()
 
 
@@ -126,22 +129,22 @@ def _client_config() -> str:
     endpoint = _endpoint()
     if not endpoint:
         return ""
-    return json.dumps({"mcpServers": {"void": {"type": "http", "url": endpoint}}})
+    return json.dumps({"mcpServers": {"nomo": {"type": "http", "url": endpoint}}})
 
 
 @server.tool(
     annotations=READ_ONLY,
     description=(
-        "Return public VOID project identity, how to connect to this endpoint, the "
+        "Return public NOMO project identity, how to connect to this endpoint, the "
         "hosted MCP boundary, and where recovery actually executes."
     )
 )
-def void_project_info() -> str:
+def nomo_project_info() -> str:
     """Return public project metadata and the hosted/local capability boundary."""
-    summary = void_data.registry_summary()
+    summary = nomo_data.registry_summary()
     return _answered(
         {
-            "name": "VOID",
+            "name": "NOMO",
             "version": SERVER_VERSION,
             "summary": (
                 "Accountable AI tool calls: classified for reversibility, written to a "
@@ -170,7 +173,7 @@ def void_project_info() -> str:
             "local_recovery": (
                 "Recovery runs through the local stdio MCP server on the operator's "
                 "machine, using that machine's workspace, policy and retained key. "
-                "Run `void recovery` on a machine to use it; nothing here executes it."
+                "Run `nomo recovery` on a machine to use it; nothing here executes it."
             ),
             "hosted_execution": False,
             "registry": {
@@ -186,12 +189,12 @@ def void_project_info() -> str:
 @server.tool(
     annotations=READ_ONLY,
     description=(
-        "Search the VOID reversibility registry by operation id, vendor, surface, tag "
+        "Search the NOMO reversibility registry by operation id, vendor, surface, tag "
         "or reversibility class. Returns one row per precondition, because a single "
         "operation can be reversible under one configuration and permanent under another."
     )
 )
-def void_registry_search(
+def nomo_registry_search(
     query: str = "",
     vendor: str = "",
     surface: str = "",
@@ -281,7 +284,7 @@ def void_registry_search(
         "its inverse and the window in which that inverse remains valid."
     )
 )
-def void_registry_entry(operation_id: str) -> str:
+def nomo_registry_entry(operation_id: str) -> str:
     """Return every precondition for one operation id, or an empty cases list."""
     wanted = operation_id.strip()
     rows = [row for row in _registry_rows() if row["id"] == wanted]
@@ -294,7 +297,7 @@ def void_registry_entry(operation_id: str) -> str:
                 "id": wanted,
                 "found": False,
                 "cases": [],
-                "hint": "Use void_registry_search with a broader query to find similar ids.",
+                "hint": "Use nomo_registry_search with a broader query to find similar ids.",
             }
         )
     first = rows[0]
@@ -334,9 +337,9 @@ def void_registry_entry(operation_id: str) -> str:
         "distribution across the four classes, and the vendors covered."
     )
 )
-def void_registry_summary() -> str:
+def nomo_registry_summary() -> str:
     """Return registry totals, class distribution and vendor coverage."""
-    summary = void_data.registry_summary()
+    summary = nomo_data.registry_summary()
     return _answered(
         {
             "version": summary.get("version"),
@@ -355,11 +358,11 @@ def void_registry_summary() -> str:
 @server.tool(
     annotations=READ_ONLY,
     description=(
-        "List the MCP tools VOID runs locally over stdio, with their arguments and "
+        "List the MCP tools NOMO runs locally over stdio, with their arguments and "
         "whether each is read-only. This endpoint names them; it never invokes them."
     )
 )
-def void_local_tools() -> str:
+def nomo_local_tools() -> str:
     """Return the local recovery tool catalogue with its annotations."""
     tools = [
         {
@@ -368,12 +371,12 @@ def void_local_tools() -> str:
             "readOnly": tool["readOnlyHint"],
             "required_arguments": tool["required"],
         }
-        for tool in void_data.local_tool_schema()
+        for tool in nomo_data.local_tool_schema()
     ]
     return _answered(
         {
             "transport": "local stdio",
-            "command": "node packages/cli/bin/void.mjs recovery serve --config <file>",
+            "command": "node packages/cli/bin/nomo.mjs recovery serve --config <file>",
             "hosted_execution": False,
             "reason": (
                 "Recovery needs a configured local workspace, policy, and retained key."
@@ -386,14 +389,14 @@ def void_local_tools() -> str:
 
 @server.tool(
     annotations=READ_ONLY,
-    description="List the top-level commands the VOID command line exposes, read from its dispatcher."
+    description="List the top-level commands the NOMO command line exposes, read from its dispatcher."
 )
-def void_cli_commands() -> str:
+def nomo_cli_commands() -> str:
     """Return the CLI command surface as the dispatcher declares it."""
-    commands = list(void_data.cli_commands())
+    commands = list(nomo_data.cli_commands())
     return _answered(
         {
-            "binary": "void",
+            "binary": "nomo",
             "count": len(commands),
             "commands": commands,
         }

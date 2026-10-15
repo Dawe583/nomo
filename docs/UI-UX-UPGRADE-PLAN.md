@@ -1,4 +1,4 @@
-# VOID UI/UX Upgrade Plan - Mobile-First, Claude Chat Parity
+# NOMO UI/UX Upgrade Plan - Mobile-First, Claude Chat Parity
 
 > **Superseded, 2026-09-26. Not the plan of record, and its checklist is not
 > status.** Nothing below has been maintained since it was written: all forty
@@ -15,7 +15,7 @@
 > [PLAN-STATUS.md](PLAN-STATUS.md) for what is actually built, and
 > [HANDBOOK.md](HANDBOOK.md) for how to use the product.
 
-**Goal**: Transform VOID into a professional, mobile-first AI chat interface matching Claude Chat web experience, with OpenCode Zen as default provider.
+**Goal**: Transform NOMO into a professional, mobile-first AI chat interface matching Claude Chat web experience, with OpenCode Zen as default provider.
 
 ## 1. Provider Configuration - OpenCode Zen as Default
 

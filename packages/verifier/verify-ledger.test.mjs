@@ -42,7 +42,7 @@ test("invocation with no bundle prints usage rather than crashing", () => {
     stderr = error.stderr ?? "";
   }
   assert.notEqual(code, 0, "an empty invocation must not exit zero");
-  assert.match(stderr, /Usage: void-verify/);
+  assert.match(stderr, /Usage: nomo-verify/);
 });
 
 test("the package imports nothing that would need installing", () => {
@@ -93,7 +93,7 @@ const invoke = (args) => {
 };
 
 const scratchDir = () =>
-  mkdtempSync(join(tmpdir(), "void-verify-args-"));
+  mkdtempSync(join(tmpdir(), "nomo-verify-args-"));
 
 test("an empty directory is answered as an empty directory", (t) => {
   const dir = scratchDir();

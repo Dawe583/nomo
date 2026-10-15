@@ -69,7 +69,7 @@ export function managedFilesystemAdapter(options: {
           /[<>:"|?*\x00-\x1f]/.test(p) ||
           /[. ]$/.test(p) ||
           /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(p) ||
-          /^(\.git|\.ssh|\.aws|\.env.*|\.void.*)$/i.test(p),
+          /^(\.git|\.ssh|\.aws|\.env.*|\.nomo.*)$/i.test(p),
       )
     )
       throw new Error("Protected or invalid workspace path.");
@@ -252,7 +252,7 @@ export function managedFilesystemAdapter(options: {
     if (bytes === null) {
       if (expected.bytes !== null) unlinkSync(absolute);
     } else {
-      const temporary = join(dirname(absolute), `.void-${randomUUID()}`);
+      const temporary = join(dirname(absolute), `.nomo-${randomUUID()}`);
       const fd = openSync(
         temporary,
         constants.O_CREAT |

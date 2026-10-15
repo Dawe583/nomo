@@ -14,7 +14,7 @@ import { runVerifyCommand } from "./verify.ts";
 const workspace = "integrity";
 
 const scratch = async (t: { after: (fn: () => unknown) => void }) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-integrity-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-integrity-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   return dir;
 };
@@ -48,11 +48,11 @@ const collect = (env?: Readonly<NodeJS.ProcessEnv>) => {
   };
 };
 
-describe("void attest publishes an anchor", () => {
+describe("nomo attest publishes an anchor", () => {
   test("the anchor is retained locally and appended to the file the operator names", async (t) => {
     const dir = await scratch(t);
     const { key, ledger } = await seed(dir, ["fixture.one", "fixture.two"]);
-    const env = { VOID_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
+    const env = { NOMO_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
     const outOfBand = join(dir, "operator-held", "anchors.jsonl");
     const c = collect();
     assert.equal(await runOperation("attest", ["--ledger", ledger, "--anchor", outOfBand], env, (line) => void c.out.push(line)), 0);
@@ -87,7 +87,7 @@ describe("void attest publishes an anchor", () => {
   test("the anchor is refused when the chain does not verify", async (t) => {
     const dir = await scratch(t);
     const { ledger } = await seed(dir, ["fixture.one"]);
-    const env = { VOID_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
+    const env = { NOMO_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
     await writeFile(ledger, (await readFile(ledger, "utf8")).replace("fixture.one", "s3.object.put"));
     await assert.rejects(
       runOperation("attest", ["--ledger", ledger], env, () => assert.fail("must not attest")),
@@ -96,11 +96,11 @@ describe("void attest publishes an anchor", () => {
   });
 });
 
-describe("void verify against a published anchor", () => {
+describe("nomo verify against a published anchor", () => {
   test("a truncated but internally consistent chain fails against the anchor", async (t) => {
     const dir = await scratch(t);
     const { key, ledger } = await seed(dir, ["fixture.one", "fixture.two", "fixture.three"]);
-    const env = { VOID_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
+    const env = { NOMO_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
     const outOfBand = join(dir, "anchors.jsonl");
     assert.equal(await runOperation("attest", ["--ledger", ledger, "--anchor", outOfBand], env, () => {}), 0);
 
@@ -119,7 +119,7 @@ describe("void verify against a published anchor", () => {
   test("a chain re-signed with a substituted key fails the anchor even when it verifies", async (t) => {
     const dir = await scratch(t);
     const { ledger } = await seed(dir, ["fixture.one", "fixture.two"]);
-    const env = { VOID_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
+    const env = { NOMO_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
     const outOfBand = join(dir, "anchors.jsonl");
     assert.equal(await runOperation("attest", ["--ledger", ledger, "--anchor", outOfBand], env, () => {}), 0);
 
@@ -141,7 +141,7 @@ describe("void verify against a published anchor", () => {
     const attackerKey = await attacker.publicKey(await attacker.currentKeyId());
     assert.ok(attackerKey !== null);
 
-    const c = collect({ VOID_VERIFY_KEY: Buffer.from(attackerKey).toString("base64") });
+    const c = collect({ NOMO_VERIFY_KEY: Buffer.from(attackerKey).toString("base64") });
     const code = await runVerifyCommand(["--ledger", forgedLedger, "--anchors", outOfBand], c.io);
     assert.equal(code, 1);
     assert.match(c.out.join("\n"), /chain: 2 entries ok/);
@@ -155,7 +155,7 @@ describe("void verify against a published anchor", () => {
     const dir = await scratch(t);
     const { ledger } = await seed(dir, ["fixture.one"]);
     const outOfBand = join(dir, "anchors.jsonl");
-    const withKey = { VOID_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
+    const withKey = { NOMO_SIGNING_KEY: (await readFile(join(dir, "keys", "dev-ed25519.pkcs8"))).toString("base64") };
     assert.equal(await runOperation("attest", ["--ledger", ledger, "--anchor", outOfBand], withKey, () => {}), 0);
 
     const c = collect({ HOME: join(dir, "empty-home") });

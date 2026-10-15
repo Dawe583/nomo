@@ -32,7 +32,7 @@ export function primeArguments(job, sessionDir, cwd) {
     "--model",
     job.model,
     "--append-system-prompt",
-    "This run was requested by the user through VOID. Never expose credentials. Local tools are not automatically reversible by VOID. Report actual results and do not claim captured Undo for local or external changes.",
+    "This run was requested by the user through NOMO. Never expose credentials. Local tools are not automatically reversible by NOMO. Report actual results and do not claim captured Undo for local or external changes.",
     "--",
     job.prompt,
   ];

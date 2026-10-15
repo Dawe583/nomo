@@ -53,6 +53,17 @@ describe("holdErrorMessage, the body the model reads", () => {
     assert.ok(body.message.includes("approved and released"));
     assert.equal(body.data.result, "approved");
   });
+
+  test("a caller cancellation is explicit and is not a denial", () => {
+    const body = holdErrorMessage(
+      held(),
+      { kind: "cancelled" } as never,
+      "hold",
+    );
+    assert.equal(body.code, -32800);
+    assert.ok(body.message.includes("cancelled before dispatch"));
+    assert.equal(body.data.result, "cancelled");
+  });
 });
 
 describe("HoldQueue, the pending map and its timers", () => {
@@ -115,5 +126,26 @@ describe("HoldQueue, the pending map and its timers", () => {
     assert.equal(firstResolution.call.tool, "a");
     assert.equal(firstResolution.outcome.kind, "released");
     queue.close();
+  });
+
+  test("an aborted hold resolves as cancelled and cannot be approved later", async () => {
+    const queue = new HoldQueue();
+    const controller = new AbortController();
+    const waiting = queue.hold(baseCall, 120, controller.signal);
+    const id = queue.list()[0]?.id;
+    assert.ok(id);
+    controller.abort();
+    try {
+      const timeout = new Promise<null>((resolve) => {
+        setTimeout(() => resolve(null), 50);
+      });
+      const resolution = await Promise.race([waiting, timeout]);
+      assert.ok(resolution);
+      assert.equal((resolution as { outcome: { kind: string } }).outcome.kind, "cancelled");
+      assert.equal(queue.list().length, 0);
+      assert.equal(queue.resolve(id, { kind: "approved" }), false);
+    } finally {
+      queue.close();
+    }
   });
 });

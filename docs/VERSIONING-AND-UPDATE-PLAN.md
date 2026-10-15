@@ -1,4 +1,4 @@
-# VOID versioning and self-update plan
+# NOMO versioning and self-update plan
 
 Written 2026-10-01 against commit `5b943f3` on the `omp/selfupdate-release`
 branch. Local claims were read from source or produced by a command on that
@@ -6,7 +6,7 @@ date, and the commands are given so they can be re-run. External claims were
 fetched from the vendor's own API on the same date.
 
 **This document is a plan of record for the next release, not a description of
-a shipped mechanism.** The `void update` command described in section 5 is
+a shipped mechanism.** The `nomo update` command described in section 5 is
 being implemented against this specification in parallel and had not landed
 when this was written, so section 5 is normative for that implementation
 rather than a report of it.
@@ -29,19 +29,19 @@ on 2026-10-01, that is exactly thirteen, and all thirteen carry `"version":
 
 | Directory | Name | Version | `private` |
 |---|---|---|---|
-| `.` | `@void/workspace` | 0.1.0 | true |
-| `packages/cli` | `@void/cli` | 0.1.0 | true |
-| `packages/connectors` | `@void/connectors` | 0.1.0 | true |
-| `packages/ledger` | `@void/ledger` | 0.1.0 | true |
-| `packages/policy` | `@void/policy` | 0.1.0 | true |
-| `packages/proxy` | `@void/proxy` | 0.1.0 | true |
-| `packages/registry` | `@void/registry` | 0.1.0 | true |
-| `packages/runtime` | `@void/runtime` | 0.1.0 | true |
-| `packages/sdk` | `@void/sdk` | 0.1.0 | true |
-| `packages/verifier` | `@void/verifier` | 0.1.0 | **absent** |
-| `packages/workbench` | `@void/workbench` | 0.1.0 | true |
-| `apps/control-plane` | `@void/control-plane-api` | 0.1.0 | true |
-| `scripts` | `@void/scripts` | 0.1.0 | true |
+| `.` | `@nomo/workspace` | 0.1.0 | true |
+| `packages/cli` | `@nomo/cli` | 0.1.0 | true |
+| `packages/connectors` | `@nomo/connectors` | 0.1.0 | true |
+| `packages/ledger` | `@nomo/ledger` | 0.1.0 | true |
+| `packages/policy` | `@nomo/policy` | 0.1.0 | true |
+| `packages/proxy` | `@nomo/proxy` | 0.1.0 | true |
+| `packages/registry` | `@nomo/registry` | 0.1.0 | true |
+| `packages/runtime` | `@nomo/runtime` | 0.1.0 | true |
+| `packages/sdk` | `@nomo/sdk` | 0.1.0 | true |
+| `packages/verifier` | `@nomo/verifier` | 0.1.0 | **absent** |
+| `packages/workbench` | `@nomo/workbench` | 0.1.0 | true |
+| `apps/control-plane` | `@nomo/control-plane-api` | 0.1.0 | true |
+| `scripts` | `@nomo/scripts` | 0.1.0 | true |
 
 **One correction to the usual description, because it changes what a reviewer
 checks.** "Every workspace manifest is private" is true of twelve of the
@@ -74,16 +74,16 @@ mistaken for a product regression.
 and both are found by reading, not by running anything:
 
 1. `packages/cli/src/recovery-mcp.ts:299` constructs the MCP server with a
-   hardcoded `{ name: "void-recovery", version: "0.1.0" }`. Nothing asserts
+   hardcoded `{ name: "nomo-recovery", version: "0.1.0" }`. Nothing asserts
    this against the manifest, so it silently becomes a lie on the first bump.
 2. `README.md:45` states in prose that packages are private at version 0.1.0.
    It is an operational document, so a stale number there is a reader-facing
    error rather than a technicality.
 
-`void --version` is not one of these: `packages/cli/bin/void.mjs:21-33` reads
-`packages/cli/package.json` at run time and prints `void <version>`, and
+`nomo --version` is not one of these: `packages/cli/bin/nomo.mjs:21-33` reads
+`packages/cli/package.json` at run time and prints `nomo <version>`, and
 `packageVersion()` in `packages/cli/src/dispatch.ts:27` does the same for
-`void config`, whose first line is `version: <version> (package)`
+`nomo config`, whose first line is `version: <version> (package)`
 (`packages/cli/src/config.ts:73`). Both follow the CLI manifest, so both
 follow a bump automatically.
 
@@ -108,7 +108,7 @@ is the defect.
 
 Concretely, four changes, in this order:
 
-1. **Declare the root manifest authoritative.** `@void/workspace` is the only
+1. **Declare the root manifest authoritative.** `@nomo/workspace` is the only
    manifest present in every checkout of the product, including a git-only
    install with no workspace tooling involved, so it is the one an installer,
    a tag, and a rollback can all read without knowing the package layout.
@@ -134,7 +134,7 @@ Concretely, four changes, in this order:
 
 **Why not the alternative.** Two mechanisms were rejected. A version file
 (VERSION, or a field in the workspace config) needs every reader, including
-`void --version`, to parse it, and the manifests are what npm, pnpm and the
+`nomo --version`, to parse it, and the manifests are what npm, pnpm and the
 registry read, so a second file is a second thing that can disagree. Generating
 the manifests from the root one was rejected as the same mechanism with more
 moving parts: writing thirteen derived files is what the script already does.
@@ -160,7 +160,7 @@ proper, with a published compatibility promise per persisted format, starts at
 
 | Surface | Breaking when |
 |---|---|
-| CLI | A command is removed or renamed; a flag stops being accepted; a documented exit code changes; the shape of `void --version` or `void config` output changes. |
+| CLI | A command is removed or renamed; a flag stops being accepted; a documented exit code changes; the shape of `nomo --version` or `nomo config` output changes. |
 | MCP | A tool is removed or renamed; a result field is removed or its type changes; a refusal stops being a refusal. New tools and new optional fields are additions. |
 | SDK | An export is removed or narrowed from the barrel in `packages/sdk/src/index.ts`, which `scripts/src/docs-release.test.mjs:20-44` already holds in step with `docs/SDK.md`. |
 | Persisted data | A record a released build accepts stops verifying or stops parsing. This is the only category that can lose an operator's evidence. |
@@ -205,7 +205,7 @@ obligations**:
 
 ### How an operator migrates
 
-There is no `void migrate` command today, and adding one is not proposed here.
+There is no `nomo migrate` command today, and adding one is not proposed here.
 Migration is what the reader does, and it must be one of exactly three
 outcomes, stated per format in the changelog:
 
@@ -264,7 +264,7 @@ a changelog violation fails the release gate.
 
 | Command | What it is |
 |---|---|
-| `node --check packages/cli/bin/void.mjs` | The entrypoint parses. |
+| `node --check packages/cli/bin/nomo.mjs` | The entrypoint parses. |
 | `node --test --test-reporter=tap scripts/src/release-packaging.test.mjs` | Release metadata, including the version assertions. |
 | `pnpm run typecheck` | Filters every package and the scripts directory, then `apps/control-plane`, then the control-plane UI. |
 | `pnpm test` | `node scripts/src/check-tests.mjs`: every package suite, the control-plane suite, the scripts suite, the cloud suites, and two Python suites. |
@@ -290,7 +290,7 @@ this gate cannot be read as covering a suite that never executed.
 
 ```sh
 git commit -am "release: X.Y.Z"
-git tag -a vX.Y.Z -m "VOID X.Y.Z"
+git tag -a vX.Y.Z -m "NOMO X.Y.Z"
 git push origin HEAD --tags
 ```
 
@@ -305,10 +305,10 @@ release tag rather than inferred from the list.
 
 ```sh
 git describe --tags --exact-match
-node packages/cli/bin/void.mjs --version      # prints: void X.Y.Z
+node packages/cli/bin/nomo.mjs --version      # prints: void X.Y.Z
 ```
 
-An installed operator checks `void --version` and `void config`, whose first
+An installed operator checks `nomo --version` and `nomo config`, whose first
 line is `version: X.Y.Z (package)`. Both read the manifest at run time, so
 both are the proof that the tag and the tree agree.
 
@@ -319,38 +319,38 @@ does not claim that a push has succeeded; see section 9.
 
 ---
 
-## 5. The `void update` contract
+## 5. The `nomo update` contract
 
 Normative. The implementation is the text of record and this section describes
 it; where wording drifts, this section is corrected to the code rather than
 the code to this section.
 
 **What it operates on.** The install tree: a git clone of this repository at
-`$HOME/.local/share/void-cli`, reachable through the `VOID_HOME` environment
-variable when it is set, run through the launcher at `$HOME/.local/bin/void`.
-The updater defaults to the same tree the launcher runs from, so a `void` on
-your PATH and the tree `void update` moves are the same tree by construction.
+`$HOME/.local/share/nomo-cli`, reachable through the `NOMO_HOME` environment
+variable when it is set, run through the launcher at `$HOME/.local/bin/nomo`.
+The updater defaults to the same tree the launcher runs from, so a `nomo` on
+your PATH and the tree `nomo update` moves are the same tree by construction.
 It never touches operator state, which lives outside the clone under
-`~/.void/ledger`, `~/.void/workbench` and `~/.void/approvals/<workspace>`
+`~/.nomo/ledger`, `~/.nomo/workbench` and `~/.nomo/approvals/<workspace>`
 (`packages/cli/src/config.ts:31-37`).
 
-**Why the default is `void-cli` and not `void`.** On the maintainer's machine
-`~/.local/share/void` already holds unrelated local state, and the installer
-refuses to clone into a directory that is not a VOID checkout. Naming the tree
-`void-cli` keeps a second tool's directory out of the picture instead of
-failing on it, and `VOID_HOME` moves it for anyone who wants a different path.
+**Why the default is `nomo-cli` and not `nomo`.** On the maintainer's machine
+`~/.local/share/nomo` already holds unrelated local state, and the installer
+refuses to clone into a directory that is not a NOMO checkout. Naming the tree
+`nomo-cli` keeps a second tool's directory out of the picture instead of
+failing on it, and `NOMO_HOME` moves it for anyone who wants a different path.
 
 ### Invocation
 
 | Command | Effect |
 |---|---|
-| `void update` | Move the install tree onto the tracked remote ref, run the locked dependency install, and report. |
-| `void update --check` | Report the verdict and change nothing. |
-| `void update --force` | Allow a move that is not a fast-forward. Everything else is unchanged. |
+| `nomo update` | Move the install tree onto the tracked remote ref, run the locked dependency install, and report. |
+| `nomo update --check` | Report the verdict and change nothing. |
+| `nomo update --force` | Allow a move that is not a fast-forward. Everything else is unchanged. |
 
 ### Exit codes
 
-| Code | `void update` | `void update --check` |
+| Code | `nomo update` | `nomo update --check` |
 |---|---|---|
 | 0 | The tree already sits on the tracked branch, or the update was applied. | The tree is up to date. **Also** when the check answered and there is nothing to install now: a refused update still exists, and a fetch that could not reach the remote leaves the target `unknown`. |
 | 1 | The move could not be completed, so the tree was left where it was. Also when there is no updatable tree to speak of. | Never returned. |
@@ -376,7 +376,7 @@ Matching the other tool's convention here would have bought consistency at
 the cost of making the answer unavailable to a script.
 
 Code 2 is the convention the binary already uses for an argument a command
-does not accept (`packages/cli/bin/void.mjs:36-38`,
+does not accept (`packages/cli/bin/nomo.mjs:36-38`,
 `packages/cli/src/config.ts:68-71`). `--check` cannot be combined with
 `--force`: one of them promises not to move the tree and the other says it
 may, so the combination is refused with the usage line and exit 2.
@@ -395,7 +395,7 @@ will say. The identity that exists on both sides of the move is the commit.
 Real output from a run against an installed tree:
 
 ```
-installed: void 0.1.0 at /Users/dawe/.local/share/void-cli
+installed: void 0.1.0 at /Users/dawe/.local/share/nomo-cli
 installed-commit: 5b943f3deb342134b397c4d6a08f93df1e207321
 tracked-branch: origin/main
 target-commit: 5b943f3deb342134b397c4d6a08f93df1e207321
@@ -409,7 +409,7 @@ Verdicts for `--check`, verbatim:
 
 ```
 up to date
-update available: run `void update`
+update available: run `nomo update`
 update available, not applied: <reason>
 ```
 
@@ -433,12 +433,12 @@ was. Every one names the way out:
 ```
 the installed tree has uncommitted changes; commit or discard them first. --force does not discard uncommitted work.
 the installed tree has 1 local commit the tracked branch does not have, and moving would drop it. Give it a branch, or re-run with --force.
-<path> is not a git checkout. Reinstall it with scripts/install-void.sh, or point VOID_HOME at the checkout you want to update.
-no installed tree at <path>. Run scripts/install-void.sh to create one, or point VOID_HOME at an existing checkout.
+<path> is not a git checkout. Reinstall it with scripts/install-nomo.sh, or point NOMO_HOME at the checkout you want to update.
+no installed tree at <path>. Run scripts/install-nomo.sh to create one, or point NOMO_HOME at an existing checkout.
 <path> tracks no upstream branch, so there is no target to update to.
 ```
 
-A usage error writes one line to stderr and nothing else, matching `void
+A usage error writes one line to stderr and nothing else, matching `nomo
 config`:
 
 ```
@@ -465,7 +465,7 @@ tree is dirty, commit or discard first, then update.
 
 ### Channels: one, not two
 
-**VOID does not need a stable and canary split yet, and should not have one
+**NOMO does not need a stable and canary split yet, and should not have one
 until two named conditions are met.** The argument is about cost, not taste:
 
 - A channel is not one flag. It is a second published version line, a second
@@ -484,8 +484,8 @@ until two named conditions are met.** The argument is about cost, not taste:
 **The conditions that would change this answer**, both required: more than one
 external operator who is not the maintainer, and at least one incident caused
 by a bad push to the tracked ref that a canary would have caught. When both
-hold, the shape is an explicit `VOID_UPDATE_CHANNEL` with values `stable` and
-`canary`, resolving to tag prefixes `v` and `canary-v`, printed by `void
+hold, the shape is an explicit `NOMO_UPDATE_CHANNEL` with values `stable` and
+`canary`, resolving to tag prefixes `v` and `canary-v`, printed by `nomo
 config` so an operator can see which one they are on. Until then the channel
 is "the tracked remote ref", stated here so it is a decision rather than an
 omission. No environment variable for a channel should exist in the code
@@ -496,7 +496,7 @@ before then.
 - Never rewrite, reorder or delete anything under the operator state
   directory. `docs/RELEASE.md:274-276` is explicit that a ledger rollback is
   never a release rollback.
-- Never leave the install tree where `void --version` does not run. If the new
+- Never leave the install tree where `nomo --version` does not run. If the new
   commit fails its first command, the updater returns the tree to the previous
   commit and exits 1.
 - Never require a credential. Section 7.
@@ -543,7 +543,7 @@ install command. The same check found `@void/cli`, `void-mcp` and `void-ledger`
 free (404 each), which is where section 6's later work would start.
 
 **The bin is not installable from npm today.** `docs/DISTRIBUTION-PATH.md:91-103`
-records three facts, all still visible in the tree: the `void` and `void-proxy`
+records three facts, all still visible in the tree: the `nomo` and `nomo-proxy`
 bins are declared on the private root manifest, the CLI manifest has no `bin`,
 and the entrypoint imports across package boundaries into a `workspace:*`
 dependency that npm cannot resolve. Publishing therefore means a bundle, and
@@ -553,7 +553,7 @@ dependency that npm cannot resolve. Publishing therefore means a bundle, and
 argument for it.** A git clone plus a launcher needs no registry account, no
 trusted publishing identity, no scope ownership, no provenance attestation,
 and no public repository. It works today on the machine that has the
-repository. `void update` is built on it for exactly that reason.
+repository. `nomo update` is built on it for exactly that reason.
 
 ### What must happen before any npm or GitHub Releases channel
 
@@ -569,7 +569,7 @@ Ordered, because each is a prerequisite for the next:
    (`scripts/src/release-packaging.test.mjs:170-274`), so the machinery
    exists and is reusable.
 3. **A name that is free**, from the free set in this section. The unscoped
-   `void` is not available.
+   `nomo` is not available.
 4. **A publishing identity and a reviewed publish workflow**, with an explicit
    package allowlist and protected approval. `docs/RELEASE.md:88-98` lists this
    as release blocker 1 and 2, and the instruction there not to un-private a
@@ -608,7 +608,7 @@ What it means for the updater, and it is the part worth writing down now:
   one, including in an error message that quotes a command it ran.
 - **The check is advisory about a remote and authoritative about the local
   tree.** Which tag is latest is a remote question; which version is installed
-  is answered by `void --version`. The updater reports the second and only
+  is answered by `nomo --version`. The updater reports the second and only
   ever reports the first after it has fetched it.
 
 **Rollout order.** Git-only update first, releases second, npm third, because
@@ -627,20 +627,20 @@ clones with `--depth 1`, which is the right trade for a first install: it is one
 commit and no tags. Verified on 2026-10-02, a fresh `--depth 1` clone reports
 `git rev-list --count HEAD` of 1 and `git tag -l` empty, so the checkout below
 fails with `error: pathspec 'v0.1.0' did not match any file(s) known to git`.
-`void update` fetches commits but never deepens history, so an operator who has
-only ever run `void update` still has nothing to roll back to. Fetch the history
+`nomo update` fetches commits but never deepens history, so an operator who has
+only ever run `nomo update` still has nothing to roll back to. Fetch the history
 once:
 
 ```sh
-git -C "${VOID_HOME:-$HOME/.local/share/void-cli}" fetch --unshallow --tags
+git -C "${NOMO_HOME:-$HOME/.local/share/nomo-cli}" fetch --unshallow --tags
 ```
 
 That takes the same tree from 1 commit and 0 tags to the full history and every
 tag, measured at 440 commits and 5 tags on 2026-10-02. Then:
 
 ```sh
-git -C "${VOID_HOME:-$HOME/.local/share/void-cli}" checkout v0.1.0
-void --version      # prints: void 0.1.0
+git -C "${NOMO_HOME:-$HOME/.local/share/nomo-cli}" checkout v0.1.0
+nomo --version      # prints: void 0.1.0
 ```
 
 **No `vX.Y.Z` tag exists yet, so that checkout cannot succeed today.** As of
@@ -657,17 +657,17 @@ was published and the tag is still wrong, `--force` after the tag is corrected
 moves the tree forward again.
 
 **Rollback leaves the tree on a detached HEAD**, because checking out a tag
-does. That is a real operational consequence: `void update` moves a tree that
+does. That is a real operational consequence: `nomo update` moves a tree that
 sits on the tracked branch, so an operator who rolled back must first return
-to that branch inside the install tree before `void update` will move it
+to that branch inside the install tree before `nomo update` will move it
 forward again. Which branch is tracked is per install; read it off the tree
 rather than assuming `main`. This document does not state the updater's
 message for a detached tree, because the implementation is the text of record
 for that (section 5).
 
 **State survives a code rollback because state is not in the tree.** The ledger
-is at `~/.void/ledger/<workspace>.jsonl`, the workbench data at
-`~/.void/workbench`, approvals at `~/.void/approvals/<workspace>`
+is at `~/.nomo/ledger/<workspace>.jsonl`, the workbench data at
+`~/.nomo/workbench`, approvals at `~/.nomo/approvals/<workspace>`
 (`packages/cli/src/config.ts:31-37`,
 `packages/ledger/src/store.ts:55`). Checking out an older commit changes code,
 not evidence. That separation is the reason a code rollback is safe here at
@@ -679,7 +679,7 @@ reversible only from a copy. `packages/runtime/src/reserved-vault.ts:303-304`
 refuses a `user_version` above what it knows, so a build that raises the vault
 schema leaves an older build unable to open it. Therefore:
 
-1. **Before any update, copy the state directory.** `cp -a ~/.void
+1. **Before any update, copy the state directory.** `cp -a ~/.nomo
    ~/.void.before-<version>` is sufficient and is the whole of the backup
    story for the code path; it is not a backup product, and
    `docs/OPERATIONS.md:229-231` says so in its own words.
@@ -690,11 +690,11 @@ schema leaves an older build unable to open it. Therefore:
    deleted, at any version. `docs/RELEASE.md:274-276`. A rollback that touches
    a signed record is a worse outcome than the bug that caused it.
 
-**Verification either side of the move.** `void verify` exists and is the
+**Verification either side of the move.** `nomo verify` exists and is the
 proof, before and after: an update that leaves the chain unverified is a
 defect, not a successful update, and the correct response is to report it and
 stay on the previous tree. `packages/verifier/verify-ledger.mjs` verifies a
-ledger with no VOID package dependency at all, which is what makes this check
+ledger with no NOMO package dependency at all, which is what makes this check
 possible from a machine that cannot run the new build.
 
 **The honest limit.** A rollback restores the code. It cannot un-run a
@@ -710,7 +710,7 @@ copy rather than an instruction to be careful.
   records pushing as credential-blocked. No push, and no remote CI result, is
   claimed here; section 4 step 5 is written as the procedure to run once a
   human has restored access.
-- **That `void update` behaves as section 5 specifies.** It is the
+- **That `nomo update` behaves as section 5 specifies.** It is the
   specification. The implementation lands against it and this section is
   corrected if the implementation and the document ever disagree.
 - **Whether the npm name situation changes.** The registry was queried on

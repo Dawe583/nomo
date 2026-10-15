@@ -1,4 +1,4 @@
-"""Appwrite Function entrypoint for the hosted VOID reference MCP."""
+"""Appwrite Function entrypoint for the hosted NOMO reference MCP."""
 
 from __future__ import annotations
 

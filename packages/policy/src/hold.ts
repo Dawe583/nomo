@@ -39,7 +39,8 @@ export type Release =
 
 export type HoldOutcome =
   | { readonly kind: "released"; readonly release: Release }
-  | { readonly kind: "expired" };
+  | { readonly kind: "expired" }
+  | { readonly kind: "cancelled" };
 
 export type HoldResolution = {
   readonly id: HoldId;
@@ -58,27 +59,30 @@ export function holdErrorMessage(
   decision: Decision,
 ): { code: number; message: string; data: Record<string, unknown> } {
   const expiry = outcome.kind === "expired";
+  const cancelled = outcome.kind === "cancelled";
   const verb = expiry
     ? "expired without a human decision"
-    : outcome.release.kind === "approved"
-      ? "was approved and released"
-      : "was denied by a human";
+    : cancelled
+      ? "was cancelled before dispatch"
+      : outcome.release.kind === "approved"
+        ? "was approved and released"
+        : "was denied by a human";
   const message =
     `The call to ${call.tool} (${call.klass}, blast radius ${call.blastRadius ?? "unknown"}) ` +
     `${verb}. Rule ${call.ruleIndex} ${decision === "hold" ? "held" : "denied"} it` +
     (call.rationale === undefined ? "." : `: ${call.rationale}.`) +
-    (outcome.kind === "released" && outcome.release.kind === "denied" && !expiry
+    (outcome.kind === "released" && outcome.release.kind === "denied"
       ? ` Do not retry the same call; it was rejected by ${outcome.release.by}.`
       : "");
   return {
-    code: expiry ? -32000 : -32003,
+    code: expiry ? -32000 : cancelled ? -32800 : -32003,
     message,
     data: {
       held: call.tool,
       class: call.klass,
       blastRadius: call.blastRadius,
       rule: call.ruleIndex,
-      result: expiry ? "expired" : outcome.release.kind,
+      result: expiry ? "expired" : cancelled ? "cancelled" : outcome.release.kind,
       approvedVia: call.notify,
     },
   };
@@ -96,6 +100,7 @@ export class HoldQueue {
   private readonly pending = new Map<HoldId, HeldCall>();
   private readonly resolvers = new Map<HoldId, (r: HoldResolution) => void>();
   private readonly timers = new Map<HoldId, ReturnType<typeof setTimeout>>();
+  private readonly abortCleanup = new Map<HoldId, () => void>();
   private seq = 0;
   private closed = false;
   private readonly onExpire: (resolution: HoldResolution) => void;
@@ -112,6 +117,7 @@ export class HoldQueue {
   hold(
     call: Omit<HeldCall, "id" | "heldAt" | "expiresAt">,
     seconds: number,
+    signal?: AbortSignal,
   ): Promise<HoldResolution> {
     if (this.closed) throw new TypeError("the hold queue is closed");
     this.seq += 1;
@@ -135,7 +141,21 @@ export class HoldQueue {
     }, seconds * 1000);
     timer.unref?.();
     this.timers.set(id, timer);
+    if (signal !== undefined) {
+      const onAbort = () => { this.cancel(id); };
+      this.abortCleanup.set(id, () => signal.removeEventListener("abort", onAbort));
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (signal.aborted) queueMicrotask(onAbort);
+    }
     return promise;
+  }
+
+  /** Resolves one pending request as cancelled without affecting other holds. */
+  cancel(id: HoldId): boolean {
+    if (!this.pending.has(id)) return false;
+    this.clearTimer(id);
+    this.finish(id, { kind: "cancelled" });
+    return true;
   }
 
   /** A human decided. Resolving an unknown or already finished id is false, never a crash. */
@@ -169,6 +189,8 @@ export class HoldQueue {
     const call = this.pending.get(id);
     this.pending.delete(id);
     this.resolvers.delete(id);
+    this.abortCleanup.get(id)?.();
+    this.abortCleanup.delete(id);
     if (resolve !== undefined && call !== undefined) resolve({ id, outcome, call });
   }
 

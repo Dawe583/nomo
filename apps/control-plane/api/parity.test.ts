@@ -9,13 +9,13 @@ import {listenControlPlane} from "./server.ts";
 
 test("local recovery routes require exact stored approval and retain immutable previews",async t=>{
  const directory=await mkdtemp(join(tmpdir(),"void-api-recovery-"));
- const wb=new Workbench({VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"},async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]}));
+ const wb=new Workbench({NOMO_DATA_DIR:directory,NOMO_PERMISSION_MODE:"normal"},async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]}));
  assertIsolated(directory);
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await wb.start("Test","fixture"); await wb.settled();
  const first=await wb.editDocument(session.id,{path:"note",content:"one",expectedRevision:null});
  wb.close();
- const server=await listenControlPlane({env:{VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"}});
+ const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory,NOMO_PERMISSION_MODE:"normal"}});
  t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
  const base=`http://127.0.0.1:${server.port}/api/sessions/${session.id}/recovery-jobs`;
  const post=(path:string,body:unknown)=>fetch(base+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -33,7 +33,7 @@ test("local recovery routes require exact stored approval and retain immutable p
 
 test("local project and stop routes expose guarded additive capabilities",async t=>{
  const directory=await mkdtemp(join(tmpdir(),"void-api-project-"));
- const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
  t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
  const origin=`http://127.0.0.1:${server.port}`;
  const post=(path:string,body:unknown)=>fetch(origin+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -54,14 +54,14 @@ test("local project and stop routes expose guarded additive capabilities",async 
 test("server read-only mode blocks direct document and recovery mutations",async t=>{
  const directory=await mkdtemp(join(tmpdir(),"void-api-readonly-"));
  const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
- const wb=new Workbench({VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"},fetcher);
+ const wb=new Workbench({NOMO_DATA_DIR:directory,NOMO_PERMISSION_MODE:"normal"},fetcher);
  assertIsolated(directory);
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const session=await wb.start("Test","fixture");await wb.settled();
  const document=await wb.editDocument(session.id,{path:"note",content:"one",expectedRevision:null});
  const plan=await wb.planRecoveryJob(session.id,{jobId:"job",selection:{kind:"operations",operationIds:[document.revision!]}});
  await wb.shutdown();
- const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
  t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
  const origin=`http://127.0.0.1:${server.port}`;
  const patch=await fetch(`${origin}/api/sessions/${session.id}/documents`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({path:"note",content:"two",expectedRevision:document.revision})});
@@ -76,7 +76,7 @@ test("server read-only mode blocks direct document and recovery mutations",async
 
 test("local agent API persists scoped profiles but cannot enable shell hooks",async t=>{
  const directory=await mkdtemp(join(tmpdir(),"void-api-agents-"));
- const server=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
  t.after(async()=>{await server.close();await rm(directory,{recursive:true,force:true});});
  const origin=`http://127.0.0.1:${server.port}`;
  const post=(path:string,body:unknown)=>fetch(origin+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -88,7 +88,7 @@ test("local agent API persists scoped profiles but cannot enable shell hooks",as
  // pinned in both directions: false with nothing allowlisted (the line above),
  // and true once a command is — otherwise the flag could be hardcoded and no
  // assertion here would notice.
- const allowed=await listenControlPlane({env:{VOID_DATA_DIR:directory,VOID_HOOK_COMMANDS:JSON.stringify(["echo done"])}});
+ const allowed=await listenControlPlane({env:{NOMO_DATA_DIR:directory,NOMO_HOOK_COMMANDS:JSON.stringify(["echo done"])}});
  t.after(async()=>{await allowed.close();});
  const allowedOrigin=`http://127.0.0.1:${allowed.port}`;
  assert.equal((await fetch(allowedOrigin+"/api/agents").then(r=>r.json() as Promise<{hooksSupported:boolean}>)).hooksSupported,true);
@@ -100,7 +100,7 @@ test("local agent API persists scoped profiles but cannot enable shell hooks",as
 test("local branch route strictly validates and delegates to Workbench.branch",async t=>{
  const directory=await mkdtemp(join(tmpdir(),"void-api-branch-"));
  const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
- const wb=new Workbench({VOID_DATA_DIR:directory},fetcher);
+ const wb=new Workbench({NOMO_DATA_DIR:directory},fetcher);
  assertIsolated(directory);
  await wb.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  const parent=await wb.start("Branch fixture","fixture"); await wb.settled(); wb.close();
@@ -108,7 +108,7 @@ test("local branch route strictly validates and delegates to Workbench.branch",a
  // write. The control plane defaults to read-only, so this route is exercised
  // in normal mode; the read-only refusal is asserted below instead of being
  // silently pinned as a passing 201.
- const server=await listenControlPlane({env:{VOID_DATA_DIR:directory,VOID_PERMISSION_MODE:"normal"}});
+ const server=await listenControlPlane({env:{NOMO_DATA_DIR:directory,NOMO_PERMISSION_MODE:"normal"}});
  // The read-only phase below reopens the same data directory, so the first
  // server has to be closed first; the hook stays idempotent either way.
  let firstServerClosed=false;
@@ -130,7 +130,7 @@ test("local branch route strictly validates and delegates to Workbench.branch",a
  firstServerClosed=true;await server.close();
  // The same route in the default read-only mode: branching without a document
  // snapshot still works, seeding a branch is refused.
- const readOnly=await listenControlPlane({env:{VOID_DATA_DIR:directory}});
+ const readOnly=await listenControlPlane({env:{NOMO_DATA_DIR:directory}});
  const readOnlyOrigin=`http://127.0.0.1:${readOnly.port}`;
  const postReadOnly=(b:unknown)=>fetch(`${readOnlyOrigin}/api/sessions/${parent.id}/branches`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)});
  assert.equal((await postReadOnly({seq:2,idempotencyKey:"api-branch-readonly"})).status,201);

@@ -1,4 +1,4 @@
-# VOID Prime TokenRouter Configuration Fix
+# NOMO Prime TokenRouter Configuration Fix
 
 ## Problem
 The control-plane test "Prime TokenRouter import keeps the free default model when available" was failing.

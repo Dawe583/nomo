@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { assertRecoveryStateOutsideRoot } from "./recovery-paths.ts";
 
 test("state containment rejects native paths and aliases before creating state", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-state-boundary-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-state-boundary-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const root = join(dir, "project");
   await mkdir(root);

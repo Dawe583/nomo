@@ -3,12 +3,12 @@
 `cloud/appwrite.mjs` is a manual provisioner. It reads Appwrite values only
 from `.env.local` or the process environment. It verifies the existing
 `void_control_plane` TablesDB, creates the empty-permission `void_documents`
-bucket, named `VOID Documents`, creates only these web platforms:
+bucket, named `NOMO Documents`, creates only these web platforms:
 
-- `void_web`, named `VOID Production`, for `https://void-tui.vercel.app`
-- `void_local_web`, named `VOID Local Development`, for `http://localhost`
+- `void_web`, named `NOMO Production`, for `https://void-tui.vercel.app`
+- `void_local_web`, named `NOMO Local Development`, for `http://localhost`
 
-and creates the hosted VOID MCP function described below.
+and creates the hosted NOMO MCP function described below.
 
 `APPWRITE_WEB_ORIGINS` can select only those exact origins. The localhost
 exception is limited to that configured web platform. The Appwrite endpoint is
@@ -27,8 +27,8 @@ Required runtime variables:
 - `APPWRITE_ENDPOINT`
 - `APPWRITE_PROJECT_ID`
 - `APPWRITE_RUNTIME_KEY`
-- `VOID_AUTH_SEAL_KEY`, 32 random bytes as 64 hexadecimal characters
-- `VOID_PUBLIC_ORIGIN`, exact HTTPS public origin
+- `NOMO_AUTH_SEAL_KEY`, 32 random bytes as 64 hexadecimal characters
+- `NOMO_PUBLIC_ORIGIN`, exact HTTPS public origin
 
 The elevated provision key is only for the manual provisioner. Do not add it
 to runtime or deployment configuration. Run `node cloud/appwrite.mjs` only
@@ -56,7 +56,7 @@ cutover.
 
 ## Hosted MCP function
 
-`cloud/appwrite.mjs` also declares the hosted VOID reference MCP, function id
+`cloud/appwrite.mjs` also declares the hosted NOMO reference MCP, function id
 `6abbae3e000f6f24ce2a`, named `MCP server`. It runs Python 3.14 with
 entrypoint `src/main.py` under root directory `apps/appwrite-mcp`, build
 command `pip install -r requirements.txt`, a 30 second timeout, and execution
@@ -65,7 +65,7 @@ project, its latest deployment built successfully, and it reads
 `MCP_SERVER_NAME`, `MCP_AUTH_MODE`, `MCP_AUTH_TOKEN`, and `MCP_TOOL_TIMEOUT`,
 whose values are the operator's to set and are never written here.
 
-It serves public VOID project information and the catalogue of local recovery
+It serves public NOMO project information and the catalogue of local recovery
 tools, read only. It holds no credential and performs no writes, and it serves
 no repository file. The provisioner creates the function when it is absent and
 refuses a project whose existing function disagrees with the manifest, naming
@@ -100,16 +100,16 @@ repository, install the function's requirements into it, and run the suite
 with that interpreter:
 
 ```bash
-python3 -m venv /tmp/void-mcp-venv
-/tmp/void-mcp-venv/bin/python -m pip install \
+python3 -m venv /tmp/nomo-mcp-venv
+/tmp/nomo-mcp-venv/bin/python -m pip install \
   -r apps/appwrite-mcp/requirements.txt
-/tmp/void-mcp-venv/bin/python -m unittest discover \
+/tmp/nomo-mcp-venv/bin/python -m unittest discover \
   -s apps/appwrite-mcp/tests -t apps/appwrite-mcp
 ```
 
 `scripts/src/check-tests.mjs` now runs both Python suites. It looks for an
-interpreter that can import what each suite needs, tries `VOID_PYTHON`, then
-`/tmp/void-mcp-venv/bin/python`, then the system `python3`, and reports which
+interpreter that can import what each suite needs, tries `NOMO_PYTHON`, then
+`/tmp/nomo-mcp-venv/bin/python`, then the system `python3`, and reports which
 one it used. A suite that runs appears in the summary with its passing count,
 and a suite that cannot run is reported as `UNRUN` with the interpreters it
 tried and the commands to run it, and is excluded from the total rather than
@@ -117,7 +117,7 @@ counted as a pass. The summary line reads `N suites, M tests, K could not run`
 whenever anything was skipped, so a quoted test count cannot silently include
 a suite nobody executed.
 
-`python/void-transport` runs under the system interpreter with no SDK, so it
+`python/nomo-transport` runs under the system interpreter with no SDK, so it
 executes on an ordinary checkout. `apps/appwrite-mcp` needs the `mcp` SDK and
 is `UNRUN` until the virtual environment above exists; on a machine without
 it, that suite is a named warning and does not fail the gate, because the SDK
@@ -127,7 +127,7 @@ What is still not true: neither suite runs in CI, because
 no job installs `apps/appwrite-mcp/requirements.txt`. The `apple` job added
 alongside covers the Apple surface and no Python. Until a CI job builds the
 virtual environment and runs both, the local gate is the only thing executing
-these 22 checks and the `python/void-transport` suite.
+these 22 checks and the `python/nomo-transport` suite.
 
 `cloud/auth.mjs` provides server-only signup, email-password login, logout,
 account lookup, and password recovery helpers. Its `__Host-void-auth` cookie
@@ -136,7 +136,7 @@ contains neither an Appwrite API key nor an Appwrite session secret. The caller
 must provide an atomic create-if-absent server session store. `create` must
 return the created record, and `read` must return validated `id`, `userId`,
 `secret`, expiry, and revocation fields. The recovery helper ignores caller
-URLs and derives `/reset-password` from `VOID_PUBLIC_ORIGIN`.
+URLs and derives `/reset-password` from `NOMO_PUBLIC_ORIGIN`.
 
 This is not what the deployment uses. The live identity path for the chat
 origin is `cloud/account.mjs`, which talks to Supabase Auth, and it is wired
@@ -193,9 +193,9 @@ same property at the HTTP boundary against a real database, as two
 provider confirmed users.
 
 Signup is nevertheless off, and the switch that would turn it on is
-`VOID_ACCOUNT_SIGNUP`, which is not set. Two things are still missing. A real
+`NOMO_ACCOUNT_SIGNUP`, which is not set. Two things are still missing. A real
 Supabase project: without `SUPABASE_URL`, `SUPABASE_ANON_KEY` and
-`VOID_ACCOUNT_SEAL_KEY` the broker is unconfigured, the account routes say so,
+`NOMO_ACCOUNT_SEAL_KEY` the broker is unconfigured, the account routes say so,
 and no sign in has ever been confirmed against a real provider. And a decision
 about the Prime bridge, which is a machine credential bound to the operator's
 namespace and is refused to accounts for now. Setting the variable on its own
@@ -208,7 +208,7 @@ reasoning are in `docs/ACCOUNT-OWNERSHIP.md`.
 There is still no account deletion route, and there is still nothing to delete:
 no mounted route creates an account. `cloud/auth.mjs` is not imported by any
 application, its only importer is `cloud/auth.test.mjs`, and the live broker
-will not sign anybody up while `VOID_ACCOUNT_SIGNUP` is unset. The one
+will not sign anybody up while `NOMO_ACCOUNT_SIGNUP` is unset. The one
 deletion it can perform is a session revocation, not an account removal.
 
 That said, the reason this section exists has changed. The claim it used to

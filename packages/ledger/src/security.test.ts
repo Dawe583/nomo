@@ -10,7 +10,7 @@ import { attestLedger, merkleDigest } from "./attest.ts";
 import { readLedgerEntries, verifyChain } from "./verify.ts";
 
 test("unreadable ledger is not verified as an empty chain", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-security-ledger-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-security-ledger-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(key, { dir });
@@ -20,7 +20,7 @@ test("unreadable ledger is not verified as an empty chain", async (t) => {
 });
 
 test("a missing workspace can still start an empty ledger", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-security-ledger-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-security-ledger-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(key, { dir });
@@ -32,7 +32,7 @@ test("a missing workspace can still start an empty ledger", async (t) => {
 for (const umask of [0o022, 0o077] as const) {
   test(`a ledger file is owner-only under umask ${umask.toString(8)}`, async (t) => {
     if (process.platform === "win32") return;
-    const dir = await mkdtemp(join(tmpdir(), "void-ledger-mode-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-ledger-mode-"));
     t.after(() => rm(dir, { recursive: true, force: true }));
     const previous = process.umask(umask);
     t.after(() => {
@@ -48,7 +48,7 @@ for (const umask of [0o022, 0o077] as const) {
 
 test("a ledger file left broad by an earlier build is refused, not repaired", async (t) => {
   if (process.platform === "win32") return;
-  const dir = await mkdtemp(join(tmpdir(), "void-ledger-broad-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-ledger-broad-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const file = join(dir, "broad.jsonl");
@@ -66,7 +66,7 @@ test("a ledger file left broad by an earlier build is refused, not repaired", as
 });
 
 test("unsigned workspace relabeling cannot change signed ledger ownership", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-security-ledger-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-security-ledger-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(key, { dir });
@@ -81,7 +81,7 @@ test("unsigned workspace relabeling cannot change signed ledger ownership", asyn
 });
 
 test("copying a valid ledger into another workspace cannot mint an attestation", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-security-ledger-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-security-ledger-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(key, { dir });
@@ -99,7 +99,7 @@ test("merkle digest retains entry order", async () => {
 });
 
 test("an oversized ledger line is refused instead of loading whole file", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-security-ledger-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-security-ledger-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const file = join(dir, "big.jsonl");
   await writeFile(file, `{"workspace":"big","seq":1,"body":"${"x".repeat(3 * 1024 * 1024)}"}\n`);
@@ -110,7 +110,7 @@ test("an oversized ledger line is refused instead of loading whole file", async 
 });
 
 test("a ledger with too many entries stops reading at the entry limit", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-security-ledger-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-security-ledger-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const file = join(dir, "many.jsonl");
   const entry = JSON.stringify({

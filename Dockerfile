@@ -13,4 +13,4 @@ COPY packages/sdk/package.json packages/sdk/package.json
 COPY scripts/package.json scripts/package.json
 RUN pnpm install --frozen-lockfile
 COPY . .
-CMD ["node", "packages/cli/bin/void.mjs", "--help"]
+CMD ["node", "packages/cli/bin/nomo.mjs", "--help"]

@@ -1,9 +1,9 @@
-# VOID upgrade checkpoint
+# NOMO upgrade checkpoint
 
-One operational certification run, recorded for the reverse and recovery
-upgrade programme. This file exists because the programme kept shipping
-components and gates while no single run had been recorded end to end
-(`docs/PLAN-GAPS.md` G-15, `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R14).
+One operational run, recorded for the reverse and recovery upgrade programme.
+This file records one end-to-end run on one machine. It is a historical test
+record, not a current status report. The work was scoped in the older reverse
+upgrade plan `docs/REVERSE-TOOL-UPGRADE-PLAN.md` WP-R14.
 
 It is a record of one run on one machine. It is not a certification, and it
 does not close any external gate. Where the run did not go, this file says so
@@ -55,7 +55,7 @@ same transport.
 
 ## What this run did not cover
 
-Each line is an open item in `docs/OPEN-WORK-AUDIT.md`, not a defect found here.
+Each item below was outside that run and remains unverified by it. This is not a current status report.
 
 - **No real PostgreSQL server.** PGlite is in-process. Cascade, tenant and RLS
   isolation, in-flight client kill, network partition and the v1-to-v2 metadata

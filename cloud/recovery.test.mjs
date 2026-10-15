@@ -18,13 +18,13 @@ import {
 } from "./recovery.mjs";
 import { validateCloudTestEnvironment } from "../scripts/src/cloud-test-config.mjs";
 import { OPERATOR_OWNER } from "./owner.mjs";
-if (process.env.VOID_GUI_DATABASE_TEST === "1")
+if (process.env.NOMO_GUI_DATABASE_TEST === "1")
   validateCloudTestEnvironment(process.env);
 
 test(
   "cloud managed documents commit evidence atomically, refuse drift and missing artifacts",
   {
-    skip: process.env.VOID_GUI_DATABASE_TEST !== "1",
+    skip: process.env.NOMO_GUI_DATABASE_TEST !== "1",
   },
   async () => {
     assert.equal(

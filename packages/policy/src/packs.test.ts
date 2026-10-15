@@ -53,7 +53,7 @@ test("listPacks includes exactly the three built-in packs", () => {
 });
 
 test("loadPack uses the override directory instead of the package directory", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-packs-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-packs-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   await writeFile(join(dir, "dev.yaml"), "version: 1\nrules:\n  - match: {}\n    decision: deny\n");
   assert.equal(decide(await loadPack("dev", dir), calls[0]!).kind, "deny");
@@ -66,7 +66,7 @@ for (const [label, text] of [
   ["malformed rules", "version: 1\nrules: [null]\n"],
 ] as const) {
   test(`loadPack throws PackError for ${label} in an override`, async (t) => {
-    const dir = await mkdtemp(join(tmpdir(), "void-packs-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-packs-"));
     t.after(() => rm(dir, { recursive: true, force: true }));
     await writeFile(join(dir, "dev.yaml"), text);
     await assert.rejects(loadPack("dev", dir), PackError);
@@ -74,7 +74,7 @@ for (const [label, text] of [
 }
 
 test("loadPack does not fall back when an override file is missing", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-packs-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-packs-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   await assert.rejects(loadPack("dev", dir), PackError);
 });

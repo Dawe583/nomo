@@ -1,4 +1,4 @@
-# VOID companion protocol v1
+# NOMO companion protocol v1
 
 Status: P04 design contract, 2026-09-24. This document freezes a proposed wire contract for later TypeScript and Swift contract tests. It does not implement a listener, pairing flow, device credential, remote authority, or Apple client. Every companion behavior in this document is `pending` until a separately reviewed implementation supplies it and passes the evidence gates below.
 
@@ -69,7 +69,7 @@ therefore reaches pairing by calling the operation directly rather than by
 negotiating it. Closing this properly needs a v1.1 contract change, not an
 adapter change.
 
-The existing cloud cookie and `VOID_CONTROL_TOKEN` authentication paths are not device pairing. They must not be copied into a phone credential. The existing loopback API remains private.
+The existing cloud cookie and `NOMO_CONTROL_TOKEN` authentication paths are not device pairing. They must not be copied into a phone credential. The existing loopback API remains private.
 
 ## 3. Protocol envelope and exact identity
 
@@ -219,7 +219,7 @@ Request body:
 ```json
 {
   "client": {
-    "name": "VOID Apple companion",
+    "name": "NOMO Apple companion",
     "version": "0.0.0-fixture",
     "platform": "ios"
   },
@@ -507,7 +507,7 @@ The public session may retain only `lastRecoveryJob: { jobId }`. It must not exp
 
 Pairing and device credentials are future P05 work. This section defines their required semantics so v1 tests do not accidentally treat a browser token as a phone credential.
 
-A host confirmation flow creates a short-lived, single-use invitation. The invitation is not reusable, is never logged, and is never included in a QR history, screenshot fixture, release asset, or diagnostic bundle. The default invitation lifetime is two minutes. The future device credential is stored in platform secure storage and is separate from `VOID_CONTROL_TOKEN`.
+A host confirmation flow creates a short-lived, single-use invitation. The invitation is not reusable, is never logged, and is never included in a QR history, screenshot fixture, release asset, or diagnostic bundle. The default invitation lifetime is two minutes. The future device credential is stored in platform secure storage and is separate from `NOMO_CONTROL_TOKEN`.
 
 `device.revoke` is a pending authenticated operation. Its response records `deviceId`, `revokedAt`, `activeStreamsClosed`, and a statement that new mutations are denied. Revocation invalidates access and refresh material immediately; it stops new requests, pending approvals, and un-dispatched grants. An already-dispatched effect keeps its durable outcome and is not erased or automatically repeated. A request made after revocation returns `outcome: "revoked"`.
 

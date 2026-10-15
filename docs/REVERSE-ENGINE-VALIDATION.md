@@ -1,4 +1,4 @@
-# VOID reverse engine: ověření jádra a skutečné hranice
+# NOMO reverse engine: ověření jádra a skutečné hranice
 
 Datum: 2026-09-11. Rozsah: ledger, policy, registry, proxy, connectors, CLI replay, SDK a managed document engine. Tento audit nehodnotí GUI ani TUI. Všechny změny a testy běžely s izolovanými dočasnými daty. Nebyla provedena produkční destruktivní operace ani deployment.
 
@@ -6,7 +6,7 @@ Datum: 2026-09-11. Rozsah: ledger, policy, registry, proxy, connectors, CLI repl
 
 **404 testů jádra prošlo, 0 selhání, 0 přeskočených testů.** Prošel také typecheck všech balíčků, pět scénářů `e2e-connectors` a osm scénářů `e2e-final`.
 
-VOID dnes poskytuje integrované Undo pro vlastní spravované textové dokumenty a samostatné konektorové inverse pro omezené operace PostgreSQL a kompenzační obnovu S3. **Není to univerzální Ctrl+Z pro libovolný nástroj nebo vedlejší efekt agenta.** Klasifikace R1 ani schválení operace samy nevytvoří předchozí stav.
+NOMO dnes poskytuje integrované Undo pro vlastní spravované textové dokumenty a samostatné konektorové inverse pro omezené operace PostgreSQL a kompenzační obnovu S3. **Není to univerzální Ctrl+Z pro libovolný nástroj nebo vedlejší efekt agenta.** Klasifikace R1 ani schválení operace samy nevytvoří předchozí stav.
 
 Nové testy odhalily a opravy odstranily ztrátu souběžných zápisů manifestu, nefunkční lokální namespace konektorového capture, důvěru v modifikovatelný inverse plán, provádění PostgreSQL inverse bez transakce, souběžné použití jedné transakční connection, vrácení nedostupného nadlimitního snapshotu a nedostatečné autentizování CLI replay.
 
@@ -48,7 +48,7 @@ Conformance fixture ověřuje `postgres.row.update` přes skutečný `runProxy`,
 
 `packages/proxy/src/legacy-root.ts` je produkční místo, kde se evidence kontraktu skládá do funkčního bindingu. Dřívější stav měl kontrakt i jednu fixture, ale žádné produkční místo, kde by operátor binding vybral; fixture skládala `LegacyProxyBinding` ručně. To je právě dva paralelní mechanismy.
 
-Root je dosažitelný z běžné cesty: `packages/proxy/src/index.ts` ho re-exportuje, takže host získá resolver přes `@void/proxy` a předá ho do `runProxy({ legacyBinding })`. Není potřeba psát vlastní `LegacyProxyBinding`.
+Root je dosažitelný z běžné cesty: `packages/proxy/src/index.ts` ho re-exportuje, takže host získá resolver přes `@nomo/proxy` a předá ho do `runProxy({ legacyBinding })`. Není potřeba psát vlastní `LegacyProxyBinding`.
 
 | Vlastnost | Chování |
 |---|---|
@@ -76,7 +76,7 @@ Co **ne**bylo ověřeno a co root **ne**pokrývá:
 - `aws.s3.object.put` a `aws.s3.bucket.delete` záměrně nejsou bindovatelné. Put přepíše bajty, které root nikdy nečetl, takže neexistuje before image k obrácení. Nejde o vynechanou implementaci, ale o chybějící předpoklad obnovy.
 - S3 fixture používá fake klient s modelovanými ETagy. Není to AWS emulátor: nejsou ověřeny bucket policy, ACL, tagy, metadata, retention, historie verzí ani `If-Match`/`If-None-Match` konflikty proti skutečné S3. Konektor sám navíc přiznává, že jde o kompenzaci vytvořením objektu, ne o obnovení historie.
 - PostgreSQL fixture běží na PGlite, ne na sítěovém clusteru. Síťový výpadek, neurčitý výsledek COMMIT a cross-host transakční hranice mezi capture a forwardem nejsou prokázány. Ta hranice zůstává na hostiteli.
-- `void-proxy` bin a `sdk` klient **nepředávají** `legacyBinding` do `runProxy`. Root je veřejný export `@void/proxy`, ale žádný z těchto dvou produkčních vstupů ho zatím nepoužívá. K compositu je připraven, zapojen není.
+- `nomo-proxy` bin a `sdk` klient **nepředávají** `legacyBinding` do `runProxy`. Root je veřejný export `@nomo/proxy`, ale žádný z těchto dvou produkčních vstupů ho zatím nepoužívá. K compositu je připraven, zapojen není.
 - Root neřeší více závislých služeb, distribuovanou transakci ani rollback grafu. Jeden binding je jedna capture evidence pro jeden nástroj.
 
 Jde o ověření konkrétní matice scénářů, nikoli o certifikaci. Žádné prohlášení shody s externí službou z tohoto oddílu neplyne.
@@ -126,13 +126,13 @@ Každé nové tvrzení v `legacy-root.test.ts` bylo ověřeno mutací zdroje: vy
 Inspect-only náhled staré historie zůstává dostupný:
 
 ```sh
-void replay --ledger /path/workspace.jsonl --snapshot-dir /path/snapshots --seq 3 --dry-run
+nomo replay --ledger /path/workspace.jsonl --snapshot-dir /path/snapshots --seq 3 --dry-run
 ```
 
-Skutečný apply navíc potřebuje důvěryhodný veřejný SPKI klíč přes `--key` nebo `VOID_VERIFY_KEY` (library může dodat `publicKey`), záznam `decision: execute:completed` a `captureDigest` přesně rovný `manifest.reference.digest`.
+Skutečný apply navíc potřebuje důvěryhodný veřejný SPKI klíč přes `--key` nebo `NOMO_VERIFY_KEY` (library může dodat `publicKey`), záznam `decision: execute:completed` a `captureDigest` přesně rovný `manifest.reference.digest`.
 
 ```sh
-void replay --ledger /path/workspace.jsonl --snapshot-dir /path/snapshots --seq 3 --key "$VOID_VERIFY_KEY"
+nomo replay --ledger /path/workspace.jsonl --snapshot-dir /path/snapshots --seq 3 --key "$NOMO_VERIFY_KEY"
 ```
 
 Konkrétní service adapter musí být nakonfigurovaný; samotný klíč žádné služby nepřipojuje. Historické authorization-only nebo nepodepsaně svázané capture záznamy se nesmějí dodatečně vydávat za důkaz dokončení. Zůstávají inspect-only. Náhled `--dry-run` sám o sobě nepotvrzuje oprávnění ani budoucí úspěch apply.
@@ -156,7 +156,7 @@ Konkrétní service adapter musí být nakonfigurovaný; samotný klíč žádn�
 | Legacy proxy neznámé binding jméno | `UnknownLegacyBindingError` při sestavení; žádný fallback ani odhad toolu |
 | Legacy proxy bind name bez fixture | Test na kompletní podporovanou množinu failuje; neověřená obnova se neinzeruje |
 | Legacy proxy cizí workspace na callu | Odmítnutí před capture; snapshot a ledger zůstávají v jednom namespace |
-| Legacy proxy `void-proxy` bin / SDK klient | `legacyBinding` se nepředává; root je exportovaný, ale produkční vstupy ho zatím nepoužívají |
+| Legacy proxy `nomo-proxy` bin / SDK klient | `legacyBinding` se nepředává; root je exportovaný, ale produkční vstupy ho zatím nepoužívají |
 | Legacy proxy numeric/string IDs | Přeložená ID vedou oddělenou capture a outcome evidenci |
 | Legacy proxy capture failure / close | Nula upstream callů před dispatch; po dispatch `unknown`, bez retry |
 | Capture versus původní forward race | Hostitel musí řešit transakční hranici; obecně nezaručeno |

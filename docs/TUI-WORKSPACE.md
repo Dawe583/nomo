@@ -1,4 +1,4 @@
-# VOID na vlastním počítači
+# NOMO na vlastním počítači
 
 > Úplný návod pro provozovatele, včetně všech povrchů, je
 > [HANDBOOK.cs.md](HANDBOOK.cs.md). Tento dokument popisuje jen terminálové
@@ -6,7 +6,7 @@
 
 ## Spuštění
 
-Po instalaci závislostí otevře TUI samotné `void`. Z klonu GitHubu postupuj
+Po instalaci závislostí otevře TUI samotné `nomo`. Z klonu GitHubu postupuj
 v kořeni repozitáře:
 
 ```sh
@@ -16,24 +16,24 @@ pnpm setup # jednou, pokud je potřeba zpřístupnit globální příkazy
 
 `pnpm setup` je jednorázový krok na počítači, pokud globální adresář pnpm ještě
 není v `PATH`; pokud jej spustíš a změní nastavení shellu, otevři nový terminál.
-Potom zpřístupni tento checkout jako `void` z libovolného adresáře:
+Potom zpřístupni tento checkout jako `nomo` z libovolného adresáře:
 
 ```sh
 pnpm link --global
-void
+nomo
 ```
 
 Po přesunu klonu nebo výběru jiného klonu příkaz spusť znovu. Bez globální
-instalace funguje `pnpm void` nebo přímo
-`./void` na macOS/Linux a `.\void.cmd` v PowerShellu či cmd na Windows. Na macOS
-lze použít také `VOID.command` dvojklikem. TUI potřebuje dostupný Node.js 24+ a
+instalace funguje `pnpm nomo` nebo přímo
+`./nomo` na macOS/Linux a `.\nomo.cmd` v PowerShellu či cmd na Windows. Na macOS
+lze použít také `NOMO.command` dvojklikem. TUI potřebuje dostupný Node.js 24+ a
 pnpm. Není to `tui:preview`: tento příkaz používá skutečný lokální Workbench,
 šifrované uložiště, skutečný model a skutečné dokumentové operace.
 
 Výchozí provider je NVIDIA NIM, model `z-ai/glm-5.3-flash`, endpoint
 `https://integrate.api.nvidia.com/v1`. Klíč se čte pouze z proměnné
 `NVIDIA_API_KEY`; nikdy se nezadává do příkazové historie ani do repozitáře.
-Bez klíče je stav `Setup required`. VOID nikdy tiše nepřepne na jiný
+Bez klíče je stav `Setup required`. NOMO nikdy tiše nepřepne na jiný
 providera a nikdy neodhadne cenu. `/sources` ukáže další dostupné zdroje:
 OpenCode Zen, TokenRouter, OpenRouter, Anthropic, Google, Groq, DeepSeek,
 Vercel AI Gateway, Ollama a LM Studio. Model pro nové konverzace vybírá
@@ -72,7 +72,7 @@ zachovají vlastní profil.
 7. `/verify` znovu ověří podpisy a řetězce. Enter na ledger záznamu otevře
    úplný záznam včetně hashů, podpisu, capture ID a operátora.
 8. `/export ledger`, `/export chat` a `/export document` uloží soubor do
-   `void-exports/` s právy 0600. Existující soubory nepřepisují.
+   `nomo-exports/` s právy 0600. Existující soubory nepřepisují.
 9. `q` v navigaci nebo Ctrl+C ukončí TUI a obnoví terminál. Již odeslaný
    externí nástroj může ještě dobíhat; automaticky se neopakuje.
 
@@ -92,16 +92,16 @@ skončení běhu. Escape nebo Ctrl+C během běhu zastavuje model. Ctrl+C ve vst
 nejprve vymaže koncept; s prázdným vstupem ukončí aplikaci.
 
 Logo při startu krátce prosvítá; běh modelu má animovaný indikátor a pohyb
-na oddělovači vstupu. `VOID_TUI_MOTION=0 pnpm tui` vypne animace.
-`VOID_TUI_COLOR=0 pnpm tui` vypne barvy. Rozhraní je standardně anglické
-a barevné, i když prostředí zdědí `NO_COLOR=1`; barvy řídí vlastní nastavení VOIDu. Výpis `--once` je vždy statický bez barev.
+na oddělovači vstupu. `NOMO_TUI_MOTION=0 pnpm tui` vypne animace.
+`NOMO_TUI_COLOR=0 pnpm tui` vypne barvy. Rozhraní je standardně anglické
+a barevné, i když prostředí zdědí `NO_COLOR=1`; barvy řídí vlastní nastavení NOMOu. Výpis `--once` je vždy statický bez barev.
 Malé terminály používají kompaktní logo a kratší navigaci. Zůstává vlastní
-ovládání VOIDu pro ledger a explicitní rozhodnutí; nejde o úplný klon Claude Code.
+ovládání NOMOu pro ledger a explicitní rozhodnutí; nejde o úplný klon Claude Code.
 
 ### Čtení chatu a průběh práce
 
 Chat po úvodní animaci používá kompaktní hlavičku, aby zůstalo více místa
-na zprávy. Role vycházejí z událostí Workbenche: uživatel, VOID, požadavek
+na zprávy. Role vycházejí z událostí Workbenche: uživatel, NOMO, požadavek
 nástroje, výsledek a chyba. Nadpisy odpovědi jsou zvýrazněné; fenced code
 bloky mají vlastní pozadí, jazyk a čísla řádků. Kód se nevykonává a původní
 zprávy se nemění. Jde o terminálové formátování nadpisů a kódových bloků,
@@ -217,21 +217,21 @@ samotným připojením MCP. Podrobný stav všech adaptérů je v `RECOVERY-COVE
 
 ## Lokální data a další procesy
 
-- Konverzace, dokumenty, zachycené operace a podpisy: `~/.void/workbench`.
+- Konverzace, dokumenty, zachycené operace a podpisy: `~/.nomo/workbench`.
 - Stav TUI a koncepty: jeho podadresář `tui`, rovněž šifrovaný.
 - Vlastní izolovaný prostor: `pnpm tui --data-dir /absolutní/cesta`.
 - Cloudová aplikace má vlastní úložiště. TUI do ní automaticky nepřihlašuje.
 - Nespouštěj dva zapisující Workbench procesy nad jedním adresářem. Storage
   odmítne přepis změn jiného runtime; nezamění je za vlastní aktuální stav.
-- Proxy ledger: `VOID_LEDGER_DIR`, standardně `~/.void/ledger`; TUI čte všechny
+- Proxy ledger: `NOMO_LEDGER_DIR`, standardně `~/.nomo/ledger`; TUI čte všechny
   JSONL workspace soubory v této složce. Managed a proxy zdroje rozlišuje.
-- Proxy schvalování: `VOID_APPROVALS_DIR`, jinak
-  `~/.void/approvals/$VOID_WORKSPACE` (`default`). Pro konkrétní proxy nastav její
+- Proxy schvalování: `NOMO_APPROVALS_DIR`, jinak
+  `~/.nomo/approvals/$NOMO_WORKSPACE` (`default`). Pro konkrétní proxy nastav její
   workspace/adresář. TUI pouze zapisuje požadavky do existující fronty, nevytváří
   konkurenční broker. Výsledek ukazuje jako zařazený, nikoli provedený.
 - Bez správného veřejného klíče označí proxy ledger pouze jako ověřenou hash
   integritu. Poškozený ledger se vyznačí a blokuje export; TUI jej neopravuje
-  přepsáním důkazů. `VOID_VERIFY_KEY` umožňuje dodat odpovídající veřejný klíč.
+  přepsáním důkazů. `NOMO_VERIFY_KEY` umožňuje dodat odpovídající veřejný klíč.
 
 Karta ledger ukazuje vedle podepsaných záznamů řetězce a naučených pravidel
 (`learned:*`) také to, kdo řetězec produkoval. Řádek `harness:current`
@@ -251,7 +251,7 @@ Editor je standardně `nano`; `EDITOR` může obsahovat cestu k programu.
 Argumenty se bezpečně předávají bez shellu přes JSON pole:
 
 ```sh
-export VOID_TUI_EDITOR='["code","--wait"]'
+export NOMO_TUI_EDITOR='["code","--wait"]'
 pnpm tui
 ```
 
@@ -266,7 +266,7 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
   některé terminály Shift+Tab vůbec neposílají. Volba přetrvá restart.
 - Režim `plan` předřadí pokynu větu, aby model nejprve navrhl postup a nežádal
   hned nástroje měnící stav. Režim `accept` zkracuje klávesy editace, ale
-  schválení externích nástrojů zůstává vždy explicitní. VOID nikdy nic
+  schválení externích nástrojů zůstává vždy explicitní. NOMO nikdy nic
   automaticky nepotvrzuje.
 - Pokyn odeslaný během běhu se zařadí do fronty a odešle po zastavení běhu.
   Ve stavovém řádku je vidět, zda fronta čeká.
@@ -305,7 +305,7 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
 - `/init` připraví úložiště a v klidové konverzaci založí startovní `plan.md`,
   pokud ještě neexistuje.
 - `/hooks`, `/vim`, `/terminal-setup` a `/output-style` nemají obdobu ve
-  VOIDu. TUI to řekne rovnou a odkáže na `/expand`.
+  NOMOu. TUI to řekne rovnou a odkáže na `/expand`.
 
 ## Ověření
 
@@ -323,6 +323,6 @@ neúplných běhů, UTF-8 a vkládání. PTY test ověřuje skutečný terminál
 změny velikosti, potvrzení a čistého ukončení.
 
 Na tomto počítači byl navíc ověřen živý TokenRouter: GLM vytvořil `tui-check.md`
-s obsahem `VOID TUI works.`, TUI obsah načetlo, explicitní Undo odstranilo
+s obsahem `NOMO TUI works.`, TUI obsah načetlo, explicitní Undo odstranilo
 dokument a ledger ověřil dvě podepsané operace. Nejde o důkaz bezchybnosti
 všech externích providerů, libovolné obnovy napříč systémy ani hotové týmové služby.

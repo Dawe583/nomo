@@ -28,7 +28,7 @@ import {
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
 
 async function fixture(t: import("node:test").TestContext) {
-  const root = await mkdtemp(join(tmpdir(), "void-recovery-job-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-recovery-job-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
   const key = randomBytes(32);
@@ -881,7 +881,7 @@ test("a step another job holds keeps its connected branch out of the plan", asyn
   // that does: a branch is only provable from a recorded read, and inventing
   // edges from the shared one would change the ordering proof under every
   // other case in this file.
-  const root = await mkdtemp(join(tmpdir(), "void-held-branch-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-held-branch-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
   const key = randomBytes(32);
@@ -1011,7 +1011,7 @@ async function filesystemFixture(
   t: import("node:test").TestContext,
   tamperBetweenSteps = false,
 ) {
-  const root = await mkdtemp(join(tmpdir(), "void-recovery-chain-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-recovery-chain-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(join(root, "shared.txt"), "original", { mode: 0o640 });
   if (process.platform !== "win32")
@@ -1057,11 +1057,11 @@ async function journeyFixture(
   t: import("node:test").TestContext,
   tamper: (step: number) => Promise<void> = async () => {},
 ) {
-  // The managed root and VOID's own state are siblings, as in every supported
+  // The managed root and NOMO's own state are siblings, as in every supported
   // configuration. Putting the journal inside the managed root would put a
   // directory entry in the same parent the adapter snapshots, which is a
   // fixture mistake rather than a product one.
-  const dir = await mkdtemp(join(tmpdir(), "void-recovery-journey-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-recovery-journey-"));
   const root = join(dir, "project");
   await mkdir(root);
   t.after(() => rm(dir, { recursive: true, force: true }));

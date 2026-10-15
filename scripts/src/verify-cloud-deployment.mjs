@@ -4,10 +4,10 @@ import { spawnSync } from "node:child_process";
 const secrets = JSON.parse(await readFile(".env.cloud-secrets", "utf8"));
 const url = process.argv[2];
 if (!url?.startsWith("https://void-"))
-  throw new Error("Supply the exact VOID deployment URL.");
+  throw new Error("Supply the exact NOMO deployment URL.");
 await writeFile(
   ".env.curl-auth",
-  `Authorization: Bearer ${secrets.VOID_CONTROL_TOKEN}\n`,
+  `Authorization: Bearer ${secrets.NOMO_CONTROL_TOKEN}\n`,
   { mode: 0o600 },
 );
 function request(path, body) {
@@ -56,7 +56,7 @@ try {
       state.models.find((m) => m.id.includes("flash-lite"));
     if (!model) throw new Error("No suitable small test model found.");
     const result = request("/api/sessions", {
-      prompt: "Reply with exactly: VOID cloud ready. Do not call any tools.",
+      prompt: "Reply with exactly: NOMO cloud ready. Do not call any tools.",
       model: model.id,
     });
     if (!result.session) throw new Error(JSON.stringify(result));

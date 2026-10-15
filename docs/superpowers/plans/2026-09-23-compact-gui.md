@@ -7,7 +7,7 @@ See `docs/GUI-COMPACT-VERIFICATION.md` for exact evidence and open platform gate
 ## Goal
 
 Make conversation the dominant workspace on web, packaged desktop and mobile.
-Use neutral Claude Code inspired hierarchy with VOID branding. Preserve all
+Use neutral Claude Code inspired hierarchy with NOMO branding. Preserve all
 backend contracts, permission truth, recovery controls and accessible input.
 Do not use page zoom or transform scaling. No new dependencies.
 

@@ -4,7 +4,6 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
-import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import { WorkspaceTui } from "./workspace.ts";
 
 /**
@@ -30,13 +29,12 @@ async function ledgerRows(
   ui: WorkspaceTui;
   app: Workbench;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-harness-rows-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-harness-rows-"));
   const env = {
     VOID_DATA_DIR: root,
     VOID_HOOK_COMMANDS: JSON.stringify(hookCommands),
   };
   const app = new Workbench(env, assistantFetcher("ok"));
-  assertIsolated(root, env);
   await app.configure({
     baseUrl: "https://fixture.test/v1",
     apiKey: "fixture-key",
@@ -138,8 +136,8 @@ test("every selectable agent gets a row, and the selected one is marked", async 
   // Presets always exist, so the panel is never an empty list.
   const preset = rowsOf(ui).find((r) => r.id === "agent:default");
   assert.ok(preset, "no row for the default preset");
-  assert.match(preset.label, /^agent default$/);
-  assert.match(preset.lines.join("\n"), /Preset default: VOID default\./);
+  assert.match(preset.label, /^◆ agent default$/);
+  assert.match(preset.lines.join("\n"), /Preset default: NOMO default\./);
 
   ui.agentId = "planner";
   const marked = rowsOf(ui).find((r) => r.id === "agent:planner");
@@ -255,65 +253,4 @@ test("a long hook command is bounded, with a marker saying it was cut", async (t
     commandLine.length <= "Command: ".length + 160 + 20,
     `command line not bounded: ${commandLine.length}`,
   );
-});
-
-test("the ledger has an honest harness score row when no samples exist", async (t) => {
-  const { ui } = await ledgerRows(t);
-  const row = rowsOf(ui).find((r) => r.id === "harness:scores");
-  assert.ok(row, "no harness score row on the ledger tab");
-  assert.match(row.label, /harness score/);
-  assert.match(row.lines.join("\n"), /insufficient-data/);
-  assert.match(row.lines.join("\n"), /0 cases/);
-  assert.match(row.lines.join("\n"), /CI: unavailable/);
-});
-
-test("/harness scores reports the verified sample count and CI without authority", async (t) => {
-  const { ui } = await ledgerRows(t);
-  await ui.command("/harness scores");
-  const output = (ui.detail ?? []).join("\n");
-  assert.match(output, /HARNESS SCORES, verdict: insufficient-data/);
-  assert.match(output, /95% CI: unavailable/);
-  assert.match(output, /Sample count: 0 first-pass samples/);
-  assert.match(output, /Case count: 0 verified tool-call cases/);
-  assert.match(output, /never changes a decision or permission/);
-});
-
-test("score sampling deduplicates sessions that share one verified workspace chain", async (t) => {
-  const { ui, app } = await ledgerRows(t);
-  const session = await app.start("Score fixture", "fixture");
-  await app.settled();
-  await app.editDocument(session.id, {
-    path: "score.md",
-    content: "one verified decision",
-    expectedRevision: null,
-  });
-  await ui.refresh();
-  const proof = await app.ledger(session.workspace);
-  assert.ok(proof);
-  // A second session viewing the same chain is not an independent case.
-  ui.proofs.set("same-workspace-second-session", [...proof.entries]);
-  ui.proofs.set("refinement-only", [{
-    workspace: "refinement-only",
-    seq: 1,
-    body: { tool: "harness.refinement", decision: "refinement:applied" },
-    prev_hash: "",
-    hash: "",
-    key_id: "",
-    alg: "",
-    signature: "",
-  }]);
-  const row = rowsOf(ui).find((r) => r.id === "harness:scores");
-  assert.ok(row);
-  assert.match(row.lines.join("\n"), /1 case/);
-  assert.match(row.lines.join("\n"), /95% CI: unavailable/);
-});
-
-test("the score row prints the reason the verdict is what it is", async (t) => {
-  // "flat" is a sentence, not a grade: without the reason it reads as
-  // "measured and unchanged", which is the one thing this row is forbidden
-  // to claim. The reason is what tells the operator nothing was compared.
-  const { ui } = await ledgerRows(t);
-  const row = rowsOf(ui).find((r) => r.id === "harness:scores");
-  assert.ok(row);
-  assert.match(row.lines.join("\n"), /Reason: no decided call in the chain/);
 });

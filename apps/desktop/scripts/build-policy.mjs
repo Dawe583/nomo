@@ -73,7 +73,7 @@ export function resolveBuildPolicy({
   const selected = distribution ?? 'direct';
   const profile = DISTRIBUTION_PROFILES[selected];
   if (!profile) {
-    throw new Error(`Unknown VOID_DISTRIBUTION profile: ${selected}`);
+    throw new Error(`Unknown NOMO_DISTRIBUTION profile: ${selected}`);
   }
   if (platform === 'darwin' && selected === 'store') {
     throw new Error('Mac App Store packaging is not configured; use the direct-download profile until a separate signed sandbox/provisioning path exists.');
@@ -107,7 +107,7 @@ export function resolveBuildPolicy({
     'warning: no stable macOS code-signing identity was found, so this build is signed ad-hoc (`-`).\n' +
     'An ad-hoc signature is different on every rebuild, and macOS binds the workspace key item\n' +
     '`dev.void.desktop.workspace` to the identity that created it, so the next rebuild will start\n' +
-    'the app, fail to read that key and exit with "Cannot unlock the VOID workspace key in macOS\n' +
+    'the app, fail to read that key and exit with "Cannot unlock the NOMO workspace key in macOS\n' +
     'Keychain" and no window, leaving the encrypted workspace unreadable. Set\n' +
     'APPLE_SIGNING_IDENTITY="<identity name>" to sign with a stable identity; the identities this\n' +
     'machine already has are listed by `security find-identity -v -p codesigning`.',

@@ -1,8 +1,8 @@
-# VOID Workbench, web preview
+# NOMO Workbench, web preview
 
 **This is a prototype, not the product.** It renders mock data and it
-is not the interface VOID ships. The product UI is
-`apps/control-plane/ui/`, the terminal workbench is `void`, and the
+is not the interface NOMO ships. The product UI is
+`apps/control-plane/ui/`, the terminal workbench is `nomo`, and the
 native macOS app is under `apps/apple`.
 
 It is a static, zero dependency sketch of a future desktop shell, kept
@@ -54,7 +54,7 @@ gui-web/
   manifest.json  PWA shell (installable, standalone, dark chrome)
   sw.js            offline cache for the app shell, network first rest
   js/api.js        real OpenAI compatible client (streaming, models, test)
-  views/           one file per view, registered on window.VOID_VIEWS
+  views/           one file per view, registered on window.NOMO_VIEWS
     chat.js        agent session: streaming, tool cards, plan mode,
                    slash commands, voice input, attachments
     artifacts.js   right drawer for generated files (preview, copy)
@@ -91,7 +91,7 @@ extracted locally), any text or code file inlined, anything else
 inserted as a filename reference. Max 20 files per chat, 30 MB
 per file, 5 MB per image. The GitHub view is real too, once you paste
 your own token. Everything else (holds, ledger, replay, audit) is an
-interactive local simulation of the VOID write path, labelled mock
+interactive local simulation of the NOMO write path, labelled mock
 wherever it runs. None of it classifies, holds, signs or replays
 anything.
 
@@ -119,7 +119,7 @@ no policy is enforced.
 
 ## Design
 
-VOID Aperture, exactly like apps/tui-preview: warm near-black paper,
+NOMO Aperture, exactly like apps/tui-preview: warm near-black paper,
 single orange accent, mono labels, serif display, ASCII glyphs,
 no gradients, one soft shadow reserved for palette and drawers.
 Dark first, light theme fully supported, theme toggle in nav,

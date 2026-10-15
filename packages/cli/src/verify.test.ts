@@ -26,7 +26,7 @@ async function seedLedger(): Promise<{
   readonly publicKey: Uint8Array;
   readonly key: Awaited<ReturnType<typeof devKeyProvider>>;
 }> {
-  const dir = await mkdtemp(join(tmpdir(), "void-cli-verify-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-cli-verify-"));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(key, { dir });
   for (let index = 1; index <= 2; index += 1) {
@@ -49,7 +49,7 @@ async function seedLedger(): Promise<{
 describe("runVerifyCommand", () => {
   test("verifies an export file without the live ledger dir", async () => {
     const { file, publicKey } = await seedLedger();
-    const exportDir = await mkdtemp(join(tmpdir(), "void-export-only-"));
+    const exportDir = await mkdtemp(join(tmpdir(), "nomo-export-only-"));
     const exportFile = join(exportDir, "export.jsonl");
     await writeFile(exportFile, await readFile(file, "utf8"));
     const out: string[] = [];
@@ -116,7 +116,7 @@ describe("runVerifyCommand", () => {
     );
 
     assert.equal(code, 1);
-    assert.match(err.join("\n"), /void verify failed/);
+    assert.match(err.join("\n"), /nomo verify failed/);
   });
 
   test("an attestation mismatch exits one", async () => {

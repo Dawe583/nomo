@@ -28,7 +28,7 @@ extends the list and this file is the index.
 | ec2.instance.root_device_type | string | The instance's root device type, ebs or instance-store. |
 | ec2.rule.source_internal | string | Whether the new ingress source is a security group or an RFC1918 range, true or false. |
 | pg.capture.before_image | string | Whether the interceptor captured a before image of every matched row, true or false. |
-| pg.transaction.void_controlled | string | Whether the statement ran inside a transaction VOID controls, true or false. |
+| pg.transaction.void_controlled | string | Whether the statement ran inside a transaction NOMO controls, true or false. |
 | pg.cascade.traversed | string | Whether a foreign key with ON DELETE CASCADE was traversed, true or false. |
 | pg.migration.additive_only | string | Whether the migration is additive only and a down migration exists, true or false. |
 | stripe.balance_covers_refund | string | Whether the settled balance can cover a refund of the charge, true or false. |
@@ -203,7 +203,7 @@ returns carries the stale list so the CLI can show it.
 These facts describe only the target and the exact scope of the intercepted call.
 A recovery-copy assertion covers every affected object, value and required
 configuration, not an arbitrary recent backup. Copies and secret values stay in
-operator-controlled storage; VOID records declarations and references, not payloads.
+operator-controlled storage; NOMO records declarations and references, not payloads.
 Every string comparison is exact. Missing or boolean values do not satisfy a guard
 that requires the strings `true` or `false`.
 

@@ -34,9 +34,9 @@ async function seedHeavySession(
   turns: number,
   replyBytes: number,
 ): Promise<{ readonly dir: string; readonly id: string; readonly events: number }> {
-  const dir = await mkdtemp(join(tmpdir(), "void-api-sse-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-api-sse-"));
   const wb = new Workbench(
-    { VOID_DATA_DIR: dir, VOID_PERMISSION_MODE: "normal" },
+    { NOMO_DATA_DIR: dir, NOMO_PERMISSION_MODE: "normal" },
     bigReplyFetcher(replyBytes),
   );
   assertIsolated(dir);
@@ -80,7 +80,7 @@ function stallingSubscriber(port: number, path: string) {
 test("a session stream refuses a subscriber that stopped reading", async (t) => {
   const { dir, id, events } = await seedHeavySession(60, 30_000);
   const server = await listenControlPlane({
-    env: { VOID_DATA_DIR: dir, VOID_PERMISSION_MODE: "normal" },
+    env: { NOMO_DATA_DIR: dir, NOMO_PERMISSION_MODE: "normal" },
   });
   const stalling = stallingSubscriber(server.port, `/api/sessions/${id}/stream`);
   t.after(async () => {
@@ -144,7 +144,7 @@ test("a session stream refuses a subscriber that stopped reading", async (t) => 
 test("a second concurrent subscriber to one session is refused with 409", async (t) => {
   const { dir, id } = await seedHeavySession(1, 16);
   const server = await listenControlPlane({
-    env: { VOID_DATA_DIR: dir, VOID_PERMISSION_MODE: "normal" },
+    env: { NOMO_DATA_DIR: dir, NOMO_PERMISSION_MODE: "normal" },
   });
   const first = await fetch(`http://127.0.0.1:${server.port}/api/sessions/${id}/stream`, {
     headers: { accept: "text/event-stream" },
@@ -165,9 +165,9 @@ test("a second concurrent subscriber to one session is refused with 409", async 
 });
 
 test("a session view drops its oldest events at a named byte ceiling", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-api-view-ceiling-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-api-view-ceiling-"));
   const wb = new Workbench(
-    { VOID_DATA_DIR: dir, VOID_PERMISSION_MODE: "normal" },
+    { NOMO_DATA_DIR: dir, NOMO_PERMISSION_MODE: "normal" },
     bigReplyFetcher(30_000),
   );
   assertIsolated(dir);

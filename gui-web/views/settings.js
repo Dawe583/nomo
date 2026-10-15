@@ -1,7 +1,7 @@
-window.VOID_VIEWS = window.VOID_VIEWS || {};
-window.VOID_VIEWS.settings = function (root) {
+window.NOMO_VIEWS = window.NOMO_VIEWS || {};
+window.NOMO_VIEWS.settings = function (root) {
   root.innerHTML = "";
-  var F = window.VOID_FIXTURES;
+  var F = window.NOMO_FIXTURES;
   if (!F.channels) F.channels = [
     { name: "CLI (open source)", state: "on" },
     { name: "Control plane", state: "on" },
@@ -29,13 +29,13 @@ window.VOID_VIEWS.settings = function (root) {
       "<div class='toolbar'><input type='text' id='st-hook' placeholder='Slack webhook URL (mock)' aria-label='Slack webhook'><button class='btn-pearl' id='st-save'>Save</button></div></div>";
     wrap.querySelector("#st-obs").onclick = function () {
       obs = !obs;
-      if (window.VOID_TOAST) window.VOID_TOAST(obs ? "Observe only on, mock." : "Fail closed restored, mock.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST(obs ? "Observe only on, mock." : "Fail closed restored, mock.");
       paint();
     };
     wrap.querySelector("#st-rot").onclick = function () {
       F.keys.forEach(function (k) { if (k.state === "active") k.state = "retired"; });
       F.keys.unshift({ id: "dev-02", alg: "ed25519", state: "active", note: "Rotated just now, mock." });
-      if (window.VOID_TOAST) window.VOID_TOAST("Rotation done: dev-02 active, mock.");
+      if (window.NOMO_TOAST) window.NOMO_TOAST("Rotation done: dev-02 active, mock.");
       paint();
     };
     wrap.querySelector("#st-val").onclick = function () {
@@ -47,8 +47,8 @@ window.VOID_VIEWS.settings = function (root) {
       var v = wrap.querySelector("#st-hook").value.trim();
       if (v) {
         F.channels.forEach(function (c) { if (c.name === "Slack webhook") c.state = "on"; });
-        if (window.VOID_TOAST) window.VOID_TOAST("Slack channel on, mock. Real secret never leaves the server.");
-      } else if (window.VOID_TOAST) window.VOID_TOAST("Paste a webhook URL first.");
+        if (window.NOMO_TOAST) window.NOMO_TOAST("Slack channel on, mock. Real secret never leaves the server.");
+      } else if (window.NOMO_TOAST) window.NOMO_TOAST("Paste a webhook URL first.");
       paint();
     };
   }

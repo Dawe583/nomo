@@ -118,6 +118,26 @@ describe("interceptCall", () => {
     }
   });
 
+  test("a cancelled hold records cancellation and never reports approval", async () => {
+    const ledger: unknown[] = [];
+    const verdict = await interceptCall(call, {
+      classify: () => classified("r2"),
+      policy: () => ({ kind: "hold", ruleIndex: 2, seconds: 30, notify: ["cli"], rationale: "needs a human" }),
+      hold: async () => ({
+        id: "h1",
+        outcome: { kind: "cancelled" } as never,
+        call: { id: "h1", tool: call.tool, klass: "r2", blastRadius: 12, ruleIndex: 2, rationale: "needs a human", args: call.args, heldAt: 1, expiresAt: 2, notify: ["cli"] },
+      }),
+      ledger: (entry) => { ledger.push(entry); },
+    });
+
+    assert.equal(verdict.kind, "hold");
+    const error = await (verdict as { promise: Promise<JsonRpcError> }).promise;
+    assert.equal(error.error.code, -32800);
+    assert.match(error.error.message, /cancelled before dispatch/);
+    assert.deepEqual(ledger.map((entry) => (entry as { decision: string }).decision), ["hold", "hold:cancelled"]);
+  });
+
   test("classifies an unknown tool as r3", async () => {
     let seenClass = "";
     const verdict = await interceptCall(call, {

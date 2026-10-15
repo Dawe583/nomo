@@ -111,7 +111,7 @@ Recovery configuration accepts exactly one of `filesystem`, `postgres` or
 Existing inspect, execute, plan, apply, reconcile and reconcile-recovery commands
 reuse the runtime. Git has no install action.
 
-The MCP `void_execute` mutation schema becomes adapter specific. Git exposes only
+The MCP `nomo_execute` mutation schema becomes adapter specific. Git exposes only
 the closed mutation union above and states the POSIX cooperative limitation.
 Policy classification uses connector `git`.
 

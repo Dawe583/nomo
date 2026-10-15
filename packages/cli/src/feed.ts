@@ -1,6 +1,7 @@
 import { readLedgerFeed, watchLedgerFeed, type FeedPage, type LedgerFeedWatch } from "../../ledger/src/feed.ts";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { dataDir } from "../../ledger/src/paths.ts";
 
 export type FeedCommandIo = {
   readonly stdout: (line: string) => void;
@@ -30,7 +31,7 @@ export async function runFeedCommand(
     });
     return 0;
   } catch (error) {
-    io.stderr(`void feed failed: ${error instanceof Error ? error.message : String(error)}`);
+    io.stderr(`nomo feed failed: ${error instanceof Error ? error.message : String(error)}`);
     return 1;
   }
 }
@@ -70,8 +71,8 @@ function parseFeedArgs(argv: readonly string[], env: Readonly<NodeJS.ProcessEnv>
 }
 
 function defaultLedgerPath(env: Readonly<NodeJS.ProcessEnv>): string {
-  const dir = env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger");
-  const workspace = env.VOID_WORKSPACE ?? "default";
+  const dir = env.NOMO_LEDGER_DIR ?? join(dataDir(homedir()), "ledger");
+  const workspace = env.NOMO_WORKSPACE ?? "default";
   return join(dir, `${workspace}.jsonl`);
 }
 

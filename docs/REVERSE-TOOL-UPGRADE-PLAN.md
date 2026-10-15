@@ -1,4 +1,4 @@
-# VOID: plán dokončení vrstvy pro obnovu po AI agentech
+# NOMO: plán dokončení vrstvy pro obnovu po AI agentech
 
 Stav: návrh k následné realizaci, nikoli seznam již hotových funkcí.
 Datum: 2026-09-11.
@@ -7,17 +7,17 @@ Produktová reference: `Dawe583/void-empty`, commit `25b5e62d49d614f88804b72b556
 
 ## 1. Cíl a rozhodnutí
 
-VOID bude samostatná vrstva mezi libovolným podporovaným agentem a systémy, do kterých zapisuje. Každou zachycenou operaci propojí s identitou, skutečným cílem, ověřenými podmínkami, předchozím stavem, rozhodnutím, výsledkem a proveditelným plánem obnovy. Obnova jedné akce, běhu nebo incidentu poběží přes stejnou kontrolovanou cestu a vytvoří vlastní podepsanou evidenci.
+NOMO bude samostatná vrstva mezi libovolným podporovaným agentem a systémy, do kterých zapisuje. Každou zachycenou operaci propojí s identitou, skutečným cílem, ověřenými podmínkami, předchozím stavem, rozhodnutím, výsledkem a proveditelným plánem obnovy. Obnova jedné akce, běhu nebo incidentu poběží přes stejnou kontrolovanou cestu a vytvoří vlastní podepsanou evidenci.
 
 „Na všechno“ znamená společný protokol pro všechny nástroje a postupně širokou sadu ověřených adaptérů. Neznamená slib vrátit doručenou zprávu, zapomenout již přečtená data nebo zvrátit definitivní externí vypořádání. Nepodporovaná akce musí být viditelná jako nepodporovaná, nikdy vydávaná za obnovitelnou.
 
-Výsledkem má být nástroj použitelný z OpenCode, Claude Code, dalších MCP klientů, TypeScript/Python aplikací i webového chatu VOID. Web zůstává ovládáním stejného jádra. Úspěch této práce nebude posuzován podle vzhledu GUI/TUI.
+Výsledkem má být nástroj použitelný z OpenCode, Claude Code, dalších MCP klientů, TypeScript/Python aplikací i webového chatu NOMO. Web zůstává ovládáním stejného jádra. Úspěch této práce nebude posuzován podle vzhledu GUI/TUI.
 
 Rozhodnutí pro realizaci:
 
 1. Prioritou je skutečná cesta zápisu a obnovy. Další redesign ani nové chatové funkce nejsou závislost.
 2. Zachovat registry, ledger, policy, konektory a existující testy. Přidat společný runtime namísto další implementace v každém hostiteli.
-3. První úplně ověřená cesta: OpenCode/MCP nebo SDK, řízený zápis do PostgreSQL, restart VOID, ověřené Undo.
+3. První úplně ověřená cesta: OpenCode/MCP nebo SDK, řízený zápis do PostgreSQL, restart NOMO, ověřené Undo.
 4. Ihned poté filesystem/Git a GitHub, protože jde o běžné zásahy coding agentů. Následují S3/Supabase a Vercel.
 5. Obnova stavu, obnova s viditelnou stopou, kompenzace a nevratnost budou oddělené výsledky.
 6. Rozšíření na další služby bude využívat stejný kontrakt a certifikační testy, nikoli další izolované „Undo“ implementace.
@@ -57,7 +57,7 @@ Zdrojové odkazy:
 - Příklady typu kalendář s oznámením účastníkům nebo rollout s již obslouženými požadavky nesmějí automaticky dostat R0. Obnovit konfiguraci neznamená odstranit všechny externí následky.
 - LIFO je výchozí pořadí nezávislých akcí. Skutečné závislosti mají přednost; použije se obrácené topologické pořadí.
 - Ilustrační latence 8 až 40 ms ani počty „tools with inverses“ nejsou existující benchmark nebo implementované konektory.
-- Původní `CONTEXT.md` říká, že VOID žádné volání neiniciuje. Upřesnit: VOID nevymýšlí původní business intent, ale autorizovaný recovery runtime provádí inverse a kompenzace.
+- Původní `CONTEXT.md` říká, že NOMO žádné volání neiniciuje. Upřesnit: NOMO nevymýšlí původní business intent, ale autorizovaný recovery runtime provádí inverse a kompenzace.
 
 ## 3. Výchozí stav a mezery
 
@@ -107,13 +107,13 @@ Snapshot obnovu umožňuje pouze při dostupném a otestovaném apply a verify. 
 - Recovery nevydává R2 za Undo a R3 za vyřešené.
 - Ledger je append-only. Recovery přidává nové události, nemaže historii původní operace.
 - Smazaný či poškozený snapshot zneplatní recovery readiness.
-- Lokální proces bez síťové izolace neumí garantovat zachycení operací mimo VOID.
+- Lokální proces bez síťové izolace neumí garantovat zachycení operací mimo NOMO.
 
 ## 5. Cílová architektura
 
 ```mermaid
 flowchart TD
-  A[OpenCode / MCP / SDK / HTTP / VOID chat] --> B[Identity and transport adapters]
+  A[OpenCode / MCP / SDK / HTTP / NOMO chat] --> B[Identity and transport adapters]
   B --> C[Shared execution runtime]
   C --> D[Preflight and resource discovery]
   D --> E[Policy, approval and budget]
@@ -267,7 +267,7 @@ Každý balíček musí dodat implementaci, testy, migraci nebo kompatibilitu, k
 - Vercel: capture konfigurace, vybraných env proměnných v šifrovaném snapshotu, aliasů a předchozího deployment targetu. Výpis pro model nadále redigovaný.
 - Redeploy, repoint alias a promote předchozí verze nejsou rollback databázových migrací ani již obsloužených requestů.
 - Read-only test dostupnosti OAuth je oddělen od recovery certifikace. Revalidate scopes před inverse; odvolaná oprávnění znamenají blocked recovery.
-- Exit: disposable repository a Vercel projekt; změna přes VOID, nový lidský commit, bezpečný conflict; samostatně ověřený návrat konfigurace/deployment targetu.
+- Exit: disposable repository a Vercel projekt; změna přes NOMO, nový lidský commit, bezpečný conflict; samostatně ověřený návrat konfigurace/deployment targetu.
 - Závislosti: R05, R06, dokončené OAuth souhlasy. Velikost: L až XL.
 
 ### WP-R10: Policy režimy a rozpočty nevratnosti
@@ -295,7 +295,7 @@ Každý balíček musí dodat implementaci, testy, migraci nebo kompatibilitu, k
 
 - TypeScript `wrap()` a `adapter()` podle ducha webu, Python klient se stejným wire protokolem. Nevytvářet druhý nezávislý reverse engine v Pythonu.
 - Generický HTTP wrapper zaznamená volání a použije zaregistrovaný adapter; z HTTP metody sám nesestavuje inverse.
-- `void adapter test` provede capture/execute/recovery/verify, drift, retry a interruption sadu v sandboxu.
+- `nomo adapter test` provede capture/execute/recovery/verify, drift, retry a interruption sadu v sandboxu.
 - Capability manifest váže tool schema digest, verzi adaptéru, permissions, inverse template a úspěšné testy.
 - AI návrh adaptéru se stane executable pouze po kontrole a conformance testech. Neověřený generovaný kód se nespouští s produkčními credentials.
 - Další vlny: CRM record create/update/archive; email draft/delayed send; calendar bez/ s notifications; Slack draft/post; Stripe sandbox cancel/refund/settlement; Kubernetes deklarativní konfigurace.
@@ -305,7 +305,7 @@ Každý balíček musí dodat implementaci, testy, migraci nebo kompatibilitu, k
 
 ### WP-R13: Vynutitelná hranice a integrace hostitelů
 
-- `void doctor/init` inventarizuje nakonfigurované MCP/tool surfaces, ověří dostupné capabilities a ukáže nechráněné cesty.
+- `nomo doctor/init` inventarizuje nakonfigurované MCP/tool surfaces, ověří dostupné capabilities a ukáže nechráněné cesty.
 - OpenCode jako první konkrétní host, poté další MCP klient a TS/Python SDK. Konfigurace má backup, dry-run a bezpečnou obnovu původního nastavení.
 - Kooperativní režim explicitně negarantuje zachycení přímého shellu, curl, SSH nebo jiných credentials.
 - Volitelný managed executor/container drží service credentials mimo agenta a vynucuje síťový egress přes schválené adaptéry. Filesystem permissions vymezí zapisovatelný workspace.
@@ -329,7 +329,7 @@ Každý balíček musí dodat implementaci, testy, migraci nebo kompatibilitu, k
 | Milník | Obsah | Co smíme tvrdit |
 |---|---|---|
 | M0: smlouva | R00 | Přesně definované recovery capabilities a známé mezery |
-| M1: skutečné integrované Undo | R01, R02, R03, R04, minimální R06 | Zápis přes VOID do podporovaného PostgreSQL lze po restartu bezpečně obnovit |
+| M1: skutečné integrované Undo | R01, R02, R03, R04, minimální R06 | Zápis přes NOMO do podporovaného PostgreSQL lze po restartu bezpečně obnovit |
 | M2: coding agent | R05, dokončení R06, základ R13 | Podporované filesystem/Git změny mají evidované selektivní Undo |
 | M3: incident napříč systémy | R07, R08, R09 | Jeden plán koordinuje podporované DB/storage/GitHub/Vercel kroky a přizná zbytky |
 | M4: prevence a otevřené integrace | R10, R12, R13 | Vynucené budgets a rozšiřitelný ověřovaný adapter SDK |
@@ -388,15 +388,15 @@ Výkonnost měřit odděleně: CPU/policy overhead, probe latency, capture laten
 
 ## 9. Referenční incident pro konečné převzetí
 
-1. OpenCode přes VOID upraví lokální kód a provede podporovaný DB update.
+1. OpenCode přes NOMO upraví lokální kód a provede podporovaný DB update.
 2. Další agent přečte změněné DB údaje a upraví GitHub issue či připraví PR.
-3. VOID uloží skutečné outputs, snapshots, resource revisions a meziagentní závislosti.
+3. NOMO uloží skutečné outputs, snapshots, resource revisions a meziagentní závislosti.
 4. Test vloží lidskou změnu do jednoho z dotčených resources a přeruší runtime.
 5. Po restartu operátor vybere checkpoint před chybným během.
 6. Planner najde celý známý dopad, určí pořadí, vypíše lidský konflikt a nevratné externí stopy.
 7. Schválený recovery job obnoví povolené části, konfliktní větev zastaví a nepřepíše lidskou změnu.
 8. Opakování stejného jobu nevytvoří další nechtěné účinky.
-9. Externí verifier ověří původní i recovery evidence bez přístupu k internímu VOID serveru.
+9. Externí verifier ověří původní i recovery evidence bez přístupu k internímu NOMO serveru.
 10. Stejný scénář se zvlášť spustí bez konfliktu a musí skončit obnovou všech deklarovaně obnovitelných částí.
 
 Rozšířený scénář přidá Vercel deployment a R2/R3 mock nebo sandbox akci. Úspěchem není „vše zelené“, ale přesné oddělení restored, compensated, conflict a irreversible. Live finanční převod ani zpráva skutečnému zákazníkovi nejsou součástí testu.

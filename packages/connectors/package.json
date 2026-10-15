@@ -20,7 +20,7 @@
   },
   "description": "Capture snapshots and build guarded inverses for Postgres and S3 tool calls.",
   "keywords": [
-    "void",
+    "nomo",
     "ai-safety",
     "postgres",
     "s3",

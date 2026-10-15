@@ -739,7 +739,7 @@ export function createPrivateIndexWorkspace(
   const parentIdentity = lstatSync(parent, { bigint: true });
   const effectiveUid = BigInt(process.geteuid?.() ?? process.getuid?.() ?? Number(parentIdentity.uid));
   const initialDirectoryMode = BigInt(0o700 & ~process.umask());
-  const directory = mkdtempSync(join(parent, ".void-git-index-"));
+  const directory = mkdtempSync(join(parent, ".nomo-git-index-"));
   let createdDirectory: BigIntStats | undefined;
   let descriptor: number | undefined;
   let tokenIdentity: { dev: bigint; ino: bigint } | undefined;

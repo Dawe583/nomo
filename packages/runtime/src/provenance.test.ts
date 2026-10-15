@@ -218,7 +218,7 @@ const unversioned = (): RecoveryAdapter => ({
 });
 
 const probe = async (t: TestContext, adapter: RecoveryAdapter) => {
-  const root = await mkdtemp(join(tmpdir(), "void-provenance-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-provenance-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(root, "keys"), env: {} });
   // One key for every runtime over this workspace: a second key would make the

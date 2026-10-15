@@ -19,7 +19,7 @@ import { reservedRecoveryVault } from "../../runtime/src/reserved-vault.ts";
 
 
 async function fixture(t: TestContext) {
-  const root = await mkdtemp(join(tmpdir(), "void-health-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-health-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const stateDir = join(root, "state");
   const signer = await devKeyProvider({
@@ -120,7 +120,7 @@ test("health is read-only and refuses missing or mismatched retained keys", asyn
 });
 
 test("health reports fresh unavailable state without creating recovery files", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-health-cli-fresh-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-health-cli-fresh-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const config = join(root, "config.json");
   await writeFile(
@@ -128,7 +128,7 @@ test("health reports fresh unavailable state without creating recovery files", a
     JSON.stringify({
       workspace: "test",
       stateDir: "state",
-      encryptionKeyEnv: "VOID_HEALTH_KEY",
+      encryptionKeyEnv: "NOMO_HEALTH_KEY",
       filesystem: { root: "managed", cooperative: true },
     }),
   );
@@ -168,7 +168,7 @@ test("health reports a retained vault unavailable when its encryption key is mis
     JSON.stringify({
       workspace: "test",
       stateDir: "state",
-      encryptionKeyEnv: "VOID_HEALTH_KEY",
+      encryptionKeyEnv: "NOMO_HEALTH_KEY",
       filesystem: { root: "managed", cooperative: true },
     }),
   );

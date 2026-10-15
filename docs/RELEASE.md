@@ -73,7 +73,7 @@ NOTE. Fixture executors do not prove restoration against a real service.
 Wave 5 source status, pending integrated verification:
 
 - `void approve` and the proxy share a filesystem request path. The proxy uses
-  `--approvals-dir`, then `VOID_APPROVALS_DIR`, then
+  `--approvals-dir`, then `NOMO_APPROVALS_DIR`, then
   `~/.void/approvals/<workspace>`. An exclusive `proxy.lock` prevents a second
   proxy writer. Binary wiring is implemented; real end-to-end verification is
   still required before closing the baseline NOTE. These files do not prove
@@ -81,7 +81,7 @@ Wave 5 source status, pending integrated verification:
   prior proxy exited.
 - Replay can plan from persisted Postgres snapshots without an executor. Apply
   reports `ExecutorNotConfigured` without configuration and
-  `ExecutorAdapterUnavailable` even when `VOID_PG_URL` is present. No production
+  `ExecutorAdapterUnavailable` even when `NOMO_PG_URL` is present. No production
   driver is installed. Persisted S3 replay and live binary drift proof remain
   open. In-process injected-executor tests do not close those gaps.
 
@@ -137,10 +137,10 @@ Wave 5 source status, pending integrated verification:
    app is being built.** No iOS client, no macOS client, no desktop app at
    all. These blockers therefore stay open because nobody is working on them,
    not because the work is pending. They return as a phase immediately before
-   a public release, and until the owner says so they are not engineering this
-   project does. The same decision is recorded in `docs/ROADMAP-2026-Q4.md`
-   (scope amendment) and `docs/PLAN-GAPS.md` §7, which takes G-24 with it:
-   item 9 below is packaging **for the desktop app**, the Tauri `deb`, `rpm`
+   a public release, and until the owner says so they are not part of the current
+   engineering scope. This scope decision is historical; the current Apple release
+   boundary is recorded in `docs/RELEASE-1.0.1-MATRIX.md`. Item 9 below is
+   packaging **for the desktop app**, the Tauri `deb`, `rpm`
    and `AppImage` targets, so removing the app removes its packaging tail.
    Nothing here changes the Linux or macOS *server* or CLI distribution, which
    is a different question and is not part of this decision.
@@ -155,8 +155,7 @@ Wave 5 source status, pending integrated verification:
 10. **Production secrets, mobile, and accessibility gates.** Local secret
     storage (AES-256-GCM snapshot, macOS Keychain / Windows Credential
     Manager, mode-0600 key file) exists, but production KMS and a key
-    rotation drill remain open per `docs/PLAN-GAPS.md` item 10 and the
-    Production-secrets row. `VOID_SIGNING_KEY` rotation today means
+    rotation drill remain open. `NOMO_SIGNING_KEY` rotation today means
     redeploy plus `provision-cloud.mjs`; it is not a KMS rotation.
     Physical iOS/Android keyboards, VoiceOver/TalkBack, and true 200%
     browser zoom at desktop and mobile widths are pending per

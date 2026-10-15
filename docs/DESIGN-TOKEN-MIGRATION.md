@@ -105,7 +105,7 @@ invented. Six contrast pairs were added — each role against canvas and against
 surface — and the existing gate recomputes all of them.
 
 On the Apple side the same three roles were added to the generated Swift module
-and to `VoidPalette.platformColor`, where they resolve to `nil` for the same
+and to `NomoPalette.platformColor`, where they resolve to `nil` for the same
 reason `danger` and `good` do: there is no platform semantic colour for source
 punctuation, and taking a default would silently undo a measurement.
 

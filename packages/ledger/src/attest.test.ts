@@ -21,7 +21,7 @@ type Body = {
 };
 
 async function seedLedger(): Promise<{ readonly dir: string; readonly key: Awaited<ReturnType<typeof devKeyProvider>> }> {
-  const dir = await mkdtemp(join(tmpdir(), "void-attest-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-attest-"));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(key, { dir });
   for (let index = 1; index <= 3; index += 1) {

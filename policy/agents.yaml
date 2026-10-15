@@ -1,0 +1,47 @@
+# NOMO agent policy, spike draft. Who may act, on what, with which scope.
+# Evaluated together with policy/default.yaml (the VOID class policy); the
+# stricter answer wins. First match wins. The last rule must deny.
+# Agents and targets below are invented for the demo; no real accounts.
+version: 1
+agents:
+  - id: demo-support-bot
+    owner: oliver
+  - id: demo-report-bot
+    owner: max
+rules:
+  - id: support-bot-reads-notes
+    match:
+      agent: demo-support-bot
+      tool: notes.read
+      target_prefix: fs:sandbox/notes/
+      scope: read
+      class: unknown
+    decision: allow
+    rationale: the support bot may read the shared notes folder
+  - id: support-bot-writes-drafts
+    match:
+      agent: demo-support-bot
+      tool: fs.file.write
+      target_prefix: fs:sandbox/drafts/
+      scope: write
+      class: [r0, r1]
+    decision: allow
+    rationale: drafts are reversible and the ledger keeps the inverse
+  - id: support-bot-deletes-need-a-human
+    match:
+      agent: demo-support-bot
+      scope: delete
+    decision: hold
+    seconds: 120
+    rationale: deleting anything waits for a person
+  - id: report-bot-reads-only
+    match:
+      agent: demo-report-bot
+      scope: read
+      class: unknown
+    decision: allow
+    rationale: the report bot only reads
+  - id: default-deny
+    match: {}
+    decision: deny
+    rationale: no rule grants this agent this action

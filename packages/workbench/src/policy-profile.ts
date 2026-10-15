@@ -2,7 +2,7 @@
  * A policy profile is the name of a policy file on disk, not a policy
  * embedded in the profile.
  *
- * The names come from the same directory `VOID_POLICY_PATH` points at, so the
+ * The names come from the same directory `NOMO_POLICY_PATH` points at, so the
  * operator's own policy files are the catalogue and this runtime grows no second
  * place to configure one. `default` is the built-in operator policy and needs
  * no file, which is why a workbench with no policy path configured is never
@@ -89,7 +89,7 @@ export function resolvePolicyProfile(
     return {
       ok: false,
       name,
-      reason: `no policy directory is configured; set VOID_POLICY_PATH or select ${DEFAULT_POLICY_PROFILE}`,
+      reason: `no policy directory is configured; set NOMO_POLICY_PATH or select ${DEFAULT_POLICY_PROFILE}`,
     };
   const path = join(directory, `${name}.yaml`);
   let text: string;

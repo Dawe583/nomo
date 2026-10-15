@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Whole-product arc moment: one script drives every public surface in a single story.
-// The arc runs the proxy through the SDK (VoidClient keeps the proxy in-process and owns
+// The arc runs the proxy through the SDK (NomoClient keeps the proxy in-process and owns
 // an ApprovalBroker), attaches the control-plane HTTP server to that same broker object,
 // and resolves a held destructive call through the operator surface. It then reads the
-// resulting history through the void CLI and closes with a tamper-and-verify-fail proof.
+// resulting history through the nomo CLI and closes with a tamper-and-verify-fail proof.
 // Every surface is the real one: no injected fakes, no shortened paths.
 
 import { mkdtemp, readFile, writeFile, rm, readdir } from "node:fs/promises";
@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import assert from "node:assert/strict";
 
-import { createVoidClient } from "../../packages/sdk/src/index.ts";
+import { createNomoClient } from "../../packages/sdk/src/index.ts";
 import { listenControlPlane } from "../../apps/control-plane/api/server.ts";
 import { devKeyProvider } from "../../packages/ledger/src/sign.ts";
 
@@ -52,7 +52,7 @@ async function check(name, fn) {
 }
 
 function runCli(args, env) {
-  const child = spawn(process.execPath, ["packages/cli/bin/void.mjs", ...args], { cwd: root, env, stdio: ["ignore", "pipe", "pipe"] });
+  const child = spawn(process.execPath, ["packages/cli/bin/nomo.mjs", ...args], { cwd: root, env, stdio: ["ignore", "pipe", "pipe"] });
   let out = "";
   let err = "";
   child.stdout.on("data", (c) => { out += c; });
@@ -63,21 +63,21 @@ function runCli(args, env) {
 }
 
 async function runArcMoment() {
-  const base = await mkdtemp(join(tmpdir(), "void-arc-"));
+  const base = await mkdtemp(join(tmpdir(), "nomo-arc-"));
   const home = join(base, "home");
   const ledgerDir = join(base, "ledger");
   const workspace = "arc-workspace";
-  const env = { ...process.env, HOME: home, VOID_WORKSPACE: workspace };
+  const env = { ...process.env, HOME: home, NOMO_WORKSPACE: workspace };
 
-  // One run-scoped signing key: the in-process proxy and every void CLI child must agree.
-  // devKeyProvider prefers VOID_SIGNING_KEY, so the same base64 pkcs8 goes to both.
+  // One run-scoped signing key: the in-process proxy and every nomo CLI child must agree.
+  // devKeyProvider prefers NOMO_SIGNING_KEY, so the same base64 pkcs8 goes to both.
   await devKeyProvider({ dir: join(base, "keys"), env: {} });
   const signingKey = (await readFile(join(base, "keys", "dev-ed25519.pkcs8"))).toString("base64");
-  process.env.VOID_SIGNING_KEY = signingKey;
-  env.VOID_SIGNING_KEY = signingKey;
+  process.env.NOMO_SIGNING_KEY = signingKey;
+  env.NOMO_SIGNING_KEY = signingKey;
 
   // Agent-side consumer: the SDK runs the proxy in-process over the fixture upstream.
-  const client = createVoidClient({
+  const client = createNomoClient({
     ledgerDir,
     workspace,
     connect: { upstreamCommand: [process.execPath, fixturesUpstream] },
@@ -135,19 +135,19 @@ async function runArcMoment() {
     assert.equal(approvedRecord.status, "approved", "SDK sees the approved record");
     assert.equal(approvedRecord.by, "arc-operator", "decision attribution survives the broker round trip");
 
-    // 7. Ledger arc through the real void CLI: verify, feed, taint.
+    // 7. Ledger arc through the real nomo CLI: verify, feed, taint.
     const ledgerFile = join(ledgerDir, `${workspace}.jsonl`);
     const verify = await runCli(["verify", "--ledger", ledgerDir], env);
-    assert.equal(verify.code, 0, `void verify exits 0 (stderr: ${verify.err.slice(0, 200)})`);
+    assert.equal(verify.code, 0, `nomo verify exits 0 (stderr: ${verify.err.slice(0, 200)})`);
     assert.match(verify.out, /chain: \d+ entries ok/, "verify reports an intact chain");
     const feed = await runCli(["feed", "--ledger", ledgerFile, "--json"], env);
-    assert.equal(feed.code, 0, "void feed exits 0");
+    assert.equal(feed.code, 0, "nomo feed exits 0");
     const page = JSON.parse(feed.out.trim());
     assert.equal(page.verified, true, "feed page carries verification");
     const approvedRow = page.records.find((r) => r.decision === "hold:approved" && r.tool === "orders_delete");
     assert.ok(approvedRow, "ledger records the approved hold for the destructive call");
     const taint = await runCli(["taint", "--ledger", ledgerDir, "--seq", String(approvedRow.seq)], env);
-    assert.equal(taint.code, 0, "void taint exits 0");
+    assert.equal(taint.code, 0, "nomo taint exits 0");
     assert.ok(taint.out.includes("orders_delete"), "taint names the touched tool");
 
     // 8. A second destructive call denied through the control-plane must not execute upstream.

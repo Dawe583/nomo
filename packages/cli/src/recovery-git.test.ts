@@ -9,11 +9,11 @@ import { runRecoveryCommand } from "./recovery.ts";
 const posixTest = process.platform === "win32" ? test.skip : test;
 
 posixTest("CLI accepts the exclusive relative Git configuration", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-cli-git-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-cli-git-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const root = join(dir, "repo");
   execFileSync("git", ["init", "-q", root]);
-  execFileSync("git", ["-C", root, "config", "user.name", "VOID test"]);
+  execFileSync("git", ["-C", root, "config", "user.name", "NOMO test"]);
   execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
   execFileSync("git", ["-C", root, "commit", "--allow-empty", "-qm", "initial"]);
   await writeFile(join(dir, "config.json"), JSON.stringify({ workspace: "test", stateDir: "state", encryptionKeyEnv: "KEY", git: { root: "repo", cooperative: true } }));
@@ -25,10 +25,10 @@ posixTest("CLI accepts the exclusive relative Git configuration", async (t) => {
 
 
 posixTest("CLI rejects malformed and nonexclusive Git configuration before target access", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-cli-git-config-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-cli-git-config-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const input = join(dir, "input.json"), root = join(dir, "repo"), sentinel = join(root, "sentinel");
-  execFileSync("git", ["init", "-q", root]); execFileSync("git", ["-C", root, "config", "user.name", "VOID test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
+  execFileSync("git", ["init", "-q", root]); execFileSync("git", ["-C", root, "config", "user.name", "NOMO test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
   await writeFile(sentinel, "unchanged"); execFileSync("git", ["-C", root, "add", "sentinel"]); execFileSync("git", ["-C", root, "commit", "-qm", "sentinel"]);
   await writeFile(input, JSON.stringify({ workspace: "test" }));
   const indexPath = execFileSync("git", ["-C", root, "rev-parse", "--git-path", "index"], { encoding: "utf8" }).trim();
@@ -50,11 +50,11 @@ posixTest("CLI rejects malformed and nonexclusive Git configuration before targe
 
 
 posixTest("CLI worktree recovery round trip persists across fresh commands", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-cli-git-roundtrip-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-cli-git-roundtrip-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const root = join(dir, "repo"), config = join(dir, "config.json"), input = join(dir, "input.json");
   execFileSync("git", ["init", "-q", root]);
-  execFileSync("git", ["-C", root, "config", "user.name", "VOID test"]);
+  execFileSync("git", ["-C", root, "config", "user.name", "NOMO test"]);
   execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
   await writeFile(join(root, "file"), "before");
   execFileSync("git", ["-C", root, "add", "file"]); execFileSync("git", ["-C", root, "commit", "-qm", "initial"]);
@@ -77,9 +77,9 @@ posixTest("CLI worktree recovery round trip persists across fresh commands", asy
 
 
 posixTest("CLI index recovery round trip restores staged entry and worktree bytes", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-cli-git-index-")); t.after(() => rm(dir, { recursive: true, force: true }));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-cli-git-index-")); t.after(() => rm(dir, { recursive: true, force: true }));
   const root = join(dir, "repo"), config = join(dir, "config.json"), input = join(dir, "input.json");
-  execFileSync("git", ["init", "-q", root]); execFileSync("git", ["-C", root, "config", "user.name", "VOID test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
+  execFileSync("git", ["init", "-q", root]); execFileSync("git", ["-C", root, "config", "user.name", "NOMO test"]); execFileSync("git", ["-C", root, "config", "user.email", "void@example.invalid"]);
   await writeFile(join(root, "file"), "before", { mode: 0o755 }); execFileSync("git", ["-C", root, "add", "file"]); execFileSync("git", ["-C", root, "commit", "-qm", "initial"]); await writeFile(join(root, "file"), "after", { mode: 0o755 });
   await writeFile(config, JSON.stringify({ workspace: "test", stateDir: "state", encryptionKeyEnv: "KEY", git: { root: "repo", cooperative: true } }));
   const env = { KEY: Buffer.alloc(32, 8).toString("base64") }, call = async (args: string[]) => { const lines: string[] = []; const code = await runRecoveryCommand(args, env, (line) => lines.push(line)); return { code, value: JSON.parse(lines[0]!) }; };

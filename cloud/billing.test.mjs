@@ -31,18 +31,18 @@ import {
 import { webhooks } from "@polar-sh/sdk/2026-10";
 import { OPERATOR_OWNER } from "./owner.mjs";
 
-const SECRET = "whsec_" + Buffer.from("void-billing-test-secret-32b").toString("base64");
+const SECRET = "whsec_" + Buffer.from("nomo-billing-test-secret-32b").toString("base64");
 const OTHER_SECRET = "whsec_" + Buffer.from("another-billing-secret-32b").toString("base64");
 const ACCESS_TOKEN = "polar_oat_a_token_that_must_never_be_answered";
 const PRODUCT = "product_team";
 const CUSTOMER = "customer_1111";
 
 const ENV = {
-  VOID_POLAR_ACCESS_TOKEN: ACCESS_TOKEN,
-  VOID_POLAR_ORGANIZATION_ID: "org_2222",
-  VOID_POLAR_WEBHOOK_SECRET: SECRET,
-  VOID_POLAR_PRODUCT_TEAM: PRODUCT,
-  VOID_POLAR_ENVIRONMENT: "sandbox",
+  NOMO_POLAR_ACCESS_TOKEN: ACCESS_TOKEN,
+  NOMO_POLAR_ORGANIZATION_ID: "org_2222",
+  NOMO_POLAR_WEBHOOK_SECRET: SECRET,
+  NOMO_POLAR_PRODUCT_TEAM: PRODUCT,
+  NOMO_POLAR_ENVIRONMENT: "sandbox",
 };
 
 const cloudDir = fileURLToPath(new URL(".", import.meta.url));
@@ -510,8 +510,8 @@ test("a delivery carries no owner: the request cannot choose one", async (t) => 
 
   const delivered = await f.deliver(body, {
     ...signed(body, { id: "msg_owner" }),
-    "x-void-owner": "account-two",
-    "x-void-control-token": "not-a-control-token",
+    "x-nomo-owner": "account-two",
+    "x-nomo-control-token": "not-a-control-token",
   });
 
   assert.equal(delivered.status, 200);
@@ -621,31 +621,31 @@ test("billingFromEnv reads the environment when it is called", async () => {
   const env = {};
   assert.equal(billingFromEnv(env), undefined, "an empty environment configures nothing");
 
-  env.VOID_POLAR_WEBHOOK_SECRET = SECRET;
+  env.NOMO_POLAR_WEBHOOK_SECRET = SECRET;
   assert.equal(
     billingFromEnv(env),
     undefined,
     "a webhook secret without an account is half a configuration",
   );
 
-  env.VOID_POLAR_ACCESS_TOKEN = ACCESS_TOKEN;
+  env.NOMO_POLAR_ACCESS_TOKEN = ACCESS_TOKEN;
   assert.equal(billingFromEnv(env), undefined, "no organization is still half");
 
-  env.VOID_POLAR_ORGANIZATION_ID = "org_2222";
+  env.NOMO_POLAR_ORGANIZATION_ID = "org_2222";
   assert.ok(billingFromEnv(env), "the four required variables configure the service");
 
   // An environment name that is not one of Polar's two is a deployment that
   // does not know which account it is billing, so it is refused rather than
   // assumed.
-  assert.equal(billingFromEnv({ ...env, VOID_POLAR_ENVIRONMENT: "staging" }), undefined);
-  assert.ok(billingFromEnv({ ...env, VOID_POLAR_ENVIRONMENT: "production" }));
-  assert.ok(billingFromEnv({ ...env, VOID_POLAR_ENVIRONMENT: undefined }));
+  assert.equal(billingFromEnv({ ...env, NOMO_POLAR_ENVIRONMENT: "staging" }), undefined);
+  assert.ok(billingFromEnv({ ...env, NOMO_POLAR_ENVIRONMENT: "production" }));
+  assert.ok(billingFromEnv({ ...env, NOMO_POLAR_ENVIRONMENT: undefined }));
 
   // The secret is read through the environment on every verification, so
   // rotating it takes effect without restarting the process. The environment
   // object is held on to and changed underneath the service, which is the only
   // way to tell reading it per call apart from copying it once.
-  const rotating = { ...env, VOID_POLAR_WEBHOOK_SECRET: SECRET };
+  const rotating = { ...env, NOMO_POLAR_WEBHOOK_SECRET: SECRET };
   const service = billingFromEnv(rotating);
   const body = subscription();
   const refused = await service.verify(
@@ -655,7 +655,7 @@ test("billingFromEnv reads the environment when it is called", async () => {
   assert.equal(refused.ok, false, "a signature made with another secret is refused");
   assert.equal(refused.failure, "signature_rejected");
 
-  rotating.VOID_POLAR_WEBHOOK_SECRET = OTHER_SECRET;
+  rotating.NOMO_POLAR_WEBHOOK_SECRET = OTHER_SECRET;
   const accepted = await service.verify(
     Buffer.from(body),
     signed(body, { id: "msg_rotate", secret: OTHER_SECRET }),
@@ -743,7 +743,7 @@ test("the webhook is mounted above the JSON parser and above the owner middlewar
   // The operator control token is set so the owner middleware is configured:
   // with neither it nor an account provider it answers `setup_required`, which
   // would prove nothing about which side of it the webhook sits on.
-  Object.assign(process.env, ENV, { VOID_CONTROL_TOKEN: "control-token-for-the-mount-test-1" });
+  Object.assign(process.env, ENV, { NOMO_CONTROL_TOKEN: "control-token-for-the-mount-test-1" });
   process.env.DATABASE_URL = "postgresql://void:void@127.0.0.1:1/void";
   Pool.prototype.query = () => Promise.resolve({ rows: [], rowCount: 0 });
   const store = await import("./store.mjs");
@@ -848,7 +848,7 @@ test("the module never puts an owner on a request or reads one from one", () => 
     "req.query.owner",
     "req.body.owner",
     "req.headers.owner",
-    'req.headers["x-void-owner"]',
+    'req.headers["x-nomo-owner"]',
   ])
     assert.equal(
       source.includes(forbidden),

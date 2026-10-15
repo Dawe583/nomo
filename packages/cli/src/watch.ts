@@ -13,23 +13,25 @@ import { retainedKeyProvider } from "../../ledger/src/sign.ts";
 import { detectCapabilities } from "./tui/caps.ts";
 import { DiffScreenWriter } from "./tui/watch.ts";
 import { liveRecords, renderLiveFeed, type LiveView } from "./tui/live.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
+import { envValue } from "../../ledger/src/env-compat.ts";
 
 /// Resolve the `--ledger` value to a ledger file. Every sibling command reads
 /// `<ledger dir>/<workspace>.jsonl`, so handing the directory itself to the
 /// feed fails to open it. A path that exists as a file is taken as given, so
 /// pointing at one specific ledger still works.
 export async function resolveLedgerPath(value: string | undefined, workspace: string): Promise<string> {
-  const fallback = join(process.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"), `${workspace}.jsonl`);
+  const fallback = join(envValue(process.env, "NOMO_LEDGER_DIR") ?? join(dataDir(homedir()), "ledger"), `${workspace}.jsonl`);
   if (value === undefined) return fallback;
   const isDirectory = await stat(value).then(info => info.isDirectory()).catch(() => false);
   return isDirectory ? join(value, `${workspace}.jsonl`) : value;
 }
 
 export async function runWatchCommand(argv: readonly string[]): Promise<number> {
-  let workspace = process.env.VOID_WORKSPACE ?? "default";
+  let workspace = envValue(process.env, "NOMO_WORKSPACE") ?? "default";
   let ledger: string | undefined;
   let once = false;
-  let approvalDir = process.env.VOID_APPROVALS_DIR;
+  let approvalDir = envValue(process.env, "NOMO_APPROVALS_DIR");
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--once") once = true;
@@ -43,7 +45,7 @@ export async function runWatchCommand(argv: readonly string[]): Promise<number> 
   }
   if (!/^[A-Za-z0-9_.-]+$/.test(workspace)) throw new Error("invalid workspace");
   const ledgerFile = await resolveLedgerPath(ledger, workspace);
-  approvalDir ??= join(homedir(), ".void", "approvals", workspace);
+  approvalDir ??= join(dataDir(homedir()), "approvals", workspace);
   let view: LiveView = { workspace, selected: 0, filter: "", paused: false, detail: false, help: false };
   const caps = () => detectCapabilities(process.env, process.stdout);
   let reading = false;
@@ -57,7 +59,7 @@ export async function runWatchCommand(argv: readonly string[]): Promise<number> 
       // Resolved the same way every other verifier surface resolves it, so an
       // operator's pin is honoured here and the source is reported. This used
       // to call `devKeyProvider()` with no arguments at all: it read the real
-      // `~/.void/keys`, ignored the trust file, and minted a key when none
+      // `~/.nomo/keys`, ignored the trust file, and minted a key when none
       // existed. `retainedKeyProvider` keeps a watch from creating signing
       // capability as a side effect of looking at the ledger.
       const key = await resolveVerificationKey({
@@ -78,7 +80,7 @@ export async function runWatchCommand(argv: readonly string[]): Promise<number> 
       // The watch stated nothing at all when no key resolved, which is the one
       // state an operator most needs to be told about. It now always names the
       // answer, using the same line every other surface prints, so a reader
-      // comparing `void watch` against `void verify` is comparing the same
+      // comparing `nomo watch` against `nomo verify` is comparing the same
       // claim and not two different ones.
       const note = key === undefined ? NO_VERIFICATION_KEY_NOTE : verificationKeyLine(key);
       view = {

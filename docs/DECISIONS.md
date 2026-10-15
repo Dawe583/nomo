@@ -1,4 +1,4 @@
-# VOID: decision log
+# NOMO: decision log
 
 The seven decisions taken before any product code was written, why each was
 taken, and what was rejected. Written 4 September 2026, at WP-00.
@@ -60,7 +60,7 @@ in phase 1. Streamable HTTP means an inbound listener, session identifiers,
 Origin and DNS rebinding validation, TLS and bearer auth sitting in front of
 someone's database: a second security surface, opened in the same week the
 forwarding logic is written for the first time. It is also the only shape where
-VOID holds no credentials at all, which keeps the first security conversation
+NOMO holds no credentials at all, which keeps the first security conversation
 short. EXECUTION-PLAN already splits this as WP-01 and WP-02, so the narrowing
 costs nothing structurally.
 
@@ -80,7 +80,7 @@ gateway, so the Team tier in GO-TO-MARKET section 4, which is defined by a
 hosted control plane, is structurally blocked until WP-02 and WP-10 exist.
 Declared facts mean a classification is only as honest as the operator's config
 file, which is the limitation BUILD-PLAN section 7.1 names and which must stay
-visible in the product rather than buried. Fail closed means a VOID crash
+visible in the product rather than buried. Fail closed means a NOMO crash
 becomes an outage of the agent's write path: availability traded for safety,
 which is the right direction here but must be documented for the first user.
 
@@ -95,16 +95,16 @@ forwarded and are proven by unit test rather than by transcript.
 | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Stripe or another payments surface first                                    | Needs an account, keys and an internet reachable webhook before line one, so it costs money and standing surface before the first user. Nearly every call in it is R2 or R3, so the product only ever says no and never says undone. A development mistake touches someone's real money.                              |
 | Both transports in phase 1, as BUILD-PLAN writes it                         | Doubles the code under review in the riskiest week and adds an inbound listener, session state, Origin checks and an auth surface in front of a database. Deferred to WP-02 with localhost binding, Origin validation and a required bearer token as its own exit criteria.                                           |
-| SDK wrap or a framework plugin first                                        | Binds VOID to one framework's agent loop, which BUILD-PLAN section 8 names as the mistake that turns a framework agnostic layer into a competitor to the framework. It also defers the transport work rather than saving it. It is the natural second deployment shape, at WP-14.                                     |
-| Filesystem or shell MCP server as the first surface                         | Fastest to intercept and impossible to compensate honestly. A file delete has no keyed before image you can restore without copying the payload, which collides with the rule that VOID stores references and digests, never payloads. It produces a hold demo with no path to a replay demo.                         |
+| SDK wrap or a framework plugin first                                        | Binds NOMO to one framework's agent loop, which BUILD-PLAN section 8 names as the mistake that turns a framework agnostic layer into a competitor to the framework. It also defers the transport work rather than saving it. It is the natural second deployment shape, at WP-14.                                     |
+| Filesystem or shell MCP server as the first surface                         | Fastest to intercept and impossible to compensate honestly. A file delete has no keyed before image you can restore without copying the payload, which collides with the rule that NOMO stores references and digests, never payloads. It produces a hold demo with no path to a replay demo.                         |
 | A general purpose HTTP egress proxy classifying any outbound API call       | No tool identity, no arguments, no target state, so classification degrades to URL matching. 74 of the 89 registry entries change class with configuration, so URL matching is wrong most of the time.                                                                                                                |
 | A gateway across several MCP servers at once                                | Every classification bug is then spread across surfaces with different auth, snapshot formats and failure modes. A plausible but wrong interceptor is worse than none.                                                                                                                                                |
-| VOID holding its own read only credentials per connector, to enable probing | BUILD-PLAN section 7.1 names this as the mistake that turns a proxy into an agent platform. It gives VOID standing access to customer systems, which is a much larger security review and a much longer sale. Declared facts ship first, probing through the upstream server's own read tools is the phase 6 upgrade. |
+| NOMO holding its own read only credentials per connector, to enable probing | BUILD-PLAN section 7.1 names this as the mistake that turns a proxy into an agent platform. It gives NOMO standing access to customer systems, which is a much larger security review and a much longer sale. Declared facts ship first, probing through the upstream server's own read tools is the phase 6 upgrade. |
 | A production database for the first end to end run                          | Prohibited by BUILD-PLAN section 3 and by EXECUTION-PLAN section 2. The first run of an unproven interceptor is the least safe moment there has ever been to break that rule.                                                                                                                                         |
 
 **Revisit when.** The phase 4 moment runs end to end (an agent attempts a real
 R3 Postgres write, a human cancels it, the write never happens, the agent
-recovers) **or** a design partner commits to paying for a surface VOID does not
+recovers) **or** a design partner commits to paying for a surface NOMO does not
 yet intercept. Either event reopens the tool surface. The transport reopens
 separately, at the first request for a remote or shared proxy, which is WP-02.
 
@@ -120,7 +120,7 @@ tier**. The interface is `append`, `read`, `head` and `verify`, and nothing
 else: no `update`, no `delete`.
 
 _Dev tier, the default:_ an append only JSONL file per workspace at
-`VOID_LEDGER_DIR` (default `~/.void/ledger/<workspace>.jsonl`), directory mode
+`NOMO_LEDGER_DIR` (default `~/.nomo/ledger/<workspace>.jsonl`), directory mode
 0700, file mode 0600, opened `O_APPEND`, one JSON object per line, `fsync`
 before the append is acknowledged. The signing public key and the latest signed
 checkpoint are written beside it so the store is self contained for the
@@ -152,7 +152,7 @@ _The append is one serialised transaction per workspace:_ begin,
 commit, with the unique constraint as the backstop and a single re-read and
 retry on a unique violation.
 
-_With no `DATABASE_URL`:_ resolve `VOID_LEDGER_URL`, then `DATABASE_URL`, then
+_With no `DATABASE_URL`:_ resolve `NOMO_LEDGER_URL`, then `DATABASE_URL`, then
 the local JSONL store if its directory is writable, and log which store was
 chosen exactly once at startup. If none can be opened durably, `append` throws,
 and because the proxy fails closed the intercepted call is denied with an MCP
@@ -293,9 +293,9 @@ then base64. Signatures cover the hash rather than the body, so signature
 checking is independent of canonicalisation once the verifier has recomputed the
 hash from the body.
 
-In development the private key comes from `VOID_SIGNING_KEY` as base64 PKCS8 if
+In development the private key comes from `NOMO_SIGNING_KEY` as base64 PKCS8 if
 set. If unset, `packages/ledger` generates one on first append into
-`~/.void/keys/<key_id>.pkcs8` at mode 0600, prints one loud line saying a
+`~/.nomo/keys/<key_id>.pkcs8` at mode 0600, prints one loud line saying a
 development key is in use, and gives the id a `dev-` prefix. The verifier
 reports an entry signed by a `dev-` key as **valid, development key**, never as
 plain valid. In production the same interface is backed by KMS and no calling
@@ -346,7 +346,7 @@ Signing every entry rather than only the head is a deliberate deviation from
 BUILD-PLAN phase 2. It costs tens of microseconds and one text column, and it
 means an exported slice verifies on its own, which is the whole of WP-13 and of
 the per entry `signature` field the site already publishes at
-`artifacts/void/src/pages/docs.tsx:106`.
+`artifacts/nomo/src/pages/docs.tsx:106`.
 
 Grafted from the losing logs: the `alg` field, the alg-bound preimage and the
 in-chain rotation entry (safest); the `dev-` key id prefix and the verifier's
@@ -377,7 +377,7 @@ check.
 | libsodium, tweetnacl, noble-ed25519                                       | A new dependency behind the 1440 minute release age gate for a primitive the platform already implements, and a supply chain surface in the one component whose job is to be trustworthy.                                                                                                  |
 | A `KeyProvider` with `getPrivateKey`, `exportKey` or a synchronous `sign` | Exported key material eventually reaches a log or a crash dump, and a synchronous signature makes a KMS implementation impossible without rewriting every caller.                                                                                                                          |
 | Hardcoding ed25519 with no `alg` field                                    | Blocks AWS KMS, the most common enterprise ask, and turns a later algorithm addition into a format break for every entry already written.                                                                                                                                                  |
-| Requiring `VOID_SIGNING_KEY`, with no auto generated development key      | Safer, and it puts a setup step in front of the demo and in front of every contributor's first test run. The `dev-` prefix plus a distinct verifier verdict recovers the safety at a fraction of the friction.                                                                             |
+| Requiring `NOMO_SIGNING_KEY`, with no auto generated development key      | Safer, and it puts a setup step in front of the demo and in front of every contributor's first test run. The `dev-` prefix plus a distinct verifier verdict recovers the safety at a fraction of the friction.                                                                             |
 | Sigstore or a public transparency log                                     | An external service and an availability dependency in the write path, disproportionate at one user. Worth revisiting as a paid attestation feature.                                                                                                                                        |
 | X.509 and a small PKI                                                     | Certificate lifecycle management for a solo operator, to solve a key distribution problem that one public key file next to the ledger already solves.                                                                                                                                      |
 | One key shared between development and production, or a key with no id    | Rotation becomes unverifiable after the first rotation, and a development key that can sign production entries makes every entry's provenance a guess.                                                                                                                                     |
@@ -545,7 +545,7 @@ _Open, Apache 2.0:_ `packages/registry` (data, evaluator, schema),
 decide, hold, the approval **channel interface** and the CLI channel),
 `packages/cli`, `packages/connectors/postgres`, `packages/connectors/s3`, and
 the standalone verifier as its own separately installable package with **zero
-dependency on any other VOID package**.
+dependency on any other NOMO package**.
 
 _Paid and closed:_ `apps/control-plane`, `cloud` (added 2026-10-03, see the
 amendment at the end of this file), the Slack and Teams channel
@@ -564,7 +564,7 @@ The Slack and Teams implementations live in a separate paid package
 implementing that interface.
 
 _Amendment two, the verifier's independence is structural._ It ships as its own
-installable package with no VOID dependencies, the ledger format is documented
+installable package with no NOMO dependencies, the ledger format is documented
 well enough that a second verifier can be written in another language, and the
 commitment that it never moves is written into its own README.
 
@@ -588,7 +588,7 @@ readable by the person putting it in their write path. Apache 2.0 over MIT for
 two clauses that cost nothing now and matter later: the express patent grant in
 section 3, which is what a corporate legal reviewer looks for before allowing a
 security component into a write path and is the question that stalls exactly
-this kind of review, and the trademark reservation, which keeps the VOID name
+this kind of review, and the trademark reservation, which keeps the NOMO name
 when a gateway vendor forks the proxy. Under a cheapest bias the same conclusion
 arrives differently: an open, dependency light core is the only distribution a
 solo operator cannot buy with money, and the MCP registry, GitHub search and the
@@ -637,7 +637,7 @@ features being good rather than on artificial limits.
 | Two repositories from the start                               | The cleanest long term boundary and a direct tax now. One repository with a root Apache 2.0 `LICENSE`, a per-directory `LICENSE` under `apps/control-plane`, and SPDX headers where the line actually runs gives the same clarity. Splitting is a day whenever it becomes necessary, which is when a paying customer's legal team asks. |
 | Opening the taint graph, budgets and attestation mappings now | They are organisational features and belong on the paid side from day one. Moving them across later would be the exact licence change the model forbids, so the line has to hold before there is pressure on it.                                                                                                                        |
 
-**Revisit when.** A cloud provider ships a hosted VOID, **or** a customer's
+**Revisit when.** A cloud provider ships a hosted NOMO, **or** a customer's
 procurement rejects Apache 2.0 for a reason that is not the patent grant. The
 hard rule itself is not revisitable: open features stay open. New organisational
 features may land paid.
@@ -796,7 +796,7 @@ the regression is silent. **So the relative shim out of `api/` is rejected on
 evidence, permanently.**
 
 That leaves the safe move against not moving yet. The bare specifier form
-(`export * from "@void/registry"`, package declared as a root dependency) is
+(`export * from "@nomo/registry"`, package declared as a root dependency) is
 **proven safe on the emit half**, even when the package's types resolve to
 TypeScript source through a pnpm style symlink, because TypeScript treats
 anything resolved through `node_modules` as an external library file and
@@ -808,7 +808,7 @@ CommonJS loadable JavaScript, because `api/tsconfig.json` uses `moduleResolution
 `node` (node10) which never reads an `exports` map, and the api emit is CommonJS
 and will `require()` it; that JavaScript must exist **before** the Vercel Node
 builder compiles the functions; and `vercel.json`'s `buildCommand` is
-`pnpm run build:web`, which filters to `@workspace/void` and would not run a
+`pnpm run build:web`, which filters to `@workspace/nomo` and would not run a
 build script in `packages/registry` at all. So the safe move costs a root
 dependency, a dual CommonJS and ESM build, `main`, `module`, `types` and
 `exports` kept correct for three resolvers simultaneously (node10 for `api/`,
@@ -839,9 +839,9 @@ imports the registry at runtime where Node's type stripping deliberately does
 not apply inside `node_modules`. Then, and only then:
 
 - `api/_registry.ts` becomes, as its entire contents,
-  `export * from "@void/registry";` with a header comment explaining that the
+  `export * from "@nomo/registry";` with a header comment explaining that the
   bare specifier is deliberate.
-- `@void/registry` is declared in the **root** `package.json` dependencies as
+- `@nomo/registry` is declared in the **root** `package.json` dependencies as
   `"workspace:*"`, in the slot `zod` and `pg` occupy.
 - The package carries top level `main` and `types`, not only an `exports` map.
 - `main` points at CommonJS that exists before the functions compile; ship dual
@@ -858,7 +858,7 @@ it as an oversight.
 | Rejected                                                                                                                                        | Why not                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Move the source and leave a **relative** re-export in `api/_registry.ts` (Reader B's recommendation, and EXECUTION-PLAN's literal builder line) | Proven fatal and proven silent. `tsc` exits 0 with zero diagnostics while every function moves from `<out>/registry.js` to `<out>/api/registry.js`, so Vercel cannot resolve any route. Typecheck, lint and `build:web` all pass through it. This is the exact regression that broke this repository's deploy before.                                                                                   |
-| Move the source now and reach it through the bare specifier `@void/registry`                                                                    | The correct long term answer and proven safe on the emit half. Rejected only for sequencing: it costs a root dependency, dual CJS and ESM output, `main`/`types` correct for three resolvers, build ordering in `build:web`, and a preview deploy to validate a trace behaviour that cannot be tested locally, all inside the scaffolding package, to buy nothing until WP-04a. Right form, wrong time. |
+| Move the source now and reach it through the bare specifier `@nomo/registry`                                                                    | The correct long term answer and proven safe on the emit half. Rejected only for sequencing: it costs a root dependency, dual CJS and ESM output, `main`/`types` correct for three resolvers, build ordering in `build:web`, and a preview deploy to validate a trace behaviour that cannot be tested locally, all inside the scaffolding package, to buy nothing until WP-04a. Right form, wrong time. |
 | Add a `paths` mapping to `api/tsconfig.json` so a bare specifier resolves without a real package                                                | `paths` affects typechecking only. The emitted CommonJS still `require()`s the literal specifier at runtime, so it resolves during the build and fails at function invocation. That is the worst failure mode, because it looks green.                                                                                                                                                                  |
 | Copy the registry into `packages/registry` and keep both                                                                                        | Two sources of truth for the classification data. `replit.md` states the reason the registry is one module: the page, the endpoint and the intercept time classification must not be able to disagree about what a class means. A classifier that disagrees with the published registry is the single worst bug this product can have.                                                                  |
 | Generate a JSON artifact into `api/` from a package source                                                                                      | A build step in front of the Vercel function build and a generated file in git that can be stale, for no safety gain, and a second way for the site and the runtime to disagree.                                                                                                                                                                                                                        |
@@ -926,7 +926,7 @@ Apple branding in GUI-RULES.md. Keep Apple's touch sizing, hierarchy and keyboar
 accessibility while sharing one paper/CRT stylesheet across GUI pages.
 
 The optional workbench originates model requests through the SDK; the proxy
-itself remains an interceptor. Provider/session logic lives in @void/workbench.
+itself remains an interceptor. Provider/session logic lives in @nomo/workbench.
 Vercel hosts a stateless authenticated gateway, while a persistent runtime owns
 MCP sessions, approval brokers and signed JSONL storage. There is no claim that
 function-local disk is durable. See BETA.md for configuration and open scope.
@@ -1002,7 +1002,7 @@ separate from this bundled-interface update. Research: GUI-DESIGN-RESEARCH.md.
 ## Apple 1.0.1 scope, 2026-09-24
 
 The user authorized implementation of
-`docs/superpowers/plans/2026-09-23-void-1.0.1-apple-release.md`.
+`docs/superpowers/plans/2026-09-23-nomo-1.0.1-apple-release.md`.
 Keep the TypeScript recovery engine and existing Tauri Mac presentation until
 a signed App Sandbox experiment proves a blocker. Build a native SwiftUI
 iPhone/iPad companion for one explicitly paired Mac over a trusted local
@@ -1032,7 +1032,7 @@ not deleted; it is dated and marked as not current, because deleting the record
 of what a work package was supposed to deliver loses the reason the work exists.
 
 **The phone companion stays read-only.** The shipped app is read-only by
-construction: `apps/apple/VOIDApp/AppCopy.swift` already tells the user that
+construction: `apps/apple/NOMOApp/AppCopy.swift` already tells the user that
 approval and Undo happen on the Mac, and pairing a device with write scope is an
 operator opt-in that is off by default. That is the answer, so the P05.03,
 P06.03 and P07.01-P07.04 rows that assume a phone-side approval or Undo are
@@ -1069,7 +1069,7 @@ and the web control plane adopt the platform's own typography, semantic colours,
 materials, navigation patterns and accessibility behaviour. The warm paper
 palette, the `Inter` interface face and the custom orange accent leave the
 platform surfaces. The iOS app was already close, because
-`apps/apple/VOIDApp/ChatTheme.swift` was built on system colours; the web was the
+`apps/apple/NOMOApp/ChatTheme.swift` was built on system colours; the web was the
 outlier, with seventeen hand-maintained colour properties, no spacing token and
 two stylesheets that override the third. The contract is
 `docs/APPLE-DESIGN-SYSTEM.md`, which quotes the guideline tables rather than
@@ -1093,7 +1093,7 @@ the platform look, and no part of the platform look may be read back as a
 proposal to restyle it.
 
 **What this costs, stated here because the strategy documents say otherwise.**
-`docs/VOID-FUTURE-DIRECTION.md` argued for dropping the Apple product and
+`docs/NOMO-FUTURE-DIRECTION.md` argued for dropping the Apple product and
 shipping the ledger. That argument is overridden, not refuted, and the override
 has a price: the redesign is roughly a quarter of the available sessions for two
 months, and the sequence in `docs/ROADMAP-2026-Q4.md` exists so that reaching a
@@ -1106,12 +1106,12 @@ unresolved item, and because the same roadmap makes the scope the longest-lead
 external gate in the quarter. What follows is a rule. It is not a name, and it
 does not claim one exists.
 
-**Product packages keep the `@void/<package>` convention, and owning the scope is
+**Product packages keep the `@nomo/<package>` convention, and owning the scope is
 a human action that has not happened.** All ten packages under `packages/` are
-named `@void/registry`, `@void/ledger`, `@void/policy`, `@void/proxy`,
-`@void/cli`, `@void/connectors`, `@void/runtime`, `@void/sdk`, `@void/verifier`
-and `@void/workbench` today, and nothing in this section renames any of them. A
-scope is owned by an account, so owning `@void` means an organisation, a
+named `@nomo/registry`, `@nomo/ledger`, `@nomo/policy`, `@nomo/proxy`,
+`@nomo/cli`, `@nomo/connectors`, `@nomo/runtime`, `@nomo/sdk`, `@nomo/verifier`
+and `@nomo/workbench` today, and nothing in this section renames any of them. A
+scope is owned by an account, so owning `@nomo` means an organisation, a
 verified account and a publish authorization, and none of the three exists yet.
 That is the item the roadmap calls B2, and it is a person with a credit card
 rather than an engineer with a branch. The consequence is stated here because it
@@ -1144,7 +1144,7 @@ derived path instead of the path the caller gave it.
 
 **The ledger path is resolved in one helper that returns a result, and no
 command resolves it on its own.** `packages/cli/src/ledger-target.ts` is used by
-`void verify`, `void export`, `void attest` and `void metrics`. It returns a
+`nomo verify`, `nomo export`, `nomo attest` and `nomo metrics`. It returns a
 result rather than throwing because the failure is an answer, not an exception:
 `absent`, `empty-directory`, `workspace-absent`, `unreadable` and `not-a-file`
 are five different operational problems and were one `ENOENT`. The standalone
@@ -1157,20 +1157,20 @@ default location is named and labelled as the default, because that is what was
 resolved. A message naming `<dir>/default.jsonl` to someone who passed `<dir>`
 is the defect, not the detail.
 
-**`void metrics` exits non-zero when it cannot measure.** An empty directory is
+**`nomo metrics` exits non-zero when it cannot measure.** An empty directory is
 a measurement of zeroes and exits zero; an absent or unreadable path is not a
 measurement and exits 1 with nothing on stdout. A counter surface that prints an
 error and exits zero is a false pass, and a false pass on the machine-readable
 surface is the one a dashboard records forever.
 
 **A refusal names a field, and a configuration is inspectable.**
-`packages/cli/src/recovery-config.ts` describes every field `void recovery`
+`packages/cli/src/recovery-config.ts` describes every field `nomo recovery`
 reads, every required field it did not find and every field it ignores, and
-`void recovery doctor --config <file>` prints that description and exits 1 when
+`nomo recovery doctor --config <file>` prints that description and exits 1 when
 it is not usable. The same description is the text of the refusal, so the
 diagnostic and the report cannot drift apart. A config carrying an adapter this
 executor does not read is answered with the adapter name and a pointer at
-`void recovery conformance`, which does read it: "unsupported" and "malformed"
+`nomo recovery conformance`, which does read it: "unsupported" and "malformed"
 are different problems and an operator cannot fix either one from a sentence
 that names neither.
 
@@ -1240,7 +1240,7 @@ agent's write is allowed. Closing the deployed server does not close the hold.
 **Every other directory is now classified too.** The gate scans the whole tree
 and every tracked top-level directory, plus every child of `apps/`, appears in
 it with a status. `apps/apple`, `apps/desktop`, `apps/appwrite-mcp`,
-`apps/tui-preview`, `gui-web`, `python/void-transport`, `scripts/`, `docs`,
+`apps/tui-preview`, `gui-web`, `python/nomo-transport`, `scripts/`, `docs`,
 `fixtures`, `policy`, `marketing`, `site` and the tool directories are open,
 each with the reason it is not closed. They were open before this amendment
 under the root licence; naming them narrows nothing and makes it impossible for
@@ -1323,7 +1323,7 @@ the product, and the distinction is the whole amendment:
   builder, its three traversal queries and the ledger reader. Apache 2.0, in
   the open package, tested by `graph.test.ts`, `query.test.ts` and
   `capture.test.ts` without any entitlement.
-- `void taint` in `packages/cli` is the local operator command. Open, and
+- `nomo taint` in `packages/cli` is the local operator command. Open, and
   correct: it reads a ledger file the operator already holds on their own disk.
   `docs/HANDBOOK.md` and `README.md` document it and this amendment changes
   neither.
@@ -1341,7 +1341,7 @@ licence, and it serves a single operator workspace with no multi-tenancy and no
 billing (`docs/PLAN-STATUS.md`, the WP-10 row). A surface inside the closed side
 cannot leak open code, because nothing there is open. The allowlist at
 `apps/control-plane/api/remote-gateway.mjs:50` forwards the same path to a
-self-hosted runtime behind `VOID_CONTROL_TOKEN`, which is the deployment
+self-hosted runtime behind `NOMO_CONTROL_TOKEN`, which is the deployment
 authority the capability gate already exempts as `OPERATOR_OWNER`. So the paid
 line is enforced everywhere an account boundary exists, and the two ungated
 surfaces are ungated because there is no account boundary to enforce it across.
@@ -1424,7 +1424,7 @@ licence can hold.
 `taintGraph`. The thing no competitor offers is not the ledger and it is not the
 signature: it is that a reverted Postgres row leaves a durable receipt **in the
 customer's own database**, so a third party verifies the restoration without
-trusting VOID, its key or its ledger. That sentence is
+trusting NOMO, its key or its ledger. That sentence is
 `docs/COMPETITIVE-WEDGE.md` §4.3. _(This entry said "nobody else has" and "the
 only claim in this repository that no competitor touches". Both were corrected
 on 2026-10-04: Rubrik shipped Agent Rewind on 2025-08-12
@@ -1487,3 +1487,56 @@ consumed nowhere in code (operator config under `.omp/` only), and
 surfaces, `scripts/src/prime-bridge.mjs`, `cloud/prime.mjs` plus
 `scripts/team/prime-spawn.sh`, and the TUI `/harness` switch. There is no
 source-level dependency to vendor; there is a process contract.
+
+## NOMO Agent Identity and Fleet Control Plane: active direction, 2026-10-08
+
+This decision records the product direction the owner selected on 2026-10-08.
+It supersedes the earlier recovery-first product recommendation and any
+conflicting strategy or sales plan. It does not silently repeal the technical,
+security, privacy, compatibility, recovery or operations contracts below.
+
+**Choice.** Make NOMO an Agent Identity & Fleet Control Plane for MCP-capable
+agents. Bind each tool call to a trusted principal, workspace, registered agent
+and run. Apply identity and scope checks to every call. Use a measured fast path
+for reads and low-risk calls. Apply the complete policy and durable-evidence
+path to high-risk writes. Give operators agent and run visibility, exact-digest
+approval, and truthful stop and revocation state.
+
+**Required host integration.** The coding-agent Harness remains in scope and is
+a product-v1 release gate, not a separate product pitch. Harness runs use the
+same identity, token, proxy, policy and ledger path. Learning proposals stay
+inert until an operator approves the exact proposal digest. Later-session
+retrieval is bounded, same-workspace and sourced only from approved, verified
+records. It never changes policy, permissions or credentials.
+
+**Local demo.** The target for 2026-10-11 is one trusted local Workbench run, one
+workspace, one loopback inbound HTTP MCP endpoint, one disposable target and an
+opaque local token with a maximum 60-second lifetime and a proxy audience. The
+current proxy accepts agents over STDIO and uses HTTP only as an upstream client,
+so inbound HTTP is new work. This local test token is not MCP OAuth. The demo is
+not production, a distributed fleet, fleet-wide kill or revocation
+acknowledgement, or customer validation.
+
+**Product-v1 authorization.** HTTP MCP authorization must follow the current MCP
+specification, including Protected Resource Metadata, Authorization Server
+discovery, PKCE, `resource`, audience and scope validation, expiry, revocation
+and proper unauthorized responses. STDIO requires a separate process and
+environment trust design. The NOMO proxy token is never forwarded upstream.
+
+**Market position.** Identity, credential brokerage, MCP gateways and runtime
+controls are active competitive areas. No empty-market, first or only claim is
+authorized. The capability map and MVP spec define a qualification test based on
+a real write incident or blocked write, four named owners, a specific pilot
+environment and a dated next step. Positive reaction alone is not demand proof.
+Pricing and tiers remain unvalidated hypotheses, and no price claim is approved.
+
+**Compatibility.** NOMO is the product name and `@nomo/*` is the public package
+target. Existing `@void/*` imports, environment names, CLI commands, state and
+ledgers remain compatible through a tested, explicit, versioned migration.
+Never silently rename or delete user state.
+
+**Documents and authority.** The capability map, MVP spec and implementation
+plan are the active product-design references. Conflicting older product
+strategy and sales documents will be removed from the active feature branch
+after valid evidence is migrated. Keep `DECISIONS.md` history, current technical
+contracts and valid operations documentation. Do not rewrite Git history.

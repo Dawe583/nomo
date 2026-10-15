@@ -1,6 +1,6 @@
 // App shell cache. Same-origin app files cache-first, all else
 // network-first. No push, no background sync.
-var CACHE = "void-v1";
+var CACHE = "nomo-v1";
 var SHELL = [
   "./",
   "./index.html",

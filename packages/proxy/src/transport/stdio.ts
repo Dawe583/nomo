@@ -112,7 +112,7 @@ export function spawnUpstream(
   // sandbox, so it must never inherit the ledger signing key, even when an
   // operator explicitly forwards an environment that contains it. An upstream
   // that can sign ledger entries can forge the audit trail it is audited by.
-  delete childEnv.VOID_SIGNING_KEY;
+  delete childEnv.NOMO_SIGNING_KEY;
   if (childEnv.PATH === undefined && process.env.PATH !== undefined) {
     childEnv.PATH = process.env.PATH;
   }

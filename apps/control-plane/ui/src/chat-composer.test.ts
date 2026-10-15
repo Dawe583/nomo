@@ -26,7 +26,7 @@ function storage() {
     },
   };
 }
-const key = "void-draft:workspace:session";
+const key = "nomo-draft:workspace:session";
 
 test("an ordinary message is far from the bound the send guard enforces", () => {
   const text = "Popiš prosím migrační plán.";
@@ -100,40 +100,40 @@ test("attachments survive the same route change the draft text survives", () => 
     { name: "notes.csv", content: "a,b\n", bytes: 4 },
   ];
   saveDraftFiles(store, key, files);
-  assert.equal(store.values.get("void-files:workspace:session") !== undefined, true);
+  assert.equal(store.values.get("nomo-files:workspace:session") !== undefined, true);
   assert.deepEqual(loadDraftFiles(store, key), files);
   // A different conversation must not inherit another conversation's files.
-  assert.deepEqual(loadDraftFiles(store, "void-draft:workspace:other"), []);
+  assert.deepEqual(loadDraftFiles(store, "nomo-draft:workspace:other"), []);
 });
 
 test("an accepted send clears the files even if the route changes first", () => {
   const store = storage();
   const files = [{ name: "plan.md", content: "# Plan\n", bytes: 8 }];
-  saveDraftFiles(store, "void-draft:workspace:new", files);
-  assert.equal(attachmentBytes(loadDraftFiles(store, "void-draft:workspace:new")), 8);
+  saveDraftFiles(store, "nomo-draft:workspace:new", files);
+  assert.equal(attachmentBytes(loadDraftFiles(store, "nomo-draft:workspace:new")), 8);
   // The imperative clear is what send() runs inside the accepted block; the
   // mirroring effect never gets the chance to run against the new key.
-  clearDraftFiles(store, "void-draft:workspace:new");
-  assert.equal(store.getItem("void-files:workspace:new"), null);
-  assert.deepEqual(loadDraftFiles(store, "void-draft:workspace:new"), []);
+  clearDraftFiles(store, "nomo-draft:workspace:new");
+  assert.equal(store.getItem("nomo-files:workspace:new"), null);
+  assert.deepEqual(loadDraftFiles(store, "nomo-draft:workspace:new"), []);
   // And a different conversation is untouched by it.
-  saveDraftFiles(store, "void-draft:workspace:other", files);
-  clearDraftFiles(store, "void-draft:workspace:new");
-  assert.equal(attachmentBytes(loadDraftFiles(store, "void-draft:workspace:other")), 8);
+  saveDraftFiles(store, "nomo-draft:workspace:other", files);
+  clearDraftFiles(store, "nomo-draft:workspace:new");
+  assert.equal(attachmentBytes(loadDraftFiles(store, "nomo-draft:workspace:other")), 8);
 });
 
 test("a sent or cleared draft does not leave its files behind", () => {
   const store = storage();
   saveDraftFiles(store, key, [{ name: "plan.md", content: "# Plan\n", bytes: 8 }]);
   saveDraftFiles(store, key, []);
-  assert.equal(store.getItem("void-files:workspace:session"), null);
+  assert.equal(store.getItem("nomo-files:workspace:session"), null);
   assert.deepEqual(loadDraftFiles(store, key), []);
 });
 
 test("a corrupt attachment record loses the file, not the conversation", () => {
   const store = storage();
-  store.setItem("void-files:workspace:session", "{not json");
+  store.setItem("nomo-files:workspace:session", "{not json");
   assert.deepEqual(loadDraftFiles(store, key), []);
-  store.setItem("void-files:workspace:session", JSON.stringify([{ name: 5 }]));
+  store.setItem("nomo-files:workspace:session", JSON.stringify([{ name: 5 }]));
   assert.deepEqual(loadDraftFiles(store, key), []);
 });

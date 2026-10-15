@@ -1,3 +1,4 @@
+import { envValue } from './env.mjs';
 import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from "node:crypto";
 
 const COOKIE = "__Host-void-auth";
@@ -40,10 +41,23 @@ export function unsealSession(cookie, key, now = Date.now()) {
   } catch { return undefined; }
 }
 
+/**
+ * `APPWRITE_*` are Appwrite's names, not ours, so they are read straight from
+ * the injected object: aliasing them would mean owning a variable the upstream
+ * provider defines. `NOMO_AUTH_SEAL_KEY` and `NOMO_PUBLIC_ORIGIN` are ours and
+ * keep the legacy spelling working.
+ *
+ * The message names the variables and never their values: a deployment that
+ * got the seal key wrong must be able to see which one, and must not be able to
+ * read a key out of its own error.
+ */
 export function readAuthConfig(env = process.env) {
-  const projectId = env.APPWRITE_PROJECT_ID, runtimeKey = env.APPWRITE_RUNTIME_KEY, sealKey = env.VOID_AUTH_SEAL_KEY;
-  if (!projectId || !runtimeKey || !/^[a-f0-9]{64}$/i.test(sealKey ?? "")) throw new Error("Appwrite auth requires APPWRITE_PROJECT_ID, APPWRITE_RUNTIME_KEY and VOID_AUTH_SEAL_KEY.");
-  const publicOrigin = httpsUrl(env.VOID_PUBLIC_ORIGIN, "VOID_PUBLIC_ORIGIN").origin;
+  const projectId = env.APPWRITE_PROJECT_ID,
+    runtimeKey = env.APPWRITE_RUNTIME_KEY,
+    sealKey = envValue(env, "NOMO_AUTH_SEAL_KEY");
+  if (!projectId || !runtimeKey || !/^[a-f0-9]{64}$/i.test(sealKey ?? ""))
+    throw new Error("Appwrite auth requires APPWRITE_PROJECT_ID, APPWRITE_RUNTIME_KEY and NOMO_AUTH_SEAL_KEY.");
+  const publicOrigin = httpsUrl(envValue(env, "NOMO_PUBLIC_ORIGIN"), "NOMO_PUBLIC_ORIGIN").origin;
   return { endpoint: endpoint(env.APPWRITE_ENDPOINT), projectId, runtimeKey, sealKey, publicOrigin, sessionSeconds: 60 * 60 * 24 * 7 };
 }
 
@@ -87,6 +101,6 @@ export function createAuth({ config = readAuthConfig(), sessions, fetcher = fetc
       return { setCookie: clearSession() };
     },
     async me(cookie) { const { stored } = await local(cookie); const account = await request("account", "GET", undefined, stored.secret); if (typeof account.$id !== "string" || account.$id !== stored.userId) throw fail("authentication_failed", 401); return { id: account.$id, email: account.email, name: account.name }; },
-    async recover({ email }) { await request("account/recovery", "POST", { email, url: new URL("reset-password", `${httpsUrl(config.publicOrigin, "VOID_PUBLIC_ORIGIN").origin}/`).href }); return { ok: true }; },
+    async recover({ email }) { await request("account/recovery", "POST", { email, url: new URL("reset-password", `${httpsUrl(config.publicOrigin, "NOMO_PUBLIC_ORIGIN").origin}/`).href }); return { ok: true }; },
   };
 }

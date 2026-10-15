@@ -22,7 +22,7 @@ type FeedBody = {
 };
 
 async function seedLedger(count = 2): Promise<{ readonly file: string; readonly dir: string }> {
-  const dir = await mkdtemp(join(tmpdir(), "void-feed-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-feed-"));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(signer, { dir });
   for (let index = 1; index <= count; index += 1) {

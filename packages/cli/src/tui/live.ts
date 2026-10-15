@@ -1,3 +1,4 @@
+import { brandHeader } from "./brand.ts";
 import type { FeedPage } from "../../../ledger/src/feed.ts";
 import type { TerminalCapabilities } from "./types.ts";
 import { crop, fit, pad, rule, sanitizeText } from "./layout.ts";
@@ -38,7 +39,7 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
   const rows = liveRecords(view);
   const selected = rows[Math.min(view.selected, Math.max(0, rows.length - 1))];
   const lines = [
-    `NOMO / ${view.workspace}`,
+    ...brandHeader(`NOMO / ${view.workspace}`, caps),
     `${view.paused ? "Paused view" : "Live ledger"}  |  ${view.filter || "All classes"}  |  ${rows.length} records`,
     paint(rule(width), "rule", caps),
     view.error
@@ -77,7 +78,7 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
         lines.push(`${pad(offset === 0 ? `${label}:` : "", 12)}${text.slice(offset, offset + valueWidth)}`);
     }
   } else if (rows.length === 0) {
-    lines.push(view.filter ? "No records in this class. Press f to change the filter." : "No recorded calls yet.", "", "Run an agent through void-proxy to record its tool calls.");
+    lines.push(view.filter ? "No records in this class. Press f to change the filter." : "No recorded calls yet.", "", "Run an agent through nomo-proxy to record its tool calls.");
   } else {
     lines.push(`${pad("Record", 10)}${pad("Class", 8)}${pad("Decision", 18)}Tool`);
     const available = Math.max(1, caps.rows - lines.length - 3);

@@ -34,7 +34,7 @@ test("missing bundle and empty invocation fail with usage, not a crash", async (
 test("standalone verifier agrees with the real ledger on a real export", async (t) => {
   // The replicated canonicaliser, entry hash and preimage must match the
   // repository byte for byte, or offline verification is decoration.
-  const root = await mkdtemp(join(tmpdir(), "void-standalone-cross-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-standalone-cross-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const generator = join(root, "generate.mts");
   await writeFile(

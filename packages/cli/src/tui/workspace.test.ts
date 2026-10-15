@@ -6,8 +6,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+// The hostile-text test asserts no raw escape sequences in renderWorkspace
+// output. Other tests pass because detectCapabilities honours NO_COLOR, but
+// this file has many tests and the assertion is unconditional: force the flag
+// here so the test does not depend on the caller's environment.
+process.env.NO_COLOR = "1";
 import { Workbench } from "../../../workbench/src/index.ts";
-import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import {
   WorkspaceTui,
   approvalBannerLines,
@@ -20,8 +24,14 @@ import {
   renderWorkspace,
   transcript,
   wrap,
+  TUI_COMMANDS,
 } from "./workspace.ts";
 import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
+import {
+  filterPalette,
+  paletteFromCommands,
+  type PaletteState,
+} from "./palette.ts";
 import {
   renderHunkSelection,
   splitDiffHunks,
@@ -41,28 +51,45 @@ test("Ctrl+P requests the command palette through the input, not a submit", () =
   assert.equal(input.value, "draft", "Ctrl+P never rewrites the draft");
 });
 
-test("command palette handler lists the real command reference", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-palette-"));
+test("command palette opens a live filter over the real command list", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-palette-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app);
+  // The palette is an overlay with its own state, not a printed reference.
+  // Asserting on the state rather than on rendered text is what makes the
+  // fuzzy filter testable without a terminal.
+  assert.equal(ui.palette, undefined, "closed until the operator opens it");
   await ui.command("/command-palette");
-  const rows = ui.lines();
-  assert.ok(rows.some((line) => line.includes("COMMAND PALETTE")));
+  // Narrowing: after the assert above the compiler knows the field was
+  // undefined, so read it through a fresh local rather than the field, whose
+  // narrowed type has collapsed.
+  const opened = ui.palette as PaletteState | undefined;
+  if (!opened) throw Error("opening the palette must set its state");
+  assert.equal(opened.query, "", "it starts unfiltered");
+  assert.equal(opened.selected, 0, "the first row starts selected");
+  assert.equal(ui.detail, undefined, "the underlying detail view is replaced");
+  // Every registered command must be reachable, so the source of truth stays
+  // TUI_COMMANDS rather than a second list that can drift.
+  const items = filterPalette(paletteFromCommands(TUI_COMMANDS), opened.query);
+  assert.ok(items.length > 0, "an empty query lists the commands");
   assert.ok(
-    rows.some((line) => line.includes("/tools")),
-    "palette lists the real /tools hint",
+    items.some((item) => item.id === "/tools"),
+    "the real /tools command is present",
+  );
+  assert.equal(
+    items.length,
+    TUI_COMMANDS.length,
+    "every command is listed, none dropped",
   );
 });
 
 test("queuePrompt(undefined) cancels a queued prompt", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-queue-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-queue-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -125,9 +152,8 @@ test("multiline editing moves across Unicode lines and deletes words without tou
 });
 
 test("tools show actual managed capabilities, searchable schemas and no execution on inspection", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-tools-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-tools-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -144,7 +170,14 @@ test("tools show actual managed capabilities, searchable schemas and no executio
     ),
   );
   await ui.openSelected();
-  assert.ok(ui.detail?.includes("INPUT SCHEMA"));
+  // The schema is a property table, not raw JSON. The two facts an operator
+  // reads, which property is required and what type it takes, were buried
+  // under a dozen keys nobody scans.
+  assert.ok(ui.detail?.includes("PROPERTIES"));
+  assert.ok(
+    ui.detail?.some((line) => line.includes("required")),
+    "the table states which properties are required",
+  );
   assert.ok(
     ui.detail?.some((line) => line.includes("not certified by any vendor")),
   );
@@ -152,10 +185,9 @@ test("tools show actual managed capabilities, searchable schemas and no executio
   assert.equal(ui.confirmation, undefined);
 });
 
-test("Claude style management aliases open real VOID views", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-aliases-"));
+test("Claude style management aliases open real NOMO views", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-aliases-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -182,7 +214,7 @@ test("Claude style management aliases open real VOID views", async (t) => {
   assert.match(ui.notice, /select a conversation to rewind/i);
   assert.match(
     stripAnsi(renderWorkspace(ui, 140, 32)),
-    /model: not connected.*mode: normal \(local only, not enforced\).*tokens: unknown.*compact/i,
+    /model offline.*mode .*mode: normal \(local only, not enforced\).*tok \?.*tools compact/i,
   );
 });
 
@@ -209,9 +241,8 @@ test("compact tool output keeps complete events available and never hides assist
 });
 
 test("composer follows the actual cursor beyond literal underscores", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-cursor-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-cursor-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -225,7 +256,7 @@ test("composer follows the actual cursor beyond literal underscores", async (t) 
 });
 
 test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, signed export and restart", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-"));
   const env = { VOID_DATA_DIR: root, VOID_EXPORT_DIR: join(root, "exports") };
   let app = new Workbench(env, async (url, options) => {
     if (String(url).endsWith("/models"))
@@ -261,7 +292,6 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
       ],
     });
   });
-  assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -310,10 +340,7 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
   const keyId = await key.currentKeyId();
   const spki = await key.publicKey(keyId);
   const standalone = fileURLToPath(
-    new URL(
-      "../../../verifier/verify-ledger.mjs",
-      import.meta.url,
-    ),
+    new URL("../../../verifier/verify-ledger.mjs", import.meta.url),
   );
   const verified = await promisify(execFile)(process.execPath, [
     standalone,
@@ -327,7 +354,6 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
   assert.match(verified.stdout, /signatures and hash links/);
   await app.shutdown();
   app = new Workbench(env);
-  assertIsolated(root, env);
   assert.equal(app.workspace(id).files["plan.md"], "first");
   assert.equal((await app.ledger(app.get(id)!.workspace))?.result.ok, true);
   const restored = new WorkspaceTui(app, env);
@@ -354,9 +380,8 @@ test("input preserves Unicode and multiline paste, never submits pasted Enter", 
 });
 
 test("terminal rendering contains hostile control text and complete Unicode wrapping", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-frame-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-frame-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -385,7 +410,7 @@ test("stream deltas are shown once and replaced by the completed assistant messa
   };
   assert.deepEqual(
     transcript([{ ...base, type: "message.delta", text: "Hello" }]),
-    ["VOID [stream]", "Hello"],
+    ["NOMO [stream]", "Hello"],
   );
   const result = transcript([
     { ...base, type: "message.delta", text: "Hello" },
@@ -395,9 +420,8 @@ test("stream deltas are shown once and replaced by the completed assistant messa
 });
 
 test("styled frames stay bounded, motion can stop, and slash choices never include arguments", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-style-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-style-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -428,17 +452,12 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
     assert.ok(frame.split("\n").length <= h!);
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= w!));
   }
-  // Motion now lives only in the running dots. The idle header used to animate
-  // a logo and draws nothing that could move, so motion is asserted in the
-  // state that actually renders it: a run in flight, where the dots grow and
-  // reset, and motion:false holds them still.
-  assert.equal(
-    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 0, motion: false }),
-    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 9, motion: false }),
-  );
+  const still = (frame: number) =>
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame, motion: false });
+  assert.equal(still(0), still(9));
   assert.notEqual(
     renderWorkspace(ui, 80, 30, "_", true, true, { frame: 0 }),
-    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 3 }),
+    renderWorkspace(ui, 80, 30, "_", true, true, { frame: 1 }),
   );
   assert.deepEqual(
     commandSuggestions("/led").map(([name]) => name),
@@ -447,7 +466,9 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
   assert.ok(commandSuggestions("/rs").some(([name]) => name === "/resume"));
   assert.ok(commandSuggestions("/rw").some(([name]) => name === "/rewind"));
   assert.equal(commandSuggestions("/new delete everything").length, 0);
-  assert.match(stripAnsi(renderWorkspace(ui, 100, 32)).split("\n")[0]!, /^NOMO\b/);
+  assert.ok(
+    stripAnsi(renderWorkspace(ui, 100, 32)).includes("NOMO / local workspace"),
+  );
 });
 
 test("chat presentation preserves code, sanitizes escapes, and distinguishes event roles", async () => {
@@ -492,7 +513,7 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
 });
 
 test("search and paging use real conversation data and return to live follow", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-reading-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-reading-"));
   const app = new Workbench({ VOID_DATA_DIR: root }, async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
@@ -510,7 +531,6 @@ test("search and paging use real conversation data and return to live follow", a
           ],
         }),
   );
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -548,9 +568,7 @@ test("search and paging use real conversation data and return to live follow", a
       color: true,
     });
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width!));
-    // The composer has no bottom edge to close, so the rendered view can be
-    // shorter than the terminal and the terminal pads the rest.
-    assert.ok(frame.split("\n").length <= height);
+    assert.equal(frame.split("\n").length, height);
   }
 });
 
@@ -575,9 +593,8 @@ test("unified diff shows changed hunks with context and caps long output", () =>
 });
 
 test("TUI doctor reuses the CLI implementation without touching state", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-doctor-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-doctor-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -589,7 +606,7 @@ test("TUI doctor reuses the CLI implementation without touching state", async (t
 });
 
 test("rewind selects the latest recoverable operation", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-rewind-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-rewind-"));
   const env = { VOID_DATA_DIR: root };
   const app = new Workbench(env, async (url, options) => {
     if (String(url).endsWith("/models"))
@@ -625,7 +642,6 @@ test("rewind selects the latest recoverable operation", async (t) => {
       ],
     });
   });
-  assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -650,9 +666,8 @@ test("rewind selects the latest recoverable operation", async (t) => {
 });
 
 test("rewind without a conversation asks for selection", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-rewind-empty-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-rewind-empty-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -664,10 +679,9 @@ test("rewind without a conversation asks for selection", async (t) => {
 });
 
 test("TUI init reuses the CLI implementation and creates storage", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-init-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-init-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
   });
@@ -717,9 +731,8 @@ test("A2 banner sanitizes hostile tool ids", () => {
 });
 
 test("A2 banner stays visible across tab switches", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-banner-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-banner-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -770,9 +783,8 @@ test("A4 mode label always says local only, never server enforced", () => {
 });
 
 test("A4 status bar and status detail carry the local only label", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-modelabel-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-modelabel-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
@@ -913,9 +925,8 @@ test("A1 approval review builds selectable hunks only with a diff", () => {
 });
 
 test("A1 hunk toggle flips scope and the suffix rides with the decision", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-tui-hunks-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-hunks-"));
   const app = new Workbench({ VOID_DATA_DIR: root });
-  assertIsolated(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });

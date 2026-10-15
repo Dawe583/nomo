@@ -68,7 +68,7 @@ jobs:
   # deploys still matches the repository it was generated from.
   #
   # The snapshot check is the reason this job exists rather than being folded
-  # into the Node job. `apps/appwrite-mcp/src/appwrite_mcp/void_snapshot.json`
+  # into the Node job. `apps/appwrite-mcp/src/appwrite_mcp/nomo_snapshot.json`
   # is what a deployed function serves in place of the source tree, because
   # Appwrite receives a tarball and not a checkout. A snapshot that no longer
   # matches its source is a deployed catalogue describing a product that has
@@ -104,18 +104,18 @@ jobs:
           python-version: "3.14"
       - name: Install the MCP SDK the hosted function depends on
         run: |
-          python -m venv "$RUNNER_TEMP/void-mcp-venv"
-          "$RUNNER_TEMP/void-mcp-venv/bin/python" -m pip install --upgrade pip
-          "$RUNNER_TEMP/void-mcp-venv/bin/python" -m pip install -r apps/appwrite-mcp/requirements.txt
+          python -m venv "$RUNNER_TEMP/nomo-mcp-venv"
+          "$RUNNER_TEMP/nomo-mcp-venv/bin/python" -m pip install --upgrade pip
+          "$RUNNER_TEMP/nomo-mcp-venv/bin/python" -m pip install -r apps/appwrite-mcp/requirements.txt
         timeout-minutes: 5
       # Fails rather than regenerating. A gate that repairs what it is meant to
       # check is not a gate, and a silently rewritten snapshot would ship a
       # catalogue whose provenance nobody reviewed.
       - name: The deployed snapshot still matches the source
-        run: "$RUNNER_TEMP/void-mcp-venv/bin/python apps/appwrite-mcp/scripts/generate-snapshot.py --check"
+        run: "$RUNNER_TEMP/nomo-mcp-venv/bin/python apps/appwrite-mcp/scripts/generate-snapshot.py --check"
         timeout-minutes: 5
       - name: Hosted endpoint contract
-        run: "$RUNNER_TEMP/void-mcp-venv/bin/python -m unittest discover -s apps/appwrite-mcp/tests -t apps/appwrite-mcp"
+        run: "$RUNNER_TEMP/nomo-mcp-venv/bin/python -m unittest discover -s apps/appwrite-mcp/tests -t apps/appwrite-mcp"
         timeout-minutes: 5
       # The step the contract above cannot do for itself: every test in it runs
       # from a checkout, so a reader whose fallback to the snapshot is missing
@@ -124,13 +124,13 @@ jobs:
       # asks the tools the same questions, so the deployed shape is the thing
       # that is checked.
       - name: The deployed tarball serves without a repository
-        run: "$RUNNER_TEMP/void-mcp-venv/bin/python apps/appwrite-mcp/scripts/verify-deploy-shape.py"
+        run: "$RUNNER_TEMP/nomo-mcp-venv/bin/python apps/appwrite-mcp/scripts/verify-deploy-shape.py"
         timeout-minutes: 5
       # The transport suite runs under the system interpreter because it needs
       # no SDK, and running it under the venv would prove less about the shape
       # a contributor actually has.
-      - name: VOID transport suite
-        run: python -m unittest discover -s python/void-transport/tests -t python/void-transport
+      - name: NOMO transport suite
+        run: python -m unittest discover -s python/nomo-transport/tests -t python/nomo-transport
         timeout-minutes: 10
 
   # The Apple surface had no runner at all until this job, which is why
@@ -161,24 +161,24 @@ jobs:
         run: |
           xcodebuild -version
           swift --version
-          xcodebuild -list -project apps/apple/VOID.xcodeproj
+          xcodebuild -list -project apps/apple/NOMO.xcodeproj
       # The two Swift packages first, because they are host-side and fast, so a
       # broken protocol or design-system package is reported as itself rather
       # than as a simulator failure ten minutes later.
       - run: swift test --package-path apps/apple/CompanionProtocolKit
         timeout-minutes: 15
-      - run: swift test --package-path apps/apple/VoidDesignSystem
+      - run: swift test --package-path apps/apple/NomoDesignSystem
         timeout-minutes: 15
-      - name: Run the VOID scheme on the iOS simulator
+      - name: Run the NOMO scheme on the iOS simulator
         env:
           # Keep derived data outside the checkout, so a stale build product is
           # never picked up and the working tree stays clean. runner.temp is
           # available in step env, but not in the enclosing job env.
-          DERIVED_DATA: ${{ runner.temp }}/VOID-derived-data
+          DERIVED_DATA: ${{ runner.temp }}/NOMO-derived-data
         run: |
           xcodebuild test \
-            -project apps/apple/VOID.xcodeproj \
-            -scheme VOID \
+            -project apps/apple/NOMO.xcodeproj \
+            -scheme NOMO \
             -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5)' \
             -derivedDataPath "$DERIVED_DATA" \
             CODE_SIGNING_ALLOWED=NO

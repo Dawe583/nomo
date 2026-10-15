@@ -10,7 +10,7 @@ and write is scoped by a verified owner.
 
 ## Supabase migration checkpoint
 
-The empty `VOID` project in `eu-west-1` now has migration `20260926231124`
+The empty `NOMO` project in `eu-west-1` now has migration `20260926231124`
 with the three tables below. Row Level Security is enabled. The `anon`,
 `authenticated` and `PUBLIC` roles have no table privileges. A live Data API
 request with the publishable key received HTTP 401. The application is not yet
@@ -74,7 +74,7 @@ loudly rather than land quietly in a namespace nobody chose.
 There is no bridge from the local control plane into this database: the hosted
 web UI is the only thing that writes here, so scoping the rows by account does
 not change what the local product does on a visitor's own machine, and the
-local path keeps its `VOID_CONTROL_TOKEN` and its loopback.
+local path keeps its `NOMO_CONTROL_TOKEN` and its loopback.
 
 ## Where the owner comes from
 
@@ -85,7 +85,7 @@ sources and only two:
 - The operator's control token, cookie or bearer header, resolves to
   `OPERATOR_OWNER`.
 - A sealed `__Host-void-account` cookie, opened with
-  `VOID_ACCOUNT_SEAL_KEY` and then confirmed against the provider over TLS,
+  `NOMO_ACCOUNT_SEAL_KEY` and then confirmed against the provider over TLS,
   resolves to the provider's user id.
 
 A request that presents neither is refused. It is not served from a shared
@@ -95,7 +95,7 @@ as "you have nothing" and hides the refusal.
 The second source is `cloud/account.mjs`: the same design the marketing site
 already uses for its accounts, and it is server side only, so `vercel.json`
 keeps `connect-src 'self'` and the browser never holds a provider token. Sign up
-is refused unless `VOID_ACCOUNT_SIGNUP` is `1`, and it is not set.
+is refused unless `NOMO_ACCOUNT_SIGNUP` is `1`, and it is not set.
 
 ### What a session actually is
 
@@ -153,7 +153,7 @@ credential.
 The sign in surface over HTTP is password sign in and nothing else. A signup is
 attempted only when the provider says the address holds no account, the switch
 is on, and the request carried an invitation code, and no mounted route passes
-an invitation code. So even a future operator who sets `VOID_ACCOUNT_SIGNUP`
+an invitation code. So even a future operator who sets `NOMO_ACCOUNT_SIGNUP`
 does not open registration by doing so alone.
 
 Two things about a refusal are worth knowing before reading one. A wrong
@@ -178,7 +178,7 @@ suites.
 The operator is a distinct scoped role, not an account, and not a token that
 reads everything.
 
-`VOID_CONTROL_TOKEN` resolves to one reserved owner, `operator`. It reads
+`NOMO_CONTROL_TOKEN` resolves to one reserved owner, `operator`. It reads
 exactly the rows owned by `operator`, which is one namespace and not the union
 of the others. `cloud/0001-account-ownership.sql` moves every row that existed
 before this change into that namespace, so the beta the operator is using today
@@ -215,7 +215,7 @@ the primary key swap, and every step is conditional on the shape it needs, so
 it is idempotent and order independent. The detail that is not guessable is
 what the immutability triggers do to it. `void_cloud_ledger` and
 `void_cloud_events` each carry a `BEFORE UPDATE OR DELETE` trigger that raises
-`VOID ledger is append only`, and the backfill is an `UPDATE` on both. The
+`NOMO ledger is append only`, and the backfill is an `UPDATE` on both. The
 migration therefore disables those two triggers, updates, and re-enables them
 inside one transaction. `ALTER TABLE ... DISABLE TRIGGER` is itself
 transactional, so a failure anywhere in the file rolls the trigger back to
@@ -235,7 +235,7 @@ moment, with the deploy paused.
 
 ## What must be true before signup is enabled
 
-Signup is off because `VOID_ACCOUNT_SIGNUP` is not set, and that variable is
+Signup is off because `NOMO_ACCOUNT_SIGNUP` is not set, and that variable is
 the only thing standing between the beta and public registration. The gate in
 `docs/APPWRITE-AUTH.md` is what it may not be turned on against. Of its four
 conditions:
@@ -260,7 +260,7 @@ conditions:
 Two further conditions are not in that list and have to hold anyway:
 
 - **A Supabase project exists.** With no `SUPABASE_URL`, `SUPABASE_ANON_KEY`
-  and `VOID_ACCOUNT_SEAL_KEY` set, `accounts.isConfigured()` is false, the
+  and `NOMO_ACCOUNT_SEAL_KEY` set, `accounts.isConfigured()` is false, the
   account routes report themselves unconfigured, and every request has to
   present the control token. Nothing has been signed in against a real identity
   provider, so the sealed cookie path, the provider round trip and the refresh
@@ -299,9 +299,9 @@ plan anything, because a recovery plan is a write against somebody's session.
 
 ## What this does not do
 
-It does not make the local product multi user. VOID still runs on the
+It does not make the local product multi user. NOMO still runs on the
 operator's machine, still talks to it over loopback, and still authenticates
-with `VOID_CONTROL_TOKEN`. It does not give anybody a hosted VOID, and the
+with `NOMO_CONTROL_TOKEN`. It does not give anybody a hosted NOMO, and the
 marketing site's copy says so on purpose.
 
 It does not store a password anywhere in this database, and it will not: the

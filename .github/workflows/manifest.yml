@@ -42,5 +42,5 @@ jobs:
         timeout-minutes: 75
       - run: node --test packages/connectors/src/filesystem/managed.test.ts packages/cli/src/recovery-filesystem.test.ts packages/cli/src/recovery-mcp.test.ts packages/cli/src/recovery-paths.test.ts packages/cli/src/conformance.test.ts
         timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 15 }}
-      - run: node packages/cli/bin/void.mjs recovery conformance
+      - run: node packages/cli/bin/nomo.mjs recovery conformance
         timeout-minutes: ${{ matrix.os == 'windows-latest' && 15 || 5 }}

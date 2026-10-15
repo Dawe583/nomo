@@ -3,10 +3,10 @@ import express from "express";
 import { resolve } from "node:path";
 import { demoRouter } from "../../cloud/demo.mjs";
 Object.assign(process.env, {
-  VOID_PUBLIC_DEMO: "1",
-  VOID_DEMO_NVIDIA_KEY: "qa-fixture",
-  VOID_SECRET_KEY: "mobile-qa-only-".repeat(4),
-  VOID_LOCAL_TEST: "1",
+  NOMO_PUBLIC_DEMO: "1",
+  NOMO_DEMO_NVIDIA_KEY: "qa-fixture",
+  NOMO_SECRET_KEY: "mobile-qa-only-".repeat(4),
+  NOMO_LOCAL_TEST: "1",
 });
 const values = new Map();
 let tail = Promise.resolve();

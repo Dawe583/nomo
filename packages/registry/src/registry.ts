@@ -3,7 +3,7 @@ import type { Precondition } from "./precondition.ts";
 /**
  * The Reversibility Registry.
  *
- * The premise the rest of VOID rests on: reversibility is not a property of an
+ * The premise the rest of NOMO rests on: reversibility is not a property of an
  * API call, it is a property of a call evaluated against the state of its
  * target. Deleting an S3 object is fully reversible with bucket versioning on
  * and irreversible with it off. The same DELETE, two different classes.
@@ -55,7 +55,7 @@ export type RegistryEntry = {
 export const REGISTRY_VERSION = "2026.09.2";
 
 /**
- * Draft classifications reviewed by the VOID team against public vendor
+ * Draft classifications reviewed by the NOMO team against public vendor
  * documentation. Not vendor certified, and no vendor has endorsed them.
  * Preconditions are the part that goes stale first, so every entry is dated by
  * the registry version rather than pretending to be timeless.
@@ -230,7 +230,7 @@ const awsEntries: RegistryEntry[] = [
     summary: "Schedule a customer managed key for deletion.",
     tags: ["security", "delete", "deferred"],
     cases: [
-      { when: "the pending window has not elapsed", tone: "r0", inverse: "kms:CancelKeyDeletion", window: "7 to 30 days as configured", note: "AWS built the deferral in, which is exactly the pattern VOID generalises" , if: {"kind": "fact", "fact": "aws.kms.deletion.window_elapsed", "is": "false"} },
+      { when: "the pending window has not elapsed", tone: "r0", inverse: "kms:CancelKeyDeletion", window: "7 to 30 days as configured", note: "AWS built the deferral in, which is exactly the pattern NOMO generalises" , if: {"kind": "fact", "fact": "aws.kms.deletion.window_elapsed", "is": "false"} },
       { when: "always", tone: "r3", inverse: null, window: "none", note: "everything encrypted under the key is permanently unreadable" , if: {"kind": "always"} },
     ],
   },
@@ -477,7 +477,7 @@ const messagingEntries: RegistryEntry[] = [
     summary: "Create a draft without sending it.",
     tags: ["messaging"],
     cases: [
-      { when: "always", tone: "r0", inverse: "users.drafts.delete", window: "unbounded", note: "the draft never left the account, which is why VOID rewrites risky sends into drafts under a strict policy" , if: {"kind": "always"} },
+      { when: "always", tone: "r0", inverse: "users.drafts.delete", window: "unbounded", note: "the draft never left the account, which is why NOMO rewrites risky sends into drafts under a strict policy" , if: {"kind": "always"} },
     ],
   },
   {
@@ -681,7 +681,7 @@ const dataEntries: RegistryEntry[] = [
     tags: ["database", "write"],
     cases: [
       { when: "the interceptor captured a before image of every matched row", tone: "r0", inverse: "UPDATE from the captured image, keyed by primary key", window: "unbounded", note: "the interceptor runs the predicate as a SELECT first, which is also where the blast radius number comes from", if: { kind: "fact", fact: "pg.capture.before_image", is: "true" } },
-      { when: "the statement ran inside an open transaction VOID controls", tone: "r0", inverse: "ROLLBACK", window: "until commit", note: "the cheapest inverse there is, and the reason VOID prefers to own the transaction boundary", if: { kind: "fact", fact: "pg.transaction.void_controlled", is: "true" } },
+      { when: "the statement ran inside an open transaction NOMO controls", tone: "r0", inverse: "ROLLBACK", window: "until commit", note: "the cheapest inverse there is, and the reason NOMO prefers to own the transaction boundary", if: { kind: "fact", fact: "pg.transaction.void_controlled", is: "true" } },
       { when: "always", tone: "r3", inverse: null, window: "none", note: "an unbounded UPDATE with no before image cannot be reconstructed from the WAL after the retention window" , if: { kind: "always" } },
     ],
   },
@@ -704,7 +704,7 @@ const dataEntries: RegistryEntry[] = [
     summary: "DROP TABLE.",
     tags: ["database", "delete", "schema"],
     cases: [
-      { when: "the statement ran inside an open transaction VOID controls", tone: "r0", inverse: "ROLLBACK", window: "until commit", note: "DDL is transactional in Postgres, which is not true of MySQL and is the single biggest difference between them here" , if: {"kind": "fact", "fact": "pg.transaction.void_controlled", "is": "true"} },
+      { when: "the statement ran inside an open transaction NOMO controls", tone: "r0", inverse: "ROLLBACK", window: "until commit", note: "DDL is transactional in Postgres, which is not true of MySQL and is the single biggest difference between them here" , if: {"kind": "fact", "fact": "pg.transaction.void_controlled", "is": "true"} },
       { when: "always", tone: "r3", inverse: null, window: "none", note: "restoring from a backup is an out of band operation measured in hours, not an inverse" , if: {"kind": "always"} },
     ],
   },
@@ -1863,7 +1863,7 @@ const localEntries: RegistryEntry[] = [
     tags: ["shell", "unbounded"],
     cases: [
       { when: "the command matches the read only allowlist", tone: "r0", inverse: "none needed", window: "unbounded", note: "the allowlist is the only reason a shell call can ever be classified better than R3" , if: {"kind": "fact", "fact": "shell.command.read_only_allowlist", "is": "true"} },
-      { when: "always", tone: "r3", inverse: null, window: "none", note: "an arbitrary command cannot be classified before it runs, so it is the worst case by definition, and this is why VOID intercepts at the tool boundary rather than the shell" , if: {"kind": "always"} },
+      { when: "always", tone: "r3", inverse: null, window: "none", note: "an arbitrary command cannot be classified before it runs, so it is the worst case by definition, and this is why NOMO intercepts at the tool boundary rather than the shell" , if: {"kind": "always"} },
     ],
   },
 ];
@@ -2112,7 +2112,7 @@ const platformEntries: RegistryEntry[] = [
     summary: "Move a Basecamp recording to trash.",
     tags: ["basecamp", "trash"],
     cases: [
-      { when: "always", tone: "r3", inverse: null, window: "none", note: "Trashing hides the original recording; without a verified retained recovery path VOID cannot promise restoration.", if: {"kind": "always"} },
+      { when: "always", tone: "r3", inverse: null, window: "none", note: "Trashing hides the original recording; without a verified retained recovery path NOMO cannot promise restoration.", if: {"kind": "always"} },
     ],
   },
   {

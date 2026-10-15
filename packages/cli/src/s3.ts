@@ -2,7 +2,7 @@ import { S3Client as AwsClient, GetObjectCommand, PutObjectCommand, DeleteObject
 import type { S3Client } from '../../connectors/src/s3/classify.ts';
 
 export function s3Executor(env: Readonly<NodeJS.ProcessEnv>): S3Client & { close(): void } {
-  const client = new AwsClient({ region: env.AWS_REGION ?? 'us-east-1', ...(env.VOID_S3_ENDPOINT ? { endpoint: env.VOID_S3_ENDPOINT, forcePathStyle: true } : {}) });
+  const client = new AwsClient({ region: env.AWS_REGION ?? 'us-east-1', ...(env.NOMO_S3_ENDPOINT ? { endpoint: env.NOMO_S3_ENDPOINT, forcePathStyle: true } : {}) });
   return {
     async getObject(input) {
       const result = await client.send(new GetObjectCommand({ Bucket: input.bucket, Key: input.key, VersionId: input.versionId }));

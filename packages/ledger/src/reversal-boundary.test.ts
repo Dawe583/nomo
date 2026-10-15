@@ -98,7 +98,7 @@ async function rewriteAs(attacker: KeyProvider, entries: readonly JsonlEntry[]) 
 }
 
 async function fixture(t: { after: (fn: () => unknown) => void }) {
-  const dir = await mkdtemp(join(tmpdir(), "void-reversal-first-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-reversal-first-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const key = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const attacker = await devKeyProvider({ dir: join(dir, "attacker"), env: {} });

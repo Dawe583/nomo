@@ -1,6 +1,6 @@
-# VOID handbook
+# NOMO handbook
 
-The complete operator guide: what VOID is, what it refuses to claim, how to
+The complete operator guide: what NOMO is, what it refuses to claim, how to
 install it, and every command, key, route and file it exposes. Read sections 1
 to 7 in order the first time. The rest is reference.
 
@@ -10,8 +10,8 @@ stops existing, if a command disappears, or if the two language editions drift
 apart. A handbook that lies is worse than no handbook, so this one is a gate,
 not prose.
 
-- [1. What VOID is](#1-what-void-is)
-- [2. What VOID does not do](#2-what-void-does-not-do)
+- [1. What NOMO is](#1-what-nomo-is)
+- [2. What NOMO does not do](#2-what-nomo-does-not-do)
 - [3. Vocabulary](#3-vocabulary)
 - [4. Install](#4-install)
 - [5. Your first ten minutes](#5-your-first-ten-minutes)
@@ -32,12 +32,12 @@ not prose.
 
 ---
 
-## 1. What VOID is
+## 1. What NOMO is
 
-VOID is a layer between an AI agent and the tools that agent can write to. For
+NOMO is a layer between an AI agent and the tools that agent can write to. For
 every intercepted tool call it decides four things and then records them:
 
-1. **Intercept** the call. VOID terminates the MCP session; the agent does not
+1. **Intercept** the call. NOMO terminates the MCP session; the agent does not
    talk to its tools directly.
 2. **Classify** it. How reversible is this call, given the state of the target?
    The answer is one of R0, R1, R2, R3.
@@ -61,12 +61,12 @@ what is actually demonstrated, and both are checkable:
   Restoring a database to a moment ago discards every legitimate write made
   since; an inverse restores the affected rows and leaves the writes other people
   made in the meantime alone. `scripts/receipt-demo/run.mjs` shows both on one
-  table: an agent write, a finance write made outside VOID, then the inverse,
+  table: an agent write, a finance write made outside NOMO, then the inverse,
   after which the first row is back and the second keeps its later value.
 - **The receipt lands in the database the effect happened in.** After a verified
   managed Postgres restore the record is written to `${schema}.recoveries`
   (`packages/connectors/src/postgres/managed.ts:1399`), so anyone who can reach
-  that database checks it with plain SQL and no VOID process.
+  that database checks it with plain SQL and no NOMO process.
   `docs/RECEIPT-VERIFY.sql` is that query. It prints `PASS` only when the row
   each receipt names is the row the live table holds, and `FAIL` when it is not;
   it was run against a deliberately tampered table to prove it can fail
@@ -75,7 +75,7 @@ what is actually demonstrated, and both are checkable:
 The restore is refused before any receipt is written, if the rows do not match
 the capture (`packages/connectors/src/postgres/managed.ts:1393`).
 
-## 2. What VOID does not do
+## 2. What NOMO does not do
 
 Read this section before section 1 makes you trust the product. Every item here
 is a current, measured limit, not a roadmap item.
@@ -87,7 +87,7 @@ is a current, measured limit, not a roadmap item.
   configures it to govern. It does not intercept arbitrary shell commands, other
   programs, or a second agent that was never pointed at it.
 - **Undo exists only where a connector captured the before image.** An R2 or R3
-  call may have no inverse at all. `void` will tell you so rather than pretend.
+  call may have no inverse at all. `nomo` will tell you so rather than pretend.
 - **The ledger is tamper-evident, not tamper-proof.** Anyone who owns the machine
   can rewrite a JSONL file. What a signature buys you is proof that the record was
   not edited _after_ it was written, by someone who did not hold the key.
@@ -96,7 +96,7 @@ is a current, measured limit, not a roadmap item.
   principal (`docs/OPERATIONS.md`). A receipt in your database is a durable
   claim written beside the rows it describes, and the check reads the rows.
 - **A hold is not a lock on the world.** A hold pauses one call. A writer that
-  never went through VOID is unaffected.
+  never went through NOMO is unaffected.
 - **Reversibility classes are draft classifications, not vendor certifications.**
   See `NOTICE` in the repository root for the exact wording that travels with the
   registry data.
@@ -124,7 +124,7 @@ state of the target:
 An **unclassified** call is treated as R3. A registry gap therefore widens into
 caution rather than into a silent allow.
 
-**Blast radius.** How many resources the call would affect. VOID refuses to guess:
+**Blast radius.** How many resources the call would affect. NOMO refuses to guess:
 only a measured count satisfies a radius rule, and a missing measurement leaves
 the radius unknown, which matches no radius rule at all.
 
@@ -138,20 +138,20 @@ intercepted call. Never updated, never deleted.
 R0 and R1 have one. R2 has compensations, which reduce harm and are not the same
 thing.
 
-**Managed document.** A file VOID itself created and owns. Its writes are
+**Managed document.** A file NOMO itself created and owns. Its writes are
 captured, so its Undo is real. A file an outside program is also editing is
 cooperative only, and the drift check will refuse the Undo.
 
 ## 4. Install
 
-VOID needs **Node.js 24 or newer** and **pnpm 10**. Check both:
+NOMO needs **Node.js 24 or newer** and **pnpm 10**. Check both:
 
 ```sh
 node --version
 pnpm --version
 ```
 
-From a Git checkout, install the workspace and link its `void` command:
+From a Git checkout, install the workspace and link its `nomo` command:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -160,21 +160,21 @@ pnpm setup # run once only if pnpm's global bin directory is not already on PATH
 
 `pnpm setup` prepares pnpm's user-level command directory when needed;
 if it changes your shell configuration, open a new terminal. Then make the
-current checkout's `void` command available from any directory:
+current checkout's `nomo` command available from any directory:
 
 ```sh
 pnpm link --global
-void doctor
+nomo doctor
 ```
 
 Repeat the link if you move the checkout or switch clones. From the repository
-root, `pnpm void`, `./void` on macOS/Linux, or `.\void.cmd` on Windows works
-without a global link. `void doctor` reports the terminal, the Node version,
+root, `pnpm nomo`, `./nomo` on macOS/Linux, or `.\nomo.cmd` on Windows works
+without a global link. `nomo doctor` reports the terminal, the Node version,
 writable data and ledger directories, and owner-only checks for the signing
 key and default ledger. For configured recovery state, pass its config file:
 
 ```sh
-void doctor --recovery-config ./void-recovery.json
+nomo doctor --recovery-config ./nomo-recovery.json
 ```
 
 That check walks the configured state tree, including journal, vault and
@@ -211,7 +211,7 @@ what is missing.
 **1. Create the workspace layout.**
 
 ```sh
-void init
+nomo init
 ```
 
 It prints the directory it created and the next three steps. It writes nothing
@@ -220,7 +220,7 @@ else and destroys nothing.
 **2. Check the environment.**
 
 ```sh
-void doctor
+nomo doctor
 ```
 
 Expect `PASS` for the Node version and the data directory. A `WARN` for the
@@ -237,7 +237,7 @@ pnpm tui
 ```
 
 Type `/help` for the command list, `?` to reach the help tab, and `/status` to
-see what VOID resolved. The mode indicator in the status bar always reads
+see what NOMO resolved. The mode indicator in the status bar always reads
 `local only, not enforced`; section 9 explains why that is not a defect in your
 setup.
 
@@ -251,7 +251,7 @@ It opens the same workspace, in a browser.
 
 ## 6. Connect a model provider
 
-**VOID has no default provider and no default model.** A new workspace has
+**NOMO has no default provider and no default model.** A new workspace has
 neither until you connect one. Settings lists the providers on offer, and the
 first conversation asks which model to use from the catalog the connected
 provider returns. Existing conversations keep the provider and model they were
@@ -260,16 +260,16 @@ created with; connecting a different provider never rewrites history.
 There are two ways to supply a credential, and they are different on purpose.
 
 **Ambient, for a developer.** Set the key in the host environment before starting
-VOID:
+NOMO:
 
 ```sh
 export NVIDIA_API_KEY=...
-void tui
+nomo tui
 ```
 
-This is the only ambient credential VOID reads, and it is a choice you made, not
+This is the only ambient credential NOMO reads, and it is a choice you made, not
 a default it made for you. The TUI says so directly: `Set NVIDIA_API_KEY in the
-host environment, then reopen VOID. No key is accepted in chat.`
+host environment, then reopen NOMO. No key is accepted in chat.`
 
 **Stored, for an operator.** In the GUI, open **Settings**, then **Model
 provider**. Pick a preset, paste the key into the password field, press **Connect
@@ -280,7 +280,7 @@ success notice is `Provider connected. The key is encrypted on the server.`
 credential material, and the GUI has no field in the composer.
 
 When no credential resolves, the status badge reads **Setup required** and
-nothing dispatches. This is deliberate: VOID does not fall back to another
+nothing dispatches. This is deliberate: NOMO does not fall back to another
 provider, because a silent provider switch is exactly the failure an operator
 cannot see.
 
@@ -293,7 +293,7 @@ local and the GUI filters them out. Provider status is one of: `Ready`, `Setup
 required`, `Rate limited` (with the earliest retry time), `Unavailable`.
 
 Provider cost and quota figures are never estimated. Where no provider reported a
-number, VOID prints `unknown`, never `$0.00`.
+number, NOMO prints `unknown`, never `$0.00`.
 
 ## 7. Choose a surface
 
@@ -302,8 +302,8 @@ number, VOID prints `unknown`, never `$0.00`.
 | Terminal (TUI) | `pnpm tui`                               | You live in a terminal, want the ledger adjacent, and want keyboard control. Full approval and recovery keys. |
 | Web app        | `pnpm gui`                               | You want a browser, a phone-sized layout, or the document and recovery review views.                          |
 | Desktop app    | `pnpm desktop:setup` then `pnpm desktop` | You want the desktop shell with bundled runtime and native key storage.                                       |
-| CLI            | `void <command>`                         | You are scripting, auditing, or checking state from another tool.                                             |
-| MCP host       | `void recovery serve --config <file>`    | Another agent is the caller and you want interception in front of its tools.                                  |
+| CLI            | `nomo <command>`                         | You are scripting, auditing, or checking state from another tool.                                             |
+| MCP host       | `nomo recovery serve --config <file>`    | Another agent is the caller and you want interception in front of its tools.                                  |
 
 The TUI and the GUI are the same engine against the same workspace. Approvals
 resolved in one are visible in the other. The TUI has keys the GUI does not, and
@@ -311,7 +311,7 @@ the GUI has a document history view the TUI does not.
 
 ## 8. The terminal interface
 
-`pnpm tui`, or `void tui`. Options: `--once` renders one static frame and exits
+`pnpm tui`, or `nomo tui`. Options: `--once` renders one static frame and exits
 (the one-shot render is always colourless), `--view <tab>`, `--session <id>`,
 `--data-dir <path>`, `--import-provider opencode:zen|opencode:tokenrouter`, and
 `--help`.
@@ -363,7 +363,7 @@ no argument at all, or an unknown one, is refused by name.
 
 **Two refusals are permanent and deliberate.** `/vim`, `/terminal-setup` and
 `/output-style` exist so that an operator arriving from another agent CLI gets a
-clear answer instead of silence. VOID has no equivalent.
+clear answer instead of silence. NOMO has no equivalent.
 
 **Completion covers most commands, not all.** Fifteen dispatchable commands are
 reachable but are not offered by `/` completion: `/open`, `/sources`, `/filter`,
@@ -442,7 +442,7 @@ ledger**; the detail header says `LOCAL SHELL, not stored in the ledger`.
 The command is refused, before it runs, if it mentions anything that looks like
 credential material: a variable whose name contains KEY, TOKEN, SECRET or
 PASSWORD, the words api_key, authorization or bearer, `tokenharbor` or
-`tokenrouter`, a private key or `.pem`, or `.env`, `.void` or `keychain`. Any
+`tokenrouter`, a private key or `.pem`, or `.env`, `.nomo` or `keychain`. Any
 recognised secret **value** in the environment is replaced with `[redacted]` in
 the output regardless.
 
@@ -589,86 +589,86 @@ It reports status and offers only a refresh. **It grants no recovery authority.*
 
 ## 10. The command line
 
-Twenty-one commands. `void --help` prints the list; `void <command>` with no
+Twenty-one commands. `nomo --help` prints the list; `nomo <command>` with no
 arguments prints that command's usage.
 
 | Command          | What it does                                                              |
 | ---------------- | ------------------------------------------------------------------------- |
-| `void tui`       | The terminal workspace.                                                   |
-| `void watch`     | A full-screen live ledger view.                                           |
-| `void run`       | The MCP proxy: `void-proxy` in front of an agent's tools.                 |
-| `void classify`  | Classify the tool calls in a transcript, or one named call.               |
-| `void feed`      | Print ledger entries, optionally following.                               |
-| `void verify`    | Verify a ledger's chain and signatures.                                   |
-| `void ledger`    | The ledger group. `void ledger verify <dir>` verifies a ledger directory. |
-| `void attest`    | Write a signed attestation over a workspace's entries.                    |
-| `void export`    | Write a recovery evidence bundle.                                         |
-| `void replay`    | Replay or dry-run a recorded inverse.                                     |
-| `void taint`     | Show the dependency neighbourhood of a ledger entry.                      |
-| `void metrics`   | Machine-readable counters over the ledger and journal.                    |
-| `void policy`    | List, show and validate policy packs and files.                           |
-| `void approvals` | List pending holds.                                                       |
-| `void approve`   | Record a decision against a hold.                                         |
-| `void recovery`  | The managed executor: inspect, plan, apply, reconcile, serve.             |
-| `void agent`     | Run one agent turn non-interactively.                                     |
-| `void doctor`    | Report the environment.                                                   |
-| `void config`    | Print resolved configuration. Never prints secret values.                 |
-| `void init`      | Create the workspace layout.                                              |
-| `void update`    | Move the installed tree to the tracked branch, fast-forward only.         |
+| `nomo tui`       | The terminal workspace.                                                   |
+| `nomo watch`     | A full-screen live ledger view.                                           |
+| `nomo run`       | The MCP proxy: `nomo-proxy` in front of an agent's tools.                 |
+| `nomo classify`  | Classify the tool calls in a transcript, or one named call.               |
+| `nomo feed`      | Print ledger entries, optionally following.                               |
+| `nomo verify`    | Verify a ledger's chain and signatures.                                   |
+| `nomo ledger`    | The ledger group. `nomo ledger verify <dir>` verifies a ledger directory. |
+| `nomo attest`    | Write a signed attestation over a workspace's entries.                    |
+| `nomo export`    | Write a recovery evidence bundle.                                         |
+| `nomo replay`    | Replay or dry-run a recorded inverse.                                     |
+| `nomo taint`     | Show the dependency neighbourhood of a ledger entry.                      |
+| `nomo metrics`   | Machine-readable counters over the ledger and journal.                    |
+| `nomo policy`    | List, show and validate policy packs and files.                           |
+| `nomo approvals` | List pending holds.                                                       |
+| `nomo approve`   | Record a decision against a hold.                                         |
+| `nomo recovery`  | The managed executor: inspect, plan, apply, reconcile, serve.             |
+| `nomo agent`     | Run one agent turn non-interactively.                                     |
+| `nomo doctor`    | Report the environment.                                                   |
+| `nomo config`    | Print resolved configuration. Never prints secret values.                 |
+| `nomo init`      | Create the workspace layout.                                              |
+| `nomo update`    | Move the installed tree to the tracked branch, fast-forward only.         |
 
 The ones that take arguments, exactly:
 
 ```sh
-void classify --transcript <file> [--facts <file>]
-void classify --tool <id> [--facts <file>] [--fact k=v] [--args <json>]
-void feed --ledger <dir> [--json] [--follow]
-void verify --ledger <dir> [--attestation <file>]
-void attest --ledger <dir> --workspace <id>
-void taint --ledger <dir> --seq <n> [--depth <n>] [--json]
-void replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key base64-spki]
-void replay --list-connectors
-void agent --model <id> [--prompt <text>]
-void recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
-void recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config <file> [--input <file>] [--approve <digest>]
-void policy list | show <name> | validate <file>
-void approve <hold-id> --by <who> [--deny] [--reason <text>] [--dir <path>]
-void approvals --dir <path> [--json]
-void update [--check] [--force]
+nomo classify --transcript <file> [--facts <file>]
+nomo classify --tool <id> [--facts <file>] [--fact k=v] [--args <json>]
+nomo feed --ledger <dir> [--json] [--follow]
+nomo verify --ledger <dir> [--attestation <file>]
+nomo attest --ledger <dir> --workspace <id>
+nomo taint --ledger <dir> --seq <n> [--depth <n>] [--json]
+nomo replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key base64-spki]
+nomo replay --list-connectors
+nomo agent --model <id> [--prompt <text>]
+nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
+nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config <file> [--input <file>] [--approve <digest>]
+nomo policy list | show <name> | validate <file>
+nomo approve <hold-id> --by <who> [--deny] [--reason <text>] [--dir <path>]
+nomo approvals --dir <path> [--json]
+nomo update [--check] [--force]
 ```
 
 Notes that save time:
 
-- `void config` prints the resolved data, ledger and approvals directories and
+- `nomo config` prints the resolved data, ledger and approvals directories and
   whether a verification key is set. It never prints the key.
-- `void verify` on a ledger with no entries in the current directory fails with a
+- `nomo verify` on a ledger with no entries in the current directory fails with a
   plain `ENOENT` naming the path. That is the first-run state, not a fault.
-- `void classify --tool <id>` classifies one call instead of a transcript and
+- `nomo classify --tool <id>` classifies one call instead of a transcript and
   exits 0 when the registry decided, 2 when it could not. Read the `facts:`
   line before the `tone:` line: with no declared facts the evaluator can only
   reach the entry's terminal case, so an `r3` there is the fail-closed
   posture rather than a reading of your account. `--fact k=v` overrides
   `--facts <file>` for that call, and the value is the literal text the
   registry compares against.
-- `void replay --dry-run` reports what an inverse would do without performing it.
+- `nomo replay --dry-run` reports what an inverse would do without performing it.
   Use it before any real replay.
-- Every `void recovery` action that changes something requires `--approve <digest>`
+- Every `nomo recovery` action that changes something requires `--approve <digest>`
   from the preceding `plan`. The digest is what binds your approval to that exact
   work.
-- `void policy` with no argument lists the shipped packs: `strict`, `balanced`,
+- `nomo policy` with no argument lists the shipped packs: `strict`, `balanced`,
   `dev`.
-- `void update` moves the installed tree, which lives at `~/.local/share/void-cli`
-  by default and is set by `VOID_HOME`. It is a fast-forward only: a tree with
+- `nomo update` moves the installed tree, which lives at `~/.local/share/nomo-cli`
+  by default and is set by `NOMO_HOME`. It is a fast-forward only: a tree with
   uncommitted changes is refused, and `--force` still refuses one, because no
   flag is a reason to delete an operator's edits. Local commits are dropped only
   when `--force` says so out loud, and even then with `git reset --keep`, so a
   mistake stops at a modified file.
-- `void update --check` changes nothing and prints four facts then one verdict
+- `nomo update --check` changes nothing and prints four facts then one verdict
   line: `installed:`, `installed-commit:`, `tracked-branch:`, `target-commit:`,
   then `up to date` or `update available`. It exits 3 when an update exists and
   0 when the tree is current. A tree that cannot reach the remote also exits 0
   and reports `target-commit: unknown`, so read the verdict line rather than
   trusting the exit code alone.
-- `void update` has no channel flag. There is no `--stable` and no `--canary`;
+- `nomo update` has no channel flag. There is no `--stable` and no `--canary`;
   the target is whatever the installed tree's tracked branch points at.
 
 ## 11. Policy files
@@ -738,17 +738,17 @@ two calls. There is no rate, no running total, no time window, and no rule about
 the human behind the agent beyond the workspace. Irreversibility budgets, which
 are stateful rules of exactly that kind, are separate work.
 
-`void policy validate <file>` checks a file without installing it. Validate
+`nomo policy validate <file>` checks a file without installing it. Validate
 before you point a proxy at it, because an invalid file denies everything.
 
 ## 12. The ledger
 
 The ledger is one JSON object per line in an append-only file, under
-`~/.void/ledger/<workspace>.jsonl` by default. `void feed` prints it, `void verify`
+`~/.nomo/ledger/<workspace>.jsonl` by default. `nomo feed` prints it, `nomo verify`
 checks it, and `/verify` in the TUI does the same with the scope on screen.
 
 **Verify it offline.** `packages/verifier/verify-ledger.mjs` is a
-single-file verifier with no dependencies, runnable without installing VOID:
+single-file verifier with no dependencies, runnable without installing NOMO:
 
 ```sh
 node packages/verifier/verify-ledger.mjs --selftest
@@ -766,8 +766,8 @@ the key that signed them. It does not prove nobody with that key wrote something
 false, and it does not prove the process was not rolled back to an earlier head.
 Trust the key's custody as much as the mathematics.
 
-**A development key is labelled as one.** When no key is configured, VOID
-generates one under `~/.void/keys/`, says loudly that a development key is in
+**A development key is labelled as one.** When no key is configured, NOMO
+generates one under `~/.nomo/keys/`, says loudly that a development key is in
 use, and gives the key id a `dev-` prefix. The verifier reports an entry signed by
 such a key as valid under a development key, never as plain valid. On Windows the
 key file is narrowed with an ACL; on POSIX it is mode 0600.
@@ -788,7 +788,7 @@ write. That separation is the entire point of holding a before image.
 
 The flow is always the same shape:
 
-1. **Plan.** `void recovery plan`, `/undo`, or `/rewind` in the TUI. You get a
+1. **Plan.** `nomo recovery plan`, `/undo`, or `/rewind` in the TUI. You get a
    digest, the steps in order, the resources each touches, and the residuals.
 2. **Review.** Read it. A drift or a missing artifact shows here.
 3. **Approve.** The approval binds the plan digest, so it cannot be moved onto
@@ -823,7 +823,7 @@ operation does not silently rebind to the new path.
 it is local. The restore re-reads the rows it wrote, refuses unless they equal
 the capture (`packages/connectors/src/postgres/managed.ts:1393`), and only then
 writes the record into `${schema}.recoveries` in your own database
-(`packages/connectors/src/postgres/managed.ts:1399`). Nobody has to trust VOID
+(`packages/connectors/src/postgres/managed.ts:1399`). Nobody has to trust NOMO
 to read it: `docs/RECEIPT-VERIFY.sql` is plain SQL over tables you own, and it
 was run against a tampered row to confirm it reports `FAIL`
 (`scripts/receipt-demo/README.md`).
@@ -841,7 +841,7 @@ bytes and not POSIX mode, because Windows has no mode to capture.
 
 ## 14. Hosting an MCP server
 
-`void recovery serve --config <file>` exposes the managed executor as a local
+`nomo recovery serve --config <file>` exposes the managed executor as a local
 stdio MCP server for an agent to call. The configuration names the workspace, a
 stable `agentId`, a state directory, the environment variable holding the
 encryption key, and the adapters to expose.
@@ -851,18 +851,18 @@ encryption key, and the adapters to expose.
   "workspace": "test",
   "agentId": "test-agent",
   "stateDir": "state",
-  "encryptionKeyEnv": "VOID_RECOVERY_KEY",
+  "encryptionKeyEnv": "NOMO_RECOVERY_KEY",
   "filesystem": { "root": "project", "cooperative": true }
 }
 ```
 
-**Eight tools are implemented.** `void_execute`, `void_recovery_plan`,
-`void_recovery_apply`, `void_recovery_plan_job`, `void_recovery_status_job`,
-`void_recovery_apply_job`, `void_reconcile`, `void_recovery_reconcile`.
+**Eight tools are implemented.** `nomo_execute`, `nomo_recovery_plan`,
+`nomo_recovery_apply`, `nomo_recovery_plan_job`, `nomo_recovery_status_job`,
+`nomo_recovery_apply_job`, `nomo_reconcile`, `nomo_recovery_reconcile`.
 
 **A host may authorize fewer.** The Prime dogfood setup authorizes five:
-`void_execute`, `void_recovery_plan`, `void_recovery_apply`, `void_reconcile`,
-`void_recovery_reconcile`. The three job tools are implemented and not authorized
+`nomo_execute`, `nomo_recovery_plan`, `nomo_recovery_apply`, `nomo_reconcile`,
+`nomo_recovery_reconcile`. The three job tools are implemented and not authorized
 there. Which set is live is a host decision, recorded per deployment.
 
 **The boundary is enforced server-side.** The agent may not supply its own
@@ -872,7 +872,7 @@ editing the policy file takes effect on the next call.
 
 **Interactive approval is not implemented on this transport.** Hold and deny
 refuse execution; there is no prompt inside the MCP session. Approve from the TUI,
-the GUI, or `void approve`.
+the GUI, or `nomo approve`.
 
 **A plan digest is not policy authorization.** A digest says what would be done.
 Permission comes from the policy and, where the policy says hold, from a human.
@@ -922,7 +922,7 @@ These are real, current, and worth knowing before you file a bug.
 | Dev signing key                | mode 0600             | ACL narrowed to the current user                       |
 | Line endings in the repository | LF                    | LF, via `.gitattributes`                               |
 
-Two Windows-only rough edges, stated rather than hidden: `void recovery
+Two Windows-only rough edges, stated rather than hidden: `nomo recovery
 conformance --adapter git.managed` reports a `platform-refusal` failure there by
 design, and the TUI's `/harness` detection splits `PATH` on `:` only, so it
 reports nothing found on Windows.
@@ -934,27 +934,27 @@ repository. If you see it, your checkout predates the fix; the preinstall hook i
 now a Node script.
 
 **`ERR_SQLITE_ERROR: unable to open database file`.** The state directory is not
-writable, or the path is wrong. Run `void config` and check the reported data
-directory, then `void doctor`, which reports writability.
+writable, or the path is wrong. Run `nomo config` and check the reported data
+directory, then `nomo doctor`, which reports writability.
 
 **`ERR_UNSUPPORTED_ESM_URL_SCHEME ... protocol 'd:'`.** A Windows path reached an
 import. Fixed in this repository; if you hit it you are running an older build.
 
 **`No local Chromium binary found`.** The browser layout gate needs a Chromium.
-Set `VOID_QA_CHROMIUM` to point at one. Without it the gate reports a named skip
+Set `NOMO_QA_CHROMIUM` to point at one. Without it the gate reports a named skip
 and a todo rather than passing quietly.
 
 **`Ledger verification reports hash integrity but no signature check`.** No
-verification key is set. `void config` shows `verify-key: unset`. Set
-`VOID_SIGNING_KEY` or accept integrity-only verification and say so.
+verification key is set. `nomo config` shows `verify-key: unset`. Set
+`NOMO_SIGNING_KEY` or accept integrity-only verification and say so.
 
 **Every call is denied and you do not know why.** Read the refusal: it names the
 rule id, the class, and what approval would require. Then run
-`void policy validate <file>`. An unreadable or invalid policy denies loudly by
+`nomo policy validate <file>`. An unreadable or invalid policy denies loudly by
 design.
 
 **A hold never appears anywhere.** The call was allowed, not held. Check
-`/ledger` for the decision and its matched rule, and `void approvals` for
+`/ledger` for the decision and its matched rule, and `nomo approvals` for
 anything still pending.
 
 **The TUI shows `mode: plan (local only, not enforced)` and you expected a
@@ -962,9 +962,9 @@ block.** Read the section on permission modes. The TUI mode is a prompt prefix.
 The GUI mode is the enforced one.
 
 **`Setup required` and nothing dispatches.** No provider credential resolves. See
-section 6. VOID does not fall back to another provider.
+section 6. NOMO does not fall back to another provider.
 
-**`Export refused: a ledger has not been verified.`** Run `void verify` first, on
+**`Export refused: a ledger has not been verified.`** Run `nomo verify` first, on
 the same directory.
 
 **Undo returns `conflict`.** Something changed the target after capture. That is
@@ -977,23 +977,23 @@ host did not advertise recovery jobs. Single-operation Undo still works.
 
 A checklist, in the order that catches the most.
 
-1. **Run `void doctor` and read every line.** An unwritable ledger directory is
+1. **Run `nomo doctor` and read every line.** An unwritable ledger directory is
    the failure that matters most.
 2. **Connect a provider and confirm the badge says Ready.** A workspace that
    cannot dispatch is safe but useless, and you want to know which one you have.
-3. **Run `void init`, then `void doctor` again.** Confirm the second run has no
+3. **Run `nomo init`, then `nomo doctor` again.** Confirm the second run has no
    warning about the ledger directory.
 4. **Decide the permission mode's owner.** In the GUI the server owns it. Confirm
    what your host returns from `GET /api/capabilities`, because the app falls back
    to read-only if the server does not answer.
-5. **Write and verify your own policy.** Start from `void policy show dev` and
+5. **Write and verify your own policy.** Start from `nomo policy show dev` and
    tighten. Validate it. A typo in a match key fails the load rather than
    widening a rule, but only once you have validated.
-6. **Confirm which resources are managed.** Undo is real only for files VOID
+6. **Confirm which resources are managed.** Undo is real only for files NOMO
    owns. A cooperative directory that another program also writes will produce a
    conflict on Undo, and that is the correct outcome.
-7. **Prove the ledger on a machine that is not the one running VOID.** Take a
-   `void export` bundle and run the standalone verifier against it elsewhere.
+7. **Prove the ledger on a machine that is not the one running NOMO.** Take a
+   `nomo export` bundle and run the standalone verifier against it elsewhere.
 8. **Rehearse a real hold.** Run the simulated moment from the repository root
    with `node scripts/src/moment.mjs`. It shows one denied delete, one approved
    delete, and the exact text the agent reads after a hold resolves.
@@ -1027,11 +1027,11 @@ A checklist, in the order that catches the most.
 | Managed filesystem recovery                             | [managed filesystem recovery](MANAGED-FILESYSTEM.md)                                                                                |
 | Managed Git recovery                                    | [managed Git recovery](MANAGED-GIT.md)                                                                                              |
 | Adapter conformance and what a certification means      | [adapter conformance and what a certification means](ADAPTER-CONFORMANCE.md)                                                        |
-| The receipt, and who can check it without VOID          | [a recovery receipt, verified without VOID](../scripts/receipt-demo/README.md), [the SQL a third party runs](RECEIPT-VERIFY.sql)    |
+| The receipt, and who can check it without NOMO          | [a recovery receipt, verified without NOMO](../scripts/receipt-demo/README.md), [the SQL a third party runs](RECEIPT-VERIFY.sql)    |
 | The decisions behind the design                         | [context](CONTEXT.md), [decision log](DECISIONS.md)                                                                                 |
 | The standards this repository holds itself to           | [the standards](STANDARDS.md)                                                                                                       |
 | The release evidence matrix                             | [the release evidence matrix](RELEASE-1.0.1-MATRIX.md)                                                                              |
-| What is left to build, honestly                         | [what is left to build, honestly](PLAN-GAPS.md)                                                                                     |
+| Current NOMO MVP plan and roadmap                      | [active NOMO implementation plan](superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md)                           |
 | Windows desktop specifics                               | [Windows desktop specifics](WINDOWS-DESKTOP.md)                                                                                     |
 | Beta boundaries                                         | [beta boundaries](BETA.md)                                                                                                          |
 | How this handbook is kept true                          | [how this handbook is kept true](../scripts/src/handbook.test.mjs)                                                                  |

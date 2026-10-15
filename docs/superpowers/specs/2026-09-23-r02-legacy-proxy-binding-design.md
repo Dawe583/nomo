@@ -14,7 +14,7 @@ write completed.
 
 This slice closes G-08 only for the named Postgres tool and the tested host
 binding. It does not certify arbitrary MCP tools, S3, the standalone
-`void-proxy` binary, observe posture, or a distributed deployment.
+`nomo-proxy` binary, observe posture, or a distributed deployment.
 
 ## Current gap
 

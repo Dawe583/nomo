@@ -1,10 +1,10 @@
 /**
  * The four ledger situations that used to collapse into one raw errno, and the
- * exit code `void metrics` reports for each.
+ * exit code `nomo metrics` reports for each.
  *
  * The suites here all passed while the bug was live because every fixture held
  * a ledger. Nothing asked what happens when the directory an operator passed is
- * readable and empty, which is the case `void doctor` had already reported on a
+ * readable and empty, which is the case `nomo doctor` had already reported on a
  * different line and nothing else repeated.
  */
 import test, { describe } from "node:test";
@@ -18,7 +18,7 @@ import { runVerifyCommand } from "./verify.ts";
 import { runOperation } from "./operations.ts";
 
 const scratch = async (t: { after: (fn: () => unknown) => void }) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-ledger-diagnostics-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-ledger-diagnostics-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   return dir;
 };
@@ -80,9 +80,9 @@ describe("resolveLedgerTarget", () => {
     const fromEnv = await resolveLedgerTarget({
       mode: "workspace",
       ledger: dir,
-      env: { VOID_WORKSPACE: "e2e-final" },
+      env: { NOMO_WORKSPACE: "e2e-final" },
     });
-    assert.ok(fromEnv.ok, "VOID_WORKSPACE must select the same file");
+    assert.ok(fromEnv.ok, "NOMO_WORKSPACE must select the same file");
     assert.equal(fromEnv.path, ledger);
 
     // A workspace that is not there is still a refusal, and it must not be
@@ -173,7 +173,7 @@ describe("resolveLedgerTarget", () => {
   });
 });
 
-describe("void verify on a ledger it cannot read", () => {
+describe("nomo verify on a ledger it cannot read", () => {
   test("an empty directory names the directory and exits non-zero", async (t) => {
     const dir = await scratch(t);
 
@@ -229,7 +229,7 @@ describe("void verify on a ledger it cannot read", () => {
   test("the advice to pass --workspace is advice this command can follow", async (t) => {
     // A message that recommends a flag the command rejects is worse than the
     // errno it replaced: it sends the operator to type something and get
-    // "unknown verify option" back. `void metrics` always could; `void verify`
+    // "unknown verify option" back. `nomo metrics` always could; `nomo verify`
     // could not.
     const dir = await scratch(t);
     await writeFile(join(dir, "other.jsonl"), "{}\n");
@@ -248,7 +248,7 @@ describe("void verify on a ledger it cannot read", () => {
 
 });
 
-describe("void metrics exit code", () => {
+describe("nomo metrics exit code", () => {
   test("it exits non-zero when it cannot measure, and says what it passed", async (t) => {
     const dir = await scratch(t);
     const missing = join(dir, "absent");
@@ -260,7 +260,7 @@ describe("void metrics exit code", () => {
     assert.doesNotMatch(result.err, /ENOENT/);
     // Nothing was measured, so no counters were printed on stdout where a
     // scraper would read them as a healthy reading.
-    assert.doesNotMatch(result.out, /void_ledger_entries_total/);
+    assert.doesNotMatch(result.out, /nomo_ledger_entries_total/);
   });
 
   test("it exits zero for an empty directory, which is a real measurement", async (t) => {
@@ -269,8 +269,8 @@ describe("void metrics exit code", () => {
     const result = await metrics(["--ledger", dir]);
 
     assert.equal(result.code, 0);
-    assert.match(result.out, /void_ledger_files_total 0/);
-    assert.match(result.out, /void_ledger_entries_total 0/);
+    assert.match(result.out, /nomo_ledger_files_total 0/);
+    assert.match(result.out, /nomo_ledger_entries_total 0/);
   });
 
   test("it exits zero when it counted a ledger, in either format", async (t) => {
@@ -281,7 +281,7 @@ describe("void metrics exit code", () => {
     const json = await metrics(["--ledger", dir, "--format", "json"]);
 
     assert.equal(text.code, 0);
-    assert.match(text.out, /void_ledger_files_unreadable_total 1/);
+    assert.match(text.out, /nomo_ledger_files_unreadable_total 1/);
     assert.equal(json.code, 0);
     assert.match(JSON.parse(json.out).schema, /void\.metrics\.v1/);
   });

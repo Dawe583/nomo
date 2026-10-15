@@ -144,7 +144,7 @@ export function ComponentGallery() {
   const t = useText();
   // The gallery mounts without the shell, so it applies the appearance
   // contract itself. Without this /gallery would always render light.
-  useAppliedAppearance(localStorage.getItem("void-appearance") ?? "system");
+  useAppliedAppearance(localStorage.getItem("nomo-appearance") ?? "system");
   const [dialog, setDialog] = useState(false);
   const [mode, setMode] = useState<PermissionMode>("normal");
   const [pending, setPending] = useState(false);
@@ -402,8 +402,8 @@ export function ComponentGallery() {
         <p className="muted">
           <BrandMark />{" "}
           {t(
-            "Značka VOID zůstává jediným znakem značky.",
-            "The VOID aperture stays the only brand mark.",
+            "Značka NOMO zůstává jediným znakem značky.",
+            "The NOMO aperture stays the only brand mark.",
           )}
         </p>
       </Section>

@@ -1,9 +1,9 @@
 /**
  * The anchor: a signed head kept where the recorder cannot rewrite it.
  *
- * `void attest` produces the document (`attestLedger`), keeps a retained local
+ * `nomo attest` produces the document (`attestLedger`), keeps a retained local
  * copy under `<ledger dir>/attestations/`, and appends the signed head to an
- * anchor file the operator names. That file is the only part of VOID's evidence
+ * anchor file the operator names. That file is the only part of NOMO's evidence
  * story that leaves the agent's trust domain, and it is only an anchor for as
  * long as the agent process cannot write it: a read-only mount, an off-host
  * copy, a path the OS denies the runtime, or a copy a third party holds. An

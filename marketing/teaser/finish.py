@@ -1,6 +1,6 @@
 """Deterministic edit, ASCII motion graphics, original score and H.264 master.
 
-python finish.py /tmp/void-teaser /path/to/output
+python finish.py /tmp/nomo-teaser /path/to/output
 Requires Pillow, NumPy, fontTools[brotli], ffmpeg and the Blender frame render.
 """
 import math
@@ -48,14 +48,14 @@ def corners(draw,b,color=ORANGE,width=2,length=30):
         draw.line([(px,py+sy*length),(px,py),(px+sx*length,py)],fill=color,width=width)
 
 def hud(draw,t,section):
-    text(draw,(82,240),'[ VOID ]',28,ORANGE)
+    text(draw,(82,240),'[ NOMO ]',28,ORANGE)
     text(draw,(810,240),f'{section:02d} / 05',22)
     draw.line((82,292,952,292),fill=(89,70,47),width=1)
     text(draw,(82,1530),'AGENT ACCOUNTABILITY / REDEFINED',19,(171,154,125))
     for i in range(5):
         x=82+i*176
         draw.rectangle((x,1585,x+148,1588),fill=ORANGE if i<section else (69,58,41))
-    text(draw,(82,1620),f'VOID_SYSTEM  //  {int(t*30):04d}',16,(125,111,87))
+    text(draw,(82,1620),f'NOMO_SYSTEM  //  {int(t*30):04d}',16,(125,111,87))
     text(draw,(784,1620),'SIGNAL: LIVE',16,(125,111,87))
 
 def ascii_layer(base,t,strong=False):
@@ -143,9 +143,9 @@ def compose(frame):
         text(d,(86,1356),'reversible actions.',35)
         text(d,(86,1430),'REVIEW  /  RESTORE  /  VERIFY',22,ORANGE)
     elif t<10.5:
-        tracked(d,'ENTER THE VOID',1370,36,8)
+        tracked(d,'ENTER THE NOMO',1370,36,8)
     else:
-        text(d,(540,1142),'VOID',193,kind='serif',center=True)
+        text(d,(540,1142),'NOMO',193,kind='serif',center=True)
         if t<12.375:
             tracked(d,'CONTROL FOR AI AGENTS',1390,32,3)
         else:
@@ -214,12 +214,12 @@ def main():
         for i,im in enumerate(thumbs):sheet.paste(im,((i%4)*270,(i//4)*480))
         sheet.save(OUT/'storyboard.jpg',quality=94);return
     audio()
-    cmd=['ffmpeg','-y','-hide_banner','-loglevel','warning','-f','rawvideo','-pix_fmt','rgb24','-s',f'{W}x{H}','-r','30','-i','-','-i',str(WORK/'score.wav'),'-map','0:v','-map','1:a','-vf','scale=out_color_matrix=bt709:out_range=tv,setsar=1','-c:v','libx264','-preset','slow','-crf','17','-profile:v','high','-x264-params','colorprim=bt709:transfer=bt709:colormatrix=bt709','-pix_fmt','yuv420p','-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-c:a','aac','-b:a','320k','-af','loudnorm=I=-14:TP=-1:LRA=8','-ar','48000','-t','15','-movflags','+faststart',str(OUT/'VOID-TEASER-1080x1920.mp4')]
+    cmd=['ffmpeg','-y','-hide_banner','-loglevel','warning','-f','rawvideo','-pix_fmt','rgb24','-s',f'{W}x{H}','-r','30','-i','-','-i',str(WORK/'score.wav'),'-map','0:v','-map','1:a','-vf','scale=out_color_matrix=bt709:out_range=tv,setsar=1','-c:v','libx264','-preset','slow','-crf','17','-profile:v','high','-x264-params','colorprim=bt709:transfer=bt709:colormatrix=bt709','-pix_fmt','yuv420p','-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-c:a','aac','-b:a','320k','-af','loudnorm=I=-14:TP=-1:LRA=8','-ar','48000','-t','15','-movflags','+faststart',str(OUT/'NOMO-TEASER-1080x1920.mp4')]
     p=subprocess.Popen(cmd,stdin=subprocess.PIPE)
     for f in range(450):
         im=compose(f);p.stdin.write(im.tobytes())
         if f%30==0:print(f'FINISH {f}/450',flush=True)
-        if f==418:im.save(OUT/'VOID-TEASER-cover.jpg',quality=96)
+        if f==418:im.save(OUT/'NOMO-TEASER-cover.jpg',quality=96)
     p.stdin.close();assert p.wait()==0,'FFmpeg export failed'
 
 if __name__=='__main__':main()

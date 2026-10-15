@@ -49,7 +49,7 @@ const PUBLISHABLE = new Map([
 for (const directory of directories) {
   test(`${directory} ${PUBLISHABLE.has(directory) ? "is publishable with" : "stays private with"} coherent development release metadata`, () => {
     const data = manifest(`${directory}/package.json`);
-    assert.match(data.name, /^@void\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    assert.match(data.name, /^@nomo\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
     if (directory.startsWith("packages/")) {
       assert.equal(data.name, `@void/${directory.slice("packages/".length)}`);
     }
@@ -85,8 +85,8 @@ for (const directory of directories) {
 }
 
 const bins = {
-  void: "packages/cli/bin/void.mjs",
-  "void-proxy": "packages/proxy/bin/void-proxy.mjs",
+  nomo: "packages/cli/bin/nomo.mjs",
+  "nomo-proxy": "packages/proxy/bin/nomo-proxy.mjs",
 };
 
 test("root bin mappings resolve to the development entrypoints", () => {
@@ -94,16 +94,16 @@ test("root bin mappings resolve to the development entrypoints", () => {
 });
 
 test("checkout launchers expose the same TUI entrypoint on POSIX and Windows", () => {
-  const posix = read("void");
-  const windows = read("void.cmd");
+  const posix = read("nomo");
+  const windows = read("nomo.cmd");
   assert.match(posix, /^#!\/bin\/sh\n/);
-  assert.match(posix, /packages\/cli\/bin\/void\.mjs/);
+  assert.match(posix, /packages\/cli\/bin\/nomo\.mjs/);
   assert.match(posix, /exec node .*"\$@"/);
-  assert.ok(lstatSync(new URL("../../void", import.meta.url)).mode & 0o111);
+  assert.ok(lstatSync(new URL("../../nomo", import.meta.url)).mode & 0o111);
   assert.match(windows, /^@echo off\r?\n/);
-  assert.match(windows, /packages\\cli\\bin\\void\.mjs/);
+  assert.match(windows, /packages\\cli\\bin\\nomo\.mjs/);
   assert.match(windows, /%\*/);
-  assert.match(manifest("package.json").scripts.void, /packages\/cli\/bin\/void\.mjs/);
+  assert.match(manifest("package.json").scripts.nomo, /packages\/cli\/bin\/nomo\.mjs/);
 });
 
 for (const [name, path] of Object.entries(bins)) {
@@ -201,7 +201,7 @@ for (const directory of PUBLISHABLE.keys()) {
     );
 
     const packageDir = fileURLToPath(new URL(`${directory}/`, root));
-    const sandbox = mkdtempSync(join(tmpdir(), "void-release-clean-install-"));
+    const sandbox = mkdtempSync(join(tmpdir(), "nomo-release-clean-install-"));
     try {
       // Pack from the package directory into the sandbox, never into the
       // repository: the tarball is the artefact under test and a stray one
@@ -226,7 +226,7 @@ for (const directory of PUBLISHABLE.keys()) {
       rmSync(consumer, { recursive: true, force: true });
       writeFileSync(
         join(sandbox, "package.json"),
-        `${JSON.stringify({ name: "void-clean-install-probe", version: "0.0.0", private: true }, null, 2)}\n`,
+        `${JSON.stringify({ name: "nomo-clean-install-probe", version: "0.0.0", private: true }, null, 2)}\n`,
       );
       const installed = spawnSync(
         "npm",

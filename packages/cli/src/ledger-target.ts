@@ -2,7 +2,7 @@
  * Where the ledger is, before anything reads it.
  *
  * Every command that takes a ledger resolves it here, and it returns a result
- * rather than throwing. The reason is history: `void verify`, `void metrics`
+ * rather than throwing. The reason is history: `nomo verify`, `nomo metrics`
  * and the export/attest pair each resolved the path on their own and each let
  * `fs.stat` raise, so an operator who passed a readable but empty directory
  * was answered with `ENOENT ... /<dir>/default.jsonl` — a file they never
@@ -26,6 +26,7 @@ import { readdir, stat } from "node:fs/promises";
 import type { Stats } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { dataDir } from "../../ledger/src/paths.ts";
 
 /**
  * `workspace` reads one workspace, so a directory resolves to the workspace
@@ -37,11 +38,11 @@ export type LedgerMode = "workspace" | "scan";
 
 export type LedgerRequest = {
   readonly mode: LedgerMode;
-  /** An explicit single file (`--file` on `void verify`). */
+  /** An explicit single file (`--file` on `nomo verify`). */
   readonly file?: string | undefined;
   /** The ledger file or ledger directory the caller named. */
   readonly ledger?: string | undefined;
-  /** Overrides `VOID_WORKSPACE`; a `--workspace <name>` the operator passed. */
+  /** Overrides `NOMO_WORKSPACE`; a `--workspace <name>` the operator passed. */
   readonly workspace?: string | undefined;
   readonly env: Readonly<NodeJS.ProcessEnv>;
 };
@@ -88,9 +89,9 @@ export async function resolveLedgerTarget(
   request: LedgerRequest,
 ): Promise<LedgerResolution> {
   const env = request.env;
-  const workspace = request.workspace ?? env.VOID_WORKSPACE ?? "default";
+  const workspace = request.workspace ?? env.NOMO_WORKSPACE ?? "default";
   const defaultFile = join(
-    env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger"),
+    env.NOMO_LEDGER_DIR ?? join(dataDir(homedir()), "ledger"),
     `${workspace}.jsonl`,
   );
   const requested = request.file ?? request.ledger ?? defaultFile;
@@ -114,11 +115,11 @@ export async function resolveLedgerTarget(
         ? fail("absent", requested, requested, [
             `no ledger at the path you passed: ${requested}`,
             `that is what ${found} resolves to here, and it does not exist`,
-            "a ledger is created on first use; `void doctor` shows where VOID looks",
+            "a ledger is created on first use; `nomo doctor` shows where NOMO looks",
           ])
         : fail("absent", requested, requested, [
             `no ledger at ${requested} (the resolved default location; name one with --ledger or --workspace)`,
-            "pass --ledger <dir-or-file>, or set VOID_LEDGER_DIR",
+            "pass --ledger <dir-or-file>, or set NOMO_LEDGER_DIR",
             "a ledger is created on first use",
           ]);
     return fail("unreadable", requested, requested, [

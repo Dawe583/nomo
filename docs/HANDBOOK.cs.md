@@ -1,6 +1,6 @@
-# VOID handbook
+# NOMO handbook
 
-Úplný návod pro provozovatele: co VOID je, co odmítá tvrdit, jak se nainstaluje
+Úplný návod pro provozovatele: co NOMO je, co odmítá tvrdit, jak se nainstaluje
 a jaké příkazy, klávesy, routy a soubory vystavuje. První čas si přečti
 kapitoly 1 až 7 v tomto pořadí, zbytek je reference.
 
@@ -10,8 +10,8 @@ z nich přestane existovat, pokud se příkaz vytrácí, nebo pokud se obě jazy
 verze rozejdou. Návod, který lže, je horší než žádný, takže tenhle je brána, ne
 proza.
 
-- [1. Co VOID je](#1-co-void-je)
-- [2. Co VOID neumí](#2-co-void-neumí)
+- [1. Co NOMO je](#1-co-nomo-je)
+- [2. Co NOMO neumí](#2-co-nomo-neumí)
 - [3. Pojmy](#3-pojmy)
 - [4. Instalace](#4-instalace)
 - [5. Prvních deset minut](#5-prvních-deset-minut)
@@ -32,12 +32,12 @@ proza.
 
 ---
 
-## 1. Co VOID je
+## 1. Co NOMO je
 
-VOID je vrstva mezi AI agentem a nástroji, do kterých ten agent může zapisovat.
+NOMO je vrstva mezi AI agentem a nástroji, do kterých ten agent může zapisovat.
 Každé zachycené volání nástroje posoudí ve čtyřech krocích a pak je zapíše:
 
-1. **Zachytí** volání. VOID převezme MCP session; agent nekomunikuje přímo se
+1. **Zachytí** volání. NOMO převezme MCP session; agent nekomunikuje přímo se
    svými nástroji.
 2. **Klasifikuje** ho. Jak vratitelné je toto volání vzhledem ke stavu cíle?
    Odpověď je R0, R1, R2 nebo R3.
@@ -59,12 +59,12 @@ tenhle návod na tom nestojí. Ukázané jsou dvě užší věci, a obě jdou ov
   Obnovení databáze do nějakého okamžiku zahodí každý legitimní zápis od té doby;
   inverze vrátí dotčené řádky a nechá beze změny zápisy, které mezitím udělal
   někdo jiný. `scripts/receipt-demo/run.mjs` ukazuje obojí na jedné tabulce: zápis
-  agenta, schválení financí mimo VOID a pak inverzi, po níž je první řádek zpět
+  agenta, schválení financí mimo NOMO a pak inverzi, po níž je první řádek zpět
   a druhý si drží svou pozdější hodnotu.
 - **Potvrzení zůstane v té databázi, kde se efekt stal.** Po ověřené obnově ve
   spravovaném Postgresu se záznam zapíše do `${schema}.recoveries`
   (`packages/connectors/src/postgres/managed.ts:1399`), takže si ho ověří kdokoli,
-  kdo se k té databázi dostane, čistým SQL a bez žádného procesu VOID.
+  kdo se k té databázi dostane, čistým SQL a bez žádného procesu NOMO.
   `docs/RECEIPT-VERIFY.sql` je právě ten dotaz. Vypíše `PASS` jen tehdy, když
   řádek, který každé potvrzení jmenuje, je řádek, který živá tabulka opravdu má,
   a `FAIL`, když ne; byl spuštěn proti záměrně zkazené tabulce, aby se ukázalo,
@@ -73,7 +73,7 @@ tenhle návod na tom nestojí. Ukázané jsou dvě užší věci, a obě jdou ov
 Obnova se odmítne dřív, než se cokoli zapíše, pokud řádky nesouhlasí se
 zachycením (`packages/connectors/src/postgres/managed.ts:1393`).
 
-## 2. Co VOID neumí
+## 2. Co NOMO neumí
 
 Přečti tuto kapitolu před tím, než kapitola 1 vytvoří důvěru k produktu. Každá
 položka je současné, změřené omezení, ne bod plánu.
@@ -85,7 +85,7 @@ položka je současné, změřené omezení, ne bod plánu.
   nakonfiguroval. Nezachytí libovolné příkazy shellu, jiné programy ani druhého
   agenta, kterému nikdy neukázal cestu.
 - **Undo existuje jen tam, kde konektor zachytil předchozí obraz.** Volání R2 nebo
-  R3 nemusí mít inverzi vůbec. `void` ti to řekne, místo aby předstíral.
+  R3 nemusí mít inverzi vůbec. `nomo` ti to řekne, místo aby předstíral.
 - **Ledger je odolný proti změnám, ne proti změnám nezabránění.** Kdokoli, kdo
   vlastní stroj, může JSONL přepsat. Podpis ti dokazuje, že záznam nebyl změněn
   _po_ zapsání někým, kdo neměl klíč.
@@ -94,7 +94,7 @@ položka je současné, změřené omezení, ne bod plánu.
   (`docs/OPERATIONS.md`). Potvrzení ve tvé databázi je trvalý nárok zapsaný vedle
   řádků, o kterých mluví, a kontrola čte ty řádky.
 - **Hold není zámek na svět.** Hold pozastaví jedno volání. Zapisovatel, který
-  nikdy nešel přes VOID, je nedotčen.
+  nikdy nešel přes NOMO, je nedotčen.
 - **Třídy vratitelnosti jsou konceptuální klasifikace, ne certifikace dodavatele.**
   Přesné znění, které cestuje s daty registru, je v `NOTICE` v kořeni repozitáře.
 - **Není tu plán napříč systémy.** Jedna úloha obnovy pokrývá spravované
@@ -121,7 +121,7 @@ stavu cíle:
 **Neklasifikované** volání se považuje za R3. Mezera v registru se tak mění v
 opatrnost, ne v tichý allowance.
 
-**Blast radius.** Kolika zdrojů by se volání dotklo. VOID nehádá: pouze změřené
+**Blast radius.** Kolika zdrojů by se volání dotklo. NOMO nehádá: pouze změřené
 číslo splní pravidlo na radius a chybějící měření nechá radius neznámý, což
 nesplní žádné radius pravidlo vůbec.
 
@@ -134,20 +134,20 @@ které pravidlo ho drželo, a že nesmí tentýž pokus zopakovat.
 **Inverze.** Operace, která vrátí cíl přesně do předchozího stavu. Jen R0 a R1 mají
 inverzi. R2 má kompenzace, které poškodění zmenšují, a to není totéž.
 
-**Spravovaný dokument.** Soubor, který VOID sám vytvořil a vlastní. Jeho zápisy
+**Spravovaný dokument.** Soubor, který NOMO sám vytvořil a vlastní. Jeho zápisy
 se zachytí, takže jeho Undo je skutečné. Soubor, který současně upravuje
 vnější program, je kooperativní jen částečně a kontrola driftu Undo odmítne.
 
 ## 4. Instalace
 
-VOID potřebuje **Node.js 24 nebo novější** a **pnpm 10**. Ověř obojí:
+NOMO potřebuje **Node.js 24 nebo novější** a **pnpm 10**. Ověř obojí:
 
 ```sh
 node --version
 pnpm --version
 ```
 
-Z Git checkoutu nainstaluj workspace a zpřístupni jeho příkaz `void`:
+Z Git checkoutu nainstaluj workspace a zpřístupni jeho příkaz `nomo`:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -156,16 +156,16 @@ pnpm setup # jednou, pokud je třeba přidat globální příkazy do PATH
 
 `pnpm setup` podle potřeby připraví uživatelský adresář příkazů pnpm. Pokud
 změní nastavení shellu, otevři nový terminál. Pak zpřístupni tento checkout jako
-`void` z libovolného adresáře:
+`nomo` z libovolného adresáře:
 
 ```sh
 pnpm link --global
-void doctor
+nomo doctor
 ```
 
 Po přesunu checkoutu nebo výběru jiného klonu link spusť znovu.
-Z kořene repozitáře funguje také `pnpm void`, `./void` na macOS/Linux nebo
-`.\void.cmd` na Windows, bez globálního linku. `void doctor` hlásí terminál,
+Z kořene repozitáře funguje také `pnpm nomo`, `./nomo` na macOS/Linux nebo
+`.\nomo.cmd` na Windows, bez globálního linku. `nomo doctor` hlásí terminál,
 verzi Node, rozřešené adresáře dat a ledgeru, zda jsou zapisovatelné a zda je
 přítomný ověřovací klíč.
 
@@ -194,7 +194,7 @@ Udělej to v tomto pořadí. Každý krok je příkaz, který buď funguje, nebo
 **1. Vytvoř rozvržení pracovního prostoru.**
 
 ```sh
-void init
+nomo init
 ```
 
 Vypíše adresář, který vytvořil, a tři další kroky. Nic jiného nezapisuje a
@@ -203,7 +203,7 @@ nic nemaže.
 **2. Zkontroluj prostředí.**
 
 ```sh
-void doctor
+nomo doctor
 ```
 
 Čekej `PASS` pro verzi Node a datový adresář. `WARN` pro adresář ledgeru na
@@ -219,7 +219,7 @@ pnpm tui
 ```
 
 Napiš `/help` pro seznam příkazů, `?` pro kartu nápovědy a `/status`, abys viděl,
-co VOID rozřešil. Ukazatel režimu ve stavovém řádku vždy čte
+co NOMO rozřešil. Ukazatel režimu ve stavovém řádku vždy čte
 `local only, not enforced`; kapitola 9 vysvětluje, proč to není chyba tvého
 nastavení.
 
@@ -233,7 +233,7 @@ pracovní prostor, v prohlížeči.
 
 ## 6. Připojení poskytovatele modelu
 
-**VOID nemá žádný výchozí poskytovatele ani výchozí model.** Nový pracovní prostor
+**NOMO nemá žádný výchozí poskytovatele ani výchozí model.** Nový pracovní prostor
 nemá ani jedno, dokud nějaký nepřipojíš. Nastavení vypisuje poskytovatele na
 výběr a první konverzace se zeptá, který model použít, z katalogu, který vrátí
 připojený poskytovatel. Existující konverzace si ponechají poskytovatele a
@@ -241,16 +241,16 @@ model, se kterým vznikly; připojení jiného poskytovatele nikdy nepřepíše 
 
 Přihlášení udávají dva způsoby a jsou záměrně různé.
 
-**Ambientní, pro vývojáře.** Nastav klíč v prostředí hostitele před startem VOID:
+**Ambientní, pro vývojáře.** Nastav klíč v prostředí hostitele před startem NOMO:
 
 ```sh
 export NVIDIA_API_KEY=...
-void tui
+nomo tui
 ```
 
-Toto je jediný ambientní přihlašovací údaj, který VOID čte, a je to volba, kterou
-udělal sis ty, ne default, který udělal VOID. TUI to říká přímo: `Set
-NVIDIA_API_KEY in the host environment, then reopen VOID. No key is accepted in
+Toto je jediný ambientní přihlašovací údaj, který NOMO čte, a je to volba, kterou
+udělal sis ty, ne default, který udělal NOMO. TUI to říká přímo: `Set
+NVIDIA_API_KEY in the host environment, then reopen NOMO. No key is accepted in
 chat.`
 
 **Uložený, pro operátora.** V GUI otevři **Nastavení**, pak **Poskytovatel
@@ -262,7 +262,7 @@ ověřit**. Klíč se na serveru zašifruje a pole se vymaže. Úspěšné hlá�
 přihlašovací materiál, a GUI nemá v composeru žádné pole na klíč.
 
 Když se nerozřeší žádné přihlášení, odznak stavu říká **Vyžaduje nastavení** a
-nic nevyšle. To je záměr: VOID nepřepíná na jiného poskytovatele, protože tichý
+nic nevyšle. To je záměr: NOMO nepřepíná na jiného poskytovatele, protože tichý
 přepínaje poskytovatele je přesně ta chyba, které operátor nevidí.
 
 Presety dostupné v GUI: NVIDIA NIM (`https://integrate.api.nvidia.com/v1`),
@@ -274,7 +274,7 @@ Stav poskytovatele je jeden z: `Připraven`, `Vyžaduje nastavení`, `Limit
 poskytovatele` (s nejčasnějším zkušením s retry), `Nedostupný`.
 
 Cena a kvóty poskytovatele se nikdy neodhadují. Tam, kde provider nehlásil číslo,
-VOID vypíše `unknown`, nikdy `$0.00`.
+NOMO vypíše `unknown`, nikdy `$0.00`.
 
 ## 7. Který povrch použít
 
@@ -283,8 +283,8 @@ VOID vypíše `unknown`, nikdy `$0.00`.
 | Terminál (TUI)      | `pnpm tui`                              | Žiješ v terminálu, chceš ledger vedle a chceš ovládání klávesnicí. Plné klávesy pro schvalování a obnovu. |
 | Webová aplikace     | `pnpm gui`                              | Chceš prohlížeč, velikost pro telefon, nebo pohledy na dokumenty a obnovu.                                |
 | Desktopová aplikace | `pnpm desktop:setup` pak `pnpm desktop` | Chceš desktopový shell s bundlovaným runtime a nativním úložištěm klíčů.                                  |
-| CLI                 | `void <příkaz>`                         | Skriptuješ, audituješ, nebo stav ověřuješ z jiného nástroje.                                              |
-| MCP host            | `void recovery serve --config <soubor>` | Volajícím je jiný agent a chceš zachytávání před jeho nástroji.                                           |
+| CLI                 | `nomo <příkaz>`                         | Skriptuješ, audituješ, nebo stav ověřuješ z jiného nástroje.                                              |
+| MCP host            | `nomo recovery serve --config <soubor>` | Volajícím je jiný agent a chceš zachytávání před jeho nástroji.                                           |
 
 TUI a GUI jsou stejný engine nad stejným pracovním prostorem. Schválení vyřešené v
 jednom je vidět ve druhém. TUI má klávesy, které GUI nemá, a GUI má historii
@@ -292,7 +292,7 @@ dokumentů, kterou TUI nemá.
 
 ## 8. Terminálové rozhraní
 
-`pnpm tui`, nebo `void tui`. Možnosti: `--once` vykreslí jeden statický snímek a
+`pnpm tui`, nebo `nomo tui`. Možnosti: `--once` vykreslí jeden statický snímek a
 skončí (jednorázový výkres je vždy bez barev), `--view <karta>`, `--session <id>`,
 `--data-dir <cesta>`, `--import-provider opencode:zen|opencode:tokenrouter` a
 `--help`.
@@ -343,7 +343,7 @@ nebo neznámý se odmítne jménem.
 
 **Dvě odmítnutí jsou trvalá a záměrná.** `/vim`, `/terminal-setup` a
 `/output-style` existují, aby operátor přicházející z jiného agent CLI dostal
-jasnou odpověď místo ticha. VOID nemá ekvivalent.
+jasnou odpověď místo ticha. NOMO nemá ekvivalent.
 
 **Dokončování pokrývá většinu příkazů, ne všechny.** Pět patnáct zpracovatelných
 příkazů je dosažitelných, ale `/` dokončování je nenabídne: `/open`, `/sources`,
@@ -421,7 +421,7 @@ detAILu říká `LOCAL SHELL, not stored in the ledger`.
 Příkaz se odmítne, ještě než se spustí, pokud zmiňuje cokoli, co vypadá jako
 přihlašovací materiál: proměnnou, jejíž název obsahuje KEY, TOKEN, SECRET nebo
 PASSWORD, slova api_key, authorization nebo bearer, `tokenharbor` nebo
-`tokenrouter`, privátní klíč nebo `.pem`, nebo `.env`, `.void` či `keychain`.
+`tokenrouter`, privátní klíč nebo `.pem`, nebo `.env`, `.nomo` či `keychain`.
 Jakákoli rozpoznaná **hodnota** tajemství v prostředí se v výstupu nahradí
 `[redacted]` bez ohledu.
 
@@ -564,82 +564,82 @@ nabízí jen obnovení. **Neposkytuje žádnou autoritu obnovy.**
 
 ## 10. Příkazová řáda
 
-Dvacet jedna příkazů. `void --help` vypíše seznam; `void <příkaz>` bez argumentů
+Dvacet jedna příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
 vypíše usage daného příkazu.
 
 | Příkaz               | Co dělá                                                         |
 | -------------------- | --------------------------------------------------------------- |
-| `void tui`           | Terminálový pracovní prostor.                                   |
-| `void watch`         | Celoobrazkový živý pohled na ledger.                            |
-| `void run`           | MCP proxy: `void-proxy` před nástroji agenta.                   |
-| `void classify`      | Klasifikovat volání nástrojů v transkriptu nebo jedno volání.        |
-| `void feed`          | Vypsat záznamy ledgeru, volitelně sledovat.                     |
-| `void verify`        | Ověřit řetězec a podpisy ledgeru.                               |
-| `void attest`        | Zapsat podepsanou attestaci nad záznamy workspace.              |
-| `void export`        | Zapsat svazek důkazů pro obnovu.                                |
-| `void replay`        | Přehrát nebo nasucho pustit zaznamenanou inverzi.               |
-| `void taint`         | Ukázat sousedství závislostí záznamu ledgeru.                   |
-| `void metrics`       | Strojově čitelné čítače ledgeru a journalu.                     |
-| `void policy`        | Vypsat, ukázat a ověřit packy a soubory policy.                 |
-| `void approvals`     | Vypsat čekající holds.                                          |
-| `void approve`       | Zapsat rozhodnutí proti holdu.                                  |
-| `void recovery`      | Spravovaný vykonavatel: inspect, plan, apply, reconcile, serve. |
-| `void agent`         | Spustit jeden agent turn neinteraktivně.                        |
-| `void doctor`        | Nahlásit prostředí.                                             |
-| `void config`        | Vypsat rozřešenou konfiguraci. Tajemství nikdy nevypíše.        |
-| `void init`          | Vytvořit rozvržení pracovního prostoru.                         |
-| `void ledger verify` | Ověřit adresář ledgeru.                                         |
-| `void update`     | Posunout instalovaný strom na sledovanou větev, jen dopředu.         |
+| `nomo tui`           | Terminálový pracovní prostor.                                   |
+| `nomo watch`         | Celoobrazkový živý pohled na ledger.                            |
+| `nomo run`           | MCP proxy: `nomo-proxy` před nástroji agenta.                   |
+| `nomo classify`      | Klasifikovat volání nástrojů v transkriptu nebo jedno volání.        |
+| `nomo feed`          | Vypsat záznamy ledgeru, volitelně sledovat.                     |
+| `nomo verify`        | Ověřit řetězec a podpisy ledgeru.                               |
+| `nomo attest`        | Zapsat podepsanou attestaci nad záznamy workspace.              |
+| `nomo export`        | Zapsat svazek důkazů pro obnovu.                                |
+| `nomo replay`        | Přehrát nebo nasucho pustit zaznamenanou inverzi.               |
+| `nomo taint`         | Ukázat sousedství závislostí záznamu ledgeru.                   |
+| `nomo metrics`       | Strojově čitelné čítače ledgeru a journalu.                     |
+| `nomo policy`        | Vypsat, ukázat a ověřit packy a soubory policy.                 |
+| `nomo approvals`     | Vypsat čekající holds.                                          |
+| `nomo approve`       | Zapsat rozhodnutí proti holdu.                                  |
+| `nomo recovery`      | Spravovaný vykonavatel: inspect, plan, apply, reconcile, serve. |
+| `nomo agent`         | Spustit jeden agent turn neinteraktivně.                        |
+| `nomo doctor`        | Nahlásit prostředí.                                             |
+| `nomo config`        | Vypsat rozřešenou konfiguraci. Tajemství nikdy nevypíše.        |
+| `nomo init`          | Vytvořit rozvržení pracovního prostoru.                         |
+| `nomo ledger verify` | Ověřit adresář ledgeru.                                         |
+| `nomo update`     | Posunout instalovaný strom na sledovanou větev, jen dopředu.         |
 
 Tě s argumenty, přesně:
 
 ```sh
-void classify --transcript <soubor> [--facts <soubor>]
-void classify --tool <id> [--facts <soubor>] [--fact k=v] [--args <json>]
-void feed --ledger <adresář> [--json] [--follow]
-void verify --ledger <adresář> [--attestation <soubor>]
-void attest --ledger <adresář> --workspace <id>
-void taint --ledger <adresář> --seq <n> [--depth <n>] [--json]
-void replay --ledger <cesta> --snapshot-dir <adresář> --seq <n> [--dry-run] [--key base64-spki]
-void replay --list-connectors
-void agent --model <id> [--prompt <text>]
-void recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
-void recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config <soubor> [--input <soubor>] [--approve <digest>]
-void policy list | show <jméno> | validate <soubor>
-void approve <hold-id> --by <kdo> [--deny] [--reason <text>] [--dir <cesta>]
-void approvals --dir <cesta> [--json]
-void update [--check] [--force]
+nomo classify --transcript <soubor> [--facts <soubor>]
+nomo classify --tool <id> [--facts <soubor>] [--fact k=v] [--args <json>]
+nomo feed --ledger <adresář> [--json] [--follow]
+nomo verify --ledger <adresář> [--attestation <soubor>]
+nomo attest --ledger <adresář> --workspace <id>
+nomo taint --ledger <adresář> --seq <n> [--depth <n>] [--json]
+nomo replay --ledger <cesta> --snapshot-dir <adresář> --seq <n> [--dry-run] [--key base64-spki]
+nomo replay --list-connectors
+nomo agent --model <id> [--prompt <text>]
+nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
+nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config <soubor> [--input <soubor>] [--approve <digest>]
+nomo policy list | show <jméno> | validate <soubor>
+nomo approve <hold-id> --by <kdo> [--deny] [--reason <text>] [--dir <cesta>]
+nomo approvals --dir <cesta> [--json]
+nomo update [--check] [--force]
 ```
 
 Poznámky, které ušetří čas:
 
-- `void config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
+- `nomo config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
-- `void verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se
+- `nomo verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se
   jménem cesty. To je stav prvního spuštění, ne chyba.
-- `void classify --tool <id>` klasifikuje jedno volání místo transkriptu a
+- `nomo classify --tool <id>` klasifikuje jedno volání místo transkriptu a
   skončí kódem 0, když registry rozhodlo, kódem 2, když nemohlo. Čti řádek
   `facts:` před řádkem `tone:`: bez deklarovaných fakt se evaluator dostane
   jen na terminální případ entry, takže `r3` je tady fail-closed postoj, ne
   měření tvého účtu. `--fact k=v` přepíší `--facts <soubor>` pro toto volání
   a hodnota je doslova ten text, se kterým registry porovnává.
-- `void replay --dry-run` řekne, co by inverze udělala, bez toho, aby to provedla.
+- `nomo replay --dry-run` řekne, co by inverze udělala, bez toho, aby to provedla.
   Použij před každým skutečným přehráním.
-- Každá `void recovery` akce, něco měnící, vyžaduje `--approve <digest>` z
+- Každá `nomo recovery` akce, něco měnící, vyžaduje `--approve <digest>` z
   předchozího `plan`. Digest je to, co váže tvoje schválení na přesně tu práci.
-- `void policy` bez argumentu vypíše dodávané packy: `strict`, `balanced`, `dev`.
-- `void update` posune instalovaný strom, který bydlí v `~/.local/share/void-cli`
-  a nastavuje se proměnnou `VOID_HOME`. Jde jen o dopředný posun: strom s
+- `nomo policy` bez argumentu vypíše dodávané packy: `strict`, `balanced`, `dev`.
+- `nomo update` posune instalovaný strom, který bydlí v `~/.local/share/nomo-cli`
+  a nastavuje se proměnnou `NOMO_HOME`. Jde jen o dopředný posun: strom s
   necommitnutými změnami odmítne a `--force` ho odmítne také, protože žádný
   přepínač není důvod smazat práci provozovatele. Místní commity zahodí jen tehdy,
   když to `--force` výslovně řekne, a i tehdy přes `git reset --keep`, takže se
   chyba zastaví na změněném souboru.
-- `void update --check` nic nemění a vypíše čtyři fakta a pak jeden verdikt:
+- `nomo update --check` nic nemění a vypíše čtyři fakta a pak jeden verdikt:
   `installed:`, `installed-commit:`, `tracked-branch:`, `target-commit:` a pak
   `up to date` nebo `update available`. Když aktualizace existuje, skončí kódem
   3, když je strom aktuální, kódem 0. Strom, který remote nedosáhne, skončí
   taky kódem 0 a vypíše `target-commit: unknown`, takže čti verdikt, ne kód.
-- `void update` nemá přepínač kanálu. Není tu `--stable` ani `--canary`; cílem je
+- `nomo update` nemá přepínač kanálu. Není tu `--stable` ani `--canary`; cílem je
   to, na co ukazuje sledovaná větev instalovaného stromu.
 
 ## 11. Soubory policy
@@ -707,17 +707,17 @@ volání. Není tu žádná sazba, žádný běžný součet, žádné časové 
 pravidlo o člověku za agentem mimo workspace.Nevratitelnostní rozpočty, což jsou
 stavová pravidla přesně toho druhu, jsou samostatná práce.
 
-`void policy validate <soubor>` ověří soubor bez instalace. Validuj dřív, než na
+`nomo policy validate <soubor>` ověří soubor bez instalace. Validuj dřív, než na
 něj namíříš proxy, protože neplatný soubor zakáže vše.
 
 ## 12. Ledger
 
 Ledger je jeden JSON objekt na řádek v jen připisovaném souboru, defaultně pod
-`~/.void/ledger/<workspace>.jsonl`. `void feed` ho vypíše, `void verify` ho
+`~/.nomo/ledger/<workspace>.jsonl`. `nomo feed` ho vypíše, `nomo verify` ho
 zkontroluje a `/verify` v TUI udělá totéž s rozsahem na obrazovce.
 
 **Ověř ho mimo síť.** `packages/verifier/verify-ledger.mjs` je
-jednosouborový verifikátor bez závislostí, spustitelný bez instalace VOID:
+jednosouborový verifikátor bez závislostí, spustitelný bez instalace NOMO:
 
 ```sh
 node packages/verifier/verify-ledger.mjs --selftest
@@ -735,8 +735,8 @@ podepsal. Nedokazuje, že nikdo s tím klíčem nenapsal něco nepravdivého, an
 proces nebyl odvinut na dřívější head. Opečování klíče důvěřuj stejně jako
 matematice.
 
-**Vývojářský klíč je tak označený.** Když není nastaven žádný klíč, VOID vygeneruje
-jeden pod `~/.void/keys/`, nahlas řekne, že se používá vývojářský klíč, a id klíče
+**Vývojářský klíč je tak označený.** Když není nastaven žádný klíč, NOMO vygeneruje
+jeden pod `~/.nomo/keys/`, nahlas řekne, že se používá vývojářský klíč, a id klíče
 dostane předponu `dev-`. Verifikátor označí záznam podepsaný takovým klíčem jako
 platný pod vývojářským klíčem, nikdy prostě jako platný. Na Windows se soubor
 klíče zúží ACL; na POSIX se režimem 0600.
@@ -756,7 +756,7 @@ Toto oddělení je celý důvod, proč se drží předchozí obraz.
 
 Tok je vždy stejný tvar:
 
-1. **Plán.** `void recovery plan`, `/undo` nebo `/rewind` v TUI. Dostaneš digest,
+1. **Plán.** `nomo recovery plan`, `/undo` nebo `/rewind` v TUI. Dostaneš digest,
    kroky v pořadí, zdroje, kterých se každý dotýká, a zbytky.
 2. **Zkontroluj.** Přečti to. Drift nebo chybějící artefakt se ukážou tady.
 3. **Schval.** Schválení váže digest plánu, takže se nedá přesunout na jinou práci.
@@ -791,7 +791,7 @@ Obnova znovu přečte řádky, které zapsala, odmítne, pokud nesouhlasí se za
 (`packages/connectors/src/postgres/managed.ts:1393`), a teprve pak zapíše záznam
 do `${schema}.recoveries` ve tvé vlastní databázi
 (`packages/connectors/src/postgres/managed.ts:1399`). Číst nemusíš s důvěrou v
-VOID: `docs/RECEIPT-VERIFY.sql` je čisté SQL nad tabulkami, které vlastníš, a
+NOMO: `docs/RECEIPT-VERIFY.sql` je čisté SQL nad tabulkami, které vlastníš, a
 byl spuštěn proti zkazenému řádku, aby potvrdil, že vypíše `FAIL`
 (`scripts/receipt-demo/README.md`).
 
@@ -807,7 +807,7 @@ Windows pokrývá bajty a ne POSIX režim, protože Windows nemá režim k zachy
 
 ## 14. Hostování MCP serveru
 
-`void recovery serve --config <soubor>` vystaví spravovaného vykonavatele jako
+`nomo recovery serve --config <soubor>` vystaví spravovaného vykonavatele jako
 lokální stdio MCP server, kterého si agent může volat. Konfigurace jmenuje
 workspace, stabilní `agentId`, stavový adresář, proměnnou prostředí s klíčem
 šifrování a adaptéry k vystavení.
@@ -817,18 +817,18 @@ workspace, stabilní `agentId`, stavový adresář, proměnnou prostředí s kl�
   "workspace": "test",
   "agentId": "test-agent",
   "stateDir": "state",
-  "encryptionKeyEnv": "VOID_RECOVERY_KEY",
+  "encryptionKeyEnv": "NOMO_RECOVERY_KEY",
   "filesystem": { "root": "project", "cooperative": true }
 }
 ```
 
-**Implementováno je osm nástrojů.** `void_execute`, `void_recovery_plan`,
-`void_recovery_apply`, `void_recovery_plan_job`, `void_recovery_status_job`,
-`void_recovery_apply_job`, `void_reconcile`, `void_recovery_reconcile`.
+**Implementováno je osm nástrojů.** `nomo_execute`, `nomo_recovery_plan`,
+`nomo_recovery_apply`, `nomo_recovery_plan_job`, `nomo_recovery_status_job`,
+`nomo_recovery_apply_job`, `nomo_reconcile`, `nomo_recovery_reconcile`.
 
 **Host smí autorizovat méně.** Sestava Prime dogfood autorizuje pět:
-`void_execute`, `void_recovery_plan`, `void_recovery_apply`, `void_reconcile`,
-`void_recovery_reconcile`. Tři nástroje úloh jsou implementované a tam
+`nomo_execute`, `nomo_recovery_plan`, `nomo_recovery_apply`, `nomo_reconcile`,
+`nomo_recovery_reconcile`. Tři nástroje úloh jsou implementované a tam
 neautorizované. Která sada je živá, je rozhodnutí hostitele, zaznamenané pro každé
 nasazení.
 
@@ -839,7 +839,7 @@ per požadavek, takže úprava souboru policy má účinek na další volání.
 
 **Interaktivní schvalování na tomto transportu není implementováno.** Hold a deny
 výkon odmítnou; v MCP session není žádný prompt. Schval z TUI, z GUI nebo
-`void approve`.
+`nomo approve`.
 
 **Digest plánu není autorita policy.** Digest říká, co by se udělalo. Oprávnění
 pochází z policy a tam, kde policy říká hold, od člověka.
@@ -889,7 +889,7 @@ Toto jsou skutečné, současné věci, které stojí za to vědět, než nahlá
 | Vývojářský podpisový klíč | režim 0600          | ACL zúženo na aktuálního uživatele                   |
 | Konce řádků v repozitáři  | LF                  | LF, přes `.gitattributes`                            |
 
-Dvě hrany specifické pro Windows, které říkáme, než schováme: `void recovery
+Dvě hrany specifické pro Windows, které říkáme, než schováme: `nomo recovery
 conformance --adapter git.managed` tam hlásí `platform-refusal` selhání záměrně,
 a detekce `/harness` v TUI dělí `PATH` jen na `:`, takže na Windows hlásí, že
 nic nenašla.
@@ -901,35 +901,35 @@ Když to uvidíš, tvůj checkout je starší než oprava; preinstall hook je te
 skript.
 
 **`ERR_SQLITE_ERROR: unable to open database file`.** Stavový adresář není
-zapisovatelný, nebo je cesta špatná. Spusť `void config` a zkontroluj hlášený
-datový adresář, pak `void doctor`, který hlásí zapisovatelnost.
+zapisovatelný, nebo je cesta špatná. Spusť `nomo config` a zkontroluj hlášený
+datový adresář, pak `nomo doctor`, který hlásí zapisovatelnost.
 
 **`ERR_UNSUPPORTED_ESM_URL_SCHEME ... protocol 'd:'`.** Windows cesta se dostala
 k importu. Opraveno v tomto repozitáři; když na to narazíš, běžíš starší build.
 
 **`No local Chromium binary found`.** Brána rozvržení prohlížeče potřebuje
-Chromium. Nastav `VOID_QA_CHROMIUM` na cestu k jednomu. Bez něj brána hlásí
+Chromium. Nastav `NOMO_QA_CHROMIUM` na cestu k jednomu. Bez něj brána hlásí
 pojmenovaný skip a todo, místo aby tiše prošla.
 
 **Ověření ledgeru hlásí integritu hashů bez kontroly podpisů.** Není nastaven
-ověřovací klíč. `void config` ukáže `verify-key: unset`. Nastav
-`VOID_VERIFY_KEY`, nebo přijmi ověření jen integrity a řekni to.
+ověřovací klíč. `nomo config` ukáže `verify-key: unset`. Nastav
+`NOMO_VERIFY_KEY`, nebo přijmi ověření jen integrity a řekni to.
 
 **Každé volání je zakázáno a nevíš proč.** Přečti odmítnutí: jmenuje id pravidla,
-třídu a to, co by schválení vyžadovalo. Pak spusť `void policy validate <soubor>`.
+třídu a to, co by schválení vyžadovalo. Pak spusť `nomo policy validate <soubor>`.
 Nečitelná nebo neplatná policy záměrně nahlas zakáže vše.
 
 **Hold se nikde neobjeví.** Volání bylo povoleno, ne drženo. Zkontroluj `/ledger`
-pro rozhodnutí a jeho pravidlo a `void approvals` pro cokoliv, co čeká.
+pro rozhodnutí a jeho pravidlo a `nomo approvals` pro cokoliv, co čeká.
 
 **TUI ukazuje `mode: plan (local only, not enforced)` a čekal jsi blokaci.**
 Přečti kapitolu o režimech oprávnění. Režim TUI je předpona k promptu. Režim
 GUI je ten vynucený.
 
 **`Setup required` a nic nevyšle.** Nerozřeší se žádné přihlášení poskytovatele.
-Viz kapitola 6. VOID nepřepíná na jiného poskytovatele.
+Viz kapitola 6. NOMO nepřepíná na jiného poskytovatele.
 
-**`Export refused: a ledger has not been verified.`** Nejdřív spusť `void verify`
+**`Export refused: a ledger has not been verified.`** Nejdřív spusť `nomo verify`
 na stejném adresáři.
 
 **Undo vrátí `conflict`.** Něco změnilo cíl po zachycení. To je funkční kontrola
@@ -942,22 +942,22 @@ nereklámoval úlohy obnovy. Jedna operace Undo pořád funguje.
 
 Kontrolní seznam v pořadí, které chytí nejvíc.
 
-1. **Spusť `void doctor` a přečti každý řádek.** Nezapisovatelný adresář ledgeru
+1. **Spusť `nomo doctor` a přečti každý řádek.** Nezapisovatelný adresář ledgeru
    je selhání, na kterém nejvíc záleží.
 2. **Připoj poskytovatele a ověř, že odznak říká Ready.** Pracovní prostor, který
    nemůže vysílat, je bezpečný ale nepoužitelný a chceš vědět, který máš.
-3. **Spusť `void init`, pak `void doctor` znovu.** Potvrď, že druhý běh nemá
+3. **Spusť `nomo init`, pak `nomo doctor` znovu.** Potvrď, že druhý běh nemá
    varování o adresáři ledgeru.
 4. **Rozhodni, kdo vlastní režim oprávnění.** V GUI ho vlastní server. Ověř, co
    tvůj host vrací na `GET /api/capabilities`, protože aplikace padne na read-only,
    když server neodpoví.
-5. **Napiš a ověř si vlastní policy.** Začni od `void policy show dev` a
+5. **Napiš a ověř si vlastní policy.** Začni od `nomo policy show dev` a
    zpřesni ji. Validuj ji. Překlep v match klíči shodí načtení místo aby
    pravidlo rozšířil, ale jen jakmile ji validuješ.
 6. **Potvrď, které zdroje jsou spravované.** Undo je skutečné jen pro soubory,
-   které VOID vlastní. Kooperativní adresář, který zapisuje i jiný program, dá na
+   které NOMO vlastní. Kooperativní adresář, který zapisuje i jiný program, dá na
    Undo konflikt, a to je správný výsledek.
-7. **Dokáž ledger na stroji, který VOID nespouští.** Vezmi `void export` svazek a
+7. **Dokáž ledger na stroji, který NOMO nespouští.** Vezmi `nomo export` svazek a
    spusť proti němu samostatný verifikátor jinde.
 8. **Nacvič skutečný hold.** Spusť ze kořene repozitáře simulovaný moment příkazem
    `node scripts/src/moment.mjs`. Ukáže jeden zakázaný delete, jeden schválený
@@ -992,11 +992,11 @@ Kontrolní seznam v pořadí, které chytí nejvíc.
 | Spravovaná obnova filesystému                       | [spravovaná obnova filesystému](MANAGED-FILESYSTEM.md)                             |
 | Spravovaná obnova Gitu                              | [spravovaná obnova Gitu](MANAGED-GIT.md)                                    |
 | Konformance adaptéru a co znamená certifikace       | [konformance adaptéru a co znamená certifikace](ADAPTER-CONFORMANCE.md)                            |
-| Potvrzení obnovy a jeho kontrola bez VOID             | [potvrzení obnovy ověřené bez VOID](../scripts/receipt-demo/README.md), [SQL, které spustí třetí strana](RECEIPT-VERIFY.sql) |
+| Potvrzení obnovy a jeho kontrola bez NOMO             | [potvrzení obnovy ověřené bez NOMO](../scripts/receipt-demo/README.md), [SQL, které spustí třetí strana](RECEIPT-VERIFY.sql) |
 | Rozhodnutí za návrhem                               | `docs/CONTEXT.md`, `docs/DECISIONS.md`                   |
 | Standardy, které si tento repozitář drží            | [standardy](STANDARDS.md)                             |
 | Matice releasových důkazů                           | [matice releasových důkazů](RELEASE-1.0.1-MATRIX.md)                           |
-| Co zbývá postavit, poctivě                          | [co zbývá postavit, poctivě](PLAN-GAPS.md)                                      |
+| Aktivní plán NOMO MVP a roadmapa                  | [plán implementace NOMO](superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md) |
 | Specifika Windows desktopu                          | [specifika Windows desktopu](WINDOWS-DESKTOP.md)                                |
 | Hranice beta                                        | [hranice beta](BETA.md)                                           |
 | Jak se tento návod udržuje pravdivý                 | [jak se tento návod udržuje pravdivý](../scripts/src/handbook.test.mjs)                          |

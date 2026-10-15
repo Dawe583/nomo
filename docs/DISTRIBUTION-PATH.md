@@ -1,4 +1,9 @@
-# How VOID reaches one real user
+# Historical distribution path for VOID
+
+> Historical analysis written 2026-09-26. Its product recommendations and
+> source direction were superseded on 2026-10-08. Keep its checked distribution
+> facts as history, not as the NOMO launch plan. Current product authority is in
+> the NOMO capability map and MVP spec.
 
 Written 2026-09-26 against commit `63dbd2c` on `main`, read from source, and
 checked against the vendors' own live documentation rather than against the

@@ -16,7 +16,7 @@ branches could plausibly hold the same work. A path missing from main entirely i
 work that exists nowhere else — that is the one thing a count settles on its own.
 
 The whole set is also snapshotted in
-`~/Developer/VOID-all-branches-20261005.bundle` (87 heads, complete history),
+`~/Developer/NOMO-all-branches-20261005.bundle` (87 heads, complete history),
 so nothing here is recoverable only from this document.
 
 ## Uniquely held work — lost unless someone reclaims it

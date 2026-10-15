@@ -28,19 +28,19 @@ const packagesDir = join(root, "packages");
  * minutes across every suite, so no single suite can legitimately approach
  * this, and anything that does is wedged rather than slow.
  *
- * `VOID_SUITE_TIMEOUT_MS` overrides it, and accepts `0` to disable the bound
+ * `NOMO_SUITE_TIMEOUT_MS` overrides it, and accepts `0` to disable the bound
  * for a deliberate long run.
  */
 const DEFAULT_SUITE_TIMEOUT_MS = 15 * 60 * 1000;
 const suiteTimeoutMs = (() => {
-  const raw = process.env.VOID_SUITE_TIMEOUT_MS;
+  const raw = process.env.NOMO_SUITE_TIMEOUT_MS;
   if (raw === undefined || raw === "") return DEFAULT_SUITE_TIMEOUT_MS;
   // Digits only. `parseInt` alone would truncate "1.5" to 1 and "12abc" to 12,
   // and a ceiling silently turned into a different number is worse than one
   // refused: it looks configured and is not what anybody asked for.
   if (!/^\d+$/.test(raw) || !Number.isSafeInteger(Number(raw)))
     throw new Error(
-      `VOID_SUITE_TIMEOUT_MS is not a non-negative integer: ${raw}`,
+      `NOMO_SUITE_TIMEOUT_MS is not a non-negative integer: ${raw}`,
     );
   return Number(raw);
 })();
@@ -170,15 +170,15 @@ const pythonSuites = [
     // would be a gate nobody runs.
     probe: "import mcp",
     setup: [
-      "python3 -m venv /tmp/void-mcp-venv",
-      "/tmp/void-mcp-venv/bin/python -m pip install -r apps/appwrite-mcp/requirements.txt",
+      "python3 -m venv /tmp/nomo-mcp-venv",
+      "/tmp/nomo-mcp-venv/bin/python -m pip install -r apps/appwrite-mcp/requirements.txt",
     ],
   },
   {
-    name: "void-transport",
-    dir: join(root, "python", "void-transport"),
-    startDir: "python/void-transport/tests",
-    topDir: "python/void-transport",
+    name: "nomo-transport",
+    dir: join(root, "python", "nomo-transport"),
+    startDir: "python/nomo-transport/tests",
+    topDir: "python/nomo-transport",
     probe: null,
     setup: [],
   },
@@ -192,14 +192,14 @@ const pythonSuites = [
  * built. The documented virtual environment is next, then the system `python3`
  * for the suite that needs nothing. Each is reported with the reason it was
  * rejected, so a reader is never left guessing which interpreter the gate
- * meant. `VOID_MCP_PYTHON` relocates the SDK environment and `VOID_PYTHON`
+ * meant. `NOMO_MCP_PYTHON` relocates the SDK environment and `NOMO_PYTHON`
  * overrides the interpreter outright; both exist so a machine that has the
  * SDK somewhere else, and a run that needs to reach the `UNRUN` branch, are
  * both expressible without editing this file.
  */
 const pythonCandidates = [
-  ...(process.env.VOID_PYTHON ? [process.env.VOID_PYTHON] : []),
-  process.env.VOID_MCP_PYTHON ?? "/tmp/void-mcp-venv/bin/python",
+  ...(process.env.NOMO_PYTHON ? [process.env.NOMO_PYTHON] : []),
+  process.env.NOMO_MCP_PYTHON ?? "/tmp/nomo-mcp-venv/bin/python",
   "python3",
 ];
 
@@ -360,7 +360,7 @@ for (const r of results) {
     for (const step of suite?.setup ?? [])
       console.log(`      then run: ${step}`);
     console.log(
-      `      ${process.env.VOID_MCP_PYTHON ?? "/tmp/void-mcp-venv/bin/python"} -m unittest discover -s ${suite?.startDir} -t ${suite?.topDir}`,
+      `      ${process.env.NOMO_MCP_PYTHON ?? "/tmp/nomo-mcp-venv/bin/python"} -m unittest discover -s ${suite?.startDir} -t ${suite?.topDir}`,
     );
     continue;
   }

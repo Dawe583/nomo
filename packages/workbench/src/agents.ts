@@ -280,18 +280,115 @@ export function runHook(
     child.stdin.end(
       JSON.stringify({
         ...context,
-        VOID_HOOK_EVENT: hook.event,
-        VOID_HOOK_ID: hook.id,
+        NOMO_HOOK_EVENT: hook.event,
+        NOMO_HOOK_ID: hook.id,
         ...(context.tool === undefined
           ? {}
-          : { VOID_HOOK_TOOL: String(context.tool) }),
+          : { NOMO_HOOK_TOOL: String(context.tool) }),
         ...(context.decision === undefined
           ? {}
-          : { VOID_HOOK_DECISION: String(context.decision) }),
+          : { NOMO_HOOK_DECISION: String(context.decision) }),
         ...(context.outcome === undefined
           ? {}
-          : { VOID_HOOK_OUTCOME: String(context.outcome) }),
+          : { NOMO_HOOK_OUTCOME: String(context.outcome) }),
       }),
     );
+  });
+}
+
+/**
+ * The one task the local identity demo is allowed to run, and the two things
+ * it may not carry.
+ *
+ * Learning is off because the demo proves the *transport*: that a harness run
+ * reaches the proxy with a server-bound identity and comes back through the
+ * same policy and ledger as everything else. Turning learning on would make
+ * the demo claim two further things — proposal approval and later-session
+ * retrieval — which it has not earned. So `enabled` is required and must be
+ * `false`; a missing field is refused rather than defaulted, because a default
+ * is exactly what a later change would quietly flip.
+ */
+export const HARNESS_LEARNING_DISABLED =
+  "Harness learning activation is disabled on the identity path: the local demo runs one constrained task and activates nothing.";
+
+/** Fields a caller may not use to name its own identity or credential. */
+const RESERVED_IDENTITY_FIELDS = [
+  "agentId",
+  "principalId",
+  "runId",
+  "workspaceId",
+  "token",
+  "bearer",
+  "identity",
+  "credentials",
+] as const;
+
+export type LocalHarnessTask = Readonly<{
+  upstreamId: string;
+  prompt: string;
+  toolScope: readonly string[];
+  /**
+   * Declared facts about the demo target, forwarded to the connector so the
+   * registry can classify its tools. This is the operator's configuration
+   * input, not an authority decision: a fact the registry does not recognise
+   * only makes a call *less* classified, never more allowed.
+   */
+  facts: Readonly<Record<string, string | boolean>>;
+  learning: Readonly<{ enabled: false }>;
+}>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function validateLocalHarnessTask(input: unknown): LocalHarnessTask {
+  if (!isRecord(input))
+    throw new TypeError("A local harness task must be an object.");
+  for (const field of RESERVED_IDENTITY_FIELDS) {
+    if (input[field] !== undefined)
+      throw new Error(
+        `A local harness task takes no caller-supplied ${field}; the identity is bound to the run.`,
+      );
+  }
+  const learning = input.learning;
+  if (!isRecord(learning) || learning.enabled !== false)
+    throw new Error(HARNESS_LEARNING_DISABLED);
+
+  const upstreamId = input.upstreamId;
+  const prompt = input.prompt;
+  if (typeof upstreamId !== "string" || !/^[A-Za-z0-9._-]{1,128}$/.test(upstreamId))
+    throw new Error("A local harness task needs an upstream id.");
+  if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 4000)
+    throw new Error("A local harness task needs a prompt of 1 to 4000 characters.");
+
+  const rawFacts = input.facts;
+  if (rawFacts !== undefined) {
+    if (
+      !isRecord(rawFacts) ||
+      Object.keys(rawFacts).length > 64 ||
+      Object.entries(rawFacts).some(
+        ([key, value]) =>
+          !/^[A-Za-z0-9._-]{1,128}$/.test(key) ||
+          (typeof value !== "string" && typeof value !== "boolean"),
+      )
+    )
+      throw new Error("A local harness task takes at most 64 string or boolean facts.");
+  }
+
+  const scope = input.toolScope;
+  if (
+    !Array.isArray(scope) ||
+    scope.length === 0 ||
+    scope.length > 64 ||
+    scope.some((name) => typeof name !== "string" || !/^[A-Za-z0-9._-]{1,128}$/.test(name))
+  )
+    throw new Error("A local harness task needs between 1 and 64 tool names.");
+
+  return Object.freeze({
+    upstreamId,
+    prompt,
+    toolScope: Object.freeze([...(scope as string[])]),
+    facts: Object.freeze({ ...(rawFacts as Record<string, string | boolean>) }),
+    learning: Object.freeze({ enabled: false as const }),
   });
 }
