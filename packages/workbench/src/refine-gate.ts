@@ -88,6 +88,12 @@ export type GateInput = {
   readonly hasPendingReview: boolean;
   /** A round is in flight. */
   readonly inFlight: boolean;
+  /** The operator asked for a review by hand. A manual request is its own
+   * arm: it passes the unarmed and settled-turn checks, because the operator
+   * asking is what those checks exist to decide for them, and keeps every
+   * other gate, because a cooldown or an empty candidate set is a fact about
+   * the chain that a request cannot change. */
+  readonly manual: boolean;
   /** Settled, non-error turns since the last review. */
   readonly settledTurns: number;
   /** Milliseconds since the last review attempt, or null if there was none. */
@@ -129,7 +135,7 @@ const REFUSAL_TEXT: Record<GateRefusal, string> = {
  * and one that silently stops, and it is why the return value carries both.
  */
 export function cheapGate(input: GateInput): GateDecision {
-  if (!input.pending && !input.hasPendingReview) return refuse("not-armed", false);
+  if (!input.pending && !input.hasPendingReview && !input.manual) return refuse("not-armed", false);
 
   // Gates before arithmetic. A disabled harness must not even measure how long
   // ago the last review was, because nothing about its history matters.
@@ -156,7 +162,10 @@ export function cheapGate(input: GateInput): GateDecision {
     return { proceed: true, instructions: "" };
   }
 
-  if (input.settledTurns < input.gates.turnInterval) return refuse("too-soon", true);
+  // The settled-turn interval measures how long the harness has waited before
+  // asking the operator. A manual request is the operator asking, so there is
+  // nothing left to wait for.
+  if (!input.manual && input.settledTurns < input.gates.turnInterval) return refuse("too-soon", true);
   if (input.candidates.length === 0) return refuse("nothing-new", true);
 
   return { proceed: true, instructions: "" };

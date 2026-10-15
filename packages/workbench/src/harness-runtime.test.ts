@@ -139,6 +139,31 @@ test("a cooldown from an earlier attempt spends no provider request", async () =
   assert.equal(result.state.pending, true, "evidence survives to a later boundary");
 });
 
+test("a manual request reaches the reviewer below the turn interval", async () => {
+  const { deps: wired, counters } = deps();
+  const state = { ...initialTriggerState(), pending: false, manualReviewRequested: true };
+  const result = await serviceHarnessBoundary(state, wired);
+
+  assert.equal(result.outcome.kind, "ran");
+  assert.equal(counters.asked, 1);
+  assert.equal(result.state.manualReviewRequested, false);
+});
+
+test("a manual request still spends nothing while the cooldown holds", async () => {
+  const { deps: wired, counters } = deps();
+  const state = {
+    ...initialTriggerState(),
+    pending: false,
+    manualReviewRequested: true,
+    lastReviewAt: 999_000,
+  };
+  const result = await serviceHarnessBoundary(state, wired);
+
+  assert.equal(result.outcome.kind, "not-run");
+  assert.equal(counters.asked, 0);
+  assert.equal(result.state.manualReviewRequested, true);
+});
+
 test("a permitted boundary asks once and applies the validated proposal", async () => {
   const { deps: wired, counters } = deps();
   const result = await serviceHarnessBoundary(ready(), wired);

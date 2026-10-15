@@ -64,6 +64,41 @@ test("TUI shows the exact proposal before approving it", async (t) => {
   assert.equal((await app.harnessEntries(app.get(sessionId)!.workspace)).length, 1);
 });
 
+test("TUI asks before a manual review and reports the gate's decision", async (t) => {
+  const { app, ui, sessionId } = await fixture(t);
+  const reviewsBefore = (app.get(sessionId)?.events ?? []).filter(
+    (event) => event.type === "harness.review",
+  ).length;
+
+  await ui.command("/harness review");
+  assert.match(ui.confirmation!.title, /REQUEST A HARNESS REVIEW/);
+  // Nothing is spent before the operator confirms.
+  assert.equal(
+    (app.get(sessionId)?.events ?? []).filter((event) => event.type === "harness.review").length,
+    reviewsBefore,
+  );
+
+  await ui.confirm();
+  // The fixture chain has mined nothing, so the gate holds the request instead
+  // of spending a review on it, and the operator is told which gate did it.
+  assert.match(ui.notice!, /armed/i);
+  assert.match(ui.detail!.join("\n"), /nothing has been mined/);
+});
+
+test("TUI confirms a served review and reports the reviewer's decline", async (t) => {
+  const { app, ui, sessionId } = await fixture(t);
+  const created = await app.refineHarness(sessionId, proposal());
+  await app.approveHarnessProposal(sessionId, created.proposalDigest!);
+
+  await ui.command("/harness review");
+  await ui.confirm();
+  assert.match(ui.notice!, /declined/i);
+  const review = (app.get(sessionId)?.events ?? [])
+    .filter((event) => event.type === "harness.review")
+    .at(-1);
+  assert.equal(review?.payload?.["outcome"], "declined");
+});
+
 test("TUI rejection records the decision without activating the proposal", async (t) => {
   const { app, ui, sessionId } = await fixture(t);
   const created = await app.refineHarness(sessionId, proposal());

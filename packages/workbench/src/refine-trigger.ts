@@ -51,6 +51,12 @@ export type Reviewer = (instructions: string) => Promise<ReviewVerdict>;
 export type TriggerState = {
   /** A compaction armed the trigger. */
   pending: boolean;
+  /** The operator asked for a review by hand. Kept apart from `pending`
+   * because the two say different things: `pending` means a boundary arrived
+   * with the interval already waited out, while a manual request is precisely
+   * the statement that the interval has not elapsed. The gate reads this flag
+   * separately, and only a held refusal keeps it. */
+  manualReviewRequested: boolean;
   /** Settled, non-error turns since the last review attempt. */
   settledTurnsSinceReview: number;
   /** Milliseconds since the last attempt, or null. */
@@ -68,6 +74,7 @@ export type TriggerState = {
 export function initialTriggerState(): TriggerState {
   return {
     pending: false,
+    manualReviewRequested: false,
     settledTurnsSinceReview: 0,
     lastReviewAt: null,
     inFlight: false,
@@ -77,17 +84,20 @@ export function initialTriggerState(): TriggerState {
 }
 
 /**
- * A branch move drops the armed trigger and any retained review, and bumps the
- * version so a round already in flight can tell it belongs to an abandoned
- * conversation.
+ * A branch move drops the armed trigger, a manual request and any retained
+ * review, and bumps the version so a round already in flight can tell it
+ * belongs to an abandoned conversation.
  *
  * The retained review is dropped rather than carried over on purpose: it was an
  * approval of a trajectory that no longer exists, and approving a different one
- * by proxy is not a smaller mistake than skipping the review entirely.
+ * by proxy is not a smaller mistake than skipping the review entirely. A manual
+ * request is dropped for the same reason: it named a conversation, and that
+ * conversation is gone.
  */
 export function onBranchMove(state: TriggerState): TriggerState {
   return {
     pending: false,
+    manualReviewRequested: false,
     settledTurnsSinceReview: state.settledTurnsSinceReview,
     lastReviewAt: state.lastReviewAt,
     inFlight: state.inFlight,
@@ -96,15 +106,21 @@ export function onBranchMove(state: TriggerState): TriggerState {
   };
 }
 
-/** Arm the trigger, as a successful compaction does.
- *
- * A manual request is the other obvious way to arm it and does not exist yet:
- * `/harness` offers scores, approve and reject, and the harness-kind switch,
- * but nothing that asks for a review. The docblock used to claim one, which is
- * how a missing caller read as a finished feature for as long as it did.
- */
+/** Arm the trigger, as a successful compaction does. */
 export function arm(state: TriggerState): TriggerState {
   return { ...state, pending: true };
+}
+
+/**
+ * Ask for a review now, as `/harness review` does.
+ *
+ * It sets the manual flag and deliberately not `pending`: `pending` is a
+ * compaction's claim that a settled-turn boundary arrived, and reusing it here
+ * would have a manual request claim the threshold it exists to bypass. The
+ * gate consults the flag on its own, so the two arms stay distinguishable.
+ */
+export function requestManualReview(state: TriggerState): TriggerState {
+  return { ...state, manualReviewRequested: true };
 }
 
 /** Count one settled turn. Called by the caller on turn boundaries. */
@@ -170,9 +186,10 @@ export async function serviceTrigger(
     if (!decision.held) {
       // The settings changed or the surface cannot hold state. Clear the
       // trigger so it does not sit armed waiting for a gate that will never
-      // open.
+      // open. A manual request goes with it: keeping it would have the
+      // operator's request outlive the answer that it cannot be served.
       return {
-        state: { ...state, pending: false, pendingReview: null },
+        state: { ...state, pending: false, pendingReview: null, manualReviewRequested: false },
         outcome: { kind: "not-run", reason: decision.reason },
         startedAtBranchVersion: null,
       };
@@ -190,7 +207,7 @@ export async function serviceTrigger(
         outcome: { kind: "not-run", reason: "branch moved before the retained review could run" },
         startedAtBranchVersion: version,
       };
-    const running: TriggerState = { ...state, inFlight: true, pending: false, pendingReview: null };
+    const running: TriggerState = { ...state, inFlight: true, pending: false, pendingReview: null, manualReviewRequested: false };
     try {
       await options.run?.(instructions, version);
     } catch (error) {
@@ -232,7 +249,7 @@ export async function serviceTrigger(
       outcome: { kind: "not-run", reason: "branch moved before the review could start" },
       startedAtBranchVersion: version,
     };
-  const running: TriggerState = { ...state, inFlight: true, pending: false };
+  const running: TriggerState = { ...state, inFlight: true, pending: false, manualReviewRequested: false };
 
   let reviewed: Awaited<ReturnType<Reviewer>>;
   try {

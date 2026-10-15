@@ -6,6 +6,7 @@ import {
   initialTriggerState,
   onBranchMove,
   recordSettledTurn,
+  requestManualReview,
   serviceTrigger,
   type RoundOutcome,
   type TriggerState,
@@ -100,6 +101,77 @@ test("a gate that stops clears the trigger and any retained approval", async () 
   const result = await serviceTrigger(state, () => STOP, async () => approve, { now: clock() });
   assert.equal(result.state.pending, false);
   assert.equal(result.state.pendingReview, null);
+});
+
+test("a manual request is not a pending trigger", () => {
+  // `pending` means a compaction armed the trigger. A manual request says the
+  // opposite thing about the settled-turn threshold, so it gets its own flag
+  // and the gate reads it separately.
+  const state = requestManualReview(initialTriggerState());
+  assert.equal(state.manualReviewRequested, true);
+  assert.equal(state.pending, false);
+});
+
+test("a held refusal keeps the manual request for the next boundary", async () => {
+  const state = requestManualReview(ready({ pending: false }));
+  const held = await serviceTrigger(state, () => WAIT, async () => approve, { now: clock() });
+  assert.equal(held.outcome.kind, "not-run");
+  assert.equal(held.state.manualReviewRequested, true);
+
+  const served = await serviceTrigger(held.state, () => GO, async () => approve, {
+    now: clock(),
+    run: async () => {},
+  });
+  assert.equal(served.outcome.kind, "ran");
+});
+
+test("a settled outcome consumes the manual request", async () => {
+  for (const [reviewer, expected] of [
+    [async () => approve, "ran"],
+    [async () => decline, "declined"],
+    [async () => {
+      throw new Error("provider down");
+    }, "failed"],
+  ] as const) {
+    const state = requestManualReview(ready({ pending: false }));
+    const result = await serviceTrigger(state, () => GO, reviewer, {
+      now: clock(),
+      run: async () => {},
+    });
+    assert.equal(result.outcome.kind, expected);
+    assert.equal(result.state.manualReviewRequested, false);
+  }
+});
+
+test("a stopped gate clears the manual request, a branch move drops it", async () => {
+  // Both cases leave nothing that could still run: the gate will never open,
+  // or the conversation it was about no longer exists.
+  const stopped = await serviceTrigger(
+    requestManualReview(ready({ pending: false })),
+    () => STOP,
+    async () => approve,
+    { now: clock() },
+  );
+  assert.equal(stopped.state.manualReviewRequested, false);
+
+  const moved = onBranchMove(requestManualReview(ready({ pending: false })));
+  assert.equal(moved.manualReviewRequested, false);
+});
+
+test("a manual round discarded by a branch move clears the flag and stamps nothing", async () => {
+  let version = 0;
+  const result = await serviceTrigger(
+    requestManualReview(ready({ pending: false })),
+    () => GO,
+    async () => {
+      version = 1;
+      return approve;
+    },
+    { now: clock(), run: async () => {}, currentBranchVersion: () => version },
+  );
+  assert.equal(result.outcome.kind, "not-run");
+  assert.equal(result.state.manualReviewRequested, false);
+  assert.equal(result.state.lastReviewAt, null);
 });
 
 test("the in-flight guard releases after every outcome", async () => {

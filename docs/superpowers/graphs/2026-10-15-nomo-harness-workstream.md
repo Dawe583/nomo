@@ -77,15 +77,15 @@ the nodes. This mapping is honest about what exists:
 | Reducers             | `applyProposal` merges edits; approvals bind to the proposal digest               | done |
 | Human gate           | `kind: "prompt"` edits are withheld until an operator signature exists            | done |
 | Loop cap             | cooldown on every attempt, branch invalidation discards stale rounds              | done |
-| Manual arm (human edge into the loop) | docblocks say `arm()` is called by compaction only; `/harness` has no review request | **gap** |
+| Manual arm (human edge into the loop) | `refine-trigger.ts` `requestManualReview`, `refine-gate.ts` `GateInput.manual`, Workbench `requestHarnessReview`, TUI `/harness review` | done |
 | Parallel review lenses | one reviewer today                                                   | candidate, needs a cost decision |
 
 ## Work package queue
 
 | WP      | Scope                                                                 | Status                                            |
 | ------- | --------------------------------------------------------------------- | ------------------------------------------------- |
-| WP-CATALOG | A provider without a model catalog (404 or empty) accepts the model the operator named; every other probe failure surfaces as itself | REVIEW: two findings confirmed and fixed, one refused; VERIFY green (447/447 + tsc); EVIDENCE in this commit |
-| WP-MANUAL  | `/harness review` arms the trigger on demand: the missing caller the refine docblocks point at. Design questions: does a manual arm bypass the settled-turn threshold or only the pending requirement; does it service at the next boundary or immediately; what does the operator see while it runs | DESIGN frozen (two proposals + judge ruling); BUILD next |
+| WP-CATALOG | A provider without a model catalog (404 or empty) accepts the model the operator named; every other probe failure surfaces as itself | done: `aff5ee6`, VERIFY green (447/447 + tsc), skeptic findings 1+2 fixed, 3 refused (D-4), EVIDENCE landed |
+| WP-MANUAL  | `/harness review` arms the trigger on demand: the missing caller the refine docblocks point at | done: contract frozen (D-5), open items settled (D-6); BUILD+VERIFY green (463/463 workbench, TUI 194/195 with the one pre-existing stderr-warning failure proven on `aff5ee6`); EVIDENCE in this commit |
 | WP-MERGE   | Land `feat/agent-harness` on `main` after the TUI lane settles; rebase checkpoint on event edge; `nomo-merger` | queued, gated by the TUI lane |
 
 ## Decision log
@@ -97,3 +97,4 @@ the nodes. This mapping is honest about what exists:
 | D-2026-10-15-3 Environment credential probing | Probe failures are tracked per source, keyed by preset URL; a refused key still counts as a credential for `hasCredential`; an explicit reconnect clears the set | The single global failure gate let one rejected NVIDIA key silence the DashScope attempt behind it, and a DashScope-only 401 reported setup-required instead of the recorded failure; retrying on every poll would repeat requests against the same refused key |
 | D-2026-10-15-4 A 200 whose entries all fail the shape filter | It stays the same `[]` as an endpoint that lists only embedding models: the operator-named model stands | After the filter runs, both arrive as `[]`, so any distinction would guess the provider's intent; the fallback serves only a name the operator typed, and a name the endpoint cannot serve fails on first use |
 | D-2026-10-15-5 Manual review arm (judge ruling) | `TriggerState.manualReviewRequested: boolean`; `requestManualReview` sets manual only; `GateInput.manual` passes not-armed and skips only too-soon, keeping cooldown, in-flight, disabled and nothing-new; served at once when idle, otherwise armed; terminal outcomes clear, a held refusal stays | A new GateSurface duplicates the gate; reusing `pending` would claim the settled-turn threshold was reached, which is exactly what a manual arm has not happened; bypassing cooldown or the in-flight check could stack model calls |
+| D-2026-10-15-6 Manual review arm (open items) | The `/harness review` confirmation is one dialog titled "REQUEST A HARNESS REVIEW?" naming spend, the still-applying checks, the running case and the approval gate; `harness.review.requested` carries only `{outcome:"armed"}` and is emitted only for the busy-arm case, an idle held refusal going through `harness.review` not-run; the note is the gate sentence for refusals | A separate busy screen would promise progress the gate can still refuse; a cooldown expiration on the event would restate state the operator cannot act on; a success-shaped note for a refusal would read as a review that happened |

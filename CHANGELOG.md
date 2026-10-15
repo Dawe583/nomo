@@ -3,6 +3,15 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- The harness could only learn on its own schedule. A review is armed when a
+  compaction happens, and an operator who saw the mistake now had to wait for
+  one, or move the conversation along until a boundary came. `/harness review`
+  asks by hand: the confirmation states what will be spent and what still
+  applies, an idle conversation is reviewed immediately, a running one records
+  the request and serves it at the next settled boundary, and a second request
+  inside the cooldown, a gate refusal or a provider that is not connected are
+  each reported as themselves instead of as a review. A review still only
+  proposes; nothing activates without the operator's approval.
 - Two working providers could not be configured at all. An OpenAI-compatible
   endpoint that answers `/models` with 404, or with an empty list, was reported
   as having no available models even when the operator had named the model it

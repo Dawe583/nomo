@@ -119,6 +119,8 @@ import {
   initialTriggerState,
   onBranchMove,
   recordSettledTurn,
+  requestManualReview,
+  type ServiceResult,
   type TriggerState,
 } from "./refine-trigger.ts";
 import { loadPolicy, type ValidPolicy } from "../../policy/src/rules.ts";
@@ -494,6 +496,17 @@ export type PendingHarnessProposal = {
   readonly proposal: RefinementProposal;
   /** Compatibility view for callers that only render prompt addenda. */
   readonly addendum: string;
+};
+/** What `/harness review` gets back.
+ *
+ * `armed` is not a refusal: the request is recorded and a later boundary will
+ * serve it, either because a run is in progress or because a gate that holds
+ * (cooldown, nothing new, in flight) kept it. `refused` means the request has
+ * nowhere to run: the session is unknown, no provider is connected, or the
+ * gate cannot open at all. `note` is always the sentence the operator reads. */
+export type ManualReviewResult = {
+  readonly kind: "refused" | "armed" | "ran" | "declined" | "failed";
+  readonly note: string;
 };
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
@@ -3163,99 +3176,202 @@ export class Workbench {
    * mark a successful turn as failed.
    */
   private async serviceHarnessTurn(session: Session, surface: GateSurface): Promise<void> {
-    const provider = session.provider;
-    if (!provider) return;
+    if (!session.provider) return;
     const id = session.view.id;
     const previous = this.harnessTriggers.get(id) ?? initialTriggerState();
     const state = recordSettledTurn(previous);
     this.harnessTriggers.set(id, state);
     try {
-      const result = await serviceHarnessBoundary(state, {
-        // The gate decides when the harness spends a model call, so an operator
-        // has to be able to move it. It was passed DEFAULT_REFINE_GATES
-        // directly, which left resolveRefineGates reachable only from tests.
-        gates: resolveRefineGates({
-          enabled: this.harness.refinementEnabled === 1,
-          turnInterval: this.harness.refinementTurnInterval,
-          cooldownMs: this.harness.refinementCooldownMs,
-        }),
-        surface,
-        now: () => Date.now(),
-        entries: async () => await this.harnessEntries(session.view.workspace),
-        // The operator's prompt ceiling governs this request like any other.
-        // It did not before: the user-prompt path enforces maxPromptCharacters
-        // in three places and this one read the setting for nothing.
-        maxPromptCharacters: this.harness.maxPromptCharacters,
-        // The refusals currently mined from this workspace's own chain. The
-        // reviewer is told how many, not what: the gate already decided the
-        // round is worth paying for, and handing over the full rule list would
-        // answer a question the chain does not support.
-        rules: () => mineLearnedRules(this.evidence[session.view.workspace] ?? []).length,
-        ask: async (request) => {
-          const reply = await provider.complete(
-            session.view.model,
-            [{ role: "user", content: request }],
-            [],
-            session.controller.signal,
-          );
-          // The review is a model call like any other and costs money like any
-          // other. The turn path records reply.usage; this one used to throw it
-          // away, so an operator reading usage saw conversation turns only and
-          // the harness spent on its own account without appearing anywhere.
-          if (reply.usage)
-            this.event(
-              session,
-              "usage",
-              `${reply.usage.total_tokens ?? "Unknown"} tokens reported by the harness reviewer`,
-              {
-                ...reply.usage,
-                model: session.view.model,
-                source: "harness",
-                cost: null,
-              },
-            );
-          return reply.message.content ?? "";
-        },
-        apply: async (proposal, expectedBranchVersion) => {
-          await this.refineHarness(id, proposal, { expectedBranchVersion });
-        },
-        currentBranchVersion: () =>
-          this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion,
-      });
-      // A branch move may update the map while the review awaits. Do not overwrite its newer version.
-      const currentVersion = this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion;
-      const expectedVersion = result.startedAtBranchVersion ?? state.branchVersion;
-      if (currentVersion === expectedVersion) this.harnessTriggers.set(id, result.state);
-      // The boundary is silent by default, and silence here is ambiguous: an
-      // operator watching a workspace learn nothing cannot tell a gate that
-      // refused from a hook that was never reached. One line naming the refusal
-      // costs nothing when there is no work to do and settles the question when
-      // there is.
-      const note =
-        result.outcome.kind === "not-run"
-          ? result.outcome.reason
-          : result.outcome.kind === "declined"
-            ? `Review declined: ${result.outcome.reason}`
-            : result.outcome.kind === "ran"
-              ? "Harness review ran and recorded a proposal."
-              : null;
-      if (note !== null)
-        this.event(
-          session,
-          "tool",
-          note,
-          { outcome: result.outcome.kind },
-          "harness.review",
-        );
+      await this.runHarnessBoundary(session, state, surface);
     } catch (error) {
+      this.reportHarnessFailure(session, error);
+    }
+  }
+  /**
+   * Request a harness review by hand, as `/harness review` does.
+   *
+   * Served immediately when the conversation is idle, recorded for the next
+   * settled boundary when it is not. A held gate refusal (under cooldown,
+   * nothing new, in flight) also reports `armed`: the trigger keeps the
+   * request and a later boundary will serve it, so calling that a refusal
+   * would tell the operator to ask again for something already queued.
+   */
+  async requestHarnessReview(id: string): Promise<ManualReviewResult> {
+    const session = this.sessions.get(id);
+    if (!session) return { kind: "refused", note: "Session not found." };
+    const state = requestManualReview(
+      this.harnessTriggers.get(id) ?? initialTriggerState(),
+    );
+    this.harnessTriggers.set(id, state);
+    if (
+      this.jobs.has(id) ||
+      session.view.status === "running" ||
+      session.view.status === "queued"
+    ) {
+      const note =
+        "The conversation is running; the request is served at the next settled boundary.";
       this.event(
         session,
         "tool",
-        `Harness review did not complete: ${error instanceof Error ? error.message : String(error)}`,
-        { status: session.view.status },
-        "harness.review.failed",
+        note,
+        { outcome: "armed" },
+        "harness.review.requested",
       );
+      return { kind: "armed", note };
     }
+    if (!session.provider)
+      return {
+        kind: "refused",
+        note: "Connect the provider before requesting a harness review.",
+      };
+    // An aborted controller belongs to a cancelled or closed run. The manual
+    // review is its own action, so it does not inherit that cancellation.
+    if (session.controller.signal.aborted)
+      session.controller = new AbortController();
+    try {
+      const result = await this.runHarnessBoundary(session, state, "checkpoint");
+      switch (result.outcome.kind) {
+        case "ran":
+          return {
+            kind: "ran",
+            note: "Harness review ran and recorded a proposal.",
+          };
+        case "declined":
+          return { kind: "declined", note: result.outcome.reason };
+        case "failed":
+          return {
+            kind: "failed",
+            note:
+              result.outcome.error instanceof Error
+                ? result.outcome.error.message
+                : String(result.outcome.error),
+          };
+        case "not-run":
+          // A held refusal kept the request for a later boundary; a cleared
+          // one means the gate answered that it cannot be served at all.
+          return result.state.manualReviewRequested
+            ? { kind: "armed", note: result.outcome.reason }
+            : { kind: "refused", note: result.outcome.reason };
+      }
+    } catch (error) {
+      this.reportHarnessFailure(session, error);
+      return {
+        kind: "failed",
+        note: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+  /**
+   * One boundary call, shared by the settled turn and the manual request.
+   *
+   * The caller owns the state it passes in: the turn path has already counted
+   * its settled turn, and a manual request deliberately has not, because no
+   * turn settled to pay for it. The branch-version write-back guard lives here
+   * rather than at the call sites so both paths keep it.
+   */
+  private async runHarnessBoundary(
+    session: Session,
+    state: TriggerState,
+    surface: GateSurface,
+  ): Promise<ServiceResult> {
+    const provider = session.provider;
+    if (!provider)
+      throw new Error("Connect the provider before requesting a harness review.");
+    const id = session.view.id;
+    const result = await serviceHarnessBoundary(state, {
+      // The gate decides when the harness spends a model call, so an operator
+      // has to be able to move it. It was passed DEFAULT_REFINE_GATES
+      // directly, which left resolveRefineGates reachable only from tests.
+      gates: resolveRefineGates({
+        enabled: this.harness.refinementEnabled === 1,
+        turnInterval: this.harness.refinementTurnInterval,
+        cooldownMs: this.harness.refinementCooldownMs,
+      }),
+      surface,
+      now: () => Date.now(),
+      entries: async () => await this.harnessEntries(session.view.workspace),
+      // The operator's prompt ceiling governs this request like any other.
+      // It did not before: the user-prompt path enforces maxPromptCharacters
+      // in three places and this one read the setting for nothing.
+      maxPromptCharacters: this.harness.maxPromptCharacters,
+      // The refusals currently mined from this workspace's own chain. The
+      // reviewer is told how many, not what: the gate already decided the
+      // round is worth paying for, and handing over the full rule list would
+      // answer a question the chain does not support.
+      rules: () => mineLearnedRules(this.evidence[session.view.workspace] ?? []).length,
+      ask: async (request) => {
+        const reply = await provider.complete(
+          session.view.model,
+          [{ role: "user", content: request }],
+          [],
+          session.controller.signal,
+        );
+        // The review is a model call like any other and costs money like any
+        // other. The turn path records reply.usage; this one used to throw it
+        // away, so an operator reading usage saw conversation turns only and
+        // the harness spent on its own account without appearing anywhere.
+        if (reply.usage)
+          this.event(
+            session,
+            "usage",
+            `${reply.usage.total_tokens ?? "Unknown"} tokens reported by the harness reviewer`,
+            {
+              ...reply.usage,
+              model: session.view.model,
+              source: "harness",
+              cost: null,
+            },
+          );
+        return reply.message.content ?? "";
+      },
+      apply: async (proposal, expectedBranchVersion) => {
+        await this.refineHarness(id, proposal, { expectedBranchVersion });
+      },
+      currentBranchVersion: () =>
+        this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion,
+    });
+    // A branch move may update the map while the review awaits. Do not overwrite its newer version.
+    const currentVersion = this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion;
+    const expectedVersion = result.startedAtBranchVersion ?? state.branchVersion;
+    if (currentVersion === expectedVersion) this.harnessTriggers.set(id, result.state);
+    this.reportHarnessOutcome(session, result);
+    return result;
+  }
+  /**
+   * The one line a boundary leaves behind.
+   *
+   * The boundary is silent by default, and silence here is ambiguous: an
+   * operator watching a workspace learn nothing cannot tell a gate that
+   * refused from a hook that was never reached. One line naming the outcome
+   * costs nothing when there is no work to do and settles the question when
+   * there is.
+   */
+  private reportHarnessOutcome(session: Session, result: ServiceResult): void {
+    const note =
+      result.outcome.kind === "not-run"
+        ? result.outcome.reason
+        : result.outcome.kind === "declined"
+          ? `Review declined: ${result.outcome.reason}`
+          : result.outcome.kind === "ran"
+            ? "Harness review ran and recorded a proposal."
+            : null;
+    if (note !== null)
+      this.event(
+        session,
+        "tool",
+        note,
+        { outcome: result.outcome.kind },
+        "harness.review",
+      );
+  }
+  private reportHarnessFailure(session: Session, error: unknown): void {
+    this.event(
+      session,
+      "tool",
+      `Harness review did not complete: ${error instanceof Error ? error.message : String(error)}`,
+      { status: session.view.status },
+      "harness.review.failed",
+    );
   }
 
   /**

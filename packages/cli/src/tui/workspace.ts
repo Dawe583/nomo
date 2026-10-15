@@ -3016,12 +3016,48 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.scroll = 0;
         return;
       }
+      if (verb === "review") {
+        if (!this.sessionId) throw Error("Select a conversation.");
+        const sessionId = this.sessionId;
+        this.confirmation = {
+          title: "REQUEST A HARNESS REVIEW?",
+          lines: [
+            "This may spend one model call: the reviewer looks for a durable lesson in the signed chain.",
+            "The settled-turn interval is skipped because you asked; the harness switch, the cooldown and the nothing-new check still apply, and a refusal costs nothing.",
+            "If the conversation is running, the request is recorded and served at the next settled boundary.",
+            "The reviewer can only propose. Nothing is activated without your approval.",
+          ],
+          apply: async () => {
+            this.confirmation = undefined;
+            const result = await this.workbench.requestHarnessReview(sessionId);
+            const note = escapeTerminalText(result.note);
+            this.notice = `Harness review ${result.kind}. ${note}`;
+            this.detail = [
+              `HARNESS REVIEW ${result.kind.toUpperCase()}`,
+              "",
+              note,
+              ...(result.kind === "ran"
+                ? [
+                    "",
+                    "The signed chain records the outcome. /harness lists any proposal awaiting a decision.",
+                  ]
+                : []),
+              "",
+              "The reviewer can only propose. Nothing is activated without your approval.",
+            ];
+            this.scroll = 0;
+            await this.refresh(true);
+          },
+        };
+        this.scroll = 0;
+        return;
+      }
       if (verb === "approve" || verb === "reject") {
         await this.prepareHarnessDecision(rest.join(" "), verb);
         return;
       }
       if (verb && verb !== "cloud" && verb !== "prime-agent")
-        throw Error("/harness cloud | prime-agent | scores | approve DIGEST | reject DIGEST");
+        throw Error("/harness cloud | prime-agent | scores | review | approve DIGEST | reject DIGEST");
       if (verb) {
         this.workbench.patchPreferences({ defaultAgent: verb });
         this.notice =
@@ -3050,7 +3086,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           : "No Harness proposals are awaiting an operator decision.",
         "",
         "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
-        "/harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
+        "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
       ];
       this.scroll = 0;
       return;
@@ -3435,7 +3471,7 @@ export const TUI_COMMANDS = [
   ["/export", "Save ledger, chat or document"],
   ["/attest", "Signed slice for a third party"],
   ["/providers", "Model providers and local open models"],
-  ["/harness", "Agent harness: cloud or prime-agent; scores"],
+  ["/harness", "Agent harness: kind, scores, review, approve/reject"],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],
   ["/verify", "Verify signatures"],
@@ -3888,6 +3924,7 @@ const HELP = [
   "/models | /model exact-ID | /connect opencode:zen | /login | /logout",
   "/providers lists model providers incl. local open models",
   "/harness cloud | /harness prime-agent switches the agent harness",
+  "/harness review asks the reviewer by hand; the gate still applies",
   "/conformance [adapter] runs the disposable adapter checks",
   "/theme [color|mono|motion|still|reset] session theme",
   "/settings lists every harness limit; /settings key value sets one",

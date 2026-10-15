@@ -35,6 +35,7 @@ const input = (over: Partial<GateInput> = {}): GateInput => ({
   candidates: [entry("fs.write")],
   harnessStateAvailable: true,
   surface: "checkpoint",
+  manual: false,
   ...over,
 });
 
@@ -98,6 +99,40 @@ test("too few settled turns holds the trigger", () => {
   const decision = cheapGate(input({ settledTurns: 3 }));
   assert.equal(decision.proceed === false && decision.reason, "too-soon");
   assert.equal(decision.proceed === false && decision.held, true);
+});
+
+test("a manual request bypasses the unarmed and too-soon gates", () => {
+  // The operator asking for a review is the arm, and the settled-turn interval
+  // measures how long the harness has waited to ask them. Nothing has to settle
+  // again for the operator's own request to be served.
+  const decision = cheapGate(input({ pending: false, settledTurns: 0, manual: true }));
+  assert.deepEqual(decision, { proceed: true, instructions: "" });
+});
+
+test("a manual request still waits for the cooldown", () => {
+  // Otherwise an operator could conjure a review per keystroke on a failing
+  // provider, which is the unbounded bill the cooldown exists to stop.
+  const decision = cheapGate(input({ pending: false, settledTurns: 0, manual: true, msSinceLastReview: 1000 }));
+  assert.equal(decision.proceed === false && decision.reason, "under-cooldown");
+  assert.equal(decision.proceed === false && decision.held, true);
+});
+
+test("a manual request still needs something new to review", () => {
+  const decision = cheapGate(input({ pending: false, settledTurns: 0, manual: true, candidates: [] }));
+  assert.equal(decision.proceed === false && decision.reason, "nothing-new");
+  assert.equal(decision.proceed === false && decision.held, true);
+});
+
+test("a manual request cannot overrule settings or an in-flight round", () => {
+  const disabled = cheapGate(input({ manual: true, gates: { ...DEFAULT_REFINE_GATES, enabled: false } }));
+  assert.equal(disabled.proceed === false && disabled.reason, "disabled");
+  assert.equal(disabled.proceed === false && disabled.held, false);
+  const statefree = cheapGate(input({ manual: true, harnessStateAvailable: false }));
+  assert.equal(statefree.proceed === false && statefree.reason, "no-harness-state");
+  assert.equal(statefree.proceed === false && statefree.held, false);
+  const busy = cheapGate(input({ manual: true, inFlight: true }));
+  assert.equal(busy.proceed === false && busy.reason, "in-flight");
+  assert.equal(busy.proceed === false && busy.held, true);
 });
 
 test("nothing mined is the refusal that does the most work in practice", () => {

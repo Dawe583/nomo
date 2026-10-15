@@ -105,6 +105,7 @@ function toTriggerDecision(
     pending: state.pending,
     hasPendingReview: state.pendingReview !== null,
     inFlight: state.inFlight,
+    manual: state.manualReviewRequested,
     settledTurns: state.settledTurnsSinceReview,
     msSinceLastReview: state.lastReviewAt === null ? null : now - state.lastReviewAt,
     candidates: entries,
