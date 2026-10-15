@@ -22,6 +22,8 @@ export const FREE_MODEL_BY_ORIGIN: Readonly<Record<string, string>> = {
 export const NVIDIA_URL = "https://integrate.api.nvidia.com/v1";
 export const TOKENROUTER_URL = "https://api.tokenrouter.com/v1";
 export const OPENCODE_ZEN_URL = "https://opencode.ai/zen/v1";
+export const PUTER_URL = "https://api.puter.com/puterai/v1";
+export const QWEN_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
 export const PROVIDER_PRESETS = [
   {
     id: "nvidia",
@@ -45,6 +47,18 @@ export const PROVIDER_PRESETS = [
     id: "tokenrouter",
     name: "TokenRouter",
     baseUrl: TOKENROUTER_URL,
+    kind: "compatible",
+  },
+  {
+    id: "puter",
+    name: "Puter (free, no key)",
+    baseUrl: PUTER_URL,
+    kind: "compatible",
+  },
+  {
+    id: "qwen",
+    name: "Qwen (Alibaba DashScope)",
+    baseUrl: QWEN_URL,
     kind: "compatible",
   },
   {

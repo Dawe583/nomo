@@ -26,17 +26,67 @@ export type ProviderConfig = {
   readonly baseUrl: string;
   readonly apiKey: string;
   readonly kind?: ProviderKind;
+  /** A model to use when the provider cannot list one.
+   *
+   * Some OpenAI-compatible endpoints serve chat completions and answer the
+   * model catalog with 404 — Puter's does exactly that. An operator who names
+   * the model has already made the choice a catalog would have offered, so the
+   * name stands in for the list rather than the configuration being refused. */
+  readonly model?: string;
 };
 export function normalizeProviderConfig(config: {
   readonly baseUrl: string;
   readonly apiKey: string;
   readonly kind?: string;
+  readonly model?: string;
 }): ProviderConfig {
   return {
     baseUrl: config.baseUrl,
     apiKey: config.apiKey,
     kind: config.kind === "anthropic" ? "anthropic" : "compatible",
+    ...(config.model ? { model: config.model } : {}),
   };
+}
+/**
+ * Resolve the model catalog for a configured provider.
+ *
+ * Some OpenAI-compatible endpoints answer `/models` with a real catalog; others
+ * answer 404, because they only route named models to completions, and some
+ * answer 200 with an empty list. All three must produce a usable list when the
+ * operator named a model, or `configure` refuses a provider that works: an
+ * operator who typed a model has already made the choice a catalog would have
+ * offered, so the name stands in for the list.
+ *
+ * Only a 404 and an empty catalog fall back. Every other probe failure — a
+ * refused connection, a rejected credential, a server error, a body that is
+ * not a JSON object with a `data` array — is a real failure and surfaces as
+ * itself. Swallowing those would report a provider as configured while its
+ * endpoint is unreachable, which is the kind of honest-error boundary this
+ * package keeps.
+ *
+ * A 200 whose entries all fail the shape filter arrives here as the same `[]`
+ * as an endpoint that lists only embedding models, because the filter in
+ * `models()` runs before the length check. The fallback then serves the name
+ * the operator typed, and a name the endpoint cannot serve fails on first
+ * use. Distinguishing the two would need a guess about the provider's
+ * intentions while changing nothing an operator can act on, so it stays.
+ */
+export async function catalogFor(
+  provider: CompatibleProvider,
+  config: ProviderConfig,
+): Promise<readonly Model[]> {
+  try {
+    const models = await provider.models();
+    if (models.length) return models;
+  } catch (error) {
+    // A 404 is the provider saying it has no catalog route: a shape, not a
+    // rejection. Anything else is the provider failing and must surface.
+    if (!(error instanceof ProviderRequestError && error.status === 404))
+      throw error;
+  }
+  return config.model
+    ? [{ id: config.model, name: config.model }]
+    : [];
 }
 export type Model = {
   readonly id: string;

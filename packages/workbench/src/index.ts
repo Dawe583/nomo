@@ -16,7 +16,7 @@ import {
   digest,
   type Json,
 } from "../../runtime/src/index.ts";
-import { NVIDIA_URL, PROVIDER_PRESETS } from "./provider-defaults.ts";
+import { NVIDIA_URL, QWEN_URL, PROVIDER_PRESETS } from "./provider-defaults.ts";
 import {
   documentView,
   sessionPatch,
@@ -144,6 +144,7 @@ import {
 import { createVoidClient, type VoidClient } from "../../sdk/src/client.ts";
 import { HoldDeniedError } from "../../sdk/src/errors.ts";
 import {
+  catalogFor,
   CompatibleProvider,
   ProviderRequestError,
   normalizeProviderConfig,
@@ -502,6 +503,15 @@ export class Workbench {
     status: number;
     retryAt: string | null;
   } | null = null;
+  /**
+   * Environment sources already probed and refused in this process, keyed by
+   * their preset base URL. Per source, because two keys are two statements
+   * about two different hosts: a rejected NVIDIA key must not veto the
+   * DashScope attempt behind it. The set also stops every `providerState` poll
+   * from repeating a request against the same refused key; an explicit
+   * reconnect clears it, because the operator asking again is a new attempt.
+   */
+  private readonly envProbeFailures = new Set<string>();
   private readonly storage: LocalStorage;
   private hasState = false;
   /** VOID ships no default model and no default provider, so neither key is
@@ -917,7 +927,7 @@ export class Workbench {
         this.fetcher,
         () => this.harness,
       );
-      const models = await provider.models();
+      const models = await catalogFor(provider, config);
       if (generation !== this.providerGeneration)
         throw new ProviderSetupSuperseded();
       if (!models.length)
@@ -961,20 +971,26 @@ export class Workbench {
     }
   }
   async providerState(options: { reconnectEnvironment?: boolean } = {}) {
-    if (options.reconnectEnvironment && this.ignoreEnvironment) {
-      this.ignoreEnvironment = false;
-      try {
-        this.persist();
-      } catch (error) {
-        this.ignoreEnvironment = true;
-        throw error;
+    if (options.reconnectEnvironment) {
+      if (this.ignoreEnvironment) {
+        this.ignoreEnvironment = false;
+        try {
+          this.persist();
+        } catch (error) {
+          this.ignoreEnvironment = true;
+          throw error;
+        }
       }
+      // The operator asked for the environment again, so earlier refusals are
+      // stale: each source gets one fresh attempt instead of a veto replayed
+      // from an earlier poll.
+      this.envProbeFailures.clear();
     }
     if (
       !this.provider &&
       !this.ignoreEnvironment &&
       this.env.NVIDIA_API_KEY &&
-      !this.providerFailureState
+      !this.envProbeFailures.has(NVIDIA_URL)
     ) {
       try {
         await this.configure({
@@ -985,13 +1001,38 @@ export class Workbench {
         if (
           !this.ignoreEnvironment &&
           !(error instanceof ProviderSetupSuperseded)
-        )
+        ) {
+          this.envProbeFailures.add(NVIDIA_URL);
           this.recordProviderFailure(error);
+        }
+      }
+    }
+    if (
+      !this.provider &&
+      !this.ignoreEnvironment &&
+      this.env.DASHSCOPE_API_KEY &&
+      !this.envProbeFailures.has(QWEN_URL)
+    ) {
+      try {
+        await this.configure({
+          baseUrl: QWEN_URL,
+          apiKey: this.env.DASHSCOPE_API_KEY,
+          model: "qwen3.8-flash",
+        });
+      } catch (error) {
+        if (
+          !this.ignoreEnvironment &&
+          !(error instanceof ProviderSetupSuperseded)
+        ) {
+          this.envProbeFailures.add(QWEN_URL);
+          this.recordProviderFailure(error);
+        }
       }
     }
     const hasCredential = Boolean(
       this.config?.apiKey ||
-      (!this.ignoreEnvironment && this.env.NVIDIA_API_KEY),
+      (!this.ignoreEnvironment &&
+        (this.env.NVIDIA_API_KEY || this.env.DASHSCOPE_API_KEY)),
     );
     const derived = providerStateFromFailure(
       this.provider !== undefined,

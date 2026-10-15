@@ -3,6 +3,19 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- Two working providers could not be configured at all. An OpenAI-compatible
+  endpoint that answers `/models` with 404, or with an empty list, was reported
+  as having no available models even when the operator had named the model it
+  serves: Puter routes named models without publishing a catalog, and the Qwen
+  preset on DashScope was refused the same way when its catalog did not answer.
+  When a probe says 404 or returns an empty list, the model the operator named
+  now stands in for the catalog, which is the choice a catalog would have
+  offered. Any other probe failure, a refused connection, a rejected
+  credential, a server error or a malformed body, still reaches the operator as
+  itself, so a broken endpoint is never reported as configured. The provider
+  list now offers Puter and Qwen, and a DashScope key in the environment
+  configures the Qwen preset on first use, the way the NVIDIA key already
+  configures its own.
 - The harness could not learn anything, and nothing said so. A review is
   triggered when a compaction arms it, but nothing armed it: the trigger
   started disarmed, the gate refused every boundary as "not armed", and that
