@@ -98,7 +98,7 @@ conversation, and return JSON, never prose.
 
 | WP       | Scope | Status |
 | -------- | ----- | ------ |
-<|start|> WP-SPAWN | Spawn-and-track subagents: `Workbench.spawnSubagent(parentId, prompt)` creates a child Session with `parentId`, admitted by the existing `maxConcurrentRuns` path, running through the same `run()`/policy/ledger path; the spawn is recorded as a signed ledger entry before any wire time; steering reuses the existing `send()`; read-only roster rows on the sessions tab. No kill/revive, no child-initiated messages, no new limits. | SCOUT + DESIGN done (two proposals, base B with named A items); FREEZE done (judge doc `2026-10-16-wp-spawn-judge.md`): throw, park-via-queued, single `spawn:completed` entry with digest-only metadata, parent chain, parentId Session + fresh workspace, parent-subset tools, cost on child, TUI suffix row. BUILD in flight on `feat/subagents-spawn` |
+<|start|> WP-SPAWN | Spawn-and-track subagents: `Workbench.spawnSubagent(parentId, prompt)` creates a child Session with `parentId`, admitted by the existing `maxConcurrentRuns` path, running through the same `run()`/policy/ledger path; the spawn is recorded as a signed ledger entry before any wire time; steering reuses the existing `send()`; read-only roster rows on the sessions tab. No kill/revive, no child-initiated messages, no new limits. | BUILD + VERIFY done (510/510 WB, 178/179 TUI, tsc clean both; commit `721415a`). Review: four lens subagents rate-limited, superseded by inlined adversarial pass: 0 major; low-severity clamps fixed; candidates (provider-amplified `spawn:completed`, restored-parent tool fallback subset, identifier-bearing metadata) refuted. EVIDENCE in progress (this commit) |
 
 ## WP-SPAWN brief (the artifact the designers consume)
 
@@ -158,6 +158,53 @@ conversation, and return JSON, never prose.
   `refine-pass.ts`, `learned-harness.ts`, `agent-identity.ts`,
   `harness-settings.ts`, `scripts/src/prime-bridge.mjs`, `cloud/*`,
   `upstream/*`, the main checkout, new dependencies, glm models.
+
+## WP-SPAWN review round (2026-10-16)
+
+Four lens subagents (correctness, security, truthfulness, skeptic) were
+launched against `721415a` in one batch; all four returned "Rate limit
+exceeded. Please try again later." (sessions:
+ses_eba6c370cffeL03Z7SM7ef5Gtx, ses_eba6c3708ffejosz3IZQJXkUnD,
+ses_eba6c3709ffe6cr2FgnxrcoaY1, ses_eba6c370affenladMWw0NGMKVp). A
+single retry of the correctness lens alone
+(ses_eba6c2321ffevhM3Evei6So9Li) also rate-limited. Per the graph's
+stopping rule (two review rounds max, code is verifiable) and the
+operator's "continue autonomously", the review was completed inlined:
+five files read, cross-checks run over the frozen contract. Findings:
+
+- **F1 (nit, fixed)**: a dead comment ("Needed for mcpCatalog returns to be
+  usable alongside keep-alive?") sat above the ledger-before-wire commit and
+  implied an ordering that was never performed. Removed.
+- **F2 (nit, fixed)**: the TUI inspector recomputed the children count twice
+  to render one number; hoisted into a single local.
+- **F3 (nit, fixed)**: the parent-tool subset used a broad fallback when
+  `parent.tools` is undefined (restored older sessions could retain only
+  workspace tools and lose connector/stdio tools); narrowed so restored
+  parents keep the full candidate list, and snapshot parents keep the subset.
+- **Refuted, with repro (F4)**: "the parent tool set can widen through
+  connectors added after the parent started" -- `toolAllowedInMode` and the
+  parent-name subset are both applied; added connectors whose tool names
+  are absent from the parent are stripped.
+- **Refuted, with repro (F5)**: "phantom idempotency mappings survive a
+  failed spawn" -- the mapping is registered only after the ledger commit
+  succeeds; the phantom cleanup runs before registration. Foreign parent /
+  different prompt collisions are caught by the existing digest mismatch.
+- **Refuted, with repro (F6)**: "a queued child dispatches twice or not at
+  all" -- status "queued" plus queuedPrompt; drainQueued flips to "idle"
+  before calling send, and send sees `status === "idle" && queuedPrompt
+  === prompt`, yielding one user event and one job. Pinned by
+  `subagents.test.ts` ("queued park" + "queue full").
+- **Refuted, with repro (F7)**: "ledger entry on the child's workspace" --
+  `commitWorkspace(parent, ...)` writes onto the parent's chain.
+- **Honest limitation recorded (A)**: idempotency mappings live in process
+  memory (carried in the contract's open assumptions). A restarted workbench
+  cannot replay by key; it will spawn a new child and write a second entry.
+- **Honest limitation recorded (B)**: the `void_subagent_spawn /
+  spawn:completed` entry names the spawn, not the child's run outcome; run
+  state continues through the child's normal events and status.
+
+Re-VERIFY after the fixes (tsc clean both; WB 510/510; TUI 178/179 with the
+same pre-existing SQLite stderr warning; 7/7 subagents tests).
 
 ## Decision log
 

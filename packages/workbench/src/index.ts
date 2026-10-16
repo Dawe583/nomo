@@ -2288,12 +2288,9 @@ export class Workbench {
           )
         : tools
       ).filter((tool) => this.toolAllowedInMode(tool));
-      const parentToolNames = new Set(
-        (parent.tools ?? [...workspaceTools]).map(
-          (tool) => tool.name,
-        ),
-      );
-      const finalTools = subsetTools(baseTools, parentToolNames);
+      const finalTools = parent.tools
+        ? subsetTools(baseTools, new Set(parent.tools.map((t) => t.name)))
+        : baseTools;
 
       const queued =
         this.jobs.size > 0 ||
@@ -2329,9 +2326,6 @@ export class Workbench {
         controller: new AbortController(),
         provider: selectedProvider,
       };
-
-      // Needed for mcpCatalog returns to be usable alongside keep-alive? the
-      // client stays open on the session, matches startSession.
 
       // ---- ledger-before-wire: commit on the parent chain first ----
       const promptDigest = `sha256:${await sha256Hex(trimmedPrompt)}`;

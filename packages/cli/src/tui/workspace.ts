@@ -2952,19 +2952,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                           },
                         ]
                       : []),
-                    ...(this.workbench.list().filter((s) => s.parentId === session.id)
-                      .length > 0
-                      ? [
-                          {
-                            label: "children",
-                            value: String(
-                              this.workbench
-                                .list()
-                                .filter((s) => s.parentId === session.id).length,
-                            ),
-                          },
-                        ]
-                      : []),
+                    ...(() => {
+                      const children = this.workbench
+                        .list()
+                        .filter((s) => s.parentId === session.id).length;
+                      return children > 0
+                        ? [
+                            {
+                              label: "children",
+                              value: String(children),
+                            },
+                          ]
+                        : [];
+                    })(),
                   ],
                 },
               ],
