@@ -7,6 +7,9 @@
  * neither prints node's SQLite experimental warning. The dispatch is imported
  * only once a real command is named.
  */
+
+import "./silence-experimental-warning.mjs";
+
 import { readFileSync } from "node:fs";
 import { parseInvocation, withDefaultTui } from "../src/argv.ts";
 
