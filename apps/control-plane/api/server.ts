@@ -1719,9 +1719,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     port,
     (() => {
       const token =
-        envValue(process.env, "NOMO_CONTROL_TOKEN" as any) ?? process.env.VOID_CONTROL_TOKEN;
+        envValue(process.env, "NOMO_CONTROL_TOKEN" as any);
       if (!token || token.length < 32) return "127.0.0.1";
-      return envValue(process.env, "NOMO_CONTROL_HOST" as any) ?? process.env.VOID_CONTROL_HOST ?? "127.0.0.1";
+      return envValue(process.env, "NOMO_CONTROL_HOST" as any) ?? "127.0.0.1";
     })(),
     () => {
       console.log(
