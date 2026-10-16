@@ -564,7 +564,7 @@ nabízí jen obnovení. **Neposkytuje žádnou autoritu obnovy.**
 
 ## 10. Příkazová řáda
 
-Dvacet jedna příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
+Dvacet dva příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
 vypíše usage daného příkazu.
 
 | Příkaz               | Co dělá                                                         |
@@ -590,6 +590,7 @@ vypíše usage daného příkazu.
 | `nomo init`          | Vytvořit rozvržení pracovního prostoru.                         |
 | `nomo ledger verify` | Ověřit adresář ledgeru.                                         |
 | `nomo update`     | Posunout instalovaný strom na sledovanou větev, jen dopředu.         |
+| `nomo state`      | Shrnnout nebo migrovat trvalý stav pracovního prostoru.             |
 
 Tě s argumenty, přesně:
 

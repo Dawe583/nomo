@@ -149,7 +149,7 @@ const legacyAliasedNames = (sourceText) => {
     .replace(/^[ \t]*\/\/.*$/gm, "");
   const names = new Set();
   const resolve = (argument) => {
-    const direct = /^"(NOMO_[A-Z0-9_]+)"$/.exec(argument);
+    const direct = /^["'](NOMO_[A-Z0-9_]+)["']$/.exec(argument);
     if (direct) return direct[1];
     if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(argument)) return undefined;
     const declaration = new RegExp(
@@ -160,6 +160,11 @@ const legacyAliasedNames = (sourceText) => {
   for (const match of code.matchAll(/envValue\(\s*[^,()]+,\s*([^,()]+)\)/g)) {
     const name = resolve(match[1].trim());
     if (name) names.add(name);
+  }
+  // Cloud's own env.mjs wrapper is called key-first: envValue("NOMO_X", env).
+  // Both spellings are the same rule, so a name read that way is also owned.
+  for (const match of code.matchAll(/envValue\(\s*["'](NOMO_[A-Z0-9_]+)["']\s*,/g)) {
+    names.add(match[1]);
   }
   const owned = /OWNED_ENV_KEYS[^=]*=\s*\[([\s\S]*?)\]/.exec(code);
   if (owned)

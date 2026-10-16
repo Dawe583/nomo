@@ -589,7 +589,7 @@ It reports status and offers only a refresh. **It grants no recovery authority.*
 
 ## 10. The command line
 
-Twenty-one commands. `nomo --help` prints the list; `nomo <command>` with no
+Twenty-two commands. `nomo --help` prints the list; `nomo <command>` with no
 arguments prints that command's usage.
 
 | Command          | What it does                                                              |
@@ -615,6 +615,7 @@ arguments prints that command's usage.
 | `nomo config`    | Print resolved configuration. Never prints secret values.                 |
 | `nomo init`      | Create the workspace layout.                                              |
 | `nomo update`    | Move the installed tree to the tracked branch, fast-forward only.         |
+| `nomo state`     | Summarise or migrate persisted workspace state.                           |
 
 The ones that take arguments, exactly:
 
