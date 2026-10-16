@@ -7,6 +7,8 @@ import {
   learnedRuleRationale,
   mineLearnedRules,
 } from "./learned-rules.ts";
+import { decide } from "../../policy/src/decide.ts";
+import { loadPolicy } from "../../policy/src/rules.ts";
 import { mineHarnessEntries } from "./learned-harness.ts";
 
 const entry = (
@@ -313,4 +315,46 @@ describe("self-caused refusals are not learned evidence", () => {
       mineLearnedRules(chain),
     );
   });
+});
+
+test("appended learned rule cannot pass the terminal catch-all", () => {
+  // The pinned inertness: the loader requires the terminal catch-all
+  // (match: {}) as the last rule, decide is first-match-wins, and
+  // policyWithLearned appends mined rules after it. A mined rule matching this
+  // exact call still loses to the catch-all. The merge below is built the same
+  // way policyWithLearned builds it rather than by calling it, so the test
+  // pins the rule shape and the decide outcome, not one private method.
+  const loaded = loadPolicy(
+    "version: 1\nrules:\n  - match:\n      tool: unrelated.tool\n    decision: deny\n    rationale: operator refuses something else\n  - match: {}\n    decision: allow\n",
+  );
+  if (!loaded.ok)
+    throw new Error(`fixture policy failed to load: ${loaded.errors.join("; ")}`);
+  const mined = mineLearnedRules([
+    entry("guarded.tool", "r3", "deny:policy"),
+    entry("guarded.tool", "r3", "deny:policy"),
+    entry("guarded.tool", "r3", "hold:denied"),
+  ]);
+  assert.equal(mined.length, 1);
+  assert.deepEqual(mined[0]?.match, { class: "r3", tool: "guarded.tool" });
+  const merged = {
+    ok: true as const,
+    policy: { ...loaded.policy, rules: [...loaded.policy.rules, ...mined] },
+  };
+  const decision = decide(merged, {
+    tool: "guarded.tool",
+    connector: "test",
+    workspace: undefined,
+    klass: "r3",
+    blastRadius: undefined,
+    unclassified: false,
+  });
+  assert.equal(decision.kind, "allow");
+  if (decision.kind !== "allow")
+    throw new Error("the terminal catch-all must allow this call");
+  assert.equal(
+    decision.ruleIndex,
+    1,
+    "the terminal catch-all decides, at its own index",
+  );
+  assert.notEqual(decision.ruleIndex, 2, "the appended rule never binds");
 });

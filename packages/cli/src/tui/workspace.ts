@@ -2491,7 +2491,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                 ? []
                 : [`Verification key: ${this.managedVerificationNote}`]),
               rule.rationale ?? "",
-              "A learned rule is evidence, not authority: it is appended after the operator's own rules, so it can only fill a gap they left open.",
+              "A learned rule is evidence, not authority: it is appended after the operator's own rules, and under the mandatory terminal catch-all it never binds.",
             ],
           });
         }
@@ -4526,7 +4526,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ...perWorkspace,
         ...(perWorkspace.length ? [""] : []),
         "A learned rule is evidence, not authority: it is appended after the",
-        "operator's own rules, so it can only fill a gap they left open.",
+        "operator's own rules, and under the mandatory terminal catch-all it never binds.",
       ];
       this.scroll = 0;
       return;

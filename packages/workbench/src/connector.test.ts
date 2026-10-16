@@ -6,17 +6,27 @@ import { createServer, type Server } from "node:http";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { isolatedWorkbench } from "./test-fixture.ts";
 import type { Workbench } from "./index.ts";
+import { loadPolicy } from "../../policy/src/rules.ts";
+import { policyDigest } from "../../policy/src/digest.ts";
+import { mineLearnedRules } from "./learned-rules.ts";
 
 /** A minimal MCP server over loopback HTTP that answers the catalog handshake
  * and counts the requests it received, so a test can prove that a staged
  * connector sent nothing. */
-async function catalogServer(tools: { name: string }[], status = 200) {
+async function catalogServer(
+  tools: { name: string; description?: string }[],
+  status = 200,
+) {
   const methods: string[] = [];
+  // The method names prove whether a call left the workbench; the bodies let
+  // a test pin which tool was asked for without a second server per tool.
+  const bodies: unknown[] = [];
   const server: Server = createServer(async (req, res) => {
     let text = "";
     for await (const chunk of req) text += chunk;
     const body = JSON.parse(text || "{}");
     if (body.method) methods.push(body.method);
+    bodies.push(body);
     if (status !== 200) {
       res.statusCode = status;
       res.end("Service Unavailable");
@@ -37,6 +47,7 @@ async function catalogServer(tools: { name: string }[], status = 200) {
   assert.ok(address && typeof address !== "string");
   return {
     methods,
+    bodies,
     url: `http://127.0.0.1:${address.port}/mcp`,
     async close() {
       await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -210,4 +221,266 @@ test("the policy preview shows the decision each tool would get", async (t) => {
   assert.equal(mapped.blastRadius, "unknown");
   assert.equal(preview.counts.deny, 1);
   assert.equal(preview.counts.hold, 1);
+});
+
+const DELETE_TOOL = { name: "delete", description: "delete: fixture" };
+const DELETE = "aws.s3.object.delete";
+const connectorFacts = { "bucket.versioning": "Enabled" };
+const allowAll =
+  "version: 1\nrules:\n  - match: {}\n    decision: allow\n";
+
+/** Stage a connector, then make it usable, without ever letting the test forget
+ * that both steps are separate operator actions. */
+async function confirmedConnector(
+  app: Workbench,
+  url: string,
+  name: string,
+  policy: string,
+  mapping: Record<string, string>,
+  facts: Record<string, string>,
+) {
+  await app.addConnector({ url, name, mapping, facts, policy });
+  const id = app.connectionState().connectors.at(-1)!.id;
+  await app.probeConnector(id);
+  await app.confirmConnector(id);
+  return id;
+}
+
+/** A provider that answers one tool call per user turn while the test allows
+ * it, then closes. The gate starts closed in tests that must seed evidence
+ * before the call is decided: a provider that calls on its first turn would
+ * race that seeding, and the test would prove timing rather than policy. */
+function phasedProvider(
+  pick: (tools: { function: { name: string; description?: string } }[]) => string,
+  gate: { wantCall: boolean },
+) {
+  return async (url: unknown, init?: { body?: unknown }) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const messages = (body.messages ?? []) as { role: string }[];
+    if (messages.some((message) => message.role === "tool"))
+      return Response.json({
+        choices: [{ message: { role: "assistant", content: "done" } }],
+      });
+    const last = messages.at(-1);
+    if (last?.role === "user" && gate.wantCall) {
+      gate.wantCall = false;
+      return Response.json({
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: null,
+              tool_calls: [
+                {
+                  id: "one",
+                  type: "function",
+                  function: { name: pick(body.tools ?? []), arguments: "{}" },
+                },
+              ],
+            },
+          },
+        ],
+      });
+    }
+    return Response.json({
+      choices: [{ message: { role: "assistant", content: "ready" } }],
+    });
+  };
+}
+
+const deleteName = (tools: { function: { name: string; description?: string } }[]) =>
+  tools.find((tool) => String(tool.function.description ?? "").startsWith("delete:"))!
+    .function.name;
+
+const unmappedName = (tools: { function: { name: string; description?: string } }[]) =>
+  tools.find((tool) => String(tool.function.description ?? "").startsWith("unmapped_unknown_thing:"))!
+    .function.name;
+
+type SeededEvidence = {
+  evidence: Record<string, { body: unknown }[]>;
+};
+
+function refusalSeed(tool: string, klass: string) {
+  return [
+    { body: { tool, klass, decision: "deny:policy" } },
+    { body: { tool, klass, decision: "deny:policy" } },
+    { body: { tool, klass, decision: "hold:denied" } },
+  ];
+}
+
+test("workspace-mined refusal never holds a connector call", async (t) => {
+  const server = await catalogServer([DELETE_TOOL]);
+  t.after(() => server.close());
+  const gate = { wantCall: false };
+  const { app } = await isolatedWorkbench(t, phasedProvider(deleteName, gate), {}, {
+    prefix: "void-learned-connector-",
+  });
+  const id = await confirmedConnector(
+    app,
+    server.url,
+    "Fixture",
+    allowAll,
+    { delete: DELETE },
+    connectorFacts,
+  );
+  const listed = app
+    .policyPreview(id)
+    .tools.find((tool) => tool.tool === "delete");
+  assert.equal(
+    listed?.klass,
+    "r3",
+    "the fixture delete classifies r3, which is the class the seed below refuses",
+  );
+
+  const session = await app.start("hello", "fixture");
+  await app.settled();
+  assert.equal(app.get(session.id)?.status, "idle");
+
+  // Three refusals of the mapped tool under its classified class: exactly what
+  // mines a hold rule for this call shape. The miner call proves the seed
+  // would bind if it were consulted, so the passing call below is a statement
+  // about the connector path rather than about a seed that teaches nothing.
+  const seed = refusalSeed(DELETE, "r3");
+  assert.equal(
+    mineLearnedRules(seed).length,
+    1,
+    "the seed mines the hold rule this test claims is ignored",
+  );
+  const internals = app as unknown as SeededEvidence;
+  internals.evidence[session.workspace] = [
+    ...(internals.evidence[session.workspace] ?? []),
+    ...seed,
+  ];
+  const before = (internals.evidence[session.workspace] ?? []).length;
+
+  gate.wantCall = true;
+  app.send(session.id, "Delete it");
+  await app.settled();
+
+  assert.equal(app.get(session.id)?.status, "idle");
+  assert.ok(
+    server.methods.includes("tools/call"),
+    "the connector ran the call upstream",
+  );
+  const added = (internals.evidence[session.workspace] ?? [])
+    .slice(before)
+    .map((entry) => entry.body as Record<string, unknown>);
+  assert.ok(
+    added.some((body) => body.tool === DELETE && body.decision === "allow"),
+    "the operator policy allowed the call",
+  );
+  assert.ok(
+    !added.some(
+      (body) =>
+        body.tool === DELETE &&
+        typeof body.decision === "string" &&
+        body.decision.startsWith("hold"),
+    ),
+    "no learned hold touched the call",
+  );
+});
+
+test("connector attribution names the raw operator policy digest", async (t) => {
+  const server = await catalogServer([DELETE_TOOL]);
+  t.after(() => server.close());
+  const { app } = await isolatedWorkbench(
+    t,
+    phasedProvider(deleteName, { wantCall: true }),
+    {},
+    { prefix: "void-connector-attribution-" },
+  );
+  await confirmedConnector(app, server.url, "Fixture", allowAll, { delete: DELETE }, connectorFacts);
+
+  const session = await app.start("Delete it", "fixture");
+  await app.settled();
+  assert.equal(app.get(session.id)?.status, "idle");
+  assert.ok(
+    server.methods.includes("tools/call"),
+    "the connector ran the call upstream",
+  );
+
+  const loaded = loadPolicy(allowAll);
+  if (!loaded.ok)
+    throw new Error(`fixture policy failed to load: ${loaded.errors.join("; ")}`);
+  const internals = app as unknown as SeededEvidence;
+  const record = (internals.evidence[session.workspace] ?? [])
+    .map((entry) => entry.body as Record<string, unknown>)
+    .find((body) => body.tool === DELETE && body.decision === "allow");
+  assert.ok(record, "the allow decision was recorded");
+  const attribution = record.attribution as
+    | { policyDigest: string; rule?: { index: number } }
+    | undefined;
+  assert.equal(
+    attribution?.policyDigest,
+    policyDigest(loaded.policy),
+    "the record names the raw operator policy, not a merged one",
+  );
+  assert.equal(
+    attribution?.rule?.index,
+    0,
+    "the operator catch-all decided, at its own index",
+  );
+});
+
+test("unclassified tool fails closed on the connector path", async (t) => {
+  const server = await catalogServer([
+    { name: "unmapped_unknown_thing", description: "unmapped_unknown_thing: fixture" },
+  ]);
+  t.after(() => server.close());
+  const gate = { wantCall: false };
+  const { app } = await isolatedWorkbench(
+    t,
+    phasedProvider(unmappedName, gate),
+    {},
+    { prefix: "void-unclassified-" },
+  );
+  await confirmedConnector(app, server.url, "Fixture", allowAll, {}, connectorFacts);
+  const internals = app as unknown as SeededEvidence;
+  const calls = () =>
+    server.methods.filter((method) => method === "tools/call").length;
+  const refusals = (workspace: string, from: number) =>
+    (internals.evidence[workspace] ?? [])
+      .slice(from)
+      .map((entry) => entry.body as Record<string, unknown>);
+
+  // With seeded learned rules for the same shape: the refusal must look
+  // exactly like the operator policy refusing, because classification fails
+  // before any policy, merged or raw, is consulted.
+  const seeded = await app.start("hello", "fixture");
+  await app.settled();
+  internals.evidence[seeded.workspace] = [
+    ...(internals.evidence[seeded.workspace] ?? []),
+    ...refusalSeed("unmapped_unknown_thing", "r3"),
+  ];
+  const seededFrom = (internals.evidence[seeded.workspace] ?? []).length;
+  const callsBeforeSeeded = calls();
+  gate.wantCall = true;
+  app.send(seeded.id, "Call the unknown tool");
+  await app.settled();
+  assert.equal(app.get(seeded.id)?.status, "idle", "a refusal is an answer, not a crash");
+  assert.equal(calls(), callsBeforeSeeded, "the upstream never saw the call");
+  const seededBodies = refusals(seeded.workspace, seededFrom);
+  assert.ok(
+    seededBodies.some(
+      (body) => body.tool === "unmapped_unknown_thing" && body.decision === "deny",
+    ),
+    "the unclassified call was denied",
+  );
+
+  // Without any seeded rules: the same refusal, proving learned rules change
+  // nothing on this path in either direction.
+  gate.wantCall = true;
+  const plain = await app.start("Call the unknown tool", "fixture");
+  await app.settled();
+  assert.equal(app.get(plain.id)?.status, "idle", "a refusal is an answer, not a crash");
+  assert.equal(calls(), callsBeforeSeeded, "the upstream never saw the call");
+  const plainBodies = refusals(plain.workspace, 0);
+  assert.ok(
+    plainBodies.some(
+      (body) => body.tool === "unmapped_unknown_thing" && body.decision === "deny",
+    ),
+    "the unclassified call was denied",
+  );
 });

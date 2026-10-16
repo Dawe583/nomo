@@ -10,6 +10,11 @@ import { Workbench } from "./index.ts";
 import { CompatibleProvider } from "./provider.ts";
 import { LocalStorage } from "./storage.ts";
 import { readLedgerFeed } from "../../ledger/src/feed.ts";
+import { canonicalJson, entryHash, GENESIS_PREV } from "../../ledger/src/canonical.ts";
+import { signingPreimage } from "../../ledger/src/index.ts";
+import type { JsonlEntry } from "../../ledger/src/store.ts";
+import { devKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
+import { mineLearnedRules } from "./learned-rules.ts";
 import { validateAgentProfile, validateHook } from "./agents.ts";
 import { assertIsolated, isolatedWorkbench } from "./test-fixture.ts";
 
@@ -1352,4 +1357,326 @@ test("legacy inline provider keys are scrubbed without borrowing another provide
   assert.ok(sendError instanceof Error);
   assert.match(sendError.message, /provider/i);
   assert.equal(requestCount, requestsBeforeResume);
+});
+
+/** A provider that answers one fixture tool call per user turn while the test
+ * allows it, then closes. The gate lets a test seed evidence between two
+ * turns: without it the first turn would decide the call before the seed
+ * exists, and the test would prove timing rather than delegation. */
+function gatedToolProvider(
+  gate: { wantCall: boolean },
+  toolPrefix: string,
+  args: string,
+  seen: unknown[] = [],
+) {
+  return async (url: unknown, options?: { body?: unknown }) => {
+    if (String(url).endsWith("/models"))
+      return reply({ data: [{ id: "fixture-model" }] });
+    const request = JSON.parse(String(options?.body));
+    seen.push(request);
+    const messages = (request.messages ?? []) as { role: string }[];
+    if (messages.at(-1)?.role === "tool")
+      return reply({
+        choices: [{ message: { role: "assistant", content: "done" } }],
+      });
+    if (messages.at(-1)?.role === "user" && gate.wantCall) {
+      gate.wantCall = false;
+      const tool = (request.tools as { function: { name: string; description: string } }[]).find(
+        (item) => String(item.function.description ?? "").startsWith(toolPrefix),
+      )!;
+      return reply({
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: null,
+              tool_calls: [
+                {
+                  id: "call1",
+                  type: "function",
+                  function: { name: tool.function.name, arguments: args },
+                },
+              ],
+            },
+          },
+        ],
+      });
+    }
+    return reply({
+      choices: [{ message: { role: "assistant", content: "waiting" } }],
+    });
+  };
+}
+
+function stdioEnv(dir: string, extra: Record<string, string> = {}) {
+  return {
+    NOMO_LEDGER_DIR: dir,
+    NOMO_UPSTREAM_COMMAND: JSON.stringify([
+      process.execPath,
+      join(root, "fixtures/e2e-server.mjs"),
+    ]),
+    NOMO_POLICY_PATH: join(root, "fixtures/e2e-policy.yaml"),
+    ...extra,
+  };
+}
+
+async function waitSettled(workbench: Workbench, id: string, rounds = 200) {
+  for (
+    let i = 0;
+    i < rounds && workbench.get(id)?.status === "running";
+    i++
+  )
+    await delay(20);
+}
+
+test("stdio delegation is recorded, not decided", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-stdio-recorded-"));
+  const gate = { wantCall: true };
+  const workbench = new Workbench(
+    stdioEnv(dir),
+    gatedToolProvider(gate, "echo:", '{"text":"fixture echo"}'),
+  );
+  assertIsolated(storeDirUnder(dir), stdioEnv(dir));
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  await workbench.configure({
+    baseUrl: "https://provider.test/v1",
+    apiKey: secret,
+  });
+  const started = await workbench.start("Test echo", "fixture-model");
+  await waitSettled(workbench, started.id);
+  const session = workbench.get(started.id)!;
+  assert.equal(session.status, "idle", JSON.stringify(session.events));
+
+  const feed = await readLedgerFeed(join(dir, `${started.workspace}.jsonl`));
+  const proxyRecord = feed.records.find((record) => record.tool === "echo");
+  assert.ok(proxyRecord, "the proxy recorded the call upstream");
+
+  const chained = await workbench.ledger(started.workspace);
+  const echoEntries = (chained?.entries ?? []).filter(
+    (entry) => (entry.body as { tool: string }).tool === "echo",
+  );
+  assert.ok(echoEntries.length > 0, "the workspace chain holds the call");
+  for (const entry of echoEntries) {
+    const body = entry.body as Record<string, unknown>;
+    assert.equal(body.source, "stdio-proxy");
+    assert.match(String(body.sourceDigest ?? ""), /^[0-9a-f]{64}$/);
+    // Recorded, not decided: the attribution is the proxy's own, imported
+    // verbatim. A workbench decision would additionally stamp the model that
+    // asked and the request that asked, which the proxy never knows, so their
+    // absence proves this side computed no policy digest and no rule index.
+    assert.deepEqual(body.attribution, proxyRecord.attribution);
+    const stamped = body.attribution as
+      | { modelId?: string; requestDigest?: string }
+      | undefined;
+    assert.equal(stamped?.modelId, undefined, "no locally computed model stamp");
+    assert.equal(
+      stamped?.requestDigest,
+      undefined,
+      "no locally computed request stamp",
+    );
+  }
+});
+
+test("unverifiable proxy ledger is unknown, not failed", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-stdio-unverified-"));
+  // A key the proxy never signed with. The workbench resolves its syncStdio
+  // verification key from NOMO_PROXY_KEYS without creating one, so this decoy
+  // makes the imported chain fail verification exactly the way a substituted
+  // proxy key would, while the upstream call itself still succeeds.
+  const proxyKeys = await mkdtemp(join(tmpdir(), "void-stdio-decoy-keys-"));
+  t.after(async () => {
+    await rm(proxyKeys, { recursive: true, force: true });
+  });
+  await devKeyProvider({ dir: proxyKeys, env: {} });
+  const gate = { wantCall: true };
+  const workbench = new Workbench(
+    stdioEnv(dir, { NOMO_PROXY_KEYS: proxyKeys }),
+    gatedToolProvider(gate, "echo:", '{"text":"fixture echo"}'),
+  );
+  assertIsolated(storeDirUnder(dir), stdioEnv(dir));
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  await workbench.configure({
+    baseUrl: "https://provider.test/v1",
+    apiKey: secret,
+  });
+  const started = await workbench.start("Test echo", "fixture-model");
+  await waitSettled(workbench, started.id);
+  const session = workbench.get(started.id)!;
+  // The upstream ran: the proxy ledger holds the call. Only the import is
+  // refused, so the outcome is unknown rather than a failure of the tool.
+  const feed = await readLedgerFeed(join(dir, `${started.workspace}.jsonl`));
+  assert.ok(
+    feed.records.some((record) => record.tool === "echo"),
+    "the upstream ran the call",
+  );
+  assert.equal(session.status, "unknown", JSON.stringify(session.events));
+  assert.ok(
+    session.events.some(
+      (event) => event.kind === "error" && /unknown/i.test(event.text),
+    ),
+    "the run reports the outcome as unknown",
+  );
+  const chained = await workbench.ledger(started.workspace);
+  assert.ok(
+    chained === undefined ||
+      !chained.entries.some(
+        (entry) => (entry.body as { tool: string }).tool === "echo",
+      ),
+    "the workspace chain gains no entry for the unverified call",
+  );
+});
+
+test("stdio delegation ignores learned rules", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "void-stdio-learned-"));
+  const gate = { wantCall: true };
+  const proxyEnv = stdioEnv(dir);
+  const workbench = new Workbench(
+    proxyEnv,
+    gatedToolProvider(gate, "echo:", '{"text":"fixture echo"}'),
+  );
+  assertIsolated(storeDirUnder(dir), proxyEnv);
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  await workbench.configure({
+    baseUrl: "https://provider.test/v1",
+    apiKey: secret,
+  });
+  const started = await workbench.start("Test echo", "fixture-model");
+  await waitSettled(workbench, started.id);
+  assert.equal(workbench.get(started.id)?.status, "idle");
+
+  const feed = await readLedgerFeed(join(dir, `${started.workspace}.jsonl`));
+  const klass = feed.records.find((record) => record.tool === "echo")?.klass;
+  assert.ok(klass, "the proxy classified the call");
+  // Three genuine refusals of this exact tool and class, appended as real
+  // signed chain entries under the workbench's own key. Unsigned fakes would
+  // break the next run, because the run verifies the workspace chain, so a
+  // seed that is not a real entry turns this test into a signature failure
+  // instead of a delegation proof. The miner call proves the seed mints the
+  // hold rule the delegation below must ignore.
+  const internals = workbench as unknown as {
+    evidence: Record<string, JsonlEntry[]>;
+  };
+  const key = await devKeyProvider({
+    dir: join(dir, "workbench", "keys"),
+    env: proxyEnv,
+  });
+  const keyId = await key.currentKeyId();
+  const current = internals.evidence[started.workspace] ?? [];
+  const seed: JsonlEntry[] = [];
+  for (const decision of ["deny:policy", "deny:policy", "hold:denied"]) {
+    const body = { workspace: started.workspace, tool: "echo", klass, decision };
+    const prev = current.at(-1)?.hash ?? GENESIS_PREV;
+    const hash = await entryHash(body, prev, sha256Hex);
+    current.push({
+      workspace: started.workspace,
+      seq: current.length + 1,
+      body,
+      prev_hash: prev,
+      hash,
+      key_id: keyId,
+      alg: key.alg,
+      signature: `${key.alg}:${Buffer.from(await key.sign(signingPreimage(key.alg, keyId, hash))).toString("base64")}`,
+    });
+    seed.push(current.at(-1)!);
+  }
+  internals.evidence[started.workspace] = current;
+  assert.equal(
+    mineLearnedRules(seed).length,
+    1,
+    "the seed mines the hold rule this test claims is ignored",
+  );
+  const checkpoint = (internals.evidence[started.workspace] ?? []).length;
+
+  gate.wantCall = true;
+  workbench.send(started.id, "Echo again");
+  await waitSettled(workbench, started.id);
+  assert.equal(workbench.get(started.id)?.status, "idle");
+
+  const added = (internals.evidence[started.workspace] ?? []).slice(checkpoint);
+  assert.ok(added.length > 0, "the second call left entries");
+  for (const entry of added) {
+    const body = entry.body as Record<string, unknown>;
+    assert.equal(
+      body.source,
+      "stdio-proxy",
+      "the only new entries are the proxy re-commits",
+    );
+  }
+  assert.ok(
+    !added.some(
+      (entry) =>
+        (entry.body as { tool: string }).tool === "echo" &&
+        ["deny", "hold:denied"].includes(
+          (entry.body as { decision: string }).decision,
+        ),
+    ),
+    "no hold or deny derived from the seeded rule",
+  );
+});
+
+test("a verified proxy denial surfaces, a receiptless one cannot", async (t) => {
+  // The proxy holds orders_delete for 5 seconds under the fixture policy and
+  // nobody approves, so the hold expires: the client raises the typed
+  // HoldDeniedError and the proxy has already recorded the hold:expired
+  // receipt this side re-commits. A typed denial with no fresh verified
+  // receipt for the call's argsDigest is the forged case, and this fixture
+  // cannot produce it: the honest proxy records every hold resolution before
+  // answering, so any genuine HoldDeniedError arrives with its receipt. That
+  // branch stays pinned by reading index.ts, and forging it would mean
+  // editing the proxy ledger mid-flight, which breaks chain verification and
+  // is the previous test's case instead.
+  const dir = await mkdtemp(join(tmpdir(), "void-stdio-denied-"));
+  const seen: unknown[] = [];
+  const gate = { wantCall: true };
+  const workbench = new Workbench(
+    stdioEnv(dir),
+    gatedToolProvider(gate, "orders_delete:", '{"where":"id = 1"}', seen),
+  );
+  assertIsolated(storeDirUnder(dir), stdioEnv(dir));
+  t.after(async () => {
+    workbench.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  await workbench.configure({
+    baseUrl: "https://provider.test/v1",
+    apiKey: secret,
+  });
+  const started = await workbench.start("Delete matching orders", "fixture-model");
+  await waitSettled(workbench, started.id, 600);
+  const session = workbench.get(started.id)!;
+  // An isError denial is an answer, not an unknown outcome and not a crash.
+  assert.equal(session.status, "idle", JSON.stringify(session.events));
+
+  const argsDigest = await sha256Hex(canonicalJson({ where: "id = 1" }));
+  const chained = await workbench.ledger(started.workspace);
+  const denials = (chained?.entries ?? []).filter((entry) => {
+    const body = entry.body as Record<string, unknown>;
+    return (
+      body.tool === "orders_delete" &&
+      body.source === "stdio-proxy" &&
+      (body.decision === "hold:denied" || body.decision === "hold:expired")
+    );
+  });
+  assert.ok(denials.length > 0, "the verified receipt was re-committed");
+  for (const entry of denials) {
+    const body = entry.body as Record<string, unknown>;
+    assert.equal(
+      body.argsDigest,
+      argsDigest,
+      "the receipt names this exact call's arguments",
+    );
+  }
+  assert.ok(
+    seen.some((request) => JSON.stringify(request).includes("Do not retry")),
+    "the denial reached the model in the proxy's own words",
+  );
 });

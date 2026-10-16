@@ -4399,6 +4399,12 @@ export class Workbench {
       reason: callReason,
       arguments: args,
     };
+    // Decided under the raw operator policy by design: learned rules are
+    // deliberately not merged here. The loader requires the terminal catch-all
+    // (match: {}) as the last rule and decide is first-match-wins, so any rule
+    // appended after it, which is where policyWithLearned puts mined rules, is
+    // structurally unreachable. Merging here would suggest learned rules bind
+    // connector calls when they cannot, and evidence stays evidence.
     const policy = loadPolicy(config.policy ?? DEFAULT_POLICY);
     if (!policy.ok) throw new Error("Invalid policy.");
     const decision =
