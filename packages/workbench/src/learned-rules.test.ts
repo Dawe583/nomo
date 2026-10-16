@@ -358,3 +358,22 @@ test("appended learned rule cannot pass the terminal catch-all", () => {
   );
   assert.notEqual(decision.ruleIndex, 2, "the appended rule never binds");
 });
+test("the rationale builder and the matcher cannot drift apart", () => {
+  // The matcher is private. Derive the same anchored regex from the builder
+  // output, replacing only the count, so the test proves the two stay in step
+  // without copying the sentence into the test file.
+  const template = learnedRuleRationale(0).replace(/\d+/, "\\d+");
+  const anchored = new RegExp(`^${template}$`);
+  for (const n of [1, 2, 3, 7, 100, 1000000]) {
+    assert.match(learnedRuleRationale(n), anchored, `N=${n} must match the matcher`);
+    assert.doesNotMatch(
+      `${learnedRuleRationale(n)}x`,
+      anchored,
+      `N=${n} with a trailing character is an operator note, not self-cause`,
+    );
+  }
+  const seed = [1, 2, 3].map(() => entry("t", "r1", "hold:denied"));
+  const [rule] = mineLearnedRules(seed);
+  assert.ok(rule, "the seed must mint a rule");
+  assert.equal(rule.rationale, learnedRuleRationale(3));
+});
