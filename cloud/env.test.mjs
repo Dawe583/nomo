@@ -43,12 +43,12 @@ test('envValue: legacy only resolves', () => {
 });
 
 test('envValue: NOMO wins', () => {
-  const env = { NOMO_DATA_DIR: 'new', NOMO_DATA_DIR: 'old' };
+  const env = { NOMO_DATA_DIR: 'new', VOID_DATA_DIR: 'old' };
   assert.strictEqual(envValue(env, 'NOMO_DATA_DIR'), 'new');
 });
 
 test('envValue: empty NOMO wins', () => {
-  const env = { NOMO_DATA_DIR: '', NOMO_DATA_DIR: 'old' };
+  const env = { NOMO_DATA_DIR: '', VOID_DATA_DIR: 'old' };
   assert.strictEqual(envValue(env, 'NOMO_DATA_DIR'), '');
 });
 
@@ -67,14 +67,14 @@ test('envValue: does not mutate input', () => {
 });
 
 test('legacyEnvKey: swaps only the prefix', () => {
-  assert.strictEqual(legacyEnvKey('NOMO_ACCOUNT_SEAL_KEY'), 'NOMO_ACCOUNT_SEAL_KEY');
-  assert.strictEqual(legacyEnvKey('NOMO_DATA_DIR'), 'NOMO_DATA_DIR');
+  assert.strictEqual(legacyEnvKey('NOMO_ACCOUNT_SEAL_KEY'), 'VOID_ACCOUNT_SEAL_KEY');
+  assert.strictEqual(legacyEnvKey('NOMO_DATA_DIR'), 'VOID_DATA_DIR');
 });
 
 test('normalizeEnv: returns new object with legacy values', () => {
-  const env = { NOMO_DATA_DIR: 'bar' };
+  const env = { VOID_DATA_DIR: 'bar' };
   const normalized = normalizeEnv(env, ['NOMO_DATA_DIR']);
-  assert.deepStrictEqual(normalized, { NOMO_DATA_DIR: 'bar', NOMO_DATA_DIR: 'bar' });
+  assert.deepStrictEqual(normalized, { VOID_DATA_DIR: 'bar', NOMO_DATA_DIR: 'bar' });
   assert.notStrictEqual(normalized, env);
 });
 
@@ -85,7 +85,7 @@ test('normalizeEnv: returns same object when nothing changes', () => {
 });
 
 test('normalizeEnv: an empty current value is not replaced by the legacy one', () => {
-  const normalized = normalizeEnv({ NOMO_DATA_DIR: '', NOMO_DATA_DIR: 'old' }, ['NOMO_DATA_DIR']);
+  const normalized = normalizeEnv({ NOMO_DATA_DIR: '', VOID_DATA_DIR: 'old' }, ['NOMO_DATA_DIR']);
   assert.strictEqual(normalized.NOMO_DATA_DIR, '');
 });
 
@@ -103,9 +103,9 @@ test('readAuthConfig: a NOMO value wins over the legacy one', () => {
   const config = readAuthConfig({
     ...APPWRITE,
     NOMO_AUTH_SEAL_KEY: SEAL,
-    NOMO_AUTH_SEAL_KEY: 'b'.repeat(64),
+    VOID_AUTH_SEAL_KEY: 'b'.repeat(64),
     NOMO_PUBLIC_ORIGIN: 'https://new.example.test',
-    NOMO_PUBLIC_ORIGIN: 'https://old.example.test',
+    VOID_PUBLIC_ORIGIN: 'https://old.example.test',
   });
   assert.strictEqual(config.sealKey, SEAL);
   assert.strictEqual(config.publicOrigin, 'https://new.example.test');
@@ -144,7 +144,7 @@ test('billingFromEnv: a NOMO name wins over the legacy one', async () => {
   const env = {
     ...POLAR_LEGACY,
     NOMO_POLAR_PRODUCT_TEAM: 'current-team',
-    NOMO_POLAR_PRODUCT_TEAM: 'legacy-team',
+    VOID_POLAR_PRODUCT_TEAM: 'legacy-team',
   };
   assert.strictEqual(await isSubscribed(env, 'current-team'), true);
   assert.strictEqual(await isSubscribed(env, 'legacy-team'), false);
@@ -157,5 +157,5 @@ test('billingFromEnv: an empty NOMO secret does not fall back to the legacy one'
 
 test('signupAllowed: legacy name opens signup, current name closes it again', () => {
   assert.strictEqual(signupAllowed({ NOMO_ACCOUNT_SIGNUP: '1' }), true);
-  assert.strictEqual(signupAllowed({ NOMO_ACCOUNT_SIGNUP: '0', NOMO_ACCOUNT_SIGNUP: '1' }), false);
+  assert.strictEqual(signupAllowed({ NOMO_ACCOUNT_SIGNUP: '0', VOID_ACCOUNT_SIGNUP: '1' }), false);
 });

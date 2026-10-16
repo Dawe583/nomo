@@ -236,8 +236,22 @@ const INVENTORY = {
 
   // Planned NOMO identity MVP deliverables. Remove each entry when its file is
   // created; an inventory entry must not hide a shipped path.
-  "docs/NOMO-LOCAL-IDENTITY-DEMO.md":
-    "planned local demo runbook in the NOMO identity MVP plan; not written yet",
+  "docs/NOMO-FUTURE-DIRECTION.md":
+    "historical line reference only; the file still ships but the cited line is stale",
+  "packages/cli/bin/void.mjs":
+    "legacy launcher name retired with the void-to-nomo rename; the path is historical in distribution docs",
+  "packages/proxy/bin/void-proxy.mjs":
+    "legacy launcher name retired with the void-to-nomo rename; the path is historical in distribution docs",
+  "docs/superpowers/specs/void-1.0.1-product.md":
+    "renamed superseded spec; the path is historical in the release notes",
+  "packages/workbench/src/harness-refinement.ts":
+    "planned module name; the refinement pass lives in harness-runtime.ts instead",
+  "packages/workbench/src/harness-refinement.test.ts":
+    "planned module name; the refinement pass lives in harness-runtime.ts instead",
+  "packages/cli/src/tui/workspace-refinement.test.ts":
+    "planned module name; the refinement pass lives in harness-runtime.ts instead",
+  "packages/workbench/src/harness-retrieval.test.ts":
+    "planned module name; retrieval lives in learned-harness.ts instead",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */
