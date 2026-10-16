@@ -506,7 +506,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             if (observation.reads)
               identity.readSet = observation.reads.map((read) => read.resource);
             identity.writeSet = [...observation.resources];
-            // A null revision is an observation — there was no prior state —
+            // A null revision is an observation, there was no prior state , 
             // and is recorded as such. A revision the adapter did not report
             // at all is an absence, and an absent field is the only honest
             // record of it: canonicalJson refuses undefined, and a signed

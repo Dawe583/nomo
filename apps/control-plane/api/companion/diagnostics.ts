@@ -66,7 +66,7 @@ export function projectDiagnostics(candidates: readonly unknown[]): CompanionDia
 function deviceSummary(session: CompanionSession): string {
   const state = session.scopes.includes(writeScope) ? "active" : "active read-only";
   return displayText.test(session.label) && (session.label.includes(" ") || Array.from(session.label).length < 32)
-    ? `${session.label} — ${state}`
+    ? `${session.label}, ${state}`
     : state;
 }
 

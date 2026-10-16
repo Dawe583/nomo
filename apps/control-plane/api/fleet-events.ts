@@ -4,7 +4,7 @@
  * Task 7 of the identity-fleet plan needs an operator to see one registered
  * agent and its current run, and to stop it with a visible acknowledgement.
  * The ledger records tool-call *evidence*; this store records fleet *state
- * changes* — agent start, run start, tool decision, approval, dispatch result,
+ * changes*, agent start, run start, tool decision, approval, dispatch result,
  * stop request, stop acknowledgement.
  *
  * Metadata-only by construction: the store's input type has no field that

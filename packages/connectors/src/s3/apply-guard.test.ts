@@ -172,7 +172,7 @@ test("a receipt is stored once, in the s3-restore namespace, without its own dig
   // or the two would disagree about what they describe.
   const before = recorder();
   // Two reads, as the code does: the first sees the object as it is now, the
-  // second sees it after the PUT. Both etags matter — the first has to match
+  // second sees it after the PUT. Both etags matter, the first has to match
   // `capturedEtag` or this refuses as drift before it writes anything, and the
   // second is the read-back that becomes the receipt's evidence.
   let reads = 0;

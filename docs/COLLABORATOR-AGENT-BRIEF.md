@@ -1,4 +1,4 @@
-# Collaborator agent brief — NOMO
+# Collaborator agent brief, NOMO
 
 You are a second coding agent working **alongside another agent** on this
 repository. You have no shared conversation with them. Everything you need is
@@ -17,7 +17,7 @@ project conventions and hard constraints that override anything you infer.
 - The site deploys to Vercel **on push to `main`**. Do not also run
   `vercel --prod`; that is a second deployment.
 
-## 2. Branch policy (changed 2026-10-05 — this supersedes older guidance)
+## 2. Branch policy (changed 2026-10-05, this supersedes older guidance)
 
 `AGENTS.local.md` says "work directly on `main`". That is **no longer the
 policy**. The current rule, stated by the owner:
@@ -47,7 +47,7 @@ git push -u origin <short-slug>
   `c4187d1` hook execution on the live dispatch path, plus four follow-ups
   (the `attest()` regression test, a house-style lookup helper, and a test
   that pins the provider dispatch path into the signed chain).
-- `ui/compact-redesign` = `88ad279`, identical to `main`, no unique commits —
+- `ui/compact-redesign` = `88ad279`, identical to `main`, no unique commits , 
   a leftover to delete.
 - `packages/workbench`: 146 tests, 0 failures. Typecheck clean.
 
@@ -81,7 +81,7 @@ You share one working tree. To avoid clobbering each other:
 - **Claim a path before editing it.** Announce it, and do not edit outside
   your claim.
 - **One agent at a time per path.** If you need a path the other agent is
-  working in, wait — do not create a second branch and race.
+  working in, wait, do not create a second branch and race.
 - Never `git checkout`, `git reset --hard`, `git stash`, or `git clean` in this
   repo without confirming the other agent's work is committed first. Those
   destroy uncommitted work that nobody else can recover.
@@ -100,7 +100,7 @@ git push origin --delete <branch> # only after the merge is on origin
 
 Never delete a branch that is not merged into `main` on the remote. Verify
 with `git branch --merged main` first. If a branch holds work nobody merged,
-merge it or ask — do not drop it.
+merge it or ask, do not drop it.
 
 ## 7. Verification before you claim anything works
 
@@ -115,7 +115,7 @@ plainly instead of implying it passed.
 
 Bugs: reproduce before, confirm after. Keep a regression test when it can fail
 for a real reason. A test that passes both before and after a change proves
-nothing — check that.
+nothing, check that.
 
 ## 8. Hard constraints
 
@@ -130,7 +130,7 @@ nothing — check that.
 - Default provider is NVIDIA, model `z-ai/glm-5.3-flash`, endpoint
   `https://integrate.api.nvidia.com/v1`, key only from `NVIDIA_API_KEY` or
   approved local secret storage. Never fall back silently to another provider.
-- `npm` packages ship only what `files:` allows — currently `dist/` alone.
+- `npm` packages ship only what `files:` allows, currently `dist/` alone.
   Anything else in the repo is not in the tarball.
 - Communicate with the owner in concise Czech, preserving full technical
   detail in plans and reports.

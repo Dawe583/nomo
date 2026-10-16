@@ -1,4 +1,4 @@
-# TUI harness map — evidence for "Surface the harness in the TUI"
+# TUI harness map, evidence for "Surface the harness in the TUI"
 
 Reconnaissance only. Every claim carries a `file.ts:line` citation. Anything not
 verifiable from the source is marked **unverified**. Where a comment, a doc or a
@@ -25,7 +25,7 @@ and the barrel `packages/cli/src/tui/index.ts:1-11`.
 | `workspace-proxy.ts` | 132 | `ProxyWorkspace` (`:25`); reads the proxy's own `.jsonl` ledgers and approval dir from disk. |
 | `layout.ts` | 349 | `sanitizeText` (`:19`), `visibleLength` (`:77`), `fit` (`:83`), `unifiedDiff`, `renderHunkSelection`. |
 | `theme.ts` | 126 | `NOMO_PALETTE` (`:7`), class/decision markers (`:27`, `:34`), `paint` (`:87`). |
-| `types.ts` | 143 | `ReversibilityClass`, `CallDecision`, `PipelineStage` — the render model. |
+| `types.ts` | 143 | `ReversibilityClass`, `CallDecision`, `PipelineStage`, the render model. |
 | `caps.ts` | 71 | `detectCapabilities` (`:13`); the only TTY/env reader. |
 | `brand.ts` | 28 | `brandHeader` (`:16`); rasterizes the aperture mark to half blocks. |
 | `watch.ts` | 424 | `renderWatchFrame` (`:284`), `DiffScreenWriter` (`:379`); the alternate-screen watch surface. |
@@ -38,7 +38,7 @@ and the barrel `packages/cli/src/tui/index.ts:1-11`.
 | `fixtures.ts` | 126 | `previewState` (`:5`), `previewHold` (`:121`); invented data for previews. |
 | `preview.ts` | 39 | `tui:preview` entry; renders fixtures, stamps them `illustrative fixture, not a live session` (`:10`). |
 | `README.md` | 122 | Design/visual/responsive contract for the three non-workspace surfaces. |
-| tests | — | `tui.test.ts` (591), `workspace.test.ts` (962), `workspace-parity.test.ts` (1166), `workspace-controls.test.ts` (477), `workspace-mcp.test.ts` (320), `workspace-approval.test.ts` (172), `workspace-terminal.test.ts` (116), `workspace-proxy.test.ts` (77), `live.test.ts` (78), `visual-states.test.ts` (98). |
+| tests |, | `tui.test.ts` (591), `workspace.test.ts` (962), `workspace-parity.test.ts` (1166), `workspace-controls.test.ts` (477), `workspace-mcp.test.ts` (320), `workspace-approval.test.ts` (172), `workspace-terminal.test.ts` (116), `workspace-proxy.test.ts` (77), `live.test.ts` (78), `visual-states.test.ts` (98). |
 
 ### TUI vs. web UI: two surfaces, one backend
 
@@ -50,7 +50,7 @@ They are different surfaces over the same `Workbench` class, and the code says s
 - The web API is an HTTP server over the same class:
   `apps/control-plane/api/server.ts:308-310` calls `options.workbench.agents()`,
   `wb.upsertAgent(...)`, `wb.upsertHook(...)` directly.
-- The React UI is a separate app: `apps/control-plane/ui/src/` (React 19, Vite —
+- The React UI is a separate app: `apps/control-plane/ui/src/` (React 19, Vite , 
   `apps/control-plane/ui/package.json`), plus a server-rendered set of static
   pages in `apps/control-plane/web/` (`ledger.html`, `feed.html`, `approvals.html`).
 - One cross-boundary import exists: the TUI imports `importDesktopProvider` and
@@ -62,7 +62,7 @@ in one direction:** `apps/control-plane/ui/src/pages.tsx:399` exports a `Ledger(
 page too, and `apps/control-plane/web/ledger.html` is a ledger page. A "ledger
 *tab*" with no other qualifier most likely means the TUI's `ledger` tab
 (`packages/cli/src/tui/workspace.ts:44`), because the TUI is the only surface
-that calls its navigation a tab bar — but this is **unverified**: no document in
+that calls its navigation a tab bar, but this is **unverified**: no document in
 the repo ties the todo item to either surface.
 
 ---
@@ -83,12 +83,12 @@ export const WORKSPACE_TABS = [
 
 Render path:
 
-1. `renderWorkspace(ui, columns, rows, …)` — `packages/cli/src/tui/workspace.ts:3075`.
-2. Tab bar, which collapses to a 3-tab window on narrow terminals —
+1. `renderWorkspace(ui, columns, rows, …)`, `packages/cli/src/tui/workspace.ts:3075`.
+2. Tab bar, which collapses to a 3-tab window on narrow terminals , 
    `packages/cli/src/tui/workspace.ts:3180-3199` (`TAB_ICONS`/`TAB_ICON_TONE` per tab).
-3. Body from `lines()` — `packages/cli/src/tui/workspace.ts:2650`, which short-circuits on
+3. Body from `lines()`, `packages/cli/src/tui/workspace.ts:2650`, which short-circuits on
    `confirmation` (`:2651`), then `detail` (`:2656`), then tab-specific branches.
-4. Item rows from `items()` — `packages/cli/src/tui/workspace.ts:936`, one `if`
+4. Item rows from `items()`, `packages/cli/src/tui/workspace.ts:936`, one `if`
    block per tab; each tab with a list pushes `{id,label,lines}`.
 5. `Enter` → `openSelected()` (`packages/cli/src/tui/workspace.ts:1090-1116`); most tabs
    set `this.detail = row.lines` (`:1115`), which takes over the whole body.
@@ -115,7 +115,7 @@ It is **live, not static**: `runWorkspaceTui` polls `ui.refresh()` every 250 ms
 (`packages/cli/src/tui/workspace-runner.ts:1092-1104`), `refresh()` re-reads every
 session's ledger (`:536-571`), and `r` forces a refresh
 (`packages/cli/src/tui/workspace-runner.ts:1019`).
-It is not a stream or a socket — it is a re-read.
+It is not a stream or a socket, it is a re-read.
 
 Two things already hang off this tab:
 
@@ -135,7 +135,7 @@ The type and the Workbench API exist (`packages/workbench/src/agents.ts:13-18`,
 `Hook = {id, event, command, enabled}`; `packages/workbench/src/index.ts:788`
 `upsertHook`, `:755-768` `agents()`).
 
-**Hooks do reach the TUI, but as two slash commands and one JSON file — there is
+**Hooks do reach the TUI, but as two slash commands and one JSON file, there is
 no editor, no tab, no form, and no per-hook interactive field anywhere.**
 
 | what | where | shape |
@@ -146,7 +146,7 @@ no editor, no tab, no form, and no per-hook interactive field anywhere.**
 | help entries | `:2925-2926` | `["/hooks", …]`, `["/hook-file", …]`. |
 
 Nothing in `WORKSPACE_TABS` (`:39-51`) concerns hooks, and `items()` (`:936`)
-has no hooks branch — hooks appear only through `this.detail`, which
+has no hooks branch, hooks appear only through `this.detail`, which
 `lines()` returns before any tab branch (`:2656`).
 
 The web has the API (`apps/control-plane/api/server.ts:308-310`) and a
@@ -192,7 +192,7 @@ has the POST endpoint and no UI for it.
    explicitly allowed by the operator"*; `:277-279` says *"Hook execution is not
    supported on this host."* Both are rendered unconditionally, every render.
 
-4. **The TUI's `/hooks` and `/hook-file` help text is not shown when unsupported** —
+4. **The TUI's `/hooks` and `/hook-file` help text is not shown when unsupported** , 
    `packages/cli/src/tui/workspace.ts:2070-2072` gates the `/hook-file` hint on
    `catalog.hooksSupported`, which `agents()` always sets to `true`, so the hint
    is always shown while `:2926` still advertises `/hook-file` as *"(if supported)"*.
@@ -205,10 +205,10 @@ their own hook runs"*).
 ### 3b. Per-agent profile
 
 `AgentProfile = {id, name, systemPrompt, allowedTools, policyProfile, maxTurns,
-maxContextTokens}` — `packages/workbench/src/agents.ts:3-11`. Validator at `:29`,
+maxContextTokens}`, `packages/workbench/src/agents.ts:3-11`. Validator at `:29`,
 `upsertAgent` at `packages/workbench/src/index.ts:769-781`, catalog at `:755-768`.
 
-**Yes, the TUI surfaces it — read-only, plus `/agent-file` for writes.**
+**Yes, the TUI surfaces it, read-only, plus `/agent-file` for writes.**
 
 | what | where | shape |
 |---|---|---|
@@ -218,7 +218,7 @@ maxContextTokens}` — `packages/workbench/src/agents.ts:3-11`. Validator at `:2
 | no tab | `:39-51` | Not a tab. |
 
 The web is the surface that actually edits profiles as a form:
-`apps/control-plane/ui/src/workspace-controls.tsx:138-266` — a full `<form>` with
+`apps/control-plane/ui/src/workspace-controls.tsx:138-266`, a full `<form>` with
 `systemPrompt` textarea (`:186-193`), `allowedTools` textarea (`:194-203`),
 `policyProfile` select (`:210-223`), `maxTurns` (`:224-234`), `maxContextTokens`
 (`:235-245`), saving via `save(event, "/api/agents", agentInput)` (`:166`).
@@ -231,7 +231,7 @@ the only test of this path. What it pins down: `/agent-file` shows a
 confirmation and writes nothing until confirmed (`:260-263`); a profile's
 `policyProfile: "unrestricted"` is rejected and the stored profile is unchanged
 (`:267-276`); the profile survives a `Workbench` restart (`:277`); and an existing
-conversation keeps its agent (`:264`). It exercises the **file** path only — there
+conversation keeps its agent (`:264`). It exercises the **file** path only, there
 is no TUI test for an interactive profile editor, because none exists.
 
 ### 3c. Learning record on the ledger tab
@@ -245,8 +245,8 @@ return zero. The only `learn` hits are unrelated English in comments (e.g.
 `packages/registry/src/evaluate.ts:109`).
 
 The concept exists only as prose. `docs/LEARNING-STEP-MAP.md:1-3` scopes a
-*different, sibling* todo — *"after-tool hook mines recurring failures and promotes
-them to signed, replayable policy rules"* — and states at `:6`: *"Nothing here is
+*different, sibling* todo, *"after-tool hook mines recurring failures and promotes
+them to signed, replayable policy rules"*, and states at `:6`: *"Nothing here is
 wired."* Its "What does not exist" section (`docs/LEARNING-STEP-MAP.md:~28`)
 already records that `Rule.rationale` (`packages/policy/src/rules.ts:43`) is the
 existing field a learned rule's evidence would belong in.
@@ -286,14 +286,14 @@ The second boundary is the filesystem, for the proxy's own stores:
 an approval decision file (`:129-131`).
 
 **The boundary an editor crosses to write a hook or a profile is therefore one
-synchronous call into an already-constructed `Workbench`** —
+synchronous call into an already-constructed `Workbench`** , 
 `upsertHook(input: unknown): Hook` (`packages/workbench/src/index.ts:788`) or
 `upsertAgent(input: unknown): AgentProfile` (`packages/workbench/src/index.ts:769`).
 Both take `unknown`, both run the validator internally (`validateHook`,
 `packages/workbench/src/agents.ts:75`; `validateAgentProfile`, `:29`), both
 re-persist, and both roll back in memory if `persist()` throws
 (`:779`, `:793`). Both are already reachable from the TUI today at
-`packages/cli/src/tui/workspace.ts:2047` and `:2052` — the only thing missing is
+`packages/cli/src/tui/workspace.ts:2047` and `:2052`, the only thing missing is
 the UI in front of them.
 
 The web crosses the same boundary over HTTP instead:
@@ -309,7 +309,7 @@ reads via `useApi("/api/agents")`.
 |---|---|---|
 | hooks editor | `/hooks` read overlay + `/hook-file <path>.json` write, `packages/cli/src/tui/workspace.ts:2061, 2028` | any interactive field; any tab. The web has `POST /api/hooks` (`apps/control-plane/api/server.ts:310`) with no UI form (`apps/control-plane/ui/src/workspace-controls.tsx:267-287` is read-only). |
 | per-agent profile | `/agents` list (`:881-899`, `systemPrompt` not printed) + `/agent-file` (`:2046-2050`) | any interactive field; any tab. The web has a complete form (`apps/control-plane/ui/src/workspace-controls.tsx:138-266`). |
-| learning record on the ledger tab | `ledger` tab exists and is live (`:968-989`, polled at `packages/cli/src/tui/workspace-runner.ts:1092`) | **the feature itself** — zero learning code in the repo (`docs/LEARNING-STEP-MAP.md:29`: *"There is no learning concept anywhere."*) |
+| learning record on the ledger tab | `ledger` tab exists and is live (`:968-989`, polled at `packages/cli/src/tui/workspace-runner.ts:1092`) | **the feature itself**, zero learning code in the repo (`docs/LEARNING-STEP-MAP.md:29`: *"There is no learning concept anywhere."*) |
 
 ### Three facts that contradict the code (two since fixed)
 
@@ -322,13 +322,13 @@ reads via `useApi("/api/agents")`.
    (`packages/cli/src/tui/workspace.ts:2030, 2065`) unreachable and failed
    `packages/cli/src/tui/workspace-controls.test.ts:280`. The flag is now derived
    from the operator allowlist, so with nothing allowlisted it is `false` again
-   and that test passes **unmodified** — it was right and the constant was wrong.
+   and that test passes **unmodified**, it was right and the constant was wrong.
 3. **Still open.** `apps/control-plane/ui/src/workspace-controls.tsx:271-279`
    renders two contradictory hooks sentences unconditionally, on every render.
    It also has no form, though `POST /api/hooks` exists
-   (`apps/control-plane/api/server.ts:310`) — the listing is read-only.
+   (`apps/control-plane/api/server.ts:310`), the listing is read-only.
 
-The `ledger` tab in the todo item refers to something that **exists** — item 5 of
+The `ledger` tab in the todo item refers to something that **exists**, item 5 of
 `WORKSPACE_TABS` (`packages/cli/src/tui/workspace.ts:44`), rendering live verified
 chain entries (`:968-1006`), polled every 250 ms
 (`packages/cli/src/tui/workspace-runner.ts:1092-1104`).

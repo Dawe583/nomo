@@ -175,7 +175,7 @@ test("operation status, revocation, and diagnostics answer with the exact contra
     assert.equal(entry.id.includes("/"), false);
   }
   assert.ok(body.entries.some(entry => entry.summary === "1 active, 1 revoked"), JSON.stringify(body.entries));
-  assert.ok(body.entries.some(entry => entry.summary === "Hallway iPad — active read-only"), JSON.stringify(body.entries));
+  assert.ok(body.entries.some(entry => entry.summary === "Hallway iPad, active read-only"), JSON.stringify(body.entries));
 });
 
 test("an unknown operation identity is a 404 and never a success", async t => {

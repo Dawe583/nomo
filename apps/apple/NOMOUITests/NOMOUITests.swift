@@ -349,8 +349,8 @@ final class NOMOUITests: XCTestCase {
         let details = element("chat.tool.details")
         XCTAssertTrue(details.waitForExistence(timeout: 5), "Details must open in the bounded notices region.")
 
-        // The details panel may be taller than the region that holds it — that
-        // is the point of a bounded region — so the contract is that the region
+        // The details panel may be taller than the region that holds it - that
+        // is the point of a bounded region - so the contract is that the region
         // stays on screen, stays bounded, and that its first line is reachable.
         let region = scrollView("chat.notices")
         XCTAssertTrue(region.waitForExistence(timeout: 5))
@@ -473,8 +473,8 @@ final class NOMOUITests: XCTestCase {
     /// Tables and code blocks render inside their own horizontal scroll view,
     /// nested in the transcript's vertical one. This pins that a table is laid
     /// out and addressable by its own identifier even though it starts far
-    /// above the fold — a transcript that only fills in as it is scrolled
-    /// reads as a conversation still loading — that it is one narrated element
+    /// above the fold - a transcript that only fills in as it is scrolled
+    /// reads as a conversation still loading - that it is one narrated element
     /// rather than a grid of separately targetable cells, and that the prose
     /// around it is not swallowed into it.
     ///
@@ -507,8 +507,8 @@ final class NOMOUITests: XCTestCase {
         // `MarkdownParser` is a pure value type, so these expectations are
         // checked against its real output rather than against the fixture by
         // eye. Parsing the sample message yields a 4-column table with 3 data
-        // rows, narrated as "Table with 4 columns and 3 rows." — the header
-        // is not counted as a row — and the last data row is "Row 3.". An
+        // rows, narrated as "Table with 4 columns and 3 rows." - the header
+        // is not counted as a row - and the last data row is "Row 3.". An
         // earlier version of this test expected 4 rows and "Row 4", which the
         // parser has never produced.
         XCTAssertTrue(table.label.contains("Table with 4 columns and 3 rows."), "got \(table.label)")

@@ -57,8 +57,8 @@ test("the generic page slot cannot be where that identity is fixed", () => {
   assert.doesNotMatch(pageMap, /\bchat\b/, "chat is not a page-map entry");
   // `PageProps` carries no route parameter, so no page in the map can tell two
   // paths that resolve to it apart. A route-derived key here would be inert for
-  // every page that exists, and would remount one — discarding a typed provider
-  // key, a half-filled connector or an open document review — the first time a
+  // every page that exists, and would remount one, discarding a typed provider
+  // key, a half-filled connector or an open document review, the first time a
   // hand-typed sub-path differed from the bare one.
   const pageProps = ui.slice(
     ui.indexOf("export type PageProps"),

@@ -8,8 +8,8 @@
  *
  * A read names one state of one resource, so exactly one step can have produced
  * it: the last step that wrote that resource before the reader ran. That is the
- * closure this file computes, and it is why the older rule — a read matches
- * every step that wrote the same resource — was wrong twice over. It named a
+ * closure this file computes, and it is why the older rule, a read matches
+ * every step that wrote the same resource, was wrong twice over. It named a
  * producer the reader cannot have read from, and it read a step's own
  * before-image as though it were a read of somebody else's work. Two ordinary
  * writes to one file, which is what a retry or a reformat looks like, were
@@ -169,7 +169,7 @@ export function orderRecoverySteps(facts: readonly ProvenanceFact[]): StepOrderV
  * and resource: a read recorded twice is one claim, not two.
  *
  * A read of a resource the reading step did not write is a consultation, and
- * any step that wrote the resource could have produced what it saw — including
+ * any step that wrote the resource could have produced what it saw, including
  * one that comes later in the journal, which is the case the ordering proof
  * has to refuse.
  *

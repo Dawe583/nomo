@@ -10,8 +10,8 @@
  * difference matters for this data. A ledger-derived lesson repeats its own
  * tool name and class in the title, the content and the identifier, so counting
  * occurrences would rank it above a lesson that actually addresses what the
- * operator asked. `prime-src` scores *field coverage* instead — an entry
- * matching in three fields beats one matching thrice in one — which is why an
+ * operator asked. `prime-src` scores *field coverage* instead, an entry
+ * matching in three fields beats one matching thrice in one, which is why an
  * entry cannot win by being repetitive.
  *
  * Two further properties are carried over rather than reinvented:
@@ -27,11 +27,11 @@
  * the reference does not: **provenance weight**. An entry derived from the
  * signed ledger is an observation; an entry an operator wrote is a decision. The
  * ranking must not pretend they are equally worth showing, and nothing else
- * here can tell them apart once mined — `learned-harness.ts` records where each
+ * here can tell them apart once mined, `learned-harness.ts` records where each
  * came from, so this is where that fact is spent.
  *
  * Nothing here decides. The output is a list to put in a prompt, and the
- * entries it selects are observations, not authority — the same line
+ * entries it selects are observations, not authority, the same line
  * `learned-rules.ts` draws. Ranking by relevance cannot promote an entry into a
  * rule, and the type of the return value says so by carrying no policy at all.
  */
@@ -285,11 +285,11 @@ function clip(entry: HarnessEntry, limit: number): HarnessEntry {
 export function formatForPrompt(ranked: readonly RankedEntry[], at: string): string {
   if (ranked.length === 0) return "";
   const line = ({ entry, score }: RankedEntry) =>
-    `- [${entry.kind}] ${entry.tool} (${entry.klass}) ${entry.content} — ${score.toFixed(2)}`;
+    `- [${entry.kind}] ${entry.tool} (${entry.klass}) ${entry.content}, ${score.toFixed(2)}`;
   const approved = ranked.filter((row) => row.entry.decidedByOperator);
   const mined = ranked.filter((row) => !row.entry.decidedByOperator);
   // Each section header sits directly above its own entries. Emitting both
-  // headers as a group first would leave a reader — including the model —
+  // headers as a group first would leave a reader, including the model , 
   // unable to tell which line a claim applied to, which is the same defect as
   // having one claim for both.
   const lines = [`NOMO learned-entry digest, ${at}.`];

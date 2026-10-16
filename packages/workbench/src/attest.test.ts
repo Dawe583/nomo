@@ -130,7 +130,7 @@ const internalsOf = (app: Workbench) =>
  * The case that does is a workbench that holds evidence it cannot sign with:
  * the chain verifies against a key pinned out of band through
  * `NOMO_VERIFY_KEY`, while the private key directory is not on disk. There the
- * old line called `devKeyProvider`, which creates a key when none exists — it
+ * old line called `devKeyProvider`, which creates a key when none exists, it
  * minted signing capability on the way to answering a read question, and
  * attested with a key that was not the pinned one. The invariant is simply that
  * the keys directory does not exist afterwards.
@@ -174,7 +174,7 @@ test("attest refuses to mint a key for a workbench that cannot sign", async (t) 
   await signer.shutdown();
 
   // 2. Take the private material away. This process can verify the chain and
-  //    can never sign it — the public key is the only thing left.
+  //    can never sign it, the public key is the only thing left.
   const keys = join(directory, "keys");
   await rm(keys, { recursive: true, force: true });
 
@@ -192,7 +192,7 @@ test("attest refuses to mint a key for a workbench that cannot sign", async (t) 
   await app.settled();
   // `start()` mints a fresh `agent-<uuid>` workspace, and a workbench only
   // verifies a ledger it has a document for. Point a session at the restored
-  // workspace so the pinned key is genuinely exercised — otherwise attest
+  // workspace so the pinned key is genuinely exercised, otherwise attest
   // refuses for the wrong reason and proves nothing.
   const w2 = internalsOf(app);
   (w2.sessions as Map<string, unknown>).set("restored", { id: "restored", view: { workspace }, controller: { abort() {} } });

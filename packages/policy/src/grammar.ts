@@ -6,7 +6,7 @@
  * `index.ts` is a barrel that also re-exports the pack loader and the approval
  * broker. Both of those touch the filesystem, so a leaf that imported them for
  * two string constants would drag `node:fs`, `node:path` and `node:url` into
- * every consumer's dependency graph — including the agent-step workflow, whose
+ * every consumer's dependency graph, including the agent-step workflow, whose
  * runtime refuses Node builtins outright. The barrel is the public surface; the
  * grammar is what the modules inside it share.
  */

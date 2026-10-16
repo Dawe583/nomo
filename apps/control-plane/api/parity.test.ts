@@ -86,7 +86,7 @@ test("local agent API persists scoped profiles but cannot enable shell hooks",as
  assert.deepEqual(agents.profiles,[profile]);assert.ok(agents.agents.some(a=>a.id==="reviewer"));assert.equal(agents.hooksSupported,false);
  // `hooksSupported` is derived from the operator allowlist, so it has to be
  // pinned in both directions: false with nothing allowlisted (the line above),
- // and true once a command is — otherwise the flag could be hardcoded and no
+ // and true once a command is, otherwise the flag could be hardcoded and no
  // assertion here would notice.
  const allowed=await listenControlPlane({env:{NOMO_DATA_DIR:directory,NOMO_HOOK_COMMANDS:JSON.stringify(["echo done"])}});
  t.after(async()=>{await allowed.close();});

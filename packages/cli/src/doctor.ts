@@ -266,7 +266,7 @@ export async function runDoctorCommand(
   // `allowDegraded` and the retained key are what make the third state
   // reachable. Without them an operator who set `NOMO_VERIFY_ALLOW_SIGNING_KEY`
   // was reported as `unset` here while every other surface was quietly
-  // verifying with signing key material — so the one command whose job is to
+  // verifying with signing key material, so the one command whose job is to
   // tell an operator they are in a degraded mode was the one that could not
   // see it. `retainedKeyProvider` never creates a key, so asking costs
   // nothing and grants no capability.

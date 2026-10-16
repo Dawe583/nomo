@@ -170,7 +170,7 @@ for (const { why, name } of ACCEPTED_BUT_INERT_NAMES) {
     // `validPath` accepts this name, and that is currently correct: the managed
     // store is an in-memory map keyed by the name, so the name is a label, not a
     // location. What must stay true is that accepting it changes nothing about
-    // the host — the document exists in the map under exactly this key, and the
+    // the host, the document exists in the map under exactly this key, and the
     // same key round-trips through read.
     const written = executeWorkspaceTool(createWorkspace(), {
       id: 'inert',

@@ -146,7 +146,7 @@ is added to it without an index.
 
 ### Row ids are digests
 
-Appwrite caps a row id at 36 characters and the registry's own ids are longer —
+Appwrite caps a row id at 36 characters and the registry's own ids are longer , 
 `aws.ec2.securitygroup.authorize_ingress` is 39. `rowIdFor` uses a SHA-256
 digest of the key rather than a truncation, because a truncation collides
 (two ids sharing a 36-character prefix would overwrite each other silently,

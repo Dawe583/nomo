@@ -11,8 +11,8 @@
  *   for should pause for a human who can undo it, not permanently forbid an
  *   action on the strength of one pattern.
  *
- * Nothing here writes. Promotion — recording the rule into the chain so it
- * survives a restart — is the caller's job, and it goes through `commitWorkspace`
+ * Nothing here writes. Promotion, recording the rule into the chain so it
+ * survives a restart, is the caller's job, and it goes through `commitWorkspace`
  * so the record is signed by the same key as everything else.
  *
  * This is deliberately a pure function over entries. It cannot be trusted to

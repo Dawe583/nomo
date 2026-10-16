@@ -31,7 +31,7 @@ export function statusLabel(
   value: unknown,
   t: Translate,
 ): string {
-  if (value === undefined || value === null || value === "") return "—";
+  if (value === undefined || value === null || value === "") return ", ";
   const text = String(value);
   const labels = LABELS[text];
   return labels ? t(labels[0], labels[1]) : text;

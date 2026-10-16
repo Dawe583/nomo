@@ -16,5 +16,5 @@ test("built-in policy values localize while server-specific values stay unchange
   assert.equal(statusLabel("approved", english), "Approved");
   assert.equal(statusLabel("deny", czech), "Zamítnout");
   assert.equal(statusLabel("future-server-state", english), "future-server-state");
-  assert.equal(statusLabel(undefined, english), "—");
+  assert.equal(statusLabel(undefined, english), ", ");
 });

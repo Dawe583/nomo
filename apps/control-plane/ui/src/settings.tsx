@@ -476,7 +476,7 @@ function Capabilities() {
                 : t("Lokální počítač", "Local computer")}
             </dd>
             <dt>{t("Současné běhy", "Concurrent runs")}</dt>
-            <dd>{query.data.maxActiveRuns ?? "—"}</dd>
+            <dd>{query.data.maxActiveRuns ?? ", "}</dd>
             <dt>{t("Fronta běhů", "Run queue")}</dt>
             <dd>
               {query.data.backgroundQueue
@@ -485,7 +485,7 @@ function Capabilities() {
             </dd>
             <dt>{t("Velikost zprávy", "Message size")}</dt>
             <dd>
-              {query.data.maxPromptCharacters ?? "—"} {t("znaků", "characters")}
+              {query.data.maxPromptCharacters ?? ", "} {t("znaků", "characters")}
             </dd>
             <dt>{t("Přílohy", "Attachments")}</dt>
             <dd>

@@ -8,12 +8,12 @@ those never leave the operator machine.
 
 Tools:
 
-- `nomo_project_info` — what this endpoint is and where recovery runs
-- `nomo_registry_search` — search the reversibility registry
-- `nomo_registry_entry` — one operation's preconditions, inverses, windows
-- `nomo_registry_summary` — registry totals and class distribution
-- `nomo_local_tools` — the local stdio tools with their annotations
-- `nomo_cli_commands` — the CLI command surface
+- `nomo_project_info` ,  what this endpoint is and where recovery runs
+- `nomo_registry_search` ,  search the reversibility registry
+- `nomo_registry_entry` ,  one operation's preconditions, inverses, windows
+- `nomo_registry_summary` ,  registry totals and class distribution
+- `nomo_local_tools` ,  the local stdio tools with their annotations
+- `nomo_cli_commands` ,  the CLI command surface
 
 Everything published here is read out of the NOMO source tree rather than
 written by hand, because a hand-maintained catalogue is a claim about the

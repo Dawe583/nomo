@@ -273,7 +273,7 @@ class ToolCallTest(unittest.TestCase):
         # not in the id. "delete marker" and "lifecycle rule" are the phrases
         # this registry is actually consulted for, and neither appears in any
         # identifier, so a search that only read the id returned nothing at all
-        # for them — indistinguishable from an empty catalogue.
+        # for them ,  indistinguishable from an empty catalogue.
         for phrase in ("delete marker", "lifecycle rule"):
             with self.subTest(phrase=phrase):
                 data = self.payload("nomo_registry_search", {"query": phrase, "limit": 5})
@@ -296,8 +296,8 @@ class ToolCallTest(unittest.TestCase):
 
     def test_registry_search_matches_every_word_not_the_phrase(self) -> None:
         # A person types the words that describe the row, not the literal text of
-        # the row. "stripe refund" appears nowhere as a phrase — the vendor is in
-        # one field and the summary in another — so a substring match answered
+        # the row. "stripe refund" appears nowhere as a phrase ,  the vendor is in
+        # one field and the summary in another ,  so a substring match answered
         # zero for the most obvious query against this registry, while each word
         # on its own found rows. Every word has to match, in any field.
         data = self.payload("nomo_registry_search", {"query": "stripe refund", "limit": 5})

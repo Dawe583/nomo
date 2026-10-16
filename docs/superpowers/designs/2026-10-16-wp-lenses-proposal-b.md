@@ -71,7 +71,7 @@ approval in fixed lens order (lens 1 beats lens 2 beats lens 3).
 Deterministic, no randomness, no operator input.
 
 Rationale and fail direction: the merge itself leans toward learning, which
-is safe here because precision already lives downstream — `validateProposal`
+is safe here because precision already lives downstream, `validateProposal`
 rejects malformed proposals, `kind: "prompt"` edits wait for an operator
 signature, and the cooldown stamps every attempt either way. The reviewer's
 job in this loop is recall (finding lessons worth a human look); the gate and
@@ -81,7 +81,7 @@ disagreement about proposal text, later lenses never overwrite an earlier
 approval, and a lens that approved nothing contributes nothing.
 
 Rejected: unanimity. With three independent decline probabilities almost
-nothing would ever clear, and every armed round would still pay K calls — cost
+nothing would ever clear, and every armed round would still pay K calls, cost
 without value.
 
 ### Decision 3. Fan-out lives in `harness-runtime.ts` `review()`, calling the injected `ask` K times sequentially
@@ -93,7 +93,7 @@ The `ask` closure in `index.ts` is untouched.
 
 Rationale: the injected `ask` is the seam the module was designed around
 ("hand in an asker that counts"), so K calls through it keep cost honesty
-automatic — K usage events, one per call, with zero wiring changes. Sequential
+automatic, K usage events, one per call, with zero wiring changes. Sequential
 await keeps usage-event order deterministic and keeps the K=1 path a single
 unchanged call. The per-session boundary lock (D-8) already serializes
 boundaries, so no new concurrency gate is needed or added.
@@ -118,7 +118,7 @@ The `consumerFile` union in `harness-settings.ts` widens with one member:
 `harness-runtime.ts` gains an exported `resolveLensCount(raw: unknown): number`
 (clamp to 1..3, non-numbers fall back to 1) which `serviceHarnessBoundary`
 reads from a new optional dep `lensCount`. `index.ts` passes
-`lensCount: this.harness.refinementLensCount` — wiring only, no logic there,
+`lensCount: this.harness.refinementLensCount`, wiring only, no logic there,
 so the consumer assertion (which greps the named file for the named symbol)
 holds: `resolveLensCount` is defined in `harness-runtime.ts`.
 
@@ -159,7 +159,7 @@ that every attempt stamps.
   Dissenting declines are appended to the same note string.
 - Usage events are unchanged in shape: K calls produce K `usage` events with
   `source: "harness"` through the existing closure. A lens that never ran
-  (K smaller, or short-circuit never happens — there is none) produces no
+  (K smaller, or short-circuit never happens, there is none) produces no
   event and is never claimed.
 
 Rationale: the outcome vocabulary and ledger event shapes are frozen, and a
@@ -245,17 +245,17 @@ K=1 rows are exactly today's behavior: `A` -> `ran`, `D` -> `declined`,
 
 Happy path, K lenses, gate passed: exactly **K provider calls** and **K
 `usage` events** (`source: "harness"`), one per lens, in lens order. K=1:
-1 call, 1 record — today's accounting to the token.
+1 call, 1 record, today's accounting to the token.
 
 Failure paths:
 
 - Gate held: **0 calls, 0 records** (unchanged; the gate runs once before any lens).
 - One lens errors, another returns a verdict: **K calls attempted, K-1 or
-  fewer records** — only lenses whose `ask` resolved produce usage records; the
+  fewer records**, only lenses whose `ask` resolved produce usage records; the
   errored lens bills nothing and claims nothing.
 - All lenses error: **K calls attempted, 0 verdicts, round `failed`**,
   cooldown stamped once (unchanged single stamp in `serviceTrigger`).
-- Branch moved during fan-out: **up to K calls spent, 0 records applied** —
+- Branch moved during fan-out: **up to K calls spent, 0 records applied** , 
   the merged verdict is discarded, nothing is written, cooldown unstamped
   (today's rule preserved).
 - Post-merge `run` throws on the winning proposal: unchanged `failed` path;

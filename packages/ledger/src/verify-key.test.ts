@@ -251,7 +251,7 @@ describe("the verification vocabulary", () => {
 
   // The word `pinned` is a claim, and this is the claim it makes: that the
   // operator handed the bytes over somewhere the agent cannot reach. The
-  // default trust file does not, so it must never render the word — the exact
+  // default trust file does not, so it must never render the word, the exact
   // defect the audit found in `nomo verify`.
   test("pinned is reserved for keys supplied out of band", () => {
     assert.match(

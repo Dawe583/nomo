@@ -29,7 +29,7 @@ export function recoveryStateLabel(
   };
   const key = String(value ?? "");
   const label = labels[key];
-  return label ? label[locale === "cs" ? 0 : 1] : key || "—";
+  return label ? label[locale === "cs" ? 0 : 1] : key || ", ";
 }
 export type RecoveryReview = {
   phase: "planning" | "ready" | "applying" | "blocked" | "settled";

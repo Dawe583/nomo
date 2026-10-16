@@ -71,7 +71,7 @@ Decision rows append, never rewrite. Evidence appends, never edits.
 - Imports inside packages keep `.ts` extensions.
 - Assertions from `node:assert/strict`.
 - No `enum`, `namespace`, parameter properties or dynamic imports inside the new packages.
-- Dash characters forbidden: `—` and `–`.
+- Dash characters forbidden: `, ` and `-`.
 - Comment earns its place by carrying a constraint, not a restatement of the line.
 
 ## Stopping and honesty rules

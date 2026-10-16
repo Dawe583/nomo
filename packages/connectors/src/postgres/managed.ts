@@ -1432,8 +1432,8 @@ export function managedPostgresAdapter(
           revision: json(state),
           blastRadius: { count: state.rows.length, precision: "exact" },
           // R07: what this call actually read, at the revision it read it.
-          // `inspectState` selects every row it will later write — the target
-          // plus, for a delete, the whole cascade tree it walked — and each
+          // `inspectState` selects every row it will later write, the target
+          // plus, for a delete, the whole cascade tree it walked, and each
           // capture carries that row's own revision from the metadata ledger.
           // Naming them is a claim a reviewer can check against the capture.
           //
@@ -1506,7 +1506,7 @@ export function managedPostgresAdapter(
       //
       // The lock already held here is `prepare`'s own
       // `BEGIN ISOLATION LEVEL SERIALIZABLE` transaction, on this same
-      // connection — so this re-check reads the catalogue under the snapshot
+      // connection, so this re-check reads the catalogue under the snapshot
       // that is about to commit the mutation and its receipt together, rather
       // than under a session that could commit between the read and the write.
       // Taking the metadata tables in an explicit lock mode is the stronger
@@ -1559,8 +1559,8 @@ export function managedPostgresAdapter(
       // make the mutation durable while reconcile answers "unknown" and
       // recover throws an identity mismatch.
       //
-      // RETURNING makes the swallow visible — both constructs yield zero
-      // rows, which is otherwise indistinguishable from a successful write —
+      // RETURNING makes the swallow visible, both constructs yield zero
+      // rows, which is otherwise indistinguishable from a successful write , 
       // and the count has to be asserted here, before the COMMIT, while
       // ROLLBACK is still reachable. Reading the row back afterwards would
       // prove nothing: by then the mutation and the receipt are both durable

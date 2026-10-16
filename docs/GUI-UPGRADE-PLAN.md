@@ -1,4 +1,4 @@
-# NOMO — plán velkého upgradu GUI
+# NOMO, plán velkého upgradu GUI
 
 ## Current contract and delivery boundary
 
@@ -44,9 +44,9 @@ Navázat na aktuální požadavek zaznamenaný v `docs/GUI-RULES.md`: identita N
 
 Hranice, focus a semantické barvy odvodit z existujících CSS proměnných. Kontrast změřit pro reálné kombinace; malé texty alespoň 4,5:1, velké texty a nezbytné UI grafiky alespoň 3:1. Barva nikdy není jediný nositel stavu.
 
-Typografie: systémový sans pro běžné UI a zprávy, současný monospace pro kód, identifikátory a krátké technické štítky. Serif pouze ve welcome a výrazných titulcích; v datových stránkách malé funkční nadpisy. Text zpráv 17/26 px, UI 14–16 px, doplňující metadata 12–13 px. Velké přehledy nesmí být celé drobným monospace písmem.
+Typografie: systémový sans pro běžné UI a zprávy, současný monospace pro kód, identifikátory a krátké technické štítky. Serif pouze ve welcome a výrazných titulcích; v datových stránkách malé funkční nadpisy. Text zpráv 17/26 px, UI 14-16 px, doplňující metadata 12-13 px. Velké přehledy nesmí být celé drobným monospace písmem.
 
-Rozměry: spacing 4/8/12/16/24/32 px; ovladače 44 px, na mobilu preferovat 48 px. Rohy 2 px na tabulkách, 4–6 px na formulářích a dialogu. Kompaktní datové řádky mohou mít 40 px, samostatné dotykové akce stále 44 px. Bez dekorativních gradientů. Pohyb 120–180 ms jen jako odpověď na akci; respektovat reduced motion.
+Rozměry: spacing 4/8/12/16/24/32 px; ovladače 44 px, na mobilu preferovat 48 px. Rohy 2 px na tabulkách, 4-6 px na formulářích a dialogu. Kompaktní datové řádky mohou mít 40 px, samostatné dotykové akce stále 44 px. Bez dekorativních gradientů. Pohyb 120-180 ms jen jako odpověď na akci; respektovat reduced motion.
 
 ## 3. Informační architektura
 
@@ -90,15 +90,15 @@ Chat, přehled a ledger nesmí mít vzájemně odlišné názvy navigace. UI tex
 └────────────────┴──────────────────────────────────────────────────────┘
 ```
 
-Sidebar výchozí 248 px, povoleně 216–300 px; sbalený 64 px. Chat používá `minmax(0,1fr)`, textový sloupec 720–820 px a je vycentrovaný uvnitř pracovní plochy. Inspektor otevřený na vyžádání, výchozí 360 px, rozsah 320–520 px. Resize má klávesnicovou alternativu. Šířky se ukládají lokálně a omezují podle aktuálního viewportu.
+Sidebar výchozí 248 px, povoleně 216-300 px; sbalený 64 px. Chat používá `minmax(0,1fr)`, textový sloupec 720-820 px a je vycentrovaný uvnitř pracovní plochy. Inspektor otevřený na vyžádání, výchozí 360 px, rozsah 320-520 px. Resize má klávesnicovou alternativu. Šířky se ukládají lokálně a omezují podle aktuálního viewportu.
 
 Celý shell má `height:100dvh`, vnořené plochy `min-height:0`. Scrolluje transcript, sidebar a inspektor nezávisle; composer patří do neodscrollovatelného spodního řádku chatu. Na datových stránkách scrolluje obsah tabulky, toolbar zůstává dostupný. Marketingový hero a dlouhý footer uvnitř aplikace odstranit.
 
-### Tablet 768–1279 px
+### Tablet 768-1279 px
 
 Výchozí úzký sidebar 64 px, rozbalení jako overlay. Inspektor se otevírá přes obsah nebo jako samostatná plocha podle dostupné šířky. Neumísťovat ho pod dlouhý transcript. Když chat nemá alespoň 480 px, otevřít dokument místo něj a nabídnout jasný návrat. Ověřit šířky 768, 834, 1024 i landscape.
 
-### Mobil 320–767 px
+### Mobil 320-767 px
 
 ```text
 ┌───────────────────────────────────┐
@@ -119,7 +119,7 @@ Výchozí úzký sidebar 64 px, rozbalení jako overlay. Inspektor se otevírá 
 
 Historie se otevírá v draweru; nikdy nezabírá první čtvrtinu chatu. Vyhledávání historie zůstává dostupné i na mobilu. Dokument nebo diff se otevírá jako celá obrazovka s návratem do stejné konverzace a stejného scrollu. Filtry tabulek otevírat v sheetu, zvolený filtr viditelně ukázat nad výsledky.
 
-Composer: textarea automaticky 1–6 řádků s interním scrollem. Při virtuální klávesnici skrýt spodní navigaci a udržet composer nad klávesnicí. Primárně CSS `dvh` a safe-area; `visualViewport` použít jen pro reprodukovaný problém browseru. Draft i scroll přežijí otočení telefonu a otevření dokumentu. Na mobilu Enter vytvoří nový řádek; odeslání samostatným tlačítkem. Desktop má nastavitelný Enter/Cmd+Enter a respektuje IME composition.
+Composer: textarea automaticky 1-6 řádků s interním scrollem. Při virtuální klávesnici skrýt spodní navigaci a udržet composer nad klávesnicí. Primárně CSS `dvh` a safe-area; `visualViewport` použít jen pro reprodukovaný problém browseru. Draft i scroll přežijí otočení telefonu a otevření dokumentu. Na mobilu Enter vytvoří nový řádek; odeslání samostatným tlačítkem. Desktop má nastavitelný Enter/Cmd+Enter a respektuje IME composition.
 
 Akceptace: na 390 × 844 px lze bez scrollování stránky začít psát a odeslat; historie je dostupná jedním kliknutím. Žádný horizontální overflow celé aplikace na 320 px. Kód a široké tabulky mohou mít vlastní označený horizontální scroll.
 
@@ -155,7 +155,7 @@ Společná tabulka poskytne serverové hledání, řazení, cursor pagination, v
 |---|---|---|
 | Konverzace | Název, projekt, model/provider, stav, poslední změna, počet zpráv | Hledat, štítky, stav, období; připnout, archivovat, exportovat |
 | Běhy | Session, run ID, stav, začátek, trvání, model, kroky, čekání | Běžící/čekající/chybové; detail, zastavit, přejít do chatu |
-| Volání nástrojů | Čas, nástroj, konektor, klasifikace, rozhodnutí, výsledek, trvání | Session, nástroj, R0–R3, allow/hold/deny, výsledek, čas |
+| Volání nástrojů | Čas, nástroj, konektor, klasifikace, rozhodnutí, výsledek, trvání | Session, nástroj, R0-R3, allow/hold/deny, výsledek, čas |
 | Schvalování | Nástroj, důvod, workspace, riziko, expirace, stav, kdo rozhodl | Čekající/odeslané/vyřešené/expirované; detail a jednotlivé rozhodnutí |
 | Dokumenty | Cesta, typ, velikost, revize, změněno, session | Hledat, typ, session; otevřít, porovnat, exportovat |
 | Změny | Operace, dokument, čas, autor/nástroj, evidence, možnost Undo | Dokument, druh operace, session; preview, přejít na ledger |
@@ -293,7 +293,7 @@ Structured event: `id`, `sessionId`, `runId`, `seq`, `at`, `type`, `payload`, `s
 
 Token streaming a streaming událostí jsou dvě různé vrstvy. Provider musí umět číst stream a bezpečně skládat tool-call fragmenty; nástroj se smí spustit teprve po úplném validovaném volání. Workflow přetrvá odpojení browseru. SSE pouze sleduje běh; reconnect nikdy znovu nespustí generaci. Ukládat delty po blocích, ne databázový zápis pro každý token. Konečná zpráva je autoritativní a opraví neúplné delty po reconnectu.
 
-SSE má event ID, heartbeat a obnovu podle posledního potvrzeného seq. Při nedostupnosti použít delta polling: aktivní běh 1–2 s, idle 15–30 s, skrytá karta bez zbytečného obnovování; po návratu okamžitě synchronizovat. Autorizace stejná jako běžné API. Při chybě zobrazit stale timestamp.
+SSE má event ID, heartbeat a obnovu podle posledního potvrzeného seq. Při nedostupnosti použít delta polling: aktivní běh 1-2 s, idle 15-30 s, skrytá karta bez zbytečného obnovování; po návratu okamžitě synchronizovat. Autorizace stejná jako běžné API. Při chybě zobrazit stale timestamp.
 
 ## 12. Persistence, limity a cloud
 
@@ -325,22 +325,22 @@ Vercel CLI podle session hlášení zaostává (`59.11.2` proti `59.16.0`). Pře
 
 ## 14. Implementační etapy
 
-Odhady jsou plánovací rozpětí soustředěné práce, nikoli závazný kalendář. Celkově přibližně 23–41 pracovních dnů pro jednoho vývojáře s agentní asistencí, podle streamingu, migrace a produkčních omezení. Testy jsou součástí každé etapy.
+Odhady jsou plánovací rozpětí soustředěné práce, nikoli závazný kalendář. Celkově přibližně 23-41 pracovních dnů pro jednoho vývojáře s agentní asistencí, podle streamingu, migrace a produkčních omezení. Testy jsou součástí každé etapy.
 
 | Etapa | Rozsah a hlavní soubory | Závisí na | Důkaz dokončení | Odhad |
 |---|---|---|---|---|
-| E0 | Baseline, kontrakty, anonymizované QA datasety, desktop/mobile reference; tests + docs | Tento plán | Reprodukovatelné stavy a seznam stávajících API | 1–2 dny |
-| E1 | TokenRouter preset, serverový default, migrace preference; provider/index/cloud | E0 | Čistý browser volí GLM, živý smoke na preview, stará session beze změny | 1–2 dny |
-| E2 | Vite/React shell, router, login gate, tokens, sidebar/drawer; build/server/desktop | E0 | 320–1920 px, deep link refresh, stejný build v lokálu a preview | 3–4 dny |
-| E3 | Chat Markdown, composer, draft, model picker, tool cards, session správa | E1+E2 | Chat a dokumentový write přes reálné API, focus/scroll/draft zachován | 3–5 dnů |
-| E4 | Structured events, historie, stream adapter, SSE, reconnect, usage | E3 | Přerušit browser, obnovit bez duplicity; cancel a tool fragments správně | 3–6 dnů |
-| E5 | Dokumenty, přílohy, editace s revizí, diff, Undo, větvení | E3+event kontrakt E4 | Změna, konflikt, preview, Undo a ledger navzájem souhlasí | 3–5 dnů |
-| E6 | DataTable, serverové filtry, přehled, runs, ledger, approvals | E2+E4 | Najde se starý záznam mimo první stránku; agregace sedí s API | 3–5 dnů |
-| E7 | Konektory, tool katalog, modely/usage, settings, uložené pohledy | E3+E6 | Skutečné capability, žádné smyšlené ceny, úplné loading/error stavy | 2–4 dny |
-| E8 | Mobilní klávesnice, a11y, dlouhé historie, výkon, CSP a regresní opravy | Průběžně; finálně E1–E7 | Testovací matice níže projde, doložené screenshoty a měření | 3–5 dnů |
-| E9 | Aditivní migrace, Vercel preview, produkční release, rollback smoke | E8 | Funkční produkční story včetně default modelu a Undo | 1–3 dny |
+| E0 | Baseline, kontrakty, anonymizované QA datasety, desktop/mobile reference; tests + docs | Tento plán | Reprodukovatelné stavy a seznam stávajících API | 1-2 dny |
+| E1 | TokenRouter preset, serverový default, migrace preference; provider/index/cloud | E0 | Čistý browser volí GLM, živý smoke na preview, stará session beze změny | 1-2 dny |
+| E2 | Vite/React shell, router, login gate, tokens, sidebar/drawer; build/server/desktop | E0 | 320-1920 px, deep link refresh, stejný build v lokálu a preview | 3-4 dny |
+| E3 | Chat Markdown, composer, draft, model picker, tool cards, session správa | E1+E2 | Chat a dokumentový write přes reálné API, focus/scroll/draft zachován | 3-5 dnů |
+| E4 | Structured events, historie, stream adapter, SSE, reconnect, usage | E3 | Přerušit browser, obnovit bez duplicity; cancel a tool fragments správně | 3-6 dnů |
+| E5 | Dokumenty, přílohy, editace s revizí, diff, Undo, větvení | E3+event kontrakt E4 | Změna, konflikt, preview, Undo a ledger navzájem souhlasí | 3-5 dnů |
+| E6 | DataTable, serverové filtry, přehled, runs, ledger, approvals | E2+E4 | Najde se starý záznam mimo první stránku; agregace sedí s API | 3-5 dnů |
+| E7 | Konektory, tool katalog, modely/usage, settings, uložené pohledy | E3+E6 | Skutečné capability, žádné smyšlené ceny, úplné loading/error stavy | 2-4 dny |
+| E8 | Mobilní klávesnice, a11y, dlouhé historie, výkon, CSP a regresní opravy | Průběžně; finálně E1-E7 | Testovací matice níže projde, doložené screenshoty a měření | 3-5 dnů |
+| E9 | Aditivní migrace, Vercel preview, produkční release, rollback smoke | E8 | Funkční produkční story včetně default modelu a Undo | 1-3 dny |
 
-Každý checkpoint obsahuje demo URL nebo lokální příkaz, reálný dataset, screenshot desktop/mobile, výsledek testu a známé limity. Po dokončení E3 je použitelný nový chat; práce pokračuje E4–E9, aby splnila celé zadání.
+Každý checkpoint obsahuje demo URL nebo lokální příkaz, reálný dataset, screenshot desktop/mobile, výsledek testu a známé limity. Po dokončení E3 je použitelný nový chat; práce pokračuje E4-E9, aby splnila celé zadání.
 
 ## 15. Testovací scénáře a akceptační matice
 

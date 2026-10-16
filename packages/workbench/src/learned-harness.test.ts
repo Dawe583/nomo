@@ -191,7 +191,7 @@ test("a record with no tool or no class cannot be grouped", () => {
 test("entries mined without chain positions cite nothing", () => {
   // `seq` is optional in the ledger type, so mining can see calls that carry
   // no chain position. Such an entry teaches, but nothing about it can be
-  // traced, and refine-pass refuses an edit whose derivedFromSeq is empty —
+  // traced, and refine-pass refuses an edit whose derivedFromSeq is empty , 
   // so mining has to produce the empty citation rather than invent one.
   const withoutSeq = Array.from({ length: 9 }, () => ({
     body: { tool: "fs.write", klass: "r1", decision: "hold:approved" },

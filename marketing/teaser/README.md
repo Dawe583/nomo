@@ -14,14 +14,14 @@ The film combines an original 3D data canyon, hard camera cuts, reverse travel, 
 
 | Time | Message |
 | --- | --- |
-| 0–1.5 s | AI moves fast. |
-| 1.5–3 s | Keep control. The control layer for AI agents. |
-| 3–5.25 s | You approve. Policy checks before tool writes. |
-| 5.25–7.5 s | Every action. On record. Signed, verifiable audit trail. |
-| 7.5–9.75 s | Undo changes. Restore captured, reversible actions. |
-| 9.75–10.5 s | Macro cuts of the extruded NOMO logo. |
-| 10.5–12.375 s | NOMO. Control for AI agents. |
-| 12.375–15 s | NOMO. COMING SOON. |
+| 0-1.5 s | AI moves fast. |
+| 1.5-3 s | Keep control. The control layer for AI agents. |
+| 3-5.25 s | You approve. Policy checks before tool writes. |
+| 5.25-7.5 s | Every action. On record. Signed, verifiable audit trail. |
+| 7.5-9.75 s | Undo changes. Restore captured, reversible actions. |
+| 9.75-10.5 s | Macro cuts of the extruded NOMO logo. |
+| 10.5-12.375 s | NOMO. Control for AI agents. |
+| 12.375-15 s | NOMO. COMING SOON. |
 
 Copy reflects the project's documented capabilities. Undo is explicitly limited to captured, reversible actions. No release date or unsupported guarantee is introduced.
 

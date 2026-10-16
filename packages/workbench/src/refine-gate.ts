@@ -82,7 +82,7 @@ export function resolveRefineGates(raw: Partial<RefineGates> | undefined): Refin
 export type GateInput = {
   /** Gates resolved from settings. */
   readonly gates: RefineGates;
-  /** The trigger is armed — by a compaction. */
+  /** The trigger is armed, by a compaction. */
   readonly pending: boolean;
   /** A review is already retained from an earlier boundary. */
   readonly hasPendingReview: boolean;
@@ -127,7 +127,7 @@ const REFUSAL_TEXT: Record<GateRefusal, string> = {
  *
  * `held: true` means the trigger survives to a later boundary; `held: false`
  * means it is cleared. Only `disabled` and `no-harness-state` clear it, and both
- * are settings problems rather than timing ones — a cooldown or a short turn
+ * are settings problems rather than timing ones, a cooldown or a short turn
  * count will pass, and dropping the trigger on the way would throw away the
  * evidence that something was worth learning.
  *

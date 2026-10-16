@@ -317,8 +317,8 @@ function rate(part: number, whole: number): number {
  * Measure the board over one chain.
  *
  * `cases` groups attempts by case so the interval means what it says. The
- * caller supplies the grouping because only the caller knows what a case is —
- * a workspace, a model run, a day — and this module must not guess: a wrong
+ * caller supplies the grouping because only the caller knows what a case is , 
+ * a workspace, a model run, a day, and this module must not guess: a wrong
  * grouping produces a confident number about the wrong thing.
  */
 export function measureBoard(

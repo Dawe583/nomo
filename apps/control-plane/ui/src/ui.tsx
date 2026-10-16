@@ -533,7 +533,7 @@ export function DataTable({
                       {c.render
                         ? c.render(row)
                         : row[c.key] == null
-                          ? "—"
+                          ? ", "
                           : /^(at|.*At)$/.test(c.key) &&
                               Number.isFinite(Date.parse(row[c.key]))
                             ? new Date(row[c.key]).toLocaleString(

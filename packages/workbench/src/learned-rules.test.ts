@@ -143,7 +143,7 @@ test("the threshold is a count, and a useless one is rejected", () => {
 });
 
 test("learned rules are appended, so an operator's own rule is still reached first", async (t) => {
-  // Nothing here reaches a provider — the workbench is only built so its
+  // Nothing here reaches a provider, the workbench is only built so its
   // evidence map and policy merge exist to be inspected. Without a fetcher
   // `configure` tries a real endpoint and the test fails on the network
   // instead of on the ordering it exists to prove.

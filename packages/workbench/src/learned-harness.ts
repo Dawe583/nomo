@@ -138,7 +138,7 @@ function shapeKey(klass: string, tool: string): string {
 }
 
 /**
- * A content-addressed id. Same observation, same id — on every run and every
+ * A content-addressed id. Same observation, same id, on every run and every
  * machine. A clock here would make two runs over an identical chain produce
  * different entries, and the chain could then not be compared to itself.
  */
@@ -171,7 +171,7 @@ type Group = {
  * `hold:approved` and `hold:denied` are counted apart, and only the first
  * teaches anything. A tool the operator keeps *approving* is a tool the
  * operator has effectively sanctioned, and a harness that learns that is worth
- * far more than one that learns only from refusals — but it is still a note,
+ * far more than one that learns only from refusals, but it is still a note,
  * not a rule, because the operator approving a call once does not mean they
  * approve the next one unattended.
  *
@@ -293,7 +293,7 @@ export type Mined = {
  *
  * `seq` on an entry is optional in the chain type, so a caller may pass
  * entries that carry none. Those still teach, because the shape is legible, but
- * `derivedFromSeq` is then empty and the caller is expected to notice — see
+ * `derivedFromSeq` is then empty and the caller is expected to notice, see
  * `provenanceIsComplete`. The alternative, dropping such entries, would mean a
  * caller that forgets to pass sequences gets silence and reads it as "nothing
  * to learn", which is the failure this reports instead.

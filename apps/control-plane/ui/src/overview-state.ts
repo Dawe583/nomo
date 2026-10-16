@@ -7,7 +7,7 @@ export type OverviewState = {
   /**
    * Fleet view fields (plan Task 7): one registered agent's current run, the
    * stop acknowledgement of this process, and in-flight calls whose result is
-   * not confirmed yet. In flight reads as unknown on purpose — a killed local
+   * not confirmed yet. In flight reads as unknown on purpose, a killed local
    * process cannot prove what an already dispatched call did.
    */
   readonly agentId: string | undefined;

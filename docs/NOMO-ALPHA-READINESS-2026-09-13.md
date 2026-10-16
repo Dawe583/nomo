@@ -50,8 +50,8 @@ k dispozici; placený upgrade nebyl proveden. Staré karty vyžadují jednorázo
 | Oblast / slib | Skutečný stav | Co chybí k deklarovanému produktu |
 | --- | --- | --- |
 | MCP / SDK / HTTP interceptor před libovolným nástrojem | Existuje MCP proxy, TS klient a managed CLI/MCP/runtime. Ochrana platí na zapojené cestě. | Univerzální integrace bez změn, konformance externích nástrojů, vynucená hranice bez obcházení. |
-| R0–R3, preflight, allow/hold/deny | Registry, vyhodnocování faktů a policy fungují; neznámé nástroje se nepovažují za bezpečně vratné. | Deklarace v registru není certifikovaný vykonatelný inverse; doložit schopnosti každého adaptéru. |
-| Měřený blast radius pro každý write, latence 8–40 ms | Existují specializované moduly a omezené SQL kontroly. Není obecná změřená simulace všech providerů. | Skutečné sondy, důkazy měření a benchmark na definovaném prostředí. |
+| R0-R3, preflight, allow/hold/deny | Registry, vyhodnocování faktů a policy fungují; neznámé nástroje se nepovažují za bezpečně vratné. | Deklarace v registru není certifikovaný vykonatelný inverse; doložit schopnosti každého adaptéru. |
+| Měřený blast radius pro každý write, latence 8-40 ms | Existují specializované moduly a omezené SQL kontroly. Není obecná změřená simulace všech providerů. | Skutečné sondy, důkazy měření a benchmark na definovaném prostředí. |
 | Shadow run proti dvojčeti systému | Dílčí podklady; veřejný univerzální tok z webu není dodán. | Bezpečná simulace pro konkrétní adaptéry, měření a propojení s rozhodováním. Nezaručovat bezpečnost prvního spuštění v produkci. |
 | Hold s provisional receipt, agent pokračuje, timer automaticky commitne | Současný hold blokuje; cloud čeká na schválení. Expirace odmítá provedení. | Jde o jinou semantiku: staged execution, provisional výsledky, závislosti a kaskádové zrušení nejsou integrovány. |
 | Compensation compiler pro každý call | Skutečný capture/Undo spravovaných dokumentů, omezené PostgreSQL a souborové adaptéry. | Žádný obecný generátor správných inversí pro libovolný nástroj. Git/revert, rename a další adaptéry zbývají. |
@@ -86,7 +86,7 @@ Undo, obnova stránky a mobilní ovládání. Demo má šest zpráv na návště
 Limity nelze prezentovat jako připravenost na veřejnou zátěž. Free model může
 vypadnout a demo na něj závisí.
 
-Před propagací uvést viditelně: „Alpha — obnova spravovaných dokumentů; obecné
+Před propagací uvést viditelně: „Alpha, obnova spravovaných dokumentů; obecné
 SaaS Undo a další mechanismy jsou ve vývoji.“ Doplnit stručný návod a způsob
 hlášení chyb. Marketingový repozitář nebyl tímto auditem měněn ani nasazen.
 
@@ -109,12 +109,12 @@ Pokračovat existujícím reverse plánem, nikoli kreslit další UI jako náhra
 
 1. Dokončit M1: zbývající crash/persistence scénáře, jasné recovery receipts,
    adapter certifikace a konformance jednotlivých vstupních cest.
-2. Trvalé víceoperační recovery a provenance/taint závislosti (R06–R07).
-3. Skutečné provider adaptéry včetně jejich omezení a inverse testů (R08–R09,
+2. Trvalé víceoperační recovery a provenance/taint závislosti (R06-R07).
+3. Skutečné provider adaptéry včetně jejich omezení a inverse testů (R08-R09,
    zbývající filesystem/Git R05).
-4. Cloudové rozpočty a staged/cascading cancel (R10–R11).
+4. Cloudové rozpočty a staged/cascading cancel (R10-R11).
 5. SDK/CLI kompatibilita, bezpečný remote executor, kompletní exporty a provozní
-   ověření (R12–R14), zákaznické účty a pravdivé produktové dokumenty.
+   ověření (R12-R14), zákaznické účty a pravdivé produktové dokumenty.
 
 ## Důkazy a meze testování
 

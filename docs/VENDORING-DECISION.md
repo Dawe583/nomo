@@ -55,7 +55,7 @@ published `18.6.1`, cloned source `18.6.2`.
 
 ---
 
-### Option A — record provenance only
+### Option A, record provenance only
 
 | Cost                       | Value                                                                                                                                                                                                                      |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,21 +66,21 @@ published `18.6.1`, cloned source `18.6.2`.
 | Left undone                | Rebranding never happens. Nothing is copied, so nothing needs rebinding. The two CLIs remain external binaries at `~/.local/bin/omp` (18.6.1) and `~/.local/bin/prime` (0.9.1), outside the repo and outside any lockfile. |
 
 Existing home for this: `docs/VERSIONING-AND-UPDATE-PLAN.md` and
-`docs/DECISIONS.md` (measured: both exist). No provenance file exists today —
+`docs/DECISIONS.md` (measured: both exist). No provenance file exists today , 
 `ls docs | grep -iE "vendor|licen|provenance|third|attribut"` returns only
 `VERSIONING-AND-UPDATE-PLAN.md` (measured).
 
 ---
 
-### Option B — fork on the owner's GitHub account, depend on the fork
+### Option B, fork on the owner's GitHub account, depend on the fork
 
 | Cost                       | Value                                                                                                           |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Files landing in repo      | 0 source files. A `package.json` dependency line plus lockfile churn.                                           |
 | Lines landing              | ~1 dependency entry; `pnpm-lock.yaml` is currently 173.2 KB and would grow.                                     |
-| New build systems in CI    | none from the fork itself — the fork's CI is upstream's problem, not NOMO's. NOMO installs a published tarball. |
+| New build systems in CI    | none from the fork itself, the fork's CI is upstream's problem, not NOMO's. NOMO installs a published tarball. |
 | Collision with `packages/` | none, unless the fork is consumed via `workspace:`.                                                             |
-| Left undone                | The rebrand still has to happen somewhere. See §2 — it is ~15,949 import statements.                            |
+| Left undone                | The rebrand still has to happen somewhere. See §2, it is ~15,949 import statements.                            |
 
 The structural constraint is measured, not assumed: `omp-src/packages/*/package.json`
 contains **119 `catalog:` references** and **1 `workspace:` reference** across the
@@ -106,7 +106,7 @@ _name_. Renaming a package's `name` field therefore invalidates every
 
 ---
 
-### Option C — port selected capabilities, reimplement in NOMO's idiom
+### Option C, port selected capabilities, reimplement in NOMO's idiom
 
 | Cost                       | Value                                                                                                                                                                                                                                                                                                             |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -123,7 +123,7 @@ toolchain unchanged.
 
 ---
 
-### Option D — vendor both trees under `packages/` with a deep rebrand
+### Option D, vendor both trees under `packages/` with a deep rebrand
 
 This is the most expensive and the only option whose cost is dominated by
 find-and-replace volume.
@@ -133,8 +133,8 @@ find-and-replace volume.
 | Files landing              | Up to **10,104** (`omp-src` 8,651 + `prime-src` 1,453), measured.                                                                                                                                                                                                                   |
 | Lines landing              | ~2.86 M source lines, measured (see Baseline).                                                                                                                                                                                                                                      |
 | Disk in repo               | Up to ~322 MB of working tree, measured (283 + 39), before `node_modules`/build output.                                                                                                                                                                                             |
-| New build systems in CI    | **bun, Rust nightly, Bazel 9.2.0, Nix** — see §2 for the file paths.                                                                                                                                                                                                                |
-| Collision with `packages/` | `packages/cli/src` exists and is one of the ten workspace packages; `check-tests.mjs` reacts to _any_ directory under `packages/` — see §3.                                                                                                                                         |
+| New build systems in CI    | **bun, Rust nightly, Bazel 9.2.0, Nix**, see §2 for the file paths.                                                                                                                                                                                                                |
+| Collision with `packages/` | `packages/cli/src` exists and is one of the ten workspace packages; `check-tests.mjs` reacts to _any_ directory under `packages/`, see §3.                                                                                                                                         |
 | Left undone                | Everything about upstream's release cadence. A vendored tree has to be re-vendored on every upstream bump; measured evidence that this is frequent: `omp-src` is at `18.6.2` and `prime-src/Cargo.toml` declares `version = "0.9.8"` while the installed `prime` binary is `0.9.1`. |
 
 Rebrand volume for D (measured):
@@ -144,12 +144,12 @@ Rebrand volume for D (measured):
 | Occurrences of `oh-my-pi`           | 20,560                           |
 | Occurrences of `@oh-my-pi`          | 18,859                           |
 | Files containing `@oh-my-pi`        | 4,407                            |
-| — in `.ts`                          | 17,359 occurrences / 4,283 files |
-| — in `.tsx`                         | 9 / 9                            |
-| — in `.json`                        | 104 / 19                         |
-| — in `.md`                          | 369 / 79                         |
-| — in `bun.lock`                     | 122 / 1                          |
-| — in `.rs` / `.py` / `.sh` / `.yml` | 21 / 9 / 22 / 2                  |
+|, in `.ts`                          | 17,359 occurrences / 4,283 files |
+|, in `.tsx`                         | 9 / 9                            |
+|, in `.json`                        | 104 / 19                         |
+|, in `.md`                          | 369 / 79                         |
+|, in `bun.lock`                     | 122 / 1                          |
+|, in `.rs` / `.py` / `.sh` / `.yml` | 21 / 9 / 22 / 2                  |
 | Files containing `can1357`          | 236 (1,709 occurrences)          |
 | `prime-agent` occurrences           | 14,118 across 389 files          |
 
@@ -176,7 +176,7 @@ prefixes such as `pi-`, `pi-agent`, `pi-mom`).
 
 ## 2. The two questions that decide B and C
 
-### Q1 — Can `@oh-my-pi` be republished under a different name or scope?
+### Q1, Can `@oh-my-pi` be republished under a different name or scope?
 
 **Answer, from the manifests and the registry: yes, the rename is mechanical and
 does not require owning the `@oh-my-pi` scope. What it costs is 15,949 import
@@ -200,7 +200,7 @@ Evidence:
    **inferred:** publishing under the literal string `@oh-my-pi` would require
    the `can1357` account or an npm-granted publish right on it. Publishing under
    _any other_ name or scope requires nothing from that account.
-3. **The scope name is not load-bearing at runtime — it is a string in a
+3. **The scope name is not load-bearing at runtime, it is a string in a
    specifier.** 15,949 import statements, 16 manifest `name` fields, 12 catalog
    keys. No build-time codegen reads the literal: `git grep` shows the scope
    appearing in `.ts` (imports), `.json` (manifests/catalog), `.md` (docs),
@@ -208,7 +208,7 @@ Evidence:
 4. **Resolution stays local after a rename.** `bun.lock:722` maps
    `@oh-my-pi/pi-tui@catalog:` to `@oh-my-pi/pi-tui@workspace:packages/tui`.
    A renamed package resolves to its renamed workspace entry; nothing is
-   fetched from the registry. (measured; the lockfile consequence is inferred —
+   fetched from the registry. (measured; the lockfile consequence is inferred , 
    `bun.lock` regeneration is required, exact output **unverified** without
    running bun.)
 5. **The distribution name is already free of the scope.** `omp-src/package.json`
@@ -220,7 +220,7 @@ Evidence:
 **unverified:** whether the owner's npm account has any existing scope, org, or
 2FA/publish token configured. Not determinable from this machine.
 
-### Q2 — Which build systems would NOMO's CI have to acquire?
+### Q2, Which build systems would NOMO's CI have to acquire?
 
 **Answer: bun, Rust (nightly), Bazel, and Nix. prime-agent adds only Rust, which
 NOMO already has for its Apple job. The Rust halves of both trees are therefore
@@ -242,12 +242,12 @@ What each upstream needs (measured):
 
 | Tool               | Evidence in `omp-src`                                                                                                                                                              | Evidence in `prime-src`                                                               |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| bun                | `package.json` → `"packageManager": "bun@>=1.4"`; `bun.lock` (157 KB); root `"test": "bun scripts/ci-test-ts.ts local"`                                                            | —                                                                                     |
+| bun                | `package.json` → `"packageManager": "bun@>=1.4"`; `bun.lock` (157 KB); root `"test": "bun scripts/ci-test-ts.ts local"`                                                            |,                                                                                     |
 | Rust nightly       | `rust-toolchain.toml` → `channel = "nightly-2026-08-12"`, components `rustfmt`, `clippy`, `rust-analyzer`, three cross targets                                                     | `.github/workflows/ci.yml` uses `dtolnay/rust-toolchain*`; `install-rust.sh` (123 KB) |
-| Bazel              | `.bazelversion` → `9.2.0`; `MODULE.bazel` (14.6 KB); `MODULE.bazel.lock` (**4.2 MB**); `BUILD.bazel`; `bazel/`; CI runs `bazelisk --bazelrc=… build --config=rustfmt //crates/...` | —                                                                                     |
-| Nix                | `flake.nix` (6.0 KB), `flake.lock` (6.3 KB); `.github/workflows/nix.yml`                                                                                                           | —                                                                                     |
+| Bazel              | `.bazelversion` → `9.2.0`; `MODULE.bazel` (14.6 KB); `MODULE.bazel.lock` (**4.2 MB**); `BUILD.bazel`; `bazel/`; CI runs `bazelisk --bazelrc=… build --config=rustfmt //crates/...` |,                                                                                     |
+| Nix                | `flake.nix` (6.0 KB), `flake.lock` (6.3 KB); `.github/workflows/nix.yml`                                                                                                           |,                                                                                     |
 | Cargo + make       | 17 `crates/*/Cargo.toml`, root `Cargo.toml` 31.3 KB                                                                                                                                | 9 `crates/*/Cargo.toml`, root `Cargo.toml`, `Makefile` (17 targets)                   |
-| Self-hosted runner | `omp-kata` — `runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-22.04' \|\| 'omp-kata' }}`, used by 8 jobs                                                               | `actions/create-github-app-token` (a GitHub App, not a plain `GITHUB_TOKEN`)          |
+| Self-hosted runner | `omp-kata`, `runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-22.04' \|\| 'omp-kata' }}`, used by 8 jobs                                                               | `actions/create-github-app-token` (a GitHub App, not a plain `GITHUB_TOKEN`)          |
 
 Two of these are not merely "new tools" but new **infrastructure**:
 
@@ -277,7 +277,7 @@ packages:
   - apps/control-plane/ui
 ```
 
-The workspace glob is **`packages/*`** — a single-segment glob.
+The workspace glob is **`packages/*`**, a single-segment glob.
 
 **Measured, by running picomatch 4.0.7 (the matcher pnpm bundles via fast-glob)
 against the hypothetical paths from this repo's root:**
@@ -292,12 +292,12 @@ So the answer is neither "ignore" nor "break". It is **partial capture**, and
 that is the worst of the two:
 
 1. **The vendored root is captured.** `packages/*` matches `packages/oh-my-pi/`
-   and `packages/prime-agent/` — depth 1 only. Everything _below_ the vendored
+   and `packages/prime-agent/`, depth 1 only. Everything _below_ the vendored
    root is invisible to pnpm.
 2. **`omp-src` ships a root `package.json`** (`"name": "omp"`, `"private": true`,
    measured), so the captured directory **has a manifest**. `pnpm install
---frozen-lockfile` — the first step of NOMO's `gates` and `hosted-mcp` jobs
-   — would then treat `packages/oh-my-pi` as a NOMO workspace project and pull
+--frozen-lockfile`, the first step of NOMO's `gates` and `hosted-mcp` jobs
+  , would then treat `packages/oh-my-pi` as a NOMO workspace project and pull
    its `dependencies` (measured: `sherpa-onnx`, `sherpa-onnx-darwin-arm64`,
    `sherpa-onnx-node` plus 11 `catalog:` devDependencies) into the NOMO
    lockfile. The `--frozen-lockfile` flag turns that into a hard failure, not a
@@ -306,12 +306,12 @@ that is the worst of the two:
 3. **The 17 real sub-packages are NOT captured**, because they sit at
    `packages/oh-my-pi/packages/*`, which `packages/*` does not match. So pnpm
    would install the vendored root's dependencies while ignoring the 16 nested
-   package manifests — a split state that matches neither the upstream repo's
+   package manifests, a split state that matches neither the upstream repo's
    intent nor NOMO's.
 4. **`prime-src` has no `package.json` anywhere** (`git ls-files | grep -c package.json`
    → `0`, measured). `packages/prime-agent/` matches the glob but has no
    manifest. Whether pnpm skips such a directory silently or errors is
-   **unverified** — it was not tested, because doing so would require writing a
+   **unverified**, it was not tested, because doing so would require writing a
    scratch workspace, which this task's constraints exclude.
 
 ### The collision the brief asked about
@@ -335,8 +335,8 @@ packages. The guard at `:64-73` skips a directory only if it has no
 
 `omp-src`'s root package.json **does** have a `test` script (measured):
 `"test": "bun scripts/ci-test-ts.ts local"`. So a vendored `packages/oh-my-pi/`
-would pass both guards, and `pnpm test` — the third step of `gates`, budgeted at
-25 minutes — would shell out to `bun scripts/ci-test-ts.ts local` inside
+would pass both guards, and `pnpm test`, the third step of `gates`, budgeted at
+25 minutes, would shell out to `bun scripts/ci-test-ts.ts local` inside
 `packages/oh-my-pi/`. On a runner with no `bun` on PATH, that fails. (measured
 that the script exists and what it runs; **inferred** that the failure mode is a
 missing-binary error, since no run was performed.)
@@ -361,7 +361,7 @@ packages/*/src/**/*.js.map
   because that is two levels of `packages/`. (measured, by inspection of the
   pattern shape)
 - `.build/` is ignored, which is where both Bazel and Cargo/SwiftPM place
-  output — convenient, but it also means a vendored `MODULE.bazel` would have its
+  output, convenient, but it also means a vendored `MODULE.bazel` would have its
   `bazel-*` symlink forest ignored by a rule written for Xcode.
 
 ---
@@ -396,7 +396,7 @@ NOMO is Apache-2.0 (`LICENSE`, 11.1 KB, measured) and carries a populated
 `license = "MIT"` (measured).
 
 MIT is compatible with Apache-2.0 for redistribution. **measured:** the
-obligation that does bite is attribution — 236 files mention `can1357`, and
+obligation that does bite is attribution, 236 files mention `can1357`, and
 `omp-src/THIRD-PARTY-NOTICES.txt` is 1.0 MB of upstream third-party notices that
 MIT §"include the copyright notice" makes a redistribution artefact, not a
 discardable build file. **inferred:** a D or B rebrand must regenerate that file.
@@ -415,7 +415,7 @@ package that no longer exists in the workspace.
 Installed `omp` = `18.6.1`. npm `latest` = `18.6.1`. Clone = `18.6.2`, a commit
 (`1c0993c chore: bump version to 18.6.2`) that is ahead of the registry. For
 `prime`: installed `0.9.1`, clone `Cargo.toml` `0.9.8`. **measured.** Any of
-options A–D has to name which of these it is pinned to, and the brief's
+options A-D has to name which of these it is pinned to, and the brief's
 `18.5.1` is not a number that exists anywhere on this machine.
 
 ### 4.6 `packages/cli/src` is modified in the working tree right now
@@ -423,7 +423,7 @@ options A–D has to name which of these it is pinned to, and the brief's
 `git status --short` shows ` M packages/cli/src/tui/workspace.ts` and
 ` M packages/cli/src/tui/workspace-parity.test.ts` (measured). Another agent is
 editing `packages/cli/src` concurrently. **inferred:** any operation that touches
-`packages/cli` — which a naive `git add -A` during a D-shaped vendoring would —
+`packages/cli`, which a naive `git add -A` during a D-shaped vendoring would , 
 is contending with an in-flight edit.
 
 ### 4.7 `.omp/` and `.prime/` already exist in this repo
@@ -432,7 +432,7 @@ NOMO already has `.omp/config.yml` (504 B) and `.omp/WATCHDOG.md` (888 B), plus
 `.prime/agent/` (measured, `ls -la`). `omp-src` also ships a `.omp/` directory
 whose 3 files contain `@oh-my-pi` references (measured, top-level dir tally).
 A vendored `omp-src` would bring a second `.omp/` into the tree. Naming
-collision is **unverified** — depends on where the vendored root lands.
+collision is **unverified**, depends on where the vendored root lands.
 
 ---
 
@@ -446,7 +446,7 @@ collision is **unverified** — depends on where the vendored root lands.
 | New CI tools                            | none | none   | none if TS-only     | bun, Rust nightly, Bazel 9.2.0, Nix, `omp-kata` self-hosted runner, GitHub App token |
 | New CI infrastructure                   | none | none   | none                | self-hosted runner label + GitHub App                                                |
 | Rebrand statements to rewrite           | 0    | 15,949 | 0 (reimplemented)   | 15,949 + 7,814 `prime-agent` refs                                                    |
-| Touches `packages/cli`                  | no   | no     | depends             | **yes** — `check-tests.mjs:53` enumerates all of `packages/`                         |
+| Touches `packages/cli`                  | no   | no     | depends             | **yes**, `check-tests.mjs:53` enumerates all of `packages/`                         |
 | Upstream bumps become manual re-vendors | no   | no     | no                  | **yes**                                                                              |
 
 ## Decision, 2026-10-05

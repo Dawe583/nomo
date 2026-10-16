@@ -30,8 +30,8 @@ const ROOT = "packages";
  * section 5 puts it on.
  *
  * The earlier version of this file classified only `packages/*`, which left the
- * deployed server — the directory that reads provider credentials, holds
- * customer documents and makes the paid entitlement decision — in a directory
+ * deployed server, the directory that reads provider credentials, holds
+ * customer documents and makes the paid entitlement decision, in a directory
  * no decision named and no test asserted. The trap is not that its status was
  * wrong; it is that "nobody decided" and "open" are indistinguishable to every
  * reader and to every tool.

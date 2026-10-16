@@ -70,7 +70,7 @@ export async function applyRestore(store: SnapshotStore, client: S3Client, input
  *
  * This exists because the two call sites disagreed. The guard around the PUT
  * and the guard around the whole restore each classified a 403, and only one of
- * them called it a permission failure — so the same bucket refusing the same
+ * them called it a permission failure, so the same bucket refusing the same
  * write was reported as `permission_denied` or `internal_error` depending on
  * which frame caught it. A refusal reason is what tells an operator whether to
  * fix credentials or investigate a fault, so the two have to agree.

@@ -240,7 +240,7 @@ There is no second push under any of them, and no rebase.
 `recoverRemote` has no managed inverse, so its observation is `r3` and the
 default runtime denies the dispatch: a host has to configure an
 irreversibility budget or a shared budget ledger before it can run at all. The
-adapter's own `recover` refuses with the same reason — deleting or closing a
+adapter's own `recover` refuses with the same reason, deleting or closing a
 published branch is a human decision, not an inverse this adapter performs.
 `reconcileRecovery` returns unknown, because there is no recovery receipt and
 an absent one never authorizes another inverse.

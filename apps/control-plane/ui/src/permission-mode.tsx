@@ -48,7 +48,7 @@ export function resolvePermissionMode(capabilities: PermissionQuery): {
 
 /** The server capability is authoritative. This hook intentionally does not
  * read or write local preferences: a client cannot grant itself permission.
- * There is consequently no setter — a no-op function would only let a caller
+ * There is consequently no setter, a no-op function would only let a caller
  * render a switch that looks operable and is not. */
 export function usePermissionMode(
   capabilities: PermissionQuery,
@@ -101,7 +101,7 @@ function modeWords(
       ? t("vynucuje server", "enforced by server")
       : source === "pending"
         ? t("režim se ověřuje u serveru", "checking the server")
-        : t("server mode unavailable — read-only fallback", "server mode unavailable — read-only fallback");
+        : t("server mode unavailable, read-only fallback", "server mode unavailable, read-only fallback");
   return { label, origin };
 }
 
@@ -143,8 +143,8 @@ export function PermissionModeSwitch({
         </div>
       ) : (
         // No setter, so no radiogroup. A group whose every radio is disabled
-        // announces the authoritative mode as unselectable — the one thing it
-        // actually is not — so the mode is stated as text and the rail on the
+        // announces the authoritative mode as unselectable, the one thing it
+        // actually is not, so the mode is stated as text and the rail on the
         // banner carries the source, as it does everywhere else.
         <p className="muted permission-authority">
           {words.label} · {words.origin}

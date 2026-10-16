@@ -26,7 +26,7 @@ should look. Where a judgement was needed, the answer was to **add the role the
 stylesheet already implied**, and the additions are listed below with the
 measurement that justified each one.
 
-## Hit targets — 52
+## Hit targets, 52
 
 `44px` and `28px` restated in `min-height`, `min-width`, `width` and `height`,
 restating values the document already publishes once as `control.touchPt` 44
@@ -35,7 +35,7 @@ which reads both numbers out of the document rather than restating them.
 `--check` fails rather than writes, and a test asserts the tokens the
 stylesheet reads are the ones the generator declares.
 
-## Corner radii — 59, and the document grew seven roles
+## Corner radii, 59, and the document grew seven roles
 
 The document carried six roles. The stylesheet used fourteen distinct sizes.
 Five mapped exactly; the rest did not, and **the honest answer was that the
@@ -77,7 +77,7 @@ which is what makes a three-corner selection expressible without a role for it.
 `50%` is not a role and never will be: it is a shape, not a size, and five rules
 use it for circles and capsules.
 
-## Syntax colours — 6 literals, 3 roles, and the measurement
+## Syntax colours, 6 literals, 3 roles, and the measurement
 
 These were highlight.js values the document had no role for. Reading them
 changed the conclusion: they are **paired light and dark appearances of three
@@ -101,15 +101,15 @@ appearances before the roles were added:
 
 Every pair exceeds 4.5:1 comfortably and is comparable to `accent` (7.56) and
 `danger` (5.38) on the same backgrounds, so nothing was tuned and nothing was
-invented. Six contrast pairs were added — each role against canvas and against
-surface — and the existing gate recomputes all of them.
+invented. Six contrast pairs were added, each role against canvas and against
+surface, and the existing gate recomputes all of them.
 
 On the Apple side the same three roles were added to the generated Swift module
 and to `NomoPalette.platformColor`, where they resolve to `nil` for the same
 reason `danger` and `good` do: there is no platform semantic colour for source
 punctuation, and taking a default would silently undo a measurement.
 
-## The scrim — 3 literals, 1 role, its own section
+## The scrim, 3 literals, 1 role, its own section
 
 `rgba(18, 16, 10, 0.5)` appeared three times, and it is a full-bleed veil rather
 than a drop shadow. The document's `colour.shadow` family is all
@@ -126,7 +126,7 @@ against surface, which is why it reads as depth rather than as a line.
 ## One dead fallback removed
 
 `color: var(--ink, #252420)` on `.command-palette`. `--ink` is emitted by the
-generator in both appearances, so the fallback can never apply — and it was a
+generator in both appearances, so the fallback can never apply, and it was a
 second copy of a colour the document already states, which is the last thing
 the gate exists to refuse. Removed rather than tokenised, because a fallback for
 a variable that always exists is not a fallback.

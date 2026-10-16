@@ -175,7 +175,7 @@ export function hookArgv(command: string): string[] {
  * refusal, not a shrug. The trade-off is real: a hook whose command was
  * deleted out from under the operator takes every run down with it, which is
  * availability lost for a safety property. The direction taken is fail
- * closed because the opposite failure is silent and unbounded — "the gate
+ * closed because the opposite failure is silent and unbounded, "the gate
  * did not open, so I let it through" is indistinguishable, in the ledger and
  * in the session view, from "the gate opened", and the operator reading
  * afterwards cannot tell which one happened. A refused run is loud, names the
@@ -187,8 +187,8 @@ export function hookArgv(command: string): string[] {
  *
  * `after-tool` and `after-run` observe work that has already happened, so a
  * failure there cannot undo a tool that ran or a run that finished. Those
- * results never change a verdict. They are reported — as a hook result and a
- * session event carrying the exit code, the stdout and the stderr — so a
+ * results never change a verdict. They are reported, as a hook result and a
+ * session event carrying the exit code, the stdout and the stderr, so a
  * failed observer is visible rather than swallowed.
  *
  * The timeout is bounded on both sides: the default is 5s and no operator may
@@ -303,8 +303,8 @@ export function runHook(
  * Learning is off because the demo proves the *transport*: that a harness run
  * reaches the proxy with a server-bound identity and comes back through the
  * same policy and ledger as everything else. Turning learning on would make
- * the demo claim two further things — proposal approval and later-session
- * retrieval — which it has not earned. So `enabled` is required and must be
+ * the demo claim two further things, proposal approval and later-session
+ * retrieval, which it has not earned. So `enabled` is required and must be
  * `false`; a missing field is refused rather than defaulted, because a default
  * is exactly what a later change would quietly flip.
  */

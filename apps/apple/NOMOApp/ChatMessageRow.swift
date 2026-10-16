@@ -3,8 +3,8 @@ import SwiftUI
 /// One transcript entry.
 ///
 /// A user turn is a single short utterance, so it is announced as one combined
-/// element. An assistant turn contains structure — headings, lists, code,
-/// tables — so its role label and its body stay separate and are read in
+/// element. An assistant turn contains structure, headings, lists, code,
+/// tables, so its role label and its body stay separate and are read in
 /// order instead of being flattened into one sentence. A tool call is a state
 /// record, so its summary is one combined element and its disclosure stays a
 /// separate control.
@@ -224,7 +224,7 @@ struct ToolCallCard: View {
             parts.append("\(chatCopy.toolResultLabel): \(result)")
         }
         if let duration = call.durationLabel { parts.append(duration) }
-        return Text(parts.isEmpty ? "—" : parts.joined(separator: " · "))
+        return Text(parts.isEmpty ? ", " : parts.joined(separator: " · "))
     }
 
     private func symbol(for state: ToolCall.State) -> String {

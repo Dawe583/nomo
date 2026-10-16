@@ -40,7 +40,7 @@ _SECURITY = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 class BufferedDispatchContext:
     """Structural ``DispatchContext`` for one buffered request.
 
-    Back-channel is closed by construction — Appwrite cannot hold an SSE stream
+    Back-channel is closed by construction ,  Appwrite cannot hold an SSE stream
     open for server-initiated requests or progress notifications.
     """
 
@@ -77,7 +77,7 @@ class BufferedDispatchContext:
 
 
 def _lowlevel(server: MCPServer) -> Server[Any]:
-    return server._lowlevel_server  # noqa: SLF001 — public API is ASGI-only
+    return server._lowlevel_server  # noqa: SLF001 ,  public API is ASGI-only
 
 
 def _asgi_scope(
@@ -148,7 +148,7 @@ async def _serve_modern(
         if not delivered:
             delivered = True
             return {"type": "http.request", "body": body, "more_body": False}
-        # Buffered runtime — never disconnect mid-handler.
+        # Buffered runtime ,  never disconnect mid-handler.
         await asyncio.sleep(3600)
         return {"type": "http.disconnect"}
 
@@ -212,7 +212,7 @@ async def _serve_legacy(
             lifespan_state=None,
         )
         payload: dict[str, Any] = {"jsonrpc": "2.0", "id": request_id, "result": result}
-    except Exception as exc:  # noqa: BLE001 — map to JSON-RPC error
+    except Exception as exc:  # noqa: BLE001 ,  map to JSON-RPC error
         error = modern_error_data(exc)
         payload = {
             "jsonrpc": "2.0",

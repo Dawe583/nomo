@@ -14,7 +14,7 @@
  * it: it makes **truncation and rewriting of the anchored prefix detectable by
  * whoever holds the anchor**. It does not stop the agent from rewriting local
  * history, and it does not stop the agent from never writing the records it
- * omits — an attacker who runs the agent can simply decline to anchor, and the
+ * omits, an attacker who runs the agent can simply decline to anchor, and the
  * absence of a newer anchor is the signal. This is "detects tampering by a
  * third party, not by the agent itself".
  *

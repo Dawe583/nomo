@@ -179,7 +179,7 @@ class NoSourceAtAllTest(unittest.TestCase):
         # it is the lever this uses: pointing it at a file that does not exist
         # leaves every reader with nothing. Each has to come back empty rather
         # than raise, because a deployed function that raises on a tool call
-        # answers no request at all — and an empty answer is at least an honest
+        # answers no request at all ,  and an empty answer is at least an honest
         # one, which is the difference this module exists to preserve.
         nomo_data.registry_entries.cache_clear()
         nomo_data.registry_summary.cache_clear()

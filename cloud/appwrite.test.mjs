@@ -5,7 +5,7 @@
  * evidence that these shapes are accepted by the real API. These tests exist
  * for the next person, who cannot re-run a live provision casually: they check
  * the shapes the seeder would send, the parser that produces them, and the two
- * rules that are easy to break silently — that a row id fits Appwrite's 36
+ * rules that are easy to break silently, that a row id fits Appwrite's 36
  * character cap, and that a parse which found nothing refuses rather than
  * publishing an empty catalogue.
  *
@@ -80,7 +80,7 @@ test("every column a published query filters by carries an index", () => {
   // The filter is applied to the columns a query actually reads, not to every
   // declared column. A summary and a precondition string are fetched, not
   // searched, and indexing them would write an index over hundreds of bytes per
-  // row to serve a lookup nobody asks for — which is how a table ends up
+  // row to serve a lookup nobody asks for, which is how a table ends up
   // paying write cost for reads it never does. `filters` therefore names the
   // query surface, and a column added to it without an index fails here.
   const FILTERS = {
@@ -330,7 +330,7 @@ test("provisioning refuses any API host the manifest does not name", () => {
   // project key in `x-appwrite-key`, so the host is part of the trust boundary
   // and not a cosmetic setting. HTTPS alone is not enough: a look-alike host
   // is valid HTTPS, and one that also ends in `.appwrite.io` is the shape a
-  // typo takes. This was measured before it was fixed — the endpoint guard
+  // typo takes. This was measured before it was fixed, the endpoint guard
   // accepted `https://fra.cloud.appwrite.io.evil.example/v1` and every request
   // would have carried the key to it.
   for (const value of [

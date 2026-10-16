@@ -161,7 +161,7 @@ struct ChatCopy {
     }
 
     /// One sentence that carries a tool card's whole state, so a screen reader
-    /// user is not left to assemble it from separate fragments — and so the
+    /// user is not left to assemble it from separate fragments, and so the
     /// reason a control is absent travels with the state itself.
     func toolCardSummary(_ call: ToolCall) -> String {
         var parts = ["\(toolCardLabel): \(call.name)", toolStateLabel(call.state)]

@@ -1,5 +1,5 @@
 /**
- * The refinement pass — the only place a token is spent.
+ * The refinement pass, the only place a token is spent.
  *
  * Everything else in the harness is a pure function and this is the exception,
  * which is why the exception is small. `refine-gate.ts` has already decided that
@@ -132,7 +132,7 @@ function readEdit(value: unknown): RefinementEdit {
   const raw = isRecord(value) ? value : {};
   // An absent optional field is left absent, not set to undefined. refineHarness
   // signs the proposal, canonicalJson refuses undefined because it does not
-  // round trip, and JSON.stringify drops the key — so a parser-produced edit
+  // round trip, and JSON.stringify drops the key, so a parser-produced edit
   // would carry three keys a hand-built one never has, and could not be
   // written to the chain at all. Every test builds proposals as literals, so
   // nothing exercised the parsed shape end to end.
@@ -396,8 +396,8 @@ export function applyProposal(
     // An approved prompt edit becomes a workspace-scoped lesson holding the
     // addendum text. The operator approved it, so it applies to later sessions
     // and survives a restart: it is rebuilt from the chain with everything
-    // else. Session scope is a different thing — a mined entry the current
-    // session observed — and that is not restored as active state.
+    // else. Session scope is a different thing, a mined entry the current
+    // session observed, and that is not restored as active state.
     const addendum =
       edit.kind === "prompt" ? edit.promptAddendum ?? "" : edit.content ?? "";
     const id =

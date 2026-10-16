@@ -184,11 +184,11 @@ function Root() {
     if (internal)
       document.title =
         locale === "en"
-          ? "NOMO — Internal component gallery"
-          : "NOMO — Interní galerie komponent";
+          ? "NOMO, Internal component gallery"
+          : "NOMO, Interní galerie komponent";
     else
       document.title =
-        locale === "en" ? "NOMO — Workspace" : "NOMO — Pracovní prostor";
+        locale === "en" ? "NOMO, Workspace" : "NOMO, Pracovní prostor";
   }, [locale, internal]);
   return (
     <Locale value={locale}>

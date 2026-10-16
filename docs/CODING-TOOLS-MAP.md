@@ -1,4 +1,4 @@
-# Coding tools map — evidence for "add coding tools (read, write, search, run)"
+# Coding tools map, evidence for "add coding tools (read, write, search, run)"
 
 Reconnaissance only. Every claim carries a `file.ts:line` citation. Where a claim
 could not be verified from the source it is marked **unverified** rather than
@@ -33,7 +33,7 @@ does initialize + `tools/list` and caps the catalogue at 100 tools.
 
 | Source | Assembled at | How `connectorId` is set |
 | --- | --- | --- |
-| Workspace tools | `packages/workbench/src/index.ts:1082` — `const tools: McpTool[] = [...workspaceTools]` | left `undefined` |
+| Workspace tools | `packages/workbench/src/index.ts:1082`, `const tools: McpTool[] = [...workspaceTools]` | left `undefined` |
 | Confirmed connectors | `packages/workbench/src/index.ts:1086-1093` | `connectorId: connector.id` |
 | SDK/stdio upstream | `packages/workbench/src/index.ts:1094-1101` | `connectorId: "stdio"` |
 
@@ -80,7 +80,7 @@ This is the load-bearing gate for question 2. See below.
 
 ### Two filters sit between the catalogue and the model
 
-- `toolAllowedInMode` (`packages/workbench/src/index.ts:1420-1422`) — outside
+- `toolAllowedInMode` (`packages/workbench/src/index.ts:1420-1422`), outside
   `normal` mode, only `nomo_workspace_list` and `nomo_workspace_read` survive,
   and only when `connectorId` is unset.
 - The agent-profile allowlist, applied at session construction
@@ -125,11 +125,11 @@ is on the host. What enforces the property is three structural facts:
 merely absent-from-the-catalogue for everything else.** The distinction matters
 because the catalogue is assembled in one place (`:1082-1101`) from three
 sources, and an operator-configured MCP upstream is one of them. If the operator
-configures an upstream that itself touches the host, the model gets that tool —
+configures an upstream that itself touches the host, the model gets that tool , 
 NOMO proxies it (`:2487-2519`) but does not remove its capability. The
 security review already states this in the open:
 
-> `packages/security-notes.md:12-14` — "A local upstream running as the proxy OS
+> `packages/security-notes.md:12-14`, "A local upstream running as the proxy OS
 > user is not sandboxed. It can read that user's files."
 
 The comment's phrasing "no shell or filesystem authority" is therefore accurate
@@ -197,7 +197,7 @@ a stricter posture than the policy package's `unknown`-class opt-in
 
 **A hypothetical `read`/`search` coding tool would need a decision the existing
 scale does not make for it.** Under `workspaceToolClass`'s shape it would be
-r0 (read) and r1 (write) — but r0 is *allowed with no hold at all* under
+r0 (read) and r1 (write), but r0 is *allowed with no hold at all* under
 `DEFAULT_POLICY`:
 
 ```
@@ -208,7 +208,7 @@ version: 1 / rules: / class: r0 → allow / {} → hold, seconds: 300, notify: [
 So a `read`/`search` tool at r0 would bypass the hold path entirely, and a
 `write`/`run` tool at r1 would be held only because the catch-all holds
 everything non-r0, not because any rule names writes. **`blast_radius` is the
-only lever that separates small from large within a class** — and the workbench
+only lever that separates small from large within a class**, and the workbench
 hardcodes `blastRadius: 1` for workspace calls
 (`packages/workbench/src/index.ts:2477`), so that lever is inert for workspace
 tools today.
@@ -224,7 +224,7 @@ but have separate ledgers, separate storage and separate entry points.
 
 | Step | Where |
 | --- | --- |
-| Decision becomes a hold | `decide()` returns `{ kind: "hold", seconds, notify, ruleIndex, rationale }` — `packages/policy/src/decide.ts:183-189` |
+| Decision becomes a hold | `decide()` returns `{ kind: "hold", seconds, notify, ruleIndex, rationale }`, `packages/policy/src/decide.ts:183-189` |
 | The pre-decision record is written first | `packages/workbench/src/index.ts:2332-2344` (`commitWorkspace` with `decision.kind`) |
 | Hold object created, keyed `${sessionId}:${uuid}` | `packages/workbench/src/index.ts:2346-2362` |
 | Session event + persisted state | `:2363-2364` |
@@ -248,7 +248,7 @@ below. The workbench returns `isError` content with `denialText`
 | Decision record written **before** the verdict | `packages/proxy/src/forward/tools.ts:112-122` |
 | Hold parks the call; capture gate runs on approval | `:179-236` |
 | `hold:approved` / `hold:denied` / `hold:expired` written to the proxy ledger | `:207-215`, `:224-232` |
-| `HoldQueue.hold` — the blocking primitive | `packages/policy/src/hold.ts:112-139` |
+| `HoldQueue.hold`, the blocking primitive | `packages/policy/src/hold.ts:112-139` |
 | `HoldQueue.resolve` | `packages/policy/src/hold.ts:142-147` |
 | Broker registration + notification fan-out | `packages/policy/src/approvals.ts:214-234` |
 | Broker `decide` resolves the queue and persists | `packages/policy/src/approvals.ts:236-257` |
@@ -257,7 +257,7 @@ below. The workbench returns `isError` content with `denialText`
 
 `HoldDeniedError` is only thrown when the upstream reports `result: "denied"` or
 `"expired"` (`packages/sdk/src/client.ts:566`). The workbench deliberately does
-**not** trust that typed error on its own — it requires fresh, verified,
+**not** trust that typed error on its own, it requires fresh, verified,
 digest-matching proxy evidence:
 
 ```ts
@@ -273,7 +273,7 @@ throw new UnknownToolOutcome();
 
 ### C. Where the operator decides
 
-- `Workbench.decide(id, { kind: "approved" | "denied", by, reason })` —
+- `Workbench.decide(id, { kind: "approved" | "denied", by, reason })` , 
   `packages/workbench/src/index.ts:1334-1363`. Mutates the in-memory hold,
   persists, and on failure rolls the status back (`:1350-1355`). Falls through
   to the SDK client for proxy holds (`:1358-1362`).
@@ -312,11 +312,11 @@ match key (`:18-24`). `isMatchKey` is the only gate (`grammar.ts:55-57`).
 
 | Field | Matches on | Comparison |
 | --- | --- | --- |
-| `class` | `PolicyCall.klass` — "the reversibility class the evaluator decided, or the assumed worst" (`decide.ts:24`) | `r0\|r1\|r2\|r3\|unknown`, or a list = any of (`rules.ts:144-146`) |
+| `class` | `PolicyCall.klass`, "the reversibility class the evaluator decided, or the assumed worst" (`decide.ts:24`) | `r0\|r1\|r2\|r3\|unknown`, or a list = any of (`rules.ts:144-146`) |
 | `tool` | registry entry id, e.g. `aws.s3.object.delete` (`decide.ts:18`) | exact string, list = any of |
 | `connector` | "the connector of the intercepted server, for example s3 or postgres" (`decide.ts:20`) | exact string, list = any of |
 | `workspace` | "the workspace tag the proxy was started with, if any" (`decide.ts:22`) | exact string; `undefined` never matches (`decide.ts:87`) |
-| `blast_radius` | rows/files/objects the call would touch (`decide.ts:26`) | **only** `{ lt: number }` — `rules.ts:23-26`, `decide.ts:90-95`; `gt` is rejected by the validator (`rules.ts:114-133`) |
+| `blast_radius` | rows/files/objects the call would touch (`decide.ts:26`) | **only** `{ lt: number }`, `rules.ts:23-26`, `decide.ts:90-95`; `gt` is rejected by the validator (`rules.ts:114-133`) |
 
 Matcher: `matchesOne` (`packages/policy/src/decide.ts:69-99`), first match wins
 (`:163-191`). Keys AND together (`:35` comment on `RuleMatch`); an undefined
@@ -324,7 +324,7 @@ call-side value is a non-match, not a match-all (`:73-75`).
 
 ### Can a policy express "read is fine but write needs an operator"?
 
-**Yes, on tool name or class — but not on argument paths.**
+**Yes, on tool name or class, but not on argument paths.**
 
 - By tool name: `match: { tool: fs_file_read }` → `allow`, plus a catch-all
   `hold`. This is expressible today.
@@ -332,7 +332,7 @@ call-side value is a non-match, not a match-all (`:73-75`).
   and is what `DEFAULT_POLICY` does.
 - **By argument path: not expressible.** No match key reads `call.arguments`.
   `PolicyCall` (`packages/policy/src/decide.ts:16-34`) carries no arguments at
-  all — they exist on `HeldCall` (`packages/policy/src/hold.ts:30`), which is
+  all, they exist on `HeldCall` (`packages/policy/src/hold.ts:30`), which is
   built *after* the decision, only so the operator and the model can read them.
   The class note at `decide.ts:17` is explicit that a class is an *evaluation
   result*, so any path-dependent distinction has to be expressed as distinct
@@ -352,15 +352,15 @@ prospective. Not checked against code.
 
 | Mechanism | Exists | Scope | Reachable by a model? |
 | --- | --- | --- | --- |
-| Managed workspace documents | `packages/workbench/src/workspace.ts`, adapter `packages/workbench/src/managed-documents.ts:25-29` | In-memory/`workspace.enc` string map, 256 kB/doc, 100 files (`workspace.ts:24`) | **Yes** — `nomo_workspace_*` |
+| Managed workspace documents | `packages/workbench/src/workspace.ts`, adapter `packages/workbench/src/managed-documents.ts:25-29` | In-memory/`workspace.enc` string map, 256 kB/doc, 100 files (`workspace.ts:24`) | **Yes**, `nomo_workspace_*` |
 | Managed documents recovery runtime | `packages/workbench/src/index.ts:1875-1932` (`documentRuntime`) | Journal + vault under the data dir | Operator-only (`planRecoveryJob`/`applyRecoveryJob`/`undo`) |
-| `NOMO_LEDGER_DIR` | `packages/workbench/src/index.ts:1074`, `:2282` | Ledger JSONL path; read at `:2287`, verified at `:2305` | No — NOMO reads its own ledger |
+| `NOMO_LEDGER_DIR` | `packages/workbench/src/index.ts:1074`, `:2282` | Ledger JSONL path; read at `:2287`, verified at `:2305` | No, NOMO reads its own ledger |
 | `homedir()` uses | `:435` (data dir default), `:1074` (ledger default), `:2282` (ledger default), `:2303` (key dir) | Path defaults only | No |
 | `NOMO_UPSTREAM_COMMAND` | Parsed `:1049-1065`, requires `NOMO_POLICY_PATH` `:1064-1065`, spawned via `packages/sdk/src/client.ts:272-278` | Arbitrary operator-named MCP server command, run as the host user | Its tools reach the model as `connectorId: "stdio"` |
 | `NOMO_HOOK_COMMANDS` | `packages/workbench/src/index.ts:637-655`, spawn at `packages/workbench/src/agents.ts:237` | Exact-command-string allowlist from the launcher; comment at `:626-636` explains why it is env-only | Hooks observe; `before-run` can refuse a run (`:2644-2648`) |
-| `filesystem.managed` adapter | `packages/connectors/src/filesystem/managed.ts:41-51` | Real host filesystem, but confined to one `realpath`'d root with a directory identity check (`:47-51`, `:76-86`) | **No** — CLI `nomo recovery` only |
-| `git.managed` adapter | `packages/connectors/src/git/managed.ts`, capability `packages/cli/src/conformance.ts:201-216` | One cooperative POSIX repo; explicitly excludes remotes, hooks, arbitrary git, history rewriting | **No** — CLI `nomo recovery` only |
-| Recovery MCP server | `packages/cli/src/recovery-mcp.ts:313-440`, launched by `nomo recovery serve` (`packages/cli/src/recovery.ts:316-332`) | `nomo_execute`, `nomo_recovery_plan`, `nomo_reconcile`, and the job tools — this *is* a host-filesystem tool surface, and it is model-shaped | **No** — a separately launched stdio MCP server, not in `Workbench`'s catalogue |
+| `filesystem.managed` adapter | `packages/connectors/src/filesystem/managed.ts:41-51` | Real host filesystem, but confined to one `realpath`'d root with a directory identity check (`:47-51`, `:76-86`) | **No**, CLI `nomo recovery` only |
+| `git.managed` adapter | `packages/connectors/src/git/managed.ts`, capability `packages/cli/src/conformance.ts:201-216` | One cooperative POSIX repo; explicitly excludes remotes, hooks, arbitrary git, history rewriting | **No**, CLI `nomo recovery` only |
+| Recovery MCP server | `packages/cli/src/recovery-mcp.ts:313-440`, launched by `nomo recovery serve` (`packages/cli/src/recovery.ts:316-332`) | `nomo_execute`, `nomo_recovery_plan`, `nomo_reconcile`, and the job tools, this *is* a host-filesystem tool surface, and it is model-shaped | **No**, a separately launched stdio MCP server, not in `Workbench`'s catalogue |
 | Self-update via git | `packages/cli/src/update.ts:186-198` | `NOMO_HOME` clone, argument-array git only | No |
 
 The recovery path is the closest precedent and it is instructive: `nomo recovery
@@ -398,28 +398,28 @@ Classification knowledge for host operations exists. Execution surface does not.
 
 ## Comment vs. code
 
-1. **`packages/workbench/src/index.ts:337-338`** — "Model tools always cross the
+1. **`packages/workbench/src/index.ts:337-338`**, "Model tools always cross the
    existing NOMO SDK." Only `connectorId === "stdio"` tools cross the SDK
    (`:2487`). Workspace tools execute in-process (`:2520-2543`); connector tools
    go over plain HTTPS via `rpc` (`:2588`). "A provider has no shell or
    filesystem authority" is true of the model's *tool surface* and false of the
-   *process* — `NOMO_UPSTREAM_COMMAND` (`:1051`) and `NOMO_HOOK_COMMANDS`
+   *process*, `NOMO_UPSTREAM_COMMAND` (`:1051`) and `NOMO_HOOK_COMMANDS`
    (`:637`) both spawn host processes as the operator's user, which
    `packages/security-notes.md:12-14` already concedes.
 
-2. **`packages/workbench/src/index.ts:1125`** — the system instruction tells the
+2. **`packages/workbench/src/index.ts:1125`**, the system instruction tells the
    model "These tools do not access the host filesystem." True for
    `nomo_workspace_*`. It is the *only* statement of the property the model
    receives, and it is a prompt, not an enforced invariant. The enforced
    invariant is the positional-name mapping (`:2739-2744`).
 
-3. **`packages/workbench/src/index.ts:2477`** — workspace calls are given
+3. **`packages/workbench/src/index.ts:2477`**, workspace calls are given
    `blastRadius: 1` unconditionally, so the `blast_radius` match key
    (`packages/policy/src/grammar.ts:22`) can never discriminate a workspace
    call by size. The key is documented as usable
    (`docs/HANDBOOK.md:120`) and is inert on this path.
 
-4. **`packages/workbench/src/tool-catalog.ts:12`** — external tools are
+4. **`packages/workbench/src/tool-catalog.ts:12`**, external tools are
    displayed with `klass: 'policy'` rather than a measured class, because
    classification happens at execution time (comment at `:11`). The UI therefore
    cannot show a class for a connector or stdio tool before it runs, while
@@ -427,7 +427,7 @@ Classification knowledge for host operations exists. Execution surface does not.
    "always written as text".
 
 5. **`packages/workbench/src/index.ts:2571-2574`** vs
-   **`cloud/steps.mjs:36-39`** — both deny unclassifiable tools, and
+   **`cloud/steps.mjs:36-39`**, both deny unclassifiable tools, and
    `cloud/steps.mjs:31-34` explains why built-in workspace tools get no
    exemption. Consistent. Noted because the *reason* given in that comment
    ("returning `allow` for built-ins would let the agent write managed documents
@@ -436,7 +436,7 @@ Classification knowledge for host operations exists. Execution surface does not.
    agent-profile path at `:2477-2479` classifies built-ins rather than exempting
    them.
 
-6. **`packages/workbench/src/index.ts:2547-2550` vs `:1807-1810`** — connector
+6. **`packages/workbench/src/index.ts:2547-2550` vs `:1807-1810`**, connector
    classification is run twice, once with empty arguments for the preview and
    once with real arguments for execution. Where arguments change the class, the
    preview and the decision disagree. Unverified whether any connector's registry
@@ -464,7 +464,7 @@ Classification knowledge for host operations exists. Execution surface does not.
 
 Read-only recon, second pass. **Line numbers in this appendix were re-verified
 against the working tree after the concurrent `packages/workbench/src/` edit;
-the numbers in sections 1–6 above predate it and have drifted by roughly +9
+the numbers in sections 1-6 above predate it and have drifted by roughly +9
 lines in `index.ts`.** See the drift table at the end of this appendix.
 
 Short answer: **no.** The no-host-filesystem property is guarded by one
@@ -474,7 +474,7 @@ pinned by exactly one test.
 
 ## 1. Tests that would fail if a filesystem-touching tool entered the managed set
 
-### `safety-boundaries.test.ts` — asserts nothing about the tool set
+### `safety-boundaries.test.ts`, asserts nothing about the tool set
 
 Four tests, none of which mentions a tool, a catalogue, a path, or a filesystem.
 What they actually assert:
@@ -490,7 +490,7 @@ This file is about **recovery and lifecycle state machines**. A fifth workspace
 tool, or a workspace tool that touches the host, would not fail any of these.
 The file name over-promises relative to its contents.
 
-### `permission-authority.test.ts` — the closest thing, and it is about *mode*, not *filesystem*
+### `permission-authority.test.ts`, the closest thing, and it is about *mode*, not *filesystem*
 
 Five tests. The two that touch the tool catalogue:
 
@@ -525,12 +525,12 @@ to `permissionMode !== "normal"`, where `toolAllowedInMode`
 (`packages/workbench/src/index.ts:1425-1427`) already hardcodes
 `tool.name === "nomo_workspace_list" || tool.name === "nomo_workspace_read"`.
 The test is asserting the output of a name allowlist, and would fail if that
-allowlist changed. It says nothing about whether those tools touch the host — a
+allowlist changed. It says nothing about whether those tools touch the host, a
 host-touching `nomo_workspace_read` would sail through it. The model-call test
 at `:42-61` asserts only that the managed document map is still empty; it does
 not assert that any file outside the data directory is untouched.
 
-### The connector-consent tests — adjacent and weaker, exactly as suspected
+### The connector-consent tests, adjacent and weaker, exactly as suspected
 
 ```ts
 // packages/workbench/src/connector.test.ts:80-83
@@ -566,9 +566,9 @@ This is the strongest existing guard, and it is a *unit* test of
 is `executeWorkspaceTool(..., name: 'nomo_workspace_write')`
 (`workspace.test.ts:5-7`). It proves `/etc/passwd` and `../secrets` are refused
 **as document names inside the managed map**. It does not prove that
-`nomo_workspace_read` — or any other tool in the set — goes through `validPath`.
+`nomo_workspace_read`, or any other tool in the set, goes through `validPath`.
 `validPath` is called once, unconditionally, at
-`packages/workbench/src/workspace.ts:44`, before the read/write/delete branch —
+`packages/workbench/src/workspace.ts:44`, before the read/write/delete branch , 
 so today every path-taking workspace tool shares it. That sharing is structural,
 not tested.
 
@@ -598,26 +598,26 @@ unmodified after a model tool call.
 exact four names as a set. The frozen `as const` (`workspace.ts:30`) is a
 TypeScript type-level guarantee, not a runtime one.
 
-The four assertions that touch the set are all *relative* — they compare the set
+The four assertions that touch the set are all *relative*, they compare the set
 against itself, so they hold for any membership:
 
 | Assertion | Why it does not pin membership |
 | --- | --- |
-| `tool-catalog.test.ts:39` — `assert.deepEqual(snapshot.tools.map(t => t.name), workspaceTools.map(t => t.name))` | compares the runtime catalogue to `workspaceTools` itself; true for 4 tools or 40 |
-| `tool-catalog.test.ts:8-10` — indexes `tools[2]` and `tools[4]` | a *fifth* tool would still be `tools[4]`; the impersonation fixture appends one entry and this passes |
-| `tool-catalog.test.ts:17` — `assert.equal(filterCommands(tools, '/').length, 4)` | this is a count, but it counts `filterCommands(workspaceTools, '/')` — i.e. the literal — **not** the dispatched catalogue. Adding a fifth workspace tool *would* fail this one line. It is an incidental count inside a slash-search test (`tool-catalog.test.ts:15-23`) whose subject is the filter, not the set. |
-| `apps/control-plane/api/parity.test.ts:66` — `assert.deepEqual(tools.tools.map(t => t.name), ["nomo_workspace_list", "nomo_workspace_read"])` | pinned, but only in read-only mode, i.e. the output of the same `toolAllowedInMode` name allowlist as `permission-authority.test.ts:37` |
-| `agents.test.ts:38` and `:42` — `assert.equal(tools.length, 1)` | a profile whose `allowedTools` is `["nomo_workspace_list"]` (`agents.test.ts:12`) filters the set down to one. True for any set size |
-| `workspace.test.ts:70-72` — `assert.equal(workspaceToolClass('shell'), undefined)` | the only negative class assertion, and it uses a name that is not in the set |
+| `tool-catalog.test.ts:39`, `assert.deepEqual(snapshot.tools.map(t => t.name), workspaceTools.map(t => t.name))` | compares the runtime catalogue to `workspaceTools` itself; true for 4 tools or 40 |
+| `tool-catalog.test.ts:8-10`, indexes `tools[2]` and `tools[4]` | a *fifth* tool would still be `tools[4]`; the impersonation fixture appends one entry and this passes |
+| `tool-catalog.test.ts:17`, `assert.equal(filterCommands(tools, '/').length, 4)` | this is a count, but it counts `filterCommands(workspaceTools, '/')`, i.e. the literal, **not** the dispatched catalogue. Adding a fifth workspace tool *would* fail this one line. It is an incidental count inside a slash-search test (`tool-catalog.test.ts:15-23`) whose subject is the filter, not the set. |
+| `apps/control-plane/api/parity.test.ts:66`, `assert.deepEqual(tools.tools.map(t => t.name), ["nomo_workspace_list", "nomo_workspace_read"])` | pinned, but only in read-only mode, i.e. the output of the same `toolAllowedInMode` name allowlist as `permission-authority.test.ts:37` |
+| `agents.test.ts:38` and `:42`, `assert.equal(tools.length, 1)` | a profile whose `allowedTools` is `["nomo_workspace_list"]` (`agents.test.ts:12`) filters the set down to one. True for any set size |
+| `workspace.test.ts:70-72`, `assert.equal(workspaceToolClass('shell'), undefined)` | the only negative class assertion, and it uses a name that is not in the set |
 
 So the accurate statement is: **`workspaceTools` is frozen only in the type
-system. One line — `tool-catalog.test.ts:17` — would incidentally fail on a
+system. One line, `tool-catalog.test.ts:17`, would incidentally fail on a
 fifth tool, and it would fail for the wrong reason** (a slash-filter count), with
 no message about tool membership.
 
 ## 3. Is the alias invariant tested?
 
-**Yes — one test, and it is a good one.**
+**Yes, one test, and it is a good one.**
 
 ```ts
 // packages/workbench/src/policy-review.test.ts:89-113
@@ -642,7 +642,7 @@ test("a tool the provider invented never reaches the connector", async (t) => {
 Three assertions: the session fails, the connector is never asked to run
 anything, and the refusal names itself. `callingProvider`
 (`policy-review.test.ts:42-67`) lets the fixture pick the name to return, and
-the test picks the literal `"not_in_catalog"` — a name no `tool_${index}` alias
+the test picks the literal `"not_in_catalog"`, a name no `tool_${index}` alias
 can produce. The alias mapping it exercises is
 `packages/workbench/src/index.ts:2663-2665`; the refusal is
 `packages/workbench/src/index.ts:2752-2757`.
@@ -651,14 +651,14 @@ Two limits worth stating:
 
 - It runs with a **confirmed connector** in the fixture, so the proved path is
   "an invented name never reaches an external connector." It does not prove the
-  invented name cannot reach the **in-process** workspace executor — that branch
+  invented name cannot reach the **in-process** workspace executor, that branch
   is structurally unreachable because the `mapping.get` failure throws before
   `executeTool` is called (`index.ts:2752-2757` precedes `:2771`), but no test
   drives a workspace-only session with a fabricated name.
 - It does not test that a **valid-looking** alias (`tool_7`) cannot be used to
   index past the end of the catalogue. `mapping.get("tool_7")` returns
   `undefined` for a four-tool catalogue, so it is refused, but only by the same
-  `if (!name)` check — **unverified** whether any test exercises an
+  `if (!name)` check, **unverified** whether any test exercises an
   in-range-but-wrong alias.
 
 `packages/workbench/src/provider-native.test.ts:12` and `:17-19` use `tool_0`
@@ -678,7 +678,7 @@ changed. The shape that satisfies both halves of the question:
 1. **Drive the real dispatch path, not `executeWorkspaceTool` directly.** Use the
    existing `Workbench` fixture with a `callingProvider`-style fetcher
    (`policy-review.test.ts:42-67`) that emits the write tool with a **host path**
-   as its argument — `/etc/passwd`, `../../.ssh/id_rsa`, `~/Library/...` — the
+   as its argument, `/etc/passwd`, `../../.ssh/id_rsa`, `~/Library/...`, the
    argument a real host-touching tool would receive.
 2. **Canary the host, don't assert on the error.** Plant marker files at those
    paths (or under a temp root standing in for `/etc`) before the call, then
@@ -686,7 +686,7 @@ changed. The shape that satisfies both halves of the question:
    `validPath` refuses the path (`workspace.ts:106-109`) and fails on the day a
    tool reaches past that check.
 3. **Enumerate the set rather than hardcoding it.** `for (const tool of
-   workspaceTools)` — a fifth tool is simply covered, not failed. The test then
+   workspaceTools)`, a fifth tool is simply covered, not failed. The test then
    passes the day a coding tool is added and keeps passing the day one is
    removed, which is the whole point of the question.
 4. **Include the connector and stdio sources in the same canary**, using the
@@ -696,12 +696,12 @@ changed. The shape that satisfies both halves of the question:
 
 The existing `permission-authority.test.ts:42-61` is the closest prior art and
 shows exactly the weakness: it asserts `app.workspace(session.id).files` is
-`{}` — the managed map, which a host-touching tool would leave empty too. The
+`{}`, the managed map, which a host-touching tool would leave empty too. The
 assertion has to be on something the tool *could* have modified outside that map.
 
 **Cheapest form that is still discriminating:** extend the loopback fixture at
 `policy-review.test.ts:11-38` to also record any request NOMO's own process
-makes to a path outside `NOMO_DATA_DIR` — or, simpler and with no new harness,
+makes to a path outside `NOMO_DATA_DIR`, or, simpler and with no new harness,
 assert on the *return shape*: that a host-shaped path argument produces an
 `isError` result whose text is `validPath`'s message
 (`workspace.ts:107`), for **every** tool in the enumerated set. That fails the
@@ -710,7 +710,7 @@ needs no filesystem canary at all.
 
 ## Drift: `index.ts` line numbers, before and after the concurrent edit
 
-Sections 1–6 of this document were written against the pre-edit tree. The
+Sections 1-6 of this document were written against the pre-edit tree. The
 concurrent change to `packages/workbench/src/` shifted `index.ts` by +5 to +9.
 `workspace.ts`, `mcp.ts`, and all test files cited here are unchanged.
 
@@ -736,7 +736,7 @@ concurrent change to `packages/workbench/src/` shifted `index.ts` by +5 to +9.
 
 ## What was built
 
-`packages/workbench/src/workspace-tools-guard.test.ts` — option (A) only, and
+`packages/workbench/src/workspace-tools-guard.test.ts`, option (A) only, and
 only for the source NOMO owns.
 
 It drives the real `executeWorkspaceTool`, enumerates `workspaceTools` rather
@@ -786,8 +786,8 @@ This is **not** a traversal. The managed store is
 `Readonly<Record<string, string>>` (`workspace.ts:16-19`); the name is a map
 key, never a location, and nothing resolves it against `node:fs`. Refusing `~`
 and `C:` would be a rule about shell expansion and Windows path roots rather
-than about the document namespace, and `validPath`'s own error message — "Use a
-relative document path without traversal or reserved segments" — does not claim
+than about the document namespace, and `validPath`'s own error message, "Use a
+relative document path without traversal or reserved segments", does not claim
 to cover them.
 
 So the honest statement is two-part, and the guard now asserts both halves
@@ -796,8 +796,8 @@ classes it is written for, and the two names it does not refuse stay inert
 because they are opaque keys. The second half is now a test, not a comment.
 
 **Verdict on the question asked:** no workspace tool validates fewer inputs
-than `validPath` does. All three path-taking tools — `nomo_workspace_read`,
-`nomo_workspace_write`, `nomo_workspace_delete` — refuse all nine hostile
+than `validPath` does. All three path-taking tools, `nomo_workspace_read`,
+`nomo_workspace_write`, `nomo_workspace_delete`, refuse all nine hostile
 classes identically, because `validPath` is called once, unconditionally, at
 `workspace.ts:44`, ahead of every branch. The gap was in the *premise* of the
 first draft, not in the source.
@@ -810,7 +810,7 @@ reversible edit to `packages/workbench/src/workspace.ts`, reverted by hand. No
 
 **First attempt was a false pass, and the reason is worth recording.** Adding a
 fifth tool to the `workspaceTools` literal alone did **not** fail the path
-assertions — only the class assertion fired:
+assertions, only the class assertion fired:
 
 ```
 ✔ nomo_workspace_read_host refuses parent segments escape the document namespace (0.032125ms)
@@ -859,6 +859,6 @@ First failure, unedited:
   - true
 ```
 
-Reverted, and `git diff packages/workbench/src/workspace.ts` is empty — an exact
+Reverted, and `git diff packages/workbench/src/workspace.ts` is empty, an exact
 revert, confirmed byte-for-byte rather than by inspection. Guard green again at
 33 tests, 0 failures.

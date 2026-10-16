@@ -45,7 +45,7 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
     view.error
       ? `Read failed: ${sanitizeText(view.error)}. Press v to retry.`
       : view.page?.signed
-        ? `Signatures checked — ${view.verificationStatus ?? "against a key of unstated origin"}`
+        ? `Signatures checked, ${view.verificationStatus ?? "against a key of unstated origin"}`
         : "Integrity only. Signatures have not been checked.",
     // Which key that was, on the same screen as the boolean. "Checked" and
     // "checked against a key this process could also have replaced" are not

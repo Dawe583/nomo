@@ -5,7 +5,7 @@
  * into it, so this asserts on what the two real verifiers do with a real file
  * rather than on the function in isolation:
  *
- *   1. a reversal as the first entry in a chain — there is nothing earlier to
+ *   1. a reversal as the first entry in a chain, there is nothing earlier to
  *      name, so the claim cannot be checked and must not be accepted;
  *   2. a reversal that names itself;
  *   3. a reversal that names a record later in the same file.

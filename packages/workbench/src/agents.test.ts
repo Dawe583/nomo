@@ -13,8 +13,8 @@ const profile={id:"custom",name:"Custom",systemPrompt:"Only inspect",allowedTool
 async function fixture(t:import("node:test").TestContext,fetcher:typeof fetch,hookCommands:string[]=[],hookTimeoutMs?:number){
  // The allowlist is supplied the way an operator supplies it: in the runtime
  // environment the launcher passes, never on the workbench API surface. It
- // travels as `extraEnv`, which the fixture merges with — rather than in place
- // of — `NOMO_DATA_DIR`.
+ // travels as `extraEnv`, which the fixture merges with, rather than in place
+ // of, `NOMO_DATA_DIR`.
  const f=await isolatedWorkbench(t,fetcher,{
   NOMO_HOOK_COMMANDS:JSON.stringify(hookCommands),
   ...(hookTimeoutMs===undefined?{}:{NOMO_HOOK_TIMEOUT_MS:String(hookTimeoutMs)}),
@@ -110,7 +110,7 @@ test("compaction metadata survives restart without rewriting ledger evidence",as
 // A hook is a real process, so these tests spawn real ones. Each command is a
 // Node script written into the fixture directory; the marker file it touches is
 // how a test proves a process ran, and its absence is how a test proves one
-// did not — an assertion on a thrown Error alone would pass just as well
+// did not, an assertion on a thrown Error alone would pass just as well
 // against an implementation that never spawns anything at all.
 async function hookScript(directory:string,name:string,body:string){
  const path=join(directory,`${name}.mjs`);
@@ -201,7 +201,7 @@ test("a hook that never exits is killed and does not hang the run",async t=>{
  // Bounded twice over: the operator's 300ms applies to the run, and the
  // assertion proves the loop returned on its own rather than waiting on a
  // process that will never end. The generous ceiling is a flake guard, not
- // the expected value — a hung runner would sit here until node's own timeout.
+ // the expected value, a hung runner would sit here until node's own timeout.
  assert.equal(f.app.get(session.id)?.status,"failed");
  assert.ok(elapsed<15_000,`run took ${elapsed}ms`);
  const result=await agents.runHook({id:"hang",event:"before-run",command,enabled:true},{},{timeoutMs:150});

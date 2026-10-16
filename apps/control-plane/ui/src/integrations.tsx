@@ -183,7 +183,7 @@ export function Integrations() {
                 </p>
                 {integration.connected && (
                   <p className="muted">
-                    {integration.toolCount ?? integration.tools?.length ?? "—"}{" "}
+                    {integration.toolCount ?? integration.tools?.length ?? ", "}{" "}
                     {t("nástrojů", "tools")}
                     {integration.connectedAt
                       ? " · " +
@@ -388,8 +388,8 @@ function ClientSetup({
               maxLength={80}
               pattern="([a-z0-9]|-){1,80}"
               title={t(
-                "1–80 malých písmen a–z, číslic nebo pomlček.",
-                "1–80 lowercase letters a–z, digits, or hyphens.",
+                "1-80 malých písmen a-z, číslic nebo pomlček.",
+                "1-80 lowercase letters a-z, digits, or hyphens.",
               )}
               autoComplete="off"
               autoCapitalize="none"
@@ -475,7 +475,7 @@ export function IntegrationContext({
                 <li key={integration.id}>
                   <strong>{integration.name}</strong>
                   <span>
-                    {integration.toolCount ?? integration.tools?.length ?? "—"}{" "}
+                    {integration.toolCount ?? integration.tools?.length ?? ", "}{" "}
                     {t("nástrojů", "tools")}
                   </span>
                 </li>

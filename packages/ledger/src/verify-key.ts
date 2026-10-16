@@ -25,8 +25,8 @@
  * Substitution is therefore detectable **only** by a holder of a key that was
  * obtained out of band and never written to a file the agent can reach:
  * `NOMO_VERIFY_KEY`, or a trust file at a path under `NOMO_TRUST_DIR` that the
- * agent process has no credentials for. For everyone else — including every
- * install using the default path — the signature still proves close to nothing
+ * agent process has no credentials for. For everyone else, including every
+ * install using the default path, the signature still proves close to nothing
  * against the agent itself, because the recorder, the signer and the verifier
  * are one OS principal in every shipped topology
  * (docs/THREAT-MODEL.md §1.1). This is "detects tampering by a third party,
@@ -63,7 +63,7 @@ export const SIGNING_KEY_ENV = "NOMO_SIGNING_KEY";
  *
  * It leads with the opt-in, not with the explanation, because an operator who
  * lands in this mode by accident cannot find the switch that put them there
- * and every one of these surfaces truncates this line to the terminal width —
+ * and every one of these surfaces truncates this line to the terminal width , 
  * the tail is what gets cut, so the actionable part has to be at the front.
  * This is the only place the degraded mode is described; every surface renders
  * this string rather than restating it.
@@ -591,7 +591,7 @@ export type SigningKeyIdsInLedgersOptions = {
  *
  * This is the question a trust anchor has to answer for itself. Whether a key
  * has signed anything is a fact about the ledgers, not about the key file, so
- * it is read out of the `key_id` the entries record — the same field a
+ * it is read out of the `key_id` the entries record, the same field a
  * verifier resolves against, and the field whose mismatch produces `entry 1
  * has no public key for ...`. A pin whose key id appears nowhere here anchors
  * a key that has signed nothing, which a reader cannot see from the trust

@@ -1,4 +1,4 @@
-# Mobile ASCII delivery — 13 September 2026
+# Mobile ASCII delivery, 13 September 2026
 
 ## Scope and evidence
 

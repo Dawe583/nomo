@@ -13,7 +13,7 @@
  * transaction boundary, the same row triggers, the same foreign-key cascade
  * and the same version 2 recovery metadata the adapter uses against a server,
  * with no service to start. What it cannot prove is anything about a
- * networked cluster — replication, disk exhaustion, a server this fixture did
+ * networked cluster, replication, disk exhaustion, a server this fixture did
  * not create. Those stay the real-server certification gate, and nothing here
  * claims to have crossed it.
  */
@@ -103,7 +103,7 @@ const persisted = (dir: string) => {
  * The identity the conformance profile binds, read from the factory rather
  * than written out: the adapter derives its id from the workspace, so a
  * profile that spelled the concatenation by hand would assert a string no
- * code checks. Building the adapter does no I/O — `connect` runs per request,
+ * code checks. Building the adapter does no I/O, `connect` runs per request,
  * and the refusal below names that precondition instead of quietly answering
  * from a closure that could never work.
  */

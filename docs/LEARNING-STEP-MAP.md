@@ -40,7 +40,7 @@ loaded from operator YAML. Everything below is new.
    is a *safety* outcome, not a model mistake, and probably should not teach a
    rule.
 
-2. **What counts as recurring.** Over the whole chain is wrong — old resolved
+2. **What counts as recurring.** Over the whole chain is wrong, old resolved
    incidents stay in the chain forever. Needs a window: recent N entries, a time
    span, or a repeat count since the last promotion. Decide and write down which.
 
@@ -52,21 +52,21 @@ loaded from operator YAML. Everything below is new.
 
 4. **What "replayable" requires.** For replay to mean anything, the rule must be
    reconstructible from the signed chain alone. That means the ledger entry has
-   to carry the whole `Rule`, and loading has to include a pass over the chain —
+   to carry the whole `Rule`, and loading has to include a pass over the chain , 
    which means `decide()` can no longer be pure over YAML alone.
 
 5. **Rule precedence.** `decide()` takes the **first** matching rule. A learned
    rule appended after the operator's rules never fires for a tool the operator
    already matches; placed before, it can shadow deliberate operator intent.
    A learned rule is evidence, not authority, so it should not be allowed to
-   override — but then it only ever fires in gaps, which is also where it is
+   override, but then it only ever fires in gaps, which is also where it is
    useful.
 
 ## The hook is the wrong place for this, today
 
 Hooks are external processes allowlisted by the operator. The payload at
 `packages/workbench/src/index.ts:2454` carries no `argsDigest`, no entry `hash`, and no ledger path, so
-an external process cannot correlate anything across runs — it sees one event,
+an external process cannot correlate anything across runs, it sees one event,
 with no history and nothing to key on.
 
 Either the learner is in-process (a method on `Workbench`, reading
@@ -77,7 +77,7 @@ the ledger location and the entry digest. The first is simpler and is what the
 ## Adjacent defect found while mapping this
 
 `packages/workbench/src/index.ts:2308` calls `retainedSigner(join(homedir(), ".nomo",
-"keys"))` with the operator's home hardcoded — it ignores `NOMO_LEDGER_DIR`,
+"keys"))` with the operator's home hardcoded, it ignores `NOMO_LEDGER_DIR`,
 which line 2287 in the same function respects. `~/.nomo/keys/dev-ed25519.pkcs8`
 exists on this machine, so any test that reaches the stdio branch reads real
 signing key material, and `devKeyProvider` will create one if it is missing.

@@ -38,32 +38,32 @@ This section is the research note for how NOMO's user surfaces are
 developed day to day, so that opening one does not require remembering
 undocumented incantations. Today's surfaces and their direct entrypoints:
 
-- **TUI** — `pnpm tui` (alias of `nomo` with no arguments:
+- **TUI**, `pnpm tui` (alias of `nomo` with no arguments:
   `packages/cli/bin/nomo.mjs` calls `withDefaultTui` and dispatches to
   `packages/cli/src/tui/*`). Tests: `pnpm test:tui` (node --test for
   `packages/cli/src/tui/workspace*.test.ts` plus
   `python3 scripts/src/verify-tui-terminal.py`). The workspace TUI has its own
   `README.md` visual contract (inline call, watch frame, hold prompt) and
   parity tests.
-- **Desktop (native)** — `pnpm desktop` runs `apps/desktop dev`:
+- **Desktop (native)**, `pnpm desktop` runs `apps/desktop dev`:
   `pnpm prepare:runtime && tauri dev`. In order it needs: root
-  `pnpm install --frozen-lockfile --ignore-scripts` (**first** — without it
+  `pnpm install --frozen-lockfile --ignore-scripts` (**first**, without it
   `desktop:test` fails with `Cannot find package 'node-sql-parser'`),
   `pnpm desktop:setup` (pnpm install inside `apps/desktop` with
   `--ignore-workspace`), and a working Rust MSVC toolchain + VS C++ build
   tools for `cargo` (per-shell env loader in `vsenvs.ps1`). Tests:
   `pnpm desktop:test`, `cargo test`.
-- **Desktop (smoke)** — same binary accepts `--smoke-test`, `--smoke-mobile`
+- **Desktop (smoke)**, same binary accepts `--smoke-test`, `--smoke-mobile`
   (visible 390 × 844 window), `--smoke-runtime-exit`. These start the bundled
   Node 24 runtime, load the local UI, exercise a download and exit with a
   code; they exist so CI and release packaging can gate on real behaviour. The
   Windows gate is open until a green installed `--smoke-test`.
-- **Web control plane / mobile shell** — `pnpm dev:web` (dev server for
+- **Web control plane / mobile shell**, `pnpm dev:web` (dev server for
   `@nomo/control-plane-ui`), `pnpm gui` (build the web UI and serve it),
   `pnpm build` (production nitro build). Mobile layout is the same UI at a
   narrow viewport (see `docs/MOBILE-WEB-REFINEMENT.md`): chat-first header,
   bottom sheets, options in a mobile popover, bottom composer.
-- **Watch / inline wrapper** — `pnpm watch` opens the second-terminal watch
+- **Watch / inline wrapper**, `pnpm watch` opens the second-terminal watch
   frame for a session that also runs inline output in the first. The same
   renderers (`renderInlineCall`, `renderWatchFrame`, `renderHoldPrompt`) are
   shared: TUI is three surfaces of one contract, not three implementations.
@@ -71,7 +71,7 @@ undocumented incantations. Today's surfaces and their direct entrypoints:
 **Keeping this ergonomic long term:** run `pnpm install` at the workspace
 root first; keep the desktop README's per-surface smoke flags next to the
 dev commands; and make the Windows smoke export check target a tool the
-no-credential smoke workspace actually exposes — the 2026-10-04 Windows smoke
+no-credential smoke workspace actually exposes, the 2026-10-04 Windows smoke
 failure came from the smoke expecting `/nomo_workspace_write` under
 `.command-trigger` while the fresh smoke workspace renders only the
 no-provider workspace, not from Node, packaging or the WebView2 download
@@ -170,7 +170,7 @@ desktop window is a local operator surface, so `launch_runtime` in
 `apps/desktop/src-tauri/src/main.rs` now sets
 `NOMO_PERMISSION_MODE=normal` for the bundled Node runtime (accepted by
 `serverPermissionMode`). The mobile smoke also bit on a stale selector:
-it clicked `.mobile-action-list .theme-toggle`, which no longer exists —
+it clicked `.mobile-action-list .theme-toggle`, which no longer exists , 
 the current theme control is the button labelled "Toggle theme" in the
 mobile options popover. That probe now matches on `aria-label`, so both
 smoke legs are green again on current source.
@@ -178,7 +178,7 @@ smoke legs are green again on current source.
 Next for the Windows gate:
 - Windows desktop gate now has current-source Windows 11 evidence: MSVC
   build, `cfg(windows)` Rust tests 20/20, `desktop:test` 9/9, silent NSIS
-  install to `%LOCALAPPDATA%\NOMO`, and BOTH installed smokes green —
+  install to `%LOCALAPPDATA%\NOMO`, and BOTH installed smokes green , 
   `%LOCALAPPDATA%\VOID\nomo-desktop.exe --smoke-test` and `--smoke-mobile`:
   bundled Node runtime, real WebView render, byte-exact Blob export, mobile
   toolbar. Packaging/smoke packaging is ready for a human to run the manual

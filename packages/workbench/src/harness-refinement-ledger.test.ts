@@ -513,7 +513,7 @@ test("a read-only workbench refuses a refinement, because it signs a record", as
 test("a restart keeps the environment that refused the refinement", async (t) => {
   // `reopen` used to rebuild the environment by hand, which dropped
   // `extraEnv`: the reopened workbench came back in `normal` mode and signed
-  // the very record the original refused. The refusal is the witness — a
+  // the very record the original refused. The refusal is the witness, a
   // reopened workbench that had lost its mode would happily sign here.
   const { session, closeOriginal, reopen } = await fixture(
     t,

@@ -1310,7 +1310,7 @@ a boundary drawn in advance. It cannot move a boundary already crossed, and
 granted, in a package whose completeness §5 amendment two promises. The
 operational test in this section reaches the same answer from its own direction:
 could a solo developer protecting one Postgres do their job without the
-cross-record dependency graph? Yes — the hold, the approval, the ledger, the
+cross-record dependency graph? Yes, the hold, the approval, the ledger, the
 verification and the captured inverse all stay open, and
 `docs/RECOVERY-CONTRACT.md` records that the taint graph is an inspection-only
 neighbourhood whose output the retained planners never consume. Nothing a solo
@@ -1355,7 +1355,7 @@ answered for, because a paid list entry with no answer is how the first one went
 unnoticed for as long as it did. Two are paid by name and shipped open:
 
 - **The Slack channel implementation.** `paid/channels/slack.ts` is the real
-  thing — `postHoldToSlack`, `slackPayload`, `SlackChannel` — and it now lives
+  thing, `postHoldToSlack`, `slackPayload`, `SlackChannel`, and it now lives
   in a closed `paid/` directory carrying `LicenseRef-VOID-Proprietary`, rather
   than in the Apache 2.0 policy package it used to sit in. This was amendment
   one's collision, and it was fixed on 2026-10-03: the implementation moved
@@ -1367,7 +1367,7 @@ unnoticed for as long as it did. Two are paid by name and shipped open:
   `scripts/src/licence-line.test.mjs` classifies `paid/` as closed, checks that
   no open package imports it or defines the implementation, and fails if the
   file is put back under `packages/policy`. This one was movable for the reason
-  given below — a webhook client nothing has ever depended on reading — which is
+  given below, a webhook client nothing has ever depended on reading, which is
   why moving it cost no consumer.
 - **Irreversibility budgets.** `packages/runtime/src/budget.ts` is 30 kB of
   accounting in an Apache 2.0 package, which `cloud/capability-gate.mjs` lines
@@ -1430,7 +1430,7 @@ only claim in this repository that no competitor touches". Both were corrected
 on 2026-10-04: Rubrik shipped Agent Rewind on 2025-08-12
 claiming rollback of "files, databases, configurations, or repositories", so
 the undo itself is not exclusive. What still holds is the placement and the
-mechanism — the receipt lands in the customer's own database rather than the
+mechanism, the receipt lands in the customer's own database rather than the
 vendor's cloud, and the inverse is per-effect rather than a point-in-time
 restore, which a live system with concurrent writers cannot use.)_
 

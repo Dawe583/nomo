@@ -10,12 +10,12 @@ reads it as a promise.
 
 The published tools are therefore:
 
-* ``nomo_project_info`` — what this endpoint is and where recovery runs.
-* ``nomo_registry_search`` — search the reversibility registry.
-* ``nomo_registry_entry`` — one operation's preconditions and inverses.
-* ``nomo_registry_summary`` — the registry's shape: counts by tone and vendor.
-* ``nomo_local_tools`` — the local MCP tools, with their annotations.
-* ``nomo_cli_commands`` — the CLI surface, read from the dispatch router.
+* ``nomo_project_info`` ,  what this endpoint is and where recovery runs.
+* ``nomo_registry_search`` ,  search the reversibility registry.
+* ``nomo_registry_entry`` ,  one operation's preconditions and inverses.
+* ``nomo_registry_summary`` ,  the registry's shape: counts by tone and vendor.
+* ``nomo_local_tools`` ,  the local MCP tools, with their annotations.
+* ``nomo_cli_commands`` ,  the CLI surface, read from the dispatch router.
 
 What this endpoint deliberately does **not** publish is any way to execute
 recovery. Recovery needs the operator's local workspace, policy and retained

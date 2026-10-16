@@ -295,7 +295,7 @@ test("operator decision time and spend are read when the record carries them", (
 test("recovery is measured per case, and a case without one is not a success", () => {
   // Two cases: the first recovered once and failed once, the second recovered
   // once. Pooled that is 2 of 3 attempts. Per case it is 0.5 and 1.0, because a
-  // case with one attempt is a case, not half a case — the same rule that keeps
+  // case with one attempt is a case, not half a case, the same rule that keeps
   // retries from outweighing distinct work everywhere else on the board.
   const board = measureBoard(
     [

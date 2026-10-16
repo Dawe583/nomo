@@ -10,7 +10,7 @@ offline suite stays green.
 So this extracts the deploy tarball into a scratch directory that has no
 repository in it, puts that directory first on ``sys.path``, and asks the tools
 the questions a client would. The two lines that matter are ``source reachable``
-— which must be ``False`` — and the row count that follows it, which must come
+,  which must be ``False`` ,  and the row count that follows it, which must come
 from the snapshot rather than from a file that is not there.
 
 Run it from the repository root:

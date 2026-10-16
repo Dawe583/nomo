@@ -238,7 +238,7 @@ paying for them.
 
 The remaining cost is the SQLite blob binding: the stored payload is one `BLOB`
 column, so it is materialised once no matter how it is written. That sets the
-floor at about two full-size buffers, and the measurement bears it out — a
+floor at about two full-size buffers, and the measurement bears it out, a
 64 MiB artifact peaks at about 141 MB, still linear in artifact size and still
 far below the value path. Streaming also removes the base64 string entirely, by
 hashing the base64 preimage in three-byte-aligned slices; that is exact because
@@ -389,9 +389,9 @@ library with no host. `recoveryRuntime` takes it as the optional
 reserves a unit against it.
 
 The shape is deliberate, and it is the shape that survives. A host supplies a
-`BudgetStore` whose scope is `host` or `cluster` — a `session` store is refused
+`BudgetStore` whose scope is `host` or `cluster`, a `session` store is refused
 outright, because per-process counting hands every worker the full limit and so
-authorises N times the irreversible work the cap exists to prevent — plus the
+authorises N times the irreversible work the cap exists to prevent, plus the
 account name and the same limits the local derivation uses. The reservation
 happens in three places, and each one is where it has to be:
 

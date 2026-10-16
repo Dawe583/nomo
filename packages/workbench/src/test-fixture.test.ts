@@ -19,7 +19,7 @@ test("a caller naming NOMO_DATA_DIR in extraEnv cannot redirect the store", asyn
   // temporary one, and `assertIsolated` then checks a directory nothing was
   // written to and passes anyway. The stray path is deliberately one the
   // process can create, so the fixture gets far enough to build a workbench
-  // there — that is the state this test exists to rule out.
+  // there, that is the state this test exists to rule out.
   const stray = join(tmpdir(), "void-test-fixture-stray-store");
   await rm(stray, { recursive: true, force: true });
   t.after(async () => {
@@ -61,7 +61,7 @@ test("assertIsolated fails when the store was not built under the root", async (
 
   // The second branch: the directory is there, so the path was honoured, but
   // no key landed in it. A workbench that fell back to the operator's store
-  // leaves exactly this behind — a root nothing was written to.
+  // leaves exactly this behind, a root nothing was written to.
   const root = await mkdtemp(join(tmpdir(), "void-test-fixture-no-key-"));
   t.after(async () => {
     await rm(root, { recursive: true, force: true });

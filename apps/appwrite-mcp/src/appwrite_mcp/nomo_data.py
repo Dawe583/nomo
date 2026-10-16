@@ -9,7 +9,7 @@ noticed because no test compared the two.
 
 The generator runs against a checkout. When the checkout is absent, as it is in
 a deployed function, the module falls back to the snapshot in
-``nomo_snapshot.json`` — a generated file that is verified against the source in
+``nomo_snapshot.json`` ,  a generated file that is verified against the source in
 ``tests/test_hosted_endpoint.py`` on every local gate run. A stale snapshot
 therefore fails the gate rather than being served.
 """
@@ -316,7 +316,7 @@ def cli_commands() -> tuple[str, ...]:
     A deployed function has no ``dispatch.ts``, so the snapshot is the fallback
     and the one the endpoint actually serves. Without it the tool returns an
     empty list, and a client reads that as "the command line has no commands"
-    rather than as "this build cannot see the source" — which is the failure
+    rather than as "this build cannot see the source" ,  which is the failure
     `verify-deploy-shape.py` exists to catch.
     """
     if not CLI_DISPATCH.exists():
@@ -421,8 +421,8 @@ def local_tool_schema() -> tuple[dict[str, Any], ...]:
 def _properties_with_spread(argument: str) -> list[str]:
     """Property keys, with a spread resolved to the keys it contributes.
 
-    Several tools pass a shared constant directly — ``operation``, which is
-    ``{ operationId: identity }`` — rather than spreading it. The name is not a
+    Several tools pass a shared constant directly ,  ``operation``, which is
+    ``{ operationId: identity }`` ,  rather than spreading it. The name is not a
     property key and must not be reported as one, but the argument it carries is
     a real one, so the constant's own keys are read from its declaration.
 
@@ -447,7 +447,7 @@ def _call_arguments(text: str, start: int) -> list[str]:
     argument such as ``{ jobId: identityShape("...") }`` contains a closing
     paren that belongs to the inner call, and a scanner that only tracks ``{``
     and ``[`` treats it as the end of the outer call and returns three
-    arguments for a five-argument call — which then reads as "this tool has no
+    arguments for a five-argument call ,  which then reads as "this tool has no
     annotation" rather than as a parse failure.
     """
     depth = 1

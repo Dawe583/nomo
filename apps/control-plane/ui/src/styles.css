@@ -3300,7 +3300,7 @@ dialog::backdrop {
   color: var(--ink);
 }
 
-/* B1: approval inbox v2 — riziko první, karty bez dekorativních gradientů. */
+/* B1: approval inbox v2, riziko první, karty bez dekorativních gradientů. */
 .approval-inbox {
   display: grid;
   gap: 12px;
@@ -3343,7 +3343,7 @@ dialog label > textarea {
   margin-top: 6px;
 }
 
-/* B4: ledger verify — poctivý rozsah, progress bez animací navíc. */
+/* B4: ledger verify, poctivý rozsah, progress bez animací navíc. */
 .verify-block {
   margin: 4px 0 16px;
 }

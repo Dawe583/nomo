@@ -26,24 +26,24 @@ node scripts/src/e2e.mjs
 
 Expected output: every check prints `PASS`, including:
 
-1. `api initialize version` — the proxy and fixture negotiate MCP.
-2. `api echo forwards result` — the low-risk allowed call forwards.
-3. `api orders_delete parks without response` — the destructive tool is held.
-4. `api hold approval releases upstream result` — approving the hold lets the
+1. `api initialize version`, the proxy and fixture negotiate MCP.
+2. `api echo forwards result`, the low-risk allowed call forwards.
+3. `api orders_delete parks without response`, the destructive tool is held.
+4. `api hold approval releases upstream result`, approving the hold lets the
    original call resolve; the ledger records `hold:approved`.
-5. `api ledger recorded every decided call` — one signed entry per decision,
+5. `api ledger recorded every decided call`, one signed entry per decision,
    metadata only (`tool`, `klass`, `decision`, `argsDigest`); raw arguments are
    digest-hashed, never stored.
-6. `binary observe ...` — `--posture observe` forwards held calls and says so,
+6. `binary observe ...`, `--posture observe` forwards held calls and says so,
    the observe path is explicit, never a silent bypass.
-7. `fail-closed startup refuses to run without a ledger directory` — a missing
+7. `fail-closed startup refuses to run without a ledger directory`, a missing
    evidence store is a refusal, not a degraded run.
 
 ## What the policy demonstrates
 
 `fixtures/e2e-policy.yaml` holds three rules: `echo` allowed, `orders_delete`
 held (5 s expiry, operator approval), everything else denied. That is one
-low-risk call, one held destructive write, one denied unknown tool — the exact
+low-risk call, one held destructive write, one denied unknown tool, the exact
 scenarios from the spec.
 
 ## Identity path (separate from the fixture proxy)

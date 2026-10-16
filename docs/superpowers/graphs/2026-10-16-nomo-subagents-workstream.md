@@ -4,7 +4,7 @@ Directive: the harness workstream is landed (`origin/main` = `d70f245`) and its
 product table is exhausted. `docs/NOMO-AGENT-HARNESS-SPEC.md` section 7 names
 the next work package, verbatim: "Subagenti. omp má Agent Hub, prime má
 rlm.spawn a agent_message, NOMO nemá nic. Chybí to tu. Je to větší kus práce
-než všechno výše a nedotýká se učení — patří do vlastního work package."
+než všechno výše a nedotýká se učení, patří do vlastního work package."
 
 This file is the control surface for that workstream. It is updated at every
 checkpoint and is the first thing a next session reads.

@@ -81,8 +81,8 @@ now is unknown to everything in the tree. Read the number as a dated
 observation, not as the current state.
 
 `docs/VENDORING-DECISION.md` recorded three version identifiers for this
-project on that same date — installed `18.6.1`, npm `18.6.1`, cloned source
-`18.6.2` — and observed that the clone is ahead of what is published. All
+project on that same date, installed `18.6.1`, npm `18.6.1`, cloned source
+`18.6.2`, and observed that the clone is ahead of what is published. All
 three were measurements taken on 2026-10-05. None of them is pinned here, and
 they are reproduced as that day's evidence rather than restated as current.
 
@@ -94,7 +94,7 @@ from that repository. **`~/.local/bin/prime` is a symlink**, and that is the
 part worth knowing: it resolves to
 `/Users/dawe/.local/share/uv/tools/prime/bin/prime`, under uv's tool
 directory rather than a plain file. That is why "the upstream installer" was
-unusable — nothing on this machine pointed at the command that manages that
+unusable, nothing on this machine pointed at the command that manages that
 directory. `uv tool upgrade prime` is how uv updates a tool installed that
 way. It is recorded here as where the next reader should start, not as a
 command this page has run.

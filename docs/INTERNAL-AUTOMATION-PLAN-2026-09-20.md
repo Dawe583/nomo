@@ -76,7 +76,7 @@ Do not add a general event bus, a second workflow engine, a second project track
 
 ## 4. Upgraded agent responsibilities
 
-### David's Agent — product and engineering execution
+### David's Agent, product and engineering execution
 
 Functional role: Builder. Primary owner: David.
 
@@ -101,7 +101,7 @@ Add these skills:
 
 Automation level: read and draft automatically; create David’s own tasks on explicit request; cross-owner assignments require owner approval.
 
-### Oliver's Agent — internal operations and compliance
+### Oliver's Agent, internal operations and compliance
 
 Functional role: Operator. Primary owner: Oliver after Slack onboarding.
 
@@ -122,7 +122,7 @@ Add these skills:
 
 Automation level: reminders, evidence collection and drafts automatic; access, credential, legal, financial and policy changes always human-approved.
 
-### Max's Agent — marketing and distribution engine
+### Max's Agent, marketing and distribution engine
 
 Functional role: Courier. Primary owner: Max.
 
@@ -132,7 +132,7 @@ Add these skills:
    - Pull only verified product evidence, public sources and Graphify context.
    - Separate fact, internal assumption and proposed claim.
 2. **Video script studio**
-   - Generate hook, 30–60 second script, shot list, on-screen text, captions, thumbnail line, CTA and platform variants.
+   - Generate hook, 30-60 second script, shot list, on-screen text, captions, thumbnail line, CTA and platform variants.
    - Prefer screen recordings and real ledger/hold evidence over generic AI imagery.
 3. **Editorial calendar**
    - Maintain campaign, audience, channel, owner, publish time, approval state, asset state and result metrics.
@@ -144,7 +144,7 @@ Add these skills:
 
 Automation level: research, briefs, scripts, captions and scheduling proposals automatic; public posting and outbound contact approval-gated.
 
-### Coordinator — team planner and GitHub Release Steward
+### Coordinator, team planner and GitHub Release Steward
 
 Team agent. No access to private personal memory.
 
@@ -288,14 +288,14 @@ Do not optimize for raw post volume. Primary conversion metric remains a team re
 
 ### 6.2 Video format
 
-Default 35–55 seconds, 9:16, captions always on.
+Default 35-55 seconds, 9:16, captions always on.
 
 ```text
-0–3 s   concrete failure or question
-3–10 s  why ordinary logs or git revert are insufficient
-10–32 s real VOID screen or terminal evidence
-32–45 s result and honest limitation
-45–55 s one CTA
+0-3 s   concrete failure or question
+3-10 s  why ordinary logs or git revert are insufficient
+10-32 s real VOID screen or terminal evidence
+32-45 s result and honest limitation
+45-55 s one CTA
 ```
 
 Every script includes:
@@ -316,7 +316,7 @@ Every script includes:
    - CTA: run the local hold demo.
 2. **“Git revert is not agent undo.”**
    - Contrast source rollback with an external database mutation.
-   - CTA: inspect VOID’s R0–R3 model.
+   - CTA: inspect VOID’s R0-R3 model.
 3. **“Four classes of AI-agent actions in 40 seconds.”**
    - R0 direct inverse, R1 before image, R2 mitigation, R3 irreversible.
    - State that class depends on target facts, not tool name.
@@ -358,23 +358,23 @@ Week: Monday 2026-09-21 through Sunday 2026-09-27. Current configured capacity i
 
 David / David's Agent:
 
-1. Confirm `VOID-harness/void` as canonical and audit all links/deployments that still point to `Dawe583/void` — 2 h.
-2. Approve the pre-1.0 version policy and release gate in this document — 1.5 h.
-3. Select one honest product proof for the first video and reproduce it locally — 2.5 h.
-4. Review current release blockers R00, R02, R03, R04 and choose one next vertical slice — 2 h.
+1. Confirm `VOID-harness/void` as canonical and audit all links/deployments that still point to `Dawe583/void`, 2 h.
+2. Approve the pre-1.0 version policy and release gate in this document, 1.5 h.
+3. Select one honest product proof for the first video and reproduce it locally, 2.5 h.
+4. Review current release blockers R00, R02, R03, R04 and choose one next vertical slice, 2 h.
 
 Max / Max's Agent:
 
-1. Produce script, shot list, captions and platform copy for “Git revert is not agent undo” — 2 h.
-2. Build a ten-company design-partner prospect list using the criteria in `GO-TO-MARKET.md`; do not contact anyone — 2 h.
-3. Prepare the first-week editorial calendar and asset checklist — 1.5 h.
-4. Review every claim in the first script against repository evidence — 1 h.
+1. Produce script, shot list, captions and platform copy for “Git revert is not agent undo”, 2 h.
+2. Build a ten-company design-partner prospect list using the criteria in `GO-TO-MARKET.md`; do not contact anyone, 2 h.
+3. Prepare the first-week editorial calendar and asset checklist, 1.5 h.
+4. Review every claim in the first script against repository evidence, 1 h.
 
 Oliver / Oliver's Agent, blocked until Slack onboarding:
 
-1. Join Slack and bind Oliver's Agent to Oliver’s user identity — 0.5 h.
-2. Audit the release runbook and produce a short external-prerequisite register — 2 h.
-3. Inventory social account owners, OAuth status and publishing permissions without collecting secrets — 1.5 h.
+1. Join Slack and bind Oliver's Agent to Oliver’s user identity, 0.5 h.
+2. Audit the release runbook and produce a short external-prerequisite register, 2 h.
+3. Inventory social account owners, OAuth status and publishing permissions without collecting secrets, 1.5 h.
 
 Coordinator:
 
@@ -419,7 +419,7 @@ Weekend:
 
 ## 8. Minimal implementation backlog
 
-### Phase A — visibility, one to two days
+### Phase A, visibility, one to two days
 
 1. Install read-only GitHub App into `VOID-harness`.
 2. Remove retired hard-coded model routes from every agent configuration; set the workspace-approved default and keep credentials out of Git.
@@ -431,7 +431,7 @@ Weekend:
 
 Exit proof: Coordinator reports organization branches, open work, latest workflow status and current release version with links; no write permission exists.
 
-### Phase B — release proposals, two to four days
+### Phase B, release proposals, two to four days
 
 1. Add release-candidate records and deterministic version calculation.
 2. Generate changelog from an exact commit range.
@@ -441,7 +441,7 @@ Exit proof: Coordinator reports organization branches, open work, latest workflo
 
 Exit proof: disposable repository release goes from approved commit to draft and published prerelease; changed digest invalidates approval; agent cannot merge or bypass rules.
 
-### Phase C — marketing studio, three to five days
+### Phase C, marketing studio, three to five days
 
 1. Add campaigns, content items, platform variants and performance records.
 2. Add evidence-backed brief and video-script tools.
@@ -451,7 +451,7 @@ Exit proof: disposable repository release goes from approved commit to draft and
 
 Exit proof: one technical proof creates consistent LinkedIn, X and video drafts with source links and approval state.
 
-### Phase D — platform publishing, per platform
+### Phase D, platform publishing, per platform
 
 1. Connect one platform at a time with OAuth.
 2. Add private/unlisted dry run and fetch resulting post status.
@@ -461,7 +461,7 @@ Exit proof: one technical proof creates consistent LinkedIn, X and video drafts 
 
 Exit proof: duplicate delivery cannot duplicate a post; expired approval cannot publish; changed content requires new approval.
 
-### Phase E — optimization after four weeks
+### Phase E, optimization after four weeks
 
 - Compare content themes by qualified conversations and first-hold activations.
 - Retire low-signal formats.

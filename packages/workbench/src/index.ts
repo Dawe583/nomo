@@ -951,7 +951,7 @@ export class Workbench {
    * process is the only place a command can be authorised. It deliberately
    * lives on the runtime rather than in the encrypted workspace snapshot,
    * because a snapshot is written by whoever holds the workbench API and read
-   * *by* the same API — a hook author who could persist an allowlist entry
+   * *by* the same API, a hook author who could persist an allowlist entry
    * could authorise the command their own hook runs. Nothing that arrives on
    * `upsertHook(input)` reaches this list; `input` is only ever checked *against*
    * it, so a caller who can add a hook cannot authorise it.
@@ -1150,7 +1150,7 @@ export class Workbench {
       // Derived, not asserted: a hardcoded `true` cannot disagree with a test
       // that reads it, so a caller checking this flag was told nothing. The
       // truth is that hooks are executable exactly when some command is on the
-      // operator allowlist — `validateHook` refuses everything else — and with
+      // operator allowlist, `validateHook` refuses everything else, and with
       // an empty allowlist no hook can be saved or run at all.
       hooksSupported: this.hookAllowlist.length > 0,
     };
@@ -3112,7 +3112,7 @@ export class Workbench {
       );
       // This is a read path. `devKeyProvider` creates a key when none exists,
       // so calling it here would mint signing capability as a side effect of
-      // being asked to attest — the exact thing `retainedSigner` exists to
+      // being asked to attest, the exact thing `retainedSigner` exists to
       // prevent, and the reason `ledger()` above goes through it. A workbench
       // that has never signed anything has nothing to attest with, and says so
       // instead of quietly acquiring the power to sign.
@@ -4003,7 +4003,7 @@ export class Workbench {
       // authorization events instead of hiding them behind the document ledger.
       //
       // These entries were signed by the stdio proxy, which signs with
-      // `devKeyProvider()` at its default `~/.void/keys` — *not* with the
+      // `devKeyProvider()` at its default `~/.void/keys`, *not* with the
       // workbench's own document key under the data directory. Resolving
       // against the wrong directory finds nothing, and the throw below turns
       // that into an unknown tool outcome for a tool that ran perfectly well.
@@ -4050,7 +4050,7 @@ export class Workbench {
    * Learned rules go last on purpose. `decide` takes the first matching rule,
    * so anything placed earlier could let a pattern a model happened to repeat
    * override a decision an operator made deliberately. A learned rule is
-   * evidence, not authority — it may only fill a gap the operator left open.
+   * evidence, not authority, it may only fill a gap the operator left open.
    *
    * The rules are not written back: this is derived on read, so a chain that
    * is truncated or rolled back cannot leave a stale rule in force.
@@ -4536,7 +4536,7 @@ export class Workbench {
       }
       // before-run gates the turn. A refusal is thrown into the same handler
       // as every other run failure, so the session ends "failed" with the hook
-      // named — it never reaches the provider and is never recorded as a pass.
+      // named, it never reaches the provider and is never recorded as a pass.
       const gate = await this.fireHooks(
         "before-run",
         {

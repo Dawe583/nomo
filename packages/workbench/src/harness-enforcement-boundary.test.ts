@@ -12,7 +12,7 @@ import type { RefinementProposal } from "./refine-pass.ts";
  * Milestone C item 6, first sentence: retrieved entries may guide bounded
  * context only, and never change a decision the operator owns.
  *
- * The tests elsewhere prove each guard works on its own — a deny rule stops a
+ * The tests elsewhere prove each guard works on its own, a deny rule stops a
  * call (`policy-review.test.ts`), read-only refuses a write, the digest stays
  * bounded (`harness-retrieval-wiring.test.ts`). None of them puts an entry in
  * the prompt that *asks* for the permission to be widened, which is the only
@@ -20,7 +20,7 @@ import type { RefinementProposal } from "./refine-pass.ts";
  * model reads it as an instruction, and the model then tries the thing it
  * describes. So each test here asserts the prompt really carried the
  * instruction before it asserts that nothing changed. Without that first
- * assertion the refusal would prove nothing — the entry might simply never
+ * assertion the refusal would prove nothing, the entry might simply never
  * have arrived.
  */
 

@@ -552,7 +552,7 @@ async function route(
       if (parsed.pathname === "/api/overview") {
         // Fleet view (plan Task 7): one registered agent and its current run,
         // this process's stop acknowledgement, and unconfirmed in-flight calls.
-        // Labels only — the event store's input type cannot carry a token or a
+        // Labels only, the event store's input type cannot carry a token or a
         // prompt, so the overview cannot leak one either.
         const events = options.fleetEvents.latest(5);
         const agentRun = data.runs[0];

@@ -269,9 +269,9 @@ test("applying twice changes nothing the second time", () => {
 });
 
 test("a well-formed model reply reaches the operator as a prompt edit", () => {
-  // The whole model-driven path in one reply: what a model actually sends —
+  // The whole model-driven path in one reply: what a model actually sends , 
   // fenced, with prose around it, shaped exactly as the refinement
-  // instructions describe — through parsing and validation to the queue that
+  // instructions describe, through parsing and validation to the queue that
   // needs a human.
   //
   // The prompt addendum here is the `kind: "prompt"` edit itself, an append to

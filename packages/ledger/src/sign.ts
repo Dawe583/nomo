@@ -42,7 +42,7 @@ import { envValue } from "./env-compat.ts";
  * Every surface that reads or writes the development key derives it here. The
  * trust anchor, `doctor`, `watch` and the TUI proxy all have to agree on which
  * key signs a ledger, and a trust anchor resolved against a different
- * directory than the signer used is not an anchor at all — it verifies
+ * directory than the signer used is not an anchor at all, it verifies
  * nothing and reads as an improvement. One derivation, so they cannot drift.
  *
  * The workbench document ledger is the one thing that keeps its own key, at
@@ -201,7 +201,7 @@ async function keyProviderFromDirectory(
  * This is the write side of rotation, and it is deliberately not a trust
  * decision: a ring says which public keys this machine can check, not which
  * keys a verifier should accept. Every shipped surface still resolves one key
- * and still refuses the other key's entries — see `rotation-drill.test.ts`,
+ * and still refuses the other key's entries, see `rotation-drill.test.ts`,
  * where the two-key chain passes here and is refused there in the same run.
  *
  * Retired keys are keyed by the id derived from their own bytes, never by the
@@ -219,7 +219,7 @@ export async function devKeyRing(dir: string): Promise<KeyProvider> {
  * Retire the current development key and install a fresh one: the outgoing
  * key's *public* SPKI moves to `<dir>/retired/<keyId>.spki` and a new private
  * key is generated through the same O_EXCL 0600 path as a first run. The
- * retired private key is not kept — anything that still needs to sign as the
+ * retired private key is not kept, anything that still needs to sign as the
  * old key has to have kept the key material itself.
  *
  * Returns the provider for the new key. Callers that hold a provider from

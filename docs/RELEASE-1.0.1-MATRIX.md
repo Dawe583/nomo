@@ -733,7 +733,7 @@ over PGlite, and a refused row change leaves the row exactly as it was, an
 approved change lands and leaves every other row alone, the confirmed inverse
 restores the captured values rather than a reconstruction, and the database
 journal verifies. PGlite is a real engine running in process, so this is a real
-transaction boundary — and a disposable local database, which is not the R04
+transaction boundary, and a disposable local database, which is not the R04
 networked-cluster certification and does not stand in for it.
 
 It is a gate, not a demonstration: `check-tests.mjs` already globs
@@ -741,7 +741,7 @@ It is a gate, not a demonstration: `check-tests.mjs` already globs
 were shown red. Redoing the capture into the wrong vault slot makes the
 approved write report `unknown` instead of succeeding; making the approval
 callback approve everything makes a refused file call succeed and a refused row
-change succeed with the row mutated — which is the failure mode the whole
+change succeed with the row mutated, which is the failure mode the whole
 product exists to prevent.
 
 `scripts/src/agentic-reverse-exercise.mjs` also runs standalone with

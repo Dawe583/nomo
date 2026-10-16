@@ -5,9 +5,9 @@
  * `packages/workbench/src/index.ts` reads `env.NOMO_DATA_DIR`, and the suites
  * that build a `Workbench` pass `{ NOMO_DATA_DIR: root }` so every write lands
  * in a temporary directory that the suite deletes afterwards. Rename that one
- * variable in the source and leave the tests alone — which is what a VOID→NOMO
+ * variable in the source and leave the tests alone, which is what a VOID→NOMO
  * sweep does to half the tree at a time, and what any single-package rename
- * does — and the harness reads `undefined`, falls back to
+ * does, and the harness reads `undefined`, falls back to
  * `~/.void/workbench`, and the suite keeps passing while writing into the
  * operator's real home directory. Every assertion still holds. The corruption
  * is silent and the test suite reports green, which is the worst shape a
@@ -46,9 +46,9 @@ const root = resolve(import.meta.dirname, "..", "..");
 /**
  * A name only counts as an identifier when the whole token is one.
  *
- * `[A-Z]` after the underscore is what keeps `VOID_0.1.0_aarch64.dmg` — a
+ * `[A-Z]` after the underscore is what keeps `VOID_0.1.0_aarch64.dmg`, a
  * release filename in a fixture path, in
- * `apps/control-plane/ui/src/desktop-downloads.test.ts` — out of the results,
+ * `apps/control-plane/ui/src/desktop-downloads.test.ts`, out of the results,
  * as is the lookahead rejecting a following `.`, `-` or `/`. Both halves are
  * load-bearing: the letter rejects a leading digit, the lookahead rejects a
  * name that is the prefix of a longer dotted path. The lookbehind is what
@@ -61,7 +61,7 @@ const ENV_VAR =
  * Names that are meant to be unread, with the reason each one is legitimate.
  *
  * Every entry is a name that exists to be observed by a test, a fake binary,
- * or a config string — not consumed by product code. The prefix is not treated
+ * or a config string, not consumed by product code. The prefix is not treated
  * as a category: `NOMO_TEST_DATABASE_URL`, `NOMO_TEST_WS_PROXY` and
  * `NOMO_TEST_DATABASE_ISOLATED` carry that prefix and are deliberately absent,
  * because `scripts/src/cloud-test-config.mjs` and
@@ -136,8 +136,8 @@ const ALLOWED = new Set(TEST_ONLY_ENV_VARS.map((entry) => entry.name));
  * The names whose legacy `VOID_*` spelling is actually read at runtime.
  *
  * The fallback lives in exactly two places: `envValue(env, "NOMO_X")` looks
- * up `VOID_X` when the current name is absent, and `normalizeEnv` — reached
- * through `normalizeOwnedEnv` — does the same for every name listed in
+ * up `VOID_X` when the current name is absent, and `normalizeEnv`, reached
+ * through `normalizeOwnedEnv`, does the same for every name listed in
  * `OWNED_ENV_KEYS`. The alias is therefore built from those call sites, not
  * from every identifier that merely looks like a name: `NOMO_ENV_PREFIX` is a
  * prefix constant, not a setting, so a test naming `VOID_ENV_PREFIX` must
@@ -313,8 +313,8 @@ test("a variable no source reads is reported on the line that sets it", () => {
  *
  * Every other test file names variables the source reads. This one has to name
  * variables the source does not, because those are the fixtures the unit tests
- * are built from. Exempt by exact path rather than by shape — "skip any file
- * whose names are synthetic" would describe every file in the tree — and a
+ * are built from. Exempt by exact path rather than by shape, "skip any file
+ * whose names are synthetic" would describe every file in the tree, and a
  * test below asserts the list has not grown, which is the only way an
  * exemption like this stays honest.
  */

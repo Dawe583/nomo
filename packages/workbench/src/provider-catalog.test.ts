@@ -6,8 +6,8 @@
  * answer `/models` with 404 (Puter), or with an empty list. For those, the
  * model the operator named stands in for the catalog, because the operator has
  * already made the choice a catalog would have offered. For every other probe
- * failure — refused connection, rejected credential, server error, malformed
- * body — the probe's own error must reach the operator: reporting a provider
+ * failure, refused connection, rejected credential, server error, malformed
+ * body, the probe's own error must reach the operator: reporting a provider
  * as configured while its endpoint is unreachable is the failure mode this
  * boundary exists to prevent.
  */

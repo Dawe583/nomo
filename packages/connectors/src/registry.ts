@@ -124,7 +124,7 @@ export function connectorRegistry(): ConnectorRegistry {
 // `readS3Capture`, never from anything held here. This used to allocate a
 // per-connector map for each side and write every capture into it. Nothing
 // ever read either map back, so each entry retained a full before-image plus
-// its derived steps for the life of the process with no reader — a long session
+// its derived steps for the life of the process with no reader, a long session
 // grew without bound while the authoritative copy sat in the store, which is
 // also what makes a capture replayable after a restart. Deleting them is the
 // fix; capping a map with no reader would only slow the leak down.

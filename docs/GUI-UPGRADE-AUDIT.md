@@ -29,22 +29,22 @@ Datum: 2026-09-11. Lokální commit: `e301162`. Rozsah: všechny čtyři webové
 
 | ID | Priorita | Důkaz | Dopad a požadovaná náprava |
 |---|---|---|---|
-| A01 | P0 | `workbench.css:222–236`; mobilní DOM měření níže | Historie a dokumenty se skládají nad/pod chat. Composer je mimo první obrazovku. Mobil potřebuje samostatný shell a přepínané plochy. |
-| A02 | P1 | `sessions.js:58–63` | Každý event je odstavec s `textContent`. Chybí Markdown, tabulky, kódové bloky, přílohy a bohaté tool cards. |
+| A01 | P0 | `workbench.css:222-236`; mobilní DOM měření níže | Historie a dokumenty se skládají nad/pod chat. Composer je mimo první obrazovku. Mobil potřebuje samostatný shell a přepínané plochy. |
+| A02 | P1 | `sessions.js:58-63` | Každý event je odstavec s `textContent`. Chybí Markdown, tabulky, kódové bloky, přílohy a bohaté tool cards. |
 | A03 | P1 | `provider.ts:32`, `sessions.js:130` | `stream: false` a polling 2 s. Tokenový streaming vyžaduje změnu provideru i serverového event protokolu. |
-| A04 | P1 | `sessions.js:6–10,25–33`; `cloud/provider.mjs:8–14`; `cloud/server.mjs:307` | TokenRouter nemá preset. Model se vybírá z DOM/localStorage; cloud bez uloženého profilu používá Gateway. Nestačí přejmenovat option v selectu. |
-| A05 | P1 | `app.js:29–33,110–123`; `cloud/server.mjs:415–422` | Tabulky mají pevné sloupce a klientské filtry nad posledními 50 záznamy. Přehled celé historie potřebuje serverové stránkování a filtry. |
-| A06 | P1 | `cloud/store.mjs:50–55,131–138` | Seznam sessions má limit 100; events se ořezávají na 200. Úplné vyhledávání a export celé historie nyní nelze slibovat. |
-| A07 | P1 | `cloud/server.mjs:313–317,335–342` | Cloud dovoluje jeden běžící agent. UI musí ukazovat kapacitu a stav čekání; paralelní běhy nejsou hotová schopnost. |
-| A08 | P1 | `app.js:205–216`; `sessions.js:74–96`; `workspace-ui.js:18–23,46` | Nezávislé obnovování feedu, verifikace, sessions a dokumentů. Dokumenty se načítají i zavřené; celé seznamy se znovu renderují. Potřebný společný plán obnov a revize dat. |
-| A09 | P1 | `cloud/store.mjs:116–128`; `cloud/server.mjs:415–435` | Čtení feedu i ověření čtou a ověřují celý ledger. Náklad roste s historií; nestačí pouze zrychlit vykreslení tabulky. |
+| A04 | P1 | `sessions.js:6-10,25-33`; `cloud/provider.mjs:8-14`; `cloud/server.mjs:307` | TokenRouter nemá preset. Model se vybírá z DOM/localStorage; cloud bez uloženého profilu používá Gateway. Nestačí přejmenovat option v selectu. |
+| A05 | P1 | `app.js:29-33,110-123`; `cloud/server.mjs:415-422` | Tabulky mají pevné sloupce a klientské filtry nad posledními 50 záznamy. Přehled celé historie potřebuje serverové stránkování a filtry. |
+| A06 | P1 | `cloud/store.mjs:50-55,131-138` | Seznam sessions má limit 100; events se ořezávají na 200. Úplné vyhledávání a export celé historie nyní nelze slibovat. |
+| A07 | P1 | `cloud/server.mjs:313-317,335-342` | Cloud dovoluje jeden běžící agent. UI musí ukazovat kapacitu a stav čekání; paralelní běhy nejsou hotová schopnost. |
+| A08 | P1 | `app.js:205-216`; `sessions.js:74-96`; `workspace-ui.js:18-23,46` | Nezávislé obnovování feedu, verifikace, sessions a dokumentů. Dokumenty se načítají i zavřené; celé seznamy se znovu renderují. Potřebný společný plán obnov a revize dat. |
+| A09 | P1 | `cloud/store.mjs:116-128`; `cloud/server.mjs:415-435` | Čtení feedu i ověření čtou a ověřují celý ledger. Náklad roste s historií; nestačí pouze zrychlit vykreslení tabulky. |
 | A10 | P1 | `workspace-ui.js:23` | Cache dokumentového panelu používá počet operací. Pro dlouhodobý model s retencí/stejným počtem položek je vhodná explicitní revize. Jde o konstrukční riziko, nikoli reprodukovanou ztrátu dat. |
-| A11 | P1 | `app.js:46–56` | Schvalování nepředává do UI vysvětlení politiky; blast radius může být „not measured“. Doplnit strukturované důvody a jasné rozlišení deklarovaných/měřených dat. |
+| A11 | P1 | `app.js:46-56` | Schvalování nepředává do UI vysvětlení politiky; blast radius může být „not measured“. Doplnit strukturované důvody a jasné rozlišení deklarovaných/měřených dat. |
 | A12 | P1 | `index.html` versus `feed.html`, `ledger.html`, `approvals.html` | Navigace a shell jsou opakované, názvy Activity/Feed a Home/Workspace se liší. Sjednotit rámec a slovník. |
 | A13 | P1 | Desktopový a mobilní screenshot Feed/Ledger | Velké titulky, formulář workspace a opakované statusy odsouvají data dolů. Na desktopu ledger začínal kolem y=732. Datová plocha potřebuje kompaktní header. |
 | A14 | P2 | `workbench.css:30` | Vlastní focus pravidlo neobsahuje `textarea`. Ověřit browser fallback a zavést konzistentní focus pro všechny ovladače. |
-| A15 | P1 | `sessions.js:13–16,74–80,124–132` | Aktivní session není stabilně adresovaná URL; nové konverzace nemají zachovaný draft a nový výběr nevykreslí původní welcome. Doplnit router, draft a explicitní stavy. |
-| A16 | P1 | `cloud/store.mjs:153–163`; `cloud/steps.mjs:184–188` | Spotřeba je textový event, ne strukturovaná metrika. Ceny, latence, context usage a historie modelů potřebují sběr dat. |
+| A15 | P1 | `sessions.js:13-16,74-80,124-132` | Aktivní session není stabilně adresovaná URL; nové konverzace nemají zachovaný draft a nový výběr nevykreslí původní welcome. Doplnit router, draft a explicitní stavy. |
+| A16 | P1 | `cloud/store.mjs:153-163`; `cloud/steps.mjs:184-188` | Spotřeba je textový event, ne strukturovaná metrika. Ceny, latence, context usage a historie modelů potřebují sběr dat. |
 | A17 | P1 | `apps/desktop/scripts/prepare.mjs`; `server.ts:71,490` | Desktop kopíruje současné webové soubory; lokální server má omezené public asset cesty. Nový bundler musí řešit oba distribuční kanály. |
 | A18 | P1 | Produkční screenshot před přihlášením | Connect panel se přidává nad celý workbench a ubírá výšku. Vyhradit samostatnou přihlašovací plochu a nespouštět chráněná načítání před připojením. |
 

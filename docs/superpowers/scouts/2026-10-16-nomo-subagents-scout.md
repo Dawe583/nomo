@@ -46,13 +46,13 @@ Read-only map. No design, no build. Paths relative to worktree root.
   views, filter, inspector, revive/kill, focus-to-steer, pinned jump list,
   `agent://` and `history://` URLs for messaging/transcript. Spawn itself
   is the Task tool (`@oh-my-pi/pi-tui/tools/task`, `BeforeSubagentSpawnEvent`
-  in `coding-agent/src/tools/index.ts:15-16`) — second-hand, not read deep.
+  in `coding-agent/src/tools/index.ts:15-16`), second-hand, not read deep.
 - prime `rlm.spawn` (read directly, `prime-agent-runtime/src/rlm/`):
   `handle = await rlm.spawn('sub-task', name='worker')` returns immediately
   with `rlm_child_id, name, session_dir, model`, never the answer
   (`__init__.py:27-33`, `harness.py:1094-1099`). Results arrive only via
   `agent_message.send(..., receiver_role='parent')` replies or files;
-  follow-ups via `receiver_role='child'`. Python kernel runtime —
+  follow-ups via `receiver_role='child'`. Python kernel runtime , 
   explicitly rejected for NOMO by the harness spec.
 - prime `agent_message` (read directly,
   `pa-core/src/session_engine/agent_messaging.rs`, 568 lines):
@@ -117,5 +117,5 @@ messages, no new limits, no schema change to refinement.
 - Steering a running child races the turn loop; needs the same
   boundary discipline as manual harness review.
 - `branch()` is the only `parentId` writer; its semantics (clone) differ
-  from spawn (fresh session, shared workspace?) — workspace scoping open.
+  from spawn (fresh session, shared workspace?), workspace scoping open.
 - env: `NOMO_*` with `VOID_*` fallback; no glm models anywhere.

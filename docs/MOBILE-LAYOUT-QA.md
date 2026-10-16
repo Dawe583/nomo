@@ -1,4 +1,4 @@
-# Mobile layout checkpoint — 2026-09-14
+# Mobile layout checkpoint, 2026-09-14
 
 The mobile sizing contract now lives in `apps/control-plane/ui/src/mobile.css`,
 loaded after the shared styling and ASCII identity. Desktop panel preferences do
@@ -7,7 +7,7 @@ or viewport zoom restrictions are used.
 
 ## Delivered
 
-- Workspace drawer: 240–280 CSS pixels, proportional to narrow viewports,
+- Workspace drawer: 240-280 CSS pixels, proportional to narrow viewports,
   with one scrollable surface so settings remain reachable on short phones.
 - Compact navigation typography and spacing, including when the desktop sidebar
   was previously collapsed. Touch targets remain at least 44 pixels.
@@ -36,7 +36,7 @@ live model provider.
 | 320 × 568 | Drawer 240 px, menu scroll reaches Settings; chat, settings and public menu stay within viewport; workspace message completed. |
 | 390 × 844 | Drawer 280 px, versus 310 px before; composer area 170 px, versus 201.5 px before; public action menu 320 px wide. |
 | 430 × 932 | Drawer 280 px after collapsing the desktop sidebar; labels remain left aligned and visible. |
-| 390 × 360 | Public composer remains visible; menu bounds 12–348 px, with internal scrolling. |
+| 390 × 360 | Public composer remains visible; menu bounds 12-348 px, with internal scrolling. |
 | 768 × 1024 | Resizing with the drawer open closes it; no remaining drawer overlay or horizontal overflow. |
 | 1440 × 900 | Desktop navigation and chat remain available; collapsing navigation still works. |
 

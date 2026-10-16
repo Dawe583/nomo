@@ -1,5 +1,5 @@
 /**
- * Conversation minimap – a vertical indicator on the right edge of the chat
+ * Conversation minimap-a vertical indicator on the right edge of the chat
  * pane showing the shape of the conversation. Each marker is one row high
  * and maps to a conversation event: user message, assistant message, tool call,
  * error, approval hold, usage, or gap. The current viewport is highlighted.

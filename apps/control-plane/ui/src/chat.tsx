@@ -1452,8 +1452,8 @@ export function Chat({
                 : perm.source === "pending"
                   ? t("Režim se ověřuje u serveru", "Checking the server")
                   : t(
-                      "Server mode unavailable — read-only fallback",
-                      "Server mode unavailable — read-only fallback",
+                      "Server mode unavailable, read-only fallback",
+                      "Server mode unavailable, read-only fallback",
                     )}
             </span>
           </div>

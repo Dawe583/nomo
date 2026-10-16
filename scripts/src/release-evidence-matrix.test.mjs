@@ -404,7 +404,7 @@ test("every suite count the matrix states is the count the tree has, once", asyn
   for (const [suite, claims] of stated) {
     const numbers = [...new Set(claims.map((claim) => claim.count))];
     const said = claims
-      .map((claim) => `  line ${claim.line}: ${claim.count} — ${claim.clause.slice(0, 90)}`)
+      .map((claim) => `  line ${claim.line}: ${claim.count}, ${claim.clause.slice(0, 90)}`)
       .join("\n");
     assert.ok(claims.length > 0, `the matrix no longer states a count for ${suite}`);
     assert.deepEqual(

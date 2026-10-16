@@ -19,7 +19,7 @@ The short answer, established from source below:
 - The research pass is right about the trust domain and wrong about the
   mechanism. The signing key is **not** in the keychain. It is a `0600` PKCS#8
   file in the same directory as the data it signs. The keychain holds a
-  *different* secret — the workspace encryption key — and conflating the two
+  *different* secret, the workspace encryption key, and conflating the two
   makes the finding sound more alarming and the fix look more expensive than
   it is.
 - Against a third party who can edit the JSONL but cannot read the key file,
@@ -84,7 +84,7 @@ audited agent as its own child*.
 So in the stdio topology the auditor is literally the parent of the audited
 process, and both run as the login user. There is no setuid, launchd daemon,
 helper service, DPAPI call, Secure Enclave use, TPM use, or keychain ACL
-anywhere in the source tree — I grepped for all of them and found nothing.
+anywhere in the source tree, I grepped for all of them and found nothing.
 
 ### 1.2 The one piece of boundary work that does exist, and what it is worth
 
@@ -117,12 +117,12 @@ as defense in depth only."
 
 The key is generated with `generateKeyPairSync("ed25519")`
 (`packages/ledger/src/sign.ts:147`) and written with `O_CREAT|O_EXCL` at `0600`
-(`:150-151`) — a real symlink-preplacement defence, and `readExistingKey`
+(`:150-151`), a real symlink-preplacement defence, and `readExistingKey`
 asserts mode `0600`, non-symlink, regular file (`:135-138`,
 `packages/ledger/src/hardening.ts:75-96`), with a Windows ACL check
 (`hardening.ts:8-64`). On Windows the ACL is allowed to grant only the current
 SID, `S-1-5-18` (SYSTEM) and `S-1-5-32-544` (Administrators)
-(`hardening.ts:30`) — the same three principals that can already read anything
+(`hardening.ts:30`), the same three principals that can already read anything
 the user can.
 
 **Every one of those defences is a defence against a *different* user.** There
@@ -143,12 +143,12 @@ handed to the Node child as `NOMO_WORKSPACE_KEY`
 (`apps/desktop/src-tauri/src/main.rs:137`).
 
 `apps/desktop/src-tauri/` contains **no reference to the ledger signing key at
-all** — I grepped `main.rs`, `keychain.rs`, `diagnostics.rs` and `downloads.rs`
+all**, I grepped `main.rs`, `keychain.rs`, `diagnostics.rs` and `downloads.rs`
 for `sign`, `ed25519` and `ledger`: the only hit is an unrelated UI string at
 `main.rs:414`.
 
 So the accurate statement is: **the signing key is in the same directory and
-the same trust domain as the data it signs** — which is worse than "in the same
+the same trust domain as the data it signs**, which is worse than "in the same
 keychain", because `0600` on a file in the app data directory offers no access
 control at all against the process that is running. But it is *not* a keychain
 custody problem, and moving it to a keychain would not fix the AAT gap,
@@ -162,7 +162,7 @@ describes the encryption key and should not be read as a statement about the
 signature.
 
 Note also that `MacKeychain` sets no `SecAccessControl`
-(`keychain.rs:134-162` — a plain `get_generic_password` /
+(`keychain.rs:134-162`, a plain `get_generic_password` /
 `set_generic_password`): no user-presence requirement, no ACL bound to a
 signing identity. The doc comments on `MacKeychainRead` at `keychain.rs:96-115`
 correctly explain that an ad-hoc-signed rebuild loses the grant and that this is
@@ -186,14 +186,14 @@ independent of process boundaries.
 Every verification path resolves the *public* key by loading the *private* key
 file:
 
-- `apps/control-plane/api/server.ts:97` — reads
+- `apps/control-plane/api/server.ts:97`, reads
   `~/.nomo/keys/dev-ed25519.pkcs8` and returns `keyProviderFromPkcs8(...).publicKey`.
-- `packages/cli/src/verify.ts:166` — `devKeyProvider({ env })`, same default dir.
-- `packages/workbench/src/index.ts:1682-1688` and `:1767-1770` — same.
+- `packages/cli/src/verify.ts:166`, `devKeyProvider({ env })`, same default dir.
+- `packages/workbench/src/index.ts:1682-1688` and `:1767-1770`, same.
 
 Consequence: an attacker who replaces `dev-ed25519.pkcs8` controls both halves
 of verification. They do not need to re-sign anything to make old entries look
-forged — but more usefully, they can re-sign **everything** with their own key
+forged, but more usefully, they can re-sign **everything** with their own key
 and every NOMO verifier will report the rewritten chain as valid, because the
 verifier is asking the attacker's key whether the attacker's signatures are
 good. Rewriting is cheap: `entryHash` and `signingPreimage` are three lines
@@ -204,7 +204,7 @@ Two secondary consequences of the same design:
 - **Truncation is undetectable locally.** `verifyChain` is happy on any
   consistent prefix (`packages/ledger/src/verify.ts:92-146`); the only thing
   that pins a length is an attestation document, and `storeAttestation`
-  (`packages/ledger/src/attest.ts:61-74`) has **no production caller** — only
+  (`packages/ledger/src/attest.ts:61-74`) has **no production caller**, only
   tests and `scripts/src/e2e-final.mjs:310`. The anchoring mechanism exists and
   is not shipped.
 - **`nomo verify` can mint a key.** `packages/cli/src/verify.ts:166` calls
@@ -222,7 +222,7 @@ The signed pre-image is narrow and well-defined. Entry hash:
 (`packages/ledger/src/canonical.ts:94-105`). Signature pre-image:
 `"void.ledger.<ver>|" + alg + "|" + key_id + "|" + entry_hash`
 (`packages/ledger/src/index.ts:69-77`). Canonicalisation is recursive, so
-nested tool arguments are genuinely covered — the comment at
+nested tool arguments are genuinely covered, the comment at
 `packages/ledger/src/canonical.ts:1-17` records that a shallower design would
 have silently erased them, and it is correct.
 
@@ -238,22 +238,22 @@ Two record shapes exist. The **proxy decision record** is what
 | --- | --- | --- | --- | --- |
 | Workspace | yes (`bin.ts:716`) | yes (`:1712`) | yes (`journal.ts:27`) | yes (`attest.ts:48`) |
 | Timestamp | yes (`:1713` / `tools.ts:35`) | yes (`:1713`) | yes (`:162`) | yes (`:51`) |
-| Tool name | yes (`:1714`) | yes (`:1714`) | via `adapterId` (`:313`) | — |
-| Reversibility class | yes (`klass`, `:1715-1717`) | yes (`:1715-1717`) | no | — |
-| Decision / outcome | yes, as a free string (`:1718`) | yes, free string (`:1718`) | as `stage` (`:318`) | — |
-| **Tool arguments** | **digest only** — `argsDigest` (`:1719`) | digest only (`:1719`) | `requestDigest` (`:312`) | — |
-| **Which policy rule fired** | yes — `attribution.rule.index` (`attribution.ts:46-49`) | **no** | **no** | — |
-| **Why that rule fired** | yes — `attribution.rule.rationale` when the rule states one | **no** | **no** | — |
-| **The policy itself** (content or version) | yes — `attribution.policyDigest` = `canonicalDigest(policyFile)` | **no** | **no** | — |
-| **The model that made the call** | **no** | **no** | **no** | — |
-| **The prompt / conversation** | **no** | **no** | **no** | — |
-| **The tool result / side effect** | **no** | **no** | result goes to the vault, not the chain (`execute.ts:240-249`) | — |
-| Agent identity | **no** | `approvedBy` only (`:1710`) | yes — `agentId`, `runId` (`:315-316`) | — |
-| Adapter identity | connector only, not signed (`bin.ts:758`) | no | yes — `adapterId`, `adapterVersion` (`:313-314`) | — |
+| Tool name | yes (`:1714`) | yes (`:1714`) | via `adapterId` (`:313`) |, |
+| Reversibility class | yes (`klass`, `:1715-1717`) | yes (`:1715-1717`) | no |, |
+| Decision / outcome | yes, as a free string (`:1718`) | yes, free string (`:1718`) | as `stage` (`:318`) |, |
+| **Tool arguments** | **digest only**, `argsDigest` (`:1719`) | digest only (`:1719`) | `requestDigest` (`:312`) |, |
+| **Which policy rule fired** | yes, `attribution.rule.index` (`attribution.ts:46-49`) | **no** | **no** |, |
+| **Why that rule fired** | yes, `attribution.rule.rationale` when the rule states one | **no** | **no** |, |
+| **The policy itself** (content or version) | yes, `attribution.policyDigest` = `canonicalDigest(policyFile)` | **no** | **no** |, |
+| **The model that made the call** | **no** | **no** | **no** |, |
+| **The prompt / conversation** | **no** | **no** | **no** |, |
+| **The tool result / side effect** | **no** | **no** | result goes to the vault, not the chain (`execute.ts:240-249`) |, |
+| Agent identity | **no** | `approvedBy` only (`:1710`) | yes, `agentId`, `runId` (`:315-316`) |, |
+| Adapter identity | connector only, not signed (`bin.ts:758`) | no | yes, `adapterId`, `adapterVersion` (`:313-314`) |, |
 | Predecessor link | yes (`store.ts:107`) | yes (`:1728`) | yes (`store.ts:107`) | yes (`:50`) |
 | Signing key id | yes (`store.ts:109`) | yes (`:1737`) | yes (`store.ts:109`) | yes (`:54`) |
 | Chain position | yes (`store.ts:105`) | yes (`:1733`) | yes (`store.ts:105`) | yes (`:49`) |
-| Whole-file commitment | — | — | — | Merkle root over all entry hashes (`attest.ts:53`, `:113-127`) |
+| Whole-file commitment |, |, |, | Merkle root over all entry hashes (`attest.ts:53`, `:113-127`) |
 
 ### 3.2 The interesting failure
 
@@ -274,7 +274,7 @@ Almost everything that matters.
   different policy with a different digest. AAT §5.3 asks for exactly this and
   calls it "Policy integrity".
   What it does not do: it does not stop an attacker who also holds the signing
-  key, and it does not make the policy itself available — the digest is
+  key, and it does not make the policy itself available, the digest is
   evidence, not the document. Note also that the *retention* `policyDigest`
   (`packages/runtime/src/retention.ts:271`) is a different quantity: it is
   `digest(canonicalJson(policy))`, which canonicalises an already-canonical
@@ -294,16 +294,16 @@ Almost everything that matters.
   would have refused and records `decision: "allow"` with no rule
   (`packages/proxy/src/bin.ts:659-663`), so an observe-mode record names the
   policy but not the rule it evaded.
-- **The classification.** `klass` is recorded, so the R-class is bound — but
+- **The classification.** `klass` is recorded, so the R-class is bound, but
   `blastRadius`, `unclassified`, and the probe facts that produced them are not.
 - **Everything about the model.** No model id, no prompt, no digest. Nothing in
   `packages/ledger/`, `packages/runtime/src/journal.ts` or `execute.ts` mentions
   either. AAT §13.6 ("Attestation Closure") is the direct reference here, and
-  NOMO is far outside it — though §13.6 is about decision *reproducibility*, a
+  NOMO is far outside it, though §13.6 is about decision *reproducibility*, a
   stronger property than NOMO claims.
 - **The evidence itself.** The workbench keeps `evidence` in memory
   (`packages/workbench/src/index.ts:1681`, `:1743`) and serialises it into
-  `workspace.enc` via `this.persist()` (`:1745`) — the same process, same key,
+  `workspace.enc` via `this.persist()` (`:1745`), the same process, same key,
   same directory.
 - **The verifier's answer.** As established in §2.4, replacing the key file
   makes any rewritten chain verify clean.
@@ -361,8 +361,8 @@ The draft is an **individual Internet-Draft with no RFC stream and no IESG
 state**; the datatracker page states plainly that it "is not endorsed by the
 IETF and has no formal standing in the IETF standards process." It should be
 treated as a design reference, not a conformance target. That does not make it
-useless as a specification of what independent recording means — it is a
-careful one — but it does mean "non-compliant with AAT" is not, by itself, a
+useless as a specification of what independent recording means, it is a
+careful one, but it does mean "non-compliant with AAT" is not, by itself, a
 finding.
 
 ### 4.1 What the draft actually requires
@@ -391,9 +391,9 @@ finding.
 The draft's own threat model is stated in §5.1: "Self-recording provides weaker
 evidentiary guarantees because the agent could, in principle, omit or alter
 records of its own actions without external detection." And §5.3 makes
-suppression itself visible: consequential actions — payment or fund movement,
+suppression itself visible: consequential actions, payment or fund movement,
 deletion of data, production deployment, delegation, or egress of data to an
-external party — "MUST be assigned a `trust_level` of L2 or above by default,"
+external party, "MUST be assigned a `trust_level` of L2 or above by default,"
 and downgrading one requires an explicit, signed `trust_assignment` naming the
 classifier and the `policy_version` in force.
 
@@ -408,9 +408,9 @@ classifier and the `policy_version` in force.
 | Signing key **not accessible** to the audited agent process | **Not met.** It is read and used in that process (`workbench/src/index.ts:1705`, `:1739`). |
 | Verification outside the recorder's principal | **Not met.** The HTTP verifier runs in the recorder process (`server.ts:113`, `:331`). |
 | `policy_digest` / `policy_version` recorded, digest of canonical policy | **Not met.** Neither field exists; `PolicyFile.version` is a format constant (`rules.ts:46-49`, `:73`). |
-| Downgrade is an attributable recorded event | **Not applicable** — NOMO has no trust-level field to suppress. |
+| Downgrade is an attributable recorded event | **Not applicable**, NOMO has no trust-level field to suppress. |
 | `recording_component` URI distinct from `agent_id` | **Not met.** No `recording_component` field; `key_id` is derived from the same key that signs everything. |
-| `signer_kid` distinct from the agent's key thumbprint | **Not met, and unmeetable in principle here** — there is only one key, used for both roles (`store.ts:99-104`). |
+| `signer_kid` distinct from the agent's key thumbprint | **Not met, and unmeetable in principle here**, there is only one key, used for both roles (`store.ts:99-104`). |
 | Pre-execution record for denied decisions (§4.2) | **Met**, and deliberately (`forward/tools.ts:97-106`, record written before the verdict). |
 | Pre-execution record before external-state modification (§4.3) | **Met** for the proxy path; **not** for the workbench path, which commits evidence after `mutateDocument` returns (`workbench/src/index.ts:1424-1441`, `:1693`). |
 
@@ -420,7 +420,7 @@ above*. At L0/L1 the draft explicitly permits self-recording (§5.1: "At trust
 levels L0 and L1, the agent itself MAY write its own audit records"), requiring
 only that the genesis record declare `recording_mode: "self"`.
 
-NOMO's actual trust level is **L1** — self-signed identity, no trust
+NOMO's actual trust level is **L1**, self-signed identity, no trust
 authority, no external attestation (§2 terminology, lines 388-399 of the
 fetched text). Under the draft as written, NOMO **is not in violation**. It is
 **not capable of claiming L2 or above**, and it must not market itself as
@@ -440,7 +440,7 @@ gap is a *ceiling*, not a breach.
 > in force was the policy that was applied, or that the recording process was
 > not itself compromised. Verification uses the same key the writer used, so it
 > detects a third party who can edit the ledger but cannot read the key
-> directory — a population that, on a single-user host, is close to empty.
+> directory, a population that, on a single-user host, is close to empty.
 
 That is a defensible sentence to put in the README. It is roughly the sentence
 `packages/security-notes.md:11-14` already writes for internal readers, and it
@@ -463,13 +463,13 @@ rebuilds. Consequences:
   call site and the `NOMO_SIGNING_KEY` env path, and the "dev tier key" in
   `sign.ts` is explicitly designed to be swappable for a KMS ("In production
   the same interface is backed by KMS and no calling code changes",
-  `sign.ts:12-14`) — so the *interface* is ready and the *deployment* is not.
+  `sign.ts:12-14`), so the *interface* is ready and the *deployment* is not.
 - It buys nothing against the agent itself, because in NOMO's topology the
   agent is the process being recorded. A compromised agent would simply stop
   recording and the absence would be the signal.
 
 Estimate: weeks of work per platform, an installer, and a code-signing
-identity the project does not currently have — to move NOMO from L1 to L2.
+identity the project does not currently have, to move NOMO from L1 to L2.
 
 ### 5.3 The single change that closes the most of the gap
 
@@ -481,13 +481,13 @@ Concretely, two coupled pieces:
 1. **Make the external anchor a shipped product surface.** `attestLedger`
    already computes a Merkle root over all entry hashes
    (`packages/ledger/src/attest.ts:53`, `:113-127`) and `storeAttestation`
-   already writes a signed document (`:61-74`) — and neither has a production
+   already writes a signed document (`:61-74`), and neither has a production
    caller. Ship a `nomo attest` command that emits the signed
    `{headSeq, headHash, treeDigest}` and push it to somewhere the agent
    process has no credentials for: the operator's cloud account
    (`cloud/store.mjs` already holds an append-only `void_cloud_ledger` table),
    or a syslog/`log(1)` forward, or a plain append-only file the agent cannot
-   open. AAT §14.1 asks for exactly this — "Implementations SHOULD store
+   open. AAT §14.1 asks for exactly this, "Implementations SHOULD store
    `session_hash` values in a separate, append-only system to provide an
    independent verification point."
 2. **Stop resolving the verification key from the private key file.** Emit the
@@ -504,7 +504,7 @@ Why this is the right single change:
   key, a swapped key produces a `dev-<different thumbprint>` `key_id`, and
   `verifyChain` fails at `packages/ledger/src/verify.ts:135-137` with "has no
   public key for ...". That is a real detection primitive, cheaply obtained.
-- It converts **truncation and omission** from undetectable to detectable —
+- It converts **truncation and omission** from undetectable to detectable , 
   currently the worst gap, because the anchoring machinery exists and is
   unwired.
 - It is the only change in this list that puts a byte into a **different trust
@@ -547,7 +547,7 @@ which is a real and much better property than nothing, and it is honest.
 Optionally, if a stronger-than-nothing local story is wanted on desktop without
 any installer: store the signing key as a non-exportable `SecKey` (macOS) or
 `NCrypt` key (Windows) rather than a PKCS#8 file. **This is not isolation** and
-must not be described as such — the agent is in the same process and would call
+must not be described as such, the agent is in the same process and would call
 the same API. What it does buy is real but narrow: it stops *malware running as
 the same user in a different process* from silently copying the key to a
 server, provided the key is created with a `SecAccessControl` requiring user
@@ -562,7 +562,7 @@ agent", and the two should never be conflated in the documentation.
 - Do not say: "non-repudiable", "auditable", "tamper-proof", or anything
   implying the agent cannot influence its own record.
 - Say which trust level the product targets, in the draft's own vocabulary. If
-  the answer is L1, say L1 — the draft permits it (§5.1), and a product that
+  the answer is L1, say L1, the draft permits it (§5.1), and a product that
   names its level is more credible than one that implies L3.
 
 ---
@@ -627,8 +627,8 @@ Stated plainly rather than guessed.
 4. **Whether the `MacKeychain` item has any ACL in practice.**
    `apps/desktop/src-tauri/src/keychain.rs:145-160` sets no access control on
    `set_generic_password`, so it inherits the default login-keychain
-   protection. I did not inspect a live keychain — deliberately, per the task
-   constraints — so I cannot state the real-world protection level of a NOMO
+   protection. I did not inspect a live keychain, deliberately, per the task
+   constraints, so I cannot state the real-world protection level of a NOMO
    workspace key on an operator's machine.
 5. **Key rotation and multi-key verification.** `packages/security-notes.md:35`
    (S09) flags that signature verification accepts any key an injected lookup

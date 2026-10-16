@@ -77,7 +77,7 @@ test("compact navigation and checkbox labels keep 44px targets", () => {
   // Asserted against the token rather than the literal. The 44px these two rules
   // carry is `--control-touch`, whose value is 44, and a test that matched the
   // digits would fail the moment someone did the right thing and read the
-  // token — which is the same failure the design-source gate exists to end.
+  // token, which is the same failure the design-source gate exists to end.
   const touch = "min-height:\\s*var\\(--control-touch\\)";
   assert.match(css, new RegExp(`\\.sidebar a:not\\(\\.brand a\\)\\s*\\{[^}]*${touch}`, "s"));
   assert.match(css, new RegExp(`label:has\\(input\\[type="checkbox"\\]\\)\\s*\\{[^}]*${touch}`, "s"));

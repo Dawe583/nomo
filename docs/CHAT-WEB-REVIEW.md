@@ -1,4 +1,4 @@
-# Adversarial review — `apps/control-plane/ui` chat surface
+# Adversarial review, `apps/control-plane/ui` chat surface
 
 Scope: `chat.tsx` (+ diff vs `db481fd`), new `chat-stream.ts`, `chat-composer.ts`,
 `chat.css`, `chat-stream.test.ts`, `chat-composer.test.ts`, with
@@ -15,21 +15,21 @@ No source file was modified.
 
 ---
 
-## 0. The restored hunk — `now` and `edited` (the reason this review exists)
+## 0. The restored hunk, `now` and `edited` (the reason this review exists)
 
 **They are intact and correctly wired. Nothing to fix.**
 
 `git diff -U0 apps/control-plane/ui/src/chat.tsx` contains no `+`/`-` line that
 touches either declaration (the only grep hit is `unknown` inside the new
 `toolStatusLabel` signature). Both lines are byte-identical to `HEAD`, and
-neither appears in the diff at all — the restoration was exact.
+neither appears in the diff at all, the restoration was exact.
 
 Traced end to end:
 
 | value | declared | written | read | controls |
 |---|---|---|---|---|
 | `now` | `chat.tsx:266` `useState(Date.now())` | `chat.tsx:522` `setInterval(() => setNow(Date.now()), 1000)` | `chat.tsx:518` `Math.ceil((retryAt - now) / 1000)` | the provider rate-limit countdown in the notices region, and via `retryWait` the `disabled` on both the send button (`:1360`) and the "Send draft" button (`:1069`) |
-| `edited` | `chat.tsx:267` `useState("")` | `:977` (branch from a row — user text, or `""` for an assistant row), `:995` (Retry — the preceding user text), `:1192` (ArrowUp history — `lastUserMessage`) | `:770` `prompt: edited` in the branch POST, `:1556` `value=` on the branch dialog textarea | the editable text inside the "New conversation branch" dialog |
+| `edited` | `chat.tsx:267` `useState("")` | `:977` (branch from a row, user text, or `""` for an assistant row), `:995` (Retry, the preceding user text), `:1192` (ArrowUp history, `lastUserMessage`) | `:770` `prompt: edited` in the branch POST, `:1556` `value=` on the branch dialog textarea | the editable text inside the "New conversation branch" dialog |
 
 Both are load-bearing. `now` must be state, not a ref, because the countdown has
 to re-render the composer; the interval at `:520-524` is correctly gated on
@@ -77,7 +77,7 @@ truncated    -> { streaming: true, seq: '4' }   // historyComplete === false / p
 ```
 
 Why it matters to a user: the moment the user presses Stop, the run ends, the
-Stop button unmounts, focus returns to the composer — and the last answer is
+Stop button unmounts, focus returns to the composer, and the last answer is
 stuck with a breathing caret, the "arriving" flag, `aria-busy="true"`, and
 **its entire `.message-actions` row suppressed** by `{text && !arriving && ...}`
 at `:967`. The user can no longer copy the answer they just asked for, branch
@@ -86,7 +86,7 @@ provider failure. The diff introduces the flag, the rail, the caret and the
 action suppression together, so the regression lands with the feature.
 
 A correct fix: give `streamPhase` every terminal transition, not just the happy
-one — treat `run.error`, and any `run.status` in a terminal set
+one, treat `run.error`, and any `run.status` in a terminal set
 (`stopped`/`cancelled`/`idle`/`failed`), as closing the open run the same way
 `message.completed` does. A second, independent guard is worth having: scope
 the "still arriving" claim to a run that is actually live (`runBlocksInput`), so
@@ -113,7 +113,7 @@ disagrees.
 
 Fix: `disabled={busy || running || retryWait > 0 || !draft.trim() || size.over}`.
 
-### 1.3 The send path clears the draft text imperatively but leaves the files to a React effect — the two drift apart
+### 1.3 The send path clears the draft text imperatively but leaves the files to a React effect, the two drift apart
 `chat-composer.ts:74-81` · `draft-state.ts:submitDraft` · `chat.tsx:750-753`
 
 `send()` on success calls `submitDraft`, which imperatively does
@@ -124,13 +124,13 @@ was called at `:753`. Two reachable ways that effect never runs:
 * the tab closes or the route unmounts the component between `submitDraft`
   resolving and the effect flushing;
 * the send creates a new session, so `navigate("/chat/" + result.session.id)` at
-  `:757` changes `draftKey` from `…:new` to `…:<id>` — the old `…:new` files
+  `:757` changes `draftKey` from `…:new` to `…:<id>`, the old `…:new` files
   key is then never removed, because every subsequent effect writes the *new*
   key.
 
 Result: `nomo-draft:ws:new` is gone but `nomo-files:ws:new` survives. Navigate
 back to `/chat/new` and the composer restores attachments against an **empty
-draft** — the precise "a different message than the one on screen" failure the
+draft**, the precise "a different message than the one on screen" failure the
 author set out to prevent, reappearing one layer down. The symmetric case is
 that these entries also accumulate for the life of the tab with no eviction.
 
@@ -161,7 +161,7 @@ assert.equal(ATTACHMENT_BYTE_LIMIT, 24576);
 
 That asserts a constant against the same literal the production code duplicates.
 It fails when you change the constant and passes when you change either `24576`
-in `chat.tsx` — precisely backwards from its stated purpose.
+in `chat.tsx`, precisely backwards from its stated purpose.
 
 Fix: use `ATTACHMENT_BYTE_LIMIT` at `:1293` and `:1462`, and replace the
 tautology with an assertion that reads the two call sites, the way
@@ -175,16 +175,16 @@ tautology with an assertion that reads the two call sites, the way
 `permission-mode.tsx:15-23` · `permission-mode.tsx:97-119` · `chat.tsx:1057`
 
 `resolvePermissionMode` returns `{ mode: "read-only", source: "local" }` for
-**any** input that is not an explicit server authority — including
+**any** input that is not an explicit server authority, including
 `capabilities.data === undefined` while the query is still in flight. The
 banner therefore renders
 
-> Režim: jen čtení · server mode unavailable — read-only fallback
+> Režim: jen čtení · server mode unavailable, read-only fallback
 
 on every single page load, for a few hundred milliseconds, even when the server
 is healthy and the session is `normal`. It then flips to "enforced by server".
-The claim being reviewed — that the unenforced state is made *visually
-distinct* rather than softer — holds (see §4), but the banner is not telling the
+The claim being reviewed, that the unenforced state is made *visually
+distinct* rather than softer, holds (see §4), but the banner is not telling the
 truth about **why** it is in that state, and it cannot distinguish "loading"
 from "server said nothing" from "server unreachable".
 
@@ -204,7 +204,7 @@ region, on the grounds that "the run status below already announces the run".
 That reasoning does not hold in the state where the flag is most visible. The
 anchor it relies on is `{running && <p className="run-status" role="status">}`
 at `:1007`, and `running = runBlocksInput(session)`. After Stop or after a
-failure, `running` is false while `streaming.streaming` is still true (§1.1) —
+failure, `running` is false while `streaming.streaming` is still true (§1.1) , 
 so the transcript says "arriving", `aria-busy="true"` is set on the row, and
 there is no live region announcing anything. The provisionality is conveyed by
 an `aria-hidden` caret and a rail colour.
@@ -224,7 +224,7 @@ fixing the phase model fixes the announcement gap too.
 `draft` on every keystroke. A screen-reader user typing a long message gets a
 number read back at them per character. The same element is *also* the target of
 `aria-describedby` on the textarea (`:1162`), which is the right channel and
-already announces it on focus — the live region is redundant and harmful.
+already announces it on focus, the live region is redundant and harmful.
 
 Fix: drop `role="status"`; keep `aria-describedby`. If it must announce
 transitions, announce only on the `not over → over` edge, not on every count.
@@ -240,7 +240,7 @@ const observer = new ResizeObserver(() => {
 observer.observe(content);
 ```
 
-The observed element is the right one — `el.firstElementChild` is the `.messages`
+The observed element is the right one, `el.firstElementChild` is the `.messages`
 div, which is what actually grows. Disconnect on cleanup is present. But
 *any* resize of that div sets the pill: a webfont finishing, a window resize, a
 Markdown table reflowing, the user expanding a tool card. The user is scrolled
@@ -256,7 +256,7 @@ re-anchoring the scroll position while following.
 `chat.tsx:152-153` · `chat.tsx:165` · `chat.css:64-69`
 
 `live = status === "requested"`, so `data-phase` is binary. `events.ts:26-29`
-produces three statuses — `requested`, `completed`, `failed` — and `failed` lands
+produces three statuses, `requested`, `completed`, `failed`, and `failed` lands
 in `data-phase="settled"` with the neutral `var(--line)` rail. The only signal
 is the badge word. The diff added an explicit two-state phase model and a
 pending notice; failure is the third state it left out, and it is the one a user
@@ -273,13 +273,13 @@ drop `data-phase` to one neutral style and let the badge carry it honestly.
 
 The *values* do come from `events.ts`; the *table* does not. It is a literal
 copy of two strings that `events.ts:26-29` produces independently. Rename
-`"requested"` in `events.ts` and this table silently stops matching — the badge
+`"requested"` in `events.ts` and this table silently stops matching, the badge
 falls through `toolStatusLabel` to `statusLabel`, which has no entry for either
 string and returns the raw English token, untranslated. Verified: neither
 `requested` nor `completed` is in `status-label.ts`'s `LABELS`.
 
 The ordering inside `toolStatusLabel` (`t(lifecycle[0], lifecycle[1])` = Czech
-first) is correct and matches every other call site — do not "tidy" that.
+first) is correct and matches every other call site, do not "tidy" that.
 
 Fix: a test that asserts the `status` values `transcriptEvents` emits are
 exactly the keys of `TOOL_LIFECYCLE`, which makes the comment true. That is
@@ -297,7 +297,7 @@ const usage = usageSummary(rawEvents);
 
 None are memoised. `transcriptEvents` walks the entire event buffer and builds
 new objects for every tool card; `toolTimings` rebuilds a `Map`; `usageSummary`
-copies and reverses. This runs on every render — and the rate-limit countdown
+copies and reverses. This runs on every render, and the rate-limit countdown
 forces a render every second via `setNow`. On a long conversation that is a
 full O(n) re-derivation plus a fresh `Map` and fresh row objects sixty times a
 minute, for a number that only appears in one string.
@@ -311,7 +311,7 @@ react-query when the session is loaded, so this memoises correctly; guard the
 
 `PermissionModeSwitch` renders `role="radiogroup"` with three `role="radio"`
 buttons, all `disabled`, one carrying `aria-checked="true"`. A screen reader
-announces the active mode as "dimmed / unavailable" — the one thing it is
+announces the active mode as "dimmed / unavailable", the one thing it is
 actually the authoritative value of. `aria-disabled="true"` on the group doubles
 down on it.
 
@@ -330,7 +330,7 @@ only disable the other two.
 `PageComponent` (`ui.tsx:107-121`) renders `<Page … />` with **no `key`**, so
 navigating `/chat/A` → `/chat/B` reuses the same `Chat` instance. The
 `draftKey` effect resets `draft`, `queued`, `attachments`, `selectedTool`,
-`commandDismissed` and `follow` — but not `branch`, and not `edited`. Open the
+`commandDismissed` and `follow`, but not `branch`, and not `edited`. Open the
 branch dialog in A, click a session in the sidebar, and the dialog is still open
 holding A's `seq` and A's text. Confirming it POSTs to
 `/api/sessions/<B>/branches` with A's `seq` and A's prompt.
@@ -354,60 +354,60 @@ const bytes = new TextEncoder().encode(JSON.stringify({ prompt })).length;
 the number reported next to "characters" and above the send button is not the
 message's byte length. A message that is 5 000 characters of JSON-ish text will
 report materially more than 5 000 B. The guard and the counter use the same
-value, so they cannot disagree with each other — but they can both be wrong
+value, so they cannot disagree with each other, but they can both be wrong
 about the thing they claim to measure, and the error text at `:722-725` repeats
 the wrong number back as a hard limit. It also allocates the whole encoded
 string on every keystroke.
 
 Fix: measure `new TextEncoder().encode(prompt).length` for the display, and
 either keep the serialised figure as a separate explicitly-named field or drop
-the byte bound to the prompt alone — whichever the server actually enforces.
+the byte bound to the prompt alone, whichever the server actually enforces.
 
 ---
 
 ## 3. Nits
 
-* `chat.tsx:21` (import of `useLayoutEffect`) — fine, but the layout effect at
+* `chat.tsx:21` (import of `useLayoutEffect`), fine, but the layout effect at
   `:625-630` calls `setNewMessages(false)`. It only ever sets `false` when it is
   already `false` on the follow path, so React bails out and there is no loop;
   it is safe, just worth knowing before someone "simplifies" it into a plain
   effect.
-* `chat.tsx:1116` `key={a.name}` — two attachments with the same filename
+* `chat.tsx:1116` `key={a.name}`, two attachments with the same filename
   collide and React will reconcile them into one chip. Pre-existing, one-word
   fix (`key={name + ":" + i}`), but out of scope here.
-* `chat.css:235-237` — `transition: opacity 140ms ease-out` on `.new-messages`,
+* `chat.css:235-237`, `transition: opacity 140ms ease-out` on `.new-messages`,
   but nothing in any stylesheet changes that element's opacity. A transition for
   a property that never moves; harmless, dead.
-* `chat.tsx:1525` — `aria-label={t("Oblíbený model", "Favorite model")}` on the
+* `chat.tsx:1525`, `aria-label={t("Oblíbený model", "Favorite model")}` on the
   per-model star. Three model cards produce three identically named buttons.
   Should be "…: <model name>". Pre-existing.
-* `chat.tsx:1113` — `aria-label={t("Odebrat přílohu", "Remove attachment") + " " + a.name}`.
+* `chat.tsx:1113`, `aria-label={t("Odebrat přílohu", "Remove attachment") + " " + a.name}`.
   This is a correct fix and the only accessible name in the composer that names
   the thing acted on rather than the control type. **Leave it.** By contrast the
   textarea's `aria-label` is still the bare `t("Zpráva", "Message")` at `:1153`.
-* `chat.tsx:891-899` — `.chat-loading` is `role="status"` and contains empty
+* `chat.tsx:891-899`, `.chat-loading` is `role="status"` and contains empty
   `<span className="skeleton-line">` elements with no `aria-hidden`. They read
   as nothing, so it is harmless, but `aria-hidden` on the decorative spans is
   the honest markup.
-* `chat.tsx:1017-1026` — the pill now calls `textarea.current?.focus()` after
+* `chat.tsx:1017-1026`, the pill now calls `textarea.current?.focus()` after
   setting `follow`. Defensible (you are now following, so invite the reply), but
   the button announces as "New messages ↓" and silently moves focus to a
   different control. Either move focus and say so, or do not.
-* `chat-composer.ts:45` `filesKey = key.replace(/^nomo-draft:/, "nomo-files:")` —
+* `chat-composer.ts:45` `filesKey = key.replace(/^nomo-draft:/, "nomo-files:")` , 
   `String.prototype.replace` with a non-matching pattern is a no-op, so a caller
   that passes a key not prefixed `nomo-draft:` writes the files JSON *into the
   draft key itself*, corrupting the draft. Today `chat.tsx` always builds the
   prefix, so it cannot happen. A `startsWith` guard, or deriving both keys from
   one function, would make that structural instead of conventional.
-* `chat.css:130-165` — the sticky permission banner eats ~35 % of a notices
+* `chat.css:130-165`, the sticky permission banner eats ~35 % of a notices
   region that `styles.css:3357` caps at `min(144px, 18dvh)`; at 320×568 that is
   102 px, leaving ~66 px for the error box, provider notice, queue banner,
-  selected tool and attachments. It scrolls, so it is usable — but the banner is
+  selected tool and attachments. It scrolls, so it is usable, but the banner is
   the least urgent thing in that stack to be permanently pinned.
 
 ---
 
-## 4. Correct and subtle — do not "fix" these
+## 4. Correct and subtle, do not "fix" these
 
 * **`chat.tsx:271-272` + `474-493`, the `attachmentsRef` ordering.** The
   comment claims the save effect must read the ref rather than the state because
@@ -419,14 +419,14 @@ the byte bound to the prompt alone — whichever the server actually enforces.
   `:272` is harmless because the restore effect overwrites it before any
   consumer reads it. If someone "cleans up" the ref into a lazy initialiser, or
   moves the save effect above the restore, the previous conversation's files get
-  written under the new key — reintroducing exactly the bug this was built to
+  written under the new key, reintroducing exactly the bug this was built to
   fix. Correct; leave the ordering alone.
 * **`chat.tsx:625-630`, the layout-effect anchor.** `useLayoutEffect` rather
   than `useEffect` is right: an autoscroll applied after paint is a visible jump
   on every streamed fragment. The early return on `!follow` is the correct
-  semantics for "the reader is at the end" — a user scrolled up is never fought.
+  semantics for "the reader is at the end", a user scrolled up is never fought.
 * **`chat.tsx:634-648`, the transcript `ResizeObserver`.** It observes
-  `el.firstElementChild`, which is the `.messages` div — the element that
+  `el.firstElementChild`, which is the `.messages` div, the element that
   actually grows when a streamed fragment, a Markdown table or a code block
   changes the layout. That is the correct target, not the scroll container
   itself. It disconnects on cleanup, and the effect re-binds on `[follow]` so
@@ -444,7 +444,7 @@ the byte bound to the prompt alone — whichever the server actually enforces.
   `transition` declaration is inside `@media (prefers-reduced-motion:
   no-preference)` **and** gated on `:root:not([data-motion="off"])`, so motion
   collapses completely under either switch. The `@keyframes` are defined outside
-  the block, which is correct and not a leak — a keyframe definition alone
+  the block, which is correct and not a leak, a keyframe definition alone
   animates nothing, and no rule references them from outside the block. The
   framer-motion entrance (`initial`/`animate` at `:921-922`) is separately driven
   by the existing `useReducedMotion`/`MotionConfig` path. Nothing here needs
@@ -453,47 +453,47 @@ the byte bound to the prompt alone — whichever the server actually enforces.
   are separated by `border-left-style` (solid / dashed / dotted) as well as
   colour, and the local fallback adds `double` at 5 px on top. A
   `data-source="local"` read-only banner therefore differs from a
-  server-enforced read-only banner by border *pattern* and *width*, not hue —
+  server-enforced read-only banner by border *pattern* and *width*, not hue , 
   distinguishable in greyscale, in forced-colours mode, and to a reader who
   cannot separate the two greys. Combined with the words at
   `permission-mode.tsx:117`, the local-fallback state is never colour-only. The
   cascade works out correctly too: `[data-source="local"]` and `[data-mode=…]`
   are both (0,3,0), and the source rule is declared last, so the `double` wins
-  over the mode's `dotted` without `!important`. **This part is right — do not
+  over the mode's `dotted` without `!important`. **This part is right, do not
   simplify it back to a colour-only rail.**
 * **`chat.tsx:967`, suppressing actions on a provisional row.** The reasoning
-  is right — copying, branching or retrying unsettled text acts on something
+  is right, copying, branching or retrying unsettled text acts on something
   the server has not committed. The bug is the *predicate* (§1.1), not the idea.
 
 ---
 
 ## 5. Test quality
 
-The package has **no DOM test infrastructure** — no jsdom, no testing-library,
+The package has **no DOM test infrastructure**, no jsdom, no testing-library,
 `node --test` over `src/*.test.ts` only, and `package.json` has no test-render
-dependency. So the highest-risk new code in this change — the layout effect, the
+dependency. So the highest-risk new code in this change, the layout effect, the
 two `ResizeObserver` wirings, `onTranscriptScroll`, the pill clear, the
-`attachmentsRef` ordering, `ToolCard` — has **no test at all, and could not
+`attachmentsRef` ordering, `ToolCard`, has **no test at all, and could not
 have one** under the current harness. That is the headline test finding, and it
 is a harness gap, not a discipline gap.
 
-### `chat-stream.test.ts` — the stronger of the two
+### `chat-stream.test.ts`, the stronger of the two
 
 These are real behavioural tests over pure functions, and several pin genuine
 product decisions rather than arithmetic:
 
-* *"a tool call between deltas does not settle an unfinished message"* —
+* *"a tool call between deltas does not settle an unfinished message"* , 
   `streamPhase` correctly refuses to let an interleaved `tool.started` close an
   open message. This is a real semantic, and a naive implementation would fail
   it.
-* *"an unfinished or untimestamped tool call has no duration, not a zero"* —
+* *"an unfinished or untimestamped tool call has no duration, not a zero"* , 
   pins the "absence is not zero" decision and the reversed-timestamp case. Good.
-* *"duration is omitted below a second"* — the `< 1000 → null` suppression is a
+* *"duration is omitted below a second"*, the `< 1000 → null` suppression is a
   deliberate product call, not a restatement.
 
 **The gap is the whole point.** Every test here covers a *happy* terminal
 (`message.completed`). There is no test for `run.error`, a cancelled `run.status`,
-or truncated history — the three inputs that produce §1.1. A single
+or truncated history, the three inputs that produce §1.1. A single
 `assert.equal(streamPhase([delta, {type:"run.status", payload:{status:"cancelled"}}]).streaming, false)`
 would have failed before the change and passes after the fix. Its absence is why
 the bug shipped.
@@ -501,26 +501,26 @@ the bug shipped.
 Minor: the `assert.deepEqual(timings.get("c1"), {…})` at `:49-53` restates the
 two `assert.equal`s immediately above it.
 
-### `chat-composer.test.ts` — three of six tests do not test what they claim
+### `chat-composer.test.ts`, three of six tests do not test what they claim
 
-* **`:42` "the visible budget and the blocking guard read the same numbers"** —
+* **`:42` "the visible budget and the blocking guard read the same numbers"** , 
   the name asserts a cross-check between the visible budget and the send guard.
   The body never touches `chat.tsx`, never renders anything, and calls
   `messageSize` twice. **Revert `chat.tsx:1357` to the hardcoded
   `32000`/`60000` from `HEAD` and this test still passes.** That is the exact
   regression the test names, and it is invisible to it. It currently only pins
-  `messageSize`'s own arithmetic — the same tautology, wearing a
+  `messageSize`'s own arithmetic, the same tautology, wearing a
   cross-component name.
 
-* **`:62` `assert.equal(ATTACHMENT_BYTE_LIMIT, 24576)`** — asserts a constant
+* **`:62` `assert.equal(ATTACHMENT_BYTE_LIMIT, 24576)`**, asserts a constant
   against the literal that production code duplicates twice (`chat.tsx:1293`,
   `:1462`). It fails on the wrong edit and passes on the right one. See §1.4.
 
 * **`:65` "attachments survive the same route change the draft text survives"**
-  and **`:78` "a sent or cleared draft does not leave its files behind"** — both
+  and **`:78` "a sent or cleared draft does not leave its files behind"**, both
   call `saveDraftFiles`/`loadDraftFiles` directly, so they test the module, not
   the wiring. **Delete `chat.tsx:481-483` (the whole restore) and both stay
-  green** — the component would go back to `setAttachments([])` and the original
+  green**, the component would go back to `setAttachments([])` and the original
   bug would return untouched. The round-trip and the corrupt-record handling are
   worth keeping; the *names* promise integration coverage that is not there.
   The genuine regression test for the send path is precisely the one that would
@@ -534,7 +534,7 @@ currently three integration tests wearing unit-test labels, and two of the
 three would survive the exact bugs they were written to prevent. The fix is
 either to rename them to what they check (`messageSize` arithmetic, key
 derivation round-trip) or to make them real by reading the `chat.tsx` source the
-way `compact-layout.test.ts:22` already does for `styles.css` — assert that the
+way `compact-layout.test.ts:22` already does for `styles.css`, assert that the
 `24576` literals are gone, that the queue-banner `disabled` includes `size.over`,
 and that the restore effect calls `loadDraftFiles`. Plus the missing DOM harness
 for the scroll and pill behaviour.

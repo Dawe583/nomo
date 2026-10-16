@@ -2421,7 +2421,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             lines: [
               this.managedVerificationStatus === undefined
                 ? "[OK] Hash chain and signature verified"
-                : `[OK] Hash chain and signature verified — ${this.managedVerificationStatus}`,
+                : `[OK] Hash chain and signature verified, ${this.managedVerificationStatus}`,
               ...(this.managedVerificationNote === undefined
                 ? []
                 : [`Verification key: ${this.managedVerificationNote}`]),
@@ -2438,7 +2438,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             label: `${ROW_ICONS.proxyEntry} proxy:${workspace} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
             lines: [
               this.proxy.signed
-                ? `[OK] Proxy signatures and hash chain verified — ${this.proxy.verificationStatus}`
+                ? `[OK] Proxy signatures and hash chain verified, ${this.proxy.verificationStatus}`
                 : "[!] Proxy: hash integrity only, signature NOT VERIFIED",
               ...(this.proxy.verificationNote
                 ? [`Verification key: ${this.proxy.verificationNote}`]
@@ -2486,7 +2486,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             lines: [
               this.managedVerificationStatus === undefined
                 ? "[OK] Mined from the verified chain"
-                : `[OK] Mined from the verified chain — ${this.managedVerificationStatus}`,
+                : `[OK] Mined from the verified chain, ${this.managedVerificationStatus}`,
               ...(this.managedVerificationNote === undefined
                 ? []
                 : [`Verification key: ${this.managedVerificationNote}`]),
@@ -2852,7 +2852,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                     {
                       label: "reconciliation",
                       value: run.reconcileRequired
-                        ? "required — outcome unknown"
+                        ? "required, outcome unknown"
                         : "not needed",
                     },
                     { label: "started", value: run.createdAt ?? "neznámo" },
@@ -6798,7 +6798,7 @@ export function renderWorkspace(
     }
   }
 
-  // Live run badges – named sessions that are actively running.
+  // Live run badges-named sessions that are actively running.
   // Shows up to 3 running sessions with their progress.
   const runningRuns = [...ui.workbench.runs()].filter(
     (run: { state: string; sessionId: string }) =>
@@ -6821,7 +6821,7 @@ export function renderWorkspace(
     );
   }
 
-  // Live approval pulse – the oldest pending hold gets a breathing dot.
+  // Live approval pulse-the oldest pending hold gets a breathing dot.
   // Only when there are holds and not in a confirmation modal.
   const pendingHolds = ui.workbench.pending();
   if (pendingHolds.length > 0 && !ui.confirmation) {

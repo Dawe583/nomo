@@ -2,7 +2,7 @@
  * The Appwrite resources the hosted NOMO surfaces on top of the MCP function.
  *
  * This is the manifest, not the provisioning. `cloud/appwrite.mjs` applies it
- * with `ensure` semantics — create, or verify on 409 — so a run is safe to
+ * with `ensure` semantics, create, or verify on 409, so a run is safe to
  * repeat and a drift is a named refusal rather than a silent overwrite. The
  * manifest lives here rather than inline in the provisioner for the reason
  * every other manifest in this repository lives in a file: a resource shape a
@@ -81,15 +81,15 @@ export const appwriteManifest = Object.freeze({
    * Three tables, each answering one question a hosted reader can be given
    * without a signing key:
    *
-   *   - `registry_operations` — one row per classified operation. Its `id` is
+   *   - `registry_operations`, one row per classified operation. Its `id` is
    *     the registry's own canonical dotted id, which is what makes the row a
    *     stable identity rather than a copy that has to be reconciled.
-   *   - `registry_cases` — one row per precondition. This is the row that
+   *   - `registry_cases`, one row per precondition. This is the row that
    *     carries `tone`, because a tone belongs to a precondition and not to an
    *     operation: the same S3 PUT is r0 on a versioned bucket and r3 on an
    *     unversioned one, and a single `tone` column on the operation would
    *     have to pick one and lie about the other.
-   *   - `mcp_tools` — one row per tool the hosted endpoint publishes, with the
+   *   - `mcp_tools`, one row per tool the hosted endpoint publishes, with the
    *     annotations a client reads before prompting.
    *
    * Indexes are declared rather than left to the server. Every column a
@@ -206,7 +206,7 @@ function localEnv() {
  *
  * The protocol check alone is not a boundary: both callers send the elevated
  * project key to whatever host this resolves to, so the host is checked here,
- * once, rather than in each caller — a second check is a second thing to forget.
+ * once, rather than in each caller, a second check is a second thing to forget.
  */
 export function endpoint(value) {
   const url = new URL(value);

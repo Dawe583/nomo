@@ -1,7 +1,7 @@
 /**
  * What `nomo recovery` read from a configuration file, and what it refused.
  *
- * The refusal used to be one sentence — `Invalid recovery configuration.` —
+ * The refusal used to be one sentence, `Invalid recovery configuration.` , 
  * and it was the sentence an operator met first when they pointed the managed
  * executor at a filesystem root. Nothing named a field, nothing named an
  * adapter, and nothing pointed at `nomo recovery conformance`, which does take
@@ -87,8 +87,8 @@ function rootProblem(key: string, root: unknown): string | undefined {
   // `.` and `..` are the security property: they can walk a managed root back
   // out of the workspace, and a symlinked parent can redirect what the root
   // resolves to. Those still refuse. Refusing the leading `./` would break
-  // every configuration written that way — including the Python transport
-  // fixture, which is how this was found — without refusing anything unsafe.
+  // every configuration written that way, including the Python transport
+  // fixture, which is how this was found, without refusing anything unsafe.
   const parts = root.split("/");
   if (parts[0] === ".") parts.shift();
   const bad = parts.find((part) => !part || part === "." || part === "..");

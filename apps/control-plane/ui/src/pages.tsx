@@ -213,7 +213,7 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
         ].map(([label, key, path]) => (
           <button key={key} onClick={() => navigate(path)}>
             <span>{label}</span>
-            <strong>{metrics[key] ?? "—"}</strong>
+            <strong>{metrics[key] ?? ", "}</strong>
             <span aria-hidden="true">↗</span>
           </button>
         ))}
@@ -223,7 +223,7 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
         <ul className="fleet-meta">
           <li>
             <span>{t("Agent", "Agent")}</span>
-            <strong>{data?.agentId ?? "—"}</strong>
+            <strong>{data?.agentId ?? ", "}</strong>
           </li>
           <li>
             <span>{t("Stav běhu", "Run state")}</span>
@@ -231,7 +231,7 @@ export function Overview({ navigate }: { navigate: (path: string) => void }) {
           </li>
           <li>
             <span>{t("Nevyřízená volání v běhu", "Unresolved in-flight calls")}</span>
-            <strong>{data?.inFlight ?? "—"}</strong>
+            <strong>{data?.inFlight ?? ", "}</strong>
             {typeof data?.inFlight === "number" && data.inFlight > 0 && (
               <small>
                 {t(
@@ -379,8 +379,8 @@ export function Approvals() {
     <>
       <p className="page-intro">
         {t(
-          `Riziko první: R3 a R2 nahoře. Čeká ${pendingCount}. Expiraci a druhé rozhodnutí hlídá server — pozdní volba skončí konfliktem, ne dvojím zápisem.`,
-          `Risk first: R3 and R2 on top. ${pendingCount} pending. Expiry and double decisions are guarded by the server — a late choice ends in conflict, not a duplicate write.`,
+          `Riziko první: R3 a R2 nahoře. Čeká ${pendingCount}. Expiraci a druhé rozhodnutí hlídá server, pozdní volba skončí konfliktem, ne dvojím zápisem.`,
+          `Risk first: R3 and R2 on top. ${pendingCount} pending. Expiry and double decisions are guarded by the server, a late choice ends in conflict, not a duplicate write.`,
         )}
       </p>
       <ErrorBox error={query.error} />
@@ -426,13 +426,13 @@ export function Approvals() {
                   <Badge value={r.status} />
                 </div>
                 <p className="muted">
-                  {r.call?.tool ?? r.tool ?? "—"} ·{" "}
+                  {r.call?.tool ?? r.tool ?? ", "} ·{" "}
                   {t("prostor", "workspace")}{" "}
                   {r.call?.workspace ?? "unknown"} ·{" "}
                   {t("vyprší", "expires")}{" "}
                   {r.expiresAt
                     ? new Date(r.expiresAt).toLocaleString(t("cs-CZ", "en-GB"))
-                    : "—"}
+                    : ", "}
                 </p>
                 <p className="approval-rationale">
                   {r.reason ??
@@ -665,7 +665,7 @@ export function Models({ navigate }: { navigate: (path: string) => void }) {
                 <p className="muted">
                   {t("Cena", "Price")}:{" "}
                   {m.pricing ? json(m.pricing) : t("neověřena", "unverified")} ·{" "}
-                  {t("Kontext", "Context")}: {m.contextLength ?? "—"}
+                  {t("Kontext", "Context")}: {m.contextLength ?? ", "}
                 </p>
               </div>
               <button

@@ -811,7 +811,7 @@ test("the paid decision lives in the closed tier, never in the open capability s
   // It also found the `cloud/` overlay by slicing from the route to the next
   // `"}));"`, which worked only because the overlay happened to be a single
   // expression. Changing the route's punctuation moves that marker far away and
-  // the assertion silently starts scanning an unrelated part of the file — a
+  // the assertion silently starts scanning an unrelated part of the file, a
   // tripwire defanged by a reformat, which is worse than no tripwire. The
   // `cloud/` half is now asserted positively by `cloud/capability-gate.test.mjs`,
   // which checks the route reads the gate and the paid route refuses on it.

@@ -1,4 +1,4 @@
-# Visual refinement — 2026-09-11
+# Visual refinement, 2026-09-11
 
 Production: https://void-tui.vercel.app. Deployment `dpl_G6to5pSvCNZVxM6vqK9e3pekAYqB` is READY; build took 15 seconds. Exact URL: https://void-5btdfhuu8-sitespot.vercel.app.
 

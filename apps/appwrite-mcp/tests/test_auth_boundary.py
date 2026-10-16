@@ -64,7 +64,7 @@ class OpenModeTest(unittest.TestCase):
         self.assertEqual(response.status, 200)
         # Compared against the surface rather than a literal. This test is
         # about the auth gate, and hard-coding a tool count here would make it
-        # fail every time the catalogue grows — which trains a reader to blame
+        # fail every time the catalogue grows ,  which trains a reader to blame
         # the wrong thing.
         tools = response.json()["result"]["tools"]
         self.assertTrue(tools, "an open endpoint must publish at least one tool")

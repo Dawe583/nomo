@@ -1914,7 +1914,7 @@ test("/attest refuses when nothing has signed, and mints no key to pretend other
 
   // The old expectation here was a successful attestation with
   // `"entriesCount": 0`, which only worked because `attest` reached for
-  // `devKeyProvider` — a function that *creates* a signing key when none
+  // `devKeyProvider`, a function that *creates* a signing key when none
   // exists. Asking a workbench to prove something must never be the way it
   // acquires the power to sign, so the read path now refuses instead. This
   // fixture never signs anything, so refusing is the correct outcome.

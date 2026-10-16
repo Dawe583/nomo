@@ -11,8 +11,8 @@ import type { SnapshotReference, SnapshotStore } from "./snapshot/store.ts";
 // them back: `inverse` and `apply` both resolve the capture through
 // `readPostgresCapture`/`readS3Capture`, which load the envelope out of the
 // snapshot store. The S3 restart test below is the proof that the map is not
-// load-bearing — a second connector built over the same store produces the
-// identical plan — so the maps were write-only retention of a full
+// load-bearing, a second connector built over the same store produces the
+// identical plan, so the maps were write-only retention of a full
 // before-image plus derived steps, growing for the life of the process for no
 // reader at all.
 //

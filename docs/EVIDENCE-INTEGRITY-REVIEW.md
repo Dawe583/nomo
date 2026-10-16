@@ -18,7 +18,7 @@ Test suites run, all green: `packages/ledger` 69/69, `packages/cli` 283/283,
 The core mechanism is real and I tried hard to break it. A pinned public key
 bound to exactly one key id (`pinnedKey`, `verify-key.ts:115-122`) does make key
 substitution detectable, and `verifyAnchor` genuinely catches a truncated or
-rewritten chain as long as an anchor covering the rewritten prefix survives —
+rewritten chain as long as an anchor covering the rewritten prefix survives , 
 I confirmed both. The threat model's §5.3 diagnosis was correct and the fix is
 the right shape.
 
@@ -28,7 +28,7 @@ in the cryptography:
 1. The thing called "pinned" is a file in the same directory tree as the key it
    is supposed to anchor, and it reports itself as the safe path. Replacing both
    is silent and total. **[CONFIRMED]**
-2. Two shipped verification surfaces — the TUI and `nomo watch` — were never
+2. Two shipped verification surfaces, the TUI and `nomo watch`, were never
    converted, and both report success while using the private key file. **[CONFIRMED]**
 3. `verificationSummary` reports `degraded: false` when nothing was authenticated
    at all. **[CONFIRMED]**
@@ -39,7 +39,7 @@ in the cryptography:
 
 ---
 
-## F1 — CRITICAL. The "pinned" trust file is not out of band, and it reports itself as the safe path
+## F1, CRITICAL. The "pinned" trust file is not out of band, and it reports itself as the safe path
 
 `packages/ledger/src/verify-key.ts:94-113` (`pinnedKeyFile`),
 `packages/ledger/src/verify-key.ts:161-166` (the `pinned-file` branch).
@@ -48,9 +48,9 @@ The pinned key is stored at `~/.nomo/trust/verify-ed25519.spki`. The signing key
 is at `~/.nomo/keys/dev-ed25519.pkcs8` (proxy, `sign.ts:66`) or
 `~/.nomo/workbench/keys/dev-ed25519.pkcs8` (workbench, `index.ts:1405`). The
 common ancestor is `~/.nomo/`. The module comment at `verify-key.ts:90-93`
-claims the separation is deliberate — *"deliberately not under `~/.nomo/keys/`
+claims the separation is deliberate, *"deliberately not under `~/.nomo/keys/`
 next to the private key: a trust anchor reachable by taking the key file is not
-an anchor"* — and `docs/OPERATIONS.md:73` puts it in a column headed
+an anchor"*, and `docs/OPERATIONS.md:73` puts it in a column headed
 **"pinned, out of band"**. Neither is true of an attacker who has filesystem
 write access to the data directory, which is the exact attacker the change
 targets.
@@ -72,7 +72,7 @@ targets.
 5. Attacker rewrites the ledger with whatever body they like and re-signs the
    whole chain. `entryHash` + `signingPreimage` are three lines
    (`canonical.ts:94-105`, `index.ts:69-77`), so this is trivial.
-6. Any NOMO verifier — CLI, workbench, control-plane API — resolves the
+6. Any NOMO verifier, CLI, workbench, control-plane API, resolves the
    attacker's key and reports the forged chain as fully valid.
 
 ### What I observed **[CONFIRMED]**
@@ -88,7 +88,7 @@ with the honest pin       -> false entry 1 has no public key for dev-ed25519:97b
 ```
 
 The last line is the part that matters: the mechanism is good, and the attacker's
-only problem is that they had to update a second file — which is one extra step,
+only problem is that they had to update a second file, which is one extra step,
 reported nowhere, and which the documentation tells the operator is impossible.
 
 ### What the user or operator observes
@@ -97,7 +97,7 @@ Nothing. The CLI prints `verification key: pinned dev-ed25519:97b4... (pinned-fi
 The API returns `verification: {source: "pinned-file", degraded: false}`. The
 trust file is still `0400` and still parses. `nomo doctor` is silent on the pin
 entirely (F10). The forged chain verifies clean and is presented as the
-strongest possible evidence — better than the honest chain, which now fails.
+strongest possible evidence, better than the honest chain, which now fails.
 
 ### Smallest correct fix
 
@@ -111,14 +111,14 @@ Three parts, all small:
 - Move the default trust path out of `~/.nomo/` (e.g. `~/.config/nomo/trust/`)
   and, at minimum, state in `verify-key.ts` and `OPERATIONS.md` that this mode
   defends only against an attacker who can reach the *ledger* but not the home
-  directory — the same caveat the anchor file already gets at `anchor.ts:9-15`.
+  directory, the same caveat the anchor file already gets at `anchor.ts:9-15`.
 - Keep the O_EXCL/0400 provisioning as is. It is correct; it is just not an
   anchor against a same-uid writer, and the code should say so where the code
   currently claims the opposite.
 
 ---
 
-## F2 — HIGH. Two shipped verification surfaces were not converted; both silently use the private key file and both report success
+## F2, HIGH. Two shipped verification surfaces were not converted; both silently use the private key file and both report success
 
 `packages/cli/src/tui/workspace-proxy.ts:44-66`,
 `packages/cli/src/watch.ts:51-52`.
@@ -133,8 +133,8 @@ still resolve the verification key from `dev-ed25519.pkcs8`:
   `this.signed = publicKey !== undefined` (`workspace-proxy.ts:84`), and the TUI
   renders that as `Proxy signatures: verified` (`workspace.ts:2339`) and
   `Signatures checked against the configured key` (`live.ts:38`).
-- `watch.ts:51` calls `devKeyProvider()` with no options at all — no `env`, no
-  `dir` — so it reads the real `~/.nomo/keys`, ignores `NOMO_VERIFY_KEY` and the
+- `watch.ts:51` calls `devKeyProvider()` with no options at all, no `env`, no
+  `dir`, so it reads the real `~/.nomo/keys`, ignores `NOMO_VERIFY_KEY` and the
   trust file, **mints a key if none exists** (`sign.ts:67` defaults
   `createIfMissing` to `true`), and prints no degraded notice anywhere.
 
@@ -175,7 +175,7 @@ replacement of lines 44-66 plus a `degraded` field alongside `signed`; for
 
 ---
 
-## F3 — HIGH. `verificationSummary` reports `degraded: false` when nothing was authenticated
+## F3, HIGH. `verificationSummary` reports `degraded: false` when nothing was authenticated
 
 `apps/control-plane/api/server.ts:410-418`:
 
@@ -188,8 +188,8 @@ function verificationSummary(options: RouteOptions): JsonObject {
 ```
 
 The brief requires that the degraded state be machine-distinguishable. This is
-the one boolean a consumer would check, and for the *most* alarming state —
-no key, nothing verified — it says `false`.
+the one boolean a consumer would check, and for the *most* alarming state , 
+no key, nothing verified, it says `false`.
 
 ### What I observed **[CONFIRMED]**
 
@@ -200,8 +200,8 @@ no key, nothing verified — it says `false`.
 
 `signed: false` is the honest signal, and `degraded: false` actively contradicts
 it in the same object. Any client written as
-`if (!body.verificationKey.degraded) trust()` — the obvious way to consume this
-API — inverts the meaning in exactly the case where it matters.
+`if (!body.verificationKey.degraded) trust()`, the obvious way to consume this
+API, inverts the meaning in exactly the case where it matters.
 
 ### Smallest correct fix
 
@@ -209,11 +209,11 @@ Add an explicit `authenticated: boolean` to `verificationSummary` and to the
 inline block at `server.ts:288`, and set `degraded` from its actual meaning
 (private key material was involved) in both places. If `degraded` must keep its
 current two-value shape for compatibility, return `degraded: true` for
-`source: "none"` — it is strictly safer to over-report degradation.
+`source: "none"`, it is strictly safer to over-report degradation.
 
 ---
 
-## F4 — HIGH. Anchor-file truncation is undetectable and the operator-visible output is identical to the honest case
+## F4, HIGH. Anchor-file truncation is undetectable and the operator-visible output is identical to the honest case
 
 `packages/ledger/src/anchor.ts:66-68` (docstring) and `:95-110` (the checks).
 
@@ -225,7 +225,7 @@ The docstring claims:
 > any signature is trusted.
 
 The second clause is false. `checkAnchors` enforces `headSeq` non-decreasing
-and rejects two anchors claiming the same head with different hashes — but only
+and rejects two anchors claiming the same head with different hashes, but only
 across the anchors **still present in the array**. An attacker who deletes lines
 satisfies both rules trivially. Nothing in the file records how many anchors
 there were, so a shrink is invisible.
@@ -255,7 +255,7 @@ This is a naming and honesty fix, not a mechanism fix. Rename the concept from
 "append-only anchor file" to "anchor set", reword the docstring to say exactly
 what is enforced (contradiction among retained anchors, plus coverage of the
 ledger prefix), and rename the misleading test at `anchor.test.ts:139`
-("a rewritten anchor file is refused before any signature is trusted" — it only
+("a rewritten anchor file is refused before any signature is trusted", it only
 covers the duplicate-head shape). If a shrink must be detectable, the count and
 head have to be compared against something held elsewhere, which is the same
 "keep a copy you control" caveat the CLI already prints at
@@ -263,13 +263,13 @@ head have to be compared against something held elsewhere, which is the same
 
 ---
 
-## F5 — MEDIUM-HIGH. The read path mints a signing key, and the primary API path returns HTTP 500 instead of a clean refusal
+## F5, MEDIUM-HIGH. The read path mints a signing key, and the primary API path returns HTTP 500 instead of a clean refusal
 
 `apps/control-plane/api/server.ts:286-293`,
 `packages/workbench/src/index.ts:1700-1710`.
 
 `Workbench.verificationKey` passes `allowDegraded: true` with a `signingKey`
-thunk of `devKeyProvider({dir: join(this.storage.directory, "keys"), env})` —
+thunk of `devKeyProvider({dir: join(this.storage.directory, "keys"), env})` , 
 with `createIfMissing` defaulting to `true` (`sign.ts:67`). So the
 workbench verification path still mints signing capability, the same footgun
 `docs/THREAT-MODEL.md` §5.4.1 called out. The fix was applied to
@@ -320,7 +320,7 @@ every path I could construct threw.
 
 ---
 
-## F6 — MEDIUM. `nomo verify --standalone` exits 0 when signatures were not verified
+## F6, MEDIUM. `nomo verify --standalone` exits 0 when signatures were not verified
 
 `packages/cli/src/verify.ts:236-244`.
 
@@ -350,7 +350,7 @@ prints `signature NOT VERIFIED`. Keep the existing text; it is the right text.
 
 ---
 
-## F7 — MEDIUM. `nomo export verify` is unusable on a clean reviewer machine, and its error message gives the wrong remedy
+## F7, MEDIUM. `nomo export verify` is unusable on a clean reviewer machine, and its error message gives the wrong remedy
 
 `packages/cli/src/operations.ts:100-110`.
 
@@ -369,7 +369,7 @@ configured key.
 `pinVerificationKeyFromSigner`, which mints a *new* key of the reviewer's own
 and pins that. It matches nothing and will fail confusingly later. There is also
 no `--key` flag on `export verify`, though `nomo verify --key` exists
-(`verify.ts:130-134`), and the bundle does **not** carry the SPKI — I checked
+(`verify.ts:130-134`), and the bundle does **not** carry the SPKI, I checked
 `export-bundle.ts`: no created section contains a public key, so a reviewer has
 no in-band way to obtain the right one.
 
@@ -383,12 +383,12 @@ the old behaviour.
 Accept `--key base64-spki` on `export verify` (the parser already exists in
 `verify.ts`), add it to `BUNDLE_FLAGS`, and change the remedy text to name
 `--key` first. Optionally embed the SPKI in a new, clearly-optional bundle
-section so the reviewer can lift it — but that is a manifest change, so it is
+section so the reviewer can lift it, but that is a manifest change, so it is
 out of scope for this change.
 
 ---
 
-## F8 — MEDIUM. The trust anchor is bootstrapped from the untrusted source it is meant to anchor, and the result is sticky
+## F8, MEDIUM. The trust anchor is bootstrapped from the untrusted source it is meant to anchor, and the result is sticky
 
 `packages/ledger/src/verify-key.ts:268-288`, called from
 `packages/cli/src/init.ts:66-76`.
@@ -401,7 +401,7 @@ change it: `"a different verification key is already pinned at ... remove it
 deliberately to repin"`. The poisoning is therefore sticky, and the operator who
 pinned it was told nothing.
 
-**[SOURCE]** — I established the code path and the sticky-refusal behaviour from
+**[SOURCE]**, I established the code path and the sticky-refusal behaviour from
 the source; I did not construct a full end-to-end "replace key file, then pin"
 scenario, because the outcome is unambiguous: the pin is a pure function of
 whatever the key file held at pin time.
@@ -420,18 +420,18 @@ out-of-band case, and mention that in `OPERATIONS.md`.
 
 ---
 
-## F9 — MEDIUM. `nomo export --bundle` verifies with the recorder's own signing key and reports nothing
+## F9, MEDIUM. `nomo export --bundle` verifies with the recorder's own signing key and reports nothing
 
 `packages/cli/src/operations.ts:128-133` and `:148-160`.
 
 The shared path resolves `resolveVerificationKey({env, allowDegraded: true,
 signingKey: async () => signer})` and verifies with it. The `DEGRADED` line is
 printed in the `attest` branch (`:141`) and the `export verify` branch (`:120`)
-— but **not** in the `export --bundle` branch, which prints only
+,  but **not** in the `export --bundle` branch, which prints only
 `describeBundle(created)`, and `describeBundle` (`export-bundle.ts:866-878`)
 contains no key line.
 
-**[SOURCE]** — read from source; I did not execute `nomo export --bundle`. The
+**[SOURCE]**, read from source; I did not execute `nomo export --bundle`. The
 new test file `packages/cli/src/evidence-integrity.test.ts` covers `attest` and
 `verify` but not `--bundle`, so nothing catches this either.
 
@@ -441,7 +441,7 @@ Emit the same one-line DEGRADED report from the `--bundle` branch. Three lines.
 
 ---
 
-## F10 — MEDIUM. Documentation and status surfaces contradict the code
+## F10, MEDIUM. Documentation and status surfaces contradict the code
 
 Four separate places, three of them confirmed by execution.
 
@@ -462,7 +462,7 @@ Four separate places, three of them confirmed by execution.
    The one command whose job is "is this host set up safely" reports a
    fully-pinned host as unconfigured, and never mentions the pin exists.
 3. **`packages/security-notes.md:34` (S08)** still describes the pre-change
-   resolution — *"the server resolves a read-only key from `NOMO_SIGNING_KEY` or
+   resolution, *"the server resolves a read-only key from `NOMO_SIGNING_KEY` or
    `NOMO_VERIFY_KEY`"*. It was not updated for the trust file, the degraded
    reporting, or the removal of the private-key-file read.
 4. **`NOMO_VERIFY_ALLOW_SIGNING_KEY`** (`verify-key.ts:38`,
@@ -481,13 +481,13 @@ others.
 
 ---
 
-## F11 — LOW. `readAnchors` throws instead of returning a failed check
+## F11, LOW. `readAnchors` throws instead of returning a failed check
 
 `packages/ledger/src/anchor.ts:44-51`. A malformed or partially-written line
 makes `readAnchors` throw, so `checkAnchors` is never reached and a caller
 expecting an `AnchorCheck` gets an exception; the CLI's top-level catch turns it
 into exit 1 with a raw `JSON.parse` message. It fails closed, so this is API
-consistency and diagnosability, not a bypass. **[SOURCE]** — I did not construct
+consistency and diagnosability, not a bypass. **[SOURCE]**, I did not construct
 a partial-line case.
 
 Fix: have `readAnchors` return the line index with a failed result, or document
@@ -495,10 +495,10 @@ that it throws and have `checkAnchors` own the parse.
 
 ---
 
-## F12 — LOW. Test quality: the two tests that matter most are missing
+## F12, LOW. Test quality: the two tests that matter most are missing
 
 The brief asked what it would take to make the feature fail while the tests
-still pass. Mostly the tests are good — `verify-key.test.ts:82-113` is exactly
+still pass. Mostly the tests are good, `verify-key.test.ts:82-113` is exactly
 the right test: it builds a forged chain with a substituted key, asserts the
 attacker's own key accepts it, then asserts the pinned lookup returns `null` and
 `verifyChain` fails with `has no public key for`. `evidence-integrity.test.ts`
@@ -517,21 +517,21 @@ gaps are:
 3. **`verify-key.test.ts` (control plane) never reaches the primary API path.**
    Its workbench has no workspace, so `workbench.list()` is empty,
    `workspace` resolves to `undefined`, and every request falls through to
-   `handleVerify`. The primary block at `server.ts:286-293` — the one that
-   hardcodes `signed: true`, uses a different field name, and 500s — is
+   `handleVerify`. The primary block at `server.ts:286-293`, the one that
+   hardcodes `signed: true`, uses a different field name, and 500s, is
    untested. This is why F5 went unnoticed.
 4. **Dead code left in a test**: `anchor.test.ts:143-144`,
    `const { appendAnchor: _ignored, ...rest } = { appendAnchor }; void rest;`.
 
 ---
 
-## F13 — LOW. Key rotation now bricks export and attest **[SOURCE]**
+## F13, LOW. Key rotation now bricks export and attest **[SOURCE]**
 
 `operations.ts:128-133` verifies with the pinned key, then `attestLedger` signs
 with the current signer. With a pin in place, a legitimately rotated key makes
 `verifyChain` fail and the command refuses outright
 (`"Ledger verification failed; export and attestation refused."`). There is no
-rotation story in the codebase — `docs/THREAT-MODEL.md` §7.5 records this — so
+rotation story in the codebase, `docs/THREAT-MODEL.md` §7.5 records this, so
 this is a forward-looking operational trap rather than a current defect. Worth a
 `key_id` allowlist in the pin before pinning becomes the documented default.
 
@@ -568,7 +568,7 @@ control-plane 174/174. The two workflow impacts I found are F5 (the read path
 `entriesCount > ledgerEntries.length` and commits the prefix with
 `headHash` + Merkle root, so an attacker who rewrites entries inside the
 anchored prefix is caught (cases D and E above), and entries written after the
-last anchor are simply uncommitted — inherent to anchoring, and honestly
+last anchor are simply uncommitted, inherent to anchoring, and honestly
 described at `attest.ts:170-176`. The only thing `grown` fails to signal is
 *how much* uncommitted history there is, which no anchor scheme can do.
 
@@ -580,7 +580,7 @@ After this change, an attacker with local filesystem write access and
 agent-level code execution still **cannot** forge a chain that verifies against
 a verification key they do not control, and still **cannot** truncate or rewrite
 a ledger whose anchored prefix is covered by an anchor file somebody else
-holds — both of those I tried to break and failed, and the pinned-key-to-one-
+holds, both of those I tried to break and failed, and the pinned-key-to-one-
 key-id binding is a genuine detection primitive where the pin genuinely came
 from outside. What they **can** do is rewrite the entire local history, and make
 it report `pinned-file, degraded: false` while doing it, because the file called
@@ -594,11 +594,11 @@ principal boundary, and `docs/THREAT-MODEL.md` §6 was right that it could not
 be made to from inside this process. What it genuinely buys is narrower than
 the change's own comments claim and narrower than `OPERATIONS.md` tells the
 operator: substitution is detectable **only** by a holder of a key that was
-obtained out of band and never written to a file the agent can reach — for
+obtained out of band and never written to a file the agent can reach, for
 everyone else the correct status is still the threat model's §5.1 sentence,
 verbatim: the signature proves the bytes came from a process holding a specific
 key, and against the agent itself that is worth close to nothing. The fix that
 would actually change this is the one the threat model already named and this
-change did not attempt — move the anchor somewhere the agent has no credentials
+change did not attempt, move the anchor somewhere the agent has no credentials
 for, and state the trust level honestly in the user-facing docs rather than
 implying the pin closes a gap it relocates.

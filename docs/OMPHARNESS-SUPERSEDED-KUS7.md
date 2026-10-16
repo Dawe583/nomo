@@ -15,7 +15,7 @@ landed; the substance did not change.
 `harness-score-rows.ts` on the other branch returns **one row per workspace**:
 id `harness-score:<workspace>`, label `◆ harness score <first 8 of the
 workspace>`, showing `hold_rate`, `deny_rate` and `first_pass_rate`. It carries
-no `Verdict:` line and no sentence about the metric having no authority — the
+no `Verdict:` line and no sentence about the metric having no authority, the
 string `Verdict` and the word `Descriptive` do not appear in that module at all.
 
 This branch renders **one aggregated row**, id `harness:scores`, label `◈
@@ -50,14 +50,14 @@ bring in a test that deliberately requires breaking existing behaviour.
 
 `harness-proposal-rows.ts` calls `pendingProposalsFromEntries`, exported from
 `packages/workbench/src/refine-pass.ts:469` on the other branch. **That export
-does not exist on this branch** — grepping all of `packages/` returns zero
+does not exist on this branch**, grepping all of `packages/` returns zero
 hits. Copied as is, the file does not compile: `TS2305: Module has no exported
 member 'pendingProposalsFromEntries'`.
 
 Even with the export added, the module would be dead. This branch writes a
-different record shape into `harnessRefinement` at `index.ts:3102-3112` —
+different record shape into `harnessRefinement` at `index.ts:3102-3112` , 
 summary, rationale, expectedOutcome, applied, overrides, suppressedIds,
-approvedBy, digest, atSeq — with **no `status` and no nested `proposal`** in
+approvedBy, digest, atSeq, with **no `status` and no nested `proposal`** in
 that sub-record, which is what the predicate reads. The proposal state lives
 under a different key, `harnessProposal` (`index.ts:2940` when the proposal is
 recorded, `3089` on approval, `3148` on rejection); those entries carry

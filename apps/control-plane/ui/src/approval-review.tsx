@@ -101,8 +101,8 @@ export function ApprovalReview({
       ) {
         setConflict(
           t(
-            "Toto schválení již bylo rozhodnuto jinde nebo vypršelo. Žádný druhý zápis se neprovedl — obnovte seznam.",
-            "This approval was already decided elsewhere or expired. No second write was made — refresh the list.",
+            "Toto schválení již bylo rozhodnuto jinde nebo vypršelo. Žádný druhý zápis se neprovedl, obnovte seznam.",
+            "This approval was already decided elsewhere or expired. No second write was made, refresh the list.",
           ),
         );
         await client.invalidateQueries();

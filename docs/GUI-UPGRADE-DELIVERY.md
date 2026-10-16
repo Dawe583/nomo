@@ -1,4 +1,4 @@
-# GUI upgrade — předání 2026-09-11
+# GUI upgrade, předání 2026-09-11
 
 Produkce: https://void-tui.vercel.app. Implementace na větvi `codex/gui-upgrade`.
 Plán: [GUI-UPGRADE-PLAN.md](GUI-UPGRADE-PLAN.md), původní audit: [GUI-UPGRADE-AUDIT.md](GUI-UPGRADE-AUDIT.md).

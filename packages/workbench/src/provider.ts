@@ -29,7 +29,7 @@ export type ProviderConfig = {
   /** A model to use when the provider cannot list one.
    *
    * Some OpenAI-compatible endpoints serve chat completions and answer the
-   * model catalog with 404 — Puter's does exactly that. An operator who names
+   * model catalog with 404, Puter's does exactly that. An operator who names
    * the model has already made the choice a catalog would have offered, so the
    * name stands in for the list rather than the configuration being refused. */
   readonly model?: string;
@@ -57,9 +57,9 @@ export function normalizeProviderConfig(config: {
  * operator who typed a model has already made the choice a catalog would have
  * offered, so the name stands in for the list.
  *
- * Only a 404 and an empty catalog fall back. Every other probe failure — a
+ * Only a 404 and an empty catalog fall back. Every other probe failure, a
  * refused connection, a rejected credential, a server error, a body that is
- * not a JSON object with a `data` array — is a real failure and surfaces as
+ * not a JSON object with a `data` array, is a real failure and surfaces as
  * itself. Swallowing those would report a provider as configured while its
  * endpoint is unreachable, which is the kind of honest-error boundary this
  * package keeps.

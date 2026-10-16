@@ -5,7 +5,7 @@
  * rather than throwing. The reason is history: `nomo verify`, `nomo metrics`
  * and the export/attest pair each resolved the path on their own and each let
  * `fs.stat` raise, so an operator who passed a readable but empty directory
- * was answered with `ENOENT ... /<dir>/default.jsonl` — a file they never
+ * was answered with `ENOENT ... /<dir>/default.jsonl`, a file they never
  * named and may not have. One helper, one answer.
  *
  * Four situations used to collapse into that single errno. They are now
@@ -30,8 +30,8 @@ import { dataDir } from "../../ledger/src/paths.ts";
 
 /**
  * `workspace` reads one workspace, so a directory resolves to the workspace
- * file inside it. `scan` reads a directory whole — it exists to count the
- * ledgers that do not verify — so an empty directory is a report of zeroes, not
+ * file inside it. `scan` reads a directory whole, it exists to count the
+ * ledgers that do not verify, so an empty directory is a report of zeroes, not
  * a refusal, and only an absent or unreadable path stops the measurement.
  */
 export type LedgerMode = "workspace" | "scan";
