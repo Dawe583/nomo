@@ -3,6 +3,16 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- One reviewer can be wrong once, and a lesson recorded from a wrong review is
+  worse than no lesson. The harness review step can now pay for up to three
+  identical reviews of the same evidence, and a proposal is recorded only when
+  every one of them approves: two independent reads that disagree are evidence
+  the lesson was noise, so the harness fails toward not learning. A lens that
+  never answered names itself and fails the round, so the lenses after it are
+  never paid for, and every reply that reports usage records its own, so the
+  usage tab shows exactly what was spent. The count is the operator's dial in
+  `/settings`, defaulting to the single review of before, byte for byte; the
+  harness never turns it up itself.
 - The harness could only learn on its own schedule. A review is armed when a
   compaction happens, and an operator who saw the mistake now had to wait for
   one, or move the conversation along until a boundary came. `/harness review`
