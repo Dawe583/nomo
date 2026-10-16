@@ -316,13 +316,13 @@ export function createControlPlaneServer(
     new Workbench({
       ...env,
       VOID_PERMISSION_MODE: serverPermissionMode(
-        env.VOID_PERMISSION_MODE ?? DEFAULT_HTTP_PERMISSION_MODE,
+        envValue(env, "NOMO_PERMISSION_MODE" as any) ?? DEFAULT_HTTP_PERMISSION_MODE,
       ),
     });
   const fleetEventStore = options.fleetEvents ?? new FleetEventStore();
   const server = createServer((request, response) => {
     if (
-      env.VOID_CONTROL_TOKEN
+      envValue(env, "NOMO_CONTROL_TOKEN" as any)
         ? !authorizedRemote(request, env)
         : !isLocalRequest(request)
     ) {
@@ -417,7 +417,7 @@ async function route(
       return sendJson(response, 200, {
         ...capabilities(
           "local",
-          serverPermissionMode(options.env.VOID_PERMISSION_MODE),
+          serverPermissionMode(envValue(options.env, "NOMO_PERMISSION_MODE" as any) ?? DEFAULT_HTTP_PERMISSION_MODE),
           wb.harnessSettings(),
         ),
         desktopSetup: desktop,
@@ -1114,12 +1114,12 @@ async function route(
             message: "Replay requires verified signatures.",
           });
       }
-      const snapshots = options.env.VOID_SNAPSHOT_DIR;
+      const snapshots = envValue(options.env, "NOMO_SNAPSHOT_DIR" as any);
       if (!snapshots)
         return sendJson(response, 409, {
           error: "snapshots_not_configured",
           message:
-            "Set VOID_SNAPSHOT_DIR on the runtime to preview captured inverses.",
+            "Set NOMO_SNAPSHOT_DIR on the runtime to preview captured inverses.",
         });
       const lines: string[] = [];
       const errors: string[] = [];
@@ -1305,7 +1305,7 @@ async function handleFeed(
       // empty state with the same page shape, not a failed request.
       const fresh =
         searchParams.get("workspace") ??
-        options.env.VOID_WORKSPACE ??
+        envValue(options.env, "NOMO_WORKSPACE" as any) ?? 
         basename(ledgerPath, ".jsonl");
       const empty = page(filterRows([], searchParams), searchParams, fresh);
       return sendJson(response, 200, {
@@ -1323,7 +1323,7 @@ async function handleFeed(
   }
   const workspace =
     searchParams.get("workspace") ??
-    options.env.VOID_WORKSPACE ??
+    envValue(options.env, "NOMO_WORKSPACE" as any) ?? 
     basename(ledgerPath, ".jsonl");
   let feed: Awaited<ReturnType<typeof readLedgerFeed>>;
   try {
@@ -1707,9 +1707,9 @@ function selectLedgerPath(
   workspace: string | null,
 ): string | null {
   if (options.ledgerPath !== undefined) return options.ledgerPath;
-  const name = workspace ?? options.env.VOID_WORKSPACE ?? "default";
+  const name = workspace ?? envValue(options.env, "NOMO_WORKSPACE" as any) ??  "default";
   if (!/^[A-Za-z0-9_.-]+$/.test(name)) return null;
-  const dir = options.env.VOID_LEDGER_DIR ?? join(homedir(), ".void", "ledger");
+  const dir = envValue(options.env, "NOMO_LEDGER_DIR" as any) ?? join(homedir(), ".nomo", "ledger");
   return join(dir, `${name}.jsonl`);
 }
 
@@ -1717,10 +1717,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number.parseInt(process.env.PORT ?? "8081", 10);
   createControlPlaneServer({ approvals: localApprovals(process.env) }).listen(
     port,
-    process.env.VOID_CONTROL_TOKEN &&
-      process.env.VOID_CONTROL_TOKEN.length >= 32
-      ? (process.env.VOID_CONTROL_HOST ?? "127.0.0.1")
-      : "127.0.0.1",
+    (() => {
+      const token =
+        envValue(process.env, "NOMO_CONTROL_TOKEN" as any) ?? process.env.VOID_CONTROL_TOKEN;
+      if (!token || token.length < 32) return "127.0.0.1";
+      return envValue(process.env, "NOMO_CONTROL_HOST" as any) ?? process.env.VOID_CONTROL_HOST ?? "127.0.0.1";
+    })(),
     () => {
       console.log(
         `VOID control plane API listening on http://127.0.0.1:${port}`,
