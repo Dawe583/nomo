@@ -107,6 +107,13 @@ import {
 } from "./policy-profile.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
+import type { SpawnSubagentOptions } from "./subagents.ts";
+import {
+  validateIdempotencyKey,
+  validateSpawnPrompt,
+  spawnWorkspaceName,
+  subsetTools,
+} from "./subagents.ts";
 import {
   formatForPrompt,
   queryTermsFrom,
@@ -2088,6 +2095,302 @@ export class Workbench {
       return this.document(id, input.path);
     });
   }
+  async spawnSubagent(
+    parentId: string,
+    prompt: string,
+    options?: SpawnSubagentOptions,
+  ): Promise<SessionView> {
+    return this.locked(async () => {
+      // ---- validate parent outcome (never spawn from an unresolved parent) ----
+      const parent = this.sessions.get(parentId);
+      if (!parent) throw new Error("Session not found.");
+      const parentState = deriveRunState(
+        parent.view.status,
+        parent.view.events,
+      );
+      if (
+        parentState === "unknown" ||
+        parentState === "stopping" ||
+        (parentState === "paused" &&
+          (!parent.recoveryBlock ||
+            parent.recoveryBlock.previousStatus === "unknown"))
+      )
+        throw new Error(
+          "Parent session outcome is unresolved. Reconcile or settle it before spawning a subagent.",
+        );
+      if (parent.recoveryBlock)
+        throw new Error(
+          "Parent session outcome is unresolved. Reconcile or settle it before spawning a subagent.",
+        );
+
+      // ---- provider state ----
+      if (!this.provider)
+        throw new Error("Connect and validate a provider first.");
+      if (this.providerSetupCount)
+        throw new Error(
+          "Wait for provider setup to finish before starting a session.",
+        );
+
+      // ---- closing / queue capacity (fail closed, before any wire) ----
+      if (this.closing)
+        throw new Error(
+          "Wait for the active session or cancel it before starting another.",
+        );
+      if (this.queued.size >= this.harness.maxQueuedRuns)
+        throw new Error(
+          `Background queue is full (${this.harness.maxQueuedRuns} queued runs). Stop a queued run before adding another.`,
+        );
+
+      // ---- idempotency (foreign parent / different prompt both throw on digest mismatch) ----
+      const idempotencyKey = validateIdempotencyKey(
+        options?.idempotencyKey,
+      );
+      if (idempotencyKey) {
+        const prior = this.request(idempotencyKey, [
+          parentId,
+          prompt,
+        ]);
+        if (prior) {
+          const child = this.sessions.get(prior);
+          if (!child)
+            throw new Error("Idempotent spawn result is unavailable.");
+          if (child.view.parentId !== parentId)
+            throw new Error(
+              "Idempotency key belongs to a subagent of a different session.",
+            );
+          return this.view(child);
+        }
+      }
+
+      // ---- agent / model resolve ----
+      const requestedAgent = options?.agent;
+      let selectedAgent: (typeof AGENT_PRESETS)[number] | undefined;
+      let selectedProfile: AgentProfile | undefined;
+      if (requestedAgent) {
+        selectedAgent = AGENT_PRESETS.find(
+          (item) => item.id === requestedAgent,
+        );
+        selectedProfile = this.agentProfiles.find(
+          (profile) => profile.id === requestedAgent,
+        );
+        if (!selectedAgent && !selectedProfile)
+          throw new Error("Unknown agent preset or profile.");
+      } else {
+        selectedAgent = AGENT_PRESETS.find(
+          (item) => item.id === parent.view.agent,
+        );
+        selectedProfile = parent.agentProfile
+          ? structuredClone(parent.agentProfile)
+          : undefined;
+      }
+      const selectedModel = options?.model ?? parent.view.model;
+      if (
+        !selectedModel ||
+        !this.catalog.some((item) => item.id === selectedModel)
+      )
+        throw new Error("Select a model from the validated catalog.");
+
+      // ---- prompt bounds ----
+      const trimmedPrompt = validateSpawnPrompt(
+        prompt,
+        this.harness.maxPromptCharacters,
+      );
+
+      // ---- workspace command parse (same gate as start) ----
+      const selectedGeneration = this.providerGeneration,
+        selectedProvider = this.provider,
+        selectedConfig = this.config;
+      let command: unknown;
+      try {
+        command = JSON.parse(this.env.NOMO_UPSTREAM_COMMAND ?? "null");
+      } catch {
+        throw new Error("NOMO_UPSTREAM_COMMAND must be a JSON array.");
+      }
+      if (
+        command !== null &&
+        (!Array.isArray(command) ||
+          !command.length ||
+          !command.every(
+            (item) => typeof item === "string" && item.length > 0,
+          ))
+      ) {
+        throw new Error(
+          "Configure NOMO_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.",
+        );
+      }
+      if (command && !this.env.NOMO_POLICY_PATH)
+        throw new Error(
+          "Configure NOMO_POLICY_PATH before starting an agent.",
+        );
+
+      // ---- tool listing (mirror of startSession, without starting) ----
+      const childId = randomUUID();
+      const workspace = spawnWorkspaceName(childId);
+      const client =
+        Array.isArray(command)
+          ? createNomoClient({
+              workspace,
+              ledgerDir:
+                this.env.NOMO_LEDGER_DIR ??
+                join(dataDir(homedir()), "ledger"),
+              connect: { upstreamCommand: command },
+              policyPath: this.env.NOMO_POLICY_PATH!,
+              factsPath: this.env.NOMO_FACTS_PATH,
+              posture: "fail-closed",
+              requestTimeoutMs: 180000,
+            })
+          : undefined;
+      const tools: McpTool[] = [...workspaceTools];
+      const connections: NonNullable<Session["connections"]> = {};
+      this.sessionSetupCount++;
+      try {
+        for (const connector of this.connectors) {
+          if (connector.consentState !== "confirmed") continue;
+          const listed = await mcpCatalog(connector);
+          connections[connector.id] = {
+            ...connector,
+            sessionId: listed.sessionId,
+          };
+          tools.push(
+            ...listed.tools.map((tool) => ({
+              ...tool,
+              connectorId: connector.id,
+            })),
+          );
+        }
+        if (client) {
+          const listed = (await client.request("tools/list")) as {
+            tools: McpTool[];
+          };
+          tools.push(
+            ...listed.tools.map((tool) => ({ ...tool, connectorId: "stdio" })),
+          );
+        }
+      } catch (error) {
+        client?.close();
+        throw error;
+      } finally {
+        this.sessionSetupCount--;
+      }
+      if (this.providerGeneration !== selectedGeneration) {
+        client?.close();
+        throw new Error(
+          "Provider changed while connecting tools. Retry after provider setup finishes.",
+        );
+      }
+
+      const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}`;
+
+      // ---- effective tool list (mirrors startSession) then narrowed to parent ----
+      const baseTools = (selectedProfile
+        ? tools.filter((tool) =>
+            selectedProfile.allowedTools.includes(tool.name),
+          )
+        : tools
+      ).filter((tool) => this.toolAllowedInMode(tool));
+      const parentToolNames = new Set(
+        (parent.tools ?? [...workspaceTools]).map(
+          (tool) => tool.name,
+        ),
+      );
+      const finalTools = subsetTools(baseTools, parentToolNames);
+
+      const queued =
+        this.jobs.size > 0 ||
+        this.countRunning() >= this.harness.maxConcurrentRuns;
+
+      const session: Session = {
+        view: {
+          id: childId,
+          workspace,
+          model: selectedModel,
+          provider: selectedConfig?.baseUrl,
+          agent: selectedProfile?.id ?? selectedAgent?.id,
+          createdAt: new Date().toISOString(),
+          title: trimmedPrompt.slice(0, 80),
+          status: queued ? "queued" : "idle",
+          ...(queued ? { runId: randomUUID() } : {}),
+          events: [],
+          continuationCount: 0,
+          runTokenCount: 0,
+          parentId,
+        },
+        messages: [{ role: "system", content: systemInstruction }],
+        agentProfile: selectedProfile
+          ? structuredClone(selectedProfile)
+          : undefined,
+        queuedPrompt: queued ? trimmedPrompt : undefined,
+        client,
+        tools: finalTools,
+        connections,
+        config: selectedConfig
+          ? { baseUrl: selectedConfig.baseUrl, kind: selectedConfig.kind }
+          : undefined,
+        controller: new AbortController(),
+        provider: selectedProvider,
+      };
+
+      // Needed for mcpCatalog returns to be usable alongside keep-alive? the
+      // client stays open on the session, matches startSession.
+
+      // ---- ledger-before-wire: commit on the parent chain first ----
+      const promptDigest = `sha256:${await sha256Hex(trimmedPrompt)}`;
+      try {
+        await this.commitWorkspace(
+          parent,
+          this.documents[parent.view.workspace] ?? createWorkspace(),
+          "void_subagent_spawn",
+          { childId, parentId },
+          "spawn:completed",
+          undefined,
+          undefined,
+          {
+            childId,
+            parentId,
+            childWorkspace: workspace,
+            promptSha256: promptDigest,
+            model: selectedModel,
+            ...(selectedProfile?.id ?? selectedAgent?.id
+              ? { agent: selectedProfile?.id ?? selectedAgent?.id }
+              : {}),
+          },
+        );
+      } catch (error) {
+        client?.close();
+        this.sessions.delete(childId);
+        delete this.documents[workspace];
+        this.queued.delete(childId);
+        throw error instanceof Error
+          ? new Error(
+              `Failed to record the spawn entry: ${error.message}`,
+            )
+          : new Error("Failed to record the spawn entry.");
+      }
+
+      // ---- publish the session (after its spawn entry is signed) ----
+      this.sessions.set(childId, session);
+      this.documents[workspace] = createWorkspace();
+
+      this.remember(idempotencyKey, [parentId, prompt], childId);
+
+      if (queued) {
+        this.queued.add(childId);
+        this.event(session, "user", trimmedPrompt);
+        this.event(
+          session,
+          "tool",
+          "Queued",
+          { status: "queued" },
+          "run.status",
+        );
+        this.persist();
+      } else {
+        this.send(childId, trimmedPrompt);
+      }
+      return this.view(session);
+    });
+  }
+
   async branch(
     id: string,
     body: {

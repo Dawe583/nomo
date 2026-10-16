@@ -2248,7 +2248,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       ...(rows.length
         ? rows.map(
             (item) =>
-              `${stateIcon(item.status)} [${item.status}] ${item.title ?? item.id} ${item.id.slice(0, 8)} ${item.model}`,
+              `${stateIcon(item.status)} [${item.status}] ${item.title ?? item.id} ${item.id.slice(0, 8)} ${item.model}${item.parentId ? ` [child of ${item.parentId.slice(0, 8)}]` : ""}`,
           )
         : ["No conversations yet."]),
       "",
@@ -2944,6 +2944,27 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                       label: "last event",
                       value: last?.type ?? "none",
                     },
+                    ...(session.parentId
+                      ? [
+                          {
+                            label: "parent",
+                            value: session.parentId.slice(0, 8),
+                          },
+                        ]
+                      : []),
+                    ...(this.workbench.list().filter((s) => s.parentId === session.id)
+                      .length > 0
+                      ? [
+                          {
+                            label: "children",
+                            value: String(
+                              this.workbench
+                                .list()
+                                .filter((s) => s.parentId === session.id).length,
+                            ),
+                          },
+                        ]
+                      : []),
                   ],
                 },
               ],
