@@ -129,6 +129,43 @@ nothing here was written by guessing.
 - **Gate**: landing on `main` is the HUMAN edge; prepare everything, ask
   before pushing to main.
 
+## WP-REGRESS brief (frozen 2026-10-16)
+
+Scout brief and a DESIGN round (designer A minimal blast radius, designer B
+value first, judge ruling) ran over the self-reinforcement loop the harness
+spec section 7 names: mined learned rules fire as real holds, a denied learned
+hold writes a fresh refusal record, and the miner counts that record as fresh
+evidence for the same rule, inflating `repeats` forever.
+
+- **Frozen contract**: exclusion by template match inside the miner only.
+  `learnedRuleRationale(repeats: number): string` becomes the single source of
+  the writer text and the anchored matcher
+  `/^Refused \d+ times on the signed ledger\. Not written by an operator\.$/`
+  (N-agnostic, full anchor, substring quotes do not match). Detection walks
+  raw `body.attribution.rule.rationale` only; the miner never calls
+  `readLedgerReason`. `mineLearnedRules` keeps its signature; no new output
+  fields; the rationale N renders the post-exclusion count.
+- **Ambiguity table**: unattributed refusals count as evidence (the
+  `syncStdio` proxy-import channel carries no attribution and is the only
+  `hold:expired` source; starving it would be the wrong fail direction).
+  Attribution present, rule absent: evidence. Non-object rule or non-string
+  rationale: evidence. String rationale matching the template: not evidence.
+  Operator text merely quoting the template: evidence.
+- **Rejected**: the additive `attribution.rule.learned` marker (opens the
+  strict-additive validator in `packages/ledger/src/attribution.ts` for zero
+  loop-closure gain, and its write plumbing would thread an operator rule
+  count into `sessionAttribution`); `ruleIndex >= operatorRuleCount`
+  threading (positional, unstable between decide and mine); a separate
+  self-caused bucket (API change for observability alone).
+- **Files in play**: `packages/workbench/src/learned-rules.ts` and
+  `learned-rules.test.ts` only. `packages/verifier` shares no attribution
+  validator, so no verifier change. Forbidden: index.ts, packages/ledger,
+  packages/policy, the main checkout, new dependencies.
+- **Exit commands**: `npx tsc -p packages/workbench/tsconfig.json --noEmit`,
+  `node --test packages/workbench/src/learned-rules.test.ts
+  packages/workbench/src/learned-harness.test.ts`,
+  `node --test --test-concurrency=1 packages/workbench/src/*.test.ts`.
+
 ## WP-LENSES brief (the artifact the designers consume)
 
 Scout read `harness-runtime.ts`, `refine-gate.ts`, `refine-trigger.ts`,
@@ -226,3 +263,4 @@ stderr warning), control-plane 42/42 (no surface change), tsc clean both.
 | D-2026-10-15-7 WP-MERGE strategy | One `git merge` of `origin/main` into the lane, never a rebase; the harness semantic core keeps this lane's contracts (`docs/OMPHARNESS-SUPERSEDED-KUS7.md` is the ruling), only TUI-upgrade-only files take main's side, mixed files (`workspace.ts`, `workspace.test.ts`, `workspace-harness-rows.test.ts`) are decided per hunk by the merger node | A rebase replays 51 commits, each stopping on the same 49-file surface; main's harness core is byte-identical to the superseded `harness/settled-review-race` cut, whose tests assert the opposite contract (a verdict row is required here and forbidden there), so a symmetric merge would import tests whose stated job is to break this lane |
 | D-2026-10-16-8 Concurrent manual reviews | One harness boundary per session at a time: a manual request that arrives while a round runs joins that round and reads its outcome (the joiner never writes); a settled turn landing mid-round joins too and its counted turn survives the write-back; a request refused for a missing provider never arms; the write-back merges a manual arm or settled count recorded during the round instead of overwriting it | Two concurrent requests raced the gate and paid twice for one intent (reproduced: 2 model calls), and `armed` would have lied about a request the running round was already answering; a refused request that stayed armed spent a model call on a later settled turn (reproduced); dropping a concurrent record silently breaks the busy-arm promise |
 | D-2026-10-16-9 WP-LENSES merge rule | Unanimous K identical samples, throw-fails, range 1..3, consumer index.ts, default K=1 byte-identical; falsification experiment (measure the K=2 veto rate; near-zero leaves the dial at 1) | Any-approve inverts fail-toward-NOT-learning and leaves dissents decorative; fixed angles add unvalidated prompt surface with no measured buyer; degrade-to-decline masks provider failure; max 5 spends beyond the veto's value; widening the consumer union buys nothing |
+| D-2026-10-16-10 WP-REGRESS self-cause detection | Template match on `attribution.rule.rationale` inside the miner, via one shared builder for writer and matcher; unattributed refusals still count as evidence; no format change, no API change | The additive `attribution.rule.learned` marker opens the strict ledger validator and threads an operator rule count through the write path for zero loop-closure gain, because the current writer set stamps every self-caused record with the template rationale; excluding unattributed refusals would starve the syncStdio proxy-import channel, the only source of `hold:expired`; a separate self-caused bucket changes the return shape for observability alone |
