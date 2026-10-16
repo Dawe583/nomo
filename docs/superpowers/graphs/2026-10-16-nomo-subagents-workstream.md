@@ -98,7 +98,7 @@ conversation, and return JSON, never prose.
 
 | WP       | Scope | Status |
 | -------- | ----- | ------ |
-| WP-SPAWN | Spawn-and-track subagents: `Workbench.spawnSubagent(parentId, prompt)` creates a child Session with `parentId`, admitted by the existing `maxConcurrentRuns` path, running through the same `run()`/policy/ledger path; the spawn is recorded as a signed ledger entry before any wire time; steering reuses the existing `send()`; read-only roster rows on the sessions tab. No kill/revive, no child-initiated messages, no new limits. | SCOUT done 2026-10-16 (brief below); DESIGN in flight |
+| WP-SPAWN | Spawn-and-track subagents: `Workbench.spawnSubagent(parentId, prompt)` creates a child Session with `parentId`, admitted by the existing `maxConcurrentRuns` path, running through the same `run()`/policy/ledger path; the spawn is recorded as a signed ledger entry before any wire time; steering reuses the existing `send()`; read-only roster rows on the sessions tab. No kill/revive, no child-initiated messages, no new limits. | SCOUT done 2026-10-16 (brief below); DESIGN done (two proposals in `docs/superpowers/designs/2026-10-16-wp-spawn-proposal-{a,b}.md`); FREEZE in flight |
 
 ## WP-SPAWN brief (the artifact the designers consume)
 
