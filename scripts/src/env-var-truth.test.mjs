@@ -132,18 +132,50 @@ const TEST_ONLY_ENV_VARS = [
 
 const ALLOWED = new Set(TEST_ONLY_ENV_VARS.map((entry) => entry.name));
 
+/**
+ * The names whose legacy `VOID_*` spelling is actually read at runtime.
+ *
+ * The fallback lives in exactly two places: `envValue(env, "NOMO_X")` looks
+ * up `VOID_X` when the current name is absent, and `normalizeEnv` — reached
+ * through `normalizeOwnedEnv` — does the same for every name listed in
+ * `OWNED_ENV_KEYS`. The alias is therefore built from those call sites, not
+ * from every identifier that merely looks like a name: `NOMO_ENV_PREFIX` is a
+ * prefix constant, not a setting, so a test naming `VOID_ENV_PREFIX` must
+ * still be reported.
+ */
+const legacyAliasedNames = (sourceText) => {
+  const code = sourceText
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^[ \t]*\/\/.*$/gm, "");
+  const names = new Set();
+  const resolve = (argument) => {
+    const direct = /^"(NOMO_[A-Z0-9_]+)"$/.exec(argument);
+    if (direct) return direct[1];
+    if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(argument)) return undefined;
+    const declaration = new RegExp(
+      `(?:const|let)\\s+${argument}\\s*(?::[^=;]*)?=\\s*"(NOMO_[A-Z0-9_]+)"`,
+    ).exec(code);
+    return declaration?.[1];
+  };
+  for (const match of code.matchAll(/envValue\(\s*[^,()]+,\s*([^,()]+)\)/g)) {
+    const name = resolve(match[1].trim());
+    if (name) names.add(name);
+  }
+  const owned = /OWNED_ENV_KEYS[^=]*=\s*\[([\s\S]*?)\]/.exec(code);
+  if (owned)
+    for (const match of owned[1].matchAll(/"(NOMO_[A-Z0-9_]+)"/g))
+      names.add(match[1]);
+  return names;
+};
+
 /** Every VOID_/NOMO_ name the given product source reads. */
 const knownEnvVars = (sourceText) => {
   const found = new Set(Array.from(sourceText.matchAll(ENV_VAR), (match) => match[0]));
-  // `envValue(env, NOMO_*)` falls back to the matching `VOID_*` spelling at
-  // runtime (the rename left the legacy env names in place for operators
-  // whose config still carries them). Expand the known set accordingly, so a
-  // test that exercises the legacy spelling is not flagged as naming a name
-  // nothing reads.
-  const alias = (envVar) => `VOID_${envVar.slice("NOMO_".length)}`;
-  for (const name of [...found]) {
-    if (name.startsWith("NOMO_")) found.add(alias(name));
-  }
+  // A test that exercises the legacy spelling is not naming a dead variable:
+  // the runtime really reads that `VOID_*` name when the current one is
+  // absent. The alias covers exactly the names the fallback reaches.
+  for (const name of legacyAliasedNames(sourceText))
+    found.add(`VOID_${name.slice("NOMO_".length)}`);
   return found;
 };
 
@@ -177,9 +209,10 @@ const describeFinding = (file, finding) =>
   `    ${finding.text}\n` +
   `  Nothing consumes ${finding.name}, so the value this line sets is never read and the code\n` +
   "  falls back to its default. For a data directory that default is the operator's real\n" +
-  "  ~/.void/workbench, so the suite writes into a real home directory and still passes: no\n" +
-  "  assertion in it can report this. Either rename the variable here to the name the source\n" +
-  "  actually reads, or delete it if the source no longer has that setting at all.";
+  "  ~/.nomo/workbench (or the legacy ~/.void/workbench where it exists), so the suite\n" +
+  "  writes into a real home directory and still passes: no assertion in it can report\n" +
+  "  this. Either rename the variable here to the name the source actually reads, or\n" +
+  "  delete it if the source no longer has that setting at all.";
 
 const SKIP_DIRS = new Set([
   ".git",
@@ -363,6 +396,25 @@ test("NOMO_ names are held to the same standard as VOID_ ones", () => {
       knownSource,
     ).map((finding) => finding.name),
     ["NOMO_SOMETHING_ELSE"],
+  );
+});
+
+test("the legacy alias covers lookups, not identifiers that only look like names", () => {
+  const knownSource = [
+    'const NOMO_ENV_PREFIX = "NOMO_";',
+    'const dir = envValue(env, "NOMO_LEDGER_DIR");',
+  ].join("\n");
+  // The legacy spelling of a name the fallback reads is known...
+  assert.deepEqual(
+    unknownEnvVars("process.env.VOID_LEDGER_DIR = d;", knownSource),
+    [],
+  );
+  // ...and a name that merely shares the shape (a prefix constant) is not.
+  assert.deepEqual(
+    unknownEnvVars("process.env.VOID_ENV_PREFIX = p;", knownSource).map(
+      (finding) => finding.name,
+    ),
+    ["VOID_ENV_PREFIX"],
   );
 });
 

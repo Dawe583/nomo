@@ -6,6 +6,10 @@ things.
 
 Both were verified by running the tree, not by reading the diff.
 
+The ruling was written at the lane's pre-merge tip (`4409c34`). The line
+pointers below were re-pointed after `origin/main` was merged in and the port
+landed; the substance did not change.
+
 ## Score rows: the ported module is a different design, not a refactor
 
 `harness-score-rows.ts` on the other branch returns **one row per workspace**:
@@ -20,12 +24,12 @@ confidence interval, the sample count, the case count, every metric without a
 sample mapped through `unmeasuredMetrics()`, and the sentence stating that none
 of it changes a decision or a permission.
 
-`workspace-harness-rows.test.ts` holds this branch to that row on line 263 (the
-row exists on the ledger tab), 264 (its label names a harness score), 265
-(`insufficient-data`), 266 (`0 cases`), 267 (`CI: unavailable`), 274 (`HARNESS
-SCORES, verdict: insufficient-data`), 275 (`95% CI: unavailable`), 276 (sample
-count), 277 (case count), 278 (`never changes a decision or permission`), 307
-(`1 case`), 308 (`CI: unavailable`) and 318 (`Reason: no decided call in the
+`workspace-harness-rows.test.ts` holds this branch to that row on line 260 (the
+row exists on the ledger tab), 262 (its label names a harness score), 263
+(`insufficient-data`), 264 (`0 cases`), 265 (`CI: unavailable`), 272 (`HARNESS
+SCORES, verdict: insufficient-data`), 273 (`95% CI: unavailable`), 274 (sample
+count), 275 (case count), 276 (`never changes a decision or permission`), 305
+(`1 case`), 306 (`CI: unavailable`) and 316 (`Reason: no decided call in the
 chain`).
 
 And `harness-score-rows.test.ts` from the other branch ends on line 125 with an
@@ -51,16 +55,18 @@ hits. Copied as is, the file does not compile: `TS2305: Module has no exported
 member 'pendingProposalsFromEntries'`.
 
 Even with the export added, the module would be dead. This branch writes a
-different record shape into `harnessRefinement` at `index.ts:2982-2992` —
+different record shape into `harnessRefinement` at `index.ts:3102-3112` —
 summary, rationale, expectedOutcome, applied, overrides, suppressedIds,
-approvedBy, digest, atSeq — with **no `status` and no nested `proposal`**,
-which is what the predicate reads. State is written under a different key,
-`harnessProposal` (`index.ts:2820, 2837, 2969, 3024`), and the string
-`status: "proposed"` does not occur anywhere in this repository.
+approvedBy, digest, atSeq — with **no `status` and no nested `proposal`** in
+that sub-record, which is what the predicate reads. The proposal state lives
+under a different key, `harnessProposal` (`index.ts:2940` when the proposal is
+recorded, `3089` on approval, `3148` on rejection); those entries carry
+`status: "approved"` or `"rejected"` and a nested proposal on the write paths,
+and the string `status: "proposed"` does not occur anywhere in this repository.
 
 This branch reads pending proposals through a live API,
 `workbench.pendingApprovalsFor(sessionId)`, and approves through
-`prepareHarnessDecision` (`workspace.ts:876`) with a confirmation dialog that
+`prepareHarnessDecision` (`workspace.ts:1917`) with a confirmation dialog that
 shows the operator the summary, the rationale, the expected outcome, the full
 digest, the cited chain position (`Cited chain position: ${match.atSeq}.`) and
 the complete proposal JSON. **That is richer than re-parsing ledger entries,

@@ -39,7 +39,7 @@ All notable user-facing changes since the first repository commit.
   Lessons mined from the chain take effect on their own, but a change to the
   agent's prompt never does. A prompt edit waits as a signed proposal on the
   ledger tab, where the exact diff and the chain sequences it rests on are
-  inspectable, and `/refine approve <digest>` activates it only when the
+  inspectable, and `/harness approve <digest>` activates it only when the
   digest still reproduces byte for byte and every cited sequence still
   verifies. Rejection is recorded the same way, and deciding twice is a
   replay, not a second decision. The base system prompt is immutable;
@@ -62,7 +62,7 @@ All notable user-facing changes since the first repository commit.
 - Settings an operator configured before the rename kept working after it.
   Names like `NOMO_LEDGER_DIR` and `NOMO_DATA_DIR` are the current spelling,
   but a machine whose shell profile, launch agent or `.env` still says
-  `NOMO_LEDGER_DIR` was reading nothing at all: every setting fell back to its
+  `VOID_LEDGER_DIR` was reading nothing at all: every setting fell back to its
   default while looking configured, which reads as data loss and loses
   nothing. The old names now answer wherever the new ones do.
 
@@ -73,7 +73,7 @@ All notable user-facing changes since the first repository commit.
   `NOMO_*` name falls back.
 
   The list of settings that alias is a list, not a scan. `PATH`, `HOME` and
-  `TERM` are not ours and `NOMO_HOME` was never a spelling of a variable the
+  `TERM` are not ours and `VOID_HOME` was never a spelling of a variable the
   product owned, so a helper that guessed would change what the process reads.
   Settings a process passes to its own children for one call, such as the hook
   context, are deliberately excluded: each has a known writer inside a single
