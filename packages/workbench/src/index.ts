@@ -119,7 +119,7 @@ import {
   type RefinementEdit,
   type RefinementProposal,
 } from "./refine-pass.ts";
-import { serviceHarnessBoundary } from "./harness-runtime.ts";
+import { resolveLensCount, reviewRanNote, serviceHarnessBoundary } from "./harness-runtime.ts";
 import {
   resolveRefineGates,
   type GateSurface,
@@ -3459,6 +3459,9 @@ export class Workbench {
       // It did not before: the user-prompt path enforces maxPromptCharacters
       // in three places and this one read the setting for nothing.
       maxPromptCharacters: this.harness.maxPromptCharacters,
+      // The operator's lens count for this round, clamped by the helper so
+      // the runtime never sees a value outside 1..3.
+      reviewLensCount: resolveLensCount(this.harness.refinementLensCount),
       // The refusals currently mined from this workspace's own chain. The
       // reviewer is told how many, not what: the gate already decided the
       // round is worth paying for, and handing over the full rule list would
@@ -3537,7 +3540,7 @@ export class Workbench {
         : result.outcome.kind === "declined"
           ? `Review declined: ${result.outcome.reason}`
           : result.outcome.kind === "ran"
-            ? "Harness review ran and recorded a proposal."
+            ? reviewRanNote(this.harness.refinementLensCount)
             : null;
     if (note !== null)
       this.event(

@@ -6,7 +6,12 @@ import {
   resolveRefineGates,
   type RefineGates,
 } from "./refine-gate.ts";
-import { serviceHarnessBoundary } from "./harness-runtime.ts";
+import {
+  mergeLensVerdicts,
+  resolveLensCount,
+  reviewRanNote,
+  serviceHarnessBoundary,
+} from "./harness-runtime.ts";
 import {
   initialTriggerState,
   onBranchMove,
@@ -14,7 +19,7 @@ import {
   type TriggerState,
 } from "./refine-trigger.ts";
 import type { HarnessEntry } from "./learned-harness.ts";
-import type { RefinementProposal } from "./refine-pass.ts";
+import { REFINEMENT_INSTRUCTIONS, type RefinementProposal } from "./refine-pass.ts";
 
 /**
  * The claim these tests exist for is a count: a boundary the gate refuses must
@@ -64,6 +69,7 @@ function deps(
     readonly now?: () => number;
     readonly harnessStateAvailable?: boolean;
     readonly maxPromptCharacters?: number;
+    readonly reviewLensCount?: number;
   } = {},
 ): { readonly deps: Parameters<typeof serviceHarnessBoundary>[1]; readonly counters: Counters } {
   const counters: Counters = { asked: 0, applied: [] };
@@ -98,6 +104,7 @@ function deps(
       },
       harnessStateAvailable: overrides.harnessStateAvailable ?? true,
       maxPromptCharacters: overrides.maxPromptCharacters,
+      reviewLensCount: overrides.reviewLensCount,
     },
   };
 }
@@ -365,4 +372,217 @@ test("without a ceiling the request keeps every entry it was given", async () =>
 
   assert.equal(evidenceLines(sent).length, 40);
   assert.doesNotMatch(sent, /sample and not the whole set/);
+});
+
+// --- review lenses: K identical samples, unanimous merge -------------------
+
+const approveReply = (summary: string) =>
+  JSON.stringify({ approve: true, proposal: { ...PROPOSAL, summary } });
+
+const declineReply = (reason: string) =>
+  JSON.stringify({ approve: false, reason });
+
+/** An asker that answers with each reply in turn and keeps every request. */
+function sequence(replies: readonly string[]) {
+  const requests: string[] = [];
+  return {
+    requests,
+    ask: async (request: string) => {
+      requests.push(request);
+      const reply = replies[requests.length - 1];
+      if (reply === undefined)
+        throw new Error(`the round asked ${requests.length} times, more than the script`);
+      return reply;
+    },
+  };
+}
+
+test("lenses: the default pays for one review with today's request", async () => {
+  const script = sequence([approveReply("only")]);
+  const { deps: wired, counters } = deps({ ask: script.ask });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "ran");
+  assert.equal(script.requests.length, 1);
+  assert.ok(
+    script.requests[0]!.startsWith(`${REFINEMENT_INSTRUCTIONS}\n`),
+    "the request must open with the refinement instructions, as today",
+  );
+  assert.match(script.requests[0]!, /Answer with JSON only, in one of two shapes:/);
+  assert.equal(counters.applied.length, 1);
+});
+
+test("lenses: one lens returns the reviewer's bare reason", async () => {
+  const { deps: wired } = deps({
+    reply: declineReply("one call is not a pattern"),
+    reviewLensCount: 1,
+  });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "declined");
+  assert.equal(
+    result.outcome.kind === "declined" ? result.outcome.reason : "",
+    "one call is not a pattern",
+    "a single lens must not be given a tally it never earned",
+  );
+});
+
+test("lenses: two approvals run the round with the first lens's text", async () => {
+  const script = sequence([approveReply("first text"), approveReply("second text")]);
+  const { deps: wired, counters } = deps({ ask: script.ask, reviewLensCount: 2 });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "ran");
+  assert.equal(script.requests.length, 2);
+  assert.equal(counters.applied.length, 1);
+  assert.equal(counters.applied[0]?.summary, "first text");
+});
+
+test("lenses: one decline vetoes the round", async () => {
+  const script = sequence([
+    approveReply("x"),
+    declineReply("edits too vague to enforce"),
+  ]);
+  const { deps: wired, counters } = deps({ ask: script.ask, reviewLensCount: 2 });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "declined");
+  assert.equal(
+    result.outcome.kind === "declined" ? result.outcome.reason : "",
+    "(1 of 2 approved) lens 1 approved; lens 2: edits too vague to enforce",
+  );
+  assert.equal(counters.applied.length, 0);
+});
+
+test("lenses: all declines join every reason", async () => {
+  const script = sequence([
+    declineReply("one-off output"),
+    declineReply("no durable lesson"),
+  ]);
+  const { deps: wired } = deps({ ask: script.ask, reviewLensCount: 2 });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "declined");
+  assert.equal(
+    result.outcome.kind === "declined" ? result.outcome.reason : "",
+    "(0 of 2 approved) lens 1: one-off output; lens 2: no durable lesson",
+  );
+});
+
+test("lenses: a reply that is not JSON declines rather than fails", async () => {
+  const script = sequence([approveReply("x"), "Looks fine to me."]);
+  const { deps: wired, counters } = deps({ ask: script.ask, reviewLensCount: 2 });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "declined");
+  assert.match(
+    result.outcome.kind === "declined" ? result.outcome.reason : "",
+    /^\(1 of 2 approved\) lens 1 approved; lens 2: Reviewer reply was not JSON: /,
+  );
+  assert.equal(counters.applied.length, 0);
+});
+
+test("lenses: a throwing lens fails the round and stamps the cooldown", async () => {
+  let asked = 0;
+  const { deps: wired } = deps({
+    reviewLensCount: 2,
+    ask: async () => {
+      asked += 1;
+      if (asked === 2) throw new Error("provider unavailable");
+      return approveReply("x");
+    },
+  });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "failed");
+  assert.equal(
+    result.outcome.kind === "failed" && result.outcome.error instanceof Error
+      ? result.outcome.error.message
+      : "",
+    "lens 2 of 2: provider unavailable",
+  );
+  assert.equal(asked, 2);
+  assert.equal(result.state.lastReviewAt, 1_000_000, "a failed attempt still stamps");
+  assert.equal(result.state.settledTurnsSinceReview, 0);
+});
+
+test("lenses: a throw stops the remaining lenses", async () => {
+  let asked = 0;
+  const { deps: wired } = deps({
+    reviewLensCount: 3,
+    ask: async () => {
+      asked += 1;
+      throw new Error("boom");
+    },
+  });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "failed");
+  assert.equal(
+    result.outcome.kind === "failed" && result.outcome.error instanceof Error
+      ? result.outcome.error.message
+      : "",
+    "lens 1 of 3: boom",
+  );
+  assert.equal(asked, 1, "later lenses must never run after a throw");
+});
+
+test("lenses: a decline before a throw is moot", async () => {
+  let asked = 0;
+  const { deps: wired } = deps({
+    reviewLensCount: 2,
+    ask: async () => {
+      asked += 1;
+      if (asked === 1) return declineReply("noise");
+      throw new Error("timeout");
+    },
+  });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "failed");
+  assert.equal(
+    result.outcome.kind === "failed" && result.outcome.error instanceof Error
+      ? result.outcome.error.message
+      : "",
+    "lens 2 of 2: timeout",
+  );
+  assert.equal(asked, 2);
+});
+
+test("lenses: the count clamps to the runtime's range", () => {
+  assert.equal(resolveLensCount(0), 1);
+  assert.equal(resolveLensCount(99), 3);
+  assert.equal(resolveLensCount(undefined), 1);
+  assert.equal(resolveLensCount("2"), 1);
+  assert.equal(resolveLensCount(Number.NaN), 1);
+  assert.equal(resolveLensCount(2.6), 3);
+});
+
+test("lenses: two lenses ask twice with the byte-identical request", async () => {
+  const script = sequence([approveReply("x"), declineReply("no")]);
+  const { deps: wired } = deps({ ask: script.ask, reviewLensCount: 2 });
+  await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(script.requests.length, 2);
+  assert.equal(script.requests[0], script.requests[1]);
+});
+
+test("lenses: the ran note names the count only above one lens", () => {
+  assert.equal(reviewRanNote(1), "Harness review ran and recorded a proposal.");
+  assert.equal(reviewRanNote(undefined), "Harness review ran and recorded a proposal.");
+  assert.equal(
+    reviewRanNote(2),
+    "Harness review ran and recorded a proposal (2 of 2 lenses approved).",
+  );
+  assert.equal(
+    reviewRanNote(99),
+    "Harness review ran and recorded a proposal (3 of 3 lenses approved).",
+  );
+});
+
+test("lenses: merging nothing declines rather than approving nothing", () => {
+  assert.deepEqual(mergeLensVerdicts([]), {
+    approve: false,
+    reason: "No lens returned a verdict.",
+  });
 });

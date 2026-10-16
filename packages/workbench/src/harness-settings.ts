@@ -48,7 +48,8 @@ export type HarnessSettingKey =
   | "contextCharsPerEntry"
   | "refinementEnabled"
   | "refinementTurnInterval"
-  | "refinementCooldownMs";
+  | "refinementCooldownMs"
+  | "refinementLensCount";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -291,6 +292,19 @@ export const HARNESS_SETTINGS: {
     min: 0,
     max: 86_400_000,
     icon: "◲",
+  },
+  refinementLensCount: {
+    label: "Review lenses",
+    description:
+      "How many independent reviews one harness round pays for. Every lens must approve before anything is recorded; 1 is today's behavior.",
+    consumerFile: "index.ts",
+    consumers: ["serveHarnessBoundary"],
+    default: 1,
+    min: 1,
+    // With unanimous merging each added lens buys only more veto power at
+    // full K cost; past three the spend has no named buyer.
+    max: 3,
+    icon: "◑",
   },
 };
 

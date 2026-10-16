@@ -88,6 +88,7 @@ the nodes. This mapping is honest about what exists:
 | WP-MANUAL  | `/harness review` arms the trigger on demand: the missing caller the refine docblocks point at | done: contract frozen (D-5), open items settled (D-6); BUILD+VERIFY green (463/463 workbench, TUI 194/195 with the one pre-existing stderr-warning failure proven on `aff5ee6`); EVIDENCE in this commit |
 | WP-MANUAL REVIEW | adversarial lenses over `7e79fe8` | done: resumed as part of the WP-MERGE REVIEW round over the merged surface (the manual-arm code is in that diff). The correctness and skeptic lenses attacked the D-5/D-6 contract: the contract itself held; the skeptic found two wiring defects (double-served concurrent requests, a refused no-provider request staying armed), both fixed and re-proven |
 | WP-MERGE   | Land `feat/agent-harness` on `main`; merge (not rebase), `nomo-merger` | merger complete on `merge/origin-main-into-lane` (merge `53f8bef` + port `08bc041`, D-7). REVIEW round 2026-10-16: 4 parallel lenses over `git diff origin/main..HEAD` — correctness 0, security 0, truthfulness 7 findings, skeptic 2, plus 1 found during FIX (the merge had dropped 4 lane score tests). All 10 fixed: per-session boundary lock + join (D-8), no-provider refusal never arms, write-back merge, `/refine` legend removed and `/harness` legend completed, CHANGELOG wording restored, ruling-doc pointers re-pointed, guard alias tightened to real lookups, 4 score tests restored. Fresh verification: WB 487/487, TUI 233/234 (the 1 failure is the pre-existing SQLite stderr warning), control-plane 42/42, guard 12/12, tsc clean both. Landing on `main` = HUMAN edge (gated by the TUI lane settling: `origin/main` still 953f6ba, main checkout dirty) |
+| WP-LENSES  | Parallel review lenses: the review step can run K identical reviews over one evidence packet and merge their verdicts; default 1 lens = today's behavior | DESIGN 2026-10-16: two proposals + judge ruling (`docs/superpowers/designs/2026-10-16-wp-lenses-{proposal-a,proposal-b,judge}.md`), D-9. BUILD + VERIFY done: unanimity over K identical samples, `refinementLensCount` 1..3 default 1 (consumer `serveHarnessBoundary`), throw fails naming the lens, K calls = K usage records; 13 new tests. VERIFY: WB 500/500, TUI 233/234 (the 1 failure is the pre-existing SQLite stderr warning), control-plane 42/42, tsc clean both. Build-time refinement (recorded): the frozen ran-note branch was built as the exported pure helper `reviewRanNote` so the exact string is testable inside the allowed files. REVIEW round next |
 
 ## WP-MERGE brief (the artifact the merger node consumes)
 
@@ -128,6 +129,61 @@ nothing here was written by guessing.
 - **Gate**: landing on `main` is the HUMAN edge; prepare everything, ask
   before pushing to main.
 
+## WP-LENSES brief (the artifact the designers consume)
+
+Scout read `harness-runtime.ts`, `refine-gate.ts`, `refine-trigger.ts`,
+`harness-settings.ts` and the `index.ts` wiring on 2026-10-16.
+
+- **Goal**: `review()` in `harness-runtime.ts` runs exactly one model call
+  today. WP-LENSES lets the review step run K independent lenses over the
+  same evidence packet and merge their verdicts deterministically. K is an
+  operator-tunable harness setting; **default K = 1 reproduces today's
+  behavior exactly** (one ask, same prompt, same outcome vocabulary). The
+  cost decision is the operator's: the WP adds the dial, it never turns it
+  up.
+- **Frozen constraints** (not open for redesign):
+  - The cheap gate still runs first, once per round; a held gate costs zero
+    provider requests and the manual-arm/cooldown semantics (D-5, D-8) are
+    untouched.
+  - Lenses live inside one boundary; the per-session boundary lock (D-8)
+    stays the only concurrency gate.
+  - The round outcome vocabulary (`ran|declined|failed|not-run`) and the
+    ledger event shapes do not change.
+  - Lens prompts are fixed strings in code, never operator text.
+  - Cost honesty: K calls produce K usage records through the existing ask
+    closure; a lens that never ran is never billed or claimed.
+  - Failure direction: any ambiguity must fail toward NOT learning (the
+    repo's stated bias).
+  - No new dependencies; node:test only; the settings rule "a setting with
+    no consumer does not exist" holds, including its consumer assertion in
+    `harness-settings.test.ts`.
+- **Open for the designers** (each proposal must decide all of these):
+  1. What a lens is: K identical samples, K different fixed angles, or a
+     proposer plus checkers.
+  2. Merge policy and its fail direction: unanimity, any-approve, or
+     first-approve in a fixed order; what happens when lenses disagree on
+     the proposal text.
+  3. Where the fan-out lives: `harness-runtime.ts` `review()` calling the
+     injected `ask` K times, or the `ask` closure in `index.ts`.
+  4. The setting: key, range, default, and which consumer file reads it
+     (the consumerFile union in `harness-settings.ts` may need widening;
+     say how).
+  5. Per-lens failure: one lens erroring, timing out, or returning garbage
+     JSON — round failed, retried, or degraded; and how the report says so.
+  6. What the operator sees: how a multi-lens round reports which lens
+     declined and why, without new event types.
+- **Exit commands** (one `node --test` at a time):
+  `npx tsc -p packages/workbench/tsconfig.json --noEmit`,
+  `npx tsc -p packages/cli/tsconfig.json --noEmit`,
+  `node --test --test-concurrency=1 packages/workbench/src/*.test.ts`,
+  `node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts`.
+- **Files in play**: `packages/workbench/src/harness-runtime.ts`,
+  `harness-settings.ts` and its test, `packages/workbench/src/index.ts`
+  (wiring only), `packages/cli/src/tui/workspace.ts` only if the settings
+  row needs it (the settings panel renders `harnessSettingsView` rows
+  automatically). Forbidden: the main checkout, any new dependency, glm
+  models, flipping the default.
+
 ## Decision log
 
 | Decision | Choice | Rejected because |
@@ -140,3 +196,4 @@ nothing here was written by guessing.
 | D-2026-10-15-6 Manual review arm (open items) | The `/harness review` confirmation is one dialog titled "REQUEST A HARNESS REVIEW?" naming spend, the still-applying checks, the running case and the approval gate; `harness.review.requested` carries only `{outcome:"armed"}` and is emitted only for the busy-arm case, an idle held refusal going through `harness.review` not-run; the note is the gate sentence for refusals | A separate busy screen would promise progress the gate can still refuse; a cooldown expiration on the event would restate state the operator cannot act on; a success-shaped note for a refusal would read as a review that happened |
 | D-2026-10-15-7 WP-MERGE strategy | One `git merge` of `origin/main` into the lane, never a rebase; the harness semantic core keeps this lane's contracts (`docs/OMPHARNESS-SUPERSEDED-KUS7.md` is the ruling), only TUI-upgrade-only files take main's side, mixed files (`workspace.ts`, `workspace.test.ts`, `workspace-harness-rows.test.ts`) are decided per hunk by the merger node | A rebase replays 51 commits, each stopping on the same 49-file surface; main's harness core is byte-identical to the superseded `harness/settled-review-race` cut, whose tests assert the opposite contract (a verdict row is required here and forbidden there), so a symmetric merge would import tests whose stated job is to break this lane |
 | D-2026-10-16-8 Concurrent manual reviews | One harness boundary per session at a time: a manual request that arrives while a round runs joins that round and reads its outcome (the joiner never writes); a settled turn landing mid-round joins too and its counted turn survives the write-back; a request refused for a missing provider never arms; the write-back merges a manual arm or settled count recorded during the round instead of overwriting it | Two concurrent requests raced the gate and paid twice for one intent (reproduced: 2 model calls), and `armed` would have lied about a request the running round was already answering; a refused request that stayed armed spent a model call on a later settled turn (reproduced); dropping a concurrent record silently breaks the busy-arm promise |
+| D-2026-10-16-9 WP-LENSES merge rule | Unanimous K identical samples, throw-fails, range 1..3, consumer index.ts, default K=1 byte-identical; falsification experiment (measure the K=2 veto rate; near-zero leaves the dial at 1) | Any-approve inverts fail-toward-NOT-learning and leaves dissents decorative; fixed angles add unvalidated prompt surface with no measured buyer; degrade-to-decline masks provider failure; max 5 spends beyond the veto's value; widening the consumer union buys nothing |

@@ -83,6 +83,12 @@ export type HarnessRuntimeDeps = {
    * thousand mined entries measured at 557k characters against a 32k default.
    */
   readonly maxPromptCharacters?: number;
+  /**
+   * How many identical reviews this round may pay for. Optional so a caller
+   * that knows nothing gets today's single review; index.ts always passes the
+   * operator's clamped setting.
+   */
+  readonly reviewLensCount?: number;
 };
 
 /**
@@ -148,6 +154,56 @@ export function parseReviewVerdict(reply: string): ReviewVerdict {
 }
 
 /**
+ * Clamp the operator's lens count to the number of reviews that exist.
+ *
+ * A value that is not a finite number is not a count an operator chose, so it
+ * falls back to 1 rather than to a neighbour. Three is the cap: with unanimous
+ * merging each added lens buys only more veto power at full K cost, so beyond
+ * three the spend has no named buyer.
+ */
+export function resolveLensCount(raw: unknown): number {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return 1;
+  return Math.min(3, Math.max(1, Math.round(raw)));
+}
+
+/**
+ * Merge the verdicts of K identical review lenses.
+ *
+ * Unanimity is the only policy whose fail direction is NOT learning under
+ * every disagreement: one decline vetoes the round, because two independent
+ * reads of the same evidence disagreeing is evidence the lesson was noise.
+ * The applied text is the first lens's: every lens was asked the same
+ * question, so preferring a later sample would make the outcome depend on
+ * which text happened to arrive second.
+ */
+export function mergeLensVerdicts(verdicts: readonly ReviewVerdict[]): ReviewVerdict {
+  const first = verdicts[0];
+  if (first === undefined)
+    // Unreachable from the review loop (K is at least 1), but a merge of
+    // nothing must not read as unanimity.
+    return { approve: false, reason: "No lens returned a verdict." };
+  if (first.approve && verdicts.every((verdict) => verdict.approve))
+    return { approve: true, instructions: first.instructions };
+  const approved = verdicts.filter((verdict) => verdict.approve).length;
+  const parts = verdicts.map((verdict, index) =>
+    verdict.approve ? `lens ${index + 1} approved` : `lens ${index + 1}: ${verdict.reason}`,
+  );
+  return {
+    approve: false,
+    reason: `(${approved} of ${verdicts.length} approved) ${parts.join("; ")}`,
+  };
+}
+
+/** The note a ran boundary leaves, naming the lens count only when more than
+ * one lens was paid for: at K=1 the sentence is exactly today's. */
+export function reviewRanNote(rawLensCount: unknown): string {
+  const lenses = resolveLensCount(rawLensCount);
+  return lenses > 1
+    ? `Harness review ran and recorded a proposal (${lenses} of ${lenses} lenses approved).`
+    : "Harness review ran and recorded a proposal.";
+}
+
+/**
  * One boundary: gate, review, refine.
  *
  * Returns the trigger state the caller must retain. The caller owns persistence
@@ -185,10 +241,26 @@ export async function serviceHarnessBoundary(
       settledTurns,
       maxCharacters: ceiling,
     }).question;
-    const reply = await deps.ask(
-      `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}`,
-    );
-    return parseReviewVerdict(reply);
+    // Built once: every lens sends the byte-identical request, which is what
+    // makes K=1 literally today's call and the lenses independent samples of
+    // one question rather than variations of it.
+    const request = `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}`;
+    const lensCount = resolveLensCount(deps.reviewLensCount);
+    if (lensCount === 1) return parseReviewVerdict(await deps.ask(request));
+    const verdicts: ReviewVerdict[] = [];
+    for (let index = 1; index <= lensCount; index += 1) {
+      try {
+        verdicts.push(parseReviewVerdict(await deps.ask(request)));
+      } catch (error) {
+        // A lens that never answered names itself, and the lenses after it
+        // never run: a retry would spend beyond the K the operator budgeted
+        // and a degraded quorum would silently change the merge.
+        throw new Error(
+          `lens ${index} of ${lensCount}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+    return mergeLensVerdicts(verdicts);
   };
 
   const run = async (instructions: string, expectedBranchVersion: number): Promise<void> => {
