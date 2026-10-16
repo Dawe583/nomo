@@ -266,3 +266,58 @@ test("a settled turn during a manual review joins it instead of paying twice", a
     "the first turn, the review and the second turn, with no second review",
   );
 });
+
+test("a two-lens manual round bills twice and names the count on both surfaces", async (t) => {
+  const reviewProposal: RefinementProposal = {
+    summary: "second manual review proposal",
+    rationale: "two lenses reviewed the same evidence",
+    expectedOutcome: "one signed proposal awaits the decision",
+    edits: [
+      {
+        action: "create",
+        kind: "memory",
+        title: "manual lesson two",
+        content: "The operator asked twice, so two lenses answered.",
+        derivedFromSeq: [1],
+        reason: "the request is the evidence",
+      },
+    ],
+  };
+  const approval = () =>
+    Response.json({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: JSON.stringify({ approve: true, proposal: reviewProposal }),
+          },
+        },
+      ],
+      usage: { prompt_tokens: 11, completion_tokens: 7, total_tokens: 18 },
+    });
+  const { fetcher, count } = answering((n) => (n === 1 ? answer() : approval()));
+  const { app, session } = await seeded(t, fetcher);
+  await seedLesson(app, session.id);
+  app.patchHarnessSettings({ refinementLensCount: 2 });
+
+  const before = count();
+  const result = await app.requestHarnessReview(session.id);
+  assert.equal(result.kind, "ran");
+  assert.equal(
+    result.note,
+    "Harness review ran and recorded a proposal (2 of 2 lenses approved).",
+  );
+  assert.equal(count() - before, 2, "two lenses pay for two model calls");
+
+  const events = app.get(session.id)!.events;
+  const usage = events.filter(
+    (event) => event.kind === "usage" && event.payload?.source === "harness",
+  );
+  assert.equal(usage.length, 2, "one usage record per reply that reports usage");
+  const reviews = events.filter((event) => event.type === "harness.review");
+  assert.equal(
+    reviews.at(-1)?.text,
+    "Harness review ran and recorded a proposal (2 of 2 lenses approved).",
+    "the event log and the manual result must name the same count",
+  );
+});

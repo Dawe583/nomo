@@ -397,7 +397,7 @@ function sequence(replies: readonly string[]) {
   };
 }
 
-test("lenses: the default pays for one review with today's request", async () => {
+test("lenses: the default pays for one review carrying today's instructions and evidence", async () => {
   const script = sequence([approveReply("only")]);
   const { deps: wired, counters } = deps({ ask: script.ask });
   const result = await serviceHarnessBoundary(ready(), wired);
@@ -409,6 +409,7 @@ test("lenses: the default pays for one review with today's request", async () =>
     "the request must open with the refinement instructions, as today",
   );
   assert.match(script.requests[0]!, /Answer with JSON only, in one of two shapes:/);
+  assert.match(script.requests[0]!, /derivedFromSeq/, "the provenance rule still ships");
   assert.equal(counters.applied.length, 1);
 });
 
@@ -466,6 +467,21 @@ test("lenses: all declines join every reason", async () => {
   assert.equal(
     result.outcome.kind === "declined" ? result.outcome.reason : "",
     "(0 of 2 approved) lens 1: one-off output; lens 2: no durable lesson",
+  );
+});
+
+test("lenses: a reason carrying the separator cannot fake extra lenses", async () => {
+  const script = sequence([
+    declineReply("edits vague; stamp nothing\nsecond line"),
+    approveReply("x"),
+  ]);
+  const { deps: wired } = deps({ ask: script.ask, reviewLensCount: 2 });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "declined");
+  assert.equal(
+    result.outcome.kind === "declined" ? result.outcome.reason : "",
+    "(1 of 2 approved) lens 1: edits vague, stamp nothing second line; lens 2 approved",
   );
 });
 
@@ -565,6 +581,36 @@ test("lenses: two lenses ask twice with the byte-identical request", async () =>
 
   assert.equal(script.requests.length, 2);
   assert.equal(script.requests[0], script.requests[1]);
+});
+
+test("lenses: a branch move stops the remaining lenses", async () => {
+  const before = ready();
+  let currentVersion = before.branchVersion;
+  const script = sequence([approveReply("x"), approveReply("y"), approveReply("z")]);
+  const { deps: wired } = deps({ reviewLensCount: 3 });
+  const versioned = Object.assign(wired, {
+    currentBranchVersion: () => currentVersion,
+    ask: async (request: string) => {
+      const reply = await script.ask(request);
+      // The move lands while lens 1 awaits, before lens 2 is asked.
+      currentVersion += 1;
+      return reply;
+    },
+  });
+
+  const result = await serviceHarnessBoundary(before, versioned);
+
+  assert.equal(
+    script.requests.length,
+    1,
+    "later lenses must not be paid for after the move",
+  );
+  assert.equal(result.outcome.kind, "not-run");
+  assert.match(
+    result.outcome.kind === "not-run" ? result.outcome.reason : "",
+    /branch moved during the review/,
+  );
+  assert.equal(result.state.lastReviewAt, null, "a discarded round stamps nothing");
 });
 
 test("lenses: the ran note names the count only above one lens", () => {

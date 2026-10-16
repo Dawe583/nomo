@@ -584,7 +584,10 @@ export class Workbench {
    * reads the outcome only and never touches the chain, so the rule that an
    * in-flight round is never joined for writes still holds.
    */
-  private readonly harnessBoundariesInFlight = new Map<string, Promise<ServiceResult>>();
+  private readonly harnessBoundariesInFlight = new Map<
+    string,
+    { readonly run: Promise<ServiceResult>; readonly lenses: number }
+  >();
   private readonly localIdentityIssuer = new LocalAgentIdentityIssuer();
   /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
   private readonly harnessJobs = new Set<Promise<void>>();
@@ -3317,7 +3320,7 @@ export class Workbench {
     const inFlight = this.harnessBoundariesInFlight.get(id);
     if (inFlight) {
       try {
-        return this.manualResultFrom(await inFlight);
+        return this.manualResultFrom(await inFlight.run, inFlight.lenses);
       } catch (error) {
         // The running round's own caller reports the failure; the joiner
         // reports the outcome it received and reports nothing itself.
@@ -3368,8 +3371,8 @@ export class Workbench {
     if (session.controller.signal.aborted)
       session.controller = new AbortController();
     try {
-      const result = await this.runHarnessBoundary(session, state, "checkpoint");
-      return this.manualResultFrom(result);
+      const { result, lenses } = await this.runHarnessBoundary(session, state, "checkpoint");
+      return this.manualResultFrom(result, lenses);
     } catch (error) {
       this.reportHarnessFailure(session, error);
       return {
@@ -3379,13 +3382,12 @@ export class Workbench {
     }
   }
   /** The operator-facing sentence for one boundary outcome. */
-  private manualResultFrom(result: ServiceResult): ManualReviewResult {
+  private manualResultFrom(result: ServiceResult, lenses: number): ManualReviewResult {
     switch (result.outcome.kind) {
       case "ran":
-        return {
-          kind: "ran",
-          note: "Harness review ran and recorded a proposal.",
-        };
+        // The same sentence the event log carries: both surfaces name the
+        // same count.
+        return { kind: "ran", note: reviewRanNote(lenses) };
       case "declined":
         return { kind: "declined", note: result.outcome.reason };
       case "failed":
@@ -3421,14 +3423,19 @@ export class Workbench {
     session: Session,
     state: TriggerState,
     surface: GateSurface,
-  ): Promise<ServiceResult> {
+  ): Promise<{ readonly result: ServiceResult; readonly lenses: number }> {
     const id = session.view.id;
     const inFlight = this.harnessBoundariesInFlight.get(id);
-    if (inFlight) return await inFlight;
-    const run = this.serveHarnessBoundary(session, state, surface);
-    this.harnessBoundariesInFlight.set(id, run);
+    if (inFlight) return { result: await inFlight.run, lenses: inFlight.lenses };
+    // Captured before the round awaits: every note about this round must name
+    // the count it actually paid for, not whatever the operator patches in
+    // while it runs.
+    const lenses = resolveLensCount(this.harness.refinementLensCount);
+    const run = this.serveHarnessBoundary(session, state, surface, lenses);
+    const entry = { run, lenses };
+    this.harnessBoundariesInFlight.set(id, entry);
     try {
-      return await run;
+      return { result: await run, lenses };
     } finally {
       this.harnessBoundariesInFlight.delete(id);
     }
@@ -3438,6 +3445,7 @@ export class Workbench {
     session: Session,
     state: TriggerState,
     surface: GateSurface,
+    lenses: number,
   ): Promise<ServiceResult> {
     const provider = session.provider;
     if (!provider)
@@ -3459,9 +3467,9 @@ export class Workbench {
       // It did not before: the user-prompt path enforces maxPromptCharacters
       // in three places and this one read the setting for nothing.
       maxPromptCharacters: this.harness.maxPromptCharacters,
-      // The operator's lens count for this round, clamped by the helper so
-      // the runtime never sees a value outside 1..3.
-      reviewLensCount: resolveLensCount(this.harness.refinementLensCount),
+      // The count captured for this round before it awaited: the same value
+      // every note about the round names.
+      reviewLensCount: lenses,
       // The refusals currently mined from this workspace's own chain. The
       // reviewer is told how many, not what: the gate already decided the
       // round is worth paying for, and handing over the full rule list would
@@ -3521,7 +3529,7 @@ export class Workbench {
           : result.state;
       this.harnessTriggers.set(id, merged);
     }
-    this.reportHarnessOutcome(session, result);
+    this.reportHarnessOutcome(session, result, lenses);
     return result;
   }
   /**
@@ -3533,14 +3541,18 @@ export class Workbench {
    * costs nothing when there is no work to do and settles the question when
    * there is.
    */
-  private reportHarnessOutcome(session: Session, result: ServiceResult): void {
+  private reportHarnessOutcome(
+    session: Session,
+    result: ServiceResult,
+    lenses: number,
+  ): void {
     const note =
       result.outcome.kind === "not-run"
         ? result.outcome.reason
         : result.outcome.kind === "declined"
           ? `Review declined: ${result.outcome.reason}`
           : result.outcome.kind === "ran"
-            ? reviewRanNote(this.harness.refinementLensCount)
+            ? reviewRanNote(lenses)
             : null;
     if (note !== null)
       this.event(

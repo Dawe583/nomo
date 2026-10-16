@@ -185,8 +185,12 @@ export function mergeLensVerdicts(verdicts: readonly ReviewVerdict[]): ReviewVer
   if (first.approve && verdicts.every((verdict) => verdict.approve))
     return { approve: true, instructions: first.instructions };
   const approved = verdicts.filter((verdict) => verdict.approve).length;
+  // The tally is one line and "; " separates its parts, so a reason carrying
+  // either would read as phantom lenses; flatten both.
   const parts = verdicts.map((verdict, index) =>
-    verdict.approve ? `lens ${index + 1} approved` : `lens ${index + 1}: ${verdict.reason}`,
+    verdict.approve
+      ? `lens ${index + 1} approved`
+      : `lens ${index + 1}: ${verdict.reason.replace(/[\r\n]+/g, " ").replaceAll("; ", ", ")}`,
   );
   return {
     approve: false,
@@ -247,8 +251,14 @@ export async function serviceHarnessBoundary(
     const request = `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}`;
     const lensCount = resolveLensCount(deps.reviewLensCount);
     if (lensCount === 1) return parseReviewVerdict(await deps.ask(request));
+    const branchNow = deps.currentBranchVersion;
     const verdicts: ReviewVerdict[] = [];
     for (let index = 1; index <= lensCount; index += 1) {
+      // The branch can move while earlier lenses await. Asking the rest would
+      // pay for verdicts the trigger is about to discard, so stop here; the
+      // post-review check still discards the round without stamping.
+      if (index > 1 && branchNow !== undefined && branchNow() !== state.branchVersion)
+        break;
       try {
         verdicts.push(parseReviewVerdict(await deps.ask(request)));
       } catch (error) {
