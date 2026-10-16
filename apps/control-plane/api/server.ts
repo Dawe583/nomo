@@ -16,6 +16,7 @@ import {
 } from "node:http";
 import { basename, extname, join, posix, relative, resolve } from "node:path";
 import { homedir } from "node:os";
+import { envValue } from "../../../packages/ledger/src/env-compat.ts";
 import { fileURLToPath } from "node:url";
 import { harnessSettingsView } from "../../../packages/workbench/src/harness-settings.ts";
 
@@ -395,14 +396,22 @@ async function route(
   options: RouteOptions,
 ): Promise<void> {
   const parsed = parseRequestUrl(request);
+  const desktopWebRoot = envValue(
+    options.env,
+    "NOMO_DESKTOP_WEB_ROOT" as Parameters<typeof envValue>[1],
+  );
+  const controlToken = envValue(
+    options.env,
+    "NOMO_CONTROL_TOKEN" as Parameters<typeof envValue>[1],
+  );
   if (parsed === null) return sendJson(response, 400, { error: "bad_url" });
 
   const query = parsed.searchParams,
     wb = options.workbench;
   try {
     const desktop =
-      !!options.env.VOID_DESKTOP_WEB_ROOT &&
-      !options.env.VOID_CONTROL_TOKEN &&
+      !!desktopWebRoot &&
+      !controlToken &&
       isLocalRequest(request);
     if (parsed.pathname === "/api/capabilities" && request.method === "GET")
       return sendJson(response, 200, {
