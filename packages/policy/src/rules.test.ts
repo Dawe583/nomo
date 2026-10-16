@@ -140,6 +140,33 @@ rules:
     if (!badNan.ok) assert.ok(badNan.errors.some((e) => e.includes("seconds")));
   });
 
+  test("a load error names the key but does not echo the policy text", () => {
+    const sentinel = "UNIQUE_POLICY_MARKER_9f3a1c";
+    const bad = loadPolicy(`
+version: 1
+rules:
+  - match: { class: r2 }
+    decision: hold
+    seconds: 60
+    ${sentinel}: true
+  - match: {}
+    decision: hold
+    seconds: 60
+`);
+    assert.equal(bad.ok, false);
+    if (bad.ok) return;
+    assert.ok(
+      bad.errors.some((e) => e.includes(sentinel)),
+      "the error names the offending key",
+    );
+    for (const error of bad.errors)
+      assert.doesNotMatch(
+        error,
+        /decision: hold/,
+        "the error must not echo the policy source text",
+      );
+  });
+
   test("blast_radius is the only comparison, and only lt", () => {
     const wrongOp = validatePolicyFile({
       version: 1,

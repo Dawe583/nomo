@@ -66,3 +66,27 @@ test("normalizeEnv returns the same object when nothing has to change", () => {
   const source = { NOMO_MODEL: "current" } as NodeJS.ProcessEnv;
   assert.equal(normalizeEnv(source, ["NOMO_MODEL"]), source);
 });
+test("normalizeEnv does not invent an unowned alias", () => {
+  const source = { VOID_UNOWNED_X: "legacy" } as NodeJS.ProcessEnv;
+  const normalized = normalizeEnv(source, ["NOMO_MODEL"]);
+  assert.equal(normalized.NOMO_UNOWNED_X, undefined);
+  assert.equal(normalized.VOID_UNOWNED_X, "legacy");
+});
+
+test("the owned list is read through the same rule as a single lookup", () => {
+  const owned = [
+    "NOMO_DATA_DIR",
+    "NOMO_HOME",
+    "NOMO_MODEL",
+    "NOMO_POLICY_PATH",
+    "NOMO_SIGNING_KEY",
+    "NOMO_UPSTREAM_COMMAND",
+    "NOMO_VERIFY_KEY",
+    "NOMO_WORKSPACE",
+  ] as const;
+  for (const key of owned) {
+    const legacy = key.replace(/^NOMO_/, "VOID_");
+    assert.equal(envValue({ [key]: "current", [legacy]: "legacy" }, key), "current", key);
+    assert.equal(envValue({ [legacy]: "legacy" }, key), "legacy", key);
+  }
+});
