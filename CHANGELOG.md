@@ -18,7 +18,7 @@ All notable user-facing changes since the first repository commit.
   terminal catch-all as its last rule, they never decide a call themselves: they
   are evidence, appended and shown, never a silent addition to a decision. The
   two places in the TUI that said they "fill a gap the operator left open" now
-  say they never bind. The guard tests pin this for the helper path, the
+  say they never bind. The guard pins this for the helper path, the
   connector path and the stdio delegation path, so the claim and the code cannot
   drift apart.
 - One reviewer can be wrong once, and a lesson recorded from a wrong review is
