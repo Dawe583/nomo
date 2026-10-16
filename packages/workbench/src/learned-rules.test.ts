@@ -1,11 +1,26 @@
-import test from "node:test";
+import test, { describe } from "node:test";
 import { isolatedWorkbench } from "./test-fixture.ts";
 import assert from "node:assert/strict";
 
-import { LEARNED_RULE_MIN_REPEATS, mineLearnedRules } from "./learned-rules.ts";
+import {
+  LEARNED_RULE_MIN_REPEATS,
+  learnedRuleRationale,
+  mineLearnedRules,
+} from "./learned-rules.ts";
+import { mineHarnessEntries } from "./learned-harness.ts";
 
-const entry = (tool: string, klass: string, decision: string) => ({
-  body: { tool, klass, decision },
+const entry = (
+  tool: string,
+  klass: string,
+  decision: string,
+  attribution?: unknown,
+) => ({
+  body: {
+    tool,
+    klass,
+    decision,
+    ...(attribution === undefined ? {} : { attribution }),
+  },
 });
 
 test("a repeated refusal becomes a hold rule naming the tool and the class", () => {
@@ -170,4 +185,132 @@ test("learned rules are appended, so an operator's own rule is still reached fir
   assert.equal(merged.policy.rules[1].decision, "hold", "the learned rule fills the gap behind it");
   assert.match(merged.policy.rules[1].rationale ?? "", /Not written by an operator/);
   assert.equal(operator.policy.rules.length, 1, "the operator's policy must not be mutated");
+});
+
+describe("self-caused refusals are not learned evidence", () => {
+  test("a learned rule's own denied holds are not its own evidence", () => {
+    // Three independent refusals mint the rule; denials produced by firing
+    // that same rule must not inflate its repeat count.
+    const base = [
+      entry("t", "r1", "deny:policy"),
+      entry("t", "r1", "deny:policy"),
+      entry("t", "r1", "hold:denied"),
+    ];
+    const first = mineLearnedRules(base);
+    assert.equal(first.length, 1);
+    assert.equal(first[0].rationale, learnedRuleRationale(3));
+    const selfCaused = [
+      entry("t", "r1", "hold:denied", {
+        rule: { index: 0, rationale: learnedRuleRationale(3) },
+      }),
+      entry("t", "r1", "hold:denied", {
+        rule: { index: 0, rationale: learnedRuleRationale(3) },
+      }),
+    ];
+    const remined = mineLearnedRules([...base, ...selfCaused]);
+    assert.deepEqual(remined, first);
+    assert.equal(remined[0].rationale, "Refused 3 times on the signed ledger. Not written by an operator.");
+  });
+
+  test("mining is a fixed point under self-feedback", () => {
+    let chain = [
+      entry("t", "r1", "deny:policy"),
+      entry("t", "r1", "deny:policy"),
+      entry("t", "r1", "hold:denied"),
+    ];
+    const first = mineLearnedRules(chain);
+    assert.equal(first.length, 1);
+    for (let i = 0; i < 3; i++) {
+      const mined = mineLearnedRules(chain);
+      // Each freshly fired denial carries the mined rule's own rationale back
+      // into the chain; the next mining must not move.
+      chain = [
+        ...chain,
+        entry("t", "r1", "hold:denied", {
+          rule: { index: 0, rationale: mined[0].rationale },
+        }),
+      ];
+      assert.deepEqual(mineLearnedRules(chain), first);
+    }
+  });
+
+  test("a refusal without attribution still counts", () => {
+    // A body with no attribution at all cannot name a fired learned rule, so
+    // it is genuine evidence by construction. Those must keep teaching or a
+    // writer that stamps nothing would starve the miner.
+    const chain = [
+      entry("t", "r1", "hold:expired"),
+      entry("t", "r1", "hold:expired"),
+      entry("t", "r1", "hold:expired"),
+    ];
+    const rules = mineLearnedRules(chain);
+    assert.equal(rules.length, 1);
+    assert.equal(rules[0].rationale, learnedRuleRationale(3));
+  });
+
+  test("an imported refusal under an operator rule still counts", () => {
+    // The syncStdio proxy import channel spreads the upstream body, which
+    // carries operator-policy attribution whose rationale is never the
+    // learned template, so imports keep teaching through the same door.
+    const chain = [
+      entry("t", "r1", "hold:expired", {
+        rule: { index: 0, rationale: "operator rule: production writes held" },
+      }),
+      entry("t", "r1", "hold:expired", {
+        rule: { index: 0, rationale: "operator rule: production writes held" },
+      }),
+      entry("t", "r1", "hold:expired", {
+        rule: { index: 0, rationale: "operator rule: production writes held" },
+      }),
+    ];
+    const rules = mineLearnedRules(chain);
+    assert.equal(rules.length, 1);
+    assert.equal(rules[0].rationale, learnedRuleRationale(3));
+  });
+
+  test("an operator rationale that merely quotes the sentence still counts", () => {
+    // The matcher is fully anchored, so extra text around the sentence means
+    // a human wrote it and the refusal is genuine evidence.
+    const quoted = "Operator reviewed: " + learnedRuleRationale(9);
+    const chain = [
+      entry("t", "r1", "deny:policy"),
+      entry("t", "r1", "deny:policy"),
+      entry("t", "r1", "hold:denied", {
+        rule: { index: 0, rationale: quoted },
+      }),
+    ];
+    const rules = mineLearnedRules(chain);
+    assert.equal(rules.length, 1);
+    assert.equal(rules[0].rationale, learnedRuleRationale(3));
+  });
+
+  test("a group held up only by self-caused refusals never mints", () => {
+    const chain = [
+      entry("t", "r1", "hold:denied", {
+        rule: { index: 0, rationale: learnedRuleRationale(3) },
+      }),
+      entry("t", "r1", "hold:denied", {
+        rule: { index: 0, rationale: learnedRuleRationale(7) },
+      }),
+      entry("t", "r1", "hold:expired", {
+        rule: { index: 0, rationale: learnedRuleRationale(1) },
+      }),
+    ];
+    assert.deepEqual(mineLearnedRules(chain), []);
+  });
+
+  test("parity with the harness mining stays exact", () => {
+    const chain = [
+      entry("t", "r1", "deny:policy"),
+      entry("t", "r1", "deny:policy"),
+      entry("t", "r1", "hold:denied"),
+      entry("t", "r1", "hold:denied", {
+        rule: { index: 0, rationale: learnedRuleRationale(3) },
+      }),
+    ];
+    assert.deepEqual(
+      mineHarnessEntries(chain, { generatedAt: "2026-10-16T00:00:00.000Z" }).rules,
+      mineLearnedRules(chain),
+    );
+  });
 });

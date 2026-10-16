@@ -26,6 +26,28 @@ import type { Rule } from "../../policy/src/rules.ts";
  * attention. One refusal is noise; a model that keeps being refused is a fact. */
 export const LEARNED_RULE_MIN_REPEATS = 3;
 
+/**
+ * The sentence a mined rule carries as its rationale.
+ *
+ * One builder owns the wording so the miner and the matcher below cannot
+ * drift apart: a second copy of this sentence elsewhere would let one copy
+ * change while the other still matches, and self-caused refusals would then
+ * either leak back into the count or genuine evidence would be dropped.
+ */
+export function learnedRuleRationale(repeats: number): string {
+  return `Refused ${repeats} times on the signed ledger. Not written by an operator.`;
+}
+
+/**
+ * Matches exactly the sentence the builder above produces, for any count.
+ *
+ * Fully anchored on purpose: an operator rationale that merely quotes the
+ * sentence with extra text around it is a human note about the pattern, not
+ * the pattern echoing itself, so it stays evidence.
+ */
+const SELF_CAUSED_RATIONALE =
+  /^Refused \d+ times on the signed ledger\. Not written by an operator\.$/;
+
 type Entry = { readonly body: unknown };
 
 /**
@@ -71,6 +93,40 @@ export function mineLearnedRules(
     const tool = field(record, "tool");
     const klass = field(record, "klass");
     if (!tool || !klass) continue;
+    // A refusal produced by firing a learned rule carries that rule's own
+    // rationale in body.attribution.rule.rationale. Counting it would let the
+    // rule vote for itself, so it is dropped here, never deleted. Any other
+    // shape, missing attribution, a non-object rule, a missing or non-string
+    // rationale, or a rationale that merely quotes the sentence, is genuine
+    // evidence and counts. Only raw body fields are read; the ledger's
+    // readLedgerReason interprets records for display and has no say in what
+    // teaches.
+    //
+    // The closure is scoped to writers that stamp the template. A foreign
+    // writer firing learned holds without that stamp still feeds the loop,
+    // and an operator rule whose rationale is a verbatim copy of the sentence
+    // would have its genuine refusals dropped; both are recorded limitations
+    // of matching by content rather than by an additive ledger marker.
+    const attribution = record["attribution"];
+    if (
+      attribution !== null &&
+      typeof attribution === "object" &&
+      !Array.isArray(attribution)
+    ) {
+      const fired = (attribution as Record<string, unknown>)["rule"];
+      if (
+        fired !== null &&
+        typeof fired === "object" &&
+        !Array.isArray(fired)
+      ) {
+        const rationale = (fired as Record<string, unknown>)["rationale"];
+        if (
+          typeof rationale === "string" &&
+          SELF_CAUSED_RATIONALE.test(rationale)
+        )
+          continue;
+      }
+    }
     // JSON, not a raw NUL between the two parts: a literal NUL in a source
     // file makes git treat the whole file as binary, and then no diff of it is
     // ever shown again. Neither a tool name nor a class can contain a quote or
@@ -101,6 +157,6 @@ export function mineLearnedRules(
       notify: ["cli"],
       // The model reads this in the hold message, so it states the observation
       // rather than claiming a conclusion the chain does not support.
-      rationale: `Refused ${group.repeats} times on the signed ledger. Not written by an operator.`,
+      rationale: learnedRuleRationale(group.repeats),
     }));
 }

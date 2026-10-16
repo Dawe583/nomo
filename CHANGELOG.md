@@ -3,6 +3,16 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- A learned rule could feed on itself. The mining read refusals from the
+  signed chain, a fired learned hold that the operator denied wrote a new
+  refusal record of its own, and the miner counted that record as fresh
+  evidence for the same rule, so the count behind "Refused N times" grew
+  forever without a single new operator refusal. A refusal whose record names
+  the learned rule that fired is now excluded from the count, so the rule
+  stands only on evidence the rule did not cause, can fall below the repeat
+  threshold when its only support was itself, and re-arms on real refusals.
+  Refusals recorded without a fired-rule rationale, including the proxy's
+  imported records, keep counting exactly as before.
 - One reviewer can be wrong once, and a lesson recorded from a wrong review is
   worse than no lesson. The harness review step can now pay for up to three
   identical reviews of the same evidence, and a proposal is recorded only when
