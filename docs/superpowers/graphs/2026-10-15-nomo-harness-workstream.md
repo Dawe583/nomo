@@ -88,7 +88,7 @@ the nodes. This mapping is honest about what exists:
 | WP-MANUAL  | `/harness review` arms the trigger on demand: the missing caller the refine docblocks point at | done: contract frozen (D-5), open items settled (D-6); BUILD+VERIFY green (463/463 workbench, TUI 194/195 with the one pre-existing stderr-warning failure proven on `aff5ee6`); EVIDENCE in this commit |
 | WP-MANUAL REVIEW | adversarial lenses over `7e79fe8` | done: resumed as part of the WP-MERGE REVIEW round over the merged surface (the manual-arm code is in that diff). The correctness and skeptic lenses attacked the D-5/D-6 contract: the contract itself held; the skeptic found two wiring defects (double-served concurrent requests, a refused no-provider request staying armed), both fixed and re-proven |
 | WP-MERGE   | Land `feat/agent-harness` on `main`; merge (not rebase), `nomo-merger` | merger complete on `merge/origin-main-into-lane` (merge `53f8bef` + port `08bc041`, D-7). REVIEW round 2026-10-16: 4 parallel lenses over `git diff origin/main..HEAD` — correctness 0, security 0, truthfulness 7 findings, skeptic 2, plus 1 found during FIX (the merge had dropped 4 lane score tests). All 10 fixed: per-session boundary lock + join (D-8), no-provider refusal never arms, write-back merge, `/refine` legend removed and `/harness` legend completed, CHANGELOG wording restored, ruling-doc pointers re-pointed, guard alias tightened to real lookups, 4 score tests restored. Fresh verification: WB 487/487, TUI 233/234 (the 1 failure is the pre-existing SQLite stderr warning), control-plane 42/42, guard 12/12, tsc clean both. Landing on `main` = HUMAN edge (gated by the TUI lane settling: `origin/main` still 953f6ba, main checkout dirty) |
-| WP-LENSES  | Parallel review lenses: the review step can run K identical reviews over one evidence packet and merge their verdicts; default 1 lens = today's behavior | DESIGN 2026-10-16: two proposals + judge ruling (`docs/superpowers/designs/2026-10-16-wp-lenses-{proposal-a,proposal-b,judge}.md`), D-9. BUILD + VERIFY done: unanimity over K identical samples, `refinementLensCount` 1..3 default 1 (consumer `serveHarnessBoundary`), throw fails naming the lens, K calls = K usage records; 13 new tests. VERIFY: WB 500/500, TUI 233/234 (the 1 failure is the pre-existing SQLite stderr warning), control-plane 42/42, tsc clean both. Build-time refinement (recorded): the frozen ran-note branch was built as the exported pure helper `reviewRanNote` so the exact string is testable inside the allowed files. REVIEW round next |
+| WP-LENSES  | Parallel review lenses: the review step can run K identical reviews over one evidence packet and merge their verdicts; default 1 lens = today's behavior | done 2026-10-16: DESIGN (two proposals + judge ruling in `docs/superpowers/designs/`, D-9), BUILD (`c7054cd`), REVIEW (3 lenses over `c7054cd`: 7 findings, none major), FIX (`61220be`), re-VERIFY. Unanimity over K identical samples, `refinementLensCount` 1..3 default 1 (consumer `serveHarnessBoundary`), throw fails naming the lens. Cost honesty wording: one usage record per reply that reports usage (the untouched closure never invents one), pinned by a K=2 wiring test. VERIFY: WB 503/503, TUI 233/234 (the 1 failure is the pre-existing SQLite stderr warning), control-plane 42/42 (no surface change), tsc clean both. Build-time refinement (recorded): the frozen ran-note branch was built as the exported pure helper `reviewRanNote` so the exact string is testable inside the allowed files. Landing on main = HUMAN gate |
 
 ## WP-MERGE brief (the artifact the merger node consumes)
 
@@ -183,6 +183,35 @@ Scout read `harness-runtime.ts`, `refine-gate.ts`, `refine-trigger.ts`,
   row needs it (the settings panel renders `harnessSettingsView` rows
   automatically). Forbidden: the main checkout, any new dependency, glm
   models, flipping the default.
+
+## WP-LENSES review round (2026-10-16)
+
+Three lenses over `c7054cd` (`git show c7054cd`): correctness, truthfulness,
+skeptic. Seven findings, none major; every claim they could not reproduce
+was refuted with observed output. Fixes in `61220be`:
+
+- **S1** A branch move mid-round kept paying for lenses whose verdict the
+  trigger discards. The loop now re-checks the branch before each lens after
+  the first and stops; the post-review check still discards without
+  stamping, so the round costs less and the fail direction is unchanged.
+- **S2/C1** The ran note re-read the live setting, so a mid-round
+  `patchHarnessSettings` made it name a count the round never billed. The
+  count is now captured before the round awaits and threaded to the event
+  log.
+- **S3** The manual result note stayed bare while the event log named the
+  count. Both surfaces now carry the same `reviewRanNote` sentence, and the
+  in-flight map remembers the count so a joiner names it too.
+- **S4** A decline reason carrying `; ` or a newline read as phantom lenses
+  in the tally; parts are flattened before joining.
+- **T1** The commit message's "K calls = K usage records" overstated the
+  closure, which emits only `if (reply.usage)`. The honest line is one usage
+  record per reply that reports usage, and a K=2 wiring test now pins two
+  usage events through the real closure.
+- **T2** One test name over-claimed what it pinned; renamed and given the
+  provenance assertion.
+
+Re-VERIFY after the fixes: WB 503/503, TUI 233/234 (the pre-existing SQLite
+stderr warning), control-plane 42/42 (no surface change), tsc clean both.
 
 ## Decision log
 
