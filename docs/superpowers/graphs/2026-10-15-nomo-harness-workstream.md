@@ -78,7 +78,7 @@ the nodes. This mapping is honest about what exists:
 | Human gate           | `kind: "prompt"` edits are withheld until an operator signature exists            | done |
 | Loop cap             | cooldown on every attempt, branch invalidation discards stale rounds              | done |
 | Manual arm (human edge into the loop) | `refine-trigger.ts` `requestManualReview`, `refine-gate.ts` `GateInput.manual`, Workbench `requestHarnessReview`, TUI `/harness review` | done |
-| Parallel review lenses | one reviewer today                                                   | candidate, needs a cost decision |
+| Parallel review lenses | `harness-runtime.ts` review runs K identical lenses (unanimous merge, `refinementLensCount` 1..3 default 1) | done: WP-LENSES, `c7054cd` + `61220be` |
 
 ## Work package queue
 
