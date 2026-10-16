@@ -128,6 +128,14 @@ const TEST_ONLY_ENV_VARS = [
     name: "VOID_A_B",
     why: "The legacy spelling of the hypothetical NOMO_A_B above, used to exercise legacyEnvKey against a non-aligned name.",
   },
+  {
+    name: "NOMO_UNOWNED_X",
+    why: "packages/ledger/src/env-compat.test.ts uses it to prove normalizeEnv does not invent an alias for a name that is not in OWNED_ENV_KEYS. Synthetic boundary fixture, never read by product code.",
+  },
+  {
+    name: "VOID_UNOWNED_X",
+    why: "The legacy spelling of the hypothetical NOMO_UNOWNED_X above; also a synthetic boundary fixture, never read by product code.",
+  },
 ];
 
 const ALLOWED = new Set(TEST_ONLY_ENV_VARS.map((entry) => entry.name));
@@ -157,7 +165,7 @@ const legacyAliasedNames = (sourceText) => {
     ).exec(code);
     return declaration?.[1];
   };
-  for (const match of code.matchAll(/envValue\(\s*[^,()]+,\s*([^,()]+)\)/g)) {
+  for (const match of code.matchAll(/envValue\(\s*[^,()]+,\s*([^,()]+)\s*,?\s*\)/g)) {
     const name = resolve(match[1].trim());
     if (name) names.add(name);
   }

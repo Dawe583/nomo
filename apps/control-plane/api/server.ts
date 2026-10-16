@@ -316,13 +316,13 @@ export function createControlPlaneServer(
     new Workbench({
       ...env,
       VOID_PERMISSION_MODE: serverPermissionMode(
-        envValue(env, "NOMO_PERMISSION_MODE" as any) ?? DEFAULT_HTTP_PERMISSION_MODE,
+        envValue(env, "NOMO_PERMISSION_MODE") ?? DEFAULT_HTTP_PERMISSION_MODE,
       ),
     });
   const fleetEventStore = options.fleetEvents ?? new FleetEventStore();
   const server = createServer((request, response) => {
     if (
-      envValue(env, "NOMO_CONTROL_TOKEN" as any)
+      envValue(env, "NOMO_CONTROL_TOKEN")
         ? !authorizedRemote(request, env)
         : !isLocalRequest(request)
     ) {
@@ -398,11 +398,11 @@ async function route(
   const parsed = parseRequestUrl(request);
   const desktopWebRoot = envValue(
     options.env,
-    "NOMO_DESKTOP_WEB_ROOT" as Parameters<typeof envValue>[1],
+    "NOMO_DESKTOP_WEB_ROOT",
   );
   const controlToken = envValue(
     options.env,
-    "NOMO_CONTROL_TOKEN" as Parameters<typeof envValue>[1],
+    "NOMO_CONTROL_TOKEN",
   );
   if (parsed === null) return sendJson(response, 400, { error: "bad_url" });
 
@@ -417,7 +417,7 @@ async function route(
       return sendJson(response, 200, {
         ...capabilities(
           "local",
-          serverPermissionMode(envValue(options.env, "NOMO_PERMISSION_MODE" as any) ?? DEFAULT_HTTP_PERMISSION_MODE),
+          serverPermissionMode(envValue(options.env, "NOMO_PERMISSION_MODE") ?? DEFAULT_HTTP_PERMISSION_MODE),
           wb.harnessSettings(),
         ),
         desktopSetup: desktop,
@@ -1114,7 +1114,7 @@ async function route(
             message: "Replay requires verified signatures.",
           });
       }
-      const snapshots = envValue(options.env, "NOMO_SNAPSHOT_DIR" as any);
+      const snapshots = envValue(options.env, "NOMO_SNAPSHOT_DIR");
       if (!snapshots)
         return sendJson(response, 409, {
           error: "snapshots_not_configured",
@@ -1305,7 +1305,7 @@ async function handleFeed(
       // empty state with the same page shape, not a failed request.
       const fresh =
         searchParams.get("workspace") ??
-        envValue(options.env, "NOMO_WORKSPACE" as any) ?? 
+        envValue(options.env, "NOMO_WORKSPACE") ?? 
         basename(ledgerPath, ".jsonl");
       const empty = page(filterRows([], searchParams), searchParams, fresh);
       return sendJson(response, 200, {
@@ -1323,7 +1323,7 @@ async function handleFeed(
   }
   const workspace =
     searchParams.get("workspace") ??
-    envValue(options.env, "NOMO_WORKSPACE" as any) ?? 
+    envValue(options.env, "NOMO_WORKSPACE") ?? 
     basename(ledgerPath, ".jsonl");
   let feed: Awaited<ReturnType<typeof readLedgerFeed>>;
   try {
@@ -1707,9 +1707,9 @@ function selectLedgerPath(
   workspace: string | null,
 ): string | null {
   if (options.ledgerPath !== undefined) return options.ledgerPath;
-  const name = workspace ?? envValue(options.env, "NOMO_WORKSPACE" as any) ??  "default";
+  const name = workspace ?? envValue(options.env, "NOMO_WORKSPACE") ??  "default";
   if (!/^[A-Za-z0-9_.-]+$/.test(name)) return null;
-  const dir = envValue(options.env, "NOMO_LEDGER_DIR" as any) ?? join(homedir(), ".nomo", "ledger");
+  const dir = envValue(options.env, "NOMO_LEDGER_DIR") ?? join(homedir(), ".nomo", "ledger");
   return join(dir, `${name}.jsonl`);
 }
 
@@ -1719,9 +1719,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     port,
     (() => {
       const token =
-        envValue(process.env, "NOMO_CONTROL_TOKEN" as any);
+        envValue(process.env, "NOMO_CONTROL_TOKEN");
       if (!token || token.length < 32) return "127.0.0.1";
-      return envValue(process.env, "NOMO_CONTROL_HOST" as any) ?? "127.0.0.1";
+      return envValue(process.env, "NOMO_CONTROL_HOST") ?? "127.0.0.1";
     })(),
     () => {
       console.log(
