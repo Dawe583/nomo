@@ -1488,6 +1488,35 @@ surfaces, `scripts/src/prime-bridge.mjs`, `cloud/prime.mjs` plus
 `scripts/team/prime-spawn.sh`, and the TUI `/harness` switch. There is no
 source-level dependency to vendor; there is a process contract.
 
+## Harness spec section 7: three questions closed, 2026-10-17
+
+**Mined rules never bind by construction, and that is deliberate.** The policy
+grammar requires a terminal catch-all (`match: {}`) as the last rule and
+`decide` is first-match-wins, while `policyWithLearned` appends mined rules after
+it, so no mined rule can reach a decision. A placement before the catch-all
+would let a model-mined hold override an operator allow, which is authority, not
+evidence, and which `docs/NOMO-AGENT-HARNESS-SPEC.md` section 7 already refuses.
+The binding surface for learned material is the lessons path: bounded,
+same-workspace context injection that cannot change `decide`. This matches the
+MVP spec Milestone C item 6, which says retrieved entries never change `decide`.
+
+**The host execution surface stays deferred, by design.** Adding a
+model-callable shell, filesystem or git tool is a product-security decision, not
+a work package: an operator-configured upstream runs as the proxy OS user and is
+not sandboxed, so a "host untouched" canary would fail by design. `toolCatalog`
+keeps `policy` as the honest resolution for connector and stdio tools, because a
+preview class computed from name and shape can disagree with the execution-time
+classification that has the real tool facts.
+
+**Skill drift is undefined, and therefore not a work package.** "Workspace
+versus global store" names no defined store in this repository. Defining drift
+is a requirement or pilot decision; implementing it silently would invent a
+target store and a bigger claim than the item itself.
+
+All three were recorded in the harness workstream graph as D-14, D-15 and D-16.
+None is a defect: each is a deliberate boundary, and the guard tests pin the
+first two.
+
 ## NOMO Agent Identity and Fleet Control Plane: active direction, 2026-10-08
 
 This decision records the product direction the owner selected on 2026-10-08.
