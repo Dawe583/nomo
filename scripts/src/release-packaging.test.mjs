@@ -49,7 +49,7 @@ const PUBLISHABLE = new Map([
 for (const directory of directories) {
   test(`${directory} ${PUBLISHABLE.has(directory) ? "is publishable with" : "stays private with"} coherent development release metadata`, () => {
     const data = manifest(`${directory}/package.json`);
-    assert.match(data.name, /^@nomo\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    assert.match(data.name, /^@(?:void|nomo)\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
     if (directory.startsWith("packages/")) {
       assert.equal(data.name, `@void/${directory.slice("packages/".length)}`);
     }
