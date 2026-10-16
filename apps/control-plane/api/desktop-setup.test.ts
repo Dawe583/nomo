@@ -137,6 +137,20 @@ test('concurrent workspace writer prevents import and retains prior in-memory pr
   } finally { assert.throws(() => second.close(), /Workspace changed in another runtime/); }
 });
 
+test('desktop detection keeps reading the legacy VOID spelling alone', async t => {
+  // The migration rule: a NOMO_* name that is present wins, including an empty
+  // value; only an absent NOMO_* name falls back to the legacy VOID_* name.
+  const home = await mkdtemp(join(tmpdir(), 'nomo-desktop-legacy-'));
+  const env = { HOME: home, NOMO_DATA_DIR: join(home, 'nomo'), VOID_DESKTOP_WEB_ROOT: home };
+  const server = await listenControlPlane({ env });
+  t.after(async () => {
+    await server.close();
+    await rm(home, { recursive: true, force: true });
+  });
+  const response = await fetch(`http://127.0.0.1:${server.port}/api/desktop/setup`);
+  assert.equal(response.status, 200);
+});
+
 test('desktop API blocks remote mode and hostile origins and rejects extra import parameters', async t => {
   const f = await fixture(t);
   await f.save(auth, { opencode: { type: 'api', key } });
