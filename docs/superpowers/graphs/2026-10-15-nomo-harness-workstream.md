@@ -90,6 +90,7 @@ the nodes. This mapping is honest about what exists:
 | WP-MERGE   | Land `feat/agent-harness` on `main`; merge (not rebase), `nomo-merger` | merger complete on `merge/origin-main-into-lane` (merge `53f8bef` + port `08bc041`, D-7). REVIEW round 2026-10-16: 4 parallel lenses over `git diff origin/main..HEAD` — correctness 0, security 0, truthfulness 7 findings, skeptic 2, plus 1 found during FIX (the merge had dropped 4 lane score tests). All 10 fixed: per-session boundary lock + join (D-8), no-provider refusal never arms, write-back merge, `/refine` legend removed and `/harness` legend completed, CHANGELOG wording restored, ruling-doc pointers re-pointed, guard alias tightened to real lookups, 4 score tests restored. Fresh verification: WB 487/487, TUI 233/234 (the 1 failure is the pre-existing SQLite stderr warning), control-plane 42/42, guard 12/12, tsc clean both. **LANDED 2026-10-16** on the operator's go: `origin/main` fast-forwarded to this branch's tip (the TUI lane gate was waived by the operator; the main checkout was left untouched, still dirty with the prime session's work) |
 | WP-LENSES  | Parallel review lenses: the review step can run K identical reviews over one evidence packet and merge their verdicts; default 1 lens = today's behavior | done 2026-10-16: DESIGN (two proposals + judge ruling in `docs/superpowers/designs/`, D-9), BUILD (`c7054cd`), REVIEW (3 lenses over `c7054cd`: 7 findings, none major), FIX (`61220be`), re-VERIFY. Unanimity over K identical samples, `refinementLensCount` 1..3 default 1 (consumer `serveHarnessBoundary`), throw fails naming the lens. Cost honesty wording: one usage record per reply that reports usage (the untouched closure never invents one), pinned by a K=2 wiring test. VERIFY: WB 503/503, TUI 233/234 (the 1 failure is the pre-existing SQLite stderr warning), control-plane 42/42 (no surface change), tsc clean both. Build-time refinement (recorded): the frozen ran-note branch was built as the exported pure helper `reviewRanNote` so the exact string is testable inside the allowed files. Landed with the lane 2026-10-16 (`origin/main` fast-forwarded to this branch's tip) |
 | WP-REGRESS | The mined-rule self-reinforcement loop from harness spec section 7: a denied learned hold must not count as fresh evidence for the same rule | done 2026-10-16: scout brief, DESIGN round (A minimal blast radius, B value first, judge ruling D-10), BUILD (tests T1-T6 first, then the shared-builder exclusion in `learned-rules.ts`), VERIFY (WB 517/517, workbench+cli tsc clean, TUI 233/234 the known pre-existing SQLite stderr warning, dash check clean), REVIEW (3 lenses: 0 major, 4 minor, all addressed: the test comment and graph brief stated the proxy-import premise wrong, the miner comment now records the writer-scope residual, the operator-copy limitation accepted as documented), re-VERIFY 517/517. On `feat/wp-regress` from `origin/main` @ 151b8cb |
+| WP-GUARD    | Connector and stdio surfaces: deliberate asymmetry pinned by tests, honest kernel | done 2026-10-16: empirical finding that appended mined rules are UNREACHABLE through decide (catch-all last + first-match-wins + append after) reframed the WP. Builder implemented T1-T8 in packages/workbench/src/{learned-rules,connector,workbench}.test.ts plus a comment at index.ts:4402 and two TUI sentence fixes, WB 525/525, workbench+cli tsc clean, TUI 233/234 (one pre-existing SQLite stderr warning). Reviewed manually (rate limits): clean, with two recorded limits (T8 forged half not honestly drivable; only the positive receipt-shape half asserted). On `feat/wp-regress` @ 0953f10 |
 
 ## WP-MERGE brief (the artifact the merger node consumes)
 
@@ -168,6 +169,35 @@ evidence for the same rule, inflating `repeats` forever.
   `node --test packages/workbench/src/learned-rules.test.ts
   packages/workbench/src/learned-harness.test.ts`,
   `node --test --test-concurrency=1 packages/workbench/src/*.test.ts`.
+
+## WP-GUARD brief (frozen 2026-10-16)
+
+The scout found one real code asymmetry (connector path at index.ts:4402
+uses loadPolicy and a RAW policy; workspace path uses policyWithLearned) plus
+a test gap (a guard canary was deliberately refused earlier, CODING-TOOLS-MAP
+Appendix 2). The judge's second-round scout of the facts produced a sharper
+finding: the appended learned rules cannot ever fire, because validatePolicyFile
+forces the terminal catch-all to be the last rule and decide is first-match-wins,
+while policyWithLearned appends after it. So the wrap at 4402 would change
+nothing and only churn connector digests. The WP therefore pins the deliberate
+inertness and pins the guard with honest tests, without touching decide paths.
+
+- **Frozen contract**: no code change in policyWithLearned or decide; index.ts
+  gets only a comment at 4402 stating the reason. T1-T8 (listed in the WP-GUARD
+  decision above) pin: terminal-catch-all inertness, connector decision
+  continuity, raw-operator digest, unclassified fail-closed, stdio delegation
+  recorded not decided, unverifiable proxy ledger -> unknown, stdio ignores
+  learned rules, verified proxy denial surfaces / receiptless one does not.
+- **Files in play**: packages/workbench/src/index.ts (comment only),
+  learned-rules.test.ts, connector.test.ts, workbench.test.ts,
+  packages/cli/src/tui/workspace.ts (two sentences).
+- **Files governing**: docs/NOMO-AGENT-HARNESS-SPEC.md section 7,
+  docs/CODING-TOOLS-MAP.md Appendix 2.
+- **Inertness fact**: both proposals accepted it; decision: leave deliberate,
+  do not make mined rules bind silently.
+- **Exit commands**: node --test packages/workbench/src/connector.test.ts
+  packages/workbench/src/workbench.test.ts packages/workbench/src/learned-rules.test.ts;
+  npx tsc both; node --test --test-concurrency=1 packages/cli/src/tui/workspace*.test.ts.
 
 ## WP-LENSES brief (the artifact the designers consume)
 
@@ -267,3 +297,6 @@ stderr warning), control-plane 42/42 (no surface change), tsc clean both.
 | D-2026-10-16-8 Concurrent manual reviews | One harness boundary per session at a time: a manual request that arrives while a round runs joins that round and reads its outcome (the joiner never writes); a settled turn landing mid-round joins too and its counted turn survives the write-back; a request refused for a missing provider never arms; the write-back merges a manual arm or settled count recorded during the round instead of overwriting it | Two concurrent requests raced the gate and paid twice for one intent (reproduced: 2 model calls), and `armed` would have lied about a request the running round was already answering; a refused request that stayed armed spent a model call on a later settled turn (reproduced); dropping a concurrent record silently breaks the busy-arm promise |
 | D-2026-10-16-9 WP-LENSES merge rule | Unanimous K identical samples, throw-fails, range 1..3, consumer index.ts, default K=1 byte-identical; falsification experiment (measure the K=2 veto rate; near-zero leaves the dial at 1) | Any-approve inverts fail-toward-NOT-learning and leaves dissents decorative; fixed angles add unvalidated prompt surface with no measured buyer; degrade-to-decline masks provider failure; max 5 spends beyond the veto's value; widening the consumer union buys nothing |
 | D-2026-10-16-10 WP-REGRESS self-cause detection | Template match on `attribution.rule.rationale` inside the miner, via one shared builder for writer and matcher; unattributed refusals still count as evidence; no format change, no API change | The additive `attribution.rule.learned` marker opens the strict ledger validator and threads an operator rule count through the write path for zero loop-closure gain, because the current writer set stamps every self-caused record with the template rationale; excluding unattributed refusals would starve the syncStdio proxy-import channel, the only source of `hold:expired`; a separate self-caused bucket changes the return shape for observability alone |
+
+| D-2026-10-16-11 Mined rules never bind | The mined-rule append lives after the mandatory terminal catch-all, so a mined rule can never fire through decide; turning mined rules into binding decisions would be an owner semantics change against the MVP spec, not a guard fix | A placement before the catch-all would override an operator allow catch-all with a model-mined hold, which the index.ts comment deliberately forbids and which is a product decision outside this WP |
+| D-2026-10-16-12 Connector/stdio guard asymmetry | Raw operator policy on connector, operator-plus-inert-mined on workspace, delegation-only on stdio; persisted digests stay honest, no cosmetic wrap | A wrap of policyWithLearned at index.ts:4402 changes no decision and only churns digests, so it is rejected; the canary on a host built on an operator-configured upstream is rejected as before (CODING-TOOLS-MAP Appendix 2) |

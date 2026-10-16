@@ -13,6 +13,14 @@ All notable user-facing changes since the first repository commit.
   threshold when its only support was itself, and re-arms on real refusals.
   Refusals recorded without a fired-rule rationale, including the proxy's
   imported records, keep counting exactly as before.
+- The harness now says what the learned rules actually do. They are appended
+  after the operator's own rules and, because the policy grammar requires a
+  terminal catch-all as its last rule, they never decide a call themselves: they
+  are evidence, appended and shown, never a silent addition to a decision. The
+  two places in the TUI that said they "fill a gap the operator left open" now
+  say they never bind. The guard tests pin this for the helper path, the
+  connector path and the stdio delegation path, so the claim and the code cannot
+  drift apart.
 - One reviewer can be wrong once, and a lesson recorded from a wrong review is
   worse than no lesson. The harness review step can now pay for up to three
   identical reviews of the same evidence, and a proposal is recorded only when

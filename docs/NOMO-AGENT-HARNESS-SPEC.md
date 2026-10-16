@@ -691,9 +691,15 @@ nejsou, se v tomhle stromu objevují jako falešné tvrzení později.
 - **Klasifikace hostovských nástrojů modelu.** `docs/CODING-TOOLS-MAP.md`
   §6 končí konstatováním, že `shell.command.exec` je v registru jako r3,
   ale žádný takový nástroj není v katalogu, který model vidí. Učení to nemění.
-- **Guard na connector a stdio povrchy.** Totéž, refaktorované
-  `workspace-tools-guard.test.ts` to výslovně odmítl řešit canary testem, protože
-  proti operator-configured upstream by padl z designu.
+- **Guard na connector a stdio povrchy.** (WP-GUARD, 2026-10-16). Povrch
+  konektoru rozhoduje podle surove politiky operatora, povrch pracovniho prostoru
+  podle politiky operatora s pripojenymi naucenymi pravidly, ktera jsou dnes
+  inertni evidenci za terminalnim catch-all a nikdy nerozhoduji; stdio pouze
+  deleguje a nerozhoduje nikdy. Testy v
+  `packages/workbench/src/connector.test.ts` a
+  `packages/workbench/src/workbench.test.ts` to pinuji pro cestu a receipt.
+  Canary na nedotceny host se na obou površích neslibuje, viz
+  `docs/CODING-TOOLS-MAP.md` Appendix 2.
 - **Subagenti.** omp má Agent Hub, prime má `rlm.spawn` a `agent_message`,
   NOMO nemá nic. Chybí to tu. Je to větší kus práce než všechno výše a nedotýká
   se učení — patří do vlastního work package.

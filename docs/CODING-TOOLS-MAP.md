@@ -756,6 +756,14 @@ encoding a guarantee the product does not make is worse than having no test.
 **The connector and stdio surfaces remain unguarded and un-promised.** That is
 an owner decision, not an oversight, and it is not settled by this work.
 
+**WP-GUARD guard-test authority (2026-10-16).** The recorded decision above is
+unchanged, and WP-GUARD does not contradict it. The guard-test authority for
+the surfaces is the spec section 7 bullet rewritten in
+`docs/NOMO-AGENT-HARNESS-SPEC.md` for WP-GUARD: connector calls decide under
+the raw operator policy, workspace calls under the operator policy with inert
+mined rules, stdio delegates under the proxy's verified decision. The canary
+on an untouched host still is not promised.
+
 ## Finding: two host-shaped names are accepted, and that is currently correct
 
 The guard's first draft asserted that `validPath` refuses every host-shaped
