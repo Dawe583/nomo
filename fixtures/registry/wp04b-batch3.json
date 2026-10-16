@@ -2938,7 +2938,7 @@
       "summary": "Void a finalized Stripe invoice.",
       "tags": [
         "stripe",
-        "nomo"
+        "void"
       ],
       "cases": [
         {
