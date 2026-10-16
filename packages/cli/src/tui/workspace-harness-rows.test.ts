@@ -254,3 +254,64 @@ test("a long hook command is bounded, with a marker saying it was cut", async (t
     `command line not bounded: ${commandLine.length}`,
   );
 });
+
+test("the ledger has an honest harness score row when no samples exist", async (t) => {
+  const { ui } = await ledgerRows(t);
+  const row = rowsOf(ui).find((r) => r.id === "harness:scores");
+  assert.ok(row, "no harness score row on the ledger tab");
+  assert.match(row.label, /harness score/);
+  assert.match(row.lines.join("\n"), /insufficient-data/);
+  assert.match(row.lines.join("\n"), /0 cases/);
+  assert.match(row.lines.join("\n"), /CI: unavailable/);
+});
+
+test("/harness scores reports the verified sample count and CI without authority", async (t) => {
+  const { ui } = await ledgerRows(t);
+  await ui.command("/harness scores");
+  const output = (ui.detail ?? []).join("\n");
+  assert.match(output, /HARNESS SCORES, verdict: insufficient-data/);
+  assert.match(output, /95% CI: unavailable/);
+  assert.match(output, /Sample count: 0 first-pass samples/);
+  assert.match(output, /Case count: 0 verified tool-call cases/);
+  assert.match(output, /never changes a decision or permission/);
+});
+
+test("score sampling deduplicates sessions that share one verified workspace chain", async (t) => {
+  const { ui, app } = await ledgerRows(t);
+  const session = await app.start("Score fixture", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "score.md",
+    content: "one verified decision",
+    expectedRevision: null,
+  });
+  await ui.refresh();
+  const proof = await app.ledger(session.workspace);
+  assert.ok(proof);
+  // A second session viewing the same chain is not an independent case.
+  ui.proofs.set("same-workspace-second-session", [...proof.entries]);
+  ui.proofs.set("refinement-only", [{
+    workspace: "refinement-only",
+    seq: 1,
+    body: { tool: "harness.refinement", decision: "refinement:applied" },
+    prev_hash: "",
+    hash: "",
+    key_id: "",
+    alg: "",
+    signature: "",
+  }]);
+  const row = rowsOf(ui).find((r) => r.id === "harness:scores");
+  assert.ok(row);
+  assert.match(row.lines.join("\n"), /1 case/);
+  assert.match(row.lines.join("\n"), /95% CI: unavailable/);
+});
+
+test("the score row prints the reason the verdict is what it is", async (t) => {
+  // "flat" is a sentence, not a grade: without the reason it reads as
+  // "measured and unchanged", which is the one thing this row is forbidden
+  // to claim. The reason is what tells the operator nothing was compared.
+  const { ui } = await ledgerRows(t);
+  const row = rowsOf(ui).find((r) => r.id === "harness:scores");
+  assert.ok(row);
+  assert.match(row.lines.join("\n"), /Reason: no decided call in the chain/);
+});
