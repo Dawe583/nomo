@@ -574,8 +574,19 @@ export class Workbench {
    * Persisting it would mean a stored timestamp deciding what the product does.
    */
   private readonly harnessTriggers = new Map<string, TriggerState>();
-  /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
+  /**
+   * The harness boundary running per session, if any.
+   *
+   * One boundary at a time is what makes "one operator intent, one model
+   * call" true: a second manual request joins the running round for its
+   * answer instead of starting another, and a settled turn that arrives
+   * mid-round leaves its turn counted for the next boundary. The joiner
+   * reads the outcome only and never touches the chain, so the rule that an
+   * in-flight round is never joined for writes still holds.
+   */
+  private readonly harnessBoundariesInFlight = new Map<string, Promise<ServiceResult>>();
   private readonly localIdentityIssuer = new LocalAgentIdentityIssuer();
+  /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
   private readonly harnessJobs = new Set<Promise<void>>();
   /** The timeout `NOMO_HOOK_TIMEOUT_MS` asked for, or undefined when the
    * launcher set none. Kept apart from the resolved setting so an explicit
@@ -3292,19 +3303,39 @@ export class Workbench {
    * nothing new, in flight) also reports `armed`: the trigger keeps the
    * request and a later boundary will serve it, so calling that a refusal
    * would tell the operator to ask again for something already queued.
+   *
+   * A request that arrives while a round is already running joins that round:
+   * the running review is the answer to the same intent, and a second round
+   * would spend a second model call on it.
    */
   async requestHarnessReview(id: string): Promise<ManualReviewResult> {
     const session = this.sessions.get(id);
     if (!session) return { kind: "refused", note: "Session not found." };
-    const state = requestManualReview(
-      this.harnessTriggers.get(id) ?? initialTriggerState(),
-    );
-    this.harnessTriggers.set(id, state);
+    // A round already running answers this request too: joining it spends
+    // nothing and cannot double-write, because the joiner only reads the
+    // outcome. Without this, two requests race the gate and pay twice.
+    const inFlight = this.harnessBoundariesInFlight.get(id);
+    if (inFlight) {
+      try {
+        return this.manualResultFrom(await inFlight);
+      } catch (error) {
+        // The running round's own caller reports the failure; the joiner
+        // reports the outcome it received and reports nothing itself.
+        return {
+          kind: "failed",
+          note: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
     if (
       this.jobs.has(id) ||
       session.view.status === "running" ||
       session.view.status === "queued"
     ) {
+      this.harnessTriggers.set(
+        id,
+        requestManualReview(this.harnessTriggers.get(id) ?? initialTriggerState()),
+      );
       const note =
         "The conversation is running; the request is served at the next settled boundary.";
       this.event(
@@ -3316,40 +3347,29 @@ export class Workbench {
       );
       return { kind: "armed", note };
     }
+    // Checked before the flag is set: a refusal for a missing provider must
+    // not leave the request armed, or a later settled turn would spend a
+    // model call on a request the operator was told was refused.
     if (!session.provider)
       return {
         kind: "refused",
         note: "Connect the provider before requesting a harness review.",
       };
+    const state = requestManualReview(
+      this.harnessTriggers.get(id) ?? initialTriggerState(),
+    );
+    // The map holds the request cleared while this call serves it, so a
+    // settled turn counted during the round cannot re-arm a request the
+    // round is already answering. A held refusal puts the flag back through
+    // the boundary's write-back, so nothing that was kept is lost.
+    this.harnessTriggers.set(id, { ...state, manualReviewRequested: false });
     // An aborted controller belongs to a cancelled or closed run. The manual
     // review is its own action, so it does not inherit that cancellation.
     if (session.controller.signal.aborted)
       session.controller = new AbortController();
     try {
       const result = await this.runHarnessBoundary(session, state, "checkpoint");
-      switch (result.outcome.kind) {
-        case "ran":
-          return {
-            kind: "ran",
-            note: "Harness review ran and recorded a proposal.",
-          };
-        case "declined":
-          return { kind: "declined", note: result.outcome.reason };
-        case "failed":
-          return {
-            kind: "failed",
-            note:
-              result.outcome.error instanceof Error
-                ? result.outcome.error.message
-                : String(result.outcome.error),
-          };
-        case "not-run":
-          // A held refusal kept the request for a later boundary; a cleared
-          // one means the gate answered that it cannot be served at all.
-          return result.state.manualReviewRequested
-            ? { kind: "armed", note: result.outcome.reason }
-            : { kind: "refused", note: result.outcome.reason };
-      }
+      return this.manualResultFrom(result);
     } catch (error) {
       this.reportHarnessFailure(session, error);
       return {
@@ -3358,15 +3378,63 @@ export class Workbench {
       };
     }
   }
+  /** The operator-facing sentence for one boundary outcome. */
+  private manualResultFrom(result: ServiceResult): ManualReviewResult {
+    switch (result.outcome.kind) {
+      case "ran":
+        return {
+          kind: "ran",
+          note: "Harness review ran and recorded a proposal.",
+        };
+      case "declined":
+        return { kind: "declined", note: result.outcome.reason };
+      case "failed":
+        return {
+          kind: "failed",
+          note:
+            result.outcome.error instanceof Error
+              ? result.outcome.error.message
+              : String(result.outcome.error),
+        };
+      case "not-run":
+        // A held refusal kept the request for a later boundary; a cleared
+        // one means the gate answered that it cannot be served at all.
+        return result.state.manualReviewRequested
+          ? { kind: "armed", note: result.outcome.reason }
+          : { kind: "refused", note: result.outcome.reason };
+    }
+  }
   /**
    * One boundary call, shared by the settled turn and the manual request.
    *
    * The caller owns the state it passes in: the turn path has already counted
    * its settled turn, and a manual request deliberately has not, because no
-   * turn settled to pay for it. The branch-version write-back guard lives here
-   * rather than at the call sites so both paths keep it.
+   * turn settled to pay for it. The branch-version write-back guard lives in
+   * the body rather than at the call sites so both paths keep it.
+   *
+   * One boundary runs per session at a time. A second caller receives the
+   * running round's result rather than starting another: two concurrent
+   * rounds would spend two model calls on one intent and could write the
+   * same evidence twice.
    */
   private async runHarnessBoundary(
+    session: Session,
+    state: TriggerState,
+    surface: GateSurface,
+  ): Promise<ServiceResult> {
+    const id = session.view.id;
+    const inFlight = this.harnessBoundariesInFlight.get(id);
+    if (inFlight) return await inFlight;
+    const run = this.serveHarnessBoundary(session, state, surface);
+    this.harnessBoundariesInFlight.set(id, run);
+    try {
+      return await run;
+    } finally {
+      this.harnessBoundariesInFlight.delete(id);
+    }
+  }
+  /** The boundary itself: gate, review, apply, write-back, report. */
+  private async serveHarnessBoundary(
     session: Session,
     state: TriggerState,
     surface: GateSurface,
@@ -3430,7 +3498,26 @@ export class Workbench {
     // A branch move may update the map while the review awaits. Do not overwrite its newer version.
     const currentVersion = this.harnessTriggers.get(id)?.branchVersion ?? state.branchVersion;
     const expectedVersion = result.startedAtBranchVersion ?? state.branchVersion;
-    if (currentVersion === expectedVersion) this.harnessTriggers.set(id, result.state);
+    if (currentVersion === expectedVersion) {
+      const live = this.harnessTriggers.get(id);
+      // A caller that replaced the map entry while this round ran (a settled
+      // turn counted, a manual arm recorded) must not lose what it recorded.
+      // The turn count is added rather than maxed: a completed review resets
+      // the result to zero and the turns that settled during the round still
+      // belong to the next window.
+      const merged =
+        live !== undefined && live !== state
+          ? {
+              ...result.state,
+              manualReviewRequested:
+                result.state.manualReviewRequested || live.manualReviewRequested,
+              settledTurnsSinceReview:
+                result.state.settledTurnsSinceReview +
+                Math.max(0, live.settledTurnsSinceReview - state.settledTurnsSinceReview),
+            }
+          : result.state;
+      this.harnessTriggers.set(id, merged);
+    }
     this.reportHarnessOutcome(session, result);
     return result;
   }

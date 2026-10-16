@@ -173,3 +173,96 @@ test("a request during a run is recorded and served at the next boundary", async
     "the armed request must be served at the next boundary",
   );
 });
+
+test("two concurrent manual requests share one review and its outcome", async (t) => {
+  const { fetcher, count } = answering((n) => (n === 1 ? answer() : declined()));
+  const { app, session } = await seeded(t, fetcher);
+  await seedLesson(app, session.id);
+
+  const before = count();
+  const [first, second] = await Promise.all([
+    app.requestHarnessReview(session.id),
+    app.requestHarnessReview(session.id),
+  ]);
+  assert.equal(count() - before, 1, "one operator intent pays for one review");
+  assert.equal(first.kind, "declined");
+  assert.equal(second.kind, "declined");
+  assert.equal(second.note, first.note, "the joiner reads the same outcome");
+});
+
+test("a refusal for a missing provider does not arm a later settled turn", async (t) => {
+  const { fetcher, count } = answering((n) => (n <= 2 ? answer() : declined()));
+  const { app, session } = await seeded(t, fetcher);
+  await seedLesson(app, session.id);
+
+  app.clearProvider();
+  const refused = await app.requestHarnessReview(session.id);
+  assert.equal(refused.kind, "refused");
+  assert.match(refused.note, /Connect the provider/);
+
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  app.send(session.id, "One more turn");
+  await app.settled();
+  assert.equal(count(), 2, "only the two turns asked the model, never a review");
+  const reviews = (app.get(session.id)?.events ?? []).filter(
+    (event) => event.type === "harness.review",
+  );
+  assert.ok(
+    reviews.every((event) => event.payload?.["outcome"] !== "declined"),
+    "a refused request must not spend a review on a later boundary",
+  );
+});
+
+test("a settled turn during a manual review joins it instead of paying twice", async (t) => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let markReviewStarted!: () => void;
+  const reviewStarted = new Promise<void>((resolve) => {
+    markReviewStarted = resolve;
+  });
+  let markTurnDone!: () => void;
+  const turnDone = new Promise<void>((resolve) => {
+    markTurnDone = resolve;
+  });
+  let completions = 0;
+  const fetcher = async (url: unknown) => {
+    if (String(url).endsWith("/models")) return models();
+    completions += 1;
+    if (completions === 1) return answer();
+    if (completions === 2) {
+      markReviewStarted();
+      await held;
+      return declined();
+    }
+    markTurnDone();
+    return answer();
+  };
+  const { app } = await isolatedWorkbench(t, fetcher as typeof fetch, {}, {
+    prefix: "void-harness-manual-overlap-",
+    beforeShutdown: () => release(),
+  });
+  const session = await app.start("Review the workspace", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  await seedLesson(app, session.id);
+
+  const review = app.requestHarnessReview(session.id);
+  await reviewStarted;
+  app.send(session.id, "One more turn");
+  await turnDone;
+  release();
+  const result = await review;
+  await app.settled();
+  assert.equal(result.kind, "declined");
+  assert.equal(
+    completions,
+    3,
+    "the first turn, the review and the second turn, with no second review",
+  );
+});
