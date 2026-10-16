@@ -98,7 +98,7 @@ conversation, and return JSON, never prose.
 
 | WP       | Scope | Status |
 | -------- | ----- | ------ |
-| WP-SPAWN | Spawn-and-track subagents: `Workbench.spawnSubagent(parentId, prompt)` creates a child Session with `parentId`, admitted by the existing `maxConcurrentRuns` path, running through the same `run()`/policy/ledger path; the spawn is recorded as a signed ledger entry before any wire time; steering reuses the existing `send()`; read-only roster rows on the sessions tab. No kill/revive, no child-initiated messages, no new limits. | SCOUT done 2026-10-16 (brief below); DESIGN done (two proposals in `docs/superpowers/designs/2026-10-16-wp-spawn-proposal-{a,b}.md`); FREEZE in flight |
+<|start|> WP-SPAWN | Spawn-and-track subagents: `Workbench.spawnSubagent(parentId, prompt)` creates a child Session with `parentId`, admitted by the existing `maxConcurrentRuns` path, running through the same `run()`/policy/ledger path; the spawn is recorded as a signed ledger entry before any wire time; steering reuses the existing `send()`; read-only roster rows on the sessions tab. No kill/revive, no child-initiated messages, no new limits. | SCOUT + DESIGN done (two proposals, base B with named A items); FREEZE done (judge doc `2026-10-16-wp-spawn-judge.md`): throw, park-via-queued, single `spawn:completed` entry with digest-only metadata, parent chain, parentId Session + fresh workspace, parent-subset tools, cost on child, TUI suffix row. BUILD in flight on `feat/subagents-spawn` |
 
 ## WP-SPAWN brief (the artifact the designers consume)
 
@@ -163,4 +163,4 @@ conversation, and return JSON, never prose.
 
 | Decision | Why | Rejected |
 | -------- | --- | -------- |
-| (D-1 comes from the judge after DESIGN) | | |
+| D-1 | WP-SPAWN frozen on proposal B (throw, park-via-queue, `spawn:completed`) with A's /spawn surface, token-free row suffix and phantom cleanup; readable ledger identifiers in metadata, digest never text | A's result union, hard-refuse-when-busy, `execute:completed`, args-placed identifiers, row tokens |
