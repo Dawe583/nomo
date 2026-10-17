@@ -18,7 +18,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 
@@ -58,6 +58,28 @@ try {
   const run = spawnSync("xcodegen", ["generate", "--spec", "project.yml"], { cwd: copy, encoding: "utf8" });
   if (run.error || run.status !== 0) {
     console.error(run.error?.message ?? run.stderr);
+    process.exit(1);
+  }
+
+  // A spec whose `name:` does not match the project this script compares
+  // exits xcodegen successfully and generates a project directory this script
+  // then cannot find, which used to surface as a raw ENOENT stack naming a
+  // scratch path and nothing else. Name both sides instead, because the
+  // reader's next move is to align the spec with the committed artifact.
+  const generatedDir = join(copy, projectDirectory);
+  if (!existsSync(generatedDir)) {
+    console.error(
+      `xcodegen reported success but wrote no ${projectDirectory} under the scratch copy. ` +
+        "The spec's `name:` and this script's projectDirectory must name the same project; " +
+        "check whether project.yml was renamed without regenerating, or the other way round.",
+    );
+    process.exit(1);
+  }
+  if (!existsSync(join(copy, generatedPlist))) {
+    console.error(
+      `xcodegen reported success but wrote no ${generatedPlist}. ` +
+        "The spec's info: path and this script's generatedPlist must name the same file.",
+    );
     process.exit(1);
   }
 
