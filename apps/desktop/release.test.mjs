@@ -98,6 +98,41 @@ test('Mac build policy signs with a stable keychain identity instead of ad-hoc',
   assert.deepEqual(warnings, [], 'a stable identity is not a fallback and must stay quiet');
 });
 
+test('an identity name the keychain holds twice signs by hash, not by the ambiguous name', () => {
+  // codesign fails the whole bundle step on an ambiguous name, measured at
+  // "ambiguous (matches "..." and "..." in keychain-db)". The hash the
+  // keychain listing already prints reaches one certificate unambiguously, so
+  // the policy must use it instead of letting the build die after compile.
+  const sharedName = 'Apple Development: Example Tester (TEAM)';
+  const duplicated = () => [
+    { hash: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', name: sharedName },
+    { hash: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', name: sharedName },
+  ];
+  const { warnings, warn } = captureWarnings();
+  const resolved = resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: duplicated, warn });
+  assert.deepEqual(resolved, {
+    distribution: 'direct',
+    signingIdentity: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    signingIdentitySource: 'keychain-hash',
+  });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /ambiguous/);
+  assert.match(warnings[0], /APPLE_SIGNING_IDENTITY/);
+
+  // A Developer ID name that also carries the duplicate still wins the rank
+  // first, and its duplicates are resolved the same way.
+  const rankedDuplicate = () => [
+    { hash: 'C614CD528B7365B2CF07C47B4F920911B1BFE8C4', name: sharedName },
+    { hash: '6B53226A8BC2DB19D8E155DB1194F7A981FB6D0D', name: sharedName },
+    { hash: '1234567890123456789012345678901234567890', name: 'Developer ID Application: Example (TEAM)' },
+    { hash: '9234567890123456789012345678901234567890', name: 'Developer ID Application: Example (TEAM)' },
+  ];
+  assert.equal(
+    resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: rankedDuplicate, warn }).signingIdentity,
+    '1234567890123456789012345678901234567890',
+  );
+});
+
 test('an ad-hoc Mac fallback names the consequence and the override', () => {
   const { warnings, warn } = captureWarnings();
   resolveBuildPolicy({ platform: 'darwin', distribution: 'direct', env: {}, listIdentities: noIdentities, warn });

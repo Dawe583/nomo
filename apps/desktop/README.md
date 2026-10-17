@@ -55,6 +55,8 @@ supported on their matching host architectures. The build pins and verifies the
 SHA-256 of the official Node distribution. The exact website Aperture logo is
 used to generate the application icons.
 
+The first release-compile on a host can fail with `can't find crate for ...` even though the named proc-macro artifact exists on disk and reads cleanly on the next compile. The observed remedy is `cargo clean --release -p <crate>` with the crate name taken from the error, then re-run `pnpm --dir apps/desktop build`; the second pass completes and the crate is never in this state again on that machine. This is a toolchain-level first-pass defect, not a repository defect: the same source builds green in debug mode and in a second release pass, and this repository's tests do not depend on the release profile.
+
 Artifacts are written to `apps/desktop/src-tauri/target/release/bundle/`.
 DMG creation runs without Finder automation. The `.app` can run locally; public distribution also needs an Apple Developer
 signing identity and notarization credentials configured using Tauri's standard
@@ -68,10 +70,10 @@ repository, and those must not be inferred from the direct build. Windows produc
 SmartScreen may warn. Linux packages are not verified.
 
 `APPLE_SIGNING_IDENTITY` is the one variable that overrides the whole chain: set
-it to any identity name and the build uses it verbatim, skipping both the
+it to any identity name or SHA-1 and the build uses it verbatim, skipping both the
 keychain lookup and the ad-hoc fallback. To see the names the machine already
-holds, run `security find-identity -v -p codesigning`; it prints identity names
-only. Apple does not accept an ad-hoc, Apple Development, Mac Distribution or
+holds, run `security find-identity -v -p codesigning`; it prints identity hashes
+and names. Apple does not accept an ad-hoc, Apple Development, Mac Distribution or
 local development certificate for notarization, so a stable identity bought for
 local keychain stability is not a notarization identity.
 

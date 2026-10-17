@@ -41,10 +41,10 @@ const ADHOC_IDENTITY = '-';
 
 /**
  * Reads the code-signing identities the keychain already holds. This lists
- * identity names and nothing else: no key material is decrypted, opened or
- * printed, and the keychain is never written to.
+ * identity hashes and names and nothing else: no key material is decrypted,
+ * opened or printed, and the keychain is never written to.
  */
-function listKeychainCodeSigningIdentities() {
+function listKeychainIdentities() {
   let output;
   try {
     output = execFileSync('security', ['find-identity', '-v', '-p', 'codesigning'], {
@@ -54,7 +54,15 @@ function listKeychainCodeSigningIdentities() {
   } catch {
     return [];
   }
-  return [...output.matchAll(/^[ \t]*\d+\)[ \t]+[0-9A-Fa-f]{40}[ \t]+"(.*)"[ \t]*$/gmu)].map(match => match[1]);
+  return [...output.matchAll(/^[ \t]*\d+\)[ \t]+([0-9A-Fa-f]{40})[ \t]+"(.*)"[ \t]*$/gmu)].map(match => ({
+    hash: match[1],
+    name: match[2],
+  }));
+}
+
+/** Tests hand the policy names for speed; the live keychain parser returns entries. */
+function asIdentityEntry(entry) {
+  return typeof entry === 'string' ? { hash: null, name: entry } : entry;
 }
 
 /** Where a discovered name sits in the preference order; lower wins. */
@@ -67,7 +75,7 @@ export function resolveBuildPolicy({
   platform,
   distribution,
   env,
-  listIdentities = listKeychainCodeSigningIdentities,
+  listIdentities = listKeychainIdentities,
   warn = message => process.stderr.write(`${message}\n`),
 }) {
   const selected = distribution ?? 'direct';
@@ -89,9 +97,33 @@ export function resolveBuildPolicy({
   }
 
   // 2. A stable identity this machine already has, discovered read-only.
-  const stable = [...new Set(listIdentities().map(name => name.trim()).filter(Boolean))]
+  const entries = listIdentities().map(asIdentityEntry);
+  const stable = [...new Set(entries.map(entry => entry.name.trim()).filter(Boolean))]
     .sort((left, right) => identityRank(left) - identityRank(right))[0];
   if (stable) {
+    // codesign refuses an identity NAME when the keychain holds more than one
+    // certificate under it ("ambiguous (matches ... and ... in keychain-db)"),
+    // which is exactly the state a recreated Apple Development certificate
+    // leaves behind. The SHA-1 the listing already showed reaches the same
+    // certificate unambiguously, so a name held by several identities resolves
+    // to the first listed hash and the build signs by it.
+    const uniqueHashes = [
+      ...new Set(
+        entries
+          .filter(entry => entry.name.trim() === stable && typeof entry.hash === 'string')
+          .map(entry => entry.hash),
+      ),
+    ];
+    if (uniqueHashes.length > 1) {
+      warn(
+        `warning: the keychain holds ${uniqueHashes.length} code-signing identities named "${stable}", ` +
+        `which codesign refuses as ambiguous, so this build signs by the SHA-1 ${uniqueHashes[0]} of the first one. ` +
+        'A previously built app that stops unlocking the workspace key after this switch starts a one-time ' +
+        'keychain re-authorization; remove the older duplicate in Keychain Access, or set ' +
+        'APPLE_SIGNING_IDENTITY to this hash, to stop the build choosing between the two.',
+      );
+      return { distribution: selected, signingIdentity: uniqueHashes[0], signingIdentitySource: 'keychain-hash' };
+    }
     return { distribution: selected, signingIdentity: stable, signingIdentitySource: 'keychain' };
   }
 
