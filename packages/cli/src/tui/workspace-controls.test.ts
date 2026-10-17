@@ -237,6 +237,33 @@ test("stale Undo clears apply authority and names the changed resource before re
   assert.equal(app.workspace(session.id).files["draft.md"], "first");
 });
 
+test("u on a documents row previews that document's undo without opening it", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Edit", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "undo.md",
+    content: "first",
+    expectedRevision: null,
+  });
+  await ui.initialize();
+  ui.choose("documents");
+  const row = ui.items().findIndex((item) => item.path === "undo.md");
+  assert.ok(row >= 0, "the edited document is listed");
+  ui.selected = row;
+  // Enter deliberately only inspects, so documentPath is still unset here:
+  // the shortcut must take the target from the row, not from a document an
+  // earlier command happened to open.
+  await ui.prepareUndo();
+  assert.match(ui.confirmation!.title, /UNDO undo\.md\?/);
+  await ui.confirm();
+  assert.equal(app.workspace(session.id).files["undo.md"], undefined);
+});
+
 test("custom agent files use Workbench validation and persist without broadening existing sessions", async (t) => {
   const { app, env, ui, restart } = await fixture(t);
   await app.configure({

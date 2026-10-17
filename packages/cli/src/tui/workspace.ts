@@ -3439,6 +3439,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.useSession(selected.sessionId!);
       id = selected.operationId;
     }
+    // The documents list is the one tab where the selection is already the
+    // undo target: Enter inspects on purpose (reading a document is not
+    // aiming an undo), so documentPath would otherwise still name whatever
+    // an earlier command opened, and u would undo the wrong file or nothing.
+    if (this.tab === "documents" && selected?.path && !id) {
+      this.useSession(selected.sessionId!);
+      this.documentPath = selected.path;
+    }
     if (!this.sessionId) throw Error("Select a conversation or ledger entry.");
     const sessionId = this.sessionId;
     const ops = this.workbench.workspace(sessionId).operations;

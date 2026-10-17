@@ -14,6 +14,17 @@ import termios
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _visible_screen(path):
+    """Last complete frame from the observer, rows stripped, for failures."""
+    try:
+        rows = json.loads(Path(path).read_text())
+    except Exception:
+        return "[no screen]"
+    import re
+    plain = [re.sub(r"\x1b\[[0-9;?]*[a-zA-Z]", "", r).rstrip() for r in rows]
+    return "\n".join(l for l in plain if l.strip())[-2000:]
 with tempfile.TemporaryDirectory(prefix="nomo-tui-pty-") as data:
     env = {"PATH": os.environ["PATH"], "HOME": data, "NOMO_DATA_DIR": data,
            "TERM": "xterm-256color", "NO_COLOR": "1"}
@@ -27,19 +38,25 @@ await app.shutdown(); console.log(session.id);
 """
     session = subprocess.check_output(["node", "--input-type=module", "-e", seed], cwd=ROOT, env=env, text=True).strip()
     observer = Path(data) / "frames.mjs"
+    screenPath = Path(data) / "last-screen.json"
     observer.write_text("""
 import { DiffScreenWriter } from '%s';
 import { stripAnsi } from '%s';
+import { writeFileSync } from 'node:fs';
 const write = DiffScreenWriter.prototype.write;
 DiffScreenWriter.prototype.write = function(frame) {
   const result = write.call(this, frame);
+  try {
+    writeFileSync('%s', JSON.stringify(this.previous));
+  } catch {}
   // A notice may render before the runner completes its async refresh.
   if (!stripAnsi(frame).includes('Finishing operation'))
     process.stdout.write('\\x1b]777;nomo-test-ready\\x07');
   return result;
 };
 """ % ((ROOT / "packages/cli/src/tui/watch.ts").as_uri(),
-       (ROOT / "packages/cli/src/tui/layout.ts").as_uri()))
+       (ROOT / "packages/cli/src/tui/layout.ts").as_uri(),
+       screenPath))
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 80, 0, 0))
     process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/nomo.mjs", "tui", "--session", session, "--view", "documents"], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
@@ -61,13 +78,22 @@ DiffScreenWriter.prototype.write = function(frame) {
             found = output.find(marker.encode(), start)
             if found >= 0 and (not ready or b"nomo-test-ready" in output[found:]):
                 return
-        raise AssertionError(f"Missing terminal state: {marker}; tail={output[-1000:]!r}")
+        raise AssertionError(
+            "{} tail={} screen={}".format(
+                marker,
+                bytes(output[-800:]).decode("utf-8", "replace"),
+                _visible_screen(screenPath),
+            )
+        )
 
     try:
         read_until("pty.md", ready=True)
         assert b"\x1b[38;5;" in output or b"\x1b[1;38;5;" in output, "Inherited NO_COLOR disabled TUI colors"
         os.write(master, b"\r")
-        read_until("DOCUMENT pty.md", ready=True)
+        # Enter on a documents row inspects the document: the detail panel is
+        # renderInspector with a revision field, not the old DOCUMENT editor
+        # title. /document and /edit still open the editor from elsewhere.
+        read_until("revision", ready=True)
         os.write(master, b"u")
         read_until("UNDO pty.md?", ready=True)
         before = len(output)
@@ -108,19 +134,19 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"\x03/find PTY test\r")
         read_until("1 matching messages", ready=True)
         os.write(master, b"\x1b")
-        read_until("› You", ready=True)
+        read_until("Undid", ready=True)
         os.write(master, b"/bottom\r")
         read_until("Following latest messages", ready=True)
         os.write(master, b"/tools write\r")
-        read_until("nomo_workspace_write", ready=True)
+        read_until("void_workspace_write", ready=True)
         os.write(master, b"\r")
-        read_until("INPUT SCHEMA", ready=True)
+        read_until("PROPERTIES", ready=True)
         # Escape clears a list filter before closing its detail. A diff renderer
         # does not resend unchanged tool text when only the filter notice changes.
         os.write(master, b"\x1b")
         read_until("Filter cleared.", ready=True)
         os.write(master, b"\x1b")
-        read_until("nomo_workspace_write", ready=True)
+        read_until("void_workspace_write", ready=True)
         os.write(master, b"/chat\r")
         read_until("Write a prompt", ready=True)
         os.write(master, b"/expand\r")
@@ -137,7 +163,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         read_until("1 matching messages", ready=True)
         os.write(master, b"\x1b")
         # Closing search changes the transcript, not the already visible tab label.
-        read_until("› You", ready=True)
+        read_until("Undid", ready=True)
         os.write(master, b"\x15\x04")
         read_until("Press Ctrl+D again to exit.", ready=True)
         os.write(master, b"\x04")

@@ -268,7 +268,7 @@ function runPythonSuite(suite) {
   return { ...unrunResult(suite.name), tried };
 }
 
-function unrunResult(name, runner = "python") {
+function unrunResult(name, runner = "python", reason) {
   return {
     name,
     runner,
@@ -279,6 +279,7 @@ function unrunResult(name, runner = "python") {
     elapsed: 0,
     output: "",
     unrun: true,
+    reason,
   };
 }
 
@@ -374,17 +375,49 @@ const scriptSuites = [
     name: "apple-project",
     file: "scripts/src/check-apple-project.mjs",
   },
+  // The PTY regression ran only through the manual `test:tui` script, and
+  // manual commands rot: the 10-17 TUI upgrade left four of its markers stale
+  // and disabled the documents-tab undo shortcut with nothing watching. Gating
+  // it turns operator-visible breakage into a gate row every round.
+  {
+    name: "tui-pty",
+    command: ["python3", "scripts/src/verify-tui-terminal.py"],
+    unrunPattern: /ModuleNotFoundError: (?:pty|termios|fcntl|select)/,
+    passes: "lines",
+    unrunReason: "no python3 or the POSIX pty modules it needs",
+  },
 ];
 
 function runScriptSuite(suite) {
   const started = Date.now();
-  const run = spawnSync(process.execPath, [join(root, suite.file)], {
+  const [command, ...args] = suite.command ?? [
+    process.execPath,
+    join(root, suite.file),
+  ];
+  const run = spawnSync(command, args, {
+    cwd: root,
     encoding: "utf8",
     timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
     killSignal: "SIGKILL",
   });
   const timedOut = run.error?.code === "ETIMEDOUT";
   const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
+  // Toolchain absence is this gate's honest UNRUN: the command or a module it
+  // needs is missing on this runner, and that is not a failing assertion.
+  if (run.error?.code === "ENOENT") {
+    return {
+      ...unrunResult(suite.name, "script", suite.unrunReason),
+      tried: [`${command}: not found`],
+      elapsed: Date.now() - started,
+    };
+  }
+  if (!timedOut && suite.unrunPattern?.test(output)) {
+    return {
+      ...unrunResult(suite.name, "script", suite.unrunReason),
+      tried: [output.split("\n").find((line) => suite.unrunPattern.test(line)) ?? ""],
+      elapsed: Date.now() - started,
+    };
+  }
   if (!timedOut && /is not on PATH/.test(output)) {
     return {
       ...unrunResult(suite.name, "script"),
@@ -393,11 +426,17 @@ function runScriptSuite(suite) {
     };
   }
   const generated = output.match(/\((\d+) generated files\)/);
+  const pass =
+    suite.passes === "lines"
+      ? (output.match(/^PASS:/gm) ?? []).length
+      : generated
+        ? Number.parseInt(generated[1], 10)
+        : -1;
   return {
     name: suite.name,
     runner: "script",
-    pass: generated ? Number.parseInt(generated[1], 10) : -1,
-    fail: generated && run.status === 0 ? 0 : 1,
+    pass,
+    fail: pass > 0 && run.status === 0 ? 0 : 1,
     code: run.status ?? 1,
     timedOut,
     elapsed: Date.now() - started,
@@ -485,13 +524,14 @@ for (const r of results) {
   if (r.unrun) {
     const suite = pythonSuites.find((s) => s.name === r.name);
     console.log(
-      `  ${`${r.runner}/${r.name}`.padEnd(width)}  --- pass    0 fail  UNRUN: no interpreter could import the SDK it needs`,
+      `  ${`${r.runner}/${r.name}`.padEnd(width)}  --- pass    0 fail  UNRUN: ${r.reason ?? "no interpreter could import the SDK it needs"}`,
     );
     console.log(`      tried: ${(r.tried ?? []).join(", ")}`);
-    for (const step of suite?.setup ?? [])
+    if (!suite) continue;
+    for (const step of suite.setup ?? [])
       console.log(`      then run: ${step}`);
     console.log(
-      `      ${process.env.NOMO_MCP_PYTHON ?? "/tmp/nomo-mcp-venv/bin/python"} -m unittest discover -s ${suite?.startDir} -t ${suite?.topDir}`,
+      `      ${process.env.NOMO_MCP_PYTHON ?? "/tmp/nomo-mcp-venv/bin/python"} -m unittest discover -s ${suite.startDir} -t ${suite.topDir}`,
     );
     continue;
   }
