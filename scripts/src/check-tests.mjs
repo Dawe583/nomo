@@ -8,7 +8,7 @@
  * and that criterion is only honest if a suite of zero is a failure.
  */
 
-import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { interpretSwiftRun } from "./check-tests-swift-result.mjs";
@@ -307,6 +307,24 @@ const swiftSuites = [
   },
 ];
 
+/**
+ * The Command Line Tools 6.4 swiftbuild backend resolves the Swift Testing
+ * macro plugins nondeterministically: the same package, the same tree and the
+ * same environment measured green, red, green in three back to back runs, and
+ * the red runs compile every test file against a plugin server that never
+ * receives the TestingMacros plugin ("plugin for module 'TestingMacros' not
+ * found"), so zero tests execute. Neither the deprecated native build system,
+ * nor `-j 1`, nor any environment variable of the toolchain's own list
+ * (strings-scanned: only SBOM, registry and cache keys exist) makes it
+ * deterministic. The honest gate behaviour is therefore a bounded retry that
+ * is strictly narrower than the failure: only a run that executed no tests at
+ * all and carries exactly this toolchain signature is re-run after the scratch
+ * directory is cleared. Real test failures pass through unremarked.
+ */
+const SWIFT_MACRO_PLUGIN_FLAKE =
+  /plugin for module 'TestingMacros' (?:not|could not|cannot) (?:be )?found/;
+const SWIFT_FLAKE_ATTEMPTS = 5;
+
 function runSwiftSuite(suite) {
   const started = Date.now();
   const available = spawnSync("swift", ["--version"], { encoding: "utf8" });
@@ -318,39 +336,69 @@ function runSwiftSuite(suite) {
       elapsed: Date.now() - started,
     };
   }
-  const run = spawnSync("swift", ["test"], {
-    cwd: suite.cwd,
-    encoding: "utf8",
-    timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
-    killSignal: "SIGKILL",
-  });
-  const timedOut = run.error?.code === "ETIMEDOUT";
-  const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
-  // The mapping lives in its own module so the gate-on-gate can test it
-  // without executing a compiler. A module absence maps to UNRUN with the
-  // reason named; every other failing exit fails the gate.
-  const mapped = interpretSwiftRun({
-    output,
-    status: run.status ?? 1,
-    timedOut,
-    attempted,
-  });
-  if (mapped.verdict === "unrun") {
+  let run;
+  let retryNotes = [];
+  for (let attempt = 0; attempt < SWIFT_FLAKE_ATTEMPTS; attempt++) {
+    if (attempt > 0) {
+      rmSync(join(suite.cwd, ".build"), { recursive: true, force: true });
+    }
+    run = spawnSync("swift", ["test"], {
+      cwd: suite.cwd,
+      encoding: "utf8",
+      timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
+      killSignal: "SIGKILL",
+    });
+    const timedOut = run.error?.code === "ETIMEDOUT";
+    const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
+    const mapped = interpretSwiftRun({
+      output,
+      status: run.status ?? 1,
+      timedOut,
+      attempted,
+    });
+    // The mapping lives in its own module so the gate-on-gate can test it
+    // without executing a compiler. A module absence maps to UNRUN with the
+    // reason named; every other failing exit fails the gate.
+    const zeroTests = !/Test run with \d+ test/.test(output);
+    if (
+      (run.status ?? 1) !== 0 &&
+      !timedOut &&
+      zeroTests &&
+      SWIFT_MACRO_PLUGIN_FLAKE.test(output)
+    ) {
+      retryNotes.push(`attempt ${attempt + 1}: macro plugin flake, no tests ran`);
+      continue;
+    }
+    if (mapped.verdict === "unrun") {
+      return {
+        ...unrunResult(suite.name, "swift"),
+        tried: [...(retryNotes.length ? retryNotes : []), mapped.tried].flat(),
+        elapsed: Date.now() - started,
+      };
+    }
     return {
-      ...unrunResult(suite.name, "swift"),
-      tried: mapped.tried,
+      ...mapped,
+      name: suite.name,
+      runner: "swift",
+      pass: mapped.pass,
+      fail: mapped.fail,
+      code: run.status ?? 1,
+      timedOut,
       elapsed: Date.now() - started,
+      output,
+      tried: retryNotes.length ? retryNotes : undefined,
     };
   }
+  const finalOutput = `${run.stdout ?? ""}${run.stderr ?? ""}`;
   return {
     name: suite.name,
     runner: "swift",
-    pass: mapped.pass,
-    fail: mapped.fail,
+    pass: -1,
+    fail: 1,
     code: run.status ?? 1,
-    timedOut,
     elapsed: Date.now() - started,
-    output,
+    output: finalOutput,
+    tried: retryNotes,
   };
 }
 
@@ -385,6 +433,17 @@ const scriptSuites = [
     unrunPattern: /ModuleNotFoundError: (?:pty|termios|fcntl|select)/,
     passes: "lines",
     unrunReason: "no python3 or the POSIX pty modules it needs",
+  },
+  // The desktop shell's inline Rust tests (keychain naming, diagnostics
+  // allowlist, runtime readiness) compile the real Tauri app, which needs the
+  // icon set that prepare.mjs generates; an unprepared checkout is UNRUN with
+  // the setup steps named instead of a red gate for missing artifacts.
+  {
+    name: "desktop-rust",
+    command: ["node", "scripts/src/check-desktop-rust.mjs"],
+    passRegex: /desktop-rust: (\d+) rust tests passed/,
+    unrunPattern: /desktop-rust: UNRUN/,
+    unrunReason: "no cargo or the desktop icons were never prepared",
   },
 ];
 
@@ -426,12 +485,15 @@ function runScriptSuite(suite) {
     };
   }
   const generated = output.match(/\((\d+) generated files\)/);
+  const suitePass = suite.passRegex ? output.match(suite.passRegex) : undefined;
   const pass =
-    suite.passes === "lines"
-      ? (output.match(/^PASS:/gm) ?? []).length
-      : generated
-        ? Number.parseInt(generated[1], 10)
-        : -1;
+    suite.passRegex && suitePass
+      ? Number.parseInt(suitePass[1], 10)
+      : suite.passes === "lines"
+        ? (output.match(/^PASS:/gm) ?? []).length
+        : generated
+          ? Number.parseInt(generated[1], 10)
+          : -1;
   return {
     name: suite.name,
     runner: "script",
