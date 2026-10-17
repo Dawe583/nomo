@@ -55,14 +55,17 @@ const results = [];
 const suites = [
   ...readdirSync(packagesDir)
     .sort()
-    .map((name) => ({ name, dir: join(packagesDir, name) })),
-  { name: "control-plane", dir: join(root, "apps", "control-plane") },
-  { name: "control-plane-ui", dir: join(root, "apps", "control-plane", "ui") },
-  { name: "desktop", dir: join(root, "apps", "desktop") },
-  { name: "scripts", dir: join(root, "scripts") },
+    .map((name) => ({ name, dir: join(packagesDir, name), runner: "packages" })),
+  // `apps/*` suites carry a label naming the directory they actually live in.
+  // Printing them under `packages/` would send a reader chasing a failure to
+  // the wrong tree.
+  { name: "control-plane", dir: join(root, "apps", "control-plane"), runner: "apps" },
+  { name: "control-plane-ui", dir: join(root, "apps", "control-plane", "ui"), runner: "apps" },
+  { name: "desktop", dir: join(root, "apps", "desktop"), runner: "apps" },
+  { name: "scripts", dir: join(root, "scripts"), runner: "scripts" },
 ];
 
-for (const { name, dir } of suites) {
+for (const { name, dir, runner } of suites) {
   const manifestPath = join(dir, "package.json");
   const required = name === "control-plane" || name === "scripts";
   if (!existsSync(manifestPath)) {
@@ -91,7 +94,7 @@ for (const { name, dir } of suites) {
   if (name === "scripts" && files.length === 0)
     throw new Error("scripts suite has no tests");
   results.push(
-    runSuite(name, name === "scripts" ? root : dir, files, "packages"),
+    runSuite(name, runner === "scripts" ? root : dir, files, runner),
   );
 }
 
