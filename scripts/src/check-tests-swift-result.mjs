@@ -18,6 +18,30 @@
 const TOOLCHAIN_ABSENCE =
   /unable to resolve module dependency: '(Testing|XCTest)'|no such module '(Testing|XCTest)'/;
 
+/** The compile signature of the CLT 6.4 swiftbuild macro plugin flake. */
+const MACRO_PLUGIN_FLAKE =
+  /plugin for module 'TestingMacros' (?:not|could not|cannot) (?:be )?found/;
+
+/**
+ * The one observable step the macro plugin flake retry may act on.
+ *
+ * The retry exists because the red runs compile every test file against a
+ * plugin server that never receives the TestingMacros plugin, so the suite
+ * dies before any test executes. Both halves are load bearing: the failure
+ * signature identifies the toolchain scheduler, and "no test ran" keeps the
+ * retry away from a suite that produced real results. A run where any test
+ * executed is final even when its text mentions the plugin, because retrying
+ * it could only manufacture green.
+ */
+export function isSwiftMacroFlake({ output, status, timedOut = false }) {
+  return (
+    status !== 0 &&
+    !timedOut &&
+    !/Test run with \d+ test/.test(output) &&
+    MACRO_PLUGIN_FLAKE.test(output)
+  );
+}
+
 /** The name the compiled error named, so the row's reason names it too. */
 function absentModule(output) {
   return output.match(/unable to resolve module dependency: '([^']+)'|no such module '([^']+)'/);

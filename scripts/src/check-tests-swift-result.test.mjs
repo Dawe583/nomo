@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { interpretSwiftRun } from "./check-tests-swift-result.mjs";
+import { interpretSwiftRun, isSwiftMacroFlake } from "./check-tests-swift-result.mjs";
 
 /**
  * The Swift suite's row in the root gate is a mapping, not a parser glued
@@ -76,4 +76,58 @@ test("NomoDesignSystem fails loudly, and the gate's mapping refuses to call that
     timedOut: false,
   });
   assert.equal(failing.verdict, "failed", "a type error is the suite failing, not the toolchain");
+});
+
+/**
+ * The macro plugin flake predicate is the other half of the module: the retry
+ * in runSwiftSuite acts only through it, so the two facts that make the retry
+ * honest are asserted in two directions. The quoted compile output is the
+ * measured signature of the CLT 6.4 swiftbuild backend, where the red runs
+ * compile every test file against a plugin server that never receives the
+ * TestingMacros plugin and no test ever executes.
+ */
+test("the macro plugin signature with no tests run is the only retryable shape", () => {
+  const output =
+    "error: external macro implementation type 'TestingMacros.TestDeclarationMacro' could not be found for macro 'Test'; plugin for module 'TestingMacros' not found\nerror: Build failed\nerror: fatalError";
+  assert.equal(
+    isSwiftMacroFlake({ output, status: 1, timedOut: false }),
+    true,
+    "a red run that executed no test and carries the plugin signature is the toolchain scheduler, not the suite",
+  );
+});
+
+test("the same signature after tests ran is final, never retryable", () => {
+  // The whole point of the second factor: a run that executed tests has real
+  // results, and re-running it could only manufacture green.
+  const output =
+    "plugin for module 'TestingMacros' not found\nTest run with 31 tests in 7 suites failed after 0.190 seconds.";
+  assert.equal(
+    isSwiftMacroFlake({ output, status: 1, timedOut: false }),
+    false,
+  );
+});
+
+test("an ordinary compile failure is not retryable even without a verdict", () => {
+  assert.equal(
+    isSwiftMacroFlake({
+      output: "error: cannot find 'NomoContrastPairs' in scope\nerror: Build failed",
+      status: 1,
+      timedOut: false,
+    }),
+    false,
+  );
+  assert.equal(
+    isSwiftMacroFlake({ output: SUMMARY, status: 0, timedOut: false }),
+    false,
+  );
+  // A killed run's row belongs to the ceiling, whose reason prints before the
+  // mapping sees it, so a timeout must never take the retry path.
+  assert.equal(
+    isSwiftMacroFlake({
+      output: "plugin for module 'TestingMacros' not found\nerror: fatalError",
+      status: 1,
+      timedOut: true,
+    }),
+    false,
+  );
 });

@@ -11,7 +11,7 @@
 import { readdirSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { interpretSwiftRun } from "./check-tests-swift-result.mjs";
+import { interpretSwiftRun, isSwiftMacroFlake } from "./check-tests-swift-result.mjs";
 
 const root = resolve(import.meta.dirname, "..", "..");
 const packagesDir = join(root, "packages");
@@ -312,17 +312,16 @@ const swiftSuites = [
  * macro plugins nondeterministically: the same package, the same tree and the
  * same environment measured green, red, green in three back to back runs, and
  * the red runs compile every test file against a plugin server that never
- * receives the TestingMacros plugin ("plugin for module 'TestingMacros' not
- * found"), so zero tests execute. Neither the deprecated native build system,
- * nor `-j 1`, nor any environment variable of the toolchain's own list
- * (strings-scanned: only SBOM, registry and cache keys exist) makes it
- * deterministic. The honest gate behaviour is therefore a bounded retry that
- * is strictly narrower than the failure: only a run that executed no tests at
- * all and carries exactly this toolchain signature is re-run after the scratch
- * directory is cleared. Real test failures pass through unremarked.
+ * receives the TestingMacros plugin, so zero tests execute (measured 2026-10-
+ * 17, recorded in the workstream graph as D-25). Neither the deprecated
+ * native build system, nor `-j 1`, nor any environment variable of the
+ * toolchain's own list (strings-scanned: only SBOM, registry and cache keys
+ * exist) makes it deterministic. The honest gate behaviour is therefore a
+ * bounded retry that acts only through the pure predicate in
+ * check-tests-swift-result.mjs: a run that executed no test at all and
+ * carries exactly the plugin-not-found signature. Real test failures pass
+ * through unremarked.
  */
-const SWIFT_MACRO_PLUGIN_FLAKE =
-  /plugin for module 'TestingMacros' (?:not|could not|cannot) (?:be )?found/;
 const SWIFT_FLAKE_ATTEMPTS = 5;
 
 function runSwiftSuite(suite) {
@@ -356,15 +355,11 @@ function runSwiftSuite(suite) {
       timedOut,
       attempted,
     });
-    // The mapping lives in its own module so the gate-on-gate can test it
-    // without executing a compiler. A module absence maps to UNRUN with the
-    // reason named; every other failing exit fails the gate.
-    const zeroTests = !/Test run with \d+ test/.test(output);
+    // The retry gate is deliberately inside the loop, not around it: each
+    // flake attempt ends the preceding process, and the cleared .build is the
+    // only state the next attempt bases its plan on.
     if (
-      (run.status ?? 1) !== 0 &&
-      !timedOut &&
-      zeroTests &&
-      SWIFT_MACRO_PLUGIN_FLAKE.test(output)
+      isSwiftMacroFlake({ output, status: run.status ?? 1, timedOut })
     ) {
       retryNotes.push(`attempt ${attempt + 1}: macro plugin flake, no tests ran`);
       continue;
