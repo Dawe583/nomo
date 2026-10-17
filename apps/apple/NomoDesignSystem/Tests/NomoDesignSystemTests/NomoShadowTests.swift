@@ -1,4 +1,4 @@
-import XCTest
+import Testing
 
 @testable import NomoDesignSystem
 
@@ -6,12 +6,12 @@ import XCTest
 /// property worth holding is that a dark appearance shadow is at least as deep
 /// as the light one it replaces. A role that came back lighter in the dark would
 /// be a value nobody would notice until a surface dropped its own shadow.
-final class NomoShadowTests: XCTestCase {
-    func testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne() throws {
+struct NomoShadowTests {
+    @Test func aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne() throws {
         for role in NomoShadowRole.allCases {
-            let light = try XCTUnwrap(opacity(of: role.light), "\(role.rawValue) light")
-            let dark = try XCTUnwrap(opacity(of: role.dark), "\(role.rawValue) dark")
-            XCTAssertGreaterThanOrEqual(dark, light, "\(role.rawValue) is lighter in the dark appearance")
+            let light = try #require(opacity(of: role.light), "\(role.rawValue) light")
+            let dark = try #require(opacity(of: role.dark), "\(role.rawValue) dark")
+            #expect(dark >= light, "\(role.rawValue) is lighter in the dark appearance")
         }
     }
 

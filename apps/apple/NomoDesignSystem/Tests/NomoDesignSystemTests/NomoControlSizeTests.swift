@@ -1,4 +1,4 @@
-import XCTest
+import Testing
 
 @testable import NomoDesignSystem
 
@@ -6,47 +6,37 @@ import XCTest
 /// from the document; what these tests hold is that each size role is wired to
 /// the floor it claims to be and that nothing the package offers is below a
 /// floor.
-final class NomoControlSizeTests: XCTestCase {
-    func testEveryControlSizeClearsTheAbsoluteFloor() {
+struct NomoControlSizeTests {
+    @Test func everyControlSizeClearsTheAbsoluteFloor() {
         for size in NomoControlSize.allCases {
-            XCTAssertGreaterThanOrEqual(
-                size.points,
-                NomoControlSize.macOSMinimum.points,
+            #expect(
+                size.points >= NomoControlSize.macOSMinimum.points,
                 "\(size.rawValue) is \(size.points), absolute floor \(NomoControlSize.macOSMinimum.points)"
             )
         }
     }
 
-    func testTheTouchSizeClearsTheTouchFloor() {
-        XCTAssertGreaterThanOrEqual(
-            NomoControlSize.touch.points,
-            NomoControlMetrics.touchPoints
-        )
+    @Test func theTouchSizeClearsTheTouchFloor() {
+        #expect(NomoControlSize.touch.points >= NomoControlMetrics.touchPoints)
     }
 
-    func testTheMacOSSizeClearsTheMacOSPointerTarget() {
-        XCTAssertGreaterThanOrEqual(
-            NomoControlSize.macOS.points,
-            NomoControlMetrics.macOSPoints
-        )
-        XCTAssertGreaterThanOrEqual(
-            NomoControlSize.macOS.points,
-            NomoControlMetrics.macOSMinimumPoints
-        )
+    @Test func theMacOSSizeClearsTheMacOSPointerTarget() {
+        #expect(NomoControlSize.macOS.points >= NomoControlMetrics.macOSPoints)
+        #expect(NomoControlSize.macOS.points >= NomoControlMetrics.macOSMinimumPoints)
     }
 
-    func testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot() {
+    @Test func aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot() {
         let floor = NomoControlSize.platformFloor
-        XCTAssertTrue(NomoControlSize.isValidHitTarget(floor))
-        XCTAssertTrue(NomoControlSize.isValidHitTarget(floor + 1))
-        XCTAssertFalse(NomoControlSize.isValidHitTarget(floor - 1))
+        #expect(NomoControlSize.isValidHitTarget(floor))
+        #expect(NomoControlSize.isValidHitTarget(floor + 1))
+        #expect(!NomoControlSize.isValidHitTarget(floor - 1))
     }
 
-    func testTheHostFloorIsThePlatformTheBuildIsFor() {
+    @Test func theHostFloorIsThePlatformTheBuildIsFor() {
         #if os(macOS)
-        XCTAssertEqual(NomoControlSize.platformFloor, NomoControlSize.macOSMinimum.points)
+        #expect(NomoControlSize.platformFloor == NomoControlSize.macOSMinimum.points)
         #else
-        XCTAssertEqual(NomoControlSize.platformFloor, NomoControlSize.touch.points)
+        #expect(NomoControlSize.platformFloor == NomoControlSize.touch.points)
         #endif
     }
 }

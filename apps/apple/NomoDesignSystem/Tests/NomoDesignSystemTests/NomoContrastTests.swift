@@ -1,4 +1,4 @@
-import XCTest
+import Testing
 
 @testable import NomoDesignSystem
 
@@ -9,63 +9,62 @@ import XCTest
 /// a stale comment. These tests are that measurement: the package computes the
 /// ratio with its own WCAG 2.1 implementation, in both appearances, for every
 /// pair the document carries.
-final class NomoContrastTests: XCTestCase {
-    func testEveryContrastPairMeetsItsMinimumInBothAppearances() {
+struct NomoContrastTests {
+    @Test func everyContrastPairMeetsItsMinimumInBothAppearances() {
         for pair in NomoContrastPairs.all {
             for appearance in NomoAppearance.allCases {
                 let ratio = NomoContrast.ratio(pair, appearance: appearance)
-                XCTAssertGreaterThanOrEqual(
-                    ratio,
-                    pair.minimum,
+                #expect(
+                    ratio >= pair.minimum,
                     "\(pair.name) measures \(ratio) in \(appearance.rawValue), minimum \(pair.minimum)"
                 )
             }
         }
     }
 
-    func testRelativeLuminanceIsZeroForBlackAndOneForWhite() {
-        XCTAssertEqual(NomoContrast.relativeLuminance(red: 0, green: 0, blue: 0), 0, accuracy: 1e-12)
-        XCTAssertEqual(NomoContrast.relativeLuminance(red: 1, green: 1, blue: 1), 1, accuracy: 1e-12)
+    @Test func relativeLuminanceIsZeroForBlackAndOneForWhite() {
+        // WCAG 2.1 rounds the comparison at the ratio step, so the luminance
+        // identities are pinned tightly rather than approximately.
+        #expect(abs(NomoContrast.relativeLuminance(red: 0, green: 0, blue: 0)) <= 1e-12)
+        #expect(abs(NomoContrast.relativeLuminance(red: 1, green: 1, blue: 1) - 1) <= 1e-12)
     }
 
-    func testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark() {
+    @Test func theCanvasIsTheLightestRoleInLightAndTheDarkestInDark() {
         for appearance in NomoAppearance.allCases {
             for role in NomoColorRole.allCases where !role.isDecorative {
                 let canvas = NomoContrast.relativeLuminance(.canvas, appearance: appearance)
                 let other = NomoContrast.relativeLuminance(role, appearance: appearance)
                 if appearance == .light {
-                    XCTAssertGreaterThanOrEqual(canvas, other, "\(role.rawValue) is lighter than the canvas")
+                    #expect(canvas >= other, "\(role.rawValue) is lighter than the canvas")
                 } else {
-                    XCTAssertLessThanOrEqual(canvas, other, "\(role.rawValue) is darker than the canvas")
+                    #expect(canvas <= other, "\(role.rawValue) is darker than the canvas")
                 }
             }
         }
     }
 
-    func testTheContrastRatioIsSymmetricInItsTwoColours() {
+    @Test func theContrastRatioIsSymmetricInItsTwoColours() {
         let light = NomoColorRole.text.components(for: .light)
         let dark = NomoColorRole.canvas.components(for: .light)
-        XCTAssertEqual(
-            NomoContrast.ratio(light, dark),
-            NomoContrast.ratio(dark, light),
-            accuracy: 1e-12
+        #expect(
+            abs(NomoContrast.ratio(light, dark) - NomoContrast.ratio(dark, light)) <= 1e-12
         )
     }
 
-    func testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum() {
+    @Test func theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum() {
         let black = NomoColorComponents(red: 0, green: 0, blue: 0)
         let white = NomoColorComponents(red: 1, green: 1, blue: 1)
-        XCTAssertEqual(NomoContrast.ratio(black, white), 21, accuracy: 1e-9)
+        #expect(abs(NomoContrast.ratio(black, white) - 21) <= 1e-9)
     }
 
-    func testNoContrastPairMeasuresAgainstADecorativeRole() {
+    @Test func noContrastPairMeasuresAgainstADecorativeRole() {
         for pair in NomoContrastPairs.all {
-            XCTAssertFalse(
-                pair.foreground.isDecorative,
+            #expect(
+                !pair.foreground.isDecorative,
                 "\(pair.name) is measured against a role that only separates"
             )
-            XCTAssertFalse(
-                pair.background.isDecorative,
+            #expect(
+                !pair.background.isDecorative,
                 "\(pair.name) is measured against a role that only separates"
             )
         }

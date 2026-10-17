@@ -267,10 +267,10 @@ function runPythonSuite(suite) {
   return { ...unrunResult(suite.name), tried };
 }
 
-function unrunResult(name) {
+function unrunResult(name, runner = "python") {
   return {
     name,
-    runner: "python",
+    runner,
     pass: 0,
     fail: 0,
     code: 0,
@@ -284,6 +284,70 @@ function unrunResult(name) {
 for (const suite of pythonSuites) {
   if (!existsSync(join(suite.dir, "tests"))) continue;
   results.push(runPythonSuite(suite));
+}
+
+/**
+ * The Swift suite runs under the pinned toolchain, not a simulator.
+ *
+ * The Apple selection is Command Line Tools (DECISIONS 2026-09-24), and the
+ * 6.4 CLT ships Swift Testing while it does not ship XCTest at all: a package
+ * still importing XCTest fails at compile time with "unable to resolve module
+ * dependency: XCTest", which is how this suite was silently unrun on the
+ * primary machine while its root script looked healthy. The design system's
+ * suites import Testing, so the suite runs where the operator works and a
+ * toolchain that loses the module fails closed, with the compile signature
+ * mapped to UNRUN rather than to a lie.
+ */
+const swiftSuites = [
+  {
+    name: "apple-design",
+    cwd: join(root, "apps", "apple", "NomoDesignSystem"),
+  },
+];
+
+function runSwiftSuite(suite) {
+  const started = Date.now();
+  const tried = [];
+  const available = spawnSync("swift", ["--version"], { encoding: "utf8" });
+  if (available.error || available.status !== 0) {
+    tried.push("swift (not a working toolchain)");
+    return { ...unrunResult(suite.name), tried };
+  }
+  const run = spawnSync("swift", ["test"], {
+    cwd: suite.cwd,
+    encoding: "utf8",
+    timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
+    killSignal: "SIGKILL",
+  });
+  const timedOut = run.error?.code === "ETIMEDOUT";
+  const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
+  // The one toolchain absence that must not fail a clean clone is a missing
+  // Swift Testing module; any other compile or test failure is real and fails
+  // the gate.
+  if (
+    !timedOut &&
+    /unable to resolve module dependency: '(Testing|NomoDesignSystem)'|no such module '(Testing|NomoDesignSystem)'/.test(
+      output,
+    )
+  ) {
+    tried.push("swift (the Testing module is not in this toolchain)");
+    return { ...unrunResult(suite.name, "swift"), tried };
+  }
+  const verdict = output.match(/Test run with (\d+) tests? in \d+ suites? (passed|failed)/m);
+  return {
+    name: suite.name,
+    runner: "swift",
+    pass: verdict ? Number.parseInt(verdict[1], 10) : -1,
+    fail: verdict ? (verdict[2] === "failed" ? 1 : 0) : run.status === 0 ? 0 : 1,
+    code: run.status ?? 1,
+    timedOut,
+    elapsed: Date.now() - started,
+    output,
+  };
+}
+
+for (const suite of swiftSuites) {
+  results.push(runSwiftSuite(suite));
 }
 
 /**
