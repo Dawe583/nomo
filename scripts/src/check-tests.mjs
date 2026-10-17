@@ -57,6 +57,8 @@ const suites = [
     .sort()
     .map((name) => ({ name, dir: join(packagesDir, name) })),
   { name: "control-plane", dir: join(root, "apps", "control-plane") },
+  { name: "control-plane-ui", dir: join(root, "apps", "control-plane", "ui") },
+  { name: "desktop", dir: join(root, "apps", "desktop") },
   { name: "scripts", dir: join(root, "scripts") },
 ];
 

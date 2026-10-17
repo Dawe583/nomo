@@ -105,7 +105,10 @@ test('an ad-hoc Mac fallback names the consequence and the override', () => {
   const [warning] = warnings;
   assert.match(warning, /ad-hoc/);
   assert.match(warning, /APPLE_SIGNING_IDENTITY="<identity name>"/);
-  assert.match(warning, /dev\.nomo\.desktop\.workspace/);
+  // The Keychain service name is durable user state. The migration rule
+  // forbids renaming it silently, so the warning must name the item the app
+  // actually reads, which is still the original service name.
+  assert.match(warning, /dev\.void\.desktop\.workspace/);
   assert.match(warning, /Cannot unlock the NOMO workspace key in macOS/);
 });
 
