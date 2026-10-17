@@ -11,6 +11,7 @@
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { interpretSwiftRun } from "./check-tests-swift-result.mjs";
 
 const root = resolve(import.meta.dirname, "..", "..");
 const packagesDir = join(root, "packages");
@@ -307,11 +308,14 @@ const swiftSuites = [
 
 function runSwiftSuite(suite) {
   const started = Date.now();
-  const tried = [];
   const available = spawnSync("swift", ["--version"], { encoding: "utf8" });
-  if (available.error || available.status !== 0) {
-    tried.push("swift (not a working toolchain)");
-    return { ...unrunResult(suite.name), tried };
+  const attempted = !available.error && available.status === 0;
+  if (!attempted) {
+    return {
+      ...unrunResult(suite.name, "swift"),
+      tried: ["swift (not a working toolchain)"],
+      elapsed: Date.now() - started,
+    };
   }
   const run = spawnSync("swift", ["test"], {
     cwd: suite.cwd,
@@ -321,24 +325,27 @@ function runSwiftSuite(suite) {
   });
   const timedOut = run.error?.code === "ETIMEDOUT";
   const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
-  // The one toolchain absence that must not fail a clean clone is a missing
-  // Swift Testing module; any other compile or test failure is real and fails
-  // the gate.
-  if (
-    !timedOut &&
-    /unable to resolve module dependency: '(Testing|NomoDesignSystem)'|no such module '(Testing|NomoDesignSystem)'/.test(
-      output,
-    )
-  ) {
-    tried.push("swift (the Testing module is not in this toolchain)");
-    return { ...unrunResult(suite.name, "swift"), tried };
+  // The mapping lives in its own module so the gate-on-gate can test it
+  // without executing a compiler. A module absence maps to UNRUN with the
+  // reason named; every other failing exit fails the gate.
+  const mapped = interpretSwiftRun({
+    output,
+    status: run.status ?? 1,
+    timedOut,
+    attempted,
+  });
+  if (mapped.verdict === "unrun") {
+    return {
+      ...unrunResult(suite.name, "swift"),
+      tried: mapped.tried,
+      elapsed: Date.now() - started,
+    };
   }
-  const verdict = output.match(/Test run with (\d+) tests? in \d+ suites? (passed|failed)/m);
   return {
     name: suite.name,
     runner: "swift",
-    pass: verdict ? Number.parseInt(verdict[1], 10) : -1,
-    fail: verdict ? (verdict[2] === "failed" ? 1 : 0) : run.status === 0 ? 0 : 1,
+    pass: mapped.pass,
+    fail: mapped.fail,
     code: run.status ?? 1,
     timedOut,
     elapsed: Date.now() - started,
