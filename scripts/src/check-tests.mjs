@@ -59,8 +59,11 @@ const suites = [
   // `apps/*` suites carry a label naming the directory they actually live in.
   // Printing them under `packages/` would send a reader chasing a failure to
   // the wrong tree.
+  // `apps/control-plane` bare discovery already reaches ui/src, so a
+  // dedicated entry here would run those 123 tests twice in one gate run and
+  // double-count them in the totals. Listed in the log so a reader does not
+  // re-add it.
   { name: "control-plane", dir: join(root, "apps", "control-plane"), runner: "apps" },
-  { name: "control-plane-ui", dir: join(root, "apps", "control-plane", "ui"), runner: "apps" },
   { name: "desktop", dir: join(root, "apps", "desktop"), runner: "apps" },
   { name: "scripts", dir: join(root, "scripts"), runner: "scripts" },
 ];
