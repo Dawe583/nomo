@@ -358,6 +358,58 @@ for (const suite of swiftSuites) {
 }
 
 /**
+ * One script suite: a repository check that is a process, not a test file.
+ *
+ * `apple:project:check` proves the committed Xcode project is what project.yml
+ * generates, and the release matrix records that drift as exactly the failure
+ * the gate must catch, so the check belongs in every gate run. It is spawned
+ * rather than imported, its pass count is the generated file count it reports,
+ * and its one environment absence (xcodegen, a brew install) maps to UNRUN
+ * with the script's own message, the same judgement the Swift suite makes for
+ * a missing module. Any other failing exit fails the gate with the script's
+ * output carried for the reader.
+ */
+const scriptSuites = [
+  {
+    name: "apple-project",
+    file: "scripts/src/check-apple-project.mjs",
+  },
+];
+
+function runScriptSuite(suite) {
+  const started = Date.now();
+  const run = spawnSync(process.execPath, [join(root, suite.file)], {
+    encoding: "utf8",
+    timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
+    killSignal: "SIGKILL",
+  });
+  const timedOut = run.error?.code === "ETIMEDOUT";
+  const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
+  if (!timedOut && /is not on PATH/.test(output)) {
+    return {
+      ...unrunResult(suite.name, "script"),
+      tried: [output.split("\n").find((line) => /is not on PATH/.test(line)) ?? "not on PATH"],
+      elapsed: Date.now() - started,
+    };
+  }
+  const generated = output.match(/\((\d+) generated files\)/);
+  return {
+    name: suite.name,
+    runner: "script",
+    pass: generated ? Number.parseInt(generated[1], 10) : -1,
+    fail: generated && run.status === 0 ? 0 : 1,
+    code: run.status ?? 1,
+    timedOut,
+    elapsed: Date.now() - started,
+    output,
+  };
+}
+
+for (const suite of scriptSuites) {
+  results.push(runScriptSuite(suite));
+}
+
+/**
  * Runs one suite under the ceiling and returns its result.
  *
  * The runner label travels with the result. `packages` and `cloud` are two
