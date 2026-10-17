@@ -590,7 +590,7 @@ vypíše usage daného příkazu.
 | `nomo init`          | Vytvořit rozvržení pracovního prostoru.                         |
 | `nomo ledger verify` | Ověřit adresář ledgeru.                                         |
 | `nomo update`     | Posunout instalovaný strom na sledovanou větev, jen dopředu.         |
-| `nomo state`      | Shrnnout nebo migrovat trvalý stav pracovního prostoru.             |
+| `nomo state`      | Shrnutí nebo migrace trvalého stavu pracovního prostoru.             |
 
 Tě s argumenty, přesně:
 
