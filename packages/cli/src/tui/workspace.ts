@@ -10,7 +10,6 @@ import {
   DEFAULT_POLICY,
   type SessionEvent,
 } from "../../../workbench/src/index.ts";
-import type { ProjectSkillSnapshot } from "../../../workbench/src/project-skills.ts";
 import { activity, type ViewName } from "../../../workbench/src/gui.ts";
 import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
