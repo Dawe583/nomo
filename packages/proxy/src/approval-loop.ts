@@ -108,6 +108,7 @@ function policyCallFromHeld(held: HeldCall): PolicyCall {
     workspace: undefined,
     klass: held.klass,
     blastRadius: held.blastRadius,
+    args: held.args,
   };
 }
 
