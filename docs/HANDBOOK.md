@@ -224,7 +224,15 @@ that TTL: a pinned artifact stays until a named release, an artifact with no
 recorded evidence is protected rather than assumed unpinned, and a schema 1
 vault, which carries no write time, stays protected for the same reason.
 Every run writes the same signed journal chain a runtime capture does, so a
-shell-driven delete is audited exactly like a runtime one. `nomo recovery
+shell-driven delete is audited exactly like a runtime one. What no command writes yet, stated
+where a reader would look for the tool: the contract's named pins and
+releases are runtime library calls, and no operator command, MCP tool or
+desktop surface writes one for either vault half today. The consequence
+for collection is safe and total: an artifact carries no recorded
+lifecycle until some host that has the marking calls marks it, artifacts
+with no record stay protected by that absence, and an age policy
+therefore deletes nothing until an operator surface that can mark and
+release exists. `nomo recovery
 health` summarizes the same evidence as one `retention` section: how much
 is recorded, how much is pinned, how much is released, and how much of the
 vault is protected with nothing an operator can read. The summary carries
