@@ -160,3 +160,11 @@ the real workbench, renders it in the native WebView, opens the slash menu, sele
 to its temporary directory, then shuts down. It uses a temporary data directory and does
 not contact a provider. Smoke tests bypass the single-instance guard so they do
 not focus or alter an already running user workspace.
+
+Any smoke outcome, pass or failure, leaves through a direct process exit so the
+reported code is the verdict; an exit through the tauri shutdown request loses
+the code inside the run loop on macOS. The hidden-window probe is currently
+expected to stop at the watchdog: macOS App Nap stalls the timers of a WebView
+in a window that is never shown, so the web side of the probe never reaches
+its download. The `--smoke-mobile` variant runs the same flow in a visible
+window and is the full end to end proof while the hidden probe is redesigned.

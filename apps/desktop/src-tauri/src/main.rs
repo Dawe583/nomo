@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod downloads;
 mod diagnostics;
+mod downloads;
 mod keychain;
 use base64::Engine;
 use std::{
@@ -41,7 +41,10 @@ impl Runtime {
     }
 
     fn wait_for_exit(&self) -> bool {
-        self.exit.lock().map(|exit| exit.recv().is_ok()).unwrap_or(false)
+        self.exit
+            .lock()
+            .map(|exit| exit.recv().is_ok())
+            .unwrap_or(false)
             && !self.stopping.load(Ordering::SeqCst)
     }
 
@@ -84,7 +87,6 @@ fn forward_runtime_stdout(
     for _ in lines {}
     let _ = exit_sender.send(());
 }
-
 
 fn launch_runtime(
     resources: PathBuf,
@@ -181,7 +183,9 @@ fn launch_runtime(
 fn main() {
     let mobile_smoke = std::env::args().any(|argument| argument == "--smoke-mobile");
     let runtime_exit_smoke = std::env::args().any(|argument| argument == "--smoke-runtime-exit");
-    let smoke = mobile_smoke || runtime_exit_smoke || std::env::args().any(|argument| argument == "--smoke-test");
+    let smoke = mobile_smoke
+        || runtime_exit_smoke
+        || std::env::args().any(|argument| argument == "--smoke-test");
     let smoke_data =
         std::env::temp_dir().join(format!("nomo-desktop-native-smoke-{}", std::process::id()));
     let cleanup_data = smoke_data.clone();
@@ -192,6 +196,9 @@ fn main() {
     // rather than read back out of the log file.
     let startup_code = Arc::new(Mutex::new(None::<&'static str>));
     let setup_startup_code = startup_code.clone();
+    // Diagnoses the webview half of a failing smoke: where the page-load
+    // event actually lands relative to the fixed watchdog and eval windows.
+    let page_start = Instant::now();
     let builder = tauri::Builder::default();
     let builder = if smoke {
         builder
@@ -232,11 +239,27 @@ fn main() {
                 if !response.starts_with("HTTP/1.1 200") || !response.contains("NOMO") {
                     return Err("Packaged desktop runtime did not serve the workbench".into());
                 }
+                // A worker thread cannot read page state back without a tauri
+                // invoke bridge: the title accessor reports the title set at
+                // window creation, never the document title the page changes,
+                // so a stalled probe is invisible to the host process. The
+                // download event and this watchdog are the smoke's only
+                // observable web outcomes.
                 let timeout_app = app.handle().clone();
                 std::thread::spawn(move || {
                     std::thread::sleep(Duration::from_secs(20));
                     eprintln!("NOMO native desktop smoke timed out waiting for the webview download.");
-                    timeout_app.exit(1);
+                    eprintln!(
+                        "NOMO native desktop smoke watchdog fired at {:?}.",
+                        page_start.elapsed()
+                    );
+                    // AppHandle::exit terminates the process inside the run
+                    // loop on macOS with 0 no matter which code was passed,
+                    // so a failing smoke must leave through a direct exit
+                    // after the sidecar is stopped, never through the
+                    // requested shutdown.
+                    timeout_app.state::<Runtime>().stop();
+                    std::process::exit(1);
                 });
             }
             let allowed = origin.clone();
@@ -255,11 +278,15 @@ fn main() {
             .visible(!smoke || mobile_smoke)
             .inner_size(if mobile_smoke { 390.0 } else { 1200.0 }, if mobile_smoke { 844.0 } else { 820.0 })
             .min_inner_size(360.0, 520.0)
-            .on_navigation(move |url| url.origin().ascii_serialization() == allowed)
+            .on_navigation(move |url| {
+                if smoke { eprintln!("NOMO native desktop smoke navigation to {}.", url); }
+                url.origin().ascii_serialization() == allowed
+            })
             .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny)
             .on_download(move |_, event| {
                 match event {
                     tauri::webview::DownloadEvent::Requested { url, destination } => {
+                        eprintln!("NOMO native desktop smoke download requested for {}.", url);
                         if !downloads::allowed(&url, &download_origin) { return false; }
                         if smoke { *destination = smoke_file.clone(); }
                         // Wry picks a collision-free filename in Downloads. Keep it
@@ -271,7 +298,9 @@ fn main() {
                             let correct = success && std::fs::read(&finish_file).ok().as_deref() == Some(b"NOMO desktop download smoke");
                             if correct { println!("NOMO native desktop smoke passed: bundled runtime, rendered WebView and Blob download verified. Mobile toolbar checks: {}.", mobile_smoke); }
                             else { eprintln!("NOMO native desktop smoke failed: the expected local export was not saved"); }
-                            download_app.exit(if correct { 0 } else { 1 });
+                            // Same exit mechanism as the watchdog above.
+                            download_app.state::<Runtime>().stop();
+                            std::process::exit(if correct { 0 } else { 1 });
                         }
                         true
                     }
@@ -280,6 +309,10 @@ fn main() {
             })
             .on_page_load(move |window, payload| {
                 if smoke && !runtime_exit_smoke && matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
+                    eprintln!(
+                        "NOMO native desktop smoke page loaded after {:?}.",
+                        page_start.elapsed()
+                    );
                     // Exercise the same browser Blob + anchor.download mechanism
                     // as the production document and conversation export buttons.
                     if mobile_smoke {
@@ -320,8 +353,8 @@ fn main() {
                           }, 100);
                         })()"#);
                     } else {
-                    let _ = window.eval(r#"(() => {
-                      const finish = text => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'nomo-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
+                    if let Err(eval_error) = window.eval(r#"(() => {
+                      const finish = text => { document.title = 'SMOKE finish: ' + text; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'nomo-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
                       let attempts = 0, opened = false;
                       const timer = setInterval(() => {
                         if (++attempts > 150) { clearInterval(timer); finish('FAIL: React command menu or bundled tool API unavailable'); return; }
@@ -341,7 +374,9 @@ fn main() {
                           finish(draft?.value.includes('nomo_workspace_write') && document.querySelector('.selected-tool') ? 'NOMO desktop download smoke' : 'FAIL: tool selection did not prepare a request');
                         }, 150);
                       }, 100);
-                    })()"#);
+                    })()"#) {
+                        eprintln!("NOMO native desktop smoke eval failed: {}.", eval_error);
+                    }
                     }
                 }
             })
@@ -358,7 +393,11 @@ fn main() {
                             let _ = std::fs::remove_dir_all(&monitor_data);
                             std::process::exit(1);
                         }
-                        monitor_app.exit(1);
+                        // The monitor thread only gets here when the runtime
+                        // child has actually exited, so no stop is needed;
+                        // a direct exit is the only one that reports 1 (the
+                        // watchdog comment explains why).
+                        std::process::exit(1);
                     }
                 });
                 if runtime_exit_smoke {
@@ -407,7 +446,6 @@ fn main() {
     if runtime_exited.load(Ordering::SeqCst) {
         std::process::exit(1);
     }
-
 }
 /// Operator guidance per startup category. Fixed strings only: no error text,
 /// no path and no environment value ever reaches the terminal from here.
@@ -501,10 +539,16 @@ mod tests {
     fn resolve_env_precedence() {
         std::env::set_var("NOMO_TEST", "nomo");
         std::env::set_var("VOID_TEST", "void");
-        assert_eq!(resolve_env("NOMO_TEST", "VOID_TEST"), Some("nomo".to_string()));
+        assert_eq!(
+            resolve_env("NOMO_TEST", "VOID_TEST"),
+            Some("nomo".to_string())
+        );
 
         std::env::remove_var("NOMO_TEST");
-        assert_eq!(resolve_env("NOMO_TEST", "VOID_TEST"), Some("void".to_string()));
+        assert_eq!(
+            resolve_env("NOMO_TEST", "VOID_TEST"),
+            Some("void".to_string())
+        );
 
         std::env::set_var("NOMO_TEST", "");
         assert_eq!(resolve_env("NOMO_TEST", "VOID_TEST"), Some("".to_string()));
