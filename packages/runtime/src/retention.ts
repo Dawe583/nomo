@@ -53,22 +53,26 @@ const kinds: readonly RetentionKind[] = ["unpinned", "recovery", "operator"];
 /** ponytail: the descriptor is small on purpose. A pinned kind has no TTL because
  * a pin is never evicted, and refusing that here is the invariant, not a comment. */
 export function validateRetentionPolicy(
-  policy: RetentionPolicy,
+  policy: RetentionPolicy | unknown,
 ): RetentionPolicy {
+  // The parameter is spelled `unknown` in practice: a policy arrives as JSON
+  // text at a boundary and this check is the only thing that turns it into a
+  // policy, so the type stays honest about accepting what it validates.
+  const candidate = policy as RetentionPolicy;
   if (
-    typeof policy !== "object" ||
-    policy === null ||
-    policy.version !== RETENTION_POLICY_VERSION ||
-    (policy.mode !== "manual" && policy.mode !== "age") ||
-    typeof policy.ttlByKind !== "object" ||
-    policy.ttlByKind === null
+    typeof candidate !== "object" ||
+    candidate === null ||
+    candidate.version !== RETENTION_POLICY_VERSION ||
+    (candidate.mode !== "manual" && candidate.mode !== "age") ||
+    typeof candidate.ttlByKind !== "object" ||
+    candidate.ttlByKind === null
   )
     throw new Error("Invalid recovery retention policy.");
   const ttlByKind = {} as Record<RetentionKind, number | null>;
   for (const kind of kinds) {
-    if (!Object.hasOwn(policy.ttlByKind, kind))
+    if (!Object.hasOwn(candidate.ttlByKind, kind))
       throw new Error("Invalid recovery retention policy.");
-    const ttl = policy.ttlByKind[kind];
+    const ttl = candidate.ttlByKind[kind];
     if (ttl !== null && (!Number.isSafeInteger(ttl) || ttl < 1))
       throw new Error(
         "A recovery retention TTL is null or a positive millisecond count.",
@@ -77,15 +81,15 @@ export function validateRetentionPolicy(
       throw new Error("A pinned recovery artifact kind cannot expire.");
     ttlByKind[kind] = ttl;
   }
-  if (Object.keys(policy.ttlByKind).length !== kinds.length)
+  if (Object.keys(candidate.ttlByKind).length !== kinds.length)
     throw new Error("Invalid recovery retention policy.");
-  if (policy.mode === "manual" && ttlByKind.unpinned !== null)
+  if (candidate.mode === "manual" && ttlByKind.unpinned !== null)
     throw new Error("A manual recovery retention policy carries no TTL.");
-  if (policy.mode === "age" && ttlByKind.unpinned === null)
+  if (candidate.mode === "age" && ttlByKind.unpinned === null)
     throw new Error("An age recovery retention policy needs an unpinned TTL.");
   return Object.freeze({
     version: RETENTION_POLICY_VERSION,
-    mode: policy.mode,
+    mode: candidate.mode,
     ttlByKind: Object.freeze(ttlByKind),
   });
 }

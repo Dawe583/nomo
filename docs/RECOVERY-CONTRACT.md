@@ -277,7 +277,11 @@ database moves to schema 2 on the next open, and its existing artifacts carry
 no write time, which keeps them protected: an unknown age is not a passed
 age. An older binary reading a schema 2 vault refuses on the version, the
 same stop-old-writers rule the capacity migration already established. The
-collector still does not read `getStream`, and there is no streaming reader
+collector is the operator's `nomo recovery collect` command, which takes the
+workspace's recovery configuration file and an optional `--retention-policy`
+JSON file; its shipped default policy is `manual` and collects nothing. The
+collector still does not read
+`getStream`, and there is no streaming reader
 for a legacy file artifact, and no partial-restore path: a restore that
 cannot verify every entry refuses everything.
 

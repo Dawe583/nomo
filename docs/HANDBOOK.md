@@ -187,6 +187,23 @@ does not use DPAPI for the signing key and cannot isolate another process
 running as the same user or an administrator. The scan is a read-only snapshot;
 run it when the recovery executor is idle for a stable report.
 
+The reserved vault is never collected implicitly: an operator drives it, and
+the shipped default policy is `manual`, so a collection without a policy
+deletes nothing and prints the report of what it saw:
+
+```sh
+nomo recovery collect --config ./nomo-recovery.json
+nomo recovery collect --config ./nomo-recovery.json --retention-policy ./retention.json
+```
+
+An age policy names a TTL for unpinned artifacts. Collection deletes only
+artifacts whose recorded lifecycle leaves them unpinned and provably past
+that TTL: a pinned artifact stays until a named release, an artifact with no
+recorded evidence is protected rather than assumed unpinned, and a schema 1
+vault, which carries no write time, stays protected for the same reason.
+Every run writes the same signed journal chain a runtime capture does, so a
+shell-driven delete is audited exactly like a runtime one.
+
 Check the complete source installation:
 
 ```sh

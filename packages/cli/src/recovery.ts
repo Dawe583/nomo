@@ -10,6 +10,8 @@ import {
   recoveryRuntime,
   localOperationJournal,
   reservedRecoveryVault,
+  collectReservedVaultGarbage,
+  validateRetentionPolicy,
   digest,
   type ExecutionRequest,
   type RecoveryPlan,
@@ -38,6 +40,19 @@ import { postgresExecutor } from "./postgres.ts";
  * and not something a policy edit can widen by accident.
  */
 export type RecoveryMode = "audit" | "plan" | "normal";
+
+/** A retention policy arrives as JSON at a boundary, so a parse failure names
+ * the file it came from and the schema check names the field, exactly as the
+ * recovery config refusals do. */
+const readRetentionPolicy = async (path: string) => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await readFile(path, "utf8"));
+  } catch {
+    throw new Error(`The retention policy is not valid JSON: ${path}`);
+  }
+  return validateRetentionPolicy(parsed);
+};
 
 type Config = {
   vaultCapacity?: { maxArtifactBytes: number; maxTotalBytes: number };
@@ -68,7 +83,9 @@ export async function runRecoveryCommand(
   const args = new Map<string, string>();
   for (let i = 0; i < rest.length; i += 2) {
     if (
-      !["--config", "--input", "--approve"].includes(rest[i] ?? "") ||
+      !["--config", "--input", "--approve", "--retention-policy", "--operation"].includes(
+        rest[i] ?? "",
+      ) ||
       !rest[i + 1] ||
       args.has(rest[i]!)
     )
@@ -91,11 +108,12 @@ export async function runRecoveryCommand(
       "reconcile",
       "reconcile-recovery",
       "serve",
+      "collect",
     ].includes(action ?? "") ||
     !args.get("--config")
   )
     throw new Error(
-      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config file [--input file] [--approve digest]",
+      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -170,13 +188,15 @@ export async function runRecoveryCommand(
     print(JSON.stringify(await migrateManagedPostgres(options)));
     return 0;
   }
-  if (action !== "serve" && !args.get("--input"))
-    throw new Error("--input is required.");
+  // Collect needs no operation input: the policy file, not the input, is what
+  // it reads, and the workspace comes from the configuration.
   const input =
     action === "serve"
       ? { workspace: config.workspace }
-      : JSON.parse(await readFile(resolve(args.get("--input")!), "utf8"));
-  if (input.workspace !== config.workspace)
+      : action === "collect"
+        ? null
+        : JSON.parse(await readFile(resolve(args.get("--input")!), "utf8"));
+  if (input !== null && (input as { workspace: unknown }).workspace !== config.workspace)
     throw new Error("Input belongs to another workspace.");
   if (config.filesystem || config.git) {
     const root = resolve(dirname(configPath), (config.filesystem ?? config.git)!.root);
@@ -290,14 +310,16 @@ export async function runRecoveryCommand(
       return false;
     }
   };
-  const runtime = recoveryRuntime({
-    journal: localOperationJournal(join(state, "journal"), signer),
-    vault: reservedRecoveryVault(
+  const journal = localOperationJournal(join(state, "journal"), signer),
+    vault = reservedRecoveryVault(
       join(state, "vault"),
       { local: key },
       "local",
       config.vaultCapacity,
-    ),
+    );
+  const runtime = recoveryRuntime({
+    journal,
+    vault,
     adapters: [adapter],
     authorize: async (proposal) => {
       // A mode that forbids dispatch forbids it here, before the policy is
@@ -329,6 +351,37 @@ export async function runRecoveryCommand(
         ),
     });
     await server.connect(new StdioServerTransport());
+    return 0;
+  }
+  if (action === "collect") {
+    // The invoked command is the authorization: the policy digest and every
+    // stage land in the same signed chain as a runtime capture, so a shell
+    // delete is audited exactly like a runtime one.
+    const policyArg = args.get("--retention-policy"),
+      policy = policyArg
+        ? await readRetentionPolicy(resolve(dirname(configPath), policyArg))
+        : undefined,
+      stamp = Date.now().toString(36);
+    const garbage = await collectReservedVaultGarbage({
+      workspace: config.workspace,
+      journal,
+      vault,
+      operationId: args.get("--operation") ?? `collect-${stamp}`,
+      agentId: config.agentId ?? "operator",
+      runId: `collect-${stamp}`,
+      ...(policy === undefined ? {} : { policy }),
+      authorize: async () => true,
+    });
+    print(
+      JSON.stringify(
+        {
+          mode: policy?.mode ?? "manual",
+          ...garbage,
+        },
+        null,
+        2,
+      ),
+    );
     return 0;
   }
   if (action === "execute") {
