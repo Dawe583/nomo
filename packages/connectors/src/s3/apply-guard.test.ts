@@ -128,6 +128,67 @@ test("a restore over an existing object is guarded by the etag that was read", a
   assert.equal(guard.ifNoneMatch, undefined);
   assert.deepEqual(report.applied, ["restore"]);
 });
+test("an ETag-less capture refuses changed current bytes before writing", async () => {
+  const before = await recorder();
+  const currentBytes = new TextEncoder().encode("newer");
+  let writes = 0;
+  const client: S3Client = {
+    getObject: async () => ({ body: currentBytes }),
+    putObject: async () => {
+      writes += 1;
+      return {};
+    },
+    deleteObject: async () => ({}),
+    getBucketVersioning: async () => ({}),
+  };
+
+  const report = await applyRestore(before.store, client, {
+    stepId: "restore",
+    call,
+    reference,
+  });
+
+  assert.equal(writes, 0, "replay overwrote bytes changed since capture");
+  assert.deepEqual(report.applied, []);
+  assert.deepEqual(report.refused, [{
+    stepId: "restore",
+    reason: "drift",
+    changed: [{
+      target: "s3.object",
+      key: call,
+      field: "body",
+      capturedDigest: reference.digest,
+      currentDigest: sha256(currentBytes),
+    }],
+  }]);
+  assert.equal(report.receipts, undefined);
+});
+test("an ETag-less capture refuses an unreadable current object before writing", async () => {
+  let writes = 0;
+  const client: S3Client = {
+    getObject: async () => ({ etag: "current-etag" }),
+    putObject: async () => {
+      writes += 1;
+      return {};
+    },
+    deleteObject: async () => ({}),
+    getBucketVersioning: async () => ({}),
+  };
+
+  const report = await applyRestore(recorder().store, client, {
+    stepId: "restore",
+    call,
+    reference,
+  });
+
+  assert.equal(writes, 0, "replay wrote without being able to check for drift");
+  assert.deepEqual(report.applied, []);
+  assert.deepEqual(report.refused, [{
+    stepId: "restore",
+    reason: "verification_unavailable",
+    changed: [],
+  }]);
+});
 
 test("no refusal path emits a receipt", async () => {
   // One loop over every way this can refuse. The invariant is not that these

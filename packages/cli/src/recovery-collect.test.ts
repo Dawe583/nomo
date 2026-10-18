@@ -6,7 +6,7 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
@@ -173,8 +173,54 @@ test("a retention policy that fails the schema is refused with its rule", async 
   );
 });
 
-/** A direct read through the vault, so an assertion about the artifact survives
- * the store the command used. */
+test("collect --dry-run predicts the deletes and leaves every artifact in place", async (t) => {
+  const f = await fixture(t);
+  const released = await f.put("released"),
+    unmarked = await f.put("unmarked");
+  const key = Buffer.from(f.env.TEST_KEY, "base64");
+  const vault = reservedRecoveryVault(
+    join(f.dir, "state", "vault"),
+    { local: key },
+    "local",
+  );
+  await vault.markVaultLifecycle("test", released, {});
+  await f.age(released, 60_000);
+  await f.age(unmarked, 60_000);
+  const policy = await f.policyFile({
+    version: 1,
+    mode: "age",
+    ttlByKind: { unpinned: 1000, recovery: null, operator: null },
+  });
+
+  const { code, lines } = await f.run(
+    "collect",
+    "--dry-run",
+    "--retention-policy",
+    policy,
+  );
+
+  assert.equal(code, 0);
+  const report = JSON.parse(lines.at(-1)!) as {
+    dryRun: boolean;
+    mode: string;
+    deleted: number;
+    freedBytes: number;
+    digests: string[];
+  };
+  assert.equal(report.dryRun, true);
+  assert.equal(report.mode, "age");
+  assert.deepEqual(report.digests, [released.digest]);
+  assert.equal(report.freedBytes, released.bytes);
+  // Nothing was collected: both artifacts are still readable.
+  assert.equal(await requireVault(f, released), "released");
+  assert.equal(await requireVault(f, unmarked), "unmarked");
+  // A prediction is not an operation, so no journal directory was created.
+  const writes = await readdir(join(f.dir, "state", "journal")).catch(
+    (error: NodeJS.ErrnoException) =>
+      error.code === "ENOENT" ? [] : Promise.reject(error),
+  );
+  assert.deepEqual(writes, []);
+});
 async function requireVault(
   f: Awaited<ReturnType<typeof fixture>>,
   reference: { digest: string; keyId: string; bytes: number },

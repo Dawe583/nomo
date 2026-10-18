@@ -194,6 +194,7 @@ deletes nothing and prints the report of what it saw:
 ```sh
 nomo recovery collect --config ./nomo-recovery.json
 nomo recovery collect --config ./nomo-recovery.json --retention-policy ./retention.json
+nomo recovery collect --config ./nomo-recovery.json --retention-policy ./retention.json --dry-run
 ```
 
 An age policy names a TTL for unpinned artifacts. Collection deletes only

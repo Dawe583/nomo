@@ -15,7 +15,7 @@ import {
   type Stage,
 } from "./journal.ts";
 import type { RetentionReport } from "../../connectors/src/snapshot/store.ts";
-import type { ManagedRecoveryVault } from "./reserved-vault.ts";
+import type { ManagedRecoveryVault, ReservedRetentionRow } from "./reserved-vault.ts";
 import {
   MANUAL_RETENTION_POLICY,
   validateRetentionPolicy,
@@ -36,6 +36,72 @@ export type ReservedVaultGarbageOptions = {
   readonly journal: OperationJournal;
   readonly vault: ManagedRecoveryVault;
 };
+
+/** The pure policy evaluation the collector and a dry run share: which rows
+ * the policy would delete, which expired rows were protected, and nothing
+ * more. It decides from one snapshot; the collector still re-proves inside
+ * its own transaction, and a manual policy expires nothing, exactly as the
+ * file collector does. */
+export function evaluateReservedVaultRetentionPolicy(
+  rows: ReservedRetentionRow[],
+  policy: RetentionPolicy,
+  now: number,
+): {
+  deleting: ReadonlyArray<ReservedRetentionRow>;
+  skippedPinned: number;
+  retained: number;
+} {
+  const ttl = policy.ttlByKind.unpinned;
+  const pinnedOf = (row: { lifecycle: VaultLifecycle | undefined }): boolean =>
+    row.lifecycle === undefined || row.lifecycle.pin !== undefined;
+  const pastTtl = (row: { at: string | null }): boolean =>
+    ttl !== null &&
+    row.at !== null &&
+    Number.isFinite(Date.parse(row.at)) &&
+    now - Date.parse(row.at) >= ttl;
+  // The file vault's rules, verbatim: absent evidence protects because the
+  // pin state is unknown, a recorded pin protects until an operator's named
+  // release, and only unpinned artifacts with a provably past write time
+  // are expired. A schema 1 artifact carries no write time and an
+  // unparseable one is treated the same way: an unknown age is not a
+  // passed age.
+  const expired = rows.filter(pastTtl);
+  const deleting = expired.filter((row) => !pinnedOf(row));
+  const skippedPinned = expired.length - deleting.length;
+  return { deleting, skippedPinned, retained: rows.length - deleting.length - skippedPinned };
+}
+
+/** A dry run: everything the collector reads and evaluates, and nothing it
+ * writes. It opens no journal chain, because there is nothing to audit, and
+ * it never proves inside a transaction the collector will later hold, which
+ * is why its report is a prediction an operator reads before invoking the
+ * real one rather than a report of something that happened. */
+export async function auditReservedVaultCollection(options: {
+  readonly workspace: string;
+  readonly policy?: RetentionPolicy;
+  readonly clock?: () => Date;
+  readonly vault: ManagedRecoveryVault;
+}): Promise<GarbageReport & { readonly digests: readonly string[] }> {
+  const { workspace } = options;
+  if (!/^[\w-]{1,120}$/.test(workspace))
+    throw new Error("Invalid vault retention identity.");
+  const policy = validateRetentionPolicy(
+    options.policy ?? MANUAL_RETENTION_POLICY,
+  );
+  const rows = await options.vault.retentionEntries(workspace);
+  const { deleting, skippedPinned, retained } = evaluateReservedVaultRetentionPolicy(
+    rows,
+    policy,
+    (options.clock ?? (() => new Date()))().getTime(),
+  );
+  return {
+    skippedPinned,
+    retained,
+    deleted: deleting.length,
+    freedBytes: deleting.reduce((sum, row) => sum + row.bytes, 0),
+    digests: deleting.map((row) => row.digest),
+  };
+}
 
 /** R03 garbage collection for the reserved vault. It reuses the same stage
  * protocol as the file collector: received, authorized, prepared, dispatched,
@@ -82,39 +148,23 @@ export async function collectReservedVaultGarbage(
     // The snapshot refuses as a whole when any evidence is unreadable, so a
     // pin this store cannot prove is never resolved in favour of deleting.
     const rows = await options.vault.retentionEntries(workspace);
-    const ttl = policy.ttlByKind.unpinned,
-      now = clock().getTime();
-    // The file vault's rules, verbatim: absent evidence protects because the
-    // pin state is unknown, a recorded pin protects until an operator's named
-    // release, and only unpinned artifacts with a provably past write time
-    // are expired. A schema 1 artifact carries no write time and an
-    // unparseable one is treated the same way: an unknown age is not a
-    // passed age.
-    const pinnedOf = (row: { lifecycle: VaultLifecycle | undefined }): boolean =>
-      row.lifecycle === undefined || row.lifecycle.pin !== undefined;
-    const pastTtl = (row: { at: string | null }): boolean =>
-      ttl !== null &&
-      row.at !== null &&
-      Number.isFinite(Date.parse(row.at)) &&
-      now - Date.parse(row.at) >= ttl;
-    // A manual policy expires nothing, exactly as the file collector does.
-    const expired = rows.filter(pastTtl);
-    const skippedPinned = expired.filter(pinnedOf).length;
+    const { deleting, skippedPinned, retained } =
+      evaluateReservedVaultRetentionPolicy(rows, policy, clock().getTime());
     await record("prepared", {
       policyDigest,
-      expired: expired.length,
+      expired: deleting.length + skippedPinned,
       skippedPinned,
-      retained: rows.length - skippedPinned,
+      retained,
     });
     await record("dispatched", {
       policyDigest,
-      deleting: expired.length - skippedPinned,
+      deleting: deleting.length,
     });
     let report: RetentionReport;
     try {
       report = await options.vault.deleteRetained(
         workspace,
-        expired.filter((row) => !pinnedOf(row)).map((row) => row.digest),
+        deleting.map((row) => row.digest),
       );
     } catch (error) {
       await record("failed", {

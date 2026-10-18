@@ -10,6 +10,7 @@ import {
   recoveryRuntime,
   localOperationJournal,
   reservedRecoveryVault,
+  auditReservedVaultCollection,
   collectReservedVaultGarbage,
   validateRetentionPolicy,
   digest,
@@ -81,7 +82,16 @@ export async function runRecoveryCommand(
   const [action, ...rest] = argv;
   if (action === "conformance") return runConformanceCommand(rest, print);
   const args = new Map<string, string>();
-  for (let i = 0; i < rest.length; i += 2) {
+  let dryRun = false;
+  for (let i = 0; i < rest.length; ) {
+    if (rest[i] === "--dry-run") {
+      // The only bare flag: a prediction carries no value, so a `--dry-run
+      // file` typo on the next token would otherwise be parsed as it.
+      if (dryRun) throw new Error("Invalid recovery arguments.");
+      dryRun = true;
+      i += 1;
+      continue;
+    }
     if (
       !["--config", "--input", "--approve", "--retention-policy", "--operation"].includes(
         rest[i] ?? "",
@@ -91,6 +101,7 @@ export async function runRecoveryCommand(
     )
       throw new Error("Invalid recovery arguments.");
     args.set(rest[i]!, rest[i + 1]!);
+    i += 2;
   }
   if (
     ![
@@ -113,7 +124,7 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest]",
+      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--dry-run]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -362,6 +373,24 @@ export async function runRecoveryCommand(
         ? await readRetentionPolicy(resolve(dirname(configPath), policyArg))
         : undefined,
       stamp = Date.now().toString(36);
+    if (dryRun) {
+      // A prediction opens no journal chain and signs nothing: the chain is
+      // the evidence a delete happened, so a run that deletes nothing must
+      // never leave one behind as if it had.
+      const audit = await auditReservedVaultCollection({
+        workspace: config.workspace,
+        ...(policy === undefined ? {} : { policy }),
+        vault,
+      });
+      print(
+        JSON.stringify(
+          { dryRun: true, mode: policy?.mode ?? "manual", ...audit },
+          null,
+          2,
+        ),
+      );
+      return 0;
+    }
     const garbage = await collectReservedVaultGarbage({
       workspace: config.workspace,
       journal,

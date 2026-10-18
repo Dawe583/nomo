@@ -240,8 +240,10 @@ captured bytes, inverse throws `InverseImpossible`.
 ### `s3/apply.ts`
 
 Apply executes the inverse plan and verifies the restored object's digest or
-ETag when available. If the key changed after capture, replay refuses with a
-drift report rather than replacing the newer object.
+ETag when available. When capture had no ETag, replay compares current object
+bytes with the captured digest; if those bytes are unavailable, it refuses
+because it cannot establish that no later write changed the key. A key changed
+after capture is refused with a drift report rather than replaced.
 
 ## Drift rule
 

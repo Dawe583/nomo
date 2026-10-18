@@ -7,7 +7,7 @@ import { createCipheriv, createHash, randomBytes } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { reservedRecoveryVault } from "./reserved-vault.ts";
-import { collectReservedVaultGarbage } from "./reserved-retention.ts";
+import { auditReservedVaultCollection, collectReservedVaultGarbage } from "./reserved-retention.ts";
 import {
   MANUAL_RETENTION_POLICY,
   type RetentionPolicy,
@@ -392,4 +392,67 @@ test("collection frees the quota the deleted artifacts held", async (t) => {
     freedBytes: released.bytes,
   });
   assert.equal(f.usedBytes(), 0);
+});
+
+test("a dry run predicts the collector without writing anything", async (t) => {
+  const f = await fixture(t);
+  const released = await f.put("released"),
+    pinned = await f.put("pinned");
+  await f.mark(released);
+  await f.mark(pinned, { ownerId: "operator-1", kind: "recovery" });
+  await f.age(released, 60_000);
+  await f.age(pinned, 60_000);
+  const audit = await auditReservedVaultCollection({
+    workspace: WORKSPACE,
+    policy: AGE_POLICY,
+    clock: () => new Date(BASE),
+    vault: f.vault,
+  });
+  assert.deepEqual(
+    { skippedPinned: audit.skippedPinned, retained: audit.retained, deleted: audit.deleted, freedBytes: audit.freedBytes },
+    { skippedPinned: 1, retained: 0, deleted: 1, freedBytes: released.bytes },
+  );
+  assert.deepEqual(audit.digests, [released.digest]);
+  assert.equal(await f.read(released), "released");
+  assert.equal(await f.read(pinned), "pinned");
+  // No journal chain opened: a prediction is not an operation.
+  assert.deepEqual(stages(await f.events("no-such-operation")), []);
+  // The real run then deletes exactly what the audit named.
+  assert.deepEqual(reportOf(await f.collect("gc-audited", AGE_POLICY)), {
+    skippedPinned: 1,
+    retained: 0,
+    deleted: 1,
+    freedBytes: released.bytes,
+  });
+});
+
+test("a dry run on an unreadable record refuses exactly like the collector", async (t) => {
+  const f = await fixture(t);
+  const first = await f.put("first");
+  await f.mark(first);
+  await f.age(first, 60_000);
+  const db = new DatabaseSync(join(f.root, "vault.sqlite"));
+  try {
+    db.prepare("UPDATE retention SET record=? WHERE digest=?").run(
+      "{not json",
+      first.digest,
+    );
+  } finally {
+    db.close();
+  }
+  await assert.rejects(
+    auditReservedVaultCollection({
+      workspace: WORKSPACE,
+      policy: AGE_POLICY,
+      vault: f.vault,
+    }),
+    /invalid/,
+  );
+  await assert.rejects(
+    auditReservedVaultCollection({
+      workspace: "not a workspace",
+      vault: f.vault,
+    }),
+    /Invalid vault retention identity/,
+  );
 });
