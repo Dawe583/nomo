@@ -266,10 +266,19 @@ use. A worker whose configured capacity disagrees with the persisted one is
 still rejected on every operation, which is what makes the migration the
 visible way out rather than a bypass.
 
-The SQLite vault still has no retention: the collector above walks the legacy
-file tree, so artifacts in the reserved vault are not collected by it, and
-`getStream` is not yet a surface the collector uses. There is no streaming
-reader for a legacy file artifact, and no partial-restore path: a restore that
+The SQLite vault now carries its own retention under schema 2: a `retention`
+evidence table and a per-artifact write time added to `artifacts`. The file
+vault's invariants hold verbatim: absent or conflicting evidence protects, a
+pin is released only by a named operator with a recorded `release` field, an
+unreadable or invalid record refuses the whole collection before any delete,
+and `collectReservedVaultGarbage` runs the same signed journal chain under
+`adapterId "vault.retention"`, so a delete is never silent. A schema 1
+database moves to schema 2 on the next open, and its existing artifacts carry
+no write time, which keeps them protected: an unknown age is not a passed
+age. An older binary reading a schema 2 vault refuses on the version, the
+same stop-old-writers rule the capacity migration already established. The
+collector still does not read `getStream`, and there is no streaming reader
+for a legacy file artifact, and no partial-restore path: a restore that
 cannot verify every entry refuses everything.
 
 The older `localRecoveryVault` remains compatible but offers only an individual

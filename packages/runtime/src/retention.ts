@@ -143,6 +143,7 @@ function vaultPin(value: unknown): VaultPin {
     throw new Error("Recovery artifact lifecycle is invalid; retention refused.");
   return value as VaultPin;
 }
+export { vaultPin };
 function vaultRelease(value: unknown): VaultRelease {
   if (
     typeof value !== "object" ||
@@ -165,24 +166,15 @@ function vaultRelease(value: unknown): VaultRelease {
     released: vaultPin(value.released),
   };
 }
-/** Absent evidence is reported as undefined so the caller protects the artifact.
- * Unreadable or invalid evidence refuses instead of guessing the pin. */
-async function readLifecycle(
-  dir: string,
-  artifact: ArtifactIdentity,
-): Promise<VaultLifecycle | undefined> {
-  let bytes: Buffer;
-  try {
-    bytes = await readFile(lifecyclePath(dir, artifact));
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") return undefined;
-    throw new Error(
-      "Recovery artifact lifecycle is unreadable; retention refused.",
-    );
-  }
+/** Parse retention evidence text into a lifecycle, refusing anything this
+ * store cannot prove rather than guessing a pin. Absent evidence is handled
+ * by the caller; a present but unreadable or invalid record is always a
+ * refusal, so both the file sidecar and the reserved-vault record column
+ * share one reading of what counts as evidence. */
+export function parseVaultLifecycle(raw: string): VaultLifecycle | undefined {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(bytes.toString("utf8"));
+    parsed = JSON.parse(raw);
   } catch {
     throw new Error(
       "Recovery artifact lifecycle is invalid; retention refused.",
@@ -204,6 +196,24 @@ async function readLifecycle(
       ? { release: vaultRelease(record.release) }
       : {}),
   };
+}
+
+/** Absent evidence is reported as undefined so the caller protects the artifact.
+ * Unreadable or invalid evidence refuses instead of guessing the pin. */
+async function readLifecycle(
+  dir: string,
+  artifact: ArtifactIdentity,
+): Promise<VaultLifecycle | undefined> {
+  let bytes: Buffer;
+  try {
+    bytes = await readFile(lifecyclePath(dir, artifact));
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") return undefined;
+    throw new Error(
+      "Recovery artifact lifecycle is unreadable; retention refused.",
+    );
+  }
+  return parseVaultLifecycle(bytes.toString("utf8"));
 }
 
 export type VaultLifecycleRequest = {

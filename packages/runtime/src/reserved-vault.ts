@@ -14,6 +14,14 @@ import {
   type VaultSlot,
 } from "./vault.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
+import type { RetentionReport } from "../../connectors/src/snapshot/store.ts";
+import {
+  parseVaultLifecycle,
+  vaultPin,
+  type VaultLifecycle,
+  type VaultPin,
+  type VaultRelease,
+} from "./retention.ts";
 import {
   assertPrivateDirectoryPath,
   assertPrivateFileIfPresent,
@@ -30,6 +38,56 @@ type LegacyState = {
 const identity = (value: string) => {
   if (typeof value !== "string" || !/^[\w-]{1,120}$/.test(value))
     throw new Error("Invalid vault identity.");
+};
+
+/** The record column crosses the statement boundary as unknown, so the shape
+ * is proved before a pin is read. An unreadable or invalid record refuses
+ * rather than guessing protection, which is the file vault's rule verbatim. */
+const readRetentionRecord = (
+  db: DatabaseSync,
+  workspace: string,
+  target: string,
+): VaultLifecycle | undefined => {
+  const row: unknown = db
+    .prepare("SELECT record FROM retention WHERE workspace=? AND digest=?")
+    .get(workspace, target);
+  if (row === undefined) return undefined;
+  if (
+    typeof row !== "object" ||
+    row === null ||
+    !("record" in row) ||
+    typeof (row as Record<string, unknown>).record !== "string"
+  )
+    throw new Error("Recovery artifact lifecycle is invalid; retention refused.");
+  return parseVaultLifecycle((row as Record<string, unknown>).record as string);
+};
+
+const toRetentionRow = (row: unknown): ReservedRetentionRow => {
+  if (
+    typeof row !== "object" ||
+    row === null ||
+    !("digest" in row) ||
+    !("bytes" in row) ||
+    !("at" in row) ||
+    !("record" in row)
+  )
+    throw new Error("Recovery artifact cannot be verified.");
+  const record = row as Record<string, unknown>;
+  if (
+    typeof record.digest !== "string" ||
+    !/^[a-f0-9]{64}$/.test(record.digest) ||
+    typeof record.bytes !== "number" ||
+    !Number.isSafeInteger(record.bytes) ||
+    record.bytes < 1 ||
+    (record.at !== null && typeof record.at !== "string")
+  )
+    throw new Error("Recovery artifact cannot be verified.");
+  return {
+    digest: record.digest,
+    bytes: record.bytes,
+    at: record.at,
+    lifecycle: record.record === null ? undefined : parseVaultLifecycle(record.record as string),
+  };
 };
 export type VaultCapacity = { maxArtifactBytes: number; maxTotalBytes: number };
 
@@ -75,7 +133,39 @@ export interface ManagedRecoveryVault extends RecoveryVault {
   migrateCapacity(
     request: VaultCapacityMigration,
   ): Promise<VaultCapacityMigrationReport>;
+  /** Retention, mirrored from the file vault: absent or conflicting evidence
+   * protects, a release is a recorded fact naming the pin it removed, and
+   * nothing unpins itself. The collector reads one workspace snapshot and
+   * deletes only what the snapshot still proves unpinned. */
+  markVaultLifecycle(
+    workspace: string,
+    reference: VaultReference,
+    request: { readonly pin?: VaultPin },
+  ): Promise<void>;
+  releaseVaultPin(
+    workspace: string,
+    reference: VaultReference,
+    request: {
+      readonly pin: VaultPin;
+      readonly operatorId: string;
+      readonly clock?: () => Date;
+    },
+  ): Promise<VaultRelease>;
+  retentionEntries(workspace: string): Promise<ReservedRetentionRow[]>;
+  deleteRetained(
+    workspace: string,
+    digests: readonly string[],
+  ): Promise<RetentionReport>;
 }
+/** One reserved-vault artifact with the retention evidence that protects it.
+ * `at` is the write time; a row stored by schema v1 carries `at: null`, which
+ * keeps the artifact protected because an unknown age is not a passed age. */
+export type ReservedRetentionRow = {
+  readonly digest: string;
+  readonly bytes: number;
+  readonly at: string | null;
+  readonly lifecycle: VaultLifecycle | undefined;
+};
 
 const capacityOf = (capacity: VaultCapacity): VaultCapacity => {
   for (const value of [capacity.maxArtifactBytes, capacity.maxTotalBytes])
@@ -323,15 +413,31 @@ export function reservedRecoveryVault(
       )
         throw new Error("Recovery vault schema version cannot be verified.");
       const schemaVersion = versionRow.user_version;
-      if (schemaVersion > 1)
+      // Schema 2 adds the retention table and the artifact write time. An
+      // older binary reading a moved database refuses on the version instead
+      // of writing through a shape it cannot prove, which is the same
+      // stop-old-writers rule the capacity migration already established.
+      if (schemaVersion > 2)
         throw new Error("Unsupported recovery vault schema version.");
       db.exec(`CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),capacity TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS artifacts(workspace TEXT NOT NULL,digest TEXT NOT NULL,key_id TEXT NOT NULL,data BLOB NOT NULL,operation_id TEXT,slot TEXT,content_digest TEXT NOT NULL,PRIMARY KEY(workspace,digest),UNIQUE(workspace,operation_id,slot));
+    CREATE TABLE IF NOT EXISTS artifacts(workspace TEXT NOT NULL,digest TEXT NOT NULL,key_id TEXT NOT NULL,data BLOB NOT NULL,operation_id TEXT,slot TEXT,content_digest TEXT NOT NULL,at TEXT,PRIMARY KEY(workspace,digest),UNIQUE(workspace,operation_id,slot));
     CREATE TABLE IF NOT EXISTS reservations(workspace TEXT NOT NULL,operation_id TEXT NOT NULL,slot TEXT NOT NULL,bytes INTEGER NOT NULL,PRIMARY KEY(workspace,operation_id,slot));
     CREATE TABLE IF NOT EXISTS key_checks(key_id TEXT PRIMARY KEY,proof TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS artifacts_key_id ON artifacts(key_id);
     CREATE TABLE IF NOT EXISTS capacity_migrations(at TEXT NOT NULL,operator_id TEXT NOT NULL,from_capacity TEXT NOT NULL,to_capacity TEXT NOT NULL,used_bytes INTEGER NOT NULL,reservations INTEGER NOT NULL);
-    PRAGMA user_version=1;`);
+    CREATE TABLE IF NOT EXISTS retention(workspace TEXT NOT NULL,digest TEXT NOT NULL,record TEXT NOT NULL,at TEXT NOT NULL,PRIMARY KEY(workspace,digest));`);
+      if (schemaVersion < 2) {
+        // A v1 database carries artifacts without a write time. The column is
+        // added and existing rows are left NULL: retention must never guess an
+        // age it cannot prove, so schema 1 artifacts stay protected until an
+        // operator marks them.
+        const columns = db.prepare("PRAGMA table_info(artifacts)").all() as ReadonlyArray<
+          Record<string, unknown>
+        >;
+        if (!columns.some((column) => column.name === "at"))
+          db.exec("ALTER TABLE artifacts ADD COLUMN at TEXT");
+      }
+      db.exec("PRAGMA user_version=2;");
       const limits = canonicalJson({ maxArtifactBytes, maxTotalBytes });
       db.prepare("INSERT OR IGNORE INTO settings VALUES(1,?)").run(limits);
       const expected = migrate
@@ -526,7 +632,7 @@ export function reservedRecoveryVault(
       used - Number(reserved?.bytes ?? 0) + data.byteLength > maxTotalBytes
     )
       throw new VaultCapacityError("Recovery vault total quota exhausted.");
-    db.prepare("INSERT INTO artifacts VALUES(?,?,?,?,?,?,?)").run(
+    db.prepare("INSERT INTO artifacts VALUES(?,?,?,?,?,?,?,?)").run(
       workspace,
       reference.digest,
       currentKey,
@@ -534,6 +640,9 @@ export function reservedRecoveryVault(
       allocation?.operationId ?? null,
       allocation?.slot ?? null,
       contentDigest,
+      // The write time is the only age retention may rely on, so it is stored
+      // with the artifact in the same statement rather than derived later.
+      new Date().toISOString(),
     );
     if (allocation)
       db.prepare(
@@ -691,6 +800,146 @@ export function reservedRecoveryVault(
           reservations: counted.count,
         };
       }, request);
+    },
+    async markVaultLifecycle(workspace, reference, request) {
+      identity(workspace);
+      if (!/^[a-f0-9]{64}$/.test(reference.digest))
+        throw new Error("Invalid recovery reference.");
+      await transaction((db) => {
+        // The file vault refuses to record evidence for an artifact it cannot
+        // stat; the row lookup is the same refusal, because a lifecycle record
+        // for an absent artifact would protect nothing and still pretend to.
+        if (
+          !db
+            .prepare("SELECT 1 FROM artifacts WHERE workspace=? AND digest=?")
+            .get(workspace, reference.digest)
+        )
+          throw new Error(
+            "Recovery artifact is unavailable; lifecycle was not recorded.",
+          );
+        const existing = readRetentionRecord(db, workspace, reference.digest);
+        const incoming: VaultLifecycle =
+          request.pin === undefined ? {} : { pin: vaultPin(request.pin) };
+        if (existing?.pin !== undefined && incoming.pin === undefined)
+          throw new Error("A pinned recovery artifact is not released by retention.");
+        if (
+          existing?.pin !== undefined &&
+          incoming.pin !== undefined &&
+          (existing.pin.ownerId !== incoming.pin.ownerId ||
+            existing.pin.kind !== incoming.pin.kind)
+        )
+          throw new Error("Recovery artifact pin conflicts with recorded lifecycle.");
+        const lifecycle: VaultLifecycle = { ...existing, ...incoming };
+        if (existing !== undefined && canonicalJson(lifecycle) === canonicalJson(existing))
+          return;
+        db.prepare(
+          "INSERT INTO retention VALUES(?,?,?,?) ON CONFLICT(workspace,digest) DO UPDATE SET record=excluded.record, at=excluded.at",
+        ).run(workspace, reference.digest, canonicalJson(lifecycle), new Date().toISOString());
+      });
+    },
+    async releaseVaultPin(workspace, reference, request) {
+      identity(workspace);
+      if (!/^[a-f0-9]{64}$/.test(reference.digest))
+        throw new Error("Invalid recovery reference.");
+      if (!/^[\w-]{1,120}$/.test(request.operatorId))
+        throw new Error("Invalid recovery pin release operator.");
+      const held = vaultPin(request.pin);
+      return transaction((db) => {
+        const existing = readRetentionRecord(db, workspace, reference.digest);
+        // Absent evidence means "protect", not "nothing to do": releasing an
+        // artifact whose pin state this store cannot prove would convert
+        // unknown into collectable, which is the one inference retention must
+        // never make.
+        if (existing === undefined)
+          throw new Error(
+            "Recovery artifact has no recorded pin; a release cannot prove what protection to remove.",
+          );
+        if (existing.pin === undefined)
+          throw new Error(
+            "Recovery artifact has no recorded pin to release; it is already released for retention.",
+          );
+        if (existing.pin.ownerId !== held.ownerId || existing.pin.kind !== held.kind)
+          throw new Error(
+            "Recovery artifact pin does not match the recorded lifecycle; nothing was released.",
+          );
+        const release: VaultRelease = {
+          operatorId: request.operatorId,
+          at: (request.clock ?? (() => new Date()))().toISOString(),
+          released: { ownerId: held.ownerId, kind: held.kind },
+        };
+        db.prepare(
+          "INSERT INTO retention VALUES(?,?,?,?) ON CONFLICT(workspace,digest) DO UPDATE SET record=excluded.record, at=excluded.at",
+        ).run(
+          workspace,
+          reference.digest,
+          canonicalJson({ release: { ...existing.release, ...release } }),
+          new Date().toISOString(),
+        );
+        return release;
+      });
+    },
+    async retentionEntries(workspace) {
+      identity(workspace);
+      return transaction((db) => {
+        const rows: unknown = db
+          .prepare(
+            "SELECT a.digest AS digest, LENGTH(a.data) AS bytes, a.at AS at, r.record AS record FROM artifacts a LEFT JOIN retention r ON r.workspace=a.workspace AND r.digest=a.digest WHERE a.workspace=?",
+          )
+          .all(workspace);
+        if (!Array.isArray(rows))
+          throw new Error("Recovery artifact cannot be verified.");
+        return rows.map((row) => toRetentionRow(row));
+      });
+    },
+    async deleteRetained(workspace, digests) {
+      identity(workspace);
+      let deleted = 0,
+        freedBytes = 0;
+      const errors: string[] = [];
+      await transaction((db) => {
+        for (const target of digests) {
+          if (!/^[a-f0-9]{64}$/.test(target)) {
+            errors.push("Invalid recovery reference.");
+            continue;
+          }
+          // The record is re-checked inside this transaction, so a pin that
+          // landed between the collector's snapshot and this statement stops
+          // the delete. The file vault re-reads for the same reason; the
+          // SQLite shape just re-reads inside the writer lock instead.
+          const record = readRetentionRecord(db, workspace, target);
+          if (record === undefined || record.pin !== undefined) {
+            errors.push(
+              `${target} gained evidence or a pin after the scan; not deleted`,
+            );
+            continue;
+          }
+          const row: unknown = db
+            .prepare("SELECT LENGTH(data) AS bytes FROM artifacts WHERE workspace=? AND digest=?")
+            .get(workspace, target);
+          if (
+            typeof row !== "object" ||
+            row === null ||
+            !("bytes" in row) ||
+            typeof row.bytes !== "number"
+          ) {
+            errors.push(`${target} disappeared after the scan; not deleted`);
+            continue;
+          }
+          db.prepare("DELETE FROM artifacts WHERE workspace=? AND digest=?").run(
+            workspace,
+            target,
+          );
+          deleted += 1;
+          freedBytes += row.bytes;
+          // The record goes with the artifact: a stub left behind would read
+          // as protection for something that no longer exists.
+          db.prepare("DELETE FROM retention WHERE workspace=? AND digest=?").run(
+            workspace,
+            target,
+          );
+        }
+      });
+      return { deleted, freedBytes, errors };
     },
     async get(workspace, reference) {
       identity(workspace);

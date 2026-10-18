@@ -473,13 +473,25 @@ test("persisted v0 SQLite schema upgrades to the bounded vault schema in place",
   );
   const upgraded = new DatabaseSync(path, { readOnly: true });
   try {
-    assert.equal(upgraded.prepare("PRAGMA user_version").get()?.user_version, 1);
+    assert.equal(upgraded.prepare("PRAGMA user_version").get()?.user_version, 2);
     assert.equal(
       upgraded
         .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='artifacts_key_id'")
         .get()?.name,
       "artifacts_key_id",
     );
+    // Schema 2 carries retention: the evidence table and the artifact write
+    // time the collector ages against.
+    assert.equal(
+      upgraded
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='retention'")
+        .get()?.name,
+      "retention",
+    );
+    const columns = upgraded
+      .prepare("PRAGMA table_info(artifacts)")
+      .all() as ReadonlyArray<{ name: string }>;
+    assert.ok(columns.some((column) => column.name === "at"));
   } finally {
     upgraded.close();
   }
@@ -490,7 +502,7 @@ test("newer persisted vault schema is refused before accepting bounded work", as
     path = join(f.root, "vault.sqlite");
   const future = new DatabaseSync(path);
   try {
-    future.exec("PRAGMA user_version=2; CREATE TABLE settings(id INTEGER PRIMARY KEY CHECK(id=1),capacity TEXT NOT NULL)");
+    future.exec("PRAGMA user_version=3; CREATE TABLE settings(id INTEGER PRIMARY KEY CHECK(id=1),capacity TEXT NOT NULL)");
   } finally {
     future.close();
   }
@@ -502,7 +514,7 @@ test("newer persisted vault schema is refused before accepting bounded work", as
   );
   const unchanged = new DatabaseSync(path, { readOnly: true });
   try {
-    assert.equal(unchanged.prepare("PRAGMA user_version").get()?.user_version, 2);
+    assert.equal(unchanged.prepare("PRAGMA user_version").get()?.user_version, 3);
     assert.equal(
       unchanged
         .prepare("SELECT count(*) AS count FROM sqlite_master WHERE type='table' AND name='artifacts'")
