@@ -31,8 +31,6 @@ export type PolicyCall = {
    * what classification could not prove. Deny and hold rules still match.
    */
   readonly unclassified?: boolean;
-  /** The intercepted arguments, shown to the approver before deciding. */
-  readonly args?: Readonly<Record<string, unknown>>;
 };
 
 /** The resolved action for a call. */

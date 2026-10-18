@@ -102,13 +102,17 @@ function newestHold(queue: HoldQueue, tool: string): HeldCall {
 }
 
 function policyCallFromHeld(held: HeldCall): PolicyCall {
+  // Args stay on the HeldCall and live in this process only: approval state
+  // is durable, and call arguments can carry secrets, so the record a later
+  // reader sees must not reproduce what the call was handed. The approve.test
+  // fixture pins that boundary by asserting the persisted bytes never contain
+  // the arguments it handed the hold.
   return {
     tool: held.tool,
     connector: connectorFromTool(held.tool),
     workspace: undefined,
     klass: held.klass,
     blastRadius: held.blastRadius,
-    args: held.args,
   };
 }
 
