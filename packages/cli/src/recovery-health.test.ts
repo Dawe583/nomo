@@ -1,6 +1,7 @@
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import {
+  chmod,
   lstat,
   mkdtemp,
   readFile,
@@ -8,9 +9,10 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { inspectRecoveryHealth } from "./recovery-health.ts";
@@ -97,6 +99,11 @@ test("health reports verified history, vault capacity and retained unknown work"
     pinned: 0,
     released: 0,
     withoutEvidence: 1,
+    filePresent: false,
+    fileEvidence: 0,
+    filePinned: 0,
+    fileReleased: 0,
+    fileWithoutEvidence: 0,
   });
   assert.deepEqual(report.repairs, ["review-retained-unknown-work"]);
 });
@@ -135,8 +142,78 @@ test("health reports the vault's retention evidence in one summary", async (t) =
     pinned: 1,
     released: 1,
     withoutEvidence: /* fixture seed + orphan */ 2,
+    filePresent: false,
+    fileEvidence: 0,
+    filePinned: 0,
+    fileReleased: 0,
+    fileWithoutEvidence: 0,
   });
   assert.equal(await vault.get("test", orphan), "orphan");
+});
+
+test("health counts the legacy file half beside the reserved store", async (t) => {
+  const f = await fixture(t);
+  const vault = reservedRecoveryVault(
+    join(f.stateDir, "vault"),
+    { local: f.key },
+    "local",
+    { maxArtifactBytes: 1024, maxTotalBytes: 4096 },
+  );
+  await vault.put("test", "reserved side");
+  // The file half: one released artifact with evidence, one file with none.
+  const released = Buffer.from("file released", "utf8"),
+    releasedDigest = createHash("sha256").update(released).digest("hex"),
+    fileRoot = join(f.stateDir, "vault", "test"),
+    fileIndex = join(f.stateDir, "retention-index", "test");
+  // The reader enforces the private mode the collector creates its dirs
+  // with, so the fixture does the same instead of a looser mkdir default.
+  await mkdir(fileRoot, { recursive: true, mode: 0o700 });
+  // The health reader counts these through the reserved vault's legacy
+  // namespace, whose writer leaves private artifacts at 0600, so the
+  // fixture does too: a looser file mode is a refusal the detail names.
+  await writeFile(join(fileRoot, releasedDigest), released, { mode: 0o600 });
+  await mkdir(fileIndex, { recursive: true, mode: 0o700 });
+  // A recorded release names the protection it removed: who, when, and which
+  // pin, which is the exact shape a real operator release leaves behind.
+  await writeFile(
+    join(fileIndex, `${releasedDigest}.meta`),
+    JSON.stringify({
+      release: {
+        operatorId: "operator",
+        at: new Date(0).toISOString(),
+        released: { ownerId: "operator-1", kind: "recovery" },
+      },
+    }),
+  );
+  const orphan = Buffer.from("file unrecorded", "utf8");
+  await writeFile(
+    join(fileRoot, createHash("sha256").update(orphan).digest("hex")),
+    orphan,
+    // Same private mode the legacy writer leaves artifacts at.
+    { mode: 0o600 },
+  );
+  const report = await inspectRecoveryHealth({
+    stateDir: f.stateDir,
+    workspace: "test",
+    adapter: { id: "filesystem.managed", version: "1" },
+    encryptionKey: f.key,
+  });
+  assert.deepEqual(
+    {
+      filePresent: report.retention.filePresent,
+      fileEvidence: report.retention.fileEvidence,
+      filePinned: report.retention.filePinned,
+      fileReleased: report.retention.fileReleased,
+      fileWithoutEvidence: report.retention.fileWithoutEvidence,
+    },
+    {
+      filePresent: true,
+      fileEvidence: 1,
+      filePinned: 0,
+      fileReleased: 1,
+      fileWithoutEvidence: 1,
+    },
+  );
 });
 
 test("health is read-only and refuses missing or mismatched retained keys", async (t) => {
@@ -251,4 +328,23 @@ test("health does not call a retained vault healthy without its encryption key",
   assert.equal(report.status, "unavailable");
   assert.equal(report.state.vault, "unavailable");
   assert.match(report.repairs.join(","), /provide-original-encryption-key/);
+});
+
+test("health names what it could not prove about an unprovable vault", async (t) => {
+  const f = await fixture(t);
+  // A vault directory anyone else can read is exactly the condition the
+  // report exists to name: invalid, with the message that says which check
+  // failed and on which path, rather than a bare status.
+  await chmod(join(f.stateDir, "vault"), 0o755);
+  const report = await inspectRecoveryHealth({
+    stateDir: f.stateDir,
+    workspace: "test",
+    adapter: { id: "filesystem.managed", version: "1" },
+    encryptionKey: f.key,
+  });
+  assert.equal(report.state.vault, "invalid");
+  assert.equal(
+    typeof report.vaultDetail === "string" && report.vaultDetail.includes("0700"),
+    true,
+  );
 });

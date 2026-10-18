@@ -16,6 +16,7 @@ import { createHash } from "node:crypto";
 import {
   auditFileVaultCollection,
   evaluateFileVaultRetentionPolicy,
+  summarizeFileVaultRetention,
 } from "./file-retention.ts";
 import {
   MANUAL_RETENTION_POLICY,
@@ -159,4 +160,74 @@ test("the evaluator stays a pure function over the listed files", () => {
   assert.equal(aged.deleting.length, 1);
   assert.equal(aged.skippedPinned, 1);
   assert.equal(aged.retained, 0);
+});
+
+test("the summary reports files the never written evidence tree still holds", async (t) => {
+  const f = await fixture(t),
+    artifact = await f.put("kept");
+  await f.age(artifact, 60_000);
+  const summary = await summarizeFileVaultRetention({
+    root: f.root,
+    index: f.index,
+    workspace: "test",
+  });
+  // present stays false because nothing is recorded anywhere, while the
+  // files are exactly the protected-with-nothing-readable case a health
+  // report exists to surface rather than hide.
+  assert.deepEqual(summary, {
+    present: false,
+    evidence: 0,
+    pinned: 0,
+    released: 0,
+    withoutEvidence: 1,
+  });
+});
+
+test("the summary counts pins, releases and files with no record at all", async (t) => {
+  const f = await fixture(t),
+    releasedFile = await f.put("released"),
+    pinnedFile = await f.put("pinned");
+  await f.release(releasedFile);
+  await markVaultLifecycle({
+    root: f.root,
+    index: f.index,
+    workspace: "test",
+    reference: { digest: pinnedFile.digest, keyId: "local", bytes: pinnedFile.size },
+    pin: { ownerId: "op-a", kind: "recovery" },
+  });
+  await f.put("unrecorded");
+  const summary = await summarizeFileVaultRetention({
+    root: f.root,
+    index: f.index,
+    workspace: "test",
+  });
+  assert.deepEqual(summary, {
+    present: true,
+    evidence: 2,
+    pinned: 1,
+    released: 1,
+    // The artifact beyond both sidecars is the protected-with-nothing-
+    // readable count the reserved store names as its orphans.
+    withoutEvidence: 1,
+  });
+});
+
+test("a record the summary cannot prove refuses the counts outright", async (t) => {
+  const f = await fixture(t),
+    artifact = await f.put("kept");
+  // A sidecar the lifecycle reader refuses is a refusal, not a zero: health
+  // inherits the collector's rule that unparsable or unknown evidence never
+  // counts as protection. The sidecar must sit where the collector reads
+  // it, in the workspace directory of the evidence tree.
+  const sidecar = join(f.index, "test", `${artifact.digest}.meta`);
+  await mkdir(join(f.index, "test"), { recursive: true });
+  await writeFile(sidecar, "{not proven");
+  await assert.rejects(
+    summarizeFileVaultRetention({
+      root: f.root,
+      index: f.index,
+      workspace: "test",
+    }),
+    /lifecycle is invalid/,
+  );
 });

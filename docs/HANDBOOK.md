@@ -227,7 +227,13 @@ Every run writes the same signed journal chain a runtime capture does, so a
 shell-driven delete is audited exactly like a runtime one. `nomo recovery
 health` summarizes the same evidence as one `retention` section: how much
 is recorded, how much is pinned, how much is released, and how much of the
-vault is protected with nothing an operator can read.
+vault is protected with nothing an operator can read. The summary carries
+the file vault beside the reserved store under `filePresent` through
+`fileWithoutEvidence`, counted from the same `retention-index` tree the
+file collector writes, so both stores' protection is one report. When the
+vault read cannot prove itself the report is invalid, and `vaultDetail`
+names the message it failed on rather than leaving an operator at the
+word invalid.
 
 Check the complete source installation:
 
@@ -672,7 +678,7 @@ nomo replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key ba
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
-nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config <file> [--input <file>] [--approve <digest>]
+nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config <file> [--input <file>] [--approve <digest>] [--retention-policy <file>] [--surface file|reserved|both] [--dry-run]
 nomo policy list | show <name> | validate <file>
 nomo approve <hold-id> --by <who> [--deny] [--reason <text>] [--dir <path>]
 nomo approvals --dir <path> [--json]

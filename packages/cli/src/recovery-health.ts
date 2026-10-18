@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import { retainedKeyProvider } from "../../ledger/src/sign.ts";
+import { summarizeFileVaultRetention } from "../../runtime/src/file-retention.ts";
 import { recoveryKeyProof } from "../../runtime/src/reserved-vault.ts";
 import type { KeyProvider } from "../../ledger/src/index.ts";
 import {
@@ -35,16 +36,28 @@ export type RecoveryHealthReport = {
    * unfiltered way capacity is. `withoutEvidence` counts artifacts whose
    * (workspace, digest) has no recorded lifecycle: they are still protected,
    * but by nothing an operator can read, which is exactly what a collector
-   * run would refuse to reason about. */
+   * run would refuse to reason about. The file fields carry the legacy file
+   * half that lives in workspace directories beside vault.sqlite: its
+   * evidence tree is the `retention-index` the file collector writes, and an
+   * unreadable sidecar keeps the store unprovable rather than guessed at. */
   retention: {
     present: boolean;
     evidence: number;
     pinned: number;
     released: number;
     withoutEvidence: number;
+    filePresent: boolean;
+    fileEvidence: number;
+    filePinned: number;
+    fileReleased: number;
+    fileWithoutEvidence: number;
   };
   jobs: { paused: number; unknown: number };
   repairs: string[];
+  /** Set only when the vault read could not prove itself: the message the
+   * read failed with, naming the mode or the path an operator has to fix.
+   * A report that is only invalid teaches nothing on its own. */
+  vaultDetail?: string;
 };
 
 type HealthInput = {
@@ -170,6 +183,10 @@ async function readVault(
   status: RecoveryHealthReport["state"]["vault"];
   capacity: RecoveryHealthReport["capacity"];
   retention: RecoveryHealthReport["retention"];
+  /** Why the store is unprovable, when the status is. A vault an operator
+   * cannot act on from the word invalid is a diagnostic that reports a
+   * state without naming it, so the catch carries what it caught. */
+  detail?: string;
 }> {
   const root = join(input.stateDir, "vault");
   const path = join(root, "vault.sqlite");
@@ -189,6 +206,11 @@ async function readVault(
     pinned: 0,
     released: 0,
     withoutEvidence: 0,
+    filePresent: false,
+    fileEvidence: 0,
+    filePinned: 0,
+    fileReleased: 0,
+    fileWithoutEvidence: 0,
   };
   try {
     await assertPrivateDirectoryPath(root, "recovery vault directory");
@@ -203,6 +225,12 @@ async function readVault(
       status: isMissing(error) ? "missing" : "invalid",
       capacity: empty,
       retention: emptyRetention,
+      ...(isMissing(error)
+        ? {}
+        : {
+            detail:
+              error instanceof Error ? error.message : String(error),
+          }),
     };
   }
   let db: DatabaseSync;
@@ -213,6 +241,12 @@ async function readVault(
       status: isMissing(error) ? "missing" : "unavailable",
       capacity: empty,
       retention: emptyRetention,
+      ...(isMissing(error)
+        ? {}
+        : {
+            detail:
+              error instanceof Error ? error.message : String(error),
+          }),
     };
   }
   try {
@@ -224,7 +258,12 @@ async function readVault(
       !("capacity" in settings) ||
       typeof settings.capacity !== "string"
     )
-      return { status: "invalid", capacity: empty, retention: emptyRetention };
+      return {
+        status: "invalid",
+        capacity: empty,
+        retention: emptyRetention,
+        detail: "the vault settings row does not carry a capacity object",
+      };
     const parsed: unknown = JSON.parse(settings.capacity);
     if (
       typeof parsed !== "object" ||
@@ -239,7 +278,12 @@ async function readVault(
       parsed.maxArtifactBytes < 1 ||
       parsed.maxTotalBytes < 1
     )
-      return { status: "invalid", capacity: empty, retention: emptyRetention };
+      return {
+        status: "invalid",
+        capacity: empty,
+        retention: emptyRetention,
+        detail: "the vault settings row does not carry a capacity object",
+      };
     const artifacts = db
       .prepare("SELECT count(*) AS count,COALESCE(SUM(length(data)),0) AS bytes FROM artifacts")
       .get();
@@ -273,8 +317,26 @@ async function readVault(
         pinned: numberField(records, "pinned") ?? 0,
         released: numberField(records, "released") ?? 0,
         withoutEvidence: numberField(orphaned, "count") ?? 0,
+        // The file half is merged in below for either branch, so the shell
+        // here starts zeroed for it the way item absent evidence is.
+        filePresent: false,
+        fileEvidence: 0,
+        filePinned: 0,
+        fileReleased: 0,
+        fileWithoutEvidence: 0,
       };
     }
+    // The reserved counts and the file half are independent facts about the
+    // same vault: a schema 1 reserved store can still carry file evidence
+    // beside it, so the summary reads the retention-index tree in either
+    // case. A sidecar the reader cannot parse throws, which lands in the
+    // catch below as the invalid shell rather than a guessed count.
+    const file = await summarizeFileVaultRetention({
+      root,
+      index: join(input.stateDir, "retention-index"),
+      workspace: input.workspace,
+    });
+    retention = { ...retention, filePresent: file.present, fileEvidence: file.evidence, filePinned: file.pinned, fileReleased: file.released, fileWithoutEvidence: file.withoutEvidence };
     const artifactBytes = numberField(artifacts, "bytes") ?? 0;
     const reservationBytes = numberField(reservations, "bytes") ?? 0;
     const legacy = await legacyBytes(root);
@@ -303,14 +365,26 @@ async function readVault(
       !("proof" in marker) ||
       typeof marker.proof !== "string"
     )
-      return { status: "invalid", capacity, retention };
+      return {
+        status: "invalid",
+        capacity,
+        retention,
+        detail: "the vault key check carries no proof string",
+      };
     const expected = recoveryKeyProof(encryptionKey, keyId);
     if (marker.proof !== expected) return { status: "mismatch", capacity, retention };
     return { status: "verified", capacity, retention };
-  } catch {
+  } catch (error) {
     // A partial read reports the empty retention shell, the way capacity
-    // degrades: an unprovable vault is one an operator inspects.
-    return { status: "invalid", capacity: empty, retention: emptyRetention };
+    // degrades: an unprovable vault is one an operator inspects, and a
+    // report that says invalid without naming what it could not prove
+    // leaves the operator no place to start.
+    return {
+      status: "invalid",
+      capacity: empty,
+      retention: emptyRetention,
+      detail: error instanceof Error ? error.message : String(error),
+    };
   } finally {
     db.close();
   }
@@ -346,6 +420,11 @@ export async function inspectRecoveryHealth(
       pinned: 0,
       released: 0,
       withoutEvidence: 0,
+      filePresent: false,
+      fileEvidence: 0,
+      filePinned: 0,
+      fileReleased: 0,
+      fileWithoutEvidence: 0,
     },
     jobs: { paused: 0, unknown: 0 },
     repairs: [],
@@ -387,6 +466,7 @@ export async function inspectRecoveryHealth(
   report.state.vault = vault.status;
   report.capacity = vault.capacity;
   report.retention = vault.retention;
+  if (vault.detail !== undefined) report.vaultDetail = vault.detail;
   if (vault.status === "missing") {
     addRepair(repairs, "restore-vault-snapshot");
     markUnavailable(report);
