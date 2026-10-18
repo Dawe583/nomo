@@ -94,7 +94,7 @@ export function validateRetentionPolicy(
   });
 }
 
-const evidenceDir = (index: string, workspace: string, artifactRoot: string): string => {
+export const evidenceDir = (index: string, workspace: string, artifactRoot: string): string => {
   if (!/^[\w-]{1,100}$/.test(workspace))
     throw new Error("Invalid vault retention workspace.");
   // The evidence tree must not be the artifact tree, or any parent of it: the
@@ -379,7 +379,7 @@ export type VaultGarbageOptions = {
   readonly clock?: () => Date;
   readonly authorize: (request: RetentionRequest) => Promise<boolean>;
 };
-type VaultFile = {
+export type VaultFile = {
   readonly path: string;
   readonly artifact: ArtifactIdentity;
   readonly size: number;
@@ -545,7 +545,7 @@ async function withRetentionLock<T>(
   }
 }
 
-async function vaultFiles(
+export async function vaultFiles(
   artifacts: string,
   evidence: string,
 ): Promise<VaultFile[]> {
