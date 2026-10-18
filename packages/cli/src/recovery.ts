@@ -14,10 +14,12 @@ import {
   collectReservedVaultGarbage,
   validateRetentionPolicy,
   digest,
+  collectVaultGarbage,
   type ExecutionRequest,
   type RecoveryPlan,
   type RecoveryJobRequest,
 } from "../../runtime/src/index.ts";
+import { auditFileVaultCollection } from "../../runtime/src/file-retention.ts";
 import {
   managedPostgresAdapter,
   installManagedPostgres,
@@ -93,7 +95,7 @@ export async function runRecoveryCommand(
       continue;
     }
     if (
-      !["--config", "--input", "--approve", "--retention-policy", "--operation"].includes(
+      !["--config", "--input", "--approve", "--retention-policy", "--operation", "--surface"].includes(
         rest[i] ?? "",
       ) ||
       !rest[i + 1] ||
@@ -124,7 +126,7 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--dry-run]",
+      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--surface file|reserved|both] [--dry-run]",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -373,43 +375,116 @@ export async function runRecoveryCommand(
         ? await readRetentionPolicy(resolve(dirname(configPath), policyArg))
         : undefined,
       stamp = Date.now().toString(36);
+    const surfaceArg = args.get("--surface");
+    if (surfaceArg !== undefined && !["file", "reserved", "both"].includes(surfaceArg))
+      throw new Error("The collect surface must be file, reserved, or both.");
+    const surface = surfaceArg ?? "reserved";
+    // The legacy file artifacts share the reserved vault's root: workspace
+    // directories sit beside vault.sqlite there, and the retention evidence
+    // for them must therefore live outside it in its own index directory.
+    const fileRoot = join(state, "vault"),
+      fileIndex = join(state, "retention-index");
     if (dryRun) {
       // A prediction opens no journal chain and signs nothing: the chain is
       // the evidence a delete happened, so a run that deletes nothing must
       // never leave one behind as if it had.
-      const audit = await auditReservedVaultCollection({
-        workspace: config.workspace,
-        ...(policy === undefined ? {} : { policy }),
-        vault,
-      });
-      print(
-        JSON.stringify(
-          { dryRun: true, mode: policy?.mode ?? "manual", ...audit },
+      const printAudit = async () => {
+        const reserved =
+          surface === "file"
+            ? undefined
+            : await auditReservedVaultCollection({
+                workspace: config.workspace,
+                ...(policy === undefined ? {} : { policy }),
+                vault,
+              });
+        const file =
+          surface === "reserved"
+            ? undefined
+            : await auditFileVaultCollection({
+                root: fileRoot,
+                index: fileIndex,
+                workspace: config.workspace,
+                ...(policy === undefined ? {} : { policy }),
+              });
+        if (file === undefined)
+          return JSON.stringify(
+            { dryRun: true, mode: policy?.mode ?? "manual", ...reserved },
+            null,
+            2,
+          );
+        return JSON.stringify(
+          {
+            dryRun: true,
+            surface,
+            mode: policy?.mode ?? "manual",
+            ...(reserved === undefined ? {} : { reserved }),
+            file,
+          },
           null,
           2,
-        ),
+        );
+      };
+      print(await printAudit());
+      return 0;
+    }
+    if (surface === "reserved") {
+      const garbage = await collectReservedVaultGarbage({
+        workspace: config.workspace,
+        journal,
+        vault,
+        operationId: args.get("--operation") ?? `collect-${stamp}`,
+        agentId: config.agentId ?? "operator",
+        runId: `collect-${stamp}`,
+        ...(policy === undefined ? {} : { policy }),
+        authorize: async () => true,
+      });
+      print(JSON.stringify({ mode: policy?.mode ?? "manual", ...garbage }, null, 2));
+      return 0;
+    }
+    // Each surface gets its own operation id suffix, so the two chains stay
+    // independently verifiable rather than interleaving stages of unrelated
+    // stores under one id.
+    const baseId = args.get("--operation") ?? `collect-${stamp}`;
+    if (surface === "file") {
+      const garbage = await collectVaultGarbage({
+        root: fileRoot,
+        index: fileIndex,
+        workspace: config.workspace,
+        journal,
+        operationId: `${baseId}-file`,
+        agentId: config.agentId ?? "operator",
+        runId: `collect-${stamp}`,
+        ...(policy === undefined ? {} : { policy }),
+        authorize: async () => true,
+      });
+      print(
+        JSON.stringify({ surface: "file", mode: policy?.mode ?? "manual", ...garbage }, null, 2),
       );
       return 0;
     }
-    const garbage = await collectReservedVaultGarbage({
+    const reserved = await collectReservedVaultGarbage({
       workspace: config.workspace,
       journal,
       vault,
-      operationId: args.get("--operation") ?? `collect-${stamp}`,
+      operationId: `${baseId}-reserved`,
+      agentId: config.agentId ?? "operator",
+      runId: `collect-${stamp}`,
+      ...(policy === undefined ? {} : { policy }),
+      authorize: async () => true,
+    });
+    const file = await collectVaultGarbage({
+      root: fileRoot,
+      index: fileIndex,
+      workspace: config.workspace,
+      journal,
+      operationId: `${baseId}-file`,
       agentId: config.agentId ?? "operator",
       runId: `collect-${stamp}`,
       ...(policy === undefined ? {} : { policy }),
       authorize: async () => true,
     });
     print(
-      JSON.stringify(
-        {
-          mode: policy?.mode ?? "manual",
-          ...garbage,
-        },
-        null,
-        2,
-      ),
+      JSON.stringify({ surface: "both", mode: policy?.mode ?? "manual", reserved, file }, null, 2),
     );
     return 0;
   }

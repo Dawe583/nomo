@@ -197,6 +197,27 @@ nomo recovery collect --config ./nomo-recovery.json --retention-policy ./retenti
 nomo recovery collect --config ./nomo-recovery.json --retention-policy ./retention.json --dry-run
 ```
 
+`--dry-run` prints the predicted report and the digests the real run would
+remove, and writes nothing: no artifact is deleted and no journal chain is
+opened, so a prediction cannot be mistaken for a collection that ran.
+
+The legacy file artifacts an older binary wrote share the reserved vault's
+root, and the reserved collector does not collect them. `--surface file`
+runs the file vault's own collector over those workspace directories, and
+`--surface both` runs both collectors with distinct operation ids:
+
+```sh
+nomo recovery collect --config ./nomo-recovery.json --surface file
+nomo recovery collect --config ./nomo-recovery.json --surface both
+```
+
+The file collector follows the same rules: a file with no recorded evidence
+is protected, a recorded pin stays until a named release, and only unpinned
+files provably past the policy's TTL are removed. Its pin evidence lives in
+the state directory's `retention-index` tree, outside the vault root, so a
+retained-state restore for collection must restore that tree beside the
+vault.
+
 An age policy names a TTL for unpinned artifacts. Collection deletes only
 artifacts whose recorded lifecycle leaves them unpinned and provably past
 that TTL: a pinned artifact stays until a named release, an artifact with no

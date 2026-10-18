@@ -143,8 +143,11 @@ still fails closed before dispatch, or leaves an uncertain result after dispatch
 Streaming, pin release, retention-index backup and administrative quota
 migration are implemented and described under "File recovery vault retention"
 below. Automatic collection remains unfinished: collection for the legacy file
-vault is operator-driven. Capacity settings persist and mismatching workers are
-rejected.
+vault is operator-driven through `nomo recovery collect --surface file`, or
+`--surface both` for both stores at once, which runs the file collector with
+the same signed-chain stage protocol and the same write-nothing dry-run audit
+the reserved collector has. Capacity settings persist and mismatching workers
+are rejected.
 
 ## File recovery vault retention
 
