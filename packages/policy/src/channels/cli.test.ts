@@ -108,6 +108,29 @@ describe("the CLI approval channel", () => {
     assert.ok(!line.includes("sekret-999"));
   });
 
+  test("renderHold redacts JSON argument values no key=value pattern would catch", () => {
+    const line = renderHold(
+      {
+        ...call,
+        id: "h0013",
+        heldAt: 1,
+        expiresAt: Date.now() + 60_000,
+        args: {
+          password: "sekret-42",
+          apiKey: "k-999",
+          secret_value: "s-777",
+          note: "visible",
+        },
+      },
+      12,
+      Date.now(),
+    );
+    assert.ok(!line.includes("sekret-42"));
+    assert.ok(!line.includes("k-999"));
+    assert.ok(!line.includes("s-777"));
+    assert.ok(line.includes("visible"), "non secret arguments stay readable");
+  });
+
   test("renderHold bounds oversized arguments instead of blowing the row", () => {
     const args: Record<string, unknown> = { payload: "x".repeat(500) };
     const line = renderHold(

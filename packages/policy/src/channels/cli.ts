@@ -28,7 +28,14 @@ const redactSecrets = (value: string): string =>
     .replace(/-H\s+"Authorization:[^"]*"/gi, "[redacted]")
     .replace(/Authorization:\s*\S+/gi, "[redacted]")
     .replace(/Bearer\s+\S+/g, "[redacted]")
-    .replace(/\b(?:token|key|password)=\S+/gi, "[redacted]");
+    .replace(/\b(?:token|key|password)=\S+/gi, "[redacted]")
+    // The row prints compact JSON, where an argument has no equals sign:
+    // {"password":"x"} would read in full if only the key=value pattern ran,
+    // so the JSON argument shape is redacted by its argument name instead.
+    .replace(
+      /("(?:[^"]*?(?:api[-_]?key|secret|token|password|credential|authorization)[^"]*?)"\s*:\s*)"[^"]*"/gi,
+      '$1"[redacted]"',
+    );
 
 const renderArgs = (args: Readonly<Record<string, unknown>>): string => {
   if (Object.keys(args).length === 0) return "";
