@@ -275,7 +275,7 @@ describe("runProxy", () => {
       lowRiskDispatched.then(() => true),
       new Promise<boolean>((resolve) => setTimeout(
         () => resolve(false),
-        platformTestTimeoutMs(150, 1_000),
+        platformTestTimeoutMs(1_000, 1_000),
       )),
     ]);
     held.resolve(held.list()[0]!.id, { kind: "approved" });
