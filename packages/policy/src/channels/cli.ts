@@ -18,11 +18,30 @@ export type ApprovalView = {
   readonly ids: readonly string[];
 };
 
+// A y or n on a held write is a decision about specific values, so the screen
+// must carry them: an operator who approves `aws.s3.object.delete` without
+// seeing the key approves a key name they never read. Secrets are redacted
+// with the same patterns the workbench shell rows use, and long payloads are
+// bounded so one oversized argument cannot scroll the queue past the prompt.
+const redactSecrets = (value: string): string =>
+  value
+    .replace(/-H\s+"Authorization:[^"]*"/gi, "[redacted]")
+    .replace(/Authorization:\s*\S+/gi, "[redacted]")
+    .replace(/Bearer\s+\S+/g, "[redacted]")
+    .replace(/\b(?:token|key|password)=\S+/gi, "[redacted]");
+
+const renderArgs = (args: Readonly<Record<string, unknown>>): string => {
+  if (Object.keys(args).length === 0) return "";
+  const bounded = redactSecrets(JSON.stringify(args)).slice(0, 200);
+  const ellipsis = bounded.length === 200 ? "..." : "";
+  return ` args ${bounded}${ellipsis}`;
+};
+
 export function renderHold(call: HeldCall, index: number, now: number): string {
   const left = Math.max(0, Math.round((call.expiresAt - now) / 1000));
   const radius = call.blastRadius === undefined ? "unknown" : `${call.blastRadius}`;
   const reason = call.rationale === undefined ? "" : `: ${call.rationale}`;
-  return `[${index}] ${call.id} ${call.tool} (${call.klass}, ${radius} touched) ${left}s left${reason}`;
+  return `[${index}] ${call.id} ${call.tool} (${call.klass}, ${radius} touched) ${left}s left${reason}${renderArgs(call.args)}`;
 }
 
 /** The whole queue as one view, oldest first, because that is the order they expire. */

@@ -75,4 +75,53 @@ describe("the CLI approval channel", () => {
     assert.ok(line.includes("41883"));
     assert.ok(line.includes("human looks first"));
   });
+
+  test("renderHold carries the held arguments so the operator decides on values", () => {
+    const line = renderHold(
+      {
+        ...call,
+        id: "h0010",
+        heldAt: 1,
+        expiresAt: Date.now() + 60_000,
+        args: { bucket: "acme-invoices", key: "2026/oct-final.pdf" },
+      },
+      9,
+      Date.now(),
+    );
+    assert.ok(line.includes("acme-invoices"));
+    assert.ok(line.includes("2026/oct-final.pdf"));
+  });
+
+  test("renderHold redacts secrets in arguments and never prints the value", () => {
+    const line = renderHold(
+      {
+        ...call,
+        id: "h0011",
+        heldAt: 1,
+        expiresAt: Date.now() + 60_000,
+        args: { Authorization: "Bearer sekret-999", note: "call Accounting" },
+      },
+      10,
+      Date.now(),
+    );
+    assert.ok(line.includes("[redacted]"));
+    assert.ok(!line.includes("sekret-999"));
+  });
+
+  test("renderHold bounds oversized arguments instead of blowing the row", () => {
+    const args: Record<string, unknown> = { payload: "x".repeat(500) };
+    const line = renderHold(
+      {
+        ...call,
+        id: "h0012",
+        heldAt: 1,
+        expiresAt: Date.now() + 60_000,
+        args,
+      },
+      11,
+      Date.now(),
+    );
+    assert.ok(line.includes("..."));
+    assert.ok(line.length < 400);
+  });
 });
