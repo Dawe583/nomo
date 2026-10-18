@@ -233,7 +233,10 @@ the file vault beside the reserved store under `filePresent` through
 file collector writes, so both stores' protection is one report. When the
 vault read cannot prove itself the report is invalid, and `vaultDetail`
 names the message it failed on rather than leaving an operator at the
-word invalid.
+word invalid. The command is a gate, not prose: it exits zero only when
+the report is healthy, so degraded, unsafe and unavailable all exit 1
+under the rule a counter surface that prints a problem and exits zero is
+a false pass, while the status field keeps naming the exact state.
 
 Check the complete source installation:
 

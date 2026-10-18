@@ -15,7 +15,10 @@ import { join } from "node:path";
 import { createHash, randomBytes } from "node:crypto";
 import { jsonlStore } from "../../ledger/src/store.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
-import { inspectRecoveryHealth } from "./recovery-health.ts";
+import {
+  inspectRecoveryHealth,
+  recoveryHealthExitCode,
+} from "./recovery-health.ts";
 import { runRecoveryCommand } from "./recovery.ts";
 import { reservedRecoveryVault } from "../../runtime/src/reserved-vault.ts";
 
@@ -347,4 +350,14 @@ test("health names what it could not prove about an unprovable vault", async (t)
     typeof report.vaultDetail === "string" && report.vaultDetail.includes("0700"),
     true,
   );
+});
+
+test("the health exit is a gate: healthy is the only zero", () => {
+  // The metrics rule, carried one surface over: a report that names a real
+  // condition and then exits zero is a false pass an automation records
+  // forever.
+  assert.equal(recoveryHealthExitCode("healthy"), 0);
+  assert.equal(recoveryHealthExitCode("degraded"), 1);
+  assert.equal(recoveryHealthExitCode("unsafe"), 1);
+  assert.equal(recoveryHealthExitCode("unavailable"), 1);
 });

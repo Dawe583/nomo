@@ -2,7 +2,10 @@ import { managedGitAdapter } from "../../connectors/src/git/managed.ts";
 import { managedFilesystemAdapter } from "../../connectors/src/filesystem/managed.ts";
 import { assertRecoveryStateOutsideRoot } from "./recovery-paths.ts";
 import { runConformanceCommand } from "./conformance.ts";
-import { inspectRecoveryHealth } from "./recovery-health.ts";
+import {
+  inspectRecoveryHealth,
+  recoveryHealthExitCode,
+} from "./recovery-health.ts";
 import { readFile, readdir, lstat } from "node:fs/promises";
 import { resolve, join, dirname } from "node:path";
 import { devKeyProvider, retainedKeyProvider } from "../../ledger/src/sign.ts";
@@ -160,7 +163,7 @@ export async function runRecoveryCommand(
     // it without reading the config file, and so a restricted workspace is
     // never mistaken for a broken one.
     print(JSON.stringify({ ...report, mode: config.mode ?? "normal" }));
-    return report.status === "unavailable" || report.status === "unsafe" ? 1 : 0;
+    return recoveryHealthExitCode(report.status);
   }
   const mode: RecoveryMode = config.mode ?? "normal";
   const postgres = config.postgres;

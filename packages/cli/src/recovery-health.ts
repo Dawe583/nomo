@@ -13,6 +13,16 @@ import {
 } from "../../ledger/src/hardening.ts";
 
 export type RecoveryHealthStatus = "healthy" | "degraded" | "unavailable" | "unsafe";
+
+/** Exit contract for the health command: a report is a gate, not prose. A
+ * degraded vault is attention an operator has to act on, and unsafe or
+ * unavailable is a store the runtime refuses to run through, so all three
+ * end non-zero under the same rule the metrics command follows: a
+ * machine-readable surface that prints a problem and exits zero is a
+ * false pass. */
+export function recoveryHealthExitCode(status: RecoveryHealthStatus): number {
+  return status === "healthy" ? 0 : 1;
+}
 export type RecoveryHealthReport = {
   status: RecoveryHealthStatus;
   adapter: { id: string; version: string };
