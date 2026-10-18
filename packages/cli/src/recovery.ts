@@ -29,6 +29,15 @@ import {
   migrateManagedPostgres,
   type ManagedPostgresOptions,
 } from "../../connectors/src/postgres/managed.ts";
+import {
+  listFileVaultRetention,
+  listReservedVaultRetention,
+  markFileVaultUnpinned,
+  pinFileVaultLifecycle,
+  releaseFileVaultPin,
+  reservedVaultReference,
+  type RetentionRow,
+} from "./recovery-retention.ts";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { recoveryMcpServer } from "./recovery-mcp.ts";
 import { loadPolicy, decide } from "../../policy/src/index.ts";
@@ -88,17 +97,37 @@ export async function runRecoveryCommand(
   if (action === "conformance") return runConformanceCommand(rest, print);
   const args = new Map<string, string>();
   let dryRun = false;
+  let listOnly = false;
   for (let i = 0; i < rest.length; ) {
-    if (rest[i] === "--dry-run") {
-      // The only bare flag: a prediction carries no value, so a `--dry-run
-      // file` typo on the next token would otherwise be parsed as it.
-      if (dryRun) throw new Error("Invalid recovery arguments.");
-      dryRun = true;
+    if (rest[i] === "--dry-run" || (action === "retention" && rest[i] === "--list")) {
+      // Bare flags: a prediction and a listing carry no value, so a
+      // `--dry-run file` typo on the next token would otherwise be parsed
+      // as one.
+      if (rest[i] === "--dry-run") {
+        if (dryRun) throw new Error("Invalid recovery arguments.");
+        dryRun = true;
+      }
+      // --list is parsed as its own bare flag and rejected again in the
+      // retention block when it collides with a transition.
+      listOnly = true;
       i += 1;
       continue;
     }
     if (
-      !["--config", "--input", "--approve", "--retention-policy", "--operation", "--surface"].includes(
+      ![
+        "--config",
+        "--input",
+        "--approve",
+        "--retention-policy",
+        "--operation",
+        "--surface",
+        "--as",
+        "--pins",
+        "--kind",
+        "--pin",
+        "--mark-unpinned",
+        "--release",
+      ].includes(
         rest[i] ?? "",
       ) ||
       !rest[i + 1] ||
@@ -125,11 +154,12 @@ export async function runRecoveryCommand(
       "reconcile-recovery",
       "serve",
       "collect",
+      "retention",
     ].includes(action ?? "") ||
     !args.get("--config")
   )
     throw new Error(
-      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--surface file|reserved|both] [--dry-run]",
+      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--surface file|reserved|both] [--dry-run] OR nomo recovery retention --config file (--list | (--pin|--mark-unpinned|--release) <digest> --as <owner> [--kind recovery|operator] [--pins owner:kind])",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -209,7 +239,7 @@ export async function runRecoveryCommand(
   const input =
     action === "serve"
       ? { workspace: config.workspace }
-      : action === "collect"
+      : action === "collect" || action === "retention"
         ? null
         : JSON.parse(await readFile(resolve(args.get("--input")!), "utf8"));
   if (input !== null && (input as { workspace: unknown }).workspace !== config.workspace)
@@ -488,6 +518,135 @@ export async function runRecoveryCommand(
     });
     print(
       JSON.stringify({ surface: "both", mode: policy?.mode ?? "manual", reserved, file }, null, 2),
+    );
+    return 0;
+  }
+  if (action === "retention") {
+    // Exactly one transition runs per invocation, so a half-typed command
+    // cannot move two different protections at once.
+    const surfaceArg = args.get("--surface");
+    if (surfaceArg !== undefined && !["file", "reserved", "both"].includes(surfaceArg))
+      throw new Error("The retention surface must be file, reserved, or both.");
+    const surface = (surfaceArg ?? "both") as "file" | "reserved" | "both";
+    const listing = listOnly,
+      pinned = args.get("--pin"),
+      unpinned = args.get("--mark-unpinned"),
+      released = args.get("--release");
+    if (
+      [listing, pinned !== undefined, unpinned !== undefined, released !== undefined]
+        .filter(Boolean).length !== 1
+    )
+      throw new Error(
+        "A retention run names exactly one of --list, --pin, --mark-unpinned, or --release.",
+      );
+    const digest = pinned ?? unpinned ?? released;
+    if (digest !== undefined && !/^[a-f0-9]{64}$/.test(digest))
+      throw new Error("The retention digest must be a sha256 hex digest.");
+    const owner = args.get("--as");
+    if (
+      // A listing names no operator, and the unpinned record names none
+      // either: every other transition both requires and records --as.
+      !listing &&
+      unpinned === undefined &&
+      (owner === null || owner === undefined || !/^[\w-]{1,120}$/.test(owner))
+    )
+      throw new Error("A pin and a release name their operator with --as <id>.");
+    const kind = args.get("--kind");
+    if (pinned !== undefined && kind !== undefined && kind !== "recovery" && kind !== "operator")
+      throw new Error("The pin kind must be recovery or operator.");
+    const surfaces: Array<"file" | "reserved"> =
+      surface === "both" ? ["file", "reserved"] : [surface];
+    const fileRoot = join(state, "vault"),
+      fileIndex = join(state, "retention-index");
+    if (listing) {
+      const rows: Record<"file" | "reserved", RetentionRow[]> = {
+        file: [],
+        reserved: [],
+      };
+      for (const piece of surfaces)
+        rows[piece] =
+          piece === "file"
+            ? await listFileVaultRetention({
+                root: fileRoot,
+                index: fileIndex,
+                workspace: config.workspace,
+              })
+            : await listReservedVaultRetention(vault, config.workspace);
+      print(
+        JSON.stringify(
+          Object.fromEntries(surfaces.map((piece) => [piece, rows[piece]])),
+          null,
+          2,
+        ),
+      );
+      return 0;
+    }
+    let believedPin: { ownerId: string; kind: "recovery" | "operator" } | undefined;
+    if (released !== undefined) {
+      const believed = args.get("--pins");
+      const believedFormat = /^[\w-]+:(recovery|operator)$/.exec(believed ?? "");
+      if (believedFormat === null)
+        throw new Error(
+          "A release names the pin it removes with --pins <ownerId>:<kind>.",
+        );
+      const [believedOwner, believedKind] = believed!
+        .split(":") as [string, "recovery" | "operator"];
+      believedPin = { ownerId: believedOwner, kind: believedKind };
+    }
+    for (const piece of surfaces) {
+      const reference =
+        piece === "reserved"
+          ? await reservedVaultReference(vault, config.workspace, digest!)
+          : undefined;
+      if (pinned !== undefined) {
+        const pin = { ownerId: owner!, kind: (kind ?? "operator") as "recovery" | "operator" };
+        if (piece === "file")
+          await pinFileVaultLifecycle({
+            root: fileRoot,
+            index: fileIndex,
+            workspace: config.workspace,
+            digest: pinned,
+            pin,
+          });
+        else await vault.markVaultLifecycle(config.workspace, reference!, { pin });
+      } else if (unpinned !== undefined) {
+        if (piece === "file")
+          await markFileVaultUnpinned({
+            root: fileRoot,
+            index: fileIndex,
+            workspace: config.workspace,
+            digest: unpinned,
+          });
+        else await vault.markVaultLifecycle(config.workspace, reference!, {});
+      } else {
+        if (piece === "file")
+          await releaseFileVaultPin({
+            root: fileRoot,
+            index: fileIndex,
+            workspace: config.workspace,
+            digest: released!,
+            pin: believedPin!,
+            operatorId: owner!,
+          });
+        else
+          await vault.releaseVaultPin(config.workspace, reference!, {
+            pin: believedPin!,
+            operatorId: owner!,
+          });
+      }
+    }
+    print(
+      JSON.stringify(
+        {
+          surface,
+          digest,
+          transition:
+            pinned !== undefined ? "pinned" : unpinned !== undefined ? "unpinned" : "released",
+          ...(unpinned === undefined ? { as: owner } : {}),
+        },
+        null,
+        2,
+      ),
     );
     return 0;
   }

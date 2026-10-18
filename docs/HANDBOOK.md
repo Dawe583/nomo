@@ -224,15 +224,21 @@ that TTL: a pinned artifact stays until a named release, an artifact with no
 recorded evidence is protected rather than assumed unpinned, and a schema 1
 vault, which carries no write time, stays protected for the same reason.
 Every run writes the same signed journal chain a runtime capture does, so a
-shell-driven delete is audited exactly like a runtime one. What no command writes yet, stated
-where a reader would look for the tool: the contract's named pins and
-releases are runtime library calls, and no operator command, MCP tool or
-desktop surface writes one for either vault half today. The consequence
-for collection is safe and total: an artifact carries no recorded
-lifecycle until some host that has the marking calls marks it, artifacts
-with no record stay protected by that absence, and an age policy
-therefore deletes nothing until an operator surface that can mark and
-release exists. `nomo recovery
+shell-driven delete is audited exactly like a runtime one. Marking and releasing an artifact is
+an operator transition: `nomo recovery retention --config <file>` records
+the pin and the release the contract names. `--list` reads both halves'
+evidence rows, `--pin <digest> --as <owner>` records a pin whose kind is
+`--kind recovery|operator` and defaults to operator, `--mark-unpinned
+<digest>` records the reviewed collectable state a past-TTL policy acts
+on, and `--release <digest> --pins <ownerId>:<kind> --as <operator>`
+removes a pin the operator names exactly, refusing any stale view of the
+protection it removes. The transition runs against `--surface
+file|reserved` or both, an unpinned record names no operator on purpose,
+and a mark or release for an artifact a store cannot prove refuses
+rather than recording protection for nothing. Where a host other than
+this command should make the marking calls, artifacts still stay
+protected by the absence of a record until that host exists.
+`nomo recovery
 health` summarizes the same evidence as one `retention` section: how much
 is recorded, how much is pinned, how much is released, and how much of the
 vault is protected with nothing an operator can read. The summary carries
@@ -689,7 +695,8 @@ nomo replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key ba
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
-nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config <file> [--input <file>] [--approve <digest>] [--retention-policy <file>] [--surface file|reserved|both] [--dry-run]
+nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect|retention> --config <file> [--input <file>] [--approve <digest>] [--retention-policy <file>] [--surface file|reserved|both] [--dry-run]
+nomo recovery retention --config <file> [--surface file|reserved|both] (--list | --pin <digest> [--kind <recovery|operator>] --as <id> | --mark-unpinned <digest> | --release <digest> --pins <ownerId>:<kind> --as <id>)
 nomo policy list | show <name> | validate <file>
 nomo approve <hold-id> --by <who> [--deny] [--reason <text>] [--dir <path>]
 nomo approvals --dir <path> [--json]
