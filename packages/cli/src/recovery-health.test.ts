@@ -89,7 +89,54 @@ test("health reports verified history, vault capacity and retained unknown work"
   assert.equal(report.jobs.unknown, 1);
   assert.equal(report.capacity.artifacts, 1);
   assert.ok(report.capacity.usedBytes > 0);
+  // Schema 2 carries the retention surface, and an artifact with no recorded
+  // lifecycle is the protected-but-unprovable case the summary names.
+  assert.deepEqual(report.retention, {
+    present: true,
+    evidence: 0,
+    pinned: 0,
+    released: 0,
+    withoutEvidence: 1,
+  });
   assert.deepEqual(report.repairs, ["review-retained-unknown-work"]);
+});
+
+test("health reports the vault's retention evidence in one summary", async (t) => {
+  const f = await fixture(t);
+  const vault = reservedRecoveryVault(
+    join(f.stateDir, "vault"),
+    { local: f.key },
+    "local",
+    { maxArtifactBytes: 1024, maxTotalBytes: 4096 },
+  );
+  const orphan = await vault.put("test", "orphan");
+  const pinned = await vault.put("test", "pinned");
+  const released = await vault.put("test", "released");
+  await vault.markVaultLifecycle("test", pinned, {
+    pin: { ownerId: "operator-1", kind: "recovery" },
+  });
+  await vault.markVaultLifecycle("test", released, {
+    pin: { ownerId: "operator-1", kind: "recovery" },
+  });
+  await vault.releaseVaultPin("test", released, {
+    pin: { ownerId: "operator-1", kind: "recovery" },
+    operatorId: "operator-2",
+  });
+  const report = await inspectRecoveryHealth({
+    stateDir: f.stateDir,
+    workspace: "test",
+    adapter: { id: "filesystem.managed", version: "1" },
+    encryptionKey: f.key,
+  });
+  assert.equal(report.state.vault, "verified");
+  assert.deepEqual(report.retention, {
+    present: true,
+    evidence: 2,
+    pinned: 1,
+    released: 1,
+    withoutEvidence: /* fixture seed + orphan */ 2,
+  });
+  assert.equal(await vault.get("test", orphan), "orphan");
 });
 
 test("health is read-only and refuses missing or mismatched retained keys", async (t) => {

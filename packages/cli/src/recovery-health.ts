@@ -31,6 +31,18 @@ export type RecoveryHealthReport = {
     artifacts: number;
     reservations: number;
   };
+  /** One shell summary of the vault's retention evidence, counted the same
+   * unfiltered way capacity is. `withoutEvidence` counts artifacts whose
+   * (workspace, digest) has no recorded lifecycle: they are still protected,
+   * but by nothing an operator can read, which is exactly what a collector
+   * run would refuse to reason about. */
+  retention: {
+    present: boolean;
+    evidence: number;
+    pinned: number;
+    released: number;
+    withoutEvidence: number;
+  };
   jobs: { paused: number; unknown: number };
   repairs: string[];
 };
@@ -157,6 +169,7 @@ async function readVault(
 ): Promise<{
   status: RecoveryHealthReport["state"]["vault"];
   capacity: RecoveryHealthReport["capacity"];
+  retention: RecoveryHealthReport["retention"];
 }> {
   const root = join(input.stateDir, "vault");
   const path = join(root, "vault.sqlite");
@@ -170,6 +183,13 @@ async function readVault(
     artifacts: 0,
     reservations: 0,
   };
+  const emptyRetention: RecoveryHealthReport["retention"] = {
+    present: false,
+    evidence: 0,
+    pinned: 0,
+    released: 0,
+    withoutEvidence: 0,
+  };
   try {
     await assertPrivateDirectoryPath(root, "recovery vault directory");
     await assertPrivateFilePath(path, "recovery vault database");
@@ -182,13 +202,18 @@ async function readVault(
     return {
       status: isMissing(error) ? "missing" : "invalid",
       capacity: empty,
+      retention: emptyRetention,
     };
   }
   let db: DatabaseSync;
   try {
     db = new DatabaseSync(path, { readOnly: true });
   } catch (error) {
-    return { status: isMissing(error) ? "missing" : "unavailable", capacity: empty };
+    return {
+      status: isMissing(error) ? "missing" : "unavailable",
+      capacity: empty,
+      retention: emptyRetention,
+    };
   }
   try {
     const settings = db.prepare("SELECT capacity FROM settings WHERE id=1").get();
@@ -199,7 +224,7 @@ async function readVault(
       !("capacity" in settings) ||
       typeof settings.capacity !== "string"
     )
-      return { status: "invalid", capacity: empty };
+      return { status: "invalid", capacity: empty, retention: emptyRetention };
     const parsed: unknown = JSON.parse(settings.capacity);
     if (
       typeof parsed !== "object" ||
@@ -214,13 +239,42 @@ async function readVault(
       parsed.maxArtifactBytes < 1 ||
       parsed.maxTotalBytes < 1
     )
-      return { status: "invalid", capacity: empty };
+      return { status: "invalid", capacity: empty, retention: emptyRetention };
     const artifacts = db
       .prepare("SELECT count(*) AS count,COALESCE(SUM(length(data)),0) AS bytes FROM artifacts")
       .get();
     const reservations = db
       .prepare("SELECT count(*) AS count,COALESCE(SUM(bytes),0) AS bytes FROM reservations")
       .get();
+    // Retention evidence exists from schema 2 on. A schema 1 vault reports
+    // present: false rather than zeroes that would read as "nothing is
+    // pinned", because its rows are still protected and there is no surface
+    // that could ever say which.
+    const retentionTable = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='retention'")
+      .get();
+    let retention: RecoveryHealthReport["retention"];
+    if (retentionTable === undefined) {
+      retention = { ...emptyRetention };
+    } else {
+      const records = db
+        .prepare(
+          "SELECT count(*) AS count,SUM(CASE WHEN json_extract(record,'$.pin.ownerId') IS NOT NULL THEN 1 ELSE 0 END) AS pinned,SUM(CASE WHEN json_extract(record,'$.release.released') IS NOT NULL THEN 1 ELSE 0 END) AS released FROM retention",
+        )
+        .get();
+      const orphaned = db
+        .prepare(
+          "SELECT count(*) AS count FROM artifacts a WHERE NOT EXISTS (SELECT 1 FROM retention r WHERE r.workspace=a.workspace AND r.digest=a.digest)",
+        )
+        .get();
+      retention = {
+        present: true,
+        evidence: numberField(records, "count") ?? 0,
+        pinned: numberField(records, "pinned") ?? 0,
+        released: numberField(records, "released") ?? 0,
+        withoutEvidence: numberField(orphaned, "count") ?? 0,
+      };
+    }
     const artifactBytes = numberField(artifacts, "bytes") ?? 0;
     const reservationBytes = numberField(reservations, "bytes") ?? 0;
     const legacy = await legacyBytes(root);
@@ -237,11 +291,11 @@ async function readVault(
     const keyId = input.keyId ?? "local";
     const encryptionKey = input.encryptionKey;
     if (encryptionKey === undefined || encryptionKey.byteLength !== 32)
-      return { status: "unavailable", capacity };
+      return { status: "unavailable", capacity, retention };
     const marker = db
       .prepare("SELECT proof FROM key_checks WHERE key_id=?")
       .get(keyId);
-    if (!marker) return { status: "unmarked", capacity };
+    if (!marker) return { status: "unmarked", capacity, retention };
     if (
       typeof marker !== "object" ||
       marker === null ||
@@ -249,12 +303,14 @@ async function readVault(
       !("proof" in marker) ||
       typeof marker.proof !== "string"
     )
-      return { status: "invalid", capacity };
+      return { status: "invalid", capacity, retention };
     const expected = recoveryKeyProof(encryptionKey, keyId);
-    if (marker.proof !== expected) return { status: "mismatch", capacity };
-    return { status: "verified", capacity };
+    if (marker.proof !== expected) return { status: "mismatch", capacity, retention };
+    return { status: "verified", capacity, retention };
   } catch {
-    return { status: "invalid", capacity: empty };
+    // A partial read reports the empty retention shell, the way capacity
+    // degrades: an unprovable vault is one an operator inspects.
+    return { status: "invalid", capacity: empty, retention: emptyRetention };
   } finally {
     db.close();
   }
@@ -283,6 +339,13 @@ export async function inspectRecoveryHealth(
       legacyBytes: 0,
       artifacts: 0,
       reservations: 0,
+    },
+    retention: {
+      present: false,
+      evidence: 0,
+      pinned: 0,
+      released: 0,
+      withoutEvidence: 0,
     },
     jobs: { paused: 0, unknown: 0 },
     repairs: [],
@@ -323,6 +386,7 @@ export async function inspectRecoveryHealth(
   });
   report.state.vault = vault.status;
   report.capacity = vault.capacity;
+  report.retention = vault.retention;
   if (vault.status === "missing") {
     addRepair(repairs, "restore-vault-snapshot");
     markUnavailable(report);

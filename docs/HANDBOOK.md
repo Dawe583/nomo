@@ -202,7 +202,10 @@ that TTL: a pinned artifact stays until a named release, an artifact with no
 recorded evidence is protected rather than assumed unpinned, and a schema 1
 vault, which carries no write time, stays protected for the same reason.
 Every run writes the same signed journal chain a runtime capture does, so a
-shell-driven delete is audited exactly like a runtime one.
+shell-driven delete is audited exactly like a runtime one. `nomo recovery
+health` summarizes the same evidence as one `retention` section: how much
+is recorded, how much is pinned, how much is released, and how much of the
+vault is protected with nothing an operator can read.
 
 Check the complete source installation:
 
