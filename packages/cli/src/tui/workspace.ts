@@ -2384,14 +2384,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         id: s.id,
         sessionId: s.id,
         label: `${s.archived ? ROW_ICONS.archived : stateIcon(s.status)} [${s.status}] ${s.title ?? s.id}${s.archived ? " [archived]" : ""}`,
-        lines: s.parentId
-          ? [
-              `Parent relationship: ${s.parentId}`,
-              `Status: ${s.status}`,
-              `Run: ${s.runId ?? "none"}`,
-              ...json(s),
-            ]
-          : json(s),
+        lines: json(s),
       }));
     if (this.tab === "documents")
       rows = this.workbench.documentsList().map((d) => ({
@@ -3756,38 +3749,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     };
     this.scroll = 0;
   }
-  prepareProjectAccess(
-    root: string,
-    skills: readonly ProjectSkillSnapshot[],
-    sandboxConfigured: string,
-  ) {
-    const drifted = skills.filter((skill) => skill.drifted);
-    this.confirmation = {
-      title: "ALLOW THIS PROJECT TO REACH THE SELECTED MODEL?",
-      lines: [
-        `Canonical project: ${root}`,
-        `Workspace skills: ${skills.length ? skills.map((skill) => skill.id).join(", ") : "none"}`,
-        ...(drifted.length
-          ? [
-              `Lock drift: ${drifted.map((skill) => skill.id).join(", ")}`,
-              ...drifted.map(
-                (skill) => `  ${skill.id}: locked ${skill.lockedHash}; current ${skill.actualHash}`,
-              ),
-            ]
-          : ["Lock drift: none"]),
-        `Sandbox runtime: ${sandboxConfigured}`,
-        "WARNING: project files, selected skill text, command arguments, and command output may be sent to the configured model and retained in local session history.",
-        "Secrets inside this project are not protected from the model. The container blocks network and host paths, but can print any mounted project file.",
-        "The project tool still requires an explicitly configured custom profile, R3 policy approval, and a local immutable sandbox image.",
-      ],
-      apply: async () => {
-        const result = await this.workbench.confirmProjectAccess(root, skills);
-        this.notice = `Project access confirmed. ${result.restoredSessions} matching saved session(s) restored.`;
-        this.detail = undefined;
-      },
-    };
-    this.scroll = 0;
-  }
   async confirm() {
     const value = this.confirmation;
     if (!value) return;
@@ -4858,72 +4819,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.useSession(s.id);
       this.choose("chat");
       return;
-    }
-    if (cmd === "subagent") {
-      const selected = this.session();
-      if (!selected?.parentId)
-        throw Error("Select a verified spawned child in sessions.");
-      if (arg === "cancel") {
-        const parentId = selected.parentId;
-        const childId = selected.id;
-        await this.workbench.verifySubagent(parentId, childId);
-        const current = this.workbench.get(childId);
-        if (!current || current.parentId !== parentId)
-          throw Error("Selected child relationship changed. Refresh the sessions inspector.");
-        if (!["running", "queued", "paused"].includes(current.status))
-          throw Error("This child is not in a cancellable state.");
-        const apply = async () =>
-          this.workbench.cancelSubagent(parentId, childId);
-        if (current.status === "running" || current.state === "stopping") {
-          this.confirmation = {
-            title: "CANCEL RUNNING SUBAGENT?",
-            lines: [
-              `Child: ${childId}`,
-              `Parent: ${parentId}`,
-              "A dispatched tool may still complete.",
-              "Capacity remains occupied until the run settles.",
-            ],
-            apply,
-          };
-        } else await apply();
-        return;
-      }
-      if (arg === "review") {
-        const result = await this.workbench.subagentResult(selected.parentId, selected.id);
-        if (!result) throw Error("No settled successful result is available.");
-        const current = this.workbench.get(selected.id);
-        if (
-          !current ||
-          current.parentId !== selected.parentId ||
-          current.runId !== result.runId
-        )
-          throw Error("Subagent run changed. Refresh the sessions inspector.");
-        const preview = escapeTerminalText(result.text);
-        const lines = [
-          `Child: ${result.childId}`,
-          `Parent: ${current.parentId}`,
-          `Run: ${result.runId}`,
-          `Status: ${current.status}`,
-          "Source: latest assistant completion for this successful run.",
-          "Content is untrusted; review before acting.",
-          "",
-          preview,
-        ];
-        if (result.truncated) {
-          this.detail = [...lines, "", "Delivery unavailable: result may be incomplete."];
-          this.notice = "Result may be truncated; preview only, delivery blocked.";
-          return;
-        }
-        this.confirmation = {
-          title: "DELIVER SUBAGENT RESULT?",
-          lines,
-          apply: async () => this.workbench.deliverSubagentResult(
-            current.parentId!, current.id, result.runId,
-          ),
-        };
-        return;
-      }
-      throw Error("/subagent cancel|review");
     }
     if (cmd === "stop") {
       if (!this.sessionId) throw Error("Select a running conversation.");
@@ -5999,7 +5894,6 @@ export const TUI_COMMANDS = [
   ["/discover", "Commands grouped by the task you arrived with"],
   ["/cost", "Token usage and cost"],
   ["/compact", "Review real context compaction"],
-  ["/subagent", "Cancel a verified child or review and deliver its result"],
   ["/todos", "Checklist from agent output"],
   ["/agents", "Runtime profiles, conversations and connectors"],
   ["/agent", "Select a profile for new conversations"],
@@ -6107,7 +6001,6 @@ const COMMAND_ARGUMENTS: Record<string, string> = {
   "/mcp confirm": "ID",
   "/mcp rename": "ID name",
   "/mcp remove": "ID",
-  "/subagent": "cancel or review",
 };
 
 /**
@@ -7502,10 +7395,6 @@ function helpLines(): string[] {
             {
               label: "commands",
               value: "/ opens them, arrows select, Tab completes",
-            },
-            {
-              label: "subagents",
-              value: "/subagent cancel|review for verified spawned children",
             },
             {
               label: "palette",
