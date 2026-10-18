@@ -61,6 +61,18 @@ for (const deny of [false, true]) {
   });
 }
 
+test("approvals rows carry class and radius and never the call arguments", async (t) => {
+  const f = fixture(t);
+  const output: string[] = [];
+  const io = { stdout: (line: string) => output.push(line), stderr: () => {} };
+  assert.equal(await runApprovalsCommand(["--dir", f.dir], io), 0);
+  assert.equal(output.length, 1);
+  assert.match(output[0]!, /postgres\.table\.drop r3 radius 1 expires /);
+  assert.ok(!output[0]!.includes("secret"), "the row must not replay persisted or in-memory arguments");
+  assert.equal(await runApprovalsCommand(["--dir", f.dir, "--json"], io), 0);
+  assert.ok(!output[1]!.includes("secret"), "the JSON record must not carry the arguments either");
+});
+
 test("approve rejects missing id, actor, invalid options and unknown holds", async (t) => {
   const f = fixture(t);
   const io = { stdout() {}, stderr() {} };

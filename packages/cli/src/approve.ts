@@ -43,7 +43,7 @@ export async function runApprovalsCommand(
     const pending = loadPending(args.dir, options.fs).filter((record) => record.expiresAt > (options.now ?? Date.now)());
     if (args.json) io.stdout(JSON.stringify(pending));
     else if (pending.length === 0) io.stdout("no pending holds in state directory");
-    else for (const record of pending) io.stdout(`${record.holdId} ${record.call.tool} ${record.call.klass} expires ${new Date(record.expiresAt).toISOString()}`);
+    else for (const record of pending) io.stdout(`${record.holdId} ${record.call.tool} ${record.call.klass} radius ${record.call.blastRadius ?? "unknown"} expires ${new Date(record.expiresAt).toISOString()}`);
     return 0;
   } catch { io.stderr("could not read pending approvals: state unavailable or invalid"); return 1; }
 }

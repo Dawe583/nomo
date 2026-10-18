@@ -430,6 +430,7 @@ function approvalInspectLines(
       klass?: string;
       blastRadius?: number;
       reason?: string;
+      args?: Readonly<Record<string, unknown>>;
     };
   },
   raw: readonly string[],
@@ -438,11 +439,19 @@ function approvalInspectLines(
     hold.call.blastRadius === undefined
       ? "unknown"
       : String(hold.call.blastRadius);
-  // Approval state is durable and call arguments can carry secrets, so it
-  // never stores them: the args exist only on the live HeldCall inside the
-  // proxy process, which the CLI approver renders. The detail calls the
-  // omission by name instead of printing a field that is always empty.
-  const args = "not recorded: approval state does not store call arguments";
+  // Arguments are shown in the detail view for an informed decision, but
+  // production secrets must be redacted. The same patterns used for shell
+  // command redaction apply here.
+  const redactSecrets = (value: string): string =>
+    value
+      .replace(/-H\s+"Authorization:[^"]*"/gi, "[redacted]")
+      .replace(/Authorization:\s*\S+/gi, "[redacted]")
+      .replace(/Bearer\s+\S+/g, "[redacted]")
+      .replace(/\b(?:token|key|password)=\S+/gi, "[redacted]");
+  const args =
+    hold.call.args && typeof hold.call.args === "object"
+      ? redactSecrets(JSON.stringify(hold.call.args, null, 2))
+      : "unknown (the server did not supply arguments)";
   return renderInspector(
     {
       title: hold.call.tool,
