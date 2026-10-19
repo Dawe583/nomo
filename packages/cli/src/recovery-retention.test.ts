@@ -255,6 +255,27 @@ test("a sidecar whose artifact collection already removed lists as a ghost row",
   });
 });
 
+test("--dry-run is refused on the retention action and records nothing", async (t) => {
+  const f = await fixture(t);
+  const digest = await f.putReserved("dry run probe");
+  await assert.rejects(
+    f.run(["--dry-run", "--pin", digest, "--as", "op-dry"]),
+    /--dry-run predicts a collect run; a retention transition has no prediction mode/,
+  );
+  const rows = await f.reservedRows();
+  const row = rows.find((entry) => entry.digest === digest);
+  assert.ok(row !== undefined);
+  assert.equal(row.lifecycle, undefined);
+});
+
+test("--dry-run beside --list refuses the same way", async (t) => {
+  const f = await fixture(t);
+  await assert.rejects(
+    f.run(["--dry-run", "--list"]),
+    /--dry-run predicts a collect run/,
+  );
+});
+
 test("grammar refusals name what is missing", async (t) => {
   const f = await fixture(t);
   await assert.rejects(f.run([]), /exactly one/);

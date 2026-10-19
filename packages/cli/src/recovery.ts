@@ -106,10 +106,14 @@ export async function runRecoveryCommand(
       if (rest[i] === "--dry-run") {
         if (dryRun) throw new Error("Invalid recovery arguments.");
         dryRun = true;
+      } else {
+        // --list is parsed as its own bare flag and rejected again in the
+        // retention block when it collides with a transition. The flag must
+        // not ride along on --dry-run: a prediction flag that also sets the
+        // listing turned every retention transition into a lying
+        // "names exactly one of" refusal.
+        listOnly = true;
       }
-      // --list is parsed as its own bare flag and rejected again in the
-      // retention block when it collides with a transition.
-      listOnly = true;
       i += 1;
       continue;
     }
@@ -526,6 +530,13 @@ export async function runRecoveryCommand(
     return 0;
   }
   if (action === "retention") {
+    // The prediction flag belongs to collect: a retention transition
+    // records what it runs, so --dry-run here must refuse with the
+    // surface named instead of being read as a listing or ignored.
+    if (dryRun)
+      throw new Error(
+        "--dry-run predicts a collect run; a retention transition has no prediction mode.",
+      );
     // Exactly one transition runs per invocation, so a half-typed command
     // cannot move two different protections at once.
     const surfaceArg = args.get("--surface");
