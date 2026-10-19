@@ -30,9 +30,25 @@ export function spawnWorkspaceName(childId: string): string {
   return `agent-${childId}`;
 }
 
-export function subsetTools<T extends { readonly name: string }>(
+type ToolScopeEntry = {
+  readonly name: string;
+  readonly connectorId?: string;
+};
+
+export function subsetTools<T extends ToolScopeEntry>(
   childTools: readonly T[],
-  parentToolNames: ReadonlySet<string>,
+  parentTools: readonly ToolScopeEntry[],
 ): T[] {
-  return childTools.filter((tool) => parentToolNames.has(tool.name));
+  const namesByConnector = new Map<string | undefined, Set<string>>();
+  for (const tool of parentTools) {
+    let names = namesByConnector.get(tool.connectorId);
+    if (!names) {
+      names = new Set();
+      namesByConnector.set(tool.connectorId, names);
+    }
+    names.add(tool.name);
+  }
+  return childTools.filter((tool) =>
+    namesByConnector.get(tool.connectorId)?.has(tool.name),
+  );
 }

@@ -1,3 +1,4 @@
+import { PROJECT_EXEC_TOOL } from "./project-sandbox.ts";
 import { createHash } from 'node:crypto';
 
 /** Managed text documents, never paths on the host filesystem. Persistence and
@@ -27,19 +28,21 @@ export const workspaceTools = [
   { name: 'void_workspace_read', description: 'Read a managed NOMO document.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
   { name: 'void_workspace_write', description: 'Create or replace a managed NOMO text document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'], additionalProperties: false } },
   { name: 'void_workspace_delete', description: 'Delete a managed NOMO document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
-] as const;
+  PROJECT_EXEC_TOOL,
+];
 
 export function createWorkspace(): WorkspaceState { return { version: 1, files: {}, operations: [] }; }
 
-export function workspaceToolClass(name: string): 'r0' | 'r1' | undefined {
+export function workspaceToolClass(name: string): 'r0' | 'r1' | 'r3' | undefined {
   if (name === 'void_workspace_list' || name === 'void_workspace_read') return 'r0';
   if (name === 'void_workspace_write' || name === 'void_workspace_delete') return 'r1';
+  if (name === PROJECT_EXEC_TOOL.name) return 'r3';
   return undefined;
 }
 
 export function executeWorkspaceTool(state: WorkspaceState, input: { readonly id: string; readonly name: string; readonly arguments: Readonly<Record<string, unknown>>; readonly at?: string }): WorkspaceTransition {
   try {
-    if (!workspaceTools.some(tool => tool.name === input.name)) throw new Error('Unknown managed workspace tool.');
+    if (!workspaceTools.some(tool => tool.name === input.name) || input.name === PROJECT_EXEC_TOOL.name) throw new Error('Unknown managed workspace tool.');
     if (input.name === 'void_workspace_list') return { state, result: result({ files: Object.keys(state.files).sort().map(path => ({ path, bytes: bytes(state.files[path]!) })) }) };
     const path = validPath(input.arguments.path);
     const before = Object.hasOwn(state.files, path) ? state.files[path]! : null;

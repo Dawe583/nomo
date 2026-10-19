@@ -7,15 +7,16 @@ import { isolatedWorkbench } from './test-fixture.ts';
 
 test('tool catalogue never claims Undo for a connector impersonating a built-in tool', () => {
   const tools = toolCatalog([...workspaceTools, { ...workspaceTools[2], connectorId: 'external', token: 'private' } as typeof workspaceTools[2] & { connectorId: string; token: string }]);
-  assert.equal(tools[2]!.capturedUndo, true);
-  assert.equal(tools[4]!.capturedUndo, false);
-  assert.equal(tools[4]!.klass, 'policy');
+  assert.equal(tools.find(tool => tool.name === 'void_workspace_write')!.capturedUndo, true);
+  const impersonator = tools.find(tool => tool.source === 'external')!;
+  assert.equal(impersonator.capturedUndo, false);
+  assert.equal(impersonator.klass, 'policy');
   assert.equal(new Set(tools.map(tool => tool.id)).size, tools.length);
   assert.doesNotMatch(JSON.stringify(tools), /private|token/);
 });
 test('slash search filters metadata, does not capture prose, and selection only prepares a request', () => {
   const tools = toolCatalog(workspaceTools);
-  assert.equal(filterCommands(tools, '/').length, 4);
+  assert.equal(filterCommands(tools, '/').length, 5);
   assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read']);
   assert.equal(filterCommands(tools, '/unknown').length, 0);
   assert.equal(filterCommands(tools, '/read document').length, 0);
@@ -33,7 +34,10 @@ test('session tool catalogue uses its snapshot and rejects unknown sessions', as
   const session = await app.start('Hello', 'fixture');
   const snapshot = app.availableTools(session.id);
   assert.equal(snapshot.scope, 'session');
-  assert.deepEqual(snapshot.tools.map(t => t.name), workspaceTools.map(t => t.name));
+  assert.deepEqual(
+    snapshot.tools.map(t => t.name),
+    workspaceTools.filter(t => t.name !== 'nomo_project_exec').map(t => t.name),
+  );
   assert.doesNotMatch(JSON.stringify(snapshot), /private-key|messages|baseUrl/);
 });
 
