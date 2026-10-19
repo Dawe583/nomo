@@ -23,7 +23,7 @@ const namespaceOperations = new Map<string, Promise<void>>();
 
 export function LocalSnapshotStore(root: string, options: LocalSnapshotStoreOptions = {}): SnapshotStore {
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
-  if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) throw new Error("Snapshot byte budget must be a nonnegative safe integer.");
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) throw new Error(`Snapshot byte budget ${maxBytes} must be a nonnegative safe integer.`);
   const redaction = options.redaction;
   const clock = options.clock ?? (() => new Date());
   const availableKeyIds = options.availableKeyIds;
@@ -89,7 +89,7 @@ export function LocalSnapshotStore(root: string, options: LocalSnapshotStoreOpti
               await rm(tmp, { force: true });
             }
           } else if (sha256Digest(existing) !== digest) {
-            throw new Error("Existing snapshot bytes do not match their digest path.");
+            throw new Error(`Existing snapshot bytes hash to ${sha256Digest(existing)}, not ${digest}.`);
           }
           await writeSidecar(dir, digestHex, meta);
           const report = await deleteSnapshots(evictions);
@@ -150,7 +150,7 @@ export function LocalSnapshotStore(root: string, options: LocalSnapshotStoreOpti
         const expired = files.filter((file) => file.mtimeMs < cutoffMs);
         const skippedPinned = expired.filter((file) => file.pinned).length;
         const report = await deleteSnapshots(expired.filter((file) => !file.pinned));
-        if (report.errors.length) throw new Error("Snapshot garbage collection failed.");
+        if (report.errors.length) throw new Error(`Snapshot garbage collection failed: ${report.errors.join("; ")}.`);
         return { skippedPinned, retained: files.length - report.deleted - skippedPinned, deleted: report.deleted, freedBytes: report.freedBytes };
       });
     },
@@ -203,7 +203,7 @@ function mergeMeta(existing: SnapshotMeta | undefined, incoming: SnapshotMeta): 
   if (existing === undefined) return incoming;
   if (existing.pin !== undefined && incoming.pin !== undefined &&
       (existing.pin.ownerId !== incoming.pin.ownerId || existing.pin.kind !== incoming.pin.kind))
-    throw new Error("Snapshot pin metadata conflicts with an existing capture.");
+    throw new Error(`Snapshot pin metadata conflicts: recorded ${existing.pin.ownerId}:${existing.pin.kind}, incoming ${incoming.pin.ownerId}:${incoming.pin.kind}.`);
   for (const field of ["keyId", "expiresAt"] as const) {
     if (existing[field] !== undefined && incoming[field] !== undefined && existing[field] !== incoming[field])
       throw new Error(`Snapshot ${field} metadata conflicts with an existing capture.`);
