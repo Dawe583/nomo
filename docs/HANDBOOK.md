@@ -226,7 +226,9 @@ vault, which carries no write time, stays protected for the same reason.
 Every run writes the same signed journal chain a runtime capture does, so a
 shell-driven delete is audited exactly like a runtime one. Marking and releasing an artifact is
 an operator transition: `nomo recovery retention --config <file>` records
-the pin and the release the contract names. `--list` reads both halves'
+the pin and the release the contract names. It takes no `--dry-run`: a
+transition is a decision about one named artifact, and there is no
+prediction of it to print. `--list` reads both halves'
 evidence rows, `--pin <digest> --as <owner>` records a pin whose kind is
 `--kind recovery|operator` and defaults to operator, `--mark-unpinned
 <digest>` records the reviewed collectable state a past-TTL policy acts
