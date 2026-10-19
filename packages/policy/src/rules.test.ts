@@ -32,6 +32,14 @@ describe("loadPolicy, the closed grammar", () => {
     if (!bad.ok) assert.ok(bad.errors.some((e) => e.includes("version")));
   });
 
+  test("a non-JSON version value returns a validation error", () => {
+    const errors = validatePolicyFile({
+      version: 1n,
+      rules: [{ match: {}, decision: "deny" }],
+    });
+    assert.ok(errors.some((error) => error.startsWith("version:")));
+  });
+
   test("an unknown match key is a load error, never a silent no-op", () => {
     const bad = loadPolicy(`
 version: 1

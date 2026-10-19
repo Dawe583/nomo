@@ -73,9 +73,7 @@ export function validatePolicyFile(value: unknown): string[] {
   if (topKeys.length > 0)
     errors.push(`policy file: unknown key ${topKeys.join(", ")}`);
   if (top.version !== POLICY_VERSION)
-    errors.push(
-      `version: must be ${POLICY_VERSION}, got ${JSON.stringify(top.version)}`,
-    );
+    errors.push(`version: must be ${POLICY_VERSION}`);
   if (!Array.isArray(top.rules))
     return [...errors, "rules: required, a list of rules"];
   if (top.rules.length === 0)
