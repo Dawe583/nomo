@@ -67,9 +67,7 @@ export function validateAgentPolicyFile(value: unknown): string[] {
   if (extra.length > 0)
     errors.push(`agent policy: unknown key ${extra.join(", ")}`);
   if (value.version !== AGENT_POLICY_VERSION)
-    errors.push(
-      `version: must be ${AGENT_POLICY_VERSION}, got ${JSON.stringify(value.version)}`,
-    );
+    errors.push(`version: must be ${AGENT_POLICY_VERSION}`);
 
   const declared = new Set<string>();
   if (!Array.isArray(value.agents) || value.agents.length === 0) {

@@ -2,7 +2,7 @@ import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-import { loadAgentPolicy } from "./load.ts";
+import { loadAgentPolicy, validateAgentPolicyFile } from "./load.ts";
 
 const shipped = readFileSync(
   new URL("../../../policy/agents.yaml", import.meta.url),
@@ -44,6 +44,15 @@ describe("loadAgentPolicy", () => {
       minimal(catchAll).replace("version: 1", "version: 2"),
     );
     assert.ok(errors.some((e) => e.startsWith("version:")));
+  });
+
+  test("a non-JSON version value is a validation error", () => {
+    const errors = validateAgentPolicyFile({
+      version: 1n,
+      agents: [{ id: "bot-a" }],
+      rules: [{ id: "default-deny", match: {}, decision: "deny" }],
+    });
+    assert.ok(errors.some((error) => error.startsWith("version:")));
   });
 
   test("an unknown match key is a load error, never ignored", () => {
