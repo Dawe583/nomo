@@ -686,7 +686,19 @@ export async function runRecoveryCommand(
     }
     if (halves.length === surfaces.length && refusals.length === 0 && !halves.some((half) => half.outcome === "recorded"))
       throw new Error("No retention surface names the digest; nothing was recorded.");
-    if (refusals.length > 0)
+    if (refusals.length > 0) {
+      // The machine contract outlives the prose: automation reads the run
+      // object to learn what landed when the transition halted, so the run
+      // prints on stdout before the refusal turns into an exit code. A
+      // refusal whose only record is a prose stderr line cannot be
+      // reconciled by anything but a human.
+      print(
+        JSON.stringify(
+          { surface, digest: pinned ?? unpinned ?? released, halves, refusals },
+          null,
+          2,
+        ),
+      );
       throw new Error(
         "Retention transition refused: " +
           [
@@ -694,6 +706,7 @@ export async function runRecoveryCommand(
             ...refusals,
           ].join("; "),
       );
+    }
     print(
       JSON.stringify(
         {

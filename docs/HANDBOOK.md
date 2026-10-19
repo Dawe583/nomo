@@ -239,7 +239,10 @@ recording nothing, because it names the pin it removes exactly. A mark
 lands on every surface that proves the digest and reports the surface
 that has nothing to protect, so one move reads true in a mixed store
 where a digest lives in one half, and a digest no surface holds refuses
-because there is nothing to protect. Where a host other than
+because there is nothing to protect. A release decides from the
+recorded evidence, not from the artifact bytes: a pin whose bytes an
+operator removed by hand is still releasable by naming it exactly,
+while bytes with no recorded evidence refuse as protected. Where a host other than
 this command should make the marking calls, artifacts still stay
 protected by the absence of a record until that host exists.
 `nomo recovery

@@ -116,11 +116,23 @@ const fileVaultReference = async (
   root: string,
   workspace: string,
   digest: string,
+  options?: { allowAbsentArtifact?: boolean },
 ): Promise<VaultReference> => {
   let size: number;
   try {
     size = (await stat(join(resolve(root), workspace, digest))).size;
-  } catch {
+  } catch (error) {
+    // The release decides from the recorded evidence, never from the
+    // artifact: a pin whose bytes an operator removed by hand must still be
+    // releasable, so absence by itself is not a refusal here. A mark keeps
+    // the strict availability proof, and every other stat failure moves
+    // through as the store error it is, because a permissions problem that
+    // read as "absent" would classify a live refusal as nothing to protect.
+    if (
+      options?.allowAbsentArtifact &&
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+    )
+      return { digest, keyId: VAULT_KEY_ID, bytes: 0 };
     // The mark itself refuses the same absence inside its lock; naming it
     // here too means the operator reads one reason wherever the call is
     // made.
@@ -188,6 +200,7 @@ export async function releaseFileVaultPin(options: {
       options.root,
       options.workspace,
       options.digest,
+      { allowAbsentArtifact: true },
     ),
     pin: options.pin,
     operatorId: options.operatorId,

@@ -82,12 +82,22 @@ const fixture = async (t: { after: (fn: () => unknown) => void }) => {
     fileRows,
     run: async (argv: readonly string[]) => {
       const lines: string[] = [];
-      const code = await runRecoveryCommand(
-        ["retention", ...argv, "--config", config],
-        env,
-        (line) => lines.push(line),
-      );
-      return { code, json: () => JSON.parse(lines.join("\n")) as unknown };
+      try {
+        const code = await runRecoveryCommand(
+          ["retention", ...argv, "--config", config],
+          env,
+          (line) => lines.push(line),
+        );
+        return {
+          code,
+          json: () => JSON.parse(lines.join("\n")) as unknown,
+        };
+      } catch (error) {
+        // A refusal can still print its run object, so the test that
+        // asserts the machine contract needs the lines out of the throw.
+        (error as Error & { printed: string[] }).printed = lines.slice();
+        throw error;
+      }
     },
   };
 };
@@ -274,6 +284,85 @@ test("--dry-run beside --list refuses the same way", async (t) => {
     f.run(["--dry-run", "--list"]),
     /--dry-run predicts a collect run/,
   );
+});
+
+test("a release decides from the recorded evidence, not from the artifact bytes", async (t) => {
+  const f = await fixture(t);
+  const digest = await f.putFile("ghost release");
+  await f.run(["--surface", "file", "--pin", digest, "--as", "op-g"]);
+  // The operator removes the bytes by hand: the pin record outlives them,
+  // and the release still names and drops exactly that pin.
+  await rm(join(f.dir, "state", "vault", "test", digest));
+  const out = await f.run([
+    "--surface",
+    "file",
+    "--release",
+    digest,
+    "--pins",
+    "op-g:operator",
+    "--as",
+    "op-g",
+  ]);
+  assert.equal(out.code, 0);
+  const row = (await f.fileRows()).find((entry) => entry.digest === digest);
+  assert.ok(row?.lifecycle);
+  assert.ok(row.lifecycle.release);
+  assert.equal(row.lifecycle.pin, undefined);
+});
+
+test("a release over bytes with no recorded evidence still refuses as protected", async (t) => {
+  const f = await fixture(t);
+  const digest = await f.putFile("unprotected bytes");
+  await assert.rejects(
+    f.run([
+      "--surface",
+      "file",
+      "--release",
+      digest,
+      "--pins",
+      "op-x:operator",
+      "--as",
+      "op-x",
+    ]),
+    /no recorded pin; a release cannot prove/,
+  );
+  assert.equal(
+    (await f.fileRows()).find((entry) => entry.digest === digest)?.lifecycle,
+    undefined,
+  );
+});
+
+test("a halted transition prints its run before the refusal", async (t) => {
+  const f = await fixture(t);
+  const digest = await f.putFile("file only");
+  await f.run(["--surface", "file", "--pin", digest, "--as", "op-r"]);
+  const failure = await f
+    .run(["--release", digest, "--pins", "op-r:operator", "--as", "op-r"])
+    .then(
+      () => null,
+      (error: Error & { printed?: string[] }) => error,
+    );
+  assert.ok(failure);
+  // The prose still composes what landed beside what refused.
+  assert.match(
+    failure.message,
+    /file recorded; reserved: Recovery artifact is unavailable/,
+  );
+  // The machine contract carries the same truth as JSON on stdout, so the
+  // landed half is reconcilable without a human reading stderr.
+  const run = JSON.parse((failure.printed ?? []).join("\n")) as {
+    digest: string;
+    halves: { surface: string; outcome: string }[];
+    refusals: string[];
+  };
+  assert.equal(run.digest, digest);
+  assert.deepEqual(run.halves, [{ surface: "file", outcome: "recorded" }]);
+  assert.deepEqual(
+    run.refusals,
+    ["reserved: Recovery artifact is unavailable; lifecycle was not recorded."],
+  );
+  const row = (await f.fileRows()).find((entry) => entry.digest === digest);
+  assert.ok(row?.lifecycle?.release);
 });
 
 test("grammar refusals name what is missing", async (t) => {
