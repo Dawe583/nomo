@@ -212,6 +212,26 @@ nomo doctor
 **3. Připoj poskytovatele.** Viz kapitola 6. Dokud to neuděláš, každá konverzace
 hlásí `Setup required` a nic nevyšle. To je navržený stav, ne chyba.
 
+**Sbírání místa v obou vaultech.** Rezervovaný vault se nikdy nesbírá implicitně:
+sbírání řídí operátor a výchozí politika je `manual`, takže sběr bez
+politiky nesmaže nic a vypíše jen report toho, co našel:
+
+```sh
+nomo recovery collect --config ./nomo-recovery.json
+nomo recovery collect --config ./nomo-recovery.json --retention-policy ./retention.json
+nomo recovery collect --config ./nomo-recovery.json --retention-policy ./retention.json --dry-run
+```
+
+`--dry-run` vypíše předpověď a digesty, které by skutečný běh smazal, a
+nezapíše nic: žádný artefakt se nesmaže a žádný podepsaný řetězec se neotevře,
+takže předpověď nelze zaměnit za sběr, který proběhl. Starší adresářové
+artefakty sdílejí kořen rezervovaného vaultu a rezervovaný sběrač je
+nesbírá, proto `--surface file` spustí vlastní sběrač adresářového vaultu a
+`--surface both` spustí oba sběrače s různými operation id. Adresářový
+sběrač platí stejná pravidla: soubor bez zaznamenaného důkazu je chráněný,
+zaznamenaný pin drží, dokud jej neuvolní pojmenovaný operátor, a smazat se
+smí jen to, co je odemčeno a staré podle politiky.
+
 **4. Otevři pracovní prostor.**
 
 ```sh
