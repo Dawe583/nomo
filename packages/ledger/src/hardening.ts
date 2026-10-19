@@ -306,7 +306,7 @@ foreach ($item in $items) {
   try {
     await windowsPowerShell(script, { NOMO_ACL_ROOT: root });
   } catch {
-    throw new Error("configured state tree failed the Windows ACL check");
+    throw new Error(`configured state tree ${root} failed the Windows ACL check`);
   }
 }
 
