@@ -722,8 +722,9 @@ nomo replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key ba
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
-nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config <file> [--input <file>] [--approve <digest>] [--surface file|reserved|both]
+nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <file> [--input <file>] [--approve <digest>] [--surface file|reserved|both]
 nomo recovery collect --config <file> [--retention-policy <file>] [--surface file|reserved|both] [--dry-run] [--operation <id>]
+nomo recovery doctor --config <file>
 nomo recovery retention --config <file> [--surface file|reserved|both] (--list | --pin <digest> [--kind <recovery|operator>] --as <id> | --mark-unpinned <digest> | --release <digest> --pins <ownerId>:<kind> --as <id>)
 nomo recovery vault-capacity --config <file> --from <maxTotalBytes>:<maxArtifactBytes> --to <maxTotalBytes>:<maxArtifactBytes> --as <operatorId>
 nomo policy list | show <name> | validate <file>
