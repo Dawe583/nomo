@@ -62,16 +62,26 @@ export function validateRetentionPolicy(
   if (
     typeof candidate !== "object" ||
     candidate === null ||
-    candidate.version !== RETENTION_POLICY_VERSION ||
-    (candidate.mode !== "manual" && candidate.mode !== "age") ||
     typeof candidate.ttlByKind !== "object" ||
     candidate.ttlByKind === null
   )
-    throw new Error("Invalid recovery retention policy.");
+    throw new Error(
+      "A recovery retention policy is an object with a version, a mode and a ttl block.",
+    );
+  if (candidate.version !== RETENTION_POLICY_VERSION)
+    throw new Error(
+      `Recovery retention policy version ${JSON.stringify(candidate.version)} is not the version this binary reads: ${RETENTION_POLICY_VERSION}.`,
+    );
+  if (candidate.mode !== "manual" && candidate.mode !== "age")
+    throw new Error(
+      `Recovery retention policy mode ${JSON.stringify(candidate.mode)} is neither manual nor age.`,
+    );
   const ttlByKind = {} as Record<RetentionKind, number | null>;
   for (const kind of kinds) {
     if (!Object.hasOwn(candidate.ttlByKind, kind))
-      throw new Error("Invalid recovery retention policy.");
+      throw new Error(
+        `Recovery retention policy ttl block is missing ${kind}; it must name all of ${kinds.join(", ")}.`,
+      );
     const ttl = candidate.ttlByKind[kind];
     if (ttl !== null && (!Number.isSafeInteger(ttl) || ttl < 1))
       throw new Error(
@@ -82,7 +92,9 @@ export function validateRetentionPolicy(
     ttlByKind[kind] = ttl;
   }
   if (Object.keys(candidate.ttlByKind).length !== kinds.length)
-    throw new Error("Invalid recovery retention policy.");
+    throw new Error(
+      `Recovery retention policy ttl block carries ${JSON.stringify(Object.keys(candidate.ttlByKind))}: the valid kinds are ${kinds.join(", ")}.`,
+    );
   if (candidate.mode === "manual" && ttlByKind.unpinned !== null)
     throw new Error("A manual recovery retention policy carries no TTL.");
   if (candidate.mode === "age" && ttlByKind.unpinned === null)
@@ -254,13 +266,16 @@ export async function markVaultLifecycle(
       (existing.pin.ownerId !== incoming.pin.ownerId ||
         existing.pin.kind !== incoming.pin.kind)
     )
-      throw new Error("Recovery artifact pin conflicts with recorded lifecycle.");
+      throw new Error(
+        `The recorded pin ${existing.pin.ownerId}:${existing.pin.kind} does not match the stated pin ${incoming.pin!.ownerId}:${incoming.pin!.kind}; nothing was recorded.`,
+      );
     const artifact = join(
         resolve(request.root),
         request.workspace,
         request.reference.digest,
       ),
-      metadata = await stat(artifact).catch(() => {
+      metadata = await stat(artifact).catch((error: unknown) => {
+        if (!isNodeError(error) || error.code !== "ENOENT") throw error;
         throw new Error(
           "Recovery artifact is unavailable; lifecycle was not recorded.",
         );
@@ -557,8 +572,11 @@ export async function vaultFiles(
   for (const name of names) {
     if (!/^[a-f0-9]{64}$/.test(name)) continue;
     const path = join(artifacts, name);
-    const metadata = await stat(path);
-    if (!metadata.isFile()) continue;
+    const metadata = await stat(path).catch((error: unknown) => {
+      if (isNodeError(error) && error.code === "ENOENT") return undefined;
+      throw error;
+    });
+    if (metadata === undefined || !metadata.isFile()) continue;
     // Recorded evidence is authoritative. Absent evidence is not permission: the
     // artifact stays protected until an operator releases it.
     const lifecycle = await readLifecycle(evidence, { digest: name });
