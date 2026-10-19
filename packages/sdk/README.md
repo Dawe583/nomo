@@ -40,6 +40,8 @@ This package is landing in wave 4. Its README documents only the public barrel e
   Unknown signing keys and forged signatures cause `LedgerVerifyError`.
 - Missing policy defaults to a temporary deny-all policy.
 - Holds are exposed through the approval broker and hold handles.
+- Closing the client rejects pending requests and every `awaitHold` waiter, including
+  waiters registered before their hold appears.
 - Denied or expired holds throw `HoldDeniedError`.
 - Invalid policy startup throws `PolicyStartupError`.
 - Invalid ledger startup throws `LedgerVerifyError`.

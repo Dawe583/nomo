@@ -208,6 +208,7 @@ export class NomoClient implements McpLikeClient {
       `request ${method} timed out`,
       () => {
         this.#pending.delete(id);
+        this.#input.remove(id);
       },
       running,
     );
@@ -252,10 +253,7 @@ export class NomoClient implements McpLikeClient {
       this.#pumpTimer = undefined;
     }
     this.#input.end();
-    for (const pending of this.#pending.values()) {
-      pending.reject(new Error("NOMO client closed"));
-    }
-    this.#pending.clear();
+    this.#rejectAll(new Error("NOMO client closed"));
   }
 
   #ensureStarted(): Promise<void> {
@@ -499,25 +497,30 @@ export function createNomoClient(options: NomoClientOptions): NomoClient {
 }
 
 class ScriptInput implements AsyncIterable<string>, AsyncIterator<string> {
-  readonly #lines: string[] = [];
+  readonly #lines: Array<{ readonly line: string; readonly id: JsonRpcId | undefined }> = [];
   readonly #waiters: Array<(result: IteratorResult<string>) => void> = [];
   #done = false;
-
   push(message: JsonRpcMessage): void {
-    this.pushLine(JSON.stringify(message));
+    this.pushLine(JSON.stringify(message), "id" in message ? message.id : undefined);
   }
 
-  pushLine(line: string): void {
+  pushLine(line: string, id: JsonRpcId | undefined): void {
     const waiter = this.#waiters.shift();
     if (waiter !== undefined) {
       waiter({ value: line, done: false });
       return;
     }
-    this.#lines.push(line);
+    this.#lines.push({ line, id });
+  }
+
+  remove(id: JsonRpcId): void {
+    const index = this.#lines.findIndex((entry) => entry.id === id);
+    if (index !== -1) this.#lines.splice(index, 1);
   }
 
   end(): void {
     this.#done = true;
+    this.#lines.length = 0;
     for (const waiter of this.#waiters.splice(0)) waiter({ value: undefined, done: true });
   }
 
@@ -526,8 +529,8 @@ class ScriptInput implements AsyncIterable<string>, AsyncIterator<string> {
   }
 
   next(): Promise<IteratorResult<string>> {
-    const line = this.#lines.shift();
-    if (line !== undefined) return Promise.resolve({ value: line, done: false });
+    const entry = this.#lines.shift();
+    if (entry !== undefined) return Promise.resolve({ value: entry.line, done: false });
     if (this.#done) return Promise.resolve({ value: undefined, done: true });
     return new Promise((resolve) => { this.#waiters.push(resolve); });
   }

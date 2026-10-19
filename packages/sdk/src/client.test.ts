@@ -1,5 +1,7 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
+import { closeSync, constants, existsSync, openSync, writeSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { mkdtemp, writeFile, readFile, rm, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -109,6 +111,181 @@ describe("NomoClient", () => {
     } finally {
       client.close();
     }
+  });
+
+  test("close rejects awaitHold waiters before the upstream hold appears", async () => {
+    const client = new NomoClient({
+      connect: { upstreamCommand: [process.execPath, fixtureServer] },
+    });
+    const settled = client.awaitHold("hold-not-seen").then(
+      () => ({ kind: "resolved" as const }),
+      (error: unknown) => ({ kind: "rejected" as const, error }),
+    );
+
+    client.close();
+    const outcome = await Promise.race([
+      settled,
+      new Promise<{ kind: "pending" }>((resolve) => {
+        setImmediate(() => resolve({ kind: "pending" }));
+      }),
+    ]);
+
+    if (outcome.kind !== "rejected") {
+      assert.fail(outcome.kind === "pending"
+        ? "close left an early awaitHold waiter pending"
+        : "close resolved an early awaitHold waiter");
+    }
+    assert.ok(outcome.error instanceof Error);
+    assert.match(outcome.error.message, /NOMO client closed/);
+  });
+
+  test("close prevents already queued requests from reaching the upstream", async (t) => {
+    const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-close-queue-"));
+    t.after(async () => { await rm(dir, { recursive: true, force: true }); });
+    const policyPath = join(dir, "policy.yaml");
+    await writeFile(policyPath, [
+      "version: 1",
+      "rules:",
+      "  - match:",
+      "      tool: echo",
+      "      class: unknown",
+      "    decision: allow",
+      "    rationale: close queue fixture",
+      "  - match: {}",
+      "    decision: deny",
+      "    rationale: deny other tools",
+      "",
+    ].join("\n"));
+    const upstreamScript = join(dir, "upstream.mjs");
+    const callMarker = join(dir, "call-received");
+    await writeFile(upstreamScript, `
+import { createInterface } from "node:readline";
+import { writeFileSync } from "node:fs";
+const callMarker = process.argv[2];
+const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
+const result = (id, value) => process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id, result: value }) + "\\n");
+input.on("line", (line) => {
+  const message = JSON.parse(line);
+  if (message.method === "initialize") {
+    result(message.id, { protocolVersion: "2025-11-25", capabilities: { tools: {} }, serverInfo: { name: "close-fixture", version: "1" } });
+  } else if (message.method === "tools/list") {
+    result(message.id, { tools: [{ name: "echo", inputSchema: { type: "object" } }] });
+  } else if (message.method === "tools/call") {
+    writeFileSync(callMarker, "received");
+    result(message.id, { content: [{ type: "text", text: "called" }] });
+  }
+});
+process.on("SIGTERM", () => process.exit(0));
+`);
+    const ledgerDir = join(dir, "ledger");
+    const client = new NomoClient({
+      ledgerDir,
+      policyPath,
+      connect: { upstreamCommand: [process.execPath, upstreamScript, callMarker] },
+      requestTimeoutMs: 5_000,
+    });
+    const request = client.request("tools/call", {
+      name: "echo",
+      arguments: { text: "must not run after close" },
+    }).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    client.close();
+    const outcome = await request;
+    assert.ok(outcome instanceof Error);
+    assert.match(outcome.message, /NOMO client closed/);
+    assert.equal(existsSync(callMarker), false);
+  });
+
+  test("request timeout removes an unread RPC before startup resumes", async (t) => {
+    if (process.platform === "win32") {
+      t.skip("mkfifo is a POSIX utility");
+      return;
+    }
+    const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-timeout-queue-"));
+    t.after(async () => { await rm(dir, { recursive: true, force: true }); });
+    const policyPath = join(dir, "policy.fifo");
+    execFileSync("mkfifo", [policyPath]);
+    const policyText = [
+      "version: 1",
+      "rules:",
+      "  - match:",
+      "      tool: echo",
+      "      class: unknown",
+      "    decision: allow",
+      "    rationale: timeout queue fixture",
+      "  - match: {}",
+      "    decision: deny",
+      "    rationale: deny other tools",
+      "",
+    ].join("\n");
+    const callLog = join(dir, "calls");
+    const closeMarker = join(dir, "closed");
+    const upstreamScript = join(dir, "upstream.mjs");
+    await writeFile(upstreamScript, `
+import { createInterface } from "node:readline";
+import { appendFileSync } from "node:fs";
+const [callLog, closeMarker] = process.argv.slice(2);
+const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
+input.on("line", (line) => {
+  const message = JSON.parse(line);
+  if (message.method === "tools/call") {
+    const text = message.params?.arguments?.text ?? "";
+    appendFileSync(callLog, text + "\\n");
+    process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id: message.id, result: { content: [{ type: "text", text }] } }) + "\\n");
+  }
+});
+process.on("SIGTERM", () => {
+  appendFileSync(closeMarker, "closed");
+  process.exit(0);
+});
+`);
+    const client = new NomoClient({
+      ledgerDir: await mkdtemp(join(dir, "ledger-")),
+      policyPath,
+      connect: { upstreamCommand: [process.execPath, upstreamScript, callLog, closeMarker] },
+      requestTimeoutMs: 2_000,
+    });
+    let policyWriter: number | undefined;
+    t.after(() => {
+      if (policyWriter !== undefined) {
+        writeSync(policyWriter, policyText);
+        closeSync(policyWriter);
+      }
+      client.close();
+    });
+    const first = client.request("tools/call", {
+      name: "echo",
+      arguments: { text: "timed out" },
+    }).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    for (let attempt = 0; attempt < 500; attempt += 1) {
+      try {
+        policyWriter = openSync(policyPath, constants.O_WRONLY | constants.O_NONBLOCK);
+        break;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENXIO") throw error;
+        await delay(10);
+      }
+    }
+    assert.notEqual(policyWriter, undefined, "client never opened the FIFO policy");
+    const timedOut = await first;
+    assert.ok(timedOut instanceof Error);
+    assert.match(timedOut.message, /request tools\/call timed out/);
+    const liveCall = client.request("tools/call", {
+      name: "echo",
+      arguments: { text: "after timeout" },
+    });
+    writeSync(policyWriter!, policyText);
+    closeSync(policyWriter!);
+    policyWriter = undefined;
+    assert.equal(textFrom(await liveCall), "after timeout");
+    client.close();
+    await waitFor(() => existsSync(closeMarker) ? true : undefined, "timeout fixture shutdown");
+    assert.equal(await readFile(callLog, "utf8"), "after timeout\n");
   });
 
 
