@@ -597,48 +597,92 @@ export async function runRecoveryCommand(
         .split(":") as [string, "recovery" | "operator"];
       believedPin = { ownerId: believedOwner, kind: believedKind };
     }
+    // Two stores cannot commit one transition atomically, so this run first
+    // learns what every half decided. A mark skips the half that has nothing
+    // to protect, while a release keeps its exact interpretation of what
+    // the operator stated. The half that proves the digest lands either
+    // way, and a refusal after one half recorded names both, because a run
+    // whose message denies what did happen trains operators to distrust it.
+    const halves: Array<{ surface: "file" | "reserved"; outcome: string }> = [];
+    const refusals: string[] = [];
     for (const piece of surfaces) {
-      const reference =
-        piece === "reserved"
-          ? await reservedVaultReference(vault, config.workspace, digest!)
-          : undefined;
-      if (pinned !== undefined) {
-        const pin = { ownerId: owner!, kind: (kind ?? "operator") as "recovery" | "operator" };
-        if (piece === "file")
-          await pinFileVaultLifecycle({
-            root: fileRoot,
-            index: fileIndex,
-            workspace: config.workspace,
-            digest: pinned,
-            pin,
-          });
-        else await vault.markVaultLifecycle(config.workspace, reference!, { pin });
-      } else if (unpinned !== undefined) {
-        if (piece === "file")
-          await markFileVaultUnpinned({
-            root: fileRoot,
-            index: fileIndex,
-            workspace: config.workspace,
-            digest: unpinned,
-          });
-        else await vault.markVaultLifecycle(config.workspace, reference!, {});
-      } else {
-        if (piece === "file")
-          await releaseFileVaultPin({
-            root: fileRoot,
-            index: fileIndex,
-            workspace: config.workspace,
-            digest: released!,
-            pin: believedPin!,
-            operatorId: owner!,
-          });
-        else
-          await vault.releaseVaultPin(config.workspace, reference!, {
-            pin: believedPin!,
-            operatorId: owner!,
-          });
+      // The absence a healthy store reports comes in one of these two
+      // literal forms; a genuine half failure, like a capacity worker or a
+      // mismatched pin, names itself differently and must refuse.
+      const isAbsent = (message: string): boolean =>
+        message === "Recovery artifact is unavailable; lifecycle was not recorded." ||
+        message === "Invalid or unavailable recovery reference.";
+      try {
+        if (pinned !== undefined) {
+          const pin = {
+            ownerId: owner!,
+            kind: (kind ?? "operator") as "recovery" | "operator",
+          };
+          if (piece === "file")
+            await pinFileVaultLifecycle({
+              root: fileRoot,
+              index: fileIndex,
+              workspace: config.workspace,
+              digest: pinned,
+              pin,
+            });
+          else
+            await vault.markVaultLifecycle(
+              config.workspace,
+              await reservedVaultReference(vault, config.workspace, pinned),
+              { pin },
+            );
+        } else if (unpinned !== undefined) {
+          if (piece === "file")
+            await markFileVaultUnpinned({
+              root: fileRoot,
+              index: fileIndex,
+              workspace: config.workspace,
+              digest: unpinned,
+            });
+          else
+            await vault.markVaultLifecycle(
+              config.workspace,
+              await reservedVaultReference(vault, config.workspace, unpinned),
+              {},
+            );
+        } else {
+          if (piece === "file")
+            await releaseFileVaultPin({
+              root: fileRoot,
+              index: fileIndex,
+              workspace: config.workspace,
+              digest: released!,
+              pin: believedPin!,
+              operatorId: owner!,
+            });
+          else
+            await vault.releaseVaultPin(
+              config.workspace,
+              await reservedVaultReference(vault, config.workspace, released!),
+              { pin: believedPin!, operatorId: owner! },
+            );
+        }
+        halves.push({ surface: piece, outcome: "recorded" });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (released === undefined && isAbsent(message)) {
+          halves.push({ surface: piece, outcome: "absent" });
+          continue;
+        }
+        refusals.push(`${piece}: ${message}`);
       }
     }
+    if (halves.length === surfaces.length && refusals.length === 0 && !halves.some((half) => half.outcome === "recorded"))
+      throw new Error("No retention surface names the digest; nothing was recorded.");
+    if (refusals.length > 0)
+      throw new Error(
+        "Retention transition refused: " +
+          [
+            ...halves.map((half) => `${half.surface} ${half.outcome}`),
+            ...refusals,
+          ].join("; "),
+      );
     print(
       JSON.stringify(
         {
@@ -647,6 +691,7 @@ export async function runRecoveryCommand(
           transition:
             pinned !== undefined ? "pinned" : unpinned !== undefined ? "unpinned" : "released",
           ...(unpinned === undefined ? { as: owner } : {}),
+          halves,
         },
         null,
         2,

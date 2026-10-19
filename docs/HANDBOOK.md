@@ -234,8 +234,12 @@ on, and `--release <digest> --pins <ownerId>:<kind> --as <operator>`
 removes a pin the operator names exactly, refusing any stale view of the
 protection it removes. The transition runs against `--surface
 file|reserved` or both, an unpinned record names no operator on purpose,
-and a mark or release for an artifact a store cannot prove refuses
-rather than recording protection for nothing. Where a host other than
+and a release for a pin a store cannot prove refuses rather than
+recording nothing, because it names the pin it removes exactly. A mark
+lands on every surface that proves the digest and reports the surface
+that has nothing to protect, so one move reads true in a mixed store
+where a digest lives in one half, and a digest no surface holds refuses
+because there is nothing to protect. Where a host other than
 this command should make the marking calls, artifacts still stay
 protected by the absence of a record until that host exists.
 `nomo recovery

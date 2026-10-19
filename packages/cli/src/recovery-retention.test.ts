@@ -11,7 +11,7 @@ import {
   listReservedVaultRetention,
   type RetentionRow,
 } from "./recovery-retention.ts";
-import { reservedRecoveryVault } from "../../runtime/src/index.ts";
+import { reservedRecoveryVault, localRecoveryVault } from "../../runtime/src/index.ts";
 import { devKeyProvider } from "../../ledger/src/sign.ts";
 
 const fixture = async (t: { after: (fn: () => unknown) => void }) => {
@@ -52,20 +52,17 @@ const fixture = async (t: { after: (fn: () => unknown) => void }) => {
     return row.digest;
   };
   const putFile = async (value: string): Promise<string> => {
-    const digest = createHash("sha256")
-      .update(Buffer.from(value, "utf8"))
-      .digest("hex");
-    // The health reader walks this namespace and asserts the modes its
-    // writers leave behind, so the fixture writes what a legacy writer
-    // writes: a 0700 directory and 0600 artifacts.
-    await mkdir(join(dir, "state", "vault", "test"), {
-      recursive: true,
-      mode: 0o700,
-    });
-    await writeFile(join(dir, "state", "vault", "test", digest), Buffer.from(value), {
-      mode: 0o600,
-    });
-    return digest;
+    // The legacy half keeps files the legacy writer wrote: the reserved
+    // store reads one of them as its key-check sample by decrypting it, so
+    // a raw byte file here would make every first reserved-half
+    // transaction refuse "Recovery artifact cannot be verified." The
+    // artifact content is the ciphertext envelope a real writer leaves.
+    const reference = await localRecoveryVault(
+      join(dir, "state", "vault"),
+      { local: Buffer.from(env.TEST_KEY, "base64") },
+      "local",
+    ).put("test", value);
+    return reference.digest;
   };
   const reservedRows = (): Promise<RetentionRow[]> =>
     listReservedVaultRetention(vault, "test");
@@ -119,6 +116,7 @@ test("a pin records on the reserved half and the list reads it back", async (t) 
     digest,
     transition: "pinned",
     as: "op-a",
+    halves: [{ surface: "reserved", outcome: "recorded" }],
   });
   const rows = await f.reservedRows();
   assert.deepEqual(rows[0].lifecycle?.pin, { ownerId: "op-a", kind: "operator" });
@@ -143,6 +141,7 @@ test("a pin protects the legacy file half and a wrong release refuses", async (t
     digest,
     transition: "pinned",
     as: "op-a",
+    halves: [{ surface: "file", outcome: "recorded" }],
   });
   const pinned = (await f.fileRows()).find((row) => row.digest === digest);
   assert.deepEqual(pinned?.lifecycle?.pin, { ownerId: "op-a", kind: "recovery" });
@@ -172,6 +171,7 @@ test("a pin protects the legacy file half and a wrong release refuses", async (t
     digest,
     transition: "released",
     as: "op-r",
+    halves: [{ surface: "file", outcome: "recorded" }],
   });
   const after = (await f.fileRows()).find((row) => row.digest === digest);
   assert.deepEqual(after?.lifecycle?.pin, undefined);
@@ -192,19 +192,20 @@ test("a release with no recorded pin refuses and records nothing", async (t) => 
   assert.deepEqual(rows[0].lifecycle, undefined);
 });
 
-test("a mark of an absent artifact refuses where the store cannot prove it", async (t) => {
+test("a mark for a digest no healthy store proves refuses", async (t) => {
   const f = await fixture(t);
   await f.putReserved("reserved only");
   const missing = createHash("sha256").update(Buffer.from("ghost")).digest("hex");
-  // The file half has no such artifact, so a default both-surface pin must
-  // refuse loudly rather than pretend both stores were protected.
+  // A default both-surface pin of a digest neither store holds skips both
+  // absent halves, so the run refuses loudly rather than pretend the
+  // protection moved anywhere.
   await assert.rejects(
     f.run(["--pin", missing, "--as", "op-a"]),
-    /unavailable/,
+    /No retention surface names the digest/,
   );
   await assert.rejects(
     f.run(["--surface", "reserved", "--pin", missing, "--as", "op-a"]),
-    /unavailable/,
+    /No retention surface names the digest/,
   );
 });
 
@@ -218,6 +219,7 @@ test("the unpinned mark records the collectable record and a pin refuses it", as
     surface: "file",
     digest: collectable,
     transition: "unpinned",
+    halves: [{ surface: "file", outcome: "recorded" }],
   });
   const rows = await f.fileRows();
   assert.deepEqual(rows.find((row) => row.digest === collectable)?.lifecycle, {});
@@ -247,5 +249,83 @@ test("grammar refusals name what is missing", async (t) => {
   await assert.rejects(
     f.run(["--release", "a".repeat(64), "--as", "op-a", "--pins", "badformat"]),
     /--pins/,
+  );
+});
+
+test("a mark lands where a store proves the digest and reports both halves", async (t) => {
+  const f = await fixture(t);
+  const fileDigest = await f.putFile("probe file value");
+  const out = await f.run(["--pin", fileDigest, "--as", "op-p"]);
+  // The digest only exists in the file store: the reserved half reports
+  // its absence instead of refusing a protection the run recorded.
+  assert.equal(out.code, 0);
+  assert.deepEqual(out.json(), {
+    surface: "both",
+    digest: fileDigest,
+    transition: "pinned",
+    as: "op-p",
+    halves: [
+      { surface: "file", outcome: "recorded" },
+      { surface: "reserved", outcome: "absent" },
+    ],
+  });
+  const rows = await f.fileRows();
+  assert.deepEqual(rows.find((row) => row.digest === fileDigest)?.lifecycle, {
+    pin: { ownerId: "op-p", kind: "operator" },
+  });
+});
+
+test("a half failure discloses what the run recorded before refusing", async (t) => {
+  // The fixture vault persists a non-default capacity, and the config
+  // states none: every CLI worker that reaches the reserved store is the
+  // mismatched worker the contract refuses, which a real move repairs.
+  const dir = await mkdtemp(join(tmpdir(), "nomo-recovery-retention-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const env = { TEST_KEY: randomBytes(32).toString("base64") },
+    config = join(dir, "nomo-recovery.json");
+  await mkdir(join(dir, "project"), { recursive: true });
+  await mkdir(join(dir, "state"), { recursive: true });
+  await writeFile(
+    config,
+    JSON.stringify({
+      workspace: "test",
+      stateDir: "state",
+      encryptionKeyEnv: "TEST_KEY",
+      filesystem: { root: "project", cooperative: true },
+    }),
+  );
+  await devKeyProvider({
+    dir: join(dir, "state", "keys"),
+    env: {},
+    createIfMissing: true,
+  });
+  await reservedRecoveryVault(
+    join(dir, "state", "vault"),
+    { local: Buffer.from(env.TEST_KEY, "base64") },
+    "local",
+    { maxTotalBytes: 131072, maxArtifactBytes: 32768 },
+  ).put("test", "seed");
+  const reference = await localRecoveryVault(
+    join(dir, "state", "vault"),
+    { local: Buffer.from(env.TEST_KEY, "base64") },
+    "local",
+  ).put("test", "probe file value");
+  const digest = reference.digest;
+  const lines: string[] = [];
+  await assert.rejects(
+    runRecoveryCommand(
+      ["retention", "--pin", digest, "--as", "op-p", "--config", config],
+      env,
+      (line) => lines.push(line),
+    ),
+    /file recorded; reserved: Vault capacity differs/,
+  );
+});
+
+test("a release keeps exact refusals for a digest no surface proves", async (t) => {
+  const f = await fixture(t);
+  await assert.rejects(
+    f.run(["--release", "d".repeat(64), "--as", "op-r", "--pins", "op-r:operator"]),
+    /Recovery artifact is unavailable/,
   );
 });
