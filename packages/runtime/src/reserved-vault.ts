@@ -168,13 +168,18 @@ export type ReservedRetentionRow = {
 };
 
 const capacityOf = (capacity: VaultCapacity): VaultCapacity => {
-  for (const value of [capacity.maxArtifactBytes, capacity.maxTotalBytes])
+  for (const [field, value] of [
+    ["maxArtifactBytes", capacity.maxArtifactBytes],
+    ["maxTotalBytes", capacity.maxTotalBytes],
+  ] as const)
     if (
       !Number.isSafeInteger(value) ||
       value < 1 ||
       value > Number.MAX_SAFE_INTEGER / 4
     )
-      throw new Error(`Invalid vault capacity; ${JSON.stringify(value)} is not a safe positive integer.`);
+      throw new Error(
+        `vaultCapacity.${field} is ${JSON.stringify(value)}: the capacity must be a whole number from 1 to ${Math.floor(Number.MAX_SAFE_INTEGER / 4)}.`,
+      );
   return capacity;
 };
 

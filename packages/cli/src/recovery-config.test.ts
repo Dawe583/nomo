@@ -113,6 +113,51 @@ test("doctor reports a usable configuration without refusing it", async (t) => {
   assert.match(lines.join("\n"), /adapters configured: filesystem/);
 });
 
+test("doctor names a malformed vaultCapacity before any executor opens the vault", async (t) => {
+  const path = await fixture(t, {
+    workspace: "dogfood",
+    stateDir: "state",
+    encryptionKeyEnv: "KEY",
+    vaultCapacity: { maxTotalBytes: "1GiB", maxArtifactBytes: 1024 },
+    filesystem: { root: "project", cooperative: true },
+  });
+
+  const { code, lines } = await doctor(path);
+  const text = lines.join("\n");
+
+  assert.equal(code, 1);
+  assert.match(text, /problem: vaultCapacity\.maxTotalBytes is 1GiB/);
+  assert.match(text, /it must be a whole number from 1 to/);
+});
+
+test("a whole-number vaultCapacity is usable and a zero maxArtifactBytes is refused by name", async (t) => {
+  const usable = await fixture(t, {
+    workspace: "dogfood",
+    stateDir: "state",
+    encryptionKeyEnv: "KEY",
+    vaultCapacity: { maxTotalBytes: 3156, maxArtifactBytes: 1024 },
+    filesystem: { root: "project", cooperative: true },
+  });
+  const zero = await fixture(t, {
+    workspace: "dogfood",
+    stateDir: "state",
+    encryptionKeyEnv: "KEY",
+    vaultCapacity: { maxTotalBytes: 3156, maxArtifactBytes: 0 },
+    filesystem: { root: "project", cooperative: true },
+  });
+
+  const ok = await doctor(usable);
+  assert.equal(ok.code, 0);
+  assert.match(ok.lines.join("\n"), /configuration: usable/);
+
+  const refused = await doctor(zero);
+  assert.equal(refused.code, 1);
+  assert.match(
+    refused.lines.join("\n"),
+    /vaultCapacity\.maxArtifactBytes is 0/,
+  );
+});
+
 test("doctor never prints the encryption key, only the variable that holds it", async (t) => {
   const path = await fixture(t, {
     workspace: "dogfood",

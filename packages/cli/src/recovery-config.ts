@@ -120,6 +120,30 @@ function unsupportedAdapter(config: Record<string, unknown>): string | undefined
   );
 }
 
+/**
+ * The bound the runtime's own capacity guard enforces: a safe integer the
+ * capacity arithmetic cannot overflow. Stating it here means the doctor
+ * refuses the value the vault would refuse, with the field named, before any
+ * executor opens a store.
+ */
+const MAX_CAPACITY_BYTES = Math.floor(Number.MAX_SAFE_INTEGER / 4);
+
+function vaultCapacityProblem(capacity: unknown): string | undefined {
+  if (!isJsonObject(capacity))
+    return `vaultCapacity is ${show(capacity)}: it must be an object with maxTotalBytes and maxArtifactBytes`;
+  for (const key of ["maxTotalBytes", "maxArtifactBytes"] as const) {
+    const value = capacity[key];
+    if (
+      typeof value !== "number" ||
+      !Number.isSafeInteger(value) ||
+      value < 1 ||
+      value > MAX_CAPACITY_BYTES
+    )
+      return `vaultCapacity.${key} is ${show(value)}: it must be a whole number from 1 to ${MAX_CAPACITY_BYTES}`;
+  }
+  return undefined;
+}
+
 export function describeRecoveryConfig(
   raw: unknown,
   configPath: string,
@@ -191,6 +215,11 @@ export function describeRecoveryConfig(
     problems.push(
       `mode is ${JSON.stringify(mode)}: it must be one of ${MODES.join(", ")}`,
     );
+  const capacity = config.vaultCapacity;
+  if (capacity !== undefined) {
+    const capacityFailure = vaultCapacityProblem(capacity);
+    if (capacityFailure !== undefined) problems.push(capacityFailure);
+  }
 
   const present = ADAPTER_KEYS.filter((key) => config[key] !== undefined);
   for (const key of present) fields.push(field(key));
