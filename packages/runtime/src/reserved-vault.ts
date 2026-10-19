@@ -569,10 +569,10 @@ export function reservedRecoveryVault(
     if (allocation) {
       identity(allocation.operationId);
       if (!slots.includes(allocation.slot))
-        throw new Error("Invalid vault slot.");
+        throw new Error(`Invalid vault slot ${JSON.stringify(allocation.slot)}.`);
     }
     if (!Number.isSafeInteger(bytes) || bytes < 1)
-      throw new Error("A recovery artifact declares a positive byte count.");
+      throw new Error(`A recovery artifact declares ${bytes} bytes; it must be a positive safe integer.`);
     if (bytes > maxArtifactBytes)
       throw new VaultCapacityError(`Recovery artifact of ${bytes} bytes exceeds the ${maxArtifactBytes} byte artifact limit.`);
     // GCM expands by a fixed amount and the caller declared the plaintext
