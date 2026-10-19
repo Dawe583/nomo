@@ -58,7 +58,7 @@ export function managedFilesystemAdapter(options: {
       path.includes("\\") ||
       path.includes("\0")
     )
-      throw new Error("Invalid workspace path.");
+      throw new Error(`Invalid workspace path ${JSON.stringify(path)}.`);
     const parts = path.split("/");
     if (
       parts.some(
@@ -72,7 +72,7 @@ export function managedFilesystemAdapter(options: {
           /^(\.git|\.ssh|\.aws|\.env.*|\.nomo.*)$/i.test(p),
       )
     )
-      throw new Error("Protected or invalid workspace path.");
+      throw new Error(`Protected or invalid workspace path ${JSON.stringify(path)}.`);
     const current = lstatSync(root, { bigint: true });
     if (!current.isDirectory() || `${current.dev}:${current.ino}` !== identity)
       throw new Error("Workspace identity changed.");
@@ -81,7 +81,7 @@ export function managedFilesystemAdapter(options: {
       parent = join(parent, part);
       const stat = lstatSync(parent);
       if (!stat.isDirectory() || stat.isSymbolicLink())
-        throw new Error("Unsafe workspace parent.");
+        throw new Error(`Unsafe workspace parent ${JSON.stringify(parent)}.`);
     }
     return join(root, path); //MUTATED
   }
@@ -103,7 +103,7 @@ export function managedFilesystemAdapter(options: {
       target(value.to);
       if (process.platform === "win32")
         throw new Error("Managed rename is not verified on Windows.");
-      if (value.path === value.to) throw new Error("Rename paths must differ.");
+      if (value.path === value.to) throw new Error(`Rename paths must differ: ${JSON.stringify(value.path)}.`);
       return { action: "rename", path: value.path, to: value.to };
     }
     if (value.action === "delete") {
@@ -111,7 +111,7 @@ export function managedFilesystemAdapter(options: {
         throw new Error("Delete accepts only a path.");
       return { action: "delete", path: value.path };
     }
-    if (value.action !== "write") throw new Error("Unsupported file action.");
+    if (value.action !== "write") throw new Error(`Unsupported file action ${JSON.stringify(value.action)}.`);
     if (
       Object.keys(value).some(
         (key) => !["action", "path", "base64", "mode"].includes(key),
