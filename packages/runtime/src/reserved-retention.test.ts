@@ -176,6 +176,57 @@ test("the manual policy collects nothing and the report counts every artifact", 
   ]);
 });
 
+test("a declined delete names the rows the vault would not remove", async (t) => {
+  const f = await fixture(t);
+  const ref = await f.put("collect me, then decline me");
+  await f.age(ref, 2000);
+  await f.mark(ref);
+  // A bare "failed" sentence sent the operator reading journal records to
+  // learn which digests died; the refusal carries them instead.
+  const stub = {
+    async retentionEntries(_workspace: string) {
+      return [
+        {
+          digest: ref.digest,
+          bytes: 12,
+          at: new Date(BASE - 2000).toISOString(),
+          lifecycle: {},
+        },
+      ];
+    },
+    async deleteRetained(_workspace: string, digests: readonly string[]) {
+      return {
+        deleted: 0,
+        freedBytes: 0,
+        errors: digests.map(
+          (digest) => `${digest} is not a digest this vault holds; not deleted`,
+        ),
+      };
+    },
+  };
+  await assert.rejects(
+    collectReservedVaultGarbage({
+      workspace: WORKSPACE,
+      journal: f.journal,
+      vault: stub as unknown as typeof f.vault,
+      operationId: "gc-declined",
+      agentId: "agent",
+      runId: "run",
+      policy: AGE_POLICY,
+      clock: () => new Date(BASE),
+      authorize: async () => true,
+    }),
+    (error: unknown) => {
+      assert.match(
+        (error as Error).message,
+        new RegExp(`Reserved vault garbage collection failed: ${ref.digest}`),
+      );
+      return true;
+    },
+  );
+  assert.equal(stages(await f.events("gc-declined")).slice(-1)[0], "failed");
+});
+
 test("age collection deletes only released artifacts and reports every count", async (t) => {
   const f = await fixture(t);
   const unmarked = await f.put("unmarked"),

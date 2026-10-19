@@ -8,7 +8,15 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, stat, utimes, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  rm,
+  stat,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -19,12 +27,20 @@ import {
   summarizeFileVaultRetention,
 } from "./file-retention.ts";
 import {
+  collectVaultGarbage,
   MANUAL_RETENTION_POLICY,
   markVaultLifecycle,
   type RetentionPolicy,
 } from "./retention.ts";
+import { localOperationJournal, type OperationJournal } from "./index.ts";
+import { devKeyProvider } from "../../ledger/src/sign.ts";
 
 const BASE = Date.UTC(2026, 0, 2);
+const AGE_POLICY: RetentionPolicy = {
+  version: 1,
+  mode: "age",
+  ttlByKind: { unpinned: 1000, recovery: null, operator: null },
+};
 
 const fixture = async (t: { after: (fn: () => unknown) => void }) => {
   const dir = await mkdtemp(join(tmpdir(), "nomo-file-retention-"));
@@ -230,4 +246,43 @@ test("a record the summary cannot prove refuses the counts outright", async (t) 
     }),
     /lifecycle is invalid/,
   );
+});
+
+test("a failed delete names the file the store could not remove", async (t) => {
+  const f = await fixture(t),
+    artifact = await f.put("collect me, then fail on me");
+  await f.age(artifact, 60_000);
+  await f.release(artifact);
+  const journal: OperationJournal = localOperationJournal(
+    join(f.dir, "journal"),
+    await devKeyProvider({ dir: join(f.dir, "keys"), env: {} }),
+  );
+  const workspaceDir = join(f.root, "test");
+  // An unwritable directory is the deterministic shape of a delete the store
+  // cannot complete: unlink needs write permission on the containing
+  // directory, and the refusal then names the file instead of a bare
+  // sentence.
+  await chmod(workspaceDir, 0o500);
+  await assert.rejects(
+    collectVaultGarbage({
+      root: f.root,
+      index: f.index,
+      workspace: "test",
+      journal,
+      operationId: "gc-eacces",
+      agentId: "agent",
+      runId: "run",
+      policy: AGE_POLICY,
+      clock: () => new Date(BASE),
+      authorize: async () => true,
+    }),
+    (error: unknown) => {
+      assert.match(
+        (error as Error).message,
+        /File vault garbage collection failed: EACCES/,
+      );
+      return true;
+    },
+  );
+  await chmod(workspaceDir, 0o700);
 });

@@ -175,7 +175,9 @@ export async function collectReservedVaultGarbage(
     }
     if (report.errors.length) {
       await record("failed", { policyDigest, errors: [...report.errors] });
-      throw new Error("Recovery vault garbage collection failed.");
+      throw new Error(
+        `Reserved vault garbage collection failed: ${[...report.errors].join("; ")}`,
+      );
     }
     // The report keeps the file collector's arithmetic: what was seen at the
     // start is exactly what stayed, what was protected, and what was deleted.
