@@ -22,6 +22,7 @@
 export const CONFORMANCE_ADAPTERS: readonly string[] = [
   "filesystem.managed",
   "git.managed",
+  "managed-documents",
   "postgres.managed",
 ];
 

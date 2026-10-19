@@ -747,9 +747,12 @@ Notes that save time:
   registry compares against.
 - `nomo replay --dry-run` reports what an inverse would do without performing it.
   Use it before any real replay.
-- Every `nomo recovery` action that changes something requires `--approve <digest>`
-  from the preceding `plan`. The digest is what binds your approval to that exact
-  work.
+- The `nomo recovery` actions that change the managed target, `execute`, `apply`
+  and `apply-job`, require `--approve <digest>` from the preceding `plan` or
+  plan-job. The digest is what binds your approval to that exact work. The
+  retention transitions and `vault-capacity` instead name their operator with
+  `--as`, and `collect` runs under the configured retention policy, so none of
+  the three carries a plan digest to approve.
 - `nomo policy` with no argument lists the shipped packs: `strict`, `balanced`,
   `dev`.
 - `nomo update` moves the installed tree, which lives at `~/.local/share/nomo-cli`
