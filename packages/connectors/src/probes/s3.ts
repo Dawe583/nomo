@@ -43,8 +43,8 @@ export const versioningProbe: Probe = {
 function parseS3Input(args: Readonly<Record<string, unknown>>): { readonly bucket: string; readonly prefix: string | undefined } {
   const bucket = args.bucket ?? args.Bucket;
   const prefix = args.prefix ?? args.Prefix;
-  if (typeof bucket !== "string" || bucket.length === 0) throw new Error("s3 probe requires string bucket");
-  if (prefix !== undefined && typeof prefix !== "string") throw new Error("s3 probe prefix must be a string");
+  if (typeof bucket !== "string" || bucket.length === 0) throw new Error(`s3 probe requires a nonempty string bucket; got ${JSON.stringify(bucket)}.`);
+  if (prefix !== undefined && typeof prefix !== "string") throw new Error(`s3 probe prefix must be a string; got ${JSON.stringify(prefix)}.`);
   return { bucket, prefix };
 }
 

@@ -58,8 +58,8 @@ type CascadeTarget = { readonly table: string; readonly predicate: string };
 function parsePredicateInput(args: Readonly<Record<string, unknown>>): { readonly table: string; readonly predicate: string } {
   const table = args.table;
   const predicate = args.predicate;
-  if (typeof table !== "string" || table.length === 0) throw new Error("postgres probe requires string table");
-  if (typeof predicate !== "string" || predicate.length === 0) throw new Error("postgres probe requires string predicate");
+  if (typeof table !== "string" || table.length === 0) throw new Error(`postgres probe requires a nonempty string table; got ${JSON.stringify(table)}.`);
+  if (typeof predicate !== "string" || predicate.length === 0) throw new Error(`postgres probe requires a nonempty string predicate; got ${JSON.stringify(predicate)}.`);
   return { table, predicate };
 }
 
@@ -81,7 +81,7 @@ async function loadForeignKeys(exec: ProbeExecutor): Promise<readonly ForeignKey
 function readCount(rows: readonly Readonly<Record<string, unknown>>[]): number {
   const value = rows[0]?.count;
   const count = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
-  if (!Number.isFinite(count)) throw new Error("postgres count probe returned no numeric count");
+  if (!Number.isFinite(count)) throw new Error(`postgres count probe returned no numeric count; got ${JSON.stringify(count)}.`);
   return count;
 }
 
