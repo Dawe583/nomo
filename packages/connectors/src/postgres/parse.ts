@@ -34,6 +34,8 @@ export function parseStatement(sql: string): ParsedStatement {
   let ast: unknown;
   try {
     ast = parser.astify(sql, { database: "Postgresql" });
+    if (Array.isArray(ast) && ast.length !== 1)
+      throw new Error("exactly one SQL statement is required");
   } catch (error) {
     throw new ParseError(sql, error);
   }
@@ -88,14 +90,10 @@ function tablesFromAstValue(value: unknown): string[] {
 function expressionSql(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   try {
-    return normalizePredicate(parser.exprToSQL(value, { database: "Postgresql" }));
+    return parser.exprToSQL(value, { database: "Postgresql" });
   } catch {
     return JSON.stringify(value);
   }
-}
-
-function normalizePredicate(value: string): string {
-  return value.replaceAll('"', "");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

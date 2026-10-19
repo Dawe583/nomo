@@ -104,6 +104,31 @@ async function restore(store: SnapshotStore, client: S3Client, input: ApplyResto
       }],
     };
   }
+  if (current !== undefined && input.capturedEtag === undefined) {
+    if (current.body === undefined) {
+      return {
+        applied: [],
+        refused: [{ stepId: input.stepId, reason: "verification_unavailable", changed: [] }],
+      };
+    }
+    const currentDigest = sha256(current.body);
+    if (currentDigest !== input.reference.digest) {
+      return {
+        applied: [],
+        refused: [{
+          stepId: input.stepId,
+          reason: "drift",
+          changed: [{
+            target: "s3.object",
+            key: { bucket: input.call.bucket, key: input.call.key },
+            field: "body",
+            capturedDigest: input.reference.digest,
+            currentDigest,
+          }],
+        }],
+      };
+    }
+  }
 
   const bytes = await store.get(input.reference);
   try {
