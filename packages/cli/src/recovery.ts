@@ -104,7 +104,7 @@ export async function runRecoveryCommand(
       // `--dry-run file` typo on the next token would otherwise be parsed
       // as one.
       if (rest[i] === "--dry-run") {
-        if (dryRun) throw new Error("Invalid recovery arguments.");
+        if (dryRun) throw new Error("--dry-run is given twice.");
         dryRun = true;
       } else {
         // --list is parsed as its own bare flag and rejected again in the
@@ -117,6 +117,7 @@ export async function runRecoveryCommand(
       i += 1;
       continue;
     }
+    const flag = rest[i];
     if (
       ![
         "--config",
@@ -133,13 +134,13 @@ export async function runRecoveryCommand(
         "--release",
         "--from",
         "--to",
-      ].includes(
-        rest[i] ?? "",
-      ) ||
-      !rest[i + 1] ||
-      args.has(rest[i]!)
+      ].includes(flag ?? "")
     )
-      throw new Error("Invalid recovery arguments.");
+      throw new Error(
+        `${JSON.stringify(rest[i] ?? "")} is not a flag nomo recovery parses.`,
+      );
+    if (!rest[i + 1]) throw new Error(`${flag} is set without a value.`);
+    if (args.has(flag!)) throw new Error(`${flag} is given twice.`);
     args.set(rest[i]!, rest[i + 1]!);
     i += 2;
   }

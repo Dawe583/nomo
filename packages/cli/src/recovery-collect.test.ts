@@ -169,7 +169,7 @@ test("a retention policy that fails the schema is refused with its rule", async 
       f.env,
       () => {},
     ),
-    /Invalid recovery retention policy/,
+    /ttl block is missing recovery/,
   );
 });
 

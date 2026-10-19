@@ -52,7 +52,9 @@ export async function auditFileVaultCollection(options: {
   readonly clock?: () => Date;
 }): Promise<GarbageReport & { readonly digests: readonly string[] }> {
   if (!/^[\w-]{1,120}$/.test(options.workspace))
-    throw new Error("Invalid vault retention identity.");
+    throw new Error(
+      `Recovery retention identity workspace is ${JSON.stringify(options.workspace)}: it must be 1 to 120 word or hyphen characters.`,
+    );
   const policy = validateRetentionPolicy(
     options.policy ?? MANUAL_RETENTION_POLICY,
   );

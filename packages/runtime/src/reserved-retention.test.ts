@@ -312,7 +312,7 @@ test("an invalid identity refuses before the journal opens", async (t) => {
       clock: () => new Date(BASE),
       authorize: async () => true,
     }),
-    /Invalid vault retention identity/,
+    /Recovery retention identity/,
   );
 });
 
@@ -504,6 +504,6 @@ test("a dry run on an unreadable record refuses exactly like the collector", asy
       workspace: "not a workspace",
       vault: f.vault,
     }),
-    /Invalid vault retention identity/,
+    /Recovery retention identity/,
   );
 });

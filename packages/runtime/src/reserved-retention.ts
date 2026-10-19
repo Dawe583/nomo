@@ -84,7 +84,9 @@ export async function auditReservedVaultCollection(options: {
 }): Promise<GarbageReport & { readonly digests: readonly string[] }> {
   const { workspace } = options;
   if (!/^[\w-]{1,120}$/.test(workspace))
-    throw new Error("Invalid vault retention identity.");
+    throw new Error(
+      `Recovery retention identity workspace is ${JSON.stringify(workspace)}: it must be 1 to 120 word or hyphen characters.`,
+    );
   const policy = validateRetentionPolicy(
     options.policy ?? MANUAL_RETENTION_POLICY,
   );
@@ -114,9 +116,17 @@ export async function collectReservedVaultGarbage(
     options.policy ?? MANUAL_RETENTION_POLICY,
   );
   const { workspace, operationId, agentId, runId } = options;
-  for (const value of [workspace, operationId, agentId, runId])
+  const identityFields: [string, string][] = [
+    ["workspace", workspace],
+    ["operationId", operationId],
+    ["agentId", agentId],
+    ["runId", runId],
+  ];
+  for (const [field, value] of identityFields)
     if (!/^[\w-]{1,120}$/.test(value))
-      throw new Error("Invalid vault retention identity.");
+      throw new Error(
+        `Recovery retention identity ${field} is ${JSON.stringify(value)}: it must be 1 to 120 word or hyphen characters.`,
+      );
   const clock = options.clock ?? (() => new Date());
   const policyDigest = digest(canonicalJson(policy));
   const identity: OperationEvent = {
