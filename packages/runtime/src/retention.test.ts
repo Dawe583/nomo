@@ -347,14 +347,14 @@ test("lifecycle evidence is recorded once and never silently released", async (t
   );
   await assert.rejects(
     f.mark(reference, { ownerId: "other", kind: "recovery" }),
-    /pin conflicts/,
+    /does not match the stated pin/,
   );
   await assert.rejects(
     f.mark(reference, {
       ownerId: "op",
       kind: "operator",
     } as VaultPin),
-    /pin conflicts/,
+    /does not match the stated pin/,
   );
   const reread = await f.put("other");
   await f.mark(reread);
