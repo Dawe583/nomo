@@ -1,4 +1,5 @@
-import { readFile, stat } from "node:fs/promises";
+import { constants } from "node:fs";
+import { open } from "node:fs/promises";
 
 import { GENESIS_PREV, entryHash } from "./canonical.ts";
 import { readLedgerReason } from "./attribution.ts";
@@ -55,6 +56,7 @@ export type ReadLedgerEntriesOptions = {
 
 export const LEDGER_READ_MAX_BYTES = 64 * 1024 * 1024;
 export const LEDGER_READ_MAX_ENTRIES = 100_000;
+const LEDGER_READ_CHUNK_BYTES = 64 * 1024;
 
 export async function readLedgerEntries(
   path: string,
@@ -62,13 +64,43 @@ export async function readLedgerEntries(
 ): Promise<JsonlEntry[]> {
   const maxBytes = options.maxBytes ?? LEDGER_READ_MAX_BYTES;
   const maxEntries = options.maxEntries ?? LEDGER_READ_MAX_ENTRIES;
-  const stat = await fstat(path);
-  if (stat > maxBytes) {
-    throw new Error(
-      `ledger file ${path} is ${stat} bytes and exceeds the ${maxBytes} byte read limit`,
-    );
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 0)
+    throw new RangeError("ledger maxBytes must be a non-negative safe integer");
+  if (!Number.isSafeInteger(maxEntries) || maxEntries < 0)
+    throw new RangeError("ledger maxEntries must be a non-negative safe integer");
+
+  // Opening nonblocking and checking this handle prevents a FIFO from hanging
+  // verification; bounded reads enforce the limit even if a regular file grows.
+  // Sources: https://nodejs.org/api/fs.html#file-open-constants
+  // https://nodejs.org/api/fs.html#filehandlereadbuffer-offset-length-position
+  const handle = await open(path, constants.O_RDONLY | constants.O_NONBLOCK);
+  let text: string;
+  try {
+    const info = await handle.stat();
+    if (!info.isFile())
+      throw new Error(`ledger path ${path} is not a regular file`);
+    if (info.size > maxBytes) {
+      throw new Error(
+        `ledger file ${path} is ${info.size} bytes and exceeds the ${maxBytes} byte read limit`,
+      );
+    }
+
+    const chunks: Buffer[] = [];
+    let bytesRead = 0;
+    for (;;) {
+      const remaining = maxBytes - bytesRead + 1;
+      const buffer = Buffer.allocUnsafe(Math.min(LEDGER_READ_CHUNK_BYTES, remaining));
+      const result = await handle.read(buffer, 0, buffer.length, null);
+      if (result.bytesRead === 0) break;
+      bytesRead += result.bytesRead;
+      if (bytesRead > maxBytes)
+        throw new Error(`ledger file ${path} exceeds the ${maxBytes} byte read limit`);
+      chunks.push(buffer.subarray(0, result.bytesRead));
+    }
+    text = Buffer.concat(chunks, bytesRead).toString("utf8");
+  } finally {
+    await handle.close();
   }
-  const text = await readFile(path, "utf8");
   const entries: JsonlEntry[] = [];
   const lines = text.split("\n");
   for (let index = 0; index < lines.length; index += 1) {
@@ -90,10 +122,6 @@ export async function readLedgerEntries(
   return entries;
 }
 
-async function fstat(path: string): Promise<number> {
-  const info = await stat(path);
-  return info.size;
-}
 
 export async function verifyChain(
   entries: readonly JsonlEntry[],

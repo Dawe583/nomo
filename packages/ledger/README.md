@@ -59,6 +59,12 @@ independently. This chain stores all 64, truncated only at the render boundary.
   `NOMO_LEDGER_DIR` (default `~/.nomo/ledger`), 0700 directory, fsync before
   the append is acknowledged.
 
+## Verification input limits
+
+The JSONL verifier accepts regular files only. Its defaults cap reads at 64 MiB
+and 100,000 entries. The byte ceiling is enforced during chunked reads; callers
+may raise either non-negative safe-integer limit explicitly.
+
 The Postgres store is the hosted tier and lands with its own migrations at
 WP-06, behind the same interface. WP-03 sharpened `LedgerStore` to three type
 parameters, `Body, StoredEntry, Receipt`: the caller brings a body, the file

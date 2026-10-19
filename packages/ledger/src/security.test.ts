@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { chmod, mkdtemp, mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -107,6 +108,43 @@ test("an oversized ledger line is refused instead of loading whole file", async 
     readLedgerEntries(file, { maxBytes: 1024 * 1024 }),
     /exceeds the 1048576 byte read limit/,
   );
+});
+
+test("invalid ledger read limits fail before opening a path", async () => {
+  await assert.rejects(
+    readLedgerEntries("", { maxBytes: Number.NaN }),
+    /ledger maxBytes must be a non-negative safe integer/,
+  );
+  await assert.rejects(
+    readLedgerEntries("", { maxEntries: Number.POSITIVE_INFINITY }),
+    /ledger maxEntries must be a non-negative safe integer/,
+  );
+});
+
+test("a named pipe cannot bypass the ledger byte limit", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("mkfifo is a POSIX utility");
+    return;
+  }
+  const dir = await mkdtemp(join(tmpdir(), "nomo-security-ledger-pipe-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const file = join(dir, "pipe.jsonl");
+  execFileSync("mkfifo", [file]);
+  const entry = JSON.stringify({
+    workspace: "pipe",
+    seq: 1,
+    body: { workspace: "pipe" },
+    prev_hash: "0".repeat(64),
+    hash: "1".repeat(64),
+    key_id: "k",
+    alg: "ed25519",
+    signature: "ed25519:AA",
+  });
+  const read = readLedgerEntries(file, { maxBytes: 1 });
+  const write = writeFile(file, `${entry}\n`).catch(() => undefined);
+
+  await assert.rejects(read, /not a regular file/);
+  await write;
 });
 
 test("a ledger with too many entries stops reading at the entry limit", async (t) => {
