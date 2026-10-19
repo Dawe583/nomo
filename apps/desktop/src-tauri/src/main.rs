@@ -182,10 +182,10 @@ fn launch_runtime(
 
 fn main() {
     let mobile_smoke = std::env::args().any(|argument| argument == "--smoke-mobile");
+    let desktop_smoke = std::env::args().any(|argument| argument == "--smoke-test");
     let runtime_exit_smoke = std::env::args().any(|argument| argument == "--smoke-runtime-exit");
-    let smoke = mobile_smoke
-        || runtime_exit_smoke
-        || std::env::args().any(|argument| argument == "--smoke-test");
+    let smoke = mobile_smoke || desktop_smoke || runtime_exit_smoke;
+    let visible_smoke = mobile_smoke || desktop_smoke;
     let smoke_data =
         std::env::temp_dir().join(format!("nomo-desktop-native-smoke-{}", std::process::id()));
     let cleanup_data = smoke_data.clone();
@@ -275,7 +275,7 @@ fn main() {
                 WebviewUrl::External(format!("{origin}/").parse()?),
             )
             .title("NOMO")
-            .visible(!smoke || mobile_smoke)
+            .visible(!smoke || visible_smoke)
             .inner_size(if mobile_smoke { 390.0 } else { 1200.0 }, if mobile_smoke { 844.0 } else { 820.0 })
             .min_inner_size(360.0, 520.0)
             .on_navigation(move |url| {
@@ -295,9 +295,21 @@ fn main() {
                     }
                     tauri::webview::DownloadEvent::Finished { success, .. } => {
                         if smoke {
-                            let correct = success && std::fs::read(&finish_file).ok().as_deref() == Some(b"NOMO desktop download smoke");
-                            if correct { println!("NOMO native desktop smoke passed: bundled runtime, rendered WebView and Blob download verified. Mobile toolbar checks: {}.", mobile_smoke); }
-                            else { eprintln!("NOMO native desktop smoke failed: the expected local export was not saved"); }
+                            let downloaded = std::fs::read(&finish_file).ok();
+                            let correct = success
+                                && downloaded.as_deref() == Some(b"NOMO desktop download smoke");
+                            if correct {
+                                println!("NOMO native desktop smoke passed: bundled runtime, rendered WebView and Blob download verified. Mobile toolbar checks: {}.", mobile_smoke);
+                            } else {
+                                let reason = if !success {
+                                    "WebView reported download failure"
+                                } else if downloaded.is_none() {
+                                    "download target missing"
+                                } else {
+                                    "download contents differ"
+                                };
+                                eprintln!("NOMO native desktop smoke failed: {reason}.");
+                            }
                             // Same exit mechanism as the watchdog above.
                             download_app.state::<Runtime>().stop();
                             std::process::exit(if correct { 0 } else { 1 });
@@ -352,31 +364,39 @@ fn main() {
                             } catch (error) { finish('FAIL: ' + error.message); }
                           }, 100);
                         })()"#);
-                    } else {
-                    if let Err(eval_error) = window.eval(r#"(() => {
-                      const finish = text => { document.title = 'SMOKE finish: ' + text; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'nomo-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
+                    } else if let Err(eval_error) = window.eval(r#"(() => {
+                      const finish = text => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'})); a.download = 'nomo-desktop-download-smoke.txt'; document.body.appendChild(a); a.click(); a.remove(); };
                       let attempts = 0, opened = false;
                       const timer = setInterval(() => {
-                        if (++attempts > 150) { clearInterval(timer); finish('FAIL: React command menu or bundled tool API unavailable'); return; }
+                        if (++attempts > 150) {
+                          clearInterval(timer);
+                          const selectors = ['#root', '.chat-container', '.composer', '.command-trigger', '.mobile-options-toggle', '.connection-gate', '.route-loading'];
+                          const ui = {
+                            viewport: [innerWidth, innerHeight],
+                            selectors: Object.fromEntries(selectors.map(selector => [selector, !!document.querySelector(selector)]))
+                          };
+                          finish('FAIL: desktop UI probe ' + JSON.stringify(ui));
+                          return;
+                        }
                         const trigger = document.querySelector('.command-trigger');
                         if (!trigger) return;
                         if (!opened) { opened = true; trigger.click(); return; }
                         const options = [...document.querySelectorAll('.command-results [role=option]')];
-                        const write = options.find(option => option.textContent.includes('/nomo_workspace_write'));
-                        if (!write) return;
+                        const plan = options.find(option => option.querySelector('.command-copy strong')?.textContent?.trim() === '/plan');
+                        if (!plan) return;
                         clearInterval(timer);
                         const palette = document.querySelector('.command-palette');
                         const composer = document.querySelector('.composer');
                         if (getComputedStyle(composer).overflow === 'hidden' || palette.getBoundingClientRect().height < 100) { finish('FAIL: command menu clipped'); return; }
-                        write.click();
+                        plan.click();
                         setTimeout(() => {
                           const draft = document.querySelector('.composer textarea');
-                          finish(draft?.value.includes('nomo_workspace_write') && document.querySelector('.selected-tool') ? 'NOMO desktop download smoke' : 'FAIL: tool selection did not prepare a request');
+                          const prepared = draft?.value.startsWith('First propose a plan') || draft?.value.startsWith('Nejprve navrhni plán');
+                          finish(prepared ? 'NOMO desktop download smoke' : 'FAIL: local plan command did not prepare its prompt');
                         }, 150);
                       }, 100);
                     })()"#) {
                         eprintln!("NOMO native desktop smoke eval failed: {}.", eval_error);
-                    }
                     }
                 }
             })
@@ -442,8 +462,7 @@ fn main() {
     });
     if smoke {
         let _ = std::fs::remove_dir_all(cleanup_data);
-    }
-    if runtime_exited.load(Ordering::SeqCst) {
+        eprintln!("NOMO native desktop smoke exited before download verification.");
         std::process::exit(1);
     }
 }

@@ -155,16 +155,21 @@ user workspace and must exit nonzero:
 cargo run --manifest-path apps/desktop/src-tauri/Cargo.toml -- --smoke-runtime-exit
 ```
 
-This checks that the packaged application resolves its own resources and serves
-the real workbench, renders it in the native WebView, opens the slash menu, selects a real tool, and verifies an actual Blob download
-to its temporary directory, then shuts down. It uses a temporary data directory and does
-not contact a provider. Smoke tests bypass the single-instance guard so they do
+On macOS, the desktop Rust integration test launches this smoke path as a child
+and asserts the monitor diagnostic, exit code 1 and a 20-second deadline.
+
+The desktop smoke checks that the packaged application resolves its own
+resources, serves and renders the real workbench, opens the slash menu,
+selects the provider-independent `/plan` command, verifies its prepared prompt
+and visible palette bounds, then saves an actual Blob download to its temporary
+directory. It does not require valid provider credentials or make a model call.
+Smoke tests use temporary data and bypass the single-instance guard, so they do
 not focus or alter an already running user workspace.
 
-Any smoke outcome, pass or failure, leaves through a direct process exit so the
-reported code is the verdict; an exit through the tauri shutdown request loses
-the code inside the run loop on macOS. The hidden-window probe is currently
-expected to stop at the watchdog: macOS App Nap stalls the timers of a WebView
-in a window that is never shown, so the web side of the probe never reaches
-its download. The `--smoke-mobile` variant runs the same flow in a visible
-window and is the full end to end proof while the hidden probe is redesigned.
+`--smoke-test` opens a visible desktop-sized window because macOS App Nap stalls
+WebView timers in a window that is never shown. `--smoke-mobile` runs the same
+provider-independent workflow at a mobile viewport and additionally checks the
+mobile toolbar. `--smoke-runtime-exit` remains a hidden lifecycle-only check.
+Every smoke result exits directly with its verdict; if the application run loop
+returns before a download verdict, the smoke fails rather than reporting a
+false pass.

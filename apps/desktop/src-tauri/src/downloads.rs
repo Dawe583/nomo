@@ -34,4 +34,15 @@ mod tests {
             assert!(!allowed(&url.parse().unwrap(), origin));
         }
     }
+
+    #[test]
+    fn rejects_blob_origin_lookalikes() {
+        let origin = "http://127.0.0.1:4567";
+        for url in [
+            "blob:http://127.0.0.1:4567@attacker.invalid/uuid",
+            "blob:http://127.0.0.1.evil:4567/uuid",
+        ] {
+            assert!(!allowed(&url.parse().unwrap(), origin), "{url}");
+        }
+    }
 }

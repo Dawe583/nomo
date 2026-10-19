@@ -21,7 +21,8 @@ pub fn classify(error: &(dyn Error + 'static)) -> &'static str {
         || text.contains("workspace encryption key")
     {
         "KEYCHAIN_UNAVAILABLE"
-    } else if text.contains("runtime exited before readiness") || text.contains("runtime returned") {
+    } else if text.contains("runtime exited before readiness") || text.contains("runtime returned")
+    {
         "RUNTIME_STARTUP_FAILED"
     } else if text.contains("loopback") || text.contains("listen") || text.contains("bind") {
         "RUNTIME_NETWORK_FAILED"
@@ -74,11 +75,30 @@ mod tests {
 
     #[test]
     fn classifies_startup_failures_without_returning_error_text() {
-        assert_eq!(classify(&io::Error::other("Cannot unlock the NOMO workspace key in macOS Keychain")), "KEYCHAIN_UNAVAILABLE");
-        assert_eq!(classify(&io::Error::other("Runtime exited before readiness")), "RUNTIME_STARTUP_FAILED");
-        assert_eq!(classify(&io::Error::other("Desktop runtime did not bind loopback")), "RUNTIME_NETWORK_FAILED");
-        assert_eq!(classify(&io::Error::other("workspace.enc exists with a secret-bearing path")), "WORKSPACE_ACCESS_FAILED");
-        assert_eq!(classify(&io::Error::other("unexpected internal detail")), "STARTUP_FAILED");
+        assert_eq!(
+            classify(&io::Error::other(
+                "Cannot unlock the NOMO workspace key in macOS Keychain"
+            )),
+            "KEYCHAIN_UNAVAILABLE"
+        );
+        assert_eq!(
+            classify(&io::Error::other("Runtime exited before readiness")),
+            "RUNTIME_STARTUP_FAILED"
+        );
+        assert_eq!(
+            classify(&io::Error::other("Desktop runtime did not bind loopback")),
+            "RUNTIME_NETWORK_FAILED"
+        );
+        assert_eq!(
+            classify(&io::Error::other(
+                "workspace.enc exists with a secret-bearing path"
+            )),
+            "WORKSPACE_ACCESS_FAILED"
+        );
+        assert_eq!(
+            classify(&io::Error::other("unexpected internal detail")),
+            "STARTUP_FAILED"
+        );
     }
     #[test]
     fn classifies_windows_credential_failures_as_secure_store_failures() {
@@ -101,7 +121,10 @@ mod tests {
             )),
             "KEYCHAIN_ACCESS_DENIED"
         );
-        assert_eq!(allowlisted_code("KEYCHAIN_ACCESS_DENIED"), "KEYCHAIN_ACCESS_DENIED");
+        assert_eq!(
+            allowlisted_code("KEYCHAIN_ACCESS_DENIED"),
+            "KEYCHAIN_ACCESS_DENIED"
+        );
     }
 
     #[test]
@@ -120,12 +143,16 @@ mod tests {
     }
     #[test]
     fn startup_log_contains_only_allowlisted_categories() {
-        let directory = std::env::temp_dir().join(format!("nomo-startup-diagnostics-{}", std::process::id()));
+        let directory =
+            std::env::temp_dir().join(format!("nomo-startup-diagnostics-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&directory);
         std::fs::create_dir_all(&directory).unwrap();
         write_startup(&directory, "KEYCHAIN_UNAVAILABLE").unwrap();
         let log = directory.join(STARTUP_LOG);
-        assert_eq!(std::fs::read_to_string(log).unwrap(), "code=KEYCHAIN_UNAVAILABLE\n");
+        assert_eq!(
+            std::fs::read_to_string(log).unwrap(),
+            "code=KEYCHAIN_UNAVAILABLE\n"
+        );
         let _ = std::fs::remove_dir_all(&directory);
     }
 

@@ -143,9 +143,9 @@ impl SecretStore for MacKeychain {
                 // There is no password to be entered here. The operator has to
                 // grant this build access to the item, or build with a stable
                 // signing identity so a rebuild does not lose the grant.
-                MacKeychainRead::Denied => {
-                    Err("NOMO workspace key exists but this build is not authorised to read it".into())
-                }
+                MacKeychainRead::Denied => Err(
+                    "NOMO workspace key exists but this build is not authorised to read it".into(),
+                ),
                 MacKeychainRead::Unavailable => {
                     Err("Cannot unlock the NOMO workspace key in macOS Keychain".into())
                 }
@@ -193,7 +193,10 @@ impl SecretStore for WindowsCredentials {
             let key = if entry.CredentialBlobSize as usize == WINDOWS_CREDENTIAL_BLOB_BYTES
                 && !entry.CredentialBlob.is_null()
             {
-                Some(std::slice::from_raw_parts(entry.CredentialBlob, WINDOWS_CREDENTIAL_BLOB_BYTES).to_vec())
+                Some(
+                    std::slice::from_raw_parts(entry.CredentialBlob, WINDOWS_CREDENTIAL_BLOB_BYTES)
+                        .to_vec(),
+                )
             } else {
                 None
             };
@@ -416,7 +419,11 @@ mod windows_naming_tests {
         let target = windows_credential_target("default");
         let text: String = String::from_utf16(&target[..target.len() - 1]).unwrap();
         assert_eq!(text, "dev.void.desktop.workspace:default");
-        assert!(target.starts_with(&"dev.void.desktop.workspace:".encode_utf16().collect::<Vec<u16>>()[..]));
+        assert!(target.starts_with(
+            &"dev.void.desktop.workspace:"
+                .encode_utf16()
+                .collect::<Vec<u16>>()[..]
+        ));
     }
 
     #[test]
