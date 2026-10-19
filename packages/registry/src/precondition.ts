@@ -78,6 +78,16 @@ export const PRECONDITION_KINDS = [
  * catches more (it names the path in the entry) and stays reviewable.
  */
 export function validatePrecondition(value: unknown, path: string): string[] {
+  return validatePreconditionAt(value, path, 0);
+}
+
+function validatePreconditionAt(
+  value: unknown,
+  path: string,
+  depth: number,
+): string[] {
+  if (depth > MAX_DEPTH)
+    return [`${path}: precondition nests deeper than ${MAX_DEPTH} levels`];
   const errors: string[] = [];
   if (typeof value !== "object" || value === null) {
     return [`${path}: a precondition must be an object`];
@@ -96,7 +106,7 @@ export function validatePrecondition(value: unknown, path: string): string[] {
     }
     case "not": {
       if (record.of === undefined) errors.push(`${path}.of: required`);
-      else errors.push(...validatePrecondition(record.of, `${path}.of`));
+      else errors.push(...validatePreconditionAt(record.of, `${path}.of`, depth + 1));
       const extra = Object.keys(record).filter((k) => !["kind", "of"].includes(k));
       if (extra.length > 0) errors.push(`${path}: unknown key ${extra.join(", ")}`);
       break;
@@ -128,16 +138,14 @@ export function validatePrecondition(value: unknown, path: string): string[] {
         errors.push(`${path}.of: a combinator needs at least one precondition`);
       else
         record.of.forEach((item, index) =>
-          errors.push(...validatePrecondition(item, `${path}.of[${index}]`)),
+          errors.push(...validatePreconditionAt(item, `${path}.of[${index}]`, depth + 1)),
         );
       const extra = Object.keys(record).filter((k) => !["kind", "of"].includes(k));
       if (extra.length > 0) errors.push(`${path}: unknown key ${extra.join(", ")}`);
       break;
     }
     default:
-      errors.push(
-        `${path}.kind: must be one of ${PRECONDITION_KINDS.join(", ")}, got ${JSON.stringify(kind)}`,
-      );
+      errors.push(`${path}.kind: must be one of ${PRECONDITION_KINDS.join(", ")}`);
   }
   return errors;
 }

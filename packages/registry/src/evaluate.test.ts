@@ -233,6 +233,7 @@ describe("validatePrecondition, the closed grammar", () => {
 
   test("unknown kinds, keys and shapes are load errors with the path in them", () => {
     assert.ok(validatePrecondition({ kind: "maybe" }, "p")[0].includes("p.kind"));
+    assert.ok(validatePrecondition({ kind: 1n }, "p")[0].includes("p.kind"));
     assert.ok(validatePrecondition({ kind: "fact", fact: "f", extra: 1 }, "p")[0].includes("unknown key"));
     assert.ok(validatePrecondition({ kind: "fact" }, "p")[0].includes("fact name"));
     assert.ok(validatePrecondition({ kind: "all", of: [] }, "p")[0].includes("at least one"));
@@ -240,5 +241,12 @@ describe("validatePrecondition, the closed grammar", () => {
       validatePrecondition({ kind: "argument", argument: "a", operator: "equals" }, "p")[0].includes("value"),
     );
     assert.ok(validatePrecondition(null, "p")[0].includes("object"));
+  });
+
+  test("cyclic preconditions are rejected at the nesting limit", () => {
+    const cyclic: Record<string, unknown> = { kind: "not" };
+    cyclic.of = cyclic;
+    const errors = validatePrecondition(cyclic, "p");
+    assert.ok(errors.some((error) => error.includes("nests deeper than 32 levels")));
   });
 });
