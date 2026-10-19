@@ -232,6 +232,29 @@ test("the unpinned mark records the collectable record and a pin refuses it", as
   );
 });
 
+test("a sidecar whose artifact collection already removed lists as a ghost row", async (t) => {
+  const f = await fixture(t);
+  const digest = await f.putFile("collected away");
+  await f.run(["--surface", "file", "--mark-unpinned", digest]);
+  // The collector removes the artifact bytes and keeps the evidence sidecar,
+  // so protection recorded for reviewed bytes outlives the bytes.
+  await rm(join(f.dir, "state", "vault", "test", digest));
+  const out = await f.run(["--list"]);
+  assert.equal(out.code, 0);
+  const ghost = (out.json() as { file: RetentionRow[] }).file.find(
+    (row) => row.digest === digest,
+  );
+  // The record names nothing an artifact walk can measure: the ghost row
+  // distinguishes a reviewed removal from a digest nobody proved.
+  assert.deepEqual(ghost, {
+    digest,
+    bytes: null,
+    artifact: false,
+    writtenAt: null,
+    lifecycle: {},
+  });
+});
+
 test("grammar refusals name what is missing", async (t) => {
   const f = await fixture(t);
   await assert.rejects(f.run([]), /exactly one/);
