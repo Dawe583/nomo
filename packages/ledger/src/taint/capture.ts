@@ -34,8 +34,8 @@ export function verifyTaint(json: string): TaintGraph {
   const parsed = JSON.parse(json) as unknown;
   if (typeof parsed !== "object" || parsed === null) throw new Error("taint export is not an object");
   const value = parsed as Partial<ExportedTaint>;
-  if (value.version !== "void.taint.v1") throw new Error("taint export has invalid version");
-  if (value.honesty?.dataEdges !== DATA_EDGE_HONESTY_NOTE) throw new Error("taint export has invalid honesty note");
+  if (value.version !== "void.taint.v1") throw new Error(`taint export has invalid version ${JSON.stringify(value.version)}.`);
+  if (value.honesty?.dataEdges !== DATA_EDGE_HONESTY_NOTE) throw new Error(`taint export has invalid honesty note ${JSON.stringify(value.honesty?.dataEdges)}.`);
   if (!Array.isArray(value.nodes)) throw new Error("taint export has invalid nodes");
   if (!Array.isArray(value.edges)) throw new Error("taint export has invalid edges");
 
@@ -86,7 +86,7 @@ function parseEdge(value: unknown, nodes: ReadonlyMap<string, TaintNode>): Taint
   if (!nodes.has(from)) throw new Error(`taint export edge references unknown from node ${from}`);
   if (!nodes.has(to)) throw new Error(`taint export edge references unknown to node ${to}`);
   const kind = edge.kind;
-  if (kind !== "resource" && kind !== "data") throw new Error("taint export edge has invalid kind");
+  if (kind !== "resource" && kind !== "data") throw new Error(`taint export edge has invalid kind ${JSON.stringify(kind)}.`);
   return { from, to, kind, via: requiredString(edge.via, "edge via"), bindingType: edge.bindingType };
 }
 
