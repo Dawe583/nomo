@@ -10,6 +10,7 @@ import {
   stat,
   utimes,
   writeFile,
+  symlink,
 } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
@@ -772,6 +773,30 @@ test("a tampered or unlisted retention index backup refuses to restore", async (
   assert.deepEqual(
     JSON.parse(await readFile(f.evidence(pinned), "utf8")),
     JSON.parse(original),
+  );
+});
+
+test("retention restore refuses a backup whose contents cannot be enumerated", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("symlink creation may require Windows Developer Mode");
+    return;
+  }
+  const f = await fixture(t);
+  const backup = join(dirname(f.index), "index-backup");
+  await mkdir(backup);
+  await writeFile(
+    join(backup, "retention-index.json"),
+    JSON.stringify({ schema: RETENTION_INDEX_MANIFEST, entries: [] }),
+  );
+  await symlink(f.index, join(backup, "unlisted-link"));
+
+  await assert.rejects(
+    restoreRetentionIndex({
+      index: join(dirname(f.index), "restored-index"),
+      source: backup,
+      artifactRoot: f.root,
+    }),
+    /not a file/,
   );
 });
 
