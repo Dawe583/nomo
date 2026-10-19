@@ -346,7 +346,7 @@ test("a halted transition prints its run before the refusal", async (t) => {
   // The prose still composes what landed beside what refused.
   assert.match(
     failure.message,
-    /file recorded; reserved: Recovery artifact is unavailable/,
+    /file recorded | reserved: Recovery artifact is unavailable/,
   );
   // The machine contract carries the same truth as JSON on stdout, so the
   // landed half is reconcilable without a human reading stderr.
@@ -451,7 +451,7 @@ test("a half failure discloses what the run recorded before refusing", async (t)
       env,
       (line) => lines.push(line),
     ),
-    /file recorded; reserved: Vault worker states .* but the vault persists .{1,80}\./,
+    /file recorded | reserved: Vault worker states .* but the vault persists .{1,80}\./,
   );
 });
 
