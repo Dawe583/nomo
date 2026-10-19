@@ -218,19 +218,19 @@ async function readSidecar(snapshotPath: string, required = false): Promise<Snap
   } catch (error) {
     if (isNodeError(error) && error.code === "ENOENT") {
       if (!required) return undefined;
-      throw new Error("Snapshot metadata is missing; retention refused.");
+      throw new Error(`Snapshot metadata is missing: ${JSON.stringify(sidecarPath(snapshotPath))}; retention refused.`);
     }
-    throw new Error("Snapshot metadata is unreadable; retention refused.");
+    throw new Error(`Snapshot metadata is unreadable: ${JSON.stringify(sidecarPath(snapshotPath))}; retention refused.`);
   }
   let parsed: unknown;
   try { parsed = JSON.parse(bytes.toString("utf8")); }
-  catch { throw new Error("Snapshot metadata is invalid; retention refused."); }
+  catch { throw new Error(`Snapshot metadata is invalid: ${JSON.stringify(bytes.toString("utf8"))}; retention refused.`); }
   return snapshotMeta(parsed);
 }
 
 function snapshotMeta(parsed: unknown): SnapshotMeta {
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
-    throw new Error("Snapshot metadata is invalid; retention refused.");
+    throw new Error(`Snapshot metadata is invalid: ${JSON.stringify(parsed)}; retention refused.`);
   const record = parsed as Readonly<Record<string, unknown>>;
   const pin = record.pin;
   if (
@@ -245,7 +245,7 @@ function snapshotMeta(parsed: unknown): SnapshotMeta {
     (Object.hasOwn(record, "expiresAt") && (
       typeof record.expiresAt !== "string" || !Number.isFinite(Date.parse(record.expiresAt))
     ))
-  ) throw new Error("Snapshot metadata is invalid; retention refused.");
+  ) throw new Error(`Snapshot metadata is invalid: ${JSON.stringify(parsed)}; retention refused.`);
   return record as SnapshotMeta;
 }
 
