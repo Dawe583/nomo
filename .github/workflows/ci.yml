@@ -165,9 +165,14 @@ jobs:
       # The two Swift packages first, because they are host-side and fast, so a
       # broken protocol or design-system package is reported as itself rather
       # than as a simulator failure ten minutes later.
-      - run: swift test --package-path apps/apple/CompanionProtocolKit
+      # One build job: the Command Line Tools swiftbuild backend resolves the
+      # Swift Testing macro plugins nondeterministically under a parallel
+      # compile, and the red runs execute no test at all. Measured on the
+      # development host, the parallel build failed 3 of 8 runs under load
+      # while one job failed 1 of 8. The gate applies the same rule.
+      - run: swift test -j 1 --package-path apps/apple/CompanionProtocolKit
         timeout-minutes: 15
-      - run: swift test --package-path apps/apple/NomoDesignSystem
+      - run: swift test -j 1 --package-path apps/apple/NomoDesignSystem
         timeout-minutes: 15
       - name: Run the NOMO scheme on the iOS simulator
         env:
