@@ -373,7 +373,7 @@ test("grammar refusals name what is missing", async (t) => {
   await assert.rejects(f.run(["--pin", "a".repeat(64)]), /--as/);
   await assert.rejects(
     f.run(["--pin", "a".repeat(64), "--as", "op-a", "--kind", "custodian"]),
-    /kind must be/,
+    /must be recovery or operator/,
   );
   await assert.rejects(
     f.run(["--release", "a".repeat(64), "--as", "op-a"]),
