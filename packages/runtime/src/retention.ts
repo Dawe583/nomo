@@ -844,7 +844,7 @@ export async function restoreRetentionIndex(
   for (const entry of entries)
     verified.set(entry.path, await readIndexEntry(source, entry));
   const present = (
-    await indexEntries(source, "", "retention-index.json").catch(() => [])
+    await indexEntries(source, "", "retention-index.json")
   ).sort();
   const listed = entries.map((entry) => entry.path).sort();
   if (present.join("\n") !== listed.join("\n"))
