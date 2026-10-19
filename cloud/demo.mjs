@@ -27,12 +27,24 @@ import {
   workspaceTools,
   previewWorkspaceUndo,
 } from "../packages/workbench/src/workspace.ts";
+import { PROJECT_EXEC_TOOL } from "../packages/workbench/src/project-sandbox.ts";
 import { envValue } from "./env.mjs";
 
 /** The public demo has no operator to ask, so it chooses its own configuration
  * and says so in one place. This is the demo's model, not a product default:
  * NOMO ships none, and `/status` reports this value so the UI can show it. */
 export const DEMO_MODEL = "z-ai/glm-5.3-flash";
+
+/** The public demo's own tool set.
+ *
+ * The managed workspace now also carries the project exec tool, which runs
+ * commands in a container against an operator-approved project. A public
+ * visitor has no operator, no project and no approval, so the demo must not
+ * advertise that tool at all: a catalog entry is an offer, and a refused
+ * offer still tells a visitor the surface exists. */
+const demoWorkspaceTools = workspaceTools.filter(
+  (tool) => tool.name !== PROJECT_EXEC_TOOL.name,
+);
 
 export function demoFailureMessage(error) {
   const preserved =
@@ -164,7 +176,9 @@ export function demoRouter(dependencies = {}) {
         .json({ available: false, message: "Public demo is not configured." });
     next();
   });
-  router.get('/tools', (req, res) => res.json({ scope: 'session', tools: toolCatalog(workspaceTools) }));
+  router.get('/tools', (req, res) =>
+    res.json({ scope: 'session', tools: toolCatalog(demoWorkspaceTools) }),
+  );
   router.get("/status", (req, res) =>
     res.json({
       available: true,
@@ -275,7 +289,7 @@ export function demoRouter(dependencies = {}) {
       apiKey: envValue(process.env, "NOMO_DEMO_NVIDIA_KEY"),
     };
     const client = dependencies.provider?.(config) ?? new CompatibleProvider(config);
-    const tools = workspaceTools.map((tool) => ({
+    const tools = demoWorkspaceTools.map((tool) => ({
       type: "function",
       function: {
         name: tool.name,
@@ -308,7 +322,7 @@ export function demoRouter(dependencies = {}) {
           const name = call.function.name,
             args = JSON.parse(call.function.arguments);
           if (
-            !workspaceTools.some((tool) => tool.name === name) ||
+            !demoWorkspaceTools.some((tool) => tool.name === name) ||
             !args ||
             typeof args !== "object" ||
             Array.isArray(args)
