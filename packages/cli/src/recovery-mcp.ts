@@ -98,7 +98,7 @@ const classifyError = (error: unknown): RecoveryErrorCategory => {
   )
     return "policy_denied";
   if (
-    /key unavailable|key is unavailable|key.*required|invalid or unavailable recovery reference|incorrect for this vault|encryption key/.test(
+    /key unavailable|key is unavailable|key.*required|invalid or unavailable recovery reference|incorrect for retained vault|encryption key/.test(
       message,
     )
   )
@@ -449,7 +449,7 @@ export function recoveryMcpServer(options: {
       const definition = tools.find((t) => t.name === name)!;
       if (
         Object.keys(args).some(
-          (k) => !(k in definition.inputSchema.properties!),
+          (k) => !Object.hasOwn(definition.inputSchema.properties!, k),
         )
       )
         throw new Error("Unexpected argument.");
@@ -510,7 +510,8 @@ export function recoveryMcpServer(options: {
           if (stored.digest !== args.planDigest) throw new Error("Recovery job digest changed; re-plan the job.");
           result = await options.runtime.runRecoveryJob(options.workspace, args.jobId as string, async (storedPlan: RecoveryJobPlan) => {
             if (storedPlan.digest !== args.planDigest) throw new Error("Recovery job digest changed; re-plan the job.");
-            return true;
+            // Re-check current policy at the runtime's recovery authorization boundary.
+            return options.permitted(name);
           });
         }
       } else {

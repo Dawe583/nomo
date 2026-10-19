@@ -5,10 +5,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
-import { WorkspaceTui, renderWorkspace } from "./workspace.ts";
+import { WorkspaceTui, renderWorkspace, commandSuggestions } from "./workspace.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
-async function fixture(t: test.TestContext) {
+async function fixture(t: test.TestContext, answer = "Fixture reply") {
   const root = await mkdtemp(join(tmpdir(), "nomo-parity-controls-"));
   const env = { NOMO_DATA_DIR: root };
   let app = new Workbench(env, async (url) =>
@@ -16,7 +16,7 @@ async function fixture(t: test.TestContext) {
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
-            { message: { role: "assistant", content: "Fixture reply" } },
+            { message: { role: "assistant", content: answer } },
           ],
         }),
   );
@@ -583,4 +583,195 @@ test("/agents prints the system prompt it names as a field", async (t) => {
   });
   await ui.command("/agents");
   assert.match(ui.lines().join("\n"), /System prompt \/ \w+ *: \(empty\)/);
+});
+test("subagent command is discoverable and delivery requires operator confirmation", async (t) => {
+  assert.ok(commandSuggestions("/sub").some(([name]) => name === "/subagent"));
+  const { app, ui } = await fixture(t);
+  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await ui.command("/help");
+  assert.match(ui.lines().join("\n"), /\/subagent/);
+  const parent = await app.start("Parent", "fixture");
+  await app.settled();
+  const child = await app.spawnSubagent(parent.id, "Delegated task");
+  await app.settled();
+  await ui.command(`/open ${child.id}`);
+  await ui.command("/subagent review");
+  assert.match(ui.confirmation!.title, /DELIVER SUBAGENT RESULT/);
+  assert.match(ui.confirmation!.lines.join("\n"), new RegExp(`Child: ${child.id}`));
+  assert.match(ui.confirmation!.lines.join("\n"), /Source: latest assistant completion/);
+  assert.match(ui.confirmation!.lines.join("\n"), /Parent:/);
+  assert.match(ui.confirmation!.lines.join("\n"), /Run:/);
+  assert.match(ui.confirmation!.lines.join("\n"), /Status: idle/);
+  assert.equal(app.get(parent.id)?.events.some((event) => event.text.includes(child.id)), false);
+  await ui.confirm();
+  assert.equal(
+    app.get(parent.id)?.events.some((event) =>
+      event.kind === "user" && event.text.includes(`Child: ${child.id}`),
+    ),
+    true,
+  );
+});
+
+test("branch clones cannot use spawned-child TUI actions", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  const parent = await app.start("Parent", "fixture");
+  await app.settled();
+  const userEvent = app.get(parent.id)!.events.find((event) => event.kind === "user")!;
+  const branch = await app.branch(parent.id, {
+    seq: userEvent.seq,
+    idempotencyKey: "branch-clone",
+  });
+  await ui.command(`/open ${branch.id}`);
+  await assert.rejects(ui.command("/subagent cancel"), /not a verified child/i);
+  assert.equal(ui.confirmation, undefined);
+});
+
+test("subagent preview escapes terminal controls and truncation has no accept action", async (t) => {
+  const { app, ui } = await fixture(t, "\u001b[31m" + "x".repeat(256));
+  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.patchHarnessSettings({ maxPromptCharacters: 256 });
+  const parent = await app.start("Parent", "fixture");
+  await app.settled();
+  const child = await app.spawnSubagent(parent.id, "Delegated task");
+  await app.settled();
+  await ui.command(`/open ${child.id}`);
+  await ui.command("/subagent review");
+  assert.equal(ui.confirmation, undefined);
+  assert.match(ui.detail!.join("\n"), /may be incomplete/);
+  assert.doesNotMatch(ui.detail!.join("\n"), /\u001b/);
+  assert.match(ui.detail!.join("\n"), /\\u001b/);
+  await assert.rejects(
+    app.deliverSubagentResult(parent.id, child.id, child.runId!),
+    /may be truncated/i,
+  );
+});
+test("running subagent cancellation requires confirmation and preserves capacity", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-subagent-stop-"));
+  const env = { NOMO_DATA_DIR: root };
+  let release!: () => void;
+  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  let calls = 0;
+  const app = new Workbench(env, async (url) => {
+    if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
+    if (calls++ === 0)
+      return Response.json({ choices: [{ message: { role: "assistant", content: "Parent done" } }] });
+    await blocked;
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Late child output" } }] });
+  });
+  assertIsolated(root, env);
+  t.after(async () => {
+    release();
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.patchHarnessSettings({ maxConcurrentRuns: 1 });
+  const parent = await app.start("Parent", "fixture");
+  await app.settled();
+  const child = await app.spawnSubagent(parent.id, "Child");
+  const ui = new WorkspaceTui(app, env);
+  await ui.command(`/open ${child.id}`);
+  await ui.command("/subagent cancel");
+  assert.match(ui.confirmation!.title, /CANCEL RUNNING SUBAGENT/);
+  assert.equal(app.get(child.id)?.state, "running");
+  await ui.confirm();
+  assert.equal(app.get(child.id)?.state, "stopping");
+  release();
+  await app.settled();
+  assert.equal(app.get(child.id)?.state, "stopped");
+  assert.equal(app.get(child.id)?.events.some((event) => event.text === "Late child output"), false);
+});
+test("queued spawned-child cancellation is immediate and safe in the TUI", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-subagent-queue-cancel-"));
+  const env = { NOMO_DATA_DIR: root };
+  let release!: () => void;
+  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  let calls = 0;
+  const app = new Workbench(env, async (url) => {
+    if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
+    calls++;
+    await blocked;
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+  });
+  assertIsolated(root, env);
+  t.after(async () => {
+    release();
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  const parent = await app.start("Parent", "fixture");
+  const child = await app.spawnSubagent(parent.id, "Queued child");
+  const ui = new WorkspaceTui(app, env);
+  await ui.command(`/open ${child.id}`);
+  await ui.command("/subagent cancel");
+  assert.equal(ui.confirmation, undefined);
+  assert.equal(app.get(child.id)?.status, "cancelled");
+  release();
+  await app.settled();
+  assert.equal(calls, 1);
+});
+test("queued cancel rechecks the child after verification before choosing confirmation", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-subagent-race-"));
+  const env = { NOMO_DATA_DIR: root };
+  let releaseParent!: () => void;
+  let releaseChild!: () => void;
+  let childStarted!: () => void;
+  const parentBlocked = new Promise<void>((resolve) => { releaseParent = resolve; });
+  const childBlocked = new Promise<void>((resolve) => { releaseChild = resolve; });
+  const childRequestStarted = new Promise<void>((resolve) => { childStarted = resolve; });
+  let requests = 0;
+  const app = new Workbench(env, async (url) => {
+    if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
+    if (requests++ === 0) await parentBlocked;
+    else {
+      childStarted();
+      await childBlocked;
+    }
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+  });
+  assertIsolated(root, env);
+  t.after(async () => {
+    releaseParent();
+    releaseChild();
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.patchHarnessSettings({ maxConcurrentRuns: 1 });
+  const parent = await app.start("Parent", "fixture");
+  const child = await app.spawnSubagent(parent.id, "Queued child");
+  assert.equal(child.status, "queued");
+  const verify = app.verifySubagent.bind(app);
+  app.verifySubagent = async (parentId, childId) => {
+    releaseParent();
+    await childRequestStarted;
+    await verify(parentId, childId);
+  };
+  const ui = new WorkspaceTui(app, env);
+  await ui.command(`/open ${child.id}`);
+  await ui.command("/subagent cancel");
+  assert.match(ui.confirmation!.title, /CANCEL RUNNING SUBAGENT/);
+  assert.equal(app.get(child.id)?.status, "running");
+  await ui.confirm();
+  assert.equal(app.get(child.id)?.state, "stopping");
+  releaseChild();
+  await app.settled();
+  assert.equal(app.get(child.id)?.state, "stopped");
+});
+
+test("project confirmation exposes full-project data risk and requires an explicit confirm", async (t) => {
+  const { app, env } = await fixture(t);
+  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  const root = await mkdtemp(join(tmpdir(), "nomo-project-consent-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const ui = new WorkspaceTui(app, env);
+  ui.prepareProjectAccess(root, [], "unavailable: no local image");
+  assert.match(ui.confirmation!.title, /ALLOW THIS PROJECT/);
+  assert.match(ui.confirmation!.lines.join("\n"), /Secrets inside this project are not protected/);
+  assert.match(ui.confirmation!.lines.join("\n"), /command arguments, and command output/);
+  await ui.confirm();
+  assert.match(ui.notice, /Project access confirmed/);
+  assert.equal(ui.confirmation, undefined);
 });

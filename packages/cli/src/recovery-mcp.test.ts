@@ -66,12 +66,19 @@ test("MCP client executes, previews and restores through signed runtime; policy 
     authorize: async () => true,
   });
   const denied = new Set<RecoveryTool>();
+  let jobAuthorizationChecks = 0;
   const server = recoveryMcpServer({
     runtime,
     workspace: "test",
     agentId: "host",
     adapterId: "postgres",
-    permitted: async (name) => !denied.has(name),
+    permitted: async (name) => {
+      if (name === "nomo_recovery_apply_job" && jobAuthorizationChecks > 0) {
+        jobAuthorizationChecks -= 1;
+        return jobAuthorizationChecks > 0;
+      }
+      return !denied.has(name);
+    },
   });
   const client = new Client({ name: "integration-test", version: "1" });
   const [a, b] = InMemoryTransport.createLinkedPair();
@@ -93,6 +100,16 @@ test("MCP client executes, previews and restores through signed runtime; policy 
   };
   assert.equal(
     (await call("nomo_execute", { ...input, workspace: "other" })).isError,
+    true,
+  );
+  assert.equal(writes, 0);
+  assert.equal(
+    (
+      await call("nomo_execute", {
+        ...input,
+        constructor: "unexpected",
+      })
+    ).isError,
     true,
   );
   assert.equal(writes, 0);
@@ -159,6 +176,14 @@ test("MCP client executes, previews and restores through signed runtime; policy 
     true,
   );
   denied.clear();
+  jobAuthorizationChecks = 3;
+  const deniedAtRecoveryBoundary = await call("nomo_recovery_apply_job", {
+    jobId: job,
+    planDigest: stored.digest,
+  });
+  assert.equal(deniedAtRecoveryBoundary.isError, true);
+  assert.deepEqual(value, { value: "second-after" });
+  jobAuthorizationChecks = 0;
   const applied = payload(
     await call("nomo_recovery_apply_job", {
       jobId: job,

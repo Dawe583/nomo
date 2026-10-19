@@ -3,6 +3,11 @@ import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir, homedir } from "node:os";
 import { join, resolve } from "node:path";
+import {
+  canonicalProjectRoot,
+  projectSandboxConfig,
+} from "../../../workbench/src/project-sandbox.ts";
+import { readProjectSkills } from "../../../workbench/src/project-skills.ts";
 import { Workbench } from "../../../workbench/src/index.ts";
 import { LocalStorage } from "../../../workbench/src/storage.ts";
 import {
@@ -323,16 +328,26 @@ export async function runWorkspaceTui(
   let directory: string | undefined,
     once = false,
     source: string | undefined,
-    sessionId: string | undefined;
+    sessionId: string | undefined,
+    projectPath: string | undefined;
+  const skillIds: string[] = [];
   let tab: WorkspaceTab = "chat";
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--once") once = true;
     else if (arg === "--help") {
       console.log(
-        "nomo tui [--once] [--view runs|overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
+        "nomo tui [--once] [--project PATH] [--skill ID ...] [--view runs|overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
       );
       return 0;
+    } else if (arg === "--project" || arg === "--skill") {
+      const value = argv[++i];
+      if (!value || value.startsWith("--"))
+        throw Error(`${arg} requires a value`);
+      if (arg === "--project") {
+        if (projectPath) throw Error("--project may be specified only once");
+        projectPath = value;
+      } else skillIds.push(value);
     } else if (
       ["--view", "--session", "--data-dir", "--import-provider"].includes(arg!)
     ) {
@@ -357,6 +372,25 @@ export async function runWorkspaceTui(
   // TUI entry point directly sees the same settings an operator configured
   // under the old names.
   Object.assign(env, normalizeOwnedEnv(env));
+  const interactive =
+    process.stdin.isTTY &&
+    process.stdout.isTTY &&
+    process.env.TERM !== "dumb" &&
+    !process.env.CI;
+  if (skillIds.length && !projectPath)
+    throw Error("--skill requires --project");
+  if (projectPath && (once || !interactive)) {
+    console.error(
+      "Project access requires an interactive TTY confirmation; no project or skill data was sent.",
+    );
+    return 2;
+  }
+  const projectRoot = projectPath
+    ? await canonicalProjectRoot(resolve(projectPath))
+    : undefined;
+  const projectSkills = projectRoot
+    ? await readProjectSkills(projectRoot, skillIds)
+    : [];
   const app = new Workbench(env),
     ui = new WorkspaceTui(app, env);
   const dataDir =
@@ -379,6 +413,17 @@ export async function runWorkspaceTui(
   const drafts = saved?.drafts ?? {};
   const input = new WorkspaceInput();
   await ui.initialize();
+  if (projectRoot) {
+    let sandboxConfigured: string;
+    try {
+      const config = projectSandboxConfig(env);
+      sandboxConfigured = `${config.runtime} ${config.imageId}`;
+    } catch (error) {
+      sandboxConfigured =
+        error instanceof Error ? `unavailable: ${error.message}` : "unavailable";
+    }
+    ui.prepareProjectAccess(projectRoot, projectSkills, sandboxConfigured);
+  }
   ui.compactTools = saved?.compactTools ?? true;
   if (
     saved?.mode === "normal" ||
@@ -399,11 +444,6 @@ export async function runWorkspaceTui(
   if (saved?.lastRecoveryJob && app.get(saved.lastRecoveryJob.sessionId))
     ui.lastRecoveryJob = saved.lastRecoveryJob;
   input.set(drafts[ui.sessionId ?? "new"] ?? "");
-  const interactive =
-    process.stdin.isTTY &&
-    process.stdout.isTTY &&
-    process.env.TERM !== "dumb" &&
-    !process.env.CI;
   if (once || !interactive) {
     console.log(
       renderWorkspace(
