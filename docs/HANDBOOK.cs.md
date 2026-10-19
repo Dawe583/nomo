@@ -619,8 +619,13 @@ nomo taint --ledger <adresář> --seq <n> [--depth <n>] [--json]
 nomo replay --ledger <cesta> --snapshot-dir <adresář> --seq <n> [--dry-run] [--key base64-spki]
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
-nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
-nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve> --config <soubor> [--input <soubor>] [--approve <digest>]
+nomo tui [--once] [--project <cesta>] [--skill <id> ...] [--view <karta>] [--session <id>] [--data-dir <cesta>]
+nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres.managed]
+nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <soubor> [--input <soubor>] [--approve <digest>] [--surface file|reserved|both]
+nomo recovery collect --config <soubor> [--retention-policy <soubor>] [--surface file|reserved|both] [--dry-run] [--operation <id>]
+nomo recovery doctor --config <soubor>
+nomo recovery retention --config <soubor> [--surface file|reserved|both] (--list | --pin <digest> [--kind <recovery|operator>] --as <id> | --mark-unpinned <digest> | --release <digest> --pins <ownerId>:<kind> --as <id>)
+nomo recovery vault-capacity --config <soubor> --from <maxTotalBytes>:<maxArtifactBytes> --to <maxTotalBytes>:<maxArtifactBytes> --as <operatorId>
 nomo policy list | show <jméno> | validate <soubor>
 nomo approve <hold-id> --by <kdo> [--deny] [--reason <text>] [--dir <cesta>]
 nomo approvals --dir <cesta> [--json]
