@@ -3,6 +3,22 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- Spawned children now use the parent's connector snapshots and inherit tools
+  only when both the name and connector identity match. Later connector
+  additions or edits cannot widen the child's scope.
+- A TUI session can now opt into one project with `nomo tui --project PATH`
+  and explicitly selected, lock-listed workspace skills. The operator sees the
+  project root and data-retention/provider disclosure before consent; consent is
+  process-local. A custom profile must explicitly allowlist
+  `nomo_project_exec`, and its R3 policy still decides each call. Commands run
+  only in a pinned Docker/Podman container with no network, a read-only root,
+  bounded resources and output, a non-root user, and only the selected project
+  mounted writable.
+  Cancellation during container creation still attempts cleanup by its unique
+  name.
+  Missing sandbox configuration refuses execution; no host-shell fallback
+  exists. Project files and command results can contain secrets and reach the
+  configured provider or local session history.
 - A learned rule could feed on itself. The mining read refusals from the
   signed chain, a fired learned hold that the operator denied wrote a new
   refusal record of its own, and the miner counted that record as fresh

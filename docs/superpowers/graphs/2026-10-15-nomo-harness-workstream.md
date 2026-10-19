@@ -324,6 +324,67 @@ stderr warning), control-plane 42/42 (no surface change), tsc clean both.
 
 | D-2026-10-18-26 The swift flake retry trigger is gate-on-gate tested | The retry condition moved out of runSwiftSuite into `isSwiftMacroFlake` in check-tests-swift-result.mjs, the same module the gate-on-gate already tests the mapping from, and three new tests cover the retryable shape (plugin signature, no verdict, no tests run), the same signature after a real verdict (final, never retryable) and the ordinary-failure and timeout shapes (never retryable); 16 gate-on-gate tests pass, no gate behaviour changed | A retry whose trigger lives inline is the one D-25 branch a regression could delete without any test failing, and the house pattern is exactly that the mapping module carries the verdict so no test needs a compiler |
 | D-2026-10-18-27 desktop:build verified end to end: release-only E0463 heals per crate, codesign duplicate resolved by hash | The first complete desktop:build run on any gate round measured three independent facts: (1) release-only `can't find crate for \`X\`` (E0463) on freshly written proc-macro dylibs (phf_macros 33bac, then derive_more_impl and zerofrom_derive, then tauri_macros fd59), each time with the artifact present and each time healed by `cargo clean --release -p <crate>` and a rebuild; a forced-clean rebuild is green and stays green, debug never fails, and a from-scratch `rm -rf target/release` full build (238 crates) was green, so the defect is a first-pass-in-a-mode artifact the toolchain then refuses to re-read, mechanism unidentified, reproduced with plain cargo (no tauri-cli involvement) via `cargo build --bins --features tauri/custom-protocol --release`; (2) after healing, cargo and link complete and NOMO.app assembles; (3) codesign then refused the keychain identity: this machine holds two valid Apple Development certificates sharing one name, and codesign rejects the ambiguous name outright, so build-policy.mjs now returns the SHA-1 (first listed) when a discovered name maps to several identities, source `keychain-hash`, one warning naming the duplicates, with tests over fabricated hashes and string-only fakes unchanged. Final measured evidence: desktop:build exit 0 producing NOMO.app plus NOMO_1.0.1_aarch64.dmg (42 MB), `codesign --verify --deep --strict` OK | An auto-healing wrapper is refused for now: build.mjs spawns tauri with stdio inherit, so the signature cannot be parsed without piping, and a self-healing loop whose mechanism is unidentified could mask real breakage; instead the README names the remedy where the operator hits it, and the codesign half is a policy defect with a code fix rather than a toolchain mystery |
+| D-2026-10-18-28 Project execution (supersedes D-15 for this approved surface) | A project root is opt-in per TUI process and requires a visible operator confirmation before any file or skill content reaches the model. `nomo_project_exec` is available only to an explicitly configured custom profile, classified R3, and decided by that profile's existing policy/approval path. Commands run only through Docker/Podman in a one-shot container pinned by local image ID; network is disabled, the project is the only writable host mount, and resource/time/output bounds apply. Missing runtime/image refuses; never execute on the host. | A model-callable host shell without isolation crosses the deferred security boundary; a silent default root, network access, inherited host environment, or fallback would widen the capability beyond the operator-approved project. |
+| D-2026-10-18-29 Workspace skill scope (supersedes D-16 definition) | Skills are read only from the selected project’s `.agents/skills/<id>/SKILL.md`, indexed by its root `skills-lock.json`, explicitly selected with `--skill`, and snapshotted for that session. SHA-256 drift is disclosed and requires the same explicit project confirmation; skill text is untrusted instruction context, never executable, and cannot change policy or tool allowlists. No global skill store. | A global store does not exist in NOMO; loading every skill silently or executing learned skill code would create unreviewed prompt and runtime authority. |
 
 | D-2026-10-18-30 The desktop smoke verdict leaves through a direct exit | The three deciding paths (the 20s watchdog, the download verdict and the runtime-exit monitor) stop the sidecar and call std::process::exit(code) from the deciding thread, because AppHandle::exit(code) was measured to terminate the process inside the macOS run loop with 0 whatever the code was, so both release smokes and one debug smoke had printed the timeout text and exited 0, a false pass on a packaging-level check; after the fix the same hidden-window runs report exit 1 with the watchdog timing, 22 rust tests stay green, the release rebuild produces the bundle and dmg, and the visible --smoke-mobile run passes fully including the blob download reaching on_download, which isolates the hidden probe's remaining red to App Nap stalling the timers of a never-shown window, kept open in the coordination note until the probe is redesigned | A smoke that reports 0 on a verified failure verifies nothing forever, and the direct exit is house precedent from the --smoke-runtime-exit monitor that already worked this way |
+| D-2026-10-18-31 Visible, provider-independent desktop smoke | The default `--smoke-test` opens a visible desktop-sized WebView, selects built-in `/plan`, verifies its prepared prompt and unclipped palette, then verifies the real Blob download. The hidden-window experiment proved synchronous eval by hash navigation, but App Nap prevented the timer-driven UI probe from progressing. The prior `/nomo_workspace_write` assertion was invalid for a fresh workspace with a rejected/unconfigured provider; `/plan` tests the local UI contract without a model call. If the run loop returns before the download verdict, smoke exits 1; `--smoke-mobile` retains mobile toolbar checks and `--smoke-runtime-exit` retains hidden lifecycle coverage. Verified: desktop smoke passed; desktop Rust tests 22/22; no new dependency. | NSActivity bindings add platform-specific machinery, and a timer-free Rust-driven DOM workflow duplicates UI logic; a visible smoke is the smallest path that exercises the real interface and download. |
+| D-2026-10-18-32 Runtime-exit monitor has a process-level regression test | `apps/desktop/src-tauri/tests/runtime_exit_smoke.rs` launches the real binary with `--smoke-runtime-exit`, bounds the child to 20s, and requires both the monitor's fixed failure diagnostic and exit code 1; this rejects startup failures that also exit nonzero. `cargo test -- --test-threads=1`: 23 tests across unit and integration suites passed; the standalone smoke also reported the monitor sentinel and status 1. macOS-only because this is a native Tauri process test. | An in-process unit test cannot observe `std::process::exit`; a child-process test covers the actual monitor and process verdict without extracting a mockable copy of the branch. |
+| D-2026-10-18-33 Blob origin lookalikes stay outside the local download allowlist | `downloads::allowed` compares parsed origin serialization. A regression test rejects `blob:http://127.0.0.1:4567@attacker.invalid/uuid` (userinfo authority trap) and `blob:http://127.0.0.1.evil:4567/uuid` (host suffix), while the existing test keeps exact local Blob and HTTP cases allowed. No production policy change or dependency. Focused edge test 1/1; desktop Rust gate 24/24. | An origin is structured authority, not a string prefix; these cases prevent accepting an attacker-controlled authority if a future edit weakens equality. |
 
+## WP-PROJECT-CAPABILITIES brief (frozen 2026-10-18)
+
+- **Authority**: the operator approved the project sandbox and workspace-only
+  skill design in chat. This supersedes D-15/D-16 only for this bounded scope.
+- **Goal**: a local coding session can inspect and modify one explicitly selected
+  project through a bounded container command, and can attach only explicitly
+  selected workspace skills to new sessions.
+- **Project root**: `nomo tui --project PATH [--skill ID ...]`. Resolve and
+  validate the directory before startup. An interactive confirmation names the
+  canonical path, selected skills, and the fact that project files, tool
+  arguments and results can be sent to the configured model and retained in
+  local session history. No TTY/`--once` means no consent and no project tool.
+  Consent is process-local and is never restored from saved state.
+- **Sandbox**: `nomo_project_exec` has a closed JSON schema and is registered
+  only after consent for a custom agent profile that explicitly allowlists it.
+  Every call uses the existing R3 policy/approval/ledger path. The launcher
+  uses a direct argv spawn, never a host shell; Docker/Podman is mandatory,
+  image input is an immutable local `sha256:` image ID, and there is no
+  host-execution fallback. Container constraints: network off, root filesystem
+  read-only, only the selected project bind-mounted read-write, no host home,
+  Docker socket, or host variables passed into the container; non-root user,
+  CPU/memory/PID/time/output limits, bounded cleanup.
+- **Workspace skills**: only IDs in the selected project's lock file can be
+  named. Read the corresponding `.agents/<skillPath>` file with path/symlink
+  containment and size bounds, compute SHA-256, disclose lock drift, and pass
+  an immutable snapshot to the model only after project confirmation. Skills
+  cannot execute code, add tools, or widen policy. No cross-project/global
+  lookup. Existing `/compact` remains manual and makes no model call.
+- **Data risk**: the operator chose whole-project visibility. A mounted project
+  may contain secrets; the sandbox prevents direct host-path/network access but
+  cannot prevent a command from printing a project file to the model or the
+  session history. The confirmation must say this plainly; never pass host
+  environment variables or mount host credentials.
+- **Build order**: tests for skill lock/path/snapshot first; tests for command
+  validation/process bounds and fail-closed runtime next; then Workbench policy,
+  ledger, profile and TUI consent wiring; update the spec and changelog after
+  smoke evidence. Keep Node checks sequential to cap CPU.
+- **Exit**: focused new Workbench and CLI tests; `npx tsc -p
+  packages/workbench/tsconfig.json --noEmit`; `npx tsc -p
+  packages/cli/tsconfig.json --noEmit`; then
+  `node --test --test-concurrency=1 packages/workbench/src/*.test.ts` and
+  `node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts`, one Node
+  process at a time. Runtime smoke must exercise the actual container when a
+  local image is available; if no image is available, record the exact blocker,
+  never substitute a host shell.
+
+- **Verification, 2026-10-18**: local Docker image
+  `sha256:62973d3f02b0f031c8260837373f25d6c79da7ffce6ff066bbeec9b5a70169c6`
+  built from `packages/workbench/sandbox/Dockerfile`; actual-container
+  sandbox tests 4/4 and Workbench R3/ledger integration tests 2/2 passed.
+  Workbench full suite: 550 passed, 0 failed, 2 gated runtime tests skipped;
+  CLI TUI suite: 243 passed, 0 failed. Workbench and CLI typechecks exited 0.
+  Tests ran one Node process at a time. The runtime CLI uses the operator's
+  selected Docker/Podman context; NOMO pins the image ID and never pulls but
+  does not independently attest the daemon endpoint, so configure a local
+  engine context.

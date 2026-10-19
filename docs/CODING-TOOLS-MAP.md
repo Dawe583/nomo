@@ -862,3 +862,66 @@ First failure, unedited:
 Reverted, and `git diff packages/workbench/src/workspace.ts` is empty, an exact
 revert, confirmed byte-for-byte rather than by inspection. Guard green again at
 33 tests, 0 failures.
+## Appendix 3: opt-in project execution (2026-10-18)
+
+This supersedes the earlier statement that no project command tool is in the
+model catalog, only for sessions that satisfy the new consent and profile
+gates. It does not give a model direct host filesystem access.
+
+- `packages/cli/src/tui/workspace-runner.ts` accepts `--project` and repeated
+  `--skill` flags. It refuses project mode without an interactive TTY before
+  opening project files or constructing a provider session.
+- `packages/cli/src/tui/workspace.ts` displays the canonical project path,
+  selected skills, runtime readiness, provider/history disclosure and secret
+  risk before the operator confirms. The grant exists only in that Workbench
+  process.
+- `packages/workbench/src/project-skills.ts` accepts only lock-listed skill IDs
+  from the selected project, checks path and symlink containment and size caps,
+  hashes the content, and reports lock drift. The copied prompt text remains
+  untrusted.
+- `packages/workbench/src/project-sandbox.ts` accepts one bounded shell command
+  and starts Docker/Podman directly with argv. It requires a pinned
+  `sha256:` image ID and uses `--pull=never`; no host-shell fallback exists.
+  The container has no network, a read-only root, only the selected project as
+  a writable host mount, a non-root uid/gid, and CPU, memory, PID, timeout and
+  output bounds. Container cleanup is forced after completion, timeout or
+  output truncation.
+- `packages/workbench/src/index.ts` adds the tool only to a custom profile that
+  explicitly allowlists it after project confirmation. Dispatch still goes
+  through that profile's existing R3 policy/approval path. A signed
+  `dispatch:started` record precedes external execution; only argument/output
+  hashes and outcome metadata are retained in the ledger.
+
+The project is intentionally visible: source files, selected skill text,
+command arguments and output can reach the configured provider and local
+session history, including secrets stored inside the project. The sandbox does
+not protect project contents from the model. Its host boundary still depends on
+the local container engine and OS kernel; container isolation is not a defense
+against a runtime/kernel escape.
+
+Runtime evidence for this implementation: built
+`packages/workbench/sandbox/Dockerfile` locally and used its immutable image ID
+for real Docker tests. The sandbox suite exercised a project write, non-root
+identity, read-only `/etc`, absent Docker socket and host test variable,
+network refusal, command exit status, timeout and bounded-output cleanup. The
+WorkBench integration test exercised the custom-profile R3 dispatch and signed
+ledger lifecycle. Full Workbench and TUI suite results are recorded in the
+workstream graph.
+
+To build and select a local image:
+
+```sh
+docker build -t nomo-project-sandbox:local \
+  -f packages/workbench/sandbox/Dockerfile \
+  packages/workbench/sandbox
+docker image inspect --format '{{.Id}}' nomo-project-sandbox:local
+export NOMO_PROJECT_SANDBOX_RUNTIME=docker
+export NOMO_PROJECT_SANDBOX_IMAGE=sha256:<image-id-from-inspect>
+nomo tui --project /path/to/project
+```
+
+The selected Docker/Podman CLI context must be the intended local engine.
+`--pull=never` prevents a registry fallback, but NOMO does not independently
+authenticate a Docker daemon or its context. Network-disabled containers cannot
+fetch dependencies; use dependencies already present in the project or a
+separately reviewed image build.

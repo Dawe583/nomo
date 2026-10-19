@@ -1,8 +1,8 @@
 # NOMO agent harness implementation specification
 
-Status: draft for review. The high-level scope was approved in chat. No code
-implementation is authorized until this specification and its task plan are
-reviewed.
+Status: historical refinement-scope draft. It does not authorize unrelated
+changes. The operator separately approved the project-capabilities addendum at
+the end of this document on 2026-10-18.
 
 This specification extends `NOMO-AGENT-HARNESS-SPEC.md`. That file remains the
 reference for the harness concepts and evidence. This document resolves the
@@ -132,8 +132,49 @@ implementation.
 
 - No changes to production accounts, cloud state, deployed schemas, cookies,
   Keychain services, or external repositories.
-- No subagent runtime, skill executor, automatic policy mutation, or model
-  fallback.
+- No Python skill executor, global skill store, automatic policy mutation, or
+  model fallback. Existing bounded subagent behavior is not expanded here.
 - No claim that the ledger signature authenticates a human identity.
 - No commit, push, reset, stash, or broad text replacement as part of the local
   implementation.
+
+## Owner-approved addendum: project capabilities, 2026-10-18
+
+This addendum is the implementation contract for the separate work package
+approved by the operator. It supersedes the former host-tool deferral only for
+the capabilities below; it does not change the refinement lifecycle above.
+
+1. `nomo tui --project PATH [--skill ID ...]` selects one canonical project
+   root. A visible interactive confirmation names the root, selected skill
+   hashes, provider disclosure, and local history retention. Consent is
+   process-local, not restored. Non-interactive and `--once` runs cannot grant
+   it.
+2. A custom profile must explicitly allowlist `nomo_project_exec`. Each call
+   follows the existing R3 policy, approval, and signed-ledger path. The tool
+   has a closed schema and dispatches a command only through Docker or Podman.
+3. The image is a local immutable `sha256:` image ID. The runtime disables
+   network, uses a read-only container root, mounts only the selected project
+   read-write, passes no host environment variables, and applies CPU, memory,
+   process, timeout, output, and cleanup bounds. Missing runtime or image is a
+   refusal, never a host fallback.
+4. Selected skills come only from the project root `skills-lock.json` and
+   `.agents/<skillPath>`. Resolve paths under `.agents/skills`, reject
+   traversal and out-of-root symlinks, bound file and aggregate size, compute
+   SHA-256, and disclose any difference from `computedHash` before consent.
+   Freeze the accepted content and digest in the session. Skill text is
+   untrusted prompt context, never executable, and cannot add tools or change
+   policy. There is no global skills source.
+5. The operator selected whole-project visibility. Project files and command
+   output can contain secrets and can reach the configured provider or local
+   session history. State this before consent; do not pass host credentials or
+   mount host credential stores. This isolation is not a guarantee that
+   secrets inside the project remain hidden from the model.
+6. `/compact` stays manual and deterministic, with no model call. No change to
+   that behavior is part of this work package.
+
+Acceptance: tests cover skill-lock drift, path/symlink containment, immutable
+session snapshots, refusal without consent/profile/policy/runtime/image,
+operator approval before execution, non-zero/timeout/output-limit outcomes,
+and actual container isolation. Typechecks and relevant Workbench/TUI suites
+run sequentially. A runtime smoke uses a real configured Docker/Podman image;
+host execution is never an acceptable substitute.

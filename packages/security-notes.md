@@ -224,3 +224,22 @@ valid ledger signed with a separate key. The latter two passed hash-only
 verification and failed the new startup assertions before the fix; after it,
 all 9 SDK tests pass. SDK typechecking and the whole-product arc also pass.
 No key-rotation or protection against compromise of the signing host is claimed.
+
+## Project command boundary, 2026-10-18
+
+The opt-in project command surface was exercised against a real local Docker
+image. The Workbench test reached the R3 policy path, wrote a file only in the
+mounted project, and verified the signed dispatch lifecycle. The sandbox smoke
+verified non-root execution, read-only root files, no network, no mounted
+Docker socket, no inherited test environment variable, exit status, timeout,
+bounded output, and cleanup. Commands and output remain visible to the model
+and local session history by design; project secrets are not protected from
+model access.
+
+Residual boundary: NOMO pins an image ID and invokes Docker/Podman without a
+pull, but does not independently prove that the CLI's selected daemon context
+is local. The operator must select a trusted local engine. Container isolation
+also relies on the runtime and host kernel; no protection against their escape
+or a compromise of the same host account is claimed. These limits are
+documented in `docs/CODING-TOOLS-MAP.md` Appendix 3; the TUI warning covers the
+project-data exposure to the model and local history.

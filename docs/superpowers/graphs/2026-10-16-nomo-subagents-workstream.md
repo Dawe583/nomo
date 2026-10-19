@@ -196,9 +196,10 @@ five files read, cross-checks run over the frozen contract. Findings:
   `subagents.test.ts` ("queued park" + "queue full").
 - **Refuted, with repro (F7)**: "ledger entry on the child's workspace" --
   `commitWorkspace(parent, ...)` writes onto the parent's chain.
-- **Honest limitation recorded (A)**: idempotency mappings live in process
-  memory (carried in the contract's open assumptions). A restarted workbench
-  cannot replay by key; it will spawn a new child and write a second entry.
+- **Correction to limitation (A)**: request mappings are persisted with the
+  workbench snapshot. If a replayed spawn key names a child absent from the
+  restored sessions, `spawnSubagent` fails closed rather than creating a
+  replacement child or writing another spawn entry.
 - **Honest limitation recorded (B)**: the `void_subagent_spawn /
   spawn:completed` entry names the spawn, not the child's run outcome; run
   state continues through the child's normal events and status.
@@ -211,3 +212,50 @@ same pre-existing SQLite stderr warning; 7/7 subagents tests).
 | Decision | Why | Rejected |
 | -------- | --- | -------- |
 | D-1 | WP-SPAWN frozen on proposal B (throw, park-via-queue, `spawn:completed`) with A's /spawn surface, token-free row suffix and phantom cleanup; readable ledger identifiers in metadata, digest never text | A's result union, hard-refuse-when-busy, `execute:completed`, args-placed identifiers, row tokens |
+
+## WP-LIFECYCLE (approved follow-on)
+
+Scope: parent-scoped cancellation and operator-reviewed result delivery for
+verified spawned children. The spawn record proves only spawn: actions require
+`child.view.parentId` and a signed `void_subagent_spawn` entry whose metadata
+names the same child and parent. Branch clones do not qualify.
+
+Cancellation removes queued work and its retained prompt; restored queued work
+is paused and can be cancelled only while its prompt is present and recovery
+is unblocked. Running work keeps its provider abort/close path and run capacity
+until settlement. Unknown outcomes remain unknown; ordinary late provider
+completion is ignored.
+
+Results are read-only inspector previews from the last assistant completion
+event for the current run, only after a matching successful terminal status.
+Completion events persist explicit tool-call presence and event-time text
+truncation metadata; legacy events without that proof fail closed. Text at the
+prompt character ceiling is considered possibly incomplete and cannot be
+delivered, even if the configured limit later changes. Operator confirmation
+sends one child/run-attributed, untrusted-content-labelled parent message
+through `send()` with a deterministic idempotency key. No automatic context
+injection, truncation, queue, or retry.
+
+Excluded: lifecycle ledger records, package ledger changes, new public status,
+child messaging, restart auto-resume/redispatch, new authority/policy/caps,
+and unrelated cleanup. This work package must preserve queued-to-paused and
+running-to-unknown restart behavior.
+
+Implementation evidence: regression tests are in
+`packages/workbench/src/subagents.test.ts` (22/22 passed) and
+`packages/cli/src/tui/workspace-controls.test.ts` (21/21 passed). Exact
+commands:
+
+- `node --test --test-concurrency=1 packages/workbench/src/subagents.test.ts`
+- `node --test --test-concurrency=1 packages/cli/src/tui/workspace-controls.test.ts`
+- `npx tsc -p packages/workbench/tsconfig.json --noEmit` (passed)
+- `npx tsc -p packages/cli/tsconfig.json --noEmit` (passed)
+
+Both node test commands emitted Node's experimental SQLite warning. Both
+TypeScript commands emitted npm warnings for the existing
+`auto-install-peers` and `strict-peer-dependencies` project settings. The
+TUI controls suite exercises the real `WorkspaceTui` review/confirm and
+TUI controls cover the subagent review/confirm and queued/running cancel paths.
+The real CLI PTY smoke `python3 scripts/src/verify-tui-terminal.py` passed:
+logo, typing/history, fuzzy commands, terminal controls, safe Undo, clean exit,
+and run cancellation; it does not exercise `/subagent` itself.

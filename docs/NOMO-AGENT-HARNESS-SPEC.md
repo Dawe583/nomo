@@ -700,10 +700,35 @@ nejsou, se v tomhle stromu objevují jako falešné tvrzení později.
   `packages/workbench/src/workbench.test.ts` to pinuji pro cestu a receipt.
   Canary na nedotceny host se na obou površích neslibuje, viz
   `docs/CODING-TOOLS-MAP.md` Appendix 2.
-- **Subagenti.** omp má Agent Hub, prime má `rlm.spawn` a `agent_message`,
-  NOMO nemá nic. Chybí to tu. Je to větší kus práce než všechno výše a nedotýká
-  se učení, patří do vlastního work package.
-- **Skill drift mezi workspace a globální store.** Neuvažováno.
+- **Subagenti**: původní tvrzení, že NOMO subagenty nemá, je zastaralé.
+  Workbench poskytuje omezené podřízené session přes `Workbench.spawnSubagent`
+  a `/subagent`; nástroje dítěte jsou omezené na nástroje rodiče.
+- **Skill drift**: původní otázku workspace vs. globální úložiště nahrazuje
+  rozhodnutí vlastníka z 2026-10-18 níže. Globální úložiště nepřibývá.
+
 - **Co se stane, když se `mineLearnedRules` začne opakovat na vlastních
   výstupech.** Regresní smyčka. Řešitelné, ale `derivedFromSeq` je jen
   zachytí, ne řešení.
+
+### 7.1 Rozsah schválený vlastníkem, 2026-10-18
+
+Vlastník schválil work package pro projektové schopnosti v
+`docs/superpowers/graphs/2026-10-15-nomo-harness-workstream.md`.
+
+- Spouštění projektu se zapíná pouze přes `nomo tui --project PATH` a před
+  předáním projektových dat modelu vyžaduje viditelný souhlas v TUI. Nástroj
+  `nomo_project_exec` dostane jen explicitně nakonfigurovaný profil a podléhá
+  existující R3 policy a approval cestě.
+- Příkazy běží výhradně v jednorázovém Docker/Podman kontejneru s lokálním
+  připnutým image ID, bez sítě a bez host environmentu či credentialů. Pouze
+  zvolený projekt se připojí pro zápis. Chybějící runtime nebo image znamená
+  odmítnutí, nikdy host fallback.
+- Skills se čtou pouze z `.agents/skills/` zvoleného projektu a jeho
+  `skills-lock.json`, explicitně přes `--skill`. Kontroluje se drift a do
+  session se vloží neměnný snapshot jako nedůvěryhodný, nevykonatelný prompt
+  context. Bez globálního lookupu a bez změny policy či allowlistu.
+- Projekt i výstupy příkazů mohou obsahovat secrets; mohou odejít zvolenému
+  provideru a zůstat v lokální historii session. TUI musí toto riziko říct
+  před souhlasem. Izolace kontejneru před modelem neskryje tajemství uložená
+  uvnitř připojeného projektu.
+- `/compact` zůstává ruční deterministickou operací bez sumarizačního modelu.

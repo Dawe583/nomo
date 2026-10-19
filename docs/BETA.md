@@ -154,6 +154,8 @@ Local sessions, provider profiles, connector credentials, documents and signed
 history persist in an atomic AES-256-GCM snapshot under `NOMO_DATA_DIR` (default
 `~/.nomo/workbench`). The desktop keeps its encryption key in macOS Keychain;
 standalone CLI/GUI uses a mode-0600 key file. A conflicting writer is rejected.
+The local control-plane API caps JSON request bodies at 64 KiB and returns HTTP
+413 (`body_too_large`) for larger bodies.
 
 The document connector automatically captures before and after content. Every
 mutation and its signed evidence commit together. Open Documents & Undo, preview
@@ -194,6 +196,10 @@ Server environment variables:
 - `NOMO_SECRET_KEY`: 32 random bytes, base64, for AES-256-GCM secret encryption.
 - `NOMO_SIGNING_KEY`: Ed25519 PKCS8 DER, base64, stable across deployments.
 - Optional `AI_GATEWAY_API_KEY`: otherwise Vercel OIDC authenticates AI Gateway.
+
+The hosted gateway limits JSON sign-in bodies to 4 KiB and forwarded POST
+bodies to 64 KiB of UTF-8 JSON. The forwarding ceiling is fixed and may be
+lower than the control plane's configurable `maxRequestBytes`.
 
 The account identity layer reads four more, and none of them is set here:
 
