@@ -10,7 +10,7 @@ export function neighbors(
   digest: string,
   depth: number,
 ): TaintNeighborhood {
-  if (!Number.isInteger(depth) || depth < 0) throw new Error("taint depth must be a non-negative integer");
+  if (!Number.isInteger(depth) || depth < 0) throw new Error(`taint depth must be a non-negative integer: got ${JSON.stringify(depth)}.`);
   if (!graph.nodes.has(digest)) return { nodes: [], edges: [] };
 
   const outgoing = outgoingEdges(graph.edges);

@@ -32,12 +32,12 @@ export function exportTaint(graph: TaintGraph): string {
 
 export function verifyTaint(json: string): TaintGraph {
   const parsed = JSON.parse(json) as unknown;
-  if (typeof parsed !== "object" || parsed === null) throw new Error("taint export is not an object");
+  if (typeof parsed !== "object" || parsed === null) throw new Error(`taint export is not an object: ${JSON.stringify(parsed)}.`);
   const value = parsed as Partial<ExportedTaint>;
   if (value.version !== "void.taint.v1") throw new Error(`taint export has invalid version ${JSON.stringify(value.version)}.`);
   if (value.honesty?.dataEdges !== DATA_EDGE_HONESTY_NOTE) throw new Error(`taint export has invalid honesty note ${JSON.stringify(value.honesty?.dataEdges)}.`);
-  if (!Array.isArray(value.nodes)) throw new Error("taint export has invalid nodes");
-  if (!Array.isArray(value.edges)) throw new Error("taint export has invalid edges");
+  if (!Array.isArray(value.nodes)) throw new Error(`taint export has invalid nodes: ${JSON.stringify(value.nodes)}.`);
+  if (!Array.isArray(value.edges)) throw new Error(`taint export has invalid edges: ${JSON.stringify(value.edges)}.`);
 
   const nodes = new Map<string, TaintNode>();
   for (const node of value.nodes) {
@@ -65,7 +65,7 @@ async function readEntries(ledgerPath: string): Promise<JsonlEntry[]> {
 }
 
 function parseNode(value: unknown): TaintNode {
-  if (typeof value !== "object" || value === null) throw new Error("taint export node is not an object");
+  if (typeof value !== "object" || value === null) throw new Error(`taint export node is not an object: ${JSON.stringify(value)}.`);
   const node = value as Partial<TaintNode>;
   return {
     digest: requiredString(node.digest, "node digest"),
@@ -79,7 +79,7 @@ function parseNode(value: unknown): TaintNode {
 }
 
 function parseEdge(value: unknown, nodes: ReadonlyMap<string, TaintNode>): TaintEdge {
-  if (typeof value !== "object" || value === null) throw new Error("taint export edge is not an object");
+  if (typeof value !== "object" || value === null) throw new Error(`taint export edge is not an object: ${JSON.stringify(value)}.`);
   const edge = value as Partial<TaintEdge>;
   const from = requiredString(edge.from, "edge from");
   const to = requiredString(edge.to, "edge to");
@@ -91,12 +91,12 @@ function parseEdge(value: unknown, nodes: ReadonlyMap<string, TaintNode>): Taint
 }
 
 function requiredString(value: unknown, name: string): string {
-  if (typeof value !== "string" || value === "") throw new Error(`taint export has invalid ${name}`);
+  if (typeof value !== "string" || value === "") throw new Error(`taint export has invalid ${name}: ${JSON.stringify(value)}.`);
   return value;
 }
 
 function requiredInteger(value: unknown, name: string): number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) throw new Error(`taint export has invalid ${name}`);
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) throw new Error(`taint export has invalid ${name}: ${JSON.stringify(value)}.`);
   return value;
 }
 

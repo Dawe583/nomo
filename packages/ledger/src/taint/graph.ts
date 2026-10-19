@@ -96,13 +96,13 @@ function addEdge(
 
 function entryBody(entry: JsonlEntry): Record<string, unknown> {
   if (typeof entry.body !== "object" || entry.body === null) {
-    throw new Error(`ledger entry ${entry.seq} has invalid body`);
+    throw new Error(`ledger entry ${entry.seq} has invalid body: ${JSON.stringify(entry.body)}.`);
   }
   return entry.body as Record<string, unknown>;
 }
 
 function requiredString(value: unknown, name: string, seq: number): string {
-  if (typeof value !== "string" || value === "") throw new Error(`ledger entry ${seq} has no ${name}`);
+  if (typeof value !== "string" || value === "") throw new Error(`ledger entry ${seq} has no ${name}: ${JSON.stringify(value)}.`);
   return value;
 }
 
