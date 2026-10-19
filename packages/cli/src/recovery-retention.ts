@@ -22,6 +22,7 @@ import type {
   ManagedRecoveryVault,
 } from "../../runtime/src/reserved-vault.ts";
 import type { VaultReference } from "../../runtime/src/vault.ts";
+import { ARTIFACT_UNAVAILABLE } from "../../runtime/src/vault-refusals.ts";
 
 /** The key id both vault halves the CLI constructs name. The reference
  * travels with the row, so a different label here would read as a second
@@ -136,9 +137,7 @@ const fileVaultReference = async (
     // The mark itself refuses the same absence inside its lock; naming it
     // here too means the operator reads one reason wherever the call is
     // made.
-    throw new Error(
-      "Recovery artifact is unavailable; lifecycle was not recorded.",
-    );
+    throw new Error(ARTIFACT_UNAVAILABLE);
   }
   return { digest, keyId: VAULT_KEY_ID, bytes: size };
 };
@@ -216,8 +215,6 @@ export async function reservedVaultReference(
     (entry) => entry.digest === digest,
   );
   if (!row)
-    throw new Error(
-      "Recovery artifact is unavailable; lifecycle was not recorded.",
-    );
+    throw new Error(ARTIFACT_UNAVAILABLE);
   return { digest, keyId: VAULT_KEY_ID, bytes: row.bytes };
 }
