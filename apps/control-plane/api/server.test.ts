@@ -556,3 +556,25 @@ test("registering an agent emits agent_started", async () => {
     assert.equal(started?.agentId, "fleet-fixture-agent", "the feed names the upserted agent");
   });
 });
+
+test("oversized JSON request bodies return 413 across API error handlers", async () => {
+  await withServer("unused.jsonl", async (origin) => {
+    const body = JSON.stringify({
+      name: "oversized",
+      payload: "x".repeat(70 * 1024),
+    });
+    for (const pathname of ["/api/agents", "/api/provider", "/api/sessions"]) {
+      const response = await fetch(origin + pathname, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body,
+      });
+      assert.equal(response.status, 413, pathname);
+      assert.deepEqual(
+        await response.json(),
+        { error: "body_too_large" },
+        pathname,
+      );
+    }
+  });
+});

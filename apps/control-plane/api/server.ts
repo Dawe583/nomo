@@ -353,8 +353,8 @@ export function createControlPlaneServer(
             : options.approvals,
         }),
       )
-      .catch(() => {
-        sendOnce(response, 500, {
+      .catch((error) => {
+        sendRequestError(response, error, 500, {
           error: "internal_error",
           message: "The request failed; operator review required",
         });
@@ -648,8 +648,10 @@ async function route(
         let body: unknown;
         try {
           body = await readJsonBody(request);
-        } catch {
-          return sendJson(response, 400, { error: "invalid_branch" });
+        } catch (error) {
+          return sendRequestError(response, error, 400, {
+            error: "invalid_branch",
+          });
         }
         const input = parseBranchInput(body);
         if (!input) return sendJson(response, 400, { error: "invalid_branch" });
@@ -702,7 +704,7 @@ async function route(
       }
     }
   } catch (error) {
-    return sendJson(response, 409, {
+    return sendRequestError(response, error, 409, {
       message: error instanceof Error ? error.message : "Request failed.",
     });
   }
@@ -733,7 +735,7 @@ async function route(
         });
       }
     } catch (error) {
-      return sendJson(response, 400, {
+      return sendRequestError(response, error, 400, {
         error: "provider_unavailable",
         message:
           error instanceof Error ? error.message : "Provider unavailable",
@@ -760,7 +762,7 @@ async function route(
         );
       }
     } catch (error) {
-      return sendJson(response, 400, {
+      return sendRequestError(response, error, 400, {
         message:
           error instanceof Error ? error.message : "Connector unavailable.",
       });
@@ -778,7 +780,7 @@ async function route(
         ),
       });
     } catch (error) {
-      return sendJson(response, 409, {
+      return sendRequestError(response, error, 409, {
         message:
           error instanceof Error ? error.message : "Connector update failed.",
       });
@@ -836,7 +838,7 @@ async function route(
         );
       }
     } catch (error) {
-      return sendJson(response, 409, {
+      return sendRequestError(response, error, 409, {
         message:
           error instanceof Error
             ? error.message
@@ -985,7 +987,7 @@ async function route(
           ),
         });
       } catch (error) {
-        return sendJson(response, 400, {
+        return sendRequestError(response, error, 400, {
           message: error instanceof Error ? error.message : "Invalid update.",
         });
       }
@@ -1073,7 +1075,7 @@ async function route(
           ],
         });
       } catch (error) {
-        return sendJson(response, 409, {
+        return sendRequestError(response, error, 409, {
           message: error instanceof Error ? error.message : "Undo refused.",
         });
       }
@@ -1604,6 +1606,26 @@ function parseBranchInput(value: unknown): {
   };
 }
 
+class RequestBodyTooLarge extends Error {
+  constructor() {
+    super("request body exceeds 64 KiB");
+    this.name = "RequestBodyTooLarge";
+  }
+}
+
+function sendRequestError(
+  response: ServerResponse,
+  error: unknown,
+  status: number,
+  body: Record<string, unknown>,
+): void {
+  if (error instanceof RequestBodyTooLarge) {
+    sendOnce(response, 413, { error: "body_too_large" });
+    return;
+  }
+  sendOnce(response, status, body);
+}
+
 async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   // Browsers block cross-origin application/json form posts behind a preflight,
   // but a text/plain form body can still be crafted to parse as JSON. Requiring
@@ -1617,7 +1639,7 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   for await (const chunk of request) {
     const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
     size += buffer.length;
-    if (size > maxBodyBytes) throw new Error("request body exceeds 64 KiB");
+    if (size > maxBodyBytes) throw new RequestBodyTooLarge();
     chunks.push(buffer);
   }
   if (chunks.length === 0) return null;

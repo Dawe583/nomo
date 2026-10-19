@@ -2,8 +2,9 @@ import { workspaceSessionCookie } from "./session-cookie.mjs";
 import { timingSafeEqual } from 'node:crypto';
 
 const sameToken = (value, token) => {
-  const left = Buffer.from(value ?? '');
-  const right = Buffer.from(token ?? '');
+  if (typeof value !== 'string' || typeof token !== 'string') return false;
+  const left = Buffer.from(value);
+  const right = Buffer.from(token);
   return right.length >= 32 && left.length === right.length && timingSafeEqual(left, right);
 };
 const json = (response, status, body) => {
@@ -13,6 +14,34 @@ const json = (response, status, body) => {
   response.setHeader('x-content-type-options', 'nosniff');
   response.end(JSON.stringify(body));
 };
+
+const MAX_SESSION_BODY_BYTES = 4096;
+const MAX_UPSTREAM_BODY_BYTES = 65536;
+
+async function readRequestBody(request, maxBytes) {
+  if (request.body !== undefined) {
+    const text = typeof request.body === 'string' ? request.body : JSON.stringify(request.body);
+    return Buffer.byteLength(text) <= maxBytes ? text : null;
+  }
+  const stream = request.iterator?.({ destroyOnReturn: false }) ?? request;
+  const chunks = [];
+  let bytesRead = 0;
+  let tooLarge = false;
+  for await (const chunk of stream) {
+    const byteLength = typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.byteLength;
+    if (byteLength > maxBytes - bytesRead) {
+      tooLarge = true;
+      break;
+    }
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    bytesRead += byteLength;
+  }
+  if (tooLarge) {
+    request.resume?.();
+    return null;
+  }
+  return Buffer.concat(chunks, bytesRead).toString('utf8');
+}
 
 /** The Vercel function is a stateless gateway. Durable ledgers and active holds
  * remain with the running proxy; serverless /tmp is never treated as a store. */
@@ -29,10 +58,11 @@ export default async function handler(request, response) {
   if (request.headers['sec-fetch-site'] === 'cross-site') return json(response, 403, { error: 'origin_rejected' });
   if (url.pathname === '/api/session' && request.method === 'POST') {
     if (!request.headers['content-type']?.startsWith('application/json')) return json(response, 415, { error: 'json_required' });
-    let body = request.body;
+    let body;
     try {
-      if (body === undefined) { let text = ''; for await (const chunk of request) { text += chunk; if (text.length > 4096) return json(response, 413, { error: 'body_too_large' }); } body = JSON.parse(text); }
-      if (typeof body === 'string') body = JSON.parse(body);
+      const text = await readRequestBody(request, MAX_SESSION_BODY_BYTES);
+      if (text === null) return json(response, 413, { error: 'body_too_large' });
+      body = JSON.parse(text);
     } catch { return json(response, 400, { error: 'invalid_json' }); }
     if (!sameToken(body?.token, token)) return json(response, 401, { error: 'invalid_token', message: 'The access token was not accepted.' });
     response.setHeader('set-cookie', workspaceSessionCookie(token));
@@ -58,9 +88,8 @@ export default async function handler(request, response) {
     let body;
     if (request.method === 'POST') {
       if (!request.headers['content-type']?.startsWith('application/json')) return json(response, 415, { error: 'json_required' });
-      if (request.body !== undefined) body = typeof request.body === 'string' ? request.body : JSON.stringify(request.body);
-      else { body = ''; for await (const chunk of request) { body += chunk; if (body.length > 65536) return json(response, 413, { error: 'body_too_large' }); } }
-      if (body.length > 65536) return json(response, 413, { error: 'body_too_large' });
+      body = await readRequestBody(request, MAX_UPSTREAM_BODY_BYTES);
+      if (body === null) return json(response, 413, { error: 'body_too_large' });
     }
     const result = await fetch(target, { method: request.method, redirect: 'error', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(15000) });
     const payload = await result.json();
