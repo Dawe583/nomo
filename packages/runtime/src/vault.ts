@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { open, rename, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
+import { REFERENCE_ABSENT } from "./vault-refusals.ts";
 import { digest } from "./journal.ts";
 import type { Json } from "../../connectors/src/recovery.ts";
 import {
@@ -104,7 +105,7 @@ export function localRecoveryVault(
         !/^[a-f0-9]{64}$/.test(reference.digest) ||
         !Object.hasOwn(keys, reference.keyId)
       )
-        throw new Error("Invalid or unavailable recovery reference.");
+        throw new Error(REFERENCE_ABSENT);
       const rootDir = resolve(root);
       const dir = directory(workspace);
       await assertPrivateDirectoryPath(rootDir, "recovery vault root", undefined, true);
