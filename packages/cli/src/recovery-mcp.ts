@@ -98,7 +98,7 @@ const classifyError = (error: unknown): RecoveryErrorCategory => {
   )
     return "policy_denied";
   if (
-    /key unavailable|key is unavailable|key.*required|invalid or unavailable recovery reference|incorrect for retained vault|encryption key/.test(
+    /key unavailable|key is unavailable|key.*required|invalid or unavailable recovery reference|incorrect for this vault|encryption key/.test(
       message,
     )
   )
