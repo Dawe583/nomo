@@ -723,7 +723,7 @@ export function reservedRecoveryVault(
     async putStream(workspace, source, request) {
       identity(workspace);
       if (typeof request !== "object" || request === null)
-        throw new Error("A streamed recovery artifact declares its byte count.");
+        throw new Error(`A streamed recovery artifact declares its byte count; got ${JSON.stringify(request)}.`);
       // The declared length is proved against the quota before the source is
       // touched, so an oversized capture costs no chunk of reading.
       if (
