@@ -41,7 +41,19 @@ import {
   applyWorkspaceUndo,
   executeWorkspaceTool,
 } from "../packages/workbench/src/workspace.ts";
+import { PROJECT_EXEC_TOOL } from "../packages/workbench/src/project-sandbox.ts";
 import { envValue } from "./env.mjs";
+
+/** The hosted surface's own workspace tool set.
+ *
+ * The managed workspace carries the project exec tool, which runs commands
+ * in a container against an operator-approved project on that operator's own
+ * machine. The hosted plane has no such project, no profile that allowlists
+ * the tool and no container runtime, so publishing it would offer a surface
+ * that no hosted account can use and that no hosted operator approved. */
+const hostedWorkspaceTools = workspaceTools.filter(
+  (tool) => tool.name !== PROJECT_EXEC_TOOL.name,
+);
 import { canonicalJson } from "../packages/ledger/src/canonical.ts";
 import { sha256Hex } from "../packages/ledger/src/sign.ts";
 import { append } from "./store.mjs";
@@ -726,7 +738,7 @@ app.get("/api/tools", async (req, res) => {
   const saved = (await read(req.owner, "connectors")) ?? [];
   const secrets = saved.map((item) => decrypt(item.secret).token);
   const tools = [
-    ...workspaceTools,
+    ...hostedWorkspaceTools,
     ...saved.flatMap((item) =>
       (decrypt(item.secret).tools ?? []).map((tool) => ({
         ...tool,
@@ -758,8 +770,8 @@ app.get("/api/connectors", async (req, res) => {
         name: "NOMO documents",
         builtin: true,
         undo: true,
-        tools: workspaceTools.map((t) => t.name),
-        toolDetails: workspaceTools,
+        tools: hostedWorkspaceTools.map((t) => t.name),
+        toolDetails: hostedWorkspaceTools,
       },
       ...saved.map((item) =>
         publicConnector({ ...decrypt(item.secret), id: item.id }),
@@ -1073,7 +1085,7 @@ app.post("/api/sessions", async (req, res) => {
   const tools =
     agent === "prime-agent"
       ? []
-      : workspaceTools.map((tool) => ({ ...tool, builtin: true }));
+      : hostedWorkspaceTools.map((tool) => ({ ...tool, builtin: true }));
   if (upstream) {
     connected.legacy = { config: upstream, sessionId: listed.sessionId };
     tools.push(
