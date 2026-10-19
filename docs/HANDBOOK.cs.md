@@ -294,8 +294,23 @@ dokumentů, kterou TUI nemá.
 
 `pnpm tui`, nebo `nomo tui`. Možnosti: `--once` vykreslí jeden statický snímek a
 skončí (jednorázový výkres je vždy bez barev), `--view <karta>`, `--session <id>`,
-`--data-dir <cesta>`, `--import-provider opencode:zen|opencode:tokenrouter` a
-`--help`.
+`--data-dir <cesta>`, `--import-provider opencode:zen|opencode:tokenrouter`,
+`--project <cesta>`, `--skill <id>` (opakovatelně) a `--help`.
+
+`--project` otevře jeden operátorem schválený projekt: pracovní prostor ho
+vidí přes `nomo_project_exec`, příkaz, který běží v jednorázovém kontejneru
+bez sítě a s projektem připojeným na cestě /workspace, bez hostovského
+prostředí a bez credentialů. Projektový nástroj je dostupný jen tehdy, když
+ho explicitně povolí vlastní nakonfigurovaný profil, a jde o R3 hov, takže
+jde běžnou cestou policy a schvalování. Chybějící runtime kontejneru nebo
+chybějící připnutý image je odmítnutí, nikoli návrat na hosta. `--skill`
+vybírá skills z `.agents/skills/` zvoleného projektu a z jeho
+`skills-lock.json`; text skillu se vloží do session jako neměnný snapshot a
+počítá se jako nedůvěryhodný obsah projektu, takže nemůže rozšířit nástroje
+ani oprávnění. Operátor je předtím, než se jakákoliv projektová data dostanou
+k modelu, informován, že soubory projektu, text vybraných skillů, argumenty
+příkazů a výstup příkazů mohou být odeslány nakonfigurovanému modelu a
+ponechány v místní historii session.
 
 ### 8.1 Jedenáct karet
 
