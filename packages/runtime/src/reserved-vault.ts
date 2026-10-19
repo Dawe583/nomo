@@ -5,7 +5,6 @@ import { setTimeout as delay } from "node:timers/promises";
 import { DatabaseSync } from "node:sqlite";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
 import { digest } from "./journal.ts";
-import { ARTIFACT_UNAVAILABLE } from "./vault-refusals.ts";
 import {
   localRecoveryVault,
   VaultCapacityError,
@@ -834,7 +833,7 @@ export function reservedRecoveryVault(
             .get(workspace, reference.digest)
         )
           throw new Error(
-            ARTIFACT_UNAVAILABLE,
+            "Recovery artifact is unavailable; lifecycle was not recorded.",
           );
         const existing = readRetentionRecord(db, workspace, reference.digest);
         const incoming: VaultLifecycle =
