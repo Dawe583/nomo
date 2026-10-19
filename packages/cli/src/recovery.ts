@@ -719,7 +719,7 @@ export async function runRecoveryCommand(
           [
             ...halves.map((half) => `${half.surface} ${half.outcome}`),
             ...refusals,
-          ].join("; "),
+          ].join(" | "),
       );
     }
     print(
