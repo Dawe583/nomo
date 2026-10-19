@@ -43,11 +43,11 @@ export function managedFilesystemAdapter(options: {
   cooperative: true;
 }): RecoveryAdapter {
   if (options.cooperative !== true)
-    throw new Error("Explicit cooperative workspace ownership is required.");
+    throw new Error(`Explicit cooperative workspace ownership is required: got ${JSON.stringify(options.cooperative)}.`);
   const root = realpathSync(resolve(options.root));
   const rootStat = lstatSync(root, { bigint: true });
   if (!rootStat.isDirectory())
-    throw new Error("Workspace must be a directory.");
+    throw new Error(`Workspace must be a directory: ${JSON.stringify(options.root)}.`);
   const identity = `${rootStat.dev}:${rootStat.ino}`;
   function target(path: string) {
     if (
@@ -75,7 +75,7 @@ export function managedFilesystemAdapter(options: {
       throw new Error(`Protected or invalid workspace path ${JSON.stringify(path)}.`);
     const current = lstatSync(root, { bigint: true });
     if (!current.isDirectory() || `${current.dev}:${current.ino}` !== identity)
-      throw new Error("Workspace identity changed.");
+      throw new Error(`Workspace identity changed: expected ${identity}, got ${current.dev}:${current.ino}.`);
     let parent = root;
     for (const part of parts.slice(0, -1)) {
       parent = join(parent, part);
@@ -87,10 +87,10 @@ export function managedFilesystemAdapter(options: {
   }
   function parse(args: Json): Mutation {
     if (!args || Array.isArray(args) || typeof args !== "object")
-      throw new Error("Invalid file mutation.");
+      throw new Error(`Invalid file mutation: ${JSON.stringify(args)}.`);
     const value = args as Record<string, unknown>;
     if (typeof value.action !== "string" || typeof value.path !== "string")
-      throw new Error("Invalid file mutation.");
+      throw new Error(`Invalid file mutation: ${JSON.stringify(args)}.`);
     target(value.path);
     if (value.action === "rename") {
       if (
@@ -99,16 +99,16 @@ export function managedFilesystemAdapter(options: {
         ) ||
         typeof value.to !== "string"
       )
-        throw new Error("Rename requires source and destination paths only.");
+        throw new Error(`Rename requires source and destination paths only: ${JSON.stringify(Object.keys(value))}.`);
       target(value.to);
       if (process.platform === "win32")
-        throw new Error("Managed rename is not verified on Windows.");
+        throw new Error(`Managed rename is not verified on Windows: ${process.platform}.`);
       if (value.path === value.to) throw new Error(`Rename paths must differ: ${JSON.stringify(value.path)}.`);
       return { action: "rename", path: value.path, to: value.to };
     }
     if (value.action === "delete") {
       if (Object.keys(value).some((key) => !["action", "path"].includes(key)))
-        throw new Error("Delete accepts only a path.");
+        throw new Error(`Delete accepts only a path: ${JSON.stringify(Object.keys(value))}.`);
       return { action: "delete", path: value.path };
     }
     if (value.action !== "write") throw new Error(`Unsupported file action ${JSON.stringify(value.action)}.`);
@@ -117,14 +117,14 @@ export function managedFilesystemAdapter(options: {
         (key) => !["action", "path", "base64", "mode"].includes(key),
       )
     )
-      throw new Error("Invalid file mutation.");
+      throw new Error(`Invalid file mutation: ${JSON.stringify(args)}.`);
     if (
       typeof value.base64 !== "string" ||
       value.base64.length > Math.ceil(maxBytes / 3) * 4 ||
       Buffer.from(value.base64, "base64").toString("base64") !== value.base64 ||
       Buffer.from(value.base64, "base64").length > maxBytes
     )
-      throw new Error("Expected canonical base64 up to 1 MiB.");
+      throw new Error(`Expected canonical base64 up to 1 MiB: got ${String(value.base64).length} characters.`);
     if (
       value.mode !== undefined &&
       (!Number.isInteger(value.mode) ||
@@ -138,7 +138,7 @@ export function managedFilesystemAdapter(options: {
       value.mode !== 0o666
     )
       throw new Error(
-        "Windows managed writes support writable files (mode 0666) only.",
+        `Windows managed writes support writable files (mode 0666) only: got ${JSON.stringify(value.mode)}.`,
       );
     return {
       action: "write",
@@ -155,7 +155,7 @@ export function managedFilesystemAdapter(options: {
       // the opened handle; cooperative ownership excludes races between them.
       const entry = lstatSync(absolute);
       if (!entry.isFile() || entry.isSymbolicLink())
-        throw new Error("Only regular files without symlinks are supported.");
+        throw new Error(`Only regular files without symlinks are supported: ${JSON.stringify(path)}.`);
       fd = openSync(
         absolute,
         constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
@@ -191,11 +191,11 @@ export function managedFilesystemAdapter(options: {
         (stat.mode & 0o7000n) !== 0n
       )
         throw new Error(
-          "Only regular, single-link files up to 1 MiB are supported.",
+          `Only regular, single-link files up to 1 MiB are supported: ${JSON.stringify(absolute)}.`,
         );
       if (process.platform === "win32" && Number(stat.mode & 0o777n) !== 0o666)
         throw new Error(
-          "Windows managed recovery requires a writable regular file.",
+          `Windows managed recovery requires a writable regular file: got ${JSON.stringify(Number(stat.mode & 0o777n))}.`,
         );
       // Bound reads even when a non-cooperating process grows the file.
       const bytes = Buffer.alloc(maxBytes + 1);
@@ -208,7 +208,7 @@ export function managedFilesystemAdapter(options: {
         stat.mtimeNs !== after.mtimeNs ||
         stat.size !== after.size
       )
-        throw new Error("File changed during capture.");
+        throw new Error(`File changed during capture: ${count} bytes vs ${stat.size}.`);
       const encoded = bytes.subarray(0, count).toString("base64"),
         mode = Number(stat.mode & 0o777n);
       return {
@@ -248,7 +248,7 @@ export function managedFilesystemAdapter(options: {
   ) {
     const absolute = target(path);
     if (snapshot(path).revision !== expected.revision)
-      throw new Error("File revision conflict.");
+      throw new Error(`File revision conflict: expected ${JSON.stringify(expected.revision)}, got ${JSON.stringify(snapshot(path).revision)}.`);
     if (bytes === null) {
       if (expected.bytes !== null) unlinkSync(absolute);
     } else {
@@ -275,7 +275,7 @@ export function managedFilesystemAdapter(options: {
           linkSync(temporary, absolute);
         } else {
           if (snapshot(path).revision !== expected.revision)
-            throw new Error("File revision conflict.");
+            throw new Error(`File revision conflict: expected ${JSON.stringify(expected.revision)}, got ${JSON.stringify(snapshot(path).revision)}.`);
           renameSync(temporary, absolute);
         }
       } finally {
@@ -289,7 +289,7 @@ export function managedFilesystemAdapter(options: {
     syncDirectory(absolute);
     const after = snapshot(path);
     if (after.bytes !== bytes || (bytes !== null && after.mode !== mode))
-      throw new Error("File verification failed.");
+      throw new Error(`File verification failed: expected ${JSON.stringify(bytes)}, got ${JSON.stringify(after.bytes)}.`);
     return after;
   }
   const capture = (prepared: Prepared) => prepared.before as unknown as Capture;
@@ -336,7 +336,7 @@ export function managedFilesystemAdapter(options: {
         restored.mode !== before.snapshot.mode ||
         removed.bytes !== null
       )
-        throw new Error("File verification failed.");
+        throw new Error(`File verification failed: ${JSON.stringify(before.path)}.`);
       return {
         status: "restored",
         evidence: {
@@ -438,12 +438,12 @@ export function managedFilesystemAdapter(options: {
             ? hash([before.revision, destination!.revision])
             : before.revision;
       if (observation.revision !== revision)
-        throw new Error("File revision conflict.");
+        throw new Error(`File revision conflict: expected ${JSON.stringify(revision)}, got ${JSON.stringify(observation.revision)}.`);
       if (
         mutation.action === "rename" &&
         (before.bytes === null || destination!.bytes !== null)
       )
-        throw new Error("File revision conflict.");
+        throw new Error(`File revision conflict: ${JSON.stringify(mutation.path)}.`);
       return {
         before: (mutation.action === "rename"
           ? {
@@ -470,15 +470,15 @@ export function managedFilesystemAdapter(options: {
         hash(plan.mutation) !== hash(mutation) ||
         before.path !== mutation.path
       )
-        throw new Error("File capture binding mismatch.");
+        throw new Error(`File capture binding mismatch: ${JSON.stringify(args)}.`);
       if (mutation.action === "rename") {
         if (!("to" in before) || before.to !== mutation.to)
-          throw new Error("File capture binding mismatch.");
+          throw new Error(`File capture binding mismatch: ${JSON.stringify(args)}.`);
         if (
           snapshot(mutation.path).revision !== before.snapshot.revision ||
           snapshot(mutation.to).revision !== before.destination.revision
         )
-          throw new Error("File revision conflict.");
+          throw new Error(`File revision conflict: ${JSON.stringify(mutation.path)}.`);
         renameSync(target(mutation.path), target(mutation.to));
         syncDirectory(target(mutation.path));
         if (dirname(target(mutation.path)) !== dirname(target(mutation.to)))
@@ -490,7 +490,7 @@ export function managedFilesystemAdapter(options: {
           destination.bytes !== before.snapshot.bytes ||
           destination.mode !== before.snapshot.mode
         )
-          throw new Error("File verification failed.");
+          throw new Error(`File verification failed: ${JSON.stringify(before.path)}.`);
         return {
           result: {
             path: mutation.path,
