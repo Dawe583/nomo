@@ -37,7 +37,7 @@ type LegacyState = {
 };
 const identity = (value: string) => {
   if (typeof value !== "string" || !/^[\w-]{1,120}$/.test(value))
-    throw new Error("Invalid vault identity.");
+    throw new Error(`Invalid vault identity; ${JSON.stringify(value)} is not 1 to 120 word characters.`);
 };
 
 /** The record column crosses the statement boundary as unknown, so the shape
@@ -174,7 +174,7 @@ const capacityOf = (capacity: VaultCapacity): VaultCapacity => {
       value < 1 ||
       value > Number.MAX_SAFE_INTEGER / 4
     )
-      throw new Error("Invalid vault capacity.");
+      throw new Error(`Invalid vault capacity; ${JSON.stringify(value)} is not a safe positive integer.`);
   return capacity;
 };
 
@@ -291,7 +291,7 @@ export function reservedRecoveryVault(
       .get(currentKey);
     if (existing) {
       if (!keyProofMatches(existing.proof))
-        throw new Error("Recovery key unavailable or incorrect for retained vault.");
+        throw new Error(`The retained key ${currentKey} is unavailable or incorrect for this vault.`);
       return;
     }
     const keyRows: unknown = db
@@ -332,7 +332,7 @@ export function reservedRecoveryVault(
           isAuthenticationFailure(error) ||
           (error instanceof Error && error.message === "Recovery key unavailable.")
         )
-          throw new Error("Recovery key unavailable or incorrect for retained vault.");
+          throw new Error(`The retained key ${currentKey} is unavailable or incorrect for this vault.`);
         throw error;
       }
     }
@@ -356,7 +356,7 @@ export function reservedRecoveryVault(
         }
         if (!verified) {
           if (authenticationFailure && !missing)
-            throw new Error("Recovery key unavailable or incorrect for retained vault.");
+            throw new Error(`No retained key verified the recorded sample; restore the key the retained artifacts were written with.`);
           throw new Error("Recovery artifact cannot be verified.");
         }
       } else {
@@ -418,7 +418,7 @@ export function reservedRecoveryVault(
       // of writing through a shape it cannot prove, which is the same
       // stop-old-writers rule the capacity migration already established.
       if (schemaVersion > 2)
-        throw new Error("Unsupported recovery vault schema version.");
+        throw new Error(`Unsupported recovery vault schema version ${schemaVersion}; this binary supports schema 2.`);
       db.exec(`CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),capacity TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS artifacts(workspace TEXT NOT NULL,digest TEXT NOT NULL,key_id TEXT NOT NULL,data BLOB NOT NULL,operation_id TEXT,slot TEXT,content_digest TEXT NOT NULL,at TEXT,PRIMARY KEY(workspace,digest),UNIQUE(workspace,operation_id,slot));
     CREATE TABLE IF NOT EXISTS reservations(workspace TEXT NOT NULL,operation_id TEXT NOT NULL,slot TEXT NOT NULL,bytes INTEGER NOT NULL,PRIMARY KEY(workspace,operation_id,slot));
@@ -530,7 +530,7 @@ export function reservedRecoveryVault(
       bytes.length !== reference.bytes ||
       digest(bytes.toString("base64")) !== reference.digest
     )
-      throw new Error("Recovery artifact digest or size mismatch.");
+      throw new Error(`The stored artifact reads ${bytes.length} bytes with digest ${digest(bytes.toString("base64"))}; the reference carries ${reference.bytes} bytes of ${reference.digest}.`);
     if (!Object.hasOwn(keys, reference.keyId))
       throw new Error("Recovery key unavailable.");
     const cipher = createDecipheriv(
@@ -569,7 +569,7 @@ export function reservedRecoveryVault(
     if (!Number.isSafeInteger(bytes) || bytes < 1)
       throw new Error("A recovery artifact declares a positive byte count.");
     if (bytes > maxArtifactBytes)
-      throw new VaultCapacityError("Recovery artifact exceeds quota.");
+      throw new VaultCapacityError(`Recovery artifact of ${bytes} bytes exceeds the ${maxArtifactBytes} byte artifact limit.`);
     // GCM expands by a fixed amount and the caller declared the plaintext
     // length, so the ciphertext length is known before the first chunk: one
     // allocation filled in place, not a chunk list plus a concatenation.
@@ -613,7 +613,7 @@ export function reservedRecoveryVault(
       : undefined;
     if (prior) {
       if (prior.content_digest !== contentDigest)
-        throw new Error("Vault slot belongs to different evidence.");
+        throw new Error(`Vault slot ${allocation!.slot} already holds evidence ${String(prior.content_digest)}; the reservation for ${allocation!.operationId} carries ${contentDigest}.`);
       const stored = prior.data as Uint8Array,
         reference = {
           digest: String(prior.digest),
@@ -634,7 +634,7 @@ export function reservedRecoveryVault(
           .get(workspace, allocation.operationId, allocation.slot)
       : undefined;
     if (allocation && !reserved)
-      throw new Error("Recovery slot is not reserved.");
+      throw new Error(`Reservation ${allocation.operationId} at slot ${allocation.slot} is not recorded in ${workspace}.`);
     const reference = {
       digest: streamedBase64Digest(data),
       keyId: currentKey,
@@ -644,7 +644,7 @@ export function reservedRecoveryVault(
       data.byteLength > Number(reserved?.bytes ?? maxTotalBytes) ||
       used - Number(reserved?.bytes ?? 0) + data.byteLength > maxTotalBytes
     )
-      throw new VaultCapacityError("Recovery vault total quota exhausted.");
+      throw new VaultCapacityError(`The reserved vault holds ${used} of its ${maxTotalBytes} byte total; an artifact of ${data.byteLength} bytes would exceed it.`);
     db.prepare("INSERT INTO artifacts VALUES(?,?,?,?,?,?,?,?)").run(
       workspace,
       reference.digest,
@@ -695,7 +695,7 @@ export function reservedRecoveryVault(
           ).run(workspace, operationId, slot, slotBytes);
         }
         if (used + extra > maxTotalBytes)
-          throw new VaultCapacityError("Recovery vault total quota exhausted.");
+          throw new VaultCapacityError(`The reserved vault holds ${used} of its ${maxTotalBytes} byte total; a reservation of ${extra} bytes more would exceed it.`);
       });
     },
     async release(workspace, operationId) {
@@ -725,7 +725,7 @@ export function reservedRecoveryVault(
         request.bytes < 1 ||
         request.bytes > maxArtifactBytes
       )
-        throw new VaultCapacityError("Recovery artifact exceeds quota.");
+        throw new VaultCapacityError(`The declared artifact of ${request.bytes} bytes exceeds the ${maxArtifactBytes} byte artifact limit.`);
       return transaction((db, used) =>
         write(db, used, workspace, source, request.bytes, request.allocation),
       );
@@ -733,7 +733,7 @@ export function reservedRecoveryVault(
     async *getStream(workspace, reference) {
       identity(workspace);
       if (!/^[a-f0-9]{64}$/.test(reference.digest))
-        throw new Error("Invalid recovery reference.");
+        throw new Error(`Invalid recovery reference; ${JSON.stringify(reference.digest)} is not a sha256 hex digest.`);
       const row: unknown = await transaction((db) =>
         db
           .prepare("SELECT data FROM artifacts WHERE workspace=? AND digest=?")
@@ -747,7 +747,7 @@ export function reservedRecoveryVault(
       // boundary as unknown, so the shape is proved before it is read.
       const blob = row.data;
       if (!(blob instanceof Uint8Array))
-        throw new Error("Recovery artifact digest or size mismatch.");
+        throw new Error(`The stored payload behind ${reference.digest} is not a readable blob; the reference declares ${reference.bytes} bytes.`);
       const stored: Buffer = view(blob);
       // The stored payload arrives as one SQLite blob, which is the last
       // full-size allocation on this path. Verifying and decrypting it in place
@@ -756,7 +756,7 @@ export function reservedRecoveryVault(
         stored.byteLength !== reference.bytes ||
         streamedBase64Digest(stored) !== reference.digest
       )
-        throw new Error("Recovery artifact digest or size mismatch.");
+        throw new Error(`The stored artifact reads ${stored.byteLength} bytes with digest ${streamedBase64Digest(stored)}; the reference carries ${reference.bytes} bytes of ${reference.digest}.`);
       if (!Object.hasOwn(keys, reference.keyId))
         throw new Error("Recovery key unavailable.");
       const cipher = createDecipheriv(
@@ -817,7 +817,7 @@ export function reservedRecoveryVault(
     async markVaultLifecycle(workspace, reference, request) {
       identity(workspace);
       if (!/^[a-f0-9]{64}$/.test(reference.digest))
-        throw new Error("Invalid recovery reference.");
+        throw new Error(`Invalid recovery reference; ${JSON.stringify(reference.digest)} is not a sha256 hex digest.`);
       await transaction((db) => {
         // The file vault refuses to record evidence for an artifact it cannot
         // stat; the row lookup is the same refusal, because a lifecycle record
@@ -834,14 +834,14 @@ export function reservedRecoveryVault(
         const incoming: VaultLifecycle =
           request.pin === undefined ? {} : { pin: vaultPin(request.pin) };
         if (existing?.pin !== undefined && incoming.pin === undefined)
-          throw new Error("A pinned recovery artifact is not released by retention.");
+          throw new Error(`The recorded pin on ${reference.digest} in ${workspace} is not released by retention; unpin it instead.`);
         if (
           existing?.pin !== undefined &&
           incoming.pin !== undefined &&
           (existing.pin.ownerId !== incoming.pin.ownerId ||
             existing.pin.kind !== incoming.pin.kind)
         )
-          throw new Error("Recovery artifact pin conflicts with recorded lifecycle.");
+          throw new Error(`The recorded pin on ${reference.digest} does not match the stated pin ${incoming.pin!.ownerId}:${incoming.pin!.kind}; nothing was recorded.`);
         const lifecycle: VaultLifecycle = { ...existing, ...incoming };
         if (existing !== undefined && canonicalJson(lifecycle) === canonicalJson(existing))
           return;
@@ -853,7 +853,7 @@ export function reservedRecoveryVault(
     async releaseVaultPin(workspace, reference, request) {
       identity(workspace);
       if (!/^[a-f0-9]{64}$/.test(reference.digest))
-        throw new Error("Invalid recovery reference.");
+        throw new Error(`Invalid recovery reference; ${JSON.stringify(reference.digest)} is not a sha256 hex digest.`);
       if (!/^[\w-]{1,120}$/.test(request.operatorId))
         throw new Error("Invalid recovery pin release operator.");
       const held = vaultPin(request.pin);
@@ -865,15 +865,15 @@ export function reservedRecoveryVault(
         // never make.
         if (existing === undefined)
           throw new Error(
-            "Recovery artifact has no recorded pin; a release cannot prove what protection to remove.",
+            `The artifact ${reference.digest} in ${workspace} has no recorded pin; a release cannot prove what protection to remove.`,
           );
         if (existing.pin === undefined)
           throw new Error(
-            "Recovery artifact has no recorded pin to release; it is already released for retention.",
+            `The recorded lifecycle of ${reference.digest} in ${workspace} names no pin; it is already released for retention.`,
           );
         if (existing.pin.ownerId !== held.ownerId || existing.pin.kind !== held.kind)
           throw new Error(
-            "Recovery artifact pin does not match the recorded lifecycle; nothing was released.",
+            `The recorded pin ${existing.pin.ownerId}:${existing.pin.kind} does not match the stated pin ${held.ownerId}:${held.kind}; nothing was released.`,
           );
         const release: VaultRelease = {
           operatorId: request.operatorId,
@@ -912,7 +912,7 @@ export function reservedRecoveryVault(
       await transaction((db) => {
         for (const target of digests) {
           if (!/^[a-f0-9]{64}$/.test(target)) {
-            errors.push("Invalid recovery reference.");
+            errors.push(`${target} is not a digest this vault holds; not deleted`);
             continue;
           }
           // The record is re-checked inside this transaction, so a pin that
@@ -957,7 +957,7 @@ export function reservedRecoveryVault(
     async get(workspace, reference) {
       identity(workspace);
       if (!/^[a-f0-9]{64}$/.test(reference.digest))
-        throw new Error("Invalid recovery reference.");
+        throw new Error(`Invalid recovery reference; ${JSON.stringify(reference.digest)} is not a sha256 hex digest.`);
       const row = await transaction((db) =>
         db
           .prepare("SELECT data FROM artifacts WHERE workspace=? AND digest=?")

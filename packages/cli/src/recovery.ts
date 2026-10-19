@@ -206,7 +206,9 @@ export async function runRecoveryCommand(
   const postgres = config.postgres;
   const url = postgres ? env[postgres.urlEnv] : undefined;
   if (postgres && !url)
-    throw new Error("Configured Postgres URL environment variable is absent.");
+    throw new Error(
+      `Configured Postgres URL environment variable ${postgres.urlEnv} is absent.`,
+    );
   const options: ManagedPostgresOptions | undefined = postgres
     ? {
         workspace: config.workspace,
@@ -251,7 +253,9 @@ export async function runRecoveryCommand(
         ? null
         : JSON.parse(await readFile(resolve(args.get("--input")!), "utf8"));
   if (input !== null && (input as { workspace: unknown }).workspace !== config.workspace)
-    throw new Error("Input belongs to another workspace.");
+    throw new Error(
+      `Input belongs to workspace ${(input as { workspace: unknown }).workspace}, the configuration names ${(config as { workspace: unknown }).workspace}.`,
+    );
   if (config.filesystem || config.git) {
     const root = resolve(dirname(configPath), (config.filesystem ?? config.git)!.root);
     const state = resolve(dirname(configPath), config.stateDir);
@@ -271,7 +275,9 @@ export async function runRecoveryCommand(
   if (action === "inspect") {
     const request = input as ExecutionRequest;
     if (request.adapterId !== adapter.id)
-      throw new Error("Adapter does not match configuration.");
+      throw new Error(
+      `Request binds adapter ${String(request.adapterId)}, the configuration builds ${adapter.id}.`,
+    );
     const observation = await adapter.preflight(request.arguments);
     print(
       JSON.stringify(
@@ -294,7 +300,7 @@ export async function runRecoveryCommand(
     key = Buffer.from(env[config.encryptionKeyEnv] ?? "", "base64");
   if (key.length !== 32)
     throw new Error(
-      "Configured recovery encryption key must be 32 bytes in base64.",
+      `The retained vault key in ${config.encryptionKeyEnv} is ${key.length} bytes, not the 32 bytes the base64 form carries.`,
     );
   const keyPath = join(state, "keys", "dev-ed25519.pkcs8");
   let retainedState = false;
@@ -314,7 +320,8 @@ export async function runRecoveryCommand(
     retainedState =
       entries.some((entry) => entry !== "keys") || keyEntries.length > 0;
     if (retainedState)
-      throw new Error("Retained recovery signing key is unavailable; restore the original key before continuing.");
+      throw new Error(`Retained recovery signing key is unavailable; restore the signing key at ${keyPath} before continuing.`);
+
   }
   let signer;
   try {
@@ -333,7 +340,8 @@ export async function runRecoveryCommand(
       "code" in error &&
       error.code === "ENOENT"
     )
-      throw new Error("Retained recovery signing key is unavailable; restore the original key before continuing.");
+      throw new Error(`Retained recovery signing key is unavailable; restore the signing key at ${keyPath} before continuing.`);
+
     throw error;
   }
   const policy = async () => {
@@ -390,8 +398,12 @@ export async function runRecoveryCommand(
     },
   });
   if (action === "serve") {
-    if (!config.agentId || !/^[\w-]{1,120}$/.test(config.agentId))
-      throw new Error("A stable agentId is required for MCP.");
+    if (!config.agentId)
+      throw new Error("The MCP host needs a stable agentId in the configuration.");
+    if (!/^[\w-]{1,120}$/.test(config.agentId))
+      throw new Error(
+        `The configuration's agentId "${config.agentId}" is not 1 to 120 word characters.`,
+      );
     const server = recoveryMcpServer({
       runtime,
       workspace: config.workspace,
@@ -685,7 +697,9 @@ export async function runRecoveryCommand(
       }
     }
     if (halves.length === surfaces.length && refusals.length === 0 && !halves.some((half) => half.outcome === "recorded"))
-      throw new Error("No retention surface names the digest; nothing was recorded.");
+      throw new Error(
+      `No retention surface names ${digest}; nothing was recorded.`,
+    );
     if (refusals.length > 0) {
       // The machine contract outlives the prose: automation reads the run
       // object to learn what landed when the transition halted, so the run
@@ -733,12 +747,14 @@ export async function runRecoveryCommand(
       const pair = /^(\d+):(\d+)$/.exec(value ?? "");
       if (!pair)
         throw new Error(
-          `${flag} states the vault capacity as <maxTotalBytes>:<maxArtifactBytes>.`,
+          `${flag} states the vault capacity as <maxTotalBytes>:<maxArtifactBytes>; it carries ${JSON.stringify(value)}.`,
         );
       const total = Number(pair[1]),
         artifact = Number(pair[2]);
       if (total < 1 || artifact < 1)
-        throw new Error("The vault capacities must be positive integers.");
+        throw new Error(
+        `${flag} carries ${total}:${artifact}; both must be positive integers.`,
+      );
       return { maxTotalBytes: total, maxArtifactBytes: artifact };
     };
     const from = parseCapacity(args.get("--from"), "--from"),

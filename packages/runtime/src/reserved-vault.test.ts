@@ -38,7 +38,7 @@ test("durable reservations cap concurrent writers, survive restart and preserve 
     results[0]!.status === "fulfilled" ? ["one", "a"] : ["two", "b"];
   const restart = reservedRecoveryVault(f.root, f.keys, "second", capacity);
   await restart.reserve!(workspace!, operationId!);
-  await assert.rejects(restart.reserve!("other", "extra"), /quota/);
+  await assert.rejects(restart.reserve!("other", "extra"), /would exceed it/);
   const capture = await restart.put(workspace!, "private old bytes", {
     operationId: operationId!,
     slot: "capture",
@@ -49,7 +49,7 @@ test("durable reservations cap concurrent writers, survive restart and preserve 
   });
   // Unrelated traffic can consume only unreserved room, never the inverse's slot.
   await restart.put("other", "x".repeat(1022));
-  await assert.rejects(restart.put("other", "y".repeat(1022)), /quota/);
+  await assert.rejects(restart.put("other", "y".repeat(1022)), /would exceed it/);
   const receipt = await restart.put(workspace!, "restored", {
     operationId: operationId!,
     slot: "recovery",
@@ -86,14 +86,14 @@ test("slot retry returns the same artifact and rejects changed evidence or anoth
       { value: "changed" },
       { operationId: "op", slot: "capture" },
     ),
-    /different evidence/,
+    /already holds evidence/,
   );
   await assert.rejects(vault.get("two", reference));
   await vault.release!("one", "op");
   assert.deepEqual(await vault.get("one", reference), { value: "before" });
   await assert.rejects(
     vault.put("one", "result", { operationId: "op", slot: "outcome" }),
-    /not reserved/,
+    /not recorded in/,
   );
 });
 test("legacy snapshots remain readable and consume quota; new configuration cannot reset the shared limit", async (t) => {
@@ -103,7 +103,7 @@ test("legacy snapshots remain readable and consume quota; new configuration cann
   const capacity = { maxArtifactBytes: 1024, maxTotalBytes: 3 * 1052 };
   const vault = reservedRecoveryVault(f.root, f.keys, "second", capacity);
   assert.equal(await vault.get("one", reference), "legacy");
-  await assert.rejects(vault.reserve!("one", "op"), /quota/);
+  await assert.rejects(vault.reserve!("one", "op"), /would exceed it/);
   await assert.rejects(
     reservedRecoveryVault(f.root, f.keys, "second", {
       ...capacity,
@@ -214,7 +214,7 @@ test("ciphertext tampering and unavailable keys refuse restore", async (t) => {
     reference.digest,
   );
   db.close();
-  await assert.rejects(vault.get("one", reference), /mismatch/);
+  await assert.rejects(vault.get("one", reference), /the reference carries/);
 });
 test("runtime refuses dispatch without capacity and reconciles a persisted result without consuming a second slot", async (t) => {
   const f = await fixture(t),
@@ -433,7 +433,7 @@ test("SIGKILL before snapshot commit rolls back payload and quota together", asy
   assert.equal(exit, null);
   assert.equal(signal, "SIGKILL");
   const restarted = reservedRecoveryVault(root, f.keys, "first", capacity);
-  await assert.rejects(restarted.reserve!("other", "op", ["capture"]), /quota/);
+  await assert.rejects(restarted.reserve!("other", "op", ["capture"]), /would exceed it/);
   const reference = await restarted.put("one", "before", {
     operationId: "op",
     slot: "capture",
@@ -700,7 +700,7 @@ test("a streamed write obeys the same reservation and slot rules as a value writ
       bytes: plain.byteLength,
       allocation: { operationId: "unreserved", slot: "capture" },
     }),
-    /not reserved/,
+    /not recorded in/,
   );
   await vault.reserve!("one", "op", ["capture"]);
   const first = await vault.putStream("one", chunked(plain), {
@@ -722,7 +722,7 @@ test("a streamed write obeys the same reservation and slot rules as a value writ
       bytes: changed.byteLength,
       allocation: { operationId: "op", slot: "capture" },
     }),
-    /different evidence/,
+    /already holds evidence/,
   );
   assert.deepEqual(await vault.get("one", first), { value: "before" });
 });
@@ -777,7 +777,7 @@ test("a streamed read refuses a legacy artifact, a wrong key and a corrupted pay
     (async () => {
       for await (const _ of vault.getStream("two", managed));
     })(),
-    /digest or size mismatch/,
+    /the reference carries/,
   );
 });
 

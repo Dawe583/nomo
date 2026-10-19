@@ -211,11 +211,11 @@ test("a mark for a digest no healthy store proves refuses", async (t) => {
   // protection moved anywhere.
   await assert.rejects(
     f.run(["--pin", missing, "--as", "op-a"]),
-    /No retention surface names the digest/,
+    /No retention surface names [a-f0-9]{12}/,
   );
   await assert.rejects(
     f.run(["--surface", "reserved", "--pin", missing, "--as", "op-a"]),
-    /No retention surface names the digest/,
+    /No retention surface names [a-f0-9]{12}/,
   );
 });
 

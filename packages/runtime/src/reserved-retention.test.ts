@@ -332,7 +332,7 @@ test("marking refuses conflicts, refuses absent artifacts and stays idempotent",
   await f.mark(pinned, { ownerId: "operator-1", kind: "recovery" });
   await assert.rejects(
     f.mark(pinned, { ownerId: "operator-1", kind: "operator" }),
-    /conflicts/,
+    /does not match the stated pin/,
   );
   // Marking no pin over a recorded pin is not a release; it is refused so
   // nothing unpins itself silently.
