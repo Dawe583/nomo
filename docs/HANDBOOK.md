@@ -735,6 +735,7 @@ nomo taint --ledger <dir> --seq <n> [--depth <n>] [--json]
 nomo replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key base64-spki]
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
+nomo tui [--once] [--project <path>] [--skill <id> ...] [--view <tab>] [--session <id>] [--data-dir <path>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
 nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <file> [--input <file>] [--approve <digest>] [--surface file|reserved|both]
 nomo recovery collect --config <file> [--retention-policy <file>] [--surface file|reserved|both] [--dry-run] [--operation <id>]
