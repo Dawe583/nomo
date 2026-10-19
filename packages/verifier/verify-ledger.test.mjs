@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, truncateSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 /**
@@ -75,7 +75,7 @@ test("the package imports nothing that would need installing", () => {
  * bundle <dir>` for a readable, empty directory is the one an audit script is
  * most likely to meet first.
  */
-const invoke = (args) => {
+const invoke = (args, options = {}) => {
   let stdout = "";
   let stderr = "";
   let status = 0;
@@ -83,6 +83,7 @@ const invoke = (args) => {
     stdout = execFileSync(process.execPath, [script, ...args], {
       encoding: "utf8",
       stdio: "pipe",
+      ...options,
     });
   } catch (error) {
     status = error.status;
@@ -158,4 +159,33 @@ test("a directory holding several bundles refuses to guess which one was meant",
 
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /holds 2 bundles \(a\.jsonl, b\.jsonl\)/);
+});
+
+test("a bundle over the byte limit is refused", (t) => {
+  const dir = scratchDir();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const bundle = join(dir, "large.jsonl");
+  writeFileSync(bundle, "");
+  truncateSync(bundle, 64 * 1024 * 1024 + 1);
+
+  const result = invoke([bundle]);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /bundle exceeds the 67108864 byte read limit/);
+});
+
+test("a FIFO bundle is refused without waiting for data", (t) => {
+  if (process.platform === "win32") {
+    t.skip("mkfifo is a POSIX utility");
+    return;
+  }
+  const dir = scratchDir();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const fifo = join(dir, "pipe.jsonl");
+  execFileSync("mkfifo", [fifo]);
+
+  const result = invoke([fifo], { timeout: 1000 });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /not a regular file/);
 });

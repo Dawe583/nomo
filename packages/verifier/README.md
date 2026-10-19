@@ -18,6 +18,9 @@ hash links and body digests only, and the verdict says exactly that. That
 distinction is the point: hash integrity alone is **not** signature
 verification, and this tool never reports one as the other.
 
+Inputs must be regular files. Reads are bounded to 64 MiB and 100,000 entries;
+larger bundles are refused.
+
 ## The commitment that it never moves
 
 This package is the structural half of the open core licence line, and the

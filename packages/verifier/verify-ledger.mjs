@@ -34,9 +34,14 @@ import {
   verify,
 } from "node:crypto";
 import {
+  closeSync,
+  constants,
+  fstatSync,
   mkdtempSync,
-  readdirSync,
+  openSync,
   readFileSync,
+  readSync,
+  readdirSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -52,6 +57,7 @@ const GENESIS_PREV = "0".repeat(64);
 const MAX_BYTES = 64 * 1024 * 1024;
 const MAX_ENTRIES = 100_000;
 const MAX_DEPTH = 1000;
+const READ_CHUNK_BYTES = 64 * 1024;
 
 function canonicalJson(value) {
   return canonicalize(value, new WeakSet(), 0);
@@ -383,16 +389,7 @@ function resolveBundlePath(input) {
 
 function readBundle(path) {
   const resolved = resolveBundlePath(path);
-  let text;
-  try {
-    text = readFileSync(resolved, "utf8");
-  } catch (error) {
-    throw new Error(
-      `cannot read bundle ${resolved}: ${error.code ?? error.message}`,
-    );
-  }
-  if (Buffer.byteLength(text) > MAX_BYTES)
-    throw new Error(`bundle exceeds the ${MAX_BYTES} byte read limit`);
+  const text = readBundleText(resolved);
   const entries = [];
   const lines = text.split("\n");
   for (let index = 0; index < lines.length; index += 1) {
@@ -412,6 +409,47 @@ function readBundle(path) {
   }
   if (!entries.length) throw new Error("bundle holds no entries");
   return entries;
+}
+
+function readBundleText(path) {
+  let descriptor;
+  try {
+    // A FIFO open can otherwise block before fstat rejects the non-file.
+    descriptor = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
+  } catch (error) {
+    throw new Error(
+      `cannot read bundle ${path}: ${error.code ?? error.message}`,
+    );
+  }
+  try {
+    const info = fstatSync(descriptor);
+    if (!info.isFile()) throw new Error(`bundle ${path} is not a regular file`);
+    if (info.size > MAX_BYTES)
+      throw new Error(`bundle exceeds the ${MAX_BYTES} byte read limit`);
+    const chunks = [];
+    let bytesRead = 0;
+    // fstat is only an early reject; the file could grow after this check.
+    for (;;) {
+      const remaining = MAX_BYTES - bytesRead + 1;
+      const buffer = Buffer.allocUnsafe(
+        Math.min(READ_CHUNK_BYTES, remaining),
+      );
+      const count = readSync(descriptor, buffer, 0, buffer.length, null);
+      if (count === 0) break;
+      bytesRead += count;
+      if (bytesRead > MAX_BYTES)
+        throw new Error(`bundle exceeds the ${MAX_BYTES} byte read limit`);
+      chunks.push(buffer.subarray(0, count));
+    }
+    return Buffer.concat(chunks, bytesRead).toString("utf8");
+  } catch (error) {
+    if (error.message?.startsWith("bundle ")) throw error;
+    throw new Error(
+      `cannot read bundle ${path}: ${error.code ?? error.message}`,
+    );
+  } finally {
+    closeSync(descriptor);
+  }
 }
 
 function selftest() {
