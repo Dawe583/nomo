@@ -8,7 +8,7 @@
  * and that criterion is only honest if a suite of zero is a failure.
  */
 
-import { readdirSync, readFileSync, existsSync, rmSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { interpretSwiftRun, isSwiftMacroFlake } from "./check-tests-swift-result.mjs";
@@ -313,14 +313,22 @@ const swiftSuites = [
  * same environment measured green, red, green in three back to back runs, and
  * the red runs compile every test file against a plugin server that never
  * receives the TestingMacros plugin, so zero tests execute (measured 2026-10-
- * 17, recorded in the workstream graph as D-25). Neither the deprecated
- * native build system, nor `-j 1`, nor any environment variable of the
- * toolchain's own list (strings-scanned: only SBOM, registry and cache keys
- * exist) makes it deterministic. The honest gate behaviour is therefore a
- * bounded retry that acts only through the pure predicate in
- * check-tests-swift-result.mjs: a run that executed no test at all and
- * carries exactly the plugin-not-found signature. Real test failures pass
- * through unremarked.
+ * 17, recorded in the workstream graph as D-25).
+ *
+ * The earlier note here claimed that neither the deprecated native build
+ * system nor `-j 1` makes it deterministic. Measured again on 2026-10-20 on
+ * this host, the claim holds for the native build system and does not hold
+ * for `-j 1`: the default parallel build failed 3 of 8 runs under load and 4
+ * of 6 with a cleared .build, while `-j 1` failed 1 of 8 under load and 0 of 6
+ * without it. The plugin server races the parallel compile; a single build
+ * job gives it no race to lose. The suite therefore builds with one job.
+ *
+ * The remaining flake is bounded by a retry that acts only through the pure
+ * predicate in check-tests-swift-result.mjs: a run that executed no test at
+ * all and carries exactly the plugin-not-found signature. Real test failures
+ * pass through unremarked. The retry keeps the build directory, because the
+ * measurement shows a cleared one does not help: the failure is the plugin
+ * resolution, not the cached state.
  */
 const SWIFT_FLAKE_ATTEMPTS = 5;
 
@@ -338,10 +346,11 @@ function runSwiftSuite(suite) {
   let run;
   let retryNotes = [];
   for (let attempt = 0; attempt < SWIFT_FLAKE_ATTEMPTS; attempt++) {
-    if (attempt > 0) {
-      rmSync(join(suite.cwd, ".build"), { recursive: true, force: true });
-    }
-    run = spawnSync("swift", ["test"], {
+    // The build directory is kept across attempts. Measured on 2026-10-20, a
+    // cleared one did not change the outcome: the failing runs are the ones
+    // where the plugin server never received the plugin, not the ones that
+    // read a stale cache.
+    run = spawnSync("swift", ["test", "-j", "1"], {
       cwd: suite.cwd,
       encoding: "utf8",
       timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
