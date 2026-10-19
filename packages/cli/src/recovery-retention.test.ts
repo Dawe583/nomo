@@ -159,7 +159,7 @@ test("a pin protects the legacy file half and a wrong release refuses", async (t
   // holds the pin must not become the removal of it.
   await assert.rejects(
     f.run(["--surface", "file", "--release", digest, "--pins", "op-b:operator", "--as", "op-r"]),
-    /pin does not match/,
+    /does not match the stated pin/,
   );
   assert.deepEqual(
     (await f.fileRows()).find((row) => row.digest === digest)?.lifecycle?.pin,

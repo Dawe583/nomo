@@ -10,6 +10,7 @@ import {
   stat,
   utimes,
   writeFile,
+  symlink,
 } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
@@ -343,7 +344,7 @@ test("lifecycle evidence is recorded once and never silently released", async (t
   await f.mark(reference, { ownerId: "op", kind: "recovery" });
   await assert.rejects(
     f.mark(reference),
-    /pinned recovery artifact is not released/,
+    /is not released by retention/,
   );
   await assert.rejects(
     f.mark(reference, { ownerId: "other", kind: "recovery" }),
@@ -616,11 +617,11 @@ test("a pin release refuses any owner or kind it cannot prove it is removing", a
   // absent evidence means "protect", not "nothing to do".
   await assert.rejects(
     release(f, pinned, { ownerId: "someone-else", kind: "operator" }),
-    /does not match the recorded lifecycle/,
+    /recorded pin ops:operator does not match the stated pin/,
   );
   await assert.rejects(
     release(f, pinned, { ownerId: "ops", kind: "recovery" }),
-    /does not match the recorded lifecycle/,
+    /recorded pin ops:operator does not match the stated pin/,
   );
   await assert.rejects(
     release(f, unmarked, { ownerId: "ops", kind: "operator" }),
@@ -629,7 +630,7 @@ test("a pin release refuses any owner or kind it cannot prove it is removing", a
   // An operator identity that is not an identity is refused outright.
   await assert.rejects(
     release(f, pinned, { ownerId: "ops", kind: "operator" }, "../escape"),
-    /Invalid recovery pin release operator/,
+    /pin release operator is/,
   );
   // Nothing was released: every refusal left the pin standing. Both artifacts
   // are protected, the pinned one by its record and the unmarked one because
@@ -645,7 +646,7 @@ test("a pin release refuses any owner or kind it cannot prove it is removing", a
   await release(f, pinned, { ownerId: "ops", kind: "operator" });
   await assert.rejects(
     release(f, pinned, { ownerId: "ops", kind: "operator" }),
-    /no recorded pin to release/,
+    /names no pin/,
   );
 });
 
@@ -772,6 +773,30 @@ test("a tampered or unlisted retention index backup refuses to restore", async (
   assert.deepEqual(
     JSON.parse(await readFile(f.evidence(pinned), "utf8")),
     JSON.parse(original),
+  );
+});
+
+test("retention restore refuses a backup whose contents cannot be enumerated", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("symlink creation may require Windows Developer Mode");
+    return;
+  }
+  const f = await fixture(t);
+  const backup = join(dirname(f.index), "index-backup");
+  await mkdir(backup);
+  await writeFile(
+    join(backup, "retention-index.json"),
+    JSON.stringify({ schema: RETENTION_INDEX_MANIFEST, entries: [] }),
+  );
+  await symlink(f.index, join(backup, "unlisted-link"));
+
+  await assert.rejects(
+    restoreRetentionIndex({
+      index: join(dirname(f.index), "restored-index"),
+      source: backup,
+      artifactRoot: f.root,
+    }),
+    /not a file/,
   );
 });
 

@@ -5,6 +5,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { DatabaseSync } from "node:sqlite";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
 import { digest } from "./journal.ts";
+import { ARTIFACT_UNAVAILABLE } from "./vault-refusals.ts";
 import {
   localRecoveryVault,
   VaultCapacityError,
@@ -833,7 +834,7 @@ export function reservedRecoveryVault(
             .get(workspace, reference.digest)
         )
           throw new Error(
-            "Recovery artifact is unavailable; lifecycle was not recorded.",
+            ARTIFACT_UNAVAILABLE,
           );
         const existing = readRetentionRecord(db, workspace, reference.digest);
         const incoming: VaultLifecycle =
@@ -860,7 +861,9 @@ export function reservedRecoveryVault(
       if (!/^[a-f0-9]{64}$/.test(reference.digest))
         throw new Error(`Invalid recovery reference; ${JSON.stringify(reference.digest)} is not a sha256 hex digest.`);
       if (!/^[\w-]{1,120}$/.test(request.operatorId))
-        throw new Error("Invalid recovery pin release operator.");
+        throw new Error(
+          `Recovery pin release operator is ${JSON.stringify(request.operatorId)}: it must be 1 to 120 word or hyphen characters.`,
+        );
       const held = vaultPin(request.pin);
       return transaction((db) => {
         const existing = readRetentionRecord(db, workspace, reference.digest);
