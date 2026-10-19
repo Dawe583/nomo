@@ -246,7 +246,7 @@ for (const [boundary, before, after] of forwardCases) {
           // Unknown retains room for the outcome and inverse even under quota contention.
           await assert.rejects(
             restarted.vault.reserve!("test", "competitor"),
-            /quota/,
+            /would exceed/,
           );
           assert.equal(
             (await restarted.runtime.reconcile("test", "operation")).status,
@@ -316,7 +316,7 @@ for (const boundary of [
       const restarted = f.open();
       await assert.rejects(
         restarted.vault.reserve!("test", "competitor"),
-        /quota/,
+        /would exceed/,
       );
       const retry = await restarted.runtime.recover(plan, async () => true);
       const undispatched =
