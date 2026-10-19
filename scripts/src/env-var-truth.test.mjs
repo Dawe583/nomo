@@ -109,6 +109,14 @@ const TEST_ONLY_ENV_VARS = [
     why: "packages/cli/src/tui/workspace-parity.test.ts prints it with `printenv` inside a TUI command to prove the environment reaches the subprocess. Same pass-through probe as NOMO_ENV_PROBE_SECRET.",
   },
   {
+    name: "NOMO_FAKE_RUNTIME_LOG",
+    why: "Read by the fake container runtime that packages/workbench/src/project-sandbox.test.ts writes into its fixture bin directory. The launcher under test never sees it; the fake binary does.",
+  },
+  {
+    name: "NOMO_PROJECT_TEST_SECRET",
+    why: "packages/workbench/src/project-sandbox.test.ts sets it to prove the container does not inherit the host environment, by asserting the variable is empty inside the command. The assertion is about absence, so the variable must be readable by nobody.",
+  },
+  {
     name: "NOMO_VAULT_KEY",
     why: "A value of the `encryptionKeyEnv` config field in packages/cli/src/recovery-config.test.ts, asserted through the rendered config text. Same reason as NOMO_HEALTH_KEY.",
   },

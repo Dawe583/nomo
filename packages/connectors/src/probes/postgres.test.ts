@@ -52,6 +52,6 @@ describe("postgres probes", () => {
   test("probe errors surface as results", async () => {
     const result = await countProbe.run({ tool: "postgres.row.delete", args: { table: "users" } }, {});
 
-    assert.deepEqual(result, { error: "postgres probe requires string predicate" });
+    assert.deepEqual(result, { error: "postgres probe requires a nonempty string predicate; got undefined." });
   });
 });
