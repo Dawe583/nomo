@@ -772,6 +772,23 @@ has not been verified.` Nejdřív ověř.
 
 ## 13. Undo a obnova
 
+**Retence a uvolňování místa.** Oba vaulty (starý adresářový a rezervovaný
+SQLite) drží artefakty s důkazem o ochraně. `nomo recovery collect
+--config <soubor>` je jediný sběrač: smaže jen to, co je odemčeno, staré
+podle zvolené věkové politiky a má důkaz, že je tomu tak. Artefakt s
+nepřečteným důkazem je chráněný, chybný důkaz odmítne celý běh, a zrušený
+pin drží ochranu, dokud jej operátor neuvolní pojmenováním. `--dry-run`
+vypíše předpověď a nic neudělá. `nomo recovery retention --config <soubor>`
+zaznamenává operátorové přechody: `--pin` připne, `--mark-unpinned` označí
+revidovaný stav, po kterém politika může sbírat, `--release` odstraní
+konkrétní pin, když jej pojmenuješ přesně, a `--list` přečte důkaz obou
+polovic. `nomo recovery health --config <soubor>` shrne totéž do jedné
+sekce `retention` a je to brána: exit nula znamená zdravý stav, degradovaný,
+nebezpečný a nedostupný stav odejdou s exit 1. Strop vaultu se posouvá jen
+výslovným operátorovým přesunem `nomo recovery vault-capacity --config
+<soubor> --from <celkem>:<artefakt> --to <celkem>:<artefakt> --as <id>`,
+který tvrdí, v jakém stavu vault je, a uloží přesun spolu s jeho záznamem.
+
 Obnova je **samostatná, potvrzená akce na plánu**, nikdy vedlejší efekt zápisu.
 Toto oddělení je celý důvod, proč se drží předchozí obraz.
 
