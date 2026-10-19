@@ -323,7 +323,10 @@ bez sítě a s projektem připojeným na cestě /workspace, bez hostovského
 prostředí a bez credentialů. Projektový nástroj je dostupný jen tehdy, když
 ho explicitně povolí vlastní nakonfigurovaný profil, a jde o R3 hov, takže
 jde běžnou cestou policy a schvalování. Chybějící runtime kontejneru nebo
-chybějící připnutý image je odmítnutí, nikoli návrat na hosta. `--skill`
+chybějící připnutý image je odmítnutí, nikoli návrat na hosta. Dvě nastavení,
+která potřebuje, jsou `NOMO_PROJECT_SANDBOX_RUNTIME` (docker nebo podman) a
+`NOMO_PROJECT_SANDBOX_IMAGE` (lokální sha256 image ID, ne tag: tag se může
+posunout pod nohama operátora). `--skill`
 vybírá skills z `.agents/skills/` zvoleného projektu a z jeho
 `skills-lock.json`; text skillu se vloží do session jako neměnný snapshot a
 počítá se jako nedůvěryhodný obsah projektu, takže nemůže rozšířit nástroje

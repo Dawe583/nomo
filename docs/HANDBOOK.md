@@ -416,7 +416,10 @@ container with the project mounted at the container path /workspace and no host
 environment or credentials. The project tool is available only when an explicitly configured
 custom profile allows it, and it is an R3 call, so it goes through the normal
 policy and approval path. A missing container runtime or a missing pinned
-image is a refusal, never a fallback to the host. `--skill` selects skills
+image is a refusal, never a fallback to the host. The two settings it needs
+are `NOMO_PROJECT_SANDBOX_RUNTIME` (docker or podman) and
+`NOMO_PROJECT_SANDBOX_IMAGE` (a local sha256 image ID, not a tag: a tag can
+move under the operator's feet). `--skill` selects skills
 from the project's `.agents/skills/` and its `skills-lock.json`; the skill text
 is inserted into the session as an immutable snapshot and is treated as
 untrusted project content, so it cannot widen tools or permissions. The
