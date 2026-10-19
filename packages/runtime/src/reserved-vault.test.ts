@@ -109,7 +109,7 @@ test("legacy snapshots remain readable and consume quota; new configuration cann
       ...capacity,
       maxTotalBytes: 100000,
     }).reserve!("one", "op"),
-    /persisted configuration/,
+    /Vault worker states .* but the vault persists ./,
   );
 });
 test("refuses a different 32-byte key under an existing key ID before accepting new work", async (t) => {
@@ -490,7 +490,7 @@ test("persisted v0 SQLite schema upgrades to the bounded vault schema in place",
     );
     const columns = upgraded
       .prepare("PRAGMA table_info(artifacts)")
-      .all() as ReadonlyArray<{ name: string }>;
+      .all() as unknown as ReadonlyArray<{ name: string }>;
     assert.ok(columns.some((column) => column.name === "at"));
   } finally {
     upgraded.close();
@@ -791,7 +791,7 @@ test("a capacity migration moves capacity explicitly, once, and is recorded", as
   // which is the point: capacity never follows from ordinary use.
   await assert.rejects(
     reservedRecoveryVault(f.root, f.keys, "first", after).reserve!("one", "op"),
-    /persisted configuration/,
+    /Vault worker states .* but the vault persists ./,
   );
   const moved = await reservedRecoveryVault(f.root, f.keys, "first", after)
     .migrateCapacity({ from: before, operatorId: "ops-1" });
@@ -805,7 +805,7 @@ test("a capacity migration moves capacity explicitly, once, and is recorded", as
   assert.equal(await after1.get("one", second), "written after the move");
   await assert.rejects(
     reservedRecoveryVault(f.root, f.keys, "first", before).reserve!("one", "op"),
-    /persisted configuration/,
+    /Vault worker states .* but the vault persists ./,
   );
   // Replaying the same move is refused: the vault no longer holds what it
   // declared, so a stale operator decision cannot be applied twice.
@@ -814,7 +814,7 @@ test("a capacity migration moves capacity explicitly, once, and is recorded", as
       from: before,
       operatorId: "ops-2",
     }),
-    /does not match the capacity the vault holds/,
+    /believed the vault holds .* but the settings row records ./,
   );
   const db = new DatabaseSync(join(f.root, "vault.sqlite"), { readOnly: true });
   try {

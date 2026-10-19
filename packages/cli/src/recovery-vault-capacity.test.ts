@@ -95,7 +95,7 @@ test("an operator move commits the ceiling and its migration row", async (t) => 
   await moved.put("test", "fits the moved ceiling");
   await assert.rejects(
     f.vault.put("test", "refused by the old worker"),
-    /Vault capacity differs from its persisted configuration\./,
+    /Vault worker states .* but the vault persists .{1,80}\./,
   );
 });
 
@@ -104,7 +104,7 @@ test("a stale belief about the held capacity refuses and moves nothing", async (
   await f.vault.put("test", "probe artifact");
   await assert.rejects(
     f.run(["--from", "999:64", "--to", "512:128", "--as", "op-a"]),
-    /does not match the capacity the vault holds/,
+    /believed the vault holds .* but the settings row records .{1,80}\./,
   );
   // The compare-and-swap ran in one transaction that never updated the
   // settings row, so the old worker still writes.

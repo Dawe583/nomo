@@ -265,7 +265,12 @@ in one transaction, so an operator who cannot read the row back has no
 evidence the move happened. The move measures the bytes the vault really
 holds, the counted ciphertext rather than the plaintext it came from,
 lowering the total below them is refused with the count named, and a
-second operator's stale belief refuses without touching anything.
+second operator's stale belief refuses without touching anything, with
+the refusal naming the capacity the operator stated and the one the
+settings row records. A worker whose stated capacity disagrees with the
+persisted one refuses on every operation with both capacities named, so
+after the move the config that hosts this vault states the new capacity
+in `vaultCapacity`.
 
 Check the complete source installation:
 

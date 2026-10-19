@@ -341,7 +341,7 @@ test("a half failure discloses what the run recorded before refusing", async (t)
       env,
       (line) => lines.push(line),
     ),
-    /file recorded; reserved: Vault capacity differs/,
+    /file recorded; reserved: Vault worker states .* but the vault persists .{1,80}\./,
   );
 });
 

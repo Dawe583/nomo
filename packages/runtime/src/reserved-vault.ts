@@ -446,16 +446,29 @@ export function reservedRecoveryVault(
       const persisted: unknown = db
         .prepare("SELECT capacity FROM settings WHERE id=1")
         .get();
+      // The refusal reports what it found, so the recorded capacity is read
+      // here with an explicit shape; a settings row the schema guarantees
+      // should never be anything else.
+      const recorded =
+        typeof persisted === "object" &&
+        persisted !== null &&
+        "capacity" in persisted &&
+        typeof persisted.capacity === "string"
+          ? persisted.capacity
+          : "no settings row";
       if (
         typeof persisted !== "object" ||
         persisted === null ||
         !("capacity" in persisted) ||
         persisted.capacity !== expected
       )
+        // A worker that refuses a capacity mismatch without naming both
+        // capacities it compared sends the operator hunting through the
+        // state directory; the message is the fastest way to the fix.
         throw new Error(
           migrate
-            ? "Recovery vault capacity migration does not match the capacity the vault holds."
-            : "Vault capacity differs from its persisted configuration.",
+            ? `Recovery vault capacity migration believed the vault holds ${expected} but the settings row records ${recorded}.`
+            : `Vault worker states ${limits} but the vault persists ${recorded}.`,
         );
       await ensureKeyMarker(db, old);
       const used =
