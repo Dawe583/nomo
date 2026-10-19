@@ -167,7 +167,7 @@ export async function runRecoveryCommand(
     !args.get("--config")
   )
     throw new Error(
-      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--surface file|reserved|both] [--dry-run] OR nomo recovery retention --config file (--list | (--pin|--mark-unpinned|--release) <digest> --as <owner> [--kind recovery|operator] [--pins owner:kind]) OR nomo recovery vault-capacity --config file --from <total>:<artifact> --to <total>:<artifact> --as <owner>",
+      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--surface file|reserved|both] [--dry-run] OR nomo recovery retention --config file (--list | (--pin|--mark-unpinned|--release) <digest> --as <owner> [--kind recovery|operator] [--pins owner:kind]) OR nomo recovery vault-capacity --config file --from <total>:<artifact> --to <total>:<artifact> --as <owner>",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
