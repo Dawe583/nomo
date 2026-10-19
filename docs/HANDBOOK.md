@@ -412,8 +412,8 @@ the GUI has a document history view the TUI does not.
 
 `--project` opens one operator-approved project: the workspace sees it through
 `nomo_project_exec`, a command that runs in a disposable, network-disabled
-container with the project mounted at `/workspace` and no host environment or
-credentials. The project tool is available only when an explicitly configured
+container with the project mounted at the container path /workspace and no host
+environment or credentials. The project tool is available only when an explicitly configured
 custom profile allows it, and it is an R3 call, so it goes through the normal
 policy and approval path. A missing container runtime or a missing pinned
 image is a refusal, never a fallback to the host. `--skill` selects skills
