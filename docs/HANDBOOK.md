@@ -250,7 +250,18 @@ names the message it failed on rather than leaving an operator at the
 word invalid. The command is a gate, not prose: it exits zero only when
 the report is healthy, so degraded, unsafe and unavailable all exit 1
 under the rule a counter surface that prints a problem and exits zero is
-a false pass, while the status field keeps naming the exact state.
+a false pass, while the status field keeps naming the exact state. The
+vault's ceiling moves only by an explicit operator move, never by
+ordinary use: `nomo recovery vault-capacity --config <file> --from
+<maxTotalBytes>:<maxArtifactBytes> --to <maxTotalBytes>:<maxArtifactBytes>
+--as <operatorId>` states the capacity the vault is believed to hold and
+the one it must become. The store validates the belief as a
+compare-and-swap and commits the move and its `capacity_migrations` row
+in one transaction, so an operator who cannot read the row back has no
+evidence the move happened. The move measures the bytes the vault really
+holds, the counted ciphertext rather than the plaintext it came from,
+lowering the total below them is refused with the count named, and a
+second operator's stale belief refuses without touching anything.
 
 Check the complete source installation:
 
@@ -697,6 +708,7 @@ nomo agent --model <id> [--prompt <text>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents]
 nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect|retention> --config <file> [--input <file>] [--approve <digest>] [--retention-policy <file>] [--surface file|reserved|both] [--dry-run]
 nomo recovery retention --config <file> [--surface file|reserved|both] (--list | --pin <digest> [--kind <recovery|operator>] --as <id> | --mark-unpinned <digest> | --release <digest> --pins <ownerId>:<kind> --as <id>)
+nomo recovery vault-capacity --config <file> --from <maxTotalBytes>:<maxArtifactBytes> --to <maxTotalBytes>:<maxArtifactBytes> --as <operatorId>
 nomo policy list | show <name> | validate <file>
 nomo approve <hold-id> --by <who> [--deny] [--reason <text>] [--dir <path>]
 nomo approvals --dir <path> [--json]

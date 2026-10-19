@@ -127,6 +127,8 @@ export async function runRecoveryCommand(
         "--pin",
         "--mark-unpinned",
         "--release",
+        "--from",
+        "--to",
       ].includes(
         rest[i] ?? "",
       ) ||
@@ -155,11 +157,12 @@ export async function runRecoveryCommand(
       "serve",
       "collect",
       "retention",
+      "vault-capacity",
     ].includes(action ?? "") ||
     !args.get("--config")
   )
     throw new Error(
-      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--surface file|reserved|both] [--dry-run] OR nomo recovery retention --config file (--list | (--pin|--mark-unpinned|--release) <digest> --as <owner> [--kind recovery|operator] [--pins owner:kind])",
+      "usage: nomo recovery conformance [--adapter filesystem.managed] OR nomo recovery doctor --config file OR nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|apply|reconcile|reconcile-recovery|serve|collect> --config file [--input file] [--approve digest] [--retention-policy file] [--operation id] [--surface file|reserved|both] [--dry-run] OR nomo recovery retention --config file (--list | (--pin|--mark-unpinned|--release) <digest> --as <owner> [--kind recovery|operator] [--pins owner:kind]) OR nomo recovery vault-capacity --config file --from <total>:<artifact> --to <total>:<artifact> --as <owner>",
     );
   const configPath = resolve(args.get("--config")!),
     config = JSON.parse(await readFile(configPath, "utf8")) as Config;
@@ -239,7 +242,8 @@ export async function runRecoveryCommand(
   const input =
     action === "serve"
       ? { workspace: config.workspace }
-      : action === "collect" || action === "retention"
+      : action === "collect" || action === "retention" ||
+        action === "vault-capacity"
         ? null
         : JSON.parse(await readFile(resolve(args.get("--input")!), "utf8"));
   if (input !== null && (input as { workspace: unknown }).workspace !== config.workspace)
@@ -648,6 +652,46 @@ export async function runRecoveryCommand(
         2,
       ),
     );
+    return 0;
+  }
+  if (action === "vault-capacity") {
+    // Capacity follows no ordinary use: the persisted ceiling moves only
+    // through this command. The operator states both the capacity the vault
+    // is believed to hold and the one it must become, the store validates the
+    // belief as a compare-and-swap, and the move and its capacity_migrations
+    // row commit together or not at all.
+    const parseCapacity = (value: string | undefined, flag: string) => {
+      const pair = /^(\d+):(\d+)$/.exec(value ?? "");
+      if (!pair)
+        throw new Error(
+          `${flag} states the vault capacity as <maxTotalBytes>:<maxArtifactBytes>.`,
+        );
+      const total = Number(pair[1]),
+        artifact = Number(pair[2]);
+      if (total < 1 || artifact < 1)
+        throw new Error("The vault capacities must be positive integers.");
+      return { maxTotalBytes: total, maxArtifactBytes: artifact };
+    };
+    const from = parseCapacity(args.get("--from"), "--from"),
+      to = parseCapacity(args.get("--to"), "--to");
+    const owner = args.get("--as");
+    if (owner === null || owner === undefined || !/^[\w-]{1,120}$/.test(owner))
+      throw new Error("A capacity move names its operator with --as <id>.");
+    // Built at the target on purpose: the migration's compare-and-swap reads
+    // the capacity the vault holds instead of the constructed one, and a
+    // normal operation on a mismatched worker still refuses, so this move
+    // stays the only way the persisted ceiling changes.
+    const migration = reservedRecoveryVault(
+      join(state, "vault"),
+      { local: key },
+      "local",
+      to,
+    );
+    const report = await migration.migrateCapacity({
+      from,
+      operatorId: owner,
+    });
+    print(JSON.stringify(report, null, 2));
     return 0;
   }
   if (action === "execute") {
