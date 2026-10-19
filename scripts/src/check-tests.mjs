@@ -518,7 +518,9 @@ function runSuite(name, dir, files, runner) {
   // `killSignal: SIGKILL` rather than the default SIGTERM: a suite wedged in
   // native code or holding a child that ignores SIGTERM would otherwise keep
   // the event loop alive past the timeout and defeat the bound entirely.
-  const run = spawnSync("node", ["--test", "--test-reporter=tap", ...files], {
+  // Node defaults to availableParallelism() - 1 concurrent test files.
+  // Keep the gate serial to bound local CPU use.
+  const run = spawnSync("node", ["--test", "--test-concurrency=1", "--test-reporter=tap", ...files], {
     cwd: dir,
     encoding: "utf8",
     timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,

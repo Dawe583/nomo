@@ -1,5 +1,5 @@
 /**
- * Runs the desktop shell's inline Rust tests through the real toolchain.
+ * Runs the desktop shell's Rust unit and integration tests through the real toolchain.
  *
  * The Tauri compile step is what makes this non-trivial: `tauri.conf.json`
  * lists bundle resources and `tauri::generate_context!` embeds the icon set
@@ -8,7 +8,8 @@
  * build script failed with a bare "resource path `resources` doesn't exist",
  * and without the icons the compile stopped on a missing 32x32.png). An absent
  * prepared tree is this gate's honest UNRUN with the two setup commands named,
- * and a present one means cargo test runs against the real Tauri build.
+ * and a present one means cargo test runs the real Tauri build, including the
+ * macOS process-level runtime-exit smoke.
  *
  * A settable side effect of this check is an empty `resources/` directory when
  * only icons are missing the other way around: the compile-time check needs the

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import handler from '../../apps/control-plane/api/remote-gateway.mjs';
+import { Readable } from 'node:stream';
 
 function response() {
   return { statusCode: 0, headers: {}, setHeader(key, value) { this.headers[key] = value; }, end(text) { this.body = JSON.parse(text); } };
@@ -26,6 +27,39 @@ test('hosted gateway fails closed, authenticates, scopes requests and hides upst
   assert.equal(login.statusCode, 200);
   assert.match(login.headers['set-cookie'], /HttpOnly; Secure; SameSite=Strict/);
   assert.match(login.headers['set-cookie'], /Max-Age=34560000$/);
+
+  const nonStringLogin = await call('/api/session', {
+    method: 'POST',
+    headers: { host: 'nomo.example.test', 'content-type': 'application/json' },
+    body: { token: {} },
+  });
+  assert.equal(nonStringLogin.statusCode, 401);
+  const oversizedLogin = await call('/api/session', {
+    method: 'POST',
+    headers: { host: 'nomo.example.test', 'content-type': 'application/json' },
+    body: { token, padding: 'x'.repeat(4096) },
+  });
+  assert.equal(oversizedLogin.statusCode, 413);
+  const streamedOversizedLogin = await call('/api/session', {
+    method: 'POST',
+    headers: { host: 'nomo.example.test', 'content-type': 'application/json' },
+    async *[Symbol.asyncIterator]() {
+      yield Buffer.from('é'.repeat(2049));
+    },
+  });
+  assert.equal(streamedOversizedLogin.statusCode, 413);
+
+  const nativeRequest = Readable.from([Buffer.from('é'.repeat(2049))]);
+  Object.assign(nativeRequest, {
+    url: '/api/session',
+    method: 'POST',
+    headers: { host: 'nomo.example.test', 'content-type': 'application/json' },
+  });
+  const nativeResponse = response();
+  await handler(nativeRequest, nativeResponse);
+  assert.equal(nativeResponse.statusCode, 413);
+  assert.equal(nativeRequest.destroyed, false);
+
   const headers = { host: 'nomo.example.test', cookie: `__Host-void-session=${token}` };
   assert.equal((await call('/api/unknown', { headers })).statusCode, 404);
   t.mock.method(globalThis, 'fetch', async (url, options) => {
@@ -34,6 +68,12 @@ test('hosted gateway fails closed, authenticates, scopes requests and hides upst
     assert.equal(options.redirect, 'error');
     return { status: 200, json: async () => ({ entries: [], integrity: true }) };
   });
+  const oversizedForward = await call('/api/sessions', {
+    method: 'POST',
+    headers: { ...headers, 'content-type': 'application/json' },
+    body: { value: 'é'.repeat(32768) },
+  });
+  assert.equal(oversizedForward.statusCode, 413);
   const result = await call('/api/feed?workspace=beta', { headers });
   assert.equal(result.statusCode, 200);
   assert.equal(result.headers['set-cookie'], login.headers['set-cookie']);
