@@ -260,7 +260,9 @@ export async function markVaultLifecycle(
       request.pin === undefined ? {} : { pin: vaultPin(request.pin) };
     const existing = await readLifecycle(dir, request.reference);
     if (existing?.pin !== undefined && incoming.pin === undefined)
-      throw new Error("A pinned recovery artifact is not released by retention.");
+      throw new Error(
+        `The recorded pin on ${request.reference.digest} in ${request.workspace} is not released by retention; unpin it instead.`,
+      );
     if (
       existing?.pin !== undefined &&
       incoming.pin !== undefined &&
@@ -310,7 +312,9 @@ export async function releaseVaultPin(
   request: VaultPinReleaseRequest,
 ): Promise<VaultRelease> {
   if (!/^[\w-]{1,120}$/.test(request.operatorId))
-    throw new Error("Invalid recovery pin release operator.");
+    throw new Error(
+      `Recovery pin release operator is ${JSON.stringify(request.operatorId)}: it must be 1 to 120 word or hyphen characters.`,
+    );
   const dir = evidenceDir(request.index, request.workspace, request.root);
   const held = vaultPin(request.pin);
   return withRetentionLock(dir, async () => {
@@ -320,18 +324,18 @@ export async function releaseVaultPin(
     // into collectable, which is the one inference retention must never make.
     if (existing === undefined)
       throw new Error(
-        "Recovery artifact has no recorded pin; a release cannot prove what protection to remove.",
+        `The artifact ${request.reference.digest} in ${request.workspace} has no recorded pin; a release cannot prove what protection to remove.`,
       );
     if (existing.pin === undefined)
       throw new Error(
-        "Recovery artifact has no recorded pin to release; it is already released for retention.",
+        `The recorded lifecycle of ${request.reference.digest} in ${request.workspace} names no pin; it is already released for retention.`,
       );
     if (
       existing.pin.ownerId !== held.ownerId ||
       existing.pin.kind !== held.kind
     )
       throw new Error(
-        "Recovery artifact pin does not match the recorded lifecycle; nothing was released.",
+        `The recorded pin ${existing.pin.ownerId}:${existing.pin.kind} does not match the stated pin ${held.ownerId}:${held.kind}; nothing was released.`,
       );
     const release: VaultRelease = {
       operatorId: request.operatorId,
