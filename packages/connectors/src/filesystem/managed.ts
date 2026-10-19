@@ -131,7 +131,7 @@ export function managedFilesystemAdapter(options: {
         (value.mode as number) < 0 ||
         (value.mode as number) > 0o777)
     )
-      throw new Error("Invalid file mode.");
+      throw new Error(`Invalid file mode ${JSON.stringify(value.mode)}.`);
     if (
       process.platform === "win32" &&
       value.mode !== undefined &&
@@ -200,7 +200,7 @@ export function managedFilesystemAdapter(options: {
       // Bound reads even when a non-cooperating process grows the file.
       const bytes = Buffer.alloc(maxBytes + 1);
       const count = readSync(fd, bytes, 0, bytes.length, 0);
-      if (count > maxBytes) throw new Error("File exceeded capture limit.");
+      if (count > maxBytes) throw new Error(`File exceeded capture limit: ${count} bytes over ${maxBytes}.`);
       const after = fstatSync(fd, { bigint: true });
       if (
         BigInt(count) !== stat.size ||
@@ -384,9 +384,9 @@ export function managedFilesystemAdapter(options: {
         (mutation.action === "delete" || mutation.action === "rename") &&
         before.bytes === null
       )
-        throw new Error("File does not exist.");
+        throw new Error(`File does not exist: ${JSON.stringify(mutation.path)}.`);
       if (destination && destination.bytes !== null)
-        throw new Error("Rename destination exists.");
+        throw new Error(`Rename destination exists: ${JSON.stringify((mutation as { to?: string }).to)}.`);
       return {
         effect: "write",
         reversibility: "r1",
