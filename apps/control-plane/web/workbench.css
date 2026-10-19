@@ -228,6 +228,9 @@ dialog::backdrop { background: var(--a40,rgba(0,0,0,.4)); }
  .sidebar-bottom button { width: auto; }
  .workspace-app .session-main { padding: 17px; min-height: 650px; max-height: none; }
  .workspace-app #session-transcript { max-height: 430px; min-height: 220px; }
+@media (max-width: 734px) and (min-height: 500px) {
+ .workspace-app #session-transcript { min-height: 423px; }
+}
  .workspace-app .session-empty { padding-block: 24px; }
  .conversation-heading { align-items: start; }
  .conversation-heading button { max-width: 150px; font-size: 11px; }
