@@ -15,6 +15,7 @@ import {
   type Stage,
 } from "./journal.ts";
 import type { VaultReference } from "./vault.ts";
+import { ARTIFACT_UNAVAILABLE, REFERENCE_ABSENT } from "./vault-refusals.ts";
 
 export type VaultPin = { ownerId: string; kind: "recovery" | "operator" };
 export const RETENTION_POLICY_VERSION = 1;
@@ -141,7 +142,7 @@ const retentionLeaseMs = 15 * 60 * 1000;
 
 const lifecyclePath = (dir: string, artifact: ArtifactIdentity): string => {
   if (!/^[a-f0-9]{64}$/.test(artifact.digest))
-    throw new Error("Invalid or unavailable recovery reference.");
+    throw new Error(REFERENCE_ABSENT);
   return join(dir, `${artifact.digest}.meta`);
 };
 function vaultPin(value: unknown): VaultPin {
@@ -276,14 +277,10 @@ export async function markVaultLifecycle(
       ),
       metadata = await stat(artifact).catch((error: unknown) => {
         if (!isNodeError(error) || error.code !== "ENOENT") throw error;
-        throw new Error(
-          "Recovery artifact is unavailable; lifecycle was not recorded.",
-        );
+        throw new Error(ARTIFACT_UNAVAILABLE);
       });
     if (!metadata.isFile())
-      throw new Error(
-        "Recovery artifact is unavailable; lifecycle was not recorded.",
-      );
+      throw new Error(ARTIFACT_UNAVAILABLE);
     const lifecycle: VaultLifecycle = { ...existing, ...incoming };
     if (existing !== undefined && canonicalJson(lifecycle) === canonicalJson(existing))
       return;
