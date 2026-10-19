@@ -431,7 +431,7 @@ export async function runRecoveryCommand(
       stamp = Date.now().toString(36);
     const surfaceArg = args.get("--surface");
     if (surfaceArg !== undefined && !["file", "reserved", "both"].includes(surfaceArg))
-      throw new Error("The collect surface must be file, reserved, or both.");
+      throw new Error(`The collect surface ${JSON.stringify(surfaceArg)} must be file, reserved, or both.`);
     const surface = surfaceArg ?? "reserved";
     // The legacy file artifacts share the reserved vault's root: workspace
     // directories sit beside vault.sqlite there, and the retention evidence
@@ -554,7 +554,7 @@ export async function runRecoveryCommand(
     // cannot move two different protections at once.
     const surfaceArg = args.get("--surface");
     if (surfaceArg !== undefined && !["file", "reserved", "both"].includes(surfaceArg))
-      throw new Error("The retention surface must be file, reserved, or both.");
+      throw new Error(`The retention surface ${JSON.stringify(surfaceArg)} must be file, reserved, or both.`);
     const surface = (surfaceArg ?? "both") as "file" | "reserved" | "both";
     const listing = listOnly,
       pinned = args.get("--pin"),
@@ -569,7 +569,7 @@ export async function runRecoveryCommand(
       );
     const digest = pinned ?? unpinned ?? released;
     if (digest !== undefined && !/^[a-f0-9]{64}$/.test(digest))
-      throw new Error("The retention digest must be a sha256 hex digest.");
+      throw new Error(`The retention digest ${JSON.stringify(digest)} must be a sha256 hex digest.`);
     const owner = args.get("--as");
     if (
       // A listing names no operator, and the unpinned record names none
@@ -578,10 +578,10 @@ export async function runRecoveryCommand(
       unpinned === undefined &&
       (owner === null || owner === undefined || !/^[\w-]{1,120}$/.test(owner))
     )
-      throw new Error("A pin and a release name their operator with --as <id>.");
+      throw new Error(`The retention operator ${JSON.stringify(owner)} must be 1 to 120 word or hyphen characters given with --as <id>.`);
     const kind = args.get("--kind");
     if (pinned !== undefined && kind !== undefined && kind !== "recovery" && kind !== "operator")
-      throw new Error("The pin kind must be recovery or operator.");
+      throw new Error(`The pin kind ${JSON.stringify(kind)} must be recovery or operator.`);
     const surfaces: Array<"file" | "reserved"> =
       surface === "both" ? ["file", "reserved"] : [surface];
     const fileRoot = join(state, "vault"),
