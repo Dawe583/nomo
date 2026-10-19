@@ -762,7 +762,7 @@ export async function runRecoveryCommand(
       to = parseCapacity(args.get("--to"), "--to");
     const owner = args.get("--as");
     if (owner === null || owner === undefined || !/^[\w-]{1,120}$/.test(owner))
-      throw new Error("A capacity move names its operator with --as <id>.");
+      throw new Error(`A capacity move names its operator with --as <id>; got ${JSON.stringify(owner)}.`);
     // Built at the target on purpose: the migration's compare-and-swap reads
     // the capacity the vault holds instead of the constructed one, and a
     // normal operation on a mismatched worker still refuses, so this move

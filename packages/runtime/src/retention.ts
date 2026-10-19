@@ -109,7 +109,7 @@ export function validateRetentionPolicy(
 
 export const evidenceDir = (index: string, workspace: string, artifactRoot: string): string => {
   if (!/^[\w-]{1,100}$/.test(workspace))
-    throw new Error("Invalid vault retention workspace.");
+    throw new Error(`Invalid vault retention workspace ${JSON.stringify(workspace)}.`);
   // The evidence tree must not be the artifact tree, or any parent of it: the
   // reserved vault reads every file in a workspace directory as a legacy
   // artifact, so a `.meta` sidecar there makes the whole store unverifiable.
