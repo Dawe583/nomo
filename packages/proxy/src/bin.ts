@@ -135,6 +135,9 @@ const INVALID_REQUEST = -32600;
 const INTERNAL_ERROR = -32603;
 const REQUEST_CANCELLED = -32800;
 const DEFAULT_MAX_INFLIGHT_UPSTREAM_MESSAGES = 512;
+// Bound agent-side tool work independently of upstream response buffering.
+const DEFAULT_MAX_PENDING_TOOL_CALLS = 16;
+const SERVER_BUSY = -32000;
 
 export async function runProxy(options: ProxyOptions): Promise<void> {
   const inboundMaxBytes = options.inboundMaxBytes ?? DEFAULT_INBOUND_MAX_BYTES;
@@ -515,6 +518,10 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         }
 
         if (message.method === "tools/call") {
+          if (pendingToolCalls.size >= DEFAULT_MAX_PENDING_TOOL_CALLS) {
+            sendLocal(jsonRpcError(message.id, SERVER_BUSY, "Too many pending tool calls"));
+            return;
+          }
           const state = { controller: new AbortController(), dispatched: false };
           activeToolCalls.set(message.id, state);
           const task = handleToolCall(

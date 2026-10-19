@@ -681,6 +681,99 @@ describe("runProxy", () => {
     );
   });
 
+  test("bounds unresolved tool calls before forwarding", async (t) => {
+    const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-pending-calls-"));
+    t.after(async () => { await rm(dir, { recursive: true, force: true }); });
+    const policyPath = join(dir, "policy.yml");
+    await writeFile(policyPath, policyText("allow"));
+    const output: Array<Record<string, unknown>> = [];
+    const errors: string[] = [];
+    const forwardedIds: Array<number | string> = [];
+    let events: UpstreamEvents | undefined;
+    const messages = [
+      {
+        jsonrpc: "2.0",
+        id: 0,
+        method: "initialize",
+        params: { protocolVersion: "2025-06-18", capabilities: {} },
+      },
+      ...Array.from({ length: 17 }, (_, index) => toolCall(index + 1, "echo")),
+    ];
+    const running = runProxy({
+      keyProvider: keyProviderFromPkcs8(
+        generateKeyPairSync("ed25519").privateKey.export({ format: "der", type: "pkcs8" }),
+      ),
+      upstreamCommand: ["fake"],
+      policyPath,
+      posture: "observe",
+      ledgerDir: join(dir, "ledger"),
+      workspace: "test",
+      input: fromLines(messages.map((message) => JSON.stringify(message))),
+      output(line) { output.push(JSON.parse(line) as Record<string, unknown>); },
+      error(line) { errors.push(line); },
+      upstreamSpawn(upstreamEvents) {
+        events = upstreamEvents;
+        return {
+          send(line) {
+            const message = JSON.parse(line) as { id?: number | string; method?: string };
+            if (message.method === "initialize") {
+              upstreamEvents.onMessage(JSON.stringify({
+                jsonrpc: "2.0",
+                id: message.id,
+                result: {
+                  protocolVersion: "2025-06-18",
+                  capabilities: { tools: {} },
+                  serverInfo: { name: "pending-capacity", version: "1" },
+                },
+              }));
+            } else if (message.method === "tools/list") {
+              upstreamEvents.onMessage(JSON.stringify({
+                jsonrpc: "2.0",
+                id: message.id,
+                result: { tools: [{ name: "echo", inputSchema: { type: "object" } }] },
+              }));
+            } else if (message.method === "tools/call" && message.id !== undefined) {
+              forwardedIds.push(message.id);
+            }
+          },
+          close() {},
+          onStderr() { return () => {}; },
+        };
+      },
+    });
+
+    const replyToForwardedCalls = (): void => {
+      for (const id of forwardedIds.splice(0)) {
+        events?.onMessage(JSON.stringify({
+          jsonrpc: "2.0",
+          id,
+          result: { content: [{ type: "text", text: "done" }] },
+        }));
+      }
+    };
+    try {
+      await waitFor(
+        () => output.some((message) => (message.error as { code?: number } | undefined)?.code === -32000),
+        "pending tool call limit",
+      );
+      await waitFor(() => forwardedIds.length >= 16, "forwarded pending calls");
+      assert.equal(forwardedIds.length, 16);
+      const rejected = output.find((message) => (message.error as { code?: number } | undefined)?.code === -32000);
+      assert.ok(rejected);
+      assert.equal(rejected.id, 17);
+      assert.deepEqual(rejected.error, { code: -32000, message: "Too many pending tool calls" });
+      assert.equal(
+        output.filter((message) => (message.error as { code?: number } | undefined)?.code === -32000).length,
+        1,
+      );
+      replyToForwardedCalls();
+      await running;
+    } finally {
+      replyToForwardedCalls();
+      await running.catch(() => {});
+    }
+  });
+
   test("S10: an upstream burst past the in-flight cap is dropped with a named refusal", async () => {
     const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-backlog-"));
     const policyPath = join(dir, "policy.yml");

@@ -182,6 +182,19 @@ describe("Session typed request identity", () => {
     assert.deepEqual(replyNumber, { jsonrpc: "2.0", id: 1, result: "n" });
   });
 
+  test("unsafe numeric request ids are rejected in both directions", () => {
+    const session = new Session();
+    const unsafe = Number.MAX_SAFE_INTEGER + 1;
+    assert.throws(
+      () => session.translateRequestOut(request(unsafe, "tools/list")),
+      /safe integer/,
+    );
+    assert.throws(
+      () => session.translateInbound(request(unsafe, "roots/list")),
+      /safe integer/,
+    );
+  });
+
   test("cancelling a string id leaves the matching numeric id active", () => {
     const session = new Session();
     const fromString = session.translateRequestOut(request("1", "tools/list"));

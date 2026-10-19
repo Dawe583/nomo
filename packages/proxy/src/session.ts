@@ -339,12 +339,12 @@ function assertRequestId(id: JsonRpcId): JsonRpcId {
     return id;
   }
 
-  if (typeof id === "number" && Number.isInteger(id)) {
+  if (typeof id === "number" && Number.isSafeInteger(id)) {
     return id;
   }
 
   throw new Error(
-    "JSON-RPC id must be a string or integer for session translation",
+    "JSON-RPC id must be a string or safe integer for session translation",
   );
 }
 
@@ -360,7 +360,7 @@ function readRequestIdParam(
   if (typeof value === "string" && value !== "") {
     return value;
   }
-  if (typeof value === "number" && Number.isInteger(value)) {
+  if (typeof value === "number" && Number.isSafeInteger(value)) {
     return value;
   }
 
