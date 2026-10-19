@@ -248,7 +248,11 @@ protected by the absence of a record until that host exists.
 `nomo recovery
 health` summarizes the same evidence as one `retention` section: how much
 is recorded, how much is pinned, how much is released, and how much of the
-vault is protected with nothing an operator can read. The summary carries
+vault is protected with nothing an operator can read. Both halves count
+one way: a recorded lifecycle with a pin is pinned, and one without is
+released for retention, so the same `--mark-unpinned` action reads as
+released on the reserved store too rather than landing in neither
+bucket. The summary carries
 the file vault beside the reserved store under `filePresent` through
 `fileWithoutEvidence`, counted from the same `retention-index` tree the
 file collector writes, so both stores' protection is one report. When the

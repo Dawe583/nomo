@@ -122,12 +122,17 @@ test("health reports the vault's retention evidence in one summary", async (t) =
   const orphan = await vault.put("test", "orphan");
   const pinned = await vault.put("test", "pinned");
   const released = await vault.put("test", "released");
+  const unpinned = await vault.put("test", "unpinned");
   await vault.markVaultLifecycle("test", pinned, {
     pin: { ownerId: "operator-1", kind: "recovery" },
   });
   await vault.markVaultLifecycle("test", released, {
     pin: { ownerId: "operator-1", kind: "recovery" },
   });
+  // The mark-unpinned record is the case the two halves used to count
+  // differently: the file half read a pinless lifecycle as released and the
+  // reserved summary counted it in neither bucket.
+  await vault.markVaultLifecycle("test", unpinned, {});
   await vault.releaseVaultPin("test", released, {
     pin: { ownerId: "operator-1", kind: "recovery" },
     operatorId: "operator-2",
@@ -141,9 +146,9 @@ test("health reports the vault's retention evidence in one summary", async (t) =
   assert.equal(report.state.vault, "verified");
   assert.deepEqual(report.retention, {
     present: true,
-    evidence: 2,
+    evidence: 3,
     pinned: 1,
-    released: 1,
+    released: 2,
     withoutEvidence: /* fixture seed + orphan */ 2,
     filePresent: false,
     fileEvidence: 0,

@@ -313,7 +313,14 @@ async function readVault(
     } else {
       const records = db
         .prepare(
-          "SELECT count(*) AS count,SUM(CASE WHEN json_extract(record,'$.pin.ownerId') IS NOT NULL THEN 1 ELSE 0 END) AS pinned,SUM(CASE WHEN json_extract(record,'$.release.released') IS NOT NULL THEN 1 ELSE 0 END) AS released FROM retention",
+          // One counting rule across both halves: a recorded lifecycle with a
+        // pin is pinned, and one without is released for retention, which is
+        // the reading the file half has always used and the collector itself
+        // applies. Counting only explicit release blocks left a mark-unpinned
+        // record in the reserved store in neither bucket, so the same
+        // operator action read as "released" on one half and as nothing on
+        // the other.
+        "SELECT count(*) AS count,SUM(CASE WHEN json_extract(record,'$.pin.ownerId') IS NOT NULL THEN 1 ELSE 0 END) AS pinned,SUM(CASE WHEN json_extract(record,'$.pin.ownerId') IS NULL THEN 1 ELSE 0 END) AS released FROM retention",
         )
         .get();
       const orphaned = db
