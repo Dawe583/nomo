@@ -471,7 +471,9 @@ export async function collectVaultGarbage(
       );
       if (report.errors.length) {
         await record("failed", { policyDigest, errors: [...report.errors] });
-        throw new Error("Recovery vault garbage collection failed.");
+        throw new Error(
+          `File vault garbage collection failed: ${[...report.errors].join("; ")}`,
+        );
       }
       const garbage: GarbageReport = {
         skippedPinned,
