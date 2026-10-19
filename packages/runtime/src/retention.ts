@@ -413,9 +413,17 @@ export async function collectVaultGarbage(
     options.policy ?? MANUAL_RETENTION_POLICY,
   );
   const { workspace, operationId, agentId, runId } = options;
-  for (const value of [workspace, operationId, agentId, runId])
+  const identityFields: [string, string][] = [
+    ["workspace", workspace],
+    ["operationId", operationId],
+    ["agentId", agentId],
+    ["runId", runId],
+  ];
+  for (const [field, value] of identityFields)
     if (!/^[\w-]{1,120}$/.test(value))
-      throw new Error("Invalid vault retention identity.");
+      throw new Error(
+        `Recovery retention identity ${field} is ${JSON.stringify(value)}: it must be 1 to 120 word or hyphen characters.`,
+      );
   const artifacts = join(resolve(options.root), workspace),
     evidence = evidenceDir(options.index, workspace, options.root);
   const clock = options.clock ?? (() => new Date());
