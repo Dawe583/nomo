@@ -170,6 +170,13 @@ export async function collectReservedVaultGarbage(
       policyDigest,
       deleting: deleting.length,
     });
+    // A journal failure after dispatched strands the chain at dispatched, so
+    // an error that reached the caller may read as a refusal while the
+    // deletes the next statement made stand recorded in no journal. That
+    // state is self-healing, not lost work: deleteRetained re-reads inside
+    // its own transaction, so an already committed delete comes back as the
+    // named "disappeared after the scan" failure instead of a second delete,
+    // and a failed rerun carries that name in its own journal.
     let report: RetentionReport;
     try {
       report = await options.vault.deleteRetained(
