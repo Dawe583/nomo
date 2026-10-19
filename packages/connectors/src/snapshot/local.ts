@@ -310,7 +310,7 @@ async function deleteOlderThan(root: string, namespace: SnapshotNamespace, cutof
 function validCutoff(cutoff: Date): number {
   const timestamp = cutoff instanceof Date ? cutoff.getTime() : NaN;
   if (!Number.isFinite(timestamp))
-    throw new Error("Snapshot retention cutoff must be a valid date.");
+    throw new Error(`Snapshot retention cutoff ${JSON.stringify(cutoff)} must be a valid date.`);
   return timestamp;
 }
 
@@ -349,14 +349,14 @@ function pathForReference(root: string, reference: SnapshotReference): string {
 
 function assertSafeNamespace(namespace: SnapshotNamespace): void {
   if (namespace.length === 0 || namespace.includes("/") || namespace.includes("\\") || namespace === "." || namespace === "..") {
-    throw new Error("invalid snapshot namespace");
+    throw new Error(`Invalid snapshot namespace ${JSON.stringify(namespace)}.`);
   }
 }
 
 function assertSafeReference(reference: SnapshotReference): void {
   assertSafeNamespace(reference.namespace);
   if (!/^sha256:[a-f0-9]{64}$/.test(reference.digest)) {
-    throw new Error("invalid snapshot digest");
+    throw new Error(`Invalid snapshot digest ${JSON.stringify(reference.digest)}.`);
   }
 }
 
