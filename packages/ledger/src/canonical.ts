@@ -37,11 +37,11 @@ export function canonicalJson(value: unknown): string {
  */
 function canonicalize(value: unknown, seen: WeakSet<object>, depth: number): string {
   if (depth > MAX_DEPTH)
-    throw new TypeError("ledger payload nests deeper than 1000 levels");
+    throw new TypeError(`ledger payload nests deeper than 1000 levels: depth ${depth}`);
   if (value === null) return "null";
   switch (typeof value) {
     case "undefined":
-      throw new TypeError("undefined does not round trip through JSON");
+      throw new TypeError(`${String(value)} does not round trip through JSON`);
     case "number":
       if (!Number.isFinite(value))
         throw new TypeError(`${String(value)} does not round trip through JSON`);
@@ -50,7 +50,7 @@ function canonicalize(value: unknown, seen: WeakSet<object>, depth: number): str
     case "boolean":
       return JSON.stringify(value);
     case "bigint":
-      throw new TypeError("bigint does not round trip through JSON");
+      throw new TypeError(`bigint ${String(value)} does not round trip through JSON`);
     case "function":
     case "symbol":
       throw new TypeError(`${typeof value} does not round trip through JSON`);

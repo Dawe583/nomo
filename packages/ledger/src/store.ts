@@ -380,8 +380,16 @@ export function jsonlStore(
   };
 }
 
-function throwNoWorkspace(): never {
-  throw new TypeError("ledger body must carry a string workspace field: the store is per workspace");
+function throwNoWorkspace(body: unknown): never {
+  // The body is a ledger payload and may carry a secret, so the refusal
+  // names the field and its type, never the body itself.
+  const workspace =
+    typeof body === "object" && body !== null && "workspace" in body
+      ? (body as { workspace: unknown }).workspace
+      : undefined;
+  throw new TypeError(
+    `ledger body must carry a string workspace field: the store is per workspace: got ${typeof workspace === "string" ? JSON.stringify(workspace) : typeof workspace}.`,
+  );
 }
 
 /**
@@ -391,9 +399,9 @@ function throwNoWorkspace(): never {
  */
 function workspaceOf(body: unknown): string {
   if (typeof body !== "object" || body === null || !("workspace" in body))
-    throwNoWorkspace();
+    throwNoWorkspace(body);
   const workspace: unknown = body.workspace;
-  if (typeof workspace !== "string") throwNoWorkspace();
+  if (typeof workspace !== "string") throwNoWorkspace(body);
   return sanitizeWorkspace(workspace);
 }
 

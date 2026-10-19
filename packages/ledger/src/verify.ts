@@ -65,9 +65,9 @@ export async function readLedgerEntries(
   const maxBytes = options.maxBytes ?? LEDGER_READ_MAX_BYTES;
   const maxEntries = options.maxEntries ?? LEDGER_READ_MAX_ENTRIES;
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 0)
-    throw new RangeError("ledger maxBytes must be a non-negative safe integer");
+    throw new RangeError(`ledger maxBytes must be a non-negative safe integer: got ${JSON.stringify(maxBytes)}.`);
   if (!Number.isSafeInteger(maxEntries) || maxEntries < 0)
-    throw new RangeError("ledger maxEntries must be a non-negative safe integer");
+    throw new RangeError(`ledger maxEntries must be a non-negative safe integer: got ${JSON.stringify(maxEntries)}.`);
 
   // Opening nonblocking and checking this handle prevents a FIFO from hanging
   // verification; bounded reads enforce the limit even if a regular file grows.

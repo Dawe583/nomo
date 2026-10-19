@@ -50,26 +50,26 @@ export type AnchorMatch =
 /** Parse and shape check an attestation document from untrusted bytes. */
 export function parseAttestationDocument(value: unknown, label = "attestation"): AttestationDocument {
   if (typeof value !== "object" || value === null)
-    throw new Error(`${label} is not an object`);
+    throw new Error(`${label} is not an object: ${JSON.stringify(value)}.`);
   const parsed = value as Partial<AttestationDocument>;
   if (typeof parsed.workspace !== "string" || parsed.workspace === "")
-    throw new Error(`${label} has invalid workspace`);
+    throw new Error(`${label} has invalid workspace: ${JSON.stringify(parsed.workspace)}.`);
   if (typeof parsed.headSeq !== "number" || !Number.isInteger(parsed.headSeq) || parsed.headSeq < 0)
-    throw new Error(`${label} has invalid headSeq`);
+    throw new Error(`${label} has invalid headSeq: ${JSON.stringify(parsed.headSeq)}.`);
   if (typeof parsed.headHash !== "string" || parsed.headHash === "")
-    throw new Error(`${label} has invalid headHash`);
+    throw new Error(`${label} has invalid headHash: ${JSON.stringify(parsed.headHash)}.`);
   if (typeof parsed.at !== "string" || parsed.at === "")
-    throw new Error(`${label} has invalid at`);
+    throw new Error(`${label} has invalid at: ${JSON.stringify(parsed.at)}.`);
   if (typeof parsed.entriesCount !== "number" || !Number.isInteger(parsed.entriesCount) || parsed.entriesCount < 0)
-    throw new Error(`${label} has invalid entriesCount`);
+    throw new Error(`${label} has invalid entriesCount: ${JSON.stringify(parsed.entriesCount)}.`);
   if (typeof parsed.treeDigest !== "string" || parsed.treeDigest === "")
-    throw new Error(`${label} has invalid treeDigest`);
+    throw new Error(`${label} has invalid treeDigest: ${JSON.stringify(parsed.treeDigest)}.`);
   if (typeof parsed.key_id !== "string" || parsed.key_id === "")
-    throw new Error(`${label} has invalid key_id`);
+    throw new Error(`${label} has invalid key_id: ${JSON.stringify(parsed.key_id)}.`);
   if (parsed.alg !== "ed25519" && parsed.alg !== "ecdsa-p256-sha256")
-    throw new Error(`${label} has invalid alg`);
+    throw new Error(`${label} has invalid alg: ${JSON.stringify(parsed.alg)}.`);
   if (typeof parsed.signature !== "string" || parsed.signature === "")
-    throw new Error(`${label} has invalid signature`);
+    throw new Error(`${label} has invalid signature: ${JSON.stringify(parsed.signature)}.`);
   return parsed as AttestationDocument;
 }
 
