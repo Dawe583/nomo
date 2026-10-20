@@ -378,6 +378,12 @@ Schvalování a obnova: `/approvals`, `/approve [hold-ID] [důvod...]`, `/deny
 Nastavení a diagnostika: `/doctor`, `/init`, `/conformance`, `/harness
 <cloud|prime-agent>`.
 
+Samotný harness: `/harness scores` ukazuje, co harness změřil, `/harness
+review` žádá o revizi ihned a `/harness approve <digest>` a `/harness reject
+<digest> [důvod...]` rozhodují návrh. Návrh zůstává neúčinný, dokud není
+pojmenován přesný jeho digest, a digest, který nikdo nenavrhl, je odmítnut
+jménem.
+
 Každý příkaz výše bere argument na stejném místě; spuštění bez argumentu vypíše
 svoji vlastníusage řádek, než by selhalo nečitelně. Příkaz bez argumentu vůbec
 nebo neznámý se odmítne jménem.
@@ -603,9 +609,27 @@ nemaže.
 Ve composeru zůstává čitelný stavový žeton poslední úlohy obnovy. Hlásí stav a
 nabízí jen obnovení. **Neposkytuje žádnou autoritu obnovy.**
 
+### 9.6 Schválení návrhu harnesse
+
+Harness navrhuje změnu toho, co se naučil, a návrh čeká na člověka. V aplikaci
+návrhy otevřené konverzace čekají přímo v konverzaci, jeden řádek na návrh, a
+**Zkontrolovat a rozhodnout** otevře návrh.
+
+Modál ukazuje návrh, ne jeho souhrn: každou úpravu s její akcí, druhem, položkou,
+které se dotýká, textem, který zapíše, důvodem, proč ji stojí za to, a
+podepsanými záznamy, ze kterých vychází. Úprava promptu ukazuje dodatek, který
+chce, protože právě ten by přidal ke stálým instrukcím. Digest, ke kterému se
+rozhodnutí váže, je na obrazovce, protože rozhodnutí, které se dá přesunout na
+jiný text, není rozhodnutím o tomto návrhu.
+
+**Schválit** a **Zamítnout** jsou jediné dvě akce, zamítnutí vyžaduje důvod a
+server zůstává autoritou: návrh, který už někdo rozhodl, přijde s vlastní
+větou serveru a druhý zápis se nestane. Návrh, který byl vrácen zpět, ze
+seznamu zmizí, protože harness čte stav, který vrácení obnovilo.
+
 ## 10. Příkazová řáda
 
-Dvacet dva příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
+Dvacet tři příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
 vypíše usage daného příkazu.
 
 | Příkaz               | Co dělá                                                         |
@@ -632,6 +656,7 @@ vypíše usage daného příkazu.
 | `nomo ledger verify` | Ověřit adresář ledgeru.                                         |
 | `nomo update`     | Posunout instalovaný strom na sledovanou větev, jen dopředu.         |
 | `nomo state`      | Shrnutí nebo migrace trvalého stavu pracovního prostoru.             |
+| `nomo harness`    | Seznam a rozhodnutí nad návrhy harnesse relace a model, na kterém jeho recenze běží. |
 
 Tě s argumenty, přesně:
 
@@ -645,6 +670,12 @@ nomo taint --ledger <adresář> --seq <n> [--depth <n>] [--json]
 nomo replay --ledger <cesta> --snapshot-dir <adresář> --seq <n> [--dry-run] [--key base64-spki]
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
+nomo harness list --session <id>
+nomo harness approve --session <id> <digest>
+nomo harness reject --session <id> <digest> --reason <text>
+nomo harness rollback --session <id> <digest>
+nomo harness entries --session <id>
+nomo harness model [<model-id>|--clear]
 nomo tui [--once] [--project <cesta>] [--skill <id> ...] [--view <karta>] [--session <id>] [--data-dir <cesta>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres-managed-conformance]
 nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <soubor> [--input <soubor>] [--approve <digest>] [--surface file|reserved|both]
