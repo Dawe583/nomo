@@ -161,7 +161,10 @@ function artifact(
   const event = [...tx.events]
     .reverse()
     .find((e) => e.operationId === id && e.stage === stage);
-  if (!event) throw new Error("Required operation evidence is missing.");
+  if (!event)
+    throw new Error(
+      `Required operation evidence is missing: operation ${id} has no recorded ${stage} stage in this workspace journal.`,
+    );
   return event.data as unknown as VaultReference;
 }
 export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
@@ -175,8 +178,12 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
   }
   const adapterFor = (id: string, version?: string) => {
     const adapter = adapters.get(id);
-    if (!adapter || (version && version !== adapter.version))
-      throw new Error("Recovery adapter version is unavailable.");
+    if (!adapter)
+      throw new Error(`Recovery adapter version is unavailable: id ${JSON.stringify(id)} is not registered; registered ids are ${[...adapters.keys()].join(", ")}.`);
+    if (version && version !== adapter.version)
+      throw new Error(
+        `Recovery adapter version is unavailable: ${JSON.stringify(id)} is at version ${adapter.version}, the plan requests ${JSON.stringify(version)}.`,
+      );
     return adapter;
   };
   const record = async (
@@ -229,7 +236,9 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
       bundle.observation.readiness !== "verified" ||
       !["r0", "r1", "r2"].includes(bundle.observation.reversibility)
     )
-      throw new Error("Operation has no verified recovery capability.");
+      throw new Error(
+        `Operation has no verified recovery capability: recorded readiness ${bundle.observation.readiness}, reversibility ${bundle.observation.reversibility}.`,
+      );
     await options.vault.get(
       event.workspace,
       artifact(tx, event.operationId, "succeeded"),
@@ -1121,7 +1130,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           );
           if (blocking.length > reclaimable.length)
             throw new Error(
-              "Another recovery job is active in this workspace.",
+              `Another recovery job is active in this workspace: jobs ${blocking.filter((candidate) => !leaseVerdict(leaseOf(candidate.data)).reclaimable).map((candidate) => candidate.jobId).join(", ")} hold a live lease.`,
             );
           const superseded: string[] = [];
           for (const stale of reclaimable) {
@@ -1132,7 +1141,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             const stalePlan = jobPlan(tx.jobEvents ?? [], stale.jobId);
             if (stalePlan === undefined) {
               throw new Error(
-                "Another recovery job is active in this workspace.",
+                `Another recovery job is active in this workspace: the expired lease of job ${stale.jobId} has no plan to supersede.`,
               );
             }
             const staleProgress = progressFrom(
@@ -1142,7 +1151,7 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
             const step = stalePlan.steps[staleProgress.checkpoint];
             if (step === undefined) {
               throw new Error(
-                "Another recovery job is active in this workspace.",
+                `Another recovery job is active in this workspace: job ${stale.jobId} is at checkpoint ${staleProgress.checkpoint} with no step to name.`,
               );
             }
             // The paused payload has to name the job and the status the
@@ -1397,7 +1406,9 @@ export function recoveryRuntime(options: RuntimeOptions): RecoveryRuntime {
           bundle.observation.readiness !== "verified" ||
           !["r0", "r1", "r2"].includes(bundle.observation.reversibility)
         )
-          throw new Error("Operation has no verified recovery capability.");
+          throw new Error(
+            `Operation has no verified recovery capability: recorded readiness ${bundle.observation.readiness}, reversibility ${bundle.observation.reversibility}.`,
+          );
         const actual = {
           workspace: plan.workspace,
           operationId: plan.operationId,
