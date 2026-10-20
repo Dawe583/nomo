@@ -149,9 +149,19 @@ const lifecycleRefusal = (detail: string): Error =>
   new Error(
     // The base sentence is load bearing: the collector tests match refusals
     // by its phrase, so every detail is appended after it. Details name
-    // fields, keys and kinds, never artifact contents.
+    // fields, keys and kinds; any file-supplied value is capped because a
+    // hostile sidecar can make a field arbitrarily long.
     `Recovery artifact lifecycle is invalid; retention refused: ${detail}`,
   );
+/** At most 40 characters of a file-supplied value reach a refusal. */
+const bounded = (value: unknown): string => {
+  const text = typeof value === "string" ? value : JSON.stringify(value) ?? "undefined";
+  return text.length > 40 ? `${text.slice(0, 40)}...` : text;
+};
+const boundedKeys = (keys: readonly string[]): string => {
+  const shown = keys.slice(0, 4).map((key) => (key.length > 40 ? `${key.slice(0, 40)}...` : key));
+  return `${shown.join(", ")}${keys.length > 4 ? `, and ${keys.length - 4} more` : ""}`;
+};
 function vaultPin(value: unknown): VaultPin {
   if (typeof value !== "object" || value === null || Array.isArray(value))
     throw lifecycleRefusal(
@@ -163,13 +173,13 @@ function vaultPin(value: unknown): VaultPin {
   );
   if (unexpected.length)
     throw lifecycleRefusal(
-      `pin carries unexpected key ${unexpected.join(", ")}; a pin has ownerId and kind.`,
+      `pin carries unexpected key ${boundedKeys(unexpected)}; a pin has ownerId and kind.`,
     );
   if (typeof record.ownerId !== "string" || !record.ownerId.length)
     throw lifecycleRefusal("pin.ownerId is missing or not a nonempty string.");
   if (record.kind !== "recovery" && record.kind !== "operator")
     throw lifecycleRefusal(
-      `pin.kind is ${JSON.stringify(record.kind)}; kinds are recovery or operator.`,
+      `pin.kind is ${bounded(record.kind)}; kinds are recovery or operator.`,
     );
   return value as VaultPin;
 }
@@ -185,7 +195,7 @@ function vaultRelease(value: unknown): VaultRelease {
   );
   if (unexpected.length)
     throw lifecycleRefusal(
-      `release carries unexpected key ${unexpected.join(", ")}; a release has operatorId, at and released.`,
+      `release carries unexpected key ${boundedKeys(unexpected)}; a release has operatorId, at and released.`,
     );
   if (typeof record.operatorId !== "string" || !record.operatorId.length)
     throw lifecycleRefusal(
@@ -221,7 +231,7 @@ export function parseVaultLifecycle(raw: string): VaultLifecycle {
   );
   if (unexpected.length)
     throw lifecycleRefusal(
-      `lifecycle carries unexpected key ${unexpected.join(", ")}; a lifecycle record has pin and release.`,
+      `lifecycle carries unexpected key ${boundedKeys(unexpected)}; a lifecycle record has pin and release.`,
     );
   return {
     ...(Object.hasOwn(record, "pin") ? { pin: vaultPin(record.pin) } : {}),

@@ -279,11 +279,13 @@ export function validateProposal(proposal: RefinementProposal): Validated {
     const reject = (reason: string) => rejections.push({ index, edit, reason });
 
     if (!(REFINEMENT_ACTIONS as readonly string[]).includes(edit.action)) {
-      reject(`unsupported action ${JSON.stringify(edit.action)}`);
+      // The action text is model output: it is never quoted back, the allowed
+      // set is what tells the model what to send instead.
+      reject(`unsupported action: expected one of ${REFINEMENT_ACTIONS.join(", ")}`);
       return;
     }
     if (!(REFINEMENT_KINDS as readonly string[]).includes(edit.kind)) {
-      reject(`unsupported kind ${JSON.stringify(edit.kind)}`);
+      reject(`unsupported kind: expected one of ${REFINEMENT_KINDS.join(", ")}`);
       return;
     }
     if (edit.id === BASE_SYSTEM_PROMPT_ID) {

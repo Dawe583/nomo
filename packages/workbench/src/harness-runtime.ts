@@ -279,7 +279,9 @@ export async function serviceHarnessBoundary(
       throw new Error(`Refinement reply was not a proposal: ${parsed.message}`);
     const validated = validateProposal(parsed.proposal);
     if (!validated.ok)
-      throw new Error(`Invalid refinement proposal: ${validated.rejections.join("; ")}`);
+      throw new Error(
+        `Invalid refinement proposal: ${validated.rejections.map((item) => item.reason).join("; ")}`,
+      );
     await deps.apply(validated.proposal, expectedBranchVersion);
   };
 
