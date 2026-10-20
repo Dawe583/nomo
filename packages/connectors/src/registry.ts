@@ -192,7 +192,16 @@ function makePostgresConnector(deps: ConnectorDeps): Connector {
       const exec = requireDependency(deps.exec, "postgres exec");
       postgresPlan(plan);
       const stored = await readPostgresCapture(deps.store, plan.capture);
-      if (JSON.stringify(plan.steps) !== JSON.stringify(stored.steps.map(postgresStepToPlanStep))) throw new Error("Inverse plan differs from its captured snapshot.");
+      const expected = stored.steps.map(postgresStepToPlanStep);
+      if (JSON.stringify(plan.steps) !== JSON.stringify(expected)) {
+        const step = plan.steps.find(
+          (candidate, index) =>
+            JSON.stringify(candidate) !== JSON.stringify(expected[index]),
+        );
+        throw new Error(
+          `Inverse plan differs from its captured snapshot: step ${step?.id ?? "?"} does not match the recorded plan for ${plan.capture.digest}.`,
+        );
+      }
       try {
         return postgresApplyReport(await applyInverse(exec, stored.steps, stored.image));
       } catch {
@@ -254,7 +263,18 @@ function makeS3Connector(deps: ConnectorDeps): Connector {
       const client = requireDependency(deps.s3, "s3 client");
       s3Plan(plan);
       const stored = await readS3Capture(deps.store, plan.capture);
-      if (plan.steps.length !== 1 || plan.steps[0]?.inputDigest !== stored.input.reference.digest || plan.steps[0]?.target !== `s3://${stored.input.call.bucket}/${stored.input.call.key}`) throw new Error("Inverse plan differs from its captured snapshot.");
+      if (plan.steps.length !== 1)
+        throw new Error(
+          `Inverse plan differs from its captured snapshot: a capture of ${stored.input.call.bucket}/${stored.input.call.key} restores in exactly one step, the plan carries ${plan.steps.length}.`,
+        );
+      if (plan.steps[0] && plan.steps[0].inputDigest !== stored.input.reference.digest)
+        throw new Error(
+          `Inverse plan differs from its captured snapshot: step inputDigest ${plan.steps[0].inputDigest} does not match the captured digest ${stored.input.reference.digest}.`,
+        );
+      if (plan.steps[0] && plan.steps[0].target !== `s3://${stored.input.call.bucket}/${stored.input.call.key}`)
+        throw new Error(
+          `Inverse plan differs from its captured snapshot: step target ${plan.steps[0].target} does not match the captured object s3://${stored.input.call.bucket}/${stored.input.call.key}.`,
+        );
       return s3ApplyReport(await applyRestore(deps.store, client, stored.input));
     },
   };
