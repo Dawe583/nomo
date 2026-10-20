@@ -129,6 +129,19 @@ operator was shown, a rejection carries its reason, an unknown session reads
 404, and a digest nobody proposed is refused with the workbench's own sentence
 rather than as a silent no-op.
 
+The test `packages/workbench/src/harness-tools.test.ts` proves the two tools
+the agent may call: `void_harness_add` proposes a lesson and
+`void_harness_forget` proposes that one be forgotten. The tool writes a
+proposal, never a change: a proposal is inert until an operator approves its
+exact digest, and an approval is a human act with a human reading the text.
+An agent that could write its own instructions would be an agent that could
+talk itself out of every boundary above it, so the tool stops at the proposal.
+The proposal cites the chain records it was derived from, because the chain is
+signed and an uncited claim cannot be recorded; the agent does not know those
+sequence numbers, so the tool cites the head of the chain it observed. Before
+the chain holds a record there is nothing a proposal could rest on, and the
+tool says exactly that.
+
 The test `packages/workbench/src/harness-conversation.test.ts` proves the
 conversation tail the reviewer sees. The reviewer was blind to the
 conversation, and a blind reviewer proposes the same generic lesson again.

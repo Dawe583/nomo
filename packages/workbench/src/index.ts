@@ -149,6 +149,13 @@ import {
 import { resolveLensCount, reviewRanNote, serviceHarnessBoundary } from "./harness-runtime.ts";
 import { buildConversationTail } from "./harness-conversation.ts";
 import {
+  HARNESS_ADD_TOOL,
+  HARNESS_FORGET_TOOL,
+  HARNESS_TOOLS,
+  harnessToolPlan,
+  type HarnessToolArgs,
+} from "./harness-tools.ts";
+import {
   resolveRefineGates,
   type GateSurface,
 } from "./refine-gate.ts";
@@ -1547,7 +1554,7 @@ export class Workbench {
       );
     const tools = (
       session
-        ? (session.tools ?? [...workspaceTools])
+        ? (session.tools ?? [...workspaceTools, ...HARNESS_TOOLS])
         : [
             ...workspaceTools,
             ...this.connectors
@@ -1703,6 +1710,10 @@ export class Workbench {
       !!selectedProfile?.allowedTools.includes(PROJECT_EXEC_TOOL.name);
     const tools: McpTool[] = [
       ...workspaceTools.filter((tool) => tool.name !== PROJECT_EXEC_TOOL.name),
+      // The agent may propose what it learned. The proposal is inert until an
+      // operator approves its exact digest, so the tool cannot write the
+      // harness into being anything.
+      ...HARNESS_TOOLS,
       ...(projectToolEnabled ? [PROJECT_EXEC_TOOL] : []),
     ];
     const connections: NonNullable<Session["connections"]> = {};
@@ -2561,6 +2572,10 @@ export class Workbench {
         !!selectedProfile?.allowedTools.includes(PROJECT_EXEC_TOOL.name);
       const tools: McpTool[] = [
         ...workspaceTools.filter((tool) => tool.name !== PROJECT_EXEC_TOOL.name),
+        // The agent may propose what it learned. The proposal is inert until
+        // an operator approves its exact digest, so the tool cannot write
+        // the harness into being anything.
+        ...HARNESS_TOOLS,
         ...(projectToolEnabled ? [PROJECT_EXEC_TOOL] : []),
       ];
       const connections: NonNullable<Session["connections"]> = {};
@@ -4288,6 +4303,15 @@ export class Workbench {
     return tail.text;
   }
 
+  /** The last sequence the workspace chain holds. The harness tools cite it
+   * as the record their proposal rests on: the agent saw the chain up to
+   * there when it decided something was worth remembering. */
+  private chainHead(workspace: string): number[] {
+    const entries = this.evidence[workspace] ?? [];
+    const head = entries.at(-1)?.seq;
+    return head === undefined ? [] : [head];
+  }
+
   private async serviceHarnessTurn(session: Session, surface: GateSurface): Promise<void> {
     if (!session.provider) return;
     const id = session.view.id;
@@ -5249,6 +5273,32 @@ export class Workbench {
         };
       }
       throw new UnknownToolOutcome();
+    }
+    if (
+      !tool.connectorId &&
+      (tool.name === HARNESS_ADD_TOOL || tool.name === HARNESS_FORGET_TOOL)
+    ) {
+      // A proposal, never a change. The tool writes an inert record and the
+      // operator decides it, so an agent cannot write its own instructions.
+      observed.decision = "harness-proposal";
+      const head = this.chainHead(session.view.workspace);
+      const plan = harnessToolPlan(tool.name, args as HarnessToolArgs, head);
+      if (!plan.ok)
+        return {
+          isError: true,
+          content: [{ type: "text", text: plan.reason }],
+        };
+      // The session id, not the call id: the proposal belongs to the
+      // conversation, and the call id names the attempt.
+      const created = await this.refineHarness(session.view.id, plan.proposal);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Proposal ${created.proposalDigest}. It changes nothing until an operator approves that exact digest.`,
+          },
+        ],
+      };
     }
     if (!tool.connectorId && tool.name === PROJECT_EXEC_TOOL.name) {
       observed.decision = "sandbox";

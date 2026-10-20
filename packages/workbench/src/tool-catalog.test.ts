@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { toolCatalog } from './tool-catalog.ts';
 import { workspaceTools } from './workspace.ts';
+import { HARNESS_TOOLS } from './harness-tools.ts';
 import { filterCommands, toolPrompt } from '../../../apps/control-plane/ui/src/commands.ts';
 import { isolatedWorkbench } from './test-fixture.ts';
 
@@ -34,9 +35,16 @@ test('session tool catalogue uses its snapshot and rejects unknown sessions', as
   const session = await app.start('Hello', 'fixture');
   const snapshot = app.availableTools(session.id);
   assert.equal(snapshot.scope, 'session');
+  // The session's snapshot is its own: the workspace tools it runs on, the
+  // project tool it may hold, and the harness tools the agent may propose
+  // with. A proposal is inert until an operator approves it, so offering the
+  // tool does not offer the harness itself.
   assert.deepEqual(
     snapshot.tools.map(t => t.name),
-    workspaceTools.filter(t => t.name !== 'nomo_project_exec').map(t => t.name),
+    [
+      ...workspaceTools.filter(t => t.name !== 'nomo_project_exec').map(t => t.name),
+      ...HARNESS_TOOLS.map(tool => tool.name),
+    ],
   );
   assert.doesNotMatch(JSON.stringify(snapshot), /private-key|messages|baseUrl/);
 });
