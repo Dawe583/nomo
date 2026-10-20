@@ -66,12 +66,14 @@ describe("terminal capabilities", () => {
 });
 
 describe("NOMO visual language", () => {
-  test("brand uses the compact aperture mark within narrow widths", () => {
-    const mono = brandHeader("", capabilities(20)).map(stripAnsi);
-    assert.equal(mono.length, 5);
-    assert.ok(mono.every((line) => visibleLength(line) <= 20));
-    assert.match(mono.join("\n"), /[⌜⌝⌞⌟]/);
-    assert.match(mono.join("\n"), /·/);
+  test("aperture mark stays legible across supported widths in monochrome and color", () => {
+    for (const width of [20, 40, 80, 120, 160]) {
+      const mono = brandHeader("", capabilities(width)).map(stripAnsi);
+      assert.equal(mono.length, 5);
+      assert.ok(mono.every((line) => visibleLength(line) <= width));
+      assert.match(mono.join("\n"), /[⌜⌝⌞⌟]/);
+      assert.match(mono.join("\n"), /·/);
+    }
     const color = brandHeader("NOMO", capabilities(40, 40, true)).join("\n");
     assert.match(color, /38;2;189;66;6/);
   });
