@@ -26,6 +26,21 @@ export type HarnessIo = {
 /** The part of the workbench this command uses. Narrow on purpose: the
  * command is a reader and a decider, and it does not need the run path. */
 export type HarnessSurface = {
+  /** The entries the harness currently holds for a session's workspace. */
+  harnessEntries(
+    sessionId: string,
+  ): Promise<
+    readonly {
+      readonly id: string;
+      readonly kind: string;
+      readonly title: string;
+      readonly content: string;
+      readonly tool: string;
+      readonly klass: string;
+      readonly repeats: number;
+      readonly decidedByOperator?: boolean;
+    }[]
+  >;
   /** The reviewer model selection, as resolved. */
   harnessTextSettings(): { readonly refinementModel: string };
   patchHarnessTextSettings(
@@ -86,6 +101,7 @@ const USAGE = [
   "  nomo harness approve --session <id> <digest>",
   "  nomo harness reject --session <id> <digest> --reason <text>",
   "  nomo harness rollback --session <id> <digest>",
+  "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness model                 show the reviewer model",
   "  nomo harness model <model-id>      set the reviewer model",
   "  nomo harness model --clear         use the conversation's own model",
@@ -159,7 +175,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "approve", "reject", "rollback", "model"].includes(action)) {
+  if (!["list", "entries", "approve", "reject", "rollback", "model"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -214,7 +230,7 @@ export async function runHarnessCommand(
     io.stderr(USAGE);
     return 1;
   }
-  if (action !== "list" && !flags.digest) {
+  if (!["list", "entries", "model"].includes(action) && !flags.digest) {
     io.stderr(`The ${action} action needs the digest of the proposal.`);
     io.stderr(USAGE);
     return 1;
@@ -238,6 +254,27 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
+    if (action === "entries") {
+      const entries = await workbench.harnessEntries(flags.session);
+      if (!entries.length) {
+        io.stdout("The harness holds no entry for this workspace.");
+        return 0;
+      }
+      for (const entry of entries) {
+        const content =
+          entry.content.length > 160
+            ? `${entry.content.slice(0, 160)}...`
+            : entry.content;
+        io.stdout(
+          `${entry.id}  ${entry.kind}${entry.decidedByOperator ? "  operator" : ""}${
+            entry.tool ? `  ${entry.tool}/${entry.klass}` : ""
+          }`,
+        );
+        io.stdout(`    ${entry.title}`);
+        io.stdout(`    ${content}`);
+      }
+      return 0;
+    }
     if (action === "list") {
       const proposals = await workbench.pendingApprovalsFor(flags.session);
       if (!proposals.length) {

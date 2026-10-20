@@ -49,6 +49,21 @@ function fake(overrides: Partial<HarnessSurface> = {}) {
       calls.push({ method: "rollback", args: [sessionId, digest] });
       return { applied: [{ outcome: "deleted" }] };
     },
+    async harnessEntries(sessionId) {
+      calls.push({ method: "entries", args: [sessionId] });
+      return [
+        {
+          id: "lesson-1",
+          kind: "lesson",
+          title: "approval pattern",
+          content: "The operator repeatedly approved the same action.",
+          tool: "postgres.row.update",
+          klass: "r2",
+          repeats: 3,
+          decidedByOperator: true,
+        },
+      ];
+    },
     harnessTextSettings() {
       return { refinementModel: "" };
     },
@@ -196,6 +211,20 @@ test("a machine with no workspace is refused, and none is created", async () => 
     false,
     "a command that only reads must not create the workspace it would read",
   );
+});
+
+test("entries shows what the harness holds", async () => {
+  const { surface, calls } = fake();
+  const terminal = io();
+  const code = await runHarnessCommand(["entries", "--session", "s1"], terminal, {
+    workbench: async () => surface,
+  });
+  assert.equal(code, 0);
+  const text = terminal.out.join("\n");
+  assert.match(text, /lesson-1/);
+  assert.match(text, /operator/);
+  assert.match(text, /postgres\.row\.update\/r2/);
+  assert.deepEqual(calls, [{ method: "entries", args: ["s1"] }]);
 });
 
 test("the reviewer model is shown, set and cleared", async () => {

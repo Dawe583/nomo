@@ -775,6 +775,7 @@ nomo harness list --session <id>
 nomo harness approve --session <id> <digest>
 nomo harness reject --session <id> <digest> --reason <text>
 nomo harness rollback --session <id> <digest>
+nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
 nomo tui [--once] [--project <path>] [--skill <id> ...] [--view <tab>] [--session <id>] [--data-dir <path>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres-managed-conformance]
