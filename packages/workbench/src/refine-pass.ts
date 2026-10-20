@@ -427,8 +427,13 @@ export function applyProposal(
   return { entries: [...byId.values()], applied, awaitingApproval };
 }
 
-/** A stable id for a create, so two identical proposals agree. */
-function contentAddressedId(kind: string, title: string, content: string): string {
+/** A stable id for a create, so two identical proposals agree.
+ *
+ * Exported because a rollback has to name the entry an id-less create
+ * produced: the inverse edit is a delete, and a delete names the entry it
+ * removes. A rollback that guessed the id would either miss the entry or
+ * remove one it did not create. */
+export function contentAddressedId(kind: string, title: string, content: string): string {
   let hash = 0x811c9dc5;
   const input = `${kind}\u0000${title}\u0000${content}`;
   for (let i = 0; i < input.length; i++) {

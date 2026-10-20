@@ -135,6 +135,8 @@ import {
 } from "./harness-ranking.ts";
 import {
   applyProposal,
+  contentAddressedId,
+  REFINEMENT_KINDS,
   validateProposal,
   type AppliedEdit,
   type RefinementEdit,
@@ -3710,6 +3712,229 @@ export class Workbench {
         undefined,
         { harnessProposal: { digest, status: "rejected" } },
       );
+    });
+  }
+
+  /**
+   * Roll back one activated refinement, by the digest of its proposal.
+   *
+   * The activation record already carries the entry as it stood before every
+   * applied edit, so a rollback needs no second approval cycle: the operator
+   * names the digest and the workbench writes one more signed record whose
+   * harnessRefinement carries the state the view should read. The inverse
+   * edits are rebuilt from that signed record and go through the same apply
+   * machinery an approval uses, so a rollback cannot invent an entry the
+   * chain does not carry.
+   *
+   * Three digests are refused by name: one no activation carries, one a
+   * later refinement has displaced, and one already rolled back. Displacing
+   * is refused rather than reconstructed, because the view reads the latest
+   * refinement record alone: reverting an older activation would mean
+   * replaying the activations after it, and that replay is a second history
+   * nobody approved.
+   */
+  async rollbackHarnessProposal(
+    sessionId: string,
+    digest: string,
+  ): Promise<{ readonly applied: readonly AppliedEdit[] }> {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.view.id !== sessionId) throw new Error("Session not found.");
+    this.assertNormalMutation("harness refinement");
+    if (this.closing || session.recoveryBlock)
+      throw new Error(
+        "Wait for the workbench to reopen. Reconcile unresolved recovery before refining the harness.",
+      );
+    const workspace = session.view.workspace;
+    return this.locked(async () => {
+      const proof = await this.ledger(workspace);
+      if (!proof) throw new Error("No activated refinement matches that digest.");
+      const entries = proof.entries;
+      // The latest refinement record is the state the view reads, so it is the
+      // only rollback target. A rollback record carries no digest of its own,
+      // it names what it undid, which is how an already rolled back digest
+      // tells itself apart from a displaced one.
+      let latest: { seq: number; record: Record<string, unknown> } | undefined;
+      let activation: { seq: number; record: Record<string, unknown> } | undefined;
+      for (let index = entries.length - 1; index >= 0; index--) {
+        const body = entries[index]!.body as Record<string, unknown>;
+        const refinement = body.harnessRefinement;
+        if (refinement === null || typeof refinement !== "object") continue;
+        const record = refinement as Record<string, unknown>;
+        if (!latest) latest = { seq: entries[index]!.seq, record };
+        if (record.digest === digest && !activation)
+          activation = { seq: entries[index]!.seq, record };
+      }
+      if (latest && latest.record.rolledBackDigest === digest)
+        throw new Error("That refinement is already rolled back.");
+      if (!latest || !activation)
+        throw new Error("No activated refinement matches that digest.");
+      if (latest.seq !== activation.seq)
+        throw new Error(
+          `A later refinement has changed this workspace since ${digest} was activated. Roll the later refinement back first.`,
+        );
+      const applied = activation.record.applied;
+      if (!Array.isArray(applied) || applied.length === 0)
+        throw new Error("The activated refinement carries no applied edit to roll back.");
+      const edits: RefinementEdit[] = [];
+      for (const item of applied) {
+        if (item === null || typeof item !== "object") continue;
+        const record = item as Record<string, unknown>;
+        const source = record.edit;
+        if (source === null || typeof source !== "object") continue;
+        const edit = source as Record<string, unknown>;
+        const kind = typeof edit.kind === "string" ? edit.kind : "";
+        if (!(REFINEMENT_KINDS as readonly string[]).includes(kind)) continue;
+        const outcome = typeof record.outcome === "string" ? record.outcome : "";
+        const title = typeof edit.title === "string" ? edit.title : "";
+        const content = typeof edit.content === "string" ? edit.content : "";
+        const addendum =
+          kind === "prompt"
+            ? typeof edit.promptAddendum === "string"
+              ? edit.promptAddendum
+              : ""
+            : content;
+        // The entry an edit wrote is addressed by its own id when the edit
+        // named one, and by the content address of the edit text otherwise.
+        // The rollback has to name the same id, or its delete would miss the
+        // entry the create wrote.
+        const id =
+          typeof edit.id === "string" && edit.id
+            ? edit.id
+            : contentAddressedId(kind, title, addendum);
+        const seqs = Array.isArray(edit.derivedFromSeq)
+          ? edit.derivedFromSeq.filter(
+              (seq): seq is number => typeof seq === "number" && Number.isInteger(seq),
+            )
+          : [];
+        const before = record.before;
+        if (outcome === "created" && before === null) {
+          edits.push({
+            action: "delete",
+            kind: kind as RefinementEdit["kind"],
+            id,
+            derivedFromSeq: seqs,
+            reason: "rollback: remove the entry this proposal created",
+          });
+          continue;
+        }
+        if (before === null || typeof before !== "object") continue;
+        const previous = before as Record<string, unknown>;
+        const previousTitle =
+          typeof previous.title === "string" ? previous.title : title;
+        const previousContent =
+          typeof previous.content === "string" ? previous.content : "";
+        if (outcome === "deleted") {
+          edits.push(
+            kind === "prompt"
+              ? {
+                  action: "create",
+                  kind: kind as RefinementEdit["kind"],
+                  id,
+                  title: previousTitle,
+                  promptAddendum: previousContent,
+                  derivedFromSeq: seqs,
+                  reason: "rollback: restore the entry this proposal deleted",
+                }
+              : {
+                  action: "create",
+                  kind: kind as RefinementEdit["kind"],
+                  id,
+                  title: previousTitle,
+                  content: previousContent,
+                  derivedFromSeq: seqs,
+                  reason: "rollback: restore the entry this proposal deleted",
+                },
+          );
+          continue;
+        }
+        edits.push(
+          kind === "prompt"
+            ? {
+                action: "update",
+                kind: kind as RefinementEdit["kind"],
+                id,
+                title: previousTitle,
+                promptAddendum: previousContent,
+                derivedFromSeq: seqs,
+                reason: "rollback: restore the entry this proposal replaced",
+              }
+            : {
+                action: "update",
+                kind: kind as RefinementEdit["kind"],
+                id,
+                title: previousTitle,
+                content: previousContent,
+                derivedFromSeq: seqs,
+                reason: "rollback: restore the entry this proposal replaced",
+              },
+        );
+      }
+      if (!edits.length)
+        throw new Error("The activated refinement carries no edit a rollback can restore.");
+      const inverse: RefinementProposal = {
+        summary: `Rollback of refinement ${digest}`,
+        rationale: "The operator rolled back an activated refinement by its digest.",
+        expectedOutcome: "The harness reads the state the chain carried before that refinement.",
+        edits,
+      };
+      const validated = validateProposal(inverse);
+      if (!validated.ok)
+        throw new Error(
+          `The rollback could not be reconstructed: ${validated.rejections
+            .map((item) => item.reason)
+            .join("; ")}`,
+        );
+      const generatedAt = new Date().toISOString();
+      const current = await this.harnessEntries(workspace);
+      const result = applyProposal(current, inverse, generatedAt, {
+        by: "operator",
+        digest,
+        atSeq: activation.seq,
+      });
+      if (!result.applied.length)
+        throw new Error("The rollback applied no edit, so it would record a change of nothing.");
+      const { overrides, suppressedIds } = this.refinementDelta(
+        workspace,
+        result.entries,
+        generatedAt,
+      );
+      const state = this.documents[workspace] ?? createWorkspace();
+      this.documents[workspace] ??= state;
+      const tombstones = result.applied
+        .filter((edit) => edit.outcome === "deleted")
+        .map((edit) => edit.edit.id)
+        .filter((id): id is string => typeof id === "string");
+      await this.commitWorkspace(
+        session,
+        state,
+        "harness.rollback",
+        { digest },
+        "refinement:rolled-back",
+        undefined,
+        { by: "operator" },
+        {
+          harnessLifecycle: {
+            digest,
+            events: [
+              "refinement:rolled-back",
+              ...(tombstones.length ? ["entry:tombstone"] : []),
+            ],
+            atSeq: activation.seq,
+          },
+          harnessRefinement: {
+            summary: inverse.summary,
+            rationale: inverse.rationale,
+            expectedOutcome: inverse.expectedOutcome,
+            applied: result.applied,
+            overrides,
+            suppressedIds,
+            approvedBy: "operator",
+            rolledBackDigest: digest,
+            atSeq: activation.seq,
+          },
+        },
+      );
+      return { applied: result.applied };
     });
   }
 

@@ -80,6 +80,20 @@ A dispose review bypasses arming but not the gate facts the trigger keeps:
 refinement disabled, a round in flight, and a cooldown a failed attempt just
 stamped all still hold, so a drain twice in one tick pays once.
 
+`node --test packages/workbench/src/harness-rollback.test.ts` proves the
+operator rollback. `rollbackHarnessProposal` takes the digest of an activated
+refinement and writes one more signed record whose `harnessRefinement` carries
+the state the view reads. The inverse edits are rebuilt from the activation
+record's own before snapshots and go through the same apply machinery an
+approval uses, so a rollback cannot invent an entry the chain does not carry.
+Three digests are refused by name: one no activation carries, one a later
+refinement has displaced, and one already rolled back. Displacing is refused
+rather than reconstructed, because the view reads the latest refinement record
+alone and replaying the activations after it would be a second history nobody
+approved. The rollback record names what it undid in `rolledBackDigest` and
+carries no `digest` of its own, which is what keeps it apart from an
+activation in every reader of that body.
+
 `node --test packages/workbench/src/connector.test.ts` proves the consent gate
 end to end against a loopback MCP server that counts its requests, including
 the migration of a snapshot written before the gate.
