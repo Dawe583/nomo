@@ -46,6 +46,10 @@ operator as applied while changing nothing.
 | `maxRequestBytes`     | 65536   | 1024 to 10485760 | largest request body the control plane accepts               |
 | `maxRunTimeoutMs`     | 600000  | 1000 to 86400000 | wall-clock ceiling for one run                               |
 | `maxToolCallsPerTurn` | 32      | 1 to 256         | tool calls one provider reply may request                    |
+| `refinementEnabled` | 1 | 0 to 1 | whether the harness may spend a model call reviewing what it learned (0 switches it off) |
+| `refinementTurnInterval` | 25 | 1 to 1000 | settled turns that must pass before an armed trigger can pay for a review |
+| `refinementCooldownMs` | 1200000 | 0 to 86400000 | how long a review attempt blocks the next one; zero means no wait |
+| `refinementLensCount` | 1 | 1 to 3 | independent reviews one harness round pays for; every lens must approve |
 | `hookTimeoutMs`       | 5000    | 100 to 60000     | how long one hook process may run before it is killed        |
 | `retryAttempts`       | 3       | 1 to 10          | attempts for a transient provider rejection                  |
 | `retryBaseDelayMs`    | 1000    | 100 to 60000     | base wait between those attempts                             |

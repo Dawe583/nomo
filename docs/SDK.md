@@ -23,6 +23,14 @@ The SDK is for app builders who want NOMO in process instead of only as a stdio 
 | `LedgerVerifyError` | class | Error for a ledger that fails startup verification. |
 | `PolicyStartupError` | class | Error for policy load or validation failure. |
 | `RefusedError` | class | Error wrapper for replay refusal reports. |
+| `managedClient` | function | In-process client for managed document runs. |
+| `RecoveryAdapter` | type | Executable recovery contract adapter. |
+| `RecoveryJobPlan` | type | Persisted recovery job plan. |
+| `RecoveryJobRequest` | type | Request to plan or apply a recovery job. |
+| `RecoveryJobResult` | type | Result of a recovery job run. |
+| `RuntimeOptions` | type | Options for the managed runtime. |
+| `RecoveryPlan` | type | Single-operation recovery plan. |
+| `ExecutionResult` | type | Outcome of a managed execution. |
 | `NomoErrorCode` | type | String union of SDK error codes. |
 | `RefusalReason` | type | Replay refusal reason. |
 

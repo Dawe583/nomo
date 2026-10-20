@@ -83,11 +83,11 @@ check, and a put-back restore.
 
 Shared stores both shapes use:
 
-- `SnapshotStore` in packages/connectors/src/snapshot/store.ts:11 is
+- `SnapshotStore` in packages/connectors/src/snapshot/store.ts:14 is
   `put` plus `get` plus `retention`. Digests use `sha256Digest` in
-  packages/connectors/src/snapshot/store.ts:30.
+  packages/connectors/src/snapshot/store.ts:33.
 - Manifest append plus read for e2e proofs: `manifestWriter` in
-  packages/connectors/src/manifest.ts:19 and `manifestReader` in
+  packages/connectors/src/manifest.ts:36 and `manifestReader` in
   packages/connectors/src/manifest.ts:29.
 - Probe sets per connector: `pickProbes` in
   packages/connectors/src/probes/registry.ts:25 returns the postgres probe
@@ -133,16 +133,16 @@ place only: `packages/connectors/src/registry.ts` (section 4).
 
 ## 2. The exact Connector interface to implement
 
-The interface is `Connector` in packages/connectors/src/registry.ts:78.
+The interface is `Connector` in packages/connectors/src/registry.ts:80.
 It has 7 members. Implement all 7; none is optional.
 
-- `id: ConnectorId` in packages/connectors/src/registry.ts:79. The id
+- `id: ConnectorId` in packages/connectors/src/registry.ts:81. The id
   union is `ConnectorId` in packages/connectors/src/registry.ts:12, today
   `"postgres" | "s3"`. After your change it must include your new literal
   (section 4).
-- `surface: string` in packages/connectors/src/registry.ts:80. Postgres
+- `surface: string` in packages/connectors/src/registry.ts:82. Postgres
   uses `"postgres"` and s3 uses `"s3"`. Use your vendor prefix.
-- `probes: readonly Probe[]` in packages/connectors/src/registry.ts:81.
+- `probes: readonly Probe[]` in packages/connectors/src/registry.ts:83.
   Return `pickProbes("<name>")`
   (packages/connectors/src/probes/registry.ts:25) after you add your probe
   pair next to the postgres and s3 pairs, or return `[]` only if you also
@@ -171,7 +171,8 @@ It has 7 members. Implement all 7; none is optional.
   packages/connectors/src/registry.ts:73 (`applied`, `refused`) where each
   refusal is a `ReplayRefusal` in
   packages/connectors/src/registry.ts:66 with reason `"drift"` or
-  `"missing_target"` or `"permission_denied"` or `"internal_error"`,
+  `"missing_target"` or `"permission_denied"` or `"internal_error"` or
+  `"verification_failed"` or `"verification_unavailable"`,
   plus the `DriftChange` detail shape in
   packages/connectors/src/registry.ts:58 when drift is the reason.
 
@@ -252,13 +253,13 @@ registers a connector.
    `"postgres" | "s3"` to `"postgres" | "s3" | "<name>"`.
 2. Add your maker next to `makePostgresConnector` and `makeS3Connector`,
    then add the new key inside `makeConnector` in
-   packages/connectors/src/registry.ts:120 so the returned object has all
+   packages/connectors/src/registry.ts:131 so the returned object has all
    three keys. `connectorRegistry` in
    packages/connectors/src/registry.ts:116 delegates to `makeConnector`,
    so it picks up the new connector automatically. Extend `ConnectorDeps`
    in packages/connectors/src/registry.ts:90 with your optional client.
 3. Extend the vendor branch in `connectorFor` in
-   packages/connectors/src/registry.ts:130, which today accepts only
+   packages/connectors/src/registry.ts:138, which today accepts only
    `"postgres"` and `"s3"` and returns `null` otherwise. Add your vendor
    string to the check and to the registry index. Unknown vendors must
    keep returning `null` so callers deny instead of guessing.

@@ -297,7 +297,7 @@ approval wiring, session hold workspace identity, recursive Postgres capture and
 restore ordering, S3 captures surviving restart, conditional S3 writes, private
 snapshot permissions, and authenticated remote API forwarding.
 
-Verification includes the full `pnpm check` (487 tests passing), whole-product approval arc, final
+Verification includes the full `pnpm check` (487 tests passing, recorded 2026-09-11; the suite has since grown), whole-product approval arc, final
 stdio/HTTP product sweep and connector replay sweep. PostgreSQL cascade behavior
 also runs on PGlite's actual SQL engine with foreign-key constraints and unrelated
 rows. Browser QA covers 320, 375, 390, 430, 768 and 1280 pixel widths, both themes,
@@ -329,7 +329,7 @@ Only one model session runs at a time. Speculative execution is not supported.
 
 ## Desktop and managed-workspace verification
 
-`pnpm check` passes all 500 shared-runtime tests. The added default-agent integration test
+`pnpm check` passes all 500 shared-runtime tests (recorded 2026-09-11; current suite is 22 suites / ~3060 tests). The added default-agent integration test
 runs a real built-in tool through a deterministic provider, restarts twice,
 verifies encrypted persistence and Ed25519 capture binding, rejects a forged
 capture, and applies an explicit inverse. The Anthropic adapter test covers

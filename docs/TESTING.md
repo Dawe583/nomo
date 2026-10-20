@@ -10,7 +10,7 @@ Run package tests from the repository root with these exact commands:
 cd packages/registry && node --test src/evaluate.test.ts src/facts.test.ts src/index.test.ts
 cd packages/ledger && node --test src/index.test.ts
 cd packages/proxy && node --test src/forward/forward.test.ts src/forward/tools.test.ts src/index.test.ts src/relay/notifications.test.ts src/relay/requests.test.ts src/session.test.ts src/transport/stdio.test.ts
-cd packages/policy && node --test src/channels/cli.test.ts src/channels/slack.test.ts src/hold.test.ts src/index.test.ts src/rules.test.ts src/skeptics.test.ts
+cd packages/policy && node --test src/channels/cli.test.ts src/hold.test.ts src/index.test.ts src/rules.test.ts src/skeptics.test.ts
 cd packages/connectors && node --test src/index.test.ts
 cd packages/cli && node --test src/classify.test.ts src/index.test.ts src/tui/tui.test.ts
 ```

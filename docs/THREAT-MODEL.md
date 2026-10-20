@@ -207,11 +207,7 @@ Two secondary consequences of the same design:
   (`packages/ledger/src/attest.ts:61-74`) has **no production caller**, only
   tests and `scripts/src/e2e-final.mjs:310`. The anchoring mechanism exists and
   is not shipped.
-- **`nomo verify` can mint a key.** `packages/cli/src/verify.ts:166` calls
-  `devKeyProvider({ env })` with no `createIfMissing: false`, and
-  `packages/ledger/src/sign.ts:67` defaults it to `true`. On a machine with no
-  key, running the verifier creates one. That is a footgun, not a vulnerability,
-  and the fix is one argument.
+- **`nomo verify` could mint a key (historical).** This was true before the verifier switched to `resolveVerificationKey` with no `createIfMissing`; it no longer mints a key. Left as a record of the prior footgun.
 
 ---
 
@@ -407,7 +403,7 @@ classifier and the `policy_version` in force.
 | Signing key outside the audited process's **writable filesystem** | **Not met.** `0600` file in the agent's own data directory (`sign.ts:61`, `:150`). |
 | Signing key **not accessible** to the audited agent process | **Not met.** It is read and used in that process (`workbench/src/index.ts:1705`, `:1739`). |
 | Verification outside the recorder's principal | **Not met.** The HTTP verifier runs in the recorder process (`server.ts:113`, `:331`). |
-| `policy_digest` / `policy_version` recorded, digest of canonical policy | **Not met.** Neither field exists; `PolicyFile.version` is a format constant (`rules.ts:46-49`, `:73`). |
+| `policy_digest` / `policy_version` recorded, digest of canonical policy | **Met on the proxy path** (`attribution.policyDigest` + `attribution.rule`, `forward/tools.ts:376`, `packages/policy/src/digest.ts`); **not** on workbench evidence or journal events, which still lack it. See `readLedgerReason` in `ledger/src/attribution.ts:162`. |
 | Downgrade is an attributable recorded event | **Not applicable**, NOMO has no trust-level field to suppress. |
 | `recording_component` URI distinct from `agent_id` | **Not met.** No `recording_component` field; `key_id` is derived from the same key that signs everything. |
 | `signer_kid` distinct from the agent's key thumbprint | **Not met, and unmeetable in principle here**, there is only one key, used for both roles (`store.ts:99-104`). |
