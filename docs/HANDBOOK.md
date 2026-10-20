@@ -775,6 +775,7 @@ nomo harness list --session <id>
 nomo harness approve --session <id> <digest-or-prefix>
 nomo harness reject --session <id> <digest-or-prefix> --reason <text>
 nomo harness rollback --session <id> <digest-or-prefix>
+nomo harness ratchet --session <id>
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
 nomo tui [--once] [--project <path>] [--skill <id> ...] [--view <tab>] [--session <id>] [--data-dir <path>]

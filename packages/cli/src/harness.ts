@@ -26,6 +26,20 @@ export type HarnessIo = {
 /** The part of the workbench this command uses. Narrow on purpose: the
  * command is a reader and a decider, and it does not need the run path. */
 export type HarnessSurface = {
+  /** A live session, when the surface owns sessions. */
+  get?(id: string): { readonly workspace: string } | undefined;
+  /** The signed chain of a workspace, verified. Optional: a test double may
+   * omit it, and the ratchet reports that there is nothing to measure. */
+  ledger?(
+    workspace: string,
+  ): Promise<
+    | {
+        readonly entries: readonly { readonly body: unknown; readonly seq: number }[];
+        readonly result: unknown;
+        readonly verification: unknown;
+      }
+    | undefined
+  >;
   /** The entries the harness currently holds for a session's workspace. */
   harnessEntries(
     sessionId: string,
@@ -102,6 +116,7 @@ const USAGE = [
   "  nomo harness reject --session <id> <digest> --reason <text>",
   "  nomo harness rollback --session <id> <digest>",
   "  nomo harness entries --session <id> show what the harness holds",
+  "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
   "  nomo harness model                 show the reviewer model",
   "  nomo harness model <model-id>      set the reviewer model",
   "  nomo harness model --clear         use the conversation's own model",
@@ -254,12 +269,12 @@ export async function runHarnessCommand(
       return 1;
     }
   }
-  if (!flags.session) {
+  if (!flags.session && !["model", "ratchet"].includes(action)) {
     io.stderr("The harness commands need a session: --session <id>.");
     io.stderr(USAGE);
     return 1;
   }
-  if (!["list", "entries", "model"].includes(action) && !flags.digest) {
+  if (!["list", "entries", "model", "ratchet"].includes(action) && !flags.digest) {
     io.stderr(`The ${action} action needs the digest of the proposal.`);
     io.stderr(USAGE);
     return 1;
@@ -283,6 +298,84 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
+    if (action === "ratchet") {
+      // The workbench owns the sessions; a test double may not, so the
+      // session lookup falls back to a pending-proposals probe.
+      let session: { readonly workspace: string } | undefined;
+      try {
+        session = workbench.get ? workbench.get(flags.session) : undefined;
+      } catch {
+        session = undefined;
+      }
+      if (!session) {
+        io.stderr("Session not found.");
+        return 1;
+      }
+      const proof = workbench.ledger
+        ? await workbench.ledger(session.workspace)
+        : undefined;
+      const entries = (proof?.entries ?? []) as readonly {
+        readonly body: unknown;
+        readonly seq: number;
+      }[];
+      const now = new Date().toISOString();
+      io.stdout(
+        "The harness board is descriptive only. It never changes a decision or permission.",
+      );
+      io.stdout("");
+      if (!entries.length) {
+        io.stdout("No signed entry in this workspace, so there is nothing to measure.");
+        return 0;
+      }
+      const previous = [...entries]
+        .reverse()
+        .find(
+          (entry) =>
+            (entry.body as Record<string, unknown> | null)?.decision ===
+            "proposal:activated",
+        );
+      if (!previous) {
+        const { measureBoard, scoreCases } = await import(
+          "../../workbench/src/harness-scores.ts"
+        );
+        const current = measureBoard(scoreCases(entries), now);
+        io.stdout("No previous refinement: nothing to compare against.");
+        io.stdout(
+          `Current board: verdict ${current.verdict}, ${current.caseCount} cases, deny_rate ${current.metrics.deny_rate.n} measured.`,
+        );
+        return 0;
+      }
+      const baselineIndex = entries.indexOf(previous);
+      const { compareBoards, measureBoard, scoreCases, SCORE_GUARDRAILS, SCORE_METRICS } = await import(
+        "../../workbench/src/harness-scores.ts"
+      );
+      const before = measureBoard(scoreCases(entries.slice(0, baselineIndex)), now);
+      const after = measureBoard(scoreCases(entries), now);
+      const compared = compareBoards(before, after);
+      io.stdout(`Baseline: the board before the refinement activated at sequence ${previous.seq}.`);
+      io.stdout(`Verdict: ${compared.verdict}`);
+      io.stdout("");
+      for (const key of SCORE_GUARDRAILS) {
+        const metric = SCORE_METRICS[key];
+        const b = before.guardrails[key];
+        const a = after.guardrails[key];
+        const fmt = (summary: { readonly mean: number | null; readonly n: number } | undefined) =>
+          summary && summary.mean !== null
+            ? `${summary.mean.toFixed(3)} (n=${summary.n})`
+            : "unmeasured";
+        const moved = compared.guardrailBreaches.includes(key) ? "  REGRESSED" : "";
+        io.stdout(
+          `${key}  ${metric ? metric.label : key}: ${fmt(b)} -> ${fmt(a)}${moved}`,
+        );
+      }
+      if (compared.guardrailBreaches.length) {
+        io.stdout("");
+        io.stdout(
+          "A guardrail regressed outside noise. This is a report, not a refusal: the workbench decides, and it decides on evidence the harness chain carries.",
+        );
+      }
+      return 0;
+    }
     if (action === "entries") {
       const entries = await workbench.harnessEntries(flags.session);
       if (!entries.length) {
