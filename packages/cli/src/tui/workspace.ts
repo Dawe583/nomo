@@ -6419,7 +6419,7 @@ export function renderWorkspace(
     header.push(
       ink(
         text(
-          ` /V/  NOMO  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
+          `⌜·⌟ NOMO  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
         ),
         `1;${amber}`,
       ),

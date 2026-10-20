@@ -1361,6 +1361,20 @@ test("branch intent reuses its idempotency key after a transient failure", async
   assert.match(keys[0]!, /^[0-9a-f-]{36}$/);
 });
 
+test("narrow workspace header uses the compact aperture identity", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-brand-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  const frame = stripAnsi(renderWorkspace(ui, 40, 24));
+  assert.match(frame, /⌜·⌟ NOMO/);
+  assert.doesNotMatch(frame, /\/V\//);
+  assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
+});
+
 test("aperture logo keeps open corners and center dot", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-logo-"));
   const { app, env } = await fixtureApp(root);
