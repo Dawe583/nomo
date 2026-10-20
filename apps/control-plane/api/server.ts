@@ -657,6 +657,20 @@ async function route(
     // path and the web surface did not, so an operator who works in the
     // browser could not approve what the harness learned, which is the one
     // action the loop exists for.
+    // What the harness holds for this conversation: the lessons, the tools
+    // they are about, and whether an operator decided them. The proposal
+    // list is the inbox; this is the shelf.
+    const harnessEntries =
+      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/entries$/.exec(parsed.pathname);
+    if (harnessEntries) {
+      const id = harnessEntries[1]!;
+      if (!wb.get(id)) return sendJson(response, 404, { message: "Session not found." });
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      return sendJson(response, 200, {
+        entries: await wb.harnessEntries(wb.get(id)!.workspace),
+      });
+    }
     const harnessProposals =
       /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals$/.exec(parsed.pathname);
     if (harnessProposals) {

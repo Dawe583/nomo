@@ -10,6 +10,7 @@ import * as m from "motion/react-m";
 import { BrandMark } from "./brand";
 import { ApprovalReview } from "./approval-review";
 import { HarnessProposals } from "./harness-proposals.tsx";
+import { HarnessEntries } from "./harness-entries.tsx";
 import { Icon } from "./icons";
 import {
   PermissionBanner,
@@ -1068,6 +1069,7 @@ export function Chat({
           </p>
         )}
         <HarnessProposals sessionId={id} />
+        <HarnessEntries sessionId={id} />
         {(holds.data?.approvals ?? [])
           .filter(
             (a: Row) =>
