@@ -135,7 +135,7 @@ export function localRecoveryVault(
       }
       if (digest(bytes.toString("base64")) !== reference.digest)
         throw new Error(
-          `Recovery artifact hash mismatch: reference declares ${reference.digest}, the stored bytes hash to ${digest(bytes.toString("base64"))}.`,
+          `Recovery artifact digest mismatch: reference declares ${reference.digest}, the stored bytes hash to ${digest(bytes.toString("base64"))}.`,
         );
       const cipher = createDecipheriv(
         "aes-256-gcm",
