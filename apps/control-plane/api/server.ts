@@ -654,7 +654,12 @@ async function route(
           });
         }
         const input = parseBranchInput(body);
-        if (!input) return sendJson(response, 400, { error: "invalid_branch" });
+        if (!input)
+          return sendJson(response, 400, {
+            error: "invalid_branch",
+            message:
+              "needs seq: a safe integer of at least 1, prompt: a non-empty string, snapshotDocuments: a boolean, idempotencyKey: a string",
+          });
         return sendJson(response, 201, { session: await wb.branch(id, input) });
       }
       if (kind === "documents") {
@@ -724,7 +729,10 @@ async function route(
         } | null;
         const { baseUrl, apiKey, kind } = body ?? {};
         if (typeof baseUrl !== "string" || typeof apiKey !== "string")
-          return sendJson(response, 400, { error: "invalid_provider" });
+          return sendJson(response, 400, {
+            error: "invalid_provider",
+            message: "baseUrl and apiKey must be strings",
+          });
         const models = await options.workbench.configure(
           normalizeProviderConfig({ baseUrl, apiKey, kind }),
         );
@@ -1091,7 +1099,10 @@ async function route(
       publicKey: options.publicKey,
     });
     if (!verified.ok)
-      return sendJson(response, 409, { error: "ledger_verification_failed" });
+      return sendJson(response, 409, {
+        error: "ledger_verification_failed",
+        message: verified.reason,
+      });
     const entry = entries.find((item) => item.seq === seq);
     if (!entry) return sendJson(response, 404, { error: "record_not_found" });
     if (recordAction[2] === "taint" && request.method === "GET") {
