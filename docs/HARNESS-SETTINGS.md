@@ -29,7 +29,9 @@ range it may be set within, and the symbols that read it.
 `/settings maxQueuedRuns 50` sets one.
 
 Over HTTP, `GET /api/harness-settings` returns the same rows and
-`PATCH /api/harness-settings` accepts the same keys.
+`PATCH /api/harness-settings` accepts the same keys. The one selection, which
+is a name rather than a limit, has its own pair of routes:
+`GET /api/harness-review-settings` and `PATCH /api/harness-review-settings`.
 
 Both paths clamp rather than refuse an out-of-range value, and both refuse an
 unknown key by name. A misspelled limit that returned success would read to an
@@ -150,7 +152,8 @@ consumes from each binary.
 
 | file                                                  | what it protects                                                                                                                                                          |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/workbench/src/harness-settings.test.ts`     | clamping, the unknown-key refusal, the stored-state clamp, and that every declared consumer exists in the file it claims                                                  |
+| `packages/workbench/src/harness-settings.test.ts`     | clamping, the unknown-key refusal, the stored-state clamp, that every declared consumer exists in the file it claims, and that a selection is shape checked and refused by name |
+| `packages/workbench/src/harness-review-model.test.ts` | that the review runs on the conversation's own model until one is selected, that a selected model takes the call, and that a malformed selection changes nothing                 |
 | `packages/workbench/src/harness-wiring.test.ts`       | that a lowered limit actually stops the run, that a raised queue bound admits more, that a timeout is not reported as a clean finish, and that settings survive a restart |
 | `packages/workbench/src/gui-harness-settings.test.ts` | that `capabilities` reports the configured limits rather than the shipped constants                                                                                       |
 | `apps/control-plane/api/harness-settings.test.ts`     | that a refused patch is not accepted over HTTP                                                                                                                            |

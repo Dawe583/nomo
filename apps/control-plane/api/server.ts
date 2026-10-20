@@ -669,7 +669,7 @@ async function route(
       });
     }
     const harnessDecision =
-      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals\/([a-f0-9]{64})\/(approve|reject)$/.exec(
+      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals\/([a-f0-9]{64})\/(approve|reject|rollback)$/.exec(
         parsed.pathname,
       );
     if (harnessDecision) {
@@ -681,6 +681,11 @@ async function route(
         return sendJson(response, 405, { error: "method_not_allowed" });
       if (action === "approve")
         return sendJson(response, 200, await wb.approveHarnessProposal(id, digest));
+      // The rollback undoes an activation the operator already approved, so
+      // it needs the same reach as the approval: a decision nobody can take
+      // back from the surface they decided on is not reversible.
+      if (action === "rollback")
+        return sendJson(response, 200, await wb.rollbackHarnessProposal(id, digest));
       const body = await readJsonBody(request).catch(() => ({})) as {
         reason?: unknown;
       };

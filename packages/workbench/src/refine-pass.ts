@@ -68,6 +68,14 @@ export type RefinementEdit = {
   readonly promptAddendum?: string;
   /** Present on delete and optional elsewhere: how to undo it. */
   readonly rollbackId?: string;
+  /**
+   * The tool and class a lesson is about, when the lesson was mined from
+   * them. A rollback restores a mined lesson and needs to write back what
+   * the lesson was about, not only its text: a lesson with an empty tool and
+   * class reads as though it applies to nothing.
+   */
+  readonly tool?: string;
+  readonly klass?: string;
 };
 
 export type RefinementProposal = {
@@ -136,8 +144,9 @@ function readEdit(value: unknown): RefinementEdit {
   // would carry three keys a hand-built one never has, and could not be
   // written to the chain at all. Every test builds proposals as literals, so
   // nothing exercised the parsed shape end to end.
-  const optional = (key: "id" | "title" | "content" | "rollbackId" | "promptAddendum") =>
-    raw[key] === undefined ? {} : { [key]: text(raw[key]) };
+  const optional = (
+    key: "id" | "title" | "content" | "rollbackId" | "promptAddendum" | "tool" | "klass",
+  ) => (raw[key] === undefined ? {} : { [key]: text(raw[key]) });
   return {
     action: text(raw.action) as RefinementAction,
     kind: text(raw.kind) as RefinementKind,
@@ -147,6 +156,8 @@ function readEdit(value: unknown): RefinementEdit {
     derivedFromSeq: seqs(raw.derivedFromSeq),
     reason: text(raw.reason),
     ...optional("rollbackId"),
+    ...optional("tool"),
+    ...optional("klass"),
     // A prompt edit carries the addendum text in its own field, not in
     // content. Dropping it here meant validateProposal rejected every prompt
     // edit a model could produce, and the approval path the operator reads
@@ -299,6 +310,13 @@ export function validateProposal(proposal: RefinementProposal): Validated {
       reject(`${edit.action} requires an id`);
       return;
     }
+    if (edit.id !== undefined && edit.id.trim() === "") {
+      // An empty id is not an id. The apply path would take it as the entry
+      // id, and the rollback would then look for a different entry and
+      // report a removal that never happened.
+      reject("an edit id must not be empty");
+      return;
+    }
     if (edit.kind === "prompt" && !edit.promptAddendum?.trim()) {
       // A prompt edit is only an addendum to the standing instructions, so it
       // has to say what the addendum is. An empty one is not an addendum: it
@@ -412,8 +430,10 @@ export function applyProposal(
       // author one would route around the only thing that is auditable.
       kind: "lesson",
       scope: "workspace",
-      tool: before?.tool ?? "",
-      klass: before?.klass ?? "",
+      // The edit may name the tool and class the lesson is about, which is
+      // how a rollback writes back a mined lesson whole.
+      tool: edit.tool ?? before?.tool ?? "",
+      klass: edit.klass ?? before?.klass ?? "",
       title: edit.title ?? "",
       content: addendum,
       derivedFromSeq: edit.derivedFromSeq,

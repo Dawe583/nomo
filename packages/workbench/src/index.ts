@@ -3630,7 +3630,12 @@ export class Workbench {
         (typeof refinementRecord?.digest === "string" && refinementRecord.digest);
       if (
         terminalDigest &&
-        ["proposal:activated", "proposal:rejected", "refinement:approved"].includes(String(body.decision))
+        [
+          "proposal:activated",
+          "proposal:rejected",
+          "refinement:approved",
+          "refinement:rolled-back",
+        ].includes(String(body.decision))
       )
         pending.delete(terminalDigest);
     }
@@ -3814,7 +3819,10 @@ export class Workbench {
       // it names what it undid, which is how an already rolled back digest
       // tells itself apart from a displaced one.
       let latest: { seq: number; record: Record<string, unknown> } | undefined;
-      let activation: { seq: number; record: Record<string, unknown> } | undefined;
+      let activation:
+        | { index: number; seq: number; record: Record<string, unknown> }
+        | undefined;
+      let rolledBackAt: number | null = null;
       for (let index = entries.length - 1; index >= 0; index--) {
         const body = entries[index]!.body as Record<string, unknown>;
         const refinement = body.harnessRefinement;
@@ -3822,21 +3830,63 @@ export class Workbench {
         const record = refinement as Record<string, unknown>;
         if (!latest) latest = { seq: entries[index]!.seq, record };
         if (record.digest === digest && !activation)
-          activation = { seq: entries[index]!.seq, record };
+          activation = { index, seq: entries[index]!.seq, record };
+        // Every record is read, not only the latest: a digest that was rolled
+        // back and then displaced by a later refinement is still rolled back,
+        // and the refusal has to name that rather than tell the operator to
+        // roll back a refinement that is no longer the state.
+        if (record.rolledBackDigest === digest) rolledBackAt = entries[index]!.seq;
       }
-      if (latest && latest.record.rolledBackDigest === digest)
-        throw new Error("That refinement is already rolled back.");
+      if (rolledBackAt !== null)
+        throw new Error(
+          latest && latest.record.rolledBackDigest === digest
+            ? "That refinement is already rolled back."
+            : "A later rollback already restored this workspace past that refinement.",
+        );
       if (!latest || !activation)
         throw new Error("No activated refinement matches that digest.");
-      if (latest.seq !== activation.seq)
+      // The harness reads the state of one refinement at a time, so the
+      // rollback target is the refinement whose state it currently reads. A
+      // rollback record names that state in restoresDigest, which is how a
+      // rollback of the rollback's predecessor stays reachable: after
+      // rolling back the second refinement, the harness reads the state of
+      // the first again, and that first is what the operator can undo next.
+      const latestHoldsRequested =
+        latest.record.digest === digest || latest.record.restoresDigest === digest;
+      if (!latestHoldsRequested)
         throw new Error(
           `A later refinement has changed this workspace since ${digest} was activated. Roll the later refinement back first.`,
         );
+      // The state this rollback restores is the state of the refinement before
+      // the one being rolled back. It is named in the record, so the next
+      // rollback can tell which refinement the harness reads afterwards.
+      let restoresDigest: string | undefined;
+      for (let index = activation.index - 1; index >= 0; index--) {
+        const body = entries[index]!.body as Record<string, unknown>;
+        const refinement = body.harnessRefinement;
+        if (refinement === null || typeof refinement !== "object") continue;
+        const record = refinement as Record<string, unknown>;
+        const held =
+          typeof record.digest === "string"
+            ? record.digest
+            : typeof record.restoresDigest === "string"
+              ? record.restoresDigest
+              : undefined;
+        if (held) {
+          restoresDigest = held;
+          break;
+        }
+      }
       const applied = activation.record.applied;
       if (!Array.isArray(applied) || applied.length === 0)
         throw new Error("The activated refinement carries no applied edit to roll back.");
       const edits: RefinementEdit[] = [];
-      for (const item of applied) {
+      // Backwards, because the inverse of a sequence of edits on one entry is
+      // that sequence reversed. Applied forwards, two updates of the same id
+      // would restore the intermediate state rather than the state before the
+      // proposal, and a rollback that reports success while restoring the
+      // wrong text is worse than no rollback at all.
+      for (const item of [...applied].reverse()) {
         if (item === null || typeof item !== "object") continue;
         const record = item as Record<string, unknown>;
         const source = record.edit;
@@ -3858,7 +3908,7 @@ export class Workbench {
         // The rollback has to name the same id, or its delete would miss the
         // entry the create wrote.
         const id =
-          typeof edit.id === "string" && edit.id
+          typeof edit.id === "string"
             ? edit.id
             : contentAddressedId(kind, title, addendum);
         const seqs = Array.isArray(edit.derivedFromSeq)
@@ -3883,6 +3933,18 @@ export class Workbench {
           typeof previous.title === "string" ? previous.title : title;
         const previousContent =
           typeof previous.content === "string" ? previous.content : "";
+        // The entry a restore writes back keeps what it was about and which
+        // records it was mined from. A lesson with an empty tool and class
+        // reads as though it applies to nothing, and one that cites the
+        // rollback's own records cites evidence it did not come from.
+        const previousTool = typeof previous.tool === "string" ? previous.tool : "";
+        const previousKlass =
+          typeof previous.klass === "string" ? previous.klass : "";
+        const previousSeqs = Array.isArray(previous.derivedFromSeq)
+          ? previous.derivedFromSeq.filter(
+              (seq): seq is number => typeof seq === "number" && Number.isInteger(seq),
+            )
+          : seqs;
         if (outcome === "deleted") {
           edits.push(
             kind === "prompt"
@@ -3892,7 +3954,9 @@ export class Workbench {
                   id,
                   title: previousTitle,
                   promptAddendum: previousContent,
-                  derivedFromSeq: seqs,
+                  derivedFromSeq: previousSeqs,
+                  tool: previousTool,
+                  klass: previousKlass,
                   reason: "rollback: restore the entry this proposal deleted",
                 }
               : {
@@ -3901,7 +3965,9 @@ export class Workbench {
                   id,
                   title: previousTitle,
                   content: previousContent,
-                  derivedFromSeq: seqs,
+                  derivedFromSeq: previousSeqs,
+                  tool: previousTool,
+                  klass: previousKlass,
                   reason: "rollback: restore the entry this proposal deleted",
                 },
           );
@@ -3915,7 +3981,9 @@ export class Workbench {
                 id,
                 title: previousTitle,
                 promptAddendum: previousContent,
-                derivedFromSeq: seqs,
+                derivedFromSeq: previousSeqs,
+                tool: previousTool,
+                klass: previousKlass,
                 reason: "rollback: restore the entry this proposal replaced",
               }
             : {
@@ -3924,7 +3992,9 @@ export class Workbench {
                 id,
                 title: previousTitle,
                 content: previousContent,
-                derivedFromSeq: seqs,
+                derivedFromSeq: previousSeqs,
+                tool: previousTool,
+                klass: previousKlass,
                 reason: "rollback: restore the entry this proposal replaced",
               },
         );
@@ -3961,6 +4031,18 @@ export class Workbench {
       });
       if (!result.applied.length)
         throw new Error("The rollback applied no edit, so it would record a change of nothing.");
+      // The applied count is not the evidence: a delete that hit no entry is
+      // still counted as applied, and the view would read exactly as before.
+      const beforeIds = new Set(current.map((entry) => entry.id));
+      const afterIds = new Set(result.entries.map((entry) => entry.id));
+      const changed =
+        beforeIds.size !== afterIds.size ||
+        current.some((entry) => {
+          const next = result.entries.find((item) => item.id === entry.id);
+          return !next || next.content !== entry.content || next.title !== entry.title;
+        });
+      if (!changed)
+        throw new Error("The rollback would not change what the harness reads.");
       // The restored entries travel into the new record as the overrides, so
       // they are scanned as well: an update rollback writes back the text the
       // entry carried before, and that text was written under the secrets
@@ -3993,6 +4075,7 @@ export class Workbench {
               "refinement:rolled-back",
               ...(tombstones.length ? ["entry:tombstone"] : []),
             ],
+            tombstones,
             atSeq: activation.seq,
           },
           harnessRefinement: {
@@ -4009,6 +4092,7 @@ export class Workbench {
             // operator approved text because it came back.
             approvedBy: "rollback",
             rolledBackDigest: digest,
+            ...(restoresDigest ? { restoresDigest } : {}),
             atSeq: activation.seq,
           },
         },

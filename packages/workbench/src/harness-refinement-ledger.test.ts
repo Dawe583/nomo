@@ -165,19 +165,13 @@ test("a refused branch request does not discard a retained review", async (t) =>
 
   // An approving review already paid for and waiting behind an active turn. No
   // production path creates one, so it is seeded here; what the boundary then
-  // does with it is the runtime's own code. Every optional edit field is
-  // spelled out because the reply parser writes the absent ones as an explicit
-  // `undefined`, which the digest cannot serialise -- a separate defect in
-  // refine-pass.ts, not one this test is here to pin down.
+  // does with it is the runtime's own code. The optional edit fields are left
+  // absent rather than spelled out as empty strings: the reply parser writes
+  // an absent field as an explicit `undefined`, which the digest cannot
+  // serialise, and an empty id is not an id, which the validator now refuses.
   const retained = {
     ...proposal(),
     summary: "retained across a refused branch",
-    edits: proposal().edits.map((edit) => ({
-      ...edit,
-      id: "",
-      rollbackId: "",
-      promptAddendum: "",
-    })),
   };
   internals.harnessTriggers.set(session.id, {
     ...initialTriggerState(),

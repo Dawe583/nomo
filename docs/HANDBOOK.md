@@ -472,6 +472,12 @@ Setup and diagnostics: `/doctor`, `/init`, `/conformance`, `/harness
 <cloud|prime-agent>`. The two external agent binaries behind `/harness` are
 documented in `docs/AGENT-BINARIES.md`.
 
+The harness itself: `/harness scores` shows what the harness measured,
+`/harness review` asks for a review now, and `/harness approve <digest>` and
+`/harness reject <digest> [reason...]` decide a proposal. A proposal stays
+inert until its exact digest is named, and a digest nobody proposed is
+refused by name.
+
 Every command above takes its argument in the same place; running one with no
 argument prints its own usage line rather than failing opaquely. A command with
 no argument at all, or an unknown one, is refused by name.

@@ -70,7 +70,11 @@ async function fixture(t: { after(fn: () => Promise<void>): void }) {
       ).json()) as {
         proposals: { digest: string; summary: string; proposal: RefinementProposal }[];
       },
-    decide: (digest: string, action: "approve" | "reject", body?: unknown) =>
+    decide: (
+      digest: string,
+      action: "approve" | "reject" | "rollback",
+      body?: unknown,
+    ) =>
       fetch(`${origin}/api/sessions/${session.id}/harness/proposals/${digest}/${action}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -137,4 +141,26 @@ test("an unknown session reads 404 and an unknown digest reads as refused", asyn
   assert.notEqual(unknownDigest.status, 200);
   const refused = (await unknownDigest.json()) as { message?: string };
   assert.match(refused.message ?? "", /No pending refinement matches that digest\./);
+});
+
+test("POST rollback undoes an activation and the lesson stops being read", async (t) => {
+  const f = await fixture(t);
+  const created = await f.app.refineHarness(f.session.id, proposal("approval pattern"));
+  await f.decide(created.proposalDigest!, "approve");
+  assert.equal((await f.app.harnessEntries(f.session.workspace)).length, 1);
+
+  const rolled = await f.decide(created.proposalDigest!, "rollback");
+
+  assert.equal(rolled.status, 200);
+  const body = (await rolled.json()) as { applied: unknown[] };
+  assert.equal(body.applied.length, 1);
+  assert.deepEqual(await f.app.harnessEntries(f.session.workspace), []);
+});
+
+test("POST rollback of a digest nobody activated reads as refused", async (t) => {
+  const f = await fixture(t);
+  const rolled = await f.decide("b".repeat(64), "rollback");
+  assert.notEqual(rolled.status, 200);
+  const refused = (await rolled.json()) as { message?: string };
+  assert.match(refused.message ?? "", /No activated refinement matches that digest\./);
 });

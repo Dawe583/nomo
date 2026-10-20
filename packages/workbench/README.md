@@ -69,19 +69,20 @@ Assistant text streams to the UI. There is no claim of Codex, Claude Code or
 OpenCode process adapters, PTY, or desktop packaging. Those are separate AW
 work packages.
 
-Validation: `node --test packages/workbench/src/workbench.test.ts` drives real MCP
-fixture processes behind a local provider test double, including approval denial.
-It does not spend credits or claim external-provider account validation.
+Validation: the test `packages/workbench/src/workbench.test.ts`, run with
+`node --test`, drives real MCP fixture processes behind a local provider test
+double, including approval denial. It does not spend credits or claim
+external-provider account validation.
 
-`node --test packages/workbench/src/harness-dispose.test.ts` proves the shutdown
+The test `packages/workbench/src/harness-dispose.test.ts` proves the shutdown
 drain. `disposeReviews` serves each open session's dispose boundary while the
 provider still answers, and `shutdown` awaits it before closing the transports.
 A dispose review bypasses arming but not the gate facts the trigger keeps:
 refinement disabled, a round in flight, and a cooldown a failed attempt just
 stamped all still hold, so a drain twice in one tick pays once.
 
-`node --test packages/workbench/src/harness-rollback.test.ts` proves the
-operator rollback. `rollbackHarnessProposal` takes the digest of an activated
+The test `packages/workbench/src/harness-rollback.test.ts` proves the operator
+rollback. `rollbackHarnessProposal` takes the digest of an activated
 refinement and writes one more signed record whose `harnessRefinement` carries
 the state the view reads. The inverse edits are rebuilt from the activation
 record's own before snapshots and go through the same apply machinery an
@@ -106,18 +107,29 @@ entered the environment after a proposal was written would otherwise travel
 into the chain again through the rollback, and the guarantee has to be
 re-established at the write rather than inherited.
 
+The rollback restores the state the harness reads, and the state it restores
+is named in the record. A rollback of the second refinement leaves the harness
+reading the state of the first again, so the first can be rolled back too, and
+each record says which state it holds in `restoresDigest`. The inverse edits
+run backwards, because the inverse of two edits on one entry is those two
+edits reversed, and applied forwards a rollback would restore an intermediate
+state and still report success. A restored lesson keeps the tool, the class
+and the records it was mined from, and an edit id that is present but empty
+is refused, because the apply path would take it as the entry id and the
+rollback would then look for a different entry.
+
 The operator decides a proposal on the surface they are already on. The
 terminal has had that path; the web control plane did not, so an operator who
 works in the browser could not approve what the harness learned, which is the
 one action the loop exists for. The control plane now serves
 `GET /api/sessions/:id/harness/proposals` and
-`POST /api/sessions/:id/harness/proposals/:digest/approve` and `.../reject`
-for a live session. A decision binds to the exact digest the operator was
-shown, a rejection carries its reason, an unknown session reads 404, and a
-digest nobody proposed is refused with the workbench's own sentence rather
-than as a silent no-op.
+`POST /api/sessions/:id/harness/proposals/:digest/approve`, `.../reject` and
+`.../rollback` for a live session. A decision binds to the exact digest the
+operator was shown, a rejection carries its reason, an unknown session reads
+404, and a digest nobody proposed is refused with the workbench's own sentence
+rather than as a silent no-op.
 
-`node --test packages/workbench/src/harness-review-model.test.ts` proves the
+The test `packages/workbench/src/harness-review-model.test.ts` proves the
 reviewer model selection. `refinementModel` is empty by default and empty
 means the conversation's own model pays for the review. A selected model takes
 the review call, the usage record names the model the call actually went to,
@@ -128,7 +140,7 @@ refuses. The selection is a name rather than a limit, so it lives in its own
 table with shape validation instead of a clamp, and it is set over HTTP at
 `/api/harness-review-settings`.
 
-`node --test packages/workbench/src/connector.test.ts` proves the consent gate
+The test `packages/workbench/src/connector.test.ts` proves the consent gate
 end to end against a loopback MCP server that counts its requests, including
 the migration of a snapshot written before the gate.
 `packages/workbench/src/policy-review.test.ts` proves that the operator rule and
