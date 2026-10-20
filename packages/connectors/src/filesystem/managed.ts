@@ -87,10 +87,14 @@ export function managedFilesystemAdapter(options: {
   }
   function parse(args: Json): Mutation {
     if (!args || Array.isArray(args) || typeof args !== "object")
-      throw new Error(`Invalid file mutation: ${JSON.stringify(args)}.`);
+      throw new Error(
+        `Invalid file mutation: expected an object, got ${Array.isArray(args) ? "array" : typeof args}.`,
+      );
     const value = args as Record<string, unknown>;
     if (typeof value.action !== "string" || typeof value.path !== "string")
-      throw new Error(`Invalid file mutation: ${JSON.stringify(args)}.`);
+      throw new Error(
+        `Invalid file mutation: action and path must be strings (present: action=${typeof value.action}, path=${typeof value.path}).`,
+      );
     target(value.path);
     if (value.action === "rename") {
       if (
@@ -117,7 +121,11 @@ export function managedFilesystemAdapter(options: {
         (key) => !["action", "path", "base64", "mode"].includes(key),
       )
     )
-      throw new Error(`Invalid file mutation: ${JSON.stringify(args)}.`);
+      throw new Error(
+        `Invalid file mutation: unexpected keys (${Object.keys(value)
+          .filter((key) => !["action", "path", "base64", "mode"].includes(key))
+          .join(", ")}); expected action, path, base64, mode.`,
+      );
     if (
       typeof value.base64 !== "string" ||
       value.base64.length > Math.ceil(maxBytes / 3) * 4 ||
@@ -289,7 +297,9 @@ export function managedFilesystemAdapter(options: {
     syncDirectory(absolute);
     const after = snapshot(path);
     if (after.bytes !== bytes || (bytes !== null && after.mode !== mode))
-      throw new Error(`File verification failed: expected ${JSON.stringify(bytes)}, got ${JSON.stringify(after.bytes)}.`);
+      throw new Error(
+        `File verification failed: bytes expected ${bytes === null ? "absent" : String(bytes.length)}, found ${after.bytes === null ? "absent" : String(after.bytes.length)}; mode expected ${bytes === null ? "unchanged" : mode}, found ${after.mode}.`,
+      );
     return after;
   }
   const capture = (prepared: Prepared) => prepared.before as unknown as Capture;
@@ -331,12 +341,14 @@ export function managedFilesystemAdapter(options: {
         syncDirectory(target(before.to));
       const restored = snapshot(before.path),
         removed = snapshot(before.to);
-      if (
-        restored.bytes !== before.snapshot.bytes ||
-        restored.mode !== before.snapshot.mode ||
-        removed.bytes !== null
-      )
-        throw new Error(`File verification failed: ${JSON.stringify(before.path)}.`);
+      if (restored.bytes !== before.snapshot.bytes || restored.mode !== before.snapshot.mode)
+        throw new Error(
+          `File verification failed: restored ${JSON.stringify(before.path)}: bytes expected ${before.snapshot.bytes === null ? "absent" : String(before.snapshot.bytes.length)}, found ${restored.bytes === null ? "absent" : String(restored.bytes.length)}; mode expected ${before.snapshot.mode}, found ${restored.mode}.`,
+        );
+      if (removed.bytes !== null)
+        throw new Error(
+          `File verification failed: rename destination ${JSON.stringify(before.to)} still exists after the restore.`,
+        );
       return {
         status: "restored",
         evidence: {
@@ -439,11 +451,16 @@ export function managedFilesystemAdapter(options: {
             : before.revision;
       if (observation.revision !== revision)
         throw new Error(`File revision conflict: expected ${JSON.stringify(revision)}, got ${JSON.stringify(observation.revision)}.`);
-      if (
-        mutation.action === "rename" &&
-        (before.bytes === null || destination!.bytes !== null)
-      )
-        throw new Error(`File revision conflict: ${JSON.stringify(mutation.path)}.`);
+      if (mutation.action === "rename") {
+        if (before.bytes === null)
+          throw new Error(
+            `File revision conflict: rename source ${JSON.stringify(mutation.path)} vanished between observation and capture.`,
+          );
+        if (destination!.bytes !== null)
+          throw new Error(
+            `File revision conflict: rename destination ${JSON.stringify(mutation.to)} already exists.`,
+          );
+      }
       return {
         before: (mutation.action === "rename"
           ? {
@@ -464,33 +481,49 @@ export function managedFilesystemAdapter(options: {
         identity: string;
         mutation: Json;
       };
-      if (
-        plan.root !== root ||
-        plan.identity !== identity ||
-        hash(plan.mutation) !== hash(mutation) ||
-        before.path !== mutation.path
-      )
-        throw new Error(`File capture binding mismatch: ${JSON.stringify(args)}.`);
+      if (plan.root !== root || plan.identity !== identity)
+        throw new Error(
+          `File capture binding mismatch: the prepared mutation was bound to root ${JSON.stringify(plan.root)}, not this executor's ${JSON.stringify(root)}.`,
+        );
+      if (hash(plan.mutation) !== hash(mutation))
+        throw new Error(
+          `File capture binding mismatch: prepared mutation digest ${hash(plan.mutation)} does not match the requested ${hash(mutation)}.`,
+        );
+      if (before.path !== mutation.path)
+        throw new Error(
+          `File capture binding mismatch: prepared capture path ${JSON.stringify(before.path)}, requested ${JSON.stringify(mutation.path)}.`,
+        );
       if (mutation.action === "rename") {
-        if (!("to" in before) || before.to !== mutation.to)
-          throw new Error(`File capture binding mismatch: ${JSON.stringify(args)}.`);
-        if (
-          snapshot(mutation.path).revision !== before.snapshot.revision ||
-          snapshot(mutation.to).revision !== before.destination.revision
-        )
-          throw new Error(`File revision conflict: ${JSON.stringify(mutation.path)}.`);
+        if (!("to" in before))
+          throw new Error("File capture binding mismatch: the prepared capture is not a rename.");
+        if (before.to !== mutation.to)
+          throw new Error(
+            `File capture binding mismatch: prepared rename destination ${JSON.stringify(before.to)}, requested ${JSON.stringify(mutation.to)}.`,
+          );
+        const currentSource = snapshot(mutation.path);
+        if (currentSource.revision !== before.snapshot.revision)
+          throw new Error(
+            `File revision conflict: rename source ${JSON.stringify(mutation.path)} changed since capture: captured ${before.snapshot.revision}, found ${currentSource.revision}.`,
+          );
+        const currentDestination = snapshot(mutation.to);
+        if (currentDestination.revision !== before.destination.revision)
+          throw new Error(
+            `File revision conflict: rename destination ${JSON.stringify(mutation.to)} changed since capture: captured ${before.destination.revision}, found ${currentDestination.revision}.`,
+          );
         renameSync(target(mutation.path), target(mutation.to));
         syncDirectory(target(mutation.path));
         if (dirname(target(mutation.path)) !== dirname(target(mutation.to)))
           syncDirectory(target(mutation.to));
         const source = snapshot(mutation.path),
           destination = snapshot(mutation.to);
-        if (
-          source.bytes !== null ||
-          destination.bytes !== before.snapshot.bytes ||
-          destination.mode !== before.snapshot.mode
-        )
-          throw new Error(`File verification failed: ${JSON.stringify(before.path)}.`);
+        if (source.bytes !== null)
+          throw new Error(
+            `File verification failed: rename source ${JSON.stringify(mutation.path)} still exists after the rename.`,
+          );
+        if (destination.bytes !== before.snapshot.bytes || destination.mode !== before.snapshot.mode)
+          throw new Error(
+            `File verification failed: rename destination ${JSON.stringify(mutation.to)}: bytes expected ${before.snapshot.bytes === null ? "absent" : String(before.snapshot.bytes.length)}, found ${destination.bytes === null ? "absent" : String(destination.bytes.length)}; mode expected ${before.snapshot.mode}, found ${destination.mode}.`,
+          );
         return {
           result: {
             path: mutation.path,
