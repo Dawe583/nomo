@@ -53,14 +53,15 @@ const readRetentionRecord = (
     .prepare("SELECT record FROM retention WHERE workspace=? AND digest=?")
     .get(workspace, target);
   if (row === undefined) return undefined;
-  if (
-    typeof row !== "object" ||
-    row === null ||
-    !("record" in row) ||
-    typeof (row as Record<string, unknown>).record !== "string"
-  )
-    throw new Error("Recovery artifact lifecycle is invalid; retention refused.");
-  return parseVaultLifecycle((row as Record<string, unknown>).record as string);
+  const record: unknown =
+    row === null || typeof row !== "object" || !("record" in row)
+      ? undefined
+      : (row as Record<string, unknown>).record;
+  if (typeof record !== "string")
+    throw new Error(
+      `Recovery artifact lifecycle is invalid; retention refused: the retention row for ${workspace}:${target} carries ${record === undefined ? "no record column" : `a ${typeof record} record`} where a JSON lifecycle string is required.`,
+    );
+  return parseVaultLifecycle(record);
 };
 
 const toRetentionRow = (row: unknown): ReservedRetentionRow => {

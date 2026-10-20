@@ -145,42 +145,58 @@ const lifecyclePath = (dir: string, artifact: ArtifactIdentity): string => {
     throw new Error(REFERENCE_ABSENT);
   return join(dir, `${artifact.digest}.meta`);
 };
+const lifecycleRefusal = (detail: string): Error =>
+  new Error(
+    // The base sentence is load bearing: the collector tests match refusals
+    // by its phrase, so every detail is appended after it. Details name
+    // fields, keys and kinds, never artifact contents.
+    `Recovery artifact lifecycle is invalid; retention refused: ${detail}`,
+  );
 function vaultPin(value: unknown): VaultPin {
-  if (
-    typeof value !== "object" ||
-    value === null ||
-    Array.isArray(value) ||
-    Object.keys(value).some((key) => key !== "ownerId" && key !== "kind") ||
-    !("ownerId" in value) ||
-    typeof value.ownerId !== "string" ||
-    !value.ownerId.length ||
-    !("kind" in value) ||
-    (value.kind !== "recovery" && value.kind !== "operator")
-  )
-    throw new Error("Recovery artifact lifecycle is invalid; retention refused.");
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    throw lifecycleRefusal(
+      `the pin is ${value === null ? "null" : Array.isArray(value) ? "an array" : typeof value}, not an object.`,
+    );
+  const record = value as Readonly<Record<string, unknown>>;
+  const unexpected = Object.keys(record).filter(
+    (key) => key !== "ownerId" && key !== "kind",
+  );
+  if (unexpected.length)
+    throw lifecycleRefusal(
+      `pin carries unexpected key ${unexpected.join(", ")}; a pin has ownerId and kind.`,
+    );
+  if (typeof record.ownerId !== "string" || !record.ownerId.length)
+    throw lifecycleRefusal("pin.ownerId is missing or not a nonempty string.");
+  if (record.kind !== "recovery" && record.kind !== "operator")
+    throw lifecycleRefusal(
+      `pin.kind is ${JSON.stringify(record.kind)}; kinds are recovery or operator.`,
+    );
   return value as VaultPin;
 }
 export { vaultPin };
 function vaultRelease(value: unknown): VaultRelease {
-  if (
-    typeof value !== "object" ||
-    value === null ||
-    Array.isArray(value) ||
-    Object.keys(value).some(
-      (key) => key !== "operatorId" && key !== "at" && key !== "released",
-    ) ||
-    !("operatorId" in value) ||
-    typeof value.operatorId !== "string" ||
-    !value.operatorId.length ||
-    !("at" in value) ||
-    typeof value.at !== "string" ||
-    !("released" in value)
-  )
-    throw new Error("Recovery artifact lifecycle is invalid; retention refused.");
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    throw lifecycleRefusal(
+      `the release is ${value === null ? "null" : Array.isArray(value) ? "an array" : typeof value}, not an object.`,
+    );
+  const record = value as Readonly<Record<string, unknown>>;
+  const unexpected = Object.keys(record).filter(
+    (key) => key !== "operatorId" && key !== "at" && key !== "released",
+  );
+  if (unexpected.length)
+    throw lifecycleRefusal(
+      `release carries unexpected key ${unexpected.join(", ")}; a release has operatorId, at and released.`,
+    );
+  if (typeof record.operatorId !== "string" || !record.operatorId.length)
+    throw lifecycleRefusal(
+      "release.operatorId is missing or not a nonempty string.",
+    );
+  if (typeof record.at !== "string")
+    throw lifecycleRefusal("release.at is missing or not a string.");
   return {
-    operatorId: value.operatorId,
-    at: value.at,
-    released: vaultPin(value.released),
+    operatorId: record.operatorId,
+    at: record.at,
+    released: vaultPin(record.released),
   };
 }
 /** Parse retention evidence text into a lifecycle, refusing anything this
@@ -188,25 +204,25 @@ function vaultRelease(value: unknown): VaultRelease {
  * by the caller; a present but unreadable or invalid record is always a
  * refusal, so both the file sidecar and the reserved-vault record column
  * share one reading of what counts as evidence. */
-export function parseVaultLifecycle(raw: string): VaultLifecycle | undefined {
+export function parseVaultLifecycle(raw: string): VaultLifecycle {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error(
-      "Recovery artifact lifecycle is invalid; retention refused.",
-    );
+    throw lifecycleRefusal("the evidence text is not JSON.");
   }
-  if (
-    typeof parsed !== "object" ||
-    parsed === null ||
-    Array.isArray(parsed) ||
-    Object.keys(parsed).some((key) => key !== "pin" && key !== "release")
-  )
-    throw new Error(
-      "Recovery artifact lifecycle is invalid; retention refused.",
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+    throw lifecycleRefusal(
+      `the lifecycle record is ${parsed === null ? "null" : Array.isArray(parsed) ? "an array" : typeof parsed}, not an object.`,
     );
   const record = parsed as Readonly<Record<string, unknown>>;
+  const unexpected = Object.keys(record).filter(
+    (key) => key !== "pin" && key !== "release",
+  );
+  if (unexpected.length)
+    throw lifecycleRefusal(
+      `lifecycle carries unexpected key ${unexpected.join(", ")}; a lifecycle record has pin and release.`,
+    );
   return {
     ...(Object.hasOwn(record, "pin") ? { pin: vaultPin(record.pin) } : {}),
     ...(Object.hasOwn(record, "release")

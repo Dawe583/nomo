@@ -139,8 +139,6 @@ export async function summarizeFileVaultRetention(options: {
     const record = parseVaultLifecycle(
       await readFile(join(evidence, `${digest}.meta`), "utf8"),
     );
-    if (record === undefined)
-      throw new Error("Recovery artifact lifecycle is invalid; retention refused.");
     // Marking with no pin is the documented release-for-retention record on
     // the file side, so every sidecar without a pin counts as released and
     // only recorded pins count as pinned, which is the collector's own
