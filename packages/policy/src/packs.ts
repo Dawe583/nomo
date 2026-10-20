@@ -22,7 +22,10 @@ export async function loadPack(
   name: string,
   dir: string = fileURLToPath(new URL("../packs/", import.meta.url)),
 ): Promise<Extract<LoadedPolicy, { readonly ok: true }>> {
-  if (!PACK_NAMES.includes(name)) throw new PackError("Unknown policy pack name");
+  if (!PACK_NAMES.includes(name))
+    throw new PackError(
+      `Unknown policy pack name: ${JSON.stringify(name)}; shipped packs are ${PACK_NAMES.join(", ")}.`,
+    );
   try {
     const loaded = loadPolicy(await readFile(join(dir, `${name}.yaml`), "utf8"));
     if (!loaded.ok) throw new PackError(`Invalid policy pack ${name}`);

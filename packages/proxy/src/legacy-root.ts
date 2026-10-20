@@ -153,7 +153,9 @@ export function legacyBindingRoot(
       // lands in one namespace and the ledger in another, and recovery would
       // read a snapshot the signed record never names.
       if (call.workspace !== deps.workspace) {
-        throw new Error("legacy binding workspace mismatch");
+        throw new Error(
+          `legacy binding workspace mismatch: the call declares ${JSON.stringify(call.workspace)}, this binding records into ${JSON.stringify(deps.workspace)}`,
+        );
       }
       const snapshot = await deps.capture({
         tool: call.tool,
