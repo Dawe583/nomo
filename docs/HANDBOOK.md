@@ -361,9 +361,12 @@ export NVIDIA_API_KEY=...
 nomo tui
 ```
 
-This is the only ambient credential NOMO reads, and it is a choice you made, not
-a default it made for you. The TUI says so directly: `Set NVIDIA_API_KEY in the
-host environment, then reopen NOMO. No key is accepted in chat.`
+NOMO reads no credential ahead of the one an operator chose. The TUI preset
+takes `NVIDIA_API_KEY` from the host environment, and the GUI Qwen preset takes
+`DASHSCOPE_API_KEY`; no other key reaches a provider in either surface. This is
+a choice an operator makes, not a default NOMO makes. The TUI says so directly:
+`Set NVIDIA_API_KEY in the host environment, then reopen NOMO. No key is
+accepted in chat.`
 
 **Stored, for an operator.** In the GUI, open **Settings**, then **Model
 provider**. Pick a preset, paste the key into the password field, press **Connect
@@ -379,12 +382,13 @@ provider, because a silent provider switch is exactly the failure an operator
 cannot see.
 
 The presets available in the GUI are NVIDIA NIM (`https://integrate.api.nvidia.com/v1`),
-OpenCode Zen, Pollinations (free, no key), TokenRouter, OpenRouter, Anthropic,
-Google Gemini, Groq, DeepSeek and the Vercel AI Gateway, plus a custom
-OpenAI-compatible endpoint. They are the choices on offer, and choosing one is
-what connects it. The TUI lists two more, Ollama and LM Studio, because those are
-local and the GUI filters them out. Provider status is one of: `Ready`, `Setup
-required`, `Rate limited` (with the earliest retry time), `Unavailable`.
+OpenCode Zen, Pollinations (free, no key), TokenRouter, Puter (free, no key),
+Qwen (Alibaba DashScope), OpenRouter, Anthropic, Google Gemini, Groq, DeepSeek
+and the Vercel AI Gateway, plus Ollama and LM Studio, the two local endpoints,
+and a custom OpenAI-compatible endpoint. Both surfaces list the same presets;
+choosing one is what connects it. Provider
+status is one of: `Ready`, `Setup required`, `Rate limited` (with the earliest
+retry time), `Unavailable`.
 
 Provider cost and quota figures are never estimated. Where no provider reported a
 number, NOMO prints `unknown`, never `$0.00`.

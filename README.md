@@ -44,12 +44,13 @@ observed run, including an intentional failure after editing a row by hand.
 **Current operator guide:** [the handbook](docs/HANDBOOK.md), also available in
 [Czech](docs/HANDBOOK.cs.md). Its paths and commands are checked by a test.
 
-**Current command:** install the legacy `void` executable with
-`bash scripts/install-void.sh`. It checks for Node.js 24 or newer, git and pnpm,
-clones the repository into `$HOME/.local/share/void-cli` (set `NOMO_HOME` to
-choose another location), installs from the lockfile and writes a launcher at
-`$HOME/.local/bin/void`. It does not edit PATH. The NOMO rename must preserve
-this command and its data until the explicit compatibility migration is ready.
+**Current command:** install the `nomo` executable with
+`bash scripts/install-nomo.sh`. It checks for Node.js 24 or newer, git and pnpm,
+clones the repository into `$HOME/.local/share/nomo-cli` (set `NOMO_HOME` to
+choose another location; `VOID_HOME` is honoured as the compatibility alias),
+installs from the lockfile and writes a launcher at
+`$HOME/.local/bin/nomo`. It does not edit PATH. The legacy `void` names stay
+preserved as compatibility aliases until the explicit migration is ready.
 See the [beta runbook](docs/BETA.md) for setup and rollback.
 
 The current proxy sits between an MCP-capable agent and tools. It classifies
@@ -89,9 +90,9 @@ The existing `void` proxy does not make an agent safe by trusting the model. It 
 
 ## Five-minute local path
 
-Run the live local terminal workspace with `void`, `pnpm void`, or `pnpm tui`. From a checkout, `./void` works on macOS/Linux and `.\void.cmd` works on Windows. To make the bare `void` command available from any directory after cloning, install dependencies, run `pnpm setup` once if pnpm's global bin directory is not on PATH, open a new terminal, then run `pnpm link --global` from the checkout. This links the command to that checkout; repeat the link if you move it or switch to another clone. Chat, documents, reviewed Undo, signed ledgers, approvals, policy and tool controls use real local data. See [the TUI guide](docs/TUI-WORKSPACE.md) for setup and testing. `tui:preview` remains an illustrative renderer.
+Run the live local terminal workspace with `nomo`, `pnpm nomo`, or `pnpm tui`. From a checkout, `./nomo` works on macOS/Linux and `.\nomo.cmd` works on Windows. To make the bare `nomo` command available from any directory after cloning, install dependencies, run `pnpm setup` once if pnpm's global bin directory is not on PATH, open a new terminal, then run `pnpm link --global` from the checkout. This links the command to that checkout; repeat the link if you move it or switch to another clone. Chat, documents, reviewed Undo, signed ledgers, approvals, policy and tool controls use real local data. See [the TUI guide](docs/TUI-WORKSPACE.md) for setup and testing. `tui:preview` remains an illustrative renderer.
 
-Use Node.js 24 or newer and `pnpm install --frozen-lockfile`. Packages are private and unpublished, and the version lives in the root manifest rather than in this file, so `void --version` is what a reader should trust for the number. Start the agent GUI with `pnpm gui`, or run the native macOS app with `pnpm desktop:setup` followed by `pnpm desktop`. Connect a provider in Settings; managed documents and captured Undo work without a separate tool server. Build the installer with `pnpm desktop:build`; see [the beta runbook](docs/BETA.md) for agent configuration, terminal controls, Vercel deployment and the reviewed feature boundaries.
+Use Node.js 24 or newer and `pnpm install --frozen-lockfile`. Packages are private and unpublished, and the version lives in the root manifest rather than in this file, so `nomo --version` is what a reader should trust for the number. Start the agent GUI with `pnpm gui`, or run the native macOS app with `pnpm desktop:setup` followed by `pnpm desktop`. Connect a provider in Settings; managed documents and captured Undo work without a separate tool server. Build the installer with `pnpm desktop:build`; see [the beta runbook](docs/BETA.md) for agent configuration, terminal controls, Vercel deployment and the reviewed feature boundaries.
 
 The native iOS app under `apps/apple` is generated: `apps/apple/project.yml` is
 the source of truth and `apps/apple/VOID.xcodeproj` is a build artifact. Run
@@ -122,7 +123,7 @@ You should see one denied Postgres delete, one approved Postgres delete, and the
 Run a real proxy process against the fixture MCP server:
 
 ```sh
-node packages/proxy/bin/void-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/void-ledger --workspace demo
+node packages/proxy/bin/nomo-proxy.mjs --upstream node --args fixtures/e2e-server.mjs --policy fixtures/e2e-policy.yaml --ledger-dir /tmp/nomo-ledger --workspace demo
 ```
 
 That command waits on stdin because it is an MCP stdio server. Put an MCP client in front of it. With the fixture policy, `echo` is allowed and `orders_delete` is held.
@@ -130,7 +131,7 @@ That command waits on stdin because it is an MCP stdio server. Put an MCP client
 Classify a fixture transcript without running the proxy:
 
 ```sh
-node packages/cli/bin/void.mjs classify --transcript fixtures/session.jsonl --facts fixtures/facts.json
+node packages/cli/bin/nomo.mjs classify --transcript fixtures/session.jsonl --facts fixtures/facts.json
 ```
 
 Run the final local product sweep. It creates a temp ledger, reaches a hold, reads the feed, verifies the chain, checks taint, writes an attestation, detects tamper, and exercises the HTTP upstream path when the current wave exposes it:
@@ -145,7 +146,7 @@ For connector replay behavior, including drift refusal, run:
 node scripts/src/e2e-connectors.mjs
 ```
 
-The whole-product arc drives every surface in one story: the SDK client holds a destructive call, a control-plane operator approves it over HTTP, the upstream executes it, and the ledger arc closes through the void CLI:
+The whole-product arc drives every surface in one story: the SDK client holds a destructive call, a control-plane operator approves it over HTTP, the upstream executes it, and the ledger arc closes through the nomo CLI:
 
 ```sh
 node scripts/src/e2e-arc.mjs all
@@ -159,7 +160,7 @@ node scripts/src/bench.mjs --scale 200
 
 ## Operator commands
 
-The development binary is `node packages/cli/bin/void.mjs`. Packaged releases will expose the same handlers as `void`.
+The development binary is `node packages/cli/bin/nomo.mjs`. Packaged releases will expose the same handlers as `nomo`.
 
 | Need               | Command surface                                                                                        | Current note                                                                                                                                                                                                |
 | ------------------ | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

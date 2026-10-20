@@ -268,8 +268,10 @@ export NVIDIA_API_KEY=...
 nomo tui
 ```
 
-Toto je jediný ambientní přihlašovací údaj, který NOMO čte, a je to volba, kterou
-udělal sis ty, ne default, který udělal NOMO. TUI to říká přímo: `Set
+NOMO nečte žádný přihlašovací údaj před tím, kterého si operátor zvolil. Preset
+TUI bere z hostitelského prostředí `NVIDIA_API_KEY` a preset Qwen v GUI bere
+`DASHSCOPE_API_KEY`; žádný jiný klíč se k provideru v žádné ploše nedostane.
+Je to volba operátora, ne default NOMO. TUI to říká přímo: `Set
 NVIDIA_API_KEY in the host environment, then reopen NOMO. No key is accepted in
 chat.`
 
@@ -286,10 +288,11 @@ nic nevyšle. To je záměr: NOMO nepřepíná na jiného poskytovatele, protož
 přepínaje poskytovatele je přesně ta chyba, které operátor nevidí.
 
 Presety dostupné v GUI: NVIDIA NIM (`https://integrate.api.nvidia.com/v1`),
-OpenCode Zen, Pollinations (zdarma, bez klíče), TokenRouter, OpenRouter,
-Anthropic, Google Gemini, Groq, DeepSeek a Vercel AI Gateway, plus vlastní
-OpenAI-kompatibilní endpoint. Jsou to volby na výběr a připojí ten, koho vyberete.
-TUI vypisuje ještě dva, Ollama a LM Studio, protože jsou lokální a GUI je vyřazuje.
+OpenCode Zen, Pollinations (zdarma, bez klíče), TokenRouter, Puter (zdarma, bez
+klíče), Qwen (Alibaba DashScope), OpenRouter, Anthropic, Google Gemini, Groq,
+DeepSeek a Vercel AI Gateway, plus lokální Ollama a LM Studio a vlastní
+OpenAI-kompatibilní endpoint. Obě plochy vypisují tentýž seznam; připojí ten,
+koho vyberete.
 Stav poskytovatele je jeden z: `Připraven`, `Vyžaduje nastavení`, `Limit
 poskytovatele` (s nejčasnějším zkušením s retry), `Nedostupný`.
 
