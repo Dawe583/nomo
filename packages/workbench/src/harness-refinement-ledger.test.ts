@@ -424,7 +424,7 @@ test("policy edits are rejected before they reach the signed ledger", async (t) 
 
   await assert.rejects(
     app.refineHarness(session.id, invalid),
-    /unsupported kind "policy"/,
+    /unsupported kind: expected one of memory, skill, subagent, prompt/,
   );
 
   const after = await app.ledger(session.workspace);
