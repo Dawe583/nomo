@@ -378,6 +378,26 @@ test("/discover groups the command set by the task it serves", async (t) => {
   assert.match(empty.join("\n"), /No commands/i);
 });
 
+test("rich chat keeps the session activity summary at wide width", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-wide-activity-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  ui.choose("chat");
+  const frame = stripAnsi(renderWorkspace(ui, 100, 32, "", false, false));
+  const expected = activitySummary(buildActivity(ui.session()!.events));
+  assert.ok(
+    frame.includes(expected),
+    "wide chat includes the textual activity summary",
+  );
+});
+
 test("the chat panel leads with the shape of the conversation", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-activity-"));
   const { app, env } = await fixtureApp(root);
