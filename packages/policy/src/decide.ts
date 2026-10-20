@@ -10,7 +10,7 @@
  */
 
 import { UNMATCHED_DECISION, UNKNOWN_CLASS, type MatchKey } from "./grammar.ts";
-import type { LoadedPolicy, Rule, RuleMatch } from "./rules.ts";
+import type { BlastRadiusCondition, LoadedPolicy, Rule, RuleMatch } from "./rules.ts";
 
 /** The call, as the registry and the proxy see it. */
 export type PolicyCall = {
@@ -88,14 +88,27 @@ function matchesOne(rule: Rule, call: PolicyCall): boolean {
         if (!valueMatches(rawValue, call.workspace)) return false;
         break;
       case "blast_radius": {
-        const condition = rawValue as { lt: number };
-        if (call.blastRadius === undefined) return false;
-        if (!(call.blastRadius < condition.lt)) return false;
+        if (!radiusMatches(rawValue, call.blastRadius)) return false;
         break;
       }
     }
   }
   return true;
+}
+
+/**
+ * One of the four frozen comparators, per the decision log's policy
+ * format. An unknown call side never matches: the loader already rejected
+ * anything but exactly one operator, so a rule reaching this function has
+ * a threshold to compare against and a non-match is the fail-closed side.
+ */
+function radiusMatches(rawValue: unknown, radius: number | undefined): boolean {
+  if (radius === undefined) return false;
+  const condition = rawValue as BlastRadiusCondition;
+  if ("lt" in condition) return radius < condition.lt;
+  if ("lte" in condition) return radius <= condition.lte;
+  if ("gt" in condition) return radius > condition.gt;
+  return radius >= condition.gte;
 }
 
 function valueMatches(expected: unknown, actual: string): boolean {
@@ -144,9 +157,7 @@ function matchesExceptClass(rule: Rule, call: PolicyCall): boolean {
         if (!valueMatches(rawValue, call.workspace)) return false;
         break;
       case "blast_radius": {
-        const condition = rawValue as { lt: number };
-        if (call.blastRadius === undefined) return false;
-        if (!(call.blastRadius < condition.lt)) return false;
+        if (!radiusMatches(rawValue, call.blastRadius)) return false;
         break;
       }
     }

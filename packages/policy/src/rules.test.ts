@@ -175,15 +175,36 @@ rules:
       );
   });
 
-  test("blast_radius is the only comparison, and only lt", () => {
-    const wrongOp = validatePolicyFile({
+  test("blast_radius takes exactly one of the four frozen comparators", () => {
+    const unknownOp = validatePolicyFile({
       version: 1,
       rules: [
-        { match: { blast_radius: { gt: 5 } }, decision: "allow" },
+        { match: { blast_radius: { between: 5 } }, decision: "allow" },
         { match: {}, decision: "hold", seconds: 60 },
       ],
     });
-    assert.ok(wrongOp.some((e) => e.includes("blast_radius")));
+    assert.ok(unknownOp.some((e) => e.includes("unknown operator between")));
+
+    const multiple = validatePolicyFile({
+      version: 1,
+      rules: [
+        { match: { blast_radius: { gt: 2, lte: 8 } }, decision: "allow" },
+        { match: {}, decision: "hold", seconds: 60 },
+      ],
+    });
+    assert.ok(multiple.some((e) => e.includes("exactly one of")));
+
+    const none = validatePolicyFile({
+      version: 1,
+      rules: [{ match: {blast_radius: {}}, decision: "allow" }, { match: {}, decision: "hold", seconds: 60 }],
+    });
+    assert.ok(none.some((e) => e.includes("got none")));
+
+    const negative = validatePolicyFile({
+      version: 1,
+      rules: [{ match: { blast_radius: { gt: -1 } }, decision: "allow" }, { match: {}, decision: "hold", seconds: 60 }],
+    });
+    assert.ok(negative.some((e) => e.includes("gt must be a nonnegative safe integer")));
   });
 });
 
@@ -238,6 +259,28 @@ rules:
     assert.equal(decide(fenced, call({ workspace: undefined })).kind, "hold");
     assert.equal(decide(fenced, call({ workspace: "staging" })).kind, "hold");
     assert.equal(decide(fenced, call({ workspace: "prod" })).kind, "allow");
+  });
+
+  test("blast_radius comparators bind their own sides", () => {
+    const radiusPolicy = (rule: string) => {
+      const loaded = loadPolicy(`version: 1\nrules:\n${rule}\n  - match: {}\n    decision: hold\n    seconds: 60\n`);
+      if (!loaded.ok) throw new Error(`fixture must load: ${loaded.errors.join("; ")}`);
+      return loaded;
+    };
+    const lte = radiusPolicy("  - match: { blast_radius: { lte: 5 } }\n    decision: allow");
+    assert.equal(decide(lte, call({ blastRadius: 5 })).kind, "allow");
+    assert.equal(decide(lte, call({ blastRadius: 6 })).kind, "hold");
+    const gt = radiusPolicy("  - match: { blast_radius: { gt: 5 } }\n    decision: deny");
+    assert.equal(decide(gt, call({ blastRadius: 6 })).kind, "deny");
+    assert.equal(decide(gt, call({ blastRadius: 5 })).kind, "hold");
+    const gte = radiusPolicy("  - match: { blast_radius: { gte: 5 } }\n    decision: allow");
+    assert.equal(decide(gte, call({ blastRadius: 5 })).kind, "allow");
+    assert.equal(decide(gte, call({ blastRadius: 4 })).kind, "hold");
+    assert.equal(
+      decide(lte, call({ blastRadius: undefined })).kind,
+      "hold",
+      "an unmeasured radius never matches a threshold rule",
+    );
   });
 });
 

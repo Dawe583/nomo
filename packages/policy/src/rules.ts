@@ -20,10 +20,17 @@ import {
 /** The value a match key compares against; a list means any of. */
 export type MatchValue = string | number | readonly string[];
 
-export type BlastRadiusCondition = {
-  /** Fewer than: the only comparison the hold message needs. */
-  readonly lt: number;
-};
+/** The four comparators the decision log froze for blast_radius, section 4. */
+export const BLAST_RADIUS_OPERATORS = ["lt", "lte", "gt", "gte"] as const;
+
+export type BlastRadiusOperator = (typeof BLAST_RADIUS_OPERATORS)[number];
+
+/** Exactly one comparison per threshold; the validator enforces that. */
+export type BlastRadiusCondition =
+  | { readonly lt: number }
+  | { readonly lte: number }
+  | { readonly gt: number }
+  | { readonly gte: number };
 
 export type RuleMatch = {
   readonly [key: string]: MatchValue | BlastRadiusCondition | undefined;
@@ -110,25 +117,7 @@ export function validatePolicyFile(value: unknown): string[] {
           continue;
         }
         if (key === "blast_radius") {
-          const threshold =
-            typeof val === "object" && val !== null && !Array.isArray(val)
-              ? (val as Record<string, unknown>).lt
-              : undefined;
-          if (
-            typeof threshold !== "number" ||
-            !Number.isSafeInteger(threshold) ||
-            threshold < 0
-          )
-            errors.push(`${path}.match.blast_radius: must be { lt: number }`);
-          else {
-            const extra = Object.keys(val as Record<string, unknown>).filter(
-              (k) => k !== "lt",
-            );
-            if (extra.length > 0)
-              errors.push(
-                `${path}.match.blast_radius: unknown key ${extra.join(", ")}`,
-              );
-          }
+          for (const error of blastRadiusErrors(path, val)) errors.push(error);
           continue;
         }
         if (key === "class") {
@@ -213,6 +202,42 @@ export function validatePolicyFile(value: unknown): string[] {
       "rules: the catch-all must be the last rule, because first match wins",
     );
   return errors;
+}
+
+/**
+ * The blast_radius payload is one comparison from the frozen operator set.
+ * Every failure names the operator or the expected shape, and none of these
+ * messages echo the policy source: operators and counts are names, so a
+ * failed key tells the editor which line to fix without quoting their file.
+ */
+function blastRadiusErrors(path: string, value: unknown): readonly string[] {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return [
+      `${path}.match.blast_radius: must be one comparison { lt: n }, { lte: n }, { gt: n } or { gte: n }`,
+    ];
+  const record = value as Record<string, unknown>;
+  const unknownKeys = Object.keys(record).filter(
+    (operator) => !(BLAST_RADIUS_OPERATORS as readonly string[]).includes(operator),
+  );
+  if (unknownKeys.length)
+    return [
+      `${path}.match.blast_radius: unknown operator ${unknownKeys.join(", ")}; allowed operators are ${BLAST_RADIUS_OPERATORS.join(", ")}`,
+    ];
+  const threshold = BLAST_RADIUS_OPERATORS.find(
+    (operator) =>
+      record[operator] !== undefined &&
+      (typeof record[operator] !== "number" || !Number.isSafeInteger(record[operator] as number) || (record[operator] as number) < 0),
+  );
+  if (threshold !== undefined)
+    return [`${path}.match.blast_radius: ${threshold} must be a nonnegative safe integer`];
+  const present = BLAST_RADIUS_OPERATORS.filter(
+    (operator) => record[operator] !== undefined,
+  );
+  if (present.length !== 1)
+    return [
+      `${path}.match.blast_radius: exactly one of ${BLAST_RADIUS_OPERATORS.join(", ")} is required${present.length ? `, got ${present.join(", ")}` : ", got none"}`,
+    ];
+  return [];
 }
 
 /**
