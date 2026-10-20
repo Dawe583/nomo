@@ -407,7 +407,7 @@ function readBundle(path) {
     }
     entries.push(parseEntry(parsed, index + 1));
   }
-  if (!entries.length) throw new Error("bundle holds no entries");
+  if (!entries.length) throw new Error(`bundle holds no entries: ${resolved} is a bundle with no entry lines`);
   return entries;
 }
 

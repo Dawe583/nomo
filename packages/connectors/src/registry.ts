@@ -266,14 +266,15 @@ async function readS3Capture(store: SnapshotStore, reference: SnapshotReference)
     typeof value.call?.tool !== "string" || typeof value.input?.stepId !== "string" ||
     typeof value.input?.call?.bucket !== "string" || typeof value.input?.call?.key !== "string" ||
     typeof value.input?.reference?.digest !== "string" || !Array.isArray(value.facts))
-    throw new Error("invalid persisted S3 capture");
+    throw new Error(`invalid persisted S3 capture at ${reference.digest}: not a void.s3.capture.v1 envelope with a string tool, stepId, bucket, key, reference digest and a facts array`);
   return { call: value.call, input: value.input, facts: value.facts };
 }
 
 async function readPostgresCapture(store: SnapshotStore, reference: SnapshotReference): Promise<StoredPostgresCapture> {
   const parsed = JSON.parse(new TextDecoder().decode(await store.get(reference)));
   const image = (parsed.version === "void.postgres.capture.v1" ? parsed.image : parsed) as BeforeImage;
-  if (!image || !Array.isArray(image.rows) || !["update", "delete"].includes(image.statement?.type)) throw new Error("invalid persisted Postgres capture");
+  if (!image || !Array.isArray(image.rows) || !["update", "delete"].includes(image.statement?.type))
+    throw new Error(`invalid persisted Postgres capture at ${reference.digest}: not a void.postgres.capture.v1 image with rows and an update or delete statement`);
   const call: ConnectorCall = {
     tool: image.statement.sql.startsWith("delete") ? "postgres.row.delete" : "postgres.row.update",
     connector: "postgres",

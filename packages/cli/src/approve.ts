@@ -66,7 +66,7 @@ function parseArgs(argv: readonly string[], approve: boolean, env: Readonly<Node
       else if (arg === "--by") by = value;
       else reason = value;
     } else if (approve && holdId === undefined && !arg.startsWith("-") && arg.trim() !== "") holdId = arg;
-    else throw new Error("invalid approval command option");
+    else throw new Error(`unknown approval option ${JSON.stringify(arg)}: approve takes <holdId>, --by, --reason, --deny, --json and --dir; every invocation also accepts --dir and --json`);
   }
   if (approve && (holdId === undefined || by === undefined)) throw new Error("usage: nomo approve <holdId> --by actor [--reason text] [--dir path] [--deny] [--json]");
   const workspace = env.NOMO_WORKSPACE ?? "default";
