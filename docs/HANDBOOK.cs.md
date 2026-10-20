@@ -671,9 +671,9 @@ nomo replay --ledger <cesta> --snapshot-dir <adresář> --seq <n> [--dry-run] [-
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
 nomo harness list --session <id>
-nomo harness approve --session <id> <digest>
-nomo harness reject --session <id> <digest> --reason <text>
-nomo harness rollback --session <id> <digest>
+nomo harness approve --session <id> <digest-or-prefix>
+nomo harness reject --session <id> <digest-or-prefix> --reason <text>
+nomo harness rollback --session <id> <digest-or-prefix>
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
 nomo tui [--once] [--project <cesta>] [--skill <id> ...] [--view <karta>] [--session <id>] [--data-dir <cesta>]

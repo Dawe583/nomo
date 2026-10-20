@@ -165,6 +165,35 @@ function describeEdit(edit: {
   } | records ${edit.derivedFromSeq.join(", ")}`;
 }
 
+/**
+ * The full digest behind what the operator typed.
+ *
+ * The interactive shell shows the first eight characters of a digest, so an
+ * operator who read it there cannot paste it into a terminal. A prefix is
+ * accepted when it names exactly one pending proposal, and refused when it
+ * names none or several, because a decision that lands on the wrong
+ * proposal is worse than one that does not land at all.
+ */
+async function resolveDigest(
+  workbench: HarnessSurface,
+  sessionId: string,
+  typed: string,
+): Promise<string> {
+  if (typed.length === 64) return typed;
+  const proposals = await workbench.pendingApprovalsFor(sessionId);
+  const matches = proposals.filter((proposal) =>
+    proposal.digest.startsWith(typed),
+  );
+  if (matches.length === 1) return matches[0]!.digest;
+  if (matches.length > 1)
+    throw new Error(
+      `The digest prefix ${typed} names ${matches.length} pending proposals. Use more of it.`,
+    );
+  throw new Error(
+    `No pending proposal matches the digest prefix ${typed}.`,
+  );
+}
+
 export async function runHarnessCommand(
   args: readonly string[],
   io: HarnessIo,
@@ -290,23 +319,24 @@ export async function runHarnessCommand(
     if (action === "approve") {
       const applied = await workbench.approveHarnessProposal(
         flags.session,
-        flags.digest,
+        await resolveDigest(workbench, flags.session, flags.digest),
       );
       io.stdout(`Applied ${applied.applied.length} edit(s) from ${flags.digest}.`);
       return 0;
     }
     if (action === "reject") {
-      await workbench.rejectHarnessProposal(
+      const digest = await resolveDigest(
+        workbench,
         flags.session,
         flags.digest,
-        flags.reason,
       );
-      io.stdout(`Rejected ${flags.digest}.`);
+      await workbench.rejectHarnessProposal(flags.session, digest, flags.reason);
+      io.stdout(`Rejected ${digest}.`);
       return 0;
     }
     const rolled = await workbench.rollbackHarnessProposal(
       flags.session,
-      flags.digest,
+      await resolveDigest(workbench, flags.session, flags.digest),
     );
     io.stdout(`Rolled back ${flags.digest}: ${rolled.applied.length} edit(s) undone.`);
     return 0;

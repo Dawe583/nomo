@@ -213,6 +213,54 @@ test("a machine with no workspace is refused, and none is created", async () => 
   );
 });
 
+test("a digest prefix names the proposal, and an ambiguous one is refused", async () => {
+  const { surface, calls } = fake();
+  const terminal = io();
+  const code = await runHarnessCommand(
+    ["approve", "--session", "s1", "aaaaaaa"],
+    terminal,
+    { workbench: async () => surface },
+  );
+  assert.equal(code, 0);
+  // The prefix is resolved against the pending proposals, so the list is
+  // read before the decision is made.
+  assert.deepEqual(calls, [
+    { method: "list", args: ["s1"] },
+    { method: "approve", args: ["s1", proposal.digest] },
+  ]);
+
+  const ambiguous = io();
+  const refused = await runHarnessCommand(
+    ["approve", "--session", "s1", "z"],
+    ambiguous,
+    {
+      workbench: async () => ({
+        ...surface,
+        async pendingApprovalsFor() {
+          return [
+            { ...proposal, digest: "z1".repeat(32) },
+            { ...proposal, digest: "z2".repeat(32) },
+          ];
+        },
+      }),
+    },
+  );
+  assert.equal(refused, 1);
+  assert.match(ambiguous.err.join("\n"), /names 2 pending proposals/);
+});
+
+test("a digest prefix that names nothing is refused", async () => {
+  const { surface } = fake();
+  const terminal = io();
+  const code = await runHarnessCommand(
+    ["approve", "--session", "s1", "fffffff"],
+    terminal,
+    { workbench: async () => surface },
+  );
+  assert.equal(code, 1);
+  assert.match(terminal.err.join("\n"), /No pending proposal matches the digest prefix/);
+});
+
 test("entries shows what the harness holds", async () => {
   const { surface, calls } = fake();
   const terminal = io();
