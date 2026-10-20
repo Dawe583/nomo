@@ -111,7 +111,7 @@ async function legacyBytes(root: string): Promise<number> {
         await assertPrivateFilePath(path, "legacy recovery vault artifact");
         bytes += (await lstat(path)).size;
       }
-      else throw new Error("Unexpected legacy vault entry.");
+      else throw new Error(`Unexpected legacy vault entry at ${JSON.stringify(path)}: neither a file nor a directory.`);
     }
   };
   await assertPrivateDirectoryPath(root, "recovery vault directory");

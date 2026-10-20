@@ -495,9 +495,11 @@ export function recoveryMcpServer(options: {
           args.operationId as string,
         );
       else if (name === "nomo_recovery_plan_job") {
-        const request = { workspace: options.workspace, jobId: args.jobId, selection: args.selection } as RecoveryJobRequest;
-        if (request.workspace !== options.workspace) throw new Error("Recovery job belongs to another workspace.");
-        result = await options.runtime.planRecoveryJob(request);
+        result = await options.runtime.planRecoveryJob({
+          workspace: options.workspace,
+          jobId: args.jobId,
+          selection: args.selection,
+        } as RecoveryJobRequest);
       } else if (name === "nomo_recovery_status_job") {
         result = await options.runtime.recoveryJobStatus(options.workspace, args.jobId as string);
       } else if (name === "nomo_recovery_apply_job") {
