@@ -19,6 +19,16 @@ Everything below is evidence based where evidence was available. Claims marked
 Claims marked **unproven** cannot be checked without a deploy or an account, and
 are called out so nobody later mistakes a guess for a measurement.
 
+**Documents this log cites by name may be retired.** A work package may update
+the pack; older sections are history and are not rewritten. On 2026-10-09,
+commit 98d2261 retired the superseded sales and status documents from the active
+branch, and this log's earlier sections still cite the words they were decided
+against: GO-TO-MARKET-10K-MRR, COMPETITIVE-WEDGE, REVERSE-WEDGE, OPEN-WORK-AUDIT,
+STATUS-INDEX, PLAN-STATUS and ROADMAP-2026-Q4 under `docs/`. Read those citations
+as dated evidence for the decision they carry, not as pointers to live files;
+their tier and pricing claims remain unvalidated hypotheses, and no decision
+here depends on their current availability.
+
 ---
 
 ## 1. The wedge: one agent host, one tool surface
