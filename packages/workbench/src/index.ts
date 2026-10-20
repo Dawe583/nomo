@@ -1229,8 +1229,11 @@ export class Workbench {
         ...this.connectors.flatMap((connector) => connector.tools),
       ].map((tool) => tool.name),
     );
-    if (profile.allowedTools.some((name) => !available.has(name)))
-      throw new Error("Agent allowlist contains an unavailable tool.");
+    const unavailable = profile.allowedTools.filter((name) => !available.has(name));
+    if (unavailable.length)
+      throw new Error(
+        `Agent allowlist contains tools that no connector offers: ${unavailable.join(", ")}; available tools are ${[...available].sort().join(", ")}.`,
+      );
     const before = this.agentProfiles;
     this.agentProfiles = [
       ...before.filter((candidate) => candidate.id !== profile.id),
@@ -1340,7 +1343,9 @@ export class Workbench {
       (typeof input.id !== "string" ||
         !/^[A-Za-z0-9][\w-]{0,119}$/.test(input.id))
     )
-      throw new Error("Invalid project id.");
+      throw new Error(
+        `Invalid project id ${JSON.stringify(input.id)}: an id starts with a letter or digit and is 1 to 120 letters, digits, underscores or hyphens.`,
+      );
     const name = input.name.trim(),
       root = input.root.trim();
     const existing = this.projectList.find((p) =>
@@ -1383,7 +1388,10 @@ export class Workbench {
   }
   stopRun(sessionId: string): void {
     const session = this.sessions.get(sessionId);
-    if (!session) throw new Error("Session not found.");
+    if (!session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(sessionId)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     if (session.view.status === "running" || session.view.status === "queued") {
       this.cancel(sessionId);
     }
@@ -1485,7 +1493,10 @@ export class Workbench {
   }
   availableTools(id?: string) {
     const session = id ? this.sessions.get(id) : undefined;
-    if (id && !session) throw new Error("Session not found.");
+    if (id && !session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     const tools = (
       session
         ? (session.tools ?? [...workspaceTools])
@@ -1841,7 +1852,10 @@ export class Workbench {
   }
   compact(id: string): CompactionResult {
     const session = this.sessions.get(id);
-    if (!session) throw new Error("Session not found.");
+    if (!session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     if (
       this.jobs.size ||
       session.view.status === "running" ||
@@ -1915,7 +1929,10 @@ export class Workbench {
   }
   cancel(id: string): void {
     const session = this.sessions.get(id);
-    if (!session) throw new Error("Session not found.");
+    if (!session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     if (session.view.status === "unknown" || session.recoveryBlock) return;
     if (session.view.status === "queued") {
       this.queued.delete(id);
@@ -2102,7 +2119,10 @@ export class Workbench {
   }
   patchSession(id: string, body: Record<string, unknown>) {
     const session = this.sessions.get(id);
-    if (!session) throw new Error("Session not found.");
+    if (!session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     const patch = sessionPatch(body);
     session.view = {
       ...session.view,
@@ -2177,7 +2197,10 @@ export class Workbench {
   }
   private settledSession(id: string): Session {
     const session = this.sessions.get(id);
-    if (!session) throw new Error("Session not found.");
+    if (!session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     if (
       this.closing ||
       this.jobs.size ||
@@ -3073,7 +3096,10 @@ export class Workbench {
   }
   private recoverySession(id: string) {
     const session = this.sessions.get(id);
-    if (!session) throw new Error("Session not found.");
+    if (!session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     if (
       this.closing ||
       this.jobs.size ||
@@ -3108,7 +3134,10 @@ export class Workbench {
   async recoveryJobStatus(id: string, jobId: string) {
     return this.locked(async () => {
       const session = this.sessions.get(id);
-      if (!session) throw new Error("Session not found.");
+      if (!session)
+        throw new Error(
+          `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+        );
       const request = this.recoveryRequests[`${id}:${jobId}`];
       if (!request) throw new Error("Recovery job not found.");
       const runtime = await this.documentRuntime(session);
@@ -3330,7 +3359,10 @@ export class Workbench {
   /** Signed slice of one workspace for a third party. Verified in repo first. */
   async attest(id: string): Promise<AttestationDocument> {
     const session = this.sessions.get(id);
-    if (!session) throw new Error("Session not found.");
+    if (!session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     const workspace = session.view.workspace;
     await this.ledger(workspace);
     const dir = await mkdtemp(join(tmpdir(), "void-attest-"));
@@ -3689,7 +3721,10 @@ export class Workbench {
     upstreamId: string,
   ): IssuedLocalAgentGrant {
     const session = this.sessions.get(sessionId);
-    if (!session) throw new Error("Session not found.");
+    if (!session)
+      throw new Error(
+        `Session not found. ${JSON.stringify(sessionId)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
+      );
     if (session.view.status !== "running" || !session.view.runId)
       throw new Error("A local agent grant requires an active run.");
     if (session.proxyGrantReadyRunId !== session.view.runId)
