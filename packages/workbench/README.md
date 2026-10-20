@@ -129,6 +129,24 @@ operator was shown, a rejection carries its reason, an unknown session reads
 404, and a digest nobody proposed is refused with the workbench's own sentence
 rather than as a silent no-op.
 
+The test `packages/workbench/src/harness-conversation.test.ts` proves the
+conversation tail the reviewer sees. The reviewer was blind to the
+conversation, and a blind reviewer proposes the same generic lesson again.
+The tail is the last exchanges of the conversation, cut whole, labelled as
+untrusted context, and charged to the operator's prompt ceiling before the
+two evidence halves share what is left. A tool message never travels, because
+a tool result is an upstream payload. Tool call arguments never travel,
+because they are model authored JSON that can quote a document. A system
+message never travels, because a harness entry must not reach the reviewer
+twice. A message longer than the per message cap keeps its last characters
+and says that the earlier part was omitted, because a half message presented
+as a whole one is how a reviewer learns something that was never said. A tail
+whose text carries a secret is withheld whole rather than trimmed, and the
+operator is told, because a silent omission would leave them believing the
+reviewer read the conversation. The tail goes to the reviewer and nowhere
+else: it is not written into a chain record, and it is not echoed into a
+refusal.
+
 The test `packages/workbench/src/harness-review-model.test.ts` proves the
 reviewer model selection. `refinementModel` is empty by default and empty
 means the conversation's own model pays for the review. A selected model takes

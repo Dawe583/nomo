@@ -147,6 +147,7 @@ import {
   type RefinementProposal,
 } from "./refine-pass.ts";
 import { resolveLensCount, reviewRanNote, serviceHarnessBoundary } from "./harness-runtime.ts";
+import { buildConversationTail } from "./harness-conversation.ts";
 import {
   resolveRefineGates,
   type GateSurface,
@@ -4261,6 +4262,32 @@ export class Workbench {
     await Promise.allSettled(passes);
   }
 
+  /**
+   * The conversation tail the reviewer may see.
+   *
+   * Built here because this is where the conversation and the secret
+   * knowledge live: the session messages are on the session, the known
+   * secrets are on the workbench, and the provider is the one that knows
+   * which string is its own api key. A tail that carries a secret is
+   * withheld whole, and the operator is told that it was, because a silent
+   * omission would leave them believing the reviewer read the conversation.
+   */
+  private harnessConversationTail(session: Session): string {
+    const tail = buildConversationTail(session.messages, {
+      redact: (text) => session.provider?.redact(text) ?? text,
+      isSecretLike: (text) => secretLikeText(text, this.knownSecretValues()),
+    });
+    if (tail.withheld)
+      this.event(
+        session,
+        "tool",
+        "The conversation tail was withheld from the harness review because it carried secret-like text.",
+        { outcome: "conversation-withheld" },
+        "harness.review",
+      );
+    return tail.text;
+  }
+
   private async serviceHarnessTurn(session: Session, surface: GateSurface): Promise<void> {
     if (!session.provider) return;
     const id = session.view.id;
@@ -4438,6 +4465,12 @@ export class Workbench {
       surface,
       now: () => Date.now(),
       entries: async () => await this.harnessEntries(session.view.workspace),
+      // The reviewer sees the conversation, cut and screened here. The
+      // builder excludes tool messages, tool call arguments and system
+      // messages, and a tail that carries a secret is withheld whole rather
+      // than trimmed, so the reviewer is never shown something the operator
+      // did not write.
+      conversationTail: () => this.harnessConversationTail(session),
       // The operator's prompt ceiling governs this request like any other.
       // It did not before: the user-prompt path enforces maxPromptCharacters
       // in three places and this one read the setting for nothing.

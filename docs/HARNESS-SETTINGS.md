@@ -123,6 +123,21 @@ outcome was never established.
 
 ## What is deliberately not a setting
 
+**The bounds of the conversation tail.** The reviewer sees the last exchanges
+of the conversation, cut to a fixed number of messages, a fixed number of
+characters per message and a fixed number of characters overall. Those
+numbers are not operator-tunable, because a tail wide enough to be worth
+tuning is a tail wide enough to carry a pasted credential, and because the
+ceiling that governs it is the prompt ceiling the operator already sets. The
+tail is charged to that ceiling before the two evidence halves share what is
+left, so a longer conversation costs the reviewer evidence rather than
+silently exceeding what the operator allowed.
+
+The tail is not written into a chain record and not echoed into a refusal. It
+goes to the reviewer and nowhere else, and the pattern screen that refuses a
+secret-like proposal is not the guard for it: the tail is raw session text,
+and its own guard is that it is cut, screened and withheld whole.
+
 **`permissionMode`.** It is an authority decision, not a preference. It comes
 from `NOMO_PERMISSION_MODE`, fails closed to `read-only`, and any patch naming
 it is refused with `Permission mode is server-controlled.` That refusal is
@@ -154,6 +169,7 @@ consumes from each binary.
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/workbench/src/harness-settings.test.ts`     | clamping, the unknown-key refusal, the stored-state clamp, that every declared consumer exists in the file it claims, and that a selection is shape checked and refused by name |
 | `packages/workbench/src/harness-review-model.test.ts` | that the review runs on the conversation's own model until one is selected, that a selected model takes the call, and that a malformed selection changes nothing                 |
+| `packages/workbench/src/harness-conversation.test.ts` | that a tool message, tool call arguments and a system message never reach the reviewer, that the tail is charged to the prompt ceiling, and that a tail carrying a secret is withheld whole |
 | `packages/workbench/src/harness-wiring.test.ts`       | that a lowered limit actually stops the run, that a raised queue bound admits more, that a timeout is not reported as a clean finish, and that settings survive a restart |
 | `packages/workbench/src/gui-harness-settings.test.ts` | that `capabilities` reports the configured limits rather than the shipped constants                                                                                       |
 | `apps/control-plane/api/harness-settings.test.ts`     | that a refused patch is not accepted over HTTP                                                                                                                            |
