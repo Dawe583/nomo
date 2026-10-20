@@ -166,7 +166,7 @@ export async function verifyChain(
       return fail(`entry ${entry.seq} points at ${entry.prev_hash}, expected ${prev}`);
     const recomputed = await entryHash(entry.body, prev, sha256Hex);
     if (recomputed !== entry.hash)
-      return fail(`entry ${entry.seq} body does not match digest`);
+      return fail(`entry ${entry.seq} body does not match digest: computed ${recomputed}, stored ${entry.hash}`);
 
     if (options.publicKey !== undefined) {
       if (entry.alg !== "ed25519")

@@ -342,7 +342,7 @@ export function jsonlStore(
           return { ok: false, checked, reason: `link: entry ${entry.seq} points at ${entry.prev_hash.slice(0, 8)} but the chain is at ${prev.slice(0, 8)}` };
         const recomputed = await entryHash(entry.body, prev, sha256Hex);
         if (recomputed !== entry.hash)
-          return { ok: false, checked, reason: `body: entry ${entry.seq} does not hash to its stored digest` };
+          return { ok: false, checked, reason: `body: entry ${entry.seq} does not hash to its stored digest: computed ${recomputed.slice(0, 16)}, stored ${entry.hash.slice(0, 16)}` };
         if (entry.seq !== checked)
           return { ok: false, checked, reason: `order: expected seq ${checked}, found ${entry.seq}` };
         proven.set(entry.seq, entry.hash);

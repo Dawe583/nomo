@@ -193,7 +193,10 @@ function verifyAttestation(doc, entries, publicKey) {
       reason: `head seq mismatch: attestation ${doc.headSeq}, ledger ${headSeq}`,
     };
   if (doc.headHash !== chain.head)
-    return { ok: false, reason: "head hash mismatch" };
+    return {
+      ok: false,
+      reason: `head hash mismatch: attestation ${doc.headHash}, ledger ${chain.head}`,
+    };
   let tree;
   try {
     tree = merkleDigest(entries.map((entry) => entry.hash));
@@ -201,7 +204,10 @@ function verifyAttestation(doc, entries, publicKey) {
     return { ok: false, reason: `tree digest failed: ${error.message}` };
   }
   if (doc.treeDigest !== tree)
-    return { ok: false, reason: "tree digest mismatch" };
+    return {
+      ok: false,
+      reason: `tree digest mismatch: attestation ${doc.treeDigest}, ledger ${tree}`,
+    };
   const wrong = entries.find((entry) => entry.workspace !== doc.workspace);
   if (wrong !== undefined)
     return { ok: false, reason: `workspace mismatch at entry ${wrong.seq}` };
@@ -311,7 +317,7 @@ function verifyEntries(entries, publicKey) {
       );
     }
     if (recomputed !== entry.hash)
-      return fail(`entry ${entry.seq} body does not match digest`);
+      return fail(`entry ${entry.seq} body does not match digest: computed ${recomputed}, stored ${entry.hash}`);
     if (publicKey) {
       if (entry.alg !== "ed25519")
         return fail(
