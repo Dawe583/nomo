@@ -316,9 +316,9 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
         const outcome = await bound.binding.outcome(bound.evidence, failed);
         validateLegacyOutcome(bound.evidence, failed, outcome);
       } catch {
-        throw new Error("legacy dispatch and failure evidence recording failed");
+        throw new Error(`legacy dispatch and failure evidence recording failed for request ${JSON.stringify(translated.id)}`);
       }
-      throw new Error("legacy dispatch evidence failed");
+      throw new Error(`legacy dispatch evidence failed for request ${JSON.stringify(translated.id)}`);
     }
     checkBeforeDispatch();
     pendingLegacy.set(translated.id, bound);
@@ -330,9 +330,9 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       try {
         await finishLegacy(translated.id, null);
       } catch {
-        throw new Error("legacy send and unknown evidence recording failed");
+        throw new Error(`legacy send and unknown evidence recording failed for request ${JSON.stringify(translated.id)}`);
       }
-      throw new Error("legacy upstream send failed");
+      throw new Error(`legacy upstream send failed for request ${JSON.stringify(translated.id)}`);
     }
     return translated;
   };
@@ -776,11 +776,11 @@ async function handleToolCall(
     try {
       binding = legacyBinding(call);
     } catch {
-      throw new Error("legacy binding resolution failed");
+      throw new Error(`legacy binding resolution failed for the call tool ${JSON.stringify(call.tool)}`);
     }
   }
   if (binding !== null && binding.tool !== call.tool) {
-    throw new Error("legacy binding tool mismatch");
+    throw new Error(`legacy binding tool mismatch: binding resolves ${JSON.stringify(binding.tool)}, the call carries ${JSON.stringify(call.tool)}`);
   }
   let capturedEvidence: LegacyCaptureEvidence | null = null;
   let lastPolicyCall: PolicyCall | null = null;
