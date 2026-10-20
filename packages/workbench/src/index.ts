@@ -123,7 +123,7 @@ import {
   listPolicyProfiles,
   resolvePolicyProfile,
 } from "./policy-profile.ts";
-import { mineLearnedRules } from "./learned-rules.ts";
+import { mineLearnedRules, minePromotedRules } from "./learned-rules.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
 import type { SpawnSubagentOptions } from "./subagents.ts";
 import {
@@ -4535,6 +4535,19 @@ export class Workbench {
     if (!provider)
       throw new Error("Connect the provider before requesting a harness review.");
     const id = session.view.id;
+    // The promoted rules the chain now supports are reported to the
+    // operator, because the operator is the one who approves them. The
+    // count, not the text: the text is a proposal that has not been
+    // approved yet.
+    const promoted = minePromotedRules(this.evidence[session.view.workspace] ?? []).length;
+    if (promoted > 0)
+      this.event(
+        session,
+        "tool",
+        `${promoted} promoted rule${promoted === 1 ? "" : "s"} mined from the chain. They wait for an operator to approve them.`,
+        { outcome: "promoted-rules", count: promoted },
+        "harness.review",
+      );
     const result = await serviceHarnessBoundary(state, {
       // The gate decides when the harness spends a model call, so an operator
       // has to be able to move it. It was passed DEFAULT_REFINE_GATES

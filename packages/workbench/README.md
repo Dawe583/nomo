@@ -143,6 +143,17 @@ separately from the compaction, because the compaction is synchronous and the
 terminal reads its result without awaiting; a host that wants the summary
 asks for it first and passes it in.
 
+The test `packages/workbench/src/promoted-rules.test.ts` proves the promoted
+rules: the refusals an operator never wrote, mined into a rule the operator
+has to approve. A refusal three or more times of the same shape promotes a
+deny rule, an execute:failed or an execute:unknown teaches nothing, a hold the
+operator let through teaches nothing, and a self-caused refusal does not vote
+for itself. The rule carries the provenance, and the same five rules that
+govern a learned rule govern it: the decision is deny, the rule is appended
+after the operator's own rules, it is replayable from the chain alone, self-
+caused refusals do not vote for themselves, and what counts as a failure is
+an operator denial.
+
 The test `packages/workbench/src/harness-tools.test.ts` proves the two tools
 the agent may call: `void_harness_add` proposes a lesson and
 `void_harness_forget` proposes that one be forgotten. The tool writes a
