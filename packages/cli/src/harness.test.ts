@@ -49,6 +49,13 @@ function fake(overrides: Partial<HarnessSurface> = {}) {
       calls.push({ method: "rollback", args: [sessionId, digest] });
       return { applied: [{ outcome: "deleted" }] };
     },
+    harnessTextSettings() {
+      return { refinementModel: "" };
+    },
+    patchHarnessTextSettings(body) {
+      calls.push({ method: "model", args: [String(body.refinementModel ?? "")] });
+      return { refinementModel: String(body.refinementModel ?? "") };
+    },
     ...overrides,
   };
   return { surface, calls };
@@ -188,6 +195,33 @@ test("a machine with no workspace is refused, and none is created", async () => 
     existsSync(directory),
     false,
     "a command that only reads must not create the workspace it would read",
+  );
+});
+
+test("the reviewer model is shown, set and cleared", async () => {
+  const { surface, calls } = fake();
+  const shown = io();
+  const read = await runHarnessCommand(["model"], shown, {
+    workbench: async () => surface,
+  });
+  assert.equal(read, 0);
+  assert.match(shown.out.join("\n"), /conversation's own model/);
+
+  const set = io();
+  const written = await runHarnessCommand(["model", "reviewer-1"], set, {
+    workbench: async () => surface,
+  });
+  assert.equal(written, 0);
+  assert.match(set.out.join("\n"), /reviewer-1/);
+
+  const cleared = io();
+  const clearedCode = await runHarnessCommand(["model", "--clear"], cleared, {
+    workbench: async () => surface,
+  });
+  assert.equal(clearedCode, 0);
+  assert.deepEqual(
+    calls.filter((call) => call.method === "model").map((call) => call.args[0]),
+    ["reviewer-1", ""],
   );
 });
 

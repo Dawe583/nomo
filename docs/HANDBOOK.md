@@ -757,7 +757,7 @@ arguments prints that command's usage.
 | `nomo init`      | Create the workspace layout.                                              |
 | `nomo update`    | Move the installed tree to the tracked branch, fast-forward only.         |
 | `nomo state`     | Summarise or migrate persisted workspace state.                           |
-| `nomo harness`   | List and decide the harness proposals of a session.                       |
+| `nomo harness`   | List and decide the harness proposals of a session, and name the model its reviews run on. |
 
 The ones that take arguments, exactly:
 
@@ -775,6 +775,7 @@ nomo harness list --session <id>
 nomo harness approve --session <id> <digest>
 nomo harness reject --session <id> <digest> --reason <text>
 nomo harness rollback --session <id> <digest>
+nomo harness model [<model-id>|--clear]
 nomo tui [--once] [--project <path>] [--skill <id> ...] [--view <tab>] [--session <id>] [--data-dir <path>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres-managed-conformance]
 nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <file> [--input <file>] [--approve <digest>] [--surface file|reserved|both]

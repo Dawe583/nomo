@@ -26,6 +26,11 @@ export type HarnessIo = {
 /** The part of the workbench this command uses. Narrow on purpose: the
  * command is a reader and a decider, and it does not need the run path. */
 export type HarnessSurface = {
+  /** The reviewer model selection, as resolved. */
+  harnessTextSettings(): { readonly refinementModel: string };
+  patchHarnessTextSettings(
+    body: Record<string, unknown>,
+  ): { readonly refinementModel: string };
   pendingApprovalsFor(
     sessionId: string,
   ): Promise<
@@ -81,12 +86,16 @@ const USAGE = [
   "  nomo harness approve --session <id> <digest>",
   "  nomo harness reject --session <id> <digest> --reason <text>",
   "  nomo harness rollback --session <id> <digest>",
+  "  nomo harness model                 show the reviewer model",
+  "  nomo harness model <model-id>      set the reviewer model",
+  "  nomo harness model --clear         use the conversation's own model",
 ].join("\n");
 
 type Flags = {
   readonly session: string;
   readonly reason: string;
   readonly digest: string;
+  readonly clear: boolean;
   readonly unknown: readonly string[];
 };
 
@@ -94,9 +103,14 @@ function parseFlags(args: readonly string[]): Flags {
   let session = "";
   let reason = "";
   let digest = "";
+  let clear = false;
   const unknown: string[] = [];
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]!;
+    if (arg === "--clear") {
+      clear = true;
+      continue;
+    }
     if (arg === "--session") {
       session = args[index + 1] ?? "";
       index += 1;
@@ -113,7 +127,7 @@ function parseFlags(args: readonly string[]): Flags {
     }
     digest = arg;
   }
-  return { session, reason, digest, unknown };
+  return { session, reason, digest, clear, unknown };
 }
 
 /** One line per edit, so a proposal can be read in a terminal. */
@@ -145,7 +159,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "approve", "reject", "rollback"].includes(action)) {
+  if (!["list", "approve", "reject", "rollback", "model"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -155,6 +169,45 @@ export async function runHarnessCommand(
     io.stderr(`Unknown option ${flags.unknown[0]}.`);
     io.stderr(USAGE);
     return 1;
+  }
+  if (action === "model") {
+    const env = deps.env ?? process.env;
+    if (!deps.workbench) {
+      const directory = workspaceDir(env);
+      if (!existsSync(directory)) {
+        io.stderr(`No workspace at ${directory}. Run nomo init first.`);
+        return 1;
+      }
+    }
+    const workbench = deps.workbench
+      ? await deps.workbench()
+      : new Workbench(env);
+    try {
+      if (flags.clear) {
+        const applied = workbench.patchHarnessTextSettings({ refinementModel: "" });
+        io.stdout(
+          `The reviewer runs on the conversation's own model now (${applied.refinementModel || "unset"}).`,
+        );
+        return 0;
+      }
+      if (!flags.digest) {
+        const current = workbench.harnessTextSettings();
+        io.stdout(
+          current.refinementModel
+            ? `The reviewer runs on ${current.refinementModel}.`
+            : "The reviewer runs on the conversation's own model.",
+        );
+        return 0;
+      }
+      const applied = workbench.patchHarnessTextSettings({
+        refinementModel: flags.digest,
+      });
+      io.stdout(`The reviewer runs on ${applied.refinementModel}.`);
+      return 0;
+    } catch (error) {
+      io.stderr(error instanceof Error ? error.message : String(error));
+      return 1;
+    }
   }
   if (!flags.session) {
     io.stderr("The harness commands need a session: --session <id>.");
