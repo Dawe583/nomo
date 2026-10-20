@@ -13,6 +13,7 @@ import { runOperation } from "./operations.ts";
 import { runWatchCommand } from "./watch.ts";
 import { runApproveCommand, runApprovalsCommand } from "./approve.ts";
 import { runDoctorCommand } from "./doctor.ts";
+import { runHarnessCommand } from "./harness.ts";
 import { runConfigCommand } from "./config.ts";
 import { runInitCommand } from "./init.ts";
 import { runUpdateCommand } from "./update.ts";
@@ -109,6 +110,12 @@ export async function runCommand(
       stdout: (line) => console.log(line),
       stderr: (line) => console.error(line),
     });
+  }
+  if (parsed.command === "harness") {
+    return await runHarnessCommand(parsed.args, {
+      stdout: (line) => console.log(line),
+      stderr: (line) => console.error(line),
+    }, { env: injected });
   }
   if (parsed.command === "verify") {
     return await runVerifyCommand(parsed.args, {

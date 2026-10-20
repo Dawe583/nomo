@@ -16,6 +16,7 @@ export * from "./replay.ts";
 export * from "./taint.ts";
 export * from "./verify.ts";
 export * from "./approve.ts";
+export * from "./harness.ts";
 export * from "./doctor.ts";
 export * from "./config.ts";
 export * from "./init.ts";

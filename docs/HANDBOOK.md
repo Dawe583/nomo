@@ -730,7 +730,7 @@ harness reads the state the rollback restored.
 
 ## 10. The command line
 
-Twenty-two commands. `nomo --help` prints the list; `nomo <command>` with no
+Twenty-three commands. `nomo --help` prints the list; `nomo <command>` with no
 arguments prints that command's usage.
 
 | Command          | What it does                                                              |
@@ -757,6 +757,7 @@ arguments prints that command's usage.
 | `nomo init`      | Create the workspace layout.                                              |
 | `nomo update`    | Move the installed tree to the tracked branch, fast-forward only.         |
 | `nomo state`     | Summarise or migrate persisted workspace state.                           |
+| `nomo harness`   | List and decide the harness proposals of a session.                       |
 
 The ones that take arguments, exactly:
 
@@ -770,6 +771,10 @@ nomo taint --ledger <dir> --seq <n> [--depth <n>] [--json]
 nomo replay --ledger <path> --snapshot-dir <dir> --seq <n> [--dry-run] [--key base64-spki]
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
+nomo harness list --session <id>
+nomo harness approve --session <id> <digest>
+nomo harness reject --session <id> <digest> --reason <text>
+nomo harness rollback --session <id> <digest>
 nomo tui [--once] [--project <path>] [--skill <id> ...] [--view <tab>] [--session <id>] [--data-dir <path>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres-managed-conformance]
 nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <file> [--input <file>] [--approve <digest>] [--surface file|reserved|both]
