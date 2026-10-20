@@ -73,6 +73,13 @@ Validation: `node --test packages/workbench/src/workbench.test.ts` drives real M
 fixture processes behind a local provider test double, including approval denial.
 It does not spend credits or claim external-provider account validation.
 
+`node --test packages/workbench/src/harness-dispose.test.ts` proves the shutdown
+drain. `disposeReviews` serves each open session's dispose boundary while the
+provider still answers, and `shutdown` awaits it before closing the transports.
+A dispose review bypasses arming but not the gate facts the trigger keeps:
+refinement disabled, a round in flight, and a cooldown a failed attempt just
+stamped all still hold, so a drain twice in one tick pays once.
+
 `node --test packages/workbench/src/connector.test.ts` proves the consent gate
 end to end against a loopback MCP server that counts its requests, including
 the migration of a snapshot written before the gate.

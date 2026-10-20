@@ -691,6 +691,7 @@ export class Workbench {
       await Promise.allSettled([...this.jobs.values(), ...this.harnessJobs]);
   }
   async shutdown() {
+    await this.disposeReviews();
     this.close();
     await this.settled();
   }
@@ -3848,6 +3849,30 @@ export class Workbench {
    * it follows succeeded, and a learning pass that failed is not a reason to
    * mark a successful turn as failed.
    */
+  /**
+   * One last review per session while the workbench is still open.
+   *
+   * A settled-turn boundary cannot serve the lessons a session produced in
+   * its closing turns, because the interval has not elapsed by then. The
+   * dispose surface exists for exactly that drain, and `shutdown` is the
+   * caller that wants the guarantee, so it waits for every pass before the
+   * transport closes. Reviews requested here still pay the full gate: a
+   * cooldown just stamped by a failed attempt holds, and a session with
+   * nothing new commits nothing. `close()` alone skips the drain, because a
+   * synchronous close aborts the transports a review needs.
+   */
+  async disposeReviews(): Promise<void> {
+    const passes: Promise<void>[] = [];
+    for (const session of this.sessions.values()) {
+      if (!session.provider) continue;
+      const pass = this.serviceHarnessTurn(session, "dispose");
+      this.harnessJobs.add(pass);
+      void pass.finally(() => this.harnessJobs.delete(pass));
+      passes.push(pass);
+    }
+    await Promise.allSettled(passes);
+  }
+
   private async serviceHarnessTurn(session: Session, surface: GateSurface): Promise<void> {
     if (!session.provider) return;
     const id = session.view.id;

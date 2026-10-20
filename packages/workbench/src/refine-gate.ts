@@ -135,6 +135,29 @@ const REFUSAL_TEXT: Record<GateRefusal, string> = {
  * and one that silently stops, and it is why the return value carries both.
  */
 export function cheapGate(input: GateInput): GateDecision {
+  if (input.surface === "dispose") {
+    // Disposal is the last boundary a session will get. It bypasses arming,
+    // because arming happens at compaction and a short session never
+    // compacts, so a drain gated on it would never fire; what still holds
+    // here is every timing fact the trigger keeps: a disabled harness, a
+    // session that cannot hold state, a round in flight, and a cooldown a
+    // failed attempt just stamped, which is why a dispose cannot double up
+    // on an attempt that already paid.
+    if (!input.gates.enabled) return refuse("disabled", false);
+    if (!input.harnessStateAvailable) return refuse("no-harness-state", false);
+    if (input.inFlight) return refuse("in-flight", true);
+    if (
+      input.msSinceLastReview !== null &&
+      input.gates.cooldownMs > 0 &&
+      input.msSinceLastReview < input.gates.cooldownMs
+    ) {
+      return refuse("under-cooldown", true);
+    }
+    if (input.hasPendingReview) return { proceed: true, instructions: "" };
+    if (input.candidates.length === 0) return refuse("nothing-new", true);
+    return { proceed: true, instructions: "" };
+  }
+
   if (!input.pending && !input.hasPendingReview && !input.manual) return refuse("not-armed", false);
 
   // Gates before arithmetic. A disabled harness must not even measure how long
@@ -150,16 +173,6 @@ export function cheapGate(input: GateInput): GateDecision {
     input.msSinceLastReview < input.gates.cooldownMs
   ) {
     return refuse("under-cooldown", true);
-  }
-
-  if (input.surface === "dispose") {
-    // Disposal runs its review even when the interval has not elapsed: the
-    // session is ending and this is the last boundary there will be. The
-    // cooldown above still applies, so a dispose cannot double up on an attempt
-    // that just failed.
-    if (input.hasPendingReview) return { proceed: true, instructions: "" };
-    if (input.candidates.length === 0) return refuse("nothing-new", true);
-    return { proceed: true, instructions: "" };
   }
 
   // The settled-turn interval measures how long the harness has waited before
