@@ -119,7 +119,9 @@ export function localRecoveryVault(
           metadata.size !== reference.bytes ||
           metadata.size > maxArtifactBytes + 28
         )
-          throw new Error("Recovery artifact size mismatch.");
+          throw new Error(
+            `Recovery artifact file is ${metadata.size} bytes, but the reference declares ${reference.bytes} and the store ceiling is ${maxArtifactBytes + 28}.`,
+          );
         // Read budget. `maxArtifactBytes` already bounds what may be stored,
         // so this only bites a host that deliberately declares a smaller
         // working set.
@@ -132,7 +134,9 @@ export function localRecoveryVault(
         await handle.close();
       }
       if (digest(bytes.toString("base64")) !== reference.digest)
-        throw new Error("Recovery artifact digest mismatch.");
+        throw new Error(
+          `Recovery artifact hash mismatch: reference declares ${reference.digest}, the stored bytes hash to ${digest(bytes.toString("base64"))}.`,
+        );
       const cipher = createDecipheriv(
         "aes-256-gcm",
         keys[reference.keyId]!,

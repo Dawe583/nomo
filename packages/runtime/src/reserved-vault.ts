@@ -251,7 +251,7 @@ export function reservedRecoveryVault(
       )
         continue;
       if (!entry.isDirectory())
-        throw new Error("Unexpected entry in legacy vault.");
+        throw new Error(`Unexpected entry in legacy vault at ${JSON.stringify(join(rootPath, entry.name))}: the legacy layout stores one directory per workspace.`);
       const workspaceDir = join(rootPath, entry.name);
       await assertPrivateDirectoryPath(
         workspaceDir,
@@ -262,7 +262,7 @@ export function reservedRecoveryVault(
       for (const file of await readdir(join(rootPath, entry.name), {
         withFileTypes: true,
       })) {
-        if (!file.isFile()) throw new Error("Unexpected legacy artifact.");
+        if (!file.isFile()) throw new Error(`Unexpected legacy artifact layout at ${JSON.stringify(join(rootPath, entry.name, file.name))}: the legacy vault stores regular files only.`);
         const artifactPath = join(rootPath, entry.name, file.name);
         await assertPrivateFilePath(artifactPath, "legacy vault artifact");
         const stat = await lstat(artifactPath);
