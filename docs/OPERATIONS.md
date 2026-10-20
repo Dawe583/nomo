@@ -16,7 +16,7 @@ Policy files are YAML. Version 1 uses ordered rules. First match wins.
 | `match.tool` | no | string or list | Tool id, for example `postgres.row.delete`. |
 | `match.connector` | no | string or list | Connector id, for example `postgres` or `s3`. |
 | `match.workspace` | no | string or list | Workspace name. |
-| `match.blast_radius` | no | `{ lt: n }` only; other operators are load errors | Measured blast radius comparison. |
+| `match.blast_radius` | no | exactly one of `{ lt: n }`, `{ lte: n }`, `{ gt: n }` or `{ gte: n }` | Measured blast radius comparison; an unmeasured radius never matches. |
 | `decision` | yes | `allow`, `deny`, or `hold` | What the proxy does. |
 | `seconds` | for hold | whole number from 1 to 900 | Hold timeout. |
 | `notify` | no | `cli`, `slack`, or list | Approval channels. |

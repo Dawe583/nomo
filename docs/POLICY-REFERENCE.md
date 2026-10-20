@@ -93,7 +93,8 @@ Per-key value shapes (packages/policy/src/rules.ts:100-107):
   names `workspace` never matches a call that has no workspace; an
   undefined call side is a non-match, not a match-everything
   (packages/policy/src/decide.ts:63-65).
-- `blast_radius`: only `{ lt: <number> }`. See below.
+- `blast_radius`: exactly one of `{ lt: n }`, `{ lte: n }`, `{ gt: n }`,
+  `{ gte: n }`. See below.
 
 Semantics shared by all keys:
 
@@ -112,34 +113,44 @@ Semantics shared by all keys:
 
 ## BlastRadiusCondition
 
-The TypeScript shape is (packages/policy/src/rules.ts:18-21):
+The TypeScript shape is (packages/policy/src/rules.ts:29-34):
 
 ```ts
-export type BlastRadiusCondition = {
-  /** Fewer than: the only comparison the hold message needs. */
-  readonly lt: number;
-};
+export type BlastRadiusCondition =
+  | { readonly lt: number }
+  | { readonly lte: number }
+  | { readonly gt: number }
+  | { readonly gte: number };
 ```
 
-Rules enforced by the validator (packages/policy/src/rules.ts:91-98):
+Rules enforced by the validator (packages/policy/src/rules.ts:213-238,
+measured messages):
 
-- The value must be an object whose `lt` is a nonnegative safe integer; anything else
-  is rejected with `rules[N].match.blast_radius: must be { lt: number }`.
-- Extra keys beside `lt` are rejected with
-  `rules[N].match.blast_radius: unknown key <names>`.
+- The value must be an object with exactly one of the four operators,
+  whose value is a nonnegative safe integer. Anything else is
+  rejected with one of, in order: `rules[N].match.blast_radius: must
+  be one comparison { lt: n }, { lte: n }, { gt: n } or { gte: n }`
+  (wrong shape), `rules[N].match.blast_radius: unknown operator
+  <names>; allowed operators are lt, lte, gt, gte` (an unknown key
+  such as `eq`), and `rules[N].match.blast_radius: lt must be a
+  nonnegative safe integer` (wrong operator value).
 
-At match time the call matches only when its measured blast radius
-(rows, files, or objects the call would touch,
-packages/policy/src/decide.ts:25-26) is defined and strictly less
-than `lt` (packages/policy/src/decide.ts:67-71).
+At match time (packages/policy/src/decide.ts:105-112) the call matches
+only when its measured blast radius (rows, files, or objects the call
+would touch) is defined and the measured value satisfies the named
+comparison. An unknown measured radius never matches any threshold,
+so an operator can never satisfy a threshold rule by omitting the
+measurement. `lt` is strictly less than, `lte` less than or equal,
+`gt` strictly greater than, `gte` greater than or equal. A threshold
+payload naming zero or two operators is rejected with
+`rules[N].match.blast_radius: exactly one of lt, lte, gt, gte is
+required, got <names>`.
 
-Note on OPERATIONS.md: the "Policy grammar quick table" lists
-`{ lt: n }`, `{ lte: n }`, `{ gt: n }`, `{ gte: n }`, and `{ eq: n }`
-for `match.blast_radius`. The validator accepts only `{ lt: number }`;
-a file using `lte` is rejected with
-`rules[0].match.blast_radius: must be { lt: number }` (reproduced
-against the validator; see "Common mistakes"). Until the validator
-changes, write only `{ lt: n }`.
+Note on OPERATIONS.md: its "Policy grammar quick table" states the
+four shipped comparators and the unmeasured-radius rule, which is
+this text in shortened form. `eq` was never shipped and is not in
+the frozen comparator set; a file using it is rejected with the
+unknown-operator message above.
 
 ## NotifyChannel values
 
