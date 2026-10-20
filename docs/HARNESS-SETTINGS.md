@@ -63,6 +63,41 @@ operator as applied while changing nothing.
 An agent profile's own `maxTurns` still wins over the harness setting, because
 a profile is a deliberate per-agent choice and `AGENT_LIMITS` already caps it.
 
+## A selection, not a limit
+
+One setting is not a limit: `refinementModel` names the provider model the
+harness spends its review calls on. It is empty by default, and empty means
+the conversation's own model pays for the review.
+
+It lives in its own small table rather than in the table above because the
+rules above do not apply to a name. A limit has a bound the run path can
+honour, so a clamp is what keeps a hand-edited state file from widening one.
+A model id has no bound: the only honest check on it is its shape, because
+whether a provider knows the model is a fact only the provider can answer.
+The shape is checked on the way in: at most 128 characters, and only letters,
+digits and the characters `. _ - : @ /`. Anything else is refused by name,
+with the reason, and changes nothing. A stored state file cannot inject a
+model id the validator refuses.
+
+It is set over HTTP:
+
+```
+GET   /api/harness-review-settings
+PATCH /api/harness-review-settings   {"refinementModel": "vendor/model-v2:1"}
+```
+
+The terminal `/settings` command still reads a number, so the selection is
+not settable there yet. That is a known gap in the terminal surface, not a
+design decision, and the HTTP path is the one that exists today.
+
+Two things follow from the selection, and both are visible to an operator. The
+usage record for a review names the model the call actually went to, not the
+one the conversation runs on, because that record is where the spend is
+accounted. And a provider that does not know the selected model fails the
+review with the model named in the refusal, because a refusal that does not
+say which model was called leaves the operator guessing between a wrong
+selection and a provider that never had the model.
+
 ## Four rules the implementation keeps
 
 **A setting with no consumer does not exist.** Each row names the symbols that

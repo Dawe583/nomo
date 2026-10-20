@@ -3,11 +3,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   HARNESS_SETTINGS,
+  HARNESS_TEXT_SETTINGS,
   clampHarnessSetting,
   defaultHarnessSettings,
   harnessSettingsPatch,
   harnessSettingsView,
+  harnessTextSettingsPatch,
+  harnessTextSettingRejection,
+  harnessTextSettingsView,
   resolveHarnessSettings,
+  resolveHarnessTextSettings,
   type HarnessSettingKey,
 } from "./harness-settings.ts";
 import { HOOK_TIMEOUT_BOUNDS, HOOK_TIMEOUT_MS } from "./agents.ts";
@@ -71,6 +76,92 @@ test("every declared consumer names a symbol the named file actually defines", (
         `${key} names consumer ${symbol}, which is not defined in ${spec.consumerFile}`,
       );
   }
+});
+
+test("every selection names a consumer, so no choice is decorative", () => {
+  // The numeric table's rule applies to the selection table too: a knob
+  // nothing reads is a claim the operator cannot verify.
+  for (const [key, spec] of Object.entries(HARNESS_TEXT_SETTINGS)) {
+    assert.ok(spec.consumers.length > 0, `${key} has no consumer`);
+    assert.ok(
+      CONSUMER_FILES.includes(spec.consumerFile),
+      `${key} names an unknown file`,
+    );
+    assert.ok(spec.label.length > 0, `${key} has no label`);
+    assert.ok(spec.description.length > 0, `${key} has no description`);
+    assert.ok(spec.maxLength > 0, `${key} has no length bound`);
+  }
+});
+
+test("every declared selection consumer names a symbol the named file defines", () => {
+  for (const [key, spec] of Object.entries(HARNESS_TEXT_SETTINGS)) {
+    const source = consumerSource(spec.consumerFile);
+    for (const symbol of spec.consumers)
+      assert.ok(
+        new RegExp(`\\b${symbol}\\s*[(<]|\\b${symbol}\\s*[:=]`).test(source),
+        `${key} names consumer ${symbol}, which is not defined in ${spec.consumerFile}`,
+      );
+  }
+});
+
+test("a model id is refused for its shape and its length, and named when it is", () => {
+  assert.equal(harnessTextSettingRejection("refinementModel", ""), null);
+  assert.equal(harnessTextSettingRejection("refinementModel", "gpt-4o"), null);
+  assert.equal(harnessTextSettingRejection("refinementModel", "vendor/model-v2:1"), null);
+  assert.match(
+    harnessTextSettingRejection("refinementModel", "bad id") ?? "",
+    /Invalid refinementModel/,
+  );
+  assert.match(
+    harnessTextSettingRejection("refinementModel", 7) ?? "",
+    /expected a string, got number/,
+  );
+  assert.match(
+    harnessTextSettingRejection("refinementModel", "x".repeat(129)) ?? "",
+    /at most 128 characters, got 129/,
+  );
+});
+
+test("a selection patch refuses an unknown key and a malformed value by name", () => {
+  assert.throws(
+    () => harnessTextSettingsPatch({ reviewerModel: "gpt-4o" }),
+    /Unknown harness selection reviewerModel\. Known: refinementModel\./,
+  );
+  assert.throws(
+    () => harnessTextSettingsPatch({ refinementModel: "bad id" }),
+    /Invalid refinementModel/,
+  );
+  assert.deepEqual(harnessTextSettingsPatch({ refinementModel: "gpt-4o" }), {
+    refinementModel: "gpt-4o",
+  });
+});
+
+test("a stored state file cannot inject a model id the validator refuses", () => {
+  const resolved = resolveHarnessTextSettings({
+    refinementModel: "bad id",
+    other: "gpt-4o",
+  });
+  assert.equal(resolved.refinementModel, "");
+  assert.equal(
+    resolveHarnessTextSettings({ refinementModel: "gpt-4o" }).refinementModel,
+    "gpt-4o",
+  );
+  assert.deepEqual(
+    resolveHarnessTextSettings(undefined).refinementModel,
+    "",
+  );
+});
+
+test("the selection view names the consumer and marks a value that is not the default", () => {
+  const rows = harnessTextSettingsView({ refinementModel: "gpt-4o" });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0]!.key, "refinementModel");
+  assert.equal(rows[0]!.consumer, "serveHarnessBoundary");
+  assert.equal(rows[0]!.changed, true);
+  assert.equal(
+    harnessTextSettingsView({ refinementModel: "" })[0]!.changed,
+    false,
+  );
 });
 
 test("the hook timeout bounds are the ones runHook actually enforces", () => {

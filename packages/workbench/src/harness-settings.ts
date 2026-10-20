@@ -396,3 +396,132 @@ export function harnessSettingsView(settings: HarnessSettings) {
     changed: settings[key] !== HARNESS_SETTINGS[key].default,
   }));
 }
+
+/**
+ * A setting that selects rather than limits.
+ *
+ * The table above is numeric because every entry there is a bound the run
+ * path can honour, and a clamp is what keeps a hand-edited snapshot from
+ * widening one. A model id is not a bound: it names a model, and the only
+ * honest check on it is its shape, because whether a provider knows the model
+ * is a fact only the provider can answer. So the selection lives in its own
+ * table with its own validation, and the run path falls back to the
+ * conversation's own model when nothing is selected.
+ */
+export type HarnessTextSettingKey = "refinementModel";
+
+export type HarnessTextSettingSpec = {
+  label: string;
+  description: string;
+  consumerFile: "index.ts" | "provider.ts" | "gui.ts" | "agents.ts";
+  consumers: readonly string[];
+  icon: string;
+  default: string;
+  maxLength: number;
+};
+
+export const HARNESS_TEXT_SETTINGS: {
+  readonly [K in HarnessTextSettingKey]: HarnessTextSettingSpec;
+} = {
+  refinementModel: {
+    label: "Reviewer model",
+    description:
+      "The provider model the harness spends its review calls on. Empty means the conversation's own model.",
+    consumerFile: "index.ts",
+    consumers: ["serveHarnessBoundary"],
+    icon: "◕",
+    default: "",
+    maxLength: 128,
+  },
+};
+
+export type HarnessTextSettings = {
+  readonly [K in HarnessTextSettingKey]: string;
+};
+
+/** A model id is a provider's own name for a model. The shape is checked here
+ * because the id travels into a request body, and a control character or a
+ * space in a header or a path is a value no provider asked for. */
+const MODEL_ID = /^[A-Za-z0-9._:@/-]+$/;
+
+export function defaultHarnessTextSettings(): HarnessTextSettings {
+  return Object.fromEntries(
+    (Object.keys(HARNESS_TEXT_SETTINGS) as HarnessTextSettingKey[]).map((key) => [
+      key,
+      HARNESS_TEXT_SETTINGS[key].default,
+    ]),
+  ) as HarnessTextSettings;
+}
+
+/** Why a model id was refused, in one sentence an operator can act on. The
+ * value is named because a refusal that does not name it teaches nothing. */
+export function harnessTextSettingRejection(
+  key: HarnessTextSettingKey,
+  value: unknown,
+): string | null {
+  const spec = HARNESS_TEXT_SETTINGS[key];
+  if (typeof value !== "string")
+    return `Invalid ${key}: expected a string, got ${typeof value}.`;
+  if (value === "") return null;
+  if (value.length > spec.maxLength)
+    return `Invalid ${key}: a model id is at most ${spec.maxLength} characters, got ${value.length}.`;
+  if (!MODEL_ID.test(value))
+    return `Invalid ${key}: a model id may hold letters, digits and the characters . _ - : @ /, got ${JSON.stringify(value)}.`;
+  return null;
+}
+
+/** Merge stored values over the defaults, keeping only what the validator
+ * accepts. A hand-edited or truncated state file cannot put a model id into
+ * the run path that the operator never chose. */
+export function resolveHarnessTextSettings(
+  stored: Readonly<Record<string, unknown>> | undefined,
+): HarnessTextSettings {
+  const resolved: { -readonly [K in HarnessTextSettingKey]?: string } =
+    defaultHarnessTextSettings();
+  if (!stored) return resolved as HarnessTextSettings;
+  for (const key of Object.keys(HARNESS_TEXT_SETTINGS) as HarnessTextSettingKey[]) {
+    if (!(key in stored)) continue;
+    const value = stored[key];
+    if (harnessTextSettingRejection(key, value) !== null) continue;
+    resolved[key] = value as string;
+  }
+  return resolved as HarnessTextSettings;
+}
+
+/** Validate a patch body and return the keys it may change. An unknown key
+ * is refused by name rather than ignored: a silent no-op on a misspelled
+ * selection reads to an operator as applied. */
+export function harnessTextSettingsPatch(
+  body: Record<string, unknown>,
+): Partial<HarnessTextSettings> {
+  const patch: { -readonly [K in HarnessTextSettingKey]?: string } = {};
+  for (const [key, value] of Object.entries(body)) {
+    if (!Object.hasOwn(HARNESS_TEXT_SETTINGS, key))
+      throw new Error(
+        `Unknown harness selection ${key}. Known: ${Object.keys(HARNESS_TEXT_SETTINGS).sort().join(", ")}.`,
+      );
+    const rejection = harnessTextSettingRejection(
+      key as HarnessTextSettingKey,
+      value,
+    );
+    if (rejection) throw new Error(rejection);
+    patch[key as HarnessTextSettingKey] = value as string;
+  }
+  return patch;
+}
+
+/** One row per selection, for the operator surfaces. */
+export function harnessTextSettingsView(settings: HarnessTextSettings) {
+  return (Object.keys(HARNESS_TEXT_SETTINGS) as HarnessTextSettingKey[]).map(
+    (key) => ({
+      key,
+      label: HARNESS_TEXT_SETTINGS[key].label,
+      description: HARNESS_TEXT_SETTINGS[key].description,
+      consumer: HARNESS_TEXT_SETTINGS[key].consumers.join(", "),
+      icon: HARNESS_TEXT_SETTINGS[key].icon,
+      default: HARNESS_TEXT_SETTINGS[key].default,
+      value: settings[key],
+      changed: settings[key] !== HARNESS_TEXT_SETTINGS[key].default,
+    }),
+  );
+}

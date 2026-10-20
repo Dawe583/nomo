@@ -57,9 +57,13 @@ import {
 } from "./agent-identity.ts";
 import {
   defaultHarnessSettings,
+  defaultHarnessTextSettings,
   harnessSettingsPatch,
+  harnessTextSettingsPatch,
   resolveHarnessSettings,
+  resolveHarnessTextSettings,
   type HarnessSettings,
+  type HarnessTextSettings,
 } from "./harness-settings.ts";
 import { LocalStorage } from "./storage.ts";
 import {
@@ -616,6 +620,7 @@ export class Workbench {
   private hooks: Hook[] = [];
   private readonly hookAllowlist: readonly string[];
   private harness: HarnessSettings = defaultHarnessSettings();
+  private harnessText: HarnessTextSettings = defaultHarnessTextSettings();
   /**
    * Per-session refinement trigger state.
    *
@@ -758,6 +763,7 @@ export class Workbench {
     const saved = this.storage.read<{
       preferences?: Record<string, string>;
       harnessSettings?: Record<string, unknown>;
+      harnessTextSettings?: Record<string, unknown>;
       requests?: Record<string, { digest: string; sessionId: string }>;
       approvalHistory?: unknown[];
       config?: ProviderConfig;
@@ -825,6 +831,9 @@ export class Workbench {
       // Resolved, not trusted: a hand-edited or truncated snapshot must not be
       // able to put the run path in range of a limit nobody chose.
       this.harness = resolveHarnessSettings(saved.harnessSettings);
+      // Resolved, not trusted: a hand-edited snapshot can carry a model id the
+      // validator refuses, and a review call is spent on whatever it names.
+      this.harnessText = resolveHarnessTextSettings(saved.harnessTextSettings);
       if (retiredModel) {
         // The retired id leaves the preference instead of being rewritten to a
         // vendor's model. A workspace with a validated catalog re-picks from it;
@@ -954,6 +963,7 @@ export class Workbench {
     this.storage.save({
       preferences: this.preferences,
       harnessSettings: this.harness,
+      harnessTextSettings: this.harnessText,
       requests: this.requests,
       approvalHistory: [...this.approvalHistory, ...this.holds.values()],
       config: this.config,
@@ -2090,6 +2100,23 @@ export class Workbench {
    * so a caller cannot widen a limit by mutating the returned object. */
   harnessSettings(): HarnessSettings {
     return { ...this.harness };
+  }
+  /** The selections, as resolved on load. A copy, so a caller cannot rewrite
+   * one by mutating the returned object. */
+  harnessTextSettings(): HarnessTextSettings {
+    return { ...this.harnessText };
+  }
+  /** Set one selection. The validation names the key and the reason, because
+   * a refused model id that does not say which one was refused leaves the
+   * operator guessing between a typo and a provider that never had it. */
+  patchHarnessTextSettings(body: Record<string, unknown>): HarnessTextSettings {
+    this.harnessText = resolveHarnessTextSettings({
+      ...this.harnessText,
+      ...harnessTextSettingsPatch(body),
+    });
+    this.hasState = true;
+    this.persist();
+    return this.harnessTextSettings();
   }
   patchHarnessSettings(body: Record<string, unknown>): HarnessSettings {
     // Validated before anything is stored: harnessSettingsPatch refuses an
@@ -4288,12 +4315,31 @@ export class Workbench {
       // answer a question the chain does not support.
       rules: () => mineLearnedRules(this.evidence[session.view.workspace] ?? []).length,
       ask: async (request) => {
-        const reply = await provider.complete(
-          session.view.model,
-          [{ role: "user", content: request }],
-          [],
-          session.controller.signal,
-        );
+        // The review may name another model than the conversation runs on:
+        // a review is a bounded, structured request, and an operator may want
+        // it on a cheaper or a stronger model than the one they are chatting
+        // with. Nothing is selected by default, so the session's own model
+        // pays for the review until an operator says otherwise.
+        const reviewModel = this.harnessText.refinementModel || session.view.model;
+        let reply;
+        try {
+          reply = await provider.complete(
+            reviewModel,
+            [{ role: "user", content: request }],
+            [],
+            session.controller.signal,
+          );
+        } catch (error) {
+          // The model is named, because a refusal that does not say which
+          // model was called leaves the operator guessing between a wrong
+          // selection and a provider that never had the model. The reason
+          // travels unchanged: the request body is not echoed, because the
+          // request carries the workspace's own evidence.
+          const reason = error instanceof Error ? error.message : String(error);
+          throw new Error(
+            `The harness review on model ${reviewModel} failed: ${reason}`,
+          );
+        }
         // The review is a model call like any other and costs money like any
         // other. The turn path records reply.usage; this one used to throw it
         // away, so an operator reading usage saw conversation turns only and
@@ -4305,7 +4351,10 @@ export class Workbench {
             `${reply.usage.total_tokens ?? "Unknown"} tokens reported by the harness reviewer`,
             {
               ...reply.usage,
-              model: session.view.model,
+              // The model the call actually went to, not the one the
+              // conversation runs on: the operator reads this to see what the
+              // harness was paid for.
+              model: reviewModel,
               source: "harness",
               cost: null,
             },

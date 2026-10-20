@@ -94,6 +94,17 @@ approved. The rollback record names what it undid in `rolledBackDigest` and
 carries no `digest` of its own, which is what keeps it apart from an
 activation in every reader of that body.
 
+`node --test packages/workbench/src/harness-review-model.test.ts` proves the
+reviewer model selection. `refinementModel` is empty by default and empty
+means the conversation's own model pays for the review. A selected model takes
+the review call, the usage record names the model the call actually went to,
+and a provider that does not know the model fails the review with the model
+named. A malformed or unknown selection is refused by name and changes
+nothing, and a hand-edited state file cannot inject a model id the validator
+refuses. The selection is a name rather than a limit, so it lives in its own
+table with shape validation instead of a clamp, and it is set over HTTP at
+`/api/harness-review-settings`.
+
 `node --test packages/workbench/src/connector.test.ts` proves the consent gate
 end to end against a loopback MCP server that counts its requests, including
 the migration of a snapshot written before the gate.

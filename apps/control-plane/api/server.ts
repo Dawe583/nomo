@@ -18,7 +18,10 @@ import { basename, extname, join, posix, relative, resolve } from "node:path";
 import { homedir } from "node:os";
 import { envValue } from "../../../packages/ledger/src/env-compat.ts";
 import { fileURLToPath } from "node:url";
-import { harnessSettingsView } from "../../../packages/workbench/src/harness-settings.ts";
+import {
+  harnessSettingsView,
+  harnessTextSettingsView,
+} from "../../../packages/workbench/src/harness-settings.ts";
 
 import { runReplayCommand } from "../../../packages/cli/src/replay.ts";
 import type { ReplayCommandOptions } from "../../../packages/cli/src/replay.ts";
@@ -541,6 +544,28 @@ async function route(
         return sendJson(response, 200, {
           settings,
           rows: harnessSettingsView(settings),
+        });
+      }
+    }
+    // The selections, not the limits: a review model is a name, and the
+    // numeric table's clamp has nothing to say about it. A separate route
+    // keeps the two patch validators from having to agree on which table an
+    // unknown key belongs to.
+    if (parsed.pathname === "/api/harness-review-settings") {
+      if (request.method === "GET") {
+        const selections = wb.harnessTextSettings();
+        return sendJson(response, 200, {
+          settings: selections,
+          rows: harnessTextSettingsView(selections),
+        });
+      }
+      if (request.method === "PATCH") {
+        const selections = wb.patchHarnessTextSettings(
+          (await readJsonBody(request)) as Record<string, unknown>,
+        );
+        return sendJson(response, 200, {
+          settings: selections,
+          rows: harnessTextSettingsView(selections),
         });
       }
     }
