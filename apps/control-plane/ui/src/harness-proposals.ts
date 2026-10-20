@@ -1,3 +1,5 @@
+import type { Row } from "./api";
+
 /**
  * The harness proposal as the operator reads it.
  *
