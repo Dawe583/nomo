@@ -1361,7 +1361,7 @@ test("branch intent reuses its idempotency key after a transient failure", async
   assert.match(keys[0]!, /^[0-9a-f-]{36}$/);
 });
 
-test("logo is one stroke width and every row aligns", async (t) => {
+test("aperture logo keeps open corners and center dot", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-logo-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -1370,18 +1370,12 @@ test("logo is one stroke width and every row aligns", async (t) => {
   });
   const ui = new WorkspaceTui(app, env);
   const rows = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n");
-  // The mark is 7 rows of half blocks: an ink square outline, an accent
-  // square inside it, and a dot in the centre. Every row carries ink, so the
-  // mark never reads as a broken or partial rule.
-  const mark = rows.slice(0, 7).map((line) => line.slice(0, 13));
-  assert.ok(mark.every((line) => /[█▀▄]/.test(line)));
-  // Column 0 and column 12 are the outer rule, so they are ink on every row.
-  for (const row of mark) {
-    assert.ok(row.startsWith("█"), row);
-    assert.equal(row[12], "█", row);
-  }
-  // The centre cell of the middle row is the dot.
-  assert.equal(mark[3]![6], "█", mark[3]);
+  const mark = rows.slice(0, 5).map((line) => line.slice(0, 10));
+  assert.match(mark[0]!, /⌜.*⌝/);
+  assert.match(mark[1]!, /│.*┌─┐.*│/);
+  assert.match(mark[2]!, /│.*│·│.*│/);
+  assert.match(mark[3]!, /│.*└─┘.*│/);
+  assert.match(mark[4]!, /⌞.*⌟/);
 });
 
 test("tab icons carry fixed colors in color mode only", async (t) => {

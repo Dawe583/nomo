@@ -6406,18 +6406,13 @@ export function renderWorkspace(
     mark.forEach((markRow, i) => {
       header.push(
         ink(
-          markRow,
-          (visuals.boot || running) && frame % 5 === i ? ice : mutedAnsi,
-        ) +
-          (width >= 78
-            ? ink(
-                fit(
-                  sanitizeText("   " + (aside[i] ?? "")),
-                  width - visibleLength(markRow),
-                ),
-                i === 1 ? ice : mutedAnsi,
-              )
-            : ""),
+          fit(`${markRow}  ${aside[i] ?? ""}`, width),
+          (visuals.boot || running) && frame % 5 === i
+            ? ice
+            : i === 1
+              ? ice
+              : mutedAnsi,
+        ),
       );
     });
   } else

@@ -4,10 +4,16 @@ import { EventEmitter } from "node:events";
 import { readFile } from "node:fs/promises";
 
 import { approvalsView, type HeldCall } from "./approvals.ts";
+import { brandHeader } from "./brand.ts";
 import { detectCapabilities } from "./caps.ts";
 import { previewHold, previewState } from "./fixtures.ts";
 import { renderInlineCall } from "./inline.ts";
-import { sanitizeText, stripAnsi, visibleLength, progressBar } from "./layout.ts";
+import {
+  sanitizeText,
+  stripAnsi,
+  visibleLength,
+  progressBar,
+} from "./layout.ts";
 import { promptForHold, renderHoldPrompt, type RawInput } from "./modal.ts";
 import { CLASS_MARKER, NOMO_PALETTE } from "./theme.ts";
 import type { InterceptedCall, TerminalCapabilities } from "./types.ts";
@@ -60,6 +66,16 @@ describe("terminal capabilities", () => {
 });
 
 describe("NOMO visual language", () => {
+  test("brand uses the compact aperture mark within narrow widths", () => {
+    const mono = brandHeader("", capabilities(20)).map(stripAnsi);
+    assert.equal(mono.length, 5);
+    assert.ok(mono.every((line) => visibleLength(line) <= 20));
+    assert.match(mono.join("\n"), /[⌜⌝⌞⌟]/);
+    assert.match(mono.join("\n"), /·/);
+    const color = brandHeader("NOMO", capabilities(40, 40, true)).join("\n");
+    assert.match(color, /38;2;189;66;6/);
+  });
+
   test("uses the product palette and a non-colour marker for every class", () => {
     assert.equal(NOMO_PALETTE.r3, "#f47a88");
     assert.deepEqual(CLASS_MARKER, {
@@ -138,8 +154,7 @@ describe("external strings cannot inject terminal control", () => {
       capabilities(80),
     );
     assert.doesNotMatch(modal, /\u001b|\u0007/);
-    for (const line of modal.split("\n"))
-      assert.ok(visibleLength(line) <= 80);
+    for (const line of modal.split("\n")) assert.ok(visibleLength(line) <= 80);
   });
 
   test("the watch frame sanitizes hostile detail and hold data", () => {
@@ -351,9 +366,6 @@ describe("watch dashboard", () => {
   });
 });
 
-
-
-
 describe("approvals view", () => {
   const held = (over: Partial<HeldCall> = {}): HeldCall => ({
     id: "h0001",
@@ -556,7 +568,7 @@ describe("A6 cost panel", () => {
       ...previewState,
       cost: [
         { model: "gpt-4", tokens: 1_500, records: 42, usd: null },
-        { model: "gpt-3.5", tokens: 3_200, records: 18, usd: 3.20 },
+        { model: "gpt-3.5", tokens: 3_200, records: 18, usd: 3.2 },
       ],
     };
     const caps = capabilities(80);
@@ -569,9 +581,7 @@ describe("A6 cost panel", () => {
   test("missing price renders unknown not 0", () => {
     const stateMissingPrice = {
       ...previewState,
-      cost: [
-        { model: "gpt-4", tokens: 1_500, records: 42, usd: null },
-      ],
+      cost: [{ model: "gpt-4", tokens: 1_500, records: 42, usd: null }],
     };
     const caps = capabilities(80);
     const frame = renderWatchFrame(stateMissingPrice, caps);
