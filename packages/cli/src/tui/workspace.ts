@@ -16,7 +16,10 @@ import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
-import { measureBoard, unmeasuredMetrics } from "../../../workbench/src/harness-scores.ts";
+import {
+  measureBoard,
+  unmeasuredMetrics,
+} from "../../../workbench/src/harness-scores.ts";
 
 import { harnessSettingsView } from "../../../workbench/src/harness-settings.ts";
 import {
@@ -282,7 +285,8 @@ const text = (value: unknown) => String(value ?? "unknown");
 const escapeTerminalText = (value: string) =>
   value.replace(
     /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/gu,
-    (character) => `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
+    (character) =>
+      `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
   );
 /** A workspace chain is one score case, even when several sessions display it. */
 const verifiedScoreCases = (
@@ -1984,10 +1988,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "The signed chain records the approval and activation.",
           ];
         } else {
-          await this.workbench.rejectHarnessProposal(
-            sessionId,
-            match.digest,
-          );
+          await this.workbench.rejectHarnessProposal(sessionId, match.digest);
           this.notice = `Harness proposal rejected: ${match.digest.slice(0, 8)}.`;
           this.detail = [
             "HARNESS PROPOSAL REJECTED",
@@ -3763,7 +3764,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ? [
               `Lock drift: ${drifted.map((skill) => skill.id).join(", ")}`,
               ...drifted.map(
-                (skill) => `  ${skill.id}: locked ${skill.lockedHash}; current ${skill.actualHash}`,
+                (skill) =>
+                  `  ${skill.id}: locked ${skill.lockedHash}; current ${skill.actualHash}`,
               ),
             ]
           : ["Lock drift: none"]),
@@ -4861,7 +4863,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         await this.workbench.verifySubagent(parentId, childId);
         const current = this.workbench.get(childId);
         if (!current || current.parentId !== parentId)
-          throw Error("Selected child relationship changed. Refresh the sessions inspector.");
+          throw Error(
+            "Selected child relationship changed. Refresh the sessions inspector.",
+          );
         if (!["running", "queued", "paused"].includes(current.status))
           throw Error("This child is not in a cancellable state.");
         const apply = async () =>
@@ -4881,7 +4885,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         return;
       }
       if (arg === "review") {
-        const result = await this.workbench.subagentResult(selected.parentId, selected.id);
+        const result = await this.workbench.subagentResult(
+          selected.parentId,
+          selected.id,
+        );
         if (!result) throw Error("No settled successful result is available.");
         const current = this.workbench.get(selected.id);
         if (
@@ -4902,16 +4909,24 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           preview,
         ];
         if (result.truncated) {
-          this.detail = [...lines, "", "Delivery unavailable: result may be incomplete."];
-          this.notice = "Result may be truncated; preview only, delivery blocked.";
+          this.detail = [
+            ...lines,
+            "",
+            "Delivery unavailable: result may be incomplete.",
+          ];
+          this.notice =
+            "Result may be truncated; preview only, delivery blocked.";
           return;
         }
         this.confirmation = {
           title: "DELIVER SUBAGENT RESULT?",
           lines,
-          apply: async () => this.workbench.deliverSubagentResult(
-            current.parentId!, current.id, result.runId,
-          ),
+          apply: async () =>
+            this.workbench.deliverSubagentResult(
+              current.parentId!,
+              current.id,
+              result.runId,
+            ),
         };
         return;
       }
@@ -5058,109 +5073,114 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       );
       return;
     }
-     // Prompt proposals are inert until one of these names their exact digest.
-     // Listing shows diffs; only approve activates, only reject settles, and
-     // both refuse an unknown digest rather than guessing. Approval runs through
-     // a confirmation that prints the complete proposal first: it is the one
-     // path that changes the prompt every later conversation runs under.
-     if (cmd === "harness") {
-       const [verb = "", ...rest] = arg.split(/\s+/).filter(Boolean);
-       if (verb === "scores") {
-         const board = measureBoard(
-           verifiedScoreCases(this.proofs),
-           new Date().toISOString(),
-         );
-         const firstPass = board.metrics.first_pass_rate;
-         this.detail = [
-           `HARNESS SCORES, verdict: ${board.verdict}`,
-           `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
-           `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
-           `Sample count: ${firstPass.n} first-pass samples`,
-           `Case count: ${board.caseCount} verified tool-call cases`,
-           `Reason: ${board.reasons.join("; ")}.`,
-           ...unmeasuredMetrics(board).map(
-             (key) => `${key}: no sample, so no rate can be computed.`,
-           ),
-           "Descriptive only; never changes a decision or permission.",
-         ];
-         this.scroll = 0;
-         return;
-       }
-       if (verb === "review") {
-         if (!this.sessionId) throw Error("Select a conversation.");
-         const sessionId = this.sessionId;
-         this.confirmation = {
-           title: "REQUEST A HARNESS REVIEW?",
-           lines: [
-             "This may spend one model call: the reviewer looks for a durable lesson in the signed chain.",
-             "The settled-turn interval is skipped because you asked; the harness switch, the cooldown and the nothing-new check still apply, and a refusal costs nothing.",
-             "If the conversation is running, the request is recorded and served at the next settled boundary.",
-             "The reviewer can only propose. Nothing is activated without your approval.",
-           ],
-           apply: async () => {
-             this.confirmation = undefined;
-             const result = await this.workbench.requestHarnessReview(sessionId);
-             const note = escapeTerminalText(result.note);
-             this.notice = `Harness review ${result.kind}. ${note}`;
-             this.detail = [
-               `HARNESS REVIEW ${result.kind.toUpperCase()}`,
-               "",
-               note,
-               ...(result.kind === "ran"
-                 ? [
-                     "",
-                     "The signed chain records the outcome. /harness lists any proposal awaiting a decision.",
-                   ]
-                 : []),
-               "",
-               "The reviewer can only propose. Nothing is activated without your approval.",
-             ];
-             this.scroll = 0;
-             await this.refresh(true);
-           },
-         };
-         this.scroll = 0;
-         return;
-       }
-       if (verb === "approve" || verb === "reject") {
-         await this.prepareHarnessDecision(rest.join(" "), verb);
-         return;
-       }
-       if (verb && verb !== "cloud" && verb !== "prime-agent")
-         throw Error("/harness cloud | prime-agent | scores | review | approve DIGEST | reject DIGEST");
-       if (verb) {
-         this.workbench.patchPreferences({ defaultAgent: verb });
-         this.notice =
-           verb === "prime-agent"
-             ? "Harness: prime-agent. New conversations route there when the bridge runs."
-             : "Harness: cloud. New conversations run in the managed session.";
-       }
-       const prefs = this.workbench.getPreferences();
-       const found = await detectHarnesses(this.env);
-       const pending = this.sessionId ? await this.workbench.pendingApprovalsFor(this.sessionId) : [];
-       this.detail = [
-         `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
-         "",
-         "cloud: managed session in this workspace, approvals in the TUI.",
-         "prime-agent: local harness CLI for team agents, needs the bridge.",
-         "",
-         ...found.map(
-           (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
-         ),
-         "",
-         ...pending.map((approval) =>
-           `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
-         ),
-         pending.length
-           ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
-           : "No Harness proposals are awaiting an operator decision.",
-         "",
-         "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
-         "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
-       ];
-       this.scroll = 0;
-       return;
-     }
+    // Prompt proposals are inert until one of these names their exact digest.
+    // Listing shows diffs; only approve activates, only reject settles, and
+    // both refuse an unknown digest rather than guessing. Approval runs through
+    // a confirmation that prints the complete proposal first: it is the one
+    // path that changes the prompt every later conversation runs under.
+    if (cmd === "harness") {
+      const [verb = "", ...rest] = arg.split(/\s+/).filter(Boolean);
+      if (verb === "scores") {
+        const board = measureBoard(
+          verifiedScoreCases(this.proofs),
+          new Date().toISOString(),
+        );
+        const firstPass = board.metrics.first_pass_rate;
+        this.detail = [
+          `HARNESS SCORES, verdict: ${board.verdict}`,
+          `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
+          `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
+          `Sample count: ${firstPass.n} first-pass samples`,
+          `Case count: ${board.caseCount} verified tool-call cases`,
+          `Reason: ${board.reasons.join("; ")}.`,
+          ...unmeasuredMetrics(board).map(
+            (key) => `${key}: no sample, so no rate can be computed.`,
+          ),
+          "Descriptive only; never changes a decision or permission.",
+        ];
+        this.scroll = 0;
+        return;
+      }
+      if (verb === "review") {
+        if (!this.sessionId) throw Error("Select a conversation.");
+        const sessionId = this.sessionId;
+        this.confirmation = {
+          title: "REQUEST A HARNESS REVIEW?",
+          lines: [
+            "This may spend one model call: the reviewer looks for a durable lesson in the signed chain.",
+            "The settled-turn interval is skipped because you asked; the harness switch, the cooldown and the nothing-new check still apply, and a refusal costs nothing.",
+            "If the conversation is running, the request is recorded and served at the next settled boundary.",
+            "The reviewer can only propose. Nothing is activated without your approval.",
+          ],
+          apply: async () => {
+            this.confirmation = undefined;
+            const result = await this.workbench.requestHarnessReview(sessionId);
+            const note = escapeTerminalText(result.note);
+            this.notice = `Harness review ${result.kind}. ${note}`;
+            this.detail = [
+              `HARNESS REVIEW ${result.kind.toUpperCase()}`,
+              "",
+              note,
+              ...(result.kind === "ran"
+                ? [
+                    "",
+                    "The signed chain records the outcome. /harness lists any proposal awaiting a decision.",
+                  ]
+                : []),
+              "",
+              "The reviewer can only propose. Nothing is activated without your approval.",
+            ];
+            this.scroll = 0;
+            await this.refresh(true);
+          },
+        };
+        this.scroll = 0;
+        return;
+      }
+      if (verb === "approve" || verb === "reject") {
+        await this.prepareHarnessDecision(rest.join(" "), verb);
+        return;
+      }
+      if (verb && verb !== "cloud" && verb !== "prime-agent")
+        throw Error(
+          "/harness cloud | prime-agent | scores | review | approve DIGEST | reject DIGEST",
+        );
+      if (verb) {
+        this.workbench.patchPreferences({ defaultAgent: verb });
+        this.notice =
+          verb === "prime-agent"
+            ? "Harness: prime-agent. New conversations route there when the bridge runs."
+            : "Harness: cloud. New conversations run in the managed session.";
+      }
+      const prefs = this.workbench.getPreferences();
+      const found = await detectHarnesses(this.env);
+      const pending = this.sessionId
+        ? await this.workbench.pendingApprovalsFor(this.sessionId)
+        : [];
+      this.detail = [
+        `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
+        "",
+        "cloud: managed session in this workspace, approvals in the TUI.",
+        "prime-agent: local harness CLI for team agents, needs the bridge.",
+        "",
+        ...found.map(
+          (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
+        ),
+        "",
+        ...pending.map(
+          (approval) =>
+            `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
+        ),
+        pending.length
+          ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
+          : "No Harness proposals are awaiting an operator decision.",
+        "",
+        "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
+        "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
+      ];
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "rename") {
       if (!this.sessionId) throw Error("Select a conversation.");
       this.workbench.patchSession(this.sessionId, { title: arg });
@@ -6016,7 +6036,10 @@ export const TUI_COMMANDS = [
   ["/export", "Save ledger, chat or document"],
   ["/attest", "Signed slice for a third party"],
   ["/providers", "Model providers and local open models"],
-  ["/harness", "Agent harness: cloud, prime-agent, scores, review, approve, reject"],
+  [
+    "/harness",
+    "Agent harness: cloud, prime-agent, scores, review, approve, reject",
+  ],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],
   ["/verify", "Verify signatures"],
@@ -6080,7 +6103,8 @@ const COMMAND_ARGUMENTS: Record<string, string> = {
   "/export": "ledger, chat or document",
   "/filter": "text",
   "/settings": "key value",
-  "/harness": "cloud, prime-agent, scores, review, approve DIGEST, reject DIGEST",
+  "/harness":
+    "cloud, prime-agent, scores, review, approve DIGEST, reject DIGEST",
   "/theme": "color, mono, motion, still or reset",
   "/approve": "hold-ID [reason]",
   "/deny": "hold-ID [reason]",
@@ -6675,6 +6699,12 @@ export function renderWorkspace(
     ? chatRows(ui.session()!.events, width - 4, ui.compactTools)
     : undefined;
   const lines = styled?.map((row) => row.text) ?? wrap(content, width - 4);
+  const activityRows = richChat
+    ? renderActivity(buildActivity(ui.session()!.events), width - 4, {
+        motion,
+        height: Math.min(3, bodyHeight),
+      })
+    : [];
   let offset = ui.scroll;
   // The palette windows its own list internally and the window follows the
   // selection, so the body always starts at the top here.
@@ -6703,8 +6733,10 @@ export function renderWorkspace(
         : -1,
     )
     .filter((index) => index >= 0);
-  const body = lines.slice(offset, offset + bodyHeight);
-  while (body.length < bodyHeight) body.push("");
+  const chatBodyHeight = Math.max(0, bodyHeight - activityRows.length);
+  const body = lines.slice(offset, offset + chatBodyHeight);
+  while (body.length < chatBodyHeight) body.push("");
+  body.unshift(...activityRows);
   // Build minimap events for chat tab (just events, no palette needed)
   const minimapEvents =
     richChat && ui.session() ? buildMinimapEvents(ui.session()!.events) : [];
@@ -6712,7 +6744,7 @@ export function renderWorkspace(
   let minimapRows: string[] = [];
   const frameColor = ui.confirmation ? amber : mutedAnsi;
   const bodyRows = body.map((line, index) => {
-    const style = styled?.[offset + index]?.style;
+    const style = styled?.[offset + index - activityRows.length]?.style;
     const tone =
       style === "user"
         ? `1;${violet};48;5;236`
@@ -6753,8 +6785,15 @@ export function renderWorkspace(
       ink(ui.confirmation ? "! " : "  ", frameColor) +
       ink(painted, tone) +
       (ui.confirmation ? ink(" !", frameColor) : "  ") +
-      (richChat && minimapRows[index]
-        ? paintWithPalette(" " + minimapRows[index], "muted", palette, caps)
+      (richChat &&
+      index >= activityRows.length &&
+      minimapRows[index - activityRows.length]
+        ? paintWithPalette(
+            " " + minimapRows[index - activityRows.length],
+            "muted",
+            palette,
+            caps,
+          )
         : "")
     );
   });

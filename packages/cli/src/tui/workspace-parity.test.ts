@@ -392,6 +392,9 @@ test("the chat panel leads with the shape of the conversation", async (t) => {
   ui.choose("chat");
   const rows = ui.lines();
   const joined = rows.join("\n");
+  const frame = stripAnsi(renderWorkspace(ui, 100, 32, "", false, false));
+  const wideStrip = activityStrip(buildActivity(ui.session()!.events), 96);
+  assert.ok(frame.includes(wideStrip), "wide chat retains its activity strip");
 
   // The strip comes before the transcript. An operator returning after an hour
   // wants to see where it got to, and scrolling to find that is the work the
