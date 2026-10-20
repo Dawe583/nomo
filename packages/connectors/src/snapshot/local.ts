@@ -206,7 +206,7 @@ function mergeMeta(existing: SnapshotMeta | undefined, incoming: SnapshotMeta): 
     throw new Error(`Snapshot pin metadata conflicts: recorded ${existing.pin.ownerId}:${existing.pin.kind}, incoming ${incoming.pin.ownerId}:${incoming.pin.kind}.`);
   for (const field of ["keyId", "expiresAt"] as const) {
     if (existing[field] !== undefined && incoming[field] !== undefined && existing[field] !== incoming[field])
-      throw new Error(`Snapshot ${field} metadata conflicts with an existing capture.`);
+      throw new Error(`Snapshot ${field} metadata conflicts with an existing capture: recorded ${JSON.stringify(existing[field])}, incoming ${JSON.stringify(incoming[field])}.`);
   }
   return { ...incoming, ...existing };
 }

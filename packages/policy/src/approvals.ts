@@ -334,9 +334,10 @@ export class ApprovalBroker {
       try {
         assertPrivateFile(path, check);
         const value: unknown = JSON.parse(this.fs.readFileSync(path, "utf8"));
-        if (!isObject(value) || typeof value.holdId !== "string" || typeof value.decisionToken !== "string") {
-          throw new Error("invalid approval decision file");
-        }
+        if (!isObject(value)) throw new Error("invalid approval decision file: expected a JSON object");
+        if (typeof value.holdId !== "string") throw new Error("invalid approval decision file: holdId must be a string");
+        if (typeof value.decisionToken !== "string")
+          throw new Error("invalid approval decision file: decisionToken must be a string");
         validateDecision(value.decision);
         const record = this.get(value.holdId);
         if (record?.decisionToken === value.decisionToken) this.decide(value.holdId, value.decision);
@@ -408,11 +409,20 @@ export function loadPending(dir: string, fs: ApprovalFs = nodeFs, acknowledge?: 
   assertPrivateDirectory(dir, check, false);
   assertPrivateFile(join(dir, "pending.json"), check);
   const value: unknown = JSON.parse(fs.readFileSync(join(dir, "pending.json"), "utf8"));
-  if (!Array.isArray(value) || !value.every((item: unknown) => isObject(item) &&
-    typeof item.holdId === "string" && typeof item.decisionToken === "string" &&
-    item.status === "pending" && typeof item.expiresAt === "number" && Number.isFinite(item.expiresAt) &&
-    isObject(item.call) && typeof item.call.tool === "string" && typeof item.call.klass === "string" &&
-    Array.isArray(item.notify))) throw new Error("invalid pending approvals file");
+  if (!Array.isArray(value)) throw new Error("invalid pending approvals file: expected a JSON array");
+  value.forEach((item: unknown, index: number) => {
+    const where = `invalid pending approvals file: entry ${index}`;
+    if (!isObject(item)) throw new Error(`${where} is not an object`);
+    if (typeof item.holdId !== "string") throw new Error(`${where} holdId must be a string`);
+    if (typeof item.decisionToken !== "string") throw new Error(`${where} decisionToken must be a string`);
+    if (item.status !== "pending") throw new Error(`${where} status must be "pending", got ${JSON.stringify(item.status)}`);
+    if (typeof item.expiresAt !== "number" || !Number.isFinite(item.expiresAt))
+      throw new Error(`${where} expiresAt must be a finite number`);
+    if (!isObject(item.call)) throw new Error(`${where} call must be an object`);
+    if (typeof item.call.tool !== "string") throw new Error(`${where} call.tool must be a string`);
+    if (typeof item.call.klass !== "string") throw new Error(`${where} call.klass must be a string`);
+    if (!Array.isArray(item.notify)) throw new Error(`${where} notify must be an array`);
+  });
   return value as PendingApprovalRecord[];
 }
 
@@ -424,7 +434,9 @@ export function writeDecision(
   validateDecision(decision);
   const check = stateCheck(fs, acknowledge);
   const record = loadPending(dir, fs, acknowledge).find((pending) => pending.holdId === holdId);
-  if (record === undefined || record.expiresAt <= now()) throw new Error("hold is not pending or has expired");
+  if (record === undefined) throw new Error(`no pending hold matches ${JSON.stringify(holdId)}`);
+  if (record.expiresAt <= now())
+    throw new Error(`hold ${JSON.stringify(holdId)} expired at ${new Date(record.expiresAt).toISOString()}`);
   atomicWrite(join(dir, "decisions"), `${randomUUID()}.json`, {
     holdId, decisionToken: record.decisionToken, decision,
   }, check);
@@ -470,12 +482,15 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function validateDecision(value: unknown): asserts value is ApprovalDecision {
-  if (!isObject(value) || (value.kind !== "approved" && value.kind !== "denied") ||
-    typeof value.by !== "string" || value.by.trim() === "" ||
-    (value.reason !== undefined && typeof value.reason !== "string") ||
-    Object.keys(value).some((key) => !["kind", "by", "reason"].includes(key))) {
-    throw new Error("invalid approval decision");
-  }
+  if (!isObject(value)) throw new Error("invalid approval decision: expected a JSON object");
+  if (value.kind !== "approved" && value.kind !== "denied")
+    throw new Error(`invalid approval decision: kind must be "approved" or "denied", got ${JSON.stringify(value.kind)}`);
+  if (typeof value.by !== "string" || value.by.trim() === "")
+    throw new Error("invalid approval decision: by must be a non-empty string");
+  if (value.reason !== undefined && typeof value.reason !== "string")
+    throw new Error("invalid approval decision: reason must be a string when present");
+  const unknown = Object.keys(value).filter((key) => !["kind", "by", "reason"].includes(key));
+  if (unknown.length) throw new Error(`invalid approval decision: unknown field ${JSON.stringify(unknown[0])}`);
 }
 
 function secureDirectory(dir: string, check: ApprovalStateCheck): ApprovalStateVerdict {
