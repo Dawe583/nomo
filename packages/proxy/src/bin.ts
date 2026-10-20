@@ -310,7 +310,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
       const failed: JsonRpcError = {
         jsonrpc: "2.0",
         id: translated.id,
-        error: { code: INTERNAL_ERROR, message: "dispatch evidence failed" },
+        error: { code: INTERNAL_ERROR, message: "dispatch evidence append failed" },
       };
       try {
         const outcome = await bound.binding.outcome(bound.evidence, failed);
@@ -341,9 +341,11 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
     let message: JsonRpcMessage;
     try {
       message = parseMessage(line, inboundMaxBytes);
-    } catch {
+    } catch (error) {
       await markPendingLegacyUnknown();
-      writeError("upstream sent malformed JSON-RPC message");
+      writeError(
+        `upstream sent malformed JSON-RPC message: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return;
     }
 

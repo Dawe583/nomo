@@ -76,7 +76,10 @@ export async function startLocalMcpHttpServer(
   const server = createServer((request, response) => {
     void handleHttpRequest(request, response).catch(() => {
       if (!response.headersSent)
-        writeJson(response, 500, { error: "local_mcp_request_failed" });
+        writeJson(response, 500, {
+          error: "local_mcp_request_failed",
+          message: "internal handler failure; the failing stage is in the proxy stderr log",
+        });
       else response.destroy();
     });
   });
@@ -134,12 +137,12 @@ export async function startLocalMcpHttpServer(
     }
     const token = bearerToken(request.headers.authorization);
     if (!token) {
-      writeUnauthorized(response);
+      writeUnauthorized(response, "missing-grant");
       return;
     }
     const identity = resolveIdentity(options.resolveGrant, token, options.upstreamId);
     if (!identity) {
-      writeUnauthorized(response);
+      writeUnauthorized(response, "invalid-or-expired-grant");
       return;
     }
     const authenticatedRequest = request as IncomingMessage & { auth?: AuthInfo };
@@ -231,12 +234,15 @@ function asJsonObject(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function writeUnauthorized(response: ServerResponse): void {
+function writeUnauthorized(
+  response: ServerResponse,
+  reason: "missing-grant" | "invalid-or-expired-grant",
+): void {
   response.writeHead(401, {
     "www-authenticate": "Bearer",
     "content-type": "application/json",
   });
-  response.end(JSON.stringify({ error: "invalid_local_agent_grant" }));
+  response.end(JSON.stringify({ error: "invalid_local_agent_grant", reason }));
 }
 
 function writeJson(
