@@ -653,6 +653,46 @@ async function route(
         return sendJson(response, 200, await wb.recoveryJobStatus(id, action));
       return sendJson(response, 405, { error: "method_not_allowed" });
     }
+    // The harness proposals an operator has to decide. The terminal had this
+    // path and the web surface did not, so an operator who works in the
+    // browser could not approve what the harness learned, which is the one
+    // action the loop exists for.
+    const harnessProposals =
+      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals$/.exec(parsed.pathname);
+    if (harnessProposals) {
+      const id = harnessProposals[1]!;
+      if (!wb.get(id)) return sendJson(response, 404, { message: "Session not found." });
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      return sendJson(response, 200, {
+        proposals: await wb.pendingApprovalsFor(id),
+      });
+    }
+    const harnessDecision =
+      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals\/([a-f0-9]{64})\/(approve|reject)$/.exec(
+        parsed.pathname,
+      );
+    if (harnessDecision) {
+      const id = harnessDecision[1]!,
+        digest = harnessDecision[2]!,
+        action = harnessDecision[3]!;
+      if (!wb.get(id)) return sendJson(response, 404, { message: "Session not found." });
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      if (action === "approve")
+        return sendJson(response, 200, await wb.approveHarnessProposal(id, digest));
+      const body = await readJsonBody(request).catch(() => ({})) as {
+        reason?: unknown;
+      };
+      // A rejection names its reason, because a rejection without one reads to
+      // the next reviewer as a decision with no argument behind it.
+      await wb.rejectHarnessProposal(
+        id,
+        digest,
+        typeof body.reason === "string" ? body.reason : "",
+      );
+      return sendJson(response, 200, { rejected: true, digest });
+    }
     const feature =
       /^\/api\/sessions\/([a-f0-9-]+)\/(events|stream|documents|branches|compact)$/.exec(
         parsed.pathname,

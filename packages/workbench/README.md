@@ -106,6 +106,17 @@ entered the environment after a proposal was written would otherwise travel
 into the chain again through the rollback, and the guarantee has to be
 re-established at the write rather than inherited.
 
+The operator decides a proposal on the surface they are already on. The
+terminal has had that path; the web control plane did not, so an operator who
+works in the browser could not approve what the harness learned, which is the
+one action the loop exists for. The control plane now serves
+`GET /api/sessions/:id/harness/proposals` and
+`POST /api/sessions/:id/harness/proposals/:digest/approve` and `.../reject`
+for a live session. A decision binds to the exact digest the operator was
+shown, a rejection carries its reason, an unknown session reads 404, and a
+digest nobody proposed is refused with the workbench's own sentence rather
+than as a silent no-op.
+
 `node --test packages/workbench/src/harness-review-model.test.ts` proves the
 reviewer model selection. `refinementModel` is empty by default and empty
 means the conversation's own model pays for the review. A selected model takes
