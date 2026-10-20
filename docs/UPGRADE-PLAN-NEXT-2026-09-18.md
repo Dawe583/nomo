@@ -2,7 +2,7 @@
 
 ## Current status correction
 
-The dated roadmap below is not a completion report. See [verified scope](UPGRADE-VERIFICATION.md). New unconfigured workspaces default to NVIDIA NIM, `z-ai/glm-5.3-flash`; existing provider/model snapshots remain unchanged. Missing credentials mean setup-required, never fallback.
+The dated roadmap below is not a completion report. See [verified scope](UPGRADE-VERIFICATION.md). New unconfigured workspaces have no default provider and no default model (DECISIONS 2026-09-26): the surfaces ask on first use, and the presets are choices on offer, not a vendor picked for the operator. Existing provider/model snapshots remain unchanged, and missing credentials mean setup-required, never fallback.
 
 Managed document SQL journaling, retained run/list recovery, local profiles, deterministic compaction and a bounded local queue are implemented slices of A5/A9/A10, B6/B8/B9/B11 and C3/C6. Their larger roadmap items are not complete: no general pause/resume, executable hooks, dependency closure, server-enforced per-hunk review or general cloud queue is claimed. Percentage milestones are not measured evidence. No entire F0-F5 phase is closed by this integration.
 
