@@ -445,6 +445,36 @@ export function compareBoards(
 }
 
 /** Metrics that carry no measurement at all, named for a surface to show. */
+/**
+ * Group a chain's entries by the call shape they name.
+ *
+ * The board is measured over cases, and only the caller knows what a case is.
+ * The CLI reads one ledger (one workspace), so a per-workspace case would
+ * leave it with a single sample and no interval. A case here is a call
+ * shape, the same tool in the same class, which is the granularity the
+ * chain's own records carry and the one that gives a single ledger enough
+ * samples to say whether a metric moved.
+ */
+export function scoreCases(
+  entries: readonly { readonly body: unknown }[],
+): readonly (readonly { readonly body: unknown }[])[] {
+  const byShape = new Map<string, { readonly body: unknown }[]>();
+  for (const entry of entries) {
+    const record =
+      entry.body !== null && typeof entry.body === "object" && !Array.isArray(entry.body)
+        ? (entry.body as Record<string, unknown>)
+        : null;
+    const tool = typeof record?.tool === "string" ? record.tool : "";
+    if (!tool) continue;
+    const klass = typeof record?.klass === "string" ? record.klass : "";
+    const key = `${tool}|${klass}`;
+    const list = byShape.get(key) ?? [];
+    list.push(entry);
+    byShape.set(key, list);
+  }
+  return [...byShape.values()];
+}
+
 export function unmeasuredMetrics(board: ScoreBoard): ScoreMetric["key"][] {
   return (Object.keys(board.metrics) as ScoreMetric["key"][]).filter(
     (key) => board.metrics[key].n === 0,
