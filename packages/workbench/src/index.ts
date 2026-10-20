@@ -534,15 +534,49 @@ const REFINEMENT_SECRET_PATTERNS = [
  * ordinary text, and a value the model paraphrases is not detectable. The
  * operator is expected not to place credentials in the managed workspace in
  * the first place. */
-function refinementTextIsSensitive(
-  proposal: RefinementProposal,
-  knownSecrets: readonly string[],
-): boolean {
-  const text = JSON.stringify(proposal);
+function secretLikeText(text: string, knownSecrets: readonly string[]): boolean {
   return (
     REFINEMENT_SECRET_PATTERNS.some((pattern) => pattern.test(text)) ||
     knownSecrets.some((secret) => secret.length >= 4 && text.includes(secret))
   );
+}
+
+function refinementTextIsSensitive(
+  proposal: RefinementProposal,
+  knownSecrets: readonly string[],
+): boolean {
+  return secretLikeText(JSON.stringify(proposal), knownSecrets);
+}
+
+/**
+ * The secret values this workspace knows about, gathered in one place.
+ *
+ * Two paths read it: the proposal write path, which refuses a proposal whose
+ * text carries one, and the rollback path, which rebuilds a proposal from the
+ * chain and therefore has to re-establish the same refusal rather than
+ * inherit it. A secret that appears in the environment after a proposal was
+ * written is exactly the case a re-scan catches and an inherited guarantee
+ * does not.
+ */
+function knownSecretValues(
+  env: Readonly<NodeJS.ProcessEnv>,
+  config: { readonly apiKey?: string } | undefined,
+  workspaceKeySecret: string | undefined,
+  profiles: Readonly<Record<string, { readonly apiKey?: string }>>,
+  connectors: readonly { readonly token?: string }[],
+): string[] {
+  return [
+    ...Object.entries(env)
+      .filter(
+        ([name, value]) =>
+          /secret|token|password|credential|api[_-]?key|private[_-]?key|authorization/i.test(name) && value,
+      )
+      .map(([, value]) => value!),
+    config?.apiKey,
+    workspaceKeySecret,
+    ...Object.values(profiles).map((profile) => profile.apiKey),
+    ...connectors.map((connector) => connector.token),
+  ].filter((secret): secret is string => typeof secret === "string" && secret.length >= 4);
 }
 
 /**
@@ -2133,6 +2167,17 @@ export class Workbench {
   permissionModeState() {
     return this.permissionMode;
   }
+  /** The secret values this workspace knows about, gathered by the module
+   * function so the proposal path and the rollback path read one list. */
+  private knownSecretValues(): string[] {
+    return knownSecretValues(
+      this.env,
+      this.config,
+      this.workspaceKeySecret,
+      this.profiles,
+      this.connectors,
+    );
+  }
   private assertNormalMutation(action: string) {
     if (this.permissionMode !== "normal")
       throw new Error(
@@ -3484,19 +3529,7 @@ export class Workbench {
     const proposal = validated.proposal;
     if (proposal.edits.some((edit) => edit.kind === "skill" || edit.kind === "subagent"))
       throw new Error("Skill and subagent edits are proposal-only until their schema is supported.");
-    const knownSecrets = [
-      ...Object.entries(this.env)
-        .filter(
-          ([name, value]) =>
-            /secret|token|password|credential|api[_-]?key|private[_-]?key|authorization/i.test(name) && value,
-        )
-        .map(([, value]) => value!),
-      this.config?.apiKey,
-      this.workspaceKeySecret,
-      ...Object.values(this.profiles).map((profile) => profile.apiKey),
-      ...this.connectors.map((connector) => connector.token),
-    ].filter((secret): secret is string => typeof secret === "string" && secret.length >= 4);
-    if (refinementTextIsSensitive(proposal, knownSecrets))
+    if (refinementTextIsSensitive(proposal, this.knownSecretValues()))
       throw new Error("Refinement contains secret-like content and was not recorded.");
     if (proposal.edits.length === 0)
       return { applied: [], awaitingApproval: [] };
@@ -3911,6 +3944,14 @@ export class Workbench {
             .map((item) => item.reason)
             .join("; ")}`,
         );
+      // Re-scanned, not inherited. The content came from a proposal that was
+      // scanned when it was written, but a secret that entered the
+      // environment after that write would travel into the chain again
+      // through the rollback, and the guarantee the write path gives has to
+      // be re-established here rather than assumed.
+      const secrets = this.knownSecretValues();
+      if (refinementTextIsSensitive(inverse, secrets))
+        throw new Error("Refinement contains secret-like content and was not recorded.");
       const generatedAt = new Date().toISOString();
       const current = await this.harnessEntries(workspace);
       const result = applyProposal(current, inverse, generatedAt, {
@@ -3920,6 +3961,12 @@ export class Workbench {
       });
       if (!result.applied.length)
         throw new Error("The rollback applied no edit, so it would record a change of nothing.");
+      // The restored entries travel into the new record as the overrides, so
+      // they are scanned as well: an update rollback writes back the text the
+      // entry carried before, and that text was written under the secrets
+      // known at the time, not the ones known now.
+      if (secretLikeText(JSON.stringify(result.entries), secrets))
+        throw new Error("Refinement contains secret-like content and was not recorded.");
       const { overrides, suppressedIds } = this.refinementDelta(
         workspace,
         result.entries,
@@ -3955,7 +4002,12 @@ export class Workbench {
             applied: result.applied,
             overrides,
             suppressedIds,
-            approvedBy: "operator",
+            // Not "operator". That label decides whether the harness shows
+            // a restored entry as an instruction to follow, and the operator
+            // rolled back a digest without reading the restored text again.
+            // A mined lesson that was never operator written must not become
+            // operator approved text because it came back.
+            approvedBy: "rollback",
             rolledBackDigest: digest,
             atSeq: activation.seq,
           },

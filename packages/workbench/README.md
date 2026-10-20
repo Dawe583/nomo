@@ -94,6 +94,18 @@ approved. The rollback record names what it undid in `rolledBackDigest` and
 carries no `digest` of its own, which is what keeps it apart from an
 activation in every reader of that body.
 
+The record says `approvedBy: "rollback"`, not `"operator"`, and that is load
+bearing. The label decides whether the harness shows a restored entry to the
+model as an operator-approved instruction, and the operator rolled back a
+digest without reading the restored text again. A mined lesson that was never
+operator written must not become operator approved text because it came back.
+
+The rollback re-scans what it writes with the same patterns the proposal path
+uses, rather than trusting that the original write was scanned. A secret that
+entered the environment after a proposal was written would otherwise travel
+into the chain again through the rollback, and the guarantee has to be
+re-established at the write rather than inherited.
+
 `node --test packages/workbench/src/harness-review-model.test.ts` proves the
 reviewer model selection. `refinementModel` is empty by default and empty
 means the conversation's own model pays for the review. A selected model takes

@@ -173,7 +173,9 @@ test("the rollback lands as one signed record naming what it undid", async (t) =
   assert.equal(body.decision, "refinement:rolled-back");
   const refinement = body.harnessRefinement as Record<string, unknown>;
   assert.equal(refinement.rolledBackDigest, second);
-  assert.equal(refinement.approvedBy, "operator");
+  // Not "operator": the operator rolled back a digest without reading the
+  // restored text again, so the record must not claim they approved it.
+  assert.equal(refinement.approvedBy, "rollback");
   const lifecycle = body.harnessLifecycle as { digest: string; events: string[]; atSeq: number };
   assert.deepEqual(lifecycle.events, ["refinement:rolled-back"]);
   assert.equal(lifecycle.digest, second);
@@ -207,4 +209,56 @@ test("a rollback does not resurrect a pending approval", async (t) => {
   );
   void second;
   assert.deepEqual(await app.pendingApprovalsFor(session.id).then((p) => p.length), 0);
+});
+
+test("a restored lesson is not relabelled as operator approved", async (t) => {
+  const { app, session } = await fixture(t);
+  await activate(app, session.id, createProposal("v1", [1], "lesson-1"));
+  const second = await activate(app, session.id, updateProposal("lesson-1", "v2"));
+  const before = await app.harnessEntries(session.workspace);
+  assert.equal(
+    before[0]?.decidedByOperator,
+    true,
+    "the operator approved that text by digest, so the entry carries the label",
+  );
+
+  await app.rollbackHarnessProposal(session.id, second);
+
+  const after = await app.harnessEntries(session.workspace);
+  assert.deepEqual(after.map((entry) => entry.content), ["v1"]);
+  assert.notEqual(
+    after[0]?.decidedByOperator,
+    true,
+    "the operator rolled back a digest without reading the restored text again, so the label must not follow the text back",
+  );
+});
+
+test("a rollback refuses content that became secret-like after it was written", async (t) => {
+  const { app, session } = await fixture(t);
+  await activate(app, session.id, createProposal("the operator approved twice", [1], "lesson-1"));
+  // The update replaces that text. Rolling the update back would write the
+  // replaced text into the chain again, and the rollback re-scans what it
+  // writes rather than trusting that the original write was scanned.
+  const second = await activate(
+    app,
+    session.id,
+    updateProposal("lesson-1", "v2"),
+  );
+  // The content was ordinary when it was written. It becomes secret-like
+  // here, because the operator's own provider key now carries that text.
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "the operator approved twice",
+  });
+
+  await assert.rejects(
+    () => app.rollbackHarnessProposal(session.id, second),
+    /Refinement contains secret-like content and was not recorded\./,
+  );
+  // The refusal is a refusal: the view still reads the newer text, because
+  // nothing was written.
+  assert.deepEqual(
+    (await app.harnessEntries(session.workspace)).map((entry) => entry.content),
+    ["v2"],
+  );
 });
