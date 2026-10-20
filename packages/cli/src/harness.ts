@@ -12,7 +12,11 @@
  * signed chain of the workspace, and neither holds a proposal in process
  * memory.
  */
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { Workbench } from "../../workbench/src/index.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
 
 export type HarnessIo = {
   readonly stdout: (line: string) => void;
@@ -61,6 +65,15 @@ export type HarnessDeps = {
   /** Injected so a test does not open the operator's real workspace. */
   readonly workbench?: () => Promise<HarnessSurface>;
 };
+
+/** Where the workbench keeps its state, resolved the way the workbench
+ * resolves it. */
+function workspaceDir(env: Readonly<NodeJS.ProcessEnv>): string {
+  return (
+    env.NOMO_DATA_DIR ??
+    join(env.NOMO_LEDGER_DIR ?? dataDir(homedir()), "workbench")
+  );
+}
 
 const USAGE = [
   "usage:",
@@ -157,9 +170,20 @@ export async function runHarnessCommand(
     io.stderr("A rejection needs a reason: --reason <text>.");
     return 1;
   }
+  const env = deps.env ?? process.env;
+  if (!deps.workbench) {
+    // The workbench writes its storage key when it is constructed, so a
+    // command that only reads would create a workspace on a machine that has
+    // none. The refusal names the path and the command that creates it.
+    const directory = workspaceDir(env);
+    if (!existsSync(directory)) {
+      io.stderr(`No workspace at ${directory}. Run nomo init first.`);
+      return 1;
+    }
+  }
   const workbench = deps.workbench
     ? await deps.workbench()
-    : new Workbench(deps.env ?? process.env);
+    : new Workbench(env);
   try {
     if (action === "list") {
       const proposals = await workbench.pendingApprovalsFor(flags.session);

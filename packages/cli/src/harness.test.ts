@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { runHarnessCommand, type HarnessSurface } from "./harness.ts";
 
 /**
@@ -171,6 +174,21 @@ test("an unknown action, an unknown option and a missing session are refused by 
   });
   assert.equal(noSession, 1);
   assert.deepEqual(calls, []);
+});
+
+test("a machine with no workspace is refused, and none is created", async () => {
+  const directory = join(tmpdir(), "void-harness-no-workspace-" + Date.now());
+  const terminal = io();
+  const code = await runHarnessCommand(["list", "--session", "s1"], terminal, {
+    env: { NOMO_DATA_DIR: directory },
+  });
+  assert.equal(code, 1);
+  assert.match(terminal.err.join("\n"), /No workspace at/);
+  assert.equal(
+    existsSync(directory),
+    false,
+    "a command that only reads must not create the workspace it would read",
+  );
 });
 
 test("no action prints the usage and fails", async () => {
