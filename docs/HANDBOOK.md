@@ -708,6 +708,26 @@ the evidence is never deleted.
 A read-only status chip for the last recovery job stays visible in the composer.
 It reports status and offers only a refresh. **It grants no recovery authority.**
 
+### 9.6 Approving a harness proposal
+
+The harness proposes a change to what it has learned, and the proposal waits
+for a human. In the app the pending proposals of the open conversation appear
+in the conversation itself, one line per proposal, and **Review and decide**
+opens the proposal.
+
+The modal shows the proposal, not a summary of it: every edit with its action,
+its kind, the entry it touches, the text it writes, why it is worth keeping
+and the signed records it was derived from. A prompt edit shows the addendum
+it wants, which is the text the standing instructions would gain. The digest
+the decision binds to is on the screen, because a decision that could be
+moved onto different text would not be a decision about this proposal.
+
+**Approve** and **Reject** are the only two actions, a rejection requires a
+reason, and the server stays the authority: a proposal somebody else already
+decided comes back as that server's own sentence, and no second write is
+made. A proposal that was rolled back is gone from the list, because the
+harness reads the state the rollback restored.
+
 ## 10. The command line
 
 Twenty-two commands. `nomo --help` prints the list; `nomo <command>` with no

@@ -9,6 +9,7 @@ import { filterCommands, toolPrompt, type Command } from "./commands.ts";
 import * as m from "motion/react-m";
 import { BrandMark } from "./brand";
 import { ApprovalReview } from "./approval-review";
+import { HarnessProposals } from "./harness-proposals.tsx";
 import { Icon } from "./icons";
 import {
   PermissionBanner,
@@ -1066,6 +1067,7 @@ export function Chat({
             {retryWait} s.
           </p>
         )}
+        <HarnessProposals sessionId={id} />
         {(holds.data?.approvals ?? [])
           .filter(
             (a: Row) =>
