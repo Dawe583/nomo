@@ -14,6 +14,20 @@ import type {
   Reconciliation,
   RecoveryOutcome,
 } from "../recovery.ts";
+
+/**
+ * Strips userinfo from a remote URL before it is stored in signed evidence:
+ * scheme://user[:pass]@rest becomes scheme://rest, and the scp-like form
+ * loses its leading user the same way. The WHATWG URL parser refuses
+ * file://user@/path forms that git itself accepts, so this is a bounded
+ * regex on the authority component rather than a parse: it removes exactly
+ * the userinfo that sits before the first slash of the URL, and never
+ * touches anything after it. The push path reaches the remote by its
+ * configured name, so nothing needs the credentialed form.
+ */
+export function redactRemoteUrl(url: string): string {
+  return url.replace(/^([a-z][a-z0-9+.-]*:\/\/)?[^/?#]*@/i, "$1");
+}
 import {
   applySelectedEntry,
   assertRepositoryProfile,
@@ -311,6 +325,11 @@ export async function captureRemoteRecovery(
   const url = services.git(["remote", "get-url", mutation.remote]);
   if (!url || services.git(["remote", "get-url", "--push", mutation.remote]) !== url)
     throw new Error("A Git remote with one shared fetch and push URL is required.");
+  // The URL is stored into signed evidence that outlives the process, so it
+  // is kept without any userinfo it may carry: a credentialed https URL would
+  // put the token into a record every verifier read surfaces. The push path
+  // reaches the remote by name, so nothing needs the credentialed form.
+  const storedUrl = redactRemoteUrl(url);
   const profile = assertRepositoryProfile(services, branch);
   for (const [rawKey] of profile.config) {
     const key = rawKey.toLowerCase();
@@ -373,7 +392,7 @@ export async function captureRemoteRecovery(
       worktreeCount: 1,
       destructivePaths: profile.paths,
     },
-    remote: { name: mutation.remote, url, branch, trackingRef, tip, tipTree },
+    remote: { name: mutation.remote, url: storedUrl, branch, trackingRef, tip, tipTree },
     operation,
     undo: { path, from: published, to: previous },
   };

@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { managedGitAdapter } from "./managed.ts";
 import type { Json, Prepared, RecoveryAdapter } from "../recovery.ts";
 import type { RemoteCapture, RemotePlan } from "./managed-remote.ts";
+import { redactRemoteUrl } from "./managed-remote.ts";
 import {
   localOperationJournal,
   localRecoveryVault,
@@ -183,6 +184,30 @@ posixTest("a published managed commit is undone by one new remote branch and not
   assert.deepEqual(await readFile(indexPath), indexBefore);
   assert.deepEqual(await readFile(join(f.root, "selected")), worktreeBefore);
   assert.equal(f.run("status", "--porcelain"), statusBefore);
+});
+
+test("a remote URL stored for evidence never carries its userinfo", () => {
+  assert.equal(
+    redactRemoteUrl("https://deploy:ghp_secret@host/repo.git"),
+    "https://host/repo.git",
+  );
+  assert.equal(redactRemoteUrl("ssh://git@host/repo.git"), "ssh://host/repo.git");
+  assert.equal(redactRemoteUrl("git@host:repo.git"), "host:repo.git");
+  assert.equal(redactRemoteUrl("/srv/git/repo"), "/srv/git/repo");
+  assert.equal(redactRemoteUrl("file:///srv/git/repo"), "file:///srv/git/repo");
+  assert.equal(redactRemoteUrl("https://host/repo@x.git"), "https://host/repo@x.git");
+});
+
+posixTest("a capture of a credentialed remote records the redacted URL", async (t) => {
+  const f = await remoteRepository(t);
+  const credentialed = `file://deploy:ghp_secret@${f.remote}`;
+  f.run("remote", "set-url", "origin", credentialed);
+  f.run("remote", "set-url", "--push", "origin", credentialed);
+  await f.publishOperation("credentialed-op");
+  f.run("push", "-q", "origin", "main");
+  const { plan } = await prepareRecovery(f, "credentialed-op", "redacted-op");
+  assert.equal(plan.remote.url, `file://${f.remote}`);
+  assert.ok(!JSON.stringify(plan).includes("ghp_secret"));
 });
 
 posixTest("the recovery proposal names the undone operation, its receipt and its digest", async (t) => {
