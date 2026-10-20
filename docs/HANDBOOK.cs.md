@@ -646,7 +646,7 @@ nomo replay --ledger <cesta> --snapshot-dir <adresář> --seq <n> [--dry-run] [-
 nomo replay --list-connectors
 nomo agent --model <id> [--prompt <text>]
 nomo tui [--once] [--project <cesta>] [--skill <id> ...] [--view <karta>] [--session <id>] [--data-dir <cesta>]
-nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres.managed]
+nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres-managed-conformance]
 nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <soubor> [--input <soubor>] [--approve <digest>] [--surface file|reserved|both]
 nomo recovery collect --config <soubor> [--retention-policy <soubor>] [--surface file|reserved|both] [--dry-run] [--operation <id>]
 nomo recovery doctor --config <soubor>

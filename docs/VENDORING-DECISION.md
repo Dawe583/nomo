@@ -113,7 +113,7 @@ _name_. Renaming a package's `name` field therefore invalidates every
 | Files landing              | Only the ported capability. Unbounded by this document; depends on the selection.                                                                                                                                                                                                                                 |
 | Lines landing              | Unbounded by this document. For scale only: `omp-src` is 2.27 M source lines across TS/Rust/Python (measured), so "selected capabilities" must be named before this option can be costed.                                                                                                                         |
 | New build systems in CI    | none, **if** the port is TS-only. NOMO's `packages/*` are TS (`packages/cli/package.json` → `"exports": { ".": "./src/index.ts" }`, measured).                                                                                                                                                                    |
-| Collision with `packages/` | Depends on placement. All ten existing packages are named `@nomo/*` (measured: `pnpm m ls --depth -1 --json` returns `@nomo/cli`, `@nomo/connectors`, `@nomo/ledger`, `@nomo/policy`, `@nomo/proxy`, `@nomo/registry`, `@nomo/runtime`, `@nomo/sdk`, `@nomo/verifier`, `@nomo/workbench`, all `"private": true`). |
+| Collision with `packages/` | Depends on placement. All eleven existing packages are named `@void/*` (measured 2026-10-20: every `packages/*/package.json` carries `"name": "@void/*"`, `@void/agent-policy` through `@void/workbench`, all `"private": true`); `@nomo/*` is the public target no package carries yet. |
 | Left undone                | Whatever is not ported. This option has no defined boundary in the brief; the boundary _is_ the cost.                                                                                                                                                                                                             |
 
 **measured:** NOMO's own runner is Node 24 and 26 on ubuntu-latest
@@ -371,9 +371,10 @@ packages/*/src/**/*.js.map
 ### 4.1 Both upstreams are already running, and one is already a `devDependency` neighbour
 
 `omp` (`omp/18.6.1`) and `prime` (`Prime CLI version: 0.9.1`) are installed on
-this machine (measured). Separately, `@nomo/policy` and `@nomo/ledger` exist as
+this machine (measured). Separately, `@void/policy` and `@void/ledger` exist as
 workspace packages, and `packages/cli/package.json` depends on
-`@nomo/registry` via `"workspace:*"` (measured).
+`@void/registry` via `"workspace:*"` (measured 2026-10-20; this paragraph
+previously named `@nomo/*`, which no package carries).
 
 **unverified:** how much of the working behaviour in those two binaries is
 already consumed by NOMO today. The 84 installed markdown skills described in

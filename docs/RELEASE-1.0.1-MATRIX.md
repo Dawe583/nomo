@@ -42,7 +42,7 @@ design. Console errors, uncaught exceptions and warnings were 0 on every page.
 The write pass needed a second launcher. The default QA harness
 `scripts/src/preview-workspace.mjs` sets only `NOMO_DATA_DIR` and
 `NOMO_LEDGER_DIR`, so it inherits `DEFAULT_HTTP_PERMISSION_MODE = "read-only"`
-from `packages/workbench/src/gui.ts:195`. A first attempt through the composer
+from `packages/workbench/src/gui.ts:196`. A first attempt through the composer
 therefore produced a session and an answer but no document, and the composer
 reported `Režim: jen čtení · vynucuje server`. That is correct fail-closed
 behaviour, not a defect, and the mode is deliberately not switchable from the
@@ -81,14 +81,14 @@ session that exists and a body the contract requires, `{"seq":1,
 session, and an immediate replay of the identical request returns `201` with
 the same child id. A body missing `seq` or `idempotencyKey` correctly returns
 `400 invalid_branch` from `parseBranchInput` at
-`apps/control-plane/api/server.ts:567`, and an unknown session returns 404. The
+`apps/control-plane/api/server.ts:1564`, and an unknown session returns 404. The
 earlier observation is not carried forward as an open defect; if it was ever
 real, the route is not where it was measured.
 
 The permission-mode finding was misattributed. There is no runtime
 `PATCH /permission-mode` route and there is not meant to be: the server is the
 sole authority, `resolvePermissionMode` at
-`apps/control-plane/ui/src/permission-mode.tsx:15` reads the mode from
+`apps/control-plane/ui/src/permission-mode.tsx:30` reads the mode from
 `/api/capabilities`, and `usePermissionMode` returns `setMode: () => undefined`
 so a client cannot grant itself permission. A 404 from a hand-written path is
 the fail-closed design working, not a route discarding a value.

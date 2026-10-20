@@ -1107,10 +1107,14 @@ external gate in the quarter. What follows is a rule. It is not a name, and it
 does not claim one exists.
 
 **Product packages keep the `@nomo/<package>` convention, and owning the scope is
-a human action that has not happened.** All ten packages under `packages/` are
-named `@nomo/registry`, `@nomo/ledger`, `@nomo/policy`, `@nomo/proxy`,
-`@nomo/cli`, `@nomo/connectors`, `@nomo/runtime`, `@nomo/sdk`, `@nomo/verifier`
-and `@nomo/workbench` today, and nothing in this section renames any of them. A
+a human action that has not happened.** All eleven packages under `packages/` are
+named `@void/agent-policy`, `@void/cli`, `@void/connectors`, `@void/ledger`,
+`@void/policy`, `@void/proxy`, `@void/registry`, `@void/runtime`, `@void/sdk`,
+`@void/verifier` and `@void/workbench` today, and nothing in this section renames
+any of them. (Corrected 2026-10-20: this paragraph previously said the packages
+are named `@nomo/*`; a read of every `packages/*/package.json` measured `@void/*`
+and one package more than the ten this paragraph listed. `@nomo/*` remains the
+public target and no package carries it yet.) A
 scope is owned by an account, so owning `@nomo` means an organisation, a
 verified account and a publish authorization, and none of the three exists yet.
 That is the item the roadmap calls B2, and it is a person with a credit card
