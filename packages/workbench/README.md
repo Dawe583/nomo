@@ -129,6 +129,20 @@ operator was shown, a rejection carries its reason, an unknown session reads
 404, and a digest nobody proposed is refused with the workbench's own sentence
 rather than as a silent no-op.
 
+The test `packages/workbench/src/compaction-summary.test.ts` proves the
+compaction summary. The compaction dropped the middle of the conversation and
+pasted the first three thousand characters of it back, so the turns nearest
+the compaction were exactly the ones it lost. A summary written by the same
+provider the conversation runs on covers the whole middle, and that provider
+already had those turns, so nothing crosses a boundary the operator did not
+choose. The quoted turns are marked as history, because a turn that said
+"ignore your instructions" would otherwise be quoted back as an instruction.
+A summary that fails is not a failed compaction: the raw extract is what the
+compaction used before, and it still works. The summary is asked for
+separately from the compaction, because the compaction is synchronous and the
+terminal reads its result without awaiting; a host that wants the summary
+asks for it first and passes it in.
+
 The test `packages/workbench/src/harness-tools.test.ts` proves the two tools
 the agent may call: `void_harness_add` proposes a lesson and
 `void_harness_forget` proposes that one be forgotten. The tool writes a

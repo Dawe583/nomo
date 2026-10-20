@@ -709,7 +709,10 @@ async function route(
       if (!session)
         return sendJson(response, 404, { message: "Session not found." });
       if (kind === "compact" && request.method === "POST") {
-        const compaction = wb.compact(id);
+        // The summary is asked for first, because the compaction is
+        // synchronous and the turns it drops are gone afterwards.
+        const summary = await wb.summarizeForCompaction(id);
+        const compaction = wb.compact(id, summary ? { summary } : {});
         return sendJson(response, 200, { compaction, session: wb.get(id) });
       }
       if (kind === "branches") {
