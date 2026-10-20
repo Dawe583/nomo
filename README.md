@@ -44,13 +44,13 @@ observed run, including an intentional failure after editing a row by hand.
 **Current operator guide:** [the handbook](docs/HANDBOOK.md), also available in
 [Czech](docs/HANDBOOK.cs.md). Its paths and commands are checked by a test.
 
-**Current command:** install the legacy `void` executable with
-`bash scripts/install-void.sh`. It checks for Node.js 24 or newer, git and pnpm,
-clones the repository into `$HOME/.local/share/void-cli` (set `NOMO_HOME` to
+**Current command:** install the `nomo` executable with
+`bash scripts/install-nomo.sh`. It checks for Node.js 24 or newer, git and pnpm,
+clones the repository into `$HOME/.local/share/nomo-cli` (set `NOMO_HOME` to
 choose another location), installs from the lockfile and writes a launcher at
-`$HOME/.local/bin/void`. It does not edit PATH. The NOMO rename must preserve
-this command and its data until the explicit compatibility migration is ready.
-See the [beta runbook](docs/BETA.md) for setup and rollback.
+`$HOME/.local/bin/nomo`. It does not edit PATH. Legacy `void` environment names
+remain supported where documented; the installed command and data directory use
+NOMO names. See the [beta runbook](docs/BETA.md) for setup and rollback.
 
 The current proxy sits between an MCP-capable agent and tools. It classifies
 writes, applies policy, and appends signed hash-chained ledger records before

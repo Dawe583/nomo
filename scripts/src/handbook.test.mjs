@@ -95,6 +95,13 @@ const PROSE_AFTER_NOMO = new Set([
   "z",
 ]);
 
+test("README recommends the NOMO installer and launcher", () => {
+  const readme = read("README.md");
+  assert.match(readme, /bash scripts\/install-nomo\.sh/);
+  assert.match(readme, /\$HOME\/\.local\/bin\/nomo/);
+  assert.doesNotMatch(readme, /install-void\.sh/);
+});
+
 test("both handbook editions exist and are real documents", () => {
   for (const file of [EN, CS]) {
     assert.ok(existsSync(file), `${file} is missing`);
