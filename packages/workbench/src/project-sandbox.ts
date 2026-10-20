@@ -72,9 +72,9 @@ export function projectSandboxConfig(
   const runtime = env.NOMO_PROJECT_SANDBOX_RUNTIME;
   const imageId = env.NOMO_PROJECT_SANDBOX_IMAGE;
   if (runtime !== "docker" && runtime !== "podman")
-    throw new Error("Set NOMO_PROJECT_SANDBOX_RUNTIME to docker or podman.");
+    throw new Error(`Set NOMO_PROJECT_SANDBOX_RUNTIME to docker or podman, got ${JSON.stringify(runtime)}.`);
   if (typeof imageId !== "string" || !/^sha256:[a-f0-9]{64}$/.test(imageId))
-    throw new Error("Set NOMO_PROJECT_SANDBOX_IMAGE to a local sha256 image ID.");
+    throw new Error(`Set NOMO_PROJECT_SANDBOX_IMAGE to a local sha256 image ID, got ${JSON.stringify(imageId)}.`);
   return { runtime, imageId };
 }
 
@@ -88,7 +88,7 @@ export function parseProjectCommand(value: unknown): { readonly command: string 
   if (typeof command !== "string" || command.trim().length === 0)
     throw new Error("Project command must be non-empty text.");
   if (Buffer.byteLength(command, "utf8") > 16_384)
-    throw new Error("Project command exceeds its size limit.");
+    throw new Error(`Project command is ${Buffer.byteLength(command, "utf8")} bytes, exceeds its 16384 byte size limit.`);
   if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(command))
     throw new Error("Project command contains a control character.");
   return { command };

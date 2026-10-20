@@ -25,15 +25,12 @@ type LockEntry = {
 
 function parseLock(value: unknown): { readonly skills: Readonly<Record<string, unknown>> } {
   if (value === null || typeof value !== "object" || Array.isArray(value))
-    throw new Error("Unsupported workspace skills lock.");
+    throw new Error("Unsupported workspace skills lock: expected a JSON object.");
   const candidate = value as { readonly version?: unknown; readonly skills?: unknown };
-  if (
-    candidate.version !== 1 ||
-    candidate.skills === null ||
-    typeof candidate.skills !== "object" ||
-    Array.isArray(candidate.skills)
-  )
-    throw new Error("Unsupported workspace skills lock.");
+  if (candidate.version !== 1)
+    throw new Error(`Unsupported workspace skills lock: version must be 1, got ${JSON.stringify(candidate.version)}.`);
+  if (candidate.skills === null || typeof candidate.skills !== "object" || Array.isArray(candidate.skills))
+    throw new Error(`Unsupported workspace skills lock: skills must be an object, got ${JSON.stringify(typeof candidate.skills)}.`);
   return {
     skills: candidate.skills as Readonly<Record<string, unknown>>,
   };

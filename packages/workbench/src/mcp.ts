@@ -146,7 +146,7 @@ export async function rpc(config: McpConfig, method: string, params: unknown, se
       const chunk = await reader.read();
       if (chunk.done) break;
       bytes += chunk.value.length;
-      if (bytes > 1048576) throw new Error("MCP response exceeds 1 MB.");
+      if (bytes > 1048576) throw new Error(`MCP response exceeds 1 MB at ${bytes} bytes.`);
       text += decoder
         .decode(chunk.value, { stream: true })
         .replace(/\r\n/g, "\n");

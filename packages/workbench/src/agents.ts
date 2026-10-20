@@ -359,7 +359,7 @@ export function validateLocalHarnessTask(input: unknown): LocalHarnessTask {
   if (typeof upstreamId !== "string" || !/^[A-Za-z0-9._-]{1,128}$/.test(upstreamId))
     throw new Error("A local harness task needs an upstream id.");
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 4000)
-    throw new Error("A local harness task needs a prompt of 1 to 4000 characters.");
+    throw new Error(`A local harness task needs a prompt of 1 to 4000 characters, got ${typeof prompt} of length ${typeof prompt === "string" ? prompt.length : "n/a"}.`);
 
   const rawFacts = input.facts;
   if (rawFacts !== undefined) {
