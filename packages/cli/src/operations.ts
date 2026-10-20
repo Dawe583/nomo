@@ -64,7 +64,7 @@ export async function runOperation(command: string, argv: readonly string[], env
     if (argv.length === 2 && argv[0] === 'show') { output(JSON.stringify(await loadPack(argv[1]!), null, 2)); return 0; }
     if (argv.length === 2 && argv[0] === 'validate') {
       const result = loadPolicy(await readFile(argv[1]!, 'utf8'));
-      if (!result.ok) throw new Error('Policy is invalid; fix its structure before starting the proxy.');
+      if (!result.ok) throw new Error(`Policy is invalid; fix its structure before starting the proxy: ${result.errors.join('; ')}`);
       output('Policy valid'); return 0;
     }
     throw new Error('usage: nomo policy list | show <strict|balanced|dev> | validate <file>');

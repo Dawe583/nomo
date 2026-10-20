@@ -667,19 +667,25 @@ export function managedPostgresAdapter(
   function mutation(args: Json): Mutation {
     if (!args || Array.isArray(args) || typeof args !== "object")
       throw new Error("Expected a structured row mutation.");
-    if (
-      Object.keys(args).some(
-        (key) => !["table", "action", "key", "values"].includes(key),
-      )
-    )
-      throw new Error("Unexpected mutation argument.");
+    const unexpected = Object.keys(args).find(
+      (key) => !["table", "action", "key", "values"].includes(key),
+    );
+    if (unexpected !== undefined)
+      throw new Error(
+        `Unexpected mutation argument ${unexpected}; allowed keys are table, action, key, values.`,
+      );
     const target =
       typeof args.table === "string" ? tables.get(args.table) : undefined;
-    if (
-      !target ||
-      !["insert", "update", "delete"].includes(String(args.action))
-    )
-      throw new Error("Table or action is not configured.");
+    if (!target)
+      throw new Error(
+        typeof args.table === "string"
+          ? `Table ${args.table} is not configured for managed mutation; configured: ${[...tables.keys()].join(", ")}.`
+          : "Table must be a string naming a configured table.",
+      );
+    if (!["insert", "update", "delete"].includes(String(args.action)))
+      throw new Error(
+        `Mutation action must be insert, update or delete; got ${JSON.stringify(String(args.action))}.`,
+      );
     const key = args.key;
     const values = args.values ?? {};
     if (
@@ -703,15 +709,16 @@ export function managedPostgresAdapter(
       throw new Error("Exact non-null primary key required.");
     if (options.tenant && Object.hasOwn(key, options.tenant.column))
       throw new Error("Tenant scope is server-bound and cannot be requested.");
-    if (
-      Object.keys(values).some(
-        (column) =>
-          !target.columns.includes(column) ||
-          target.primaryKey.includes(column) ||
-          column === options.tenant?.column,
-      )
-    )
-      throw new Error("Column is not writable.");
+    const unwritable = Object.keys(values).filter(
+      (column) =>
+        !target.columns.includes(column) ||
+        target.primaryKey.includes(column) ||
+        column === options.tenant?.column,
+    );
+    if (unwritable.length)
+      throw new Error(
+        `Column${unwritable.length > 1 ? "s" : ""} ${unwritable.join(", ")} not writable on ${target.table}; writable: ${target.columns.join(", ")}.`,
+      );
     if (
       (args.action === "update" && !Object.keys(values).length) ||
       (args.action === "delete" && Object.keys(values).length)
@@ -761,7 +768,10 @@ export function managedPostgresAdapter(
         [options.tenant.setting],
       )
     )[0]?.value;
-    if (!value) throw new Error("Server-bound tenant setting is unavailable.");
+    if (!value)
+      throw new Error(
+        `Server-bound tenant setting ${options.tenant.setting} is unavailable for ${target.table}.`,
+      );
     const policies = await connection.query<{
       qual: string | null;
       withCheck: string | null;
@@ -1089,20 +1099,27 @@ export function managedPostgresAdapter(
       !Array.isArray(plan.captures) ||
       !plan.captures.length
     )
-      throw new Error("Recovery plan is malformed.");
-    const captures = plan.captures.map((capture) => {
-      if (
-        !capture ||
-        typeof capture.table !== "string" ||
-        !capture.key ||
-        typeof capture.key !== "object" ||
-        Array.isArray(capture.key) ||
-        typeof capture.resource !== "string" ||
-        typeof capture.revision !== "string" ||
-        typeof capture.relationOid !== "string" ||
-        !Number.isSafeInteger(capture.depth)
-      )
-        throw new Error("Recovery capture is malformed.");
+      throw new Error(
+        !plan || typeof plan !== "object"
+          ? "Recovery plan is malformed: the stored plan is not an object."
+          : !plan.mutation
+            ? "Recovery plan is malformed: mutation is missing."
+            : typeof plan.operationKey !== "string"
+              ? "Recovery plan is malformed: operationKey is not a string."
+              : "Recovery plan is malformed: captures is empty or not an array.",
+      );
+    const captures = plan.captures.map((capture, index) => {
+      if (!capture || typeof capture !== "object" || Array.isArray(capture))
+        throw new Error(`Recovery capture ${index} is malformed: capture is ${JSON.stringify(capture ?? null)}.`);
+      if (typeof capture.table !== "string")
+        throw new Error(`Recovery capture ${index} is malformed: table is ${JSON.stringify(capture.table)}.`);
+      if (!capture.key || typeof capture.key !== "object" || Array.isArray(capture.key))
+        throw new Error(`Recovery capture ${index} is malformed: key is not an object.`);
+      for (const field of ["resource", "revision", "relationOid"] as const)
+        if (typeof capture[field] !== "string")
+          throw new Error(`Recovery capture ${index} is malformed: ${field} is ${JSON.stringify(capture[field])}.`);
+      if (!Number.isSafeInteger(capture.depth))
+        throw new Error(`Recovery capture ${index} is malformed: depth is ${JSON.stringify(capture.depth)}.`);
       return capture;
     });
     return {

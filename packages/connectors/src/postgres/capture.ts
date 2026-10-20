@@ -48,16 +48,17 @@ export async function captureBeforeImage(
     const pending: { table: string; rows: readonly CapturedRow[]; ancestors: readonly string[] }[] = [{ table: targetSchema.table, rows: [...rows], ancestors: [] }];
     const seen = new Set(rows.map(row => `${row.table}:${JSON.stringify(row.key)}`));
     for (let i = 0; i < pending.length; i++) {
-      if (pending.length > 100) throw new Error("cascade traversal exceeds the supported table limit");
+      if (pending.length > 100) throw new Error(`cascade traversal from ${targetSchema.table} exceeds the 100-table limit with ${pending.length} tables of ancestors to reach`);
       const parent = pending[i]!;
       for (const edge of await cascadeEdges(exec, parent.table)) {
-        if (parent.ancestors.includes(edge.table) || edge.table === parent.table) throw new Error("cyclic cascade cannot be captured safely");
+        if (parent.ancestors.includes(edge.table) || edge.table === parent.table) throw new Error(`cyclic cascade cannot be captured safely: ${parent.table} reaches ${edge.table} again`);
         const childSchema = findSchema(schema, edge.table);
         if (!cascadeTables.includes(edge.table)) cascadeTables.push(edge.table);
         const children: CapturedRow[] = [];
         for (const row of parent.rows) {
+          const missingColumn = edge.parentColumns.find(column => row.row[column] === undefined);
+          if (missingColumn !== undefined) throw new Error(`cascade capture failed: parent row of ${parent.table} carries no value for column ${missingColumn}, but ${edge.table} cascades through it`);
           const values = edge.parentColumns.map(column => row.row[column]);
-          if (values.some(value => value === undefined)) throw new Error("cascade parent column was not captured");
           const predicate = edge.childColumns.map((column, index) => `${quoteIdentifier(column)} = $${index + 1}`).join(" and ");
           const matches = await exec.query<Record<string, unknown>>(`select * from ${quoteIdentifierPath(edge.table)} where ${predicate}`, values);
           for (const match of matches) {

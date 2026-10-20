@@ -223,7 +223,7 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     if (sparse || existsSync(join(gitDir, "info", "sparse-checkout"))) throw new Error("Sparse checkout is unsupported.");
     for (const marker of ["MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "BISECT_LOG", "BISECT_START", "AUTO_MERGE", "sequencer", "rebase-apply", "rebase-merge"]) {
       const path = git(["rev-parse", "--git-path", marker]);
-      if (existsSync(isAbsolute(path) ? path : join(root, path))) throw new Error("Active Git operation is unsupported.");
+      if (existsSync(isAbsolute(path) ? path : join(root, path))) throw new Error(`Active Git operation is unsupported: ${marker} exists in this repository's git directory. Complete or abort the operation first.`);
     }
   }
   function pathTarget(path: string) {
@@ -243,7 +243,7 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
     return absolute;
   }
   function parse(args: Json): Mutation {
-    if (!args || Array.isArray(args) || typeof args !== "object") throw new Error("Invalid Git mutation.");
+    if (!args || Array.isArray(args) || typeof args !== "object") throw new Error("Invalid Git mutation: expected a JSON object.");
     const value = args as Record<string, unknown>;
     if (value.action === "recoverRemote") {
       if (
@@ -252,15 +252,20 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
       ) throw new Error("Invalid Git remote recovery.");
       return { action: "recoverRemote", remote: value.remote, operation: value.operation };
     }
-    if (typeof value.action !== "string" || typeof value.path !== "string") throw new Error("Invalid Git mutation.");
+    if (typeof value.action !== "string")
+      throw new Error(`Invalid Git mutation: action must be a string, got ${JSON.stringify(value.action)}.`);
+    if (typeof value.path !== "string")
+      throw new Error(`Invalid Git mutation: path must be a string, got ${JSON.stringify(value.path)}.`);
     pathTarget(value.path);
     if (value.action === "commit") {
-      if (Object.keys(value).some((key) => !["action", "path"].includes(key)))
-        throw new Error("Invalid Git commit.");
+      const unexpected = Object.keys(value).find((key) => !["action", "path"].includes(key));
+      if (unexpected !== undefined) throw new Error(`Invalid Git commit: unexpected argument ${unexpected}; a commit takes only action and path.`);
       return { action: "commit", path: value.path };
     }
     if (value.action === "write") {
-      if (Object.keys(value).some((key) => !["action", "path", "base64", "mode"].includes(key)) || typeof value.base64 !== "string") throw new Error("Invalid Git write.");
+      const unexpected = Object.keys(value).find((key) => !["action", "path", "base64", "mode"].includes(key));
+      if (unexpected !== undefined) throw new Error(`Invalid Git write: unexpected argument ${unexpected}; a write takes only action, path, base64 and mode.`);
+      if (typeof value.base64 !== "string") throw new Error(`Invalid Git write: base64 must be a string, got ${typeof value.base64}.`);
       const bytes = Buffer.from(value.base64, "base64");
       if (value.base64.length > Math.ceil(maxBytes / 3) * 4 || bytes.toString("base64") !== value.base64 || bytes.length > maxBytes) throw new Error("Expected canonical base64 up to 1 MiB.");
       if (value.mode !== undefined && (!Number.isInteger(value.mode) || (value.mode as number) < 0 || (value.mode as number) > 0o777 || ((value.mode as number) & 0o7000) !== 0)) throw new Error("Invalid POSIX mode.");
@@ -272,7 +277,10 @@ export function managedGitAdapter(options: { root: string; cooperative: true }):
       if (value.path === value.to) throw new Error("Rename paths must differ.");
       return { action: "rename", path: value.path, to: value.to };
     }
-    if (!["delete", "stage", "unstage"].includes(value.action) || Object.keys(value).some((key) => !["action", "path"].includes(key))) throw new Error("Unsupported Git action.");
+    if (!["delete", "stage", "unstage"].includes(value.action))
+      throw new Error(`${JSON.stringify(value.action)} is not a Git mutation action; allowed actions are commit, write, rename, delete, stage, unstage, recoverRemote.`);
+    const unexpected = Object.keys(value).find((key) => !["action", "path"].includes(key));
+    if (unexpected !== undefined) throw new Error(`Invalid Git ${value.action}: unexpected argument ${unexpected}; it takes only action and path.`);
     return { action: value.action as "delete" | "stage" | "unstage", path: value.path };
   }
   function worktree(path: string): Worktree {
