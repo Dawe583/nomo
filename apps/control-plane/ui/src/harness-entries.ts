@@ -21,6 +21,11 @@ export type HarnessEntryView = {
    * lesson: a lesson states an observation and proposes no decision. */
   readonly ruleDecision: string;
   readonly ruleSeconds: number;
+  /** The mined rule as policy file text, built by the workbench beside the
+   * rule. The panel shows it so an operator working in the browser can copy
+   * the rule into their own policy file, which is the only way it enters
+   * policy. Empty on a lesson. */
+  readonly policyText: string[];
 };
 
 /**
@@ -56,6 +61,11 @@ export function harnessEntries(
         : [],
       ruleDecision: typeof rule?.decision === "string" ? rule.decision : "",
       ruleSeconds: typeof rule?.seconds === "number" ? rule.seconds : 0,
+      policyText: Array.isArray(entry.policyText)
+        ? entry.policyText.filter(
+            (line): line is string => typeof line === "string",
+          )
+        : [],
     };
   });
 }

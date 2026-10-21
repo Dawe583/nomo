@@ -51,6 +51,7 @@ test("a missing field shows an empty value, never undefined", () => {
   assert.deepEqual(entries[0]!.derivedFromSeq, []);
   assert.equal(entries[0]!.ruleDecision, "");
   assert.equal(entries[0]!.ruleSeconds, 0);
+  assert.deepEqual(entries[0]!.policyText, []);
 });
 
 test("a mined rule carries the decision it proposes, not only a count", () => {
@@ -72,12 +73,27 @@ test("a mined rule carries the decision it proposes, not only a count", () => {
           notify: ["cli"],
           rationale: "Refused 3 times on the signed ledger. Not written by an operator.",
         },
+        policyText: [
+          "- match:",
+          "    class: r3",
+          "    tool: fs.delete",
+          "  decision: hold",
+        ],
       },
     ],
   });
   assert.equal(entries[0]!.ruleDecision, "hold");
   assert.equal(entries[0]!.ruleSeconds, 300);
   assert.equal(entries[0]!.repeats, 3);
+  // The panel is where a browser operator copies the rule from, so the text
+  // the terminal prints has to survive this view rather than be flattened
+  // into the decision line.
+  assert.deepEqual(entries[0]!.policyText, [
+    "- match:",
+    "    class: r3",
+    "    tool: fs.delete",
+    "  decision: hold",
+  ]);
 });
 
 test("no entries show nothing rather than a broken card", () => {

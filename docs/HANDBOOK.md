@@ -795,7 +795,9 @@ Notes that save time:
 
 - `nomo harness entries` prints each mined rule as policy file text. The rule is
   not in force: the text is what an operator pastes into their own policy file,
-  ahead of the terminal catch-all, if they agree with it.
+  ahead of the terminal catch-all, if they agree with it. The web panel's
+  harness shelf shows the same text, from the same builder, so an operator who
+  never opens a terminal can copy it too.
 - `nomo harness ratchet` reports the guardrails before and after the last
   activated refinement, and marks a line `REGRESSED` when one moved outside the
   spread of its own samples. It is a report and never a refusal: nothing in it

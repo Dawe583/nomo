@@ -55,6 +55,19 @@ export function HarnessEntries({ sessionId }: { sessionId?: string }) {
                   {entry.ruleSeconds > 0 ? ` ${entry.ruleSeconds}s` : ""}
                 </p>
               )}
+              {entry.policyText.length > 0 && (
+                <>
+                  <p className="muted">
+                    {t(
+                      "Není v platnosti: zkopírujte do svého policy souboru",
+                      "Not in force: copy it into your own policy file",
+                    )}
+                  </p>
+                  <pre className="harness-rule-text">
+                    {entry.policyText.join("\n")}
+                  </pre>
+                </>
+              )}
               <p className="approval-rationale">{entry.content}</p>
               {entry.derivedFromSeq.length > 0 && (
                 <p className="muted">

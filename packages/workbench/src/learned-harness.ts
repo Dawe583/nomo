@@ -47,6 +47,7 @@ import {
   LEARNED_RULE_MIN_REPEATS,
   learnedRule,
   learnedRuleGroups,
+  ruleAsPolicyText,
   type LearnedRuleGroup,
 } from "./learned-rules.ts";
 
@@ -99,6 +100,15 @@ export type HarnessEntry = {
   readonly supersededBy?: string;
   /** The mined rule, when `kind` is `rule`. Absent otherwise. */
   readonly rule?: Rule;
+  /**
+   * The rule above as policy file text, when `kind` is `rule`.
+   *
+   * Both surfaces print this: the terminal command and the web panel, and the
+   * operator's copy into their own policy file is the only way a mined rule
+   * enters policy. Rendered here rather than by each surface so the text the
+   * panel shows is provably the text the loader accepts.
+   */
+  readonly policyText?: readonly string[];
 };
 
 /**
@@ -323,6 +333,7 @@ export function minedRuleEntries(
       repeats: group.repeats,
       createdAt: generatedAt,
       rule,
+      policyText: ruleAsPolicyText(rule),
     };
   });
 }

@@ -7,7 +7,7 @@ import {
   LEARNED_LESSON_MIN_REPEATS,
   mineHarnessEntries,
 } from "./learned-harness.ts";
-import { LEARNED_RULE_MIN_REPEATS, mineLearnedRules } from "./learned-rules.ts";
+import { LEARNED_RULE_MIN_REPEATS, mineLearnedRules, ruleAsPolicyText } from "./learned-rules.ts";
 
 /** One ledger entry with the `seq` provenance needs. */
 const entry = (seq: number, tool: string, klass: string, decision: string) => ({
@@ -248,6 +248,10 @@ test("the rule the operator reads is the rule the miner minted", () => {
   assert.deepEqual(readable.rule, mined.rules[0]);
   assert.equal(readable.rule?.decision, "hold");
   assert.match(readable.content, /Not written by an operator/);
+  // The text both surfaces print is built beside the rule, so neither can
+  // render a rule the miner did not mint.
+  assert.deepEqual(readable.policyText, ruleAsPolicyText(mined.rules[0]!));
+  assert.match(readable.policyText?.join("\n") ?? "", /decision: hold/);
 });
 
 test("a chain below the threshold produces no rule entry either", () => {

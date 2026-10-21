@@ -8,6 +8,7 @@ import {
   learnedRuleGroups,
   learnedRuleRationale,
   mineLearnedRules,
+  ruleAsPolicyText,
 } from "./learned-rules.ts";
 import { decide } from "../../policy/src/decide.ts";
 import { loadPolicy } from "../../policy/src/rules.ts";
@@ -403,4 +404,27 @@ describe("the group is the one thing both the rule and the entry read", () => {
       { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
     ])[0]);
   });
+});
+
+test("the rule text is what the operator's loader accepts", () => {
+  // The rule is not in force. Printing it is only useful if the operator can
+  // paste it into their own file, so the text is loaded by the same loader
+  // the runtime uses, ahead of the terminal catch-all it has to sit before.
+  // Both surfaces print this text, so this is the one place that proves the
+  // rendering matches the grammar.
+  const [group] = learnedRuleGroups([
+    { body: { tool: "fs.delete", klass: "r3", decision: "deny:policy" } },
+    { body: { tool: "fs.delete", klass: "r3", decision: "deny:policy" } },
+    { body: { tool: "fs.delete", klass: "r3", decision: "deny:policy" } },
+  ]);
+  const text = ruleAsPolicyText(learnedRule(group!)).join("\n");
+  const loaded = loadPolicy(
+    `version: 1\nrules:\n${text}\n- match: {}\n  decision: allow\n`,
+  );
+  assert.equal(loaded.ok, true, loaded.ok ? "" : loaded.errors.join("; "));
+  if (!loaded.ok) return;
+  assert.deepEqual(loaded.policy.rules[0]?.match, { class: "r3", tool: "fs.delete" });
+  assert.equal(loaded.policy.rules[0]?.decision, "hold");
+  assert.equal(loaded.policy.rules[0]?.seconds, 300);
+  assert.deepEqual(loaded.policy.rules[0]?.notify, ["cli"]);
 });

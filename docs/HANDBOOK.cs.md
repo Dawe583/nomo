@@ -695,6 +695,8 @@ Poznámky, které ušetří čas:
 - `nomo harness entries` vypíše každé vytěžené pravidlo jako text policy
   souboru. Pravidlo není v platnosti: text slouží k vložení do vlastního policy
   souboru, před koncové catch-all pravidlo, pokud s ním operátor souhlasí.
+  Webový panel zobrazuje stejný text, protože ho skládá stejná funkce, takže si
+  ho operátor v prohlížeči může zkopírovat.
 - `nomo harness ratchet` hlásí guardraily před poslední aktivovanou rafinací a
   po ní a označí řádek `REGRESSED`, když se některý posunul mimo rozptyl
   vlastních vzorků. Je to zpráva, nikdy odmítnutí: nic v ní nemění rozhodnutí,

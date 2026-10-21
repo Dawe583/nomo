@@ -207,3 +207,48 @@ export function mineLearnedRules(
 ): Rule[] {
   return learnedRuleGroups(entries, minRepeats).map(learnedRule);
 }
+
+/**
+ * One match value as YAML.
+ *
+ * `RuleMatch` is an index signature, so every key carries the whole union and
+ * a condition cannot be excluded by the type. A rendered rule that dropped a
+ * condition would be a wider rule than the one mined, which is the one thing
+ * this text must not become, so a non scalar is refused rather than skipped.
+ */
+function policyScalar(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && value.every((item) => typeof item === "string"))
+    return `[${value.join(", ")}]`;
+  throw new Error(
+    "A rule can be rendered as policy text only when every listed match value is a string.",
+  );
+}
+
+/**
+ * A mined rule as policy file text.
+ *
+ * The rule is not in force, so the point of rendering it is that the operator
+ * can paste it into their own file. That only works if the loader accepts the
+ * text, so the shape follows the grammar the loader enforces rather than a
+ * pretty rendering of the object. One builder, because two surfaces print this
+ * text: a second copy could drift and one of them would then offer the operator
+ * a rule their loader refuses.
+ */
+export function ruleAsPolicyText(rule: Rule): string[] {
+  const lines = ["- match:"];
+  const match = rule.match;
+  if (match.class !== undefined) lines.push(`    class: ${policyScalar(match.class)}`);
+  if (match.tool !== undefined) lines.push(`    tool: ${policyScalar(match.tool)}`);
+  if (match.connector !== undefined)
+    lines.push(`    connector: ${policyScalar(match.connector)}`);
+  if (match.workspace !== undefined)
+    lines.push(`    workspace: ${policyScalar(match.workspace)}`);
+  lines.push(`  decision: ${rule.decision}`);
+  if (rule.decision === "hold" && typeof rule.seconds === "number")
+    lines.push(`  seconds: ${rule.seconds}`);
+  if (rule.notify?.length) lines.push(`  notify: [${rule.notify.join(", ")}]`);
+  if (rule.rationale !== undefined)
+    lines.push(`  rationale: ${JSON.stringify(rule.rationale)}`);
+  return lines;
+}

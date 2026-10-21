@@ -3,8 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ruleAsPolicyText, runHarnessCommand, type HarnessSurface } from "./harness.ts";
-import { loadPolicy } from "../../policy/src/rules.ts";
+import { runHarnessCommand, type HarnessSurface } from "./harness.ts";
 
 /**
  * The harness command, at the boundary an operator or a script touches.
@@ -312,27 +311,11 @@ test("no action prints the usage and fails", async () => {
   assert.match(terminal.out.join("\n"), /nomo harness list --session/);
 });
 
-test("a mined rule prints as policy text the loader accepts", () => {
-  // The rule is not in force. Printing it is only useful if the operator can
-  // paste it into their own file, so the text is loaded by the same loader
-  // the runtime uses, ahead of the terminal catch-all it has to sit before.
-  const text = ruleAsPolicyText({
-    match: { class: "r3", tool: "fs.delete" },
-    decision: "hold",
-    seconds: 300,
-    notify: ["cli"],
-    rationale: "Refused 3 times on the signed ledger. Not written by an operator.",
-  }).join("\n");
-  const loaded = loadPolicy(
-    `version: 1\nrules:\n${text}\n- match: {}\n  decision: allow\n`,
-  );
-  assert.equal(loaded.ok, true, loaded.ok ? "" : loaded.errors.join("; "));
-  if (!loaded.ok) return;
-  assert.deepEqual(loaded.policy.rules[0]?.match, { class: "r3", tool: "fs.delete" });
-  assert.equal(loaded.policy.rules[0]?.decision, "hold");
-});
-
 test("entries prints a mined rule as policy text under the entry", async () => {
+  // The rule is not in force. Printing it is only useful if the operator can
+  // paste it into their own file, so the command prints the text the workbench
+  // built beside the rule rather than formatting a second copy here. The
+  // loader-validity half of this lives with that builder, in learned-rules.
   const { surface } = fake();
   const withRule: HarnessSurface = {
     ...surface,
@@ -345,13 +328,15 @@ test("entries prints a mined rule as policy text under the entry", async () => {
         tool: "fs.delete",
         klass: "r3",
         repeats: 3,
-        rule: {
-          match: { class: "r3", tool: "fs.delete" },
-          decision: "hold",
-          seconds: 300,
-          notify: ["cli"],
-          rationale: "Refused 3 times on the signed ledger. Not written by an operator.",
-        },
+        policyText: [
+          "- match:",
+          "    class: r3",
+          "    tool: fs.delete",
+          "  decision: hold",
+          "  seconds: 300",
+          "  notify: [cli]",
+          '  rationale: "Refused 3 times on the signed ledger. Not written by an operator."',
+        ],
       },
     ],
   };
