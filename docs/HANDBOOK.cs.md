@@ -695,6 +695,12 @@ Poznámky, které ušetří čas:
 - `nomo harness entries` vypíše každé vytěžené pravidlo jako text policy
   souboru. Pravidlo není v platnosti: text slouží k vložení do vlastního policy
   souboru, před koncové catch-all pravidlo, pokud s ním operátor souhlasí.
+- `nomo harness ratchet` hlásí guardraily před poslední aktivovanou rafinací a
+  po ní a označí řádek `REGRESSED`, když se některý posunul mimo rozptyl
+  vlastních vzorků. Je to zpráva, nikdy odmítnutí: nic v ní nemění rozhodnutí,
+  oprávnění ani záznam. Řádek `unmeasured` znamená, že řetěz ten údaj zatím
+  nenese, což není totéž jako nula, a bez aktivované rafinace vypíše přehled
+  tak, jak je.
 - `nomo config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
 - `nomo verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se
