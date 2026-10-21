@@ -25,6 +25,23 @@ launcher. Its only writable filesystem scope is
 allowlist. Do not regenerate its retained recovery key or expand its scope.
 This managed path does not intercept ordinary shell or editor writes.
 
+## Autonomous loop contract (2026-10-21)
+
+All future NOMO work in this repository runs through one graph and bounded
+loops. Read `docs/HARNESS-LOOP-PLAN.md` for the full contract, settings, work
+graph and verification matrix. The short form:
+
+- Use `.nomo/work-state.json` as the single execution state; one active node;
+  discover, specify, change, verify, review, record.
+- Load the skills `nomo-loops`, `nomo-graphs`, `nomo-pipeline` and
+  `nomo-work-package` before work.
+- Continue safe, in-scope nodes without re-prompting. Commit and push after
+  each verified slice. Fast-forward `main` only after a green gate.
+- Never edit or stage `packages/cli/src/tui/*` or other foreign worktree files.
+- Never read, copy or expose secrets. No production actions, no dependency
+  installs, no global setting changes.
+- Evidence first: a claim without a command and its output is not a claim.
+
 ## NOMO memory source
 
 - Canonical human-readable NOMO project memory lives in the Obsidian vault at `/Users/dawe/Library/Mobile Documents/iCloud~md~obsidian/Documents/NOMO`.
