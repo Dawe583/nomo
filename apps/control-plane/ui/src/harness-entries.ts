@@ -28,6 +28,61 @@ export type HarnessEntryView = {
   readonly policyText: string[];
 };
 
+export type HarnessRatchetGuardrailView = {
+  readonly key: string;
+  readonly n: number;
+  readonly unmeasured: number;
+  readonly measured: boolean;
+};
+
+export type HarnessRatchetView = {
+  readonly baselineSeq: number | null;
+  readonly verdict: string;
+  readonly caseCount: number;
+  readonly guardrailBreaches: readonly string[];
+  readonly guardrails: readonly HarnessRatchetGuardrailView[];
+  readonly empty: boolean;
+};
+
+/**
+ * The ratchet report as the panel reads it. Pure, so a guardrail that is
+ * silently dropped here is a guardrail the operator never saw.
+ */
+export function harnessRatchetView(
+  data: Row | undefined,
+): HarnessRatchetView | null {
+  if (data === undefined || data === null) return null;
+  if (data.empty === true || data.after == null) {
+    return {
+      baselineSeq: null,
+      verdict: typeof data.verdict === "string" ? data.verdict : "insufficient-data",
+      caseCount: 0,
+      guardrailBreaches: [],
+      guardrails: [],
+      empty: true,
+    };
+  }
+  const after = data.after as Row;
+  const metrics = (after.metrics ?? {}) as Row;
+  const keys = ["deny_rate", "rollback_count", "unknown_tool_rate"];
+  const guardrails = keys.map((key) => {
+    const metric = (metrics[key] ?? {}) as Row;
+    const n = typeof metric.n === "number" ? metric.n : 0;
+    const unmeasured = typeof metric.unmeasured === "number" ? metric.unmeasured : 0;
+    return { key, n, unmeasured, measured: n > 0 };
+  });
+  return {
+    baselineSeq: typeof data.baselineSeq === "number" ? data.baselineSeq : null,
+    verdict: typeof data.verdict === "string" ? data.verdict : "insufficient-data",
+    caseCount: typeof data.caseCount === "number" ? data.caseCount : 0,
+    guardrailBreaches: Array.isArray(data.guardrailBreaches)
+      ? data.guardrailBreaches.filter((item): item is string => typeof item === "string")
+      : [],
+    guardrails,
+    empty: false,
+  };
+}
+
 /**
  * The entries in the shape the panel reads them.
  *

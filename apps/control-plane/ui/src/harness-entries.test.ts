@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { harnessEntries } from "./harness-entries.ts";
+import { harnessEntries, harnessRatchetView } from "./harness-entries.ts";
 
 /**
  * The operator's view of what the harness holds.
@@ -41,6 +41,43 @@ test("an operator-approved entry and a mined one are kept apart", () => {
   assert.equal(entries[1]!.decidedByOperator, false);
   assert.equal(entries[0]!.tool, "postgres.row.update");
   assert.deepEqual(entries[0]!.derivedFromSeq, [1, 2]);
+});
+
+test("the ratchet view keeps the three guardrails and their measured state", () => {
+  const view = harnessRatchetView({
+    baselineSeq: 7,
+    verdict: "flat",
+    caseCount: 2,
+    guardrailBreaches: ["rollback_count regressed outside noise"],
+    after: {
+      metrics: {
+        deny_rate: { n: 1, mean: 0.2, half: null, unmeasured: 0 },
+        rollback_count: { n: 1, mean: 2, half: null, unmeasured: 0 },
+        unknown_tool_rate: { n: 0, mean: null, half: null, unmeasured: 3 },
+      },
+    },
+  });
+  assert.ok(view);
+  assert.equal(view!.baselineSeq, 7);
+  assert.equal(view!.verdict, "flat");
+  assert.equal(view!.guardrails.length, 3);
+  assert.equal(view!.guardrails[0]!.key, "deny_rate");
+  assert.equal(view!.guardrails[0]!.measured, true);
+  assert.equal(view!.guardrails[2]!.key, "unknown_tool_rate");
+  assert.equal(view!.guardrails[2]!.measured, false);
+  assert.equal(view!.guardrails[2]!.unmeasured, 3);
+  assert.deepEqual(view!.guardrailBreaches, ["rollback_count regressed outside noise"]);
+});
+
+test("an empty ratchet reports no guardrails", () => {
+  const view = harnessRatchetView({ empty: true, verdict: "insufficient-data" });
+  assert.ok(view);
+  assert.equal(view!.empty, true);
+  assert.equal(view!.guardrails.length, 0);
+});
+
+test("a missing ratchet reports nothing", () => {
+  assert.equal(harnessRatchetView(undefined), null);
 });
 
 test("a missing field shows an empty value, never undefined", () => {

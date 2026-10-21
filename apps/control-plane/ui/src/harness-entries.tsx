@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, type Row } from "./api";
 import { ErrorBox, useApi, useText } from "./ui";
-import { harnessEntries } from "./harness-entries";
+import { harnessEntries, harnessRatchetView } from "./harness-entries";
 
 /**
  * What the harness holds for this conversation.
@@ -19,6 +19,9 @@ export function HarnessEntries({ sessionId }: { sessionId?: string }) {
   const path = "/api/sessions/" + sessionId + "/harness/entries";
   const query = useApi(path, !!sessionId, 15000);
   const entries = harnessEntries(query.data);
+  const ratchetPath = "/api/sessions/" + sessionId + "/harness/ratchet";
+  const ratchetQuery = useApi(ratchetPath, open && !!sessionId, 15000);
+  const ratchet = harnessRatchetView(ratchetQuery.data);
   if (!sessionId || !entries.length) return null;
   return (
     <>
@@ -35,6 +38,35 @@ export function HarnessEntries({ sessionId }: { sessionId?: string }) {
       </div>
       {open && (
         <div className="approval-card">
+          {ratchet && !ratchet.empty && (
+            <div className="approval-card-head">
+              <strong>
+                {t("Ratchet", "Ratchet")}: {ratchet.verdict}
+              </strong>
+              <span className="muted">
+                {" "}
+                {ratchet.caseCount} {t("případů", "cases")}
+                {ratchet.baselineSeq !== null
+                  ? ` ${t("od záznamu", "since record")} ${ratchet.baselineSeq}`
+                  : ""}
+              </span>
+              <ul>
+                {ratchet.guardrails.map((guardrail) => (
+                  <li key={guardrail.key} className="muted">
+                    {guardrail.key}:{" "}
+                    {guardrail.measured
+                      ? `${guardrail.n} ${t("měřeno", "measured")}`
+                      : `${guardrail.unmeasured} ${t("neměřeno", "unmeasured")}`}
+                    {ratchet.guardrailBreaches.some((breach) =>
+                      breach.startsWith(guardrail.key),
+                    )
+                      ? ` ${t("REGRESSED", "REGRESSED")}`
+                      : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {entries.map((entry) => (
             <div className="approval-card-head" key={entry.id}>
               <strong>

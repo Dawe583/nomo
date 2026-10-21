@@ -22,6 +22,11 @@ import {
   harnessSettingsView,
   harnessTextSettingsView,
 } from "../../../packages/workbench/src/harness-settings.ts";
+import {
+  scoreCases,
+  measureBoard,
+  compareBoards,
+} from "../../../packages/workbench/src/harness-scores.ts";
 
 import { runReplayCommand } from "../../../packages/cli/src/replay.ts";
 import type { ReplayCommandOptions } from "../../../packages/cli/src/replay.ts";
@@ -669,6 +674,63 @@ async function route(
         return sendJson(response, 405, { error: "method_not_allowed" });
       return sendJson(response, 200, {
         entries: await wb.harnessEntries(wb.get(id)!.workspace),
+      });
+    }
+    const harnessRatchet =
+      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/ratchet$/.exec(parsed.pathname);
+    if (harnessRatchet) {
+      const id = harnessRatchet[1]!;
+      if (!wb.get(id)) return sendJson(response, 404, { message: "Session not found." });
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const workspace = wb.get(id)!.workspace;
+      const proof = await wb.ledger(workspace);
+      const entries = (proof?.entries ?? []) as readonly {
+        readonly body: unknown;
+        readonly seq: number;
+      }[];
+      const now = new Date().toISOString();
+      if (!entries.length) {
+        return sendJson(response, 200, {
+          baselineSeq: null,
+          before: null,
+          after: null,
+          guardrailBreaches: [],
+          verdict: "insufficient-data",
+          caseCount: 0,
+          empty: true,
+        });
+      }
+      const previous = [...entries]
+        .reverse()
+        .find(
+          (entry) =>
+            (entry.body as Record<string, unknown> | null)?.decision ===
+            "proposal:activated",
+        );
+      const after = measureBoard(scoreCases(entries), now);
+      if (!previous) {
+        return sendJson(response, 200, {
+          baselineSeq: null,
+          before: null,
+          after,
+          guardrailBreaches: [],
+          verdict: after.verdict,
+          caseCount: after.caseCount,
+          empty: false,
+        });
+      }
+      const baselineIndex = entries.indexOf(previous);
+      const before = measureBoard(scoreCases(entries.slice(0, baselineIndex)), now);
+      const compared = compareBoards(before, after);
+      return sendJson(response, 200, {
+        baselineSeq: previous.seq,
+        before,
+        after: compared,
+        guardrailBreaches: compared.guardrailBreaches,
+        verdict: compared.verdict,
+        caseCount: compared.caseCount,
+        empty: false,
       });
     }
     const harnessProposals =
