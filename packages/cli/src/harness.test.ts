@@ -411,3 +411,83 @@ test("a surface with no sessions is asked with the id it was given", async () =>
   assert.equal(code, 0);
   assert.deepEqual(asked, ["s1"]);
 });
+
+/** A chain as the ratchet reads it: sequence, signed body, nothing else that
+ * command is allowed to trust. */
+function chain(entries: readonly { body: unknown; seq: number }[]) {
+  return fake({
+    get: () => ({ workspace: "ws-1" }),
+    ledger: async () => ({ entries, result: { ok: true }, verification: {} }),
+  }).surface;
+}
+
+const refused = (seq: number, tool: string) => ({
+  seq,
+  body: { workspace: "ws-1", tool, klass: "r3", decision: "deny:policy" },
+});
+const allowed = (seq: number, tool: string) => ({
+  seq,
+  body: { workspace: "ws-1", tool, klass: "r3", decision: "execute:ok" },
+});
+const activated = (seq: number) => ({
+  seq,
+  body: { workspace: "ws-1", decision: "proposal:activated" },
+});
+
+test("the ratchet says there is nothing to measure when the chain is empty", async () => {
+  const terminal = io();
+  const code = await runHarnessCommand(
+    ["ratchet", "--session", "s1"],
+    terminal,
+    { workbench: async () => chain([]) },
+  );
+  assert.equal(code, 0);
+  const text = terminal.out.join("\n");
+  assert.match(text, /nothing to measure/);
+  assert.match(text, /descriptive only/);
+});
+
+test("with no previous refinement the ratchet reports the board as it stands", async () => {
+  const terminal = io();
+  const code = await runHarnessCommand(
+    ["ratchet", "--session", "s1"],
+    terminal,
+    {
+      workbench: async () =>
+        chain([allowed(1, "postgres.row.read"), refused(2, "postgres.row.delete")]),
+    },
+  );
+  assert.equal(code, 0);
+  const text = terminal.out.join("\n");
+  assert.match(text, /No previous refinement/);
+  assert.match(text, /Current board: verdict flat, 2 cases, deny_rate 2 measured/);
+});
+
+test("the ratchet names the baseline and marks a guardrail that regressed", async () => {
+  const terminal = io();
+  // Three call shapes, each allowed once before the refinement and refused
+  // twice after it, so the per shape deny rate moves from 0 to two thirds
+  // with no spread across the shapes and the comparison is not noise.
+  const entries = [
+    allowed(1, "postgres.row.read"),
+    allowed(2, "postgres.row.update"),
+    allowed(3, "postgres.row.delete"),
+    activated(4),
+    refused(5, "postgres.row.read"),
+    refused(6, "postgres.row.update"),
+    refused(7, "postgres.row.delete"),
+    refused(8, "postgres.row.read"),
+    refused(9, "postgres.row.update"),
+    refused(10, "postgres.row.delete"),
+  ];
+  const code = await runHarnessCommand(
+    ["ratchet", "--session", "s1"],
+    terminal,
+    { workbench: async () => chain(entries) },
+  );
+  assert.equal(code, 0);
+  const text = terminal.out.join("\n");
+  assert.match(text, /Baseline: the board before the refinement activated at sequence 4/);
+  assert.match(text, /deny_rate.*0\.000.*0\.667.*REGRESSED/);
+  assert.match(text, /report, not a refusal/);
+});

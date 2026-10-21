@@ -411,7 +411,15 @@ export async function runHarnessCommand(
           summary && summary.mean !== null
             ? `${summary.mean.toFixed(3)} (n=${summary.n})`
             : "unmeasured";
-        const moved = compared.guardrailBreaches.includes(key) ? "  REGRESSED" : "";
+        // A breach is stored as a sentence naming the metric, so the marker
+        // matches the metric it starts with rather than the whole sentence.
+        // Comparing against the bare key never matched, and the marker that
+        // told an operator which line moved was dead code.
+        const moved = compared.guardrailBreaches.some((line) =>
+          line.startsWith(`${key} `),
+        )
+          ? "  REGRESSED"
+          : "";
         io.stdout(
           `${key}  ${metric ? metric.label : key}: ${fmt(b)} -> ${fmt(a)}${moved}`,
         );
