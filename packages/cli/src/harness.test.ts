@@ -367,3 +367,47 @@ test("entries prints a mined rule as policy text under the entry", async () => {
   assert.match(text, /decision: hold/);
   assert.match(text, /tool: fs\.delete/);
 });
+
+test("entries resolves the session to its workspace before it asks", async () => {
+  // The workbench keys entries by workspace, and the web route resolves it
+  // before asking. Passing the session id returned nothing on a real store,
+  // so the command pins which key it uses.
+  const asked: string[] = [];
+  const terminal = io();
+  const code = await runHarnessCommand(
+    ["entries", "--session", "s1"],
+    terminal,
+    {
+      workbench: async () =>
+        fake({
+          get: () => ({ workspace: "ws-1" }),
+          harnessEntries: async (workspace: string) => {
+            asked.push(workspace);
+            return [];
+          },
+        }).surface,
+    },
+  );
+  assert.equal(code, 0);
+  assert.deepEqual(asked, ["ws-1"]);
+  assert.match(terminal.out.join("\n"), /no entry/);
+});
+
+test("a surface with no sessions is asked with the id it was given", async () => {
+  const asked: string[] = [];
+  const code = await runHarnessCommand(
+    ["entries", "--session", "s1"],
+    io(),
+    {
+      workbench: async () =>
+        fake({
+          harnessEntries: async (workspace: string) => {
+            asked.push(workspace);
+            return [];
+          },
+        }).surface,
+    },
+  );
+  assert.equal(code, 0);
+  assert.deepEqual(asked, ["s1"]);
+});

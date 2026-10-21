@@ -425,7 +425,18 @@ export async function runHarnessCommand(
       return 0;
     }
     if (action === "entries") {
-      const entries = await workbench.harnessEntries(flags.session);
+      // The workbench keys entries by workspace and a session id is not one.
+      // The web route resolves the workspace before it asks, so the command
+      // has to as well; a surface with no sessions is handed the id unchanged.
+      let workspace = flags.session;
+      if (workbench.get) {
+        try {
+          workspace = workbench.get(flags.session)?.workspace ?? flags.session;
+        } catch {
+          workspace = flags.session;
+        }
+      }
+      const entries = await workbench.harnessEntries(workspace);
       if (!entries.length) {
         io.stdout("The harness holds no entry for this workspace.");
         return 0;
