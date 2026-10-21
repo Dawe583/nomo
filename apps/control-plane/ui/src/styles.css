@@ -3341,15 +3341,15 @@ dialog::backdrop {
 }
 /* The mined rule as the operator will paste it. Monospaced because it is
    policy file text, and wrapping because a long rationale must not widen the
-   card. No colour of its own: it is evidence, not a status. */
+   card. No colour of its own: it is evidence, not a status. The size is
+   inherited on purpose: the type scale has no token for this block, and a
+   literal here would be one more value outside the generated block. */
 .harness-rule-text {
   margin: 0 0 4px;
   padding: 8px 10px;
   border: 1px solid var(--line);
-  border-radius: 5px;
   background: var(--raised);
   font-family: var(--font-code);
-  font-size: 11px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
