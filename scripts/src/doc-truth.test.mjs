@@ -185,6 +185,12 @@ const INVENTORY = {
   "apps/control-plane/web/components/mobile-ascii.js":
     "held only on preserve/lane-mobile-ascii, unreferenced by anything in main; recorded in PRESERVED-LANES as finished accessibility work that was never integrated",
 
+  // A generated esbuild bundle created by prepare.mjs. It is a build artifact
+  // that never exists in source control; the reference names it as a fact about
+  // the gate, not as a file a reader should find.
+  "apps/desktop/src-tauri/resources/runtime/backend.mjs":
+    "generated desktop bundle, never in source control; named in a graph record as a gate observation",
+
   // Product direction and sales documents retired on 2026-10-09. Their valid
   // evidence now lives in the capability map, MVP spec and implementation plan.
   "docs/BUILD-PLAN.md":

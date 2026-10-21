@@ -702,7 +702,8 @@ Poznámky, které ušetří čas:
   vlastních vzorků. Je to zpráva, nikdy odmítnutí: nic v ní nemění rozhodnutí,
   oprávnění ani záznam. Řádek `unmeasured` znamená, že řetěz ten údaj zatím
   nenese, což není totéž jako nula, a bez aktivované rafinace vypíše přehled
-  tak, jak je.
+  tak, jak je. Webový panel zobrazuje stejné tři guardraily, takže je operátor
+  uvidí i bez terminálu.
 - `nomo config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
 - `nomo verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se

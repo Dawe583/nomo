@@ -803,7 +803,9 @@ Notes that save time:
   spread of its own samples. It is a report and never a refusal: nothing in it
   changes a decision, a permission or a record. A row reading `unmeasured` means
   the chain does not carry that metric yet, which is not the same as a zero, and
-  with no activated refinement it prints the board as it stands.
+  with no activated refinement it prints the board as it stands. The web panel's
+  harness shelf shows the same three guardrails, so an operator who never opens
+  a terminal sees them too.
 - `nomo config` prints the resolved data, ledger and approvals directories and
   whether a verification key is set. It never prints the key.
 - `nomo verify` on a ledger with no entries in the current directory fails with a
